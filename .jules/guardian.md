@@ -1,10 +1,11 @@
-# Guardian's Journal 🧪
+## 2025-02-18 - [Critical Test Gaps]
 
-## 2026-02-08 - Audio Data Sanitization
+**Erkenntnis:** Critical socket generation logic in `module.rs` was relying on untested `match` arms, particularly for `Bevy` source types and `Hue` integration. `Layer` transformation logic also lacked explicit verification of delegate calls to `Transform`.
 
 **Erkenntnis:** Rohe Audio-Buffer enthalten oft NaNs oder Infinities von Treibern oder leeren Streams. Das Propagieren dieser Werte in FFT- oder RMS-Berechnungen vergiftet die gesamte Analyse-Pipeline, was zu NaNs in Uniform Buffern führt, die GPU-Treiber zum Absturz bringen oder schwarze Bildschirme verursachen können.
 
 **Aktion:** Audio-Input-Buffer immer am Eingangspunkt sanitizen (nicht-finite Werte durch 0.0 ersetzen). `test_sanitization_of_bad_input` wurde zu `AudioAnalyzerV2` hinzugefügt, um dies strikt durchzusetzen.
+**Aktion:** Implemented comprehensive socket verification tests (`test_bevy_source_sockets`, `test_hue_sockets`) and transform delegation tests (`test_layer_transform_delegation`). Future PRs should strictly enforce `socket_type` verification for any new `ModulePartType`.
 
 ## 2024-10-24 - Initial Setup
 
