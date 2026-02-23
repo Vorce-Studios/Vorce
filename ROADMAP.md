@@ -1,7 +1,7 @@
 # MapFlow – Vollständige Roadmap und Feature-Status
 
 > **Version:** 2.1
-> **Stand:** 2026-02-17 10:00
+> **Stand:** 2026-02-22 10:00
 > **Zielgruppe:** @Projektleitung und Entwickler-Team
 > **Projekt-Version:** 0.2.1
 
@@ -142,6 +142,7 @@ Basierend auf dem aktuellen Status und den Projektzielen für die erste produkti
 
 * ✅ **LUT-Color-Grading** (`shaders/lut_color_grade.wgsl`, `mapmap-core/src/lut.rs`)
   * ✅ 3D-LUT-Unterstützung
+  * ✅ 3D-LUT Effect Support (COMPLETED 2026-02-20)
   * ✅ LUT-Format-Parser (.cube)
   * ✅ LUT-Manager mit Presets
   * ✅ GPU-beschleunigte Color-Grading
@@ -304,6 +305,10 @@ Basierend auf dem aktuellen Status und den Projektzielen für die erste produkti
   * ✅ Default-OSC-Port: 8000 (konfigurierbar)
   * 🟡 Neue Trigger-Nodes: Ableton Link (Tempo/Phase) & MIDI Clock (24 PPQ Divider) – Basis über `ableton-link-rs`
 
+* ✅ **Security Enforcement (ControlManager)**
+  * ✅ Global Path Traversal Checks (COMPLETED 2026-02-20)
+  * ✅ Input Validation in Control System (COMPLETED 2026-02-17)
+
 * ⬜ **MIDI-System (LOW PRIORITY)** (`mapmap-control/src/midi/`) - FULLY WIRED 2025-12-27
   * ✅ MIDI-Input (`midi/input.rs`)
   * ✅ MIDI-Output (`midi/output.rs`)
@@ -318,10 +323,11 @@ Basierend auf dem aktuellen Status und den Projektzielen für die erste produkti
   * ✅ MIDI-Learn im Module Canvas verdrahtet - IMPLEMENTED 2025-12-27
   * ⬜ MIDI-zu-Parameter-Routing für Layer/Effects (low priority)
 
-* ✅ **WebSocket-System** (`mapmap-control/src/web/`) – NICHT NUTZEN
+* ⚠️ **WebSocket-System** (`mapmap-control/src/web/`) – EXPERIMENTAL / SECURITY HARDENING
   * ✅ WebSocket-Server vorhanden (`web/websocket.rs`)
   * ✅ Web-API-Routes (`web/routes.rs`, `web/handlers.rs`)
-  * ✅ **Entscheidung: WebSocket NICHT als Control-Pfad nutzen, OSC priorisieren**
+  * ✅ Authentication via Subprotocol (`mapmap.auth.`) (COMPLETED 2026-02-06)
+  * ⚠️ **Entscheidung: WebSocket wird gehärtet, OSC bleibt primärer Control-Pfad**
 
 * ⬜ **DMX-System** (`mapmap-control/src/dmx/`) – FUTURE
   * ⬜ Art-Net (`dmx/artnet.rs`)
@@ -350,6 +356,11 @@ Basierend auf dem aktuellen Status und den Projektzielen für die erste produkti
   * ✅ egui-Integration (`egui`, `egui-wgpu`, `egui-winit`, `egui_dock`, `egui_extras`)
   * ✅ **Phase 6: Migration von ImGui zu egui ABGESCHLOSSEN**
   * ⬜ WGPU 0.27, Winit 0.30 & Egui 0.33 Upgrade ist jetzt vollständig abgeschlossen aber es gibt noch diverse Fehler die gerade gefixt werden
+
+* ✅ **Responsive Layout System** (`mapmap-ui/src/core/responsive.rs`)
+  * ✅ ResponsiveLayout Helper (COMPLETED 2026-02-06)
+  * ✅ Mobile/Compact detection (COMPLETED 2026-02-06)
+  * ✅ Viewport-based sizing (COMPLETED 2026-02-06)
 
 * ✅ **UI-Module (Migriert zu egui)** (`mapmap-ui/src/`)
   * ✅ Dashboard (`dashboard.rs`) – Hauptansicht
