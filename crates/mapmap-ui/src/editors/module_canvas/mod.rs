@@ -4094,7 +4094,7 @@ impl ModuleCanvas {
                         self.context_menu_part = None;
                         self.context_menu_pos = None;
                     }
-                    if ui.button("\u{1F5D1} Delete").clicked() {
+                    if crate::widgets::hold_to_action_button(ui, "\u{1F5D1} Delete", colors::ERROR_COLOR) {
                         // Remove connections and part
                         module
                             .connections
@@ -4139,7 +4139,11 @@ impl ModuleCanvas {
             let inner_rect = menu_rect.shrink(4.0);
             ui.scope_builder(egui::UiBuilder::new().max_rect(inner_rect), |ui| {
                 ui.vertical(|ui| {
-                    if ui.button("\u{1F5D1} Delete Connection").clicked() {
+                    if crate::widgets::hold_to_action_button(
+                        ui,
+                        "\u{1F5D1} Delete Connection",
+                        colors::ERROR_COLOR,
+                    ) {
                         if conn_idx < module.connections.len() {
                             module.connections.remove(conn_idx);
                         }
