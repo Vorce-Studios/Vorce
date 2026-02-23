@@ -52,6 +52,13 @@ impl TriggerSystem {
     ) {
         self.active_triggers.clear();
 
+        // Hoist RNG to avoid repeated initialization inside the loop
+        use rand::Rng;
+        let mut rng = rand::rng();
+
+        // Track parts that actively use state to perform Garbage Collection
+        let mut active_state_users = HashSet::new();
+
         for module in module_manager.modules() {
             for part in &module.parts {
                 if let ModulePartType::Trigger(trigger) = &part.part_type {
@@ -123,6 +130,8 @@ impl TriggerSystem {
                             }
                         }
                         TriggerType::Fixed { interval_ms, .. } => {
+                            active_state_users.insert(part.id); // Mark as using state
+
                             let interval = *interval_ms as f32 / 1000.0;
                             // Unified state lookup (O(1))
                             let state = self.states.entry(part.id).or_default();
@@ -137,13 +146,13 @@ impl TriggerSystem {
                             max_interval_ms,
                             ..
                         } => {
+                            active_state_users.insert(part.id); // Mark as using state
+
                             // Unified state lookup (O(1)) - Handles both timer and target
                             let state = self.states.entry(part.id).or_default();
 
                             // Initialize target if needed (first run or after type switch)
                             if state.target < 0.0 {
-                                use rand::Rng;
-                                let mut rng = rand::rng();
                                 state.target = rng.random_range(*min_interval_ms..=*max_interval_ms)
                                     as f32
                                     / 1000.0;
@@ -155,9 +164,7 @@ impl TriggerSystem {
                                 state.timer = 0.0;
                                 self.active_triggers.insert((part.id, 0));
 
-                                // Pick new target
-                                use rand::Rng;
-                                let mut rng = rand::rng();
+                                // Pick new target using hoisted RNG
                                 state.target = rng.random_range(*min_interval_ms..=*max_interval_ms)
                                     as f32
                                     / 1000.0;
@@ -169,6 +176,9 @@ impl TriggerSystem {
                 }
             }
         }
+
+        // Garbage Collection: Remove states for parts that no longer exist or don't use state
+        self.states.retain(|id, _| active_state_users.contains(id));
     }
 
     /// Check if a specific trigger output is currently active.
@@ -282,5 +292,114 @@ mod tests {
         // So timer is 0.0 at the end of the frame it fired.
         assert_eq!(new_state.timer, 0.0);
         assert!(new_state.target >= 0.1 && new_state.target <= 0.2);
+    }
+
+    #[test]
+    fn test_trigger_system_garbage_collection() {
+        let mut manager = ModuleManager::new();
+        let module_id = manager.create_module("Test GC".to_string());
+
+        // Create a Random trigger (which uses state)
+        let trigger_type = ModulePartType::Trigger(TriggerType::Random {
+            min_interval_ms: 100,
+            max_interval_ms: 200,
+            probability: 1.0,
+        });
+
+        let part_id = manager
+            .add_part_to_module(module_id, PartType::Trigger, (0.0, 0.0))
+            .unwrap();
+
+        if let Some(module) = manager.get_module_mut(module_id) {
+            if let Some(part) = module.parts.iter_mut().find(|p| p.id == part_id) {
+                part.part_type = trigger_type;
+            }
+        }
+
+        let mut system = TriggerSystem::new();
+        let audio = AudioTriggerData::default();
+
+        // 1. Update to initialize state
+        system.update(&manager, &audio, 0.01);
+        assert!(system.states.contains_key(&part_id), "State should be created");
+
+        // 2. Remove the part
+        if let Some(module) = manager.get_module_mut(module_id) {
+             module.parts.retain(|p| p.id != part_id);
+        }
+
+        // 3. Update again
+        system.update(&manager, &audio, 0.01);
+
+        // 4. Assert state is gone
+        assert!(!system.states.contains_key(&part_id), "State should be garbage collected");
+    }
+
+    #[test]
+    fn test_audio_fft_socket_consistency() {
+        // This test ensures TriggerSystem logic matches AudioTriggerOutputConfig logic
+        let mut manager = ModuleManager::new();
+        let module_id = manager.create_module("Test FFT".to_string());
+
+        let config = crate::module::AudioTriggerOutputConfig {
+            frequency_bands: true,
+            volume_outputs: true,
+            beat_output: true,
+            bpm_output: true,
+            inverted_outputs: Default::default(),
+        };
+
+        // Get expected sockets
+        let expected_sockets = config.generate_outputs();
+
+        // Setup part
+        let trigger_type = ModulePartType::Trigger(TriggerType::AudioFFT {
+            band: crate::module::AudioBand::Bass, // Irrelevant for this test
+            threshold: 0.0, // Low threshold to trigger everything
+            output_config: config,
+        });
+
+        let part_id = manager
+            .add_part_to_module(module_id, PartType::Trigger, (0.0, 0.0))
+            .unwrap();
+
+        if let Some(module) = manager.get_module_mut(module_id) {
+            if let Some(part) = module.parts.iter_mut().find(|p| p.id == part_id) {
+                part.part_type = trigger_type;
+            }
+        }
+
+        let mut system = TriggerSystem::new();
+        // Mock audio data that triggers EVERYTHING
+        let mut audio = AudioTriggerData::default();
+        audio.beat_detected = true;
+        audio.peak_volume = 1.0;
+        audio.rms_volume = 1.0;
+        for i in 0..9 {
+            audio.band_energies[i] = 1.0;
+        }
+
+        system.update(&manager, &audio, 0.01);
+
+        // Check each expected socket index is active
+        for (i, socket) in expected_sockets.iter().enumerate() {
+            if socket.name == "BPM Out" {
+                assert!(
+                    !system.is_active(part_id, i),
+                    "BPM Out should NOT be active in TriggerSystem (handled separately)"
+                );
+                continue;
+            }
+
+            assert!(
+                system.is_active(part_id, i),
+                "Socket '{}' at index {} should be active",
+                socket.name,
+                i
+            );
+        }
+
+        // Check no extra sockets active (e.g. index 100)
+        assert!(!system.is_active(part_id, expected_sockets.len()), "Index out of bounds should not be active");
     }
 }
