@@ -298,7 +298,7 @@ pub fn duplicate_button(ui: &mut Ui) -> Response {
 }
 
 pub fn delete_button(ui: &mut Ui) -> bool {
-    ui.button("🗑").clicked()
+    hold_to_action_button(ui, "🗑", colors::ERROR_COLOR)
 }
 
 pub fn lock_button(ui: &mut Ui, active: bool) -> Response {

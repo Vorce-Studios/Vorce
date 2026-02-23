@@ -27,3 +27,10 @@
 1.  **Focus:** Always draw a focus ring (e.g., `ui.visuals().selection.stroke`) when `response.has_focus()`.
 2.  **Metadata:** Always call `response.widget_info` with a labeled `WidgetType::Button`. Use descriptive labels (e.g., `format!("{:?}", icon)`), not generic ones.
 3.  **Interaction:** Ensure `Sense::click()` is used and verify keyboard activation support.
+
+## 2026-02-17 – Universal Safety for Deletion
+**Learning:** Destructive actions in context menus (e.g., "Delete Node", "Delete Connection") were still immediate-click, posing a risk during live performance. Consistency is key: if node deletion is safe on the canvas, it must be safe in the menu.
+**Action:** Enforced "Hold-to-Confirm" on all delete actions.
+- **Implementation:** Refactored `delete_button` widget to use `hold_to_action_button`.
+- **Context Menus:** Replaced standard buttons with `hold_to_action_button` in `ModuleCanvas` menus.
+- **Visuals:** Used standard trash icon "🗑" and `colors::ERROR_COLOR` (Red) to signal danger.
