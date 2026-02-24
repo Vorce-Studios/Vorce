@@ -41,3 +41,7 @@
 ## 2026-10-25 - Static Helpers for Disjoint Borrows
 **Learning:** `ModuleEvaluator` methods often need to mutate cached results while reading configuration state. Passing `&self` to helper methods prevents this due to borrowing rules, leading to unnecessary cloning (e.g. `triggers_to_eval`).
 **Action:** Convert helper methods to associated static functions (`fn helper(arg1, arg2)`) that take only the necessary fields, allowing the caller to split `self` borrows and avoid cloning.
+
+## 2026-03-05 - Redundant Map Re-computation in Hot Paths
+**Learning:** In `ModuleEvaluator::trace_chain`, a `HashMap` mapping part IDs to indices was being rebuilt from scratch for every layer rendered, despite the same map being built and cached in the parent `evaluate` method. This O(N) operation per layer caused significant overhead in complex scenes.
+**Action:** Always check if a required lookup structure (like an ID-to-index map) is already available in the parent context before building a local one. If so, reuse it to avoid redundant allocations and iterations.

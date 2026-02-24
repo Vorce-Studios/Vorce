@@ -819,8 +819,9 @@ impl ModuleEvaluator {
         let mut source_props = SourceProperties::default_identity();
         let mut current_id = start_node_id;
 
-        // CRITICAL: Ensure the part index cache is consistent with the current module state
-        // Bolt Optimization: Use cached index populated in evaluate() instead of rebuilding it
+        // Optimization: Use the part index cache that was already built in evaluate()
+        // This avoids an O(N) allocation and iteration for every layer being rendered.
+        let part_index = &self.part_index_cache;
 
         tracing::debug!(
             "trace_chain: Starting from node {} in module {}",
