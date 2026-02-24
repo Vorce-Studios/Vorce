@@ -7,8 +7,8 @@ use crate::core::responsive::ResponsiveLayout;
 use crate::i18n::LocaleManager;
 use crate::icons::{AppIcon, IconManager};
 use crate::theme::colors;
+use crate::widgets::custom::{delete_button, icon_button_simple, styled_slider};
 use crate::widgets::panel::{cyber_panel_frame, render_panel_header};
-use crate::widgets::custom::{styled_slider, icon_button_simple, delete_button};
 use egui::{Color32, RichText, Ui};
 use serde::{Deserialize, Serialize};
 
@@ -743,7 +743,9 @@ impl EffectChainPanel {
             colors::CYAN_ACCENT.linear_multiply(0.4) // Highlight when dragging
         } else if enabled {
             // Active effect background - subtle tint
-            colors::CYAN_ACCENT.linear_multiply(0.05).gamma_multiply(0.5)
+            colors::CYAN_ACCENT
+                .linear_multiply(0.05)
+                .gamma_multiply(0.5)
         } else if index % 2 == 0 {
             colors::DARK_GREY
         } else {
@@ -1289,6 +1291,7 @@ impl EffectChainPanel {
         let _ = effect_id; // Silence unused warning
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn render_param_slider_static(
         ui: &mut Ui,
         parameters: &std::collections::HashMap<String, f32>,
@@ -1413,9 +1416,8 @@ impl EffectChainPanel {
                     .clicked()
                         && !self.save_preset_name.is_empty()
                     {
-                        self.actions.push(EffectChainAction::SavePreset(
-                            self.save_preset_name.clone(),
-                        ));
+                        self.actions
+                            .push(EffectChainAction::SavePreset(self.save_preset_name.clone()));
                         self.save_preset_name.clear();
                     }
                 });
