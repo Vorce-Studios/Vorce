@@ -819,11 +819,9 @@ impl ModuleEvaluator {
         let mut source_props = SourceProperties::default_identity();
         let mut current_id = start_node_id;
 
-        // CRITICAL: Ensure the part index cache is consistent with the current module state
-        let mut part_index = std::collections::HashMap::new();
-        for (i, part) in module.parts.iter().enumerate() {
-            part_index.insert(part.id, i);
-        }
+        // Optimization: Use the part index cache that was already built in evaluate()
+        // This avoids an O(N) allocation and iteration for every layer being rendered.
+        let part_index = &self.part_index_cache;
 
         tracing::debug!(
             "trace_chain: Starting from node {} in module {}",
