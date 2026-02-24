@@ -217,9 +217,7 @@ pub fn icon_button_simple(
     let (rect, response) = ui.allocate_at_least(desired_size, Sense::click());
 
     // Accessibility info
-    response.widget_info(|| {
-        WidgetInfo::labeled(WidgetType::Button, ui.is_enabled(), hover_text)
-    });
+    response.widget_info(|| WidgetInfo::labeled(WidgetType::Button, ui.is_enabled(), hover_text));
 
     let visuals = ui.style().interact(&response);
 
