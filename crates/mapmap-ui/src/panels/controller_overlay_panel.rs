@@ -11,7 +11,7 @@ use crate::config::{MidiAssignment, MidiAssignmentTarget, UserConfig};
 #[cfg(feature = "midi")]
 use mapmap_control::midi::{
     ControllerElement, ControllerElements, ElementState, ElementStateManager, ElementType,
-    MidiConfig, MidiLearnManager, MidiMessage,
+    MidiLearnManager, MidiMessage,
 };
 use mapmap_control::target::ControlTarget;
 use std::collections::{HashMap, HashSet};
@@ -351,8 +351,8 @@ impl ControllerOverlayPanel {
         message: &MidiMessage,
         config: &mapmap_control::midi::MidiConfig,
     ) -> bool {
-        use mapmap_control::midi::MidiConfig;
-
+        // Use full path to avoid import conflict or unused import warnings
+        // if we import MidiConfig at module level
         match (message, config) {
             (
                 MidiMessage::ControlChange {
@@ -360,7 +360,7 @@ impl ControllerOverlayPanel {
                     controller,
                     ..
                 },
-                MidiConfig::Cc {
+                mapmap_control::midi::MidiConfig::Cc {
                     channel: cfg_ch,
                     controller: cfg_cc,
                 },
@@ -371,21 +371,21 @@ impl ControllerOverlayPanel {
                     controller,
                     ..
                 },
-                MidiConfig::CcRelative {
+                mapmap_control::midi::MidiConfig::CcRelative {
                     channel: cfg_ch,
                     controller: cfg_cc,
                 },
             ) => *channel == *cfg_ch && *controller == *cfg_cc,
             (
                 MidiMessage::NoteOn { channel, note, .. },
-                MidiConfig::Note {
+                mapmap_control::midi::MidiConfig::Note {
                     channel: cfg_ch,
                     note: cfg_note,
                 },
             ) => *channel == *cfg_ch && *note == *cfg_note,
             (
                 MidiMessage::NoteOff { channel, note },
-                MidiConfig::Note {
+                mapmap_control::midi::MidiConfig::Note {
                     channel: cfg_ch,
                     note: cfg_note,
                 },
