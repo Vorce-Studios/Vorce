@@ -3,7 +3,6 @@
 //! Visual representation of the Ecler NUO 4 (or other MIDI controllers)
 //! with live state visualization and MIDI Learn functionality.
 
-#[cfg(feature = "midi")]
 use egui::{Color32, Pos2, Rect, Response, Sense, Stroke, TextureHandle, Ui, Vec2};
 
 use crate::config::{MidiAssignment, MidiAssignmentTarget, UserConfig};
@@ -1081,7 +1080,7 @@ impl ControllerOverlayPanel {
         ui.separator();
 
         // Element table
-        let mut element_to_remove = None;
+        let mut element_to_remove: Option<String> = None;
 
         egui::ScrollArea::vertical().show(ui, |ui| {
             egui::Grid::new("element_list")
