@@ -1,14 +1,19 @@
 //! Video player and media orchestration.
 
 use crate::app::core::app_struct::App;
+use crate::orchestration::media_pipeline::{ActiveMediaPipeline, WgpuFrameUploader};
 use mapmap_core::module::{ModulePartType, SourceType};
+use mapmap_media::pipeline::FramePipeline;
+use mapmap_media::player::{PlaybackCommand, PlaybackState};
 use tracing::{error, info};
 
 /// Synchronize media players with active source modules
 pub fn sync_media_players(app: &mut App) {
     let mut active_sources = std::collections::HashSet::new();
 
-    // Identify active media files across all source types
+    // Collect active media configurations to avoid borrowing app.state while mutating app.media_players
+    let mut media_configs = Vec::new();
+
     for module in app.state.module_manager.modules() {
         for part in &module.parts {
             if let ModulePartType::Source(source_type) = &part.part_type {
@@ -30,59 +35,82 @@ pub fn sync_media_players(app: &mut App) {
 
                 if let Some(path) = path_result {
                     if !path.is_empty() {
-                        let key = (module.id, part.id);
-                        active_sources.insert(key);
-
-                        // Create player if not exists
-                        match app.media_players.entry(key) {
-                            std::collections::hash_map::Entry::Vacant(e) => {
-                                match mapmap_media::open_path(&path) {
-                                    Ok(mut player) => {
-                                        info!(
-                                            "Created media player for module={} part={} path='{}'",
-                                            module.id, part.id, path
-                                        );
-                                        if let Err(e) = player.play() {
-                                            error!(
-                                                "Failed to start playback for source {}:{} : {}",
-                                                module.id, part.id, e
-                                            );
-                                        }
-                                        e.insert((path.clone(), player));
-                                    }
-                                    Err(e) => {
-                                        error!(
-                                            "Failed to create video player for source {}:{} : {}",
-                                            module.id, part.id, e
-                                        );
-                                    }
-                                }
-                            }
-                            std::collections::hash_map::Entry::Occupied(mut e) => {
-                                // Check if path changed
-                                let (current_path, player) = e.get_mut();
-                                if *current_path != path {
-                                    info!(
-                                        "Path changed for source {}:{} -> loading {}",
-                                        module.id, part.id, path
-                                    );
-                                    // Load new media
-                                    match mapmap_media::open_path(&path) {
-                                        Ok(mut new_player) => {
-                                            if let Err(err) = new_player.play() {
-                                                error!("Failed to start playback: {}", err);
-                                            }
-                                            *current_path = path.clone();
-                                            *player = new_player;
-                                        }
-                                        Err(err) => {
-                                            error!("Failed to load new media: {}", err);
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        media_configs.push((module.id, part.id, path));
                     }
+                }
+            }
+        }
+    }
+
+    for (mod_id, part_id, path) in media_configs {
+        let key = (mod_id, part_id);
+        active_sources.insert(key);
+        let texture_name = format!("part_{}_{}", mod_id, part_id);
+
+        // Check if we need to create or update player
+        let needs_create = if let Some(pipeline) = app.media_players.get(&key) {
+             pipeline.source_path != path
+        } else {
+            true
+        };
+
+        if needs_create {
+            if app.media_players.contains_key(&key) {
+                info!(
+                    "Path changed for source {}:{} -> loading {}",
+                    mod_id, part_id, path
+                );
+                // Remove old player
+                app.media_players.remove(&key);
+            }
+
+            // Create new player
+            match mapmap_media::open_path(&path) {
+                Ok(player) => {
+                    info!(
+                        "Created media player for module={} part={} path='{}'",
+                        mod_id, part_id, path
+                    );
+
+                    // Extract control channels and info before moving player
+                    let command_tx = player.command_sender();
+                    let status_rx = player.status_receiver();
+                    let duration = player.duration();
+
+                    // Initial Play command
+                    let _ = command_tx.send(PlaybackCommand::Play);
+
+                    // Create pipeline
+                    let mut pipeline = FramePipeline::new();
+
+                    // Setup Uploader
+                    let uploader = WgpuFrameUploader::new(
+                        app.backend.queue.clone(),
+                        app.texture_pool.clone(),
+                        texture_name.clone(),
+                    );
+                    pipeline.set_uploader(Box::new(uploader));
+
+                    // Start threads
+                    pipeline.start_decode_thread(player);
+                    pipeline.start_upload_thread();
+
+                    let active_pipeline = ActiveMediaPipeline::new(
+                        pipeline,
+                        command_tx,
+                        status_rx,
+                        texture_name,
+                        duration,
+                        path.clone()
+                    );
+
+                    app.media_players.insert(key, active_pipeline);
+                }
+                Err(e) => {
+                    error!(
+                        "Failed to create video player for source {}:{} : {}",
+                        mod_id, part_id, e
+                    );
                 }
             }
         }
@@ -93,98 +121,17 @@ pub fn sync_media_players(app: &mut App) {
         .retain(|key, _| active_sources.contains(key));
 }
 
-/// Update all media players and upload frames to texture pool
+/// Update all media players and sync stats to UI
 #[allow(clippy::manual_is_multiple_of)]
-pub fn update_media_players(app: &mut App, dt: f32) {
-    static FRAME_LOG_COUNTER: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
-    let num_frames = FRAME_LOG_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    #[allow(clippy::manual_is_multiple_of)]
-    let log_this_frame = num_frames % 60 == 0;
-
-    let texture_pool = &mut app.texture_pool;
-    let queue = &app.backend.queue;
+pub fn update_media_players(app: &mut App, _dt: f32) {
     let ui_state = &mut app.ui_state;
 
-    for ((mod_id, part_id), (_, player)) in &mut app.media_players {
-        let player: &mut mapmap_media::player::VideoPlayer = player;
-        let tex_name = format!("part_{}_{}", mod_id, part_id);
+    for ((mod_id, part_id), pipeline) in &mut app.media_players {
+        // Update state from status channel
+        pipeline.update_state();
 
-        // Ensure texture entry exists in pool so we don't hit MAGENTA fallback
-        if !texture_pool.has_texture(&tex_name) {
-            let (width, height) = player.resolution();
-            let (w, h) = if width == 0 || height == 0 {
-                (1280, 720)
-            } else {
-                (width, height)
-            };
-
-            texture_pool.ensure_texture(
-                &tex_name,
-                w,
-                h,
-                wgpu::TextureFormat::Rgba8UnormSrgb,
-                wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-            );
-
-            // Initial black fill
-            let black_data = vec![0u8; (w * h * 4) as usize];
-            texture_pool.upload_data(queue, &tex_name, &black_data, w, h);
-        }
-
-        // Update player logic
-        let update_start = std::time::Instant::now();
-        if let Some(frame) = player.update(std::time::Duration::from_secs_f32(dt)) {
-            let elapsed = update_start.elapsed().as_secs_f64() * 1000.0;
-            if log_this_frame {
-                tracing::debug!(
-                    "Player update took {:.2}ms for {}:{}",
-                    elapsed,
-                    mod_id,
-                    part_id
-                );
-            }
-
-            // Upload to GPU if data is on CPU
-            if let mapmap_io::format::FrameData::Cpu(data) = &frame.data {
-                if log_this_frame {
-                    tracing::info!(
-                        "Frame upload: mod={} part={} size={}x{} pts={:?}",
-                        mod_id,
-                        part_id,
-                        frame.format.width,
-                        frame.format.height,
-                        frame.timestamp
-                    );
-                }
-
-                // CRITICAL: Ensure texture exists in pool with correct format and size
-                texture_pool.ensure_texture(
-                    &tex_name,
-                    frame.format.width,
-                    frame.format.height,
-                    wgpu::TextureFormat::Rgba8UnormSrgb,
-                    wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-                );
-
-                let upload_start = std::time::Instant::now();
-                texture_pool.upload_data(
-                    queue,
-                    &tex_name,
-                    data,
-                    frame.format.width,
-                    frame.format.height,
-                );
-                let upload_elapsed = upload_start.elapsed().as_secs_f64() * 1000.0;
-                if log_this_frame {
-                    tracing::debug!(
-                        "Texture upload took {:.2}ms for {}:{}",
-                        upload_elapsed,
-                        mod_id,
-                        part_id
-                    );
-                }
-            }
-        }
+        // Get stats
+        let stats = pipeline.pipeline.stats();
 
         // Sync player info to UI for timeline display
         if let Some(active_id) = ui_state.module_canvas.active_module_id {
@@ -192,9 +139,9 @@ pub fn update_media_players(app: &mut App, dt: f32) {
                 ui_state.module_canvas.player_info.insert(
                     *part_id,
                     mapmap_ui::types::MediaPlayerInfo {
-                        current_time: player.current_time().as_secs_f64(),
-                        duration: player.duration().as_secs_f64(),
-                        is_playing: matches!(player.state(), mapmap_media::PlaybackState::Playing),
+                        current_time: stats.last_pts_secs,
+                        duration: pipeline.duration.as_secs_f64(),
+                        is_playing: matches!(pipeline.current_state, PlaybackState::Playing),
                     },
                 );
             }

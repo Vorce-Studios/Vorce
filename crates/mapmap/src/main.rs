@@ -186,49 +186,19 @@ impl App {
             if let Some(mod_id) = target_module_id {
                 let player_key = (mod_id, part_id);
 
-                // If player doesn't exist and we get any command (except Reload), try to create it
-                if !self.media_players.contains_key(&player_key)
-                    && cmd != MediaPlaybackCommand::Reload
-                {
-                    info!(
-                        "Player doesn't exist for part_id={}, attempting to create...",
-                        part_id
-                    );
-                    // Find the source path
-                    if let Some(module) = self.state.module_manager.get_module(mod_id) {
-                        if let Some(part) = module.parts.iter().find(|p| p.id == part_id) {
-                            if let mapmap_core::module::ModulePartType::Source(
-                                mapmap_core::module::SourceType::MediaFile { ref path, .. },
-                            ) = &part.part_type
-                            {
-                                info!("Found media path: '{}' in module '{}'", path, module.name);
-                                if !path.is_empty() {
-                                    match mapmap_media::open_path(path) {
-                                        Ok(player) => {
-                                            info!("Successfully created player for '{}'", path);
-                                            self.media_players
-                                                .insert(player_key, (path.clone(), player));
-                                        }
-                                        Err(e) => {
-                                            error!("Failed to load media '{}': {}", path, e);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                // Note: manual player creation logic removed as sync_media_players handles it every frame.
+                // We just send commands to existing players.
 
-                if let Some((_, player)) = self.media_players.get_mut(&player_key) {
+                if let Some(pipeline) = self.media_players.get_mut(&player_key) {
                     match cmd {
                         MediaPlaybackCommand::Play => {
-                            let _ = player.command_sender().send(PlaybackCommand::Play);
+                            let _ = pipeline.command_tx.send(PlaybackCommand::Play);
                         }
                         MediaPlaybackCommand::Pause => {
-                            let _ = player.command_sender().send(PlaybackCommand::Pause);
+                            let _ = pipeline.command_tx.send(PlaybackCommand::Pause);
                         }
                         MediaPlaybackCommand::Stop => {
-                            let _ = player.command_sender().send(PlaybackCommand::Stop);
+                            let _ = pipeline.command_tx.send(PlaybackCommand::Stop);
                         }
                         MediaPlaybackCommand::Reload => {
                             info!("Reloading media player for part_id={}", part_id);
@@ -236,7 +206,7 @@ impl App {
                         }
                         MediaPlaybackCommand::SetSpeed(speed) => {
                             info!("Setting speed to {} for part_id={}", speed, part_id);
-                            let _ = handle_media_speed(player, speed);
+                            let _ = pipeline.command_tx.send(PlaybackCommand::SetSpeed(speed));
                         }
                         MediaPlaybackCommand::SetLoop(enabled) => {
                             info!("Setting loop to {} for part_id={}", enabled, part_id);
@@ -245,13 +215,11 @@ impl App {
                             } else {
                                 mapmap_media::LoopMode::PlayOnce
                             };
-                            let _ = player
-                                .command_sender()
-                                .send(PlaybackCommand::SetLoopMode(mode));
+                            let _ = pipeline.command_tx.send(PlaybackCommand::SetLoopMode(mode));
                         }
                         MediaPlaybackCommand::Seek(position) => {
                             info!("Seeking to {} for part_id={}", position, part_id);
-                            let _ = player.command_sender().send(PlaybackCommand::Seek(
+                            let _ = pipeline.command_tx.send(PlaybackCommand::Seek(
                                 std::time::Duration::from_secs_f64(position),
                             ));
                         }
@@ -264,7 +232,8 @@ impl App {
                     }
                 }
 
-                // Handle Reload by removing player and immediately recreating
+                // Handle Reload by removing player
+                // sync_media_players will recreate it in the next update cycle
                 if cmd == MediaPlaybackCommand::Reload {
                     if self.media_players.remove(&player_key).is_some() {
                         info!(
@@ -272,44 +241,12 @@ impl App {
                             part_id
                         );
                     }
-                    // Immediately recreate the player
-                    if let Some(module) = self.state.module_manager.get_module(mod_id) {
-                        if let Some(part) = module.parts.iter().find(|p| p.id == part_id) {
-                            if let mapmap_core::module::ModulePartType::Source(
-                                mapmap_core::module::SourceType::MediaFile { ref path, .. },
-                            ) = &part.part_type
-                            {
-                                if !path.is_empty() {
-                                    match mapmap_media::open_path(path) {
-                                        Ok(player) => {
-                                            info!("Recreated player for '{}' after reload", path);
-                                            // Auto-play after reload
-                                            let _ =
-                                                player.command_sender().send(PlaybackCommand::Play);
-                                            self.media_players
-                                                .insert(player_key, (path.clone(), player));
-                                        }
-                                        Err(e) => {
-                                            error!("Failed to reload media '{}': {}", path, e);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
             }
         }
 
         Ok(())
     }
-}
-
-fn handle_media_speed(player: &mut mapmap_media::player::VideoPlayer, speed: f32) -> Result<()> {
-    player
-        .command_sender()
-        .send(PlaybackCommand::SetSpeed(speed))
-        .map_err(|e| anyhow::anyhow!("Failed to send speed command: {}", e))
 }
 
 fn main() -> Result<()> {

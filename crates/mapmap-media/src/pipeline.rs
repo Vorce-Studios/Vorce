@@ -21,13 +21,19 @@
 //! - Pre-buffering prevents frame stutters
 //! - Overlapped decode + GPU upload
 
-use crate::{DecodedFrame, MediaError, Result, VideoDecoder, VideoPlayer};
+use crate::{DecodedFrame, VideoPlayer};
 use crossbeam_channel::{bounded, Receiver, Sender};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
+
+/// Interface for uploading frames to GPU/Texture
+pub trait FrameUploader: Send + Sync {
+    /// Upload a decoded frame to the GPU/Texture pool
+    fn upload(&mut self, frame: &DecodedFrame);
+}
 
 /// Frame pipeline statistics
 #[derive(Debug, Clone, Copy, Default)]
@@ -38,6 +44,7 @@ pub struct PipelineStats {
     pub dropped_frames: u64,
     pub decode_time_ms: f64,
     pub upload_time_ms: f64,
+    pub last_pts_secs: f64,
 }
 
 /// Priority level for pipeline stages
@@ -98,6 +105,9 @@ pub struct FramePipeline {
     // Threads
     decode_thread: Option<JoinHandle<()>>,
     config: PipelineConfig,
+
+    // Optional Uploader
+    uploader: Option<Box<dyn FrameUploader>>,
 }
 
 impl FramePipeline {
@@ -120,15 +130,17 @@ impl FramePipeline {
             stats: Arc::new(parking_lot::RwLock::new(PipelineStats::default())),
             decode_thread: None,
             config,
+            uploader: None,
         }
     }
 
+    /// Set the frame uploader
+    pub fn set_uploader(&mut self, uploader: Box<dyn FrameUploader>) {
+        self.uploader = Some(uploader);
+    }
+
     /// Start the decode thread
-    pub fn start_decode_thread<D: VideoDecoder + 'static>(
-        &mut self,
-        mut decoder: D,
-        mut player: VideoPlayer,
-    ) {
+    pub fn start_decode_thread(&mut self, mut player: VideoPlayer) {
         if self.running.load(Ordering::Relaxed) {
             warn!("Decode thread already running");
             return;
@@ -151,8 +163,9 @@ impl FramePipeline {
                     let start = std::time::Instant::now();
 
                     // Update player and get next frame
-                    if let Some(frame) = player.update(Duration::from_secs_f64(1.0 / decoder.fps()))
-                    {
+                    // Note: player.fps() is used to calculate target frame duration
+                    let target_frame_duration = Duration::from_secs_f64(1.0 / player.fps());
+                    if let Some(frame) = player.update(target_frame_duration) {
                         let pipeline_frame = PipelineFrame {
                             frame,
                             sequence,
@@ -184,9 +197,8 @@ impl FramePipeline {
 
                     // Throttle to approximately match video FPS
                     let elapsed = start.elapsed();
-                    let frame_duration = Duration::from_secs_f64(1.0 / decoder.fps());
-                    if elapsed < frame_duration {
-                        std::thread::sleep(frame_duration - elapsed);
+                    if elapsed < target_frame_duration {
+                        std::thread::sleep(target_frame_duration - elapsed);
                     }
                 }
 
@@ -198,12 +210,12 @@ impl FramePipeline {
     }
 
     /// Start the upload thread (requires render backend)
-    /// Note: In Phase 1, this is a placeholder. Full implementation requires wgpu integration.
     pub fn start_upload_thread(&mut self) {
         let decode_rx = self.decode_rx.clone();
         let upload_tx = self.upload_tx.clone();
         let running = self.running.clone();
         let stats = self.stats.clone();
+        let mut uploader = self.uploader.take();
 
         thread::Builder::new()
             .name("upload-thread".to_string())
@@ -215,19 +227,18 @@ impl FramePipeline {
                         Ok(pipeline_frame) => {
                             let start = std::time::Instant::now();
 
-                            // TODO: Upload to GPU here (Phase 1 placeholder)
-                            // In real implementation:
-                            // 1. Get staging buffer from pool
-                            // 2. Copy frame data to staging buffer
-                            // 3. Record copy command
-                            // 4. Submit to GPU queue
-                            // 5. Send texture handle to render thread
+                            // Upload to GPU if uploader is present
+                            if let Some(uploader) = &mut uploader {
+                                uploader.upload(&pipeline_frame.frame);
+                            }
 
-                            // For now, just forward the frame
-                            if upload_tx.send(pipeline_frame).is_ok() {
+                            // Forward frame metadata (and CPU data if not consumed)
+                            // to main thread for completion/stats
+                            if upload_tx.send(pipeline_frame.clone()).is_ok() {
                                 let mut stats = stats.write();
                                 stats.uploaded_frames += 1;
                                 stats.upload_time_ms = start.elapsed().as_secs_f64() * 1000.0;
+                                stats.last_pts_secs = pipeline_frame.frame.timestamp.as_secs_f64();
                             }
                         }
                         Err(crossbeam_channel::RecvTimeoutError::Timeout) => {
@@ -342,26 +353,21 @@ mod tests {
     fn test_frame_scheduler() {
         let mut scheduler = FrameScheduler::new(3);
 
+        let format = mapmap_io::VideoFormat {
+            width: 100,
+            height: 100,
+            pixel_format: mapmap_io::PixelFormat::RGBA8,
+            frame_rate: 30.0,
+        };
+
         let frame1 = PipelineFrame {
-            frame: DecodedFrame {
-                data: vec![],
-                format: crate::decoder::PixelFormat::RGBA8,
-                width: 100,
-                height: 100,
-                pts: Duration::ZERO,
-            },
+            frame: DecodedFrame::new(vec![], format.clone(), Duration::ZERO),
             sequence: 1,
             priority: Priority::Low,
         };
 
         let frame2 = PipelineFrame {
-            frame: DecodedFrame {
-                data: vec![],
-                format: crate::decoder::PixelFormat::RGBA8,
-                width: 100,
-                height: 100,
-                pts: Duration::ZERO,
-            },
+            frame: DecodedFrame::new(vec![], format, Duration::ZERO),
             sequence: 2,
             priority: Priority::High,
         };
@@ -391,12 +397,11 @@ mod tests {
         let mut pipeline = FramePipeline::new();
         let decoder = TestPatternDecoder::new(640, 480, Duration::from_secs(1), 30.0);
         let mut player = VideoPlayer::new(decoder);
-        player.set_looping(true);
-        player.play();
+        let _ = player.set_loop_mode(crate::player::LoopMode::Loop);
+        let _ = player.play();
 
         // Start decode thread
-        let test_decoder = TestPatternDecoder::new(640, 480, Duration::from_secs(1), 30.0);
-        pipeline.start_decode_thread(test_decoder, player);
+        pipeline.start_decode_thread(player);
         pipeline.start_upload_thread();
 
         // Let it run for a bit

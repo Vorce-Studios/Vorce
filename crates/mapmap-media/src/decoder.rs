@@ -55,10 +55,9 @@ fn yuv420p_to_rgba(yuv_data: &[u8], width: u32, height: u32) -> Vec<u8> {
 
 /// Video decoder trait
 ///
-/// Note: VideoDecoder does not require Send because FFmpeg's scaler context
-/// is not thread-safe. Decoders should be used on a single thread or wrapped
-/// in appropriate synchronization primitives.
-pub trait VideoDecoder {
+/// Note: VideoDecoder requires Send to support multi-threaded pipeline.
+/// Implementations must ensure thread safety (e.g. by wrapping non-Send fields).
+pub trait VideoDecoder: Send {
     fn next_frame(&mut self) -> Result<VideoFrame>;
     fn seek(&mut self, timestamp: Duration) -> Result<()>;
     fn duration(&self) -> Duration;
@@ -91,6 +90,13 @@ mod ffmpeg_impl {
     use ffmpeg_next as ffmpeg;
     use ffmpeg_sys_next as ffi;
     use std::path::PathBuf;
+
+    // Wrapper to make scaler Send
+    struct SendScaler(ffmpeg::software::scaling::Context);
+
+    // SAFETY: SwsContext is a pointer. Moving it between threads is safe
+    // as long as we don't access it concurrently. FramePipeline ensures single-threaded access.
+    unsafe impl Send for SendScaler {}
 
     #[cfg(target_os = "windows")]
     unsafe extern "C" fn get_format_callback(
@@ -127,9 +133,9 @@ mod ffmpeg_impl {
     pub struct RealFFmpegDecoder {
         input_ctx: ffmpeg::format::context::Input,
         decoder: ffmpeg::codec::decoder::Video,
-        // NOTE: Scaler is not thread-safe (SwsContext is not Send)
-        // For multi-threading: Move scaler creation to next_frame() or use thread_local!
-        scaler: ffmpeg::software::scaling::Context,
+        // NOTE: Scaler is not thread-safe (SwsContext is not Send).
+        // Wrapped in SendScaler to allow moving to decode thread.
+        scaler: SendScaler,
         video_stream_idx: usize,
         time_base: ffmpeg::Rational,
         duration: Duration,
@@ -257,7 +263,7 @@ mod ffmpeg_impl {
             Ok(Self {
                 input_ctx,
                 decoder,
-                scaler,
+                scaler: SendScaler(scaler),
                 video_stream_idx,
                 time_base,
                 duration,
@@ -364,7 +370,7 @@ mod ffmpeg_impl {
 
                     // Scale to RGBA
                     let mut rgb_frame = ffmpeg::util::frame::Video::empty();
-                    self.scaler
+                    self.scaler.0
                         .run(frame_ptr, &mut rgb_frame)
                         .map_err(|e| MediaError::DecoderError(e.to_string()))?;
 
