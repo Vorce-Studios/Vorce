@@ -15,7 +15,9 @@ use mapmap_core::{
 };
 
 pub mod types;
+pub mod geometry;
 use self::types::*;
+use self::geometry::{calculate_drag_delta_time, is_bezier_hovered};
 use egui_node_editor::*;
 use std::borrow::Cow;
 
@@ -4810,50 +4812,12 @@ impl ModuleCanvas {
                 let ctrl1 = Pos2::new(cable_start.x + control_offset, cable_start.y);
                 let ctrl2 = Pos2::new(cable_end.x - control_offset, cable_end.y);
 
-                // Hit Detection (Approximate Bezier with segments)
+                // Hit Detection (Refactored to geometry util)
                 let mut is_hovered = false;
                 if let Some(pos) = pointer_pos {
-                    let steps = 20;
                     let threshold = 5.0 * self.zoom.max(1.0); // Adjust hit area with zoom
-
-                    // OPTIMIZATION: Broad-phase AABB Check
-                    let min_x =
-                        cable_start.x.min(cable_end.x).min(ctrl1.x).min(ctrl2.x) - threshold;
-                    let max_x =
-                        cable_start.x.max(cable_end.x).max(ctrl1.x).max(ctrl2.x) + threshold;
-                    let min_y =
-                        cable_start.y.min(cable_end.y).min(ctrl1.y).min(ctrl2.y) - threshold;
-                    let max_y =
-                        cable_start.y.max(cable_end.y).max(ctrl1.y).max(ctrl2.y) + threshold;
-
-                    let in_aabb =
-                        pos.x >= min_x && pos.x <= max_x && pos.y >= min_y && pos.y <= max_y;
-
-                    if in_aabb {
-                        // Iterative Bezier calculation (De Casteljau's algorithm logic unrolled/simplified)
-                        let mut prev_p = cable_start;
-                        for i in 1..=steps {
-                            let t = i as f32 / steps as f32;
-                            let l1 = cable_start.lerp(ctrl1, t);
-                            let l2 = ctrl1.lerp(ctrl2, t);
-                            let l3 = ctrl2.lerp(cable_end, t);
-                            let q1 = l1.lerp(l2, t);
-                            let q2 = l2.lerp(l3, t);
-                            let p = q1.lerp(q2, t);
-
-                            // Distance to segment
-                            let segment = p - prev_p;
-                            let len_sq = segment.length_sq();
-                            if len_sq > 0.0 {
-                                let t_proj = ((pos - prev_p).dot(segment) / len_sq).clamp(0.0, 1.0);
-                                let closest = prev_p + segment * t_proj;
-                                if pos.distance(closest) < threshold {
-                                    is_hovered = true;
-                                    break;
-                                }
-                            }
-                            prev_p = p;
-                        }
+                    if is_bezier_hovered(cable_start, cable_end, ctrl1, ctrl2, pos, threshold) {
+                        is_hovered = true;
                     }
                 }
 
@@ -6945,11 +6909,16 @@ impl ModuleCanvas {
         }
 
         if start_resp.dragged() {
-            let delta_s = (start_resp.drag_delta().x / rect.width()) * video_duration;
+            let delta_s = calculate_drag_delta_time(
+                start_resp.drag_delta().x,
+                rect.width(),
+                video_duration,
+            );
             *start_time = (*start_time + delta_s).clamp(0.0, effective_end - 0.1);
             handled = true;
         } else if end_resp.dragged() {
-            let delta_s = (end_resp.drag_delta().x / rect.width()) * video_duration;
+            let delta_s =
+                calculate_drag_delta_time(end_resp.drag_delta().x, rect.width(), video_duration);
             let mut new_end = (effective_end + delta_s).clamp(*start_time + 0.1, video_duration);
             // Snap to end (0.0) if close
             if (video_duration - new_end).abs() < 0.1 {

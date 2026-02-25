@@ -133,6 +133,136 @@ mod tests_evaluator {
     }
 
     #[test]
+    fn test_trigger_fixed_offset() {
+        // Test logic for Fixed trigger with offset
+        let mut output = Vec::new();
+        let data = crate::audio_reactive::AudioTriggerData::default();
+        let keys = std::collections::HashSet::new();
+        let mut rng = rand::rng();
+
+        // Interval 1000ms, Offset 500ms
+        // At 0ms (actual): Adjusted time = 0 - 500 = 0 (saturating sub). Phase = 0. Output = 1.0
+        // At 600ms (actual): Adjusted time = 600 - 500 = 100. Phase = 100. Output = 0.0 (if pulse < 100)
+
+        // Let's use compute_trigger_output directly to control "start_time" logic which uses Instant::now()
+        // Wait, compute_trigger_output takes `start_time` which is the creation time of evaluator.
+        // And it calculates elapsed = Instant::now() - start_time.
+        // So we can simulate elapsed time by providing a `start_time` in the past.
+
+        // Case 1: 50ms elapsed. Offset 0. Interval 1000. Pulse 100.
+        // elapsed 50. phase 50. 50 < 100 -> 1.0
+        let start_time = Instant::now() - Duration::from_millis(50);
+        output.clear();
+        ModuleEvaluator::compute_trigger_output(
+            &TriggerType::Fixed {
+                interval_ms: 1000,
+                offset_ms: 0,
+            },
+            &data,
+            start_time,
+            &keys,
+            &mut output,
+            &mut rng,
+        );
+        assert_eq!(output[0], 1.0);
+
+        // Case 2: 50ms elapsed. Offset 20ms. Interval 1000.
+        // elapsed 50. adjusted 30. phase 30. 30 < 100 -> 1.0
+        let start_time = Instant::now() - Duration::from_millis(50);
+        output.clear();
+        ModuleEvaluator::compute_trigger_output(
+            &TriggerType::Fixed {
+                interval_ms: 1000,
+                offset_ms: 20,
+            },
+            &data,
+            start_time,
+            &keys,
+            &mut output,
+            &mut rng,
+        );
+        assert_eq!(output[0], 1.0);
+
+        // Case 3: 50ms elapsed. Offset 45ms.
+        // elapsed 50. adjusted 5. phase 5. 5 < 100 -> 1.0
+        output.clear();
+        ModuleEvaluator::compute_trigger_output(
+            &TriggerType::Fixed {
+                interval_ms: 1000,
+                offset_ms: 45,
+            },
+            &data,
+            start_time,
+            &keys,
+            &mut output,
+            &mut rng,
+        );
+        assert_eq!(output[0], 1.0);
+
+        // Case 4: 50ms elapsed. Offset 60ms.
+        // elapsed 50. adjusted 0 (saturating sub). phase 0. 0 < 100 -> 1.0
+        // Wait, saturating sub means negative result becomes 0.
+        // If offset > elapsed, time is effectively 0.
+        // At 0, phase is 0. 0 < 100 -> 1.0.
+        // So Fixed trigger with large offset just delays the start of the cycle?
+        // Yes, it delays the effective time.
+        // So it starts at 1.0?
+        output.clear();
+        ModuleEvaluator::compute_trigger_output(
+            &TriggerType::Fixed {
+                interval_ms: 1000,
+                offset_ms: 60,
+            },
+            &data,
+            start_time,
+            &keys,
+            &mut output,
+            &mut rng,
+        );
+        assert_eq!(output[0], 1.0);
+    }
+
+    #[test]
+    fn test_trigger_random() {
+        let mut output = Vec::new();
+        let data = crate::audio_reactive::AudioTriggerData::default();
+        let keys = std::collections::HashSet::new();
+        let mut rng = rand::rng(); // We can use StdRng with seed for determinism if we want
+
+        // Probability 1.0 -> Always 1.0
+        output.clear();
+        ModuleEvaluator::compute_trigger_output(
+            &TriggerType::Random {
+                min_interval_ms: 100,
+                max_interval_ms: 200,
+                probability: 1.0,
+            },
+            &data,
+            Instant::now(),
+            &keys,
+            &mut output,
+            &mut rng,
+        );
+        assert_eq!(output[0], 1.0);
+
+        // Probability 0.0 -> Always 0.0
+        output.clear();
+        ModuleEvaluator::compute_trigger_output(
+            &TriggerType::Random {
+                min_interval_ms: 100,
+                max_interval_ms: 200,
+                probability: 0.0,
+            },
+            &data,
+            Instant::now(),
+            &keys,
+            &mut output,
+            &mut rng,
+        );
+        assert_eq!(output[0], 0.0);
+    }
+
+    #[test]
     fn test_trigger_audio_fft() {
         let mut evaluator = ModuleEvaluator::new();
 
