@@ -145,13 +145,9 @@ impl TransformPanel {
                             changed = true;
                         }
                     });
-                    changed |= styled_slider(
-                        ui,
-                        &mut self.current_transform.rotation,
-                        0.0..=360.0,
-                        0.0,
-                    )
-                    .changed();
+                    changed |=
+                        styled_slider(ui, &mut self.current_transform.rotation, 0.0..=360.0, 0.0)
+                            .changed();
 
                     ui.add_space(8.0);
 
@@ -184,20 +180,12 @@ impl TransformPanel {
                         )
                         .changed();
                     });
-                    changed |= styled_slider(
-                        ui,
-                        &mut self.current_transform.scale.0,
-                        0.1..=5.0,
-                        1.0,
-                    )
-                    .changed();
-                    changed |= styled_slider(
-                        ui,
-                        &mut self.current_transform.scale.1,
-                        0.1..=5.0,
-                        1.0,
-                    )
-                    .changed();
+                    changed |=
+                        styled_slider(ui, &mut self.current_transform.scale.0, 0.1..=5.0, 1.0)
+                            .changed();
+                    changed |=
+                        styled_slider(ui, &mut self.current_transform.scale.1, 0.1..=5.0, 1.0)
+                            .changed();
 
                     ui.add_space(8.0);
 
@@ -208,20 +196,12 @@ impl TransformPanel {
                             changed = true;
                         }
                     });
-                    changed |= styled_slider(
-                        ui,
-                        &mut self.current_transform.anchor.0,
-                        0.0..=1.0,
-                        0.5,
-                    )
-                    .changed();
-                    changed |= styled_slider(
-                        ui,
-                        &mut self.current_transform.anchor.1,
-                        0.0..=1.0,
-                        0.5,
-                    )
-                    .changed();
+                    changed |=
+                        styled_slider(ui, &mut self.current_transform.anchor.0, 0.0..=1.0, 0.5)
+                            .changed();
+                    changed |=
+                        styled_slider(ui, &mut self.current_transform.anchor.1, 0.0..=1.0, 0.5)
+                            .changed();
 
                     ui.add_space(16.0);
                     ui.separator();

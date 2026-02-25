@@ -365,8 +365,6 @@ pub fn icon_button(
     response
 }
 
-/// Simple Icon Button that uses an AppIcon and IconManager
-
 pub fn bypass_button(ui: &mut Ui, active: bool) -> Response {
     icon_button(ui, "B", Color32::TRANSPARENT, colors::WARN_COLOR, active)
         .on_hover_text("Bypass Layer")
