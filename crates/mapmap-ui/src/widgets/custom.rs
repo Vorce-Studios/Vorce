@@ -390,11 +390,8 @@ pub fn delete_button(ui: &mut Ui) -> bool {
 
 pub fn lock_button(ui: &mut Ui, active: bool) -> Response {
     let active_color = Color32::from_rgb(200, 50, 50);
-    icon_button(ui, "🔒", Color32::TRANSPARENT, active_color, active).on_hover_text(if active {
-        "Unlock"
-    } else {
-        "Lock"
-    })
+    icon_button(ui, "🔒", Color32::TRANSPARENT, active_color, active)
+        .on_hover_text(if active { "Unlock" } else { "Lock" })
 }
 
 pub fn move_up_button(ui: &mut Ui) -> Response {
