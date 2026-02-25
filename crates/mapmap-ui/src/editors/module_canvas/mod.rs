@@ -692,27 +692,26 @@ impl ModuleCanvas {
                                 let (out_part, out_idx, in_part, in_idx) = if is_output {
                                     (from_part, from_idx, target.part_id, target.socket_idx)
                                 } else {
-                                        (target.part_id, target.socket_idx, from_part, from_idx)
-                                    };
+                                    (target.part_id, target.socket_idx, from_part, from_idx)
+                                };
 
-                                    let exists = module.connections.iter().any(|c| {
-                                        c.from_part == out_part
-                                            && c.from_socket == out_idx
-                                            && c.to_part == in_part
-                                            && c.to_socket == in_idx
-                                    });
+                                let exists = module.connections.iter().any(|c| {
+                                    c.from_part == out_part
+                                        && c.from_socket == out_idx
+                                        && c.to_part == in_part
+                                        && c.to_socket == in_idx
+                                });
 
-                                    if !exists {
-                                        module.connections.push(
-                                            mapmap_core::module::ModuleConnection {
-                                                from_part: out_part,
-                                                from_socket: out_idx,
-                                                to_part: in_part,
-                                                to_socket: in_idx,
-                                            },
-                                        );
-                                        ui.ctx().request_repaint();
-                                    }
+                                if !exists {
+                                    module.connections.push(
+                                        mapmap_core::module::ModuleConnection {
+                                            from_part: out_part,
+                                            from_socket: out_idx,
+                                            to_part: in_part,
+                                            to_socket: in_idx,
+                                        },
+                                    );
+                                    ui.ctx().request_repaint();
                                 }
                             }
                         }
