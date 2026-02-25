@@ -20,8 +20,8 @@ This document tracks the current state of MapFlow's implementation, identifying 
 
 ### 1. module_canvas Decomposition
 - **Goal:** Split into logical sub-modules.
-- **Status:** Directory structure prepared. Logic separation identified.
-- **Modules:** `draw.rs`, `interaction.rs`, `integration/`, `state.rs`.
+- **Status:** Directory structure prepared. Logic separation identified. `types.rs` extracted.
+- **Modules:** `types.rs`, `draw.rs`, `interaction.rs`, `integration/`, `state.rs`.
 
 ### 2. core/module.rs Splitting
 - **Goal:** Separate data definitions from graph logic.

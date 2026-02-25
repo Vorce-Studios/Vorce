@@ -1,7 +1,7 @@
 # MapFlow – Vollständige Roadmap und Feature-Status
 
 > **Version:** 2.1
-> **Stand:** 2026-02-22 10:00
+> **Stand:** 2026-02-25 15:00
 > **Zielgruppe:** @Projektleitung und Entwickler-Team
 > **Projekt-Version:** 0.2.1
 
@@ -960,6 +960,7 @@ graph TD
 ## Arbeitspakete für @jules
 
 1. **Refactorings (Priorität: Hoch)**
+    * `module_canvas` Refactoring: Aufteilung in Submodule (`types.rs`, `draw.rs`, `interaction.rs`).
     * `MapFlowModule` in `mapmap-core` aufräumen (nicht verwendete Felder entfernen).
     * `MediaPlayer` State-Machine stabilisieren.
 
