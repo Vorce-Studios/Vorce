@@ -14,10 +14,10 @@ use mapmap_core::{
     },
 };
 
-pub mod types;
 pub mod geometry;
-use self::types::*;
+pub mod types;
 use self::geometry::{calculate_drag_delta_time, is_bezier_hovered};
+use self::types::*;
 use egui_node_editor::*;
 use std::borrow::Cow;
 
@@ -6909,11 +6909,8 @@ impl ModuleCanvas {
         }
 
         if start_resp.dragged() {
-            let delta_s = calculate_drag_delta_time(
-                start_resp.drag_delta().x,
-                rect.width(),
-                video_duration,
-            );
+            let delta_s =
+                calculate_drag_delta_time(start_resp.drag_delta().x, rect.width(), video_duration);
             *start_time = (*start_time + delta_s).clamp(0.0, effective_end - 0.1);
             handled = true;
         } else if end_resp.dragged() {
