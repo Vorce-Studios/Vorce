@@ -1432,5 +1432,4 @@ mod additional_tests {
         // Move non-existent layer
         assert!(!manager.move_layer_to(999, 0));
     }
-    }
 }
