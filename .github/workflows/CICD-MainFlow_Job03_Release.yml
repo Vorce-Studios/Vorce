@@ -92,10 +92,17 @@ jobs:
           echo "FFMPEG_INCLUDE_DIR=$IncludePath" >> $env:GITHUB_ENV
           echo "FFMPEG_LIB_DIR=$LibPath" >> $env:GITHUB_ENV
           
-          # CRITICAL: Do NOT override BINDGEN_EXTRA_CLANG_ARGS with just -I, 
-          # as it can confuse bindgen about system headers.
-          # The msvc-dev-cmd action handles the base paths.
-          echo "BINDGEN_EXTRA_CLANG_ARGS=-isystem $IncludePath" >> $env:GITHUB_ENV
+          # CRITICAL: Bindgen (libclang) needs to know where system headers are on Windows.
+          # We append the INCLUDE env var (set by msvc-dev-cmd) to BINDGEN_EXTRA_CLANG_ARGS.
+          $ClangArgs = "-isystem $IncludePath"
+          if ($env:INCLUDE) {
+            foreach ($inc in ($env:INCLUDE -split ';')) {
+              if ($inc.Trim()) {
+                $ClangArgs += " -isystem `"$inc`""
+              }
+            }
+          }
+          echo "BINDGEN_EXTRA_CLANG_ARGS=$ClangArgs" >> $env:GITHUB_ENV
           
           echo "$BinPath" >> $env:GITHUB_PATH
 

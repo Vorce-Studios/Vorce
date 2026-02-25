@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- 2026-02-25: fix(ci): Resolve 'errno.h' missing in Windows release build by activating MSVC environment (ClawMaster)
+- 2026-02-25: perf(core): Optimize module evaluation graph traversal with cached part indexing (Bolt)
+- 2026-02-25: test(core): Substantially expand unit test coverage for layers, sockets, and effects (Guardian)
+- 2026-02-25: feat(ui): Polish effect chain panel with improved layout and safety buttons (Lina)
+- 2026-02-25: feat(ux): Implement 'Hold-to-Confirm' for critical delete actions and safe navigation (Mary)
+- 2026-02-25: fix(ui): Enable robust module renaming and duplication in sidebar
+- 2026-02-25: fix(security): Enforce file size limits in project loader to prevent DoS (Sentinel)
 - 2026-02-20: fix(ci): Restore CodeQL security scan workflow (CI-02) to resolve GitHub Security warnings
 - 2026-02-20: feat(render): Add 3D LUT effect support with GPU-accelerated color grading (#770)
 - 2026-02-20: fix(security): Enforce global path traversal checks in ControlManager (#758)
