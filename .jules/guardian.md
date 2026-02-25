@@ -1,5 +1,10 @@
 # Guardian's Journal 🧪
 
+## 2026-02-08 - MIDI Learn Timeout State
+
+**Erkenntnis:** State machines like `MidiLearnState` rely heavily on timeouts for user experience, but logic checks like `check_timeout` are often assumed correct without verifying the state transition actually happens.
+**Aktion:** Explicitly test state machine transitions involving time using `std::thread::sleep` with short durations in unit tests to guarantee UI states (like "Timed Out") are reachable.
+
 ## 2026-02-08 - Audio Data Sanitization
 
 **Erkenntnis:** Rohe Audio-Buffer enthalten oft NaNs oder Infinities von Treibern oder leeren Streams. Das Propagieren dieser Werte in FFT- oder RMS-Berechnungen vergiftet die gesamte Analyse-Pipeline, was zu NaNs in Uniform Buffern führt, die GPU-Treiber zum Absturz bringen oder schwarze Bildschirme verursachen können.
