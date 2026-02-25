@@ -10,6 +10,7 @@
 //! - [`ModuleConnection`]: A wire connecting two sockets.
 //! - [`ModuleManager`]: Manages multiple modules (scenes).
 
+use rand::RngExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -449,7 +450,6 @@ impl TriggerConfig {
             }
             TriggerMappingMode::RandomInRange => {
                 if value > 0.0 {
-                    use rand::Rng;
                     let mut rng = rand::rng();
                     rng.random_range(self.min_value..=self.max_value)
                 } else {

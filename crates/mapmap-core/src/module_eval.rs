@@ -10,6 +10,7 @@ use crate::module::{
     ModulePartId, ModulePartType, ModulizerType, OutputType, SharedMediaState, SourceType,
     TriggerType,
 };
+use rand::RngExt;
 use std::collections::HashMap;
 use std::time::Instant;
 

@@ -2,7 +2,7 @@
 
 use crate::audio_reactive::AudioTriggerData;
 use crate::module::{ModuleManager, ModulePartType, TriggerType};
-use rand::Rng;
+use rand::RngExt;
 use std::collections::{HashMap, HashSet};
 
 /// A set of active trigger outputs. Each entry is (part_id, socket_idx).
