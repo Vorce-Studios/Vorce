@@ -318,6 +318,8 @@ pub enum EffectChainAction {
     SetParameter(u64, String, f32),
     /// Set LUT path
     SetLUTPath(u64, String),
+    /// Reset effect parameters to default
+    ResetEffect(u64),
     /// Load a preset by name
     LoadPreset(String),
     /// Save current chain as preset
@@ -575,6 +577,7 @@ impl EffectChainPanel {
 
                         let (
                             remove,
+                            reset,
                             move_up,
                             move_down,
                             dragged,
@@ -651,6 +654,13 @@ impl EffectChainPanel {
                             effect.error = err;
                         }
 
+                        if reset {
+                            for (k, v) in effect_type.default_params() {
+                                effect.set_param(&k, v);
+                            }
+                            self.actions.push(EffectChainAction::ResetEffect(effect_id));
+                        }
+
                         if remove {
                             effect_to_remove = Some(effect_id);
                         }
@@ -723,6 +733,7 @@ impl EffectChainPanel {
         bool,
         bool,
         bool,
+        bool,
         egui::Rect,
         bool,
         bool,
@@ -732,6 +743,7 @@ impl EffectChainPanel {
         Option<Option<String>>,
     ) {
         let mut remove = false;
+        let mut reset = false;
         let mut move_up = false;
         let mut move_down = false;
         let mut dragged = false;
@@ -775,7 +787,8 @@ impl EffectChainPanel {
                         egui::Button::new("⋮⋮")
                             .frame(false)
                             .sense(egui::Sense::drag()),
-                    );
+                    ).on_hover_text("Drag to reorder. Hold Alt+Up/Down to move.");
+
                     if handle_resp.drag_started() {
                         dragged = true;
                     }
@@ -783,10 +796,18 @@ impl EffectChainPanel {
                         ui.ctx().set_cursor_icon(egui::CursorIcon::Grabbing);
                     } else if handle_resp.hovered() {
                         ui.ctx().set_cursor_icon(egui::CursorIcon::Grab);
+
+                        // Keyboard reordering
+                        if ui.input(|i| i.modifiers.alt && i.key_pressed(egui::Key::ArrowUp)) {
+                            move_up = true;
+                        }
+                        if ui.input(|i| i.modifiers.alt && i.key_pressed(egui::Key::ArrowDown)) {
+                            move_down = true;
+                        }
                     }
 
                     // Enable toggle
-                    ui.checkbox(&mut enabled, "");
+                    ui.checkbox(&mut enabled, "").on_hover_text("Enable/Disable Effect");
 
                     // Effect name with icon
                     let header_text = effect_type.display_name(locale);
@@ -808,6 +829,11 @@ impl EffectChainPanel {
                         // Delete button (Hold to Confirm)
                         if delete_button(ui) {
                             remove = true;
+                        }
+
+                        // Reset button (Hold to Confirm)
+                        if crate::widgets::custom::hold_to_action_button(ui, "↺", colors::WARN_COLOR) {
+                            reset = true;
                         }
 
                         // Move buttons
@@ -889,6 +915,7 @@ impl EffectChainPanel {
 
         (
             remove,
+            reset,
             move_up,
             move_down,
             dragged,
@@ -1306,7 +1333,15 @@ impl EffectChainPanel {
             ui.label(format!("{}:", label));
             let old_value = *parameters.get(param_name).unwrap_or(&default_value);
             let mut value = old_value;
-            styled_slider(ui, &mut value, min..=max, default_value);
+            let response = styled_slider(ui, &mut value, min..=max, default_value);
+
+            response.context_menu(|ui| {
+                if ui.button("Reset to Default").clicked() {
+                    value = default_value;
+                    ui.close();
+                }
+            });
+
             if (value - old_value).abs() > 0.0001 {
                 param_changes.push((param_name.to_string(), value));
             }
@@ -1504,5 +1539,35 @@ mod tests {
         let actions = panel.take_actions();
         assert_eq!(actions.len(), 1);
         assert!(panel.actions.is_empty());
+    }
+
+    #[test]
+    fn test_effect_reset_logic() {
+        let mut chain = UIEffectChain::new();
+        let id = chain.add_effect(EffectType::Blur);
+
+        // Modify
+        if let Some(effect) = chain.get_effect_mut(id) {
+            effect.set_param("radius", 20.0);
+        }
+
+        // Verify modified
+        assert_eq!(
+            chain.get_effect_mut(id).unwrap().get_param("radius", 0.0),
+            20.0
+        );
+
+        // Reset Logic (simulate what happens in UI)
+        if let Some(effect) = chain.get_effect_mut(id) {
+            for (k, v) in effect.effect_type.default_params() {
+                effect.set_param(&k, v);
+            }
+        }
+
+        // Verify reset
+        assert_eq!(
+            chain.get_effect_mut(id).unwrap().get_param("radius", 0.0),
+            5.0
+        );
     }
 }

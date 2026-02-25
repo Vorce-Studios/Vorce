@@ -34,3 +34,10 @@
 - **Implementation:** Refactored `delete_button` widget to use `hold_to_action_button`.
 - **Context Menus:** Replaced standard buttons with `hold_to_action_button` in `ModuleCanvas` menus.
 - **Visuals:** Used standard trash icon "🗑" and `colors::ERROR_COLOR` (Red) to signal danger.
+
+## 2026-02-18 – Safe Reset & Keyboard Productivity
+**Learning:** Users need a way to experiment freely with effects, which requires a quick "Reset" to a known good state (defaults). Immediate reset buttons are too dangerous during live performance.
+**Action:** Implemented a standard "Safe Reset" pattern:
+- **Effect Level:** "Hold-to-Confirm" button (0.6s) in the effect header.
+- **Parameter Level:** Right-click context menu "Reset to Default" for individual controls.
+- **Power User:** Added keyboard shortcuts (Alt+Arrow Up/Down) to drag handles for quick reordering without mouse drag, improving accessibility and speed.
