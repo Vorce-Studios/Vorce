@@ -8,46 +8,57 @@ This document tracks the current state of MapFlow's implementation, identifying 
 
 | Issue | Status | Impact | File/Location |
 | :--- | :--- | :--- | :--- |
-| **GPU Upload Thread** | 🔴 Placeholder | UI micro-stutters during high-res playback. Uploads currently block the main logic thread. | `mapmap-media/src/pipeline.rs` |
-| **wgpu Lifetime Hack** | 🔴 Unsafe Hack | Uses `unsafe transmute` to force `'static` lifetime on `RenderPass`. High risk of UB if not fixed. | `crates/mapmap/src/app/loops/render.rs` |
-| **UI App Pointer Hack** | 🔴 Unsafe Hack | Uses `*mut App` raw pointer to bypass borrow checker during egui UI layout. | `crates/mapmap/src/app/loops/render.rs` |
-| **Video Sync Pipeline** | 🟡 In Progress | Frames are decoded but not always synced with node previews, leading to magenta/black outputs. | `crates/mapmap/src/app/loops/render.rs` |
+| **"God Object" module_canvas** | 🔴 Refactor Needed | `module_canvas/mod.rs` has grown to **~7,000 lines**. It contains UI drawing, interaction logic, NDI discovery, Hue integration, and state management. | `crates/mapmap-ui/src/editors/module_canvas/mod.rs` |
+| **Monolithic core/module.rs** | 🔴 Refactor Needed | `module.rs` contains over **3,500 lines** of data structures and graph logic. It violates the Single Responsibility Principle. | `crates/mapmap-core/src/module.rs` |
+| **GPU Upload Blockage** | 🔴 Critical | The `FramePipeline` in `mapmap-media` is not yet integrated into the main `update_media_players` loop. Currently, texture uploads happen on the main thread, causing micro-stutters. | `crates/mapmap/src/orchestration/media.rs` |
+| **wgpu Lifetime Hack** | 🔴 Unsafe Hack | Uses `unsafe transmute` to force `'static` lifetime on `RenderPass`. High risk of UB. | `crates/mapmap/src/app/loops/render.rs` |
+| **UI App Pointer Hack** | 🔴 Unsafe Hack | Uses `*mut App` raw pointer to bypass the Rust borrow checker during egui UI layout. | `crates/mapmap/src/app/loops/render.rs` |
 
 ---
 
-## 🎨 Feature Gaps: Code vs. UI
+## 🏗️ Refactoring Strategy (Architecture Audit 2026-02-25)
 
-Features that are partially or fully implemented in the backend but lack a UI representation.
+### 1. module_canvas Decomposition
+- **Goal:** Split into logical sub-modules.
+- **Modules:** `draw.rs`, `interaction.rs`, `integration/`, `state.rs`.
 
-### 🎥 Media & Rendering
-- **HAP Video:** `hap_decoder.rs` exists but is not selectable in the Node Editor.
-- **NDI Support:** NDI Send implementation is a placeholder (`ndi/mod.rs`); no UI to configure NDI outputs.
-- **Shader Graph Nodes:** Math, Oscillator, and logic nodes exist in `shader_graph.rs` but lack visual representation/wiring in the UI.
-- **LUT Support:** Core supports LUT loading, but there is no "LUT Effect" node in the effect chain UI.
-- **MPV Decoder:** Exists as a shell in `mapmap-media` but only generates gray placeholder frames.
+### 2. core/module.rs Splitting
+- **Goal:** Separate data definitions from graph logic.
+- **Modules:** `types/`, `config.rs`, `manager.rs`.
 
-### 🌐 IO & Control
-- **SRT Streaming:** Connection and frame sending logic are unimplemented stubs (`srt.rs`).
-- **OSC Triggers:** UI lacks an OSC input field for Cue triggers despite core support.
-- **MIDI Feedback:** Backend supports sending MIDI back to devices, but UI only maps inputs.
-- **Philips Hue:** Entertainment areas fetching is coded but missing from the "Area Select" dropdown.
-- **Ableton Link:** Currently just a placeholder wrapper (`link.rs`).
+---
+
+## 🎨 Feature Gaps: Code vs. UI (Updated)
+
+- **Bevy Node Controls:** UI labels indicate controls for Bevy 3D/Particles nodes are "not yet implemented".
+- **HAP Video Alpha:** Alpha support is hardcoded to `None` in `hap_decoder.rs`.
+- **NDI Support:** Send implementation is a placeholder; no UI configuration.
+- **Shader Graph Nodes:** Core supports logic nodes, but UI lacks visual representation/wiring.
+- **LUT Support:** No "LUT Effect" node in the effect chain UI despite core support.
+- **MPV Decoder:** Shell exists, but actual API integration is missing (generates gray frames).
+- **SRT Streaming:** Missing `libsrt` integration; connection/sending logic are just stubs.
+- **OSC Triggers:** UI lacks OSC input field for Cue triggers.
+- **Philips Hue:** Pairing logic and Area Selection fetching are missing.
 
 ---
 
 ## 🛠️ Significant Technical Debt (TODOs)
 
 ### 🏗️ Architecture & Core Logic
-- **Undo/Redo:** Only supports node positions. Needs to cover parameters, connections, and layer mutations.
-- **Bezier Interpolation:** fallback to linear/grid. Smooth Bezier easing is missing in `animation.rs` and `module.rs`.
-- **Mesh Import:** `module.rs` TODO for loading meshes from OBJ/SVG files.
+- **Undo/Redo Coverage:** Currently only node positions. Needs to cover parameters, connections, and layer mutations.
+- **Trigger Smoothing:** `TriggerMappingMode::Smoothed` (attack/release) is a TODO in `module.rs`.
+- **Individual Layer Speed:** Returns master speed; individual control not yet implemented in `layer.rs`.
+- **Mesh Import:** Missing core logic for loading meshes from file (OBJ/SVG) in `module.rs`.
 - **Shader Codegen:** Missing scale, rotation, and translation parameter injection.
-- **Graph Validation:** `shader_graph.rs` lacks cycle detection and type-safety checks for connections.
+- **Graph Validation:** `shader_graph.rs` lacks cycle detection and type-safety checks.
+- **MCP Shared State:** MCP server cannot yet read/access the shared project state.
+- **Spout Sync:** Spout output is missing from the main synchronization loop in `orchestration/outputs.rs`.
 
 ### 🧼 Code Cleanup & Quality
-- **Dead Code:** Significant amounts of legacy Qt-migration logic marked with `#[allow(dead_code)]` in `window_manager.rs` and `mesh_editor.rs`.
-- **Error Handling:** Heavy use of `panic!` in production-adjacent code (e.g., `mcp/server.rs`, `converter.rs`) instead of proper `Result` handling.
-- **Placeholders:** Multiple "Phase 1" placeholders in `pipeline.rs`, `lib.rs` (FFI), and `web/routes.rs`.
+- **Panic Policy:** Replace `panic!` with `Result` in `mapmap-mcp/server.rs`, `web/handlers.rs`, and MIDI mapping.
+- **Safety Documentation:** Every `unsafe` block must have a `// SAFETY:` comment (especially in FFmpeg/NDI/Spout).
+- **Dead Code:** Significant amounts of legacy Qt-migration logic in `window_manager.rs` and `mesh_editor.rs`.
+- **Media Thumbnails:** Background thumbnail generation and duration extraction missing in `media_browser.rs`.
 
 ---
 
@@ -55,12 +66,11 @@ Features that are partially or fully implemented in the backend but lack a UI re
 
 | Bug | Status | Root Cause |
 | :--- | :--- | :--- |
-| **Output Magenta Patterns** | 🟡 Partial Fix | `PaintTextureCache` missing implementation for video/source loading. |
-| **Media Thumbnails** | 🔴 Missing | Background thumbnail generation not implemented in `media_browser.rs`. |
-| **Media Duration** | 🔴 Missing | Duration extraction is a TODO in `media_browser.rs`. |
-| **Theme Switching** | 🔴 Missing | `settings.rs` lacks implementation to apply theme changes globally. |
-| **Node Renaming** | 🔴 Missing | Rename/Duplicate actions in `module_sidebar.rs` are stubs. |
+| **Output Magenta Patterns** | 🟡 Partial Fix | `PaintTextureCache` falls back to test pattern because real loading is missing. |
+| **NDI Buffer Padding** | 🟡 In Progress | Hardcoded 256-byte alignment in NDI readback may fail on some hardware. |
+| **Theme Switching** | 🔴 Missing | Global theme application requires restart; `settings.rs` implementation missing. |
+| **Node Renaming** | 🔴 Missing | Rename/Duplicate actions in `module_sidebar.rs` are currently no-ops. |
 
 ---
 
-*Last Updated: 2026-02-21*
+*Last Updated: 2026-02-25 (by ClawMaster PM 🦀)*
