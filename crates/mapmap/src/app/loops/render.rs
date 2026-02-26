@@ -129,127 +129,8 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
             egui_render_data.as_ref(),
         )?;
 
-        // --- NDI Readback (if enabled) ---
-        #[cfg(feature = "ndi")]
-        {
-            // Find if this output has an NDI sender
-            let part_id = app.render_ops.iter().find_map(|(_, op)| {
-                if let mapmap_core::module::OutputType::Projector { id, .. } = &op.output_type {
-                    if *id == output_id {
-                        return Some(op.output_part_id);
-                    }
-                }
-                None
-            });
-
-            if let Some(pid) = part_id {
-                if let Some(sender) = app.ndi_senders.get_mut(&pid) {
-                    let mut buffer_ready = false;
-                    if let Some((buffer, mapping_requested)) = app.ndi_readbacks.get_mut(&output_id)
-                    {
-                        if mapping_requested.load(Ordering::SeqCst) {
-                            let _ = app.backend.device.poll(wgpu::PollType::Wait {
-                                submission_index: None,
-                                timeout: Some(std::time::Duration::from_millis(0)),
-                            });
-
-                            if !buffer.slice(..).get_mapped_range().is_empty() {
-                                {
-                                    let view = buffer.slice(..).get_mapped_range();
-                                    let frame_data = view.to_vec();
-                                    let width = window_context.surface_config.width;
-                                    let height = window_context.surface_config.height;
-
-                                    let video_frame = mapmap_io::format::VideoFrame {
-                                        data: mapmap_io::format::FrameData::Cpu(frame_data),
-                                        format: mapmap_io::format::VideoFormat {
-                                            width,
-                                            height,
-                                            pixel_format: mapmap_io::format::PixelFormat::BGRA8,
-                                            frame_rate: 60.0,
-                                        },
-                                        timestamp: std::time::Duration::from_secs(0),
-                                        metadata: Default::default(),
-                                    };
-
-                                    if let Err(e) = sender.send_frame(&video_frame) {
-                                        tracing::warn!("Failed to send NDI frame: {}", e);
-                                    }
-                                }
-                                buffer.unmap();
-                                mapping_requested.store(false, Ordering::SeqCst);
-                                buffer_ready = true;
-                            }
-                        } else {
-                            buffer_ready = true;
-                        }
-                    } else {
-                        let width = window_context.surface_config.width;
-                        let height = window_context.surface_config.height;
-                        let bytes_per_pixel = 4;
-                        let unpadded_bytes_per_row = width * bytes_per_pixel;
-                        let padding = (256 - unpadded_bytes_per_row % 256) % 256;
-                        let bytes_per_row = unpadded_bytes_per_row + padding;
-                        let size = (bytes_per_row * height) as u64;
-
-                        let buffer = app.backend.device.create_buffer(&wgpu::BufferDescriptor {
-                            label: Some("NDI Readback Buffer"),
-                            size,
-                            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
-                            mapped_at_creation: false,
-                        });
-                        app.ndi_readbacks.insert(
-                            output_id,
-                            (buffer, std::sync::Arc::new(AtomicBool::new(false))),
-                        );
-                        buffer_ready = true;
-                    }
-
-                    if buffer_ready {
-                        if let Some((buffer, mapping_requested)) =
-                            app.ndi_readbacks.get_mut(&output_id)
-                        {
-                            let width = window_context.surface_config.width;
-                            let height = window_context.surface_config.height;
-                            let bytes_per_pixel = 4;
-                            let unpadded_bytes_per_row = width * bytes_per_pixel;
-                            let padding = (256 - unpadded_bytes_per_row % 256) % 256;
-                            let bytes_per_row = unpadded_bytes_per_row + padding;
-
-                            encoder.copy_texture_to_buffer(
-                                wgpu::TexelCopyTextureInfo {
-                                    texture: &surface_texture.texture,
-                                    mip_level: 0,
-                                    origin: wgpu::Origin3d::ZERO,
-                                    aspect: wgpu::TextureAspect::All,
-                                },
-                                wgpu::TexelCopyBufferInfo {
-                                    buffer,
-                                    layout: wgpu::TexelCopyBufferLayout {
-                                        offset: 0,
-                                        bytes_per_row: Some(bytes_per_row),
-                                        rows_per_image: Some(height),
-                                    },
-                                },
-                                wgpu::Extent3d {
-                                    width,
-                                    height,
-                                    depth_or_array_layers: 1,
-                                },
-                            );
-
-                            let slice = buffer.slice(..);
-                            let requested_clone = mapping_requested.clone();
-                            slice.map_async(wgpu::MapMode::Read, move |res| {
-                                if res.is_ok() {
-                                    requested_clone.store(true, Ordering::SeqCst);
-                                }
-                            });
-                        }
-                    }
-                }
-            }
-        }
+    // NDI Readback has been moved to separate render_ndi function
+    // to support dedicated NDI outputs without windows.
 
         app.backend.queue.submit(std::iter::once(encoder.finish()));
         window_context.window.pre_present_notify();
@@ -258,6 +139,14 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
         if output_id != 0 {
             window_context.window.request_redraw();
         }
+
+    // Process NDI Outputs (only once per main loop, triggered by output_id 0)
+    #[cfg(feature = "ndi")]
+    if output_id == 0 {
+        if let Err(e) = render_ndi(app) {
+            tracing::error!("NDI Render Error: {}", e);
+        }
+    }
     }
 
     Ok(())
@@ -278,6 +167,192 @@ struct RenderContext<'a> {
     _dummy_view: &'a Option<std::sync::Arc<wgpu::TextureView>>,
     mesh_buffer_cache: &'a mut mapmap_render::MeshBufferCache,
     egui_renderer: &'a mut egui_wgpu::Renderer,
+}
+
+#[cfg(feature = "ndi")]
+fn render_ndi(app: &mut App) -> Result<()> {
+    if app.ndi_senders.is_empty() {
+        return Ok(());
+    }
+
+    // Collect sender IDs to avoid borrow checker issues
+    let sender_ids: Vec<mapmap_core::module::ModulePartId> =
+        app.ndi_senders.keys().cloned().collect();
+
+    for part_id in sender_ids {
+        // Find format info from render ops (if possible, or default to HD)
+        let (width, height) = (1920, 1080); // TODO: Get from output config or render op
+
+        // Use texture pool for render target
+        let tex_name = format!("ndi_out_{}", part_id);
+        app.texture_pool.ensure_texture(
+            &tex_name,
+            width,
+            height,
+            wgpu::TextureFormat::Bgra8UnormSrgb,
+            wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
+        );
+
+        let view = app.texture_pool.get_view(&tex_name);
+        let mut encoder = app
+            .backend
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some(&format!("NDI Encoder {}", part_id)),
+            });
+
+        // Render content
+        render_content(
+            RenderContext {
+                device: &app.backend.device,
+                queue: &app.backend.queue,
+                render_ops: &app.render_ops,
+                output_manager: &app.state.output_manager,
+                edge_blend_renderer: &app.edge_blend_renderer,
+                color_calibration_renderer: &app.color_calibration_renderer,
+                mesh_renderer: &mut app.mesh_renderer,
+                texture_pool: &app.texture_pool,
+                _dummy_view: &app.dummy_view,
+                mesh_buffer_cache: &mut app.mesh_buffer_cache,
+                egui_renderer: &mut app.egui_renderer,
+            },
+            part_id, // Use part_id as output_id
+            &mut encoder,
+            &view,
+            None, // No UI on NDI output
+        )?;
+
+        // Readback logic
+        if let Some(sender) = app.ndi_senders.get_mut(&part_id) {
+            let mut buffer_ready = false;
+
+            // Reuse existing buffer or create new one
+            if let Some((buffer, mapping_completed, pending)) = app.ndi_readbacks.get_mut(&part_id) {
+                if *pending {
+                    // Poll device to trigger callback
+                    let _ = app.backend.device.poll(wgpu::PollType::Wait {
+                        submission_index: None,
+                        timeout: Some(std::time::Duration::from_millis(0)),
+                    });
+
+                    if mapping_completed.load(Ordering::SeqCst) {
+                        // Mapping complete!
+                        {
+                            let view = buffer.slice(..).get_mapped_range();
+                            // Handle padding removal
+                            let bytes_per_pixel = 4;
+                            let unpadded_bytes_per_row = (width * bytes_per_pixel) as usize;
+                            let padding = (256 - unpadded_bytes_per_row % 256) % 256;
+                            let bytes_per_row = unpadded_bytes_per_row + padding;
+
+                            let mut frame_data =
+                                Vec::with_capacity((width * height * bytes_per_pixel) as usize);
+
+                            for i in 0..height {
+                                let start = (i as usize * bytes_per_row);
+                                let end = start + unpadded_bytes_per_row;
+                                frame_data.extend_from_slice(&view[start..end]);
+                            }
+
+                            let video_frame = mapmap_io::format::VideoFrame {
+                                data: mapmap_io::format::FrameData::Cpu(frame_data),
+                                format: mapmap_io::format::VideoFormat {
+                                    width,
+                                    height,
+                                    pixel_format: mapmap_io::format::PixelFormat::BGRA8,
+                                    frame_rate: 60.0,
+                                },
+                                timestamp: std::time::Duration::from_secs(0),
+                                metadata: Default::default(),
+                            };
+
+                            if let Err(e) = sender.send_frame(&video_frame) {
+                                tracing::warn!("Failed to send NDI frame: {}", e);
+                            }
+                        }
+                        buffer.unmap();
+                        mapping_completed.store(false, Ordering::SeqCst);
+                        *pending = false;
+                        buffer_ready = true;
+                    }
+                } else {
+                    // Not pending, ready to issue new request
+                    buffer_ready = true;
+                }
+            } else {
+                // Create buffer
+                let bytes_per_pixel = 4;
+                let unpadded_bytes_per_row = width * bytes_per_pixel;
+                let padding = (256 - unpadded_bytes_per_row % 256) % 256;
+                let bytes_per_row = unpadded_bytes_per_row + padding;
+                let size = (bytes_per_row * height) as u64;
+
+                let buffer = app.backend.device.create_buffer(&wgpu::BufferDescriptor {
+                    label: Some(&format!("NDI Readback {}", part_id)),
+                    size,
+                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+                    mapped_at_creation: false,
+                });
+                app.ndi_readbacks.insert(
+                    part_id,
+                    (
+                        buffer,
+                        std::sync::Arc::new(AtomicBool::new(false)),
+                        false, // pending flag
+                    ),
+                );
+                buffer_ready = true;
+            }
+
+            if buffer_ready {
+                if let Some((buffer, mapping_completed, pending)) =
+                    app.ndi_readbacks.get_mut(&part_id)
+                {
+                    let bytes_per_pixel = 4;
+                    let unpadded_bytes_per_row = width * bytes_per_pixel;
+                    let padding = (256 - unpadded_bytes_per_row % 256) % 256;
+                    let bytes_per_row = unpadded_bytes_per_row + padding;
+
+                    encoder.copy_texture_to_buffer(
+                        wgpu::TexelCopyTextureInfo {
+                            texture: &view,
+                            mip_level: 0,
+                            origin: wgpu::Origin3d::ZERO,
+                            aspect: wgpu::TextureAspect::All,
+                        },
+                        wgpu::TexelCopyBufferInfo {
+                            buffer,
+                            layout: wgpu::TexelCopyBufferLayout {
+                                offset: 0,
+                                bytes_per_row: Some(bytes_per_row),
+                                rows_per_image: Some(height),
+                            },
+                        },
+                        wgpu::Extent3d {
+                            width,
+                            height,
+                            depth_or_array_layers: 1,
+                        },
+                    );
+
+                    let slice = buffer.slice(..);
+                    let requested_clone = mapping_completed.clone();
+                    slice.map_async(wgpu::MapMode::Read, move |res| {
+                        if res.is_ok() {
+                            requested_clone.store(true, Ordering::SeqCst);
+                        }
+                    });
+                    *pending = true;
+                }
+            }
+        }
+
+        app.backend
+            .queue
+            .submit(std::iter::once(encoder.finish()));
+    }
+
+    Ok(())
 }
 
 fn render_content(
