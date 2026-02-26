@@ -129,8 +129,8 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
             egui_render_data.as_ref(),
         )?;
 
-    // NDI Readback has been moved to separate render_ndi function
-    // to support dedicated NDI outputs without windows.
+        // NDI Readback has been moved to separate render_ndi function
+        // to support dedicated NDI outputs without windows.
 
         app.backend.queue.submit(std::iter::once(encoder.finish()));
         window_context.window.pre_present_notify();
@@ -140,13 +140,13 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
             window_context.window.request_redraw();
         }
 
-    // Process NDI Outputs (only once per main loop, triggered by output_id 0)
-    #[cfg(feature = "ndi")]
-    if output_id == 0 {
-        if let Err(e) = render_ndi(app) {
-            tracing::error!("NDI Render Error: {}", e);
+        // Process NDI Outputs (only once per main loop, triggered by output_id 0)
+        #[cfg(feature = "ndi")]
+        if output_id == 0 {
+            if let Err(e) = render_ndi(app) {
+                tracing::error!("NDI Render Error: {}", e);
+            }
         }
-    }
     }
 
     Ok(())
@@ -194,12 +194,12 @@ fn render_ndi(app: &mut App) -> Result<()> {
         );
 
         let view = app.texture_pool.get_view(&tex_name);
-        let mut encoder = app
-            .backend
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some(&format!("NDI Encoder {}", part_id)),
-            });
+        let mut encoder =
+            app.backend
+                .device
+                .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                    label: Some(&format!("NDI Encoder {}", part_id)),
+                });
 
         // Render content
         render_content(
@@ -227,7 +227,8 @@ fn render_ndi(app: &mut App) -> Result<()> {
             let mut buffer_ready = false;
 
             // Reuse existing buffer or create new one
-            if let Some((buffer, mapping_completed, pending)) = app.ndi_readbacks.get_mut(&part_id) {
+            if let Some((buffer, mapping_completed, pending)) = app.ndi_readbacks.get_mut(&part_id)
+            {
                 if *pending {
                     // Poll device to trigger callback
                     let _ = app.backend.device.poll(wgpu::PollType::Wait {
@@ -347,9 +348,7 @@ fn render_ndi(app: &mut App) -> Result<()> {
             }
         }
 
-        app.backend
-            .queue
-            .submit(std::iter::once(encoder.finish()));
+        app.backend.queue.submit(std::iter::once(encoder.finish()));
     }
 
     Ok(())
