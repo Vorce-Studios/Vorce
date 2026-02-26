@@ -686,7 +686,7 @@ mod tests {
                 assert_eq!(*channel, 0, "CH2 should be on MIDI channel 1 (0-indexed)");
                 assert_eq!(*controller, 16, "CH2 Gain should be CC 16");
             }
-            _ => panic!("CH2 Gain should be a CC message"),
+            _ => panic!("CH2 Gain should be a CC message, got {:?}", ch2_gain.message_template),
         }
     }
 
@@ -712,7 +712,7 @@ mod tests {
                 );
                 assert_eq!(*controller, 22, "Encoder 3 (A/L1) should be CC 22");
             }
-            _ => panic!("Encoder should be a CC message"),
+            _ => panic!("Encoder should be a CC message, got {:?}", enc3_a1.message_template),
         }
     }
 
