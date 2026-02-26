@@ -984,9 +984,9 @@ _Stand: 2026-02-26 01:50 (Europe/Berlin)_
 | 4181450308749999114 | Modulare Trennung von Rendering- und State-Handling im Canvas | Geschlossen (PR #825) | [https://jules.google.com/session/4181450308749999114](https://jules.google.com/session/4181450308749999114) | Durchlauf war erfolgreich, Auto-Merge lief; PR wurde dennoch auf Wunsch geschlossen und Branch entfernt. Feedback bereithalten, damit die Session neu startet. |
 | 17134084665800646930 | Gezielte Unit-/Integrationstests für neue Canvas-Connectoren und Timing-Logik | Geschlossen (PR #824) | [https://jules.google.com/session/17134084665800646930](https://jules.google.com/session/17134084665800646930) | Tests (`cargo fmt/clippy/check` + Python Hooks) grün; GitHub meldete `mergeStateStatus=DIRTY`, daher Branch gelöscht und PR geschlossen. Bitte erneut in einer frischen Session anstoßen. |
 | 1821521759967542536 | ROADMAP & Technical_Debt aktualisieren (Aktuelle Aufgaben, Telegram-Automation) | Abgeschlossen (PR #823 merged) | [https://jules.google.com/session/1821521759967542536](https://jules.google.com/session/1821521759967542536) | Dokumentation abgeschlossen; Tabelle & Telegram-How-To eingebracht. |
-| 12744118335336060991 | Rebuild: FramePipeline threaded uploads (Issue #828) | Aktiv | [https://jules.google.com/session/12744118335336060991](https://jules.google.com/session/12744118335336060991) | Issue #828 löst Neustart aus; bitte erneut `scripts/Slave-Local-PreCommit.ps1` dokumentieren und neuen PR gegen `main` aufsetzen. |
-| 11538622621812368551 | Rebuild: module_canvas in Submodule aufteilen (Issue #829) | Aktiv | [https://jules.google.com/session/11538622621812368551](https://jules.google.com/session/11538622621812368551) | Issue #829 erstellt; Fokus auf saubere Modulstruktur + Pre-Commit-Durchlauf, keine Konflikte zulassen. |
-| 9304563805510538471 | Rebuild: module_canvas Geometry + Tests (Issue #830) | Aktiv | [https://jules.google.com/session/9304563805510538471](https://jules.google.com/session/9304563805510538471) | Issue #830 (nach kurzem API-Fehler erneut getriggert); targeted Tests + Geometrie-Refactor neu implementieren, Pre-Commit protokollieren. |
+| 12744118335336060991 | Rebuild: FramePipeline threaded uploads (Issue #828) | Abgeschlossen (PR #831 merged) | [https://jules.google.com/session/12744118335336060991](https://jules.google.com/session/12744118335336060991) | Jules hat die GPU-Upload-Optimierung erneut geliefert; PR #831 ist auf `origin/main` gemerged (Pre-Commit grün). |
+| 11538622621812368551 | Rebuild: module_canvas in Submodule aufteilen (Issue #829) | Abgeschlossen (PR #832 merged) | [https://jules.google.com/session/11538622621812368551](https://jules.google.com/session/11538622621812368551) | Submodule-Refactor erneut umgesetzt; PR #832 gemerged nach erfolgreichem Pre-Commit. |
+| 9304563805510538471 | Rebuild: module_canvas Geometry + Tests (Issue #830) | Abgeschlossen (PR #833 merged) | [https://jules.google.com/session/9304563805510538471](https://jules.google.com/session/9304563805510538471) | Geometrie-Refactor + Tests wurden neu gebaut; PR #833 gemerged, alle Checks grün. |
 
 Alle Sessions erzeugen automatisch PRs auf `origin/main` und führen das vorgeschriebene Pre-Commit-Skript aus.
 
@@ -1053,5 +1053,5 @@ Alle Sessions erzeugen automatisch PRs auf `origin/main` und führen das vorgesc
   2. Add Bevy-specific targets: ParticleRate, ParticleSpeed, 3DPosition, 3DRotation, 3DScale.
   3. Implement handling in crates/mapmap-core/src/module_eval.rs.
   4. Fix TriggerTarget::Param(String) to correctly map to effect parameters.
-* **Status:** ?? Commissioned (2026-02-25)
+* **Status:** 🔄 Pull Request #835 offen (Branch `fix/trigger-target-merge`), Konflikte manuell behoben; wartet auf CI & Review.
 * **Pre-Commit Requirement:** Run ./scripts/Final-Prepare-PreCommit.sh before finalizing changes.\
