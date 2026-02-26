@@ -2,7 +2,13 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
+use tracing::warn;
 use walkdir::WalkDir;
+
+#[cfg(not(test))]
+const MAX_MEDIA_ITEMS: usize = 100_000;
+#[cfg(test)]
+const MAX_MEDIA_ITEMS: usize = 100;
 
 /// Type of media file
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -30,6 +36,41 @@ impl MediaType {
         } else {
             MediaType::Unknown
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_media_library_limit() {
+        use std::fs::File;
+        use std::path::PathBuf;
+
+        struct TempDir(PathBuf);
+        impl Drop for TempDir {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+
+        let path = std::env::temp_dir().join(format!("mapmap_test_limit_{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&path).unwrap();
+        let _guard = TempDir(path.clone()); // Ensures cleanup on panic
+
+        // Create MAX_MEDIA_ITEMS + 10 files
+        // MAX_MEDIA_ITEMS is 100 in test
+        for i in 0..(MAX_MEDIA_ITEMS + 10) {
+            let file_path = path.join(format!("test_{}.jpg", i));
+            File::create(&file_path).unwrap();
+        }
+
+        let mut library = MediaLibrary::new();
+        library.add_scan_path(path);
+        library.refresh();
+
+        assert_eq!(library.items.len(), MAX_MEDIA_ITEMS);
     }
 }
 
@@ -94,8 +135,16 @@ impl MediaLibrary {
 
     /// Refresh the library by re-scanning all paths
     pub fn refresh(&mut self) {
-        for root in self.scanned_paths.clone() {
+        'outer: for root in self.scanned_paths.clone() {
             for entry in WalkDir::new(&root).into_iter().filter_map(|e| e.ok()) {
+                if self.items.len() >= MAX_MEDIA_ITEMS {
+                    warn!(
+                        "Media library limit reached ({}) - stopping scan",
+                        MAX_MEDIA_ITEMS
+                    );
+                    break 'outer;
+                }
+
                 let path = entry.path();
                 if path.is_file() {
                     let media_type = MediaType::from_path(path);
