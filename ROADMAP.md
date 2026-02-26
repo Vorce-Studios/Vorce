@@ -1,7 +1,7 @@
 # MapFlow – Vollständige Roadmap und Feature-Status
 
 > **Version:** 2.1
-> **Stand:** 2026-02-26 06:20
+> **Stand:** 2026-02-26 13:30
 > **Zielgruppe:** @Projektleitung und Entwickler-Team
 > **Projekt-Version:** 0.2.1
 
@@ -99,6 +99,9 @@ Basierend auf dem aktuellen Status und den Projektzielen für die erste produkti
   * ✅ Trigger State Infrastructure
   * ✅ AudioFFT Trigger Completion (2026-01-15)
   * ✅ Extended Trigger Targets (3D, Particles, Layout) (COMPLETED 2026-02-26)
+
+* ✅ **Performance Optimization**
+  * ✅ Module evaluation graph traversal cached part indexing (Bolt) (COMPLETED 2026-02-25)
 
 ### 3D / Bevy Integration
 
@@ -291,7 +294,10 @@ Basierend auf dem aktuellen Status und den Projektzielen für die erste produkti
 
 ### Control (OSC als Hauptpfad / MIDI low priority)
 
-* ✅ **Security: Global path traversal checks** (Sentinel) (COMPLETED 2026-02-20)
+* ✅ **Security (Sentinel)**
+  * ✅ Global path traversal checks (COMPLETED 2026-02-20)
+  * ✅ File size limits in project loader (COMPLETED 2026-02-25)
+
 * ✅ **OSC-System** (`mapmap-control/src/osc/`)
   * ✅ OSC-Server (`osc/server.rs`) mit UDP-Socket
   * ✅ OSC-Client (`osc/client.rs`) für Outgoing-Messages
@@ -398,6 +404,11 @@ Basierend auf dem aktuellen Status und den Projektzielen für die erste produkti
   * ✅ Audio device selection saved and restored
   * ✅ Target FPS saved and restored
   * ✅ Autosave with proper .mflow extension in user data directory
+
+* ✅ **UI Enhancements (2026)**
+  * ✅ Hold-to-Confirm for critical delete actions (Mary) (COMPLETED 2026-02-25)
+  * ✅ Effect Chain Panel Polish (Lina) (COMPLETED 2026-02-25)
+  * ✅ Module renaming and duplication fixes (COMPLETED 2026-02-25)
 
 * 🟡 **Internationalisierung (i18n) – NEU**
   * ✅ Sprachauswahl UI (Deutsch / Englisch)
@@ -827,6 +838,7 @@ MapFlow unterstützt verteilte Ausgabe über mehrere PCs. Vier Architektur-Optio
 
 * ✅ **Bestehende Tests**
   * ✅ Unit-Tests in Core (`mapmap-core/src/*.rs` mit `#[cfg(test)]`)
+  * ✅ Expanded Unit-Tests for Layers, Sockets, and Effects (Guardian) (COMPLETED 2026-02-25)
   * ✅ PropTest für Property-Based-Testing (`mapmap-core/Cargo.toml`)
   * ✅ Benchmarks: `texture_upload.rs`, `video_decode.rs`
   * ✅ Examples: `hello_world_projection.rs`, `simple_render.rs`
@@ -845,6 +857,7 @@ MapFlow unterstützt verteilte Ausgabe über mehrere PCs. Vier Architektur-Optio
 * ✅ **CI/CD** (`.github/workflows/`)
   * ✅ Restore CodeQL Security Scan (COMPLETED 2026-02-20)
   * ✅ Fix wgpu v27 / hexx v0.18 compatibility (COMPLETED 2026-02-20)
+  * ✅ Windows release build fix ('errno.h') (COMPLETED 2026-02-25)
   * ✅ CI-Workflow vorhanden und optimiert (2025-12-18)
   * ✅ Workflow-Lints behoben (deprecation warnings entfernt)
   * ✅ FFmpeg-Installation in Linux-Builds korrigiert (libavutil-Fehler behoben)
