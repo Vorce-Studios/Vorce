@@ -1,7 +1,7 @@
 # MapFlow – Vollständige Roadmap und Feature-Status
 
 > **Version:** 2.1
-> **Stand:** 2026-02-25 15:00
+> **Stand:** 2026-02-26 06:20
 > **Zielgruppe:** @Projektleitung und Entwickler-Team
 > **Projekt-Version:** 0.2.1
 
@@ -98,6 +98,7 @@ Basierend auf dem aktuellen Status und den Projektzielen für die erste produkti
   * ✅ Stateful Triggers (Random Interval)
   * ✅ Trigger State Infrastructure
   * ✅ AudioFFT Trigger Completion (2026-01-15)
+  * ✅ Extended Trigger Targets (3D, Particles, Layout) (COMPLETED 2026-02-26)
 
 ### 3D / Bevy Integration
 
@@ -1053,5 +1054,5 @@ Alle Sessions erzeugen automatisch PRs auf `origin/main` und führen das vorgesc
   2. Add Bevy-specific targets: ParticleRate, ParticleSpeed, 3DPosition, 3DRotation, 3DScale.
   3. Implement handling in crates/mapmap-core/src/module_eval.rs.
   4. Fix TriggerTarget::Param(String) to correctly map to effect parameters.
-* **Status:** 🔄 Pull Request #835 offen (Branch `fix/trigger-target-merge`), Konflikte manuell behoben; wartet auf CI & Review.
+* **Status:** ✅ Abgeschlossen (PR #835 merged via 6a30f1a).
 * **Pre-Commit Requirement:** Run ./scripts/Final-Prepare-PreCommit.sh before finalizing changes.\
