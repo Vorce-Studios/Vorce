@@ -974,7 +974,7 @@ graph TD
 
 ## Aktuelle Jules-Aufträge
 
-_Stand: 2026-02-25 23:59 (Europe/Berlin)_
+_Stand: 2026-02-26 01:50 (Europe/Berlin)_
 
 | Session-ID | Task | Status | Link | Notizen |
 |------------|------|--------|------|---------|
@@ -984,6 +984,9 @@ _Stand: 2026-02-25 23:59 (Europe/Berlin)_
 | 4181450308749999114 | Modulare Trennung von Rendering- und State-Handling im Canvas | Geschlossen (PR #825) | [https://jules.google.com/session/4181450308749999114](https://jules.google.com/session/4181450308749999114) | Durchlauf war erfolgreich, Auto-Merge lief; PR wurde dennoch auf Wunsch geschlossen und Branch entfernt. Feedback bereithalten, damit die Session neu startet. |
 | 17134084665800646930 | Gezielte Unit-/Integrationstests für neue Canvas-Connectoren und Timing-Logik | Geschlossen (PR #824) | [https://jules.google.com/session/17134084665800646930](https://jules.google.com/session/17134084665800646930) | Tests (`cargo fmt/clippy/check` + Python Hooks) grün; GitHub meldete `mergeStateStatus=DIRTY`, daher Branch gelöscht und PR geschlossen. Bitte erneut in einer frischen Session anstoßen. |
 | 1821521759967542536 | ROADMAP & Technical_Debt aktualisieren (Aktuelle Aufgaben, Telegram-Automation) | Abgeschlossen (PR #823 merged) | [https://jules.google.com/session/1821521759967542536](https://jules.google.com/session/1821521759967542536) | Dokumentation abgeschlossen; Tabelle & Telegram-How-To eingebracht. |
+| 12744118335336060991 | Rebuild: FramePipeline threaded uploads (Issue #828) | Aktiv | [https://jules.google.com/session/12744118335336060991](https://jules.google.com/session/12744118335336060991) | Issue #828 löst Neustart aus; bitte erneut `scripts/Slave-Local-PreCommit.ps1` dokumentieren und neuen PR gegen `main` aufsetzen. |
+| 11538622621812368551 | Rebuild: module_canvas in Submodule aufteilen (Issue #829) | Aktiv | [https://jules.google.com/session/11538622621812368551](https://jules.google.com/session/11538622621812368551) | Issue #829 erstellt; Fokus auf saubere Modulstruktur + Pre-Commit-Durchlauf, keine Konflikte zulassen. |
+| 9304563805510538471 | Rebuild: module_canvas Geometry + Tests (Issue #830) | Aktiv | [https://jules.google.com/session/9304563805510538471](https://jules.google.com/session/9304563805510538471) | Issue #830 (nach kurzem API-Fehler erneut getriggert); targeted Tests + Geometrie-Refactor neu implementieren, Pre-Commit protokollieren. |
 
 Alle Sessions erzeugen automatisch PRs auf `origin/main` und führen das vorgeschriebene Pre-Commit-Skript aus.
 
