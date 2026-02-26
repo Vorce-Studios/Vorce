@@ -13,6 +13,7 @@ use std::borrow::Cow;
 
 pub mod diagnostics;
 pub mod draw;
+pub mod geometry;
 pub mod inspector;
 pub mod mesh;
 pub mod state;
