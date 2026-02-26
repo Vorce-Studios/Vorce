@@ -89,14 +89,3 @@ impl WgpuFrameUploader {
         self.queue.submit(std::iter::once(encoder.finish()));
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_uploader_struct() {
-        // Verify struct fields are accessible (via construction)
-        // We cannot create a real device here easily, but we can check if it compiles.
-    }
-}
