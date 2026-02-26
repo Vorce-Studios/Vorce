@@ -31,6 +31,7 @@ pub mod shader_graph_integration;
 #[cfg(target_os = "windows")]
 pub mod spout;
 pub mod texture;
+pub mod uploader;
 
 pub use backend::{RenderBackend, WgpuBackend};
 pub use color_calibration_renderer::ColorCalibrationRenderer;
@@ -50,6 +51,7 @@ pub use quad::QuadRenderer;
 pub use shader::{ShaderHandle, ShaderSource};
 pub use shader_graph_integration::{CompiledShaderGraph, ShaderGraphManager, ShaderGraphRendering};
 pub use texture::{TextureDescriptor, TextureHandle, TexturePool};
+pub use uploader::WgpuFrameUploader;
 
 /// Rendering errors
 #[derive(Error, Debug)]

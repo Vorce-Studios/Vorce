@@ -4,6 +4,7 @@ use crate::app::core::app_struct::App;
 use crossbeam_channel::{Receiver, Sender};
 use mapmap_core::module::{ModulePartType, SourceType};
 use mapmap_media::{FramePipeline, PlaybackCommand, PlaybackState, PlaybackStatus};
+use mapmap_render::WgpuFrameUploader;
 use std::time::Duration;
 use tracing::{error, info};
 
@@ -28,6 +29,7 @@ pub struct MediaPlayerHandle {
 /// Create a new media player handle, spawning decode and upload threads
 pub fn create_player_handle(
     pool: std::sync::Arc<mapmap_render::TexturePool>,
+    device: std::sync::Arc<wgpu::Device>,
     queue: std::sync::Arc<wgpu::Queue>,
     path: &str,
     tex_name: &str,
@@ -50,6 +52,7 @@ pub fn create_player_handle(
 
     let tex_name_owned = tex_name.to_string();
     let pool_clone = pool.clone();
+    let uploader = std::sync::Arc::new(WgpuFrameUploader::new(device.clone(), queue.clone()));
 
     // Ensure texture exists initially
     pool.ensure_texture(
@@ -62,13 +65,22 @@ pub fn create_player_handle(
 
     pipeline.start_upload_thread(move |frame: &mapmap_media::pipeline::PipelineFrame| {
         if let mapmap_io::format::FrameData::Cpu(data) = &frame.frame.data {
-            pool_clone.upload_data(
-                &queue,
+            let width = frame.frame.format.width;
+            let height = frame.frame.format.height;
+
+            // Ensure texture exists and is correct size
+            pool_clone.ensure_texture(
                 &tex_name_owned,
-                data,
-                frame.frame.format.width,
-                frame.frame.format.height,
+                width,
+                height,
+                wgpu::TextureFormat::Rgba8UnormSrgb,
+                wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
             );
+
+            // Get texture and upload
+            if let Some(texture) = pool_clone.get_texture(&tex_name_owned) {
+                uploader.upload(&texture, data, width, height);
+            }
         }
         Ok(())
     });
@@ -115,6 +127,7 @@ pub fn sync_media_players(app: &mut App) {
                         let tex_name = format!("part_{}_{}", module.id, part.id);
 
                         let pool = app.texture_pool.clone();
+                        let device = app.backend.device.clone();
                         let queue = app.backend.queue.clone();
 
                         // Create player if not exists
@@ -122,6 +135,7 @@ pub fn sync_media_players(app: &mut App) {
                             std::collections::hash_map::Entry::Vacant(e) => {
                                 match create_player_handle(
                                     pool.clone(),
+                                    device.clone(),
                                     queue.clone(),
                                     &path,
                                     &tex_name,
@@ -150,7 +164,13 @@ pub fn sync_media_players(app: &mut App) {
                                         module.id, part.id, path
                                     );
                                     // Load new media
-                                    match create_player_handle(pool, queue, &path, &tex_name) {
+                                    match create_player_handle(
+                                        pool,
+                                        device.clone(),
+                                        queue,
+                                        &path,
+                                        &tex_name,
+                                    ) {
                                         Ok(new_handle) => {
                                             *handle = new_handle;
                                         }

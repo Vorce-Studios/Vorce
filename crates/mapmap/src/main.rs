@@ -205,9 +205,10 @@ impl App {
                                 if !path.is_empty() {
                                     let tex_name = format!("part_{}_{}", mod_id, part_id);
                                     let pool = self.texture_pool.clone();
+                                    let device = self.backend.device.clone();
                                     let queue = self.backend.queue.clone();
                                     match crate::orchestration::media::create_player_handle(
-                                        pool, queue, path, &tex_name,
+                                        pool, device, queue, path, &tex_name,
                                     ) {
                                         Ok(handle) => {
                                             info!("Successfully created player for '{}'", path);
@@ -284,9 +285,10 @@ impl App {
                                 if !path.is_empty() {
                                     let tex_name = format!("part_{}_{}", mod_id, part_id);
                                     let pool = self.texture_pool.clone();
+                                    let device = self.backend.device.clone();
                                     let queue = self.backend.queue.clone();
                                     match crate::orchestration::media::create_player_handle(
-                                        pool, queue, path, &tex_name,
+                                        pool, device, queue, path, &tex_name,
                                     ) {
                                         Ok(handle) => {
                                             info!("Recreated player for '{}' after reload", path);

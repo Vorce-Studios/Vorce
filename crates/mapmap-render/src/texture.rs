@@ -154,6 +154,16 @@ impl TexturePool {
         Arc::new(view)
     }
 
+    /// Get the underlying texture by name.
+    pub fn get_texture(&self, name: &str) -> Option<Arc<wgpu::Texture>> {
+        if let Some(handle) = self.textures.read().get(name) {
+            handle.mark_used(self.start_time);
+            Some(handle.texture.clone())
+        } else {
+            None
+        }
+    }
+
     /// Alias an existing texture to a new name
     pub fn alias_texture(&self, src_name: &str, dest_name: &str) -> bool {
         let textures = self.textures.read();
