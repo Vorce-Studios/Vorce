@@ -107,11 +107,3 @@ Added regression tests `test_resilience_to_bad_input` and `test_resize_mode_zero
 
 **Erkenntnis:** `TriggerSystem` akkumulierte Trigger-Status für gelöschte Parts (Speicherleck) und initialisierte RNG in der Hot-Loop. Außerdem gab es keine Garantie, dass `AudioFFT` Socket-Indizes in `TriggerSystem` mit `module.rs` übereinstimmen.
 **Aktion:** Garbage Collection und RNG-Optimierung in `TriggerSystem::update` implementiert. `test_trigger_system_garbage_collection` und `test_audio_fft_socket_consistency` hinzugefügt, um Lecks und Inkonsistenzen zu verhindern.
-
-## 2026-06-25 - [Trigger Logic Inconsistency]
-
-**Erkenntnis:** `TriggerSystem` und `ModuleEvaluator` implementierten unterschiedliche Logik für `Fixed` und `Random` Trigger.
-`ModuleEvaluator` implementierte `Random` Trigger als statenloses Rauschen (Ignorieren von Intervallen), während `TriggerSystem` Intervalle nutzte, aber `probability` ignorierte.
-Zudem ignorierte `TriggerSystem` den `offset_ms` Parameter für `Fixed` Trigger.
-**Aktion:** `TriggerSystem` wurde korrigiert, um `offset_ms` (als initiale Verzögerung) und `probability` (als Filter bei Intervall-Ende) zu respektieren.
-Die Inkonsistenz im `ModuleEvaluator` bleibt bestehen, da dieser statenlos ist und keine Intervalle korrekt abbilden kann. Dies sollte bei zukünftigen Refactorings adressiert werden.

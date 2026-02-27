@@ -129,15 +129,11 @@ pub struct App {
     #[cfg(feature = "ndi")]
     pub ndi_senders:
         std::collections::HashMap<mapmap_core::module::ModulePartId, mapmap_io::ndi::NdiSender>,
-    /// NDI Readback buffers (OutputID -> (Buffer, MappedState, PendingFlag))
+    /// NDI Readback buffers (OutputID -> (Buffer, MappedState))
     #[cfg(feature = "ndi")]
     pub ndi_readbacks: std::collections::HashMap<
         u64,
-        (
-            wgpu::Buffer,
-            std::sync::Arc<std::sync::atomic::AtomicBool>,
-            bool,
-        ),
+        (wgpu::Buffer, std::sync::Arc<std::sync::atomic::AtomicBool>),
     >,
 
     /// Shader Graph Manager (Runtime)

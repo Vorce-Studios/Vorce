@@ -26,12 +26,12 @@ fn test_trigger_inversion_logic() {
         next_part_id: 1,
     };
 
-    let config = AudioTriggerOutputConfig {
+    let mut config = AudioTriggerOutputConfig {
         beat_output: true,
         volume_outputs: false,
-        inverted_outputs: vec!["Beat Out".to_string()].into_iter().collect(),
         ..Default::default()
     };
+    config.inverted_outputs.insert("Beat Out".to_string());
 
     let trigger_type = ModulePartType::Trigger(TriggerType::AudioFFT {
         band: AudioBand::Bass,

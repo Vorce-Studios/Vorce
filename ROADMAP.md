@@ -1,7 +1,7 @@
 # MapFlow – Vollständige Roadmap und Feature-Status
 
 > **Version:** 2.1
-> **Stand:** 2026-02-26 13:30
+> **Stand:** 2026-02-25 15:00
 > **Zielgruppe:** @Projektleitung und Entwickler-Team
 > **Projekt-Version:** 0.2.1
 
@@ -98,10 +98,6 @@ Basierend auf dem aktuellen Status und den Projektzielen für die erste produkti
   * ✅ Stateful Triggers (Random Interval)
   * ✅ Trigger State Infrastructure
   * ✅ AudioFFT Trigger Completion (2026-01-15)
-  * ✅ Extended Trigger Targets (3D, Particles, Layout) (COMPLETED 2026-02-26)
-
-* ✅ **Performance Optimization**
-  * ✅ Module evaluation graph traversal cached part indexing (Bolt) (COMPLETED 2026-02-25)
 
 ### 3D / Bevy Integration
 
@@ -294,10 +290,7 @@ Basierend auf dem aktuellen Status und den Projektzielen für die erste produkti
 
 ### Control (OSC als Hauptpfad / MIDI low priority)
 
-* ✅ **Security (Sentinel)**
-  * ✅ Global path traversal checks (COMPLETED 2026-02-20)
-  * ✅ File size limits in project loader (COMPLETED 2026-02-25)
-
+* ✅ **Security: Global path traversal checks** (Sentinel) (COMPLETED 2026-02-20)
 * ✅ **OSC-System** (`mapmap-control/src/osc/`)
   * ✅ OSC-Server (`osc/server.rs`) mit UDP-Socket
   * ✅ OSC-Client (`osc/client.rs`) für Outgoing-Messages
@@ -404,11 +397,6 @@ Basierend auf dem aktuellen Status und den Projektzielen für die erste produkti
   * ✅ Audio device selection saved and restored
   * ✅ Target FPS saved and restored
   * ✅ Autosave with proper .mflow extension in user data directory
-
-* ✅ **UI Enhancements (2026)**
-  * ✅ Hold-to-Confirm for critical delete actions (Mary) (COMPLETED 2026-02-25)
-  * ✅ Effect Chain Panel Polish (Lina) (COMPLETED 2026-02-25)
-  * ✅ Module renaming and duplication fixes (COMPLETED 2026-02-25)
 
 * 🟡 **Internationalisierung (i18n) – NEU**
   * ✅ Sprachauswahl UI (Deutsch / Englisch)
@@ -838,7 +826,6 @@ MapFlow unterstützt verteilte Ausgabe über mehrere PCs. Vier Architektur-Optio
 
 * ✅ **Bestehende Tests**
   * ✅ Unit-Tests in Core (`mapmap-core/src/*.rs` mit `#[cfg(test)]`)
-  * ✅ Expanded Unit-Tests for Layers, Sockets, and Effects (Guardian) (COMPLETED 2026-02-25)
   * ✅ PropTest für Property-Based-Testing (`mapmap-core/Cargo.toml`)
   * ✅ Benchmarks: `texture_upload.rs`, `video_decode.rs`
   * ✅ Examples: `hello_world_projection.rs`, `simple_render.rs`
@@ -857,7 +844,6 @@ MapFlow unterstützt verteilte Ausgabe über mehrere PCs. Vier Architektur-Optio
 * ✅ **CI/CD** (`.github/workflows/`)
   * ✅ Restore CodeQL Security Scan (COMPLETED 2026-02-20)
   * ✅ Fix wgpu v27 / hexx v0.18 compatibility (COMPLETED 2026-02-20)
-  * ✅ Windows release build fix ('errno.h') (COMPLETED 2026-02-25)
   * ✅ CI-Workflow vorhanden und optimiert (2025-12-18)
   * ✅ Workflow-Lints behoben (deprecation warnings entfernt)
   * ✅ FFmpeg-Installation in Linux-Builds korrigiert (libavutil-Fehler behoben)
@@ -998,9 +984,9 @@ _Stand: 2026-02-26 01:50 (Europe/Berlin)_
 | 4181450308749999114 | Modulare Trennung von Rendering- und State-Handling im Canvas | Geschlossen (PR #825) | [https://jules.google.com/session/4181450308749999114](https://jules.google.com/session/4181450308749999114) | Durchlauf war erfolgreich, Auto-Merge lief; PR wurde dennoch auf Wunsch geschlossen und Branch entfernt. Feedback bereithalten, damit die Session neu startet. |
 | 17134084665800646930 | Gezielte Unit-/Integrationstests für neue Canvas-Connectoren und Timing-Logik | Geschlossen (PR #824) | [https://jules.google.com/session/17134084665800646930](https://jules.google.com/session/17134084665800646930) | Tests (`cargo fmt/clippy/check` + Python Hooks) grün; GitHub meldete `mergeStateStatus=DIRTY`, daher Branch gelöscht und PR geschlossen. Bitte erneut in einer frischen Session anstoßen. |
 | 1821521759967542536 | ROADMAP & Technical_Debt aktualisieren (Aktuelle Aufgaben, Telegram-Automation) | Abgeschlossen (PR #823 merged) | [https://jules.google.com/session/1821521759967542536](https://jules.google.com/session/1821521759967542536) | Dokumentation abgeschlossen; Tabelle & Telegram-How-To eingebracht. |
-| 12744118335336060991 | Rebuild: FramePipeline threaded uploads (Issue #828) | Abgeschlossen (PR #831 merged) | [https://jules.google.com/session/12744118335336060991](https://jules.google.com/session/12744118335336060991) | Jules hat die GPU-Upload-Optimierung erneut geliefert; PR #831 ist auf `origin/main` gemerged (Pre-Commit grün). |
-| 11538622621812368551 | Rebuild: module_canvas in Submodule aufteilen (Issue #829) | Abgeschlossen (PR #832 merged) | [https://jules.google.com/session/11538622621812368551](https://jules.google.com/session/11538622621812368551) | Submodule-Refactor erneut umgesetzt; PR #832 gemerged nach erfolgreichem Pre-Commit. |
-| 9304563805510538471 | Rebuild: module_canvas Geometry + Tests (Issue #830) | Abgeschlossen (PR #833 merged) | [https://jules.google.com/session/9304563805510538471](https://jules.google.com/session/9304563805510538471) | Geometrie-Refactor + Tests wurden neu gebaut; PR #833 gemerged, alle Checks grün. |
+| 12744118335336060991 | Rebuild: FramePipeline threaded uploads (Issue #828) | Aktiv | [https://jules.google.com/session/12744118335336060991](https://jules.google.com/session/12744118335336060991) | Issue #828 löst Neustart aus; bitte erneut `scripts/Slave-Local-PreCommit.ps1` dokumentieren und neuen PR gegen `main` aufsetzen. |
+| 11538622621812368551 | Rebuild: module_canvas in Submodule aufteilen (Issue #829) | Aktiv | [https://jules.google.com/session/11538622621812368551](https://jules.google.com/session/11538622621812368551) | Issue #829 erstellt; Fokus auf saubere Modulstruktur + Pre-Commit-Durchlauf, keine Konflikte zulassen. |
+| 9304563805510538471 | Rebuild: module_canvas Geometry + Tests (Issue #830) | Aktiv | [https://jules.google.com/session/9304563805510538471](https://jules.google.com/session/9304563805510538471) | Issue #830 (nach kurzem API-Fehler erneut getriggert); targeted Tests + Geometrie-Refactor neu implementieren, Pre-Commit protokollieren. |
 
 Alle Sessions erzeugen automatisch PRs auf `origin/main` und führen das vorgeschriebene Pre-Commit-Skript aus.
 
@@ -1067,5 +1053,5 @@ Alle Sessions erzeugen automatisch PRs auf `origin/main` und führen das vorgesc
   2. Add Bevy-specific targets: ParticleRate, ParticleSpeed, 3DPosition, 3DRotation, 3DScale.
   3. Implement handling in crates/mapmap-core/src/module_eval.rs.
   4. Fix TriggerTarget::Param(String) to correctly map to effect parameters.
-* **Status:** ✅ Abgeschlossen (PR #835 merged via 6a30f1a).
+* **Status:** ?? Commissioned (2026-02-25)
 * **Pre-Commit Requirement:** Run ./scripts/Final-Prepare-PreCommit.sh before finalizing changes.\

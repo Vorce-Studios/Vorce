@@ -1474,7 +1474,9 @@ mod tests {
         // Verify valid action sent
         let valid_action = rx.try_recv().unwrap();
         match valid_action {
-            McpAction::SaveProject(path) => assert_eq!(path.to_str().unwrap(), "good_project.mapmap"),
+            McpAction::SaveProject(path) => {
+                assert_eq!(path.to_str().unwrap(), "good_project.mapmap")
+            }
             other => panic!("Expected SaveProject action, got {:?}", other),
         }
     }
