@@ -1,4 +1,34 @@
 //! Bevy integration for MapFlow.
+//!
+//! This crate integrates the Bevy engine into MapFlow to provide advanced 3D rendering capabilities.
+//! It bridges MapFlow's core data structures with Bevy's ECS (Entity Component System), allowing
+//! for the creation of complex 3D scenes, particle systems, and audio-reactive visuals.
+//!
+//! ## Features
+//!
+//! - **Seamless ECS Integration**: Run Bevy systems alongside MapFlow's main loop.
+//! - **Audio Reactivity**: Bind 3D transform properties (scale, rotation, position) to audio analysis data.
+//! - **Particle Systems**: GPU-accelerated particle emitters with customizable lifetime, speed, and color gradients.
+//! - **Atmospheric Rendering**: Realistic sky and atmosphere simulation.
+//! - **3D Models**: Load and display 3D models (glTF) with optional outline effects.
+//! - **Hex Grid Generation**: Procedural generation of 3D hexagonal grids.
+//! - **Shared Rendering**: Efficiently share the rendered Bevy frame with MapFlow's WGPU context.
+//!
+//! ## Usage
+//!
+//! This crate is primarily used by the main application to initialize the Bevy runner and update it
+//! with fresh data from the MapFlow engine.
+//!
+//! ```rust,no_run
+//! use mapmap_bevy::BevyRunner;
+//!
+//! // Initialize the Bevy runner
+//! let mut runner = BevyRunner::new();
+//!
+//! // In the main loop:
+//! // runner.update(&audio_data, &node_triggers);
+//! // let frame = runner.get_image_data();
+//! ```
 
 pub mod components;
 pub mod resources;
@@ -10,6 +40,10 @@ use resources::*;
 use systems::*;
 use tracing::info;
 
+/// The main entry point for running Bevy within MapFlow.
+///
+/// This struct manages the Bevy `App` instance, handles initialization of plugins and resources,
+/// and provides methods to update the simulation and retrieve rendered frames.
 pub struct BevyRunner {
     app: App,
 }
@@ -21,6 +55,11 @@ impl Default for BevyRunner {
 }
 
 impl BevyRunner {
+    /// Create a new BevyRunner instance.
+    ///
+    /// This initializes the Bevy `App` with a minimal set of plugins required for 3D rendering
+    /// and logic, without opening a separate window. It registers all custom components and resources
+    /// needed for MapFlow integration.
     pub fn new() -> Self {
         info!("Initializing Bevy integration (Safe Logic Mode)...");
 
@@ -72,6 +111,15 @@ impl BevyRunner {
         Self { app }
     }
 
+    /// Update the Bevy simulation with new data from MapFlow.
+    ///
+    /// This method should be called once per frame. It updates the internal resources with
+    /// the latest audio analysis data and trigger values, then steps the Bevy `App`.
+    ///
+    /// # Arguments
+    ///
+    /// * `audio_data` - The current audio analysis data (FFT bands, volume, etc.).
+    /// * `node_triggers` - A map of trigger values for specific nodes.
     pub fn update(
         &mut self,
         audio_data: &mapmap_core::audio_reactive::AudioTriggerData,
@@ -99,6 +147,14 @@ impl BevyRunner {
         self.app.update();
     }
 
+    /// Retrieve the rendered image data from the last frame.
+    ///
+    /// Returns a tuple containing:
+    /// - The raw byte data of the image (BGRA8 format).
+    /// - The width of the image.
+    /// - The height of the image.
+    ///
+    /// Returns `None` if no frame has been rendered yet.
     pub fn get_image_data(&self) -> Option<(Vec<u8>, u32, u32)> {
         let render_output = self
             .app
@@ -113,6 +169,9 @@ impl BevyRunner {
     }
 
     /// Update the Bevy scene based on the MapFlow graph state.
+    ///
+    /// This synchronizes the Bevy entities with the configuration of a `MapFlowModule`.
+    /// It handles spawning new entities for new nodes and updating properties of existing ones.
     pub fn apply_graph_state(&mut self, module: &mapmap_core::module::MapFlowModule) {
         use mapmap_core::module::{ModulePartType, SourceType};
         let module_id = module.id;
