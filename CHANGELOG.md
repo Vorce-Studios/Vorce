@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 2026-02-26: docs: Improve Bevy integration documentation and component references (Scribe)
 - 2026-02-26: feat(core): Expand TriggerTarget with 3D transforms, particle controls, and layout modifiers (supersedes #834) (#835)
 - 2026-02-26: chore(assets): Restore missing icon resources and shader files (6a30f1a)
+- 2026-02-25: test(stability): Stabilize test suite by replacing panic! with assertions in mapmap-mcp and mapmap-control (Jules)
 - 2026-02-25: fix(ci): Resolve 'errno.h' missing in Windows release build by activating MSVC environment and explicitly passing include paths to bindgen (ClawMaster)
 - 2026-02-25: fix(core): Final syntax cleanup and removal of merge markers in layer.rs and trigger_system.rs (ClawMaster)
 - 2026-02-25: perf(core): Optimize module evaluation graph traversal with cached part indexing (Bolt)

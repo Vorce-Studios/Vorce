@@ -260,16 +260,14 @@ mod tests {
         assert!(json.contains("value"));
 
         let deserialized: UpdateParameterRequest = serde_json::from_str(&json).unwrap();
-        if let ControlTarget::LayerOpacity(id) = deserialized.target {
-            assert_eq!(id, 0);
-        } else {
-            panic!("Wrong target type");
+        match deserialized.target {
+            ControlTarget::LayerOpacity(id) => assert_eq!(id, 0),
+            other => panic!("Wrong target type: {:?}", other),
         }
 
-        if let ControlValue::Float(val) = deserialized.value {
-            assert_eq!(val, 0.75);
-        } else {
-            panic!("Wrong value type");
+        match deserialized.value {
+            ControlValue::Float(val) => assert_eq!(val, 0.75),
+            other => panic!("Wrong value type: {:?}", other),
         }
     }
 }

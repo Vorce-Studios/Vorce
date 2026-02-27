@@ -176,10 +176,9 @@ mod tests {
         let (target, value) = mapping.get_control_value(&msg).unwrap();
         assert_eq!(target, ControlTarget::LayerOpacity(0));
 
-        if let ControlValue::Float(v) = value {
-            assert!((v - 0.503).abs() < 0.01);
-        } else {
-            panic!("Expected float");
+        match value {
+            ControlValue::Float(v) => assert!((v - 0.503).abs() < 0.01),
+            other => panic!("Expected float value, got {:?}", other),
         }
     }
 

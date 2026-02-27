@@ -1233,10 +1233,9 @@ mod tests {
         assert!(response.is_some());
 
         let action = rx.try_recv().unwrap();
-        if let McpAction::AddLayer(name) = action {
-            assert_eq!(name, "Test Layer");
-        } else {
-            panic!("Expected AddLayer action");
+        match action {
+            McpAction::AddLayer(name) => assert_eq!(name, "Test Layer"),
+            other => panic!("Expected AddLayer action, got {:?}", other),
         }
     }
 
@@ -1259,10 +1258,9 @@ mod tests {
 
         server.handle_request(&request.to_string()).await;
         let action = rx.try_recv().unwrap();
-        if let McpAction::RemoveLayer(id) = action {
-            assert_eq!(id, 42);
-        } else {
-            panic!("Expected RemoveLayer action");
+        match action {
+            McpAction::RemoveLayer(id) => assert_eq!(id, 42),
+            other => panic!("Expected RemoveLayer action, got {:?}", other),
         }
     }
 
@@ -1285,10 +1283,9 @@ mod tests {
 
         server.handle_request(&request.to_string()).await;
         let action = rx.try_recv().unwrap();
-        if let McpAction::TriggerCue(id) = action {
-            assert_eq!(id, 5);
-        } else {
-            panic!("Expected TriggerCue action");
+        match action {
+            McpAction::TriggerCue(id) => assert_eq!(id, 5),
+            other => panic!("Expected TriggerCue action, got {:?}", other),
         }
     }
 
@@ -1343,10 +1340,9 @@ mod tests {
         });
         server.handle_request(&save_req.to_string()).await;
         let action = rx.try_recv().unwrap();
-        if let McpAction::SaveProject(path) = action {
-            assert_eq!(path.to_str().unwrap(), "test.mapmap");
-        } else {
-            panic!("Expected SaveProject action");
+        match action {
+            McpAction::SaveProject(path) => assert_eq!(path.to_str().unwrap(), "test.mapmap"),
+            other => panic!("Expected SaveProject action, got {:?}", other),
         }
 
         // Test Load
@@ -1363,10 +1359,9 @@ mod tests {
         });
         server.handle_request(&load_req.to_string()).await;
         let action = rx.try_recv().unwrap();
-        if let McpAction::LoadProject(path) = action {
-            assert_eq!(path.to_str().unwrap(), "other.mapmap");
-        } else {
-            panic!("Expected LoadProject action");
+        match action {
+            McpAction::LoadProject(path) => assert_eq!(path.to_str().unwrap(), "other.mapmap"),
+            other => panic!("Expected LoadProject action, got {:?}", other),
         }
     }
 
@@ -1478,10 +1473,11 @@ mod tests {
 
         // Verify valid action sent
         let valid_action = rx.try_recv().unwrap();
-        if let McpAction::SaveProject(path) = valid_action {
-            assert_eq!(path.to_str().unwrap(), "good_project.mapmap");
-        } else {
-            panic!("Expected SaveProject action");
+        match valid_action {
+            McpAction::SaveProject(path) => {
+                assert_eq!(path.to_str().unwrap(), "good_project.mapmap")
+            }
+            other => panic!("Expected SaveProject action, got {:?}", other),
         }
     }
 }

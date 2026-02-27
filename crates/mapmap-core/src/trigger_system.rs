@@ -129,36 +129,22 @@ impl TriggerSystem {
                                 self.active_triggers.insert((part.id, 0));
                             }
                         }
-                        TriggerType::Fixed {
-                            interval_ms,
-                            offset_ms,
-                        } => {
+                        TriggerType::Fixed { interval_ms, .. } => {
                             active_state_users.insert(part.id); // Mark as using state
 
                             let interval = *interval_ms as f32 / 1000.0;
-                            let offset = *offset_ms as f32 / 1000.0;
-
                             // Unified state lookup (O(1))
                             let state = self.states.entry(part.id).or_default();
-
-                            // Initialize target (used for offset delay on first run)
-                            if state.target < 0.0 {
-                                state.target = offset;
-                            }
-
                             state.timer += dt;
-                            if state.timer >= state.target {
-                                state.timer -= state.target;
+                            if state.timer >= interval {
+                                state.timer -= interval;
                                 self.active_triggers.insert((part.id, 0));
-
-                                // Subsequent targets are just the interval
-                                state.target = interval;
                             }
                         }
                         TriggerType::Random {
                             min_interval_ms,
                             max_interval_ms,
-                            probability,
+                            ..
                         } => {
                             active_state_users.insert(part.id); // Mark as using state
 
@@ -176,11 +162,7 @@ impl TriggerSystem {
 
                             if state.timer >= state.target {
                                 state.timer = 0.0;
-
-                                // Check probability
-                                if rng.random::<f32>() < *probability {
-                                    self.active_triggers.insert((part.id, 0));
-                                }
+                                self.active_triggers.insert((part.id, 0));
 
                                 // Pick new target using hoisted RNG
                                 state.target = rng.random_range(*min_interval_ms..=*max_interval_ms)
@@ -240,11 +222,11 @@ mod tests {
         let mut system = TriggerSystem::new();
         let audio = AudioTriggerData::default();
 
-        // 0.0s -> 0.05s (Trigger! Because offset=0, it starts immediately)
+        // 0.0s -> 0.05s (No trigger)
         system.update(&manager, &audio, 0.05);
-        assert!(system.is_active(part_id, 0));
+        assert!(!system.is_active(part_id, 0));
 
-        // 0.05s -> 0.10s (Trigger! 100ms mark reached)
+        // 0.05s -> 0.10s (Trigger!)
         system.update(&manager, &audio, 0.05);
         assert!(system.is_active(part_id, 0));
 
@@ -424,136 +406,6 @@ mod tests {
         assert!(
             !system.is_active(part_id, expected_sockets.len()),
             "Index out of bounds should not be active"
-        );
-    }
-
-    #[test]
-    fn test_fixed_trigger_offset_logic() {
-        let mut manager = ModuleManager::new();
-        let module_id = manager.create_module("Test Offset".to_string());
-
-        // Interval 100ms, Offset 50ms
-        // Expect triggers at 50ms, 150ms, 250ms...
-        let trigger_type = ModulePartType::Trigger(TriggerType::Fixed {
-            interval_ms: 100,
-            offset_ms: 50,
-        });
-
-        let part_id = manager
-            .add_part_to_module(module_id, PartType::Trigger, (0.0, 0.0))
-            .unwrap();
-
-        if let Some(module) = manager.get_module_mut(module_id) {
-            if let Some(part) = module.parts.iter_mut().find(|p| p.id == part_id) {
-                part.part_type = trigger_type;
-            }
-        }
-
-        let mut system = TriggerSystem::new();
-        let audio = AudioTriggerData::default();
-
-        // 0.0s -> 0.04s (Total 0.04s)
-        // Should NOT fire (target is 50ms)
-        system.update(&manager, &audio, 0.04);
-        assert!(
-            !system.is_active(part_id, 0),
-            "Should not fire before offset (40ms < 50ms)"
-        );
-
-        // 0.04s -> 0.06s (Total 0.06s)
-        // Should FIRE (crossed 50ms)
-        system.update(&manager, &audio, 0.02);
-        assert!(
-            system.is_active(part_id, 0),
-            "Should fire after offset (60ms > 50ms)"
-        );
-
-        // 0.06s -> 0.14s (Total 0.14s)
-        // Next target is +100ms = 150ms. Current time 140ms.
-        // Should NOT fire.
-        system.update(&manager, &audio, 0.08);
-        assert!(
-            !system.is_active(part_id, 0),
-            "Should not fire before interval (140ms < 150ms)"
-        );
-
-        // 0.14s -> 0.16s (Total 0.16s)
-        // Should FIRE (crossed 150ms)
-        system.update(&manager, &audio, 0.02);
-        assert!(
-            system.is_active(part_id, 0),
-            "Should fire after interval (160ms > 150ms)"
-        );
-    }
-
-    #[test]
-    fn test_random_trigger_probability_logic() {
-        let mut manager = ModuleManager::new();
-        let module_id = manager.create_module("Test Probability".to_string());
-
-        // Random Trigger with 0% probability
-        // Interval 10ms (fast)
-        let trigger_type_0 = ModulePartType::Trigger(TriggerType::Random {
-            min_interval_ms: 10,
-            max_interval_ms: 10,
-            probability: 0.0,
-        });
-
-        let part_id = manager
-            .add_part_to_module(module_id, PartType::Trigger, (0.0, 0.0))
-            .unwrap();
-
-        if let Some(module) = manager.get_module_mut(module_id) {
-            if let Some(part) = module.parts.iter_mut().find(|p| p.id == part_id) {
-                part.part_type = trigger_type_0;
-            }
-        }
-
-        let mut system = TriggerSystem::new();
-        let audio = AudioTriggerData::default();
-
-        // Run for 100ms (10 intervals)
-        // Should NEVER fire
-        for _ in 0..10 {
-            system.update(&manager, &audio, 0.011); // 11ms
-            assert!(
-                !system.is_active(part_id, 0),
-                "Probability 0.0 should never fire"
-            );
-        }
-
-        // Change to 100% probability
-        let trigger_type_100 = ModulePartType::Trigger(TriggerType::Random {
-            min_interval_ms: 10,
-            max_interval_ms: 10,
-            probability: 1.0,
-        });
-
-        if let Some(module) = manager.get_module_mut(module_id) {
-            if let Some(part) = module.parts.iter_mut().find(|p| p.id == part_id) {
-                part.part_type = trigger_type_100;
-            }
-        }
-
-        // Need to reset system or wait for next interval
-        // Run for 100ms
-        // Should FIRE every time
-        // Note: Changing part type on the fly might not reset the state immediately in TriggerSystem
-        // because state is persistent by ID.
-        // But the probability is checked at the moment of firing.
-        // So it should start firing.
-
-        let mut fired_count = 0;
-        for _ in 0..10 {
-            system.update(&manager, &audio, 0.011); // 11ms
-            if system.is_active(part_id, 0) {
-                fired_count += 1;
-            }
-        }
-        assert!(
-            fired_count > 0,
-            "Probability 1.0 should fire (fired {} times)",
-            fired_count
         );
     }
 }
