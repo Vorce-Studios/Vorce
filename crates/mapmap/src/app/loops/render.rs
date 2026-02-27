@@ -656,7 +656,7 @@ fn prepare_texture_previews(app: &mut App, encoder: &mut wgpu::CommandEncoder) {
                 let texture_name = format!("part_{}_{}", active_id, part.id);
                 if app.texture_pool.has_texture(&texture_name) {
                     let view = app.texture_pool.get_view(&texture_name);
-                    
+
                     // Register or update egui texture
                     use std::collections::hash_map::Entry;
                     let tex_id = match app.ui_state.module_canvas.node_previews.entry((active_id, part.id)) {
