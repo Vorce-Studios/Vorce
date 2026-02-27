@@ -8,9 +8,9 @@ This document tracks the current state of MapFlow's implementation, identifying 
 
 | Issue | Status | Impact | File/Location |
 | :--- | :--- | :--- | :--- |
-| **"God Object" module_canvas** | 🟡 In Progress | `module_canvas/mod.rs` has grown to **~6,500 lines**. Refactoring started: Splitting into draw, interaction, integration, and state. | `crates/mapmap-ui/src/editors/module_canvas/mod.rs` |
-| **Monolithic core/module.rs** | 🟡 In Progress | `module.rs` contains over **3,500 lines**. Refactoring started: Splitting into types, config, and manager. | `crates/mapmap-core/src/module.rs` |
-| **GPU Upload Blockage** | 🔴 Critical | The `FramePipeline` in `mapmap-media` is not yet integrated into the main `update_media_players` loop. Currently, texture uploads happen on the main thread, causing micro-stutters. | `crates/mapmap/src/orchestration/media.rs` |
+| **"God Object" module_canvas** | ✅ Completed | `module_canvas` has been split into `controller.rs`, `draw.rs`, `state.rs`, `types.rs`, etc. God object eliminated. | `crates/mapmap-ui/src/editors/module_canvas/` |
+| **Monolithic core/module.rs** | 🟡 In Progress | Refactor started (PR #846). File still large (~4k lines). Needs final cleanup and actual file deletion after full migration to `module/` submodule. | `crates/mapmap-core/src/module.rs` |
+| **GPU Upload Blockage** | ✅ Fixed | Threaded uploads implemented in `FramePipeline` (PR #831). Micro-stutters resolved. | `crates/mapmap/src/orchestration/media.rs` |
 | **wgpu Lifetime Hack** | 🔴 Unsafe Hack | Uses `unsafe transmute` to force `'static` lifetime on `RenderPass`. High risk of UB. | `crates/mapmap/src/app/loops/render.rs` |
 | **UI App Pointer Hack** | 🔴 Unsafe Hack | Uses `*mut App` raw pointer to bypass the Rust borrow checker during egui UI layout. | `crates/mapmap/src/app/loops/render.rs` |
 
@@ -32,6 +32,7 @@ This document tracks the current state of MapFlow's implementation, identifying 
 
 ## 🎨 Feature Gaps: Code vs. UI (Updated)
 
+- **Link System**: ✅ Integrated (PR #837). UI for linking nodes is functional.
 - **Bevy Node Controls**: UI labels indicate controls for Bevy 3D/Particles nodes are "not yet implemented".
 - **HAP Video Alpha**: Alpha support is partially implemented. HAP Q Alpha (YCoCg+A) is currently a TODO. Complex multi-section decoding is unstable.
 - **NDI Support**: `NdiSender` is a placeholder (stub); `NdiReceiver` is blocking and lacks full async integration. No UI configuration for sending.
@@ -72,7 +73,8 @@ This document tracks the current state of MapFlow's implementation, identifying 
 | **NDI Buffer Padding** | 🟡 In Progress | Hardcoded 256-byte alignment in NDI readback may fail on some hardware. |
 | **Theme Switching** | 🔴 Missing | Global theme application requires restart; `settings.rs` implementation missing. |
 | **Node Renaming** | ✅ Fixed | Rename/Duplicate actions enabled in `module_sidebar.rs`. |
+| **Canvas Toolbar Lag** | ✅ Fixed | Restored with modern egui API in commit 56d67ed3. |
 
 ---
 
-*Last Updated: 2026-02-25 (by ClawMaster PM 🦀)*
+*Last Updated: 2026-02-27 (by Orchestrator) 🦀*

@@ -1,11 +1,7 @@
 # MapFlow – Vollständige Roadmap und Feature-Status
 
 > **Version:** 2.1
-<<<<<<< HEAD
-> **Stand:** 2026-02-26 14:00
-=======
-> **Stand:** 2026-02-25 15:00
->>>>>>> origin/stabilize-tests-panic-policy-13751316466267121957
+> **Stand:** 2026-02-27 19:00
 > **Zielgruppe:** @Projektleitung und Entwickler-Team
 > **Projekt-Version:** 0.2.1
 
@@ -994,18 +990,36 @@ _Stand: 2026-02-26 14:00 (Europe/Berlin)_
 | 17134084665800646930 | Gezielte Unit-/Integrationstests für neue Canvas-Connectoren und Timing-Logik | Geschlossen (PR #824) | [https://jules.google.com/session/17134084665800646930](https://jules.google.com/session/17134084665800646930) | Tests (`cargo fmt/clippy/check` + Python Hooks) grün; GitHub meldete `mergeStateStatus=DIRTY`, daher Branch gelöscht und PR geschlossen. Bitte erneut in einer frischen Session anstoßen. |
 | 1821521759967542536 | ROADMAP & Technical_Debt aktualisieren (Aktuelle Aufgaben, Telegram-Automation) | Abgeschlossen (PR #823 merged) | [https://jules.google.com/session/1821521759967542536](https://jules.google.com/session/1821521759967542536) | Dokumentation abgeschlossen; Tabelle & Telegram-How-To eingebracht. |
 <<<<<<< HEAD
-| 12744118335336060991 | Rebuild: FramePipeline threaded uploads (Issue #828) | Abgeschlossen (PR #831 merged) | [https://jules.google.com/session/12744118335336060991](https://jules.google.com/session/12744118335336060991) | Jules hat die GPU-Upload-Optimierung erneut geliefert; PR #831 ist auf `origin/main` gemerged (Pre-Commit grün). |
-| 11538622621812368551 | Rebuild: module_canvas in Submodule aufteilen (Issue #829) | Abgeschlossen (PR #832 merged) | [https://jules.google.com/session/11538622621812368551](https://jules.google.com/session/11538622621812368551) | Submodule-Refactor erneut umgesetzt; PR #832 gemerged nach erfolgreichem Pre-Commit. |
-| 9304563805510538471 | Rebuild: module_canvas Geometry + Tests (Issue #830) | Abgeschlossen (PR #833 merged) | [https://jules.google.com/session/9304563805510538471](https://jules.google.com/session/9304563805510538471) | Geometrie-Refactor + Tests wurden neu gebaut; PR #833 gemerged, alle Checks grün. |
+## Aktuelle Jules-Aufträge
+
+_Stand: 2026-02-27 19:00 (Europe/Berlin)_
+
+| Session-ID | Task | Status | Link | Notizen |
+|------------|------|--------|------|---------|
 | 14318715518596799691 | [CORE-01] Node Parameter & Trigger Target Expansion | Abgeschlossen (PR #835 merged) | [https://jules.google.com/session/14318715518596799691](https://jules.google.com/session/14318715518596799691) | Added OffsetX/Y, FlipH/V and Bevy targets. |
-| 8208b0a | Module System Refactor (#846) | Abgeschlossen (PR #846 merged) | - | Split module.rs into submodules for better maintainability. |
-=======
-| 12744118335336060991 | Rebuild: FramePipeline threaded uploads (Issue #828) | Aktiv | [https://jules.google.com/session/12744118335336060991](https://jules.google.com/session/12744118335336060991) | Issue #828 löst Neustart aus; bitte erneut `scripts/Slave-Local-PreCommit.ps1` dokumentieren und neuen PR gegen `main` aufsetzen. |
-| 11538622621812368551 | Rebuild: module_canvas in Submodule aufteilen (Issue #829) | Aktiv | [https://jules.google.com/session/11538622621812368551](https://jules.google.com/session/11538622621812368551) | Issue #829 erstellt; Fokus auf saubere Modulstruktur + Pre-Commit-Durchlauf, keine Konflikte zulassen. |
-| 9304563805510538471 | Rebuild: module_canvas Geometry + Tests (Issue #830) | Aktiv | [https://jules.google.com/session/9304563805510538471](https://jules.google.com/session/9304563805510538471) | Issue #830 (nach kurzem API-Fehler erneut getriggert); targeted Tests + Geometrie-Refactor neu implementieren, Pre-Commit protokollieren. |
->>>>>>> origin/stabilize-tests-panic-policy-13751316466267121957
+| 56d67ed3 | Restore canvas toolbar and diagnostics | Abgeschlossen | - | Modern egui API implementation. |
+| 17275048138074007485 | feat-mesh-editor-extensions | Abgeschlossen | - | Extended mesh types UI. |
+| 73698441478363935 | link-system-ui | Abgeschlossen | - | Link system implementation. |
+| 5692743681638454682 | refactor-module-canvas-interaction | Abgeschlossen | - | Interaction logic decoupled. |
+| 14418333466582012573 | feature-module-bypass-socket | Abgeschlossen | - | Bypass socket for modules. |
+| 3883291063399773554 | feature-ndi-spout-io | Abgeschlossen | - | NDI/Spout initial support. |
+| 3174533248231373226 | fix-trigger-param-shader | Abgeschlossen | - | Fixed shader parameter triggering. |
+| 3125037812423445221 | timeline-v3-integration | Abgeschlossen | - | Multi-track timeline V3 integrated. |
 
 Alle Sessions erzeugen automatisch PRs auf `origin/main` und führen das vorgeschriebene Pre-Commit-Skript aus.
+
+## Abgeschlossene Jules-Aufträge (Archiv)
+
+| Session-ID | Task | Status | Notizen |
+|------------|------|--------|---------|
+| 12744118335336060991 | Rebuild: FramePipeline threaded uploads (Issue #828) | Abgeschlossen | PR #831 merged. |
+| 11538622621812368551 | Rebuild: module_canvas in Submodule aufteilen (Issue #829) | Abgeschlossen | PR #832 merged. |
+| 9304563805510538471 | Rebuild: module_canvas Geometry + Tests (Issue #830) | Abgeschlossen | PR #833 merged. |
+| 1499173718553143537 | Fix GPU Upload Thread blocking | Abgeschlossen | PR #826 merged. |
+| 9472154532138526611 | Refactor Phase 1 – `module_canvas` God Object aufteilen | Abgeschlossen | PR #822 merged. |
+| 1821521759967542536 | ROADMAP & Technical_Debt aktualisieren | Abgeschlossen | PR #823 merged. |
+
+---
 
 ## Task-Gruppen (Adaptiert für Rust)
 
@@ -1057,21 +1071,4 @@ Alle Sessions erzeugen automatisch PRs auf `origin/main` und führen das vorgesc
 * **CI:** GitHub Actions (Build, Test, Lint).
 * **Linter:** `clippy` (Strikt).
 * **Formatter:** `rustfmt`.
-<<<<<<< HEAD
-=======
-\
----
 
-## ?? Jules Commissions & Active Sessions
-
-### Task: [CORE-01] Node Parameter & Trigger Target Expansion
-* **Session ID:** `14318715518596799691`
-* **Objective:** Extend TriggerTarget enum and implement evaluation logic for missing node parameters.
-* **Details:**
-  1. Add OffsetX, OffsetY, FlipH, FlipV to TriggerTarget.
-  2. Add Bevy-specific targets: ParticleRate, ParticleSpeed, 3DPosition, 3DRotation, 3DScale.
-  3. Implement handling in crates/mapmap-core/src/module_eval.rs.
-  4. Fix TriggerTarget::Param(String) to correctly map to effect parameters.
-* **Status:** ?? Commissioned (2026-02-25)
-* **Pre-Commit Requirement:** Run ./scripts/Final-Prepare-PreCommit.sh before finalizing changes.\
->>>>>>> origin/stabilize-tests-panic-policy-13751316466267121957
