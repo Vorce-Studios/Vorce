@@ -42,7 +42,7 @@ pub fn cyber_panel_frame(_style: &Style) -> egui::Frame {
     egui::Frame {
         fill: crate::theme::colors::DARK_GREY,
         corner_radius: egui::CornerRadius::ZERO, // Sharp corners
-        inner_margin: egui::Margin::same(0), // Removed inner margin to let header touch edges
+        inner_margin: egui::Margin::same(0),     // Removed inner margin to let header touch edges
         stroke: Stroke::new(1.0, crate::theme::colors::STROKE_GREY),
         ..Default::default()
     }
