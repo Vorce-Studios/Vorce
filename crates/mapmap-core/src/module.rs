@@ -367,6 +367,14 @@ pub enum TriggerTarget {
     ScaleY,
     /// Rotation
     Rotation,
+    /// Offset X
+    OffsetX,
+    /// Offset Y
+    OffsetY,
+    /// Flip Horizontal
+    FlipH,
+    /// Flip Vertical
+    FlipV,
     /// Specific Effect Parameter (by name)
     Param(String),
 }

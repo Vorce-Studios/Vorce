@@ -1022,7 +1022,6 @@ impl ModuleEvaluator {
                                 params.insert(name.clone(), final_val);
                             }
                         }
-                        }
                         _ => {}
                     }
                 }
