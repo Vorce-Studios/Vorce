@@ -1,6 +1,5 @@
-
 use super::types::*;
-use egui::{Color32, TextureHandle, Rect, Pos2, Vec2};
+use egui::{Color32, Pos2, Rect, TextureHandle, Vec2};
 use mapmap_core::module::{
     AudioBand, AudioTriggerOutputConfig, BevyCameraMode, BlendModeType, EffectType, HueNodeType,
     LayerType, MaskShape, MaskType, ModulePart, ModulePartType, ModuleSocket, ModuleSocketType,
@@ -89,9 +88,7 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         NodeCatalogItem {
             label: "📡 NDI Input",
             search_tags: "source network video stream",
-            part_type: ModulePartType::Source(SourceType::NdiInput {
-                source_name: None,
-            }),
+            part_type: ModulePartType::Source(SourceType::NdiInput { source_name: None }),
         },
         #[cfg(target_os = "windows")]
         NodeCatalogItem {
@@ -1176,10 +1173,32 @@ mod tests {
     fn test_node_catalog_coverage() {
         let catalog = build_node_catalog();
 
-        let has_trigger = catalog.iter().any(|item| matches!(item.part_type, mapmap_core::module::ModulePartType::Trigger(_)));
-        let has_source = catalog.iter().any(|item| matches!(item.part_type, mapmap_core::module::ModulePartType::Source(_)));
-        let has_effect = catalog.iter().any(|item| matches!(item.part_type, mapmap_core::module::ModulePartType::Modulizer(mapmap_core::module::ModulizerType::Effect { .. })));
-        let has_output = catalog.iter().any(|item| matches!(item.part_type, mapmap_core::module::ModulePartType::Output(_)));
+        let has_trigger = catalog.iter().any(|item| {
+            matches!(
+                item.part_type,
+                mapmap_core::module::ModulePartType::Trigger(_)
+            )
+        });
+        let has_source = catalog.iter().any(|item| {
+            matches!(
+                item.part_type,
+                mapmap_core::module::ModulePartType::Source(_)
+            )
+        });
+        let has_effect = catalog.iter().any(|item| {
+            matches!(
+                item.part_type,
+                mapmap_core::module::ModulePartType::Modulizer(
+                    mapmap_core::module::ModulizerType::Effect { .. }
+                )
+            )
+        });
+        let has_output = catalog.iter().any(|item| {
+            matches!(
+                item.part_type,
+                mapmap_core::module::ModulePartType::Output(_)
+            )
+        });
 
         assert!(has_trigger, "Catalog missing Triggers");
         assert!(has_source, "Catalog missing Sources");
@@ -1190,7 +1209,13 @@ mod tests {
     #[test]
     fn test_node_catalog_search_tags() {
         let catalog = build_node_catalog();
-        let beat_trigger = catalog.iter().find(|item| item.label.contains("Beat")).expect("Beat trigger not found");
-        assert!(beat_trigger.search_tags.contains("rhythm"), "Beat trigger missing search tag");
+        let beat_trigger = catalog
+            .iter()
+            .find(|item| item.label.contains("Beat"))
+            .expect("Beat trigger not found");
+        assert!(
+            beat_trigger.search_tags.contains("rhythm"),
+            "Beat trigger missing search tag"
+        );
     }
 }
