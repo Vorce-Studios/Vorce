@@ -8,9 +8,17 @@ pub mod manager;
 pub mod transform;
 /// types module
 pub mod types;
+/// Module `transform`
+pub mod transform;
+/// Module `layer_struct`
+pub mod layer_struct;
+/// Module `composition`
+pub mod composition;
+/// Module `manager`
+pub mod manager;
 
-pub use composition::*;
-pub use layer_struct::*;
-pub use manager::*;
-pub use transform::*;
 pub use types::*;
+pub use transform::*;
+pub use layer_struct::*;
+pub use composition::*;
+pub use manager::*;

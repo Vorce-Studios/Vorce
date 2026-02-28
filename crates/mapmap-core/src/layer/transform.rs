@@ -1,6 +1,6 @@
-use crate::layer::types::ResizeMode;
-use glam::{Mat4, Vec2, Vec3};
 use serde::{Deserialize, Serialize};
+use glam::{Mat4, Vec2, Vec3};
+use crate::layer::types::ResizeMode;
 
 /// Transform properties for layers (Phase 1, Month 4)
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]

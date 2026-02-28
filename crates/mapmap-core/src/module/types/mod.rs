@@ -27,17 +27,17 @@ pub mod source;
 /// trigger module
 pub mod trigger;
 
-pub use connection::*;
-pub use hue::*;
-pub use layer::*;
+pub use socket::*;
+pub use trigger::*;
+pub use node_link::*;
+pub use source::*;
 pub use mask::*;
 pub use mesh::*;
-pub use module::*;
 pub use modulizer::*;
-pub use node_link::*;
+pub use layer::*;
 pub use output::*;
-pub use part::*;
+pub use hue::*;
 pub use shared_media::*;
-pub use socket::*;
-pub use source::*;
-pub use trigger::*;
+pub use part::*;
+pub use connection::*;
+pub use module::*;
