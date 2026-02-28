@@ -133,6 +133,7 @@ impl ControllerOverlayPanel {
     pub fn new() -> Self {
         Self {
             #[cfg(feature = "midi")]
+            // List of interactive components (knobs, faders, buttons).
             elements: None,
             #[cfg(feature = "midi")]
             state_manager: ElementStateManager::new(),
