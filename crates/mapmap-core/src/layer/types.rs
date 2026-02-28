@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use glam::Vec2;
+use serde::{Deserialize, Serialize};
 
 /// Blend mode for compositing layers
 #[repr(u32)]

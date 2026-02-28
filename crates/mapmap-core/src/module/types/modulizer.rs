@@ -1,6 +1,6 @@
+use crate::module::types::socket::BlendModeType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::module::types::socket::BlendModeType;
 
 /// Types of modulizers
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
-use glam::{Mat4, Vec2};
-use crate::layer::types::{BlendMode, ResizeMode};
 use crate::layer::transform::Transform;
+use crate::layer::types::{BlendMode, ResizeMode};
+use glam::{Mat4, Vec2};
+use serde::{Deserialize, Serialize};
 
 /// A single layer in the composition
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
