@@ -139,51 +139,58 @@ pub fn show(app: &mut App, ctx: &egui::Context) {
                     }
                 }
 
-                // --- Canvas Top Toolbar (Grouped for better layout) ---
+                // --- Module Selector Toolbar ---
                 egui::MenuBar::new().ui(ui, |ui| {
-                    if let Some(module_id) = app.ui_state.module_canvas.active_module_id {
-                        ui.menu_button(egui::RichText::new("➕ Hinzufügen").strong(), |ui| {
-                            mapmap_ui::editors::module_canvas::draw::render_add_node_menu_content(
-                                ui,
-                                std::sync::Arc::make_mut(&mut app.state.module_manager),
-                                None,
-                                Some(module_id),
-                            );
-                        });
+                    // Module dropdown selector
+                    let modules: Vec<(u64, String, [f32; 4])> = app
+                        .state
+                        .module_manager
+                        .modules()
+                        .iter()
+                        .map(|m| (m.id, m.name.clone(), m.color))
+                        .collect();
+
+                    if !modules.is_empty() {
+                        let active_name = app
+                            .ui_state
+                            .module_canvas
+                            .active_module_id
+                            .and_then(|id| modules.iter().find(|(mid, _, _)| *mid == id))
+                            .map(|(_, name, _)| name.clone())
+                            .unwrap_or_else(|| "Module wählen...".to_string());
+
+                        egui::ComboBox::from_id_salt("module_selector")
+                            .selected_text(format!("📦 {}", active_name))
+                            .show_ui(ui, |ui| {
+                                for (id, name, color) in &modules {
+                                    let color32 = egui::Color32::from_rgba_premultiplied(
+                                        (color[0] * 255.0) as u8,
+                                        (color[1] * 255.0) as u8,
+                                        (color[2] * 255.0) as u8,
+                                        255,
+                                    );
+                                    let is_selected =
+                                        app.ui_state.module_canvas.active_module_id == Some(*id);
+                                    let label =
+                                        egui::RichText::new(format!("● {}", name)).color(color32);
+                                    if ui.selectable_label(is_selected, label).clicked() {
+                                        app.ui_state.module_canvas.set_active_module(Some(*id));
+                                    }
+                                }
+                            });
                         ui.separator();
                     }
 
-                    if ui.button("💾 Speichern").clicked() {
-                        app.ui_state.module_canvas.show_presets = true;
-                    }
-                    if ui.button("🔍 Suchen").clicked() {
-                        app.ui_state.module_canvas.show_search =
-                            !app.ui_state.module_canvas.show_search;
-                    }
-
+                    // New Module button
                     if ui
-                        .button("✔️ Check")
-                        .on_hover_text("Check Module")
+                        .button(egui::RichText::new("➕ Neues Modul").strong())
                         .clicked()
                     {
-                        if let Some(module_id) = app.ui_state.module_canvas.active_module_id {
-                            if let Some(module) = app.state.module_manager.get_module(module_id) {
-                                app.ui_state.module_canvas.diagnostic_issues =
-                                    mapmap_core::diagnostics::check_module_integrity(module);
-                                app.ui_state.module_canvas.show_diagnostics = true;
-                            }
-                        }
+                        let new_id = std::sync::Arc::make_mut(&mut app.state.module_manager)
+                            .create_module("New Module".to_string());
+                        app.ui_state.module_canvas.set_active_module(Some(new_id));
                     }
-
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button("Zentrieren").clicked() {
-                            app.ui_state.module_canvas.pan_offset = egui::Vec2::ZERO;
-                            app.ui_state.module_canvas.zoom = 1.0;
-                        }
-                        ui.label(format!("Zoom: {:.1}x", app.ui_state.module_canvas.zoom));
-                    });
                 });
-                ui.separator();
 
                 ui::editors::module_canvas::show(
                     ui,

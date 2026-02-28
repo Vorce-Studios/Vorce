@@ -101,6 +101,14 @@ Basierend auf dem aktuellen Status und den Projektzielen für die erste produkti
 
 ---
 
+## Bekannte Probleme & Performance (Aktueller Stand)
+
+* ⚠️ **Performance:** Die App läuft derzeit mit ca. 23 FPS. Dies liegt teilweise an der Auswahl der GPU (AMD Radeon R5 430), die vom System als sekundärer Adapter eingestuft wird.
+* ⚠️ **Media-Decoder:** Es treten häufige Warnungen auf: `Decoder error: Input changed`. Dies deutet darauf hin, dass die WebM-Dateien (VP9/VP8) in der aktuellen Pipeline Probleme beim Frame-Decoding verursachen, sobald sich die Eingabeparameter ändern.
+* ⚠️ **Hue-System:** Die DTLS-Verbindung zur Hue Bridge schlägt fehl, da OpenSSL im aktuellen Build-Profil deaktiviert ist (um Build-Hänger zu vermeiden).
+
+---
+
 ## Aktuelle Jules-Aufträge
 
 _Stand: 2026-02-27 23:59 (Europe/Berlin)_
@@ -108,8 +116,8 @@ _Stand: 2026-02-27 23:59 (Europe/Berlin)_
 | Session-ID | Task | Status | Link | Notizen |
 |------------|------|--------|------|---------|
 | 14374730097834491321 | [ARCH-01] Complete core/module.rs Refactoring | Abgeschlossen | [https://jules.google.com/session/14374730097834491321](https://jules.google.com/session/14374730097834491321) | Monolithic module.rs split into submodules. |
-| 15034419910350922962 | [SAFE-01] Eliminate Unsafe Hacks in Render Loop | Abgeschlossen | [https://jules.google.com/session/15034419910350922962](https://jules.google.com/session/15034419910350922962) | Removed raw pointers and unsafe transmutes in render loop. |
-| 4749311560780055775 | [IO-01] Functional NDI Sender and MPV Decoder | Abgeschlossen | [https://jules.google.com/session/4749311560780055775](https://jules.google.com/session/4749311560780055775) | NDI Sender implemented; MPV Decoder fixed using libmpv2. |
+| 15034419910350922962 | [SAFE-01] Eliminate Unsafe Hacks in Render Loop | In Arbeit | [https://jules.google.com/session/15034419910350922962](https://jules.google.com/session/15034419910350922962) | Partially removed; *mut App and transmute still present in render loop. |
+| 4749311560780055775 | [IO-01] Functional NDI Sender and MPV Decoder | In Arbeit | [https://jules.google.com/session/4749311560780055775](https://jules.google.com/session/4749311560780055775) | NDI Sender implemented; MPV Decoder integrated but currently renders gray frames. |
 | 56d67ed3 | Restore canvas toolbar and diagnostics | Abgeschlossen | - | Modern egui API implementation. |
 | 73698441478363935 | link-system-ui | Abgeschlossen | - | Link system implementation. |
 | 3125037812423445221 | timeline-v3-integration | Abgeschlossen | - | Multi-track timeline V3 integrated. |

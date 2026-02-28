@@ -11,15 +11,15 @@ This document tracks the current state of MapFlow's implementation, identifying 
 | **"God Object" module_canvas** | ✅ Completed | `module_canvas` has been split into `controller.rs`, `draw.rs`, `state.rs`, `types.rs`, etc. God object eliminated. | `crates/mapmap-ui/src/editors/module_canvas/` |
 | **Monolithic core/module.rs** | ✅ Completed | Refactor completed (2026-02-27). Split into `types.rs`, `config.rs`, `manager.rs`, and `mod.rs`. | `crates/mapmap-core/src/module/` |
 | **GPU Upload Blockage** | ✅ Fixed | Threaded uploads implemented in `FramePipeline` (PR #831 and #871). Micro-stutters resolved. | `crates/mapmap/src/orchestration/media.rs` |
-| **wgpu Lifetime Hack** | ✅ Fixed | Removed `unsafe transmute` in render loop. Lifetimes are now handled safely. | `crates/mapmap/src/app/loops/render.rs` |
-| **UI App Pointer Hack** | ✅ Fixed | Removed `*mut App` raw pointer hack. Refactored to use safe references in UI layout. | `crates/mapmap/src/app/loops/render.rs` |
+| **wgpu Lifetime Hack** | 🟡 In Progress | Unsafe `transmute` still used in render loop for `egui-wgpu` static lifetimes. | `crates/mapmap/src/app/loops/render.rs` |
+| **UI App Pointer Hack** | 🟡 In Progress | `*mut App` raw pointer still used in render loop for UI layout display. | `crates/mapmap/src/app/loops/render.rs` |
 
 ---
 
 ## 🎨 Feature Gaps: Code vs. UI (Updated)
 
-- **NDI Support**: ✅ Functional. `NdiSender` implemented with async ring buffer. UI supports enabling and naming streams.
-- **MPV Decoder**: ✅ Fixed. Now uses `libmpv2` for full video playback instead of gray frames.
+- **NDI Support**: 🟡 Partial. `NdiSender` implemented; `NdiReceiver` exists as a stub with `TODO`s.
+- **MPV Decoder**: 🟡 Partial Fix. Integrated via `libmpv2`, but currently renders gray placeholder frames.
 - **Link System**: ✅ Integrated (PR #837). UI for linking nodes is functional.
 - **Bevy Node Controls**: UI labels indicate controls for Bevy 3D/Particles nodes are "not yet implemented".
 - **HAP Video Alpha**: Alpha support is partially implemented. HAP Q Alpha (YCoCg+A) is currently a TODO. Complex multi-section decoding is unstable.
