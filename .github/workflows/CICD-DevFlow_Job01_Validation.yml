@@ -220,10 +220,6 @@ jobs:
     name: "Build & Test (Windows)"
     runs-on: windows-latest
     needs: [quality]
-    if: |
-      github.ref == 'refs/heads/main' ||
-      github.event.inputs.run_windows == 'true' ||
-      contains(github.event.pull_request.labels.*.name, 'test-windows')
     steps:
       - uses: actions/checkout@v4
 
