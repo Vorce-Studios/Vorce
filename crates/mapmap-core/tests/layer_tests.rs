@@ -113,6 +113,10 @@ fn test_transform_apply_resize_mode() {
     // Fit: scale should be min(100/100, 100/50) = 1.0
     t.apply_resize_mode(ResizeMode::Fit, source, target);
     assert_eq!(t.scale, Vec2::splat(1.0));
+
+    // Stretch: scale should be 100/100 = 1.0 for x, 100/50 = 2.0 for y
+    t.apply_resize_mode(ResizeMode::Stretch, source, target);
+    assert_eq!(t.scale, Vec2::new(1.0, 2.0));
 }
 
 #[test]

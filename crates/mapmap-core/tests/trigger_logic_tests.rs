@@ -76,6 +76,30 @@ fn test_trigger_config_apply_random() {
 }
 
 #[test]
+fn test_trigger_config_apply_smoothed() {
+    let mut config = TriggerConfig {
+        mode: TriggerMappingMode::Smoothed {
+            attack: 0.1,
+            release: 0.5,
+        },
+        min_value: 0.0,
+        max_value: 100.0,
+        ..TriggerConfig::default()
+    };
+
+    // The current implementation of Smoothed in apply() is identical to Direct
+    assert_eq!(config.apply(0.0), 0.0);
+    assert_eq!(config.apply(0.5), 50.0);
+    assert_eq!(config.apply(1.0), 100.0);
+
+    // With inversion
+    config.invert = true;
+    assert_eq!(config.apply(0.0), 100.0);
+    assert_eq!(config.apply(0.5), 50.0);
+    assert_eq!(config.apply(1.0), 0.0);
+}
+
+#[test]
 fn test_trigger_config_for_target() {
     let config = TriggerConfig::for_target(TriggerTarget::Opacity);
     assert_eq!(config.target, TriggerTarget::Opacity);
