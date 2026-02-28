@@ -559,13 +559,8 @@ pub fn render_canvas(
         canvas.quick_create_selected_index = 0;
     }
 
-    // We drop the borrow of module here so we can pass manager to other functions
     let mut do_delete_part = None;
     let mut do_delete_conn = None;
-
-    // We defer the quick create popup because it requires `manager`
-    // Wait, `module` is no longer used after this point except for deleting in context menu.
-    // Instead of dropping it, we handle the context menu delete actions via flags.
 
     if let Some(pos) = canvas.context_menu_pos {
         let is_add_menu =
@@ -596,17 +591,13 @@ pub fn render_canvas(
 
             let inner = menu_rect.shrink(8.0);
 
-            // To avoid borrowing `module` inside the closure for `manager`, we separate the add menu logic
-            if is_add_menu {
-                // Drop module borrow before calling draw::render_add_node_menu_content which needs `manager`
-            } else {
+            if !is_add_menu {
                 ui.scope_builder(egui::UiBuilder::new().max_rect(inner), |ui| {
                     ui.vertical(|ui| {
                         if let Some(part_id) = canvas.context_menu_part {
                             ui.heading("\u{2699} Node Actions");
                             ui.separator();
 
-                            // Delete Node Action (Hold-to-Confirm)
                             if crate::widgets::custom::hold_to_action_button(
                                 ui,
                                 "🗑 Delete Node",
@@ -620,7 +611,6 @@ pub fn render_canvas(
                             ui.heading("\u{2699} Connection Actions");
                             ui.separator();
 
-                            // Delete Connection Action (Hold-to-Confirm)
                             if crate::widgets::custom::hold_to_action_button(
                                 ui,
                                 "🗑 Delete Connection",
@@ -650,12 +640,10 @@ pub fn render_canvas(
         }
     }
 
-    // Drop the mutable borrow of module so we can use manager
     let _ = module;
 
     draw::draw_quick_create_popup(canvas, ui, canvas_rect, manager, canvas.active_module_id);
 
-    // Now render the add menu if it was open
     if let Some(pos) = canvas.context_menu_pos {
         let is_add_menu =
             canvas.context_menu_part.is_none() && canvas.context_menu_connection.is_none();
