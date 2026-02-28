@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
-use crate::module::types::socket::BlendModeType;
 use crate::module::types::mesh::MeshType;
+use crate::module::types::socket::BlendModeType;
+use serde::{Deserialize, Serialize};
 
 /// Types of compositing layers
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

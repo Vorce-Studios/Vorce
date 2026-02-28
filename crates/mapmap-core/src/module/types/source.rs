@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::module::types::socket::BlendModeType;
+use serde::{Deserialize, Serialize};
 
 /// Types of media sources
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

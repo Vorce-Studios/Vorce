@@ -14,11 +14,17 @@ pub mod transform;
 pub mod layer_struct;
 /// Module `composition`
 pub mod composition;
+/// Module `layer_struct`
+pub mod layer_struct;
 /// Module `manager`
 pub mod manager;
+/// Module `transform`
+pub mod transform;
+/// Module `types`
+pub mod types;
 
-pub use types::*;
-pub use transform::*;
-pub use layer_struct::*;
 pub use composition::*;
+pub use layer_struct::*;
 pub use manager::*;
+pub use transform::*;
+pub use types::*;

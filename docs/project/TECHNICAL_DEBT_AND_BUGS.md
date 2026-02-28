@@ -11,40 +11,40 @@ This document tracks the current state of MapFlow's implementation, identifying 
 | **"God Object" module_canvas** | ✅ Completed | `module_canvas` has been split into `controller.rs`, `draw.rs`, `state.rs`, `types.rs`, etc. God object eliminated. | `crates/mapmap-ui/src/editors/module_canvas/` |
 | **Monolithic core/module.rs** | ✅ Completed | Refactor completed (2026-02-27). Split into `types.rs`, `config.rs`, `manager.rs`, and `mod.rs`. | `crates/mapmap-core/src/module/` |
 | **GPU Upload Blockage** | ✅ Fixed | Threaded uploads implemented in `FramePipeline` (PR #831 and #871). Micro-stutters resolved. | `crates/mapmap/src/orchestration/media.rs` |
-| **wgpu Lifetime Hack** | 🟡 In Progress | Unsafe `transmute` still used in render loop for `egui-wgpu` static lifetimes. | `crates/mapmap/src/app/loops/render.rs` |
-| **UI App Pointer Hack** | 🟡 In Progress | `*mut App` raw pointer still used in render loop for UI layout display. | `crates/mapmap/src/app/loops/render.rs` |
+| **wgpu Lifetime Hack** | 🟡 In Progress | Unsafe `transmute` still used in `render.rs` (L501) for `egui-wgpu` static lifetimes. | `crates/mapmap/src/app/loops/render.rs` |
+| **UI App Pointer Hack** | 🟡 Partial Fix | Raw pointers minimized, but complex mutable `&mut App` passing still dominates the render loop. | `crates/mapmap/src/app/loops/render.rs` |
 
 ---
 
 ## 🎨 Feature Gaps: Code vs. UI (Updated)
 
-- **NDI Support**: 🟡 Partial. `NdiSender` implemented; `NdiReceiver` exists as a stub with `TODO`s.
-- **MPV Decoder**: 🟡 Partial Fix. Integrated via `libmpv2`, but currently renders gray placeholder frames.
+- **NDI Support**: 🟡 Partial. `NdiSender` implemented; `NdiReceiver` is missing in `mapmap-media` and `orchestration`.
+- **MPV Decoder**: 🟡 Partial Fix. Integrated via `libmpv2`, but uses `screenshot-raw` (L113) with CPU-side RGBA conversion instead of native GPU sharing.
 - **Link System**: ✅ Integrated (PR #837). UI for linking nodes is functional.
-- **Bevy Node Controls**: UI labels indicate controls for Bevy 3D/Particles nodes are "not yet implemented".
+- **Bevy Node Controls**: 🔴 Missing. UI labels (L915) explicitly state controls for Bevy Particles, Atmosphere, and HexGrid are "not yet implemented".
 - **HAP Video Alpha**: Alpha support is partially implemented. HAP Q Alpha (YCoCg+A) is currently a TODO. Complex multi-section decoding is unstable.
 - **Shader Graph Nodes**: Core supports logic nodes, but UI lacks visual representation/wiring for complex operations.
 - **LUT Support**: No "LUT Effect" node in the effect chain UI despite core support.
 - **SRT Streaming**: Missing `libsrt` integration; connection/sending logic are just stubs.
 - **OSC Triggers**: UI lacks OSC input field for Cue triggers.
-- **Philips Hue**: Pairing logic and Area Selection fetching are missing.
+- **Philips Hue**: 🟡 Partial. `HueOutput` params added to core (L513), but pairing logic and Area Selection fetching are missing.
 
 ---
 
 ## 🛠️ Significant Technical Debt (TODOs)
 
 ### 🏗️ Architecture & Core Logic
-- **Undo/Redo Coverage**: Currently only node positions. Needs to cover parameters, connections, and layer mutations.
-- **Trigger Smoothing**: `TriggerMappingMode::Smoothed` (attack/release) is a TODO in `module.rs`.
-- **Individual Layer Speed**: Returns master speed; individual control not yet implemented in `layer.rs`.
-- **Mesh Import**: Missing core logic for loading meshes from file (OBJ/SVG) in `module.rs`.
-- **Shader Codegen**: Missing scale, rotation, and translation parameter injection.
-- **Graph Validation**: `shader_graph.rs` lacks cycle detection and type-safety checks.
-- **MCP Shared State**: MCP server cannot yet read/access the shared project state.
-- **Spout Sync**: Spout output is missing from the main synchronization loop in `orchestration/outputs.rs`.
+- **Undo/Redo Coverage**: Currently stores full `AppState` snapshots. Needs granular commands for parameters, connections, and layer mutations to reduce memory pressure.
+- **Trigger Smoothing**: 🔴 Incomplete. `TriggerMappingMode::Smoothed` exists in `trigger.rs` (L51), but evaluation (L125) performs only linear mapping; Attack/Release logic is missing.
+- **Individual Layer Speed**: 🔴 Missing. `LayerType` (layer.rs) lacks speed parameters; evaluation defaults to master speed.
+- **Mesh Import**: 🔴 Missing. `MeshType` supports `Custom { path }` (L139), but `to_mesh()` has no loader for OBJ/SVG files.
+- **Shader Codegen**: 🟡 Partial. Code generator lacks scale, rotation, and translation parameter injection (L517).
+- **Graph Validation**: 🔴 Missing. `shader_graph.rs` (L529) lacks cycle detection and type-safety checks.
+- **MCP Shared State**: 🔴 Missing. `server.rs` (L722) contains a hardcoded error for shared state access.
+- **Spout Sync**: 🔴 Missing. Spout output (L129) is explicitly excluded from the main synchronization loop in `orchestration/outputs.rs`.
 
 ### 🧼 Code Cleanup & Quality
-- **Panic Policy**: Replace `panic!` with `Result` in `mapmap-mcp/server.rs`, `web/handlers.rs`, and MIDI mapping.
+- **Panic Policy**: Replace `panic!` and `.unwrap()` in `mapmap-mcp/server.rs` (L1235+), `web/handlers.rs`, and MIDI mapping.
 - **Safety Documentation**: Every `unsafe` block must have a `// SAFETY:` comment (especially in FFmpeg/NDI/Spout).
 - **Dead Code**: Significant amounts of legacy Qt-migration logic in `window_manager.rs` and `mesh_editor.rs`.
 - **Media Thumbnails**: Background thumbnail generation and duration extraction missing in `media_browser.rs`.
