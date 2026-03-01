@@ -1,26 +1,12 @@
 /// composition module
 pub mod composition;
-/// Module `composition`
-pub mod composition;
 /// layer_struct module
-pub mod layer_struct;
-/// Module `layer_struct`
-pub mod layer_struct;
-/// Module `layer_struct`
 pub mod layer_struct;
 /// manager module
 pub mod manager;
-/// Module `manager`
-pub mod manager;
 /// transform module
 pub mod transform;
-/// Module `transform`
-pub mod transform;
-/// Module `transform`
-pub mod transform;
 /// types module
-pub mod types;
-/// Module `types`
 pub mod types;
 
 pub use composition::*;
