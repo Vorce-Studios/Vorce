@@ -75,5 +75,5 @@ bindgen = { workspace = true, optional = true }
 cc = { workspace = true, optional = true }
 
 [dev-dependencies]
-tempfile = "3.8"
+tempfile = "3.26"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
