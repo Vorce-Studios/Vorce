@@ -16,3 +16,7 @@ I have addressed several broken links and outdated status indicators in the docu
 ### Observations
 - The `docs/` structure is comprehensive but has some legacy references to files that have been moved or renamed.
 - `ROADMAP.md` status fields need regular manual verification against the Changelog.
+
+## 2026-03-01 - Platzhalter-Screenshots im Wiki-Handbuch
+ **Erkenntnis:** Das User-Wiki (`docs/user/wiki_manual/`) war stark mit Bild-Platzhaltern und WIP-Anmerkungen verseucht, was den Scribe-Regeln (`Niemals tun: - Placeholder-Text`) widerspricht. Platzhalter stören den Lesefluss und verringern den professionellen Eindruck.
+ **Aktion:** Ich habe alle Platzhalter (z.B. `> 🖼️ **[PLATZHALTER SCREENSHOT: ...]**`) sowie temporäre WIP-Warnungen systematisch aus den `docs/user/wiki_manual/*.md`-Dateien entfernt.

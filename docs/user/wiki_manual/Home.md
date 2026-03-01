@@ -14,8 +14,6 @@ Um MapFlow effektiv nutzen zu können, ist es hilfreich, die zugrunde liegenden 
 
 Im Gegensatz zu herkömmlicher Layer-basierter VJ-Software (bei der Videoclips wie Pfannkuchen übereinandergestapelt werden) ist MapFlow um einen **Node-Graphen** herum aufgebaut.
 
-> 🖼️ **[PLATZHALTER SCREENSHOT: Ein komplexer, aber organisierter Node-Graph, der den Datenfluss von Quellen auf der linken Seite, durch Effekte und Layer in der Mitte, bis zu Ausgaben auf der rechten Seite zeigt.]**
-
 *   **Nodes (Module):** Jede Funktion in MapFlow wird durch einen "Node" (oder ein Modul) repräsentiert. Ein Node ist ein Block, der eine bestimmte Aufgabe erfüllt. Es gibt Nodes zum Abspielen von Videos, zur Erzeugung von Farben, zur Anwendung von Effekten (wie Unschärfe oder Farbkorrektur), zum Compositing von Layern und zur Ausgabe auf Bildschirme.
 *   **Sockets & Verbindungen (Kabel):** Nodes haben Eingänge (Sockets auf der linken Seite) und Ausgänge (Sockets auf der rechten Seite). Sie verbinden den Ausgang eines Nodes mit dem Eingang eines anderen, indem Sie "Kabel" (Wires) ziehen.
 *   **Der Signalfluss:** Die Kabel repräsentieren den Fluss von Videodaten, Audiodaten oder Steuersignalen. Sie "zeichnen" buchstäblich den Weg, den Ihre Visuals von der Erstellung bis zum finalen Bildschirm nehmen.
@@ -34,8 +32,6 @@ Obwohl der Node-Graph flexibel ist, folgen die meisten Workflows einem gemeinsam
 ### Projection Mapping
 
 MapFlow ist für komplexe physische Umgebungen konzipiert. Sobald Ihre Visuals erstellt und zusammengesetzt sind, ist die letzte Phase oft die Projektion auf physische Objekte.
-
-> 🖼️ **[PLATZHALTER SCREENSHOT: Das aktive Mapping-Panel, das ein über eine geometrische Form gelegtes Mesh zeigt, welches zur Anpassung verzerrt wird.]**
 
 Dies wird mit speziellen Werkzeugen innerhalb von MapFlow erreicht:
 *   **Warping (Mesh Editing):** Die Verformung des Videobildes zur Anpassung an gekrümmte oder unregelmäßige Oberflächen mithilfe eines Gitters (Grid) von Kontrollpunkten.

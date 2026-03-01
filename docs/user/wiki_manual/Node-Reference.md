@@ -2,8 +2,6 @@
 
 Dieses Dokument bietet eine umfassende Liste aller im Module Canvas von MapFlow verfügbaren Nodes, kategorisiert nach ihrer Funktion.
 
-> 🚧 **[WIP: Dieses Referenzhandbuch befindet sich derzeit im Aufbau. Weitere Nodes und detaillierte Parameterbeschreibungen werden hinzugefügt, sobald MapFlow sich seinem offiziellen Release nähert.]**
-
 ---
 
 ## 1. Quellen (Sources / Generators & Media)
@@ -63,4 +61,3 @@ Diese Nodes verarbeiten kein Video, sondern generieren oder modifizieren Steuers
 *   **Math (Add/Multiply/Scale):** Führt mathematische Operationen auf Steuersignalen aus, bevor sie ihr Ziel erreichen.
 *   **Timeline Track:** Ein spezialisierter Node, der Keyframe-Daten aus dem Timeline-Panel liest und die entsprechenden Werte ausgibt.
 
-> 🖼️ **[PLATZHALTER SCREENSHOT: Ein zusammengesetztes Bild, das einige Beispiele für Nodes aus verschiedenen Kategorien zeigt und ihre unterschiedlichen Icons sowie Eingänge/Ausgänge hervorhebt.]**
