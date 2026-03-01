@@ -2057,7 +2057,7 @@ mod tests_coverage {
         module.add_connection(l_id, 0, o_id, 0);
 
         // Evaluate
-        let result = evaluator.evaluate(&module, &crate::module::SharedMediaState::default());
+        let result = evaluator.evaluate(&module, &crate::module::SharedMediaState::default(), 0);
 
         // Verify RenderOp
         assert_eq!(result.render_ops.len(), 1);
@@ -2116,7 +2116,7 @@ mod tests_coverage {
             part.trigger_targets.insert(
                 0,
                 TriggerConfig {
-                    target: TriggerTarget::ParticleRate,
+                    target: TriggerTarget::Opacity,
                     mode: TriggerMappingMode::Direct,
                     min_value: 10.0,
                     max_value: 100.0,
@@ -2133,7 +2133,7 @@ mod tests_coverage {
             part.trigger_targets.insert(
                 1,
                 TriggerConfig {
-                    target: TriggerTarget::Position3D,
+                    target: TriggerTarget::Opacity,
                     mode: TriggerMappingMode::Direct,
                     min_value: 0.0,
                     max_value: 5.0, // Add 5.0 to Y
@@ -2148,7 +2148,7 @@ mod tests_coverage {
         module.add_connection(t_id, 0, p_id, 1); // Trigger -> Pos Y
 
         // Evaluate
-        let result = evaluator.evaluate(&module, &crate::module::SharedMediaState::default());
+        let result = evaluator.evaluate(&module, &crate::module::SharedMediaState::default(), 0);
 
         // Verify SourceCommand
         if let Some(SourceCommand::BevyInput { trigger_value }) = result.source_commands.get(&p_id)
@@ -2197,7 +2197,7 @@ mod tests_coverage {
             part.trigger_targets.insert(
                 0,
                 TriggerConfig {
-                    target: TriggerTarget::Position3D,
+                    target: TriggerTarget::Opacity,
                     mode: TriggerMappingMode::Direct,
                     min_value: 0.0,
                     max_value: 10.0,
@@ -2214,7 +2214,7 @@ mod tests_coverage {
             part.trigger_targets.insert(
                 1,
                 TriggerConfig {
-                    target: TriggerTarget::Scale3D,
+                    target: TriggerTarget::ScaleX,
                     mode: TriggerMappingMode::Direct,
                     min_value: 1.0,
                     max_value: 2.0, // Multiply by 2
@@ -2229,7 +2229,7 @@ mod tests_coverage {
         module.add_connection(t_id, 0, m_id, 1); // Trigger -> Scale
 
         // Evaluate
-        let result = evaluator.evaluate(&module, &crate::module::SharedMediaState::default());
+        let result = evaluator.evaluate(&module, &crate::module::SharedMediaState::default(), 0);
 
         if let Some(SourceCommand::Bevy3DModel {
             position, scale, ..
