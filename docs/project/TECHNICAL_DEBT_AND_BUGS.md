@@ -4,50 +4,63 @@ This document tracks the current state of MapFlow's implementation, identifying 
 
 ---
 
-## 🛑 Critical Architectural Issues
+## 🛑 Critical Architectural Issues & Hacks
 
 | Issue | Status | Impact | File/Location |
 | :--- | :--- | :--- | :--- |
-| **"God Object" module_canvas** | ✅ Completed | `module_canvas` has been split into `controller.rs`, `draw.rs`, `state.rs`, `types.rs`, etc. God object eliminated. | `crates/mapmap-ui/src/editors/module_canvas/` |
-| **Monolithic core/module.rs** | ✅ Completed | Refactor completed (2026-02-27). Split into `types.rs`, `config.rs`, `manager.rs`, and `mod.rs`. | `crates/mapmap-core/src/module/` |
-| **GPU Upload Blockage** | ✅ Fixed | Threaded uploads implemented in `FramePipeline` (PR #831 and #871). Micro-stutters resolved. | `crates/mapmap/src/orchestration/media.rs` |
-| **wgpu Lifetime Hack** | 🟡 In Progress | Unsafe `transmute` still used in render loop for `egui-wgpu` static lifetimes. | `crates/mapmap/src/app/loops/render.rs` |
-| **UI App Pointer Hack** | 🟡 In Progress | `*mut App` raw pointer still used in render loop for UI layout display. | `crates/mapmap/src/app/loops/render.rs` |
+| **"God Object" module_canvas** | 🟡 In Progress | `module_canvas/mod.rs` has grown to **~7,000 lines**. Refactoring started: Splitting into draw, interaction, integration, and state. | `crates/mapmap-ui/src/editors/module_canvas/mod.rs` |
+| **Monolithic core/module.rs** | 🟡 In Progress | `module.rs` contains over **3,500 lines**. Refactoring started: Splitting into types, config, and manager. | `crates/mapmap-core/src/module.rs` |
+| **GPU Upload Blockage** | 🔴 Critical | The `FramePipeline` in `mapmap-media` is not yet integrated into the main `update_media_players` loop. Currently, texture uploads happen on the main thread, causing micro-stutters. | `crates/mapmap/src/orchestration/media.rs` |
+| **wgpu Lifetime Hack** | 🔴 Unsafe Hack | Uses `unsafe transmute` to force `'static` lifetime on `RenderPass`. High risk of UB. | `crates/mapmap/src/app/loops/render.rs` |
+| **UI App Pointer Hack** | 🔴 Unsafe Hack | Uses `*mut App` raw pointer to bypass the Rust borrow checker during egui UI layout. | `crates/mapmap/src/app/loops/render.rs` |
+
+---
+
+## 🏗️ Refactoring Strategy (Architecture Audit 2026-02-25)
+
+### 1. module_canvas Decomposition
+- **Goal:** Split into logical sub-modules.
+- **Status:** Directory structure prepared. Logic separation identified.
+- **Modules:** `draw.rs`, `interaction.rs`, `integration/`, `state.rs`.
+
+### 2. core/module.rs Splitting
+- **Goal:** Separate data definitions from graph logic.
+- **Status:** Initial `types.rs` and `manager.rs` separation planned.
+- **Modules:** `types/`, `config.rs`, `manager.rs`.
 
 ---
 
 ## 🎨 Feature Gaps: Code vs. UI (Updated)
 
-- **NDI Support**: 🟡 Partial. `NdiSender` implemented; `NdiReceiver` exists as a stub with `TODO`s.
-- **MPV Decoder**: 🟡 Partial Fix. Integrated via `libmpv2`, but currently renders gray placeholder frames.
-- **Link System**: ✅ Integrated (PR #837). UI for linking nodes is functional.
-- **Bevy Node Controls**: UI labels indicate controls for Bevy 3D/Particles nodes are "not yet implemented".
-- **HAP Video Alpha**: Alpha support is partially implemented. HAP Q Alpha (YCoCg+A) is currently a TODO. Complex multi-section decoding is unstable.
-- **Shader Graph Nodes**: Core supports logic nodes, but UI lacks visual representation/wiring for complex operations.
-- **LUT Support**: No "LUT Effect" node in the effect chain UI despite core support.
-- **SRT Streaming**: Missing `libsrt` integration; connection/sending logic are just stubs.
-- **OSC Triggers**: UI lacks OSC input field for Cue triggers.
-- **Philips Hue**: Pairing logic and Area Selection fetching are missing.
+- **Bevy Node Controls:** UI labels indicate controls for Bevy 3D/Particles nodes are "not yet implemented".
+- **HAP Video Alpha:** Alpha support is hardcoded to `None` in `hap_decoder.rs`.
+- **NDI Support:** Send implementation is a placeholder; no UI configuration.
+- **Shader Graph Nodes:** Core supports logic nodes, but UI lacks visual representation/wiring.
+- **LUT Support:** No "LUT Effect" node in the effect chain UI despite core support.
+- **MPV Decoder:** Shell exists, but actual API integration is missing (generates gray frames).
+- **SRT Streaming:** Missing `libsrt` integration; connection/sending logic are just stubs.
+- **OSC Triggers:** UI lacks OSC input field for Cue triggers.
+- **Philips Hue:** Pairing logic and Area Selection fetching are missing.
 
 ---
 
 ## 🛠️ Significant Technical Debt (TODOs)
 
 ### 🏗️ Architecture & Core Logic
-- **Undo/Redo Coverage**: Currently only node positions. Needs to cover parameters, connections, and layer mutations.
-- **Trigger Smoothing**: `TriggerMappingMode::Smoothed` (attack/release) is a TODO in `module.rs`.
-- **Individual Layer Speed**: Returns master speed; individual control not yet implemented in `layer.rs`.
-- **Mesh Import**: Missing core logic for loading meshes from file (OBJ/SVG) in `module.rs`.
-- **Shader Codegen**: Missing scale, rotation, and translation parameter injection.
-- **Graph Validation**: `shader_graph.rs` lacks cycle detection and type-safety checks.
-- **MCP Shared State**: MCP server cannot yet read/access the shared project state.
-- **Spout Sync**: Spout output is missing from the main synchronization loop in `orchestration/outputs.rs`.
+- **Undo/Redo Coverage:** Currently only node positions. Needs to cover parameters, connections, and layer mutations.
+- **Trigger Smoothing:** `TriggerMappingMode::Smoothed` (attack/release) is a TODO in `module.rs`.
+- **Individual Layer Speed:** Returns master speed; individual control not yet implemented in `layer.rs`.
+- **Mesh Import:** Missing core logic for loading meshes from file (OBJ/SVG) in `module.rs`.
+- **Shader Codegen:** Missing scale, rotation, and translation parameter injection.
+- **Graph Validation:** `shader_graph.rs` lacks cycle detection and type-safety checks.
+- **MCP Shared State:** MCP server cannot yet read/access the shared project state.
+- **Spout Sync:** Spout output is missing from the main synchronization loop in `orchestration/outputs.rs`.
 
 ### 🧼 Code Cleanup & Quality
-- **Panic Policy**: Replace `panic!` with `Result` in `mapmap-mcp/server.rs`, `web/handlers.rs`, and MIDI mapping.
-- **Safety Documentation**: Every `unsafe` block must have a `// SAFETY:` comment (especially in FFmpeg/NDI/Spout).
-- **Dead Code**: Significant amounts of legacy Qt-migration logic in `window_manager.rs` and `mesh_editor.rs`.
-- **Media Thumbnails**: Background thumbnail generation and duration extraction missing in `media_browser.rs`.
+- **Panic Policy:** Replace `panic!` with `Result` in `mapmap-mcp/server.rs`, `web/handlers.rs`, and MIDI mapping.
+- **Safety Documentation:** Every `unsafe` block must have a `// SAFETY:` comment (especially in FFmpeg/NDI/Spout).
+- **Dead Code:** Significant amounts of legacy Qt-migration logic in `window_manager.rs` and `mesh_editor.rs`.
+- **Media Thumbnails:** Background thumbnail generation and duration extraction missing in `media_browser.rs`.
 
 ---
 
@@ -59,8 +72,29 @@ This document tracks the current state of MapFlow's implementation, identifying 
 | **NDI Buffer Padding** | 🟡 In Progress | Hardcoded 256-byte alignment in NDI readback may fail on some hardware. |
 | **Theme Switching** | 🔴 Missing | Global theme application requires restart; `settings.rs` implementation missing. |
 | **Node Renaming** | ✅ Fixed | Rename/Duplicate actions enabled in `module_sidebar.rs`. |
-| **Canvas Toolbar Lag** | ✅ Fixed | Restored with modern egui API in commit 56d67ed3. |
 
 ---
 
-*Last Updated: 2026-02-27 (by Orchestrator) 🦀*
+
+---
+
+## 🧠 Jules Automation & Operations
+
+Diese Sektion fasst zusammen, wie Jules den Pre-Commit-Workflow, das Branching und den Telegram-Switch automatisiert. Sie verweist auf die Task-Documentation (`docs/project/jules/telegram-automation.md`).
+
+### Pre-Commit & Branching
+
+- `scripts/Slave-Local-PreCommit.ps1` ist der maßgeschneiderte Runner für Slave-PC-02: Er setzt `VCPKG`, `FFmpeg`, `LLVM/Clang`, führt `cargo fmt`, optional `cargo sort`, `cargo clippy --fix --allow-dirty --allow-staged --workspace --features "mapmap-io/ci-linux" -- -D warnings`, `cargo check --workspace --features "mapmap-io/ci-linux"` und – falls installiert – `pre-commit run --all-files` aus.
+- Branches entstehen immer von `origin/main` und folgen dem Muster `jules/<task>` (z.B. `jules/telegram-automation`). Commit-Messages nutzen das Format `type(scope): summary` und verweisen auf diese Task-Description.
+
+### Telegram Switch
+
+- Das neue Script `scripts/switch-telegram-agent.js` schreibt `~/.openclaw/openclaw.json` neu, erzeugt die Binding-Zeile für `channels.telegram`/`accountId=default` und startet danach `openclaw gateway restart`, so dass ein Telegram-Wechsel unmittelbar wirksam wird.
+
+### Aktuelle Jules-Aufträge
+
+| Auftrag | Status | Datum | Task-Description |
+| :--- | :--- | :--- | :--- |
+| Telegram Agent Switching | Ready | 2026-02-25 | [Telegram agent switch automation](jules/telegram-automation.md) |
+
+*Last Updated: 2026-02-25 (by ClawMaster PM 🦀)*
