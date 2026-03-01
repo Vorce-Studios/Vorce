@@ -206,7 +206,7 @@ pub fn render_transport_controls(
         }
 
         // PAUSE (Secondary Action - Yellow)
-        let pause_btn = egui::Button::new(egui::RichText::new("â ¸").size(24.0))
+        let pause_btn = egui::Button::new(egui::RichText::new("⏸").size(24.0))
             .min_size(big_btn_size)
             .fill(if !is_playing && current_pos > 0.1 {
                 Color32::from_rgb(200, 160, 40)
@@ -225,7 +225,7 @@ pub fn render_transport_controls(
         ui.add_space(8.0);
 
         // STOP (Destructive Action - Separated)
-        if crate::widgets::hold_to_action_button(ui, "â ¹", Color32::from_rgb(255, 80, 80)) {
+        if crate::widgets::hold_to_action_button(ui, "⏹", Color32::from_rgb(255, 80, 80)) {
             canvas
                 .pending_playback_commands
                 .push((part_id, MediaPlaybackCommand::Stop));
@@ -260,7 +260,7 @@ pub fn render_transport_controls(
         };
         if ui
             .add(
-                egui::Button::new(egui::RichText::new("â ª").size(18.0))
+                egui::Button::new(egui::RichText::new("⏪").size(18.0))
                     .min_size(small_btn_size)
                     .fill(rev_color),
             )

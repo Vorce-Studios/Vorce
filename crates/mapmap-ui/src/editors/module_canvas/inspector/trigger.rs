@@ -219,7 +219,7 @@ pub fn render_trigger_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, trigger: &mut T
             ui.separator();
             ui.label("\u{1F4E4} Output Configuration:");
             ui.checkbox(&mut output_config.beat_output, "🥁 Beat Detection");
-            ui.checkbox(&mut output_config.bpm_output, "⏱️ï¸  BPM");
+            ui.checkbox(&mut output_config.bpm_output, "⏱️ BPM");
             ui.checkbox(&mut output_config.volume_outputs, "\u{1F4CA} Volume (RMS, Peak)");
             ui.checkbox(&mut output_config.frequency_bands, "\u{1F3B5} Frequency Bands (9)");
 
@@ -243,7 +243,7 @@ pub fn render_trigger_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, trigger: &mut T
                     toggle_invert(ui, "Beat Out", "🥁 Beat Out");
                 }
                 if output_config.bpm_output {
-                    toggle_invert(ui, "BPM Out", "⏱️ï¸  BPM Out");
+                    toggle_invert(ui, "BPM Out", "⏱️ BPM Out");
                 }
                 if output_config.volume_outputs {
                     toggle_invert(ui, "RMS Volume", "\u{1F4CA} RMS Volume");
@@ -291,7 +291,7 @@ pub fn render_trigger_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, trigger: &mut T
             offset_ms,
             ..
         } => {
-            ui.label("⏱️ï¸  Fixed Timer");
+            ui.label("⏱️ Fixed Timer");
             ui.add(
                 egui::Slider::new(interval_ms, 16..=10000)
                     .text("Interval (ms)"),

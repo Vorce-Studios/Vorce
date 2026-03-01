@@ -56,7 +56,7 @@ pub fn render_output_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, output: &mut Out
             ndi_stream_name: _ndi_stream_name,
             ..
         } => {
-            ui.label("📽️ï¸  Projector Output");
+            ui.label("📽️ Projector Output");
 
             // Output ID selection
             ui.horizontal(|ui| {
@@ -70,7 +70,7 @@ pub fn render_output_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, output: &mut Out
             });
 
             ui.separator();
-            ui.label("🖥️ï¸  Window Settings:");
+            ui.label("🖥️ Window Settings:");
 
             // Target screen selection
             ui.horizontal(|ui| {
@@ -87,10 +87,10 @@ pub fn render_output_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, output: &mut Out
                     });
             });
 
-            ui.checkbox(hide_cursor, "🖱️ï¸  Hide Mouse Cursor");
+            ui.checkbox(hide_cursor, "🖱️ Hide Mouse Cursor");
 
             ui.separator();
-            ui.label("👁️ï¸  Preview:");
+            ui.label("👁️ Preview:");
             ui.checkbox(show_in_preview_panel, "Show in Preview Panel");
             ui.checkbox(extra_preview_window, "Extra Preview Window");
 
@@ -146,7 +146,7 @@ pub fn render_output_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, output: &mut Out
             ui.separator();
 
             // --- Tabs for Hue configuration ---
-            ui.collapsing("âš™ï¸  Setup (Bridge & Pairing)", |ui| {
+            ui.collapsing("⚙️ Setup (Bridge & Pairing)", |ui| {
                 // Discovery status
                 if let Some(msg) = &canvas.hue_status_message {
                     ui.label(format!("Status: {}", msg));
@@ -194,7 +194,7 @@ pub fn render_output_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, output: &mut Out
                     ui.label("\u{2705} Paired");
                     // ui.label(format!("User: {}", username)); // Keep secret?
                 } else {
-                    ui.label("â Œ Not Paired");
+                    ui.label("❌ Not Paired");
                 }
             });
 
@@ -211,7 +211,7 @@ pub fn render_output_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, output: &mut Out
             });
 
             if *mapping_mode == HueMappingMode::Spatial {
-                ui.collapsing("🗺️ï¸  Spatial Editor", |ui| {
+                ui.collapsing("🗺️ Spatial Editor", |ui| {
                     ui.label("Position lamps in the virtual room:");
                     // Render 2D room editor
                     mesh::render_hue_spatial_editor(ui, lamp_positions);
