@@ -1,30 +1,30 @@
-/// connection module
+/// connection
 pub mod connection;
-/// hue module
+/// hue
 pub mod hue;
-/// layer module
+/// layer
 pub mod layer;
-/// mask module
+/// mask
 pub mod mask;
-/// mesh module
+/// mesh
 pub mod mesh;
-/// module module
+/// module
 pub mod module;
-/// modulizer module
+/// modulizer
 pub mod modulizer;
-/// node_link module
+/// node_link
 pub mod node_link;
-/// output module
+/// output
 pub mod output;
-/// part module
+/// part
 pub mod part;
-/// shared_media module
+/// shared_media
 pub mod shared_media;
-/// socket module
+/// socket
 pub mod socket;
-/// source module
+/// source
 pub mod source;
-/// trigger module
+/// trigger
 pub mod trigger;
 
 pub use connection::*;

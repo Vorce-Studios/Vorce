@@ -591,7 +591,9 @@ pub fn render_canvas(
 
             let inner = menu_rect.shrink(8.0);
 
-            if !is_add_menu {
+            if is_add_menu {
+                // Defer add menu since it requires `manager`
+            } else {
                 ui.scope_builder(egui::UiBuilder::new().max_rect(inner), |ui| {
                     ui.vertical(|ui| {
                         if let Some(part_id) = canvas.context_menu_part {
@@ -640,10 +642,12 @@ pub fn render_canvas(
         }
     }
 
+    // Drop the mutable borrow of module so we can use manager
     let _ = module;
 
     draw::draw_quick_create_popup(canvas, ui, canvas_rect, manager, canvas.active_module_id);
 
+    // Now render the add menu if it was open
     if let Some(pos) = canvas.context_menu_pos {
         let is_add_menu =
             canvas.context_menu_part.is_none() && canvas.context_menu_connection.is_none();
