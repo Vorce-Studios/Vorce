@@ -17,6 +17,7 @@ permissions:
   security-events: write
 
 jobs:
+  # 1. Quality Gate (Format & Lint)
   quality:
     name: "Quality Gate (Format & Lint)"
     runs-on: ubuntu-latest
@@ -35,6 +36,7 @@ jobs:
       - name: Check Clippy
         run: cargo clippy --workspace --all-targets --features "mapmap-io/ci-linux,ffmpeg" -- -D warnings
 
+  # 2. Security Scan
   security:
     name: "Security Scan"
     runs-on: ubuntu-latest
@@ -49,6 +51,7 @@ jobs:
       - name: Run Audit
         run: cargo audit --ignore RUSTSEC-2024-0370 --ignore RUSTSEC-2025-0141 --ignore RUSTSEC-2024-0436
 
+  # 3. Build & Test (Linux)
   build-linux:
     name: "Build & Test (Linux)"
     runs-on: ubuntu-latest
@@ -59,12 +62,13 @@ jobs:
       - name: Install System Dependencies
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y build-essential pkg-config clang libclang-dev yasm nasm libfontconfig1-dev libfreetype6-dev libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libasound2-dev libudev-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavdevice-dev libavfilter-dev libswresample-dev libudev-dev ffmpeg
+          sudo apt-get install -y build-essential pkg-config clang libclang-dev yasm nasm libfontconfig1-dev libfreetype6-dev libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libasound2-dev libudev-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavdevice-dev libavfilter-dev libswresample-dev libudev-dev ffmpeg      
       - name: Build (Release)
         run: cargo build --release --verbose --features "mapmap-io/ci-linux,ffmpeg"
       - name: Test
         run: cargo test --release --workspace --features "mapmap-io/ci-linux,ffmpeg"
 
+  # 4. Build & Test (Windows) - Optional for PRs, but must match name
   build-windows:
     name: "Build & Test (Windows)"
     runs-on: windows-latest
@@ -78,6 +82,7 @@ jobs:
       - name: Build
         run: cargo build --release --verbose --no-default-features --features "audio"
 
+  # 5. Validation Success (Der finale Check)
   validation-success:
     name: "Validation Success"
     runs-on: ubuntu-latest
@@ -90,7 +95,7 @@ jobs:
           echo "Security: ${{ needs.security.result }}"
           echo "Linux: ${{ needs.build-linux.result }}"
           echo "Windows: ${{ needs.build-windows.result }}"
-          
+
           if [ "${{ needs.quality.result }}" != "success" ]; then exit 1; fi
           if [ "${{ needs.security.result }}" != "success" ]; then exit 1; fi
           if [ "${{ needs.build-linux.result }}" != "success" ]; then exit 1; fi
