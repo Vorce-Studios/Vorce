@@ -11,6 +11,7 @@ use crate::module::{
     TriggerType,
 };
 use rand::RngExt;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
@@ -541,6 +542,18 @@ pub struct ModuleEvaluator {
 
     /// Currently active keyboard keys (for Shortcut triggers)
     active_keys: std::collections::HashSet<String>,
+
+    /// State for smoothed trigger inputs: (PartId, SocketIdx) -> (Current Value, Last Updated Frame)
+    trigger_smoothing_state: RefCell<HashMap<(ModulePartId, usize), (f32, u64)>>,
+
+    /// Current evaluation frame count (used to prevent smoothing multiple times per frame)
+    current_frame: u64,
+
+    /// Time of the last evaluation (used for delta time calculation)
+    last_eval_time: Instant,
+
+    /// The delta time calculated at the start of the current evaluation frame
+    current_dt: f32,
 }
 
 impl Default for ModuleEvaluator {
@@ -559,6 +572,10 @@ impl ModuleEvaluator {
             cached_result: ModuleEvalResult::default(),
             indices_cache: HashMap::new(),
             active_keys: std::collections::HashSet::new(),
+            trigger_smoothing_state: RefCell::new(HashMap::new()),
+            current_frame: 0,
+            last_eval_time: Instant::now(),
+            current_dt: 0.0,
         }
     }
 
@@ -575,6 +592,43 @@ impl ModuleEvaluator {
     /// Update active keyboard keys for Shortcut triggers
     pub fn update_keys(&mut self, keys: &std::collections::HashSet<String>) {
         self.active_keys = keys.clone();
+    }
+
+    /// Apply smoothing to a trigger value if configured, using delta time.
+    fn apply_smoothing(
+        &self,
+        part_id: ModulePartId,
+        socket_idx: usize,
+        target_val: f32,
+        mode: &crate::module::TriggerMappingMode,
+    ) -> f32 {
+        if let crate::module::TriggerMappingMode::Smoothed { attack, release } = mode {
+            let state_key = (part_id, socket_idx);
+            let mut cache = self.trigger_smoothing_state.borrow_mut();
+            let (mut current_val, last_frame) =
+                cache.get(&state_key).copied().unwrap_or((target_val, 0));
+
+            // Only update the value once per frame
+            if last_frame != self.current_frame {
+                let time_constant = if target_val > current_val {
+                    *attack
+                } else {
+                    *release
+                };
+
+                if time_constant > 0.001 {
+                    let alpha = 1.0 - (-self.current_dt / time_constant).exp();
+                    current_val = current_val + (target_val - current_val) * alpha;
+                } else {
+                    current_val = target_val;
+                }
+
+                cache.insert(state_key, (current_val, self.current_frame));
+            }
+            current_val
+        } else {
+            target_val
+        }
     }
 
     /// Get a spare RenderOp from the cache or create a new one (Object Pooling)
@@ -617,6 +671,12 @@ impl ModuleEvaluator {
         shared_state: &SharedMediaState,
         graph_revision: u64,
     ) -> &ModuleEvalResult {
+        // Calculate delta time
+        let now = Instant::now();
+        self.current_dt = now.duration_since(self.last_eval_time).as_secs_f32();
+        self.last_eval_time = now;
+        self.current_frame += 1;
+
         // Initialize RNG once per frame outside the loop
         let mut rng = rand::rng();
 
@@ -971,7 +1031,9 @@ impl ModuleEvaluator {
                     }
 
                     // Apply mapping
-                    let final_val = config.apply(trigger_val);
+                    let raw_final_val = config.apply(trigger_val);
+                    let final_val =
+                        self.apply_smoothing(part.id, *socket_idx, raw_final_val, &config.mode);
 
                     tracing::debug!(
                         "Trigger applying: part={}, socket={}, target={:?}, raw={}, final={}",
@@ -1189,7 +1251,13 @@ impl ModuleEvaluator {
                                         crate::module::TriggerTarget::None => {}
                                         target => {
                                             // Apply mapping
-                                            let final_val = config.apply(trigger_val);
+                                            let raw_final_val = config.apply(trigger_val);
+                                            let final_val = self.apply_smoothing(
+                                                part.id,
+                                                *socket_idx,
+                                                raw_final_val,
+                                                &config.mode,
+                                            );
 
                                             tracing::debug!(
                                                 "Trigger applying: part={}, socket={}, target={:?}, raw={}, final={}",
@@ -1766,8 +1834,8 @@ mod tests_logic {
 
         // Start trace from 1 using cached indices
         let mut op = evaluator.get_spare_render_op();
-        let indices = &evaluator.indices_cache[&module.id];
-        evaluator.trace_chain_into(1, &module, &mut op, &MeshType::default(), indices);
+        let indices = evaluator.indices_cache[&module.id].clone();
+        evaluator.trace_chain_into(1, &module, &mut op, &MeshType::default(), &indices);
 
         // Should not panic or hang, but finish with limited effects
         // The limit is 50.
