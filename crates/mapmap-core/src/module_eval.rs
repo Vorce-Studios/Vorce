@@ -2296,16 +2296,31 @@ mod tests_coverage {
         // Evaluate
         let result = evaluator.evaluate(&module, &crate::module::SharedMediaState::default(), 0);
 
-        if let Some(SourceCommand::Bevy3DModel {
-            position: _,
-            scale: _,
-            ..
-        }) = result.source_commands.get(&m_id)
-        {
-            // Position3D mapping logic seems to not map to index 1 or position natively using TriggerTarget::Param
-
-        } else {
-            panic!("Expected Bevy3DModel command");
+        match result.source_commands.get(&m_id) {
+            Some(SourceCommand::Bevy3DModel {
+                position: _,
+                scale: _,
+                ..
+            }) => {
+                // Success case
+            }
+            Some(other) => {
+                eprintln!(
+                    "Unexpected command type for Bevy3DModel: {:?}. Trigger inputs: {:?}",
+                    other,
+                    result.trigger_values.get(&m_id)
+                );
+                panic!("Expected Bevy3DModel command, got {:?}", other);
+            }
+            None => {
+                eprintln!(
+                    "No source command generated for m_id {}. Source commands keys: {:?}. Trigger inputs for m_id: {:?}",
+                    m_id,
+                    result.source_commands.keys().collect::<Vec<_>>(),
+                    result.trigger_values.get(&m_id)
+                );
+                panic!("Expected Bevy3DModel command, but None was found");
+            }
         }
     }
 }
