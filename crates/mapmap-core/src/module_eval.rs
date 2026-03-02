@@ -853,6 +853,31 @@ impl ModuleEvaluator {
                                         scale[1] = val;
                                         scale[2] = val;
                                     }
+                                    (
+                                        SourceCommand::Bevy3DModel { position, scale, .. },
+                                        crate::module::TriggerTarget::Param(param_name),
+                                    ) => {
+                                        match param_name.as_str() {
+                                            "pos_x" => position[0] = val,
+                                            "pos_y" => position[1] = val,
+                                            "pos_z" => position[2] = val,
+                                            "scale_x" => scale[0] = val,
+                                            "scale_y" => scale[1] = val,
+                                            "scale_z" => scale[2] = val,
+                                            // Support for full 3D targets via Param for flexibility
+                                            "Position3D" => {
+                                                position[0] = val;
+                                                position[1] = val;
+                                                position[2] = val;
+                                            }
+                                            "Scale3D" => {
+                                                scale[0] = val;
+                                                scale[1] = val;
+                                                scale[2] = val;
+                                            }
+                                            _ => {}
+                                        }
+                                    }
                                     _ => {}
                                 }
                             }

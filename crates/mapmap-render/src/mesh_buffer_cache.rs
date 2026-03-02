@@ -120,7 +120,10 @@ impl MeshBufferCache {
         };
 
         self.cache.insert(mapping_id, cached);
-        let cached_ref = self.cache.get(&mapping_id).unwrap();
+        let cached_ref = self
+            .cache
+            .get(&mapping_id)
+            .expect("cached mesh must exist after insertion");
         (
             &cached_ref.vertex_buffer,
             &cached_ref.index_buffer,
