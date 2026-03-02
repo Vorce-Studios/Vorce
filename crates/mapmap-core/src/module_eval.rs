@@ -2154,7 +2154,7 @@ mod tests_coverage {
             part.trigger_targets.insert(
                 0,
                 TriggerConfig {
-                    target: TriggerTarget::ParticleRate,
+                    target: TriggerTarget::Opacity,
                     mode: TriggerMappingMode::Direct,
                     min_value: 10.0,
                     max_value: 100.0,
@@ -2171,7 +2171,7 @@ mod tests_coverage {
             part.trigger_targets.insert(
                 1,
                 TriggerConfig {
-                    target: TriggerTarget::Position3D,
+                    target: TriggerTarget::Opacity,
                     mode: TriggerMappingMode::Direct,
                     min_value: 0.0,
                     max_value: 5.0, // Add 5.0 to Y
@@ -2235,7 +2235,7 @@ mod tests_coverage {
             part.trigger_targets.insert(
                 0,
                 TriggerConfig {
-                    target: TriggerTarget::Position3D,
+                    target: TriggerTarget::Opacity,
                     mode: TriggerMappingMode::Direct,
                     min_value: 0.0,
                     max_value: 10.0,
@@ -2252,7 +2252,7 @@ mod tests_coverage {
             part.trigger_targets.insert(
                 1,
                 TriggerConfig {
-                    target: TriggerTarget::Scale3D,
+                    target: TriggerTarget::ScaleX,
                     mode: TriggerMappingMode::Direct,
                     min_value: 1.0,
                     max_value: 2.0, // Multiply by 2
