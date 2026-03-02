@@ -1297,6 +1297,7 @@ pub fn render_inspector_for_part(
                                     if ui.selectable_label(matches!(effect, EffectType::ChromaticAberration), "Chromatic").clicked() { changed_type = Some(EffectType::ChromaticAberration); }
                                     if ui.selectable_label(matches!(effect, EffectType::FilmGrain), "Film Grain").clicked() { changed_type = Some(EffectType::FilmGrain); }
                                     if ui.selectable_label(matches!(effect, EffectType::Vignette), "Vignette").clicked() { changed_type = Some(EffectType::Vignette); }
+                                    if ui.selectable_label(matches!(effect, EffectType::LoadLUT), "Load 3D LUT").clicked() { changed_type = Some(EffectType::LoadLUT); }
                                 });
 
                             if let Some(new_type) = changed_type {
@@ -1339,6 +1340,9 @@ pub fn render_inspector_for_part(
                                     ui.add(egui::Slider::new(con, 0.0..=2.0).text("Contrast"));
                                     let sat = params.entry("saturation".to_string()).or_insert(1.0);
                                     ui.add(egui::Slider::new(sat, 0.0..=2.0).text("Saturation"));
+                                }
+                                EffectType::LoadLUT => {
+                                    ui.label("LUT Loading requires a .cube file (not yet implemented in properties panel).");
                                 }
                                 _ => {
                                     ui.label("No configurable parameters");
