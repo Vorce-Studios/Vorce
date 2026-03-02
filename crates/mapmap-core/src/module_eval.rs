@@ -2116,8 +2116,8 @@ mod tests_coverage {
             op.source_props.rotation, 90.0,
             "Rotation should be mapped 1.0 -> 90.0"
         );
-        assert_eq!(
-            op.source_props.flip_horizontal, true,
+        assert!(
+            op.source_props.flip_horizontal,
             "FlipH should be true (1.0 > 0.5)"
         );
     }
