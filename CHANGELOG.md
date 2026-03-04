@@ -6,7 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- 2026-03-03: docs: Repariere veraltete Links und Ordner-Referenzen in der Dokumentation (0[1-9]-* -> neue Struktur).
+- 2026-03-03: test: Guardian: Füge Tests für Layer und Composition hinzu (#917)
+- 2026-03-03: docs: Scribe: Repariere veraltete Links und Ordner-Referenzen in der Dokumentation (#918)
+- 2026-03-02: fix: Fix Connectivity/Media Technical Debt & Implement SRT/HAP Alpha/MPV Fixes (#908)
+- 2026-03-02: feat: add LUT effect node to UI effect chain (#904)
+- 2026-03-02: feat: Add OSC trigger value fields to Cue Panel (#905)
+- 2026-03-02: refactor: modularize module canvas inspector (#907)
+- 2026-03-02: refactor: Apply per-layer effect chains in renderer and clean up related UI/texture/cache code (#909)
+- 2026-03-02: docs: Scribe: Aktualisiere MIDI Control Dokumentation (#912)
+- 2026-03-02: chore: Archivist: Repository Cleanup (#910)
 
 - 2026-03-02: fix(stability): Resolve main branch build failures, failing tests, and clippy warnings.
     - Fixed redundant method definitions in `mapmap-ui` after modularization.
