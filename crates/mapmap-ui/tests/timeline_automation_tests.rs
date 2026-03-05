@@ -1,5 +1,4 @@
 use mapmap_ui::editors::timeline_v2::{TimelineV2, ShowMode, ModuleArrangementItem};
-use mapmap_ui::TimelineAction;
 
 #[test]
 fn test_timeline_fully_automated_switch() {
