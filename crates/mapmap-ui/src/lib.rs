@@ -466,10 +466,9 @@ impl Default for AppUI {
         let saved_show_dashboard = user_config.show_dashboard;
 
         Self {
-            dashboard: {
-                let mut d = Dashboard::default();
-                d.visible = saved_show_dashboard;
-                d
+            dashboard: Dashboard {
+                visible: saved_show_dashboard,
+                ..Default::default()
             },
             paint_panel: PaintPanel::default(),
             show_osc_panel: false, // Hide by default - advanced feature

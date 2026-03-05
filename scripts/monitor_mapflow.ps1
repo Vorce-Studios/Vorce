@@ -1,5 +1,8 @@
-﻿# Wir erzwingen UTF-8 fÃ¼r die Ausgabe, damit Umlaute im Log korrekt sind
+﻿# Setze das Encoding fÃ¼r Pipes und Konsole auf UTF-8
+# Das ist entscheidend, damit Sonderzeichen wie das 'â€¦' korrekt an die Gemini CLI Ã¼bergeben werden.
+$OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::InputEncoding  = [System.Text.Encoding]::UTF8
 
 Write-Host "--- MapFlow Orchestrator WÃ¤chter (Offizieller Modus) ---"
 
@@ -45,6 +48,9 @@ while ($true) {
     $prStatus = try { gh pr status | Out-String } catch { "Fehler GitHub Status" }
     $openPrs = try { gh pr list --state open | Out-String } catch { "Fehler GitHub List" }
 
+    # Ersetze das 'â€¦' durch '...' um absolut sicher zu gehen, dass die CLI es schluckt
+    $julesStatus = $julesStatus -replace "â€¦", "..."
+
     $msg = @"
 [ORCHESTRATOR-HEARTBEAT]
 Zeitstempel: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
@@ -63,25 +69,15 @@ ANWEISUNG:
 Analysiere kurz den Status von Jules und den PRs und gib eine knappe RÃ¼ckmeldung hier im Chat.
 "@
 
-    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Sende Update..."
-    
-    # Sicherer Versand Ã¼ber temporÃ¤re Datei
-    $tempFile = [IO.Path]::Combine($env:TEMP, "gemini_hb_$(Get-Random).txt")
-    $msg | Out-File -FilePath $tempFile -Encoding utf8
+    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Sende Update an Chat ($SessionId)..."
     
     try {
-        # Wir nutzen -r fÃ¼r Resume und -p @file fÃ¼r den Prompt
-        # Wir lassen --raw-output weg, um Warnungen zu vermeiden
-        $res = & gemini -p "@$tempFile" -r $SessionId --approval-mode yolo 2>&1 | Out-String
-        if ($res -match "Loaded cached credentials") {
-            Write-Host "[$(Get-Date -Format 'HH:mm:ss')] OK: Nachricht erfolgreich injiziert."
-        } else {
-            Write-Host "[$(Get-Date -Format 'HH:mm:ss')] INFO: Gemini CLI Antwort:`n$res"
-        }
+        # Einfacher Pipe-Versand laut Gemini CLI Doku
+        # Wir nutzen nur -r fÃ¼r Resume und --approval-mode yolo.
+        # Der Prompt kommt direkt vom Standard Input (stdin).
+        $msg | & gemini -r $SessionId --approval-mode yolo --raw-output 2>&1 | Write-Host
     } catch {
-        Write-Host "FEHLER: $_"
-    } finally {
-        if (Test-Path $tempFile) { Remove-Item $tempFile }
+        Write-Host "FEHLER beim Senden: $_"
     }
 
     Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Warte $Interval Sekunden..."

@@ -13,7 +13,7 @@ impl MediaManagerUIWrapper {
             .show(ctx, |ui| {
                 ui.label("Media Manager Placeholder");
                 if ui.button("Refresh").clicked() {
-                    let _ = library.refresh();
+                    library.refresh();
                 }
             });
         self.visible = open;
