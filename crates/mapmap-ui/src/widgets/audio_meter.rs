@@ -41,8 +41,8 @@ impl Widget for AudioMeter {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         // Expand vertically to fill available space, but clamp to reasonable limits
         // to prevent layout explosions or zero-height issues.
-        // We use available_height() but clamp it because sometimes it can be infinite or 0.
-        let h = ui.available_height().clamp(40.0, 120.0);
+        // Increased min height to 60.0 to ensure analog scale is not clipped.
+        let h = ui.available_height().clamp(60.0, 120.0);
 
         let desired_size = Vec2::new(self.width, h);
         let (rect, response) = ui.allocate_exact_size(desired_size, Sense::hover());

@@ -465,6 +465,15 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     .pending_playback_commands
                     .push((part_id, command));
             }
+            UIAction::TimelineAction(timeline_action) => {
+                use mapmap_ui::TimelineAction;
+                match timeline_action {
+                    TimelineAction::Play => app.state.effect_animator_mut().play(),
+                    TimelineAction::Pause => app.state.effect_animator_mut().pause(),
+                    TimelineAction::Stop => app.state.effect_animator_mut().stop(),
+                    TimelineAction::Seek(time) => app.state.effect_animator_mut().seek(time as f64),
+                }
+            }
             _ => {
                 // Other actions
             }

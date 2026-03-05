@@ -351,7 +351,7 @@ pub fn render_canvas(
             {
                 if let Some(pointer_pos) = ui.input(|i| i.pointer.hover_pos()) {
                     for target in &all_sockets {
-                        if target.position.distance(pointer_pos) < 15.0 * canvas.zoom
+                        if target.position.distance(pointer_pos) < 30.0 * canvas.zoom
                             && target.part_id != from_part
                             && target.is_output != is_output
                         {

@@ -77,9 +77,9 @@ impl InspectorPanel {
 
         egui::SidePanel::right("inspector_panel")
             .resizable(true)
-            .default_width(300.0)
-            .min_width(250.0)
-            .max_width(450.0)
+            .default_width(400.0)
+            .min_width(320.0)
+            .max_width(600.0)
             .frame(cyber_panel_frame(&ctx.style()))
             .show(ctx, |ui| {
                 // Cyber Header

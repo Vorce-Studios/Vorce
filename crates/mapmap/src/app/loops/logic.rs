@@ -79,6 +79,11 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
             bpm: analysis.tempo_bpm,
         };
         runner.update(&trigger_data, &node_triggers);
+
+        // SYNC WITH UI
+        app.ui_state.module_canvas.set_audio_data(trigger_data.clone());
+        app.ui_state.current_audio_level = trigger_data.rms_volume;
+        app.ui_state.current_bpm = trigger_data.bpm;
     } else {
         // Fallback for when Bevy is disabled: still need to evaluate for render_ops
         for module in app.state.module_manager.list_modules() {

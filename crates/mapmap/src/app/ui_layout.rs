@@ -40,7 +40,8 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
     if app.ui_state.show_inspector {
         egui::SidePanel::right("right_panel")
             .resizable(true)
-            .default_width(320.0)
+            .default_width(400.0)
+            .min_width(320.0)
             .show(ctx, |_ui_obj| {
                 // Render the unified Inspector
                 app.ui_state.render_inspector(
