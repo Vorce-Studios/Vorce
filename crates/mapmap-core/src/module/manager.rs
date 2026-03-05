@@ -204,3 +204,7 @@ impl Default for ModuleManager {
         Self::new()
     }
 }
+
+#[cfg(test)]
+#[path = "manager_tests.rs"]
+mod manager_tests;

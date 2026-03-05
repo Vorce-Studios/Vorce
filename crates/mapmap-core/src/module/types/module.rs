@@ -282,3 +282,7 @@ pub enum ModulePlaybackMode {
     /// Loop indefinitely until user switches module
     LoopUntilManualSwitch,
 }
+
+#[cfg(test)]
+#[path = "module_tests.rs"]
+mod module_tests;

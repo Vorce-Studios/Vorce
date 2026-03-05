@@ -122,3 +122,7 @@ Die Inkonsistenz im `ModuleEvaluator` bleibt bestehen, da dieser statenlos ist u
 ## 2024-05-24 - Split Logic in ModuleEvaluator
 **Erkenntnis:** The application of `TriggerTarget` logic is split between two separate methods in `ModuleEvaluator`. `evaluate()` handles `SourceCommand` modification (for Bevy/Media inputs), while `trace_chain_into()` handles `RenderOp` modification (for visual properties like Opacity/Scale). This separation increases the risk of regression if one path is updated without the other.
 **Aktion:** Ensure both paths are explicitly tested for `TriggerTarget` application. Future refactoring should consider unifying this logic.
+
+## 2024-05-19 - Ungetestete Kernlogik in ModuleManager und MapFlowModule entdeckt
+**Erkenntnis:** Wichtige Kernfunktionalitäten in `crates/mapmap-core/src/module/manager.rs` und `crates/mapmap-core/src/module/types/module.rs` wie das Hinzufügen, Entfernen und Duplizieren von Modulen bzw. Verbindungen waren komplett ungetestet, was ein Risiko für die Stabilität des MapFlow-Graphs darstellt.
+**Aktion:** Für zukünftige Testabdeckungen sollte besonderes Augenmerk auf zustandsverändernde Methoden in Datenstrukturen (insbesondere CRUD-Operationen für den Modul-Graphen) gelegt werden, selbst wenn diese trivial erscheinen, da sie oft in einer Kette von Änderungen (z.B. UI -> Manager -> Module -> Part) eine zentrale Rolle spielen.
