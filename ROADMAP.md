@@ -1,7 +1,7 @@
 # MapFlow – Vollständige Roadmap und Feature-Status
 
 > **Version:** 1.0.0 (Release Candidate)
-> **Stand:** 2026-03-05 05:15
+> **Stand:** 2026-03-05 05:50
 > **Zielgruppe:** @Projektleitung und Entwickler-Team
 > **Projekt-Version:** 1.0.0-RC1
 
