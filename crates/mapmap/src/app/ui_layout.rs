@@ -19,7 +19,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                 .stroke(egui::Stroke::new(1.0, ctx.style().visuals.widgets.noninteractive.bg_stroke.color))
             )
             .show(ctx, |ui_obj| {
-                ui::view::menu_bar::toolbar::show(ui_obj, &mut app.ui_state, &mut app.ui_state.actions);
+                ui::view::menu_bar::toolbar::show(ui_obj, &mut app.ui_state);
             });
     }
 
