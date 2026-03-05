@@ -4,50 +4,73 @@ use mapmap_ui as ui;
 /// Main UI orchestration function.
 /// Renders the entire application UI layout using egui.
 pub fn show(ctx: &egui::Context, app: &mut App) {
-    // 1. Top Panel: Dashboard / Global Controls
+    // 1. Global Menu Bar (Top-most)
+    let menu_actions = ui::view::menu_bar::show(ctx, &mut app.ui_state);
+    for action in menu_actions {
+        app.ui_state.actions.push(action);
+    }
+
+    // 2. Dashboard / Global Controls (Top Panel)
     let _ = app
         .ui_state
         .dashboard
         .ui(ctx, &app.ui_state.i18n, app.ui_state.icon_manager.as_ref());
 
-    // 2. Left Panel: Media Browser
-    if app.ui_state.show_media_browser {
-        egui::SidePanel::left("media_browser_panel")
+    // 3. Left Panel: Sidebar (Collapsible)
+    if app.ui_state.show_left_sidebar {
+        egui::SidePanel::left("left_sidebar_panel")
             .resizable(true)
             .default_width(280.0)
             .show(ctx, |ui_obj| {
-                let _ = app.ui_state.media_browser.ui(
-                    ui_obj,
+                if app.ui_state.show_media_browser {
+                    let _ = app.ui_state.media_browser.ui(
+                        ui_obj,
+                        &app.ui_state.i18n,
+                        app.ui_state.icon_manager.as_ref(),
+                    );
+                } else {
+                    ui_obj.heading(&app.ui_state.i18n.t("panel-dashboard"));
+                    ui_obj.separator();
+                    ui_obj.label("Wählen Sie ein Modul oder Medium...");
+                }
+            });
+    }
+
+    // 4. Right Panel: Inspector (Docked)
+    if app.ui_state.show_inspector {
+        egui::SidePanel::right("right_panel")
+            .resizable(true)
+            .default_width(320.0)
+            .show(ctx, |_ui_obj| {
+                // Render the unified Inspector
+                app.ui_state.render_inspector(
+                    ctx,
+                    std::sync::Arc::make_mut(&mut app.state.module_manager),
+                    &app.state.layer_manager,
+                    &app.state.output_manager,
+                );
+
+                // Legacy panels (can be toggled separately or integrated)
+                if app.ui_state.show_transforms {
+                    app.ui_state.transform_panel.render(ctx, &app.ui_state.i18n);
+                }
+                
+                app.ui_state.effect_chain_panel.ui(
+                    ctx,
                     &app.ui_state.i18n,
                     app.ui_state.icon_manager.as_ref(),
+                    Some(&mut app.recent_effect_configs),
                 );
             });
     }
 
-    // 3. Right Panel: Inspector & Functional Panels
-    egui::SidePanel::right("right_panel")
-        .resizable(true)
-        .default_width(300.0)
-        .show(ctx, |_ui_obj| {
-            // Transform and Edge Blend panels manage their own windows
-            app.ui_state.transform_panel.render(ctx, &app.ui_state.i18n);
-            app.ui_state.edge_blend_panel.show(ctx, &app.ui_state.i18n);
-
-            app.ui_state.effect_chain_panel.ui(
-                ctx,
-                &app.ui_state.i18n,
-                app.ui_state.icon_manager.as_ref(),
-                Some(&mut app.recent_effect_configs),
-            );
-        });
-
-    // 4. Bottom Panel: Timeline
+    // 5. Bottom Panel: Timeline
     if app.ui_state.show_timeline {
         egui::TopBottomPanel::bottom("bottom_panel")
             .resizable(true)
             .default_height(200.0)
             .show(ctx, |ui_obj| {
-                ui_obj.heading("Timeline");
+                ui_obj.heading(app.ui_state.i18n.t("panel-timeline"));
                 let _ = app
                     .ui_state
                     .timeline_panel
@@ -55,16 +78,25 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
             });
     }
 
-    // Cue Panel
-    app.ui_state.cue_panel.show(
-        ctx,
-        &app.control_manager,
-        &app.ui_state.i18n,
-        &mut app.ui_state.actions,
-        app.ui_state.icon_manager.as_ref(),
-    );
+    // 6. Floating Windows / Overlays
+    
+    // Performance Stats Overlay
+    if app.ui_state.show_stats {
+        app.ui_state.render_stats_overlay(ctx, app.ui_state.current_fps, app.ui_state.current_frame_time_ms);
+    }
 
-    // 5. Central Panel: Module Canvas
+    // Cue Panel
+    if app.ui_state.show_cue_panel {
+        app.ui_state.cue_panel.show(
+            ctx,
+            &app.control_manager,
+            &app.ui_state.i18n,
+            &mut app.ui_state.actions,
+            app.ui_state.icon_manager.as_ref(),
+        );
+    }
+
+    // 7. Central Panel: Module Canvas
     egui::CentralPanel::default()
         .frame(egui::Frame::default().fill(ctx.style().visuals.panel_fill))
         .show(ctx, |ui_obj| {
@@ -175,19 +207,10 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
             }
         });
 
-    // 6. Floating Windows / Overlays
+    // 8. Other Overlays (Shader Graph, Audio, MIDI)
 
     if app.ui_state.show_shader_graph {
-        let mut open = app.ui_state.show_shader_graph;
-        egui::Window::new(app.ui_state.i18n.t("panel-node-editor"))
-            .open(&mut open)
-            .show(ctx, |ui_obj| {
-                let _ = app
-                    .ui_state
-                    .node_editor_panel
-                    .ui(ui_obj, &app.ui_state.i18n);
-            });
-        app.ui_state.show_shader_graph = open;
+        app.ui_state.render_node_editor(ctx);
     }
 
     if app.ui_state.show_audio {
