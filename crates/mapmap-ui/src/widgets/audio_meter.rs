@@ -13,6 +13,7 @@ pub struct AudioMeter {
     level_db_left: f32,
     level_db_right: f32,
     width: f32,
+    height: Option<f32>,
 }
 
 impl AudioMeter {
@@ -27,6 +28,7 @@ impl AudioMeter {
             level_db_left,
             level_db_right,
             width,
+            height: None,
         }
     }
 
@@ -35,14 +37,19 @@ impl AudioMeter {
         self.width = width;
         self
     }
+
+    /// Set preferred height
+    pub fn height(mut self, height: f32) -> Self {
+        self.height = Some(height);
+        self
+    }
 }
 
 impl Widget for AudioMeter {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        // Expand vertically to fill available space, but clamp to reasonable limits
-        // to prevent layout explosions or zero-height issues.
-        // Increased min height to 60.0 to ensure analog scale is not clipped.
-        let h = ui.available_height().clamp(60.0, 120.0);
+        // Use fixed height if provided, otherwise default to 60.0.
+        // Avoid available_height() in horizontal layouts to prevent layout loops.
+        let h = self.height.unwrap_or(60.0);
 
         let desired_size = Vec2::new(self.width, h);
         let (rect, response) = ui.allocate_exact_size(desired_size, Sense::hover());

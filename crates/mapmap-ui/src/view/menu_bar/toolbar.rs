@@ -131,7 +131,7 @@ pub fn show(ui: &mut egui::Ui, ui_state: &mut AppUI, actions: &mut Vec<UIAction>
                     ui_state.user_config.meter_style,
                     left_db,
                     right_db,
-                ));
+                ).height(40.0));
 
                 // === SPACER - push performance to right ===
                 ui.with_layout(
