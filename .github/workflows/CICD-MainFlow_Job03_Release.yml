@@ -109,25 +109,9 @@ jobs:
           Add-Content -Path $env:GITHUB_ENV -Value "FFMPEG_LIB_DIR=$LibPath"
           Add-Content -Path $env:GITHUB_ENV -Value "FFMPEG_VERSION=7.1"
 
-          # Force bindgen to see vcpkg headers first (critical)
-          $ClangArgs = @(
-            "-I`"$IncludePath`"",
-            "-isystem", "`"$IncludePath`""
-          )
-
-          # Add standard MSVC includes if present
-          if ($env:INCLUDE) {
-            foreach ($p in ($env:INCLUDE -split ';')) {
-              $trimmed = $p.Trim()
-              if ($trimmed) {
-                $fullPath = [System.IO.Path]::GetFullPath($trimmed)
-                $ClangArgs += "-I`"$fullPath`""
-              }
-            }
-          }
-
-          $ClangArgsString = $ClangArgs -join " "
-          Add-Content -Path $env:GITHUB_ENV -Value "BINDGEN_EXTRA_CLANG_ARGS=$ClangArgsString"
+          # Force bindgen/clang to use vcpkg headers on Windows MSVC and avoid Linux path leakage
+          $ClangArgs = "--target=x86_64-pc-windows-msvc -I`"$IncludePath`""
+          Add-Content -Path $env:GITHUB_ENV -Value "BINDGEN_EXTRA_CLANG_ARGS=$ClangArgs"
           Add-Content -Path $env:GITHUB_PATH -Value "$BinPath"
 
       - name: Install cargo-wix

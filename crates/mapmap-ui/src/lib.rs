@@ -158,6 +158,8 @@ pub enum UIAction {
     SetMasterOpacity(f32),
     /// Set master playback speed
     SetMasterSpeed(f32),
+    /// Set master blackout state
+    SetMasterBlackout(bool),
     /// Set composition name
     SetCompositionName(String),
 
@@ -880,7 +882,7 @@ impl AppUI {
     /// Render master controls content (embedded)
     pub fn render_master_controls_embedded(
         &mut self,
-        ui: &mut Ui,
+        ui: &mut egui::Ui,
         layer_manager: &mut mapmap_core::LayerManager,
     ) {
         // Determine learning state (capture values to avoid borrow conflict)
@@ -927,6 +929,27 @@ impl AppUI {
         if (composition.master_speed - old_master_speed).abs() > 0.001 {
             self.actions
                 .push(UIAction::SetMasterSpeed(composition.master_speed));
+        }
+
+        // Master Blackout
+        ui.separator();
+        let old_master_blackout = composition.master_blackout;
+        let response = ui.checkbox(
+            &mut composition.master_blackout,
+            self.i18n.t("label-master-blackout"),
+        );
+        Self::midi_learn_helper(
+            ui,
+            &response,
+            mapmap_control::target::ControlTarget::MasterBlackout,
+            is_learning,
+            last_active_element.as_ref(),
+            last_active_time,
+            &mut self.actions,
+        );
+        if composition.master_blackout != old_master_blackout {
+            self.actions
+                .push(UIAction::SetMasterBlackout(composition.master_blackout));
         }
     }
 
@@ -1013,6 +1036,7 @@ impl AppUI {
         }
 
         let mut is_open = self.show_settings;
+        let mut should_close = false;
         egui::Window::new(self.i18n.t("menu-settings"))
             .open(&mut is_open)
             .default_size([500.0, 400.0])
@@ -1072,10 +1096,10 @@ impl AppUI {
 
                 ui.add_space(20.0);
                 if ui.button("Close").clicked() {
-                    is_open = false;
+                    should_close = true;
                 }
             });
         
-        self.show_settings = is_open;
+        self.show_settings = is_open && !should_close;
     }
 }

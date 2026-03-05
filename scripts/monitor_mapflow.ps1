@@ -1,55 +1,89 @@
-param(
-    [Parameter(Mandatory=$true)][int]$Interval,
-    [Parameter(Mandatory=$true)][string]$SessionId
-)
+ï»¿# Wir erzwingen UTF-8 fÃƒÂ¼r die Ausgabe, damit Umlaute im Log korrekt sind
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-# Initialer Start-Hinweis im Konsolen-Log
-Write-Host "--- MapFlow Orchestrator Wächter (Offizieller Modus) ---"
+Write-Host "--- MapFlow Orchestrator WÃƒÂ¤chter (Offizieller Modus) ---"
+
+# Parameter-Verarbeitung
+$Interval = 300
+$SessionId = $null
+
+for ($i = 0; $i -lt $args.Count; $i++) {
+    if ($args[$i] -eq "-Interval") { $Interval = [int]$args[$i+1]; $i++ }
+    if ($args[$i] -eq "-SessionId") { $SessionId = $args[$i+1]; $i++ }
+}
+
+if ($null -eq $SessionId -or $SessionId -eq "") {
+    $SessionId = $env:GEMINI_SESSION_ID
+    if ($null -eq $SessionId -or $SessionId -eq "") {
+        Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Suche nach Session-ID..."
+        try {
+            $sessionsText = gemini --list-sessions | Out-String
+            if ($sessionsText -match "([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})") {
+                $matches = [regex]::Matches($sessionsText, "([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})")
+                $SessionId = $matches[0].Value
+                Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Nutze Session-ID: $SessionId"
+            }
+        } catch {
+            Write-Host "Konnte Sessions nicht auflisten."
+        }
+    }
+}
+
+if ($null -eq $SessionId -or $SessionId -eq "") {
+    Write-Host "FEHLER: Keine Session-ID gefunden!"
+    exit 1
+}
+
 Write-Host "Ziel-Session: $SessionId"
 Write-Host "Intervall: $Interval Sekunden"
-Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Monitoring ist bereit und startet jetzt..."
+Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Monitoring startet..."
 
 while ($true) {
-    Write-Host "`n[$(Get-Date -Format 'HH:mm:ss')] === STARTE CHECK-ZYKLUS ==="
-    
-    # 1. Jules Status abrufen
-    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Rufe Jules Remote Sessions ab..."
-    $julesStatus = jules remote list --session | Out-String
-    
-    # 2. Vollständige Übersicht (alle PRs)
-    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Rufe vollständige PR-Liste ab..."
-    $allPrs = gh pr list --limit 100 --json number,title,author,state | Out-String
-    
-    # 3. Fokus-Liste (für die Arbeit)
-    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Rufe Fokus-PR-Liste mit Status-Checks ab..."
-    $focusPrs = gh pr list --search "is:open" --json number,title,statusCheckRollup,mergeable,author | Out-String
-    
-    # 4. Der Orchestrator-Prompt
+    Write-Host "`n[$(Get-Date -Format 'HH:mm:ss')] === CHECK START ==="
+
+    $julesStatus = try { jules remote list --session | Out-String } catch { "Fehler Jules" }
+    $prStatus = try { gh pr status | Out-String } catch { "Fehler GitHub Status" }
+    $openPrs = try { gh pr list --state open | Out-String } catch { "Fehler GitHub List" }
+
     $msg = @"
 [ORCHESTRATOR-HEARTBEAT]
+Zeitstempel: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
 Session-ID: $SessionId
 
 --- JULES REMOTE SESSIONS ---
 $julesStatus
 
---- VOLLSTÄNDIGE PR ÜBERSICHT (Referenz) ---
-$allPrs
+--- GITHUB PR STATUS ---
+$prStatus
 
---- FOKUS PR LISTE (Primäre Aufgabe) ---
-$focusPrs
+--- OFFENE PULL REQUESTS ---
+$openPrs
 
 ANWEISUNG:
-1. Nutze die FOKUS-LISTE zur Identifikation von PRs mit 'FAILURE' in statusCheckRollup.
-2. BEI FEHLERN: Analysiere die Ursache via GitHub-Tools und schreibe einen @jules Kommentar mit Korrekturhinweisen. (KEIN Eigen-Fix!)
-3. BEI ERFOLG (SUCCESS) & MERGEABLE: Führe den Merge automatisch durch. WICHTIG: PRs dürfen NIEMALS gemerged werden, wenn nicht alle Checks absolut grün (SUCCESS) sind!
-4. NUTZE DIE VOLLSTÄNDIGE ÜBERSICHT, um sicherzustellen, dass kein PR vergessen wurde.
-5. Melde den Status kurz hier im Chat.
+Analysiere kurz den Status von Jules und den PRs und gib eine knappe RÃƒÂ¼ckmeldung hier im Chat.
 "@
 
-    # 5. In die Session injizieren
-    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Sende Update an Gemini-Chat ($SessionId)..."
-    & gemini --prompt $msg --session $SessionId --yolo --approval-mode yolo
+    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Sende Update..."
     
-    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Update gesendet. Nächster Check in $Interval Sekunden."
+    # Sicherer Versand ÃƒÂ¼ber temporÃƒÂ¤re Datei
+    $tempFile = [IO.Path]::Combine($env:TEMP, "gemini_hb_$(Get-Random).txt")
+    $msg | Out-File -FilePath $tempFile -Encoding utf8
+    
+    try {
+        # Wir nutzen -r fÃƒÂ¼r Resume und -p @file fÃƒÂ¼r den Prompt
+        # Wir lassen --raw-output weg, um Warnungen zu vermeiden
+        $res = & gemini -p "@$tempFile" -r $SessionId --approval-mode yolo 2>&1 | Out-String
+        if ($res -match "Loaded cached credentials") {
+            Write-Host "[$(Get-Date -Format 'HH:mm:ss')] OK: Nachricht erfolgreich injiziert."
+        } else {
+            Write-Host "[$(Get-Date -Format 'HH:mm:ss')] INFO: Gemini CLI Antwort:`n$res"
+        }
+    } catch {
+        Write-Host "FEHLER: $_"
+    } finally {
+        if (Test-Path $tempFile) { Remove-Item $tempFile }
+    }
+
+    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Warte $Interval Sekunden..."
     Start-Sleep -Seconds $Interval
 }

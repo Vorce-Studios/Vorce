@@ -13,9 +13,9 @@ pub fn show(ctx: &egui::Context, ui_state: &mut AppUI) -> Vec<UIAction> {
     egui::TopBottomPanel::top("main_menu_bar")
         .frame(egui::Frame::menu(ctx.style().as_ref()))
         .show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
+            egui::MenuBar::new().ui(ui, |ui: &mut egui::Ui| {
                 // File Menu
-                ui.menu_button(ui_state.i18n.t("menu-file"), |ui| {
+                ui.menu_button(ui_state.i18n.t("menu-file"), |ui: &mut egui::Ui| {
                     if ui.button(ui_state.i18n.t("menu-new")).clicked() {
                         actions.push(UIAction::NewProject);
                         ui.close();
@@ -52,7 +52,7 @@ pub fn show(ctx: &egui::Context, ui_state: &mut AppUI) -> Vec<UIAction> {
                 });
 
                 // Edit Menu
-                ui.menu_button(ui_state.i18n.t("menu-edit"), |ui| {
+                ui.menu_button(ui_state.i18n.t("menu-edit"), |ui: &mut egui::Ui| {
                     if ui.button(ui_state.i18n.t("menu-undo")).clicked() {
                         actions.push(UIAction::Undo);
                         ui.close();
@@ -69,7 +69,7 @@ pub fn show(ctx: &egui::Context, ui_state: &mut AppUI) -> Vec<UIAction> {
                 });
 
                 // View Menu - CLEANED UP & REORGANIZED
-                ui.menu_button(ui_state.i18n.t("menu-view"), |ui| {
+                ui.menu_button(ui_state.i18n.t("menu-view"), |ui: &mut egui::Ui| {
                     ui.checkbox(&mut ui_state.show_left_sidebar, "🖥 Sidebar");
                     ui.checkbox(&mut ui_state.show_module_canvas, "📦 Module Canvas");
                     ui.checkbox(&mut ui_state.show_timeline, format!("🎞 {}", ui_state.i18n.t("panel-timeline")));
@@ -83,14 +83,14 @@ pub fn show(ctx: &egui::Context, ui_state: &mut AppUI) -> Vec<UIAction> {
                     
                     ui.separator();
                     
-                    ui.menu_button("🛠 Erweitert", |ui| {
+                    ui.menu_button("🛠 Erweitert", |ui: &mut egui::Ui| {
                         ui.checkbox(&mut ui_state.show_shader_graph, "⚛ Shader Editor");
                         ui.checkbox(&mut ui_state.show_controller_overlay, "🎹 Controller Overlay");
                         ui.checkbox(&mut ui_state.show_cue_panel, "🎭 Cue List");
                         ui.checkbox(&mut ui_state.is_midi_learn_mode, "🛰 MIDI Learn Mode");
                     });
 
-                    ui.menu_button("📺 Windows (Legacy)", |ui| {
+                    ui.menu_button("📺 Windows (Legacy)", |ui: &mut egui::Ui| {
                         ui.checkbox(&mut ui_state.show_layers, "Layers");
                         ui.checkbox(&mut ui_state.show_mappings, "Mappings");
                         ui.checkbox(&mut ui_state.show_outputs, "Outputs");
@@ -113,7 +113,7 @@ pub fn show(ctx: &egui::Context, ui_state: &mut AppUI) -> Vec<UIAction> {
                 });
 
                 // Help Menu
-                ui.menu_button(ui_state.i18n.t("menu-help"), |ui| {
+                ui.menu_button(ui_state.i18n.t("menu-help"), |ui: &mut egui::Ui| {
                     if ui.button(ui_state.i18n.t("menu-docs")).clicked() {
                         actions.push(UIAction::OpenDocs);
                         ui.close();
