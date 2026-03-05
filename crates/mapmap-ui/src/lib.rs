@@ -1098,7 +1098,7 @@ impl AppUI {
                     should_close = true;
                 }
             });
-        
+
         self.show_settings = is_open && !should_close;
     }
 }

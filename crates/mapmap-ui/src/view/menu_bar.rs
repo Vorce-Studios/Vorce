@@ -74,15 +74,15 @@ pub fn show(ctx: &egui::Context, ui_state: &mut AppUI) -> Vec<UIAction> {
                     ui.checkbox(&mut ui_state.show_module_canvas, "📦 Module Canvas");
                     ui.checkbox(&mut ui_state.show_timeline, format!("🎞 {}", ui_state.i18n.t("panel-timeline")));
                     ui.checkbox(&mut ui_state.show_inspector, format!("🔍 {}", ui_state.i18n.t("panel-inspector")));
-                    
+
                     ui.separator();
 
                     if ui.checkbox(&mut ui_state.show_media_manager, "🎞 Media Manager").clicked() {
                         actions.push(UIAction::ToggleMediaManager);
                     }
-                    
+
                     ui.separator();
-                    
+
                     ui.menu_button("🛠 Erweitert", |ui: &mut egui::Ui| {
                         ui.checkbox(&mut ui_state.show_shader_graph, "⚛ Shader Editor");
                         ui.checkbox(&mut ui_state.show_controller_overlay, "🎹 Controller Overlay");
@@ -100,12 +100,12 @@ pub fn show(ctx: &egui::Context, ui_state: &mut AppUI) -> Vec<UIAction> {
                     });
 
                     ui.separator();
-                    
+
                     ui.checkbox(&mut ui_state.show_toolbar, ui_state.i18n.t("view-show-toolbar"));
                     ui.checkbox(&mut ui_state.show_stats, ui_state.i18n.t("view-show-stats"));
-                    
+
                     ui.separator();
-                    
+
                     if ui.button(ui_state.i18n.t("view-reset-layout")).clicked() {
                         actions.push(UIAction::ResetLayout);
                         ui.close();
@@ -165,13 +165,13 @@ pub fn show(ctx: &egui::Context, ui_state: &mut AppUI) -> Vec<UIAction> {
                     // Stats Overlay
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         ui.add_space(8.0);
-                        
+
                         // Audio Level
                         let meter = AudioMeter::new(ui_state.user_config.meter_style, ui_state.current_audio_level, ui_state.current_audio_level);
                         ui.add(meter);
-                        
+
                         ui.separator();
-                        
+
                         // Performance
                         ui.label(
                             egui::RichText::new(format!("{:.0} FPS", ui_state.current_fps))
