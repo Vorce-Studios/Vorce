@@ -15,7 +15,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
             .default_width(300.0)
             .show(ctx, |ui_obj| {
                 ui_obj.set_min_width(200.0);
-                
+
                 // Tabs for sidebar
                 ui_obj.horizontal(|ui| {
                     ui.selectable_value(&mut app.ui_state.active_sidebar_tab, 0, "📁 Media");
