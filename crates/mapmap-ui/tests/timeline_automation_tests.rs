@@ -1,5 +1,6 @@
 use mapmap_ui::editors::timeline_v2::{TimelineV2, ShowMode, ModuleArrangementItem};
 
+
 #[test]
 fn test_timeline_fully_automated_switch() {
     let mut timeline = TimelineV2::default();
