@@ -110,7 +110,7 @@ impl Default for TimelineV2 {
             snap_interval: 0.1, // 100ms default snap
             selected_keyframes: Vec::new(),
             show_curve_editor: false,
-            show_control_enabled: false,
+            show_control_enabled: true,
             show_mode: ShowMode::FullyAutomated,
             module_arrangement: Vec::new(),
             selected_module_id: None,

@@ -29,7 +29,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                         app.ui_state.icon_manager.as_ref(),
                     );
                 } else {
-                    ui_obj.heading(&app.ui_state.i18n.t("panel-dashboard"));
+                    ui_obj.heading(app.ui_state.i18n.t("panel-dashboard"));
                     ui_obj.separator();
                     ui_obj.label("Wählen Sie ein Modul oder Medium...");
                 }

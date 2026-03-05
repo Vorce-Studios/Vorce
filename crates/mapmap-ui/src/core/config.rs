@@ -383,6 +383,7 @@ mod tests {
             show_controller_overlay: false,
             show_media_manager: false,
             show_dashboard: true,
+            ndi_discovery: true,
             hue_config: HueConfig::default(),
             global_fullscreen: true,
         };

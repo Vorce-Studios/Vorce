@@ -28,7 +28,13 @@ pub use crate::core::*;
 pub use crate::editors::{
     mesh_editor::*, module_canvas::*, node_editor::*, shortcut_editor::*, timeline_v2::*,
 };
-pub use crate::panels::*;
+// Re-export panel types directly to avoid ambiguous glob re-exports
+pub use crate::panels::{
+    assignment_panel::*, audio_panel::*, controller_overlay_panel::*, cue_panel::*,
+    edge_blend_panel::*, effect_chain_panel::*, inspector_panel::*, layer_panel::*,
+    mapping_panel::*, osc_panel::*, oscillator_panel::*, output_panel::*, paint_panel::*,
+    preview_panel::*, shortcuts_panel::*, transform_panel::*,
+};
 pub use crate::view::*;
 pub use crate::widgets::*;
 
@@ -258,7 +264,7 @@ pub enum UIAction {
     NodeAction(NodeEditorAction),
 
     /// Execute timeline action
-    TimelineAction(crate::editors::timeline_v2::TimelineAction),
+    TimelineAction(TimelineAction),
 
     // Global Fullscreen Setting
     /// Set global fullscreen state
@@ -325,7 +331,7 @@ pub struct AppUI {
     /// Show output configuration
     pub show_outputs: bool, // Phase 2
     /// Output panel state
-    pub output_panel: output_panel::OutputPanel,
+    pub output_panel: OutputPanel,
     /// Edge blend configuration panel
     pub edge_blend_panel: EdgeBlendPanel,
     /// Oscillator control panel
@@ -482,7 +488,7 @@ impl Default for AppUI {
             show_master_controls: true, // Keep visible
             show_outputs: false,        // Hide by default
             output_panel: {
-                let mut panel = output_panel::OutputPanel::default();
+                let mut panel = OutputPanel::default();
                 panel.visible = false;
                 panel
             },
@@ -829,18 +835,10 @@ impl AppUI {
             }
         }
 
-        let is_learning = self.is_midi_learn_mode;
-        let last_active_element = self.controller_overlay.last_active_element.clone();
-        let last_active_time = self.controller_overlay.last_active_time;
-
         let action = self.inspector_panel.show(
             ctx,
             context,
             &self.i18n,
-            self.icon_manager.as_ref(),
-            is_learning,
-            last_active_element.as_ref(),
-            last_active_time,
             &mut self.actions,
         );
 
