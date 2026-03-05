@@ -4,25 +4,25 @@
 
 ## Struktur Analyse
 
-Das `docs/` Verzeichnis ist grundsätzlich gut strukturiert (nummerierte Ordner 01-10).
+Das `docs/` Verzeichnis ist grundsätzlich gut strukturiert (semantische Ordner wie user/, dev/, project/).
 
 ### Vorhandene Ordner
-- `01-GETTING-STARTED`: Einstieg
-- `02-CONTRIBUTING`: Guidelines
-- `03-ARCHITECTURE`: Architektur-Docs
-- `04-USER-GUIDE`: Handbuch
-- `05-ROADMAP`: Planungsunterlagen
-- `06-TUTORIALS`: Anleitungen
-- `07-TECHNICAL`: Technische Details
-- `08-CHANGELOG`: Historie
-- `09-RESOURCES`: Externe Ressourcen
-- `10-OSC-CONTROL`: Spezifische Doku für OSC
+- `user/getting-started`: Einstieg
+- `CONTRIBUTING`: Guidelines
+- `dev/architecture`: Architektur-Docs
+- `user/manual`: Handbuch
+- `project/roadmap`: Planungsunterlagen
+- `user/tutorials`: Anleitungen
+- `dev/technical`: Technische Details
+- `CHANGELOG`: Historie
+- `project/resources`: Externe Ressourcen
+- `dev/features/OSC-CONTROL`: Spezifische Doku für OSC
 
 ### Auffälligkeiten & "Loose Files"
 Folgende Dateien liegen direkt im Root von `docs/` und sollten verschoben werden:
-- `HAP_INTEGRATION_PLAN.md` -> Nach `07-TECHNICAL/` oder `05-ROADMAP/` (wenn abgeschlossen Archiv).
-- `MCP-API.md` -> Nach `07-TECHNICAL/` oder neuer Ordner `11-API/`.
-- `MIDI_USER_GUIDE.md` -> Nach `04-USER-GUIDE/` oder `10-CONTROLLER-CONFIG/`.
+- `HAP_INTEGRATION_PLAN.md` -> Nach `docs/dev/technical/` oder `docs/project/roadmap/` (wenn abgeschlossen Archiv).
+- `MCP-API.md` -> Nach `docs/dev/technical/` oder neuer Ordner `docs/dev/api/`.
+- `MIDI_USER_GUIDE.md` -> Nach `docs/user/manual/` oder `docs/dev/features/dev/features/OSC-CONTROL/`.
 - `cleanup-summary.md` -> Vermutlich alt/temporär. Archivieren oder löschen.
 - `CODE_ANALYSIS_REPORT.md` -> (Vom User?) Ggf. konsolidieren mit `CODE_AUDIT_REPORT.md`.
 
@@ -36,6 +36,6 @@ Folgende Dateien liegen direkt im Root von `docs/` und sollten verschoben werden
 3.  **Update Index:** Stelle sicher, dass `INDEX.md` alle neuen Dokumente referenziert.
 
 ## Geplante Tasks
-- [ ] Move `HAP_INTEGRATION_PLAN.md` to `07-TECHNICAL/`
-- [ ] Move `MCP-API.md` to `07-TECHNICAL/`
-- [ ] Move `MIDI_USER_GUIDE.md` to `04-USER-GUIDE/`
+- [ ] Move `HAP_INTEGRATION_PLAN.md` to `docs/dev/technical/`
+- [ ] Move `MCP-API.md` to `docs/dev/technical/`
+- [ ] Move `MIDI_USER_GUIDE.md` to `docs/user/manual/`

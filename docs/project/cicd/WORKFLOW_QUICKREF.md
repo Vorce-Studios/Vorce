@@ -308,7 +308,7 @@ echo "$((SUCCESS * 100 / TOTAL))%"
 ## 🔗 Links
 
 - **CI/CD README:** [CI_CD_README.md](README_CICD.md)
-- **Workflow Details:** [workflows/README.md](../../.github/workflows/README.md)
+- **Workflow Details:** [workflows/README.md](../../../.github/workflows/README.md)
 - **Roadmap:** [ROADMAP.md](../../ROADMAP.md)
 
 ---
