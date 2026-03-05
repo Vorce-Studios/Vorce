@@ -36,20 +36,21 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     let param_updates = app.state.effect_animator_mut().update(dt as f64);
     
     // Check if we need to re-evaluate the graph
-    // We re-evaluate if:
-    // 1. Graph structure changed
-    // 2. Parameters are animating
-    // 3. UI explicitly requested sync
-    // 4. We have active modulations (Audio/MIDI/OSC)
+    let all_modules = app.state.module_manager.modules();
+    if all_modules.is_empty() {
+        // No modules? Nothing to evaluate, nothing to render.
+        // Sync minimal UI state and return early to save CPU.
+        app.ui_state.current_fps = app.current_fps;
+        app.ui_state.current_frame_time_ms = app.current_frame_time_ms;
+        return Ok(());
+    }
+
     let graph_dirty = app.state.module_manager.graph_revision != app.last_graph_revision;
     
     // Check for reactive nodes or active modulations
     let mut has_reactive_content = false;
-    for module in app.state.module_manager.modules() {
+    for module in all_modules {
         if !module.parts.is_empty() {
-            // If we have any parts, we check if any are triggers or have active modulations
-            // For now, if there is ANY content, we keep evaluating to ensure reactivity.
-            // In a future update, we could check specifically for ModulePartType::Trigger
             has_reactive_content = true;
             break;
         }
@@ -57,10 +58,7 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
 
     let needs_re_eval = graph_dirty || !param_updates.is_empty() || ui_needs_sync || has_reactive_content;
 
-    let all_module_ids: Vec<u64> = app
-        .state
-        .module_manager
-        .list_modules()
+    let all_module_ids: Vec<u64> = all_modules
         .iter()
         .map(|m| m.id)
         .collect();

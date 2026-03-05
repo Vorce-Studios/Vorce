@@ -73,7 +73,8 @@ impl AudioPanel {
                                 db, // Mono for now
                             ).height(120.0);
                             
-                            ui.add(meter);
+                            let available_width = ui.available_width();
+                            ui.add_sized([available_width, 120.0], meter);
                         }
                         crate::config::AudioMeterStyle::Digital => {
                             let db = 20.0 * analysis.rms_volume.log10().max(-60.0);
