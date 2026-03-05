@@ -70,7 +70,7 @@ Analysiere kurz den Status von Jules und den PRs und gib eine knappe RÃ¼ckmeld
 "@
 
     Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Sende Update an Chat ($SessionId)..."
-    
+
     try {
         # Einfacher Pipe-Versand laut Gemini CLI Doku
         # Wir nutzen nur -r fÃ¼r Resume und --approval-mode yolo.
