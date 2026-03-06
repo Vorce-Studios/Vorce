@@ -1,4 +1,4 @@
-use mapmap_ui::editors::timeline_v2::{TimelineV2, ShowMode, ModuleArrangementItem};
+use mapmap_ui::editors::timeline_v2::{ModuleArrangementItem, ShowMode, TimelineV2};
 
 #[test]
 fn test_timeline_fully_automated_switch() {
@@ -18,7 +18,7 @@ fn test_timeline_fully_automated_switch() {
                 start_time: 10.0,
                 duration: 10.0,
                 enabled: true,
-            }
+            },
         ],
         ..TimelineV2::default()
     };
@@ -39,15 +39,13 @@ fn test_timeline_manual_mode_no_auto_switch() {
     let mut timeline = TimelineV2 {
         show_mode: ShowMode::Manual,
         manual_current_block_id: Some(1),
-        module_arrangement: vec![
-            ModuleArrangementItem {
-                id: 1,
-                module_id: 101,
-                start_time: 0.0,
-                duration: 10.0,
-                enabled: true,
-            }
-        ],
+        module_arrangement: vec![ModuleArrangementItem {
+            id: 1,
+            module_id: 101,
+            start_time: 0.0,
+            duration: 10.0,
+            enabled: true,
+        }],
         ..TimelineV2::default()
     };
 

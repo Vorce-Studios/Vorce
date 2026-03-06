@@ -835,12 +835,9 @@ impl AppUI {
             }
         }
 
-        let action = self.inspector_panel.show(
-            ui,
-            context,
-            &self.i18n,
-            &mut self.actions,
-        );
+        let action = self
+            .inspector_panel
+            .show(ui, context, &self.i18n, &mut self.actions);
 
         if let Some(action) = action {
             match action {
