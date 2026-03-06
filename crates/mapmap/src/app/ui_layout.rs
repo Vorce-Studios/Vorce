@@ -59,9 +59,6 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                                             }
                                         }
                                     }
-                                    ui::view::dashboard::DashboardAction::ToggleAudioPanel => {
-                                        app.ui_state.show_audio = !app.ui_state.show_audio;
-                                    }
                                     _ => {}
                                 }
                             }
@@ -317,22 +314,6 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
 
     if app.ui_state.show_shader_graph {
         app.ui_state.render_node_editor(ctx);
-    }
-
-    if app.ui_state.show_audio {
-        egui::Window::new(app.ui_state.i18n.t("audio"))
-            .open(&mut app.ui_state.show_audio)
-            .show(ctx, |ui_obj| {
-                let analysis = app.audio_analyzer.get_latest_analysis();
-                app.ui_state.audio_panel.ui(
-                    ui_obj,
-                    &app.ui_state.i18n,
-                    Some(&analysis),
-                    &app.state.audio_config,
-                    &app.ui_state.audio_devices,
-                    &mut app.ui_state.selected_audio_device,
-                );
-            });
     }
 
     app.ui_state.controller_overlay.show(
