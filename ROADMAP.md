@@ -1,7 +1,7 @@
 # MapFlow – Vollständige Roadmap und Feature-Status
 
 > **Version:** 1.0.0 (Rescue & Reconstruction Edition)
-> **Stand:** 2026-03-06 01:45
+> **Stand:** 2026-03-06 05:40
 > **Status:** Erweiterte Stabilisierung & Security Audit (5 PRs im Review).
 
 ---
@@ -54,6 +54,7 @@ Das System wurde nach massiven Regressionen erfolgreich rekonstruiert und auf ei
 *   **Fehler-Handling:** Implementierung von Toast-Notifications für Engine-Fehler steht noch aus.
 
 ### 🔍 Aktuelle Review-Phase (Stand 06.03.2026)
+- [x] **Sicherheit (#929):** Fix Information Disclosure via Hardcoded Developer Paths (Sentinel) – **Merged** ✅
 - [x] **Sicherheit (#934):** Validierung der Pfad-Traversierung (Sentinel) – **Ready for Merge** ✅
 - [ ] **UX-Sicherheit (#937):** "Hold-to-Confirm" für kritische Aktionen (Mary) – *CI failing (pre-commit)* ❌
 - [x] **Core-Tests (#933):** Unit-Tests für ModuleManager & Kernlogik (Guardian) – **Ready for Merge** ✅
