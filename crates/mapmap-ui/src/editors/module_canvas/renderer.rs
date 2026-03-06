@@ -382,12 +382,13 @@ pub fn render_canvas(
 
     // 3. Global Connection Release
     if ui.input(|i| i.pointer.any_released()) {
-        if let Some((from_part, from_idx, is_output, _, _)) = canvas.creating_connection.take() {
+        if let Some((from_part, from_idx, is_output, from_type, _)) = canvas.creating_connection.take() {
             if let Some(pointer_pos) = ui.input(|i| i.pointer.hover_pos()) {
                 for target in &all_sockets {
                     if target.position.distance(pointer_pos) < 30.0 * canvas.zoom
                         && target.part_id != from_part
                         && target.is_output != is_output
+                        && target.socket_type == from_type
                     {
                         let (out_part, out_idx, in_part, in_idx) = if is_output {
                             (from_part, from_idx, target.part_id, target.socket_idx)
