@@ -1,0 +1,44 @@
+# Gemini CLI Ignore Patterns
+# Supplementing .gitignore for better token/context optimization
+
+# Binary Assets
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.mp4
+*.mov
+*.ogg
+*.otf
+*.ttf
+*.woff
+*.woff2
+*.ico
+*.pdf
+*.psd
+*.ai
+
+# Project Metadata/Secondary Config
+.gitattributes
+.markdownlint.json
+.secrets.baseline
+.pre-commit-config.yaml
+deny.toml
+rust-toolchain.toml
+vcpkg.json
+vcpkg-configuration.json
+
+# Explicitly restate critical ignores from .gitignore
+/target/
+/logs/
+/tmp/
+.gemini/
+/.temp-archive/
+
+# Build/test output files
+check_*.txt
+*.pdb
+*.tmp
+*.bak
+*.rs.bk
