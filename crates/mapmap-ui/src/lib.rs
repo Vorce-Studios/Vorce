@@ -205,6 +205,9 @@ pub enum UIAction {
 
     // Settings
     /// Set UI language
+    /// Set UI theme
+    SetTheme(crate::theme::Theme),
+    /// Set UI language
     SetLanguage(String),
     /// Connect to Philips Hue bridge
     ConnectHue,

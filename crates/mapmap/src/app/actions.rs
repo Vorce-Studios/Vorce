@@ -173,6 +173,13 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                 let path = PathBuf::from(path_str);
                 load_project_file(app, &path);
             }
+            UIAction::SetTheme(theme) => {
+                app.ui_state.user_config.theme.theme = theme;
+
+                app.state.dirty = true;
+
+                info!("Theme switched to: {:?}", theme);
+            }
             UIAction::SetLanguage(lang_code) => {
                 app.state.settings_mut().language = lang_code.clone();
                 app.state.dirty = true;

@@ -94,22 +94,13 @@ pub fn show(ctx: &Context, context: SettingsContext) {
             ui.heading(RichText::new(i18n.t("appearance")).color(Color32::WHITE));
             ui.add_space(4.0);
 
-            ui.horizontal(|ui| {
-                ui.label(format!("{}:", i18n.t("theme")));
-                let is_dark = ctx.style().visuals.dark_mode;
-                if ui
-                    .selectable_label(is_dark, format!("🌙 {}", i18n.t("theme-dark")))
-                    .clicked()
-                {
-                    ctx.set_visuals(egui::Visuals::dark());
-                }
-                if ui
-                    .selectable_label(!is_dark, format!("☀ {}", i18n.t("theme-light")))
-                    .clicked()
-                {
-                    ctx.set_visuals(egui::Visuals::light());
-                }
-            });
+            let mut current_theme = context.ui_state.user_config.theme.theme;
+            if mapmap_ui::theme::theme_picker(ui, &mut current_theme) {
+                context
+                    .ui_state
+                    .actions
+                    .push(UIAction::SetTheme(current_theme));
+            }
 
             ui.add_space(4.0);
             ui.horizontal(|ui| {
