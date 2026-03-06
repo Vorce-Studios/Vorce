@@ -105,3 +105,12 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 **Aktion:**
 - Alle identifizierten Skripte (`fix_docs_pro.py`, `fix_docs_smart.py`, `fix_docs_smart_all.py`, `fix_ui_layout_10.sh`, `fix_ui_layout_3.sh`, `fix_ui_layout_4.sh`, `fix_ui_layout_5.sh`, `fix_ui_layout_6.sh`, `fix_ui_layout_7.sh`, `fix_ui_layout_8.sh`, `fix_ui_layout_9.sh`, `fix_wgpu.py`, `fix_wgpu_2.py`, `fix_wgpu_clean.py`) nach `.temp-archive/` mit aktuellem Datums-Präfix archiviert.
 - `GEMINI.md` nach `.temp-archive/` mit aktuellem Datums-Präfix archiviert.
+
+## 2026-03-06 - Root Directory Cleanup
+
+**Erkenntnis:** Das Root-Verzeichnis enthielt das Skript `update_docs.sh` und eine Datei `GEMINI.md`. Zudem fehlte in `.gitignore` der Eintrag für `Thumbs.db`.
+
+**Aktion:**
+- `update_docs.sh` nach `scripts/` verschoben.
+- `GEMINI.md` nach `.jules/` verschoben.
+- `Thumbs.db` in `.gitignore` unter OS-spezifischen Ausschlüssen hinzugefügt.
