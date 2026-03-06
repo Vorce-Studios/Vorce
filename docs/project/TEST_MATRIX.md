@@ -3,7 +3,7 @@
 Stand: 2026-03-06
 Bezug: `ROADMAP.md` (MF-ID gesteuert)
 
-## 1) Roh-Inventar (unveraendert)
+## Roh-Inventar (unveraendert)
 
 Alle Quellpunkte bleiben als `SRC-###` erhalten.
 
@@ -82,7 +82,7 @@ Alle Quellpunkte bleiben als `SRC-###` erhalten.
 | SRC-071 | Loganalyse_2026-03-06 | Autosave-Load-Fehler: missing field `master_blackout` in Composition. |
 | SRC-072 | Loganalyse_2026-03-06 | Wiederkehrende trace_chain Warnungen: Node not found in part_index. |
 
-### 1.1) Normalisierte Zuordnung
+### Normalisierte Zuordnung
 
 | Quellbereich | Feature-ID | Zugehoerige MF-Task(s) |
 | --- | --- | --- |
@@ -122,90 +122,90 @@ Alle Quellpunkte bleiben als `SRC-###` erhalten.
 | SRC-071 | F-014 | MF-014 |
 | SRC-072 | F-015 | MF-015 |
 
-## 2) Gruppierte Feature-/Testmatrix
+## Gruppierte Feature-/Testmatrix
 
 Spaltenstandard:
 `Feature-ID | Zugehoerige MF-Task(s) | Feature | Preconditions | Testschritte | Erwartet | Dev-Status | QA-Status (User) | Nacharbeit`
 
 | Feature-ID | Zugehoerige MF-Task(s) | Feature | Preconditions | Testschritte | Erwartet | Dev-Status | QA-Status (User) | Nacharbeit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| F-001 | MF-001 | Audio UI Konsolidierung | App startet mit aktivem Dashboard | 1. Audio-Sektion im Sidebar oeffnen. 2. Audio-Fenster-Trigger betaetigen. 3. UI-Elemente zaehlen. | Genau ein Audio-Analyse-Panel sichtbar. | In Analyse | Offen | - |
-| F-002 | MF-002 | Audio Pipeline Recovery | Audio-Input Device vorhanden | 1. Device waehlen. 2. Signal einspeisen. 3. Analyzer/Trigger beobachten. | Pegel/Baender/Trigger aktualisieren live ohne manuelles Refresh. | In Analyse | Offen | - |
-| F-003 | MF-003 | Inspector Vorschau fuer alle Nodes | Module Canvas geoeffnet | 1. Mehrere Node-Typen selektieren. 2. Inspector pruefen. | Optionale Vorschau fuer jeden Node-Typ verfuegbar. | Offen | Offen | - |
-| F-004 | MF-004 | Typgleiche Verbindungen | Zwei Nodes mit unterschiedlichen Socket-Typen | 1. Ungleichartige Verbindung ziehen. 2. Gleichartige Verbindung ziehen. | Ungleichartige Verbindung blockiert, gleichartige erfolgreich. | In Analyse | Offen | - |
-| F-005 | MF-005 | Layer Mesh Editor im Inspector | Layer Node vorhanden | 1. Layer Node selektieren. 2. Inspector auf Mesh-Bereich pruefen. 3. Punkte bewegen. | Grafischer Mesh-Editor sichtbar und editierbar. | In Analyse | Offen | - |
-| F-006 | MF-006 | Trigger Feedback Visualisierung | Trigger-Node mit eingehendem Signal | 1. Trigger aktivieren. 2. Node-Glow/Output-Meter beobachten. | Visuelles Feedback folgt Triggerwerten nachvollziehbar. | In Analyse | Offen | - |
-| F-007 | MF-007 | Settings Grafik/Performance | Settings Dialog offen | 1. FPS/Quality aendern. 2. App neu starten. 3. Runtime-Wirkung pruefen. | Werte persistieren und wirken im Runtime-Verhalten. | In Analyse | Offen | - |
-| F-008 | MF-008 | Theme Switcher + Auswahlmenue | Settings Dialog offen | 1. Theme wechseln. 2. Neustart. 3. UI-Farben kontrollieren. | Ausgewaehltes Theme wirkt sofort und bleibt gespeichert. | In Analyse | Offen | - |
-| F-009 | MF-009 | Hue DTLS/OpenSSL Pfad | Hue Bridge vorhanden | 1. Hue verbinden. 2. Streaming starten. 3. Logs pruefen. | Kein OpenSSL-disabled Fehler; Verbindung stabil. | In Analyse | Offen | - |
-| F-010 | MF-010 | Hue Config Reuse | Gespeicherte Hue-Daten vorhanden | 1. App neu starten. 2. Hue-Status pruefen. 3. Reconnect testen. | Gespeicherte Bridge-Daten werden ohne Neu-Einrichtung genutzt. | In Analyse | Offen | - |
-| F-011 | MF-011 | UI Panel Konsistenz | View-Menue verfuegbar | 1. Panel-Flags toggeln. 2. Sichtbarkeit/Funktion pro Panel pruefen. | Alle Panels erscheinen korrekt und voll funktionsfaehig. | In Analyse | Offen | - |
-| F-012 | MF-012 | Analoges Level Meter | Audio aktiv | 1. Meter-Style in Settings wechseln. 2. Toolbar beobachten. | Analog- und Digital-Meter auswählbar und sichtbar. | In Analyse | Offen | - |
-| F-013 | MF-013 | FFmpeg Buildmode Klarheit | Videoquelle geladen | 1. Build ohne/mit ffmpeg laufen lassen. 2. Logs kontrollieren. | Verhalten eindeutig; Warnungen nur erwartbar und dokumentiert. | In Analyse | Offen | - |
-| F-014 | MF-014 | Autosave Kompatibilitaet | Altes Autosave-File vorhanden | 1. App mit altem Autosave starten. 2. Ladeprozess beobachten. | Kein Deserialisierungsfehler fuer `master_blackout`. | In Analyse | Offen | - |
-| F-015 | MF-015 | trace_chain Hardening | Modulgraph mit Grenzfaellen | 1. Graph evaluieren. 2. Logs auf trace_chain Warnungen pruefen. | Warnungen reduziert; verbleibende Meldungen sind diagnostisch klar. | In Analyse | Offen | - |
-| F-016 | MF-016 | Feature-Status Baseline | ROADMAP + Matrix vorhanden | 1. Alle Features auflisten. 2. Dev/QA Status je Feature setzen. | Keine unklaren Haken; Doppelstatus vollstaendig gepflegt. | In Umsetzung | Offen | - |
-| F-017 | MF-017 | Regression Testmatrix Rollout | Matrix gepflegt | 1. Standard-Testlauf nach grosser Aenderung ausfuehren. 2. Ergebnisse dokumentieren. | Vollstaendiger Regressionslauf reproduzierbar. | In Umsetzung | Offen | - |
-| F-018 | MF-018, MF-028 | Scope/Prioritaet + MF-ID Compliance | Neue Tasks in Planung | 1. Neue Task anlegen. 2. Prioritaet/Scope setzen. 3. Branch/PR Name pruefen. | Keine Extra-Sektion noetig; MF-ID Regel eingehalten. | In Umsetzung | Offen | - |
-| F-019 | MF-019 | Spout Update | Spout Output aktiv | 1. Spout aktivieren. 2. Ausgabe in Empfaenger pruefen. | Spout kompatibel mit aktueller wgpu-Basis. | Offen | Offen | - |
-| F-020 | MF-020 | Timeline Keyframe Interaction | Timeline mit Keyframes | 1. Keyframe verschieben. 2. Keyframe loeschen. | Beide Aktionen funktionieren stabil. | Offen | Offen | - |
-| F-021 | MF-021 | NDI Discovery UI | NDI Netzwerk verfuegbar | 1. Discovery starten. 2. Quelle im Sidebar waehlen. | NDI Quellen werden gefunden und auswaehlbar. | Offen | Offen | - |
-| F-022 | MF-022 | Shader Graph Expansion | Shader-Editor offen | 1. Neue Node-Typen hinzufuegen. 2. Verbindungen testen. | Neue Node-Typen verfuegbar und nutzbar. | Offen | Offen | - |
-| F-023 | MF-023 | Error Toast Notifications | Fehler provozierbar | 1. Fehlerfall ausloesen. 2. Toast beobachten. | Fehler sichtbar als Toast mit brauchbarer Meldung. | Offen | Offen | - |
-| F-024 | MF-024 | Hold-to-Confirm UX | Kritische Aktion vorhanden | 1. Button kurz klicken. 2. Button lange halten. | Nur langes Halten fuehrt Aktion aus; CI gruen. | In Analyse | Offen | - |
-| F-025 | MF-026 | Task-ID Dispatch Auto PR | Maestro/Jules Prozess aktiv | 1. Task-ID uebergeben. 2. Dispatcher-Aufruf pruefen. | Task-Details aus ROADMAP; PR auto erstellt. | In Umsetzung | Offen | - |
-| F-026 | MF-025 | Roadmap/GitHub Sync Gate | PR vorhanden | 1. CI-Status pruefen. 2. Roadmap-Status setzen. | Statuswechsel nur nach gruener CI und Gate-Check. | In Umsetzung | Offen | - |
-| F-027 | MF-027 | Status Workflow Standard | Task-Lebenszyklus vorhanden | 1. Statusweg durchlaufen. 2. Dokumentierte Uebergaenge pruefen. | Einheitlicher Statusfluss ohne Luecken. | In Umsetzung | Offen | - |
-| F-028 | MF-042 | Legacy Performance Validation | Historische Perf-Optimierung vorhanden | 1. Benchmark/Baseline vergleichen. | Historischer Fix weiterhin wirksam. | Bereit fuer QA | Offen | - |
-| F-029 | MF-029 | Legacy Rescue Deliverables | Historische Punkte dokumentiert | 1. Stichproben aus archivierten Punkten verifizieren. | Historische "done"-Aussagen sind nachvollziehbar oder als Regression markiert. | Abgeschlossen | Offen | - |
-| F-030 | MF-040 | Security #934 Validation | Sicherheitsfix vorhanden | 1. Security-Regressionstest laufen lassen. | Keine erneute Path-Traversal-Luecke. | Bereit fuer QA | Offen | - |
-| F-031 | MF-041 | Core Tests #933 Validation | Testsuite verfuegbar | 1. Betroffene Unit-Tests ausfuehren. | Tests bleiben stabil gruen. | Bereit fuer QA | Offen | - |
-| F-032 | MF-043 | UI Polish #936 Validation | UI-Ansichten vorhanden | 1. Leere Zustaende aufrufen. 2. Styling pruefen. | Muted Styling unveraendert konsistent. | Bereit fuer QA | Offen | - |
+| F-001 | MF-001 | Audio UI Konsolidierung | App startet mit aktivem Dashboard | 1. Audio-Sektion im Sidebar oeffnen. 2. Audio-Fenster-Trigger betaetigen. 3. UI-Elemente zaehlen. | Genau ein Audio-Analyse-Panel sichtbar. | 🟠 In Analyse | 🔴 Offen | - |
+| F-002 | MF-002 | Audio Pipeline Recovery | Audio-Input Device vorhanden | 1. Device waehlen. 2. Signal einspeisen. 3. Analyzer/Trigger beobachten. | Pegel/Baender/Trigger aktualisieren live ohne manuelles Refresh. | 🟠 In Analyse | 🔴 Offen | - |
+| F-003 | MF-003 | Inspector Vorschau fuer alle Nodes | Module Canvas geoeffnet | 1. Mehrere Node-Typen selektieren. 2. Inspector pruefen. | Optionale Vorschau fuer jeden Node-Typ verfuegbar. | 🔴 Offen | 🔴 Offen | - |
+| F-004 | MF-004 | Typgleiche Verbindungen | Zwei Nodes mit unterschiedlichen Socket-Typen | 1. Ungleichartige Verbindung ziehen. 2. Gleichartige Verbindung ziehen. | Ungleichartige Verbindung blockiert, gleichartige erfolgreich. | 🟠 In Analyse | 🔴 Offen | - |
+| F-005 | MF-005 | Layer Mesh Editor im Inspector | Layer Node vorhanden | 1. Layer Node selektieren. 2. Inspector auf Mesh-Bereich pruefen. 3. Punkte bewegen. | Grafischer Mesh-Editor sichtbar und editierbar. | 🟠 In Analyse | 🔴 Offen | - |
+| F-006 | MF-006 | Trigger Feedback Visualisierung | Trigger-Node mit eingehendem Signal | 1. Trigger aktivieren. 2. Node-Glow/Output-Meter beobachten. | Visuelles Feedback folgt Triggerwerten nachvollziehbar. | 🟠 In Analyse | 🔴 Offen | - |
+| F-007 | MF-007 | Settings Grafik/Performance | Settings Dialog offen | 1. FPS/Quality aendern. 2. App neu starten. 3. Runtime-Wirkung pruefen. | Werte persistieren und wirken im Runtime-Verhalten. | 🟠 In Analyse | 🔴 Offen | - |
+| F-008 | MF-008 | Theme Switcher + Auswahlmenue | Settings Dialog offen | 1. Theme wechseln. 2. Neustart. 3. UI-Farben kontrollieren. | Ausgewaehltes Theme wirkt sofort und bleibt gespeichert. | 🟠 In Analyse | 🔴 Offen | - |
+| F-009 | MF-009 | Hue DTLS/OpenSSL Pfad | Hue Bridge vorhanden | 1. Hue verbinden. 2. Streaming starten. 3. Logs pruefen. | Kein OpenSSL-disabled Fehler; Verbindung stabil. | 🟠 In Analyse | 🔴 Offen | - |
+| F-010 | MF-010 | Hue Config Reuse | Gespeicherte Hue-Daten vorhanden | 1. App neu starten. 2. Hue-Status pruefen. 3. Reconnect testen. | Gespeicherte Bridge-Daten werden ohne Neu-Einrichtung genutzt. | 🟠 In Analyse | 🔴 Offen | - |
+| F-011 | MF-011 | UI Panel Konsistenz | View-Menue verfuegbar | 1. Panel-Flags toggeln. 2. Sichtbarkeit/Funktion pro Panel pruefen. | Alle Panels erscheinen korrekt und voll funktionsfaehig. | 🟠 In Analyse | 🔴 Offen | - |
+| F-012 | MF-012 | Analoges Level Meter | Audio aktiv | 1. Meter-Style in Settings wechseln. 2. Toolbar beobachten. | Analog- und Digital-Meter auswaehlbar und sichtbar. | 🟠 In Analyse | 🔴 Offen | - |
+| F-013 | MF-013 | FFmpeg Buildmode Klarheit | Videoquelle geladen | 1. Build ohne/mit ffmpeg laufen lassen. 2. Logs kontrollieren. | Verhalten eindeutig; Warnungen nur erwartbar und dokumentiert. | 🟠 In Analyse | 🔴 Offen | - |
+| F-014 | MF-014 | Autosave Kompatibilitaet | Altes Autosave-File vorhanden | 1. App mit altem Autosave starten. 2. Ladeprozess beobachten. | Kein Deserialisierungsfehler fuer `master_blackout`. | 🟠 In Analyse | 🔴 Offen | - |
+| F-015 | MF-015 | trace_chain Hardening | Modulgraph mit Grenzfaellen | 1. Graph evaluieren. 2. Logs auf trace_chain Warnungen pruefen. | Warnungen reduziert; verbleibende Meldungen sind diagnostisch klar. | 🟠 In Analyse | 🔴 Offen | - |
+| F-016 | MF-016 | Feature-Status Baseline | ROADMAP + Matrix vorhanden | 1. Alle Features auflisten. 2. Dev/QA Status je Feature setzen. | Keine unklaren Haken; Doppelstatus vollstaendig gepflegt. | 🔵 In Umsetzung | 🔴 Offen | - |
+| F-017 | MF-017 | Regression Testmatrix Rollout | Matrix gepflegt | 1. Standard-Testlauf nach grosser Aenderung ausfuehren. 2. Ergebnisse dokumentieren. | Vollstaendiger Regressionslauf reproduzierbar. | 🔵 In Umsetzung | 🔴 Offen | - |
+| F-018 | MF-018, MF-028 | Scope/Prioritaet + MF-ID Compliance | Neue Tasks in Planung | 1. Neue Task anlegen. 2. Prioritaet/Scope setzen. 3. Branch/PR Name pruefen. | Keine Extra-Sektion noetig; MF-ID Regel eingehalten. | 🔵 In Umsetzung | 🔴 Offen | - |
+| F-019 | MF-019 | Spout Update | Spout Output aktiv | 1. Spout aktivieren. 2. Ausgabe in Empfaenger pruefen. | Spout kompatibel mit aktueller wgpu-Basis. | 🔴 Offen | 🔴 Offen | - |
+| F-020 | MF-020 | Timeline Keyframe Interaction | Timeline mit Keyframes | 1. Keyframe verschieben. 2. Keyframe loeschen. | Beide Aktionen funktionieren stabil. | 🔴 Offen | 🔴 Offen | - |
+| F-021 | MF-021 | NDI Discovery UI | NDI Netzwerk verfuegbar | 1. Discovery starten. 2. Quelle im Sidebar waehlen. | NDI Quellen werden gefunden und auswaehlbar. | 🔴 Offen | 🔴 Offen | - |
+| F-022 | MF-022 | Shader Graph Expansion | Shader-Editor offen | 1. Neue Node-Typen hinzufuegen. 2. Verbindungen testen. | Neue Node-Typen verfuegbar und nutzbar. | 🔴 Offen | 🔴 Offen | - |
+| F-023 | MF-023 | Error Toast Notifications | Fehler provozierbar | 1. Fehlerfall ausloesen. 2. Toast beobachten. | Fehler sichtbar als Toast mit brauchbarer Meldung. | 🔴 Offen | 🔴 Offen | - |
+| F-024 | MF-024 | Hold-to-Confirm UX | Kritische Aktion vorhanden | 1. Button kurz klicken. 2. Button lange halten. | Nur langes Halten fuehrt Aktion aus; CI gruen. | 🟠 In Analyse | 🔴 Offen | - |
+| F-025 | MF-026 | Task-ID Dispatch Auto PR | Maestro/Jules Prozess aktiv | 1. Task-ID uebergeben. 2. Dispatcher-Aufruf pruefen. | Task-Details aus ROADMAP; PR auto erstellt. | 🔵 In Umsetzung | 🔴 Offen | - |
+| F-026 | MF-025 | Roadmap/GitHub Sync Gate | PR vorhanden | 1. CI-Status pruefen. 2. Roadmap-Status setzen. | Statuswechsel nur nach gruener CI und Gate-Check. | 🔵 In Umsetzung | 🔴 Offen | - |
+| F-027 | MF-027 | Status Workflow Standard | Task-Lebenszyklus vorhanden | 1. Statusweg durchlaufen. 2. Dokumentierte Uebergaenge pruefen. | Einheitlicher Statusfluss ohne Luecken. | 🔵 In Umsetzung | 🔴 Offen | - |
+| F-028 | MF-042 | Legacy Performance Validation | Historische Perf-Optimierung vorhanden | 1. Benchmark/Baseline vergleichen. | Historischer Fix weiterhin wirksam. | 🟢 Bereit fuer QA | 🔴 Offen | - |
+| F-029 | MF-029 | Legacy Rescue Deliverables | Historische Punkte dokumentiert | 1. Stichproben aus archivierten Punkten verifizieren. | Historische "done"-Aussagen sind nachvollziehbar oder als Regression markiert. | ✅ Abgeschlossen | 🔴 Offen | - |
+| F-030 | MF-040 | Security #934 Validation | Sicherheitsfix vorhanden | 1. Security-Regressionstest laufen lassen. | Keine erneute Path-Traversal-Luecke. | 🟢 Bereit fuer QA | 🔴 Offen | - |
+| F-031 | MF-041 | Core Tests #933 Validation | Testsuite verfuegbar | 1. Betroffene Unit-Tests ausfuehren. | Tests bleiben stabil gruen. | 🟢 Bereit fuer QA | 🔴 Offen | - |
+| F-032 | MF-043 | UI Polish #936 Validation | UI-Ansichten vorhanden | 1. Leere Zustaende aufrufen. 2. Styling pruefen. | Muted Styling unveraendert konsistent. | 🟢 Bereit fuer QA | 🔴 Offen | - |
 
-## 3) Testfaelle mit festen Schritten und Erwartung
+## Testfaelle mit festen Schritten und Erwartung
 
 | TC-ID | Feature-ID | Zugehoerige MF-Task(s) | Testschritte | Erwartet | Dev-Status | QA-Status (User) | Nacharbeit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| TC-001 | F-001 | MF-001 | App starten -> Sidebar Audio oeffnen -> Audio-Window Toggle betaetigen -> Anzahl Panels pruefen. | Maximal ein Audio-Analyse-Panel. | In Analyse | Offen | - |
-| TC-002 | F-002 | MF-002 | Audio-Device waehlen -> Musik einspeisen -> Analyzer/Meter/Trigger pruefen. | Audiofluss aktiv bis UI sichtbar. | In Analyse | Offen | - |
-| TC-031 | F-003 | MF-003 | Mehrere Node-Typen selektieren -> Inspector auf Preview-Option pruefen. | Vorschau-Option bei allen Node-Typen vorhanden. | Offen | Offen | - |
-| TC-003 | F-004 | MF-004 | Unpassende Socket-Typen verbinden -> passende verbinden. | Nur passende Verbindung wird angelegt. | In Analyse | Offen | - |
-| TC-004 | F-005 | MF-005 | Layer Node selektieren -> Inspector Mesh UI nutzen. | Mesh-Punkte lassen sich editieren/speichern. | In Analyse | Offen | - |
-| TC-032 | F-006 | MF-006 | Trigger aktivieren -> Node-Glow/Output-Meter live beobachten. | Trigger-Feedback folgt Signalwerten stabil. | In Analyse | Offen | - |
-| TC-005 | F-007 | MF-007 | FPS/Quality aendern -> Neustart -> Wirkung validieren. | Werte persistent und wirksam. | In Analyse | Offen | - |
-| TC-006 | F-008 | MF-008 | Theme wechseln -> Neustart -> Theme bleibt aktiv. | Theme-Switch inkl Menue funktioniert. | In Analyse | Offen | - |
-| TC-007 | F-009 | MF-009 | Hue verbinden -> Stream starten -> Logs beobachten. | Kein OpenSSL-disabled Fehler. | In Analyse | Offen | - |
-| TC-008 | F-010 | MF-010 | Gespeicherte Hue-Daten laden -> Reconnect ohne Neueingabe. | Bridge-Daten werden wiederverwendet. | In Analyse | Offen | - |
-| TC-009 | F-011 | MF-011 | View-Menue Panels toggeln -> Position/Funktionen pruefen. | Flags und Renderpfade konsistent. | In Analyse | Offen | - |
-| TC-010 | F-012 | MF-012 | Meter-Style wechseln -> Toolbar vergleichen. | Analog/Digital umschaltbar. | In Analyse | Offen | - |
-| TC-011 | F-013 | MF-013 | Build ohne ffmpeg -> mit ffmpeg -> Logvergleich. | Verhalten klar, keine irrefuehrenden Warnungen. | In Analyse | Offen | - |
-| TC-012 | F-014 | MF-014 | Altes Autosave laden. | Kein missing-field Fehler. | In Analyse | Offen | - |
-| TC-013 | F-015 | MF-015 | Problemgraph evaluieren -> Logs pruefen. | trace_chain Warnungen reduziert/verbessert. | In Analyse | Offen | - |
-| TC-014 | F-016 | MF-016 | Featureliste und Doppelstatus vollstaendig ausfuellen. | Kein Feature ohne Dev+QA Status. | In Umsetzung | Offen | - |
-| TC-015 | F-017 | MF-017 | Standard-Regressionstestsatz komplett laufen. | Reproduzierbare Pruefung ohne Luecken. | In Umsetzung | Offen | - |
-| TC-016 | F-018 | MF-018, MF-028 | Neue Task anlegen und Branch/PR Benennung pruefen. | MF-ID Regel wird strikt eingehalten. | In Umsetzung | Offen | - |
-| TC-017 | F-019 | MF-019 | Spout Output gegen Empfaenger pruefen. | Kompatible Ausgabe ohne Crash. | Offen | Offen | - |
-| TC-018 | F-020 | MF-020 | Keyframe verschieben/loeschen. | Timeline Interaktion wieder funktionsfaehig. | Offen | Offen | - |
-| TC-019 | F-021 | MF-021 | NDI Discovery starten und Quelle waehlen. | Quellen sichtbar, Auswahl moeglich. | Offen | Offen | - |
-| TC-020 | F-022 | MF-022 | Neue Shader-Node-Typen einfuegen und verbinden. | Nodes funktionieren wie spezifiziert. | Offen | Offen | - |
-| TC-021 | F-023 | MF-023 | Fehler simulieren -> Toast pruefen. | Fehlermeldung sichtbar und nutzbar. | Offen | Offen | - |
-| TC-022 | F-024 | MF-024 | Hold-to-confirm kurz/long press pruefen. | Nur long press triggert Aktion. | In Analyse | Offen | - |
-| TC-023 | F-025 | MF-026 | Task-ID Delegation ausfuehren, PR-Erstellung pruefen. | AUTO_CREATE_PR Ablauf korrekt. | In Umsetzung | Offen | - |
-| TC-024 | F-026 | MF-025 | CI gruen setzen -> Status in Roadmap aktualisieren. | Status-Gate eingehalten. | In Umsetzung | Offen | - |
-| TC-025 | F-027 | MF-027 | Statuswechsel entlang Standardworkflow testen. | Sauberer Workflow ohne Sonderfaelle. | In Umsetzung | Offen | - |
-| TC-026 | F-028 | MF-042 | Historische Perf-Optimierung gegentesten. | Keine Regression gegen dokumentierten Fix. | Bereit fuer QA | Offen | - |
-| TC-027 | F-029 | MF-029 | Archivierte Punkte stichprobenartig verifizieren. | Historische Aussagen nachvollziehbar. | Abgeschlossen | Offen | - |
-| TC-028 | F-030 | MF-040 | Security Regressionstest ausfuehren. | Pfad-Traversal weiterhin geblockt. | Bereit fuer QA | Offen | - |
-| TC-029 | F-031 | MF-041 | Kern-Testpaket #933 ausfuehren. | Tests bleiben gruen. | Bereit fuer QA | Offen | - |
-| TC-030 | F-032 | MF-043 | UI-Leerzustaende pruefen. | Polishing bleibt intakt. | Bereit fuer QA | Offen | - |
+| TC-001 | F-001 | MF-001 | App starten -> Sidebar Audio oeffnen -> Audio-Window Toggle betaetigen -> Anzahl Panels pruefen. | Maximal ein Audio-Analyse-Panel. | 🟠 In Analyse | 🔴 Offen | - |
+| TC-002 | F-002 | MF-002 | Audio-Device waehlen -> Musik einspeisen -> Analyzer/Meter/Trigger pruefen. | Audiofluss aktiv bis UI sichtbar. | 🟠 In Analyse | 🔴 Offen | - |
+| TC-031 | F-003 | MF-003 | Mehrere Node-Typen selektieren -> Inspector auf Preview-Option pruefen. | Vorschau-Option bei allen Node-Typen vorhanden. | 🔴 Offen | 🔴 Offen | - |
+| TC-003 | F-004 | MF-004 | Unpassende Socket-Typen verbinden -> passende verbinden. | Nur passende Verbindung wird angelegt. | 🟠 In Analyse | 🔴 Offen | - |
+| TC-004 | F-005 | MF-005 | Layer Node selektieren -> Inspector Mesh UI nutzen. | Mesh-Punkte lassen sich editieren/speichern. | 🟠 In Analyse | 🔴 Offen | - |
+| TC-032 | F-006 | MF-006 | Trigger aktivieren -> Node-Glow/Output-Meter live beobachten. | Trigger-Feedback folgt Signalwerten stabil. | 🟠 In Analyse | 🔴 Offen | - |
+| TC-005 | F-007 | MF-007 | FPS/Quality aendern -> Neustart -> Wirkung validieren. | Werte persistent und wirksam. | 🟠 In Analyse | 🔴 Offen | - |
+| TC-006 | F-008 | MF-008 | Theme wechseln -> Neustart -> Theme bleibt aktiv. | Theme-Switch inkl Menue funktioniert. | 🟠 In Analyse | 🔴 Offen | - |
+| TC-007 | F-009 | MF-009 | Hue verbinden -> Stream starten -> Logs beobachten. | Kein OpenSSL-disabled Fehler. | 🟠 In Analyse | 🔴 Offen | - |
+| TC-008 | F-010 | MF-010 | Gespeicherte Hue-Daten laden -> Reconnect ohne Neueingabe. | Bridge-Daten werden wiederverwendet. | 🟠 In Analyse | 🔴 Offen | - |
+| TC-009 | F-011 | MF-011 | View-Menue Panels toggeln -> Position/Funktionen pruefen. | Flags und Renderpfade konsistent. | 🟠 In Analyse | 🔴 Offen | - |
+| TC-010 | F-012 | MF-012 | Meter-Style wechseln -> Toolbar vergleichen. | Analog/Digital umschaltbar. | 🟠 In Analyse | 🔴 Offen | - |
+| TC-011 | F-013 | MF-013 | Build ohne ffmpeg -> mit ffmpeg -> Logvergleich. | Verhalten klar, keine irrefuehrenden Warnungen. | 🟠 In Analyse | 🔴 Offen | - |
+| TC-012 | F-014 | MF-014 | Altes Autosave laden. | Kein missing-field Fehler. | 🟠 In Analyse | 🔴 Offen | - |
+| TC-013 | F-015 | MF-015 | Problemgraph evaluieren -> Logs pruefen. | trace_chain Warnungen reduziert/verbessert. | 🟠 In Analyse | 🔴 Offen | - |
+| TC-014 | F-016 | MF-016 | Featureliste und Doppelstatus vollstaendig ausfuellen. | Kein Feature ohne Dev+QA Status. | 🔵 In Umsetzung | 🔴 Offen | - |
+| TC-015 | F-017 | MF-017 | Standard-Regressionstestsatz komplett laufen. | Reproduzierbare Pruefung ohne Luecken. | 🔵 In Umsetzung | 🔴 Offen | - |
+| TC-016 | F-018 | MF-018, MF-028 | Neue Task anlegen und Branch/PR Benennung pruefen. | MF-ID Regel wird strikt eingehalten. | 🔵 In Umsetzung | 🔴 Offen | - |
+| TC-017 | F-019 | MF-019 | Spout Output gegen Empfaenger pruefen. | Kompatible Ausgabe ohne Crash. | 🔴 Offen | 🔴 Offen | - |
+| TC-018 | F-020 | MF-020 | Keyframe verschieben/loeschen. | Timeline Interaktion wieder funktionsfaehig. | 🔴 Offen | 🔴 Offen | - |
+| TC-019 | F-021 | MF-021 | NDI Discovery starten und Quelle waehlen. | Quellen sichtbar, Auswahl moeglich. | 🔴 Offen | 🔴 Offen | - |
+| TC-020 | F-022 | MF-022 | Neue Shader-Node-Typen einfuegen und verbinden. | Nodes funktionieren wie spezifiziert. | 🔴 Offen | 🔴 Offen | - |
+| TC-021 | F-023 | MF-023 | Fehler simulieren -> Toast pruefen. | Fehlermeldung sichtbar und nutzbar. | 🔴 Offen | 🔴 Offen | - |
+| TC-022 | F-024 | MF-024 | Hold-to-confirm kurz/long press pruefen. | Nur long press triggert Aktion. | 🟠 In Analyse | 🔴 Offen | - |
+| TC-023 | F-025 | MF-026 | Task-ID Delegation ausfuehren, PR-Erstellung pruefen. | AUTO_CREATE_PR Ablauf korrekt. | 🔵 In Umsetzung | 🔴 Offen | - |
+| TC-024 | F-026 | MF-025 | CI gruen setzen -> Status in Roadmap aktualisieren. | Status-Gate eingehalten. | 🔵 In Umsetzung | 🔴 Offen | - |
+| TC-025 | F-027 | MF-027 | Statuswechsel entlang Standardworkflow testen. | Sauberer Workflow ohne Sonderfaelle. | 🔵 In Umsetzung | 🔴 Offen | - |
+| TC-026 | F-028 | MF-042 | Historische Perf-Optimierung gegentesten. | Keine Regression gegen dokumentierten Fix. | 🟢 Bereit fuer QA | 🔴 Offen | - |
+| TC-027 | F-029 | MF-029 | Archivierte Punkte stichprobenartig verifizieren. | Historische Aussagen nachvollziehbar. | ✅ Abgeschlossen | 🔴 Offen | - |
+| TC-028 | F-030 | MF-040 | Security Regressionstest ausfuehren. | Pfad-Traversal weiterhin geblockt. | 🟢 Bereit fuer QA | 🔴 Offen | - |
+| TC-029 | F-031 | MF-041 | Kern-Testpaket #933 ausfuehren. | Tests bleiben gruen. | 🟢 Bereit fuer QA | 🔴 Offen | - |
+| TC-030 | F-032 | MF-043 | UI-Leerzustaende pruefen. | Polishing bleibt intakt. | 🟢 Bereit fuer QA | 🔴 Offen | - |
 
-## 4) Traceability pro Zeile
+## Traceability pro Zeile
 
-- Jede Roh-Inventar-Zeile (`SRC-###`) hat einen Mapping-Eintrag in `ROADMAP.md` Abschnitt "Migrations-Mapping".
+- Jede Roh-Inventar-Zeile (`SRC-###`) ist ueber `Normalisierte Zuordnung` mindestens einer MF-Task zugeordnet.
 - Jede Feature-Zeile (`F-###`) ist auf mindestens eine MF-Task verlinkt.
 - Jeder aktive MF-Task ist mindestens einem Testfall (`TC-###`) zugeordnet.
 
-### 4.1) Vollstaendigkeitscheck
+### Vollstaendigkeitscheck
 
 | Pruefung | Ergebnis |
 | --- | --- |
@@ -214,3 +214,5 @@ Spaltenstandard:
 | Quellzeilen ohne Feature/MF Bezug | 0 |
 | MF-Tasks ohne Testfall | 0 |
 | Orphan-Points | 0 |
+
+
