@@ -363,6 +363,8 @@ pub struct AppUI {
     pub selected_output_id: Option<u64>,
     /// List of available audio devices
     pub audio_devices: Vec<String>,
+    /// List of available GPU adapters
+    pub gpu_adapters: Vec<String>,
     /// Currently selected audio device
     pub selected_audio_device: Option<String>,
     /// Recent project files
@@ -508,6 +510,7 @@ impl Default for AppUI {
             selected_layer_id: None,
             selected_output_id: None,
             audio_devices: vec!["None".to_string()],
+            gpu_adapters: Vec::new(),
             // Load selected audio device from user config
             selected_audio_device: saved_audio_device,
             recent_files: saved_recent_files,

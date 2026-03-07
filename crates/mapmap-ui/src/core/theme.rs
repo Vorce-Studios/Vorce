@@ -21,6 +21,10 @@ pub enum Theme {
     Resolume,
     /// Synthwave (Neon/Retro)
     Synthwave,
+    /// Purple accent theme
+    Purple,
+    /// Pink accent theme
+    Pink,
 }
 
 /// Theme configuration
@@ -81,6 +85,8 @@ impl ThemeConfig {
             Theme::HighContrast => Self::high_contrast_visuals(),
             Theme::Resolume => Self::resolume_visuals(),
             Theme::Synthwave => Self::synthwave_visuals(),
+            Theme::Purple => Self::purple_visuals(),
+            Theme::Pink => Self::pink_visuals(),
             Theme::Custom => self.custom_visuals(),
         };
 
@@ -428,6 +434,30 @@ impl ThemeConfig {
             ..egui::Visuals::dark()
         }
     }
+
+    /// Purple accent visuals
+    fn purple_visuals() -> Visuals {
+        let mut visuals = Visuals::dark();
+        let purple = Color32::from_rgb(170, 50, 255);
+        visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, purple);
+        visuals.widgets.active.bg_fill = purple;
+        visuals.selection.bg_fill = purple.linear_multiply(0.3);
+        visuals.selection.stroke = egui::Stroke::new(1.0, purple);
+        visuals.hyperlink_color = purple;
+        visuals
+    }
+
+    /// Pink accent visuals
+    fn pink_visuals() -> Visuals {
+        let mut visuals = Visuals::dark();
+        let pink = Color32::from_rgb(255, 50, 170);
+        visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, pink);
+        visuals.widgets.active.bg_fill = pink;
+        visuals.selection.bg_fill = pink.linear_multiply(0.3);
+        visuals.selection.stroke = egui::Stroke::new(1.0, pink);
+        visuals.hyperlink_color = pink;
+        visuals
+    }
 }
 
 /// Theme picker widget
@@ -447,6 +477,10 @@ pub fn theme_picker(ui: &mut egui::Ui, theme: &mut Theme) -> bool {
         changed |= ui
             .selectable_value(theme, Theme::Synthwave, "Synthwave")
             .clicked();
+        changed |= ui
+            .selectable_value(theme, Theme::Purple, "Purple")
+            .clicked();
+        changed |= ui.selectable_value(theme, Theme::Pink, "Pink").clicked();
     });
 
     changed
