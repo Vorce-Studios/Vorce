@@ -13,11 +13,7 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     // Process internal MCP actions first
     handle_mcp_actions(app);
 
-    let current_theme = app.ui_state.user_config.theme.theme;
     let ui_needs_sync = handle_ui_actions(app).unwrap_or(false);
-    if app.ui_state.user_config.theme.theme != current_theme {
-        app.ui_state.user_config.theme.apply(&app.egui_context);
-    }
 
     // --- Media Player Update ---
     sync_media_players(app);
