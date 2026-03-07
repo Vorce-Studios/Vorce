@@ -310,7 +310,7 @@ where
             };
 
             let current_plug_size = if is_trigger {
-                plug_size * 1.4 // 40% larger for Trigger
+                plug_size * 1.6 // 60% larger for Trigger
             } else {
                 plug_size
             };
@@ -350,18 +350,18 @@ where
                     painter.add(mesh);
                 };
 
-                // Source Plug at OUTPUT socket - points LEFT (-PI/2). 45 deg CCW from that is -PI/2 - PI/4 = -3*PI/4
+                // Source Plug at OUTPUT socket - points LEFT (PI). 45 deg CCW is 3*PI/4
                 draw_rotated(
                     start_pos,
-                    -3.0 * PI / 4.0,
+                    3.0 * PI / 4.0,
                     current_plug_size,
                     Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
                 );
 
-                // Target Plug at INPUT socket - points RIGHT (PI/2). 45 deg CCW from that is PI/2 - PI/4 = PI/4
+                // Target Plug at INPUT socket - points RIGHT (0). 45 deg CCW is -PI/4
                 draw_rotated(
                     end_pos,
-                    PI / 4.0,
+                    -PI / 4.0,
                     current_plug_size,
                     Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
                 );
@@ -825,7 +825,7 @@ pub fn draw_part_with_delete(
         let socket_pos = Pos2::new(rect.min.x, socket_y);
         let socket_radius = 7.0 * canvas.zoom;
 
-        // Socket "Port" style - Thin Glowing Ring (doesn't block the plug)
+        // Socket "Port" style - Thin Glowing Ring
         let socket_color = utils::get_socket_color(&socket.socket_type);
 
         let is_hovered = if let Some(pointer_pos) = ui.input(|i| i.pointer.hover_pos()) {
@@ -845,7 +845,7 @@ pub fn draw_part_with_delete(
             socket_radius,
             Stroke::new(1.0 * canvas.zoom, stroke_color),
         );
-
+        
         // Very subtle inner glow
         painter.circle_filled(
             socket_pos,
@@ -855,11 +855,7 @@ pub fn draw_part_with_delete(
 
         // Socket label
         let type_name = socket.socket_type.name();
-        let display_name = if socket
-            .name
-            .to_lowercase()
-            .contains(&type_name.to_lowercase())
-        {
+        let display_name = if socket.name.to_lowercase().contains(&type_name.to_lowercase()) {
             socket.name.clone()
         } else {
             format!("{} ({})", socket.name, type_name)
@@ -900,7 +896,7 @@ pub fn draw_part_with_delete(
             socket_radius,
             Stroke::new(1.0 * canvas.zoom, stroke_color),
         );
-
+        
         // Very subtle inner glow
         painter.circle_filled(
             socket_pos,
@@ -910,11 +906,7 @@ pub fn draw_part_with_delete(
 
         // Socket label
         let type_name = socket.socket_type.name();
-        let display_name = if socket
-            .name
-            .to_lowercase()
-            .contains(&type_name.to_lowercase())
-        {
+        let display_name = if socket.name.to_lowercase().contains(&type_name.to_lowercase()) {
             socket.name.clone()
         } else {
             format!("{} ({})", socket.name, type_name)

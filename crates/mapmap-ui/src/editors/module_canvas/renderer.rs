@@ -200,29 +200,29 @@ pub fn render_canvas(
         }
     }
 
-    // --- ZOOM UI ---
+    // --- ZOOM UI (Top Right) ---
     let zoom_ui_rect = Rect::from_min_size(
-        Pos2::new(canvas_rect.max.x - 150.0, canvas_rect.max.y - 45.0),
-        Vec2::new(140.0, 35.0),
+        Pos2::new(canvas_rect.max.x - 160.0, canvas_rect.min.y + 40.0),
+        Vec2::new(150.0, 35.0),
     );
 
     // Draw background for zoom UI
     painter.rect_filled(
         zoom_ui_rect.expand(4.0),
         4.0,
-        Color32::from_rgba_unmultiplied(20, 20, 30, 200),
+        Color32::from_rgba_unmultiplied(20, 20, 30, 220),
     );
     painter.rect_stroke(
         zoom_ui_rect.expand(4.0),
         4.0,
-        Stroke::new(1.0, Color32::from_gray(80)),
+        Stroke::new(1.0, Color32::from_gray(100)),
         egui::StrokeKind::Middle,
     );
 
     ui.scope_builder(egui::UiBuilder::new().max_rect(zoom_ui_rect), |ui| {
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 4.0;
-            if ui.button(RichText::new("-").strong()).clicked() {
+            if ui.button(RichText::new("-").strong()).on_hover_text("Zoom Out").clicked() {
                 canvas.zoom = (canvas.zoom - 0.1).max(0.1);
             }
             ui.add(
@@ -230,10 +230,10 @@ pub fn render_canvas(
                     .show_value(false)
                     .trailing_fill(true),
             );
-            if ui.button(RichText::new("+").strong()).clicked() {
+            if ui.button(RichText::new("+").strong()).on_hover_text("Zoom In").clicked() {
                 canvas.zoom = (canvas.zoom + 0.1).min(5.0);
             }
-            ui.label(RichText::new(format!("{:.0}%", canvas.zoom * 100.0)).size(10.0));
+            ui.label(RichText::new(format!("{:.0}%", canvas.zoom * 100.0)).size(11.0).color(Color32::WHITE));
         });
     });
 
@@ -340,8 +340,9 @@ pub fn render_canvas(
         // 2.1 Handle Socket Interaction (Priority)
         for socket_info in &all_sockets {
             if socket_info.part_id == part_id {
+                let interact_radius = 18.0 * canvas.zoom; // Smaller radius to avoid overlap
                 let socket_rect =
-                    Rect::from_center_size(socket_info.position, Vec2::splat(24.0 * canvas.zoom));
+                    Rect::from_center_size(socket_info.position, Vec2::splat(interact_radius));
                 let socket_resp = ui.interact(
                     socket_rect,
                     egui::Id::new((part_id, socket_info.is_output, socket_info.socket_idx)),
@@ -353,7 +354,7 @@ pub fn render_canvas(
                         part_id,
                         socket_info.socket_idx,
                         socket_info.is_output,
-                        socket_info.socket_type,
+                        socket_info.socket_type.clone(),
                         socket_info.position,
                     ));
                     clicked_on_part = true;
@@ -438,10 +439,11 @@ pub fn render_canvas(
         {
             if let Some(pointer_pos) = ui.input(|i| i.pointer.hover_pos()) {
                 let mut best_target = None;
-                let mut min_dist = 25.0 * canvas.zoom; // Slightly tighter radius
+                let mut min_dist = 20.0 * canvas.zoom; // Very tight radius
 
                 for target in &all_sockets {
                     let dist = target.position.distance(pointer_pos);
+                    // CRITICAL: Type must match EXACTLY
                     if dist < min_dist
                         && target.part_id != from_part
                         && target.is_output != is_output
@@ -459,7 +461,7 @@ pub fn render_canvas(
                         (target.part_id, target.socket_idx, from_part, from_idx)
                     };
 
-                    // Final safety check: no self-connection (redundant but safe)
+                    // Final safety check: no self-connection and NO DUPLICATES
                     if out_part != in_part {
                         let exists = module.connections.iter().any(|c| {
                             c.from_part == out_part
