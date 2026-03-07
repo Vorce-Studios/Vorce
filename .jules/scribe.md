@@ -16,3 +16,7 @@ I have addressed several broken links and outdated status indicators in the docu
 ### Observations
 - The `docs/` structure is comprehensive but has some legacy references to files that have been moved or renamed.
 - `ROADMAP.md` status fields need regular manual verification against the Changelog.
+
+## 2026-03-05 - Folder Structure Migration Fixes
+**Observation:** Some files still had legacy `0[1-9]-...` references to the documentation directory (e.g. `docs/01-GETTING-STARTED/INSTALLATION.md`) instead of the new semantic folder structure (like `docs/user/getting-started/INSTALLATION.md`).
+**Action:** Fixed `crates/mapmap/README.md`, `docs/user/getting-started/BUILD.md`, `docs/project/cicd/WORKFLOW_CONTROL.md`, `docs/project/cicd/WORKFLOW_QUICKREF.md`, and `docs/project/audits/DOCUMENTATION_AUDIT.md` to point to the correct semantic documentation paths.

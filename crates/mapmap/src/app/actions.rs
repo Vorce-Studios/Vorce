@@ -101,6 +101,45 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                 app.ui_state.show_inspector = true;
                 app.ui_state.show_media_browser = true;
                 app.ui_state.show_module_canvas = false;
+<<<<<<< HEAD
+=======
+                app.ui_state.show_stats = true;
+                app.ui_state.show_toolbar = true;
+                app.ui_state.show_master_controls = true;
+            }
+            UIAction::Play => {
+                app.state.effect_animator_mut().play();
+                for handle in app.media_players.values_mut() {
+                    let _ = handle.command_tx.send(mapmap_media::PlaybackCommand::Play);
+                }
+            }
+            UIAction::Pause => {
+                app.state.effect_animator_mut().pause();
+                for handle in app.media_players.values_mut() {
+                    let _ = handle.command_tx.send(mapmap_media::PlaybackCommand::Pause);
+                }
+            }
+            UIAction::Stop => {
+                app.state.effect_animator_mut().stop();
+                for handle in app.media_players.values_mut() {
+                    let _ = handle.command_tx.send(mapmap_media::PlaybackCommand::Stop);
+                }
+            }
+            UIAction::SetSpeed(s) => {
+                app.state.effect_animator_mut().set_speed(s);
+                for handle in app.media_players.values_mut() {
+                    let _ = handle
+                        .command_tx
+                        .send(mapmap_media::PlaybackCommand::SetSpeed(s));
+                }
+            }
+            UIAction::SetLoopMode(m) => {
+                for handle in app.media_players.values_mut() {
+                    let _ = handle
+                        .command_tx
+                        .send(mapmap_media::PlaybackCommand::SetLoopMode(m));
+                }
+>>>>>>> 8688cbac (docs: Fix legacy folder references to semantic structure)
             }
             UIAction::Play => app.state.effect_animator_mut().play(),
             UIAction::Pause => app.state.effect_animator_mut().pause(),
@@ -229,6 +268,87 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                 info!("About dialog requested");
                 app.ui_state.show_about = true;
             }
+<<<<<<< HEAD
+=======
+            UIAction::OpenLicense => {
+                app.egui_context.open_url(egui::OpenUrl::new_tab(
+                    "https://github.com/MrLongNight/MapFlow/blob/main/LICENSE",
+                ));
+            }
+
+            UIAction::ToggleMidiLearn => {
+                app.ui_state.is_midi_learn_mode = !app.ui_state.is_midi_learn_mode;
+                info!("MIDI Learn mode: {}", app.ui_state.is_midi_learn_mode);
+            }
+            UIAction::ToggleAudioPanel => {
+                app.ui_state.show_audio = !app.ui_state.show_audio;
+            }
+            UIAction::SelectAudioDevice(device) => {
+                app.ui_state.selected_audio_device = Some(device.clone());
+                // AudioConfig in state doesn't have input_device, it's in UserConfig
+                app.ui_state.user_config.selected_audio_device = Some(device);
+                let _ = app.ui_state.user_config.save();
+            }
+
+            UIAction::AddPaint => {
+                app.history.push(app.state.clone());
+                let count = app.state.paint_manager.paints().len();
+                app.state
+                    .paint_manager_mut()
+                    .add_paint(mapmap_core::Paint::color(
+                        0,
+                        format!("Paint {}", count + 1),
+                        [1.0, 1.0, 1.0, 1.0],
+                    ));
+                app.state.dirty = true;
+            }
+            UIAction::RemovePaint(id) => {
+                app.history.push(app.state.clone());
+                app.state.paint_manager_mut().remove_paint(id);
+                app.state.dirty = true;
+            }
+
+            UIAction::AddMapping => {
+                app.history.push(app.state.clone());
+                let count = app.state.mapping_manager.mappings().len();
+                app.state
+                    .mapping_manager_mut()
+                    .add_mapping(mapmap_core::Mapping::quad(
+                        0,
+                        format!("Mapping {}", count + 1),
+                        0,
+                    ));
+                app.state.dirty = true;
+            }
+            UIAction::RemoveMapping(id) => {
+                app.history.push(app.state.clone());
+                app.state.mapping_manager_mut().remove_mapping(id);
+                app.state.dirty = true;
+            }
+            UIAction::SelectMapping(id) => {
+                app.ui_state.selected_output_id = Some(id);
+            }
+            UIAction::ToggleMappingVisibility(id, visible) => {
+                if let Some(mapping) = app.state.mapping_manager_mut().get_mapping_mut(id) {
+                    mapping.visible = visible;
+                    app.state.dirty = true;
+                }
+            }
+
+            UIAction::AddOutput(name, region, size) => {
+                app.history.push(app.state.clone());
+                app.state
+                    .output_manager_mut()
+                    .add_output(name, region, size);
+                app.state.dirty = true;
+            }
+            UIAction::RemoveOutput(id) => {
+                app.history.push(app.state.clone());
+                app.state.output_manager_mut().remove_output(id);
+                app.state.dirty = true;
+            }
+
+>>>>>>> 8688cbac (docs: Fix legacy folder references to semantic structure)
             #[cfg(feature = "ndi")]
             UIAction::ConnectNdiSource { part_id, source } => {
                 let receiver = app.ndi_receivers.entry(part_id).or_insert_with(|| {
@@ -481,6 +601,13 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     .set_master_speed(val);
                 app.state.dirty = true;
             }
+<<<<<<< HEAD
+=======
+            UIAction::SetMasterBlackout(val) => {
+                app.state.layer_manager_mut().composition.master_blackout = val;
+                app.state.dirty = true;
+            }
+>>>>>>> 8688cbac (docs: Fix legacy folder references to semantic structure)
             UIAction::SetCompositionName(name) => {
                 app.state.layer_manager_mut().composition.name = name;
                 app.state.dirty = true;

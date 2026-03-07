@@ -209,6 +209,54 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
         };
     }
 
+<<<<<<< HEAD
+=======
+    // --- Sync UI State with App Data ---
+    app.ui_state.current_fps = app.current_fps;
+    app.ui_state.current_frame_time_ms = app.current_frame_time_ms;
+    app.ui_state.cpu_usage = app.sys_info.global_cpu_usage();
+    app.ui_state.ram_usage_mb = if let Ok(pid) = sysinfo::get_current_pid() {
+        app.sys_info
+            .process(pid)
+            .map(|p| p.memory() as f32 / 1024.0 / 1024.0)
+            .unwrap_or(0.0)
+    } else {
+        0.0
+    };
+
+    let analysis = app.audio_analyzer.get_latest_analysis();
+    app.ui_state.current_audio_level = analysis.rms_volume;
+    app.ui_state.current_bpm = analysis.tempo_bpm;
+
+    // Convert AudioAnalysisV2 to AudioAnalysis for Dashboard
+    let dashboard_analysis = mapmap_core::AudioAnalysis {
+        timestamp: analysis.timestamp,
+        fft_magnitudes: analysis.fft_magnitudes,
+        band_energies: [
+            analysis.band_energies[0],
+            analysis.band_energies[1],
+            analysis.band_energies[2],
+            analysis.band_energies[3],
+            analysis.band_energies[4],
+            analysis.band_energies[6], // Skip UpperMid
+            analysis.band_energies[7], // Skip Air
+        ],
+        rms_volume: analysis.rms_volume,
+        peak_volume: analysis.peak_volume,
+        beat_detected: analysis.beat_detected,
+        beat_strength: analysis.beat_strength,
+        onset_detected: false, // V2 doesn't have onset
+        tempo_bpm: analysis.tempo_bpm,
+        waveform: analysis.waveform,
+    };
+    app.ui_state
+        .dashboard
+        .set_audio_analysis(dashboard_analysis);
+    app.ui_state
+        .dashboard
+        .set_audio_devices(app.audio_devices.clone());
+
+>>>>>>> 8688cbac (docs: Fix legacy folder references to semantic structure)
     // Check auto-save (every 30s)
     if app.last_autosave.elapsed().as_secs() >= 30 {
         if app.state.dirty {

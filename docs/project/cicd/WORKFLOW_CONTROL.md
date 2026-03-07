@@ -262,7 +262,7 @@ Wenn du wirklich nur das Nötigste willst:
 
 Bei Fragen oder Problemen:
 1. Siehe [INSTALLATION.md](../../user/getting-started/INSTALLATION.md)
-2. Siehe [workflows/README.md](.github/workflows/README.md)
+2. Siehe [workflows/README.md](../../../.github/workflows/README.md)
 3. Issue öffnen mit Label `workflows`
 
 ---
