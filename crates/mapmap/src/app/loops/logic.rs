@@ -231,13 +231,13 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
         timestamp: analysis.timestamp,
         fft_magnitudes: analysis.fft_magnitudes,
         band_energies: [
-            analysis.band_energies[0],
-            analysis.band_energies[1],
-            analysis.band_energies[2],
-            analysis.band_energies[3],
-            analysis.band_energies[4],
-            analysis.band_energies[6], // Skip UpperMid
-            analysis.band_energies[7], // Skip Air
+            analysis.band_energies[0], // SubBass
+            analysis.band_energies[1], // Bass
+            analysis.band_energies[2], // LowMid
+            analysis.band_energies[3], // Mid
+            analysis.band_energies[4], // HighMid
+            analysis.band_energies[6], // Presence (Skip UpperMid)
+            analysis.band_energies[7], // Brilliance (Skip Air)
         ],
         rms_volume: analysis.rms_volume,
         peak_volume: analysis.peak_volume,
