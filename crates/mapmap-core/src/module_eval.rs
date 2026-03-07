@@ -1762,7 +1762,9 @@ mod tests_logic {
     fn test_compute_trigger_output_beat() {
         let mut output = Vec::new();
         let data_true = create_audio_data(true);
-        let keys = std::collections::HashSet::new();
+        let keys: std::collections::HashSet<String> = std::collections::HashSet::new();
+        let midi: std::collections::HashSet<(u8, u8)> = std::collections::HashSet::new();
+        let osc: std::collections::HashSet<String> = std::collections::HashSet::new();
         let mut rng = rand::rng();
 
         ModuleEvaluator::compute_trigger_output(
@@ -1770,6 +1772,9 @@ mod tests_logic {
             &data_true,
             Instant::now(),
             &keys,
+            &midi,
+            &osc,
+            false,
             &mut output,
             &mut rng,
         );
@@ -1782,6 +1787,9 @@ mod tests_logic {
             &data_false,
             Instant::now(),
             &keys,
+            &midi,
+            &osc,
+            false,
             &mut output,
             &mut rng,
         );
@@ -1792,7 +1800,9 @@ mod tests_logic {
     fn test_compute_trigger_output_audio_fft() {
         let mut output = Vec::new();
         let data = create_audio_data(true);
-        let keys = std::collections::HashSet::new();
+        let keys: std::collections::HashSet<String> = std::collections::HashSet::new();
+        let midi: std::collections::HashSet<(u8, u8)> = std::collections::HashSet::new();
+        let osc: std::collections::HashSet<String> = std::collections::HashSet::new();
         let mut rng = rand::rng();
 
         let config = AudioTriggerOutputConfig {
@@ -1812,6 +1822,9 @@ mod tests_logic {
             &data,
             Instant::now(),
             &keys,
+            &midi,
+            &osc,
+            false,
             &mut output,
             &mut rng,
         );
@@ -1836,7 +1849,9 @@ mod tests_logic {
     fn test_compute_trigger_output_fixed() {
         let mut output = Vec::new();
         let data = create_audio_data(false);
-        let keys = std::collections::HashSet::new();
+        let keys: std::collections::HashSet<String> = std::collections::HashSet::new();
+        let midi: std::collections::HashSet<(u8, u8)> = std::collections::HashSet::new();
+        let osc: std::collections::HashSet<String> = std::collections::HashSet::new();
         let mut rng = rand::rng();
 
         // Interval 1000ms. Pulse duration 100ms.
@@ -1854,6 +1869,9 @@ mod tests_logic {
             &data,
             start_past_50,
             &keys,
+            &midi,
+            &osc,
+            false,
             &mut output,
             &mut rng,
         );
@@ -1870,6 +1888,9 @@ mod tests_logic {
             &data,
             start_past_150,
             &keys,
+            &midi,
+            &osc,
+            false,
             &mut output,
             &mut rng,
         );

@@ -402,9 +402,10 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                     ui_obj,
                     &app.ui_state.i18n,
                     Some(&analysis),
-                    &app.state.audio_config,
-                    &app.ui_state.audio_devices,
+                    &app.audio_analyzer.get_config(),
+                    &app.audio_devices,
                     &mut app.ui_state.selected_audio_device,
+                    app.ui_state.user_config.meter_style,
                 );
             });
     }

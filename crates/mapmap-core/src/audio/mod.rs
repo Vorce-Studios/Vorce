@@ -208,6 +208,11 @@ impl AudioAnalyzer {
         self.v2.update_config(v2_config);
     }
 
+    /// Get current audio configuration
+    pub fn get_config(&self) -> AudioConfig {
+        self.config.clone()
+    }
+
     /// Reset all buffers and state
     pub fn reset(&mut self) {
         self.v2.reset();

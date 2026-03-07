@@ -3,7 +3,6 @@ use crate::app::core::app_struct::App;
 use crate::orchestration::media::{sync_media_players, update_media_players};
 use crate::orchestration::outputs::sync_output_windows;
 use anyhow::Result;
-use mapmap_core::module::{ModulePartType, OutputType};
 use mapmap_io::save_project;
 use std::collections::HashSet;
 use tracing::info;
@@ -70,9 +69,9 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     app.render_ops.clear();
 
     // --- Bevy Runner Update ---
+    let mut node_triggers = std::collections::HashMap::new();
     if let Some(runner) = &mut app.bevy_runner {
         let runner: &mut mapmap_bevy::BevyRunner = runner;
-        let mut node_triggers = std::collections::HashMap::new();
 
         for module_id in &modules_for_eval {
             if let Some(module_ref) = app.state.module_manager.get_module(*module_id) {
