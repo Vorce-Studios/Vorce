@@ -340,6 +340,14 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     .create_layer(format!("Layer {}", count + 1));
                 app.state.dirty = true;
             }
+            UIAction::UpdateMappingMesh(id, mesh) => {
+                if let Some(mapping) =
+                    std::sync::Arc::make_mut(&mut app.state.mapping_manager).get_mapping_mut(id)
+                {
+                    mapping.mesh = mesh;
+                    app.state.dirty = true;
+                }
+            }
             UIAction::CreateGroup => {
                 let count = app.state.layer_manager.len();
                 app.state

@@ -131,6 +131,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                     std::sync::Arc::make_mut(&mut app.state.module_manager),
                     &app.state.layer_manager,
                     &app.state.output_manager,
+                    &app.state.mapping_manager,
                 );
 
                 // Legacy panels (can be toggled separately or integrated)
