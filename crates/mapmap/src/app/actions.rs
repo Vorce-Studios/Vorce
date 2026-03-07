@@ -27,6 +27,21 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
             }
 
             // Settings
+            UIAction::SelectAudioDevice(device) => {
+                app.ui_state.selected_audio_device = Some(device.clone());
+                app.state.dirty = true;
+                // Note: Re-initializing audio backend with new device is currently missing/complex
+                info!(
+                    "Selected audio device: {:?}",
+                    app.ui_state.selected_audio_device
+                );
+            }
+            UIAction::UpdateAudioConfig(cfg) => {
+                app.state.audio_config = cfg.clone();
+                app.audio_analyzer.update_config(cfg);
+                app.state.dirty = true;
+            }
+            // Settings
             UIAction::SetTargetFps(fps) => {
                 app.ui_state.user_config.target_fps = Some(fps);
                 let _ = app.ui_state.user_config.save();

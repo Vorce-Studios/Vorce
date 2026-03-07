@@ -86,7 +86,9 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                                     ui::panels::audio_panel::AudioPanelAction::ConfigChanged(
                                         cfg,
                                     ) => {
-                                        app.state.audio_config = cfg;
+                                        app.ui_state
+                                            .actions
+                                            .push(ui::UIAction::UpdateAudioConfig(cfg));
                                     }
                                 }
                             }
