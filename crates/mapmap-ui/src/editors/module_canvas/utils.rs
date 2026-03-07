@@ -258,6 +258,8 @@ pub fn ensure_icons_loaded(
         "plug.svg",
         "power-plug.svg",
         "usb-cable.svg",
+        "Klinkestecker.svg",
+        "Klinkestecker2.svg",
     ];
 
     for path_str in paths {

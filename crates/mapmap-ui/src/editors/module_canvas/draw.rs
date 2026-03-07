@@ -192,13 +192,16 @@ where
             let plug_size = 20.0 * canvas.zoom;
 
             let icon_name = match socket_type {
-                mapmap_core::module::ModuleSocketType::Trigger => "audio-jack1.1.svg",
+                mapmap_core::module::ModuleSocketType::Trigger => "Klinkestecker.svg",
                 mapmap_core::module::ModuleSocketType::Media => "plug.svg",
                 mapmap_core::module::ModuleSocketType::Effect => "usb-cable.svg",
                 mapmap_core::module::ModuleSocketType::Layer => "power-plug.svg",
-                mapmap_core::module::ModuleSocketType::Output => "audio-jack_2.svg",
+                mapmap_core::module::ModuleSocketType::Output => "Klinkestecker2.svg",
                 mapmap_core::module::ModuleSocketType::Link => "audio-jack_1.2.svg",
             };
+
+            let is_new_jack = icon_name == "Klinkestecker.svg" || icon_name == "Klinkestecker2.svg";
+            let is_trigger = matches!(socket_type, mapmap_core::module::ModuleSocketType::Trigger);
 
             // Draw Cable (Bezier)
             let cable_start = start_pos;
@@ -344,7 +347,11 @@ where
 
                 // Source Plug at OUTPUT socket - points LEFT (PI baseline)
                 // Target Plug at INPUT socket - points RIGHT (0.0 baseline)
-                let (source_angle, target_angle) = if is_trigger {
+                let (source_angle, target_angle) = if is_new_jack {
+                    // New jacks point right by default, so source (leaving node) needs to flip 180deg (PI)
+                    // and target (entering node) needs 0deg
+                    (PI, 0.0)
+                } else if is_trigger {
                     // Trigger: 45 deg CCW offset from baseline
                     (PI + PI / 4.0, 0.0 + PI / 4.0)
                 } else {
