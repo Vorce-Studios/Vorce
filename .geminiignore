@@ -1,6 +1,21 @@
 # Gemini CLI Ignore Patterns
 # Supplementing .gitignore for better token/context optimization
 
+# Ignore massive build and dependency directories
+/target/
+/vcpkg/
+/vcpkg_installed/
+/.git/
+/tmp/
+/.temp-archive/
+/logs/
+/.jules/
+/.gemini/
+
+# Assets and resources (usually too big for context)
+/assets/
+/resources/
+
 # Binary Assets
 *.png
 *.jpg
@@ -18,6 +33,8 @@
 *.pdf
 *.psd
 *.ai
+*.zip
+*.mmp
 
 # Project Metadata/Secondary Config
 .gitattributes
@@ -28,13 +45,6 @@ deny.toml
 rust-toolchain.toml
 vcpkg.json
 vcpkg-configuration.json
-
-# Explicitly restate critical ignores from .gitignore
-/target/
-/logs/
-/tmp/
-.gemini/
-/.temp-archive/
 
 # Build/test output files
 check_*.txt
