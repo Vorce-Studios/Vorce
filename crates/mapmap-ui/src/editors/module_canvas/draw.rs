@@ -306,27 +306,60 @@ where
                     Color32::from_rgba_unmultiplied(255, 255, 255, 150),
                 );
             }
-            // Draw Plugs on top of cable
-            if let Some(texture) = canvas.plug_icons.get(icon_name) {
-                // Source Plug at OUTPUT socket - pointing LEFT (into node)
-                let start_rect = Rect::from_center_size(start_pos, Vec2::splat(plug_size));
-                // Flip horizontally so plug points left (into node)
-                painter.image(
-                    texture.id(),
-                    start_rect,
-                    Rect::from_min_max(Pos2::new(1.0, 0.0), Pos2::new(0.0, 1.0)),
-                    Color32::WHITE,
-                );
 
-                // Target Plug at INPUT socket - pointing RIGHT (into node)
-                let end_rect = Rect::from_center_size(end_pos, Vec2::splat(plug_size));
-                // Normal orientation (pointing right into node)
-                painter.image(
-                    texture.id(),
-                    end_rect,
-                    Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
-                    Color32::WHITE,
-                );
+            // Draw Plugs on top of cable
+            let icon_name = match socket_type {
+                mapmap_core::module::ModuleSocketType::Trigger => "audio-jack_2.svg",
+                mapmap_core::module::ModuleSocketType::Media => "plug.svg",
+                mapmap_core::module::ModuleSocketType::Effect => "usb-cable.svg",
+                mapmap_core::module::ModuleSocketType::Layer => "power-plug.svg",
+                mapmap_core::module::ModuleSocketType::Output => "audio-jack_2.svg",
+                mapmap_core::module::ModuleSocketType::Link => "audio-jack_1.2.svg",
+            };
+
+            if let Some(texture) = canvas.plug_icons.get(icon_name) {
+                use std::f32::consts::PI;
+                
+                // Helper to draw rotated image via Mesh
+                let mut draw_rotated = |pos: Pos2, angle: f32, size: f32, uv: Rect| {
+                    let mut mesh = egui::Mesh::with_texture(texture.id());
+                    let rotation = egui::Rot2::from_angle(angle);
+                    let half_size = size / 2.0;
+                    
+                    let corners = [
+                        Pos2::new(-half_size, -half_size),
+                        Pos2::new(half_size, -half_size),
+                        Pos2::new(half_size, half_size),
+                        Pos2::new(-half_size, half_size),
+                    ];
+                    
+                    let uvs = [
+                        Pos2::new(uv.min.x, uv.min.y),
+                        Pos2::new(uv.max.x, uv.min.y),
+                        Pos2::new(uv.max.x, uv.max.y),
+                        Pos2::new(uv.min.x, uv.max.y),
+                    ];
+                    
+                    for i in 0..4 {
+                        mesh.vertices.push(egui::epaint::Vertex {
+                            pos: pos + rotation * corners[i].to_vec2(),
+                            uv: uvs[i],
+                            color: Color32::WHITE,
+                        });
+                    }
+                    mesh.add_triangle(0, 1, 2);
+                    mesh.add_triangle(0, 2, 3);
+                    painter.add(mesh);
+                };
+
+                // Source Plug at OUTPUT socket - points LEFT (into node)
+                // Assuming SVG points UP (0 rad), pointing LEFT is -PI/2 (or 3*PI/2)
+                // User wants 90 deg rotation, let's try PI/2 and -PI/2
+                draw_rotated(start_pos, -PI/2.0, plug_size, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)));
+
+                // Target Plug at INPUT socket - points RIGHT (into node)
+                // Pointing RIGHT is PI/2
+                draw_rotated(end_pos, PI/2.0, plug_size, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)));
             } else {
                 // Fallback circles
                 painter.circle_filled(start_pos, 6.0 * canvas.zoom, cable_color);

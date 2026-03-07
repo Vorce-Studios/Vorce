@@ -435,25 +435,27 @@ impl ThemeConfig {
         }
     }
 
-    /// Purple accent visuals
+    /// Purple accent visuals (Cyber Purple)
     fn purple_visuals() -> Visuals {
-        let mut visuals = Visuals::dark();
         let purple = Color32::from_rgb(170, 50, 255);
+        let mut visuals = Self::resolume_visuals();
         visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, purple);
         visuals.widgets.active.bg_fill = purple;
-        visuals.selection.bg_fill = purple.linear_multiply(0.3);
+        visuals.widgets.active.bg_stroke = egui::Stroke::new(1.0, purple);
+        visuals.selection.bg_fill = purple.linear_multiply(0.2);
         visuals.selection.stroke = egui::Stroke::new(1.0, purple);
         visuals.hyperlink_color = purple;
         visuals
     }
 
-    /// Pink accent visuals
+    /// Pink accent visuals (Cyber Pink)
     fn pink_visuals() -> Visuals {
-        let mut visuals = Visuals::dark();
         let pink = Color32::from_rgb(255, 50, 170);
+        let mut visuals = Self::resolume_visuals();
         visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, pink);
         visuals.widgets.active.bg_fill = pink;
-        visuals.selection.bg_fill = pink.linear_multiply(0.3);
+        visuals.widgets.active.bg_stroke = egui::Stroke::new(1.0, pink);
+        visuals.selection.bg_fill = pink.linear_multiply(0.2);
         visuals.selection.stroke = egui::Stroke::new(1.0, pink);
         visuals.hyperlink_color = pink;
         visuals
