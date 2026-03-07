@@ -70,9 +70,9 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     app.render_ops.clear();
 
     // --- Bevy Runner Update ---
-    let mut node_triggers = std::collections::HashMap::new();
     if let Some(runner) = &mut app.bevy_runner {
         let runner: &mut mapmap_bevy::BevyRunner = runner;
+        let mut node_triggers = std::collections::HashMap::new();
 
         for module_id in &modules_for_eval {
             if let Some(module_ref) = app.state.module_manager.get_module(*module_id) {
