@@ -211,7 +211,7 @@ impl ControlManager {
 
         if let Some(midi_input) = &self.midi_input {
             while let Some(message) = midi_input.poll_message() {
-                events.push(message.clone());
+                events.push(message);
                 // Get mapping and collect control values
                 if let Some(mapping) = midi_input.get_mapping() {
                     if let Some((target, value)) = mapping.get_control_value(&message) {
