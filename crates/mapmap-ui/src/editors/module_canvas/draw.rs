@@ -301,7 +301,7 @@ where
             // Draw Plugs on top of cable
             let is_trigger = matches!(socket_type, mapmap_core::module::ModuleSocketType::Trigger);
             let icon_name = match socket_type {
-                mapmap_core::module::ModuleSocketType::Trigger => "audio-jack1.1.svg",
+                mapmap_core::module::ModuleSocketType::Trigger => "audio-jack_2.svg",
                 mapmap_core::module::ModuleSocketType::Media => "plug.svg",
                 mapmap_core::module::ModuleSocketType::Effect => "usb-cable.svg",
                 mapmap_core::module::ModuleSocketType::Layer => "power-plug.svg",
@@ -350,18 +350,26 @@ where
                     painter.add(mesh);
                 };
 
-                // Source Plug at OUTPUT socket - points LEFT (PI). 45 deg CCW is 5*PI/4
+                // Source Plug at OUTPUT socket - points LEFT (-PI/2 baseline)
+                // Target Plug at INPUT socket - points RIGHT (PI/2 baseline)
+                let (source_angle, target_angle) = if is_trigger {
+                    // Trigger: 45 deg CCW offset from baseline
+                    (-PI / 2.0 - PI / 4.0, PI / 2.0 - PI / 4.0)
+                } else {
+                    // Normal: 90 deg baseline
+                    (-PI / 2.0, PI / 2.0)
+                };
+
                 draw_rotated(
                     start_pos,
-                    5.0 * PI / 4.0,
+                    source_angle,
                     current_plug_size,
                     Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
                 );
 
-                // Target Plug at INPUT socket - points RIGHT (0). 45 deg CCW is PI/4
                 draw_rotated(
                     end_pos,
-                    PI / 4.0,
+                    target_angle,
                     current_plug_size,
                     Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
                 );
@@ -843,16 +851,15 @@ pub fn draw_part_with_delete(
         painter.circle_stroke(
             socket_pos,
             socket_radius,
-            Stroke::new(1.0 * canvas.zoom, stroke_color),
+            Stroke::new(0.8 * canvas.zoom, stroke_color),
         );
 
         // Very subtle inner glow
         painter.circle_filled(
             socket_pos,
-            2.0 * canvas.zoom,
-            stroke_color.linear_multiply(0.3),
+            1.5 * canvas.zoom,
+            stroke_color.linear_multiply(0.2),
         );
-
         // Socket label
         let type_name = socket.socket_type.name();
         let display_name = if socket
@@ -898,16 +905,15 @@ pub fn draw_part_with_delete(
         painter.circle_stroke(
             socket_pos,
             socket_radius,
-            Stroke::new(1.0 * canvas.zoom, stroke_color),
+            Stroke::new(0.8 * canvas.zoom, stroke_color),
         );
 
         // Very subtle inner glow
         painter.circle_filled(
             socket_pos,
-            2.0 * canvas.zoom,
-            stroke_color.linear_multiply(0.3),
+            1.5 * canvas.zoom,
+            stroke_color.linear_multiply(0.2),
         );
-
         // Socket label
         let type_name = socket.socket_type.name();
         let display_name = if socket

@@ -440,9 +440,9 @@ impl ThemeConfig {
         let purple = Color32::from_rgb(191, 64, 255); // Electric Neon Purple
         let mut visuals = Self::resolume_visuals();
         
-        // Comprehensive override of all accent-related fields
         visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.5, purple);
         visuals.widgets.active.bg_fill = purple;
+        visuals.widgets.active.weak_bg_fill = purple;
         visuals.widgets.active.bg_stroke = egui::Stroke::new(1.0, purple);
         visuals.widgets.inactive.bg_stroke = egui::Stroke::new(1.0, purple.linear_multiply(0.4));
         
@@ -459,9 +459,9 @@ impl ThemeConfig {
         let pink = Color32::from_rgb(255, 0, 127); // Vibrant Neon Pink (Rose)
         let mut visuals = Self::resolume_visuals();
         
-        // Comprehensive override of all accent-related fields
         visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.5, pink);
         visuals.widgets.active.bg_fill = pink;
+        visuals.widgets.active.weak_bg_fill = pink;
         visuals.widgets.active.bg_stroke = egui::Stroke::new(1.0, pink);
         visuals.widgets.inactive.bg_stroke = egui::Stroke::new(1.0, pink.linear_multiply(0.4));
         

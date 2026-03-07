@@ -649,4 +649,42 @@ pub fn render_canvas(
             }
         }
     }
+
+    // --- ZOOM UI (Top Right) ---
+    // Rendered last to be on top
+    let zoom_ui_rect = Rect::from_min_size(
+        Pos2::new(canvas_rect.max.x - 160.0, canvas_rect.min.y + 40.0),
+        Vec2::new(150.0, 35.0),
+    );
+
+    // Draw background for zoom UI
+    painter.rect_filled(
+        zoom_ui_rect.expand(4.0),
+        4.0,
+        Color32::from_rgba_unmultiplied(20, 20, 30, 220),
+    );
+    painter.rect_stroke(
+        zoom_ui_rect.expand(4.0),
+        4.0,
+        Stroke::new(1.0, Color32::from_gray(100)),
+        egui::StrokeKind::Middle,
+    );
+
+    ui.scope_builder(egui::UiBuilder::new().max_rect(zoom_ui_rect), |ui| {
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 4.0;
+            if ui.button(RichText::new("-").strong()).on_hover_text("Zoom Out").clicked() {
+                canvas.zoom = (canvas.zoom - 0.1).max(0.1);
+            }
+            ui.add(
+                egui::Slider::new(&mut canvas.zoom, 0.1..=5.0)
+                    .show_value(false)
+                    .trailing_fill(true),
+            );
+            if ui.button(RichText::new("+").strong()).on_hover_text("Zoom In").clicked() {
+                canvas.zoom = (canvas.zoom + 0.1).min(5.0);
+            }
+            ui.label(RichText::new(format!("{:.0}%", canvas.zoom * 100.0)).size(11.0).color(Color32::WHITE));
+        });
+    });
 }
