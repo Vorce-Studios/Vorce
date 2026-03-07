@@ -67,3 +67,66 @@ impl Composition {
         self.master_speed = speed.clamp(0.1, 10.0);
     }
 }
+
+#[cfg(test)]
+mod tests_guardian {
+    use super::*;
+
+    #[test]
+    fn test_composition_default_values() {
+        let comp = Composition::default();
+        assert_eq!(comp.name, "Untitled Composition");
+        assert_eq!(comp.description, "");
+        assert_eq!(comp.master_opacity, 1.0);
+        assert!(!comp.master_blackout);
+        assert_eq!(comp.master_speed, 1.0);
+        assert_eq!(comp.size, (1920, 1080));
+        assert_eq!(comp.frame_rate, 60.0);
+    }
+
+    #[test]
+    fn test_composition_new_initialization() {
+        let comp = Composition::new("Test Composition", (800, 600), 30.0);
+        assert_eq!(comp.name, "Test Composition");
+        assert_eq!(comp.description, "");
+        assert_eq!(comp.master_opacity, 1.0);
+        assert!(!comp.master_blackout);
+        assert_eq!(comp.master_speed, 1.0);
+        assert_eq!(comp.size, (800, 600));
+        assert_eq!(comp.frame_rate, 30.0);
+    }
+
+    #[test]
+    fn test_composition_with_description_builder() {
+        let comp = Composition::default().with_description("A test composition description");
+        assert_eq!(comp.description, "A test composition description");
+    }
+
+    #[test]
+    fn test_composition_set_master_opacity_bounds() {
+        let mut comp = Composition::default();
+
+        comp.set_master_opacity(0.5);
+        assert_eq!(comp.master_opacity, 0.5);
+
+        comp.set_master_opacity(-1.0);
+        assert_eq!(comp.master_opacity, 0.0); // Clamped to 0.0
+
+        comp.set_master_opacity(2.0);
+        assert_eq!(comp.master_opacity, 1.0); // Clamped to 1.0
+    }
+
+    #[test]
+    fn test_composition_set_master_speed_bounds() {
+        let mut comp = Composition::default();
+
+        comp.set_master_speed(5.0);
+        assert_eq!(comp.master_speed, 5.0);
+
+        comp.set_master_speed(0.0);
+        assert_eq!(comp.master_speed, 0.1); // Clamped to 0.1
+
+        comp.set_master_speed(15.0);
+        assert_eq!(comp.master_speed, 10.0); // Clamped to 10.0
+    }
+}
