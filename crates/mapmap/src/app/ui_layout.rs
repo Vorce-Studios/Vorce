@@ -40,26 +40,23 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                     egui::CollapsingHeader::new(app.ui_state.i18n.t("dashboard"))
                         .default_open(true)
                         .show(ui_obj, |ui| {
-                            if let Some(dash_action) = app.ui_state.dashboard.render_contents(
-                                ui,
-                                &app.ui_state.i18n,
-                                app.ui_state.icon_manager.as_ref(),
-                            ) {
-                                match dash_action {
-                                    ui::view::dashboard::DashboardAction::SendCommand(cmd) => {
-                                        if let Some(_module_id) =
-                                            app.ui_state.module_canvas.active_module_id
-                                        {
-                                            if let Some(part_id) =
-                                                app.ui_state.module_canvas.get_selected_part_id()
-                                            {
-                                                app.ui_state
-                                                    .actions
-                                                    .push(ui::UIAction::MediaCommand(part_id, cmd));
-                                            }
-                                        }
+                            if let Some(ui::view::dashboard::DashboardAction::SendCommand(cmd)) =
+                                app.ui_state.dashboard.render_contents(
+                                    ui,
+                                    &app.ui_state.i18n,
+                                    app.ui_state.icon_manager.as_ref(),
+                                )
+                            {
+                                if let Some(_module_id) =
+                                    app.ui_state.module_canvas.active_module_id
+                                {
+                                    if let Some(part_id) =
+                                        app.ui_state.module_canvas.get_selected_part_id()
+                                    {
+                                        app.ui_state
+                                            .actions
+                                            .push(ui::UIAction::MediaCommand(part_id, cmd));
                                     }
-                                    _ => {}
                                 }
                             }
                         });
