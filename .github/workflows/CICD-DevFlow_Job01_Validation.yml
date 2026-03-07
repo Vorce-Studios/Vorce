@@ -4,20 +4,12 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
     types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
       toolchain:
         description: 'Rust toolchain version'
         required: true
-        default: 'stable'
-  workflow_call:
-    inputs:
-      toolchain:
-        description: 'Rust toolchain version'
-        required: false
-        type: string
         default: 'stable'
 
 permissions:
