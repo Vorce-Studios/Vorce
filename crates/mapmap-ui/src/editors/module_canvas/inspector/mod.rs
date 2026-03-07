@@ -184,7 +184,7 @@ pub fn render_inspector_for_part(
                                         mapmap_control::midi::MidiInputHandler::list_ports()
                                     {
                                         if ports.is_empty() {
-                                            ui.label("No MIDI devices");
+                                            ui.label(egui::RichText::new("No MIDI devices").weak().italics());
                                         } else {
                                             egui::ComboBox::from_id_salt(
                                                 "midi_device",
@@ -1348,7 +1348,7 @@ pub fn render_inspector_for_part(
                                     ui.label("LUT Loading requires a .cube file (not yet implemented in properties panel).");
                                 }
                                 _ => {
-                                    ui.label("No configurable parameters");
+                                    ui.label(egui::RichText::new("No configurable parameters").weak().italics());
                                 }
                             }
                         }
