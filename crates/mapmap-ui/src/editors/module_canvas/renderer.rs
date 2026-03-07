@@ -202,18 +202,25 @@ pub fn render_canvas(
 
     // --- ZOOM UI ---
     let zoom_ui_rect = Rect::from_min_size(
-        Pos2::new(canvas_rect.max.x - 120.0, canvas_rect.max.y - 140.0),
-        Vec2::new(100.0, 30.0)
+        Pos2::new(canvas_rect.max.x - 150.0, canvas_rect.max.y - 45.0),
+        Vec2::new(140.0, 35.0)
     );
+    
+    // Draw background for zoom UI
+    painter.rect_filled(zoom_ui_rect.expand(4.0), 4.0, Color32::from_rgba_unmultiplied(20, 20, 30, 200));
+    painter.rect_stroke(zoom_ui_rect.expand(4.0), 4.0, Stroke::new(1.0, Color32::from_gray(80)), egui::StrokeKind::Middle);
+
     ui.scope_builder(egui::UiBuilder::new().max_rect(zoom_ui_rect), |ui| {
         ui.horizontal(|ui| {
-            if ui.button("-").clicked() {
+            ui.spacing_mut().item_spacing.x = 4.0;
+            if ui.button(RichText::new("-").strong()).clicked() {
                 canvas.zoom = (canvas.zoom - 0.1).max(0.1);
             }
-            ui.add(egui::Slider::new(&mut canvas.zoom, 0.1..=5.0).show_value(false));
-            if ui.button("+").clicked() {
+            ui.add(egui::Slider::new(&mut canvas.zoom, 0.1..=5.0).show_value(false).trailing_fill(true));
+            if ui.button(RichText::new("+").strong()).clicked() {
                 canvas.zoom = (canvas.zoom + 0.1).min(5.0);
             }
+            ui.label(RichText::new(format!("{:.0}%", canvas.zoom * 100.0)).size(10.0));
         });
     });
 
