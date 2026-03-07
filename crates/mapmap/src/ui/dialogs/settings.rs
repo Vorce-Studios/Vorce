@@ -184,13 +184,22 @@ pub fn show(ctx: &Context, context: SettingsContext) {
                     egui::ComboBox::from_id_salt("gpu_picker")
                         .selected_text(gpu_text)
                         .show_ui(ui, |ui| {
-                            if ui.selectable_label(current_gpu.is_none(), "Default").clicked() {
-                                context.ui_state.actions.push(UIAction::SetPreferredGpu(None));
+                            if ui
+                                .selectable_label(current_gpu.is_none(), "Default")
+                                .clicked()
+                            {
+                                context
+                                    .ui_state
+                                    .actions
+                                    .push(UIAction::SetPreferredGpu(None));
                             }
                             for adapter in &context.ui_state.gpu_adapters {
                                 let is_selected = current_gpu.as_ref() == Some(adapter);
                                 if ui.selectable_label(is_selected, adapter).clicked() {
-                                    context.ui_state.actions.push(UIAction::SetPreferredGpu(Some(adapter.clone())));
+                                    context
+                                        .ui_state
+                                        .actions
+                                        .push(UIAction::SetPreferredGpu(Some(adapter.clone())));
                                 }
                             }
                         });

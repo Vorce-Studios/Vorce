@@ -351,10 +351,20 @@ where
                 };
 
                 // Source Plug at OUTPUT socket - points LEFT (-PI/2). 45 deg CCW from that is -PI/2 - PI/4 = -3*PI/4
-                draw_rotated(start_pos, -3.0 * PI / 4.0, current_plug_size, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)));
+                draw_rotated(
+                    start_pos,
+                    -3.0 * PI / 4.0,
+                    current_plug_size,
+                    Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
+                );
 
                 // Target Plug at INPUT socket - points RIGHT (PI/2). 45 deg CCW from that is PI/2 - PI/4 = PI/4
-                draw_rotated(end_pos, PI / 4.0, current_plug_size, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)));
+                draw_rotated(
+                    end_pos,
+                    PI / 4.0,
+                    current_plug_size,
+                    Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
+                );
             } else {
                 // Fallback circles
                 painter.circle_filled(start_pos, 6.0 * canvas.zoom, cable_color);
@@ -845,7 +855,11 @@ pub fn draw_part_with_delete(
 
         // Socket label
         let type_name = socket.socket_type.name();
-        let display_name = if socket.name.to_lowercase().contains(&type_name.to_lowercase()) {
+        let display_name = if socket
+            .name
+            .to_lowercase()
+            .contains(&type_name.to_lowercase())
+        {
             socket.name.clone()
         } else {
             format!("{} ({})", socket.name, type_name)
@@ -896,7 +910,11 @@ pub fn draw_part_with_delete(
 
         // Socket label
         let type_name = socket.socket_type.name();
-        let display_name = if socket.name.to_lowercase().contains(&type_name.to_lowercase()) {
+        let display_name = if socket
+            .name
+            .to_lowercase()
+            .contains(&type_name.to_lowercase())
+        {
             socket.name.clone()
         } else {
             format!("{} ({})", socket.name, type_name)
