@@ -308,24 +308,64 @@ where
             }
             // Draw Plugs on top of cable
             if let Some(texture) = canvas.plug_icons.get(icon_name) {
-                // Source Plug at OUTPUT socket - pointing LEFT (into node)
-                let start_rect = Rect::from_center_size(start_pos, Vec2::splat(plug_size));
-                // Flip horizontally so plug points left (into node)
-                painter.image(
-                    texture.id(),
-                    start_rect,
-                    Rect::from_min_max(Pos2::new(1.0, 0.0), Pos2::new(0.0, 1.0)),
-                    Color32::WHITE,
+                use std::f32::consts::PI;
+
+                // Helper to draw rotated image via Mesh
+                let draw_rotated = |pos: Pos2, angle: f32, size: f32, uv: Rect| {
+                    let mut mesh = egui::Mesh::with_texture(texture.id());
+                    let rotation = egui::emath::Rot2::from_angle(angle);
+                    let half_size = size / 2.0;
+
+                    let corners = [
+                        Pos2::new(-half_size, -half_size),
+                        Pos2::new(half_size, -half_size),
+                        Pos2::new(half_size, half_size),
+                        Pos2::new(-half_size, half_size),
+                    ];
+
+                    let uvs = [
+                        Pos2::new(uv.min.x, uv.min.y),
+                        Pos2::new(uv.max.x, uv.min.y),
+                        Pos2::new(uv.max.x, uv.max.y),
+                        Pos2::new(uv.min.x, uv.max.y),
+                    ];
+
+                    for i in 0..4 {
+                        mesh.vertices.push(egui::epaint::Vertex {
+                            pos: pos + rotation * corners[i].to_vec2(),
+                            uv: uvs[i],
+                            color: Color32::WHITE,
+                        });
+                    }
+                    mesh.add_triangle(0, 1, 2);
+                    mesh.add_triangle(0, 2, 3);
+                    painter.add(mesh);
+                };
+
+                // Source Plug at OUTPUT socket - points LEFT (PI baseline)
+                // Target Plug at INPUT socket - points RIGHT (0.0 baseline)
+                let (source_angle, target_angle) = if is_trigger {
+                    // Trigger: 45 deg CCW offset from baseline
+                    (PI + PI / 4.0, 0.0 + PI / 4.0)
+                } else {
+                    // Normal baseline
+                    (PI, 0.0)
+                };
+
+                // Draw Source Plug
+                draw_rotated(
+                    start_pos,
+                    source_angle,
+                    plug_size,
+                    Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
                 );
 
-                // Target Plug at INPUT socket - pointing RIGHT (into node)
-                let end_rect = Rect::from_center_size(end_pos, Vec2::splat(plug_size));
-                // Normal orientation (pointing right into node)
-                painter.image(
-                    texture.id(),
-                    end_rect,
+                // Draw Target Plug
+                draw_rotated(
+                    end_pos,
+                    target_angle,
+                    plug_size,
                     Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
-                    Color32::WHITE,
                 );
             } else {
                 // Fallback circles
