@@ -58,9 +58,13 @@ $branches
     # 2. SENDE DEN BERICHT AN DEN CHAT (aktualisiert die Historie)
     Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Sende Update an Chat ($SessionId)..."
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> remotes/origin/jules/bolt-optimize-history-vecdeque-15195946004347935531
+=======
+
+>>>>>>> origin/jules/ui-muted-empty-states-1-176332392277018225
     try {
         # Wir geben den Bericht als Argument an gemini -r
         $aiPrompt = "Hier ist ein automatisches Monitor-Update für den Chat-Verlauf. Bitte nimm es zur Kenntnis: `n$report"

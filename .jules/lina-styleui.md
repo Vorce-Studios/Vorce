@@ -75,3 +75,7 @@
 **Learning:** Default style overrides for `egui::style::Widgets` in custom themes (like High Contrast, Synthwave, Dark, etc) still used rounded corners (e.g., `CornerRadius::same(2)`) which contradict the standard Cyber Dark theme requirements for MapFlow UI. Furthermore, custom input widgets (like `hold_to_action_button`) had hardcoded `CornerRadius::same(4)` or `CornerRadius::same(6)`.
 - **Insight:** Global widget definitions and helper macros must follow MapFlow's unified visual structure. Rounded corners in some UI elements conflict with the rigid, sharp style intended for MapFlow.
 - **Action:** Applied `CornerRadius::ZERO` globally across all visual definitions in `crate::core::theme` and custom widget utilities in `crate::widgets::custom`, strictly enforcing the Cyber Dark angularity for all interactive and structural components.
+
+## 2024-05-24 – [Empty State Visibility]
+**Learning:** Plain `ui.label("No data")` blends in with regular data points, creating visual confusion about whether data is missing or if "No data" is the actual value.
+**Action:** Enforce empty/no data states to use `egui::RichText::new("...").weak().italics()` across all modules (e.g., "No matching nodes found.", "No MIDI devices"). This provides immediate visual differentiation.
