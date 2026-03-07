@@ -1,6 +1,6 @@
 # MapFlow ROADMAP (MF-ID gesteuert)
 
-> **Stand:** 2026-03-07 20:15
+> **Stand:** 2026-03-07 20:30
 Operatives Hauptdokument: `ROADMAP.md`
 Sprache: Deutsch
 
@@ -87,7 +87,7 @@ Sprache: Deutsch
 |MF-034-CI-FIX-BATCH                     |CI/CD               |Fix         |Prio A: Behebe pre-commit/CI Fehler in PRs #928, #930, #93 6, #937, #944,       |🔵 In Umsetzung         |🔴 Offen            |1772898346132            |`main`                                                 |-         |2026-03-07     |
 |                                        |                    |            |#946.                                                                           |                         |                    |                         |                                                       |          |               |
 |________________________________________|____________________|____________|________________________________________________________________________________|_________________________|____________________|_________________________|_______________________________________________________|__________|---------------|
-|MF-035-AUDIO-UI-SLIDER-BOUNCE           |Audio/UI            |Bug         |Prio A: Gain/Smoothing Regler springen bei Änderung sofort auf alten Wert       |🔼 Bereit fuer QA🩷      |🔴 Offen            |14876728953099369789     |`main`                                                 |#954      |2026-03-07     |
+|MF-035-AUDIO-UI-SLIDER-BOUNCE           |Audio/UI            |Bug         |Prio A: Gain/Smoothing Regler springen bei Änderung sofort auf alten Wert       |✅ Abgeschlossen         |🔴 Offen            |14876728953099369789     |`main`                                                 |#954      |2026-03-07     |
 |________________________________________|____________________|____________|________________________________________________________________________________|_________________________|____________________|_________________________|_______________________________________________________|__________|---------------|
 |MF-036-AUDIO-ANALYSIS-EXT-FEATURES      |Audio/UI            |Feature     |Prio B: Zusätzliche visuelle Darstellungen & unabhängige L /M/H                 |🔼 Bereit fuer QA🩷      |🔴 Offen            |2322034780590501110      |`main`                                                 |#955      |2026-03-07     |
 |                                        |                    |            |Analyseanpassung.                                                               |                         |                    |                         |                                                       |          |               |

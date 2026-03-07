@@ -26,6 +26,38 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                 }
             }
 
+            // Settings
+            UIAction::SelectAudioDevice(device) => {
+                app.ui_state.selected_audio_device = Some(device.clone());
+                app.state.dirty = true;
+                // Note: Re-initializing audio backend with new device is currently missing/complex
+                info!(
+                    "Selected audio device: {:?}",
+                    app.ui_state.selected_audio_device
+                );
+            }
+            UIAction::UpdateAudioConfig(cfg) => {
+                app.state.audio_config = cfg.clone();
+                app.audio_analyzer.update_config(cfg);
+                app.state.dirty = true;
+            }
+            // Settings
+            UIAction::SetTargetFps(fps) => {
+                app.ui_state.user_config.target_fps = Some(fps);
+                let _ = app.ui_state.user_config.save();
+                app.ui_state.target_fps = fps; // Keep runtime variable updated if necessary
+            }
+            UIAction::SetVsyncMode(mode) => {
+                app.ui_state.user_config.vsync_mode = mode;
+                let _ = app.ui_state.user_config.save();
+                // Apply vsync right away
+                app.window_manager.update_vsync_mode(&app.backend, mode);
+            }
+            UIAction::SetPreferredGpu(gpu) => {
+                app.ui_state.user_config.preferred_gpu = gpu;
+                let _ = app.ui_state.user_config.save();
+            }
+
             // Global Fullscreen Setting
             UIAction::SetGlobalFullscreen(is_fullscreen) => {
                 needs_sync = true;
