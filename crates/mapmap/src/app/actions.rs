@@ -203,6 +203,12 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                 app.ui_state.i18n.set_locale(&lang_code);
                 info!("Language switched to: {}", lang_code);
             }
+            UIAction::SetMeterStyle(style) => {
+                app.ui_state.user_config.meter_style = style;
+                app.state.dirty = true;
+                let _ = app.ui_state.user_config.save();
+                info!("Audio meter style switched to: {:?}", style);
+            }
             UIAction::Exit => {
                 info!("Exit requested via menu");
                 app.exit_requested = true;
@@ -309,7 +315,7 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     bridge_ip: ui_hue.bridge_ip.clone(),
                     username: ui_hue.username.clone(),
                     client_key: ui_hue.client_key.clone(),
-                    application_id: ui_hue.application_id.clone(),
+                    application_id: String::new(),
                     entertainment_group_id: ui_hue.entertainment_area.clone(),
                 };
                 app.hue_controller.update_config(control_hue);
@@ -318,17 +324,6 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     error!("Failed to connect to Hue Bridge: {}", e);
                 } else {
                     info!("Successfully connected to Hue Bridge");
-                    if app
-                        .ui_state
-                        .user_config
-                        .hue_config
-                        .application_id
-                        .is_empty()
-                    {
-                        app.ui_state.user_config.hue_config.application_id =
-                            app.hue_controller.get_application_id().to_string();
-                        let _ = app.ui_state.user_config.save();
-                    }
                 }
             }
             UIAction::DisconnectHue => {
