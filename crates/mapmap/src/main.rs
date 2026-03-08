@@ -7,6 +7,7 @@
 
 pub mod app;
 mod media_manager_ui;
+/// Orchestration module for managing application state updates
 pub mod orchestration;
 /// UI components.
 pub mod ui;
