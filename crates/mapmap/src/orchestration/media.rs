@@ -15,7 +15,7 @@ pub struct MediaPlayerHandle {
 /// Creates a new media player handle.
 pub fn create_player_handle(
     pool: Arc<TexturePool>,
-    device: Arc<wgpu::Device>,
+    _device: Arc<wgpu::Device>,
     queue: Arc<wgpu::Queue>,
     path: &str,
     texture_name: &str,

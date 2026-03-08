@@ -7,6 +7,7 @@
 
 pub mod app;
 mod media_manager_ui;
+/// Orchestration and node evaluation logic.
 pub mod orchestration;
 /// UI components.
 pub mod ui;

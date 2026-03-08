@@ -25,8 +25,15 @@ pub enum TriggerState {
     None,
     /// Random trigger state
     Random {
-        /// The timestamp (in ms since start) when the next trigger is scheduled.
-        next_fire_time_ms: u64,
+        /// Accumulated time since last trigger
+        timer: f32,
+        /// Target interval for the next trigger
+        target: f32,
+    },
+    /// Fixed trigger state
+    Fixed {
+        /// Accumulated time since last trigger
+        timer: f32,
     },
 }
 
@@ -129,21 +136,18 @@ mod tests_evaluator {
         });
         let part_id = module.add_part_with_type(trigger_part, (0.0, 0.0));
 
-        // Initial eval - t=0, phase=0, duration=10, 0 < 10 -> 1.0
+        // Initial eval - t=0.01 (small dt), phase=0.01 < 0.1 -> 0.0
         let result = evaluator.evaluate(&module, &shared, 0);
         let values = &result.trigger_values[&part_id];
-        assert_eq!(values[0], 1.0);
-
-        // We can't easily mock time passage without refactoring ModuleEvaluator to accept a clock,
-        // or sleeping. Sleeping in unit tests is generally bad, but for 15ms it's acceptable-ish
-        // for this specific scenario if we want to test the time logic.
-        // Ideally we'd refactor to inject time.
-        std::thread::sleep(Duration::from_millis(20));
-
-        let result = evaluator.evaluate(&module, &shared, 0);
-        let values = &result.trigger_values[&part_id];
-        // 20ms > 10ms pulse duration -> 0.0
         assert_eq!(values[0], 0.0);
+
+        // Sleep to let time pass
+        std::thread::sleep(Duration::from_millis(150));
+
+        let result = evaluator.evaluate(&module, &shared, 0);
+        let values = &result.trigger_values[&part_id];
+        // Now > 100ms should have passed, so it should have triggered
+        assert_eq!(values[0], 1.0);
     }
 
     #[test]
@@ -533,10 +537,7 @@ pub enum SourceCommand {
 pub struct ModuleEvaluator {
     /// Current trigger data from audio analysis
     audio_trigger_data: AudioTriggerData,
-    /// Creation time for timing calculations
-    start_time: Instant,
     /// Per-node state for stateful triggers (e.g., Random)
-    #[allow(dead_code)]
     trigger_states: HashMap<ModulePartId, TriggerState>,
     /// Reusable result buffer to avoid allocations
     cached_result: ModuleEvalResult,
@@ -580,7 +581,6 @@ impl ModuleEvaluator {
     pub fn new() -> Self {
         Self {
             audio_trigger_data: AudioTriggerData::default(),
-            start_time: Instant::now(),
             trigger_states: HashMap::new(),
             cached_result: ModuleEvalResult::default(),
             indices_cache: HashMap::new(),
@@ -759,7 +759,10 @@ impl ModuleEvaluator {
         // Step 1: Evaluate all trigger nodes
         for part in &module.parts {
             if let ModulePartType::Trigger(trigger_type) = &part.part_type {
-                // Get/Create the buffer
+                // Get/Create the state for this node
+                let state = self.trigger_states.entry(part.id).or_default();
+
+                // Get/Create the buffer for output values
                 let values = self
                     .cached_result
                     .trigger_values
@@ -771,8 +774,9 @@ impl ModuleEvaluator {
 
                 Self::compute_trigger_output(
                     trigger_type,
+                    state,
                     &self.audio_trigger_data,
-                    self.start_time,
+                    self.current_dt,
                     &self.active_keys,
                     &self.midi_triggers,
                     &self.osc_triggers,
@@ -1465,8 +1469,9 @@ impl ModuleEvaluator {
     #[allow(clippy::too_many_arguments)]
     fn compute_trigger_output(
         trigger_type: &TriggerType,
+        state: &mut TriggerState,
         audio_data: &AudioTriggerData,
-        start_time: Instant,
+        dt: f32,
         active_keys: &std::collections::HashSet<String>,
         midi_triggers: &std::collections::HashSet<(u8, u8)>,
         osc_triggers: &std::collections::HashSet<String>,
@@ -1507,7 +1512,10 @@ impl ModuleEvaluator {
                     for (i, name) in bands.iter().enumerate() {
                         let inverted = output_config.inverted_outputs.contains(*name);
                         if i < audio_data.band_energies.len() {
-                            push_val_internal(audio_data.band_energies[i], output, inverted);
+                            let val = audio_data.band_energies[i];
+                            // Apply threshold as a gate: only output if energy > threshold
+                            let gated_val = if val > *_threshold { val } else { 0.0 };
+                            push_val_internal(gated_val, output, inverted);
                         } else {
                             push_val_internal(0.0, output, inverted);
                         }
@@ -1542,39 +1550,82 @@ impl ModuleEvaluator {
                     );
                 }
 
-                // Fallback
+                // Fallback: use selected band and threshold if nothing else enabled
                 if output.is_empty() {
-                    let val = if audio_data.beat_detected { 1.0 } else { 0.0 };
-                    let inverted = output_config.inverted_outputs.contains("Beat Out");
-                    push_val_internal(val, output, inverted);
+                    let band_index = *_band as usize;
+                    let val = match *_band {
+                        crate::module::AudioBand::Peak => audio_data.peak_volume,
+                        crate::module::AudioBand::BPM => audio_data.bpm.unwrap_or(0.0) / 200.0,
+                        _ => {
+                            if band_index < audio_data.band_energies.len() {
+                                audio_data.band_energies[band_index]
+                            } else {
+                                0.0
+                            }
+                        }
+                    };
+                    let triggered_val = if val > *_threshold { 1.0 } else { 0.0 };
+                    let inverted = output_config.inverted_outputs.contains("Beat Out"); // Fallback name
+                    push_val_internal(triggered_val, output, inverted);
                 }
             }
             TriggerType::Beat => {
                 push_val_internal(if audio_data.beat_detected { 1.0 } else { 0.0 }, output, false);
             }
-            TriggerType::Random { probability, .. } => {
-                let random_value: f32 = rng.random();
-                push_val_internal(if random_value < *probability { 1.0 } else { 0.0 }, output, false);
+            TriggerType::Random {
+                min_interval_ms,
+                max_interval_ms,
+                probability,
+            } => {
+                // Initialize state if needed
+                if !matches!(state, TriggerState::Random { .. }) {
+                    *state = TriggerState::Random {
+                        timer: 0.0,
+                        target: rng.random_range((*min_interval_ms as f32 / 1000.0)..=(*max_interval_ms as f32 / 1000.0)),
+                    };
+                }
+
+                if let TriggerState::Random { timer, target } = state {
+                    *timer += dt;
+                    let mut triggered = false;
+
+                    if *timer >= *target {
+                        // Reset and pick new target
+                        *timer = 0.0;
+                        *target = rng.random_range((*min_interval_ms as f32 / 1000.0)..=(*max_interval_ms as f32 / 1000.0));
+
+                        // Check probability
+                        if rng.random_range(0.0..=1.0) < *probability {
+                            triggered = true;
+                        }
+                    }
+                    push_val_internal(if triggered { 1.0 } else { 0.0 }, output, false);
+                }
             }
             TriggerType::Fixed {
                 interval_ms,
-                offset_ms,
+                offset_ms: _, // Not fully implemented in stateful mode, could be added to initial timer
             } => {
-                let elapsed_ms = start_time.elapsed().as_millis() as u64;
-                let adjusted_time = elapsed_ms.saturating_sub(*offset_ms as u64);
-                let interval = *interval_ms as u64;
-                let val = if interval == 0 {
-                    1.0
-                } else {
-                    let pulse_duration = (interval / 10).max(16);
-                    let phase = adjusted_time % interval;
-                    if phase < pulse_duration {
-                        1.0
+                // Initialize state if needed
+                if !matches!(state, TriggerState::Fixed { .. }) {
+                    *state = TriggerState::Fixed { timer: 0.0 };
+                }
+
+                if let TriggerState::Fixed { timer } = state {
+                    let interval = *interval_ms as f32 / 1000.0;
+
+                    if interval <= 0.0 {
+                        push_val_internal(1.0, output, false);
                     } else {
-                        0.0
+                        *timer += dt;
+                        let mut triggered = false;
+                        if *timer >= interval {
+                            *timer -= interval;
+                            triggered = true;
+                        }
+                        push_val_internal(if triggered { 1.0 } else { 0.0 }, output, false);
                     }
-                };
-                push_val_internal(val, output, false);
+                }
             }
             TriggerType::Midi { channel, note, .. } => {
                 let is_triggered = midi_triggers.contains(&(*channel, *note));
@@ -1735,8 +1786,6 @@ mod tests_logic {
         ModulePartType, ModulePlaybackMode, SourceType, TriggerType,
     };
 
-    use std::time::{Duration, Instant};
-
     fn create_audio_data(beat: bool) -> AudioTriggerData {
         AudioTriggerData {
             beat_detected: beat,
@@ -1767,11 +1816,13 @@ mod tests_logic {
         let midi: std::collections::HashSet<(u8, u8)> = std::collections::HashSet::new();
         let osc: std::collections::HashSet<String> = std::collections::HashSet::new();
         let mut rng = rand::rng();
+        let mut state = TriggerState::default();
 
         ModuleEvaluator::compute_trigger_output(
             &TriggerType::Beat,
+            &mut state,
             &data_true,
-            Instant::now(),
+            0.01,
             &keys,
             &midi,
             &osc,
@@ -1785,8 +1836,9 @@ mod tests_logic {
         let data_false = create_audio_data(false);
         ModuleEvaluator::compute_trigger_output(
             &TriggerType::Beat,
+            &mut state,
             &data_false,
-            Instant::now(),
+            0.01,
             &keys,
             &midi,
             &osc,
@@ -1805,6 +1857,7 @@ mod tests_logic {
         let midi: std::collections::HashSet<(u8, u8)> = std::collections::HashSet::new();
         let osc: std::collections::HashSet<String> = std::collections::HashSet::new();
         let mut rng = rand::rng();
+        let mut state = TriggerState::default();
 
         let config = AudioTriggerOutputConfig {
             frequency_bands: true,
@@ -1817,11 +1870,12 @@ mod tests_logic {
         ModuleEvaluator::compute_trigger_output(
             &TriggerType::AudioFFT {
                 band: AudioBand::Bass,
-                threshold: 0.5,
+                threshold: 0.0,
                 output_config: config,
             },
+            &mut state,
             &data,
-            Instant::now(),
+            0.01,
             &keys,
             &midi,
             &osc,
@@ -1854,21 +1908,37 @@ mod tests_logic {
         let midi: std::collections::HashSet<(u8, u8)> = std::collections::HashSet::new();
         let osc: std::collections::HashSet<String> = std::collections::HashSet::new();
         let mut rng = rand::rng();
+        let mut state = TriggerState::default();
 
-        // Interval 1000ms. Pulse duration 100ms.
-        // At 50ms: Phase 50 < 100 -> 1.0
-        // At 150ms: Phase 150 > 100 -> 0.0
+        // Interval 1000ms.
+        let trigger = TriggerType::Fixed {
+            interval_ms: 1000,
+            offset_ms: 0,
+        };
 
-        // Emulate 50ms elapsed
-        let start_past_50 = Instant::now() - Duration::from_millis(50);
+        // At 50ms: Should not fire (standard interval behavior)
         output.clear();
         ModuleEvaluator::compute_trigger_output(
-            &TriggerType::Fixed {
-                interval_ms: 1000,
-                offset_ms: 0,
-            },
+            &trigger,
+            &mut state,
             &data,
-            start_past_50,
+            0.05,
+            &keys,
+            &midi,
+            &osc,
+            false,
+            &mut output,
+            &mut rng,
+        );
+        assert_eq!(output[0], 0.0);
+
+        // At 1050ms (total): Should fire
+        output.clear();
+        ModuleEvaluator::compute_trigger_output(
+            &trigger,
+            &mut state,
+            &data,
+            1.0,
             &keys,
             &midi,
             &osc,
@@ -1878,16 +1948,13 @@ mod tests_logic {
         );
         assert_eq!(output[0], 1.0);
 
-        // 150ms
-        let start_past_150 = Instant::now() - Duration::from_millis(150);
+        // Next frame: Should not fire (reset)
         output.clear();
         ModuleEvaluator::compute_trigger_output(
-            &TriggerType::Fixed {
-                interval_ms: 1000,
-                offset_ms: 0,
-            },
+            &trigger,
+            &mut state,
             &data,
-            start_past_150,
+            0.01,
             &keys,
             &midi,
             &osc,

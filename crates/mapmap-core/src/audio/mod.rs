@@ -115,7 +115,7 @@ pub struct AudioAnalysis {
     pub fft_magnitudes: Arc<Vec<f32>>,
 
     /// Frequency band energies
-    pub band_energies: [f32; 7],
+    pub band_energies: [f32; 9],
 
     /// Overall RMS volume (0.0-1.0)
     pub rms_volume: f32,
@@ -144,7 +144,7 @@ impl Default for AudioAnalysis {
         Self {
             timestamp: 0.0,
             fft_magnitudes: Arc::new(vec![0.0; 512]),
-            band_energies: [0.0; 7],
+            band_energies: [0.0; 9],
             rms_volume: 0.0,
             peak_volume: 0.0,
             beat_detected: false,
@@ -160,14 +160,18 @@ use self::analyzer_v2::{AudioAnalyzerV2, AudioAnalyzerV2Config};
 
 /// Audio analyzer - Wrapper around AudioAnalyzerV2 for backward compatibility
 pub struct AudioAnalyzer {
+    /// Audio analysis configuration
     pub config: AudioConfig,
+    /// V2 analyzer instance
     pub v2: AudioAnalyzerV2,
     // Onset detection history (V2 doesn't provide onset)
     onset_history: VecDeque<f32>,
     // Last analysis for caching
     last_analysis: AudioAnalysis,
     // Channel for async access (kept for API compatibility)
+    /// Sender for audio analysis results
     analysis_sender: Sender<AudioAnalysis>,
+    /// Receiver for audio analysis results
     analysis_receiver: Receiver<AudioAnalysis>,
     // Scratch buffer for processing samples to avoid allocation
     scratch_buffer: Vec<f32>,
@@ -260,18 +264,18 @@ impl AudioAnalyzer {
             false
         };
 
-        // Map 9 bands (V2) to 7 bands (V1)
-        // V2: SubBass, Bass, LowMid, Mid, HighMid, UpperMid, Presence, Brilliance, Air
-        // V1: SubBass, Bass, LowMid, Mid, HighMid, Presence, Brilliance
+        // Map 9 bands (V2) to 9 bands (now 1:1)
         let b = v2_analysis.band_energies;
         let mapped_bands = [
-            b[0] * self.config.low_band_gain,  // SubBass -> SubBass
-            b[1] * self.config.low_band_gain,  // Bass -> Bass
-            b[2] * self.config.low_band_gain,  // LowMid -> LowMid
-            b[3] * self.config.mid_band_gain,  // Mid -> Mid
-            b[4] * self.config.mid_band_gain,  // HighMid -> HighMid
-            b[6] * self.config.high_band_gain, // Presence -> Presence (skip UpperMid)
-            b[7] * self.config.high_band_gain, // Brilliance -> Brilliance (skip Air)
+            b[0] * self.config.low_band_gain,
+            b[1] * self.config.low_band_gain,
+            b[2] * self.config.low_band_gain,
+            b[3] * self.config.mid_band_gain,
+            b[4] * self.config.mid_band_gain,
+            b[5] * self.config.mid_band_gain,
+            b[6] * self.config.high_band_gain,
+            b[7] * self.config.high_band_gain,
+            b[8] * self.config.high_band_gain,
         ];
 
         let analysis = AudioAnalysis {
@@ -596,7 +600,7 @@ mod tests {
             beat_strength: 0.8,
             onset_detected: true,
             tempo_bpm: Some(120.0),
-            band_energies: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
+            band_energies: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
             fft_magnitudes: Arc::new(vec![0.1; 512]),
             ..Default::default()
         };

@@ -53,11 +53,7 @@ pub fn perform_evaluation(
     // Sync with Bevy (only if runner exists)
     if let Some(runner) = &mut app.bevy_runner {
         let trigger_data = mapmap_core::audio_reactive::AudioTriggerData {
-            band_energies: {
-                let mut b = [0.0; 9];
-                for i in 0..9.min(analysis.band_energies.len()) { b[i] = analysis.band_energies[i]; }
-                b
-            },
+            band_energies: analysis.band_energies,
             rms_volume: analysis.rms_volume,
             peak_volume: analysis.peak_volume,
             beat_detected: analysis.beat_detected,
