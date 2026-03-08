@@ -65,7 +65,7 @@ impl AudioPanel {
                     match meter_style {
                         crate::config::AudioMeterStyle::Retro => {
                             // Convert linear to dB
-                            let db = 20.0 * analysis.rms_volume.log10().max(-60.0);
+                            let db = 20.0 * (analysis.rms_volume.max(0.00001).log10()).max(-60.0);
                             
                             let meter = crate::widgets::audio_meter::AudioMeter::new(
                                 crate::config::AudioMeterStyle::Retro,
@@ -73,11 +73,16 @@ impl AudioPanel {
                                 db, // Mono for now
                             ).height(120.0);
                             
+                            // FORCE ALLOCATION to prevent clipping in parent layouts
+                            ui.add_space(4.0);
                             let available_width = ui.available_width();
-                            ui.add_sized([available_width, 120.0], meter);
+                            ui.allocate_ui(egui::vec2(available_width, 130.0), |ui| {
+                                ui.add(meter);
+                            });
+                            ui.add_space(4.0);
                         }
                         crate::config::AudioMeterStyle::Digital => {
-                            let db = 20.0 * analysis.rms_volume.log10().max(-60.0);
+                            let db = 20.0 * (analysis.rms_volume.max(0.00001).log10()).max(-60.0);
                             let meter = crate::widgets::audio_meter::AudioMeter::new(
                                 crate::config::AudioMeterStyle::Digital,
                                 db,
