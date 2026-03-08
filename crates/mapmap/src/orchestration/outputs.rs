@@ -9,8 +9,8 @@ use std::collections::HashSet;
 pub fn sync_output_windows(
     app: &mut App,
     elwt: &winit::event_loop::ActiveEventLoop,
-    ui_needs_sync: bool,
-    graph_dirty: bool,
+    _ui_needs_sync: bool,
+    _graph_dirty: bool,
 ) -> Result<()> {
     let mut active_window_ids: HashSet<u64> = HashSet::new();
 
@@ -24,7 +24,7 @@ pub fn sync_output_windows(
                         
                         // Create window if it doesn't exist
                         if !app.window_manager.window_ids().any(|&wid| wid == *id) {
-                            app.window_manager.create_projector_window(
+                            let _ = app.window_manager.create_projector_window(
                                 elwt,
                                 &app.backend,
                                 *id,
@@ -33,7 +33,7 @@ pub fn sync_output_windows(
                                 false, // Default or fetch from config
                                 *target_screen,
                                 app.ui_state.user_config.vsync_mode,
-                            )?;
+                            );
                         }
                     }
                     _ => {}
