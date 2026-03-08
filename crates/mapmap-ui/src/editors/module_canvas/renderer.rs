@@ -601,4 +601,46 @@ pub fn render_canvas(
             }
         }
     }
+
+    // --- Zoom Controls UI (Bottom-Right) ---
+    let zoom_ui_size = Vec2::new(120.0, 30.0);
+    let zoom_ui_rect = Rect::from_min_size(
+        Pos2::new(
+            canvas_rect.max.x - zoom_ui_size.x - 20.0,
+            canvas_rect.max.y - zoom_ui_size.y - 20.0,
+        ),
+        zoom_ui_size,
+    );
+
+    ui.scope_builder(egui::UiBuilder::new().max_rect(zoom_ui_rect), |ui| {
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 4.0;
+            if ui
+                .button(egui::RichText::new("-").strong())
+                .on_hover_text("Zoom Out")
+                .clicked()
+            {
+                canvas.zoom = (canvas.zoom / 1.2).max(0.1);
+            }
+
+            ui.add(
+                egui::Slider::new(&mut canvas.zoom, 0.1..=2.0)
+                    .show_value(false)
+                    .trailing_fill(true),
+            );
+
+            if ui
+                .button(egui::RichText::new("+").strong())
+                .on_hover_text("Zoom In")
+                .clicked()
+            {
+                canvas.zoom = (canvas.zoom * 1.2).min(2.0);
+            }
+            ui.label(
+                egui::RichText::new(format!("{:.0}%", canvas.zoom * 100.0))
+                    .size(11.0)
+                    .color(Color32::WHITE),
+            );
+        });
+    });
 }

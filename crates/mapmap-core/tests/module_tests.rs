@@ -1,5 +1,5 @@
 use mapmap_core::module::{
-    EffectType, HueMappingMode, MapFlowModule, ModuleManager, ModulePartType, ModulePlaybackMode,
+    HueMappingMode, MapFlowModule, ModuleManager, ModulePartType, ModulePlaybackMode,
     ModuleSocketType, OutputType, PartType,
 };
 use std::collections::HashMap;

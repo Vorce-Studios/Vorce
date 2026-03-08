@@ -1462,6 +1462,7 @@ impl ModuleEvaluator {
     }
 
     /// Evaluate a trigger node and write output values to the provided buffer
+    #[allow(clippy::too_many_arguments)]
     fn compute_trigger_output(
         trigger_type: &TriggerType,
         audio_data: &AudioTriggerData,
