@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 /// Handle to a background media player.
 pub struct MediaPlayerHandle {
+    /// Channel sender for issuing playback commands to the background media player thread.
     pub command_tx: Sender<mapmap_media::PlaybackCommand>,
 }
 
