@@ -353,29 +353,45 @@ mod tests_evaluator {
 /// Render operation containing all info needed to render a layer to an output
 #[derive(Debug, Clone)]
 pub struct RenderOp {
+    /// The ID of the output module part.
     pub output_part_id: ModulePartId,
+    /// The type of the output.
     pub output_type: OutputType,
+    /// The ID of the layer module part.
     pub layer_part_id: ModulePartId,
+    /// The mesh geometry used for rendering.
     pub mesh: MeshType,
+    /// Global opacity level of the operation.
     pub opacity: f32,
+    /// Optional blending mode used when compositing.
     pub blend_mode: Option<BlendModeType>,
+    /// Whether this rendering operation uses mapping coordinates.
     pub mapping_mode: bool,
+    /// Optional source module part ID generating the content.
     pub source_part_id: Option<ModulePartId>,
+    /// Properties of the visual source.
     pub source_props: SourceProperties,
+    /// Active effect nodes applied to the render pipeline.
     pub effects: Vec<ModulizerType>,
+    /// Active masking shapes applied to the geometry.
     pub masks: Vec<MaskType>,
 }
 
 /// Evaluation result for a single frame
 #[derive(Debug, Clone, Default)]
 pub struct ModuleEvalResult {
+    /// Current values of all triggers.
     pub trigger_values: HashMap<ModulePartId, Vec<f32>>,
+    /// Active commands for source modules.
     pub source_commands: HashMap<ModulePartId, SourceCommand>,
+    /// Rendering operations constructed for this frame.
     pub render_ops: Vec<RenderOp>,
+    /// Spare operations kept for memory reuse.
     pub spare_render_ops: Vec<RenderOp>,
 }
 
 impl ModuleEvalResult {
+    /// Clears the result structure to prepare for the next frame evaluation.
     pub fn clear(&mut self) {
         for values in self.trigger_values.values_mut() {
             values.clear();
@@ -388,29 +404,107 @@ impl ModuleEvalResult {
 /// Command for a source node
 #[derive(Debug, Clone)]
 pub enum SourceCommand {
-    PlayMedia { path: String, trigger_value: f32 },
-    PlaySharedMedia { id: String, path: String, trigger_value: f32 },
-    PlayShader { name: String, params: Vec<(String, f32)>, trigger_value: f32 },
-    NdiInput { source_name: Option<String>, trigger_value: f32 },
-    LiveInput { device_id: u32, trigger_value: f32 },
+    /// Command to play standard media.
+    PlayMedia {
+        /// Path to the media file.
+        path: String,
+        /// Value to trigger or modify playback.
+        trigger_value: f32
+    },
+    /// Command to play shared media across modules.
+    PlaySharedMedia {
+        /// Identifier of the shared media.
+        id: String,
+        /// Path to the media file.
+        path: String,
+        /// Value to trigger or modify playback.
+        trigger_value: f32
+    },
+    /// Command to run a shader.
+    PlayShader {
+        /// Name or path of the shader.
+        name: String,
+        /// Dynamic parameters injected into the shader.
+        params: Vec<(String, f32)>,
+        /// Value to trigger or modify playback.
+        trigger_value: f32
+    },
+    /// Command to ingest an NDI network stream.
+    NdiInput {
+        /// Name of the NDI stream source.
+        source_name: Option<String>,
+        /// Value to trigger or modify playback.
+        trigger_value: f32
+    },
+    /// Command to ingest live video input.
+    LiveInput {
+        /// ID of the video capture device.
+        device_id: u32,
+        /// Value to trigger or modify playback.
+        trigger_value: f32
+    },
     #[cfg(target_os = "windows")]
-    SpoutInput { sender_name: String, trigger_value: f32 },
-    BevyInput { trigger_value: f32 },
-    Bevy3DModel { path: String, position: [f32; 3], rotation: [f32; 3], scale: [f32; 3], trigger_value: f32 },
-    HueOutput { brightness: f32, hue: Option<f32>, saturation: Option<f32>, strobe: Option<f32>, ids: Option<Vec<String>> },
+    /// Command to ingest Spout stream on Windows.
+    SpoutInput {
+        /// Sender name of the Spout source.
+        sender_name: String,
+        /// Value to trigger or modify playback.
+        trigger_value: f32
+    },
+    /// Command to ingest Bevy engine render output.
+    BevyInput {
+        /// Value to trigger or modify playback.
+        trigger_value: f32
+    },
+    /// Command to render a 3D model using Bevy.
+    Bevy3DModel {
+        /// Path to the 3D model.
+        path: String,
+        /// World space position of the model.
+        position: [f32; 3],
+        /// Rotation angles (Euler).
+        rotation: [f32; 3],
+        /// Scaling factors in 3D space.
+        scale: [f32; 3],
+        /// Value to trigger or modify playback.
+        trigger_value: f32
+    },
+    /// Command to send DMX/Hue output signals.
+    HueOutput {
+        /// Desired brightness level.
+        brightness: f32,
+        /// Desired hue component.
+        hue: Option<f32>,
+        /// Desired saturation component.
+        saturation: Option<f32>,
+        /// Desired strobe speed.
+        strobe: Option<f32>,
+        /// Identifiers of the target lights.
+        ids: Option<Vec<String>>
+    },
 }
 
 /// Module graph evaluator
 pub struct ModuleEvaluator {
+    /// Cached audio analysis data for audio-reactive triggers.
     audio_trigger_data: AudioTriggerData,
+    /// State of stateful triggers (e.g. random timers).
     trigger_states: HashMap<ModulePartId, TriggerState>,
+    /// Cached evaluation result to avoid reallocation.
     cached_result: ModuleEvalResult,
+    /// Cached node indexing structure.
     indices_cache: HashMap<crate::module::ModuleId, Arc<ModuleGraphIndices>>,
+    /// Set of currently pressed keys for shortcut triggers.
     active_keys: std::collections::HashSet<String>,
+    /// Cache for parameter smoothing over time.
     trigger_smoothing_state: RefCell<HashMap<(ModulePartId, usize), (f32, u64)>>,
+    /// Set of triggers fired manually via UI.
     manual_triggers: std::collections::HashSet<ModulePartId>,
+    /// Counter for execution frames.
     current_frame: u64,
+    /// Timestamp of the last evaluation.
     last_eval_time: Instant,
+    /// Time delta for the current frame.
     current_dt: f32,
 }
 
@@ -419,6 +513,7 @@ impl Default for ModuleEvaluator {
 }
 
 impl ModuleEvaluator {
+    /// Creates a new, empty evaluator.
     pub fn new() -> Self {
         Self {
             audio_trigger_data: AudioTriggerData::default(),
@@ -434,6 +529,7 @@ impl ModuleEvaluator {
         }
     }
 
+    /// Sets the frame delta time and updates frame tracking.
     pub fn set_delta_time(&mut self, dt: f32) {
         self.current_dt = dt.min(0.5);
         self.current_frame += 1;
@@ -441,8 +537,10 @@ impl ModuleEvaluator {
         self.manual_triggers.clear();
     }
 
+    /// Fires a trigger node manually from external code/UI.
     pub fn trigger_node(&mut self, part_id: ModulePartId) { self.manual_triggers.insert(part_id); }
 
+    /// Synchronizes new audio analysis data into the evaluator.
     pub fn update_audio(&mut self, analysis: &AudioAnalysisV2) {
         self.audio_trigger_data.band_energies = analysis.band_energies;
         self.audio_trigger_data.rms_volume = analysis.rms_volume;
@@ -452,6 +550,7 @@ impl ModuleEvaluator {
         self.audio_trigger_data.bpm = analysis.tempo_bpm;
     }
 
+    /// Updates the current active pressed keys for shortcuts.
     pub fn update_keys(&mut self, keys: &std::collections::HashSet<String>) { self.active_keys = keys.clone(); }
 
     fn apply_smoothing(&self, part_id: ModulePartId, socket_idx: usize, target_val: f32, mode: &crate::module::TriggerMappingMode) -> f32 {
@@ -479,6 +578,7 @@ impl ModuleEvaluator {
         })
     }
 
+    /// Runs the evaluation pipeline over a module graph, returning the collected rendering operations and source states.
     pub fn evaluate(&mut self, module: &MapFlowModule, shared_state: &SharedMediaState, graph_revision: u64) -> &ModuleEvalResult {
         let mut rng = rand::rng();
         self.cached_result.clear();

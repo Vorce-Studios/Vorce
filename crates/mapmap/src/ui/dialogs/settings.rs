@@ -9,21 +9,32 @@ use mapmap_control::midi::MidiInputHandler;
 
 /// Context required to render the settings window.
 pub struct SettingsContext<'a> {
+    /// The UI application state and configuration.
     pub ui_state: &'a mut AppUI,
+    /// The global application core state.
     pub state: &'a mut AppState,
+    /// WGPU rendering backend instance.
     pub backend: &'a WgpuBackend,
+    /// Controller for Philips Hue integration.
     pub hue_controller: &'a mut HueController,
     #[cfg(feature = "midi")]
+    /// Optional handle to the active MIDI input system.
     pub midi_handler: &'a mut Option<MidiInputHandler>,
     #[cfg(feature = "midi")]
+    /// Available MIDI ports for connection.
     pub midi_ports: &'a mut Vec<String>,
     #[cfg(feature = "midi")]
+    /// Currently selected MIDI port index.
     pub selected_midi_port: &'a mut Option<usize>,
+    /// Flag indicating if the user requested to restart the app.
     pub restart_requested: &'a mut bool,
+    /// Flag indicating if the user requested to close the app.
     pub exit_requested: &'a mut bool,
+    /// The async Tokio runtime context.
     pub tokio_runtime: &'a tokio::runtime::Runtime,
 }
 
+/// Displays the mapmap settings dialog.
 pub fn show(ctx: &Context, context: SettingsContext) {
     let mut show_settings = context.ui_state.show_settings;
     let i18n = &context.ui_state.i18n;
