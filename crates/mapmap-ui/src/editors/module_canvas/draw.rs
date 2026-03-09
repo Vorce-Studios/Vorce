@@ -314,8 +314,8 @@ where
                 use std::f32::consts::PI;
 
                 // Helper to draw rotated image via Mesh
-                let draw_rotated = |pos: Pos2, angle: f32, size: f32, uv: Rect| {
-                    let mut mesh = egui::Mesh::with_texture(texture.id());
+                let draw_rotated = |pos: Pos2, angle: f32, size: f32, uv: Rect, painter: &egui::Painter, texture_id: egui::TextureId| {
+                    let mut mesh = egui::Mesh::with_texture(texture_id);
                     let rotation = egui::emath::Rot2::from_angle(angle);
                     let half_size = size / 2.0;
 
@@ -361,6 +361,8 @@ where
                     source_angle,
                     plug_size,
                     Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
+                    painter,
+                    texture.id(),
                 );
 
                 // Draw Target Plug
@@ -369,6 +371,8 @@ where
                     target_angle,
                     plug_size,
                     Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
+                    painter,
+                    texture.id(),
                 );
             } else {
                 // Fallback circles
@@ -1621,18 +1625,6 @@ pub fn draw_quick_create_popup(
             if let Some(module_id) = active_module_id {
                 if let Some(module) = manager.get_module_mut(module_id) {
                     // Calculate position relative to pan/zoom
-                    // We want to place it where the mouse was when popup opened (quick_create_pos)
-                    // but converted to canvas coordinates.
-                    // However, we don't have easy access to `to_screen` closure here.
-                    // We need to inverse transform manually.
-                    // Canvas pos = (Screen Pos - Pan - Canvas Min) / Zoom
-                    // We can approximate or just use the center of view if mouse pos is complex.
-                    // But we stored `quick_create_pos` which is Screen Coords.
-                    // We assume `draw_quick_create_popup` is called inside the canvas area context.
-                    // Wait, `from_screen` logic is in `renderer.rs`.
-                    // We can just pass the position logic or calculate it here if we had rect.
-                    // We have `_canvas_rect`.
-
                     let canvas_min = _canvas_rect.min.to_vec2();
                     let pos_screen = canvas.quick_create_pos;
                     let pan = canvas.pan_offset;

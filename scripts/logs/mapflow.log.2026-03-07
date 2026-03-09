@@ -119,4 +119,7 @@
 2026-03-07T00:16:29.225495Z  INFO MapFlow::window_manager: Successfully created winit icon from "../resources/app_icons/MapFlow_Logo_HQ-Full-M.png"
 2026-03-07T00:16:29.240200Z  INFO MapFlow::window_manager: Created projector window 'Projector 1' at 1920x1080
 2026-03-07T00:16:29.240499Z  INFO MapFlow::orchestration::outputs: Created projector window for output 1
+<<<<<<< HEAD
 >>>>>>> origin/jules/ui-panel-consistency-3372896917882100483
+=======
+>>>>>>> origin/fix-hue-dtls-openssl-4596603282674004067

@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+<<<<<<< HEAD
 - 2026-03-09: fix(ui): Standardize panel layout and resolve UI consistency gaps (MF-011).
 - 2026-03-08: feat(ui): Implement Toast Notification system for engine errors and status updates (MF-023).
 - 2026-03-08: fix(core): Refactor Trigger System logic for synchronized multi-module evaluation (MF-038).
@@ -13,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 2026-03-08: fix(hue): Replace OpenSSL-disabled stub with real DTLS implementation using webrtc-dtls (ring) (MF-009).
 - 2026-03-06: fix(security): Fix Information Disclosure via Hardcoded Developer Paths (#929)
 
+=======
+>>>>>>> origin/fix-hue-dtls-openssl-4596603282674004067
 - 2026-03-03: docs: Repariere veraltete Links und Ordner-Referenzen in der Dokumentation (0[1-9]-* -> neue Struktur).
 
 - 2026-03-02: fix(stability): Resolve main branch build failures, failing tests, and clippy warnings.
