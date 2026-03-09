@@ -41,6 +41,7 @@ fn test_manual_trigger() {
     assert_eq!(val, 1.0);
 
     // Verify it's cleared next frame
+    evaluator.set_delta_time(0.01);
     let res = evaluator.evaluate(&module, &shared, 0);
     let val = res
         .trigger_values
@@ -135,7 +136,7 @@ fn test_midi_trigger() {
         (0.0, 0.0),
     );
 
-    let shared = mapmap_core::module::SharedMediaState::default();
+    let mut shared = mapmap_core::module::SharedMediaState::default();
 
     // No MIDI
     let res = evaluator.evaluate(&module, &shared, 0);
@@ -148,7 +149,7 @@ fn test_midi_trigger() {
     assert_eq!(val, 0.0);
 
     // Send MIDI
-    evaluator.record_midi(1, 60);
+    shared.active_midi_events.push((1, 60, 127));
     let res = evaluator.evaluate(&module, &shared, 0);
     let val = res
         .trigger_values
@@ -158,7 +159,9 @@ fn test_midi_trigger() {
         .unwrap_or(0.0);
     assert_eq!(val, 1.0);
 
-    // Verify cleared
+    // Verify cleared in next frame (SharedMediaState should be cleared by the caller/system usually, 
+    // but here we manually clear for the test)
+    shared.active_midi_events.clear();
     let res = evaluator.evaluate(&module, &shared, 0);
     let val = res
         .trigger_values
@@ -190,7 +193,7 @@ fn test_osc_trigger() {
         (0.0, 0.0),
     );
 
-    let shared = mapmap_core::module::SharedMediaState::default();
+    let mut shared = mapmap_core::module::SharedMediaState::default();
 
     // No OSC
     let res = evaluator.evaluate(&module, &shared, 0);
@@ -203,7 +206,7 @@ fn test_osc_trigger() {
     assert_eq!(val, 0.0);
 
     // Send OSC
-    evaluator.record_osc("/trigger/1");
+    shared.active_osc_messages.insert("/trigger/1".to_string(), vec![1.0]);
     let res = evaluator.evaluate(&module, &shared, 0);
     let val = res
         .trigger_values
@@ -214,6 +217,7 @@ fn test_osc_trigger() {
     assert_eq!(val, 1.0);
 
     // Verify cleared
+    shared.active_osc_messages.clear();
     let res = evaluator.evaluate(&module, &shared, 0);
     let val = res
         .trigger_values
