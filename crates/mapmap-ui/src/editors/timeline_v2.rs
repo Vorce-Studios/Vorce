@@ -3,7 +3,7 @@
 //! Multi-track timeline with keyframe animation, using mapmap_core::animation types.
 
 use crate::theme::colors;
-use crate::widgets::hold_to_action_button;
+use crate::widgets::custom::hold_to_action_button;
 use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use mapmap_core::animation::AnimValue;
 use mapmap_core::effect_animation::EffectParameterAnimator;
@@ -533,7 +533,7 @@ impl TimelineV2 {
                         a.start_time.total_cmp(&b.start_time).then(a.id.cmp(&b.id))
                     });
                 }
-                if ui.button("Clear").clicked() {
+                if hold_to_action_button(ui, "Clear", colors::ERROR_COLOR) {
                     self.module_arrangement.clear();
                     self.reset_runtime_selection();
                 }
@@ -578,7 +578,7 @@ impl TimelineV2 {
                     if ui.button("Jump").clicked() {
                         jump_to_block = Some((block.start_time, block.id));
                     }
-                    if ui.button("X").clicked() {
+                    if hold_to_action_button(ui, "X", colors::ERROR_COLOR) {
                         remove_block_id = Some(block.id);
                     }
                 });

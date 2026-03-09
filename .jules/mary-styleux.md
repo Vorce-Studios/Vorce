@@ -51,3 +51,7 @@
 ## 2026-06-10 – Context Menu Interaction Speed
 **Learning:** While "Hold-to-Confirm" is essential for destructive canvas and panel actions to prevent live-performance accidents, applying it to transient context menus (like "Reset to Default" on a slider) creates friction and a poor UX. Context menus are already an intentional secondary action.
 **Action:** Use standard immediate-click buttons (`ui.button().clicked()`) for low-risk reset actions inside context menus. Preserve "Hold-to-Confirm" for high-risk deletions or top-level panel resets.
+
+## 2024-05-15 - Applied Hold-to-Confirm for Destructive Actions in Timeline
+**Learning:** Found immediate destructive actions ("Clear", "X" delete) in the Timeline UI that violate live-performance safety constraints.
+**Action:** Replaced standard `ui.button().clicked()` with `crate::widgets::hold_to_action_button` using `colors::ERROR_COLOR` to prevent accidental node/timeline data loss under stress.
