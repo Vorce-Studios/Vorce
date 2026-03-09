@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/jules-mf-048-core-repair-2290194584907283660
 2026-03-07T23:42:47.191441Z  INFO MapFlow: Starting MapFlow...
 2026-03-07T23:42:47.200579Z  INFO MapFlow: Initializing MapFlow...
 2026-03-07T23:42:48.221879Z  INFO mapmap_render::backend: Using GPU: AMD Radeon R5 430 (Vulkan)
@@ -18,7 +21,11 @@
 2026-03-07T23:42:50.179994Z  INFO mapmap_ui::widgets::icons: Loaded 35 icons
 2026-03-07T23:42:50.365851Z  INFO mapmap_bevy: Initializing Bevy integration (Safe Logic Mode)...
 2026-03-07T23:42:50.368633Z  INFO MapFlow::app::core::init: ==========================================
+<<<<<<< HEAD
 2026-03-07T23:42:50.369043Z  INFO MapFlow::app::core::init:    MapFlow Initialization Status Report   
+=======
+2026-03-07T23:42:50.369043Z  INFO MapFlow::app::core::init:    MapFlow Initialization Status Report
+>>>>>>> origin/jules-mf-048-core-repair-2290194584907283660
 2026-03-07T23:42:50.369203Z  INFO MapFlow::app::core::init: ------------------------------------------
 2026-03-07T23:42:50.369435Z  INFO MapFlow::app::core::init: - Render Backend: AMD Radeon R5 430 (Vulkan)
 2026-03-07T23:42:50.369738Z  INFO MapFlow::app::core::init: - Edge Blend:     ENABLED
@@ -58,6 +65,7 @@
 2026-03-07T23:53:43.700389Z  INFO mapmap_media::pipeline: Stopping pipeline
 2026-03-07T23:53:43.729013Z  INFO mapmap_media::pipeline: Decode thread stopped
 2026-03-07T23:53:43.744346Z  INFO mapmap_media::pipeline: Upload thread stopped
+<<<<<<< HEAD
 =======
 2026-03-07T00:16:25.441134Z  INFO MapFlow: Starting MapFlow...
 2026-03-07T00:16:25.462635Z  INFO MapFlow: Initializing MapFlow...
@@ -123,3 +131,5 @@
 >>>>>>> origin/jules/ui-panel-consistency-3372896917882100483
 =======
 >>>>>>> origin/fix-hue-dtls-openssl-4596603282674004067
+=======
+>>>>>>> origin/jules-mf-048-core-repair-2290194584907283660

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## 2026-02-08 - MIDI Learn Timeout State
 
 **Erkenntnis:** State machines like `MidiLearnState` rely heavily on timeouts for user experience, but logic checks like `check_timeout` are often assumed correct without verifying the state transition actually happens.
@@ -122,3 +123,14 @@ Die Inkonsistenz im `ModuleEvaluator` bleibt bestehen, da dieser statenlos ist u
 ## 2024-05-24 - Split Logic in ModuleEvaluator
 **Erkenntnis:** The application of `TriggerTarget` logic is split between two separate methods in `ModuleEvaluator`. `evaluate()` handles `SourceCommand` modification (for Bevy/Media inputs), while `trace_chain_into()` handles `RenderOp` modification (for visual properties like Opacity/Scale). This separation increases the risk of regression if one path is updated without the other.
 **Aktion:** Ensure both paths are explicitly tested for `TriggerTarget` application. Future refactoring should consider unifying this logic.
+=======
+## 2024-03-04 - Ungetestete ModuleManager Funktion
+**Erkenntnis:** Die `ModuleManager` Struktur in `mapmap-core/src/module/manager.rs` war komplett ungetestet. Dies ist kritische Core-Logik.
+**Aktion:** Unit Tests für die Modul-Erstellung, -Löschung, -Umbenennung und -Duplizierung hinzugefügt, inklusive Behandlung von Namenskonflikten.
+## 2026-03-08 - Zusammensetzung Standardwerte und Grenzen
+**Was:** Die `Composition` Struktur und ihre Initialisierung in `crates/mapmap-core/src/layer/composition.rs` wurde intensiv durch Unit-Tests abgedeckt.
+**Warum:** Um sicherzustellen, dass die Boundary Conditions, Master Speed/Opacity Limits (0.1 - 10.0, 0.0 - 1.0) und Default-Werte nicht regressieren.
+**Abdeckung:** Erreicht vollständige Testabdeckung der Initialisierungslogik.
+**Neue Tests:** `test_composition_default_values`, `test_composition_new_initialization`, `test_composition_set_master_opacity_bounds`, `test_composition_set_master_speed_bounds`, `test_composition_with_description_builder`.
+**Geänderte Tests:** Keine.
+>>>>>>> origin/jules-mf-048-core-repair-2290194584907283660

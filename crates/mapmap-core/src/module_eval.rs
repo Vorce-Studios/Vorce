@@ -574,13 +574,10 @@ impl ModuleEvaluator {
     }
 
     /// Set the delta time for the current evaluation frame.
-    /// This should be called once per frame before evaluating any modules.
     pub fn set_delta_time(&mut self, dt: f32) {
-        self.current_dt = dt.min(0.5); // Cap to 0.5s to avoid huge jumps
+        self.current_dt = dt.min(0.5);
         self.current_frame += 1;
         self.last_eval_time = Instant::now();
-
-        // Clear per-frame manual triggers
         self.manual_triggers.clear();
     }
 
@@ -640,7 +637,6 @@ impl ModuleEvaluator {
         }
     }
 
-    /// Get a spare RenderOp from the cache or create a new one (Object Pooling)
     fn get_spare_render_op(&mut self) -> RenderOp {
         self.cached_result
             .spare_render_ops
@@ -682,7 +678,6 @@ impl ModuleEvaluator {
         let mut rng = rand::rng();
         self.cached_result.clear();
 
-        // Manage indices cache
         let indices_valid = if let Some(cache) = self.indices_cache.get(&module.id) {
             cache.last_revision == graph_revision
         } else {
@@ -713,15 +708,12 @@ impl ModuleEvaluator {
 
         let indices = self.indices_cache[&module.id].clone();
 
-        // Step 1: Evaluate all trigger nodes
         for part in &module.parts {
             if let ModulePartType::Trigger(trigger_type) = &part.part_type {
                 let state = self.trigger_states.entry(part.id).or_default();
                 let values = self.cached_result.trigger_values.entry(part.id).or_default();
                 values.clear();
-
                 let manual_fired = self.manual_triggers.contains(&part.id);
-
                 Self::compute_trigger_output(
                     trigger_type,
                     state,
@@ -736,7 +728,6 @@ impl ModuleEvaluator {
             }
         }
 
-        // Step 2: Propagation & Link Processing
         let mut trigger_inputs = self.compute_trigger_inputs(module, &self.cached_result.trigger_values);
 
         for part in &module.parts {
@@ -767,7 +758,6 @@ impl ModuleEvaluator {
             }
         }
 
-        // Step 3: Generate commands
         let socket_inputs = self.compute_socket_inputs(module, &self.cached_result.trigger_values);
 
         for part in &module.parts {
@@ -810,7 +800,6 @@ impl ModuleEvaluator {
             }
         }
 
-        // Step 4: Trace Render Pipeline
         for part in &module.parts {
             if let ModulePartType::Output(output_type) = &part.part_type {
                 if let Some(conn_idx) = indices.conn_index_cache.get(&part.id).and_then(|v| v.first()).copied() {
@@ -895,7 +884,6 @@ impl ModuleEvaluator {
                     match &part.part_type {
                         ModulePartType::Source(source_type) => {
                             op.source_part_id = Some(part.id);
-                            // Simple extraction for common source props
                             let mut props = SourceProperties::default_identity();
                             match source_type {
                                 SourceType::MediaFile { opacity, brightness, contrast, saturation, hue_shift, scale_x, scale_y, rotation, offset_x, offset_y, flip_horizontal, flip_vertical, .. } => {
