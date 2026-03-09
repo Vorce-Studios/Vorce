@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿# MapFlow ROADMAP (MF-ID gesteuert)
 
 <<<<<<< HEAD
@@ -7,9 +8,17 @@
 >>>>>>> origin/jules/mf-038-trigger-function-recovery-15279165363656306526
 Operatives Hauptdokument: `ROADMAP.md`
 Sprache: Deutsch
+=======
+# MapFlow – Vollständige Roadmap und Feature-Status
 
-## Legende
+> **Version:** 1.0.0 (Rescue & Reconstruction Edition)
+> **Stand:** 2026-03-06 01:45
+> **Status:** Erweiterte Stabilisierung & Security Audit (5 PRs im Review).
+>>>>>>> origin/jules-ci-fix-batch-mf-034-13254202037157575175
 
+---
+
+<<<<<<< HEAD
 - MF-ID Format: `MF-###-SLUG` (Beispiel: `MF-001-AUDIO-UI-CONSOLIDATION`)
 - Branch und PR muessen die MF-ID im Namen tragen.
 - Pflichtstatus pro Task: `Dev-Status` und `QA-Status (User)`.
@@ -20,9 +29,17 @@ Sprache: Deutsch
   - 🟢 `Bereit fuer QA`
   - 🟣 `Nacharbeit`
   - ✅ `Abgeschlossen`
+=======
+## 📋 Inhaltsverzeichnis
+1. [Status-Quo nach Rescue-Session](#status-quo)
+2. [Kritische Fehler (Blocker für 1.0.0)](#kritische-fehler)
+3. [Geplante Features für Release Candidate 1](#geplante-features)
+4. [Langfristige Ziele (V2.0)](#langfristige-ziele)
+>>>>>>> origin/jules-ci-fix-batch-mf-034-13254202037157575175
 
-## Task-Board
+---
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 |Task-ID                                 |Bereich             |Typ         |Beschreibung                                                                    |Dev-Status               |QA-Status           |Session ID               |Branch                                                 |PR        |Update         |
 |----------------------------------------|--------------------|------------|--------------------------------------------------------------------------------|-------------------------|--------------------|-------------------------|-------------------------------------------------------|----------|---------------|
@@ -185,18 +202,61 @@ Sprache: Deutsch
 | MF-042-PERF-935 | Core/Perf | Refactor | Historische Performance-Optimierung gegen aktuelle Basis pruefen. | SRC-020 | 🟢 Bereit fuer QA | 🔴 Offen | - | `MF-042-perf-935` | #935 | 2026-03-06 |
 | MF-043-UI-POLISH-936 | UI | Polish | Historischer UI-Polish gegen aktuelle Panel-Realitaet gegenpruefen. | SRC-021 | 🟢 Bereit fuer QA | 🔴 Offen | - | `MF-043-ui-polish-936` | #936 | 2026-03-06 |
 | MF-029-ARCHIVE-RESCUE-DELIVERABLES | Legacy/Rescue | Sammelpunkt | Historisch als erledigt markierte Rescue-Lieferungen (technisch erneut validieren ueber MF-016/MF-017). | SRC-001, SRC-002, SRC-003, SRC-005, SRC-006, SRC-007, SRC-008, SRC-012, SRC-015 | ✅ Abgeschlossen | 🔴 Offen | - | - | - | 2026-03-06 |
+=======
+## Status-Quo (Report 05.03.2026) {#status-quo}
+>>>>>>> origin/jules-ci-fix-batch-mf-034-13254202037157575175
 
-## No-Loss-Trace (kompakt)
+Das System wurde nach massiven Regressionen erfolgreich rekonstruiert und auf eine modulare Architektur umgestellt.
 
-| Pruefung | Ergebnis |
-| --- | --- |
-| Quellpunkte (`SRC-###`) gesamt | 72 |
-| Gemappte Quellpunkte | 72 |
-| Quellpunkte ohne MF-Zuordnung | 0 |
-| MF-Tasks ohne Quellreferenz | 0 |
-| Detail-Nachverfolgung | `docs/project/TEST_MATRIX.md` (`Roh-Inventar` + `Normalisierte Zuordnung`) |
+### ✅ Erledigte Reparaturen & Features:
+- **UI-Architektur:** Komplette Modularisierung von `MenuBar` und `Inspector`.
+- **UI-Stabilität:** Fix von Layout-Deadlocks durch separate Toolbar-Orchestrierung in `ui_layout.rs`.
+- **Canvas Node Graph:** Verbindungen funktionieren wieder einwandfrei (Radius: 30px).
+- **Audio-Analyse:** Echtzeit-Sync zwischen Engine und UI repariert; Peak-Decay für Level-Meter implementiert.
+- **Show Automation:** Timeline um Modi **Fully Auto**, **Semi Auto** und **Manual** erweitert.
+- **HAP Video Engine:** HAP Q Alpha Support implementiert und Syntaxfehler behoben.
+- **Settings & About:** Dialoge vollständig rekonstruiert und integriert.
+- **CI/CD:** Job01 Validation Fehler (toolchain input & hap_decoder syntax) behoben.
 
+<<<<<<< HEAD
 >>>>>>> origin/jules/mf-038-trigger-function-recovery-15279165363656306526
 Warum kein grosses Migrations-Mapping in der Roadmap:
 - Damit `ROADMAP.md` steuerbar bleibt und nicht aufgeblaeht wird.
 - Die verlustfreie 1:1-Quelle bleibt in `docs/project/TEST_MATRIX.md` erhalten.
+=======
+---
+
+## 🔴 Verbleibende Blocker (Prio 1) {#kritische-fehler}
+
+| Task | Bereich | Status | Beschreibung |
+| :--- | :--- | :--- | :--- |
+| **Hue-Stabilität** | Control | 🟠 In Arbeit | Integration der `HueFlow` Logik für stabilere DTLS-Verbindungen. |
+| **Spout Support Update** | Engine | 🔴 Hoch | Anpassung des Spout-Moduls an die aktuelle wgpu-Version (0.19+). |
+| **Timeline Interaktion** | UI/Core | 🔴 Hoch | Keyframes können im UI noch nicht verschoben oder gelöscht werden. |
+
+---
+
+## 🚀 Geplante Features für RC1 {#geplante-features}
+
+- [x] **Vollständiges Splitting der God-Files:** `menu_bar.rs` und `inspector/mod.rs` erfolgreich zerlegt.
+- [ ] **NDI-Discovery UI:** Integration der Quellensuche direkt im Sidebar-Tab.
+- [ ] **Shader-Graph Expansion:** Hinzufügen weiterer Node-Typen (Math, Noise, Filter).
+
+---
+
+## 🛠 Technische Schulden {#langfristige-ziele}
+
+*   **Testing:** 100% Passrate erreicht (400+ Tests). Neue Tests für Timeline-Automation hinzugefügt.
+*   **Fehler-Handling:** Implementierung von Toast-Notifications für Engine-Fehler steht noch aus.
+
+### 🔍 Aktuelle Review-Phase (Stand 06.03.2026)
+- [x] **Sicherheit (#934):** Validierung der Pfad-Traversierung (Sentinel) – **Ready for Merge** ✅
+- [ ] **UX-Sicherheit (#937):** "Hold-to-Confirm" für kritische Aktionen (Mary) – *CI failing (pre-commit)* ❌
+- [x] **Core-Tests (#933):** Unit-Tests für ModuleManager & Kernlogik (Guardian) – **Ready for Merge** ✅
+- [x] **Performance (#935):** VecDeque-Optimierung für den History-Stack (Bolt) – **Ready for Merge** ✅
+- [x] **UI-Polishing (#936):** Muted Styling für leere Zustände (Jules) – **Ready for Merge** ✅
+
+---
+
+*Zuletzt aktualisiert: 06.03.2026 | Orchestrator: Gemini CLI (Stabilization Mode) 🦀*
+>>>>>>> origin/jules-ci-fix-batch-mf-034-13254202037157575175

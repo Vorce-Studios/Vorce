@@ -1,6 +1,7 @@
-# Gemini CLI Ignore Patterns
-# Supplementing .gitignore for better token/context optimization
+# Ignore massive build and dependency directories from Gemini CLI context
+# This prevents context bloat, API timeouts, and "Aborted" errors!
 
+<<<<<<< HEAD
 # Ignore massive build and dependency directories
 /target/
 /vcpkg/
@@ -52,3 +53,20 @@ check_*.txt
 *.tmp
 *.bak
 *.rs.bk
+=======
+target/
+vcpkg/
+vcpkg_installed/
+.git/
+tmp/
+.temp-archive/
+logs/
+.jules/
+assets/
+resources/
+*.zip
+*.psd
+*.mmp
+*.mov
+*.ogg
+>>>>>>> origin/jules-ci-fix-batch-mf-034-13254202037157575175
