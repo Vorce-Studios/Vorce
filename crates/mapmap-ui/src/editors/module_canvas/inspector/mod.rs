@@ -4,7 +4,7 @@ use super::types::MediaPlaybackCommand;
 use crate::theme::colors;
 use crate::widgets::{styled_drag_value, styled_slider};
 use crate::UIAction;
-use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
+use egui::{Color32, Sense, Stroke, Ui, Vec2};
 use mapmap_core::module::{
     BevyCameraMode, BlendModeType, EffectType, HueMappingMode, LayerType, MaskShape, MaskType,
     ModuleId, ModulePart, ModulePartId, ModulePartType, ModulizerType, OutputType, SourceType,
@@ -783,7 +783,7 @@ pub fn render_inspector_for_part(
                         }
                         SourceType::Bevy3DModel { .. } => {
                             ui.label("\u{1F3AE} Bevy 3D Model");
-                            ui.label("Model controls not yet implemented.");
+                            ui.label(egui::RichText::new("Model controls not yet implemented.").weak().italics());
                         }
                         SourceType::Bevy => {
                             ui.label("\u{1F3AE} Bevy Scene");
@@ -886,7 +886,7 @@ pub fn render_inspector_for_part(
                                 EffectType::Vignette => { let rad = params.entry("radius".to_string()).or_insert(0.5); ui.add(egui::Slider::new(rad, 0.0..=1.0).text("Radius")); let soft = params.entry("softness".to_string()).or_insert(0.5); ui.add(egui::Slider::new(soft, 0.0..=1.0).text("Softness")); }
                                 EffectType::ChromaticAberration => { let amt = params.entry("amount".to_string()).or_insert(0.01); ui.add(egui::Slider::new(amt, 0.0..=0.1).text("Amount")); }
                                 EffectType::Brightness | EffectType::Contrast | EffectType::Saturation => { let bri = params.entry("brightness".to_string()).or_insert(0.0); ui.add(egui::Slider::new(bri, -1.0..=1.0).text("Brightness")); let con = params.entry("contrast".to_string()).or_insert(1.0); ui.add(egui::Slider::new(con, 0.0..=2.0).text("Contrast")); let sat = params.entry("saturation".to_string()).or_insert(1.0); ui.add(egui::Slider::new(sat, 0.0..=2.0).text("Saturation")); }
-                                EffectType::LoadLUT => { ui.label("LUT Loading requires a .cube file (not yet implemented in properties panel)."); }
+                                EffectType::LoadLUT => { ui.label(egui::RichText::new("LUT Loading requires a .cube file (not yet implemented in properties panel).").weak().italics()); }
                                 _ => { ui.label(egui::RichText::new("No configurable parameters").weak().italics()); }
                             }
                         }
@@ -1064,7 +1064,7 @@ fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &mut M
     });
 }
 
-fn render_transport_controls(canvas: &mut ModuleCanvas, ui: &mut Ui, part_id: ModulePartId, is_playing: bool, current_pos: f32, loop_enabled: &mut bool, reverse_playback: &mut bool) {
+fn render_transport_controls(canvas: &mut ModuleCanvas, ui: &mut Ui, part_id: ModulePartId, is_playing: bool, _current_pos: f32, loop_enabled: &mut bool, _reverse_playback: &mut bool) {
     ui.horizontal(|ui| {
         if ui.button(if is_playing { "⏸ Pause" } else { "▶ Play" }).clicked() {
             let cmd = if is_playing { MediaPlaybackCommand::Pause } else { MediaPlaybackCommand::Play };
@@ -1077,7 +1077,7 @@ fn render_transport_controls(canvas: &mut ModuleCanvas, ui: &mut Ui, part_id: Mo
     });
 }
 
-fn render_timeline(canvas: &mut ModuleCanvas, ui: &mut Ui, part_id: ModulePartId, duration: f32, current_pos: f32, start_time: &mut f32, end_time: &mut f32) {
+fn render_timeline(_canvas: &mut ModuleCanvas, ui: &mut Ui, _part_id: ModulePartId, duration: f32, current_pos: f32, _start_time: &mut f32, _end_time: &mut f32) {
     ui.label("Timeline:");
     let (rect, _) = ui.allocate_at_least(egui::vec2(ui.available_width(), 40.0), Sense::click_and_drag());
     let painter = ui.painter();

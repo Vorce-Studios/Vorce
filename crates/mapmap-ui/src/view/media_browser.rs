@@ -558,9 +558,9 @@ impl MediaBrowser {
                     ui.add_space(40.0);
                     // Differentiate between empty folder and no search results
                     if self.entries.is_empty() {
-                        ui.label(locale.t("media-browser-empty-folder"));
+                        ui.label(egui::RichText::new(locale.t("media-browser-empty-folder")).weak().italics());
                     } else {
-                        ui.label(locale.t("media-browser-no-results"));
+                        ui.label(egui::RichText::new(locale.t("media-browser-no-results")).weak().italics());
                     }
                 });
             } else {
