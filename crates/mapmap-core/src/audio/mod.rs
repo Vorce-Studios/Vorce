@@ -71,10 +71,14 @@ pub enum FrequencyBand {
     Mid,
     /// High midrange (2000-4000 Hz)
     HighMid,
-    /// Presence (4000-6000 Hz)
+    /// Upper midrange (4000-6000 Hz)
+    UpperMid,
+    /// Presence (6000-10000 Hz)
     Presence,
-    /// Brilliance (6000-20000 Hz)
+    /// Brilliance (10000-15000 Hz)
     Brilliance,
+    /// Air (15000-20000 Hz)
+    Air,
 }
 
 impl FrequencyBand {
@@ -86,8 +90,10 @@ impl FrequencyBand {
             FrequencyBand::LowMid => (250.0, 500.0),
             FrequencyBand::Mid => (500.0, 2000.0),
             FrequencyBand::HighMid => (2000.0, 4000.0),
-            FrequencyBand::Presence => (4000.0, 6000.0),
-            FrequencyBand::Brilliance => (6000.0, 20000.0),
+            FrequencyBand::UpperMid => (4000.0, 6000.0),
+            FrequencyBand::Presence => (6000.0, 10000.0),
+            FrequencyBand::Brilliance => (10000.0, 15000.0),
+            FrequencyBand::Air => (15000.0, 20000.0),
         }
     }
 
@@ -99,8 +105,10 @@ impl FrequencyBand {
             FrequencyBand::LowMid,
             FrequencyBand::Mid,
             FrequencyBand::HighMid,
+            FrequencyBand::UpperMid,
             FrequencyBand::Presence,
             FrequencyBand::Brilliance,
+            FrequencyBand::Air,
         ]
     }
 }
@@ -390,8 +398,10 @@ impl AudioReactiveMapping {
                         FrequencyBand::LowMid => 2,
                         FrequencyBand::Mid => 3,
                         FrequencyBand::HighMid => 4,
-                        FrequencyBand::Presence => 5,
-                        FrequencyBand::Brilliance => 6,
+                        FrequencyBand::UpperMid => 5,
+                        FrequencyBand::Presence => 6,
+                        FrequencyBand::Brilliance => 7,
+                        FrequencyBand::Air => 8,
                     };
                     analysis.band_energies[index]
                 } else {
@@ -565,7 +575,7 @@ mod tests {
         let analysis = analyzer.process_samples(&samples, 0.5);
 
         // Check that band energies are calculated
-        assert_eq!(analysis.band_energies.len(), 7);
+        assert_eq!(analysis.band_energies.len(), 9);
     }
 
     #[test]
@@ -580,7 +590,7 @@ mod tests {
     #[test]
     fn test_all_frequency_bands() {
         let bands = FrequencyBand::all();
-        assert_eq!(bands.len(), 7);
+        assert_eq!(bands.len(), 9);
 
         // Verify all band ranges are correctly defined
         for band in bands {
@@ -643,7 +653,7 @@ mod tests {
         let analysis = AudioAnalysis::default();
         assert_eq!(analysis.timestamp, 0.0);
         assert_eq!(analysis.fft_magnitudes.len(), 512);
-        assert_eq!(analysis.band_energies.len(), 7);
+        assert_eq!(analysis.band_energies.len(), 9);
         assert!(!analysis.beat_detected);
         assert!(!analysis.onset_detected);
     }

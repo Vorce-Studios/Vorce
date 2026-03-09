@@ -28,7 +28,7 @@ pub fn sync_output_windows(
 
                 // Create window if it doesn't exist
                 if !app.window_manager.window_ids().any(|&wid| wid == *id) {
-                    let _ = app.window_manager.create_projector_window(
+                    app.window_manager.create_projector_window(
                         elwt,
                         &app.backend,
                         *id,
@@ -37,7 +37,7 @@ pub fn sync_output_windows(
                         false, // Default or fetch from config
                         *target_screen,
                         app.ui_state.user_config.vsync_mode,
-                    );
+                    )?;
                 }
             }
         }

@@ -4,5 +4,5 @@ pub mod media;
 pub mod evaluation;
 /// Output window management.
 pub mod outputs;
-/// Project and file loading logic.
+/// Specialized node logic (e.g. Bevy synchronization).
 pub mod node_logic;
