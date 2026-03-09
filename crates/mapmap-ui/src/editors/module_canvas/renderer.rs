@@ -308,10 +308,7 @@ pub fn render_canvas(
                     Sense::click_and_drag(),
                 );
 
-                if socket_resp.clicked()
-                    && socket_info.is_output
-                    && socket_info.socket_type == mapmap_core::module::ModuleSocketType::Trigger
-                {
+                if socket_resp.clicked() && socket_info.is_output && socket_info.socket_type == mapmap_core::module::ModuleSocketType::Trigger {
                     actions.push(UIAction::ManualTrigger(module_id, part_id));
                 }
                 if socket_resp.drag_started() {
@@ -404,7 +401,7 @@ pub fn render_canvas(
         {
             if let Some(pointer_pos) = ui.input(|i| i.pointer.hover_pos()) {
                 let mut closest_socket = None;
-                let mut min_dist = 25.0 * canvas.zoom; // Slightly tighter radius from branch
+                let mut min_dist = 25.0 * canvas.zoom;
 
                 for target in &all_sockets {
                     let dist = target.position.distance(pointer_pos);
@@ -605,7 +602,6 @@ pub fn render_canvas(
         }
     }
 
-    // --- Zoom Controls UI (Bottom-Right) ---
     egui::Area::new(egui::Id::new("canvas_zoom_area"))
         .anchor(egui::Align2::RIGHT_BOTTOM, egui::vec2(-20.0, -20.0))
         .show(ui.ctx(), |ui| {
