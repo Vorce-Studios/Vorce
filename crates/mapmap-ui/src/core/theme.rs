@@ -21,7 +21,6 @@ pub enum Theme {
     Resolume,
     /// Synthwave (Neon/Retro)
     Synthwave,
-<<<<<<< HEAD
     /// Cyberpunk (Black & Yellow)
     Cyber,
     /// Midnight (Deep Black)
@@ -30,8 +29,6 @@ pub enum Theme {
     Purple,
     /// Pink Paradise
     Pink,
-=======
->>>>>>> origin/jules/ui-panel-consistency-3372896917882100483
 }
 
 /// Theme configuration
@@ -88,13 +85,10 @@ impl ThemeConfig {
             Theme::HighContrast => Self::high_contrast_visuals(),
             Theme::Resolume => Self::resolume_visuals(),
             Theme::Synthwave => Self::synthwave_visuals(),
-<<<<<<< HEAD
             Theme::Cyber => Self::cyber_visuals(),
             Theme::Midnight => Self::midnight_visuals(),
             Theme::Purple => Self::purple_visuals(),
             Theme::Pink => Self::pink_visuals(),
-=======
->>>>>>> origin/jules/ui-panel-consistency-3372896917882100483
             Theme::Custom => self.custom_visuals(),
         };
 
@@ -117,68 +111,6 @@ impl ThemeConfig {
     }
 
     fn high_contrast_visuals() -> Visuals {
-<<<<<<< HEAD
-        let mut visuals = Visuals::dark();
-        visuals.window_fill = Color32::BLACK;
-        visuals.panel_fill = Color32::from_rgb(10, 10, 10);
-        visuals.widgets.inactive.bg_stroke = egui::Stroke::new(2.0, Color32::WHITE);
-        visuals
-    }
-
-    fn custom_visuals(&self) -> Visuals {
-        Self::dark_visuals()
-    }
-
-    fn resolume_visuals() -> Visuals {
-        let mut visuals = Visuals::dark();
-        visuals.window_fill = colors::DARKER_GREY;
-        visuals.panel_fill = colors::DARK_GREY;
-        visuals.selection.bg_fill = colors::CYAN_ACCENT.linear_multiply(0.2);
-        visuals.selection.stroke = egui::Stroke::new(1.0, colors::CYAN_ACCENT);
-        visuals
-    }
-
-    fn synthwave_visuals() -> Visuals {
-        let mut visuals = Visuals::dark();
-        let deep_purple = Color32::from_rgb(20, 13, 33);
-        visuals.window_fill = deep_purple;
-        visuals.panel_fill = deep_purple;
-        visuals
-    }
-
-    fn cyber_visuals() -> Visuals {
-        let mut visuals = Visuals::dark();
-        visuals.window_fill = Color32::BLACK;
-        visuals.panel_fill = Color32::from_rgb(15, 15, 15);
-        visuals.widgets.active.bg_fill = Color32::from_rgb(255, 215, 0); // Gold/Yellow
-        visuals.selection.bg_fill = Color32::from_rgb(255, 215, 0).linear_multiply(0.3);
-        visuals
-    }
-
-    fn midnight_visuals() -> Visuals {
-        let mut visuals = Visuals::dark();
-        visuals.window_fill = Color32::from_rgb(5, 5, 5);
-        visuals.panel_fill = Color32::BLACK;
-        visuals
-    }
-
-    fn purple_visuals() -> Visuals {
-        let mut visuals = Visuals::dark();
-        let deep_purple = Color32::from_rgb(30, 0, 50);
-        visuals.window_fill = deep_purple;
-        visuals.panel_fill = Color32::from_rgb(45, 0, 75);
-        visuals.widgets.active.bg_fill = Color32::from_rgb(180, 0, 255);
-        visuals
-    }
-
-    fn pink_visuals() -> Visuals {
-        let mut visuals = Visuals::dark();
-        let deep_pink = Color32::from_rgb(50, 0, 30);
-        visuals.window_fill = deep_pink;
-        visuals.panel_fill = Color32::from_rgb(75, 0, 45);
-        visuals.widgets.active.bg_fill = Color32::from_rgb(255, 0, 180);
-        visuals
-=======
         Visuals {
             dark_mode: true,
             override_text_color: Some(Color32::WHITE),
@@ -280,7 +212,7 @@ impl ThemeConfig {
         }
     }
 
-    /// Resolume Arena-like theme visuals (Cyber Dark: Neutral Dark + Cyan/Mint Accents)
+    /// Resolume Arena-like theme visuals
     fn resolume_visuals() -> Visuals {
         Visuals {
             dark_mode: true,
@@ -291,7 +223,7 @@ impl ThemeConfig {
                     weak_bg_fill: colors::DARK_GREY,
                     bg_stroke: egui::Stroke::new(1.0, colors::STROKE_GREY),
                     fg_stroke: egui::Stroke::new(1.0, Color32::from_rgb(180, 180, 180)),
-                    corner_radius: egui::CornerRadius::ZERO, // Sharp corners
+                    corner_radius: egui::CornerRadius::ZERO,
                     expansion: 0.0,
                 },
                 inactive: egui::style::WidgetVisuals {
@@ -305,7 +237,7 @@ impl ThemeConfig {
                 hovered: egui::style::WidgetVisuals {
                     bg_fill: Color32::from_rgb(60, 60, 60),
                     weak_bg_fill: Color32::from_rgb(60, 60, 60),
-                    bg_stroke: egui::Stroke::new(1.0, colors::CYAN_ACCENT), // Cyan border on hover
+                    bg_stroke: egui::Stroke::new(1.0, colors::CYAN_ACCENT),
                     fg_stroke: egui::Stroke::new(1.5, Color32::WHITE),
                     corner_radius: egui::CornerRadius::ZERO,
                     expansion: 0.0,
@@ -314,7 +246,7 @@ impl ThemeConfig {
                     bg_fill: colors::CYAN_ACCENT,
                     weak_bg_fill: colors::CYAN_ACCENT,
                     bg_stroke: egui::Stroke::new(1.0, colors::CYAN_ACCENT),
-                    fg_stroke: egui::Stroke::new(2.0, Color32::BLACK), // Black text on Cyan
+                    fg_stroke: egui::Stroke::new(2.0, Color32::BLACK),
                     corner_radius: egui::CornerRadius::ZERO,
                     expansion: 0.0,
                 },
@@ -335,10 +267,10 @@ impl ThemeConfig {
             faint_bg_color: colors::DARKER_GREY,
             extreme_bg_color: colors::DARKER_GREY,
             code_bg_color: colors::DARK_GREY,
-            warn_fg_color: colors::WARN_COLOR,   // Orange
-            error_fg_color: colors::ERROR_COLOR, // Red
-            window_fill: colors::DARKER_GREY,    // Darker window background for hierarchy
-            panel_fill: colors::DARK_GREY,       // Lighter panel background
+            warn_fg_color: colors::WARN_COLOR,
+            error_fg_color: colors::ERROR_COLOR,
+            window_fill: colors::DARKER_GREY,
+            panel_fill: colors::DARK_GREY,
             window_stroke: egui::Stroke::new(1.0, colors::STROKE_GREY),
             ..Default::default()
         }
@@ -412,14 +344,46 @@ impl ThemeConfig {
             window_stroke: egui::Stroke::new(1.0, neon_cyan.linear_multiply(0.5)),
             ..egui::Visuals::dark()
         }
->>>>>>> origin/jules/ui-panel-consistency-3372896917882100483
+    }
+
+    fn cyber_visuals() -> Visuals {
+        let mut visuals = Visuals::dark();
+        visuals.window_fill = Color32::BLACK;
+        visuals.panel_fill = Color32::from_rgb(15, 15, 15);
+        visuals.widgets.active.bg_fill = Color32::from_rgb(255, 215, 0); // Gold/Yellow
+        visuals.selection.bg_fill = Color32::from_rgb(255, 215, 0).linear_multiply(0.3);
+        visuals
+    }
+
+    fn midnight_visuals() -> Visuals {
+        let mut visuals = Visuals::dark();
+        visuals.window_fill = Color32::from_rgb(5, 5, 5);
+        visuals.panel_fill = Color32::BLACK;
+        visuals
+    }
+
+    fn purple_visuals() -> Visuals {
+        let mut visuals = Visuals::dark();
+        let deep_purple = Color32::from_rgb(30, 0, 50);
+        visuals.window_fill = deep_purple;
+        visuals.panel_fill = Color32::from_rgb(45, 0, 75);
+        visuals.widgets.active.bg_fill = Color32::from_rgb(180, 0, 255);
+        visuals
+    }
+
+    fn pink_visuals() -> Visuals {
+        let mut visuals = Visuals::dark();
+        let deep_pink = Color32::from_rgb(50, 0, 30);
+        visuals.window_fill = deep_pink;
+        visuals.panel_fill = Color32::from_rgb(75, 0, 45);
+        visuals.widgets.active.bg_fill = Color32::from_rgb(255, 0, 180);
+        visuals
     }
 }
 
 pub fn theme_picker(ui: &mut egui::Ui, theme: &mut Theme) -> bool {
     let mut changed = false;
     ui.label("Theme:");
-<<<<<<< HEAD
     egui::ComboBox::from_id_salt("theme_picker")
         .selected_text(format!("{:?}", theme))
         .show_ui(ui, |ui| {
@@ -431,21 +395,5 @@ pub fn theme_picker(ui: &mut egui::Ui, theme: &mut Theme) -> bool {
                 changed |= ui.selectable_value(theme, t, format!("{:?}", t)).clicked();
             }
         });
-=======
-    ui.horizontal(|ui| {
-        changed |= ui.selectable_value(theme, Theme::Dark, "Dark").clicked();
-        changed |= ui.selectable_value(theme, Theme::Light, "Light").clicked();
-        changed |= ui
-            .selectable_value(theme, Theme::HighContrast, "High Contrast")
-            .clicked();
-        changed |= ui
-            .selectable_value(theme, Theme::Resolume, "Resolume")
-            .clicked();
-        changed |= ui
-            .selectable_value(theme, Theme::Synthwave, "Synthwave")
-            .clicked();
-    });
-
->>>>>>> origin/jules/ui-panel-consistency-3372896917882100483
     changed
 }
