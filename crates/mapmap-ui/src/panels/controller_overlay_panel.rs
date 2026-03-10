@@ -3,9 +3,9 @@
 //! Visual representation of the Ecler NUO 4 (or other MIDI controllers)
 //! with live state visualization and MIDI Learn functionality.
 
-use egui::{Color32, Pos2, Rect, Response, Sense, Stroke, TextureHandle, Ui, Vec2};
+use egui::{Color32, Pos2, Rect, Sense, Stroke, TextureHandle, Ui, Vec2};
 
-use crate::config::{MidiAssignment, MidiAssignmentTarget, UserConfig};
+use crate::config::{MidiAssignment, UserConfig};
 
 #[cfg(feature = "midi")]
 use mapmap_control::midi::{
@@ -13,7 +13,7 @@ use mapmap_control::midi::{
     MidiLearnManager, MidiMessage,
 };
 use mapmap_control::target::ControlTarget;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 #[allow(dead_code)]
 fn get_mock_targets() -> Vec<ControlTarget> {
@@ -64,9 +64,11 @@ pub struct ControllerOverlayPanel {
     pub last_active_time: Option<std::time::Instant>,
 
     /// Input field for Streamer.bot function
+    #[allow(dead_code)]
     streamerbot_function: String,
 
     /// Input field for Mixxx function
+    #[allow(dead_code)]
     mixxx_function: String,
 
     /// Show element labels
@@ -80,9 +82,11 @@ pub struct ControllerOverlayPanel {
     show_midi_info: bool,
 
     /// Selected element for editing
+    #[allow(dead_code)]
     selected_element: Option<String>,
 
     /// Hovered element
+    #[allow(dead_code)]
     hovered_element: Option<String>,
 
     /// Panel is expanded
@@ -107,9 +111,11 @@ pub struct ControllerOverlayPanel {
     pub is_edit_mode: bool,
 
     /// Clipboard for element size (width, height)
+    #[allow(dead_code)]
     clipboard_size: Option<[f32; 2]>,
 
     /// Loaded assets
+    #[allow(dead_code)]
     assets: HashMap<String, TextureHandle>,
 }
 
@@ -598,7 +604,7 @@ impl ControllerOverlayPanel {
     }
 
     /// Show the visual overlay with mixer background
-    fn show_overlay_view(&mut self, ui: &mut Ui, assignments: &[MidiAssignment]) {
+    fn show_overlay_view(&mut self, ui: &mut Ui, _assignments: &[MidiAssignment]) {
         let (base_w, base_h) = if let Some(tex) = &self.background_texture {
             let size = tex.size();
             (size[0] as f32, size[1] as f32)
@@ -867,7 +873,7 @@ impl ControllerOverlayPanel {
         container: Rect,
         element: &ControllerElement,
         response: &Response,
-        assignments: &[MidiAssignment],
+        _assignments: &[MidiAssignment],
     ) {
         // Calculate element rect based on relative position
         let elem_rect = Rect::from_min_size(
@@ -1076,7 +1082,7 @@ impl ControllerOverlayPanel {
         ui.separator();
 
         // Element table
-        let mut element_to_remove: Option<String> = None;
+        let element_to_remove: Option<String> = None;
 
         egui::ScrollArea::vertical().show(ui, |ui| {
             egui::Grid::new("element_list")
@@ -1144,6 +1150,7 @@ impl ControllerOverlayPanel {
 }
 
 /// Get current time in seconds for animations
+#[allow(dead_code)]
 fn ui_time_seconds() -> f64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
