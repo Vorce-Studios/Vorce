@@ -594,12 +594,14 @@ impl ModuleEvaluator {
         }
     }
 
-    /// Manually fire a trigger node for the next evaluation frame
-    pub fn trigger_node(&mut self, part_id: ModulePartId) {
-        self.manual_triggers.insert(part_id);
+    /// Inject the frame delta reported by the outer app loop.
+    pub fn set_delta_time(&mut self, dt: f32) {
+        let clamped = dt.clamp(0.0, 0.5);
+        self.current_dt = clamped;
+        self.last_eval_time = Instant::now() - std::time::Duration::from_secs_f32(clamped);
     }
 
-    /// Manually trigger a node for the current frame.
+    /// Manually fire a trigger node for the next evaluation frame
     pub fn trigger_node(&mut self, part_id: ModulePartId) {
         self.manual_triggers.insert(part_id);
     }
@@ -696,6 +698,11 @@ impl ModuleEvaluator {
         graph_revision: u64,
     ) -> &ModuleEvalResult {
         let mut rng = rand::rng();
+        let now = Instant::now();
+
+        self.current_dt = now.duration_since(self.last_eval_time).as_secs_f32().min(0.5);
+        self.last_eval_time = now;
+        self.current_frame = self.current_frame.wrapping_add(1);
 
         // Clear previous result for reuse
         self.cached_result.clear();
@@ -750,7 +757,7 @@ impl ModuleEvaluator {
                     trigger_type,
                     state,
                     &self.audio_trigger_data,
-                    self.current_dt,
+                    self.start_time,
                     shared_state,
                     &self.active_keys,
                     manual_fired,
@@ -1363,11 +1370,11 @@ impl ModuleEvaluator {
     #[allow(clippy::too_many_arguments)]
     fn compute_trigger_output(
         trigger_type: &TriggerType,
+        state: &mut TriggerState,
         audio_data: &AudioTriggerData,
         start_time: Instant,
+        shared_state: &SharedMediaState,
         active_keys: &std::collections::HashSet<String>,
-        midi_triggers: &std::collections::HashSet<(u8, u8)>,
-        osc_triggers: &std::collections::HashSet<String>,
         manual_fired: bool,
         output: &mut Vec<f32>,
         rng: &mut impl rand::Rng,
@@ -1429,46 +1436,42 @@ impl ModuleEvaluator {
                 max_interval_ms,
                 probability,
             } => {
+                let elapsed_ms = start_time.elapsed().as_millis() as u64;
+                let min_interval = u64::from(*min_interval_ms);
+                let max_interval = u64::from((*max_interval_ms).max(*min_interval_ms));
+
                 if !matches!(state, TriggerState::Random { .. }) {
                     *state = TriggerState::Random {
-                        timer: 0.0,
-                        target: rng.random_range(
-                            (*min_interval_ms as f32 / 1000.0)..=(*max_interval_ms as f32 / 1000.0),
-                        ),
+                        next_fire_time_ms: elapsed_ms + rng.random_range(min_interval..=max_interval),
                     };
                 }
-                if let TriggerState::Random { timer, target } = state {
-                    *timer += dt;
-                    let mut triggered = false;
-                    if *timer >= *target {
-                        *timer = 0.0;
-                        *target = rng.random_range(
-                            (*min_interval_ms as f32 / 1000.0)..=(*max_interval_ms as f32 / 1000.0),
-                        );
+
+                let mut triggered = false;
+                if let TriggerState::Random { next_fire_time_ms } = state {
+                    if elapsed_ms >= *next_fire_time_ms {
+                        *next_fire_time_ms =
+                            elapsed_ms + rng.random_range(min_interval..=max_interval);
                         if rng.random_range(0.0..=1.0) < *probability {
                             triggered = true;
                         }
                     }
-                    push_val_internal(if triggered { 1.0 } else { 0.0 }, output, false);
                 }
+
+                push_val_internal(if triggered { 1.0 } else { 0.0 }, output, false);
             }
-            TriggerType::Fixed { interval_ms, .. } => {
-                if !matches!(state, TriggerState::Fixed { .. }) {
-                    *state = TriggerState::Fixed { timer: 0.0 };
-                }
-                if let TriggerState::Fixed { timer } = state {
-                    let interval = *interval_ms as f32 / 1000.0;
-                    if interval <= 0.0 {
-                        push_val_internal(1.0, output, false);
-                    } else {
-                        *timer += dt;
-                        let mut triggered = false;
-                        if *timer >= interval {
-                            *timer -= interval;
-                            triggered = true;
-                        }
-                        push_val_internal(if triggered { 1.0 } else { 0.0 }, output, false);
-                    }
+            TriggerType::Fixed {
+                interval_ms,
+                offset_ms,
+            } => {
+                let elapsed_ms = start_time.elapsed().as_millis() as u64;
+                let adjusted_time = elapsed_ms.saturating_sub(u64::from(*offset_ms));
+                let interval = u64::from(*interval_ms);
+                let val = if interval == 0 {
+                    1.0
+                } else {
+                    let pulse_duration = (interval / 10).max(16);
+                    let phase = adjusted_time % interval;
+                    if phase < pulse_duration { 1.0 } else { 0.0 }
                 };
                 push_val_internal(val, output, false);
             }

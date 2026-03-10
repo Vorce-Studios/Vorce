@@ -310,6 +310,9 @@ where
             if let Some(texture) = canvas.plug_icons.get(icon_name) {
                 use std::f32::consts::PI;
 
+                let is_trigger = matches!(socket_type, mapmap_core::module::ModuleSocketType::Trigger);
+                let is_new_jack = matches!(socket_type, mapmap_core::module::ModuleSocketType::Link | mapmap_core::module::ModuleSocketType::Output);
+
                 let draw_rotated =
                     |pos: Pos2,
                      angle: f32,
@@ -347,7 +350,7 @@ where
                         painter.add(mesh);
                     };
 
-                let (source_angle, target_angle) = if is_new_jack {
+                let (source_angle, _target_angle) = if is_new_jack {
                     (PI, 0.0)
                 } else if is_trigger {
                     (PI + PI / 4.0, 0.0 + PI / 4.0)
@@ -362,9 +365,6 @@ where
                     Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
                     painter,
                     texture.id(),
-                    start_rect,
-                    Rect::from_min_max(Pos2::new(1.0, 0.0), Pos2::new(0.0, 1.0)),
-                    Color32::WHITE,
                 );
 
                 // Target Plug at INPUT socket - pointing RIGHT (into node)

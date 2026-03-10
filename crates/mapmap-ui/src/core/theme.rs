@@ -21,6 +21,14 @@ pub enum Theme {
     Resolume,
     /// Synthwave (Neon/Retro)
     Synthwave,
+    /// Cyberpunk theme
+    Cyber,
+    /// Midnight theme
+    Midnight,
+    /// Purple theme
+    Purple,
+    /// Pink theme
+    Pink,
 }
 
 /// Theme configuration
@@ -81,6 +89,10 @@ impl ThemeConfig {
             Theme::HighContrast => Self::high_contrast_visuals(),
             Theme::Resolume => Self::resolume_visuals(),
             Theme::Synthwave => Self::synthwave_visuals(),
+            Theme::Cyber => Self::cyber_visuals(),
+            Theme::Midnight => Self::midnight_visuals(),
+            Theme::Purple => Self::purple_visuals(),
+            Theme::Pink => Self::pink_visuals(),
             Theme::Custom => self.custom_visuals(),
         };
 
@@ -427,6 +439,30 @@ impl ThemeConfig {
             window_stroke: egui::Stroke::new(1.0, neon_cyan.linear_multiply(0.5)),
             ..egui::Visuals::dark()
         }
+    }
+
+    fn cyber_visuals() -> Visuals {
+        let mut visuals = Self::resolume_visuals();
+        visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, Color32::from_rgb(255, 255, 0));
+        visuals
+    }
+
+    fn midnight_visuals() -> Visuals {
+        let mut visuals = Visuals::dark();
+        visuals.window_fill = Color32::from_rgb(5, 5, 10);
+        visuals
+    }
+
+    fn purple_visuals() -> Visuals {
+        let mut visuals = Visuals::dark();
+        visuals.selection.bg_fill = Color32::from_rgb(120, 0, 255).linear_multiply(0.3);
+        visuals
+    }
+
+    fn pink_visuals() -> Visuals {
+        let mut visuals = Visuals::dark();
+        visuals.selection.bg_fill = Color32::from_rgb(255, 0, 120).linear_multiply(0.3);
+        visuals
     }
 }
 

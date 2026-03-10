@@ -30,6 +30,16 @@ pub struct SharedMediaItem {
 pub struct SharedMediaState {
     /// Component property or field.
     pub items: HashMap<String, SharedMediaItem>,
+
+    /// Active MIDI CC values (channel, note) -> value
+    #[serde(skip, default)]
+    pub active_midi_cc: HashMap<(u8, u8), u8>,
+    /// Active MIDI note events (channel, note, velocity)
+    #[serde(skip, default)]
+    pub active_midi_events: Vec<(u8, u8, u8)>,
+    /// Active OSC messages (address -> values)
+    #[serde(skip, default)]
+    pub active_osc_messages: HashMap<String, Vec<f32>>,
 }
 
 impl SharedMediaState {
@@ -37,6 +47,9 @@ impl SharedMediaState {
     pub fn new() -> Self {
         Self {
             items: HashMap::new(),
+            active_midi_cc: HashMap::new(),
+            active_midi_events: Vec::new(),
+            active_osc_messages: HashMap::new(),
         }
     }
 

@@ -6,7 +6,8 @@ Dieses Dokument dient als zentrale Wissensbasis für Maestro-Agenten im Mapflow-
 
 1.  **QA-Status**: Weder dieser Agent noch Subagenten dürfen jemals den `QA-Status` in der `ROADMAP.md` ändern. Nur der Benutzer ist berechtigt, Tasks auf `🟢 QA Erfolgreich` zu setzen.
 2.  **Task-Erhalt**: Es dürfen niemals Tasks aus der `ROADMAP.md` entfernt werden, außer der Benutzer gibt hierfür eine explizite Freigabe.
-3.  **Vorgaben-Treue**: Der Agent muss sich stets strikt an die Vorgaben und Anforderungen des Benutzers halten.
+3.  **PR-Merge-Sicherheit**: Es ist STRENGSTENS VERBOTEN, Pull Requests zu mergen (lokal oder remote), wenn die PR-Checks (CI/CD, Linting, Tests) nicht vollständig fehlerfrei ("grün") sind. Ein erzwungener Merge ("brute force") ist unter keinen Umständen zulässig, da dies die Integrität des Workspace gefährdet.
+4.  **Vorgaben-Treue**: Der Agent muss sich stets strikt an die Vorgaben und Anforderungen des Benutzers halten.
 
 ## Projektstruktur
 

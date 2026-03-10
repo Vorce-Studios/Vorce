@@ -46,6 +46,11 @@ pub struct ControlManager {
     /// Map of keyboard shortcuts to application actions.
     pub key_bindings: KeyBindings,
 
+    /// Raw MIDI events collected during update (channel, note/cc)
+    pub raw_midi_events: Vec<(u8, u8)>,
+    /// Raw OSC addresses collected during update
+    pub raw_osc_events: Vec<String>,
+
     /// Event callback for control changes
     #[allow(clippy::type_complexity)]
     /// Optional callback function triggered on every control value change.
@@ -75,6 +80,9 @@ impl ControlManager {
 
             cue_list: CueList::new(),
             key_bindings: KeyBindings::new(),
+
+            raw_midi_events: Vec::new(),
+            raw_osc_events: Vec::new(),
 
             control_callback: None,
         }
