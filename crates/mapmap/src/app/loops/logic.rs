@@ -95,11 +95,11 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
             app.audio_analyzer.process_samples(&samples, timestamp);
         }
     }
-    
+
     // Get analysis results for different targets (UI and Evaluator)
     let analysis_v1 = app.audio_analyzer.get_latest_analysis();
     let analysis_v2 = app.audio_analyzer.v2.get_latest_analysis();
-    
+
     // Update evaluator with V2 analysis (9 bands)
     app.module_evaluator.update_audio(&analysis_v2);
 
