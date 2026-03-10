@@ -160,6 +160,7 @@ fn test_midi_trigger() {
     assert_eq!(val, 1.0);
 
     // Verify cleared
+    shared.active_osc_messages.clear();
     let res = evaluator.evaluate(&module, &shared, 0);
     let val = res
         .trigger_values
