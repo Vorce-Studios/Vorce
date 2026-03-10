@@ -78,9 +78,9 @@ pub struct TimelineV2 {
     pub snap_interval: f32,
     /// Selected keyframes (track_name, key_time_us)
     pub selected_keyframes: Vec<(String, u64)>,
-    /// Currently dragged keyframe (track_name, time)
+    /// Currently dragged keyframe (track_name, original_time, current_time)
     #[serde(skip)]
-    pub dragged_keyframe: Option<(String, u64)>,
+    pub dragged_keyframe: Option<(String, u64, u64)>,
     /// Show curve editor
     pub show_curve_editor: bool,
     /// Enable module arrangement show-control.
@@ -761,31 +761,47 @@ impl TimelineV2 {
 
                     // Interaction check
                     let kf_rect = Rect::from_center_size(kf_pos, Vec2::new(16.0, 16.0));
-                    let kf_id = (track.name.clone(), kf.time.to_bits());
-                    let is_selected = self.selected_keyframes.contains(&kf_id);
+                    let kf_time_bits = kf.time.to_bits();
+                    let kf_id_val = (track.name.clone(), kf_time_bits);
+                    let is_selected = self.selected_keyframes.contains(&kf_id_val);
+
+                    // Determine the stable egui ID for dragging.
+                    // If this keyframe matches the currently updated time of the dragged keyframe,
+                    // use its original time to maintain the drag lock.
+                    let mut stable_kf_id = kf_id_val.clone();
+                    if let Some((drag_track, drag_orig, drag_curr)) = &self.dragged_keyframe {
+                        if drag_track == &track.name && *drag_curr == kf_time_bits {
+                            stable_kf_id = (track.name.clone(), *drag_orig);
+                        }
+                    }
 
                     // To fix improper track-wide drag triggering, we capture specific dragging on this rect.
                     // Instead of using the entire track response, we use ui.interact
-                    let kf_response = ui.interact(kf_rect, ui.id().with(&kf_id), Sense::click_and_drag());
+                    let kf_response = ui.interact(
+                        kf_rect,
+                        ui.id().with(&stable_kf_id),
+                        Sense::click_and_drag(),
+                    );
 
                     if kf_response.clicked() || kf_response.double_clicked() {
                         if !ui.input(|i| i.modifiers.shift) {
                             self.selected_keyframes.clear();
                         }
-                        if self.selected_keyframes.contains(&kf_id) {
-                            self.selected_keyframes.retain(|x| x != &kf_id);
+                        if self.selected_keyframes.contains(&kf_id_val) {
+                            self.selected_keyframes.retain(|x| x != &kf_id_val);
                         } else {
-                            self.selected_keyframes.push(kf_id.clone());
+                            self.selected_keyframes.push(kf_id_val.clone());
                         }
                     }
 
                     if kf_response.drag_started() {
-                        self.dragged_keyframe = Some(kf_id.clone());
+                        self.dragged_keyframe =
+                            Some((track.name.clone(), kf_time_bits, kf_time_bits));
                         if !is_selected {
                             if !ui.input(|i| i.modifiers.shift) {
                                 self.selected_keyframes.clear();
                             }
-                            self.selected_keyframes.push(kf_id.clone());
+                            self.selected_keyframes.push(kf_id_val.clone());
                         }
                     }
                     if kf_response.drag_stopped() {
@@ -793,23 +809,39 @@ impl TimelineV2 {
                     }
 
                     // Dragging
-                    if kf_response.dragged() && self.dragged_keyframe == Some(kf_id.clone()) {
-                        if let Some(pos) = kf_response.interact_pointer_pos() {
-                            let time = (pos.x - rect.min.x) / self.zoom;
-                            let new_time = time.max(0.0);
-                            let snapped_time = if ui.input(|i| i.modifiers.shift) {
-                                new_time
-                            } else {
-                                self.snap_time(new_time)
-                            };
+                    if kf_response.dragged() {
+                        if let Some((drag_track, drag_orig, _)) = self.dragged_keyframe.clone() {
+                            if drag_track == track.name && stable_kf_id.1 == drag_orig {
+                                if let Some(pos) = kf_response.interact_pointer_pos() {
+                                    let time = (pos.x - rect.min.x) / self.zoom;
+                                    let new_time = time.max(0.0);
+                                    let snapped_time = if ui.input(|i| i.modifiers.shift) {
+                                        new_time
+                                    } else {
+                                        self.snap_time(new_time)
+                                    };
 
-                            if (snapped_time - kf.time as f32).abs() > 0.001 {
-                                actions.push(TimelineAction::MoveKeyframe(track.name.clone(), kf.time, snapped_time as f64));
-                                // Also update selection to point to new time so it stays selected
-                                self.selected_keyframes.retain(|x| x.0 != track.name || x.1 != kf.time.to_bits());
-                                self.selected_keyframes.push((track.name.clone(), (snapped_time as f64).to_bits()));
-                                // Update dragged keyframe to the new one
-                                self.dragged_keyframe = Some((track.name.clone(), (snapped_time as f64).to_bits()));
+                                    if (snapped_time - kf.time as f32).abs() > 0.001 {
+                                        actions.push(TimelineAction::MoveKeyframe(
+                                            track.name.clone(),
+                                            kf.time,
+                                            snapped_time as f64,
+                                        ));
+
+                                        let new_time_bits = (snapped_time as f64).to_bits();
+
+                                        // Also update selection to point to new time so it stays selected
+                                        self.selected_keyframes.retain(|x| {
+                                            x.0 != track.name || x.1 != kf.time.to_bits()
+                                        });
+                                        self.selected_keyframes
+                                            .push((track.name.clone(), new_time_bits));
+
+                                        // Update dragged keyframe to the new current time while keeping the original time intact
+                                        self.dragged_keyframe =
+                                            Some((track.name.clone(), drag_orig, new_time_bits));
+                                    }
+                                }
                             }
                         }
                     }
@@ -822,7 +854,11 @@ impl TimelineV2 {
                         Pos2::new(x - diamond_size, y),
                     ];
 
-                    let fill_color = if is_selected { Color32::from_rgb(255, 100, 100) } else { Color32::YELLOW };
+                    let fill_color = if is_selected {
+                        Color32::from_rgb(255, 100, 100)
+                    } else {
+                        Color32::YELLOW
+                    };
 
                     painter.add(egui::Shape::convex_polygon(
                         diamond,
@@ -847,7 +883,8 @@ impl TimelineV2 {
                                 let normalized = val.clamp(0.0, 1.0);
                                 let x = rect.min.x + kf_time * self.zoom;
                                 let y = track_rect.max.y - 10.0 - (normalized * 40.0);
-                                let kf_rect = Rect::from_center_size(Pos2::new(x, y), Vec2::new(16.0, 16.0));
+                                let kf_rect =
+                                    Rect::from_center_size(Pos2::new(x, y), Vec2::new(16.0, 16.0));
                                 if kf_rect.contains(pos) {
                                     clicked_kf = true;
                                     break;
@@ -856,23 +893,35 @@ impl TimelineV2 {
 
                             if !clicked_kf {
                                 let time = (pos.x - rect.min.x) / self.zoom;
-                                let snapped = if ui.input(|i| i.modifiers.shift) { time } else { self.snap_time(time) };
-                                actions.push(TimelineAction::AddKeyframe(track.name.clone(), snapped.max(0.0) as f64));
+                                let snapped = if ui.input(|i| i.modifiers.shift) {
+                                    time
+                                } else {
+                                    self.snap_time(time)
+                                };
+                                actions.push(TimelineAction::AddKeyframe(
+                                    track.name.clone(),
+                                    snapped.max(0.0) as f64,
+                                ));
                             }
                         }
                     }
                 }
             }
 
-            // Handle delete action globally
-            if ui.input(|i| i.key_pressed(egui::Key::Delete) || i.key_pressed(egui::Key::Backspace))
-                && !self.selected_keyframes.is_empty()
+            // Handle delete action globally, only if timeline is focused and user is not typing in a text field
+            if (response.hovered() || response.has_focus()) && !ui.memory(|m| m.focused().is_some())
             {
-                for (track_name, time_bits) in self.selected_keyframes.drain(..) {
-                    actions.push(TimelineAction::DeleteKeyframe(
-                        track_name,
-                        f64::from_bits(time_bits),
-                    ));
+                if ui.input(|i| {
+                    i.key_pressed(egui::Key::Delete) || i.key_pressed(egui::Key::Backspace)
+                }) {
+                    if !self.selected_keyframes.is_empty() {
+                        for (track_name, time_bits) in self.selected_keyframes.drain(..) {
+                            actions.push(TimelineAction::DeleteKeyframe(
+                                track_name,
+                                f64::from_bits(time_bits),
+                            ));
+                        }
+                    }
                 }
             }
 

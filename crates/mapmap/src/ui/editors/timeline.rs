@@ -2,7 +2,7 @@
 
 use egui::Context;
 use mapmap_core::AppState;
-use mapmap_ui::AppUI;
+use mapmap_ui::{AppUI, UIAction};
 
 /// Context required to render the timeline.
 pub struct TimelineContext<'a> {
@@ -52,7 +52,10 @@ pub fn show(ctx: &Context, context: TimelineContext) {
             );
 
             for action in actions {
-                context.ui_state.actions.push(mapmap_ui::UIAction::TimelineAction(action));
+                context
+                    .ui_state
+                    .actions
+                    .push(UIAction::TimelineAction(action));
             }
         });
 }

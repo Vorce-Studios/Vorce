@@ -66,7 +66,9 @@ fn test_timeline_keyframe_selection() {
     assert!(timeline.selected_keyframes.is_empty());
 
     // Simulate selection
-    timeline.selected_keyframes.push((track_name.clone(), time_bits));
+    timeline
+        .selected_keyframes
+        .push((track_name.clone(), time_bits));
 
     assert_eq!(timeline.selected_keyframes.len(), 1);
     assert_eq!(timeline.selected_keyframes[0].0, track_name);
