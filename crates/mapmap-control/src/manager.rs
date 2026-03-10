@@ -266,7 +266,7 @@ impl ControlManager {
         if let Some(osc_server) = &mut self.osc_server {
             while let Some(packet) = osc_server.poll_packet() {
                 events.push(packet.clone());
-                
+
                 // Record raw event
                 if let rosc::OscPacket::Message(msg) = &packet {
                     self.raw_osc_events.push(msg.addr.clone());

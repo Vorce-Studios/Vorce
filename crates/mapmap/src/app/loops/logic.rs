@@ -18,7 +18,7 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
 
     // 3. Get all module IDs
     let all_module_ids: Vec<u64> = app.state.module_manager.modules().iter().map(|m| m.id).collect();
-    
+
     // Determine which modules to evaluate based on timeline
     let show_module_id = app.ui_state.timeline_panel.runtime_show_module(
         app.state.effect_animator.get_current_time() as f32,
@@ -46,7 +46,7 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
 
     // 4. Update evaluator with reaktive events
     app.module_evaluator.set_delta_time(dt);
-    
+
     let active_keys: HashSet<String> = app.egui_context.input(|i| {
         i.keys_down.iter().map(|k| format!("{:?}", k)).collect()
     });
@@ -61,7 +61,7 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
         shared.active_midi_events.clear();
         shared.active_midi_cc.clear();
         shared.active_osc_messages.clear();
-        
+
         for msg in &midi_events {
             match msg {
                 mapmap_control::midi::MidiMessage::NoteOn { channel, note, velocity } => {
@@ -73,7 +73,7 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
                 _ => {}
             }
         }
-        
+
         for packet in &osc_packets {
             if let rosc::OscPacket::Message(msg) = packet {
                 let vals: Vec<f32> = msg.args.iter().filter_map(|a| match a {
