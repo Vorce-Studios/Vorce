@@ -148,17 +148,18 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
         // Only refresh CPU usage and current process to save performance
         app.sys_info.refresh_cpu_usage();
         app.sys_info.refresh_memory();
-        
+
         // Refresh only the current process
-        if let Some(pid) = sysinfo::get_current_pid().ok() {
-            app.sys_info.refresh_processes(sysinfo::ProcessesToUpdate::Some(&[pid]), true);
+        if let Ok(pid) = sysinfo::get_current_pid() {
+            app.sys_info
+                .refresh_processes(sysinfo::ProcessesToUpdate::Some(&[pid]), true);
         }
-        
+
         app.last_sysinfo_refresh = std::time::Instant::now();
     }
 
     // Get process-specific CPU usage if available
-    if let Some(pid) = sysinfo::get_current_pid().ok() {
+    if let Ok(pid) = sysinfo::get_current_pid() {
         if let Some(process) = app.sys_info.process(pid) {
             // sysinfo returns sum of all core percentages, divide by core count to match Task Manager
             let num_cpus = app.sys_info.cpus().len() as f32;

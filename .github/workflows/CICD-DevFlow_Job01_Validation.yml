@@ -36,12 +36,15 @@ permissions:
   issues: write
   security-events: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   quality:
     name: "Quality Gate (Format & Lint)"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@master
         with:
@@ -52,7 +55,7 @@ jobs:
       - name: Install System Deps (Ubuntu)
         run: |
           sudo apt-get update
-          sudo apt-get install -y libasound2-dev libudev-dev pkg-config clang libclang-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavdevice-dev libavfilter-dev libswresample-dev libudev-dev ffmpeg
+          sudo apt-get install -y build-essential pkg-config clang libclang-dev yasm nasm libfontconfig1-dev libfreetype6-dev libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libasound2-dev libudev-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavdevice-dev libavfilter-dev libswresample-dev ffmpeg
       - name: Check Formatting
         run: cargo fmt --all -- --check
       - name: Check Clippy
@@ -62,7 +65,7 @@ jobs:
     name: "Security Scan"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@master
         with:
@@ -71,16 +74,16 @@ jobs:
         uses: Swatinem/rust-cache@v2
       - name: Install Tools
         uses: cargo-bins/cargo-binstall@main
-      - name: Install cargo-audit
-        run: cargo install cargo-audit --locked
-      - name: Run Audit
-        run: cargo audit
+      - name: Install cargo-deny
+        run: cargo binstall cargo-deny --no-confirm
+      - name: Run Advisory Check
+        run: cargo deny check advisories
 
   build-linux:
     name: "Build & Test (Linux)"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@master
         with:
@@ -103,7 +106,7 @@ jobs:
       github.ref == 'refs/heads/main' ||
       contains(github.event.pull_request.labels.*.name, 'test-windows')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@master
         with:

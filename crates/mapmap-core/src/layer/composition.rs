@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 /// Composition metadata and master controls (Phase 1, Month 5)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(default)]
 pub struct Composition {
     /// Composition name
     pub name: String,

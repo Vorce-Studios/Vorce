@@ -144,10 +144,10 @@ jobs:
           Add-Content -Path $env:GITHUB_ENV -Value "VCPKG_DEFAULT_TRIPLET=x64-windows"
           Add-Content -Path $env:GITHUB_ENV -Value "VCPKG_INSTALLED_DIR=$installedDir"
 
-      - name: ffmpeg mit vcpkg installieren
+      - name: vcpkg-Abhaengigkeiten installieren
         if: steps.cache-vcpkg-installed.outputs.cache-hit != 'true'
         shell: pwsh
-        run: .\vcpkg\vcpkg install ffmpeg:x64-windows
+        run: .\vcpkg\vcpkg install
 
       - name: Set FFmpeg environment for ffmpeg-sys-next
         shell: pwsh
