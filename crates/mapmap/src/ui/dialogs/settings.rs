@@ -19,12 +19,15 @@ pub struct SettingsContext<'a> {
     pub hue_controller: &'a mut HueController,
     /// Reference to the MIDI input handler (if enabled).
     #[cfg(feature = "midi")]
+    /// Optional handle to the active MIDI input system.
     pub midi_handler: &'a mut Option<MidiInputHandler>,
     /// List of available MIDI ports (if enabled).
     #[cfg(feature = "midi")]
+    /// Available MIDI ports for connection.
     pub midi_ports: &'a mut Vec<String>,
     /// Index of the selected MIDI port (if enabled).
     #[cfg(feature = "midi")]
+    /// Currently selected MIDI port index.
     pub selected_midi_port: &'a mut Option<usize>,
     /// Flag indicating if a restart was requested.
     pub restart_requested: &'a mut bool,
