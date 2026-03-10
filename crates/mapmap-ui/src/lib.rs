@@ -116,8 +116,6 @@ pub enum UIAction {
     ToggleMappingVisibility(u64, bool),
     /// Select mapping by ID
     SelectMapping(u64),
-    /// Update mapping mesh
-    UpdateMappingMesh(u64, mapmap_core::Mesh),
     /// Set MIDI assignment for UI element
     SetMidiAssignment(String, String), // element_id, target_id
 
@@ -202,22 +200,19 @@ pub enum UIAction {
     SelectAudioDevice(String),
     /// Update audio configuration
     UpdateAudioConfig(mapmap_core::audio::AudioConfig),
-    /// Toggle audio panel visibility
-    ToggleAudioPanel,
 
     // Settings
-    /// Set UI language
-    SetLanguage(String),
-    /// Set audio meter style
-    SetMeterStyle(crate::config::AudioMeterStyle),
-    /// Set target FPS
+    /// Set target frames per second
     SetTargetFps(f32),
     /// Set VSync mode
-    SetVsyncMode(crate::core::config::VSyncMode),
+    SetVsyncMode(crate::config::VSyncMode),
     /// Set preferred GPU
     SetPreferredGpu(Option<String>),
-    /// Set master blackout
-    SetMasterBlackout(bool),
+    /// Set UI language
+    /// Set UI theme
+    SetTheme(crate::theme::Theme),
+    /// Set UI language
+    SetLanguage(String),
     /// Connect to Philips Hue bridge
     ConnectHue,
     /// Disconnect from Philips Hue bridge
@@ -289,12 +284,6 @@ pub enum UIAction {
         crate::editors::module_canvas::types::MediaPlaybackCommand,
     ),
 
-    /// Manually fire a trigger node
-    ManualTrigger(
-        mapmap_core::module::ModuleId,
-        mapmap_core::module::ModulePartId,
-    ),
-
     // Module Connection Deletion
     /// Delete a connection between two module parts
     DeleteConnection(
@@ -354,8 +343,6 @@ pub struct AppUI {
     pub edge_blend_panel: EdgeBlendPanel,
     /// Oscillator control panel
     pub oscillator_panel: OscillatorPanel,
-    /// Show audio panel
-    pub show_audio: bool,
     /// Audio panel state
     pub audio_panel: AudioPanel,
     /// Show cue list panel
@@ -512,7 +499,6 @@ impl Default for AppUI {
             },
             edge_blend_panel: EdgeBlendPanel::default(),
             oscillator_panel: OscillatorPanel::default(), // Hide by default
-            show_audio: false,                            // Hide by default - use Dashboard toggle
             audio_panel: AudioPanel::default(),
             show_cue_panel: false, // Hide by default
             assignment_panel: AssignmentPanel::default(),
@@ -798,7 +784,6 @@ impl AppUI {
         module_manager: &mut mapmap_core::module::ModuleManager,
         layer_manager: &mapmap_core::LayerManager,
         output_manager: &mapmap_core::OutputManager,
-        mapping_manager: &mapmap_core::MappingManager,
     ) {
         if !self.show_inspector {
             return;
@@ -836,17 +821,10 @@ impl AppUI {
                         .iter()
                         .position(|l| l.id == id)
                         .unwrap_or(0);
-
-                    let first_mapping = layer
-                        .mapping_ids
-                        .first()
-                        .and_then(|&mapping_id| mapping_manager.get_mapping(mapping_id));
-
                     context = crate::InspectorContext::Layer {
                         layer,
                         transform: &layer.transform,
                         index,
-                        first_mapping,
                     };
                 }
             }
@@ -873,10 +851,6 @@ impl AppUI {
                 crate::InspectorAction::UpdateTransform(id, transform) => {
                     self.actions
                         .push(crate::UIAction::SetLayerTransform(id, transform));
-                }
-                crate::InspectorAction::UpdateMappingMesh(id, mesh) => {
-                    self.actions
-                        .push(crate::UIAction::UpdateMappingMesh(id, mesh));
                 }
             }
         }

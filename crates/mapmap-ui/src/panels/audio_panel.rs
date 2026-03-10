@@ -14,7 +14,6 @@ use mapmap_core::audio::{AudioAnalysis, AudioConfig};
 pub enum AudioPanelAction {
     DeviceChanged(String),
     ConfigChanged(AudioConfig),
-    MeterStyleChanged(crate::config::AudioMeterStyle),
 }
 
 #[derive(Debug)]
@@ -35,7 +34,6 @@ impl AudioPanel {
     }
 
     /// Render the Audio Panel UI
-    #[allow(clippy::too_many_arguments)]
     pub fn ui(
         &mut self,
         ui: &mut Ui,
@@ -44,7 +42,6 @@ impl AudioPanel {
         config: &AudioConfig,
         available_devices: &[String],
         selected_device: &mut Option<String>,
-        meter_style: crate::config::AudioMeterStyle,
     ) -> Option<AudioPanelAction> {
         let mut action = None;
 
@@ -62,40 +59,7 @@ impl AudioPanel {
             // Visualizer Section
             ui.vertical(|ui| {
                 if let Some(analysis) = analysis {
-                    match meter_style {
-                        crate::config::AudioMeterStyle::Retro => {
-                            // Convert linear to dB
-                            let db = 20.0 * (analysis.rms_volume.max(0.00001).log10()).max(-60.0);
-
-                            let meter = crate::widgets::audio_meter::AudioMeter::new(
-                                crate::config::AudioMeterStyle::Retro,
-                                db,
-                                db, // Mono for now
-                            )
-                            .height(120.0);
-
-                            // FORCE ALLOCATION to prevent clipping in parent layouts
-                            ui.add_space(4.0);
-                            let available_width = ui.available_width();
-                            ui.allocate_ui(egui::vec2(available_width, 130.0), |ui| {
-                                ui.add(meter);
-                            });
-                            ui.add_space(4.0);
-                        }
-                        crate::config::AudioMeterStyle::Digital => {
-                            let db = 20.0 * (analysis.rms_volume.max(0.00001).log10()).max(-60.0);
-                            let meter = crate::widgets::audio_meter::AudioMeter::new(
-                                crate::config::AudioMeterStyle::Digital,
-                                db,
-                                db,
-                            )
-                            .height(60.0);
-                            ui.add(meter);
-
-                            ui.add_space(8.0);
-                            self.show_visualizer(ui, analysis, locale);
-                        }
-                    }
+                    self.show_visualizer(ui, analysis);
                 } else {
                     // Placeholder visualizer when no signal
                     let height = 60.0;
@@ -157,36 +121,6 @@ impl AudioPanel {
                     }
                     ui.end_row();
 
-                    // Low Band Gain
-                    ui.label(locale.t("audio-gain-low"));
-                    let mut low_band_gain = config.low_band_gain;
-                    if custom::styled_slider(ui, &mut low_band_gain, 0.0..=10.0, 1.0).changed() {
-                        let mut new_cfg = config.clone();
-                        new_cfg.low_band_gain = low_band_gain;
-                        action = Some(AudioPanelAction::ConfigChanged(new_cfg));
-                    }
-                    ui.end_row();
-
-                    // Mid Band Gain
-                    ui.label(locale.t("audio-gain-mid"));
-                    let mut mid_band_gain = config.mid_band_gain;
-                    if custom::styled_slider(ui, &mut mid_band_gain, 0.0..=10.0, 1.0).changed() {
-                        let mut new_cfg = config.clone();
-                        new_cfg.mid_band_gain = mid_band_gain;
-                        action = Some(AudioPanelAction::ConfigChanged(new_cfg));
-                    }
-                    ui.end_row();
-
-                    // High Band Gain
-                    ui.label(locale.t("audio-gain-high"));
-                    let mut high_band_gain = config.high_band_gain;
-                    if custom::styled_slider(ui, &mut high_band_gain, 0.0..=10.0, 1.0).changed() {
-                        let mut new_cfg = config.clone();
-                        new_cfg.high_band_gain = high_band_gain;
-                        action = Some(AudioPanelAction::ConfigChanged(new_cfg));
-                    }
-                    ui.end_row();
-
                     // Smoothing
                     ui.label(locale.t("audio-smoothing"));
                     let mut smoothing = config.smoothing;
@@ -196,32 +130,13 @@ impl AudioPanel {
                         action = Some(AudioPanelAction::ConfigChanged(new_cfg));
                     }
                     ui.end_row();
-
-                    // Meter Style
-                    ui.label("Meter Style");
-                    egui::ComboBox::from_id_salt("audio_meter_style_combo")
-                        .selected_text(meter_style.to_string())
-                        .show_ui(ui, |ui| {
-                            for style in [
-                                crate::config::AudioMeterStyle::Retro,
-                                crate::config::AudioMeterStyle::Digital,
-                            ] {
-                                if ui
-                                    .selectable_label(meter_style == style, style.to_string())
-                                    .clicked()
-                                {
-                                    action = Some(AudioPanelAction::MeterStyleChanged(style));
-                                }
-                            }
-                        });
-                    ui.end_row();
                 });
         });
 
         action
     }
 
-    fn show_visualizer(&self, ui: &mut Ui, analysis: &AudioAnalysis, _locale: &LocaleManager) {
+    fn show_visualizer(&self, ui: &mut Ui, analysis: &AudioAnalysis) {
         let height = 60.0;
         let (rect, _response) =
             ui.allocate_at_least(egui::vec2(ui.available_width(), height), Sense::hover());
@@ -243,22 +158,25 @@ impl AudioPanel {
         }
 
         let spacing = 2.0;
+        // Ensure band_width is positive
         let band_width =
             ((rect.width() - (num_bands as f32 + 1.0) * spacing) / num_bands as f32).max(1.0);
 
         for i in 0..num_bands {
             let energy = analysis.band_energies[i];
             let x = rect.min.x + spacing + i as f32 * (band_width + spacing);
-            let h = (energy * (rect.height() - 2.0 * spacing)).max(1.0);
+            let h = (energy * (rect.height() - 2.0 * spacing)).max(1.0); // Minimum height for visibility
 
             let band_rect = Rect::from_min_max(
                 egui::pos2(x, rect.max.y - spacing - h),
                 egui::pos2(x + band_width, rect.max.y - spacing),
             );
 
+            // Use Theme Colors for Bands
             let color = if analysis.beat_detected && i < 2 {
-                colors::MINT_ACCENT
+                colors::MINT_ACCENT // Beat hit!
             } else {
+                // Gradient from Cyan to Blue-ish based on intensity
                 colors::CYAN_ACCENT.linear_multiply(0.6 + (energy * 0.4))
             };
 
