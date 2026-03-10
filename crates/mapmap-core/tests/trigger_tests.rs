@@ -1,6 +1,4 @@
-use mapmap_core::module::{
-    MapFlowModule, ModulePartType, ModulePlaybackMode, SharedMediaState, TriggerType,
-};
+use mapmap_core::module::{MapFlowModule, ModulePartType, ModulePlaybackMode, TriggerType};
 use mapmap_core::module_eval::ModuleEvaluator;
 use std::collections::HashSet;
 
@@ -137,7 +135,7 @@ fn test_midi_trigger() {
         (0.0, 0.0),
     );
 
-    let mut shared = mapmap_core::module::SharedMediaState::default();
+    let shared = mapmap_core::module::SharedMediaState::default();
 
     // No MIDI
     let res = evaluator.evaluate(&module, &shared, 0);

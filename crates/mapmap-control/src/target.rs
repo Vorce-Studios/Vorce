@@ -194,10 +194,6 @@ impl ControlValue {
                 // Security: Normalize path separators to correctly identify Windows-style
                 // traversal payloads across all operating systems.
                 let normalized = s.replace("\\", "/");
-                // Path traversal check
-                // Security check: normalize path separators to prevent Windows-style traversal payloads
-                // (e.g., ..\..\secret) from bypassing validation on non-Windows OS platforms.
-                let normalized = s.replace("\\", "/");
                 if Path::new(&normalized)
                     .components()
                     .any(|c| matches!(c, Component::ParentDir))

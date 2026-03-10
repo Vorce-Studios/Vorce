@@ -489,6 +489,7 @@ pub enum SourceCommand {
         trigger_value: f32,
     },
     #[cfg(target_os = "windows")]
+    /// Receive frames from a Spout sender (Windows only).
     SpoutInput {
         /// Name of the Spout sender.
         sender_name: String,
@@ -700,7 +701,10 @@ impl ModuleEvaluator {
         let mut rng = rand::rng();
         let now = Instant::now();
 
-        self.current_dt = now.duration_since(self.last_eval_time).as_secs_f32().min(0.5);
+        self.current_dt = now
+            .duration_since(self.last_eval_time)
+            .as_secs_f32()
+            .min(0.5);
         self.last_eval_time = now;
         self.current_frame = self.current_frame.wrapping_add(1);
 
@@ -975,7 +979,6 @@ impl ModuleEvaluator {
 
         let mut override_mesh = None;
         let mut current_id = start_node_id;
-        let trigger_values = &self.cached_result.trigger_values;
 
         // Cycle detection
         let mut visited = std::collections::HashSet::with_capacity(16);
@@ -1442,7 +1445,8 @@ impl ModuleEvaluator {
 
                 if !matches!(state, TriggerState::Random { .. }) {
                     *state = TriggerState::Random {
-                        next_fire_time_ms: elapsed_ms + rng.random_range(min_interval..=max_interval),
+                        next_fire_time_ms: elapsed_ms
+                            + rng.random_range(min_interval..=max_interval),
                     };
                 }
 
@@ -1471,7 +1475,11 @@ impl ModuleEvaluator {
                 } else {
                     let pulse_duration = (interval / 10).max(16);
                     let phase = adjusted_time % interval;
-                    if phase < pulse_duration { 1.0 } else { 0.0 }
+                    if phase < pulse_duration {
+                        1.0
+                    } else {
+                        0.0
+                    }
                 };
                 push_val_internal(val, output, false);
             }
