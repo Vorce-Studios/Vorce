@@ -1,6 +1,10 @@
 name: "Stable Release"
 
 on:
+  push:
+    tags:
+      - "v*.*.*"
+      - "*.*.*"
   workflow_dispatch:
     inputs:
       version:
@@ -16,8 +20,54 @@ permissions:
   contents: write
 
 jobs:
+  resolve-release:
+    name: "Resolve Release Metadata"
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      is_prerelease: ${{ steps.release.outputs.is_prerelease }}
+    steps:
+      - name: Resolve version and prerelease flag
+        id: release
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          MANUAL_VERSION: ${{ github.event.inputs.version }}
+          MANUAL_IS_PRERELEASE: ${{ github.event.inputs.is_prerelease }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            VERSION="$MANUAL_VERSION"
+            IS_PRERELEASE="$MANUAL_IS_PRERELEASE"
+          else
+            VERSION="$REF_NAME"
+            if [[ "$VERSION" == *-* ]]; then
+              IS_PRERELEASE=true
+            else
+              IS_PRERELEASE=false
+            fi
+          fi
+
+          if [[ -z "$VERSION" ]]; then
+            echo "Release version must not be empty." >&2
+            exit 1
+          fi
+
+          if [[ ! "$VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Unsupported release version/tag: $VERSION" >&2
+            exit 1
+          fi
+
+          {
+            echo "version=$VERSION"
+            echo "is_prerelease=$IS_PRERELEASE"
+          } >> "$GITHUB_OUTPUT"
+
   build-windows:
     name: "Build (Windows x64)"
+    needs: [resolve-release]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -147,7 +197,7 @@ jobs:
       - name: Create ZIP Artifact
         shell: pwsh
         run: |
-          $Version = "${{ inputs.version }}"
+          $Version = "${{ needs.resolve-release.outputs.version }}"
           $ZipName = "MapFlow-$Version-Windows-x64.zip"
           Compress-Archive -Path "target/release/MapFlow.exe", "target/release/*.dll" -DestinationPath "$ZipName"
           Add-Content -Path $env:GITHUB_ENV -Value "ZIP_PATH=$ZipName"
@@ -163,12 +213,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-artifacts
+          if-no-files-found: error
           path: |
-            MapFlow-${{ inputs.version }}-Windows-x64.zip
-            MapFlow-${{ inputs.version }}-x64.msi
+            MapFlow-${{ needs.resolve-release.outputs.version }}-Windows-x64.zip
+            MapFlow-${{ needs.resolve-release.outputs.version }}-x64.msi
 
   build-linux:
     name: "Build (Linux x64)"
+    needs: [resolve-release]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -201,7 +253,7 @@ jobs:
         run: cargo build --release -p mapmap --features "audio,ffmpeg"
       - name: Create Tarball
         run: |
-          VERSION="${{ inputs.version }}"
+          VERSION="${{ needs.resolve-release.outputs.version }}"
           TAR_NAME="MapFlow-$VERSION-Linux-x64.tar.gz"
           cd target/release
           tar -czf "../../$TAR_NAME" MapFlow
@@ -209,26 +261,45 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: linux-artifacts
-          path: MapFlow-${{ inputs.version }}-Linux-x64.tar.gz
+          if-no-files-found: error
+          path: MapFlow-${{ needs.resolve-release.outputs.version }}-Linux-x64.tar.gz
 
   publish-release:
     name: "Publish Release"
-    needs: [build-windows, build-linux]
+    needs: [resolve-release, build-windows, build-linux]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
+          path: release-artifacts
           merge-multiple: true
       - name: Create GitHub Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ needs.resolve-release.outputs.version }}
+          RELEASE_IS_PRERELEASE: ${{ needs.resolve-release.outputs.is_prerelease }}
+        shell: bash
         run: |
-          gh release create "${{ inputs.version }}" \
-            --title "MapFlow ${{ inputs.version }}" \
-            --generate-notes \
-            ${{ inputs.is_prerelease && '--prerelease' || '' }} \
-            MapFlow-${{ inputs.version }}-Windows-x64.zip \
-            MapFlow-${{ inputs.version }}-x64.msi \
-            MapFlow-${{ inputs.version }}-Linux-x64.tar.gz
+          set -euo pipefail
+
+          assets=(
+            "release-artifacts/MapFlow-$RELEASE_VERSION-Windows-x64.zip"
+            "release-artifacts/MapFlow-$RELEASE_VERSION-x64.msi"
+            "release-artifacts/MapFlow-$RELEASE_VERSION-Linux-x64.tar.gz"
+          )
+
+          args=(
+            "$RELEASE_VERSION"
+            --target "$GITHUB_SHA"
+            --title "MapFlow $RELEASE_VERSION"
+            --generate-notes
+          )
+
+          if [[ "$RELEASE_IS_PRERELEASE" == "true" ]]; then
+            args+=(--prerelease)
+          fi
+
+          args+=("${assets[@]}")
+
+          gh release create "${args[@]}"
