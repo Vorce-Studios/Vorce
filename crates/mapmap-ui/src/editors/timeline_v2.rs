@@ -865,11 +865,14 @@ impl TimelineV2 {
             }
 
             // Handle delete action globally
-            if ui.input(|i| i.key_pressed(egui::Key::Delete) || i.key_pressed(egui::Key::Backspace)) {
-                if !self.selected_keyframes.is_empty() {
-                    for (track_name, time_bits) in self.selected_keyframes.drain(..) {
-                        actions.push(TimelineAction::DeleteKeyframe(track_name, f64::from_bits(time_bits)));
-                    }
+            if ui.input(|i| i.key_pressed(egui::Key::Delete) || i.key_pressed(egui::Key::Backspace))
+                && !self.selected_keyframes.is_empty()
+            {
+                for (track_name, time_bits) in self.selected_keyframes.drain(..) {
+                    actions.push(TimelineAction::DeleteKeyframe(
+                        track_name,
+                        f64::from_bits(time_bits),
+                    ));
                 }
             }
 

@@ -644,9 +644,9 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                         let bindings = app.state.effect_animator_mut().bindings().to_vec();
                         if let Some(binding) = bindings.iter().find(|b| b.track_name == track_name) {
                             if let Some(val) = app.state.effect_animator_mut().get_value(binding.id).cloned() {
-                                app.state.effect_animator_mut().add_keyframe(binding.id, time as f64, val);
+                                app.state.effect_animator_mut().add_keyframe(binding.id, time, val);
                             } else {
-                                app.state.effect_animator_mut().add_keyframe(binding.id, time as f64, mapmap_core::animation::AnimValue::Float(0.0));
+                                app.state.effect_animator_mut().add_keyframe(binding.id, time, mapmap_core::animation::AnimValue::Float(0.0));
                             }
                         }
                     }
@@ -663,15 +663,15 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                                 }
                             };
                             if let Some(val) = value {
-                                app.state.effect_animator_mut().remove_keyframe(binding.id, old_time as f64);
-                                app.state.effect_animator_mut().add_keyframe(binding.id, new_time as f64, val);
+                                app.state.effect_animator_mut().remove_keyframe(binding.id, old_time);
+                                app.state.effect_animator_mut().add_keyframe(binding.id, new_time, val);
                             }
                         }
                     }
                     TimelineAction::DeleteKeyframe(track_name, time) => {
                         let bindings = app.state.effect_animator_mut().bindings().to_vec();
                         if let Some(binding) = bindings.iter().find(|b| b.track_name == track_name) {
-                            app.state.effect_animator_mut().remove_keyframe(binding.id, time as f64);
+                            app.state.effect_animator_mut().remove_keyframe(binding.id, time);
                         }
                     }
                 }
