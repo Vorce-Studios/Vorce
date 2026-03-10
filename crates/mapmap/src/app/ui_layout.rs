@@ -184,11 +184,13 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                     .collect();
                 modules.sort_by_key(|m| m.id);
 
-                if let Some(action) = app.ui_state.timeline_panel.ui(
+                let actions = app.ui_state.timeline_panel.ui(
                     ui_obj,
                     app.state.effect_animator_mut(),
                     &modules,
-                ) {
+                );
+
+                for action in actions {
                     app.ui_state
                         .actions
                         .push(ui::UIAction::TimelineAction(action));
