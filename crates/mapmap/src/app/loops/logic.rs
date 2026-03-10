@@ -1,5 +1,6 @@
 use crate::app::actions::{handle_mcp_actions, handle_ui_actions};
 use crate::app::core::app_struct::App;
+use crate::orchestration::evaluation::perform_evaluation;
 use crate::orchestration::media::{sync_media_players, update_media_players};
 use crate::orchestration::outputs::sync_output_windows;
 use anyhow::Result;
