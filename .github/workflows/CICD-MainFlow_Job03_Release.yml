@@ -124,7 +124,6 @@ jobs:
             git clone --depth 1 https://github.com/microsoft/vcpkg.git
             .\vcpkg\bootstrap-vcpkg.bat
           }
-          .\vcpkg\vcpkg integrate install
 
       - name: Cache vcpkg installed libs
         id: cache-vcpkg-installed
