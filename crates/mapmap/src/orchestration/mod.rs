@@ -1,8 +1,6 @@
-/// Media player orchestration.
+//! State and Logic orchestration for the application.
+
 pub mod media;
-/// Node evaluation and module logic.
 pub mod evaluation;
-/// Output window management.
-pub mod outputs;
-/// Specialized node logic (e.g. Bevy synchronization).
 pub mod node_logic;
+pub mod outputs;
