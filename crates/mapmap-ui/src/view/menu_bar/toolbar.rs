@@ -46,7 +46,7 @@ pub fn show(ui: &mut egui::Ui, ui_state: &mut AppUI) {
 
                 // === BPM DISPLAY ===
                 let bpm = ui_state.current_bpm;
-                let bpm_text = if let Some(tempo) = bpm.filter(|tempo| *tempo > 0.0) {
+                let bpm_text = if let Some(tempo) = bpm {
                     format!("{:.0} BPM", tempo)
                 } else {
                     "--- BPM".to_string()
@@ -128,10 +128,9 @@ pub fn show(ui: &mut egui::Ui, ui_state: &mut AppUI) {
 
                 ui.label("🔊");
 
-                let meter_height = ui.available_height().clamp(16.0, 28.0);
                 ui.add(
                     AudioMeter::new(ui_state.user_config.meter_style, left_db, right_db)
-                        .height(meter_height),
+                        .height(20.0),
                 );
 
                 // === SPACER - push performance to right ===

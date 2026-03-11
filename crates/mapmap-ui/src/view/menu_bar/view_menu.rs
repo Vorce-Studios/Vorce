@@ -2,19 +2,8 @@ use super::menu_item;
 use crate::icons::AppIcon;
 use crate::{AppUI, UIAction};
 
-pub fn show(
-    ui: &mut egui::Ui,
-    ui_state: &mut AppUI,
-    actions: &mut Vec<UIAction>,
-    compact_menu: bool,
-) {
-    let menu_view_label = ui_state.i18n.t("menu-view");
-    let top_label = if compact_menu {
-        "👁"
-    } else {
-        &menu_view_label
-    };
-    let response = ui.menu_button(top_label, |ui| {
+pub fn show(ui: &mut egui::Ui, ui_state: &mut AppUI, actions: &mut Vec<UIAction>) {
+    ui.menu_button(ui_state.i18n.t("menu-view"), |ui| {
         ui.label(ui_state.i18n.t("view-egui-panels"));
         ui.checkbox(
             &mut ui_state.dashboard.visible,
@@ -135,8 +124,4 @@ pub fn show(
             ui.close();
         }
     });
-
-    if compact_menu {
-        response.response.on_hover_text(menu_view_label);
-    }
 }

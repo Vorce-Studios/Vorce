@@ -120,7 +120,7 @@ pub fn render_source_ui(
                     if ui.add(egui::Button::new("\u{1F4C2} Select Media File").min_size(egui::vec2(150.0, 30.0))).clicked() {
                         actions.push(UIAction::PickMediaFile(module_id, part_id, "".to_string()));
                     }
-                    ui.label(egui::RichText::new("No media loaded").weak().italics());
+                    ui.label(egui::RichText::new("No media loaded").weak());
                     ui.add_space(10.0);
                 });
             } else {
@@ -242,7 +242,7 @@ pub fn render_source_ui(
                     if ui.add(egui::Button::new("\u{1F4C2} Select Image File").min_size(egui::vec2(150.0, 30.0))).clicked() {
                         actions.push(crate::UIAction::PickMediaFile(module_id, part_id, "".to_string()));
                     }
-                    ui.label(egui::RichText::new("No image loaded").weak().italics());
+                    ui.label(egui::RichText::new("No image loaded").weak());
                     ui.add_space(10.0);
                 });
             } else {
@@ -434,7 +434,6 @@ pub fn render_source_ui(
                             .clicked()
                         {
                             *source_name = None;
-                            actions.push(UIAction::DisconnectNdiSource { part_id });
                         }
 
                         // Available sources
@@ -453,10 +452,11 @@ pub fn render_source_ui(
                                 );
 
                                 // Trigger connection action
-                                actions.push(UIAction::ConnectNdiSource {
-                                    part_id,
-                                    source: ndi_source.clone(),
-                                });
+                                canvas.pending_ndi_connect =
+                                    Some((
+                                        part_id,
+                                        ndi_source.clone(),
+                                    ));
                             }
                         }
                     });

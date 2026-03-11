@@ -2,14 +2,8 @@ use super::menu_item;
 use crate::icons::AppIcon;
 use crate::{AppUI, UIAction};
 
-pub fn show(ui: &mut egui::Ui, ui_state: &AppUI, actions: &mut Vec<UIAction>, compact_menu: bool) {
-    let menu_edit_label = ui_state.i18n.t("menu-edit");
-    let top_label = if compact_menu {
-        "✏"
-    } else {
-        &menu_edit_label
-    };
-    let response = ui.menu_button(top_label, |ui| {
+pub fn show(ui: &mut egui::Ui, ui_state: &AppUI, actions: &mut Vec<UIAction>) {
+    ui.menu_button(ui_state.i18n.t("menu-edit"), |ui| {
         if menu_item(
             ui,
             ui_state,
@@ -56,8 +50,4 @@ pub fn show(ui: &mut egui::Ui, ui_state: &AppUI, actions: &mut Vec<UIAction>, co
             ui.close();
         }
     });
-
-    if compact_menu {
-        response.response.on_hover_text(menu_edit_label);
-    }
 }

@@ -350,11 +350,6 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     error!("Failed to connect to NDI source: {}", e);
                 }
             }
-            #[cfg(feature = "ndi")]
-            UIAction::DisconnectNdiSource { part_id } => {
-                info!("Disconnecting NDI source from part {}", part_id);
-                app.ndi_receivers.remove(&part_id);
-            }
             UIAction::SetMidiAssignment(element_id, target_id) => {
                 #[cfg(feature = "midi")]
                 {
@@ -657,13 +652,13 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                             {
                                 app.state.effect_animator_mut().add_keyframe(
                                     binding.id,
-                                    time as f64,
+                                    time,
                                     val,
                                 );
                             } else {
                                 app.state.effect_animator_mut().add_keyframe(
                                     binding.id,
-                                    time as f64,
+                                    time,
                                     mapmap_core::animation::AnimValue::Float(0.0),
                                 );
                             }
@@ -689,10 +684,10 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                             if let Some(val) = value {
                                 app.state
                                     .effect_animator_mut()
-                                    .remove_keyframe(binding.id, old_time as f64);
+                                    .remove_keyframe(binding.id, old_time);
                                 app.state.effect_animator_mut().add_keyframe(
                                     binding.id,
-                                    new_time as f64,
+                                    new_time,
                                     val,
                                 );
                             }
@@ -704,7 +699,7 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                         {
                             app.state
                                 .effect_animator_mut()
-                                .remove_keyframe(binding.id, time as f64);
+                                .remove_keyframe(binding.id, time);
                         }
                     }
                 }
