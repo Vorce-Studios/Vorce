@@ -210,6 +210,11 @@ jobs:
         run: |
           New-Item -ItemType Directory -Path "target/wix" -Force | Out-Null
 
+      - name: Ensure WiX Output Directory
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path "target/wix" -Force | Out-Null
+
       - name: Build MSI Installer
         shell: pwsh
         run: |
