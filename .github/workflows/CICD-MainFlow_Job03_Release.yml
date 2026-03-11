@@ -8,10 +8,10 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (e.g. v1.0.0)'
+        description: "Version (e.g. v1.0.0)"
         required: true
       is_prerelease:
-        description: 'Mark as Pre-release'
+        description: "Mark as Pre-release"
         required: false
         type: boolean
         default: true
@@ -117,7 +117,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-vcpkg-full-clone-v1-
 
-      - name: vcpkg installieren
+      - name: Install vcpkg
         shell: pwsh
         run: |
           if (-not (Test-Path "vcpkg")) {
@@ -128,7 +128,6 @@ jobs:
             git -C vcpkg fetch origin
           }
           .\vcpkg\vcpkg integrate install
-
           .\vcpkg\bootstrap-vcpkg.bat
 
       - name: Cache vcpkg installed libs
@@ -140,7 +139,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-vcpkg-installed-
 
-      - name: VCPKG_ROOT-Variable setzen
+      - name: Set VCPKG_ROOT
         shell: pwsh
         run: |
           $vcpkgRoot = "$(Get-Location)\vcpkg"
@@ -149,7 +148,7 @@ jobs:
           Add-Content -Path $env:GITHUB_ENV -Value "VCPKG_DEFAULT_TRIPLET=x64-windows"
           Add-Content -Path $env:GITHUB_ENV -Value "VCPKG_INSTALLED_DIR=$installedDir"
 
-      - name: vcpkg-Abhaengigkeiten installieren
+      - name: Install vcpkg dependencies
         if: steps.cache-vcpkg-installed.outputs.cache-hit != 'true'
         shell: pwsh
         run: .\vcpkg\vcpkg install
@@ -170,7 +169,6 @@ jobs:
           Add-Content -Path $env:GITHUB_ENV -Value "FFMPEG_VERSION=7.1"
           Add-Content -Path $env:GITHUB_ENV -Value "PKG_CONFIG_PATH=$PkgConfigPath"
 
-          # Force bindgen/clang to use vcpkg headers on Windows MSVC and avoid Linux path leakage
           $ClangArgs = "--target=x86_64-pc-windows-msvc -I`"$IncludePath`""
           Add-Content -Path $env:GITHUB_ENV -Value "BINDGEN_EXTRA_CLANG_ARGS=$ClangArgs"
           Add-Content -Path $env:GITHUB_PATH -Value "$BinPath"
@@ -179,23 +177,21 @@ jobs:
         shell: pwsh
         run: |
           if (Test-Path "$env:FFMPEG_INCLUDE_DIR/libavcodec/avfft.h") {
-            Write-Host "✅ avfft.h found at $env:FFMPEG_INCLUDE_DIR/libavcodec/avfft.h"
+            Write-Host "avfft.h found at $env:FFMPEG_INCLUDE_DIR/libavcodec/avfft.h"
           } else {
-            Write-Error "❌ avfft.h NOT found! Check vcpkg installation."
+            Write-Error "avfft.h not found. Check vcpkg installation."
             exit 1
           }
 
       - name: Install cargo-wix
-        run: |
-          # Use binstall if available or cargo install
-          cargo install cargo-wix --locked || true
+        run: cargo install cargo-wix --locked || true
 
       - name: Build (Release)
         shell: pwsh
         run: |
           cargo build --release -p mapmap --features "audio,ffmpeg" --verbose
 
-      - name: Prepare Release Folder & Copy DLLs
+      - name: Prepare Release Folder and Copy DLLs
         shell: pwsh
         run: |
           $ReleaseDir = "target/release"
@@ -208,13 +204,21 @@ jobs:
           $Version = "${{ needs.resolve-release.outputs.version }}"
           $ZipName = "MapFlow-$Version-Windows-x64.zip"
           Compress-Archive -Path "target/release/MapFlow.exe", "target/release/*.dll" -DestinationPath "$ZipName"
-          Add-Content -Path $env:GITHUB_ENV -Value "ZIP_PATH=$ZipName"
+
+      - name: Ensure WiX Output Directory
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path "target/wix" -Force | Out-Null
 
       - name: Build MSI Installer
         shell: pwsh
         run: |
-          cargo wix --release -p mapmap --no-check-includes
-          $MsiPath = Get-ChildItem -Path "target/wix/*.msi" | Select-Object -First 1 -ExpandProperty FullName
+          cargo wix -p mapmap --no-check-includes -- --release
+          $MsiPath = Get-ChildItem -Path "target/wix/*.msi" -File -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $MsiPath) {
+            Write-Error "No MSI artifact was generated in target/wix."
+            exit 1
+          }
           Move-Item -Path $MsiPath -Destination "MapFlow-${{ needs.resolve-release.outputs.version }}-x64.msi"
 
       - name: Upload Artifacts
@@ -259,14 +263,17 @@ jobs:
             libxcb-xfixes0-dev libx11-dev libxcursor-dev libxi-dev libxrandr-dev \
             libxinerama-dev libwayland-dev libxkbcommon-dev libssl-dev \
             ffmpeg
+
       - name: Build (Release)
         run: cargo build --release -p mapmap --features "audio,ffmpeg"
+
       - name: Create Tarball
         run: |
           VERSION="${{ needs.resolve-release.outputs.version }}"
           TAR_NAME="MapFlow-$VERSION-Linux-x64.tar.gz"
           cd target/release
           tar -czf "../../$TAR_NAME" MapFlow
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -274,9 +281,52 @@ jobs:
           if-no-files-found: error
           path: MapFlow-${{ needs.resolve-release.outputs.version }}-Linux-x64.tar.gz
 
+  build-macos:
+    name: "Build (macOS Beta)"
+    needs: [resolve-release]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo Registry
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build (Release)
+        run: cargo build --release -p mapmap --no-default-features --features "macos-beta"
+
+      - name: Package .app Bundle
+        shell: bash
+        run: |
+          bash scripts/package_macos_app.sh "${{ needs.resolve-release.outputs.version }}"
+
+      - name: Create ZIP Artifact
+        shell: bash
+        run: |
+          VERSION="${{ needs.resolve-release.outputs.version }}"
+          ZIP_NAME="MapFlow-$VERSION-macOS-beta.zip"
+          ditto -c -k --sequesterRsrc --keepParent "target/release/MapFlow.app" "$ZIP_NAME"
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          if-no-files-found: error
+          path: MapFlow-${{ needs.resolve-release.outputs.version }}-macOS-beta.zip
+
   publish-release:
     name: "Publish Release"
-    needs: [resolve-release, build-windows, build-linux]
+    needs: [resolve-release, build-windows, build-linux, build-macos]
     runs-on: ubuntu-latest
     steps:
       - name: Download Artifacts
@@ -284,6 +334,7 @@ jobs:
         with:
           path: release-artifacts
           merge-multiple: true
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -297,6 +348,7 @@ jobs:
             "release-artifacts/MapFlow-$RELEASE_VERSION-Windows-x64.zip"
             "release-artifacts/MapFlow-$RELEASE_VERSION-x64.msi"
             "release-artifacts/MapFlow-$RELEASE_VERSION-Linux-x64.tar.gz"
+            "release-artifacts/MapFlow-$RELEASE_VERSION-macOS-beta.zip"
           )
 
           args=(
