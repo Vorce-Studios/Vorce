@@ -1,32 +1,43 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
 
-# Final-Prepare-PreCommit.sh
-# Automates code quality checks and fixes before commit (Linux/CI/Jules).
+PROFILE="${PREPARE_PRECOMMIT_PROFILE:-generic}"
 
-echo -e "\033[0;36m🚀 Starting Pre-Commit Preparation...\033[0m"
+log()  { printf '\033[1;34m[%s]\033[0m %s\n' "$PROFILE" "$*"; }
+warn() { printf '\033[1;33m[%s]\033[0m %s\n' "$PROFILE" "$*"; }
 
-# 1. Format Code
-echo -e "\033[0;33m📝 Running cargo fmt...\033[0m"
-cargo fmt --all
-
-# 2. Sort Dependencies
-if command -v cargo-sort &> /dev/null; then
-    echo -e "\033[0;33m📚 Running cargo sort...\033[0m"
-    cargo sort --workspace
-else
-    echo -e "\033[0;33m⚠️ cargo-sort not found. Skipping dependency sorting.\033[0m"
+if git_root="$(git rev-parse --show-toplevel 2>/dev/null)"; then
+    cd "$git_root"
 fi
 
-# 3. Clippy Auto-Fix
-echo -e "\033[0;33m🛠️ Running cargo clippy (Auto-Fix)...\033[0m"
-# Using settings similar to CI
-cargo clippy --fix --allow-dirty --allow-staged --workspace --features "mapmap-io/ci-linux" -- -D warnings || {
-    echo -e "\033[0;31m⚠️ Clippy found issues that couldn't be automatically fixed.\033[0m"
-}
+if ! command -v cargo >/dev/null 2>&1; then
+    printf 'cargo not found.\n' >&2
+    exit 1
+fi
 
-# 4. Final Check
-echo -e "\033[0;33m✅ Running final cargo check...\033[0m"
-cargo check --workspace --features "mapmap-io/ci-linux"
+log "Running cargo fmt --all"
+cargo fmt --all
 
-echo -e "\033[0;32m🎉 Pre-Commit Preparation Complete!\033[0m"
+if command -v cargo-sort >/dev/null 2>&1; then
+    log "Running cargo sort --workspace"
+    cargo sort --workspace
+else
+    warn "cargo-sort not found; skipping dependency sorting"
+fi
+
+log "Running cargo clippy --fix"
+if ! cargo clippy --fix --allow-dirty --allow-staged --workspace --all-targets --features "mapmap-io/ci-linux" -- -D warnings; then
+    warn "Auto-fix could not solve every clippy issue; running strict validation next"
+fi
+
+log "Running strict cargo clippy validation"
+cargo clippy --workspace --all-targets --features "mapmap-io/ci-linux" -- -D warnings
+
+log "Running cargo check --workspace --all-targets"
+cargo check --workspace --all-targets --features "mapmap-io/ci-linux"
+
+log "Running git diff --check"
+git diff --check --exit-code
+
+log "Pre-commit preparation complete"

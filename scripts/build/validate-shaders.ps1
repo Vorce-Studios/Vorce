@@ -1,4 +1,4 @@
-# scripts/validate_shaders.ps1
+# scripts/build/validate-shaders.ps1
 # Dieses Skript validiert alle .wgsl Shader-Dateien im Projekt mit naga.
 
 $shaderDir = "shaders"

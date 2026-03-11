@@ -1,42 +1,44 @@
-# scripts/monitor_mapflow.ps1
-# Setze das Encoding fÃ¼r Pipes und Konsole auf UTF-8
+# scripts/gemini-cli/monitor-mapflow.ps1
 $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-[Console]::InputEncoding  = [System.Text.Encoding]::UTF8
+[Console]::InputEncoding = [System.Text.Encoding]::UTF8
 
-Write-Host "--- MapFlow Orchestrator WÃ¤chter (Offizieller Modus) ---" -ForegroundColor Cyan
+Write-Host "--- MapFlow Orchestrator Monitor ---" -ForegroundColor Cyan
 
-# Parameter-Verarbeitung
 $Interval = 300
 $SessionId = $null
 
 for ($i = 0; $i -lt $args.Count; $i++) {
-    if ($args[$i] -eq "-Interval") { $Interval = [int]$args[$i+1]; $i++ }
-    if ($args[$i] -eq "-SessionId") { $SessionId = $args[$i+1]; $i++ }
+    if ($args[$i] -eq "-Interval") {
+        $Interval = [int]$args[$i + 1]
+        $i++
+    }
+    if ($args[$i] -eq "-SessionId") {
+        $SessionId = $args[$i + 1]
+        $i++
+    }
 }
 
-if ($null -eq $SessionId -or $SessionId -eq "") {
+if ([string]::IsNullOrWhiteSpace($SessionId)) {
     $SessionId = $env:GEMINI_SESSION_ID
 }
 
-if ($null -eq $SessionId -or $SessionId -eq "") {
-    Write-Host "FEHLER: Keine Session-ID gefunden!"
+if ([string]::IsNullOrWhiteSpace($SessionId)) {
+    Write-Host "ERROR: No session id found." -ForegroundColor Red
     exit 1
 }
 
-Write-Host "Ziel-Session: $SessionId"
-Write-Host "Intervall: $Interval Sekunden"
-Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Monitoring startet..."
+Write-Host "Target session: $SessionId"
+Write-Host "Interval: $Interval seconds"
+Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Monitoring started..."
 
 while ($true) {
     Write-Host "`n[$(Get-Date -Format 'HH:mm:ss')] === STATUS CHECK START ===" -ForegroundColor Green
 
-    # Sammele Daten
-    $prStatus = try { gh pr status | Out-String } catch { "Fehler GitHub Status" }
-    $openPrs = try { gh pr list --limit 5 | Out-String } catch { "Fehler GitHub List" }
+    $prStatus = try { gh pr status | Out-String } catch { "GitHub status failed." }
+    $openPrs = try { gh pr list --limit 5 | Out-String } catch { "GitHub PR list failed." }
     $branches = git branch --remotes --no-merged origin/main | Select-Object -First 5 | Out-String
 
-    # Erstelle den Bericht
     $report = @"
 ------------------------------------------------------------
 [MONITOR-UPDATE] $(Get-Date -Format 'HH:mm:ss')
@@ -44,36 +46,25 @@ while ($true) {
 GITHUB PR STATUS:
 $prStatus
 
-OFFENE PULL REQUESTS (Top 5):
+OPEN PULL REQUESTS (TOP 5):
 $openPrs
 
-UNMERGED BRANCHES (Top 5):
+UNMERGED BRANCHES (TOP 5):
 $branches
 ------------------------------------------------------------
 "@
 
-    # 1. GIB DEN BERICHT DIREKT IN DER KONSOLE AUS (sichtbar im Ctrl+B Fenster)
     Write-Host $report -ForegroundColor Gray
+    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Sending update to chat ($SessionId)..."
 
-    # 2. SENDE DEN BERICHT AN DEN CHAT (aktualisiert die Historie)
-    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Sende Update an Chat ($SessionId)..."
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-
->>>>>>> remotes/origin/jules/bolt-optimize-history-vecdeque-15195946004347935531
-=======
-
->>>>>>> origin/jules/ui-muted-empty-states-1-176332392277018225
     try {
-        # Wir geben den Bericht als Argument an gemini -r
-        $aiPrompt = "Hier ist ein automatisches Monitor-Update für den Chat-Verlauf. Bitte nimm es zur Kenntnis: `n$report"
+        $aiPrompt = "Automated monitor update for chat history. Please acknowledge:`n$report"
         & gemini -r $SessionId "$aiPrompt" --approval-mode yolo --raw-output 2>&1 | Out-Null
-        Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Update erfolgreich gesendet."
+        Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Update sent successfully."
     } catch {
-        Write-Host "FEHLER beim Senden an Gemini: $_" -ForegroundColor Red
+        Write-Host "ERROR while sending to Gemini: $_" -ForegroundColor Red
     }
 
-    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] N├ñchster Check in $Interval Sekunden..." -ForegroundColor Yellow
+    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Next check in $Interval seconds..." -ForegroundColor Yellow
     Start-Sleep -Seconds $Interval
 }
