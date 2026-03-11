@@ -100,9 +100,24 @@ jobs:
             }
 
             if (pr.data.mergeable_state === 'behind') {
-              console.log(
-                'PR is behind the base branch. Skipping automatic branch updates because bot-generated update commits do not re-emit the required PR checks on the new head SHA.',
-              );
+              console.log('PR is behind the base branch. Updating branch before attempting auto-merge...');
+
+              try {
+                await github.rest.pulls.updateBranch({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: prNumber,
+                  expected_head_sha: pr.data.head.sha,
+                });
+
+                console.log(
+                  'Branch update requested successfully. Waiting for the synchronize event and fresh required checks on the new head SHA.',
+                );
+              } catch (error) {
+                console.log(`Branch update failed: ${error.message}`);
+              }
+
+              return;
             }
 
             await new Promise((resolve) => setTimeout(resolve, 2000));
