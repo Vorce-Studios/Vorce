@@ -5,7 +5,7 @@ on:
     tags:
       - "v*.*.*"
       - "*.*.*"
-  #workflow_dispatch:
+  workflow_dispatch:
     inputs:
       version:
         description: 'Version (e.g. v1.0.0)'
@@ -229,7 +229,6 @@ jobs:
             Write-Error "No MSI artifact was generated in target/wix."
             exit 1
           }
-
           Move-Item -Path $MsiPath -Destination "MapFlow-${{ needs.resolve-release.outputs.version }}-x64.msi"
 
       - name: Upload Artifacts
@@ -337,6 +336,10 @@ jobs:
     needs: [resolve-release, build-windows, build-linux, build-macos]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
