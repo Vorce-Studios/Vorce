@@ -9,7 +9,7 @@
   [![Build & Quality](https://github.com/MrLongNight/MapFlow/actions/workflows/CICD-DevFlow_Job01_Validation.yml/badge.svg?branch=main)](https://github.com/MrLongNight/MapFlow/actions/workflows/CICD-DevFlow_Job01_Validation.yml)
   [![Security Analysis](https://github.com/MrLongNight/MapFlow/actions/workflows/CI-02_security-scan.yml/badge.svg)](https://github.com/MrLongNight/MapFlow/actions/workflows/CI-02_security-scan.yml)
   [![Stable Release](https://github.com/MrLongNight/MapFlow/actions/workflows/CICD-MainFlow_Job03_Release.yml/badge.svg)](https://github.com/MrLongNight/MapFlow/actions/workflows/CICD-MainFlow_Job03_Release.yml)
-  ![OS: Windows | Linux | macOS beta](https://img.shields.io/badge/OS-Windows%20%7C%20Linux%20%7C%20macOS%20beta-blue.svg)
+  ![OS: Windows | Linux](https://img.shields.io/badge/OS-Windows%20%7C%20Linux-blue.svg)
   [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
   [![Rust: 1.75+](https://img.shields.io/badge/Rust-1.75%2B-orange.svg)](https://www.rust-lang.org/)
   [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -97,7 +97,17 @@ cd MapFlow
 cargo run --release
 ```
 
-### 3. Usage
+### 3. Verify Your Local Development Setup
+
+Before opening a pull request, run the standard quality checks and let long-running commands finish completely:
+
+```bash
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo test --workspace
+```
+
+### 4. Usage
 
 * Check the [**Quick Start Guide**](docs/A4_USER/B1_MANUAL/DOC-C2_QUICKSTART.md) to create your first composition.
 * Explore the [**User Manual**](docs/A4_USER/B1_MANUAL/DOC-C0_README.md) for detailed control explanations.
