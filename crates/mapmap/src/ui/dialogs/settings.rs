@@ -115,6 +115,72 @@ pub fn show(ctx: &Context, context: SettingsContext) {
                         }
                     });
             });
+            ui.horizontal(|ui| {
+                ui.label("Schriftgröße:");
+                let mut ui_scale = context.ui_state.user_config.ui_scale;
+                if ui
+                    .add(egui::Slider::new(&mut ui_scale, 0.8..=1.4).suffix("x"))
+                    .changed()
+                {
+                    context.ui_state.user_config.ui_scale = ui_scale;
+                    let _ = context.ui_state.user_config.save();
+                }
+            });
+            ui.add_space(10.0);
+            ui.separator();
+            ui.heading(RichText::new("Toolbar-Metriken").color(Color32::WHITE));
+            ui.add_space(4.0);
+            ui.horizontal(|ui| {
+                ui.label("Anzeige-Modus:");
+                egui::ComboBox::from_id_salt("toolbar_metric_mode")
+                    .selected_text(match context.ui_state.user_config.toolbar_metrics.mode {
+                        mapmap_ui::core::config::ToolbarMetricMode::Always => "Permanent sichtbar",
+                        mapmap_ui::core::config::ToolbarMetricMode::Hover => "Nur Hover/Popover",
+                    })
+                    .show_ui(ui, |ui| {
+                        if ui
+                            .selectable_label(
+                                context.ui_state.user_config.toolbar_metrics.mode
+                                    == mapmap_ui::core::config::ToolbarMetricMode::Always,
+                                "Permanent sichtbar",
+                            )
+                            .clicked()
+                        {
+                            context.ui_state.user_config.toolbar_metrics.mode =
+                                mapmap_ui::core::config::ToolbarMetricMode::Always;
+                            let _ = context.ui_state.user_config.save();
+                        }
+                        if ui
+                            .selectable_label(
+                                context.ui_state.user_config.toolbar_metrics.mode
+                                    == mapmap_ui::core::config::ToolbarMetricMode::Hover,
+                                "Nur Hover/Popover",
+                            )
+                            .clicked()
+                        {
+                            context.ui_state.user_config.toolbar_metrics.mode =
+                                mapmap_ui::core::config::ToolbarMetricMode::Hover;
+                            let _ = context.ui_state.user_config.save();
+                        }
+                    });
+            });
+            ui.add_space(4.0);
+            let metrics = &mut context.ui_state.user_config.toolbar_metrics;
+            let mut metric_changed = false;
+            metric_changed |= ui.checkbox(&mut metrics.show_bpm, "BPM").changed();
+            metric_changed |= ui.checkbox(&mut metrics.show_fps, "FPS").changed();
+            metric_changed |= ui
+                .checkbox(&mut metrics.show_frame_time, "Frame Time")
+                .changed();
+            metric_changed |= ui.checkbox(&mut metrics.show_cpu, "CPU").changed();
+            metric_changed |= ui.checkbox(&mut metrics.show_gpu, "GPU").changed();
+            metric_changed |= ui.checkbox(&mut metrics.show_ram, "RAM").changed();
+            metric_changed |= ui
+                .checkbox(&mut metrics.show_overall_status, "Status-Indikator")
+                .changed();
+            if metric_changed {
+                let _ = context.ui_state.user_config.save();
+            }
             ui.add_space(10.0);
             ui.separator();
             ui.heading(

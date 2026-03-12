@@ -34,6 +34,52 @@ pub enum VSyncMode {
     Off,
 }
 
+/// Toolbar metric disclosure behavior
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum ToolbarMetricMode {
+    /// Metric is visible directly in toolbar
+    #[default]
+    Always,
+    /// Metric is available via hover/popover only
+    Hover,
+}
+
+/// Per-metric visibility settings for toolbar telemetry
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ToolbarMetricsConfig {
+    #[serde(default = "default_true")]
+    pub show_bpm: bool,
+    #[serde(default = "default_true")]
+    pub show_fps: bool,
+    #[serde(default = "default_true")]
+    pub show_frame_time: bool,
+    #[serde(default = "default_true")]
+    pub show_cpu: bool,
+    #[serde(default = "default_true")]
+    pub show_gpu: bool,
+    #[serde(default = "default_true")]
+    pub show_ram: bool,
+    #[serde(default = "default_true")]
+    pub show_overall_status: bool,
+    #[serde(default)]
+    pub mode: ToolbarMetricMode,
+}
+
+impl Default for ToolbarMetricsConfig {
+    fn default() -> Self {
+        Self {
+            show_bpm: true,
+            show_fps: true,
+            show_frame_time: true,
+            show_cpu: true,
+            show_gpu: true,
+            show_ram: true,
+            show_overall_status: true,
+            mode: ToolbarMetricMode::Always,
+        }
+    }
+}
+
 impl fmt::Display for VSyncMode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -183,10 +229,22 @@ pub struct UserConfig {
     /// Enable fullscreen for all projectors
     #[serde(default)]
     pub global_fullscreen: bool,
+
+    /// Global UI font scale factor (0.8 - 1.4)
+    #[serde(default = "default_ui_scale")]
+    pub ui_scale: f32,
+
+    /// Toolbar telemetry visibility and disclosure settings
+    #[serde(default)]
+    pub toolbar_metrics: ToolbarMetricsConfig,
 }
 
 fn default_true() -> bool {
     true
+}
+
+fn default_ui_scale() -> f32 {
+    1.0
 }
 
 impl Default for UserConfig {
@@ -220,6 +278,8 @@ impl Default for UserConfig {
             ndi_discovery: true,
             hue_config: HueConfig::default(),
             global_fullscreen: false,
+            ui_scale: 1.0,
+            toolbar_metrics: ToolbarMetricsConfig::default(),
         }
     }
 }
@@ -386,6 +446,8 @@ mod tests {
             ndi_discovery: true,
             hue_config: HueConfig::default(),
             global_fullscreen: true,
+            ui_scale: 1.2,
+            toolbar_metrics: ToolbarMetricsConfig::default(),
         };
 
         let json = serde_json::to_string(&config).unwrap();
