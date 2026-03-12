@@ -592,8 +592,8 @@ impl AppUI {
     ///
     /// Only updates every 500ms to preserve performance
     pub fn update_responsive_styles(&mut self, ctx: &egui::Context) {
-        // Only update every 500ms
-        if self.last_style_update.elapsed().as_millis() < 500 {
+        // Keep style updates frequent enough for live settings changes while avoiding per-frame churn.
+        if self.last_style_update.elapsed().as_millis() < 120 {
             return;
         }
         self.last_style_update = std::time::Instant::now();
@@ -602,9 +602,10 @@ impl AppUI {
 
         let mut style = (*ctx.style()).clone();
         let base_font_size = 14.0;
+        let user_scale = self.user_config.ui_scale.clamp(0.8, 1.4);
 
         // Scale font sizes
-        let scaled_size = layout.scale_font(base_font_size);
+        let scaled_size = layout.scale_font(base_font_size) * user_scale;
 
         style.text_styles.insert(
             egui::TextStyle::Body,
@@ -624,7 +625,7 @@ impl AppUI {
         );
 
         // Scale spacing
-        let spacing_scale = layout.scale_font(1.0) / 14.0; // Normalize scale factor
+        let spacing_scale = (layout.scale_font(1.0) / 14.0) * user_scale; // Normalize scale factor
         style.spacing.item_spacing = egui::vec2(8.0, 6.0) * spacing_scale;
         style.spacing.button_padding = egui::vec2(8.0, 4.0) * spacing_scale;
 

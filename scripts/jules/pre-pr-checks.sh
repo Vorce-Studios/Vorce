@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# scripts/jules-pre_pr_checks.sh
+# scripts/jules/pre-pr-checks.sh
 # Kurzes Vor-PR-Check-Skript für Jules.
 # Ausführen im geklonten Repo (Repo-Root). Bricht bei erstem Fehler ab.
 

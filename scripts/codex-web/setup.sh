@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 # Setup-Skript für MapFlow in der Codex-Entwicklungsumgebung (Ubuntu 24.04)
 # Wird nach dem Erstellen neuer Container ausgeführt.
@@ -34,6 +34,19 @@ cargo install cargo-sort --quiet || echo "cargo-sort Installation fehlgeschlagen
 
 # 4. Cargo-Cache vorwärmen
 echo "📥 Lade Abhängigkeiten herunter (Warming up cache)..."
-cargo fetch --locked --quiet
+fetch_log="$(mktemp)"
+if cargo fetch --locked --quiet 2>"$fetch_log"; then
+    rm -f "$fetch_log"
+else
+    if grep -q "cannot update the lock file" "$fetch_log"; then
+        rm -f "$fetch_log"
+        echo "Cargo.lock drift detected in this container; retrying cache warm-up without --locked..."
+        cargo fetch --quiet
+    else
+        cat "$fetch_log" >&2
+        rm -f "$fetch_log"
+        exit 1
+    fi
+fi
 
 echo "✅ Codex Setup abgeschlossen!"

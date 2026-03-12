@@ -1,4 +1,4 @@
-# scripts/taskmon_raw.ps1
+# scripts/gemini-cli/taskmon-raw.ps1
 $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 

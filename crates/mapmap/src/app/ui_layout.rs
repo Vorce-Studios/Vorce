@@ -6,9 +6,12 @@ use mapmap_ui as ui;
 pub fn show(ctx: &egui::Context, app: &mut App) {
     app.ui_state.update_responsive_styles(ctx);
 
-    let viewport_width = ctx.content_rect().width();
-    let sidebar_default = (viewport_width * 0.2).clamp(240.0, 420.0);
-    let inspector_default = (viewport_width * 0.24).clamp(280.0, 520.0);
+    let viewport_rect = ctx.content_rect();
+    let viewport_width = viewport_rect.width();
+    let viewport_height = viewport_rect.height();
+    let compact_height = viewport_height < 760.0;
+    let sidebar_default = (viewport_width * 0.22).clamp(220.0, 420.0);
+    let inspector_default = (viewport_width * 0.24).clamp(260.0, 520.0);
 
     // 1. Global Menu Bar (Top-most)
     let menu_actions = ui::view::menu_bar::show(ctx, &mut app.ui_state);
@@ -20,7 +23,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
     if app.ui_state.show_toolbar {
         egui::TopBottomPanel::top("toolbar_panel")
             .resizable(true)
-            .min_height(44.0)
+            .min_height(if compact_height { 36.0 } else { 44.0 })
             .frame(
                 egui::Frame::default()
                     .fill(ctx.style().visuals.window_fill())
@@ -85,8 +88,27 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                         }
                     });
 
+                egui::TopBottomPanel::bottom("left_sidebar_media")
+                    .resizable(true)
+                    .default_height(if compact_height { 160.0 } else { 240.0 })
+                    .min_height(120.0)
+                    .show_inside(ui_obj, |ui_obj| {
+                        egui::CollapsingHeader::new(app.ui_state.i18n.t("media"))
+                            .default_open(true)
+                            .show(ui_obj, |ui| {
+                                if app.ui_state.show_media_browser {
+                                    let _ = app.ui_state.media_browser.ui(
+                                        ui,
+                                        &app.ui_state.i18n,
+                                        app.ui_state.icon_manager.as_ref(),
+                                    );
+                                } else {
+                                    ui.label(app.ui_state.i18n.t("media-sidebar-placeholder"));
+                                }
+                            });
+                    });
+
                 egui::ScrollArea::vertical().show(ui_obj, |ui_obj| {
-                    // --- Dashboard Section ---
                     egui::CollapsingHeader::new(app.ui_state.i18n.t("dashboard"))
                         .default_open(true)
                         .show(ui_obj, |ui| {
@@ -97,15 +119,9 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                             ) {
                                 match dash_action {
                                     ui::view::dashboard::DashboardAction::SendCommand(cmd) => {
-                                        if let Some(_module_id) =
-                                            app.ui_state.module_canvas.active_module_id
-                                        {
-                                            if let Some(part_id) =
-                                                app.ui_state.module_canvas.get_selected_part_id()
-                                            {
-                                                app.ui_state
-                                                    .actions
-                                                    .push(ui::UIAction::MediaCommand(part_id, cmd));
+                                        if let Some(_module_id) = app.ui_state.module_canvas.active_module_id {
+                                            if let Some(part_id) = app.ui_state.module_canvas.get_selected_part_id() {
+                                                app.ui_state.actions.push(ui::UIAction::MediaCommand(part_id, cmd));
                                             }
                                         }
                                     }
@@ -118,13 +134,11 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                         });
                     ui_obj.separator();
 
-                    // --- Master Controls Section (in sidebar, not floating) ---
                     if app.ui_state.show_master_controls {
                         egui::CollapsingHeader::new(app.ui_state.i18n.t("panel-master"))
                             .default_open(true)
                             .show(ui_obj, |ui| {
-                                let mut layer_manager =
-                                    std::sync::Arc::make_mut(&mut app.state.layer_manager).clone();
+                                let mut layer_manager = std::sync::Arc::make_mut(&mut app.state.layer_manager).clone();
                                 app.ui_state.render_master_controls_embedded(ui, &mut layer_manager);
                                 if layer_manager != *app.state.layer_manager {
                                     *std::sync::Arc::make_mut(&mut app.state.layer_manager) = layer_manager;
@@ -134,7 +148,6 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                         ui_obj.separator();
                     }
 
-                    // --- Audio Analysis Section ---
                     egui::CollapsingHeader::new(app.ui_state.i18n.t("audio"))
                         .default_open(app.ui_state.show_audio)
                         .show(ui_obj, |ui| {
@@ -150,32 +163,12 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                             ) {
                                 match audio_action {
                                     ui::panels::audio_panel::AudioPanelAction::ConfigChanged(cfg) => {
-                                        app.ui_state
-                                            .actions
-                                            .push(ui::UIAction::UpdateAudioConfig(cfg));
+                                        app.ui_state.actions.push(ui::UIAction::UpdateAudioConfig(cfg));
                                     }
                                     ui::panels::audio_panel::AudioPanelAction::MeterStyleChanged(style) => {
-                                        app.ui_state
-                                            .actions
-                                            .push(ui::UIAction::SetMeterStyle(style));
+                                        app.ui_state.actions.push(ui::UIAction::SetMeterStyle(style));
                                     }
                                 }
-                            }
-                        });
-                    ui_obj.separator();
-
-                    // --- Media Browser Section ---
-                    egui::CollapsingHeader::new(app.ui_state.i18n.t("media"))
-                        .default_open(true)
-                        .show(ui_obj, |ui| {
-                            if app.ui_state.show_media_browser {
-                                let _ = app.ui_state.media_browser.ui(
-                                    ui,
-                                    &app.ui_state.i18n,
-                                    app.ui_state.icon_manager.as_ref(),
-                                );
-                            } else {
-                                ui.label(app.ui_state.i18n.t("media-sidebar-placeholder"));
                             }
                         });
                 });
@@ -224,27 +217,25 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
     if app.ui_state.show_timeline {
         egui::TopBottomPanel::bottom("bottom_panel")
             .resizable(true)
-            .default_height(200.0)
-            .min_height(100.0)
+            .default_height(if compact_height { 150.0 } else { 220.0 })
+            .min_height(if compact_height { 80.0 } else { 110.0 })
             .show(ctx, |ui_obj| {
                 ui_obj.heading(app.ui_state.i18n.t("timeline"));
-                let mut modules: Vec<ui::TimelineModule> = app
-                    .state
+                let state = &mut app.state;
+                let animator = std::sync::Arc::make_mut(&mut state.effect_animator);
+                let mut modules: Vec<ui::TimelineModule> = state
                     .module_manager
                     .modules()
                     .iter()
                     .map(|m| ui::TimelineModule {
                         id: m.id,
-                        name: m.name.clone(),
+                        // Optimization: Borrow name string to prevent allocation overhead in UI hot loop.
+                        name: &m.name,
                     })
                     .collect();
                 modules.sort_by_key(|m| m.id);
 
-                if let Some(action) = app.ui_state.timeline_panel.ui(
-                    ui_obj,
-                    app.state.effect_animator_mut(),
-                    &modules,
-                ) {
+                if let Some(action) = app.ui_state.timeline_panel.ui(ui_obj, animator, &modules) {
                     app.ui_state
                         .actions
                         .push(ui::UIAction::TimelineAction(action));

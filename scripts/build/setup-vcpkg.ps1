@@ -1,7 +1,8 @@
 
 $ErrorActionPreference = "Stop"
 
-$vcpkgDir = Join-Path "$PSScriptRoot/.." "vcpkg"
+$repoRoot = Join-Path "$PSScriptRoot/../.." "."
+$vcpkgDir = Join-Path $repoRoot "vcpkg"
 $vcpkgExe = Join-Path $vcpkgDir "vcpkg.exe"
 
 Write-Host "Checking for vcpkg in $vcpkgDir..."

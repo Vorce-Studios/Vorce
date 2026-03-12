@@ -2,7 +2,7 @@
 setlocal
 REM MapFlow local startup script.
 
-set "ROOT_DIR=%~dp0.."
+set "ROOT_DIR=%~dp0..\\.."
 set "TARGET_DIR=%ROOT_DIR%\target\release"
 set "VCPKG_BIN=%ROOT_DIR%\vcpkg_installed\x64-windows\bin"
 

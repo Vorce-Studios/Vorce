@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 VERSION="${1:-0.0.0-dev}"
 BUILD_DIR="${2:-$ROOT_DIR/target/release}"
 APP_NAME="${APP_NAME:-MapFlow}"

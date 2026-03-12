@@ -1,4 +1,4 @@
-# scripts/taskmon_summary.ps1
+# scripts/gemini-cli/taskmon-summary.ps1
 # Dieses Skript sammelt Informationen für Maestro Task Monitor.
 
 Write-Host "--- Jules Sessions (Gemini CLI) ---" -ForegroundColor Yellow
@@ -32,7 +32,7 @@ if (Get-Command gh -ErrorAction SilentlyContinue) {
 
 Write-Host "`n--- Aktive Mapflow Monitore ---" -ForegroundColor Yellow
 $monitors = Get-Process -Name "powershell" -ErrorAction SilentlyContinue | Where-Object {
-    $_.CommandLine -like "*monitor_mapflow.ps1*"
+    $_.CommandLine -like "*monitor_mapflow.ps1*" -or $_.CommandLine -like "*monitor-mapflow.ps1*"
 }
 if ($monitors) {
     $monitors | Select-Object Id, @{Name="CPU(s)"; Expression={$_.CPU}}, StartTime | Format-Table
