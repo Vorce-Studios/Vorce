@@ -121,6 +121,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
             RenderContext {
                 device: &app.backend.device,
                 queue: &app.backend.queue,
+                target_format: window_context.surface_config.format,
                 render_ops: &app.render_ops,
                 output_manager: &app.state.output_manager,
                 edge_blend_renderer: &app.edge_blend_renderer,
@@ -275,6 +276,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
 struct RenderContext<'a> {
     device: &'a wgpu::Device,
     queue: &'a wgpu::Queue,
+    target_format: wgpu::TextureFormat,
     render_ops: &'a Vec<(
         mapmap_core::module::ModulePartId,
         mapmap_core::module_eval::RenderOp,
@@ -347,15 +349,14 @@ fn render_content(
     let output_config_opt = ctx.output_manager.get_output(output_id).cloned();
     let use_edge_blend = output_config_opt
         .as_ref()
-        .map(|cfg| {
-            cfg.edge_blend.left.enabled
-                || cfg.edge_blend.right.enabled
-                || cfg.edge_blend.top.enabled
-                || cfg.edge_blend.bottom.enabled
-        })
+        .map(has_active_edge_blend)
         .unwrap_or(false)
         && ctx.edge_blend_renderer.is_some();
-    let use_color_calib = output_config_opt.is_some() && ctx.color_calibration_renderer.is_some();
+    let use_color_calib = output_config_opt
+        .as_ref()
+        .map(has_active_color_calibration)
+        .unwrap_or(false)
+        && ctx.color_calibration_renderer.is_some();
 
     let needs_post_processing = use_edge_blend || use_color_calib;
 
@@ -366,7 +367,7 @@ fn render_content(
                 &intermediate_tex_name,
                 config.resolution.0,
                 config.resolution.1,
-                wgpu::TextureFormat::Rgba8Unorm, // Always supported for RENDER_ATTACHMENT and TEXTURE_BINDING
+                ctx.target_format,
                 wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
             );
         }
@@ -669,6 +670,26 @@ fn render_content(
         }
     }
     Ok(())
+}
+
+fn has_active_edge_blend(config: &mapmap_core::OutputConfig) -> bool {
+    config.edge_blend.left.enabled
+        || config.edge_blend.right.enabled
+        || config.edge_blend.top.enabled
+        || config.edge_blend.bottom.enabled
+}
+
+fn has_active_color_calibration(config: &mapmap_core::OutputConfig) -> bool {
+    const EPSILON: f32 = 0.0001;
+
+    let calibration = &config.color_calibration;
+    calibration.brightness.abs() > EPSILON
+        || (calibration.contrast - 1.0).abs() > EPSILON
+        || (calibration.gamma.x - 1.0).abs() > EPSILON
+        || (calibration.gamma.y - 1.0).abs() > EPSILON
+        || (calibration.gamma_b - 1.0).abs() > EPSILON
+        || (calibration.color_temp - 6500.0).abs() > EPSILON
+        || (calibration.saturation - 1.0).abs() > EPSILON
 }
 
 #[allow(clippy::manual_is_multiple_of)]
@@ -1013,5 +1034,38 @@ fn draw_digit(
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{has_active_color_calibration, has_active_edge_blend};
+    use mapmap_core::{CanvasRegion, OutputConfig};
+
+    fn output_config() -> OutputConfig {
+        OutputConfig::new(
+            1,
+            "Projector".to_string(),
+            CanvasRegion::new(0.0, 0.0, 1.0, 1.0),
+            (1920, 1080),
+        )
+    }
+
+    #[test]
+    fn default_output_has_no_active_post_processing() {
+        let config = output_config();
+
+        assert!(!has_active_edge_blend(&config));
+        assert!(!has_active_color_calibration(&config));
+    }
+
+    #[test]
+    fn modified_output_enables_post_processing() {
+        let mut config = output_config();
+        config.edge_blend.left.enabled = true;
+        config.color_calibration.saturation = 1.2;
+
+        assert!(has_active_edge_blend(&config));
+        assert!(has_active_color_calibration(&config));
     }
 }
