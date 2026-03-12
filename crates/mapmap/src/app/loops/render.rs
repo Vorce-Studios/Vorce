@@ -386,7 +386,6 @@ fn render_content(
     } else {
         view
     };
-
     // Clear Pass
     {
         let _pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -570,14 +569,16 @@ fn render_content(
     // --- POST PROCESSING PASSES ---
     if needs_post_processing {
         let intermediate_view = mesh_target_view_ref.as_ref().unwrap();
-
         // Re-create the texture bind group each frame since the intermediate texture may be re-allocated by the pool,
         // but we could optimize this later by checking if the texture's ID changed.
         // For now, creating a texture bind group is relatively cheap compared to buffers.
         if let Some(edge_blend_renderer) = ctx.edge_blend_renderer.as_ref() {
-            let texture_bind_group = ctx.edge_blend_texture_cache.entry(output_id).or_insert_with(|| {
-                edge_blend_renderer.create_texture_bind_group(intermediate_view)
-            });
+            let texture_bind_group = ctx
+                .edge_blend_texture_cache
+                .entry(output_id)
+                .or_insert_with(|| {
+                    edge_blend_renderer.create_texture_bind_group(intermediate_view)
+                });
             // Update texture bind group if view changed (TexturePool creates new textures on resize)
             // As a simple fix to avoid holding stale views across resizes, we just recreate it.
             *texture_bind_group = edge_blend_renderer.create_texture_bind_group(intermediate_view);
@@ -602,11 +603,12 @@ fn render_content(
             hasher.write(&config_to_use.gamma.to_le_bytes());
             let config_hash = hasher.finish();
 
-            let (uniform_buffer, uniform_bind_group, last_hash) = ctx.edge_blend_cache.entry(output_id).or_insert_with(|| {
-                let buffer = edge_blend_renderer.create_uniform_buffer(&config_to_use);
-                let bind_group = edge_blend_renderer.create_uniform_bind_group(&buffer);
-                (buffer, bind_group, config_hash)
-            });
+            let (uniform_buffer, uniform_bind_group, last_hash) =
+                ctx.edge_blend_cache.entry(output_id).or_insert_with(|| {
+                    let buffer = edge_blend_renderer.create_uniform_buffer(&config_to_use);
+                    let bind_group = edge_blend_renderer.create_uniform_bind_group(&buffer);
+                    (buffer, bind_group, config_hash)
+                });
 
             if *last_hash != config_hash {
                 edge_blend_renderer.update_uniform_buffer(queue, uniform_buffer, &config_to_use);
@@ -614,7 +616,11 @@ fn render_content(
             }
 
             let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some(if use_edge_blend { "Edge Blending Pass" } else { "Passthrough Pass" }),
+                label: Some(if use_edge_blend {
+                    "Edge Blending Pass"
+                } else {
+                    "Passthrough Pass"
+                }),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     depth_slice: None,
                     view, // Draw to the final surface view
@@ -630,11 +636,7 @@ fn render_content(
                 occlusion_query_set: None,
             });
 
-            edge_blend_renderer.render(
-                &mut rpass,
-                texture_bind_group,
-                uniform_bind_group,
-            );
+            edge_blend_renderer.render(&mut rpass, texture_bind_group, uniform_bind_group);
         }
     }
 
