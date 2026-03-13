@@ -21,7 +21,6 @@ pub fn show(ui: &mut egui::Ui, ui_state: &mut AppUI) {
                         if let Some(img) = mgr.image(icon, icon_size) {
                             return ui
                                 .add(egui::Button::image(img).frame(false))
-                                .clone()
                                 .on_hover_text(tooltip)
                                 .clicked();
                         }
@@ -43,6 +42,11 @@ pub fn show(ui: &mut egui::Ui, ui_state: &mut AppUI) {
                 }
 
                 ui.separator();
+                ui.toggle_value(&mut ui_state.show_left_sidebar, "Sidebar");
+                ui.toggle_value(&mut ui_state.show_inspector, "Inspector");
+                ui.toggle_value(&mut ui_state.show_timeline, "Timeline");
+
+                ui.separator();
 
                 let metrics = &ui_state.user_config.toolbar_metrics;
                 let show_metric = |cfg: &crate::core::config::ToolbarMetricConfig| {
@@ -54,7 +58,7 @@ pub fn show(ui: &mut egui::Ui, ui_state: &mut AppUI) {
                 if show_metric(&metrics.bpm) {
                     let bpm = ui_state.current_bpm;
                     let bpm_text = if let Some(tempo) = bpm.filter(|tempo| *tempo > 0.0) {
-                        format!("{:.0} BPM", tempo)
+                        format!("{tempo:.0} BPM")
                     } else {
                         "--- BPM".to_string()
                     };
@@ -80,18 +84,15 @@ pub fn show(ui: &mut egui::Ui, ui_state: &mut AppUI) {
                                 egui::Button::image(img).frame(false)
                             };
                             ui.add(btn)
-                                .clone()
                                 .on_hover_text("MIDI Controller Overlay ein/aus")
                                 .clicked()
                         } else {
                             ui.button("MIDI")
-                                .clone()
                                 .on_hover_text("MIDI Controller Overlay ein/aus")
                                 .clicked()
                         }
                     } else {
                         ui.button("MIDI")
-                            .clone()
                             .on_hover_text("MIDI Controller Overlay ein/aus")
                             .clicked()
                     };
@@ -109,7 +110,6 @@ pub fn show(ui: &mut egui::Ui, ui_state: &mut AppUI) {
                     };
                     if ui
                         .add(learn_btn)
-                        .clone()
                         .on_hover_text("Global MIDI Learn Mode aktivieren")
                         .clicked()
                     {
@@ -161,25 +161,6 @@ pub fn show(ui: &mut egui::Ui, ui_state: &mut AppUI) {
                         egui::Color32::from_rgb(255, 50, 50)
                     };
 
-                    if show_metric(&metrics.ram) {
-                        ui.label(format!("RAM:{:.0}MB", ram));
-                    }
-                    if show_metric(&metrics.gpu) {
-                        let gpu_color = traffic_light(gpu, 70.0, 90.0);
-                        ui.colored_label(gpu_color, format!("Load:{:.0}%", gpu));
-                    }
-                    if show_metric(&metrics.cpu) {
-                        let cpu_color = traffic_light(cpu, 70.0, 90.0);
-                        ui.colored_label(cpu_color, format!("CPU:{:.0}%", cpu));
-                    }
-                    if show_metric(&metrics.frame_time) {
-                        ui.label(format!("{:.1}ms/f", frame_time))
-                            .clone()
-                            .on_hover_text("Millisekunden pro Frame");
-                    }
-                    if show_metric(&metrics.fps) {
-                        ui.colored_label(fps_color, format!("{:.0}/{:.0}FPS", fps, target_fps));
-                    }
                     if show_metric(&metrics.status) {
                         let overall_color = if cpu >= 90.0 || gpu >= 90.0 || fps_ratio < 0.8 {
                             egui::Color32::from_rgb(255, 50, 50)
@@ -192,6 +173,25 @@ pub fn show(ui: &mut egui::Ui, ui_state: &mut AppUI) {
                             ui.allocate_exact_size(egui::vec2(14.0, 14.0), egui::Sense::hover());
                         ui.painter()
                             .circle_filled(rect.center(), 7.0, overall_color);
+                    }
+
+                    if show_metric(&metrics.ram) {
+                        ui.label(format!("RAM:{ram:.0}MB"));
+                    }
+                    if show_metric(&metrics.gpu) {
+                        let gpu_color = traffic_light(gpu, 70.0, 90.0);
+                        ui.colored_label(gpu_color, format!("Load:{gpu:.0}%"));
+                    }
+                    if show_metric(&metrics.cpu) {
+                        let cpu_color = traffic_light(cpu, 70.0, 90.0);
+                        ui.colored_label(cpu_color, format!("CPU:{cpu:.0}%"));
+                    }
+                    if show_metric(&metrics.frame_time) {
+                        ui.label(format!("{frame_time:.1}ms/f"))
+                            .on_hover_text("Millisekunden pro Frame");
+                    }
+                    if show_metric(&metrics.fps) {
+                        ui.colored_label(fps_color, format!("{fps:.0}/{target_fps:.0}FPS"));
                     }
                 });
             });

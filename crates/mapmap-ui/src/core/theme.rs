@@ -83,7 +83,7 @@ impl ThemeConfig {
     /// Apply theme to egui context
     pub fn apply(&self, ctx: &egui::Context) {
         let mut style = Style::default();
-        let visuals = match self.theme {
+        let mut visuals = match self.theme {
             Theme::Dark => Self::dark_visuals(),
             Theme::Light => Self::light_visuals(),
             Theme::HighContrast => Self::high_contrast_visuals(),
@@ -96,6 +96,17 @@ impl ThemeConfig {
             Theme::Custom => self.custom_visuals(),
         };
 
+        // Harmonize interaction states across all themes for a modern, consistent UI language.
+        let radius = egui::CornerRadius::same(8);
+        visuals.widgets.noninteractive.corner_radius = radius;
+        visuals.widgets.inactive.corner_radius = radius;
+        visuals.widgets.hovered.corner_radius = radius;
+        visuals.widgets.active.corner_radius = radius;
+        visuals.widgets.open.corner_radius = radius;
+        visuals.widgets.hovered.expansion = 0.5;
+        visuals.widgets.active.expansion = 0.5;
+        visuals.selection.stroke.width = 1.5;
+        visuals.window_stroke.width = 1.0;
         style.visuals = visuals;
 
         // Konsistente moderne Interaktionszustände über alle Themes.
@@ -126,9 +137,9 @@ impl ThemeConfig {
         style.visuals.widgets.open.corner_radius = radius;
 
         // Base spacing for modern, less cramped layouts (responsive layer can override).
-        style.spacing.item_spacing = egui::vec2(8.0, 6.0);
-        style.spacing.button_padding = egui::vec2(10.0, 6.0);
-        style.spacing.interact_size = egui::vec2(24.0, 22.0);
+        style.spacing.item_spacing = egui::vec2(10.0, 8.0);
+        style.spacing.button_padding = egui::vec2(12.0, 7.0);
+        style.spacing.interact_size = egui::vec2(30.0, 26.0);
 
         ctx.set_style(style);
     }
@@ -477,19 +488,69 @@ impl ThemeConfig {
 
     fn midnight_visuals() -> Visuals {
         let mut visuals = Visuals::dark();
-        visuals.window_fill = Color32::from_rgb(5, 5, 10);
+        let bg = Color32::from_rgb(8, 12, 20);
+        let panel = Color32::from_rgb(14, 20, 32);
+        let accent = Color32::from_rgb(84, 148, 255);
+
+        visuals.override_text_color = Some(Color32::from_rgb(222, 232, 245));
+        visuals.window_fill = bg;
+        visuals.panel_fill = panel;
+        visuals.faint_bg_color = Color32::from_rgb(5, 8, 15);
+        visuals.extreme_bg_color = Color32::from_rgb(3, 6, 12);
+        visuals.hyperlink_color = accent;
+        visuals.selection.bg_fill = accent.linear_multiply(0.35);
+        visuals.selection.stroke = egui::Stroke::new(1.0, accent);
+        visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, accent);
+        visuals.widgets.active.bg_fill = accent.linear_multiply(0.8);
+        visuals.widgets.active.bg_stroke = egui::Stroke::new(1.0, accent);
+        visuals.widgets.active.fg_stroke = egui::Stroke::new(1.8, Color32::WHITE);
+        visuals.window_stroke = egui::Stroke::new(1.0, Color32::from_rgb(50, 74, 112));
         visuals
     }
 
     fn purple_visuals() -> Visuals {
         let mut visuals = Visuals::dark();
-        visuals.selection.bg_fill = Color32::from_rgb(120, 0, 255).linear_multiply(0.3);
+        let bg = Color32::from_rgb(22, 12, 34);
+        let panel = Color32::from_rgb(34, 18, 52);
+        let accent = Color32::from_rgb(180, 110, 255);
+
+        visuals.override_text_color = Some(Color32::from_rgb(244, 236, 255));
+        visuals.window_fill = bg;
+        visuals.panel_fill = panel;
+        visuals.faint_bg_color = Color32::from_rgb(14, 8, 24);
+        visuals.extreme_bg_color = Color32::from_rgb(9, 5, 18);
+        visuals.hyperlink_color = Color32::from_rgb(203, 145, 255);
+        visuals.selection.bg_fill = accent.linear_multiply(0.38);
+        visuals.selection.stroke = egui::Stroke::new(1.0, accent);
+        visuals.widgets.hovered.bg_fill = Color32::from_rgb(62, 36, 94);
+        visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, accent);
+        visuals.widgets.active.bg_fill = Color32::from_rgb(142, 74, 224);
+        visuals.widgets.active.bg_stroke = egui::Stroke::new(1.0, accent);
+        visuals.widgets.active.fg_stroke = egui::Stroke::new(1.8, Color32::WHITE);
+        visuals.window_stroke = egui::Stroke::new(1.0, Color32::from_rgb(88, 58, 128));
         visuals
     }
 
     fn pink_visuals() -> Visuals {
         let mut visuals = Visuals::dark();
-        visuals.selection.bg_fill = Color32::from_rgb(255, 0, 120).linear_multiply(0.3);
+        let bg = Color32::from_rgb(34, 8, 24);
+        let panel = Color32::from_rgb(50, 12, 36);
+        let accent = Color32::from_rgb(255, 96, 176);
+
+        visuals.override_text_color = Some(Color32::from_rgb(255, 236, 246));
+        visuals.window_fill = bg;
+        visuals.panel_fill = panel;
+        visuals.faint_bg_color = Color32::from_rgb(24, 5, 17);
+        visuals.extreme_bg_color = Color32::from_rgb(16, 4, 12);
+        visuals.hyperlink_color = Color32::from_rgb(255, 130, 196);
+        visuals.selection.bg_fill = accent.linear_multiply(0.40);
+        visuals.selection.stroke = egui::Stroke::new(1.0, accent);
+        visuals.widgets.hovered.bg_fill = Color32::from_rgb(86, 25, 59);
+        visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, accent);
+        visuals.widgets.active.bg_fill = Color32::from_rgb(220, 64, 146);
+        visuals.widgets.active.bg_stroke = egui::Stroke::new(1.0, accent);
+        visuals.widgets.active.fg_stroke = egui::Stroke::new(1.8, Color32::WHITE);
+        visuals.window_stroke = egui::Stroke::new(1.0, Color32::from_rgb(130, 52, 92));
         visuals
     }
 }
