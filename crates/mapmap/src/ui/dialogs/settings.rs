@@ -2,7 +2,7 @@ use egui::{Color32, Context, RichText, Window};
 use mapmap_control::hue::controller::HueController;
 use mapmap_core::AppState;
 use mapmap_render::WgpuBackend;
-use mapmap_ui::core::config::ToolbarMetricMode;
+use mapmap_ui::core::config::{AppLogLevel, ToolbarMetricMode};
 use mapmap_ui::{AppUI, UIAction};
 
 #[cfg(feature = "midi")]
@@ -225,6 +225,44 @@ pub fn show(ctx: &Context, context: SettingsContext) {
                 if save_needed {
                     let _ = context.ui_state.user_config.save();
                 }
+
+                ui.add_space(10.0);
+                ui.separator();
+                ui.heading(RichText::new("Logging").color(Color32::WHITE));
+                ui.add_space(4.0);
+
+                let previous_log_level = context.ui_state.user_config.log_level;
+                ui.horizontal(|ui| {
+                    ui.label("Log-Level:");
+                    egui::ComboBox::from_id_salt("log_level_selector")
+                        .selected_text(context.ui_state.user_config.log_level.to_string())
+                        .show_ui(ui, |ui| {
+                            for level in [AppLogLevel::Info, AppLogLevel::Debug] {
+                                if ui
+                                    .selectable_label(
+                                        context.ui_state.user_config.log_level == level,
+                                        level.to_string(),
+                                    )
+                                    .clicked()
+                                {
+                                    context.ui_state.user_config.log_level = level;
+                                }
+                            }
+                        });
+                });
+                if context.ui_state.user_config.log_level != previous_log_level {
+                    context.state.settings_mut().log_config.level =
+                        context.ui_state.user_config.log_level.as_str().to_string();
+                    context.state.dirty = true;
+                    let _ = context.ui_state.user_config.save();
+                }
+                ui.label(
+                    RichText::new(
+                        "Hinweis: Die Log-Level-Aenderung wird nach einem App-Neustart wirksam.",
+                    )
+                    .small()
+                    .weak(),
+                );
 
                 ui.add_space(10.0);
                 ui.separator();

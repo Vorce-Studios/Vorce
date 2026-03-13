@@ -172,6 +172,33 @@ impl fmt::Display for VSyncMode {
     }
 }
 
+/// Application log level used for console and file logging.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum AppLogLevel {
+    #[default]
+    Info,
+    Debug,
+}
+
+impl AppLogLevel {
+    /// Returns the serialized string representation used by the core LogConfig.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Info => "info",
+            Self::Debug => "debug",
+        }
+    }
+}
+
+impl fmt::Display for AppLogLevel {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Info => write!(f, "Info"),
+            Self::Debug => write!(f, "Debug"),
+        }
+    }
+}
+
 /// Globales Animationsprofil für UI-Bewegungen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum AnimationProfile {
@@ -341,6 +368,10 @@ pub struct UserConfig {
     #[serde(default = "default_ui_scale")]
     pub ui_scale: f32,
 
+    /// Persisted application log level. Takes effect after restarting MapFlow.
+    #[serde(default)]
+    pub log_level: AppLogLevel,
+
     /// Enable animated node visuals in module canvas
     #[serde(default = "default_true")]
     pub node_animations_enabled: bool,
@@ -442,6 +473,7 @@ impl Default for UserConfig {
             hue_config: HueConfig::default(),
             global_fullscreen: false,
             ui_scale: 1.0,
+            log_level: AppLogLevel::Info,
             node_animations_enabled: true,
             startup_animation_enabled: true,
             startup_animation_path: default_startup_animation_path(),
@@ -667,6 +699,7 @@ mod tests {
             hue_config: HueConfig::default(),
             global_fullscreen: true,
             ui_scale: 1.2,
+            log_level: AppLogLevel::Info,
             node_animations_enabled: true,
             startup_animation_enabled: true,
             startup_animation_path: default_startup_animation_path(),

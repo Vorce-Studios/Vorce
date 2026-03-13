@@ -355,6 +355,26 @@ fn render_content(
 
     target_ops.sort_by(|(_, a), (_, b)| b.output_part_id.cmp(&a.output_part_id));
 
+    let empty_ops_issue_key = format!(
+        "video-output-empty-ops:{real_output_id}:{}",
+        if is_preview_output { "preview" } else { "output" }
+    );
+    if target_ops.is_empty() {
+        if output_id != 0 && should_log_video_issue(video_log_times, empty_ops_issue_key.clone()) {
+            tracing::warn!(
+                "Fehler in Videoausgabe: {} {} bleibt leer, weil keine RenderOps fuer diesen Output erzeugt wurden.",
+                if is_preview_output {
+                    "Output-Preview"
+                } else {
+                    "Output"
+                },
+                real_output_id
+            );
+        }
+    } else {
+        clear_video_issue(video_log_times, empty_ops_issue_key);
+    }
+
     if target_ops.is_empty() && output_id != 0 {
         let _pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Clear Pass"),

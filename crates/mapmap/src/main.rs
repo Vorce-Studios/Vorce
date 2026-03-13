@@ -308,6 +308,11 @@ impl App {
 
 fn main() -> Result<()> {
     let args = CliArgs::parse();
+    let initial_user_config = mapmap_ui::config::UserConfig::load();
+    let configured_log_level = match initial_user_config.log_level {
+        mapmap_ui::config::AppLogLevel::Info => tracing::Level::INFO,
+        mapmap_ui::config::AppLogLevel::Debug => tracing::Level::DEBUG,
+    };
 
     // Initialize logging
     let file_appender = tracing_appender::rolling::daily("logs", "mapflow.log");
@@ -315,7 +320,7 @@ fn main() -> Result<()> {
 
     // Filter configuration
     let env_filter = tracing_subscriber::EnvFilter::from_default_env()
-        .add_directive(tracing::Level::INFO.into())
+        .add_directive(configured_log_level.into())
         // Noise reduction from external crates
         .add_directive("wgpu_core=warn".parse().unwrap())
         .add_directive("wgpu_hal=warn".parse().unwrap())
@@ -344,6 +349,10 @@ fn main() -> Result<()> {
         .init();
 
     info!("Starting MapFlow in {:?} mode...", args.mode);
+    info!(
+        "Configured log level from user settings: {}",
+        initial_user_config.log_level
+    );
 
     match args.mode {
         Mode::Editor => run_editor()?,
