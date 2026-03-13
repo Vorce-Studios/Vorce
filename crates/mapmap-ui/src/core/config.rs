@@ -1,5 +1,5 @@
 //! User configuration management
-//!
+//!.
 //! Handles saving and loading user preferences including language settings.
 
 use crate::theme::ThemeConfig;
