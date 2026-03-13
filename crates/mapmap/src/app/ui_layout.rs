@@ -88,7 +88,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
     let viewport_width = viewport_rect.width();
     let viewport_height = viewport_rect.height();
     let compact_height = viewport_height < 760.0;
-    
+
     let active_layout = app.ui_state.user_config.active_layout().cloned();
     let layout_sizes = active_layout
         .as_ref()
@@ -253,7 +253,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                                         app.ui_state.icon_manager.as_ref(),
                                     );
                                 } else {
-                                    ui.label(app.ui_state.i18n.t("media-sidebar-placeholder"));       
+                                    ui.label(app.ui_state.i18n.t("media-sidebar-placeholder"));
                                 }
                             });
                     });
@@ -262,20 +262,20 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                     egui::CollapsingHeader::new(app.ui_state.i18n.t("dashboard"))
                         .default_open(true)
                         .show(ui_obj, |ui| {
-                            if let Some(dash_action) = app.ui_state.dashboard.render_contents(        
+                            if let Some(dash_action) = app.ui_state.dashboard.render_contents(
                                 ui,
                                 &app.ui_state.i18n,
                                 app.ui_state.icon_manager.as_ref(),
                             ) {
                                 match dash_action {
-                                    ui::view::dashboard::DashboardAction::SendCommand(cmd) => {       
+                                    ui::view::dashboard::DashboardAction::SendCommand(cmd) => {
                                         if let Some(_module_id) = app.ui_state.module_canvas.active_module_id {
                                             if let Some(part_id) = app.ui_state.module_canvas.get_selected_part_id() {
                                                 app.ui_state.actions.push(ui::UIAction::MediaCommand(part_id, cmd));
                                             }
                                         }
                                     }
-                                    ui::view::dashboard::DashboardAction::ToggleAudioPanel => {       
+                                    ui::view::dashboard::DashboardAction::ToggleAudioPanel => {
                                         app.ui_state.show_audio = !app.ui_state.show_audio;
                                     }
                                     _ => {}
@@ -289,7 +289,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                             .default_open(true)
                             .show(ui_obj, |ui| {
                                 let mut layer_manager = std::sync::Arc::make_mut(&mut app.state.layer_manager).clone();
-                                app.ui_state.render_master_controls_embedded(ui, &mut layer_manager); 
+                                app.ui_state.render_master_controls_embedded(ui, &mut layer_manager);
                                 if layer_manager != *app.state.layer_manager {
                                     *std::sync::Arc::make_mut(&mut app.state.layer_manager) = layer_manager;
                                     app.state.dirty = true;
@@ -410,7 +410,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                     .collect();
                 modules.sort_by_key(|m| m.id);
 
-                if let Some(action) = app.ui_state.timeline_panel.ui(ui_obj, animator, &modules) {    
+                if let Some(action) = app.ui_state.timeline_panel.ui(ui_obj, animator, &modules) {
                     app.ui_state
                         .actions
                         .push(ui::UIAction::TimelineAction(action));
@@ -474,11 +474,11 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                                         255,
                                     );
                                     let is_selected =
-                                        app.ui_state.module_canvas.active_module_id == Some(*id);     
+                                        app.ui_state.module_canvas.active_module_id == Some(*id);
                                     let label =
-                                        egui::RichText::new(format!("● {}", name)).color(color32);    
-                                    if ui_obj.selectable_label(is_selected, label).clicked() {        
-                                        app.ui_state.module_canvas.set_active_module(Some(*id));      
+                                        egui::RichText::new(format!("● {}", name)).color(color32);
+                                    if ui_obj.selectable_label(is_selected, label).clicked() {
+                                        app.ui_state.module_canvas.set_active_module(Some(*id));
                                     }
                                 }
                             });
@@ -489,7 +489,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                         ui_obj.menu_button(
                             egui::RichText::new("➕ Hinzufügen").strong(),
                             |ui_obj| {
-                                ui::editors::module_canvas::draw::render_add_node_menu_content(       
+                                ui::editors::module_canvas::draw::render_add_node_menu_content(
                                     ui_obj,
                                     std::sync::Arc::make_mut(&mut app.state.module_manager),
                                     None,
@@ -524,7 +524,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                                 app.ui_state.module_canvas.pan_offset = egui::Vec2::ZERO;
                                 app.ui_state.module_canvas.zoom = 1.0;
                             }
-                            ui_obj.label(format!("Zoom: {:.1}x", app.ui_state.module_canvas.zoom));   
+                            ui_obj.label(format!("Zoom: {:.1}x", app.ui_state.module_canvas.zoom));
                         },
                     );
                 });
@@ -538,7 +538,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                 );
             } else {
                 ui_obj.centered_and_justified(|ui_obj| {
-                    ui_obj.label("Canvas - Module Canvas deaktiviert (View → Module Canvas)");        
+                    ui_obj.label("Canvas - Module Canvas deaktiviert (View → Module Canvas)");
                 });
             }
         });
@@ -579,7 +579,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
 
     app.ui_state.render_controls(ctx);
 
-    mapmap_ui::panels::osc_panel::show_osc_panel(ctx, &mut app.ui_state, &mut app.control_manager);   
+    mapmap_ui::panels::osc_panel::show_osc_panel(ctx, &mut app.ui_state, &mut app.control_manager);
 
     app.ui_state.oscillator_panel.render(
         ctx,
