@@ -103,23 +103,24 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
         layout_sizes.left_sidebar_width
     } else {
         (viewport_width * 0.2).clamp(240.0, 420.0)
-    }.clamp(220.0, (viewport_width * 0.45).max(340.0));
+    }
+    .clamp(220.0, (viewport_width * 0.45).max(340.0));
 
     let inspector_default = if layout_sizes.inspector_width > 0.0 {
         layout_sizes.inspector_width
     } else {
         (viewport_width * 0.24).clamp(260.0, 520.0)
-    }.clamp(260.0, (viewport_width * 0.5).max(420.0));
+    }
+    .clamp(260.0, (viewport_width * 0.5).max(420.0));
 
     let timeline_default_height = if layout_sizes.timeline_height > 0.0 {
         layout_sizes.timeline_height
+    } else if compact_height {
+        (viewport_height * 0.22).clamp(90.0, 150.0)
     } else {
-        if compact_height {
-            (viewport_height * 0.22).clamp(90.0, 150.0)
-        } else {
-            (viewport_height * 0.26).clamp(140.0, 300.0)
-        }
-    }.clamp(100.0, 500.0);
+        (viewport_height * 0.26).clamp(140.0, 300.0)
+    }
+    .clamp(100.0, 500.0);
 
     // 1. Global Menu Bar (Top-most)
     let menu_actions = ui::view::menu_bar::show(ctx, &mut app.ui_state);
@@ -335,7 +336,11 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
             .show(ctx, |ui_obj| {
                 ui_obj.horizontal(|ui| {
                     ui.heading(app.ui_state.i18n.t("inspector"));
-                    if ui.small_button("✕").on_hover_text("Inspector ausblenden").clicked() {
+                    if ui
+                        .small_button("✕")
+                        .on_hover_text("Inspector ausblenden")
+                        .clicked()
+                    {
                         app.ui_state.show_inspector = false;
                         app.ui_state.user_config.show_inspector = false;
                         let _ = app.ui_state.user_config.save();

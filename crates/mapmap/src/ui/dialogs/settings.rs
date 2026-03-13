@@ -156,7 +156,8 @@ pub fn show(ctx: &Context, context: SettingsContext) {
                 ui.horizontal(|ui| {
                     ui.label("Basis-Schriftgröße:");
                     let mut font_scale_percent =
-                        (context.ui_state.user_config.theme.font_size / 14.0 * 100.0).round() as i32;
+                        (context.ui_state.user_config.theme.font_size / 14.0 * 100.0).round()
+                            as i32;
                     if ui
                         .add(
                             egui::Slider::new(&mut font_scale_percent, 80..=140)
