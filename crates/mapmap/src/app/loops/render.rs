@@ -10,6 +10,31 @@ use mapmap_core::OutputId;
 #[cfg(feature = "ndi")]
 use std::sync::atomic::{AtomicBool, Ordering};
 
+const PREVIEW_FLAG: u64 = 1u64 << 63;
+const VIDEO_LOG_THROTTLE: std::time::Duration = std::time::Duration::from_secs(5);
+
+fn should_log_video_issue(
+    log_times: &mut std::collections::HashMap<String, std::time::Instant>,
+    key: impl Into<String>,
+) -> bool {
+    let key = key.into();
+    let now = std::time::Instant::now();
+    match log_times.get(&key) {
+        Some(last_logged) if now.duration_since(*last_logged) < VIDEO_LOG_THROTTLE => false,
+        _ => {
+            log_times.insert(key, now);
+            true
+        }
+    }
+}
+
+fn clear_video_issue(
+    log_times: &mut std::collections::HashMap<String, std::time::Instant>,
+    key: impl AsRef<str>,
+) {
+    log_times.remove(key.as_ref());
+}
+
 /// Renders the UI or content for the given output ID.
 pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
     // Clone device Arc to create encoder without borrowing self
@@ -135,6 +160,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                 _dummy_view: &app.dummy_view,
                 mesh_buffer_cache: &mut app.mesh_buffer_cache,
                 egui_renderer: &mut app.egui_renderer,
+                video_diagnostic_log_times: &mut app.video_diagnostic_log_times,
             },
             output_id,
             &mut encoder,
@@ -294,6 +320,8 @@ struct RenderContext<'a> {
     _dummy_view: &'a Option<std::sync::Arc<wgpu::TextureView>>,
     mesh_buffer_cache: &'a mut mapmap_render::MeshBufferCache,
     egui_renderer: &'a mut egui_wgpu::Renderer,
+    video_diagnostic_log_times:
+        &'a mut std::collections::HashMap<String, std::time::Instant>,
 }
 
 fn render_content(
@@ -311,8 +339,7 @@ fn render_content(
     let queue = ctx.queue;
     let mesh_renderer = ctx.mesh_renderer;
     let egui_renderer = ctx.egui_renderer;
-
-    const PREVIEW_FLAG: u64 = 1u64 << 63;
+    let video_log_times = ctx.video_diagnostic_log_times;
     let is_preview_output = (output_id & PREVIEW_FLAG) != 0;
     let real_output_id = output_id & !PREVIEW_FLAG;
 
@@ -348,7 +375,7 @@ fn render_content(
         return Ok(());
     }
 
-    let output_config_opt = ctx.output_manager.get_output(output_id).cloned();
+    let output_config_opt = ctx.output_manager.get_output(real_output_id).cloned();
     let use_edge_blend = output_config_opt
         .as_ref()
         .map(|cfg| {
@@ -441,11 +468,40 @@ fn render_content(
             }
             Some(ctx.texture_pool.get_view(&grid_tex_name))
         } else if ctx.texture_pool.has_texture(&tex_name) {
+            clear_video_issue(
+                video_log_times,
+                format!(
+                    "video-output-missing-texture:{real_output_id}:{module_id}:{}",
+                    op.source_part_id.unwrap_or_default()
+                ),
+            );
             Some(ctx.texture_pool.get_view(&tex_name))
         } else if ctx.texture_pool.has_texture("bevy_output") {
             // Fallback for Bevy nodes
+            clear_video_issue(
+                video_log_times,
+                format!(
+                    "video-output-missing-texture:{real_output_id}:{module_id}:{}",
+                    op.source_part_id.unwrap_or_default()
+                ),
+            );
             Some(ctx.texture_pool.get_view("bevy_output"))
         } else {
+            if let Some(source_part_id) = op.source_part_id {
+                let issue_key = format!(
+                    "video-output-missing-texture:{real_output_id}:{module_id}:{source_part_id}"
+                );
+                if should_log_video_issue(video_log_times, issue_key) {
+                    tracing::warn!(
+                        "Fehler in Videoausgabe: {} {} kann Modul {} / Part {} nicht rendern, weil die erwartete Textur '{}' im TexturePool fehlt.",
+                        if is_preview_output { "Preview fuer Output" } else { "Output" },
+                        real_output_id,
+                        module_id,
+                        source_part_id,
+                        tex_name
+                    );
+                }
+            }
             // BLACK FALLBACK for missing textures
             let fallback_name = "missing_texture_fallback";
             if !ctx.texture_pool.has_texture(fallback_name) {
@@ -706,159 +762,222 @@ fn prepare_texture_previews(app: &mut App, encoder: &mut wgpu::CommandEncoder) {
 
     for (_mid, output_id, _name) in &app.cached_output_infos {
         let output_id = *output_id;
-        if let Some(texture_name) = app
-            .output_assignments
-            .get(&output_id)
-            .and_then(|v| v.last())
-            .cloned()
-        {
-            if app.texture_pool.has_texture(&texture_name) {
-                let preview_width = 256;
-                let preview_height = 144;
+        let preview_width = 256;
+        let preview_height = 144;
 
-                let needs_recreate = if let Some(tex) = app.output_temp_textures.get(&output_id) {
-                    tex.width() != preview_width || tex.height() != preview_height
-                } else {
-                    true
-                };
+        let needs_recreate = if let Some(tex) = app.output_temp_textures.get(&output_id) {
+            tex.width() != preview_width || tex.height() != preview_height
+        } else {
+            true
+        };
 
+        if needs_recreate {
+            let texture = app.backend.device.create_texture(&wgpu::TextureDescriptor {
+                label: Some(&format!("Preview Tex {}", output_id)),
+                size: wgpu::Extent3d {
+                    width: preview_width,
+                    height: preview_height,
+                    depth_or_array_layers: 1,
+                },
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format: app.backend.surface_format(),
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT
+                    | wgpu::TextureUsages::TEXTURE_BINDING,
+                view_formats: &[],
+            });
+            app.output_temp_textures.insert(output_id, texture);
+        }
+
+        let target_tex = app.output_temp_textures.get(&output_id).unwrap();
+
+        use std::collections::hash_map::Entry;
+        let current_view_arc = match app.output_preview_cache.entry(output_id) {
+            Entry::Occupied(mut e) => {
+                let (id, old_view) = e.get_mut();
                 if needs_recreate {
-                    let texture = app.backend.device.create_texture(&wgpu::TextureDescriptor {
-                        label: Some(&format!("Preview Tex {}", output_id)),
-                        size: wgpu::Extent3d {
-                            width: preview_width,
-                            height: preview_height,
-                            depth_or_array_layers: 1,
-                        },
-                        mip_level_count: 1,
-                        sample_count: 1,
-                        dimension: wgpu::TextureDimension::D2,
-                        format: app.backend.surface_format(),
-                        usage: wgpu::TextureUsages::RENDER_ATTACHMENT
-                            | wgpu::TextureUsages::TEXTURE_BINDING,
-                        view_formats: &[],
-                    });
-                    app.output_temp_textures.insert(output_id, texture);
-                }
-
-                let target_tex = app.output_temp_textures.get(&output_id).unwrap();
-
-                use std::collections::hash_map::Entry;
-                let current_view_arc = match app.output_preview_cache.entry(output_id) {
-                    Entry::Occupied(mut e) => {
-                        let (id, old_view) = e.get_mut();
-                        if needs_recreate {
-                            let target_view =
-                                target_tex.create_view(&wgpu::TextureViewDescriptor::default());
-                            let target_view_arc = std::sync::Arc::new(target_view);
-                            app.egui_renderer.update_egui_texture_from_wgpu_texture(
-                                &app.backend.device,
-                                &target_view_arc,
-                                wgpu::FilterMode::Linear,
-                                *id,
-                            );
-                            *e.get_mut() = (*id, target_view_arc.clone());
-                            target_view_arc
-                        } else {
-                            old_view.clone()
-                        }
-                    }
-                    Entry::Vacant(e) => {
-                        let target_view =
-                            target_tex.create_view(&wgpu::TextureViewDescriptor::default());
-                        let target_view_arc = std::sync::Arc::new(target_view);
-                        let id = app.egui_renderer.register_native_texture(
-                            &app.backend.device,
-                            &target_view_arc,
-                            wgpu::FilterMode::Linear,
-                        );
-                        e.insert((id, target_view_arc.clone()));
-                        target_view_arc
-                    }
-                };
-
-                {
-                    let transform = glam::Mat4::IDENTITY;
-                    let uniform_bind_group = app.mesh_renderer.get_uniform_bind_group(
-                        &app.backend.queue,
-                        transform,
-                        1.0,
+                    let target_view = target_tex.create_view(&wgpu::TextureViewDescriptor::default());
+                    let target_view_arc = std::sync::Arc::new(target_view);
+                    app.egui_renderer.update_egui_texture_from_wgpu_texture(
+                        &app.backend.device,
+                        &target_view_arc,
+                        wgpu::FilterMode::Linear,
+                        *id,
                     );
-                    let source_view = app.texture_pool.get_view(&texture_name);
-                    let texture_bind_group = app.mesh_renderer.get_texture_bind_group(&source_view);
-
-                    let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                        label: Some("Preview Render Pass"),
-                        color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                            depth_slice: None,
-                            view: &current_view_arc,
-                            resolve_target: None,
-
-                            ops: wgpu::Operations {
-                                load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                                store: wgpu::StoreOp::Store,
-                            },
-                        })],
-                        depth_stencil_attachment: None,
-                        timestamp_writes: None,
-                        occlusion_query_set: None,
-                    });
-
-                    app.mesh_renderer.draw(
-                        &mut render_pass,
-                        &app.preview_quad_buffers.0,
-                        &app.preview_quad_buffers.1,
-                        app.preview_quad_buffers.2,
-                        &uniform_bind_group,
-                        &texture_bind_group,
-                        false,
-                    );
+                    *e.get_mut() = (*id, target_view_arc.clone());
+                    target_view_arc
+                } else {
+                    old_view.clone()
                 }
+            }
+            Entry::Vacant(e) => {
+                let target_view = target_tex.create_view(&wgpu::TextureViewDescriptor::default());
+                let target_view_arc = std::sync::Arc::new(target_view);
+                let id = app.egui_renderer.register_native_texture(
+                    &app.backend.device,
+                    &target_view_arc,
+                    wgpu::FilterMode::Linear,
+                );
+                e.insert((id, target_view_arc.clone()));
+                target_view_arc
+            }
+        };
+
+        if let Err(err) = render_content(
+            RenderContext {
+                device: &app.backend.device,
+                queue: &app.backend.queue,
+                render_ops: &app.render_ops,
+                output_manager: &app.state.output_manager,
+                edge_blend_renderer: &app.edge_blend_renderer,
+                color_calibration_renderer: &app.color_calibration_renderer,
+                edge_blend_cache: &mut app.edge_blend_cache,
+                edge_blend_texture_cache: &mut app.edge_blend_texture_cache,
+                mesh_renderer: &mut app.mesh_renderer,
+                effect_chain_renderer: &mut app.effect_chain_renderer,
+                preview_effect_chain_renderer: &mut app.preview_effect_chain_renderer,
+                shader_graph_manager: &app.shader_graph_manager,
+                texture_pool: &app.texture_pool,
+                _dummy_view: &app.dummy_view,
+                mesh_buffer_cache: &mut app.mesh_buffer_cache,
+                egui_renderer: &mut app.egui_renderer,
+                video_diagnostic_log_times: &mut app.video_diagnostic_log_times,
+            },
+            output_id | PREVIEW_FLAG,
+            encoder,
+            current_view_arc.as_ref(),
+            None,
+        ) {
+            let issue_key = format!("output-preview-render-failed:{output_id}");
+            if should_log_video_issue(&mut app.video_diagnostic_log_times, issue_key) {
+                tracing::error!(
+                    "Fehler in Videoausgabe: Output-Preview {} konnte nicht gerendert werden, weil {}.",
+                    output_id,
+                    err
+                );
             }
         }
     }
 
     // --- NEW: Sync individual Node Previews for the Canvas ---
     if let Some(active_id) = app.ui_state.module_canvas.active_module_id {
-        if let Some(module) = app.state.module_manager.get_module(active_id) {
-            for part in &module.parts {
-                let texture_name = format!("part_{}_{}", active_id, part.id);
-                if app.texture_pool.has_texture(&texture_name) {
-                    let view = app.texture_pool.get_view(&texture_name);
+        let part_descriptors = app
+            .state
+            .module_manager
+            .get_module(active_id)
+            .map(|module| {
+                module
+                    .parts
+                    .iter()
+                    .map(|part| {
+                        let media_path = match &part.part_type {
+                            mapmap_core::module::ModulePartType::Source(
+                                mapmap_core::module::SourceType::MediaFile { path, .. }
+                                | mapmap_core::module::SourceType::VideoUni { path, .. }
+                                | mapmap_core::module::SourceType::ImageUni { path, .. },
+                            ) if !path.trim().is_empty() => Some(path.clone()),
+                            mapmap_core::module::ModulePartType::Source(
+                                mapmap_core::module::SourceType::VideoMulti { shared_id, .. }
+                                | mapmap_core::module::SourceType::ImageMulti { shared_id, .. },
+                            ) => app
+                                .state
+                                .module_manager
+                                .shared_media
+                                .get(shared_id)
+                                .map(|item| item.path.clone())
+                                .filter(|path| !path.trim().is_empty()),
+                            _ => None,
+                        };
 
-                    // Register or update egui texture
-                    use std::collections::hash_map::Entry;
-                    let tex_id = match app
-                        .ui_state
-                        .module_canvas
-                        .node_previews
-                        .entry((active_id, part.id))
-                    {
-                        Entry::Occupied(e) => {
-                            let id = *e.get();
-                            app.egui_renderer.update_egui_texture_from_wgpu_texture(
-                                &app.backend.device,
-                                &view,
-                                wgpu::FilterMode::Linear,
-                                id,
+                        (part.id, media_path)
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+
+        for (part_id, media_path) in part_descriptors {
+            let texture_name = format!("part_{}_{}", active_id, part_id);
+            if app.texture_pool.has_texture(&texture_name) {
+                clear_video_issue(
+                    &mut app.video_diagnostic_log_times,
+                    format!("node-preview-missing-player:{active_id}:{part_id}"),
+                );
+                clear_video_issue(
+                    &mut app.video_diagnostic_log_times,
+                    format!("node-preview-missing-texture:{active_id}:{part_id}"),
+                );
+
+                let view = app.texture_pool.get_view(&texture_name);
+
+                use std::collections::hash_map::Entry;
+                let tex_id = match app
+                    .ui_state
+                    .module_canvas
+                    .node_previews
+                    .entry((active_id, part_id))
+                {
+                    Entry::Occupied(e) => {
+                        let id = *e.get();
+                        app.egui_renderer.update_egui_texture_from_wgpu_texture(
+                            &app.backend.device,
+                            &view,
+                            wgpu::FilterMode::Linear,
+                            id,
+                        );
+                        id
+                    }
+                    Entry::Vacant(e) => {
+                        let id = app.egui_renderer.register_native_texture(
+                            &app.backend.device,
+                            &view,
+                            wgpu::FilterMode::Linear,
+                        );
+                        e.insert(id);
+                        id
+                    }
+                };
+                app.ui_state
+                    .module_canvas
+                    .node_previews
+                    .insert((active_id, part_id), tex_id);
+            } else {
+                app.ui_state
+                    .module_canvas
+                    .node_previews
+                    .remove(&(active_id, part_id));
+
+                if let Some(path) = media_path {
+                    if app.media_players.contains_key(&(active_id, part_id)) {
+                        let issue_key =
+                            format!("node-preview-missing-texture:{active_id}:{part_id}");
+                        if should_log_video_issue(
+                            &mut app.video_diagnostic_log_times,
+                            issue_key,
+                        ) {
+                            tracing::warn!(
+                                "Fehler in Videoausgabe: Node-Vorschau fuer Modul {} / Part {} bleibt leer, weil fuer '{}' noch keine Textur '{}' vorliegt.",
+                                active_id,
+                                part_id,
+                                path,
+                                texture_name
                             );
-                            id
                         }
-                        Entry::Vacant(e) => {
-                            let id = app.egui_renderer.register_native_texture(
-                                &app.backend.device,
-                                &view,
-                                wgpu::FilterMode::Linear,
+                    } else {
+                        let issue_key =
+                            format!("node-preview-missing-player:{active_id}:{part_id}");
+                        if should_log_video_issue(
+                            &mut app.video_diagnostic_log_times,
+                            issue_key,
+                        ) {
+                            tracing::warn!(
+                                "Fehler in Videoausgabe: Node-Vorschau fuer Modul {} / Part {} bleibt leer, weil kein MediaPlayer fuer '{}' aktiv ist.",
+                                active_id,
+                                part_id,
+                                path
                             );
-                            e.insert(id);
-                            id
                         }
-                    };
-                    // Ensure it stays in the map (redundant but safe)
-                    app.ui_state
-                        .module_canvas
-                        .node_previews
-                        .insert((active_id, part.id), tex_id);
+                    }
                 }
             }
         }

@@ -1,6 +1,7 @@
 use super::controller;
 use super::diagnostics;
 use super::draw;
+use super::ModuleCanvasRenderOptions;
 use super::state::ModuleCanvas;
 use super::types::*;
 use super::utils;
@@ -15,7 +16,7 @@ pub fn show(
     manager: &mut ModuleManager,
     locale: &LocaleManager,
     actions: &mut Vec<UIAction>,
-    meter_style: crate::config::AudioMeterStyle,
+    options: ModuleCanvasRenderOptions,
 ) {
     if !canvas.selected_parts.is_empty()
         && !ui.memory(|m| m.focused().is_some())
@@ -73,7 +74,7 @@ pub fn show(
     }
 
     if let Some(module_id) = canvas.active_module_id {
-        render_canvas(canvas, ui, manager, module_id, locale, actions, meter_style);
+        render_canvas(canvas, ui, manager, module_id, locale, actions, options);
     } else {
         ui.centered_and_justified(|ui| {
             ui.vertical_centered(|ui| {
@@ -94,7 +95,7 @@ pub fn render_canvas(
     module_id: ModuleId,
     _locale: &LocaleManager,
     actions: &mut Vec<UIAction>,
-    meter_style: crate::config::AudioMeterStyle,
+    options: ModuleCanvasRenderOptions,
 ) {
     let module = if let Some(m) = manager.get_module_mut(module_id) {
         m
@@ -181,7 +182,32 @@ pub fn render_canvas(
     let to_screen = move |pos: Pos2| -> Pos2 { pos * zoom + pan_offset + canvas_min };
     let from_screen = move |pos: Pos2| -> Pos2 { (pos - pan_offset - canvas_min) / zoom };
 
-    let remove_conn_idx = draw::draw_connections(canvas, ui, &painter, module, &to_screen);
+    let animation_profile = {
+        use crate::config::AnimationProfile;
+        if options.reduce_motion_enabled {
+            AnimationProfile::Off
+        } else {
+            let dt = ui.input(|i| i.stable_dt).max(0.0001);
+            let fps = 1.0 / dt;
+            match options.animation_profile {
+                AnimationProfile::Cinematic if fps < 40.0 => AnimationProfile::Subtle,
+                AnimationProfile::Subtle | AnimationProfile::Cinematic if fps < 28.0 => {
+                    AnimationProfile::Off
+                }
+                profile => profile,
+            }
+        }
+    };
+
+    let remove_conn_idx = draw::draw_connections(
+        canvas,
+        ui,
+        &painter,
+        module,
+        &to_screen,
+        options.node_animations_enabled,
+        animation_profile,
+    );
     if let Some(idx) = remove_conn_idx {
         if idx < module.connections.len() {
             module.connections.remove(idx);
@@ -292,7 +318,9 @@ pub fn render_canvas(
             part_rect,
             actions,
             module.id,
-            meter_style,
+            options.meter_style,
+            options.node_animations_enabled,
+            animation_profile,
         );
 
         let part_id = part.id;
@@ -500,7 +528,15 @@ pub fn render_canvas(
                 }
             }
 
-            painter.line_segment([start_pos, pointer_pos], Stroke::new(3.0, color));
+            let preview_stroke = if options.short_circuit_animation_enabled && color == Color32::RED
+            {
+                let pulse = (ui.input(|i| i.time) as f32 * 10.0).sin().abs();
+                Stroke::new(3.0 + pulse * 2.0, color.gamma_multiply(0.8 + pulse * 0.2))
+            } else {
+                Stroke::new(3.0, color)
+            };
+
+            painter.line_segment([start_pos, pointer_pos], preview_stroke);
             painter.circle_filled(pointer_pos, 5.0, color);
         }
     }

@@ -3,6 +3,7 @@
 use crate::media_manager_ui::MediaManagerUI;
 use crate::window_manager::WindowManager;
 use crossbeam_channel::Receiver;
+use egui::TextureHandle;
 use egui_wgpu::Renderer;
 use egui_winit::State;
 use mapmap_control::hue::controller::HueController;
@@ -21,6 +22,47 @@ use mapmap_render::{
 };
 use mapmap_ui::AppUI;
 use std::collections::{HashMap, VecDeque};
+
+/// Runtime state for the startup animation overlay.
+pub struct StartupAnimationState {
+    /// Configured startup animation path as entered by the user.
+    pub requested_path: String,
+    /// Resolved runtime path to the startup media file.
+    pub resolved_path: Option<std::path::PathBuf>,
+    /// Short-lived media player used only during the startup overlay.
+    pub player: Option<mapmap_media::VideoPlayer>,
+    /// Uploaded egui texture for the most recent decoded frame.
+    pub texture: Option<TextureHandle>,
+    /// Timestamp of the last player update.
+    pub last_update: Option<std::time::Instant>,
+    /// Last startup animation loading or decoding error.
+    pub error: Option<String>,
+}
+
+impl Default for StartupAnimationState {
+    fn default() -> Self {
+        Self {
+            requested_path: String::new(),
+            resolved_path: None,
+            player: None,
+            texture: None,
+            last_update: None,
+            error: None,
+        }
+    }
+}
+
+impl StartupAnimationState {
+    /// Drop the transient player, texture and any tracked path state.
+    pub fn reset(&mut self) {
+        self.requested_path.clear();
+        self.resolved_path = None;
+        self.player = None;
+        self.texture = None;
+        self.last_update = None;
+        self.error = None;
+    }
+}
 
 /// The main application state.
 pub struct App {
@@ -71,6 +113,8 @@ pub struct App {
     pub last_update: std::time::Instant,
     /// Application start time.
     pub start_time: std::time::Instant,
+    /// Startup animation video state.
+    pub startup_animation: StartupAnimationState,
     /// Last VRAM Garbage Collection timestamp.
     pub last_texture_gc: std::time::Instant,
     /// Receiver for MCP commands
@@ -158,6 +202,8 @@ pub struct App {
         HashMap<(u64, u64), (egui::TextureId, std::sync::Arc<wgpu::TextureView>)>,
     /// Cache for output preview textures (OutputID -> (EguiTextureId, View))
     pub output_preview_cache: HashMap<u64, (egui::TextureId, std::sync::Arc<wgpu::TextureView>)>,
+    /// Throttles repeated video diagnostics so missing-frame issues do not spam the log file.
+    pub video_diagnostic_log_times: HashMap<String, std::time::Instant>,
     /// Unit Quad buffers for preview rendering (Vertex, Index, IndexCount)
     pub preview_quad_buffers: (wgpu::Buffer, wgpu::Buffer, u32),
     /// Philips Hue Controller

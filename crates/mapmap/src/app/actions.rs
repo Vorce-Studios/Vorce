@@ -777,6 +777,8 @@ pub fn handle_mcp_actions(app: &mut App) {
                             if app.media_players.remove(&(mod_id, part_id)).is_some() {
                                 info!("Removed player for {} to force reload", part_id);
                             }
+                            app.texture_pool
+                                .release(&format!("part_{}_{}", mod_id, part_id));
                         }
                     }
                 }

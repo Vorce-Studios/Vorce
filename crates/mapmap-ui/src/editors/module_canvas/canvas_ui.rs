@@ -3,7 +3,7 @@ use egui::Ui;
 use mapmap_core::module::ModuleManager;
 
 use super::state::ModuleCanvas;
-use super::{renderer, utils};
+use super::{renderer, utils, ModuleCanvasRenderOptions};
 
 impl ModuleCanvas {
     pub fn ensure_icons_loaded(&mut self, ctx: &egui::Context) {
@@ -16,8 +16,8 @@ impl ModuleCanvas {
         manager: &mut ModuleManager,
         locale: &LocaleManager,
         actions: &mut Vec<crate::UIAction>,
-        meter_style: crate::config::AudioMeterStyle,
+        options: ModuleCanvasRenderOptions,
     ) {
-        renderer::show(self, ui, manager, locale, actions, meter_style);
+        renderer::show(self, ui, manager, locale, actions, options);
     }
 }

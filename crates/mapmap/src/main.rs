@@ -152,6 +152,16 @@ impl App {
                 let dt = dt.min(0.1);
 
                 let has_modules = !self.state.module_manager.modules().is_empty();
+                let has_projector_outputs = self.state.module_manager.modules().iter().any(|module| {
+                    module.parts.iter().any(|part| {
+                        matches!(
+                            part.part_type,
+                            mapmap_core::module::ModulePartType::Output(
+                                mapmap_core::module::OutputType::Projector { .. }
+                            )
+                        )
+                    })
+                });
                 let is_playing = self.state.effect_animator.is_playing();
                 let configured_fps = self.ui_state.target_fps.max(1.0);
                 let tick_fps = if !has_modules {
@@ -173,12 +183,11 @@ impl App {
 
                     // Avoid expensive continuous redraws while idle.
                     // - During playback: redraw all windows (main + projector outputs)
-                    // - While idle/editing: redraw only main window, output windows stay static
+                    // - With projector outputs present: keep them live while editing so media
+                    //   sources do not freeze on stale frames.
                     if has_modules {
-                        if is_playing {
-                            for context in self.window_manager.iter() {
-                                context.window.request_redraw();
-                            }
+                        if is_playing || has_projector_outputs {
+                            self.window_manager.request_redraw_all();
                         } else if let Some(main_window) = self.window_manager.get(0) {
                             main_window.window.request_redraw();
                         }
@@ -227,52 +236,21 @@ impl App {
             if let Some(mod_id) = target_module_id {
                 let player_key = (mod_id, part_id);
 
-                // If player doesn't exist and we get any command (except Reload), try to create it
-                if !self.media_players.contains_key(&player_key)
-                    && cmd != MediaPlaybackCommand::Reload
-                {
-                    info!(
-                        "Player doesn't exist for part_id={}, attempting to create...",
-                        part_id
-                    );
-                    // Find the source path
-                    if let Some(module) = self.state.module_manager.get_module(mod_id) {
-                        if let Some(part) = module.parts.iter().find(|p| p.id == part_id) {
-                            let path_opt = match &part.part_type {
-                                mapmap_core::module::ModulePartType::Source(
-                                    mapmap_core::module::SourceType::MediaFile { ref path, .. },
-                                ) => Some(path.clone()),
-                                mapmap_core::module::ModulePartType::Source(
-                                    mapmap_core::module::SourceType::VideoUni { ref path, .. },
-                                ) => Some(path.clone()),
-                                mapmap_core::module::ModulePartType::Source(
-                                    mapmap_core::module::SourceType::ImageUni { ref path, .. },
-                                ) => Some(path.clone()),
-                                _ => None,
-                            };
-
-                            if let Some(path) = path_opt {
-                                info!("Found media path: '{}' in module '{}'", path, module.name);
-                                if !path.is_empty() {
-                                    let tex_name = format!("part_{}_{}", mod_id, part_id);
-                                    let pool = self.texture_pool.clone();
-                                    let device = self.backend.device.clone();
-                                    let queue = self.backend.queue.clone();
-                                    match crate::orchestration::media::create_player_handle(
-                                        pool, device, queue, &path, &tex_name,
-                                    ) {
-                                        Ok(handle) => {
-                                            info!("Successfully created player for '{}'", path);
-                                            self.media_players.insert(player_key, handle);
-                                        }
-                                        Err(e) => {
-                                            error!("Failed to load media '{}': {}", path, e);
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                if cmd == MediaPlaybackCommand::Reload {
+                    if self.media_players.remove(&player_key).is_some() {
+                        info!(
+                            "Removed old media player for part_id={} for reload",
+                            part_id
+                        );
                     }
+                    self.texture_pool
+                        .release(&format!("part_{}_{}", mod_id, part_id));
+                    crate::orchestration::media::sync_media_players(self);
+                    continue;
+                }
+
+                if !self.media_players.contains_key(&player_key) {
+                    crate::orchestration::media::sync_media_players(self);
                 }
 
                 if let Some(player) = self.media_players.get_mut(&player_key) {
@@ -286,10 +264,9 @@ impl App {
                         MediaPlaybackCommand::Stop => {
                             let _ = player.command_tx.send(PlaybackCommand::Stop);
                         }
-                        MediaPlaybackCommand::Reload => {
-                            info!("Reloading media player for part_id={}", part_id);
-                            // Player removal handled below
-                        }
+                        MediaPlaybackCommand::Reload => unreachable!(
+                            "MediaPlaybackCommand::Reload is handled before player dispatch"
+                        ),
                         MediaPlaybackCommand::SetSpeed(speed) => {
                             info!("Setting speed to {} for part_id={}", speed, part_id);
                             let _ = player.command_tx.send(PlaybackCommand::SetSpeed(speed));
@@ -316,55 +293,11 @@ impl App {
                             );
                         }
                     }
-                }
-
-                // Handle Reload by removing player and immediately recreating
-                if cmd == MediaPlaybackCommand::Reload {
-                    if self.media_players.remove(&player_key).is_some() {
-                        info!(
-                            "Removed old media player for part_id={} for reload",
-                            part_id
-                        );
-                    }
-                    // Immediately recreate the player
-                    if let Some(module) = self.state.module_manager.get_module(mod_id) {
-                        if let Some(part) = module.parts.iter().find(|p| p.id == part_id) {
-                            let path_opt = match &part.part_type {
-                                mapmap_core::module::ModulePartType::Source(
-                                    mapmap_core::module::SourceType::MediaFile { ref path, .. },
-                                ) => Some(path.clone()),
-                                mapmap_core::module::ModulePartType::Source(
-                                    mapmap_core::module::SourceType::VideoUni { ref path, .. },
-                                ) => Some(path.clone()),
-                                mapmap_core::module::ModulePartType::Source(
-                                    mapmap_core::module::SourceType::ImageUni { ref path, .. },
-                                ) => Some(path.clone()),
-                                _ => None,
-                            };
-
-                            if let Some(path) = path_opt {
-                                if !path.is_empty() {
-                                    let tex_name = format!("part_{}_{}", mod_id, part_id);
-                                    let pool = self.texture_pool.clone();
-                                    let device = self.backend.device.clone();
-                                    let queue = self.backend.queue.clone();
-                                    match crate::orchestration::media::create_player_handle(
-                                        pool, device, queue, &path, &tex_name,
-                                    ) {
-                                        Ok(handle) => {
-                                            info!("Recreated player for '{}' after reload", path);
-                                            // Auto-play after reload
-                                            let _ = handle.command_tx.send(PlaybackCommand::Play);
-                                            self.media_players.insert(player_key, handle);
-                                        }
-                                        Err(e) => {
-                                            error!("Failed to reload media '{}': {}", path, e);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                } else {
+                    error!(
+                        "Fehler in Videoausgabe: Befehl {:?} fuer Modul {} / Part {} konnte nicht ausgefuehrt werden, weil kein MediaPlayer aktiv ist.",
+                        cmd, mod_id, part_id
+                    );
                 }
             }
         }

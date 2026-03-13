@@ -90,6 +90,20 @@ pub struct ModuleGraphIndices {
     pub last_revision: u64,
 }
 
+fn primary_render_connection_idx(
+    module: &MapFlowModule,
+    indices: &ModuleGraphIndices,
+    part_id: ModulePartId,
+) -> Option<usize> {
+    indices
+        .conn_index_cache
+        .get(&part_id)?
+        .iter()
+        .copied()
+        // Socket 0 is the primary visual input of the render chain.
+        .find(|&conn_idx| module.connections[conn_idx].to_socket == 0)
+}
+
 #[cfg(test)]
 mod tests_evaluator {
     use super::*;
@@ -281,6 +295,45 @@ mod tests_evaluator {
         } else {
             panic!("Expected PlayMedia command");
         }
+    }
+
+    #[test]
+    fn test_render_trace_prefers_layer_visual_input_over_trigger_input() {
+        let mut evaluator = ModuleEvaluator::new();
+        let mut module = create_test_module();
+
+        let t_id = module.add_part_with_type(
+            ModulePartType::Trigger(TriggerType::Fixed {
+                interval_ms: 0,
+                offset_ms: 0,
+            }),
+            (0.0, 0.0),
+        );
+
+        let s_id = module.add_part(crate::module::PartType::Source, (100.0, 0.0));
+        if let Some(part) = module.parts.iter_mut().find(|p| p.id == s_id) {
+            if let ModulePartType::Source(SourceType::MediaFile { path, .. }) = &mut part.part_type
+            {
+                *path = "test.mp4".to_string();
+            }
+        }
+
+        let l_id = module.add_part(crate::module::PartType::Layer, (200.0, 0.0));
+        let o_id = module.add_part(crate::module::PartType::Output, (300.0, 0.0));
+
+        // Repro: if the trigger connection is inserted first, the render trace must
+        // still follow layer socket 0 (visual chain) rather than socket 1 (trigger).
+        module.add_connection(t_id, 0, l_id, 1);
+        module.add_connection(s_id, 0, l_id, 0);
+        module.add_connection(l_id, 0, o_id, 0);
+
+        let result = evaluator.evaluate(&module, &crate::module::SharedMediaState::default(), 0);
+
+        assert_eq!(result.render_ops.len(), 1);
+        let op = &result.render_ops[0];
+        assert_eq!(op.output_part_id, o_id);
+        assert_eq!(op.layer_part_id, l_id);
+        assert_eq!(op.source_part_id, Some(s_id));
     }
 
     #[test]
@@ -904,12 +957,7 @@ impl ModuleEvaluator {
         // Step 4: Trace Render Pipeline
         for part in &module.parts {
             if let ModulePartType::Output(output_type) = &part.part_type {
-                if let Some(conn_idx) = indices
-                    .conn_index_cache
-                    .get(&part.id)
-                    .and_then(|v| v.first())
-                    .copied()
-                {
+                if let Some(conn_idx) = primary_render_connection_idx(module, &indices, part.id) {
                     let conn = &module.connections[conn_idx];
 
                     // Look up the layer part
@@ -1102,12 +1150,7 @@ impl ModuleEvaluator {
             }
 
             // 2. Find PREVIOUS node in chain
-            if let Some(conn_idx) = indices
-                .conn_index_cache
-                .get(&current_id)
-                .and_then(|v| v.first())
-                .copied()
-            {
+            if let Some(conn_idx) = primary_render_connection_idx(module, indices, current_id) {
                 let conn = &module.connections[conn_idx];
 
                 // Cycle detection
