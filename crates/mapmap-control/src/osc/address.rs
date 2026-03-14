@@ -99,9 +99,15 @@ fn parse_layer_address(parts: &[&str]) -> Result<ControlTarget> {
         "rotation" => Ok(ControlTarget::LayerRotation(layer_id)),
         "scale" => Ok(ControlTarget::LayerScale(layer_id)),
         "visibility" => Ok(ControlTarget::LayerVisibility(layer_id)),
-        "media" if parts.len() > 2 && parts[2] == "load" => Ok(ControlTarget::LayerMediaLoad(layer_id)),
-        "playback" if parts.len() > 2 && parts[2] == "time" => Ok(ControlTarget::LayerPlaybackTime(layer_id)),
-        "playback" if parts.len() > 2 && parts[2] == "speed" => Ok(ControlTarget::LayerPlaybackSpeed(layer_id)),
+        "media" if parts.len() > 2 && parts[2] == "load" => {
+            Ok(ControlTarget::LayerMediaLoad(layer_id))
+        }
+        "playback" if parts.len() > 2 && parts[2] == "time" => {
+            Ok(ControlTarget::LayerPlaybackTime(layer_id))
+        }
+        "playback" if parts.len() > 2 && parts[2] == "speed" => {
+            Ok(ControlTarget::LayerPlaybackSpeed(layer_id))
+        }
         "loop_mode" => Ok(ControlTarget::LayerLoopMode(layer_id)),
         _ => Err(ControlError::InvalidMessage(format!(
             "Unknown layer parameter: {}",

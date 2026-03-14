@@ -537,7 +537,6 @@ pub fn get_tools() -> Vec<Tool> {
                 "required": ["preset_id"]
             }),
         },
-
         Tool {
             name: "set_module_source_path".to_string(),
             description: Some("Set module source path for async file picking".to_string()),
@@ -551,7 +550,6 @@ pub fn get_tools() -> Vec<Tool> {
                 "required": ["module_id", "part_id", "path"]
             }),
         },
-
         Tool {
             name: "media_library_list".to_string(),
             description: Some("List available media in library".to_string()),
