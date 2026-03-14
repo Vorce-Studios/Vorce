@@ -757,13 +757,16 @@ pub fn handle_mcp_actions(app: &mut App) {
             info!("MCP: ApplicationCaptureScreenshot({})", test_name);
             if let Some(runner) = &app.bevy_runner {
                 if let Some((data, width, height)) = runner.get_image_data() {
-                    let path_str = format!("tests/artifacts/{}_actual.png", test_name);
-                    let path = std::path::Path::new(&path_str);
+                    let output_dir = std::env::var_os("MAPFLOW_VISUAL_CAPTURE_OUTPUT_DIR")
+                        .map(std::path::PathBuf::from)
+                        .unwrap_or_else(|| std::env::current_dir().unwrap_or_default().join("tests").join("artifacts"));
+                    let path = output_dir.join(format!("{}_actual.png", test_name));
+
                     if let Some(parent) = path.parent() {
                         let _ = std::fs::create_dir_all(parent);
                     }
                     if let Some(img) = image::RgbaImage::from_raw(width, height, data) {
-                        if let Err(e) = img.save(path) {
+                        if let Err(e) = img.save(&path) {
                             tracing::error!("Failed to save screenshot: {}", e);
                         } else {
                             info!("Saved screenshot to {:?}", path);

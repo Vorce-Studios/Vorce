@@ -16,8 +16,17 @@ def run_test_script(mapflow_exe, script_path):
     env = os.environ.copy()
 
     # We launch mapflow in background
-    # Since MapFlow does not have a dedicated headless mode arg yet we just run it
-    proc = subprocess.Popen([mapflow_exe], env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+    # For headless CI environments without a display, wrap the launch with xvfb-run
+    cmd = [mapflow_exe]
+    if not env.get("DISPLAY"):
+        import shutil
+        if shutil.which("xvfb-run"):
+            print("DISPLAY not set. Launching with xvfb-run...")
+            cmd = ["xvfb-run", "--auto-servernum", "--server-args=-screen 0 1920x1080x24"] + cmd
+        else:
+            print("DISPLAY not set and xvfb-run not found. GUI launch might fail.")
+
+    proc = subprocess.Popen(cmd, env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
 
     # Wait for the server to spin up
     time.sleep(2)
