@@ -37,11 +37,11 @@ def run_test_script(mapflow_exe, script_path):
             print("DISPLAY not set and xvfb-run not found. GUI launch might fail.")
 
     proc = subprocess.Popen(
-        cmd, 
-        env=env, 
-        stdin=subprocess.PIPE, 
-        stdout=subprocess.PIPE, 
-        stderr=subprocess.STDOUT, 
+        cmd,
+        env=env,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
         text=True,
         bufsize=1
     )
@@ -119,7 +119,7 @@ def run_test_script(mapflow_exe, script_path):
     if not output_dir:
         output_dir = os.path.join(os.getcwd(), "tests", "artifacts")
     expected_output = os.path.join(output_dir, f"{test_name}_actual.png")
-    
+
     timeout = 15
     start = time.time()
     found = False
