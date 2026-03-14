@@ -79,3 +79,6 @@ winit = { workspace = true }
 
 [build-dependencies]
 winres = { workspace = true }
+
+[dev-dependencies]
+image = { workspace = true }

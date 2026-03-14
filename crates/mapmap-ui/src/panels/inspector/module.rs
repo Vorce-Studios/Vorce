@@ -15,6 +15,9 @@ pub fn show_module_inspector(
     shared_media_ids: &[String],
     global_actions: &mut Vec<UIAction>,
 ) {
+    let preview_context =
+        crate::editors::module_canvas::inspector::build_preview_context(module, part_id);
+
     if let Some(part) = module.parts.iter_mut().find(|p| p.id == part_id) {
         canvas.render_inspector_for_part(
             mesh_editor,
@@ -24,6 +27,7 @@ pub fn show_module_inspector(
             global_actions,
             module.id,
             shared_media_ids,
+            &preview_context,
         );
     }
 }

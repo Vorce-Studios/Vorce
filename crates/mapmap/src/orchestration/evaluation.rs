@@ -10,6 +10,7 @@ pub fn perform_evaluation(
     graph_dirty: bool,
 ) {
     app.render_ops.clear();
+    app.ui_state.module_canvas.last_trigger_values.clear();
     let mut node_triggers = HashMap::new();
 
     for module_id in modules_for_eval {
@@ -30,6 +31,10 @@ pub fn perform_evaluation(
             for (part_id, values) in &eval_result.trigger_values {
                 let max_val = values.iter().cloned().fold(0.0, f32::max);
                 node_triggers.insert((*module_id, *part_id), max_val);
+                app.ui_state
+                    .module_canvas
+                    .last_trigger_values
+                    .insert(*part_id, max_val);
             }
 
             app.render_ops.extend(

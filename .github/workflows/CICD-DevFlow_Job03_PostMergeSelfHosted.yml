@@ -1,0 +1,310 @@
+name: "CICD-DevFlow: Job03 Post-Merge Self-Hosted"
+
+on:
+  pull_request_target:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Merged PR number to validate on the self-hosted runner"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: read
+  statuses: read
+  actions: read
+
+concurrency:
+  group: post-merge-self-hosted-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.run_id }}
+  cancel-in-progress: false
+
+env:
+  SELF_HOSTED_POST_MERGE_ENABLED: ${{ vars.MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE || 'false' }}
+
+jobs:
+  resolve-context:
+    name: Resolve Post-Merge Context
+    runs-on: ubuntu-latest
+    if: vars.MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE == 'true'
+    outputs:
+      should_run: ${{ steps.resolve.outputs.should_run }}
+      pr_number: ${{ steps.resolve.outputs.pr_number }}
+      pr_head_sha: ${{ steps.resolve.outputs.pr_head_sha }}
+      merge_commit_sha: ${{ steps.resolve.outputs.merge_commit_sha }}
+      checkout_ref: ${{ steps.resolve.outputs.checkout_ref }}
+    steps:
+      - name: Resolve PR details and activation guard
+        id: resolve
+        uses: actions/github-script@v7
+        env:
+          INPUT_PR_NUMBER: ${{ github.event.inputs.pr_number || '' }}
+        with:
+          script: |
+            const enabled = process.env.SELF_HOSTED_POST_MERGE_ENABLED === 'true';
+            if (!enabled) {
+              core.notice(
+                'Self-hosted post-merge workflow is prepared but disabled. Set the repository variable MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE=true to activate it.',
+              );
+              core.setOutput('should_run', 'false');
+              return;
+            }
+
+            let prNumber = context.payload.pull_request?.number;
+            if (!prNumber && process.env.INPUT_PR_NUMBER) {
+              prNumber = Number.parseInt(process.env.INPUT_PR_NUMBER, 10);
+            }
+
+            if (!Number.isInteger(prNumber) || prNumber <= 0) {
+              core.setFailed('No valid merged PR number was provided.');
+              return;
+            }
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            if (!pr.merged) {
+              core.notice(`PR #${prNumber} is not merged. Skipping self-hosted validation.`);
+              core.setOutput('should_run', 'false');
+              return;
+            }
+
+            if (pr.base.ref !== 'main') {
+              core.notice(
+                `PR #${prNumber} targets ${pr.base.ref} instead of main. Skipping self-hosted validation.`,
+              );
+              core.setOutput('should_run', 'false');
+              return;
+            }
+
+            const labels = (pr.labels || []).map((label) => label.name);
+            if (labels.includes('skip-self-hosted-post-merge')) {
+              core.notice(
+                `PR #${prNumber} carries the skip-self-hosted-post-merge label. Skipping self-hosted validation.`,
+              );
+              core.setOutput('should_run', 'false');
+              return;
+            }
+
+            if (!pr.merge_commit_sha) {
+              core.setFailed(`PR #${prNumber} has no merge_commit_sha.`);
+              return;
+            }
+
+            core.setOutput('should_run', 'true');
+            core.setOutput('pr_number', String(prNumber));
+            core.setOutput('pr_head_sha', pr.head.sha);
+            core.setOutput('merge_commit_sha', pr.merge_commit_sha);
+            core.setOutput('checkout_ref', pr.merge_commit_sha);
+
+  gate-standard-pr-checks:
+    name: Gate On Standard PR Checks
+    runs-on: ubuntu-latest
+    needs: [resolve-context]
+    if: vars.MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE == 'true' && needs.resolve-context.outputs.should_run == 'true'
+    steps:
+      - name: Verify required GitHub-hosted PR checks succeeded
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const headSha = `${{ needs.resolve-context.outputs.pr_head_sha }}`;
+            const prNumber = `${{ needs.resolve-context.outputs.pr_number }}`;
+
+            const REQUIRED_CHECKS = [
+              {
+                name: 'Quality Gate (Format & Lint)',
+                source: 'check_run',
+                allowedConclusions: ['success'],
+              },
+              {
+                name: 'Security Scan',
+                source: 'check_run',
+                allowedConclusions: ['success'],
+              },
+              {
+                name: 'Build & Test (Linux)',
+                source: 'check_run',
+                allowedConclusions: ['success'],
+              },
+              {
+                name: 'Validation Success',
+                source: 'check_run',
+                allowedConclusions: ['success'],
+              },
+              {
+                name: 'Analyze (rust)',
+                source: 'check_run',
+                allowedConclusions: ['success'],
+              },
+            ];
+
+            const OPTIONAL_CHECKS = [
+              {
+                name: 'Build & Test (Windows)',
+                source: 'check_run',
+                allowedConclusions: ['success', 'skipped', 'neutral'],
+              },
+            ];
+
+            const [checks, combinedStatus] = await Promise.all([
+              github.rest.checks.listForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: headSha,
+                per_page: 100,
+              }),
+              github.rest.repos.getCombinedStatusForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: headSha,
+              }),
+            ]);
+
+            const latestCheckRunsByName = new Map();
+            for (const run of checks.data.check_runs.sort((left, right) => {
+              const leftTime = Date.parse(left.completed_at || left.started_at || '1970-01-01T00:00:00Z');
+              const rightTime = Date.parse(right.completed_at || right.started_at || '1970-01-01T00:00:00Z');
+              return rightTime - leftTime;
+            })) {
+              if (!latestCheckRunsByName.has(run.name)) {
+                latestCheckRunsByName.set(run.name, run);
+              }
+            }
+
+            const latestStatusesByName = new Map();
+            for (const status of combinedStatus.data.statuses) {
+              if (!latestStatusesByName.has(status.context)) {
+                latestStatusesByName.set(status.context, status);
+              }
+            }
+
+            const failures = [];
+            for (const expected of REQUIRED_CHECKS) {
+              const match =
+                expected.source === 'check_run'
+                  ? latestCheckRunsByName.get(expected.name)
+                  : latestStatusesByName.get(expected.name);
+
+              if (!match) {
+                failures.push(`${expected.name} (missing)`);
+                continue;
+              }
+
+              const status =
+                expected.source === 'check_run'
+                  ? match.status
+                  : match.state === 'pending'
+                    ? 'in_progress'
+                    : 'completed';
+              const conclusion =
+                expected.source === 'check_run'
+                  ? match.conclusion
+                  : match.state === 'pending'
+                    ? null
+                    : match.state;
+
+              core.info(
+                `${expected.name}: source=${expected.source}, status=${status}, conclusion=${conclusion}`,
+              );
+
+              if (status !== 'completed') {
+                failures.push(`${expected.name} (${status})`);
+                continue;
+              }
+
+              if (!expected.allowedConclusions.includes(conclusion)) {
+                failures.push(`${expected.name} (${conclusion})`);
+              }
+            }
+
+            for (const optionalCheck of OPTIONAL_CHECKS) {
+              const match =
+                optionalCheck.source === 'check_run'
+                  ? latestCheckRunsByName.get(optionalCheck.name)
+                  : latestStatusesByName.get(optionalCheck.name);
+
+              if (!match) {
+                core.info(`${optionalCheck.name}: not present on this PR head, accepted as optional.`);
+                continue;
+              }
+
+              const status =
+                optionalCheck.source === 'check_run'
+                  ? match.status
+                  : match.state === 'pending'
+                    ? 'in_progress'
+                    : 'completed';
+              const conclusion =
+                optionalCheck.source === 'check_run'
+                  ? match.conclusion
+                  : match.state === 'pending'
+                    ? null
+                    : match.state;
+
+              core.info(
+                `${optionalCheck.name}: source=${optionalCheck.source}, status=${status}, conclusion=${conclusion}`,
+              );
+
+              if (status !== 'completed') {
+                failures.push(`${optionalCheck.name} (${status})`);
+                continue;
+              }
+
+              if (!optionalCheck.allowedConclusions.includes(conclusion)) {
+                failures.push(`${optionalCheck.name} (${conclusion})`);
+              }
+            }
+
+            if (failures.length > 0) {
+              core.setFailed(
+                `Merged PR #${prNumber} does not satisfy the standard hosted PR gate: ${failures.join(', ')}`,
+              );
+              return;
+            }
+
+            core.notice(`Merged PR #${prNumber} passed the standard hosted PR gate.`);
+
+  self-hosted-post-merge:
+    name: Self-Hosted Post-Merge Validation
+    runs-on: [self-hosted, windows, x64, mapflow-post-merge]
+    needs: [resolve-context, gate-standard-pr-checks]
+    if: vars.MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE == 'true' && needs.resolve-context.outputs.should_run == 'true'
+    timeout-minutes: 120
+    steps:
+      - name: Checkout merged commit from main
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.resolve-context.outputs.checkout_ref }}
+          fetch-depth: 0
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up MSVC Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Run post-merge self-hosted validation script
+        shell: pwsh
+        env:
+          MAPFLOW_PR_NUMBER: ${{ needs.resolve-context.outputs.pr_number }}
+          MAPFLOW_PR_HEAD_SHA: ${{ needs.resolve-context.outputs.pr_head_sha }}
+          MAPFLOW_MERGE_COMMIT_SHA: ${{ needs.resolve-context.outputs.merge_commit_sha }}
+          MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS: ${{ vars.MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS || 'false' }}
+          MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION: ${{ vars.MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION || 'false' }}
+        run: .\scripts\build\self-hosted-post-merge.ps1
+
+      - name: Upload visual capture artifacts
+        if: always() && vars.MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-capture-${{ needs.resolve-context.outputs.pr_number }}-${{ github.run_id }}
+          path: artifacts/visual-capture
+          if-no-files-found: ignore
+          retention-days: 14

@@ -267,5 +267,28 @@ Bei Fragen oder Problemen:
 
 ---
 
+## Self-hosted Post-Merge Runner
+
+Neu vorbereitet, aber standardmaessig deaktiviert:
+
+- Workflow:
+  - `.github/workflows/CICD-DevFlow_Job03_PostMergeSelfHosted.yml`
+- globale Aktivierung:
+  - Repo-Variable `MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE=true`
+- globale Deaktivierung:
+  - Repo-Variable entfernen oder auf `false` setzen
+- zusaetzliche Spaeter-Schalter:
+  - `MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS`
+  - `MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION`
+- einzelnen PR ausnehmen:
+  - Label `skip-self-hosted-post-merge`
+- Runner-seitig deaktivieren:
+  - Runner stoppen oder Label `mapflow-post-merge` entfernen
+
+Details:
+- [DOC-C5_SELF_HOSTED_RUNNER_WINDOWS](./DOC-C5_SELF_HOSTED_RUNNER_WINDOWS.md)
+
+---
+
 **Erstellt:** 2024-12-04
 **Version:** 1.0

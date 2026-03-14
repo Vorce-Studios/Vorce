@@ -12,6 +12,12 @@ use std::sync::mpsc;
 use super::types::*;
 use super::utils;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LayerInspectorViewMode {
+    Preview,
+    MeshEditor,
+}
+
 #[allow(dead_code)]
 pub struct ModuleCanvas {
     /// The ID of the currently active/edited module
@@ -77,6 +83,8 @@ pub struct ModuleCanvas {
     pub editing_part_id: Option<ModulePartId>,
     /// Video Texture Previews for Media Nodes ((Module ID, Part ID) -> Egui Texture)
     pub node_previews: std::collections::HashMap<(u64, u64), egui::TextureId>,
+    /// Output previews mirrored from the app layer for inspector usage (Output ID -> Egui Texture)
+    pub output_previews: std::collections::HashMap<u64, egui::TextureId>,
     /// Pending playback commands (Part ID, Command)
     pub pending_playback_commands: Vec<(ModulePartId, MediaPlaybackCommand)>,
     /// Last diagnostic check results
@@ -99,6 +107,10 @@ pub struct ModuleCanvas {
     pub hue_status_message: Option<String>,
     /// Last known trigger values for visualization (Part ID -> Value 0.0-1.0)
     pub last_trigger_values: std::collections::HashMap<ModulePartId, f32>,
+    /// Whether inspector previews should be shown where available.
+    pub show_inspector_previews: bool,
+    /// Shared workspace mode for layer nodes inside the inspector.
+    pub layer_inspector_view_mode: LayerInspectorViewMode,
 
     /// Advanced Mesh Editor instance
     pub mesh_editor: MeshEditor,
@@ -156,6 +168,7 @@ impl Default for ModuleCanvas {
             available_outputs: Vec::new(),
             editing_part_id: None,
             node_previews: std::collections::HashMap::new(),
+            output_previews: std::collections::HashMap::new(),
             pending_playback_commands: Vec::new(),
             diagnostic_issues: Vec::new(),
             show_diagnostics: false,
@@ -164,6 +177,8 @@ impl Default for ModuleCanvas {
             hue_discovery_rx: None,
             hue_status_message: None,
             last_trigger_values: std::collections::HashMap::new(),
+            show_inspector_previews: true,
+            layer_inspector_view_mode: LayerInspectorViewMode::MeshEditor,
             mesh_editor: MeshEditor::new(),
             show_mesh_editor: false,
             last_mesh_edit_id: None,

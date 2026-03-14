@@ -49,6 +49,7 @@ impl ModuleCanvas {
         actions: &mut Vec<UIAction>,
         module_id: mapmap_core::module::ModuleId,
         shared_media_ids: &[String],
+        preview_context: &inspector::InspectorPreviewContext,
     ) {
         let interacting = ui.input(|i| i.pointer.any_pressed() || i.pointer.any_down());
         let release = ui.input(|i| i.pointer.any_released());
@@ -68,6 +69,7 @@ impl ModuleCanvas {
             actions,
             module_id,
             shared_media_ids,
+            preview_context,
         );
 
         let snapshot_after = part.clone();

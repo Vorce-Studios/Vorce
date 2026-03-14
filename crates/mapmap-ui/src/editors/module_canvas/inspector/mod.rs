@@ -1,15 +1,85 @@
 use super::mesh;
-use super::state::ModuleCanvas;
+use super::state::{LayerInspectorViewMode, ModuleCanvas};
 use super::types::MediaPlaybackCommand;
 use crate::theme::colors;
 use crate::widgets::{styled_drag_value, styled_slider};
 use crate::UIAction;
-use egui::{Color32, Sense, Stroke, Ui, Vec2};
+use egui::{Color32, ProgressBar, Sense, Stroke, Ui, Vec2};
 use mapmap_core::module::{
     BevyCameraMode, BlendModeType, EffectType, HueMappingMode, LayerType, MaskShape, MaskType,
-    ModuleId, ModulePart, ModulePartId, ModulePartType, ModulizerType, OutputType, SourceType,
-    TriggerMappingMode, TriggerTarget, TriggerType,
+    MapFlowModule, ModuleId, ModulePart, ModulePartId, ModulePartType, ModulizerType, OutputType,
+    SourceType, TriggerMappingMode, TriggerTarget, TriggerType,
 };
+use std::collections::HashSet;
+
+#[derive(Debug, Clone, Default)]
+pub struct InspectorPreviewContext {
+    pub output_ids: Vec<u64>,
+    pub upstream_source_part_ids: Vec<ModulePartId>,
+}
+
+pub fn build_preview_context(
+    module: &MapFlowModule,
+    part_id: ModulePartId,
+) -> InspectorPreviewContext {
+    let mut output_ids = Vec::new();
+    let mut source_ids = Vec::new();
+
+    collect_downstream_output_ids(module, part_id, &mut HashSet::new(), &mut output_ids);
+    collect_upstream_source_ids(module, part_id, &mut HashSet::new(), &mut source_ids);
+
+    output_ids.sort_unstable();
+    output_ids.dedup();
+    source_ids.sort_unstable();
+    source_ids.dedup();
+
+    InspectorPreviewContext {
+        output_ids,
+        upstream_source_part_ids: source_ids,
+    }
+}
+
+fn collect_downstream_output_ids(
+    module: &MapFlowModule,
+    part_id: ModulePartId,
+    visited: &mut HashSet<ModulePartId>,
+    output_ids: &mut Vec<u64>,
+) {
+    if !visited.insert(part_id) {
+        return;
+    }
+
+    for connection in module.connections.iter().filter(|conn| conn.from_part == part_id) {
+        if let Some(next_part) = module.parts.iter().find(|part| part.id == connection.to_part) {
+            match &next_part.part_type {
+                ModulePartType::Output(OutputType::Projector { id, .. }) => output_ids.push(*id),
+                _ => collect_downstream_output_ids(module, next_part.id, visited, output_ids),
+            }
+        }
+    }
+}
+
+fn collect_upstream_source_ids(
+    module: &MapFlowModule,
+    part_id: ModulePartId,
+    visited: &mut HashSet<ModulePartId>,
+    source_ids: &mut Vec<ModulePartId>,
+) {
+    if !visited.insert(part_id) {
+        return;
+    }
+
+    if let Some(part) = module.parts.iter().find(|part| part.id == part_id) {
+        if matches!(part.part_type, ModulePartType::Source(_)) {
+            source_ids.push(part_id);
+            return;
+        }
+    }
+
+    for connection in module.connections.iter().filter(|conn| conn.to_part == part_id) {
+        collect_upstream_source_ids(module, connection.from_part, visited, source_ids);
+    }
+}
 
 /// Sets default parameters for a given effect type
 pub fn set_default_effect_params(
@@ -48,6 +118,157 @@ pub fn set_default_effect_params(
     }
 }
 
+fn render_inspector_preview_toggle(canvas: &mut ModuleCanvas, ui: &mut Ui) {
+    ui.horizontal(|ui| {
+        ui.heading("Inspector Preview");
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.checkbox(&mut canvas.show_inspector_previews, "Enabled");
+        });
+    });
+}
+
+fn render_fixed_timer_preview(
+    canvas: &mut ModuleCanvas,
+    ui: &mut Ui,
+    part_id: ModulePartId,
+    interval_ms: u32,
+    offset_ms: u32,
+) {
+    if !canvas.show_inspector_previews {
+        return;
+    }
+
+    let now_ms = (ui.input(|input| input.time) * 1000.0) as u32;
+    let cycle_ms = interval_ms.max(1);
+    let phase_ms = now_ms.wrapping_add(offset_ms) % cycle_ms;
+    let progress = phase_ms as f32 / cycle_ms as f32;
+    let live_value = canvas
+        .last_trigger_values
+        .get(&part_id)
+        .copied()
+        .unwrap_or(0.0);
+    let is_live = live_value > 0.1;
+    let next_pulse_ms = cycle_ms.saturating_sub(phase_ms) % cycle_ms;
+
+    ui.ctx().request_repaint();
+    ui.separator();
+    render_inspector_preview_toggle(canvas, ui);
+    ui.group(|ui| {
+        ui.label("Fixed timer cadence");
+        ui.add(
+            ProgressBar::new(progress)
+                .desired_width(ui.available_width())
+                .text(format!("cycle {} ms", cycle_ms)),
+        );
+        ui.horizontal(|ui| {
+            let status = if is_live { "LIVE pulse" } else { "Waiting" };
+            let color = if is_live {
+                Color32::from_rgb(110, 235, 150)
+            } else {
+                Color32::from_rgb(180, 180, 180)
+            };
+            ui.colored_label(color, status);
+            ui.label(format!("Next pulse in {} ms", next_pulse_ms));
+        });
+        ui.label(format!("Offset {} ms", offset_ms));
+        ui.label(format!("Current trigger value {:.2}", live_value));
+    });
+}
+
+fn render_preview_texture(
+    ui: &mut Ui,
+    texture_id: egui::TextureId,
+    caption: &str,
+) {
+    let width = ui.available_width().max(160.0);
+    let size = Vec2::new(width, width * 9.0 / 16.0);
+    ui.image((texture_id, size));
+    ui.small(caption);
+}
+
+fn render_layer_preview_panel(
+    canvas: &mut ModuleCanvas,
+    ui: &mut Ui,
+    module_id: ModuleId,
+    part_id: ModulePartId,
+    preview_context: &InspectorPreviewContext,
+) {
+    ui.horizontal(|ui| {
+        ui.selectable_value(
+            &mut canvas.layer_inspector_view_mode,
+            LayerInspectorViewMode::Preview,
+            "Preview",
+        );
+        ui.selectable_value(
+            &mut canvas.layer_inspector_view_mode,
+            LayerInspectorViewMode::MeshEditor,
+            "Mesh Editor",
+        );
+    });
+
+    if canvas.layer_inspector_view_mode != LayerInspectorViewMode::Preview {
+        return;
+    }
+
+    if !canvas.show_inspector_previews {
+        ui.label("Inspector preview is disabled.");
+        return;
+    }
+
+    ui.add_space(6.0);
+    if let Some(&texture_id) = canvas.node_previews.get(&(module_id, part_id)) {
+        render_preview_texture(ui, texture_id, "Direct layer preview");
+        return;
+    }
+
+    for output_id in &preview_context.output_ids {
+        if let Some(&texture_id) = canvas.output_previews.get(output_id) {
+            render_preview_texture(
+                ui,
+                texture_id,
+                &format!("Linked output preview (Output {})", output_id),
+            );
+            return;
+        }
+    }
+
+    for source_part_id in &preview_context.upstream_source_part_ids {
+        if let Some(&texture_id) = canvas.node_previews.get(&(module_id, *source_part_id)) {
+            render_preview_texture(
+                ui,
+                texture_id,
+                "Fallback: upstream source preview",
+            );
+            ui.small(
+                "The layer preview is falling back to the source texture. If the output stays black, the issue is after the source stage.",
+            );
+            return;
+        }
+    }
+
+    ui.group(|ui| {
+        ui.label("No preview available yet.");
+        if preview_context.output_ids.is_empty() {
+            ui.small("This layer is not linked to a projector output yet.");
+        } else {
+            ui.small(format!(
+                "Expected linked output preview for Output {}.",
+                preview_context
+                    .output_ids
+                    .iter()
+                    .map(|id| id.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ));
+        }
+        if preview_context.upstream_source_part_ids.is_empty() {
+            ui.small("No upstream source node was found for this layer.");
+        } else {
+            ui.small("Upstream source exists, but no preview texture reached the inspector.");
+        }
+    });
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn render_inspector_for_part(
     canvas: &mut ModuleCanvas,
@@ -58,6 +279,7 @@ pub fn render_inspector_for_part(
     actions: &mut Vec<UIAction>,
     module_id: ModuleId,
     shared_media_ids: &[String],
+    preview_context: &InspectorPreviewContext,
 ) {
     // Sync mesh editor state if needed
     mesh::sync_mesh_editor_to_current_selection(mesh_editor, last_mesh_edit_id, part);
@@ -170,6 +392,13 @@ pub fn render_inspector_for_part(
                             ui.add(
                                 egui::Slider::new(offset_ms, 0..=5000)
                                     .text("Offset (ms)"),
+                            );
+                            render_fixed_timer_preview(
+                                canvas,
+                                ui,
+                                part_id,
+                                *interval_ms,
+                                *offset_ms,
                             );
                         }
                         TriggerType::Midi { channel, note, device: _ } => {
@@ -416,9 +645,12 @@ pub fn render_inspector_for_part(
 
                             ui.add_space(10.0);
 
-                            if let Some(tex_id) = canvas.node_previews.get(&(module_id, part_id)) {
-                                let size = Vec2::new(ui.available_width(), ui.available_width() * 9.0 / 16.0);
-                                ui.image((*tex_id, size));
+                            if canvas.show_inspector_previews {
+                                render_inspector_preview_toggle(canvas, ui);
+                                if let Some(tex_id) = canvas.node_previews.get(&(module_id, part_id)) {
+                                    let size = Vec2::new(ui.available_width(), ui.available_width() * 9.0 / 16.0);
+                                    ui.image((*tex_id, size));
+                                }
                             }
                             ui.add_space(4.0);
 
@@ -851,6 +1083,8 @@ pub fn render_inspector_for_part(
                     }
                 }
                 ModulePartType::Layer(layer) => {
+                    render_inspector_preview_toggle(canvas, ui);
+                    render_layer_preview_panel(canvas, ui, module_id, part_id, preview_context);
                     ui.label("📋 Layer:");
                     let mut render_mesh_ui = |ui: &mut Ui, mesh: &mut mapmap_core::module::MeshType, id_salt: u64| { mesh::render_mesh_editor_ui(mesh_editor, last_mesh_edit_id, ui, mesh, part_id, id_salt); };
                     match layer {
@@ -867,7 +1101,9 @@ pub fn render_inspector_for_part(
                                 if ui.selectable_label(matches!(blend_mode, Some(BlendModeType::Multiply)), "Multiply").clicked() { *blend_mode = Some(BlendModeType::Multiply); }
                             });
                             ui.checkbox(mapping_mode, "Mapping Mode (Grid)");
-                            render_mesh_ui(ui, mesh, *id);
+                            if canvas.layer_inspector_view_mode == LayerInspectorViewMode::MeshEditor {
+                                render_mesh_ui(ui, mesh, *id);
+                            }
                         }
                         LayerType::Group { name, opacity, mesh, mapping_mode, .. } => {
                             ui.label("📂 Group"); ui.text_edit_singleline(name); ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity")); ui.checkbox(mapping_mode, "Mapping Mode (Grid)"); render_mesh_ui(ui, mesh, 9999);

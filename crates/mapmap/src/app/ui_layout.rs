@@ -340,38 +340,44 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                         ui_obj.horizontal(|ui| {
                             ui.heading(app.ui_state.i18n.t("preview"));
                         });
-                        if app.ui_state.show_preview_panel {
-                            use mapmap_core::module::{ModulePartType, OutputType};
-                            let preview_outputs = app
-                                .state
-                                .module_manager
-                                .modules()
-                                .iter()
-                                .flat_map(|m| m.parts.iter())
-                                .filter_map(|part| {
-                                    if let ModulePartType::Output(OutputType::Projector {
-                                        id,
-                                        name,
-                                        show_in_preview_panel,
-                                        ..
-                                    }) = &part.part_type
-                                    {
-                                        Some(ui::OutputPreviewInfo {
-                                            id: *id,
-                                            name: name.clone(),
-                                            show_in_panel: *show_in_preview_panel,
-                                            texture_name: None,
-                                            texture_id: app
-                                                .output_preview_cache
-                                                .get(id)
-                                                .map(|(texture_id, _)| *texture_id),
-                                        })
-                                    } else {
-                                        None
-                                    }
-                                })
-                                .collect();
+                        use mapmap_core::module::{ModulePartType, OutputType};
+                        let preview_outputs = app
+                            .state
+                            .module_manager
+                            .modules()
+                            .iter()
+                            .flat_map(|m| m.parts.iter())
+                            .filter_map(|part| {
+                                if let ModulePartType::Output(OutputType::Projector {
+                                    id,
+                                    name,
+                                    show_in_preview_panel,
+                                    ..
+                                }) = &part.part_type
+                                {
+                                    Some(ui::OutputPreviewInfo {
+                                        id: *id,
+                                        name: name.clone(),
+                                        show_in_panel: *show_in_preview_panel,
+                                        texture_name: None,
+                                        texture_id: app
+                                            .output_preview_cache
+                                            .get(id)
+                                            .map(|(texture_id, _)| *texture_id),
+                                    })
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect::<Vec<_>>();
 
+                        app.ui_state.module_canvas.output_previews = preview_outputs
+                            .iter()
+                            .filter_map(|output| {
+                                output.texture_id.map(|texture_id| (output.id, texture_id))
+                            })
+                            .collect();
+                        if app.ui_state.show_preview_panel {
                             app.ui_state.preview_panel.update_outputs(preview_outputs);
                             app.ui_state.preview_panel.show(ui_obj);
                         }

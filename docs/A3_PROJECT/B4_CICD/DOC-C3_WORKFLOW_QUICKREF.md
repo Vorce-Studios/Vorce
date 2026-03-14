@@ -76,6 +76,20 @@ Wenn der Build in CI fehlschlägt:
 - **Workflow Details:** [workflows/README.md](../../../.github/workflows/README.md)
 - **Roadmap:** [ROADMAP.md](../B1_PLANNING/DOC-C10_PROJECT_PHASES.md)
 
+## Self-hosted Post-Merge Quickref
+
+- Workflow:
+  - `.github/workflows/CICD-DevFlow_Job03_PostMergeSelfHosted.yml`
+- Hauptschalter:
+  - `MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE=true`
+- optional spaeter:
+  - `MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS=true`
+  - `MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true`
+- schnell global pausieren:
+  - `MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE=false`
+- einzelnen PR ausnehmen:
+  - Label `skip-self-hosted-post-merge`
+
 ---
 
 **Stand:** 2024-12-04
