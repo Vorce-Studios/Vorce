@@ -107,6 +107,7 @@ fn desired_media_players(app: &App) -> Vec<DesiredMediaPlayer> {
 }
 
 /// Creates a new media player handle.
+#[allow(clippy::too_many_arguments)]
 pub fn create_player_handle(
     pool: Arc<TexturePool>,
     _device: Arc<wgpu::Device>,
