@@ -186,7 +186,13 @@ impl ControlManager {
     }
 
     /// Update all control systems (call every frame)
-    pub fn update(&mut self) -> (Vec<crate::midi::MidiMessage>, Vec<rosc::OscPacket>, Vec<TriggerAction>) {
+    pub fn update(
+        &mut self,
+    ) -> (
+        Vec<crate::midi::MidiMessage>,
+        Vec<rosc::OscPacket>,
+        Vec<TriggerAction>,
+    ) {
         let midi_events;
         let osc_events;
         let mut trigger_actions = Vec::new();

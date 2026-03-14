@@ -82,7 +82,9 @@ pub struct TriggerRouter {
 
 impl TriggerRouter {
     pub fn new() -> Self {
-        Self { mappings: Vec::new() }
+        Self {
+            mappings: Vec::new(),
+        }
     }
 
     pub fn add_mapping(&mut self, mapping: TriggerMapping) {
