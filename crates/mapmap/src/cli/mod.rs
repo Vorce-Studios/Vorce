@@ -69,7 +69,10 @@ mod tests {
         assert_eq!(cli.mode, Mode::Automation);
         assert_eq!(cli.fixture.as_deref(), Some("test_fixture.mflow"));
         assert_eq!(cli.exit_after_frames, Some(100));
-        assert_eq!(cli.screenshot_dir.as_deref(), Some("/tmp/mapflow-screenshots"));
+        assert_eq!(
+            cli.screenshot_dir.as_deref(),
+            Some("/tmp/mapflow-screenshots")
+        );
     }
 
     #[test]

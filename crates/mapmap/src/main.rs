@@ -101,7 +101,8 @@ impl ApplicationHandler for MapFlowApp {
                                 error!("Failed to create screenshot directory: {}", e);
                             });
 
-                            let file_path = path.join(format!("automation_frame_{}.png", exit_frames));
+                            let file_path =
+                                path.join(format!("automation_frame_{}.png", exit_frames));
                             info!("Automation mode: Saving screenshot to {:?}", file_path);
 
                             // Trigger capture
@@ -110,23 +111,31 @@ impl ApplicationHandler for MapFlowApp {
                             let width = main_window_context.surface_config.width;
                             let height = main_window_context.surface_config.height;
 
-                            let mut encoder = app.backend.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                                label: Some("Automation Screenshot Encoder"),
-                            });
+                            let mut encoder = app.backend.device.create_command_encoder(
+                                &wgpu::CommandEncoderDescriptor {
+                                    label: Some("Automation Screenshot Encoder"),
+                                },
+                            );
 
-                            let texture = app.texture_pool.get_texture("composite").expect("Could not find composite texture for automation capture");
+                            let texture = app
+                                .texture_pool
+                                .get_texture("composite")
+                                .expect("Could not find composite texture for automation capture");
 
                             let bytes_per_pixel = 4;
                             let unpadded_bytes_per_row = width * bytes_per_pixel;
-                            let padded_bytes_per_row = unpadded_bytes_per_row.div_ceil(wgpu::COPY_BYTES_PER_ROW_ALIGNMENT)
+                            let padded_bytes_per_row = unpadded_bytes_per_row
+                                .div_ceil(wgpu::COPY_BYTES_PER_ROW_ALIGNMENT)
                                 * wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
 
-                            let buffer = app.backend.device.create_buffer(&wgpu::BufferDescriptor {
-                                label: Some("Automation Readback Buffer"),
-                                size: (padded_bytes_per_row * height) as u64,
-                                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
-                                mapped_at_creation: false,
-                            });
+                            let buffer =
+                                app.backend.device.create_buffer(&wgpu::BufferDescriptor {
+                                    label: Some("Automation Readback Buffer"),
+                                    size: (padded_bytes_per_row * height) as u64,
+                                    usage: wgpu::BufferUsages::COPY_DST
+                                        | wgpu::BufferUsages::MAP_READ,
+                                    mapped_at_creation: false,
+                                });
 
                             encoder.copy_texture_to_buffer(
                                 wgpu::TexelCopyTextureInfo {
@@ -155,10 +164,13 @@ impl ApplicationHandler for MapFlowApp {
                             let slice = buffer.slice(..);
                             slice.map_async(wgpu::MapMode::Read, |_| {});
 
-                            app.backend.device.poll(wgpu::PollType::Wait {
-                                submission_index: None,
-                                timeout: None,
-                            }).unwrap();
+                            app.backend
+                                .device
+                                .poll(wgpu::PollType::Wait {
+                                    submission_index: None,
+                                    timeout: None,
+                                })
+                                .unwrap();
 
                             let mapped = slice.get_mapped_range();
                             let mut rgba = Vec::with_capacity((width * height * 4) as usize);
@@ -169,8 +181,11 @@ impl ApplicationHandler for MapFlowApp {
                             {
                                 for pixel in row[..(width * 4) as usize].chunks_exact(4) {
                                     match format {
-                                        wgpu::TextureFormat::Bgra8Unorm | wgpu::TextureFormat::Bgra8UnormSrgb => {
-                                            rgba.extend_from_slice(&[pixel[2], pixel[1], pixel[0], pixel[3]]);
+                                        wgpu::TextureFormat::Bgra8Unorm
+                                        | wgpu::TextureFormat::Bgra8UnormSrgb => {
+                                            rgba.extend_from_slice(&[
+                                                pixel[2], pixel[1], pixel[0], pixel[3],
+                                            ]);
                                         }
                                         _ => rgba.extend_from_slice(pixel),
                                     }
@@ -183,7 +198,10 @@ impl ApplicationHandler for MapFlowApp {
                             img.save(&file_path).unwrap();
                         }
 
-                        info!("Automation mode: Reached frame limit ({}). Exiting.", exit_frames);
+                        info!(
+                            "Automation mode: Reached frame limit ({}). Exiting.",
+                            exit_frames
+                        );
                         event_loop.exit();
                     }
                 }

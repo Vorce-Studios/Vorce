@@ -29,7 +29,10 @@ use tracing::{error, info, warn};
 
 impl App {
     /// Creates a new `App`.
-    pub async fn new(elwt: &winit::event_loop::ActiveEventLoop, is_automation: bool) -> Result<Self> {
+    pub async fn new(
+        elwt: &winit::event_loop::ActiveEventLoop,
+        is_automation: bool,
+    ) -> Result<Self> {
         // Load user config early to get preferences
         let saved_config = mapmap_ui::config::UserConfig::load();
 
