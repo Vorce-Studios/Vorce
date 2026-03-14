@@ -285,7 +285,7 @@ The workflows require the following GitHub permissions:
 - Polls Jules API for session status
 - Detects when sessions complete or fail
 
-4. **PR Creation (CI-08):**
+1. **PR Creation (CI-08):**
    - Automatically creates PR when session completes
    - Adds jules-pr label
    - Links to issue and session
@@ -306,7 +306,7 @@ The workflows require the following GitHub permissions:
 - Success comment added
 - Triggers post-merge automation
 
-7. **Error Path (CI-05):**
+1. **Error Path (CI-05):**
    - Checks fail → detailed @jules comment
    - Lists all failed checks with summaries
    - Jules can update PR
@@ -320,7 +320,7 @@ The workflows require the following GitHub permissions:
 - Issue automatically closed
 - Success comments added
 
-9. **Continuous Automation (CI-07):**
+1. **Continuous Automation (CI-07):**
    - Triggers CI-04 for next oldest jules-task issue
    - Cycle repeats automatically
    - Fully self-sustaining workflow
