@@ -4,6 +4,16 @@ import json
 import subprocess
 import time
 import os
+import threading
+import queue
+
+def reader(pipe, queue):
+    try:
+        with pipe:
+            for line in iter(pipe.readline, ''):
+                queue.put(line)
+    except Exception:
+        pass
 
 def run_test_script(mapflow_exe, script_path):
     with open(script_path, 'r') as f:
@@ -12,13 +22,13 @@ def run_test_script(mapflow_exe, script_path):
     print(f"Starting test runner for script: {script_path}")
     print(f"Launching MapFlow: {mapflow_exe}")
 
-    # For CI and headless testing we should pass env vars, e.g. WGPU_BACKEND=software or similar
     env = os.environ.copy()
+    # Add RUST_LOG to help debug readiness
+    if not env.get("RUST_LOG"):
+        env["RUST_LOG"] = "info,mapmap=debug"
 
-    # We launch mapflow in background
-    # For headless CI environments without a display, wrap the launch with xvfb-run
     cmd = [mapflow_exe]
-    if not env.get("DISPLAY"):
+    if not env.get("DISPLAY") and sys.platform != 'win32':
         import shutil
         if shutil.which("xvfb-run"):
             print("DISPLAY not set. Launching with xvfb-run...")
@@ -26,50 +36,61 @@ def run_test_script(mapflow_exe, script_path):
         else:
             print("DISPLAY not set and xvfb-run not found. GUI launch might fail.")
 
-    proc = subprocess.Popen(cmd, env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    proc = subprocess.Popen(
+        cmd, 
+        env=env, 
+        stdin=subprocess.PIPE, 
+        stdout=subprocess.PIPE, 
+        stderr=subprocess.STDOUT, 
+        text=True,
+        bufsize=1
+    )
 
-    # Wait for the server to spin up by monitoring stdout for a ready signal, or timeout
-    ready_timeout = 15.0
+    q = queue.Queue()
+    t = threading.Thread(target=reader, args=(proc.stdout, q))
+    t.daemon = True
+    t.start()
+
+    ready_timeout = 30.0 # Increased timeout for slow CI environments
     start_wait = time.time()
     is_ready = False
+    captured_output = []
 
-    import select
     print("Waiting for MapFlow MCP server to initialize...")
     while time.time() - start_wait < ready_timeout:
-        # Check if process died early
         if proc.poll() is not None:
             print(f"MapFlow process died prematurely with exit code {proc.returncode}")
-            stdout, _ = proc.communicate()
-            print(f"Process output:\n{stdout}")
+            # Collect all remaining output
+            while not q.empty():
+                captured_output.append(q.get())
+            print(f"Process output:\n{''.join(captured_output)}")
             sys.exit(1)
 
-        r, _, _ = select.select([proc.stdout], [], [], 0.1)
-        if r:
-            line = proc.stdout.readline()
-            if line:
-                print(f"[MapFlow] {line.strip()}")
-                # MapFlow typically prints "Starting MapFlow" or "McpServer" when ready
-                # We'll consider it ready after it starts outputting logs and stays alive for a bit
-                if "Starting MapFlow" in line or "MCP" in line or "Starting" in line:
-                    is_ready = True
-                    # Small buffer time to ensure it's fully up after log
-                    time.sleep(1.0)
-                    break
+        try:
+            line = q.get(timeout=0.1)
+            captured_output.append(line)
+            print(f"[MapFlow] {line.strip()}")
+            if "Starting MapFlow" in line or "McpServer" in line or "Started" in line or "Ready" in line:
+                print("Detected MapFlow readiness signal.")
+                is_ready = True
+                time.sleep(2.0) # Increased buffer time
+                break
+        except queue.Empty:
+            continue
 
     if not is_ready:
-        print("Warning: Did not see an explicit 'Starting' log. Proceeding anyway assuming it's up.")
-        time.sleep(1)
+        print("Warning: Did not see an explicit 'Ready' log within timeout. Proceeding anyway.")
+        time.sleep(2.0)
 
     commands = test_script.get('commands', [])
     test_name = test_script.get('name', 'unknown_test')
 
-    # Send commands via stdio json-rpc (assuming the MCP server reads from stdin when launched, or we configure it to)
     for i, cmd in enumerate(commands):
-        # Abort if process died
         if proc.poll() is not None:
             print(f"MapFlow process died before command could be sent. Exit code {proc.returncode}")
-            stdout, _ = proc.communicate()
-            print(f"Process output:\n{stdout}")
+            while not q.empty():
+                captured_output.append(q.get())
+            print(f"Process output:\n{''.join(captured_output)}")
             sys.exit(1)
 
         request = {
@@ -79,45 +100,53 @@ def run_test_script(mapflow_exe, script_path):
             "params": cmd.get('params', {})
         }
         req_str = json.dumps(request)
-        print(f"Sending: {req_str}")
+        print(f"Sending request {i+1}: {req_str}")
         try:
             proc.stdin.write(req_str + "\n")
             proc.stdin.flush()
         except BrokenPipeError:
             print(f"Failed to send command {cmd['method']}: Broken pipe (MapFlow process likely crashed)")
-            stdout, _ = proc.communicate()
-            print(f"Process output:\n{stdout}")
+            while not q.empty():
+                captured_output.append(q.get())
+            print(f"Process output:\n{''.join(captured_output)}")
             sys.exit(1)
         except Exception as e:
             print(f"Failed to send command {cmd['method']}: {e}")
             break
-        time.sleep(0.5) # Wait for processing
+        time.sleep(1.0) # Increased wait for processing
 
-    # Determine expected output path
     output_dir = os.environ.get("MAPFLOW_VISUAL_CAPTURE_OUTPUT_DIR")
     if not output_dir:
         output_dir = os.path.join(os.getcwd(), "tests", "artifacts")
     expected_output = os.path.join(output_dir, f"{test_name}_actual.png")
-    timeout = 10
+    
+    timeout = 15
     start = time.time()
     found = False
-    print(f"Waiting for {expected_output} to be generated...")
+    print(f"Waiting for screenshot artifact: {expected_output} ...")
     while time.time() - start < timeout:
         if os.path.exists(expected_output):
-            found = True
-            print(f"Capture generated: {expected_output}")
-            break
+            # Check if file size is > 0
+            if os.path.getsize(expected_output) > 0:
+                found = True
+                print(f"Success: Capture generated and valid: {expected_output}")
+                break
         time.sleep(1)
 
-    print("Closing MapFlow...")
+    print("Terminating MapFlow...")
     proc.terminate()
     try:
         proc.wait(timeout=5)
     except subprocess.TimeoutExpired:
+        print("MapFlow did not terminate gracefully. Killing process.")
         proc.kill()
 
     if not found:
-        print(f"Test failed: Output {expected_output} not generated.", file=sys.stderr)
+        print(f"Test failed: Output {expected_output} not generated or empty.", file=sys.stderr)
+        # Dump output on failure
+        while not q.empty():
+            captured_output.append(q.get())
+        print(f"Full MapFlow logs for debugging:\n{''.join(captured_output)}", file=sys.stderr)
         sys.exit(1)
 
     print("MapFlow E2E MCP execution completed successfully.")
