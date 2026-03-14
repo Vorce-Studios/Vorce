@@ -6,8 +6,8 @@ use crate::widgets::{styled_drag_value, styled_slider};
 use crate::UIAction;
 use egui::{Color32, ProgressBar, Sense, Stroke, Ui, Vec2};
 use mapmap_core::module::{
-    BevyCameraMode, BlendModeType, EffectType, HueMappingMode, LayerType, MaskShape, MaskType,
-    MapFlowModule, ModuleId, ModulePart, ModulePartId, ModulePartType, ModulizerType, OutputType,
+    BevyCameraMode, BlendModeType, EffectType, HueMappingMode, LayerType, MapFlowModule, MaskShape,
+    MaskType, ModuleId, ModulePart, ModulePartId, ModulePartType, ModulizerType, OutputType,
     SourceType, TriggerMappingMode, TriggerTarget, TriggerType,
 };
 use std::collections::HashSet;
@@ -49,8 +49,16 @@ fn collect_downstream_output_ids(
         return;
     }
 
-    for connection in module.connections.iter().filter(|conn| conn.from_part == part_id) {
-        if let Some(next_part) = module.parts.iter().find(|part| part.id == connection.to_part) {
+    for connection in module
+        .connections
+        .iter()
+        .filter(|conn| conn.from_part == part_id)
+    {
+        if let Some(next_part) = module
+            .parts
+            .iter()
+            .find(|part| part.id == connection.to_part)
+        {
             match &next_part.part_type {
                 ModulePartType::Output(OutputType::Projector { id, .. }) => output_ids.push(*id),
                 _ => collect_downstream_output_ids(module, next_part.id, visited, output_ids),
@@ -76,7 +84,11 @@ fn collect_upstream_source_ids(
         }
     }
 
-    for connection in module.connections.iter().filter(|conn| conn.to_part == part_id) {
+    for connection in module
+        .connections
+        .iter()
+        .filter(|conn| conn.to_part == part_id)
+    {
         collect_upstream_source_ids(module, connection.from_part, visited, source_ids);
     }
 }
@@ -175,11 +187,7 @@ fn render_fixed_timer_preview(
     });
 }
 
-fn render_preview_texture(
-    ui: &mut Ui,
-    texture_id: egui::TextureId,
-    caption: &str,
-) {
+fn render_preview_texture(ui: &mut Ui, texture_id: egui::TextureId, caption: &str) {
     let width = ui.available_width().max(160.0);
     let size = Vec2::new(width, width * 9.0 / 16.0);
     ui.image((texture_id, size));
@@ -234,11 +242,7 @@ fn render_layer_preview_panel(
 
     for source_part_id in &preview_context.upstream_source_part_ids {
         if let Some(&texture_id) = canvas.node_previews.get(&(module_id, *source_part_id)) {
-            render_preview_texture(
-                ui,
-                texture_id,
-                "Fallback: upstream source preview",
-            );
+            render_preview_texture(ui, texture_id, "Fallback: upstream source preview");
             ui.small(
                 "The layer preview is falling back to the source texture. If the output stays black, the issue is after the source stage.",
             );
@@ -247,7 +251,11 @@ fn render_layer_preview_panel(
     }
 
     ui.group(|ui| {
-        ui.label("No preview available yet.");
+        ui.label(
+            egui::RichText::new("No preview available yet.")
+                .weak()
+                .italics(),
+        );
         if preview_context.output_ids.is_empty() {
             ui.small("This layer is not linked to a projector output yet.");
         } else {
@@ -262,9 +270,19 @@ fn render_layer_preview_panel(
             ));
         }
         if preview_context.upstream_source_part_ids.is_empty() {
-            ui.small("No upstream source node was found for this layer.");
+            ui.label(
+                egui::RichText::new("No upstream source node was found for this layer.")
+                    .weak()
+                    .italics(),
+            );
         } else {
-            ui.small("Upstream source exists, but no preview texture reached the inspector.");
+            ui.label(
+                egui::RichText::new(
+                    "Upstream source exists, but no preview texture reached the inspector.",
+                )
+                .weak()
+                .italics(),
+            );
         }
     });
 }
@@ -597,7 +615,7 @@ pub fn render_inspector_for_part(
                             if path.is_empty() {
                                 ui.vertical_centered(|ui| {
                                     ui.add_space(10.0);
-                                    if ui.add(egui::Button::new("\u{1F4C2} Select Media File").min_size(egui::vec2(150.0, 30.0))).clicked() {
+                                    if ui.button("\u{1F4C2} Select Media File").clicked() {
                                         actions.push(UIAction::PickMediaFile(module_id, part_id, "".to_string()));
                                     }
                                     ui.label(egui::RichText::new("No media loaded").weak().italics());
@@ -712,7 +730,7 @@ pub fn render_inspector_for_part(
                             if path.is_empty() {
                                 ui.vertical_centered(|ui| {
                                     ui.add_space(10.0);
-                                    if ui.add(egui::Button::new("\u{1F4C2} Select Image File").min_size(egui::vec2(150.0, 30.0))).clicked() {
+                                    if ui.button("\u{1F4C2} Select Image File").clicked() {
                                         actions.push(crate::UIAction::PickMediaFile(module_id, part_id, "".to_string()));
                                     }
                                     ui.label(egui::RichText::new("No image loaded").weak().italics());
@@ -958,7 +976,7 @@ pub fn render_inspector_for_part(
                             if path.is_empty() {
                                 ui.vertical_centered(|ui| {
                                     ui.add_space(10.0);
-                                    if ui.add(egui::Button::new("\u{1F4C2} Select Mask File").min_size(egui::vec2(150.0, 30.0))).clicked() {
+                                    if ui.button("\u{1F4C2} Select Mask File").clicked() {
                                         if let Some(picked) = rfd::FileDialog::new().add_filter("Image", &["png", "jpg", "jpeg", "webp", "bmp"]).pick_file() {
                                             *path = picked.display().to_string();
                                         }
