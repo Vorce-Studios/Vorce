@@ -1,7 +1,7 @@
-use crate::app::core::app_struct::App;
-use super::content::{RenderContext, render_content};
+use super::content::{render_content, RenderContext};
+use super::logging::{clear_video_issue, should_log_video_issue};
 use super::PREVIEW_FLAG;
-use super::logging::{should_log_video_issue, clear_video_issue};
+use crate::app::core::app_struct::App;
 
 #[allow(clippy::manual_is_multiple_of)]
 pub(crate) fn prepare_texture_previews(app: &mut App, encoder: &mut wgpu::CommandEncoder) {

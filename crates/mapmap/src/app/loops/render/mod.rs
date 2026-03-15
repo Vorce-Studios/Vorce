@@ -7,10 +7,10 @@ use mapmap_core::OutputId;
 #[cfg(feature = "ndi")]
 use std::sync::atomic::{AtomicBool, Ordering};
 
-mod logging;
 mod content;
-mod previews;
 mod effects;
+mod logging;
+mod previews;
 mod texture_gen;
 
 use content::*;

@@ -1,8 +1,8 @@
 use anyhow::Result;
 use mapmap_core::module::OutputType::Projector;
 
-use super::logging::{clear_video_issue, should_log_video_issue};
 use super::effects::build_effect_chain;
+use super::logging::{clear_video_issue, should_log_video_issue};
 use super::PREVIEW_FLAG;
 
 pub(crate) struct RenderContext<'a> {
@@ -15,7 +15,8 @@ pub(crate) struct RenderContext<'a> {
     pub output_manager: &'a mapmap_core::output::OutputManager,
     pub edge_blend_renderer: &'a Option<mapmap_render::EdgeBlendRenderer>,
     pub color_calibration_renderer: &'a Option<mapmap_render::ColorCalibrationRenderer>,
-    pub edge_blend_cache: &'a mut std::collections::HashMap<u64, (wgpu::Buffer, wgpu::BindGroup, u64)>,
+    pub edge_blend_cache:
+        &'a mut std::collections::HashMap<u64, (wgpu::Buffer, wgpu::BindGroup, u64)>,
     pub edge_blend_texture_cache: &'a mut std::collections::HashMap<u64, wgpu::BindGroup>,
     pub mesh_renderer: &'a mut mapmap_render::MeshRenderer,
     pub effect_chain_renderer: &'a mut mapmap_render::EffectChainRenderer,

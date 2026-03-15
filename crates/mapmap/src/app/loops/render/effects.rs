@@ -1,5 +1,5 @@
-use mapmap_core::module::{ModulizerType, EffectType as ModEffectType};
-use mapmap_core::effects::{EffectChain, Effect, EffectType as ChainEffectType};
+use mapmap_core::effects::{Effect, EffectChain, EffectType as ChainEffectType};
+use mapmap_core::module::{EffectType as ModEffectType, ModulizerType};
 
 pub(crate) fn build_effect_chain(modulizers: &[ModulizerType]) -> EffectChain {
     let mut chain = EffectChain::new();
@@ -64,7 +64,10 @@ mod tests {
 
     #[test]
     fn test_map_effect_type() {
-        assert_eq!(map_effect_type(ModEffectType::Blur), Some(ChainEffectType::Blur));
+        assert_eq!(
+            map_effect_type(ModEffectType::Blur),
+            Some(ChainEffectType::Blur)
+        );
         assert_eq!(map_effect_type(ModEffectType::LoadLUT), None);
     }
 }
