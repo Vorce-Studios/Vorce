@@ -418,13 +418,7 @@ mod ffmpeg_impl {
                     }
 
                     // Scale to RGBA
-                    // Properly allocate the destination frame with the correct format and dimensions
-                    let mut rgb_frame = ffmpeg::util::frame::Video::new(
-                        ffmpeg::format::Pixel::RGBA,
-                        self.width,
-                        self.height,
-                    );
-
+                    let mut rgb_frame = ffmpeg::util::frame::Video::empty();
                     self.scaler.run(frame_ptr, &mut rgb_frame).map_err(|e| {
                         MediaError::DecoderError(format!(
                             "Decoder error: Input changed? Scaler run failed: {}",
