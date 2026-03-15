@@ -239,21 +239,20 @@ impl TimelineV2 {
     }
 
     fn add_module_block(&mut self, module_id: ModuleId) {
-        let default_start = self
-            .module_arrangement
-            .iter()
-            .map(ModuleArrangementItem::end_time)
-            .fold(0.0, f32::max);
-        let id = self.next_arrangement_id;
-        self.next_arrangement_id = self.next_arrangement_id.saturating_add(1);
+        let start_time = if let Some(last) = self.module_arrangement.last() {
+            last.end_time()
+        } else {
+            0.0
+        };
 
         self.module_arrangement.push(ModuleArrangementItem {
-            id,
+            id: self.next_arrangement_id,
             module_id,
-            start_time: default_start,
-            duration: 8.0,
+            start_time,
+            duration: 5.0,
             enabled: true,
         });
+        self.next_arrangement_id += 1;
     }
 
     fn set_manual_current(&mut self, block_id: Option<u64>) {
@@ -261,13 +260,10 @@ impl TimelineV2 {
     }
 
     fn module_for_block_id(&self, block_id: Option<u64>) -> Option<ModuleId> {
-        block_id
-            .and_then(|id| self.find_block(id))
-            .map(|block| block.module_id)
+        block_id.and_then(|id| self.find_block(id).map(|b| b.module_id))
     }
 
-    /// Returns the module that should be active for show playback.
-    /// `None` means "do not filter modules".
+    /// Update orchestration and return target module if it should change.
     pub fn runtime_show_module(
         &mut self,
         current_time: f32,
@@ -1019,7 +1015,8 @@ impl TimelineV2 {
                     // For now, we just emit it, the handler in actions.rs should be idempotent.
                     if action.is_none()
                         && animator.is_playing()
-                        && self.show_mode == ShowMode::FullyAutomated
+                        && (self.show_mode == ShowMode::FullyAutomated
+                            || self.show_mode == ShowMode::Hybrid)
                     {
                         action = Some(TimelineAction::SelectModule(mod_id));
                     }
