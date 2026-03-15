@@ -49,11 +49,7 @@ jobs:
       - name: Install System Deps (Ubuntu)
         run: |
           sudo apt-get update
-<<<<<<< HEAD
-          sudo apt-get install -y build-essential pkg-config clang libclang-dev yasm nasm libfontconfig1-dev libfreetype6-dev libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libx11-xcb-dev libxcb-glx0-dev libxcb-dri2-0-dev libxcb-dri3-dev libxcb-present-dev libxcb-sync-dev libxrandr-dev libxi-dev libxcursor-dev libxinerama-dev libxkbcommon-dev libwayland-dev libasound2-dev libudev-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavdevice-dev libavfilter-dev libswresample-dev ffmpeg
-=======
           sudo apt-get install -y build-essential pkg-config clang libclang-dev yasm nasm libfontconfig1-dev libfreetype6-dev libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libasound2-dev libudev-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavdevice-dev libavfilter-dev libswresample-dev ffmpeg libxkbcommon-x11-0
->>>>>>> origin/main
       - name: Check Formatting
         run: cargo fmt --all -- --check
       - name: Check Clippy
@@ -95,11 +91,7 @@ jobs:
       - name: Install System Dependencies
         run: |
           sudo apt-get update -y
-<<<<<<< HEAD
-          sudo apt-get install -y build-essential pkg-config clang libclang-dev yasm nasm libfontconfig1-dev libfreetype6-dev libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libx11-xcb-dev libxcb-glx0-dev libxcb-dri2-0-dev libxcb-dri3-dev libxcb-present-dev libxcb-sync-dev libxrandr-dev libxi-dev libxcursor-dev libxinerama-dev libxkbcommon-dev libwayland-dev libasound2-dev libudev-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavdevice-dev libavfilter-dev libswresample-dev ffmpeg
-=======
           sudo apt-get install -y build-essential pkg-config clang libclang-dev yasm nasm libfontconfig1-dev libfreetype6-dev libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libasound2-dev libudev-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavdevice-dev libavfilter-dev libswresample-dev libudev-dev ffmpeg libxkbcommon-x11-0
->>>>>>> origin/main
       - name: Build
         run: cargo build --verbose --features "mapmap-io/ci-linux,ffmpeg"
       - name: Test
