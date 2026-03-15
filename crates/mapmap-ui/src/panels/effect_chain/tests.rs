@@ -3,7 +3,7 @@ use super::panel::*;
 use super::types::*;
 
 #[cfg(test)]
-mod tests {
+mod effect_chain_tests {
     use super::*;
 
     #[test]
