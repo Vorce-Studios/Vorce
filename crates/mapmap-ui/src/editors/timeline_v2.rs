@@ -798,18 +798,13 @@ impl TimelineV2 {
                 if x >= rect.min.x && x <= rect.max.x {
                     // Marker line
                     painter.line_segment(
-                        [
-                            Pos2::new(x, ruler_rect.min.y),
-                            Pos2::new(x, rect.max.y),
-                        ],
+                        [Pos2::new(x, ruler_rect.min.y), Pos2::new(x, rect.max.y)],
                         Stroke::new(1.0, Color32::from_rgb(100, 200, 100)),
                     );
 
                     // Marker flag
-                    let flag_rect = Rect::from_min_size(
-                        Pos2::new(x, ruler_rect.min.y),
-                        Vec2::new(14.0, 14.0),
-                    );
+                    let flag_rect =
+                        Rect::from_min_size(Pos2::new(x, ruler_rect.min.y), Vec2::new(14.0, 14.0));
                     let is_selected = self.selected_marker_id == Some(marker.id);
                     let flag_color = if is_selected {
                         Color32::from_rgb(150, 255, 150)
@@ -830,7 +825,8 @@ impl TimelineV2 {
                         Pos2::new(x - 5.0, ruler_rect.min.y),
                         Vec2::new(20.0, 16.0),
                     );
-                    let marker_response = ui.interact(interact_rect, ui.id().with(marker.id), Sense::click());
+                    let marker_response =
+                        ui.interact(interact_rect, ui.id().with(marker.id), Sense::click());
 
                     if marker_response.clicked() {
                         self.selected_marker_id = Some(marker.id);
@@ -841,7 +837,8 @@ impl TimelineV2 {
                     }
 
                     // Tooltip
-                    marker_response.on_hover_text(format!("Marker: {}\nRight-click to remove", marker.name));
+                    marker_response
+                        .on_hover_text(format!("Marker: {}\nRight-click to remove", marker.name));
                 }
             }
             if let Some(id) = remove_marker_id {
@@ -993,7 +990,9 @@ impl TimelineV2 {
                 }
 
                 let active_block_id = match self.show_mode {
-                    ShowMode::FullyAutomated | ShowMode::Trackline => self.full_auto_current_block_id,
+                    ShowMode::FullyAutomated | ShowMode::Trackline => {
+                        self.full_auto_current_block_id
+                    }
                     ShowMode::SemiAutomated => self.semi_auto_current_block_id,
                     ShowMode::Manual => self.manual_current_block_id,
                 };
