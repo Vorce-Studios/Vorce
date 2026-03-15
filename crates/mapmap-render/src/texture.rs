@@ -42,6 +42,9 @@ impl TextureHandle {
     }
 }
 
+/// A cached texture view with its last usage timestamp
+pub type CachedTextureView = (Arc<wgpu::TextureView>, Arc<AtomicU64>);
+
 /// Texture descriptor
 #[derive(Debug, Clone, Copy)]
 pub struct TextureDescriptor {
@@ -68,7 +71,7 @@ impl Default for TextureDescriptor {
 pub struct TexturePool {
     device: Arc<wgpu::Device>,
     textures: RwLock<HashMap<String, TextureHandle>>,
-    views: RwLock<HashMap<String, (Arc<wgpu::TextureView>, Arc<AtomicU64>)>>,
+    views: RwLock<HashMap<String, CachedTextureView>>,
     start_time: Instant,
 }
 
