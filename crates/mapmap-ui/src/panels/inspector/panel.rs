@@ -2,11 +2,10 @@ use crate::i18n::LocaleManager;
 use crate::panels::transform_panel::TransformPanel;
 use crate::widgets::panel::render_panel_header;
 
-// Re-export types from the new inspector module
-use crate::panels::inspector::layer::render_layer_inspector;
-use crate::panels::inspector::module::show_module_inspector;
-use crate::panels::inspector::output::show_output_inspector;
-pub use crate::panels::inspector::{InspectorAction, InspectorContext};
+use super::layer::render_layer_inspector;
+use super::module::show_module_inspector;
+use super::output::show_output_inspector;
+use super::types::{InspectorAction, InspectorContext};
 
 use crate::editors::mesh_editor::MeshEditor;
 
