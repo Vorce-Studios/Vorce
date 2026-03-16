@@ -6,7 +6,7 @@
        <match value="search-string" type="string" offset="10:140"/>
        <match type="string" value="#N " offset="0"/>
      </magic>
-     <glob pattern="*.mflow"/>
+     <glob pattern="*.sg"/>
     <comment>Pure Data Document</comment>
 	<comment xml:lang="en">MapFlow Document</comment>
 	<comment xml:lang="fr">Document MapFlow</comment>

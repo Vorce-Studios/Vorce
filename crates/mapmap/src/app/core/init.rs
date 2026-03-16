@@ -157,8 +157,7 @@ impl App {
         let mut state = AppState::new("New Project");
         state.settings_mut().log_config.level = saved_config.log_level.as_str().to_string();
 
-        let autosave_path =
-            dirs::data_local_dir().map(|p| p.join("MapFlow").join("autosave.mflow"));
+        let autosave_path = dirs::data_local_dir().map(|p| p.join("MapFlow").join("autosave.sg"));
 
         if let Some(path) = &autosave_path {
             if path.exists() {

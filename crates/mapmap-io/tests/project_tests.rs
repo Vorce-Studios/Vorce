@@ -40,7 +40,7 @@ fn create_sample_app_state() -> AppState {
 #[test]
 fn test_project_ron_roundtrip() {
     let dir = tempdir().unwrap();
-    let file_path = dir.path().join("test_project.mflow");
+    let file_path = dir.path().join("test_project.sg");
 
     let original_state = create_sample_app_state();
     save_project(&original_state, &file_path).unwrap();
@@ -66,7 +66,7 @@ fn test_project_json_roundtrip() {
 #[test]
 fn test_load_missing_file() {
     let dir = tempdir().unwrap();
-    let file_path = dir.path().join("non_existent_project.mflow");
+    let file_path = dir.path().join("non_existent_project.sg");
 
     let result = load_project(&file_path);
     assert!(matches!(result, Err(IoError::Io(_))));
@@ -75,7 +75,7 @@ fn test_load_missing_file() {
 #[test]
 fn test_load_invalid_ron() {
     let dir = tempdir().unwrap();
-    let file_path = dir.path().join("invalid.mflow");
+    let file_path = dir.path().join("invalid.sg");
 
     let mut file = File::create(&file_path).unwrap();
     writeln!(file, "this is not valid ron").unwrap();

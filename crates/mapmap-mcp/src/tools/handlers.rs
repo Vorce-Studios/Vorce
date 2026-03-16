@@ -51,7 +51,7 @@ pub fn handle_tool_call(
                     if let Some(path_str) = path_val.as_str() {
                         match crate::tools::handlers::validate_path_with_extensions(
                             path_str,
-                            &["mapmap", "json"],
+                            &["sg", "json"],
                         ) {
                             Ok(path) => {
                                 if let Some(sender) = &server.action_sender {
@@ -89,7 +89,7 @@ pub fn handle_tool_call(
                     if let Some(path_str) = path_val.as_str() {
                         match crate::tools::handlers::validate_path_with_extensions(
                             path_str,
-                            &["mapmap", "json"],
+                            &["sg", "json"],
                         ) {
                             Ok(path) => {
                                 if let Some(sender) = &server.action_sender {

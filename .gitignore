@@ -83,7 +83,7 @@ check_*.txt
 !README.txt
 !CHANGELOG.txt
 !LICENSE.txt
-project.mflow
+project.sg
 
 # Archives
 /.temp-archive/

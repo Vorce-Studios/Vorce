@@ -64,7 +64,7 @@ impl ProjectFile {
             .unwrap_or("ron");
 
         match extension {
-            "json" | "ron" | "mapmap" | "mflow" => {}
+            "json" | "ron" | "sg" | "stagegraph" => {}
             _ => return Err(IoError::UnsupportedFormat(extension.to_string())),
         }
 
@@ -93,7 +93,7 @@ impl ProjectFile {
                 let file: ProjectFile = serde_json::from_str(&content)?;
                 Ok(file)
             }
-            "ron" | "mapmap" | "mflow" => {
+            "ron" | "sg" | "stagegraph" => {
                 let file: ProjectFile = ron::from_str(&content)?;
                 Ok(file)
             }
@@ -119,7 +119,7 @@ impl ProjectFile {
                 let file = File::create(path)?;
                 serde_json::to_writer_pretty(file, self)?;
             }
-            "ron" | "mapmap" | "mflow" => {
+            "ron" | "sg" | "stagegraph" => {
                 let config = ron::ser::PrettyConfig::default();
                 let s = ron::ser::to_string_pretty(self, config)?;
                 let mut file = File::create(path)?;

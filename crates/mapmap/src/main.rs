@@ -454,7 +454,7 @@ fn main() -> Result<()> {
     };
 
     // Initialize logging
-    let file_appender = tracing_appender::rolling::daily("logs", "mapflow.log");
+    let file_appender = tracing_appender::rolling::daily("logs", "stagegraph.log");
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
 
     // Filter configuration

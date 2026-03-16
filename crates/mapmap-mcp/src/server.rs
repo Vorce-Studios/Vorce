@@ -445,14 +445,14 @@ mod tests {
             "params": {
                 "name": "project_save",
                 "arguments": {
-                    "path": "test.mapmap"
+                    "path": "test.sg"
                 }
             }
         });
         server.handle_request(&save_req.to_string()).await;
         let action = rx.try_recv().unwrap();
         match action {
-            McpAction::SaveProject(path) => assert_eq!(path.to_str().unwrap(), "test.mapmap"),
+            McpAction::SaveProject(path) => assert_eq!(path.to_str().unwrap(), "test.sg"),
             other => panic!("Expected SaveProject action, got {:?}", other),
         }
 
@@ -464,14 +464,14 @@ mod tests {
             "params": {
                 "name": "project_load",
                 "arguments": {
-                    "path": "other.mapmap"
+                    "path": "other.sg"
                 }
             }
         });
         server.handle_request(&load_req.to_string()).await;
         let action = rx.try_recv().unwrap();
         match action {
-            McpAction::LoadProject(path) => assert_eq!(path.to_str().unwrap(), "other.mapmap"),
+            McpAction::LoadProject(path) => assert_eq!(path.to_str().unwrap(), "other.sg"),
             other => panic!("Expected LoadProject action, got {:?}", other),
         }
     }
@@ -572,7 +572,7 @@ mod tests {
             "params": {
                 "name": "project_save",
                 "arguments": {
-                    "path": "good_project.mapmap"
+                    "path": "good_project.sg"
                 }
             }
         });
@@ -586,7 +586,7 @@ mod tests {
         let valid_action = rx.try_recv().unwrap();
         match valid_action {
             McpAction::SaveProject(path) => {
-                assert_eq!(path.to_str().unwrap(), "good_project.mapmap")
+                assert_eq!(path.to_str().unwrap(), "good_project.sg")
             }
             other => panic!("Expected SaveProject action, got {:?}", other),
         }
