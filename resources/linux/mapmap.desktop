@@ -2,7 +2,7 @@
 Name=MapFlow
 Comment=Professional Projection Mapping Software
 Exec=MapFlow
-Icon=mapflow
+Icon=mapmap
 Terminal=false
 Type=Application
 Categories=Graphics;Video;AudioVideo;
