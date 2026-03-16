@@ -8,10 +8,10 @@ use crate::editors::{
 use crate::panels::{
     assignment_panel::AssignmentPanel, audio_panel::AudioPanel,
     controller_overlay_panel::ControllerOverlayPanel, cue_panel::CuePanel,
-    edge_blend_panel::EdgeBlendPanel, effect_chain::EffectChainPanel,
-    inspector::InspectorPanel, layer_panel::LayerPanel, mapping_panel::MappingPanel,
-    oscillator_panel::OscillatorPanel, output_panel::OutputPanel, paint_panel::PaintPanel,
-    preview_panel::PreviewPanel, transform_panel::TransformPanel,
+    edge_blend_panel::EdgeBlendPanel, effect_chain::EffectChainPanel, inspector::InspectorPanel,
+    layer_panel::LayerPanel, mapping_panel::MappingPanel, oscillator_panel::OscillatorPanel,
+    output_panel::OutputPanel, paint_panel::PaintPanel, preview_panel::PreviewPanel,
+    transform_panel::TransformPanel,
 };
 use crate::view::{
     dashboard::Dashboard, media_browser::MediaBrowser, menu_bar, module_sidebar::ModuleSidebar,
