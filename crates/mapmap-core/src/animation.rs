@@ -275,12 +275,28 @@ struct AnimationClipSerde {
     reverse: bool,
 }
 
-fn deserialize_optional_playback_mode<'de, D>(deserializer: D) -> Result<Option<PlaybackMode>, D::Error>
+fn deserialize_optional_playback_mode<'de, D>(
+    deserializer: D,
+) -> Result<Option<PlaybackMode>, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
-    let opt = Option::<PlaybackMode>::deserialize(deserializer)?;
-    Ok(opt)
+    // If the field exists in JSON/RON but is `null`/`None` or a valid string
+    // we need to parse it.
+    // Option's default implementation will usually expect `Some(...)` or `None`.
+    // However, in our serde implementation previously this field didn't exist at all,
+    // or we are trying to parse the enum variant itself.
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum PlaybackModeOpt {
+        Present(PlaybackMode),
+        Option(Option<PlaybackMode>),
+    }
+
+    match PlaybackModeOpt::deserialize(deserializer)? {
+        PlaybackModeOpt::Present(p) => Ok(Some(p)),
+        PlaybackModeOpt::Option(o) => Ok(o),
+    }
 }
 
 impl From<AnimationClipSerde> for AnimationClip {
@@ -393,11 +409,29 @@ pub struct AnimationPlayer {
     pub pause_at_markers: bool,
 }
 
+fn deserialize_optional_direction<'de, D>(deserializer: D) -> Result<Option<f32>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum OptF32 {
+        Present(f32),
+        Option(Option<f32>),
+    }
+
+    match OptF32::deserialize(deserializer)? {
+        OptF32::Present(f) => Ok(Some(f)),
+        OptF32::Option(o) => Ok(o),
+    }
+}
+
 #[derive(Debug, Deserialize)]
 struct AnimationPlayerSerde {
     clip: AnimationClip,
     current_time: TimePoint,
     playing: bool,
+    #[serde(default, deserialize_with = "deserialize_optional_direction")]
     current_direction: Option<f32>,
     #[serde(default = "default_animation_speed")]
     speed: f32,
