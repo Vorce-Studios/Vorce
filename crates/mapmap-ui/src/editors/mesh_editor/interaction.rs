@@ -2,9 +2,13 @@ use super::state::*;
 use super::types::*;
 use egui::{Pos2, Vec2};
 
-impl MeshEditor {
+pub trait MeshEditorInteraction {
+    fn handle_interaction(&mut self, input: InteractionInput) -> Option<MeshEditorAction>;
+}
+
+impl MeshEditorInteraction for MeshEditor {
     /// Process interaction event
-    pub fn handle_interaction(&mut self, input: InteractionInput) -> Option<MeshEditorAction> {
+    fn handle_interaction(&mut self, input: InteractionInput) -> Option<MeshEditorAction> {
         let mut action = None;
         let pointer_pos = input.pointer_pos;
 

@@ -14,6 +14,7 @@ pub use types::*;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::editors::mesh_editor::interaction::MeshEditorInteraction;
 
     #[test]
     fn test_hit_detection_and_dragging() {

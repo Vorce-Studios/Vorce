@@ -1,10 +1,16 @@
 use super::state::*;
 use super::types::*;
+use crate::editors::mesh_editor::interaction::MeshEditorInteraction;
 use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui};
 
-impl MeshEditor {
+pub trait MeshEditorUi {
+    fn ui(&mut self, ui: &mut Ui) -> Option<MeshEditorAction>;
+    fn draw_grid(&self, painter: &egui::Painter, rect: Rect);
+}
+
+impl MeshEditorUi for MeshEditor {
     /// Render the mesh editor UI
-    pub fn ui(&mut self, ui: &mut Ui) -> Option<MeshEditorAction> {
+    fn ui(&mut self, ui: &mut Ui) -> Option<MeshEditorAction> {
         let mut action = None;
 
         // Toolbar
@@ -118,7 +124,7 @@ impl MeshEditor {
     }
 
     /// Draw grid background
-    pub(crate) fn draw_grid(&self, painter: &egui::Painter, rect: Rect) {
+    fn draw_grid(&self, painter: &egui::Painter, rect: Rect) {
         let color = Color32::from_rgb(50, 50, 50);
 
         let mut x = 0.0;
