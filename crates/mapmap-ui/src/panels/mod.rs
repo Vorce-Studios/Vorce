@@ -5,7 +5,6 @@ pub mod cue_panel;
 pub mod edge_blend_panel;
 pub mod effect_chain;
 pub mod inspector;
-pub mod inspector_panel;
 pub mod layer_panel;
 pub mod mapping_panel;
 pub mod osc_panel;
@@ -22,7 +21,10 @@ pub use controller_overlay_panel::*;
 pub use cue_panel::*;
 pub use edge_blend_panel::*;
 pub use effect_chain::*;
+<<<<<<< HEAD
 pub use inspector_panel::*;
+=======
+>>>>>>> main
 pub use layer_panel::*;
 pub use mapping_panel::*;
 pub use osc_panel::*;
