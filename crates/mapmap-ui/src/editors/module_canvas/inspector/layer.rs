@@ -4,12 +4,19 @@ use super::super::state::ModuleCanvas;
 use super::super::mesh;
 
 /// Renders the configuration UI for a `ModulePartType::Layer`.
-pub fn render_layer_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, layer: &mut LayerType, part_id: ModulePartId) {
+pub fn render_layer_ui(
+    _canvas: &mut ModuleCanvas,
+    mesh_editor: &mut crate::editors::mesh_editor::MeshEditor,
+    last_mesh_edit_id: &mut Option<u64>,
+    ui: &mut Ui,
+    layer: &mut LayerType,
+    part_id: ModulePartId
+) {
     ui.label("📋 Layer:");
 
     // Helper to render mesh UI
     let mut render_mesh_ui = |ui: &mut Ui, mesh: &mut MeshType, id_salt: u64| {
-        mesh::render_mesh_editor_ui(canvas, ui, mesh, part_id, id_salt);
+        mesh::render_mesh_editor_ui(mesh_editor, last_mesh_edit_id, ui, mesh, part_id, id_salt);
     };
 
     match layer {

@@ -300,6 +300,13 @@ pub fn render_trigger_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, trigger: &mut T
                 egui::Slider::new(offset_ms, 0..=5000)
                     .text("Offset (ms)"),
             );
+            super::render_fixed_timer_preview(
+                canvas,
+                ui,
+                part_id,
+                *interval_ms,
+                *offset_ms,
+            );
         }
         TriggerType::Midi { channel, note, device: _ } => {
             ui.label("\u{1F3B9} MIDI Trigger");
