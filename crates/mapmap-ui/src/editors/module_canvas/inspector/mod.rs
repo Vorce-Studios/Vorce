@@ -95,7 +95,6 @@ fn collect_upstream_source_ids(
     }
 }
 
-
 pub fn render_inspector_preview_toggle(canvas: &mut ModuleCanvas, ui: &mut Ui) {
     ui.horizontal(|ui| {
         ui.heading("Inspector Preview");
@@ -282,7 +281,15 @@ pub fn render_inspector_for_part(
                     trigger::render_trigger_ui(canvas, ui, trigger, part_id);
                 }
                 ModulePartType::Source(source) => {
-                    source::render_source_ui(canvas, ui, source, part_id, module_id, shared_media_ids, actions);
+                    source::render_source_ui(
+                        canvas,
+                        ui,
+                        source,
+                        part_id,
+                        module_id,
+                        shared_media_ids,
+                        actions,
+                    );
                 }
                 ModulePartType::Mask(mask) => {
                     layer::render_mask_ui(ui, mask);
@@ -293,12 +300,26 @@ pub fn render_inspector_for_part(
                 ModulePartType::Layer(layer) => {
                     render_inspector_preview_toggle(canvas, ui);
                     render_layer_preview_panel(canvas, ui, module_id, part_id, preview_context);
-                    layer::render_layer_ui(canvas, mesh_editor, last_mesh_edit_id, ui, layer, part_id);
+                    layer::render_layer_ui(
+                        canvas,
+                        mesh_editor,
+                        last_mesh_edit_id,
+                        ui,
+                        layer,
+                        part_id,
+                    );
                 }
                 ModulePartType::Mesh(mesh) => {
                     ui.label("🕸️ Mesh Node");
                     ui.separator();
-                    mesh::render_mesh_editor_ui(mesh_editor, last_mesh_edit_id, ui, mesh, part_id, part_id);
+                    mesh::render_mesh_editor_ui(
+                        mesh_editor,
+                        last_mesh_edit_id,
+                        ui,
+                        mesh,
+                        part_id,
+                        part_id,
+                    );
                 }
                 ModulePartType::Output(output) => {
                     output::render_output_ui(canvas, ui, output, part_id);
