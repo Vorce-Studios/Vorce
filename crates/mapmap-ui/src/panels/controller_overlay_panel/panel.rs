@@ -11,10 +11,7 @@ use egui::{Color32, Pos2, Rect, Response, Sense, Stroke, TextureHandle, Ui, Vec2
 use crate::config::{MidiAssignment, MidiAssignmentTarget, UserConfig};
 
 #[cfg(feature = "midi")]
-use mapmap_control::midi::{
-    ControllerElements, ElementStateManager,
-    MidiLearnManager,
-};
+use mapmap_control::midi::{ControllerElements, ElementStateManager, MidiLearnManager};
 use mapmap_control::target::ControlTarget;
 #[allow(unused_imports)]
 use std::collections::{HashMap, HashSet};
@@ -31,8 +28,6 @@ fn get_mock_targets() -> Vec<ControlTarget> {
     }
     targets
 }
-
-
 
 const MIN_SCALE: f32 = 0.3;
 
@@ -148,8 +143,6 @@ impl ControllerOverlayPanel {
         }
     }
 
-
-
     pub(crate) fn load_texture_from_candidates<P: AsRef<std::path::Path>>(
         &self,
         ctx: &egui::Context,
@@ -193,20 +186,6 @@ impl ControllerOverlayPanel {
         }
         None
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     pub fn show(
         &mut self,
@@ -393,8 +372,4 @@ impl ControllerOverlayPanel {
                 }
             });
     }
-
-
-
-
 }

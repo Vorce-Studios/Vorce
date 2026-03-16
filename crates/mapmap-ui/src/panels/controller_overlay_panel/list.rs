@@ -1,4 +1,3 @@
-
 #[allow(unused_imports)]
 use egui::{Color32, Pos2, Rect, Response, Sense, Stroke, TextureHandle, Ui, Vec2};
 
@@ -11,7 +10,7 @@ use std::collections::{HashMap, HashSet};
 use super::panel::{ControllerOverlayPanel, ElementFilter};
 
 impl ControllerOverlayPanel {
-/// Show the element list view
+    /// Show the element list view
     pub(crate) fn show_element_list_view(&mut self, ui: &mut Ui, user_config: &mut UserConfig) {
         // Filter buttons
         ui.horizontal(|ui| {

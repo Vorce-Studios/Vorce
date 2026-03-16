@@ -1,4 +1,3 @@
-
 #[allow(unused_imports)]
 use egui::{Color32, Pos2, Rect, Response, Sense, Stroke, TextureHandle, Ui, Vec2};
 
@@ -6,9 +5,7 @@ use egui::{Color32, Pos2, Rect, Response, Sense, Stroke, TextureHandle, Ui, Vec2
 use crate::config::{MidiAssignment, MidiAssignmentTarget, UserConfig};
 
 #[cfg(feature = "midi")]
-use mapmap_control::midi::{
-    ControllerElement, ElementState, ElementType,
-};
+use mapmap_control::midi::{ControllerElement, ElementState, ElementType};
 use mapmap_core::runtime_paths;
 #[allow(unused_imports)]
 use std::collections::{HashMap, HashSet};
@@ -16,7 +13,7 @@ use std::collections::{HashMap, HashSet};
 use super::panel::ControllerOverlayPanel;
 
 impl ControllerOverlayPanel {
-/// Load resources (background and assets)
+    /// Load resources (background and assets)
     pub(crate) fn ensure_resources_loaded(&mut self, ctx: &egui::Context) {
         // Load Background
         if self.background_texture.is_none() {
@@ -53,7 +50,7 @@ impl ControllerOverlayPanel {
             }
         }
     }
-#[cfg(feature = "midi")]
+    #[cfg(feature = "midi")]
     pub(crate) fn draw_asset(
         painter: &egui::Painter,
         assets: &HashMap<String, TextureHandle>,
@@ -99,7 +96,7 @@ impl ControllerOverlayPanel {
             }
         }
     }
-#[allow(unused_variables)]
+    #[allow(unused_variables)]
     pub(crate) fn show_overlay_view(&mut self, ui: &mut Ui, assignments: &[MidiAssignment]) {
         let (base_w, base_h) = if let Some(tex) = &self.background_texture {
             let size = tex.size();
@@ -360,7 +357,7 @@ impl ControllerOverlayPanel {
             }
         }
     }
-#[cfg(feature = "midi")]
+    #[cfg(feature = "midi")]
     pub(crate) fn draw_element_with_frame(
         &mut self,
         painter: &egui::Painter,

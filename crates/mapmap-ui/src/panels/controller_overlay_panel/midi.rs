@@ -1,4 +1,3 @@
-
 #[allow(unused_imports)]
 use egui::{Color32, Pos2, Rect, Response, Sense, Stroke, TextureHandle, Ui, Vec2};
 
@@ -6,9 +5,7 @@ use egui::{Color32, Pos2, Rect, Response, Sense, Stroke, TextureHandle, Ui, Vec2
 use crate::config::{MidiAssignment, MidiAssignmentTarget, UserConfig};
 
 #[cfg(feature = "midi")]
-use mapmap_control::midi::{
-    ControllerElements, MidiMessage,
-};
+use mapmap_control::midi::{ControllerElements, MidiMessage};
 use mapmap_core::runtime_paths;
 #[allow(unused_imports)]
 use std::collections::{HashMap, HashSet};
@@ -16,14 +13,14 @@ use std::collections::{HashMap, HashSet};
 use super::panel::{ControllerOverlayPanel, MidiLearnTarget};
 
 impl ControllerOverlayPanel {
-#[cfg(feature = "midi")]
+    #[cfg(feature = "midi")]
     pub fn load_elements(&mut self, json: &str) -> Result<(), serde_json::Error> {
         let elements = ControllerElements::from_json(json)?;
         // Dynamic expansion removed - now using static elements from JSON for better control
         self.elements = Some(elements);
         Ok(())
     }
-#[cfg(feature = "midi")]
+    #[cfg(feature = "midi")]
     pub fn process_midi(&mut self, message: MidiMessage) {
         // Check if in learn mode
         if self.learn_manager.process(message) {
@@ -56,7 +53,7 @@ impl ControllerOverlayPanel {
             }
         }
     }
-#[cfg(feature = "midi")]
+    #[cfg(feature = "midi")]
     fn message_matches_config(
         message: &MidiMessage,
         config: &mapmap_control::midi::MidiConfig,
@@ -103,23 +100,20 @@ impl ControllerOverlayPanel {
             _ => false,
         }
     }
-#[cfg(feature = "midi")]
+    #[cfg(feature = "midi")]
     pub fn start_learn(&mut self, element_id: &str, target: MidiLearnTarget) {
         self.learn_target = Some(target);
         self.learn_manager.start_learning(element_id);
     }
-#[cfg(feature = "midi")]
+    #[cfg(feature = "midi")]
     pub fn cancel_learn(&mut self) {
         self.learn_target = None;
         self.learn_manager.cancel();
     }
-#[cfg(feature = "midi")]
+    #[cfg(feature = "midi")]
     pub fn is_learning(&self) -> bool {
         self.learn_manager.is_learning()
     }
-
-
-
 
     pub(crate) fn save_elements(&self) {
         #[cfg(feature = "midi")]
