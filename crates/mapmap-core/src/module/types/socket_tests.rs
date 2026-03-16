@@ -16,12 +16,13 @@ mod tests {
     #[test]
     fn test_all_part_type_variants_socket_generation() {
         // Trigger - AudioFFT
-        let mut audio_config = AudioTriggerOutputConfig::default();
-        audio_config.frequency_bands = true;
         let trigger_fft = ModulePartType::Trigger(TriggerType::AudioFFT {
             band: crate::module::types::trigger::AudioBand::Bass,
             threshold: 0.5,
-            output_config: audio_config,
+            output_config: AudioTriggerOutputConfig {
+                frequency_bands: true,
+                ..Default::default()
+            },
         });
         let (in_sockets, out_sockets) = trigger_fft.get_default_sockets();
         assert_eq!(in_sockets.len(), 0);
