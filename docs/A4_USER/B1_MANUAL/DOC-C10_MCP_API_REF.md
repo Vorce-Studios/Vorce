@@ -90,10 +90,10 @@ The following tools are exposed by the MCP server:
 
 The MCP server provides access to application state via resources:
 
-*   **`mapmap://resources/list`**: Lists all available resources.
-*   **`mapmap://app/state`**: Read-only access to the full application state (JSON).
-*   **`mapmap://layers`**: List of layers.
-*   **`mapmap://cues`**: List of cues.
+*   **`stagegraph://resources/list`**: Lists all available resources.
+*   **`stagegraph://app/state`**: Read-only access to the full application state (JSON).
+*   **`stagegraph://layers`**: List of layers.
+*   **`stagegraph://cues`**: List of cues.
 
 ## Prompts
 

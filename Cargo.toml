@@ -2,15 +2,15 @@
 # CI Trigger fix attempt
 resolver = "2"
 members = [
-    "crates/mapmap",
-    "crates/mapmap-control",
-    "crates/mapmap-core",
-    "crates/mapmap-ffi",
-    "crates/mapmap-io",
-    "crates/mapmap-mcp",
-    "crates/mapmap-media",
-    "crates/mapmap-render",
-    "crates/mapmap-ui",
+    "crates/stagegraph",
+    "crates/stagegraph-control",
+    "crates/stagegraph-core",
+    "crates/stagegraph-ffi",
+    "crates/stagegraph-io",
+    "crates/stagegraph-mcp",
+    "crates/stagegraph-media",
+    "crates/stagegraph-render",
+    "crates/stagegraph-ui",
 ]
 
 [workspace.package]

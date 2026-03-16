@@ -57,14 +57,14 @@ Dein Journal ist KEIN Log - füge nur Einträge für KRITISCHE Erkenntnisse hinz
 
 **CRATE-ANALYSE:**
 ```
-mapmap-core/     - Kernlogik (HÖCHSTE Priorität)
-mapmap-render/   - GPU-Rendering (schwer zu testen, #[ignore] für GPU-Tests)
-mapmap-media/    - Media-Pipeline (FFmpeg-Mocks nötig)
-mapmap-ui/       - UI-Komponenten (Snapshot-Tests)
-mapmap-control/  - MIDI/OSC (Mocking erforderlich)
-mapmap-io/       - I/O-Operationen (Temp-Files, Mocks)
-mapmap-mcp/      - MCP-Server (Integration-Tests)
-mapmap/          - Hauptanwendung (E2E-Tests)
+stagegraph-core/     - Kernlogik (HÖCHSTE Priorität)
+stagegraph-render/   - GPU-Rendering (schwer zu testen, #[ignore] für GPU-Tests)
+stagegraph-media/    - Media-Pipeline (FFmpeg-Mocks nötig)
+stagegraph-ui/       - UI-Komponenten (Snapshot-Tests)
+stagegraph-control/  - MIDI/OSC (Mocking erforderlich)
+stagegraph-io/       - I/O-Operationen (Temp-Files, Mocks)
+stagegraph-mcp/      - MCP-Server (Integration-Tests)
+stagegraph/          - Hauptanwendung (E2E-Tests)
 ```
 
 **PRIORITÄTS-CHECKS:**
@@ -84,7 +84,7 @@ cargo tarpaulin --out Html --output-dir coverage/
 cargo test --workspace
 
 # Nur spezifisches Crate testen
-cargo test -p mapmap-core
+cargo test -p stagegraph-core
 ```
 
 ### 🛠️ IMPLEMENTIERUNG - Test-Patterns für MapFlow:
@@ -142,19 +142,19 @@ async fn test_async_[funktion]() {
 ## GUARDIAN'S FOKUS-BEREICHE FÜR MAPFLOW:
 
 ### 🎯 Höchste Priorität (Corelogik):
-- `mapmap-core/src/module.rs` - ModuleManager, Parts, Connections
-- `mapmap-core/src/layer.rs` - LayerManager, Blend-Modi
-- `mapmap-core/src/audio/analyzer_v2.rs` - FFT, Beat-Detection
-- `mapmap-core/src/state.rs` - AppState Serialisierung
+- `stagegraph-core/src/module.rs` - ModuleManager, Parts, Connections
+- `stagegraph-core/src/layer.rs` - LayerManager, Blend-Modi
+- `stagegraph-core/src/audio/analyzer_v2.rs` - FFT, Beat-Detection
+- `stagegraph-core/src/state.rs` - AppState Serialisierung
 
 ### 🎯 Mittlere Priorität (I/O):
-- `mapmap-io/src/format.rs` - VideoFormat Konvertierung
-- `mapmap-io/src/ndi/mod.rs` - NDI Stubs (Feature-Gates)
-- `mapmap-control/src/midi/` - MIDI-Parsing
+- `stagegraph-io/src/format.rs` - VideoFormat Konvertierung
+- `stagegraph-io/src/ndi/mod.rs` - NDI Stubs (Feature-Gates)
+- `stagegraph-control/src/midi/` - MIDI-Parsing
 
 ### 🎯 Niedrige Priorität (UI/GPU):
-- `mapmap-ui/src/module_canvas.rs` - UI-Interaktionen
-- `mapmap-render/src/` - GPU-Tests mit #[ignore]
+- `stagegraph-ui/src/module_canvas.rs` - UI-Interaktionen
+- `stagegraph-render/src/` - GPU-Tests mit #[ignore]
 
 ---
 

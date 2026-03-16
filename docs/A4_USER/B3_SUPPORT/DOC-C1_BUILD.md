@@ -189,10 +189,10 @@ git clone https://github.com/MrLongNight/MapFlow.git
 cd MapFlow
 
 # Build the current macOS beta baseline
-cargo build --release -p mapmap --no-default-features --features macos-beta
+cargo build --release -p stagegraph --no-default-features --features macos-beta
 
 # Run the application
-cargo run --release -p mapmap --no-default-features --features macos-beta
+cargo run --release -p stagegraph --no-default-features --features macos-beta
 
 # Package a .app bundle from the built binary
 bash scripts/mapflow/package-macos-app.sh 0.2.0
@@ -279,12 +279,12 @@ For production or distribution:
 cargo build --release
 
 # The binary will be at:
-# Linux/macOS: ./target/release/mapmap
-# Windows: .\target\release\mapmap.exe
+# Linux/macOS: ./target/release/stagegraph
+# Windows: .\target\release\stagegraph.exe
 
 # Run release build
-./target/release/mapmap  # Linux/macOS
-.\target\release\mapmap.exe  # Windows
+./target/release/stagegraph  # Linux/macOS
+.\target\release\stagegraph.exe  # Windows
 ```
 
 ---
@@ -296,8 +296,8 @@ cargo build --release
 cargo test
 
 # Run tests for a specific crate
-cargo test -p mapmap-core
-cargo test -p mapmap-render
+cargo test -p stagegraph-core
+cargo test -p stagegraph-render
 
 # Run tests with output
 cargo test -- --nocapture

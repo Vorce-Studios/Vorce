@@ -23,4 +23,4 @@
 | 737 | UX: Improve accessibility for styled_slider | ux/improve-styled-slider-accessibility-11840650518609249811 | Open | Pending | UNKNOWN | - |
 | 735 | 🛡️ Sentinel: [HIGH] Fix path traversal vulnerability in control system | sentinel/fix-path-traversal-5558060898835203929 | Open | Pending | UNKNOWN | - |
 | 733 | 📋 Tracker: Update ROADMAP and CHANGELOG (Feb 16 Audit) | tracker-doc-update-feb16-2099321963734110385 | Open | Pending | UNKNOWN | - |
-| 732 | 🧪 Guardian: Erweiterte Tests für mapmap-core/module.rs | guardian-core-module-tests-4369418295693435068 | Open | Pending | UNKNOWN | - |
+| 732 | 🧪 Guardian: Erweiterte Tests für stagegraph-core/module.rs | guardian-core-module-tests-4369418295693435068 | Open | Pending | UNKNOWN | - |

@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 2026-03-15: test: Add missing tests for logging module (#1153)
 - 2026-03-15: fix: Resolve YAML syntax errors and cleanup validation workflow (#-)
 - 2026-03-15: fix: Add concurrency groups and remove path filters to prevent runner queue saturation (#-)
-- 2026-03-15: refactor: Decompose mapmap-ui lib.rs (#1154)
+- 2026-03-15: refactor: Decompose stagegraph-ui lib.rs (#1154)
 - 2026-03-15: feat: Implement media player orchestration, video playback, and texture management. (#-)
 - 2026-03-15: fix: Ensure Node.js 24 opt-in is applied to all steps in post-merge workflow (#-)
 - 2026-03-15: fix: Resolve case-sensitivity conflict by removing .Jules/ entry (#-)
@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 2026-03-14: feat: Consistent styling for empty states (#1121)
 - 2026-03-14: fix: Fix DoS vulnerability in project export (#1120)
 - 2026-03-14: perf: Optimize TexturePool view fast path (#1119)
-- 2026-03-14: feat: Introduce `mapmap` crate with module evaluation and UI layout, establish visual capture tests, and implement CI/CD workflows. (#-)
+- 2026-03-14: feat: Introduce `stagegraph` crate with module evaluation and UI layout, establish visual capture tests, and implement CI/CD workflows. (#-)
 - 2026-03-14: fix: Fix broken link in GitHub Workflows README (#1110)
 - 2026-03-14: chore: Repository Cleanup Check - Clean State (#1109)
 - 2026-03-14: feat: Implement `winit::application::ApplicationHandler` for the core application event loop and lifecycle management. (#-)
@@ -56,13 +56,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 2026-03-14: feat: Enable Enter key to trigger cue jump (#1108)
 - 2026-03-14: feat: Improve empty state visibility via text muting (#1107)
 - 2026-03-14: perf: Eliminate unnecessary f32 clone in evaluation loop (#1106)
-- 2026-03-14: test: Add comprehensive unit tests for mapmap-core layer structs and manager (#1105)
+- 2026-03-14: test: Add comprehensive unit tests for stagegraph-core layer structs and manager (#1105)
 - 2026-03-14: chore: Verify clean repository state (#1104)
-- 2026-03-14: docs: Update mapmap crate README to point to new semantic documentation structure (#1103)
+- 2026-03-14: docs: Update stagegraph crate README to point to new semantic documentation structure (#1103)
 - 2026-03-14: feat: Background generation of thumbnails in Media Browser (#1100)
 - 2026-03-14: refactor: Refactor MCP Server by separating tool definitions and handlers (#1101)
 - 2026-03-14: docs: Remove broken pull request template link from GitHub workflows README (#-)
-- 2026-03-13: docs: Update mapmap crate README to point to new semantic documentation structure.
+- 2026-03-13: docs: Update stagegraph crate README to point to new semantic documentation structure.
 - 2026-03-12: fix(ci): Fix pre-commit checks after UI config additions (#1029)
 - 2026-03-12: fix(ci): Fix the Windows MSI release step by removing the stray `-- --release` from the `cargo wix` invocation so WiX packages the existing release build correctly (follow-up to Windows release workflow regression, run 22981970147).
 - 2026-03-12: fix(ci): Correct the Windows MSI release step by replacing the unsupported `cargo wix --no-check-includes` flag with `--no-build` in the release workflow (follow-up to Windows release workflow regression, run 22958743385).

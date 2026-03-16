@@ -147,5 +147,5 @@ If you have questions about contributing, please open an issue or reach out to t
 
 ---
 
-**Note:** MapFlow is based on the original MapMap project and maintains its open-source spirit.
+**Note:** MapFlow is based on the original StageGraph project and maintains its open-source spirit.
 We welcome contributions from everyone, regardless of experience level!

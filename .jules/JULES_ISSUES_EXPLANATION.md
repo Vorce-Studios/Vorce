@@ -157,7 +157,7 @@ This is critical for professional multi-projector setups.
 - [ ] Tests pass for 2, 4, and 6+ output scenarios
 
 ### Technical Details
-- Files: `crates/mapmap-render/src/output.rs`, `crates/mapmap/src/main.rs`
+- Files: `crates/stagegraph-render/src/output.rs`, `crates/stagegraph/src/main.rs`
 - Use wgpu for multi-window support
 - Implement VSync synchronization mechanism
 - Consider using separate surfaces per output

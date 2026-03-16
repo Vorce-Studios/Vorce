@@ -57,8 +57,8 @@ VjMapper/
 ├── .vscode/             # VS Code Konfiguration
 ├── assets/              # Statische Assets (Icons, Bilder)
 ├── crates/              # Rust Crates (NICHT ANFASSEN)
-│   ├── mapmap-core/
-│   ├── mapmap-render/
+│   ├── stagegraph-core/
+│   ├── stagegraph-render/
 │   └── ...
 ├── docs/                # Dokumentation
 │   ├── 01-OVERVIEW/

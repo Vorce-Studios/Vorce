@@ -16,11 +16,11 @@
 
 ```
 crates/
-├── mapmap-core      # Kernlogik, Projektmanagement
-├── mapmap-ui        # egui UI-Komponenten
-├── mapmap-io        # FFmpeg, NDI, Spout/Syphon
-├── mapmap-bevy      # 3D Engine (Bevy)
-└── mapmap           # Haupt-Binary
+├── stagegraph-core      # Kernlogik, Projektmanagement
+├── stagegraph-ui        # egui UI-Komponenten
+├── stagegraph-io        # FFmpeg, NDI, Spout/Syphon
+├── stagegraph-bevy      # 3D Engine (Bevy)
+└── stagegraph           # Haupt-Binary
 ```
 
 ---

@@ -8,7 +8,7 @@
 | Metrik | Wert |
 |--------|------|
 | Rust-Dateien | 133 |
-| Hauptcrate | mapmap (1808 Zeilen in main.rs) |
+| Hauptcrate | stagegraph (1808 Zeilen in main.rs) |
 | Build Status | ✅ Kompiliert |
 | Tests | ✅ Alle bestanden |
 | Clippy Warnungen | 0 |
@@ -19,15 +19,15 @@
 
 ```
 crates/
-├── mapmap/           # Hauptanwendung (UI + Event Loop)
-├── mapmap-core/      # Kernlogik (Layer, Module, Audio)
-├── mapmap-control/   # MIDI, OSC, Shortcuts
-├── mapmap-render/    # WGPU Rendering
-├── mapmap-io/        # Datei I/O
-├── mapmap-media/     # Media Handling
-├── mapmap-ui/        # egui UI Panels
-├── mapmap-mcp/       # MCP Integration
-└── mapmap-ffi/       # FFI Bindings
+├── stagegraph/           # Hauptanwendung (UI + Event Loop)
+├── stagegraph-core/      # Kernlogik (Layer, Module, Audio)
+├── stagegraph-control/   # MIDI, OSC, Shortcuts
+├── stagegraph-render/    # WGPU Rendering
+├── stagegraph-io/        # Datei I/O
+├── stagegraph-media/     # Media Handling
+├── stagegraph-ui/        # egui UI Panels
+├── stagegraph-mcp/       # MCP Integration
+└── stagegraph-ffi/       # FFI Bindings
 ```
 
 ---
@@ -96,11 +96,11 @@ mod render {
 
 ### Fehler 1: Unresolved Import
 ```
-error[E0432]: unresolved import `mapmap_render::MeshBufferCache`
+error[E0432]: unresolved import `stagegraph_render::MeshBufferCache`
 ```
 
 **Lösung:**
-1. In `crates/mapmap-render/src/lib.rs` hinzufügen:
+1. In `crates/stagegraph-render/src/lib.rs` hinzufügen:
 ```rust
 pub mod mesh_buffer_cache;  // Falls Datei existiert
 pub use mesh_buffer_cache::MeshBufferCache;

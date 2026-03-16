@@ -110,31 +110,31 @@
 # Component Labels
 - name: "component: core"
   color: "006b75"
-  description: "mapmap-core crate"
+  description: "stagegraph-core crate"
 
 - name: "component: render"
   color: "006b75"
-  description: "mapmap-render crate"
+  description: "stagegraph-render crate"
 
 - name: "component: media"
   color: "006b75"
-  description: "mapmap-media crate"
+  description: "stagegraph-media crate"
 
 - name: "component: ui"
   color: "006b75"
-  description: "mapmap-ui crate"
+  description: "stagegraph-ui crate"
 
 - name: "component: control"
   color: "006b75"
-  description: "mapmap-control crate"
+  description: "stagegraph-control crate"
 
 - name: "component: ffi"
   color: "006b75"
-  description: "mapmap-ffi crate"
+  description: "stagegraph-ffi crate"
 
 - name: "component: io"
   color: "006b75"
-  description: "mapmap-io crate"
+  description: "stagegraph-io crate"
 
 # Workflow Labels
 - name: "workflows"

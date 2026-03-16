@@ -25,9 +25,9 @@ Sie kombiniert:
 
 Primäre Code-Referenzen:
 
-- `crates/mapmap-media/src/pipeline.rs` (`FramePipeline`, `FrameScheduler`)
-- `crates/mapmap/src/orchestration/media.rs` (Player-Orchestrierung, Queue-Drain)
-- `crates/mapmap-render/src/uploader.rs` (`WgpuFrameUploader`)
+- `crates/stagegraph-media/src/pipeline.rs` (`FramePipeline`, `FrameScheduler`)
+- `crates/stagegraph/src/orchestration/media.rs` (Player-Orchestrierung, Queue-Drain)
+- `crates/stagegraph-render/src/uploader.rs` (`WgpuFrameUploader`)
 
 ---
 
@@ -35,11 +35,11 @@ Primäre Code-Referenzen:
 
 ### 2.1 High-Level Komponenten
 
-- **mapmap-core**: Domänenmodell (Paint/Mapping/Shape), Geometrie, Projektzustand
-- **mapmap-render**: wgpu-Backend, Texturverwaltung, Shader/Pipelines, Renderer
-- **mapmap-media**: Decoder/Player, Frame-Pipeline, Playback-Steuerung
-- **mapmap-ui**: UI-Zustand, Panels/Controls, Darstellung von Playback-Infos
-- **mapmap (binary/app)**: Orchestrierung, Event-Loop, Main-Renderloop
+- **stagegraph-core**: Domänenmodell (Paint/Mapping/Shape), Geometrie, Projektzustand
+- **stagegraph-render**: wgpu-Backend, Texturverwaltung, Shader/Pipelines, Renderer
+- **stagegraph-media**: Decoder/Player, Frame-Pipeline, Playback-Steuerung
+- **stagegraph-ui**: UI-Zustand, Panels/Controls, Darstellung von Playback-Infos
+- **stagegraph (binary/app)**: Orchestrierung, Event-Loop, Main-Renderloop
 
 ### 2.2 Threading-Modell (IST)
 

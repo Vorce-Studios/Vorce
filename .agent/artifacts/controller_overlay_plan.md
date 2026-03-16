@@ -100,12 +100,12 @@
 ## 📝 Code-Änderungen
 
 ### Dateien zu modifizieren:
-- `crates/mapmap/src/main.rs` - Toolbar MIDI Controls
-- `crates/mapmap-ui/src/controller_overlay_panel.rs` - Komplettes Redesign
-- `crates/mapmap-ui/src/lib.rs` - Exports anpassen
+- `crates/stagegraph/src/main.rs` - Toolbar MIDI Controls
+- `crates/stagegraph-ui/src/controller_overlay_panel.rs` - Komplettes Redesign
+- `crates/stagegraph-ui/src/lib.rs` - Exports anpassen
 
 ### Neue Dateien:
-- ❓ `crates/mapmap-ui/src/midi_element_list.rs` (optional, könnte in overlay sein)
+- ❓ `crates/stagegraph-ui/src/midi_element_list.rs` (optional, könnte in overlay sein)
 
 ### Datei-Struktur für Assets:
 ```

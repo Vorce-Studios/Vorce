@@ -50,20 +50,20 @@ Die meisten aktuellen Tests pruefen Logik, nicht sichtbare UI.
 
 Beispiele:
 
-- `crates/mapmap-ui/tests/timeline_automation_tests.rs`
+- `crates/stagegraph-ui/tests/timeline_automation_tests.rs`
 - diverse `#[cfg(test)]`-Bereiche in UI-Panels und Editoren
 
 Die vorhandenen GPU-Tests laufen offscreen und sind derzeit ignoriert:
 
-- `crates/mapmap-render/tests/effect_chain_tests.rs`
-- `crates/mapmap-render/tests/effect_chain_integration_tests.rs`
+- `crates/stagegraph-render/tests/effect_chain_tests.rs`
+- `crates/stagegraph-render/tests/effect_chain_integration_tests.rs`
 
 Der echte Fensterpfad liegt im Produktionslauf:
 
-- `crates/mapmap/src/main.rs`
-- `crates/mapmap/src/app/core/init.rs`
-- `crates/mapmap/src/window_manager.rs`
-- `crates/mapmap/src/app/loops/render.rs`
+- `crates/stagegraph/src/main.rs`
+- `crates/stagegraph/src/app/core/init.rs`
+- `crates/stagegraph/src/window_manager.rs`
+- `crates/stagegraph/src/app/loops/render.rs`
 
 Wesentliche Schlussfolgerung:
 
@@ -135,7 +135,7 @@ Empfohlene Richtung:
 
 Noetig:
 
-- vorhandenen GPU-Readback-Code aus `crates/mapmap/src/app/loops/render.rs` verallgemeinern
+- vorhandenen GPU-Readback-Code aus `crates/stagegraph/src/app/loops/render.rs` verallgemeinern
 - Screenshots fuer Main-Window und Projektorfenster speichern
 - Artefakte als PNG ablegen
 - optional Serienaufnahme fuer spaetere Videobildung bereitstellen

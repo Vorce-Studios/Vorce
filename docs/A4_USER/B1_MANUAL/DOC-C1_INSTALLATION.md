@@ -2,7 +2,7 @@
 
 ## ⚠️ Important Note
 
-MapFlow is a complete rewrite of the legacy "MapMap" application. The C++/Qt version instructions are obsolete.
+MapFlow is a complete rewrite of the legacy "StageGraph" application. The C++/Qt version instructions are obsolete.
 
 ## Supported Platforms
 

@@ -5373,284 +5373,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mapmap"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "arc-swap",
- "axum",
- "bindgen 0.72.1",
- "bytemuck",
- "cbindgen",
- "cc",
- "clap",
- "cpal 0.17.1",
- "criterion",
- "crossbeam-channel",
- "dirs",
- "egui",
- "egui-wgpu",
- "egui-winit",
- "egui_extras",
- "ffmpeg-next",
- "futures",
- "glam 0.32.1",
- "hound",
- "hyper",
- "image 0.24.9",
- "mapmap-bevy",
- "mapmap-control",
- "mapmap-core",
- "mapmap-io",
- "mapmap-mcp",
- "mapmap-media",
- "mapmap-render",
- "mapmap-ui",
- "midir",
- "parking_lot",
- "pollster",
- "proptest",
- "rayon",
- "rfd",
- "ron 0.12.0",
- "rosc",
- "rustfft",
- "serde",
- "serde_json",
- "sysinfo",
- "thiserror 1.0.69",
- "tokio",
- "toml 1.0.6+spec-1.1.0",
- "tower",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
- "wgpu 27.0.1",
- "winit",
- "winres",
-]
-
-[[package]]
-name = "mapmap-bevy"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "bevy",
- "bevy_atmosphere",
- "bevy_mod_outline",
- "hexx",
- "mapmap-core",
- "rand 0.9.2",
- "thiserror 1.0.69",
- "tracing",
- "wgpu 24.0.5",
-]
-
-[[package]]
-name = "mapmap-control"
-version = "0.2.0"
-dependencies = [
- "ableton-link-rs",
- "anyhow",
- "axum",
- "futures",
- "hex",
- "http",
- "midir",
- "palette",
- "reqwest",
- "rosc",
- "serde",
- "serde_json",
- "sha2",
- "subtle",
- "thiserror 1.0.69",
- "tokio",
- "tower",
- "tower-http 0.5.2",
- "tracing",
- "uuid",
- "webrtc-dtls",
- "webrtc-util 0.17.1",
-]
-
-[[package]]
-name = "mapmap-core"
-version = "0.2.0"
-dependencies = [
- "audio-processor-analysis",
- "audio-processor-traits",
- "chrono",
- "cpal 0.17.1",
- "crossbeam-channel",
- "dirs",
- "glam 0.32.1",
- "hound",
- "image 0.24.9",
- "num-complex",
- "num-traits",
- "once_cell",
- "parking_lot",
- "proptest",
- "rand 0.10.0",
- "resvg 0.47.0",
- "ron 0.12.0",
- "rustfft",
- "serde",
- "serde_json",
- "stratum-dsp",
- "tempfile",
- "thiserror 1.0.69",
- "tobj",
- "tracing",
- "usvg 0.47.0",
- "uuid",
- "walkdir",
- "winit",
-]
-
-[[package]]
-name = "mapmap-ffi"
-version = "0.2.0"
-dependencies = [
- "bindgen 0.72.1",
- "cbindgen",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "mapmap-io"
-version = "0.2.0"
-dependencies = [
- "bindgen 0.72.1",
- "bytemuck",
- "cc",
- "chrono",
- "cocoa",
- "core-foundation 0.9.4",
- "ffmpeg-next",
- "grafton-ndi",
- "image 0.24.9",
- "mapmap-core",
- "objc",
- "once_cell",
- "ron 0.12.0",
- "rusty-spout",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
- "wgpu 27.0.1",
- "windows 0.58.0",
- "zip",
-]
-
-[[package]]
-name = "mapmap-mcp"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "crossbeam-channel",
- "futures",
- "mapmap-control",
- "mapmap-core",
- "rosc",
- "serde",
- "serde_json",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "mapmap-media"
-version = "0.2.0"
-dependencies = [
- "criterion",
- "crossbeam-channel",
- "ffmpeg-next",
- "ffmpeg-sys-next",
- "image 0.24.9",
- "libmpv2",
- "mapmap-io",
- "parking_lot",
- "snap",
- "tempfile",
- "thiserror 1.0.69",
- "tracing",
- "walkdir",
-]
-
-[[package]]
-name = "mapmap-render"
-version = "0.2.0"
-dependencies = [
- "bytemuck",
- "criterion",
- "crossbeam-channel",
- "futures-channel",
- "glam 0.32.1",
- "image 0.24.9",
- "mapmap-core",
- "notify",
- "parking_lot",
- "pollster",
- "rand 0.10.0",
- "serde",
- "serde_json",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
- "wgpu 27.0.1",
- "wgpu-hal 27.0.4",
- "windows 0.58.0",
- "winit",
-]
-
-[[package]]
-name = "mapmap-ui"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "cpal 0.17.1",
- "dirs",
- "egui",
- "egui-wgpu",
- "egui-winit",
- "egui_extras",
- "egui_node_editor",
- "fluent",
- "fluent-langneg 0.14.2",
- "glam 0.32.1",
- "image 0.24.9",
- "mapmap-control",
- "mapmap-core",
- "mapmap-io",
- "mapmap-media",
- "mapmap-render",
- "once_cell",
- "parking_lot",
- "resvg 0.47.0",
- "rfd",
- "rust-embed",
- "serde",
- "serde_json",
- "sysinfo",
- "thiserror 1.0.69",
- "tiny-skia 0.12.0",
- "tokio",
- "tracing",
- "unic-langid",
- "usvg 0.47.0",
- "wgpu 27.0.1",
- "winit",
-]
-
-[[package]]
 name = "matchers"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8351,6 +8073,284 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "115beb9c69db2393ff10b75a1b8587a51716e5551d015001e55320ed279d32f9"
 dependencies = [
  "const_panic",
+]
+
+[[package]]
+name = "stagegraph"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "arc-swap",
+ "axum",
+ "bindgen 0.72.1",
+ "bytemuck",
+ "cbindgen",
+ "cc",
+ "clap",
+ "cpal 0.17.1",
+ "criterion",
+ "crossbeam-channel",
+ "dirs",
+ "egui",
+ "egui-wgpu",
+ "egui-winit",
+ "egui_extras",
+ "ffmpeg-next",
+ "futures",
+ "glam 0.32.1",
+ "hound",
+ "hyper",
+ "image 0.24.9",
+ "midir",
+ "parking_lot",
+ "pollster",
+ "proptest",
+ "rayon",
+ "rfd",
+ "ron 0.12.0",
+ "rosc",
+ "rustfft",
+ "serde",
+ "serde_json",
+ "stagegraph-bevy",
+ "stagegraph-control",
+ "stagegraph-core",
+ "stagegraph-io",
+ "stagegraph-mcp",
+ "stagegraph-media",
+ "stagegraph-render",
+ "stagegraph-ui",
+ "sysinfo",
+ "thiserror 1.0.69",
+ "tokio",
+ "toml 1.0.6+spec-1.1.0",
+ "tower",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "wgpu 27.0.1",
+ "winit",
+ "winres",
+]
+
+[[package]]
+name = "stagegraph-bevy"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "bevy",
+ "bevy_atmosphere",
+ "bevy_mod_outline",
+ "hexx",
+ "rand 0.9.2",
+ "stagegraph-core",
+ "thiserror 1.0.69",
+ "tracing",
+ "wgpu 24.0.5",
+]
+
+[[package]]
+name = "stagegraph-control"
+version = "0.2.0"
+dependencies = [
+ "ableton-link-rs",
+ "anyhow",
+ "axum",
+ "futures",
+ "hex",
+ "http",
+ "midir",
+ "palette",
+ "reqwest",
+ "rosc",
+ "serde",
+ "serde_json",
+ "sha2",
+ "subtle",
+ "thiserror 1.0.69",
+ "tokio",
+ "tower",
+ "tower-http 0.5.2",
+ "tracing",
+ "uuid",
+ "webrtc-dtls",
+ "webrtc-util 0.17.1",
+]
+
+[[package]]
+name = "stagegraph-core"
+version = "0.2.0"
+dependencies = [
+ "audio-processor-analysis",
+ "audio-processor-traits",
+ "chrono",
+ "cpal 0.17.1",
+ "crossbeam-channel",
+ "dirs",
+ "glam 0.32.1",
+ "hound",
+ "image 0.24.9",
+ "num-complex",
+ "num-traits",
+ "once_cell",
+ "parking_lot",
+ "proptest",
+ "rand 0.10.0",
+ "resvg 0.47.0",
+ "ron 0.12.0",
+ "rustfft",
+ "serde",
+ "serde_json",
+ "stratum-dsp",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tobj",
+ "tracing",
+ "usvg 0.47.0",
+ "uuid",
+ "walkdir",
+ "winit",
+]
+
+[[package]]
+name = "stagegraph-ffi"
+version = "0.2.0"
+dependencies = [
+ "bindgen 0.72.1",
+ "cbindgen",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "stagegraph-io"
+version = "0.2.0"
+dependencies = [
+ "bindgen 0.72.1",
+ "bytemuck",
+ "cc",
+ "chrono",
+ "cocoa",
+ "core-foundation 0.9.4",
+ "ffmpeg-next",
+ "grafton-ndi",
+ "image 0.24.9",
+ "objc",
+ "once_cell",
+ "ron 0.12.0",
+ "rusty-spout",
+ "serde",
+ "serde_json",
+ "stagegraph-core",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "wgpu 27.0.1",
+ "windows 0.58.0",
+ "zip",
+]
+
+[[package]]
+name = "stagegraph-mcp"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "crossbeam-channel",
+ "futures",
+ "rosc",
+ "serde",
+ "serde_json",
+ "stagegraph-control",
+ "stagegraph-core",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "stagegraph-media"
+version = "0.2.0"
+dependencies = [
+ "criterion",
+ "crossbeam-channel",
+ "ffmpeg-next",
+ "ffmpeg-sys-next",
+ "image 0.24.9",
+ "libmpv2",
+ "parking_lot",
+ "snap",
+ "stagegraph-io",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tracing",
+ "walkdir",
+]
+
+[[package]]
+name = "stagegraph-render"
+version = "0.2.0"
+dependencies = [
+ "bytemuck",
+ "criterion",
+ "crossbeam-channel",
+ "futures-channel",
+ "glam 0.32.1",
+ "image 0.24.9",
+ "notify",
+ "parking_lot",
+ "pollster",
+ "rand 0.10.0",
+ "serde",
+ "serde_json",
+ "stagegraph-core",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "wgpu 27.0.1",
+ "wgpu-hal 27.0.4",
+ "windows 0.58.0",
+ "winit",
+]
+
+[[package]]
+name = "stagegraph-ui"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "cpal 0.17.1",
+ "dirs",
+ "egui",
+ "egui-wgpu",
+ "egui-winit",
+ "egui_extras",
+ "egui_node_editor",
+ "fluent",
+ "fluent-langneg 0.14.2",
+ "glam 0.32.1",
+ "image 0.24.9",
+ "once_cell",
+ "parking_lot",
+ "resvg 0.47.0",
+ "rfd",
+ "rust-embed",
+ "serde",
+ "serde_json",
+ "stagegraph-control",
+ "stagegraph-core",
+ "stagegraph-io",
+ "stagegraph-media",
+ "stagegraph-render",
+ "sysinfo",
+ "thiserror 1.0.69",
+ "tiny-skia 0.12.0",
+ "tokio",
+ "tracing",
+ "unic-langid",
+ "usvg 0.47.0",
+ "wgpu 27.0.1",
+ "winit",
 ]
 
 [[package]]

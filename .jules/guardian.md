@@ -11,10 +11,10 @@
 
 ## 2025-05-24 - Initial Insights
 
-**Erkenntnis:** `TriggerConfig::apply` in `mapmap-core` creates a new `rand::rng()` instance on every call for `RandomInRange` mode. This is likely a performance bottleneck in hot paths (e.g., audio triggers).
+**Erkenntnis:** `TriggerConfig::apply` in `stagegraph-core` creates a new `rand::rng()` instance on every call for `RandomInRange` mode. This is likely a performance bottleneck in hot paths (e.g., audio triggers).
 **Aktion:** Consider refactoring `TriggerConfig::apply` to accept a mutable reference to an RNG or use `thread_rng()` more efficiently. For now, testing acknowledges this behavior.
 
-**Erkenntnis:** `VideoFrame` in `mapmap-io` uses `FrameData::Gpu(Arc<wgpu::Texture>)`, making it difficult to unit test without a GPU context.
+**Erkenntnis:** `VideoFrame` in `stagegraph-io` uses `FrameData::Gpu(Arc<wgpu::Texture>)`, making it difficult to unit test without a GPU context.
 **Aktion:** Use `#[ignore]` for GPU-dependent tests or separate logic from resource holding where possible. Ensure CPU fallback paths are robustly tested.
 
 **Erkenntnis:** `MidiMappingKey` implements `From<&MidiMessage>` returning `Option<MidiMappingKey>`. This is unconventional (vs `TryFrom`) but enables ergonomic `let key: Option<_> = msg.into()` in event loops.
@@ -67,7 +67,7 @@ and volume trigger fires correctly.
 
 ## 2024-10-24 - TriggerSystem Coverage
 
-**Insight:** `TriggerSystem` in `mapmap-core` was a critical logic component with zero unit tests. It relies heavily on `ModuleManager`
+**Insight:** `TriggerSystem` in `stagegraph-core` was a critical logic component with zero unit tests. It relies heavily on `ModuleManager`
 and `AudioTriggerData` integration.
 **Action:** Implemented integration tests using `ModuleManager` to simulate module configuration and `AudioTriggerData` to simulate input.
 This pattern effectively tests the interaction without needing full app state.
@@ -108,9 +108,9 @@ Added regression tests `test_resilience_to_bad_input` and `test_resize_mode_zero
 
 **Erkenntnis:** `TriggerSystem` akkumulierte Trigger-Status für gelöschte Parts (Speicherleck) und initialisierte RNG in der Hot-Loop. Außerdem gab es keine Garantie, dass `AudioFFT` Socket-Indizes in `TriggerSystem` mit `module.rs` übereinstimmen.
 **Aktion:** Garbage Collection und RNG-Optimierung in `TriggerSystem::update` implementiert. `test_trigger_system_garbage_collection` und `test_audio_fft_socket_consistency` hinzugefügt, um Lecks und Inkonsistenzen zu verhindern.
-## 2025-03-01 - Testabdeckung im mapmap-core/layer verbessert
- **Erkenntnis:** Der mapmap-core layer manager (manager.rs) hatte keine Testabdeckung. Dieser Code ist entscheidend für das Handling von Layer-Sichtbarkeit, Grouping und Z-Ordering und muss verlässlich funktionieren.
- **Aktion:** Umfangreiche Tests für LayerManager in layer_tests.rs hinzugefügt, inklusive CRUD, Grouping, Z-Order, Visible-Filter und CoW-Klonverhalten. In Zukunft bei neuem Code immer den zugehörigen Test-File prüfen, insbesondere bei zentralen Managern in mapmap-core.
+## 2025-03-01 - Testabdeckung im stagegraph-core/layer verbessert
+ **Erkenntnis:** Der stagegraph-core layer manager (manager.rs) hatte keine Testabdeckung. Dieser Code ist entscheidend für das Handling von Layer-Sichtbarkeit, Grouping und Z-Ordering und muss verlässlich funktionieren.
+ **Aktion:** Umfangreiche Tests für LayerManager in layer_tests.rs hinzugefügt, inklusive CRUD, Grouping, Z-Order, Visible-Filter und CoW-Klonverhalten. In Zukunft bei neuem Code immer den zugehörigen Test-File prüfen, insbesondere bei zentralen Managern in stagegraph-core.
 
 ## 2026-06-25 - [Trigger Logic Inconsistency]
 
@@ -125,19 +125,19 @@ Die Inkonsistenz im `ModuleEvaluator` bleibt bestehen, da dieser statenlos ist u
 **Aktion:** Ensure both paths are explicitly tested for `TriggerTarget` application. Future refactoring should consider unifying this logic.
 
 ## 2024-03-04 - Ungetestete ModuleManager Funktion
-**Erkenntnis:** Die `ModuleManager` Struktur in `mapmap-core/src/module/manager.rs` war komplett ungetestet. Dies ist kritische Core-Logik.
+**Erkenntnis:** Die `ModuleManager` Struktur in `stagegraph-core/src/module/manager.rs` war komplett ungetestet. Dies ist kritische Core-Logik.
 **Aktion:** Unit Tests für die Modul-Erstellung, -Löschung, -Umbenennung und -Duplizierung hinzugefügt, inklusive Behandlung von Namenskonflikten.
 ## 2026-03-08 - Zusammensetzung Standardwerte und Grenzen
-**Was:** Die `Composition` Struktur und ihre Initialisierung in `crates/mapmap-core/src/layer/composition.rs` wurde intensiv durch Unit-Tests abgedeckt.
+**Was:** Die `Composition` Struktur und ihre Initialisierung in `crates/stagegraph-core/src/layer/composition.rs` wurde intensiv durch Unit-Tests abgedeckt.
 **Warum:** Um sicherzustellen, dass die Boundary Conditions, Master Speed/Opacity Limits (0.1 - 10.0, 0.0 - 1.0) und Default-Werte nicht regressieren.
 **Abdeckung:** Erreicht vollständige Testabdeckung der Initialisierungslogik.
 **Neue Tests:** `test_composition_default_values`, `test_composition_new_initialization`, `test_composition_set_master_opacity_bounds`, `test_composition_set_master_speed_bounds`, `test_composition_with_description_builder`.
 **Geänderte Tests:** Keine.
 
 
-## 2025-03-11 - Testabdeckung im mapmap-core/layer verbessert
-**Erkenntnis:** Der mapmap-core layer manager (manager.rs) hatte keine direkte Testabdeckung für diverse Extrem- oder Fehlerfälle (z.B. ID out-of-bounds, `remove_layer` von nicht existierenden IDs).
-**Aktion:** Umfangreiche Tests für LayerManager direkt in `crates/mapmap-core/src/layer/manager.rs` hinzugefügt, insbesondere für Edge-Cases und extrem-Szenarien (`move_layer_up_down_extremes`, `duplicate_nonexistent_layer`). In Zukunft bei neuem Code immer den zugehörigen Test-File prüfen, insbesondere bei zentralen Managern in mapmap-core.
+## 2025-03-11 - Testabdeckung im stagegraph-core/layer verbessert
+**Erkenntnis:** Der stagegraph-core layer manager (manager.rs) hatte keine direkte Testabdeckung für diverse Extrem- oder Fehlerfälle (z.B. ID out-of-bounds, `remove_layer` von nicht existierenden IDs).
+**Aktion:** Umfangreiche Tests für LayerManager direkt in `crates/stagegraph-core/src/layer/manager.rs` hinzugefügt, insbesondere für Edge-Cases und extrem-Szenarien (`move_layer_up_down_extremes`, `duplicate_nonexistent_layer`). In Zukunft bei neuem Code immer den zugehörigen Test-File prüfen, insbesondere bei zentralen Managern in stagegraph-core.
 
 ## 2026-03-15 - [AudioAnalyzerV2 Test Coverage Improvement]
 

@@ -15,13 +15,13 @@ Dieses Dokument beschreibt den aktuellen Implementierungsstand der Timeline in V
 
 ### Lokale Codebasis
 
-- `crates/mapmap-ui/src/editors/timeline_v2.rs`
-- `crates/mapmap-core/src/animation.rs`
-- `crates/mapmap-core/src/effect_animation.rs`
-- `crates/mapmap/src/app/loops/logic.rs`
-- `crates/mapmap/src/app/actions.rs`
-- `crates/mapmap-ui/tests/timeline_automation_tests.rs`
-- `crates/mapmap-ui/src/panels/cue_panel.rs`
+- `crates/stagegraph-ui/src/editors/timeline_v2.rs`
+- `crates/stagegraph-core/src/animation.rs`
+- `crates/stagegraph-core/src/effect_animation.rs`
+- `crates/stagegraph/src/app/loops/logic.rs`
+- `crates/stagegraph/src/app/actions.rs`
+- `crates/stagegraph-ui/tests/timeline_automation_tests.rs`
+- `crates/stagegraph-ui/src/panels/cue_panel.rs`
 - `docs/A3_PROJECT/B2_QUALITY/DOC-C1_TEST_MATRIX.md`
 
 ### Offizielle externe Referenzen
@@ -73,7 +73,7 @@ Dieses Dokument beschreibt den aktuellen Implementierungsstand der Timeline in V
 - Keine sichtbare produktive Bindung von Effektparametern an den `EffectParameterAnimator` ausserhalb von Tests.
 - Die von `effect_animator.update()` erzeugten Parameter-Updates werden im Hauptloop aktuell nicht auf Effekte zurueckgeschrieben.
 - Cue-System und Timeline sind nicht integriert.
-- Die Cue-UI erzeugt `UIAction::AddCue`, `GoCue`, `NextCue`, `PrevCue`, `StopCue`, `UpdateCue`, `RemoveCue`, aber in `crates/mapmap/src/app/actions.rs` ist dafuer aktuell kein Handler sichtbar.
+- Die Cue-UI erzeugt `UIAction::AddCue`, `GoCue`, `NextCue`, `PrevCue`, `StopCue`, `UpdateCue`, `RemoveCue`, aber in `crates/stagegraph/src/app/actions.rs` ist dafuer aktuell kein Handler sichtbar.
 - Testabdeckung ist sehr schmal:
   - keine Tests fuer `SemiAutomated`
   - keine UI-Interaktionstests

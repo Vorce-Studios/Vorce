@@ -79,7 +79,7 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Check Clippy
-        run: cargo clippy --workspace --all-targets --features "mapmap-io/ci-linux,ffmpeg" -- -D warnings
+        run: cargo clippy --workspace --all-targets --features "stagegraph-io/ci-linux,ffmpeg" -- -D warnings
 
   security:
     name: "Security Scan"
@@ -158,10 +158,10 @@ jobs:
             ffmpeg
 
       - name: Build
-        run: cargo build --workspace --verbose --features "mapmap-io/ci-linux,ffmpeg"
+        run: cargo build --workspace --verbose --features "stagegraph-io/ci-linux,ffmpeg"
 
       - name: Test
-        run: cargo test --workspace --features "mapmap-io/ci-linux,ffmpeg"
+        run: cargo test --workspace --features "stagegraph-io/ci-linux,ffmpeg"
 
   build-windows:
     name: "Build & Test (Windows)"

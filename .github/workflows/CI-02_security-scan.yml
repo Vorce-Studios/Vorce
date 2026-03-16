@@ -68,7 +68,7 @@ jobs:
             ffmpeg
 
       - name: Build for Analysis
-        run: cargo build --workspace --features "mapmap-io/ci-linux,ffmpeg"
+        run: cargo build --workspace --features "stagegraph-io/ci-linux,ffmpeg"
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

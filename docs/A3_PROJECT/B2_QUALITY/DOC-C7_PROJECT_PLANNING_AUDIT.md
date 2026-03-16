@@ -13,12 +13,12 @@
 
 #### 1. Multi-PC Architektur
 - **Roadmap:** Phase 8, diverse Optionen (NDI, Distributed Rendering).
-- **Code:** `mapmap-io/src/ndi` existiert, enthält aber "TODO: Implement actual frame sending".
+- **Code:** `stagegraph-io/src/ndi` existiert, enthält aber "TODO: Implement actual frame sending".
 - **Fazit:** Die Implementierung hinkt der Planung hinterher. NDI ist nur ein Skelett.
 
 #### 2. MCP Integration
 - **Roadmap:** "MCP-API-Referenz (TODO)".
-- **Code:** `mapmap-mcp` Crate existiert und scheint funktional. Die Dokumentation fehlt aber.
+- **Code:** `stagegraph-mcp` Crate existiert und scheint funktional. Die Dokumentation fehlt aber.
 
 #### 3. Assignments System
 - **Roadmap:** "Assignment System (PR #140 MERGED)".
@@ -34,5 +34,5 @@
 3.  **Blackscreen Issue aufnehmen:** Das aktuelle Video-Problem sollte als Blocker in der Roadmap auftauchen.
 
 ## Offene Klärungspunkte
-- Ist `mapmap-control/src/web` (WebSocket) wirklich "NICHT NUTZEN"? Wenn ja, sollte der Code als `deprecated` markiert oder entfernt werden.
+- Ist `stagegraph-control/src/web` (WebSocket) wirklich "NICHT NUTZEN"? Wenn ja, sollte der Code als `deprecated` markiert oder entfernt werden.
 - Wie ist der Status von `HAP` Codec? Roadmap sagt "COMPLETED", aber gibt es Tests?

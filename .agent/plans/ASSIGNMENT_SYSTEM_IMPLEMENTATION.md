@@ -2,7 +2,7 @@
 
 > **Status:** PROPOSED
 > **Priority:** HIGH (Core Feature)
-> **Dependencies:** `mapmap-core`, `mapmap-ui`, `mapmap-control`
+> **Dependencies:** `stagegraph-core`, `stagegraph-ui`, `stagegraph-control`
 
 ---
 
@@ -20,7 +20,7 @@ Implement a centralized **Assignment System** to map generic control sources (MI
 
 ## 🏗️ Architecture
 
-### 1. Data Structures (`mapmap-core/src/assignment.rs`)
+### 1. Data Structures (`stagegraph-core/src/assignment.rs`)
 
 ```rust
 pub struct Assignment {
@@ -46,13 +46,13 @@ pub enum ControlTarget {
 }
 ```
 
-### 2. Logic (`mapmap-core/src/assignment/manager.rs`)
+### 2. Logic (`stagegraph-core/src/assignment/manager.rs`)
 
 - `AssignmentManager` struct holding a `Vec<Assignment>`.
 - `process(&self, input_state: &InputState) -> Vec<ParameterUpdate>`
 - Methods: `add()`, `remove()`, `find_by_source()`, `find_by_target()`.
 
-### 3. UI (`mapmap-ui/src/assignment_panel.rs`)
+### 3. UI (`stagegraph-ui/src/assignment_panel.rs`)
 
 - **Table View**: List all assignments (Source icon -> Target name).
 - **Controls**:
@@ -66,7 +66,7 @@ pub enum ControlTarget {
 ## 📅 Implementation Steps
 
 ### Phase 1: Core Definitions (Day 1)
-- [ ] Create `mapmap-core/src/assignment/` module.
+- [ ] Create `stagegraph-core/src/assignment/` module.
 - [ ] Implement `ControlSource` and `ControlTarget` enums.
 - [ ] Implement `Assignment` struct with serialization (serde).
 - [ ] Register module in `lib.rs`.
@@ -90,5 +90,5 @@ pub enum ControlTarget {
 
 ## 🔗 References
 - Issue #128 (Assignment System)
-- `mapmap-control::midi`
-- `mapmap-core::parameter`
+- `stagegraph-control::midi`
+- `stagegraph-core::parameter`

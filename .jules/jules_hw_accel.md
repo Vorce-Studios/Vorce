@@ -4,15 +4,15 @@
 Enable hardware-accelerated video decoding (NVDEC, DXVA2, QSV) to reduce CPU usage and improve playback performance for high-resolution files.
 
 ## Context
-Currenly `mapmap_media` uses software decoding via `ffmpeg-next`. This causes performance bottlenecks with 4K content or multiple HD streams.
+Currenly `stagegraph_media` uses software decoding via `ffmpeg-next`. This causes performance bottlenecks with 4K content or multiple HD streams.
 
 ## Implementation Steps
 
 ### 1. Dependency Configuration
-- Verify `ffmpeg-next` features in `crates/mapmap-media/Cargo.toml`.
+- Verify `ffmpeg-next` features in `crates/stagegraph-media/Cargo.toml`.
 - Ensure `vcpkg` or system FFmpeg installation supports hardware codecs (`h264_nvenc`, `hevc_nvenc`, `dxva2`, etc.).
 
-### 2. Decoder Initialization (`crates/mapmap-media/src/decoder/ffmpeg_impl.rs`)
+### 2. Decoder Initialization (`crates/stagegraph-media/src/decoder/ffmpeg_impl.rs`)
 - Modify `VideoDecoder::new` or similar initialization logic.
 - Use `ffmpeg::codec::context::Context::set_hw_device_ctx`.
 - Iterate available HW configs (`ffmpeg::util::media::Type::Video`) and select best available (DXVA2/D3D11VA on Windows).
