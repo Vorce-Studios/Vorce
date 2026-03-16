@@ -33,8 +33,9 @@
 *.autosave
 .*.autosave
 
-# Mac OS X / MacOS
+# OS
 *.DS_Store
+Thumbs.db
 
 # Created by git
 *.BACKUP.*

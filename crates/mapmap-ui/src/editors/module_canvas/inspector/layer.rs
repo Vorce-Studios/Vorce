@@ -53,10 +53,8 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
         MaskType::File { path } => {
             ui.label("📁 Mask File");
             if path.is_empty() {
-                ui.vertical_centered(|ui| {
-                    ui.add_space(10.0);
-                    if ui.button("\u{1F4C2} Select Mask File").clicked()
-                    {
+                ui.horizontal(|ui| {
+                    if ui.button("Select...").clicked() {
                         if let Some(picked) = rfd::FileDialog::new()
                             .add_filter(
                                 "Image",
@@ -71,7 +69,6 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
                         }
                     }
                     ui.label(egui::RichText::new("No mask loaded").weak().italics());
-                    ui.add_space(10.0);
                 });
             } else {
                 ui.horizontal(|ui| {
