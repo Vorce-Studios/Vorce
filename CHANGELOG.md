@@ -6,36 +6,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- 2026-03-15: chore: Translate messages to German in post-merge workflow (#-)
-- 2026-03-15: chore: Enable Node.js 24 for JavaScript actions in CI/CD (#-)
-- 2026-03-15: fix: Fix echo statement in CI/CD validation workflow (#-)
-- 2026-03-15: fix: Fix formatting in CodeQL Analysis category (#-)
-- 2026-03-15: fix: Fix environment variable assignment in CI/CD workflow (#-)
-- 2026-03-15: chore: Update CI/CD workflow for self-hosted post-merge (#-)
-- 2026-03-15: chore: Update auto-merge workflow for PRs (#-)
-- 2026-03-15: chore: Update security scan workflow for consistency and improvements (#-)
-- 2026-03-15: refactor: Refactor CI/CD workflow for better efficiency (#-)
-- 2026-03-15: refactor: Refactor auto-merge checks and workflows (#-)
+- 2026-03-16: feat: Update application branding to MapFlow (#1189)
+- 2026-03-16: docs: Add final large file decomposition tasks to ROADMAP.md
+- 2026-03-16: chore: Delete an unspecified file.
+- 2026-03-16: ci: add self-hosted post-merge validation workflow for Windows and create an empty systems.rs file.
+- 2026-03-16: feat: Introduce media player orchestration and synchronization logic, including creation, update, and cleanup of players based on module state.
+- 2026-03-16: feat: Introduce self-hosted post-merge validation workflow including build, various tests, and a performance benchmark.
+- 2026-03-16: feat: Add GitHub Actions workflows for CodeQL security scanning and comprehensive CI/CD validation including quality gates, security scans, and multi-platform builds.
+- 2026-03-15: fix: remove 'Analyze (rust)' from REQUIRED_CHECK_RUNS in Job03
+- 2026-03-15: docs: add global rebranding master and sub-issues to ROADMAP.md
+- 2026-03-15: fix: resolve compilation errors in tests due to animation API changes
+- 2026-03-15: merge: resolve structural conflicts in timeline_v2.rs and decoder.rs
+- 2026-03-15: feat: add multimodal evaluation hook for visual capture (#1157)
+- 2026-03-15: chore: Translate messages to German in post-merge workflow
+- 2026-03-15: chore: Enable Node.js 24 for JavaScript actions in CI/CD
+- 2026-03-15: fix: Fix echo statement in CI/CD validation workflow
+- 2026-03-15: fix: Fix formatting in CodeQL Analysis category
+- 2026-03-15: fix: Fix environment variable assignment in CI/CD workflow
+- 2026-03-15: chore: Update CI/CD workflow for self-hosted post-merge
+- 2026-03-15: chore: Update auto-merge workflow for PRs
+- 2026-03-15: chore: Update security scan workflow for consistency and improvements
+- 2026-03-15: refactor: Refactor CI/CD workflow for better efficiency
+- 2026-03-15: refactor: Refactor auto-merge checks and workflows
 - 2026-03-15: test: Add missing tests for logging module (#1153)
-- 2026-03-15: fix: Resolve YAML syntax errors and cleanup validation workflow (#-)
-- 2026-03-15: fix: Add concurrency groups and remove path filters to prevent runner queue saturation (#-)
+- 2026-03-15: fix: Resolve YAML syntax errors and cleanup validation workflow
+- 2026-03-15: fix: Add concurrency groups and remove path filters to prevent runner queue saturation
 - 2026-03-15: refactor: Decompose mapmap-ui lib.rs (#1154)
-- 2026-03-15: feat: Implement media player orchestration, video playback, and texture management. (#-)
-- 2026-03-15: fix: Ensure Node.js 24 opt-in is applied to all steps in post-merge workflow (#-)
-- 2026-03-15: fix: Resolve case-sensitivity conflict by removing .Jules/ entry (#-)
+- 2026-03-15: feat: Implement media player orchestration, video playback, and texture management.
+- 2026-03-15: fix: Ensure Node.js 24 opt-in is applied to all steps in post-merge workflow
+- 2026-03-15: fix: Resolve case-sensitivity conflict by removing .Jules/ entry
 - 2026-03-15: feat: MF-074-TIMELINE-SCENE-NESTING: Core/UI: Szenen-Gruppierung und Nesting-Logik fuer Module (#1140)
-- 2026-03-15: refactor: Refactor CI workflow and update dependencies (#-)
-- 2026-03-15: refactor: Refactor CI workflow for security scan (#-)
+- 2026-03-15: refactor: Refactor CI workflow and update dependencies
+- 2026-03-15: refactor: Refactor CI workflow for security scan
 - 2026-03-14: feat: Universal Trigger Router (MIDI/OSC) for Trackline-Modus (#1139)
-- 2026-03-14: chore: Delete ROADMAP.md (#-)
-- 2026-03-14: fix: Add libxkbcommon-x11-0 system dependency for Linux builds (#-)
-- 2026-03-14: chore: Change PR number input requirement to optional (#-)
-- 2026-03-14: fix: Resolve case-sensitivity conflict between .jules and .Jules (#-)
-- 2026-03-14: docs: Restore ROADMAP.md (Mandate: Tasks must not be removed) (#-)
-- 2026-03-14: fix: Report commit status to the correct PR head SHA (#-)
-- 2026-03-14: fix: Fix merge conflict markers in .geminiignore and cleanup ignore patterns (#-)
-- 2026-03-14: docs: Remove old `ROADMAP.md` and add new `.jules/mary-styleux.md` documentation. (#-)
-- 2026-03-14: fix: Ensure commit status is reported for push and pull_request events (#-)
+- 2026-03-14: chore: Delete ROADMAP.md
+- 2026-03-14: fix: Add libxkbcommon-x11-0 system dependency for Linux builds
+- 2026-03-14: chore: Change PR number input requirement to optional
+- 2026-03-14: fix: Resolve case-sensitivity conflict between .jules and .Jules
+- 2026-03-14: docs: Restore ROADMAP.md (Mandate: Tasks must not be removed)
+- 2026-03-14: fix: Report commit status to the correct PR head SHA
+- 2026-03-14: fix: Fix merge conflict markers in .geminiignore and cleanup ignore patterns
+- 2026-03-14: docs: Remove old `ROADMAP.md` and add new `.jules/mary-styleux.md` documentation.
+- 2026-03-14: fix: Ensure commit status is reported for push and pull_request events
 - 2026-03-14: feat: Implement Trackline Mode for marker-to-marker playback (#1137)
 - 2026-03-14: feat: MF-070-TIMELINE-ARCH-MULTI-TRACK: Architektur: Multi-Track Datenmodell (Module vs. Parameter Tracks) (#1135)
 - 2026-03-14: feat: __MF-SubI_Echter MapFlow-Automationsmodus auf run_app-Basis (#1134)
@@ -47,11 +59,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 2026-03-14: feat: Consistent styling for empty states (#1121)
 - 2026-03-14: fix: Fix DoS vulnerability in project export (#1120)
 - 2026-03-14: perf: Optimize TexturePool view fast path (#1119)
-- 2026-03-14: feat: Introduce `mapmap` crate with module evaluation and UI layout, establish visual capture tests, and implement CI/CD workflows. (#-)
+- 2026-03-14: feat: Introduce `mapmap` crate with module evaluation and UI layout, establish visual capture tests, and implement CI/CD workflows.
 - 2026-03-14: fix: Fix broken link in GitHub Workflows README (#1110)
 - 2026-03-14: chore: Repository Cleanup Check - Clean State (#1109)
-- 2026-03-14: feat: Implement `winit::application::ApplicationHandler` for the core application event loop and lifecycle management. (#-)
-- 2026-03-14: feat: Add module graph evaluation, initial application framework, and module canvas UI components. (#-)
+- 2026-03-14: feat: Implement `winit::application::ApplicationHandler` for the core application event loop and lifecycle management.
+- 2026-03-14: feat: Add module graph evaluation, initial application framework, and module canvas UI components.
 - 2026-03-14: feat: Modernisiere UI: responsive Panels, Preview‑Sidebar, Theme, Font‑Scale & Toolbar‑Metriken (#1099)
 - 2026-03-14: feat: Enable Enter key to trigger cue jump (#1108)
 - 2026-03-14: feat: Improve empty state visibility via text muting (#1107)
@@ -61,7 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 2026-03-14: docs: Update mapmap crate README to point to new semantic documentation structure (#1103)
 - 2026-03-14: feat: Background generation of thumbnails in Media Browser (#1100)
 - 2026-03-14: refactor: Refactor MCP Server by separating tool definitions and handlers (#1101)
-- 2026-03-14: docs: Remove broken pull request template link from GitHub workflows README (#-)
+- 2026-03-14: docs: Remove broken pull request template link from GitHub workflows README
 - 2026-03-13: docs: Update mapmap crate README to point to new semantic documentation structure.
 - 2026-03-12: fix(ci): Fix pre-commit checks after UI config additions (#1029)
 - 2026-03-12: fix(ci): Fix the Windows MSI release step by removing the stray `-- --release` from the `cargo wix` invocation so WiX packages the existing release build correctly (follow-up to Windows release workflow regression, run 22981970147).
