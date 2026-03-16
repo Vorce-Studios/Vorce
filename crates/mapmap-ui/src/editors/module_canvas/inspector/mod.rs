@@ -309,8 +309,3 @@ pub fn render_inspector_for_part(
             }
         });
 }
-
-
-
-
-
