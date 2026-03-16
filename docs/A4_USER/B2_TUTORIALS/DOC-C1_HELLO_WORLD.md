@@ -1,12 +1,12 @@
 # Hello World Projection Mapping Tutorial
 
-Welcome to your first projection mapping example with MapFlow! This tutorial will guide you through creating a simple "Hello World" projection mapping application that demonstrates the core concepts of the MapFlow projection mapping system.
+Welcome to your first projection mapping example with SubI! This tutorial will guide you through creating a simple "Hello World" projection mapping application that demonstrates the core concepts of the SubI projection mapping system.
 
 ## Table of Contents
 
 1. [What is Projection Mapping?](#what-is-projection-mapping)
 2. [Prerequisites](#prerequisites)
-3. [Understanding MapFlow Architecture](#understanding-mapflow-architecture)
+3. [Understanding SubI Architecture](#understanding-subi-architecture)
 4. [Building Your First Projection](#building-your-first-projection)
 5. [Running the Example](#running-the-example)
 6. [Understanding the Code](#understanding-the-code)
@@ -20,7 +20,7 @@ Welcome to your first projection mapping example with MapFlow! This tutorial wil
 
 ### Key Concepts
 
-MapFlow uses a **Paint → Mapping → Mesh → Output** pipeline:
+SubI uses a **Paint → Mapping → Mesh → Output** pipeline:
 
 - **Paint**: A media source (video, image, test pattern, or solid color)
 - **Mapping**: Connects a Paint to a Mesh with opacity, depth, and transforms
@@ -44,39 +44,39 @@ Please refer to the main [BUILD.md](../B3_SUPPORT/DOC-C1_BUILD.md) for detailed,
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/johnjanik/mapmap.git
-cd mapmap
+git clone https://github.com/johnjanik/subi.git
+cd subi
 ```
 
 ---
 
-## Understanding MapFlow Architecture
+## Understanding SubI Architecture
 
-Before we dive into code, let's understand MapFlow's modular architecture:
+Before we dive into code, let's understand SubI's modular architecture:
 
 ### Crate Structure
 
-MapFlow is organized as a Cargo workspace with specialized crates:
+SubI is organized as a Cargo workspace with specialized crates:
 
 ```
-mapmap/
-├── mapmap-core/      # Domain model (Paint/Mapping/Mesh)
-├── mapmap-render/    # GPU rendering (wgpu backend)
-├── mapmap-media/     # Video/image decoding (FFmpeg)
-├── mapmap-ui/        # User interface (ImGui/egui)
-├── mapmap-control/   # Control systems (MIDI/OSC/DMX)
-├── mapmap-io/        # Professional I/O (NDI/DeckLink)
-├── mapmap-ffi/       # Plugin API
-└── mapmap/           # Main application binary
+subi/
+├── subi-core/      # Domain model (Paint/Mapping/Mesh)
+├── subi-render/    # GPU rendering (wgpu backend)
+├── subi-media/     # Video/image decoding (FFmpeg)
+├── subi-ui/        # User interface (ImGui/egui)
+├── subi-control/   # Control systems (MIDI/OSC/DMX)
+├── subi-io/        # Professional I/O (NDI/DeckLink)
+├── subi-ffi/       # Plugin API
+└── subi/           # Main application binary
 ```
 
 ### Core Components
 
-1. **WgpuBackend** (`mapmap-render`): GPU abstraction layer using wgpu
-2. **Paint** (`mapmap-core`): Media source definition
-3. **Mesh** (`mapmap-core`): Warping geometry
-4. **Mapping** (`mapmap-core`): Connection between Paint and Mesh
-5. **QuadRenderer** (`mapmap-render`): GPU renderer for textured quads
+1. **WgpuBackend** (`subi-render`): GPU abstraction layer using wgpu
+2. **Paint** (`subi-core`): Media source definition
+3. **Mesh** (`subi-core`): Warping geometry
+4. **Mapping** (`subi-core`): Connection between Paint and Mesh
+5. **QuadRenderer** (`subi-render`): GPU renderer for textured quads
 
 ---
 
@@ -100,8 +100,8 @@ Create a new file at `examples/hello_world_projection.rs`:
 //! 3. Creating a Mapping (connecting Paint to Mesh)
 //! 4. Rendering the result
 
-use mapmap_core::{Paint, PaintType, Mesh, MeshType, Mapping};
-use mapmap_render::{QuadRenderer, TextureDescriptor, WgpuBackend};
+use subi_core::{Paint, PaintType, Mesh, MeshType, Mapping};
+use subi_render::{QuadRenderer, TextureDescriptor, WgpuBackend};
 use glam::Vec2;
 use winit::{
     event::{Event, WindowEvent, KeyboardInput, VirtualKeyCode, ElementState},
@@ -110,13 +110,13 @@ use winit::{
 };
 
 fn main() {
-    println!("MapMap - Hello World Projection Mapping Example");
+    println!("SubI - Hello World Projection Mapping Example");
     println!("===============================================\n");
 
     // Step 1: Create the window
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
-        .with_title("MapFlow - Hello World Projection")
+        .with_title("SubI - Hello World Projection")
         .with_inner_size(winit::dpi::PhysicalSize::new(1280, 720))
         .build(&event_loop)
         .unwrap();
@@ -335,11 +335,11 @@ pollster = "0.3"
 
 ### Build and Run
 
-Then build and run the example from the mapmap crate directory:
+Then build and run the example from the subi crate directory:
 
 ```bash
-# Navigate to the mapmap crate
-cd crates/mapmap
+# Navigate to the subi crate
+cd crates/subi
 
 # Build the example
 cargo build --example hello_world_projection
@@ -459,11 +459,11 @@ event_loop.run(move |event, _, control_flow| {
 
 ## Next Steps
 
-Congratulations! You've created your first projection mapping with MapFlow. Here's what to explore next:
+Congratulations! You've created your first projection mapping with SubI. Here's what to explore next:
 
 ### 1. Load a Real Image or Video
 
-Replace the colored Paint with an actual image or video (requires integrating `mapmap-media`).
+Replace the colored Paint with an actual image or video (requires integrating `subi-media`).
 
 ### 2. Warp the Mesh
 
@@ -471,7 +471,7 @@ Try different mesh coordinates to create perspective distortion. This is the ess
 
 ### 3. Explore the Full Application
 
-Run the full MapFlow application to see all features: `cargo run --release`
+Run the full SubI application to see all features: `cargo run --release`
 
 ### 4. Read the Documentation
 

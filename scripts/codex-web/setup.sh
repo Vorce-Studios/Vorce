@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
-# Setup-Skript für MapFlow in der Codex-Entwicklungsumgebung (Ubuntu 24.04)
+# Setup-Skript für SubI in der Codex-Entwicklungsumgebung (Ubuntu 24.04)
 # Wird nach dem Erstellen neuer Container ausgeführt.
 
-echo "🚀 Starte MapFlow Codex Setup (Ubuntu 24.04)..."
+echo "🚀 Starte SubI Codex Setup (Ubuntu 24.04)..."
 
 # 1. System-Abhängigkeiten aktualisieren und installieren
 echo "📦 Installiere System-Abhängigkeiten..."

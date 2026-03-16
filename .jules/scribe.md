@@ -19,7 +19,7 @@ I have addressed several broken links and outdated status indicators in the docu
 
 ## 2026-03-05 - Folder Structure Migration Fixes
 **Observation:** Some files still had legacy `0[1-9]-...` references to the documentation directory (e.g. `docs/01-GETTING-STARTED/INSTALLATION.md`) instead of the new semantic folder structure (like `docs/user/getting-started/INSTALLATION.md`).
-**Action:** Fixed `crates/mapmap/README.md`, `docs/user/getting-started/BUILD.md`, `docs/project/cicd/WORKFLOW_CONTROL.md`, `docs/project/cicd/WORKFLOW_QUICKREF.md`, and `docs/project/audits/DOCUMENTATION_AUDIT.md` to point to the correct semantic documentation paths.
+**Action:** Fixed `crates/subi/README.md`, `docs/user/getting-started/BUILD.md`, `docs/project/cicd/WORKFLOW_CONTROL.md`, `docs/project/cicd/WORKFLOW_QUICKREF.md`, and `docs/project/audits/DOCUMENTATION_AUDIT.md` to point to the correct semantic documentation paths.
 
 ## 2026-03-10 - Dokumentations-Architektur Migration
 **Erkenntnis:** Die Dokumentationsstruktur in `docs/` wurde von der bisherigen `user/`, `dev/`, `project/` Struktur auf eine 3-Ebenen-Struktur (`A1_SYSTEM`, `A2_DEVELOPMENT`, `A3_PROJECT`, `A4_USER`) umgestellt.
@@ -37,8 +37,8 @@ I have addressed several broken links and outdated status indicators in the docu
 3. Cleaned up Git merge conflict markers in `DOC-C2_TECHNICAL_DEBT_AND_BUGS.md`.
 
 ## 2026-03-13 - Broken Links in Crate READMEs
-**Erkenntnis:** The `crates/mapmap/README.md` was still pointing to the old documentation structure (`docs/user/getting-started/`, `docs/user/manual/`, `docs/dev/architecture/`).
-**Aktion:** Updated the markdown links in `crates/mapmap/README.md` to point to the new semantic paths `docs/A4_USER/B1_MANUAL/DOC-C2_QUICKSTART.md`, `docs/A4_USER/B1_MANUAL/DOC-C0_README.md`, and `docs/A1_SYSTEM/B1_ARCHITECTURE/DOC-C1_OVERVIEW.md`.
+**Erkenntnis:** The `crates/subi/README.md` was still pointing to the old documentation structure (`docs/user/getting-started/`, `docs/user/manual/`, `docs/dev/architecture/`).
+**Aktion:** Updated the markdown links in `crates/subi/README.md` to point to the new semantic paths `docs/A4_USER/B1_MANUAL/DOC-C2_QUICKSTART.md`, `docs/A4_USER/B1_MANUAL/DOC-C0_README.md`, and `docs/A1_SYSTEM/B1_ARCHITECTURE/DOC-C1_OVERVIEW.md`.
 
 ## 2026-03-15 - Broken Links to ROADMAP.md
 **Erkenntnis:** The root `ROADMAP.md` was removed/relocated, but multiple documentation files (like `README.md` and files in `docs/`) and the `scripts/dev-tools/check-links.py` script were still referencing it, leading to broken links.

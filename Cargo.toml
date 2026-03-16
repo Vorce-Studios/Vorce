@@ -2,24 +2,24 @@
 # CI Trigger fix attempt
 resolver = "2"
 members = [
-    "crates/mapmap",
-    "crates/mapmap-control",
-    "crates/mapmap-core",
-    "crates/mapmap-ffi",
-    "crates/mapmap-io",
-    "crates/mapmap-mcp",
-    "crates/mapmap-media",
-    "crates/mapmap-render",
-    "crates/mapmap-ui",
+    "crates/subi",
+    "crates/subi-control",
+    "crates/subi-core",
+    "crates/subi-ffi",
+    "crates/subi-io",
+    "crates/subi-mcp",
+    "crates/subi-media",
+    "crates/subi-render",
+    "crates/subi-ui",
 ]
 
 [workspace.package]
 version = "0.2.0"
 edition = "2021"
 rust-version = "1.75"
-authors = ["MapMap Contributors", "MapFlow Contributors"]
+authors = ["SubI Contributors", "SubI Contributors"]
 license = "GPL-3.0-only"
-repository = "https://github.com/MrLongNight/MapFlow"
+repository = "https://github.com/MrLongNight/SubI"
 
 [workspace.dependencies]
 ableton-link-rs = { version = "0.1" }

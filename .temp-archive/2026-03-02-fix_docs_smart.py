@@ -123,7 +123,7 @@ def fix_docs(content):
 
     return '\n'.join(new_lines)
 
-file_path = 'crates/mapmap-core/src/module/types.rs'
+file_path = 'crates/subi-core/src/module/types.rs'
 if os.path.exists(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()

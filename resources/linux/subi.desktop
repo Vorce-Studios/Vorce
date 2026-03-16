@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=SubI
+Comment=Professional Projection Mapping Software
+Exec=SubI
+Icon=subi
+Terminal=false
+Type=Application
+Categories=Graphics;Video;AudioVideo;
+Keywords=projection;mapping;vj;
+StartupNotify=true

@@ -1,6 +1,6 @@
-# 🛠️ MapFlow: Technische Schulden, Bugs & Roadmap
+# 🛠️ SubI: Technische Schulden, Bugs & Roadmap
 
-Dieses Dokument dient der zentralen Erfassung von Architektur-Problemen, monolithischen "God Files" und der Strategie zur Modularisierung des MapFlow (VJMapper) Projekts.
+Dieses Dokument dient der zentralen Erfassung von Architektur-Problemen, monolithischen "God Files" und der Strategie zur Modularisierung des SubI (VJMapper) Projekts.
 
 ---
 
@@ -31,9 +31,9 @@ Dieses Dokument dient der zentralen Erfassung von Architektur-Problemen, monolit
 *Interne Logik-Probleme und fehlende Validierung.*
 
 ### 🚀 Release 1.0.0 Blockers (Priority)
-- **Spout Support**: Muss für wgpu 0.19+ (modernisiert auf DX11/DX12 interop) aktualisiert werden. (`crates/mapmap-render/src/spout.rs`) (Status: 🔴)
+- **Spout Support**: Muss für wgpu 0.19+ (modernisiert auf DX11/DX12 interop) aktualisiert werden. (`crates/subi-render/src/spout.rs`) (Status: 🔴)
 - **HAP Q Alpha**: Handling für sekundäre Texturen in `hap_decoder.rs` implementieren. (Status: 🔴)
-- **About Dialog & Export**: Grundlegende Implementierung für Release-Build erforderlich. (`crates/mapmap/src/app/actions.rs`) (Status: 🔴)
+- **About Dialog & Export**: Grundlegende Implementierung für Release-Build erforderlich. (`crates/subi/src/app/actions.rs`) (Status: 🔴)
 
 ### 📈 Performance & Media
 - **Media Thumbnails**: Hintergrund-Generierung für `media_browser.rs` implementieren. (Status: 🔵)
@@ -51,12 +51,12 @@ Dieses Dokument dient der zentralen Erfassung von Architektur-Problemen, monolit
 
 | Crate | Maßnahme | Status | Ergebnis |
 | :--- | :--- | :---: | :--- |
-| **mapmap-core** | TODO Resolution & Graph Validation | ✅ | Zyklus-Check & Auto-Disconnect implementiert. Clippy sauber. |
-| **mapmap-io** | NDI Activation & Test Stability | ✅ | NDI-Warnungen entfernt, Projekt-Roundtrip verifiziert. |
-| **mapmap-render** | Paint Image Loading | ✅ | Synchrones Laden von Bildern in GPU-Cache implementiert. |
-| **mapmap-ui** | ID Sync & Clippy Scrub | ✅ | Node-Editor ID-Synchronisation gefixt. Redundante Bindings entfernt. |
-| **mapmap-bevy** | Integration Audit | ✅ | Main-Loop und UI-Brücke validiert. |
-| **mapmap-mcp** | Protocol Audit | ✅ | JSON-Schnittstellen für AI-Tools stabilisiert. |
+| **subi-core** | TODO Resolution & Graph Validation | ✅ | Zyklus-Check & Auto-Disconnect implementiert. Clippy sauber. |
+| **subi-io** | NDI Activation & Test Stability | ✅ | NDI-Warnungen entfernt, Projekt-Roundtrip verifiziert. |
+| **subi-render** | Paint Image Loading | ✅ | Synchrones Laden von Bildern in GPU-Cache implementiert. |
+| **subi-ui** | ID Sync & Clippy Scrub | ✅ | Node-Editor ID-Synchronisation gefixt. Redundante Bindings entfernt. |
+| **subi-bevy** | Integration Audit | ✅ | Main-Loop und UI-Brücke validiert. |
+| **subi-mcp** | Protocol Audit | ✅ | JSON-Schnittstellen für AI-Tools stabilisiert. |
 
 ---
 
@@ -64,15 +64,15 @@ Dieses Dokument dient der zentralen Erfassung von Architektur-Problemen, monolit
 *Strategie zur Aufteilung der drei größten monolithischen Dateien.*
 
 ### 🟢 Phase 1: Modularisierung des UI-Inspectors
-**Fokus:** `crates/mapmap-ui/src/editors/module_canvas/inspector/mod.rs`
+**Fokus:** `crates/subi-ui/src/editors/module_canvas/inspector/mod.rs`
 - **Status:** ✅ Abgeschlossen. Logik in Submodule aufgeteilt.
 
 ### 🔵 Phase 2: Entkopplung des Core Evaluators
-**Fokus:** `crates/mapmap-core/src/module_eval.rs`
+**Fokus:** `crates/subi-core/src/module_eval.rs`
 - **Ziel:** Trennung von Graphentraversierung, Evaluierungs-Zustand und Tests.
 
 ### 🔴 Phase 3: Refactoring des MCP-Servers
-**Fokus:** `crates/mapmap-mcp/src/server.rs`
+**Fokus:** `crates/subi-mcp/src/server.rs`
 - **Ziel:** Trennung der Tool-Definitionen vom Server-Protokoll.
 
 ---

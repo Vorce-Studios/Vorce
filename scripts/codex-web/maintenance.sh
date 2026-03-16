@@ -1,11 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
-# Wartungsskript fuer MapFlow in der Codex-Entwicklungsumgebung.
+# Wartungsskript fuer SubI in der Codex-Entwicklungsumgebung.
 # Wird in Containern ausgefuehrt, die aus dem Cache fortgesetzt wurden
 # (z.B. nach einem Branch-Wechsel).
 
-echo "Starte MapFlow Wartung (Maintenance)..."
+echo "Starte SubI Wartung (Maintenance)..."
 
 # 1. Abhaengigkeiten fuer den aktuellen Branch aktualisieren
 echo "Aktualisiere Abhaengigkeiten..."

@@ -2,7 +2,7 @@ import os
 import glob
 import re
 
-for f in glob.glob("crates/mapmap-render/src/**/*.rs", recursive=True):
+for f in glob.glob("crates/subi-render/src/**/*.rs", recursive=True):
     with open(f, 'r', encoding='utf-8') as file:
         c = file.read()
 
@@ -23,7 +23,7 @@ for f in glob.glob("crates/mapmap-render/src/**/*.rs", recursive=True):
         file.write(c)
 
 # 5. Fix StagingBelt
-backend_path = 'crates/mapmap-render/src/backend.rs'
+backend_path = 'crates/subi-render/src/backend.rs'
 with open(backend_path, 'r', encoding='utf-8') as file:
     c = file.read()
 c = c.replace('StagingBelt::new(&device,', 'StagingBelt::new(device.clone(),')

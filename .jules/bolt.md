@@ -50,7 +50,7 @@
 **Action:** Use dynamic trait objects (`&mut dyn Iterator`) to represent variable iterator types (like `FilterMap` vs `Values`), avoiding  and avoiding `collect()` entirely when passing data to UI render functions.
 
 ## 2026-06-12 - Prevent Vec allocation in UI Hot Path
-**Learning:** In UI loops run every frame, allocating an intermediate `Vec` using `.collect()` just to pass a filtered slice to rendering functions creates continuous heap churn. In `crates/mapmap/src/media_manager_ui.rs`, filtering items created a new `Vec` 60 times a second.
+**Learning:** In UI loops run every frame, allocating an intermediate `Vec` using `.collect()` just to pass a filtered slice to rendering functions creates continuous heap churn. In `crates/subi/src/media_manager_ui.rs`, filtering items created a new `Vec` 60 times a second.
 **Action:** Use dynamic trait objects (`&mut dyn Iterator`) to represent variable iterator types (like `FilterMap` vs `Values`), avoiding `Box` and avoiding `collect()` entirely when passing data to UI render functions.
 
 ## 2024-03-07 - Avoid O(N) copies of CPU FrameData
@@ -58,7 +58,7 @@
 **Action:** Use `Arc<Vec<u8>>` instead for CPU frame data so that clones only increment the reference count, making it an O(1) operation.
 
 ## 2026-03-08 - O(N) FrameData Allocations in Video Pipelines
-**Learning:** `Vec<u8>` for `FrameData::Cpu` in `mapmap-io` resulted in large O(N) memory allocations (deep copying raw video frames) during video playback or transfer.
+**Learning:** `Vec<u8>` for `FrameData::Cpu` in `subi-io` resulted in large O(N) memory allocations (deep copying raw video frames) during video playback or transfer.
 **Action:** `FrameData::Cpu` now wraps pixel buffers in an `Arc<Vec<u8>>`. Reusing the `Arc` pointer entirely bypasses the O(N) duplication, enabling zero-copy frame dispatch across multi-threaded renderer contexts.
 
 ## 2024-03-10 - Integer Math for YUV to RGB Conversion
@@ -66,5 +66,5 @@
 **Action:** When performing color space conversions or other pixel-level math, always prefer integer math approximations (e.g., multiplying by a constant and dividing by a power of two) over float operations to significantly reduce processing time.
 
 ## 2024-05-23 - Avoid String Cloning in TimelineModule Iterators
-**Learning:** Structs collected into `Vec` inside UI hot loops (like `TimelineModule` in `mapmap/src/app/ui_layout.rs`) that own `String` fields cause massive per-frame allocation overhead.
+**Learning:** Structs collected into `Vec` inside UI hot loops (like `TimelineModule` in `subi/src/app/ui_layout.rs`) that own `String` fields cause massive per-frame allocation overhead.
 **Action:** Change UI presentation structs to borrow strings (`&'a str`) instead of owning them, reducing `clone()` allocations in rendering loops to zero.

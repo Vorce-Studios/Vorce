@@ -6,7 +6,7 @@ A comprehensive ImGui-based control panel for the Kuramoto-based oscillator dist
 
 ## Location
 
-**File:** `/home/user/mapmap/crates/mapmap-ui/src/lib.rs`
+**File:** `/home/user/subi/crates/subi-ui/src/lib.rs`
 **Method:** `AppUI::render_oscillator_panel()`
 **Lines:** 1099-1314
 
@@ -157,7 +157,7 @@ Potential improvements:
 ## Testing
 
 To test the control panel:
-1. Launch MapMap application
+1. Launch SubI application
 2. Open View menu
 3. Enable "Show Oscillator"
 4. Adjust parameters and observe effects
@@ -168,12 +168,12 @@ To test the control panel:
 
 ## Related Files
 
-- **Config Definition:** `crates/mapmap-core/src/oscillator.rs`
-- **Renderer:** `crates/mapmap-render/src/oscillator_renderer.rs`
+- **Config Definition:** `crates/subi-core/src/oscillator.rs`
+- **Renderer:** `crates/subi-render/src/oscillator_renderer.rs`
 - **Shaders:**
   - `shaders/oscillator_simulation.wgsl`
   - `shaders/oscillator_distortion.wgsl`
-- **UI Implementation:** `crates/mapmap-ui/src/lib.rs`
+- **UI Implementation:** `crates/subi-ui/src/lib.rs`
 
 ## Implementation Notes
 

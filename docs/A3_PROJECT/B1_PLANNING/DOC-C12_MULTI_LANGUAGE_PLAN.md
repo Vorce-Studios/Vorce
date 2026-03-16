@@ -3,7 +3,7 @@
 > **Status:** Geplant
 > **Priorität:** Niedrig (nach UI-Stabilisierung)
 > **Geschätzter Aufwand:** 3-5 Entwicklertage
-> **Ziel:** MapFlow soll mehrere Sprachen in der Benutzeroberfläche unterstützen
+> **Ziel:** SubI soll mehrere Sprachen in der Benutzeroberfläche unterstützen
 
 ---
 
@@ -44,7 +44,7 @@
 
 ```
 crates/
-└── mapmap-ui/
+└── subi-ui/
     ├── Cargo.toml          # + rust-i18n dependency
     ├── src/
     │   └── lib.rs          # i18n!  macro initialization
@@ -65,7 +65,7 @@ crates/
 
 #### 1.1 Dependency hinzufügen
 ```toml
-# crates/mapmap-ui/Cargo. toml
+# crates/subi-ui/Cargo. toml
 [dependencies]
 rust-i18n = "3"
 sys-locale = "0.3"  # Für automatische Spracherkennung
@@ -73,7 +73,7 @@ sys-locale = "0.3"  # Für automatische Spracherkennung
 
 #### 1.2 Macro initialisieren
 ```rust
-// crates/mapmap-ui/src/lib.rs
+// crates/subi-ui/src/lib.rs
 rust_i18n::i18n! ("locales", fallback = "en");
 
 pub fn init_locale() {
@@ -87,7 +87,7 @@ pub fn init_locale() {
 
 #### 1.3 Basis-Übersetzungsdatei erstellen
 ```yaml
-# crates/mapmap-ui/locales/en.yml
+# crates/subi-ui/locales/en.yml
 en:
   # Fenster-Titel
   window:
@@ -140,7 +140,7 @@ en:
     undo: "Undo"
     redo: "Redo"
     preferences: "Preferences..."
-    about: "About MapFlow"
+    about: "About SubI"
 
   # Statusmeldungen
   status:
@@ -175,9 +175,9 @@ ui.slider(t! ("label.speed"), 0.1, 2.0, &mut self.playback_speed);
 #### Betroffene Dateien
 | Datei | Geschätzte Strings | Aufwand |
 |-------|-------------------|---------|
-| `crates/mapmap-ui/src/lib.rs` | ~150 | 4h |
-| `crates/mapmap-ui/src/dashboard.rs` | ~30 | 1h |
-| `crates/mapmap/src/main.rs` | ~20 | 1h |
+| `crates/subi-ui/src/lib.rs` | ~150 | 4h |
+| `crates/subi-ui/src/dashboard.rs` | ~30 | 1h |
+| `crates/subi/src/main.rs` | ~20 | 1h |
 | **Gesamt** | ~200 | 6h |
 
 ---
@@ -234,7 +234,7 @@ de:
     undo: "Rückgängig"
     redo: "Wiederholen"
     preferences: "Einstellungen..."
-    about: "Über MapFlow"
+    about: "Über SubI"
 
   status:
     loading: "Wird geladen..."
@@ -315,7 +315,7 @@ Die Texte aus den `. ts`-Dateien können manuell als Referenz für neue YAML-Üb
 |-----------|--------|
 | UI-Layout stabil | ⏳ In Arbeit |
 | Kern-Features fertig | ⏳ In Arbeit |
-| App umbenannt zu MapFlow | ⏳ Ausstehend |
+| App umbenannt zu SubI | ⏳ Ausstehend |
 | Community-Interesse | ✅ Vorhanden |
 
 **Empfohlener Zeitpunkt:** Nach Phase 2 Abschluss, wenn die UI weitgehend stabil ist.

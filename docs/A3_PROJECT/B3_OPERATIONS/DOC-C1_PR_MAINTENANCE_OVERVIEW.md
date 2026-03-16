@@ -14,7 +14,7 @@
 | #735 | 🛡️ Sentinel: [HIGH] Fix path traversal vulnerability in control system | `sentinel/fix-path-traversal-5558060898835203929` | [STALE] (Superseded by #742) |
 | #734 | ⚡ Bolt: Optimize TriggerSystem state storage | `bolt-optimize-trigger-system-18271879632868210782` | [IN PROGRESS] (Session 13196120215513672428) |
 | #733 | 📋 Tracker: Update ROADMAP and CHANGELOG (Feb 16 Audit) | `tracker-doc-update-feb16-2099321963734110385` | [STALE] (Superseded by #740) |
-| #732 | 🧪 Guardian: Erweiterte Tests für mapmap-core/module.rs | `guardian-core-module-tests-4369418295693435068` | [STALE] (Superseded by #741) |
+| #732 | 🧪 Guardian: Erweiterte Tests für subi-core/module.rs | `guardian-core-module-tests-4369418295693435068` | [STALE] (Superseded by #741) |
 | #731 | 📚 Scribe: Enhance Core Data Structure Documentation | `scribe-core-docs-v1-12524433962227166378` | [PENDING] |
 
 ## Branch Cleanup (2026-02-17)

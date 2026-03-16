@@ -1,27 +1,27 @@
-# DOC-B1: MapFlow System Architecture
+# DOC-B1: SubI System Architecture
 
-Dieses Dokument dient als zentrale technische Referenz für die interne Funktionsweise von MapFlow. Es beschreibt das System-Design, die Crate-Hierarchie und den Datenfluss.
+Dieses Dokument dient als zentrale technische Referenz für die interne Funktionsweise von SubI. Es beschreibt das System-Design, die Crate-Hierarchie und den Datenfluss.
 
 ## 1. System-Design & Crates
 
-MapFlow basiert auf einer modernen, modularen Architektur in **Rust**, die **Bevy** als ECS-Engine und **WGPU** für das Rendering nutzt. Das Projekt ist als Cargo Workspace organisiert.
+SubI basiert auf einer modernen, modularen Architektur in **Rust**, die **Bevy** als ECS-Engine und **WGPU** für das Rendering nutzt. Das Projekt ist als Cargo Workspace organisiert.
 
 ### Crate-Ökosystem
 
 ```mermaid
 graph TD
     %% Crates
-    Main[mapmap] --> UI[mapmap-ui]
-    Main --> Bevy[mapmap-bevy]
-    Main --> Media[mapmap-media]
-    Main --> Control[mapmap-control]
-    Main --> Render[mapmap-render]
+    Main[subi] --> UI[subi-ui]
+    Main --> Bevy[subi-bevy]
+    Main --> Media[subi-media]
+    Main --> Control[subi-control]
+    Main --> Render[subi-render]
 
-    UI --> Core[mapmap-core]
+    UI --> Core[subi-core]
     Render --> Core
     Bevy --> Core
     Control --> Core
-    Media --> IO[mapmap-io]
+    Media --> IO[subi-io]
     IO --> Core
 
     %% Externe Ressourcen
@@ -32,21 +32,21 @@ graph TD
 
 | Crate | Logische Rolle | Wichtigste Typen / Zuständigkeiten |
 | :--- | :--- | :--- |
-| `mapmap` | **Main App** | Einstiegspunkt, Event-Loop, App-State Orchestrierung. |
-| `mapmap-core` | **Logik-Kern** | Datenmodelle (Layer, Mapping, Paint), Graph-Evaluierung, Math. |
-| `mapmap-render` | **Renderer** | WGPU-Abstraktion, Shader-Verwaltung, Compositing, Texture-Pooling. |
-| `mapmap-ui` | **User Interface** | Egui-Implementierung, Panels, Node-Editor, Timeline. |
-| `mapmap-media` | **Media Engine** | Frame-Pipeline, Video-Decoding (FFmpeg), Bild-Loading. |
-| `mapmap-control` | **Peripherie** | MIDI, OSC, Philips Hue, Shortcuts. |
-| `mapmap-io` | **I/O & Netz** | NDI, Spout, Datei-System, Persistenz. |
-| `mapmap-bevy` | **3D/Particles** | Bevy ECS Integration für komplexe 3D-Inhalte. |
-| `mapmap-mcp` | **AI Interface** | Model Context Protocol Server für Agenten-Integration. |
+| `subi` | **Main App** | Einstiegspunkt, Event-Loop, App-State Orchestrierung. |
+| `subi-core` | **Logik-Kern** | Datenmodelle (Layer, Mapping, Paint), Graph-Evaluierung, Math. |
+| `subi-render` | **Renderer** | WGPU-Abstraktion, Shader-Verwaltung, Compositing, Texture-Pooling. |
+| `subi-ui` | **User Interface** | Egui-Implementierung, Panels, Node-Editor, Timeline. |
+| `subi-media` | **Media Engine** | Frame-Pipeline, Video-Decoding (FFmpeg), Bild-Loading. |
+| `subi-control` | **Peripherie** | MIDI, OSC, Philips Hue, Shortcuts. |
+| `subi-io` | **I/O & Netz** | NDI, Spout, Datei-System, Persistenz. |
+| `subi-bevy` | **3D/Particles** | Bevy ECS Integration für komplexe 3D-Inhalte. |
+| `subi-mcp` | **AI Interface** | Model Context Protocol Server für Agenten-Integration. |
 
 ---
 
 ## 2. Globaler Frame-Loop
 
-MapFlow trennt strikt zwischen Logik-Update (fest 60Hz) und Render-Update (VSync).
+SubI trennt strikt zwischen Logik-Update (fest 60Hz) und Render-Update (VSync).
 
 ### Phase A: Logic Update (`logic.rs`)
 1. **Input Sampling**: Gather MIDI/OSC/Keyboard Events.
@@ -78,7 +78,7 @@ Der fachliche Datenfluss folgt dem Prinzip:
 
 ## 4. Render-Pipeline & Threading
 
-Aktuell nutzt MapFlow ein asynchrones Modell für Medien-Frames:
+Aktuell nutzt SubI ein asynchrones Modell für Medien-Frames:
 - **Decode-Thread**: Erzeugt Frames aus Video-Quellen.
 - **Upload-Thread**: Lädt Daten via Staging-Buffer in GPU-Texturen (WGPU).
 - **Render-Thread**: Nutzt die Texturen für die Komposition.

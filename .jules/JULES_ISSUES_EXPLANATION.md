@@ -123,7 +123,7 @@ gh issue list --label "jules-task"
 curl -X POST \
   -H "Accept: application/vnd.github+json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
-  https://api.github.com/repos/MrLongNight/MapFlow/actions/workflows/CI-03_create-issues.yml/dispatches \
+  https://api.github.com/repos/MrLongNight/SubI/actions/workflows/CI-03_create-issues.yml/dispatches \
   -d '{"ref":"copilot/implement-ci-cd-workflow"}'
 ```
 
@@ -157,7 +157,7 @@ This is critical for professional multi-projector setups.
 - [ ] Tests pass for 2, 4, and 6+ output scenarios
 
 ### Technical Details
-- Files: `crates/mapmap-render/src/output.rs`, `crates/mapmap/src/main.rs`
+- Files: `crates/subi-render/src/output.rs`, `crates/subi/src/main.rs`
 - Use wgpu for multi-window support
 - Implement VSync synchronization mechanism
 - Consider using separate surfaces per output

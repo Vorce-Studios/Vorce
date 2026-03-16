@@ -1,0 +1,84 @@
+[package]
+name = "subi"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "SubI - Professional Projection Mapping Software"
+
+[[bin]]
+name = "SubI"
+path = "src/main.rs"
+
+[features]
+default = ["audio", "midi", "ffmpeg"]
+ffmpeg = ["ffmpeg-next", "subi-media/ffmpeg"]
+audio = ["subi-core/audio"]
+midi = ["subi-control/midi", "subi-ui/midi"]
+ndi = ["subi-io/ndi", "subi-ui/ndi"]
+libmpv = ["subi-media/libmpv"]
+macos-beta = []
+
+[dependencies]
+
+anyhow = { workspace = true }
+arc-swap = { workspace = true }
+axum = { workspace = true }
+bindgen = { workspace = true }
+bytemuck = { workspace = true }
+cbindgen = { workspace = true }
+cc = { workspace = true }
+clap = { version = "4.5.60", features = ["derive", "env"] }
+cpal = { workspace = true }
+criterion = { workspace = true }
+crossbeam-channel = { workspace = true }
+dirs = "6.0"
+
+egui = { workspace = true }
+egui-wgpu = { workspace = true }
+egui-winit = { workspace = true }
+egui_extras = { workspace = true }
+ffmpeg-next = { workspace = true, optional = true }
+futures = { workspace = true }
+glam = { workspace = true }
+hound = { workspace = true }
+hyper = { workspace = true }
+image = { workspace = true }
+subi-bevy = { path = "../subi-bevy" }
+subi-control = { path = "../subi-control" }
+subi-core = { path = "../subi-core", features = ["winit"] }
+subi-io = { path = "../subi-io" }
+subi-mcp = { path = "../subi-mcp" }
+subi-media = { path = "../subi-media" }
+subi-render = { path = "../subi-render" }
+subi-ui = { path = "../subi-ui" }
+midir = { workspace = true }
+parking_lot = { workspace = true }
+pollster = { workspace = true }
+proptest = { workspace = true }
+rayon = { workspace = true }
+
+rfd = "0.17"
+ron = { workspace = true }
+rosc = { workspace = true }
+rustfft = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sysinfo = "0.34"
+thiserror = { workspace = true }
+tokio = { workspace = true }
+toml = { workspace = true }
+tower = { workspace = true }
+tracing = { workspace = true }
+tracing-appender = "0.2"
+tracing-subscriber = { workspace = true }
+
+wgpu = { workspace = true }
+winit = { workspace = true }
+
+[build-dependencies]
+winres = { workspace = true }
+
+[dev-dependencies]
+image = { workspace = true }

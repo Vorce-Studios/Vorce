@@ -1,4 +1,4 @@
-﻿# MapFlow Module Tree (Generated: 2026-03-08 23:39)
+﻿# SubI Module Tree (Generated: 2026-03-08 23:39)
 
 Diese Datei zeigt die physische und logische Struktur des Projekts.
 
@@ -8,7 +8,7 @@ Diese Datei zeigt die physische und logische Struktur des Projekts.
 Auflistung der Ordnerpfade
 Volumeseriennummer : 7AE1-A876
 C:\USERS\VINYL\DESKTOP\VJMAPPER\VJMAPPER\CRATES
-+---mapmap
++---subi
 |   |   build.rs
 |   |   Cargo.toml
 |   |   README.md
@@ -79,7 +79,7 @@ C:\USERS\VINYL\DESKTOP\VJMAPPER\VJMAPPER\CRATES
 |           License.rtf
 |           main.wxs
 |
-+---mapmap-bevy
++---subi-bevy
 |   |   Cargo.toml
 |   |   README.md
 |   |
@@ -97,7 +97,7 @@ C:\USERS\VINYL\DESKTOP\VJMAPPER\VJMAPPER\CRATES
 |           resources.rs
 |           systems.rs
 |
-+---mapmap-control
++---subi-control
 |   |   Cargo.toml
 |   |   README.md
 |   |
@@ -178,7 +178,7 @@ C:\USERS\VINYL\DESKTOP\VJMAPPER\VJMAPPER\CRATES
 |               server.rs
 |               websocket.rs
 |
-+---mapmap-core
++---subi-core
 |   |   Cargo.toml
 |   |   README.md
 |   |
@@ -257,14 +257,14 @@ C:\USERS\VINYL\DESKTOP\VJMAPPER\VJMAPPER\CRATES
 |           trigger_system_tests.rs
 |           trigger_tests.rs
 |
-+---mapmap-ffi
++---subi-ffi
 |   |   Cargo.toml
 |   |   README.md
 |   |
 |   \---src
 |           lib.rs
 |
-+---mapmap-io
++---subi-io
 |   |   Cargo.toml
 |   |   README.md
 |   |
@@ -302,7 +302,7 @@ C:\USERS\VINYL\DESKTOP\VJMAPPER\VJMAPPER\CRATES
 |   \---tests
 |           project_tests.rs
 |
-+---mapmap-mcp
++---subi-mcp
 |   |   Cargo.toml
 |   |   README.md
 |   |
@@ -312,7 +312,7 @@ C:\USERS\VINYL\DESKTOP\VJMAPPER\VJMAPPER\CRATES
 |           protocol.rs
 |           server.rs
 |
-+---mapmap-media
++---subi-media
 |   |   Cargo.toml
 |   |   README.md
 |   |
@@ -330,7 +330,7 @@ C:\USERS\VINYL\DESKTOP\VJMAPPER\VJMAPPER\CRATES
 |           player.rs
 |           sequence.rs
 |
-+---mapmap-render
++---subi-render
 |   |   Cargo.toml
 |   |   README.md
 |   |
@@ -364,7 +364,7 @@ C:\USERS\VINYL\DESKTOP\VJMAPPER\VJMAPPER\CRATES
 |           effect_chain_tests.rs
 |           multi_output_tests.rs
 |
-+---mapmap-ui
++---subi-ui
 |   |   Cargo.toml
 |   |   README.md
 |   |
@@ -488,16 +488,16 @@ C:\USERS\VINYL\DESKTOP\VJMAPPER\VJMAPPER\CRATES
 
 | Crate | Pfad | Beschreibung |
 |-------|------|--------------|
-| mapmap | crates/mapmap | MapFlow - Professional Projection Mapping Software |
-| mapmap-bevy | crates/mapmap-bevy |  |
-| mapmap-control | crates/mapmap-control |  |
-| mapmap-core | crates/mapmap-core |  |
-| mapmap-ffi | crates/mapmap-ffi | MapFlow C/C++ Foreign Function Interface bindings. |
-| mapmap-io | crates/mapmap-io |  |
-| mapmap-mcp | crates/mapmap-mcp |  |
-| mapmap-media | crates/mapmap-media |  |
-| mapmap-render | crates/mapmap-render |  |
-| mapmap-ui | crates/mapmap-ui |  |
+| subi | crates/subi | SubI - Professional Projection Mapping Software |
+| subi-bevy | crates/subi-bevy |  |
+| subi-control | crates/subi-control |  |
+| subi-core | crates/subi-core |  |
+| subi-ffi | crates/subi-ffi | SubI C/C++ Foreign Function Interface bindings. |
+| subi-io | crates/subi-io |  |
+| subi-mcp | crates/subi-mcp |  |
+| subi-media | crates/subi-media |  |
+| subi-render | crates/subi-render |  |
+| subi-ui | crates/subi-ui |  |
 
 ## 3. Logische Modul-Hierarchie
 

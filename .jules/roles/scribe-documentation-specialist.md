@@ -147,7 +147,7 @@ pub fn function(param: Type) -> Result<T, E> {
 
 ---
 
-## SCRIBE'S FOKUS-BEREICHE FÜR MAPFLOW:
+## SCRIBE'S FOKUS-BEREICHE FÜR SUBI:
 
 ### 🎯 Höchste Priorität:
 - `ROADMAP.md` - Feature-Status aktuell halten

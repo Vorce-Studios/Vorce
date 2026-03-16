@@ -22,8 +22,8 @@ Jeder Schritt ist ein eigener Compute-Pass:
 
 ## 3. Architektur-Integration
 
-### 3.1 `mapmap-render` Erweiterung
-Neues Modul `crates/mapmap-render/src/fluids/`.
+### 3.1 `subi-render` Erweiterung
+Neues Modul `crates/subi-render/src/fluids/`.
 *   Verwaltet die Texturen (Ping-Pong Buffer für Read/Write).
 *   Baut die Command-Buffer für die Compute-Passes.
 

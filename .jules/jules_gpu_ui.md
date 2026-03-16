@@ -5,13 +5,13 @@ Provide the user with control over GPU selection (Multi-GPU support) and visibil
 
 ## Implementation Steps
 
-### 1. GPU Selection Backend (`crates/mapmap-render/src/backend.rs`)
+### 1. GPU Selection Backend (`crates/subi-render/src/backend.rs`)
 - Expand `Backend::new` or create a factory to enumerate adapters.
 - Use `wgpu::Instance::enumerate_adapters(wgpu::Backends::all())`.
 - Filter for discrete GPUs vs integrated.
 - Allow selecting a specific adapter by index or name.
 
-### 2. Settings UI (`crates/mapmap-ui/src/settings_panel.rs`)
+### 2. Settings UI (`crates/subi-ui/src/settings_panel.rs`)
 - Add a "Graphics" or "Performance" tab.
 - **Adapter Dropdown**: List available adapters. Store selection in `UserConfig`.
 - **Restart Requirement**: Note that changing GPU requires app restart.
@@ -23,7 +23,7 @@ Provide the user with control over GPU selection (Multi-GPU support) and visibil
     - Or rely on `sysinfo` if it supports GPU components (limited support).
     - Allow user to set "Target FPS" and "VSync" mode (Auto/On/Off) in settings.
 
-### 4. configuration Persistence (`crates/mapmap-ui/src/config.rs`)
+### 4. configuration Persistence (`crates/subi-ui/src/config.rs`)
 - Add fields: `preferred_gpu: String`, `vsync_mode: String`.
 - Load these on startup in `main.rs` before initializing `Backend`.
 

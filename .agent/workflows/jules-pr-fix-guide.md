@@ -27,7 +27,7 @@ bash ./scripts/jules/prepare-pre-commit.sh
 **Fehler:**
 ```
 error[internal]: left behind trailing whitespace
---> crates/mapmap/src/main.rs:1099
+--> crates/subi/src/main.rs:1099
 ```
 
 **Lösung:**
@@ -43,24 +43,24 @@ Dies entfernt automatisch alle trailing whitespaces.
 
 **Fehler:**
 ```
-error[E0432]: unresolved import `mapmap_render::MeshBufferCache`
---> crates/mapmap/src/main.rs:26:38
+error[E0432]: unresolved import `subi_render::MeshBufferCache`
+--> crates/subi/src/main.rs:26:38
 ```
 
 **Lösung:**
 1. Prüfe, ob das Item in `lib.rs` des Ziel-Crates exportiert wird:
    ```rust
-   // crates/mapmap-render/src/lib.rs
+   // crates/subi-render/src/lib.rs
    pub use mesh_buffer_cache::MeshBufferCache;  // Hinzufügen!
    ```
 
 2. Oder ändere den Import-Pfad:
    ```rust
    // Falsch:
-   use mapmap_render::MeshBufferCache;
+   use subi_render::MeshBufferCache;
 
    // Richtig (wenn nicht re-exported):
-   use mapmap_render::mesh_buffer_cache::MeshBufferCache;
+   use subi_render::mesh_buffer_cache::MeshBufferCache;
    ```
 
 ---
@@ -84,7 +84,7 @@ Entferne den Import oder nutze `#[allow(unused_imports)]` wenn beabsichtigt.
 This branch has conflicts that must be resolved
 Conflicting files:
 - CHANGELOG.md
-- crates/mapmap-core/src/audio/analyzer_v2.rs
+- crates/subi-core/src/audio/analyzer_v2.rs
 ```
 
 **Lösung:**

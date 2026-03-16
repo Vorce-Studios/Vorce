@@ -12,7 +12,7 @@ This directory now stores the real script implementations in thematic subfolders
 - `docs/`: documentation and icon maintenance helpers
 - `gemini-cli/`: Gemini/Jules monitor helpers
 - `jules/`: Jules-specific setup and helper scripts
-- `mapflow/`: packaging, local runtime, and MapFlow utility scripts
+- `subi/`: packaging, local runtime, and SubI utility scripts
 
 ## Naming
 

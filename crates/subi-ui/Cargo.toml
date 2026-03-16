@@ -1,0 +1,58 @@
+[package]
+name = "subi-ui"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[features]
+default = ["cpal", "midi"]
+midi = ["subi-control/midi"]
+ndi = ["dep:subi-io", "subi-io/ndi", "dep:tokio"]
+tokio = ["dep:tokio"]
+
+[dependencies]
+anyhow = { workspace = true }
+cpal = { workspace = true, optional = true }
+dirs = "6.0"
+
+# Phase 6: egui migration
+egui = { workspace = true, features = ["serde"] }
+egui-wgpu = { workspace = true }
+egui-winit = { workspace = true }
+egui_extras = { workspace = true }
+egui_node_editor = { workspace = true }
+fluent = { workspace = true }
+fluent-langneg = { workspace = true }
+glam = { workspace = true }
+image = { workspace = true }
+subi-control = { path = "../subi-control", features = ["osc", "midi"] }
+subi-core = { path = "../subi-core" }
+subi-io = { path = "../subi-io", optional = true }                      # Added for NDI
+subi-media = { path = "../subi-media" }
+subi-render = { path = "../subi-render" }
+once_cell = { workspace = true }
+parking_lot = { workspace = true }
+
+# SVG icon rendering
+resvg = { workspace = true }
+rfd = "0.17"
+rust-embed = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sysinfo = "0.34"
+thiserror = { workspace = true }
+tiny-skia = { workspace = true }
+tokio = { workspace = true, optional = true, features = [
+    "sync",
+    "macros",
+    "rt-multi-thread",
+] } # Added for NDI async
+tracing = { workspace = true }
+unic-langid = { workspace = true }
+usvg = { workspace = true }
+
+wgpu = { workspace = true }
+winit = { workspace = true }

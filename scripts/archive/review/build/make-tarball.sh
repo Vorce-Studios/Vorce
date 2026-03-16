@@ -1,5 +1,5 @@
 #!/bin/bash
 
-MAPFLOW_VERSION=$(cat VERSION.txt)
+SUBI_VERSION=$(cat VERSION.txt)
 
-git archive --format=tar.gz -9 --prefix=mapflow-${MAPFLOW_VERSION}/ --output=mapflow-${MAPFLOW_VERSION}.tar.gz HEAD
+git archive --format=tar.gz -9 --prefix=subi-${SUBI_VERSION}/ --output=subi-${SUBI_VERSION}.tar.gz HEAD

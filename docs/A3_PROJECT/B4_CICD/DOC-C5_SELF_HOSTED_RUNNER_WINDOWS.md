@@ -4,7 +4,7 @@ Stand: 2026-03-14
 
 ## Ziel
 
-Diese Anleitung bereitet einen lokalen GitHub Actions Runner auf einem aelteren Windows-10-PC fuer MapFlow vor, ohne ihn sofort produktiv zu aktivieren.
+Diese Anleitung bereitet einen lokalen GitHub Actions Runner auf einem aelteren Windows-10-PC fuer SubI vor, ohne ihn sofort produktiv zu aktivieren.
 
 Der geplante Einsatz ist bewusst eingeschraenkt:
 
@@ -27,10 +27,10 @@ Wichtig ist nicht, dass beide Maschinen exakt dieselbe Windows-Version haben, so
 
 - 64-Bit Windows nutzt
 - aktuelle Sicherheitsupdates und GPU-Treiber hat
-- eine fuer MapFlow brauchbare GPU besitzt
+- eine fuer SubI brauchbare GPU besitzt
 - dieselben kritischen Toolchains und Laufzeitabhaengigkeiten bereitstellt wie die Entwicklungsmaschine
 
-Fuer MapFlow sind in der Praxis wichtiger als Windows 10 vs. Windows 11:
+Fuer SubI sind in der Praxis wichtiger als Windows 10 vs. Windows 11:
 
 - Rust-Toolchain
 - Git
@@ -54,7 +54,7 @@ Die technische Umsetzung im neuen Workflow ist:
 2. sofortiger Abbruch fuer nicht gemergte PRs
 3. Pruefung der bereits erfolgreichen Standard-PR-Checks auf dem gemergten PR-Head
 4. Checkout des echten `merge_commit_sha`
-5. Ausfuehrung nur auf `runs-on: [self-hosted, windows, x64, mapflow-post-merge]`
+5. Ausfuehrung nur auf `runs-on: [self-hosted, windows, x64, subi-post-merge]`
 
 ## Empfohlene Runner-Rolle
 
@@ -63,7 +63,7 @@ Empfohlene Labels:
 - `self-hosted`
 - `windows`
 - `x64`
-- `mapflow-post-merge`
+- `subi-post-merge`
 
 Damit kann der Workflow spaeter gezielt nur diesen Runner verwenden, statt alle selbst gehosteten Windows-Runner zu treffen.
 
@@ -83,7 +83,7 @@ Mindestens installieren oder pruefen:
 - Git
 - Rust stable Toolchain
 - Visual Studio Build Tools mit C++-Werkzeugen
-- alle fuer MapFlow lokal benoetigten SDKs oder Laufzeitbibliotheken
+- alle fuer SubI lokal benoetigten SDKs oder Laufzeitbibliotheken
 
 Optional, aber empfehlenswert:
 
@@ -109,7 +109,7 @@ Hier kann der Runner als Windows-Service laufen.
 
 Geeignet fuer:
 
-- spaetere sichtbare MapFlow-Fenster
+- spaetere sichtbare SubI-Fenster
 - Screenshots
 - Videoaufnahmen
 - multimodale Auswertung
@@ -130,9 +130,9 @@ Die von GitHub angezeigten Befehle dann lokal auf dem Windows-10-PC ausfuehren.
 
 Empfehlung:
 
-- Runner in einen eigenen Ordner wie `C:\actions-runner-mapflow-post-merge` legen
+- Runner in einen eigenen Ordner wie `C:\actions-runner-subi-post-merge` legen
 - bei der Konfiguration einen sprechenden Namen vergeben
-- die zusaetzlichen Labels um `mapflow-post-merge` erweitern
+- die zusaetzlichen Labels um `subi-post-merge` erweitern
 
 ## Aktivierungsstrategie
 
@@ -140,14 +140,14 @@ Die vorbereitete CI/CD-Aenderung ist absichtlich deaktiviert.
 
 Die spaetere Aktivierung soll nur ueber eine Repo-Variable erfolgen:
 
-- `MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE=true`
+- `SUBI_ENABLE_SELF_HOSTED_POST_MERGE=true`
 
 Solange diese Variable nicht gesetzt ist oder auf `false` steht, bleibt der neue Post-Merge-Pfad inaktiv.
 
 Optionale Spaeter-Schalter:
 
-- `MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS=true`
-- `MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true`
+- `SUBI_SELF_HOSTED_RUN_IGNORED_GPU_TESTS=true`
+- `SUBI_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true`
 
 Das ist bewusst besser als ein direkt aktivierter Workflow, weil:
 
@@ -165,15 +165,15 @@ Wird dieses Label von der CI im geschlossenen Zustand des PRs erkannt, bricht de
 
 Empfohlene Reihenfolge:
 
-1. Repo-Variable `MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE` auf `false` setzen oder ganz entfernen
+1. Repo-Variable `SUBI_ENABLE_SELF_HOSTED_POST_MERGE` auf `false` setzen oder ganz entfernen
 2. optional den Runner in GitHub auf `offline` gehen lassen
 3. optional den lokalen Runner-Dienst oder die Runner-App stoppen
 
 Praktische Varianten:
 
-- global aus: Repo-Variable deaktivieren (`MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE=false`)
+- global aus: Repo-Variable deaktivieren (`SUBI_ENABLE_SELF_HOSTED_POST_MERGE=false`)
 - lokal gewartet: Runner-Dienst oder Runner-App stoppen
-- dauerhaft aus dem Routing nehmen: Label `mapflow-post-merge` entfernen oder Runner aus GitHub abmelden
+- dauerhaft aus dem Routing nehmen: Label `subi-post-merge` entfernen oder Runner aus GitHub abmelden
 - einzelnen PR ausnehmen: PR-Label `skip-self-hosted-post-merge` vor dem Merge setzen
 
 ## Was der vorbereitete Job aktuell macht
@@ -187,21 +187,21 @@ Aktuell erledigt der Job:
 - Pruefung auf `git`, `cargo`, `rustup`, `LLVM/Clang` und `vcpkg`
 - Bootstrap von `vcpkg`, falls noetig
 - Installation der Manifest-Abhaengigkeiten fuer Windows
-- Release-Build von `mapmap` mit `audio,ffmpeg`
+- Release-Build von `subi` mit `audio,ffmpeg`
 - optional spaeter ignorierte GPU-Tests
 - optionale lokale visuelle Screenshot-Regressionstests
 
 Lokaler Start fuer die visuellen Tests:
 
 ```powershell
-$env:MAPFLOW_VISUAL_CAPTURE_OUTPUT_DIR = "artifacts/visual-capture"
-cargo test -p mapmap --no-default-features --test visual_capture_tests -- --ignored --nocapture
+$env:SUBI_VISUAL_CAPTURE_OUTPUT_DIR = "artifacts/visual-capture"
+cargo test -p subi --no-default-features --test visual_capture_tests -- --ignored --nocapture
 ```
 
 Der vorbereitete Self-hosted-Job setzt diesen Ordner automatisch und kann die erzeugten
 Screenshots spaeter als Workflow-Artefakt hochladen.
 
-Relative Pfade fuer `MAPFLOW_VISUAL_CAPTURE_OUTPUT_DIR` werden gegen die Repo-Wurzel aufgeloest.
+Relative Pfade fuer `SUBI_VISUAL_CAPTURE_OUTPUT_DIR` werden gegen die Repo-Wurzel aufgeloest.
 
 Schneller Not-Aus direkt auf dem Runner:
 
@@ -215,7 +215,7 @@ Wieder starten:
 Start-Service "actions.runner.*"
 ```
 
-## Empfehlung fuer MapFlow
+## Empfehlung fuer SubI
 
 Kurzfristig:
 
@@ -239,8 +239,8 @@ Spaeter fuer Visual Capture:
 
 - Windows-10-PC stabil und gepatcht
 - Git und Rust installiert
-- MapFlow lokal baubar
-- Runner mit Label `mapflow-post-merge` registriert
+- SubI lokal baubar
+- Runner mit Label `subi-post-merge` registriert
 - Repo-Variable noch nicht gesetzt
 - interaktiver Modus fuer spaetere GUI-Tests eingeplant
 

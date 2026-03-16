@@ -2,7 +2,7 @@ import os
 import glob
 import re
 
-render_dir = 'crates/mapmap-render/src'
+render_dir = 'crates/subi-render/src'
 
 for filepath in glob.glob(f'{render_dir}/**/*.rs', recursive=True):
     with open(filepath, 'r', encoding='utf-8') as f:

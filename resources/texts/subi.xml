@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+   <mime-type type="application/subi">
+     <comment>SubI Project File</comment>
+     <magic priority="50">
+       <match value="search-string" type="string" offset="10:140"/>
+       <match type="string" value="#N " offset="0"/>
+     </magic>
+     <glob pattern="*.mflow"/>
+    <comment>Pure Data Document</comment>
+	<comment xml:lang="en">SubI Document</comment>
+	<comment xml:lang="fr">Document SubI</comment>
+   </mime-type>
+</mime-info>

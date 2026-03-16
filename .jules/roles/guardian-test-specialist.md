@@ -57,14 +57,14 @@ Dein Journal ist KEIN Log - füge nur Einträge für KRITISCHE Erkenntnisse hinz
 
 **CRATE-ANALYSE:**
 ```
-mapmap-core/     - Kernlogik (HÖCHSTE Priorität)
-mapmap-render/   - GPU-Rendering (schwer zu testen, #[ignore] für GPU-Tests)
-mapmap-media/    - Media-Pipeline (FFmpeg-Mocks nötig)
-mapmap-ui/       - UI-Komponenten (Snapshot-Tests)
-mapmap-control/  - MIDI/OSC (Mocking erforderlich)
-mapmap-io/       - I/O-Operationen (Temp-Files, Mocks)
-mapmap-mcp/      - MCP-Server (Integration-Tests)
-mapmap/          - Hauptanwendung (E2E-Tests)
+subi-core/     - Kernlogik (HÖCHSTE Priorität)
+subi-render/   - GPU-Rendering (schwer zu testen, #[ignore] für GPU-Tests)
+subi-media/    - Media-Pipeline (FFmpeg-Mocks nötig)
+subi-ui/       - UI-Komponenten (Snapshot-Tests)
+subi-control/  - MIDI/OSC (Mocking erforderlich)
+subi-io/       - I/O-Operationen (Temp-Files, Mocks)
+subi-mcp/      - MCP-Server (Integration-Tests)
+subi/          - Hauptanwendung (E2E-Tests)
 ```
 
 **PRIORITÄTS-CHECKS:**
@@ -84,10 +84,10 @@ cargo tarpaulin --out Html --output-dir coverage/
 cargo test --workspace
 
 # Nur spezifisches Crate testen
-cargo test -p mapmap-core
+cargo test -p subi-core
 ```
 
-### 🛠️ IMPLEMENTIERUNG - Test-Patterns für MapFlow:
+### 🛠️ IMPLEMENTIERUNG - Test-Patterns für SubI:
 
 **UNIT-TEST TEMPLATE:**
 ```rust
@@ -139,22 +139,22 @@ async fn test_async_[funktion]() {
 
 ---
 
-## GUARDIAN'S FOKUS-BEREICHE FÜR MAPFLOW:
+## GUARDIAN'S FOKUS-BEREICHE FÜR SUBI:
 
 ### 🎯 Höchste Priorität (Corelogik):
-- `mapmap-core/src/module.rs` - ModuleManager, Parts, Connections
-- `mapmap-core/src/layer.rs` - LayerManager, Blend-Modi
-- `mapmap-core/src/audio/analyzer_v2.rs` - FFT, Beat-Detection
-- `mapmap-core/src/state.rs` - AppState Serialisierung
+- `subi-core/src/module.rs` - ModuleManager, Parts, Connections
+- `subi-core/src/layer.rs` - LayerManager, Blend-Modi
+- `subi-core/src/audio/analyzer_v2.rs` - FFT, Beat-Detection
+- `subi-core/src/state.rs` - AppState Serialisierung
 
 ### 🎯 Mittlere Priorität (I/O):
-- `mapmap-io/src/format.rs` - VideoFormat Konvertierung
-- `mapmap-io/src/ndi/mod.rs` - NDI Stubs (Feature-Gates)
-- `mapmap-control/src/midi/` - MIDI-Parsing
+- `subi-io/src/format.rs` - VideoFormat Konvertierung
+- `subi-io/src/ndi/mod.rs` - NDI Stubs (Feature-Gates)
+- `subi-control/src/midi/` - MIDI-Parsing
 
 ### 🎯 Niedrige Priorität (UI/GPU):
-- `mapmap-ui/src/module_canvas.rs` - UI-Interaktionen
-- `mapmap-render/src/` - GPU-Tests mit #[ignore]
+- `subi-ui/src/module_canvas.rs` - UI-Interaktionen
+- `subi-render/src/` - GPU-Tests mit #[ignore]
 
 ---
 

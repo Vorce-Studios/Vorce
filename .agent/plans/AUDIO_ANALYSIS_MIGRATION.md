@@ -11,7 +11,7 @@
 
 ### Aktuelle Implementierung (DEFEKT)
 
-Die bestehende Audio-Analyse in `mapmap-core/src/audio/mod.rs` funktioniert nicht korrekt:
+Die bestehende Audio-Analyse in `subi-core/src/audio/mod.rs` funktioniert nicht korrekt:
 
 1. **Manuelle FFT-Implementierung** hat unbekannte Fehler
 2. **RMS-Berechnung** liefert keine korrekten Werte
@@ -55,7 +55,7 @@ Die [`audio-processor-analysis`](https://docs.rs/audio-processor-analysis/latest
 ## 📦 Neue Dependencies
 
 ```toml
-# crates/mapmap-core/Cargo.toml
+# crates/subi-core/Cargo.toml
 [dependencies]
 audio-processor-analysis = "2.4"
 audio-processor-traits = "4.3"
@@ -68,13 +68,13 @@ basedrop = "0.1"  # Für RunningRMS GC Handle
 
 ### Phase 1: Dependency Integration (30 min)
 
-1. [ ] `audio-processor-analysis` zu `mapmap-core/Cargo.toml` hinzufügen
+1. [ ] `audio-processor-analysis` zu `subi-core/Cargo.toml` hinzufügen
 2. [ ] Feature-Flags prüfen (optional `analysis` Feature?)
 3. [ ] Compile-Test durchführen
 
 ### Phase 2: Neue AudioAnalyzer-Struktur (2 Stunden)
 
-Datei: `mapmap-core/src/audio/analyzer.rs` (NEU)
+Datei: `subi-core/src/audio/analyzer.rs` (NEU)
 
 ```rust
 use audio_processor_analysis::{

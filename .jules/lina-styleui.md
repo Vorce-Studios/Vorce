@@ -1,7 +1,7 @@
 # Lina StyleUI Journal
 
 ## 2024-05-22 – [Visual Gap Analysis]
-**Learning:** MapFlow's current UI is "flat dark" but lacks the "Cyber Dark" structure found in industry standards (Resolume, MadMapper).
+**Learning:** SubI's current UI is "flat dark" but lacks the "Cyber Dark" structure found in industry standards (Resolume, MadMapper).
 - **Problem:** Visual Hierarchy is weak. Panels blend together. Lists are dense and unstyled. Active states are low-contrast.
 - **Reference Standard:** Resolume/MadMapper use:
     - **Strong Borders:** Panels are clearly contained.
@@ -72,8 +72,8 @@
 - **Action:** Updated `AudioPanel` to replace float rounding with `egui::CornerRadius::ZERO`. Added to guiding principles.
 
 ## 2026-03-01 – [Theme Visual Geometry Consistency]
-**Learning:** Default style overrides for `egui::style::Widgets` in custom themes (like High Contrast, Synthwave, Dark, etc) still used rounded corners (e.g., `CornerRadius::same(2)`) which contradict the standard Cyber Dark theme requirements for MapFlow UI. Furthermore, custom input widgets (like `hold_to_action_button`) had hardcoded `CornerRadius::same(4)` or `CornerRadius::same(6)`.
-- **Insight:** Global widget definitions and helper macros must follow MapFlow's unified visual structure. Rounded corners in some UI elements conflict with the rigid, sharp style intended for MapFlow.
+**Learning:** Default style overrides for `egui::style::Widgets` in custom themes (like High Contrast, Synthwave, Dark, etc) still used rounded corners (e.g., `CornerRadius::same(2)`) which contradict the standard Cyber Dark theme requirements for SubI UI. Furthermore, custom input widgets (like `hold_to_action_button`) had hardcoded `CornerRadius::same(4)` or `CornerRadius::same(6)`.
+- **Insight:** Global widget definitions and helper macros must follow SubI's unified visual structure. Rounded corners in some UI elements conflict with the rigid, sharp style intended for SubI.
 - **Action:** Applied `CornerRadius::ZERO` globally across all visual definitions in `crate::core::theme` and custom widget utilities in `crate::widgets::custom`, strictly enforcing the Cyber Dark angularity for all interactive and structural components.
 
 ## 2024-05-24 – [Empty State Visibility]

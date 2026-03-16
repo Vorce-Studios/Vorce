@@ -3,15 +3,15 @@
 <plist version="1.0">
 <dict>
 <key>CFBundleIdentifier</key>
-<string>info.mapmapteam.MapFlow</string>
+<string>info.subiteam.SubI</string>
 <key>CFBundleName</key>
-<string>MapFlow</string>
+<string>SubI</string>
 <key>CFBundleExecutable</key>
-<string>MapFlow</string>
+<string>SubI</string>
 <key>CFBundlePackageGetInfoString</key>
 <string>Open source video mapping software</string>
 <key>CFBundleIconFile</key>
-<string>mapmap.icns</string>
+<string>subi.icns</string>
 <key>CFBundlePackageType</key>
 <string>APPL</string>
 <key>CFBundleVersion</key>

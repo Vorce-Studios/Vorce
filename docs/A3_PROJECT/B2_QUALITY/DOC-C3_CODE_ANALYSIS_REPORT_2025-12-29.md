@@ -1,4 +1,4 @@
-# MapFlow Code-Analyse Report
+# SubI Code-Analyse Report
 
 **Datum:** 2025-12-29
 **Branch:** feature/node-menu-overhaul
@@ -8,7 +8,7 @@
 | Metrik | Wert |
 |--------|------|
 | Rust-Dateien | 133 |
-| Hauptcrate | mapmap (1808 Zeilen in main.rs) |
+| Hauptcrate | subi (1808 Zeilen in main.rs) |
 | Build Status | ✅ Kompiliert |
 | Tests | ✅ Alle bestanden |
 | Clippy Warnungen | 0 |
@@ -19,15 +19,15 @@
 
 ```
 crates/
-├── mapmap/           # Hauptanwendung (UI + Event Loop)
-├── mapmap-core/      # Kernlogik (Layer, Module, Audio)
-├── mapmap-control/   # MIDI, OSC, Shortcuts
-├── mapmap-render/    # WGPU Rendering
-├── mapmap-io/        # Datei I/O
-├── mapmap-media/     # Media Handling
-├── mapmap-ui/        # egui UI Panels
-├── mapmap-mcp/       # MCP Integration
-└── mapmap-ffi/       # FFI Bindings
+├── subi/           # Hauptanwendung (UI + Event Loop)
+├── subi-core/      # Kernlogik (Layer, Module, Audio)
+├── subi-control/   # MIDI, OSC, Shortcuts
+├── subi-render/    # WGPU Rendering
+├── subi-io/        # Datei I/O
+├── subi-media/     # Media Handling
+├── subi-ui/        # egui UI Panels
+├── subi-mcp/       # MCP Integration
+└── subi-ffi/       # FFI Bindings
 ```
 
 ---
@@ -96,11 +96,11 @@ mod render {
 
 ### Fehler 1: Unresolved Import
 ```
-error[E0432]: unresolved import `mapmap_render::MeshBufferCache`
+error[E0432]: unresolved import `subi_render::MeshBufferCache`
 ```
 
 **Lösung:**
-1. In `crates/mapmap-render/src/lib.rs` hinzufügen:
+1. In `crates/subi-render/src/lib.rs` hinzufügen:
 ```rust
 pub mod mesh_buffer_cache;  // Falls Datei existiert
 pub use mesh_buffer_cache::MeshBufferCache;

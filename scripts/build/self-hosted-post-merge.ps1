@@ -20,10 +20,10 @@ function Assert-Command {
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 Set-Location $repoRoot
 
-Write-Host "MapFlow self-hosted post-merge validation"
-Write-Host "PR number: $env:MAPFLOW_PR_NUMBER"
-Write-Host "PR head SHA: $env:MAPFLOW_PR_HEAD_SHA"
-Write-Host "Merge commit SHA: $env:MAPFLOW_MERGE_COMMIT_SHA"
+Write-Host "SubI self-hosted post-merge validation"
+Write-Host "PR number: $env:SUBI_PR_NUMBER"
+Write-Host "PR head SHA: $env:SUBI_PR_HEAD_SHA"
+Write-Host "Merge commit SHA: $env:SUBI_MERGE_COMMIT_SHA"
 
 Assert-Command -Name "git" -HelpText "Install Git on the self-hosted Windows runner."
 Assert-Command -Name "cargo" -HelpText "Install Rust with rustup on the self-hosted Windows runner."
@@ -102,50 +102,50 @@ rustc --version
 & $env:CLANG_PATH --version
 
 Write-Host "Running Windows smoke build for the full desktop app path"
-cargo build --release --verbose -p mapmap --features "audio,ffmpeg"
+cargo build --release --verbose -p subi --features "audio,ffmpeg"
 
-if ($env:MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS -eq "true") {
+if ($env:SUBI_SELF_HOSTED_RUN_IGNORED_GPU_TESTS -eq "true") {
     Write-Host "Running ignored GPU tests on the self-hosted runner"
-    cargo test -p mapmap-render --test effect_chain_tests -- --ignored
-    cargo test -p mapmap-render --test effect_chain_integration_tests -- --ignored
+    cargo test -p subi-render --test effect_chain_tests -- --ignored
+    cargo test -p subi-render --test effect_chain_integration_tests -- --ignored
 } else {
-    Write-Host "Ignored GPU tests are disabled. Set MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS=true later to enable them."
+    Write-Host "Ignored GPU tests are disabled. Set SUBI_SELF_HOSTED_RUN_IGNORED_GPU_TESTS=true later to enable them."
 }
 
-if ($env:MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION -eq "true") {
+if ($env:SUBI_SELF_HOSTED_RUN_VISUAL_AUTOMATION -eq "true") {
     Write-Host "Running local visual capture regression tests"
     $visualArtifactRoot = Join-Path $repoRoot "artifacts\visual-capture"
     New-Item -ItemType Directory -Force -Path $visualArtifactRoot | Out-Null
-    $env:MAPFLOW_VISUAL_CAPTURE_OUTPUT_DIR = $visualArtifactRoot
+    $env:SUBI_VISUAL_CAPTURE_OUTPUT_DIR = $visualArtifactRoot
     Write-Host "Visual artifacts will be written to $visualArtifactRoot"
 
     $metadataPath = Join-Path $visualArtifactRoot "run_metadata.json"
     $metadata = @{
-        pr_number = $env:MAPFLOW_PR_NUMBER
-        pr_head_sha = $env:MAPFLOW_PR_HEAD_SHA
-        merge_commit_sha = $env:MAPFLOW_MERGE_COMMIT_SHA
+        pr_number = $env:SUBI_PR_NUMBER
+        pr_head_sha = $env:SUBI_PR_HEAD_SHA
+        merge_commit_sha = $env:SUBI_MERGE_COMMIT_SHA
         timestamp = (Get-Date -AsUTC).ToString("yyyy-MM-ddTHH:mm:ssZ")
     }
     $metadata | ConvertTo-Json -Depth 2 | Out-File -FilePath $metadataPath -Encoding utf8
 
     Write-Host "Wrote run_metadata.json hook for multimodal evaluation"
 
-    cargo test -p mapmap --no-default-features --test visual_capture_tests -- --ignored --nocapture
+    cargo test -p subi --no-default-features --test visual_capture_tests -- --ignored --nocapture
 } else {
-    Write-Host "Visual automation is disabled. Set MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true to run the local screenshot regression tests."
+    Write-Host "Visual automation is disabled. Set SUBI_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true to run the local screenshot regression tests."
 }
 
-if ($env:MAPFLOW_SELF_HOSTED_RUN_PERFORMANCE_CHECK -eq "true") {
+if ($env:SUBI_SELF_HOSTED_RUN_PERFORMANCE_CHECK -eq "true") {
     Write-Host "Running performance benchmark on the self-hosted runner"
     $perfArgs = @("scripts/dev-tools/run_performance_benchmark.py")
 
-    if ($env:MAPFLOW_PERFORMANCE_THRESHOLD) {
+    if ($env:SUBI_PERFORMANCE_THRESHOLD) {
         $perfArgs += "--threshold"
-        $perfArgs += $env:MAPFLOW_PERFORMANCE_THRESHOLD
+        $perfArgs += $env:SUBI_PERFORMANCE_THRESHOLD
         $perfArgs += "--fail-on-regression"
     }
 
     python @perfArgs
 } else {
-    Write-Host "Performance benchmark is disabled. Set MAPFLOW_SELF_HOSTED_RUN_PERFORMANCE_CHECK=true to enable it."
+    Write-Host "Performance benchmark is disabled. Set SUBI_SELF_HOSTED_RUN_PERFORMANCE_CHECK=true to enable it."
 }

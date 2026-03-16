@@ -4,11 +4,11 @@ Stand: 2026-03-14
 
 ## Ziel
 
-Diese Notiz beschreibt den aktuellen Stand und die noetigen Anpassungen, damit spaeter automatisierte grafische Tests mit sichtbarem MapFlow-Fenster, Screenshots und optionalen Videoaufnahmen moeglich werden.
+Diese Notiz beschreibt den aktuellen Stand und die noetigen Anpassungen, damit spaeter automatisierte grafische Tests mit sichtbarem SubI-Fenster, Screenshots und optionalen Videoaufnahmen moeglich werden.
 
 Das Zielbild ist:
 
-- MapFlow startet in einem deterministischen Testmodus
+- SubI startet in einem deterministischen Testmodus
 - eine definierte Szene oder Fixture wird geladen
 - die App fuehrt reproduzierbare Schritte aus
 - relevante Fenster oder Outputs werden als Bild oder Video aufgenommen
@@ -20,10 +20,10 @@ Der aktuelle Testbestand ist fuer dieses Ziel noch nicht ausreichend, aber ein e
 
 ### Was bereits umgesetzt ist
 
-- dediziertes Binary `mapflow_visual_harness`
+- dediziertes Binary `subi_visual_harness`
 - Screenshot-Export aus einem echten sichtbaren `winit`-Fenster
 - Pixelvergleich gegen feste Referenzbilder
-- optional fester Screenshot-Ausgabeordner ueber `MAPFLOW_VISUAL_CAPTURE_OUTPUT_DIR`
+- optional fester Screenshot-Ausgabeordner ueber `SUBI_VISUAL_CAPTURE_OUTPUT_DIR`
 - drei erste lokale Szenarien:
   - `checkerboard`
   - `gradient`
@@ -38,7 +38,7 @@ Der aktuelle Testbestand ist fuer dieses Ziel noch nicht ausreichend, aber ein e
 
 ### Was heute noch fehlt
 
-- kein dedizierter GUI-Test-Harness fuer die komplette MapFlow-App auf Basis des echten `run_app`-Pfads
+- kein dedizierter GUI-Test-Harness fuer die komplette SubI-App auf Basis des echten `run_app`-Pfads
 - keine stabile CLI oder Test-API fuer reproduzierbare UI-Szenarien
 - kein allgemeiner Screenshot- oder Videoexport fuer Tests
 - keine Artefakt-Konvention fuer spaetere automatische Auswertung
@@ -50,24 +50,24 @@ Die meisten aktuellen Tests pruefen Logik, nicht sichtbare UI.
 
 Beispiele:
 
-- `crates/mapmap-ui/tests/timeline_automation_tests.rs`
+- `crates/subi-ui/tests/timeline_automation_tests.rs`
 - diverse `#[cfg(test)]`-Bereiche in UI-Panels und Editoren
 
 Die vorhandenen GPU-Tests laufen offscreen und sind derzeit ignoriert:
 
-- `crates/mapmap-render/tests/effect_chain_tests.rs`
-- `crates/mapmap-render/tests/effect_chain_integration_tests.rs`
+- `crates/subi-render/tests/effect_chain_tests.rs`
+- `crates/subi-render/tests/effect_chain_integration_tests.rs`
 
 Der echte Fensterpfad liegt im Produktionslauf:
 
-- `crates/mapmap/src/main.rs`
-- `crates/mapmap/src/app/core/init.rs`
-- `crates/mapmap/src/window_manager.rs`
-- `crates/mapmap/src/app/loops/render.rs`
+- `crates/subi/src/main.rs`
+- `crates/subi/src/app/core/init.rs`
+- `crates/subi/src/window_manager.rs`
+- `crates/subi/src/app/loops/render.rs`
 
 Wesentliche Schlussfolgerung:
 
-- fuer die volle MapFlow-App gilt das weiterhin
+- fuer die volle SubI-App gilt das weiterhin
 - als erster Zwischenschritt existiert jetzt aber ein kleiner lokaler visueller Harness fuer echte sichtbare Fenster und Screenshot-Regressionen
 
 ## Wichtigste Blocker
@@ -121,7 +121,7 @@ Interne Previews werden aktuell gedrosselt aktualisiert. Fuer reproduzierbare Sc
 
 Noetig:
 
-- sichtbaren Test- oder Automationsmodus fuer MapFlow einfuehren
+- sichtbaren Test- oder Automationsmodus fuer SubI einfuehren
 - Einstiegspunkt aus `main.rs` in wiederverwendbare Bausteine extrahieren
 - Fixture-Projekte automatisiert laden koennen
 - Testschritte von aussen parametrisieren
@@ -135,7 +135,7 @@ Empfohlene Richtung:
 
 Noetig:
 
-- vorhandenen GPU-Readback-Code aus `crates/mapmap/src/app/loops/render.rs` verallgemeinern
+- vorhandenen GPU-Readback-Code aus `crates/subi/src/app/loops/render.rs` verallgemeinern
 - Screenshots fuer Main-Window und Projektorfenster speichern
 - Artefakte als PNG ablegen
 - optional Serienaufnahme fuer spaetere Videobildung bereitstellen
@@ -168,7 +168,7 @@ Empfohlene erste Zielkandidaten:
 
 ## Priorisierte visuelle Testszenarien
 
-Die folgenden Faelle sind fuer einen spaeteren echten MapFlow-App-Harness besonders wertvoll,
+Die folgenden Faelle sind fuer einen spaeteren echten SubI-App-Harness besonders wertvoll,
 weil headless Runner oder reine Logiktests dort nicht genug Signal liefern:
 
 - Main-Window Startzustand mit leerem Testprojekt
@@ -220,18 +220,18 @@ Die benoetigten CLI-Parameter sind:
 *   `--mode automation`: Aktiviert den Automationsmodus, welcher schwergewichtige Dienste wie MIDI, Hue, MCP und Audio-Ausgabe umgeht.
 *   `--fixture <PFAD_ZUM_PROJEKT>`: (Optional) Laedt sofort beim Start die angegebene `.mflow` Projektdatei.
 *   `--exit-after-frames <ANZAHL>`: (Optional) Beendet die Applikation automatisch, nachdem exakt diese Anzahl an Frames gerendert wurde.
-*   `--screenshot-dir <PFAD_ZUM_ORDNER>`: (Optional) Wenn angegeben, wird *direkt vor dem automatischen Beenden* (also nach `exit-after-frames`) ein Frame-Buffer-Readback ausgeloest und das Bild als `automation_frame_<ANZAHL>.png` in diesem Ordner abgelegt. Alternativ kann die Umgebungsvariable `MAPFLOW_VISUAL_CAPTURE_OUTPUT_DIR` verwendet werden.
+*   `--screenshot-dir <PFAD_ZUM_ORDNER>`: (Optional) Wenn angegeben, wird *direkt vor dem automatischen Beenden* (also nach `exit-after-frames`) ein Frame-Buffer-Readback ausgeloest und das Bild als `automation_frame_<ANZAHL>.png` in diesem Ordner abgelegt. Alternativ kann die Umgebungsvariable `SUBI_VISUAL_CAPTURE_OUTPUT_DIR` verwendet werden.
 
 **Beispielaufruf lokal:**
 
 ```bash
-cargo run --bin mapflow -- --mode automation \
+cargo run --bin subi -- --mode automation \
   --fixture ./tests/fixtures/test_project.mflow \
   --exit-after-frames 60 \
   --screenshot-dir ./scripts/archive/logs/screenshots
 ```
 
-Damit laedt MapFlow das Test-Projekt, laesst es 60 Frames laufen (ausreichend, um sicherzustellen, dass Texturen und Shader geladen und berechnet sind), speichert einen Screenshot und beendet sich vollautomatisch, ohne auf Benutzereingaben zu warten.
+Damit laedt SubI das Test-Projekt, laesst es 60 Frames laufen (ausreichend, um sicherzustellen, dass Texturen und Shader geladen und berechnet sind), speichert einen Screenshot und beendet sich vollautomatisch, ohne auf Benutzereingaben zu warten.
 
 ## Pragmatische Empfehlung
 

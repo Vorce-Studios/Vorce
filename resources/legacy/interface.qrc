@@ -19,10 +19,10 @@
         <file alias="shape-triangle">images/shapes/add_triangle.png</file>
         <file alias="shape-ellipse">images/shapes/add_circle.png</file>
         <file alias="shape-polygon">images/shapes/add_circle.png</file>
-        <file alias="mapmap-title">images/logo/logomapmap.png</file>
-        <file alias="mapmap-title-light">images/logo/logomapmap-light.png</file>
-        <file alias="mapmap-logo">images/logo/mapmap-logo.png</file>
-        <file alias="mapmap-splash">images/logo/splash.png</file>
+        <file alias="subi-title">images/logo/logosubi.png</file>
+        <file alias="subi-title-light">images/logo/logosubi-light.png</file>
+        <file alias="subi-logo">images/logo/subi-logo.png</file>
+        <file alias="subi-splash">images/logo/splash.png</file>
         <file alias="logo-title">fonts/DroidSans.otf</file>
         <file alias="base-font">fonts/DroidSans.otf</file>
         <file alias="test-signal">images/test-signal/test-signal.svg</file>
@@ -30,14 +30,14 @@
         <file alias="lock-mapping">images/icons/small/lock_w.png</file>
         <file alias="visible-mapping">images/icons/small/visible_w.png</file>
         <file alias="duplicate-mapping">images/icons/small/duplicate_w.png</file>
-        <file alias="stylesheet">qss/mapmap.qss</file>
+        <file alias="stylesheet">qss/subi.qss</file>
         <file alias="console-font">fonts/Hack-Regular.otf</file>
         <file alias="pal-test-card">images/test-signal/pal-test-signal.svg</file>
         <file alias="classic-test">images/test-signal/examples/classic-test-card.png</file>
         <file alias="pal-test">images/test-signal/examples/pal-test-card.png</file>
         <file alias="ntsc-test">images/test-signal/examples/ntsc-test-card.png</file>
         <file alias="ntsc-test-card">images/test-signal/ntsc-test-signal.svg</file>
-        <file alias="mapmap-logo-with-border">images/logo/mapmap-wide-with-border.svg</file>
+        <file alias="subi-logo-with-border">images/logo/subi-wide-with-border.svg</file>
         <file>images/checkbox/checkbox-checked.png</file>
         <file>images/checkbox/checkbox-checked-focused.png</file>
         <file>images/checkbox/checkbox-unchecked.png</file>

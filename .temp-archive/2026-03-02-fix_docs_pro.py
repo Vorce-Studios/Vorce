@@ -128,7 +128,7 @@ def fix_docs(content, file_path):
 
     return "\n".join(new_lines)
 
-paths = ['crates/mapmap-core/src', 'crates/mapmap-io/src', 'crates/mapmap-ui/src', 'crates/mapmap-control/src', 'crates/mapmap-ffi/src']
+paths = ['crates/subi-core/src', 'crates/subi-io/src', 'crates/subi-ui/src', 'crates/subi-control/src', 'crates/subi-ffi/src']
 for path in paths:
     for root, dirs, files in os.walk(path):
         for file in files:

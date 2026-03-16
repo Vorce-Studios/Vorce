@@ -1,4 +1,4 @@
-# MapFlow Render Queue & Pipeline Architektur (Single Source of Truth)
+# SubI Render Queue & Pipeline Architektur (Single Source of Truth)
 
 > Diese Datei ist die **konsolidierte Gesamtdokumentation** für:
 > - System-/Thread-Architektur rund um Rendering und Media
@@ -11,7 +11,7 @@
 
 ## 1. Ziel und Scope
 
-Diese Dokumentation beschreibt den tatsächlichen und geplanten Render-Pfad in MapFlow mit Fokus auf Video-Frames:
+Diese Dokumentation beschreibt den tatsächlichen und geplanten Render-Pfad in SubI mit Fokus auf Video-Frames:
 
 1. **Decode-Thread** erzeugt `PipelineFrame`s aus `VideoPlayer`.
 2. **Upload-Thread** lädt Frame-Daten in GPU-Texturen.
@@ -25,9 +25,9 @@ Sie kombiniert:
 
 Primäre Code-Referenzen:
 
-- `crates/mapmap-media/src/pipeline.rs` (`FramePipeline`, `FrameScheduler`)
-- `crates/mapmap/src/orchestration/media.rs` (Player-Orchestrierung, Queue-Drain)
-- `crates/mapmap-render/src/uploader.rs` (`WgpuFrameUploader`)
+- `crates/subi-media/src/pipeline.rs` (`FramePipeline`, `FrameScheduler`)
+- `crates/subi/src/orchestration/media.rs` (Player-Orchestrierung, Queue-Drain)
+- `crates/subi-render/src/uploader.rs` (`WgpuFrameUploader`)
 
 ---
 
@@ -35,11 +35,11 @@ Primäre Code-Referenzen:
 
 ### 2.1 High-Level Komponenten
 
-- **mapmap-core**: Domänenmodell (Paint/Mapping/Shape), Geometrie, Projektzustand
-- **mapmap-render**: wgpu-Backend, Texturverwaltung, Shader/Pipelines, Renderer
-- **mapmap-media**: Decoder/Player, Frame-Pipeline, Playback-Steuerung
-- **mapmap-ui**: UI-Zustand, Panels/Controls, Darstellung von Playback-Infos
-- **mapmap (binary/app)**: Orchestrierung, Event-Loop, Main-Renderloop
+- **subi-core**: Domänenmodell (Paint/Mapping/Shape), Geometrie, Projektzustand
+- **subi-render**: wgpu-Backend, Texturverwaltung, Shader/Pipelines, Renderer
+- **subi-media**: Decoder/Player, Frame-Pipeline, Playback-Steuerung
+- **subi-ui**: UI-Zustand, Panels/Controls, Darstellung von Playback-Infos
+- **subi (binary/app)**: Orchestrierung, Event-Loop, Main-Renderloop
 
 ### 2.2 Threading-Modell (IST)
 

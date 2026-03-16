@@ -1,4 +1,4 @@
-´9# MIDI User Guide - MapFlow
+´9# MIDI User Guide - SubI
 
 > **Version:** 1.0
 > **Stand:** 2025-12-27
@@ -20,7 +20,7 @@
 
 ## Übersicht
 
-MapFlow unterstützt MIDI-Eingabe für:
+SubI unterstützt MIDI-Eingabe für:
 - **Trigger-Nodes** im Module Canvas (Steuerung von Medien/Effekten)
 - **Controller Overlay** (visuelle Anzeige des Ecler NUO 4 Mixers)
 
@@ -50,7 +50,7 @@ MapFlow unterstützt MIDI-Eingabe für:
 │         ▼                                                               │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │ midir Crate (Rust)                                               │   │
-│  │ Datei: mapmap-control/src/midi/input.rs                          │   │
+│  │ Datei: subi-control/src/midi/input.rs                          │   │
 │  │ Struct: MidiInputHandler                                         │   │
 │  │ - new() → Initialisierung                                        │   │
 │  │ - list_ports() → Alle verfügbaren Ports                          │   │
@@ -90,9 +90,9 @@ MapFlow unterstützt MIDI-Eingabe für:
 ## User Workflow: MIDI Einrichten
 
 ### Schritt 1: App starten
-MapFlow verbindet sich **automatisch** zum ersten verfügbaren MIDI-Port.
+SubI verbindet sich **automatisch** zum ersten verfügbaren MIDI-Port.
 
-Im Log (`logs/mapflow_*.log`) erscheint:
+Im Log (`logs/subi_*.log`) erscheint:
 ```
 INFO  MIDI initialized
 INFO  Available MIDI ports: ["Port 1", "Port 2"]
@@ -120,7 +120,7 @@ Im Settings-Fenster gibt es eine **klappbare Section** "🎹 MIDI".
 
 1. **MIDI Port Dropdown** klicken
 2. Gewünschten Port auswählen
-3. MapFlow disconnectet vom alten Port und connectet zum neuen
+3. SubI disconnectet vom alten Port und connectet zum neuen
 
 **Log-Ausgabe:**
 ```
@@ -224,23 +224,23 @@ Das Overlay kann über das Menü **View** → **MIDI Controller Overlay** (oder 
 
 | Datei | Zweck |
 |-------|-------|
-| `mapmap-control/src/midi/mod.rs` | MIDI-Modul Root, MidiMessage enum |
-| `mapmap-control/src/midi/input.rs` | MidiInputHandler (Connect, Poll) |
-| `mapmap-control/src/midi/mapping.rs` | MidiMapping, MidiMappingKey |
-| `mapmap-control/src/midi/midi_learn.rs` | MidiLearnManager, MidiLearnState |
-| `mapmap-control/src/midi/ecler_nuo4.rs` | 89 vordefinierte Mappings |
-| `mapmap-ui/src/controller_overlay_panel.rs` | Overlay UI |
-| `mapmap-ui/src/module_canvas.rs` | MIDI Learn für Nodes |
-| `mapmap/src/main.rs` Zeile 451-460 | MIDI Message Routing |
+| `subi-control/src/midi/mod.rs` | MIDI-Modul Root, MidiMessage enum |
+| `subi-control/src/midi/input.rs` | MidiInputHandler (Connect, Poll) |
+| `subi-control/src/midi/mapping.rs` | MidiMapping, MidiMappingKey |
+| `subi-control/src/midi/midi_learn.rs` | MidiLearnManager, MidiLearnState |
+| `subi-control/src/midi/ecler_nuo4.rs` | 89 vordefinierte Mappings |
+| `subi-ui/src/controller_overlay_panel.rs` | Overlay UI |
+| `subi-ui/src/module_canvas.rs` | MIDI Learn für Nodes |
+| `subi/src/main.rs` Zeile 451-460 | MIDI Message Routing |
 | `resources/controllers/ecler_nuo4/elements.json` | Element-Positionen/MIDI-Config |
 
 ### Feature Flags
 
 ```toml
-# In crates/mapmap/Cargo.toml
+# In crates/subi/Cargo.toml
 [features]
 default = ["audio", "midi"]  # MIDI ist standardmäßig aktiviert
-midi = ["mapmap-control/midi", "mapmap-ui/midi"]
+midi = ["subi-control/midi", "subi-ui/midi"]
 ```
 
 ### Structs/Enums

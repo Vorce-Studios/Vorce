@@ -28,12 +28,12 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 
 ## 2025-01-19 - WGSL Shader Cleanup
 
-**Erkenntnis:** `crates/mapmap-render/shaders/` enthielt 10 `.wgsl` Dateien, die gegen die Projektstruktur verstoßen, da alle Shader in `shaders/` liegen sollten. Dies führte zu einer Inkonsistenz in der Shader-Verwaltung.
+**Erkenntnis:** `crates/subi-render/shaders/` enthielt 10 `.wgsl` Dateien, die gegen die Projektstruktur verstoßen, da alle Shader in `shaders/` liegen sollten. Dies führte zu einer Inkonsistenz in der Shader-Verwaltung.
 
 **Aktion:**
-- Alle `.wgsl` Dateien aus `crates/mapmap-render/shaders/` nach `shaders/` verschoben.
-- `crates/mapmap-render/src/effect_chain_renderer.rs` aktualisiert, um die Shader aus dem neuen Pfad (`../../../shaders/`) zu laden.
-- `crates/mapmap-render/shaders/` Verzeichnis gelöscht.
+- Alle `.wgsl` Dateien aus `crates/subi-render/shaders/` nach `shaders/` verschoben.
+- `crates/subi-render/src/effect_chain_renderer.rs` aktualisiert, um die Shader aus dem neuen Pfad (`../../../shaders/`) zu laden.
+- `crates/subi-render/shaders/` Verzeichnis gelöscht.
 - Build mit `cargo check` verifiziert.
 
 ## 2026-01-29 - Repository Cleanup
@@ -66,7 +66,7 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 
 ## 2026-02-09 - Archive Maintenance
 
-**Erkenntnis:** Das Verzeichnis `.temp-archive/` enthielt mehrere getrackte Dateien vom 2026-01-02 (`.mapmap_autosave`, `check_*.txt`, `VERSION.txt`, `VjMapper.code-workspace`, `core_error.txt`, `test_results.txt`), die älter als 30 Tage waren und somit die Aufbewahrungsfrist überschritten hatten.
+**Erkenntnis:** Das Verzeichnis `.temp-archive/` enthielt mehrere getrackte Dateien vom 2026-01-02 (`.subi_autosave`, `check_*.txt`, `VERSION.txt`, `VjMapper.code-workspace`, `core_error.txt`, `test_results.txt`), die älter als 30 Tage waren und somit die Aufbewahrungsfrist überschritten hatten.
 
 **Aktion:**
 - Alle Dateien mit dem Präfix `2026-01-02-` aus `.temp-archive/` via `git rm` entfernt.
@@ -116,5 +116,5 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 
 ## 2026-03-12 - Root Directory Cleanup
 
-**Erkenntnis:** Es wurden MapFlow-Log-Dateien (`mapflow.log.*`) im Verzeichnis `scripts/archive/logs/` gefunden, welche fälschlicherweise in Git verfolgt wurden, da die aktuelle `.gitignore`-Regel (`/logs/` und `*.log`) das Datums-Suffix nicht erfasste.
+**Erkenntnis:** Es wurden SubI-Log-Dateien (`subi.log.*`) im Verzeichnis `scripts/archive/logs/` gefunden, welche fälschlicherweise in Git verfolgt wurden, da die aktuelle `.gitignore`-Regel (`/logs/` und `*.log`) das Datums-Suffix nicht erfasste.
 **Aktion:** Log-Dateien aus Git mit `git rm` entfernt und `.gitignore` aktualisiert (`scripts/archive/logs/`), um zukünftige Verfolgung von diesen Dateien zu verhindern.

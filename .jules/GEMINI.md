@@ -14,15 +14,15 @@ Dieses Dokument dient als zentrale Wissensbasis für Maestro-Agenten im Mapflow-
 Das Projekt ist als Cargo Workspace organisiert:
 
 -   **`crates/`**: Quellcode der verschiedenen Module.
-    -   `mapmap-core`: Kernlogik, mathematische Hilfsmittel, Datenmodelle.
-    -   `mapmap-render`: Renderer-Implementierung (Bevy-basiert).
-    -   `mapmap-ui`: Benutzeroberfläche (egui/Bevy).
-    -   `mapmap-io`: Datei-I/O, OSC-Kommunikation.
-    -   `mapmap-bevy`: Bevy-spezifische Integrationen.
-    -   `mapmap-control`: Steuerung und Automatisierung.
-    -   `mapmap-media`: Video- und Audio-Handling (FFmpeg).
-    -   `mapmap-ffi`: Fremdsprachen-Interfaces.
-    -   `mapmap-mcp`: Model Context Protocol Integration.
+    -   `subi-core`: Kernlogik, mathematische Hilfsmittel, Datenmodelle.
+    -   `subi-render`: Renderer-Implementierung (Bevy-basiert).
+    -   `subi-ui`: Benutzeroberfläche (egui/Bevy).
+    -   `subi-io`: Datei-I/O, OSC-Kommunikation.
+    -   `subi-bevy`: Bevy-spezifische Integrationen.
+    -   `subi-control`: Steuerung und Automatisierung.
+    -   `subi-media`: Video- und Audio-Handling (FFmpeg).
+    -   `subi-ffi`: Fremdsprachen-Interfaces.
+    -   `subi-mcp`: Model Context Protocol Integration.
 -   **`shaders/`**: WGSL Shader-Dateien für Effekte und Rendering.
     -   `effect_*.wgsl`: Verschiedene visuelle Effekte.
     -   `mesh_warp.wgsl`: Shader für Mesh-Deformation.
@@ -42,7 +42,7 @@ Das Projekt ist als Cargo Workspace organisiert:
 Für Mapflow gelten über `cargo check` hinausgehende Anforderungen:
 
 1.  **Shader-Validierung**: Jede Änderung an `.wgsl`-Dateien muss mit `naga` (oder einem entsprechenden Skript) validiert werden.
-2.  **Crate-Abhängigkeiten**: GUI-Logik darf niemals in `mapmap-core` landen.
+2.  **Crate-Abhängigkeiten**: GUI-Logik darf niemals in `subi-core` landen.
 3.  **Cross-Platform**: Achte auf Windows/Linux/macOS Kompatibilität, insbesondere bei Pfaden und FFI.
 
 ## Befehle für Maestro

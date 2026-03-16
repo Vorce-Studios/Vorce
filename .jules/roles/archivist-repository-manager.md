@@ -41,7 +41,7 @@ Vor dem Start: `.jules/archivist.md` lesen/erstellen.
 
 ---
 
-## MAPFLOW PROJEKTSTRUKTUR
+## SUBI PROJEKTSTRUKTUR
 
 ### 📁 Standard-Verzeichnisse:
 
@@ -57,8 +57,8 @@ VjMapper/
 ├── .vscode/             # VS Code Konfiguration
 ├── assets/              # Statische Assets (Icons, Bilder)
 ├── crates/              # Rust Crates (NICHT ANFASSEN)
-│   ├── mapmap-core/
-│   ├── mapmap-render/
+│   ├── subi-core/
+│   ├── subi-render/
 │   └── ...
 ├── docs/                # Dokumentation
 │   ├── 01-OVERVIEW/
