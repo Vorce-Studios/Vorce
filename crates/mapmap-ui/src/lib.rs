@@ -36,15 +36,9 @@ pub use crate::editors::{
 // Re-export panel types directly to avoid ambiguous glob re-exports
 pub use crate::panels::{
     assignment_panel::*, audio_panel::*, controller_overlay_panel::*, cue_panel::*,
-<<<<<<< HEAD
     edge_blend_panel::*, effect_chain::*, inspector_panel::*, layer_panel::*, mapping_panel::*,
     osc_panel::*, oscillator_panel::*, output_panel::*, paint_panel::*, preview_panel::*,
     shortcuts_panel::*, transform_panel::*,
-=======
-    edge_blend_panel::*, effect_chain::*, inspector::InspectorPanel, layer_panel::*,
-    mapping_panel::*, osc_panel::*, oscillator_panel::*, output_panel::*, paint_panel::*,
-    preview_panel::*, shortcuts_panel::*, transform_panel::*,
->>>>>>> main
 };
 pub use crate::view::*;
 pub use crate::widgets::*;

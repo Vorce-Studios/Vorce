@@ -8,17 +8,10 @@ use crate::editors::{
 use crate::panels::{
     assignment_panel::AssignmentPanel, audio_panel::AudioPanel,
     controller_overlay_panel::ControllerOverlayPanel, cue_panel::CuePanel,
-<<<<<<< HEAD
     edge_blend_panel::EdgeBlendPanel, effect_chain::EffectChainPanel,
     inspector_panel::InspectorPanel, layer_panel::LayerPanel, mapping_panel::MappingPanel,
     oscillator_panel::OscillatorPanel, output_panel::OutputPanel, paint_panel::PaintPanel,
     preview_panel::PreviewPanel, transform_panel::TransformPanel,
-=======
-    edge_blend_panel::EdgeBlendPanel, effect_chain::EffectChainPanel, inspector::InspectorPanel,
-    layer_panel::LayerPanel, mapping_panel::MappingPanel, oscillator_panel::OscillatorPanel,
-    output_panel::OutputPanel, paint_panel::PaintPanel, preview_panel::PreviewPanel,
-    transform_panel::TransformPanel,
->>>>>>> main
 };
 use crate::view::{
     dashboard::Dashboard, media_browser::MediaBrowser, menu_bar, module_sidebar::ModuleSidebar,
@@ -560,7 +553,7 @@ impl AppUI {
         }
 
         // Determine context priority: Module > Layer > Output
-        let mut context = crate::panels::inspector::InspectorContext::None;
+        let mut context = crate::InspectorContext::None;
 
         // 1. Module Selection
         if self.show_module_canvas {
@@ -571,7 +564,7 @@ impl AppUI {
 
                 if let Some(module) = module_manager.get_module_mut(module_id) {
                     if let Some(part_id) = self.module_canvas.get_selected_part_id() {
-                        context = crate::panels::inspector::InspectorContext::Module {
+                        context = crate::InspectorContext::Module {
                             canvas: &mut self.module_canvas,
                             module,
                             part_id,
@@ -583,7 +576,7 @@ impl AppUI {
         }
 
         // 2. Layer Selection (if not in module mode)
-        if matches!(context, crate::panels::inspector::InspectorContext::None) {
+        if matches!(context, crate::InspectorContext::None) {
             if let Some(id) = self.selected_layer_id {
                 if let Some(layer) = layer_manager.get_layer(id) {
                     let index = layer_manager
@@ -597,7 +590,7 @@ impl AppUI {
                         .first()
                         .and_then(|&mapping_id| mapping_manager.get_mapping(mapping_id));
 
-                    context = crate::panels::inspector::InspectorContext::Layer {
+                    context = crate::InspectorContext::Layer {
                         layer,
                         transform: &layer.transform,
                         index,
@@ -608,10 +601,10 @@ impl AppUI {
         }
 
         // 3. Output Selection
-        if matches!(context, crate::panels::inspector::InspectorContext::None) {
+        if matches!(context, crate::InspectorContext::None) {
             if let Some(id) = self.selected_output_id {
                 if let Some(output) = output_manager.get_output(id) {
-                    context = crate::panels::inspector::InspectorContext::Output(output);
+                    context = crate::InspectorContext::Output(output);
                 }
             }
         }
@@ -622,14 +615,14 @@ impl AppUI {
 
         if let Some(action) = action {
             match action {
-                crate::panels::inspector::InspectorAction::UpdateOpacity(id, val) => {
+                crate::InspectorAction::UpdateOpacity(id, val) => {
                     self.actions.push(crate::UIAction::SetLayerOpacity(id, val));
                 }
-                crate::panels::inspector::InspectorAction::UpdateTransform(id, transform) => {
+                crate::InspectorAction::UpdateTransform(id, transform) => {
                     self.actions
                         .push(crate::UIAction::SetLayerTransform(id, transform));
                 }
-                crate::panels::inspector::InspectorAction::UpdateMappingMesh(id, mesh) => {
+                crate::InspectorAction::UpdateMappingMesh(id, mesh) => {
                     self.actions
                         .push(crate::UIAction::UpdateMappingMesh(id, mesh));
                 }
