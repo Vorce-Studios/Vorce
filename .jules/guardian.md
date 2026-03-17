@@ -143,3 +143,6 @@ Die Inkonsistenz im `ModuleEvaluator` bleibt bestehen, da dieser statenlos ist u
 
 **Erkenntnis:** The `AudioAnalyzerV2` module had gaps in its test coverage, particularly in edge cases of the `calculate_bpm` and `try_receive` functions. The `calculate_bpm` lacked tests for clamped ranges, a zero average interval calculation (when dividing), and handling an empty valid interval collection (caused by few samples or bad input timestamps).
 **Aktion:** Handled these explicitly by injecting manual timestamps to bypass earlier signal processing logic and hit only the mathematical branches in `calculate_bpm`. This isolates tests and exposes pure logic edge cases in `audio/analyzer_v2.rs`.
+## 2026-03-17 - Modul-Umbenennung erlaubt Identität
+**Erkenntnis:** Die Funktion `rename_module` im `ModuleManager` erlaubt das Umbenennen eines Moduls auf seinen eigenen, bestehenden Namen und gibt dabei `true` zurück, anstatt fehlzuschlagen oder eine Duplikats-Prüfung auszulösen.
+**Aktion:** Dieses Muster sollte in UI-Test-Szenarien berücksichtigt werden, bei denen Benutzer den Umbenennen-Dialog bestätigen, ohne den Namen zu ändern (Silent Success vs Error).
