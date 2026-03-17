@@ -6,6 +6,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+pub type CachedTextureView = (Arc<wgpu::TextureView>, Arc<AtomicU64>);
+
 /// Handle to a GPU texture
 #[derive(Clone)]
 pub struct TextureHandle {
@@ -68,7 +70,7 @@ impl Default for TextureDescriptor {
 pub struct TexturePool {
     device: Arc<wgpu::Device>,
     textures: RwLock<HashMap<String, TextureHandle>>,
-    views: RwLock<HashMap<String, Arc<wgpu::TextureView>>>,
+    views: RwLock<HashMap<String, CachedTextureView>>,
     start_time: Instant,
 }
 
@@ -117,7 +119,7 @@ impl TexturePool {
             width,
             height,
             format,
-            last_used,
+            last_used: last_used.clone(),
         };
 
         let view = handle.create_view();
@@ -126,32 +128,38 @@ impl TexturePool {
         let name_owned = name.to_string();
 
         self.textures.write().insert(name_owned.clone(), handle);
-        self.views.write().insert(name_owned.clone(), view_arc);
+        self.views
+            .write()
+            .insert(name_owned.clone(), (view_arc, last_used));
 
         name_owned
     }
 
     /// Get a texture view by name.
     pub fn get_view(&self, name: &str) -> Arc<wgpu::TextureView> {
-        // Refresh usage timestamp
+        // Fast path: check views cache and update timestamp atomically
+        if let Some((view, last_used)) = self.views.read().get(name).cloned() {
+            let now_secs = self.start_time.elapsed().as_secs();
+            last_used.store(now_secs, Ordering::Relaxed);
+            return view;
+        }
+
+        // Refresh usage timestamp via slow path
         if let Some(handle) = self.textures.read().get(name) {
             handle.mark_used(self.start_time);
         }
 
-        // Fast path: check views cache
-        if let Some(view) = self.views.read().get(name).cloned() {
-            return view;
-        }
-
         // Slow path: create from handle
-        let view = self
-            .textures
-            .read()
-            .get(name)
-            .expect("Texture not found in pool")
-            .create_view();
+        let textures = self.textures.read();
+        let handle = textures.get(name).expect("Texture not found in pool");
+        let view = handle.create_view();
+        let view_arc = Arc::new(view);
+        let last_used = handle.last_used.clone();
 
-        Arc::new(view)
+        drop(textures);
+        self.views.write().insert(name.to_string(), (view_arc.clone(), last_used));
+
+        view_arc
     }
 
     /// Get the underlying texture by name.
@@ -176,8 +184,8 @@ impl TexturePool {
                 .write()
                 .insert(dest_name.to_string(), handle_clone);
 
-            if let Some(view) = self.views.read().get(src_name).cloned() {
-                self.views.write().insert(dest_name.to_string(), view);
+            if let Some(view_tuple) = self.views.read().get(src_name).cloned() {
+                self.views.write().insert(dest_name.to_string(), view_tuple);
             }
             true
         } else {
@@ -259,9 +267,10 @@ impl TexturePool {
                 handle.mark_used(self.start_time);
 
                 let new_view = handle.create_view();
+                let last_used = handle.last_used.clone();
                 self.views
                     .write()
-                    .insert(name.to_string(), Arc::new(new_view));
+                    .insert(name.to_string(), (Arc::new(new_view), last_used));
             }
         }
     }
