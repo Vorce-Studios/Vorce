@@ -132,6 +132,7 @@ impl super::panel::EffectChainPanel {
                             ui,
                             "↺ Reset",
                             colors::WARN_COLOR,
+                            "Reset",
                         ) {
                             reset = true;
                         }
@@ -635,8 +636,12 @@ impl super::panel::EffectChainPanel {
             let response = styled_slider(ui, &mut value, min..=max, default_value);
 
             response.context_menu(|ui| {
-                if crate::widgets::custom::hold_to_action_button(ui, "↺ Reset", colors::WARN_COLOR)
-                {
+                if crate::widgets::custom::hold_to_action_button(
+                    ui,
+                    "↺ Reset",
+                    colors::WARN_COLOR,
+                    "Reset",
+                ) {
                     value = default_value;
                     ui.close();
                 }

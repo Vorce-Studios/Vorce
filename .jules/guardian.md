@@ -146,3 +146,7 @@ Die Inkonsistenz im `ModuleEvaluator` bleibt bestehen, da dieser statenlos ist u
 ## 2026-03-17 - Modul-Umbenennung erlaubt Identität
 **Erkenntnis:** Die Funktion `rename_module` im `ModuleManager` erlaubt das Umbenennen eines Moduls auf seinen eigenen, bestehenden Namen und gibt dabei `true` zurück, anstatt fehlzuschlagen oder eine Duplikats-Prüfung auszulösen.
 **Aktion:** Dieses Muster sollte in UI-Test-Szenarien berücksichtigt werden, bei denen Benutzer den Umbenennen-Dialog bestätigen, ohne den Namen zu ändern (Silent Success vs Error).
+
+## 2024-05-24 - [State Clone & Equality Coverage]
+**Erkenntnis:** The `AppState` and `AppSettings` structures lacked basic Clone and PartialEq test coverage. This is essential for ensuring that deep fields are correctly duplicated and evaluated during CoW (Copy-on-Write) and UI diffing operations.
+**Aktion:** Implemented `test_app_settings_clone_equality`, `test_app_settings_partial_eq`, and `test_app_state_clone_equality` in `crates/mapmap-core/src/state.rs` to secure state management semantics.

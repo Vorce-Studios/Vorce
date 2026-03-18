@@ -351,6 +351,7 @@ pub fn render_source_ui(
                     ui,
                     "\u{27F2} Reset Clip",
                     colors::WARN_COLOR,
+                    "Reset Clip",
                 ) {
                     *start_time = 0.0;
                     *end_time = 0.0;
