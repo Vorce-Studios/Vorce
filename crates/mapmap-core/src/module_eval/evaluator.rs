@@ -7,9 +7,8 @@ use super::types::*;
 use crate::audio::analyzer_v2::AudioAnalysisV2;
 use crate::audio_reactive::AudioTriggerData;
 use crate::module::{
-    BlendModeType, LayerType, LinkBehavior, LinkMode, MapFlowModule, MaskType, MeshType,
-    ModulePartId, ModulePartType, ModulizerType, OutputType, SharedMediaState, SourceType,
-    TriggerType,
+    LayerType, LinkBehavior, LinkMode, MapFlowModule, MeshType, ModulePartId, ModulePartType,
+    OutputType, SharedMediaState, SourceType,
 };
 use std::cell::RefCell;
 use std::collections::HashMap;
