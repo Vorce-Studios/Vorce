@@ -1,6 +1,8 @@
 name: "CICD-DevFlow: Job03 Post-Merge Self-Hosted"
 
 on:
+  push:
+    branches: [main]
   pull_request_target:
     types: [closed]
   workflow_dispatch:
@@ -53,11 +55,33 @@ jobs:
               core.setOutput('should_run', 'false');
               return;
             }
+
+            // Handle direct push to main
+            if (context.eventName === 'push') {
+              core.info('Direct push to main detected. Using commit SHA for validation.');
+              core.setOutput('should_run', 'true');
+              core.setOutput('pr_number', '0'); // Placeholder for direct push
+              core.setOutput('pr_head_sha', context.sha);
+              core.setOutput('merge_commit_sha', context.sha);
+              core.setOutput('checkout_ref', context.sha);
+              return;
+            }
+
             let prNumber = context.payload.pull_request?.number;
             if (!prNumber && process.env.INPUT_PR_NUMBER) {
               prNumber = Number.parseInt(process.env.INPUT_PR_NUMBER, 10);
             }
             if (!Number.isInteger(prNumber) || prNumber <= 0) {
+              // If it's not a PR event and not a push, we might still want to allow manual triggers if SHA is provided elsewhere
+              if (context.eventName === 'workflow_dispatch') {
+                core.info('Manual dispatch without PR number. Using current SHA.');
+                core.setOutput('should_run', 'true');
+                core.setOutput('pr_number', '0');
+                core.setOutput('pr_head_sha', context.sha);
+                core.setOutput('merge_commit_sha', context.sha);
+                core.setOutput('checkout_ref', context.sha);
+                return;
+              }
               core.setFailed('Keine gültige PR-Nummer wurde angegeben.');
               return;
             }
@@ -66,7 +90,7 @@ jobs:
               repo: context.repo.repo,
               pull_number: prNumber,
             });
-            if (!pr.merged) {
+            if (!pr.merged && context.eventName !== 'workflow_dispatch') {
               core.notice(`PR #${prNumber} ist nicht gemerged – Self-Hosted-Validation übersprungen.`);
               core.setOutput('should_run', 'false');
               return;
@@ -98,7 +122,7 @@ jobs:
     name: "Gate On Standard PR Checks"
     runs-on: ubuntu-latest
     needs: [resolve-context]
-    if: vars.MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE == 'true' && needs.resolve-context.outputs.should_run == 'true'
+    if: vars.MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE == 'true' && needs.resolve-context.outputs.should_run == 'true' && github.event_name != 'push' && github.event_name != 'workflow_dispatch'
 
     steps:
       - name: Verify required GitHub-hosted PR checks succeeded
@@ -208,7 +232,12 @@ jobs:
     name: "Self-Hosted Post-Merge Validation"
     runs-on: [self-hosted, windows, x64, mapflow-post-merge]
     needs: [resolve-context, gate-standard-pr-checks]
-    if: vars.MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE == 'true' && needs.resolve-context.outputs.should_run == 'true'
+    if: |
+      always() && 
+      needs.resolve-context.result == 'success' &&
+      (needs.gate-standard-pr-checks.result == 'success' || needs.gate-standard-pr-checks.result == 'skipped') &&
+      vars.MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE == 'true' && 
+      needs.resolve-context.outputs.should_run == 'true'
     timeout-minutes: 120
 
     steps:
