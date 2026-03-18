@@ -9,7 +9,7 @@ use mapmap_core::animation::AnimValue;
 use mapmap_core::effect_animation::EffectParameterAnimator;
 use mapmap_core::module::ModuleId;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 /// Lightweight module descriptor for timeline arrangement UI.
 #[derive(Debug, Clone)]
@@ -218,14 +218,14 @@ impl TimelineV2 {
         blocks.first().copied()
     }
 
-    fn module_name_map<'a>(modules: &[TimelineModule<'a>]) -> HashMap<ModuleId, &'a str> {
-        modules.iter().map(|m| (m.id, m.name)).collect()
-    }
-
-    fn module_name(module_names: &HashMap<ModuleId, &str>, module_id: ModuleId) -> String {
-        module_names
-            .get(&module_id)
-            .map(|s| s.to_string())
+    // Optimization (Bolt ⚡): Instead of allocating a HashMap every frame to map module IDs
+    // to their names, we perform a zero-allocation linear scan over the `modules` slice.
+    // Since the number of modules in a UI is small, this is significantly faster and cache-friendly.
+    fn module_name(modules: &[TimelineModule<'_>], module_id: ModuleId) -> String {
+        modules
+            .iter()
+            .find(|m| m.id == module_id)
+            .map(|m| m.name.to_string())
             .unwrap_or_else(|| format!("Module {}", module_id))
     }
 
@@ -237,10 +237,11 @@ impl TimelineV2 {
         self.hybrid_current_block_id = None;
     }
 
-    fn cleanup_missing_modules(&mut self, available_module_ids: &[ModuleId]) {
-        let valid: HashSet<ModuleId> = available_module_ids.iter().copied().collect();
+    fn cleanup_missing_modules(&mut self, modules: &[TimelineModule<'_>]) {
+        // Optimization (Bolt ⚡): Prevented allocating a new HashSet every frame for missing module
+        // cleanup. Using `any` on the slice avoids the heap allocation entirely and is faster for small N.
         self.module_arrangement
-            .retain(|item| valid.contains(&item.module_id));
+            .retain(|item| modules.iter().any(|m| m.id == item.module_id));
 
         let has_block = |id: Option<u64>, blocks: &[ModuleArrangementItem]| {
             id.is_some_and(|block_id| blocks.iter().any(|item| item.id == block_id))
@@ -298,9 +299,9 @@ impl TimelineV2 {
         &mut self,
         current_time: f32,
         is_playing: bool,
-        available_module_ids: &[ModuleId],
+        modules: &[TimelineModule<'_>],
     ) -> Option<ModuleId> {
-        self.cleanup_missing_modules(available_module_ids);
+        self.cleanup_missing_modules(modules);
 
         if !self.show_control_enabled {
             return None;
@@ -481,8 +482,6 @@ impl TimelineV2 {
         modules: &[TimelineModule<'_>],
     ) -> Option<TimelineAction> {
         let mut action = None;
-        let module_names = Self::module_name_map(modules);
-        let available_module_ids: Vec<ModuleId> = modules.iter().map(|m| m.id).collect();
 
         // Ensure pause_at_markers reflects the current ShowMode
         animator.set_pause_at_markers(self.show_mode == ShowMode::Trackline);
@@ -734,7 +733,7 @@ impl TimelineV2 {
                     ui.label(egui::RichText::new("No modules available").weak().italics());
                 } else {
                     let selected = self.selected_module_id.unwrap_or(modules[0].id);
-                    let selected_label = Self::module_name(&module_names, selected);
+                    let selected_label = Self::module_name(modules, selected);
                     egui::ComboBox::from_id_salt("timeline_module_select")
                         .selected_text(selected_label)
                         .show_ui(ui, |ui| {
@@ -776,7 +775,7 @@ impl TimelineV2 {
                 ui.horizontal(|ui| {
                     ui.checkbox(&mut block.enabled, "");
 
-                    let selected_label = Self::module_name(&module_names, block.module_id);
+                    let selected_label = Self::module_name(modules, block.module_id);
                     egui::ComboBox::from_id_salt(format!("timeline_block_module_{}", block.id))
                         .selected_text(selected_label)
                         .show_ui(ui, |ui| {
@@ -839,7 +838,7 @@ impl TimelineV2 {
 
             if let Some(id) = remove_block_id {
                 self.module_arrangement.retain(|block| block.id != id);
-                self.cleanup_missing_modules(&available_module_ids);
+                self.cleanup_missing_modules(modules);
             }
         });
 
@@ -1161,11 +1160,8 @@ impl TimelineV2 {
                     Color32::from_rgb(200, 220, 255),
                 );
 
-                let active_module = self.runtime_show_module(
-                    self.playhead,
-                    animator.is_playing(),
-                    &available_module_ids,
-                );
+                let active_module =
+                    self.runtime_show_module(self.playhead, animator.is_playing(), modules);
 
                 // TRIGGER ACTION IF CHANGED
                 if let Some(mod_id) = active_module {
@@ -1217,7 +1213,7 @@ impl TimelineV2 {
                         egui::StrokeKind::Middle,
                     );
 
-                    let label = Self::module_name(&module_names, block.module_id);
+                    let label = Self::module_name(modules, block.module_id);
                     painter.text(
                         Pos2::new(block_rect.min.x + 4.0, block_rect.min.y + 6.0),
                         egui::Align2::LEFT_TOP,

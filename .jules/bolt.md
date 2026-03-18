@@ -68,3 +68,6 @@
 ## 2024-05-23 - Avoid String Cloning in TimelineModule Iterators
 **Learning:** Structs collected into `Vec` inside UI hot loops (like `TimelineModule` in `mapmap/src/app/ui_layout.rs`) that own `String` fields cause massive per-frame allocation overhead.
 **Action:** Change UI presentation structs to borrow strings (`&'a str`) instead of owning them, reducing `clone()` allocations in rendering loops to zero.
+## 2024-05-18 - [Eliminate Per-Frame Allocations in UI Loops]
+**Learning:** Immediate mode GUIs like `egui` execute the layout code on every frame. In SubI, allocating collections like `Vec`, `HashMap`, and `HashSet` inside the UI loop (e.g., `TimelineV2::ui`) to track active elements caused unnecessary heap allocations and GC overhead.
+**Action:** Replace `HashMap` mapping and `HashSet` validations with zero-allocation cache-friendly array scans (`iter().find()` and `iter().any()`) over slices. Since the number of UI elements (e.g., modules) is typically small, linear iteration is measurably faster and avoids per-frame allocations.
