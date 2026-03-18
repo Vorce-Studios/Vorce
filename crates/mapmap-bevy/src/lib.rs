@@ -35,6 +35,9 @@ pub mod resources;
 pub mod systems;
 
 use bevy::prelude::*;
+use bevy::render::{
+    extract_resource::ExtractResourcePlugin, Render, RenderApp, RenderSet,
+};
 use components::*;
 use resources::*;
 use systems::*;
@@ -75,6 +78,7 @@ impl BevyRunner {
         // Add essential rendering extensions
         app.add_plugins(bevy_atmosphere::prelude::AtmospherePlugin);
         app.add_plugins(bevy_mod_outline::OutlinePlugin);
+        app.add_plugins(ExtractResourcePlugin::<crate::resources::BevyRenderOutput>::default());
 
         // Register resources
         app.init_resource::<AudioInputResource>();
@@ -106,9 +110,21 @@ impl BevyRunner {
                 text_3d_system,
                 node_reactivity_system,
                 particle_system,
-                frame_readback_system,
             ),
         );
+
+        if let Some(render_app) = app.get_sub_app_mut(RenderApp) {
+            render_app.add_systems(
+                Render,
+                frame_readback_system.after(RenderSet::Render),
+            );
+        }
+
+        // `App::update()` does not finalize plugin setup for us.
+        // Headless integration must finish and clean up once up front,
+        // otherwise render-world resources like `RenderDevice` are absent at runtime.
+        app.finish();
+        app.cleanup();
 
         Self { app }
     }
