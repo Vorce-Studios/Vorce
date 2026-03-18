@@ -42,15 +42,23 @@ if (-not $env:VCPKG_INSTALLED_DIR) {
 $vcpkgExe = Join-Path $env:VCPKG_ROOT "vcpkg.exe"
 $bootstrapScript = Join-Path $env:VCPKG_ROOT "bootstrap-vcpkg.bat"
 if (-not (Test-Path $vcpkgExe)) {
-    if (-not (Test-Path $bootstrapScript)) {
-        Write-Host "--- Debug: repoRoot is $repoRoot ---"
-        Write-Host "Directory listing of $repoRoot :"
-        Get-ChildItem $repoRoot | Select-Object Name, Mode
-        throw "vcpkg was not found at '$($env:VCPKG_ROOT)'. See docs/A3_PROJECT/B4_CICD/DOC-C5_SELF_HOSTED_RUNNER_WINDOWS.md."
-    }
+    # Fallback: Search in repoRoot
+    $foundVcpkg = Get-ChildItem -Path $repoRoot -Filter "vcpkg.exe" -Recurse -Depth 2 -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($foundVcpkg) {
+        $vcpkgExe = $foundVcpkg.FullName
+        $env:VCPKG_ROOT = Split-Path $vcpkgExe
+        Write-Host "Found vcpkg via search at: $vcpkgExe"
+    } else {
+        if (-not (Test-Path $bootstrapScript)) {
+            Write-Host "--- Debug: repoRoot is $repoRoot ---"
+            Write-Host "Directory listing of $repoRoot :"
+            Get-ChildItem $repoRoot | Select-Object Name, Mode
+            throw "vcpkg was not found at '$($env:VCPKG_ROOT)'. See docs/A3_PROJECT/B4_CICD/DOC-C5_SELF_HOSTED_RUNNER_WINDOWS.md."
+        }
 
-    Write-Host "Bootstrapping vcpkg..."
-    & $bootstrapScript
+        Write-Host "Bootstrapping vcpkg..."
+        & $bootstrapScript
+    }
 }
 
 $llvmBin = $env:LIBCLANG_PATH
