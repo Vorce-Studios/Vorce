@@ -259,9 +259,10 @@ jobs:
           fetch-depth: 0
 
       - name: Set Rust Toolchain
-        shell: pwsh
+        shell: powershell
         env:
           toolchain: ${{ inputs.toolchain || vars.MAPFLOW_DEFAULT_TOOLCHAIN || 'stable' }}
+          RUNNER_OS: ${{ runner.os }}
         run: |
           if (-not $env:toolchain) {
             Write-Error "'toolchain' ist ein erforderlicher Input"
@@ -273,7 +274,7 @@ jobs:
           } elseif ($env:RUNNER_OS -eq "macOS") {
             Write-Host "macOS-spezifische Logik (PowerShell)"
           }
-          echo "toolchain=$($env:toolchain)" >> $env:GITHUB_OUTPUT
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "toolchain=$($env:toolchain)"
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -286,7 +287,7 @@ jobs:
           arch: x64
 
       - name: Run post-merge self-hosted validation script
-        shell: pwsh
+        shell: powershell
         env:
           MAPFLOW_PR_NUMBER: ${{ needs.resolve-context.outputs.pr_number }}
           MAPFLOW_PR_HEAD_SHA: ${{ needs.resolve-context.outputs.pr_head_sha }}
