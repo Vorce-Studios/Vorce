@@ -1,4 +1,6 @@
-use mapmap_ui::editors::timeline_v2::{ModuleArrangementItem, ShowMode, TimelineV2};
+use mapmap_ui::editors::timeline_v2::{
+    ModuleArrangementItem, ShowMode, TimelineModule, TimelineV2,
+};
 
 #[test]
 fn test_timeline_fully_automated_switch() {
@@ -25,7 +27,16 @@ fn test_timeline_fully_automated_switch() {
         ..TimelineV2::default()
     };
 
-    let available_ids = vec![101, 102];
+    let available_ids = vec![
+        TimelineModule {
+            id: 101,
+            name: "Test1",
+        },
+        TimelineModule {
+            id: 102,
+            name: "Test2",
+        },
+    ];
 
     // Check at time 5.0 (should be module 101)
     let mod_id = timeline.runtime_show_module(5.0, true, &available_ids);
@@ -52,7 +63,10 @@ fn test_timeline_manual_mode_no_auto_switch() {
         ..TimelineV2::default()
     };
 
-    let available_ids = vec![101];
+    let available_ids = vec![TimelineModule {
+        id: 101,
+        name: "Test1",
+    }];
 
     // Even at time 15.0 (outside block), it should return the manual selection
     let mod_id = timeline.runtime_show_module(15.0, true, &available_ids);
