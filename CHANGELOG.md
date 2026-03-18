@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- 2026-03-17: refactor: Style AssignmentPanel to match Cyber Dark theme (#1226)
 - 2026-03-16: refactor: Decompose module_canvas inspector mod.rs (#1219)
 - 2026-03-16: refactor: Decompose effect_chain_renderer.rs correctly (no regressions) (#-)
 - 2026-03-16: refactor: Decompose ModuleEvaluator into submodules (#1188)

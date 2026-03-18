@@ -1,6 +1,6 @@
 # MapFlow ROADMAP (MF-ID gesteuert)
 
-> **Stand:** 2026-03-16 23:59
+> **Stand:** 2026-03-18 06:06
 Operatives Hauptdokument: `ROADMAP.md`
 Sprache: Deutsch
 
