@@ -112,6 +112,7 @@ impl CuePanel {
                     AppIcon::ButtonStop,
                     24.0,
                     colors::ERROR_COLOR,
+                    &i18n.t("btn-stop-all"),
                 ) {
                     actions.push(UIAction::StopCue);
                 }
