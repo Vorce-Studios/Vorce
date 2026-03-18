@@ -65,19 +65,18 @@ impl BevyRunner {
 
         let mut app = App::new();
 
-        // Use MinimalPlugins and manually add required rendering/asset plugins
-        // to avoid Winit event loop conflicts in the same process.
-        app.add_plugins(MinimalPlugins);
-        app.add_plugins(bevy::asset::AssetPlugin::default());
-        app.add_plugins(bevy::render::RenderPlugin::default());
-        app.add_plugins(bevy::core_pipeline::CorePipelinePlugin);
-        app.add_plugins(bevy::pbr::PbrPlugin::default());
-        app.add_plugins(bevy::render::texture::ImagePlugin::default());
-        app.add_plugins(bevy::scene::ScenePlugin);
-        app.add_plugins(bevy::gltf::GltfPlugin::default());
-        app.add_plugins(bevy::transform::TransformPlugin);
-        app.add_plugins(bevy::render::view::VisibilityPlugin);
-        app.add_plugins(bevy::diagnostic::DiagnosticsPlugin);
+        // Use DefaultPlugins but disable WinitPlugin to avoid event loop conflicts.
+        // This keeps all rendering, asset, and internal logic plugins active.
+        app.add_plugins(
+            DefaultPlugins
+                .build()
+                .disable::<bevy::winit::WinitPlugin>()
+                .set(WindowPlugin {
+                    primary_window: None,
+                    exit_condition: bevy::window::ExitCondition::DontExit,
+                    ..default()
+                }),
+        );
 
         // Add essential rendering extensions
         app.add_plugins(bevy_atmosphere::prelude::AtmospherePlugin);

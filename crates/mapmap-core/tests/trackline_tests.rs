@@ -1,14 +1,14 @@
 #[cfg(test)]
 mod trackline_tests {
-    use mapmap_core::animation::{AnimationClip, AnimationPlayer, Marker, PlaybackMode};
+    use mapmap_core::animation::{AnimationClip, AnimationPlayer, PlaybackMode, TimelineMarker};
 
     #[test]
     fn test_trackline_mode_pauses_at_marker() {
         let mut clip = AnimationClip::new("test".into());
         clip.duration = 10.0;
         clip.playback_mode = PlaybackMode::Trackline;
-        clip.add_marker(Marker::new(2.0, "Pause 1".into()));
-        clip.add_marker(Marker::new(5.0, "Pause 2".into()));
+        clip.add_marker(TimelineMarker::new(2.0, "Pause 1".into()));
+        clip.add_marker(TimelineMarker::new(5.0, "Pause 2".into()));
 
         let mut player = AnimationPlayer::new(clip);
         player.play();
