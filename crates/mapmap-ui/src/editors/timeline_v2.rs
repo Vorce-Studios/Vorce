@@ -483,8 +483,6 @@ impl TimelineV2 {
     ) -> Option<TimelineAction> {
         let mut action = None;
 
-
-
         // Ensure pause_at_markers reflects the current ShowMode
         animator.set_pause_at_markers(self.show_mode == ShowMode::Trackline);
 
@@ -1162,11 +1160,8 @@ impl TimelineV2 {
                     Color32::from_rgb(200, 220, 255),
                 );
 
-                let active_module = self.runtime_show_module(
-                    self.playhead,
-                    animator.is_playing(),
-                    modules,
-                );
+                let active_module =
+                    self.runtime_show_module(self.playhead, animator.is_playing(), modules);
 
                 // TRIGGER ACTION IF CHANGED
                 if let Some(mod_id) = active_module {
