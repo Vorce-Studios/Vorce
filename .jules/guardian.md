@@ -143,3 +143,7 @@ Die Inkonsistenz im `ModuleEvaluator` bleibt bestehen, da dieser statenlos ist u
 
 **Erkenntnis:** The `AudioAnalyzerV2` module had gaps in its test coverage, particularly in edge cases of the `calculate_bpm` and `try_receive` functions. The `calculate_bpm` lacked tests for clamped ranges, a zero average interval calculation (when dividing), and handling an empty valid interval collection (caused by few samples or bad input timestamps).
 **Aktion:** Handled these explicitly by injecting manual timestamps to bypass earlier signal processing logic and hit only the mathematical branches in `calculate_bpm`. This isolates tests and exposes pure logic edge cases in `audio/analyzer_v2.rs`.
+
+## 2024-05-24 - [State Clone & Equality Coverage]
+**Erkenntnis:** The `AppState` and `AppSettings` structures lacked basic Clone and PartialEq test coverage. This is essential for ensuring that deep fields are correctly duplicated and evaluated during CoW (Copy-on-Write) and UI diffing operations.
+**Aktion:** Implemented `test_app_settings_clone_equality`, `test_app_settings_partial_eq`, and `test_app_state_clone_equality` in `crates/mapmap-core/src/state.rs` to secure state management semantics.
