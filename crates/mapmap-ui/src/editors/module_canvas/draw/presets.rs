@@ -1,4 +1,4 @@
-use super::super::{state::ModuleCanvas, utils};
+use super::super::state::ModuleCanvas;
 use egui::{Color32, Pos2, Rect, Stroke, Ui, Vec2};
 use mapmap_core::module::MapFlowModule;
 
@@ -49,39 +49,28 @@ pub fn draw_presets_popup(
                             if ui.button(&preset.name).clicked() {
                                 module.parts.clear();
                                 module.connections.clear();
+                                module.next_part_id = 1;
                                 let mut part_ids = Vec::new();
-                                let mut next_id = 1;
                                 for (part_type, position, size) in &preset.parts {
-                                    let id = next_id;
-                                    next_id += 1;
-                                    let (inputs, outputs) =
-                                        utils::get_sockets_for_part_type(part_type);
-                                    module.parts.push(mapmap_core::module::ModulePart {
-                                        id,
-                                        part_type: part_type.clone(),
-                                        position: *position,
-                                        size: *size,
-                                        inputs,
-                                        outputs,
-                                        link_data: mapmap_core::module::NodeLinkData::default(),
-                                        trigger_targets: std::collections::HashMap::new(),
-                                    });
+                                    let id = module.add_part_with_type(part_type.clone(), *position);
+                                    if let Some(part) = module.parts.iter_mut().find(|part| part.id == id) {
+                                        part.size = *size;
+                                    }
                                     part_ids.push(id);
                                 }
                                 for (from_idx, from_socket, to_idx, to_socket) in
                                     &preset.connections
                                 {
                                     if *from_idx < part_ids.len() && *to_idx < part_ids.len() {
-                                        module.connections.push(
-                                            mapmap_core::module::ModuleConnection {
-                                                from_part: part_ids[*from_idx],
-                                                from_socket: *from_socket,
-                                                to_part: part_ids[*to_idx],
-                                                to_socket: *to_socket,
-                                            },
+                                        let _ = module.connect_parts(
+                                            part_ids[*from_idx],
+                                            *from_socket,
+                                            part_ids[*to_idx],
+                                            *to_socket,
                                         );
                                     }
                                 }
+                                let _ = module.repair_graph();
                                 canvas.show_presets = false;
                             }
                             ui.label(format!("({} nodes)", preset.parts.len()));

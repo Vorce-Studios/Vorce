@@ -12,6 +12,7 @@ pub mod modulizer;
 pub mod node_link;
 pub mod output;
 pub mod part;
+/// Shared node/socket/inspector schema helpers.
 pub mod schema;
 pub mod shared_media;
 pub mod socket;

@@ -38,6 +38,7 @@ use bevy::prelude::*;
 use bevy::render::{
     extract_resource::ExtractResourcePlugin, Render, RenderApp, RenderSet,
 };
+use bevy::{log::LogPlugin, winit::WinitPlugin};
 use components::*;
 use resources::*;
 use systems::*;
@@ -68,12 +69,19 @@ impl BevyRunner {
 
         let mut app = App::new();
 
-        // Use DefaultPlugins but disable the window for headless rendering
-        app.add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: None,
-            exit_condition: bevy::window::ExitCondition::DontExit,
-            ..default()
-        }));
+        // MapFlow owns the outer winit event loop. Disabling Bevy's WinitPlugin keeps the
+        // embedded runner headless and avoids a second event-loop creation on Windows.
+        app.add_plugins(
+            DefaultPlugins
+                .build()
+                .set(WindowPlugin {
+                    primary_window: None,
+                    exit_condition: bevy::window::ExitCondition::DontExit,
+                    ..default()
+                })
+                .disable::<LogPlugin>()
+                .disable::<WinitPlugin>(),
+        );
 
         // Add essential rendering extensions
         app.add_plugins(bevy_atmosphere::prelude::AtmospherePlugin);
@@ -428,5 +436,18 @@ impl BevyRunner {
                     }
                 }
             });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn headless_runner_disables_embedded_host_plugins() {
+        let runner = BevyRunner::new();
+
+        assert!(!runner.app.is_plugin_added::<LogPlugin>());
+        assert!(!runner.app.is_plugin_added::<WinitPlugin>());
     }
 }

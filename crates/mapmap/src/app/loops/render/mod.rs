@@ -129,7 +129,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
             RenderContext {
                 device: &app.backend.device,
                 queue: &app.backend.queue,
-                render_ops: &app.render_ops,
+                render_queue: &app.render_queue.items,
                 output_manager: &app.state.output_manager,
                 edge_blend_renderer: &app.edge_blend_renderer,
                 color_calibration_renderer: &app.color_calibration_renderer,
@@ -155,10 +155,12 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
         #[cfg(feature = "ndi")]
         {
             // Find if this output has an NDI sender
-            let part_id = app.render_ops.iter().find_map(|(_, op)| {
-                if let mapmap_core::module::OutputType::Projector { id, .. } = &op.output_type {
+            let part_id = app.render_queue.items.iter().find_map(|item| {
+                if let mapmap_core::module::OutputType::Projector { id, .. } =
+                    &item.render_op.output_type
+                {
                     if *id == output_id {
-                        return Some(op.output_part_id);
+                        return Some(item.render_op.output_part_id);
                     }
                 }
                 None

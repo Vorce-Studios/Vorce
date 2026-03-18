@@ -694,3 +694,27 @@ Die sinnvollste naechste Etappe ist kein weiterer Feature-Zuwachs, sondern eine 
 4. danach erst das neue Trigger-/Control-Bus-Konzept und das neue Node-Design ausrollen.
 
 So wird aus dem heutigen "breiten, aber inkonsistenten" Node-System ein kleines, aber belastbares System, das sich spaeter wieder kontrolliert vergroessern laesst.
+
+## 12. Umsetzungsstand 2026-03-19
+
+Folgende Basis wurde inzwischen im Code umgesetzt:
+
+- `ModuleSocket` traegt jetzt stabile Schema-Metadaten:
+  - `id`
+  - `direction`
+  - `supports_trigger_mapping`
+  - `is_primary`
+  - `accepts_multiple_connections`
+- `ModulePart::schema()` liefert ein konsolidiertes Node-/Socket-/Inspector-Schema.
+- `MapFlowModule` validiert neue Verbindungen ueber `validate_connection(...)` und `connect_parts(...)`.
+- `repair_graph()` entfernt inkonsistente Connections und ungueltige Trigger-Mappings und normalisiert doppelte IDs.
+- `ModuleManager::get_module_mut()` dirty-markiert nicht mehr implizit.
+- `ModuleManager::repair_modules(...)` wird im App-Loop vor der Evaluation fuer Self-Healing genutzt.
+- Der Canvas erzwingt beim Verbinden jetzt die Core-Validierung statt nur einer losen Farbvorschau.
+- Presets erzeugen Sockets nicht mehr ueber eine driftende UI-Kopie, sondern ueber das Core-Modell.
+- Die App verwendet jetzt eine explizite `RuntimeRenderQueue` statt eines lose semantischen `Vec<(ModuleId, RenderOp)>`.
+
+Noch offen:
+
+- der native Windows-Start muss separat weiter untersucht werden, da der Runtime-Smoke-Test aktuell mit `0xc0000130` abbricht
+- Output-Inspector, Masken, Blend-Modi und Render-Transforms sind noch nicht voll end-to-end geschlossen

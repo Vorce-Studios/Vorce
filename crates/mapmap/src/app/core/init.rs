@@ -580,7 +580,7 @@ impl App {
                     .join("MapFlow")
                     .join("recent_effect_configs.json"),
             ),
-            render_ops: Vec::new(),
+            render_queue: crate::app::core::app_struct::RuntimeRenderQueue::default(),
             edge_blend_renderer,
             color_calibration_renderer,
             edge_blend_cache: std::collections::HashMap::new(),

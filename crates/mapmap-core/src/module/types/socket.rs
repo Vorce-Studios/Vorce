@@ -15,7 +15,7 @@ pub enum ModuleSocketDirection {
 }
 
 /// A connection point on a node
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ModuleSocket {
     /// Stable schema ID for this socket.
     #[serde(default)]

@@ -2,7 +2,8 @@
 
 use crate::module::config::default_color_palette;
 use crate::module::types::{
-    MapFlowModule, ModuleId, ModulePartId, ModulePlaybackMode, PartType, SharedMediaState,
+    MapFlowModule, ModuleId, ModulePartId, ModulePlaybackMode, ModuleRepairReport, PartType,
+    SharedMediaState,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -134,7 +135,6 @@ impl ModuleManager {
 
     /// Get module by ID (mutable)
     pub fn get_module_mut(&mut self, id: ModuleId) -> Option<&mut MapFlowModule> {
-        self.mark_dirty();
         self.modules.get_mut(&id)
     }
 
@@ -196,6 +196,39 @@ impl ModuleManager {
     /// Remove a module
     pub fn remove_module(&mut self, module_id: ModuleId) -> Option<MapFlowModule> {
         self.modules.remove(&module_id)
+    }
+
+    /// Repair a single module in place and mark the graph dirty if anything changed.
+    pub fn repair_module(&mut self, module_id: ModuleId) -> Option<ModuleRepairReport> {
+        let report = self.modules.get_mut(&module_id)?.repair_graph();
+        if report.changed() {
+            tracing::warn!(
+                "Module {} repaired: refreshed_parts={}, removed_connections={}, removed_trigger_targets={}, normalized_parts={}",
+                module_id,
+                report.refreshed_parts,
+                report.removed_connections,
+                report.removed_trigger_targets,
+                report.normalized_parts
+            );
+            self.mark_dirty();
+        }
+        Some(report)
+    }
+
+    /// Repair multiple modules and return reports for changed graphs.
+    pub fn repair_modules<I>(&mut self, module_ids: I) -> Vec<(ModuleId, ModuleRepairReport)>
+    where
+        I: IntoIterator<Item = ModuleId>,
+    {
+        let mut reports = Vec::new();
+        for module_id in module_ids {
+            if let Some(report) = self.repair_module(module_id) {
+                if report.changed() {
+                    reports.push((module_id, report));
+                }
+            }
+        }
+        reports
     }
 }
 
@@ -296,6 +329,7 @@ mod tests {
     fn test_get_module_mut_and_get_module() {
         let mut manager = ModuleManager::new();
         let id = manager.create_module("Test".to_string());
+        let revision_before = manager.graph_revision;
 
         {
             let module_mut = manager.get_module_mut(id).unwrap();
@@ -304,6 +338,7 @@ mod tests {
 
         let module = manager.get_module(id).unwrap();
         assert_eq!(module.name, "Mutated");
+        assert_eq!(manager.graph_revision, revision_before);
         assert!(manager.get_module(999).is_none());
         assert!(manager.get_module_mut(999).is_none());
     }
