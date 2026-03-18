@@ -252,6 +252,17 @@ jobs:
     timeout-minutes: 120
 
     steps:
+      - name: Force Git Bash in PATH
+        shell: powershell
+        run: |
+          $gitBashPath = "C:\Program Files\Git\bin"
+          if (Test-Path $gitBashPath) {
+            Write-Host "Adding $gitBashPath to PATH"
+            echo "$gitBashPath" >> $env:GITHUB_PATH
+          } else {
+            Write-Warning "Git Bash path not found at $gitBashPath"
+          }
+
       - name: Checkout merged commit from main
         uses: actions/checkout@v5
         with:
