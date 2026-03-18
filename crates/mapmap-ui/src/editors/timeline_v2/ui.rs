@@ -1,24 +1,15 @@
+use super::state::*;
+use super::types::*;
+use crate::theme::colors;
+use crate::widgets::hold_to_action_button;
 use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use mapmap_core::animation::AnimValue;
 use mapmap_core::effect_animation::EffectParameterAnimator;
 use mapmap_core::module::ModuleId;
-use crate::theme::colors;
-use crate::widgets::hold_to_action_button;
-use super::types::*;
-use super::state::*;
 
-pub trait TimelineV2Ui {
-    fn ui(
-        &mut self,
-        ui: &mut Ui,
-        animator: &mut EffectParameterAnimator,
-        modules: &[TimelineModule<'_>],
-    ) -> Option<TimelineAction>;
-}
-
-impl TimelineV2Ui for TimelineV2 {
+impl TimelineV2 {
     /// Render the timeline UI interacting with the EffectParameterAnimator
-    fn ui(
+    pub fn ui(
         &mut self,
         ui: &mut Ui,
         animator: &mut EffectParameterAnimator,
@@ -46,7 +37,7 @@ impl TimelineV2Ui for TimelineV2 {
                 action = Some(TimelineAction::Play);
             }
 
-            if hold_to_action_button(ui, "Stop", colors::ERROR_COLOR, "Stop") {
+            if hold_to_action_button(ui, "Stop", colors::ERROR_COLOR) {
                 action = Some(TimelineAction::Stop);
             }
 
@@ -200,12 +191,7 @@ impl TimelineV2Ui for TimelineV2 {
                 pts_changed = true;
             }
 
-            if crate::widgets::custom::hold_to_action_button(
-                ui,
-                "Clear I/O",
-                crate::theme::colors::WARN_COLOR,
-                "Clear I/O",
-            ) {
+            if ui.button("Clear I/O").clicked() {
                 animator.set_in_out_points(None, None);
             } else if pts_changed {
                 animator.set_in_out_points(Some(in_pt), Some(out_pt));
@@ -312,7 +298,6 @@ impl TimelineV2Ui for TimelineV2 {
                     ui,
                     "Clear",
                     crate::theme::colors::WARN_COLOR,
-                    "Clear",
                 ) {
                     self.module_arrangement.clear();
                     self.reset_runtime_selection();

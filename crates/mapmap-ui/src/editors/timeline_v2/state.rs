@@ -1,7 +1,7 @@
 use super::types::*;
 use mapmap_core::module::ModuleId;
-use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
 /// Timeline editor view state (data is in AnimationClip)
 #[derive(Serialize, Deserialize)]
@@ -135,11 +135,16 @@ impl TimelineV2 {
         blocks.first().copied()
     }
 
-    pub(crate) fn module_name_map<'a>(modules: &[TimelineModule<'a>]) -> HashMap<ModuleId, &'a str> {
+    pub(crate) fn module_name_map<'a>(
+        modules: &[TimelineModule<'a>],
+    ) -> HashMap<ModuleId, &'a str> {
         modules.iter().map(|m| (m.id, m.name)).collect()
     }
 
-    pub(crate) fn module_name(module_names: &HashMap<ModuleId, &str>, module_id: ModuleId) -> String {
+    pub(crate) fn module_name(
+        module_names: &HashMap<ModuleId, &str>,
+        module_id: ModuleId,
+    ) -> String {
         module_names
             .get(&module_id)
             .map(|s| s.to_string())
@@ -389,5 +394,4 @@ impl TimelineV2 {
         self.semi_auto_current_block_id = Some(block_ids[next_index]);
         self.module_for_block_id(self.semi_auto_current_block_id)
     }
-
 }

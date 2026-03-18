@@ -588,12 +588,7 @@ pub fn render_canvas(
                 let inner = menu_rect.shrink(8.0);
                 ui.scope_builder(egui::UiBuilder::new().max_rect(inner), |ui| {
                     ui.vertical(|ui| {
-                        if crate::widgets::custom::hold_to_action_button(
-                            ui,
-                            "🗑 Delete Connection",
-                            crate::theme::colors::ERROR_COLOR,
-                            "Delete Connection",
-                        ) {
+                        if ui.button("🗑 Delete Connection").clicked() {
                             if let Some(m) = manager.get_module_mut(module_id) {
                                 if conn_idx < m.connections.len() {
                                     m.connections.remove(conn_idx);

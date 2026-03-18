@@ -130,14 +130,15 @@ impl EffectChainPanel {
             }
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if crate::widgets::custom::hold_to_action_icon(
+                if icon_button_simple(
                     ui,
                     icon_manager,
                     AppIcon::Remove,
                     16.0,
-                    crate::theme::colors::WARN_COLOR,
                     &locale.t("effect-clear"),
-                ) {
+                )
+                .clicked()
+                {
                     self.actions.push(EffectChainAction::ClearAll);
                     self.chain.effects.clear();
                 }

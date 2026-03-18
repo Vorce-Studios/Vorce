@@ -102,7 +102,6 @@ impl PaintPanel {
                                 AppIcon::Remove,
                                 16.0,
                                 crate::theme::colors::WARN_COLOR,
-                                &i18n.t("btn-remove"),
                             ) {
                                 self.action = Some(PaintPanelAction::RemovePaint(paint.id));
                             }
