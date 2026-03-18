@@ -304,9 +304,9 @@ jobs:
           MAPFLOW_PR_HEAD_SHA: ${{ needs.resolve-context.outputs.pr_head_sha }}
           MAPFLOW_MERGE_COMMIT_SHA: ${{ needs.resolve-context.outputs.merge_commit_sha }}
           MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS: ${{ vars.MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS || 'false' }}
-          MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION: ${{ vars.MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION || 'false' }}
           MAPFLOW_SELF_HOSTED_RUN_PERFORMANCE_CHECK: ${{ vars.MAPFLOW_SELF_HOSTED_RUN_PERFORMANCE_CHECK || 'false' }}
           MAPFLOW_PERFORMANCE_THRESHOLD: ${{ vars.MAPFLOW_PERFORMANCE_THRESHOLD || '' }}
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
           toolchain: ${{ inputs.toolchain || vars.MAPFLOW_DEFAULT_TOOLCHAIN || 'stable' }}
         run: .\scripts\build\self-hosted-post-merge.ps1
 
