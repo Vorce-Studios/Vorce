@@ -224,6 +224,35 @@ mod tests {
     }
 
     #[test]
+    fn test_app_settings_clone_equality() {
+        let settings = AppSettings {
+            master_volume: 0.5,
+            dark_mode: false,
+            ui_scale: 1.5,
+            language: "de".to_string(),
+            log_config: LogConfig::default(),
+            output_count: 3,
+        };
+        let cloned_settings = settings.clone();
+        assert_eq!(settings, cloned_settings);
+    }
+
+    #[test]
+    fn test_app_settings_partial_eq() {
+        let settings_1 = AppSettings::default();
+        let mut settings_2 = AppSettings::default();
+        settings_2.master_volume = 0.5;
+        assert_ne!(settings_1, settings_2);
+    }
+
+    #[test]
+    fn test_app_state_clone_equality() {
+        let state = AppState::default();
+        let cloned_state = state.clone();
+        assert_eq!(state, cloned_state);
+    }
+
+    #[test]
     fn test_app_settings_defaults() {
         let settings = AppSettings::default();
         assert_eq!(settings.master_volume, 1.0);
