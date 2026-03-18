@@ -11,6 +11,17 @@ on:
         description: "Merged PR number to validate on the self-hosted runner"
         required: false
         type: string
+      toolchain:
+        description: "Rust toolchain version"
+        required: true
+        default: "stable"
+  workflow_call:
+    inputs:
+      toolchain:
+        description: "Rust toolchain version"
+        required: false
+        type: string
+        default: "stable"
 
 permissions:
   contents: read
@@ -247,10 +258,27 @@ jobs:
           ref: ${{ needs.resolve-context.outputs.checkout_ref }}
           fetch-depth: 0
 
+      - name: Set Rust Toolchain
+        shell: bash
+        env:
+          toolchain: ${{ inputs.toolchain || vars.MAPFLOW_DEFAULT_TOOLCHAIN || 'stable' }}
+          RUNNER_OS: ${{ runner.os }}
+        run: |
+          if [[ -z $toolchain ]]; then
+            echo "'toolchain' ist ein erforderlicher Input" >&2
+            exit 1
+          fi
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            echo "Windows-spezifische Logik"
+            # Optional: wsl.exe handling if needed in future
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            echo "macOS-spezifische Logik"
+          fi
+
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
+          toolchain: ${{ inputs.toolchain || vars.MAPFLOW_DEFAULT_TOOLCHAIN || 'stable' }}
 
       - name: Set up MSVC Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@v1
@@ -267,7 +295,7 @@ jobs:
           MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION: ${{ vars.MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION || 'false' }}
           MAPFLOW_SELF_HOSTED_RUN_PERFORMANCE_CHECK: ${{ vars.MAPFLOW_SELF_HOSTED_RUN_PERFORMANCE_CHECK || 'false' }}
           MAPFLOW_PERFORMANCE_THRESHOLD: ${{ vars.MAPFLOW_PERFORMANCE_THRESHOLD || '' }}
-          toolchain: stable
+          toolchain: ${{ inputs.toolchain || vars.MAPFLOW_DEFAULT_TOOLCHAIN || 'stable' }}
         run: .\scripts\build\self-hosted-post-merge.ps1
 
       - name: Upload visual capture artifacts
