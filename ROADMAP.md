@@ -1,6 +1,6 @@
 # MapFlow ROADMAP (MF-ID gesteuert)
 
-> **Stand:** 2026-03-15 09:00
+> **Stand:** 2026-03-16 23:59
 Operatives Hauptdokument: `ROADMAP.md`
 Sprache: Deutsch
 
@@ -258,13 +258,13 @@ Sprache: Deutsch
 |_____________________________________|_________________|_________|README.md. Korrektur aller Links & Metadaten.     |____________________|____________________|_________________________|_______________________________________________________|__________|------------|
 |___MF-SubI_GH_REPO_RENAMING          |Infrastructure   |Refactor |Sub: Migration GH Repo MrLongNight/MapFlow zu      | 🟠 Analyse         | 🔴 Offen          |-                        |-                                                      |-         |2026-03-15  |
 |_____________________________________|_________________|_________|MrLongNight/[NEW_NAME] inkl. URLs & Vars.         |____________________|____________________|_________________________|_______________________________________________________|__________|------------|
-|MF-StMa_LARGE_FILE_CLEANUP_PHASE4    |Architecture     |Refactor |Master: Final Decomposition for Absolute Clarity  | 🔵 In Umsetzung    | 🔴 Offen          |-                        |-                                                      |#1144     |2026-03-16  |
+|MF-StMa_LARGE_FILE_CLEANUP_PHASE4    |Architecture     |Refactor |Master: Final Decomposition for Absolute Clarity  | ✅ Done            | ✅ Done           |-                        |-                                                      |#1144     |2026-03-16  |
 |_____________________________________|_________________|_________|Targeting top 3 largest files (>1400 LOC)._______|____________________|____________________|_________________________|_______________________________________________________|__________|------------|
-|___MF-SubI_EFFECT_CHAIN_REGRESSION   |UI/Panels        |Refactor |Sub: Fix regression in effect_chain_panel.rs,     | 🔴 Offen           | 🔴 Offen          |-                        |-                                                      |#1147     |2026-03-16  |
+|___MF-SubI_EFFECT_CHAIN_REGRESSION   |UI/Panels        |Refactor |Sub: Fix regression in effect_chain_panel.rs,     | ✅ Done            | ✅ Done           |-                        |-                                                      |#1147     |2026-03-16  |
 |_____________________________________|_________________|_________|restore modular effect_chain/ structure.__________|____________________|____________________|_________________________|_______________________________________________________|__________|------------|
-|___MF-SubI_EVALUATOR_DEEP_SPLIT      |Core/Eval        |Refactor |Sub: Split ModuleEvaluator into submodules        | 🔴 Offen           | 🔴 Offen          |-                        |-                                                      |#1145     |2026-03-16  |
+|___MF-SubI_EVALUATOR_DEEP_SPLIT      |Core/Eval        |Refactor |Sub: Split ModuleEvaluator into submodules        | ✅ Done            | ✅ Done           |-                        |-                                                      |#1145     |2026-03-16  |
 |_____________________________________|_________________|_________|(triggers, smoothing, traversal)._________________|____________________|____________________|_________________________|_______________________________________________________|__________|------------|
-|___MF-SubI_INSPECTOR_MOD_FINAL_CLEAN |UI/Inspector     |Refactor |Sub: Further decompose inspector/mod.rs,          | 🔴 Offen           | 🔴 Offen          |-                        |-                                                      |#1156     |2026-03-16  |
+|___MF-SubI_INSPECTOR_MOD_FINAL_CLEAN |UI/Inspector     |Refactor |Sub: Further decompose inspector/mod.rs,          | ✅ Done            | ✅ Done           |-                        |-                                                      |#1156     |2026-03-16  |
 |_____________________________________|_________________|_________|extract preview logic to preview.rs.______________|____________________|____________________|_________________________|_______________________________________________________|__________|------------|
 
 
