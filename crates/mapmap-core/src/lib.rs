@@ -42,6 +42,7 @@ pub mod macros;
 /// Media asset management
 pub mod media_library;
 pub mod module;
+/// Module graph evaluation and traversal logic
 pub mod module_eval;
 pub mod oscillator;
 pub mod recent_effect_configs;
