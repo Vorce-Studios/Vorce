@@ -268,7 +268,7 @@ impl AnimationTrack {
 
 /// Timeline marker for navigation and playback control
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct Marker {
+pub struct TimelineMarker {
     /// Time of the marker in seconds
     pub time: TimePoint,
     /// Name or label of the marker
@@ -277,7 +277,7 @@ pub struct Marker {
     pub pause_at: bool,
 }
 
-impl Marker {
+impl TimelineMarker {
     /// Create a new marker
     pub fn new(time: TimePoint, name: String) -> Self {
         Self {
@@ -296,7 +296,7 @@ pub struct AnimationClip {
     /// Collection of animation tracks
     pub tracks: Vec<AnimationTrack>,
     /// Timeline markers
-    pub markers: Vec<Marker>,
+    pub markers: Vec<TimelineMarker>,
     /// Total duration of the clip in seconds
     pub duration: TimePoint,
     /// Legacy looping flag (use playback_mode)
@@ -322,7 +322,7 @@ struct AnimationClipSerde {
     name: String,
     tracks: Vec<AnimationTrack>,
     #[serde(default)]
-    markers: Vec<Marker>,
+    markers: Vec<TimelineMarker>,
     duration: TimePoint,
     looping: bool,
     #[serde(default, deserialize_with = "deserialize_optional_playback_mode")]
@@ -339,6 +339,30 @@ struct AnimationClipSerde {
     bpm: f32,
     #[serde(default = "default_animation_beats")]
     beats: f32,
+}
+
+fn deserialize_optional_playback_mode<'de, D>(
+    deserializer: D,
+) -> Result<Option<PlaybackMode>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    // If the field exists in JSON/RON but is `null`/`None` or a valid string
+    // we need to parse it.
+    // Option's default implementation will usually expect `Some(...)` or `None`.
+    // However, in our serde implementation previously this field didn't exist at all,
+    // or we are trying to parse the enum variant itself.
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum PlaybackModeOpt {
+        Present(PlaybackMode),
+        Option(Option<PlaybackMode>),
+    }
+
+    match PlaybackModeOpt::deserialize(deserializer)? {
+        PlaybackModeOpt::Present(p) => Ok(Some(p)),
+        PlaybackModeOpt::Option(o) => Ok(o),
+    }
 }
 
 impl From<AnimationClipSerde> for AnimationClip {
@@ -380,15 +404,6 @@ impl<'de> Deserialize<'de> for AnimationClip {
     }
 }
 
-fn deserialize_optional_playback_mode<'de, D>(
-    deserializer: D,
-) -> Result<Option<PlaybackMode>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    PlaybackMode::deserialize(deserializer).map(Some)
-}
-
 fn default_animation_bpm() -> f32 {
     120.0
 }
@@ -422,7 +437,7 @@ impl AnimationClip {
     }
 
     /// Add a marker to the timeline
-    pub fn add_marker(&mut self, marker: Marker) {
+    pub fn add_marker(&mut self, marker: TimelineMarker) {
         self.markers.push(marker);
         self.markers.sort_by(|a, b| a.time.total_cmp(&b.time));
     }
@@ -436,7 +451,7 @@ impl AnimationClip {
     }
 
     /// Get all markers
-    pub fn markers(&self) -> &[Marker] {
+    pub fn markers(&self) -> &[TimelineMarker] {
         &self.markers
     }
 
@@ -495,12 +510,29 @@ pub struct AnimationPlayer {
     pub speed: f32,
 }
 
+fn deserialize_optional_direction<'de, D>(deserializer: D) -> Result<Option<f32>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum OptF32 {
+        Present(f32),
+        Option(Option<f32>),
+    }
+
+    match OptF32::deserialize(deserializer)? {
+        OptF32::Present(f) => Ok(Some(f)),
+        OptF32::Option(o) => Ok(o),
+    }
+}
+
 #[derive(Debug, Deserialize)]
 struct AnimationPlayerSerde {
     clip: AnimationClip,
     current_time: TimePoint,
     playing: bool,
-    #[serde(default, deserialize_with = "deserialize_optional_current_direction")]
+    #[serde(default, deserialize_with = "deserialize_optional_direction")]
     current_direction: Option<f32>,
     #[serde(default = "default_animation_speed")]
     speed: f32,
@@ -530,13 +562,6 @@ impl<'de> Deserialize<'de> for AnimationPlayer {
     {
         AnimationPlayerSerde::deserialize(deserializer).map(Into::into)
     }
-}
-
-fn deserialize_optional_current_direction<'de, D>(deserializer: D) -> Result<Option<f32>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    f32::deserialize(deserializer).map(Some)
 }
 
 fn default_animation_speed() -> f32 {
@@ -734,40 +759,6 @@ impl AnimationPlayer {
         self.clip.evaluate(self.current_time)
     }
 
-    /// Jump to the next marker (Trackline mode)
-    pub fn jump_to_next_marker(&mut self) {
-        if let Some(marker) = self
-            .clip
-            .markers
-            .iter()
-            .find(|m| m.time > self.current_time)
-        {
-            self.current_time = marker.time;
-        } else {
-            // Jump to out point if no marker found
-            let out_pt = self.clip.out_point.unwrap_or(self.clip.duration);
-            self.current_time = out_pt;
-        }
-    }
-
-    /// Jump to the previous marker (Trackline mode)
-    pub fn jump_to_prev_marker(&mut self) {
-        let mut prev_marker = None;
-        for marker in &self.clip.markers {
-            if marker.time < self.current_time {
-                prev_marker = Some(marker);
-            }
-        }
-
-        if let Some(marker) = prev_marker {
-            self.current_time = marker.time;
-        } else {
-            // Jump to in point if no marker found
-            let in_pt = self.clip.in_point.unwrap_or(0.0);
-            self.current_time = in_pt;
-        }
-    }
-
     /// Seek to a specific time
     pub fn seek(&mut self, time: TimePoint) {
         let in_pt = self.clip.in_point.unwrap_or(0.0).max(0.0);
@@ -778,6 +769,41 @@ impl AnimationPlayer {
             .min(self.clip.duration)
             .max(in_pt + 0.001);
         self.current_time = time.clamp(in_pt, out_pt);
+    }
+
+    /// Jump playhead to the next available marker
+    pub fn jump_to_next_marker(&mut self) {
+        let epsilon = 0.001;
+        if let Some(marker) = self
+            .clip
+            .markers
+            .iter()
+            .find(|m| m.time > self.current_time + epsilon)
+        {
+            self.seek(marker.time);
+        } else {
+            // Jump to out point if no marker found
+            let out_pt = self.clip.out_point.unwrap_or(self.clip.duration);
+            self.seek(out_pt);
+        }
+    }
+
+    /// Jump playhead to the previous available marker
+    pub fn jump_to_prev_marker(&mut self) {
+        let epsilon = 0.001;
+        if let Some(marker) = self
+            .clip
+            .markers
+            .iter()
+            .rev()
+            .find(|m| m.time < self.current_time - epsilon)
+        {
+            self.seek(marker.time);
+        } else {
+            // Jump to in point if no marker found
+            let in_pt = self.clip.in_point.unwrap_or(0.0);
+            self.seek(in_pt);
+        }
     }
 }
 
@@ -807,8 +833,8 @@ mod tests {
         let mut clip = AnimationClip::new("test".into());
         clip.duration = 10.0;
         clip.playback_mode = PlaybackMode::Trackline;
-        clip.add_marker(Marker::new(2.0, "Pause 1".into()));
-        clip.add_marker(Marker::new(5.0, "Pause 2".into()));
+        clip.add_marker(TimelineMarker::new(2.0, "Pause 1".into()));
+        clip.add_marker(TimelineMarker::new(5.0, "Pause 2".into()));
 
         let mut player = AnimationPlayer::new(clip);
         player.play();

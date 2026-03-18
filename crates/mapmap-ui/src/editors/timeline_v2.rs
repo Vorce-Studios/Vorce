@@ -31,6 +31,8 @@ pub enum ShowMode {
     SemiAutomated,
     /// Module switching is manual only (timeline acts as arrangement board).
     Manual,
+    /// Hybrid: Timeline advances, triggers can override current block.
+    Hybrid,
 }
 
 impl ShowMode {
@@ -39,6 +41,7 @@ impl ShowMode {
             Self::FullyAutomated => "Fully Auto",
             Self::SemiAutomated => "Semi Auto",
             Self::Manual => "Manual",
+            Self::Hybrid => "Hybrid",
         }
     }
 }
@@ -56,6 +59,8 @@ pub struct ModuleArrangementItem {
     pub duration: f32,
     /// Whether this block is active in runtime.
     pub enabled: bool,
+    /// Trigger that activates this block (Hybrid mode).
+    pub start_trigger: Option<String>,
 }
 
 impl ModuleArrangementItem {
@@ -99,6 +104,10 @@ pub struct TimelineV2 {
     pub semi_auto_pending_block_id: Option<u64>,
     /// Full-auto last block.
     pub full_auto_current_block_id: Option<u64>,
+    /// Hybrid mode current block.
+    pub hybrid_current_block_id: Option<u64>,
+    /// Currently active triggers for hybrid switching.
+    pub hybrid_active_triggers: HashSet<String>,
 }
 
 impl Default for TimelineV2 {
@@ -120,6 +129,8 @@ impl Default for TimelineV2 {
             semi_auto_current_block_id: None,
             semi_auto_pending_block_id: None,
             full_auto_current_block_id: None,
+            hybrid_current_block_id: None,
+            hybrid_active_triggers: HashSet::new(),
         }
     }
 }
@@ -240,6 +251,7 @@ impl TimelineV2 {
             start_time: default_start,
             duration: 8.0,
             enabled: true,
+            start_trigger: None,
         });
     }
 
@@ -303,6 +315,58 @@ impl TimelineV2 {
                     self.manual_current_block_id = self.first_enabled_block_id();
                 }
                 self.module_for_block_id(self.manual_current_block_id)
+            }
+            ShowMode::Hybrid => {
+                if self.hybrid_current_block_id.is_none() {
+                    self.hybrid_current_block_id = self.first_enabled_block_id();
+                }
+
+                if is_playing {
+                    let blocks = self.sorted_enabled_blocks();
+
+                    // Find all blocks that overlap with the current time
+                    let mut active_blocks: Vec<&ModuleArrangementItem> = blocks
+                        .iter()
+                        .copied()
+                        .filter(|b| current_time >= b.start_time && current_time < b.end_time())
+                        .collect();
+
+                    // Sort by whether they require triggers (those without triggers are defaults)
+                    active_blocks
+                        .sort_by(|a, b| a.start_trigger.is_some().cmp(&b.start_trigger.is_some()));
+
+                    let mut next_block_id = self.hybrid_current_block_id;
+
+                    // Evaluate blocks matching current time
+                    for block in active_blocks {
+                        if let Some(trigger) = &block.start_trigger {
+                            if self.hybrid_active_triggers.contains(trigger) {
+                                next_block_id = Some(block.id);
+                                break; // Trigger matched, take this block
+                            }
+                        } else {
+                            // Block has no trigger, it's the default for this time
+                            let current_is_active =
+                                if let Some(current_id) = self.hybrid_current_block_id {
+                                    blocks.iter().find(|b| b.id == current_id).is_some_and(|b| {
+                                        current_time >= b.start_time && current_time < b.end_time()
+                                    })
+                                } else {
+                                    false
+                                };
+
+                            if !current_is_active {
+                                next_block_id = Some(block.id);
+                            }
+                        }
+                    }
+
+                    if next_block_id != self.hybrid_current_block_id {
+                        self.hybrid_current_block_id = next_block_id;
+                    }
+                }
+
+                self.module_for_block_id(self.hybrid_current_block_id)
             }
         }
     }
@@ -601,6 +665,11 @@ impl TimelineV2 {
                             ShowMode::Manual,
                             ShowMode::Manual.label(),
                         );
+                        ui.selectable_value(
+                            &mut self.show_mode,
+                            ShowMode::Hybrid,
+                            ShowMode::Hybrid.label(),
+                        );
                     });
 
                 match self.show_mode {
@@ -622,6 +691,9 @@ impl TimelineV2 {
                                 action = Some(TimelineAction::SelectModule(module_id));
                             }
                         }
+                    }
+                    ShowMode::Hybrid => {
+                        ui.label(egui::RichText::new("Hybrid Active").small().color(Color32::from_rgb(100, 255, 150)));
                     }
                     ShowMode::FullyAutomated => {}
                 }
@@ -938,6 +1010,7 @@ impl TimelineV2 {
                     ShowMode::FullyAutomated => self.full_auto_current_block_id,
                     ShowMode::SemiAutomated => self.semi_auto_current_block_id,
                     ShowMode::Manual => self.manual_current_block_id,
+                    ShowMode::Hybrid => self.hybrid_current_block_id,
                 };
 
                 for block in self.sorted_enabled_blocks() {

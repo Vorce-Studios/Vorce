@@ -3,7 +3,9 @@
 //! Bridges the Animation system with Effect parameters,
 //! allowing effect parameters to be keyframe-animated over time.
 
-use crate::animation::{AnimValue, AnimationClip, AnimationPlayer, AnimationTrack, Keyframe};
+use crate::animation::{
+    AnimValue, AnimationClip, AnimationPlayer, AnimationTrack, Keyframe, TimelineMarker,
+};
 use crate::effects::EffectType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -240,7 +242,7 @@ impl EffectParameterAnimator {
     }
 
     /// Add a marker to the timeline
-    pub fn add_marker(&mut self, marker: crate::animation::Marker) {
+    pub fn add_marker(&mut self, marker: TimelineMarker) {
         self.clip.add_marker(marker);
         self.player = AnimationPlayer::new(self.clip.clone());
         self.player.current_time = self.get_current_time();

@@ -130,7 +130,6 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
                         }
                     }
                     ui.label(egui::RichText::new("No mask loaded").weak().italics());
-                    ui.add_space(10.0);
                 });
             } else {
                 ui.horizontal(|ui| {

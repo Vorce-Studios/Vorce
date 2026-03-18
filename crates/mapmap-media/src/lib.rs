@@ -115,22 +115,49 @@ pub fn open_path<P: AsRef<Path>>(path: P) -> Result<VideoPlayer> {
 }
 
 /// Open a video file using the best available decoder
-/// Priority: FFmpeg > libmpv (libmpv currently only provides placeholder frames)
+/// Priority: FFmpeg (HW) > FFmpeg (SW) > libmpv
 fn open_video_file<P: AsRef<Path>>(path: P) -> Result<Box<dyn VideoDecoder>> {
     let path = path.as_ref();
 
-    // Try FFmpeg first (stable, full frame support)
-    match FFmpegDecoder::open(path) {
+    // 1. Try FFmpeg with AUTO hardware acceleration (best performance)
+    #[cfg(target_os = "windows")]
+    let hw_accel = HwAccelType::D3D11VA;
+    #[cfg(target_os = "macos")]
+    let hw_accel = HwAccelType::VideoToolbox;
+    #[cfg(target_os = "linux")]
+    let hw_accel = HwAccelType::VAAPI;
+    #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
+    let hw_accel = HwAccelType::None;
+
+    match FFmpegDecoder::open_with_hw_accel(path, hw_accel) {
         Ok(decoder) => {
-            tracing::info!("Opened with FFmpeg decoder: {:?}", path);
+            tracing::info!(
+                "Opened with FFmpeg decoder (hw_accel={:?}): {:?}",
+                hw_accel,
+                path
+            );
             return Ok(Box::new(decoder));
         }
         Err(e) => {
-            tracing::warn!("FFmpeg decoder failed: {}", e);
+            tracing::warn!(
+                "FFmpeg hardware decoder failed: {}. Falling back to software.",
+                e
+            );
         }
     }
 
-    // Fallback to libmpv if available (currently placeholder frames only)
+    // 2. Try FFmpeg with NO hardware acceleration (best compatibility)
+    match FFmpegDecoder::open_with_hw_accel(path, HwAccelType::None) {
+        Ok(decoder) => {
+            tracing::info!("Opened with FFmpeg software decoder: {:?}", path);
+            return Ok(Box::new(decoder));
+        }
+        Err(e) => {
+            tracing::warn!("FFmpeg software decoder also failed: {}", e);
+        }
+    }
+
+    // 3. Fallback to libmpv if available
     #[cfg(feature = "libmpv")]
     {
         match MpvDecoder::open(path) {

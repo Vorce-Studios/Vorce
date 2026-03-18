@@ -248,13 +248,11 @@ pub fn render_source_ui(
         } => {
             // Media Picker (common for file-based video)
             if path.is_empty() {
-                ui.vertical_centered(|ui| {
-                    ui.add_space(10.0);
-                    if ui.button("\u{1F4C2} Select Media File").clicked() {
+                ui.horizontal(|ui| {
+                    if ui.button("Select...").clicked() {
                         actions.push(UIAction::PickMediaFile(module_id, part_id, "".to_string()));
                     }
                     ui.label(egui::RichText::new("No media loaded").weak().italics());
-                    ui.add_space(10.0);
                 });
             } else {
                 ui.collapsing("📁 File Info", |ui| {
@@ -452,7 +450,6 @@ pub fn render_source_ui(
                         ));
                     }
                     ui.label(egui::RichText::new("No image loaded").weak().italics());
-                    ui.add_space(10.0);
                 });
             } else {
                 ui.collapsing("📁 File Info", |ui| {
