@@ -544,7 +544,7 @@ pub fn duplicate_button(ui: &mut Ui) -> Response {
 }
 
 pub fn delete_button(ui: &mut Ui) -> bool {
-    hold_to_action_button(ui, "🗑", colors::ERROR_COLOR)
+    hold_to_action_button(ui, "🗑", colors::ERROR_COLOR, "Delete")
 }
 
 pub fn lock_button(ui: &mut Ui, active: bool) -> Response {
@@ -611,7 +611,7 @@ pub fn check_hold_state(ui: &mut Ui, id: egui::Id, is_interacting: bool) -> (boo
 }
 
 /// A safety button that requires holding down for 0.6s to trigger (Mouse or Keyboard)
-pub fn hold_to_action_button(ui: &mut Ui, text: &str, color: Color32) -> bool {
+pub fn hold_to_action_button(ui: &mut Ui, text: &str, color: Color32, hover_text: &str) -> bool {
     // Small button size
     let text_galley = ui.painter().layout_no_wrap(
         text.to_string(),
@@ -690,7 +690,12 @@ pub fn hold_to_action_button(ui: &mut Ui, text: &str, color: Color32) -> bool {
     if response.hovered() {
         ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
     }
-    response.on_hover_text("Hold to confirm (Mouse or Space/Enter)");
+
+    if !hover_text.is_empty() {
+        response.on_hover_text(hover_text);
+    } else {
+        response.on_hover_text("Hold to confirm (Mouse or Space/Enter)");
+    }
 
     triggered
 }
@@ -703,6 +708,7 @@ pub fn hold_to_action_icon(
     icon: AppIcon,
     size: f32,
     color: Color32,
+    hover_text: &str,
 ) -> bool {
     let desired_size = Vec2::splat(size + 8.0); // Add padding for ring
     let (rect, response) = ui.allocate_at_least(desired_size, Sense::click());
@@ -798,7 +804,12 @@ pub fn hold_to_action_icon(
     if response.hovered() {
         ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
     }
-    response.on_hover_text("Hold to confirm");
+
+    if !hover_text.is_empty() {
+        response.on_hover_text(hover_text);
+    } else {
+        response.on_hover_text("Hold to confirm");
+    }
 
     triggered
 }
@@ -845,7 +856,7 @@ pub fn collapsing_header_with_reset(
         .show_header(ui, |ui| {
             ui.label(title);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if hold_to_action_button(ui, "↺ Reset", colors::WARN_COLOR) {
+                if hold_to_action_button(ui, "↺ Reset", colors::WARN_COLOR, "Reset") {
                     reset_clicked = true;
                 }
             });

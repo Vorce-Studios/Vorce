@@ -17,22 +17,19 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     let ui_needs_sync = handle_ui_actions(app).unwrap_or(false);
 
     // 3. Get all module IDs
-    let all_modules: Vec<mapmap_ui::TimelineModule> = app
+    let all_module_ids: Vec<u64> = app
         .state
         .module_manager
         .modules()
         .iter()
-        .map(|m| mapmap_ui::TimelineModule {
-            id: m.id,
-            name: &m.name,
-        })
+        .map(|m| m.id)
         .collect();
 
     // Determine which modules to evaluate based on timeline
     let show_module_id = app.ui_state.timeline_panel.runtime_show_module(
         app.state.effect_animator.get_current_time() as f32,
         app.state.effect_animator.is_playing(),
-        &all_modules,
+        &all_module_ids,
     );
     if let Some(active_module_id) = show_module_id {
         app.ui_state
@@ -42,11 +39,11 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     let modules_for_eval: Vec<u64> = if let Some(module_id) = show_module_id {
         vec![module_id]
     } else {
-        all_modules.iter().map(|m| m.id).collect()
+        all_module_ids.clone()
     };
 
     // --- Performance Optimization: Early return if idle ---
-    if all_modules.is_empty() {
+    if all_module_ids.is_empty() {
         app.ui_state.current_fps = app.current_fps;
         app.ui_state.current_frame_time_ms = app.current_frame_time_ms;
         app.last_graph_revision = app.state.module_manager.graph_revision;
