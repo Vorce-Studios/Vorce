@@ -79,6 +79,7 @@ impl RuntimeRenderQueue {
 }
 
 /// Configuration for application initialization.
+#[derive(Default)]
 pub struct InitializationConfig {
     /// Whether the app is running in automation mode.
     pub is_automation: bool,
@@ -92,19 +93,6 @@ pub struct InitializationConfig {
     pub skip_mcp: bool,
     /// Whether to skip Hue controller initialization.
     pub skip_hue: bool,
-}
-
-impl Default for InitializationConfig {
-    fn default() -> Self {
-        Self {
-            is_automation: false,
-            skip_autosave: false,
-            skip_audio: false,
-            skip_midi: false,
-            skip_mcp: false,
-            skip_hue: false,
-        }
-    }
 }
 
 impl InitializationConfig {
