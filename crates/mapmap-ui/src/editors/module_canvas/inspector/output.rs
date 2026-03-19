@@ -195,10 +195,16 @@ pub fn render_output_ui(
         }
         #[cfg(feature = "ndi")]
         OutputType::NdiOutput { name } => {
-            ui.label("\u{1F4E1} NDI Output");
-            ui.horizontal(|ui| {
-                ui.label("Stream Name:");
-                ui.text_edit_singleline(name);
+            ui.label("📡 NDI Output");
+            let supported = super::capabilities::is_output_type_enum_supported(true, false);
+            if !supported {
+                super::capabilities::render_unsupported_warning(ui, "NDI Output has no active pipeline in the current runtime.");
+            }
+            ui.add_enabled_ui(supported, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Stream Name:");
+                    ui.text_edit_singleline(name);
+                });
             });
         }
         #[cfg(not(feature = "ndi"))]
@@ -207,10 +213,16 @@ pub fn render_output_ui(
         }
         #[cfg(target_os = "windows")]
         OutputType::Spout { name } => {
-            ui.label("\u{1F6B0} Spout Output");
-            ui.horizontal(|ui| {
-                ui.label("Stream Name:");
-                ui.text_edit_singleline(name);
+            ui.label("🚰 Spout Output");
+            let supported = super::capabilities::is_output_type_enum_supported(false, true);
+            if !supported {
+                super::capabilities::render_unsupported_warning(ui, "Spout Output has no active pipeline in the current runtime.");
+            }
+            ui.add_enabled_ui(supported, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Stream Name:");
+                    ui.text_edit_singleline(name);
+                });
             });
         }
         OutputType::Hue {
