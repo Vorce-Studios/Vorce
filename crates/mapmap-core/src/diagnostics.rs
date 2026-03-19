@@ -5,7 +5,7 @@
 //!
 //! # Features
 //!
-//! - **ModuleIssue**: Represents a detected problem (Error, Warning, Info)..
+//! - **ModuleIssue**: Represents a detected problem (Error, Warning, Info).
 //! - **check_module_integrity**: Main function to validate a `MapFlowModule`.
 
 use crate::module::{MapFlowModule, ModulePartType};
@@ -235,6 +235,17 @@ mod tests {
         let issues = check_module_integrity(&module);
         assert_eq!(issues.len(), 1);
         assert_eq!(issues[0].severity, IssueSeverity::Warning);
-        assert!(issues[0].message.contains("Trigger Node has no outputs connected"));
+        assert!(issues[0]
+            .message
+            .contains("Trigger Node has no outputs connected"));
     }
 }
+
+/// Standardized reasons for features that are temporarily degraded or unsupported in the current renderer.
+pub const DEGRADED_FEATURE_BLEND_MODE: &str =
+    "Blend modes are currently unsupported in this renderer.";
+/// Standardized reason for masks being unsupported.
+pub const DEGRADED_FEATURE_MASK: &str = "Masks are currently unsupported in this renderer.";
+/// Standardized reason for LoadLUT being unsupported.
+pub const DEGRADED_FEATURE_LOAD_LUT: &str =
+    "The LoadLUT effect is currently unsupported in this renderer.";
