@@ -17,17 +17,26 @@ Assert-Command -Name "cargo" -HelpText "Install Rust and ensure cargo is in PATH
 
 # vcpkg detection
 if (-not $env:VCPKG_ROOT) {
+    $parentDir = Split-Path -Parent $repoRoot
+    $grandParentDir = Split-Path -Parent $parentDir
+    
     $candidates = @(
         (Join-Path $repoRoot "vcpkg"),
+        (Join-Path $parentDir "vcpkg"),
+        (Join-Path $grandParentDir "vcpkg"),
         "C:\vcpkg",
         "D:\vcpkg",
         "C:\src\vcpkg",
-        "C:\tools\vcpkg"
+        "C:\tools\vcpkg",
+        "$HOME\vcpkg"
     )
     foreach ($p in $candidates) {
+        if (-not $p) { continue }
         # Check if drive exists before Join-Path to avoid DriveNotFoundException
-        $drive = if ($p.Contains(":")) { $p.Split(":")[0] + ":" } else { $null }
-        if ($drive -and -not (Test-Path $drive)) { continue }
+        if ($p.Contains(":")) {
+            $drive = $p.Split(":")[0] + ":"
+            if (-not (Test-Path $drive)) { continue }
+        }
 
         if (Test-Path (Join-Path $p "vcpkg.exe")) {
             $env:VCPKG_ROOT = $p
@@ -37,12 +46,31 @@ if (-not $env:VCPKG_ROOT) {
     }
 }
 
+# Fallback: Clone vcpkg if still not found
 if (-not $env:VCPKG_ROOT -or -not (Test-Path $env:VCPKG_ROOT)) {
-    throw "vcpkg was not found. Please set VCPKG_ROOT or install vcpkg in a standard location."
+    Write-Warning "vcpkg not found in candidates. Cloning to $repoRoot\vcpkg as fallback..."
+    $env:VCPKG_ROOT = Join-Path $repoRoot "vcpkg"
+    if (-not (Test-Path $env:VCPKG_ROOT)) {
+        git clone --depth 1 https://github.com/microsoft/vcpkg.git $env:VCPKG_ROOT
+    }
+}
+
+$vcpkgExe = Join-Path $env:VCPKG_ROOT "vcpkg.exe"
+$bootstrapScript = Join-Path $env:VCPKG_ROOT "bootstrap-vcpkg.bat"
+
+# Bootstrap if executable is missing
+if (-not (Test-Path $vcpkgExe)) {
+    if (Test-Path $bootstrapScript) {
+        Write-Host "Bootstrapping vcpkg..."
+        Push-Location $env:VCPKG_ROOT
+        & .\bootstrap-vcpkg.bat
+        Pop-Location
+    } else {
+        throw "vcpkg was not found and could not be bootstrapped at $($env:VCPKG_ROOT)."
+    }
 }
 
 if (-not $env:VCPKG_DEFAULT_TRIPLET) { $env:VCPKG_DEFAULT_TRIPLET = "x64-windows" }
-$vcpkgExe = Join-Path $env:VCPKG_ROOT "vcpkg.exe"
 
 # LLVM / Clang for bindgen
 if (-not $env:LIBCLANG_PATH) {
@@ -64,6 +92,8 @@ if (-not (Test-Path $artifactsDir)) {
 }
 
 Write-Host "--- Starting Build & Test ---"
+# Note: We assume vcpkg-installed dependencies are already there or handled by cargo-vcpkg if used.
+# If not, the build might fail later, but at least we have vcpkg.
 cargo build --workspace --release
 
 # Run Visual Automation if enabled

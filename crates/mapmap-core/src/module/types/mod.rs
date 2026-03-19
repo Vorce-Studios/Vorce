@@ -34,3 +34,6 @@ pub use shared_media::*;
 pub use socket::*;
 pub use source::*;
 pub use trigger::*;
+
+#[cfg(test)]
+mod socket_tests;
