@@ -10,6 +10,17 @@
 
 use crate::module::{MapFlowModule, ModulePartType};
 
+/// Standard diagnostic code for unsupported blend modes in the current render path.
+pub const DEGRADED_FEATURE_BLEND_MODE: &str = "blend_mode_unsupported";
+/// Standard diagnostic code for unsupported masks in the current render path.
+pub const DEGRADED_FEATURE_MASK: &str = "masks_unsupported";
+/// Standard diagnostic code for unsupported LUT loading.
+pub const DEGRADED_FEATURE_LOAD_LUT: &str = "load_lut_unsupported";
+/// Standard diagnostic code for missing textures during rendering.
+pub const RENDER_MISSING_TEXTURE: &str = "missing_texture";
+/// Standard diagnostic code for empty render operations for an output.
+pub const RENDER_EMPTY_OPS: &str = "empty_ops";
+
 /// Represents an issue found within a module
 #[derive(Debug, Clone)]
 pub struct ModuleIssue {
@@ -207,12 +218,3 @@ mod tests {
         assert!(issues[0].message.contains("no file selected"));
     }
 }
-
-/// Standardized reasons for features that are temporarily degraded or unsupported in the current renderer.
-pub const DEGRADED_FEATURE_BLEND_MODE: &str =
-    "Blend modes are currently unsupported in this renderer.";
-/// Standardized reason for masks being unsupported.
-pub const DEGRADED_FEATURE_MASK: &str = "Masks are currently unsupported in this renderer.";
-/// Standardized reason for LoadLUT being unsupported.
-pub const DEGRADED_FEATURE_LOAD_LUT: &str =
-    "The LoadLUT effect is currently unsupported in this renderer.";

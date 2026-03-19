@@ -1,8 +1,9 @@
+use crate::app::core::app_struct::RuntimeRenderQueueItem;
+use anyhow::Result;
+
 use super::effects::build_effect_chain;
 use super::logging::{clear_video_issue, should_log_video_issue};
 use super::PREVIEW_FLAG;
-use crate::app::core::app_struct::RuntimeRenderQueueItem;
-use anyhow::Result;
 
 pub(crate) struct RenderContext<'a> {
     pub device: &'a wgpu::Device,
@@ -47,9 +48,6 @@ pub(crate) fn render_content(
     let real_output_id = output_id & !PREVIEW_FLAG;
 
     // ⚡ BOLT OPTIMIZATION:
-    // Store references to RenderOp instead of cloning the entire struct (which contains Vecs and complex data).
-    // This avoids per-frame allocations and deep copies for every layer being rendered.
-    // ⚡ BOLT OPTIMIZATION:
     // Use pre-partitioned and pre-sorted queues to avoid repeated O(N) filtering and sorting on every frame.
     let empty_list = Vec::new();
     let target_ops = ctx.render_queue.get(&real_output_id).unwrap_or(&empty_list);
@@ -79,6 +77,7 @@ pub(crate) fn render_content(
             }
         }
     }
+
     let empty_ops_issue_key = format!(
         "video-output-empty-ops:{real_output_id}:{}",
         if is_preview_output {
