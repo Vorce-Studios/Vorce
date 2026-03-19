@@ -44,8 +44,12 @@ impl App {
         // Initialize renderers
         let texture_pool = TexturePool::new(backend.device.clone());
         let compositor = Compositor::new(backend.device.clone(), backend.surface_format())?;
+<<<<<<< HEAD
         let (effect_chain_renderer, preview_effect_chain_renderer) =
             Self::init_renderers(&backend)?;
+=======
+        let (effect_chain_renderer, preview_effect_chain_renderer) = Self::init_renderers(&backend)?;
+>>>>>>> eff6d8162c08157626c940a308b00c8d930f48e0
         let mesh_renderer = MeshRenderer::new(backend.device.clone(), backend.surface_format())?;
         let mesh_buffer_cache = MeshBufferCache::new();
         let quad_renderer = QuadRenderer::new(&backend.device, backend.surface_format())?;
@@ -512,10 +516,14 @@ impl App {
 
     fn start_mcp_server(mcp_sender: crossbeam_channel::Sender<mapmap_mcp::McpAction>) {
         thread::spawn(move || {
+<<<<<<< HEAD
             let rt = tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
                 .unwrap();
+=======
+            let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+>>>>>>> eff6d8162c08157626c940a308b00c8d930f48e0
             rt.block_on(async {
                 let server = McpServer::new(Some(mcp_sender));
                 if let Err(e) = server.run_stdio().await {
@@ -547,9 +555,13 @@ impl App {
         }
     }
 
+<<<<<<< HEAD
     fn init_preview_quad_buffers(
         mesh_renderer: &MeshRenderer,
     ) -> (wgpu::Buffer, wgpu::Buffer, u32) {
+=======
+    fn init_preview_quad_buffers(mesh_renderer: &MeshRenderer) -> (wgpu::Buffer, wgpu::Buffer, u32) {
+>>>>>>> eff6d8162c08157626c940a308b00c8d930f48e0
         let preview_mesh = mapmap_core::Mesh {
             mesh_type: mapmap_core::MeshType::Quad,
             vertices: vec![
@@ -577,9 +589,13 @@ impl App {
     }
 
     fn connect_hue(controller: &mut HueController, ui_state: &AppUI, rt: &tokio::runtime::Runtime) {
+<<<<<<< HEAD
         if !ui_state.user_config.hue_config.bridge_ip.is_empty()
             && ui_state.user_config.hue_config.auto_connect
         {
+=======
+        if !ui_state.user_config.hue_config.bridge_ip.is_empty() && ui_state.user_config.hue_config.auto_connect {
+>>>>>>> eff6d8162c08157626c940a308b00c8d930f48e0
             info!("Initializing Hue Controller...");
             if let Err(e) = rt.block_on(controller.connect()) {
                 warn!("Hue Controller initial connection failed: {}", e);

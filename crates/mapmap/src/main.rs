@@ -354,11 +354,15 @@ impl App {
                             let _ = player.command_tx.send(PlaybackCommand::SetSpeed(speed));
                         }
                         MediaPlaybackCommand::SetLoop(enabled) => {
+<<<<<<< HEAD
                             let mode = if enabled {
                                 mapmap_media::LoopMode::Loop
                             } else {
                                 mapmap_media::LoopMode::PlayOnce
                             };
+=======
+                            let mode = if enabled { mapmap_media::LoopMode::Loop } else { mapmap_media::LoopMode::PlayOnce };
+>>>>>>> eff6d8162c08157626c940a308b00c8d930f48e0
                             let _ = player.command_tx.send(PlaybackCommand::SetLoopMode(mode));
                         }
                         MediaPlaybackCommand::Seek(position) => {
