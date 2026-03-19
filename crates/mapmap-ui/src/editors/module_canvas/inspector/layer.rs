@@ -94,12 +94,9 @@ pub fn render_layer_ui(
             if !capabilities::is_blend_mode_supported(
                 blend_mode.as_ref().unwrap_or(&BlendModeType::Normal),
             ) {
-                ui.label(
-                    egui::RichText::new(format!(
-                        "⚠ {}",
-                        mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE
-                    ))
-                    .color(crate::theme::colors::WARN_COLOR),
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "Blend modes other than Normal are currently ignored in final render.",
                 );
             }
 
@@ -137,17 +134,8 @@ pub fn render_layer_ui(
 
 /// Renders the configuration UI for a `ModulePartType::Mask`.
 pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
-    ui.horizontal(|ui| {
-        ui.label("Mask Type:");
-        ui.label(
-            egui::RichText::new(format!(
-                "⚠ {}",
-                mapmap_core::diagnostics::DEGRADED_FEATURE_MASK
-            ))
-            .color(crate::theme::colors::WARN_COLOR),
-        );
-    });
-    ui.add_enabled_ui(false, |ui| match mask {
+    ui.label("Mask Type:");
+    match mask {
         MaskType::File { path } => {
             ui.label("📁 Mask File");
             if path.is_empty() {
@@ -160,7 +148,7 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
                             *path = picked.display().to_string();
                         }
                     }
-                    super::common::render_info_label(ui, "No mask loaded");
+                    ui.label(egui::RichText::new("No mask loaded").weak().italics());
                 });
             } else {
                 ui.horizontal(|ui| {
@@ -222,5 +210,5 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
             ui.add(egui::Slider::new(angle, 0.0..=360.0).text("Angle Â°"));
             ui.add(egui::Slider::new(softness, 0.0..=1.0).text("Softness"));
         }
-    });
+    }
 }

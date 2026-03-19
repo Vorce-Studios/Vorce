@@ -105,16 +105,8 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
                                 TriggerTarget::OffsetY,
                                 "Offset Y",
                             );
-                            ui.selectable_value(
-                                &mut config.target,
-                                TriggerTarget::FlipH,
-                                "Flip H",
-                            );
-                            ui.selectable_value(
-                                &mut config.target,
-                                TriggerTarget::FlipV,
-                                "Flip V",
-                            );
+                            ui.selectable_value(&mut config.target, TriggerTarget::FlipH, "Flip H");
+                            ui.selectable_value(&mut config.target, TriggerTarget::FlipV, "Flip V");
                             ui.selectable_value(
                                 &mut config.target,
                                 TriggerTarget::ParticleRate,
@@ -353,7 +345,7 @@ pub fn render_trigger_ui(
                 {
                     if let Ok(ports) = mapmap_control::midi::MidiInputHandler::list_ports() {
                         if ports.is_empty() {
-                            super::common::render_info_label(ui, "No MIDI devices");
+                            ui.label(egui::RichText::new("No MIDI devices").weak().italics());
                         } else {
                             egui::ComboBox::from_id_salt("midi_device")
                                 .selected_text(ports.first().cloned().unwrap_or_default())
@@ -420,6 +412,37 @@ pub fn render_trigger_ui(
                     *modifiers & 1 != 0,
                     *modifiers & 4 != 0
                 ));
+            });
+        }
+    }
+
+    if !matches!(trigger, TriggerType::Fixed { .. }) {
+        ui.separator();
+        super::render_inspector_preview_toggle(canvas, ui);
+        if canvas.show_inspector_previews {
+            let live_value = canvas
+                .last_trigger_values
+                .get(&part_id)
+                .copied()
+                .unwrap_or(0.0);
+            let is_live = live_value > 0.1;
+            ui.ctx().request_repaint();
+
+            ui.group(|ui| {
+                ui.label("Live Trigger Preview");
+                ui.add(
+                    egui::ProgressBar::new(live_value.clamp(0.0, 1.0))
+                        .desired_width(ui.available_width())
+                        .text(format!("{:.2}", live_value)),
+                );
+
+                let status = if is_live { "LIVE pulse" } else { "Waiting" };
+                let color = if is_live {
+                    egui::Color32::from_rgb(110, 235, 150)
+                } else {
+                    egui::Color32::from_rgb(180, 180, 180)
+                };
+                ui.colored_label(color, status);
             });
         }
     }
