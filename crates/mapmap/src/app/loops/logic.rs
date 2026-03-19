@@ -196,7 +196,9 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
             if let Some(path) =
                 dirs::data_local_dir().map(|p| p.join("MapFlow").join("autosave.mflow"))
             {
-                let _ = std::fs::create_dir_all(path.parent().unwrap());
+                if let Some(parent) = path.parent() {
+                    let _ = std::fs::create_dir_all(parent);
+                }
                 let _ = save_project(&app.state, &path);
             }
         }

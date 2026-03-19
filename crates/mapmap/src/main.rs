@@ -152,6 +152,8 @@ impl ApplicationHandler for MapFlowApp {
                                         "Could not find composite texture for automation capture"
                                     );
                                 }
+                            } else {
+                                error!("Automation mode: Main window context not found for screenshot.");
                             }
                         }
 
