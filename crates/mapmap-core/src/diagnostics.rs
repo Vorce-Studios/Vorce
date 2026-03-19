@@ -5,7 +5,7 @@
 //!
 //! # Features
 //!
-//! - **ModuleIssue**: Represents a detected problem (Error, Warning, Info).
+//! - **ModuleIssue**: Represents a detected problem (Error, Warning, Info)..
 //! - **check_module_integrity**: Main function to validate a `MapFlowModule`.
 
 use crate::module::{MapFlowModule, ModulePartType};
