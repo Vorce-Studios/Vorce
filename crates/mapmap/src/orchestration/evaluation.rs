@@ -42,25 +42,40 @@ pub fn perform_evaluation(
             app.render_queue
                 .items
                 .extend(eval_result.render_ops.iter().cloned().map(|render_op| {
-                    let mut diagnostics = vec![];
+                    let mut diagnostics = Vec::new();
 
                     if render_op.blend_mode.is_some() {
-                        diagnostics.push(
-                            mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE.to_string(),
-                        );
+                        diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
+                            module_id: *module_id,
+                            part_id: render_op.layer_part_id,
+                            severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
+                            code: mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE.to_string(),
+                            message: "Blend modes are currently only supported via specific compositing passes.".to_string(),
+                        });
                     }
+
                     if !render_op.masks.is_empty() {
-                        diagnostics
-                            .push(mapmap_core::diagnostics::DEGRADED_FEATURE_MASK.to_string());
+                        diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
+                            module_id: *module_id,
+                            part_id: render_op.layer_part_id,
+                            severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
+                            code: mapmap_core::diagnostics::DEGRADED_FEATURE_MASK.to_string(),
+                            message: "Masks are not yet supported in this render path.".to_string(),
+                        });
                     }
+
                     for effect in &render_op.effects {
                         if let mapmap_core::module::ModulizerType::Effect { effect_type, .. } =
                             effect
                         {
                             if *effect_type == mapmap_core::module::EffectType::LoadLUT {
-                                diagnostics.push(
-                                    mapmap_core::diagnostics::DEGRADED_FEATURE_LOAD_LUT.to_string(),
-                                );
+                                diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
+                                    module_id: *module_id,
+                                    part_id: render_op.layer_part_id,
+                                    severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
+                                    code: mapmap_core::diagnostics::DEGRADED_FEATURE_LOAD_LUT.to_string(),
+                                    message: "LUT effects are currently degraded and may not render as expected.".to_string(),
+                                });
                             }
                         }
                     }

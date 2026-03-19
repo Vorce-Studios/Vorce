@@ -91,19 +91,88 @@ if (-not (Test-Path $artifactsDir)) {
     New-Item -ItemType Directory -Force -Path $artifactsDir
 }
 
-Write-Host "--- Starting Build & Test (Limited to 4 threads) ---"
+Write-Host "--- Starting Build (Limited to 4 threads) ---"
 cargo build --workspace --release -j 4
 
-# Run Visual Automation if enabled
+# Helper: run a test command, print header, propagate errors
+function Invoke-TestSuite {
+    param([string]$Label, [string]$Command)
+    Write-Host ""
+    Write-Host "--- $Label ---"
+    Invoke-Expression $Command
+    if ($LASTEXITCODE -ne 0) {
+        throw "Test suite '$Label' failed (exit code $LASTEXITCODE)."
+    }
+}
+
+# ── UI & Automation Tests ─────────────────────────────────────────────────────
+# timeline_automation_tests  : TimelineV2 module switching (no GPU, no --ignored)
+# app_automation_tests        : Full E2E app launch (requires GPU + display → --ignored)
+if ($env:MAPFLOW_RUN_UI_TESTS -eq "true") {
+    Invoke-TestSuite "UI Tests – timeline_automation" `
+        "cargo test -p mapmap-ui --test timeline_automation_tests --release -j 4 -- --nocapture"
+
+    Invoke-TestSuite "UI Tests – app_automation (GPU+display)" `
+        "cargo test -p mapmap --test app_automation_tests --release -j 4 -- --ignored --nocapture"
+}
+
+# ── Core Logic Tests ──────────────────────────────────────────────────────────
+# trigger_tests / trigger_system_tests : MIDI, OSC, keyboard, audio-FFT triggers
+# module_tests                          : ModuleManager CRUD, connections, sockets
+# trackline_tests / layer_tests / assignment_tests / module_playback_tests
+# project_tests (mapmap-io)             : Project I/O round-trip
+if ($env:MAPFLOW_RUN_CORE_TESTS -eq "true") {
+    Invoke-TestSuite "Core Tests – triggers" `
+        "cargo test -p mapmap-core --test trigger_tests --test trigger_system_tests --test trigger_logic_tests --release -j 4 -- --nocapture"
+
+    Invoke-TestSuite "Core Tests – modules" `
+        "cargo test -p mapmap-core --test module_tests --test module_playback_tests --test module_coverage_tests --release -j 4 -- --nocapture"
+
+    Invoke-TestSuite "Core Tests – trackline / layer / assignment" `
+        "cargo test -p mapmap-core --test trackline_tests --test layer_tests --test assignment_tests --release -j 4 -- --nocapture"
+
+    Invoke-TestSuite "Core Tests – project I/O" `
+        "cargo test -p mapmap-io --test project_tests --release -j 4 -- --nocapture"
+}
+
+# ── Integration Tests ─────────────────────────────────────────────────────────
+# effect_chain_integration_tests : wgpu texture passthrough (GPU, --ignored)
+# multi_output_tests              : RenderOp multi-output (--ignored, marked for refactor)
+if ($env:MAPFLOW_RUN_INTEGRATION_TESTS -eq "true") {
+    Invoke-TestSuite "Integration Tests – effect_chain_integration (GPU)" `
+        "cargo test -p mapmap-render --test effect_chain_integration_tests --release -j 4 -- --ignored --nocapture"
+
+    Invoke-TestSuite "Integration Tests – multi_output (GPU)" `
+        "cargo test -p mapmap-render --test multi_output_tests --release -j 4 -- --ignored --nocapture"
+}
+
+# ── Performance & GPU Tests ───────────────────────────────────────────────────
+# effect_chain_tests  : wgpu renderer creation + invert effect (GPU, --ignored)
+# visual_capture_tests: pixel-level visual regression (GPU + desktop session, --ignored)
+# run_performance_benchmark.py : MapFlow --mode automation frame-timing benchmark
+if ($env:MAPFLOW_RUN_PERFORMANCE_TESTS -eq "true") {
+    Invoke-TestSuite "Performance Tests – effect_chain GPU" `
+        "cargo test -p mapmap-render --test effect_chain_tests --release -j 4 -- --ignored --nocapture"
+
+    Write-Host ""
+    Write-Host "--- Performance Benchmark – MapFlow automation mode ---"
+    $pythonCmd = if (Get-Command python3 -ErrorAction SilentlyContinue) { "python3" } else { "python" }
+    $benchScript = Join-Path $repoRoot "scripts\dev-tools\run_performance_benchmark.py"
+    $benchArgs = @("$benchScript", "--iterations", "3", "--frames", "300")
+    if ($env:MAPFLOW_PERFORMANCE_THRESHOLD) {
+        $benchArgs += @("--threshold", $env:MAPFLOW_PERFORMANCE_THRESHOLD, "--fail-on-regression")
+    }
+    & $pythonCmd @benchArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "Performance benchmark failed (exit code $LASTEXITCODE)."
+    }
+}
+
 if ($env:MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION -eq "true") {
-    Write-Host "Running Visual Automation Tests..."
-    cargo test -p mapmap --test visual_capture_tests --release -j 4 -- --ignored --nocapture
+    $env:MAPFLOW_VISUAL_CAPTURE_OUTPUT_DIR = Join-Path $repoRoot "artifacts\visual-capture"
+    Invoke-TestSuite "Visual Automation – visual_capture (GPU+desktop)" `
+        "cargo test -p mapmap --no-default-features --test visual_capture_tests --release -j 4 -- --ignored --nocapture"
 }
 
-# Run GPU Tests if enabled
-if ($env:MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS -eq "true") {
-    Write-Host "Running GPU-bound tests..."
-    cargo test --workspace --release -j 4 -- --ignored
-}
-
+Write-Host ""
 Write-Host "Validation completed successfully."

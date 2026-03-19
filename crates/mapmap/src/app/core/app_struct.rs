@@ -54,6 +54,30 @@ impl StartupAnimationState {
     }
 }
 
+/// Level of severity for a render diagnostic.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DiagnosticSeverity {
+    /// Non-critical issue that might cause visual degradation.
+    Warning,
+    /// Critical issue that prevents rendering.
+    Error,
+}
+
+/// Structured diagnostic information for a render queue item.
+#[derive(Debug, Clone)]
+pub struct RenderDiagnostic {
+    /// The module ID associated with the diagnostic.
+    pub module_id: ModuleId,
+    /// The part ID associated with the diagnostic.
+    pub part_id: ModulePartId,
+    /// The severity of the diagnostic.
+    pub severity: DiagnosticSeverity,
+    /// A unique feature code or reason for the diagnostic.
+    pub code: String,
+    /// Human-readable message.
+    pub message: String,
+}
+
 /// Single render queue item for the app runtime.
 #[derive(Debug, Clone)]
 pub struct RuntimeRenderQueueItem {
@@ -61,8 +85,8 @@ pub struct RuntimeRenderQueueItem {
     pub module_id: ModuleId,
     /// Evaluated render operation.
     pub render_op: RenderOp,
-    /// Diagnostics collected during evaluation.
-    pub diagnostics: Vec<String>,
+    /// Diagnostics for this queue item.
+    pub diagnostics: Vec<RenderDiagnostic>,
 }
 
 /// Consolidated visual render queue for the current frame.

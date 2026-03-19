@@ -1,3 +1,4 @@
+use super::capabilities;
 use egui::{Color32, Ui};
 use mapmap_core::module::{BlendModeType, EffectType, ModulePartId, ModulizerType};
 
@@ -275,23 +276,29 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
         }
         ModulizerType::BlendMode(blend) => {
             ui.label("\u{1F3A8} Blend Mode");
-            ui.add_enabled_ui(false, |ui| {
-                ui.horizontal(|ui| {
-                    egui::ComboBox::from_id_salt("blend_mode")
-                        .selected_text(format!("{:?}", blend))
-                        .show_ui(ui, |ui| {
-                            if ui
-                                .selectable_label(matches!(blend, BlendModeType::Normal), "Normal")
-                                .clicked()
-                            {
-                                *blend = BlendModeType::Normal;
-                            }
+            egui::ComboBox::from_id_salt("blend_mode")
+                .selected_text(format!("{:?}", blend))
+                .show_ui(ui, |ui| {
+                    if ui
+                        .selectable_label(matches!(blend, BlendModeType::Normal), "Normal")
+                        .clicked()
+                    {
+                        *blend = BlendModeType::Normal;
+                    }
+                    ui.add_enabled_ui(
+                        capabilities::is_blend_mode_supported(&BlendModeType::Add),
+                        |ui| {
                             if ui
                                 .selectable_label(matches!(blend, BlendModeType::Add), "Add")
                                 .clicked()
                             {
                                 *blend = BlendModeType::Add;
                             }
+                        },
+                    );
+                    ui.add_enabled_ui(
+                        capabilities::is_blend_mode_supported(&BlendModeType::Multiply),
+                        |ui| {
                             if ui
                                 .selectable_label(
                                     matches!(blend, BlendModeType::Multiply),
@@ -301,12 +308,22 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                             {
                                 *blend = BlendModeType::Multiply;
                             }
+                        },
+                    );
+                    ui.add_enabled_ui(
+                        capabilities::is_blend_mode_supported(&BlendModeType::Screen),
+                        |ui| {
                             if ui
                                 .selectable_label(matches!(blend, BlendModeType::Screen), "Screen")
                                 .clicked()
                             {
                                 *blend = BlendModeType::Screen;
                             }
+                        },
+                    );
+                    ui.add_enabled_ui(
+                        capabilities::is_blend_mode_supported(&BlendModeType::Overlay),
+                        |ui| {
                             if ui
                                 .selectable_label(
                                     matches!(blend, BlendModeType::Overlay),
@@ -316,6 +333,11 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                             {
                                 *blend = BlendModeType::Overlay;
                             }
+                        },
+                    );
+                    ui.add_enabled_ui(
+                        capabilities::is_blend_mode_supported(&BlendModeType::Difference),
+                        |ui| {
                             if ui
                                 .selectable_label(
                                     matches!(blend, BlendModeType::Difference),
@@ -325,6 +347,11 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                             {
                                 *blend = BlendModeType::Difference;
                             }
+                        },
+                    );
+                    ui.add_enabled_ui(
+                        capabilities::is_blend_mode_supported(&BlendModeType::Exclusion),
+                        |ui| {
                             if ui
                                 .selectable_label(
                                     matches!(blend, BlendModeType::Exclusion),
@@ -334,17 +361,19 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                             {
                                 *blend = BlendModeType::Exclusion;
                             }
-                        });
-                    ui.label(
-                        egui::RichText::new(format!(
-                            "⚠ {}",
-                            mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE
-                        ))
-                        .color(crate::theme::colors::WARN_COLOR),
+                        },
                     );
                 });
-                ui.add(egui::Slider::new(&mut 1.0_f32, 0.0..=1.0).text("Opacity"));
-            });
+            if !capabilities::is_blend_mode_supported(blend) {
+                ui.label(
+                    egui::RichText::new(format!(
+                        "⚠ {}",
+                        mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE
+                    ))
+                    .color(crate::theme::colors::WARN_COLOR),
+                );
+            }
+            ui.add(egui::Slider::new(&mut 1.0_f32, 0.0..=1.0).text("Opacity"));
         }
         ModulizerType::AudioReactive { source } => {
             ui.label("\u{1F50A} Audio Reactive");

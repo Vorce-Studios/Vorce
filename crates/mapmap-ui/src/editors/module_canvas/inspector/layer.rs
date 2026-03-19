@@ -1,5 +1,6 @@
 use super::super::mesh;
 use super::super::state::ModuleCanvas;
+use super::capabilities;
 use egui::Ui;
 use mapmap_core::module::{BlendModeType, LayerType, MaskShape, MaskType, MeshType, ModulePartId};
 
@@ -37,19 +38,19 @@ pub fn render_layer_ui(
             ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
 
             // Blend mode
-            ui.add_enabled_ui(false, |ui| {
-                let blend_text = blend_mode
-                    .as_ref()
-                    .map(|b| format!("{:?}", b))
-                    .unwrap_or_else(|| "None".to_string());
-
-                ui.horizontal(|ui| {
-                    egui::ComboBox::from_id_salt("layer_blend")
-                        .selected_text(blend_text)
-                        .show_ui(ui, |ui| {
-                            if ui.selectable_label(blend_mode.is_none(), "None").clicked() {
-                                *blend_mode = None;
-                            }
+            let blend_text = blend_mode
+                .as_ref()
+                .map(|b| format!("{:?}", b))
+                .unwrap_or_else(|| "None".to_string());
+            egui::ComboBox::from_id_salt("layer_blend")
+                .selected_text(blend_text)
+                .show_ui(ui, |ui| {
+                    if ui.selectable_label(blend_mode.is_none(), "None").clicked() {
+                        *blend_mode = None;
+                    }
+                    ui.add_enabled_ui(
+                        capabilities::is_blend_mode_supported(&BlendModeType::Normal),
+                        |ui| {
                             if ui
                                 .selectable_label(
                                     matches!(blend_mode, Some(BlendModeType::Normal)),
@@ -59,6 +60,11 @@ pub fn render_layer_ui(
                             {
                                 *blend_mode = Some(BlendModeType::Normal);
                             }
+                        },
+                    );
+                    ui.add_enabled_ui(
+                        capabilities::is_blend_mode_supported(&BlendModeType::Add),
+                        |ui| {
                             if ui
                                 .selectable_label(
                                     matches!(blend_mode, Some(BlendModeType::Add)),
@@ -68,6 +74,11 @@ pub fn render_layer_ui(
                             {
                                 *blend_mode = Some(BlendModeType::Add);
                             }
+                        },
+                    );
+                    ui.add_enabled_ui(
+                        capabilities::is_blend_mode_supported(&BlendModeType::Multiply),
+                        |ui| {
                             if ui
                                 .selectable_label(
                                     matches!(blend_mode, Some(BlendModeType::Multiply)),
@@ -77,18 +88,30 @@ pub fn render_layer_ui(
                             {
                                 *blend_mode = Some(BlendModeType::Multiply);
                             }
-                        });
-                    ui.label(
-                        egui::RichText::new(format!(
-                            "⚠ {}",
-                            mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE
-                        ))
-                        .color(crate::theme::colors::WARN_COLOR),
+                        },
                     );
                 });
-            });
+            if !capabilities::is_blend_mode_supported(
+                blend_mode.as_ref().unwrap_or(&BlendModeType::Normal),
+            ) {
+                ui.label(
+                    egui::RichText::new(format!(
+                        "⚠ {}",
+                        mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE
+                    ))
+                    .color(crate::theme::colors::WARN_COLOR),
+                );
+            }
 
-            ui.checkbox(mapping_mode, "Mapping Mode (Grid)");
+            ui.add_enabled_ui(capabilities::is_mapping_mode_supported(), |ui| {
+                ui.checkbox(mapping_mode, "Mapping Mode (Grid)");
+            });
+            if !capabilities::is_mapping_mode_supported() {
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "Mapping mode grid is currently not end-to-end supported.",
+                );
+            }
 
             render_mesh_ui(ui, mesh, *id);
         }
