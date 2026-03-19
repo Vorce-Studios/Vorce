@@ -17,14 +17,18 @@ Assert-Command -Name "cargo" -HelpText "Install Rust and ensure cargo is in PATH
 
 # vcpkg detection
 if (-not $env:VCPKG_ROOT) {
-    $searchPaths = @(
+    $candidates = @(
         (Join-Path $repoRoot "vcpkg"),
         "C:\vcpkg",
         "D:\vcpkg",
         "C:\src\vcpkg",
         "C:\tools\vcpkg"
     )
-    foreach ($p in $searchPaths) {
+    foreach ($p in $candidates) {
+        # Check if drive exists before Join-Path to avoid DriveNotFoundException
+        $drive = if ($p.Contains(":")) { $p.Split(":")[0] + ":" } else { $null }
+        if ($drive -and -not (Test-Path $drive)) { continue }
+
         if (Test-Path (Join-Path $p "vcpkg.exe")) {
             $env:VCPKG_ROOT = $p
             Write-Host "Detected vcpkg at: $p"
@@ -65,7 +69,6 @@ cargo build --workspace --release
 # Run Visual Automation if enabled
 if ($env:MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION -eq "true") {
     Write-Host "Running Visual Automation Tests..."
-    # We use cargo test which calls the harness
     cargo test -p mapmap --test visual_capture_tests --release -- --ignored --nocapture
 }
 
