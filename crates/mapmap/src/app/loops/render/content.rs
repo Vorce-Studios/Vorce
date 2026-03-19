@@ -255,7 +255,7 @@ pub(crate) fn render_content(
             );
             Some(ctx.texture_pool.get_view(&tex_name))
         } else if ctx.texture_pool.has_texture("bevy_output") {
-            // Fallback for Bevy nodes
+            // Fallback for Bevy nodes.
             clear_video_issue(
                 video_log_times,
                 format!(
