@@ -61,6 +61,8 @@ pub struct RuntimeRenderQueueItem {
     pub module_id: ModuleId,
     /// Evaluated render operation.
     pub render_op: RenderOp,
+    /// Structured diagnostics about skipped or degraded features in this item.
+    pub diagnostics: Vec<String>,
 }
 
 /// Consolidated visual render queue for the current frame.
@@ -79,6 +81,8 @@ impl RuntimeRenderQueue {
     }
 }
 
+<<<<<<< HEAD
+=======
 /// Configuration for application initialization.
 #[derive(Default)]
 pub struct InitializationConfig {
@@ -110,6 +114,7 @@ impl InitializationConfig {
     }
 }
 
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
 /// The main application state.
 pub struct App {
     /// Manages all application windows.

@@ -13,7 +13,6 @@
 use thiserror::Error;
 
 pub mod backend;
-pub mod capture;
 pub mod color_calibration_renderer;
 pub mod compositor;
 pub mod compressed_texture;

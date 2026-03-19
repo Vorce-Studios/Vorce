@@ -232,6 +232,7 @@ fn test_update_part_sockets_removes_invalid_connections() {
     let pid2 = module.add_part(PartType::Source, (100.0, 0.0));
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     // Ensure the valid connection exists by calling `connect_parts` which bypasses soft failure
     let _ = module.connect_parts(pid1, 0, pid2, 0);
 
@@ -253,8 +254,16 @@ fn test_update_part_sockets_removes_invalid_connections() {
 
     // This updates pid1 sockets and repairs the ENTIRE graph
 =======
+<<<<<<< HEAD
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
+    // Create an invalid connection (output socket index out of bounds)
+<<<<<<< HEAD
+>>>>>>> jules-render-queue-feature-parity-8387310396268826334
+=======
     // Create invalid connection (output socket index out of bounds)
     // Create invalid connection (output socket index out of bounds)
+>>>>>>> origin/main
     module
         .connections
         .push(mapmap_core::module::ModuleConnection {
@@ -262,7 +271,11 @@ fn test_update_part_sockets_removes_invalid_connections() {
             from_socket: 999,
             to_part: pid2,
             to_socket: 0,
+<<<<<<< HEAD
+        });
+=======
         }); // pid1 only has 1 output
+>>>>>>> origin/main
     module
         .connections
         .push(mapmap_core::module::ModuleConnection {
@@ -270,7 +283,11 @@ fn test_update_part_sockets_removes_invalid_connections() {
             from_socket: 0,
             to_part: pid2,
             to_socket: 999,
+<<<<<<< HEAD
+        });
+=======
         }); // pid2 only has 1 input
+>>>>>>> origin/main
     module
         .connections
         .push(mapmap_core::module::ModuleConnection {
@@ -278,7 +295,34 @@ fn test_update_part_sockets_removes_invalid_connections() {
             from_socket: 0,
             to_part: pid2,
             to_socket: 0,
+<<<<<<< HEAD
+        });
+=======
+    module.connections.push(mapmap_core::module::ModuleConnection {
+        from_part: pid1,
+        from_socket: 999,
+        to_part: pid2,
+        to_socket: 0,
+    });
+    module.connections.push(mapmap_core::module::ModuleConnection {
+        from_part: pid1,
+        from_socket: 0,
+        to_part: pid2,
+        to_socket: 999,
+    });
+    module.connections.push(mapmap_core::module::ModuleConnection {
+        from_part: pid1,
+        from_socket: 0,
+        to_part: pid2,
+        to_socket: 0,
+    });
+<<<<<<< HEAD
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
         }); // Valid connection
+>>>>>>> origin/main
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
 
     assert_eq!(module.connections.len(), 3);
 
@@ -288,6 +332,7 @@ fn test_update_part_sockets_removes_invalid_connections() {
     module.repair_graph();
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     // All invalid connections across the entire graph will be removed in one pass
     assert_eq!(module.connections.len(), 1);
 
@@ -296,6 +341,23 @@ fn test_update_part_sockets_removes_invalid_connections() {
 
 =======
 >>>>>>> origin/main
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+    // Invalid connection from pid1 should be removed
+    assert_eq!(module.connections.len(), 1);
+
+    module.update_part_sockets(pid2);
+
+    // Invalid connection to pid2 should be removed
+=======
+    // `repair_graph` scrubs all invalid connections at once now
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
+>>>>>>> jules-render-queue-feature-parity-8387310396268826334
     assert_eq!(module.connections.len(), 1);
 
     assert_eq!(module.connections[0].from_socket, 0);
@@ -318,6 +380,7 @@ fn test_update_part_outputs_delegates() {
     let pid2 = module.add_part(PartType::Source, (100.0, 0.0));
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     module.connections.push(mapmap_core::module::ModuleConnection {
         from_part: pid1,
         from_socket: 999,
@@ -325,7 +388,12 @@ fn test_update_part_outputs_delegates() {
         to_socket: 0,
     }); // Invalid connection
 =======
+<<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> jules-render-queue-feature-parity-8387310396268826334
+=======
     // Push directly since add_connection would silently fail
+>>>>>>> origin/main
     module
         .connections
         .push(mapmap_core::module::ModuleConnection {
@@ -334,7 +402,26 @@ fn test_update_part_outputs_delegates() {
             to_part: pid2,
             to_socket: 0,
         });
+<<<<<<< HEAD
 >>>>>>> origin/main
+=======
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
+    module.connections.push(mapmap_core::module::ModuleConnection {
+        from_part: pid1,
+        from_socket: 999,
+        to_part: pid2,
+        to_socket: 0,
+    });
+<<<<<<< HEAD
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
+>>>>>>> jules-render-queue-feature-parity-8387310396268826334
 
     assert_eq!(module.connections.len(), 1);
     module.update_part_outputs(pid1); // Should call update_part_sockets and clear connection
@@ -588,15 +675,27 @@ fn test_module_add_connection_adds_to_list() {
     };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     // directly push since add_connection validates sockets which don't exist here
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    // Bypass connect_parts
+>>>>>>> jules-render-queue-feature-parity-8387310396268826334
     module.connections.push(mapmap_core::module::ModuleConnection {
         from_part: 1,
         from_socket: 0,
         to_part: 2,
         to_socket: 0,
     });
+<<<<<<< HEAD
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
+>>>>>>> jules-render-queue-feature-parity-8387310396268826334
 =======
     // The connections vector needs to be pushed directly since add_connection validates parts.
+>>>>>>> origin/main
     module
         .connections
         .push(mapmap_core::module::ModuleConnection {
@@ -605,6 +704,23 @@ fn test_module_add_connection_adds_to_list() {
             to_part: 2,
             to_socket: 0,
         });
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    // Bypass connect_parts
+    module.connections.push(mapmap_core::module::ModuleConnection {
+        from_part: 1,
+        from_socket: 0,
+        to_part: 2,
+        to_socket: 0,
+    });
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
+>>>>>>> jules-render-queue-feature-parity-8387310396268826334
 >>>>>>> origin/main
 
     assert_eq!(module.connections.len(), 1);
@@ -628,6 +744,7 @@ fn test_module_remove_connection_removes_exact_match() {
     };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     module.connections.push(mapmap_core::module::ModuleConnection {
         from_part: 1,
         from_socket: 0,
@@ -641,7 +758,12 @@ fn test_module_remove_connection_removes_exact_match() {
         to_socket: 0,
     });
 =======
+<<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> jules-render-queue-feature-parity-8387310396268826334
+=======
     // Push directly since validate_connection fails if parts are missing
+>>>>>>> origin/main
     module
         .connections
         .push(mapmap_core::module::ModuleConnection {
@@ -658,7 +780,32 @@ fn test_module_remove_connection_removes_exact_match() {
             to_part: 3,
             to_socket: 0,
         });
+<<<<<<< HEAD
 >>>>>>> origin/main
+=======
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
+    module.connections.push(mapmap_core::module::ModuleConnection {
+        from_part: 1,
+        from_socket: 0,
+        to_part: 2,
+        to_socket: 0,
+    });
+    module.connections.push(mapmap_core::module::ModuleConnection {
+        from_part: 1,
+        from_socket: 1,
+        to_part: 3,
+        to_socket: 0,
+    });
+<<<<<<< HEAD
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
+>>>>>>> jules-render-queue-feature-parity-8387310396268826334
 
     module.remove_connection(1, 0, 2, 0);
 

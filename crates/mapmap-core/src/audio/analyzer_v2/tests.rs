@@ -1,10 +1,21 @@
 #[cfg(test)]
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> jules-render-queue-feature-parity-8387310396268826334
 mod tests_v2 {
     use crate::audio::analyzer_v2::{AudioAnalyzerV2, AudioAnalyzerV2Config};
 =======
 use crate::audio::analyzer_v2::{AudioAnalyzerV2, AudioAnalyzerV2Config};
 >>>>>>> origin/main
+<<<<<<< HEAD
+=======
+=======
+mod tests_v2 {
+    use crate::audio::analyzer_v2::{AudioAnalyzerV2, AudioAnalyzerV2Config};
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
+>>>>>>> jules-render-queue-feature-parity-8387310396268826334
 
 #[test]
 fn test_create_analyzer() {
@@ -454,4 +465,5 @@ fn test_bpm_beat_timestamps_limit() {
     let analysis = analyzer.get_latest_analysis();
     assert!(analysis.tempo_bpm.is_some());
     assert_eq!(analyzer.beat_timestamps.len(), 16);
+}
 }

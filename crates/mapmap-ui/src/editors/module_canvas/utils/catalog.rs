@@ -1,7 +1,7 @@
 use mapmap_core::module::{
     AudioBand, AudioTriggerOutputConfig, BevyCameraMode, BlendModeType, EffectType, HueNodeType,
     LayerType, MaskShape, MaskType, ModulePartType, ModulizerType, OutputType, SourceType,
-    TriggerType,
+    TriggerType, MeshType,
 };
 
 pub struct NodeCatalogItem {
@@ -140,6 +140,11 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         // Masks
         NodeCatalogItem {
+            label: "📁 File Mask",
+            search_tags: "mask image file picture alpha",
+            part_type: ModulePartType::Mask(MaskType::File { path: String::new() }),
+        },
+        NodeCatalogItem {
             label: "⚪ Shape Mask",
             search_tags: "mask circle rectangle alpha",
             part_type: ModulePartType::Mask(MaskType::Shape(MaskShape::Circle)),
@@ -150,6 +155,17 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
             part_type: ModulePartType::Mask(MaskType::Gradient {
                 angle: 0.0,
                 softness: 0.5,
+            }),
+        },
+                // Meshes
+        NodeCatalogItem {
+            label: "🕸️ Mesh Node",
+            search_tags: "mesh grid quad bezier surface geometry",
+            part_type: ModulePartType::Mesh(MeshType::Quad {
+                tl: (0.0, 0.0),
+                tr: (1.0, 0.0),
+                br: (1.0, 1.0),
+                bl: (0.0, 1.0),
             }),
         },
         // Modulators
