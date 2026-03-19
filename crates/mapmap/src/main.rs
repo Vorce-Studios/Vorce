@@ -105,99 +105,47 @@ impl ApplicationHandler for MapFlowApp {
                                 path.join(format!("automation_frame_{}.png", exit_frames));
                             info!("Automation mode: Saving screenshot to {:?}", file_path);
 
-                            // Trigger capture
-                            let main_window_context = app.window_manager.get(0).unwrap();
-                            let format = main_window_context.surface_config.format;
-                            let width = main_window_context.surface_config.width;
-                            let height = main_window_context.surface_config.height;
+                            // Trigger capture using the shared utility
+                            if let Some(main_window_context) = app.window_manager.get(0) {
+                                let format = main_window_context.surface_config.format;
+                                let width = main_window_context.surface_config.width;
+                                let height = main_window_context.surface_config.height;
 
-                            let mut encoder = app.backend.device.create_command_encoder(
-                                &wgpu::CommandEncoderDescriptor {
-                                    label: Some("Automation Screenshot Encoder"),
-                                },
-                            );
-
-                            let texture = app
-                                .texture_pool
-                                .get_texture("composite")
-                                .expect("Could not find composite texture for automation capture");
-
-                            let bytes_per_pixel = 4;
-                            let unpadded_bytes_per_row = width * bytes_per_pixel;
-                            let padded_bytes_per_row = unpadded_bytes_per_row
-                                .div_ceil(wgpu::COPY_BYTES_PER_ROW_ALIGNMENT)
-                                * wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
-
-                            let buffer =
-                                app.backend.device.create_buffer(&wgpu::BufferDescriptor {
-                                    label: Some("Automation Readback Buffer"),
-                                    size: (padded_bytes_per_row * height) as u64,
-                                    usage: wgpu::BufferUsages::COPY_DST
-                                        | wgpu::BufferUsages::MAP_READ,
-                                    mapped_at_creation: false,
-                                });
-
-                            encoder.copy_texture_to_buffer(
-                                wgpu::TexelCopyTextureInfo {
-                                    texture: &texture,
-                                    mip_level: 0,
-                                    origin: wgpu::Origin3d::ZERO,
-                                    aspect: wgpu::TextureAspect::All,
-                                },
-                                wgpu::TexelCopyBufferInfo {
-                                    buffer: &buffer,
-                                    layout: wgpu::TexelCopyBufferLayout {
-                                        offset: 0,
-                                        bytes_per_row: Some(padded_bytes_per_row),
-                                        rows_per_image: Some(height),
+                                let mut encoder = app.backend.device.create_command_encoder(
+                                    &wgpu::CommandEncoderDescriptor {
+                                        label: Some("Automation Screenshot Encoder"),
                                     },
-                                },
-                                wgpu::Extent3d {
-                                    width,
-                                    height,
-                                    depth_or_array_layers: 1,
-                                },
-                            );
+                                );
 
-                            app.backend.queue.submit(std::iter::once(encoder.finish()));
+                                if let Some(texture) = app.texture_pool.get_texture("composite") {
+                                    let (buffer, padded_bytes_per_row) =
+                                        mapmap_render::capture::queue_readback_copy(
+                                            &app.backend.device,
+                                            &mut encoder,
+                                            &texture,
+                                            width,
+                                            height,
+                                        );
 
-                            let slice = buffer.slice(..);
-                            slice.map_async(wgpu::MapMode::Read, |_| {});
+                                    app.backend.queue.submit(std::iter::once(encoder.finish()));
 
-                            app.backend
-                                .device
-                                .poll(wgpu::PollType::Wait {
-                                    submission_index: None,
-                                    timeout: None,
-                                })
-                                .unwrap();
-
-                            let mapped = slice.get_mapped_range();
-                            let mut rgba = Vec::with_capacity((width * height * 4) as usize);
-
-                            for row in mapped
-                                .chunks_exact(padded_bytes_per_row as usize)
-                                .take(height as usize)
-                            {
-                                for pixel in row[..(width * 4) as usize].chunks_exact(4) {
-                                    match format {
-                                        wgpu::TextureFormat::Bgra8Unorm
-                                        | wgpu::TextureFormat::Bgra8UnormSrgb => {
-                                            rgba.extend_from_slice(&[
-                                                pixel[2], pixel[1], pixel[0], pixel[3],
-                                            ]);
-                                        }
-                                        _ => rgba.extend_from_slice(pixel),
+                                    if let Err(e) = mapmap_render::capture::save_readback_buffer(
+                                        &app.backend.device,
+                                        buffer,
+                                        width,
+                                        height,
+                                        padded_bytes_per_row,
+                                        format,
+                                        &file_path,
+                                    ) {
+                                        error!("Failed to save automation screenshot: {}", e);
                                     }
+                                } else {
+                                    error!(
+                                        "Could not find composite texture for automation capture"
+                                    );
                                 }
-                            } else {
-                                error!("Automation mode: Main window context not found for screenshot.");
                             }
-                            drop(mapped);
-                            buffer.unmap();
-
-                            let img = image::RgbaImage::from_raw(width, height, rgba).unwrap();
-                            img.save(&file_path).unwrap();
                         }
 
                         info!(

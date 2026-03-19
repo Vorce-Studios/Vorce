@@ -51,7 +51,11 @@ pub struct ModuleSocket {
 
 impl ModuleSocket {
     /// Create a new input socket.
-    pub fn input(id: impl Into<String>, name: impl Into<String>, socket_type: ModuleSocketType) -> Self {
+    pub fn input(
+        id: impl Into<String>,
+        name: impl Into<String>,
+        socket_type: ModuleSocketType,
+    ) -> Self {
         Self {
             id: id.into(),
             name: name.into(),
@@ -106,7 +110,9 @@ impl ModuleSocket {
 
     /// Check whether a source socket may connect into a target socket.
     pub fn is_compatible_with(&self, target: &Self) -> bool {
-        if self.direction != ModuleSocketDirection::Output || target.direction != ModuleSocketDirection::Input {
+        if self.direction != ModuleSocketDirection::Output
+            || target.direction != ModuleSocketDirection::Input
+        {
             return false;
         }
 
@@ -116,7 +122,9 @@ impl ModuleSocket {
 
         // Pragmatic backward compatibility for older projects where Trigger
         // used to be mapped to continuous automation (Control).
-        if self.socket_type == ModuleSocketType::Event && target.socket_type == ModuleSocketType::Control {
+        if self.socket_type == ModuleSocketType::Event
+            && target.socket_type == ModuleSocketType::Control
+        {
             return true;
         }
 

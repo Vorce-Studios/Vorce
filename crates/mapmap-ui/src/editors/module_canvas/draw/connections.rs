@@ -69,7 +69,11 @@ where
             };
 
             let is_new_jack = icon_name == "audio-jack1.1.svg" || icon_name == "audio-jack_2.svg";
-            let is_trigger = matches!(socket_type, mapmap_core::module::ModuleSocketType::Event | mapmap_core::module::ModuleSocketType::Control);
+            let is_trigger = matches!(
+                socket_type,
+                mapmap_core::module::ModuleSocketType::Event
+                    | mapmap_core::module::ModuleSocketType::Control
+            );
 
             let cable_start = start_pos;
             let cable_end = end_pos;

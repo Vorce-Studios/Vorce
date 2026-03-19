@@ -169,8 +169,7 @@ pub fn render_canvas(
             }
         }
 
-        if ctrl_held && ui.input(|i| i.key_pressed(egui::Key::Z)) && !canvas.undo_stack.is_empty()
-        {
+        if ctrl_held && ui.input(|i| i.key_pressed(egui::Key::Z)) && !canvas.undo_stack.is_empty() {
             if let Some(action) = canvas.undo_stack.pop() {
                 controller::apply_undo_action(module, &action);
                 canvas.redo_stack.push(action);
@@ -179,8 +178,7 @@ pub fn render_canvas(
             }
         }
 
-        if ctrl_held && ui.input(|i| i.key_pressed(egui::Key::Y)) && !canvas.redo_stack.is_empty()
-        {
+        if ctrl_held && ui.input(|i| i.key_pressed(egui::Key::Y)) && !canvas.redo_stack.is_empty() {
             if let Some(action) = canvas.redo_stack.pop() {
                 controller::apply_redo_action(module, &action);
                 canvas.undo_stack.push(action);
@@ -355,7 +353,9 @@ pub fn render_canvas(
 
                 if socket_resp.clicked()
                     && socket_info.is_output
-                    && (socket_info.socket_type == mapmap_core::module::ModuleSocketType::Event || socket_info.socket_type == mapmap_core::module::ModuleSocketType::Control)
+                    && (socket_info.socket_type == mapmap_core::module::ModuleSocketType::Event
+                        || socket_info.socket_type
+                            == mapmap_core::module::ModuleSocketType::Control)
                 {
                     actions.push(UIAction::ManualTrigger(module_id, part_id));
                 }
@@ -377,8 +377,11 @@ pub fn render_canvas(
             }
 
             let interact_rect = part_rect.shrink(2.0);
-            let part_response =
-                ui.interact(interact_rect, egui::Id::new(part_id), Sense::click_and_drag());
+            let part_response = ui.interact(
+                interact_rect,
+                egui::Id::new(part_id),
+                Sense::click_and_drag(),
+            );
 
             if part_response.hovered() {
                 clicked_on_part = true;
@@ -527,11 +530,17 @@ pub fn render_canvas(
                             } else {
                                 (socket.part_id, socket.socket_idx, from_part_id, from_idx)
                             };
-                            module.validate_connection(out_part, out_idx, in_part, in_idx).is_ok()
+                            module
+                                .validate_connection(out_part, out_idx, in_part, in_idx)
+                                .is_ok()
                         } else {
                             false
                         };
-                        color = if is_valid { Color32::GREEN } else { Color32::RED };
+                        color = if is_valid {
+                            Color32::GREEN
+                        } else {
+                            Color32::RED
+                        };
                         break;
                     }
                 }
@@ -652,37 +661,40 @@ pub fn render_canvas(
         egui::Area::new(egui::Id::new("canvas_zoom_area"))
             .anchor(egui::Align2::RIGHT_BOTTOM, egui::vec2(-20.0, -20.0))
             .show(ui.ctx(), |ui| {
-                crate::widgets::panel::cyber_panel_frame(ui.style()).show(ui, |ui: &mut egui::Ui| {
-                    ui.horizontal(|ui: &mut egui::Ui| {
-                        ui.spacing_mut().item_spacing.x = 4.0;
-                        if ui
-                            .button(egui::RichText::new("-").strong())
-                            .on_hover_text("Zoom Out")
-                            .clicked()
-                        {
-                            canvas.zoom = (canvas.zoom / 1.2).max(0.1);
-                        }
+                crate::widgets::panel::cyber_panel_frame(ui.style()).show(
+                    ui,
+                    |ui: &mut egui::Ui| {
+                        ui.horizontal(|ui: &mut egui::Ui| {
+                            ui.spacing_mut().item_spacing.x = 4.0;
+                            if ui
+                                .button(egui::RichText::new("-").strong())
+                                .on_hover_text("Zoom Out")
+                                .clicked()
+                            {
+                                canvas.zoom = (canvas.zoom / 1.2).max(0.1);
+                            }
 
-                        ui.add(
-                            egui::Slider::new(&mut canvas.zoom, 0.1..=2.0)
-                                .show_value(false)
-                                .trailing_fill(true),
-                        );
+                            ui.add(
+                                egui::Slider::new(&mut canvas.zoom, 0.1..=2.0)
+                                    .show_value(false)
+                                    .trailing_fill(true),
+                            );
 
-                        if ui
-                            .button(egui::RichText::new("+").strong())
-                            .on_hover_text("Zoom In")
-                            .clicked()
-                        {
-                            canvas.zoom = (canvas.zoom * 1.2).min(2.0);
-                        }
-                        ui.label(
-                            egui::RichText::new(format!("{:.0}%", canvas.zoom * 100.0))
-                                .size(11.0)
-                                .color(Color32::WHITE),
-                        );
-                    });
-                });
+                            if ui
+                                .button(egui::RichText::new("+").strong())
+                                .on_hover_text("Zoom In")
+                                .clicked()
+                            {
+                                canvas.zoom = (canvas.zoom * 1.2).min(2.0);
+                            }
+                            ui.label(
+                                egui::RichText::new(format!("{:.0}%", canvas.zoom * 100.0))
+                                    .size(11.0)
+                                    .color(Color32::WHITE),
+                            );
+                        });
+                    },
+                );
             });
 
         if needs_repair {
