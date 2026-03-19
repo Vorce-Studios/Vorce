@@ -1,5 +1,4 @@
 use super::InspectorAction;
-use crate::editors::mesh_editor::ui::MeshEditorUi;
 use crate::i18n::LocaleManager;
 use egui::Ui;
 use mapmap_core::{Layer, Transform};

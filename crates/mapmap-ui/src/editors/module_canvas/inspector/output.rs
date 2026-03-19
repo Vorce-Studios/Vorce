@@ -158,11 +158,19 @@ pub fn render_output_ui(
             });
             ui.horizontal(|ui| {
                 ui.label("Height:");
-                ui.add(egui::DragValue::new(output_height).speed(10).range(0..=8192));
+                ui.add(
+                    egui::DragValue::new(output_height)
+                        .speed(10)
+                        .range(0..=8192),
+                );
             });
             ui.horizontal(|ui| {
                 ui.label("Target FPS:");
-                ui.add(egui::DragValue::new(output_fps).speed(1.0).range(1.0..=240.0));
+                ui.add(
+                    egui::DragValue::new(output_fps)
+                        .speed(1.0)
+                        .range(1.0..=240.0),
+                );
             });
 
             ui.separator();

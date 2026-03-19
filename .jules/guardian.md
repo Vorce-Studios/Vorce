@@ -150,7 +150,3 @@ Die Inkonsistenz im `ModuleEvaluator` bleibt bestehen, da dieser statenlos ist u
 ## 2024-05-24 - [State Clone & Equality Coverage]
 **Erkenntnis:** The `AppState` and `AppSettings` structures lacked basic Clone and PartialEq test coverage. This is essential for ensuring that deep fields are correctly duplicated and evaluated during CoW (Copy-on-Write) and UI diffing operations.
 **Aktion:** Implemented `test_app_settings_clone_equality`, `test_app_settings_partial_eq`, and `test_app_state_clone_equality` in `crates/mapmap-core/src/state.rs` to secure state management semantics.
-
-## 2024-03-24 - Module Connection Validation Tests Update
-**Erkenntnis:** Tests asserting `module.add_connection` failed silently because it properly validates parts/sockets internally before adding. Also `update_part_sockets` relies on `repair_graph` to do connection cleanup.
-**Aktion:** Use `module.connections.push()` in tests to explicitly bypass `add_connection` validation when asserting connection removal/cleanup logic for invalid states, and call `repair_graph()` when expecting `update_part_sockets` to clean up connections.
