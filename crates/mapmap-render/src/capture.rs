@@ -1,8 +1,8 @@
 //! Visual capture and readback utilities.
 
-use std::path::Path;
-use anyhow::{Context, Result, anyhow};
+use anyhow::{anyhow, Context, Result};
 use image::RgbaImage;
+use std::path::Path;
 
 /// Queues a copy of a texture to a readback buffer.
 ///

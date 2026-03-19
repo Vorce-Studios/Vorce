@@ -44,7 +44,8 @@ fn test_app_automation_empty_project() {
         .expect("failed to start MapFlow");
 
     // Wait for the app to finish (should exit after 10 frames)
-    let status = child.wait_timeout(Duration::from_secs(30))
+    let status = child
+        .wait_timeout(Duration::from_secs(30))
         .expect("failed to wait for MapFlow")
         .expect("MapFlow timed out");
 
@@ -52,7 +53,15 @@ fn test_app_automation_empty_project() {
 
     // Verify screenshot was created
     let screenshot_path = output_dir.join("automation_frame_10.png");
+<<<<<<< HEAD
     assert!(screenshot_path.exists(), "screenshot was not created at {:?}", screenshot_path);
+=======
+    assert!(
+        screenshot_path.exists(),
+        "screenshot was not created at {:?}",
+        screenshot_path
+    );
+>>>>>>> origin/main
 
     let img = image::open(&screenshot_path).expect("failed to open created screenshot");
     assert_eq!(img.width(), 1280);
@@ -61,11 +70,17 @@ fn test_app_automation_empty_project() {
 
 // Extension trait for Command to add timeout
 trait CommandTimeout {
-    fn wait_timeout(&mut self, timeout: Duration) -> std::io::Result<Option<std::process::ExitStatus>>;
+    fn wait_timeout(
+        &mut self,
+        timeout: Duration,
+    ) -> std::io::Result<Option<std::process::ExitStatus>>;
 }
 
 impl CommandTimeout for std::process::Child {
-    fn wait_timeout(&mut self, timeout: Duration) -> std::io::Result<Option<std::process::ExitStatus>> {
+    fn wait_timeout(
+        &mut self,
+        timeout: Duration,
+    ) -> std::io::Result<Option<std::process::ExitStatus>> {
         let start = std::time::Instant::now();
         loop {
             if let Some(status) = self.try_wait()? {

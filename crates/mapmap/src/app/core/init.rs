@@ -44,13 +44,19 @@ impl App {
         // Initialize renderers
         let texture_pool = TexturePool::new(backend.device.clone());
         let compositor = Compositor::new(backend.device.clone(), backend.surface_format())?;
+<<<<<<< HEAD
         let (effect_chain_renderer, preview_effect_chain_renderer) = Self::init_renderers(&backend)?;
+=======
+        let (effect_chain_renderer, preview_effect_chain_renderer) =
+            Self::init_renderers(&backend)?;
+>>>>>>> origin/main
         let mesh_renderer = MeshRenderer::new(backend.device.clone(), backend.surface_format())?;
         let mesh_buffer_cache = MeshBufferCache::new();
         let quad_renderer = QuadRenderer::new(&backend.device, backend.surface_format())?;
 
         // Initialize advanced output renderers
-        let (edge_blend_renderer, color_calibration_renderer) = Self::init_advanced_renderers(&backend);
+        let (edge_blend_renderer, color_calibration_renderer) =
+            Self::init_advanced_renderers(&backend);
 
         let mut window_manager = WindowManager::new();
 
@@ -64,11 +70,23 @@ impl App {
         let main_window_id = window_manager.create_main_window_with_geometry(
             elwt,
             &backend,
-            if config.is_automation { Some(1280) } else { saved_config.window_width },
-            if config.is_automation { Some(720) } else { saved_config.window_height },
+            if config.is_automation {
+                Some(1280)
+            } else {
+                saved_config.window_width
+            },
+            if config.is_automation {
+                Some(720)
+            } else {
+                saved_config.window_height
+            },
             saved_config.window_x,
             saved_config.window_y,
-            if config.is_automation { false } else { saved_config.window_maximized },
+            if config.is_automation {
+                false
+            } else {
+                saved_config.window_maximized
+            },
             saved_config.vsync_mode,
         )?;
 
@@ -139,7 +157,10 @@ impl App {
                 info!("Restoring saved audio device: {}", dev);
                 Some(dev.clone())
             } else {
-                info!("Saved audio device '{}' no longer available, using default", dev);
+                info!(
+                    "Saved audio device '{}' no longer available, using default",
+                    dev
+                );
                 None
             }
         } else {
@@ -199,7 +220,8 @@ impl App {
 
         let control_manager = ControlManager::new();
         let sys_info = sysinfo::System::new_all();
-        let (dummy_texture, dummy_view) = Self::create_initial_dummy_texture(&backend, width, height, format);
+        let (dummy_texture, dummy_view) =
+            Self::create_initial_dummy_texture(&backend, width, height, format);
 
         #[cfg(feature = "midi")]
         let midi_handler = if config.skip_midi {
@@ -258,7 +280,14 @@ impl App {
             #[cfg(feature = "midi")]
             midi_ports: MidiInputHandler::list_ports().unwrap_or_default(),
             #[cfg(feature = "midi")]
-            selected_midi_port: if MidiInputHandler::list_ports().unwrap_or_default().is_empty() { None } else { Some(0) },
+            selected_midi_port: if MidiInputHandler::list_ports()
+                .unwrap_or_default()
+                .is_empty()
+            {
+                None
+            } else {
+                Some(0)
+            },
             #[cfg(feature = "ndi")]
             ndi_receivers: std::collections::HashMap::new(),
             #[cfg(feature = "ndi")]
@@ -289,8 +318,12 @@ impl App {
             media_manager_ui: MediaManagerUI::new(),
             media_library: {
                 let mut lib = MediaLibrary::new();
-                if let Some(video_dir) = dirs::video_dir() { lib.add_scan_path(video_dir); }
-                if let Some(project_media) = runtime_paths::existing_resource_path("app_videos") { lib.add_scan_path(project_media); }
+                if let Some(video_dir) = dirs::video_dir() {
+                    lib.add_scan_path(video_dir);
+                }
+                if let Some(project_media) = runtime_paths::existing_resource_path("app_videos") {
+                    lib.add_scan_path(project_media);
+                }
                 lib
             },
             bevy_runner: Some(mapmap_bevy::BevyRunner::new()),
@@ -317,18 +350,24 @@ impl App {
         Ok((effect_chain_renderer, preview_effect_chain_renderer))
     }
 
-    fn init_advanced_renderers(backend: &WgpuBackend) -> (Option<EdgeBlendRenderer>, Option<ColorCalibrationRenderer>) {
-        let edge_blend_renderer = EdgeBlendRenderer::new(backend.device.clone(), backend.surface_format())
-            .map_err(|e| {
-                warn!("Failed to create edge blend renderer: {}", e);
-                e
-            }).ok();
+    fn init_advanced_renderers(
+        backend: &WgpuBackend,
+    ) -> (Option<EdgeBlendRenderer>, Option<ColorCalibrationRenderer>) {
+        let edge_blend_renderer =
+            EdgeBlendRenderer::new(backend.device.clone(), backend.surface_format())
+                .map_err(|e| {
+                    warn!("Failed to create edge blend renderer: {}", e);
+                    e
+                })
+                .ok();
 
-        let color_calibration_renderer = ColorCalibrationRenderer::new(backend.device.clone(), backend.surface_format())
-            .map_err(|e| {
-                warn!("Failed to create color calibration renderer: {}", e);
-                e
-            }).ok();
+        let color_calibration_renderer =
+            ColorCalibrationRenderer::new(backend.device.clone(), backend.surface_format())
+                .map_err(|e| {
+                    warn!("Failed to create color calibration renderer: {}", e);
+                    e
+                })
+                .ok();
 
         (edge_blend_renderer, color_calibration_renderer)
     }
@@ -336,7 +375,9 @@ impl App {
     fn init_ui_assets(ui_state: &mut AppUI) {
         #[cfg(feature = "midi")]
         {
-            if let Some(path) = runtime_paths::existing_resource_path("controllers/ecler_nuo4/elements.json") {
+            if let Some(path) =
+                runtime_paths::existing_resource_path("controllers/ecler_nuo4/elements.json")
+            {
                 match std::fs::read_to_string(&path) {
                     Ok(json) => {
                         if let Err(e) = ui_state.controller_overlay.load_elements(&json) {
@@ -354,7 +395,8 @@ impl App {
     }
 
     fn load_autosave(state: &mut AppState, saved_config: &mapmap_ui::config::UserConfig) {
-        let autosave_path = dirs::data_local_dir().map(|p| p.join("MapFlow").join("autosave.mflow"));
+        let autosave_path =
+            dirs::data_local_dir().map(|p| p.join("MapFlow").join("autosave.mflow"));
         if let Some(path) = &autosave_path {
             if path.exists() {
                 info!("Found autosave at {:?}, attempting to load...", path);
@@ -362,7 +404,8 @@ impl App {
                     Ok(loaded_state) => {
                         info!("Successfully loaded autosave.");
                         *state = loaded_state;
-                        state.settings_mut().log_config.level = saved_config.log_level.as_str().to_string();
+                        state.settings_mut().log_config.level =
+                            saved_config.log_level.as_str().to_string();
                     }
                     Err(e) => {
                         error!("Failed to load autosave: {}", e);
@@ -376,19 +419,31 @@ impl App {
 
     fn run_self_heal(state: &mut AppState) {
         // --- Reconcile Output IDs ---
-        let valid_outputs: HashMap<String, u64> = state.output_manager.outputs().iter()
-            .map(|o| (o.name.clone(), o.id)).collect();
+        let valid_outputs: HashMap<String, u64> = state
+            .output_manager
+            .outputs()
+            .iter()
+            .map(|o| (o.name.clone(), o.id))
+            .collect();
         let valid_ids: Vec<u64> = valid_outputs.values().cloned().collect();
 
         let mut fixed_count = 0;
         for module in state.module_manager_mut().modules_mut() {
             for part in &mut module.parts {
                 if let mapmap_core::module::ModulePartType::Output(
-                    mapmap_core::module::OutputType::Projector { ref mut id, ref name, .. }
-                ) = &mut part.part_type {
+                    mapmap_core::module::OutputType::Projector {
+                        ref mut id,
+                        ref name,
+                        ..
+                    },
+                ) = &mut part.part_type
+                {
                     if !valid_ids.contains(id) {
                         if let Some(new_id) = valid_outputs.get(name) {
-                            info!("Self-Heal: Relinking Output '{}' from ID {} to {}.", name, id, new_id);
+                            info!(
+                                "Self-Heal: Relinking Output '{}' from ID {} to {}.",
+                                name, id, new_id
+                            );
                             *id = *new_id;
                             fixed_count += 1;
                         }
@@ -396,29 +451,49 @@ impl App {
                 }
             }
         }
-        if fixed_count > 0 { state.dirty = true; }
+        if fixed_count > 0 {
+            state.dirty = true;
+        }
 
         // --- Ensure Output Windows exist ---
-        let existing_output_ids: std::collections::HashSet<u64> = state.output_manager.outputs().iter().map(|o| o.id).collect();
+        let existing_output_ids: std::collections::HashSet<u64> = state
+            .output_manager
+            .outputs()
+            .iter()
+            .map(|o| o.id)
+            .collect();
         let mut missing_outputs = Vec::new();
         for module in state.module_manager.modules() {
             for part in &module.parts {
                 if let mapmap_core::module::ModulePartType::Output(
-                    mapmap_core::module::OutputType::Projector { id, name, .. }
-                ) = &part.part_type {
-                    if !existing_output_ids.contains(id) { missing_outputs.push((*id, name.clone())); }
+                    mapmap_core::module::OutputType::Projector { id, name, .. },
+                ) = &part.part_type
+                {
+                    if !existing_output_ids.contains(id) {
+                        missing_outputs.push((*id, name.clone()));
+                    }
                 }
             }
         }
         for (id, name) in missing_outputs {
-            info!("Self-Heal: Creating missing Output Window '{}' (ID {})", name, id);
-            state.output_manager_mut().add_output(name, mapmap_core::output::CanvasRegion::new(0.0, 0.0, 1.0, 1.0), (1920, 1080));
+            info!(
+                "Self-Heal: Creating missing Output Window '{}' (ID {})",
+                name, id
+            );
+            state.output_manager_mut().add_output(
+                name,
+                mapmap_core::output::CanvasRegion::new(0.0, 0.0, 1.0, 1.0),
+                (1920, 1080),
+            );
         }
 
         // --- Remove dangling connections ---
         for module in state.module_manager_mut().modules_mut() {
-            let part_ids: std::collections::HashSet<u64> = module.parts.iter().map(|p| p.id).collect();
-            module.connections.retain(|c| part_ids.contains(&c.from_part) && part_ids.contains(&c.to_part));
+            let part_ids: std::collections::HashSet<u64> =
+                module.parts.iter().map(|p| p.id).collect();
+            module
+                .connections
+                .retain(|c| part_ids.contains(&c.from_part) && part_ids.contains(&c.to_part));
         }
     }
 
@@ -441,7 +516,14 @@ impl App {
 
     fn start_mcp_server(mcp_sender: crossbeam_channel::Sender<mapmap_mcp::McpAction>) {
         thread::spawn(move || {
+<<<<<<< HEAD
             let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+=======
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap();
+>>>>>>> origin/main
             rt.block_on(async {
                 let server = McpServer::new(Some(mcp_sender));
                 if let Err(e) = server.run_stdio().await {
@@ -451,8 +533,17 @@ impl App {
         });
     }
 
-    fn init_oscillator_renderer(backend: &WgpuBackend, format: wgpu::TextureFormat, state: &AppState) -> Option<OscillatorRenderer> {
-        match OscillatorRenderer::new(backend.device.clone(), backend.queue.clone(), format, &state.oscillator_config) {
+    fn init_oscillator_renderer(
+        backend: &WgpuBackend,
+        format: wgpu::TextureFormat,
+        state: &AppState,
+    ) -> Option<OscillatorRenderer> {
+        match OscillatorRenderer::new(
+            backend.device.clone(),
+            backend.queue.clone(),
+            format,
+            &state.oscillator_config,
+        ) {
             Ok(mut renderer) => {
                 renderer.initialize_phases(state.oscillator_config.phase_init_mode);
                 Some(renderer)
@@ -464,7 +555,13 @@ impl App {
         }
     }
 
+<<<<<<< HEAD
     fn init_preview_quad_buffers(mesh_renderer: &MeshRenderer) -> (wgpu::Buffer, wgpu::Buffer, u32) {
+=======
+    fn init_preview_quad_buffers(
+        mesh_renderer: &MeshRenderer,
+    ) -> (wgpu::Buffer, wgpu::Buffer, u32) {
+>>>>>>> origin/main
         let preview_mesh = mapmap_core::Mesh {
             mesh_type: mapmap_core::MeshType::Quad,
             vertices: vec![
@@ -492,7 +589,13 @@ impl App {
     }
 
     fn connect_hue(controller: &mut HueController, ui_state: &AppUI, rt: &tokio::runtime::Runtime) {
+<<<<<<< HEAD
         if !ui_state.user_config.hue_config.bridge_ip.is_empty() && ui_state.user_config.hue_config.auto_connect {
+=======
+        if !ui_state.user_config.hue_config.bridge_ip.is_empty()
+            && ui_state.user_config.hue_config.auto_connect
+        {
+>>>>>>> origin/main
             info!("Initializing Hue Controller...");
             if let Err(e) = rt.block_on(controller.connect()) {
                 warn!("Hue Controller initial connection failed: {}", e);
@@ -500,10 +603,19 @@ impl App {
         }
     }
 
-    fn create_initial_dummy_texture(backend: &WgpuBackend, width: u32, height: u32, format: wgpu::TextureFormat) -> (wgpu::Texture, std::sync::Arc<wgpu::TextureView>) {
+    fn create_initial_dummy_texture(
+        backend: &WgpuBackend,
+        width: u32,
+        height: u32,
+        format: wgpu::TextureFormat,
+    ) -> (wgpu::Texture, std::sync::Arc<wgpu::TextureView>) {
         let texture = backend.device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Dummy Input Texture"),
-            size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
+            size: wgpu::Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
@@ -511,7 +623,8 @@ impl App {
             usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[],
         });
-        let view = std::sync::Arc::new(texture.create_view(&wgpu::TextureViewDescriptor::default()));
+        let view =
+            std::sync::Arc::new(texture.create_view(&wgpu::TextureViewDescriptor::default()));
         (texture, view)
     }
 
@@ -521,7 +634,9 @@ impl App {
             Ok(mut handler) => {
                 info!("MIDI initialized");
                 if let Ok(ports) = MidiInputHandler::list_ports() {
-                    if !ports.is_empty() { let _ = handler.connect(0); }
+                    if !ports.is_empty() {
+                        let _ = handler.connect(0);
+                    }
                 }
                 Some(handler)
             }
@@ -536,13 +651,45 @@ impl App {
         info!("==========================================");
         info!("   MapFlow Initialization Status Report   ");
         info!("------------------------------------------");
-        info!("- Render Backend: {} ({:?})", self.backend.adapter_info().name, self.backend.adapter_info().backend);
-        info!("- Edge Blend:     {}", if self.edge_blend_renderer.is_some() { "ENABLED" } else { "DISABLED" });
-        info!("- Color Calib:    {}", if self.color_calibration_renderer.is_some() { "ENABLED" } else { "DISABLED" });
+        info!(
+            "- Render Backend: {} ({:?})",
+            self.backend.adapter_info().name,
+            self.backend.adapter_info().backend
+        );
+        info!(
+            "- Edge Blend:     {}",
+            if self.edge_blend_renderer.is_some() {
+                "ENABLED"
+            } else {
+                "DISABLED"
+            }
+        );
+        info!(
+            "- Color Calib:    {}",
+            if self.color_calibration_renderer.is_some() {
+                "ENABLED"
+            } else {
+                "DISABLED"
+            }
+        );
         info!("- Bevy Engine:    INITIALIZED");
         #[cfg(feature = "midi")]
-        info!("- MIDI System:    {}", if self.midi_handler.is_some() { "CONNECTED" } else { "DISCONNECTED" });
-        info!("- Hue System:     {}", if !self.ui_state.user_config.hue_config.bridge_ip.is_empty() { "CONFIGURED" } else { "UNCONFIGURED" });
+        info!(
+            "- MIDI System:    {}",
+            if self.midi_handler.is_some() {
+                "CONNECTED"
+            } else {
+                "DISCONNECTED"
+            }
+        );
+        info!(
+            "- Hue System:     {}",
+            if !self.ui_state.user_config.hue_config.bridge_ip.is_empty() {
+                "CONFIGURED"
+            } else {
+                "UNCONFIGURED"
+            }
+        );
         info!("- Media Library:  {} items", self.media_library.items.len());
         info!("==========================================");
     }
