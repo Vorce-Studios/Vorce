@@ -91,19 +91,21 @@ if (-not (Test-Path $artifactsDir)) {
     New-Item -ItemType Directory -Force -Path $artifactsDir
 }
 
-Write-Host "--- Starting Build & Test (Limited to 4 threads) ---"
-cargo build --workspace --release -j 4
+Write-Host "--- Starting Build & Test ---"
+# Note: We assume vcpkg-installed dependencies are already there or handled by cargo-vcpkg if used.
+# If not, the build might fail later, but at least we have vcpkg.
+cargo build --workspace --release
 
 # Run Visual Automation if enabled
 if ($env:MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION -eq "true") {
     Write-Host "Running Visual Automation Tests..."
-    cargo test -p mapmap --test visual_capture_tests --release -j 4 -- --ignored --nocapture
+    cargo test -p mapmap --test visual_capture_tests --release -- --ignored --nocapture
 }
 
 # Run GPU Tests if enabled
 if ($env:MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS -eq "true") {
     Write-Host "Running GPU-bound tests..."
-    cargo test --workspace --release -j 4 -- --ignored
+    cargo test --workspace --release -- --ignored
 }
 
 Write-Host "Validation completed successfully."
