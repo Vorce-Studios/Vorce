@@ -250,7 +250,7 @@ jobs:
 
   self-hosted-post-merge:
     name: "Self-Hosted Post-Merge Validation"
-    runs-on: [self-hosted, windows, x64, mapflow-post-merge]
+    runs-on: [self-hosted, Windows, X64, mapflow-post-merge]
     needs: [resolve-context, gate-standard-pr-checks]
     if: |
       always() &&
