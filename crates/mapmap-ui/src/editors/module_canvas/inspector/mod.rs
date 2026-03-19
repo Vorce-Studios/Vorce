@@ -159,9 +159,6 @@ fn render_preview_texture(ui: &mut Ui, texture_id: egui::TextureId, caption: &st
     ui.small(caption);
 }
 
-<<<<<<< HEAD
-fn render_layer_preview_panel(
-=======
 pub fn render_standard_texture_preview(
     canvas: &mut ModuleCanvas,
     ui: &mut Ui,
@@ -223,11 +220,6 @@ pub fn render_output_texture_preview(
 }
 
 pub fn render_layer_preview_panel(
-<<<<<<< HEAD
->>>>>>> origin/main
-=======
->>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
->>>>>>> jules-render-queue-feature-parity-8387310396268826334
     canvas: &mut ModuleCanvas,
     ui: &mut Ui,
     module_id: ModuleId,
@@ -360,16 +352,6 @@ pub fn render_inspector_for_part(
                     );
                 }
                 ModulePartType::Mask(mask) => {
-<<<<<<< HEAD
-                    layer::render_mask_ui(ui, mask);
-                }
-                ModulePartType::Modulizer(mod_type) => {
-=======
-<<<<<<< HEAD
-                    layer::render_mask_ui(ui, mask);
-                }
-                ModulePartType::Modulizer(mod_type) => {
-=======
                     render_inspector_preview_toggle(canvas, ui);
                     render_layer_preview_panel(canvas, ui, module_id, part_id, preview_context);
                     layer::render_mask_ui(ui, mask);
@@ -377,8 +359,6 @@ pub fn render_inspector_for_part(
                 ModulePartType::Modulizer(mod_type) => {
                     render_inspector_preview_toggle(canvas, ui);
                     render_layer_preview_panel(canvas, ui, module_id, part_id, preview_context);
->>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
->>>>>>> jules-render-queue-feature-parity-8387310396268826334
                     effect::render_effect_ui(ui, mod_type, part_id);
                 }
                 ModulePartType::Layer(layer) => {

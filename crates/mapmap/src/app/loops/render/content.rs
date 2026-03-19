@@ -48,34 +48,20 @@ pub(crate) fn render_content(
     let is_preview_output = (output_id & PREVIEW_FLAG) != 0;
     let real_output_id = output_id & !PREVIEW_FLAG;
 
-<<<<<<< HEAD
-    let mut target_ops: Vec<(u64, mapmap_core::module_eval::RenderOp, Vec<String>)> = ctx
-=======
     // ⚡ BOLT OPTIMIZATION:
     // Store references to RenderOp instead of cloning the entire struct (which contains Vecs and complex data).
     // This avoids per-frame allocations and deep copies for every layer being rendered.
     let mut target_ops: Vec<(u64, &mapmap_core::module_eval::RenderOp)> = ctx
->>>>>>> origin/main
         .render_queue
         .iter()
         .filter(|item| match &item.render_op.output_type {
             Projector { id, .. } => *id == real_output_id,
             _ => item.render_op.output_part_id == real_output_id,
         })
-<<<<<<< HEAD
-        .map(|item| {
-            (
-                item.module_id,
-                item.render_op.clone(),
-                item.diagnostics.clone(),
-            )
-        })
-=======
         .map(|item| (item.module_id, &item.render_op))
->>>>>>> origin/main
         .collect();
 
-    target_ops.sort_by(|(_, a, _), (_, b, _)| b.output_part_id.cmp(&a.output_part_id));
+    target_ops.sort_by(|(_, a), (_, b)| b.output_part_id.cmp(&a.output_part_id));
 
     let empty_ops_issue_key = format!(
         "video-output-empty-ops:{real_output_id}:{}",
@@ -189,22 +175,7 @@ pub(crate) fn render_content(
     }
 
     // Accumulate Layers
-    for (module_id, op, diagnostics) in target_ops {
-        for diag in &diagnostics {
-            let issue_key = format!(
-                "video-output-degraded:{}:{}:{}",
-                real_output_id, module_id, diag
-            );
-            if should_log_video_issue(video_log_times, issue_key.clone()) {
-                tracing::warn!(
-                    "Degradierter RenderOp für Output {} Modul {}: {}",
-                    real_output_id,
-                    module_id,
-                    diag
-                );
-            }
-        }
-
+    for (module_id, op) in target_ops {
         let tex_name = if let Some(src_id) = op.source_part_id {
             format!("part_{}_{}", module_id, src_id)
         } else {
@@ -285,10 +256,6 @@ pub(crate) fn render_content(
         if let Some(src_ref) = source_view {
             let mut final_source_view = src_ref.clone();
 
-            if !op.masks.is_empty() {
-                tracing::warn!("Mask rendering is currently not implemented, ignoring {} masks.", op.masks.len());
-            }
-
             if !op.effects.is_empty() {
                 let effect_chain = build_effect_chain(&op.effects);
                 if !effect_chain.effects.is_empty() {
@@ -337,19 +304,7 @@ pub(crate) fn render_content(
                 }
             }
 
-            let mut transform = glam::Mat4::IDENTITY;
-            transform *= glam::Mat4::from_translation(glam::vec3(
-                op.source_props.offset_x,
-                op.source_props.offset_y,
-                0.0,
-            ));
-            transform *= glam::Mat4::from_rotation_z(op.source_props.rotation.to_radians());
-            transform *= glam::Mat4::from_scale(glam::vec3(
-                op.source_props.scale_x,
-                op.source_props.scale_y,
-                1.0,
-            ));
-
+            let transform = glam::Mat4::IDENTITY;
             let uniform_bind_group = mesh_renderer.get_uniform_bind_group_with_source_props(
                 queue,
                 transform,

@@ -246,15 +246,6 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                     let sat = params.entry("saturation".to_string()).or_insert(1.0);
                     ui.add(egui::Slider::new(sat, 0.0..=2.0).text("Saturation"));
                 }
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-                EffectType::LoadLUT | EffectType::Colorize | EffectType::Sharpen | EffectType::Threshold | EffectType::Spiral | EffectType::Pinch | EffectType::Halftone | EffectType::Posterize | EffectType::VHS => {
-                    ui.label(egui::RichText::new("Effect not mapped in renderer").weak().italics().color(crate::theme::colors::WARN_COLOR));
-                }
-=======
->>>>>>> ae090afc
->>>>>>> jules-render-queue-feature-parity-8387310396268826334
                 _ => {
                     ui.label(
                         egui::RichText::new("No configurable parameters")
