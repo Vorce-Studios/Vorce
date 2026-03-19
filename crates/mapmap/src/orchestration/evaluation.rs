@@ -39,14 +39,12 @@ pub fn perform_evaluation(
                     .insert(*part_id, max_val);
             }
 
-            app.render_queue
-                .items
-                .extend(eval_result.render_ops.iter().cloned().map(|render_op| {
-                    RuntimeRenderQueueItem {
-                        module_id: *module_id,
-                        render_op,
-                    }
-                }));
+            app.render_queue.items.extend(eval_result.render_ops.iter().cloned().map(|render_op| {
+                RuntimeRenderQueueItem {
+                    module_id: *module_id,
+                    render_op,
+                }
+            }));
         }
     }
 

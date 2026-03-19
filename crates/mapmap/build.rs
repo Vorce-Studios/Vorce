@@ -23,7 +23,8 @@ fn copy_runtime_dlls() {
     let manifest_dir = std::path::PathBuf::from(
         std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR missing"),
     );
-    let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR missing"));
+    let out_dir =
+        std::path::PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR missing"));
     let profile_dir = out_dir
         .ancestors()
         .nth(3)
@@ -121,10 +122,7 @@ fn copy_runtime_dlls() {
     }
 
     if !copied_any {
-        println!(
-            "cargo:warning=No runtime DLLs were copied into {}",
-            profile_dir.display()
-        );
+        println!("cargo:warning=No runtime DLLs were copied into {}", profile_dir.display());
     }
 }
 

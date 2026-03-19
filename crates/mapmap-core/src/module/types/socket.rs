@@ -40,11 +40,7 @@ pub struct ModuleSocket {
 
 impl ModuleSocket {
     /// Create a new input socket.
-    pub fn input(
-        id: impl Into<String>,
-        name: impl Into<String>,
-        socket_type: ModuleSocketType,
-    ) -> Self {
+    pub fn input(id: impl Into<String>, name: impl Into<String>, socket_type: ModuleSocketType) -> Self {
         Self {
             id: id.into(),
             name: name.into(),

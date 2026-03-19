@@ -1,6 +1,6 @@
-use crate::app::core::app_struct::RuntimeRenderQueueItem;
 use anyhow::Result;
 use mapmap_core::module::OutputType::Projector;
+use crate::app::core::app_struct::RuntimeRenderQueueItem;
 
 use super::effects::build_effect_chain;
 use super::logging::{clear_video_issue, should_log_video_issue};
