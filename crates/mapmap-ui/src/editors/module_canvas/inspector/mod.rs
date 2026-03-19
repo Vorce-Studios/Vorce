@@ -159,6 +159,58 @@ fn render_preview_texture(ui: &mut Ui, texture_id: egui::TextureId, caption: &st
     ui.small(caption);
 }
 
+pub fn render_standard_texture_preview(
+    canvas: &mut ModuleCanvas,
+    ui: &mut Ui,
+    module_id: ModuleId,
+    part_id: ModulePartId,
+) {
+    render_inspector_preview_toggle(canvas, ui);
+    if !canvas.show_inspector_previews {
+        return;
+    }
+
+    ui.add_space(6.0);
+    if let Some(&texture_id) = canvas.node_previews.get(&(module_id, part_id)) {
+        render_preview_texture(ui, texture_id, "Live node preview");
+    } else {
+        ui.group(|ui| {
+            ui.label(egui::RichText::new("No preview available yet.").weak().italics());
+        });
+    }
+}
+
+pub fn render_output_texture_preview(
+    canvas: &mut ModuleCanvas,
+    ui: &mut Ui,
+    preview_context: &InspectorPreviewContext,
+) {
+    render_inspector_preview_toggle(canvas, ui);
+    if !canvas.show_inspector_previews {
+        return;
+    }
+
+    ui.add_space(6.0);
+
+    let mut preview_found = false;
+    for output_id in &preview_context.output_ids {
+        if let Some(&texture_id) = canvas.output_previews.get(output_id) {
+            render_preview_texture(
+                ui,
+                texture_id,
+                &format!("Linked output preview (Output {})", output_id),
+            );
+            preview_found = true;
+        }
+    }
+
+    if !preview_found {
+        ui.group(|ui| {
+            ui.label(egui::RichText::new("No preview available yet.").weak().italics());
+        });
+    }
+}
+
 fn render_layer_preview_panel(
     canvas: &mut ModuleCanvas,
     ui: &mut Ui,
@@ -281,6 +333,8 @@ pub fn render_inspector_for_part(
                     trigger::render_trigger_ui(canvas, ui, trigger, part_id);
                 }
                 ModulePartType::Source(source) => {
+                    render_standard_texture_preview(canvas, ui, module_id, part_id);
+                    ui.separator();
                     source::render_source_ui(
                         canvas,
                         ui,
@@ -292,9 +346,13 @@ pub fn render_inspector_for_part(
                     );
                 }
                 ModulePartType::Mask(mask) => {
+                    render_standard_texture_preview(canvas, ui, module_id, part_id);
+                    ui.separator();
                     layer::render_mask_ui(ui, mask);
                 }
                 ModulePartType::Modulizer(mod_type) => {
+                    render_standard_texture_preview(canvas, ui, module_id, part_id);
+                    ui.separator();
                     effect::render_effect_ui(ui, mod_type, part_id);
                 }
                 ModulePartType::Layer(layer) => {
@@ -312,6 +370,12 @@ pub fn render_inspector_for_part(
                 ModulePartType::Mesh(mesh) => {
                     ui.label("🕸️ Mesh Node");
                     ui.separator();
+                    ui.label(
+                        egui::RichText::new("Live texture preview not applicable. Use the Mesh Editor below.")
+                            .weak()
+                            .italics(),
+                    );
+                    ui.separator();
                     mesh::render_mesh_editor_ui(
                         mesh_editor,
                         last_mesh_edit_id,
@@ -322,10 +386,18 @@ pub fn render_inspector_for_part(
                     );
                 }
                 ModulePartType::Output(output) => {
+                    render_output_texture_preview(canvas, ui, preview_context);
+                    ui.separator();
                     output::render_output_ui(canvas, ui, output, part_id);
                 }
                 ModulePartType::Hue(_) => {
                     ui.label("Hue Node Configuration");
+                    ui.separator();
+                    ui.label(
+                        egui::RichText::new("Live visual preview not available for hardware outputs. Check spatial editor or physical lamps.")
+                            .weak()
+                            .italics(),
+                    );
                 }
             }
         });
