@@ -1,4 +1,3 @@
-#[cfg(windows)]
 extern crate winres;
 
 fn main() {
@@ -10,7 +9,6 @@ fn main() {
     }
 }
 
-#[cfg(windows)]
 fn copy_runtime_dlls() {
     use std::collections::HashSet;
     use std::fs;
@@ -123,7 +121,6 @@ fn copy_runtime_dlls() {
     }
 }
 
-#[cfg(windows)]
 fn is_valid_runtime_dll(path: &std::path::Path) -> bool {
     use std::io::{Read, Seek, SeekFrom};
 
