@@ -159,7 +159,7 @@ jobs:
 
             for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
               core.info(`Prüfung der Checks (Versuch ${attempt}/${MAX_ATTEMPTS})...`);
-              
+
               const [checks, combinedStatus] = await Promise.all([
                 github.rest.checks.listForRef({
                   owner: context.repo.owner,
