@@ -1,5 +1,5 @@
 //!
-//! Module layer types.
+//! Module layer types..
 //!
 
 use crate::module::types::mesh::MeshType;
