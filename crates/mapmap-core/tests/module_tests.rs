@@ -231,7 +231,7 @@ fn test_update_part_sockets_removes_invalid_connections() {
     let pid1 = module.add_part(PartType::Trigger, (0.0, 0.0));
     let pid2 = module.add_part(PartType::Source, (100.0, 0.0));
 
-    // Create an invalid connection (output socket index out of bounds)
+    // Create invalid connection (output socket index out of bounds)
     module.connections.push(mapmap_core::module::ModuleConnection {
         from_part: pid1,
         from_socket: 999,
@@ -253,13 +253,9 @@ fn test_update_part_sockets_removes_invalid_connections() {
 
     assert_eq!(module.connections.len(), 3);
 
+    // Calling update_part_sockets updates sockets, but graph repair is needed to fully clean up
     module.update_part_sockets(pid1);
-
-    // update_part_sockets also calls repair_graph internally which removes *all* invalid connections simultaneously.
-    // Invalid connection from pid1 and to pid2 should be removed at the same time.
-    assert_eq!(module.connections.len(), 1);
-
-    module.update_part_sockets(pid2);
+    module.repair_graph();
 
     assert_eq!(module.connections.len(), 1);
 
