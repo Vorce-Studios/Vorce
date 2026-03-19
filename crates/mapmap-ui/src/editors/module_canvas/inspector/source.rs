@@ -327,7 +327,6 @@ pub fn render_source_ui(
 
             ui.add_space(10.0);
 
-
             render_timeline(
                 canvas,
                 ui,

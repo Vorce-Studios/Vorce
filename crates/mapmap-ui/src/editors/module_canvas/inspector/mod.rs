@@ -119,7 +119,11 @@ pub fn render_trigger_preview(
 
     ui.add_space(6.0);
     match trigger {
-        mapmap_core::module::TriggerType::Fixed { interval_ms, offset_ms, .. } => {
+        mapmap_core::module::TriggerType::Fixed {
+            interval_ms,
+            offset_ms,
+            ..
+        } => {
             let now_ms = (ui.input(|input| input.time) * 1000.0) as u32;
             let cycle_ms = (*interval_ms).max(1);
             let phase_ms = now_ms.wrapping_add(*offset_ms) % cycle_ms;
@@ -186,11 +190,7 @@ pub fn render_trigger_preview(
 pub fn render_no_preview_state(ui: &mut Ui, title: &str, reason: &str) {
     ui.label(title);
     ui.separator();
-    ui.label(
-        egui::RichText::new(reason)
-            .weak()
-            .italics(),
-    );
+    ui.label(egui::RichText::new(reason).weak().italics());
 }
 
 pub fn render_preview_texture(ui: &mut Ui, texture_id: egui::TextureId, caption: &str) {
