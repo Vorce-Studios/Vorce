@@ -109,9 +109,17 @@ pub fn render_output_ui(
             ui.label("⚙️ Advanced Setup:");
             ui.horizontal(|ui| {
                 ui.label("Resolution:");
-                ui.add(egui::DragValue::new(output_width).suffix(" px").range(0..=8192));
+                ui.add(
+                    egui::DragValue::new(output_width)
+                        .suffix(" px")
+                        .range(0..=8192),
+                );
                 ui.label("x");
-                ui.add(egui::DragValue::new(output_height).suffix(" px").range(0..=8192));
+                ui.add(
+                    egui::DragValue::new(output_height)
+                        .suffix(" px")
+                        .range(0..=8192),
+                );
             });
             ui.horizontal(|ui| {
                 ui.label("Target FPS:");
