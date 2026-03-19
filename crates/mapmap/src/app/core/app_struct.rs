@@ -11,7 +11,8 @@ use mapmap_control::hue::controller::HueController;
 use mapmap_control::midi::MidiInputHandler;
 use mapmap_control::ControlManager;
 use mapmap_core::{
-    audio::backend::cpal_backend::CpalBackend, media_library::MediaLibrary, module::ModulePartId,
+    audio::backend::cpal_backend::CpalBackend, media_library::MediaLibrary,
+    module::{ModuleId, ModulePartId},
     AppState, History, ModuleEvaluator, RenderOp,
 };
 use mapmap_mcp::McpAction;
@@ -49,6 +50,31 @@ impl StartupAnimationState {
         self.texture = None;
         self.last_update = None;
         self.error = None;
+    }
+}
+
+/// Single render queue item for the app runtime.
+#[derive(Debug, Clone)]
+pub struct RuntimeRenderQueueItem {
+    /// Owning module ID.
+    pub module_id: ModuleId,
+    /// Evaluated render operation.
+    pub render_op: RenderOp,
+}
+
+/// Consolidated visual render queue for the current frame.
+#[derive(Debug, Clone, Default)]
+pub struct RuntimeRenderQueue {
+    /// Graph revision that produced this queue.
+    pub graph_revision: u64,
+    /// Render items grouped later by output.
+    pub items: Vec<RuntimeRenderQueueItem>,
+}
+
+impl RuntimeRenderQueue {
+    /// Clear queue contents for reuse.
+    pub fn clear(&mut self) {
+        self.items.clear();
     }
 }
 
@@ -173,8 +199,8 @@ pub struct App {
     pub output_assignments: std::collections::HashMap<u64, Vec<String>>,
     /// Recent Effect Configurations (User Prefs)
     pub recent_effect_configs: mapmap_core::RecentEffectConfigs,
-    /// Render Operations from Module Evaluator ((ModuleID, RenderOp))
-    pub render_ops: Vec<(ModulePartId, RenderOp)>,
+    /// Consolidated runtime render queue for the current frame.
+    pub render_queue: RuntimeRenderQueue,
     /// Edge blend renderer for output windows
     pub edge_blend_renderer: Option<EdgeBlendRenderer>,
     /// Color calibration renderer for output windows

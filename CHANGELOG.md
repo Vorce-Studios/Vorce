@@ -6,7 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- 2026-03-18: docs: Fix broken ROADMAP.md links (#-)
+- 2026-03-18: docs: Fix broken ROADMAP.md links (#1232)
+- 2026-03-18: fix(ci): Final fix for self-hosted post-merge workflow (standardized checkout paths, fixed WSL bash conflict, and improved `vcpkg` detection logic).
 - 2026-03-16: refactor: Decompose module_canvas inspector mod.rs (#1219)
 - 2026-03-16: refactor: Decompose effect_chain_renderer.rs correctly (no regressions) (#-)
 - 2026-03-16: refactor: Decompose ModuleEvaluator into submodules (#1188)

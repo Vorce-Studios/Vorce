@@ -61,6 +61,9 @@ pub fn render_output_ui(
             target_screen,
             show_in_preview_panel,
             extra_preview_window,
+            output_width: _output_width,
+            output_height: _output_height,
+            output_fps: _output_fps,
             ndi_enabled: _ndi_enabled,
             ndi_stream_name: _ndi_stream_name,
             ..

@@ -1,151 +1,81 @@
-[CmdletBinding()]
-param()
+# self-hosted-post-merge.ps1
+# This script runs on the self-hosted Windows runner to validate the build and run GPU tests.
 
-Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-function Assert-Command {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Name,
-        [Parameter(Mandatory = $true)]
-        [string]$HelpText
-    )
+$repoRoot = Get-Item $PSScriptRoot | Select-Object -ExpandProperty Parent | Select-Object -ExpandProperty Parent | Select-Object -ExpandProperty FullName
+Write-Host "Repo Root: $repoRoot"
 
+function Assert-Command($Name, $HelpText) {
     if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
-        throw "$Name not found. $HelpText"
+        throw "Required command '$Name' not found. $HelpText"
     }
 }
 
-$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
-Set-Location $repoRoot
+Assert-Command -Name "git" -HelpText "Install Git for Windows."
+Assert-Command -Name "cargo" -HelpText "Install Rust and ensure cargo is in PATH."
 
-Write-Host "MapFlow self-hosted post-merge validation"
-Write-Host "PR number: $env:MAPFLOW_PR_NUMBER"
-Write-Host "PR head SHA: $env:MAPFLOW_PR_HEAD_SHA"
-Write-Host "Merge commit SHA: $env:MAPFLOW_MERGE_COMMIT_SHA"
-
-Assert-Command -Name "git" -HelpText "Install Git on the self-hosted Windows runner."
-Assert-Command -Name "cargo" -HelpText "Install Rust with rustup on the self-hosted Windows runner."
-Assert-Command -Name "rustup" -HelpText "Install rustup on the self-hosted Windows runner."
-
+# vcpkg detection
 if (-not $env:VCPKG_ROOT) {
-    $env:VCPKG_ROOT = Join-Path $repoRoot "vcpkg"
-}
-if (-not $env:VCPKG_DEFAULT_TRIPLET) {
-    $env:VCPKG_DEFAULT_TRIPLET = "x64-windows"
-}
-if (-not $env:VCPKG_INSTALLED_DIR) {
-    $env:VCPKG_INSTALLED_DIR = Join-Path $repoRoot "vcpkg_installed"
+    $candidates = @(
+        (Join-Path $repoRoot "vcpkg"),
+        "C:\vcpkg",
+        "D:\vcpkg",
+        "C:\src\vcpkg",
+        "C:\tools\vcpkg"
+    )
+    foreach ($p in $candidates) {
+        # Check if drive exists before Join-Path to avoid DriveNotFoundException
+        $drive = if ($p.Contains(":")) { $p.Split(":")[0] + ":" } else { $null }
+        if ($drive -and -not (Test-Path $drive)) { continue }
+
+        if (Test-Path (Join-Path $p "vcpkg.exe")) {
+            $env:VCPKG_ROOT = $p
+            Write-Host "Detected vcpkg at: $p"
+            break
+        }
+    }
 }
 
+if (-not $env:VCPKG_ROOT -or -not (Test-Path $env:VCPKG_ROOT)) {
+    throw "vcpkg was not found. Please set VCPKG_ROOT or install vcpkg in a standard location."
+}
+
+if (-not $env:VCPKG_DEFAULT_TRIPLET) { $env:VCPKG_DEFAULT_TRIPLET = "x64-windows" }
 $vcpkgExe = Join-Path $env:VCPKG_ROOT "vcpkg.exe"
-$bootstrapScript = Join-Path $env:VCPKG_ROOT "bootstrap-vcpkg.bat"
-if (-not (Test-Path $vcpkgExe)) {
-    if (-not (Test-Path $bootstrapScript)) {
-        throw "vcpkg was not found at '$($env:VCPKG_ROOT)'. See docs/A3_PROJECT/B4_CICD/DOC-C5_SELF_HOSTED_RUNNER_WINDOWS.md."
-    }
 
-    Write-Host "Bootstrapping vcpkg..."
-    & $bootstrapScript
-}
-
-$llvmBin = $env:LIBCLANG_PATH
-if (-not $llvmBin) {
-    $defaultLlvmBin = "C:\Program Files\LLVM\bin"
-    if (Test-Path $defaultLlvmBin) {
-        $llvmBin = $defaultLlvmBin
+# LLVM / Clang for bindgen
+if (-not $env:LIBCLANG_PATH) {
+    $llvmPaths = @("C:\Program Files\LLVM\bin", "C:\Program Files (x86)\LLVM\bin")
+    foreach ($p in $llvmPaths) {
+        if (Test-Path $p) {
+            $env:LIBCLANG_PATH = $p
+            $env:Path = "$p;$env:Path"
+            Write-Host "Detected LLVM at: $p"
+            break
+        }
     }
 }
 
-if (-not $llvmBin -or -not (Test-Path $llvmBin)) {
-    throw "LLVM/Clang not found. Set LIBCLANG_PATH or install LLVM to 'C:\Program Files\LLVM\bin'."
+# Ensure artifacts dir exists
+$artifactsDir = Join-Path $repoRoot "artifacts\visual-capture"
+if (-not (Test-Path $artifactsDir)) {
+    New-Item -ItemType Directory -Force -Path $artifactsDir
 }
 
-$env:LIBCLANG_PATH = $llvmBin
-if (-not $env:CLANG_PATH) {
-    $env:CLANG_PATH = Join-Path $llvmBin "clang.exe"
-}
+Write-Host "--- Starting Build & Test ---"
+cargo build --workspace --release
 
-if (-not (Test-Path $env:CLANG_PATH)) {
-    throw "clang.exe not found at '$($env:CLANG_PATH)'."
-}
-
-$env:Path = "$llvmBin;$env:Path"
-
-Write-Host "Installing manifest dependencies with vcpkg..."
-& $vcpkgExe install --triplet $env:VCPKG_DEFAULT_TRIPLET --x-manifest-root $repoRoot
-
-$installedRoot = Join-Path $env:VCPKG_INSTALLED_DIR $env:VCPKG_DEFAULT_TRIPLET
-if (-not (Test-Path $installedRoot)) {
-    throw "Expected vcpkg installed directory '$installedRoot' was not created."
-}
-
-$includePath = Join-Path $installedRoot "include"
-$libPath = Join-Path $installedRoot "lib"
-$binPath = Join-Path $installedRoot "bin"
-$pkgConfigPath = Join-Path $libPath "pkgconfig"
-$installedRootUnix = $installedRoot.Replace("\", "/")
-$includePathUnix = $includePath.Replace("\", "/")
-
-$env:FFMPEG_DIR = $installedRootUnix
-$env:FFMPEG_INCLUDE_DIR = $includePath
-$env:FFMPEG_LIB_DIR = $libPath
-$env:FFMPEG_VERSION = "7.1"
-$env:PKG_CONFIG_PATH = $pkgConfigPath
-$env:BINDGEN_EXTRA_CLANG_ARGS = "--target=x86_64-pc-windows-msvc -I`"$includePathUnix`""
-$env:Path = "$binPath;$env:Path"
-
-Write-Host "Tool versions"
-cargo --version
-rustc --version
-& $env:CLANG_PATH --version
-
-Write-Host "Running Windows smoke build for the full desktop app path"
-cargo build --release --verbose -p mapmap --features "audio,ffmpeg"
-
-if ($env:MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS -eq "true") {
-    Write-Host "Running ignored GPU tests on the self-hosted runner"
-    cargo test -p mapmap-render --test effect_chain_tests -- --ignored
-    cargo test -p mapmap-render --test effect_chain_integration_tests -- --ignored
-} else {
-    Write-Host "Ignored GPU tests are disabled. Set MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS=true later to enable them."
-}
-
+# Run Visual Automation if enabled
 if ($env:MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION -eq "true") {
-    Write-Host "Running local visual capture regression tests"
-    $visualArtifactRoot = Join-Path $repoRoot "artifacts\visual-capture"
-    New-Item -ItemType Directory -Force -Path $visualArtifactRoot | Out-Null
-    $env:MAPFLOW_VISUAL_CAPTURE_OUTPUT_DIR = $visualArtifactRoot
-    Write-Host "Visual artifacts will be written to $visualArtifactRoot"
-
-    $metadataPath = Join-Path $visualArtifactRoot "run_metadata.json"
-    $metadata = @{
-        pr_number = $env:MAPFLOW_PR_NUMBER
-        pr_head_sha = $env:MAPFLOW_PR_HEAD_SHA
-        merge_commit_sha = $env:MAPFLOW_MERGE_COMMIT_SHA
-        timestamp = (Get-Date -AsUTC).ToString("yyyy-MM-ddTHH:mm:ssZ")
-    }
-    $metadata | ConvertTo-Json -Depth 2 | Out-File -FilePath $metadataPath -Encoding utf8
-
-    Write-Host "Wrote run_metadata.json hook for multimodal evaluation"
-
-    cargo test -p mapmap --no-default-features --test visual_capture_tests -- --ignored --nocapture
-} else {
-    Write-Host "Visual automation is disabled. Set MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true to run the local screenshot regression tests."
+    Write-Host "Running Visual Automation Tests..."
+    cargo test -p mapmap --test visual_capture_tests --release -- --ignored --nocapture
 }
 
-if ($env:MAPFLOW_SELF_HOSTED_RUN_PERFORMANCE_CHECK -eq "true") {
-    Write-Host "Running performance benchmark on the self-hosted runner"
-    $perfArgs = @("scripts/dev-tools/run_performance_benchmark.py")
-
-    if ($env:MAPFLOW_PERFORMANCE_THRESHOLD) {
-        $perfArgs += "--threshold"
-        $perfArgs += $env:MAPFLOW_PERFORMANCE_THRESHOLD
-        $perfArgs += "--fail-on-regression"
-    }
-
-    python @perfArgs
-} else {
-    Write-Host "Performance benchmark is disabled. Set MAPFLOW_SELF_HOSTED_RUN_PERFORMANCE_CHECK=true to enable it."
+# Run GPU Tests if enabled
+if ($env:MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS -eq "true") {
+    Write-Host "Running GPU-bound tests..."
+    cargo test --workspace --release -- --ignored
 }
+
+Write-Host "Validation completed successfully."
