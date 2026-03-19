@@ -253,7 +253,13 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                     ui.add(egui::Slider::new(sat, 0.0..=2.0).text("Saturation"));
                 }
                 EffectType::LoadLUT => {
-                    ui.label("LUT Loading requires a .cube file (not yet implemented in properties panel).");
+                    ui.add_enabled_ui(false, |ui| {
+                        ui.label("LUT Loading requires a .cube file (not yet implemented in properties panel).");
+                    });
+                    ui.label(
+                        egui::RichText::new(format!("⚠ {}", mapmap_core::diagnostics::DEGRADED_FEATURE_LOAD_LUT))
+                            .color(crate::theme::colors::WARN_COLOR)
+                    );
                 }
                 _ => {
                     ui.label(
@@ -266,53 +272,61 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
         }
         ModulizerType::BlendMode(blend) => {
             ui.label("\u{1F3A8} Blend Mode");
-            egui::ComboBox::from_id_salt("blend_mode")
-                .selected_text(format!("{:?}", blend))
-                .show_ui(ui, |ui| {
-                    if ui
-                        .selectable_label(matches!(blend, BlendModeType::Normal), "Normal")
-                        .clicked()
-                    {
-                        *blend = BlendModeType::Normal;
-                    }
-                    if ui
-                        .selectable_label(matches!(blend, BlendModeType::Add), "Add")
-                        .clicked()
-                    {
-                        *blend = BlendModeType::Add;
-                    }
-                    if ui
-                        .selectable_label(matches!(blend, BlendModeType::Multiply), "Multiply")
-                        .clicked()
-                    {
-                        *blend = BlendModeType::Multiply;
-                    }
-                    if ui
-                        .selectable_label(matches!(blend, BlendModeType::Screen), "Screen")
-                        .clicked()
-                    {
-                        *blend = BlendModeType::Screen;
-                    }
-                    if ui
-                        .selectable_label(matches!(blend, BlendModeType::Overlay), "Overlay")
-                        .clicked()
-                    {
-                        *blend = BlendModeType::Overlay;
-                    }
-                    if ui
-                        .selectable_label(matches!(blend, BlendModeType::Difference), "Difference")
-                        .clicked()
-                    {
-                        *blend = BlendModeType::Difference;
-                    }
-                    if ui
-                        .selectable_label(matches!(blend, BlendModeType::Exclusion), "Exclusion")
-                        .clicked()
-                    {
-                        *blend = BlendModeType::Exclusion;
-                    }
+            ui.add_enabled_ui(false, |ui| {
+                ui.horizontal(|ui| {
+                    egui::ComboBox::from_id_salt("blend_mode")
+                        .selected_text(format!("{:?}", blend))
+                        .show_ui(ui, |ui| {
+                            if ui
+                                .selectable_label(matches!(blend, BlendModeType::Normal), "Normal")
+                                .clicked()
+                            {
+                                *blend = BlendModeType::Normal;
+                            }
+                            if ui
+                                .selectable_label(matches!(blend, BlendModeType::Add), "Add")
+                                .clicked()
+                            {
+                                *blend = BlendModeType::Add;
+                            }
+                            if ui
+                                .selectable_label(matches!(blend, BlendModeType::Multiply), "Multiply")
+                                .clicked()
+                            {
+                                *blend = BlendModeType::Multiply;
+                            }
+                            if ui
+                                .selectable_label(matches!(blend, BlendModeType::Screen), "Screen")
+                                .clicked()
+                            {
+                                *blend = BlendModeType::Screen;
+                            }
+                            if ui
+                                .selectable_label(matches!(blend, BlendModeType::Overlay), "Overlay")
+                                .clicked()
+                            {
+                                *blend = BlendModeType::Overlay;
+                            }
+                            if ui
+                                .selectable_label(matches!(blend, BlendModeType::Difference), "Difference")
+                                .clicked()
+                            {
+                                *blend = BlendModeType::Difference;
+                            }
+                            if ui
+                                .selectable_label(matches!(blend, BlendModeType::Exclusion), "Exclusion")
+                                .clicked()
+                            {
+                                *blend = BlendModeType::Exclusion;
+                            }
+                        });
+                    ui.label(
+                        egui::RichText::new(format!("⚠ {}", mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE))
+                            .color(crate::theme::colors::WARN_COLOR)
+                    );
                 });
-            ui.add(egui::Slider::new(&mut 1.0_f32, 0.0..=1.0).text("Opacity"));
+                ui.add(egui::Slider::new(&mut 1.0_f32, 0.0..=1.0).text("Opacity"));
+            });
         }
         ModulizerType::AudioReactive { source } => {
             ui.label("\u{1F50A} Audio Reactive");

@@ -51,17 +51,17 @@ pub(crate) fn render_content(
     // ⚡ BOLT OPTIMIZATION:
     // Store references to RenderOp instead of cloning the entire struct (which contains Vecs and complex data).
     // This avoids per-frame allocations and deep copies for every layer being rendered.
-    let mut target_ops: Vec<(u64, &mapmap_core::module_eval::RenderOp)> = ctx
+    let mut target_ops: Vec<(u64, &mapmap_core::module_eval::RenderOp, &[String])> = ctx
         .render_queue
         .iter()
         .filter(|item| match &item.render_op.output_type {
             Projector { id, .. } => *id == real_output_id,
             _ => item.render_op.output_part_id == real_output_id,
         })
-        .map(|item| (item.module_id, &item.render_op))
+        .map(|item| (item.module_id, &item.render_op, item.diagnostics.as_slice()))
         .collect();
 
-    target_ops.sort_by(|(_, a), (_, b)| b.output_part_id.cmp(&a.output_part_id));
+    target_ops.sort_by(|(_, a, _), (_, b, _)| b.output_part_id.cmp(&a.output_part_id));
 
     let empty_ops_issue_key = format!(
         "video-output-empty-ops:{real_output_id}:{}",
@@ -175,7 +175,16 @@ pub(crate) fn render_content(
     }
 
     // Accumulate Layers
-    for (module_id, op) in target_ops {
+    for (module_id, op, diagnostics) in target_ops {
+
+        for diagnostic in diagnostics {
+            let issue_key = format!("degraded-feature:{}:{}:{}", real_output_id, module_id, diagnostic);
+            if should_log_video_issue(video_log_times, issue_key) {
+                tracing::warn!("Feature Degraded: {}", diagnostic);
+            }
+        }
+
+
         let tex_name = if let Some(src_id) = op.source_part_id {
             format!("part_{}_{}", module_id, src_id)
         } else {

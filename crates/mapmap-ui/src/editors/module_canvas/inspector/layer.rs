@@ -37,41 +37,50 @@ pub fn render_layer_ui(
             ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
 
             // Blend mode
-            let blend_text = blend_mode
-                .as_ref()
-                .map(|b| format!("{:?}", b))
-                .unwrap_or_else(|| "None".to_string());
-            egui::ComboBox::from_id_salt("layer_blend")
-                .selected_text(blend_text)
-                .show_ui(ui, |ui| {
-                    if ui.selectable_label(blend_mode.is_none(), "None").clicked() {
-                        *blend_mode = None;
-                    }
-                    if ui
-                        .selectable_label(
-                            matches!(blend_mode, Some(BlendModeType::Normal)),
-                            "Normal",
-                        )
-                        .clicked()
-                    {
-                        *blend_mode = Some(BlendModeType::Normal);
-                    }
-                    if ui
-                        .selectable_label(matches!(blend_mode, Some(BlendModeType::Add)), "Add")
-                        .clicked()
-                    {
-                        *blend_mode = Some(BlendModeType::Add);
-                    }
-                    if ui
-                        .selectable_label(
-                            matches!(blend_mode, Some(BlendModeType::Multiply)),
-                            "Multiply",
-                        )
-                        .clicked()
-                    {
-                        *blend_mode = Some(BlendModeType::Multiply);
-                    }
+            ui.add_enabled_ui(false, |ui| {
+                let blend_text = blend_mode
+                    .as_ref()
+                    .map(|b| format!("{:?}", b))
+                    .unwrap_or_else(|| "None".to_string());
+
+                ui.horizontal(|ui| {
+                    egui::ComboBox::from_id_salt("layer_blend")
+                        .selected_text(blend_text)
+                        .show_ui(ui, |ui| {
+                            if ui.selectable_label(blend_mode.is_none(), "None").clicked() {
+                                *blend_mode = None;
+                            }
+                            if ui
+                                .selectable_label(
+                                    matches!(blend_mode, Some(BlendModeType::Normal)),
+                                    "Normal",
+                                )
+                                .clicked()
+                            {
+                                *blend_mode = Some(BlendModeType::Normal);
+                            }
+                            if ui
+                                .selectable_label(matches!(blend_mode, Some(BlendModeType::Add)), "Add")
+                                .clicked()
+                            {
+                                *blend_mode = Some(BlendModeType::Add);
+                            }
+                            if ui
+                                .selectable_label(
+                                    matches!(blend_mode, Some(BlendModeType::Multiply)),
+                                    "Multiply",
+                                )
+                                .clicked()
+                            {
+                                *blend_mode = Some(BlendModeType::Multiply);
+                            }
+                        });
+                    ui.label(
+                        egui::RichText::new(format!("⚠ {}", mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE))
+                            .color(crate::theme::colors::WARN_COLOR)
+                    );
                 });
+            });
 
             ui.checkbox(mapping_mode, "Mapping Mode (Grid)");
 
@@ -99,8 +108,15 @@ pub fn render_layer_ui(
 
 /// Renders the configuration UI for a `ModulePartType::Mask`.
 pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
-    ui.label("Mask Type:");
-    match mask {
+    ui.horizontal(|ui| {
+        ui.label("Mask Type:");
+        ui.label(
+            egui::RichText::new(format!("⚠ {}", mapmap_core::diagnostics::DEGRADED_FEATURE_MASK))
+                .color(crate::theme::colors::WARN_COLOR)
+        );
+    });
+    ui.add_enabled_ui(false, |ui| {
+        match mask {
         MaskType::File { path } => {
             ui.label("📁 Mask File");
             if path.is_empty() {
@@ -176,4 +192,5 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
             ui.add(egui::Slider::new(softness, 0.0..=1.0).text("Softness"));
         }
     }
+    });
 }
