@@ -232,9 +232,30 @@ fn test_update_part_sockets_removes_invalid_connections() {
     let pid2 = module.add_part(PartType::Source, (100.0, 0.0));
 
     // Create an invalid connection (output socket index out of bounds)
-    module.connections.push(mapmap_core::module::ModuleConnection { from_part: pid1, from_socket: 999, to_part: pid2, to_socket: 0 });
-    module.connections.push(mapmap_core::module::ModuleConnection { from_part: pid1, from_socket: 0, to_part: pid2, to_socket: 999 });
-    module.connections.push(mapmap_core::module::ModuleConnection { from_part: pid1, from_socket: 0, to_part: pid2, to_socket: 0 });
+    module
+        .connections
+        .push(mapmap_core::module::ModuleConnection {
+            from_part: pid1,
+            from_socket: 999,
+            to_part: pid2,
+            to_socket: 0,
+        });
+    module
+        .connections
+        .push(mapmap_core::module::ModuleConnection {
+            from_part: pid1,
+            from_socket: 0,
+            to_part: pid2,
+            to_socket: 999,
+        });
+    module
+        .connections
+        .push(mapmap_core::module::ModuleConnection {
+            from_part: pid1,
+            from_socket: 0,
+            to_part: pid2,
+            to_socket: 0,
+        });
 
     assert_eq!(module.connections.len(), 3);
 
@@ -267,7 +288,14 @@ fn test_update_part_outputs_delegates() {
     let pid1 = module.add_part(PartType::Trigger, (0.0, 0.0));
     let pid2 = module.add_part(PartType::Source, (100.0, 0.0));
 
-    module.connections.push(mapmap_core::module::ModuleConnection { from_part: pid1, from_socket: 999, to_part: pid2, to_socket: 0 });
+    module
+        .connections
+        .push(mapmap_core::module::ModuleConnection {
+            from_part: pid1,
+            from_socket: 999,
+            to_part: pid2,
+            to_socket: 0,
+        });
 
     assert_eq!(module.connections.len(), 1);
     module.update_part_outputs(pid1); // Should call update_part_sockets and clear connection
@@ -520,7 +548,14 @@ fn test_module_add_connection_adds_to_list() {
         next_part_id: 1,
     };
 
-    module.connections.push(mapmap_core::module::ModuleConnection { from_part: 1, from_socket: 0, to_part: 2, to_socket: 0 });
+    module
+        .connections
+        .push(mapmap_core::module::ModuleConnection {
+            from_part: 1,
+            from_socket: 0,
+            to_part: 2,
+            to_socket: 0,
+        });
 
     assert_eq!(module.connections.len(), 1);
     let conn = &module.connections[0];
@@ -542,8 +577,22 @@ fn test_module_remove_connection_removes_exact_match() {
         next_part_id: 1,
     };
 
-    module.connections.push(mapmap_core::module::ModuleConnection { from_part: 1, from_socket: 0, to_part: 2, to_socket: 0 });
-    module.connections.push(mapmap_core::module::ModuleConnection { from_part: 1, from_socket: 1, to_part: 3, to_socket: 0 });
+    module
+        .connections
+        .push(mapmap_core::module::ModuleConnection {
+            from_part: 1,
+            from_socket: 0,
+            to_part: 2,
+            to_socket: 0,
+        });
+    module
+        .connections
+        .push(mapmap_core::module::ModuleConnection {
+            from_part: 1,
+            from_socket: 1,
+            to_part: 3,
+            to_socket: 0,
+        });
 
     module.remove_connection(1, 0, 2, 0);
 

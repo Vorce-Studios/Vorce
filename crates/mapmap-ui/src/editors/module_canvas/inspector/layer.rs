@@ -38,43 +38,46 @@ pub fn render_layer_ui(
 
             // Blend mode
             ui.add_enabled_ui(false, |ui| {
-            let blend_text = blend_mode
-                .as_ref()
-                .map(|b| format!("{:?}", b))
-                .unwrap_or_else(|| "None".to_string());
-            egui::ComboBox::from_id_salt("layer_blend")
-                .selected_text(blend_text)
-                .show_ui(ui, |ui| {
-                    if ui.selectable_label(blend_mode.is_none(), "None").clicked() {
-                        *blend_mode = None;
-                    }
-                    if ui
-                        .selectable_label(
-                            matches!(blend_mode, Some(BlendModeType::Normal)),
-                            "Normal",
-                        )
-                        .clicked()
-                    {
-                        *blend_mode = Some(BlendModeType::Normal);
-                    }
-                    if ui
-                        .selectable_label(matches!(blend_mode, Some(BlendModeType::Add)), "Add")
-                        .clicked()
-                    {
-                        *blend_mode = Some(BlendModeType::Add);
-                    }
-                    if ui
-                        .selectable_label(
-                            matches!(blend_mode, Some(BlendModeType::Multiply)),
-                            "Multiply",
-                        )
-                        .clicked()
-                    {
-                        *blend_mode = Some(BlendModeType::Multiply);
-                    }
-                });
+                let blend_text = blend_mode
+                    .as_ref()
+                    .map(|b| format!("{:?}", b))
+                    .unwrap_or_else(|| "None".to_string());
+                egui::ComboBox::from_id_salt("layer_blend")
+                    .selected_text(blend_text)
+                    .show_ui(ui, |ui| {
+                        if ui.selectable_label(blend_mode.is_none(), "None").clicked() {
+                            *blend_mode = None;
+                        }
+                        if ui
+                            .selectable_label(
+                                matches!(blend_mode, Some(BlendModeType::Normal)),
+                                "Normal",
+                            )
+                            .clicked()
+                        {
+                            *blend_mode = Some(BlendModeType::Normal);
+                        }
+                        if ui
+                            .selectable_label(matches!(blend_mode, Some(BlendModeType::Add)), "Add")
+                            .clicked()
+                        {
+                            *blend_mode = Some(BlendModeType::Add);
+                        }
+                        if ui
+                            .selectable_label(
+                                matches!(blend_mode, Some(BlendModeType::Multiply)),
+                                "Multiply",
+                            )
+                            .clicked()
+                        {
+                            *blend_mode = Some(BlendModeType::Multiply);
+                        }
+                    });
             });
-            ui.label(egui::RichText::new("Blend Modes temporär im Renderpfad deaktiviert.").color(crate::theme::colors::WARN_COLOR));
+            ui.label(
+                egui::RichText::new("Blend Modes temporär im Renderpfad deaktiviert.")
+                    .color(crate::theme::colors::WARN_COLOR),
+            );
 
             ui.checkbox(mapping_mode, "Mapping Mode (Grid)");
 
@@ -102,84 +105,87 @@ pub fn render_layer_ui(
 
 /// Renders the configuration UI for a `ModulePartType::Mask`.
 pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
-    ui.label(egui::RichText::new("Masken temporär im Renderpfad deaktiviert.").color(crate::theme::colors::WARN_COLOR));
+    ui.label(
+        egui::RichText::new("Masken temporär im Renderpfad deaktiviert.")
+            .color(crate::theme::colors::WARN_COLOR),
+    );
     ui.add_enabled_ui(false, |ui| {
-    ui.label("Mask Type:");
-    match mask {
-        MaskType::File { path } => {
-            ui.label("📁 Mask File");
-            if path.is_empty() {
-                ui.horizontal(|ui| {
-                    if ui.button("Select...").clicked() {
-                        if let Some(picked) = rfd::FileDialog::new()
-                            .add_filter("Image", &["png", "jpg", "jpeg", "webp", "bmp"])
-                            .pick_file()
-                        {
-                            *path = picked.display().to_string();
+        ui.label("Mask Type:");
+        match mask {
+            MaskType::File { path } => {
+                ui.label("📁 Mask File");
+                if path.is_empty() {
+                    ui.horizontal(|ui| {
+                        if ui.button("Select...").clicked() {
+                            if let Some(picked) = rfd::FileDialog::new()
+                                .add_filter("Image", &["png", "jpg", "jpeg", "webp", "bmp"])
+                                .pick_file()
+                            {
+                                *path = picked.display().to_string();
+                            }
                         }
-                    }
-                    ui.label(egui::RichText::new("No mask loaded").weak().italics());
-                });
-            } else {
-                ui.horizontal(|ui| {
-                    ui.add(egui::TextEdit::singleline(path).desired_width(120.0));
-                    if ui
-                        .button("\u{1F4C2}")
-                        .on_hover_text("Select Mask File")
-                        .clicked()
-                    {
-                        if let Some(picked) = rfd::FileDialog::new()
-                            .add_filter("Image", &["png", "jpg", "jpeg", "webp", "bmp"])
-                            .pick_file()
+                        ui.label(egui::RichText::new("No mask loaded").weak().italics());
+                    });
+                } else {
+                    ui.horizontal(|ui| {
+                        ui.add(egui::TextEdit::singleline(path).desired_width(120.0));
+                        if ui
+                            .button("\u{1F4C2}")
+                            .on_hover_text("Select Mask File")
+                            .clicked()
                         {
-                            *path = picked.display().to_string();
+                            if let Some(picked) = rfd::FileDialog::new()
+                                .add_filter("Image", &["png", "jpg", "jpeg", "webp", "bmp"])
+                                .pick_file()
+                            {
+                                *path = picked.display().to_string();
+                            }
                         }
-                    }
-                });
+                    });
+                }
+            }
+            MaskType::Shape(shape) => {
+                ui.label("\u{1F537} Shape Mask");
+                egui::ComboBox::from_id_salt("mask_shape")
+                    .selected_text(format!("{:?}", shape))
+                    .show_ui(ui, |ui| {
+                        if ui
+                            .selectable_label(matches!(shape, MaskShape::Circle), "Circle")
+                            .clicked()
+                        {
+                            *shape = MaskShape::Circle;
+                        }
+                        if ui
+                            .selectable_label(matches!(shape, MaskShape::Rectangle), "Rectangle")
+                            .clicked()
+                        {
+                            *shape = MaskShape::Rectangle;
+                        }
+                        if ui
+                            .selectable_label(matches!(shape, MaskShape::Triangle), "Triangle")
+                            .clicked()
+                        {
+                            *shape = MaskShape::Triangle;
+                        }
+                        if ui
+                            .selectable_label(matches!(shape, MaskShape::Star), "Star")
+                            .clicked()
+                        {
+                            *shape = MaskShape::Star;
+                        }
+                        if ui
+                            .selectable_label(matches!(shape, MaskShape::Ellipse), "Ellipse")
+                            .clicked()
+                        {
+                            *shape = MaskShape::Ellipse;
+                        }
+                    });
+            }
+            MaskType::Gradient { angle, softness } => {
+                ui.label("\u{1F308} Gradient Mask");
+                ui.add(egui::Slider::new(angle, 0.0..=360.0).text("Angle Â°"));
+                ui.add(egui::Slider::new(softness, 0.0..=1.0).text("Softness"));
             }
         }
-        MaskType::Shape(shape) => {
-            ui.label("\u{1F537} Shape Mask");
-            egui::ComboBox::from_id_salt("mask_shape")
-                .selected_text(format!("{:?}", shape))
-                .show_ui(ui, |ui| {
-                    if ui
-                        .selectable_label(matches!(shape, MaskShape::Circle), "Circle")
-                        .clicked()
-                    {
-                        *shape = MaskShape::Circle;
-                    }
-                    if ui
-                        .selectable_label(matches!(shape, MaskShape::Rectangle), "Rectangle")
-                        .clicked()
-                    {
-                        *shape = MaskShape::Rectangle;
-                    }
-                    if ui
-                        .selectable_label(matches!(shape, MaskShape::Triangle), "Triangle")
-                        .clicked()
-                    {
-                        *shape = MaskShape::Triangle;
-                    }
-                    if ui
-                        .selectable_label(matches!(shape, MaskShape::Star), "Star")
-                        .clicked()
-                    {
-                        *shape = MaskShape::Star;
-                    }
-                    if ui
-                        .selectable_label(matches!(shape, MaskShape::Ellipse), "Ellipse")
-                        .clicked()
-                    {
-                        *shape = MaskShape::Ellipse;
-                    }
-                });
-        }
-        MaskType::Gradient { angle, softness } => {
-            ui.label("\u{1F308} Gradient Mask");
-            ui.add(egui::Slider::new(angle, 0.0..=360.0).text("Angle Â°"));
-            ui.add(egui::Slider::new(softness, 0.0..=1.0).text("Softness"));
-        }
-    }
     });
 }

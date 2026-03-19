@@ -55,7 +55,13 @@ pub(crate) fn render_content(
             Projector { id, .. } => *id == real_output_id,
             _ => item.render_op.output_part_id == real_output_id,
         })
-        .map(|item| (item.module_id, item.render_op.clone(), item.diagnostics.clone()))
+        .map(|item| {
+            (
+                item.module_id,
+                item.render_op.clone(),
+                item.diagnostics.clone(),
+            )
+        })
         .collect();
 
     target_ops.sort_by(|(_, a, _), (_, b, _)| b.output_part_id.cmp(&a.output_part_id));
@@ -174,7 +180,10 @@ pub(crate) fn render_content(
     // Accumulate Layers
     for (module_id, op, diagnostics) in target_ops {
         for diag in &diagnostics {
-            let issue_key = format!("video-output-degraded:{}:{}:{}", real_output_id, module_id, diag);
+            let issue_key = format!(
+                "video-output-degraded:{}:{}:{}",
+                real_output_id, module_id, diag
+            );
             if should_log_video_issue(video_log_times, issue_key.clone()) {
                 tracing::warn!(
                     "Degradierter RenderOp für Output {} Modul {}: {}",
@@ -314,9 +323,17 @@ pub(crate) fn render_content(
             }
 
             let mut transform = glam::Mat4::IDENTITY;
-            transform *= glam::Mat4::from_translation(glam::vec3(op.source_props.offset_x, op.source_props.offset_y, 0.0));
+            transform *= glam::Mat4::from_translation(glam::vec3(
+                op.source_props.offset_x,
+                op.source_props.offset_y,
+                0.0,
+            ));
             transform *= glam::Mat4::from_rotation_z(op.source_props.rotation.to_radians());
-            transform *= glam::Mat4::from_scale(glam::vec3(op.source_props.scale_x, op.source_props.scale_y, 1.0));
+            transform *= glam::Mat4::from_scale(glam::vec3(
+                op.source_props.scale_x,
+                op.source_props.scale_y,
+                1.0,
+            ));
 
             let uniform_bind_group = mesh_renderer.get_uniform_bind_group_with_source_props(
                 queue,
