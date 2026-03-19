@@ -13,3 +13,7 @@ Zusammenfassung aller bisherigen System-Audits.
 ## 3. Dokumentations-Audit (März 2026)
 *   **Fokus**: Restrukturierung zur besseren Übersicht (v5).
 *   **Status**: Abgeschlossen.
+
+## 4. Module-Canvas / Node-System Audit (18.03.2026)
+*   **Fokus**: IST-Zustand aller Nodes, Inspector-Abdeckung, Render-/Trigger-Logik.
+*   **Status**: Dokumentiert, Basis implementiert und mit Debug-Smoke-Test inklusive Automation-Capture verifiziert.
