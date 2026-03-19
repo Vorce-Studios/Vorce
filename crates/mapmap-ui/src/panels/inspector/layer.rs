@@ -198,7 +198,8 @@ pub fn render_layer_inspector(
                 } else {
                     ui.label(
                         egui::RichText::new("No mapping available to edit mesh.")
-                            .color(egui::Color32::GRAY),
+                            .weak()
+                            .italics(),
                     );
                 }
             });

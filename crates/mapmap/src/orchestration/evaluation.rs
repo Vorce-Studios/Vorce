@@ -1,4 +1,5 @@
 use crate::app::core::app_struct::App;
+use crate::app::core::app_struct::RuntimeRenderQueueItem;
 use mapmap_core::audio::AudioAnalysis;
 use std::collections::HashMap;
 
@@ -9,7 +10,8 @@ pub fn perform_evaluation(
     analysis: &AudioAnalysis,
     graph_dirty: bool,
 ) {
-    app.render_ops.clear();
+    app.render_queue.clear();
+    app.render_queue.graph_revision = app.state.module_manager.graph_revision;
     app.ui_state.module_canvas.last_trigger_values.clear();
     let mut node_triggers = HashMap::new();
 
@@ -37,13 +39,12 @@ pub fn perform_evaluation(
                     .insert(*part_id, max_val);
             }
 
-            app.render_ops.extend(
-                eval_result
-                    .render_ops
-                    .iter()
-                    .cloned()
-                    .map(|op| (*module_id, op)),
-            );
+            app.render_queue.items.extend(eval_result.render_ops.iter().cloned().map(|render_op| {
+                RuntimeRenderQueueItem {
+                    module_id: *module_id,
+                    render_op,
+                }
+            }));
         }
     }
 

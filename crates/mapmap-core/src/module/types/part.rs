@@ -45,24 +45,30 @@ impl ModulePart {
         let (mut inputs, mut outputs) = self.part_type.get_default_sockets();
 
         if self.link_data.mode == LinkMode::Master {
-            outputs.push(ModuleSocket {
-                name: "Link Out".to_string(),
-                socket_type: ModuleSocketType::Link,
-            });
+            outputs.push(ModuleSocket::output(
+                "link_out",
+                "Link Out",
+                ModuleSocketType::Link,
+            ));
         }
 
         if self.link_data.mode == LinkMode::Slave {
-            inputs.push(ModuleSocket {
-                name: "Link In".to_string(),
-                socket_type: ModuleSocketType::Link,
-            });
+            inputs.push(ModuleSocket::input(
+                "link_in",
+                "Link In",
+                ModuleSocketType::Link,
+            ));
         }
 
         if self.link_data.trigger_input_enabled {
-            inputs.push(ModuleSocket {
-                name: "Trigger In (Vis)".to_string(),
-                socket_type: ModuleSocketType::Trigger,
-            });
+            inputs.push(
+                ModuleSocket::input_mappable(
+                    "trigger_vis_in",
+                    "Trigger In (Vis)",
+                    ModuleSocketType::Trigger,
+                )
+                .multi_input(),
+            );
         }
 
         (inputs, outputs)
@@ -97,146 +103,128 @@ impl ModulePartType {
             ModulePartType::Trigger(trigger_type) => {
                 let outputs = match trigger_type {
                     TriggerType::AudioFFT { output_config, .. } => output_config.generate_outputs(),
-                    _ => vec![ModuleSocket {
-                        name: "Trigger Out".to_string(),
-                        socket_type: ModuleSocketType::Trigger,
-                    }],
+                    _ => vec![ModuleSocket::output(
+                        "trigger_out",
+                        "Trigger Out",
+                        ModuleSocketType::Trigger,
+                    )],
                 };
                 (vec![], outputs)
             }
             ModulePartType::Mask(_) => (
                 vec![
-                    ModuleSocket {
-                        name: "Media In".to_string(),
-                        socket_type: ModuleSocketType::Media,
-                    },
-                    ModuleSocket {
-                        name: "Mask In".to_string(),
-                        socket_type: ModuleSocketType::Media,
-                    },
+                    ModuleSocket::input("media_in", "Media In", ModuleSocketType::Media)
+                        .primary(),
+                    ModuleSocket::input("mask_in", "Mask In", ModuleSocketType::Media),
                 ],
-                vec![ModuleSocket {
-                    name: "Media Out".to_string(),
-                    socket_type: ModuleSocketType::Media,
-                }],
+                vec![ModuleSocket::output("media_out", "Media Out", ModuleSocketType::Media)
+                    .primary()],
             ),
             ModulePartType::Modulizer(_) => (
                 vec![
-                    ModuleSocket {
-                        name: "Media In".to_string(),
-                        socket_type: ModuleSocketType::Media,
-                    },
-                    ModuleSocket {
-                        name: "Trigger In".to_string(),
-                        socket_type: ModuleSocketType::Trigger,
-                    },
+                    ModuleSocket::input("media_in", "Media In", ModuleSocketType::Media)
+                        .primary(),
+                    ModuleSocket::input_mappable(
+                        "trigger_in",
+                        "Trigger In",
+                        ModuleSocketType::Trigger,
+                    ),
                 ],
-                vec![ModuleSocket {
-                    name: "Media Out".to_string(),
-                    socket_type: ModuleSocketType::Media,
-                }],
+                vec![ModuleSocket::output("media_out", "Media Out", ModuleSocketType::Media)
+                    .primary()],
             ),
             ModulePartType::Layer(_) => (
                 vec![
-                    ModuleSocket {
-                        name: "Input".to_string(),
-                        socket_type: ModuleSocketType::Media,
-                    },
-                    ModuleSocket {
-                        name: "Trigger".to_string(),
-                        socket_type: ModuleSocketType::Trigger,
-                    },
+                    ModuleSocket::input("media_in", "Input", ModuleSocketType::Media).primary(),
+                    ModuleSocket::input_mappable(
+                        "trigger_in",
+                        "Trigger",
+                        ModuleSocketType::Trigger,
+                    ),
                 ],
-                vec![ModuleSocket {
-                    name: "Output".to_string(),
-                    socket_type: ModuleSocketType::Layer,
-                }],
+                vec![ModuleSocket::output("layer_out", "Output", ModuleSocketType::Layer)
+                    .primary()],
             ),
             ModulePartType::Source(SourceType::BevyAtmosphere { .. })
             | ModulePartType::Source(SourceType::BevyHexGrid { .. })
             | ModulePartType::Source(SourceType::Bevy3DShape { .. })
             | ModulePartType::Source(SourceType::BevyCamera { .. }) => (
-                vec![ModuleSocket {
-                    name: "Trigger In".to_string(),
-                    socket_type: ModuleSocketType::Trigger,
-                }],
-                vec![ModuleSocket {
-                    name: "Media Out".to_string(),
-                    socket_type: ModuleSocketType::Media,
-                }],
+                vec![ModuleSocket::input_mappable(
+                    "trigger_in",
+                    "Trigger In",
+                    ModuleSocketType::Trigger,
+                )],
+                vec![ModuleSocket::output("media_out", "Media Out", ModuleSocketType::Media)
+                    .primary()],
             ),
             ModulePartType::Source(SourceType::BevyParticles { .. }) => (
-                vec![ModuleSocket {
-                    name: "Spawn Trigger".to_string(),
-                    socket_type: ModuleSocketType::Trigger,
-                }],
-                vec![ModuleSocket {
-                    name: "Media Out".to_string(),
-                    socket_type: ModuleSocketType::Media,
-                }],
+                vec![ModuleSocket::input_mappable(
+                    "spawn_trigger",
+                    "Spawn Trigger",
+                    ModuleSocketType::Trigger,
+                )],
+                vec![ModuleSocket::output("media_out", "Media Out", ModuleSocketType::Media)
+                    .primary()],
             ),
             ModulePartType::Source(_) => (
-                vec![ModuleSocket {
-                    name: "Trigger In".to_string(),
-                    socket_type: ModuleSocketType::Trigger,
-                }],
-                vec![ModuleSocket {
-                    name: "Media Out".to_string(),
-                    socket_type: ModuleSocketType::Media,
-                }],
+                vec![ModuleSocket::input_mappable(
+                    "trigger_in",
+                    "Trigger In",
+                    ModuleSocketType::Trigger,
+                )],
+                vec![ModuleSocket::output("media_out", "Media Out", ModuleSocketType::Media)
+                    .primary()],
             ),
             ModulePartType::Output(out) => match out {
                 OutputType::Hue { .. } => (
                     vec![
-                        ModuleSocket {
-                            name: "Layer In".to_string(),
-                            socket_type: ModuleSocketType::Layer,
-                        },
-                        ModuleSocket {
-                            name: "Trigger In".to_string(),
-                            socket_type: ModuleSocketType::Trigger,
-                        },
+                        ModuleSocket::input("layer_in", "Layer In", ModuleSocketType::Layer)
+                            .primary(),
+                        ModuleSocket::input_mappable(
+                            "trigger_in",
+                            "Trigger In",
+                            ModuleSocketType::Trigger,
+                        ),
                     ],
                     vec![],
                 ),
-                _ => (
-                    vec![ModuleSocket {
-                        name: "Layer In".to_string(),
-                        socket_type: ModuleSocketType::Layer,
-                    }],
-                    vec![],
-                ),
+                _ => (vec![ModuleSocket::input(
+                    "layer_in",
+                    "Layer In",
+                    ModuleSocketType::Layer,
+                )
+                .primary()], vec![]),
             },
             ModulePartType::Mesh(_) => (
                 vec![
-                    ModuleSocket {
-                        name: "Vertex In".to_string(),
-                        socket_type: ModuleSocketType::Media,
-                    },
-                    ModuleSocket {
-                        name: "Control In".to_string(),
-                        socket_type: ModuleSocketType::Trigger,
-                    },
+                    ModuleSocket::input("vertex_in", "Vertex In", ModuleSocketType::Media)
+                        .primary(),
+                    ModuleSocket::input_mappable(
+                        "control_in",
+                        "Control In",
+                        ModuleSocketType::Trigger,
+                    ),
                 ],
-                vec![ModuleSocket {
-                    name: "Geometry Out".to_string(),
-                    socket_type: ModuleSocketType::Media,
-                }],
+                vec![ModuleSocket::output(
+                    "geometry_out",
+                    "Geometry Out",
+                    ModuleSocketType::Media,
+                )
+                .primary()],
             ),
             ModulePartType::Hue(_) => (
                 vec![
-                    ModuleSocket {
-                        name: "Brightness".to_string(),
-                        socket_type: ModuleSocketType::Trigger,
-                    },
-                    ModuleSocket {
-                        name: "Color (RGB)".to_string(),
-                        socket_type: ModuleSocketType::Media,
-                    },
-                    ModuleSocket {
-                        name: "Strobe".to_string(),
-                        socket_type: ModuleSocketType::Trigger,
-                    },
+                    ModuleSocket::input_mappable(
+                        "brightness_in",
+                        "Brightness",
+                        ModuleSocketType::Trigger,
+                    ),
+                    ModuleSocket::input("color_in", "Color (RGB)", ModuleSocketType::Media),
+                    ModuleSocket::input_mappable(
+                        "strobe_in",
+                        "Strobe",
+                        ModuleSocketType::Trigger,
+                    ),
                 ],
                 vec![],
             ),
