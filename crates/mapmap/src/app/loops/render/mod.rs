@@ -282,5 +282,9 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
         surface_texture.present();
     }
 
+    if output_id == 0 {
+        app.frame_counter = app.frame_counter.saturating_add(1);
+    }
+
     Ok(())
 }

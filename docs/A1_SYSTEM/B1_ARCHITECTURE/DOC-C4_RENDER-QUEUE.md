@@ -163,7 +163,19 @@ Die neue Basis ist implementiert, aber der Umbau ist noch nicht vollstaendig:
 - nicht alle Inspector-Panels nutzen schon das neue Schema vollstaendig
 - `RenderOp.masks` und `blend_mode` sind im Renderpfad weiterhin nur teilweise umgesetzt
 - mehrere Node-Typen bleiben funktional unvollstaendig
-- der native Windows-Start sollte weiter separat verifiziert werden, da Laufzeitabhaengigkeiten ausserhalb des Rust-Typsystems liegen
+- der native Windows-Start inklusive Automation-Capture ist im Debug-Build verifiziert, sollte vor einem Release-Artefakt aber noch einmal separat als Release-Smoke-Test geprueft werden
+
+### 10.1 Start- und Stabilitaetsfixes 2026-03-19
+
+- `crates/mapmap/build.rs` kopiert FFmpeg-Runtime-DLLs jetzt bevorzugt aus `vcpkg_installed/x64-windows/bin` und validiert PE-Header, bevor Dateien in `target/<profile>` uebernommen werden.
+- `crates/mapmap-bevy/src/lib.rs` deaktiviert im eingebetteten Runner explizit `bevy::winit::WinitPlugin`, damit MapFlow und Bevy nicht konkurrierende Event-Loops erzeugen.
+- `crates/mapmap/src/app/loops/render/mod.rs` erhoeht `frame_counter` wieder im primaeren Renderpfad, sodass `--exit-after-frames` im Automation-Modus tatsaechlich greift.
+- `crates/mapmap-bevy/src/systems.rs` schliesst GPU-Readback-Mappings jetzt innerhalb desselben Frames ab und entmappt den Buffer deterministisch, statt gemappte Buffer in spaeteren Frames wiederzuverwenden.
+- `crates/mapmap/src/app/core/init.rs` erzeugt die `composite`-Textur jetzt mit `wgpu::TextureUsages::COPY_SRC`, sodass der Automation-Screenshot-Pfad keine WGPU-Validierungspanik mehr ausloest.
+- Verifiziert am 2026-03-19:
+  - `target/debug/MapFlow.exe --help` -> `EXIT=0`
+  - `target/debug/MapFlow.exe --mode automation --exit-after-frames 1` -> `EXIT=0`
+  - `target/debug/MapFlow.exe --mode automation --exit-after-frames 1 --screenshot-dir <dir>` -> `EXIT=0`
 
 ## 11. Naechste Ausbaupunkte
 

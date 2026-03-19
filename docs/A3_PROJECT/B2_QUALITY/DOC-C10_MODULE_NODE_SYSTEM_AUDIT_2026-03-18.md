@@ -713,8 +713,18 @@ Folgende Basis wurde inzwischen im Code umgesetzt:
 - Der Canvas erzwingt beim Verbinden jetzt die Core-Validierung statt nur einer losen Farbvorschau.
 - Presets erzeugen Sockets nicht mehr ueber eine driftende UI-Kopie, sondern ueber das Core-Modell.
 - Die App verwendet jetzt eine explizite `RuntimeRenderQueue` statt eines lose semantischen `Vec<(ModuleId, RenderOp)>`.
+- Der eingebettete Bevy-Runner deaktiviert `bevy::winit::WinitPlugin`, damit kein zweiter Event-Loop erzeugt wird.
+- Der Windows-Runtime-DLL-Copy-Pfad validiert jetzt FFmpeg-DLLs und bevorzugt den gueltigen Bestand unter `vcpkg_installed/x64-windows/bin`.
+- `frame_counter` wird wieder im primaeren Renderpfad erhoeht; dadurch funktioniert `--exit-after-frames` im Automation-Modus wieder.
+- Das Bevy-Frame-Readback entmappt den GPU-Buffer jetzt deterministisch innerhalb desselben Frames.
+- Die `composite`-Textur wird fuer den Automation-Capture-Pfad jetzt mit `COPY_SRC` angelegt; dadurch verursacht `--screenshot-dir` keine WGPU-Validierungspanik mehr.
+- Debug-Smoke-Tests am 2026-03-19:
+  - `target/debug/MapFlow.exe --help` -> `EXIT=0`
+  - `target/debug/MapFlow.exe --mode automation --exit-after-frames 1` -> `EXIT=0`
+  - `target/debug/MapFlow.exe --mode automation --exit-after-frames 1 --screenshot-dir <dir>` -> `EXIT=0`
+  - `tmp/automation-check-debug/automation_frame_1.png` wird erfolgreich geschrieben
 
 Noch offen:
 
-- der native Windows-Start muss separat weiter untersucht werden, da der Runtime-Smoke-Test aktuell mit `0xc0000130` abbricht
 - Output-Inspector, Masken, Blend-Modi und Render-Transforms sind noch nicht voll end-to-end geschlossen
+- ein finaler Release-Smoke-Test steht noch aus, obwohl die eigentlichen Startblocker im Debug-Build behoben und verifiziert sind
