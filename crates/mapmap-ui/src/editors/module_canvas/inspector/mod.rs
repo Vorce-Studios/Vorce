@@ -1,3 +1,4 @@
+pub mod capabilities;
 pub mod common;
 pub mod effect;
 pub mod layer;
