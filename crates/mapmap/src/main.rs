@@ -106,7 +106,10 @@ impl ApplicationHandler for MapFlowApp {
                             info!("Automation mode: Saving screenshot to {:?}", file_path);
 
                             // Trigger capture
-                            let main_window_context = app.window_manager.get(0).unwrap();
+                            let Some(main_window_context) = app.window_manager.get(0) else {
+                                error!("Automation mode: Main window not found.");
+                                return;
+                            };
                             let format = main_window_context.surface_config.format;
                             let width = main_window_context.surface_config.width;
                             let height = main_window_context.surface_config.height;
@@ -117,10 +120,13 @@ impl ApplicationHandler for MapFlowApp {
                                 },
                             );
 
-                            let texture = app
+                            let Some(texture) = app
                                 .texture_pool
                                 .get_texture("composite")
-                                .expect("Could not find composite texture for automation capture");
+                            else {
+                                error!("Automation mode: Could not find composite texture for automation capture.");
+                                return;
+                            };
 
                             let bytes_per_pixel = 4;
                             let unpadded_bytes_per_row = width * bytes_per_pixel;
@@ -164,13 +170,16 @@ impl ApplicationHandler for MapFlowApp {
                             let slice = buffer.slice(..);
                             slice.map_async(wgpu::MapMode::Read, |_| {});
 
-                            app.backend
+                            if let Err(e) = app.backend
                                 .device
                                 .poll(wgpu::PollType::Wait {
                                     submission_index: None,
                                     timeout: None,
                                 })
-                                .unwrap();
+                            {
+                                error!("Automation mode: Failed to poll device: {}", e);
+                                return;
+                            }
 
                             let mapped = slice.get_mapped_range();
                             let mut rgba = Vec::with_capacity((width * height * 4) as usize);
@@ -194,8 +203,13 @@ impl ApplicationHandler for MapFlowApp {
                             drop(mapped);
                             buffer.unmap();
 
-                            let img = image::RgbaImage::from_raw(width, height, rgba).unwrap();
-                            img.save(&file_path).unwrap();
+                            if let Some(img) = image::RgbaImage::from_raw(width, height, rgba) {
+                                if let Err(e) = img.save(&file_path) {
+                                    error!("Automation mode: Failed to save screenshot: {}", e);
+                                }
+                            } else {
+                                error!("Automation mode: Failed to create image from raw data.");
+                            }
                         }
 
                         info!(
