@@ -63,7 +63,7 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
 
             // 2. Safe Reset Button (Prominent)
             ui.vertical_centered(|ui| {
-                if crate::widgets::custom::hold_to_action_button(
+                if crate::widgets::hold_to_action_button(
                     ui,
                     "\u{27F2} Safe Reset",
                     Color32::from_rgb(255, 180, 0),
@@ -204,12 +204,6 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                     {
                         changed_type = Some(EffectType::Vignette);
                     }
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::LoadLUT), "Load 3D LUT")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::LoadLUT);
-                    }
                 });
 
             if let Some(new_type) = changed_type {
@@ -252,9 +246,6 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                     ui.add(egui::Slider::new(con, 0.0..=2.0).text("Contrast"));
                     let sat = params.entry("saturation".to_string()).or_insert(1.0);
                     ui.add(egui::Slider::new(sat, 0.0..=2.0).text("Saturation"));
-                }
-                EffectType::LoadLUT => {
-                    ui.label("LUT Loading requires a .cube file (not yet implemented in properties panel).");
                 }
                 _ => {
                     ui.label(

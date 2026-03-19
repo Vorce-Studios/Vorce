@@ -29,10 +29,6 @@ Primaere Implementierungsstellen:
 - `crates/mapmap/src/app/loops/render/previews.rs`
 - `crates/mapmap/src/orchestration/media.rs`
 
-Ergaenzende Architekturreferenz:
-
-- `docs/A1_SYSTEM/B1_ARCHITECTURE/DOC-C5_OUTPUT_WINDOW_LIFECYCLE.md`
-
 ## 3. Aktuelle Runtime-Architektur
 
 Es gibt jetzt zwei klar getrennte Ebenen:
@@ -181,13 +177,6 @@ Die neue Basis ist implementiert, aber der Umbau ist noch nicht vollstaendig:
   - `target/debug/MapFlow.exe --mode automation --exit-after-frames 1` -> `EXIT=0`
   - `target/debug/MapFlow.exe --mode automation --exit-after-frames 1 --screenshot-dir <dir>` -> `EXIT=0`
 
-### 10.2 Output-/Window-Lifecycle
-
-- Der Runtime-Pfad fuer Output-Fenster ist noch nicht vollstaendig vereinheitlicht.
-- `sync_output_windows(...)` ist aktuell der aktive Projector-Window-Pfad.
-- `crates/mapmap/src/window_manager.rs` enthaelt dabei nicht nur tote Altlasten, sondern auch vorbereitete Lifecycle-Infrastruktur.
-- Der geplante Soll-Zustand fuer `OutputManager`, `Projector`-Nodes und `WindowManager` ist in `DOC-C5_OUTPUT_WINDOW_LIFECYCLE.md` beschrieben.
-
 ## 11. Naechste Ausbaupunkte
 
 P0:
@@ -201,4 +190,3 @@ P1:
 - Socket-Verbindungen langfristig von Indexen auf stabile Socket-IDs migrieren
 - Render Queue um strukturierte Diagnostics pro Item erweitern
 - Fault-Isolation pro Node/Modul weiter ausbauen
-- Output-/Window-Lifecycle zwischen `OutputManager`, Graph und `WindowManager` vollstaendig konsolidieren
