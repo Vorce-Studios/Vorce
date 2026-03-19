@@ -3,26 +3,6 @@ use crate::app::core::app_struct::RuntimeRenderQueueItem;
 use mapmap_core::audio::AudioAnalysis;
 use std::collections::HashMap;
 
-fn project_uses_bevy(app: &App) -> bool {
-    app.state.module_manager.modules().iter().any(|module| {
-        module.parts.iter().any(|part| {
-            matches!(
-                &part.part_type,
-                mapmap_core::module::ModulePartType::Source(
-                    mapmap_core::module::SourceType::Bevy
-                        | mapmap_core::module::SourceType::BevyAtmosphere { .. }
-                        | mapmap_core::module::SourceType::BevyHexGrid { .. }
-                        | mapmap_core::module::SourceType::BevyParticles { .. }
-                        | mapmap_core::module::SourceType::Bevy3DShape { .. }
-                        | mapmap_core::module::SourceType::Bevy3DModel { .. }
-                        | mapmap_core::module::SourceType::Bevy3DText { .. }
-                        | mapmap_core::module::SourceType::BevyCamera { .. }
-                )
-            )
-        })
-    })
-}
-
 /// Orchestrates the evaluation of the module graph and synchronizes with the Bevy engine.
 pub fn perform_evaluation(
     app: &mut App,
@@ -30,27 +10,10 @@ pub fn perform_evaluation(
     analysis: &AudioAnalysis,
     graph_dirty: bool,
 ) {
-    let mut graph_dirty = graph_dirty;
-
     app.render_queue.clear();
     app.render_queue.graph_revision = app.state.module_manager.graph_revision;
     app.ui_state.module_canvas.last_trigger_values.clear();
     let mut node_triggers = HashMap::new();
-
-    if project_uses_bevy(app) {
-        if app.bevy_runner.is_none() {
-            tracing::info!(
-                "Initializing Bevy runner on demand because the current project contains Bevy nodes."
-            );
-            app.bevy_runner = Some(mapmap_bevy::BevyRunner::new());
-            graph_dirty = true;
-        }
-    } else if app.bevy_runner.is_some() {
-        tracing::info!(
-            "Dropping Bevy runner because the current project no longer contains Bevy nodes."
-        );
-        app.bevy_runner = None;
-    }
 
     for module_id in modules_for_eval {
         if let Some(module_ref) = app.state.module_manager.get_module(*module_id) {
@@ -76,38 +39,64 @@ pub fn perform_evaluation(
                     .insert(*part_id, max_val);
             }
 
-            app.render_queue
-                .items
-                .extend(eval_result.render_ops.iter().cloned().map(|render_op| {
-                    let mut diagnostics = Vec::new();
+            for render_op in eval_result.render_ops.drain(..) {
+                let mut diagnostics = Vec::new();
 
-                    if render_op.blend_mode.is_some() {
-                        diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
-                            module_id: *module_id,
-                            part_id: render_op.layer_part_id,
-                            severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
-                            code: "blend_mode_unsupported".to_string(),
-                            message: "Blend modes are currently only supported via specific compositing passes.".to_string(),
-                        });
+                if render_op.blend_mode.is_some() {
+                    diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
+                        module_id: *module_id,
+                        part_id: render_op.layer_part_id,
+                        severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
+                        code: mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE.to_string(),
+                        message: "Blend modes are currently only supported via specific compositing passes.".to_string(),
+                    });
+                }
+
+                if !render_op.masks.is_empty() {
+                    diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
+                        module_id: *module_id,
+                        part_id: render_op.layer_part_id,
+                        severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
+                        code: mapmap_core::diagnostics::DEGRADED_FEATURE_MASK.to_string(),
+                        message: "Masks are not yet supported in this render path.".to_string(),
+                    });
+                }
+
+                for effect in &render_op.effects {
+                    if let mapmap_core::module::ModulizerType::Effect { effect_type, .. } = effect {
+                        if *effect_type == mapmap_core::module::EffectType::LoadLUT {
+                            diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
+                                module_id: *module_id,
+                                part_id: render_op.layer_part_id,
+                                severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
+                                code: mapmap_core::diagnostics::DEGRADED_FEATURE_LOAD_LUT.to_string(),
+                                message: "LUT effects are currently degraded and may not render as expected.".to_string(),
+                            });
+                        }
                     }
+                }
 
-                    if !render_op.masks.is_empty() {
-                        diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
-                            module_id: *module_id,
-                            part_id: render_op.layer_part_id,
-                            severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
-                            code: "masks_unsupported".to_string(),
-                            message: "Masks are not yet supported in this render path.".to_string(),
-                        });
-                    }
+                let target_output_id = match &render_op.output_type {
+                    mapmap_core::module::OutputType::Projector { id, .. } => *id,
+                    _ => render_op.output_part_id,
+                };
 
-                    RuntimeRenderQueueItem {
+                app.render_queue
+                    .items
+                    .entry(target_output_id)
+                    .or_default()
+                    .push(RuntimeRenderQueueItem {
                         module_id: *module_id,
                         render_op,
                         diagnostics,
-                    }
-                }));
+                    });
+            }
         }
+    }
+
+    // Pre-sort per output to ensure deterministic layer ordering
+    for items in app.render_queue.items.values_mut() {
+        items.sort_by(|a, b| b.render_op.output_part_id.cmp(&a.render_op.output_part_id));
     }
 
     // Sync with Bevy (only if runner exists)

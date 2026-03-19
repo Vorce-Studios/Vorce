@@ -151,7 +151,7 @@ impl ModuleEvaluator {
         module: &MapFlowModule,
         shared_state: &SharedMediaState,
         graph_revision: u64,
-    ) -> &ModuleEvalResult {
+    ) -> &mut ModuleEvalResult {
         let mut rng = rand::rng();
         let now = Instant::now();
 
@@ -404,7 +404,7 @@ impl ModuleEvaluator {
         self.midi_triggers.clear();
         self.osc_triggers.clear();
 
-        &self.cached_result
+        &mut self.cached_result
     }
 
     fn create_source_command(
