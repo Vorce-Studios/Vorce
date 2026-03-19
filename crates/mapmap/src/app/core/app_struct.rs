@@ -11,7 +11,8 @@ use mapmap_control::hue::controller::HueController;
 use mapmap_control::midi::MidiInputHandler;
 use mapmap_control::ControlManager;
 use mapmap_core::{
-    audio::backend::cpal_backend::CpalBackend, media_library::MediaLibrary,
+    audio::backend::cpal_backend::CpalBackend,
+    media_library::MediaLibrary,
     module::{ModuleId, ModulePartId},
     AppState, History, ModuleEvaluator, RenderOp,
 };
@@ -79,6 +80,7 @@ impl RuntimeRenderQueue {
 }
 
 /// Configuration for application initialization.
+#[derive(Default)]
 pub struct InitializationConfig {
     /// Whether the app is running in automation mode.
     pub is_automation: bool,
@@ -92,19 +94,6 @@ pub struct InitializationConfig {
     pub skip_mcp: bool,
     /// Whether to skip Hue controller initialization.
     pub skip_hue: bool,
-}
-
-impl Default for InitializationConfig {
-    fn default() -> Self {
-        Self {
-            is_automation: false,
-            skip_autosave: false,
-            skip_audio: false,
-            skip_midi: false,
-            skip_mcp: false,
-            skip_hue: false,
-        }
-    }
 }
 
 impl InitializationConfig {
