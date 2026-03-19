@@ -1,6 +1,6 @@
 //! Application initialization logic.
 
-use super::app_struct::{App, InitializationConfig};
+use super::app_struct::App;
 use crate::media_manager_ui::MediaManagerUI;
 use crate::window_manager::WindowManager;
 use anyhow::Result;
@@ -31,7 +31,7 @@ impl App {
     /// Creates a new `App`.
     pub async fn new(
         elwt: &winit::event_loop::ActiveEventLoop,
-        config: InitializationConfig,
+        is_automation: bool,
     ) -> Result<Self> {
         // Load user config early to get preferences
         let saved_config = mapmap_ui::config::UserConfig::load();
@@ -39,18 +39,41 @@ impl App {
         let backend = WgpuBackend::new(saved_config.preferred_gpu.as_deref()).await?;
 
         // Version marker to confirm correct build is running
-        tracing::info!(">>> BUILD VERSION: 2026-03-19-VISUAL-TEST-READY <<<");
+        tracing::info!(">>> BUILD VERSION: 2026-02-16-FIX-BEVY-HEADLESS <<<");
 
         // Initialize renderers
         let texture_pool = TexturePool::new(backend.device.clone());
         let compositor = Compositor::new(backend.device.clone(), backend.surface_format())?;
-        let (effect_chain_renderer, preview_effect_chain_renderer) = Self::init_renderers(&backend)?;
+        let effect_chain_renderer = EffectChainRenderer::new(
+            backend.device.clone(),
+            backend.queue.clone(),
+            backend.surface_format(),
+        )?;
+        let preview_effect_chain_renderer = EffectChainRenderer::new(
+            backend.device.clone(),
+            backend.queue.clone(),
+            backend.surface_format(),
+        )?;
         let mesh_renderer = MeshRenderer::new(backend.device.clone(), backend.surface_format())?;
         let mesh_buffer_cache = MeshBufferCache::new();
         let quad_renderer = QuadRenderer::new(&backend.device, backend.surface_format())?;
 
         // Initialize advanced output renderers
-        let (edge_blend_renderer, color_calibration_renderer) = Self::init_advanced_renderers(&backend);
+        let edge_blend_renderer =
+            EdgeBlendRenderer::new(backend.device.clone(), backend.surface_format())
+                .map_err(|e| {
+                    tracing::warn!("Failed to create edge blend renderer: {}", e);
+                    e
+                })
+                .ok();
+
+        let color_calibration_renderer =
+            ColorCalibrationRenderer::new(backend.device.clone(), backend.surface_format())
+                .map_err(|e| {
+                    tracing::warn!("Failed to create color calibration renderer: {}", e);
+                    e
+                })
+                .ok();
 
         let mut window_manager = WindowManager::new();
 
@@ -64,11 +87,11 @@ impl App {
         let main_window_id = window_manager.create_main_window_with_geometry(
             elwt,
             &backend,
-            if config.is_automation { Some(1280) } else { saved_config.window_width },
-            if config.is_automation { Some(720) } else { saved_config.window_height },
+            saved_config.window_width,
+            saved_config.window_height,
             saved_config.window_x,
             saved_config.window_y,
-            if config.is_automation { false } else { saved_config.window_maximized },
+            saved_config.window_maximized,
             saved_config.vsync_mode,
         )?;
 
@@ -111,15 +134,168 @@ impl App {
         ];
 
         let mut ui_state = AppUI::default();
-        Self::init_ui_assets(&mut ui_state);
 
-        // Initialize state, trying to load autosave first unless skipped
+        #[cfg(feature = "midi")]
+        {
+            if let Some(path) =
+                runtime_paths::existing_resource_path("controllers/ecler_nuo4/elements.json")
+            {
+                match std::fs::read_to_string(&path) {
+                    Ok(json) => {
+                        if let Err(e) = ui_state.controller_overlay.load_elements(&json) {
+                            tracing::error!("Failed to parse elements.json: {}", e);
+                        } else {
+                            tracing::info!("Loaded controller elements from {:?}", path);
+                        }
+                    }
+                    Err(e) => {
+                        tracing::error!("Failed to read elements.json from {:?}: {}", path, e)
+                    }
+                }
+            }
+        }
+
+        // Initialize state, trying to load autosave first
         let mut state = AppState::new("New Project");
         state.settings_mut().log_config.level = saved_config.log_level.as_str().to_string();
 
-        if !config.skip_autosave {
-            Self::load_autosave(&mut state, &saved_config);
-            Self::run_self_heal(&mut state);
+        let autosave_path =
+            dirs::data_local_dir().map(|p| p.join("MapFlow").join("autosave.mflow"));
+
+        if let Some(path) = &autosave_path {
+            if path.exists() {
+                info!("Found autosave at {:?}, attempting to load...", path);
+                match load_project(path) {
+                    Ok(loaded_state) => {
+                        info!("Successfully loaded autosave.");
+                        state = loaded_state;
+                        state.settings_mut().log_config.level =
+                            saved_config.log_level.as_str().to_string();
+                    }
+                    Err(e) => {
+                        error!("Failed to load autosave: {}", e);
+                        // Fallback to new project is automatic as state is already initialized
+                    }
+                }
+            } else {
+                info!("No autosave found at {:?}, starting new project.", path);
+            }
+
+            // --- SELF-HEAL: Reconcile Output IDs ---
+            // Ensure Output Nodes in the graph point to valid IDs in OutputManager.
+            // If ID mismatch but NAME match, update the ID.
+            let valid_outputs: HashMap<String, u64> = state
+                .output_manager
+                .outputs()
+                .iter()
+                .map(|o| (o.name.clone(), o.id))
+                .collect();
+            let valid_ids: Vec<u64> = valid_outputs.values().cloned().collect();
+
+            let mut fixed_count = 0;
+            for module in state.module_manager_mut().modules_mut() {
+                for part in &mut module.parts {
+                    if let mapmap_core::module::ModulePartType::Output(
+                        mapmap_core::module::OutputType::Projector {
+                            ref mut id,
+                            ref name,
+                            ..
+                        },
+                    ) = &mut part.part_type
+                    {
+                        if !valid_ids.contains(id) {
+                            if let Some(new_id) = valid_outputs.get(name) {
+                                info!(
+                                    "Self-Heal: Relinking Output '{}' from ID {} to {}.",
+                                    name, id, new_id
+                                );
+                                *id = *new_id;
+                                fixed_count += 1;
+                            } else {
+                                warn!(
+                                    "Self-Heal: Output '{}' (ID {}) has no matching Output Window.",
+                                    name, id
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+            if fixed_count > 0 {
+                info!("Self-Heal: Fixed {} output connections.", fixed_count);
+                state.dirty = true;
+            }
+
+            // --- SELF-HEAL: Ensure Output Windows exist for active Projector nodes ---
+            let existing_output_ids: std::collections::HashSet<u64> = state
+                .output_manager
+                .outputs()
+                .iter()
+                .map(|o| o.id)
+                .collect();
+            let mut missing_outputs = Vec::new();
+            for module in state.module_manager.modules() {
+                for part in &module.parts {
+                    if let mapmap_core::module::ModulePartType::Output(
+                        mapmap_core::module::OutputType::Projector { id, name, .. },
+                    ) = &part.part_type
+                    {
+                        if !existing_output_ids.contains(id) {
+                            missing_outputs.push((*id, name.clone()));
+                        }
+                    }
+                }
+            }
+
+            for (id, name) in missing_outputs {
+                info!(
+                    "Self-Heal: Creating missing Output Window '{}' (ID {})",
+                    name, id
+                );
+                state.output_manager_mut().add_output(
+                    name,
+                    mapmap_core::output::CanvasRegion::new(0.0, 0.0, 1.0, 1.0),
+                    (1920, 1080),
+                );
+            }
+
+            // --- SELF-HEAL: Remove dangling connections ---
+            let mut graph_fixed = false;
+            for module in state.module_manager_mut().modules_mut() {
+                let part_ids: std::collections::HashSet<u64> =
+                    module.parts.iter().map(|p| p.id).collect();
+                info!(
+                    "Self-Heal: Module '{}' has nodes: {:?}",
+                    module.name, part_ids
+                );
+
+                let initial_count = module.connections.len();
+                module.connections.retain(|c| {
+                    let from_exists = part_ids.contains(&c.from_part);
+                    let to_exists = part_ids.contains(&c.to_part);
+                    if !from_exists {
+                        warn!("Self-Heal: Removing connection from non-existent node {} in module '{}'", c.from_part, module.name);
+                    }
+                    if !to_exists {
+                        warn!("Self-Heal: Removing connection to non-existent node {} in module '{}'", c.to_part, module.name);
+                    }
+                    from_exists && to_exists
+                });
+                let final_count = module.connections.len();
+                if initial_count != final_count {
+                    info!(
+                        "Self-Heal: Cleaned {} dangling connections in module '{}'",
+                        initial_count - final_count,
+                        module.name
+                    );
+                    graph_fixed = true;
+                }
+            }
+            if graph_fixed {
+                state.dirty = true;
+            }
+        } else {
+            warn!("Could not determine data local directory for autosave.");
         }
 
         let audio_devices = match CpalBackend::list_devices() {
@@ -135,11 +311,15 @@ impl App {
         // Load saved audio device from user config
         let saved_device = ui_state.user_config.selected_audio_device.clone();
         let device_to_use = if let Some(ref dev) = saved_device {
+            // Check if saved device still exists
             if audio_devices.contains(dev) {
                 info!("Restoring saved audio device: {}", dev);
                 Some(dev.clone())
             } else {
-                info!("Saved audio device '{}' no longer available, using default", dev);
+                info!(
+                    "Saved audio device '{}' no longer available, using default",
+                    dev
+                );
                 None
             }
         } else {
@@ -149,22 +329,50 @@ impl App {
         // Set the selected device in UI state
         ui_state.selected_audio_device = device_to_use.clone();
 
-        let audio_backend = if config.skip_audio {
-            info!("Initialization: Skipping audio backend");
+        let mut audio_backend: Option<CpalBackend> = if is_automation {
+            info!("Automation mode: Skipping audio backend initialization");
             None
         } else {
-            Self::init_audio(device_to_use)
+            match CpalBackend::new(device_to_use) {
+                Ok(backend) => Some(backend),
+                Err(e) => {
+                    error!("Failed to initialize audio backend: {}", e);
+                    None
+                }
+            }
         };
 
-        // Initialize Audio Analyzer
+        if let Some(backend) = &mut audio_backend {
+            if let Err(e) = backend.start() {
+                error!("Failed to start audio stream: {}", e);
+                audio_backend = None;
+            }
+        }
+
+        // Initialize Audio Analyzer (wrapper around V2 for compatibility)
         let audio_analyzer = mapmap_core::audio::AudioAnalyzer::new(state.audio_config.clone());
 
-        // Start MCP Server
+        // Start MCP Server in a separate thread
         let (mcp_sender, mcp_receiver) = unbounded();
         let action_sender = mcp_sender.clone();
 
-        if !config.skip_mcp {
-            Self::start_mcp_server(mcp_sender);
+        if !is_automation {
+            thread::spawn(move || {
+                // Create a Tokio runtime for the MCP server
+                let rt = tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
+                    .build()
+                    .unwrap();
+
+                rt.block_on(async {
+                    let server = McpServer::new(Some(mcp_sender));
+                    if let Err(e) = server.run_stdio().await {
+                        error!("MCP Server error: {}", e);
+                    }
+                });
+            });
+        } else {
+            info!("Automation mode: Skipping MCP Server initialization");
         }
 
         // Initialize egui
@@ -182,31 +390,124 @@ impl App {
             format,
             egui_wgpu::RendererOptions::default(),
         );
-        let oscillator_renderer = Self::init_oscillator_renderer(&backend, format, &state);
+        let oscillator_renderer = match OscillatorRenderer::new(
+            backend.device.clone(),
+            backend.queue.clone(),
+            format,
+            &state.oscillator_config,
+        ) {
+            Ok(mut renderer) => {
+                renderer.initialize_phases(state.oscillator_config.phase_init_mode);
+                Some(renderer)
+            }
+            Err(e) => {
+                error!("Failed to create oscillator renderer: {}", e);
+                None
+            }
+        };
 
         // Initialize icons from assets directory
         let assets_path = runtime_paths::assets_dir();
+
         ui_state.initialize_icons(&egui_context, &assets_path);
         ui_state.user_config.theme.apply(&egui_context);
 
         // Initialize preview quad buffers
-        let preview_quad_buffers = Self::init_preview_quad_buffers(&mesh_renderer);
+        // Use manual construction to ensure -1..1 NDC range coverage for full viewport
+        let preview_mesh = mapmap_core::Mesh {
+            mesh_type: mapmap_core::MeshType::Quad,
+            vertices: vec![
+                // Top-Left (0, 0) -> UV 0,0
+                mapmap_core::MeshVertex::new(glam::Vec2::new(0.0, 0.0), glam::Vec2::new(0.0, 0.0)),
+                // Top-Right (1, 0) -> UV 1,0
+                mapmap_core::MeshVertex::new(glam::Vec2::new(1.0, 0.0), glam::Vec2::new(1.0, 0.0)),
+                // Bottom-Right (1, 1) -> UV 1,1
+                mapmap_core::MeshVertex::new(glam::Vec2::new(1.0, 1.0), glam::Vec2::new(1.0, 1.0)),
+                // Bottom-Left (0, 1) -> UV 0,1
+                mapmap_core::MeshVertex::new(glam::Vec2::new(0.0, 1.0), glam::Vec2::new(0.0, 1.0)),
+            ],
+            indices: vec![0, 1, 2, 0, 2, 3],
+            revision: 0,
+        };
+        let preview_quad_buffers = {
+            let (vb, ib) = mesh_renderer.create_mesh_buffers(&preview_mesh);
+            (vb, ib, preview_mesh.indices.len() as u32)
+        };
 
-        let mut hue_controller = Self::init_hue_controller(&ui_state);
-        if !config.skip_hue {
-            Self::connect_hue(&mut hue_controller, &ui_state, &tokio_runtime);
+        // Initialize Hue Controller
+        let ui_hue_conf = &ui_state.user_config.hue_config;
+        let control_hue_conf = mapmap_control::hue::models::HueConfig {
+            bridge_ip: ui_hue_conf.bridge_ip.clone(),
+            username: ui_hue_conf.username.clone(),
+            client_key: ui_hue_conf.client_key.clone(),
+            application_id: String::new(), // Will be fetched if needed
+            entertainment_group_id: ui_hue_conf.entertainment_area.clone(),
+        };
+
+        let mut hue_controller = HueController::new(control_hue_conf);
+
+        // Try to connect if IP is set and auto-connect is enabled
+        if !is_automation
+            && !ui_state.user_config.hue_config.bridge_ip.is_empty()
+            && ui_state.user_config.hue_config.auto_connect
+        {
+            info!("Initializing Hue Controller...");
+            if let Err(e) = tokio_runtime.block_on(hue_controller.connect()) {
+                warn!("Hue Controller initial connection failed: {}", e);
+            }
+        } else if is_automation {
+            info!("Automation mode: Skipping Hue Controller connection");
         }
 
         let control_manager = ControlManager::new();
         let sys_info = sysinfo::System::new_all();
-        let (dummy_texture, dummy_view) = Self::create_initial_dummy_texture(&backend, width, height, format);
+        let (dummy_texture, dummy_view) = {
+            let texture = backend.device.create_texture(&wgpu::TextureDescriptor {
+                label: Some("Dummy Input Texture"),
+                size: wgpu::Extent3d {
+                    width,
+                    height,
+                    depth_or_array_layers: 1,
+                },
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format,
+                usage: wgpu::TextureUsages::TEXTURE_BINDING
+                    | wgpu::TextureUsages::RENDER_ATTACHMENT,
+                view_formats: &[],
+            });
+            let view =
+                std::sync::Arc::new(texture.create_view(&wgpu::TextureViewDescriptor::default()));
+            (texture, view)
+        };
 
         #[cfg(feature = "midi")]
-        let midi_handler = if config.skip_midi {
-            info!("Initialization: Skipping MIDI");
-            None
-        } else {
-            Self::init_midi()
+        let midi_handler = {
+            if is_automation {
+                info!("Automation mode: Skipping MIDI initialization");
+                None
+            } else {
+                match MidiInputHandler::new() {
+                    Ok(mut handler) => {
+                        info!("MIDI initialized");
+                        if let Ok(ports) = MidiInputHandler::list_ports() {
+                            info!("Available MIDI ports: {:?}", ports);
+                            // Auto-connect to first port if available
+                            if !ports.is_empty() {
+                                if let Err(e) = handler.connect(0) {
+                                    error!("Failed to auto-connect MIDI: {}", e);
+                                }
+                            }
+                        }
+                        Some(handler)
+                    }
+                    Err(e) => {
+                        error!("Failed to init MIDI: {}", e);
+                        None
+                    }
+                }
+            }
         };
 
         let app = Self {
@@ -258,7 +559,14 @@ impl App {
             #[cfg(feature = "midi")]
             midi_ports: MidiInputHandler::list_ports().unwrap_or_default(),
             #[cfg(feature = "midi")]
-            selected_midi_port: if MidiInputHandler::list_ports().unwrap_or_default().is_empty() { None } else { Some(0) },
+            selected_midi_port: if MidiInputHandler::list_ports()
+                .unwrap_or_default()
+                .is_empty()
+            {
+                None
+            } else {
+                Some(0) // Assuming auto-connect to first port succeeded
+            },
             #[cfg(feature = "ndi")]
             ndi_receivers: std::collections::HashMap::new(),
             #[cfg(feature = "ndi")]
@@ -289,262 +597,68 @@ impl App {
             media_manager_ui: MediaManagerUI::new(),
             media_library: {
                 let mut lib = MediaLibrary::new();
-                if let Some(video_dir) = dirs::video_dir() { lib.add_scan_path(video_dir); }
-                if let Some(project_media) = runtime_paths::existing_resource_path("app_videos") { lib.add_scan_path(project_media); }
+                // Add default search paths for media
+                if let Some(video_dir) = dirs::video_dir() {
+                    lib.add_scan_path(video_dir);
+                }
+                // Also add project relative media dir if it exists
+                if let Some(project_media) = runtime_paths::existing_resource_path("app_videos") {
+                    lib.add_scan_path(project_media);
+                }
                 lib
             },
             bevy_runner: Some(mapmap_bevy::BevyRunner::new()),
         };
 
-        app.print_init_report();
-
-        Ok(app)
-    }
-
-    // Helper methods for modular initialization
-
-    fn init_renderers(backend: &WgpuBackend) -> Result<(EffectChainRenderer, EffectChainRenderer)> {
-        let effect_chain_renderer = EffectChainRenderer::new(
-            backend.device.clone(),
-            backend.queue.clone(),
-            backend.surface_format(),
-        )?;
-        let preview_effect_chain_renderer = EffectChainRenderer::new(
-            backend.device.clone(),
-            backend.queue.clone(),
-            backend.surface_format(),
-        )?;
-        Ok((effect_chain_renderer, preview_effect_chain_renderer))
-    }
-
-    fn init_advanced_renderers(backend: &WgpuBackend) -> (Option<EdgeBlendRenderer>, Option<ColorCalibrationRenderer>) {
-        let edge_blend_renderer = EdgeBlendRenderer::new(backend.device.clone(), backend.surface_format())
-            .map_err(|e| {
-                warn!("Failed to create edge blend renderer: {}", e);
-                e
-            }).ok();
-
-        let color_calibration_renderer = ColorCalibrationRenderer::new(backend.device.clone(), backend.surface_format())
-            .map_err(|e| {
-                warn!("Failed to create color calibration renderer: {}", e);
-                e
-            }).ok();
-
-        (edge_blend_renderer, color_calibration_renderer)
-    }
-
-    fn init_ui_assets(ui_state: &mut AppUI) {
-        #[cfg(feature = "midi")]
-        {
-            if let Some(path) = runtime_paths::existing_resource_path("controllers/ecler_nuo4/elements.json") {
-                match std::fs::read_to_string(&path) {
-                    Ok(json) => {
-                        if let Err(e) = ui_state.controller_overlay.load_elements(&json) {
-                            error!("Failed to parse elements.json: {}", e);
-                        } else {
-                            info!("Loaded controller elements from {:?}", path);
-                        }
-                    }
-                    Err(e) => {
-                        error!("Failed to read elements.json from {:?}: {}", path, e)
-                    }
-                }
-            }
-        }
-    }
-
-    fn load_autosave(state: &mut AppState, saved_config: &mapmap_ui::config::UserConfig) {
-        let autosave_path = dirs::data_local_dir().map(|p| p.join("MapFlow").join("autosave.mflow"));
-        if let Some(path) = &autosave_path {
-            if path.exists() {
-                info!("Found autosave at {:?}, attempting to load...", path);
-                match load_project(path) {
-                    Ok(loaded_state) => {
-                        info!("Successfully loaded autosave.");
-                        *state = loaded_state;
-                        state.settings_mut().log_config.level = saved_config.log_level.as_str().to_string();
-                    }
-                    Err(e) => {
-                        error!("Failed to load autosave: {}", e);
-                    }
-                }
-            } else {
-                info!("No autosave found at {:?}, starting new project.", path);
-            }
-        }
-    }
-
-    fn run_self_heal(state: &mut AppState) {
-        // --- Reconcile Output IDs ---
-        let valid_outputs: HashMap<String, u64> = state.output_manager.outputs().iter()
-            .map(|o| (o.name.clone(), o.id)).collect();
-        let valid_ids: Vec<u64> = valid_outputs.values().cloned().collect();
-
-        let mut fixed_count = 0;
-        for module in state.module_manager_mut().modules_mut() {
-            for part in &mut module.parts {
-                if let mapmap_core::module::ModulePartType::Output(
-                    mapmap_core::module::OutputType::Projector { ref mut id, ref name, .. }
-                ) = &mut part.part_type {
-                    if !valid_ids.contains(id) {
-                        if let Some(new_id) = valid_outputs.get(name) {
-                            info!("Self-Heal: Relinking Output '{}' from ID {} to {}.", name, id, new_id);
-                            *id = *new_id;
-                            fixed_count += 1;
-                        }
-                    }
-                }
-            }
-        }
-        if fixed_count > 0 { state.dirty = true; }
-
-        // --- Ensure Output Windows exist ---
-        let existing_output_ids: std::collections::HashSet<u64> = state.output_manager.outputs().iter().map(|o| o.id).collect();
-        let mut missing_outputs = Vec::new();
-        for module in state.module_manager.modules() {
-            for part in &module.parts {
-                if let mapmap_core::module::ModulePartType::Output(
-                    mapmap_core::module::OutputType::Projector { id, name, .. }
-                ) = &part.part_type {
-                    if !existing_output_ids.contains(id) { missing_outputs.push((*id, name.clone())); }
-                }
-            }
-        }
-        for (id, name) in missing_outputs {
-            info!("Self-Heal: Creating missing Output Window '{}' (ID {})", name, id);
-            state.output_manager_mut().add_output(name, mapmap_core::output::CanvasRegion::new(0.0, 0.0, 1.0, 1.0), (1920, 1080));
-        }
-
-        // --- Remove dangling connections ---
-        for module in state.module_manager_mut().modules_mut() {
-            let part_ids: std::collections::HashSet<u64> = module.parts.iter().map(|p| p.id).collect();
-            module.connections.retain(|c| part_ids.contains(&c.from_part) && part_ids.contains(&c.to_part));
-        }
-    }
-
-    fn init_audio(device_to_use: Option<String>) -> Option<CpalBackend> {
-        let mut backend = match CpalBackend::new(device_to_use) {
-            Ok(backend) => Some(backend),
-            Err(e) => {
-                error!("Failed to initialize audio backend: {}", e);
-                None
-            }
-        };
-        if let Some(b) = &mut backend {
-            if let Err(e) = b.start() {
-                error!("Failed to start audio stream: {}", e);
-                return None;
-            }
-        }
-        backend
-    }
-
-    fn start_mcp_server(mcp_sender: crossbeam_channel::Sender<mapmap_mcp::McpAction>) {
-        thread::spawn(move || {
-            let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
-            rt.block_on(async {
-                let server = McpServer::new(Some(mcp_sender));
-                if let Err(e) = server.run_stdio().await {
-                    error!("MCP Server error: {}", e);
-                }
-            });
-        });
-    }
-
-    fn init_oscillator_renderer(backend: &WgpuBackend, format: wgpu::TextureFormat, state: &AppState) -> Option<OscillatorRenderer> {
-        match OscillatorRenderer::new(backend.device.clone(), backend.queue.clone(), format, &state.oscillator_config) {
-            Ok(mut renderer) => {
-                renderer.initialize_phases(state.oscillator_config.phase_init_mode);
-                Some(renderer)
-            }
-            Err(e) => {
-                error!("Failed to create oscillator renderer: {}", e);
-                None
-            }
-        }
-    }
-
-    fn init_preview_quad_buffers(mesh_renderer: &MeshRenderer) -> (wgpu::Buffer, wgpu::Buffer, u32) {
-        let preview_mesh = mapmap_core::Mesh {
-            mesh_type: mapmap_core::MeshType::Quad,
-            vertices: vec![
-                mapmap_core::MeshVertex::new(glam::Vec2::new(0.0, 0.0), glam::Vec2::new(0.0, 0.0)),
-                mapmap_core::MeshVertex::new(glam::Vec2::new(1.0, 0.0), glam::Vec2::new(1.0, 0.0)),
-                mapmap_core::MeshVertex::new(glam::Vec2::new(1.0, 1.0), glam::Vec2::new(1.0, 1.0)),
-                mapmap_core::MeshVertex::new(glam::Vec2::new(0.0, 1.0), glam::Vec2::new(0.0, 1.0)),
-            ],
-            indices: vec![0, 1, 2, 0, 2, 3],
-            revision: 0,
-        };
-        let (vb, ib) = mesh_renderer.create_mesh_buffers(&preview_mesh);
-        (vb, ib, preview_mesh.indices.len() as u32)
-    }
-
-    fn init_hue_controller(ui_state: &AppUI) -> HueController {
-        let ui_hue_conf = &ui_state.user_config.hue_config;
-        HueController::new(mapmap_control::hue::models::HueConfig {
-            bridge_ip: ui_hue_conf.bridge_ip.clone(),
-            username: ui_hue_conf.username.clone(),
-            client_key: ui_hue_conf.client_key.clone(),
-            application_id: String::new(),
-            entertainment_group_id: ui_hue_conf.entertainment_area.clone(),
-        })
-    }
-
-    fn connect_hue(controller: &mut HueController, ui_state: &AppUI, rt: &tokio::runtime::Runtime) {
-        if !ui_state.user_config.hue_config.bridge_ip.is_empty() && ui_state.user_config.hue_config.auto_connect {
-            info!("Initializing Hue Controller...");
-            if let Err(e) = rt.block_on(controller.connect()) {
-                warn!("Hue Controller initial connection failed: {}", e);
-            }
-        }
-    }
-
-    fn create_initial_dummy_texture(backend: &WgpuBackend, width: u32, height: u32, format: wgpu::TextureFormat) -> (wgpu::Texture, std::sync::Arc<wgpu::TextureView>) {
-        let texture = backend.device.create_texture(&wgpu::TextureDescriptor {
-            label: Some("Dummy Input Texture"),
-            size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format,
-            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
-            view_formats: &[],
-        });
-        let view = std::sync::Arc::new(texture.create_view(&wgpu::TextureViewDescriptor::default()));
-        (texture, view)
-    }
-
-    #[cfg(feature = "midi")]
-    fn init_midi() -> Option<MidiInputHandler> {
-        match MidiInputHandler::new() {
-            Ok(mut handler) => {
-                info!("MIDI initialized");
-                if let Ok(ports) = MidiInputHandler::list_ports() {
-                    if !ports.is_empty() { let _ = handler.connect(0); }
-                }
-                Some(handler)
-            }
-            Err(e) => {
-                error!("Failed to init MIDI: {}", e);
-                None
-            }
-        }
-    }
-
-    fn print_init_report(&self) {
+        // --- INITIALIZATION STATUS REPORT ---
         info!("==========================================");
         info!("   MapFlow Initialization Status Report   ");
         info!("------------------------------------------");
-        info!("- Render Backend: {} ({:?})", self.backend.adapter_info().name, self.backend.adapter_info().backend);
-        info!("- Edge Blend:     {}", if self.edge_blend_renderer.is_some() { "ENABLED" } else { "DISABLED" });
-        info!("- Color Calib:    {}", if self.color_calibration_renderer.is_some() { "ENABLED" } else { "DISABLED" });
+        info!(
+            "- Render Backend: {} ({:?})",
+            app.backend.adapter_info().name,
+            app.backend.adapter_info().backend
+        );
+        info!(
+            "- Edge Blend:     {}",
+            if app.edge_blend_renderer.is_some() {
+                "ENABLED"
+            } else {
+                "DISABLED"
+            }
+        );
+        info!(
+            "- Color Calib:    {}",
+            if app.color_calibration_renderer.is_some() {
+                "ENABLED"
+            } else {
+                "DISABLED"
+            }
+        );
         info!("- Bevy Engine:    INITIALIZED");
+
         #[cfg(feature = "midi")]
-        info!("- MIDI System:    {}", if self.midi_handler.is_some() { "CONNECTED" } else { "DISCONNECTED" });
-        info!("- Hue System:     {}", if !self.ui_state.user_config.hue_config.bridge_ip.is_empty() { "CONFIGURED" } else { "UNCONFIGURED" });
-        info!("- Media Library:  {} items", self.media_library.items.len());
+        info!(
+            "- MIDI System:    {}",
+            if app.midi_handler.is_some() {
+                "CONNECTED"
+            } else {
+                "DISCONNECTED"
+            }
+        );
+
+        info!(
+            "- Hue System:     {}",
+            if !app.ui_state.user_config.hue_config.bridge_ip.is_empty() {
+                "CONFIGURED"
+            } else {
+                "UNCONFIGURED"
+            }
+        );
+        info!("- Media Library:  {} items", app.media_library.items.len());
         info!("==========================================");
+
+        Ok(app)
     }
 
     /// Creates or recreates the dummy texture for effect input.
