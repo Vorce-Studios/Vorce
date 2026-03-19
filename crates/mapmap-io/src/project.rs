@@ -156,7 +156,6 @@ mod tests {
     use tempfile::NamedTempFile;
 
     #[test]
-    #[ignore]
     fn project_ron_roundtrip() {
         let original_state = AppState::default();
         let file = NamedTempFile::new().unwrap();
@@ -185,7 +184,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_version_mismatch() {
         let mut project_file = ProjectFile::new(AppState::default());
         project_file.version = "0.1.0".to_string(); // Set an old version

@@ -41,48 +41,51 @@ VjMapper ist ein Rewrite einer C++/Qt-Anwendung in Rust. Ziel ist eine hochperfo
     ```
 -   **Anforderung:** Fügen Sie für jede neue Funktion oder Fehlerbehebung entsprechende Unit-Tests hinzu. Bestehende Tests dürfen nicht fehlschlagen.
 
-## Prozess-Mandate & Source of Truth
-
-**CRITICAL:** Die Datei `ROADMAP.md` wird NICHT mehr zur Aufgabenverfolgung verwendet.
-**GitHub Project Issues** sind ab sofort die einzige "Source of Truth" für alle Entwicklungsaufgaben, Bugs und Features.
-- Jede Aufgabe muss ein entsprechendes GitHub Issue haben.
-- Der Fortschritt wird ausschließlich über GitHub Issues und Pull Requests getrackt.
-
 ## Spezialisierte KI-Agenten
 
 ### 1. Shader-Spezialist (shader_specialist)
+
+```yaml
+---
+name: shader_specialist
+tools: [read_file, grep_search, glob, run_shell_command, web_fetch, google_web_search]
+model: gemini-2.0-flash
+---
+```
+
 - **Fokus:** WGSL-Shader-Entwicklung, Performance-Optimierung (GPU), Mathematische Algorithmen.
 - **Anweisungen:** Nutze `naga` zur Validierung von `.wgsl` Dateien. Achte auf Bevy-Kompatibilität (`@group`, `@binding`). Vermeide redundante Berechnungen in Fragment-Shadern. Dokumentiere mathematische Modelle in Shaders mit Kommentaren.
 
 ### 2. Bevy-Architekt (bevy_architect)
+
+```yaml
+---
+name: bevy_architect
+tools: [read_file, grep_search, glob, run_shell_command, activate_skill]
+model: gemini-2.0-flash
+---
+```
+
 - **Fokus:** ECS-Design (Entities, Components, Systems), Plugin-Struktur, Ressourcen-Management.
 - **Anweisungen:** Halte Systeme modular. Nutze `States` und `SystemSets` für die Ablaufsteuerung. Achte auf Thread-Safety und Minimierung von Lock-Contentions. Bevorzuge Event-basierte Kommunikation zwischen Crates.
 
 ### 3. PR & Branch Manager (pr_branch_manager)
+
+```yaml
+---
+name: pr_branch_manager
+tools: [read_file, grep_search, glob, run_shell_command, git_ops, web_fetch]
+model: gemini-2.0-flash
+---
+```
+
 - **Fokus:** Git-Flow, PR-Reviews, Fehleranalyse in CI/CD, Branch-Hygiene.
 - **Anweisungen:**
-  - **GitHub Integration:** Nutze `scripts/jules/jules-github.ps1`, um Issue-Tracking-Blöcke zu verwalten (`Upsert-JulesIssueTrackingBlock`).
   - **Proaktives Branch-Management:** Scanne regelmäßig nach unmerged Branches ohne PR. Prüfe deren Status (`git diff main..branch`). Falls sinnvoll, erstelle automatisch einen PR mit einer kurzen Analyse der Änderungen.
   - **CI/CD Fehler-Spezialist:** Wenn ein PR-Check fehlschlägt, analysiere sofort die Logs. Identifiziere die Ursache (z.B. fehlende Abhängigkeit, Shader-Validierung, Flaky Tests). Implementiere Fixes direkt im Branch.
   - **Reviews:** Achte auf Mapflow-spezifische Vorgaben (Keine GUI-Logik in Core-Crates, Shader-Validierung bestanden).
   - **Merging:** Merge erst, wenn alle Checks grün sind und der PR-Review-Status "Approved" ist.
   - **Aufräumen:** Lösche Branches nach dem Mergen automatisch (Hygiene).
-
-### 4. Jules Disponent (jules_disponent)
-
-```yaml
----
-name: jules_disponent
-tools: [run_shell_command, read_file]
-model: gemini-2.0-flash
----
-```
-
-- **Fokus:** Remote Code Generierung & Session Management.
-- **Anweisungen:**
-  - Nutze `scripts/jules/send-to-jules.ps1` für den Remote-Versand von Aufgaben.
-  - Nutze `scripts/jules/jules-github.ps1` zur Synchronisation mit GitHub Issues.
-  - Stelle sicher, dass jede Remote-Session korrekt mit einem GitHub Issue verknüpft ist.
 
 ## Pull Request (PR) Prozess
 
