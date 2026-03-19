@@ -452,29 +452,6 @@ impl SourceType {
             reverse_playback: false,
         }
     }
-
-    /// Returns true if the source type requires a file path and has one selected.
-    pub fn has_file_selected(&self) -> bool {
-        match self {
-            SourceType::MediaFile { path, .. }
-            | SourceType::VideoUni { path, .. }
-            | SourceType::ImageUni { path, .. }
-            | SourceType::Bevy3DModel { path, .. } => !path.is_empty(),
-            SourceType::Shader { .. }
-            | SourceType::LiveInput { .. }
-            | SourceType::NdiInput { .. }
-            | SourceType::Bevy
-            | SourceType::BevyAtmosphere { .. }
-            | SourceType::BevyHexGrid { .. }
-            | SourceType::BevyParticles { .. }
-            | SourceType::Bevy3DShape { .. }
-            | SourceType::Bevy3DText { .. }
-            | SourceType::BevyCamera { .. } => true, // These don't use file paths or are non-file sources
-            #[cfg(target_os = "windows")]
-            SourceType::SpoutInput { .. } => true,
-            SourceType::VideoMulti { .. } | SourceType::ImageMulti { .. } => true, // Shared sources use IDs
-        }
-    }
 }
 
 /// Types of 3D shapes available in Bevy nodes.

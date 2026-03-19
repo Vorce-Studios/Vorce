@@ -105,8 +105,16 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
                                 TriggerTarget::OffsetY,
                                 "Offset Y",
                             );
-                            ui.selectable_value(&mut config.target, TriggerTarget::FlipH, "Flip H");
-                            ui.selectable_value(&mut config.target, TriggerTarget::FlipV, "Flip V");
+                            ui.selectable_value(
+                                &mut config.target,
+                                TriggerTarget::FlipH,
+                                "Flip H",
+                            );
+                            ui.selectable_value(
+                                &mut config.target,
+                                TriggerTarget::FlipV,
+                                "Flip V",
+                            );
                             ui.selectable_value(
                                 &mut config.target,
                                 TriggerTarget::ParticleRate,
@@ -256,29 +264,6 @@ pub fn render_trigger_ui(
             ui.label("Outputs 9 frequency bands, plus volume and beat.");
             ui.add(egui::Slider::new(threshold, 0.0..=1.0).text("Threshold"));
 
-            // Preview
-            if canvas.show_inspector_previews {
-                ui.separator();
-                let live_value = canvas
-                    .last_trigger_values
-                    .get(&part_id)
-                    .copied()
-                    .unwrap_or(0.0);
-                let is_live = live_value > 0.1;
-                ui.group(|ui| {
-                    ui.horizontal(|ui| {
-                        let status = if is_live { "LIVE pulse" } else { "Waiting" };
-                        let color = if is_live {
-                            egui::Color32::from_rgb(110, 235, 150)
-                        } else {
-                            egui::Color32::from_rgb(180, 180, 180)
-                        };
-                        ui.colored_label(color, status);
-                    });
-                    ui.label(format!("Current trigger value {:.2}", live_value));
-                });
-            }
-
             ui.separator();
             ui.label("\u{1F4E4} Output Configuration:");
             ui.checkbox(&mut output_config.beat_output, "🥁 Beat Detection");
@@ -357,32 +342,9 @@ pub fn render_trigger_ui(
         TriggerType::Midi {
             channel,
             note,
-            device,
+            device: _,
         } => {
             ui.label("\u{1F3B9} MIDI Trigger");
-
-            // Preview
-            if canvas.show_inspector_previews {
-                ui.separator();
-                let live_value = canvas
-                    .last_trigger_values
-                    .get(&part_id)
-                    .copied()
-                    .unwrap_or(0.0);
-                let is_live = live_value > 0.1;
-                ui.group(|ui| {
-                    ui.horizontal(|ui| {
-                        let status = if is_live { "LIVE pulse" } else { "Waiting" };
-                        let color = if is_live {
-                            egui::Color32::from_rgb(110, 235, 150)
-                        } else {
-                            egui::Color32::from_rgb(180, 180, 180)
-                        };
-                        ui.colored_label(color, status);
-                    });
-                    ui.label(format!("Current trigger value {:.2}", live_value));
-                });
-            }
 
             // Available MIDI ports dropdown
             ui.horizontal(|ui| {
@@ -393,19 +355,11 @@ pub fn render_trigger_ui(
                         if ports.is_empty() {
                             ui.label(egui::RichText::new("No MIDI devices").weak().italics());
                         } else {
-                            let selected = if device.is_empty() && !ports.is_empty() {
-                                ports.first().cloned().unwrap_or_default()
-                            } else {
-                                device.clone()
-                            };
-
                             egui::ComboBox::from_id_salt("midi_device")
-                                .selected_text(selected)
+                                .selected_text(ports.first().cloned().unwrap_or_default())
                                 .show_ui(ui, |ui| {
                                     for port in &ports {
-                                        if ui.selectable_label(*device == *port, port).clicked() {
-                                            *device = port.clone();
-                                        }
+                                        let _ = ui.selectable_label(false, port);
                                     }
                                 });
                         }

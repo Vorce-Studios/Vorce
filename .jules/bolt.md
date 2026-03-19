@@ -68,7 +68,3 @@
 ## 2024-05-23 - Avoid String Cloning in TimelineModule Iterators
 **Learning:** Structs collected into `Vec` inside UI hot loops (like `TimelineModule` in `mapmap/src/app/ui_layout.rs`) that own `String` fields cause massive per-frame allocation overhead.
 **Action:** Change UI presentation structs to borrow strings (`&'a str`) instead of owning them, reducing `clone()` allocations in rendering loops to zero.
-
-## 2024-05-14 - [Avoid cloning RenderOp in render loop]
-**Learning:** `mapmap_core::module_eval::RenderOp` contains collections (`Vec<ModulizerType>`) and meshes which can be expensive to clone. In `crates/mapmap/src/app/loops/render/content.rs`, `render_content` was cloning these operations from `ctx.render_queue` for every layer to be rendered on every frame, causing unnecessary allocations.
-**Action:** Always prefer iterating and collecting references (e.g., `&RenderOp`) instead of cloning large structs in the hot render loop, unless ownership is strictly required by the downstream functions.

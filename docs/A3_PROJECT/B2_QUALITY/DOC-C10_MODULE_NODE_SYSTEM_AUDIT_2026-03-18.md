@@ -42,20 +42,20 @@ Der Node-Stack ist funktional nur in einem Teilbereich konsistent:
 | Node | Core | Canvas create | Inspector | Runtime | IST-Bewertung |
 | --- | --- | --- | --- | --- | --- |
 | `Beat` | Ja | Ja | Ja | Ja | Basisfunktion ok |
-| `AudioFFT` | Ja | Ja | Ja | Ja | Previews implementiert; dynamische Outputs bleiben stabil und crashen die App bei Fehlern nicht |
+| `AudioFFT` | Ja | Ja | Ja | Teilweise | `band` ist praktisch tote Metadaten; dynamische Outputs werden im UI nicht sauber nachgefuehrt |
 | `Random` | Ja | Ja | Ja | Ja | ok |
 | `Fixed` | Ja | Ja | Ja | Ja | ok |
-| `Midi` | Ja | Ja | Ja | Ja | Device-Feld ist nun bindbar; Learn-Fehler stürzen nicht ab; optionales Preview vorhanden |
+| `Midi` | Ja | Ja | Ja | Teilweise | Device-Feld ist im Inspector faktisch nicht bindbar; Learn unterscheidet Note/CC nicht sauber |
 | `Osc` | Ja | Ja | Ja | Ja | ok, aber nur Basisadresse |
 | `Shortcut` | Ja | Ja | Ja | Teilweise | Modifier-Anzeige im Inspector ist vertauscht |
 
 Inspector-Status Trigger:
 
 - `Beat`: nur Info-Text.
-- `AudioFFT`: Threshold, Output-Konfiguration, Invertierung, visuelle Vorschau (Pulse + Live-Wert).
+- `AudioFFT`: Threshold, Output-Konfiguration, Invertierung.
 - `Random`: Min/Max-Intervall, Probability.
 - `Fixed`: Intervall, Offset, Live-Vorschau.
-- `Midi`: Portliste, Channel, Note, Learn, visuelle Vorschau.
+- `Midi`: Portliste, Channel, Note, Learn.
 - `Osc`: Address.
 - `Shortcut`: Key-Feld, Modifier-Statusanzeige.
 
@@ -118,13 +118,13 @@ Wichtige Probleme:
 
 | Node | Core | Canvas create | Inspector | Runtime | IST-Bewertung |
 | --- | --- | --- | --- | --- | --- |
-| `MaskType::File` | Ja | Ja | Ja | Nein | UI vorhanden, Renderpfad ignoriert `op.masks` |
+| `MaskType::File` | Ja | Nein | Ja | Nein | UI vorhanden, Renderpfad ignoriert `op.masks` |
 | `MaskType::Shape` | Ja | Ja | Ja | Nein | UI vorhanden, Renderpfad ignoriert `op.masks` |
 | `MaskType::Gradient` | Ja | Ja | Ja | Nein | UI vorhanden, Renderpfad ignoriert `op.masks` |
 
 Wichtige Probleme:
 
-- Masken werden in `RenderOp.masks` gesammelt und im Renderpfad mittels Warning sicher ausgeblendet (sauber gegatet).
+- Der Evaluator sammelt Masken in `RenderOp.masks`, der Renderpfad verwendet diese Liste aber nicht.
 - `MaskType::File` ist im Core und Inspector vorhanden, im Node-Katalog bzw. im Create-Menue aber nicht sichtbar.
 
 ### 3.4 Modulizer / Effect Nodes
@@ -159,9 +159,9 @@ Renderbar laut `map_effect_type`:
 Im Core definiert, im Canvas teils creatable, aber im Renderpfad derzeit nicht gemappt:
 
 - `LoadLUT`
-
-
-
+- `Brightness`
+- `Contrast`
+- `Saturation`
 - `Colorize`
 - `Sharpen`
 - `Threshold`
@@ -178,15 +178,15 @@ Inspector-Parameter aktuell nur fuer:
 - `FilmGrain`
 - `Vignette`
 - `ChromaticAberration`
-
-
-
+- `Brightness`
+- `Contrast`
+- `Saturation`
 
 Wichtige Probleme:
 
 - Der Inspector listet nur einen Teil der `EffectType`-Varianten im Wechselmenue.
 - Mehrere Effekte sind im Core deklariert und ueber Quick Create indirekt erzeugbar, aber nicht renderbar.
-- Brightness, Contrast, Saturation sind auf ColorAdjust gemappt und renderbar.
+- `Brightness`, `Contrast`, `Saturation` haben Inspector-Controls, werden aber aktuell gerade nicht in `map_effect_type` auf den Renderer gemappt.
 - `BlendMode`- und `AudioReactive`-Modulatoren werden im Evaluator zwar in die Chain aufgenommen, spaeter aber verworfen.
 - Die "Opacity"-UI bei `BlendMode` und die "Smoothing"-UI bei `AudioReactive` schreiben nur in temporare lokale Werte und haben keine dauerhafte Wirkung.
 
@@ -194,7 +194,7 @@ Wichtige Probleme:
 
 | Node | Core | Canvas create | Inspector | Runtime | IST-Bewertung |
 | --- | --- | --- | --- | --- | --- |
-| `MeshType::*` als eigener Node | Ja | Ja | Ja | Ja | Ist regulaer im Node-Katalog creatable und wird ins Mesh uebersetzt |
+| `MeshType::*` als eigener Node | Ja | Nein | Ja | Teilweise | existiert im Modell und Traversal, aber nicht als regulaer creatable Canvas-Node |
 
 Core-Mesh-Varianten:
 
@@ -295,9 +295,9 @@ Derzeit angebotene Targets:
 
 - `None`
 - `Opacity`
-
-
-
+- `Brightness`
+- `Contrast`
+- `Saturation`
 - `HueShift`
 - `ScaleX`
 - `ScaleY`
@@ -728,3 +728,4 @@ Noch offen:
 
 - Output-Inspector, Masken, Blend-Modi und Render-Transforms sind noch nicht voll end-to-end geschlossen
 - ein finaler Release-Smoke-Test steht noch aus, obwohl die eigentlichen Startblocker im Debug-Build behoben und verifiziert sind
+- Das Connector-Modell wurde auf Media, Control und Event migriert, indem Trigger in Event und Control aufgeteilt wurde. Kompatibilitaet bleibt durch weiche Verbindungsregeln gewaehrleistet.

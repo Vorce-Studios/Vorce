@@ -44,6 +44,9 @@ pub(crate) fn map_effect_type(effect_type: ModEffectType) -> Option<ChainEffectT
         ModEffectType::FilmGrain => ChainEffectType::FilmGrain,
         ModEffectType::Vignette => ChainEffectType::Vignette,
         ModEffectType::LoadLUT
+        | ModEffectType::Brightness
+        | ModEffectType::Contrast
+        | ModEffectType::Saturation
         | ModEffectType::Colorize
         | ModEffectType::Sharpen
         | ModEffectType::Threshold
@@ -52,7 +55,6 @@ pub(crate) fn map_effect_type(effect_type: ModEffectType) -> Option<ChainEffectT
         | ModEffectType::Halftone
         | ModEffectType::Posterize
         | ModEffectType::VHS => return None,
-        ModEffectType::Brightness | ModEffectType::Contrast | ModEffectType::Saturation => ChainEffectType::ColorAdjust,
     })
 }
 
