@@ -62,7 +62,7 @@ impl LayerPanel {
                         if crate::widgets::custom::hold_to_action_button(
                             ui,
                             &i18n.t("btn-eject-all"),
-                            crate::theme::colors::ERROR_COLOR,
+                            crate::theme::colors::WARN_COLOR,
                             &i18n.t("btn-eject-all"),
                         ) {
                             actions.push(UIAction::EjectAllLayers);
