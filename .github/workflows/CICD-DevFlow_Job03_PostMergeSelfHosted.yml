@@ -83,7 +83,6 @@ jobs:
               prNumber = Number.parseInt(process.env.INPUT_PR_NUMBER, 10);
             }
             if (!Number.isInteger(prNumber) || prNumber <= 0) {
-              // If it's not a PR event and not a push, we might still want to allow manual triggers if SHA is provided elsewhere
               if (context.eventName === 'workflow_dispatch') {
                 core.info('Manual dispatch without PR number. Using current SHA.');
                 core.setOutput('should_run', 'true');
@@ -268,11 +267,9 @@ jobs:
         with:
           ref: ${{ needs.resolve-context.outputs.checkout_ref }}
           fetch-depth: 0
-          path: MapFlow
 
       - name: Set Rust Toolchain
         shell: powershell
-        working-directory: MapFlow
         env:
           toolchain: ${{ inputs.toolchain || vars.MAPFLOW_DEFAULT_TOOLCHAIN || 'stable' }}
           RUNNER_OS: ${{ runner.os }}
@@ -301,7 +298,6 @@ jobs:
 
       - name: Run post-merge self-hosted validation script
         shell: powershell
-        working-directory: MapFlow
         env:
           MAPFLOW_PR_NUMBER: ${{ needs.resolve-context.outputs.pr_number }}
           MAPFLOW_PR_HEAD_SHA: ${{ needs.resolve-context.outputs.pr_head_sha }}
@@ -310,7 +306,6 @@ jobs:
           MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION: ${{ vars.MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION || 'false' }}
           MAPFLOW_SELF_HOSTED_RUN_PERFORMANCE_CHECK: ${{ vars.MAPFLOW_SELF_HOSTED_RUN_PERFORMANCE_CHECK || 'false' }}
           MAPFLOW_PERFORMANCE_THRESHOLD: ${{ vars.MAPFLOW_PERFORMANCE_THRESHOLD || '' }}
-          VCPKG_ROOT: ${{ github.workspace }}\MapFlow\vcpkg
           toolchain: ${{ inputs.toolchain || vars.MAPFLOW_DEFAULT_TOOLCHAIN || 'stable' }}
         run: .\scripts\build\self-hosted-post-merge.ps1
 
@@ -319,6 +314,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: visual-capture-${{ needs.resolve-context.outputs.pr_number }}-${{ github.run_id }}
-          path: MapFlow/artifacts/visual-capture
+          path: artifacts/visual-capture
           if-no-files-found: ignore
           retention-days: 14

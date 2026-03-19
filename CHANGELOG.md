@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- 2026-03-18: fix(ci): Fix missing `toolchain` input and repair platform logic in self-hosted post-merge workflow (switched to `powershell` and forced Git Bash into `PATH` to avoid WSL conflicts).
+- 2026-03-18: fix(ci): Final fix for self-hosted post-merge workflow (standardized checkout paths, fixed WSL bash conflict, and improved `vcpkg` detection logic).
 - 2026-03-16: refactor: Decompose module_canvas inspector mod.rs (#1219)
 - 2026-03-16: refactor: Decompose effect_chain_renderer.rs correctly (no regressions) (#-)
 - 2026-03-16: refactor: Decompose ModuleEvaluator into submodules (#1188)
