@@ -129,7 +129,20 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     let _param_updates = app.state.effect_animator_mut().update(dt as f64);
 
     // 7. Graph Evaluation & Bevy Sync (MODULARIZED)
-    let graph_dirty = app.state.module_manager.graph_revision != app.last_graph_revision;
+    let mut graph_dirty = app.state.module_manager.graph_revision != app.last_graph_revision;
+    if graph_dirty {
+        let repaired = app
+            .state
+            .module_manager_mut()
+            .repair_modules(modules_for_eval.iter().copied());
+        if !repaired.is_empty() {
+            tracing::warn!(
+                "Self-heal repaired {} module graph(s) before evaluation.",
+                repaired.len()
+            );
+            graph_dirty = true;
+        }
+    }
     perform_evaluation(app, &modules_for_eval, &analysis_v1, graph_dirty);
 
     // 8. UI State Sync

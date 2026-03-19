@@ -150,6 +150,7 @@ impl Dashboard {
                     crate::icons::AppIcon::ButtonStop,
                     icon_size,
                     colors::ERROR_COLOR,
+                    &locale.t("btn-stop"),
                 ) {
                     action = Some(DashboardAction::SendCommand(MediaPlaybackCommand::Stop));
                 }

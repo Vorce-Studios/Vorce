@@ -553,7 +553,12 @@ impl AppUI {
         }
 
         // Determine context priority: Module > Layer > Output
+<<<<<<< HEAD
         let mut context = crate::InspectorContext::None;
+=======
+        let mut context = crate::panels::inspector::InspectorContext::None;
+        let mut module_part_snapshot = None;
+>>>>>>> main
 
         // 1. Module Selection
         if self.show_module_canvas {
@@ -562,9 +567,26 @@ impl AppUI {
                 let shared_media_ids: Vec<String> =
                     module_manager.shared_media.items.keys().cloned().collect();
 
+<<<<<<< HEAD
                 if let Some(module) = module_manager.get_module_mut(module_id) {
                     if let Some(part_id) = self.module_canvas.get_selected_part_id() {
                         context = crate::InspectorContext::Module {
+=======
+                if let Some(part_id) = self.module_canvas.get_selected_part_id() {
+                    module_part_snapshot = module_manager
+                        .get_module(module_id)
+                        .and_then(|module| {
+                            module
+                                .parts
+                                .iter()
+                                .find(|part| part.id == part_id)
+                                .cloned()
+                                .map(|part| (module_id, part_id, part))
+                        });
+
+                    if let Some(module) = module_manager.get_module_mut(module_id) {
+                        context = crate::panels::inspector::InspectorContext::Module {
+>>>>>>> main
                             canvas: &mut self.module_canvas,
                             module,
                             part_id,
@@ -612,6 +634,22 @@ impl AppUI {
         let action = self
             .inspector_panel
             .show(ui, context, &self.i18n, &mut self.actions);
+
+        if let Some((module_id, part_id, before_part)) = module_part_snapshot {
+            let mut inspector_changed = false;
+            if let Some(module) = module_manager.get_module_mut(module_id) {
+                if let Some(after_part) = module.parts.iter().find(|part| part.id == part_id).cloned()
+                {
+                    if after_part != before_part {
+                        module.update_part_sockets(part_id);
+                        inspector_changed = true;
+                    }
+                }
+            }
+            if inspector_changed {
+                module_manager.mark_dirty();
+            }
+        }
 
         if let Some(action) = action {
             match action {

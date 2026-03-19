@@ -38,7 +38,7 @@ impl TimelineV2 {
                 action = Some(TimelineAction::Play);
             }
 
-            if hold_to_action_button(ui, "Stop", colors::ERROR_COLOR) {
+            if hold_to_action_button(ui, "Stop", colors::ERROR_COLOR, "Stop") {
                 action = Some(TimelineAction::Stop);
             }
 
@@ -192,7 +192,12 @@ impl TimelineV2 {
                 pts_changed = true;
             }
 
-            if ui.button("Clear I/O").clicked() {
+            if crate::widgets::custom::hold_to_action_button(
+                ui,
+                "Clear I/O",
+                crate::theme::colors::WARN_COLOR,
+                "Clear I/O",
+            ) {
                 animator.set_in_out_points(None, None);
             } else if pts_changed {
                 animator.set_in_out_points(Some(in_pt), Some(out_pt));
@@ -299,6 +304,7 @@ impl TimelineV2 {
                     ui,
                     "Clear",
                     crate::theme::colors::WARN_COLOR,
+                    "Clear",
                 ) {
                     self.module_arrangement.clear();
                     self.reset_runtime_selection();

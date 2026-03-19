@@ -104,6 +104,7 @@ pub fn show_osc_panel(
                         ui,
                         &format!("{}##{}", app_ui.i18n.t("btn-remove"), addr),
                         crate::theme::colors::WARN_COLOR,
+                        &app_ui.i18n.t("btn-remove"),
                     ) {
                         mappings_to_remove.push(addr.clone());
                     }

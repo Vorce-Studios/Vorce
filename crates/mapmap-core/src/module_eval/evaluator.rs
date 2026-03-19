@@ -1360,15 +1360,20 @@ mod tests_evaluator {
         if let Some(part) = module.parts.iter_mut().find(|p| p.id == m_id) {
             part.link_data.mode = LinkMode::Master;
             part.link_data.trigger_input_enabled = true; // Use trigger input to drive link
-            part.outputs.push(crate::module::ModuleSocket {
-                name: "Link Out".to_string(),
-                socket_type: crate::module::ModuleSocketType::Link,
-            });
+            part.outputs.push(crate::module::ModuleSocket::output(
+                "link_out",
+                "Link Out",
+                crate::module::ModuleSocketType::Link,
+            ));
             // Also needs Trigger In socket if enabled
-            part.inputs.push(crate::module::ModuleSocket {
-                name: "Trigger In (Vis)".to_string(),
-                socket_type: crate::module::ModuleSocketType::Trigger,
-            });
+            part.inputs.push(
+                crate::module::ModuleSocket::input_mappable(
+                    "trigger_vis_in",
+                    "Trigger In (Vis)",
+                    crate::module::ModuleSocketType::Trigger,
+                )
+                .multi_input(),
+            );
         }
 
         // Driving Trigger
@@ -1389,10 +1394,11 @@ mod tests_evaluator {
         // Configure as Slave
         if let Some(part) = module.parts.iter_mut().find(|p| p.id == s_id) {
             part.link_data.mode = LinkMode::Slave;
-            part.inputs.push(crate::module::ModuleSocket {
-                name: "Link In".to_string(),
-                socket_type: crate::module::ModuleSocketType::Link,
-            });
+            part.inputs.push(crate::module::ModuleSocket::input(
+                "link_in",
+                "Link In",
+                crate::module::ModuleSocketType::Link,
+            ));
         }
 
         // Connect Master Link Out -> Slave Link In
