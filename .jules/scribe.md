@@ -43,7 +43,3 @@ I have addressed several broken links and outdated status indicators in the docu
 ## 2026-03-15 - Broken Links to ROADMAP.md
 **Erkenntnis:** The root `ROADMAP.md` was removed/relocated, but multiple documentation files (like `README.md` and files in `docs/`) and the `scripts/dev-tools/check-links.py` script were still referencing it, leading to broken links.
 **Aktion:** Updated all references to point to the new location `docs/project/roadmap/README.md`.
-
-## 2026-03-18 - Fix broken references to ROADMAP.md
-**Erkenntnis:** Mehrere Dateien (`README.md`, `scripts/dev-tools/check-links.py`, und Dateien in `docs/A3_PROJECT/`) verwiesen fälschlicherweise auf `docs/project/roadmap/README.md` anstelle des korrekten Pfads `ROADMAP.md` im Root-Verzeichnis.
-**Aktion:** Alle Verweise wurden korrigiert, um auf das Root `ROADMAP.md` zu zeigen. Die Verweise auf Dokumentations-Indexdateien in `scripts/dev-tools/check-links.py` wurden ebenfalls aktualisiert, um die neue Struktur (`A4_USER`, `A2_DEVELOPMENT`, `A3_PROJECT`) zu reflektieren.

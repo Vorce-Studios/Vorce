@@ -83,7 +83,3 @@
 ## 2024-05-24 – [Empty State Consistency Update]
 **Learning:** Several empty/no data states in various panels and inspectors lacked the italicization required to clearly differentiate them from standard data points.
 **Action:** Applied `.weak().italics()` to these states across `layer.rs`, `source.rs`, `mapping_panel.rs`, and `effect_chain_panel.rs` to enforce consistency with the existing Cyber Dark theme guidelines.
-
-## 2026-03-16 - [Empty State Consistency Update 2]
-**Learning:** Found an empty state message ("No mapping available to edit mesh.") in the Layer Inspector that used hardcoded gray coloring instead of the standard weak italicized text.
-**Action:** Replaced `.color(egui::Color32::GRAY)` with `.weak().italics()` in `layer.rs` to enforce consistency with the existing Cyber Dark theme guidelines.

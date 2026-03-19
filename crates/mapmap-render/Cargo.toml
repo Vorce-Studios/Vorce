@@ -8,7 +8,6 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-anyhow = { workspace = true }
 bytemuck = { workspace = true }
 crossbeam-channel = { workspace = true }
 glam = { workspace = true }

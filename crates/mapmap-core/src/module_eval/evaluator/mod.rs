@@ -977,18 +977,24 @@ mod fault_isolation_tests {
         module.add_part(PartType::Output, (100.0, 0.0));
 
         // Connect the source to a non-existent effect part ID 999
-        module.connections.push(crate::module::types::connection::ModuleConnection {
-            from_part: 1, // Source
-            from_socket: 0,
-            to_part: 999, // Broken Target
-            to_socket: 0,
-        });
+        module
+            .connections
+            .push(crate::module::types::connection::ModuleConnection {
+                from_part: 1, // Source
+                from_socket: 0,
+                to_part: 999, // Broken Target
+                to_socket: 0,
+            });
 
         let shared_media = SharedMediaState::default();
         let result = evaluator.evaluate(module, &shared_media, 1);
 
         // Ensure no panics occurred and result handles the broken state
         // It should still complete evaluation smoothly, omitting broken graph paths.
-        assert_eq!(result.render_ops.len(), 0, "Expected no valid render ops for a broken graph path");
+        assert_eq!(
+            result.render_ops.len(),
+            0,
+            "Expected no valid render ops for a broken graph path"
+        );
     }
 }

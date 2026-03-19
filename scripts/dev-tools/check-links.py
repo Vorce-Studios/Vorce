@@ -24,7 +24,7 @@ def check_file(filepath):
             print(f"  OK: {link}")
 
 check_file('README.md')
-check_file('docs/A4_USER/B1_MANUAL/DOC-C0_README.md')
-check_file('docs/A2_DEVELOPMENT/DOC-B0_README.md')
-check_file('docs/A3_PROJECT/DOC-B0_README.md')
-check_file('ROADMAP.md')
+check_file('docs/user/README.md')
+check_file('docs/dev/README.md')
+check_file('docs/project/README.md')
+check_file('docs/project/roadmap/README.md')

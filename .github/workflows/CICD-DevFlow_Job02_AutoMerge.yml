@@ -3,7 +3,6 @@ name: "CICD-DevFlow: Job02 Auto-Merge"
 on:
   pull_request:
     types: [opened, reopened, synchronize, labeled, unlabeled, ready_for_review]
-    branches: [main]
   workflow_run:
     workflows: ["CICD-DevFlow: Job01 Validation"]
     types: [completed]
@@ -161,8 +160,8 @@ jobs:
                 {
                   name: 'Build & Test (Windows)',
                   source: 'check_run',
-                  allowedConclusions: ['success', 'skipped', 'neutral'],
-                  required: false,
+                  allowedConclusions: ['success'],
+                  required: true,
                 },
                 {
                   name: 'Validation Success',
@@ -227,11 +226,6 @@ jobs:
             }
 
             if (pr.draft || pr.state === 'closed') {
-              return;
-            }
-
-            if (pr.base.ref !== 'main') {
-              // Only auto-merge PRs targeting the main branch
               return;
             }
 
