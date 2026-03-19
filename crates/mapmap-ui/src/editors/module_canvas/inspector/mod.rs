@@ -276,6 +276,20 @@ pub fn render_inspector_for_part(
             trigger::render_trigger_config_ui(canvas, ui, part);
             ui.separator();
 
+            // --- Preview Container (#1041 Preparation) ---
+            if !matches!(part.part_type, ModulePartType::Layer(_)) {
+                render_inspector_preview_toggle(canvas, ui);
+                if canvas.show_inspector_previews {
+                    ui.add_space(6.0);
+                    if let Some(&texture_id) = canvas.node_previews.get(&(module_id, part_id)) {
+                        render_preview_texture(ui, texture_id, "Direct Node Preview");
+                    } else {
+                        ui.label(egui::RichText::new("Preview not available (Runtime/Pipeline not connected)").weak().italics());
+                    }
+                    ui.separator();
+                }
+            }
+
             match &mut part.part_type {
                 ModulePartType::Trigger(trigger) => {
                     trigger::render_trigger_ui(canvas, ui, trigger, part_id);

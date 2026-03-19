@@ -670,10 +670,10 @@ SOLL:
 
 ### P1
 
-- Inspector fuer `HueNodeType::*` implementieren.
+- [x] Inspector fuer `HueNodeType::*` implementieren.
 - `Bevy3DModel`-Inspector implementieren.
-- fehlende TriggerTargets im Inspector nachziehen.
-- Projector-Advanced-Settings (`output_width`, `output_height`, `output_fps`) in den Inspector aufnehmen.
+- [x] fehlende TriggerTargets im Inspector nachziehen.
+- [x] Projector-Advanced-Settings (`output_width`, `output_height`, `output_fps`) in den Inspector aufnehmen.
 - Quick Create, Kontextmenue und Katalog auf dieselbe Definitionsquelle umstellen.
 - NDI/Spout/LiveInput/Shader Nodes nur sichtbar machen, wenn auch Runtime vorhanden ist.
 
