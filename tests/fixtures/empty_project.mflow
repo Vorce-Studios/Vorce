@@ -1,0 +1,34 @@
+{
+  "name": "Empty Project",
+  "version": "0.1.0",
+  "paint_manager": {
+    "paints": []
+  },
+  "mapping_manager": {
+    "mappings": []
+  },
+  "layer_manager": {
+    "layers": []
+  },
+  "output_manager": {
+    "outputs": [],
+    "canvas_width": 1920,
+    "canvas_height": 1080
+  },
+  "module_manager": {
+    "modules": []
+  },
+  "audio_config": {
+    "enabled": false
+  },
+  "oscillator_config": {
+    "enabled": false
+  },
+  "settings": {
+    "master_volume": 1.0,
+    "dark_mode": true,
+    "ui_scale": 1.0,
+    "language": "en",
+    "output_count": 1
+  }
+}
