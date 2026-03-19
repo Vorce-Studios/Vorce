@@ -64,14 +64,36 @@ pub fn render_panel_header<R>(
         })
         .show(ui, |ui| {
             ui.set_width(ui.available_width());
-            ui.horizontal(|ui| {
+
+            // Allocate some exact space at the top-left to get the starting position for the stripe
+            let start_rect = ui.min_rect();
+
+            let response = ui.horizontal(|ui| {
+                // Add subtle left padding horizontally to distance text from the accent stripe
+                ui.add_space(8.0);
+
                 ui.strong(title);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     add_contents(ui)
                 })
                 .inner
-            })
-            .inner
+            });
+
+            // Calculate stripe height using the actual height of the laid-out content
+            let header_rect = response.response.rect;
+            let stripe_rect = egui::Rect::from_min_size(
+                egui::Pos2::new(start_rect.min.x, header_rect.min.y),
+                egui::Vec2::new(2.0, header_rect.height()),
+            );
+
+            // Draw the 2px visual accent stripe on the left edge for the Cyber Dark theme
+            ui.painter().rect_filled(
+                stripe_rect,
+                egui::CornerRadius::ZERO,
+                crate::theme::colors::CYAN_ACCENT,
+            );
+
+            response.inner
         })
         .inner
 }
