@@ -50,8 +50,11 @@ impl ApplicationHandler for MapFlowApp {
         if self.app.is_none() {
             info!("Initializing MapFlow...");
 <<<<<<< HEAD
+<<<<<<< HEAD
             let mut app = pollster::block_on(App::new(event_loop, self.is_automation))
 =======
+=======
+>>>>>>> origin/main
 
             let config = if self.is_automation {
                 InitializationConfig::automation()
@@ -182,7 +185,10 @@ impl ApplicationHandler for MapFlowApp {
                                             width,
                                             height,
                                         );
+<<<<<<< HEAD
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
 
                             let slice = buffer.slice(..);
                             slice.map_async(wgpu::MapMode::Read, |_| {});
@@ -218,7 +224,10 @@ impl ApplicationHandler for MapFlowApp {
                                     error!(
                                         "Could not find composite texture for automation capture"
                                     );
+<<<<<<< HEAD
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
                                 }
                             }
                             drop(mapped);
@@ -387,9 +396,12 @@ impl App {
     /// Global logic update
     pub fn update(&mut self, elwt: &winit::event_loop::ActiveEventLoop, dt: f32) -> Result<()> {
 <<<<<<< HEAD
+<<<<<<< HEAD
         // Run modularized update loop
 =======
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
         crate::app::loops::logic::update(self, elwt, dt)?;
 
         // Special handling for MediaPlaybackCommands from UI
@@ -437,6 +449,7 @@ impl App {
                             let _ = player.command_tx.send(PlaybackCommand::Stop);
                         }
 <<<<<<< HEAD
+<<<<<<< HEAD
                         MediaPlaybackCommand::Reload => unreachable!(
                             "MediaPlaybackCommand::Reload is handled before player dispatch"
                         ),
@@ -453,6 +466,13 @@ impl App {
                         }
                         MediaPlaybackCommand::SetLoop(enabled) => {
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+                        MediaPlaybackCommand::Reload => unreachable!(),
+                        MediaPlaybackCommand::SetSpeed(speed) => {
+                            let _ = player.command_tx.send(PlaybackCommand::SetSpeed(speed));
+                        }
+                        MediaPlaybackCommand::SetLoop(enabled) => {
+>>>>>>> origin/main
                             let mode = if enabled {
                                 mapmap_media::LoopMode::Loop
                             } else {
@@ -462,9 +482,12 @@ impl App {
                         }
                         MediaPlaybackCommand::Seek(position) => {
 <<<<<<< HEAD
+<<<<<<< HEAD
                             info!("Seeking to {} for part_id={}", position, part_id);
 =======
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
                             let _ = player.command_tx.send(PlaybackCommand::Seek(
                                 std::time::Duration::from_secs_f64(position),
                             ));
@@ -525,9 +548,12 @@ fn main() -> Result<()> {
         .with_writer(non_blocking);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     // Combine everything
 =======
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
     tracing_subscriber::registry()
         .with(env_filter)
         .with(console_layer)
@@ -588,25 +614,34 @@ fn run_player_ndi(args: &CliArgs) -> Result<()> {
     crate::player::ndi_player::run(args)
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
 fn run_player_dist(_args: &CliArgs) -> Result<()> {
     info!("Starting Distributed Player mode...");
     Ok(())
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
 fn run_player_legacy(_args: &CliArgs) -> Result<()> {
     info!("Starting Legacy RTSP/H.264 Player mode...");
     Ok(())
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
 fn run_player_pi(_args: &CliArgs) -> Result<()> {
     info!("Starting Raspberry Pi Player mode...");
     Ok(())

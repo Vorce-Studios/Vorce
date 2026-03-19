@@ -43,6 +43,7 @@ pub fn perform_evaluation(
                 .items
                 .extend(eval_result.render_ops.iter().cloned().map(|render_op| {
 <<<<<<< HEAD
+<<<<<<< HEAD
                     let mut diagnostics = Vec::new();
                     if render_op.blend_mode.is_some() {
                         diagnostics.push(
@@ -65,6 +66,11 @@ pub fn perform_evaluation(
                         module_id: *module_id,
                         render_op,
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+                    RuntimeRenderQueueItem {
+                        module_id: *module_id,
+                        render_op,
+>>>>>>> origin/main
                     }
                 }));
         }

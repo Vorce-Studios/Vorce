@@ -45,6 +45,7 @@ impl App {
         let texture_pool = TexturePool::new(backend.device.clone());
         let compositor = Compositor::new(backend.device.clone(), backend.surface_format())?;
 <<<<<<< HEAD
+<<<<<<< HEAD
         let effect_chain_renderer = EffectChainRenderer::new(
             backend.device.clone(),
             backend.queue.clone(),
@@ -59,11 +60,16 @@ impl App {
         let (effect_chain_renderer, preview_effect_chain_renderer) =
             Self::init_renderers(&backend)?;
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+        let (effect_chain_renderer, preview_effect_chain_renderer) =
+            Self::init_renderers(&backend)?;
+>>>>>>> origin/main
         let mesh_renderer = MeshRenderer::new(backend.device.clone(), backend.surface_format())?;
         let mesh_buffer_cache = MeshBufferCache::new();
         let quad_renderer = QuadRenderer::new(&backend.device, backend.surface_format())?;
 
         // Initialize advanced output renderers
+<<<<<<< HEAD
 <<<<<<< HEAD
         let edge_blend_renderer =
             EdgeBlendRenderer::new(backend.device.clone(), backend.surface_format())
@@ -84,6 +90,10 @@ impl App {
         let (edge_blend_renderer, color_calibration_renderer) =
             Self::init_advanced_renderers(&backend);
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+        let (edge_blend_renderer, color_calibration_renderer) =
+            Self::init_advanced_renderers(&backend);
+>>>>>>> origin/main
 
         let mut window_manager = WindowManager::new();
 
@@ -97,6 +107,7 @@ impl App {
         let main_window_id = window_manager.create_main_window_with_geometry(
             elwt,
             &backend,
+<<<<<<< HEAD
 <<<<<<< HEAD
             saved_config.window_width,
             saved_config.window_height,
@@ -116,12 +127,29 @@ impl App {
             },
             saved_config.window_x,
             saved_config.window_y,
+=======
+            if config.is_automation {
+                Some(1280)
+            } else {
+                saved_config.window_width
+            },
+            if config.is_automation {
+                Some(720)
+            } else {
+                saved_config.window_height
+            },
+            saved_config.window_x,
+            saved_config.window_y,
+>>>>>>> origin/main
             if config.is_automation {
                 false
             } else {
                 saved_config.window_maximized
             },
+<<<<<<< HEAD
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
             saved_config.vsync_mode,
         )?;
 
@@ -382,7 +410,10 @@ impl App {
 =======
         // Initialize Audio Analyzer
         let audio_analyzer = mapmap_core::audio::AudioAnalyzer::new(state.audio_config.clone());
+<<<<<<< HEAD
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
 
         // Initialize Audio Analyzer (wrapper around V2 for compatibility)
         let audio_analyzer = mapmap_core::audio::AudioAnalyzer::new(state.audio_config.clone());
@@ -497,6 +528,7 @@ impl App {
         let control_manager = ControlManager::new();
         let sys_info = sysinfo::System::new_all();
 <<<<<<< HEAD
+<<<<<<< HEAD
         let (dummy_texture, dummy_view) = {
             let texture = backend.device.create_texture(&wgpu::TextureDescriptor {
                 label: Some("Dummy Input Texture"),
@@ -521,6 +553,10 @@ impl App {
         let (dummy_texture, dummy_view) =
             Self::create_initial_dummy_texture(&backend, width, height, format);
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+        let (dummy_texture, dummy_view) =
+            Self::create_initial_dummy_texture(&backend, width, height, format);
+>>>>>>> origin/main
 
         #[cfg(feature = "midi")]
         let midi_handler = {
@@ -600,12 +636,16 @@ impl App {
             midi_ports: MidiInputHandler::list_ports().unwrap_or_default(),
             #[cfg(feature = "midi")]
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/main
             selected_midi_port: if MidiInputHandler::list_ports()
                 .unwrap_or_default()
                 .is_empty()
             {
                 None
             } else {
+<<<<<<< HEAD
                 Some(0) // Assuming auto-connect to first port succeeded
 =======
             selected_midi_port: if MidiInputHandler::list_ports().unwrap_or_default().is_empty() {
@@ -613,6 +653,9 @@ impl App {
             } else {
                 Some(0)
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+                Some(0)
+>>>>>>> origin/main
             },
             #[cfg(feature = "ndi")]
             ndi_receivers: std::collections::HashMap::new(),
@@ -645,6 +688,7 @@ impl App {
             media_library: {
                 let mut lib = MediaLibrary::new();
 <<<<<<< HEAD
+<<<<<<< HEAD
                 // Add default search paths for media
                 if let Some(video_dir) = dirs::video_dir() {
                     lib.add_scan_path(video_dir);
@@ -655,6 +699,11 @@ impl App {
                     lib.add_scan_path(video_dir);
                 }
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+                if let Some(video_dir) = dirs::video_dir() {
+                    lib.add_scan_path(video_dir);
+                }
+>>>>>>> origin/main
                 if let Some(project_media) = runtime_paths::existing_resource_path("app_videos") {
                     lib.add_scan_path(project_media);
                 }
@@ -1053,7 +1102,10 @@ impl App {
                 "DISCONNECTED"
             }
         );
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
         info!(
             "- Hue System:     {}",
             if !self.ui_state.user_config.hue_config.bridge_ip.is_empty() {

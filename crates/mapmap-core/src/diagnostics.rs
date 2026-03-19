@@ -157,8 +157,11 @@ mod tests {
         // so we manually push the invalid connection to test the diagnostic function.
 =======
         // Add a connection with an invalid from_part and to_part
+<<<<<<< HEAD
         // we bypass add_connection/connect_parts which would reject it
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
         module.connections.push(crate::module::ModuleConnection {
             from_part: 999,
             from_socket: 0,

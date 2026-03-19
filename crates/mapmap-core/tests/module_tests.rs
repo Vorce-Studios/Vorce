@@ -231,8 +231,13 @@ fn test_update_part_sockets_removes_invalid_connections() {
     let pid1 = module.add_part(PartType::Trigger, (0.0, 0.0));
     let pid2 = module.add_part(PartType::Source, (100.0, 0.0));
 
+<<<<<<< HEAD
     // Create an invalid connection (output socket index out of bounds)
 <<<<<<< HEAD
+=======
+    // Create invalid connection (output socket index out of bounds)
+    // Create invalid connection (output socket index out of bounds)
+>>>>>>> origin/main
     module
         .connections
         .push(mapmap_core::module::ModuleConnection {
@@ -240,7 +245,11 @@ fn test_update_part_sockets_removes_invalid_connections() {
             from_socket: 999,
             to_part: pid2,
             to_socket: 0,
+<<<<<<< HEAD
         });
+=======
+        }); // pid1 only has 1 output
+>>>>>>> origin/main
     module
         .connections
         .push(mapmap_core::module::ModuleConnection {
@@ -248,7 +257,11 @@ fn test_update_part_sockets_removes_invalid_connections() {
             from_socket: 0,
             to_part: pid2,
             to_socket: 999,
+<<<<<<< HEAD
         });
+=======
+        }); // pid2 only has 1 input
+>>>>>>> origin/main
     module
         .connections
         .push(mapmap_core::module::ModuleConnection {
@@ -256,6 +269,7 @@ fn test_update_part_sockets_removes_invalid_connections() {
             from_socket: 0,
             to_part: pid2,
             to_socket: 0,
+<<<<<<< HEAD
         });
 =======
     module.connections.push(mapmap_core::module::ModuleConnection {
@@ -277,11 +291,17 @@ fn test_update_part_sockets_removes_invalid_connections() {
         to_socket: 0,
     });
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+        }); // Valid connection
+>>>>>>> origin/main
 
     assert_eq!(module.connections.len(), 3);
 
+    // Calling update_part_sockets updates sockets, but graph repair is needed to fully clean up
     module.update_part_sockets(pid1);
+    module.repair_graph();
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     // Invalid connection from pid1 should be removed
     assert_eq!(module.connections.len(), 1);
@@ -292,6 +312,8 @@ fn test_update_part_sockets_removes_invalid_connections() {
 =======
     // `repair_graph` scrubs all invalid connections at once now
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
     assert_eq!(module.connections.len(), 1);
 
     assert_eq!(module.connections[0].from_socket, 0);
@@ -314,6 +336,10 @@ fn test_update_part_outputs_delegates() {
     let pid2 = module.add_part(PartType::Source, (100.0, 0.0));
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    // Push directly since add_connection would silently fail
+>>>>>>> origin/main
     module
         .connections
         .push(mapmap_core::module::ModuleConnection {
@@ -322,6 +348,7 @@ fn test_update_part_outputs_delegates() {
             to_part: pid2,
             to_socket: 0,
         });
+<<<<<<< HEAD
 =======
     module.connections.push(mapmap_core::module::ModuleConnection {
         from_part: pid1,
@@ -330,6 +357,8 @@ fn test_update_part_outputs_delegates() {
         to_socket: 0,
     });
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
 
     assert_eq!(module.connections.len(), 1);
     module.update_part_outputs(pid1); // Should call update_part_sockets and clear connection
@@ -583,6 +612,10 @@ fn test_module_add_connection_adds_to_list() {
     };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    // The connections vector needs to be pushed directly since add_connection validates parts.
+>>>>>>> origin/main
     module
         .connections
         .push(mapmap_core::module::ModuleConnection {
@@ -591,6 +624,7 @@ fn test_module_add_connection_adds_to_list() {
             to_part: 2,
             to_socket: 0,
         });
+<<<<<<< HEAD
 =======
     // Bypass connect_parts
     module.connections.push(mapmap_core::module::ModuleConnection {
@@ -600,6 +634,8 @@ fn test_module_add_connection_adds_to_list() {
         to_socket: 0,
     });
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
 
     assert_eq!(module.connections.len(), 1);
     let conn = &module.connections[0];
@@ -622,6 +658,10 @@ fn test_module_remove_connection_removes_exact_match() {
     };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    // Push directly since validate_connection fails if parts are missing
+>>>>>>> origin/main
     module
         .connections
         .push(mapmap_core::module::ModuleConnection {
@@ -638,6 +678,7 @@ fn test_module_remove_connection_removes_exact_match() {
             to_part: 3,
             to_socket: 0,
         });
+<<<<<<< HEAD
 =======
     module.connections.push(mapmap_core::module::ModuleConnection {
         from_part: 1,
@@ -652,6 +693,8 @@ fn test_module_remove_connection_removes_exact_match() {
         to_socket: 0,
     });
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
+=======
+>>>>>>> origin/main
 
     module.remove_connection(1, 0, 2, 0);
 
