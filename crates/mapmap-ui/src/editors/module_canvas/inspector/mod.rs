@@ -343,8 +343,6 @@ pub fn render_inspector_for_part(
                     trigger::render_trigger_ui(canvas, ui, trigger, part_id);
                 }
                 ModulePartType::Source(source) => {
-                    render_standard_texture_preview(canvas, ui, module_id, part_id);
-                    ui.separator();
                     source::render_source_ui(
                         canvas,
                         ui,
@@ -368,7 +366,14 @@ pub fn render_inspector_for_part(
                 ModulePartType::Layer(layer) => {
                     render_inspector_preview_toggle(canvas, ui);
                     render_layer_preview_panel(canvas, ui, module_id, part_id, preview_context);
-                    layer::render_layer_ui(canvas, mesh_editor, last_mesh_edit_id, ui, layer, part_id);
+                    layer::render_layer_ui(
+                        canvas,
+                        mesh_editor,
+                        last_mesh_edit_id,
+                        ui,
+                        layer,
+                        part_id,
+                    );
                 }
                 ModulePartType::Mesh(mesh) => {
                     ui.label("🕸️ Mesh Node");

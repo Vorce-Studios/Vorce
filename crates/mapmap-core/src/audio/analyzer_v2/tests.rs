@@ -1,5 +1,6 @@
 #[cfg(test)]
-use crate::audio::analyzer_v2::{AudioAnalyzerV2, AudioAnalyzerV2Config};
+mod tests_v2 {
+    use crate::audio::analyzer_v2::{AudioAnalyzerV2, AudioAnalyzerV2Config};
 
 #[test]
 fn test_create_analyzer() {
@@ -449,4 +450,5 @@ fn test_bpm_beat_timestamps_limit() {
     let analysis = analyzer.get_latest_analysis();
     assert!(analysis.tempo_bpm.is_some());
     assert_eq!(analyzer.beat_timestamps.len(), 16);
+}
 }

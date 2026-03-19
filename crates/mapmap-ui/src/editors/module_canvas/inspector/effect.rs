@@ -62,7 +62,7 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
 
             // 2. Safe Reset Button (Prominent)
             ui.vertical_centered(|ui| {
-                if crate::widgets::custom::hold_to_action_button(
+                if crate::widgets::hold_to_action_button(
                     ui,
                     "\u{27F2} Safe Reset",
                     Color32::from_rgb(255, 180, 0),
@@ -203,12 +203,6 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                     {
                         changed_type = Some(EffectType::Vignette);
                     }
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::LoadLUT), "Load 3D LUT")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::LoadLUT);
-                    }
                 });
 
             if let Some(new_type) = changed_type {
@@ -252,9 +246,12 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                     let sat = params.entry("saturation".to_string()).or_insert(1.0);
                     ui.add(egui::Slider::new(sat, 0.0..=2.0).text("Saturation"));
                 }
+<<<<<<< HEAD
                 EffectType::LoadLUT | EffectType::Colorize | EffectType::Sharpen | EffectType::Threshold | EffectType::Spiral | EffectType::Pinch | EffectType::Halftone | EffectType::Posterize | EffectType::VHS => {
                     ui.label(egui::RichText::new("Effect not mapped in renderer").weak().italics().color(crate::theme::colors::WARN_COLOR));
                 }
+=======
+>>>>>>> ae090afc
                 _ => {
                     ui.label(
                         egui::RichText::new("No configurable parameters")

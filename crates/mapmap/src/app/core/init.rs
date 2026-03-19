@@ -280,10 +280,7 @@ impl App {
             #[cfg(feature = "midi")]
             midi_ports: MidiInputHandler::list_ports().unwrap_or_default(),
             #[cfg(feature = "midi")]
-            selected_midi_port: if MidiInputHandler::list_ports()
-                .unwrap_or_default()
-                .is_empty()
-            {
+            selected_midi_port: if MidiInputHandler::list_ports().unwrap_or_default().is_empty() {
                 None
             } else {
                 Some(0)
@@ -673,6 +670,7 @@ impl App {
             }
         );
         info!("- Bevy Engine:    INITIALIZED");
+
         #[cfg(feature = "midi")]
         info!(
             "- MIDI System:    {}",
@@ -682,6 +680,7 @@ impl App {
                 "DISCONNECTED"
             }
         );
+
         info!(
             "- Hue System:     {}",
             if !self.ui_state.user_config.hue_config.bridge_ip.is_empty() {

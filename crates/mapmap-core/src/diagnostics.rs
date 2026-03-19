@@ -116,8 +116,12 @@ mod tests {
         };
 
         // Add a connection with an invalid from_part and to_part
+<<<<<<< HEAD
         // `add_connection` performs validation and would silently ignore it,
         // so we manually push the invalid connection to test the diagnostic function.
+=======
+        // we bypass add_connection/connect_parts which would reject it
+>>>>>>> ae090afc
         module.connections.push(crate::module::ModuleConnection {
             from_part: 999,
             from_socket: 0,
