@@ -11,7 +11,8 @@ use mapmap_control::hue::controller::HueController;
 use mapmap_control::midi::MidiInputHandler;
 use mapmap_control::ControlManager;
 use mapmap_core::{
-    audio::backend::cpal_backend::CpalBackend, media_library::MediaLibrary,
+    audio::backend::cpal_backend::CpalBackend,
+    media_library::MediaLibrary,
     module::{ModuleId, ModulePartId},
     AppState, History, ModuleEvaluator, RenderOp,
 };
@@ -93,15 +94,44 @@ pub struct RuntimeRenderQueueItem {
 pub struct RuntimeRenderQueue {
     /// Graph revision that produced this queue.
     pub graph_revision: u64,
-    /// Render items pre-partitioned by target Output ID.
-    pub items: std::collections::HashMap<u64, Vec<RuntimeRenderQueueItem>>,
+    /// Render items grouped later by output.
+    pub items: Vec<RuntimeRenderQueueItem>,
 }
 
 impl RuntimeRenderQueue {
     /// Clear queue contents for reuse.
     pub fn clear(&mut self) {
-        for list in self.items.values_mut() {
-            list.clear();
+        self.items.clear();
+    }
+}
+
+/// Configuration for application initialization.
+#[derive(Default)]
+pub struct InitializationConfig {
+    /// Whether the app is running in automation mode.
+    pub is_automation: bool,
+    /// Whether to skip loading the autosave project.
+    pub skip_autosave: bool,
+    /// Whether to skip audio backend initialization.
+    pub skip_audio: bool,
+    /// Whether to skip MIDI initialization.
+    pub skip_midi: bool,
+    /// Whether to skip MCP server initialization.
+    pub skip_mcp: bool,
+    /// Whether to skip Hue controller initialization.
+    pub skip_hue: bool,
+}
+
+impl InitializationConfig {
+    /// Create a config for automation mode.
+    pub fn automation() -> Self {
+        Self {
+            is_automation: true,
+            skip_autosave: true,
+            skip_audio: true,
+            skip_midi: true,
+            skip_mcp: true,
+            skip_hue: true,
         }
     }
 }
