@@ -60,7 +60,10 @@ pub fn render_layer_ui(
                                 *blend_mode = Some(BlendModeType::Normal);
                             }
                             if ui
-                                .selectable_label(matches!(blend_mode, Some(BlendModeType::Add)), "Add")
+                                .selectable_label(
+                                    matches!(blend_mode, Some(BlendModeType::Add)),
+                                    "Add",
+                                )
                                 .clicked()
                             {
                                 *blend_mode = Some(BlendModeType::Add);
@@ -76,8 +79,11 @@ pub fn render_layer_ui(
                             }
                         });
                     ui.label(
-                        egui::RichText::new(format!("⚠ {}", mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE))
-                            .color(crate::theme::colors::WARN_COLOR)
+                        egui::RichText::new(format!(
+                            "⚠ {}",
+                            mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE
+                        ))
+                        .color(crate::theme::colors::WARN_COLOR),
                     );
                 });
             });
@@ -111,12 +117,14 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
     ui.horizontal(|ui| {
         ui.label("Mask Type:");
         ui.label(
-            egui::RichText::new(format!("⚠ {}", mapmap_core::diagnostics::DEGRADED_FEATURE_MASK))
-                .color(crate::theme::colors::WARN_COLOR)
+            egui::RichText::new(format!(
+                "⚠ {}",
+                mapmap_core::diagnostics::DEGRADED_FEATURE_MASK
+            ))
+            .color(crate::theme::colors::WARN_COLOR),
         );
     });
-    ui.add_enabled_ui(false, |ui| {
-        match mask {
+    ui.add_enabled_ui(false, |ui| match mask {
         MaskType::File { path } => {
             ui.label("📁 Mask File");
             if path.is_empty() {
@@ -191,6 +199,5 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
             ui.add(egui::Slider::new(angle, 0.0..=360.0).text("Angle Â°"));
             ui.add(egui::Slider::new(softness, 0.0..=1.0).text("Softness"));
         }
-    }
     });
 }

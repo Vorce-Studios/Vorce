@@ -176,14 +176,15 @@ pub(crate) fn render_content(
 
     // Accumulate Layers
     for (module_id, op, diagnostics) in target_ops {
-
         for diagnostic in diagnostics {
-            let issue_key = format!("degraded-feature:{}:{}:{}", real_output_id, module_id, diagnostic);
+            let issue_key = format!(
+                "degraded-feature:{}:{}:{}",
+                real_output_id, module_id, diagnostic
+            );
             if should_log_video_issue(video_log_times, issue_key) {
                 tracing::warn!("Feature Degraded: {}", diagnostic);
             }
         }
-
 
         let tex_name = if let Some(src_id) = op.source_part_id {
             format!("part_{}_{}", module_id, src_id)

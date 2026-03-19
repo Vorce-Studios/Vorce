@@ -257,8 +257,11 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                         ui.label("LUT Loading requires a .cube file (not yet implemented in properties panel).");
                     });
                     ui.label(
-                        egui::RichText::new(format!("⚠ {}", mapmap_core::diagnostics::DEGRADED_FEATURE_LOAD_LUT))
-                            .color(crate::theme::colors::WARN_COLOR)
+                        egui::RichText::new(format!(
+                            "⚠ {}",
+                            mapmap_core::diagnostics::DEGRADED_FEATURE_LOAD_LUT
+                        ))
+                        .color(crate::theme::colors::WARN_COLOR),
                     );
                 }
                 _ => {
@@ -290,7 +293,10 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                                 *blend = BlendModeType::Add;
                             }
                             if ui
-                                .selectable_label(matches!(blend, BlendModeType::Multiply), "Multiply")
+                                .selectable_label(
+                                    matches!(blend, BlendModeType::Multiply),
+                                    "Multiply",
+                                )
                                 .clicked()
                             {
                                 *blend = BlendModeType::Multiply;
@@ -302,27 +308,39 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                                 *blend = BlendModeType::Screen;
                             }
                             if ui
-                                .selectable_label(matches!(blend, BlendModeType::Overlay), "Overlay")
+                                .selectable_label(
+                                    matches!(blend, BlendModeType::Overlay),
+                                    "Overlay",
+                                )
                                 .clicked()
                             {
                                 *blend = BlendModeType::Overlay;
                             }
                             if ui
-                                .selectable_label(matches!(blend, BlendModeType::Difference), "Difference")
+                                .selectable_label(
+                                    matches!(blend, BlendModeType::Difference),
+                                    "Difference",
+                                )
                                 .clicked()
                             {
                                 *blend = BlendModeType::Difference;
                             }
                             if ui
-                                .selectable_label(matches!(blend, BlendModeType::Exclusion), "Exclusion")
+                                .selectable_label(
+                                    matches!(blend, BlendModeType::Exclusion),
+                                    "Exclusion",
+                                )
                                 .clicked()
                             {
                                 *blend = BlendModeType::Exclusion;
                             }
                         });
                     ui.label(
-                        egui::RichText::new(format!("⚠ {}", mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE))
-                            .color(crate::theme::colors::WARN_COLOR)
+                        egui::RichText::new(format!(
+                            "⚠ {}",
+                            mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE
+                        ))
+                        .color(crate::theme::colors::WARN_COLOR),
                     );
                 });
                 ui.add(egui::Slider::new(&mut 1.0_f32, 0.0..=1.0).text("Opacity"));

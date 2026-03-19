@@ -42,19 +42,25 @@ pub fn perform_evaluation(
             app.render_queue
                 .items
                 .extend(eval_result.render_ops.iter().cloned().map(|render_op| {
-
                     let mut diagnostics = vec![];
 
                     if render_op.blend_mode.is_some() {
-                        diagnostics.push(mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE.to_string());
+                        diagnostics.push(
+                            mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE.to_string(),
+                        );
                     }
                     if !render_op.masks.is_empty() {
-                        diagnostics.push(mapmap_core::diagnostics::DEGRADED_FEATURE_MASK.to_string());
+                        diagnostics
+                            .push(mapmap_core::diagnostics::DEGRADED_FEATURE_MASK.to_string());
                     }
                     for effect in &render_op.effects {
-                        if let mapmap_core::module::ModulizerType::Effect { effect_type, .. } = effect {
+                        if let mapmap_core::module::ModulizerType::Effect { effect_type, .. } =
+                            effect
+                        {
                             if *effect_type == mapmap_core::module::EffectType::LoadLUT {
-                                diagnostics.push(mapmap_core::diagnostics::DEGRADED_FEATURE_LOAD_LUT.to_string());
+                                diagnostics.push(
+                                    mapmap_core::diagnostics::DEGRADED_FEATURE_LOAD_LUT.to_string(),
+                                );
                             }
                         }
                     }
@@ -64,7 +70,6 @@ pub fn perform_evaluation(
                         render_op,
                         diagnostics,
                     }
-
                 }));
         }
     }

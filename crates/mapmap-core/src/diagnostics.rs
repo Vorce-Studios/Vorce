@@ -208,10 +208,11 @@ mod tests {
     }
 }
 
-
 /// Standardized reasons for features that are temporarily degraded or unsupported in the current renderer.
-pub const DEGRADED_FEATURE_BLEND_MODE: &str = "Blend modes are currently unsupported in this renderer.";
+pub const DEGRADED_FEATURE_BLEND_MODE: &str =
+    "Blend modes are currently unsupported in this renderer.";
 /// Standardized reason for masks being unsupported.
 pub const DEGRADED_FEATURE_MASK: &str = "Masks are currently unsupported in this renderer.";
 /// Standardized reason for LoadLUT being unsupported.
-pub const DEGRADED_FEATURE_LOAD_LUT: &str = "The LoadLUT effect is currently unsupported in this renderer.";
+pub const DEGRADED_FEATURE_LOAD_LUT: &str =
+    "The LoadLUT effect is currently unsupported in this renderer.";
