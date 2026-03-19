@@ -42,9 +42,32 @@ pub fn perform_evaluation(
             app.render_queue
                 .items
                 .extend(eval_result.render_ops.iter().cloned().map(|render_op| {
+                    let mut diagnostics = Vec::new();
+
+                    if render_op.blend_mode.is_some() {
+                        diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
+                            module_id: *module_id,
+                            part_id: render_op.layer_part_id,
+                            severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
+                            code: "blend_mode_unsupported".to_string(),
+                            message: "Blend modes are currently only supported via specific compositing passes.".to_string(),
+                        });
+                    }
+
+                    if !render_op.masks.is_empty() {
+                        diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
+                            module_id: *module_id,
+                            part_id: render_op.layer_part_id,
+                            severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
+                            code: "masks_unsupported".to_string(),
+                            message: "Masks are not yet supported in this render path.".to_string(),
+                        });
+                    }
+
                     RuntimeRenderQueueItem {
                         module_id: *module_id,
                         render_op,
+                        diagnostics,
                     }
                 }));
         }
