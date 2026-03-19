@@ -102,7 +102,7 @@ pub(crate) fn prepare_texture_previews(app: &mut App, encoder: &mut wgpu::Comman
             RenderContext {
                 device: &app.backend.device,
                 queue: &app.backend.queue,
-                render_ops: &app.render_ops,
+                render_queue: &app.render_queue.items,
                 output_manager: &app.state.output_manager,
                 edge_blend_renderer: &app.edge_blend_renderer,
                 color_calibration_renderer: &app.color_calibration_renderer,

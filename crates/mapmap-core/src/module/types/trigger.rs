@@ -254,54 +254,56 @@ impl AudioTriggerOutputConfig {
 
         if self.frequency_bands {
             let bands = [
-                "SubBass Out",
-                "Bass Out",
-                "LowMid Out",
-                "Mid Out",
-                "HighMid Out",
-                "UpperMid Out",
-                "Presence Out",
-                "Brilliance Out",
-                "Air Out",
+                ("sub_bass_out", "SubBass Out"),
+                ("bass_out", "Bass Out"),
+                ("low_mid_out", "LowMid Out"),
+                ("mid_out", "Mid Out"),
+                ("high_mid_out", "HighMid Out"),
+                ("upper_mid_out", "UpperMid Out"),
+                ("presence_out", "Presence Out"),
+                ("brilliance_out", "Brilliance Out"),
+                ("air_out", "Air Out"),
             ];
-            for b in bands {
-                outputs.push(ModuleSocket {
-                    name: b.to_string(),
-                    socket_type: ModuleSocketType::Trigger,
-                });
+            for (id, name) in bands {
+                outputs.push(ModuleSocket::output(id, name, ModuleSocketType::Trigger));
             }
         }
 
         if self.volume_outputs {
-            outputs.push(ModuleSocket {
-                name: "RMS Volume".to_string(),
-                socket_type: ModuleSocketType::Trigger,
-            });
-            outputs.push(ModuleSocket {
-                name: "Peak Volume".to_string(),
-                socket_type: ModuleSocketType::Trigger,
-            });
+            outputs.push(ModuleSocket::output(
+                "rms_volume",
+                "RMS Volume",
+                ModuleSocketType::Trigger,
+            ));
+            outputs.push(ModuleSocket::output(
+                "peak_volume",
+                "Peak Volume",
+                ModuleSocketType::Trigger,
+            ));
         }
 
         if self.beat_output {
-            outputs.push(ModuleSocket {
-                name: "Beat Out".to_string(),
-                socket_type: ModuleSocketType::Trigger,
-            });
+            outputs.push(ModuleSocket::output(
+                "beat_out",
+                "Beat Out",
+                ModuleSocketType::Trigger,
+            ));
         }
 
         if self.bpm_output {
-            outputs.push(ModuleSocket {
-                name: "BPM Out".to_string(),
-                socket_type: ModuleSocketType::Trigger,
-            });
+            outputs.push(ModuleSocket::output(
+                "bpm_out",
+                "BPM Out",
+                ModuleSocketType::Trigger,
+            ));
         }
 
         if outputs.is_empty() {
-            outputs.push(ModuleSocket {
-                name: "Beat Out".to_string(),
-                socket_type: ModuleSocketType::Trigger,
-            });
+            outputs.push(ModuleSocket::output(
+                "beat_out",
+                "Beat Out",
+                ModuleSocketType::Trigger,
+            ));
         }
 
         outputs

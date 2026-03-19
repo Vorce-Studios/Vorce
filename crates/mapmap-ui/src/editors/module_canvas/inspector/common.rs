@@ -1,8 +1,8 @@
+use super::super::state::ModuleCanvas;
+use super::super::types::MediaPlaybackCommand;
 use crate::widgets::{styled_drag_value, styled_slider};
 use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use mapmap_core::module::{BlendModeType, ModulePartId};
-use super::super::state::ModuleCanvas;
-use super::super::types::MediaPlaybackCommand;
 
 /// Renders the common transform and color correction controls for a media source.
 #[allow(clippy::too_many_arguments)]
@@ -225,7 +225,8 @@ pub fn render_transport_controls(
         ui.add_space(8.0);
 
         // STOP (Destructive Action - Separated)
-        if crate::widgets::hold_to_action_button(ui, "⏹", Color32::from_rgb(255, 80, 80)) {
+        if crate::widgets::hold_to_action_button(ui, "⏹", Color32::from_rgb(255, 80, 80), "Stop")
+        {
             canvas
                 .pending_playback_commands
                 .push((part_id, MediaPlaybackCommand::Stop));
