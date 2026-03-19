@@ -1,5 +1,5 @@
 //!
-//! Module part types.
+//! Module part types..
 //!
 
 use crate::module::types::hue::HueNodeType;
