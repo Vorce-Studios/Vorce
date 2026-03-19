@@ -15,7 +15,7 @@ fn test_app_automation_empty_project() {
 
     let fixture_path = workspace_root.join("tests/fixtures/empty_project.mflow");
     let output_dir = workspace_root.join("target/automation_test_output");
-    
+
     if output_dir.exists() {
         std::fs::remove_dir_all(&output_dir).ok();
     }
@@ -53,7 +53,7 @@ fn test_app_automation_empty_project() {
     // Verify screenshot was created
     let screenshot_path = output_dir.join("automation_frame_10.png");
     assert!(screenshot_path.exists(), "screenshot was not created at {:?}", screenshot_path);
-    
+
     let img = image::open(&screenshot_path).expect("failed to open created screenshot");
     assert_eq!(img.width(), 1280);
     assert_eq!(img.height(), 720);

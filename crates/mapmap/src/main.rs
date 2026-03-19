@@ -49,7 +49,7 @@ impl ApplicationHandler for MapFlowApp {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.app.is_none() {
             info!("Initializing MapFlow...");
-            
+
             let config = if self.is_automation {
                 InitializationConfig::automation()
             } else {
@@ -196,7 +196,7 @@ impl App {
                     }
                     WindowEvent::Resized(size) => {
                         let new_size =
-                            if let Some(window_context) = self.window_manager.get_mut(output_id) {    
+                            if let Some(window_context) = self.window_manager.get_mut(output_id) {
                                 if size.width > 0 && size.height > 0 {
                                     window_context.surface_config.width = size.width;
                                     window_context.surface_config.height = size.height;
@@ -222,7 +222,7 @@ impl App {
                             }
                             None => {
                                 tracing::warn!(
-                                    "Resize event received but no valid new size was determined."     
+                                    "Resize event received but no valid new size was determined."
                                 );
                             }
                         }
@@ -282,12 +282,12 @@ impl App {
                     }
 
                     elwt.set_control_flow(winit::event_loop::ControlFlow::WaitUntil(
-                        self.last_update + std::time::Duration::from_secs_f32(target_interval),       
+                        self.last_update + std::time::Duration::from_secs_f32(target_interval),
                     ));
                 } else {
                     let wait_until =
-                        self.last_update + std::time::Duration::from_secs_f32(target_interval);       
-                    elwt.set_control_flow(winit::event_loop::ControlFlow::WaitUntil(wait_until));     
+                        self.last_update + std::time::Duration::from_secs_f32(target_interval);
+                    elwt.set_control_flow(winit::event_loop::ControlFlow::WaitUntil(wait_until));
                 }
             }
             _ => (),
@@ -302,7 +302,7 @@ impl App {
     }
 
     /// Global logic update
-    pub fn update(&mut self, elwt: &winit::event_loop::ActiveEventLoop, dt: f32) -> Result<()> {      
+    pub fn update(&mut self, elwt: &winit::event_loop::ActiveEventLoop, dt: f32) -> Result<()> {
         crate::app::loops::logic::update(self, elwt, dt)?;
 
         let commands = self.ui_state.module_canvas.take_playback_commands();
@@ -340,7 +340,7 @@ impl App {
                         MediaPlaybackCommand::SetSpeed(speed) => { let _ = player.command_tx.send(PlaybackCommand::SetSpeed(speed)); }
                         MediaPlaybackCommand::SetLoop(enabled) => {
                             let mode = if enabled { mapmap_media::LoopMode::Loop } else { mapmap_media::LoopMode::PlayOnce };
-                            let _ = player.command_tx.send(PlaybackCommand::SetLoopMode(mode));       
+                            let _ = player.command_tx.send(PlaybackCommand::SetLoopMode(mode));
                         }
                         MediaPlaybackCommand::Seek(position) => {
                             let _ = player.command_tx.send(PlaybackCommand::Seek(std::time::Duration::from_secs_f64(position)));

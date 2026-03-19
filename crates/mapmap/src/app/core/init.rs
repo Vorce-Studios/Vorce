@@ -19,7 +19,7 @@ use mapmap_core::{
 use mapmap_io::load_project;
 use mapmap_mcp::McpServer;
 use mapmap_render::{
-    ColorCalibrationRenderer, Compositor, EdgeBlendRenderer, EffectChainRenderer, MeshBufferCache,    
+    ColorCalibrationRenderer, Compositor, EdgeBlendRenderer, EffectChainRenderer, MeshBufferCache,
     MeshRenderer, OscillatorRenderer, QuadRenderer, TexturePool, WgpuBackend,
 };
 use mapmap_ui::AppUI;
@@ -44,7 +44,7 @@ impl App {
         // Initialize renderers
         let texture_pool = TexturePool::new(backend.device.clone());
         let compositor = Compositor::new(backend.device.clone(), backend.surface_format())?;
-        let (effect_chain_renderer, preview_effect_chain_renderer) = Self::init_renderers(&backend)?; 
+        let (effect_chain_renderer, preview_effect_chain_renderer) = Self::init_renderers(&backend)?;
         let mesh_renderer = MeshRenderer::new(backend.device.clone(), backend.surface_format())?;
         let mesh_buffer_cache = MeshBufferCache::new();
         let quad_renderer = QuadRenderer::new(&backend.device, backend.surface_format())?;
@@ -99,14 +99,14 @@ impl App {
                 width,
                 height,
                 backend.surface_format(),
-                wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,        
+                wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
             ),
             texture_pool.create(
                 "layer_pong_1",
                 width,
                 height,
                 backend.surface_format(),
-                wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,        
+                wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
             ),
         ];
 
@@ -157,7 +157,7 @@ impl App {
         };
 
         // Initialize Audio Analyzer
-        let audio_analyzer = mapmap_core::audio::AudioAnalyzer::new(state.audio_config.clone());      
+        let audio_analyzer = mapmap_core::audio::AudioAnalyzer::new(state.audio_config.clone());
 
         // Start MCP Server
         let (mcp_sender, mcp_receiver) = unbounded();
@@ -233,7 +233,7 @@ impl App {
             last_autosave: std::time::Instant::now(),
             last_update: std::time::Instant::now(),
             start_time: std::time::Instant::now(),
-            startup_animation: crate::app::core::app_struct::StartupAnimationState::default(),        
+            startup_animation: crate::app::core::app_struct::StartupAnimationState::default(),
             last_texture_gc: std::time::Instant::now(),
             mcp_receiver,
             action_sender,
@@ -303,7 +303,7 @@ impl App {
 
     // Helper methods for modular initialization
 
-    fn init_renderers(backend: &WgpuBackend) -> Result<(EffectChainRenderer, EffectChainRenderer)> {  
+    fn init_renderers(backend: &WgpuBackend) -> Result<(EffectChainRenderer, EffectChainRenderer)> {
         let effect_chain_renderer = EffectChainRenderer::new(
             backend.device.clone(),
             backend.queue.clone(),
@@ -441,7 +441,7 @@ impl App {
 
     fn start_mcp_server(mcp_sender: crossbeam_channel::Sender<mapmap_mcp::McpAction>) {
         thread::spawn(move || {
-            let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();     
+            let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
             rt.block_on(async {
                 let server = McpServer::new(Some(mcp_sender));
                 if let Err(e) = server.run_stdio().await {
@@ -464,14 +464,14 @@ impl App {
         }
     }
 
-    fn init_preview_quad_buffers(mesh_renderer: &MeshRenderer) -> (wgpu::Buffer, wgpu::Buffer, u32) { 
+    fn init_preview_quad_buffers(mesh_renderer: &MeshRenderer) -> (wgpu::Buffer, wgpu::Buffer, u32) {
         let preview_mesh = mapmap_core::Mesh {
             mesh_type: mapmap_core::MeshType::Quad,
             vertices: vec![
-                mapmap_core::MeshVertex::new(glam::Vec2::new(0.0, 0.0), glam::Vec2::new(0.0, 0.0)),   
-                mapmap_core::MeshVertex::new(glam::Vec2::new(1.0, 0.0), glam::Vec2::new(1.0, 0.0)),   
-                mapmap_core::MeshVertex::new(glam::Vec2::new(1.0, 1.0), glam::Vec2::new(1.0, 1.0)),   
-                mapmap_core::MeshVertex::new(glam::Vec2::new(0.0, 1.0), glam::Vec2::new(0.0, 1.0)),   
+                mapmap_core::MeshVertex::new(glam::Vec2::new(0.0, 0.0), glam::Vec2::new(0.0, 0.0)),
+                mapmap_core::MeshVertex::new(glam::Vec2::new(1.0, 0.0), glam::Vec2::new(1.0, 0.0)),
+                mapmap_core::MeshVertex::new(glam::Vec2::new(1.0, 1.0), glam::Vec2::new(1.0, 1.0)),
+                mapmap_core::MeshVertex::new(glam::Vec2::new(0.0, 1.0), glam::Vec2::new(0.0, 1.0)),
             ],
             indices: vec![0, 1, 2, 0, 2, 3],
             revision: 0,
@@ -491,7 +491,7 @@ impl App {
         })
     }
 
-    fn connect_hue(controller: &mut HueController, ui_state: &AppUI, rt: &tokio::runtime::Runtime) {  
+    fn connect_hue(controller: &mut HueController, ui_state: &AppUI, rt: &tokio::runtime::Runtime) {
         if !ui_state.user_config.hue_config.bridge_ip.is_empty() && ui_state.user_config.hue_config.auto_connect {
             info!("Initializing Hue Controller...");
             if let Err(e) = rt.block_on(controller.connect()) {
@@ -508,7 +508,7 @@ impl App {
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format,
-            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,     
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[],
         });
         let view = std::sync::Arc::new(texture.create_view(&wgpu::TextureViewDescriptor::default()));
@@ -548,7 +548,7 @@ impl App {
     }
 
     /// Creates or recreates the dummy texture for effect input.
-    pub fn create_dummy_texture(&mut self, width: u32, height: u32, format: wgpu::TextureFormat) {    
+    pub fn create_dummy_texture(&mut self, width: u32, height: u32, format: wgpu::TextureFormat) {
         let texture = self
             .backend
             .device
