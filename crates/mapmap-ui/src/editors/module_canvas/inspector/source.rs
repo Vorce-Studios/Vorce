@@ -967,26 +967,33 @@ pub fn render_source_ui(
             exposure,
         } => {
             ui.label("☁️ Atmosphere Settings");
+            ui.label(
+                egui::RichText::new(format!("⚠ {}", mapmap_core::diagnostics::DEGRADED_NODE_BEVY_UNSUPPORTED))
+                    .color(crate::theme::colors::WARN_COLOR)
+                    .small(),
+            );
             ui.separator();
 
-            ui.add(egui::Slider::new(turbidity, 0.0..=10.0).text("Turbidity"));
-            ui.add(egui::Slider::new(rayleigh, 0.0..=10.0).text("Rayleigh"));
-            ui.add(egui::Slider::new(mie_coeff, 0.0..=0.1).text("Mie Coeff"));
-            ui.add(egui::Slider::new(mie_directional_g, 0.0..=1.0).text("Mie Dir G"));
-            ui.add(egui::Slider::new(exposure, 0.0..=10.0).text("Exposure"));
+            ui.add_enabled_ui(false, |ui| {
+                ui.add(egui::Slider::new(turbidity, 0.0..=10.0).text("Turbidity"));
+                ui.add(egui::Slider::new(rayleigh, 0.0..=10.0).text("Rayleigh"));
+                ui.add(egui::Slider::new(mie_coeff, 0.0..=0.1).text("Mie Coeff"));
+                ui.add(egui::Slider::new(mie_directional_g, 0.0..=1.0).text("Mie Dir G"));
+                ui.add(egui::Slider::new(exposure, 0.0..=10.0).text("Exposure"));
 
-            ui.label("Sun Position (Azimuth, Elevation):");
-            ui.horizontal(|ui| {
-                ui.add(
-                    egui::DragValue::new(&mut sun_position.0)
-                        .prefix("Az:")
-                        .speed(0.1),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut sun_position.1)
-                        .prefix("El:")
-                        .speed(0.1),
-                );
+                ui.label("Sun Position (Azimuth, Elevation):");
+                ui.horizontal(|ui| {
+                    ui.add(
+                        egui::DragValue::new(&mut sun_position.0)
+                            .prefix("Az:")
+                            .speed(0.1),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut sun_position.1)
+                            .prefix("El:")
+                            .speed(0.1),
+                    );
+                });
             });
         }
         SourceType::BevyHexGrid {
@@ -999,52 +1006,59 @@ pub fn render_source_ui(
             scale,
         } => {
             ui.label("\u{2B22} Hex Grid Settings");
+            ui.label(
+                egui::RichText::new(format!("⚠ {}", mapmap_core::diagnostics::DEGRADED_NODE_BEVY_UNSUPPORTED))
+                    .color(crate::theme::colors::WARN_COLOR)
+                    .small(),
+            );
             ui.separator();
 
-            ui.add(egui::DragValue::new(radius).prefix("Radius:").speed(0.1));
-            ui.add(egui::DragValue::new(rings).prefix("Rings:"));
-            ui.add(egui::DragValue::new(spacing).prefix("Spacing:").speed(0.1));
-            ui.checkbox(pointy_top, "Pointy Top");
+            ui.add_enabled_ui(false, |ui| {
+                ui.add(egui::DragValue::new(radius).prefix("Radius:").speed(0.1));
+                ui.add(egui::DragValue::new(rings).prefix("Rings:"));
+                ui.add(egui::DragValue::new(spacing).prefix("Spacing:").speed(0.1));
+                ui.checkbox(pointy_top, "Pointy Top");
 
-            ui.label("Position:");
-            ui.horizontal(|ui| {
-                ui.add(
-                    egui::DragValue::new(&mut position[0])
-                        .prefix("X:")
-                        .speed(0.1),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut position[1])
-                        .prefix("Y:")
-                        .speed(0.1),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut position[2])
-                        .prefix("Z:")
-                        .speed(0.1),
-                );
+                ui.label("Position:");
+                ui.horizontal(|ui| {
+                    ui.add(
+                        egui::DragValue::new(&mut position[0])
+                            .prefix("X:")
+                            .speed(0.1),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut position[1])
+                            .prefix("Y:")
+                            .speed(0.1),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut position[2])
+                            .prefix("Z:")
+                            .speed(0.1),
+                    );
+                });
+
+                ui.label("Rotation:");
+                ui.horizontal(|ui| {
+                    ui.add(
+                        egui::DragValue::new(&mut rotation[0])
+                            .prefix("X:")
+                            .speed(1.0),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut rotation[1])
+                            .prefix("Y:")
+                            .speed(1.0),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut rotation[2])
+                            .prefix("Z:")
+                            .speed(1.0),
+                    );
+                });
+
+                ui.add(egui::DragValue::new(scale).prefix("Scale:").speed(0.1));
             });
-
-            ui.label("Rotation:");
-            ui.horizontal(|ui| {
-                ui.add(
-                    egui::DragValue::new(&mut rotation[0])
-                        .prefix("X:")
-                        .speed(1.0),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut rotation[1])
-                        .prefix("Y:")
-                        .speed(1.0),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut rotation[2])
-                        .prefix("Z:")
-                        .speed(1.0),
-                );
-            });
-
-            ui.add(egui::DragValue::new(scale).prefix("Scale:").speed(0.1));
         }
         SourceType::BevyParticles {
             rate,
@@ -1056,61 +1070,68 @@ pub fn render_source_ui(
             rotation,
         } => {
             ui.label("\u{2728} Particle System Settings");
+            ui.label(
+                egui::RichText::new(format!("⚠ {}", mapmap_core::diagnostics::DEGRADED_NODE_BEVY_UNSUPPORTED))
+                    .color(crate::theme::colors::WARN_COLOR)
+                    .small(),
+            );
             ui.separator();
 
-            ui.add(egui::DragValue::new(rate).prefix("Rate:").speed(1.0));
-            ui.add(
-                egui::DragValue::new(lifetime)
-                    .prefix("Lifetime:")
-                    .speed(0.1),
-            );
-            ui.add(egui::DragValue::new(speed).prefix("Speed:").speed(0.1));
-
-            ui.horizontal(|ui| {
-                ui.label("Start Color:");
-                ui.color_edit_button_rgba_unmultiplied(color_start);
-            });
-            ui.horizontal(|ui| {
-                ui.label("End Color:");
-                ui.color_edit_button_rgba_unmultiplied(color_end);
-            });
-
-            ui.label("Position:");
-            ui.horizontal(|ui| {
+            ui.add_enabled_ui(false, |ui| {
+                ui.add(egui::DragValue::new(rate).prefix("Rate:").speed(1.0));
                 ui.add(
-                    egui::DragValue::new(&mut position[0])
-                        .prefix("X:")
+                    egui::DragValue::new(lifetime)
+                        .prefix("Lifetime:")
                         .speed(0.1),
                 );
-                ui.add(
-                    egui::DragValue::new(&mut position[1])
-                        .prefix("Y:")
-                        .speed(0.1),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut position[2])
-                        .prefix("Z:")
-                        .speed(0.1),
-                );
-            });
+                ui.add(egui::DragValue::new(speed).prefix("Speed:").speed(0.1));
 
-            ui.label("Rotation:");
-            ui.horizontal(|ui| {
-                ui.add(
-                    egui::DragValue::new(&mut rotation[0])
-                        .prefix("X:")
-                        .speed(1.0),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut rotation[1])
-                        .prefix("Y:")
-                        .speed(1.0),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut rotation[2])
-                        .prefix("Z:")
-                        .speed(1.0),
-                );
+                ui.horizontal(|ui| {
+                    ui.label("Start Color:");
+                    ui.color_edit_button_rgba_unmultiplied(color_start);
+                });
+                ui.horizontal(|ui| {
+                    ui.label("End Color:");
+                    ui.color_edit_button_rgba_unmultiplied(color_end);
+                });
+
+                ui.label("Position:");
+                ui.horizontal(|ui| {
+                    ui.add(
+                        egui::DragValue::new(&mut position[0])
+                            .prefix("X:")
+                            .speed(0.1),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut position[1])
+                            .prefix("Y:")
+                            .speed(0.1),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut position[2])
+                            .prefix("Z:")
+                            .speed(0.1),
+                    );
+                });
+
+                ui.label("Rotation:");
+                ui.horizontal(|ui| {
+                    ui.add(
+                        egui::DragValue::new(&mut rotation[0])
+                            .prefix("X:")
+                            .speed(1.0),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut rotation[1])
+                            .prefix("Y:")
+                            .speed(1.0),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut rotation[2])
+                            .prefix("Z:")
+                            .speed(1.0),
+                    );
+                });
             });
         }
         SourceType::Bevy3DShape {
@@ -1248,17 +1269,74 @@ pub fn render_source_ui(
                 });
             });
         }
-        SourceType::Bevy3DModel { .. } => {
+        SourceType::Bevy3DModel {
+            path,
+            position,
+            rotation,
+            scale,
+            color,
+            unlit,
+            outline_width,
+            outline_color,
+        } => {
             ui.label("\u{1F3AE} Bevy 3D Model");
-            ui.label("Model controls not yet implemented.");
+            ui.separator();
+
+            ui.horizontal(|ui| {
+                ui.label("Path:");
+                ui.text_edit_singleline(path);
+                if ui.button("Select...").clicked() {
+                    actions.push(UIAction::PickMediaFile(module_id, part_id, "".to_string()));
+                }
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("Color:");
+                ui.color_edit_button_rgba_unmultiplied(color);
+            });
+
+            ui.checkbox(unlit, "Unlit (No Shading)");
+
+            ui.separator();
+
+            ui.collapsing("📐 Transform (3D)", |ui| {
+                ui.label("Position:");
+                ui.horizontal(|ui| {
+                    ui.add(egui::DragValue::new(&mut position[0]).speed(0.1).prefix("X: "));
+                    ui.add(egui::DragValue::new(&mut position[1]).speed(0.1).prefix("Y: "));
+                    ui.add(egui::DragValue::new(&mut position[2]).speed(0.1).prefix("Z: "));
+                });
+
+                ui.label("Rotation:");
+                ui.horizontal(|ui| {
+                    ui.add(egui::DragValue::new(&mut rotation[0]).speed(1.0).prefix("X: ").suffix("°"));
+                    ui.add(egui::DragValue::new(&mut rotation[1]).speed(1.0).prefix("Y: ").suffix("°"));
+                    ui.add(egui::DragValue::new(&mut rotation[2]).speed(1.0).prefix("Z: ").suffix("°"));
+                });
+
+                ui.label("Scale:");
+                ui.horizontal(|ui| {
+                    ui.add(egui::DragValue::new(&mut scale[0]).speed(0.01).prefix("X: "));
+                    ui.add(egui::DragValue::new(&mut scale[1]).speed(0.01).prefix("Y: "));
+                    ui.add(egui::DragValue::new(&mut scale[2]).speed(0.01).prefix("Z: "));
+                });
+            });
+
+            ui.separator();
+            ui.collapsing("Outline", |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Width:");
+                    ui.add(egui::Slider::new(outline_width, 0.0..=10.0));
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Color:");
+                    ui.color_edit_button_rgba_unmultiplied(outline_color);
+                });
+            });
         }
         SourceType::Bevy => {
             ui.label("\u{1F3AE} Bevy Scene");
-            ui.label(
-                egui::RichText::new("Rendering Internal 3D Scene")
-                    .weak()
-                    .italics(),
-            );
+            super::common::render_missing_preview_banner(ui, "Rendering Internal 3D Scene");
             ui.small("The scene is rendered internally and available as 'bevy_output'");
         }
     }

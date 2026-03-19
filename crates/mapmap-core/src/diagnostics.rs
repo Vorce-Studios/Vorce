@@ -207,3 +207,15 @@ mod tests {
         assert!(issues[0].message.contains("no file selected"));
     }
 }
+
+/// Standardized reasons for features that are temporarily degraded or unsupported in the current renderer.
+pub const DEGRADED_FEATURE_BLEND_MODE: &str =
+    "Blend modes are currently unsupported in this renderer.";
+/// Standardized reason for masks being unsupported.
+pub const DEGRADED_FEATURE_MASK: &str = "Masks are currently unsupported in this renderer.";
+/// Standardized reason for LoadLUT being unsupported.
+pub const DEGRADED_FEATURE_LOAD_LUT: &str =
+    "The LoadLUT effect is currently unsupported in this renderer.";
+/// Standardized reason for unsupported Bevy nodes.
+pub const DEGRADED_NODE_BEVY_UNSUPPORTED: &str =
+    "This Bevy node is currently unsupported in this renderer.";
