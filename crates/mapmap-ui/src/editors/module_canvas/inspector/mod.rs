@@ -159,7 +159,71 @@ fn render_preview_texture(ui: &mut Ui, texture_id: egui::TextureId, caption: &st
     ui.small(caption);
 }
 
+<<<<<<< HEAD
 fn render_layer_preview_panel(
+=======
+pub fn render_standard_texture_preview(
+    canvas: &mut ModuleCanvas,
+    ui: &mut Ui,
+    module_id: ModuleId,
+    part_id: ModulePartId,
+) {
+    render_inspector_preview_toggle(canvas, ui);
+    if !canvas.show_inspector_previews {
+        return;
+    }
+
+    ui.add_space(6.0);
+    if let Some(&texture_id) = canvas.node_previews.get(&(module_id, part_id)) {
+        render_preview_texture(ui, texture_id, "Live node preview");
+    } else {
+        ui.group(|ui| {
+            ui.label(
+                egui::RichText::new("No preview available yet.")
+                    .weak()
+                    .italics(),
+            );
+        });
+    }
+}
+
+pub fn render_output_texture_preview(
+    canvas: &mut ModuleCanvas,
+    ui: &mut Ui,
+    preview_context: &InspectorPreviewContext,
+) {
+    render_inspector_preview_toggle(canvas, ui);
+    if !canvas.show_inspector_previews {
+        return;
+    }
+
+    ui.add_space(6.0);
+
+    let mut preview_found = false;
+    for output_id in &preview_context.output_ids {
+        if let Some(&texture_id) = canvas.output_previews.get(output_id) {
+            render_preview_texture(
+                ui,
+                texture_id,
+                &format!("Linked output preview (Output {})", output_id),
+            );
+            preview_found = true;
+        }
+    }
+
+    if !preview_found {
+        ui.group(|ui| {
+            ui.label(
+                egui::RichText::new("No preview available yet.")
+                    .weak()
+                    .italics(),
+            );
+        });
+    }
+}
+
+pub fn render_layer_preview_panel(
+>>>>>>> origin/main
     canvas: &mut ModuleCanvas,
     ui: &mut Ui,
     module_id: ModuleId,

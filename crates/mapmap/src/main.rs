@@ -49,7 +49,7 @@ impl ApplicationHandler for MapFlowApp {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.app.is_none() {
             info!("Initializing MapFlow...");
-            
+
             let config = if self.is_automation {
                 InitializationConfig::automation()
             } else {
@@ -125,13 +125,14 @@ impl ApplicationHandler for MapFlowApp {
                                 );
 
                                 if let Some(texture) = app.texture_pool.get_texture("composite") {
-                                    let (buffer, padded_bytes_per_row) = mapmap_render::capture::queue_readback_copy(
-                                        &app.backend.device,
-                                        &mut encoder,
-                                        &texture,
-                                        width,
-                                        height,
-                                    );
+                                    let (buffer, padded_bytes_per_row) =
+                                        mapmap_render::capture::queue_readback_copy(
+                                            &app.backend.device,
+                                            &mut encoder,
+                                            &texture,
+                                            width,
+                                            height,
+                                        );
 
                                     app.backend.queue.submit(std::iter::once(encoder.finish()));
 
@@ -147,7 +148,9 @@ impl ApplicationHandler for MapFlowApp {
                                         error!("Failed to save automation screenshot: {}", e);
                                     }
                                 } else {
-                                    error!("Could not find composite texture for automation capture");
+                                    error!(
+                                        "Could not find composite texture for automation capture"
+                                    );
                                 }
                             }
                         }
@@ -196,7 +199,7 @@ impl App {
                     }
                     WindowEvent::Resized(size) => {
                         let new_size =
-                            if let Some(window_context) = self.window_manager.get_mut(output_id) {    
+                            if let Some(window_context) = self.window_manager.get_mut(output_id) {
                                 if size.width > 0 && size.height > 0 {
                                     window_context.surface_config.width = size.width;
                                     window_context.surface_config.height = size.height;
@@ -222,7 +225,7 @@ impl App {
                             }
                             None => {
                                 tracing::warn!(
-                                    "Resize event received but no valid new size was determined."     
+                                    "Resize event received but no valid new size was determined."
                                 );
                             }
                         }
@@ -282,12 +285,12 @@ impl App {
                     }
 
                     elwt.set_control_flow(winit::event_loop::ControlFlow::WaitUntil(
-                        self.last_update + std::time::Duration::from_secs_f32(target_interval),       
+                        self.last_update + std::time::Duration::from_secs_f32(target_interval),
                     ));
                 } else {
                     let wait_until =
-                        self.last_update + std::time::Duration::from_secs_f32(target_interval);       
-                    elwt.set_control_flow(winit::event_loop::ControlFlow::WaitUntil(wait_until));     
+                        self.last_update + std::time::Duration::from_secs_f32(target_interval);
+                    elwt.set_control_flow(winit::event_loop::ControlFlow::WaitUntil(wait_until));
                 }
             }
             _ => (),
@@ -302,7 +305,7 @@ impl App {
     }
 
     /// Global logic update
-    pub fn update(&mut self, elwt: &winit::event_loop::ActiveEventLoop, dt: f32) -> Result<()> {      
+    pub fn update(&mut self, elwt: &winit::event_loop::ActiveEventLoop, dt: f32) -> Result<()> {
         crate::app::loops::logic::update(self, elwt, dt)?;
 
         let commands = self.ui_state.module_canvas.take_playback_commands();
@@ -320,9 +323,13 @@ impl App {
 
                 if cmd == MediaPlaybackCommand::Reload {
                     if self.media_players.remove(&player_key).is_some() {
-                        info!("Removed old media player for part_id={} for reload", part_id);
+                        info!(
+                            "Removed old media player for part_id={} for reload",
+                            part_id
+                        );
                     }
-                    self.texture_pool.release(&format!("part_{}_{}", mod_id, part_id));
+                    self.texture_pool
+                        .release(&format!("part_{}_{}", mod_id, part_id));
                     crate::orchestration::media::sync_media_players(self);
                     continue;
                 }
@@ -333,20 +340,37 @@ impl App {
 
                 if let Some(player) = self.media_players.get_mut(&player_key) {
                     match cmd {
-                        MediaPlaybackCommand::Play => { let _ = player.command_tx.send(PlaybackCommand::Play); }
-                        MediaPlaybackCommand::Pause => { let _ = player.command_tx.send(PlaybackCommand::Pause); }
-                        MediaPlaybackCommand::Stop => { let _ = player.command_tx.send(PlaybackCommand::Stop); }
+                        MediaPlaybackCommand::Play => {
+                            let _ = player.command_tx.send(PlaybackCommand::Play);
+                        }
+                        MediaPlaybackCommand::Pause => {
+                            let _ = player.command_tx.send(PlaybackCommand::Pause);
+                        }
+                        MediaPlaybackCommand::Stop => {
+                            let _ = player.command_tx.send(PlaybackCommand::Stop);
+                        }
                         MediaPlaybackCommand::Reload => unreachable!(),
-                        MediaPlaybackCommand::SetSpeed(speed) => { let _ = player.command_tx.send(PlaybackCommand::SetSpeed(speed)); }
+                        MediaPlaybackCommand::SetSpeed(speed) => {
+                            let _ = player.command_tx.send(PlaybackCommand::SetSpeed(speed));
+                        }
                         MediaPlaybackCommand::SetLoop(enabled) => {
-                            let mode = if enabled { mapmap_media::LoopMode::Loop } else { mapmap_media::LoopMode::PlayOnce };
-                            let _ = player.command_tx.send(PlaybackCommand::SetLoopMode(mode));       
+                            let mode = if enabled {
+                                mapmap_media::LoopMode::Loop
+                            } else {
+                                mapmap_media::LoopMode::PlayOnce
+                            };
+                            let _ = player.command_tx.send(PlaybackCommand::SetLoopMode(mode));
                         }
                         MediaPlaybackCommand::Seek(position) => {
-                            let _ = player.command_tx.send(PlaybackCommand::Seek(std::time::Duration::from_secs_f64(position)));
+                            let _ = player.command_tx.send(PlaybackCommand::Seek(
+                                std::time::Duration::from_secs_f64(position),
+                            ));
                         }
                         MediaPlaybackCommand::SetReverse(reverse) => {
-                            info!("Setting reverse playback to {} for part_id={} (NOT IMPLEMENTED)", reverse, part_id);
+                            info!(
+                                "Setting reverse playback to {} for part_id={} (NOT IMPLEMENTED)",
+                                reverse, part_id
+                            );
                         }
                     }
                 }
@@ -387,7 +411,11 @@ fn main() -> Result<()> {
         .with_target(true)
         .with_writer(non_blocking);
 
-    tracing_subscriber::registry().with(env_filter).with(console_layer).with(file_layer).init();
+    tracing_subscriber::registry()
+        .with(env_filter)
+        .with(console_layer)
+        .with(file_layer)
+        .init();
 
     info!("Starting MapFlow in {:?} mode...", args.mode);
 
@@ -431,7 +459,18 @@ fn run_automation(args: &CliArgs) -> Result<()> {
     Ok(())
 }
 
-fn run_player_ndi(args: &CliArgs) -> Result<()> { crate::player::ndi_player::run(args) }
-fn run_player_dist(_args: &CliArgs) -> Result<()> { info!("Starting Distributed Player mode..."); Ok(()) }
-fn run_player_legacy(_args: &CliArgs) -> Result<()> { info!("Starting Legacy RTSP/H.264 Player mode..."); Ok(()) }
-fn run_player_pi(_args: &CliArgs) -> Result<()> { info!("Starting Raspberry Pi Player mode..."); Ok(()) }
+fn run_player_ndi(args: &CliArgs) -> Result<()> {
+    crate::player::ndi_player::run(args)
+}
+fn run_player_dist(_args: &CliArgs) -> Result<()> {
+    info!("Starting Distributed Player mode...");
+    Ok(())
+}
+fn run_player_legacy(_args: &CliArgs) -> Result<()> {
+    info!("Starting Legacy RTSP/H.264 Player mode...");
+    Ok(())
+}
+fn run_player_pi(_args: &CliArgs) -> Result<()> {
+    info!("Starting Raspberry Pi Player mode...");
+    Ok(())
+}
