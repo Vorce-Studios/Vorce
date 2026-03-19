@@ -31,8 +31,8 @@ permissions:
   actions: read
 
 concurrency:
-  group: post-merge-self-hosted-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.run_id }}
-  cancel-in-progress: false
+  group: post-merge-self-hosted-${{ github.event.pull_request.number || github.event.inputs.pr_number || 'main-push' }}
+  cancel-in-progress: true
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
