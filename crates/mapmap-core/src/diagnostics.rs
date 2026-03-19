@@ -152,7 +152,12 @@ mod tests {
         };
 
         // Add a connection with an invalid from_part and to_part
-        module.connections.push(crate::module::ModuleConnection { from_part: 999, from_socket: 0, to_part: 1000, to_socket: 0 });
+        module.connections.push(crate::module::ModuleConnection {
+            from_part: 999,
+            from_socket: 0,
+            to_part: 1000,
+            to_socket: 0,
+        });
 
         let issues = check_module_integrity(&module);
         assert_eq!(issues.len(), 2); // missing from and to parts
