@@ -3,7 +3,7 @@ use mapmap_core::module::{BlendModeType, EffectType};
 /// Determines if a given BlendMode is currently supported by the render pipeline.
 pub fn is_blend_mode_supported(blend_mode: &BlendModeType) -> bool {
     // Currently ignored in the final render according to DOC-C10.
-    // However, if we need to keep some active for testing or future-proofing, we can list them.
+    // However, if we need to keep some active for testing or future-proofing, we can list them..
     // For now, let's just say only Normal is truly supported since others are ignored.
     matches!(blend_mode, BlendModeType::Normal)
 }
