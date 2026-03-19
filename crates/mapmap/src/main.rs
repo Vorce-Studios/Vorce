@@ -465,6 +465,7 @@ impl App {
                             let _ = player.command_tx.send(PlaybackCommand::SetSpeed(speed));
                         }
                         MediaPlaybackCommand::SetLoop(enabled) => {
+<<<<<<< HEAD
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
 =======
                         MediaPlaybackCommand::Reload => unreachable!(),
@@ -473,11 +474,17 @@ impl App {
                         }
                         MediaPlaybackCommand::SetLoop(enabled) => {
 >>>>>>> origin/main
+=======
+<<<<<<< HEAD
+                            let mode = if enabled { mapmap_media::LoopMode::Loop } else { mapmap_media::LoopMode::PlayOnce };
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
                             let mode = if enabled {
                                 mapmap_media::LoopMode::Loop
                             } else {
                                 mapmap_media::LoopMode::PlayOnce
                             };
+>>>>>>> origin/main
                             let _ = player.command_tx.send(PlaybackCommand::SetLoopMode(mode));
                         }
                         MediaPlaybackCommand::Seek(position) => {

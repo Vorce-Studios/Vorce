@@ -285,6 +285,10 @@ pub(crate) fn render_content(
         if let Some(src_ref) = source_view {
             let mut final_source_view = src_ref.clone();
 
+            if !op.masks.is_empty() {
+                tracing::warn!("Mask rendering is currently not implemented, ignoring {} masks.", op.masks.len());
+            }
+
             if !op.effects.is_empty() {
                 let effect_chain = build_effect_chain(&op.effects);
                 if !effect_chain.effects.is_empty() {

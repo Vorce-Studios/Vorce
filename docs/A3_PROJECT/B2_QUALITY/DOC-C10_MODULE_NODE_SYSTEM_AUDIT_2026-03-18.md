@@ -118,13 +118,13 @@ Wichtige Probleme:
 
 | Node | Core | Canvas create | Inspector | Runtime | IST-Bewertung |
 | --- | --- | --- | --- | --- | --- |
-| `MaskType::File` | Ja | Nein | Ja | Nein | UI vorhanden, Renderpfad ignoriert `op.masks` |
+| `MaskType::File` | Ja | Ja | Ja | Nein | UI vorhanden, Renderpfad ignoriert `op.masks` |
 | `MaskType::Shape` | Ja | Ja | Ja | Nein | UI vorhanden, Renderpfad ignoriert `op.masks` |
 | `MaskType::Gradient` | Ja | Ja | Ja | Nein | UI vorhanden, Renderpfad ignoriert `op.masks` |
 
 Wichtige Probleme:
 
-- Der Evaluator sammelt Masken in `RenderOp.masks`, der Renderpfad verwendet diese Liste aber nicht.
+- Masken werden in `RenderOp.masks` gesammelt und im Renderpfad mittels Warning sicher ausgeblendet (sauber gegatet).
 - `MaskType::File` ist im Core und Inspector vorhanden, im Node-Katalog bzw. im Create-Menue aber nicht sichtbar.
 
 ### 3.4 Modulizer / Effect Nodes
@@ -159,9 +159,9 @@ Renderbar laut `map_effect_type`:
 Im Core definiert, im Canvas teils creatable, aber im Renderpfad derzeit nicht gemappt:
 
 - `LoadLUT`
-- `Brightness`
-- `Contrast`
-- `Saturation`
+
+
+
 - `Colorize`
 - `Sharpen`
 - `Threshold`
@@ -178,15 +178,15 @@ Inspector-Parameter aktuell nur fuer:
 - `FilmGrain`
 - `Vignette`
 - `ChromaticAberration`
-- `Brightness`
-- `Contrast`
-- `Saturation`
+
+
+
 
 Wichtige Probleme:
 
 - Der Inspector listet nur einen Teil der `EffectType`-Varianten im Wechselmenue.
 - Mehrere Effekte sind im Core deklariert und ueber Quick Create indirekt erzeugbar, aber nicht renderbar.
-- `Brightness`, `Contrast`, `Saturation` haben Inspector-Controls, werden aber aktuell gerade nicht in `map_effect_type` auf den Renderer gemappt.
+- Brightness, Contrast, Saturation sind auf ColorAdjust gemappt und renderbar.
 - `BlendMode`- und `AudioReactive`-Modulatoren werden im Evaluator zwar in die Chain aufgenommen, spaeter aber verworfen.
 - Die "Opacity"-UI bei `BlendMode` und die "Smoothing"-UI bei `AudioReactive` schreiben nur in temporare lokale Werte und haben keine dauerhafte Wirkung.
 
@@ -194,7 +194,7 @@ Wichtige Probleme:
 
 | Node | Core | Canvas create | Inspector | Runtime | IST-Bewertung |
 | --- | --- | --- | --- | --- | --- |
-| `MeshType::*` als eigener Node | Ja | Nein | Ja | Teilweise | existiert im Modell und Traversal, aber nicht als regulaer creatable Canvas-Node |
+| `MeshType::*` als eigener Node | Ja | Ja | Ja | Ja | Ist regulaer im Node-Katalog creatable und wird ins Mesh uebersetzt |
 
 Core-Mesh-Varianten:
 
@@ -295,9 +295,9 @@ Derzeit angebotene Targets:
 
 - `None`
 - `Opacity`
-- `Brightness`
-- `Contrast`
-- `Saturation`
+
+
+
 - `HueShift`
 - `ScaleX`
 - `ScaleY`

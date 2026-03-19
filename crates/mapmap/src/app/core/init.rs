@@ -46,6 +46,7 @@ impl App {
         let compositor = Compositor::new(backend.device.clone(), backend.surface_format())?;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         let effect_chain_renderer = EffectChainRenderer::new(
             backend.device.clone(),
             backend.queue.clone(),
@@ -63,6 +64,12 @@ impl App {
 =======
         let (effect_chain_renderer, preview_effect_chain_renderer) =
             Self::init_renderers(&backend)?;
+=======
+        let (effect_chain_renderer, preview_effect_chain_renderer) = Self::init_renderers(&backend)?;
+=======
+        let (effect_chain_renderer, preview_effect_chain_renderer) =
+            Self::init_renderers(&backend)?;
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
 >>>>>>> origin/main
         let mesh_renderer = MeshRenderer::new(backend.device.clone(), backend.surface_format())?;
         let mesh_buffer_cache = MeshBufferCache::new();
@@ -637,6 +644,7 @@ impl App {
             #[cfg(feature = "midi")]
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> origin/main
             selected_midi_port: if MidiInputHandler::list_ports()
@@ -648,6 +656,8 @@ impl App {
 <<<<<<< HEAD
                 Some(0) // Assuming auto-connect to first port succeeded
 =======
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
             selected_midi_port: if MidiInputHandler::list_ports().unwrap_or_default().is_empty() {
                 None
             } else {
@@ -947,10 +957,14 @@ impl App {
 
     fn start_mcp_server(mcp_sender: crossbeam_channel::Sender<mapmap_mcp::McpAction>) {
         thread::spawn(move || {
+<<<<<<< HEAD
+            let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+=======
             let rt = tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
                 .unwrap();
+>>>>>>> origin/main
             rt.block_on(async {
                 let server = McpServer::new(Some(mcp_sender));
                 if let Err(e) = server.run_stdio().await {
@@ -982,9 +996,13 @@ impl App {
         }
     }
 
+<<<<<<< HEAD
+    fn init_preview_quad_buffers(mesh_renderer: &MeshRenderer) -> (wgpu::Buffer, wgpu::Buffer, u32) {
+=======
     fn init_preview_quad_buffers(
         mesh_renderer: &MeshRenderer,
     ) -> (wgpu::Buffer, wgpu::Buffer, u32) {
+>>>>>>> origin/main
         let preview_mesh = mapmap_core::Mesh {
             mesh_type: mapmap_core::MeshType::Quad,
             vertices: vec![
@@ -1012,9 +1030,13 @@ impl App {
     }
 
     fn connect_hue(controller: &mut HueController, ui_state: &AppUI, rt: &tokio::runtime::Runtime) {
+<<<<<<< HEAD
+        if !ui_state.user_config.hue_config.bridge_ip.is_empty() && ui_state.user_config.hue_config.auto_connect {
+=======
         if !ui_state.user_config.hue_config.bridge_ip.is_empty()
             && ui_state.user_config.hue_config.auto_connect
         {
+>>>>>>> origin/main
             info!("Initializing Hue Controller...");
             if let Err(e) = rt.block_on(controller.connect()) {
                 warn!("Hue Controller initial connection failed: {}", e);
@@ -1103,9 +1125,13 @@ impl App {
             }
         );
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> origin/main
+=======
+
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
         info!(
             "- Hue System:     {}",
             if !self.ui_state.user_config.hue_config.bridge_ip.is_empty() {

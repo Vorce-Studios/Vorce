@@ -232,6 +232,9 @@ fn test_update_part_sockets_removes_invalid_connections() {
     let pid2 = module.add_part(PartType::Source, (100.0, 0.0));
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
     // Create an invalid connection (output socket index out of bounds)
 <<<<<<< HEAD
 =======
@@ -290,10 +293,13 @@ fn test_update_part_sockets_removes_invalid_connections() {
         to_part: pid2,
         to_socket: 0,
     });
+<<<<<<< HEAD
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
 =======
         }); // Valid connection
 >>>>>>> origin/main
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
 
     assert_eq!(module.connections.len(), 3);
 
@@ -301,6 +307,7 @@ fn test_update_part_sockets_removes_invalid_connections() {
     module.update_part_sockets(pid1);
     module.repair_graph();
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     // Invalid connection from pid1 should be removed
@@ -314,6 +321,8 @@ fn test_update_part_sockets_removes_invalid_connections() {
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
 =======
 >>>>>>> origin/main
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
     assert_eq!(module.connections.len(), 1);
 
     assert_eq!(module.connections[0].from_socket, 0);
@@ -337,6 +346,7 @@ fn test_update_part_outputs_delegates() {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     // Push directly since add_connection would silently fail
 >>>>>>> origin/main
@@ -350,15 +360,20 @@ fn test_update_part_outputs_delegates() {
         });
 <<<<<<< HEAD
 =======
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
     module.connections.push(mapmap_core::module::ModuleConnection {
         from_part: pid1,
         from_socket: 999,
         to_part: pid2,
         to_socket: 0,
     });
+<<<<<<< HEAD
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
 =======
 >>>>>>> origin/main
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
 
     assert_eq!(module.connections.len(), 1);
     module.update_part_outputs(pid1); // Should call update_part_sockets and clear connection
@@ -613,6 +628,16 @@ fn test_module_add_connection_adds_to_list() {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    // Bypass connect_parts
+    module.connections.push(mapmap_core::module::ModuleConnection {
+        from_part: 1,
+        from_socket: 0,
+        to_part: 2,
+        to_socket: 0,
+    });
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
 =======
     // The connections vector needs to be pushed directly since add_connection validates parts.
 >>>>>>> origin/main
@@ -625,6 +650,7 @@ fn test_module_add_connection_adds_to_list() {
             to_socket: 0,
         });
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     // Bypass connect_parts
     module.connections.push(mapmap_core::module::ModuleConnection {
@@ -635,6 +661,8 @@ fn test_module_add_connection_adds_to_list() {
     });
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
 =======
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
 >>>>>>> origin/main
 
     assert_eq!(module.connections.len(), 1);
@@ -659,6 +687,7 @@ fn test_module_remove_connection_removes_exact_match() {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     // Push directly since validate_connection fails if parts are missing
 >>>>>>> origin/main
@@ -680,6 +709,8 @@ fn test_module_remove_connection_removes_exact_match() {
         });
 <<<<<<< HEAD
 =======
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
     module.connections.push(mapmap_core::module::ModuleConnection {
         from_part: 1,
         from_socket: 0,
@@ -692,9 +723,12 @@ fn test_module_remove_connection_removes_exact_match() {
         to_part: 3,
         to_socket: 0,
     });
+<<<<<<< HEAD
 >>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
 =======
 >>>>>>> origin/main
+=======
+>>>>>>> MF-SubI_Effect-Mask-Mesh-Nodes-Migration-390479776812751095
 
     module.remove_connection(1, 0, 2, 0);
 
