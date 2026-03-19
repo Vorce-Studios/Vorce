@@ -44,8 +44,8 @@ Es gibt jetzt zwei klar getrennte Ebenen:
 
 2. `mapmap::RuntimeRenderQueue`
    - ist die visuelle Queue fuer den aktuellen Frame
-   - enthaelt `RuntimeRenderQueueItem { module_id, render_op }`
-   - wird pro Frame aus den Evaluator-Ergebnissen neu aufgebaut
+   - enthaelt `RuntimeRenderQueueItem { module_id, render_op }` gruppiert in einer `HashMap<u64, Vec<RuntimeRenderQueueItem>>` (Partitioniert pro Output-ID).
+   - wird pro Frame aus den Evaluator-Ergebnissen neu aufgebaut, vor-partitioniert und für die Render-Schleife deterministisch sortiert.
 
 ## 4. Ablauf pro Frame
 
@@ -69,7 +69,7 @@ In `crates/mapmap/src/orchestration/evaluation.rs`:
 
 In `crates/mapmap/src/app/loops/render/content.rs`:
 
-- Der Render-Loop filtert `RuntimeRenderQueueItem`s pro Output.
+- Der Render-Loop ruft mit der aktuellen Output-ID die bereits vor-gefilterten und sortierten Listen aus der `HashMap` ab (O(1)). Es gibt keinen manuellen, per-Frame Listenscan und keine Sortierung pro Frame mehr.
 - Danach werden Effekte, Mesh-Rendering und Output-spezifische Post-Schritte angewandt.
 
 ### 4.4 Media

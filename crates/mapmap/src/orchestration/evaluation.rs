@@ -39,15 +39,26 @@ pub fn perform_evaluation(
                     .insert(*part_id, max_val);
             }
 
-            app.render_queue
-                .items
-                .extend(eval_result.render_ops.iter().cloned().map(|render_op| {
-                    RuntimeRenderQueueItem {
+            for render_op in eval_result.render_ops.iter().cloned() {
+                let target_output_id = match &render_op.output_type {
+                    mapmap_core::module::OutputType::Projector { id, .. } => *id,
+                    _ => render_op.output_part_id,
+                };
+                app.render_queue
+                    .items
+                    .entry(target_output_id)
+                    .or_default()
+                    .push(RuntimeRenderQueueItem {
                         module_id: *module_id,
                         render_op,
-                    }
-                }));
+                    });
+            }
         }
+    }
+
+    // Pre-sort per output to ensure deterministic layer ordering
+    for items in app.render_queue.items.values_mut() {
+        items.sort_by(|a, b| b.render_op.output_part_id.cmp(&a.render_op.output_part_id));
     }
 
     // Sync with Bevy (only if runner exists)
