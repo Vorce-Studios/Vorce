@@ -207,8 +207,7 @@ impl ModulePartType {
             },
             ModulePartType::Mesh(_) => (
                 vec![
-                    ModuleSocket::input("media_in", "Vertex In", ModuleSocketType::Media)
-                        .primary(),
+                    ModuleSocket::input("media_in", "Vertex In", ModuleSocketType::Media).primary(),
                     ModuleSocket::input_mappable(
                         "trigger_in",
                         "Control In",
