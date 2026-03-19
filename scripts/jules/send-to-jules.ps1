@@ -1,3 +1,3 @@
 $ScriptDir = Split-Path -Parent $PSCommandPath
-& (Join-Path $ScriptDir 'create-jules-session.ps1') @args
+& (Join-Path $ScriptDir '..\archive\review\jules\send-to-jules.ps1') @args
 exit $LASTEXITCODE
