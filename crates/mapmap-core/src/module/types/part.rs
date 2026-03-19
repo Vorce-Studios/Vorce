@@ -135,15 +135,24 @@ impl ModulePartType {
             | ModulePartType::Source(SourceType::BevyHexGrid { .. })
             | ModulePartType::Source(SourceType::Bevy3DShape { .. })
             | ModulePartType::Source(SourceType::BevyCamera { .. }) => (
-                vec![ModuleSocket::standard_trigger_in("trigger_in", "Trigger In")],
+                vec![ModuleSocket::standard_trigger_in(
+                    "trigger_in",
+                    "Trigger In",
+                )],
                 vec![ModuleSocket::standard_media_out("media_out", "Media Out").primary()],
             ),
             ModulePartType::Source(SourceType::BevyParticles { .. }) => (
-                vec![ModuleSocket::standard_trigger_in("spawn_trigger", "Spawn Trigger")],
+                vec![ModuleSocket::standard_trigger_in(
+                    "spawn_trigger",
+                    "Spawn Trigger",
+                )],
                 vec![ModuleSocket::standard_media_out("media_out", "Media Out").primary()],
             ),
             ModulePartType::Source(_) => (
-                vec![ModuleSocket::standard_trigger_in("trigger_in", "Trigger In")],
+                vec![ModuleSocket::standard_trigger_in(
+                    "trigger_in",
+                    "Trigger In",
+                )],
                 vec![ModuleSocket::standard_media_out("media_out", "Media Out").primary()],
             ),
             ModulePartType::Output(out) => match out {
