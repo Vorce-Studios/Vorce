@@ -376,12 +376,9 @@ pub(crate) fn render_content(
             );
 
             let texture_bind_group = mesh_renderer.get_texture_bind_group(&final_source_view);
-            let (vb, ib, cnt) = ctx.mesh_buffer_cache.get_buffers(
-                device,
-                queue,
-                op.layer_part_id,
-                &mesh_data,
-            );
+            let (vb, ib, cnt) =
+                ctx.mesh_buffer_cache
+                    .get_buffers(device, queue, op.layer_part_id, &mesh_data);
 
             let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Mesh Layer Pass"),
