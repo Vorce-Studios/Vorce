@@ -84,36 +84,33 @@ pub fn render_add_node_menu_content(
             }
             if super::super::inspector::capabilities::is_source_type_enum_supported(
                 true, false, false, false,
-            ) {
-                if ui.button("🎨 Shader").clicked() {
-                    add_node(ModulePartType::Source(SourceType::Shader {
-                        name: "Default".to_string(),
-                        params: Vec::new(),
-                    }));
-                    ui.close();
-                }
+            ) && ui.button("🎨 Shader").clicked()
+            {
+                add_node(ModulePartType::Source(SourceType::Shader {
+                    name: "Default".to_string(),
+                    params: Vec::new(),
+                }));
+                ui.close();
             }
             #[cfg(feature = "ndi")]
             if super::super::inspector::capabilities::is_source_type_enum_supported(
                 false, false, true, false,
-            ) {
-                if ui.button("📡 NDI Input").clicked() {
-                    add_node(ModulePartType::Source(SourceType::NdiInput {
-                        source_name: None,
-                    }));
-                    ui.close();
-                }
+            ) && ui.button("📡 NDI Input").clicked()
+            {
+                add_node(ModulePartType::Source(SourceType::NdiInput {
+                    source_name: None,
+                }));
+                ui.close();
             }
             #[cfg(target_os = "windows")]
             if super::super::inspector::capabilities::is_source_type_enum_supported(
                 false, false, false, true,
-            ) {
-                if ui.button("🚀 Spout Input").clicked() {
-                    add_node(ModulePartType::Source(SourceType::SpoutInput {
-                        sender_name: String::new(),
-                    }));
-                    ui.close();
-                }
+            ) && ui.button("🚀 Spout Input").clicked()
+            {
+                add_node(ModulePartType::Source(SourceType::SpoutInput {
+                    sender_name: String::new(),
+                }));
+                ui.close();
             }
             ui.separator();
             ui.label("Bevy 3D:");
