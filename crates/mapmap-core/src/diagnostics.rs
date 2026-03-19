@@ -5,80 +5,125 @@
 //!
 //! # Features
 //!
-//! - **ModuleIssue**: Data structure for reporting problems.
-//! - **check_module_integrity**: Scans a module for connectivity issues.
-//! - **check_all_modules**: Scans all modules in a manager.
+//! - **ModuleIssue**: Represents a detected problem (Error, Warning, Info).
+//! - **check_module_integrity**: Main function to validate a `MapFlowModule`.
 
-use crate::module::{MapFlowModule, ModuleConnection, ModuleManager, ModulePartType, OutputType};
-use serde::{Deserialize, Serialize};
+use crate::module::{MapFlowModule, ModulePartType};
 
-/// Severity levels for module issues.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+/// Represents an issue found within a module
+#[derive(Debug, Clone)]
+pub struct ModuleIssue {
+    /// Severity level of the issue
+    pub severity: IssueSeverity,
+    /// Human-readable description
+    pub message: String,
+    /// ID of the part related to the issue (if any)
+    pub part_id: Option<u64>,
+}
+
+/// Severity level of a diagnostic issue
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum IssueSeverity {
-    /// Errors must be fixed for the module to function (e.g. broken source links).
+    /// Critical error that prevents proper functioning
     Error,
-    /// Warnings indicate potential issues but don't prevent execution (e.g. unlinked nodes).
+    /// Potential issue or suboptimal configuration
     Warning,
-    /// Informational notes.
+    /// Informational message
     Info,
 }
 
-/// A single issue found during module diagnostics.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ModuleIssue {
-    /// Unique ID of the affected part (if any).
-    pub part_id: Option<u64>,
-    /// Human-readable description of the issue.
-    pub message: String,
-    /// Severity level.
-    pub severity: IssueSeverity,
-}
-
-/// Checks a single module for structural and logical errors.
+/// Check a module for structural integrity and logical errors
+///
+/// This performs multiple checks:
+/// 1. Connection validity (dangling references, out-of-bounds sockets)
+/// 2. Part configuration (missing files, disconnected outputs)
 pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
     let mut issues = Vec::new();
 
-    // 1. Check connections
-    for conn in &module.connections {
-        if !module.parts.iter().any(|p| p.id == conn.from_part) {
+    // 1. Check connections validity (Topology)
+    for (idx, conn) in module.connections.iter().enumerate() {
+        let from_part = module.parts.iter().find(|p| p.id == conn.from_part);
+        let to_part = module.parts.iter().find(|p| p.id == conn.to_part);
+
+        if from_part.is_none() {
             issues.push(ModuleIssue {
-                part_id: Some(conn.from_part),
-                message: format!("Connection refers to invalid FROM Part ID: {}", conn.from_part),
                 severity: IssueSeverity::Error,
+                message: format!(
+                    "Connection #{} has invalid FROM Part ID {}",
+                    idx, conn.from_part
+                ),
+                part_id: None,
             });
         }
-        if !module.parts.iter().any(|p| p.id == conn.to_part) {
+        if to_part.is_none() {
             issues.push(ModuleIssue {
-                part_id: Some(conn.to_part),
-                message: format!("Connection refers to invalid TO Part ID: {}", conn.to_part),
                 severity: IssueSeverity::Error,
+                message: format!(
+                    "Connection #{} has invalid TO Part ID {}",
+                    idx, conn.to_part
+                ),
+                part_id: None,
             });
+        }
+
+        if let (Some(src), Some(dst)) = (from_part, to_part) {
+            // Check socket bounds
+            let (_src_inputs, src_outputs) = src.compute_sockets();
+            if conn.from_socket >= src_outputs.len() {
+                issues.push(ModuleIssue {
+                    severity: IssueSeverity::Error,
+                    message: format!("Connection #{} references invalid socket index {} on Source Part {} (max {})",
+                        idx, conn.from_socket, src.id, src_outputs.len().saturating_sub(1)),
+                    part_id: Some(src.id),
+                });
+            }
+
+            let (dst_inputs, _) = dst.compute_sockets();
+            if conn.to_socket >= dst_inputs.len() {
+                issues.push(ModuleIssue {
+                    severity: IssueSeverity::Error,
+                    message: format!("Connection #{} references invalid socket index {} on Target Part {} (max {})",
+                        idx, conn.to_socket, dst.id, dst_inputs.len().saturating_sub(1)),
+                    part_id: Some(dst.id),
+                });
+            }
         }
     }
 
-    // 2. Part-specific checks
+    // 2. Check Parts (Nodes)
     for part in &module.parts {
         match &part.part_type {
-            ModulePartType::Source(source) => {
-                if source.file_path.is_none() {
+            ModulePartType::Layer(layer_type) => {
+                // Verify Layer state
+                // e.g. check if mesh looks reasonable (not all zeros?)
+                match layer_type {
+                    crate::module::LayerType::Single { .. }
+                    | crate::module::LayerType::Group { .. } => {
+                        // Basic mesh validation could go here
+                    }
+                    crate::module::LayerType::All { .. } => {
+                        // Master Layer
+                    }
+                }
+            }
+            ModulePartType::Output(_) => {
+                // Warning if disconnected
+                let is_connected = module.connections.iter().any(|c| c.to_part == part.id);
+                if !is_connected {
                     issues.push(ModuleIssue {
-                        part_id: Some(part.id),
-                        message: format!("Source '{}' has no file selected.", part.id),
                         severity: IssueSeverity::Warning,
+                        message: "Output Node is not connected to any Input (expects Layer)."
+                            .to_string(),
+                        part_id: Some(part.id),
                     });
                 }
             }
-            ModulePartType::Output(OutputType::Projector { id, .. }) => {
-                // Check if this output is actually driven by a layer
-                let has_input = module
-                    .connections
-                    .iter()
-                    .any(|c| c.to_part == part.id && c.to_socket == 0);
-                if !has_input {
+            ModulePartType::Source(crate::module::SourceType::MediaFile { path, .. }) => {
+                if path.is_empty() {
                     issues.push(ModuleIssue {
-                        part_id: Some(part.id),
-                        message: format!("Output window {} has no input connected.", id),
                         severity: IssueSeverity::Warning,
+                        message: "Source Node has no file selected.".to_string(),
+                        part_id: Some(part.id),
                     });
                 }
             }
@@ -89,26 +134,17 @@ pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
     issues
 }
 
-/// Scans all modules in the manager.
-pub fn check_all_modules(manager: &ModuleManager) -> Vec<(u64, Vec<ModuleIssue>)> {
-    manager
-        .modules()
-        .iter()
-        .map(|m| (m.id, check_module_integrity(m)))
-        .collect()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::module::{ModulePartId, ModulePlaybackMode, PartType};
+    use crate::module::{MapFlowModule, ModulePlaybackMode, PartType};
 
     #[test]
-    fn test_integrity_invalid_connection() {
+    fn test_check_module_integrity_invalid_from_part() {
         let mut module = MapFlowModule {
             id: 1,
             name: "Test".to_string(),
-            color: [1.0; 4],
+            color: [0.0; 4],
             parts: vec![],
             connections: vec![],
             playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
@@ -116,12 +152,6 @@ mod tests {
         };
 
         // Add a connection with an invalid from_part and to_part
-<<<<<<< HEAD
-        // `add_connection` performs validation and would silently ignore it,
-        // so we manually push the invalid connection to test the diagnostic function.
-=======
-        // we bypass add_connection/connect_parts which would reject it
->>>>>>> ae090afc
         module.connections.push(crate::module::ModuleConnection {
             from_part: 999,
             from_socket: 0,
@@ -136,17 +166,39 @@ mod tests {
     }
 
     #[test]
-    fn test_integrity_missing_source_file() {
+    fn test_check_module_integrity_unconnected_output() {
         let mut module = MapFlowModule {
             id: 1,
-            name: "Test".to_string(),
-            color: [1.0; 4],
+            name: "Test2".to_string(),
+            color: [0.0; 4],
             parts: vec![],
             connections: vec![],
             playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
             next_part_id: 1,
         };
 
+        // Add an output part using the builder
+        module.add_part(PartType::Output, (0.0, 0.0));
+
+        let issues = check_module_integrity(&module);
+        assert_eq!(issues.len(), 1); // 1 Warning for disconnected output
+        assert_eq!(issues[0].severity, IssueSeverity::Warning);
+        assert!(issues[0].message.contains("Output Node is not connected"));
+    }
+
+    #[test]
+    fn test_check_module_integrity_empty_source_path() {
+        let mut module = MapFlowModule {
+            id: 1,
+            name: "Test3".to_string(),
+            color: [0.0; 4],
+            parts: vec![],
+            connections: vec![],
+            playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
+            next_part_id: 1,
+        };
+
+        // Add an empty source node
         module.add_part(PartType::Source, (0.0, 0.0));
 
         let issues = check_module_integrity(&module);

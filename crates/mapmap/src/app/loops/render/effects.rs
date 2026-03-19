@@ -52,7 +52,9 @@ pub(crate) fn map_effect_type(effect_type: ModEffectType) -> Option<ChainEffectT
         | ModEffectType::Halftone
         | ModEffectType::Posterize
         | ModEffectType::VHS => return None,
-        ModEffectType::Brightness | ModEffectType::Contrast | ModEffectType::Saturation => ChainEffectType::ColorAdjust,
+        ModEffectType::Brightness | ModEffectType::Contrast | ModEffectType::Saturation => {
+            ChainEffectType::ColorAdjust
+        }
     })
 }
 
