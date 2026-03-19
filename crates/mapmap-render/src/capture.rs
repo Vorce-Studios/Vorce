@@ -5,7 +5,7 @@ use anyhow::{Context, Result, anyhow};
 use image::RgbaImage;
 
 /// Queues a copy of a texture to a readback buffer.
-/// 
+///
 /// Returns the buffer and the padded bytes per row.
 pub fn queue_readback_copy(
     device: &wgpu::Device,
@@ -18,7 +18,7 @@ pub fn queue_readback_copy(
     let unpadded_bytes_per_row = width * bytes_per_pixel;
     let padded_bytes_per_row = unpadded_bytes_per_row.div_ceil(wgpu::COPY_BYTES_PER_ROW_ALIGNMENT)
         * wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
-    
+
     let buffer = device.create_buffer(&wgpu::BufferDescriptor {
         label: Some("Capture Readback Buffer"),
         size: (padded_bytes_per_row * height) as u64,
@@ -63,8 +63,8 @@ pub fn save_readback_buffer(
 ) -> Result<()> {
     let slice = buffer.slice(..);
     slice.map_async(wgpu::MapMode::Read, |_| {});
-    
-    // In a real app, we might want to poll outside this function, 
+
+    // In a real app, we might want to poll outside this function,
     // but for simple capture this is fine.
     let _ = device.poll(wgpu::PollType::Wait {
         submission_index: None,
