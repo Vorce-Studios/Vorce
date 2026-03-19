@@ -260,11 +260,7 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                     );
                 }
                 _ => {
-                    ui.label(
-                        egui::RichText::new("No configurable parameters")
-                            .weak()
-                            .italics(),
-                    );
+                    super::common::render_info_label(ui, "No configurable parameters");
                 }
             }
         }

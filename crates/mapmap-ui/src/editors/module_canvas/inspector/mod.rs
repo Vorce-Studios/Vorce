@@ -160,7 +160,55 @@ fn render_preview_texture(ui: &mut Ui, texture_id: egui::TextureId, caption: &st
     ui.small(caption);
 }
 
-fn render_layer_preview_panel(
+pub fn render_standard_texture_preview(
+    canvas: &mut ModuleCanvas,
+    ui: &mut Ui,
+    module_id: ModuleId,
+    part_id: ModulePartId,
+) {
+    render_inspector_preview_toggle(canvas, ui);
+    if !canvas.show_inspector_previews {
+        return;
+    }
+
+    ui.add_space(6.0);
+    if let Some(&texture_id) = canvas.node_previews.get(&(module_id, part_id)) {
+        render_preview_texture(ui, texture_id, "Live node preview");
+    } else {
+        common::render_missing_preview_banner(ui, "No preview available yet.");
+    }
+}
+
+pub fn render_output_texture_preview(
+    canvas: &mut ModuleCanvas,
+    ui: &mut Ui,
+    preview_context: &InspectorPreviewContext,
+) {
+    render_inspector_preview_toggle(canvas, ui);
+    if !canvas.show_inspector_previews {
+        return;
+    }
+
+    ui.add_space(6.0);
+
+    let mut preview_found = false;
+    for output_id in &preview_context.output_ids {
+        if let Some(&texture_id) = canvas.output_previews.get(output_id) {
+            render_preview_texture(
+                ui,
+                texture_id,
+                &format!("Linked output preview (Output {})", output_id),
+            );
+            preview_found = true;
+        }
+    }
+
+    if !preview_found {
+        common::render_missing_preview_banner(ui, "No preview available yet.");
+    }
+}
+
+pub fn render_layer_preview_panel(
     canvas: &mut ModuleCanvas,
     ui: &mut Ui,
     module_id: ModuleId,
@@ -217,11 +265,7 @@ fn render_layer_preview_panel(
     }
 
     ui.group(|ui| {
-        ui.label(
-            egui::RichText::new("No preview available yet.")
-                .weak()
-                .italics(),
-        );
+        common::render_info_label(ui, "No preview available yet.");
         if preview_context.output_ids.is_empty() {
             ui.small("This layer is not linked to a projector output yet.");
         } else {
@@ -236,18 +280,11 @@ fn render_layer_preview_panel(
             ));
         }
         if preview_context.upstream_source_part_ids.is_empty() {
-            ui.label(
-                egui::RichText::new("No upstream source node was found for this layer.")
-                    .weak()
-                    .italics(),
-            );
+            common::render_info_label(ui, "No upstream source node was found for this layer.");
         } else {
-            ui.label(
-                egui::RichText::new(
-                    "Upstream source exists, but no preview texture reached the inspector.",
-                )
-                .weak()
-                .italics(),
+            common::render_info_label(
+                ui,
+                "Upstream source exists, but no preview texture reached the inspector.",
             );
         }
     });
@@ -313,6 +350,8 @@ pub fn render_inspector_for_part(
                 ModulePartType::Mesh(mesh) => {
                     ui.label("🕸️ Mesh Node");
                     ui.separator();
+                    common::render_info_label(ui, "Live texture preview not applicable. Use the Mesh Editor below.");
+                    ui.separator();
                     mesh::render_mesh_editor_ui(
                         mesh_editor,
                         last_mesh_edit_id,
@@ -327,6 +366,8 @@ pub fn render_inspector_for_part(
                 }
                 ModulePartType::Hue(_) => {
                     ui.label("Hue Node Configuration");
+                    ui.separator();
+                    common::render_info_label(ui, "Live visual preview not available for hardware outputs. Check spatial editor or physical lamps.");
                 }
             }
         });

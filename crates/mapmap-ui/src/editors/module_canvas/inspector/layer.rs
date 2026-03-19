@@ -160,7 +160,7 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
                             *path = picked.display().to_string();
                         }
                     }
-                    ui.label(egui::RichText::new("No mask loaded").weak().italics());
+                    super::common::render_info_label(ui, "No mask loaded");
                 });
             } else {
                 ui.horizontal(|ui| {

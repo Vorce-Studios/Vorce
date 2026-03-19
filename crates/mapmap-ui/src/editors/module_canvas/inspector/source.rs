@@ -252,7 +252,7 @@ pub fn render_source_ui(
                     if ui.button("Select...").clicked() {
                         actions.push(UIAction::PickMediaFile(module_id, part_id, "".to_string()));
                     }
-                    ui.label(egui::RichText::new("No media loaded").weak().italics());
+                    super::common::render_info_label(ui, "No media loaded");
                 });
             } else {
                 ui.collapsing("📁 File Info", |ui| {
@@ -449,7 +449,7 @@ pub fn render_source_ui(
                             "".to_string(),
                         ));
                     }
-                    ui.label(egui::RichText::new("No image loaded").weak().italics());
+                    super::common::render_info_label(ui, "No image loaded");
                 });
             } else {
                 ui.collapsing("📁 File Info", |ui| {
