@@ -258,8 +258,6 @@ jobs:
           if (Test-Path $gitBashPath) {
             Write-Host "Adding $gitBashPath to PATH"
             echo "$gitBashPath" >> $env:GITHUB_PATH
-          } else {
-            Write-Warning "Git Bash path not found at $gitBashPath"
           }
 
       - name: Checkout merged commit from main
@@ -277,12 +275,6 @@ jobs:
           if (-not $env:toolchain) {
             Write-Error "'toolchain' ist ein erforderlicher Input"
             exit 1
-          }
-          Write-Host "Runner OS: $($env:RUNNER_OS)"
-          if ($env:RUNNER_OS -eq "Windows") {
-            Write-Host "Windows-spezifische Logik (PowerShell)"
-          } elseif ($env:RUNNER_OS -eq "macOS") {
-            Write-Host "macOS-spezifische Logik (PowerShell)"
           }
           Add-Content -Path $env:GITHUB_OUTPUT -Value "toolchain=$($env:toolchain)"
 
