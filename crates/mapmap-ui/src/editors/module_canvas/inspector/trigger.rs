@@ -105,16 +105,8 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
                                 TriggerTarget::OffsetY,
                                 "Offset Y",
                             );
-                            ui.selectable_value(
-                                &mut config.target,
-                                TriggerTarget::FlipH,
-                                "Flip H",
-                            );
-                            ui.selectable_value(
-                                &mut config.target,
-                                TriggerTarget::FlipV,
-                                "Flip V",
-                            );
+                            ui.selectable_value(&mut config.target, TriggerTarget::FlipH, "Flip H");
+                            ui.selectable_value(&mut config.target, TriggerTarget::FlipV, "Flip V");
                             ui.selectable_value(
                                 &mut config.target,
                                 TriggerTarget::ParticleRate,
