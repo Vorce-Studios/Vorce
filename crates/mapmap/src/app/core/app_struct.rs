@@ -11,7 +11,8 @@ use mapmap_control::hue::controller::HueController;
 use mapmap_control::midi::MidiInputHandler;
 use mapmap_control::ControlManager;
 use mapmap_core::{
-    audio::backend::cpal_backend::CpalBackend, media_library::MediaLibrary,
+    audio::backend::cpal_backend::CpalBackend,
+    media_library::MediaLibrary,
     module::{ModuleId, ModulePartId},
     AppState, History, ModuleEvaluator, RenderOp,
 };

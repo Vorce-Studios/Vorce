@@ -329,12 +329,14 @@ impl MapFlowModule {
                 socket_idx: from_socket,
             },
         )?;
-        let target_socket = target.inputs.get(to_socket).ok_or(
-            ConnectionValidationError::InvalidTargetSocket {
-                part_id: to_part,
-                socket_idx: to_socket,
-            },
-        )?;
+        let target_socket =
+            target
+                .inputs
+                .get(to_socket)
+                .ok_or(ConnectionValidationError::InvalidTargetSocket {
+                    part_id: to_part,
+                    socket_idx: to_socket,
+                })?;
 
         if source_socket.direction != ModuleSocketDirection::Output
             || target_socket.direction != ModuleSocketDirection::Input
@@ -413,7 +415,9 @@ impl MapFlowModule {
                     }
                 }
                 ModulePartType::Layer(crate::module::types::layer::LayerType::Single {
-                    id, name, ..
+                    id,
+                    name,
+                    ..
                 }) => {
                     if *id == 0 || !used_layer_ids.insert(*id) {
                         while used_layer_ids.contains(&next_layer_id) {
@@ -455,7 +459,8 @@ impl MapFlowModule {
             }
         }
 
-        let existing_part_ids: HashSet<ModulePartId> = self.parts.iter().map(|part| part.id).collect();
+        let existing_part_ids: HashSet<ModulePartId> =
+            self.parts.iter().map(|part| part.id).collect();
         let mut seen_connections = HashSet::new();
         let mut repaired_connections = Vec::with_capacity(self.connections.len());
 
