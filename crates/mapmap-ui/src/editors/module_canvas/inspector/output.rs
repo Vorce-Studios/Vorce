@@ -103,50 +103,23 @@ pub fn render_output_ui(
                     });
             });
 
-            ui.horizontal(|ui| {
-                ui.label("Resolution:");
-                ui.add(egui::DragValue::new(output_width).suffix(" px").speed(1.0));
-                ui.label("x");
-                ui.add(egui::DragValue::new(output_height).suffix(" px").speed(1.0));
-            });
-
-            ui.horizontal(|ui| {
-                ui.label("Target FPS:");
-                ui.add(
-                    egui::DragValue::new(output_fps)
-                        .suffix(" fps")
-                        .speed(1.0)
-                        .range(1.0..=240.0),
-                );
-            });
-
             ui.checkbox(hide_cursor, "🖱️ Hide Mouse Cursor");
 
             ui.separator();
-            ui.label("Display Settings & Preview:");
-            ui.label("Advanced Display Settings:");
+            ui.label("⚙️ Advanced Setup:");
             ui.horizontal(|ui| {
                 ui.label("Resolution:");
-                ui.add(
-                    egui::DragValue::new(output_width)
-                        .range(1..=8192)
-                        .prefix("W: "),
-                );
-                ui.add(
-                    egui::DragValue::new(output_height)
-                        .range(1..=8192)
-                        .prefix("H: "),
-                );
+                ui.add(egui::DragValue::new(output_width).suffix(" px").range(0..=8192));
+                ui.label("x");
+                ui.add(egui::DragValue::new(output_height).suffix(" px").range(0..=8192));
             });
             ui.horizontal(|ui| {
-                ui.label("Refresh Rate:");
-                ui.add(
-                    egui::DragValue::new(output_fps)
-                        .range(1.0..=240.0)
-                        .suffix(" FPS"),
-                );
+                ui.label("Target FPS:");
+                ui.add(egui::DragValue::new(output_fps).range(0.0..=240.0));
             });
+
             ui.separator();
+            ui.label("👁️ Preview:");
             ui.checkbox(show_in_preview_panel, "Show in Preview Panel");
             ui.checkbox(extra_preview_window, "Extra Preview Window");
 
