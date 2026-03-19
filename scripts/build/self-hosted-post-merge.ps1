@@ -19,7 +19,7 @@ Assert-Command -Name "cargo" -HelpText "Install Rust and ensure cargo is in PATH
 if (-not $env:VCPKG_ROOT) {
     $parentDir = Split-Path -Parent $repoRoot
     $grandParentDir = Split-Path -Parent $parentDir
-    
+
     $candidates = @(
         (Join-Path $repoRoot "vcpkg"),
         (Join-Path $parentDir "vcpkg"),
