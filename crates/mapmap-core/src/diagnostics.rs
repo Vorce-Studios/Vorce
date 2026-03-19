@@ -35,7 +35,7 @@ pub enum IssueSeverity {
 /// Check a module for structural integrity and logical errors
 ///
 /// This performs multiple checks:
-/// 1. Connection validity (dangling references, out-of-bounds sockets)
+/// 1. Connection validity (Topology)
 /// 2. Part configuration (missing files, disconnected outputs)
 pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
     let mut issues = Vec::new();
@@ -152,7 +152,12 @@ mod tests {
         };
 
         // Add a connection with an invalid from_part and to_part
-        module.connections.push(crate::module::types::connection::ModuleConnection { from_part: 999, from_socket: 0, to_part: 1000, to_socket: 0 });
+        module.connections.push(crate::module::ModuleConnection {
+            from_part: 999,
+            from_socket: 0,
+            to_part: 1000,
+            to_socket: 0,
+        });
 
         let issues = check_module_integrity(&module);
         assert_eq!(issues.len(), 2); // missing from and to parts

@@ -1,6 +1,6 @@
+use crate::app::core::app_struct::RuntimeRenderQueueItem;
 use anyhow::Result;
 use mapmap_core::module::OutputType::Projector;
-use crate::app::core::app_struct::RuntimeRenderQueueItem;
 
 use super::effects::build_effect_chain;
 use super::logging::{clear_video_issue, should_log_video_issue};
@@ -48,14 +48,17 @@ pub(crate) fn render_content(
     let is_preview_output = (output_id & PREVIEW_FLAG) != 0;
     let real_output_id = output_id & !PREVIEW_FLAG;
 
-    let mut target_ops: Vec<(u64, mapmap_core::module_eval::RenderOp)> = ctx
+    // ⚡ BOLT OPTIMIZATION:
+    // Store references to RenderOp instead of cloning the entire struct (which contains Vecs and complex data).
+    // This avoids per-frame allocations and deep copies for every layer being rendered.
+    let mut target_ops: Vec<(u64, &mapmap_core::module_eval::RenderOp)> = ctx
         .render_queue
         .iter()
         .filter(|item| match &item.render_op.output_type {
             Projector { id, .. } => *id == real_output_id,
             _ => item.render_op.output_part_id == real_output_id,
         })
-        .map(|item| (item.module_id, item.render_op.clone()))
+        .map(|item| (item.module_id, &item.render_op))
         .collect();
 
     target_ops.sort_by(|(_, a), (_, b)| b.output_part_id.cmp(&a.output_part_id));
