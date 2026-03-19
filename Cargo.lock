@@ -5589,7 +5589,6 @@ dependencies = [
 name = "mapmap-render"
 version = "0.2.0"
 dependencies = [
- "anyhow",
  "bytemuck",
  "criterion",
  "crossbeam-channel",

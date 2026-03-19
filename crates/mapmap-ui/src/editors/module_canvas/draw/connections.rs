@@ -59,7 +59,8 @@ where
             let plug_size = 20.0 * canvas.zoom;
 
             let icon_name = match socket_type {
-                mapmap_core::module::ModuleSocketType::Trigger => "audio-jack1.1.svg",
+                mapmap_core::module::ModuleSocketType::Event => "audio-jack1.1.svg",
+                mapmap_core::module::ModuleSocketType::Control => "audio-jack1.1.svg",
                 mapmap_core::module::ModuleSocketType::Media => "plug.svg",
                 mapmap_core::module::ModuleSocketType::Effect => "usb-cable.svg",
                 mapmap_core::module::ModuleSocketType::Layer => "power-plug.svg",
@@ -68,7 +69,7 @@ where
             };
 
             let is_new_jack = icon_name == "audio-jack1.1.svg" || icon_name == "audio-jack_2.svg";
-            let is_trigger = matches!(socket_type, mapmap_core::module::ModuleSocketType::Trigger);
+            let is_trigger = matches!(socket_type, mapmap_core::module::ModuleSocketType::Event | mapmap_core::module::ModuleSocketType::Control);
 
             let cable_start = start_pos;
             let cable_end = end_pos;

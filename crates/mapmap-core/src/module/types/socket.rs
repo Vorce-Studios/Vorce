@@ -40,11 +40,7 @@ pub struct ModuleSocket {
 
 impl ModuleSocket {
     /// Create a new input socket.
-    pub fn input(
-        id: impl Into<String>,
-        name: impl Into<String>,
-        socket_type: ModuleSocketType,
-    ) -> Self {
+    pub fn input(id: impl Into<String>, name: impl Into<String>, socket_type: ModuleSocketType) -> Self {
         Self {
             id: id.into(),
             name: name.into(),
@@ -99,17 +95,31 @@ impl ModuleSocket {
 
     /// Check whether a source socket may connect into a target socket.
     pub fn is_compatible_with(&self, target: &Self) -> bool {
-        self.direction == ModuleSocketDirection::Output
-            && target.direction == ModuleSocketDirection::Input
-            && self.socket_type == target.socket_type
+        if self.direction != ModuleSocketDirection::Output || target.direction != ModuleSocketDirection::Input {
+            return false;
+        }
+
+        if self.socket_type == target.socket_type {
+            return true;
+        }
+
+        // Pragmatic backward compatibility for older projects where Trigger
+        // used to be mapped to continuous automation (Control).
+        if self.socket_type == ModuleSocketType::Event && target.socket_type == ModuleSocketType::Control {
+            return true;
+        }
+
+        false
     }
 }
 
 /// Type of data carried by a connection
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ModuleSocketType {
-    /// Event-based trigger node.
-    Trigger,
+    /// Discrete event (pulse, beat, midi note).
+    Event,
+    /// Continuous control signal (LFO, FFT, envelope).
+    Control,
     /// Enumeration variant.
     Media,
     /// Enumeration variant.
@@ -126,7 +136,8 @@ impl ModuleSocketType {
     /// Human-readable display name.
     pub fn name(&self) -> &'static str {
         match self {
-            ModuleSocketType::Trigger => "Trigger",
+            ModuleSocketType::Event => "Event",
+            ModuleSocketType::Control => "Control",
             ModuleSocketType::Media => "Media",
             ModuleSocketType::Effect => "Effect",
             ModuleSocketType::Layer => "Layer",

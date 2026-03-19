@@ -38,7 +38,6 @@ fn create_sample_app_state() -> AppState {
 }
 
 #[test]
-#[ignore]
 fn test_project_ron_roundtrip() {
     let dir = tempdir().unwrap();
     let file_path = dir.path().join("test_project.mflow");

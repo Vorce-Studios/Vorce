@@ -174,5 +174,11 @@ if ($env:MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION -eq "true") {
         "cargo test -p mapmap --no-default-features --test visual_capture_tests --release -j 4 -- --ignored --nocapture"
 }
 
+# Run GPU Tests if enabled (Workspace-wide)
+if ($env:MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS -eq "true") {
+    Write-Host "Running GPU-bound tests..."
+    cargo test --workspace --release -- --ignored
+}
+
 Write-Host ""
 Write-Host "Validation completed successfully."

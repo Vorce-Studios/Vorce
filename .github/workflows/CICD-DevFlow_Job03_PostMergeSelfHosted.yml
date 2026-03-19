@@ -80,8 +80,8 @@ permissions:
   actions: write
 
 concurrency:
-  group: post-merge-self-hosted-${{ github.event.pull_request.number || github.event.inputs.pr_number || 'main-push' }}
-  cancel-in-progress: true
+  group: post-merge-self-hosted-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.run_id }}
+  cancel-in-progress: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -248,104 +248,94 @@ jobs:
             const REQUIRED_STATUSES = [
               { name: 'pre-commit.ci - pr', allowedConclusions: ['success'] },
             ];
-
-            const MAX_ATTEMPTS = 20;
-            const DELAY_MS = 30000; // 30 seconds
-
-            for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-              core.info(`Prüfung der Checks (Versuch ${attempt}/${MAX_ATTEMPTS})...`);
-
-              const [checks, combinedStatus] = await Promise.all([
-                github.rest.checks.listForRef({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  ref: headSha,
-                  per_page: 100,
-                }),
-                github.rest.repos.getCombinedStatusForRef({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  ref: headSha,
-                }),
-              ]);
-
-              const latestCheckRunsByName = new Map();
-              for (const run of checks.data.check_runs.sort((left, right) => {
-                const leftTime = Date.parse(left.completed_at || left.started_at || '1970-01-01T00:00:00Z');
-                const rightTime = Date.parse(right.completed_at || right.started_at || '1970-01-01T00:00:00Z');
-                return rightTime - leftTime;
-              })) {
-                if (!latestCheckRunsByName.has(run.name)) {
-                  latestCheckRunsByName.set(run.name, run);
-                }
-              }
-
-              const latestStatusesByName = new Map();
-              for (const status of combinedStatus.data.statuses) {
-                if (!latestStatusesByName.has(status.context)) {
-                  latestStatusesByName.set(status.context, status);
-                }
-              }
-
-              const failures = [];
-              let anyInProgress = false;
-
-              for (const expected of REQUIRED_CHECK_RUNS) {
-                const match = latestCheckRunsByName.get(expected.name);
-                if (!match) {
-                  failures.push(`${expected.name} (missing)`);
-                  continue;
-                }
-                if (match.status !== 'completed') {
-                  anyInProgress = true;
-                  continue;
-                }
-                if (!expected.allowedConclusions.includes(match.conclusion)) {
-                  failures.push(`${expected.name} (${match.conclusion})`);
-                }
-              }
-
-              for (const optional of OPTIONAL_CHECK_RUNS) {
-                const match = latestCheckRunsByName.get(optional.name);
-                if (match && match.status !== 'completed') {
-                  anyInProgress = true;
-                }
-              }
-
-              for (const expected of REQUIRED_STATUSES) {
-                const match = latestStatusesByName.get(expected.name);
-                if (match) {
-                  const status = match.state === 'pending' ? 'in_progress' : 'completed';
-                  if (status === 'in_progress') {
-                    anyInProgress = true;
-                  } else if (!expected.allowedConclusions.includes(match.state)) {
-                    failures.push(`${expected.name} (${match.state})`);
-                  }
-                } else {
-                  failures.push(`${expected.name} (missing)`);
-                }
-              }
-
-              if (!anyInProgress) {
-                if (failures.length > 0) {
-                  core.setFailed(`Anforderungen nicht erfüllt: ${failures.join(', ')}`);
-                  return;
-                }
-                core.notice(`Alle erforderlichen Checks für PR #${prNumber} sind abgeschlossen und erfolgreich.`);
-                return;
-              }
-
-              if (attempt < MAX_ATTEMPTS) {
-                core.info(`Einige Checks laufen noch. Warte ${DELAY_MS / 1000}s...`);
-                await new Promise(resolve => setTimeout(resolve, DELAY_MS));
-              } else {
-                core.setFailed(`Zeitüberschreitung: Erforderliche Checks für PR #${prNumber} wurden nicht rechtzeitig abgeschlossen.`);
+            const [checks, combinedStatus] = await Promise.all([
+              github.rest.checks.listForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: headSha,
+                per_page: 100,
+              }),
+              github.rest.repos.getCombinedStatusForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: headSha,
+              }),
+            ]);
+            const latestCheckRunsByName = new Map();
+            for (const run of checks.data.check_runs.sort((left, right) => {
+              const leftTime = Date.parse(left.completed_at || left.started_at || '1970-01-01T00:00:00Z');
+              const rightTime = Date.parse(right.completed_at || right.started_at || '1970-01-01T00:00:00Z');
+              return rightTime - leftTime;
+            })) {
+              if (!latestCheckRunsByName.has(run.name)) {
+                latestCheckRunsByName.set(run.name, run);
               }
             }
+            const latestStatusesByName = new Map();
+            for (const status of combinedStatus.data.statuses) {
+              if (!latestStatusesByName.has(status.context)) {
+                latestStatusesByName.set(status.context, status);
+              }
+            }
+            const failures = [];
+            for (const expected of REQUIRED_CHECK_RUNS) {
+              const match = latestCheckRunsByName.get(expected.name);
+              if (!match) {
+                failures.push(`${expected.name} (missing)`);
+                continue;
+              }
+              core.info(`${expected.name}: source=check_run, status=${match.status}, conclusion=${match.conclusion}`);
+              if (match.status !== 'completed') {
+                failures.push(`${expected.name} (${match.status})`);
+                continue;
+              }
+              if (!expected.allowedConclusions.includes(match.conclusion)) {
+                failures.push(`${expected.name} (${match.conclusion})`);
+              }
+            }
+            for (const optional of OPTIONAL_CHECK_RUNS) {
+              const match = latestCheckRunsByName.get(optional.name);
+              if (!match) {
+                core.info(`${optional.name}: nicht im PR vorhanden, optional.`);
+                continue;
+              }
+              core.info(`${optional.name}: source=check_run, status=${match.status}, conclusion=${match.conclusion}`);
+              if (match.status !== 'completed') {
+                failures.push(`${optional.name} (${match.status})`);
+                continue;
+              }
+              if (!optional.allowedConclusions.includes(match.conclusion)) {
+                failures.push(`${optional.name} (${match.conclusion})`);
+              }
+            }
+            for (const expected of REQUIRED_STATUSES) {
+              const match = latestStatusesByName.get(expected.name);
+              if (!match) {
+                failures.push(`${expected.name} (missing)`);
+                continue;
+              }
+              const status = match.state === 'pending' ? 'in_progress' : 'completed';
+              const conclusion = match.state === 'pending' ? null : match.state;
+              core.info(`${expected.name}: source=status, status=${status}, conclusion=${conclusion}`);
+              if (status !== 'completed') {
+                failures.push(`${expected.name} (${status})`);
+                continue;
+              }
+              if (!expected.allowedConclusions.includes(conclusion)) {
+                failures.push(`${expected.name} (${conclusion})`);
+              }
+            }
+            if (failures.length > 0) {
+              core.setFailed(
+                `Merged PR #${prNumber} erfüllt die Anforderungen nicht: ${failures.join(', ')}`,
+              );
+              return;
+            }
+            core.notice(`Merged PR #${prNumber} hat die Checks bestanden.`);
 
   self-hosted-post-merge:
     name: "Self-Hosted Post-Merge Validation"
-    runs-on: [self-hosted, Windows, X64, mapflow-post-merge]
+    runs-on: [self-hosted, windows, x64, mapflow-post-merge]
     needs: [resolve-context, gate-standard-pr-checks]
     if: |
       always() &&
