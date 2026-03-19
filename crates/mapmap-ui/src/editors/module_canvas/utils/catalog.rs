@@ -204,7 +204,9 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
     ])
     .collect();
 
-    if crate::editors::module_canvas::inspector::capabilities::is_source_type_enum_supported(true, false, false, false) {
+    if crate::editors::module_canvas::inspector::capabilities::is_source_type_enum_supported(
+        true, false, false, false,
+    ) {
         catalog.push(NodeCatalogItem {
             label: "🎨 Shader",
             search_tags: "source glsl generator procedural",
@@ -216,7 +218,9 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
     }
 
     #[cfg(feature = "ndi")]
-    if crate::editors::module_canvas::inspector::capabilities::is_source_type_enum_supported(false, false, true, false) {
+    if crate::editors::module_canvas::inspector::capabilities::is_source_type_enum_supported(
+        false, false, true, false,
+    ) {
         catalog.push(NodeCatalogItem {
             label: "📡 NDI Input",
             search_tags: "source network video stream",
@@ -225,7 +229,9 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
     }
 
     #[cfg(target_os = "windows")]
-    if crate::editors::module_canvas::inspector::capabilities::is_source_type_enum_supported(false, false, false, true) {
+    if crate::editors::module_canvas::inspector::capabilities::is_source_type_enum_supported(
+        false, false, false, true,
+    ) {
         catalog.push(NodeCatalogItem {
             label: "🚀 Spout Input",
             search_tags: "source texture share windows",

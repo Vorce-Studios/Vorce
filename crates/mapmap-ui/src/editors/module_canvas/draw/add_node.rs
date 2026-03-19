@@ -82,7 +82,9 @@ pub fn render_add_node_menu_content(
                 )));
                 ui.close();
             }
-            if super::super::inspector::capabilities::is_source_type_enum_supported(true, false, false, false) {
+            if super::super::inspector::capabilities::is_source_type_enum_supported(
+                true, false, false, false,
+            ) {
                 if ui.button("🎨 Shader").clicked() {
                     add_node(ModulePartType::Source(SourceType::Shader {
                         name: "Default".to_string(),
@@ -92,7 +94,9 @@ pub fn render_add_node_menu_content(
                 }
             }
             #[cfg(feature = "ndi")]
-            if super::super::inspector::capabilities::is_source_type_enum_supported(false, false, true, false) {
+            if super::super::inspector::capabilities::is_source_type_enum_supported(
+                false, false, true, false,
+            ) {
                 if ui.button("📡 NDI Input").clicked() {
                     add_node(ModulePartType::Source(SourceType::NdiInput {
                         source_name: None,
@@ -101,7 +105,9 @@ pub fn render_add_node_menu_content(
                 }
             }
             #[cfg(target_os = "windows")]
-            if super::super::inspector::capabilities::is_source_type_enum_supported(false, false, false, true) {
+            if super::super::inspector::capabilities::is_source_type_enum_supported(
+                false, false, false, true,
+            ) {
                 if ui.button("🚀 Spout Input").clicked() {
                     add_node(ModulePartType::Source(SourceType::SpoutInput {
                         sender_name: String::new(),

@@ -3,7 +3,7 @@ use mapmap_core::module::{BlendModeType, EffectType};
 /// Determines if a given BlendMode is currently supported by the render pipeline.
 pub fn is_blend_mode_supported(blend_mode: &BlendModeType) -> bool {
     // Currently ignored in the final render according to DOC-C10.
-    // However, if we need to keep some active for testing or future-proofing, we can list them..
+    // However, if we need to keep some active for testing or future-proofing, we can list them.
     // For now, let's just say only Normal is truly supported since others are ignored.
     matches!(blend_mode, BlendModeType::Normal)
 }
@@ -65,9 +65,6 @@ pub fn is_source_type_enum_supported(
 }
 
 /// Determines if an output type is fully supported.
-pub fn is_output_type_enum_supported(
-    is_ndi: bool,
-    is_spout: bool,
-) -> bool {
+pub fn is_output_type_enum_supported(is_ndi: bool, is_spout: bool) -> bool {
     !(is_ndi || is_spout)
 }

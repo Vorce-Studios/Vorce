@@ -198,7 +198,10 @@ pub fn render_output_ui(
             ui.label("📡 NDI Output");
             let supported = super::capabilities::is_output_type_enum_supported(true, false);
             if !supported {
-                super::capabilities::render_unsupported_warning(ui, "NDI Output has no active pipeline in the current runtime.");
+                super::capabilities::render_unsupported_warning(
+                    ui,
+                    "NDI Output has no active pipeline in the current runtime.",
+                );
             }
             ui.add_enabled_ui(supported, |ui| {
                 ui.horizontal(|ui| {
@@ -216,7 +219,10 @@ pub fn render_output_ui(
             ui.label("🚰 Spout Output");
             let supported = super::capabilities::is_output_type_enum_supported(false, true);
             if !supported {
-                super::capabilities::render_unsupported_warning(ui, "Spout Output has no active pipeline in the current runtime.");
+                super::capabilities::render_unsupported_warning(
+                    ui,
+                    "Spout Output has no active pipeline in the current runtime.",
+                );
             }
             ui.add_enabled_ui(supported, |ui| {
                 ui.horizontal(|ui| {
