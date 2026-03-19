@@ -52,8 +52,11 @@ pub fn draw_presets_popup(
                                 module.next_part_id = 1;
                                 let mut part_ids = Vec::new();
                                 for (part_type, position, size) in &preset.parts {
-                                    let id = module.add_part_with_type(part_type.clone(), *position);
-                                    if let Some(part) = module.parts.iter_mut().find(|part| part.id == id) {
+                                    let id =
+                                        module.add_part_with_type(part_type.clone(), *position);
+                                    if let Some(part) =
+                                        module.parts.iter_mut().find(|part| part.id == id)
+                                    {
                                         part.size = *size;
                                     }
                                     part_ids.push(id);
