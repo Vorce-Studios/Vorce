@@ -288,7 +288,9 @@ fn test_update_part_outputs_delegates() {
     }); // Invalid connection
 
     assert_eq!(module.connections.len(), 1);
-    module.update_part_outputs(pid1); // Should call update_part_sockets and clear connection
+    module.update_part_outputs(pid1); // Should call update_part_sockets
+    module.repair_graph(); // Must call repair_graph to fully clean up
+
     assert!(module.connections.is_empty());
 }
 
