@@ -97,12 +97,8 @@ pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
                 // Verify Layer state
                 // e.g. check if mesh looks reasonable (not all zeros?)
                 match layer_type {
-                    crate::module::LayerType::Single { .. }
-                    | crate::module::LayerType::Group { .. } => {
+                    crate::module::LayerType::Single { .. } => {
                         // Basic mesh validation could go here
-                    }
-                    crate::module::LayerType::All { .. } => {
-                        // Master Layer
                     }
                 }
             }

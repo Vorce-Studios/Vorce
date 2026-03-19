@@ -120,14 +120,32 @@ pub fn render_layer_ui(
             ..
         } => {
             ui.label("📂 Group");
-            ui.text_edit_singleline(name);
-            ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
-            ui.checkbox(mapping_mode, "Mapping Mode (Grid)");
-            render_mesh_ui(ui, mesh, 9999); // Dummy ID
+            ui.label(
+                egui::RichText::new(format!(
+                    "⚠ {}",
+                    mapmap_core::diagnostics::DEGRADED_FEATURE_LAYER_GROUP
+                ))
+                .color(crate::theme::colors::WARN_COLOR),
+            );
+            ui.add_enabled_ui(false, |ui| {
+                ui.text_edit_singleline(name);
+                ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
+                ui.checkbox(mapping_mode, "Mapping Mode (Grid)");
+                render_mesh_ui(ui, mesh, 9999); // Dummy ID
+            });
         }
         LayerType::All { opacity, .. } => {
             ui.label("🎚️ Master");
-            ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
+            ui.label(
+                egui::RichText::new(format!(
+                    "⚠ {}",
+                    mapmap_core::diagnostics::DEGRADED_FEATURE_LAYER_ALL
+                ))
+                .color(crate::theme::colors::WARN_COLOR),
+            );
+            ui.add_enabled_ui(false, |ui| {
+                ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
+            });
         }
     }
 }

@@ -28,7 +28,7 @@ pub fn sync_output_windows(
 
                 // Create window if it doesn't exist
                 if !app.window_manager.window_ids().any(|&wid| wid == *id) {
-                    app.window_manager.create_projector_window(
+                    if let Err(e) = app.window_manager.create_projector_window(
                         elwt,
                         &app.backend,
                         *id,
@@ -37,9 +37,25 @@ pub fn sync_output_windows(
                         false, // Default or fetch from config
                         *target_screen,
                         app.ui_state.user_config.vsync_mode,
-                    )?;
+                    ) {
+                        tracing::error!(
+                            "Failed to create window for projector '{}' (ID: {}): {}",
+                            name,
+                            id,
+                            e
+                        );
+                    }
                 }
             }
+        }
+    }
+
+    // 2. Remove stale windows
+    let current_window_ids: Vec<u64> = app.window_manager.window_ids().copied().collect();
+    for window_id in current_window_ids {
+        if window_id != 0 && !active_window_ids.contains(&window_id) {
+            app.window_manager.remove_window(window_id);
+            tracing::info!("Removed stale window for output ID {}", window_id);
         }
     }
 

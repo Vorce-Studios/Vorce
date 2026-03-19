@@ -361,23 +361,13 @@ impl ModuleEvaluator {
                         let link_opacity =
                             trigger_inputs.get(&layer_part.id).copied().unwrap_or(1.0);
                         if let ModulePartType::Layer(layer_type) = &layer_part.part_type {
-                            let (mesh, opacity, blend_mode, mapping_mode) = match layer_type {
-                                LayerType::Single {
-                                    mesh,
-                                    opacity,
-                                    blend_mode,
-                                    mapping_mode,
-                                    ..
-                                } => (mesh, opacity, blend_mode, mapping_mode),
-                                LayerType::Group {
-                                    mesh,
-                                    opacity,
-                                    blend_mode,
-                                    mapping_mode,
-                                    ..
-                                } => (mesh, opacity, blend_mode, mapping_mode),
-                                _ => continue,
-                            };
+                            let LayerType::Single {
+                                mesh,
+                                opacity,
+                                blend_mode,
+                                mapping_mode,
+                                ..
+                            } = layer_type;
                             let mut op = self.get_spare_render_op();
                             op.output_part_id = part.id;
                             op.output_type = output_type.clone();
