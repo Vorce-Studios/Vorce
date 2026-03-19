@@ -276,14 +276,7 @@ impl App {
             #[cfg(feature = "midi")]
             midi_ports: MidiInputHandler::list_ports().unwrap_or_default(),
             #[cfg(feature = "midi")]
-<<<<<<< HEAD
             selected_midi_port: if MidiInputHandler::list_ports().unwrap_or_default().is_empty() {
-=======
-            selected_midi_port: if MidiInputHandler::list_ports()
-                .unwrap_or_default()
-                .is_empty()
-            {
->>>>>>> origin/main
                 None
             } else {
                 Some(0)
@@ -671,10 +664,7 @@ impl App {
                 "DISCONNECTED"
             }
         );
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/main
         info!(
             "- Hue System:     {}",
             if !self.ui_state.user_config.hue_config.bridge_ip.is_empty() {
