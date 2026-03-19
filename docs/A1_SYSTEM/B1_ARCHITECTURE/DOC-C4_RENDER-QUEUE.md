@@ -1,261 +1,192 @@
-# MapFlow Render Queue & Pipeline Architektur (Single Source of Truth)
+# MapFlow Render Queue & Runtime Plan
 
-> Diese Datei ist die **konsolidierte Gesamtdokumentation** für:
-> - System-/Thread-Architektur rund um Rendering und Media
-> - den konkreten Decode → Upload → Render Queue-Laufzeitpfad
-> - den logischen PAP-Datenfluss (Trigger/Source/Modulizer/Layer/Output)
->
-> Ziel: Alle relevanten Informationen strukturiert an einem Ort zusammenführen.
+Stand: 2026-03-19
 
----
+## 1. Zweck
 
-## 1. Ziel und Scope
+Diese Datei beschreibt den aktuell implementierten Runtime-Pfad fuer das Node-System.
 
-Diese Dokumentation beschreibt den tatsächlichen und geplanten Render-Pfad in MapFlow mit Fokus auf Video-Frames:
+Wichtig:
 
-1. **Decode-Thread** erzeugt `PipelineFrame`s aus `VideoPlayer`.
-2. **Upload-Thread** lädt Frame-Daten in GPU-Texturen.
-3. **Render/Main-Thread** nutzt die aktualisierten Texturen für Komposition und Ausgabe.
+- Die visuelle Runtime-Queue ist **nicht** `FramePipeline`.
+- `FramePipeline` bleibt eine interne Media-Decode/Upload-Pipeline.
+- Die eigentliche App-Runtime arbeitet jetzt mit einer expliziten **Runtime Render Queue**.
 
-Sie kombiniert:
+## 2. Single Source of Truth
 
-- **Ist-Implementierung** im Code (threading, queues, upload-path)
-- **Systemkontext** (Crates, Rollen, Verantwortlichkeiten)
-- **Fachlichen Fluss** (PAP: Trigger → Source → Modulizer → Layer → Output)
+Primaere Implementierungsstellen:
 
-Primäre Code-Referenzen:
+- `crates/mapmap-core/src/module/types/socket.rs`
+- `crates/mapmap-core/src/module/types/schema.rs`
+- `crates/mapmap-core/src/module/types/module.rs`
+- `crates/mapmap-core/src/module/manager.rs`
+- `crates/mapmap-core/src/module_eval/evaluator/mod.rs`
+- `crates/mapmap/src/app/core/app_struct.rs`
+- `crates/mapmap/src/orchestration/evaluation.rs`
+- `crates/mapmap/src/app/loops/logic.rs`
+- `crates/mapmap/src/app/loops/render/content.rs`
+- `crates/mapmap/src/app/loops/render/mod.rs`
+- `crates/mapmap/src/app/loops/render/previews.rs`
+- `crates/mapmap/src/orchestration/media.rs`
 
-- `crates/mapmap-media/src/pipeline.rs` (`FramePipeline`, `FrameScheduler`)
-- `crates/mapmap/src/orchestration/media.rs` (Player-Orchestrierung, Queue-Drain)
-- `crates/mapmap-render/src/uploader.rs` (`WgpuFrameUploader`)
+## 3. Aktuelle Runtime-Architektur
 
----
+Es gibt jetzt zwei klar getrennte Ebenen:
 
-## 2. Systemarchitektur (Render/Media-relevant)
+1. `mapmap-media::FramePipeline`
+   - dekodiert und uploadet Media-Frames
+   - ist ein interner Source-Transport
+   - ist **nicht** die globale Render Queue
 
-### 2.1 High-Level Komponenten
+2. `mapmap::RuntimeRenderQueue`
+   - ist die visuelle Queue fuer den aktuellen Frame
+   - enthaelt `RuntimeRenderQueueItem { module_id, render_op }`
+   - wird pro Frame aus den Evaluator-Ergebnissen neu aufgebaut
 
-- **mapmap-core**: Domänenmodell (Paint/Mapping/Shape), Geometrie, Projektzustand
-- **mapmap-render**: wgpu-Backend, Texturverwaltung, Shader/Pipelines, Renderer
-- **mapmap-media**: Decoder/Player, Frame-Pipeline, Playback-Steuerung
-- **mapmap-ui**: UI-Zustand, Panels/Controls, Darstellung von Playback-Infos
-- **mapmap (binary/app)**: Orchestrierung, Event-Loop, Main-Renderloop
+## 4. Ablauf pro Frame
 
-### 2.2 Threading-Modell (IST)
+### 4.1 Graph Repair
 
-Aktuell ist für Media bereits eine asynchrone Pipeline aktiv:
+In `crates/mapmap/src/app/loops/logic.rs` gilt:
 
-- Decode in eigenem Thread (`start_decode_thread`)
-- Upload in eigenem Thread (`start_upload_thread`)
-- Render + Present im Main-Thread
-- Synchronisation via bounded `crossbeam_channel`
+- Wenn `graph_revision` geaendert wurde, ruft die App vor der Evaluation `ModuleManager::repair_modules(...)` auf.
+- Dadurch werden inkonsistente Socket-Schemata, ungultige Trigger-Mappings und kaputte oder doppelte Connections bereinigt.
+- Jede automatische Reparatur wird geloggt.
 
-Damit liegt faktisch bereits ein „Phase 2-artiger“ Pipeline-Teil vor (zumindest für Decode/Upload), auch wenn andere Bereiche weiterhin im Main-Thread orchestriert werden.
+### 4.2 Evaluation
 
-### 2.3 Threading-Modell (Roadmap / Zielbild)
+In `crates/mapmap/src/orchestration/evaluation.rs`:
 
-Langfristig: stärkere Entkopplung und Parallelisierung weiterer Render- und Processing-Schritte, inkl. robuster Backpressure-Strategien, deterministischer Shutdown-Semantik und erweiterter Telemetrie.
+- `ModuleEvaluator::evaluate(...)` liefert `render_ops` pro Modul.
+- Daraus baut die App die konsolidierte `RuntimeRenderQueue`.
+- Die Queue speichert die erzeugende `graph_revision`.
 
----
+### 4.3 Rendering
 
-## 3. Logischer PAP-Datenfluss (fachlich)
+In `crates/mapmap/src/app/loops/render/content.rs`:
 
-### 3.1 End-to-End Kette
+- Der Render-Loop filtert `RuntimeRenderQueueItem`s pro Output.
+- Danach werden Effekte, Mesh-Rendering und Output-spezifische Post-Schritte angewandt.
 
-```text
-TRIGGER → SOURCE → MODULIZER → LAYER → OUTPUT
-```
+### 4.4 Media
 
-- **Trigger**: Audio FFT, Beat, MIDI, OSC, Keyboard, Timer
-- **Source**: Media File, Live Input/Camera, NDI Input, Shader Generator, Image Sequence
-- **Modulizer**: Effekte, Blend Modes, Audio Reactive, Masken
-- **Layer**: Layering, Gruppen, Compositing
-- **Output**: Projector Window, Preview, NDI, Spout, Hue
+In `crates/mapmap/src/orchestration/media.rs`:
 
-### 3.2 Wo die Render Queue liegt
+- Media-Player und GPU-Uploads laufen weiterhin getrennt.
+- Die Render Queue referenziert nur die bereits verfuegbaren Texturen.
 
-Die hier beschriebene Queue-Logik ist der **operative Transportpfad für Media-Frames** innerhalb dieser PAP-Kette:
+## 5. Node-/Socket-Basis
 
-- Source/Media erzeugt Frames (Decode)
-- Render-nahe Vorbereitung lädt nach GPU (Upload)
-- Render/Main konsumiert den aktuellen Zustand (Draw/Present)
+Die Basis fuer Nodes, Verbinder und Inspector ist jetzt zentralisiert:
 
----
+- `ModuleSocket` enthaelt jetzt:
+  - stabile `id`
+  - `direction`
+  - `supports_trigger_mapping`
+  - `is_primary`
+  - `accepts_multiple_connections`
+- `ModulePart::schema()` liefert ein konsolidiertes Runtime-Schema fuer:
+  - Node-Kategorie
+  - Inputs
+  - Outputs
+  - Inspector-relevante Socket-Indizes
 
-## 4. Konkrete Render-Queue-Architektur (Decode → Upload → Render)
+Das Ziel ist, dass Canvas, Inspector und Validierung dieselbe Schemaquelle verwenden.
 
-## 4.1 `FramePipeline`
+## 6. Connection-Regeln
 
-`FramePipeline` enthält:
+`MapFlowModule` validiert Verbindungen jetzt ueber:
 
-- `decode_tx/decode_rx`: Decode → Upload
-- `upload_tx/upload_rx`: Upload → Render/Main
-- `running: Arc<AtomicBool>`: gemeinsamer Lifecycle
-- `stats: Arc<RwLock<PipelineStats>>`: Laufzeitmetriken
-- `decode_thread: Option<JoinHandle<()>>`: Decode-Thread-Handle
+- Part-Existenz
+- gueltige Socket-Indizes
+- Richtung Output -> Input
+- Socket-Typ-Kompatibilitaet
+- Verbot von Self-Connections
 
-**Wichtig (IST):** Upload-Thread-Handle wird derzeit nicht als Feld gehalten/gejoint.
+Die Hauptmethoden dafuer:
 
-## 4.2 Queue-Strategie
+- `validate_connection(...)`
+- `connect_parts(...)`
+- `repair_graph()`
 
-Beide Queues werden via `bounded(config.queue_depth)` erstellt.
+## 7. Selbstheilung
 
-Default:
+`repair_graph()` fuehrt aktuell diese Schritte aus:
 
-- `queue_depth = 3` (Triple Buffering)
-- `enable_frame_drop = true`
+- Socket-Sets aller Parts aus `compute_sockets()` neu ableiten
+- invalide `trigger_targets` entfernen
+- doppelte oder ungueltige Connections entfernen
+- doppelte/ungueltige Projector-IDs normalisieren
+- doppelte/ungueltige Layer-IDs normalisieren
 
-Hinweis: `queue_depth` wird aktuell nicht auf `>= 1` geklemmt. `0` hätte Rendezvous-Verhalten.
+Das ist bewusst defensiv gebaut:
 
-## 4.3 Decode-Thread Ablauf
+- ein defektes Modul soll moeglichst degradiert weiterlaufen
+- kaputte Kanten sollen entfernt werden statt spaeter zu crashen
+- jede Reparatur soll sichtbar loggen
 
-`start_decode_thread(player)`:
+## 8. Dirty-Semantik
 
-1. `player.update(1/fps)`
-2. Frame → `PipelineFrame { frame, sequence, priority }`
-3. Senden an Decode-Queue:
-   - Drop-Modus: `try_send`
-   - ohne Drop-Modus: `send` (blockierend)
-4. Stats-Update (`decoded_frames`, `decode_time_ms`)
-5. FPS-angepasstes Throttling via `sleep`
+`ModuleManager::get_module_mut()` markiert den Graphen nicht mehr automatisch dirty.
 
-## 4.4 Upload-Thread Ablauf
+Grund:
 
-`start_upload_thread(upload_fn)`:
+- Canvas und Inspector greifen sehr haeufig lesend oder opportunistisch mutierend auf das Modul zu
+- die alte Semantik hat `graph_revision` praktisch in jedem Frame veraendert
+- dadurch liefen unnötige Re-Evaluierungen und Syncs
 
-1. `recv_timeout(100ms)` aus Decode-Queue
-2. `upload_fn(&PipelineFrame)` ausführen
-3. Bei Fehler: loggen, **nicht** in Upload-Queue weiterleiten
-4. Bei Erfolg: `upload_tx.send(pipeline_frame)`
-5. Stats-Update (`uploaded_frames`, `upload_time_ms`)
+Dirty wird jetzt explizit gesetzt, wenn:
 
-Semantik: Render-Seite bekommt nur Metadaten für erfolgreich verarbeitete Uploads.
+- der Canvas wirklich editiert wurde
+- der Inspector eine Part-Konfiguration veraendert hat
+- `repair_graph()` bzw. `repair_modules()` echte Aenderungen vorgenommen hat
 
-## 4.5 Render/Main-Thread Ablauf
+## 9. Abgrenzung zu `FramePipeline`
 
-In `update_media_players`:
+`FramePipeline` bleibt weiterhin relevant, aber nur fuer Source-Frames:
 
-- `while let Ok(frame) = upload_rx.try_recv()`
-- `current_time` wird auf neuesten Timestamp gesetzt
+- Decode-Thread
+- Upload-Thread
+- Status-/Backpressure-Logik
 
-Die Textur ist bereits hochgeladen; die Queue dient primär als Synchronisations-/Statuskanal (UI/Playback).
+Sie ist kein Ersatz fuer die Render Queue des Node-Systems.
 
----
+Kurz:
 
-## 5. Upload-Pfad auf GPU (WGPU)
+- `FramePipeline` = Medien-Transport
+- `RuntimeRenderQueue` = visueller Frame-Plan
 
-`WgpuFrameUploader::upload(texture, data, width, height)`:
+## 10. Bekannte Restluecken
 
-1. `unpadded_bytes_per_row = width * 4`
-2. 256-Byte Alignment berechnen
-3. Staging Buffer erzeugen (`create_buffer_init`)
-   - direkt bei bereits passender Alignment
-   - sonst gepaddete Repack-Daten
-4. `copy_buffer_to_texture` encoden
-5. via `queue.submit(...)` einreichen
+Die neue Basis ist implementiert, aber der Umbau ist noch nicht vollstaendig:
 
-Eigenschaft: expliziter staging-buffer-basierter Copy-Pfad statt direktem `queue.write_texture`.
+- nicht alle Inspector-Panels nutzen schon das neue Schema vollstaendig
+- `RenderOp.masks` und `blend_mode` sind im Renderpfad weiterhin nur teilweise umgesetzt
+- mehrere Node-Typen bleiben funktional unvollstaendig
+- der native Windows-Start inklusive Automation-Capture ist im Debug-Build verifiziert, sollte vor einem Release-Artefakt aber noch einmal separat als Release-Smoke-Test geprueft werden
 
----
+### 10.1 Start- und Stabilitaetsfixes 2026-03-19
 
-## 6. Scheduler-Verhalten (`FrameScheduler`)
+- `crates/mapmap/build.rs` kopiert FFmpeg-Runtime-DLLs jetzt bevorzugt aus `vcpkg_installed/x64-windows/bin` und validiert PE-Header, bevor Dateien in `target/<profile>` uebernommen werden.
+- `crates/mapmap-bevy/src/lib.rs` deaktiviert im eingebetteten Runner explizit `bevy::winit::WinitPlugin`, damit MapFlow und Bevy nicht konkurrierende Event-Loops erzeugen.
+- `crates/mapmap/src/app/loops/render/mod.rs` erhoeht `frame_counter` wieder im primaeren Renderpfad, sodass `--exit-after-frames` im Automation-Modus tatsaechlich greift.
+- `crates/mapmap-bevy/src/systems.rs` schliesst GPU-Readback-Mappings jetzt innerhalb desselben Frames ab und entmappt den Buffer deterministisch, statt gemappte Buffer in spaeteren Frames wiederzuverwenden.
+- `crates/mapmap/src/app/core/init.rs` erzeugt die `composite`-Textur jetzt mit `wgpu::TextureUsages::COPY_SRC`, sodass der Automation-Screenshot-Pfad keine WGPU-Validierungspanik mehr ausloest.
+- Verifiziert am 2026-03-19:
+  - `target/debug/MapFlow.exe --help` -> `EXIT=0`
+  - `target/debug/MapFlow.exe --mode automation --exit-after-frames 1` -> `EXIT=0`
+  - `target/debug/MapFlow.exe --mode automation --exit-after-frames 1 --screenshot-dir <dir>` -> `EXIT=0`
 
-Aktuell:
+## 11. Naechste Ausbaupunkte
 
-- interne Struktur: `Vec<PipelineFrame>`
-- `push`:
-  - bei voller Queue: niedrigste Priorität via linearem Scan entfernen
-  - danach komplette Sortierung nach Priorität
-- `pop`: entfernt Element 0 (höchste Priorität)
+P0:
 
-Komplexität:
+- Renderpfad fuer `blend_mode`, Masken und Source-Transform wirklich end-to-end schliessen
+- Inspector fuer Output- und Spezial-Source-Typen weiter auf Core-Schema umstellen
+- Trigger-/Connector-Konzept weiter in Richtung `Media` vs `Control` vs `Event` schaerfen
 
-- `push`: O(n) + O(n log n)
-- `pop`: O(n)
+P1:
 
-Für kleine Queue-Tiefen praktikabel; bei höherer Last optimierbar.
-
----
-
-## 7. Lifecycle, Shutdown, Fehlersemantik
-
-## 7.1 Stärken
-
-- Gemeinsames `running`-Flag für Decode/Upload-Loops
-- Decode-Thread wird in `stop()` gejoint
-- Upload-Schleife blockiert nicht dauerhaft (`recv_timeout`)
-- Upload-Fehler werden isoliert (kein Forwarding fehlerhafter Frames)
-
-## 7.2 Aktuelle Risiken/Lücken
-
-1. Kein `upload_thread`-Handle im `FramePipeline`
-2. Potenziell blockierendes `send(...)` ohne Timeout im Non-Drop-Modus
-3. `queue_depth == 0` nicht abgefangen
-
-Diese Punkte beeinflussen vor allem deterministisches Shutdown-Verhalten und Backpressure unter Last.
-
----
-
-## 8. Metriken, Monitoring, Betrieb
-
-`PipelineStats` aktuell:
-
-- `decoded_frames`
-- `uploaded_frames`
-- `rendered_frames` (derzeit nicht vollständig als End-to-End-Zähler genutzt)
-- `dropped_frames`
-- `decode_time_ms` / `upload_time_ms` (letzte Messung)
-
-Empfohlen für nächste Ausbaustufe:
-
-- getrennte Drop-Metriken pro Queue-Segment
-- Queue-Occupancy-Sampling
-- rollierende Latenzstatistiken (avg, p95, p99)
-
-### Betriebsprofile
-
-- **Niedrige Latenz (Live):** `enable_frame_drop=true`, kleine Queue-Tiefe (2–3)
-- **Integrität (offline-näher):** `enable_frame_drop=false`, größere Queue-Tiefe
-
----
-
-## 9. Konkreter Orchestrierungsfluss im App-Code
-
-Beim Anlegen eines Players (`create_player_handle`):
-
-1. Media öffnen (`open_path`)
-2. Play starten
-3. Pipeline erzeugen
-4. Decode-Thread starten
-5. Zieltextur im Pool absichern (`ensure_texture`)
-6. Upload-Thread mit Closure starten:
-   - CPU-Frame extrahieren (`FrameData::Cpu`)
-   - Texturgröße absichern (`ensure_texture`)
-   - Upload (`WgpuFrameUploader::upload`)
-
-Im Tick (`update_media_players`):
-
-- Status-Events drainen (`PlaybackStatus`)
-- Upload-Queue drainen (`try_recv`) und Zeitstempel aktualisieren
-- UI-Playerinfos synchronisieren
-
----
-
-## 10. Offene Verbesserungen (technisch)
-
-1. `upload_thread: Option<JoinHandle<()>>` speichern + joinen
-2. `queue_depth.max(1)` erzwingen
-3. `send_timeout` statt blockierendem `send` in kritischen Pfaden
-4. effizienterer Scheduler (z. B. binäre Einfügung / Heap mit stabiler Prioritätsstrategie)
-5. observability-Ausbau (occupancy, latency distribution, segmentierte Drops)
-
----
-
-## 11. Warum eine konsolidierte Doku sinnvoll ist
-
-Für diesen Bereich ist eine **einzelne Source of Truth** sinnvoll, weil Architektur, PAP-Flow und Queue-Laufzeitsemantik in der Praxis eng verzahnt sind. Die frühere Trennung führte zu Redundanz und Inkonsistenzrisiko.
-
-Darum gilt ab jetzt:
-
-- Diese Datei enthält die vollständige Referenz.
-- Andere Dateien verweisen nur noch auf diese zentrale Doku.
+- Socket-Verbindungen langfristig von Indexen auf stabile Socket-IDs migrieren
+- Render Queue um strukturierte Diagnostics pro Item erweitern
+- Fault-Isolation pro Node/Modul weiter ausbauen

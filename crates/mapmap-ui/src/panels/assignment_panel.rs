@@ -1,3 +1,4 @@
+use crate::widgets::panel::{cyber_panel_frame, render_panel_header};
 use egui::Context;
 use mapmap_core::assignment::AssignmentManager;
 
@@ -22,9 +23,10 @@ impl AssignmentPanel {
         egui::Window::new("Assignment Manager")
             .open(&mut self.visible)
             .default_size([400.0, 600.0])
+            .frame(cyber_panel_frame(&ctx.style()))
             .show(ctx, |ui| {
-                ui.heading("Assignments");
-                ui.separator();
+                render_panel_header(ui, "Assignments", |_| {});
+                ui.add_space(8.0);
 
                 // Display a dummy list or debug info for now
                 if assignment_manager.assignments().is_empty() {

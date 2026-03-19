@@ -2,7 +2,8 @@
 
 use crate::module::config::default_color_palette;
 use crate::module::types::{
-    MapFlowModule, ModuleId, ModulePartId, ModulePlaybackMode, PartType, SharedMediaState,
+    MapFlowModule, ModuleId, ModulePartId, ModulePlaybackMode, ModuleRepairReport, PartType,
+    SharedMediaState,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -134,7 +135,6 @@ impl ModuleManager {
 
     /// Get module by ID (mutable)
     pub fn get_module_mut(&mut self, id: ModuleId) -> Option<&mut MapFlowModule> {
-        self.mark_dirty();
         self.modules.get_mut(&id)
     }
 
@@ -196,6 +196,39 @@ impl ModuleManager {
     /// Remove a module
     pub fn remove_module(&mut self, module_id: ModuleId) -> Option<MapFlowModule> {
         self.modules.remove(&module_id)
+    }
+
+    /// Repair a single module in place and mark the graph dirty if anything changed.
+    pub fn repair_module(&mut self, module_id: ModuleId) -> Option<ModuleRepairReport> {
+        let report = self.modules.get_mut(&module_id)?.repair_graph();
+        if report.changed() {
+            tracing::warn!(
+                "Module {} repaired: refreshed_parts={}, removed_connections={}, removed_trigger_targets={}, normalized_parts={}",
+                module_id,
+                report.refreshed_parts,
+                report.removed_connections,
+                report.removed_trigger_targets,
+                report.normalized_parts
+            );
+            self.mark_dirty();
+        }
+        Some(report)
+    }
+
+    /// Repair multiple modules and return reports for changed graphs.
+    pub fn repair_modules<I>(&mut self, module_ids: I) -> Vec<(ModuleId, ModuleRepairReport)>
+    where
+        I: IntoIterator<Item = ModuleId>,
+    {
+        let mut reports = Vec::new();
+        for module_id in module_ids {
+            if let Some(report) = self.repair_module(module_id) {
+                if report.changed() {
+                    reports.push((module_id, report));
+                }
+            }
+        }
+        reports
     }
 }
 
@@ -274,5 +307,105 @@ mod tests {
             manager.modules.get(&duplicate_id).unwrap().name,
             "Test Module (Copy) 1"
         );
+    }
+
+    #[test]
+    fn test_rename_module_to_same_name_succeeds() {
+        let mut manager = ModuleManager::new();
+        let id = manager.create_module("Test".to_string());
+        assert!(manager.rename_module(id, "Test".to_string()));
+        assert_eq!(manager.get_module(id).unwrap().name, "Test");
+    }
+
+    #[test]
+    fn test_set_module_color() {
+        let mut manager = ModuleManager::new();
+        let id = manager.create_module("Test".to_string());
+        manager.set_module_color(id, [1.0, 0.0, 0.0, 1.0]);
+        assert_eq!(manager.get_module(id).unwrap().color, [1.0, 0.0, 0.0, 1.0]);
+    }
+
+    #[test]
+    fn test_get_module_mut_and_get_module() {
+        let mut manager = ModuleManager::new();
+        let id = manager.create_module("Test".to_string());
+        let revision_before = manager.graph_revision;
+
+        {
+            let module_mut = manager.get_module_mut(id).unwrap();
+            module_mut.name = "Mutated".to_string();
+        }
+
+        let module = manager.get_module(id).unwrap();
+        assert_eq!(module.name, "Mutated");
+        assert_eq!(manager.graph_revision, revision_before);
+        assert!(manager.get_module(999).is_none());
+        assert!(manager.get_module_mut(999).is_none());
+    }
+
+    #[test]
+    fn test_next_part_id_increments() {
+        let mut manager = ModuleManager::new();
+        assert_eq!(manager.next_part_id, 1);
+        let id1 = manager.next_part_id();
+        assert_eq!(id1, 1);
+        assert_eq!(manager.next_part_id, 2);
+    }
+
+    #[test]
+    fn test_modules_and_modules_mut_iterators() {
+        let mut manager = ModuleManager::new();
+        let _id1 = manager.create_module("A".to_string());
+        let _id2 = manager.create_module("B".to_string());
+
+        let modules = manager.modules();
+        assert_eq!(modules.len(), 2);
+
+        let mut_modules = manager.modules_mut();
+        assert_eq!(mut_modules.len(), 2);
+    }
+
+    #[test]
+    fn test_remove_module_returns_module() {
+        let mut manager = ModuleManager::new();
+        let id = manager.create_module("A".to_string());
+        let module = manager.remove_module(id);
+        assert!(module.is_some());
+        assert_eq!(module.unwrap().id, id);
+        assert!(manager.remove_module(id).is_none());
+    }
+
+    #[test]
+    fn test_get_next_available_name_with_multiple_collisions() {
+        let mut manager = ModuleManager::new();
+        manager.create_module("Base".to_string());
+        manager.create_module("Base 1".to_string());
+        manager.create_module("Base 2".to_string());
+        assert_eq!(manager.get_next_available_name("Base"), "Base 3");
+    }
+
+    #[test]
+    fn test_duplicate_module_nonexistent_returns_none() {
+        let mut manager = ModuleManager::new();
+        assert!(manager.duplicate_module(999).is_none());
+    }
+
+    #[test]
+    fn test_add_part_to_module() {
+        let mut manager = ModuleManager::new();
+        let id = manager.create_module("A".to_string());
+        let part_id =
+            manager.add_part_to_module(id, crate::module::types::PartType::Trigger, (0.0, 0.0));
+        assert!(part_id.is_some());
+        assert!(manager
+            .add_part_to_module(999, crate::module::types::PartType::Trigger, (0.0, 0.0))
+            .is_none());
+    }
+
+    #[test]
+    fn test_list_modules() {
+        let mut manager = ModuleManager::new();
+        manager.create_module("A".to_string());
+        assert_eq!(manager.list_modules().len(), 1);
     }
 }

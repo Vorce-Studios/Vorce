@@ -85,3 +85,7 @@ Kritische Erkenntnisse aus Projektmanagement-Aktivitäten.
 ## 2026-03-15 - Missing Documentation for Multiple CI/CD and Core Timeline Features
 **Erkenntnis:** Massiver Rückstand bei der Dokumentation entdeckt. Zahlreiche CI/CD-Fixes, UI-Refactorings (PR #1154), und essentielle Timeline-Features (MF-070, MF-073, MF-074, MF-075) wurden vom 14. bis 15. März gemerged, jedoch nicht in `CHANGELOG.md` oder `ROADMAP.md` eingetragen. Zudem wurde `ROADMAP.md` fälschlicherweise gelöscht (PR/Commit 182c0864).
 **Aktion:** Tracker hat über 40 Commits ab dem 14. März 2026 analysiert, das CHANGELOG.md vollständig aktualisiert, die `ROADMAP.md` aus dem Verlauf wiederhergestellt und die darin befindlichen Task-Stände (insbes. MF-070 bis MF-074) synchronisiert. Zukünftig müssen Merges strikter gegen das Vorhandensein des Changelog-Eintrags geprüft werden, und `ROADMAP.md` darf nicht gelöscht werden.
+
+## 2026-03-16 - Missing Documentation for Phase 4 Refactoring
+**Erkenntnis:** Multiple large decomposition PRs (MF-StMa_LARGE_FILE_CLEANUP_PHASE4 including #1219, #1188, #1211, #1213, #1209) and fixes (#1195, #1198, #1194, #1189) were merged on 2026-03-16 but missing from `CHANGELOG.md`. Furthermore, the task statuses in `ROADMAP.md` were left uncompleted.
+**Aktion:** Tracker added entries to `CHANGELOG.md`, marked the corresponding tasks in `ROADMAP.md` as ✅ Done, and updated the 'Stand' timestamp to reflect reality.

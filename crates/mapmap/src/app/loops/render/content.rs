@@ -1,5 +1,6 @@
 use anyhow::Result;
 use mapmap_core::module::OutputType::Projector;
+use crate::app::core::app_struct::RuntimeRenderQueueItem;
 
 use super::effects::build_effect_chain;
 use super::logging::{clear_video_issue, should_log_video_issue};
@@ -8,10 +9,7 @@ use super::PREVIEW_FLAG;
 pub(crate) struct RenderContext<'a> {
     pub device: &'a wgpu::Device,
     pub queue: &'a wgpu::Queue,
-    pub render_ops: &'a Vec<(
-        mapmap_core::module::ModulePartId,
-        mapmap_core::module_eval::RenderOp,
-    )>,
+    pub render_queue: &'a [RuntimeRenderQueueItem],
     pub output_manager: &'a mapmap_core::output::OutputManager,
     pub edge_blend_renderer: &'a Option<mapmap_render::EdgeBlendRenderer>,
     pub color_calibration_renderer: &'a Option<mapmap_render::ColorCalibrationRenderer>,
@@ -51,13 +49,13 @@ pub(crate) fn render_content(
     let real_output_id = output_id & !PREVIEW_FLAG;
 
     let mut target_ops: Vec<(u64, mapmap_core::module_eval::RenderOp)> = ctx
-        .render_ops
+        .render_queue
         .iter()
-        .filter(|(_, op)| match &op.output_type {
+        .filter(|item| match &item.render_op.output_type {
             Projector { id, .. } => *id == real_output_id,
-            _ => op.output_part_id == real_output_id,
+            _ => item.render_op.output_part_id == real_output_id,
         })
-        .map(|(mid, op)| (*mid, op.clone()))
+        .map(|item| (item.module_id, item.render_op.clone()))
         .collect();
 
     target_ops.sort_by(|(_, a), (_, b)| b.output_part_id.cmp(&a.output_part_id));

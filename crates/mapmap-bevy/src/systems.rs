@@ -454,42 +454,44 @@ pub fn frame_readback_system(
 
         render_queue.submit(std::iter::once(encoder.finish()));
 
-        // Non-blocking map request
+        // Complete the readback in-frame so the buffer is always unmapped before the
+        // next copy. This trades some throughput for a much more stable embedded runner.
         let (tx, rx) = std::sync::mpsc::channel();
         let buffer_slice = buffer.slice(..);
         buffer_slice.map_async(bevy::render::render_resource::MapMode::Read, move |res| {
             let _ = tx.send(res);
         });
 
-        // Poll once without waiting to progress the mapping
-        render_device.poll(bevy::render::render_resource::Maintain::Poll);
+        render_device.poll(bevy::render::render_resource::Maintain::Wait);
 
-        // Check if data is ready immediately (unlikely but possible)
-        // or just wait for next frame's poll to finish it.
-        // For now, we try to recv with a tiny timeout or just try_recv
-        if let Ok(Ok(_)) = rx.try_recv() {
-            let data = buffer_slice.get_mapped_range();
+        match rx.recv() {
+            Ok(Ok(_)) => {
+                let data = buffer_slice.get_mapped_range();
 
-            // Acquire lock to update shared data
-            if let Ok(mut lock) = render_output.last_frame_data.lock() {
-                // Remove padding if necessary
-                if padding == 0 {
-                    *lock = Some(data.to_vec());
-                } else {
-                    // Compact rows
-                    let mut unpadded =
-                        Vec::with_capacity((width * height * bytes_per_pixel) as usize);
-                    for i in 0..height {
-                        let offset = (i * bytes_per_row) as usize;
-                        let end = offset + (width * bytes_per_pixel) as usize;
-                        unpadded.extend_from_slice(&data[offset..end]);
+                if let Ok(mut lock) = render_output.last_frame_data.lock() {
+                    if padding == 0 {
+                        *lock = Some(data.to_vec());
+                    } else {
+                        let mut unpadded =
+                            Vec::with_capacity((width * height * bytes_per_pixel) as usize);
+                        for i in 0..height {
+                            let offset = (i * bytes_per_row) as usize;
+                            let end = offset + (width * bytes_per_pixel) as usize;
+                            unpadded.extend_from_slice(&data[offset..end]);
+                        }
+                        *lock = Some(unpadded);
                     }
-                    *lock = Some(unpadded);
                 }
+
+                drop(data);
+                buffer.unmap();
             }
-            // Must unmap to use buffer again
-            drop(data);
-            buffer.unmap();
+            Ok(Err(err)) => {
+                tracing::warn!("Bevy frame readback mapping failed: {:?}", err);
+            }
+            Err(err) => {
+                tracing::warn!("Bevy frame readback channel failed: {}", err);
+            }
         }
     }
 }
