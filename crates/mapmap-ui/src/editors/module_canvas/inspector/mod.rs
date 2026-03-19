@@ -292,9 +292,13 @@ pub fn render_inspector_for_part(
                     );
                 }
                 ModulePartType::Mask(mask) => {
+                    render_inspector_preview_toggle(canvas, ui);
+                    render_layer_preview_panel(canvas, ui, module_id, part_id, preview_context);
                     layer::render_mask_ui(ui, mask);
                 }
                 ModulePartType::Modulizer(mod_type) => {
+                    render_inspector_preview_toggle(canvas, ui);
+                    render_layer_preview_panel(canvas, ui, module_id, part_id, preview_context);
                     effect::render_effect_ui(ui, mod_type, part_id);
                 }
                 ModulePartType::Layer(layer) => {
