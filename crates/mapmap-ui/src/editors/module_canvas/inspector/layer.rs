@@ -1,6 +1,6 @@
-use super::capabilities;
 use super::super::mesh;
 use super::super::state::ModuleCanvas;
+use super::capabilities;
 use egui::Ui;
 use mapmap_core::module::{BlendModeType, LayerType, MaskShape, MaskType, MeshType, ModulePartId};
 
@@ -48,39 +48,48 @@ pub fn render_layer_ui(
                     if ui.selectable_label(blend_mode.is_none(), "None").clicked() {
                         *blend_mode = None;
                     }
-                    ui.add_enabled_ui(capabilities::is_blend_mode_supported(&BlendModeType::Normal), |ui| {
-                        if ui
-                            .selectable_label(
-                                matches!(blend_mode, Some(BlendModeType::Normal)),
-                                "Normal",
-                            )
-                            .clicked()
-                        {
-                            *blend_mode = Some(BlendModeType::Normal);
-                        }
-                    });
-                    ui.add_enabled_ui(capabilities::is_blend_mode_supported(&BlendModeType::Add), |ui| {
-                        if ui
-                            .selectable_label(
-                                matches!(blend_mode, Some(BlendModeType::Add)),
-                                "Add",
-                            )
-                            .clicked()
-                        {
-                            *blend_mode = Some(BlendModeType::Add);
-                        }
-                    });
-                    ui.add_enabled_ui(capabilities::is_blend_mode_supported(&BlendModeType::Multiply), |ui| {
-                        if ui
-                            .selectable_label(
-                                matches!(blend_mode, Some(BlendModeType::Multiply)),
-                                "Multiply",
-                            )
-                            .clicked()
-                        {
-                            *blend_mode = Some(BlendModeType::Multiply);
-                        }
-                    });
+                    ui.add_enabled_ui(
+                        capabilities::is_blend_mode_supported(&BlendModeType::Normal),
+                        |ui| {
+                            if ui
+                                .selectable_label(
+                                    matches!(blend_mode, Some(BlendModeType::Normal)),
+                                    "Normal",
+                                )
+                                .clicked()
+                            {
+                                *blend_mode = Some(BlendModeType::Normal);
+                            }
+                        },
+                    );
+                    ui.add_enabled_ui(
+                        capabilities::is_blend_mode_supported(&BlendModeType::Add),
+                        |ui| {
+                            if ui
+                                .selectable_label(
+                                    matches!(blend_mode, Some(BlendModeType::Add)),
+                                    "Add",
+                                )
+                                .clicked()
+                            {
+                                *blend_mode = Some(BlendModeType::Add);
+                            }
+                        },
+                    );
+                    ui.add_enabled_ui(
+                        capabilities::is_blend_mode_supported(&BlendModeType::Multiply),
+                        |ui| {
+                            if ui
+                                .selectable_label(
+                                    matches!(blend_mode, Some(BlendModeType::Multiply)),
+                                    "Multiply",
+                                )
+                                .clicked()
+                            {
+                                *blend_mode = Some(BlendModeType::Multiply);
+                            }
+                        },
+                    );
                 });
             if !capabilities::is_blend_mode_supported(
                 blend_mode.as_ref().unwrap_or(&BlendModeType::Normal),

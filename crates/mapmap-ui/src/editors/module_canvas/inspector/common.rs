@@ -1,6 +1,6 @@
-use super::capabilities;
 use super::super::state::ModuleCanvas;
 use super::super::types::MediaPlaybackCommand;
+use super::capabilities;
 use crate::widgets::{styled_drag_value, styled_slider};
 use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use mapmap_core::module::{BlendModeType, ModulePartId};
@@ -52,66 +52,90 @@ pub fn render_common_controls(
                         {
                             *blend_mode = None;
                         }
-                        ui.add_enabled_ui(capabilities::is_blend_mode_supported(&BlendModeType::Add), |ui| {
-                            if ui
-                                .selectable_label(*blend_mode == Some(BlendModeType::Add), "Add")
-                                .clicked()
-                            {
-                                *blend_mode = Some(BlendModeType::Add);
-                            }
-                        });
-                        ui.add_enabled_ui(capabilities::is_blend_mode_supported(&BlendModeType::Multiply), |ui| {
-                            if ui
-                                .selectable_label(
-                                    *blend_mode == Some(BlendModeType::Multiply),
-                                    "Multiply",
-                                )
-                                .clicked()
-                            {
-                                *blend_mode = Some(BlendModeType::Multiply);
-                            }
-                        });
-                        ui.add_enabled_ui(capabilities::is_blend_mode_supported(&BlendModeType::Screen), |ui| {
-                            if ui
-                                .selectable_label(*blend_mode == Some(BlendModeType::Screen), "Screen")
-                                .clicked()
-                            {
-                                *blend_mode = Some(BlendModeType::Screen);
-                            }
-                        });
-                        ui.add_enabled_ui(capabilities::is_blend_mode_supported(&BlendModeType::Overlay), |ui| {
-                            if ui
-                                .selectable_label(
-                                    *blend_mode == Some(BlendModeType::Overlay),
-                                    "Overlay",
-                                )
-                                .clicked()
-                            {
-                                *blend_mode = Some(BlendModeType::Overlay);
-                            }
-                        });
-                        ui.add_enabled_ui(capabilities::is_blend_mode_supported(&BlendModeType::Difference), |ui| {
-                            if ui
-                                .selectable_label(
-                                    *blend_mode == Some(BlendModeType::Difference),
-                                    "Difference",
-                                )
-                                .clicked()
-                            {
-                                *blend_mode = Some(BlendModeType::Difference);
-                            }
-                        });
-                        ui.add_enabled_ui(capabilities::is_blend_mode_supported(&BlendModeType::Exclusion), |ui| {
-                            if ui
-                                .selectable_label(
-                                    *blend_mode == Some(BlendModeType::Exclusion),
-                                    "Exclusion",
-                                )
-                                .clicked()
-                            {
-                                *blend_mode = Some(BlendModeType::Exclusion);
-                            }
-                        });
+                        ui.add_enabled_ui(
+                            capabilities::is_blend_mode_supported(&BlendModeType::Add),
+                            |ui| {
+                                if ui
+                                    .selectable_label(
+                                        *blend_mode == Some(BlendModeType::Add),
+                                        "Add",
+                                    )
+                                    .clicked()
+                                {
+                                    *blend_mode = Some(BlendModeType::Add);
+                                }
+                            },
+                        );
+                        ui.add_enabled_ui(
+                            capabilities::is_blend_mode_supported(&BlendModeType::Multiply),
+                            |ui| {
+                                if ui
+                                    .selectable_label(
+                                        *blend_mode == Some(BlendModeType::Multiply),
+                                        "Multiply",
+                                    )
+                                    .clicked()
+                                {
+                                    *blend_mode = Some(BlendModeType::Multiply);
+                                }
+                            },
+                        );
+                        ui.add_enabled_ui(
+                            capabilities::is_blend_mode_supported(&BlendModeType::Screen),
+                            |ui| {
+                                if ui
+                                    .selectable_label(
+                                        *blend_mode == Some(BlendModeType::Screen),
+                                        "Screen",
+                                    )
+                                    .clicked()
+                                {
+                                    *blend_mode = Some(BlendModeType::Screen);
+                                }
+                            },
+                        );
+                        ui.add_enabled_ui(
+                            capabilities::is_blend_mode_supported(&BlendModeType::Overlay),
+                            |ui| {
+                                if ui
+                                    .selectable_label(
+                                        *blend_mode == Some(BlendModeType::Overlay),
+                                        "Overlay",
+                                    )
+                                    .clicked()
+                                {
+                                    *blend_mode = Some(BlendModeType::Overlay);
+                                }
+                            },
+                        );
+                        ui.add_enabled_ui(
+                            capabilities::is_blend_mode_supported(&BlendModeType::Difference),
+                            |ui| {
+                                if ui
+                                    .selectable_label(
+                                        *blend_mode == Some(BlendModeType::Difference),
+                                        "Difference",
+                                    )
+                                    .clicked()
+                                {
+                                    *blend_mode = Some(BlendModeType::Difference);
+                                }
+                            },
+                        );
+                        ui.add_enabled_ui(
+                            capabilities::is_blend_mode_supported(&BlendModeType::Exclusion),
+                            |ui| {
+                                if ui
+                                    .selectable_label(
+                                        *blend_mode == Some(BlendModeType::Exclusion),
+                                        "Exclusion",
+                                    )
+                                    .clicked()
+                                {
+                                    *blend_mode = Some(BlendModeType::Exclusion);
+                                }
+                            },
+                        );
                     });
                 ui.end_row();
 

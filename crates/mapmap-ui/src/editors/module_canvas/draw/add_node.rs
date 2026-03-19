@@ -1,8 +1,8 @@
 use super::super::utils;
 use egui::Ui;
 use mapmap_core::module::{
-    BevyCameraMode, EffectType, HueNodeType, LayerType, MaskShape, MaskType, ModuleManager,
-    ModulePartType, ModulizerType, OutputType, SourceType, TriggerType,
+    BevyCameraMode, BlendModeType, EffectType, HueNodeType, LayerType, MaskShape, MaskType,
+    ModuleManager, ModulePartType, ModulizerType, OutputType, SourceType, TriggerType,
 };
 
 pub fn render_add_node_menu_content(
@@ -159,20 +159,22 @@ pub fn render_add_node_menu_content(
         });
 
         ui.menu_button("🎛️ Modulators", |ui| {
+            if ui.button("🎚️ Blend Mode").clicked() {
+                add_node(ModulePartType::Modulizer(ModulizerType::BlendMode(
+                    BlendModeType::Normal,
+                )));
+                ui.close();
+            }
+            ui.separator();
             for effect in [
+                EffectType::LoadLUT,
                 EffectType::Blur,
-                EffectType::Invert,
-                EffectType::HueShift,
-                EffectType::Wave,
-                EffectType::Mirror,
-                EffectType::Kaleidoscope,
                 EffectType::Pixelate,
-                EffectType::EdgeDetect,
                 EffectType::Glitch,
-                EffectType::RgbSplit,
-                EffectType::ChromaticAberration,
-                EffectType::FilmGrain,
-                EffectType::Vignette,
+                EffectType::Kaleidoscope,
+                EffectType::EdgeDetect,
+                EffectType::Colorize,
+                EffectType::HueShift,
             ] {
                 if ui.button(effect.name()).clicked() {
                     add_node(ModulePartType::Modulizer(ModulizerType::Effect {
@@ -193,6 +195,23 @@ pub fn render_add_node_menu_content(
                     blend_mode: None,
                     mesh: mapmap_core::module::MeshType::default(),
                     mapping_mode: false,
+                }));
+                ui.close();
+            }
+            if ui.button("📁 Layer Group").clicked() {
+                add_node(ModulePartType::Layer(LayerType::Group {
+                    name: "New Group".to_string(),
+                    opacity: 1.0,
+                    blend_mode: None,
+                    mesh: mapmap_core::module::MeshType::default(),
+                    mapping_mode: false,
+                }));
+                ui.close();
+            }
+            if ui.button("\u{1F4D1} All Layers").clicked() {
+                add_node(ModulePartType::Layer(LayerType::All {
+                    opacity: 1.0,
+                    blend_mode: None,
                 }));
                 ui.close();
             }

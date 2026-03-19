@@ -1,6 +1,6 @@
-use super::capabilities;
 use super::super::state::ModuleCanvas;
 use super::super::types::MediaPlaybackCommand;
+use super::capabilities;
 use super::common::{render_common_controls, render_timeline, render_transport_controls};
 use crate::theme::colors;
 use crate::widgets::styled_slider;
