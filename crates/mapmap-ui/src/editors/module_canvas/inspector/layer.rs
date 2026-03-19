@@ -1,9 +1,11 @@
 use super::super::mesh;
+use super::super::state::ModuleCanvas;
 use egui::Ui;
 use mapmap_core::module::{BlendModeType, LayerType, MaskShape, MaskType, MeshType, ModulePartId};
 
 /// Renders the configuration UI for a `ModulePartType::Layer`.
 pub fn render_layer_ui(
+    _canvas: &mut ModuleCanvas,
     mesh_editor: &mut crate::editors::mesh_editor::MeshEditor,
     last_mesh_edit_id: &mut Option<u64>,
     ui: &mut Ui,

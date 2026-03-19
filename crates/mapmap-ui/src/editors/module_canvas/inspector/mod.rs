@@ -7,13 +7,14 @@ pub mod trigger;
 
 pub use effect::set_default_effect_params;
 
-use egui::{Color32, ProgressBar, Ui, Vec2};
-use mapmap_core::module::{MapFlowModule, ModuleId, ModulePart, ModulePartId, ModulePartType};
-use std::collections::HashSet;
-
 use super::mesh;
 use super::state::{LayerInspectorViewMode, ModuleCanvas};
 use crate::UIAction;
+use egui::{Color32, ProgressBar, Ui, Vec2};
+use mapmap_core::module::{
+    MapFlowModule, ModuleId, ModulePart, ModulePartId, ModulePartType, OutputType,
+};
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, Default)]
 pub struct InspectorPreviewContext {
@@ -63,9 +64,7 @@ fn collect_downstream_output_ids(
             .find(|part| part.id == connection.to_part)
         {
             match &next_part.part_type {
-                ModulePartType::Output(mapmap_core::module::OutputType::Projector {
-                    id, ..
-                }) => output_ids.push(*id),
+                ModulePartType::Output(OutputType::Projector { id, .. }) => output_ids.push(*id),
                 _ => collect_downstream_output_ids(module, next_part.id, visited, output_ids),
             }
         }
@@ -303,7 +302,7 @@ pub fn render_inspector_for_part(
                 ModulePartType::Layer(layer) => {
                     render_inspector_preview_toggle(canvas, ui);
                     render_layer_preview_panel(canvas, ui, module_id, part_id, preview_context);
-                    layer::render_layer_ui(mesh_editor, last_mesh_edit_id, ui, layer, part_id);
+                    layer::render_layer_ui(canvas, mesh_editor, last_mesh_edit_id, ui, layer, part_id);
                 }
                 ModulePartType::Mesh(mesh) => {
                     ui.label("🕸️ Mesh Node");

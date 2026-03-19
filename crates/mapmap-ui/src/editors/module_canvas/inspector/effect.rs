@@ -66,6 +66,7 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                     ui,
                     "\u{27F2} Safe Reset",
                     Color32::from_rgb(255, 180, 0),
+                    "Safe Reset",
                 ) {
                     set_default_effect_params(*effect, params);
                 }

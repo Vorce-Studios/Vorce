@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod analyzer_v2_tests {
+mod tests {
     use crate::audio::analyzer_v2::{AudioAnalyzerV2, AudioAnalyzerV2Config};
 
     #[test]

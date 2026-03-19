@@ -1,5 +1,4 @@
 use super::super::state::ModuleCanvas;
-use super::render_fixed_timer_preview;
 use crate::widgets::styled_slider;
 use egui::Ui;
 use mapmap_core::module::{
@@ -8,8 +7,8 @@ use mapmap_core::module::{
 
 /// Renders the trigger configuration UI for mapping module inputs.
 pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &mut ModulePart) {
-    // Only show for parts with input sockets
-    if part.inputs.is_empty() {
+    let schema = part.schema();
+    if !schema.has_trigger_mapping() {
         return;
     }
 
@@ -37,10 +36,15 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
             ui.separator();
 
             // Iterate over inputs
-            for (idx, socket) in part.inputs.iter().enumerate() {
+            for idx in schema.inspector.mappable_input_indices {
                 ui.push_id(idx, |ui| {
                     ui.separator();
-                    ui.label(format!("Input {}: {}", idx, socket.name));
+                    let socket_label = part
+                        .inputs
+                        .get(idx)
+                        .map(|socket| socket.name.clone())
+                        .unwrap_or_else(|| format!("Input {}", idx));
+                    ui.label(socket_label);
 
                     // Get config
                     let mut config = part.trigger_targets.entry(idx).or_default().clone();
@@ -90,6 +94,41 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
                                 &mut config.target,
                                 TriggerTarget::Rotation,
                                 "Rotation",
+                            );
+                            ui.selectable_value(
+                                &mut config.target,
+                                TriggerTarget::OffsetX,
+                                "Offset X",
+                            );
+                            ui.selectable_value(
+                                &mut config.target,
+                                TriggerTarget::OffsetY,
+                                "Offset Y",
+                            );
+                            ui.selectable_value(
+                                &mut config.target,
+                                TriggerTarget::FlipH,
+                                "Flip H",
+                            );
+                            ui.selectable_value(
+                                &mut config.target,
+                                TriggerTarget::FlipV,
+                                "Flip V",
+                            );
+                            ui.selectable_value(
+                                &mut config.target,
+                                TriggerTarget::ParticleRate,
+                                "Particle Rate",
+                            );
+                            ui.selectable_value(
+                                &mut config.target,
+                                TriggerTarget::Position3D,
+                                "Position 3D",
+                            );
+                            ui.selectable_value(
+                                &mut config.target,
+                                TriggerTarget::Scale3D,
+                                "Scale 3D",
                             );
                         });
 
@@ -298,7 +337,7 @@ pub fn render_trigger_ui(
             ui.label("⏱️ Fixed Timer");
             ui.add(egui::Slider::new(interval_ms, 16..=10000).text("Interval (ms)"));
             ui.add(egui::Slider::new(offset_ms, 0..=5000).text("Offset (ms)"));
-            render_fixed_timer_preview(canvas, ui, part_id, *interval_ms, *offset_ms);
+            super::render_fixed_timer_preview(canvas, ui, part_id, *interval_ms, *offset_ms);
         }
         TriggerType::Midi {
             channel,
@@ -377,8 +416,8 @@ pub fn render_trigger_ui(
                 ui.label("Mods:");
                 ui.label(format!(
                     "Ctrl={} Shift={} Alt={}",
-                    *modifiers & 1 != 0,
                     *modifiers & 2 != 0,
+                    *modifiers & 1 != 0,
                     *modifiers & 4 != 0
                 ));
             });

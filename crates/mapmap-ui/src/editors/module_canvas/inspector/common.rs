@@ -225,7 +225,8 @@ pub fn render_transport_controls(
         ui.add_space(8.0);
 
         // STOP (Destructive Action - Separated)
-        if crate::widgets::hold_to_action_button(ui, "⏹", Color32::from_rgb(255, 80, 80)) {
+        if crate::widgets::hold_to_action_button(ui, "⏹", Color32::from_rgb(255, 80, 80), "Stop")
+        {
             canvas
                 .pending_playback_commands
                 .push((part_id, MediaPlaybackCommand::Stop));
