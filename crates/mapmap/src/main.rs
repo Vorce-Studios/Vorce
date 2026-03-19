@@ -323,10 +323,7 @@ impl App {
 
                 if cmd == MediaPlaybackCommand::Reload {
                     if self.media_players.remove(&player_key).is_some() {
-                        info!(
-                            "Removed old media player for part_id={} for reload",
-                            part_id
-                        );
+                        info!("Removed old media player for part_id={} for reload", part_id);
                     }
                     self.texture_pool
                         .release(&format!("part_{}_{}", mod_id, part_id));
