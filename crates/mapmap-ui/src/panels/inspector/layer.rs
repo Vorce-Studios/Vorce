@@ -1,4 +1,5 @@
 use super::InspectorAction;
+use crate::editors::mesh_editor::ui::MeshEditorUi;
 use crate::i18n::LocaleManager;
 use egui::Ui;
 use mapmap_core::{Layer, Transform};
@@ -197,7 +198,8 @@ pub fn render_layer_inspector(
                 } else {
                     ui.label(
                         egui::RichText::new("No mapping available to edit mesh.")
-                            .color(egui::Color32::GRAY),
+                            .weak()
+                            .italics(),
                     );
                 }
             });

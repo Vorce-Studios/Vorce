@@ -152,6 +152,7 @@ mod tests {
         };
 
         // Add a connection with an invalid from_part and to_part
+        // Add a connection with an invalid from_part and to_part
         module.connections.push(crate::module::ModuleConnection {
             from_part: 999,
             from_socket: 0,
