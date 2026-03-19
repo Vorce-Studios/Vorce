@@ -177,7 +177,11 @@ pub fn render_standard_texture_preview(
         render_preview_texture(ui, texture_id, "Live node preview");
     } else {
         ui.group(|ui| {
-            ui.label(egui::RichText::new("No preview available yet.").weak().italics());
+            ui.label(
+                egui::RichText::new("No preview available yet.")
+                    .weak()
+                    .italics(),
+            );
         });
     }
 }
@@ -208,7 +212,11 @@ pub fn render_output_texture_preview(
 
     if !preview_found {
         ui.group(|ui| {
-            ui.label(egui::RichText::new("No preview available yet.").weak().italics());
+            ui.label(
+                egui::RichText::new("No preview available yet.")
+                    .weak()
+                    .italics(),
+            );
         });
     }
 }
