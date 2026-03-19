@@ -5,8 +5,6 @@ pub mod output;
 pub mod source;
 pub mod trigger;
 
-pub use effect::set_default_effect_params;
-
 use super::mesh;
 use super::state::{LayerInspectorViewMode, ModuleCanvas};
 use crate::UIAction;
@@ -154,14 +152,14 @@ pub fn render_fixed_timer_preview(
     });
 }
 
-pub fn render_preview_texture(ui: &mut Ui, texture_id: egui::TextureId, caption: &str) {
+fn render_preview_texture(ui: &mut Ui, texture_id: egui::TextureId, caption: &str) {
     let width = ui.available_width().max(160.0);
     let size = Vec2::new(width, width * 9.0 / 16.0);
     ui.image((texture_id, size));
     ui.small(caption);
 }
 
-pub fn render_layer_preview_panel(
+fn render_layer_preview_panel(
     canvas: &mut ModuleCanvas,
     ui: &mut Ui,
     module_id: ModuleId,
@@ -316,7 +314,14 @@ pub fn render_inspector_for_part(
                 ModulePartType::Layer(layer) => {
                     render_inspector_preview_toggle(canvas, ui);
                     render_layer_preview_panel(canvas, ui, module_id, part_id, preview_context);
-                    layer::render_layer_ui(canvas, mesh_editor, last_mesh_edit_id, ui, layer, part_id);
+                    layer::render_layer_ui(
+                        canvas,
+                        mesh_editor,
+                        last_mesh_edit_id,
+                        ui,
+                        layer,
+                        part_id,
+                    );
                 }
                 ModulePartType::Mesh(mesh) => {
                     ui.label("🕸️ Mesh Node");

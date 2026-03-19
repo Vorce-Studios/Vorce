@@ -1,0 +1,1 @@
+sed -i 's/const comments = await github.paginate(github.rest.issues.listComments/const comments = await github.paginate(github.rest.issues.listComments/' .github/workflows/CICD-DevFlow_Job02_AutoMerge.yml

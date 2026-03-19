@@ -52,12 +52,17 @@ jobs:
 
             const upsertManagedComment = async (issueNumber, message) => {
               const body = buildManagedCommentBody(message);
-              const comments = await github.paginate(github.rest.issues.listComments, {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issueNumber,
-                per_page: 100,
-              });
+              let comments = [];
+              try {
+                comments = await github.paginate(github.rest.issues.listComments, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  per_page: 100,
+                });
+              } catch (err) {
+                console.log("Warning: Failed to fetch comments: " + err.message);
+              }
 
               const existingComment = [...comments]
                 .reverse()
