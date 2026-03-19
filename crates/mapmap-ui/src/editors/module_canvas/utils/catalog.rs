@@ -1,7 +1,6 @@
 use mapmap_core::module::{
-    AudioBand, AudioTriggerOutputConfig, BevyCameraMode, BlendModeType, EffectType, HueNodeType,
-    LayerType, MaskShape, MaskType, ModulePartType, ModulizerType, OutputType, SourceType,
-    TriggerType,
+    AudioBand, AudioTriggerOutputConfig, BevyCameraMode, EffectType, HueNodeType, LayerType,
+    MaskShape, MaskType, ModulePartType, ModulizerType, OutputType, SourceType, TriggerType,
 };
 
 pub struct NodeCatalogItem {
@@ -152,17 +151,27 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
                 softness: 0.5,
             }),
         },
-        // Modulators
-        NodeCatalogItem {
-            label: "🎚️ Blend Mode",
-            search_tags: "modulator mix composite add multiply screen",
-            part_type: ModulePartType::Modulizer(ModulizerType::BlendMode(BlendModeType::Normal)),
-        },
     ]
     .into_iter()
     .chain(
         // Effects
-        EffectType::all().iter().map(|effect| NodeCatalogItem {
+        [
+            EffectType::Blur,
+            EffectType::Invert,
+            EffectType::HueShift,
+            EffectType::Wave,
+            EffectType::Mirror,
+            EffectType::Kaleidoscope,
+            EffectType::Pixelate,
+            EffectType::EdgeDetect,
+            EffectType::Glitch,
+            EffectType::RgbSplit,
+            EffectType::ChromaticAberration,
+            EffectType::FilmGrain,
+            EffectType::Vignette,
+        ]
+        .iter()
+        .map(|effect| NodeCatalogItem {
             label: effect.name(),
             search_tags: "modulator effect filter fx",
             part_type: ModulePartType::Modulizer(ModulizerType::Effect {
@@ -183,25 +192,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
                 blend_mode: None,
                 mesh: mapmap_core::module::MeshType::default(),
                 mapping_mode: false,
-            }),
-        },
-        NodeCatalogItem {
-            label: "📁 Layer Group",
-            search_tags: "layer folder collection",
-            part_type: ModulePartType::Layer(LayerType::Group {
-                name: "New Group".to_string(),
-                opacity: 1.0,
-                blend_mode: None,
-                mesh: mapmap_core::module::MeshType::default(),
-                mapping_mode: false,
-            }),
-        },
-        NodeCatalogItem {
-            label: "📚 All Layers",
-            search_tags: "layer master global",
-            part_type: ModulePartType::Layer(LayerType::All {
-                opacity: 1.0,
-                blend_mode: None,
             }),
         },
         // Hue
