@@ -1,3 +1,4 @@
+use super::capabilities;
 use egui::{Color32, Ui};
 use mapmap_core::module::{BlendModeType, EffectType, ModulePartId, ModulizerType};
 
@@ -275,43 +276,61 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                     {
                         *blend = BlendModeType::Normal;
                     }
-                    if ui
-                        .selectable_label(matches!(blend, BlendModeType::Add), "Add")
-                        .clicked()
-                    {
-                        *blend = BlendModeType::Add;
-                    }
-                    if ui
-                        .selectable_label(matches!(blend, BlendModeType::Multiply), "Multiply")
-                        .clicked()
-                    {
-                        *blend = BlendModeType::Multiply;
-                    }
-                    if ui
-                        .selectable_label(matches!(blend, BlendModeType::Screen), "Screen")
-                        .clicked()
-                    {
-                        *blend = BlendModeType::Screen;
-                    }
-                    if ui
-                        .selectable_label(matches!(blend, BlendModeType::Overlay), "Overlay")
-                        .clicked()
-                    {
-                        *blend = BlendModeType::Overlay;
-                    }
-                    if ui
-                        .selectable_label(matches!(blend, BlendModeType::Difference), "Difference")
-                        .clicked()
-                    {
-                        *blend = BlendModeType::Difference;
-                    }
-                    if ui
-                        .selectable_label(matches!(blend, BlendModeType::Exclusion), "Exclusion")
-                        .clicked()
-                    {
-                        *blend = BlendModeType::Exclusion;
-                    }
+                    ui.add_enabled_ui(capabilities::is_blend_mode_supported(&BlendModeType::Add), |ui| {
+                        if ui
+                            .selectable_label(matches!(blend, BlendModeType::Add), "Add")
+                            .clicked()
+                        {
+                            *blend = BlendModeType::Add;
+                        }
+                    });
+                    ui.add_enabled_ui(capabilities::is_blend_mode_supported(&BlendModeType::Multiply), |ui| {
+                        if ui
+                            .selectable_label(matches!(blend, BlendModeType::Multiply), "Multiply")
+                            .clicked()
+                        {
+                            *blend = BlendModeType::Multiply;
+                        }
+                    });
+                    ui.add_enabled_ui(capabilities::is_blend_mode_supported(&BlendModeType::Screen), |ui| {
+                        if ui
+                            .selectable_label(matches!(blend, BlendModeType::Screen), "Screen")
+                            .clicked()
+                        {
+                            *blend = BlendModeType::Screen;
+                        }
+                    });
+                    ui.add_enabled_ui(capabilities::is_blend_mode_supported(&BlendModeType::Overlay), |ui| {
+                        if ui
+                            .selectable_label(matches!(blend, BlendModeType::Overlay), "Overlay")
+                            .clicked()
+                        {
+                            *blend = BlendModeType::Overlay;
+                        }
+                    });
+                    ui.add_enabled_ui(capabilities::is_blend_mode_supported(&BlendModeType::Difference), |ui| {
+                        if ui
+                            .selectable_label(matches!(blend, BlendModeType::Difference), "Difference")
+                            .clicked()
+                        {
+                            *blend = BlendModeType::Difference;
+                        }
+                    });
+                    ui.add_enabled_ui(capabilities::is_blend_mode_supported(&BlendModeType::Exclusion), |ui| {
+                        if ui
+                            .selectable_label(matches!(blend, BlendModeType::Exclusion), "Exclusion")
+                            .clicked()
+                        {
+                            *blend = BlendModeType::Exclusion;
+                        }
+                    });
                 });
+            if !capabilities::is_blend_mode_supported(blend) {
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "Blend modes other than Normal are currently ignored.",
+                );
+            }
             ui.add(egui::Slider::new(&mut 1.0_f32, 0.0..=1.0).text("Opacity"));
         }
         ModulizerType::AudioReactive { source } => {
