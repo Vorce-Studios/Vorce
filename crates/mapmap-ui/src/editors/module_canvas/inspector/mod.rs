@@ -150,8 +150,12 @@ pub fn render_fixed_timer_preview(
             ui.colored_label(color, status);
             ui.label(format!("Next pulse in {} ms", next_pulse_ms));
         });
-        ui.label(format!("Offset {} ms", offset_ms));
-        ui.label(format!("Current trigger value {:.2}", live_value));
+        ui.horizontal(|ui| {
+            ui.label(format!("Offset {} ms", offset_ms));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.label(format!("Current trigger value {:.2}", live_value));
+            });
+        });
     });
 }
 

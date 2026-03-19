@@ -127,6 +127,16 @@ pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
                     });
                 }
             }
+            ModulePartType::Trigger(_) => {
+                let is_connected = module.connections.iter().any(|c| c.from_part == part.id);
+                if !is_connected {
+                    issues.push(ModuleIssue {
+                        severity: IssueSeverity::Warning,
+                        message: "Trigger Node has no outputs connected. Its events or control signals will not affect the graph.".to_string(),
+                        part_id: Some(part.id),
+                    });
+                }
+            }
             _ => {}
         }
     }
@@ -205,5 +215,26 @@ mod tests {
         assert_eq!(issues.len(), 1);
         assert_eq!(issues[0].severity, IssueSeverity::Warning);
         assert!(issues[0].message.contains("no file selected"));
+    }
+
+    #[test]
+    fn test_check_module_integrity_unconnected_trigger() {
+        let mut module = MapFlowModule {
+            id: 1,
+            name: "Test4".to_string(),
+            color: [0.0; 4],
+            parts: vec![],
+            connections: vec![],
+            playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
+            next_part_id: 1,
+        };
+
+        // Add a trigger node
+        module.add_part(PartType::Trigger, (0.0, 0.0));
+
+        let issues = check_module_integrity(&module);
+        assert_eq!(issues.len(), 1);
+        assert_eq!(issues[0].severity, IssueSeverity::Warning);
+        assert!(issues[0].message.contains("Trigger Node has no outputs connected"));
     }
 }
