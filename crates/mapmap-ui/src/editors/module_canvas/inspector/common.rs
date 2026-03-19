@@ -5,6 +5,20 @@ use crate::widgets::{styled_drag_value, styled_slider};
 use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use mapmap_core::module::{BlendModeType, ModulePartId};
 
+/// Renders a neutral banner for sources that are rendered outside the regular preview path.
+pub fn render_missing_preview_banner(ui: &mut Ui, status: &str) {
+    egui::Frame::group(ui.style())
+        .fill(Color32::from_gray(24))
+        .stroke(Stroke::new(1.0, Color32::from_gray(64)))
+        .inner_margin(egui::Margin::same(10))
+        .show(ui, |ui| {
+            ui.vertical_centered(|ui| {
+                ui.label(egui::RichText::new("Preview unavailable").strong());
+                ui.label(egui::RichText::new(status).weak());
+            });
+        });
+}
+
 /// Renders the common transform and color correction controls for a media source.
 #[allow(clippy::too_many_arguments)]
 pub fn render_common_controls(

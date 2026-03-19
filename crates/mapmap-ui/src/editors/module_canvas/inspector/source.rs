@@ -968,9 +968,12 @@ pub fn render_source_ui(
         } => {
             ui.label("☁️ Atmosphere Settings");
             ui.label(
-                egui::RichText::new(format!("⚠ {}", mapmap_core::diagnostics::DEGRADED_NODE_BEVY_UNSUPPORTED))
-                    .color(crate::theme::colors::WARN_COLOR)
-                    .small(),
+                egui::RichText::new(format!(
+                    "⚠ {}",
+                    mapmap_core::diagnostics::DEGRADED_NODE_BEVY_UNSUPPORTED
+                ))
+                .color(crate::theme::colors::WARN_COLOR)
+                .small(),
             );
             ui.separator();
 
@@ -1007,9 +1010,12 @@ pub fn render_source_ui(
         } => {
             ui.label("\u{2B22} Hex Grid Settings");
             ui.label(
-                egui::RichText::new(format!("⚠ {}", mapmap_core::diagnostics::DEGRADED_NODE_BEVY_UNSUPPORTED))
-                    .color(crate::theme::colors::WARN_COLOR)
-                    .small(),
+                egui::RichText::new(format!(
+                    "⚠ {}",
+                    mapmap_core::diagnostics::DEGRADED_NODE_BEVY_UNSUPPORTED
+                ))
+                .color(crate::theme::colors::WARN_COLOR)
+                .small(),
             );
             ui.separator();
 
@@ -1071,9 +1077,12 @@ pub fn render_source_ui(
         } => {
             ui.label("\u{2728} Particle System Settings");
             ui.label(
-                egui::RichText::new(format!("⚠ {}", mapmap_core::diagnostics::DEGRADED_NODE_BEVY_UNSUPPORTED))
-                    .color(crate::theme::colors::WARN_COLOR)
-                    .small(),
+                egui::RichText::new(format!(
+                    "⚠ {}",
+                    mapmap_core::diagnostics::DEGRADED_NODE_BEVY_UNSUPPORTED
+                ))
+                .color(crate::theme::colors::WARN_COLOR)
+                .small(),
             );
             ui.separator();
 
@@ -1302,23 +1311,62 @@ pub fn render_source_ui(
             ui.collapsing("📐 Transform (3D)", |ui| {
                 ui.label("Position:");
                 ui.horizontal(|ui| {
-                    ui.add(egui::DragValue::new(&mut position[0]).speed(0.1).prefix("X: "));
-                    ui.add(egui::DragValue::new(&mut position[1]).speed(0.1).prefix("Y: "));
-                    ui.add(egui::DragValue::new(&mut position[2]).speed(0.1).prefix("Z: "));
+                    ui.add(
+                        egui::DragValue::new(&mut position[0])
+                            .speed(0.1)
+                            .prefix("X: "),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut position[1])
+                            .speed(0.1)
+                            .prefix("Y: "),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut position[2])
+                            .speed(0.1)
+                            .prefix("Z: "),
+                    );
                 });
 
                 ui.label("Rotation:");
                 ui.horizontal(|ui| {
-                    ui.add(egui::DragValue::new(&mut rotation[0]).speed(1.0).prefix("X: ").suffix("°"));
-                    ui.add(egui::DragValue::new(&mut rotation[1]).speed(1.0).prefix("Y: ").suffix("°"));
-                    ui.add(egui::DragValue::new(&mut rotation[2]).speed(1.0).prefix("Z: ").suffix("°"));
+                    ui.add(
+                        egui::DragValue::new(&mut rotation[0])
+                            .speed(1.0)
+                            .prefix("X: ")
+                            .suffix("°"),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut rotation[1])
+                            .speed(1.0)
+                            .prefix("Y: ")
+                            .suffix("°"),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut rotation[2])
+                            .speed(1.0)
+                            .prefix("Z: ")
+                            .suffix("°"),
+                    );
                 });
 
                 ui.label("Scale:");
                 ui.horizontal(|ui| {
-                    ui.add(egui::DragValue::new(&mut scale[0]).speed(0.01).prefix("X: "));
-                    ui.add(egui::DragValue::new(&mut scale[1]).speed(0.01).prefix("Y: "));
-                    ui.add(egui::DragValue::new(&mut scale[2]).speed(0.01).prefix("Z: "));
+                    ui.add(
+                        egui::DragValue::new(&mut scale[0])
+                            .speed(0.01)
+                            .prefix("X: "),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut scale[1])
+                            .speed(0.01)
+                            .prefix("Y: "),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut scale[2])
+                            .speed(0.01)
+                            .prefix("Z: "),
+                    );
                 });
             });
 
