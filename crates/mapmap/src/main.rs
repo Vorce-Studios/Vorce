@@ -49,7 +49,18 @@ impl ApplicationHandler for MapFlowApp {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.app.is_none() {
             info!("Initializing MapFlow...");
+<<<<<<< HEAD
             let mut app = pollster::block_on(App::new(event_loop, self.is_automation))
+=======
+
+            let config = if self.is_automation {
+                InitializationConfig::automation()
+            } else {
+                InitializationConfig::default()
+            };
+
+            let mut app = pollster::block_on(App::new(event_loop, config))
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
                 .expect("Failed to initialize application");
 
             // Automation mode: load fixture if specified
@@ -159,7 +170,19 @@ impl ApplicationHandler for MapFlowApp {
                                 },
                             );
 
+<<<<<<< HEAD
                             app.backend.queue.submit(std::iter::once(encoder.finish()));
+=======
+                                if let Some(texture) = app.texture_pool.get_texture("composite") {
+                                    let (buffer, padded_bytes_per_row) =
+                                        mapmap_render::capture::queue_readback_copy(
+                                            &app.backend.device,
+                                            &mut encoder,
+                                            &texture,
+                                            width,
+                                            height,
+                                        );
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
 
                             let slice = buffer.slice(..);
                             slice.map_async(wgpu::MapMode::Read, |_| {});
@@ -189,6 +212,13 @@ impl ApplicationHandler for MapFlowApp {
                                         }
                                         _ => rgba.extend_from_slice(pixel),
                                     }
+<<<<<<< HEAD
+=======
+                                } else {
+                                    error!(
+                                        "Could not find composite texture for automation capture"
+                                    );
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
                                 }
                             }
                             drop(mapped);
@@ -356,7 +386,10 @@ impl App {
 
     /// Global logic update
     pub fn update(&mut self, elwt: &winit::event_loop::ActiveEventLoop, dt: f32) -> Result<()> {
+<<<<<<< HEAD
         // Run modularized update loop
+=======
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
         crate::app::loops::logic::update(self, elwt, dt)?;
 
         // Special handling for MediaPlaybackCommands from UI
@@ -403,6 +436,7 @@ impl App {
                         MediaPlaybackCommand::Stop => {
                             let _ = player.command_tx.send(PlaybackCommand::Stop);
                         }
+<<<<<<< HEAD
                         MediaPlaybackCommand::Reload => unreachable!(
                             "MediaPlaybackCommand::Reload is handled before player dispatch"
                         ),
@@ -412,6 +446,13 @@ impl App {
                         }
                         MediaPlaybackCommand::SetLoop(enabled) => {
                             info!("Setting loop to {} for part_id={}", enabled, part_id);
+=======
+                        MediaPlaybackCommand::Reload => unreachable!(),
+                        MediaPlaybackCommand::SetSpeed(speed) => {
+                            let _ = player.command_tx.send(PlaybackCommand::SetSpeed(speed));
+                        }
+                        MediaPlaybackCommand::SetLoop(enabled) => {
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
                             let mode = if enabled {
                                 mapmap_media::LoopMode::Loop
                             } else {
@@ -420,7 +461,10 @@ impl App {
                             let _ = player.command_tx.send(PlaybackCommand::SetLoopMode(mode));
                         }
                         MediaPlaybackCommand::Seek(position) => {
+<<<<<<< HEAD
                             info!("Seeking to {} for part_id={}", position, part_id);
+=======
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
                             let _ = player.command_tx.send(PlaybackCommand::Seek(
                                 std::time::Duration::from_secs_f64(position),
                             ));
@@ -480,7 +524,10 @@ fn main() -> Result<()> {
         .with_target(true)
         .with_writer(non_blocking);
 
+<<<<<<< HEAD
     // Combine everything
+=======
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
     tracing_subscriber::registry()
         .with(env_filter)
         .with(console_layer)
@@ -540,17 +587,26 @@ fn run_automation(args: &CliArgs) -> Result<()> {
 fn run_player_ndi(args: &CliArgs) -> Result<()> {
     crate::player::ndi_player::run(args)
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
 fn run_player_dist(_args: &CliArgs) -> Result<()> {
     info!("Starting Distributed Player mode...");
     Ok(())
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
 fn run_player_legacy(_args: &CliArgs) -> Result<()> {
     info!("Starting Legacy RTSP/H.264 Player mode...");
     Ok(())
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
 fn run_player_pi(_args: &CliArgs) -> Result<()> {
     info!("Starting Raspberry Pi Player mode...");
     Ok(())

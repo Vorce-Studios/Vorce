@@ -44,6 +44,7 @@ impl App {
         // Initialize renderers
         let texture_pool = TexturePool::new(backend.device.clone());
         let compositor = Compositor::new(backend.device.clone(), backend.surface_format())?;
+<<<<<<< HEAD
         let effect_chain_renderer = EffectChainRenderer::new(
             backend.device.clone(),
             backend.queue.clone(),
@@ -54,11 +55,16 @@ impl App {
             backend.queue.clone(),
             backend.surface_format(),
         )?;
+=======
+        let (effect_chain_renderer, preview_effect_chain_renderer) =
+            Self::init_renderers(&backend)?;
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
         let mesh_renderer = MeshRenderer::new(backend.device.clone(), backend.surface_format())?;
         let mesh_buffer_cache = MeshBufferCache::new();
         let quad_renderer = QuadRenderer::new(&backend.device, backend.surface_format())?;
 
         // Initialize advanced output renderers
+<<<<<<< HEAD
         let edge_blend_renderer =
             EdgeBlendRenderer::new(backend.device.clone(), backend.surface_format())
                 .map_err(|e| {
@@ -74,6 +80,10 @@ impl App {
                     e
                 })
                 .ok();
+=======
+        let (edge_blend_renderer, color_calibration_renderer) =
+            Self::init_advanced_renderers(&backend);
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
 
         let mut window_manager = WindowManager::new();
 
@@ -87,11 +97,31 @@ impl App {
         let main_window_id = window_manager.create_main_window_with_geometry(
             elwt,
             &backend,
+<<<<<<< HEAD
             saved_config.window_width,
             saved_config.window_height,
             saved_config.window_x,
             saved_config.window_y,
             saved_config.window_maximized,
+=======
+            if config.is_automation {
+                Some(1280)
+            } else {
+                saved_config.window_width
+            },
+            if config.is_automation {
+                Some(720)
+            } else {
+                saved_config.window_height
+            },
+            saved_config.window_x,
+            saved_config.window_y,
+            if config.is_automation {
+                false
+            } else {
+                saved_config.window_maximized
+            },
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
             saved_config.vsync_mode,
         )?;
 
@@ -342,12 +372,17 @@ impl App {
             }
         };
 
+<<<<<<< HEAD
         if let Some(backend) = &mut audio_backend {
             if let Err(e) = backend.start() {
                 error!("Failed to start audio stream: {}", e);
                 audio_backend = None;
             }
         }
+=======
+        // Initialize Audio Analyzer
+        let audio_analyzer = mapmap_core::audio::AudioAnalyzer::new(state.audio_config.clone());
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
 
         // Initialize Audio Analyzer (wrapper around V2 for compatibility)
         let audio_analyzer = mapmap_core::audio::AudioAnalyzer::new(state.audio_config.clone());
@@ -461,6 +496,7 @@ impl App {
 
         let control_manager = ControlManager::new();
         let sys_info = sysinfo::System::new_all();
+<<<<<<< HEAD
         let (dummy_texture, dummy_view) = {
             let texture = backend.device.create_texture(&wgpu::TextureDescriptor {
                 label: Some("Dummy Input Texture"),
@@ -481,6 +517,10 @@ impl App {
                 std::sync::Arc::new(texture.create_view(&wgpu::TextureViewDescriptor::default()));
             (texture, view)
         };
+=======
+        let (dummy_texture, dummy_view) =
+            Self::create_initial_dummy_texture(&backend, width, height, format);
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
 
         #[cfg(feature = "midi")]
         let midi_handler = {
@@ -559,6 +599,7 @@ impl App {
             #[cfg(feature = "midi")]
             midi_ports: MidiInputHandler::list_ports().unwrap_or_default(),
             #[cfg(feature = "midi")]
+<<<<<<< HEAD
             selected_midi_port: if MidiInputHandler::list_ports()
                 .unwrap_or_default()
                 .is_empty()
@@ -566,6 +607,12 @@ impl App {
                 None
             } else {
                 Some(0) // Assuming auto-connect to first port succeeded
+=======
+            selected_midi_port: if MidiInputHandler::list_ports().unwrap_or_default().is_empty() {
+                None
+            } else {
+                Some(0)
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
             },
             #[cfg(feature = "ndi")]
             ndi_receivers: std::collections::HashMap::new(),
@@ -597,11 +644,17 @@ impl App {
             media_manager_ui: MediaManagerUI::new(),
             media_library: {
                 let mut lib = MediaLibrary::new();
+<<<<<<< HEAD
                 // Add default search paths for media
                 if let Some(video_dir) = dirs::video_dir() {
                     lib.add_scan_path(video_dir);
                 }
                 // Also add project relative media dir if it exists
+=======
+                if let Some(video_dir) = dirs::video_dir() {
+                    lib.add_scan_path(video_dir);
+                }
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
                 if let Some(project_media) = runtime_paths::existing_resource_path("app_videos") {
                     lib.add_scan_path(project_media);
                 }
@@ -661,6 +714,359 @@ impl App {
         Ok(app)
     }
 
+<<<<<<< HEAD
+=======
+    // Helper methods for modular initialization
+
+    fn init_renderers(backend: &WgpuBackend) -> Result<(EffectChainRenderer, EffectChainRenderer)> {
+        let effect_chain_renderer = EffectChainRenderer::new(
+            backend.device.clone(),
+            backend.queue.clone(),
+            backend.surface_format(),
+        )?;
+        let preview_effect_chain_renderer = EffectChainRenderer::new(
+            backend.device.clone(),
+            backend.queue.clone(),
+            backend.surface_format(),
+        )?;
+        Ok((effect_chain_renderer, preview_effect_chain_renderer))
+    }
+
+    fn init_advanced_renderers(
+        backend: &WgpuBackend,
+    ) -> (Option<EdgeBlendRenderer>, Option<ColorCalibrationRenderer>) {
+        let edge_blend_renderer =
+            EdgeBlendRenderer::new(backend.device.clone(), backend.surface_format())
+                .map_err(|e| {
+                    warn!("Failed to create edge blend renderer: {}", e);
+                    e
+                })
+                .ok();
+
+        let color_calibration_renderer =
+            ColorCalibrationRenderer::new(backend.device.clone(), backend.surface_format())
+                .map_err(|e| {
+                    warn!("Failed to create color calibration renderer: {}", e);
+                    e
+                })
+                .ok();
+
+        (edge_blend_renderer, color_calibration_renderer)
+    }
+
+    fn init_ui_assets(ui_state: &mut AppUI) {
+        #[cfg(feature = "midi")]
+        {
+            if let Some(path) =
+                runtime_paths::existing_resource_path("controllers/ecler_nuo4/elements.json")
+            {
+                match std::fs::read_to_string(&path) {
+                    Ok(json) => {
+                        if let Err(e) = ui_state.controller_overlay.load_elements(&json) {
+                            error!("Failed to parse elements.json: {}", e);
+                        } else {
+                            info!("Loaded controller elements from {:?}", path);
+                        }
+                    }
+                    Err(e) => {
+                        error!("Failed to read elements.json from {:?}: {}", path, e)
+                    }
+                }
+            }
+        }
+    }
+
+    fn load_autosave(state: &mut AppState, saved_config: &mapmap_ui::config::UserConfig) {
+        let autosave_path =
+            dirs::data_local_dir().map(|p| p.join("MapFlow").join("autosave.mflow"));
+        if let Some(path) = &autosave_path {
+            if path.exists() {
+                info!("Found autosave at {:?}, attempting to load...", path);
+                match load_project(path) {
+                    Ok(loaded_state) => {
+                        info!("Successfully loaded autosave.");
+                        *state = loaded_state;
+                        state.settings_mut().log_config.level =
+                            saved_config.log_level.as_str().to_string();
+                    }
+                    Err(e) => {
+                        error!("Failed to load autosave: {}", e);
+                    }
+                }
+            } else {
+                info!("No autosave found at {:?}, starting new project.", path);
+            }
+        }
+    }
+
+    fn run_self_heal(state: &mut AppState) {
+        // --- Reconcile Output IDs ---
+        let valid_outputs: HashMap<String, u64> = state
+            .output_manager
+            .outputs()
+            .iter()
+            .map(|o| (o.name.clone(), o.id))
+            .collect();
+        let valid_ids: Vec<u64> = valid_outputs.values().cloned().collect();
+
+        let mut fixed_count = 0;
+        for module in state.module_manager_mut().modules_mut() {
+            for part in &mut module.parts {
+                if let mapmap_core::module::ModulePartType::Output(
+                    mapmap_core::module::OutputType::Projector {
+                        ref mut id,
+                        ref name,
+                        ..
+                    },
+                ) = &mut part.part_type
+                {
+                    if !valid_ids.contains(id) {
+                        if let Some(new_id) = valid_outputs.get(name) {
+                            info!(
+                                "Self-Heal: Relinking Output '{}' from ID {} to {}.",
+                                name, id, new_id
+                            );
+                            *id = *new_id;
+                            fixed_count += 1;
+                        }
+                    }
+                }
+            }
+        }
+        if fixed_count > 0 {
+            state.dirty = true;
+        }
+
+        // --- Ensure Output Windows exist ---
+        let existing_output_ids: std::collections::HashSet<u64> = state
+            .output_manager
+            .outputs()
+            .iter()
+            .map(|o| o.id)
+            .collect();
+        let mut missing_outputs = Vec::new();
+        for module in state.module_manager.modules() {
+            for part in &module.parts {
+                if let mapmap_core::module::ModulePartType::Output(
+                    mapmap_core::module::OutputType::Projector { id, name, .. },
+                ) = &part.part_type
+                {
+                    if !existing_output_ids.contains(id) {
+                        missing_outputs.push((*id, name.clone()));
+                    }
+                }
+            }
+        }
+        for (id, name) in missing_outputs {
+            info!(
+                "Self-Heal: Creating missing Output Window '{}' (ID {})",
+                name, id
+            );
+            state.output_manager_mut().add_output(
+                name,
+                mapmap_core::output::CanvasRegion::new(0.0, 0.0, 1.0, 1.0),
+                (1920, 1080),
+            );
+        }
+
+        // --- Remove dangling connections ---
+        for module in state.module_manager_mut().modules_mut() {
+            let part_ids: std::collections::HashSet<u64> =
+                module.parts.iter().map(|p| p.id).collect();
+            module
+                .connections
+                .retain(|c| part_ids.contains(&c.from_part) && part_ids.contains(&c.to_part));
+        }
+    }
+
+    fn init_audio(device_to_use: Option<String>) -> Option<CpalBackend> {
+        let mut backend = match CpalBackend::new(device_to_use) {
+            Ok(backend) => Some(backend),
+            Err(e) => {
+                error!("Failed to initialize audio backend: {}", e);
+                None
+            }
+        };
+        if let Some(b) = &mut backend {
+            if let Err(e) = b.start() {
+                error!("Failed to start audio stream: {}", e);
+                return None;
+            }
+        }
+        backend
+    }
+
+    fn start_mcp_server(mcp_sender: crossbeam_channel::Sender<mapmap_mcp::McpAction>) {
+        thread::spawn(move || {
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap();
+            rt.block_on(async {
+                let server = McpServer::new(Some(mcp_sender));
+                if let Err(e) = server.run_stdio().await {
+                    error!("MCP Server error: {}", e);
+                }
+            });
+        });
+    }
+
+    fn init_oscillator_renderer(
+        backend: &WgpuBackend,
+        format: wgpu::TextureFormat,
+        state: &AppState,
+    ) -> Option<OscillatorRenderer> {
+        match OscillatorRenderer::new(
+            backend.device.clone(),
+            backend.queue.clone(),
+            format,
+            &state.oscillator_config,
+        ) {
+            Ok(mut renderer) => {
+                renderer.initialize_phases(state.oscillator_config.phase_init_mode);
+                Some(renderer)
+            }
+            Err(e) => {
+                error!("Failed to create oscillator renderer: {}", e);
+                None
+            }
+        }
+    }
+
+    fn init_preview_quad_buffers(
+        mesh_renderer: &MeshRenderer,
+    ) -> (wgpu::Buffer, wgpu::Buffer, u32) {
+        let preview_mesh = mapmap_core::Mesh {
+            mesh_type: mapmap_core::MeshType::Quad,
+            vertices: vec![
+                mapmap_core::MeshVertex::new(glam::Vec2::new(0.0, 0.0), glam::Vec2::new(0.0, 0.0)),
+                mapmap_core::MeshVertex::new(glam::Vec2::new(1.0, 0.0), glam::Vec2::new(1.0, 0.0)),
+                mapmap_core::MeshVertex::new(glam::Vec2::new(1.0, 1.0), glam::Vec2::new(1.0, 1.0)),
+                mapmap_core::MeshVertex::new(glam::Vec2::new(0.0, 1.0), glam::Vec2::new(0.0, 1.0)),
+            ],
+            indices: vec![0, 1, 2, 0, 2, 3],
+            revision: 0,
+        };
+        let (vb, ib) = mesh_renderer.create_mesh_buffers(&preview_mesh);
+        (vb, ib, preview_mesh.indices.len() as u32)
+    }
+
+    fn init_hue_controller(ui_state: &AppUI) -> HueController {
+        let ui_hue_conf = &ui_state.user_config.hue_config;
+        HueController::new(mapmap_control::hue::models::HueConfig {
+            bridge_ip: ui_hue_conf.bridge_ip.clone(),
+            username: ui_hue_conf.username.clone(),
+            client_key: ui_hue_conf.client_key.clone(),
+            application_id: String::new(),
+            entertainment_group_id: ui_hue_conf.entertainment_area.clone(),
+        })
+    }
+
+    fn connect_hue(controller: &mut HueController, ui_state: &AppUI, rt: &tokio::runtime::Runtime) {
+        if !ui_state.user_config.hue_config.bridge_ip.is_empty()
+            && ui_state.user_config.hue_config.auto_connect
+        {
+            info!("Initializing Hue Controller...");
+            if let Err(e) = rt.block_on(controller.connect()) {
+                warn!("Hue Controller initial connection failed: {}", e);
+            }
+        }
+    }
+
+    fn create_initial_dummy_texture(
+        backend: &WgpuBackend,
+        width: u32,
+        height: u32,
+        format: wgpu::TextureFormat,
+    ) -> (wgpu::Texture, std::sync::Arc<wgpu::TextureView>) {
+        let texture = backend.device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("Dummy Input Texture"),
+            size: wgpu::Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            view_formats: &[],
+        });
+        let view =
+            std::sync::Arc::new(texture.create_view(&wgpu::TextureViewDescriptor::default()));
+        (texture, view)
+    }
+
+    #[cfg(feature = "midi")]
+    fn init_midi() -> Option<MidiInputHandler> {
+        match MidiInputHandler::new() {
+            Ok(mut handler) => {
+                info!("MIDI initialized");
+                if let Ok(ports) = MidiInputHandler::list_ports() {
+                    if !ports.is_empty() {
+                        let _ = handler.connect(0);
+                    }
+                }
+                Some(handler)
+            }
+            Err(e) => {
+                error!("Failed to init MIDI: {}", e);
+                None
+            }
+        }
+    }
+
+    fn print_init_report(&self) {
+        info!("==========================================");
+        info!("   MapFlow Initialization Status Report   ");
+        info!("------------------------------------------");
+        info!(
+            "- Render Backend: {} ({:?})",
+            self.backend.adapter_info().name,
+            self.backend.adapter_info().backend
+        );
+        info!(
+            "- Edge Blend:     {}",
+            if self.edge_blend_renderer.is_some() {
+                "ENABLED"
+            } else {
+                "DISABLED"
+            }
+        );
+        info!(
+            "- Color Calib:    {}",
+            if self.color_calibration_renderer.is_some() {
+                "ENABLED"
+            } else {
+                "DISABLED"
+            }
+        );
+        info!("- Bevy Engine:    INITIALIZED");
+
+        #[cfg(feature = "midi")]
+        info!(
+            "- MIDI System:    {}",
+            if self.midi_handler.is_some() {
+                "CONNECTED"
+            } else {
+                "DISCONNECTED"
+            }
+        );
+
+        info!(
+            "- Hue System:     {}",
+            if !self.ui_state.user_config.hue_config.bridge_ip.is_empty() {
+                "CONFIGURED"
+            } else {
+                "UNCONFIGURED"
+            }
+        );
+        info!("- Media Library:  {} items", self.media_library.items.len());
+        info!("==========================================");
+    }
+
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
     /// Creates or recreates the dummy texture for effect input.
     pub fn create_dummy_texture(&mut self, width: u32, height: u32, format: wgpu::TextureFormat) {
         let texture = self

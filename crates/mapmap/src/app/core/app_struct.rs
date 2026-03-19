@@ -81,6 +81,40 @@ impl RuntimeRenderQueue {
     }
 }
 
+<<<<<<< HEAD
+=======
+/// Configuration for application initialization.
+#[derive(Default)]
+pub struct InitializationConfig {
+    /// Whether the app is running in automation mode.
+    pub is_automation: bool,
+    /// Whether to skip loading the autosave project.
+    pub skip_autosave: bool,
+    /// Whether to skip audio backend initialization.
+    pub skip_audio: bool,
+    /// Whether to skip MIDI initialization.
+    pub skip_midi: bool,
+    /// Whether to skip MCP server initialization.
+    pub skip_mcp: bool,
+    /// Whether to skip Hue controller initialization.
+    pub skip_hue: bool,
+}
+
+impl InitializationConfig {
+    /// Create a config for automation mode.
+    pub fn automation() -> Self {
+        Self {
+            is_automation: true,
+            skip_autosave: true,
+            skip_audio: true,
+            skip_midi: true,
+            skip_mcp: true,
+            skip_hue: true,
+        }
+    }
+}
+
+>>>>>>> fix-1245-trigger-nodes-migration-172233438171995501
 /// The main application state.
 pub struct App {
     /// Manages all application windows.

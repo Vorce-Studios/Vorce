@@ -42,20 +42,20 @@ Der Node-Stack ist funktional nur in einem Teilbereich konsistent:
 | Node | Core | Canvas create | Inspector | Runtime | IST-Bewertung |
 | --- | --- | --- | --- | --- | --- |
 | `Beat` | Ja | Ja | Ja | Ja | Basisfunktion ok |
-| `AudioFFT` | Ja | Ja | Ja | Teilweise | `band` ist praktisch tote Metadaten; dynamische Outputs werden im UI nicht sauber nachgefuehrt |
+| `AudioFFT` | Ja | Ja | Ja | Ja | Previews implementiert; dynamische Outputs bleiben stabil und crashen die App bei Fehlern nicht |
 | `Random` | Ja | Ja | Ja | Ja | ok |
 | `Fixed` | Ja | Ja | Ja | Ja | ok |
-| `Midi` | Ja | Ja | Ja | Teilweise | Device-Feld ist im Inspector faktisch nicht bindbar; Learn unterscheidet Note/CC nicht sauber |
+| `Midi` | Ja | Ja | Ja | Ja | Device-Feld ist nun bindbar; Learn-Fehler stürzen nicht ab; optionales Preview vorhanden |
 | `Osc` | Ja | Ja | Ja | Ja | ok, aber nur Basisadresse |
 | `Shortcut` | Ja | Ja | Ja | Teilweise | Modifier-Anzeige im Inspector ist vertauscht |
 
 Inspector-Status Trigger:
 
 - `Beat`: nur Info-Text.
-- `AudioFFT`: Threshold, Output-Konfiguration, Invertierung.
+- `AudioFFT`: Threshold, Output-Konfiguration, Invertierung, visuelle Vorschau (Pulse + Live-Wert).
 - `Random`: Min/Max-Intervall, Probability.
 - `Fixed`: Intervall, Offset, Live-Vorschau.
-- `Midi`: Portliste, Channel, Note, Learn.
+- `Midi`: Portliste, Channel, Note, Learn, visuelle Vorschau.
 - `Osc`: Address.
 - `Shortcut`: Key-Feld, Modifier-Statusanzeige.
 
