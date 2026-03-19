@@ -71,7 +71,7 @@ pub(crate) fn render_content(
     if target_ops.is_empty() {
         if output_id != 0 && should_log_video_issue(video_log_times, empty_ops_issue_key.clone()) {
             tracing::warn!(
-                "Fehler in Videoausgabe: {} {} bleibt leer, weil keine RenderOps fuer diesen Output erzeugt wurden.",
+                "[Fault Isolation] Module: <unknown>, Part: <unknown>, Operation: Video Output, Reason: {} {} remains empty due to missing RenderOps",
                 if is_preview_output {
                     "Output-Preview"
                 } else {
@@ -138,7 +138,11 @@ pub(crate) fn render_content(
     };
 
     let target_view = if needs_post_processing {
-        mesh_target_view_ref.as_deref().unwrap()
+        if let Some(target) = mesh_target_view_ref.as_deref() {
+            target
+        } else {
+            view
+        }
     } else {
         view
     };
@@ -222,11 +226,11 @@ pub(crate) fn render_content(
                 );
                 if should_log_video_issue(video_log_times, issue_key) {
                     tracing::warn!(
-                        "Fehler in Videoausgabe: {} {} kann Modul {} / Part {} nicht rendern, weil die erwartete Textur '{}' im TexturePool fehlt.",
-                        if is_preview_output { "Preview fuer Output" } else { "Output" },
-                        real_output_id,
+                        "[Fault Isolation] Module: {}, Part: {}, Operation: Render Layer, Reason: {} {} cannot render because expected texture '{}' is missing in TexturePool",
                         module_id,
                         source_part_id,
+                        if is_preview_output { "Preview fuer Output" } else { "Output" },
+                        real_output_id,
                         tex_name
                     );
                 }
@@ -353,7 +357,10 @@ pub(crate) fn render_content(
 
     // --- POST PROCESSING PASSES ---
     if needs_post_processing {
-        let intermediate_view = mesh_target_view_ref.as_ref().unwrap();
+        let Some(intermediate_view) = mesh_target_view_ref.as_ref() else {
+            tracing::warn!("[Fault Isolation] Post-processing skipped: missing intermediate view for output {}", output_id);
+            return Ok(());
+        };
         // Re-create the texture bind group each frame since the intermediate texture may be re-allocated by the pool,
         // but we could optimize this later by checking if the texture's ID changed.
         // For now, creating a texture bind group is relatively cheap compared to buffers.

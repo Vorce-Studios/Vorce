@@ -190,3 +190,10 @@ P1:
 - Socket-Verbindungen langfristig von Indexen auf stabile Socket-IDs migrieren
 - Render Queue um strukturierte Diagnostics pro Item erweitern
 - Fault-Isolation pro Node/Modul weiter ausbauen
+
+### 11.2 Fault Isolation und Diagnostics (Issue #1242)
+
+- Der Evaluator generiert RenderOps mit expliziten `module_id` und `part_id` Informationen.
+- Falls ungültige oder leere RenderOps entstehen, werden diese im `mapmap::RuntimeRenderQueue` gefiltert oder im Render-Loop übersprungen, ohne einen globalen Panic auszulösen.
+- Es gibt explizite Safe-Guards (z.B. Ersetzen von `unwrap()` durch `if let Some()`), wenn auf dynamische Zwischen-Texturen, Views oder Previews zugegriffen wird.
+- Wenn ein Layer aufgrund fehlender Intermediate-Views oder fehlerhafter Render-Assets übersprungen wird, wird eine `[Fault Isolation]`-Logmeldung erzeugt.
