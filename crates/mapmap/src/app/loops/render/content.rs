@@ -48,17 +48,17 @@ pub(crate) fn render_content(
     let is_preview_output = (output_id & PREVIEW_FLAG) != 0;
     let real_output_id = output_id & !PREVIEW_FLAG;
 
-    let mut target_ops: Vec<(u64, mapmap_core::module_eval::RenderOp)> = ctx
+    let mut target_ops: Vec<(u64, mapmap_core::module_eval::RenderOp, Vec<String>)> = ctx
         .render_queue
         .iter()
         .filter(|item| match &item.render_op.output_type {
             Projector { id, .. } => *id == real_output_id,
             _ => item.render_op.output_part_id == real_output_id,
         })
-        .map(|item| (item.module_id, item.render_op.clone()))
+        .map(|item| (item.module_id, item.render_op.clone(), item.diagnostics.clone()))
         .collect();
 
-    target_ops.sort_by(|(_, a), (_, b)| b.output_part_id.cmp(&a.output_part_id));
+    target_ops.sort_by(|(_, a, _), (_, b, _)| b.output_part_id.cmp(&a.output_part_id));
 
     let empty_ops_issue_key = format!(
         "video-output-empty-ops:{real_output_id}:{}",
@@ -172,7 +172,19 @@ pub(crate) fn render_content(
     }
 
     // Accumulate Layers
-    for (module_id, op) in target_ops {
+    for (module_id, op, diagnostics) in target_ops {
+        for diag in &diagnostics {
+            let issue_key = format!("video-output-degraded:{}:{}:{}", real_output_id, module_id, diag);
+            if should_log_video_issue(video_log_times, issue_key.clone()) {
+                tracing::warn!(
+                    "Degradierter RenderOp für Output {} Modul {}: {}",
+                    real_output_id,
+                    module_id,
+                    diag
+                );
+            }
+        }
+
         let tex_name = if let Some(src_id) = op.source_part_id {
             format!("part_{}_{}", module_id, src_id)
         } else {
@@ -301,7 +313,11 @@ pub(crate) fn render_content(
                 }
             }
 
-            let transform = glam::Mat4::IDENTITY;
+            let mut transform = glam::Mat4::IDENTITY;
+            transform *= glam::Mat4::from_translation(glam::vec3(op.source_props.offset_x, op.source_props.offset_y, 0.0));
+            transform *= glam::Mat4::from_rotation_z(op.source_props.rotation.to_radians());
+            transform *= glam::Mat4::from_scale(glam::vec3(op.source_props.scale_x, op.source_props.scale_y, 1.0));
+
             let uniform_bind_group = mesh_renderer.get_uniform_bind_group_with_source_props(
                 queue,
                 transform,

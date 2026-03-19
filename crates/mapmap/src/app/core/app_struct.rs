@@ -60,6 +60,8 @@ pub struct RuntimeRenderQueueItem {
     pub module_id: ModuleId,
     /// Evaluated render operation.
     pub render_op: RenderOp,
+    /// Structured diagnostics about skipped or degraded features in this item.
+    pub diagnostics: Vec<String>,
 }
 
 /// Consolidated visual render queue for the current frame.

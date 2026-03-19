@@ -37,6 +37,7 @@ pub fn render_layer_ui(
             ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
 
             // Blend mode
+            ui.add_enabled_ui(false, |ui| {
             let blend_text = blend_mode
                 .as_ref()
                 .map(|b| format!("{:?}", b))
@@ -72,6 +73,8 @@ pub fn render_layer_ui(
                         *blend_mode = Some(BlendModeType::Multiply);
                     }
                 });
+            });
+            ui.label(egui::RichText::new("Blend Modes temporär im Renderpfad deaktiviert.").color(crate::theme::colors::WARN_COLOR));
 
             ui.checkbox(mapping_mode, "Mapping Mode (Grid)");
 
@@ -99,6 +102,8 @@ pub fn render_layer_ui(
 
 /// Renders the configuration UI for a `ModulePartType::Mask`.
 pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
+    ui.label(egui::RichText::new("Masken temporär im Renderpfad deaktiviert.").color(crate::theme::colors::WARN_COLOR));
+    ui.add_enabled_ui(false, |ui| {
     ui.label("Mask Type:");
     match mask {
         MaskType::File { path } => {
@@ -176,4 +181,5 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
             ui.add(egui::Slider::new(softness, 0.0..=1.0).text("Softness"));
         }
     }
+    });
 }
