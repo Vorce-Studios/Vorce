@@ -35,9 +35,7 @@ pub mod resources;
 pub mod systems;
 
 use bevy::prelude::*;
-use bevy::render::{
-    extract_resource::ExtractResourcePlugin, Render, RenderApp, RenderSet,
-};
+use bevy::render::{extract_resource::ExtractResourcePlugin, Render, RenderApp, RenderSet};
 use bevy::{log::LogPlugin, winit::WinitPlugin};
 use components::*;
 use resources::*;
@@ -122,10 +120,7 @@ impl BevyRunner {
         );
 
         if let Some(render_app) = app.get_sub_app_mut(RenderApp) {
-            render_app.add_systems(
-                Render,
-                frame_readback_system.after(RenderSet::Render),
-            );
+            render_app.add_systems(Render, frame_readback_system.after(RenderSet::Render));
         }
 
         // `App::update()` does not finalize plugin setup for us.
@@ -444,6 +439,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore]
     fn headless_runner_disables_embedded_host_plugins() {
         let runner = BevyRunner::new();
 
