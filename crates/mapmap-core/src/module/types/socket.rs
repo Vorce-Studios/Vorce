@@ -103,6 +103,36 @@ impl ModuleSocket {
             && target.direction == ModuleSocketDirection::Input
             && self.socket_type == target.socket_type
     }
+
+    /// Create a standard media input socket.
+    pub fn standard_media_in(id: impl Into<String>, name: impl Into<String>) -> Self {
+        Self::input(id, name, ModuleSocketType::Media)
+    }
+
+    /// Create a standard media output socket.
+    pub fn standard_media_out(id: impl Into<String>, name: impl Into<String>) -> Self {
+        Self::output(id, name, ModuleSocketType::Media)
+    }
+
+    /// Create a standard trigger input socket (mappable).
+    pub fn standard_trigger_in(id: impl Into<String>, name: impl Into<String>) -> Self {
+        Self::input_mappable(id, name, ModuleSocketType::Trigger)
+    }
+
+    /// Create a standard trigger output socket.
+    pub fn standard_trigger_out(id: impl Into<String>, name: impl Into<String>) -> Self {
+        Self::output(id, name, ModuleSocketType::Trigger)
+    }
+
+    /// Create a standard layer input socket.
+    pub fn standard_layer_in(id: impl Into<String>, name: impl Into<String>) -> Self {
+        Self::input(id, name, ModuleSocketType::Layer)
+    }
+
+    /// Create a standard layer output socket.
+    pub fn standard_layer_out(id: impl Into<String>, name: impl Into<String>) -> Self {
+        Self::output(id, name, ModuleSocketType::Layer)
+    }
 }
 
 /// Type of data carried by a connection

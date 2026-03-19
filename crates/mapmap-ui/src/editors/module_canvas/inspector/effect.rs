@@ -256,11 +256,7 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                     ui.label("LUT Loading requires a .cube file (not yet implemented in properties panel).");
                 }
                 _ => {
-                    ui.label(
-                        egui::RichText::new("No configurable parameters")
-                            .weak()
-                            .italics(),
-                    );
+                    super::common::render_info_label(ui, "No configurable parameters");
                 }
             }
         }
