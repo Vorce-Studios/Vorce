@@ -329,7 +329,11 @@ The workflows require the following GitHub permissions:
 
 **🧪 Phase 3: Automated Testing**
 
+<<<<<<< HEAD
 1. **Current PR Gate (`CICD-DevFlow_Job01_Validation.yml`):**
+=======
+5. **Current PR Gate (`CICD-DevFlow_Job01_Validation.yml`):**
+>>>>>>> cabb25a7 (Archive unpermitted scripts and fix formatting)
 
 - Triggered automatically on pull requests
 - Code quality checks (format, lint)
@@ -356,7 +360,11 @@ The workflows require the following GitHub permissions:
 
 **📝 Phase 5: Post-Merge Actions**
 
+<<<<<<< HEAD
 1. **Documentation Updates and Follow-up Automation:**
+=======
+8. **Documentation Updates and Follow-up Automation:**
+>>>>>>> cabb25a7 (Archive unpermitted scripts and fix formatting)
 
 - CHANGELOG updates remain available in dedicated workflows
 - Additional project automation can run separately from the merge gate
