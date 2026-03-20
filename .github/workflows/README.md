@@ -315,13 +315,13 @@ The workflows require the following GitHub permissions:
 
 **🔄 Phase 2: Session Monitoring**
 
-3. **Continuous Monitoring (CI-08):**
+1. **Continuous Monitoring (CI-08):**
 
 - Runs every 5 minutes
 - Polls Jules API for session status
 - Detects when sessions complete or fail
 
-4. **PR Creation (CI-08):**
+1. **PR Creation (CI-08):**
    - Automatically creates PR when session completes
    - Adds `jules-pr` label
    - Links to issue and session
@@ -329,7 +329,7 @@ The workflows require the following GitHub permissions:
 
 **🧪 Phase 3: Automated Testing**
 
-5. **Current PR Gate (`CICD-DevFlow_Job01_Validation.yml`):**
+1. **Current PR Gate (`CICD-DevFlow_Job01_Validation.yml`):**
 
 - Triggered automatically on pull requests
 - Code quality checks (format, lint)
@@ -340,14 +340,14 @@ The workflows require the following GitHub permissions:
 
 **✅ Phase 4: Merge Decision**
 
-6. **Current Success Path (`CICD-DevFlow_Job02_AutoMerge.yml`):**
+1. **Current Success Path (`CICD-DevFlow_Job02_AutoMerge.yml`):**
 
 - Waits for the required PR checks
 - Evaluates mergeability and branch state
 - Merges automatically when all required checks pass
 - Adds/update managed PR comments
 
-7. **Current Blocking Conditions:**
+1. **Current Blocking Conditions:**
 
 - Required PR checks are missing, pending, or failed
 - Merge conflicts exist
@@ -356,7 +356,7 @@ The workflows require the following GitHub permissions:
 
 **📝 Phase 5: Post-Merge Actions**
 
-8. **Documentation Updates and Follow-up Automation:**
+1. **Documentation Updates and Follow-up Automation:**
 
 - CHANGELOG updates remain available in dedicated workflows
 - Additional project automation can run separately from the merge gate

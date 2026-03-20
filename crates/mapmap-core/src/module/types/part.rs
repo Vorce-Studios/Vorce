@@ -65,7 +65,7 @@ impl ModulePart {
                 ModuleSocket::input_mappable(
                     "trigger_vis_in",
                     "Trigger In (Vis)",
-                    ModuleSocketType::Trigger,
+                    ModuleSocketType::Event,
                 )
                 .multi_input(),
             );
@@ -103,131 +103,83 @@ impl ModulePartType {
             ModulePartType::Trigger(trigger_type) => {
                 let outputs = match trigger_type {
                     TriggerType::AudioFFT { output_config, .. } => output_config.generate_outputs(),
-                    _ => vec![ModuleSocket::output(
+                    _ => vec![ModuleSocket::standard_trigger_out(
                         "trigger_out",
                         "Trigger Out",
-                        ModuleSocketType::Trigger,
                     )],
                 };
                 (vec![], outputs)
             }
             ModulePartType::Mask(_) => (
                 vec![
-                    ModuleSocket::input("media_in", "Media In", ModuleSocketType::Media).primary(),
-                    ModuleSocket::input("mask_in", "Mask In", ModuleSocketType::Media),
+                    ModuleSocket::standard_media_in("media_in", "Media In").primary(),
+                    ModuleSocket::standard_media_in("mask_in", "Mask In"),
                 ],
-                vec![
-                    ModuleSocket::output("media_out", "Media Out", ModuleSocketType::Media)
-                        .primary(),
-                ],
+                vec![ModuleSocket::standard_media_out("media_out", "Media Out").primary()],
             ),
             ModulePartType::Modulizer(_) => (
                 vec![
-                    ModuleSocket::input("media_in", "Media In", ModuleSocketType::Media).primary(),
-                    ModuleSocket::input_mappable(
-                        "trigger_in",
-                        "Trigger In",
-                        ModuleSocketType::Trigger,
-                    ),
+                    ModuleSocket::standard_media_in("media_in", "Media In").primary(),
+                    ModuleSocket::standard_trigger_in("trigger_in", "Trigger In"),
                 ],
-                vec![
-                    ModuleSocket::output("media_out", "Media Out", ModuleSocketType::Media)
-                        .primary(),
-                ],
+                vec![ModuleSocket::standard_media_out("media_out", "Media Out").primary()],
             ),
             ModulePartType::Layer(_) => (
                 vec![
-                    ModuleSocket::input("media_in", "Input", ModuleSocketType::Media).primary(),
-                    ModuleSocket::input_mappable(
-                        "trigger_in",
-                        "Trigger",
-                        ModuleSocketType::Trigger,
-                    ),
+                    ModuleSocket::standard_media_in("media_in", "Input").primary(),
+                    ModuleSocket::standard_trigger_in("trigger_in", "Trigger"),
                 ],
-                vec![
-                    ModuleSocket::output("layer_out", "Output", ModuleSocketType::Layer).primary(),
-                ],
+                vec![ModuleSocket::standard_layer_out("layer_out", "Output").primary()],
             ),
             ModulePartType::Source(SourceType::BevyAtmosphere { .. })
             | ModulePartType::Source(SourceType::BevyHexGrid { .. })
             | ModulePartType::Source(SourceType::Bevy3DShape { .. })
             | ModulePartType::Source(SourceType::BevyCamera { .. }) => (
-                vec![ModuleSocket::input_mappable(
+                vec![ModuleSocket::standard_trigger_in(
                     "trigger_in",
                     "Trigger In",
-                    ModuleSocketType::Trigger,
                 )],
-                vec![
-                    ModuleSocket::output("media_out", "Media Out", ModuleSocketType::Media)
-                        .primary(),
-                ],
+                vec![ModuleSocket::standard_media_out("media_out", "Media Out").primary()],
             ),
             ModulePartType::Source(SourceType::BevyParticles { .. }) => (
-                vec![ModuleSocket::input_mappable(
-                    "trigger_in",
+                vec![ModuleSocket::standard_trigger_in(
+                    "spawn_trigger",
                     "Spawn Trigger",
-                    ModuleSocketType::Trigger,
                 )],
-                vec![
-                    ModuleSocket::output("media_out", "Media Out", ModuleSocketType::Media)
-                        .primary(),
-                ],
+                vec![ModuleSocket::standard_media_out("media_out", "Media Out").primary()],
             ),
             ModulePartType::Source(_) => (
-                vec![ModuleSocket::input_mappable(
+                vec![ModuleSocket::standard_trigger_in(
                     "trigger_in",
                     "Trigger In",
-                    ModuleSocketType::Trigger,
                 )],
-                vec![
-                    ModuleSocket::output("media_out", "Media Out", ModuleSocketType::Media)
-                        .primary(),
-                ],
+                vec![ModuleSocket::standard_media_out("media_out", "Media Out").primary()],
             ),
             ModulePartType::Output(out) => match out {
                 OutputType::Hue { .. } => (
                     vec![
-                        ModuleSocket::input("layer_in", "Layer In", ModuleSocketType::Layer)
-                            .primary(),
-                        ModuleSocket::input_mappable(
-                            "trigger_in",
-                            "Trigger In",
-                            ModuleSocketType::Trigger,
-                        ),
+                        ModuleSocket::standard_layer_in("layer_in", "Layer In").primary(),
+                        ModuleSocket::standard_trigger_in("trigger_in", "Trigger In"),
                     ],
                     vec![],
                 ),
                 _ => (
-                    vec![
-                        ModuleSocket::input("layer_in", "Layer In", ModuleSocketType::Layer)
-                            .primary(),
-                    ],
+                    vec![ModuleSocket::standard_layer_in("layer_in", "Layer In").primary()],
                     vec![],
                 ),
             },
             ModulePartType::Mesh(_) => (
                 vec![
-                    ModuleSocket::input("media_in", "Vertex In", ModuleSocketType::Media).primary(),
-                    ModuleSocket::input_mappable(
-                        "trigger_in",
-                        "Control In",
-                        ModuleSocketType::Trigger,
-                    ),
+                    ModuleSocket::standard_media_in("vertex_in", "Vertex In").primary(),
+                    ModuleSocket::standard_trigger_in("control_in", "Control In"),
                 ],
-                vec![
-                    ModuleSocket::output("media_out", "Geometry Out", ModuleSocketType::Media)
-                        .primary(),
-                ],
+                vec![ModuleSocket::standard_media_out("geometry_out", "Geometry Out").primary()],
             ),
             ModulePartType::Hue(_) => (
                 vec![
-                    ModuleSocket::input_mappable(
-                        "brightness_in",
-                        "Brightness",
-                        ModuleSocketType::Trigger,
-                    ),
-                    ModuleSocket::input("media_in", "Color (RGB)", ModuleSocketType::Media),
-                    ModuleSocket::input_mappable("strobe_in", "Strobe", ModuleSocketType::Trigger),
+                    ModuleSocket::standard_trigger_in("brightness_in", "Brightness"),
+                    ModuleSocket::standard_media_in("color_in", "Color (RGB)"),
+                    ModuleSocket::standard_trigger_in("strobe_in", "Strobe"),
                 ],
                 vec![],
             ),
