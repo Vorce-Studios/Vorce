@@ -878,7 +878,7 @@ mod evaluator_tests {
                 crate::module::ModuleSocket::input_mappable(
                     "trigger_vis_in",
                     "Trigger In (Vis)",
-                    crate::module::ModuleSocketType::Event,
+                    crate::module::ModuleSocketType::Control,
                 )
                 .multi_input(),
             );

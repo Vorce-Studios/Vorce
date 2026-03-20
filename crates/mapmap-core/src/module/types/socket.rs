@@ -1,17 +1,6 @@
 //!
 //! Socket definitions.
 //!
-//! # Socket Naming & Semantic Standards
-//!
-//! To keep graphs and UI semantics consistent:
-//!
-//! - `"media_in"` / `"media_out"` identify the primary media flow.
-//! - `"trigger_in"` / `"trigger_out"` identify automation and trigger paths.
-//! - `"layer_in"` / `"layer_out"` identify layer composition paths.
-//! - `"mask_in"` identifies secondary mask inputs.
-//!
-//! Outputs must connect to inputs of the same `ModuleSocketType`. Nodes that
-//! pass a main flow through should mark that path via `.primary()`.
 
 use serde::{Deserialize, Serialize};
 
@@ -163,11 +152,11 @@ impl ModuleSocket {
 }
 
 /// Type of data carried by a connection
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum ModuleSocketType {
-    /// Discrete event (pulse, beat, midi note).
+    /// Discrete event trigger (one-off signals)
     Event,
-    /// Continuous control signal (LFO, FFT, envelope).
+    /// Continuous control automation (0.0 - 1.0)
     Control,
     /// Enumeration variant.
     Media,
