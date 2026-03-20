@@ -68,3 +68,11 @@
 ## 2024-05-23 - Avoid String Cloning in TimelineModule Iterators
 **Learning:** Structs collected into `Vec` inside UI hot loops (like `TimelineModule` in `mapmap/src/app/ui_layout.rs`) that own `String` fields cause massive per-frame allocation overhead.
 **Action:** Change UI presentation structs to borrow strings (`&'a str`) instead of owning them, reducing `clone()` allocations in rendering loops to zero.
+
+## 2024-05-14 - [Avoid cloning RenderOp in render loop]
+**Learning:** `mapmap_core::module_eval::RenderOp` contains collections (`Vec<ModulizerType>`) and meshes which can be expensive to clone. In `crates/mapmap/src/app/loops/render/content.rs`, `render_content` was cloning these operations from `ctx.render_queue` for every layer to be rendered on every frame, causing unnecessary allocations.
+**Action:** Always prefer iterating and collecting references (e.g., `&RenderOp`) instead of cloning large structs in the hot render loop, unless ownership is strictly required by the downstream functions.
+
+## 2024-05-18 - [Object pooling RenderOps in evaluation]
+**Learning:** During the evaluation phase, `RenderOp` structs were being allocated inside `eval_result.render_ops` and then cloned out `eval_result.render_ops.iter().cloned()` when transferring them into the main render queue. A naive object pool existed via `get_spare_render_op` and `ModuleEvalResult::clear()` (which moved `render_ops` back into `spare_render_ops`), but the transfer code simply cloned them and dropped the original `Vec` on each pass, defeating the object pool entirely and causing allocations every frame.
+**Action:** When transferring large structs across module evaluation bounds (e.g. from `ModuleEvalResult` into `RuntimeRenderQueue`), explicitly drain the source vectors using `.drain(..)` to transfer ownership instead of cloning. To preserve the object pooling logic, recover the discarded `RenderOp` items from `app.render_queue` just before it is cleared for the *next* frame by extending the `spare_render_ops` vector with them. This avoids per-frame memory allocations and closes the object-pool loop.

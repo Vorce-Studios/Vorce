@@ -10,6 +10,12 @@ pub fn perform_evaluation(
     analysis: &AudioAnalysis,
     graph_dirty: bool,
 ) {
+    // Reclaim RenderOp objects from the previous frame to avoid allocations.
+    // This closes the object pool loop for evaluation results.
+    app.module_evaluator
+        .cached_result
+        .spare_render_ops
+        .extend(app.render_queue.items.drain(..).map(|item| item.render_op));
     app.render_queue.clear();
     app.render_queue.graph_revision = app.state.module_manager.graph_revision;
     app.ui_state.module_canvas.last_trigger_values.clear();
@@ -41,7 +47,7 @@ pub fn perform_evaluation(
 
             app.render_queue
                 .items
-                .extend(eval_result.render_ops.iter().cloned().map(|render_op| {
+                .extend(eval_result.render_ops.drain(..).map(|render_op| {
                     let mut diagnostics = Vec::new();
 
                     if render_op.blend_mode.is_some() {

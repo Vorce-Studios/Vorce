@@ -25,7 +25,7 @@ pub struct ModuleEvaluator {
     #[allow(dead_code)]
     pub(crate) trigger_states: HashMap<ModulePartId, TriggerState>,
     /// Reusable result buffer to avoid allocations
-    pub(crate) cached_result: ModuleEvalResult,
+    pub cached_result: ModuleEvalResult,
 
     /// Cached indices per module ID to support multi-module switching
     pub(crate) indices_cache: HashMap<crate::module::ModuleId, Arc<ModuleGraphIndices>>,
@@ -151,7 +151,7 @@ impl ModuleEvaluator {
         module: &MapFlowModule,
         shared_state: &SharedMediaState,
         graph_revision: u64,
-    ) -> &ModuleEvalResult {
+    ) -> &mut ModuleEvalResult {
         let mut rng = rand::rng();
         let now = Instant::now();
 
@@ -404,7 +404,7 @@ impl ModuleEvaluator {
         self.midi_triggers.clear();
         self.osc_triggers.clear();
 
-        &self.cached_result
+        &mut self.cached_result
     }
 
     fn create_source_command(
