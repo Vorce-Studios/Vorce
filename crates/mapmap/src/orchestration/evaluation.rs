@@ -49,8 +49,8 @@ pub fn perform_evaluation(
                             module_id: *module_id,
                             part_id: render_op.layer_part_id,
                             severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
-                            code: "blend_mode_unsupported".to_string(),
-                            message: "Blend modes are currently only supported via specific compositing passes.".to_string(),
+                            code: mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE.to_string(),
+                            message: mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE_MSG.to_string(),
                         });
                     }
 
@@ -59,8 +59,8 @@ pub fn perform_evaluation(
                             module_id: *module_id,
                             part_id: render_op.layer_part_id,
                             severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
-                            code: "masks_unsupported".to_string(),
-                            message: "Masks are not yet supported in this render path.".to_string(),
+                            code: mapmap_core::diagnostics::DEGRADED_FEATURE_MASK.to_string(),
+                            message: mapmap_core::diagnostics::DEGRADED_FEATURE_MASK_MSG.to_string(),
                         });
                     }
 
