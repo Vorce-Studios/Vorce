@@ -55,23 +55,26 @@ pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
     // ...
 
     // Check for source paths (if any)
-    for (idx, part) in module.parts.iter().enumerate() {
+    for (_idx, part) in module.parts.iter().enumerate() {
         if let crate::module::types::part::ModulePartType::Source(_) = part.part_type {
             // Validation logic for sources
             // ...
-            let _ = idx; // avoid unused warning if block is empty
         }
     }
 
     issues
 }
 
-/// Standardized reasons for features that are temporarily degraded or unsupported in the current renderer.
-pub const DEGRADED_FEATURE_BLEND_MODE: &str =
+/// Diagnostic code for unsupported blend mode
+pub const DEGRADED_FEATURE_BLEND_MODE: &str = "DEGRADED_FEATURE_BLEND_MODE";
+/// Diagnostic code for unsupported mask
+pub const DEGRADED_FEATURE_MASK: &str = "DEGRADED_FEATURE_MASK";
+/// Diagnostic message for unsupported blend mode
+pub const DEGRADED_FEATURE_BLEND_MODE_MSG: &str =
     "Blend modes are currently unsupported in this renderer.";
-/// Standardized reason for masks being unsupported.
-pub const DEGRADED_FEATURE_MASK: &str = "Masks are currently unsupported in this renderer.";
-/// Standardized reason for LoadLUT being unsupported.
+/// Diagnostic message for unsupported mask
+pub const DEGRADED_FEATURE_MASK_MSG: &str = "Masks are not yet supported in this render path.";
+/// Diagnostic message for unsupported LUT
 pub const DEGRADED_FEATURE_LOAD_LUT: &str =
     "The LoadLUT effect is currently unsupported in this renderer.";
 
