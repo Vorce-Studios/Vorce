@@ -48,8 +48,7 @@ jobs:
             const AUTO_MERGE_RESULT_MARKER = '<!-- auto-merge-result -->';
 
             const buildManagedCommentBody = (message) =>
-              `${AUTO_MERGE_RESULT_MARKER}
-${message}`;
+              `${AUTO_MERGE_RESULT_MARKER}\n${message}`;
 
             const upsertManagedComment = async (issueNumber, message) => {
               const body = buildManagedCommentBody(message);
@@ -364,9 +363,7 @@ ${message}`;
                 pull_number: prNumber,
                 merge_method: 'squash',
                 commit_title: `${finalPr.title} (#${prNumber})`,
-                commit_message: `${finalPr.body || ''}
-
-Auto-merged by GitHub Actions`,
+                commit_message: `${finalPr.body || ''}\n\nAuto-merged by GitHub Actions`,
               });
 
               await upsertManagedComment(
@@ -376,8 +373,6 @@ Auto-merged by GitHub Actions`,
             } catch (error) {
               await upsertManagedComment(
                 prNumber,
-                `Auto-merge failed: ${error.message}
-
-Please merge manually.`,
+                `Auto-merge failed: ${error.message}\n\nPlease merge manually.`,
               );
             }
