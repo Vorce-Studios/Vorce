@@ -2,10 +2,10 @@
 
 use crate::app::core::app_struct::App;
 use anyhow::Result;
-use mapmap_core::module::OutputType;
 use std::collections::HashSet;
+use tracing::info;
 
-/// Synchronizes output windows with the current module graph configuration.
+/// Synchronizes output windows with the current `OutputManager` configuration.
 pub fn sync_output_windows(
     app: &mut App,
     elwt: &winit::event_loop::ActiveEventLoop,
@@ -14,49 +14,33 @@ pub fn sync_output_windows(
 ) -> Result<()> {
     let mut active_window_ids: HashSet<u64> = HashSet::new();
 
-    // 1. Identify all active outputs in the graph
-    for module in app.state.module_manager.modules() {
-        for part in &module.parts {
-            if let mapmap_core::module::ModulePartType::Output(OutputType::Projector {
-                id,
-                name,
-                target_screen,
-                ..
-            }) = &part.part_type
-            {
-                active_window_ids.insert(*id);
+    // 1. Identify all active outputs in the manager
+    for output_config in app.state.output_manager.outputs() {
+        active_window_ids.insert(output_config.id);
 
-                // Create window if it doesn't exist
-                if !app.window_manager.window_ids().any(|&wid| wid == *id) {
-                    if let Err(e) = app.window_manager.create_projector_window(
-                        elwt,
-                        &app.backend,
-                        *id,
-                        name,
-                        false, // Default or fetch from config
-                        false, // Default or fetch from config
-                        *target_screen,
-                        app.ui_state.user_config.vsync_mode,
-                    ) {
-                        tracing::error!(
-                            "Failed to create window for projector '{}' (ID: {}): {}",
-                            name,
-                            id,
-                            e
-                        );
-                    }
-                }
-            }
+        // Create window if it doesn't exist
+        if !app
+            .window_manager
+            .window_ids()
+            .any(|&wid| wid == output_config.id)
+        {
+            app.window_manager
+                .create_output_window(elwt, &app.backend, output_config)?;
         }
     }
 
-    // 2. Remove stale windows
-    let current_window_ids: Vec<u64> = app.window_manager.window_ids().copied().collect();
-    for window_id in current_window_ids {
+    // 2. Remove windows for outputs that no longer exist
+    let mut windows_to_remove = Vec::new();
+    for &window_id in app.window_manager.window_ids() {
+        // ID 0 is the main control window, skip it
         if window_id != 0 && !active_window_ids.contains(&window_id) {
-            app.window_manager.remove_window(window_id);
-            tracing::info!("Removed stale window for output ID {}", window_id);
+            windows_to_remove.push(window_id);
         }
+    }
+
+    for window_id in windows_to_remove {
+        app.window_manager.remove_window(window_id);
+        info!("Removed output window for output ID {}", window_id);
     }
 
     Ok(())
