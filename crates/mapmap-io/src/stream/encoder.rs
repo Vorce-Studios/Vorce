@@ -5,7 +5,9 @@
 #[cfg(feature = "stream")]
 use crate::error::{IoError, Result};
 #[cfg(feature = "stream")]
-use crate::format::{FrameData, VideoFormat, VideoFrame};
+use crate::format::{FrameData, PixelFormat, VideoFormat, VideoFrame};
+#[cfg(feature = "stream")]
+use ffmpeg_next as ffmpeg;
 
 /// Video codec enumeration.
 #[cfg(feature = "stream")]
@@ -75,38 +77,90 @@ impl EncoderPreset {
 
 /// Video encoder using FFmpeg.
 ///
-/// Encodes raw video frames into compressed video packets suitable for streaming.
+/// Encodes raw CPU video frames into compressed H.264/H.265/VP8/VP9 packets
+/// suitable for RTMP or SRT streaming.
 #[cfg(feature = "stream")]
 pub struct VideoEncoder {
     codec: VideoCodec,
     format: VideoFormat,
     bitrate: u64,
     frame_count: u64,
+    /// Opened FFmpeg video encoder context.
+    encoder: ffmpeg::codec::encoder::video::Encoder,
+    /// Pixel-format converter (input → YUV420P).
+    scaler: ffmpeg::software::scaling::Context,
 }
 
 #[cfg(feature = "stream")]
 impl VideoEncoder {
-    /// Creates a new video encoder.
+    /// Creates a new video encoder backed by FFmpeg.
     ///
     /// # Parameters
     ///
-    /// - `codec` - The video codec to use
-    /// - `format` - The input video format
-    /// - `bitrate` - Target bitrate in bits per second
-    /// - `_preset` - Encoder preset for quality/speed tradeoff (currently unused)
+    /// - `codec`   – The video codec to use (H.264, H.265, VP8, VP9)
+    /// - `format`  – The input video format (resolution, pixel format, fps)
+    /// - `bitrate` – Target bitrate in bits per second
+    /// - `preset`  – Encoder preset for quality/speed tradeoff
     pub fn new(
         codec: VideoCodec,
         format: VideoFormat,
         bitrate: u64,
-        _preset: EncoderPreset,
+        preset: EncoderPreset,
     ) -> Result<Self> {
-        // In a full implementation, this would initialize FFmpeg encoder
+        ffmpeg::init().map_err(|e| IoError::EncoderInitFailed(e.to_string()))?;
+
+        let codec_name = codec.ffmpeg_name();
+        let ffmpeg_codec = ffmpeg::encoder::find_by_name(codec_name).ok_or_else(|| {
+            IoError::EncoderInitFailed(format!(
+                "Encoder '{codec_name}' not found; ensure FFmpeg was compiled with the required libraries",
+            ))
+        })?;
+
+        let ctx = ffmpeg::codec::context::Context::new_with_codec(ffmpeg_codec);
+        let mut video = ctx
+            .encoder()
+            .video()
+            .map_err(|e| IoError::EncoderInitFailed(format!("Failed to create encoder context: {e}")))?;
+
+        video.set_width(format.width);
+        video.set_height(format.height);
+        // libx264/libx265 require YUV420P; the scaler converts from the input format.
+        video.set_format(ffmpeg::format::Pixel::YUV420P);
+        video.set_time_base((1, format.frame_rate.round() as i32));
+        video.set_bit_rate(bitrate as usize);
+        video.set_gop(60); // Force a keyframe every 60 frames
+        video.set_max_b_frames(0); // Disable B-frames for minimum encoding latency
+
+        let mut opts = ffmpeg::Dictionary::new();
+        if matches!(codec, VideoCodec::H264 | VideoCodec::H265) {
+            opts.set("preset", preset.ffmpeg_name());
+            opts.set("tune", "zerolatency"); // Disable look-ahead buffering
+        }
+
+        let encoder = video
+            .open_as_with(ffmpeg_codec, opts)
+            .map_err(|e| IoError::EncoderInitFailed(format!("Failed to open encoder '{codec_name}': {e}")))?;
+
+        // Build a pixel-format converter from the declared input format to YUV420P.
+        let input_pix_fmt = Self::map_pixel_format(format.pixel_format)?;
+        let scaler = ffmpeg::software::scaling::Context::get(
+            input_pix_fmt,
+            format.width,
+            format.height,
+            ffmpeg::format::Pixel::YUV420P,
+            format.width,
+            format.height,
+            ffmpeg::software::scaling::Flags::BILINEAR,
+        )
+        .map_err(|e| IoError::EncoderInitFailed(format!("Failed to create pixel-format converter: {e}")))?;
+
         tracing::info!(
-            "Creating video encoder: codec={:?}, format={}, bitrate={}, preset={:?}",
-            codec,
-            format,
+            codec = codec_name,
+            width = format.width,
+            height = format.height,
+            fps = format.frame_rate,
             bitrate,
-            _preset
+            "Video encoder initialised"
         );
 
         Ok(Self {
@@ -114,6 +168,8 @@ impl VideoEncoder {
             format,
             bitrate,
             frame_count: 0,
+            encoder,
+            scaler,
         })
     }
 
@@ -137,60 +193,130 @@ impl VideoEncoder {
         )
     }
 
-    /// Encodes a video frame into a compressed packet.
+    /// Encodes a single video frame and returns an encoded packet.
     ///
-    /// # Parameters
-    ///
-    /// - `frame` - The raw video frame to encode
-    ///
-    /// # Returns
-    ///
-    /// An encoded video packet ready for streaming.
+    /// When the encoder is still filling its internal pipeline the returned
+    /// packet will have `data.is_empty() == true`; callers should skip
+    /// transmission for such packets.
     pub fn encode(&mut self, frame: &VideoFrame) -> Result<EncodedPacket> {
         if let FrameData::Gpu(_) = &frame.data {
             return Err(IoError::UnsupportedPixelFormat(
-                "Cannot encode a GPU frame on the CPU.".to_string(),
+                "Cannot encode a GPU-resident frame on the CPU.".to_string(),
             ));
         }
 
-        // Validate frame format matches encoder format
         if frame.format.pixel_format != self.format.pixel_format {
             return Err(IoError::ConversionError(format!(
-                "Frame format {} doesn't match encoder format {}",
+                "Frame pixel format '{}' does not match encoder format '{}'",
                 frame.format.pixel_format, self.format.pixel_format
             )));
         }
 
-        // In a full implementation, this would use FFmpeg to encode the frame
-        self.frame_count += 1;
+        let cpu_data: &[u8] = match &frame.data {
+            FrameData::Cpu(arc) => arc,
+            FrameData::Gpu(_) => unreachable!("GPU case handled above"),
+        };
 
-        tracing::trace!(
-            "Encoding frame {}: timestamp={:?}",
-            self.frame_count,
-            frame.timestamp
+        // Build an FFmpeg source frame from the raw CPU bytes.
+        let input_pix_fmt = Self::map_pixel_format(self.format.pixel_format)?;
+        let mut src_frame = ffmpeg::util::frame::Video::new(
+            input_pix_fmt,
+            self.format.width,
+            self.format.height,
         );
 
-        #[allow(clippy::manual_is_multiple_of)]
-        let is_multiple = self.frame_count % 60 == 0;
+        // Copy pixel data into the frame while respecting FFmpeg's row stride.
+        let bytes_per_pixel = self.format.pixel_format.bytes_per_pixel();
+        let src_row_stride = self.format.width as usize * bytes_per_pixel;
+        let dst_stride = src_frame.stride(0);
+        let copy_width = src_row_stride.min(dst_stride);
+        for y in 0..self.format.height as usize {
+            let src_off = y * src_row_stride;
+            let dst_off = y * dst_stride;
+            if src_off + copy_width <= cpu_data.len() {
+                src_frame.data_mut(0)[dst_off..dst_off + copy_width]
+                    .copy_from_slice(&cpu_data[src_off..src_off + copy_width]);
+            }
+        }
 
-        // Return a stub packet
-        Ok(EncodedPacket {
-            data: Vec::new(), // Would contain actual encoded data
-            pts: self.frame_count as i64,
-            dts: self.frame_count as i64,
-            is_keyframe: self.frame_count == 1 || is_multiple, // Keyframe on first frame and every 60 frames
-        })
+        // Convert to YUV420P as required by libx264/libx265.
+        let mut yuv_frame = ffmpeg::util::frame::Video::new(
+            ffmpeg::format::Pixel::YUV420P,
+            self.format.width,
+            self.format.height,
+        );
+        self.scaler
+            .run(&src_frame, &mut yuv_frame)
+            .map_err(|e| IoError::EncodeFailed(format!("Pixel format conversion failed: {e}")))?;
+
+        self.frame_count += 1;
+        yuv_frame.set_pts(Some(self.frame_count as i64 - 1));
+
+        self.encoder
+            .send_frame(&yuv_frame)
+            .map_err(|e| IoError::EncodeFailed(format!("send_frame failed: {e}")))?;
+
+        let mut packet = ffmpeg::Packet::empty();
+        match self.encoder.receive_packet(&mut packet) {
+            Ok(()) => {
+                tracing::trace!(
+                    frame = self.frame_count,
+                    pts = packet.pts().unwrap_or(-1),
+                    is_key = packet.is_key(),
+                    size = packet.size(),
+                    "Frame encoded"
+                );
+                Ok(EncodedPacket {
+                    data: packet.data().unwrap_or(&[]).to_vec(),
+                    pts: packet.pts().unwrap_or(0),
+                    dts: packet.dts().unwrap_or(0),
+                    is_keyframe: packet.is_key(),
+                })
+            }
+            // AVERROR(EAGAIN) = -11: encoder needs more frames before producing output.
+            Err(ffmpeg::Error::Other { errno: -11 }) => Ok(EncodedPacket {
+                data: Vec::new(),
+                pts: self.frame_count as i64,
+                dts: self.frame_count as i64,
+                is_keyframe: false,
+            }),
+            Err(e) => Err(IoError::EncodeFailed(format!("receive_packet failed: {e}"))),
+        }
     }
 
-    /// Flushes any buffered frames from the encoder.
+    /// Flushes all frames buffered inside the encoder.
     ///
-    /// Should be called before closing the encoder to ensure all frames are encoded.
+    /// Must be called before closing the encoder to ensure every frame is encoded.
     pub fn flush(&mut self) -> Result<Vec<EncodedPacket>> {
-        tracing::debug!("Flushing encoder, {} frames encoded", self.frame_count);
-        Ok(Vec::new())
+        tracing::debug!(frames = self.frame_count, "Flushing encoder");
+
+        self.encoder
+            .send_eof()
+            .map_err(|e| IoError::EncodeFailed(format!("send_eof failed: {e}")))?;
+
+        let mut packets = Vec::new();
+        let mut packet = ffmpeg::Packet::empty();
+        loop {
+            match self.encoder.receive_packet(&mut packet) {
+                Ok(()) => packets.push(EncodedPacket {
+                    data: packet.data().unwrap_or(&[]).to_vec(),
+                    pts: packet.pts().unwrap_or(0),
+                    dts: packet.dts().unwrap_or(0),
+                    is_keyframe: packet.is_key(),
+                }),
+                Err(ffmpeg::Error::Eof) | Err(ffmpeg::Error::Other { errno: -11 }) => break,
+                Err(e) => {
+                    return Err(IoError::EncodeFailed(format!(
+                        "flush receive_packet failed: {e}"
+                    )))
+                }
+            }
+        }
+
+        Ok(packets)
     }
 
-    /// Returns the number of frames encoded.
+    /// Returns the number of frames encoded so far.
     pub fn frame_count(&self) -> u64 {
         self.frame_count
     }
@@ -200,14 +326,26 @@ impl VideoEncoder {
         self.codec
     }
 
-    /// Returns the encoder format.
+    /// Returns the encoder's input format.
     pub fn format(&self) -> &VideoFormat {
         &self.format
     }
 
-    /// Returns the target bitrate.
+    /// Returns the target bitrate in bits per second.
     pub fn bitrate(&self) -> u64 {
         self.bitrate
+    }
+
+    fn map_pixel_format(fmt: PixelFormat) -> Result<ffmpeg::format::Pixel> {
+        match fmt {
+            PixelFormat::RGBA8 => Ok(ffmpeg::format::Pixel::RGBA),
+            PixelFormat::BGRA8 => Ok(ffmpeg::format::Pixel::BGRA),
+            PixelFormat::RGB8 => Ok(ffmpeg::format::Pixel::RGB24),
+            PixelFormat::YUV420P => Ok(ffmpeg::format::Pixel::YUV420P),
+            PixelFormat::YUV422P => Ok(ffmpeg::format::Pixel::YUV422P),
+            PixelFormat::UYVY => Ok(ffmpeg::format::Pixel::UYVY422),
+            PixelFormat::NV12 => Ok(ffmpeg::format::Pixel::NV12),
+        }
     }
 }
 
@@ -255,6 +393,11 @@ mod tests {
     use super::*;
     use crate::format::PixelFormat;
 
+    /// Small format used for fast test encoding (avoids slow 1080p ops).
+    fn small_format() -> VideoFormat {
+        VideoFormat::new(320, 240, PixelFormat::RGBA8, 30.0)
+    }
+
     #[test]
     fn test_video_codec_names() {
         assert_eq!(VideoCodec::H264.ffmpeg_name(), "libx264");
@@ -270,8 +413,9 @@ mod tests {
 
     #[test]
     fn test_video_encoder_creation() {
-        let encoder = VideoEncoder::default_h264_1080p60();
-        assert!(encoder.is_ok());
+        let encoder =
+            VideoEncoder::new(VideoCodec::H264, small_format(), 500_000, EncoderPreset::UltraFast);
+        assert!(encoder.is_ok(), "Encoder creation failed: {:?}", encoder.err());
 
         let encoder = encoder.unwrap();
         assert_eq!(encoder.codec(), VideoCodec::H264);
@@ -280,44 +424,48 @@ mod tests {
 
     #[test]
     fn test_video_encoder_encode() {
-        let mut encoder = VideoEncoder::default_h264_1080p60().unwrap();
-        let format = VideoFormat::hd_1080p60_rgba();
-        let frame = VideoFrame::empty(format);
+        let fmt = small_format();
+        let mut encoder =
+            VideoEncoder::new(VideoCodec::H264, fmt.clone(), 500_000, EncoderPreset::UltraFast)
+                .unwrap();
 
+        let frame = VideoFrame::empty(fmt);
         let packet = encoder.encode(&frame);
-        assert!(packet.is_ok());
+        assert!(packet.is_ok(), "Encode failed: {:?}", packet.err());
         assert_eq!(encoder.frame_count(), 1);
     }
 
     #[test]
     fn test_video_encoder_keyframe() {
-        let mut encoder = VideoEncoder::default_h264_1080p60().unwrap();
-        let format = VideoFormat::hd_1080p60_rgba();
+        let fmt = small_format();
+        let mut encoder =
+            VideoEncoder::new(VideoCodec::H264, fmt.clone(), 500_000, EncoderPreset::UltraFast)
+                .unwrap();
 
-        // First frame should be keyframe
-        let frame = VideoFrame::empty(format.clone());
-        let packet = encoder.encode(&frame).unwrap();
-        assert!(packet.is_keyframe); // Corrected: First frame IS keyframe
+        // With tune=zerolatency there is no look-ahead; the first frame must
+        // produce an immediate IDR (keyframe) packet.
+        let pkt = encoder.encode(&VideoFrame::empty(fmt.clone())).unwrap();
+        assert!(!pkt.data.is_empty(), "Expected non-empty first packet");
+        assert!(pkt.is_keyframe, "First encoded frame must be a keyframe (IDR)");
 
-        // Encode 58 more frames (total 59)
-        for _ in 0..58 {
-            let frame = VideoFrame::empty(format.clone());
-            encoder.encode(&frame).unwrap();
+        // Encode until the second GOP boundary (gop=60 → IDR at frame 61, PTS=60).
+        for _ in 0..59 {
+            encoder.encode(&VideoFrame::empty(fmt.clone())).unwrap();
         }
-
-        // Frame 60 should be keyframe
-        let frame = VideoFrame::empty(format.clone());
-        let packet = encoder.encode(&frame).unwrap();
-        assert!(packet.is_keyframe);
+        let pkt_61 = encoder.encode(&VideoFrame::empty(fmt.clone())).unwrap();
+        assert!(!pkt_61.data.is_empty(), "Expected non-empty packet at GOP boundary");
+        assert!(pkt_61.is_keyframe, "Frame 61 must start a new GOP (keyframe)");
     }
 
     #[test]
     fn test_video_encoder_wrong_format() {
-        let mut encoder = VideoEncoder::default_h264_1080p60().unwrap();
-        let wrong_format = VideoFormat::new(1920, 1080, PixelFormat::YUV420P, 60.0);
-        let frame = VideoFrame::empty(wrong_format);
+        let mut encoder =
+            VideoEncoder::new(VideoCodec::H264, small_format(), 500_000, EncoderPreset::UltraFast)
+                .unwrap();
 
+        let wrong_format = VideoFormat::new(320, 240, PixelFormat::YUV420P, 30.0);
+        let frame = VideoFrame::empty(wrong_format);
         let result = encoder.encode(&frame);
-        assert!(result.is_err());
+        assert!(result.is_err(), "Expected error for mismatched pixel format");
     }
 }

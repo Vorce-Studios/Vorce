@@ -56,6 +56,9 @@ impl HapVideoDecoder {
 
         // Get video parameters
         let codec_par = video_stream.parameters();
+        // SAFETY: `codec_par` is obtained from `video_stream.parameters()`, which returns a
+        // valid, non-null AVCodecParameters pointer backed by the open input context above.
+        // The pointer stays valid for the duration of this function.  Only read access occurs.
         let width = unsafe { (*codec_par.as_ptr()).width as u32 };
         let height = unsafe { (*codec_par.as_ptr()).height as u32 };
 
@@ -70,6 +73,8 @@ impl HapVideoDecoder {
         info!("HAP video: {}x{} @ {:.2} fps", width, height, fps);
 
         // Check codec - HAP has codec_id FOURCC 'Hap1', 'Hap5', 'HapY', etc.
+        // SAFETY: Same guarantee as width/height above.  `avcodec_get_name` always returns
+        // a valid, non-null pointer to a static C string for any codec id (FFmpeg guarantee).
         let codec_name = unsafe {
             let codec_id = (*codec_par.as_ptr()).codec_id;
             std::ffi::CStr::from_ptr(ffmpeg::ffi::avcodec_get_name(codec_id))
