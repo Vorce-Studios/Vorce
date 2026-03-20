@@ -87,3 +87,6 @@
 ## 2026-03-16 - [Empty State Consistency Update 2]
 **Learning:** Found an empty state message ("No mapping available to edit mesh.") in the Layer Inspector that used hardcoded gray coloring instead of the standard weak italicized text.
 **Action:** Replaced `.color(egui::Color32::GRAY)` with `.weak().italics()` in `layer.rs` to enforce consistency with the existing Cyber Dark theme guidelines.
+## 2026-03-24 - [Unify Colors in Playback and Timeline Inspector UI]
+**Learning:** Found several hardcoded RGB colors (like `Color32::from_rgb(40, 180, 60)`, `Color32::from_gray(30)`) and arbitrary rounding numbers (like `0.0`, `2.0`) in `render_transport_controls` and `render_timeline` in `crates/mapmap-ui/src/editors/module_canvas/inspector/common.rs`. These break the Cyber Dark styling consistency.
+**Action:** Replaced the hardcoded RGB values with standard theme equivalents from `crate::core::theme::colors` (e.g. `colors::MINT_ACCENT`, `colors::WARN_COLOR`, `colors::DARKER_GREY`). Replaced `0.0` and `2.0` with `egui::CornerRadius::ZERO` for strict sharp aesthetic geometry in drawing rects.
