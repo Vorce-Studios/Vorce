@@ -57,12 +57,13 @@ pub fn sync_output_windows(
     // 2. WindowManager strictly follows OutputManager configuration
     for output_config in app.state.output_manager.outputs() {
         if active_window_ids.contains(&output_config.id) {
-            if !app.window_manager.window_ids().any(|&wid| wid == output_config.id) {
-                app.window_manager.create_output_window(
-                    elwt,
-                    &app.backend,
-                    output_config,
-                )?;
+            if !app
+                .window_manager
+                .window_ids()
+                .any(|&wid| wid == output_config.id)
+            {
+                app.window_manager
+                    .create_output_window(elwt, &app.backend, output_config)?;
             }
         }
     }

@@ -127,9 +127,11 @@ pub fn render_layer_ui(
                 render_mesh_ui(ui, mesh, 9999); // Dummy ID
             });
             ui.label(
-                egui::RichText::new("⚠ Group layers are currently unsupported and act like a Single layer.")
-                    .color(crate::theme::colors::WARN_COLOR)
-                    .small(),
+                egui::RichText::new(
+                    "⚠ Group layers are currently unsupported and act like a Single layer.",
+                )
+                .color(crate::theme::colors::WARN_COLOR)
+                .small(),
             );
         }
         LayerType::All { opacity, .. } => {
@@ -138,9 +140,11 @@ pub fn render_layer_ui(
                 ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
             });
             ui.label(
-                egui::RichText::new("⚠ Master layers are currently unsupported and will not be rendered.")
-                    .color(crate::theme::colors::WARN_COLOR)
-                    .small(),
+                egui::RichText::new(
+                    "⚠ Master layers are currently unsupported and will not be rendered.",
+                )
+                .color(crate::theme::colors::WARN_COLOR)
+                .small(),
             );
         }
     }

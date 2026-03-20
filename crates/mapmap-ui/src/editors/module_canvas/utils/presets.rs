@@ -1,7 +1,7 @@
 use super::super::types::*;
 use mapmap_core::module::{
-    AudioBand, AudioTriggerOutputConfig, EffectType, MaskShape, MaskType,
-    ModulePartType, ModulizerType, OutputType, SourceType, TriggerType,
+    AudioBand, AudioTriggerOutputConfig, EffectType, MaskShape, MaskType, ModulePartType,
+    ModulizerType, OutputType, SourceType, TriggerType,
 };
 
 pub fn default_presets() -> Vec<ModulePreset> {
