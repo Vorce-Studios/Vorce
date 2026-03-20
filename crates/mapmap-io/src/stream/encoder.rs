@@ -117,10 +117,9 @@ impl VideoEncoder {
         })?;
 
         let ctx = ffmpeg::codec::context::Context::new_with_codec(ffmpeg_codec);
-        let mut video = ctx
-            .encoder()
-            .video()
-            .map_err(|e| IoError::EncoderInitFailed(format!("Failed to create encoder context: {e}")))?;
+        let mut video = ctx.encoder().video().map_err(|e| {
+            IoError::EncoderInitFailed(format!("Failed to create encoder context: {e}"))
+        })?;
 
         video.set_width(format.width);
         video.set_height(format.height);
@@ -137,9 +136,9 @@ impl VideoEncoder {
             opts.set("tune", "zerolatency"); // Disable look-ahead buffering
         }
 
-        let encoder = video
-            .open_as_with(ffmpeg_codec, opts)
-            .map_err(|e| IoError::EncoderInitFailed(format!("Failed to open encoder '{codec_name}': {e}")))?;
+        let encoder = video.open_as_with(ffmpeg_codec, opts).map_err(|e| {
+            IoError::EncoderInitFailed(format!("Failed to open encoder '{codec_name}': {e}"))
+        })?;
 
         // Build a pixel-format converter from the declared input format to YUV420P.
         let input_pix_fmt = Self::map_pixel_format(format.pixel_format)?;
@@ -152,7 +151,9 @@ impl VideoEncoder {
             format.height,
             ffmpeg::software::scaling::Flags::BILINEAR,
         )
-        .map_err(|e| IoError::EncoderInitFailed(format!("Failed to create pixel-format converter: {e}")))?;
+        .map_err(|e| {
+            IoError::EncoderInitFailed(format!("Failed to create pixel-format converter: {e}"))
+        })?;
 
         tracing::info!(
             codec = codec_name,
@@ -219,11 +220,8 @@ impl VideoEncoder {
 
         // Build an FFmpeg source frame from the raw CPU bytes.
         let input_pix_fmt = Self::map_pixel_format(self.format.pixel_format)?;
-        let mut src_frame = ffmpeg::util::frame::Video::new(
-            input_pix_fmt,
-            self.format.width,
-            self.format.height,
-        );
+        let mut src_frame =
+            ffmpeg::util::frame::Video::new(input_pix_fmt, self.format.width, self.format.height);
 
         // Copy pixel data into the frame while respecting FFmpeg's row stride.
         let bytes_per_pixel = self.format.pixel_format.bytes_per_pixel();
@@ -413,9 +411,17 @@ mod tests {
 
     #[test]
     fn test_video_encoder_creation() {
-        let encoder =
-            VideoEncoder::new(VideoCodec::H264, small_format(), 500_000, EncoderPreset::UltraFast);
-        assert!(encoder.is_ok(), "Encoder creation failed: {:?}", encoder.err());
+        let encoder = VideoEncoder::new(
+            VideoCodec::H264,
+            small_format(),
+            500_000,
+            EncoderPreset::UltraFast,
+        );
+        assert!(
+            encoder.is_ok(),
+            "Encoder creation failed: {:?}",
+            encoder.err()
+        );
 
         let encoder = encoder.unwrap();
         assert_eq!(encoder.codec(), VideoCodec::H264);
@@ -425,9 +431,13 @@ mod tests {
     #[test]
     fn test_video_encoder_encode() {
         let fmt = small_format();
-        let mut encoder =
-            VideoEncoder::new(VideoCodec::H264, fmt.clone(), 500_000, EncoderPreset::UltraFast)
-                .unwrap();
+        let mut encoder = VideoEncoder::new(
+            VideoCodec::H264,
+            fmt.clone(),
+            500_000,
+            EncoderPreset::UltraFast,
+        )
+        .unwrap();
 
         let frame = VideoFrame::empty(fmt);
         let packet = encoder.encode(&frame);
@@ -438,34 +448,54 @@ mod tests {
     #[test]
     fn test_video_encoder_keyframe() {
         let fmt = small_format();
-        let mut encoder =
-            VideoEncoder::new(VideoCodec::H264, fmt.clone(), 500_000, EncoderPreset::UltraFast)
-                .unwrap();
+        let mut encoder = VideoEncoder::new(
+            VideoCodec::H264,
+            fmt.clone(),
+            500_000,
+            EncoderPreset::UltraFast,
+        )
+        .unwrap();
 
         // With tune=zerolatency there is no look-ahead; the first frame must
         // produce an immediate IDR (keyframe) packet.
         let pkt = encoder.encode(&VideoFrame::empty(fmt.clone())).unwrap();
         assert!(!pkt.data.is_empty(), "Expected non-empty first packet");
-        assert!(pkt.is_keyframe, "First encoded frame must be a keyframe (IDR)");
+        assert!(
+            pkt.is_keyframe,
+            "First encoded frame must be a keyframe (IDR)"
+        );
 
         // Encode until the second GOP boundary (gop=60 → IDR at frame 61, PTS=60).
         for _ in 0..59 {
             encoder.encode(&VideoFrame::empty(fmt.clone())).unwrap();
         }
         let pkt_61 = encoder.encode(&VideoFrame::empty(fmt.clone())).unwrap();
-        assert!(!pkt_61.data.is_empty(), "Expected non-empty packet at GOP boundary");
-        assert!(pkt_61.is_keyframe, "Frame 61 must start a new GOP (keyframe)");
+        assert!(
+            !pkt_61.data.is_empty(),
+            "Expected non-empty packet at GOP boundary"
+        );
+        assert!(
+            pkt_61.is_keyframe,
+            "Frame 61 must start a new GOP (keyframe)"
+        );
     }
 
     #[test]
     fn test_video_encoder_wrong_format() {
-        let mut encoder =
-            VideoEncoder::new(VideoCodec::H264, small_format(), 500_000, EncoderPreset::UltraFast)
-                .unwrap();
+        let mut encoder = VideoEncoder::new(
+            VideoCodec::H264,
+            small_format(),
+            500_000,
+            EncoderPreset::UltraFast,
+        )
+        .unwrap();
 
         let wrong_format = VideoFormat::new(320, 240, PixelFormat::YUV420P, 30.0);
         let frame = VideoFrame::empty(wrong_format);
         let result = encoder.encode(&frame);
-        assert!(result.is_err(), "Expected error for mismatched pixel format");
+        assert!(
+            result.is_err(),
+            "Expected error for mismatched pixel format"
+        );
     }
 }
