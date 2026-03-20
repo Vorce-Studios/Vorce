@@ -50,7 +50,8 @@ pub fn perform_evaluation(
                             part_id: render_op.layer_part_id,
                             severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
                             code: mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE.to_string(),
-                            message: mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE_MSG.to_string(),
+                            message: mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE_MSG
+                                .to_string(),
                         });
                     }
 
@@ -60,7 +61,8 @@ pub fn perform_evaluation(
                             part_id: render_op.layer_part_id,
                             severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
                             code: mapmap_core::diagnostics::DEGRADED_FEATURE_MASK.to_string(),
-                            message: mapmap_core::diagnostics::DEGRADED_FEATURE_MASK_MSG.to_string(),
+                            message: mapmap_core::diagnostics::DEGRADED_FEATURE_MASK_MSG
+                                .to_string(),
                         });
                     }
 

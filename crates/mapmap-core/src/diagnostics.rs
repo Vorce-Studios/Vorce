@@ -212,6 +212,7 @@ pub const DEGRADED_FEATURE_BLEND_MODE: &str = "DEGRADED_FEATURE_BLEND_MODE";
 /// Diagnostic code for unsupported mask
 pub const DEGRADED_FEATURE_MASK: &str = "DEGRADED_FEATURE_MASK";
 /// Diagnostic message for unsupported blend mode
-pub const DEGRADED_FEATURE_BLEND_MODE_MSG: &str = "Blend modes are currently only supported via specific compositing passes.";
+pub const DEGRADED_FEATURE_BLEND_MODE_MSG: &str =
+    "Blend modes are currently only supported via specific compositing passes.";
 /// Diagnostic message for unsupported mask
 pub const DEGRADED_FEATURE_MASK_MSG: &str = "Masks are not yet supported in this render path.";
