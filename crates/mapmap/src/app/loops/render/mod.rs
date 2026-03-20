@@ -156,15 +156,17 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
         #[cfg(feature = "ndi")]
         {
             // Find if this output has an NDI sender
-            let part_id = app.render_queue.items.iter().find_map(|item| {
-                if let mapmap_core::module::OutputType::Projector { id, .. } =
-                    &item.render_op.output_type
-                {
-                    if *id == output_id {
-                        return Some(item.render_op.output_part_id);
+            let part_id = app.render_queue.items.get(&output_id).and_then(|group| {
+                group.iter().find_map(|item| {
+                    if let mapmap_core::module::OutputType::Projector { id, .. } =
+                        &item.render_op.output_type
+                    {
+                        if *id == output_id {
+                            return Some(item.render_op.output_part_id);
+                        }
                     }
-                }
-                None
+                    None
+                })
             });
 
             if let Some(pid) = part_id {
