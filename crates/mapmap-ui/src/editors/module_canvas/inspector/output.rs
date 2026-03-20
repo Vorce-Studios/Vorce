@@ -103,6 +103,23 @@ pub fn render_output_ui(
                     });
             });
 
+            ui.horizontal(|ui| {
+                ui.label("Resolution:");
+                ui.add(egui::DragValue::new(output_width).suffix(" px").speed(1.0));
+                ui.label("x");
+                ui.add(egui::DragValue::new(output_height).suffix(" px").speed(1.0));
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("Target FPS:");
+                ui.add(
+                    egui::DragValue::new(output_fps)
+                        .suffix(" fps")
+                        .speed(1.0)
+                        .range(1.0..=240.0),
+                );
+            });
+
             ui.checkbox(hide_cursor, "🖱️ Hide Mouse Cursor");
 
             ui.separator();

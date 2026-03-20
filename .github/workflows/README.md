@@ -23,8 +23,8 @@ This directory contains automated workflows for the MapFlow project, implementin
 
 **Status:** Historical documentation entry from an earlier pipeline generation.
 
-**Note:**  
-This section is intentionally preserved for repository history and migration context.  
+**Note:**
+This section is intentionally preserved for repository history and migration context.
 The actively maintained PR-gate workflows are now the `CICD-DevFlow_*` workflows documented further below.
 
 **Historical Triggers:**
@@ -153,7 +153,7 @@ gh workflow run CI-04_session-trigger.yml -f issue_number=123
 
 **Purpose:** Automatically merge Jules PRs when all checks pass, with intelligent error handling
 
-**Status:** Historical reference entry kept for documentation continuity.  
+**Status:** Historical reference entry kept for documentation continuity.
 The actively used auto-merge logic now lives in `CICD-DevFlow_Job02_AutoMerge.yml`.
 
 **Historical Triggers:**
@@ -675,5 +675,5 @@ git commit -m "ci: implement validation and auto-merge with Jules feedback"
 git push
 ```
 
-**Last Updated:** 2026-03-15 (PR-Gate vereinheitlicht, Windows immer aktiv, CodeQL aus Required Checks entfernt)  
+**Last Updated:** 2026-03-15 (PR-Gate vereinheitlicht, Windows immer aktiv, CodeQL aus Required Checks entfernt)
 **Maintained By:** MapFlow Team
