@@ -1,6 +1,5 @@
 use crate::app::core::app_struct::RuntimeRenderQueueItem;
 use anyhow::Result;
-use mapmap_core::module::OutputType::Projector;
 
 use super::effects::build_effect_chain;
 use super::logging::{clear_video_issue, should_log_video_issue};
@@ -9,7 +8,7 @@ use super::PREVIEW_FLAG;
 pub(crate) struct RenderContext<'a> {
     pub device: &'a wgpu::Device,
     pub queue: &'a wgpu::Queue,
-    pub render_queue: &'a [RuntimeRenderQueueItem],
+    pub render_queue: &'a std::collections::HashMap<u64, Vec<RuntimeRenderQueueItem>>,
     pub output_manager: &'a mapmap_core::output::OutputManager,
     pub edge_blend_renderer: &'a Option<mapmap_render::EdgeBlendRenderer>,
     pub color_calibration_renderer: &'a Option<mapmap_render::ColorCalibrationRenderer>,
@@ -49,20 +48,14 @@ pub(crate) fn render_content(
     let real_output_id = output_id & !PREVIEW_FLAG;
 
     // ⚡ BOLT OPTIMIZATION:
-    // Store references to RenderOp instead of cloning the entire struct (which contains Vecs and complex data).
-    // This avoids per-frame allocations and deep copies for every layer being rendered.
-    let mut target_ops: Vec<&RuntimeRenderQueueItem> = ctx
+    // Read pre-partitioned and sorted target_ops directly from the context.
+    let empty_vec = Vec::new();
+    let target_ops = ctx
         .render_queue
-        .iter()
-        .filter(|item| match &item.render_op.output_type {
-            Projector { id, .. } => *id == real_output_id,
-            _ => item.render_op.output_part_id == real_output_id,
-        })
-        .collect();
+        .get(&real_output_id)
+        .unwrap_or(&empty_vec);
 
-    target_ops.sort_by(|a, b| b.render_op.output_part_id.cmp(&a.render_op.output_part_id));
-
-    for item in &target_ops {
+    for item in target_ops {
         for diag in &item.diagnostics {
             let issue_key = format!("{}:{}:{}", diag.code, diag.module_id, diag.part_id);
             if should_log_video_issue(video_log_times, issue_key) {

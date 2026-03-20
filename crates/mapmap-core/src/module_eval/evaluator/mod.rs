@@ -113,6 +113,11 @@ impl ModuleEvaluator {
         self.active_keys = keys.clone();
     }
 
+    /// Drains the evaluated render operations to reuse capacity.
+    pub fn drain_render_ops(&mut self) -> std::vec::Drain<'_, RenderOp> {
+        self.cached_result.render_ops.drain(..)
+    }
+
     /// Get a spare RenderOp from the cache or create a new one (Object Pooling)
     fn get_spare_render_op(&mut self) -> RenderOp {
         self.cached_result

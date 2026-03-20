@@ -39,38 +39,47 @@ pub fn perform_evaluation(
                     .insert(*part_id, max_val);
             }
 
-            app.render_queue
-                .items
-                .extend(eval_result.render_ops.iter().cloned().map(|render_op| {
-                    let mut diagnostics = Vec::new();
+            let render_ops = app.module_evaluator.drain_render_ops();
+            for render_op in render_ops {
+                let mut diagnostics = Vec::new();
 
-                    if render_op.blend_mode.is_some() {
-                        diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
-                            module_id: *module_id,
-                            part_id: render_op.layer_part_id,
-                            severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
-                            code: "blend_mode_unsupported".to_string(),
-                            message: "Blend modes are currently only supported via specific compositing passes.".to_string(),
-                        });
-                    }
-
-                    if !render_op.masks.is_empty() {
-                        diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
-                            module_id: *module_id,
-                            part_id: render_op.layer_part_id,
-                            severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
-                            code: "masks_unsupported".to_string(),
-                            message: "Masks are not yet supported in this render path.".to_string(),
-                        });
-                    }
-
-                    RuntimeRenderQueueItem {
+                if render_op.blend_mode.is_some() {
+                    diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
                         module_id: *module_id,
-                        render_op,
-                        diagnostics,
-                    }
-                }));
+                        part_id: render_op.layer_part_id,
+                        severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
+                        code: "blend_mode_unsupported".to_string(),
+                        message: "Blend modes are currently only supported via specific compositing passes.".to_string(),
+                    });
+                }
+
+                if !render_op.masks.is_empty() {
+                    diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
+                        module_id: *module_id,
+                        part_id: render_op.layer_part_id,
+                        severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
+                        code: "masks_unsupported".to_string(),
+                        message: "Masks are not yet supported in this render path.".to_string(),
+                    });
+                }
+
+                let output_id = match render_op.output_type {
+                    mapmap_core::module::OutputType::Projector { id, .. } => id,
+                    _ => render_op.output_part_id,
+                };
+
+                let item = RuntimeRenderQueueItem {
+                    module_id: *module_id,
+                    render_op,
+                    diagnostics,
+                };
+                app.render_queue.items.entry(output_id).or_default().push(item);
+            }
         }
+    }
+
+    for ops in app.render_queue.items.values_mut() {
+        ops.sort_by(|a, b| b.render_op.output_part_id.cmp(&a.render_op.output_part_id));
     }
 
     // Sync with Bevy (only if runner exists)
