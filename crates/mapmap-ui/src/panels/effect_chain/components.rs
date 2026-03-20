@@ -53,10 +53,14 @@ impl super::panel::EffectChainPanel {
             colors::CYAN_ACCENT
                 .linear_multiply(0.05)
                 .gamma_multiply(0.5)
-        } else if index % 2 == 0 {
-            colors::DARK_GREY
         } else {
-            colors::DARKER_GREY
+            #[allow(clippy::manual_is_multiple_of)]
+            let is_even = index % 2 == 0;
+            if is_even {
+                colors::DARK_GREY
+            } else {
+                colors::DARKER_GREY
+            }
         };
 
         // Add stroke if dragging or enabled
