@@ -166,7 +166,7 @@ pub(crate) fn render_content(
     };
 
     let target_view = if needs_post_processing {
-        mesh_target_view_ref.as_deref().unwrap()
+        mesh_target_view_ref.as_deref().unwrap_or(view)
     } else {
         view
     };
@@ -383,7 +383,11 @@ pub(crate) fn render_content(
 
     // --- POST PROCESSING PASSES ---
     if needs_post_processing {
-        let intermediate_view = mesh_target_view_ref.as_ref().unwrap();
+        let intermediate_view = if let Some(v) = mesh_target_view_ref.as_ref() {
+            v
+        } else {
+            view
+        };
         // Re-create the texture bind group each frame since the intermediate texture may be re-allocated by the pool,
         // but we could optimize this later by checking if the texture's ID changed.
         // For now, creating a texture bind group is relatively cheap compared to buffers.

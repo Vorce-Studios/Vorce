@@ -1,6 +1,6 @@
 use super::super::types::*;
 use mapmap_core::module::{
-    AudioBand, AudioTriggerOutputConfig, EffectType, LayerType, MaskShape, MaskType,
+    AudioBand, AudioTriggerOutputConfig, EffectType, MaskShape, MaskType,
     ModulePartType, ModulizerType, OutputType, SourceType, TriggerType,
 };
 
@@ -105,18 +105,6 @@ pub fn default_presets() -> Vec<ModulePreset> {
                         params: std::collections::HashMap::new(),
                     }),
                     (650.0, 100.0),
-                    None,
-                ),
-                (
-                    ModulePartType::Layer(LayerType::Single {
-                        id: 0,
-                        name: "Audio Layer".to_string(),
-                        opacity: 1.0,
-                        blend_mode: None,
-                        mesh: mapmap_core::module::MeshType::default(),
-                        mapping_mode: false,
-                    }),
-                    (950.0, 100.0),
                     None,
                 ),
                 (
