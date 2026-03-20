@@ -118,9 +118,11 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 
 **Erkenntnis:** Es wurden MapFlow-Log-Dateien (`mapflow.log.*`) im Verzeichnis `scripts/archive/logs/` gefunden, welche fälschlicherweise in Git verfolgt wurden, da die aktuelle `.gitignore`-Regel (`/logs/` und `*.log`) das Datums-Suffix nicht erfasste.
 **Aktion:** Log-Dateien aus Git mit `git rm` entfernt und `.gitignore` aktualisiert (`scripts/archive/logs/`), um zukünftige Verfolgung von diesen Dateien zu verhindern.
+
 ## 2026-03-19 - Patch Cleanup
 **Erkenntnis:** Das Root-Verzeichnis enthielt eine getrackte Patch-Datei (`patch.diff`), die dort nicht hingehört.
 **Aktion:** `patch.diff` nach `.temp-archive/2026-03-19-patch.diff` archiviert und via `git rm` aus dem Repository entfernt.
+
 ## 2026-03-19 - Vcpkg JSON Cleanup
 **Erkenntnis:** Das Root-Verzeichnis enthielt eine `vcpkg.json`, die typischerweise im Projekt-Root toleriert wird (C++ Dependency-Management), jedoch laut Regeln zur Prüfung gemeldet wurde. Da es im Standard-Kontext erlaubt sein könnte, wurde entschieden, die Datei dort zu belassen, aber im Journal als geprüft zu vermerken.
 **Aktion:** `vcpkg.json` verifiziert. Keine Aktion erforderlich.
@@ -128,3 +130,9 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 ## 2026-03-19 - CI Failure Analysis
 **Erkenntnis:** Ein Test in mapmap-bevy schlug in der CI fehl (`headless_runner_disables_embedded_host_plugins`), da ihm das `#[ignore]` Tag für GPU-Tests fehlte. Des Weiteren gab es diverse `cargo fmt` Fehlschläge im Code.
 **Aktion:** Der Test wurde gemäß den Repository-Regeln (AGENTS.md) mit `#[ignore]` markiert, da Render/GPU-Tests ohne interaktive GUI-Umgebung auf CI nicht laufen. Außerdem wurde `cargo fmt` global ausgeführt, um Formatierungswarnungen zu beheben.
+
+## 2026-03-20 - Root Directory Cleanup
+**Erkenntnis:** Das Root-Verzeichnis enthielt mehrere Python-Skripte (`fix_bevy_test.py`, `fix_script.py`, `test_script.py`) sowie eine Patch-Datei (`patch.diff`), welche gegen die Projektstruktur-Richtlinien verstoßen. Da sie potenziell temporäre Hilfsskripte oder unvollständige Patches sind, wurden sie archiviert.
+**Aktion:**
+- Die Dateien `fix_bevy_test.py`, `fix_script.py`, `test_script.py` und `patch.diff` wurden nach `.temp-archive/` verschoben und mit dem Präfix `2026-03-20-` versehen.
+- Die Dateien wurden aus dem git-Index entfernt (`git rm`).
