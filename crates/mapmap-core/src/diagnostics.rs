@@ -134,6 +134,15 @@ pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
     issues
 }
 
+/// Standardized reasons for features that are temporarily degraded or unsupported in the current renderer.
+pub const DEGRADED_FEATURE_BLEND_MODE: &str =
+    "Blend modes are currently unsupported in this renderer.";
+/// Standardized reason for masks being unsupported.
+pub const DEGRADED_FEATURE_MASK: &str = "Masks are currently unsupported in this renderer.";
+/// Standardized reason for LoadLUT being unsupported.
+pub const DEGRADED_FEATURE_LOAD_LUT: &str =
+    "The LoadLUT effect is currently unsupported in this renderer.";
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -207,12 +216,3 @@ mod tests {
         assert!(issues[0].message.contains("no file selected"));
     }
 }
-
-/// Standardized reasons for features that are temporarily degraded or unsupported in the current renderer.
-pub const DEGRADED_FEATURE_BLEND_MODE: &str =
-    "Blend modes are currently unsupported in this renderer.";
-/// Standardized reason for masks being unsupported.
-pub const DEGRADED_FEATURE_MASK: &str = "Masks are currently unsupported in this renderer.";
-/// Standardized reason for LoadLUT being unsupported.
-pub const DEGRADED_FEATURE_LOAD_LUT: &str =
-    "The LoadLUT effect is currently unsupported in this renderer.";
