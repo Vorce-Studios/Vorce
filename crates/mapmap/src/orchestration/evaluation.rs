@@ -87,7 +87,7 @@ pub fn perform_evaluation(
                     .or_default()
                     .push(RuntimeRenderQueueItem {
                         module_id: *module_id,
-                        render_op,
+                        render_op: render_op.into(),
                         diagnostics,
                     });
             }
