@@ -244,7 +244,10 @@ async fn security_headers(req: Request, next: Next) -> Response {
     headers.insert(header::X_FRAME_OPTIONS, HeaderValue::from_static("DENY"));
 
     // Legacy XSS protection (for defense in depth)
-    headers.insert(header::X_XSS_PROTECTION, HeaderValue::from_static("0"));
+    headers.insert(
+        header::X_XSS_PROTECTION,
+        HeaderValue::from_static("1; mode=block"),
+    );
 
     // Referrer Policy
     headers.insert(
@@ -358,7 +361,7 @@ mod tests {
             headers
                 .get("X-XSS-Protection")
                 .and_then(|h| h.to_str().ok()),
-            Some("0")
+            Some("1; mode=block")
         );
         assert_eq!(
             headers.get("Referrer-Policy").and_then(|h| h.to_str().ok()),
