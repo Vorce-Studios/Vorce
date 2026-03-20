@@ -177,7 +177,7 @@ mod tests {
 
     #[test]
     fn test_standard_socket_builders() {
-        use crate::module::types::socket::{ModuleSocket, ModuleSocketType, ModuleSocketDirection};
+        use crate::module::types::socket::{ModuleSocket, ModuleSocketDirection, ModuleSocketType};
 
         let media_in = ModuleSocket::standard_media_in();
         assert_eq!(media_in.id, "media_in");

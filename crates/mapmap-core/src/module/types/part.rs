@@ -112,27 +112,21 @@ impl ModulePartType {
                     ModuleSocket::standard_media_in(),
                     ModuleSocket::input("mask_in", "Mask In", ModuleSocketType::Media),
                 ],
-                vec![
-                    ModuleSocket::standard_media_out(),
-                ],
+                vec![ModuleSocket::standard_media_out()],
             ),
             ModulePartType::Modulizer(_) => (
                 vec![
                     ModuleSocket::standard_media_in(),
                     ModuleSocket::standard_trigger_in(),
                 ],
-                vec![
-                    ModuleSocket::standard_media_out(),
-                ],
+                vec![ModuleSocket::standard_media_out()],
             ),
             ModulePartType::Layer(_) => (
                 vec![
                     ModuleSocket::standard_media_in(),
                     ModuleSocket::standard_trigger_in(),
                 ],
-                vec![
-                    ModuleSocket::standard_layer_out(),
-                ],
+                vec![ModuleSocket::standard_layer_out()],
             ),
             ModulePartType::Source(SourceType::BevyAtmosphere { .. })
             | ModulePartType::Source(SourceType::BevyHexGrid { .. })
@@ -161,14 +155,12 @@ impl ModulePartType {
                     ],
                     vec![],
                 ),
-                _ => (
-                    vec![ModuleSocket::standard_layer_in()],
-                    vec![],
-                ),
+                _ => (vec![ModuleSocket::standard_layer_in()], vec![]),
             },
             ModulePartType::Mesh(_) => (
                 vec![
-                    ModuleSocket::input("vertex_in", "Vertex In", ModuleSocketType::Media).primary(),
+                    ModuleSocket::input("vertex_in", "Vertex In", ModuleSocketType::Media)
+                        .primary(),
                     ModuleSocket::input_mappable(
                         "control_in",
                         "Control In",
@@ -176,7 +168,8 @@ impl ModulePartType {
                     ),
                 ],
                 vec![
-                    ModuleSocket::output("geometry_out", "Geometry Out", ModuleSocketType::Media).primary(),
+                    ModuleSocket::output("geometry_out", "Geometry Out", ModuleSocketType::Media)
+                        .primary(),
                 ],
             ),
             ModulePartType::Hue(_) => (
