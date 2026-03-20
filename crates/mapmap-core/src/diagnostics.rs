@@ -136,7 +136,9 @@ mod tests {
 
         let issues = check_module_integrity(&module);
         assert!(!issues.is_empty());
-        assert!(issues.iter().any(|i| i.message.contains("Input socket 'Input' on part 0 is unconnected.")));
+        assert!(issues.iter().any(|i| i
+            .message
+            .contains("Input socket 'Input' on part 0 is unconnected.")));
     }
 
     #[test]
