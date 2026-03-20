@@ -112,36 +112,28 @@ impl ModulePartType {
                     ModuleSocket::standard_media_in(),
                     ModuleSocket::standard_mask_in(),
                 ],
-                vec![
-                    ModuleSocket::standard_media_out(),
-                ],
+                vec![ModuleSocket::standard_media_out()],
             ),
             ModulePartType::Modulizer(_) => (
                 vec![
                     ModuleSocket::standard_media_in(),
                     ModuleSocket::standard_trigger_in(),
                 ],
-                vec![
-                    ModuleSocket::standard_media_out(),
-                ],
+                vec![ModuleSocket::standard_media_out()],
             ),
             ModulePartType::Layer(_) => (
                 vec![
                     ModuleSocket::standard_media_in(),
                     ModuleSocket::standard_trigger_in(),
                 ],
-                vec![
-                    ModuleSocket::standard_layer_out(),
-                ],
+                vec![ModuleSocket::standard_layer_out()],
             ),
             ModulePartType::Source(SourceType::BevyAtmosphere { .. })
             | ModulePartType::Source(SourceType::BevyHexGrid { .. })
             | ModulePartType::Source(SourceType::Bevy3DShape { .. })
             | ModulePartType::Source(SourceType::BevyCamera { .. }) => (
                 vec![ModuleSocket::standard_trigger_in()],
-                vec![
-                    ModuleSocket::standard_media_out(),
-                ],
+                vec![ModuleSocket::standard_media_out()],
             ),
             ModulePartType::Source(SourceType::BevyParticles { .. }) => (
                 vec![ModuleSocket::input_mappable(
@@ -149,15 +141,11 @@ impl ModulePartType {
                     "Spawn Trigger",
                     ModuleSocketType::Trigger,
                 )],
-                vec![
-                    ModuleSocket::standard_media_out(),
-                ],
+                vec![ModuleSocket::standard_media_out()],
             ),
             ModulePartType::Source(_) => (
                 vec![ModuleSocket::standard_trigger_in()],
-                vec![
-                    ModuleSocket::standard_media_out(),
-                ],
+                vec![ModuleSocket::standard_media_out()],
             ),
             ModulePartType::Output(out) => match out {
                 OutputType::Hue { .. } => (
@@ -167,12 +155,7 @@ impl ModulePartType {
                     ],
                     vec![],
                 ),
-                _ => (
-                    vec![
-                        ModuleSocket::standard_layer_in(),
-                    ],
-                    vec![],
-                ),
+                _ => (vec![ModuleSocket::standard_layer_in()], vec![]),
             },
             ModulePartType::Mesh(_) => (
                 vec![
