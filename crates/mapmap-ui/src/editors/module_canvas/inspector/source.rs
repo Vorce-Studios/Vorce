@@ -1,7 +1,7 @@
 use super::super::state::ModuleCanvas;
 use super::super::types::MediaPlaybackCommand;
 use super::capabilities;
-use super::common::{render_common_controls, render_timeline, render_transport_controls};
+use super::common::{render_common_controls, render_info_label, render_timeline, render_transport_controls};
 use crate::theme::colors;
 use crate::widgets::styled_slider;
 use crate::UIAction;
@@ -252,7 +252,7 @@ pub fn render_source_ui(
                     if ui.button("Select...").clicked() {
                         actions.push(UIAction::PickMediaFile(module_id, part_id, "".to_string()));
                     }
-                    ui.label(egui::RichText::new("No media loaded").weak().italics());
+                    render_info_label(ui, "No media loaded");
                 });
             } else {
                 ui.collapsing("📁 File Info", |ui| {
@@ -449,7 +449,7 @@ pub fn render_source_ui(
                             "".to_string(),
                         ));
                     }
-                    ui.label(egui::RichText::new("No image loaded").weak().italics());
+                    render_info_label(ui, "No image loaded");
                 });
             } else {
                 ui.collapsing("📁 File Info", |ui| {
@@ -682,11 +682,7 @@ pub fn render_source_ui(
                             canvas.ndi_sources.clear();
                             ui.ctx().request_repaint();
                         }
-                        ui.label(
-                            egui::RichText::new("No NDI source selected")
-                                .weak()
-                                .italics(),
-                        );
+                        render_info_label(ui, "No NDI source selected");
                         ui.add_space(10.0);
                     });
                 } else {
@@ -1254,11 +1250,7 @@ pub fn render_source_ui(
         }
         SourceType::Bevy => {
             ui.label("\u{1F3AE} Bevy Scene");
-            ui.label(
-                egui::RichText::new("Rendering Internal 3D Scene")
-                    .weak()
-                    .italics(),
-            );
+            render_info_label(ui, "Rendering Internal 3D Scene");
             ui.small("The scene is rendered internally and available as 'bevy_output'");
         }
     }

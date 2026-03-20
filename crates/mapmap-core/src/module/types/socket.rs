@@ -67,6 +67,41 @@ impl ModuleSocket {
         }
     }
 
+    /// Create a standard media input socket.
+    pub fn standard_media_in() -> Self {
+        Self::input("media_in", "Media In", ModuleSocketType::Media).primary()
+    }
+
+    /// Create a standard media output socket.
+    pub fn standard_media_out() -> Self {
+        Self::output("media_out", "Media Out", ModuleSocketType::Media).primary()
+    }
+
+    /// Create a standard trigger input socket.
+    pub fn standard_trigger_in() -> Self {
+        Self::input_mappable("trigger_in", "Trigger In", ModuleSocketType::Trigger)
+    }
+
+    /// Create a standard trigger output socket.
+    pub fn standard_trigger_out() -> Self {
+        Self::output("trigger_out", "Trigger Out", ModuleSocketType::Trigger)
+    }
+
+    /// Create a standard layer input socket.
+    pub fn standard_layer_in() -> Self {
+        Self::input("layer_in", "Layer In", ModuleSocketType::Layer).primary()
+    }
+
+    /// Create a standard layer output socket.
+    pub fn standard_layer_out() -> Self {
+        Self::output("layer_out", "Layer Out", ModuleSocketType::Layer).primary()
+    }
+
+    /// Create a standard mask input socket.
+    pub fn standard_mask_in() -> Self {
+        Self::input("mask_in", "Mask In", ModuleSocketType::Media)
+    }
+
     /// Create a new input socket that supports trigger mapping.
     pub fn input_mappable(
         id: impl Into<String>,
