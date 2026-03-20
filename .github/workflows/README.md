@@ -661,6 +661,7 @@ Die Checks werden dann als "Expected" im PR angezeigt und müssen vor dem Merge 
             └──────────────────────┘
 
 ✅ Zusammenfassung der Dateipfade:
+
 Datei | Pfad | Grund
 --- | --- | ---
 `.markdownlint.json` | Root | Wird von `markdownlint-cli` im Root gesucht

@@ -1,4 +1,5 @@
 # 🔍 VJMapper / MapFlow – Intensives Code-Audit
+
 **Erstellt:** 2026-03-20  
 **Codebase:** Rust 2021, wgpu 27, egui 0.33, FFmpeg 7.1  
 **Geprüfte Crates:** `mapmap`, `mapmap-core`, `mapmap-ui`, `mapmap-io`, `mapmap-render`, `mapmap-media`, `mapmap-control`, `mapmap-mcp`, `mapmap-ffi`  
@@ -26,6 +27,7 @@
 ## 🚨 KRITISCHE ISSUES (Sofort beheben!)
 
 ### K-1 · Leere FFmpeg-Encoder-Implementierung
+
 **Datei:** `crates/mapmap-io/src/stream/encoder.rs` · **Schwere:** KRITISCH  
 Der `VideoEncoder` ist ein Stub – er produziert leere Pakete. Streaming funktioniert dadurch überhaupt nicht.
 
@@ -43,6 +45,7 @@ Ok(EncodedPacket {
 ---
 
 ### K-2 · `unsafe`-Callback ohne SAFETY-Kommentar (FFmpeg-Formatcallback)
+
 **Datei:** `crates/mapmap-media/src/decoder.rs` · **Schwere:** KRITISCH
 
 ```rust
@@ -59,6 +62,7 @@ unsafe extern "C" fn get_format_callback(
 ```
 
 **Fix:**
+
 ```rust
 // SAFETY: Wird von FFmpeg als Pixelformat-Callback aufgerufen.
 // - ctx: gültiger AVCodecContext, Lifetime durch FFmpeg garantiert
@@ -78,6 +82,7 @@ unsafe extern "C" fn get_format_callback(
 ---
 
 ### K-3 · NDI Raw-Pointer ohne SAFETY-Kommentar
+
 **Datei:** `crates/mapmap-io/src/ndi/mod.rs:208` · **Schwere:** KRITISCH
 
 ```rust
@@ -86,6 +91,7 @@ unsafe { std::slice::from_raw_parts(video_frame.p_data, data_size).to_vec() }
 ```
 
 **Fix:**
+
 ```rust
 // SAFETY: p_data wird vom NDI SDK für den angegebenen data_size-Bereich garantiert.
 // Der Pointer ist nur während des capture()-Aufrufs gültig; das .to_vec()
@@ -100,6 +106,7 @@ let frame_data = unsafe {
 ---
 
 ### K-4 · HAP-Player FFmpeg-Codec-Pointer ohne SAFETY-Kommentar
+
 **Datei:** `crates/mapmap-media/src/hap_player.rs:59-77` · **Schwere:** KRITISCH
 
 ```rust
@@ -114,6 +121,7 @@ let codec_name = unsafe {
 ```
 
 **Fix:**
+
 ```rust
 // SAFETY: codec_par ist aus dem FFmpeg-Kontext geborgt; der Pointer ist für die
 // Dauer des Borrows gültig und nicht null. FFmpeg hat AVCodecParameters
@@ -130,6 +138,7 @@ let (width, height, codec_name) = unsafe {
 ---
 
 ### K-5 · `panic!()` in Produktionspfad (Web-Handlers)
+
 **Datei:** `crates/mapmap-control/src/web/handlers.rs:274, 279` · **Schwere:** KRITISCH
 
 ```rust
@@ -138,6 +147,7 @@ other => panic!("Wrong target type: {:?}", other),
 ```
 
 **Fix:**
+
 ```rust
 other => {
     tracing::error!("Unexpected target type in parameter update: {:?}", other);
@@ -150,6 +160,7 @@ other => {
 ## 🔴 HOHE SEVERITY
 
 ### H-1 · `.unwrap()` bei Ressourcen-Initialisierung
+
 **Datei:** `crates/mapmap/src/app/core/init.rs` · **Schwere:** HOCH
 
 ```rust
@@ -164,6 +175,7 @@ let ctx = window_manager.get(main_window_id)
 ---
 
 ### H-2 · `.unwrap()` im Render-Loop (Texture-Lookup)
+
 **Datei:** `crates/mapmap/src/app/loops/render/previews.rs` · **Schwere:** HOCH
 
 ```rust
@@ -180,6 +192,7 @@ let Some(tex) = app.output_temp_textures.get(&output_id) else {
 ---
 
 ### H-3 · `CString::new().unwrap()` kann bei Null-Bytes panicen
+
 **Datei:** `crates/mapmap-io/src/spout/mod.rs:299` · **Schwere:** HOCH
 
 ```rust
@@ -194,11 +207,13 @@ let c_name = CString::new(self.name.as_str())
 ---
 
 ### H-4 · NDI `NdiReceiver` nicht `Send` – Architektur-Verletzung
+
 **Datei:** `crates/mapmap-io/src/ndi/mod.rs:261-263` · **Schwere:** HOCH
 
 Der `NdiReceiver` kann das `VideoSource: Send`-Trait nicht erfüllen, weil `grafton-ndi::Recv` nicht `Send` ist. Damit ist NDI strukturell vom einheitlichen `VideoSource`-Interface ausgeschlossen.
 
 **Fix:** `NdiReceiver` in einen Thread-Worker mit Channel-Bridge wrappen:
+
 ```rust
 pub struct NdiReceiverBridge {
     frame_rx: crossbeam_channel::Receiver<VideoFrame>,
@@ -210,6 +225,7 @@ pub struct NdiReceiverBridge {
 ---
 
 ### H-5 · Effect-Chain: `unwrap()` auf leere Liste
+
 **Datei:** `crates/mapmap-ui/src/panels/effect_chain/panel.rs:184-185` · **Schwere:** HOCH
 
 ```rust
@@ -229,6 +245,7 @@ if let Some(last) = self.chain.effects.last() {
 ---
 
 ### H-6 · Übermäßige GPU Round-Trips im Effect-Chain-Renderer
+
 **Datei:** `crates/mapmap-render/src/effect_chain_renderer/apply.rs` · **Schwere:** HOCH
 
 Jeder Effekt erzeugt einen eigenen Render-Pass, was bei N Effekten N CPU-GPU-Sync-Punkte bedeutet.
@@ -238,6 +255,7 @@ Jeder Effekt erzeugt einen eigenen Render-Pass, was bei N Effekten N CPU-GPU-Syn
 ---
 
 ### H-7 · Texture-Pool: Kein TTL für persistente Texturen
+
 **Datei:** `crates/mapmap-render/src/texture.rs:345-376` · **Schwere:** HOCH
 
 ```rust
@@ -252,6 +270,7 @@ if name == "composite" || name.starts_with("layer_pong") || name == "bevy_output
 ---
 
 ### H-8 · Doppelter HashMap-Lookup (Race-Window)
+
 **Datei:** `crates/mapmap-render/src/texture.rs:200-207` · **Schwere:** HOCH
 
 ```rust
@@ -275,6 +294,7 @@ false
 ---
 
 ### H-9 · Swallowed Errors bei NDI-Discovery
+
 **Datei:** `crates/mapmap-io/src/ndi/mod.rs:130, 134` · **Schwere:** HOCH
 
 ```rust
@@ -285,6 +305,7 @@ let _ = sender.send(vec![]);
 ```
 
 **Fix:**
+
 ```rust
 if let Err(e) = sender.send(sources) {
     tracing::error!("NDI-Discovery: Konnte Quellen nicht senden: {}", e);
@@ -294,6 +315,7 @@ if let Err(e) = sender.send(sources) {
 ---
 
 ### H-10 · `panic!()` in MCP-Server-Tests statt Assertions
+
 **Datei:** `crates/mapmap-mcp/src/server.rs:346+` · **Schwere:** HOCH
 
 ```rust
@@ -310,6 +332,7 @@ assert!(rx.try_recv().is_ok(), "Keine Aktion im Channel empfangen");
 ---
 
 ### H-11 · `ping_pong.as_ref().unwrap()` in Effect-Renderer
+
 **Datei:** `crates/mapmap-render/src/effect_chain_renderer/apply.rs:311, 342` · **Schwere:** HOCH
 
 ```rust
@@ -324,6 +347,7 @@ let ping_pong = self.ping_pong.as_ref()
 ---
 
 ### H-12 · `expect()` beim App-Start ohne Fallback
+
 **Datei:** `crates/mapmap/src/main.rs:59` · **Schwere:** HOCH
 
 ```rust
@@ -345,6 +369,7 @@ let mut app = pollster::block_on(App::new(event_loop, config))
 ## 🟠 MITTLERE SEVERITY
 
 ### M-1 · Duplizierte Fehler-Dokumentation in `codegen.rs`
+
 **Datei:** `crates/mapmap-core/src/codegen.rs:14-56` · **Schwere:** MITTEL
 
 Jede Error-Variante hat identische dreifach-duplizierte Doc-Kommentare (Copy-Paste-Fehler):
@@ -363,6 +388,7 @@ ValidationError(String),
 ---
 
 ### M-2 · `partial_cmp().unwrap()` – NaN-unsicher
+
 **Datei:** `crates/mapmap-core/src/animation.rs:370` · **Schwere:** MITTEL
 
 ```rust
@@ -376,6 +402,7 @@ ValidationError(String),
 ---
 
 ### M-3 · Thread-Spawn-Fehler in Audio-Pipeline nicht propagiert
+
 **Datei:** `crates/mapmap-core/src/audio_media_pipeline.rs:155` · **Schwere:** MITTEL
 
 ```rust
@@ -395,6 +422,7 @@ pub fn new(...) -> Result<Self, AudioPipelineError> {
 ---
 
 ### M-4 · I18n: `.unwrap()` auf hartkodierten Strings
+
 **Datei:** `crates/mapmap-ui/src/core/i18n.rs:23, 37, 41, 44, 46` · **Schwere:** MITTEL
 
 ```rust
@@ -417,6 +445,7 @@ fn load_bundle(lang_id: &LanguageIdentifier) -> FluentBundle<FluentResource> {
 ---
 
 ### M-5 · Shader: Feste 9-Tap-Blur ignoriert Radius-Parameter
+
 **Datei:** `crates/mapmap-render/src/shaders/effect_blur.wgsl:42-50` · **Schwere:** MITTEL
 
 Der Blur-Shader hat immer 3×3 Taps, egal welcher Radius konfiguriert wurde. UV-Koordinaten werden nicht geclampt.
@@ -430,6 +459,7 @@ color += textureSample(input_texture, input_sampler, uv_clamped);
 ---
 
 ### M-6 · `#[allow(dead_code)]` ohne Begründung (mehrere Dateien)
+
 **Betroffene Dateien:**
 
 | Datei | Anzahl | Problem |
@@ -441,6 +471,7 @@ color += textureSample(input_texture, input_sampler, uv_clamped);
 | `mapmap-ui/src/panels/controller_overlay_panel/*` | 8× | Ohne Kontext |
 
 **Fix:** Entweder entfernen oder dokumentieren warum das Feld/die Methode existiert:
+
 ```rust
 // ✅ Gut
 #[allow(dead_code)] // Reserviert für MIDI-Learn (Phase 7)
@@ -450,6 +481,7 @@ pub midi_learn_active: bool,
 ---
 
 ### M-7 · Unnötige `.clone()` im UI-Render-Loop
+
 **Datei:** `crates/mapmap-ui/src/panels/effect_chain/panel.rs` · **Schwere:** MITTEL
 
 ```rust
@@ -468,6 +500,7 @@ if ui.button(locale.t("effect-add"))
 ---
 
 ### M-8 · Web-API: Status-Felder sind Hardcoded-Stubs
+
 **Datei:** `crates/mapmap-control/src/web/routes.rs:40-42` · **Schwere:** MITTEL
 
 ```rust
@@ -482,6 +515,7 @@ fps: 60.0,            // TODO: Get actual FPS
 ---
 
 ### M-9 · NDI-Kontext wird bei jedem `connect()`-Aufruf neu erstellt
+
 **Datei:** `crates/mapmap-io/src/ndi/mod.rs:145-150` · **Schwere:** MITTEL
 
 Jeder `connect()`-Aufruf erstellt eine neue NDI-Instanz und einen neuen Finder. Bei wiederholtem Aufruf akkumulieren sich Ressourcen.
@@ -491,6 +525,7 @@ Jeder `connect()`-Aufruf erstellt eine neue NDI-Instanz und einen neuen Finder. 
 ---
 
 ### M-10 · Fehlende Keyboard-Navigation in UI-Panels
+
 **Betroffene Panels:** Effect Chain, Layer, Mapping, Transform, Output · **Schwere:** MITTEL
 
 Keine Tastenkürzel für häufige Operationen – verletzt WCAG 2.1 Level A.
@@ -507,6 +542,7 @@ if add_response.clicked() || keyboard_add {
 ---
 
 ### M-11 · `#[allow(missing_docs)]` auf allen Public-Modulen in `mapmap-ui`
+
 **Datei:** `crates/mapmap-ui/src/lib.rs` · **Schwere:** MITTEL
 
 Alle 8 Public-Module deaktivieren die Dokumentationspflicht, obwohl das Crate `#![warn(missing_docs)]` aktiviert. Betroffen: 70+ public Types und Funktionen.
@@ -514,6 +550,7 @@ Alle 8 Public-Module deaktivieren die Dokumentationspflicht, obwohl das Crate `#
 ---
 
 ### M-12 · Potenzieller GPU-Buffer-Alignment-Fehler
+
 **Datei:** `crates/mapmap-render/src/pipeline.rs` · **Schwere:** MITTEL
 
 Buffer-Allokation prüft weder `max_buffer_size` noch das erforderliche 256-Byte-Alignment für Uniform Buffers.
@@ -531,6 +568,7 @@ if content.len() as u64 > device.limits().max_buffer_size {
 ---
 
 ### M-13 · Kein Drop-Impl für Spout-Sender / SRT-Streamer
+
 **Dateien:** `crates/mapmap-io/src/spout/mod.rs`, `stream/srt.rs` · **Schwere:** MITTEL
 
 `RtmpStreamer` hat einen `Drop`-Impl (gut ✓), aber `SrtStreamer` nicht. Beim Drop werden Encoder-Ressourcen nicht explizit freigegeben.
@@ -538,6 +576,7 @@ if content.len() as u64 > device.limits().max_buffer_size {
 ---
 
 ### M-14 · `#![allow(missing_docs)]` in mapmap-mcp
+
 **Datei:** `crates/mapmap-mcp/src/lib.rs:5` · **Schwere:** MITTEL
 
 Das gesamte MCP-Crate deaktiviert Doc-Anforderungen. 50+ `McpAction`-Varianten sind undokumentiert.
@@ -545,6 +584,7 @@ Das gesamte MCP-Crate deaktiviert Doc-Anforderungen. 50+ `McpAction`-Varianten s
 ---
 
 ### M-15 · Arc-Pointer als Cache-Key ohne SAFETY-Kommentar
+
 **Datei:** `crates/mapmap-render/src/effect_chain_renderer/apply.rs:18` · **Schwere:** MITTEL
 
 ```rust
@@ -561,6 +601,7 @@ let key = Arc::as_ptr(input_view) as usize;
 ---
 
 ### M-16 · OSC-Binding: `osc_to_control_value().unwrap()` ohne Fallback
+
 **Datei:** `crates/mapmap-control/src/osc/types.rs` · **Schwere:** MITTEL
 
 ```rust
@@ -580,6 +621,7 @@ match osc_to_control_value(&args) {
 ---
 
 ### M-17 · `DMX::sacn::SacnSender::new().unwrap()` in Produktionspfad
+
 **Datei:** `crates/mapmap-control/src/dmx/sacn.rs` · **Schwere:** MITTEL
 
 Socket-Binding kann zur Laufzeit scheitern (Port belegt, Berechtigungen). Sollte `Result<Self>` zurückgeben.
@@ -587,6 +629,7 @@ Socket-Binding kann zur Laufzeit scheitern (Port belegt, Berechtigungen). Sollte
 ---
 
 ### M-18 · Unreachable Code-Pfade mit `panic!()` in Bevy
+
 **Datei:** `crates/mapmap-bevy/src/systems.rs` · **Schwere:** MITTEL
 
 Bevy-Systeme mit `panic!()` in theoretisch unerreichbaren Branches. Besser: `warn!()` + früher Return.
@@ -612,6 +655,7 @@ Gefundene TODOs ohne Priorisierung oder Phasenzuweisung:
 | `mapmap-render/src/paint_texture_cache.rs:124,128` | Video/Camera-Anbindung fehlt |
 
 **Empfehlung:**
+
 ```rust
 // TODO(Phase-8, @owner): Thumbnail im Hintergrund generieren
 // Abhängig von: media-info-crate v2.0
@@ -620,9 +664,11 @@ Gefundene TODOs ohne Priorisierung oder Phasenzuweisung:
 ---
 
 ### N-2 · Glob-Imports `use egui::*;` in mehreren Dateien
+
 **Betroffene Dateien:** transform_panel, mapping_panel, layer_panel, edge_blend_panel und weitere (8+)
 
 Glob-Imports erschweren Autocomplete und Symbol-Suche. Explizite Imports bevorzugen:
+
 ```rust
 use egui::{Ui, Response, Button, Slider, Color32};
 ```
@@ -630,6 +676,7 @@ use egui::{Ui, Response, Button, Slider, Color32};
 ---
 
 ### N-3 · Gemischte Sprache in Kommentaren (Deutsch/Englisch)
+
 **Betroffene Dateien:** `config.rs`, `window_manager.rs` und weitere
 
 ```rust
@@ -644,6 +691,7 @@ Code-Kommentare sollten einheitlich auf Englisch sein, da internationale Mitarbe
 ---
 
 ### N-4 · History-System: Vollständige AppState-Klone im Undo-Stack
+
 **Datei:** `crates/mapmap-core/src/history.rs` · **Schwere:** NIEDRIG (Performance)
 
 Der Undo-Stack speichert vollständige `AppState`-Klone. Da `AppState` bereits `Arc`-basierte CoW-Felder verwendet, sind die Klone günstig – aber bei 50 Undo-Schritten und großen Projekten kann der RAM-Verbrauch ansteigen.
@@ -653,9 +701,11 @@ Der Undo-Stack speichert vollständige `AppState`-Klone. Da `AppState` bereits `
 ---
 
 ### N-5 · Bevy-Crate nicht im Workspace registriert
+
 **Datei:** `Cargo.toml` · **Schwere:** NIEDRIG
 
 `crates/mapmap-bevy` existiert als Verzeichnis, ist aber nicht im Workspace `members`-Array eingetragen:
+
 ```toml
 members = [
     "crates/mapmap",
@@ -668,6 +718,7 @@ members = [
 ---
 
 ### N-6 · `image = "0.24"` ist veraltet (aktuell 0.25)
+
 **Datei:** `Cargo.toml:73` · **Schwere:** NIEDRIG
 
 Die verwendete `image`-Version 0.24 hat bekannte Performance-Issues. Update auf 0.25 empfohlen.
@@ -675,6 +726,7 @@ Die verwendete `image`-Version 0.24 hat bekannte Performance-Issues. Update auf 
 ---
 
 ### N-7 · Shader-Alternative Entry-Points undokumentiert
+
 **Datei:** `crates/mapmap-render/src/shaders/lut_color_grade.wgsl` · **Schwere:** NIEDRIG
 
 `fs_main_nearest` und `fs_main_tetrahedral` sind alternative Shader-Entry-Points, die nur als Dead Code vorkommen. Dokumentieren welcher aktiv ist und warum.
@@ -682,6 +734,7 @@ Die verwendete `image`-Version 0.24 hat bekannte Performance-Issues. Update auf 
 ---
 
 ### N-8 · `LogConfig` und `logging.rs` parallel zu `tracing-appender` in `main.rs`
+
 **Dateien:** `crates/mapmap-core/src/logging.rs`, `crates/mapmap/src/main.rs` · **Schwere:** NIEDRIG
 
 Es gibt zwei parallele Logging-Systeme: Die `LogConfig`-Struct in `mapmap-core` und die direkte `tracing_appender`-Konfiguration in `main.rs`. Beide machen dasselbe. Sollte konsolidiert werden.
@@ -710,6 +763,7 @@ Diese Punkte sind gut umgesetzt und sollten als Maßstab für den Rest der Codeb
 ## 🛠️ Priorisierter Aktionsplan
 
 ### Sprint 1 – Kritisch (ca. 12–16h)
+
 1. [ ] **K-1** Echten FFmpeg-Encoder implementieren (stream/encoder.rs)
 2. [ ] **K-2** SAFETY-Kommentar + Null-Check für `get_format_callback`
 3. [ ] **K-3** SAFETY-Kommentar + `debug_assert!` für NDI-Pointer
@@ -719,6 +773,7 @@ Diese Punkte sind gut umgesetzt und sollten als Maßstab für den Rest der Codeb
 7. [ ] **H-3** `CString::new().unwrap()` in spout/mod.rs absichern
 
 ### Sprint 2 – Hoch (ca. 20–25h)
+
 8. [ ] **H-2** Render-Loop Texture-Lookup absichern
 9. [ ] **H-4** NDI-Bridge mit Channel für Send-Sicherheit
 10. [ ] **H-5** Effect-Chain Panel unwrap() durch Option-Matching ersetzen
@@ -729,12 +784,14 @@ Diese Punkte sind gut umgesetzt und sollten als Maßstab für den Rest der Codeb
 15. [ ] **H-11** `ping_pong.as_ref().unwrap()` durch `ok_or(...)` ersetzen
 
 ### Sprint 3 – Mittel (ca. 30–40h)
+
 16. [ ] **M-1..M-18** Alle mittleren Issues adressieren
 17. [ ] Vollständige API-Dokumentation für `mapmap-ui` und `mapmap-mcp`
 18. [ ] Keyboard-Navigation in allen UI-Panels
 19. [ ] TODO-Kommentare mit Kontext versehen oder als Issues tracken
 
 ### Langfristig (Backlog)
+
 20. [ ] **N-1..N-8** Niedrige Issues
 21. [ ] Differenzbasiertes Undo-System evaluieren
 22. [ ] `image`-Crate auf 0.25 upgraden
@@ -762,7 +819,7 @@ Crate-Qualitätsscores:
   mapmap-control:  6.8/10  (Panic in Handlers, gute Auth)
   mapmap-mcp:      7.0/10  (gute Path-Validation, fehlende Docs)
   mapmap (binary): 7.0/10  (einige kritische unwrap() in Init)
-  
+
 Gesamt:           6.7/10
 ```
 
