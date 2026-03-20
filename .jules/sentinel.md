@@ -11,3 +11,7 @@
 **Vulnerability:** Loading large files entirely into memory using `read_to_end` or `read_to_string`.
 **Learning:** `std::io::copy` must be used for file transfers instead of buffering into memory arrays.
 **Prevention:** Use streaming I/O whenever possible.
+## 2025-03-20 - [MEDIUM] Update X-XSS-Protection header
+**Vulnerability:** X-XSS-Protection header was set to 1; mode=block.
+**Learning:** Modern security best practices recommend setting X-XSS-Protection to 0, because 1; mode=block can be exploited to introduce cross-site scripting vulnerabilities in otherwise secure pages.
+**Prevention:** Use X-XSS-Protection: 0 and rely on Content Security Policy (CSP) instead.
