@@ -5,27 +5,23 @@ This directory contains automated workflows for the MapFlow project, implementin
 ## 🤖 Workflows Overview
 
 > [!IMPORTANT]
-> **Current CI/CD Strategy (updated 2026-03-15):**
+> **Current CI/CD Strategy (validated on 2026-03-20):**
 >
-> The workflow setup has been unified to prevent pull requests from getting stuck because of inconsistent check sets.
+> The workflow setup has been unified to prevent pull requests from getting stuck because of inconsistent or partially reported check sets.
 >
 > - **Pull requests are the only merge-relevant validation path**
 > - **Automatic `push` validation on `main` was removed from the PR-gate workflows**
 > - **`Build & Test (Windows)` now runs on every pull request**
 > - **CodeQL remains available, but is no longer part of the required merge-blocking checks**
+> - **Validation and auto-merge now use explicit pull-request event types**
 > - **Auto-merge is centrally controlled by `CICD-DevFlow: Job02 Auto-Merge`**
->
-> This reduces GitHub Actions minute consumption while also making the PR gate deterministic.
 
-### 1. CI/CD Pipeline (`CI-01_build-and-test.yml`) ⚡ HISTORICAL CONTEXT
+### 1. CI/CD Pipeline (`CI-01_build-and-test.yml`) ⚡ OPTIMIZED
 
 **Purpose:** Comprehensive continuous integration and deployment pipeline
 
-**Status:** Historical documentation entry from an earlier pipeline generation.
-
-**Note:**  
-This section is intentionally preserved for repository history and migration context.  
-The actively maintained PR-gate workflows are now the `CICD-DevFlow_*` workflows documented further below.
+**Status:** Historical workflow documentation entry kept for context.  
+The currently active PR gate is implemented through the `CICD-DevFlow_*` workflows documented further below.
 
 **Historical Triggers:**
 
@@ -36,11 +32,11 @@ The actively maintained PR-gate workflows are now the `CICD-DevFlow_*` workflows
 > [!TIP]
 > **Optimization:** Path filters + parallel jobs reduce runtime by ~30-50%
 
-**Historical Path Filters (only runs when these change):**
+**Path Filters (historical example):**
 
 - `crates/**`, `Cargo.toml`, `Cargo.lock`, `scripts/**`, `deny.toml`
 
-**Historical Jobs (PARALLEL execution after pre-checks):**
+**Jobs (PARALLEL execution after pre-checks):**
 
 - **Pre-Checks:** Auto-formatting and Clippy fixes
 - **Code Quality:** Linting and dependency checks (parallel)
@@ -49,7 +45,7 @@ The actively maintained PR-gate workflows are now the `CICD-DevFlow_*` workflows
 - **Security Audit:** cargo-audit and dependency review (parallel)
 - **Success Gate:** Ensures all checks pass before merge
 
-### 2. CodeQL Security Scan (`CI-02_security-scan.yml`) ⚡ UPDATED
+### 2. CodeQL Security Scan (`CI-02_security-scan.yml`) ⚡ OPTIMIZED
 
 **Purpose:** Automated security vulnerability detection
 
@@ -58,20 +54,20 @@ The actively maintained PR-gate workflows are now the `CICD-DevFlow_*` workflows
 - Weekly schedule
 - Manual dispatch
 
-**Current role:**
-
-- Provides a slower, deeper security analysis using CodeQL
-- Is **not** part of the required PR merge gate
-- Is intended for scheduled and on-demand security review
-
 > [!TIP]
-> **Optimization:** CodeQL was removed from the required PR-gate path because it is comparatively slow and expensive.
-> Fast PR security checks remain in the validation workflow.
+> **Optimization:** CodeQL has been removed from the required PR path.
+> Fast security checks remain in the PR validation workflow, while CodeQL is used for scheduled and manual deep analysis.
+
+**Current Role:**
+
+- Deeper scheduled/manual security analysis
+- Not part of the required PR merge gate
+- Still available for repository-wide vulnerability review
 
 **Historical Trigger Context:**
 
 - Push to `main` branch
-- Weekly schedule
+- Weekly schedule (Mondays at 00:00 UTC)
 - Manual dispatch
 
 ### 3. Create Jules Development Issues (`CI-03_create-issues.yml`)
@@ -149,12 +145,12 @@ gh workflow run CI-04_session-trigger.yml -f issue_number=123
    - Still adds tracking comment
    - Jules GitHub App takes over (if installed)
 
-### 5. Jules PR Auto-Merge (`CI-05_pr-automation.yml`) ✨ Historical Reference
+### 5. Jules PR Auto-Merge (`CI-05_pr-automation.yml`) ✨ Enhanced
 
 **Purpose:** Automatically merge Jules PRs when all checks pass, with intelligent error handling
 
-**Status:** Historical reference entry kept for documentation continuity.  
-The actively used auto-merge logic now lives in `CICD-DevFlow_Job02_AutoMerge.yml`.
+**Status:** Historical reference entry retained for continuity.  
+The active auto-merge implementation is now `CICD-DevFlow_Job02_AutoMerge.yml`.
 
 **Historical Triggers:**
 
@@ -163,7 +159,7 @@ The actively used auto-merge logic now lives in `CICD-DevFlow_Job02_AutoMerge.ym
 - Workflow run completion (CI-01)
 - Manual dispatch
 
-**Historical Features:**
+**Features:**
 
 - **Intelligent Check Monitoring:** Waits for all checks to complete
 - **Success Path:** Auto-merges when all checks pass
@@ -172,7 +168,7 @@ The actively used auto-merge logic now lives in `CICD-DevFlow_Job02_AutoMerge.ym
 - **Failed Check Details:** Includes check names, summaries, and links
 - **Retry Support:** Jules can update PR, checks re-run automatically
 
-**Historical Auto-Merge Conditions:**
+**Auto-Merge Conditions (historical):**
 
 1. ✅ PR labeled with `jules-pr` or body contains "Created by Jules"
 2. ✅ All CI checks pass (except auto-merge workflow itself)
@@ -180,7 +176,7 @@ The actively used auto-merge logic now lives in `CICD-DevFlow_Job02_AutoMerge.ym
 4. ✅ No review requested changes
 5. ✅ Not a draft PR
 
-**Historical Error Handling:**
+**Error Handling:**
 
 - Detects failed checks and collects details
 - Creates @jules comment with:
@@ -217,7 +213,7 @@ The actively used auto-merge logic now lives in `CICD-DevFlow_Job02_AutoMerge.ym
 
 - **Issue Management:** Automatically closes related issue
 - **ROADMAP Updates:** Marks tasks as completed
-- **Continuous Automation:** Triggers CI-04 for next jules-task issue
+- **Continuous Automation:** Triggers CI-04 for next `jules-task` issue
 - **Progress Tracking:** Adds completion comments
 
 **Workflow:**
@@ -228,7 +224,7 @@ The actively used auto-merge logic now lives in `CICD-DevFlow_Job02_AutoMerge.ym
    - Mark task as completed
    - Add PR reference
    - Commit changes
-4. Trigger CI-04 for next oldest jules-task issue
+4. Trigger CI-04 for next oldest `jules-task` issue
 
 ### 8. Monitor Jules Session (`CI-08_monitor-jules-session.yml`) ⚡ OPTIMIZED
 
@@ -275,7 +271,7 @@ The automation system uses the following labels:
 - `bug`: Bug reports
 - `feature-request`: Feature requests
 - `documentation`: Documentation updates
-- `test-windows`: Forces or documents Windows-relevant validation scope in historical workflow context
+- `test-windows`: Historical/diagnostic label context for Windows-related testing flows
 
 ## 🔐 Permissions Required
 
@@ -286,7 +282,7 @@ The workflows require the following GitHub permissions:
 - `pull-requests: write` - For managing PRs
 - `security-events: write` - For CodeQL findings
 - `checks: read` - For reading check status
-- `statuses: read` - For reading external commit status integrations like `pre-commit.ci`
+- `statuses: read` - For reading external commit status integrations such as `pre-commit.ci`
 
 ## 🚀 Jules Integration Setup
 
@@ -329,11 +325,18 @@ The workflows require the following GitHub permissions:
 
 **🧪 Phase 3: Automated Testing**
 
-5. **Current PR Gate (`CICD-DevFlow_Job01_Validation.yml`):**
+5. **Current PR Validation (`CICD-DevFlow_Job01_Validation.yml`):**
 
 - Triggered automatically on pull requests
+- Explicit PR event coverage:
+  - `opened`
+  - `reopened`
+  - `synchronize`
+  - `ready_for_review`
+  - `labeled`
+  - `unlabeled`
 - Code quality checks (format, lint)
-- Security scan via `cargo-deny`
+- Security scan
 - Linux build and tests
 - Windows build and tests
 - Final success gate
@@ -342,7 +345,7 @@ The workflows require the following GitHub permissions:
 
 6. **Current Success Path (`CICD-DevFlow_Job02_AutoMerge.yml`):**
 
-- Waits for the required PR checks
+- Waits for all required PR checks
 - Evaluates mergeability and branch state
 - Merges automatically when all required checks pass
 - Adds/update managed PR comments
@@ -356,11 +359,11 @@ The workflows require the following GitHub permissions:
 
 **📝 Phase 5: Post-Merge Actions**
 
-8. **Documentation Updates and Follow-up Automation:**
+8. **Documentation Updates (CI-06 & other post-merge workflows):**
 
-- CHANGELOG updates remain available in dedicated workflows
-- Additional project automation can run separately from the merge gate
-- Post-merge self-hosted validation can be enabled independently
+- Changelog updates remain available in dedicated workflows
+- Post-merge automation remains separate from the PR gate
+- Self-hosted validation remains optional and non-blocking for PR merge
 
 **🎯 Result:** A more deterministic PR validation and merge pipeline, while preserving the broader Jules automation ecosystem.
 
@@ -397,10 +400,10 @@ gh run watch <run-id>
 # Trigger validation workflow
 gh workflow run "CICD-DevFlow: Job01 Validation"
 
-# Trigger CodeQL security analysis manually
+# Trigger CodeQL deep security analysis
 gh workflow run "Security Analysis"
 
-# Trigger auto-merge re-evaluation manually
+# Trigger auto-merge re-evaluation
 gh workflow run "CICD-DevFlow: Job02 Auto-Merge"
 
 # Trigger documentation update
@@ -422,7 +425,7 @@ gh workflow run CI-06_update-changelog.yml
 2. Use workflow dispatch for testing
 3. Monitor logs carefully
 4. Update documentation
-5. Keep **workflow triggers**, **Branch Protection Rules**, and **auto-merge expected checks** aligned
+5. Keep workflow triggers, Branch Protection Rules, and auto-merge expected checks aligned
 
 ### Troubleshooting
 
@@ -434,17 +437,17 @@ gh workflow run CI-06_update-changelog.yml
 
 **Issue: Auto-merge not working**
 
-- Verify all required PR checks passed on the latest PR head commit
-- Ensure no merge conflicts exist
+- Verify all required checks passed on the latest PR head commit
+- Ensure no merge conflicts
 - Review branch protection rules
-- Confirm the auto-merge workflow expects the same checks as branch protection
+- Confirm the auto-merge workflow expects the same checks that Branch Protection requires
 
-**Issue: Pull requests seem to hang waiting for checks**
+**Issue: Pull requests show required checks as "Expected — Waiting for status to be reported"**
 
-- Check whether Branch Protection requires outdated check names
-- Ensure CodeQL is not configured as a required PR check
-- Verify the required set matches the current `CICD-DevFlow` workflow names
-- Confirm `pre-commit.ci - pr` finished successfully
+- Verify that the validation workflow is triggered on the current PR event
+- Verify that the required check names in Branch Protection exactly match the current job names
+- Ensure stale or removed required checks were deleted from Branch Protection
+- Push a fresh commit to existing PRs after workflow-trigger changes so GitHub generates new check runs on the latest PR head SHA
 
 **Issue: Issues not created from ROADMAP**
 
@@ -487,7 +490,13 @@ For issues with workflows:
 
 **Aktuelle Trigger:**
 
-- **Pull Requests zu `main` Branch** ✅ (automatisch)
+- Pull Request Events:
+  - `opened`
+  - `reopened`
+  - `synchronize`
+  - `ready_for_review`
+  - `labeled`
+  - `unlabeled`
 - Manual Dispatch
 - Workflow Call
 
@@ -515,7 +524,7 @@ For issues with workflows:
    - Sammelt alle Check-Results
    - Schlägt fehl, wenn einer der Pflichtjobs fehlschlägt
 
-**Status:** ✅ Alle merge-relevanten Pflichtchecks laufen automatisch bei jedem Pull Request.
+**Status:** ✅ Alle merge-relevanten Pflichtchecks sollen automatisch bei jedem Pull Request laufen.
 
 > [!IMPORTANT]
 > **Troubleshooting:** Falls die Checks im GitHub UI nicht als "Expected" erscheinen:
@@ -529,12 +538,19 @@ For issues with workflows:
 >    - `Build & Test (Linux)`
 >    - `Build & Test (Windows)`
 >    - `Validation Success`
+> 4. Wenn die Trigger gerade geändert wurden, bestehende PRs durch einen neuen Commit oder Sync neu anstoßen
 
 ### CICD-DevFlow_Job02_AutoMerge.yml
 
 **Aktuelle Trigger:**
 
-- Pull Request Events (`opened`, `reopened`, `synchronize`, `labeled`, `unlabeled`, `ready_for_review`)
+- Pull Request Events:
+  - `opened`
+  - `reopened`
+  - `synchronize`
+  - `labeled`
+  - `unlabeled`
+  - `ready_for_review`
 - Workflow Run Completion von `CICD-DevFlow: Job01 Validation`
 - Manual Dispatch
 
@@ -603,6 +619,9 @@ Um die PR-Checks als "required" zu markieren, folge diesen Schritten:
 
 Die Checks werden dann als "Expected" im PR angezeigt und müssen vor dem Merge grün sein.
 
+> [!WARNING]
+> Nach Änderungen an Workflow-Triggern oder Required Checks müssen bestehende PRs meist durch einen neuen Commit oder ein erneutes Synchronisieren neu angestoßen werden, damit GitHub die Check Runs auf dem aktuellen PR-Head neu erzeugt.
+
 ---
 
 📋 Current PR-Check Flow:
@@ -623,7 +642,7 @@ Die Checks werden dann als "Expected" im PR angezeigt und müssen vor dem Merge 
 │                 │    │ • Validation Success            │
 │ ⚡ ~30s         │    │                                 │
 │ ✅ Auto-Push   │    │ ✅ Merge-relevant gate           │
-└────────┬────────┘    └───────────────┬────��────────────┘
+└────────┬────────┘    └───────────────┬─────────────────┘
          │                             │
          └─────────────┬───────────────┘
                        │
@@ -650,7 +669,7 @@ Datei | Pfad | Grund
 `copilot-instructions.md` | `.github/` | GitHub-spezifische Config
 Workflows | `.github/workflows/` | GitHub Actions Standard
 
-✅ Historische Commit-Reihenfolge für die PR-Check-Einführung:
+✅ Vollständige historische Commit-Reihenfolge:
 
 ```bash
 # Schritt 1: Root-Config-Dateien
@@ -675,5 +694,5 @@ git commit -m "ci: implement validation and auto-merge with Jules feedback"
 git push
 ```
 
-**Last Updated:** 2026-03-15 (PR-Gate vereinheitlicht, Windows immer aktiv, CodeQL aus Required Checks entfernt)  
+**Last Updated:** 2026-03-20 (PR-Gate Trigger explizit gemacht, Windows immer aktiv, CodeQL aus Required Checks entfernt)  
 **Maintained By:** MapFlow Team

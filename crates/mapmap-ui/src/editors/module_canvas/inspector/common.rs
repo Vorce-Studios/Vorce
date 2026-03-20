@@ -1,9 +1,22 @@
 use super::super::state::ModuleCanvas;
 use super::super::types::MediaPlaybackCommand;
 use super::capabilities;
+use crate::core::theme::colors;
 use crate::widgets::{styled_drag_value, styled_slider};
-use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
+use egui::{Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use mapmap_core::module::{BlendModeType, ModulePartId};
+
+/// Renders a standardized info label for fallback text or missing states.
+pub fn render_info_label(ui: &mut Ui, text: &str) {
+    ui.label(egui::RichText::new(text).weak().italics());
+}
+
+/// Renders a standardized banner for missing previews.
+pub fn render_missing_preview_banner(ui: &mut Ui, text: &str) {
+    ui.group(|ui| {
+        render_info_label(ui, text);
+    });
+}
 
 /// Renders the common transform and color correction controls for a media source.
 #[allow(clippy::too_many_arguments)]
@@ -243,9 +256,9 @@ pub fn render_transport_controls(
         let play_btn = egui::Button::new(egui::RichText::new("\u{25B6}").size(24.0))
             .min_size(big_btn_size)
             .fill(if is_playing {
-                Color32::from_rgb(40, 180, 60)
+                colors::MINT_ACCENT
             } else {
-                Color32::from_gray(50)
+                colors::LIGHTER_GREY
             });
         if ui.add(play_btn).on_hover_text("Play").clicked() {
             canvas
@@ -257,9 +270,9 @@ pub fn render_transport_controls(
         let pause_btn = egui::Button::new(egui::RichText::new("⏸").size(24.0))
             .min_size(big_btn_size)
             .fill(if !is_playing && current_pos > 0.1 {
-                Color32::from_rgb(200, 160, 40)
+                colors::WARN_COLOR
             } else {
-                Color32::from_gray(50)
+                colors::LIGHTER_GREY
             });
         if ui.add(pause_btn).on_hover_text("Pause").clicked() {
             canvas
@@ -273,8 +286,7 @@ pub fn render_transport_controls(
         ui.add_space(8.0);
 
         // STOP (Destructive Action - Separated)
-        if crate::widgets::hold_to_action_button(ui, "⏹", Color32::from_rgb(255, 80, 80), "Stop")
-        {
+        if crate::widgets::hold_to_action_button(ui, "⏹", colors::ERROR_COLOR, "Stop") {
             canvas
                 .pending_playback_commands
                 .push((part_id, MediaPlaybackCommand::Stop));
@@ -282,9 +294,9 @@ pub fn render_transport_controls(
 
         // LOOP
         let loop_color = if *loop_enabled {
-            Color32::from_rgb(80, 150, 255)
+            colors::CYAN_ACCENT
         } else {
-            Color32::from_gray(45)
+            colors::LIGHTER_GREY
         };
         if ui
             .add(
@@ -303,9 +315,9 @@ pub fn render_transport_controls(
 
         // REVERSE
         let rev_color = if *reverse_playback {
-            Color32::from_rgb(200, 80, 80)
+            colors::ERROR_COLOR
         } else {
-            Color32::from_gray(45)
+            colors::LIGHTER_GREY
         };
         if ui
             .add(
@@ -338,11 +350,11 @@ pub fn render_timeline(
     let rect = response.rect;
 
     // Background (Full Track)
-    painter.rect_filled(rect, 0.0, Color32::from_gray(30));
+    painter.rect_filled(rect, egui::CornerRadius::ZERO, colors::DARKER_GREY);
     painter.rect_stroke(
         rect,
-        0.0,
-        Stroke::new(1.0 * canvas.zoom, Color32::from_gray(60)),
+        egui::CornerRadius::ZERO,
+        Stroke::new(1.0 * canvas.zoom, colors::STROKE_GREY),
         egui::StrokeKind::Middle,
     );
 
@@ -360,13 +372,13 @@ pub fn render_timeline(
         Rect::from_min_max(Pos2::new(start_x, rect.min.y), Pos2::new(end_x, rect.max.y));
     painter.rect_filled(
         region_rect,
-        0.0,
-        Color32::from_rgba_unmultiplied(60, 180, 100, 80),
+        egui::CornerRadius::ZERO,
+        colors::MINT_ACCENT.linear_multiply(0.3),
     );
     painter.rect_stroke(
         region_rect,
-        0.0,
-        Stroke::new(1.0, Color32::from_rgb(60, 180, 100)),
+        egui::CornerRadius::ZERO,
+        Stroke::new(1.0, colors::MINT_ACCENT),
         egui::StrokeKind::Middle,
     );
 
@@ -445,8 +457,16 @@ pub fn render_timeline(
     }
 
     // Draw Handles
-    painter.rect_filled(start_handle_rect.shrink(2.0), 2.0, Color32::WHITE);
-    painter.rect_filled(end_handle_rect.shrink(2.0), 2.0, Color32::WHITE);
+    painter.rect_filled(
+        start_handle_rect.shrink(2.0),
+        egui::CornerRadius::ZERO,
+        colors::LIGHTER_GREY,
+    );
+    painter.rect_filled(
+        end_handle_rect.shrink(2.0),
+        egui::CornerRadius::ZERO,
+        colors::LIGHTER_GREY,
+    );
 
     // Draw Playhead
     let cursor_norm = (current_pos / video_duration).clamp(0.0, 1.0);
@@ -456,7 +476,7 @@ pub fn render_timeline(
             Pos2::new(cursor_x, rect.min.y),
             Pos2::new(cursor_x, rect.max.y),
         ],
-        Stroke::new(2.0, Color32::from_rgb(255, 200, 50)),
+        Stroke::new(2.0, colors::WARN_COLOR),
     );
     // Playhead triangle top
     let tri_size = 6.0;
@@ -466,7 +486,7 @@ pub fn render_timeline(
             Pos2::new(cursor_x + tri_size, rect.min.y),
             Pos2::new(cursor_x, rect.min.y + tri_size * 1.5),
         ],
-        Color32::from_rgb(255, 200, 50),
+        colors::WARN_COLOR,
         Stroke::NONE,
     ));
 }

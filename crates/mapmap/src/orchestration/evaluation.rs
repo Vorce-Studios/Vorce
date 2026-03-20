@@ -39,40 +39,64 @@ pub fn perform_evaluation(
                     .insert(*part_id, max_val);
             }
 
-            app.render_queue
-                .items
-                .extend(eval_result.render_ops.iter().cloned().map(|render_op| {
-                    let mut diagnostics = Vec::new();
+            for render_op in eval_result.render_ops.drain(..) {
+                let mut diagnostics = Vec::new();
 
-                    if render_op.blend_mode.is_some() {
-                        diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
-                            module_id: *module_id,
-                            part_id: render_op.layer_part_id,
-                            severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
-                            code: mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE.to_string(),
-                            message: mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE_MSG
-                                .to_string(),
-                        });
+                if render_op.blend_mode.is_some() {
+                    diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
+                        module_id: *module_id,
+                        part_id: render_op.layer_part_id,
+                        severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
+                        code: mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE.to_string(),
+                        message: "Blend modes are currently only supported via specific compositing passes.".to_string(),
+                    });
+                }
+
+                if !render_op.masks.is_empty() {
+                    diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
+                        module_id: *module_id,
+                        part_id: render_op.layer_part_id,
+                        severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
+                        code: mapmap_core::diagnostics::DEGRADED_FEATURE_MASK.to_string(),
+                        message: "Masks are not yet supported in this render path.".to_string(),
+                    });
+                }
+
+                for effect in &render_op.effects {
+                    if let mapmap_core::module::ModulizerType::Effect { effect_type, .. } = effect {
+                        if *effect_type == mapmap_core::module::EffectType::LoadLUT {
+                            diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
+                                module_id: *module_id,
+                                part_id: render_op.layer_part_id,
+                                severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
+                                code: mapmap_core::diagnostics::DEGRADED_FEATURE_LOAD_LUT.to_string(),
+                                message: "LUT effects are currently degraded and may not render as expected.".to_string(),
+                            });
+                        }
                     }
+                }
 
-                    if !render_op.masks.is_empty() {
-                        diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
-                            module_id: *module_id,
-                            part_id: render_op.layer_part_id,
-                            severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
-                            code: mapmap_core::diagnostics::DEGRADED_FEATURE_MASK.to_string(),
-                            message: mapmap_core::diagnostics::DEGRADED_FEATURE_MASK_MSG
-                                .to_string(),
-                        });
-                    }
+                let target_output_id = match &render_op.output_type {
+                    mapmap_core::module::OutputType::Projector { id, .. } => *id,
+                    _ => render_op.output_part_id,
+                };
 
-                    RuntimeRenderQueueItem {
+                app.render_queue
+                    .items
+                    .entry(target_output_id)
+                    .or_default()
+                    .push(RuntimeRenderQueueItem {
                         module_id: *module_id,
                         render_op,
                         diagnostics,
-                    }
-                }));
+                    });
+            }
         }
+    }
+
+    // Pre-sort per output to ensure deterministic layer ordering
+    for items in app.render_queue.items.values_mut() {
+        items.sort_by(|a, b| b.render_op.output_part_id.cmp(&a.render_op.output_part_id));
     }
 
     // Sync with Bevy (only if runner exists)
