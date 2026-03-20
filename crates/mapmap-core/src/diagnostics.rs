@@ -37,7 +37,7 @@ pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
             if !module
                 .connections
                 .iter()
-                .any(|c| c.to_part == idx && c.to_socket == s_idx)
+                .any(|c| c.to_part == part.id && c.to_socket == s_idx)
             {
                 issues.push(ModuleIssue {
                     severity: IssueSeverity::Info,
@@ -56,9 +56,10 @@ pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
 
     // Check for source paths (if any)
     for (idx, part) in module.parts.iter().enumerate() {
-        if let crate::module::PartType::Source = part.part_type {
+        if let crate::module::types::part::ModulePartType::Source(_) = part.part_type {
             // Validation logic for sources
             // ...
+            let _ = idx; // avoid unused warning if block is empty
         }
     }
 
@@ -126,18 +127,16 @@ mod tests {
     #[test]
     fn test_diagnostics_unconnected_info() {
         let mut module = MapFlowModule::default();
-        let pid = module.add_part(PartType::Source, (0.0, 0.0));
+        module.add_part(PartType::Source, (0.0, 0.0));
 
         let mut input_socket = ModuleSocket::input("in", "Input", ModuleSocketType::Media);
         input_socket.id = "in".to_string();
 
-        module.parts[pid].inputs.push(input_socket);
+        module.parts.last_mut().unwrap().inputs.push(input_socket);
 
         let issues = check_module_integrity(&module);
         assert!(!issues.is_empty());
-        assert!(issues[0]
-            .message
-            .contains("Input socket 'Input' on part 0 is unconnected."));
+        assert!(issues.iter().any(|i| i.message.contains("Input socket 'Input' on part 0 is unconnected.")));
     }
 
     #[test]
