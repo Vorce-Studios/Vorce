@@ -1,5 +1,6 @@
 use crate::app::core::app_struct::RuntimeRenderQueueItem;
 use anyhow::Result;
+use mapmap_core::module::OutputType::Projector;
 
 use super::effects::build_effect_chain;
 use super::logging::{clear_video_issue, should_log_video_issue};
@@ -8,7 +9,7 @@ use super::PREVIEW_FLAG;
 pub(crate) struct RenderContext<'a> {
     pub device: &'a wgpu::Device,
     pub queue: &'a wgpu::Queue,
-    pub render_queue: &'a std::collections::HashMap<u64, Vec<RuntimeRenderQueueItem>>,
+    pub render_queue: &'a [RuntimeRenderQueueItem],
     pub output_manager: &'a mapmap_core::output::OutputManager,
     pub edge_blend_renderer: &'a Option<mapmap_render::EdgeBlendRenderer>,
     pub color_calibration_renderer: &'a Option<mapmap_render::ColorCalibrationRenderer>,
@@ -48,11 +49,20 @@ pub(crate) fn render_content(
     let real_output_id = output_id & !PREVIEW_FLAG;
 
     // ⚡ BOLT OPTIMIZATION:
-    // Use pre-partitioned and pre-sorted queues to avoid repeated O(N) filtering and sorting on every frame.
-    let empty_list = Vec::new();
-    let target_ops = ctx.render_queue.get(&real_output_id).unwrap_or(&empty_list);
+    // Store references to RenderOp instead of cloning the entire struct (which contains Vecs and complex data).
+    // This avoids per-frame allocations and deep copies for every layer being rendered.
+    let mut target_ops: Vec<&RuntimeRenderQueueItem> = ctx
+        .render_queue
+        .iter()
+        .filter(|item| match &item.render_op.output_type {
+            Projector { id, .. } => *id == real_output_id,
+            _ => item.render_op.output_part_id == real_output_id,
+        })
+        .collect();
 
-    for item in target_ops {
+    target_ops.sort_by(|a, b| b.render_op.output_part_id.cmp(&a.render_op.output_part_id));
+
+    for item in &target_ops {
         for diag in &item.diagnostics {
             let issue_key = format!("{}:{}:{}", diag.code, diag.module_id, diag.part_id);
             if should_log_video_issue(video_log_times, issue_key) {
@@ -193,25 +203,6 @@ pub(crate) fn render_content(
     for item in target_ops {
         let module_id = item.module_id;
         let op = &item.render_op;
-
-        // Defensive skipping for zero opacity or empty mesh
-        let combined_opacity = op.opacity * op.source_props.opacity;
-        if combined_opacity <= 0.001 {
-            continue;
-        }
-
-        let mesh_data = op.mesh.to_mesh();
-        if mesh_data.vertices.is_empty() {
-            let issue_key = format!("video-output-empty-mesh:{module_id}:{}", op.layer_part_id);
-            if should_log_video_issue(video_log_times, issue_key) {
-                tracing::warn!(
-                    "Fehler in Videoausgabe: Ueberspringe Rendern von Modul {} / Part {}, da das Mesh leer ist.",
-                    module_id,
-                    op.layer_part_id
-                );
-            }
-            continue;
-        }
         let tex_name = if let Some(src_id) = op.source_part_id {
             format!("part_{}_{}", module_id, src_id)
         } else {
@@ -245,7 +236,7 @@ pub(crate) fn render_content(
             );
             Some(ctx.texture_pool.get_view(&tex_name))
         } else if ctx.texture_pool.has_texture("bevy_output") {
-            // Fallback for Bevy nodes.
+            // Fallback for Bevy nodes
             clear_video_issue(
                 video_log_times,
                 format!(
@@ -340,23 +331,11 @@ pub(crate) fn render_content(
                 }
             }
 
-            let t_translation = glam::Mat4::from_translation(glam::vec3(
-                op.source_props.offset_x,
-                op.source_props.offset_y,
-                0.0,
-            ));
-            let t_rotation = glam::Mat4::from_rotation_z(op.source_props.rotation.to_radians());
-            let t_scale = glam::Mat4::from_scale(glam::vec3(
-                op.source_props.scale_x,
-                op.source_props.scale_y,
-                1.0,
-            ));
-            let transform = t_translation * t_rotation * t_scale;
-
+            let transform = glam::Mat4::IDENTITY;
             let uniform_bind_group = mesh_renderer.get_uniform_bind_group_with_source_props(
                 queue,
                 transform,
-                combined_opacity,
+                op.opacity * op.source_props.opacity,
                 op.source_props.flip_horizontal,
                 op.source_props.flip_vertical,
                 op.source_props.brightness,
@@ -366,9 +345,12 @@ pub(crate) fn render_content(
             );
 
             let texture_bind_group = mesh_renderer.get_texture_bind_group(&final_source_view);
-            let (vb, ib, cnt) =
-                ctx.mesh_buffer_cache
-                    .get_buffers(device, queue, op.layer_part_id, &mesh_data);
+            let (vb, ib, cnt) = ctx.mesh_buffer_cache.get_buffers(
+                device,
+                queue,
+                op.layer_part_id,
+                &op.mesh.to_mesh(),
+            );
 
             let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Mesh Layer Pass"),
