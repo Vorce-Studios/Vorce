@@ -51,14 +51,19 @@ pub(crate) fn render_content(
     // ⚡ BOLT OPTIMIZATION:
     // Store references to RenderOp instead of cloning the entire struct (which contains Vecs and complex data).
     // This avoids per-frame allocations and deep copies for every layer being rendered.
-    let mut target_ops: Vec<&RuntimeRenderQueueItem> = ctx
-        .render_queue
-        .iter()
-        .filter(|item| match &item.render_op.output_type {
+    // ⚡ BOLT OPTIMIZATION: Avoid per-frame allocations by using a reusable vector or pre-calculating sizes
+    // Since we still need to filter and sort per output every frame, we reserve capacity to prevent repeated allocations
+    let expected_ops_count = ctx.render_queue.len();
+    let mut target_ops: Vec<&RuntimeRenderQueueItem> = Vec::with_capacity(expected_ops_count);
+    for item in ctx.render_queue.iter() {
+        let is_target = match &item.render_op.output_type {
             Projector { id, .. } => *id == real_output_id,
             _ => item.render_op.output_part_id == real_output_id,
-        })
-        .collect();
+        };
+        if is_target {
+            target_ops.push(item);
+        }
+    }
 
     target_ops.sort_by(|a, b| b.render_op.output_part_id.cmp(&a.render_op.output_part_id));
 

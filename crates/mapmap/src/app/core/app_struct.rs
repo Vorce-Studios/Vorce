@@ -84,7 +84,7 @@ pub struct RuntimeRenderQueueItem {
     /// Owning module ID.
     pub module_id: ModuleId,
     /// Evaluated render operation.
-    pub render_op: RenderOp,
+    pub render_op: std::sync::Arc<RenderOp>,
     /// Diagnostics for this queue item.
     pub diagnostics: Vec<RenderDiagnostic>,
 }

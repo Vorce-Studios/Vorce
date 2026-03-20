@@ -41,7 +41,7 @@ pub fn perform_evaluation(
 
             app.render_queue
                 .items
-                .extend(eval_result.render_ops.iter().cloned().map(|render_op| {
+                .extend(eval_result.render_ops.iter().map(|render_op| {
                     let mut diagnostics = Vec::new();
 
                     if render_op.blend_mode.is_some() {
