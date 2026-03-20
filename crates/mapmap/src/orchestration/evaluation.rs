@@ -73,7 +73,11 @@ pub fn perform_evaluation(
                     render_op,
                     diagnostics,
                 };
-                app.render_queue.items.entry(output_id).or_default().push(item);
+                app.render_queue
+                    .items
+                    .entry(output_id)
+                    .or_default()
+                    .push(item);
             }
         }
     }

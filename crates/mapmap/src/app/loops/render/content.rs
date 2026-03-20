@@ -50,10 +50,7 @@ pub(crate) fn render_content(
     // ⚡ BOLT OPTIMIZATION:
     // Read pre-partitioned and sorted target_ops directly from the context.
     let empty_vec = Vec::new();
-    let target_ops = ctx
-        .render_queue
-        .get(&real_output_id)
-        .unwrap_or(&empty_vec);
+    let target_ops = ctx.render_queue.get(&real_output_id).unwrap_or(&empty_vec);
 
     for item in target_ops {
         for diag in &item.diagnostics {
