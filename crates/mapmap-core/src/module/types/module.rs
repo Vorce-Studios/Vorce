@@ -23,7 +23,7 @@ pub type ModuleId = u64;
 pub type ModulePartId = u64;
 
 /// Represents a complete visual programming graph (Scene/Module)
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct MapFlowModule {
     /// Unique identifier for this entity.
     pub id: ModuleId,
@@ -598,4 +598,10 @@ pub enum ModulePlaybackMode {
     },
     /// Loop indefinitely until user switches module
     LoopUntilManualSwitch,
+}
+
+impl Default for ModulePlaybackMode {
+    fn default() -> Self {
+        Self::TimelineDuration { duration_ms: 1000 }
+    }
 }
