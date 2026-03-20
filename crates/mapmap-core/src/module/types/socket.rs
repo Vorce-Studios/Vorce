@@ -1,6 +1,17 @@
 //!
 //! Socket definitions.
 //!
+//! # Socket Naming & Semantic Standards
+//!
+//! To keep graphs and UI semantics consistent:
+//!
+//! - `"media_in"` / `"media_out"` identify the primary media flow.
+//! - `"trigger_in"` / `"trigger_out"` identify automation and trigger paths.
+//! - `"layer_in"` / `"layer_out"` identify layer composition paths.
+//! - `"mask_in"` identifies secondary mask inputs.
+//!
+//! Outputs must connect to inputs of the same `ModuleSocketType`. Nodes that
+//! pass a main flow through should mark that path via `.primary()`.
 
 use serde::{Deserialize, Serialize};
 
