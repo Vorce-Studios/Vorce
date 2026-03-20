@@ -23,7 +23,7 @@ pub type ModuleId = u64;
 pub type ModulePartId = u64;
 
 /// Represents a complete visual programming graph (Scene/Module)
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct MapFlowModule {
     /// Unique identifier for this entity.
     pub id: ModuleId,
@@ -283,10 +283,10 @@ impl MapFlowModule {
             part.inputs = new_inputs;
             part.outputs = new_outputs;
             let valid_mappable_inputs: HashSet<usize> = part
-                .schema()
-                .inspector
-                .mappable_input_indices
-                .into_iter()
+                .inputs
+                .iter()
+                .enumerate()
+                .filter_map(|(idx, socket)| socket.supports_trigger_mapping.then_some(idx))
                 .collect();
             part.trigger_targets
                 .retain(|socket_idx, _| valid_mappable_inputs.contains(socket_idx));
@@ -444,10 +444,10 @@ impl MapFlowModule {
             }
 
             let valid_mappable_inputs: HashSet<usize> = part
-                .schema()
-                .inspector
-                .mappable_input_indices
-                .into_iter()
+                .inputs
+                .iter()
+                .enumerate()
+                .filter_map(|(idx, socket)| socket.supports_trigger_mapping.then_some(idx))
                 .collect();
             let before_targets = part.trigger_targets.len();
             part.trigger_targets
@@ -598,4 +598,10 @@ pub enum ModulePlaybackMode {
     },
     /// Loop indefinitely until user switches module
     LoopUntilManualSwitch,
+}
+
+impl Default for ModulePlaybackMode {
+    fn default() -> Self {
+        Self::TimelineDuration { duration_ms: 1000 }
+    }
 }
