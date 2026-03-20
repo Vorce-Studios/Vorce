@@ -1,7 +1,6 @@
 use super::super::mesh;
 use super::super::state::ModuleCanvas;
 use super::capabilities;
-use super::common;
 use egui::Ui;
 use mapmap_core::module::{BlendModeType, LayerType, MaskShape, MaskType, MeshType, ModulePartId};
 
@@ -149,7 +148,7 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
                             *path = picked.display().to_string();
                         }
                     }
-                    common::render_info_label(ui, "No mask loaded");
+                    ui.label(egui::RichText::new("No mask loaded").weak().italics());
                 });
             } else {
                 ui.horizontal(|ui| {
