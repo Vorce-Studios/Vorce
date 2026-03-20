@@ -5,6 +5,18 @@ use crate::widgets::{styled_drag_value, styled_slider};
 use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use mapmap_core::module::{BlendModeType, ModulePartId};
 
+/// Renders a standardized info label for fallback text or missing states.
+pub fn render_info_label(ui: &mut Ui, text: &str) {
+    ui.label(egui::RichText::new(text).weak().italics());
+}
+
+/// Renders a standardized banner for missing previews.
+pub fn render_missing_preview_banner(ui: &mut Ui, text: &str) {
+    ui.group(|ui| {
+        render_info_label(ui, text);
+    });
+}
+
 /// Renders the common transform and color correction controls for a media source.
 #[allow(clippy::too_many_arguments)]
 pub fn render_common_controls(
