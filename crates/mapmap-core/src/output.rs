@@ -1,6 +1,6 @@
 //! Output Management - Multi-Window and Multi-Projector Support
 //!
-//! Phase 2 feature: Multiple independent output windows for multi-projector setups-
+//! Phase 2 feature: Multiple independent output windows for multi-projector setups
 
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
