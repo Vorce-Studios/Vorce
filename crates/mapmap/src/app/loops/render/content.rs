@@ -193,6 +193,25 @@ pub(crate) fn render_content(
     for item in target_ops {
         let module_id = item.module_id;
         let op = &item.render_op;
+
+        // Defensive skipping for zero opacity or empty mesh
+        let combined_opacity = op.opacity * op.source_props.opacity;
+        if combined_opacity <= 0.001 {
+            continue;
+        }
+
+        let mesh_data = op.mesh.to_mesh();
+        if mesh_data.vertices.is_empty() {
+            let issue_key = format!("video-output-empty-mesh:{module_id}:{}", op.layer_part_id);
+            if should_log_video_issue(video_log_times, issue_key) {
+                tracing::warn!(
+                    "Fehler in Videoausgabe: Ueberspringe Rendern von Modul {} / Part {}, da das Mesh leer ist.",
+                    module_id,
+                    op.layer_part_id
+                );
+            }
+            continue;
+        }
         let tex_name = if let Some(src_id) = op.source_part_id {
             format!("part_{}_{}", module_id, src_id)
         } else {
@@ -226,7 +245,7 @@ pub(crate) fn render_content(
             );
             Some(ctx.texture_pool.get_view(&tex_name))
         } else if ctx.texture_pool.has_texture("bevy_output") {
-            // Fallback for Bevy nodes
+            // Fallback for Bevy nodes.
             clear_video_issue(
                 video_log_times,
                 format!(
@@ -321,11 +340,23 @@ pub(crate) fn render_content(
                 }
             }
 
-            let transform = glam::Mat4::IDENTITY;
+            let t_translation = glam::Mat4::from_translation(glam::vec3(
+                op.source_props.offset_x,
+                op.source_props.offset_y,
+                0.0,
+            ));
+            let t_rotation = glam::Mat4::from_rotation_z(op.source_props.rotation.to_radians());
+            let t_scale = glam::Mat4::from_scale(glam::vec3(
+                op.source_props.scale_x,
+                op.source_props.scale_y,
+                1.0,
+            ));
+            let transform = t_translation * t_rotation * t_scale;
+
             let uniform_bind_group = mesh_renderer.get_uniform_bind_group_with_source_props(
                 queue,
                 transform,
-                op.opacity * op.source_props.opacity,
+                combined_opacity,
                 op.source_props.flip_horizontal,
                 op.source_props.flip_vertical,
                 op.source_props.brightness,
@@ -335,12 +366,9 @@ pub(crate) fn render_content(
             );
 
             let texture_bind_group = mesh_renderer.get_texture_bind_group(&final_source_view);
-            let (vb, ib, cnt) = ctx.mesh_buffer_cache.get_buffers(
-                device,
-                queue,
-                op.layer_part_id,
-                &op.mesh.to_mesh(),
-            );
+            let (vb, ib, cnt) =
+                ctx.mesh_buffer_cache
+                    .get_buffers(device, queue, op.layer_part_id, &mesh_data);
 
             let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Mesh Layer Pass"),
