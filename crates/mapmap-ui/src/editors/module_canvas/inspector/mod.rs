@@ -271,10 +271,7 @@ pub fn render_layer_preview_panel(
             ));
         }
         if preview_context.upstream_source_part_ids.is_empty() {
-            common::render_info_label(
-                ui,
-                "No upstream source node was found for this layer.",
-            );
+            common::render_info_label(ui, "No upstream source node was found for this layer.");
         } else {
             common::render_info_label(
                 ui,
