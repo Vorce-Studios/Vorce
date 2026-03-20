@@ -19,7 +19,9 @@ pub(crate) fn build_effect_chain(modulizers: &[ModulizerType]) -> EffectChain {
         };
 
         let mut effect = Effect::new(next_id, chain_effect_type);
-        effect.parameters.extend(params.clone());
+        effect
+            .parameters
+            .extend(params.iter().map(|(k, v)| (k.clone(), *v)));
         chain.effects.push(effect);
         next_id += 1;
     }

@@ -94,8 +94,8 @@ pub struct RuntimeRenderQueueItem {
 pub struct RuntimeRenderQueue {
     /// Graph revision that produced this queue.
     pub graph_revision: u64,
-    /// Render items grouped later by output.
-    pub items: Vec<RuntimeRenderQueueItem>,
+    /// Render items grouped by output ID.
+    pub items: HashMap<u64, Vec<RuntimeRenderQueueItem>>,
 }
 
 impl RuntimeRenderQueue {
