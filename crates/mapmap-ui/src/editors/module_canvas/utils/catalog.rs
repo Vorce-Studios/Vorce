@@ -140,6 +140,13 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         // Masks
         NodeCatalogItem {
+            label: "📁 File Mask",
+            search_tags: "mask image file picture alpha",
+            part_type: ModulePartType::Mask(MaskType::File {
+                path: String::new(),
+            }),
+        },
+        NodeCatalogItem {
             label: "⚪ Shape Mask",
             search_tags: "mask circle rectangle alpha",
             part_type: ModulePartType::Mask(MaskType::Shape(MaskShape::Circle)),

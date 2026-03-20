@@ -411,6 +411,30 @@ mod tests {
             let _ = state6.assignment_manager_mut();
             assert_eq!(Arc::strong_count(&state1.assignment_manager), 1);
         }
+
+        // 6. Effect Animator
+        {
+            let mut state7 = state1.clone();
+            assert_eq!(Arc::strong_count(&state1.effect_animator), 2);
+            let _ = state7.effect_animator_mut();
+            assert_eq!(Arc::strong_count(&state1.effect_animator), 1);
+        }
+
+        // 7. Shader Graphs
+        {
+            let mut state8 = state1.clone();
+            assert_eq!(Arc::strong_count(&state1.shader_graphs), 2);
+            let _ = state8.shader_graphs_mut();
+            assert_eq!(Arc::strong_count(&state1.shader_graphs), 1);
+        }
+
+        // 8. Effect Chain
+        {
+            let mut state9 = state1.clone();
+            assert_eq!(Arc::strong_count(&state1.effect_chain), 2);
+            let _ = state9.effect_chain_mut();
+            assert_eq!(Arc::strong_count(&state1.effect_chain), 1);
+        }
     }
 
     #[test]

@@ -1,13 +1,11 @@
 use super::super::state::ModuleCanvas;
 use super::super::types::MediaPlaybackCommand;
 use super::capabilities;
-use super::common::{
-    render_common_controls, render_info_label, render_timeline, render_transport_controls,
-};
+use super::common::{render_common_controls, render_timeline, render_transport_controls};
 use crate::theme::colors;
 use crate::widgets::styled_slider;
 use crate::UIAction;
-use egui::{Color32, Ui, Vec2};
+use egui::{Color32, Ui};
 use mapmap_core::module::{BevyCameraMode, ModuleId, ModulePartId, SourceType};
 
 /// Renders the configuration UI for a `ModulePartType::Source`.
@@ -254,7 +252,7 @@ pub fn render_source_ui(
                     if ui.button("Select...").clicked() {
                         actions.push(UIAction::PickMediaFile(module_id, part_id, "".to_string()));
                     }
-                    render_info_label(ui, "No media loaded");
+                    ui.label(egui::RichText::new("No media loaded").weak().italics());
                 });
             } else {
                 ui.collapsing("📁 File Info", |ui| {
@@ -329,13 +327,6 @@ pub fn render_source_ui(
             );
 
             ui.add_space(10.0);
-
-            // Preview
-            if let Some(tex_id) = canvas.node_previews.get(&(module_id, part_id)) {
-                let size = Vec2::new(ui.available_width(), ui.available_width() * 9.0 / 16.0);
-                ui.image((*tex_id, size));
-            }
-            ui.add_space(4.0);
 
             render_timeline(
                 canvas,
@@ -451,7 +442,7 @@ pub fn render_source_ui(
                             "".to_string(),
                         ));
                     }
-                    render_info_label(ui, "No image loaded");
+                    ui.label(egui::RichText::new("No image loaded").weak().italics());
                 });
             } else {
                 ui.collapsing("📁 File Info", |ui| {
@@ -527,7 +518,11 @@ pub fn render_source_ui(
                         }
                     });
             });
-            render_info_label(ui, "Use the same ID to sync multiple nodes.");
+            ui.label(
+                egui::RichText::new("Use the same ID to sync multiple nodes.")
+                    .weak()
+                    .small(),
+            );
 
             ui.separator();
             render_common_controls(
@@ -583,7 +578,11 @@ pub fn render_source_ui(
                         }
                     });
             });
-            render_info_label(ui, "Use the same ID to sync multiple nodes.");
+            ui.label(
+                egui::RichText::new("Use the same ID to sync multiple nodes.")
+                    .weak()
+                    .small(),
+            );
 
             ui.separator();
             render_common_controls(
@@ -676,7 +675,11 @@ pub fn render_source_ui(
                             canvas.ndi_sources.clear();
                             ui.ctx().request_repaint();
                         }
-                        render_info_label(ui, "No NDI source selected");
+                        ui.label(
+                            egui::RichText::new("No NDI source selected")
+                                .weak()
+                                .italics(),
+                        );
                         ui.add_space(10.0);
                     });
                 } else {
@@ -1244,7 +1247,11 @@ pub fn render_source_ui(
         }
         SourceType::Bevy => {
             ui.label("\u{1F3AE} Bevy Scene");
-            render_info_label(ui, "Rendering Internal 3D Scene");
+            ui.label(
+                egui::RichText::new("Rendering Internal 3D Scene")
+                    .weak()
+                    .italics(),
+            );
             ui.small("The scene is rendered internally and available as 'bevy_output'");
         }
     }
