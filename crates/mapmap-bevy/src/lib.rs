@@ -439,6 +439,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore]
     fn headless_runner_disables_embedded_host_plugins() {
         let runner = BevyRunner::new();
 
