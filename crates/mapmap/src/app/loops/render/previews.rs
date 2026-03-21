@@ -1,5 +1,6 @@
 use super::content::{render_content, RenderContext};
 use super::logging::{clear_video_issue, should_log_video_issue};
+use super::texture_gen::ensure_missing_texture_fallback;
 use super::PREVIEW_FLAG;
 use crate::app::core::app_struct::App;
 
@@ -220,11 +221,6 @@ pub(crate) fn prepare_texture_previews(app: &mut App, encoder: &mut wgpu::Comman
                     .node_previews
                     .insert((active_id, part_id), tex_id);
             } else {
-                app.ui_state
-                    .module_canvas
-                    .node_previews
-                    .remove(&(active_id, part_id));
-
                 if let Some(path) = media_path {
                     if app.media_players.contains_key(&(active_id, part_id)) {
                         let issue_key =
@@ -251,6 +247,36 @@ pub(crate) fn prepare_texture_previews(app: &mut App, encoder: &mut wgpu::Comman
                         }
                     }
                 }
+
+                // Render missing texture fallback
+                ensure_missing_texture_fallback(&app.texture_pool, &app.backend.queue);
+                let view = app.texture_pool.get_view("missing_texture_fallback");
+
+                use std::collections::hash_map::Entry;
+                match app
+                    .ui_state
+                    .module_canvas
+                    .node_previews
+                    .entry((active_id, part_id))
+                {
+                    Entry::Occupied(e) => {
+                        let id = *e.get();
+                        app.egui_renderer.update_egui_texture_from_wgpu_texture(
+                            &app.backend.device,
+                            &view,
+                            wgpu::FilterMode::Linear,
+                            id,
+                        );
+                    }
+                    Entry::Vacant(e) => {
+                        let id = app.egui_renderer.register_native_texture(
+                            &app.backend.device,
+                            &view,
+                            wgpu::FilterMode::Linear,
+                        );
+                        e.insert(id);
+                    }
+                };
             }
         }
     }

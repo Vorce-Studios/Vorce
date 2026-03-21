@@ -26,7 +26,7 @@ pub(crate) struct RenderContext<'a> {
     pub video_diagnostic_log_times: &'a mut std::collections::HashMap<String, std::time::Instant>,
 }
 
-use super::texture_gen::generate_grid_texture;
+use super::texture_gen::{ensure_missing_texture_fallback, generate_grid_texture};
 
 pub(crate) fn render_content(
     ctx: RenderContext<'_>,
@@ -252,22 +252,8 @@ pub(crate) fn render_content(
                 }
             }
             // BLACK FALLBACK for missing textures
-            let fallback_name = "missing_texture_fallback";
-            if !ctx.texture_pool.has_texture(fallback_name) {
-                let width = 64;
-                let height = 64;
-                let data = [0, 0, 0, 255].repeat((width * height) as usize);
-                ctx.texture_pool.ensure_texture(
-                    fallback_name,
-                    width,
-                    height,
-                    wgpu::TextureFormat::Rgba8UnormSrgb,
-                    wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-                );
-                ctx.texture_pool
-                    .upload_data(queue, fallback_name, &data, width, height);
-            }
-            Some(ctx.texture_pool.get_view(fallback_name))
+            ensure_missing_texture_fallback(ctx.texture_pool, queue);
+            Some(ctx.texture_pool.get_view("missing_texture_fallback"))
         };
 
         if let Some(src_ref) = source_view {
