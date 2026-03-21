@@ -1,6 +1,8 @@
 //! Multi-threaded video decode and upload pipeline
 //!
 //! This module implements a lock-free pipeline for video decoding and texture upload:
+
+#![allow(deprecated)]
 //! - Decode thread: Reads video frames from disk and decodes them
 //! - Upload thread: Uploads decoded frames to GPU textures
 //! - Render thread: Renders the uploaded textures (runs in main thread)

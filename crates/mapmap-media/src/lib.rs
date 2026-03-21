@@ -35,6 +35,7 @@ pub use hap_decoder::{decode_hap_frame, HapError, HapFrame, HapTextureType};
 pub use image_decoder::{GifDecoder, StillImageDecoder};
 #[cfg(feature = "libmpv")]
 pub use mpv_decoder::MpvDecoder;
+#[allow(deprecated)]
 pub use pipeline::{FramePipeline, FrameScheduler, PipelineConfig, PipelineStats, Priority};
 pub use player::{
     LoopMode, PlaybackCommand, PlaybackState, PlaybackStatus, PlayerError, VideoPlayer,
