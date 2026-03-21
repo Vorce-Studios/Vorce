@@ -1046,15 +1046,15 @@ pub fn render_source_ui(
                     );
                     ui.add(
                         egui::DragValue::new(&mut rotation[1])
-                        .speed(1.0)
-                        .prefix("Y: ")
-                        .suffix("°"),
+                            .speed(1.0)
+                            .prefix("Y: ")
+                            .suffix("°"),
                     );
                     ui.add(
                         egui::DragValue::new(&mut rotation[2])
-                        .speed(1.0)
-                        .prefix("Z: ")
-                        .suffix("°"),
+                            .speed(1.0)
+                            .prefix("Z: ")
+                            .suffix("°"),
                     );
                 });
 
