@@ -63,9 +63,9 @@ pub fn render_output_ui(
             target_screen,
             show_in_preview_panel,
             extra_preview_window,
-            output_width: _output_width,
-            output_height: _output_height,
-            output_fps: _output_fps,
+            output_width,
+            output_height,
+            output_fps,
             ndi_enabled: _ndi_enabled,
             ndi_stream_name: _ndi_stream_name,
             ..
@@ -108,6 +108,27 @@ pub fn render_output_ui(
             ui.checkbox(hide_cursor, "🖱️ Hide Mouse Cursor");
 
             ui.separator();
+            ui.label("⚙️ Advanced Setup:");
+            ui.horizontal(|ui| {
+                ui.label("Resolution:");
+                ui.add(
+                    egui::DragValue::new(output_width)
+                        .suffix(" px")
+                        .range(0..=8192),
+                );
+                ui.label("x");
+                ui.add(
+                    egui::DragValue::new(output_height)
+                        .suffix(" px")
+                        .range(0..=8192),
+                );
+            });
+            ui.horizontal(|ui| {
+                ui.label("Target FPS:");
+                ui.add(egui::DragValue::new(output_fps).range(0.0..=240.0));
+            });
+
+            ui.separator();
             ui.label("👁️ Preview:");
             ui.checkbox(show_in_preview_panel, "Show in Preview Panel");
             ui.checkbox(extra_preview_window, "Extra Preview Window");
@@ -116,16 +137,25 @@ pub fn render_output_ui(
             ui.label("\u{1F4E1} NDI Broadcast");
             #[cfg(feature = "ndi")]
             {
-                ui.checkbox(_ndi_enabled, "Enable NDI Output");
-                if *_ndi_enabled {
-                    ui.horizontal(|ui| {
-                        ui.label("Stream Name:");
-                        ui.text_edit_singleline(_ndi_stream_name);
-                    });
-                    if _ndi_stream_name.is_empty() {
-                        ui.small(format!("Default: {}", name));
-                    }
+                let supported = capabilities::is_output_type_enum_supported(true, false);
+                if !supported {
+                    capabilities::render_unsupported_warning(
+                        ui,
+                        "NDI Output has no active runtime path currently.",
+                    );
                 }
+                ui.add_enabled_ui(supported, |ui| {
+                    ui.checkbox(_ndi_enabled, "Enable NDI Output");
+                    if *_ndi_enabled {
+                        ui.horizontal(|ui| {
+                            ui.label("Stream Name:");
+                            ui.text_edit_singleline(_ndi_stream_name);
+                        });
+                        if _ndi_stream_name.is_empty() {
+                            ui.small(format!("Default: {}", name));
+                        }
+                    }
+                });
             }
             #[cfg(not(feature = "ndi"))]
             {
@@ -134,21 +164,12 @@ pub fn render_output_ui(
         }
         #[cfg(feature = "ndi")]
         OutputType::NdiOutput { name } => {
-<<<<<<< HEAD
-            ui.label("📡 NDI Output");
-            let supported = super::capabilities::is_output_type_enum_supported(true, false);
-            if !supported {
-                super::capabilities::render_unsupported_warning(
-                    ui,
-                    "NDI Output has no active pipeline in the current runtime.",
-=======
             ui.label("\u{1F4E1} NDI Output");
             let supported = capabilities::is_output_type_enum_supported(true, false);
             if !supported {
                 capabilities::render_unsupported_warning(
                     ui,
                     "NDI Output has no active runtime path currently.",
->>>>>>> main
                 );
             }
             ui.add_enabled_ui(supported, |ui| {
@@ -164,21 +185,12 @@ pub fn render_output_ui(
         }
         #[cfg(target_os = "windows")]
         OutputType::Spout { name } => {
-<<<<<<< HEAD
-            ui.label("🚰 Spout Output");
-            let supported = super::capabilities::is_output_type_enum_supported(false, true);
-            if !supported {
-                super::capabilities::render_unsupported_warning(
-                    ui,
-                    "Spout Output has no active pipeline in the current runtime.",
-=======
             ui.label("\u{1F6B0} Spout Output");
             let supported = capabilities::is_output_type_enum_supported(false, true);
             if !supported {
                 capabilities::render_unsupported_warning(
                     ui,
                     "Spout Output has no active runtime path currently.",
->>>>>>> main
                 );
             }
             ui.add_enabled_ui(supported, |ui| {
