@@ -151,7 +151,7 @@ impl ModuleEvaluator {
         module: &MapFlowModule,
         shared_state: &SharedMediaState,
         graph_revision: u64,
-    ) -> &mut ModuleEvalResult {
+    ) -> &ModuleEvalResult {
         let mut rng = rand::rng();
         let now = Instant::now();
 
@@ -404,7 +404,7 @@ impl ModuleEvaluator {
         self.midi_triggers.clear();
         self.osc_triggers.clear();
 
-        &mut self.cached_result
+        &self.cached_result
     }
 
     fn create_source_command(
@@ -878,7 +878,7 @@ mod evaluator_tests {
                 crate::module::ModuleSocket::input_mappable(
                     "trigger_vis_in",
                     "Trigger In (Vis)",
-                    crate::module::ModuleSocketType::Control,
+                    crate::module::ModuleSocketType::Event,
                 )
                 .multi_input(),
             );

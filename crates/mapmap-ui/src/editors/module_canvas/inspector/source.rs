@@ -391,6 +391,8 @@ pub fn render_source_ui(
 
                 ui.separator();
                 ui.label("Seek Position:");
+                // Note: Actual seek requires video duration from player
+                // For now, just show the control - needs integration with player state
                 ui.add_enabled_ui(video_duration > 0.0, |ui| {
                     let mut seek_pos: f64 = 0.0;
                     let seek_slider = ui.add(
@@ -403,9 +405,7 @@ pub fn render_source_ui(
                         // Convert percentage to duration-based seek
                         canvas.pending_playback_commands.push((
                             part_id,
-                            MediaPlaybackCommand::Seek(
-                                (seek_pos / 100.0) * f64::from(video_duration),
-                            ),
+                            MediaPlaybackCommand::Seek((seek_pos / 100.0) * f64::from(video_duration)),
                         ));
                     }
                 });

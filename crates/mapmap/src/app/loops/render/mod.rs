@@ -86,9 +86,10 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
 
         // 3. Handle Output (Requires another short-lived borrow of window)
         {
-            let window_context = app.window_manager.get(0).unwrap();
-            app.egui_state
-                .handle_platform_output(&window_context.window, full_output.platform_output);
+            if let Some(window_context) = app.window_manager.get(0) {
+                app.egui_state
+                    .handle_platform_output(&window_context.window, full_output.platform_output);
+            }
         }
 
         // 4. Update Textures and Buffers
@@ -155,17 +156,15 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
         #[cfg(feature = "ndi")]
         {
             // Find if this output has an NDI sender
-            let part_id = app.render_queue.items.get(&output_id).and_then(|group| {
-                group.iter().find_map(|item| {
-                    if let mapmap_core::module::OutputType::Projector { id, .. } =
-                        &item.render_op.output_type
-                    {
-                        if *id == output_id {
-                            return Some(item.render_op.output_part_id);
-                        }
+            let part_id = app.render_queue.items.iter().find_map(|item| {
+                if let mapmap_core::module::OutputType::Projector { id, .. } =
+                    &item.render_op.output_type
+                {
+                    if *id == output_id {
+                        return Some(item.render_op.output_part_id);
                     }
-                    None
-                })
+                }
+                None
             });
 
             if let Some(pid) = part_id {
