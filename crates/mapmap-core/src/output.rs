@@ -250,6 +250,15 @@ impl OutputManager {
         }
     }
 
+    /// Upsert an output: updates if it exists, inserts if it doesn't
+    pub fn upsert_output(&mut self, config: OutputConfig) {
+        if let Some(output) = self.get_output_mut(config.id) {
+            *output = config;
+        } else {
+            self.outputs.push(config);
+        }
+    }
+
     /// Get canvas size
     pub fn canvas_size(&self) -> (u32, u32) {
         self.canvas_size

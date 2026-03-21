@@ -235,6 +235,3 @@ mod tests {
         assert!(streamer.is_connected());
     }
 }
-
-#[cfg(feature = "stream")]
-unsafe impl Send for SrtStreamer {}
