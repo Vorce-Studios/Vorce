@@ -218,4 +218,109 @@ mod tests {
         assert_eq!(issues[0].severity, IssueSeverity::Warning);
         assert!(issues[0].message.contains("no file selected"));
     }
+
+    #[test]
+    fn test_check_module_integrity_invalid_from_socket() {
+        let mut module = MapFlowModule {
+            id: 1,
+            name: "Test4".to_string(),
+            color: [0.0; 4],
+            parts: vec![],
+            connections: vec![],
+            playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
+            next_part_id: 1,
+        };
+
+        // Add Source and Layer
+        module.add_part(PartType::Source, (0.0, 0.0));
+        module.add_part(PartType::Layer, (0.0, 0.0));
+
+        let src_id = module.parts[0].id;
+        let dst_id = module.parts[1].id;
+
+        // Push a connection with an invalid from_socket (e.g. 99)
+        module.connections.push(crate::module::ModuleConnection {
+            from_part: src_id,
+            from_socket: 99,
+            to_part: dst_id,
+            to_socket: 0,
+        });
+
+        let issues = check_module_integrity(&module);
+
+        // Should have 2 issues:
+        // 1. Warning about empty Source path
+        // 2. Error about invalid from_socket
+        assert!(issues.iter().any(|i| i.severity == IssueSeverity::Error
+            && i.message.contains("invalid socket index 99 on Source Part")));
+    }
+
+    #[test]
+    fn test_check_module_integrity_invalid_to_socket() {
+        let mut module = MapFlowModule {
+            id: 1,
+            name: "Test5".to_string(),
+            color: [0.0; 4],
+            parts: vec![],
+            connections: vec![],
+            playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
+            next_part_id: 1,
+        };
+
+        // Add Source and Layer
+        module.add_part(PartType::Source, (0.0, 0.0));
+        module.add_part(PartType::Layer, (0.0, 0.0));
+
+        let src_id = module.parts[0].id;
+        let dst_id = module.parts[1].id;
+
+        // Push a connection with an invalid to_socket (e.g. 99)
+        module.connections.push(crate::module::ModuleConnection {
+            from_part: src_id,
+            from_socket: 0,
+            to_part: dst_id,
+            to_socket: 99,
+        });
+
+        let issues = check_module_integrity(&module);
+
+        // Error about invalid to_socket
+        assert!(issues.iter().any(|i| i.severity == IssueSeverity::Error
+            && i.message.contains("invalid socket index 99 on Target Part")));
+    }
+
+    #[test]
+    fn test_check_module_integrity_connected_output_no_warning() {
+        let mut module = MapFlowModule {
+            id: 1,
+            name: "Test6".to_string(),
+            color: [0.0; 4],
+            parts: vec![],
+            connections: vec![],
+            playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
+            next_part_id: 1,
+        };
+
+        // Add Layer and Output
+        module.add_part(PartType::Layer, (0.0, 0.0));
+        module.add_part(PartType::Output, (0.0, 0.0));
+
+        let src_id = module.parts[0].id;
+        let dst_id = module.parts[1].id;
+
+        // Valid connection
+        module.connections.push(crate::module::ModuleConnection {
+            from_part: src_id,
+            from_socket: 0,
+            to_part: dst_id,
+            to_socket: 0,
+        });
+
+        let issues = check_module_integrity(&module);
+
+        // Output Node should NOT have a disconnected warning
+        assert!(!issues
+            .iter()
+            .any(|i| i.message.contains("Output Node is not connected")));
+    }
 }
