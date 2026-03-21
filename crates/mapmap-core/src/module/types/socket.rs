@@ -88,6 +88,11 @@ impl ModuleSocket {
         Self::output("layer_out", "Layer Out", ModuleSocketType::Layer).primary()
     }
 
+    /// Create a standard mask input socket.
+    pub fn standard_mask_in() -> Self {
+        Self::input("mask_in", "Mask In", ModuleSocketType::Media)
+    }
+
     /// Create a new input socket that supports trigger mapping.
     pub fn input_mappable(
         id: impl Into<String>,
