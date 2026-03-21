@@ -289,6 +289,3 @@ mod tests {
         assert!(stats.bitrate.is_some());
     }
 }
-
-#[cfg(feature = "stream")]
-unsafe impl Send for RtmpStreamer {}
