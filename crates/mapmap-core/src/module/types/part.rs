@@ -110,7 +110,7 @@ impl ModulePartType {
             ModulePartType::Mask(_) => (
                 vec![
                     ModuleSocket::standard_media_in(),
-                    ModuleSocket::standard_mask_in(),
+                    ModuleSocket::input("mask_in", "Mask In", ModuleSocketType::Media),
                 ],
                 vec![ModuleSocket::standard_media_out()],
             ),
