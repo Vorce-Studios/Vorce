@@ -174,4 +174,46 @@ mod tests {
         assert_eq!(in_sockets.len(), 1);
         assert_eq!(out_sockets.len(), 0);
     }
+
+    #[test]
+    fn test_standard_socket_builders() {
+        use crate::module::types::socket::{ModuleSocket, ModuleSocketDirection, ModuleSocketType};
+
+        let media_in = ModuleSocket::standard_media_in();
+        assert_eq!(media_in.id, "media_in");
+        assert_eq!(media_in.direction, ModuleSocketDirection::Input);
+        assert_eq!(media_in.socket_type, ModuleSocketType::Media);
+        assert!(media_in.is_primary);
+
+        let media_out = ModuleSocket::standard_media_out();
+        assert_eq!(media_out.id, "media_out");
+        assert_eq!(media_out.direction, ModuleSocketDirection::Output);
+        assert_eq!(media_out.socket_type, ModuleSocketType::Media);
+        assert!(media_out.is_primary);
+
+        let trigger_in = ModuleSocket::standard_trigger_in();
+        assert_eq!(trigger_in.id, "trigger_in");
+        assert_eq!(trigger_in.direction, ModuleSocketDirection::Input);
+        assert_eq!(trigger_in.socket_type, ModuleSocketType::Trigger);
+        assert!(!trigger_in.is_primary);
+        assert!(trigger_in.supports_trigger_mapping);
+
+        let trigger_out = ModuleSocket::standard_trigger_out();
+        assert_eq!(trigger_out.id, "trigger_out");
+        assert_eq!(trigger_out.direction, ModuleSocketDirection::Output);
+        assert_eq!(trigger_out.socket_type, ModuleSocketType::Trigger);
+        assert!(!trigger_out.is_primary);
+
+        let layer_in = ModuleSocket::standard_layer_in();
+        assert_eq!(layer_in.id, "layer_in");
+        assert_eq!(layer_in.direction, ModuleSocketDirection::Input);
+        assert_eq!(layer_in.socket_type, ModuleSocketType::Layer);
+        assert!(layer_in.is_primary);
+
+        let layer_out = ModuleSocket::standard_layer_out();
+        assert_eq!(layer_out.id, "layer_out");
+        assert_eq!(layer_out.direction, ModuleSocketDirection::Output);
+        assert_eq!(layer_out.socket_type, ModuleSocketType::Layer);
+        assert!(layer_out.is_primary);
+    }
 }

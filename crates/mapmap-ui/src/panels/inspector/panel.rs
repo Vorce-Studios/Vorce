@@ -43,7 +43,7 @@ impl InspectorPanel {
         egui::ScrollArea::vertical().show(ui, |ui| match context {
             InspectorContext::None => {
                 ui.centered_and_justified(|ui| {
-                    ui.label(egui::RichText::new("No selection").weak().italics());
+                    crate::widgets::custom::render_info_label(ui, "No selection");
                 });
             }
             InspectorContext::Layer {

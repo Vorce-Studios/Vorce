@@ -11,3 +11,7 @@
 **Vulnerability:** Loading large files entirely into memory using `read_to_end` or `read_to_string`.
 **Learning:** `std::io::copy` must be used for file transfers instead of buffering into memory arrays.
 **Prevention:** Use streaming I/O whenever possible.
+## 2024-05-18 - Avoid Legacy XSS-Protection Anti-Pattern
+**Vulnerability:** The HTTP API server in `crates/mapmap-control/src/web/server.rs` used the legacy header `X-XSS-Protection: 1; mode=block`. This feature is deprecated across modern browsers and is considered an anti-pattern as it can introduce new vulnerabilities like selective blocklist-based side-channel leaks.
+**Learning:** Using `X-XSS-Protection: 1; mode=block` can sometimes allow attackers to disable legitimate scripts on the page by tricking the browser's XSS auditor into blocking them (an XSS-Auditor bypass/denial-of-service). Modern applications should rely exclusively on Content Security Policy (CSP).
+**Prevention:** Always set `X-XSS-Protection: 0` to disable the legacy auditor and enforce strong CSP headers instead for XSS defense-in-depth.
