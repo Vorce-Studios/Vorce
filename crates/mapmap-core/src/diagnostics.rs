@@ -118,12 +118,12 @@ mod tests {
     fn test_diagnostics_unconnected_info() {
         let mut module = MapFlowModule::default();
         let pid = module.add_part(PartType::Source, (0.0, 0.0));
-        
+
         let mut input_socket = ModuleSocket::input("in", "Input", ModuleSocketType::Media);
         input_socket.id = "in".to_string();
-        
+
         module.parts[pid].inputs.push(input_socket);
-        
+
         let issues = check_module_integrity(&module);
         assert!(!issues.is_empty());
         assert!(issues[0].message.contains("Input socket 'Input' on part 0 is unconnected."));
@@ -133,7 +133,7 @@ mod tests {
     fn test_diagnostics_invalid_source_validation() {
         let mut module = MapFlowModule::default();
         module.add_part(PartType::Source, (0.0, 0.0));
-        
+
         let _issues = check_module_integrity(&module);
         // No errors for default sources in base integrity check
     }
@@ -142,7 +142,7 @@ mod tests {
     fn test_diagnostics_error_no_file() {
         let mut module = MapFlowModule::default();
         module.add_part(PartType::Source, (0.0, 0.0));
-        
+
         let issues = check_module_integrity(&module);
         // We don't have file validation yet in check_module_integrity
         let _ = issues;
