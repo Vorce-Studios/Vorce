@@ -1,6 +1,17 @@
 //!
 //! Socket definitions.
 //!
+//! # Socket Naming & Semantic Standards
+//!
+//! To keep graphs and UI semantics consistent:
+//!
+//! - `"media_in"` / `"media_out"` identify the primary media flow.
+//! - `"trigger_in"` / `"trigger_out"` identify automation and trigger paths.
+//! - `"layer_in"` / `"layer_out"` identify layer composition paths.
+//! - `"mask_in"` identifies secondary mask inputs.
+//!
+//! Outputs must connect to inputs of the same `ModuleSocketType`. Nodes that
+//! pass a main flow through should mark that path via `.primary()`.
 
 use serde::{Deserialize, Serialize};
 
@@ -99,17 +110,65 @@ impl ModuleSocket {
 
     /// Check whether a source socket may connect into a target socket.
     pub fn is_compatible_with(&self, target: &Self) -> bool {
-        self.direction == ModuleSocketDirection::Output
-            && target.direction == ModuleSocketDirection::Input
-            && self.socket_type == target.socket_type
+        if self.direction != ModuleSocketDirection::Output
+            || target.direction != ModuleSocketDirection::Input
+        {
+            return false;
+        }
+
+        if self.socket_type == target.socket_type {
+            return true;
+        }
+
+        // Pragmatic backward compatibility for older projects where Trigger
+        // used to be mapped to continuous automation (Control).
+        if self.socket_type == ModuleSocketType::Event
+            && target.socket_type == ModuleSocketType::Control
+        {
+            return true;
+        }
+
+        false
+    }
+
+    /// Create a standard media input socket.
+    pub fn standard_media_in(id: impl Into<String>, name: impl Into<String>) -> Self {
+        Self::input(id, name, ModuleSocketType::Media)
+    }
+
+    /// Create a standard media output socket.
+    pub fn standard_media_out(id: impl Into<String>, name: impl Into<String>) -> Self {
+        Self::output(id, name, ModuleSocketType::Media)
+    }
+
+    /// Create a standard trigger input socket (mappable).
+    pub fn standard_trigger_in(id: impl Into<String>, name: impl Into<String>) -> Self {
+        Self::input_mappable(id, name, ModuleSocketType::Control)
+    }
+
+    /// Create a standard trigger output socket.
+    pub fn standard_trigger_out(id: impl Into<String>, name: impl Into<String>) -> Self {
+        Self::output(id, name, ModuleSocketType::Event)
+    }
+
+    /// Create a standard layer input socket.
+    pub fn standard_layer_in(id: impl Into<String>, name: impl Into<String>) -> Self {
+        Self::input(id, name, ModuleSocketType::Layer)
+    }
+
+    /// Create a standard layer output socket.
+    pub fn standard_layer_out(id: impl Into<String>, name: impl Into<String>) -> Self {
+        Self::output(id, name, ModuleSocketType::Layer)
     }
 }
 
 /// Type of data carried by a connection
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ModuleSocketType {
-    /// Event-based trigger node.
-    Trigger,
+    /// Discrete event (pulse, beat, midi note).
+    Event,
+    /// Continuous control signal (LFO, FFT, envelope).
+    Control,
     /// Enumeration variant.
     Media,
     /// Enumeration variant.
@@ -126,7 +185,8 @@ impl ModuleSocketType {
     /// Human-readable display name.
     pub fn name(&self) -> &'static str {
         match self {
-            ModuleSocketType::Trigger => "Trigger",
+            ModuleSocketType::Event => "Event",
+            ModuleSocketType::Control => "Control",
             ModuleSocketType::Media => "Media",
             ModuleSocketType::Effect => "Effect",
             ModuleSocketType::Layer => "Layer",

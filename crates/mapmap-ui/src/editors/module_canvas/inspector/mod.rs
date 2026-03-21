@@ -11,7 +11,7 @@ pub use effect::set_default_effect_params;
 use super::mesh;
 use super::state::{LayerInspectorViewMode, ModuleCanvas};
 use crate::UIAction;
-use egui::{Ui, Vec2};
+use egui::{Color32, ProgressBar, Ui, Vec2};
 use mapmap_core::module::{
     MapFlowModule, ModuleId, ModulePart, ModulePartId, ModulePartType, OutputType,
 };
@@ -107,41 +107,52 @@ pub fn render_inspector_preview_toggle(canvas: &mut ModuleCanvas, ui: &mut Ui) {
     });
 }
 
-pub fn render_trigger_preview(
+pub fn render_fixed_timer_preview(
     canvas: &mut ModuleCanvas,
     ui: &mut Ui,
     part_id: ModulePartId,
-    extra_ui: impl FnOnce(&mut Ui, f32, bool),
+    interval_ms: u32,
+    offset_ms: u32,
 ) {
+    if !canvas.show_inspector_previews {
+        return;
+    }
+
+    let now_ms = (ui.input(|input| input.time) * 1000.0) as u32;
+    let cycle_ms = interval_ms.max(1);
+    let phase_ms = now_ms.wrapping_add(offset_ms) % cycle_ms;
+    let progress = phase_ms as f32 / cycle_ms as f32;
+    let live_value = canvas
+        .last_trigger_values
+        .get(&part_id)
+        .copied()
+        .unwrap_or(0.0);
+    let is_live = live_value > 0.1;
+    let next_pulse_ms = cycle_ms.saturating_sub(phase_ms) % cycle_ms;
+
+    ui.ctx().request_repaint();
+    ui.separator();
     render_inspector_preview_toggle(canvas, ui);
-    if canvas.show_inspector_previews {
-        let live_value = canvas
-            .last_trigger_values
-            .get(&part_id)
-            .copied()
-            .unwrap_or(0.0);
-        let is_live = live_value > 0.1;
-        ui.ctx().request_repaint();
-
-        ui.group(|ui| {
-            ui.label("Live Trigger Preview");
-            ui.add(
-                egui::ProgressBar::new(live_value.clamp(0.0, 1.0))
-                    .desired_width(ui.available_width())
-                    .text(format!("{:.2}", live_value)),
-            );
-
+    ui.group(|ui| {
+        ui.label("Fixed timer cadence");
+        ui.add(
+            ProgressBar::new(progress)
+                .desired_width(ui.available_width())
+                .text(format!("cycle {} ms", cycle_ms)),
+        );
+        ui.horizontal(|ui| {
             let status = if is_live { "LIVE pulse" } else { "Waiting" };
             let color = if is_live {
-                egui::Color32::from_rgb(110, 235, 150)
+                Color32::from_rgb(110, 235, 150)
             } else {
-                egui::Color32::from_rgb(180, 180, 180)
+                Color32::from_rgb(180, 180, 180)
             };
             ui.colored_label(color, status);
-
-            extra_ui(ui, live_value, is_live);
+            ui.label(format!("Next pulse in {} ms", next_pulse_ms));
         });
-    }
+        ui.label(format!("Offset {} ms", offset_ms));
+        ui.label(format!("Current trigger value {:.2}", live_value));
+    });
 }
 
 pub fn render_preview_texture(ui: &mut Ui, texture_id: egui::TextureId, caption: &str) {
@@ -166,7 +177,13 @@ pub fn render_standard_texture_preview(
     if let Some(&texture_id) = canvas.node_previews.get(&(module_id, part_id)) {
         render_preview_texture(ui, texture_id, "Live node preview");
     } else {
-        common::render_missing_preview_banner(ui);
+        ui.group(|ui| {
+            ui.label(
+                egui::RichText::new("No preview available yet.")
+                    .weak()
+                    .italics(),
+            );
+        });
     }
 }
 
@@ -195,7 +212,13 @@ pub fn render_output_texture_preview(
     }
 
     if !preview_found {
-        common::render_missing_preview_banner(ui);
+        ui.group(|ui| {
+            ui.label(
+                egui::RichText::new("No preview available yet.")
+                    .weak()
+                    .italics(),
+            );
+        });
     }
 }
 
@@ -256,7 +279,11 @@ pub fn render_layer_preview_panel(
     }
 
     ui.group(|ui| {
-        common::render_info_label(ui, "No preview available yet.");
+        ui.label(
+            egui::RichText::new("No preview available yet.")
+                .weak()
+                .italics(),
+        );
         if preview_context.output_ids.is_empty() {
             ui.small("This layer is not linked to a projector output yet.");
         } else {
@@ -271,11 +298,18 @@ pub fn render_layer_preview_panel(
             ));
         }
         if preview_context.upstream_source_part_ids.is_empty() {
-            common::render_info_label(ui, "No upstream source node was found for this layer.");
+            ui.label(
+                egui::RichText::new("No upstream source node was found for this layer.")
+                    .weak()
+                    .italics(),
+            );
         } else {
-            common::render_info_label(
-                ui,
-                "Upstream source exists, but no preview texture reached the inspector.",
+            ui.label(
+                egui::RichText::new(
+                    "Upstream source exists, but no preview texture reached the inspector.",
+                )
+                .weak()
+                .italics(),
             );
         }
     });
@@ -340,9 +374,10 @@ pub fn render_inspector_for_part(
                 ModulePartType::Mesh(mesh) => {
                     ui.label("🕸️ Mesh Node");
                     ui.separator();
-                    common::render_info_label(
-                        ui,
-                        "Live texture preview not applicable. Use the Mesh Editor below.",
+                    ui.label(
+                        egui::RichText::new("Live texture preview not applicable. Use the Mesh Editor below.")
+                            .weak()
+                            .italics(),
                     );
                     ui.separator();
                     mesh::render_mesh_editor_ui(
@@ -362,9 +397,10 @@ pub fn render_inspector_for_part(
                 ModulePartType::Hue(_) => {
                     ui.label("Hue Node Configuration");
                     ui.separator();
-                    common::render_info_label(
-                        ui,
-                        "Live visual preview not available for hardware outputs. Check spatial editor or physical lamps.",
+                    ui.label(
+                        egui::RichText::new("Live visual preview not available for hardware outputs. Check spatial editor or physical lamps.")
+                            .weak()
+                            .italics(),
                     );
                 }
             }

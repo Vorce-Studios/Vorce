@@ -399,7 +399,7 @@ pub fn frame_readback_system(
 
         let width = gpu_image.size.width;
         let height = gpu_image.size.height;
-        let block_size = gpu_image.texture_format.block_copy_size(None).unwrap_or(4);
+        let block_size = gpu_image.texture_format.block_copy_size(None).unwrap();
 
         // bytes_per_row must be multiple of 256
         let bytes_per_pixel = block_size;

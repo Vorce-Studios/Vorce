@@ -148,7 +148,6 @@ mod tests {
     use tempfile::NamedTempFile;
 
     #[test]
-    #[ignore]
     fn project_file_ron_roundtrip() {
         let app_state = AppState::default();
         let mut project_file = ProjectFile::new(app_state);

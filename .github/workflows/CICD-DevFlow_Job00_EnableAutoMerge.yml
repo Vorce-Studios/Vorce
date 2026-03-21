@@ -14,4 +14,4 @@ jobs:
       - name: Explain disabled state
         run: |
           echo "Dieser Workflow ist absichtlich deaktiviert."
-          echo "Auto-Merge wird zentral über CICD-DevFlow: Job02 Auto-Merge gesteuert."
+          echo "Auto-Merge wird ausschließlich über CICD-DevFlow: Job02 Auto-Merge gesteuert."

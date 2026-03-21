@@ -46,6 +46,9 @@ impl super::panel::EffectChainPanel {
         let mut new_lut_path = None;
         let mut new_error = None;
 
+        #[allow(clippy::manual_is_multiple_of)]
+        let is_even = index % 2 == 0;
+
         let frame_color = if is_dragging {
             colors::CYAN_ACCENT.linear_multiply(0.4) // Highlight when dragging
         } else if enabled {
@@ -53,13 +56,10 @@ impl super::panel::EffectChainPanel {
             colors::CYAN_ACCENT
                 .linear_multiply(0.05)
                 .gamma_multiply(0.5)
+        } else if is_even {
+            colors::DARK_GREY
         } else {
-            #[allow(clippy::manual_is_multiple_of)]
-            if index % 2 == 0 {
-                colors::DARK_GREY
-            } else {
-                colors::DARKER_GREY
-            }
+            colors::DARKER_GREY
         };
 
         // Add stroke if dragging or enabled

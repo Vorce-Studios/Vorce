@@ -58,18 +58,8 @@ pub fn is_source_type_enum_supported(
     is_shader: bool,
     is_live_input: bool,
     is_ndi: bool,
-    #[allow(unused_variables)] is_spout: bool,
+    is_spout: bool,
 ) -> bool {
-    #[cfg(target_os = "windows")]
-    if is_spout {
-        return false;
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    if is_spout {
-        return false;
-    }
-
     !(is_shader || is_live_input || is_ndi || is_spout)
 }
 

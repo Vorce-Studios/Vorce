@@ -281,8 +281,14 @@ fn deserialize_optional_playback_mode<'de, D>(
 where
     D: serde::Deserializer<'de>,
 {
-    let opt = Option::<PlaybackMode>::deserialize(deserializer)?;
-    Ok(opt)
+    // Try to deserialize directly as PlaybackMode first (for backwards compatibility with serialized versions that don't have Some)
+    // If it fails, fallback to deserializing as an Option
+    let value = serde_json::Value::deserialize(deserializer)?;
+    if let Ok(mode) = serde_json::from_value::<PlaybackMode>(value.clone()) {
+        Ok(Some(mode))
+    } else {
+        serde_json::from_value::<Option<PlaybackMode>>(value).map_err(serde::de::Error::custom)
+    }
 }
 
 impl From<AnimationClipSerde> for AnimationClip {
@@ -401,11 +407,28 @@ struct AnimationPlayerSerde {
     clip: AnimationClip,
     current_time: TimePoint,
     playing: bool,
+    #[serde(default, deserialize_with = "deserialize_optional_current_direction")]
     current_direction: Option<f32>,
     #[serde(default = "default_animation_speed")]
     speed: f32,
     #[serde(default)]
     pause_at_markers: bool,
+}
+
+fn deserialize_optional_current_direction<'de, D>(
+    deserializer: D,
+) -> Result<Option<f32>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    // Try to deserialize directly as f32 first
+    // If it fails, fallback to deserializing as an Option
+    let value = serde_json::Value::deserialize(deserializer)?;
+    if let Ok(dir) = serde_json::from_value::<f32>(value.clone()) {
+        Ok(Some(dir))
+    } else {
+        serde_json::from_value::<Option<f32>>(value).map_err(serde::de::Error::custom)
+    }
 }
 
 impl From<AnimationPlayerSerde> for AnimationPlayer {

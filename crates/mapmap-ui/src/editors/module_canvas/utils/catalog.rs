@@ -118,6 +118,13 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         // Masks
         NodeCatalogItem {
+            label: "📁 File Mask",
+            search_tags: "mask image file picture alpha",
+            part_type: ModulePartType::Mask(MaskType::File {
+                path: String::new(),
+            }),
+        },
+        NodeCatalogItem {
             label: "⚪ Shape Mask",
             search_tags: "mask circle rectangle alpha",
             part_type: ModulePartType::Mask(MaskType::Shape(MaskShape::Circle)),
@@ -161,25 +168,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
                 blend_mode: None,
                 mesh: mapmap_core::module::MeshType::default(),
                 mapping_mode: false,
-            }),
-        },
-        NodeCatalogItem {
-            label: "📁 Layer Group",
-            search_tags: "layer folder collection",
-            part_type: ModulePartType::Layer(LayerType::Group {
-                name: "New Group".to_string(),
-                opacity: 1.0,
-                blend_mode: None,
-                mesh: mapmap_core::module::MeshType::default(),
-                mapping_mode: false,
-            }),
-        },
-        NodeCatalogItem {
-            label: "📚 All Layers",
-            search_tags: "layer master global",
-            part_type: ModulePartType::Layer(LayerType::All {
-                opacity: 1.0,
-                blend_mode: None,
             }),
         },
         // Hue

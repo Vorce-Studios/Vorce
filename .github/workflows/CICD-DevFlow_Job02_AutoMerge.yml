@@ -118,6 +118,19 @@ jobs:
               return null;
             };
 
+            const updateBehindPr = async (currentPr) => {
+              try {
+                await github.rest.pulls.updateBranch({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: currentPr.number,
+                  expected_head_sha: currentPr.head.sha,
+                });
+              } catch (error) {
+                console.log(`Branch update failed: ${error.message}`);
+              }
+            };
+
             const getExpectedChecks = () => {
               return [
                 {
@@ -225,9 +238,10 @@ jobs:
             }
 
             if (pr.mergeable_state === 'behind') {
+              await updateBehindPr(pr);
               await upsertManagedComment(
                 prNumber,
-                'Auto-merge wartet, weil der PR hinter `main` liegt. Bitte aktualisiere den Branch manuell; automatische Branch-Updates aus diesem Workflow bleiben deaktiviert, damit GitHub Actions die PR-Checks auf dem neuen Head-SHA korrekt neu startet.',
+                'Auto-merge wartet, weil der PR hinter `main` liegt. Der Branch wurde zur Aktualisierung angefordert.',
               );
               return;
             }
@@ -339,10 +353,7 @@ jobs:
             }
 
             if (finalPr.mergeable_state === 'behind') {
-              await upsertManagedComment(
-                prNumber,
-                'Auto-merge wartet, weil der PR hinter `main` liegt. Bitte aktualisiere den Branch manuell; automatische Branch-Updates aus diesem Workflow bleiben deaktiviert, damit GitHub Actions die PR-Checks auf dem neuen Head-SHA korrekt neu startet.',
-              );
+              await updateBehindPr(finalPr);
               return;
             }
 
