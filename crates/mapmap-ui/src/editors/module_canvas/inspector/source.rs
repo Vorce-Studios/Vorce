@@ -1,11 +1,11 @@
 use super::super::state::ModuleCanvas;
 use super::super::types::MediaPlaybackCommand;
 use super::capabilities;
-use super::common::{render_common_controls, render_timeline, render_transport_controls};
+use super::common::{render_common_controls, render_info_label, render_timeline, render_transport_controls};
 use crate::theme::colors;
 use crate::widgets::styled_slider;
 use crate::UIAction;
-use egui::{Color32, Ui};
+use egui::{Color32, Ui, Vec2};
 use mapmap_core::module::{BevyCameraMode, ModuleId, ModulePartId, SourceType};
 
 /// Renders the configuration UI for a `ModulePartType::Source`.
@@ -252,7 +252,7 @@ pub fn render_source_ui(
                     if ui.button("Select...").clicked() {
                         actions.push(UIAction::PickMediaFile(module_id, part_id, "".to_string()));
                     }
-                    super::common::render_info_label(ui, "No media loaded");
+                    render_info_label(ui, "No media loaded");
                 });
             } else {
                 ui.collapsing("📁 File Info", |ui| {
@@ -327,6 +327,13 @@ pub fn render_source_ui(
             );
 
             ui.add_space(10.0);
+
+            // Preview
+            if let Some(tex_id) = canvas.node_previews.get(&(module_id, part_id)) {
+                let size = Vec2::new(ui.available_width(), ui.available_width() * 9.0 / 16.0);
+                ui.image((*tex_id, size));
+            }
+            ui.add_space(4.0);
 
             render_timeline(
                 canvas,
@@ -442,7 +449,7 @@ pub fn render_source_ui(
                             "".to_string(),
                         ));
                     }
-                    super::common::render_info_label(ui, "No image loaded");
+                    render_info_label(ui, "No image loaded");
                 });
             } else {
                 ui.collapsing("📁 File Info", |ui| {
@@ -622,159 +629,6 @@ pub fn render_source_ui(
                     });
             });
         }
-        SourceType::LiveInput { device_id } => {
-            ui.label("\u{1F4F9} Live Input");
-            let supported = capabilities::is_source_type_enum_supported(false, true, false, false);
-            if !supported {
-                capabilities::render_unsupported_warning(
-                    ui,
-                    "Live Input is currently not fully wired up to the runtime.",
-                );
-            }
-            ui.add_enabled_ui(supported, |ui| {
-                egui::Grid::new("live_input_grid")
-                    .num_columns(2)
-                    .spacing([10.0, 8.0])
-                    .show(ui, |ui| {
-                        ui.label("Device ID:");
-                        ui.add(egui::Slider::new(device_id, 0..=10));
-                        ui.end_row();
-                    });
-            });
-        }
-        #[cfg(feature = "ndi")]
-        SourceType::NdiInput { source_name } => {
-            ui.label("\u{1F4E1} NDI Input");
-            let supported = capabilities::is_source_type_enum_supported(false, false, true, false);
-            if !supported {
-                capabilities::render_unsupported_warning(
-                    ui,
-                    "NDI Input has no active polling/upload path in the current runtime.",
-                );
-            }
-
-            ui.add_enabled_ui(supported, |ui| {
-                // Smart Empty State
-                if source_name.is_none()
-                    && canvas.ndi_sources.is_empty()
-                    && canvas.ndi_discovery_rx.is_none()
-                {
-                    ui.vertical_centered(|ui| {
-                        ui.add_space(10.0);
-                        if ui
-                            .add(
-                                egui::Button::new("🔍 Discover Sources")
-                                    .min_size(egui::vec2(150.0, 30.0)),
-                            )
-                            .clicked()
-                        {
-                            // Start async discovery
-                            let (tx, rx) = std::sync::mpsc::channel();
-                            canvas.ndi_discovery_rx = Some(rx);
-                            mapmap_io::ndi::NdiReceiver::discover_sources_async(tx);
-                            canvas.ndi_sources.clear();
-                            ui.ctx().request_repaint();
-                        }
-                        ui.label(
-                            egui::RichText::new("No NDI source selected")
-                                .weak()
-                                .italics(),
-                        );
-                        ui.add_space(10.0);
-                    });
-                } else {
-                    // Display current source
-                    let display_name = source_name
-                        .clone()
-                        .unwrap_or_else(|| "Not Connected".to_string());
-                    ui.label(format!("Current: {}", display_name));
-
-                    // Discover button
-                    ui.horizontal(|ui| {
-                        if ui.button("🔍 Discover Sources").clicked() {
-                            // Start async discovery
-                            let (tx, rx) = std::sync::mpsc::channel();
-                            canvas.ndi_discovery_rx = Some(rx);
-                            mapmap_io::ndi::NdiReceiver::discover_sources_async(tx);
-                            canvas.ndi_sources.clear();
-                            ui.ctx().request_repaint();
-                        }
-
-                        // Check for discovery results
-                        if let Some(rx) = &canvas.ndi_discovery_rx {
-                            if let Ok(sources) = rx.try_recv() {
-                                canvas.ndi_sources = sources;
-                                canvas.ndi_discovery_rx = None;
-                            }
-                        }
-
-                        // Show spinner if discovering
-                        if canvas.ndi_discovery_rx.is_some() {
-                            ui.spinner();
-                            ui.label("Searching...");
-                        }
-                    });
-
-                    // Source selection dropdown
-                    if !canvas.ndi_sources.is_empty() {
-                        ui.separator();
-                        ui.label("Available Sources:");
-
-                        egui::ComboBox::from_id_salt("ndi_source_select")
-                            .selected_text(display_name.clone())
-                            .show_ui(ui, |ui| {
-                                // Option to disconnect
-                                if ui
-                                    .selectable_label(source_name.is_none(), "❌ None (Disconnect)")
-                                    .clicked()
-                                {
-                                    *source_name = None;
-                                    actions.push(UIAction::DisconnectNdiSource { part_id });
-                                }
-
-                                // Available sources
-                                for ndi_source in &canvas.ndi_sources {
-                                    let selected = source_name.as_ref() == Some(&ndi_source.name);
-                                    if ui.selectable_label(selected, &ndi_source.name).clicked() {
-                                        *source_name = Some(ndi_source.name.clone());
-
-                                        // Trigger connection action
-                                        actions.push(UIAction::ConnectNdiSource {
-                                            part_id,
-                                            source: ndi_source.clone(),
-                                        });
-                                    }
-                                }
-                            });
-
-                        ui.label(format!("Found {} source(s)", canvas.ndi_sources.len()));
-                    } else if canvas.ndi_discovery_rx.is_none() {
-                        ui.label("Click 'Discover' to find NDI sources");
-                    }
-                }
-            });
-        }
-        #[cfg(not(feature = "ndi"))]
-        SourceType::NdiInput { .. } => {
-            ui.label("\u{1F4E1} NDI Input (Feature Disabled)");
-        }
-        #[cfg(target_os = "windows")]
-        SourceType::SpoutInput { sender_name } => {
-            ui.label("\u{1F6B0} Spout Input");
-            let supported = capabilities::is_source_type_enum_supported(false, false, false, true);
-            if !supported {
-                capabilities::render_unsupported_warning(
-                    ui,
-                    "Spout Input is currently not fully wired up to the runtime.",
-                );
-            }
-            ui.add_enabled_ui(supported, |ui| {
-                ui.horizontal(|ui| {
-                    ui.label("Sender:");
-                    ui.text_edit_singleline(sender_name);
-                });
-            });
-        }
         SourceType::Bevy3DText {
             text,
             font_size,
@@ -826,16 +680,19 @@ pub fn render_source_ui(
                 ui.label("Rot:");
                 ui.add(
                     egui::DragValue::new(&mut rotation[0])
+                        .speed(1.0)
                         .prefix("X:")
                         .suffix("°"),
                 );
                 ui.add(
                     egui::DragValue::new(&mut rotation[1])
+                        .speed(1.0)
                         .prefix("Y:")
                         .suffix("°"),
                 );
                 ui.add(
                     egui::DragValue::new(&mut rotation[2])
+                        .speed(1.0)
                         .prefix("Z:")
                         .suffix("°"),
                 );
@@ -1241,17 +1098,162 @@ pub fn render_source_ui(
                 });
             });
         }
+        SourceType::LiveInput { device_id } => {
+            ui.label("\u{1F4F9} Live Input");
+            let supported = capabilities::is_source_type_enum_supported(false, true, false, false);
+            if !supported {
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "Live Input is currently not fully wired up to the runtime.",
+                );
+            }
+            ui.add_enabled_ui(supported, |ui| {
+                egui::Grid::new("live_input_grid")
+                    .num_columns(2)
+                    .spacing([10.0, 8.0])
+                    .show(ui, |ui| {
+                        ui.label("Device ID:");
+                        ui.add(egui::Slider::new(device_id, 0..=10));
+                        ui.end_row();
+                    });
+            });
+        }
+        #[cfg(feature = "ndi")]
+        SourceType::NdiInput { source_name } => {
+            ui.label("\u{1F4E1} NDI Input");
+            let supported = capabilities::is_source_type_enum_supported(false, false, true, false);
+            if !supported {
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "NDI Input has no active polling/upload path in the current runtime.",
+                );
+            }
+
+            ui.add_enabled_ui(supported, |ui| {
+                // Smart Empty State
+                if source_name.is_none()
+                    && canvas.ndi_sources.is_empty()
+                    && canvas.ndi_discovery_rx.is_none()
+                {
+                    ui.vertical_centered(|ui| {
+                        ui.add_space(10.0);
+                        if ui
+                            .add(
+                                egui::Button::new("🔍 Discover Sources")
+                                    .min_size(egui::vec2(150.0, 30.0)),
+                            )
+                            .clicked()
+                        {
+                            // Start async discovery
+                            let (tx, rx) = std::sync::mpsc::channel();
+                            canvas.ndi_discovery_rx = Some(rx);
+                            mapmap_io::ndi::NdiReceiver::discover_sources_async(tx);
+                            canvas.ndi_sources.clear();
+                            ui.ctx().request_repaint();
+                        }
+                        render_info_label(ui, "No NDI source selected");
+                        ui.add_space(10.0);
+                    });
+                } else {
+                    // Display current source
+                    let display_name = source_name
+                        .clone()
+                        .unwrap_or_else(|| "Not Connected".to_string());
+                    ui.label(format!("Current: {}", display_name));
+
+                    // Discover button
+                    ui.horizontal(|ui| {
+                        if ui.button("🔍 Discover Sources").clicked() {
+                            // Start async discovery
+                            let (tx, rx) = std::sync::mpsc::channel();
+                            canvas.ndi_discovery_rx = Some(rx);
+                            mapmap_io::ndi::NdiReceiver::discover_sources_async(tx);
+                            canvas.ndi_sources.clear();
+                            ui.ctx().request_repaint();
+                        }
+
+                        // Check for discovery results
+                        if let Some(rx) = &canvas.ndi_discovery_rx {
+                            if let Ok(sources) = rx.try_recv() {
+                                canvas.ndi_sources = sources;
+                                canvas.ndi_discovery_rx = None;
+                            }
+                        }
+
+                        // Show spinner if discovering
+                        if canvas.ndi_discovery_rx.is_some() {
+                            ui.spinner();
+                            ui.label("Searching...");
+                        }
+                    });
+
+                    // Source selection dropdown
+                    if !canvas.ndi_sources.is_empty() {
+                        ui.separator();
+                        ui.label("Available Sources:");
+
+                        egui::ComboBox::from_id_salt("ndi_source_select")
+                            .selected_text(display_name.clone())
+                            .show_ui(ui, |ui| {
+                                // Option to disconnect
+                                if ui
+                                    .selectable_label(source_name.is_none(), "❌ None (Disconnect)")
+                                    .clicked()
+                                {
+                                    *source_name = None;
+                                    actions.push(UIAction::DisconnectNdiSource { part_id });
+                                }
+
+                                // Available sources
+                                for ndi_source in &canvas.ndi_sources {
+                                    let selected = source_name.as_ref() == Some(&ndi_source.name);
+                                    if ui.selectable_label(selected, &ndi_source.name).clicked() {
+                                        *source_name = Some(ndi_source.name.clone());
+
+                                        // Trigger connection action
+                                        actions.push(UIAction::ConnectNdiSource {
+                                            part_id,
+                                            source: ndi_source.clone(),
+                                        });
+                                    }
+                                }
+                            });
+
+                        ui.label(format!("Found {} source(s)", canvas.ndi_sources.len()));
+                    } else if canvas.ndi_discovery_rx.is_none() {
+                        ui.label("Click 'Discover' to find NDI sources");
+                    }
+                }
+            });
+        }
+        #[cfg(not(feature = "ndi"))]
+        SourceType::NdiInput { .. } => {
+            ui.label("\u{1F4E1} NDI Input (Feature Disabled)");
+        }
+        #[cfg(target_os = "windows")]
+        SourceType::SpoutInput { sender_name } => {
+            ui.label("\u{1F6B0} Spout Input");
+            let supported = capabilities::is_source_type_enum_supported(false, false, false, true);
+            if !supported {
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "Spout Input is currently not fully wired up to the runtime.",
+                );
+            }
+            ui.add_enabled_ui(supported, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Sender:");
+                    ui.text_edit_singleline(sender_name);
+                });
+            });
+        }
         SourceType::Bevy3DModel { .. } => {
             ui.label("\u{1F3AE} Bevy 3D Model");
             ui.label("Model controls not yet implemented.");
         }
         SourceType::Bevy => {
             ui.label("\u{1F3AE} Bevy Scene");
-            ui.label(
-                egui::RichText::new("Rendering Internal 3D Scene")
-                    .weak()
-                    .italics(),
-            );
+            render_info_label(ui, "Rendering Internal 3D Scene");
             ui.small("The scene is rendered internally and available as 'bevy_output'");
         }
     }

@@ -38,7 +38,7 @@ grafton-ndi = { version = "0.2.4", optional = true }
 image = { workspace = true }
 mapmap-core = { path = "../mapmap-core" }
 once_cell = { workspace = true }
-ron = { workspace = true }
+ron.workspace = true
 serde = { workspace = true }
 serde_json = { workspace = true }
 tempfile = "3.26"

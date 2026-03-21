@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- 2026-03-21: fix: Gate External I/O nodes without full runtime paths (#1321)
+- 2026-03-19: refactor: Refactor Node Inspector Previews to a Family-Wide Standard (#1300)
+- 2026-03-19: feat: Standardize RenderQueue Diagnostics Contract (#1282)
+- 2026-03-19: feat: Implement uniform inspector previews for all node types (#1252)
+- 2026-03-17: ui: Style AssignmentPanel to match Cyber Dark theme (#1226)
+- 2026-03-18: fix(ci): Limit self-hosted runner resource usage (max 4 threads for build) and enable automatic cancellation of stale jobs to prevent system lockups.
 - 2026-03-18: docs: Fix broken ROADMAP.md links (#1232)
 - 2026-03-18: fix(ci): Final fix for self-hosted post-merge workflow (standardized checkout paths, fixed WSL bash conflict, and improved `vcpkg` detection logic).
 - 2026-03-16: refactor: Decompose module_canvas inspector mod.rs (#1219)

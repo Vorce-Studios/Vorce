@@ -281,8 +281,20 @@ fn deserialize_optional_playback_mode<'de, D>(
 where
     D: serde::Deserializer<'de>,
 {
-    let opt = Option::<PlaybackMode>::deserialize(deserializer)?;
-    Ok(opt)
+    // Try to deserialize directly as PlaybackMode or as Option<PlaybackMode>
+    // to handle missing `Option` wrapping in RON.
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Wrapper {
+        Direct(PlaybackMode),
+        Opt(Option<PlaybackMode>),
+    }
+
+    let w = Wrapper::deserialize(deserializer)?;
+    match w {
+        Wrapper::Direct(m) => Ok(Some(m)),
+        Wrapper::Opt(m) => Ok(m),
+    }
 }
 
 impl From<AnimationClipSerde> for AnimationClip {
@@ -396,11 +408,30 @@ pub struct AnimationPlayer {
     pub pause_at_markers: bool,
 }
 
+fn deserialize_optional_f32<'de, D>(deserializer: D) -> Result<Option<f32>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Wrapper {
+        Direct(f32),
+        Opt(Option<f32>),
+    }
+
+    let w = Wrapper::deserialize(deserializer)?;
+    match w {
+        Wrapper::Direct(m) => Ok(Some(m)),
+        Wrapper::Opt(m) => Ok(m),
+    }
+}
+
 #[derive(Debug, Deserialize)]
 struct AnimationPlayerSerde {
     clip: AnimationClip,
     current_time: TimePoint,
     playing: bool,
+    #[serde(default, deserialize_with = "deserialize_optional_f32")]
     current_direction: Option<f32>,
     #[serde(default = "default_animation_speed")]
     speed: f32,

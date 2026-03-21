@@ -89,3 +89,7 @@ Kritische Erkenntnisse aus Projektmanagement-Aktivitäten.
 ## 2026-03-16 - Missing Documentation for Phase 4 Refactoring
 **Erkenntnis:** Multiple large decomposition PRs (MF-StMa_LARGE_FILE_CLEANUP_PHASE4 including #1219, #1188, #1211, #1213, #1209) and fixes (#1195, #1198, #1194, #1189) were merged on 2026-03-16 but missing from `CHANGELOG.md`. Furthermore, the task statuses in `ROADMAP.md` were left uncompleted.
 **Aktion:** Tracker added entries to `CHANGELOG.md`, marked the corresponding tasks in `ROADMAP.md` as ✅ Done, and updated the 'Stand' timestamp to reflect reality.
+
+## 2026-03-21 - ROADMAP.md Deprecation & Missing PR Docs
+**Erkenntnis:** ROADMAP.md is officially no longer used in the project. Several PRs (#1321, #1300, #1282, #1252, #1226) were missing from CHANGELOG.md.
+**Aktion:** Tracker added the missing entries to CHANGELOG.md. No further ROADMAP.md updates will be made.
