@@ -72,6 +72,15 @@ impl AudioPanel {
 
             ui.add_space(4.0);
 
+            if cfg!(target_os = "macos") {
+                crate::widgets::custom::render_info_label(
+                    ui,
+                    "Audio input is currently feature-gated on macOS for stability.",
+                );
+                ui.add_space(8.0);
+            }
+
+            ui.add_enabled_ui(!cfg!(target_os = "macos"), |ui| {
             // Visualizer Section
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
@@ -239,6 +248,7 @@ impl AudioPanel {
                         });
                     ui.end_row();
                 });
+            });
         });
 
         action

@@ -70,6 +70,17 @@ pub mod cpal_backend {
         /// Create a new CPAL backend with the specified device.
         /// Uses a timeout to prevent the app from freezing if a device doesn't respond.
         pub fn new(device_name: Option<String>) -> Result<Self, AudioError> {
+            #[cfg(target_os = "macos")]
+            {
+                let _ = device_name; // Prevent unused variable warning
+                tracing::warn!("Audio input is currently feature-gated on macOS for stability.");
+                return Err(AudioError::NoDevicesFound(
+                    "Feature gated on macOS".to_string(),
+                ));
+            }
+
+            #[cfg(not(target_os = "macos"))]
+            {
             let (sample_tx, sample_rx) = unbounded();
             let (command_tx, command_rx) = unbounded::<Command>();
 
@@ -90,6 +101,7 @@ pub mod cpal_backend {
                 command_sender: command_tx,
                 stream,
             })
+            }
         }
 
         /// Build the audio stream (must be called from main thread)
@@ -278,6 +290,14 @@ pub mod cpal_backend {
 
         /// List all available audio input devices
         pub fn list_devices() -> Result<Option<Vec<String>>, AudioError> {
+            #[cfg(target_os = "macos")]
+            {
+                tracing::warn!("Audio input is currently feature-gated on macOS for stability.");
+                return Ok(Some(vec![]));
+            }
+
+            #[cfg(not(target_os = "macos"))]
+            {
             let host = cpal::default_host();
 
             // Log available hosts for debugging
@@ -309,6 +329,7 @@ pub mod cpal_backend {
                     Ok(Some(device_names))
                 }
                 Err(e) => Err(AudioError::NoDevicesFound(e.to_string())),
+            }
             }
         }
     }
