@@ -131,7 +131,7 @@ impl PreviewPanel {
 
                 if visible_outputs.is_empty() {
                     ui.centered_and_justified(|ui| {
-                        ui.label(egui::RichText::new("No outputs configured for preview.\nAdd a Projector Output node and enable 'Show in Preview Panel'.").weak().italics());
+                        crate::widgets::custom::render_info_label(ui, "No outputs configured for preview.\nAdd a Projector Output node and enable 'Show in Preview Panel'.");
                     });
                 } else {
                     // Calculate preview thumbnail size

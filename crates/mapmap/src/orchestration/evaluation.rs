@@ -12,11 +12,13 @@ pub fn perform_evaluation(
 ) {
     // Reclaim RenderOp objects from the previous frame to avoid allocations.
     // This closes the object pool loop for evaluation results.
-    app.module_evaluator
-        .cached_result
-        .spare_render_ops
-        .extend(app.render_queue.items.drain(..).map(|item| item.render_op));
-    app.render_queue.clear();
+    for items in app.render_queue.items.values_mut() {
+        app.module_evaluator
+            .cached_result
+            .spare_render_ops
+            .extend(items.drain(..).map(|item| item.render_op));
+    }
+    app.render_queue.items.clear();
     app.render_queue.graph_revision = app.state.module_manager.graph_revision;
     app.ui_state.module_canvas.last_trigger_values.clear();
     let mut node_triggers = HashMap::new();
@@ -45,38 +47,54 @@ pub fn perform_evaluation(
                     .insert(*part_id, max_val);
             }
 
-            app.render_queue
-                .items
-                .extend(eval_result.render_ops.drain(..).map(|render_op| {
-                    let mut diagnostics = Vec::new();
+            // Transfer RenderOps using drain to avoid clones
+            // Note: We need to access eval_result fields directly because evaluate returns a reference.
+            // But since ModuleEvaluator is on app, we can just drain from its cached_result.
+            let render_ops: Vec<_> = app.module_evaluator.cached_result.render_ops.drain(..).collect();
+            for render_op in render_ops {
+                let mut diagnostics = Vec::new();
 
-                    if render_op.blend_mode.is_some() {
-                        diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
-                            module_id: *module_id,
-                            part_id: render_op.layer_part_id,
-                            severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
-                            code: "blend_mode_unsupported".to_string(),
-                            message: "Blend modes are currently only supported via specific compositing passes.".to_string(),
-                        });
-                    }
-
-                    if !render_op.masks.is_empty() {
-                        diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
-                            module_id: *module_id,
-                            part_id: render_op.layer_part_id,
-                            severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
-                            code: "masks_unsupported".to_string(),
-                            message: "Masks are not yet supported in this render path.".to_string(),
-                        });
-                    }
-
-                    RuntimeRenderQueueItem {
+                if render_op.blend_mode.is_some() {
+                    diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
                         module_id: *module_id,
-                        render_op,
-                        diagnostics,
-                    }
-                }));
+                        part_id: render_op.layer_part_id,
+                        severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
+                        code: "blend_mode_unsupported".to_string(),
+                        message: "Blend modes are currently only supported via specific compositing passes.".to_string(),
+                    });
+                }
+
+                if !render_op.masks.is_empty() {
+                    diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
+                        module_id: *module_id,
+                        part_id: render_op.layer_part_id,
+                        severity: crate::app::core::app_struct::DiagnosticSeverity::Warning,
+                        code: "masks_unsupported".to_string(),
+                        message: "Masks are not yet supported in this render path.".to_string(),
+                    });
+                }
+
+                let output_id = match render_op.output_type {
+                    mapmap_core::module::OutputType::Projector { id, .. } => id,
+                    _ => render_op.output_part_id,
+                };
+
+                let item = RuntimeRenderQueueItem {
+                    module_id: *module_id,
+                    render_op,
+                    diagnostics,
+                };
+                app.render_queue
+                    .items
+                    .entry(output_id)
+                    .or_default()
+                    .push(item);
+            }
         }
+    }
+
+    for ops in app.render_queue.items.values_mut() {
+        ops.sort_by(|a, b| b.render_op.output_part_id.cmp(&a.render_op.output_part_id));
     }
 
     // Sync with Bevy (only if runner exists)

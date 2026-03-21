@@ -243,7 +243,7 @@ async fn security_headers(req: Request, next: Next) -> Response {
     // Prevent clickjacking
     headers.insert(header::X_FRAME_OPTIONS, HeaderValue::from_static("DENY"));
 
-    // Legacy XSS protection (for defense in depth)
+    // Legacy XSS protection disabled (rely on CSP instead)
     headers.insert(header::X_XSS_PROTECTION, HeaderValue::from_static("0"));
 
     // Referrer Policy
