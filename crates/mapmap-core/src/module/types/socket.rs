@@ -1,6 +1,22 @@
 //!
 //! Socket definitions.
 //!
+//! # Socket Naming & Semantic Standards
+//!
+//! To ensure graph consistency, backward compatibility, and an understandable UI:
+//!
+//! - **IDs**: Standardize IDs for common paths:
+//!   - `"media_in"` / `"media_out"`: Primary `Media` connector (Texture/Geometry flow).
+//!   - `"trigger_in"` / `"trigger_out"`: General automation and trigger paths (`Trigger` connector).
+//!   - `"layer_in"` / `"layer_out"`: Pipeline composition nodes (`Layer` connector).
+//!   - `"mask_in"`: Secondary modifier path for Masks.
+//!
+//! - **Directions**: Sockets distinctly follow `ModuleSocketDirection::Input` or `Output`.
+//!   Outputs connect to Inputs of identical `ModuleSocketType`s.
+//!
+//! - **Primary Path**: Nodes passing a main sequence through should mark the main Input
+//!   and Output via `.primary()`.
+//!
 
 use serde::{Deserialize, Serialize};
 
