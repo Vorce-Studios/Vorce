@@ -154,3 +154,7 @@ Die Inkonsistenz im `ModuleEvaluator` bleibt bestehen, da dieser statenlos ist u
 ## 2024-03-24 - Module Connection Validation Tests Update
 **Erkenntnis:** Tests asserting `module.add_connection` failed silently because it properly validates parts/sockets internally before adding. Also `update_part_sockets` relies on `repair_graph` to do connection cleanup.
 **Aktion:** Use `module.connections.push()` in tests to explicitly bypass `add_connection` validation when asserting connection removal/cleanup logic for invalid states, and call `repair_graph()` when expecting `update_part_sockets` to clean up connections.
+
+## 2026-03-21 - Diagnostic Coverage Improvement
+**Erkenntnis:** The `check_module_integrity` function contained untested logic paths regarding validation of connected sockets (`from_socket` and `to_socket`). This omission left an undetected gap for topology error handling.
+**Aktion:** I introduced dedicated Unit Tests (`test_check_module_integrity_invalid_from_socket`, `test_check_module_integrity_invalid_to_socket`, and `test_check_module_integrity_connected_output_no_warning`) to guarantee consistent and verified issue generation whenever these topology constraints are violated.
