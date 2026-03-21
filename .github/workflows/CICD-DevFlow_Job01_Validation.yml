@@ -203,6 +203,26 @@ jobs:
       - name: Build
         run: cargo build --release --verbose --no-default-features --features "audio"
 
+  build-macos:
+    name: "Build & Test (macOS)"
+    runs-on: macos-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --release --verbose --no-default-features --features "audio"
+
   validation-success:
     name: "Validation Success"
     runs-on: ubuntu-latest
