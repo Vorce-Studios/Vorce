@@ -408,7 +408,6 @@ pub struct AnimationPlayer {
     pub pause_at_markers: bool,
 }
 
-#[derive(Debug, Deserialize)]
 fn deserialize_optional_f32<'de, D>(deserializer: D) -> Result<Option<f32>, D::Error>
 where
     D: serde::Deserializer<'de>,
