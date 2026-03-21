@@ -108,7 +108,6 @@ mod tests {
                         false, false, true, false
                     ));
                 }
-                #[cfg(target_os = "windows")]
                 ModulePartType::Source(SourceType::SpoutInput { .. }) => {
                     assert!(capabilities::is_source_type_enum_supported(
                         false, false, false, true
