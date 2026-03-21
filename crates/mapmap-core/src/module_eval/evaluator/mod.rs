@@ -732,7 +732,7 @@ mod evaluator_tests {
 
         // 2. Source (Target)
         let s_id = module.add_part(crate::module::PartType::Source, (200.0, 0.0));
-        module.add_connection(t_id, 0, s_id, 0); // Trigger Out -> Source Trigger In
+        module.add_connection(t_id, "trigger_out".to_string(), s_id, "trigger_in".to_string()); // Trigger Out -> Source Trigger In
 
         let shared = crate::module::SharedMediaState::default();
         let _result = evaluator.evaluate(&module, &shared, 0);
@@ -753,7 +753,7 @@ mod evaluator_tests {
         assert!(result.source_commands.contains_key(&s_id));
 
         // Now remove connection
-        module.remove_connection(t_id, 0, s_id, 0);
+        module.remove_connection(t_id, "trigger_out".to_string(), s_id, "trigger_in".to_string());
 
         let result = evaluator.evaluate(&module, &shared, 1);
 
@@ -791,9 +791,9 @@ mod evaluator_tests {
         let o_id = module.add_part(crate::module::PartType::Output, (300.0, 0.0));
 
         // Connections
-        module.add_connection(t_id, 0, s_id, 0); // Trigger -> Source Trigger
-        module.add_connection(s_id, 0, l_id, 0); // Source Media -> Layer Input
-        module.add_connection(l_id, 0, o_id, 0); // Layer Output -> Output Layer In
+        module.add_connection(t_id, "trigger_out".to_string(), s_id, "trigger_in".to_string());
+        module.add_connection(s_id, "media_out".to_string(), l_id, "media_in".to_string());
+        module.add_connection(l_id, "layer_out".to_string(), o_id, "layer_in".to_string());
 
         let result = evaluator.evaluate(&module, &crate::module::SharedMediaState::default(), 0);
 
@@ -839,9 +839,9 @@ mod evaluator_tests {
 
         // Repro: if the trigger connection is inserted first, the render trace must
         // still follow layer socket 0 (visual chain) rather than socket 1 (trigger).
-        module.add_connection(t_id, 0, l_id, 1);
-        module.add_connection(s_id, 0, l_id, 0);
-        module.add_connection(l_id, 0, o_id, 0);
+        module.add_connection(t_id, "trigger_out".to_string(), l_id, "trigger_in".to_string());
+        module.add_connection(s_id, "media_out".to_string(), l_id, "media_in".to_string());
+        module.add_connection(l_id, "layer_out".to_string(), o_id, "layer_in".to_string());
 
         let result = evaluator.evaluate(&module, &crate::module::SharedMediaState::default(), 0);
 
@@ -894,8 +894,7 @@ mod evaluator_tests {
         );
 
         // Connect Driving Trigger -> Master Trigger In (Vis)
-        // Master Trigger In index: 0 (since Triggers usually have 0 inputs)
-        module.add_connection(t_id, 0, m_id, 0);
+        module.add_connection(t_id, "trigger_out".to_string(), m_id, "trigger_vis_in".to_string());
 
         // Slave Node (Layer)
         let s_id = module.add_part(crate::module::PartType::Layer, (100.0, 0.0));
@@ -910,15 +909,16 @@ mod evaluator_tests {
         }
 
         // Connect Master Link Out -> Slave Link In
-        // Master Link Out index: 1 (0 is Trigger Out)
-        // Slave Link In index: 2 (0=Media, 1=Trigger)
-        module.add_connection(m_id, 1, s_id, 2);
+        module.add_connection(m_id, "link_out".to_string(), s_id, "link_in".to_string());
 
         let result = evaluator.evaluate(&module, &crate::module::SharedMediaState::default(), 0);
 
         // Master ID in trigger_values should have 2 values: Trigger Out (1.0) and Link Out (1.0)
         let m_values = &result.trigger_values[&m_id];
         assert!(m_values.len() >= 2);
+        // We need to find the link_out value.
+        // The trigger_values are stored by socket index.
+        // Link out was pushed last, trigger_out is first.
         assert_eq!(m_values[1], 1.0); // Link Out should be active
     }
 
@@ -930,7 +930,7 @@ mod evaluator_tests {
         // 1. Layer -> Output
         let l_id = module.add_part(crate::module::PartType::Layer, (0.0, 0.0));
         let o_id = module.add_part(crate::module::PartType::Output, (100.0, 0.0));
-        module.add_connection(l_id, 0, o_id, 0);
+        module.add_connection(l_id, "layer_out".to_string(), o_id, "layer_in".to_string());
 
         let shared = crate::module::SharedMediaState::default();
 
@@ -948,7 +948,7 @@ mod evaluator_tests {
         assert_eq!(evaluator.cached_result.spare_render_ops.len(), 0);
 
         // Pass 3: Reduce workload (no output connection)
-        module.remove_connection(l_id, 0, o_id, 0);
+        module.remove_connection(l_id, "layer_out".to_string(), o_id, "layer_in".to_string());
         evaluator.evaluate(&module, &shared, 1);
 
         // render_ops should be empty
