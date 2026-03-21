@@ -8,8 +8,8 @@ pub fn render_info_label(ui: &mut Ui, text: &str) {
 }
 
 /// Standardized missing preview banner.
-pub fn render_missing_preview_banner(ui: &mut Ui) {
+pub fn render_missing_preview_banner(ui: &mut Ui, text: &str) {
     ui.group(|ui| {
-        render_info_label(ui, "No preview available yet.");
+        render_info_label(ui, text);
     });
 }

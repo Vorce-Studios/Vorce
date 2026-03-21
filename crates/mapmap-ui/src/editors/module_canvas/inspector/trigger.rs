@@ -234,12 +234,37 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
         });
 }
 
+pub fn render_trigger_preview_extra(ui: &mut Ui, trigger: &TriggerType) {
+    if let TriggerType::Fixed {
+        interval_ms,
+        offset_ms,
+        ..
+    } = trigger
+    {
+        let now_ms = (ui.input(|input| input.time) * 1000.0) as u32;
+        let cycle_ms = (*interval_ms).max(1);
+        let phase_ms = now_ms.wrapping_add(*offset_ms) % cycle_ms;
+        let progress = phase_ms as f32 / cycle_ms as f32;
+        let next_pulse_ms = cycle_ms.saturating_sub(phase_ms) % cycle_ms;
+
+        ui.add_space(6.0);
+        ui.label("Fixed timer cadence");
+        ui.add(
+            egui::ProgressBar::new(progress)
+                .desired_width(ui.available_width())
+                .text(format!("cycle {} ms", cycle_ms)),
+        );
+        ui.label(format!("Next pulse in {} ms", next_pulse_ms));
+        ui.label(format!("Offset {} ms", *offset_ms));
+    }
+}
+
 /// Renders the configuration UI for a `ModulePartType::Trigger`.
 pub fn render_trigger_ui(
-    canvas: &mut ModuleCanvas,
+    _canvas: &mut ModuleCanvas,
     ui: &mut Ui,
     trigger: &mut TriggerType,
-    part_id: ModulePartId,
+    _part_id: ModulePartId,
 ) {
     ui.label("Trigger Type:");
     match trigger {
@@ -298,7 +323,7 @@ pub fn render_trigger_ui(
                 if output_config.frequency_bands {
                     ui.label("Bands:");
                     toggle_invert(ui, "SubBass Out", "SubBass (20-60Hz)");
-                    toggle_invert(ui, "Bass Out", "Bass (60-250Hz)");
+                    toggle_invert(ui, "Beat Out", "Beat (60-250Hz)");
                     toggle_invert(ui, "LowMid Out", "LowMid (250-500Hz)");
                     toggle_invert(ui, "Mid Out", "Mid (500-1kHz)");
                     toggle_invert(ui, "HighMid Out", "HighMid (1-2kHz)");
@@ -329,25 +354,6 @@ pub fn render_trigger_ui(
             ui.label("⏱️ Fixed Timer");
             ui.add(egui::Slider::new(interval_ms, 16..=10000).text("Interval (ms)"));
             ui.add(egui::Slider::new(offset_ms, 0..=5000).text("Offset (ms)"));
-
-            ui.separator();
-            super::render_trigger_preview(canvas, ui, part_id, |ui, _live_value, _is_live| {
-                let now_ms = (ui.input(|input| input.time) * 1000.0) as u32;
-                let cycle_ms = (*interval_ms).max(1);
-                let phase_ms = now_ms.wrapping_add(*offset_ms) % cycle_ms;
-                let progress = phase_ms as f32 / cycle_ms as f32;
-                let next_pulse_ms = cycle_ms.saturating_sub(phase_ms) % cycle_ms;
-
-                ui.add_space(6.0);
-                ui.label("Fixed timer cadence");
-                ui.add(
-                    egui::ProgressBar::new(progress)
-                        .desired_width(ui.available_width())
-                        .text(format!("cycle {} ms", cycle_ms)),
-                );
-                ui.label(format!("Next pulse in {} ms", next_pulse_ms));
-                ui.label(format!("Offset {} ms", *offset_ms));
-            });
         }
         TriggerType::Midi {
             channel,
@@ -385,24 +391,6 @@ pub fn render_trigger_ui(
 
             ui.add(egui::Slider::new(channel, 1..=16).text("Channel"));
             ui.add(egui::Slider::new(note, 0..=127).text("Note"));
-
-            // MIDI Learn button
-            let is_learning = canvas.midi_learn_part_id == Some(part_id);
-            let learn_text = if is_learning {
-                "â ³ Waiting for MIDI..."
-            } else {
-                "🎯 MIDI Learn"
-            };
-            if ui.button(learn_text).clicked() {
-                if is_learning {
-                    canvas.midi_learn_part_id = None;
-                } else {
-                    canvas.midi_learn_part_id = Some(part_id);
-                }
-            }
-            if is_learning {
-                ui.label("Press any MIDI key/knob...");
-            }
         }
         TriggerType::Osc { address } => {
             ui.label("\u{1F4E1} OSC Trigger");
@@ -417,7 +405,7 @@ pub fn render_trigger_ui(
             key_code,
             modifiers,
         } => {
-            ui.label("âŒ¨ï¸  Shortcut");
+            ui.label("⌨️ Shortcut");
             ui.horizontal(|ui| {
                 ui.label("Key:");
                 ui.text_edit_singleline(key_code);
@@ -432,10 +420,5 @@ pub fn render_trigger_ui(
                 ));
             });
         }
-    }
-
-    if !matches!(trigger, TriggerType::Fixed { .. }) {
-        ui.separator();
-        super::render_trigger_preview(canvas, ui, part_id, |_, _, _| {});
     }
 }
