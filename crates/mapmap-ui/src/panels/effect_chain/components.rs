@@ -55,7 +55,8 @@ impl super::panel::EffectChainPanel {
                 .gamma_multiply(0.5)
         } else {
             #[allow(clippy::manual_is_multiple_of)]
-            if index % 2 == 0 {
+            let is_even = index % 2 == 0;
+            if is_even {
                 colors::DARK_GREY
             } else {
                 colors::DARKER_GREY
