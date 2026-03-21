@@ -98,8 +98,12 @@ impl ModuleEvaluator {
                             let conn = &module.connections[conn_idx];
                             if conn.to_socket == *socket_idx {
                                 if let Some(from_values) = trigger_values.get(&conn.from_part) {
-                                    if let Some(val) = from_values.get(conn.from_socket) {
+                                    let from_idx = module.part(conn.from_part)
+                                        .and_then(|p| p.outputs.iter().position(|s| s.id == conn.from_socket));
+                                    if let Some(idx) = from_idx {
+                                    if let Some(val) = from_values.get(idx) {
                                         trigger_val = *val;
+                                    }
                                     }
                                 }
                                 break;
@@ -108,7 +112,7 @@ impl ModuleEvaluator {
                     }
                     let val = self.apply_smoothing(
                         part.id,
-                        *socket_idx,
+                        socket_idx.clone(),
                         config.apply(trigger_val),
                         &config.mode,
                     );
@@ -296,7 +300,7 @@ impl ModuleEvaluator {
                                                     trigger_values.get(&conn.from_part)
                                                 {
                                                     if let Some(val) =
-                                                        from_values.get(conn.from_socket)
+                                                        { let from_idx = module.part(conn.from_part).and_then(|p| p.outputs.iter().position(|s| s.id == conn.from_socket)); if let Some(idx) = from_idx { from_values.get(idx) } else { None } }
                                                     {
                                                         trigger_val = *val;
                                                     }
@@ -315,7 +319,7 @@ impl ModuleEvaluator {
                                             let raw_final_val = config.apply(trigger_val);
                                             let final_val = self.apply_smoothing(
                                                 part.id,
-                                                *socket_idx,
+                                                socket_idx.clone(),
                                                 raw_final_val,
                                                 &config.mode,
                                             );

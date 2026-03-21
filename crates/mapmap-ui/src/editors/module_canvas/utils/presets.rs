@@ -38,7 +38,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
             ],
-            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0)],
+            connections: vec![(0, "0".to_string(), 1, "0".to_string()), (1, "0".to_string(), 2, "0".to_string())],
         },
         ModulePreset {
             name: "Effect Chain".to_string(),
@@ -80,7 +80,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
             ],
-            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0), (2, 0, 3, 0)],
+            connections: vec![(0, "0".to_string(), 1, "0".to_string()), (1, "0".to_string(), 2, "0".to_string()), (2, "0".to_string(), 3, "0".to_string())],
         },
         ModulePreset {
             name: "Audio Reactive".to_string(),
@@ -138,7 +138,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
             ],
-            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0), (2, 0, 3, 0), (3, 0, 4, 0)],
+            connections: vec![(0, "0".to_string(), 1, "0".to_string()), (1, "0".to_string(), 2, "0".to_string()), (2, "0".to_string(), 3, "0".to_string()), (3, "0".to_string(), 4, "0".to_string())],
         },
         ModulePreset {
             name: "Masked Media".to_string(),
@@ -177,7 +177,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
             ],
-            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0), (2, 0, 3, 0)],
+            connections: vec![(0, "0".to_string(), 1, "0".to_string()), (1, "0".to_string(), 2, "0".to_string()), (2, "0".to_string(), 3, "0".to_string())],
         },
         ModulePreset {
             name: "NDI Source".to_string(),
@@ -211,7 +211,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
             ],
-            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0)],
+            connections: vec![(0, "0".to_string(), 1, "0".to_string()), (1, "0".to_string(), 2, "0".to_string())],
         },
         ModulePreset {
             name: "NDI Output".to_string(),
@@ -234,7 +234,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
             ],
-            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0)],
+            connections: vec![(0, "0".to_string(), 1, "0".to_string()), (1, "0".to_string(), 2, "0".to_string())],
         },
         #[cfg(target_os = "windows")]
         ModulePreset {
@@ -271,7 +271,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
             ],
-            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0)],
+            connections: vec![(0, "0".to_string(), 1, "0".to_string()), (1, "0".to_string(), 2, "0".to_string())],
         },
         #[cfg(target_os = "windows")]
         ModulePreset {
@@ -296,7 +296,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
             ],
-            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0)],
+            connections: vec![(0, "0".to_string(), 1, "0".to_string()), (1, "0".to_string(), 2, "0".to_string())],
         },
     ]
 }
