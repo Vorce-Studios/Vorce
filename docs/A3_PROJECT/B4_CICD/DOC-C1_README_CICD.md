@@ -13,7 +13,7 @@ Für Antigravity, Jules und Entwickler. Fokus: Qualität & Automatisierung.
 - **`CICD-DevFlow_Job01_Validation.yml`**
   - **Zweck:** Validiert *jeden* PR und Push auf Main.
   - **Checks:** Rendering Tests, Unit Tests, Formatting, Security Audit.
-  - **OS:** Linux, Windows & macOS.
+  - **OS:** Linux & Windows.
 - **`CICD-DevFlow_Job02_AutoMerge.yml`**
   - **Zweck:** Merged PRs *automatisch*, sobald Validation (Job01) grün ist.
   - **Regel:** Gilt für Jules-PRs und Entwickler-PRs (wenn fehlerfrei).

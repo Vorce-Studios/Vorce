@@ -37,7 +37,7 @@ impl AudioAnalyzerV2 {
         self.update_band_energies();
 
         // Trace log every 100 FFTs
-        if self.fft_count.is_multiple_of(100) {
+        if self.fft_count % 100 == 0 {
             trace!(
                 "FFT #{}: bands={:?}",
                 self.fft_count,

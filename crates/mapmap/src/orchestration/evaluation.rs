@@ -39,7 +39,7 @@ pub fn perform_evaluation(
                     .insert(*part_id, max_val);
             }
 
-            for render_op in eval_result.render_ops.drain(..) {
+            for render_op in eval_result.render_ops.iter().cloned() {
                 let mut diagnostics = Vec::new();
 
                 if render_op.blend_mode.is_some() {

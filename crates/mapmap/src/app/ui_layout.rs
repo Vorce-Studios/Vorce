@@ -127,17 +127,6 @@ fn render_startup_animation_overlay(ctx: &egui::Context, app: &mut App) {
         return;
     }
 
-    let dismiss_requested = ctx.input(|input| {
-        input.pointer.any_pressed()
-            || input.key_pressed(egui::Key::Escape)
-            || input.key_pressed(egui::Key::Enter)
-            || input.key_pressed(egui::Key::Space)
-    });
-    if dismiss_requested {
-        app.startup_animation.reset();
-        return;
-    }
-
     let elapsed = app.start_time.elapsed().as_secs_f32();
     if elapsed >= STARTUP_OVERLAY_DURATION_SECS {
         app.startup_animation.reset();
@@ -178,7 +167,6 @@ fn render_startup_animation_overlay(ctx: &egui::Context, app: &mut App) {
 
     egui::Area::new("startup_animation_overlay".into())
         .order(egui::Order::Foreground)
-        .interactable(false)
         .fixed_pos(ctx.content_rect().min)
         .show(ctx, |ui| {
             let rect = ctx.content_rect();
