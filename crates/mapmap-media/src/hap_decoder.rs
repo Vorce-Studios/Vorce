@@ -9,7 +9,7 @@
 //! - HAP Q: High quality using two DXT5 textures (YCoCg + Alpha)
 
 use thiserror::Error;
-use tracing::{debug, warn};
+use tracing::debug;
 
 /// HAP texture type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

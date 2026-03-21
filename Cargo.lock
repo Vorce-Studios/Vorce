@@ -5576,6 +5576,7 @@ dependencies = [
  "ffmpeg-sys-next",
  "image 0.24.9",
  "libmpv2",
+ "libmpv2-sys",
  "mapmap-io",
  "parking_lot",
  "snap",

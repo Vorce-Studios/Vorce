@@ -76,6 +76,7 @@ imgui = "0.12"
 imgui-wgpu = { path = "crates/vendor/imgui-wgpu" }
 imgui-winit-support = "0.12"
 libmpv2 = { version = "5.0", features = ["render"] }
+libmpv2-sys = "4.0.1"
 
 # Control
 midir = "0.10"
