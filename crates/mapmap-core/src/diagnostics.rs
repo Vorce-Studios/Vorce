@@ -2,7 +2,7 @@
 //! Diagnostic tools for MapFlow modules.
 //!
 
-use crate::module::{MapFlowModule, ModulePartId, ModulePlaybackMode};
+use crate::module::{MapFlowModule, ModulePartId};
 use serde::{Deserialize, Serialize};
 
 /// Represents an issue found during module diagnostics.

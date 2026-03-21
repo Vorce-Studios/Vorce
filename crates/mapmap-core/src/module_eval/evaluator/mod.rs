@@ -25,7 +25,7 @@ pub struct ModuleEvaluator {
     #[allow(dead_code)]
     pub(crate) trigger_states: HashMap<ModulePartId, TriggerState>,
     /// Reusable result buffer to avoid allocations
-    pub(crate) cached_result: ModuleEvalResult,
+    pub cached_result: ModuleEvalResult,
 
     /// Cached indices per module ID to support multi-module switching
     pub(crate) indices_cache: HashMap<crate::module::ModuleId, Arc<ModuleGraphIndices>>,
