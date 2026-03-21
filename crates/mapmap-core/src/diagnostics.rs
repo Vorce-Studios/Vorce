@@ -64,7 +64,7 @@ pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
                 issues.push(ModuleIssue {
                     severity: IssueSeverity::Error,
                     message: format!("Connection #{} references invalid socket ID '{}' on Source Part {} (available: {})",
-                        idx, conn.from_socket, src.id, 
+                        idx, conn.from_socket, src.id,
                         src_outputs.iter().map(|s| s.id.as_str()).collect::<Vec<_>>().join(", ")),
                     part_id: Some(src.id),
                 });
