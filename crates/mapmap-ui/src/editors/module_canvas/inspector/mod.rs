@@ -256,7 +256,7 @@ pub fn render_layer_preview_panel(
     }
 
     ui.group(|ui| {
-        common::render_info_label(ui, "No preview available yet.");
+        common::render_missing_preview_banner(ui, "No preview available yet.");
         if preview_context.output_ids.is_empty() {
             ui.small("This layer is not linked to a projector output yet.");
         } else {

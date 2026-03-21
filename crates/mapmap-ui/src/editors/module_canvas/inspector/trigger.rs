@@ -47,7 +47,11 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
                     ui.label(socket_label);
 
                     // Get config
-                    let mut config = part.trigger_targets.entry(idx).or_default().clone();
+                    let mut config = part
+                        .trigger_targets
+                        .entry(part.inputs[idx].id.clone())
+                        .or_default()
+                        .clone();
                     let original_config = config.clone();
 
                     // Target Selector
@@ -227,7 +231,8 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
 
                     // Save back if changed
                     if config != original_config {
-                        part.trigger_targets.insert(idx, config);
+                        part.trigger_targets
+                            .insert(part.inputs[idx].id.clone(), config);
                     }
                 });
             }
@@ -328,7 +333,7 @@ pub fn render_trigger_ui(
                 if output_config.frequency_bands {
                     ui.label("Bands:");
                     toggle_invert(ui, "SubBass Out", "SubBass (20-60Hz)");
-                    toggle_invert(ui, "Bass Out", "Bass (60-250Hz)");
+                    toggle_invert(ui, "Beat Out", "Beat (60-250Hz)");
                     toggle_invert(ui, "LowMid Out", "LowMid (250-500Hz)");
                     toggle_invert(ui, "Mid Out", "Mid (500-1kHz)");
                     toggle_invert(ui, "HighMid Out", "HighMid (1-2kHz)");
@@ -364,25 +369,6 @@ pub fn render_trigger_ui(
             ui.label("⏱️ Fixed Timer");
             ui.add(egui::Slider::new(interval_ms, 16..=10000).text("Interval (ms)"));
             ui.add(egui::Slider::new(offset_ms, 0..=5000).text("Offset (ms)"));
-
-            ui.separator();
-            super::render_trigger_preview(canvas, ui, part_id, |ui, _live_value, _is_live| {
-                let now_ms = (ui.input(|input| input.time) * 1000.0) as u32;
-                let cycle_ms = (*interval_ms).max(1);
-                let phase_ms = now_ms.wrapping_add(*offset_ms) % cycle_ms;
-                let progress = phase_ms as f32 / cycle_ms as f32;
-                let next_pulse_ms = cycle_ms.saturating_sub(phase_ms) % cycle_ms;
-
-                ui.add_space(6.0);
-                ui.label("Fixed timer cadence");
-                ui.add(
-                    egui::ProgressBar::new(progress)
-                        .desired_width(ui.available_width())
-                        .text(format!("cycle {} ms", cycle_ms)),
-                );
-                ui.label(format!("Next pulse in {} ms", next_pulse_ms));
-                ui.label(format!("Offset {} ms", *offset_ms));
-            });
         }
         TriggerType::Midi {
             channel,
@@ -462,7 +448,7 @@ pub fn render_trigger_ui(
             key_code,
             modifiers,
         } => {
-            ui.label("âŒ¨ï¸  Shortcut");
+            ui.label("⌨️ Shortcut");
             ui.horizontal(|ui| {
                 ui.label("Key:");
                 ui.text_edit_singleline(key_code);
@@ -482,10 +468,5 @@ pub fn render_trigger_ui(
                 "Event node: Output is sent via Event connections.",
             );
         }
-    }
-
-    if !matches!(trigger, TriggerType::Fixed { .. }) {
-        ui.separator();
-        super::render_trigger_preview(canvas, ui, part_id, |_, _, _| {});
     }
 }
