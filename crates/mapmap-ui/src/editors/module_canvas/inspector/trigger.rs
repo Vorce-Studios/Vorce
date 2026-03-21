@@ -234,6 +234,31 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
         });
 }
 
+pub fn render_trigger_preview_extra(ui: &mut Ui, trigger: &TriggerType) {
+    if let TriggerType::Fixed {
+        interval_ms,
+        offset_ms,
+        ..
+    } = trigger
+    {
+        let now_ms = (ui.input(|input| input.time) * 1000.0) as u32;
+        let cycle_ms = (*interval_ms).max(1);
+        let phase_ms = now_ms.wrapping_add(*offset_ms) % cycle_ms;
+        let progress = phase_ms as f32 / cycle_ms as f32;
+        let next_pulse_ms = cycle_ms.saturating_sub(phase_ms) % cycle_ms;
+
+        ui.add_space(6.0);
+        ui.label("Fixed timer cadence");
+        ui.add(
+            egui::ProgressBar::new(progress)
+                .desired_width(ui.available_width())
+                .text(format!("cycle {} ms", cycle_ms)),
+        );
+        ui.label(format!("Next pulse in {} ms", next_pulse_ms));
+        ui.label(format!("Offset {} ms", *offset_ms));
+    }
+}
+
 /// Renders the configuration UI for a `ModulePartType::Trigger`.
 pub fn render_trigger_ui(
     canvas: &mut ModuleCanvas,
