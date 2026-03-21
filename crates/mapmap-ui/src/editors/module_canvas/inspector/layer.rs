@@ -119,15 +119,33 @@ pub fn render_layer_ui(
             mapping_mode,
             ..
         } => {
-            ui.label("📂 Group");
-            ui.text_edit_singleline(name);
-            ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
-            ui.checkbox(mapping_mode, "Mapping Mode (Grid)");
-            render_mesh_ui(ui, mesh, 9999); // Dummy ID
+            ui.add_enabled_ui(false, |ui| {
+                ui.label("📂 Group");
+                ui.text_edit_singleline(name);
+                ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
+                ui.checkbox(mapping_mode, "Mapping Mode (Grid)");
+                render_mesh_ui(ui, mesh, 9999); // Dummy ID
+            });
+            ui.label(
+                egui::RichText::new(
+                    "⚠ Group layers are currently unsupported and act like a Single layer.",
+                )
+                .color(crate::theme::colors::WARN_COLOR)
+                .small(),
+            );
         }
         LayerType::All { opacity, .. } => {
-            ui.label("🎚️ Master");
-            ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
+            ui.add_enabled_ui(false, |ui| {
+                ui.label("🎚️ Master");
+                ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
+            });
+            ui.label(
+                egui::RichText::new(
+                    "⚠ Master layers are currently unsupported and will not be rendered.",
+                )
+                .color(crate::theme::colors::WARN_COLOR)
+                .small(),
+            );
         }
     }
 }

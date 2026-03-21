@@ -36,7 +36,7 @@ pub fn is_mapping_mode_supported() -> bool {
 
 /// Determines if source properties scale/rotation/offset are fully supported.
 pub fn is_transform_supported() -> bool {
-    true
+    false // scale, rotation, offset currently ignored in final render according to DOC-C10
 }
 
 /// Determines if a mask is fully supported.

@@ -64,7 +64,11 @@ pub(crate) fn prepare_texture_previews(app: &mut App, encoder: &mut wgpu::Comman
             app.output_temp_textures.insert(output_id, texture);
         }
 
-        let target_tex = app.output_temp_textures.get(&output_id).unwrap();
+        let target_tex = if let Some(tex) = app.output_temp_textures.get(&output_id) {
+            tex
+        } else {
+            continue;
+        };
 
         use std::collections::hash_map::Entry;
         let current_view_arc = match app.output_preview_cache.entry(output_id) {
