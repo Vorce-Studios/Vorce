@@ -398,7 +398,9 @@ pub fn render_source_ui(
                         // Convert percentage to duration-based seek
                         canvas.pending_playback_commands.push((
                             part_id,
-                            MediaPlaybackCommand::Seek((seek_pos / 100.0) * f64::from(video_duration)),
+                            MediaPlaybackCommand::Seek(
+                                (seek_pos / 100.0) * f64::from(video_duration),
+                            ),
                         ));
                     }
                 });
