@@ -222,6 +222,9 @@ pub fn render_source_ui(
             flip_horizontal,
             flip_vertical,
             reverse_playback,
+            target_width,
+            target_height,
+            target_fps,
             ..
         }
         | SourceType::VideoUni {
@@ -244,6 +247,9 @@ pub fn render_source_ui(
             flip_horizontal,
             flip_vertical,
             reverse_playback,
+            target_width,
+            target_height,
+            target_fps,
             ..
         } => {
             // Media Picker (common for file-based video)
@@ -380,21 +386,47 @@ pub fn render_source_ui(
                 ui.label("Seek Position:");
                 // Note: Actual seek requires video duration from player
                 // For now, just show the control - needs integration with player state
-                let mut seek_pos: f64 = 0.0;
-                let seek_slider = ui.add(
-                    egui::Slider::new(&mut seek_pos, 0.0..=100.0)
-                        .text("Position")
-                        .suffix("%")
-                        .show_value(true),
-                );
-                if seek_slider.drag_stopped() && seek_slider.changed() {
-                    // Convert percentage to duration-based seek
-                    // This will need actual video duration from player
-                    canvas.pending_playback_commands.push((
-                        part_id,
-                        MediaPlaybackCommand::Seek(seek_pos / 100.0 * 300.0),
-                    ));
-                }
+                ui.add_enabled_ui(video_duration > 0.0, |ui| {
+                    let mut seek_pos: f64 = 0.0;
+                    let seek_slider = ui.add(
+                        egui::Slider::new(&mut seek_pos, 0.0..=100.0)
+                            .text("Position")
+                            .suffix("%")
+                            .show_value(true),
+                    );
+                    if seek_slider.drag_stopped() && seek_slider.changed() {
+                        // Convert percentage to duration-based seek
+                        canvas.pending_playback_commands.push((
+                            part_id,
+                            MediaPlaybackCommand::Seek(
+                                (seek_pos / 100.0) * f64::from(video_duration),
+                            ),
+                        ));
+                    }
+                });
+            });
+            ui.separator();
+
+            ui.collapsing("📐 Target Overrides", |ui| {
+                ui.horizontal(|ui| {
+                    let mut w = target_width.unwrap_or(0);
+                    let mut h = target_height.unwrap_or(0);
+                    ui.label("Width:");
+                    if ui.add(egui::DragValue::new(&mut w).speed(1)).changed() {
+                        *target_width = if w > 0 { Some(w) } else { None };
+                    }
+                    ui.label("Height:");
+                    if ui.add(egui::DragValue::new(&mut h).speed(1)).changed() {
+                        *target_height = if h > 0 { Some(h) } else { None };
+                    }
+                });
+                ui.horizontal(|ui| {
+                    let mut fps = target_fps.unwrap_or(0.0);
+                    ui.label("FPS:");
+                    if ui.add(egui::DragValue::new(&mut fps).speed(1.0)).changed() {
+                        *target_fps = if fps > 0.0 { Some(fps) } else { None };
+                    }
+                });
             });
             ui.separator();
 
@@ -430,6 +462,8 @@ pub fn render_source_ui(
             offset_y,
             flip_horizontal,
             flip_vertical,
+            target_width,
+            target_height,
             ..
         } => {
             // Image Picker
@@ -465,6 +499,23 @@ pub fn render_source_ui(
             }
 
             ui.separator();
+
+            ui.collapsing("📐 Target Overrides", |ui| {
+                ui.horizontal(|ui| {
+                    let mut w = target_width.unwrap_or(0);
+                    let mut h = target_height.unwrap_or(0);
+                    ui.label("Width:");
+                    if ui.add(egui::DragValue::new(&mut w).speed(1)).changed() {
+                        *target_width = if w > 0 { Some(w) } else { None };
+                    }
+                    ui.label("Height:");
+                    if ui.add(egui::DragValue::new(&mut h).speed(1)).changed() {
+                        *target_height = if h > 0 { Some(h) } else { None };
+                    }
+                });
+            });
+            ui.separator();
+
             render_common_controls(
                 ui,
                 opacity,

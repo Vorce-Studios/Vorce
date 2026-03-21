@@ -48,10 +48,10 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 
 ## 2026-01-31 - Patch Cleanup & Doc Organization
 
-**Erkenntnis:** Das Root-Verzeichnis enthielt getrackte Patch-Dateien (`pr397.patch`, `pr398.patch`), die dort nicht hingehören. Zudem existierte ein nicht-konformes `docu/` Verzeichnis mit Jules-spezifischen Notizen.
+**Erkenntnis:** Das Root-Verzeichnis enthielt getrackte Patch-Dateien (`pr397.patch`, `pr398.patch`), die dort nicht hingehören. Zudem existierte ein nicht-konformes `docu/` Verzeichnis with Jules-spezifischen Notizen.
 
 **Aktion:**
-- `pr397.patch` und `pr398.patch` nach `.temp-archive/2026-01-31-*` archiviert und via `git rm` aus dem Repository entfernt.
+- `pr397.patch` and `pr398.patch` nach `.temp-archive/2026-01-31-*` archiviert und via `git rm` aus dem Repository entfernt.
 - `docu/jules_gpu_ui.md` und `docu/jules_hw_accel.md` nach `.jules/` verschoben.
 - `docu/` Verzeichnis entfernt.
 
@@ -118,6 +118,10 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 
 **Erkenntnis:** Es wurden MapFlow-Log-Dateien (`mapflow.log.*`) im Verzeichnis `scripts/archive/logs/` gefunden, welche fälschlicherweise in Git verfolgt wurden, da die aktuelle `.gitignore`-Regel (`/logs/` und `*.log`) das Datums-Suffix nicht erfasste.
 **Aktion:** Log-Dateien aus Git mit `git rm` entfernt und `.gitignore` aktualisiert (`scripts/archive/logs/`), um zukünftige Verfolgung von diesen Dateien zu verhindern.
+
+## 2026-03-02 - Temporäre Dateien im Root verschoben
+**Erkenntnis:** Im Root-Verzeichnis befanden sich temporäre Entwicklungsskripte und Patches (`fix_bevy_test.py`, `fix_script.py`, `patch.diff`, `test_script.py`), die nicht den Projektstandards für Root-Dateien entsprechen und unnötig mit Git getrackt wurden.
+**Aktion:** Dateien via `git rm --cached` aus Git entfernt und mit Datum-Präfix ins `.temp-archive/` verschoben.
 
 ## 2026-03-19 - Patch Cleanup
 **Erkenntnis:** Das Root-Verzeichnis enthielt eine getrackte Patch-Datei (`patch.diff`), die dort nicht hingehört.
