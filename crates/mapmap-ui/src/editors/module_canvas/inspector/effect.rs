@@ -1,4 +1,5 @@
 use super::capabilities;
+use super::common;
 use egui::{Color32, Ui};
 use mapmap_core::module::{BlendModeType, EffectType, ModulePartId, ModulizerType};
 
@@ -63,7 +64,7 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
 
             // 2. Safe Reset Button (Prominent)
             ui.vertical_centered(|ui| {
-                if crate::widgets::hold_to_action_button(
+                if crate::widgets::custom::hold_to_action_button(
                     ui,
                     "\u{27F2} Safe Reset",
                     Color32::from_rgb(255, 180, 0),
@@ -204,6 +205,12 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                     {
                         changed_type = Some(EffectType::Vignette);
                     }
+                    if ui
+                        .selectable_label(matches!(effect, EffectType::LoadLUT), "Load 3D LUT")
+                        .clicked()
+                    {
+                        changed_type = Some(EffectType::LoadLUT);
+                    }
                 });
 
             if let Some(new_type) = changed_type {
@@ -248,19 +255,10 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                     ui.add(egui::Slider::new(sat, 0.0..=2.0).text("Saturation"));
                 }
                 EffectType::LoadLUT => {
-                    ui.add_enabled_ui(false, |ui| {
-                        ui.label("LUT Loading requires a .cube file (not yet implemented in properties panel).");
-                    });
-                    ui.label(
-                        egui::RichText::new(format!(
-                            "⚠ {}",
-                            mapmap_core::diagnostics::DEGRADED_FEATURE_LOAD_LUT
-                        ))
-                        .color(crate::theme::colors::WARN_COLOR),
-                    );
+                    ui.label("LUT Loading requires a .cube file (not yet implemented in properties panel).");
                 }
                 _ => {
-                    super::common::render_info_label(ui, "No configurable parameters");
+                    common::render_info_label(ui, "No configurable parameters");
                 }
             }
         }
@@ -355,12 +353,9 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                     );
                 });
             if !capabilities::is_blend_mode_supported(blend) {
-                ui.label(
-                    egui::RichText::new(format!(
-                        "⚠ {}",
-                        mapmap_core::diagnostics::DEGRADED_FEATURE_BLEND_MODE
-                    ))
-                    .color(crate::theme::colors::WARN_COLOR),
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "Blend modes other than Normal are currently ignored.",
                 );
             }
             ui.add(egui::Slider::new(&mut 1.0_f32, 0.0..=1.0).text("Opacity"));

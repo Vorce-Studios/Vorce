@@ -167,5 +167,124 @@ pub fn default_presets() -> Vec<ModulePreset> {
             ],
             connections: vec![(0, 0, 1, 0), (1, 0, 2, 0), (2, 0, 3, 0)],
         },
+        ModulePreset {
+            name: "NDI Source".to_string(),
+            parts: vec![
+                (
+                    ModulePartType::Trigger(TriggerType::Beat),
+                    (50.0, 100.0),
+                    None,
+                ),
+                (
+                    ModulePartType::Source(SourceType::NdiInput { source_name: None }),
+                    (350.0, 100.0),
+                    None,
+                ),
+                (
+                    ModulePartType::Output(OutputType::Projector {
+                        id: 1,
+                        name: "Projector 1".to_string(),
+
+                        hide_cursor: true,
+                        target_screen: 0,
+                        show_in_preview_panel: true,
+                        extra_preview_window: false,
+                        output_width: 0,
+                        output_height: 0,
+                        output_fps: 60.0,
+                        ndi_enabled: false,
+                        ndi_stream_name: String::new(),
+                    }),
+                    (650.0, 100.0),
+                    None,
+                ),
+            ],
+            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0)],
+        },
+        ModulePreset {
+            name: "NDI Output".to_string(),
+            parts: vec![
+                (
+                    ModulePartType::Trigger(TriggerType::Beat),
+                    (50.0, 100.0),
+                    None,
+                ),
+                (
+                    ModulePartType::Source(SourceType::new_media_file(String::new())),
+                    (350.0, 100.0),
+                    None,
+                ),
+                (
+                    ModulePartType::Output(OutputType::NdiOutput {
+                        name: "MapFlow NDI".to_string(),
+                    }),
+                    (650.0, 100.0),
+                    None,
+                ),
+            ],
+            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0)],
+        },
+        #[cfg(target_os = "windows")]
+        ModulePreset {
+            name: "Spout Source".to_string(),
+            parts: vec![
+                (
+                    ModulePartType::Trigger(TriggerType::Beat),
+                    (50.0, 100.0),
+                    None,
+                ),
+                (
+                    ModulePartType::Source(SourceType::SpoutInput {
+                        sender_name: String::new(),
+                    }),
+                    (350.0, 100.0),
+                    None,
+                ),
+                (
+                    ModulePartType::Output(OutputType::Projector {
+                        id: 1,
+                        name: "Projector 1".to_string(),
+
+                        hide_cursor: true,
+                        target_screen: 0,
+                        show_in_preview_panel: true,
+                        extra_preview_window: false,
+                        output_width: 0,
+                        output_height: 0,
+                        output_fps: 60.0,
+                        ndi_enabled: false,
+                        ndi_stream_name: String::new(),
+                    }),
+                    (650.0, 100.0),
+                    None,
+                ),
+            ],
+            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0)],
+        },
+        #[cfg(target_os = "windows")]
+        ModulePreset {
+            name: "Spout Output".to_string(),
+            parts: vec![
+                (
+                    ModulePartType::Trigger(TriggerType::Beat),
+                    (50.0, 100.0),
+                    None,
+                ),
+                (
+                    ModulePartType::Source(SourceType::new_media_file(String::new())),
+                    (350.0, 100.0),
+                    None,
+                ),
+                #[cfg(target_os = "windows")]
+                (
+                    ModulePartType::Output(OutputType::Spout {
+                        name: "MapFlow Spout".to_string(),
+                    }),
+                    (650.0, 100.0),
+                    None,
+                ),
+            ],
+            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0)],
+        },
     ]
 }
