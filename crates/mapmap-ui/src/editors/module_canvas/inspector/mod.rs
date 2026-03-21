@@ -166,7 +166,7 @@ pub fn render_standard_texture_preview(
     if let Some(&texture_id) = canvas.node_previews.get(&(module_id, part_id)) {
         render_preview_texture(ui, texture_id, "Live node preview");
     } else {
-        common::render_missing_preview_banner(ui);
+        crate::widgets::custom::render_missing_preview_banner(ui);
     }
 }
 
@@ -195,7 +195,7 @@ pub fn render_output_texture_preview(
     }
 
     if !preview_found {
-        common::render_missing_preview_banner(ui);
+        crate::widgets::custom::render_missing_preview_banner(ui);
     }
 }
 
@@ -256,7 +256,7 @@ pub fn render_layer_preview_panel(
     }
 
     ui.group(|ui| {
-        common::render_info_label(ui, "No preview available yet.");
+        crate::widgets::custom::render_info_label(ui, "No preview available yet.");
         if preview_context.output_ids.is_empty() {
             ui.small("This layer is not linked to a projector output yet.");
         } else {
@@ -271,9 +271,9 @@ pub fn render_layer_preview_panel(
             ));
         }
         if preview_context.upstream_source_part_ids.is_empty() {
-            common::render_info_label(ui, "No upstream source node was found for this layer.");
+            crate::widgets::custom::render_info_label(ui, "No upstream source node was found for this layer.");
         } else {
-            common::render_info_label(
+            crate::widgets::custom::render_info_label(
                 ui,
                 "Upstream source exists, but no preview texture reached the inspector.",
             );
@@ -340,7 +340,7 @@ pub fn render_inspector_for_part(
                 ModulePartType::Mesh(mesh) => {
                     ui.label("🕸️ Mesh Node");
                     ui.separator();
-                    common::render_info_label(
+                    crate::widgets::custom::render_info_label(
                         ui,
                         "Live texture preview not applicable. Use the Mesh Editor below.",
                     );
@@ -362,7 +362,7 @@ pub fn render_inspector_for_part(
                 ModulePartType::Hue(_) => {
                     ui.label("Hue Node Configuration");
                     ui.separator();
-                    common::render_info_label(
+                    crate::widgets::custom::render_info_label(
                         ui,
                         "Live visual preview not available for hardware outputs. Check spatial editor or physical lamps.",
                     );

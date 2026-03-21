@@ -736,7 +736,7 @@ impl TimelineV2 {
             ui.label("Module Arrangement");
             ui.horizontal(|ui| {
                 if modules.is_empty() {
-                    ui.label(egui::RichText::new("No modules available").weak().italics());
+                    crate::widgets::custom::render_info_label(ui, "No modules available");
                 } else {
                     let selected = self.selected_module_id.unwrap_or(modules[0].id);
                     let selected_label = Self::module_name(&module_names, selected);
