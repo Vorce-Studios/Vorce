@@ -43,7 +43,8 @@ impl WgpuFrameUploader {
                 let end = start + unpadded_bytes_per_row as usize;
                 if end <= data.len() {
                     padded_data.extend_from_slice(&data[start..end]);
-                    padded_data.extend(std::iter::repeat_n(0u8, padding as usize));
+                    #[allow(clippy::manual_repeat_n)]
+                    padded_data.extend(std::iter::repeat(0u8).take(padding as usize));
                 }
             }
 
