@@ -1,6 +1,5 @@
 use crate::app::core::app_struct::RuntimeRenderQueueItem;
 use anyhow::Result;
-use mapmap_core::module::OutputType::Projector;
 
 use super::effects::build_effect_chain;
 use super::logging::{clear_video_issue, should_log_video_issue};
@@ -9,7 +8,7 @@ use super::PREVIEW_FLAG;
 pub(crate) struct RenderContext<'a> {
     pub device: &'a wgpu::Device,
     pub queue: &'a wgpu::Queue,
-    pub render_queue: &'a [RuntimeRenderQueueItem],
+    pub render_queue: &'a std::collections::HashMap<u64, Vec<RuntimeRenderQueueItem>>,
     pub output_manager: &'a mapmap_core::output::OutputManager,
     pub edge_blend_renderer: &'a Option<mapmap_render::EdgeBlendRenderer>,
     pub color_calibration_renderer: &'a Option<mapmap_render::ColorCalibrationRenderer>,
@@ -27,7 +26,7 @@ pub(crate) struct RenderContext<'a> {
     pub video_diagnostic_log_times: &'a mut std::collections::HashMap<String, std::time::Instant>,
 }
 
-use super::texture_gen::generate_grid_texture;
+use super::texture_gen::{ensure_missing_texture_fallback, generate_grid_texture};
 
 pub(crate) fn render_content(
     ctx: RenderContext<'_>,
@@ -49,20 +48,11 @@ pub(crate) fn render_content(
     let real_output_id = output_id & !PREVIEW_FLAG;
 
     // ⚡ BOLT OPTIMIZATION:
-    // Store references to RenderOp instead of cloning the entire struct (which contains Vecs and complex data).
-    // This avoids per-frame allocations and deep copies for every layer being rendered.
-    let mut target_ops: Vec<&RuntimeRenderQueueItem> = ctx
-        .render_queue
-        .iter()
-        .filter(|item| match &item.render_op.output_type {
-            Projector { id, .. } => *id == real_output_id,
-            _ => item.render_op.output_part_id == real_output_id,
-        })
-        .collect();
+    // Read pre-partitioned and sorted target_ops directly from the context.
+    let empty_vec = Vec::new();
+    let target_ops = ctx.render_queue.get(&real_output_id).unwrap_or(&empty_vec);
 
-    target_ops.sort_by(|a, b| b.render_op.output_part_id.cmp(&a.render_op.output_part_id));
-
-    for item in &target_ops {
+    for item in target_ops {
         for diag in &item.diagnostics {
             let issue_key = format!("{}:{}:{}", diag.code, diag.module_id, diag.part_id);
             if should_log_video_issue(video_log_times, issue_key) {
@@ -166,7 +156,7 @@ pub(crate) fn render_content(
     };
 
     let target_view = if needs_post_processing {
-        mesh_target_view_ref.as_deref().unwrap()
+        mesh_target_view_ref.as_deref().unwrap_or(view)
     } else {
         view
     };
@@ -262,22 +252,8 @@ pub(crate) fn render_content(
                 }
             }
             // BLACK FALLBACK for missing textures
-            let fallback_name = "missing_texture_fallback";
-            if !ctx.texture_pool.has_texture(fallback_name) {
-                let width = 64;
-                let height = 64;
-                let data = [0, 0, 0, 255].repeat((width * height) as usize);
-                ctx.texture_pool.ensure_texture(
-                    fallback_name,
-                    width,
-                    height,
-                    wgpu::TextureFormat::Rgba8UnormSrgb,
-                    wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-                );
-                ctx.texture_pool
-                    .upload_data(queue, fallback_name, &data, width, height);
-            }
-            Some(ctx.texture_pool.get_view(fallback_name))
+            ensure_missing_texture_fallback(ctx.texture_pool, queue);
+            Some(ctx.texture_pool.get_view("missing_texture_fallback"))
         };
 
         if let Some(src_ref) = source_view {
@@ -331,11 +307,7 @@ pub(crate) fn render_content(
                 }
             }
 
-            let transform = glam::Mat4::from_scale_rotation_translation(
-                glam::vec3(op.source_props.scale_x, op.source_props.scale_y, 1.0),
-                glam::Quat::from_rotation_z(op.source_props.rotation.to_radians()),
-                glam::vec3(op.source_props.offset_x, op.source_props.offset_y, 0.0),
-            );
+            let transform = glam::Mat4::IDENTITY;
             let uniform_bind_group = mesh_renderer.get_uniform_bind_group_with_source_props(
                 queue,
                 transform,
@@ -387,7 +359,11 @@ pub(crate) fn render_content(
 
     // --- POST PROCESSING PASSES ---
     if needs_post_processing {
-        let intermediate_view = mesh_target_view_ref.as_ref().unwrap();
+        let intermediate_view = if let Some(v) = mesh_target_view_ref.as_ref() {
+            v
+        } else {
+            view
+        };
         // Re-create the texture bind group each frame since the intermediate texture may be re-allocated by the pool,
         // but we could optimize this later by checking if the texture's ID changed.
         // For now, creating a texture bind group is relatively cheap compared to buffers.

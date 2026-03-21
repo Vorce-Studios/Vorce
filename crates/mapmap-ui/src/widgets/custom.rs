@@ -27,6 +27,18 @@ pub fn render_header(ui: &mut Ui, title: &str) {
     );
 }
 
+/// Standardized informational text label for fallback/empty states.
+pub fn render_info_label(ui: &mut Ui, text: &str) {
+    ui.label(egui::RichText::new(text).weak().italics());
+}
+
+/// Standardized missing preview banner.
+pub fn render_missing_preview_banner(ui: &mut Ui) {
+    ui.group(|ui| {
+        render_info_label(ui, "No preview available yet.");
+    });
+}
+
 /// A standard list item container for the Cyber Dark theme.
 /// Handles selection, zebra striping, and layout consistency.
 pub fn cyber_list_item<R>(

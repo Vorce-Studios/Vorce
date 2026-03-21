@@ -75,6 +75,28 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
             search_tags: "source video image movie picture",
             part_type: ModulePartType::Source(SourceType::new_media_file(String::new())),
         },
+        NodeCatalogItem {
+            label: "🎨 Shader",
+            search_tags: "source glsl generator procedural",
+            part_type: ModulePartType::Source(SourceType::Shader {
+                name: "Default".to_string(),
+                params: Vec::new(),
+            }),
+        },
+        #[cfg(feature = "ndi")]
+        NodeCatalogItem {
+            label: "📡 NDI Input",
+            search_tags: "source network video stream",
+            part_type: ModulePartType::Source(SourceType::NdiInput { source_name: None }),
+        },
+        #[cfg(target_os = "windows")]
+        NodeCatalogItem {
+            label: "🚀 Spout Input",
+            search_tags: "source texture share windows",
+            part_type: ModulePartType::Source(SourceType::SpoutInput {
+                sender_name: String::new(),
+            }),
+        },
         // Bevy Sources
         NodeCatalogItem {
             label: "📝 3D Text",
@@ -161,25 +183,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
                 blend_mode: None,
                 mesh: mapmap_core::module::MeshType::default(),
                 mapping_mode: false,
-            }),
-        },
-        NodeCatalogItem {
-            label: "📁 Layer Group",
-            search_tags: "layer folder collection",
-            part_type: ModulePartType::Layer(LayerType::Group {
-                name: "New Group".to_string(),
-                opacity: 1.0,
-                blend_mode: None,
-                mesh: mapmap_core::module::MeshType::default(),
-                mapping_mode: false,
-            }),
-        },
-        NodeCatalogItem {
-            label: "📚 All Layers",
-            search_tags: "layer master global",
-            part_type: ModulePartType::Layer(LayerType::All {
-                opacity: 1.0,
-                blend_mode: None,
             }),
         },
         // Hue

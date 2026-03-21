@@ -1,7 +1,5 @@
 use super::super::mesh;
 use super::super::state::ModuleCanvas;
-#[cfg(any(feature = "ndi", target_os = "windows"))]
-use super::capabilities;
 use egui::Ui;
 use mapmap_core::module::{HueMappingMode, ModulePartId, OutputType};
 
@@ -63,9 +61,9 @@ pub fn render_output_ui(
             target_screen,
             show_in_preview_panel,
             extra_preview_window,
-            output_width: _output_width,
-            output_height: _output_height,
-            output_fps: _output_fps,
+            output_width,
+            output_height,
+            output_fps,
             ndi_enabled: _ndi_enabled,
             ndi_stream_name: _ndi_stream_name,
             ..
@@ -105,6 +103,21 @@ pub fn render_output_ui(
                     });
             });
 
+            ui.horizontal(|ui| {
+                ui.label("Width:");
+                ui.add(egui::DragValue::new(output_width).range(1..=7680));
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("Height:");
+                ui.add(egui::DragValue::new(output_height).range(1..=4320));
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("FPS:");
+                ui.add(egui::DragValue::new(output_fps).range(1.0..=240.0));
+            });
+
             ui.checkbox(hide_cursor, "🖱️ Hide Mouse Cursor");
 
             ui.separator();
@@ -135,18 +148,9 @@ pub fn render_output_ui(
         #[cfg(feature = "ndi")]
         OutputType::NdiOutput { name } => {
             ui.label("\u{1F4E1} NDI Output");
-            let supported = capabilities::is_output_type_enum_supported(true, false);
-            if !supported {
-                capabilities::render_unsupported_warning(
-                    ui,
-                    "NDI Output has no active runtime path currently.",
-                );
-            }
-            ui.add_enabled_ui(supported, |ui| {
-                ui.horizontal(|ui| {
-                    ui.label("Stream Name:");
-                    ui.text_edit_singleline(name);
-                });
+            ui.horizontal(|ui| {
+                ui.label("Stream Name:");
+                ui.text_edit_singleline(name);
             });
         }
         #[cfg(not(feature = "ndi"))]
@@ -156,18 +160,9 @@ pub fn render_output_ui(
         #[cfg(target_os = "windows")]
         OutputType::Spout { name } => {
             ui.label("\u{1F6B0} Spout Output");
-            let supported = capabilities::is_output_type_enum_supported(false, true);
-            if !supported {
-                capabilities::render_unsupported_warning(
-                    ui,
-                    "Spout Output has no active runtime path currently.",
-                );
-            }
-            ui.add_enabled_ui(supported, |ui| {
-                ui.horizontal(|ui| {
-                    ui.label("Stream Name:");
-                    ui.text_edit_singleline(name);
-                });
+            ui.horizontal(|ui| {
+                ui.label("Stream Name:");
+                ui.text_edit_singleline(name);
             });
         }
         OutputType::Hue {

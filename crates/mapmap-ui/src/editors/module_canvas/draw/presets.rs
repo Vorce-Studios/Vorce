@@ -42,7 +42,7 @@ pub fn draw_presets_popup(
                 .show(ui, |ui| {
                     let presets = canvas.presets.clone();
                     if presets.is_empty() {
-                        ui.label(egui::RichText::new("No presets found.").weak().italics());
+                        crate::widgets::custom::render_info_label(ui, "No presets found.");
                     }
                     for preset in &presets {
                         ui.horizontal(|ui| {
@@ -67,9 +67,9 @@ pub fn draw_presets_popup(
                                     if *from_idx < part_ids.len() && *to_idx < part_ids.len() {
                                         let _ = module.connect_parts(
                                             part_ids[*from_idx],
-                                            from_socket.clone(),
+                                            *from_socket,
                                             part_ids[*to_idx],
-                                            to_socket.clone(),
+                                            *to_socket,
                                         );
                                     }
                                 }
@@ -98,12 +98,7 @@ pub fn draw_presets_popup(
                         if let (Some(&from_idx), Some(&to_idx)) =
                             (id_map.get(&conn.from_part), id_map.get(&conn.to_part))
                         {
-                            connections.push((
-                                from_idx,
-                                conn.from_socket.clone(),
-                                to_idx,
-                                conn.to_socket.clone(),
-                            ));
+                            connections.push((from_idx, conn.from_socket, to_idx, conn.to_socket));
                         }
                     }
 

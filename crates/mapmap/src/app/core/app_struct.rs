@@ -94,14 +94,16 @@ pub struct RuntimeRenderQueueItem {
 pub struct RuntimeRenderQueue {
     /// Graph revision that produced this queue.
     pub graph_revision: u64,
-    /// Render items grouped later by output.
-    pub items: Vec<RuntimeRenderQueueItem>,
+    /// Render items pre-partitioned by output ID.
+    pub items: std::collections::HashMap<u64, Vec<RuntimeRenderQueueItem>>,
 }
 
 impl RuntimeRenderQueue {
     /// Clear queue contents for reuse.
     pub fn clear(&mut self) {
-        self.items.clear();
+        for v in self.items.values_mut() {
+            v.clear();
+        }
     }
 }
 
