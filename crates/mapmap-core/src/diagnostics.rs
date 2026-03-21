@@ -119,7 +119,7 @@ pub const DEGRADED_FEATURE_LOAD_LUT: &str =
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::module::{ModuleSocket, ModuleSocketType, PartType};
+    use crate::module::{ModulePlaybackMode, ModuleSocket, ModuleSocketType, PartType};
 
     fn create_test_module(name: &str) -> MapFlowModule {
         MapFlowModule {

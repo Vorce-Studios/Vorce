@@ -11,6 +11,8 @@ use crate::format::{FrameData, PixelFormat, VideoFormat, VideoFrame};
 #[cfg(feature = "ndi")]
 use grafton_ndi::{Find, Finder, FrameType, Receiver, Recv, RecvBandwidth, RecvColorFormat, NDI};
 #[cfg(feature = "ndi")]
+use std::sync::Arc;
+#[cfg(feature = "ndi")]
 use std::time::Duration;
 #[cfg(feature = "ndi")]
 use tracing::{error, info, warn};
