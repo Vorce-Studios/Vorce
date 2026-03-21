@@ -1,5 +1,7 @@
 use super::super::mesh;
 use super::super::state::ModuleCanvas;
+#[cfg(any(feature = "ndi", target_os = "windows"))]
+use super::capabilities;
 use egui::Ui;
 use mapmap_core::module::{HueMappingMode, ModulePartId, OutputType};
 
@@ -132,12 +134,21 @@ pub fn render_output_ui(
         }
         #[cfg(feature = "ndi")]
         OutputType::NdiOutput { name } => {
+<<<<<<< HEAD
             ui.label("📡 NDI Output");
             let supported = super::capabilities::is_output_type_enum_supported(true, false);
             if !supported {
                 super::capabilities::render_unsupported_warning(
                     ui,
                     "NDI Output has no active pipeline in the current runtime.",
+=======
+            ui.label("\u{1F4E1} NDI Output");
+            let supported = capabilities::is_output_type_enum_supported(true, false);
+            if !supported {
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "NDI Output has no active runtime path currently.",
+>>>>>>> main
                 );
             }
             ui.add_enabled_ui(supported, |ui| {
@@ -153,12 +164,21 @@ pub fn render_output_ui(
         }
         #[cfg(target_os = "windows")]
         OutputType::Spout { name } => {
+<<<<<<< HEAD
             ui.label("🚰 Spout Output");
             let supported = super::capabilities::is_output_type_enum_supported(false, true);
             if !supported {
                 super::capabilities::render_unsupported_warning(
                     ui,
                     "Spout Output has no active pipeline in the current runtime.",
+=======
+            ui.label("\u{1F6B0} Spout Output");
+            let supported = capabilities::is_output_type_enum_supported(false, true);
+            if !supported {
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "Spout Output has no active runtime path currently.",
+>>>>>>> main
                 );
             }
             ui.add_enabled_ui(supported, |ui| {

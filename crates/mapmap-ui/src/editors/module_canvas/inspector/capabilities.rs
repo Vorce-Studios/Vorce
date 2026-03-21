@@ -60,11 +60,20 @@ pub fn is_source_type_enum_supported(
     is_ndi: bool,
     #[allow(unused_variables)] is_spout: bool,
 ) -> bool {
-    // Currently, Shader, LiveInput, Ndi, and Spout are not fully supported end-to-end.
+    #[cfg(target_os = "windows")]
+    if is_spout {
+        return false;
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    if is_spout {
+        return false;
+    }
+
     !(is_shader || is_live_input || is_ndi || is_spout)
 }
 
-/// Determines if an output type is fully supported.
+/// Helper that checks if an output type is fully supported
 pub fn is_output_type_enum_supported(is_ndi: bool, is_spout: bool) -> bool {
     !(is_ndi || is_spout)
 }

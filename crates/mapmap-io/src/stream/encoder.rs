@@ -171,6 +171,7 @@ impl VideoEncoder {
         );
 
         // Return a stub packet
+        #[allow(clippy::manual_is_multiple_of)]
         Ok(EncodedPacket {
             data: Vec::new(), // Would contain actual encoded data
             pts: self.frame_count as i64,
