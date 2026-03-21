@@ -1,0 +1,14 @@
+--- crates/mapmap-core/src/state.rs
++++ crates/mapmap-core/src/state.rs
+@@ -239,9 +239,11 @@
+     #[test]
+     fn test_app_settings_partial_eq() {
+         let settings_1 = AppSettings::default();
+-        let mut settings_2 = AppSettings::default();
+-        settings_2.master_volume = 0.5;
++        let settings_2 = AppSettings {
++            master_volume: 0.5,
++            ..Default::default()
++        };
+         assert_ne!(settings_1, settings_2);
+     }

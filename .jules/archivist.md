@@ -118,7 +118,3 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 
 **Erkenntnis:** Es wurden MapFlow-Log-Dateien (`mapflow.log.*`) im Verzeichnis `scripts/archive/logs/` gefunden, welche fälschlicherweise in Git verfolgt wurden, da die aktuelle `.gitignore`-Regel (`/logs/` und `*.log`) das Datums-Suffix nicht erfasste.
 **Aktion:** Log-Dateien aus Git mit `git rm` entfernt und `.gitignore` aktualisiert (`scripts/archive/logs/`), um zukünftige Verfolgung von diesen Dateien zu verhindern.
-
-## 2026-03-02 - Temporäre Dateien im Root verschoben
-**Erkenntnis:** Im Root-Verzeichnis befanden sich temporäre Entwicklungsskripte und Patches (`fix_bevy_test.py`, `fix_script.py`, `patch.diff`, `test_script.py`), die nicht den Projektstandards für Root-Dateien entsprechen und unnötig mit Git getrackt wurden.
-**Aktion:** Dateien via `git rm --cached` aus Git entfernt und mit Datum-Präfix ins `.temp-archive/` verschoben.
