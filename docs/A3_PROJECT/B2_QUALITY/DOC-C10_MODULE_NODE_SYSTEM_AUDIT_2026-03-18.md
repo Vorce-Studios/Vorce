@@ -728,4 +728,12 @@ Noch offen:
 
 - Output-Inspector, Masken, Blend-Modi und Render-Transforms sind noch nicht voll end-to-end geschlossen
 - ein finaler Release-Smoke-Test steht noch aus, obwohl die eigentlichen Startblocker im Debug-Build behoben und verifiziert sind
-- Das Connector-Modell wurde auf Media, Control und Event migriert, indem Trigger in Event und Control aufgeteilt wurde. Kompatibilitaet bleibt durch weiche Verbindungsregeln gewaehrleistet.
+
+### 12.1 Inspector Previews (Feature Update)
+Ein konsistenter Preview-Contract wurde fuer alle Node-Familien umgesetzt:
+- **Layer**: Hat weiterhin den erweiterten Preview-Panel (Direct, Linked Output, Fallback).
+- **Source, Mask, Modulizer (Effekte)**: Zeigen nun alle standardmaessig einen Live-Texture-Preview im Inspector an.
+- **Output**: Zeigt nun den Live-Texture-Preview des finalen Outputs basierend auf der Output ID an.
+- **Mesh**: Preview ist im Node-Inspector bewusst nicht verfuegbar, dafuer gibt es einen Hinweis, den darunterliegenden Mesh-Editor zu verwenden.
+- **Hue**: Live-Visual-Preview ist fuer Hardware-Outputs bewusst nicht verfuegbar. Es gibt einen UI-Hinweis auf den Spatial-Editor oder die physischen Lampen.
+- **Trigger**: Alle Trigger-Typen (nicht nur `Fixed`, sondern auch `Beat`, `AudioFFT`, `Random`, etc.) zeigen nun einen Live-Trigger-Status (`ProgressBar` & Live Pulse Info) basierend auf `last_trigger_values` an.
