@@ -322,8 +322,8 @@ pub fn render_source_ui(
                 part_id,
                 is_playing,
                 current_pos,
-                loop_enabled,
-                reverse_playback,
+                *loop_enabled,
+                *reverse_playback,
             );
 
             ui.add_space(10.0);
@@ -1054,9 +1054,9 @@ pub fn render_source_ui(
                     );
                     ui.add(
                         egui::DragValue::new(&mut rotation[1])
-                            .speed(1.0)
-                            .prefix("Y: ")
-                            .suffix("°"),
+                        .speed(1.0)
+                        .prefix("Y: ")
+                        .suffix("°"),
                     );
                     ui.add(
                         egui::DragValue::new(&mut rotation[2])
@@ -1100,7 +1100,7 @@ pub fn render_source_ui(
         }
         SourceType::LiveInput { device_id } => {
             ui.label("\u{1F4F9} Live Input");
-            let supported = capabilities::is_source_type_enum_supported(false, true, false, false);
+            let supported = capabilities::is_source_type_enum_supported(true, true, false, false);
             if !supported {
                 capabilities::render_unsupported_warning(
                     ui,
@@ -1121,7 +1121,7 @@ pub fn render_source_ui(
         #[cfg(feature = "ndi")]
         SourceType::NdiInput { source_name } => {
             ui.label("\u{1F4E1} NDI Input");
-            let supported = capabilities::is_source_type_enum_supported(false, false, true, false);
+            let supported = capabilities::is_source_type_enum_supported(true, false, true, false);
             if !supported {
                 capabilities::render_unsupported_warning(
                     ui,
@@ -1233,7 +1233,7 @@ pub fn render_source_ui(
         #[cfg(target_os = "windows")]
         SourceType::SpoutInput { sender_name } => {
             ui.label("\u{1F6B0} Spout Input");
-            let supported = capabilities::is_source_type_enum_supported(false, false, false, true);
+            let supported = capabilities::is_source_type_enum_supported(true, false, false, true);
             if !supported {
                 capabilities::render_unsupported_warning(
                     ui,

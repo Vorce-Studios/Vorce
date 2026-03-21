@@ -180,9 +180,14 @@ impl ModuleEvaluator {
         let mut inputs = HashMap::new();
         for conn in &module.connections {
             if let Some(values) = trigger_values.get(&conn.from_part) {
-                if let Some(&value) = values.get(conn.from_socket) {
-                    let current = inputs.entry(conn.to_part).or_insert(0.0);
-                    *current = f32::max(*current, value);
+                // Find index of the output socket ID
+                if let Some(from_part) = module.parts.iter().find(|p| p.id == conn.from_part) {
+                    if let Some(idx) = from_part.outputs.iter().position(|s| s.id == conn.from_socket) {
+                        if let Some(&value) = values.get(idx) {
+                            let current = inputs.entry(conn.to_part).or_insert(0.0);
+                            *current = f32::max(*current, value);
+                        }
+                    }
                 }
             }
         }
@@ -199,10 +204,21 @@ impl ModuleEvaluator {
 
         for conn in &module.connections {
             if let Some(values) = trigger_values.get(&conn.from_part) {
-                if let Some(&value) = values.get(conn.from_socket) {
-                    let part_inputs = inputs.entry(conn.to_part).or_default();
-                    let current = part_inputs.entry(conn.to_socket).or_insert(0.0);
-                    *current = f32::max(*current, value);
+                // Look up source part to find output socket index
+                let from_part = module.parts.iter().find(|p| p.id == conn.from_part);
+                let to_part = module.parts.iter().find(|p| p.id == conn.to_part);
+
+                if let (Some(src), Some(dst)) = (from_part, to_part) {
+                    let from_idx = src.outputs.iter().position(|s| s.id == conn.from_socket);
+                    let to_idx = dst.inputs.iter().position(|s| s.id == conn.to_socket);
+
+                    if let (Some(f_idx), Some(t_idx)) = (from_idx, to_idx) {
+                        if let Some(&value) = values.get(f_idx) {
+                            let part_inputs = inputs.entry(conn.to_part).or_default();
+                            let current = part_inputs.entry(t_idx).or_insert(0.0);
+                            *current = f32::max(*current, value);
+                        }
+                    }
                 }
             }
         }

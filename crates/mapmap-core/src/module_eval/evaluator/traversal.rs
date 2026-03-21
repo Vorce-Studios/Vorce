@@ -90,16 +90,30 @@ impl ModuleEvaluator {
                         part.trigger_targets.len()
                     );
                 }
-                for (socket_idx, config) in &part.trigger_targets {
+                for (target_idx, config) in &part.trigger_targets {
+                    // Mappable socket index in the part's input vector
+                    let socket_idx = *target_idx;
+                    let socket_id = if let Some(s) = part.inputs.get(socket_idx) {
+                        &s.id
+                    } else {
+                        continue;
+                    };
+
                     // Find connection to this socket
                     let mut trigger_val = 0.0;
                     if let Some(conn_indices) = indices.conn_index_cache.get(&current_id) {
                         for &conn_idx in conn_indices {
                             let conn = &module.connections[conn_idx];
-                            if conn.to_socket == *socket_idx {
+                            if conn.to_socket == *socket_id {
                                 if let Some(from_values) = trigger_values.get(&conn.from_part) {
-                                    if let Some(val) = from_values.get(conn.from_socket) {
-                                        trigger_val = *val;
+                                    // Look up the value by finding the source socket ID's index
+                                    if let Some(&part_idx) = indices.part_index_cache.get(&conn.from_part) {
+                                        let src_part = &module.parts[part_idx];
+                                        if let Some(idx) = src_part.outputs.iter().position(|s| s.id == conn.from_socket) {
+                                            if let Some(val) = from_values.get(idx) {
+                                                trigger_val = *val;
+                                            }
+                                        }
                                     }
                                 }
                                 break;
@@ -108,7 +122,7 @@ impl ModuleEvaluator {
                     }
                     let val = self.apply_smoothing(
                         part.id,
-                        *socket_idx,
+                        socket_idx,
                         config.apply(trigger_val),
                         &config.mode,
                     );
@@ -277,28 +291,33 @@ impl ModuleEvaluator {
                             }
 
                             if let Some(mut props) = extracted_props {
-                                // Re-apply overrides since we just replaced with defaults
-                                // (This structure is slightly inefficient, re-doing logic)
-                                // Better: Apply overrides TO props.
+                                // Re-apply overrides
+                                for (target_idx, config) in &part.trigger_targets {
+                                    let socket_idx = *target_idx;
+                                    let socket_id = if let Some(s) = part.inputs.get(socket_idx) {
+                                        &s.id
+                                    } else {
+                                        continue;
+                                    };
 
-                                // .. Re-run target logic ..
-                                for (socket_idx, config) in &part.trigger_targets {
                                     // Find connection to this socket
                                     let mut trigger_val = 0.0;
-                                    // L556 replacement
                                     if let Some(conn_indices) =
                                         indices.conn_index_cache.get(&part.id)
                                     {
                                         for &conn_idx in conn_indices {
                                             let conn = &module.connections[conn_idx];
-                                            if conn.to_socket == *socket_idx {
+                                            if conn.to_socket == *socket_id {
                                                 if let Some(from_values) =
                                                     trigger_values.get(&conn.from_part)
                                                 {
-                                                    if let Some(val) =
-                                                        from_values.get(conn.from_socket)
-                                                    {
-                                                        trigger_val = *val;
+                                                    if let Some(&src_idx) = indices.part_index_cache.get(&conn.from_part) {
+                                                        let src_part = &module.parts[src_idx];
+                                                        if let Some(idx) = src_part.outputs.iter().position(|s| s.id == conn.from_socket) {
+                                                            if let Some(val) = from_values.get(idx) {
+                                                                trigger_val = *val;
+                                                            }
+                                                        }
                                                     }
                                                 }
                                                 break;
@@ -306,8 +325,7 @@ impl ModuleEvaluator {
                                         }
                                     }
 
-                                    // Apply config if value is significant (or if fixed/random mode which might trigger on 0?)
-                                    // Actually we just apply the mapping.
+                                    // Apply config if value is significant
                                     match &config.target {
                                         crate::module::TriggerTarget::None => {}
                                         target => {
@@ -315,14 +333,9 @@ impl ModuleEvaluator {
                                             let raw_final_val = config.apply(trigger_val);
                                             let final_val = self.apply_smoothing(
                                                 part.id,
-                                                *socket_idx,
+                                                socket_idx,
                                                 raw_final_val,
                                                 &config.mode,
-                                            );
-
-                                            tracing::debug!(
-                                                "Trigger applying: part={}, socket={}, target={:?}, raw={}, final={}",
-                                                part.id, socket_idx, target, trigger_val, final_val
                                             );
 
                                             match target {
@@ -394,10 +407,6 @@ impl ModuleEvaluator {
                     break;
                 }
             } else {
-                warn_once!(
-                    "trace_chain: Node {} not found in part_index, stopping traversal",
-                    current_id
-                );
                 break;
             }
         }

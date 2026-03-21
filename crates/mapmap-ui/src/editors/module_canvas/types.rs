@@ -8,10 +8,11 @@ use std::borrow::Cow;
 #[derive(Clone)]
 pub struct SocketInfo {
     pub part_id: ModulePartId,
+    pub socket_id: String,
     pub socket_idx: usize,
     pub is_output: bool,
     pub socket_type: ModuleSocketType,
-    /// 3D position coordinates [x, y, z].
+    /// Position in screen space.
     pub position: Pos2,
 }
 
@@ -20,7 +21,7 @@ pub type PresetPart = (
     (f32, f32),
     Option<(f32, f32)>,
 );
-pub type PresetConnection = (usize, usize, usize, usize); // from_idx, from_socket, to_idx, to_socket
+pub type PresetConnection = (usize, String, usize, String); // from_idx, from_socket_id, to_idx, to_socket_id
 
 /// A saved module preset/template
 #[derive(Debug, Clone)]

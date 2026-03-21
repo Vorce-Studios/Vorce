@@ -84,9 +84,9 @@ pub fn show(
         ui.centered_and_justified(|ui| {
             ui.vertical_centered(|ui| {
                 ui.add_space(50.0);
-                ui.heading("ðŸ”§ Module Canvas");
+                ui.heading("\u{1F527} Module Canvas");
                 ui.add_space(10.0);
-                ui.label("Click 'âž• New Module' to create a module.");
+                ui.label("Click '\u{2795} New Module' to create a module.");
                 ui.label("Please select an existing module from the toolbar above.");
             });
         });
@@ -243,6 +243,7 @@ pub fn render_canvas(
                 let pos = Pos2::new(part.position.0, y);
                 all_sockets.push(SocketInfo {
                     part_id: part.id,
+                    socket_id: socket.id.clone(),
                     socket_idx: i,
                     is_output: false,
                     socket_type: socket.socket_type,
@@ -255,6 +256,7 @@ pub fn render_canvas(
                 let pos = Pos2::new(part.position.0 + node_width, y);
                 all_sockets.push(SocketInfo {
                     part_id: part.id,
+                    socket_id: socket.id.clone(),
                     socket_idx: i,
                     is_output: true,
                     socket_type: socket.socket_type,
@@ -361,7 +363,7 @@ pub fn render_canvas(
                 if socket_resp.drag_started() {
                     canvas.creating_connection = Some((
                         part_id,
-                        socket_info.socket_idx,
+                        socket_info.socket_id.clone(),
                         socket_info.is_output,
                         socket_info.socket_type,
                         socket_info.position,
@@ -439,7 +441,7 @@ pub fn render_canvas(
         }
 
         if ui.input(|i| i.pointer.any_released()) {
-            if let Some((from_part, from_idx, is_output, _from_type, _)) =
+            if let Some((from_part, from_id, is_output, _from_type, _)) =
                 canvas.creating_connection.take()
             {
                 if let Some(pointer_pos) = ui.input(|i| i.pointer.hover_pos()) {
@@ -458,14 +460,14 @@ pub fn render_canvas(
                     }
 
                     if let Some(target) = closest_socket {
-                        let (out_part, out_idx, in_part, in_idx) = if is_output {
-                            (from_part, from_idx, target.part_id, target.socket_idx)
+                        let (out_part, out_id, in_part, in_id) = if is_output {
+                            (from_part, from_id, target.part_id, target.socket_id.clone())
                         } else {
-                            (target.part_id, target.socket_idx, from_part, from_idx)
+                            (target.part_id, target.socket_id.clone(), from_part, from_id)
                         };
 
                         if module
-                            .connect_parts(out_part, out_idx, in_part, in_idx)
+                            .connect_parts(out_part, out_id, in_part, in_id)
                             .unwrap_or(false)
                         {
                             module_changed = true;
@@ -513,7 +515,7 @@ pub fn render_canvas(
             needs_repair = true;
         }
 
-        if let Some((from_part_id, from_idx, from_is_output, ref from_type, start_pos)) =
+        if let Some((from_part_id, ref from_id, from_is_output, ref from_type, start_pos)) =
             canvas.creating_connection
         {
             if let Some(pointer_pos) = ui.input(|i| i.pointer.hover_pos()) {
@@ -523,13 +525,13 @@ pub fn render_canvas(
                         let is_valid = if socket.part_id != from_part_id
                             && socket.is_output != from_is_output
                         {
-                            let (out_part, out_idx, in_part, in_idx) = if from_is_output {
-                                (from_part_id, from_idx, socket.part_id, socket.socket_idx)
+                            let (out_part, out_id, in_part, in_id) = if from_is_output {
+                                (from_part_id, from_id.clone(), socket.part_id, socket.socket_id.clone())
                             } else {
-                                (socket.part_id, socket.socket_idx, from_part_id, from_idx)
+                                (socket.part_id, socket.socket_id.clone(), from_part_id, from_id.clone())
                             };
                             module
-                                .validate_connection(out_part, out_idx, in_part, in_idx)
+                                .validate_connection(out_part, out_id, in_part, in_id)
                                 .is_ok()
                         } else {
                             false
@@ -612,7 +614,7 @@ pub fn render_canvas(
                         ui.vertical(|ui| {
                             if crate::widgets::custom::hold_to_action_button(
                                 ui,
-                                "ðŸ—‘ Delete Connection",
+                                "\u{1F5D1} Delete Connection",
                                 crate::theme::colors::ERROR_COLOR,
                                 "Delete Connection",
                             ) {

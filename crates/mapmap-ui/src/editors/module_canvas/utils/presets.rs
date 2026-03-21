@@ -38,7 +38,10 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
             ],
-            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0)],
+            connections: vec![
+                (0, "trigger_out".to_string(), 1, "trigger_in".to_string()),
+                (1, "media_out".to_string(), 2, "layer_in".to_string())
+            ],
         },
         ModulePreset {
             name: "Effect Chain".to_string(),
@@ -80,7 +83,11 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
             ],
-            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0), (2, 0, 3, 0)],
+            connections: vec![
+                (0, "trigger_out".to_string(), 1, "trigger_in".to_string()),
+                (1, "media_out".to_string(), 2, "media_in".to_string()),
+                (2, "media_out".to_string(), 3, "layer_in".to_string())
+            ],
         },
         ModulePreset {
             name: "Audio Reactive".to_string(),
@@ -126,7 +133,11 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
             ],
-            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0), (2, 0, 3, 0), (3, 0, 4, 0)],
+            connections: vec![
+                (0, "trigger_out".to_string(), 1, "trigger_in".to_string()),
+                (1, "media_out".to_string(), 2, "media_in".to_string()),
+                (2, "media_out".to_string(), 3, "layer_in".to_string())
+            ],
         },
         ModulePreset {
             name: "Masked Media".to_string(),
@@ -165,7 +176,11 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
             ],
-            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0), (2, 0, 3, 0)],
+            connections: vec![
+                (0, "trigger_out".to_string(), 1, "trigger_in".to_string()),
+                (1, "media_out".to_string(), 2, "media_in".to_string()),
+                (2, "media_out".to_string(), 3, "layer_in".to_string())
+            ],
         },
         ModulePreset {
             name: "NDI Source".to_string(),
@@ -199,7 +214,10 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
             ],
-            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0)],
+            connections: vec![
+                (0, "trigger_out".to_string(), 1, "trigger_in".to_string()),
+                (1, "media_out".to_string(), 2, "layer_in".to_string())
+            ],
         },
         ModulePreset {
             name: "NDI Output".to_string(),
@@ -222,7 +240,10 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
             ],
-            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0)],
+            connections: vec![
+                (0, "trigger_out".to_string(), 1, "trigger_in".to_string()),
+                (1, "media_out".to_string(), 2, "layer_in".to_string())
+            ],
         },
         #[cfg(target_os = "windows")]
         ModulePreset {
@@ -259,7 +280,10 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
             ],
-            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0)],
+            connections: vec![
+                (0, "trigger_out".to_string(), 1, "trigger_in".to_string()),
+                (1, "media_out".to_string(), 2, "layer_in".to_string())
+            ],
         },
         #[cfg(target_os = "windows")]
         ModulePreset {
@@ -284,7 +308,10 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
             ],
-            connections: vec![(0, 0, 1, 0), (1, 0, 2, 0)],
+            connections: vec![
+                (0, "trigger_out".to_string(), 1, "trigger_in".to_string()),
+                (1, "media_out".to_string(), 2, "layer_in".to_string())
+            ],
         },
     ]
 }

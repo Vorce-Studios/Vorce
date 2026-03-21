@@ -1,9 +1,8 @@
 use super::super::state::ModuleCanvas;
-use super::super::types::MediaPlaybackCommand;
 use super::capabilities;
 use crate::widgets::{styled_drag_value, styled_slider};
 use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
-use mapmap_core::module::{BlendModeType, ModuleId, ModulePartId, OutputType};
+use mapmap_core::module::{BlendModeType, ModulePartId};
 
 /// Standardized informational label, used as an explicit fallback when no active preview is available.
 pub fn render_info_label(ui: &mut Ui, text: &str) {
@@ -20,28 +19,23 @@ pub fn render_missing_preview_banner(ui: &mut Ui, text: &str) {
 pub fn render_transport_controls(
     _canvas: &mut ModuleCanvas,
     ui: &mut Ui,
-    part_id: ModulePartId,
+    _part_id: ModulePartId,
     is_playing: bool,
     _current_pos: f32,
     _loop_enabled: bool,
     _reverse_playback: bool,
 ) {
     ui.horizontal(|ui| {
-        let play_btn = if is_playing {
+        let _play_btn = if is_playing {
             ui.button("⏸ Pause")
         } else {
             ui.button("▶ Play")
         };
 
-        if play_btn.clicked() {
-            // Actions handled in calling context
-        }
-
         if ui.button("⏮").clicked() {
             // Seek to start
         }
     });
-    let _ = part_id;
 }
 
 pub fn render_timeline(
@@ -144,8 +138,8 @@ pub fn render_common_controls(
                 .show(ui, |ui| {
                     ui.label("Scale:");
                     ui.horizontal(|ui| {
-                        styled_drag_value(ui, scale_x, 0.01, 0.0..=10.0, "X: ");
-                        styled_drag_value(ui, scale_y, 0.01, 0.0..=10.0, "Y: ");
+                        styled_drag_value(ui, scale_x, 0.01, 0.0..=10.0, 1.0, "X: ", "");
+                        styled_drag_value(ui, scale_y, 0.01, 0.0..=10.0, 1.0, "Y: ", "");
                     });
                     ui.end_row();
 
@@ -155,8 +149,8 @@ pub fn render_common_controls(
 
                     ui.label("Offset:");
                     ui.horizontal(|ui| {
-                        styled_drag_value(ui, offset_x, 0.01, -1.0..=1.0, "X: ");
-                        styled_drag_value(ui, offset_y, 0.01, -1.0..=1.0, "Y: ");
+                        styled_drag_value(ui, offset_x, 0.01, -1.0..=1.0, 0.0, "X: ", "");
+                        styled_drag_value(ui, offset_y, 0.01, -1.0..=1.0, 0.0, "Y: ", "");
                     });
                     ui.end_row();
 
@@ -186,7 +180,7 @@ pub fn render_hue_spatial_editor(
 
     // Draw reference screen
     let screen_rect = Rect::from_center_size(rect.center(), Vec2::new(size * 0.6, size * 0.4));
-    painter.rect_stroke(screen_rect, 2.0, Stroke::new(1.0, Color32::WHITE), egui::PaintStep::Final);
+    painter.rect_stroke(screen_rect, 2.0, Stroke::new(1.0, Color32::WHITE), egui::StrokeKind::Inside);
     painter.text(
         screen_rect.center(),
         egui::Align2::CENTER_CENTER,

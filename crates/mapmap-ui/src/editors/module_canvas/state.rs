@@ -32,8 +32,8 @@ pub struct ModuleCanvas {
     pub resizing_part: Option<(ModulePartId, (f32, f32))>,
     /// Box selection start position (screen coords)
     pub box_select_start: Option<Pos2>,
-    /// Connection being created: (from_part, from_socket_idx, is_output, socket_type, start_pos)
-    pub creating_connection: Option<(ModulePartId, usize, bool, ModuleSocketType, Pos2)>,
+    /// Connection being created: (from_part, from_socket_id, is_output, socket_type, start_pos)
+    pub creating_connection: Option<(ModulePartId, String, bool, ModuleSocketType, Pos2)>,
     /// Part ID pending deletion (set when X button clicked)
     pub pending_delete: Option<ModulePartId>,
     /// Selected parts for multi-select and copy/paste

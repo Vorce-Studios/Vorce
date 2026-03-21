@@ -3,7 +3,7 @@
 //! Traverses the module graph and computes output values.
 //! This handles the full pipeline: Trigger -> Source -> Mask -> Effect -> Layer(Mesh) -> Output.
 
-use crate::module::{MapFlowModule, ModulePartId};
+use crate::module::{MapFlowModule, ModulePartId, ModulePartType};
 use std::collections::HashMap;
 
 /// State for individual trigger nodes, stored in the evaluator
@@ -85,11 +85,26 @@ pub fn primary_render_connection_idx(
     indices: &ModuleGraphIndices,
     part_id: ModulePartId,
 ) -> Option<usize> {
+    // 1. Determine target socket name for the part type
+    let target_id = if let Some(&part_idx) = indices.part_index_cache.get(&part_id) {
+        let part = &module.parts[part_idx];
+        match &part.part_type {
+            ModulePartType::Output(_) => "layer_in",
+            ModulePartType::Layer(_) => "media_in",
+            ModulePartType::Modulizer(_) => "media_in",
+            ModulePartType::Mask(_) => "media_in",
+            ModulePartType::Mesh(_) => "vertex_in",
+            _ => "0", // Fallback for legacy / unknown
+        }
+    } else {
+        return None;
+    };
+
+    // 2. Find connection targeting that socket
     indices
         .conn_index_cache
         .get(&part_id)?
         .iter()
         .copied()
-        // Socket 0 is the primary visual input of the render chain.
-        .find(|&conn_idx| module.connections[conn_idx].to_socket == 0)
+        .find(|&conn_idx| module.connections[conn_idx].to_socket == target_id)
 }

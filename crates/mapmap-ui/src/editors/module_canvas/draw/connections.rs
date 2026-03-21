@@ -31,10 +31,13 @@ where
         let to_part = module.parts.iter().find(|p| p.id == conn.to_part);
 
         if let (Some(from), Some(to)) = (from_part, to_part) {
-            let socket_type = if let Some(socket) = from.outputs.get(conn.from_socket) {
-                &socket.socket_type
-            } else if let Some(socket) = to.inputs.get(conn.to_socket) {
-                &socket.socket_type
+            let from_socket_idx = from.outputs.iter().position(|s| s.id == conn.from_socket);
+            let to_socket_idx = to.inputs.iter().position(|s| s.id == conn.to_socket);
+
+            let socket_type = if let Some(idx) = from_socket_idx {
+                &from.outputs[idx].socket_type
+            } else if let Some(idx) = to_socket_idx {
+                &to.inputs[idx].socket_type
             } else {
                 &mapmap_core::module::ModuleSocketType::Media
             };
@@ -42,14 +45,14 @@ where
 
             let from_local_y = title_height
                 + socket_offset_y
-                + conn.from_socket as f32 * socket_spacing
+                + from_socket_idx.unwrap_or(0) as f32 * socket_spacing
                 + socket_spacing / 2.0;
             let from_socket_world =
                 Pos2::new(from.position.0 + node_width, from.position.1 + from_local_y);
 
             let to_local_y = title_height
                 + socket_offset_y
-                + conn.to_socket as f32 * socket_spacing
+                + to_socket_idx.unwrap_or(0) as f32 * socket_spacing
                 + socket_spacing / 2.0;
             let to_socket_world = Pos2::new(to.position.0, to.position.1 + to_local_y);
 
