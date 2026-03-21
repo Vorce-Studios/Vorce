@@ -82,27 +82,6 @@ pub fn render_add_node_menu_content(
                 )));
                 ui.close();
             }
-            if ui.button("\u{1F3A8} Shader").clicked() {
-                add_node(ModulePartType::Source(SourceType::Shader {
-                    name: "Default".to_string(),
-                    params: Vec::new(),
-                }));
-                ui.close();
-            }
-            #[cfg(feature = "ndi")]
-            if ui.button("\u{1F4E1} NDI Input").clicked() {
-                add_node(ModulePartType::Source(SourceType::NdiInput {
-                    source_name: None,
-                }));
-                ui.close();
-            }
-            #[cfg(target_os = "windows")]
-            if ui.button("\u{1F6B0} Spout Input").clicked() {
-                add_node(ModulePartType::Source(SourceType::SpoutInput {
-                    sender_name: String::new(),
-                }));
-                ui.close();
-            }
             ui.separator();
             ui.label("Bevy 3D:");
             if ui.button("📝 3D Text").clicked() {
@@ -195,6 +174,23 @@ pub fn render_add_node_menu_content(
                     blend_mode: None,
                     mesh: mapmap_core::module::MeshType::default(),
                     mapping_mode: false,
+                }));
+                ui.close();
+            }
+            if ui.button("📁 Layer Group").clicked() {
+                add_node(ModulePartType::Layer(LayerType::Group {
+                    name: "New Group".to_string(),
+                    opacity: 1.0,
+                    blend_mode: None,
+                    mesh: mapmap_core::module::MeshType::default(),
+                    mapping_mode: false,
+                }));
+                ui.close();
+            }
+            if ui.button("\u{1F4D1} All Layers").clicked() {
+                add_node(ModulePartType::Layer(LayerType::All {
+                    opacity: 1.0,
+                    blend_mode: None,
                 }));
                 ui.close();
             }
