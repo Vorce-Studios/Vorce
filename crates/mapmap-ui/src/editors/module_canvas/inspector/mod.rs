@@ -166,7 +166,7 @@ pub fn render_standard_texture_preview(
     if let Some(&texture_id) = canvas.node_previews.get(&(module_id, part_id)) {
         render_preview_texture(ui, texture_id, "Live node preview");
     } else {
-        common::render_missing_preview_banner(ui);
+        common::render_missing_preview_banner(ui, "No preview available yet.");
     }
 }
 
@@ -195,7 +195,7 @@ pub fn render_output_texture_preview(
     }
 
     if !preview_found {
-        common::render_missing_preview_banner(ui);
+        common::render_missing_preview_banner(ui, "No preview available yet.");
     }
 }
 
@@ -223,8 +223,8 @@ pub fn render_layer_preview_panel(
         return;
     }
 
+    render_inspector_preview_toggle(canvas, ui);
     if !canvas.show_inspector_previews {
-        ui.label("Inspector preview is disabled.");
         return;
     }
 
@@ -256,7 +256,7 @@ pub fn render_layer_preview_panel(
     }
 
     ui.group(|ui| {
-        common::render_info_label(ui, "No preview available yet.");
+        common::render_missing_preview_banner(ui, "No preview available yet.");
         if preview_context.output_ids.is_empty() {
             ui.small("This layer is not linked to a projector output yet.");
         } else {
@@ -307,6 +307,10 @@ pub fn render_inspector_for_part(
 
             match &mut part.part_type {
                 ModulePartType::Trigger(trigger) => {
+                    render_trigger_preview(canvas, ui, part_id, |ui, _val, _live| {
+                        trigger::render_trigger_preview_extra(ui, trigger);
+                    });
+                    ui.separator();
                     trigger::render_trigger_ui(canvas, ui, trigger, part_id);
                 }
                 ModulePartType::Source(source) => {
@@ -333,8 +337,8 @@ pub fn render_inspector_for_part(
                     effect::render_effect_ui(ui, mod_type, part_id);
                 }
                 ModulePartType::Layer(layer) => {
-                    render_inspector_preview_toggle(canvas, ui);
                     render_layer_preview_panel(canvas, ui, module_id, part_id, preview_context);
+                    ui.separator();
                     layer::render_layer_ui(canvas, mesh_editor, last_mesh_edit_id, ui, layer, part_id);
                 }
                 ModulePartType::Mesh(mesh) => {
