@@ -65,7 +65,12 @@ pub fn is_source_type_enum_supported(
         return false;
     }
 
-    !(is_shader || is_live_input || is_ndi)
+    #[cfg(not(target_os = "windows"))]
+    if is_spout {
+        return false;
+    }
+
+    !(is_shader || is_live_input || is_ndi || is_spout)
 }
 
 /// Helper that checks if an output type is fully supported
