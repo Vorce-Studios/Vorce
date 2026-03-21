@@ -90,7 +90,12 @@ fn test_trigger_target_range_mapping() {
 
     // CONNECTIONS:
     // Trigger -> Source Trigger In (Socket 0)
-    module.add_connection(t_id, "trigger_out".to_string(), s_id, "trigger_in".to_string());
+    module.add_connection(
+        t_id,
+        "trigger_out".to_string(),
+        s_id,
+        "trigger_in".to_string(),
+    );
     // Source -> Layer Input (Socket 0)
     module.add_connection(s_id, "media_out".to_string(), l_id, "media_in".to_string());
     // Layer -> Output Input (Socket 0)

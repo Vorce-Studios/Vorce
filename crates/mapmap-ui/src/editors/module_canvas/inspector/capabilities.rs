@@ -44,10 +44,17 @@ pub fn is_mask_supported() -> bool {
     false // masks currently ignored in final render according to DOC-C10
 }
 
+/// Determines if exposing the blend-mode node makes sense for the current runtime.
+pub fn has_advanced_blend_mode_support() -> bool {
+    BlendModeType::all()
+        .iter()
+        .any(|mode| !matches!(mode, BlendModeType::Normal) && is_blend_mode_supported(mode))
+}
+
 /// Renders a standardized unsupported warning label for UI gating.
 pub fn render_unsupported_warning(ui: &mut egui::Ui, text: &str) {
     ui.label(
-        egui::RichText::new(format!("⚠ {}", text))
+        egui::RichText::new(format!("[!] {}", text))
             .color(crate::theme::colors::WARN_COLOR)
             .small(),
     );

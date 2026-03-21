@@ -732,7 +732,12 @@ mod evaluator_tests {
 
         // 2. Source (Target)
         let s_id = module.add_part(crate::module::PartType::Source, (200.0, 0.0));
-        module.add_connection(t_id, "trigger_out".to_string(), s_id, "trigger_in".to_string()); // Trigger Out -> Source Trigger In
+        module.add_connection(
+            t_id,
+            "trigger_out".to_string(),
+            s_id,
+            "trigger_in".to_string(),
+        ); // Trigger Out -> Source Trigger In
 
         let shared = crate::module::SharedMediaState::default();
         let _result = evaluator.evaluate(&module, &shared, 0);
@@ -753,7 +758,12 @@ mod evaluator_tests {
         assert!(result.source_commands.contains_key(&s_id));
 
         // Now remove connection
-        module.remove_connection(t_id, "trigger_out".to_string(), s_id, "trigger_in".to_string());
+        module.remove_connection(
+            t_id,
+            "trigger_out".to_string(),
+            s_id,
+            "trigger_in".to_string(),
+        );
 
         let result = evaluator.evaluate(&module, &shared, 1);
 
@@ -791,7 +801,12 @@ mod evaluator_tests {
         let o_id = module.add_part(crate::module::PartType::Output, (300.0, 0.0));
 
         // Connections
-        module.add_connection(t_id, "trigger_out".to_string(), s_id, "trigger_in".to_string());
+        module.add_connection(
+            t_id,
+            "trigger_out".to_string(),
+            s_id,
+            "trigger_in".to_string(),
+        );
         module.add_connection(s_id, "media_out".to_string(), l_id, "media_in".to_string());
         module.add_connection(l_id, "layer_out".to_string(), o_id, "layer_in".to_string());
 
@@ -839,7 +854,12 @@ mod evaluator_tests {
 
         // Repro: if the trigger connection is inserted first, the render trace must
         // still follow layer socket 0 (visual chain) rather than socket 1 (trigger).
-        module.add_connection(t_id, "trigger_out".to_string(), l_id, "trigger_in".to_string());
+        module.add_connection(
+            t_id,
+            "trigger_out".to_string(),
+            l_id,
+            "trigger_in".to_string(),
+        );
         module.add_connection(s_id, "media_out".to_string(), l_id, "media_in".to_string());
         module.add_connection(l_id, "layer_out".to_string(), o_id, "layer_in".to_string());
 
@@ -894,7 +914,12 @@ mod evaluator_tests {
         );
 
         // Connect Driving Trigger -> Master Trigger In (Vis)
-        module.add_connection(t_id, "trigger_out".to_string(), m_id, "trigger_vis_in".to_string());
+        module.add_connection(
+            t_id,
+            "trigger_out".to_string(),
+            m_id,
+            "trigger_vis_in".to_string(),
+        );
 
         // Slave Node (Layer)
         let s_id = module.add_part(crate::module::PartType::Layer, (100.0, 0.0));

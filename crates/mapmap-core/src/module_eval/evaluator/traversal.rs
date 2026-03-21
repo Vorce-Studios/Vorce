@@ -107,9 +107,15 @@ impl ModuleEvaluator {
                             if conn.to_socket == *socket_id {
                                 if let Some(from_values) = trigger_values.get(&conn.from_part) {
                                     // Look up the value by finding the source socket ID's index
-                                    if let Some(&part_idx) = indices.part_index_cache.get(&conn.from_part) {
+                                    if let Some(&part_idx) =
+                                        indices.part_index_cache.get(&conn.from_part)
+                                    {
                                         let src_part = &module.parts[part_idx];
-                                        if let Some(idx) = src_part.outputs.iter().position(|s| s.id == conn.from_socket) {
+                                        if let Some(idx) = src_part
+                                            .outputs
+                                            .iter()
+                                            .position(|s| s.id == conn.from_socket)
+                                        {
                                             if let Some(val) = from_values.get(idx) {
                                                 trigger_val = *val;
                                             }
@@ -311,10 +317,18 @@ impl ModuleEvaluator {
                                                 if let Some(from_values) =
                                                     trigger_values.get(&conn.from_part)
                                                 {
-                                                    if let Some(&src_idx) = indices.part_index_cache.get(&conn.from_part) {
+                                                    if let Some(&src_idx) = indices
+                                                        .part_index_cache
+                                                        .get(&conn.from_part)
+                                                    {
                                                         let src_part = &module.parts[src_idx];
-                                                        if let Some(idx) = src_part.outputs.iter().position(|s| s.id == conn.from_socket) {
-                                                            if let Some(val) = from_values.get(idx) {
+                                                        if let Some(idx) = src_part
+                                                            .outputs
+                                                            .iter()
+                                                            .position(|s| s.id == conn.from_socket)
+                                                        {
+                                                            if let Some(val) = from_values.get(idx)
+                                                            {
                                                                 trigger_val = *val;
                                                             }
                                                         }

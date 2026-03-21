@@ -24,7 +24,7 @@ MapFlow excels at mapping video onto complex physical surfaces.
 A robust media engine ensures smooth playback of high-resolution content.
 
 *   **Wide Format Support**: Playback of H.264, H.265 (HEVC), VP8, VP9, and ProRes video.
-*   **HAP Codec**: Native support for the HAP codec family for high-performance, GPU-accelerated playback.
+*   **HAP Codec**: Experimental support exists, but the HAP playback path is not yet the default production media pipeline on all setups.
 *   **Image Sequences**: Support for folders of images (PNG, JPG) played back as video.
 *   **GIF Animation**: Full support for animated GIFs with variable frame delays.
 
@@ -50,13 +50,13 @@ MapFlow integrates seamlessly with your hardware and software setup.
 
 *   **MIDI**: Full two-way MIDI support. Map knobs and faders to any parameter. Includes presets for popular controllers (e.g., Ecler NUO 4).
 *   **OSC**: Open Sound Control support for remote control from tablets or other software.
-*   **NDI**: Send and receive high-quality video over the network.
-*   **Spout / Syphon**: Share textures in real-time with other applications on the same computer (Spout on Windows, Syphon on macOS).
+*   **NDI**: Feature-gated network video support. Output/runtime coverage exists, but not every input/output path is production-ready on every build.
+*   **Spout / Syphon**: Platform-specific interop support. Availability and runtime coverage depend on OS/build features and should currently be treated as advanced/experimental.
 
 ## 7. Multi-Output Support
 
 *   **Multiple Displays**: Drive multiple projectors or screens from a single computer.
-*   **Virtual Outputs**: Output to NDI or Spout for recording or streaming.
+*   **Virtual Outputs**: Physical projector/display outputs are the stable path. Virtual outputs such as NDI or Spout depend on enabled features and platform/runtime support.
 *   **Color Calibration**: Fine-tune color and gamma for each output independently.
 
 ## 8. Bevy Particles Node

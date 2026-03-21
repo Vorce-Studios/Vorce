@@ -526,9 +526,19 @@ pub fn render_canvas(
                             && socket.is_output != from_is_output
                         {
                             let (out_part, out_id, in_part, in_id) = if from_is_output {
-                                (from_part_id, from_id.clone(), socket.part_id, socket.socket_id.clone())
+                                (
+                                    from_part_id,
+                                    from_id.clone(),
+                                    socket.part_id,
+                                    socket.socket_id.clone(),
+                                )
                             } else {
-                                (socket.part_id, socket.socket_id.clone(), from_part_id, from_id.clone())
+                                (
+                                    socket.part_id,
+                                    socket.socket_id.clone(),
+                                    from_part_id,
+                                    from_id.clone(),
+                                )
                             };
                             module
                                 .validate_connection(out_part, out_id, in_part, in_id)

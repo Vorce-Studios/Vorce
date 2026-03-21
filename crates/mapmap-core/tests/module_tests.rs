@@ -185,12 +185,22 @@ fn test_add_remove_connection() {
     let pid1 = module.add_part(PartType::Trigger, (0.0, 0.0));
     let pid2 = module.add_part(PartType::Source, (100.0, 0.0));
 
-    module.add_connection(pid1, "trigger_out".to_string(), pid2, "trigger_in".to_string());
+    module.add_connection(
+        pid1,
+        "trigger_out".to_string(),
+        pid2,
+        "trigger_in".to_string(),
+    );
     assert_eq!(module.connections.len(), 1);
     assert_eq!(module.connections[0].from_part, pid1);
     assert_eq!(module.connections[0].to_part, pid2);
 
-    module.remove_connection(pid1, "trigger_out".to_string(), pid2, "trigger_in".to_string());
+    module.remove_connection(
+        pid1,
+        "trigger_out".to_string(),
+        pid2,
+        "trigger_in".to_string(),
+    );
     assert!(module.connections.is_empty());
 }
 
@@ -208,7 +218,12 @@ fn test_update_part_sockets() {
 
     let pid1 = module.add_part(PartType::Trigger, (0.0, 0.0));
     let pid2 = module.add_part(PartType::Source, (100.0, 0.0));
-    module.add_connection(pid1, "trigger_out".to_string(), pid2, "trigger_in".to_string());
+    module.add_connection(
+        pid1,
+        "trigger_out".to_string(),
+        pid2,
+        "trigger_in".to_string(),
+    );
 
     // For now just test it doesn't crash on normal update and keeps valid connections
     module.update_part_sockets(pid1);

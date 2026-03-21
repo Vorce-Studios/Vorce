@@ -10,7 +10,7 @@ Run the application (`mapflow` or `mapflow.exe`). You will see the **Dashboard**
 
 1.  Locate the **Media Browser** panel (usually on the left).
 2.  Click **"Import"** or drag-and-drop video/image files into the browser area.
-3.  Supported formats: `.mp4`, `.mov` (HAP/ProRes), `.png`, `.jpg`, `.gif`.
+3.  Supported formats: `.mp4`, `.mov` (ProRes; HAP currently experimental), `.png`, `.jpg`, `.gif`.
 
 ## 3. Create a Projection Surface
 
@@ -29,6 +29,7 @@ Run the application (`mapflow` or `mapflow.exe`). You will see the **Dashboard**
 1.  Create a **Projector Node** (Right-click > Add Node > Output > Projector).
 2.  Connect the **Layer Out** socket of your Layer Node to the **Layer In** socket of the Projector Node.
 3.  The video should now appear in the Preview Window!
+4.  Start with projector/display output for first tests. Virtual outputs such as NDI/Spout depend on enabled features and are not the baseline path.
 
 ## Next Steps
 

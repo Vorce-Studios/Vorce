@@ -1,7 +1,9 @@
 use super::super::state::ModuleCanvas;
 use super::super::types::MediaPlaybackCommand;
 use super::capabilities;
-use super::common::{render_common_controls, render_info_label, render_timeline, render_transport_controls};
+use super::common::{
+    render_common_controls, render_info_label, render_timeline, render_transport_controls,
+};
 use crate::theme::colors;
 use crate::widgets::styled_slider;
 use crate::UIAction;
@@ -1105,9 +1107,9 @@ pub fn render_source_ui(
                     );
                     ui.add(
                         egui::DragValue::new(&mut rotation[1])
-                        .speed(1.0)
-                        .prefix("Y: ")
-                        .suffix("°"),
+                            .speed(1.0)
+                            .prefix("Y: ")
+                            .suffix("°"),
                     );
                     ui.add(
                         egui::DragValue::new(&mut rotation[2])

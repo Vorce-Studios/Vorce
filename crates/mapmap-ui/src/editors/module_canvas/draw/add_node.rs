@@ -1,4 +1,4 @@
-use super::super::utils;
+use super::super::{inspector::capabilities, utils};
 use egui::Ui;
 use mapmap_core::module::{
     BevyCameraMode, BlendModeType, EffectType, HueNodeType, LayerType, MaskShape, MaskType,
@@ -18,18 +18,28 @@ pub fn render_add_node_menu_content(
     };
 
     if let Some(module) = &mut module {
+        let shader_supported =
+            capabilities::is_source_type_enum_supported(true, false, false, false);
+
+        #[cfg(feature = "ndi")]
+        let ndi_supported = capabilities::is_source_type_enum_supported(false, false, true, false);
+
+        #[cfg(target_os = "windows")]
+        let spout_supported =
+            capabilities::is_source_type_enum_supported(false, false, false, true);
+
         let mut add_node = |part_type: ModulePartType| {
             let preferred_pos = pos_override.unwrap_or((200.0, 200.0));
             let pos = utils::find_free_position(&module.parts, preferred_pos);
             module.add_part_with_type(part_type, pos);
         };
 
-        ui.menu_button("\u{26A1} Triggers", |ui| {
+        ui.menu_button("⚡ Triggers", |ui| {
             if ui.button("🥁 Beat").clicked() {
                 add_node(ModulePartType::Trigger(TriggerType::Beat));
                 ui.close();
             }
-            if ui.button("\u{1F50A} Audio FFT").clicked() {
+            if ui.button("🔊 Audio FFT").clicked() {
                 add_node(ModulePartType::Trigger(TriggerType::AudioFFT {
                     band: mapmap_core::module::AudioBand::Bass,
                     threshold: 0.5,
@@ -37,7 +47,7 @@ pub fn render_add_node_menu_content(
                 }));
                 ui.close();
             }
-            if ui.button("\u{1F3B2} Random").clicked() {
+            if ui.button("🎲 Random").clicked() {
                 add_node(ModulePartType::Trigger(TriggerType::Random {
                     min_interval_ms: 500,
                     max_interval_ms: 2000,
@@ -52,7 +62,7 @@ pub fn render_add_node_menu_content(
                 }));
                 ui.close();
             }
-            if ui.button("\u{1F3B9} MIDI").clicked() {
+            if ui.button("🎹 MIDI").clicked() {
                 add_node(ModulePartType::Trigger(TriggerType::Midi {
                     channel: 1,
                     note: 60,
@@ -60,7 +70,7 @@ pub fn render_add_node_menu_content(
                 }));
                 ui.close();
             }
-            if ui.button("\u{1F4E1} OSC").clicked() {
+            if ui.button("📡 OSC").clicked() {
                 add_node(ModulePartType::Trigger(TriggerType::Osc {
                     address: "/trigger".to_string(),
                 }));
@@ -75,36 +85,41 @@ pub fn render_add_node_menu_content(
             }
         });
 
-        ui.menu_button("\u{1F4F9} Sources", |ui| {
+        ui.menu_button("📹 Sources", |ui| {
             if ui.button("📁 Media File").clicked() {
                 add_node(ModulePartType::Source(SourceType::new_media_file(
                     String::new(),
                 )));
                 ui.close();
             }
-            if ui.button("\u{1F3A8} Shader").clicked() {
+
+            if shader_supported && ui.button("🎨 Shader").clicked() {
                 add_node(ModulePartType::Source(SourceType::Shader {
                     name: "Default".to_string(),
                     params: Vec::new(),
                 }));
                 ui.close();
             }
+
             #[cfg(feature = "ndi")]
-            if ui.button("\u{1F4E1} NDI Input").clicked() {
+            if ndi_supported && ui.button("📡 NDI Input").clicked() {
                 add_node(ModulePartType::Source(SourceType::NdiInput {
                     source_name: None,
                 }));
                 ui.close();
             }
+
             #[cfg(target_os = "windows")]
-            if ui.button("\u{1F6B0} Spout Input").clicked() {
+            if spout_supported && ui.button("🚰 Spout Input").clicked() {
                 add_node(ModulePartType::Source(SourceType::SpoutInput {
                     sender_name: String::new(),
                 }));
                 ui.close();
             }
+
             ui.separator();
             ui.label("Bevy 3D:");
+
             if ui.button("📝 3D Text").clicked() {
                 add_node(ModulePartType::Source(SourceType::Bevy3DText {
                     text: "Hello 3D".to_string(),
@@ -116,7 +131,8 @@ pub fn render_add_node_menu_content(
                 }));
                 ui.close();
             }
-            if ui.button("\u{1F9CA} 3D Shape").clicked() {
+
+            if ui.button("🧊 3D Shape").clicked() {
                 add_node(ModulePartType::Source(SourceType::Bevy3DShape {
                     shape_type: mapmap_core::module::BevyShapeType::Cube,
                     position: [0.0, 0.0, 0.0],
@@ -129,7 +145,8 @@ pub fn render_add_node_menu_content(
                 }));
                 ui.close();
             }
-            if ui.button("\u{1F3A5} Camera").clicked() {
+
+            if ui.button("📹 Camera").clicked() {
                 add_node(ModulePartType::Source(SourceType::BevyCamera {
                     mode: BevyCameraMode::Orbit {
                         radius: 10.0,
@@ -144,28 +161,34 @@ pub fn render_add_node_menu_content(
             }
         });
 
-        ui.menu_button("\u{1F3AD} Masks", |ui| {
-            if ui.button("\u{2B55} Shape").clicked() {
-                add_node(ModulePartType::Mask(MaskType::Shape(MaskShape::Circle)));
-                ui.close();
-            }
-            if ui.button("\u{1F308} Gradient").clicked() {
-                add_node(ModulePartType::Mask(MaskType::Gradient {
-                    angle: 0.0,
-                    softness: 0.5,
-                }));
-                ui.close();
-            }
-        });
+        if capabilities::is_mask_supported() {
+            ui.menu_button("🎭 Masks", |ui| {
+                if ui.button("⭕ Shape").clicked() {
+                    add_node(ModulePartType::Mask(MaskType::Shape(MaskShape::Circle)));
+                    ui.close();
+                }
+                if ui.button("🌈 Gradient").clicked() {
+                    add_node(ModulePartType::Mask(MaskType::Gradient {
+                        angle: 0.0,
+                        softness: 0.5,
+                    }));
+                    ui.close();
+                }
+            });
+        }
 
         ui.menu_button("🎛️ Modulators", |ui| {
-            if ui.button("🎚️ Blend Mode").clicked() {
+            if capabilities::has_advanced_blend_mode_support()
+                && ui.button("🎚️ Blend Mode").clicked()
+            {
                 add_node(ModulePartType::Modulizer(ModulizerType::BlendMode(
                     BlendModeType::Normal,
                 )));
                 ui.close();
             }
+
             ui.separator();
+
             for effect in [
                 EffectType::LoadLUT,
                 EffectType::Blur,
@@ -176,6 +199,10 @@ pub fn render_add_node_menu_content(
                 EffectType::Colorize,
                 EffectType::HueShift,
             ] {
+                if !capabilities::is_effect_supported(&effect) {
+                    continue;
+                }
+
                 if ui.button(effect.name()).clicked() {
                     add_node(ModulePartType::Modulizer(ModulizerType::Effect {
                         effect_type: effect,
@@ -186,8 +213,8 @@ pub fn render_add_node_menu_content(
             }
         });
 
-        ui.menu_button("\u{1F4D1} Layers", |ui| {
-            if ui.button("\u{1F4D1} Single Layer").clicked() {
+        ui.menu_button("📑 Layers", |ui| {
+            if ui.button("📑 Single Layer").clicked() {
                 add_node(ModulePartType::Layer(LayerType::Single {
                     id: 0,
                     name: "New Layer".to_string(),
@@ -200,8 +227,8 @@ pub fn render_add_node_menu_content(
             }
         });
 
-        ui.menu_button("\u{1F4A1} Philips Hue", |ui| {
-            if ui.button("\u{1F4A1} Single Lamp").clicked() {
+        ui.menu_button("💡 Philips Hue", |ui| {
+            if ui.button("💡 Single Lamp").clicked() {
                 add_node(ModulePartType::Hue(HueNodeType::SingleLamp {
                     id: String::new(),
                     name: "New Lamp".to_string(),
@@ -215,7 +242,7 @@ pub fn render_add_node_menu_content(
         });
 
         ui.separator();
-        if ui.button("\u{1F5BC} Output").clicked() {
+        if ui.button("🖼 Output").clicked() {
             add_node(ModulePartType::Output(OutputType::Projector {
                 id: 1,
                 name: "Projector 1".to_string(),

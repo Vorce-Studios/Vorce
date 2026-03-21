@@ -15,7 +15,9 @@ pub use styling::*;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mapmap_core::module::ModulePartType;
+    use crate::editors::module_canvas::inspector::capabilities;
+    use mapmap_core::module::{ModulePartType, ModulizerType, SourceType};
+    use std::collections::HashSet;
 
     #[test]
     fn test_node_catalog_not_empty() {
@@ -48,7 +50,14 @@ mod tests {
             "Catalog should contain at least one Trigger node"
         );
         assert!(has_layer, "Catalog should contain at least one Layer node");
-        assert!(has_mask, "Catalog should contain at least one Mask node");
+        if capabilities::is_mask_supported() {
+            assert!(has_mask, "Catalog should contain mask nodes when supported");
+        } else {
+            assert!(
+                !has_mask,
+                "Catalog should hide mask nodes while masks are not render-supported"
+            );
+        }
         assert!(
             has_effect,
             "Catalog should contain at least one Effect node"
@@ -73,6 +82,60 @@ mod tests {
                     .chars()
                     .all(|c| c.is_lowercase() || c.is_whitespace()),
                 "Search tags for {} should be entirely lowercase for easier matching",
+                item.label
+            );
+        }
+    }
+
+    #[test]
+    fn test_node_catalog_hides_unsupported_items() {
+        let catalog = build_node_catalog();
+
+        for item in &catalog {
+            match &item.part_type {
+                ModulePartType::Source(SourceType::Shader { .. }) => {
+                    assert!(capabilities::is_source_type_enum_supported(
+                        true, false, false, false
+                    ));
+                }
+                ModulePartType::Source(SourceType::LiveInput { .. }) => {
+                    assert!(capabilities::is_source_type_enum_supported(
+                        true, true, false, false
+                    ));
+                }
+                ModulePartType::Source(SourceType::NdiInput { .. }) => {
+                    assert!(capabilities::is_source_type_enum_supported(
+                        false, false, true, false
+                    ));
+                }
+                ModulePartType::Source(SourceType::SpoutInput { .. }) => {
+                    assert!(capabilities::is_source_type_enum_supported(
+                        false, false, false, true
+                    ));
+                }
+                ModulePartType::Mask(_) => {
+                    assert!(capabilities::is_mask_supported());
+                }
+                ModulePartType::Modulizer(ModulizerType::BlendMode(_)) => {
+                    assert!(capabilities::has_advanced_blend_mode_support());
+                }
+                ModulePartType::Modulizer(ModulizerType::Effect { effect_type, .. }) => {
+                    assert!(capabilities::is_effect_supported(effect_type));
+                }
+                _ => {}
+            }
+        }
+    }
+
+    #[test]
+    fn test_node_catalog_labels_are_unique() {
+        let catalog = build_node_catalog();
+        let mut labels = HashSet::new();
+
+        for item in &catalog {
+            assert!(
+                labels.insert(item.label),
+                "Node catalog should not contain duplicate labels: {}",
                 item.label
             );
         }

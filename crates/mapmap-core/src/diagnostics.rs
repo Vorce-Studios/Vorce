@@ -148,7 +148,9 @@ mod tests {
         // Only info for unconnected inputs by default
         assert!(issues
             .iter()
-            .all(|i| matches!(i.severity, IssueSeverity::Info) || matches!(i.severity, IssueSeverity::Error) || matches!(i.severity, IssueSeverity::Warning)));
+            .all(|i| matches!(i.severity, IssueSeverity::Info)
+                || matches!(i.severity, IssueSeverity::Error)
+                || matches!(i.severity, IssueSeverity::Warning)));
     }
 
     #[test]
@@ -167,12 +169,3 @@ mod tests {
         let _ = issues;
     }
 }
-
-/// Standardized reasons for features that are temporarily degraded or unsupported in the current renderer.
-pub const DEGRADED_FEATURE_BLEND_MODE: &str =
-    "Blend modes are currently unsupported in this renderer.";
-/// Standardized reason for masks being unsupported.
-pub const DEGRADED_FEATURE_MASK: &str = "Masks are currently unsupported in this renderer.";
-/// Standardized reason for LoadLUT being unsupported.
-pub const DEGRADED_FEATURE_LOAD_LUT: &str =
-    "The LoadLUT effect is currently unsupported in this renderer.";

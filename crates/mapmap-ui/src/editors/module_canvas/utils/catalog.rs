@@ -1,3 +1,4 @@
+use crate::editors::module_canvas::inspector::capabilities;
 use mapmap_core::module::{
     AudioBand, AudioTriggerOutputConfig, BevyCameraMode, BlendModeType, EffectType, HueNodeType,
     LayerType, MaskShape, MaskType, ModulePartType, ModulizerType, OutputType, SourceType,
@@ -12,7 +13,15 @@ pub struct NodeCatalogItem {
 }
 
 pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
-    let mut catalog: Vec<NodeCatalogItem> = vec![
+    let shader_supported = capabilities::is_source_type_enum_supported(true, false, false, false);
+
+    #[cfg(feature = "ndi")]
+    let ndi_supported = capabilities::is_source_type_enum_supported(false, false, true, false);
+
+    #[cfg(target_os = "windows")]
+    let spout_supported = capabilities::is_source_type_enum_supported(false, false, false, true);
+
+    let mut catalog = vec![
         // Triggers
         NodeCatalogItem {
             label: "🥁 Beat",
@@ -76,29 +85,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
             part_type: ModulePartType::Source(SourceType::new_media_file(String::new())),
         },
         NodeCatalogItem {
-            label: "🎨 Shader",
-            search_tags: "source glsl generator procedural",
-            part_type: ModulePartType::Source(SourceType::Shader {
-                name: "Default".to_string(),
-                params: Vec::new(),
-            }),
-        },
-        #[cfg(feature = "ndi")]
-        NodeCatalogItem {
-            label: "📡 NDI Input",
-            search_tags: "source network video stream",
-            part_type: ModulePartType::Source(SourceType::NdiInput { source_name: None }),
-        },
-        #[cfg(target_os = "windows")]
-        NodeCatalogItem {
-            label: "🚀 Spout Input",
-            search_tags: "source texture share windows",
-            part_type: ModulePartType::Source(SourceType::SpoutInput {
-                sender_name: String::new(),
-            }),
-        },
-        // Bevy Sources
-        NodeCatalogItem {
             label: "📝 3D Text",
             search_tags: "source bevy font label",
             part_type: ModulePartType::Source(SourceType::Bevy3DText {
@@ -138,43 +124,82 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
                 active: true,
             }),
         },
-        // Masks
-        NodeCatalogItem {
-            label: "⚪ Shape Mask",
-            search_tags: "mask circle rectangle alpha",
-            part_type: ModulePartType::Mask(MaskType::Shape(MaskShape::Circle)),
-        },
-        NodeCatalogItem {
-            label: "🌈 Gradient Mask",
-            search_tags: "mask fade transition alpha",
-            part_type: ModulePartType::Mask(MaskType::Gradient {
-                angle: 0.0,
-                softness: 0.5,
+    ];
+
+    if shader_supported {
+        catalog.push(NodeCatalogItem {
+            label: "🎨 Shader",
+            search_tags: "source glsl generator procedural",
+            part_type: ModulePartType::Source(SourceType::Shader {
+                name: "Default".to_string(),
+                params: Vec::new(),
             }),
-        },
-        // Modulators
-        NodeCatalogItem {
+        });
+    }
+
+    #[cfg(feature = "ndi")]
+    if ndi_supported {
+        catalog.push(NodeCatalogItem {
+            label: "📡 NDI Input",
+            search_tags: "source network video stream",
+            part_type: ModulePartType::Source(SourceType::NdiInput { source_name: None }),
+        });
+    }
+
+    #[cfg(target_os = "windows")]
+    if spout_supported {
+        catalog.push(NodeCatalogItem {
+            label: "🚰 Spout Input",
+            search_tags: "source texture share windows",
+            part_type: ModulePartType::Source(SourceType::SpoutInput {
+                sender_name: String::new(),
+            }),
+        });
+    }
+
+    if capabilities::is_mask_supported() {
+        catalog.extend([
+            NodeCatalogItem {
+                label: "⚪ Shape Mask",
+                search_tags: "mask circle rectangle alpha",
+                part_type: ModulePartType::Mask(MaskType::Shape(MaskShape::Circle)),
+            },
+            NodeCatalogItem {
+                label: "🌈 Gradient Mask",
+                search_tags: "mask fade transition alpha",
+                part_type: ModulePartType::Mask(MaskType::Gradient {
+                    angle: 0.0,
+                    softness: 0.5,
+                }),
+            },
+        ]);
+    }
+
+    if capabilities::has_advanced_blend_mode_support() {
+        catalog.push(NodeCatalogItem {
             label: "🎚️ Blend Mode",
             search_tags: "modulator mix composite add multiply screen",
             part_type: ModulePartType::Modulizer(ModulizerType::BlendMode(BlendModeType::Normal)),
-        },
-    ]
-    .into_iter()
-    .chain(
-        // Effects
-        EffectType::all().iter().map(|effect| NodeCatalogItem {
-            label: effect.name(),
-            search_tags: "modulator effect filter fx",
-            part_type: ModulePartType::Modulizer(ModulizerType::Effect {
-                effect_type: *effect,
-                params: std::collections::HashMap::new(),
+        });
+    }
+
+    catalog.extend(
+        EffectType::all()
+            .iter()
+            .filter(|effect| capabilities::is_effect_supported(effect))
+            .map(|effect| NodeCatalogItem {
+                label: effect.name(),
+                search_tags: "modulator effect filter fx",
+                part_type: ModulePartType::Modulizer(ModulizerType::Effect {
+                    effect_type: *effect,
+                    params: std::collections::HashMap::new(),
+                }),
             }),
-        }),
-    )
-    .chain(vec![
-        // Layers
+    );
+
+    catalog.extend([
         NodeCatalogItem {
-            label: "📄 Single Layer",
+            label: "📑 Single Layer",
             search_tags: "layer composition",
             part_type: ModulePartType::Layer(LayerType::Single {
                 id: 0,
@@ -185,7 +210,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
                 mapping_mode: false,
             }),
         },
-        // Hue
         NodeCatalogItem {
             label: "💡 Single Lamp",
             search_tags: "hue light smart home philips",
@@ -198,7 +222,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
                 effect_active: false,
             }),
         },
-        // Output
         NodeCatalogItem {
             label: "🖥️ Projector Output",
             search_tags: "output display screen beamer",
@@ -216,45 +239,7 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
                 ndi_stream_name: String::new(),
             }),
         },
-    ])
-    .collect();
-
-    if crate::editors::module_canvas::inspector::capabilities::is_source_type_enum_supported(
-        true, false, false, false,
-    ) {
-        catalog.push(NodeCatalogItem {
-            label: "🎨 Shader",
-            search_tags: "source glsl generator procedural",
-            part_type: ModulePartType::Source(SourceType::Shader {
-                name: "Default".to_string(),
-                params: Vec::new(),
-            }),
-        });
-    }
-
-    #[cfg(feature = "ndi")]
-    if crate::editors::module_canvas::inspector::capabilities::is_source_type_enum_supported(
-        false, false, true, false,
-    ) {
-        catalog.push(NodeCatalogItem {
-            label: "📡 NDI Input",
-            search_tags: "source network video stream",
-            part_type: ModulePartType::Source(SourceType::NdiInput { source_name: None }),
-        });
-    }
-
-    #[cfg(target_os = "windows")]
-    if crate::editors::module_canvas::inspector::capabilities::is_source_type_enum_supported(
-        false, false, false, true,
-    ) {
-        catalog.push(NodeCatalogItem {
-            label: "🚀 Spout Input",
-            search_tags: "source texture share windows",
-            part_type: ModulePartType::Source(SourceType::SpoutInput {
-                sender_name: String::new(),
-            }),
-        });
-    }
+    ]);
 
     catalog
 }

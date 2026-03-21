@@ -50,7 +50,12 @@ pub fn perform_evaluation(
             // Transfer RenderOps using drain to avoid clones
             // Note: We need to access eval_result fields directly because evaluate returns a reference.
             // But since ModuleEvaluator is on app, we can just drain from its cached_result.
-            let render_ops: Vec<_> = app.module_evaluator.cached_result.render_ops.drain(..).collect();
+            let render_ops: Vec<_> = app
+                .module_evaluator
+                .cached_result
+                .render_ops
+                .drain(..)
+                .collect();
             for render_op in render_ops {
                 let mut diagnostics = Vec::new();
 

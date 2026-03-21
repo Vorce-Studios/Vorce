@@ -80,9 +80,8 @@ pub fn render_common_controls(
 
         ui.horizontal(|ui| {
             ui.label("Blend Mode:");
-            let supported = capabilities::is_blend_mode_supported(
-                &blend_mode.unwrap_or(BlendModeType::Normal),
-            );
+            let supported =
+                capabilities::is_blend_mode_supported(&blend_mode.unwrap_or(BlendModeType::Normal));
             if !supported {
                 capabilities::render_unsupported_warning(ui, "Blend modes partially supported");
             }
@@ -180,7 +179,12 @@ pub fn render_hue_spatial_editor(
 
     // Draw reference screen
     let screen_rect = Rect::from_center_size(rect.center(), Vec2::new(size * 0.6, size * 0.4));
-    painter.rect_stroke(screen_rect, 2.0, Stroke::new(1.0, Color32::WHITE), egui::StrokeKind::Inside);
+    painter.rect_stroke(
+        screen_rect,
+        2.0,
+        Stroke::new(1.0, Color32::WHITE),
+        egui::StrokeKind::Inside,
+    );
     painter.text(
         screen_rect.center(),
         egui::Align2::CENTER_CENTER,

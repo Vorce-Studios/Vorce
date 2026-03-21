@@ -182,7 +182,11 @@ impl ModuleEvaluator {
             if let Some(values) = trigger_values.get(&conn.from_part) {
                 // Find index of the output socket ID
                 if let Some(from_part) = module.parts.iter().find(|p| p.id == conn.from_part) {
-                    if let Some(idx) = from_part.outputs.iter().position(|s| s.id == conn.from_socket) {
+                    if let Some(idx) = from_part
+                        .outputs
+                        .iter()
+                        .position(|s| s.id == conn.from_socket)
+                    {
                         if let Some(&value) = values.get(idx) {
                             let current = inputs.entry(conn.to_part).or_insert(0.0);
                             *current = f32::max(*current, value);

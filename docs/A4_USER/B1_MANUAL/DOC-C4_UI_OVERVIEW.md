@@ -36,7 +36,7 @@ The Module Canvas is the heart of MapFlow's node-based workflow. Here you connec
 *   **Source**: Media File, Generator, Live Input.
 *   **Effect**: Blur, Color Correction, Distortion.
 *   **Layer**: Compositing nodes.
-*   **Output**: Projector, Syphon/Spout, NDI.
+*   **Output**: Projector is the primary stable output path. Syphon/Spout and NDI depend on platform/build features and are currently advanced/experimental.
 
 ## 3. Media Browser
 
@@ -46,7 +46,7 @@ The Media Browser allows you to browse and import content from your local file s
 *   **Preview**: Hover over supported files to see a preview (where available).
 *   **Import**: Drag files from the browser onto the Module Canvas to create a Media Node.
 *   **Supported Formats**:
-    *   **Video**: MP4, MOV, MKV, WebM (H.264, H.265, VP8/9, HAP).
+    *   **Video**: MP4, MOV, MKV, WebM (H.264, H.265, VP8/9; HAP currently partial/experimental).
     *   **Image**: PNG, JPG, BMP, GIF.
 
 ## 4. Inspector
@@ -77,7 +77,7 @@ The Mapping Panel is dedicated to projection mapping tasks.
 
 ## 7. Output Panel
 
-Manage your physical and virtual outputs.
+Manage your physical outputs. Virtual outputs depend on enabled features and platform/runtime support.
 
 *   **Displays**: Assign MapFlow outputs to physical monitors or projectors.
 *   **Resolution**: Set custom resolutions and refresh rates.

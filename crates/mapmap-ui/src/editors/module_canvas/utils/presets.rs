@@ -40,7 +40,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
             ],
             connections: vec![
                 (0, "trigger_out".to_string(), 1, "trigger_in".to_string()),
-                (1, "media_out".to_string(), 2, "layer_in".to_string())
+                (1, "media_out".to_string(), 2, "layer_in".to_string()),
             ],
         },
         ModulePreset {
@@ -86,7 +86,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
             connections: vec![
                 (0, "trigger_out".to_string(), 1, "trigger_in".to_string()),
                 (1, "media_out".to_string(), 2, "media_in".to_string()),
-                (2, "media_out".to_string(), 3, "layer_in".to_string())
+                (2, "media_out".to_string(), 3, "layer_in".to_string()),
             ],
         },
         ModulePreset {
@@ -136,7 +136,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
             connections: vec![
                 (0, "trigger_out".to_string(), 1, "trigger_in".to_string()),
                 (1, "media_out".to_string(), 2, "media_in".to_string()),
-                (2, "media_out".to_string(), 3, "layer_in".to_string())
+                (2, "media_out".to_string(), 3, "layer_in".to_string()),
             ],
         },
         ModulePreset {
@@ -179,7 +179,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
             connections: vec![
                 (0, "trigger_out".to_string(), 1, "trigger_in".to_string()),
                 (1, "media_out".to_string(), 2, "media_in".to_string()),
-                (2, "media_out".to_string(), 3, "layer_in".to_string())
+                (2, "media_out".to_string(), 3, "layer_in".to_string()),
             ],
         },
         ModulePreset {
@@ -216,7 +216,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
             ],
             connections: vec![
                 (0, "trigger_out".to_string(), 1, "trigger_in".to_string()),
-                (1, "media_out".to_string(), 2, "layer_in".to_string())
+                (1, "media_out".to_string(), 2, "layer_in".to_string()),
             ],
         },
         ModulePreset {
@@ -242,7 +242,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
             ],
             connections: vec![
                 (0, "trigger_out".to_string(), 1, "trigger_in".to_string()),
-                (1, "media_out".to_string(), 2, "layer_in".to_string())
+                (1, "media_out".to_string(), 2, "layer_in".to_string()),
             ],
         },
         #[cfg(target_os = "windows")]
@@ -282,7 +282,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
             ],
             connections: vec![
                 (0, "trigger_out".to_string(), 1, "trigger_in".to_string()),
-                (1, "media_out".to_string(), 2, "layer_in".to_string())
+                (1, "media_out".to_string(), 2, "layer_in".to_string()),
             ],
         },
         #[cfg(target_os = "windows")]
@@ -310,7 +310,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
             ],
             connections: vec![
                 (0, "trigger_out".to_string(), 1, "trigger_in".to_string()),
-                (1, "media_out".to_string(), 2, "layer_in".to_string())
+                (1, "media_out".to_string(), 2, "layer_in".to_string()),
             ],
         },
     ]
