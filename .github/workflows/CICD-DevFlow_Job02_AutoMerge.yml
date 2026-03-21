@@ -411,7 +411,10 @@ jobs:
             }
 
             if (finalPr.mergeable_state === 'behind') {
-              await updateBehindPr(finalPr);
+              await upsertManagedComment(
+                prNumber,
+                'Auto-merge wartet, weil der PR hinter `main` liegt. Bitte aktualisiere den Branch manuell; automatische Branch-Updates aus diesem Workflow bleiben deaktiviert, damit GitHub Actions die PR-Checks auf dem neuen Head-SHA korrekt neu startet.',
+              );
               return;
             }
 
