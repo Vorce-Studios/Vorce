@@ -22,6 +22,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
   issues: write
@@ -46,6 +47,8 @@ jobs:
 
             const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
             const AUTO_MERGE_RESULT_MARKER = '<!-- auto-merge-result -->';
+            const VALIDATION_WORKFLOW_ID = 'CICD-DevFlow_Job01_Validation.yml';
+            const VALIDATION_TOOLCHAIN = 'stable';
 
             const buildManagedCommentBody = (message) =>
               `${AUTO_MERGE_RESULT_MARKER}\n${message}`;
@@ -118,6 +121,36 @@ jobs:
               return null;
             };
 
+            const waitForUpdatedHead = async (pullNumber, previousHeadSha) => {
+              for (let attempt = 1; attempt <= 15; attempt += 1) {
+                await sleep(2000);
+
+                const refreshedPr = await github.rest.pulls.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pullNumber,
+                });
+
+                if (refreshedPr.data.head.sha !== previousHeadSha) {
+                  return refreshedPr.data;
+                }
+              }
+
+              return null;
+            };
+
+            const dispatchValidationWorkflow = async (branchRef) => {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: VALIDATION_WORKFLOW_ID,
+                ref: branchRef,
+                inputs: {
+                  toolchain: VALIDATION_TOOLCHAIN,
+                },
+              });
+            };
+
             const updateBehindPr = async (currentPr) => {
               try {
                 await github.rest.pulls.updateBranch({
@@ -126,8 +159,23 @@ jobs:
                   pull_number: currentPr.number,
                   expected_head_sha: currentPr.head.sha,
                 });
+
+                const updatedPr = await waitForUpdatedHead(currentPr.number, currentPr.head.sha);
+                if (updatedPr) {
+                  await dispatchValidationWorkflow(updatedPr.head.ref);
+                }
+
+                return {
+                  updated: true,
+                  validationRedispatched: updatedPr !== null,
+                };
               } catch (error) {
                 console.log(`Branch update failed: ${error.message}`);
+                return {
+                  updated: false,
+                  validationRedispatched: false,
+                  error,
+                };
               }
             };
 
@@ -238,10 +286,20 @@ jobs:
             }
 
             if (pr.mergeable_state === 'behind') {
-              await updateBehindPr(pr);
+              const updateResult = await updateBehindPr(pr);
+              if (!updateResult.updated) {
+                await upsertManagedComment(
+                  prNumber,
+                  `Auto-merge konnte den PR-Branch nicht aktualisieren: ${updateResult.error.message}`,
+                );
+                return;
+              }
+
               await upsertManagedComment(
                 prNumber,
-                'Auto-merge wartet, weil der PR hinter `main` liegt. Der Branch wurde zur Aktualisierung angefordert.',
+                updateResult.validationRedispatched
+                  ? 'Auto-merge wartet, weil der PR hinter `main` liegt. Der Branch wurde aktualisiert und die Validation fuer den neuen Head-SHA erneut gestartet.'
+                  : 'Auto-merge wartet, weil der PR hinter `main` liegt. Der Branch wurde aktualisiert, aber die Validation liess sich nicht automatisch erneut starten.',
               );
               return;
             }
