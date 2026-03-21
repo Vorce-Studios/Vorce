@@ -82,27 +82,6 @@ pub fn render_add_node_menu_content(
                 )));
                 ui.close();
             }
-            if ui.button("\u{1F3A8} Shader").clicked() {
-                add_node(ModulePartType::Source(SourceType::Shader {
-                    name: "Default".to_string(),
-                    params: Vec::new(),
-                }));
-                ui.close();
-            }
-            #[cfg(feature = "ndi")]
-            if ui.button("\u{1F4E1} NDI Input").clicked() {
-                add_node(ModulePartType::Source(SourceType::NdiInput {
-                    source_name: None,
-                }));
-                ui.close();
-            }
-            #[cfg(target_os = "windows")]
-            if ui.button("\u{1F6B0} Spout Input").clicked() {
-                add_node(ModulePartType::Source(SourceType::SpoutInput {
-                    sender_name: String::new(),
-                }));
-                ui.close();
-            }
             ui.separator();
             ui.label("Bevy 3D:");
             if ui.button("📝 3D Text").clicked() {
