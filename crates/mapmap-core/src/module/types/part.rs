@@ -36,7 +36,7 @@ pub struct ModulePart {
     pub outputs: Vec<ModuleSocket>,
     /// Trigger target configuration (Input Socket Index -> Target Parameter)
     #[serde(default)]
-    pub trigger_targets: HashMap<String, TriggerConfig>,
+    pub trigger_targets: HashMap<usize, TriggerConfig>,
 }
 
 impl ModulePart {
