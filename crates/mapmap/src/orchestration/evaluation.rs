@@ -10,7 +10,15 @@ pub fn perform_evaluation(
     analysis: &AudioAnalysis,
     graph_dirty: bool,
 ) {
-    app.render_queue.clear();
+    // Reclaim RenderOp objects from the previous frame to avoid allocations.
+    // This closes the object pool loop for evaluation results.
+    for items in app.render_queue.items.values_mut() {
+        app.module_evaluator
+            .cached_result
+            .spare_render_ops
+            .extend(items.drain(..).map(|item| item.render_op));
+    }
+    app.render_queue.items.clear();
     app.render_queue.graph_revision = app.state.module_manager.graph_revision;
     app.ui_state.module_canvas.last_trigger_values.clear();
     let mut node_triggers = HashMap::new();
@@ -39,7 +47,10 @@ pub fn perform_evaluation(
                     .insert(*part_id, max_val);
             }
 
-            let render_ops = app.module_evaluator.drain_render_ops();
+            // Transfer RenderOps using drain to avoid clones
+            // Note: We need to access eval_result fields directly because evaluate returns a reference.
+            // But since ModuleEvaluator is on app, we can just drain from its cached_result.
+            let render_ops: Vec<_> = app.module_evaluator.cached_result.render_ops.drain(..).collect();
             for render_op in render_ops {
                 let mut diagnostics = Vec::new();
 
