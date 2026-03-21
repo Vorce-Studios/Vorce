@@ -604,7 +604,10 @@ pub fn show(ctx: &Context, context: SettingsContext) {
                             for rate in [22050_u32, 44100, 48000, 96000] {
                                 ui.add_enabled_ui(!cfg!(target_os = "macos"), |ui| {
                                     if ui
-                                        .selectable_label(sample_rate == rate, format!("{} Hz", rate))
+                                        .selectable_label(
+                                            sample_rate == rate,
+                                            format!("{} Hz", rate),
+                                        )
                                         .clicked()
                                     {
                                         sample_rate = rate;

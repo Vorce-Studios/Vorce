@@ -81,26 +81,26 @@ pub mod cpal_backend {
 
             #[cfg(not(target_os = "macos"))]
             {
-            let (sample_tx, sample_rx) = unbounded();
-            let (command_tx, command_rx) = unbounded::<Command>();
+                let (sample_tx, sample_rx) = unbounded();
+                let (command_tx, command_rx) = unbounded::<Command>();
 
-            // Build stream directly in main thread (cpal::Stream is not Send)
-            let stream = Self::build_stream(device_name, sample_tx)?;
+                // Build stream directly in main thread (cpal::Stream is not Send)
+                let stream = Self::build_stream(device_name, sample_tx)?;
 
-            // Spawn command processing thread
-            std::thread::Builder::new()
-                .name("audio-cmd".to_string())
-                .spawn(move || {
-                    // Just drain the command channel - stream auto-plays
-                    while command_rx.recv().is_ok() {}
+                // Spawn command processing thread
+                std::thread::Builder::new()
+                    .name("audio-cmd".to_string())
+                    .spawn(move || {
+                        // Just drain the command channel - stream auto-plays
+                        while command_rx.recv().is_ok() {}
+                    })
+                    .ok();
+
+                Ok(Self {
+                    sample_receiver: sample_rx,
+                    command_sender: command_tx,
+                    stream,
                 })
-                .ok();
-
-            Ok(Self {
-                sample_receiver: sample_rx,
-                command_sender: command_tx,
-                stream,
-            })
             }
         }
 
@@ -298,38 +298,38 @@ pub mod cpal_backend {
 
             #[cfg(not(target_os = "macos"))]
             {
-            let host = cpal::default_host();
+                let host = cpal::default_host();
 
-            // Log available hosts for debugging
-            tracing::debug!("Audio: Available hosts: {:?}", cpal::available_hosts());
-            tracing::debug!("Audio: Using host: {:?}", host.id());
+                // Log available hosts for debugging
+                tracing::debug!("Audio: Available hosts: {:?}", cpal::available_hosts());
+                tracing::debug!("Audio: Using host: {:?}", host.id());
 
-            // List all input devices with their configs
-            match host.input_devices() {
-                Ok(devices) => {
-                    let mut device_names = Vec::new();
-                    for device in devices {
-                        if let Ok(desc) = device.description() {
-                            let name = desc.to_string();
-                            // Try to get default config for debugging
-                            if let Ok(config) = device.default_input_config() {
-                                tracing::debug!(
-                                    "Audio Input: '{}' - format={:?}, rate={}, channels={}",
-                                    name,
-                                    config.sample_format(),
-                                    config.sample_rate(),
-                                    config.channels()
-                                );
-                            } else {
-                                tracing::warn!("Audio Input: '{}' - no config available", name);
+                // List all input devices with their configs
+                match host.input_devices() {
+                    Ok(devices) => {
+                        let mut device_names = Vec::new();
+                        for device in devices {
+                            if let Ok(desc) = device.description() {
+                                let name = desc.to_string();
+                                // Try to get default config for debugging
+                                if let Ok(config) = device.default_input_config() {
+                                    tracing::debug!(
+                                        "Audio Input: '{}' - format={:?}, rate={}, channels={}",
+                                        name,
+                                        config.sample_format(),
+                                        config.sample_rate(),
+                                        config.channels()
+                                    );
+                                } else {
+                                    tracing::warn!("Audio Input: '{}' - no config available", name);
+                                }
+                                device_names.push(name);
                             }
-                            device_names.push(name);
                         }
+                        Ok(Some(device_names))
                     }
-                    Ok(Some(device_names))
+                    Err(e) => Err(AudioError::NoDevicesFound(e.to_string())),
                 }
-                Err(e) => Err(AudioError::NoDevicesFound(e.to_string())),
-            }
             }
         }
     }
