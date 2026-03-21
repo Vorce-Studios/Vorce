@@ -1,8 +1,8 @@
 # 🔍 VJMapper / MapFlow – Intensives Code-Audit
 
-**Erstellt:** 2026-03-20  
-**Codebase:** Rust 2021, wgpu 27, egui 0.33, FFmpeg 7.1  
-**Geprüfte Crates:** `mapmap`, `mapmap-core`, `mapmap-ui`, `mapmap-io`, `mapmap-render`, `mapmap-media`, `mapmap-control`, `mapmap-mcp`, `mapmap-ffi`  
+**Erstellt:** 2026-03-20
+**Codebase:** Rust 2021, wgpu 27, egui 0.33, FFmpeg 7.1
+**Geprüfte Crates:** `mapmap`, `mapmap-core`, `mapmap-ui`, `mapmap-io`, `mapmap-render`, `mapmap-media`, `mapmap-control`, `mapmap-mcp`, `mapmap-ffi`
 **Gesamtbefunde:** ~280 Einzelissues in 6 Schweregrad-Kategorien
 
 ---
@@ -28,7 +28,7 @@
 
 ### K-1 · Leere FFmpeg-Encoder-Implementierung
 
-**Datei:** `crates/mapmap-io/src/stream/encoder.rs` · **Schwere:** KRITISCH  
+**Datei:** `crates/mapmap-io/src/stream/encoder.rs` · **Schwere:** KRITISCH
 Der `VideoEncoder` ist ein Stub – er produziert leere Pakete. Streaming funktioniert dadurch überhaupt nicht.
 
 ```rust

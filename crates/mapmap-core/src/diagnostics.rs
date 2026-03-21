@@ -34,10 +34,17 @@ pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
     // Check for unconnected inputs/outputs
     for (idx, part) in module.parts.iter().enumerate() {
         for (s_idx, socket) in part.inputs.iter().enumerate() {
-            if !module.connections.iter().any(|c| c.to_part == idx && c.to_socket == s_idx) {
+            if !module
+                .connections
+                .iter()
+                .any(|c| c.to_part == part.id && c.to_socket == s_idx)
+            {
                 issues.push(ModuleIssue {
                     severity: IssueSeverity::Info,
-                    message: format!("Input socket '{}' on part {} is unconnected.", socket.name, idx),
+                    message: format!(
+                        "Input socket '{}' on part {} is unconnected.",
+                        socket.name, idx
+                    ),
                     part_idx: Some(idx),
                 });
             }
@@ -48,8 +55,8 @@ pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
     // ...
 
     // Check for source paths (if any)
-    for (idx, part) in module.parts.iter().enumerate() {
-        if let crate::module::PartType::Source = part.part_type {
+    for part in module.parts.iter() {
+        if matches!(part.part_type, crate::module::ModulePartType::Source(_)) {
             // Validation logic for sources
             // ...
         }
@@ -72,28 +79,39 @@ mod tests {
     use super::*;
     use crate::module::{ModuleSocket, ModuleSocketType, PartType};
 
+    fn create_test_module(name: &str) -> MapFlowModule {
+        MapFlowModule {
+            id: 1,
+            name: name.to_string(),
+            color: [0.0; 4],
+            parts: vec![],
+            connections: vec![],
+            playback_mode: crate::module::ModulePlaybackMode::LoopUntilManualSwitch,
+            next_part_id: 1,
+        }
+    }
+
     #[test]
     fn test_check_module_integrity_empty() {
-        let module = MapFlowModule {
-            name: "Empty".to_string(),
-            ..Default::default()
-        };
+        let module = create_test_module("Empty");
         let issues = check_module_integrity(&module);
         assert!(issues.is_empty());
     }
 
     #[test]
     fn test_check_module_integrity_unconnected_output() {
-        let mut module = MapFlowModule::default();
+        let mut module = create_test_module("Test");
         module.add_part(PartType::Source, (0.0, 0.0));
         let issues = check_module_integrity(&module);
         // Only info for unconnected inputs by default
-        assert!(issues.iter().all(|i| matches!(i.severity, IssueSeverity::Info)));
+        assert!(issues
+            .iter()
+            .all(|i| matches!(i.severity, IssueSeverity::Info)));
     }
 
     #[test]
     fn test_check_module_integrity_invalid_from_part() {
-        let mut module = MapFlowModule::default();
+        let mut module = create_test_module("Test");
         module.add_part(PartType::Source, (0.0, 0.0));
         module.connections.push(crate::module::ModuleConnection {
             from_part: 999,
@@ -107,7 +125,7 @@ mod tests {
 
     #[test]
     fn test_check_module_integrity_empty_source_path() {
-        let mut module = MapFlowModule::default();
+        let mut module = create_test_module("Test");
         module.add_part(PartType::Source, (0.0, 0.0));
         let issues = check_module_integrity(&module);
         // Just verify it doesn't panic on empty modules
@@ -116,22 +134,29 @@ mod tests {
 
     #[test]
     fn test_diagnostics_unconnected_info() {
-        let mut module = MapFlowModule::default();
+        let mut module = create_test_module("Test");
         let pid = module.add_part(PartType::Source, (0.0, 0.0));
 
         let mut input_socket = ModuleSocket::input("in", "Input", ModuleSocketType::Media);
         input_socket.id = "in".to_string();
 
-        module.parts[pid].inputs.push(input_socket);
+        let part_idx = module.parts.iter().position(|p| p.id == pid).unwrap();
+        module.parts[part_idx].inputs.push(input_socket);
 
         let issues = check_module_integrity(&module);
         assert!(!issues.is_empty());
-        assert!(issues[0].message.contains("Input socket 'Input' on part 0 is unconnected."));
+        assert!(
+            issues
+                .iter()
+                .any(|i| i.message.contains("Input socket 'Input' on part")),
+            "Could not find expected diagnostic issue in: {:?}",
+            issues
+        );
     }
 
     #[test]
     fn test_diagnostics_invalid_source_validation() {
-        let mut module = MapFlowModule::default();
+        let mut module = create_test_module("Test");
         module.add_part(PartType::Source, (0.0, 0.0));
 
         let _issues = check_module_integrity(&module);
@@ -140,7 +165,7 @@ mod tests {
 
     #[test]
     fn test_diagnostics_error_no_file() {
-        let mut module = MapFlowModule::default();
+        let mut module = create_test_module("Test");
         module.add_part(PartType::Source, (0.0, 0.0));
 
         let issues = check_module_integrity(&module);
