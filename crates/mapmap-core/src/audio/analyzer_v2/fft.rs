@@ -37,7 +37,6 @@ impl AudioAnalyzerV2 {
         self.update_band_energies();
 
         // Trace log every 100 FFTs
-        #[allow(clippy::manual_is_multiple_of)]
         if self.fft_count % 100 == 0 {
             trace!(
                 "FFT #{}: bands={:?}",
