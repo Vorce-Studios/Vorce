@@ -193,13 +193,10 @@ impl FramePipeline {
                 }
 
                 info!("Decode thread stopped");
-            });
+            })
+            .expect("Failed to spawn decode thread");
 
-        if let Ok(thread_handle) = thread {
-            self.decode_thread = Some(thread_handle);
-        } else {
-            error!("Failed to spawn decode thread");
-        }
+        self.decode_thread = Some(thread);
     }
 
     /// Start the upload thread with a custom upload function
@@ -214,7 +211,7 @@ impl FramePipeline {
         let running = self.running.clone();
         let stats = self.stats.clone();
 
-        let thread_result = thread::Builder::new()
+        thread::Builder::new()
             .name("upload-thread".to_string())
             .spawn(move || {
                 info!("Upload thread started");
@@ -253,11 +250,8 @@ impl FramePipeline {
                 }
 
                 info!("Upload thread stopped");
-            });
-
-        if thread_result.is_err() {
-            error!("Failed to spawn upload thread");
-        }
+            })
+            .expect("Failed to spawn upload thread");
     }
 
     /// Stop the pipeline
