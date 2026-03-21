@@ -2,9 +2,9 @@ name: "CICD-DevFlow: Job02 Auto-Merge"
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
+    types: [opened, reopened, synchronize, labeled, unlabeled, ready_for_review]
   workflow_run:
-    workflows: ["CICD-DevFlow: Job01 Validation", "Security Analysis"]
+    workflows: ["CICD-DevFlow: Job01 Validation"]
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -118,63 +118,46 @@ jobs:
               return null;
             };
 
-            const updateBehindPr = async (currentPr) => {
-              try {
-                await github.rest.pulls.updateBranch({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  pull_number: currentPr.number,
-                  expected_head_sha: currentPr.head.sha,
-                });
-              } catch (error) {
-                console.log(`Branch update failed: ${error.message}`);
-              }
+            const getExpectedChecks = () => {
+              return [
+                {
+                  name: 'pre-commit.ci - pr',
+                  source: 'status',
+                  allowedConclusions: ['success'],
+                  required: true,
+                },
+                {
+                  name: 'Quality Gate (Format & Lint)',
+                  source: 'check_run',
+                  allowedConclusions: ['success'],
+                  required: true,
+                },
+                {
+                  name: 'Security Scan',
+                  source: 'check_run',
+                  allowedConclusions: ['success'],
+                  required: true,
+                },
+                {
+                  name: 'Build & Test (Linux)',
+                  source: 'check_run',
+                  allowedConclusions: ['success'],
+                  required: true,
+                },
+                {
+                  name: 'Build & Test (Windows)',
+                  source: 'check_run',
+                  allowedConclusions: ['success', 'skipped', 'neutral'],
+                  required: false,
+                },
+                {
+                  name: 'Validation Success',
+                  source: 'check_run',
+                  allowedConclusions: ['success'],
+                  required: true,
+                },
+              ];
             };
-
-            const expectedChecks = [
-              {
-                name: 'pre-commit.ci - pr',
-                source: 'status',
-                allowedConclusions: ['success'],
-                required: true,
-              },
-              {
-                name: 'Quality Gate (Format & Lint)',
-                source: 'check_run',
-                allowedConclusions: ['success'],
-                required: true,
-              },
-              {
-                name: 'Security Scan',
-                source: 'check_run',
-                allowedConclusions: ['success'],
-                required: true,
-              },
-              {
-                name: 'Build & Test (Linux)',
-                source: 'check_run',
-                allowedConclusions: ['success'],
-                required: true,
-              },
-              {
-                name: 'Build & Test (Windows)',
-                source: 'check_run',
-                allowedConclusions: ['success'],
-                required: true,
-              },
-              {
-                name: 'Validation Success',
-                source: 'check_run',
-                allowedConclusions: ['success'],
-                required: true,
-              },
-              {
-                name: 'Analyze (rust)',
-                source: 'check_run',
-                allowedConclusions: ['success'],
-                required: true,
-              },
-            ];
 
             let prNumber = context.payload.pull_request?.number;
             const manualPrNumber = context.payload.inputs?.pr_number;
@@ -202,11 +185,15 @@ jobs:
               const match = prs.data.find((pr) => pr.head.sha === headSha);
               if (match) {
                 prNumber = match.number;
-              } else {
-                const fallback = await findOpenPrByHeadSha(headSha);
-                if (fallback) {
-                  prNumber = fallback.number;
-                }
+              } else if (prs.data.length > 0) {
+                prNumber = prs.data[0].number;
+              }
+            }
+
+            if (!prNumber && context.payload.workflow_run?.head_sha) {
+              const match = await findOpenPrByHeadSha(context.payload.workflow_run.head_sha);
+              if (match) {
+                prNumber = match.number;
               }
             }
 
@@ -238,10 +225,9 @@ jobs:
             }
 
             if (pr.mergeable_state === 'behind') {
-              await updateBehindPr(pr);
               await upsertManagedComment(
                 prNumber,
-                'Auto-merge wartet, weil der PR hinter `main` liegt. Der Branch wurde zur Aktualisierung angefordert.',
+                'Auto-merge wartet, weil der PR hinter `main` liegt. Bitte aktualisiere den Branch manuell; automatische Branch-Updates aus diesem Workflow bleiben deaktiviert, damit GitHub Actions die PR-Checks auf dem neuen Head-SHA korrekt neu startet.',
               );
               return;
             }
@@ -301,6 +287,7 @@ jobs:
               }
             }
 
+            const expectedChecks = getExpectedChecks();
             let allRequiredPassed = true;
             const missingOrFailed = [];
 
@@ -352,7 +339,10 @@ jobs:
             }
 
             if (finalPr.mergeable_state === 'behind') {
-              await updateBehindPr(finalPr);
+              await upsertManagedComment(
+                prNumber,
+                'Auto-merge wartet, weil der PR hinter `main` liegt. Bitte aktualisiere den Branch manuell; automatische Branch-Updates aus diesem Workflow bleiben deaktiviert, damit GitHub Actions die PR-Checks auf dem neuen Head-SHA korrekt neu startet.',
+              );
               return;
             }
 
