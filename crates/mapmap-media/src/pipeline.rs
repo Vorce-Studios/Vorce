@@ -82,6 +82,7 @@ pub struct PipelineFrame {
 }
 
 /// Multi-threaded frame pipeline
+#[deprecated(note = "Legacy parallel media upload path. Real video routing goes directly to TexturePool via mapmap::orchestration::media.")]
 pub struct FramePipeline {
     // Decode → Upload channel
     decode_tx: Sender<PipelineFrame>,

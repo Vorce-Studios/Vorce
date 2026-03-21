@@ -11,9 +11,9 @@ Die statische Analyse des Codebestands hat eine signifikante Anzahl an `TODO`-Ko
 
 | Datei | Zeile | Inhalt | Priorität | Kontext |
 |-------|-------|--------|-----------|---------|
-| `mapmap-render/src/paint_texture_cache.rs` | 109 | `TODO: Load from video decoder` | **KRITISCH** | Mögliche Ursache für Video-Blackscreen |
-| `mapmap-render/src/paint_texture_cache.rs` | 105 | `TODO: Load from source_path` | **HOCH** | |
-| `mapmap-media/src/pipeline.rs` | 218 | `TODO: Upload to GPU here` | **KRITISCH** | Fehlender Upload = Kein Bild |
+| `mapmap-render/src/paint_texture_cache.rs` | 109 | `TODO: Load from video decoder` (Resolved: Legacy path) | **ERLEDIGT** | Geklärt: Standardpfad nutzt mapmap::orchestration::media |
+| `mapmap-render/src/paint_texture_cache.rs` | 105 | `TODO: Load from source_path` (Resolved) | **ERLEDIGT** | |
+| `mapmap-media/src/pipeline.rs` | 218 | `TODO: Upload to GPU here` (Resolved: Obsolete path) | **ERLEDIGT** | Geklärt: Obsoleter Legacy-Pfad |
 | `mapmap-io/src/ndi/mod.rs` | 338 | `TODO: Implement actual frame sending` | Mittel | NDI Feature unvollständig |
 | `mapmap-io/src/stream/srt.rs` | 137 | `TODO: Implement frame sending` | Mittel | SRT Feature unvollständig |
 | `mapmap-ui/src/node_editor.rs` | 560 | `TODO: Detect socket under pointer` | Mittel | UX Problem |
@@ -31,5 +31,5 @@ Viele Dateien nutzen `#[allow(dead_code)]`. Während dies während der Entwicklu
 
 ## Jules Tasks
 Ich schlage vor, Jules folgende Tasks zuzuweisen:
-- [ ] Implement Video Decoder Loading (`paint_texture_cache.rs`)
-- [ ] Implement GPU Upload Placeholder in (`pipeline.rs`)
+- [x] Implement Video Decoder Loading (`paint_texture_cache.rs`) - Resolved as Legacy Path
+- [x] Implement GPU Upload Placeholder in (`pipeline.rs`) - Resolved as Obsolete Path

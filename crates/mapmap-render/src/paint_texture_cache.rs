@@ -121,11 +121,11 @@ impl PaintTextureCache {
                 }
             }
             PaintType::Video => {
-                // TODO: Load from video decoder
+                // Legacy path. Active video routing goes directly to TexturePool via mapmap::orchestration::media.
                 self.generate_test_pattern(width, height)
             }
             PaintType::Camera => {
-                // TODO: Load from camera capture
+                // Legacy path. Active camera routing goes directly to TexturePool.
                 self.generate_solid_color(width, height, [0.2, 0.2, 0.2, 1.0])
             }
         };

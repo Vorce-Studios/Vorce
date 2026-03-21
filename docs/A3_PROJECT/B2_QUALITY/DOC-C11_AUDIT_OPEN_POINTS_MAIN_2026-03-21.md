@@ -60,7 +60,7 @@ Offen sind vor allem noch:
 
 ## Noch offene Punkte
 
-### 1. Legacy- und Parallelpfade fuer Video sind weiter unvollstaendig
+### 1. ERLEDIGT: Legacy- und Parallelpfade fuer Video sind weiter unvollstaendig
 
 Quelle:
 - `DOC-C5_CODE_AUDIT_REPORT`
@@ -70,9 +70,8 @@ Status:
 - Der heute aktive App-Pfad nutzt fuer Medien `crates/mapmap/src/orchestration/media.rs` und laedt Frames direkt in den `TexturePool`.
 - Damit ist der alte Audit-Hinweis zum Blackscreen nicht mehr 1:1 der produktive Hauptpfad.
 - Trotzdem bleiben parallele oder alte Video-Pfade offen:
-  - `crates/mapmap-render/src/paint_texture_cache.rs`: `PaintType::Video` hat weiterhin `TODO: Load from video decoder`.
-  - `crates/mapmap-render/src/paint_texture_cache.rs`: `PaintType::Camera` hat ebenfalls noch ein TODO.
-  - `crates/mapmap-media/src/pipeline.rs`: `FramePipeline` existiert, ist auf `main` aber ausserhalb von Tests nicht verdrahtet.
+  - `crates/mapmap-render/src/paint_texture_cache.rs`: `PaintType::Video` und `PaintType::Camera` TODOs wurden entfernt und als Legacy-Pfade dokumentiert.
+  - `crates/mapmap-media/src/pipeline.rs`: `FramePipeline` wurde explizit als obsolete (`#[deprecated]`) markiert.
 
 Bewertung:
 - Kein akuter Beleg dafuer, dass `main` deswegen im Standardpfad schwarz bleibt.
@@ -211,7 +210,7 @@ Offen bleibt nicht mehr der Dateiumzug, sondern die inhaltliche Drift zwischen D
 
 - Produkt-/Doku-Drift fuer NDI, HAP, Virtual Outputs und "Feature fertig" aufraeumen.
 - Module-Canvas nur noch Features sichtbar machen lassen, die end-to-end funktionieren, oder die Runtime schliessen.
-- Legacy-/Parallelpfade fuer Video (`paint_texture_cache`, `FramePipeline`) entweder final integrieren oder klar deklassieren/entfernen.
+- [x] Legacy-/Parallelpfade fuer Video (`paint_texture_cache`, `FramePipeline`) wurden klar deklassiert und obsolet markiert.
 
 ### P1
 
