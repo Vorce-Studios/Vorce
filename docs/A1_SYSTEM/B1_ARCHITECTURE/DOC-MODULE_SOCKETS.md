@@ -31,5 +31,5 @@ Using these ensures that ID nomenclature is consistent across the entire node ec
 While standard socket builders should be used wherever possible, there are specific intentional exceptions for legacy compatibility or clarity:
 
 *   **BevyParticles**: Uses a custom `"spawn_trigger"` ID (Label: "Spawn Trigger") instead of the standard `"trigger_in"`. This explicitly indicates that the trigger causes a discrete spawn action rather than modulating continuous parameters.
-*   **Mesh**: Uses legacy `"vertex_in"` and `"geometry_out"` IDs instead of standard media sockets to preserve compatibility with existing project graphs that map geometry signals through these specific IDs.
+*   **Mesh**: Uses legacy `"vertex_in"` and `"geometry_out"` IDs instead of standard media sockets, and `"control_in"` instead of `"trigger_in"`, to preserve compatibility with existing project graphs that map geometry signals through these specific IDs.
 *   **Link / AudioFFT / Hue**: Specialized nodes with dynamic or hardware-specific outputs will continue to use domain-specific socket names.
