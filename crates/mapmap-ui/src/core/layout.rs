@@ -38,7 +38,7 @@ pub struct SlotManager {
 impl Default for SlotManager {
     fn default() -> Self {
         let mut assignments = HashMap::new();
-        
+
         // Default Configuration (Hybrid System Standard)
         assignments.insert(UiSlot::Top, vec![]); // Toolbar/Menu handled separately for now
         assignments.insert(UiSlot::Left, vec![PanelId::Preview, PanelId::MediaBrowser, PanelId::Dashboard, PanelId::AudioPanel]);
@@ -76,7 +76,7 @@ impl SlotManager {
         for panels in self.assignments.values_mut() {
             panels.retain(|&p| p != panel);
         }
-        
+
         if let Some(panels) = self.assignments.get_mut(&slot) {
             if !panels.contains(&panel) {
                 panels.push(panel);
