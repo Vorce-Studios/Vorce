@@ -317,7 +317,11 @@ pub(crate) fn render_content(
                 }
             }
 
-            let transform = glam::Mat4::IDENTITY;
+            let transform = glam::Mat4::from_scale_rotation_translation(
+                glam::vec3(op.source_props.scale_x, op.source_props.scale_y, 1.0),
+                glam::Quat::from_rotation_z(op.source_props.rotation.to_radians()),
+                glam::vec3(op.source_props.offset_x, op.source_props.offset_y, 0.0),
+            );
             let uniform_bind_group = mesh_renderer.get_uniform_bind_group_with_source_props(
                 queue,
                 transform,
