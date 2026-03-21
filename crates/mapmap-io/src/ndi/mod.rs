@@ -205,11 +205,6 @@ impl NdiReceiver {
 
                 // Extract data from raw pointer (unsafe but necessary for NDI)
                 let data = if !video_frame.p_data.is_null() && data_size > 0 {
-                    // SAFETY: The null check above and `data_size > 0` guard confirm
-                    // `p_data` points to a valid, initialised BGRA buffer of exactly
-                    // `data_size` bytes allocated by the NDI runtime.  We copy the bytes
-                    // immediately into a `Vec` so no reference outlives the NDI frame.
-                    debug_assert!(!video_frame.p_data.is_null());
                     unsafe { std::slice::from_raw_parts(video_frame.p_data, data_size).to_vec() }
                 } else {
                     warn!("NDI frame has null data pointer");

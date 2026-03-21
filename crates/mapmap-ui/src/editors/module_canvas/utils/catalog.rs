@@ -192,6 +192,25 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
                 mapping_mode: false,
             }),
         },
+        NodeCatalogItem {
+            label: "📁 Layer Group",
+            search_tags: "layer folder collection",
+            part_type: ModulePartType::Layer(LayerType::Group {
+                name: "New Group".to_string(),
+                opacity: 1.0,
+                blend_mode: None,
+                mesh: mapmap_core::module::MeshType::default(),
+                mapping_mode: false,
+            }),
+        },
+        NodeCatalogItem {
+            label: "📚 All Layers",
+            search_tags: "layer master global",
+            part_type: ModulePartType::Layer(LayerType::All {
+                opacity: 1.0,
+                blend_mode: None,
+            }),
+        },
         // Hue
         NodeCatalogItem {
             label: "💡 Single Lamp",

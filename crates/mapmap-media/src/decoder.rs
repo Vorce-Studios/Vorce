@@ -91,14 +91,6 @@ mod ffmpeg_impl {
     use ffmpeg_sys_next as ffi;
     use std::path::PathBuf;
 
-    // SAFETY: This callback is invoked by libavcodec during `avcodec_open2()` and on
-    // seek, always from the same thread that owns the `AVCodecContext`.
-    // * `ctx` is guaranteed non-null by FFmpeg; it is the context currently being opened.
-    // * `fmt` points to a null-terminated `AVPixelFormat` array that is valid for the
-    //   duration of the callback. We iterate at most `MAX_FORMATS` entries to guard against
-    //   an unterminated list.
-    // * Passing `ctx` and `fmt` to `avcodec_default_get_format` is safe because both satisfy
-    //   that function's documented preconditions.
     #[cfg(target_os = "windows")]
     unsafe extern "C" fn get_format_callback(
         ctx: *mut ffi::AVCodecContext,

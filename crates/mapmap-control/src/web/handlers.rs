@@ -271,12 +271,12 @@ mod tests {
         let deserialized: UpdateParameterRequest = serde_json::from_str(&json).unwrap();
         match deserialized.target {
             ControlTarget::LayerOpacity(id) => assert_eq!(id, 0),
-            other => unreachable!("Unexpected target type after round-trip: {:?}", other),
+            other => panic!("Wrong target type: {:?}", other),
         }
 
         match deserialized.value {
             ControlValue::Float(val) => assert_eq!(val, 0.75),
-            other => unreachable!("Unexpected value type after round-trip: {:?}", other),
+            other => panic!("Wrong value type: {:?}", other),
         }
     }
 }

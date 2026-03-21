@@ -66,7 +66,7 @@ pub fn perform_evaluation(
 
                     RuntimeRenderQueueItem {
                         module_id: *module_id,
-                        render_op: render_op.into(),
+                        render_op,
                         diagnostics,
                     }
                 }));

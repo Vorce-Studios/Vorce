@@ -329,7 +329,6 @@ pub fn render_trigger_ui(
             ui.label("⏱️ Fixed Timer");
             ui.add(egui::Slider::new(interval_ms, 16..=10000).text("Interval (ms)"));
             ui.add(egui::Slider::new(offset_ms, 0..=5000).text("Offset (ms)"));
-            super::render_fixed_timer_preview(canvas, ui, part_id, *interval_ms, *offset_ms);
         }
         TriggerType::Midi {
             channel,
@@ -399,7 +398,7 @@ pub fn render_trigger_ui(
             key_code,
             modifiers,
         } => {
-            ui.label("âŒ¨ï¸  Shortcut");
+            ui.label("⌨️ Shortcut");
             ui.horizontal(|ui| {
                 ui.label("Key:");
                 ui.text_edit_singleline(key_code);
@@ -412,37 +411,6 @@ pub fn render_trigger_ui(
                     *modifiers & 1 != 0,
                     *modifiers & 4 != 0
                 ));
-            });
-        }
-    }
-
-    if !matches!(trigger, TriggerType::Fixed { .. }) {
-        ui.separator();
-        super::render_inspector_preview_toggle(canvas, ui);
-        if canvas.show_inspector_previews {
-            let live_value = canvas
-                .last_trigger_values
-                .get(&part_id)
-                .copied()
-                .unwrap_or(0.0);
-            let is_live = live_value > 0.1;
-            ui.ctx().request_repaint();
-
-            ui.group(|ui| {
-                ui.label("Live Trigger Preview");
-                ui.add(
-                    egui::ProgressBar::new(live_value.clamp(0.0, 1.0))
-                        .desired_width(ui.available_width())
-                        .text(format!("{:.2}", live_value)),
-                );
-
-                let status = if is_live { "LIVE pulse" } else { "Waiting" };
-                let color = if is_live {
-                    egui::Color32::from_rgb(110, 235, 150)
-                } else {
-                    egui::Color32::from_rgb(180, 180, 180)
-                };
-                ui.colored_label(color, status);
             });
         }
     }

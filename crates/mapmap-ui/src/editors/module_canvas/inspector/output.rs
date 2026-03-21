@@ -151,29 +151,6 @@ pub fn render_output_ui(
             ui.checkbox(extra_preview_window, "Extra Preview Window");
 
             ui.separator();
-            ui.label("⚙️ Advanced Settings:");
-            ui.horizontal(|ui| {
-                ui.label("Width:");
-                ui.add(egui::DragValue::new(output_width).speed(10).range(0..=8192));
-            });
-            ui.horizontal(|ui| {
-                ui.label("Height:");
-                ui.add(
-                    egui::DragValue::new(output_height)
-                        .speed(10)
-                        .range(0..=8192),
-                );
-            });
-            ui.horizontal(|ui| {
-                ui.label("Target FPS:");
-                ui.add(
-                    egui::DragValue::new(output_fps)
-                        .speed(1.0)
-                        .range(1.0..=240.0),
-                );
-            });
-
-            ui.separator();
             ui.label("\u{1F4E1} NDI Broadcast");
             #[cfg(feature = "ndi")]
             {
