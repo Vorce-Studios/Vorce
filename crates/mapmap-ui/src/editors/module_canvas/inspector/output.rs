@@ -61,9 +61,9 @@ pub fn render_output_ui(
             target_screen,
             show_in_preview_panel,
             extra_preview_window,
-            output_width: _output_width,
-            output_height: _output_height,
-            output_fps: _output_fps,
+            output_width,
+            output_height,
+            output_fps,
             ndi_enabled: _ndi_enabled,
             ndi_stream_name: _ndi_stream_name,
             ..
@@ -101,6 +101,21 @@ pub fn render_output_ui(
                             }
                         }
                     });
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("Width:");
+                ui.add(egui::DragValue::new(output_width).range(1..=7680));
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("Height:");
+                ui.add(egui::DragValue::new(output_height).range(1..=4320));
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("FPS:");
+                ui.add(egui::DragValue::new(output_fps).range(1.0..=240.0));
             });
 
             ui.checkbox(hide_cursor, "🖱️ Hide Mouse Cursor");

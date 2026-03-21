@@ -166,7 +166,7 @@ pub(crate) fn render_content(
     };
 
     let target_view = if needs_post_processing {
-        mesh_target_view_ref.as_deref().unwrap()
+        mesh_target_view_ref.as_deref().unwrap_or(view)
     } else {
         view
     };
@@ -331,11 +331,7 @@ pub(crate) fn render_content(
                 }
             }
 
-            let transform = glam::Mat4::from_scale_rotation_translation(
-                glam::vec3(op.source_props.scale_x, op.source_props.scale_y, 1.0),
-                glam::Quat::from_rotation_z(op.source_props.rotation.to_radians()),
-                glam::vec3(op.source_props.offset_x, op.source_props.offset_y, 0.0),
-            );
+            let transform = glam::Mat4::IDENTITY;
             let uniform_bind_group = mesh_renderer.get_uniform_bind_group_with_source_props(
                 queue,
                 transform,
@@ -387,7 +383,11 @@ pub(crate) fn render_content(
 
     // --- POST PROCESSING PASSES ---
     if needs_post_processing {
-        let intermediate_view = mesh_target_view_ref.as_ref().unwrap();
+        let intermediate_view = if let Some(v) = mesh_target_view_ref.as_ref() {
+            v
+        } else {
+            view
+        };
         // Re-create the texture bind group each frame since the intermediate texture may be re-allocated by the pool,
         // but we could optimize this later by checking if the texture's ID changed.
         // For now, creating a texture bind group is relatively cheap compared to buffers.
