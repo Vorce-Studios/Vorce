@@ -93,24 +93,6 @@ pub(crate) fn draw_digit(
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_generate_grid_texture() {
-        let tex = generate_grid_texture(100, 100, 1);
-        assert_eq!(tex.len(), 40000);
-    }
-
-    #[test]
-    fn test_draw_digit_bounds() {
-        let mut data = vec![0; 400]; // 10x10
-        draw_digit(&mut data, 10, 1, 0, 0, 1, [255, 255, 255, 255]);
-        // Should not panic
-    }
-}
-
 pub(crate) fn ensure_missing_texture_fallback(
     pool: &mapmap_render::TexturePool,
     queue: &wgpu::Queue,
@@ -128,5 +110,23 @@ pub(crate) fn ensure_missing_texture_fallback(
             wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
         );
         pool.upload_data(queue, fallback_name, &data, width, height);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_generate_grid_texture() {
+        let tex = generate_grid_texture(100, 100, 1);
+        assert_eq!(tex.len(), 40000);
+    }
+
+    #[test]
+    fn test_draw_digit_bounds() {
+        let mut data = vec![0; 400]; // 10x10
+        draw_digit(&mut data, 10, 1, 0, 0, 1, [255, 255, 255, 255]);
+        // Should not panic
     }
 }
