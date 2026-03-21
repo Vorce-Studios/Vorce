@@ -1,5 +1,7 @@
 use super::super::mesh;
 use super::super::state::ModuleCanvas;
+#[cfg(any(feature = "ndi", target_os = "windows"))]
+use super::capabilities;
 use egui::Ui;
 use mapmap_core::module::{HueMappingMode, ModulePartId, OutputType};
 
@@ -61,9 +63,9 @@ pub fn render_output_ui(
             target_screen,
             show_in_preview_panel,
             extra_preview_window,
-            output_width,
-            output_height,
-            output_fps,
+            output_width: _output_width,
+            output_height: _output_height,
+            output_fps: _output_fps,
             ndi_enabled: _ndi_enabled,
             ndi_stream_name: _ndi_stream_name,
             ..
@@ -103,50 +105,10 @@ pub fn render_output_ui(
                     });
             });
 
-            ui.horizontal(|ui| {
-                ui.label("Resolution:");
-                ui.add(egui::DragValue::new(output_width).suffix(" px").speed(1.0));
-                ui.label("x");
-                ui.add(egui::DragValue::new(output_height).suffix(" px").speed(1.0));
-            });
-
-            ui.horizontal(|ui| {
-                ui.label("Target FPS:");
-                ui.add(
-                    egui::DragValue::new(output_fps)
-                        .suffix(" fps")
-                        .speed(1.0)
-                        .range(1.0..=240.0),
-                );
-            });
-
             ui.checkbox(hide_cursor, "🖱️ Hide Mouse Cursor");
 
             ui.separator();
-            ui.label("Display Settings & Preview:");
-            ui.label("Advanced Display Settings:");
-            ui.horizontal(|ui| {
-                ui.label("Resolution:");
-                ui.add(
-                    egui::DragValue::new(output_width)
-                        .range(1..=8192)
-                        .prefix("W: "),
-                );
-                ui.add(
-                    egui::DragValue::new(output_height)
-                        .range(1..=8192)
-                        .prefix("H: "),
-                );
-            });
-            ui.horizontal(|ui| {
-                ui.label("Refresh Rate:");
-                ui.add(
-                    egui::DragValue::new(output_fps)
-                        .range(1.0..=240.0)
-                        .suffix(" FPS"),
-                );
-            });
-            ui.separator();
+            ui.label("👁️ Preview:");
             ui.checkbox(show_in_preview_panel, "Show in Preview Panel");
             ui.checkbox(extra_preview_window, "Extra Preview Window");
 
@@ -173,9 +135,18 @@ pub fn render_output_ui(
         #[cfg(feature = "ndi")]
         OutputType::NdiOutput { name } => {
             ui.label("\u{1F4E1} NDI Output");
-            ui.horizontal(|ui| {
-                ui.label("Stream Name:");
-                ui.text_edit_singleline(name);
+            let supported = capabilities::is_output_type_enum_supported(true, false);
+            if !supported {
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "NDI Output has no active runtime path currently.",
+                );
+            }
+            ui.add_enabled_ui(supported, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Stream Name:");
+                    ui.text_edit_singleline(name);
+                });
             });
         }
         #[cfg(not(feature = "ndi"))]
@@ -185,9 +156,18 @@ pub fn render_output_ui(
         #[cfg(target_os = "windows")]
         OutputType::Spout { name } => {
             ui.label("\u{1F6B0} Spout Output");
-            ui.horizontal(|ui| {
-                ui.label("Stream Name:");
-                ui.text_edit_singleline(name);
+            let supported = capabilities::is_output_type_enum_supported(false, true);
+            if !supported {
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "Spout Output has no active runtime path currently.",
+                );
+            }
+            ui.add_enabled_ui(supported, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Stream Name:");
+                    ui.text_edit_singleline(name);
+                });
             });
         }
         OutputType::Hue {

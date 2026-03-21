@@ -164,7 +164,7 @@ impl ModulePartType {
             ),
             ModulePartType::Source(SourceType::BevyParticles { .. }) => (
                 vec![ModuleSocket::input_mappable(
-                    "trigger_in",
+                    "spawn_trigger",
                     "Spawn Trigger",
                     ModuleSocketType::Trigger,
                 )],
@@ -207,15 +207,16 @@ impl ModulePartType {
             },
             ModulePartType::Mesh(_) => (
                 vec![
-                    ModuleSocket::input("media_in", "Vertex In", ModuleSocketType::Media).primary(),
+                    ModuleSocket::input("vertex_in", "Vertex In", ModuleSocketType::Media)
+                        .primary(),
                     ModuleSocket::input_mappable(
-                        "trigger_in",
+                        "control_in",
                         "Control In",
                         ModuleSocketType::Trigger,
                     ),
                 ],
                 vec![
-                    ModuleSocket::output("media_out", "Geometry Out", ModuleSocketType::Media)
+                    ModuleSocket::output("geometry_out", "Geometry Out", ModuleSocketType::Media)
                         .primary(),
                 ],
             ),
@@ -226,7 +227,7 @@ impl ModulePartType {
                         "Brightness",
                         ModuleSocketType::Trigger,
                     ),
-                    ModuleSocket::input("media_in", "Color (RGB)", ModuleSocketType::Media),
+                    ModuleSocket::input("color_in", "Color (RGB)", ModuleSocketType::Media),
                     ModuleSocket::input_mappable("strobe_in", "Strobe", ModuleSocketType::Trigger),
                 ],
                 vec![],
