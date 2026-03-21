@@ -48,16 +48,16 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 
 ## 2026-01-31 - Patch Cleanup & Doc Organization
 
-**Erkenntnis:** Das Root-Verzeichnis enthielt getrackte Patch-Dateien (`pr397.patch`, `pr398.patch`), die dort nicht hingehören. Zudem existierte ein nicht-konformes `docu/` Verzeichnis mit Jules-spezifischen Notizen.
+**Erkenntnis:** Das Root-Verzeichnis enthielt getrackte Patch-Dateien (`pr397.patch`, `pr398.patch`), die dort nicht hingehören. Zudem existierte ein nicht-konformes `docu/` Verzeichnis with Jules-spezifischen Notizen.
 
 **Aktion:**
-- `pr397.patch` und `pr398.patch` nach `.temp-archive/2026-01-31-*` archiviert und via `git rm` aus dem Repository entfernt.
-- `docu/jules_gpu_ui.md` und `docu/jules_hw_accel.md` nach `.jules/` verschoben.
+- `pr397.patch` and `pr398.patch` nach `.temp-archive/2026-01-31-*` archiviert und via `git rm` aus dem Repository entfernt.
+- `docu/jules_gpu_ui.md` and `docu/jules_hw_accel.md` nach `.jules/` verschoben.
 - `docu/` Verzeichnis entfernt.
 
 ## 2026-02-06 - Repository Cleanup & DLL Relocation
 
-**Erkenntnis:** Das Root-Verzeichnis enthielt nicht erlaubte DLL-Dateien (FFmpeg Abhängigkeiten) und eine Patch-Datei (`pr398.patch`), was gegen die Repository-Richtlinien verstößt. Zudem lag `copy_ffmpeg_dlls.bat` im Root statt im `scripts/` Verzeichnis.
+**Erkenntnis:** Das Root-Verzeichnis enthielt nicht erlaubt dem DLL-Dateien (FFmpeg Abhängigkeiten) und eine Patch-Datei (`pr398.patch`), was gegen die Repository-Richtlinien verstößt. Zudem lag `copy_ffmpeg_dlls.bat` im Root statt im `scripts/` Verzeichnis.
 
 **Aktion:**
 - DLLs (`avcodec-61.dll`, etc.) und `pr398.patch` nach `.temp-archive/2026-02-06-*` archiviert.
@@ -118,10 +118,15 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 
 **Erkenntnis:** Es wurden MapFlow-Log-Dateien (`mapflow.log.*`) im Verzeichnis `scripts/archive/logs/` gefunden, welche fälschlicherweise in Git verfolgt wurden, da die aktuelle `.gitignore`-Regel (`/logs/` und `*.log`) das Datums-Suffix nicht erfasste.
 **Aktion:** Log-Dateien aus Git mit `git rm` entfernt und `.gitignore` aktualisiert (`scripts/archive/logs/`), um zukünftige Verfolgung von diesen Dateien zu verhindern.
-<<<<<<< HEAD
+
+## 2026-03-02 - Temporäre Dateien im Root verschoben
+**Erkenntnis:** Im Root-Verzeichnis befanden sich temporäre Entwicklungsskripte und Patches (`fix_bevy_test.py`, `fix_script.py`, `patch.diff`, `test_script.py`), die nicht den Projektstandards für Root-Dateien entsprechen und unnötig mit Git getrackt wurden.
+**Aktion:** Dateien via `git rm --cached` aus Git entfernt und mit Datum-Präfix ins `.temp-archive/` verschoben.
+
 ## 2026-03-19 - Patch Cleanup
 **Erkenntnis:** Das Root-Verzeichnis enthielt eine getrackte Patch-Datei (`patch.diff`), die dort nicht hingehört.
 **Aktion:** `patch.diff` nach `.temp-archive/2026-03-19-patch.diff` archiviert und via `git rm` aus dem Repository entfernt.
+
 ## 2026-03-19 - Vcpkg JSON Cleanup
 **Erkenntnis:** Das Root-Verzeichnis enthielt eine `vcpkg.json`, die typischerweise im Projekt-Root toleriert wird (C++ Dependency-Management), jedoch laut Regeln zur Prüfung gemeldet wurde. Da es im Standard-Kontext erlaubt sein könnte, wurde entschieden, die Datei dort zu belassen, aber im Journal als geprüft zu vermerken.
 **Aktion:** `vcpkg.json` verifiziert. Keine Aktion erforderlich.
@@ -129,5 +134,3 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 ## 2026-03-19 - CI Failure Analysis
 **Erkenntnis:** Ein Test in mapmap-bevy schlug in der CI fehl (`headless_runner_disables_embedded_host_plugins`), da ihm das `#[ignore]` Tag für GPU-Tests fehlte. Des Weiteren gab es diverse `cargo fmt` Fehlschläge im Code.
 **Aktion:** Der Test wurde gemäß den Repository-Regeln (AGENTS.md) mit `#[ignore]` markiert, da Render/GPU-Tests ohne interaktive GUI-Umgebung auf CI nicht laufen. Außerdem wurde `cargo fmt` global ausgeführt, um Formatierungswarnungen zu beheben.
-=======
->>>>>>> main
