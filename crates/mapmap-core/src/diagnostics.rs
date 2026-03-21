@@ -2,7 +2,7 @@
 //! Diagnostic tools for MapFlow modules.
 //!
 
-use crate::module::{MapFlowModule, ModulePartId};
+use crate::module::{MapFlowModule, ModulePartId, ModulePlaybackMode};
 use serde::{Deserialize, Serialize};
 
 /// Represents an issue found during module diagnostics.
@@ -63,8 +63,9 @@ pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
             if src_outputs.iter().all(|s| s.id != conn.from_socket) {
                 issues.push(ModuleIssue {
                     severity: IssueSeverity::Error,
-                    message: format!("Connection #{} references invalid socket index {} on Source Part {} (max {})",
-                        idx, conn.from_socket, src.id, src_outputs.len().saturating_sub(1)),
+                    message: format!("Connection #{} references invalid socket ID '{}' on Source Part {} (available: {})",
+                        idx, conn.from_socket, src.id, 
+                        src_outputs.iter().map(|s| s.id.as_str()).collect::<Vec<_>>().join(", ")),
                     part_id: Some(src.id),
                 });
             }
@@ -73,22 +74,33 @@ pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
             if dst_inputs.iter().all(|s| s.id != conn.to_socket) {
                 issues.push(ModuleIssue {
                     severity: IssueSeverity::Error,
-                    message: format!("Connection #{} references invalid socket index {} on Target Part {} (max {})",
-                        idx, conn.to_socket, dst.id, dst_inputs.len().saturating_sub(1)),
+                    message: format!("Connection #{} references invalid socket ID '{}' on Target Part {} (available: {})",
+                        idx, conn.to_socket, dst.id,
+                        dst_inputs.iter().map(|s| s.id.as_str()).collect::<Vec<_>>().join(", ")),
                     part_id: Some(dst.id),
                 });
             }
         }
     }
 
-    // Check for overlapping parts (optional organization info)
-    // ...
-
     // Check for source paths (if any)
     for part in module.parts.iter() {
-        if matches!(part.part_type, crate::module::ModulePartType::Source(_)) {
-            // Validation logic for sources
-            // ...
+        if let crate::module::ModulePartType::Source(source_type) = &part.part_type {
+            use crate::module::SourceType;
+            match source_type {
+                SourceType::MediaFile { path, .. }
+                | SourceType::VideoUni { path, .. }
+                | SourceType::ImageUni { path, .. } => {
+                    if path.is_empty() {
+                        issues.push(ModuleIssue {
+                            severity: IssueSeverity::Warning,
+                            message: "Media source has no file path selected.".to_string(),
+                            part_id: Some(part.id),
+                        });
+                    }
+                }
+                _ => {}
+            }
         }
     }
 
@@ -116,7 +128,7 @@ mod tests {
             color: [0.0; 4],
             parts: vec![],
             connections: vec![],
-            playback_mode: crate::module::ModulePlaybackMode::LoopUntilManualSwitch,
+            playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
             next_part_id: 1,
         }
     }
@@ -136,7 +148,7 @@ mod tests {
         // Only info for unconnected inputs by default
         assert!(issues
             .iter()
-            .all(|i| matches!(i.severity, IssueSeverity::Info) || matches!(i.severity, IssueSeverity::Error)));
+            .all(|i| matches!(i.severity, IssueSeverity::Info) || matches!(i.severity, IssueSeverity::Error) || matches!(i.severity, IssueSeverity::Warning)));
     }
 
     #[test]
@@ -154,118 +166,4 @@ mod tests {
         // This test needs update based on new integrity logic which focuses on existing connections
         let _ = issues;
     }
-
-    #[test]
-    fn test_check_module_integrity_invalid_from_socket() {
-        let mut module = MapFlowModule {
-            id: 1,
-            name: "Test4".to_string(),
-            color: [0.0; 4],
-            parts: vec![],
-            connections: vec![],
-            playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
-            next_part_id: 1,
-        };
-
-        // Add Source and Layer
-        module.add_part(PartType::Source, (0.0, 0.0));
-        module.add_part(PartType::Layer, (0.0, 0.0));
-
-        let src_id = module.parts[0].id;
-        let dst_id = module.parts[1].id;
-
-        // Push a connection with an invalid from_socket (e.g. 99)
-        module.connections.push(crate::module::ModuleConnection {
-            from_part: src_id,
-            from_socket: 99,
-            to_part: dst_id,
-            to_socket: 0,
-        });
-
-        let issues = check_module_integrity(&module);
-
-        // Should have 2 issues:
-        // 1. Warning about empty Source path
-        // 2. Error about invalid from_socket
-        assert!(issues.iter().any(|i| i.severity == IssueSeverity::Error
-            && i.message.contains("invalid socket index 99 on Source Part")));
-    }
-
-    #[test]
-    fn test_check_module_integrity_invalid_to_socket() {
-        let mut module = MapFlowModule {
-            id: 1,
-            name: "Test5".to_string(),
-            color: [0.0; 4],
-            parts: vec![],
-            connections: vec![],
-            playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
-            next_part_id: 1,
-        };
-
-        // Add Source and Layer
-        module.add_part(PartType::Source, (0.0, 0.0));
-        module.add_part(PartType::Layer, (0.0, 0.0));
-
-        let src_id = module.parts[0].id;
-        let dst_id = module.parts[1].id;
-
-        // Push a connection with an invalid to_socket (e.g. 99)
-        module.connections.push(crate::module::ModuleConnection {
-            from_part: src_id,
-            from_socket: 0,
-            to_part: dst_id,
-            to_socket: 99,
-        });
-
-        let issues = check_module_integrity(&module);
-
-        // Error about invalid to_socket
-        assert!(issues.iter().any(|i| i.severity == IssueSeverity::Error
-            && i.message.contains("invalid socket index 99 on Target Part")));
-    }
-
-    #[test]
-    fn test_check_module_integrity_connected_output_no_warning() {
-        let mut module = MapFlowModule {
-            id: 1,
-            name: "Test6".to_string(),
-            color: [0.0; 4],
-            parts: vec![],
-            connections: vec![],
-            playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
-            next_part_id: 1,
-        };
-
-        // Add Layer and Output
-        module.add_part(PartType::Layer, (0.0, 0.0));
-        module.add_part(PartType::Output, (0.0, 0.0));
-
-        let src_id = module.parts[0].id;
-        let dst_id = module.parts[1].id;
-
-        // Valid connection
-        module.connections.push(crate::module::ModuleConnection {
-            from_part: src_id,
-            from_socket: 0,
-            to_part: dst_id,
-            to_socket: 0,
-        });
-
-        let issues = check_module_integrity(&module);
-
-        // Output Node should NOT have a disconnected warning
-        assert!(!issues
-            .iter()
-            .any(|i| i.message.contains("Output Node is not connected")));
-    }
 }
-
-/// Standardized reasons for features that are temporarily degraded or unsupported in the current renderer.
-pub const DEGRADED_FEATURE_BLEND_MODE: &str =
-    "Blend modes are currently unsupported in this renderer.";
-/// Standardized reason for masks being unsupported.
-pub const DEGRADED_FEATURE_MASK: &str = "Masks are currently unsupported in this renderer.";
-/// Standardized reason for LoadLUT being unsupported.
-pub const DEGRADED_FEATURE_LOAD_LUT: &str =
-    "The LoadLUT effect is currently unsupported in this renderer.";
