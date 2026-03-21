@@ -57,7 +57,7 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 
 ## 2026-02-06 - Repository Cleanup & DLL Relocation
 
-**Erkenntnis:** Das Root-Verzeichnis enthielt nicht erlaubte DLL-Dateien (FFmpeg Abhängigkeiten) und eine Patch-Datei (`pr398.patch`), was gegen die Repository-Richtlinien verstößt. Zudem lag `copy_ffmpeg_dlls.bat` im Root statt im `scripts/` Verzeichnis.
+**Erkenntnis:** Das Root-Verzeichnis enthielt nicht erlaubt dem DLL-Dateien (FFmpeg Abhängigkeiten) und eine Patch-Datei (`pr398.patch`), was gegen die Repository-Richtlinien verstößt. Zudem lag `copy_ffmpeg_dlls.bat` im Root statt im `scripts/` Verzeichnis.
 
 **Aktion:**
 - DLLs (`avcodec-61.dll`, etc.) und `pr398.patch` nach `.temp-archive/2026-02-06-*` archiviert.
@@ -118,9 +118,11 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 
 **Erkenntnis:** Es wurden MapFlow-Log-Dateien (`mapflow.log.*`) im Verzeichnis `scripts/archive/logs/` gefunden, welche fälschlicherweise in Git verfolgt wurden, da die aktuelle `.gitignore`-Regel (`/logs/` und `*.log`) das Datums-Suffix nicht erfasste.
 **Aktion:** Log-Dateien aus Git mit `git rm` entfernt und `.gitignore` aktualisiert (`scripts/archive/logs/`), um zukünftige Verfolgung von diesen Dateien zu verhindern.
+
 ## 2026-03-19 - Patch Cleanup
 **Erkenntnis:** Das Root-Verzeichnis enthielt eine getrackte Patch-Datei (`patch.diff`), die dort nicht hingehört.
 **Aktion:** `patch.diff` nach `.temp-archive/2026-03-19-patch.diff` archiviert und via `git rm` aus dem Repository entfernt.
+
 ## 2026-03-19 - Vcpkg JSON Cleanup
 **Erkenntnis:** Das Root-Verzeichnis enthielt eine `vcpkg.json`, die typischerweise im Projekt-Root toleriert wird (C++ Dependency-Management), jedoch laut Regeln zur Prüfung gemeldet wurde. Da es im Standard-Kontext erlaubt sein könnte, wurde entschieden, die Datei dort zu belassen, aber im Journal als geprüft zu vermerken.
 **Aktion:** `vcpkg.json` verifiziert. Keine Aktion erforderlich.

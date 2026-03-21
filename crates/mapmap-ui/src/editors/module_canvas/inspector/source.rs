@@ -5,7 +5,7 @@ use super::common::{render_common_controls, render_timeline, render_transport_co
 use crate::theme::colors;
 use crate::widgets::styled_slider;
 use crate::UIAction;
-use egui::{Color32, Ui, Vec2};
+use egui::{Color32, Ui};
 use mapmap_core::module::{BevyCameraMode, ModuleId, ModulePartId, SourceType};
 
 /// Renders the configuration UI for a `ModulePartType::Source`.
@@ -327,13 +327,6 @@ pub fn render_source_ui(
             );
 
             ui.add_space(10.0);
-
-            // Preview
-            if let Some(tex_id) = canvas.node_previews.get(&(module_id, part_id)) {
-                let size = Vec2::new(ui.available_width(), ui.available_width() * 9.0 / 16.0);
-                ui.image((*tex_id, size));
-            }
-            ui.add_space(4.0);
 
             render_timeline(
                 canvas,

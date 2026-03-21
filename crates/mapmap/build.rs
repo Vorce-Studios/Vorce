@@ -3,16 +3,19 @@ extern crate winres;
 
 fn main() {
     if std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_default() == "windows" {
-        #[cfg(target_os = "windows")]
+        #[cfg(windows)]
         copy_runtime_dlls();
 
-        let mut res = winres::WindowsResource::new();
-        res.set_icon("../../resources/app_icons/MapFlow_Logo_LQ-Full.ico");
-        res.compile().unwrap();
+        #[cfg(windows)]
+        {
+            let mut res = winres::WindowsResource::new();
+            res.set_icon("../../resources/app_icons/MapFlow_Logo_LQ-Full.ico");
+            res.compile().unwrap();
+        }
     }
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 fn copy_runtime_dlls() {
     use std::collections::HashSet;
     use std::fs;
@@ -126,7 +129,6 @@ fn copy_runtime_dlls() {
 }
 
 #[cfg(windows)]
-#[cfg(target_os = "windows")]
 fn is_valid_runtime_dll(path: &std::path::Path) -> bool {
     use std::io::{Read, Seek, SeekFrom};
 
