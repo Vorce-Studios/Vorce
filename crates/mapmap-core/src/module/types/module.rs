@@ -283,10 +283,10 @@ impl MapFlowModule {
             part.inputs = new_inputs;
             part.outputs = new_outputs;
             let valid_mappable_inputs: HashSet<usize> = part
-                .inputs
-                .iter()
-                .enumerate()
-                .filter_map(|(idx, socket)| socket.supports_trigger_mapping.then_some(idx))
+                .schema()
+                .inspector
+                .mappable_input_indices
+                .into_iter()
                 .collect();
             part.trigger_targets
                 .retain(|socket_idx, _| valid_mappable_inputs.contains(socket_idx));
@@ -444,10 +444,10 @@ impl MapFlowModule {
             }
 
             let valid_mappable_inputs: HashSet<usize> = part
-                .inputs
-                .iter()
-                .enumerate()
-                .filter_map(|(idx, socket)| socket.supports_trigger_mapping.then_some(idx))
+                .schema()
+                .inspector
+                .mappable_input_indices
+                .into_iter()
                 .collect();
             let before_targets = part.trigger_targets.len();
             part.trigger_targets

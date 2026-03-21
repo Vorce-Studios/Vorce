@@ -121,6 +121,27 @@ pub fn render_output_ui(
             ui.checkbox(hide_cursor, "🖱️ Hide Mouse Cursor");
 
             ui.separator();
+            ui.label("⚙️ Advanced Setup:");
+            ui.horizontal(|ui| {
+                ui.label("Resolution:");
+                ui.add(
+                    egui::DragValue::new(output_width)
+                        .suffix(" px")
+                        .range(0..=8192),
+                );
+                ui.label("x");
+                ui.add(
+                    egui::DragValue::new(output_height)
+                        .suffix(" px")
+                        .range(0..=8192),
+                );
+            });
+            ui.horizontal(|ui| {
+                ui.label("Target FPS:");
+                ui.add(egui::DragValue::new(output_fps).range(0.0..=240.0));
+            });
+
+            ui.separator();
             ui.label("👁️ Preview:");
             ui.checkbox(show_in_preview_panel, "Show in Preview Panel");
             ui.checkbox(extra_preview_window, "Extra Preview Window");
