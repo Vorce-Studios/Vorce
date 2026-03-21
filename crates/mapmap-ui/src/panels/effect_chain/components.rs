@@ -46,6 +46,7 @@ impl super::panel::EffectChainPanel {
         let mut new_lut_path = None;
         let mut new_error = None;
 
+        #[allow(clippy::manual_is_multiple_of)]
         let frame_color = if is_dragging {
             colors::CYAN_ACCENT.linear_multiply(0.4) // Highlight when dragging
         } else if enabled {
