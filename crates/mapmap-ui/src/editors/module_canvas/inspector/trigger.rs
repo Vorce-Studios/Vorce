@@ -47,7 +47,11 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
                     ui.label(socket_label);
 
                     // Get config
-                    let mut config = part.trigger_targets.entry(idx).or_default().clone();
+                    let mut config = part
+                        .trigger_targets
+                        .entry(part.inputs[idx].id.clone())
+                        .or_default()
+                        .clone();
                     let original_config = config.clone();
 
                     // Target Selector
@@ -227,7 +231,8 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
 
                     // Save back if changed
                     if config != original_config {
-                        part.trigger_targets.insert(idx, config);
+                        part.trigger_targets
+                            .insert(part.inputs[idx].id.clone(), config);
                     }
                 });
             }
@@ -235,29 +240,27 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
 }
 
 pub fn render_trigger_preview_extra(ui: &mut Ui, trigger: &TriggerType) {
-    match trigger {
-        TriggerType::Fixed {
-            interval_ms,
-            offset_ms,
-            ..
-        } => {
-            let now_ms = (ui.input(|input| input.time) * 1000.0) as u32;
-            let cycle_ms = (*interval_ms).max(1);
-            let phase_ms = now_ms.wrapping_add(*offset_ms) % cycle_ms;
-            let progress = phase_ms as f32 / cycle_ms as f32;
-            let next_pulse_ms = cycle_ms.saturating_sub(phase_ms) % cycle_ms;
+    if let TriggerType::Fixed {
+        interval_ms,
+        offset_ms,
+        ..
+    } = trigger
+    {
+        let now_ms = (ui.input(|input| input.time) * 1000.0) as u32;
+        let cycle_ms = (*interval_ms).max(1);
+        let phase_ms = now_ms.wrapping_add(*offset_ms) % cycle_ms;
+        let progress = phase_ms as f32 / cycle_ms as f32;
+        let next_pulse_ms = cycle_ms.saturating_sub(phase_ms) % cycle_ms;
 
-            ui.add_space(6.0);
-            ui.label("Fixed timer cadence");
-            ui.add(
-                egui::ProgressBar::new(progress)
-                    .desired_width(ui.available_width())
-                    .text(format!("cycle {} ms", cycle_ms)),
-            );
-            ui.label(format!("Next pulse in {} ms", next_pulse_ms));
-            ui.label(format!("Offset {} ms", *offset_ms));
-        }
-        _ => {}
+        ui.add_space(6.0);
+        ui.label("Fixed timer cadence");
+        ui.add(
+            egui::ProgressBar::new(progress)
+                .desired_width(ui.available_width())
+                .text(format!("cycle {} ms", cycle_ms)),
+        );
+        ui.label(format!("Next pulse in {} ms", next_pulse_ms));
+        ui.label(format!("Offset {} ms", *offset_ms));
     }
 }
 
