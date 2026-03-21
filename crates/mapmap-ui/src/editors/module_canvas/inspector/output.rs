@@ -150,16 +150,25 @@ pub fn render_output_ui(
             ui.label("\u{1F4E1} NDI Broadcast");
             #[cfg(feature = "ndi")]
             {
-                ui.checkbox(_ndi_enabled, "Enable NDI Output");
-                if *_ndi_enabled {
-                    ui.horizontal(|ui| {
-                        ui.label("Stream Name:");
-                        ui.text_edit_singleline(_ndi_stream_name);
-                    });
-                    if _ndi_stream_name.is_empty() {
-                        ui.small(format!("Default: {}", name));
-                    }
+                let supported = capabilities::is_output_type_enum_supported(true, false);
+                if !supported {
+                    capabilities::render_unsupported_warning(
+                        ui,
+                        "NDI Output has no active runtime path currently.",
+                    );
                 }
+                ui.add_enabled_ui(supported, |ui| {
+                    ui.checkbox(_ndi_enabled, "Enable NDI Output");
+                    if *_ndi_enabled {
+                        ui.horizontal(|ui| {
+                            ui.label("Stream Name:");
+                            ui.text_edit_singleline(_ndi_stream_name);
+                        });
+                        if _ndi_stream_name.is_empty() {
+                            ui.small(format!("Default: {}", name));
+                        }
+                    }
+                });
             }
             #[cfg(not(feature = "ndi"))]
             {

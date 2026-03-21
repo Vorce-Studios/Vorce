@@ -12,7 +12,7 @@ pub struct NodeCatalogItem {
 }
 
 pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
-    vec![
+    let mut catalog: Vec<NodeCatalogItem> = vec![
         // Triggers
         NodeCatalogItem {
             label: "🥁 Beat",
@@ -217,5 +217,44 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
             }),
         },
     ])
-    .collect()
+    .collect();
+
+    if crate::editors::module_canvas::inspector::capabilities::is_source_type_enum_supported(
+        true, false, false, false,
+    ) {
+        catalog.push(NodeCatalogItem {
+            label: "🎨 Shader",
+            search_tags: "source glsl generator procedural",
+            part_type: ModulePartType::Source(SourceType::Shader {
+                name: "Default".to_string(),
+                params: Vec::new(),
+            }),
+        });
+    }
+
+    #[cfg(feature = "ndi")]
+    if crate::editors::module_canvas::inspector::capabilities::is_source_type_enum_supported(
+        false, false, true, false,
+    ) {
+        catalog.push(NodeCatalogItem {
+            label: "📡 NDI Input",
+            search_tags: "source network video stream",
+            part_type: ModulePartType::Source(SourceType::NdiInput { source_name: None }),
+        });
+    }
+
+    #[cfg(target_os = "windows")]
+    if crate::editors::module_canvas::inspector::capabilities::is_source_type_enum_supported(
+        false, false, false, true,
+    ) {
+        catalog.push(NodeCatalogItem {
+            label: "🚀 Spout Input",
+            search_tags: "source texture share windows",
+            part_type: ModulePartType::Source(SourceType::SpoutInput {
+                sender_name: String::new(),
+            }),
+        });
+    }
+
+    catalog
 }
