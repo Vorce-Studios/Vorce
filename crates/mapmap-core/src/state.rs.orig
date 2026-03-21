@@ -240,10 +240,8 @@ mod tests {
     #[test]
     fn test_app_settings_partial_eq() {
         let settings_1 = AppSettings::default();
-        let settings_2 = AppSettings {
-            master_volume: 0.5,
-            ..Default::default()
-        };
+        let mut settings_2 = AppSettings::default();
+        settings_2.master_volume = 0.5;
         assert_ne!(settings_1, settings_2);
     }
 

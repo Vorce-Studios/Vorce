@@ -5,7 +5,7 @@
 //! complexities of managing winit windows and wgpu surfaces.
 
 use anyhow::Result;
-use mapmap_core::{runtime_paths, OutputId};
+use mapmap_core::{runtime_paths, OutputId, OutputManager};
 use mapmap_render::WgpuBackend;
 use mapmap_ui::config::VSyncMode;
 use std::collections::HashMap;
@@ -163,6 +163,7 @@ impl WindowManager {
     /// Creates a new output window based on an `OutputConfig`.
     ///
     /// If a window for the given `OutputId` already exists, this function does nothing.
+    #[allow(dead_code)] // TODO: Prüfen, ob diese Funktion dauerhaft benötigt wird!
     pub fn create_output_window(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -239,7 +240,160 @@ impl WindowManager {
         Ok(())
     }
 
+    /// Creates a new projector window from a Module OutputType::Projector.
+    ///
+    /// If a window for the given `output_id` already exists, this function does nothing.
+    #[allow(clippy::too_many_arguments)]
+    pub fn create_projector_window(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        backend: &WgpuBackend,
+        output_id: OutputId,
+        name: &str,
+        fullscreen: bool,
+        hide_cursor: bool,
+        target_screen: u8,
+        vsync_mode: VSyncMode,
+    ) -> Result<()> {
+        // Skip if window already exists
+        if self.windows.contains_key(&output_id) {
+            return Ok(());
+        }
+
+        info!(
+            "Creating projector window '{}' (ID: {}, Screen: {})",
+            name, output_id, target_screen
+        );
+
+        // Get all available monitors
+        let monitors: Vec<_> = event_loop.available_monitors().collect();
+
+        // Select target monitor (default to primary if target_screen is out of range)
+        let target_monitor = if (target_screen as usize) < monitors.len() {
+            Some(monitors[target_screen as usize].clone())
+        } else if let Some(primary) = event_loop.primary_monitor() {
+            info!(
+                "Target screen {} not found, using primary monitor",
+                target_screen
+            );
+            Some(primary)
+        } else {
+            None
+        };
+
+        // Default resolution: 1920x1080 or monitor native resolution
+        let (default_width, default_height) = if let Some(ref monitor) = target_monitor {
+            if let Some(mode) = monitor.video_modes().next() {
+                let size = mode.size();
+                (size.width, size.height)
+            } else {
+                (1920, 1080)
+            }
+        } else {
+            (1920, 1080)
+        };
+
+        let mut window_attributes = WindowAttributes::default()
+            .with_title(format!("MapFlow - {}", name))
+            .with_window_icon(load_app_icon())
+            .with_inner_size(winit::dpi::PhysicalSize::new(default_width, default_height));
+
+        // Set fullscreen if requested
+        if fullscreen {
+            if let Some(monitor) = target_monitor.clone() {
+                window_attributes =
+                    window_attributes.with_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
+            } else {
+                window_attributes =
+                    window_attributes.with_fullscreen(Some(Fullscreen::Borderless(None)));
+            }
+        }
+
+        // Build the window
+        let window = Arc::new(event_loop.create_window(window_attributes)?);
+
+        // Re-apply icon explicitly to be sure
+        if let Some(icon) = load_app_icon() {
+            window.set_window_icon(Some(icon));
+        }
+
+        // Hide cursor if requested
+        window.set_cursor_visible(!hide_cursor);
+
+        let window_id_winit = window.id();
+
+        // Create surface for this output window
+        let surface = backend.create_surface(window.clone())?;
+
+        let surface_config = wgpu::SurfaceConfiguration {
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
+            format: backend.surface_format(),
+            width: default_width,
+            height: default_height,
+            present_mode: vsync_mode_to_present_mode(vsync_mode), // VSync for synchronized output
+            alpha_mode: wgpu::CompositeAlphaMode::Opaque,
+            view_formats: vec![],
+            desired_maximum_frame_latency: 2,
+        };
+
+        surface.configure(&backend.device, &surface_config);
+
+        let window_context = WindowContext {
+            window,
+            surface,
+            surface_config,
+            output_id,
+        };
+
+        self.windows.insert(output_id, window_context);
+        self.window_id_map.insert(window_id_winit, output_id);
+
+        info!(
+            "Created projector window '{}' at {}x{}",
+            name, default_width, default_height
+        );
+
+        Ok(())
+    }
+
+    /// Synchronizes the active windows with the `OutputManager`'s configuration.
+    ///
+    /// This function will create windows for new outputs and remove windows for outputs
+    /// that no longer exist.
+    #[allow(dead_code)] // TODO: Prüfen, ob diese Funktion dauerhaft benötigt wird!
+    pub fn sync_windows(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        backend: &WgpuBackend,
+        output_manager: &OutputManager,
+    ) -> Result<()> {
+        // Create windows for new outputs
+        for output_config in output_manager.outputs() {
+            if !self.windows.contains_key(&output_config.id) {
+                self.create_output_window(event_loop, backend, output_config)?;
+            }
+        }
+
+        // Remove windows for outputs that no longer exist
+        let output_ids: Vec<OutputId> = output_manager.outputs().iter().map(|o| o.id).collect();
+
+        let mut windows_to_remove = Vec::new();
+        for &window_output_id in self.windows.keys() {
+            if window_output_id != 0 && !output_ids.contains(&window_output_id) {
+                windows_to_remove.push(window_output_id);
+            }
+        }
+
+        for output_id in windows_to_remove {
+            self.remove_window(output_id);
+            info!("Removed output window for output ID {}", output_id);
+        }
+
+        Ok(())
+    }
+
     /// Removes a window by its `OutputId`.
+    #[allow(dead_code)] // TODO: Prüfen, ob diese Funktion dauerhaft benötigt wird!
     pub fn remove_window(&mut self, output_id: OutputId) -> Option<WindowContext> {
         if let Some(context) = self.windows.remove(&output_id) {
             self.window_id_map.remove(&context.window.id());

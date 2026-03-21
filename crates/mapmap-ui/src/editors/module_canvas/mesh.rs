@@ -1,3 +1,4 @@
+use crate::editors::mesh_editor::ui::MeshEditorUi;
 use egui::{Color32, Pos2, Sense, Stroke, Ui, Vec2};
 use mapmap_core::module::{LayerType, MeshType, ModulePart, ModulePartId, ModulePartType};
 

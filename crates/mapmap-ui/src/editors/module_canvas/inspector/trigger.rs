@@ -334,7 +334,25 @@ pub fn render_trigger_ui(
             ui.label("⏱️ Fixed Timer");
             ui.add(egui::Slider::new(interval_ms, 16..=10000).text("Interval (ms)"));
             ui.add(egui::Slider::new(offset_ms, 0..=5000).text("Offset (ms)"));
-            super::render_fixed_timer_preview(canvas, ui, part_id, *interval_ms, *offset_ms);
+
+            ui.separator();
+            super::render_trigger_preview(canvas, ui, part_id, |ui, _live_value, _is_live| {
+                let now_ms = (ui.input(|input| input.time) * 1000.0) as u32;
+                let cycle_ms = (*interval_ms).max(1);
+                let phase_ms = now_ms.wrapping_add(*offset_ms) % cycle_ms;
+                let progress = phase_ms as f32 / cycle_ms as f32;
+                let next_pulse_ms = cycle_ms.saturating_sub(phase_ms) % cycle_ms;
+
+                ui.add_space(6.0);
+                ui.label("Fixed timer cadence");
+                ui.add(
+                    egui::ProgressBar::new(progress)
+                        .desired_width(ui.available_width())
+                        .text(format!("cycle {} ms", cycle_ms)),
+                );
+                ui.label(format!("Next pulse in {} ms", next_pulse_ms));
+                ui.label(format!("Offset {} ms", *offset_ms));
+            });
         }
         TriggerType::Midi {
             channel,
@@ -350,7 +368,7 @@ pub fn render_trigger_ui(
                 {
                     if let Ok(ports) = mapmap_control::midi::MidiInputHandler::list_ports() {
                         if ports.is_empty() {
-                            ui.label(egui::RichText::new("No MIDI devices").weak().italics());
+                            super::common::render_info_label(ui, "No MIDI devices");
                         } else {
                             egui::ComboBox::from_id_salt("midi_device")
                                 .selected_text(ports.first().cloned().unwrap_or_default())
@@ -423,32 +441,6 @@ pub fn render_trigger_ui(
 
     if !matches!(trigger, TriggerType::Fixed { .. }) {
         ui.separator();
-        super::render_inspector_preview_toggle(canvas, ui);
-        if canvas.show_inspector_previews {
-            let live_value = canvas
-                .last_trigger_values
-                .get(&part_id)
-                .copied()
-                .unwrap_or(0.0);
-            let is_live = live_value > 0.1;
-            ui.ctx().request_repaint();
-
-            ui.group(|ui| {
-                ui.label("Live Trigger Preview");
-                ui.add(
-                    egui::ProgressBar::new(live_value.clamp(0.0, 1.0))
-                        .desired_width(ui.available_width())
-                        .text(format!("{:.2}", live_value)),
-                );
-
-                let status = if is_live { "LIVE pulse" } else { "Waiting" };
-                let color = if is_live {
-                    egui::Color32::from_rgb(110, 235, 150)
-                } else {
-                    egui::Color32::from_rgb(180, 180, 180)
-                };
-                ui.colored_label(color, status);
-            });
-        }
+        super::render_trigger_preview(canvas, ui, part_id, |_, _, _| {});
     }
 }

@@ -353,9 +353,7 @@ pub fn render_canvas(
 
                 if socket_resp.clicked()
                     && socket_info.is_output
-                    && (socket_info.socket_type == mapmap_core::module::ModuleSocketType::Event
-                        || socket_info.socket_type
-                            == mapmap_core::module::ModuleSocketType::Control)
+                    && socket_info.socket_type == mapmap_core::module::ModuleSocketType::Trigger
                 {
                     actions.push(UIAction::ManualTrigger(module_id, part_id));
                 }

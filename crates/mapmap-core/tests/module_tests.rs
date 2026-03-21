@@ -71,7 +71,7 @@ fn test_socket_generation_coverage() {
     assert!(part_trigger
         .outputs
         .iter()
-        .any(|s| s.socket_type == ModuleSocketType::Event));
+        .any(|s| s.socket_type == ModuleSocketType::Trigger));
     assert!(part_trigger.inputs.is_empty());
 
     // 2. Source (Media File)
@@ -81,7 +81,7 @@ fn test_socket_generation_coverage() {
     assert!(part_source
         .inputs
         .iter()
-        .any(|s| s.socket_type == ModuleSocketType::Control));
+        .any(|s| s.socket_type == ModuleSocketType::Trigger));
     assert!(part_source
         .outputs
         .iter()
@@ -98,7 +98,7 @@ fn test_socket_generation_coverage() {
     assert!(part_layer
         .inputs
         .iter()
-        .any(|s| s.socket_type == ModuleSocketType::Control));
+        .any(|s| s.socket_type == ModuleSocketType::Trigger));
     assert!(part_layer
         .outputs
         .iter()
@@ -251,17 +251,20 @@ fn test_update_part_sockets_removes_invalid_connections() {
             to_part: pid2,
             to_socket: "999".to_string(),
         });
+    module
+        .connections
+        .push(mapmap_core::module::ModuleConnection {
+            from_part: pid1,
+            from_socket: "0".to_string(),
+            to_part: pid2,
+            to_socket: "0".to_string(),
+        }); // Valid connection
 
     assert_eq!(module.connections.len(), 3);
 
-    // This updates pid1 sockets and repairs the ENTIRE graph
+    // Calling update_part_sockets updates sockets, but graph repair is needed to fully clean up
     module.update_part_sockets(pid1);
-
-    // All invalid connections across the entire graph will be removed in one pass
-    assert_eq!(module.connections.len(), 1);
-
-    // Second call is a no-op for connections length
-    module.update_part_sockets(pid2);
+    module.repair_graph();
 
     assert_eq!(module.connections.len(), 1);
 
@@ -284,6 +287,7 @@ fn test_update_part_outputs_delegates() {
     let pid1 = module.add_part(PartType::Trigger, (0.0, 0.0));
     let pid2 = module.add_part(PartType::Source, (100.0, 0.0));
 
+    // Push directly since add_connection would silently fail
     module
         .connections
         .push(mapmap_core::module::ModuleConnection {
@@ -294,9 +298,7 @@ fn test_update_part_outputs_delegates() {
         }); // Invalid connection
 
     assert_eq!(module.connections.len(), 1);
-    module.update_part_outputs(pid1); // Should call update_part_sockets
-    module.repair_graph(); // Must call repair_graph to fully clean up
-
+    module.update_part_outputs(pid1); // Should call update_part_sockets and clear connection
     assert!(module.connections.is_empty());
 }
 
@@ -546,7 +548,7 @@ fn test_module_add_connection_adds_to_list() {
         next_part_id: 1,
     };
 
-    // directly push since add_connection validates sockets which don't exist here
+    // The connections vector needs to be pushed directly since add_connection validates parts.
     module
         .connections
         .push(mapmap_core::module::ModuleConnection {
@@ -576,6 +578,7 @@ fn test_module_remove_connection_removes_exact_match() {
         next_part_id: 1,
     };
 
+    // Push directly since validate_connection fails if parts are missing
     module
         .connections
         .push(mapmap_core::module::ModuleConnection {

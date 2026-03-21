@@ -115,13 +115,9 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
                 (
-                    ModulePartType::Layer(LayerType::Single {
-                        id: 0,
-                        name: "Audio Layer".to_string(),
+                    ModulePartType::Layer(LayerType::All {
                         opacity: 1.0,
                         blend_mode: None,
-                        mesh: mapmap_core::module::MeshType::default(),
-                        mapping_mode: false,
                     }),
                     (950.0, 100.0),
                     None,
