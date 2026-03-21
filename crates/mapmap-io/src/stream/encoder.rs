@@ -295,18 +295,30 @@ mod tests {
         let format = VideoFormat::hd_1080p60_rgba();
 
         // First frame should be keyframe
-        let frame = VideoFrame::new(vec![0; format.buffer_size()], format.clone(), std::time::Duration::from_millis(0));
+        let frame = VideoFrame::new(
+            vec![0; format.buffer_size()],
+            format.clone(),
+            std::time::Duration::from_millis(0),
+        );
         let packet = encoder.encode(&frame).unwrap();
         assert!(packet.is_keyframe); // Corrected: First frame IS keyframe
 
         // Encode 58 more frames (total 59)
         for i in 0..58 {
-            let frame = VideoFrame::new(vec![0; format.buffer_size()], format.clone(), std::time::Duration::from_millis(16 * (i + 1)));
+            let frame = VideoFrame::new(
+                vec![0; format.buffer_size()],
+                format.clone(),
+                std::time::Duration::from_millis(16 * (i + 1)),
+            );
             encoder.encode(&frame).unwrap();
         }
 
         // Frame 60 should be keyframe
-        let frame = VideoFrame::new(vec![0; format.buffer_size()], format.clone(), std::time::Duration::from_millis(16 * 60));
+        let frame = VideoFrame::new(
+            vec![0; format.buffer_size()],
+            format.clone(),
+            std::time::Duration::from_millis(16 * 60),
+        );
         let packet = encoder.encode(&frame).unwrap();
         assert!(packet.is_keyframe);
     }
@@ -315,7 +327,11 @@ mod tests {
     fn test_video_encoder_wrong_format() {
         let mut encoder = VideoEncoder::default_h264_1080p60().unwrap();
         let wrong_format = VideoFormat::new(1920, 1080, PixelFormat::YUV420P, 60.0);
-        let frame = VideoFrame::new(vec![0; wrong_format.buffer_size()], wrong_format.clone(), std::time::Duration::from_millis(0));
+        let frame = VideoFrame::new(
+            vec![0; wrong_format.buffer_size()],
+            wrong_format.clone(),
+            std::time::Duration::from_millis(0),
+        );
 
         let result = encoder.encode(&frame);
         assert!(result.is_err());
