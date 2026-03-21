@@ -51,68 +51,22 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 **Erkenntnis:** Das Root-Verzeichnis enthielt getrackte Patch-Dateien (`pr397.patch`, `pr398.patch`), die dort nicht hingehören. Zudem existierte ein nicht-konformes `docu/` Verzeichnis with Jules-spezifischen Notizen.
 
 **Aktion:**
-- `pr397.patch` and `pr398.patch` nach `.temp-archive/2026-01-31-*` archiviert und via `git rm` aus dem Repository entfernt.
+- `pr397.patch` and `pr398.patch` nach `.temp-archive/2026-01-31-*` archiviert and via `git rm` aus dem Repository entfernt.
 - `docu/jules_gpu_ui.md` and `docu/jules_hw_accel.md` nach `.jules/` verschoben.
 - `docu/` Verzeichnis entfernt.
 
 ## 2026-02-06 - Repository Cleanup & DLL Relocation
 
-**Erkenntnis:** Das Root-Verzeichnis enthielt nicht erlaubt dem DLL-Dateien (FFmpeg Abhängigkeiten) und eine Patch-Datei (`pr398.patch`), was gegen die Repository-Richtlinien verstößt. Zudem lag `copy_ffmpeg_dlls.bat` im Root statt im `scripts/` Verzeichnis.
+**Erkenntnis:** Das Root-Verzeichnis enthielt nicht erlaubt dem DLL-Dateien (FFmpeg Abhängigkeiten) and eine Patch-Datei (`pr398.patch`), was gegen die Repository-Richtlinien verstößt. Zudem lag `copy_ffmpeg_dlls.bat` im Root statt im `scripts/` Verzeichnis.
 
 **Aktion:**
-- DLLs (`avcodec-61.dll`, etc.) und `pr398.patch` nach `.temp-archive/2026-02-06-*` archiviert.
+- DLLs (`avcodec-61.dll`, etc.) and `pr398.patch` nach `.temp-archive/2026-02-06-*` archiviert.
 - `tmp/fix_player.ps1` nach `.temp-archive/` verschoben und `tmp/` entfernt.
 - `copy_ffmpeg_dlls.bat` nach `scripts/` verschoben und Pfade korrigiert (`%~dp0..\`).
 
 ## 2026-02-09 - Archive Maintenance
 
-**Erkenntnis:** Das Verzeichnis `.temp-archive/` enthielt mehrere getrackte Dateien vom 2026-01-02 (`.mapmap_autosave`, `check_*.txt`, `VERSION.txt`, `VjMapper.code-workspace`, `core_error.txt`, `test_results.txt`), die älter als 30 Tage waren und somit die Aufbewahrungsfrist überschritten hatten.
-
-**Aktion:**
-- Alle Dateien mit dem Präfix `2026-01-02-` aus `.temp-archive/` via `git rm` entfernt.
-- `.temp-archive/` ist nun leer und wurde entfernt.
-
-## 2026-02-10 - Root & Docs Cleanup
-
-**Erkenntnis:** Das Root-Verzeichnis enthielt `apply_global_fix.ps1` (veralteter Patch-Script) und `fix_formatting.py` (Utility-Script), die dort nicht hingehören. Zudem befand sich ein Zip-Archiv `HueFlow-main.zip` in der Dokumentation.
-
-**Aktion:**
-- `apply_global_fix.ps1` nach `.temp-archive/2026-02-10-apply_global_fix.ps1` archiviert.
-- `docs/03-ARCHITECTURE/specs/HueFlow-main.zip` nach `.temp-archive/2026-02-10-HueFlow-main.zip` archiviert.
-- `fix_formatting.py` nach `scripts/fix_formatting.py` verschoben.
-
-## 2026-02-18 - Documentation & Root Cleanup
-
-**Erkenntnis:** Das Root-Verzeichnis enthielt Projekt-Dokumentation (`PR_MAINTENANCE_OVERVIEW.md`, `pr_tracking.md`) sowie Utility-Skripte (`check_links.py`) und temporäre Dateien (`GEMINI.md`), die dort nicht hingehören.
-
-**Aktion:**
-- `PR_MAINTENANCE_OVERVIEW.md` und `pr_tracking.md` nach `docs/project/` verschoben.
-- `check_links.py` nach `scripts/` verschoben und Funktionalität verifiziert.
-- `GEMINI.md` nach `.temp-archive/2026-02-18-GEMINI.md` archiviert.
-
-## 2026-02-18 - Cleanup Verification & Completion
-
-**Erkenntnis:** Trotz des vorangegangenen Eintrags vom selben Tag befanden sich `PR_MAINTENANCE_OVERVIEW.md`, `pr_tracking.md` und `GEMINI.md` weiterhin im Root-Verzeichnis.
-
-**Aktion:**
-- Dateien erneut verschoben bzw. archiviert.
-- Verifikation der Dateipfade erfolgreich durchgeführt.
-
-## 2026-03-02 - Root Directory Cleanup
-
-**Erkenntnis:** Das Root-Verzeichnis enthielt mehrere Skripte (`fix_docs_*.py`, `fix_ui_layout_*.sh`, `fix_wgpu*.py`) sowie eine leere temporäre Datei `GEMINI.md`, die dort nicht hingehören. Da die weitere Verwendung oder der eigentliche Speicherort der Skripte unklar war, war es am sichersten, sie zunächst zu archivieren.
-
-**Aktion:**
-- Alle identifizierten Skripte (`fix_docs_pro.py`, `fix_docs_smart.py`, `fix_docs_smart_all.py`, `fix_ui_layout_10.sh`, `fix_ui_layout_3.sh`, `fix_ui_layout_4.sh`, `fix_ui_layout_5.sh`, `fix_ui_layout_6.sh`, `fix_ui_layout_7.sh`, `fix_ui_layout_8.sh`, `fix_ui_layout_9.sh`, `fix_wgpu.py`, `fix_wgpu_2.py`, `fix_wgpu_clean.py`) nach `.temp-archive/` mit aktuellem Datums-Präfix archiviert.
-- `GEMINI.md` nach `.temp-archive/` mit aktuellem Datums-Präfix archiviert.
-
-## 2026-03-09 - Root Directory Cleanup
-
-**Erkenntnis:** Das Root-Verzeichnis enthielt `GEMINI.md` und das Skript `update_docs.sh`, die beide gegen die Projektstruktur-Richtlinien verstoßen.
-
-**Aktion:**
-- `GEMINI.md` nach `.jules/GEMINI.md` verschoben.
-- `update_docs.sh` nach `scripts/update_docs.sh` verschoben.
+...
 
 ## 2026-03-12 - Root Directory Cleanup
 

@@ -58,7 +58,7 @@ pub enum ConnectionValidationError {
         /// Part ID.
         part_id: ModulePartId,
         /// Socket index.
-        socket_idx: String,
+        socket_idx: usize,
     },
     /// Target socket index is invalid.
     #[error("target socket {socket_idx} is invalid on part {part_id}")]
@@ -66,7 +66,7 @@ pub enum ConnectionValidationError {
         /// Part ID.
         part_id: ModulePartId,
         /// Socket index.
-        socket_idx: String,
+        socket_idx: usize,
     },
     /// Sockets are not direction-compatible.
     #[error("connection requires an output socket feeding an input socket")]
@@ -253,9 +253,9 @@ impl MapFlowModule {
     pub fn add_connection(
         &mut self,
         from_part: ModulePartId,
-        from_socket: String,
+        from_socket: usize,
         to_part: ModulePartId,
-        to_socket: String,
+        to_socket: usize,
     ) {
         let _ = self.connect_parts(from_part, from_socket, to_part, to_socket);
     }
@@ -264,9 +264,9 @@ impl MapFlowModule {
     pub fn remove_connection(
         &mut self,
         from_part: ModulePartId,
-        from_socket: String,
+        from_socket: usize,
         to_part: ModulePartId,
-        to_socket: String,
+        to_socket: usize,
     ) {
         self.connections.retain(|c| {
             !(c.from_part == from_part
@@ -288,12 +288,8 @@ impl MapFlowModule {
                 .mappable_input_indices
                 .into_iter()
                 .collect();
-            part.trigger_targets.retain(|socket_id, _| {
-                part.inputs
-                    .iter()
-                    .enumerate()
-                    .any(|(idx, s)| &s.id == socket_id && valid_mappable_inputs.contains(&idx))
-            });
+            part.trigger_targets
+                .retain(|socket_idx, _| valid_mappable_inputs.contains(socket_idx));
         }
         let _ = self.repair_graph();
     }
@@ -312,9 +308,9 @@ impl MapFlowModule {
     pub fn validate_connection(
         &self,
         from_part: ModulePartId,
-        from_socket: String,
+        from_socket: usize,
         to_part: ModulePartId,
-        to_socket: String,
+        to_socket: usize,
     ) -> Result<(), ConnectionValidationError> {
         if from_part == to_part {
             return Err(ConnectionValidationError::SelfConnection);
@@ -327,18 +323,20 @@ impl MapFlowModule {
             .part(to_part)
             .ok_or(ConnectionValidationError::MissingTargetPart(to_part))?;
 
-        let source_socket = source.outputs.iter().find(|s| s.id == from_socket).ok_or(
+        let source_socket = source.outputs.get(from_socket).ok_or(
             ConnectionValidationError::InvalidSourceSocket {
                 part_id: from_part,
-                socket_idx: from_socket.clone(),
+                socket_idx: from_socket,
             },
         )?;
-        let target_socket = target.inputs.iter().find(|s| s.id == to_socket).ok_or(
-            ConnectionValidationError::InvalidTargetSocket {
-                part_id: to_part,
-                socket_idx: to_socket.clone(),
-            },
-        )?;
+        let target_socket =
+            target
+                .inputs
+                .get(to_socket)
+                .ok_or(ConnectionValidationError::InvalidTargetSocket {
+                    part_id: to_part,
+                    socket_idx: to_socket,
+                })?;
 
         if source_socket.direction != ModuleSocketDirection::Output
             || target_socket.direction != ModuleSocketDirection::Input
@@ -357,15 +355,15 @@ impl MapFlowModule {
     pub fn connect_parts(
         &mut self,
         from_part: ModulePartId,
-        from_socket: String,
+        from_socket: usize,
         to_part: ModulePartId,
-        to_socket: String,
+        to_socket: usize,
     ) -> Result<bool, ConnectionValidationError> {
-        self.validate_connection(from_part, from_socket.clone(), to_part, to_socket.clone())?;
+        self.validate_connection(from_part, from_socket, to_part, to_socket)?;
 
         let target_accepts_multiple = self
             .part(to_part)
-            .and_then(|part| part.inputs.iter().find(|s| s.id == to_socket))
+            .and_then(|part| part.inputs.get(to_socket))
             .map(|socket| socket.accepts_multiple_connections)
             .unwrap_or(false);
 
@@ -452,26 +450,8 @@ impl MapFlowModule {
                 .into_iter()
                 .collect();
             let before_targets = part.trigger_targets.len();
-
-            let mut new_trigger_targets = std::collections::HashMap::new();
-            for (key, val) in part.trigger_targets.drain() {
-                if let Ok(idx) = key.parse::<usize>() {
-                    // Legacy index-based trigger target
-                    if let Some(socket) = part.inputs.get(idx) {
-                        new_trigger_targets.insert(socket.id.clone(), val);
-                    }
-                } else {
-                    new_trigger_targets.insert(key, val);
-                }
-            }
-            part.trigger_targets = new_trigger_targets;
-
-            part.trigger_targets.retain(|socket_id, _| {
-                part.inputs
-                    .iter()
-                    .enumerate()
-                    .any(|(idx, s)| &s.id == socket_id && valid_mappable_inputs.contains(&idx))
-            });
+            part.trigger_targets
+                .retain(|socket_idx, _| valid_mappable_inputs.contains(socket_idx));
             report.removed_trigger_targets += before_targets - part.trigger_targets.len();
 
             if normalized {
@@ -484,30 +464,12 @@ impl MapFlowModule {
         let mut seen_connections = HashSet::new();
         let mut repaired_connections = Vec::with_capacity(self.connections.len());
 
-        for mut connection in self.connections.iter().cloned() {
-            // Migrate legacy from_socket
-            if let Ok(idx) = connection.from_socket.parse::<usize>() {
-                if let Some(source) = self.part(connection.from_part) {
-                    if let Some(socket) = source.outputs.get(idx) {
-                        connection.from_socket = socket.id.clone();
-                    }
-                }
-            }
-
-            // Migrate legacy to_socket
-            if let Ok(idx) = connection.to_socket.parse::<usize>() {
-                if let Some(target) = self.part(connection.to_part) {
-                    if let Some(socket) = target.inputs.get(idx) {
-                        connection.to_socket = socket.id.clone();
-                    }
-                }
-            }
-
+        for connection in self.connections.iter().cloned() {
             let unique_key = (
                 connection.from_part,
-                connection.from_socket.clone(),
+                connection.from_socket,
                 connection.to_part,
-                connection.to_socket.clone(),
+                connection.to_socket,
             );
 
             let is_valid = existing_part_ids.contains(&connection.from_part)
@@ -515,9 +477,9 @@ impl MapFlowModule {
                 && self
                     .validate_connection(
                         connection.from_part,
-                        connection.from_socket.clone(),
+                        connection.from_socket,
                         connection.to_part,
-                        connection.to_socket.clone(),
+                        connection.to_socket,
                     )
                     .is_ok();
 

@@ -78,7 +78,7 @@ pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
         if let (Some(src), Some(dst)) = (from_part, to_part) {
             // Check socket bounds
             let (_src_inputs, src_outputs) = src.compute_sockets();
-            if src_outputs.iter().all(|s| s.id != conn.from_socket) {
+            if conn.from_socket >= src_outputs.len() {
                 issues.push(ModuleIssue {
                     severity: IssueSeverity::Error,
                     message: format!("Connection #{} references invalid socket index {} on Source Part {} (max {})",
@@ -88,7 +88,7 @@ pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
             }
 
             let (dst_inputs, _) = dst.compute_sockets();
-            if dst_inputs.iter().all(|s| s.id != conn.to_socket) {
+            if conn.to_socket >= dst_inputs.len() {
                 issues.push(ModuleIssue {
                     severity: IssueSeverity::Error,
                     message: format!("Connection #{} references invalid socket index {} on Target Part {} (max {})",
@@ -163,9 +163,9 @@ mod tests {
         // Add a connection with an invalid from_part and to_part
         module.connections.push(crate::module::ModuleConnection {
             from_part: 999,
-            from_socket: "0".to_string(),
+            from_socket: 0,
             to_part: 1000,
-            to_socket: "0".to_string(),
+            to_socket: 0,
         });
 
         let issues = check_module_integrity(&module);
