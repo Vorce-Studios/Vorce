@@ -90,7 +90,7 @@ impl ShortcutsPanel {
         if filtered_indices.is_empty() {
             ui.vertical_centered(|ui| {
                 ui.add_space(20.0);
-                ui.label(RichText::new("No shortcuts found").weak().italics());
+                crate::widgets::custom::render_info_label(ui, "No shortcuts found");
             });
         } else {
             // --- Shortcuts List ---

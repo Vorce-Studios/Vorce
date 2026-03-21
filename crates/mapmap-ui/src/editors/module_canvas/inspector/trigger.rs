@@ -373,7 +373,7 @@ pub fn render_trigger_ui(
                 {
                     if let Ok(ports) = mapmap_control::midi::MidiInputHandler::list_ports() {
                         if ports.is_empty() {
-                            super::common::render_info_label(ui, "No MIDI devices");
+                            crate::widgets::custom::render_info_label(ui, "No MIDI devices");
                         } else {
                             egui::ComboBox::from_id_salt("midi_device")
                                 .selected_text(ports.first().cloned().unwrap_or_default())
