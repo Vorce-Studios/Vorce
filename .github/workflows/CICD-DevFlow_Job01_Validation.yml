@@ -26,7 +26,7 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  RUST_TOOLCHAIN: ${{ inputs.toolchain || github.event.inputs.toolchain || '1.94.0' }}
+  RUST_TOOLCHAIN: ${{ inputs.toolchain || github.event.inputs.toolchain || 'stable' }}
 
 jobs:
   quality:
