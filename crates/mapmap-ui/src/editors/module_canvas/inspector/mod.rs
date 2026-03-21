@@ -271,7 +271,10 @@ pub fn render_layer_preview_panel(
             ));
         }
         if preview_context.upstream_source_part_ids.is_empty() {
-            crate::widgets::custom::render_info_label(ui, "No upstream source node was found for this layer.");
+            crate::widgets::custom::render_info_label(
+                ui,
+                "No upstream source node was found for this layer.",
+            );
         } else {
             crate::widgets::custom::render_info_label(
                 ui,

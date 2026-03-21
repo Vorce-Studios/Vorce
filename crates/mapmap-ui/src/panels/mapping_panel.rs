@@ -52,7 +52,10 @@ impl MappingPanel {
                         if mapping_ids.is_empty() {
                             ui.vertical_centered(|ui| {
                                 ui.add_space(20.0);
-                                crate::widgets::custom::render_info_label(ui, "No mappings created yet.");
+                                crate::widgets::custom::render_info_label(
+                                    ui,
+                                    "No mappings created yet.",
+                                );
                                 ui.add_space(20.0);
                             });
                         }
