@@ -170,7 +170,6 @@ impl VideoEncoder {
             frame.timestamp
         );
 
-        // Return a stub packet
         #[allow(clippy::manual_is_multiple_of)]
         let is_keyframe = self.frame_count == 1 || self.frame_count % 60 == 0; // Keyframe on first frame and every 60 frames
 
