@@ -323,11 +323,19 @@ impl ModuleEvaluator {
 
                 let brightness = socket_inputs
                     .get(&part.id)
-                    .and_then(|m| m.get(&"hue_{}_brightness_in".replace("{}", &part.id.to_string())))
+                    .and_then(|m| {
+                        m.get(&"hue_{}_brightness_in".replace("{}", &part.id.to_string()))
+                    })
                     .copied()
                     .unwrap_or(0.0);
-                let hue = socket_inputs.get(&part.id).and_then(|m| m.get(&"hue_{}_color_in".replace("{}", &part.id.to_string()))).copied(); // Socket 1: Color(Hue)
-                let strobe = socket_inputs.get(&part.id).and_then(|m| m.get(&"hue_{}_strobe_in".replace("{}", &part.id.to_string()))).copied(); // Socket 2: Strobe
+                let hue = socket_inputs
+                    .get(&part.id)
+                    .and_then(|m| m.get(&"hue_{}_color_in".replace("{}", &part.id.to_string())))
+                    .copied(); // Socket 1: Color(Hue)
+                let strobe = socket_inputs
+                    .get(&part.id)
+                    .and_then(|m| m.get(&"hue_{}_strobe_in".replace("{}", &part.id.to_string())))
+                    .copied(); // Socket 2: Strobe
 
                 // Extract IDs from node type
                 use crate::module::HueNodeType;

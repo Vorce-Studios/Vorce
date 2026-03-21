@@ -180,8 +180,9 @@ impl ModuleEvaluator {
         let mut inputs = HashMap::new();
         for conn in &module.connections {
             if let Some(values) = trigger_values.get(&conn.from_part) {
-                let from_idx = module.part(conn.from_part)
-                .and_then(|p| p.outputs.iter().position(|s| s.id == conn.from_socket));
+                let from_idx = module
+                    .part(conn.from_part)
+                    .and_then(|p| p.outputs.iter().position(|s| s.id == conn.from_socket));
                 if let Some(idx) = from_idx {
                     if let Some(&value) = values.get(idx) {
                         let current = inputs.entry(conn.to_part).or_insert(0.0);
@@ -203,8 +204,9 @@ impl ModuleEvaluator {
 
         for conn in &module.connections {
             if let Some(values) = trigger_values.get(&conn.from_part) {
-                let from_idx = module.part(conn.from_part)
-                .and_then(|p| p.outputs.iter().position(|s| s.id == conn.from_socket));
+                let from_idx = module
+                    .part(conn.from_part)
+                    .and_then(|p| p.outputs.iter().position(|s| s.id == conn.from_socket));
                 if let Some(idx) = from_idx {
                     if let Some(&value) = values.get(idx) {
                         let part_inputs = inputs.entry(conn.to_part).or_default();

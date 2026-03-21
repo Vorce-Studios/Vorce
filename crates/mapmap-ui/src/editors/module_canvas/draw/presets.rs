@@ -98,7 +98,12 @@ pub fn draw_presets_popup(
                         if let (Some(&from_idx), Some(&to_idx)) =
                             (id_map.get(&conn.from_part), id_map.get(&conn.to_part))
                         {
-                            connections.push((from_idx, conn.from_socket.clone(), to_idx, conn.to_socket.clone()));
+                            connections.push((
+                                from_idx,
+                                conn.from_socket.clone(),
+                                to_idx,
+                                conn.to_socket.clone(),
+                            ));
                         }
                     }
 

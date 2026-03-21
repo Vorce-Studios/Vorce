@@ -289,7 +289,10 @@ impl MapFlowModule {
                 .filter_map(|(idx, socket)| socket.supports_trigger_mapping.then_some(idx))
                 .collect();
             part.trigger_targets.retain(|socket_id, _| {
-                part.inputs.iter().enumerate().any(|(idx, s)| &s.id == socket_id && valid_mappable_inputs.contains(&idx))
+                part.inputs
+                    .iter()
+                    .enumerate()
+                    .any(|(idx, s)| &s.id == socket_id && valid_mappable_inputs.contains(&idx))
             });
         }
         let _ = self.repair_graph();
@@ -330,14 +333,12 @@ impl MapFlowModule {
                 socket_idx: from_socket.clone(),
             },
         )?;
-        let target_socket =
-            target
-                .inputs
-                .iter().find(|s| s.id == to_socket)
-                .ok_or(ConnectionValidationError::InvalidTargetSocket {
-                    part_id: to_part,
-                    socket_idx: to_socket.clone(),
-                })?;
+        let target_socket = target.inputs.iter().find(|s| s.id == to_socket).ok_or(
+            ConnectionValidationError::InvalidTargetSocket {
+                part_id: to_part,
+                socket_idx: to_socket.clone(),
+            },
+        )?;
 
         if source_socket.direction != ModuleSocketDirection::Output
             || target_socket.direction != ModuleSocketDirection::Input
@@ -466,10 +467,12 @@ impl MapFlowModule {
             part.trigger_targets = new_trigger_targets;
 
             part.trigger_targets.retain(|socket_id, _| {
-                part.inputs.iter().enumerate().any(|(idx, s)| &s.id == socket_id && valid_mappable_inputs.contains(&idx))
+                part.inputs
+                    .iter()
+                    .enumerate()
+                    .any(|(idx, s)| &s.id == socket_id && valid_mappable_inputs.contains(&idx))
             });
             report.removed_trigger_targets += before_targets - part.trigger_targets.len();
-
 
             if normalized {
                 report.normalized_parts += 1;
@@ -506,7 +509,6 @@ impl MapFlowModule {
                 connection.to_part,
                 connection.to_socket.clone(),
             );
-
 
             let is_valid = existing_part_ids.contains(&connection.from_part)
                 && existing_part_ids.contains(&connection.to_part)
