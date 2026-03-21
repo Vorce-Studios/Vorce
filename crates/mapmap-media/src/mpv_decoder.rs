@@ -93,7 +93,7 @@ impl MpvDecoder {
         let mut actual_height = self.height;
 
         unsafe {
-            use libmpv2_sys::*;
+            use libmpv2::sys::*;
             let handle = self.mpv.ctx;
 
             let cmd_sc = std::ffi::CString::new("screenshot-raw").unwrap();
