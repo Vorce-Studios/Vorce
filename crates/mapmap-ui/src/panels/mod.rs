@@ -21,10 +21,7 @@ pub use controller_overlay_panel::*;
 pub use cue_panel::*;
 pub use edge_blend_panel::*;
 pub use effect_chain::*;
-<<<<<<< HEAD
-pub use inspector_panel::*;
-=======
->>>>>>> main
+pub use inspector::*;
 pub use layer_panel::*;
 pub use mapping_panel::*;
 pub use osc_panel::*;
