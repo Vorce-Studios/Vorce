@@ -166,7 +166,7 @@ pub fn render_standard_texture_preview(
     if let Some(&texture_id) = canvas.node_previews.get(&(module_id, part_id)) {
         render_preview_texture(ui, texture_id, "Live node preview");
     } else {
-        common::render_missing_preview_banner(ui);
+        common::render_missing_preview_banner(ui, "No preview available yet.");
     }
 }
 
@@ -195,7 +195,7 @@ pub fn render_output_texture_preview(
     }
 
     if !preview_found {
-        common::render_missing_preview_banner(ui);
+        common::render_missing_preview_banner(ui, "No preview available yet.");
     }
 }
 
@@ -256,7 +256,7 @@ pub fn render_layer_preview_panel(
     }
 
     ui.group(|ui| {
-        common::render_missing_preview_banner(ui);
+        common::render_missing_preview_banner(ui, "No preview available yet.");
         if preview_context.output_ids.is_empty() {
             ui.small("This layer is not linked to a projector output yet.");
         } else {
