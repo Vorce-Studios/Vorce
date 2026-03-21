@@ -470,4 +470,3 @@ pub fn render_timeline(
         Stroke::NONE,
     ));
 }
-
