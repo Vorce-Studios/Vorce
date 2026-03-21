@@ -172,11 +172,13 @@ impl VideoEncoder {
 
         // Return a stub packet
         #[allow(clippy::manual_is_multiple_of)]
+        let is_keyframe = self.frame_count == 1 || self.frame_count % 60 == 0; // Keyframe on first frame and every 60 frames
+
         Ok(EncodedPacket {
             data: Vec::new(), // Would contain actual encoded data
             pts: self.frame_count as i64,
             dts: self.frame_count as i64,
-            is_keyframe: self.frame_count == 1 || self.frame_count % 60 == 0, // Keyframe on first frame and every 60 frames
+            is_keyframe,
         })
     }
 
