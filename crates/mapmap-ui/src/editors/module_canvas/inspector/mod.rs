@@ -6,6 +6,8 @@ pub mod output;
 pub mod source;
 pub mod trigger;
 
+pub use effect::set_default_effect_params;
+
 use super::mesh;
 use super::state::{LayerInspectorViewMode, ModuleCanvas};
 use crate::UIAction;
@@ -142,7 +144,7 @@ pub fn render_trigger_preview(
     }
 }
 
-fn render_preview_texture(ui: &mut Ui, texture_id: egui::TextureId, caption: &str) {
+pub fn render_preview_texture(ui: &mut Ui, texture_id: egui::TextureId, caption: &str) {
     let width = ui.available_width().max(160.0);
     let size = Vec2::new(width, width * 9.0 / 16.0);
     ui.image((texture_id, size));
@@ -164,11 +166,7 @@ pub fn render_standard_texture_preview(
     if let Some(&texture_id) = canvas.node_previews.get(&(module_id, part_id)) {
         render_preview_texture(ui, texture_id, "Live node preview");
     } else {
-<<<<<<< HEAD
-        common::render_missing_preview_banner(ui, "No preview available yet.");
-=======
         common::render_missing_preview_banner(ui);
->>>>>>> main
     }
 }
 
@@ -197,11 +195,7 @@ pub fn render_output_texture_preview(
     }
 
     if !preview_found {
-<<<<<<< HEAD
-        common::render_missing_preview_banner(ui, "No preview available yet.");
-=======
         common::render_missing_preview_banner(ui);
->>>>>>> main
     }
 }
 
@@ -229,8 +223,8 @@ pub fn render_layer_preview_panel(
         return;
     }
 
+    render_inspector_preview_toggle(canvas, ui);
     if !canvas.show_inspector_previews {
-        ui.label("Inspector preview is disabled.");
         return;
     }
 
@@ -262,7 +256,7 @@ pub fn render_layer_preview_panel(
     }
 
     ui.group(|ui| {
-        common::render_info_label(ui, "No preview available yet.");
+        common::render_missing_preview_banner(ui);
         if preview_context.output_ids.is_empty() {
             ui.small("This layer is not linked to a projector output yet.");
         } else {
@@ -313,9 +307,15 @@ pub fn render_inspector_for_part(
 
             match &mut part.part_type {
                 ModulePartType::Trigger(trigger) => {
+                    render_trigger_preview(canvas, ui, part_id, |ui, _val, _live| {
+                        trigger::render_trigger_preview_extra(ui, trigger);
+                    });
+                    ui.separator();
                     trigger::render_trigger_ui(canvas, ui, trigger, part_id);
                 }
                 ModulePartType::Source(source) => {
+                    render_standard_texture_preview(canvas, ui, module_id, part_id);
+                    ui.separator();
                     source::render_source_ui(
                         canvas,
                         ui,
@@ -327,34 +327,27 @@ pub fn render_inspector_for_part(
                     );
                 }
                 ModulePartType::Mask(mask) => {
+                    render_standard_texture_preview(canvas, ui, module_id, part_id);
+                    ui.separator();
                     layer::render_mask_ui(ui, mask);
                 }
                 ModulePartType::Modulizer(mod_type) => {
+                    render_standard_texture_preview(canvas, ui, module_id, part_id);
+                    ui.separator();
                     effect::render_effect_ui(ui, mod_type, part_id);
                 }
                 ModulePartType::Layer(layer) => {
-                    render_inspector_preview_toggle(canvas, ui);
                     render_layer_preview_panel(canvas, ui, module_id, part_id, preview_context);
-                    layer::render_layer_ui(
-                        canvas,
-                        mesh_editor,
-                        last_mesh_edit_id,
-                        ui,
-                        layer,
-                        part_id,
-                    );
+                    ui.separator();
+                    layer::render_layer_ui(canvas, mesh_editor, last_mesh_edit_id, ui, layer, part_id);
                 }
                 ModulePartType::Mesh(mesh) => {
                     ui.label("🕸️ Mesh Node");
                     ui.separator();
-<<<<<<< HEAD
-                    common::render_info_label(ui, "Live texture preview not applicable. Use the Mesh Editor below.");
-=======
                     common::render_info_label(
                         ui,
                         "Live texture preview not applicable. Use the Mesh Editor below.",
                     );
->>>>>>> main
                     ui.separator();
                     mesh::render_mesh_editor_ui(
                         mesh_editor,
@@ -366,19 +359,17 @@ pub fn render_inspector_for_part(
                     );
                 }
                 ModulePartType::Output(output) => {
+                    render_output_texture_preview(canvas, ui, preview_context);
+                    ui.separator();
                     output::render_output_ui(canvas, ui, output, part_id);
                 }
                 ModulePartType::Hue(_) => {
                     ui.label("Hue Node Configuration");
                     ui.separator();
-<<<<<<< HEAD
-                    common::render_info_label(ui, "Live visual preview not available for hardware outputs. Check spatial editor or physical lamps.");
-=======
                     common::render_info_label(
                         ui,
                         "Live visual preview not available for hardware outputs. Check spatial editor or physical lamps.",
                     );
->>>>>>> main
                 }
             }
         });

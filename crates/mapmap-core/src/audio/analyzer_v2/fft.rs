@@ -8,7 +8,7 @@ impl AudioAnalyzerV2 {
     pub(crate) fn perform_fft(&mut self) {
         self.fft_count += 1;
 
-        // Copy ring buffer to FFT buffer with proper unwrapping.
+        // Copy ring buffer to FFT buffer with proper unwrapping
         // The write position is where we'll write NEXT, so data starts there
         for i in 0..self.config.fft_size {
             let src_idx = (self.buffer_write_pos + i) % self.config.fft_size;
@@ -37,10 +37,7 @@ impl AudioAnalyzerV2 {
         self.update_band_energies();
 
         // Trace log every 100 FFTs
-<<<<<<< HEAD
-=======
         #[allow(clippy::manual_is_multiple_of)]
->>>>>>> main
         if self.fft_count % 100 == 0 {
             trace!(
                 "FFT #{}: bands={:?}",

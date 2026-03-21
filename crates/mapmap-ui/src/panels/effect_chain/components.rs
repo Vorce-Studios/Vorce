@@ -53,11 +53,6 @@ impl super::panel::EffectChainPanel {
             colors::CYAN_ACCENT
                 .linear_multiply(0.05)
                 .gamma_multiply(0.5)
-<<<<<<< HEAD
-        } else if index % 2 == 0 {
-            colors::DARK_GREY
-=======
->>>>>>> main
         } else {
             #[allow(clippy::manual_is_multiple_of)]
             if index % 2 == 0 {

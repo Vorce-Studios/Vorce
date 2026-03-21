@@ -270,10 +270,7 @@ impl EffectChainRenderer {
         self.frame_count += 1;
 
         // Cleanup LUT cache every 600 frames (approx 10 seconds at 60fps)
-<<<<<<< HEAD
-=======
         #[allow(clippy::manual_is_multiple_of)]
->>>>>>> main
         if self.frame_count % 600 == 0 {
             let threshold = self.frame_count.saturating_sub(600);
             self.lut_cache
