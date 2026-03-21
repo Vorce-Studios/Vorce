@@ -110,3 +110,23 @@ mod tests {
         // Should not panic
     }
 }
+
+pub(crate) fn ensure_missing_texture_fallback(
+    pool: &mapmap_render::TexturePool,
+    queue: &wgpu::Queue,
+) {
+    let fallback_name = "missing_texture_fallback";
+    if !pool.has_texture(fallback_name) {
+        let width = 64;
+        let height = 64;
+        let data = [0, 0, 0, 255].repeat((width * height) as usize);
+        pool.ensure_texture(
+            fallback_name,
+            width,
+            height,
+            wgpu::TextureFormat::Rgba8UnormSrgb,
+            wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+        );
+        pool.upload_data(queue, fallback_name, &data, width, height);
+    }
+}
