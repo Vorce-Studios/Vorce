@@ -6,7 +6,7 @@ use std::time::Duration;
 
 #[test]
 #[ignore = "requires GPU and display"]
-fn test_app_automation_empty_project() {
+fn test_release_smoke_automation_empty_project() {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let workspace_root = manifest_dir
         .parent()

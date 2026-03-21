@@ -191,6 +191,13 @@ Die drei bereits implementierten Harness-Szenarien decken den unteren technische
 ### Phase 4: CI-Integration auf self-hosted Runner
 
 Sichtbare GUI-Automation sollte spaeter nur auf einem geeigneten self-hosted Windows-Runner laufen.
+Der dedizierte Test `test_release_smoke_automation_empty_project` in `crates/mapmap/tests/app_automation_tests.rs` dient als dokumentierter minimaler Release-Smoke-Test fuer den aktuellen Automation-/Screenshot-Pfad. Er prueft den Main-Window-Startzustand und exportiert einen Screenshot.
+
+Damit dieser Automation-Test im CI-Lauf ausgefuehrt wird, muss die Umgebungsvariable `MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION` auf `true` gesetzt sein (siehe `scripts/build/self-hosted-post-merge.ps1`). Da echte sichtbare Fenster und GPU-Surface-Praesentation getestet werden, verlangt der Test eine interaktive Windows-Sitzung. Er ist deshalb regulaer mit `#[ignore]` markiert und wird nur durch explizite CI-Konfiguration auf dem self-hosted Runner aktiviert.
+
+Diese Tests dienen als Release-/QA-Baseline fuer die Gesamt-App, waehrend spezifischere Themen in Multi-Output-/Projektor-QA (Issue #1095) vertieft werden.
+
+Als dedizierte Standard-Absicherung fuer den reinen, nicht-interaktiven Capture-Pfad fungiert `mapflow_visual_harness` (siehe `crates/mapmap/tests/visual_capture_tests.rs`). Dieser Harness laesst sich prinzipiell headless/offscreen initialisieren oder mit Mock-Surfaces betreiben, was ihn zum primaren Kandidaten fuer CI-Umgebungen ohne gueltige Desktop-Session macht, in denen dennoch grundlegende GPU-Szenarien und Frame-Readbacks abgesichert werden muessen.
 
 Wichtige Betriebsbedingung:
 
