@@ -329,7 +329,25 @@ pub fn render_trigger_ui(
             ui.label("⏱️ Fixed Timer");
             ui.add(egui::Slider::new(interval_ms, 16..=10000).text("Interval (ms)"));
             ui.add(egui::Slider::new(offset_ms, 0..=5000).text("Offset (ms)"));
-            super::render_fixed_timer_preview(canvas, ui, part_id, *interval_ms, *offset_ms);
+
+            ui.separator();
+            super::render_trigger_preview(canvas, ui, part_id, |ui, _live_value, _is_live| {
+                let now_ms = (ui.input(|input| input.time) * 1000.0) as u32;
+                let cycle_ms = (*interval_ms).max(1);
+                let phase_ms = now_ms.wrapping_add(*offset_ms) % cycle_ms;
+                let progress = phase_ms as f32 / cycle_ms as f32;
+                let next_pulse_ms = cycle_ms.saturating_sub(phase_ms) % cycle_ms;
+
+                ui.add_space(6.0);
+                ui.label("Fixed timer cadence");
+                ui.add(
+                    egui::ProgressBar::new(progress)
+                        .desired_width(ui.available_width())
+                        .text(format!("cycle {} ms", cycle_ms)),
+                );
+                ui.label(format!("Next pulse in {} ms", next_pulse_ms));
+                ui.label(format!("Offset {} ms", *offset_ms));
+            });
         }
         TriggerType::Midi {
             channel,
@@ -415,4 +433,12 @@ pub fn render_trigger_ui(
             });
         }
     }
+<<<<<<< HEAD
+=======
+
+    if !matches!(trigger, TriggerType::Fixed { .. }) {
+        ui.separator();
+        super::render_trigger_preview(canvas, ui, part_id, |_, _, _| {});
+    }
+>>>>>>> main
 }
