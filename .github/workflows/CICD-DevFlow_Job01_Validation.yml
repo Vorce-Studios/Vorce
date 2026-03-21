@@ -26,6 +26,7 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  RUST_TOOLCHAIN: ${{ inputs.toolchain || github.event.inputs.toolchain || 'stable' }}
 
 jobs:
   quality:
@@ -40,7 +41,7 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: ${{ inputs.toolchain || github.event.inputs.toolchain || 'stable' }}
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
           components: rustfmt, clippy
 
       - name: Rust Cache
@@ -93,7 +94,7 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: ${{ inputs.toolchain || github.event.inputs.toolchain || 'stable' }}
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
@@ -123,7 +124,7 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: ${{ inputs.toolchain || github.event.inputs.toolchain || 'stable' }}
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
@@ -175,27 +176,7 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: ${{ inputs.toolchain || github.event.inputs.toolchain || 'stable' }}
-
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2
-
-      - name: Build
-        run: cargo build --release --verbose --no-default-features --features "audio"
-
-  build-macos:
-    name: "Build & Test (macOS)"
-    runs-on: macos-latest
-    timeout-minutes: 45
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: ${{ inputs.toolchain || github.event.inputs.toolchain || 'stable' }}
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2

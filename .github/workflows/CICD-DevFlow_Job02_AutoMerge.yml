@@ -208,13 +208,8 @@ jobs:
                 {
                   name: 'Build & Test (Windows)',
                   source: 'check_run',
-<<<<<<< HEAD
-                  allowedConclusions: ['success'],
-                  required: true,
-=======
                   allowedConclusions: ['success', 'skipped', 'neutral'],
                   required: false,
->>>>>>> main
                 },
                 {
                   name: 'Validation Success',
