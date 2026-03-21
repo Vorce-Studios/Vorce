@@ -225,13 +225,12 @@ pub fn get_part_category(part_type: &ModulePartType) -> &'static str {
 
 pub fn get_socket_color(socket_type: &ModuleSocketType) -> Color32 {
     match socket_type {
-        ModuleSocketType::Event => Color32::from_rgb(200, 50, 255), // Vibrant Purple
-        ModuleSocketType::Control => Color32::from_rgb(255, 100, 200), // Pinkish
-        ModuleSocketType::Media => Color32::from_rgb(50, 150, 255), // Bright Blue
-        ModuleSocketType::Effect => Color32::from_rgb(255, 160, 0), // Vivid Orange
-        ModuleSocketType::Layer => Color32::from_rgb(0, 230, 120),  // Emerald Green
-        ModuleSocketType::Output => Color32::from_rgb(255, 60, 60), // Bright Red
-        ModuleSocketType::Link => Color32::from_rgb(180, 180, 180), // Silver
+        ModuleSocketType::Trigger => Color32::from_rgb(200, 50, 255), // Vibrant Purple
+        ModuleSocketType::Media => Color32::from_rgb(50, 150, 255),   // Bright Blue
+        ModuleSocketType::Effect => Color32::from_rgb(255, 160, 0),   // Vivid Orange
+        ModuleSocketType::Layer => Color32::from_rgb(0, 230, 120),    // Emerald Green
+        ModuleSocketType::Output => Color32::from_rgb(255, 60, 60),   // Bright Red
+        ModuleSocketType::Link => Color32::from_rgb(180, 180, 180),   // Silver
     }
 }
 

@@ -29,6 +29,10 @@ Primaere Implementierungsstellen:
 - `crates/mapmap/src/app/loops/render/previews.rs`
 - `crates/mapmap/src/orchestration/media.rs`
 
+Ergaenzende Architekturreferenz:
+
+- `docs/A1_SYSTEM/B1_ARCHITECTURE/DOC-C5_OUTPUT_WINDOW_LIFECYCLE.md`
+
 ## 3. Aktuelle Runtime-Architektur
 
 Es gibt jetzt zwei klar getrennte Ebenen:
@@ -40,8 +44,8 @@ Es gibt jetzt zwei klar getrennte Ebenen:
 
 2. `mapmap::RuntimeRenderQueue`
    - ist die visuelle Queue fuer den aktuellen Frame
-   - enthaelt `RuntimeRenderQueueItem { module_id, render_op }` gruppiert in einer `HashMap<u64, Vec<RuntimeRenderQueueItem>>` (Partitioniert pro Output-ID).
-   - wird pro Frame aus den Evaluator-Ergebnissen neu aufgebaut, vor-partitioniert und für die Render-Schleife deterministisch sortiert.
+   - enthaelt `RuntimeRenderQueueItem { module_id, render_op }`
+   - wird pro Frame aus den Evaluator-Ergebnissen neu aufgebaut
 
 ## 4. Ablauf pro Frame
 
@@ -65,7 +69,7 @@ In `crates/mapmap/src/orchestration/evaluation.rs`:
 
 In `crates/mapmap/src/app/loops/render/content.rs`:
 
-- Der Render-Loop ruft mit der aktuellen Output-ID die bereits vor-gefilterten und sortierten Listen aus der `HashMap` ab (O(1)). Es gibt keinen manuellen, per-Frame Listenscan und keine Sortierung pro Frame mehr.
+- Der Render-Loop filtert `RuntimeRenderQueueItem`s pro Output.
 - Danach werden Effekte, Mesh-Rendering und Output-spezifische Post-Schritte angewandt.
 
 ### 4.4 Media
@@ -177,6 +181,13 @@ Die neue Basis ist implementiert, aber der Umbau ist noch nicht vollstaendig:
   - `target/debug/MapFlow.exe --mode automation --exit-after-frames 1` -> `EXIT=0`
   - `target/debug/MapFlow.exe --mode automation --exit-after-frames 1 --screenshot-dir <dir>` -> `EXIT=0`
 
+### 10.2 Output-/Window-Lifecycle
+
+- Der Runtime-Pfad fuer Output-Fenster ist noch nicht vollstaendig vereinheitlicht.
+- `sync_output_windows(...)` ist aktuell der aktive Projector-Window-Pfad.
+- `crates/mapmap/src/window_manager.rs` enthaelt dabei nicht nur tote Altlasten, sondern auch vorbereitete Lifecycle-Infrastruktur.
+- Der geplante Soll-Zustand fuer `OutputManager`, `Projector`-Nodes und `WindowManager` ist in `DOC-C5_OUTPUT_WINDOW_LIFECYCLE.md` beschrieben.
+
 ## 11. Naechste Ausbaupunkte
 
 P0:
@@ -190,3 +201,4 @@ P1:
 - Socket-Verbindungen langfristig von Indexen auf stabile Socket-IDs migrieren
 - Render Queue um strukturierte Diagnostics pro Item erweitern
 - Fault-Isolation pro Node/Modul weiter ausbauen
+- Output-/Window-Lifecycle zwischen `OutputManager`, Graph und `WindowManager` vollstaendig konsolidieren

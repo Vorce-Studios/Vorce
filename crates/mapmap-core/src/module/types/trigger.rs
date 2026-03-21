@@ -265,7 +265,7 @@ impl AudioTriggerOutputConfig {
                 ("air_out", "Air Out"),
             ];
             for (id, name) in bands {
-                outputs.push(ModuleSocket::output(id, name, ModuleSocketType::Control));
+                outputs.push(ModuleSocket::output(id, name, ModuleSocketType::Trigger));
             }
         }
 
@@ -273,12 +273,12 @@ impl AudioTriggerOutputConfig {
             outputs.push(ModuleSocket::output(
                 "rms_volume",
                 "RMS Volume",
-                ModuleSocketType::Control,
+                ModuleSocketType::Trigger,
             ));
             outputs.push(ModuleSocket::output(
                 "peak_volume",
                 "Peak Volume",
-                ModuleSocketType::Control,
+                ModuleSocketType::Trigger,
             ));
         }
 
@@ -286,7 +286,7 @@ impl AudioTriggerOutputConfig {
             outputs.push(ModuleSocket::output(
                 "beat_out",
                 "Beat Out",
-                ModuleSocketType::Event,
+                ModuleSocketType::Trigger,
             ));
         }
 
@@ -294,7 +294,7 @@ impl AudioTriggerOutputConfig {
             outputs.push(ModuleSocket::output(
                 "bpm_out",
                 "BPM Out",
-                ModuleSocketType::Control,
+                ModuleSocketType::Trigger,
             ));
         }
 
@@ -302,7 +302,7 @@ impl AudioTriggerOutputConfig {
             outputs.push(ModuleSocket::output(
                 "beat_out",
                 "Beat Out",
-                ModuleSocketType::Event,
+                ModuleSocketType::Trigger,
             ));
         }
 

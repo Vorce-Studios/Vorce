@@ -31,25 +31,35 @@ where
         let to_part = module.parts.iter().find(|p| p.id == conn.to_part);
 
         if let (Some(from), Some(to)) = (from_part, to_part) {
-            let socket_type = if let Some(socket) = from.outputs.get(conn.from_socket) {
-                &socket.socket_type
-            } else if let Some(socket) = to.inputs.get(conn.to_socket) {
-                &socket.socket_type
-            } else {
-                &mapmap_core::module::ModuleSocketType::Media
-            };
+            let socket_type =
+                if let Some(socket) = from.outputs.iter().find(|s| s.id == conn.from_socket) {
+                    &socket.socket_type
+                } else if let Some(socket) = to.inputs.iter().find(|s| s.id == conn.to_socket) {
+                    &socket.socket_type
+                } else {
+                    &mapmap_core::module::ModuleSocketType::Media
+                };
             let cable_color = utils::get_socket_color(socket_type);
 
             let from_local_y = title_height
                 + socket_offset_y
-                + conn.from_socket as f32 * socket_spacing
+                + from
+                    .outputs
+                    .iter()
+                    .position(|s| s.id == conn.from_socket)
+                    .unwrap_or(0) as f32
+                    * socket_spacing
                 + socket_spacing / 2.0;
             let from_socket_world =
                 Pos2::new(from.position.0 + node_width, from.position.1 + from_local_y);
 
             let to_local_y = title_height
                 + socket_offset_y
-                + conn.to_socket as f32 * socket_spacing
+                + to.inputs
+                    .iter()
+                    .position(|s| s.id == conn.to_socket)
+                    .unwrap_or(0) as f32
+                    * socket_spacing
                 + socket_spacing / 2.0;
             let to_socket_world = Pos2::new(to.position.0, to.position.1 + to_local_y);
 
@@ -59,8 +69,7 @@ where
             let plug_size = 20.0 * canvas.zoom;
 
             let icon_name = match socket_type {
-                mapmap_core::module::ModuleSocketType::Event => "audio-jack1.1.svg",
-                mapmap_core::module::ModuleSocketType::Control => "audio-jack1.1.svg",
+                mapmap_core::module::ModuleSocketType::Trigger => "audio-jack1.1.svg",
                 mapmap_core::module::ModuleSocketType::Media => "plug.svg",
                 mapmap_core::module::ModuleSocketType::Effect => "usb-cable.svg",
                 mapmap_core::module::ModuleSocketType::Layer => "power-plug.svg",
@@ -69,11 +78,7 @@ where
             };
 
             let is_new_jack = icon_name == "audio-jack1.1.svg" || icon_name == "audio-jack_2.svg";
-            let is_trigger = matches!(
-                socket_type,
-                mapmap_core::module::ModuleSocketType::Event
-                    | mapmap_core::module::ModuleSocketType::Control
-            );
+            let is_trigger = matches!(socket_type, mapmap_core::module::ModuleSocketType::Trigger);
 
             let cable_start = start_pos;
             let cable_end = end_pos;
