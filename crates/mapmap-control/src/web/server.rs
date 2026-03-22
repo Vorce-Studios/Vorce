@@ -109,7 +109,7 @@ impl WebServer {
     /// Create a new web server
     #[cfg(feature = "http-api")]
     pub fn new(config: WebServerConfig) -> Self {
-        Self { 
+        Self {
             config,
             live_status: Arc::new(parking_lot::RwLock::new(LiveStatus::default())),
         }
