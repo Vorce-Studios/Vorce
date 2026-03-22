@@ -121,7 +121,7 @@ unic-langid = "0.9"
 usvg = "0.47"
 # Core dependencies
 wgpu = "27.0.1"
-winit = { version = "0.30.13", features = ["x11", "wayland"] }
+winit = { version = "0.30.13" }
 winres = "0.1"
 
 [profile.dev]

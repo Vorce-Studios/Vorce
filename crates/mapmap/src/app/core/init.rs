@@ -215,7 +215,7 @@ impl App {
         }
 
         let mut control_manager = ControlManager::new();
-        
+
         #[cfg(feature = "http-api")]
         if ui_state.user_config.web_api_enabled {
             let web_config = mapmap_control::web::WebServerConfig::new(ui_state.user_config.web_api_port);

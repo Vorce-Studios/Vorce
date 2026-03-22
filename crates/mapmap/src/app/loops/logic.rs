@@ -239,7 +239,7 @@ fn sync_web_status(app: &mut App) {
             .map(|m| mapmap_control::web::LayerInfo {
                 id: m.id as u32,
                 name: m.name.clone(),
-                opacity: 1.0, // Modules themselves don't have opacity, but parts do. 
+                opacity: 1.0, // Modules themselves don't have opacity, but parts do.
                              // For now we just return 1.0 or use a placeholder.
                 visible: true,
             })

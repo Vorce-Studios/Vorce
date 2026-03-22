@@ -241,10 +241,10 @@ pub fn is_hap_file<P: AsRef<Path>>(path: P) -> bool {
         if let Ok(ictx) = ffmpeg_next::format::input(&path) {
             if let Some(stream) = ictx.streams().best(ffmpeg_next::media::Type::Video) {
                 // Check if the codec is HAP
-                // Note: ffmpeg-next might not have an explicit HAP ID in all versions, 
+                // Note: ffmpeg-next might not have an explicit HAP ID in all versions,
                 // but we can check the name or the ID if we know it.
                 // For now, we trust the extension + the fact that we can open it.
-                return true; 
+                return true;
             }
         }
         return false;

@@ -1,7 +1,7 @@
 # Project Phases (0-7)
 
 > **⚠️ DEPRECATED:** This document is kept for historical reference only.
-> For the most up-to-date roadmap and feature status, please verify [ROADMAP.md](../../../ROADMAP.md) in the project root.
+> For the most up-to-date roadmap and feature status, please verify the GitHub Project Issues.
 
 This document outlines the complete project roadmap for the MapFlow Rust rewrite, from the initial core engine development to the final polish and release.
 
@@ -22,13 +22,13 @@ This document outlines the complete project roadmap for the MapFlow Rust rewrite
 
 The project is currently in **Phase 7: Advanced Show Control**.
 
-✅ **Phase 6: Advanced UI (egui Migration) – COMPLETED** (2025-12-23)
+✅ **Phase 6: Advanced UI (egui Migration) – Abgeschlossen** (2025-12-23)
 
-## Phase 6: Advanced UI (egui Migration) – ✅ COMPLETED
+## Phase 6: Advanced UI (egui Migration) – ✅ Abgeschlossen
 
 The goal of this phase was to migrate the legacy ImGui interface to a professional, node-based authoring environment using `egui`.
 
-### Migration Status – ALL COMPLETED ✅
+### Migration Status – ALL Abgeschlossen ✅
 
 - [x] **Dashboard Controls** (Quick-access parameters, `dashboard.rs`)
 - [x] **Media Browser** (Asset management, `media_browser.rs`)
@@ -36,19 +36,19 @@ The goal of this phase was to migrate the legacy ImGui interface to a profession
 - [x] **Node Editor** (Visual programming, `node_editor.rs`)
 - [x] **Timeline V2** (Keyframe animation, `timeline_v2.rs`)
 - [x] **Theming** (Custom styling, `theme.rs`)
-- [x] **Layer Manager** (`layer_panel.rs`) – COMPLETED 2025-12-22
-- [x] **Paint Manager** (`paint_panel.rs`) – COMPLETED 2025-12-22
-- [x] **Mapping Manager** (`mapping_panel.rs`) – COMPLETED 2025-12-23 (PR #97)
-- [x] **Transform Controls** (`transform_panel.rs`) – COMPLETED 2025-12-22
-- [x] **Output Configuration** (`output_panel.rs`) – COMPLETED 2025-12-23
-- [x] **Edge Blend & Color Calibration** (`edge_blend_panel.rs`) – COMPLETED 2025-12-23
-- [x] **Audio Visualization** (`audio_panel.rs`) – COMPLETED 2025-12-22
-- [x] **Oscillator Control** (`oscillator_panel.rs`) – COMPLETED 2025-12-23
-- [x] **Main Menu & Toolbar** (`menu_bar.rs`) – COMPLETED 2025-12-22
-- [x] **Shader Graph Editor** (`node_editor.rs`) – COMPLETED 2025-12-23
-- [x] **OSC Panel** (`osc_panel.rs`) – COMPLETED 2025-12-23
-- [x] **Cue Panel** (`cue_panel.rs`) – COMPLETED 2025-12-23
-- [x] **ImGui Removal** (Code Cleanup) – COMPLETED 2025-12-23
+- [x] **Layer Manager** (`layer_panel.rs`) – Abgeschlossen 2025-12-22
+- [x] **Paint Manager** (`paint_panel.rs`) – Abgeschlossen 2025-12-22
+- [x] **Mapping Manager** (`mapping_panel.rs`) – Abgeschlossen 2025-12-23 (PR #97)
+- [x] **Transform Controls** (`transform_panel.rs`) – Abgeschlossen 2025-12-22
+- [x] **Output Configuration** (`output_panel.rs`) – Abgeschlossen 2025-12-23
+- [x] **Edge Blend & Color Calibration** (`edge_blend_panel.rs`) – Abgeschlossen 2025-12-23
+- [x] **Audio Visualization** (`audio_panel.rs`) – Abgeschlossen 2025-12-22
+- [x] **Oscillator Control** (`oscillator_panel.rs`) – Abgeschlossen 2025-12-23
+- [x] **Main Menu & Toolbar** (`menu_bar.rs`) – Abgeschlossen 2025-12-22
+- [x] **Shader Graph Editor** (`node_editor.rs`) – Abgeschlossen 2025-12-23
+- [x] **OSC Panel** (`osc_panel.rs`) – Abgeschlossen 2025-12-23
+- [x] **Cue Panel** (`cue_panel.rs`) – Abgeschlossen 2025-12-23
+- [x] **ImGui Removal** (Code Cleanup) – Abgeschlossen 2025-12-23
 
 ### Remaining UI Tasks (Phase 6.5)
 

@@ -72,173 +72,189 @@ impl AudioPanel {
 
             ui.add_space(4.0);
 
-            // Visualizer Section
-            ui.vertical(|ui| {
-                ui.horizontal(|ui| {
-                    ui.checkbox(show_level_meters, "Show Level Meters");
-                    ui.separator();
-                    ui.label("FFT View");
-                    egui::ComboBox::from_id_salt("audio_fft_mode_combo")
-                        .selected_text(match fft_mode {
-                            FftVisualizationMode::FullFft => "Full FFT",
-                            FftVisualizationMode::ThreeBand => "3-Band",
-                        })
-                        .show_ui(ui, |ui| {
-                            ui.selectable_value(
-                                fft_mode,
-                                FftVisualizationMode::FullFft,
-                                "Full FFT",
-                            );
-                            ui.selectable_value(
-                                fft_mode,
-                                FftVisualizationMode::ThreeBand,
-                                "3-Band",
-                            );
-                        });
-                });
+            if cfg!(target_os = "macos") {
+                crate::widgets::custom::render_info_label(
+                    ui,
+                    "Audio input is currently feature-gated on macOS for stability.",
+                );
+                ui.add_space(8.0);
+            }
 
-                ui.add_space(6.0);
-
-                if let Some(analysis) = analysis {
-                    match meter_style {
-                        crate::config::AudioMeterStyle::Retro => {
-                            if *show_level_meters {
-                                // Convert linear to dB
-                                let db =
-                                    20.0 * (analysis.rms_volume.max(0.00001).log10()).max(-60.0);
-
-                                let meter = crate::widgets::audio_meter::AudioMeter::new(
-                                    crate::config::AudioMeterStyle::Retro,
-                                    db,
-                                    db, // Mono for now
-                                )
-                                .height(60.0);
-
-                                ui.add(meter);
-                                ui.add_space(6.0);
-                            }
-
-                            self.show_visualizer(ui, analysis, locale, *fft_mode);
-                        }
-                        crate::config::AudioMeterStyle::Digital => {
-                            if *show_level_meters {
-                                let db =
-                                    20.0 * (analysis.rms_volume.max(0.00001).log10()).max(-60.0);
-                                let meter = crate::widgets::audio_meter::AudioMeter::new(
-                                    crate::config::AudioMeterStyle::Digital,
-                                    db,
-                                    db,
-                                )
-                                .height(30.0);
-                                ui.add(meter);
-                                ui.add_space(8.0);
-                            }
-
-                            self.show_visualizer(ui, analysis, locale, *fft_mode);
-                        }
-                    }
-                } else {
-                    // Placeholder visualizer when no signal
-                    let height = 60.0;
-                    let (rect, _) = ui.allocate_at_least(
-                        egui::vec2(ui.available_width(), height),
-                        Sense::hover(),
-                    );
-                    ui.painter()
-                        .rect_filled(rect, egui::CornerRadius::ZERO, colors::DARKER_GREY);
-                    ui.painter().rect_stroke(
-                        rect,
-                        egui::CornerRadius::ZERO,
-                        Stroke::new(1.0, colors::STROKE_GREY),
-                        egui::StrokeKind::Middle,
-                    );
-
-                    ui.scope_builder(egui::UiBuilder::new().max_rect(rect), |ui| {
-                        ui.centered_and_justified(|ui| {
-                            ui.label(locale.t("no-signal"));
-                        });
+            ui.add_enabled_ui(!cfg!(target_os = "macos"), |ui| {
+                // Visualizer Section
+                ui.vertical(|ui| {
+                    ui.horizontal(|ui| {
+                        ui.checkbox(show_level_meters, "Show Level Meters");
+                        ui.separator();
+                        ui.label("FFT View");
+                        egui::ComboBox::from_id_salt("audio_fft_mode_combo")
+                            .selected_text(match fft_mode {
+                                FftVisualizationMode::FullFft => "Full FFT",
+                                FftVisualizationMode::ThreeBand => "3-Band",
+                            })
+                            .show_ui(ui, |ui| {
+                                ui.selectable_value(
+                                    fft_mode,
+                                    FftVisualizationMode::FullFft,
+                                    "Full FFT",
+                                );
+                                ui.selectable_value(
+                                    fft_mode,
+                                    FftVisualizationMode::ThreeBand,
+                                    "3-Band",
+                                );
+                            });
                     });
-                }
-            });
 
-            ui.add_space(8.0);
-            ui.separator();
-            ui.add_space(8.0);
+                    ui.add_space(6.0);
 
-            // Controls Section
-            egui::Grid::new("audio_controls_grid")
-                .num_columns(2)
-                .spacing([8.0, 8.0])
-                .show(ui, |ui| {
-                    // Gain
-                    ui.label(locale.t("audio-gain"));
-                    let mut gain = config.gain;
-                    if custom::styled_slider(ui, &mut gain, 0.0..=10.0, 1.0).changed() {
-                        let mut new_cfg = config.clone();
-                        new_cfg.gain = gain;
-                        action = Some(AudioPanelAction::ConfigChanged(new_cfg));
-                    }
-                    ui.end_row();
+                    if let Some(analysis) = analysis {
+                        match meter_style {
+                            crate::config::AudioMeterStyle::Retro => {
+                                if *show_level_meters {
+                                    // Convert linear to dB
+                                    let db = 20.0
+                                        * (analysis.rms_volume.max(0.00001).log10()).max(-60.0);
 
-                    // Low Band Gain
-                    ui.label(locale.t("audio-gain-low"));
-                    let mut low_band_gain = config.low_band_gain;
-                    if custom::styled_slider(ui, &mut low_band_gain, 0.0..=10.0, 1.0).changed() {
-                        let mut new_cfg = config.clone();
-                        new_cfg.low_band_gain = low_band_gain;
-                        action = Some(AudioPanelAction::ConfigChanged(new_cfg));
-                    }
-                    ui.end_row();
+                                    let meter = crate::widgets::audio_meter::AudioMeter::new(
+                                        crate::config::AudioMeterStyle::Retro,
+                                        db,
+                                        db, // Mono for now
+                                    )
+                                    .height(60.0);
 
-                    // Mid Band Gain
-                    ui.label(locale.t("audio-gain-mid"));
-                    let mut mid_band_gain = config.mid_band_gain;
-                    if custom::styled_slider(ui, &mut mid_band_gain, 0.0..=10.0, 1.0).changed() {
-                        let mut new_cfg = config.clone();
-                        new_cfg.mid_band_gain = mid_band_gain;
-                        action = Some(AudioPanelAction::ConfigChanged(new_cfg));
-                    }
-                    ui.end_row();
-
-                    // High Band Gain
-                    ui.label(locale.t("audio-gain-high"));
-                    let mut high_band_gain = config.high_band_gain;
-                    if custom::styled_slider(ui, &mut high_band_gain, 0.0..=10.0, 1.0).changed() {
-                        let mut new_cfg = config.clone();
-                        new_cfg.high_band_gain = high_band_gain;
-                        action = Some(AudioPanelAction::ConfigChanged(new_cfg));
-                    }
-                    ui.end_row();
-
-                    // Smoothing
-                    ui.label(locale.t("audio-smoothing"));
-                    let mut smoothing = config.smoothing;
-                    if custom::styled_slider(ui, &mut smoothing, 0.0..=1.0, 0.8).changed() {
-                        let mut new_cfg = config.clone();
-                        new_cfg.smoothing = smoothing;
-                        action = Some(AudioPanelAction::ConfigChanged(new_cfg));
-                    }
-                    ui.end_row();
-
-                    // Meter Style
-                    ui.label("Meter Style");
-                    egui::ComboBox::from_id_salt("audio_meter_style_combo")
-                        .selected_text(meter_style.to_string())
-                        .show_ui(ui, |ui| {
-                            for style in [
-                                crate::config::AudioMeterStyle::Retro,
-                                crate::config::AudioMeterStyle::Digital,
-                            ] {
-                                if ui
-                                    .selectable_label(meter_style == style, style.to_string())
-                                    .clicked()
-                                {
-                                    action = Some(AudioPanelAction::MeterStyleChanged(style));
+                                    ui.add(meter);
+                                    ui.add_space(6.0);
                                 }
+
+                                self.show_visualizer(ui, analysis, locale, *fft_mode);
                             }
+                            crate::config::AudioMeterStyle::Digital => {
+                                if *show_level_meters {
+                                    let db = 20.0
+                                        * (analysis.rms_volume.max(0.00001).log10()).max(-60.0);
+                                    let meter = crate::widgets::audio_meter::AudioMeter::new(
+                                        crate::config::AudioMeterStyle::Digital,
+                                        db,
+                                        db,
+                                    )
+                                    .height(30.0);
+                                    ui.add(meter);
+                                    ui.add_space(8.0);
+                                }
+
+                                self.show_visualizer(ui, analysis, locale, *fft_mode);
+                            }
+                        }
+                    } else {
+                        // Placeholder visualizer when no signal
+                        let height = 60.0;
+                        let (rect, _) = ui.allocate_at_least(
+                            egui::vec2(ui.available_width(), height),
+                            Sense::hover(),
+                        );
+                        ui.painter().rect_filled(
+                            rect,
+                            egui::CornerRadius::ZERO,
+                            colors::DARKER_GREY,
+                        );
+                        ui.painter().rect_stroke(
+                            rect,
+                            egui::CornerRadius::ZERO,
+                            Stroke::new(1.0, colors::STROKE_GREY),
+                            egui::StrokeKind::Middle,
+                        );
+
+                        ui.scope_builder(egui::UiBuilder::new().max_rect(rect), |ui| {
+                            ui.centered_and_justified(|ui| {
+                                ui.label(locale.t("no-signal"));
+                            });
                         });
-                    ui.end_row();
+                    }
                 });
+
+                ui.add_space(8.0);
+                ui.separator();
+                ui.add_space(8.0);
+
+                // Controls Section
+                egui::Grid::new("audio_controls_grid")
+                    .num_columns(2)
+                    .spacing([8.0, 8.0])
+                    .show(ui, |ui| {
+                        // Gain
+                        ui.label(locale.t("audio-gain"));
+                        let mut gain = config.gain;
+                        if custom::styled_slider(ui, &mut gain, 0.0..=10.0, 1.0).changed() {
+                            let mut new_cfg = config.clone();
+                            new_cfg.gain = gain;
+                            action = Some(AudioPanelAction::ConfigChanged(new_cfg));
+                        }
+                        ui.end_row();
+
+                        // Low Band Gain
+                        ui.label(locale.t("audio-gain-low"));
+                        let mut low_band_gain = config.low_band_gain;
+                        if custom::styled_slider(ui, &mut low_band_gain, 0.0..=10.0, 1.0).changed()
+                        {
+                            let mut new_cfg = config.clone();
+                            new_cfg.low_band_gain = low_band_gain;
+                            action = Some(AudioPanelAction::ConfigChanged(new_cfg));
+                        }
+                        ui.end_row();
+
+                        // Mid Band Gain
+                        ui.label(locale.t("audio-gain-mid"));
+                        let mut mid_band_gain = config.mid_band_gain;
+                        if custom::styled_slider(ui, &mut mid_band_gain, 0.0..=10.0, 1.0).changed()
+                        {
+                            let mut new_cfg = config.clone();
+                            new_cfg.mid_band_gain = mid_band_gain;
+                            action = Some(AudioPanelAction::ConfigChanged(new_cfg));
+                        }
+                        ui.end_row();
+
+                        // High Band Gain
+                        ui.label(locale.t("audio-gain-high"));
+                        let mut high_band_gain = config.high_band_gain;
+                        if custom::styled_slider(ui, &mut high_band_gain, 0.0..=10.0, 1.0).changed()
+                        {
+                            let mut new_cfg = config.clone();
+                            new_cfg.high_band_gain = high_band_gain;
+                            action = Some(AudioPanelAction::ConfigChanged(new_cfg));
+                        }
+                        ui.end_row();
+
+                        // Smoothing
+                        ui.label(locale.t("audio-smoothing"));
+                        let mut smoothing = config.smoothing;
+                        if custom::styled_slider(ui, &mut smoothing, 0.0..=1.0, 0.8).changed() {
+                            let mut new_cfg = config.clone();
+                            new_cfg.smoothing = smoothing;
+                            action = Some(AudioPanelAction::ConfigChanged(new_cfg));
+                        }
+                        ui.end_row();
+
+                        // Meter Style
+                        ui.label("Meter Style");
+                        egui::ComboBox::from_id_salt("audio_meter_style_combo")
+                            .selected_text(meter_style.to_string())
+                            .show_ui(ui, |ui| {
+                                for style in [
+                                    crate::config::AudioMeterStyle::Retro,
+                                    crate::config::AudioMeterStyle::Digital,
+                                ] {
+                                    if ui
+                                        .selectable_label(meter_style == style, style.to_string())
+                                        .clicked()
+                                    {
+                                        action = Some(AudioPanelAction::MeterStyleChanged(style));
+                                    }
+                                }
+                            });
+                        ui.end_row();
+                    });
+            });
         });
 
         action

@@ -70,26 +70,38 @@ pub mod cpal_backend {
         /// Create a new CPAL backend with the specified device.
         /// Uses a timeout to prevent the app from freezing if a device doesn't respond.
         pub fn new(device_name: Option<String>) -> Result<Self, AudioError> {
-            let (sample_tx, sample_rx) = unbounded();
-            let (command_tx, command_rx) = unbounded::<Command>();
+            #[cfg(target_os = "macos")]
+            {
+                let _ = device_name; // Prevent unused variable warning
+                tracing::warn!("Audio input is currently feature-gated on macOS for stability.");
+                return Err(AudioError::NoDevicesFound(
+                    "Feature gated on macOS".to_string(),
+                ));
+            }
 
-            // Build stream directly in main thread (cpal::Stream is not Send)
-            let stream = Self::build_stream(device_name, sample_tx)?;
+            #[cfg(not(target_os = "macos"))]
+            {
+                let (sample_tx, sample_rx) = unbounded();
+                let (command_tx, command_rx) = unbounded::<Command>();
 
-            // Spawn command processing thread
-            std::thread::Builder::new()
-                .name("audio-cmd".to_string())
-                .spawn(move || {
-                    // Just drain the command channel - stream auto-plays
-                    while command_rx.recv().is_ok() {}
+                // Build stream directly in main thread (cpal::Stream is not Send)
+                let stream = Self::build_stream(device_name, sample_tx)?;
+
+                // Spawn command processing thread
+                std::thread::Builder::new()
+                    .name("audio-cmd".to_string())
+                    .spawn(move || {
+                        // Just drain the command channel - stream auto-plays
+                        while command_rx.recv().is_ok() {}
+                    })
+                    .ok();
+
+                Ok(Self {
+                    sample_receiver: sample_rx,
+                    command_sender: command_tx,
+                    stream,
                 })
-                .ok();
-
-            Ok(Self {
-                sample_receiver: sample_rx,
-                command_sender: command_tx,
-                stream,
-            })
+            }
         }
 
         /// Build the audio stream (must be called from main thread)
@@ -278,37 +290,46 @@ pub mod cpal_backend {
 
         /// List all available audio input devices
         pub fn list_devices() -> Result<Option<Vec<String>>, AudioError> {
-            let host = cpal::default_host();
+            #[cfg(target_os = "macos")]
+            {
+                tracing::warn!("Audio input is currently feature-gated on macOS for stability.");
+                return Ok(Some(vec![]));
+            }
 
-            // Log available hosts for debugging
-            tracing::debug!("Audio: Available hosts: {:?}", cpal::available_hosts());
-            tracing::debug!("Audio: Using host: {:?}", host.id());
+            #[cfg(not(target_os = "macos"))]
+            {
+                let host = cpal::default_host();
 
-            // List all input devices with their configs
-            match host.input_devices() {
-                Ok(devices) => {
-                    let mut device_names = Vec::new();
-                    for device in devices {
-                        if let Ok(desc) = device.description() {
-                            let name = desc.to_string();
-                            // Try to get default config for debugging
-                            if let Ok(config) = device.default_input_config() {
-                                tracing::debug!(
-                                    "Audio Input: '{}' - format={:?}, rate={}, channels={}",
-                                    name,
-                                    config.sample_format(),
-                                    config.sample_rate(),
-                                    config.channels()
-                                );
-                            } else {
-                                tracing::warn!("Audio Input: '{}' - no config available", name);
+                // Log available hosts for debugging
+                tracing::debug!("Audio: Available hosts: {:?}", cpal::available_hosts());
+                tracing::debug!("Audio: Using host: {:?}", host.id());
+
+                // List all input devices with their configs
+                match host.input_devices() {
+                    Ok(devices) => {
+                        let mut device_names = Vec::new();
+                        for device in devices {
+                            if let Ok(desc) = device.description() {
+                                let name = desc.to_string();
+                                // Try to get default config for debugging
+                                if let Ok(config) = device.default_input_config() {
+                                    tracing::debug!(
+                                        "Audio Input: '{}' - format={:?}, rate={}, channels={}",
+                                        name,
+                                        config.sample_format(),
+                                        config.sample_rate(),
+                                        config.channels()
+                                    );
+                                } else {
+                                    tracing::warn!("Audio Input: '{}' - no config available", name);
+                                }
+                                device_names.push(name);
                             }
-                            device_names.push(name);
                         }
+                        Ok(Some(device_names))
                     }
-                    Ok(Some(device_names))
+                    Err(e) => Err(AudioError::NoDevicesFound(e.to_string())),
                 }
-                Err(e) => Err(AudioError::NoDevicesFound(e.to_string())),
             }
         }
     }
