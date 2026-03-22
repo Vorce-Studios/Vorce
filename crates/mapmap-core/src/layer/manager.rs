@@ -447,6 +447,16 @@ mod tests {
     }
 
     #[test]
+    fn test_clear_existing_layers_empties_manager() {
+        let mut manager = LayerManager::new();
+        manager.create_layer("Layer 1");
+        manager.create_layer("Layer 2");
+        assert_eq!(manager.len(), 2);
+        manager.clear();
+        assert!(manager.is_empty());
+    }
+
+    #[test]
     fn test_manager_visible_layers_solo_logic() {
         let mut manager = LayerManager::new();
         let id1 = manager.create_layer("Layer 1");
