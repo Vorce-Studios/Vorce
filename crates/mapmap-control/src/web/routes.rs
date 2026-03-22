@@ -35,7 +35,7 @@ pub fn build_router() -> () {
 #[cfg(feature = "http-api")]
 async fn get_status(State(state): State<AppState>) -> Json<ApiResponse<StatusResponse>> {
     let live = state.live_status.read();
-    
+
     let status = StatusResponse {
         version: env!("CARGO_PKG_VERSION").to_string(),
         uptime_seconds: live.uptime_seconds,

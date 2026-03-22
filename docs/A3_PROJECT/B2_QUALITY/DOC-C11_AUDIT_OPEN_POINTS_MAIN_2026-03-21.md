@@ -112,7 +112,7 @@ Status:
   - `docs/A4_USER/B1_MANUAL/DOC-C4_UI_OVERVIEW.md`
   - `docs/A4_USER/B1_MANUAL/DOC-C2_QUICKSTART.md`
   - `docs/A2_DEVELOPMENT/B4_TECHNICAL/DOC-C1_RENDERING.md`
-- Planungsdokumente verweisen wiederholt auf eine Root-`ROADMAP.md` als "source of truth", diese Datei existiert im Repo aktuell aber nicht.
+- Planungsdokumente verweisen auf GitHub Project Issues als "source of truth". Die alte `ROADMAP.md` wurde entfernt.
 
 Bewertung:
 - Das eigentliche Doku-Umraeumen ist weitgehend geschafft.

@@ -258,7 +258,7 @@ pub fn render_output_ui(
                     let (tx, rx) = std::sync::mpsc::channel();
                     canvas.hue_pairing_rx = Some(rx);
                     let ip = bridge_ip.clone();
-                    
+
                     #[cfg(feature = "tokio")]
                     {
                         canvas.hue_status_message = Some("Pairing... (Press Bridge Button)".to_string());
