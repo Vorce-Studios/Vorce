@@ -73,11 +73,7 @@ pub fn draw_quick_create_popup(
             }
             ui.separator();
             if filtered_items.is_empty() {
-                ui.label(
-                    egui::RichText::new("No matching nodes found.")
-                        .weak()
-                        .italics(),
-                );
+                crate::widgets::custom::render_info_label(ui, "No matching nodes found.");
             } else {
                 egui::ScrollArea::vertical()
                     .max_height(300.0)

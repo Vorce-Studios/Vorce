@@ -101,11 +101,10 @@ impl IconDemoPanel {
                                             });
 
                                         // Icon name
-                                        ui.label(
-                                            egui::RichText::new(format!("{:?}", icon))
-                                                .size(10.0)
-                                                .weak()
-                                                .italics(),
+                                        crate::widgets::custom::render_info_label_with_size(
+                                            ui,
+                                            &format!("{:?}", icon),
+                                            10.0,
                                         );
                                     });
 

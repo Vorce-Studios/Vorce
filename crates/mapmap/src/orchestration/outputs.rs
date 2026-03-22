@@ -20,16 +20,34 @@ pub fn sync_output_windows(
 
     for module in app.state.module_manager.modules() {
         for part in &module.parts {
-            if let mapmap_core::module::ModulePartType::Output(OutputType::Projector {
-                id,
-                name,
-                output_width,
-                output_height,
-                ..
-            }) = &part.part_type
-            {
-                active_window_ids.insert(*id);
-                projector_configs.push((*id, name.clone(), *output_width, *output_height));
+            match &part.part_type {
+                mapmap_core::module::ModulePartType::Output(OutputType::Projector {
+                    id,
+                    name,
+                    output_width,
+                    output_height,
+                    ..
+                }) => {
+                    active_window_ids.insert(*id);
+                    projector_configs.push((*id, name.clone(), *output_width, *output_height));
+                }
+                #[cfg(target_os = "macos")]
+                mapmap_core::module::ModulePartType::Output(OutputType::NdiOutput { name }) => {
+                    // Throttled logging to avoid spam
+                    let now = std::time::Instant::now();
+                    let log_key = format!("ndi_output_unsupported_{}", name);
+                    let should_log =
+                        if let Some(last_log) = app.video_diagnostic_log_times.get(&log_key) {
+                            now.duration_since(*last_log).as_secs_f32() > 5.0
+                        } else {
+                            true
+                        };
+                    if should_log {
+                        tracing::warn!("NDI Output '{}' is currently unsupported/experimental on macOS and will not broadcast.", name);
+                        app.video_diagnostic_log_times.insert(log_key, now);
+                    }
+                }
+                _ => {}
             }
         }
     }

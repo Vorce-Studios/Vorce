@@ -25,7 +25,7 @@ Dieser Plan integriert die bereits existierende, aber bisher nur in Tests verwen
 - **Ziel**: `create_player_handle` in `media.rs` soll eine `FramePipeline` starten (decode_thread + upload_thread) statt einer einfachen `std::thread::spawn` Schleife.
 - **Agent**: `coder`
 - **Dateien ändern**:
-  - `crates/mapmap/src/orchestration/media.rs`: 
+  - `crates/mapmap/src/orchestration/media.rs`:
     - Ersetze den manuellen `std::thread::spawn` Block durch `pipeline.start_decode_thread(player)` und `pipeline.start_upload_thread(...)`.
     - Das `upload_fn` Closure muss die Textur via `pool.upload_data(...)` in die WGPU Queue schreiben.
     - Speichere die `FramePipeline` (oder einen Wrapper) im `MediaPlayerHandle`, damit sie bei Bedarf gestoppt werden kann.

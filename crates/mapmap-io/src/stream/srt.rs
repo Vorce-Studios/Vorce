@@ -1,5 +1,8 @@
 //! SRT streaming output (stub implementation).
 //!
+//! **[Experimental] / [Gated]**
+//! This feature is currently an experimental stub.
+//!
 //! Secure Reliable Transport (SRT) is a protocol for low-latency video streaming.
 //! This is currently a stub implementation.
 
@@ -13,6 +16,8 @@ use crate::sink::{SinkStatistics, VideoSink};
 use crate::stream::encoder::{EncoderPreset, VideoCodec, VideoEncoder};
 
 /// SRT streamer for sending video via SRT protocol.
+///
+/// **[Experimental] / [Gated]**
 ///
 /// SRT (Secure Reliable Transport) provides low-latency streaming with
 /// error correction and encryption. This implementation uses FFmpeg

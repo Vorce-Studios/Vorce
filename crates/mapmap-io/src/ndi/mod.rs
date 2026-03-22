@@ -1,5 +1,8 @@
 //! NDI (Network Device Interface) support.
 //!
+//! **[Experimental] / [Gated]**
+//! This feature is currently experimental and not fully integrated into the production render path.
+//!
 //! This module provides NDI input (receiving) and output (sending) capabilities
 //! using the grafton-ndi crate which wraps the official NDI SDK.
 
@@ -265,7 +268,9 @@ impl Default for NdiReceiver {
 // For cross-thread usage, wrap in a dedicated thread with channels.
 
 /// NDI sender for broadcasting video to the network.
-/// Note: Sender implementation is a placeholder - grafton-ndi 0.2.4 Send API needs verification.
+///
+/// **[Experimental] / [Gated]**
+/// Note: Sender implementation is a placeholder - grafton-ndi Send API needs verification.
 #[cfg(feature = "ndi")]
 pub struct NdiSender {
     /// NDI library handle

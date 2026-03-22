@@ -47,6 +47,28 @@ pub fn perform_evaluation(
                     .insert(*part_id, max_val);
             }
 
+            #[cfg(target_os = "macos")]
+            for part in &module_ref.parts {
+                if let mapmap_core::module::ModulePartType::Source(
+                    mapmap_core::module::SourceType::NdiInput { .. },
+                ) = &part.part_type
+                {
+                    // Throttled logging to avoid spam
+                    let now = std::time::Instant::now();
+                    let log_key = format!("ndi_input_unsupported_{}", module_ref.name);
+                    let should_log =
+                        if let Some(last_log) = app.video_diagnostic_log_times.get(&log_key) {
+                            now.duration_since(*last_log).as_secs_f32() > 5.0
+                        } else {
+                            true
+                        };
+                    if should_log {
+                        tracing::warn!("NDI Input in module '{}' is currently unsupported/experimental on macOS.", module_ref.name);
+                        app.video_diagnostic_log_times.insert(log_key, now);
+                    }
+                }
+            }
+
             // Transfer RenderOps using drain to avoid clones
             // Note: We need to access eval_result fields directly because evaluate returns a reference.
             // But since ModuleEvaluator is on app, we can just drain from its cached_result.

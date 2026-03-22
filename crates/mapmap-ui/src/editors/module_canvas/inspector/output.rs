@@ -154,9 +154,15 @@ pub fn render_output_ui(
             {
                 let supported = capabilities::is_output_type_enum_supported(true, false);
                 if !supported {
+                    #[cfg(target_os = "macos")]
                     capabilities::render_unsupported_warning(
                         ui,
-                        "NDI Output has no active runtime path currently.",
+                        "NDI Output is experimental/unavailable on macOS currently.",
+                    );
+                    #[cfg(not(target_os = "macos"))]
+                    capabilities::render_unsupported_warning(
+                        ui,
+                        "[Experimental] NDI Output has no active runtime path currently.",
                     );
                 }
                 ui.add_enabled_ui(supported, |ui| {
@@ -180,6 +186,10 @@ pub fn render_output_ui(
         #[cfg(feature = "ndi")]
         OutputType::NdiOutput { name } => {
             ui.label("\u{1F4E1} NDI Output");
+            capabilities::render_unsupported_warning(
+                ui,
+                "[Experimental] NDI Output has no active runtime path currently.",
+            );
             ui.horizontal(|ui| {
                 ui.label("Stream Name:");
                 ui.text_edit_singleline(name);
@@ -188,6 +198,10 @@ pub fn render_output_ui(
         #[cfg(not(feature = "ndi"))]
         OutputType::NdiOutput { .. } => {
             ui.label("\u{1F4E1} NDI Output (Feature Disabled)");
+            crate::editors::module_canvas::inspector::capabilities::render_unsupported_warning(
+                ui,
+                "[Experimental] NDI feature is disabled in this build.",
+            );
         }
         #[cfg(target_os = "windows")]
         OutputType::Spout { name } => {
@@ -263,9 +277,13 @@ pub fn render_output_ui(
 
                     #[cfg(feature = "tokio")]
                     {
-                        canvas.hue_status_message = Some("Pairing... (Press Bridge Button)".to_string());
+                        canvas.hue_status_message =
+                            Some("Pairing... (Press Bridge Button)".to_string());
                         let task = async move {
-                            let result = mapmap_control::hue::api::client::HueClient::register_user(&ip, "MapFlow")
+                            let result =
+                                mapmap_control::hue::api::client::HueClient::register_user(
+                                    &ip, "MapFlow",
+                                )
                                 .await
                                 .map_err(|e| e.to_string());
                             let _ = tx.send(result);

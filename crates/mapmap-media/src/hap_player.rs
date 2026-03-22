@@ -1,5 +1,8 @@
 //! HAP Video Player
 //!
+//! **[Experimental] / [Gated]**
+//! This feature is currently experimental. The container-parsing path (.mov via FFmpeg) is a placeholder.
+//!
 //! Integrates HAP decoding with GPU texture upload for high-performance playback.
 
 use std::path::Path;
@@ -11,6 +14,8 @@ use crate::player::{LoopMode, PlaybackState, PlayerError, VideoDecoder};
 use crate::MediaError;
 
 /// HAP-specific decoder that produces GPU-ready DXT textures
+///
+/// **[Experimental]**
 pub struct HapVideoDecoder {
     /// Video width
     width: u32,
@@ -31,6 +36,7 @@ pub struct HapVideoDecoder {
 impl HapVideoDecoder {
     /// Open a HAP video file
     ///
+    /// **[Experimental]**
     /// Note: This requires FFmpeg to extract frames from the MOV container.
     /// For now, this is a placeholder that needs FFmpeg integration.
     #[cfg(feature = "ffmpeg")]

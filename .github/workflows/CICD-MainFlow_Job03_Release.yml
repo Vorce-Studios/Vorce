@@ -316,19 +316,34 @@ jobs:
         run: |
           bash scripts/mapflow/package-macos-app.sh "${{ needs.resolve-release.outputs.version }}"
 
-      - name: Create ZIP Artifact
+      - name: Sign .app Bundle
+        shell: bash
+        env:
+          APPLE_DEV_ID: ${{ secrets.APPLE_DEV_ID }}
+        run: |
+          bash scripts/mapflow/sign-and-notarize-macos.sh "target/release/MapFlow.app"
+
+      - name: Create DMG Artifact
         shell: bash
         run: |
-          VERSION="${{ needs.resolve-release.outputs.version }}"
-          ZIP_NAME="MapFlow-$VERSION-macOS-beta.zip"
-          ditto -c -k --sequesterRsrc --keepParent "target/release/MapFlow.app" "$ZIP_NAME"
+          bash scripts/mapflow/create-macos-dmg.sh "${{ needs.resolve-release.outputs.version }}" "target/release/MapFlow.app" "MapFlow-${{ needs.resolve-release.outputs.version }}-macOS-beta.dmg"
+
+      - name: Sign and Notarize DMG
+        shell: bash
+        env:
+          APPLE_DEV_ID: ${{ secrets.APPLE_DEV_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          bash scripts/mapflow/sign-and-notarize-macos.sh "MapFlow-${{ needs.resolve-release.outputs.version }}-macOS-beta.dmg"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-artifacts
           if-no-files-found: error
-          path: MapFlow-${{ needs.resolve-release.outputs.version }}-macOS-beta.zip
+          path: MapFlow-${{ needs.resolve-release.outputs.version }}-macOS-beta.dmg
 
   publish-release:
     name: "Publish Release"
@@ -353,7 +368,7 @@ jobs:
             "release-artifacts/MapFlow-$RELEASE_VERSION-Windows-x64.zip"
             "release-artifacts/MapFlow-$RELEASE_VERSION-x64.msi"
             "release-artifacts/MapFlow-$RELEASE_VERSION-Linux-x64.tar.gz"
-            "release-artifacts/MapFlow-$RELEASE_VERSION-macOS-beta.zip"
+            "release-artifacts/MapFlow-$RELEASE_VERSION-macOS-beta.dmg"
           )
 
           args=(

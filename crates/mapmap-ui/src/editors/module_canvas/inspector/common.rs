@@ -6,13 +6,13 @@ use mapmap_core::module::{BlendModeType, ModulePartId};
 
 /// Standardized informational label, used as an explicit fallback when no active preview is available.
 pub fn render_info_label(ui: &mut Ui, text: &str) {
-    ui.label(egui::RichText::new(text).weak().italics());
+    crate::widgets::custom::render_info_label(ui, text);
 }
 
 /// Standardized missing preview banner.
 pub fn render_missing_preview_banner(ui: &mut Ui, text: &str) {
     ui.group(|ui| {
-        render_info_label(ui, text);
+        crate::widgets::custom::render_info_label(ui, text);
     });
 }
 
