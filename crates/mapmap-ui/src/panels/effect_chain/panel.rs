@@ -220,7 +220,11 @@ impl EffectChainPanel {
                 if self.chain.effects.is_empty() {
                     ui.vertical_centered(|ui| {
                         ui.add_space(50.0);
-                        crate::widgets::custom::render_info_label_with_size(ui, &locale.t("effect-no-effects"), 16.0);
+                        crate::widgets::custom::render_info_label_with_size(
+                            ui,
+                            &locale.t("effect-no-effects"),
+                            16.0,
+                        );
                         ui.label(locale.t("effect-start-tip"));
                         ui.add_space(50.0);
                     });

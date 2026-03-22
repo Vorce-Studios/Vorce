@@ -39,7 +39,10 @@ pub fn render_diagnostics_popup(canvas: &mut ModuleCanvas, ui: &mut Ui) {
             ui.add_space(8.0);
 
             if canvas.diagnostic_issues.is_empty() {
-                crate::widgets::custom::render_info_label(ui, "No issues found. Your module looks good!");
+                crate::widgets::custom::render_info_label(
+                    ui,
+                    "No issues found. Your module looks good!",
+                );
             } else {
                 egui::ScrollArea::vertical()
                     .max_height(150.0)

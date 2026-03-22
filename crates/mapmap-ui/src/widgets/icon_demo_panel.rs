@@ -101,7 +101,11 @@ impl IconDemoPanel {
                                             });
 
                                         // Icon name
-                                        crate::widgets::custom::render_info_label_with_size(ui, &format!("{:?}", icon), 10.0);
+                                        crate::widgets::custom::render_info_label_with_size(
+                                            ui,
+                                            &format!("{:?}", icon),
+                                            10.0,
+                                        );
                                     });
 
                                     if (i + 1) % cols == 0 {

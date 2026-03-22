@@ -196,7 +196,10 @@ pub fn render_layer_inspector(
                         *last_mesh_edit_id = None; // Trigger resync
                     }
                 } else {
-                    crate::widgets::custom::render_info_label(ui, "No mapping available to edit mesh.");
+                    crate::widgets::custom::render_info_label(
+                        ui,
+                        "No mapping available to edit mesh.",
+                    );
                 }
             });
     });
