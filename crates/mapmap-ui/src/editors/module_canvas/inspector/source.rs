@@ -1178,7 +1178,7 @@ pub fn render_source_ui(
             if !supported {
                 capabilities::render_unsupported_warning(
                     ui,
-                    "NDI Input has no active polling/upload path in the current runtime.",
+                    "[Experimental] NDI Input has no active polling/upload path in the current runtime.",
                 );
             }
 
@@ -1282,6 +1282,10 @@ pub fn render_source_ui(
         #[cfg(not(feature = "ndi"))]
         SourceType::NdiInput { .. } => {
             ui.label("\u{1F4E1} NDI Input (Feature Disabled)");
+            capabilities::render_unsupported_warning(
+                ui,
+                "[Experimental] NDI feature is disabled in this build.",
+            );
         }
         #[cfg(target_os = "windows")]
         SourceType::SpoutInput { sender_name } => {
