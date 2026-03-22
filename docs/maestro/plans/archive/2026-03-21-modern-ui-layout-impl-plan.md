@@ -7,7 +7,7 @@ date: 2026-03-21
 # Phasenplan: Moderne & Modulare Mapflow-UI
 
 ## Plan-Überblick
-Dieser Plan beschreibt die schrittweise Transformation der Mapflow-UI in ein hochflexibles, slot-basiertes System mit adaptiven Widgets und Node-Skins. 
+Dieser Plan beschreibt die schrittweise Transformation der Mapflow-UI in ein hochflexibles, slot-basiertes System mit adaptiven Widgets und Node-Skins.
 
 - **Gesamtphasen**: 4
 - **Beteiligte Agenten**: architect, ux_designer, design_system_engineer, performance_engineer, code_reviewer

@@ -8,7 +8,7 @@ date: 2026-03-21
 # Design-Dokument: Moderne & Modulare Mapflow-UI
 
 ## 1. Problemstellung (Problem Statement)
-Die aktuelle Mapflow-UI basiert auf einem starren, statischen System (Sidebar links, Timeline unten, Inspector rechts), das modernen kreativen Workflows nicht gerecht wird. 
+Die aktuelle Mapflow-UI basiert auf einem starren, statischen System (Sidebar links, Timeline unten, Inspector rechts), das modernen kreativen Workflows nicht gerecht wird.
 
 **Kernprobleme:**
 - **Mangelnde Dynamik**: Fehlende Animationen bei Layout-Änderungen erschweren die visuelle Orientierung.
