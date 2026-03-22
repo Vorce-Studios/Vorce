@@ -74,3 +74,14 @@ pub fn is_source_type_enum_supported(
 
     !(is_shader || is_live_input || is_ndi)
 }
+
+/// Helper that checks if an output type is supported based on platform
+pub fn is_output_type_enum_supported(is_ndi: bool, is_syphon: bool) -> bool {
+    #[cfg(target_os = "macos")]
+    if is_ndi || is_syphon {
+        return false;
+    }
+
+    let _ = is_syphon; // Silence warning on non-macos
+    !is_ndi
+}

@@ -103,6 +103,7 @@ mod tests {
                         true, true, false, false
                     ));
                 }
+                #[cfg(feature = "ndi")]
                 ModulePartType::Source(SourceType::NdiInput { .. }) => {
                     assert!(capabilities::is_source_type_enum_supported(
                         false, false, true, false
