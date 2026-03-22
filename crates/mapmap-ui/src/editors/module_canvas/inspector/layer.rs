@@ -17,9 +17,18 @@ pub fn render_layer_ui(
     ui.label("📋 Layer:");
 
     // Helper to render mesh UI
-    let mut render_mesh_ui = |ui: &mut Ui, mesh: &mut MeshType, id_salt: u64, show_visual_editor: bool| {
-        mesh::render_mesh_editor_ui(mesh_editor, last_mesh_edit_id, ui, mesh, part_id, id_salt, show_visual_editor);
-    };
+    let mut render_mesh_ui =
+        |ui: &mut Ui, mesh: &mut MeshType, id_salt: u64, show_visual_editor: bool| {
+            mesh::render_mesh_editor_ui(
+                mesh_editor,
+                last_mesh_edit_id,
+                ui,
+                mesh,
+                part_id,
+                id_salt,
+                show_visual_editor,
+            );
+        };
 
     let show_mesh_editor = canvas.layer_inspector_view_mode == LayerInspectorViewMode::MeshEditor;
 

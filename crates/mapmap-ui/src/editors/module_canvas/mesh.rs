@@ -190,7 +190,8 @@ pub fn render_mesh_editor_ui(
                     }
                     MeshType::BezierSurface { control_points } => {
                         let points = mesh_editor.get_bezier_points();
-                        *control_points = points.iter().map(|(x, y)| (x / scale, y / scale)).collect();
+                        *control_points =
+                            points.iter().map(|(x, y)| (x / scale, y / scale)).collect();
                     }
                     _ => {}
                 }
