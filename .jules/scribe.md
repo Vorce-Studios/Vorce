@@ -47,3 +47,7 @@ I have addressed several broken links and outdated status indicators in the docu
 ## 2026-03-18 - Fix broken references to ROADMAP.md
 **Erkenntnis:** Mehrere Dateien (`README.md`, `scripts/dev-tools/check-links.py`, und Dateien in `docs/A3_PROJECT/`) verwiesen fälschlicherweise auf `docs/project/roadmap/README.md` anstelle des korrekten Pfads `ROADMAP.md` im Root-Verzeichnis.
 **Aktion:** Alle Verweise wurden korrigiert, um auf das Root `ROADMAP.md` zu zeigen. Die Verweise auf Dokumentations-Indexdateien in `scripts/dev-tools/check-links.py` wurden ebenfalls aktualisiert, um die neue Struktur (`A4_USER`, `A2_DEVELOPMENT`, `A3_PROJECT`) zu reflektieren.
+
+## 2026-03-22 - Remove Deprecated ROADMAP.md References
+**Erkenntnis:** ROADMAP.md has been removed and replaced by GitHub Project Issues, causing broken links across main user documentation (README.md, CONTRIBUTING.md, and docs/).
+**Aktion:** Removed the link check from dev-tools, and replaced all links to ROADMAP.md with links to the GitHub Project Issues in Scribe's designated documentation files.

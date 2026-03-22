@@ -1,7 +1,7 @@
 # Project Phases (0-7)
 
 > **⚠️ DEPRECATED:** This document is kept for historical reference only.
-> For the most up-to-date roadmap and feature status, please verify [ROADMAP.md](../../../ROADMAP.md) in the project root.
+> For the most up-to-date roadmap and feature status, please verify the [GitHub Project Issues](https://github.com/MrLongNight/MapFlow/issues).
 
 This document outlines the complete project roadmap for the MapFlow Rust rewrite, from the initial core engine development to the final polish and release.
 
