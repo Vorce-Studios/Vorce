@@ -258,10 +258,9 @@ impl TransformPanel {
                         );
                         ui.add_space(16.0);
                         ui.label(i18n.t("transform-no-layer"));
-                        ui.label(
-                            egui::RichText::new(i18n.t("transform-select-tip"))
-                                .weak()
-                                .italics(),
+                        crate::widgets::custom::render_info_label(
+                            ui,
+                            &i18n.t("transform-select-tip"),
                         );
                     });
                 }

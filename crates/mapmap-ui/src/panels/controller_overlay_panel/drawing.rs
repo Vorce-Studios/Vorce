@@ -494,7 +494,7 @@ impl ControllerOverlayPanel {
                         );
                     } else {
                         ui.separator();
-                        ui.label(egui::RichText::new("Nicht zugewiesen").italics().weak());
+                        crate::widgets::custom::render_info_label(ui, "Nicht zugewiesen");
                     }
                 },
             );
