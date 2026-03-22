@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use crate::app::core::app_struct::App;
 use anyhow::Result;
 use crossbeam_channel::Sender;
