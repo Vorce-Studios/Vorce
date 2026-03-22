@@ -128,6 +128,7 @@ mod tests {
     async fn test_get_status() {
         let state = AppState {
             auth: Arc::new(RwLock::new(super::super::auth::AuthConfig::new())),
+            live_status: Arc::new(parking_lot::RwLock::new(super::super::handlers::LiveStatus::default())),
         };
 
         let response = get_status(State(state)).await;
@@ -138,6 +139,7 @@ mod tests {
     async fn test_get_layers() {
         let state = AppState {
             auth: Arc::new(RwLock::new(super::super::auth::AuthConfig::new())),
+            live_status: Arc::new(parking_lot::RwLock::new(super::super::handlers::LiveStatus::default())),
         };
 
         let response = get_layers(State(state)).await;

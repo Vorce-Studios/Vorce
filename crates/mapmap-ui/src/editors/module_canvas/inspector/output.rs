@@ -270,6 +270,12 @@ pub fn render_output_ui(
                         };
                         tokio::spawn(task);
                     }
+                    #[cfg(not(feature = "tokio"))]
+                    {
+                        let _ = tx;
+                        let _ = ip;
+                        canvas.hue_status_message = Some("Async runtime not available".to_string());
+                    }
                 }
 
                 // Handle pairing results

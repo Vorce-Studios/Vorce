@@ -18,8 +18,8 @@ pub struct MediaPlayerHandle {
     pub loop_enabled: bool,
     /// Command channel to control the player
     pub command_tx: Sender<mapmap_media::PlaybackCommand>,
-    /// Update channel to send delta time
-    pub update_tx: Sender<f32>,
+    /// Multi-threaded frame pipeline
+    pub pipeline: mapmap_media::FramePipeline,
 }
 
 #[derive(Debug, Clone)]
@@ -118,9 +118,6 @@ pub fn create_player_handle(
     loop_enabled: bool,
     start_playing: bool,
 ) -> Result<MediaPlayerHandle> {
-    let (cmd_tx, cmd_rx) = crossbeam_channel::unbounded();
-    let (upd_tx, upd_rx) = crossbeam_channel::unbounded();
-
     let path_buf = std::path::PathBuf::from(path);
     let name = texture_name.to_string();
     let mut player = mapmap_media::open_path(&path_buf).map_err(anyhow::Error::from)?;
@@ -151,51 +148,45 @@ pub fn create_player_handle(
         player.pause().map_err(anyhow::Error::from)?;
     }
 
-    std::thread::spawn(move || {
-        loop {
-            // Block until we get an update or command
-            // We use recv() on the update channel as the primary heartbeat
-            match upd_rx.recv() {
-                Ok(dt) => {
-                    // Process any pending commands first
-                    while let Ok(cmd) = cmd_rx.try_recv() {
-                        let _ = player.command_sender().send(cmd);
-                    }
+    let cmd_tx = player.command_sender();
 
-                    // Update player and only upload if we got a NEW frame
-                    if let Some(frame) = player.update(std::time::Duration::from_secs_f32(dt)) {
-                        // Extract byte slice from FrameData::Cpu
-                        if let mapmap_io::format::FrameData::Cpu(ref data) = frame.data {
-                            pool.upload_data(
-                                &queue,
-                                &name,
-                                data,
-                                frame.format.width,
-                                frame.format.height,
-                            );
-                        } else {
-                            warn!(
-                                "Fehler in Videoausgabe: Frame fuer '{}' konnte nicht hochgeladen werden, weil das Frame-Format nicht CPU-basiert ist.",
-                                path_buf.display()
-                            );
-                        }
-                    }
-                }
-                Err(_) => {
-                    // Channel disconnected, stop the thread
-                    info!("Media-Thread beendet fuer '{}'", path_buf.display());
-                    break;
-                }
-            }
+    // Create and start the pipeline
+    let mut pipeline = mapmap_media::FramePipeline::new();
+
+    // Start upload thread first to be ready for decoded frames
+    let pool_clone = pool.clone();
+    let queue_clone = queue.clone();
+    let name_clone = name.clone();
+    let path_display = path_buf.display().to_string();
+
+    pipeline.start_upload_thread(move |pipeline_frame| {
+        let frame = &pipeline_frame.frame;
+        if let mapmap_io::format::FrameData::Cpu(ref data) = frame.data {
+            pool_clone.upload_data(
+                &queue_clone,
+                &name_clone,
+                data,
+                frame.format.width,
+                frame.format.height,
+            );
+            Ok(())
+        } else {
+            Err(format!(
+                "Fehler in Videoausgabe: Frame fuer '{}' konnte nicht hochgeladen werden, weil das Frame-Format nicht CPU-basiert ist.",
+                path_display
+            ).into())
         }
     });
+
+    // Start decode thread with the player
+    pipeline.start_decode_thread(player);
 
     Ok(MediaPlayerHandle {
         source_path: path.to_string(),
         playback_speed,
         loop_enabled,
         command_tx: cmd_tx,
-        update_tx: upd_tx,
+        pipeline,
     })
 }
 
@@ -344,8 +335,12 @@ pub fn sync_media_players(app: &mut App) {
 }
 
 /// Updates all active media players.
-pub fn update_media_players(app: &mut App, dt: f32) {
+pub fn update_media_players(app: &mut App, _dt: f32) {
     for handle in app.media_players.values_mut() {
-        let _ = handle.update_tx.send(dt);
+        // Drain upload channel to keep the pipeline moving and update stats
+        while let Ok(_frame) = handle.pipeline.upload_rx.try_recv() {
+            // Frame is already uploaded to the texture pool by the upload thread.
+            // We just need to drain the channel here.
+        }
     }
 }
