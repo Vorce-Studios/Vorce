@@ -13,8 +13,6 @@ anyhow = { workspace = true }
 bevy = { version = "0.16", features = [
     "tonemapping_luts",
     "default_font",
-    "x11",
-    "wayland",
 ] }
 
 # Extensions compatible with Bevy 0.16
@@ -29,3 +27,6 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 # Use Bevy's own wgpu version (v24) to avoid conflicts
 wgpu = "24.0"
+
+[target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
+bevy = { version = "0.16", default-features = false, features = ["wayland"] }
