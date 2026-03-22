@@ -218,7 +218,8 @@ impl App {
 
         #[cfg(feature = "http-api")]
         if ui_state.user_config.web_api_enabled {
-            let web_config = mapmap_control::web::WebServerConfig::new(ui_state.user_config.web_api_port);
+            let web_config =
+                mapmap_control::web::WebServerConfig::new(ui_state.user_config.web_api_port);
             if let Err(e) = control_manager.init_web_server(web_config) {
                 error!("Failed to initialize Web API: {}", e);
             }

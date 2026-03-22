@@ -104,11 +104,8 @@ pub struct ModuleCanvas {
         >,
     >,
     /// Channel for Hue pairing results
-    pub hue_pairing_rx: Option<
-        std::sync::mpsc::Receiver<
-            Result<mapmap_control::hue::models::HueConfig, String>,
-        >,
-    >,
+    pub hue_pairing_rx:
+        Option<std::sync::mpsc::Receiver<Result<mapmap_control::hue::models::HueConfig, String>>>,
     /// Status message for Hue operations
     pub hue_status_message: Option<String>,
     /// Last known trigger values for visualization (Part ID -> Value 0.0-1.0)
