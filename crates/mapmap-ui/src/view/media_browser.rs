@@ -301,7 +301,10 @@ impl MediaBrowser {
                         let thumbnail = img.thumbnail(128, 128); // Standard thumbnail size
                         let size = [thumbnail.width() as _, thumbnail.height() as _];
                         let rgba = thumbnail.to_rgba8();
-                        Ok(egui::ColorImage::from_rgba_unmultiplied(size, rgba.as_flat_samples().as_slice()))
+                        Ok(egui::ColorImage::from_rgba_unmultiplied(
+                            size,
+                            rgba.as_flat_samples().as_slice(),
+                        ))
                     }
                     Err(e) => Err(e.to_string()),
                 };
@@ -403,7 +406,9 @@ impl MediaBrowser {
                     size,
                 };
 
-                self.thumbnail_cache.write().insert(path.clone(), handle.clone());
+                self.thumbnail_cache
+                    .write()
+                    .insert(path.clone(), handle.clone());
 
                 // Update the corresponding entry in the list
                 for entry in &mut self.entries {
