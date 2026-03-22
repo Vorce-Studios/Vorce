@@ -214,7 +214,16 @@ impl App {
             Self::connect_hue(&mut hue_controller, &ui_state, &tokio_runtime);
         }
 
-        let control_manager = ControlManager::new();
+        let mut control_manager = ControlManager::new();
+        
+        #[cfg(feature = "http-api")]
+        if ui_state.user_config.web_api_enabled {
+            let web_config = mapmap_control::web::WebServerConfig::new(ui_state.user_config.web_api_port);
+            if let Err(e) = control_manager.init_web_server(web_config) {
+                error!("Failed to initialize Web API: {}", e);
+            }
+        }
+
         let sys_info = sysinfo::System::new_all();
         let (dummy_texture, dummy_view) =
             Self::create_initial_dummy_texture(&backend, width, height, format);

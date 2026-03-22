@@ -96,9 +96,6 @@ pub struct MediaBrowser {
     filter_type: Option<MediaType>,
     /// View mode
     view_mode: ViewMode,
-    /// Grid size (thumbnails per row)
-    #[allow(dead_code)] // TODO: Prüfen, ob dieses Feld dauerhaft benötigt wird!
-    grid_columns: usize,
     /// Thumbnail size in pixels
     thumbnail_size: f32,
     /// Selected entry index
@@ -169,7 +166,6 @@ impl MediaBrowser {
             search_query: String::new(),
             filter_type: None,
             view_mode: ViewMode::Grid,
-            grid_columns: 4,
             thumbnail_size: 80.0, // Reduced from 120 for compact view
             selected: None,
             hovered: None,

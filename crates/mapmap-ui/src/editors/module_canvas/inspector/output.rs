@@ -255,9 +255,38 @@ pub fn render_output_ui(
                     .on_hover_text("Press button on Bridge then click this")
                     .clicked()
                 {
-                    // TODO: Implement pairing logic
-                    // This requires async call to `register_user`
-                    // Similar pattern to discovery
+                    let (tx, rx) = std::sync::mpsc::channel();
+                    canvas.hue_pairing_rx = Some(rx);
+                    let ip = bridge_ip.clone();
+                    
+                    #[cfg(feature = "tokio")]
+                    {
+                        canvas.hue_status_message = Some("Pairing... (Press Bridge Button)".to_string());
+                        let task = async move {
+                            let result = mapmap_control::hue::api::client::HueClient::register_user(&ip, "MapFlow")
+                                .await
+                                .map_err(|e| e.to_string());
+                            let _ = tx.send(result);
+                        };
+                        tokio::spawn(task);
+                    }
+                }
+
+                // Handle pairing results
+                if let Some(rx) = &canvas.hue_pairing_rx {
+                    if let Ok(result) = rx.try_recv() {
+                        canvas.hue_pairing_rx = None;
+                        match result {
+                            Ok(config) => {
+                                *username = config.username;
+                                *_client_key = config.client_key;
+                                canvas.hue_status_message = Some("Pairing Successful!".to_string());
+                            }
+                            Err(e) => {
+                                canvas.hue_status_message = Some(format!("Pairing failed: {}", e));
+                            }
+                        }
+                    }
                 }
 
                 if !username.is_empty() {

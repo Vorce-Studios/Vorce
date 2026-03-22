@@ -103,6 +103,12 @@ pub struct ModuleCanvas {
             Result<Vec<mapmap_control::hue::api::discovery::DiscoveredBridge>, String>,
         >,
     >,
+    /// Channel for Hue pairing results
+    pub hue_pairing_rx: Option<
+        std::sync::mpsc::Receiver<
+            Result<mapmap_control::hue::models::HueConfig, String>,
+        >,
+    >,
     /// Status message for Hue operations
     pub hue_status_message: Option<String>,
     /// Last known trigger values for visualization (Part ID -> Value 0.0-1.0)
@@ -175,6 +181,7 @@ impl Default for ModuleCanvas {
             player_info: std::collections::HashMap::new(),
             hue_bridges: Vec::new(),
             hue_discovery_rx: None,
+            hue_pairing_rx: None,
             hue_status_message: None,
             last_trigger_values: std::collections::HashMap::new(),
             show_inspector_previews: true,
