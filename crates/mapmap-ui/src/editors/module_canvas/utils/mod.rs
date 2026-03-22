@@ -103,11 +103,13 @@ mod tests {
                         true, true, false, false
                     ));
                 }
+                #[cfg(feature = "ndi")]
                 ModulePartType::Source(SourceType::NdiInput { .. }) => {
                     assert!(capabilities::is_source_type_enum_supported(
                         false, false, true, false
                     ));
                 }
+                #[cfg(target_os = "windows")]
                 ModulePartType::Source(SourceType::SpoutInput { .. }) => {
                     assert!(capabilities::is_source_type_enum_supported(
                         false, false, false, true

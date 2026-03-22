@@ -152,6 +152,12 @@ pub fn render_output_ui(
             {
                 let supported = capabilities::is_output_type_enum_supported(true, false);
                 if !supported {
+                    #[cfg(target_os = "macos")]
+                    capabilities::render_unsupported_warning(
+                        ui,
+                        "NDI Output is experimental/unavailable on macOS currently.",
+                    );
+                    #[cfg(not(target_os = "macos"))]
                     capabilities::render_unsupported_warning(
                         ui,
                         "NDI Output has no active runtime path currently.",
