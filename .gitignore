@@ -69,6 +69,7 @@ target_*/
 # Build/test output files
 check_*.txt
 /artifacts/visual-capture/
+/coverage/
 
 # vcpkg (local only, not tracked)
 /vcpkg/
