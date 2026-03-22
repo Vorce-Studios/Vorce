@@ -1,5 +1,8 @@
 //! NDI (Network Device Interface) support.
 //!
+//! **[Experimental] / [Gated]**
+//! This feature is currently experimental and not fully integrated into the production render path.
+//!
 //! This module provides NDI input (receiving) and output (sending) capabilities
 //! using the grafton-ndi crate which wraps the official NDI SDK.
 
@@ -67,7 +70,7 @@ pub struct NdiReceiver {
     /// Current source info
     source_info: Option<NdiSource>,
     /// Video format
-    format: VideoFormat,
+    _format: VideoFormat,
     /// Frame counter
     frame_count: u64,
     /// NDI receiver instance
@@ -84,7 +87,7 @@ impl NdiReceiver {
         Ok(Self {
             _handle: handle,
             source_info: None,
-            format: VideoFormat::hd_1080p30_rgba(),
+            _format: VideoFormat::hd_1080p30_rgba(),
             frame_count: 0,
             recv: None,
         })
@@ -220,7 +223,7 @@ impl NdiReceiver {
                     frame_rate,
                 };
 
-                self.format = format.clone();
+                self._format = format.clone();
                 self.frame_count += 1;
 
                 let frame = VideoFrame {
@@ -265,7 +268,9 @@ impl Default for NdiReceiver {
 // For cross-thread usage, wrap in a dedicated thread with channels.
 
 /// NDI sender for broadcasting video to the network.
-/// Note: Sender implementation is a placeholder - grafton-ndi 0.2.4 Send API needs verification.
+///
+/// **[Experimental] / [Gated]**
+/// Note: Sender implementation is a placeholder - grafton-ndi Send API needs verification.
 #[cfg(feature = "ndi")]
 pub struct NdiSender {
     /// NDI library handle
@@ -273,7 +278,7 @@ pub struct NdiSender {
     /// Sender name
     name: String,
     /// Video format
-    format: VideoFormat,
+    _format: VideoFormat,
     /// Frame counter
     frame_count: u64,
     /// NDI send instance
@@ -283,7 +288,7 @@ pub struct NdiSender {
 #[cfg(feature = "ndi")]
 impl NdiSender {
     /// Creates a new NDI sender with the given name.
-    pub fn new(name: impl Into<String>, format: VideoFormat) -> Result<Self> {
+    pub fn new(name: impl Into<String>, _format: VideoFormat) -> Result<Self> {
         let name = name.into();
         info!("Creating NDI Sender: {}", name);
 
@@ -308,7 +313,7 @@ impl NdiSender {
         Ok(Self {
             _handle: handle,
             name,
-            format,
+            _format,
             frame_count: 0,
             send: Some(send),
         })

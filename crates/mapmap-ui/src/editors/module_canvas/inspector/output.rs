@@ -1,5 +1,7 @@
 use super::super::mesh;
 use super::super::state::ModuleCanvas;
+#[cfg(feature = "ndi")]
+use super::capabilities;
 use egui::Ui;
 use mapmap_core::module::{HueMappingMode, ModulePartId, OutputType};
 
@@ -150,11 +152,17 @@ pub fn render_output_ui(
             ui.label("\u{1F4E1} NDI Broadcast");
             #[cfg(feature = "ndi")]
             {
-                let supported = capabilities::is_output_type_enum_supported(true, false);
+                let supported = capabilities::is_output_type_enum_supported(true, false, false);
                 if !supported {
+                    #[cfg(target_os = "macos")]
                     capabilities::render_unsupported_warning(
                         ui,
-                        "NDI Output has no active runtime path currently.",
+                        "NDI Output is experimental/unavailable on macOS currently.",
+                    );
+                    #[cfg(not(target_os = "macos"))]
+                    capabilities::render_unsupported_warning(
+                        ui,
+                        "[Experimental] NDI Output has no active runtime path currently.",
                     );
                 }
                 ui.add_enabled_ui(supported, |ui| {
@@ -178,6 +186,10 @@ pub fn render_output_ui(
         #[cfg(feature = "ndi")]
         OutputType::NdiOutput { name } => {
             ui.label("\u{1F4E1} NDI Output");
+            capabilities::render_unsupported_warning(
+                ui,
+                "[Experimental] NDI Output has no active runtime path currently.",
+            );
             ui.horizontal(|ui| {
                 ui.label("Stream Name:");
                 ui.text_edit_singleline(name);
@@ -186,6 +198,10 @@ pub fn render_output_ui(
         #[cfg(not(feature = "ndi"))]
         OutputType::NdiOutput { .. } => {
             ui.label("\u{1F4E1} NDI Output (Feature Disabled)");
+            crate::editors::module_canvas::inspector::capabilities::render_unsupported_warning(
+                ui,
+                "[Experimental] NDI feature is disabled in this build.",
+            );
         }
         #[cfg(target_os = "windows")]
         OutputType::Spout { name } => {

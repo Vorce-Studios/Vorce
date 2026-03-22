@@ -6,6 +6,8 @@ use anyhow::Result;
 use mapmap_core::OutputId;
 #[cfg(feature = "ndi")]
 use std::sync::atomic::{AtomicBool, Ordering};
+#[cfg(feature = "ndi")]
+use std::sync::Arc;
 
 mod content;
 mod effects;

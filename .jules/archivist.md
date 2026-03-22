@@ -134,3 +134,7 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 ## 2026-03-19 - CI Failure Analysis
 **Erkenntnis:** Ein Test in mapmap-bevy schlug in der CI fehl (`headless_runner_disables_embedded_host_plugins`), da ihm das `#[ignore]` Tag für GPU-Tests fehlte. Des Weiteren gab es diverse `cargo fmt` Fehlschläge im Code.
 **Aktion:** Der Test wurde gemäß den Repository-Regeln (AGENTS.md) mit `#[ignore]` markiert, da Render/GPU-Tests ohne interaktive GUI-Umgebung auf CI nicht laufen. Außerdem wurde `cargo fmt` global ausgeführt, um Formatierungswarnungen zu beheben.
+
+## 2026-03-22 - Temporäre Dateien im Root verschoben
+**Erkenntnis:** Im Root-Verzeichnis befanden sich temporäre Entwicklungsskripte und Patches (`fix.sh`, `fix_bevy_test.py`, `fix_script.py`, `patch_diag.py`, `patch_source3.py`, `patch_tests.py`, `test_script.py`) sowie die Testdatei `test.ron`, die nicht den Projektstandards für Root-Dateien entsprechen und unnötig mit Git getrackt wurden.
+**Aktion:** Dateien via `git mv` in das `.temp-archive/` verschoben und mit dem Datum-Präfix `2026-03-22-` versehen, um das Root-Verzeichnis sauber zu halten.
