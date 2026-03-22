@@ -67,7 +67,7 @@ pub struct NdiReceiver {
     /// Current source info
     source_info: Option<NdiSource>,
     /// Video format
-    format: VideoFormat,
+    _format: VideoFormat,
     /// Frame counter
     frame_count: u64,
     /// NDI receiver instance
@@ -84,7 +84,7 @@ impl NdiReceiver {
         Ok(Self {
             _handle: handle,
             source_info: None,
-            format: VideoFormat::hd_1080p30_rgba(),
+            _format: VideoFormat::hd_1080p30_rgba(),
             frame_count: 0,
             recv: None,
         })
@@ -273,7 +273,7 @@ pub struct NdiSender {
     /// Sender name
     name: String,
     /// Video format
-    format: VideoFormat,
+    _format: VideoFormat,
     /// Frame counter
     frame_count: u64,
     /// NDI send instance
@@ -283,7 +283,7 @@ pub struct NdiSender {
 #[cfg(feature = "ndi")]
 impl NdiSender {
     /// Creates a new NDI sender with the given name.
-    pub fn new(name: impl Into<String>, format: VideoFormat) -> Result<Self> {
+    pub fn new(name: impl Into<String>, _format: VideoFormat) -> Result<Self> {
         let name = name.into();
         info!("Creating NDI Sender: {}", name);
 
@@ -308,9 +308,9 @@ impl NdiSender {
         Ok(Self {
             _handle: handle,
             name,
-            format,
+            _format,
             frame_count: 0,
-            send: Some(send),
+            send: None,
         })
     }
 
