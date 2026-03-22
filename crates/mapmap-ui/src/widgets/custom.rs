@@ -462,7 +462,7 @@ pub fn icon_button_compact(
 
     // Accessibility info
     let enabled = ui.is_enabled();
-    let label = format!("{:?}", icon);
+    let label = if hover_text.is_empty() { format!("{:?}", icon) } else { hover_text.to_string() };
     response.widget_info(move || WidgetInfo::labeled(WidgetType::Button, enabled, label.clone()));
 
     let visuals = ui.style().interact(&response);
@@ -636,7 +636,8 @@ pub fn hold_to_action_button(ui: &mut Ui, text: &str, color: Color32, hover_text
     let (rect, response) = ui.allocate_at_least(size, Sense::click());
 
     // Accessibility info
-    response.widget_info(|| WidgetInfo::labeled(WidgetType::Button, ui.is_enabled(), text));
+    let a11y_label = if hover_text.is_empty() { text } else { hover_text };
+    response.widget_info(|| WidgetInfo::labeled(WidgetType::Button, ui.is_enabled(), a11y_label));
 
     // Use response.id for unique state storage to prevent collisions
     let state_id = response.id.with("hold_state");
@@ -674,13 +675,19 @@ pub fn hold_to_action_button(ui: &mut Ui, text: &str, color: Color32, hover_text
     }
 
     // 2. Progress Fill
-    if progress > 0.0 {
+    if progress > 0.0 || triggered {
         let mut fill_rect = rect;
-        fill_rect.max.x = rect.min.x + rect.width() * progress;
+        let display_progress = if triggered { 1.0 } else { progress };
+        fill_rect.max.x = rect.min.x + rect.width() * display_progress;
+        let fill_color = if triggered {
+            color.linear_multiply(0.8) // Flash brightly on completion
+        } else {
+            color.linear_multiply(0.4) // Transparent version of action color
+        };
         painter.rect_filled(
             fill_rect,
             CornerRadius::ZERO,
-            color.linear_multiply(0.4), // Transparent version of action color
+            fill_color,
         );
     }
 
@@ -727,7 +734,7 @@ pub fn hold_to_action_icon(
 
     // Accessibility info
     let enabled = ui.is_enabled();
-    let label = format!("{:?}", icon);
+    let label = if hover_text.is_empty() { format!("{:?}", icon) } else { hover_text.to_string() };
     response.widget_info(move || WidgetInfo::labeled(WidgetType::Button, enabled, label.clone()));
 
     let state_id = response.id.with("hold_state");
@@ -790,17 +797,21 @@ pub fn hold_to_action_icon(
     }
 
     // Draw Progress Ring
-    if progress > 0.0 {
+    if progress > 0.0 || triggered {
         use std::f32::consts::TAU;
         let radius = size / 2.0 + 2.0;
-        let stroke = Stroke::new(2.0, color);
+        let stroke = if triggered {
+            Stroke::new(3.0, color) // Thicker, brighter ring on trigger
+        } else {
+            Stroke::new(2.0, color)
+        };
 
         // Background ring (faint)
         painter.circle_stroke(center, radius, Stroke::new(2.0, color.linear_multiply(0.2)));
 
         // Better visual: Arc using points
         let start_angle = -TAU / 4.0; // Top
-        let end_angle = start_angle + progress * TAU;
+        let end_angle = start_angle + (if triggered { 1.0 } else { progress }) * TAU;
         let n_points = 32;
         let points: Vec<Pos2> = (0..=n_points)
             .map(|i| {
