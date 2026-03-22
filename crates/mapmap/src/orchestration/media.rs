@@ -19,6 +19,7 @@ pub struct MediaPlayerHandle {
     /// Command channel to control the player
     pub command_tx: Sender<mapmap_media::PlaybackCommand>,
     /// Multi-threaded frame pipeline
+    #[allow(deprecated)]
     pub pipeline: mapmap_media::FramePipeline,
 }
 
@@ -151,6 +152,7 @@ pub fn create_player_handle(
     let cmd_tx = player.command_sender();
 
     // Create and start the pipeline
+    #[allow(deprecated)]
     let mut pipeline = mapmap_media::FramePipeline::new();
 
     // Start upload thread first to be ready for decoded frames
@@ -335,6 +337,7 @@ pub fn sync_media_players(app: &mut App) {
 }
 
 /// Updates all active media players.
+#[allow(deprecated)]
 pub fn update_media_players(app: &mut App, _dt: f32) {
     for handle in app.media_players.values_mut() {
         // Drain upload channel to keep the pipeline moving and update stats
