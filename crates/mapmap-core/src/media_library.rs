@@ -72,6 +72,76 @@ mod tests {
 
         assert_eq!(library.items.len(), MAX_MEDIA_ITEMS);
     }
+
+    #[test]
+    fn test_from_path_valid_extension_returns_type() {
+        assert_eq!(MediaType::from_path(Path::new("test.mp4")), MediaType::Video);
+        assert_eq!(MediaType::from_path(Path::new("test.mkv")), MediaType::Video);
+        assert_eq!(MediaType::from_path(Path::new("test.webm")), MediaType::Video);
+        assert_eq!(MediaType::from_path(Path::new("test.jpg")), MediaType::Image);
+        assert_eq!(MediaType::from_path(Path::new("test.png")), MediaType::Image);
+        assert_eq!(MediaType::from_path(Path::new("test.mp3")), MediaType::Audio);
+        assert_eq!(MediaType::from_path(Path::new("test.wav")), MediaType::Audio);
+        assert_eq!(MediaType::from_path(Path::new("test.txt")), MediaType::Unknown);
+        assert_eq!(MediaType::from_path(Path::new("test")), MediaType::Unknown);
+    }
+
+    #[test]
+    fn test_playlist_management_crud_operations_success() {
+        let mut library = MediaLibrary::new();
+
+        library.create_playlist("Favorites".to_string());
+        assert_eq!(library.playlists.len(), 1);
+        assert_eq!(library.playlists[0].name, "Favorites");
+
+        let path1 = PathBuf::from("video1.mp4");
+        let path2 = PathBuf::from("video2.mp4");
+
+        library.add_to_playlist("Favorites", path1.clone());
+        library.add_to_playlist("Favorites", path2.clone());
+
+        // Test duplicate addition
+        library.add_to_playlist("Favorites", path1.clone());
+
+        assert_eq!(library.playlists[0].items.len(), 2);
+
+        library.remove_from_playlist("Favorites", &path1);
+        assert_eq!(library.playlists[0].items.len(), 1);
+        assert_eq!(library.playlists[0].items[0], path2);
+
+        library.remove_playlist("Favorites");
+        assert_eq!(library.playlists.len(), 0);
+    }
+
+    #[test]
+    fn test_add_scan_path_duplicate_path_ignores() {
+        let mut library = MediaLibrary::new();
+        let path = PathBuf::from("/tmp/test_scan_path");
+
+        library.add_scan_path(path.clone());
+        assert_eq!(library.scanned_paths.len(), 1);
+
+        // Test duplicate addition
+        library.add_scan_path(path.clone());
+        assert_eq!(library.scanned_paths.len(), 1);
+    }
+
+    #[test]
+    fn test_get_items_valid_library_returns_items() {
+        let mut library = MediaLibrary::new();
+        let path = PathBuf::from("video.mp4");
+        let item = MediaItem {
+            path: path.clone(),
+            name: "video.mp4".to_string(),
+            media_type: MediaType::Video,
+            metadata: None,
+        };
+        library.items.insert(path, item);
+
+        let items = library.get_items();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].name, "video.mp4");
+    }
 }
 
 /// Metadata for a media item
