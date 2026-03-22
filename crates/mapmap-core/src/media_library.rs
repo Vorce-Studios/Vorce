@@ -75,14 +75,38 @@ mod tests {
 
     #[test]
     fn test_from_path_valid_extension_returns_type() {
-        assert_eq!(MediaType::from_path(Path::new("test.mp4")), MediaType::Video);
-        assert_eq!(MediaType::from_path(Path::new("test.mkv")), MediaType::Video);
-        assert_eq!(MediaType::from_path(Path::new("test.webm")), MediaType::Video);
-        assert_eq!(MediaType::from_path(Path::new("test.jpg")), MediaType::Image);
-        assert_eq!(MediaType::from_path(Path::new("test.png")), MediaType::Image);
-        assert_eq!(MediaType::from_path(Path::new("test.mp3")), MediaType::Audio);
-        assert_eq!(MediaType::from_path(Path::new("test.wav")), MediaType::Audio);
-        assert_eq!(MediaType::from_path(Path::new("test.txt")), MediaType::Unknown);
+        assert_eq!(
+            MediaType::from_path(Path::new("test.mp4")),
+            MediaType::Video
+        );
+        assert_eq!(
+            MediaType::from_path(Path::new("test.mkv")),
+            MediaType::Video
+        );
+        assert_eq!(
+            MediaType::from_path(Path::new("test.webm")),
+            MediaType::Video
+        );
+        assert_eq!(
+            MediaType::from_path(Path::new("test.jpg")),
+            MediaType::Image
+        );
+        assert_eq!(
+            MediaType::from_path(Path::new("test.png")),
+            MediaType::Image
+        );
+        assert_eq!(
+            MediaType::from_path(Path::new("test.mp3")),
+            MediaType::Audio
+        );
+        assert_eq!(
+            MediaType::from_path(Path::new("test.wav")),
+            MediaType::Audio
+        );
+        assert_eq!(
+            MediaType::from_path(Path::new("test.txt")),
+            MediaType::Unknown
+        );
         assert_eq!(MediaType::from_path(Path::new("test")), MediaType::Unknown);
     }
 
