@@ -74,8 +74,12 @@ if ($RequirePlanApproval.IsPresent) {
 }
 
 Write-JulesInfo "Erstelle Jules Session fuer '$Title'..."
-$session = Invoke-JulesApiRequest -Method POST -Path "sessions" -Body $payload -ApiKey $ApiKey
-$sessionId = Resolve-JulesSessionId -SessionIdOrName ([string]$session.name)
+$createdSession = Invoke-JulesApiRequest -Method POST -Path "sessions" -Body $payload -ApiKey $ApiKey
+$sessionId = Resolve-JulesSessionId -SessionIdOrName ([string]$createdSession.name)
+$session = Get-JulesSession -SessionIdOrName ([string]$createdSession.name) -ApiKey $ApiKey
+if ($null -ne $createdSession -and [string]::IsNullOrWhiteSpace([string]$session.url) -and -not [string]::IsNullOrWhiteSpace([string]$createdSession.url)) {
+    $session | Add-Member -NotePropertyName "url" -NotePropertyValue ([string]$createdSession.url) -Force
+}
 Write-JulesInfo "Session erstellt: $sessionId"
 
 if ($IssueNumber -gt 0 -and $resolvedRepository) {

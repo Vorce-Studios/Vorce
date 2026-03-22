@@ -4,6 +4,7 @@ use crate::app::core::app_struct::App;
 use crate::app::ui_layout;
 use anyhow::Result;
 use mapmap_core::OutputId;
+#[cfg(feature = "ndi")]
 use std::sync::Arc;
 #[cfg(feature = "ndi")]
 use std::sync::atomic::{AtomicBool, Ordering};

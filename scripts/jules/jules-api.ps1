@@ -122,6 +122,38 @@ function Resolve-JulesSessionId {
     return $SessionIdOrName
 }
 
+function Test-JulesObjectProperty {
+    param(
+        [AllowNull()][object]$Object,
+        [Parameter(Mandatory)][string]$Name
+    )
+
+    if ($null -eq $Object) {
+        return $false
+    }
+
+    $property = $Object.PSObject.Properties | Where-Object { $_.Name -eq $Name } | Select-Object -First 1
+    return $null -ne $property
+}
+
+function Get-JulesObjectPropertyValue {
+    param(
+        [AllowNull()][object]$Object,
+        [Parameter(Mandatory)][string]$Name
+    )
+
+    if (-not (Test-JulesObjectProperty -Object $Object -Name $Name)) {
+        return $null
+    }
+
+    $property = $Object.PSObject.Properties | Where-Object { $_.Name -eq $Name } | Select-Object -First 1
+    if ($null -eq $property) {
+        return $null
+    }
+
+    return $property.Value
+}
+
 function Get-JulesSession {
     param([Parameter(Mandatory)][string]$SessionIdOrName, [string]$ApiKey)
 
@@ -141,15 +173,21 @@ function Get-AllJulesSessions {
         }
 
         $response = Invoke-JulesApiRequest -Method GET -Path "sessions" -Query $query -ApiKey $ApiKey
-        if ($response.sessions) {
-            $sessions += @($response.sessions)
-        }
-
-        if ([string]::IsNullOrWhiteSpace($response.nextPageToken)) {
+        if ($null -eq $response) {
             break
         }
 
-        $pageToken = $response.nextPageToken
+        $responseSessions = Get-JulesObjectPropertyValue -Object $response -Name "sessions"
+        if ($null -ne $responseSessions) {
+            $sessions += @($responseSessions)
+        }
+
+        $nextPageToken = [string](Get-JulesObjectPropertyValue -Object $response -Name "nextPageToken")
+        if ([string]::IsNullOrWhiteSpace($nextPageToken)) {
+            break
+        }
+
+        $pageToken = $nextPageToken
     }
 
     return $sessions
@@ -174,15 +212,21 @@ function Get-AllJulesActivities {
         }
 
         $response = Invoke-JulesApiRequest -Method GET -Path $path -Query $query -ApiKey $ApiKey
-        if ($response.activities) {
-            $activities += @($response.activities)
-        }
-
-        if ([string]::IsNullOrWhiteSpace($response.nextPageToken)) {
+        if ($null -eq $response) {
             break
         }
 
-        $pageToken = $response.nextPageToken
+        $responseActivities = Get-JulesObjectPropertyValue -Object $response -Name "activities"
+        if ($null -ne $responseActivities) {
+            $activities += @($responseActivities)
+        }
+
+        $nextPageToken = [string](Get-JulesObjectPropertyValue -Object $response -Name "nextPageToken")
+        if ([string]::IsNullOrWhiteSpace($nextPageToken)) {
+            break
+        }
+
+        $pageToken = $nextPageToken
     }
 
     return $activities
@@ -223,12 +267,13 @@ function Send-JulesMessage {
 function Get-JulesSessionPullRequestUrl {
     param([AllowNull()][object]$Session)
 
-    if ($null -eq $Session -or -not $Session.outputs) {
+    if ($null -eq $Session) {
         return $null
     }
 
-    foreach ($output in @($Session.outputs)) {
-        if ($output.pullRequest -and -not [string]::IsNullOrWhiteSpace($output.pullRequest.url)) {
+    foreach ($output in @(Get-JulesObjectPropertyValue -Object $Session -Name "outputs")) {
+        $pullRequest = Get-JulesObjectPropertyValue -Object $output -Name "pullRequest"
+        if ($null -ne $pullRequest -and -not [string]::IsNullOrWhiteSpace([string](Get-JulesObjectPropertyValue -Object $pullRequest -Name "url"))) {
             return [string]$output.pullRequest.url
         }
     }
@@ -250,20 +295,66 @@ function Get-JulesActivitySummary {
     param([AllowNull()][object]$Activity)
 
     if ($null -eq $Activity) { return $null }
-    if ($Activity.sessionFailed) { return "Session fehlgeschlagen: $($Activity.sessionFailed.reason)" }
-    if ($Activity.agentMessaged) { return "Jules: $($Activity.agentMessaged.agentMessage)" }
-    if ($Activity.progressUpdated) {
-        if (-not [string]::IsNullOrWhiteSpace([string]$Activity.progressUpdated.description)) {
-            return "$($Activity.progressUpdated.title) - $($Activity.progressUpdated.description)"
-        }
-        return [string]$Activity.progressUpdated.title
-    }
-    if ($Activity.planGenerated) { return "Plan erstellt" }
-    if ($Activity.planApproved) { return "Plan freigegeben" }
-    if ($Activity.sessionCompleted) { return "Session abgeschlossen" }
-    if ($Activity.userMessaged) { return "User: $($Activity.userMessaged.userMessage)" }
 
-    return [string]$Activity.description
+    $sessionFailed = Get-JulesObjectPropertyValue -Object $Activity -Name "sessionFailed"
+    if ($null -ne $sessionFailed) {
+        $reason = [string](Get-JulesObjectPropertyValue -Object $sessionFailed -Name "reason")
+        if (-not [string]::IsNullOrWhiteSpace($reason)) {
+            return "Session fehlgeschlagen: $reason"
+        }
+
+        return "Session fehlgeschlagen"
+    }
+
+    $agentMessaged = Get-JulesObjectPropertyValue -Object $Activity -Name "agentMessaged"
+    if ($null -ne $agentMessaged) {
+        $agentMessage = [string](Get-JulesObjectPropertyValue -Object $agentMessaged -Name "agentMessage")
+        if (-not [string]::IsNullOrWhiteSpace($agentMessage)) {
+            return "Jules: $agentMessage"
+        }
+
+        return "Jules-Antwort"
+    }
+
+    $progressUpdated = Get-JulesObjectPropertyValue -Object $Activity -Name "progressUpdated"
+    if ($null -ne $progressUpdated) {
+        $title = [string](Get-JulesObjectPropertyValue -Object $progressUpdated -Name "title")
+        $description = [string](Get-JulesObjectPropertyValue -Object $progressUpdated -Name "description")
+        if (-not [string]::IsNullOrWhiteSpace($description)) {
+            if ([string]::IsNullOrWhiteSpace($title)) {
+                return $description
+            }
+
+            return "$title - $description"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($title)) {
+            return $title
+        }
+
+        return "Fortschritt aktualisiert"
+    }
+
+    if ($null -ne (Get-JulesObjectPropertyValue -Object $Activity -Name "planGenerated")) { return "Plan erstellt" }
+    if ($null -ne (Get-JulesObjectPropertyValue -Object $Activity -Name "planApproved")) { return "Plan freigegeben" }
+    if ($null -ne (Get-JulesObjectPropertyValue -Object $Activity -Name "sessionCompleted")) { return "Session abgeschlossen" }
+
+    $userMessaged = Get-JulesObjectPropertyValue -Object $Activity -Name "userMessaged"
+    if ($null -ne $userMessaged) {
+        $userMessage = [string](Get-JulesObjectPropertyValue -Object $userMessaged -Name "userMessage")
+        if (-not [string]::IsNullOrWhiteSpace($userMessage)) {
+            return "User: $userMessage"
+        }
+
+        return "User-Nachricht"
+    }
+
+    $description = [string](Get-JulesObjectPropertyValue -Object $Activity -Name "description")
+    if (-not [string]::IsNullOrWhiteSpace($description)) {
+        return $description
+    }
+
+    return "Aktivitaet aktualisiert"
 }
 
 function Test-JulesAttentionRequired {

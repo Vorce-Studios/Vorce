@@ -67,7 +67,9 @@ function Invoke-GitHubApiJson {
         $allArgs = @($Arguments)
         if ($PSBoundParameters.ContainsKey("Body")) {
             $tempFile = [System.IO.Path]::GetTempFileName()
-            $Body | ConvertTo-Json -Depth 50 | Set-Content -Path $tempFile -Encoding UTF8 -NoNewline
+            $jsonBody = $Body | ConvertTo-Json -Depth 50
+            $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+            [System.IO.File]::WriteAllText($tempFile, $jsonBody, $utf8NoBom)
             $allArgs += @("--input", $tempFile)
         }
 
@@ -1017,17 +1019,17 @@ function Upsert-JulesIssueTrackingBlock {
     $block = Format-JulesIssueTrackingBlock -Fields $Fields
     $pattern = [regex]::Escape($script:JulesIssueBlockStart) + ".*?" + [regex]::Escape($script:JulesIssueBlockEnd)
 
-    if ($body -match $pattern) {
-        $updatedBody = [regex]::Replace(
-            $body,
-            $pattern,
-            [System.Text.RegularExpressions.MatchEvaluator]{ param($match) $block },
-            [System.Text.RegularExpressions.RegexOptions]::Singleline
-        )
-    } elseif ([string]::IsNullOrWhiteSpace($body)) {
+    $cleanBody = [regex]::Replace(
+        $body,
+        "(?:\s*)$pattern(?:\s*)",
+        "",
+        [System.Text.RegularExpressions.RegexOptions]::Singleline
+    ).Trim()
+
+    if ([string]::IsNullOrWhiteSpace($cleanBody)) {
         $updatedBody = $block
     } else {
-        $updatedBody = "{0}`n`n{1}" -f $body.TrimEnd(), $block
+        $updatedBody = "{0}`n`n{1}" -f $cleanBody, $block
     }
 
     Set-GitHubIssueBody -Repository $Repository -IssueNumber $IssueNumber -Body $updatedBody
