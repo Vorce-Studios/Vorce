@@ -56,11 +56,12 @@ pub fn perform_evaluation(
                     // Throttled logging to avoid spam
                     let now = std::time::Instant::now();
                     let log_key = format!("ndi_input_unsupported_{}", module_ref.name);
-                    let should_log = if let Some(last_log) = app.video_diagnostic_log_times.get(&log_key) {
-                        now.duration_since(*last_log).as_secs_f32() > 5.0
-                    } else {
-                        true
-                    };
+                    let should_log =
+                        if let Some(last_log) = app.video_diagnostic_log_times.get(&log_key) {
+                            now.duration_since(*last_log).as_secs_f32() > 5.0
+                        } else {
+                            true
+                        };
                     if should_log {
                         tracing::warn!("NDI Input in module '{}' is currently unsupported/experimental on macOS.", module_ref.name);
                         app.video_diagnostic_log_times.insert(log_key, now);
