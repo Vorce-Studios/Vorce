@@ -1,5 +1,6 @@
 use super::super::mesh;
 use super::super::state::ModuleCanvas;
+use super::capabilities;
 use egui::Ui;
 use mapmap_core::module::{HueMappingMode, ModulePartId, OutputType};
 

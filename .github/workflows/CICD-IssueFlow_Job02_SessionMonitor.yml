@@ -1,60 +1,71 @@
-name: "CICD-IssueFlow: Job02 SessionMonitor (manual diagnostic)"
+name: "CICD-IssueFlow: Job02 ProjectManagerSync"
 
 on:
+  schedule:
+    - cron: "0 * * * *"
   workflow_dispatch:
     inputs:
       issue_number:
-        description: 'Issue Number'
-        required: true
-      session_id:
-        description: 'Jules Session ID'
-        required: true
+        description: "Optional single issue number"
+        required: false
+        type: string
+      stale_after_hours:
+        description: "Mark issue as blocked when no update happened for this many hours"
+        required: false
+        default: "12"
+        type: string
 
 permissions:
+  contents: read
   issues: write
-  contents: write
-  pull-requests: write
-  actions: write
+  pull-requests: read
+  repository-projects: write
 
 jobs:
-  monitor:
-    name: Monitor Session
+  sync:
+    name: Sync Project Manager Tracking
     runs-on: ubuntu-latest
+
     steps:
-      - name: Monitor Logic (Polling)
-        uses: actions/github-script@v7
+      - uses: actions/checkout@v4
+
+      - name: Skip when Jules API key is missing
+        if: ${{ secrets.JULES_API_KEY == '' }}
+        run: echo "JULES_API_KEY is not configured. Skipping Project Manager sync."
+
+      - name: Sync all tracked issues
+        if: ${{ secrets.JULES_API_KEY != '' }}
+        shell: pwsh
         env:
+          GH_TOKEN: ${{ secrets.PROJECT_SYNC_GH_TOKEN || github.token }}
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
-          SESSION_ID: ${{ inputs.session_id }}
-          ISSUE_NUMBER: ${{ inputs.issue_number }}
-        with:
-          script: |
-             const fetch = globalThis.fetch ?? (await import('node-fetch')).default;
-             const sessionId = process.env.SESSION_ID;
-             const issueNumber = process.env.ISSUE_NUMBER;
+          MAPFLOW_PROJECT_OWNER: ${{ vars.MAPFLOW_PROJECT_OWNER || github.repository_owner }}
+          MAPFLOW_PROJECT_NUMBER: ${{ vars.MAPFLOW_PROJECT_NUMBER }}
+          MAPFLOW_PROJECT_STATUS_FIELD: ${{ vars.MAPFLOW_PROJECT_STATUS_FIELD }}
+          MAPFLOW_PROJECT_QUEUE_STATE_FIELD: ${{ vars.MAPFLOW_PROJECT_QUEUE_STATE_FIELD }}
+          MAPFLOW_PROJECT_REMOTE_STATE_FIELD: ${{ vars.MAPFLOW_PROJECT_REMOTE_STATE_FIELD }}
+          MAPFLOW_PROJECT_WORK_BRANCH_FIELD: ${{ vars.MAPFLOW_PROJECT_WORK_BRANCH_FIELD }}
+          MAPFLOW_PROJECT_LAST_UPDATE_FIELD: ${{ vars.MAPFLOW_PROJECT_LAST_UPDATE_FIELD }}
+          MAPFLOW_PROJECT_LINKED_PR_FIELD: ${{ vars.MAPFLOW_PROJECT_LINKED_PR_FIELD }}
+        run: |
+          $issueNumber = "${{ github.event.inputs.issue_number }}"
+          $staleAfterHours = "${{ github.event.inputs.stale_after_hours || '12' }}"
 
-             console.log(`Monitoring Session: ${sessionId} for Issue #${issueNumber}`);
+          if ([string]::IsNullOrWhiteSpace($staleAfterHours)) {
+            $staleAfterHours = "12"
+          }
 
-             // Simple Poll (In reality, CI-08 had a loop or re-trigger logic.
-             // Ideally we run for X minutes, checks status. If running -> re-trigger self. If done -> create PR.)
-
-             // FOR IMPLEMENTATION: Assuming Jules pushes a branch.
-             // If this script detects completion, it creates a PR.
-             // If Auto-Create PR mode is on, Jules might do it itself?
-             // Based on CI-04 analysis, we used 'AUTO_CREATE_PR' mode.
-             // So this monitor mainly watches for completion to notify User or handle failures.
-
-             // (Logic simplified for this step - assuming robust implementation follows existing patterns)
-
-             console.log("Checking status...");
-             const res = await fetch(`https://jules.googleapis.com/v1alpha/${sessionId}`, {
-                headers: { 'X-Goog-Api-Key': process.env.JULES_API_KEY }
-             });
-
-             if (res.ok) {
-                const data = await res.json();
-                console.log(`Status: ${data.status}`);
-                // If status is DONE, verify PR exists.
-             }
-
-             // Note: This workflow is currently kept only for manual diagnostics.
+          if ([string]::IsNullOrWhiteSpace($issueNumber)) {
+            ./scripts/jules/sync-project-manager.ps1 `
+              -Repository ${{ github.repository }} `
+              -ApiKey $env:JULES_API_KEY `
+              -StaleAfterHours ([int]$staleAfterHours) `
+              -FailOnAttention
+          } else {
+            ./scripts/jules/sync-project-manager.ps1 `
+              -Repository ${{ github.repository }} `
+              -ApiKey $env:JULES_API_KEY `
+              -IssueNumber ([int]$issueNumber) `
+              -StaleAfterHours ([int]$staleAfterHours) `
+              -FailOnAttention
+          }

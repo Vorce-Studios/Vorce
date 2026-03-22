@@ -220,7 +220,7 @@ impl NdiReceiver {
                     frame_rate,
                 };
 
-                self.format = format.clone();
+                self._format = format.clone();
                 self.frame_count += 1;
 
                 let frame = VideoFrame {
@@ -310,7 +310,7 @@ impl NdiSender {
             name,
             _format,
             frame_count: 0,
-            send: None,
+            send: Some(send),
         })
     }
 

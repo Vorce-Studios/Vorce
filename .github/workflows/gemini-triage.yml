@@ -143,16 +143,16 @@ jobs:
               .filter((label) => availableLabels.includes(label))
               .sort()
 
-            // Set the labels
+            // Add labels non-destructively so queue/status tracking cannot be wiped.
             const issueNumber = process.env.ISSUE_NUMBER;
             if (selectedLabels && selectedLabels.length > 0) {
-              await github.rest.issues.setLabels({
+              await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issueNumber,
                 labels: selectedLabels,
               });
-              core.info(`Successfully set labels: ${selectedLabels.join(',')}`);
+              core.info(`Successfully added labels: ${selectedLabels.join(',')}`);
             } else {
               core.info(`Failed to determine labels to set. There may not be enough information in the issue or pull request.`)
             }

@@ -74,3 +74,13 @@ pub fn is_source_type_enum_supported(
 
     !(is_shader || is_live_input || is_ndi)
 }
+
+/// Helper that checks by variant enum without needing the data
+pub fn is_output_type_enum_supported(
+    #[allow(unused_variables)] is_ndi: bool,
+    #[allow(unused_variables)] is_spout: bool,
+) -> bool {
+    // Currently NDI/Spout outputs are not end-to-end supported in the pipeline
+    // as per the warning message in output.rs.
+    false
+}
