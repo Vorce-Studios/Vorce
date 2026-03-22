@@ -33,13 +33,14 @@ pub fn build_router() -> () {
 
 /// GET /api/status - Get system status
 #[cfg(feature = "http-api")]
-async fn get_status(State(_state): State<AppState>) -> Json<ApiResponse<StatusResponse>> {
-    // In a real implementation, this would query the actual system state
+async fn get_status(State(state): State<AppState>) -> Json<ApiResponse<StatusResponse>> {
+    let live = state.live_status.read();
+    
     let status = StatusResponse {
         version: env!("CARGO_PKG_VERSION").to_string(),
-        uptime_seconds: 0, // TODO: Track actual uptime
-        active_layers: 0,  // TODO: Get from project
-        fps: 60.0,         // TODO: Get actual FPS
+        uptime_seconds: live.uptime_seconds,
+        active_layers: live.active_layers,
+        fps: live.fps,
     };
 
     Json(ApiResponse::success(status))
@@ -47,24 +48,9 @@ async fn get_status(State(_state): State<AppState>) -> Json<ApiResponse<StatusRe
 
 /// GET /api/layers - List all layers
 #[cfg(feature = "http-api")]
-async fn get_layers(State(_state): State<AppState>) -> Json<ApiResponse<Vec<LayerInfo>>> {
-    // In a real implementation, this would query the actual layers
-    let layers = vec![
-        LayerInfo {
-            id: 0,
-            name: "Layer 1".to_string(),
-            opacity: 1.0,
-            visible: true,
-        },
-        LayerInfo {
-            id: 1,
-            name: "Layer 2".to_string(),
-            opacity: 0.75,
-            visible: true,
-        },
-    ];
-
-    Json(ApiResponse::success(layers))
+async fn get_layers(State(state): State<AppState>) -> Json<ApiResponse<Vec<LayerInfo>>> {
+    let live = state.live_status.read();
+    Json(ApiResponse::success(live.layer_info.clone()))
 }
 
 /// GET /api/layers/:id - Get layer details

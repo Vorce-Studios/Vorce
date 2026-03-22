@@ -42,8 +42,28 @@ pub struct StatusResponse {
     pub fps: f32,
 }
 
+/// Shared live status state
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LiveStatus {
+    pub uptime_seconds: u64,
+    pub active_layers: usize,
+    pub fps: f32,
+    pub layer_info: Vec<LayerInfo>,
+}
+
+impl Default for LiveStatus {
+    fn default() -> Self {
+        Self {
+            uptime_seconds: 0,
+            active_layers: 0,
+            fps: 0.0,
+            layer_info: Vec::new(),
+        }
+    }
+}
+
 /// Layer info response
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LayerInfo {
     /// Unique identifier for this entity.
     pub id: u32,

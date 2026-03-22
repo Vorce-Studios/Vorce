@@ -344,6 +344,12 @@ pub struct UserConfig {
     /// Show controller overlay
     #[serde(default)]
     pub show_controller_overlay: bool,
+    /// Whether the Web REST API is enabled.
+    #[serde(default = "default_false")]
+    pub web_api_enabled: bool,
+    /// Port for the Web REST API.
+    #[serde(default = "default_web_api_port")]
+    pub web_api_port: u16,
     /// Show media manager window
     #[serde(default)]
     pub show_media_manager: bool,
@@ -408,6 +414,14 @@ pub struct UserConfig {
     pub active_layout_id: String,
 }
 
+fn default_web_api_port() -> u16 {
+    8080
+}
+
+fn default_false() -> bool {
+    false
+}
+
 fn default_true() -> bool {
     true
 }
@@ -467,6 +481,8 @@ impl Default for UserConfig {
             show_media_browser: true,
             show_module_canvas: false,
             show_controller_overlay: false,
+            web_api_enabled: false,
+            web_api_port: 8080,
             show_media_manager: false,
             show_dashboard: true,
             ndi_discovery: true,
@@ -693,6 +709,8 @@ mod tests {
             show_media_browser: true,
             show_module_canvas: false,
             show_controller_overlay: false,
+            web_api_enabled: false,
+            web_api_port: 8080,
             show_media_manager: false,
             show_dashboard: true,
             ndi_discovery: true,

@@ -33,9 +33,6 @@ pub struct WindowContext {
     pub surface: wgpu::Surface<'static>,
     /// The configuration for the `wgpu` surface.
     pub surface_config: wgpu::SurfaceConfiguration,
-    /// The `OutputId` associated with this window. For the main window, this is `0`.
-    #[allow(dead_code)] // TODO: Prüfen, ob dieses Feld dauerhaft benötigt wird!
-    pub output_id: OutputId,
 }
 
 /// Manages all application windows, including the main control window and all output windows.
@@ -150,7 +147,6 @@ impl WindowManager {
             window,
             surface,
             surface_config,
-            output_id,
         };
 
         self.windows.insert(output_id, context);
@@ -226,7 +222,6 @@ impl WindowManager {
             window,
             surface,
             surface_config,
-            output_id,
         };
 
         self.windows.insert(output_id, window_context);
@@ -342,7 +337,6 @@ impl WindowManager {
             window,
             surface,
             surface_config,
-            output_id,
         };
 
         self.windows.insert(output_id, window_context);

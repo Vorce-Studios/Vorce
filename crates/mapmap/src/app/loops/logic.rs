@@ -205,6 +205,9 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
         app.last_autosave = std::time::Instant::now();
     }
 
+    // 11. Update Web API Live Status
+    sync_web_status(app);
+
     // FPS Calculation
     let frame_time_ms = dt * 1000.0;
     app.fps_samples.push_back(frame_time_ms);
@@ -218,4 +221,28 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     }
 
     Ok(())
+}
+
+fn sync_web_status(app: &mut App) {
+    #[cfg(feature = "http-api")]
+    if let Some(live_status) = &app.control_manager.live_status {
+        let mut live = live_status.write();
+        live.fps = app.current_fps;
+        live.uptime_seconds = app.start_time.elapsed().as_secs();
+
+        let modules = app.state.module_manager.modules();
+        live.active_layers = modules.len();
+
+        // Map modules to LayerInfo for the API
+        live.layer_info = modules
+            .iter()
+            .map(|m| mapmap_control::web::LayerInfo {
+                id: m.id as u32,
+                name: m.name.clone(),
+                opacity: 1.0, // Modules themselves don't have opacity, but parts do. 
+                             // For now we just return 1.0 or use a placeholder.
+                visible: true,
+            })
+            .collect();
+    }
 }

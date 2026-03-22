@@ -31,4 +31,6 @@ pub enum InspectorAction {
     UpdateOpacity(u64, f32),
     /// Update the mesh of a mapping
     UpdateMappingMesh(u64, mapmap_core::Mesh),
+    /// Request to close the inspector panel
+    RequestClose,
 }

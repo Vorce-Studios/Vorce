@@ -36,6 +36,13 @@ pub struct ControlManager {
     /// Configuration mapping OSC addresses to internal control targets.
     pub osc_mapping: OscMapping,
 
+    #[cfg(feature = "http-api")]
+    /// Join handle for the background web server task.
+    pub web_server_handle: Option<tokio::task::JoinHandle<Result<()>>>,
+    #[cfg(feature = "http-api")]
+    /// Shared live status for the web API.
+    pub live_status: Option<Arc<parking_lot::RwLock<crate::web::handlers::LiveStatus>>>,
+
     /// Service for transmitting DMX data over the network via Art-Net.
     pub artnet_sender: Option<ArtNetSender>,
     /// Service for transmitting DMX data over the network via sACN.
@@ -74,6 +81,11 @@ impl ControlManager {
             #[cfg(feature = "osc")]
             // Configuration mapping OSC addresses to internal control targets.
             osc_mapping: OscMapping::new(),
+
+            #[cfg(feature = "http-api")]
+            web_server_handle: None,
+            #[cfg(feature = "http-api")]
+            live_status: None,
 
             artnet_sender: None,
             sacn_sender: None,
@@ -126,6 +138,16 @@ impl ControlManager {
                 Err(e)
             }
         }
+    }
+
+    /// Initialize Web server
+    #[cfg(feature = "http-api")]
+    pub fn init_web_server(&mut self, config: crate::web::WebServerConfig) -> Result<()> {
+        info!("Initializing Web server on {}:{}", config.host, config.port);
+        let server = crate::web::WebServer::new(config);
+        self.live_status = Some(server.live_status.clone());
+        self.web_server_handle = Some(server.spawn());
+        Ok(())
     }
 
     /// Add an OSC client for feedback.

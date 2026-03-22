@@ -17,11 +17,12 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 #[cfg(feature = "http-api")]
-use tokio::sync::RwLock;
+use tokio::sync::RwLock as TokioRwLock;
 
 use crate::{error::ControlError, Result};
 
 use super::auth::AuthConfig;
+use super::handlers::LiveStatus;
 #[cfg(feature = "http-api")]
 use super::routes::build_router;
 #[cfg(feature = "http-api")]
@@ -31,7 +32,8 @@ use super::websocket::ws_handler;
 #[derive(Clone)]
 #[cfg(feature = "http-api")]
 pub struct AppState {
-    pub auth: Arc<RwLock<AuthConfig>>,
+    pub auth: Arc<TokioRwLock<AuthConfig>>,
+    pub live_status: Arc<parking_lot::RwLock<LiveStatus>>,
 }
 
 /// Web server configuration
@@ -99,13 +101,18 @@ impl WebServerConfig {
 pub struct WebServer {
     #[cfg(feature = "http-api")]
     config: WebServerConfig,
+    #[cfg(feature = "http-api")]
+    pub live_status: Arc<parking_lot::RwLock<LiveStatus>>,
 }
 
 impl WebServer {
     /// Create a new web server
     #[cfg(feature = "http-api")]
     pub fn new(config: WebServerConfig) -> Self {
-        Self { config }
+        Self { 
+            config,
+            live_status: Arc::new(parking_lot::RwLock::new(LiveStatus::default())),
+        }
     }
 
     #[cfg(not(feature = "http-api"))]
@@ -121,7 +128,8 @@ impl WebServer {
             .map_err(|e| ControlError::HttpError(format!("Invalid address: {}", e)))?;
 
         let state = AppState {
-            auth: Arc::new(RwLock::new(self.config.auth.clone())),
+            auth: Arc::new(TokioRwLock::new(self.config.auth.clone())),
+            live_status: self.live_status.clone(),
         };
 
         // Build router with state
@@ -408,7 +416,8 @@ mod tests {
         auth_config.add_key("secret123".to_string());
 
         let state = AppState {
-            auth: Arc::new(RwLock::new(auth_config)),
+            auth: Arc::new(TokioRwLock::new(auth_config)),
+            live_status: Arc::new(parking_lot::RwLock::new(LiveStatus::default())),
         };
 
         // Dummy handler to simulate WebSocket endpoint

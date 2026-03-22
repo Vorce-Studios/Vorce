@@ -654,6 +654,12 @@ impl AppUI {
                     self.actions
                         .push(crate::UIAction::UpdateMappingMesh(id, mesh));
                 }
+                crate::panels::inspector::InspectorAction::RequestClose => {
+                    self.show_inspector = false;
+                    self.slot_manager.set_visible(PanelId::Inspector, false);
+                    self.user_config.show_inspector = false;
+                    let _ = self.user_config.save();
+                }
             }
         }
     }
