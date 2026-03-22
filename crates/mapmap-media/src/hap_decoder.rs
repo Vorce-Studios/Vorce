@@ -1,5 +1,8 @@
 //! HAP Video Codec Decoder
 //!
+//! **[Experimental] / [Gated]**
+//! This feature is currently experimental and not fully integrated into the standard media path.
+//!
 //! HAP is a GPU-accelerated video codec that stores frames in S3TC/DXT compressed format.
 //! The GPU can directly decompress these textures, resulting in minimal CPU usage.
 //!
@@ -12,6 +15,8 @@ use thiserror::Error;
 use tracing::debug;
 
 /// HAP texture type
+///
+/// **[Experimental]**
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HapTextureType {
     /// RGB only, DXT1/BC1 compressed
@@ -96,6 +101,8 @@ pub enum HapError {
 }
 
 /// Decoded HAP frame data
+///
+/// **[Experimental]**
 #[derive(Debug)]
 pub struct HapFrame {
     /// Texture type
