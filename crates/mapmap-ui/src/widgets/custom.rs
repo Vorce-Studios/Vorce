@@ -462,7 +462,11 @@ pub fn icon_button_compact(
 
     // Accessibility info
     let enabled = ui.is_enabled();
-    let label = if hover_text.is_empty() { format!("{:?}", icon) } else { hover_text.to_string() };
+    let label = if hover_text.is_empty() {
+        format!("{:?}", icon)
+    } else {
+        hover_text.to_string()
+    };
     response.widget_info(move || WidgetInfo::labeled(WidgetType::Button, enabled, label.clone()));
 
     let visuals = ui.style().interact(&response);
@@ -636,7 +640,11 @@ pub fn hold_to_action_button(ui: &mut Ui, text: &str, color: Color32, hover_text
     let (rect, response) = ui.allocate_at_least(size, Sense::click());
 
     // Accessibility info
-    let a11y_label = if hover_text.is_empty() { text } else { hover_text };
+    let a11y_label = if hover_text.is_empty() {
+        text
+    } else {
+        hover_text
+    };
     response.widget_info(|| WidgetInfo::labeled(WidgetType::Button, ui.is_enabled(), a11y_label));
 
     // Use response.id for unique state storage to prevent collisions
@@ -684,11 +692,7 @@ pub fn hold_to_action_button(ui: &mut Ui, text: &str, color: Color32, hover_text
         } else {
             color.linear_multiply(0.4) // Transparent version of action color
         };
-        painter.rect_filled(
-            fill_rect,
-            CornerRadius::ZERO,
-            fill_color,
-        );
+        painter.rect_filled(fill_rect, CornerRadius::ZERO, fill_color);
     }
 
     // 3. Text
@@ -734,7 +738,11 @@ pub fn hold_to_action_icon(
 
     // Accessibility info
     let enabled = ui.is_enabled();
-    let label = if hover_text.is_empty() { format!("{:?}", icon) } else { hover_text.to_string() };
+    let label = if hover_text.is_empty() {
+        format!("{:?}", icon)
+    } else {
+        hover_text.to_string()
+    };
     response.widget_info(move || WidgetInfo::labeled(WidgetType::Button, enabled, label.clone()));
 
     let state_id = response.id.with("hold_state");

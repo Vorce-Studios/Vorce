@@ -261,9 +261,13 @@ pub fn render_output_ui(
 
                     #[cfg(feature = "tokio")]
                     {
-                        canvas.hue_status_message = Some("Pairing... (Press Bridge Button)".to_string());
+                        canvas.hue_status_message =
+                            Some("Pairing... (Press Bridge Button)".to_string());
                         let task = async move {
-                            let result = mapmap_control::hue::api::client::HueClient::register_user(&ip, "MapFlow")
+                            let result =
+                                mapmap_control::hue::api::client::HueClient::register_user(
+                                    &ip, "MapFlow",
+                                )
                                 .await
                                 .map_err(|e| e.to_string());
                             let _ = tx.send(result);
