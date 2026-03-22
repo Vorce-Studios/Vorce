@@ -6,7 +6,7 @@ use crate::icons::{AppIcon, IconManager};
 use crate::theme::colors;
 use crate::widgets::custom::icon_button_simple;
 use crate::widgets::panel::{cyber_panel_frame, render_panel_header};
-use egui::{CornerRadius, RichText, Ui};
+use egui::{CornerRadius, Ui};
 
 /// Effect Chain Panel
 #[derive(Default, Debug)]
@@ -220,12 +220,7 @@ impl EffectChainPanel {
                 if self.chain.effects.is_empty() {
                     ui.vertical_centered(|ui| {
                         ui.add_space(50.0);
-                        ui.label(
-                            RichText::new(locale.t("effect-no-effects"))
-                                .size(16.0)
-                                .weak()
-                                .italics(),
-                        );
+                        crate::widgets::custom::render_info_label_with_size(ui, &locale.t("effect-no-effects"), 16.0);
                         ui.label(locale.t("effect-start-tip"));
                         ui.add_space(50.0);
                     });

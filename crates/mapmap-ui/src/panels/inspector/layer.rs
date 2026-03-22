@@ -22,7 +22,7 @@ pub fn render_layer_inspector(
         ui.horizontal(|ui| {
             ui.label(egui::RichText::new(&layer.name).strong().size(16.0));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(egui::RichText::new("LAYER").weak().italics());
+                crate::widgets::custom::render_info_label(ui, "LAYER");
             });
         });
 
@@ -196,11 +196,7 @@ pub fn render_layer_inspector(
                         *last_mesh_edit_id = None; // Trigger resync
                     }
                 } else {
-                    ui.label(
-                        egui::RichText::new("No mapping available to edit mesh.")
-                            .weak()
-                            .italics(),
-                    );
+                    crate::widgets::custom::render_info_label(ui, "No mapping available to edit mesh.");
                 }
             });
     });

@@ -32,6 +32,11 @@ pub fn render_info_label(ui: &mut Ui, text: &str) {
     ui.label(egui::RichText::new(text).weak().italics());
 }
 
+/// Standardized informational text label with customizable text size.
+pub fn render_info_label_with_size(ui: &mut Ui, text: &str, size: f32) {
+    ui.label(egui::RichText::new(text).size(size).weak().italics());
+}
+
 /// Standardized missing preview banner.
 pub fn render_missing_preview_banner(ui: &mut Ui) {
     ui.group(|ui| {
