@@ -649,7 +649,24 @@ impl TimelineV2 {
                             }
                         }
                     }
-                    ShowMode::FullyAutomated | ShowMode::Hybrid | ShowMode::Trackline => {}
+                    ShowMode::Trackline => {
+                        if animator.is_playing() {
+                            if ui.button("Pause").clicked() {
+                                action = Some(TimelineAction::Pause);
+                            }
+                        } else {
+                            if ui.button("Play to Next Marker").clicked() {
+                                action = Some(TimelineAction::Play);
+                            }
+                        }
+                        if ui.button("Jump Prev Marker").clicked() {
+                            action = Some(TimelineAction::JumpPrevMarker);
+                        }
+                        if ui.button("Jump Next Marker").clicked() {
+                            action = Some(TimelineAction::JumpNextMarker);
+                        }
+                    }
+                    ShowMode::FullyAutomated | ShowMode::Hybrid => {}
                 }
             }
         });
