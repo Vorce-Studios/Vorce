@@ -10,3 +10,12 @@ updates:
     labels:
       - "dependencies"
       - "rust"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions:
+        patterns:
+          - "*"

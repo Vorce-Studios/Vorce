@@ -26,9 +26,15 @@ Der Workflow `CI-05` ist gut, aber das JS-Skript ist komplex und schwer zu warte
 - **Empfehlung:** `dependabot.yml` hinzufügen/prüfen.
 
 ### 3. Release Prozess
-- Release Workflow scheint manuell zu sein.
-- **Empfehlung:** Release bei "Tag Push" automatisieren, wenn Tests grün sind.
+- **Status:** Automatisiert.
+- **Implementierung:** `.github/workflows/CICD-MainFlow_Job03_Release.yml` reagiert auf Tag-Pushes (`v*.*.*`).
+- **Empfehlung:** Erledigt.
 
 ## Status Update
 - [x] Redundante CI-Datei gelöscht.
-- [ ] Dependabot Config prüfen.
+- [x] Dependabot Config geprüft und erweitert (Cargo & GitHub Actions).
+- [x] Release-Prozess automatisiert.
+
+---
+**Nachtrag (2026-03-23):**
+Die Audit-Punkte wurden im Rahmen der Repo-Bereinigung abgeschlossen. Die Workflows wurden auf die `CICD-DevFlow`-Struktur migriert.
