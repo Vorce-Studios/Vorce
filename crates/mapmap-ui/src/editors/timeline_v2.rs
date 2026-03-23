@@ -1100,7 +1100,8 @@ impl TimelineV2 {
 
             for (group_name, tracks) in &track_groups {
                 let is_expanded = self.expanded_tracks.contains(group_name);
-                let header_y = track_start_y + module_track_height + (current_lane_index as f32 * 60.0);
+                let header_y =
+                    track_start_y + module_track_height + (current_lane_index as f32 * 60.0);
                 let header_rect = Rect::from_min_size(
                     Pos2::new(rect.min.x, header_y),
                     Vec2::new(rect.width(), 60.0),
@@ -1142,7 +1143,9 @@ impl TimelineV2 {
 
                 if is_expanded {
                     for track in tracks {
-                        let track_y = track_start_y + module_track_height + (current_lane_index as f32 * 60.0);
+                        let track_y = track_start_y
+                            + module_track_height
+                            + (current_lane_index as f32 * 60.0);
                         let track_rect = Rect::from_min_size(
                             Pos2::new(rect.min.x, track_y),
                             Vec2::new(rect.width(), 60.0),
@@ -1234,7 +1237,6 @@ impl TimelineV2 {
                     }
                 }
             }
-
         });
 
         action
