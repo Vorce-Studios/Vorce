@@ -211,6 +211,12 @@ function Test-VerificationRejected {
     return [string]$Snapshot.VerifyVerdict -eq "REJECT" -or [string]$Snapshot.Status -eq "Blocked"
 }
 
+function Test-VerificationFinalized {
+    param([Parameter(Mandatory)][object]$Snapshot)
+
+    return (Test-IsFinalStatus -Status ([string]$Snapshot.Status)) -and [string]$Snapshot.Issue.state -eq "CLOSED"
+}
+
 function Update-ImplementationFields {
     param(
         [Parameter(Mandatory)][string]$Repository,
@@ -488,7 +494,12 @@ for ($i = 0; $i -lt $implementationNumbers.Count; $i++) {
     }
 
     if (Test-VerificationRejected -Snapshot $verifySnapshot) {
-        throw ("Paar {0}:{1} ist bereits mit REJECT abgeschlossen. Vor dem naechsten Jules-Issue ist zuerst Rework oder eine manuelle Neubewertung noetig." -f $implNumber, $verifyNumber)
+        if ((Test-ImplementationComplete -Snapshot $implSnapshot) -and (Test-VerificationFinalized -Snapshot $verifySnapshot)) {
+            Write-Step ("Ueberspringe abgeschlossenes REJECT-Paar {0}:{1}" -f $implNumber, $verifyNumber)
+            continue
+        }
+
+        throw ("Paar {0}:{1} ist im REJECT-Zustand, aber noch nicht sauber finalisiert. Vor dem naechsten Jules-Issue ist zuerst Rework oder eine manuelle Neubewertung noetig." -f $implNumber, $verifyNumber)
     }
 
     if (-not (Test-ImplementationComplete -Snapshot $implSnapshot) -and (Test-VerificationPassed -Snapshot $verifySnapshot)) {
@@ -514,19 +525,47 @@ for ($i = 0; $i -lt $implementationNumbers.Count; $i++) {
             }
         } else {
             Write-Step ("Starte neue Jules Session fuer Issue #{0}" -f $implNumber)
-            $sessionResult = & "$ScriptDir\create-jules-session.ps1" -IssueNumber $implNumber -Repository $resolvedRepository -AutoCreatePr:([bool]$AutoCreatePr) -ApiKey $ApiKey
-            $sessionId = [string]$sessionResult.SessionId
+            $sessionResultRaw = & "$ScriptDir\create-jules-session.ps1" -IssueNumber $implNumber -Repository $resolvedRepository -AutoCreatePr:([bool]$AutoCreatePr) -ApiKey $ApiKey
+            $sessionResult = @(
+                @($sessionResultRaw) |
+                    Where-Object {
+                        $_ -and
+                        $_.PSObject -and
+                        ($_.PSObject.Properties.Name -contains "SessionId")
+                    } |
+                    Select-Object -Last 1
+            )
+
+            if ($sessionResult.Count -gt 0) {
+                $sessionResult = $sessionResult[0]
+                $sessionId = [string]$sessionResult.SessionId
+            } else {
+                $sessionResult = $null
+                $reference = Get-JulesSessionReferenceFromIssue -Repository $resolvedRepository -IssueNumber $implNumber
+                if ($reference) {
+                    $sessionId = [string]$reference.SessionId
+                }
+            }
+
             if ([string]::IsNullOrWhiteSpace($sessionId)) {
                 throw "Konnte keine Jules Session-ID fuer Issue #$implNumber ermitteln."
             }
 
-            if ([bool]$AutoCreatePr -and [string]$sessionResult.AutomationMode -ne "AUTO_CREATE_PR") {
+            $session = Get-JulesSession -SessionIdOrName $sessionId -ApiKey $ApiKey
+            $resolvedAutomationMode = if ($null -ne $sessionResult -and $sessionResult.PSObject.Properties.Name -contains "AutomationMode") {
+                [string]$sessionResult.AutomationMode
+            } elseif ($session.PSObject.Properties.Name -contains "automationMode") {
+                [string]$session.automationMode
+            } else {
+                $null
+            }
+
+            if ([bool]$AutoCreatePr -and $resolvedAutomationMode -ne "AUTO_CREATE_PR") {
                 Update-ImplementationFields -Repository $resolvedRepository -IssueNumber $implNumber -Status "Blocked" -SessionId $sessionId -RemoteState "jules_created" -WorkBranch "main" -LastUpdate (Get-Date -Format "yyyy-MM-dd")
                 throw ("Jules Session fuer Issue #{0} wurde ohne bestaetigtes AUTO_CREATE_PR erstellt." -f $implNumber)
             }
 
             Update-ImplementationFields -Repository $resolvedRepository -IssueNumber $implNumber -Status "In Progress" -SessionId $sessionId -RemoteState "queued" -WorkBranch "main" -LastUpdate (Get-Date -Format "yyyy-MM-dd")
-            $session = Get-JulesSession -SessionIdOrName $sessionId -ApiKey $ApiKey
             Sync-TrackingAndMirrorFields -Repository $resolvedRepository -IssueNumber $implNumber -Session $session -StartingBranch "main"
         }
 

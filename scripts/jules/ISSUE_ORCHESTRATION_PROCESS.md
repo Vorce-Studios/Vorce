@@ -87,7 +87,7 @@ Die Reihenfolge ist strikt. Das naechste Jules-Issue darf erst starten, wenn das
 - Der fachliche Abschluss wird ueber die Felder gespiegelt:
   - `Status`
   - `remote_state`
-  - Projekt-Felder im `@MapFlow Project Manager`
+  - Projekt-Felder im `@MapFlow Project Manager`, insbesondere `jules_session_status` und `pr_checks_status`
 - Falls externe Automatisierung Issues auf Basis von `Status = Done` schliesst, ist das zulaessig.
 
 ## Technische Umsetzung im Repo
@@ -133,6 +133,8 @@ Es setzt um:
   - `last_update`
 - Update des Managed-Blocks im Issue-Body
 - direkte Synchronisation in das GitHub-Projekt `@MapFlow Project Manager`
+  - `jules_session_status`
+  - `pr_checks_status`
 
 ### `scripts/jules/jules-github.ps1`
 

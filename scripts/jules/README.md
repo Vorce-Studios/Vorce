@@ -37,7 +37,7 @@ Der definierte Soll-Ablauf fuer ein Implementierungs-/Verify-Paar ist zusaetzlic
 
 ## GitHub-Issue-Felder
 
-Standard-GitHub-Issues haben per REST API keine frei definierbaren Custom Fields. Die Skripte schreiben deshalb einen verwalteten, bewusst kompakten Block `## Vorce Project Manager` in den Issue-Body und koennen zusaetzlich Kommentare posten. Sichtbar gehalten werden nur die verlaesslichen Kernfelder `Queue State`, `Remote State`, `Work Branch`, `Linked PR` und `Last Update`.
+Standard-GitHub-Issues haben per REST API keine frei definierbaren Custom Fields. Die Skripte schreiben deshalb einen verwalteten, bewusst kompakten Block `## Vorce Project Manager` in den Issue-Body und koennen zusaetzlich Kommentare posten. Sichtbar gehalten werden nur die verlaesslichen Kernfelder `Queue State`, `Remote State`, `Work Branch`, `Linked PR` und `Last Update`. Im GitHub-Projekt werden zusaetzlich die getrennten Statusfelder `jules_session_status` und `pr_checks_status` gepflegt.
 
 ## Optionale GitHub-Project-V2-Synchronisation
 
@@ -50,7 +50,8 @@ Optional koennen abweichende Feldnamen konfiguriert werden:
 
 - `VORCE_PROJECT_STATUS_FIELD`
 - `VORCE_PROJECT_QUEUE_STATE_FIELD`
-- `VORCE_PROJECT_REMOTE_STATE_FIELD`
+- `VORCE_PROJECT_JULES_SESSION_STATUS_FIELD`
+- `VORCE_PROJECT_PR_CHECKS_STATUS_FIELD`
 - `VORCE_PROJECT_WORK_BRANCH_FIELD`
 - `VORCE_PROJECT_LAST_UPDATE_FIELD`
 - `VORCE_PROJECT_LINKED_PR_FIELD`
