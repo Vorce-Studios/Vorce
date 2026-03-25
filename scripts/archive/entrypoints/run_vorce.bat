@@ -1,4 +1,4 @@
 @echo off
 setlocal
-call "%~dp0mapflow\\run-mapflow.bat" %*
+call "%~dp0vorce\\run-vorce.bat" %*
 exit /b %ERRORLEVEL%

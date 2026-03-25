@@ -1,9 +1,9 @@
-# scripts/gemini-cli/monitor-mapflow.ps1
+# scripts/gemini-cli/monitor-vorce.ps1
 $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
 
-Write-Host "--- MapFlow Orchestrator Monitor ---" -ForegroundColor Cyan
+Write-Host "--- Vorce Orchestrator Monitor ---" -ForegroundColor Cyan
 
 $Interval = 300
 $SessionId = $null

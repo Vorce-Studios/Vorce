@@ -140,7 +140,7 @@ Diese Datei enthaelt die GitHub-/Project-Helfer.
 
 Hier wurde explizit nachgezogen:
 
-- automatische Erkennung des Projekts `@MapFlow Project Manager`, auch ohne gesetzte `MAPFLOW_PROJECT_NUMBER`
+- automatische Erkennung des Projekts `@MapFlow Project Manager`, auch ohne gesetzte `VORCE_PROJECT_NUMBER`
 - robustere User-/Org-Erkennung fuer GitHub Projects
 - GraphQL-Fehlerbehandlung ohne Strict-Mode-Absturz bei fehlender `errors`- oder `options`-Property
 

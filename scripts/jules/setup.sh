@@ -35,7 +35,7 @@ sudo apt-get install -y \
     libxkbcommon-dev
 
 # Install FFmpeg Development Libraries
-# Note: MapFlow uses ffmpeg-next = "7.0".
+# Note: Vorce uses ffmpeg-next = "7.0".
 # If the system FFmpeg version is older (e.g. 6.x), this might cause link errors.
 # In that case, we might need a specific PPA or static build.
 # For now, we install the system libraries.

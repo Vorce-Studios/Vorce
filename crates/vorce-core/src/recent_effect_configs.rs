@@ -298,7 +298,7 @@ impl RecentEffectConfigs {
 
     /// Get the default config path (in user data directory)
     pub fn default_config_path() -> Option<PathBuf> {
-        dirs::data_dir().map(|p| p.join("MapFlow").join("recent_effect_configs.json"))
+        dirs::data_dir().map(|p| p.join("Vorce").join("recent_effect_configs.json"))
     }
 }
 

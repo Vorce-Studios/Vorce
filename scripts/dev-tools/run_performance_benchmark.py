@@ -11,13 +11,13 @@ import argparse
 DEFAULT_ITERATIONS = 5
 
 # Mapflow binary path
-BINARY_PATH = "./target/release/MapFlow"
+BINARY_PATH = "./target/release/Vorce"
 
 # Output directory for the artifacts
 ARTIFACT_DIR = "artifacts/performance"
 
 def run_benchmark():
-    parser = argparse.ArgumentParser(description="MapFlow Performance Benchmark")
+    parser = argparse.ArgumentParser(description="Vorce Performance Benchmark")
     parser.add_argument("--iterations", type=int, default=DEFAULT_ITERATIONS, help=f"Number of iterations (default: {DEFAULT_ITERATIONS})")
     parser.add_argument("--threshold", type=float, help="Maximum allowed average execution time in seconds")
     parser.add_argument("--fail-on-regression", action="store_true", help="Exit with code 1 if threshold is exceeded")
@@ -31,8 +31,8 @@ def run_benchmark():
     frames = args.frames
 
     # Make sure we build the release binary first to avoid including build time in the benchmark
-    print(f"Building MapFlow release binary for {binary_path}...")
-    # MapFlow binary is usually produced by 'mapmap' crate
+    print(f"Building Vorce release binary for {binary_path}...")
+    # Vorce binary is usually produced by 'mapmap' crate
     subprocess.run(["cargo", "build", "--release", "-p", "mapmap"], check=True)
 
     # Resolve binary path - cargo might put it in different places depending on OS
@@ -44,7 +44,7 @@ def run_benchmark():
             print(f"Error: Could not find compiled binary at {binary_path}.")
             sys.exit(1)
 
-    print(f"Running MapFlow performance benchmark ({iterations} iterations, {frames} frames each)...")
+    print(f"Running Vorce performance benchmark ({iterations} iterations, {frames} frames each)...")
 
     execution_times = []
 
@@ -139,7 +139,7 @@ def run_benchmark():
     # Write TXT
     txt_path = os.path.join(ARTIFACT_DIR, "performance_report.txt")
     with open(txt_path, "w") as f:
-        f.write("MapFlow Performance Benchmark Report\n")
+        f.write("Vorce Performance Benchmark Report\n")
         f.write("====================================\n\n")
         f.write(f"Timestamp: {time.ctime()}\n")
         f.write(f"Iterations: {iterations}\n")

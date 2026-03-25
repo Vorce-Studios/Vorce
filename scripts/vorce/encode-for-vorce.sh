@@ -1,5 +1,5 @@
 #!/bin/sh
-# A script to convert files to a "safe" format suitable for MapFlow.
+# A script to convert files to a "safe" format suitable for Vorce.
 # It supports either one of these options:
 # 1) <input> <output>
 # 2) -m _result.mov *.{mov,mp4}

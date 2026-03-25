@@ -204,12 +204,12 @@ function Set-ProjectFieldByName {
         [AllowNull()][string]$Value
     )
 
-    $field = Get-MapFlowProjectField -Context $Context -FieldName $FieldName
+    $field = Get-VorceProjectField -Context $Context -FieldName $FieldName
     if ($null -eq $field) {
         return
     }
 
-    Set-MapFlowProjectFieldValue -Context $Context -ItemId $ItemId -Field $field -Value $Value
+    Set-VorceProjectFieldValue -Context $Context -ItemId $ItemId -Field $field -Value $Value
 }
 
 $resolvedRepository = Resolve-GitHubRepository -Repository $Repository
@@ -270,11 +270,11 @@ Upsert-JulesIssueTrackingBlock -Repository $resolvedRepository -IssueNumber $Iss
 $updatedIssue = Get-GitHubIssue -Repository $resolvedRepository -IssueNumber $IssueNumber
 $updatedBody = if ($null -eq $updatedIssue.body) { "" } else { [string]$updatedIssue.body }
 
-$projectContext = Get-MapFlowProjectContext -Repository $resolvedRepository
+$projectContext = Get-VorceProjectContext -Repository $resolvedRepository
 if ($null -ne $projectContext) {
     $issueContentId = Get-GitHubIssueContentId -Repository $resolvedRepository -IssueNumber $IssueNumber
     if (-not [string]::IsNullOrWhiteSpace($issueContentId)) {
-        $itemId = Ensure-MapFlowProjectItem -Context $projectContext -IssueContentId $issueContentId
+        $itemId = Ensure-VorceProjectItem -Context $projectContext -IssueContentId $issueContentId
         $projectTaskType = Resolve-ProjectTaskTypeValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "task_type")
         $projectAgent = Resolve-ProjectAgentValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "agent")
         $projectRemoteState = Resolve-ProjectRemoteStateValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "remote_state") -FallbackStatus (Get-IssueFormFieldValue -Body $updatedBody -FieldName "Status")
@@ -296,7 +296,7 @@ if ($null -ne $projectContext) {
     }
 }
 
-Sync-MapFlowProjectFields -Repository $resolvedRepository -IssueNumber $IssueNumber -Fields @{
+Sync-VorceProjectFields -Repository $resolvedRepository -IssueNumber $IssueNumber -Fields @{
     QueueState     = $resolvedQueueState
     RemoteState    = $resolvedRemoteState
     WorkBranch     = $resolvedWorkBranch
