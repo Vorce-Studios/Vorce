@@ -2,7 +2,8 @@
 
 use crate::app::core::app_struct::App;
 use anyhow::Result;
-use mapmap_core::module::OutputType;
+use std::collections::HashSet;
+use vorce_core::module::OutputType;
 
 /// Synchronizes output windows with the current module graph configuration.
 pub fn sync_output_windows(
@@ -11,8 +12,7 @@ pub fn sync_output_windows(
     _ui_needs_sync: bool,
     _graph_dirty: bool,
 ) -> Result<()> {
-    // Bolt Optimization: Replace HashSet with Vec to avoid allocation overhead for small lookups
-    let mut active_window_ids: Vec<u64> = Vec::new();
+    let mut active_window_ids: HashSet<u64> = HashSet::new();
 
     // 1. Reconcile graph Projector nodes into OutputManager
     // First, collect the required updates to avoid borrowing `app.state` mutably while iterating over it
@@ -21,20 +21,18 @@ pub fn sync_output_windows(
     for module in app.state.module_manager.modules() {
         for part in &module.parts {
             match &part.part_type {
-                mapmap_core::module::ModulePartType::Output(OutputType::Projector {
+                vorce_core::module::ModulePartType::Output(OutputType::Projector {
                     id,
                     name,
                     output_width,
                     output_height,
                     ..
                 }) => {
-                    if !active_window_ids.contains(id) {
-                        active_window_ids.push(*id);
-                    }
+                    active_window_ids.insert(*id);
                     projector_configs.push((*id, name.clone(), *output_width, *output_height));
                 }
                 #[cfg(target_os = "macos")]
-                mapmap_core::module::ModulePartType::Output(OutputType::NdiOutput { name }) => {
+                vorce_core::module::ModulePartType::Output(OutputType::NdiOutput { name }) => {
                     // Throttled logging to avoid spam
                     let now = std::time::Instant::now();
                     let log_key = format!("ndi_output_unsupported_{}", name);
@@ -58,10 +56,10 @@ pub fn sync_output_windows(
         let mut config = if let Some(existing) = app.state.output_manager.get_output(id) {
             existing.clone()
         } else {
-            mapmap_core::OutputConfig::new(
+            vorce_core::OutputConfig::new(
                 id,
                 name.clone(),
-                mapmap_core::CanvasRegion::new(0.0, 0.0, 1.0, 1.0),
+                vorce_core::CanvasRegion::new(0.0, 0.0, 1.0, 1.0),
                 (output_width, output_height),
             )
         };
