@@ -455,7 +455,7 @@ function Invoke-GitHubGraphQl {
     }
 
     $response = Invoke-GitHubApiJson -Arguments @("api", "graphql", "--method", "POST") -Body $body
-    if ($null -ne $response.errors) {
+    if ($null -ne $response -and $response.PSObject.Properties.Name -contains "errors" -and $null -ne $response.errors) {
         $messages = @($response.errors | ForEach-Object { Normalize-TrackingText -Value $_.message -MaxLength 200 })
         throw ("GitHub GraphQL Fehler: {0}" -f ($messages -join " | "))
     }
@@ -468,7 +468,41 @@ function Get-MapFlowProjectConfig {
 
     $projectNumberValue = $env:MAPFLOW_PROJECT_NUMBER
     if ([string]::IsNullOrWhiteSpace($projectNumberValue)) {
-        return $null
+        $repositoryParts = (Resolve-GitHubRepository -Repository $Repository).Split("/")
+        $projectOwnerFallback = if (-not [string]::IsNullOrWhiteSpace($env:MAPFLOW_PROJECT_OWNER)) {
+            $env:MAPFLOW_PROJECT_OWNER.Trim()
+        } else {
+            $repositoryParts[0]
+        }
+
+        try {
+            $projectList = Invoke-GitHubApiJson -Arguments @("project", "list", "--owner", $projectOwnerFallback, "--format", "json")
+            $projects = if ($null -eq $projectList) { @() } else { @($projectList.projects) }
+            $preferred = @(
+                $projects |
+                    Where-Object {
+                        $_ -and
+                        ($_.closed -eq $false) -and
+                        ([string]$_.title -eq "@MapFlow Project Manager")
+                    } |
+                    Select-Object -First 1
+            )
+
+            if ($preferred.Count -gt 0) {
+                $projectNumberValue = [string]$preferred[0].number
+            } else {
+                $openProjects = @($projects | Where-Object { $_ -and ($_.closed -eq $false) })
+                if ($openProjects.Count -eq 1) {
+                    $projectNumberValue = [string]$openProjects[0].number
+                }
+            }
+        } catch {
+            Write-JulesWarn "GitHub Project konnte nicht automatisch erkannt werden: $($_.Exception.Message)"
+        }
+
+        if ([string]::IsNullOrWhiteSpace($projectNumberValue)) {
+            return $null
+        }
     }
 
     $projectNumber = 0
@@ -509,37 +543,8 @@ function Get-MapFlowProjectContext {
         return $script:MapFlowProjectContextCache[$cacheKey]
     }
 
-    $query = @'
+    $userQuery = @'
 query($owner: String!, $number: Int!) {
-  organization(login: $owner) {
-    projectV2(number: $number) {
-      id
-      title
-      fields(first: 100) {
-        nodes {
-          __typename
-          ... on ProjectV2Field {
-            id
-            name
-            dataType
-          }
-          ... on ProjectV2SingleSelectField {
-            id
-            name
-            dataType
-            options {
-              id
-              name
-            }
-          }
-          ... on ProjectV2IterationField {
-            id
-            name
-          }
-        }
-      }
-    }
-  }
   user(login: $owner) {
     projectV2(number: $number) {
       id
@@ -572,16 +577,65 @@ query($owner: String!, $number: Int!) {
 }
 '@
 
-    $data = Invoke-GitHubGraphQl -Query $query -Variables @{
-        owner  = $config.Owner
-        number = $config.Number
+    $orgQuery = @'
+query($owner: String!, $number: Int!) {
+  organization(login: $owner) {
+    projectV2(number: $number) {
+      id
+      title
+      fields(first: 100) {
+        nodes {
+          __typename
+          ... on ProjectV2Field {
+            id
+            name
+            dataType
+          }
+          ... on ProjectV2SingleSelectField {
+            id
+            name
+            dataType
+            options {
+              id
+              name
+            }
+          }
+          ... on ProjectV2IterationField {
+            id
+            name
+          }
+        }
+      }
     }
+  }
+}
+'@
 
     $project = $null
-    if ($null -ne $data.organization.projectV2) {
-        $project = $data.organization.projectV2
-    } elseif ($null -ne $data.user.projectV2) {
-        $project = $data.user.projectV2
+    try {
+        $userData = Invoke-GitHubGraphQl -Query $userQuery -Variables @{
+            owner  = $config.Owner
+            number = $config.Number
+        }
+        if ($null -ne $userData.user.projectV2) {
+            $project = $userData.user.projectV2
+        }
+    } catch {
+        $project = $null
+    }
+
+    if ($null -eq $project) {
+        try {
+            $orgData = Invoke-GitHubGraphQl -Query $orgQuery -Variables @{
+                owner  = $config.Owner
+                number = $config.Number
+            }
+            if ($null -ne $orgData.organization.projectV2) {
+                $project = $orgData.organization.projectV2
+            }
+        } catch {
+            $project = $null
+        }
     }
 
     if ($null -eq $project) {
@@ -606,7 +660,7 @@ query($owner: String!, $number: Int!) {
             Id       = [string]$field.id
             Name     = [string]$field.name
             DataType = $dataType
-            Options  = @($field.options)
+            Options  = $(if ($field.PSObject.Properties.Name -contains "options") { @($field.options) } else { @() })
         }
     }
 

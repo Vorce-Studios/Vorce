@@ -82,6 +82,15 @@ if ($null -ne $createdSession -and [string]::IsNullOrWhiteSpace([string]$session
 }
 Write-JulesInfo "Session erstellt: $sessionId"
 
+$resolvedAutomationMode = $null
+if ($null -ne $session -and $session.PSObject.Properties.Name -contains "automationMode") {
+    $resolvedAutomationMode = [string]$session.automationMode
+} elseif ($null -ne $createdSession -and $createdSession.PSObject.Properties.Name -contains "automationMode") {
+    $resolvedAutomationMode = [string]$createdSession.automationMode
+} elseif ($AutoCreatePr.IsPresent) {
+    $resolvedAutomationMode = "AUTO_CREATE_PR"
+}
+
 if ($IssueNumber -gt 0 -and $resolvedRepository) {
     if ($UpdateIssueBody) {
         Sync-JulesIssueTracking -Repository $resolvedRepository -IssueNumber $IssueNumber -Session $session -LatestActivity $null -StartingBranch $StartingBranch -SourceName $resolvedSourceName
@@ -120,7 +129,7 @@ if ($IssueNumber -gt 0 -and $resolvedRepository) {
     SessionUrl          = [string]$session.url
     Title               = [string]$session.title
     State               = [string]$session.state
-    AutomationMode      = [string]$session.automationMode
+    AutomationMode      = $resolvedAutomationMode
     RequirePlanApproval = [bool]$RequirePlanApproval.IsPresent
     SourceName          = $resolvedSourceName
     StartingBranch      = $StartingBranch
