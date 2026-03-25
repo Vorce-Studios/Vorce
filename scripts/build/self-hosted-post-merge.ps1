@@ -95,13 +95,13 @@ Write-Host "--- Starting Build & Test (Limited to 4 threads) ---"
 cargo build --workspace --release -j 4
 
 # Run Visual Automation if enabled
-if ($env:MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION -eq "true") {
+if ($env:VORCE_SELF_HOSTED_RUN_VISUAL_AUTOMATION -eq "true") {
     Write-Host "Running Visual Automation Tests..."
     cargo test -p mapmap --test visual_capture_tests --release -j 4 -- --ignored --nocapture
 }
 
 # Run GPU Tests if enabled
-if ($env:MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS -eq "true") {
+if ($env:VORCE_SELF_HOSTED_RUN_IGNORED_GPU_TESTS -eq "true") {
     Write-Host "Running GPU-bound tests..."
     cargo test --workspace --release -j 4 -- --ignored
 }

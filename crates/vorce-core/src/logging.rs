@@ -79,7 +79,7 @@ impl LogConfig {
     /// Generate a new log filename with timestamp
     pub fn generate_log_filename() -> String {
         let now = chrono::Local::now();
-        format!("mapflow_{}.log", now.format("%Y-%m-%d_%H-%M-%S"))
+        format!("vorce_{}.log", now.format("%Y-%m-%d_%H-%M-%S"))
     }
 
     /// Get the full path for the current log file
@@ -168,7 +168,7 @@ mod tests {
     #[test]
     fn test_log_filename_format() {
         let filename = LogConfig::generate_log_filename();
-        assert!(filename.starts_with("mapflow_"));
+        assert!(filename.starts_with("vorce_"));
         assert!(filename.ends_with(".log"));
     }
 
@@ -180,7 +180,7 @@ mod tests {
         };
         let path = config.current_log_path();
         assert!(path.starts_with("my_logs"));
-        assert!(path.to_string_lossy().contains("mapflow_"));
+        assert!(path.to_string_lossy().contains("vorce_"));
         assert!(path.extension().unwrap() == "log");
     }
 
@@ -205,9 +205,9 @@ mod tests {
         let log_dir = temp_dir.path().join("cleanup_logs");
         fs::create_dir_all(&log_dir).unwrap();
 
-        let file1 = log_dir.join("mapflow_1.log");
-        let file2 = log_dir.join("mapflow_2.log");
-        let file3 = log_dir.join("mapflow_3.log");
+        let file1 = log_dir.join("vorce_1.log");
+        let file2 = log_dir.join("vorce_2.log");
+        let file3 = log_dir.join("vorce_3.log");
 
         fs::write(&file1, "log 1").unwrap();
         std::thread::sleep(std::time::Duration::from_millis(10));

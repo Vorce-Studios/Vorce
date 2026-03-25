@@ -30,9 +30,9 @@ if (Get-Command gh -ErrorAction SilentlyContinue) {
     git branch --remotes --no-merged origin/main | Select-Object -First 10
 }
 
-Write-Host "`n--- Aktive Mapflow Monitore ---" -ForegroundColor Yellow
+Write-Host "`n--- Aktive Vorce Monitore ---" -ForegroundColor Yellow
 $monitors = Get-Process -Name "powershell" -ErrorAction SilentlyContinue | Where-Object {
-    $_.CommandLine -like "*monitor_mapflow.ps1*" -or $_.CommandLine -like "*monitor-mapflow.ps1*"
+    $_.CommandLine -like "*monitor_vorce.ps1*" -or $_.CommandLine -like "*monitor-vorce.ps1*"
 }
 if ($monitors) {
     $monitors | Select-Object Id, @{Name="CPU(s)"; Expression={$_.CPU}}, StartTime | Format-Table

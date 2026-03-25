@@ -1,13 +1,13 @@
-# MapFlow Architecture Generation Script
+# Vorce Architecture Generation Script
 # Generiert eine Übersicht der Modul-Struktur und Abhängigkeiten
 
 $OutputDir = "docs/A1_SYSTEM"
 if (!(Test-Path $OutputDir)) { New-Item -ItemType Directory -Path $OutputDir }
 $OutputFile = "$OutputDir/DOC-B5_MODULE_TREE.md"
 
-Write-Host "Generating MapFlow Architecture Info..." -ForegroundColor Cyan
+Write-Host "Generating Vorce Architecture Info..." -ForegroundColor Cyan
 
-$Content = "# MapFlow Module Tree (Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm'))`n`n"
+$Content = "# Vorce Module Tree (Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm'))`n`n"
 $Content += "Diese Datei zeigt die physische und logische Struktur des Projekts.`n`n"
 
 # 1. Physische Struktur (File Tree)

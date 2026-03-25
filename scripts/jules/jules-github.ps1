@@ -7,7 +7,7 @@ $script:ManagedIssueStatusLabels = @(
     "status: blocked",
     "status: needs-review"
 )
-$script:MapFlowProjectContextCache = @{}
+$script:VorceProjectContextCache = @{}
 
 function Assert-GitHubCli {
     if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
@@ -268,7 +268,7 @@ function Resolve-LatestTrackingTimestamp {
     return $bestText
 }
 
-function Get-MapFlowQueueState {
+function Get-VorceQueueState {
     param([AllowNull()][object]$Issue, [AllowNull()][object]$Session)
 
     if ($null -eq $Issue) {
@@ -295,7 +295,7 @@ function Get-MapFlowQueueState {
     return "dispatched"
 }
 
-function Get-MapFlowRemoteState {
+function Get-VorceRemoteState {
     param([AllowNull()][object]$Issue, [AllowNull()][object]$Session, [AllowNull()][object]$PullRequest)
 
     if ($null -ne $PullRequest) {
@@ -335,7 +335,7 @@ function Get-MapFlowRemoteState {
     }
 }
 
-function Get-MapFlowNeedsAttention {
+function Get-VorceNeedsAttention {
     param([AllowNull()][object]$Session, [AllowNull()][object]$PullRequest)
 
     if ($null -ne $Session) {
@@ -351,7 +351,7 @@ function Get-MapFlowNeedsAttention {
     return "no"
 }
 
-function Get-MapFlowWorkBranch {
+function Get-VorceWorkBranch {
     param([AllowNull()][object]$PullRequest, [string]$StartingBranch)
 
     if ($null -ne $PullRequest -and -not [string]::IsNullOrWhiteSpace([string]$PullRequest.headRefName)) {
@@ -365,7 +365,7 @@ function Get-MapFlowWorkBranch {
     return $null
 }
 
-function Get-MapFlowLastActivitySummary {
+function Get-VorceLastActivitySummary {
     param([AllowNull()][object]$Issue, [AllowNull()][object]$Session, [AllowNull()][object]$LatestActivity)
 
     $summary = Normalize-TrackingText -Value (Get-JulesActivitySummary -Activity $LatestActivity) -MaxLength 180
@@ -463,23 +463,23 @@ function Invoke-GitHubGraphQl {
     return $response.data
 }
 
-function Get-MapFlowProjectConfig {
+function Get-VorceProjectConfig {
     param([Parameter(Mandatory)][string]$Repository)
 
-    $projectNumberValue = $env:MAPFLOW_PROJECT_NUMBER
+    $projectNumberValue = $env:VORCE_PROJECT_NUMBER
     if ([string]::IsNullOrWhiteSpace($projectNumberValue)) {
         return $null
     }
 
     $projectNumber = 0
     if (-not [int]::TryParse($projectNumberValue, [ref]$projectNumber) -or $projectNumber -le 0) {
-        Write-JulesWarn "MAPFLOW_PROJECT_NUMBER ist ungueltig und wird ignoriert."
+        Write-JulesWarn "VORCE_PROJECT_NUMBER ist ungueltig und wird ignoriert."
         return $null
     }
 
     $repositoryParts = (Resolve-GitHubRepository -Repository $Repository).Split("/")
-    $projectOwner = if (-not [string]::IsNullOrWhiteSpace($env:MAPFLOW_PROJECT_OWNER)) {
-        $env:MAPFLOW_PROJECT_OWNER.Trim()
+    $projectOwner = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_OWNER)) {
+        $env:VORCE_PROJECT_OWNER.Trim()
     } else {
         $repositoryParts[0]
     }
@@ -487,26 +487,26 @@ function Get-MapFlowProjectConfig {
     return @{
         Owner              = $projectOwner
         Number             = $projectNumber
-        StatusFieldName    = if (-not [string]::IsNullOrWhiteSpace($env:MAPFLOW_PROJECT_STATUS_FIELD)) { $env:MAPFLOW_PROJECT_STATUS_FIELD.Trim() } else { "Status" }
-        QueueFieldName     = if (-not [string]::IsNullOrWhiteSpace($env:MAPFLOW_PROJECT_QUEUE_STATE_FIELD)) { $env:MAPFLOW_PROJECT_QUEUE_STATE_FIELD.Trim() } else { "Queue State" }
-        RemoteFieldName    = if (-not [string]::IsNullOrWhiteSpace($env:MAPFLOW_PROJECT_REMOTE_STATE_FIELD)) { $env:MAPFLOW_PROJECT_REMOTE_STATE_FIELD.Trim() } else { "Remote State" }
-        WorkBranchFieldName = if (-not [string]::IsNullOrWhiteSpace($env:MAPFLOW_PROJECT_WORK_BRANCH_FIELD)) { $env:MAPFLOW_PROJECT_WORK_BRANCH_FIELD.Trim() } else { "Work Branch" }
-        LastUpdateFieldName = if (-not [string]::IsNullOrWhiteSpace($env:MAPFLOW_PROJECT_LAST_UPDATE_FIELD)) { $env:MAPFLOW_PROJECT_LAST_UPDATE_FIELD.Trim() } else { "Last Update" }
-        LinkedPrFieldName   = if (-not [string]::IsNullOrWhiteSpace($env:MAPFLOW_PROJECT_LINKED_PR_FIELD)) { $env:MAPFLOW_PROJECT_LINKED_PR_FIELD.Trim() } else { "Linked PR" }
+        StatusFieldName    = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_STATUS_FIELD)) { $env:VORCE_PROJECT_STATUS_FIELD.Trim() } else { "Status" }
+        QueueFieldName     = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_QUEUE_STATE_FIELD)) { $env:VORCE_PROJECT_QUEUE_STATE_FIELD.Trim() } else { "Queue State" }
+        RemoteFieldName    = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_REMOTE_STATE_FIELD)) { $env:VORCE_PROJECT_REMOTE_STATE_FIELD.Trim() } else { "Remote State" }
+        WorkBranchFieldName = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_WORK_BRANCH_FIELD)) { $env:VORCE_PROJECT_WORK_BRANCH_FIELD.Trim() } else { "Work Branch" }
+        LastUpdateFieldName = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_LAST_UPDATE_FIELD)) { $env:VORCE_PROJECT_LAST_UPDATE_FIELD.Trim() } else { "Last Update" }
+        LinkedPrFieldName   = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_LINKED_PR_FIELD)) { $env:VORCE_PROJECT_LINKED_PR_FIELD.Trim() } else { "Linked PR" }
     }
 }
 
-function Get-MapFlowProjectContext {
+function Get-VorceProjectContext {
     param([Parameter(Mandatory)][string]$Repository)
 
-    $config = Get-MapFlowProjectConfig -Repository $Repository
+    $config = Get-VorceProjectConfig -Repository $Repository
     if ($null -eq $config) {
         return $null
     }
 
     $cacheKey = "{0}#{1}" -f $config.Owner, $config.Number
-    if ($script:MapFlowProjectContextCache.ContainsKey($cacheKey)) {
-        return $script:MapFlowProjectContextCache[$cacheKey]
+    if ($script:VorceProjectContextCache.ContainsKey($cacheKey)) {
+        return $script:VorceProjectContextCache[$cacheKey]
     }
 
     $query = @'
@@ -626,7 +626,7 @@ query($owner: String!, $number: Int!) {
         ItemMapLoaded      = $false
     }
 
-    $script:MapFlowProjectContextCache[$cacheKey] = $context
+    $script:VorceProjectContextCache[$cacheKey] = $context
     return $context
 }
 
@@ -653,7 +653,7 @@ query($owner: String!, $repo: String!, $issueNumber: Int!) {
     return [string]$data.repository.issue.id
 }
 
-function Initialize-MapFlowProjectItemMap {
+function Initialize-VorceProjectItemMap {
     param([Parameter(Mandatory)][object]$Context)
 
     if ($Context.ItemMapLoaded) {
@@ -710,10 +710,10 @@ query($projectId: ID!, $cursor: String) {
     $Context.ItemMapLoaded = $true
 }
 
-function Ensure-MapFlowProjectItem {
+function Ensure-VorceProjectItem {
     param([Parameter(Mandatory)][object]$Context, [Parameter(Mandatory)][string]$IssueContentId)
 
-    Initialize-MapFlowProjectItemMap -Context $Context
+    Initialize-VorceProjectItemMap -Context $Context
 
     if ($Context.ItemIdsByContentId.ContainsKey($IssueContentId)) {
         return [string]$Context.ItemIdsByContentId[$IssueContentId]
@@ -739,7 +739,7 @@ mutation($projectId: ID!, $contentId: ID!) {
     return $itemId
 }
 
-function Get-MapFlowProjectField {
+function Get-VorceProjectField {
     param([AllowNull()][object]$Context, [string]$FieldName)
 
     if ($null -eq $Context -or [string]::IsNullOrWhiteSpace($FieldName)) {
@@ -793,7 +793,7 @@ function Resolve-ProjectSingleSelectOption {
     return $null
 }
 
-function Get-MapFlowProjectStatusCandidateNames {
+function Get-VorceProjectStatusCandidateNames {
     param([Parameter(Mandatory)][hashtable]$Fields)
 
     if (@("merged", "completed", "closed") -contains [string]$Fields.RemoteState) {
@@ -815,7 +815,7 @@ function Get-MapFlowProjectStatusCandidateNames {
     return @("In Progress", "Doing", "Active")
 }
 
-function Set-MapFlowProjectFieldValue {
+function Set-VorceProjectFieldValue {
     param(
         [Parameter(Mandatory)][object]$Context,
         [Parameter(Mandatory)][string]$ItemId,
@@ -947,10 +947,10 @@ mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $textValue: String!) {
     }
 }
 
-function Sync-MapFlowProjectFields {
+function Sync-VorceProjectFields {
     param([Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][int]$IssueNumber, [Parameter(Mandatory)][hashtable]$Fields)
 
-    $context = Get-MapFlowProjectContext -Repository $Repository
+    $context = Get-VorceProjectContext -Repository $Repository
     if ($null -eq $context) {
         return
     }
@@ -960,20 +960,20 @@ function Sync-MapFlowProjectFields {
         return
     }
 
-    $itemId = Ensure-MapFlowProjectItem -Context $context -IssueContentId $issueContentId
-    $statusField = Get-MapFlowProjectField -Context $context -FieldName $context.StatusFieldName
+    $itemId = Ensure-VorceProjectItem -Context $context -IssueContentId $issueContentId
+    $statusField = Get-VorceProjectField -Context $context -FieldName $context.StatusFieldName
     if ($null -ne $statusField) {
-        $statusOption = Resolve-ProjectSingleSelectOption -Options $statusField.Options -Candidates (Get-MapFlowProjectStatusCandidateNames -Fields $Fields)
+        $statusOption = Resolve-ProjectSingleSelectOption -Options $statusField.Options -Candidates (Get-VorceProjectStatusCandidateNames -Fields $Fields)
         if ($null -ne $statusOption) {
-            Set-MapFlowProjectFieldValue -Context $context -ItemId $itemId -Field $statusField -Value ([string]$statusOption.name)
+            Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field $statusField -Value ([string]$statusOption.name)
         }
     }
 
-    Set-MapFlowProjectFieldValue -Context $context -ItemId $itemId -Field (Get-MapFlowProjectField -Context $context -FieldName $context.QueueFieldName) -Value $Fields.QueueState
-    Set-MapFlowProjectFieldValue -Context $context -ItemId $itemId -Field (Get-MapFlowProjectField -Context $context -FieldName $context.RemoteFieldName) -Value $Fields.RemoteState
-    Set-MapFlowProjectFieldValue -Context $context -ItemId $itemId -Field (Get-MapFlowProjectField -Context $context -FieldName $context.WorkBranchFieldName) -Value $Fields.WorkBranch
-    Set-MapFlowProjectFieldValue -Context $context -ItemId $itemId -Field (Get-MapFlowProjectField -Context $context -FieldName $context.LastUpdateFieldName) -Value $Fields.LastUpdate
-    Set-MapFlowProjectFieldValue -Context $context -ItemId $itemId -Field (Get-MapFlowProjectField -Context $context -FieldName $context.LinkedPrFieldName) -Value $Fields.PullRequestUrl
+    Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.QueueFieldName) -Value $Fields.QueueState
+    Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.RemoteFieldName) -Value $Fields.RemoteState
+    Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.WorkBranchFieldName) -Value $Fields.WorkBranch
+    Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.LastUpdateFieldName) -Value $Fields.LastUpdate
+    Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.LinkedPrFieldName) -Value $Fields.PullRequestUrl
 }
 
 function Format-MarkdownValue {
@@ -995,11 +995,11 @@ function Format-JulesIssueTrackingBlock {
         $script:JulesIssueBlockStart,
         "<!-- jules-session-id: $($Fields.SessionId) -->",
         "<!-- jules-session-name: $($Fields.SessionName) -->",
-        "<!-- mapflow-queue-state: $($Fields.QueueState) -->",
-        "<!-- mapflow-remote-state: $($Fields.RemoteState) -->",
-        "<!-- mapflow-work-branch: $($Fields.WorkBranch) -->",
-        "<!-- mapflow-last-update: $($Fields.LastUpdate) -->",
-        "## MapFlow Project Manager",
+        "<!-- vorce-queue-state: $($Fields.QueueState) -->",
+        "<!-- vorce-remote-state: $($Fields.RemoteState) -->",
+        "<!-- vorce-work-branch: $($Fields.WorkBranch) -->",
+        "<!-- vorce-last-update: $($Fields.LastUpdate) -->",
+        "## Vorce Project Manager",
         "- Queue State: $(Format-MarkdownValue -Value $Fields.QueueState)",
         "- Remote State: $(Format-MarkdownValue -Value $Fields.RemoteState)",
         "- Work Branch: $(Format-MarkdownValue -Value $Fields.WorkBranch)",
@@ -1121,7 +1121,7 @@ function Convert-IssueToJulesPrompt {
     return (($parts -join "`n").Trim())
 }
 
-function Sync-MapFlowIssueTracking {
+function Sync-VorceIssueTracking {
     param(
         [Parameter(Mandatory)][string]$Repository,
         [Parameter(Mandatory)][int]$IssueNumber,
@@ -1144,13 +1144,13 @@ function Sync-MapFlowIssueTracking {
         SessionName         = if ($null -eq $Session) { $null } else { [string]$Session.name }
         SessionUrl          = if ($null -eq $Session) { $null } else { [string]$Session.url }
         SessionState        = if ($null -eq $Session) { "not-started" } else { [string]$Session.state }
-        QueueState          = Get-MapFlowQueueState -Issue $issue -Session $Session
-        RemoteState         = Get-MapFlowRemoteState -Issue $issue -Session $Session -PullRequest $pullRequest
-        WorkBranch          = Get-MapFlowWorkBranch -PullRequest $pullRequest -StartingBranch $StartingBranch
+        QueueState          = Get-VorceQueueState -Issue $issue -Session $Session
+        RemoteState         = Get-VorceRemoteState -Issue $issue -Session $Session -PullRequest $pullRequest
+        WorkBranch          = Get-VorceWorkBranch -PullRequest $pullRequest -StartingBranch $StartingBranch
         SourceName          = if (-not [string]::IsNullOrWhiteSpace($SourceName)) { $SourceName } elseif ($null -ne $Session) { [string]$Session.sourceContext.source } else { $null }
         PullRequestUrl      = if ($null -ne $pullRequest) { [string]$pullRequest.url } else { $pullRequestUrl }
-        NeedsAttention      = Get-MapFlowNeedsAttention -Session $Session -PullRequest $pullRequest
-        LastActivitySummary = Get-MapFlowLastActivitySummary -Issue $issue -Session $Session -LatestActivity $LatestActivity
+        NeedsAttention      = Get-VorceNeedsAttention -Session $Session -PullRequest $pullRequest
+        LastActivitySummary = Get-VorceLastActivitySummary -Issue $issue -Session $Session -LatestActivity $LatestActivity
         LastUpdate          = Resolve-LatestTrackingTimestamp -Candidates @(
             if ($null -ne $LatestActivity) { [string]$LatestActivity.createTime }
             if ($null -ne $pullRequest) { [string]$pullRequest.updatedAt }
@@ -1171,7 +1171,7 @@ function Sync-MapFlowIssueTracking {
     Upsert-JulesIssueTrackingBlock -Repository $Repository -IssueNumber $IssueNumber -Fields $fields
     Sync-GitHubIssueStatusLabels -Repository $Repository -IssueNumber $IssueNumber -Issue $issue -DesiredLabels (Get-DesiredIssueStatusLabels -Issue $issue -Session $Session -PullRequest $pullRequest)
     try {
-        Sync-MapFlowProjectFields -Repository $Repository -IssueNumber $IssueNumber -Fields $fields
+        Sync-VorceProjectFields -Repository $Repository -IssueNumber $IssueNumber -Fields $fields
     } catch {
         Write-JulesWarn "Project-Feld-Sync fuer Issue #$IssueNumber fehlgeschlagen: $($_.Exception.Message)"
     }
@@ -1199,5 +1199,5 @@ function Sync-JulesIssueTracking {
         [string]$SourceName
     )
 
-    Sync-MapFlowIssueTracking -Repository $Repository -IssueNumber $IssueNumber -Session $Session -LatestActivity $LatestActivity -StartingBranch $StartingBranch -SourceName $SourceName
+    Sync-VorceIssueTracking -Repository $Repository -IssueNumber $IssueNumber -Session $Session -LatestActivity $LatestActivity -StartingBranch $StartingBranch -SourceName $SourceName
 }

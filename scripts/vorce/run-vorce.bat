@@ -1,6 +1,6 @@
 @echo off
 setlocal
-REM MapFlow local startup script.
+REM Vorce local startup script.
 
 set "ROOT_DIR=%~dp0..\\.."
 set "TARGET_DIR=%ROOT_DIR%\target\release"
@@ -10,7 +10,7 @@ if not exist "%VCPKG_BIN%" (
     set "VCPKG_BIN=%ROOT_DIR%\vcpkg\installed\x64-windows\bin"
 )
 
-echo Starting MapFlow in local release mode...
+echo Starting Vorce in local release mode...
 
 REM Copy FFmpeg DLLs into the release target when available.
 if exist "%VCPKG_BIN%\*.dll" (
@@ -22,7 +22,7 @@ if exist "%VCPKG_BIN%\*.dll" (
 )
 
 pushd "%ROOT_DIR%"
-cargo run --release -p mapmap --bin MapFlow --no-default-features --features "audio,ffmpeg"
+cargo run --release -p mapmap --bin Vorce --no-default-features --features "audio,ffmpeg"
 set "EXIT_CODE=%ERRORLEVEL%"
 popd
 

@@ -139,7 +139,7 @@ $results = foreach ($issue in @($issues | Sort-Object number)) {
         $latestActivity = Get-JulesLatestActivity -Activities $activities
     }
 
-    $snapshot = Sync-MapFlowIssueTracking `
+    $snapshot = Sync-VorceIssueTracking `
         -Repository $resolvedRepository `
         -IssueNumber ([int]$issue.number) `
         -Session $session `
