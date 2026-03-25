@@ -35,18 +35,32 @@ pub fn existing_asset_path(relative: impl AsRef<Path>) -> Option<PathBuf> {
 
 /// Resolve an existing path inside the resources directory.
 pub fn existing_resource_path(relative: impl AsRef<Path>) -> Option<PathBuf> {
-    resolve_existing_path(RESOURCES_ENV, LEGACY_RESOURCES_ENV, "resources", relative.as_ref())
+    resolve_existing_path(
+        RESOURCES_ENV,
+        LEGACY_RESOURCES_ENV,
+        "resources",
+        relative.as_ref(),
+    )
 }
 
 fn resolve_named_dir(env_var: &str, dir_name: &str) -> PathBuf {
-    let legacy_env = if env_var == ASSETS_ENV { LEGACY_ASSETS_ENV } else { LEGACY_RESOURCES_ENV };
+    let legacy_env = if env_var == ASSETS_ENV {
+        LEGACY_ASSETS_ENV
+    } else {
+        LEGACY_RESOURCES_ENV
+    };
     candidate_dirs(env_var, legacy_env, dir_name)
         .into_iter()
         .find(|path| path.exists())
         .unwrap_or_else(|| PathBuf::from(dir_name))
 }
 
-fn resolve_existing_path(env_var: &str, legacy_env_var: &str, dir_name: &str, relative: &Path) -> Option<PathBuf> {
+fn resolve_existing_path(
+    env_var: &str,
+    legacy_env_var: &str,
+    dir_name: &str,
+    relative: &Path,
+) -> Option<PathBuf> {
     candidate_dirs(env_var, legacy_env_var, dir_name)
         .into_iter()
         .map(|base| base.join(relative))

@@ -27,7 +27,7 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  RUST_TOOLCHAIN: ${{ inputs.toolchain || github.event.inputs.toolchain || '1.94.0' }}
+  RUST_TOOLCHAIN: ${{ github.event.inputs.toolchain || inputs.toolchain || vars.MAPFLOW_DEFAULT_TOOLCHAIN || '1.94.0' }}
 
 jobs:
   quality:
@@ -44,7 +44,7 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.94.0
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
           components: rustfmt, clippy
 
       - name: Rust Cache
@@ -99,7 +99,7 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.94.0
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
@@ -131,7 +131,7 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.94.0
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
@@ -185,7 +185,7 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.94.0
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
@@ -207,7 +207,7 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.94.0
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
