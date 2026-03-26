@@ -647,11 +647,13 @@ pub fn hold_to_action_button(ui: &mut Ui, text: &str, color: Color32, hover_text
 
     // Accessibility info
     let a11y_label = if hover_text.is_empty() {
-        text
+        format!("Hold to confirm {}...", text)
     } else {
-        hover_text
+        format!("{} (Hold to confirm)", hover_text)
     };
-    response.widget_info(|| WidgetInfo::labeled(WidgetType::Button, ui.is_enabled(), a11y_label));
+    response.widget_info(|| {
+        WidgetInfo::labeled(WidgetType::Button, ui.is_enabled(), a11y_label.clone())
+    });
 
     // Use response.id for unique state storage to prevent collisions
     let state_id = response.id.with("hold_state");
@@ -721,9 +723,9 @@ pub fn hold_to_action_button(ui: &mut Ui, text: &str, color: Color32, hover_text
     }
 
     if !hover_text.is_empty() {
-        response.on_hover_text(hover_text);
+        response.on_hover_text(format!("{} (Hold to confirm)", hover_text));
     } else {
-        response.on_hover_text("Hold to confirm (Mouse or Space/Enter)");
+        response.on_hover_text(format!("Hold to confirm {}...", text));
     }
 
     triggered
@@ -745,9 +747,9 @@ pub fn hold_to_action_icon(
     // Accessibility info
     let enabled = ui.is_enabled();
     let label = if hover_text.is_empty() {
-        "Hold Action Icon".to_string()
+        "Hold to confirm action...".to_string()
     } else {
-        hover_text.to_string()
+        format!("{} (Hold to confirm)", hover_text)
     };
     response.widget_info(move || WidgetInfo::labeled(WidgetType::Button, enabled, label.clone()));
 
@@ -836,6 +838,10 @@ pub fn hold_to_action_icon(
             .collect();
 
         painter.add(egui::Shape::line(points, stroke));
+
+        if triggered {
+            painter.circle_filled(center, radius, color.linear_multiply(0.8));
+        }
     }
 
     if response.hovered() {
@@ -843,9 +849,9 @@ pub fn hold_to_action_icon(
     }
 
     if !hover_text.is_empty() {
-        response.on_hover_text(hover_text);
+        response.on_hover_text(format!("{} (Hold to confirm)", hover_text));
     } else {
-        response.on_hover_text("Hold to confirm");
+        response.on_hover_text("Hold to confirm action...");
     }
 
     triggered
