@@ -173,6 +173,101 @@ function Resolve-ProjectRemoteStateValue {
     return "unknown"
 }
 
+function Resolve-ProjectJulesSessionStatusValue {
+    param(
+        [AllowNull()][string]$RemoteState,
+        [AllowNull()][string]$AgentValue,
+        [AllowNull()][string]$SessionId
+    )
+
+    if ($AgentValue -eq "Gemini CLI") {
+        return "n_a"
+    }
+
+    if ([string]::IsNullOrWhiteSpace($SessionId) -or $SessionId -eq "n/a") {
+        return "not_started"
+    }
+
+    switch ((([string]$RemoteState).Trim()).ToLowerInvariant()) {
+        "queued" { return "queued" }
+        "planning" { return "planning" }
+        "in-progress" { return "running" }
+        "in_progress" { return "running" }
+        "awaiting-plan-approval" { return "waiting" }
+        "awaiting-user-feedback" { return "waiting" }
+        "paused" { return "waiting" }
+        "failed" { return "failed" }
+        "completed" { return "completed" }
+        "pr_open" { return "completed" }
+        "pr-open" { return "completed" }
+        "pr_checks_pending" { return "completed" }
+        "pr-failed" { return "completed" }
+        "pr_failed" { return "completed" }
+        "pr_draft" { return "completed" }
+        "pr-closed" { return "completed" }
+        "pr_closed" { return "completed" }
+        "merged" { return "completed" }
+        default { return "unknown" }
+    }
+}
+
+function Resolve-ProjectPrChecksStatusValue {
+    param(
+        [Parameter(Mandatory)][string]$Repository,
+        [AllowNull()][string]$PullRequestUrl,
+        [AllowNull()][string]$AgentValue
+    )
+
+    if ([string]::IsNullOrWhiteSpace($PullRequestUrl)) {
+        return "n_a"
+    }
+
+    $pullRequest = Get-GitHubPullRequest -Repository $Repository -PullRequestUrl $PullRequestUrl
+    if ($null -eq $pullRequest) {
+        return "unknown"
+    }
+
+    if ([string]$pullRequest.state -eq "MERGED") {
+        return "merged"
+    }
+
+    if ([string]$pullRequest.state -eq "CLOSED") {
+        return "closed"
+    }
+
+    if ($pullRequest.PSObject.Properties.Name -contains "isDraft" -and [bool]$pullRequest.isDraft) {
+        return "draft"
+    }
+
+    $checks = @(Get-GitHubPullRequestChecks -Repository $Repository -PullRequestUrl $PullRequestUrl)
+    if ($checks.Count -eq 0) {
+        return "pending"
+    }
+
+    $failed = @(
+        $checks |
+            Where-Object {
+                [string]$_.bucket -eq "fail" -or
+                @("FAILURE", "FAILED", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED") -contains ([string]$_.state).ToUpperInvariant()
+            }
+    )
+    if ($failed.Count -gt 0) {
+        return "failed"
+    }
+
+    $pending = @(
+        $checks |
+            Where-Object {
+                @("PENDING", "QUEUED", "IN_PROGRESS", "STARTUP_FAILURE", "WAITING") -contains ([string]$_.state).ToUpperInvariant()
+            }
+    )
+    if ($pending.Count -gt 0) {
+        return "pending"
+    }
+
+    return "passed"
+}
+
 function Resolve-ProjectSubAgentValue {
     param(
         [AllowNull()][string]$Value,
@@ -278,6 +373,8 @@ if ($null -ne $projectContext) {
         $projectTaskType = Resolve-ProjectTaskTypeValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "task_type")
         $projectAgent = Resolve-ProjectAgentValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "agent")
         $projectRemoteState = Resolve-ProjectRemoteStateValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "remote_state") -FallbackStatus (Get-IssueFormFieldValue -Body $updatedBody -FieldName "Status")
+        $projectJulesSessionStatus = Resolve-ProjectJulesSessionStatusValue -RemoteState (Get-IssueFormFieldValue -Body $updatedBody -FieldName "remote_state") -AgentValue $projectAgent -SessionId (Get-IssueFormFieldValue -Body $updatedBody -FieldName "jules_session")
+        $projectPrChecksStatus = Resolve-ProjectPrChecksStatusValue -Repository $resolvedRepository -PullRequestUrl $resolvedPullRequestUrl -AgentValue $projectAgent
         $projectSubAgent = Resolve-ProjectSubAgentValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "sub_agent") -TaskTypeValue $projectTaskType -AgentValue $projectAgent
 
         Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "Status" -Value (Resolve-ProjectStatusValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "Status"))
@@ -288,7 +385,8 @@ if ($null -ne $projectContext) {
         Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "permit_issue" -Value (Resolve-ProjectPermitValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "permit_issue"))
         Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "agent" -Value $projectAgent
         Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "jules_session" -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "jules_session")
-        Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "remote_state" -Value $projectRemoteState
+        Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "jules_session_status" -Value $projectJulesSessionStatus
+        Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "pr_checks_status" -Value $projectPrChecksStatus
         Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "work_branch" -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "work_branch")
         Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "last_update" -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "last_update")
         Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "description" -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "description")
@@ -297,6 +395,8 @@ if ($null -ne $projectContext) {
 }
 
 Sync-VorceProjectFields -Repository $resolvedRepository -IssueNumber $IssueNumber -Fields @{
+    JulesSessionStatus = Resolve-ProjectJulesSessionStatusValue -RemoteState $resolvedRemoteState -AgentValue $Agent -SessionId $JulesSessionId
+    PrChecksStatus     = Resolve-ProjectPrChecksStatusValue -Repository $resolvedRepository -PullRequestUrl $resolvedPullRequestUrl -AgentValue $Agent
     QueueState     = $resolvedQueueState
     RemoteState    = $resolvedRemoteState
     WorkBranch     = $resolvedWorkBranch

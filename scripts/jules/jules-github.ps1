@@ -147,6 +147,37 @@ function Get-GitHubPullRequest {
     return (($output | Out-String) | ConvertFrom-Json)
 }
 
+function Get-GitHubPullRequestChecks {
+    param(
+        [Parameter(Mandatory)][string]$Repository,
+        [string]$PullRequestUrl,
+        [int]$PullRequestNumber
+    )
+
+    Assert-GitHubCli
+
+    $target = $null
+    if (-not [string]::IsNullOrWhiteSpace($PullRequestUrl)) {
+        $target = $PullRequestUrl.Trim()
+    } elseif ($PullRequestNumber -gt 0) {
+        $target = [string]$PullRequestNumber
+    } else {
+        return @()
+    }
+
+    $output = & gh pr checks $target --repo $Repository --required --json bucket,name,state,workflow,startedAt,completedAt 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        return @()
+    }
+
+    $items = (($output | Out-String) | ConvertFrom-Json)
+    if ($null -eq $items) {
+        return @()
+    }
+
+    return @($items)
+}
+
 function Get-GitHubIssueComments {
     param([Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][int]$IssueNumber)
 
@@ -523,7 +554,8 @@ function Get-VorceProjectConfig {
         Number             = $projectNumber
         StatusFieldName    = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_STATUS_FIELD)) { $env:VORCE_PROJECT_STATUS_FIELD.Trim() } else { "Status" }
         QueueFieldName     = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_QUEUE_STATE_FIELD)) { $env:VORCE_PROJECT_QUEUE_STATE_FIELD.Trim() } else { "Queue State" }
-        RemoteFieldName    = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_REMOTE_STATE_FIELD)) { $env:VORCE_PROJECT_REMOTE_STATE_FIELD.Trim() } else { "Remote State" }
+        JulesSessionStatusFieldName = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_JULES_SESSION_STATUS_FIELD)) { $env:VORCE_PROJECT_JULES_SESSION_STATUS_FIELD.Trim() } else { "jules_session_status" }
+        PrChecksStatusFieldName = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_PR_CHECKS_STATUS_FIELD)) { $env:VORCE_PROJECT_PR_CHECKS_STATUS_FIELD.Trim() } else { "pr_checks_status" }
         WorkBranchFieldName = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_WORK_BRANCH_FIELD)) { $env:VORCE_PROJECT_WORK_BRANCH_FIELD.Trim() } else { "Work Branch" }
         LastUpdateFieldName = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_LAST_UPDATE_FIELD)) { $env:VORCE_PROJECT_LAST_UPDATE_FIELD.Trim() } else { "Last Update" }
         LinkedPrFieldName   = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_LINKED_PR_FIELD)) { $env:VORCE_PROJECT_LINKED_PR_FIELD.Trim() } else { "Linked PR" }
@@ -671,7 +703,8 @@ query($owner: String!, $number: Int!) {
         Title              = [string]$project.title
         StatusFieldName    = [string]$config.StatusFieldName
         QueueFieldName     = [string]$config.QueueFieldName
-        RemoteFieldName    = [string]$config.RemoteFieldName
+        JulesSessionStatusFieldName = [string]$config.JulesSessionStatusFieldName
+        PrChecksStatusFieldName = [string]$config.PrChecksStatusFieldName
         WorkBranchFieldName = [string]$config.WorkBranchFieldName
         LastUpdateFieldName = [string]$config.LastUpdateFieldName
         LinkedPrFieldName   = [string]$config.LinkedPrFieldName
@@ -869,6 +902,87 @@ function Get-VorceProjectStatusCandidateNames {
     return @("In Progress", "Doing", "Active")
 }
 
+function Get-VorceJulesSessionStatusValue {
+    param(
+        [AllowNull()][object]$Session,
+        [AllowNull()][object]$Issue
+    )
+
+    if ($null -ne $Session) {
+        switch ([string]$Session.state) {
+            "QUEUED" { return "queued" }
+            "PLANNING" { return "planning" }
+            "IN_PROGRESS" { return "running" }
+            "AWAITING_PLAN_APPROVAL" { return "waiting" }
+            "AWAITING_USER_FEEDBACK" { return "waiting" }
+            "PAUSED" { return "waiting" }
+            "FAILED" { return "failed" }
+            "COMPLETED" { return "completed" }
+            default { return "unknown" }
+        }
+    }
+
+    if ($null -ne $Issue) {
+        $labels = Get-GitHubIssueLabelNames -Issue $Issue
+        if ($labels -contains "jules-task") {
+            return "not_started"
+        }
+    }
+
+    return "n_a"
+}
+
+function Get-VorcePrChecksStatusValue {
+    param(
+        [AllowNull()][object]$PullRequest,
+        [AllowNull()][object[]]$Checks
+    )
+
+    if ($null -eq $PullRequest) {
+        return "n_a"
+    }
+
+    if ([string]$PullRequest.state -eq "MERGED") {
+        return "merged"
+    }
+
+    if ([string]$PullRequest.state -eq "CLOSED") {
+        return "closed"
+    }
+
+    if ($PullRequest.PSObject.Properties.Name -contains "isDraft" -and [bool]$PullRequest.isDraft) {
+        return "draft"
+    }
+
+    $checkList = @($Checks)
+    if ($checkList.Count -eq 0) {
+        return "pending"
+    }
+
+    $failed = @(
+        $checkList |
+            Where-Object {
+                [string]$_.bucket -eq "fail" -or
+                @("FAILURE", "FAILED", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED") -contains ([string]$_.state).ToUpperInvariant()
+            }
+    )
+    if ($failed.Count -gt 0) {
+        return "failed"
+    }
+
+    $pending = @(
+        $checkList |
+            Where-Object {
+                @("PENDING", "QUEUED", "IN_PROGRESS", "STARTUP_FAILURE", "WAITING") -contains ([string]$_.state).ToUpperInvariant()
+            }
+    )
+    if ($pending.Count -gt 0) {
+        return "pending"
+    }
+
+    return "passed"
+}
+
 function Set-VorceProjectFieldValue {
     param(
         [Parameter(Mandatory)][object]$Context,
@@ -1023,8 +1137,47 @@ function Sync-VorceProjectFields {
         }
     }
 
+    $julesSessionStatus = if ($Fields.ContainsKey("JulesSessionStatus") -and -not [string]::IsNullOrWhiteSpace([string]$Fields["JulesSessionStatus"])) {
+        [string]$Fields["JulesSessionStatus"]
+    } elseif ($Fields.ContainsKey("SessionState") -and -not [string]::IsNullOrWhiteSpace([string]$Fields["SessionState"])) {
+        Get-VorceJulesSessionStatusValue -Session ([pscustomobject]@{ state = [string]$Fields["SessionState"] }) -Issue $null
+    } else {
+        switch ((([string]$Fields["RemoteState"]).Trim()).ToLowerInvariant()) {
+            "queued" { "queued" }
+            "planning" { "planning" }
+            "in-progress" { "running" }
+            "in_progress" { "running" }
+            "awaiting-plan-approval" { "waiting" }
+            "awaiting-user-feedback" { "waiting" }
+            "paused" { "waiting" }
+            "failed" { "failed" }
+            "completed" { "completed" }
+            "pr_open" { "completed" }
+            "pr-open" { "completed" }
+            "pr_checks_pending" { "completed" }
+            "pr_failed" { "completed" }
+            "pr-failed" { "completed" }
+            "pr_draft" { "completed" }
+            "pr_closed" { "completed" }
+            "pr-closed" { "completed" }
+            "merged" { "completed" }
+            default { "n_a" }
+        }
+    }
+
+    $prChecksStatus = if ($Fields.ContainsKey("PrChecksStatus") -and -not [string]::IsNullOrWhiteSpace([string]$Fields["PrChecksStatus"])) {
+        [string]$Fields["PrChecksStatus"]
+    } elseif (-not [string]::IsNullOrWhiteSpace([string]$Fields["PullRequestUrl"])) {
+        $syncPr = Get-GitHubPullRequest -Repository $Repository -PullRequestUrl ([string]$Fields["PullRequestUrl"])
+        $syncChecks = if ($null -eq $syncPr) { @() } else { Get-GitHubPullRequestChecks -Repository $Repository -PullRequestUrl ([string]$Fields["PullRequestUrl"]) }
+        Get-VorcePrChecksStatusValue -PullRequest $syncPr -Checks $syncChecks
+    } else {
+        "n_a"
+    }
+
     Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.QueueFieldName) -Value $Fields.QueueState
-    Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.RemoteFieldName) -Value $Fields.RemoteState
+    Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.JulesSessionStatusFieldName) -Value $julesSessionStatus
+    Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.PrChecksStatusFieldName) -Value $prChecksStatus
     Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.WorkBranchFieldName) -Value $Fields.WorkBranch
     Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.LastUpdateFieldName) -Value $Fields.LastUpdate
     Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.LinkedPrFieldName) -Value $Fields.PullRequestUrl
@@ -1192,12 +1345,19 @@ function Sync-VorceIssueTracking {
     } else {
         Get-GitHubPullRequest -Repository $Repository -PullRequestUrl $pullRequestUrl
     }
+    $pullRequestChecks = if ($null -eq $pullRequest) {
+        @()
+    } else {
+        Get-GitHubPullRequestChecks -Repository $Repository -PullRequestUrl ([string]$pullRequest.url)
+    }
 
     $fields = @{
         SessionId           = if ($null -eq $Session) { $null } else { Resolve-JulesSessionId -SessionIdOrName ([string]$Session.name) }
         SessionName         = if ($null -eq $Session) { $null } else { [string]$Session.name }
         SessionUrl          = if ($null -eq $Session) { $null } else { [string]$Session.url }
         SessionState        = if ($null -eq $Session) { "not-started" } else { [string]$Session.state }
+        JulesSessionStatus  = Get-VorceJulesSessionStatusValue -Session $Session -Issue $issue
+        PrChecksStatus      = Get-VorcePrChecksStatusValue -PullRequest $pullRequest -Checks $pullRequestChecks
         QueueState          = Get-VorceQueueState -Issue $issue -Session $Session
         RemoteState         = Get-VorceRemoteState -Issue $issue -Session $Session -PullRequest $pullRequest
         WorkBranch          = Get-VorceWorkBranch -PullRequest $pullRequest -StartingBranch $StartingBranch
@@ -1234,6 +1394,8 @@ function Sync-VorceIssueTracking {
         IssueNumber         = $IssueNumber
         QueueState          = $fields["QueueState"]
         RemoteState         = $fields["RemoteState"]
+        JulesSessionStatus  = $fields["JulesSessionStatus"]
+        PrChecksStatus      = $fields["PrChecksStatus"]
         WorkBranch          = $fields["WorkBranch"]
         PullRequestUrl      = $fields["PullRequestUrl"]
         LastUpdate          = $fields["LastUpdate"]
