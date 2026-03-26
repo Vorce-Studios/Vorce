@@ -367,8 +367,12 @@ function Wait-ForPullRequestMerge {
             throw ("PR-Titel stimmt nicht mit dem Issue-Titel-Muster ueberein. Erwartet: '{0}' | Ist: '{1}'" -f $ExpectedTitle, [string]$pr.title)
         }
 
-        if (-not [string]::IsNullOrWhiteSpace($ExpectedBranch) -and [string]$pr.headRefName -ne $ExpectedBranch) {
-            throw ("PR-Branch stimmt nicht mit dem Issue-Titel-Muster ueberein. Erwartet: '{0}' | Ist: '{1}'" -f $ExpectedBranch, [string]$pr.headRefName)
+        if (-not [string]::IsNullOrWhiteSpace($ExpectedBranch)) {
+            $actualBranch = [string]$pr.headRefName
+            $branchMatches = $actualBranch -eq $ExpectedBranch -or $actualBranch -like "$ExpectedBranch-*"
+            if (-not $branchMatches) {
+                throw ("PR-Branch stimmt nicht mit dem Issue-Titel-Muster ueberein. Erwartet: '{0}' oder '{0}-<suffix>' | Ist: '{1}'" -f $ExpectedBranch, $actualBranch)
+            }
         }
 
         if ($pr.state -eq "MERGED") {
@@ -667,7 +671,15 @@ for ($i = 0; $i -lt $implementationNumbers.Count; $i++) {
 
             $mergedPr = Wait-ForPullRequestMerge -Repository $resolvedRepository -PullRequestUrl ([string]$pullRequestUrl) -PollMinutes $PollMinutes -ExpectedTitle $expectedPrTitle -ExpectedBranch $expectedWorkBranch
             Sync-TrackingAndMirrorFields -Repository $resolvedRepository -IssueNumber $implNumber -Session $session -StartingBranch ([string]$mergedPr.headRefName)
-            Update-ImplementationFields -Repository $resolvedRepository -IssueNumber $implNumber -Status "Done" -SessionId $sessionId -RemoteState "merged" -WorkBranch ([string]$mergedPr.headRefName) -LastUpdate ([string]$mergedPr.updatedAt)
+            $mergedPrLastUpdate = if ($mergedPr.PSObject.Properties.Name -contains "updatedAt" -and -not [string]::IsNullOrWhiteSpace([string]$mergedPr.updatedAt)) {
+                [string]$mergedPr.updatedAt
+            } elseif ($mergedPr.PSObject.Properties.Name -contains "mergedAt" -and -not [string]::IsNullOrWhiteSpace([string]$mergedPr.mergedAt)) {
+                [string]$mergedPr.mergedAt
+            } else {
+                Get-Date -Format "yyyy-MM-dd"
+            }
+
+            Update-ImplementationFields -Repository $resolvedRepository -IssueNumber $implNumber -Status "Done" -SessionId $sessionId -RemoteState "merged" -WorkBranch ([string]$mergedPr.headRefName) -LastUpdate $mergedPrLastUpdate
             gh issue comment $implNumber --repo $resolvedRepository --body ("Implementation merged in PR #{0}." -f $mergedPr.number) | Out-Null
         }
     }
