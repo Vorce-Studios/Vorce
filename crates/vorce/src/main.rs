@@ -37,7 +37,7 @@ use crate::app::core::app_struct::{App, InitializationConfig};
 use crate::cli::{CliArgs, Mode};
 use clap::Parser;
 
-struct MapFlowApp {
+struct VorceApp {
     app: Option<App>,
     is_automation: bool,
     fixture: Option<String>,
@@ -45,7 +45,7 @@ struct MapFlowApp {
     screenshot_dir: Option<String>,
 }
 
-impl ApplicationHandler for MapFlowApp {
+impl ApplicationHandler for VorceApp {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.app.is_none() {
             info!("Initializing Vorce...");
@@ -436,7 +436,7 @@ fn main() -> Result<()> {
 fn run_editor() -> Result<()> {
     info!("Starting Editor mode...");
     let event_loop = EventLoop::new()?;
-    let mut app_handler = MapFlowApp {
+    let mut app_handler = VorceApp {
         app: None,
         is_automation: false,
         fixture: None,
@@ -450,7 +450,7 @@ fn run_editor() -> Result<()> {
 fn run_automation(args: &CliArgs) -> Result<()> {
     info!("Starting Automation mode...");
     let event_loop = EventLoop::new()?;
-    let mut app_handler = MapFlowApp {
+    let mut app_handler = VorceApp {
         app: None,
         is_automation: true,
         fixture: args.fixture.clone(),

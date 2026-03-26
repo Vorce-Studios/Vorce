@@ -239,7 +239,7 @@ pub enum MidiAssignmentTarget {
 impl fmt::Display for MidiAssignmentTarget {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::MapFlow(id) => write!(f, "MapFlow: {}", id),
+            Self::MapFlow(id) => write!(f, "Vorce: {}", id),
             Self::StreamerBot(func) => write!(f, "Streamer.bot: {}", func),
             Self::Mixxx(func) => write!(f, "Mixxx: {}", func),
         }
