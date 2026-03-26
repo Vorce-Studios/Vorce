@@ -59,6 +59,9 @@ Die Reihenfolge ist strikt. Das naechste Jules-Issue darf erst starten, wenn das
 ### 6. PR-Gate
 
 - Der Wrapper wartet anschliessend auf den Merge des PR.
+- Vor und waehrend des Wartens wird das erwartete Naming geprueft:
+  - PR-Titel = `PR` + Issue-Titel
+  - Work-Branch = `B-Jules/` + Issue-Titel
 - Bei roten Required Checks stoppt der Ablauf sofort.
 - Erst nach Merge wird das Implementierungs-Issue auf den finalen Stand gespiegelt.
 
@@ -115,6 +118,7 @@ Es setzt um:
 
 - Umwandlung des Issue-Contents in einen Jules-Prompt
 - Setzen von `automationMode = AUTO_CREATE_PR`, wenn gewuenscht
+- Vorgabe des verbindlichen PR-/Branch-Namings an Jules
 - Rueckgabe der Session-ID und des aufgeloesten Automation-Mode
 - Kommentar und Issue-Tracking fuer die gestartete Session
 

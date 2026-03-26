@@ -178,6 +178,61 @@ function Get-GitHubPullRequestChecks {
     return @($items)
 }
 
+function Find-GitHubPullRequestForIssue {
+    param(
+        [Parameter(Mandatory)][string]$Repository,
+        [Parameter(Mandatory)][int]$IssueNumber,
+        [AllowNull()][string]$SessionId
+    )
+
+    Assert-GitHubCli
+
+    $queries = @()
+    if (-not [string]::IsNullOrWhiteSpace($SessionId)) {
+        $queries += ('"{0}" in:body' -f $SessionId.Trim())
+    }
+
+    $queries += @(
+        ('"Fixes #{0}" in:body' -f $IssueNumber),
+        ('"Closes #{0}" in:body' -f $IssueNumber),
+        ('"Resolves #{0}" in:body' -f $IssueNumber),
+        ('"#{0}" in:body' -f $IssueNumber)
+    )
+
+    foreach ($query in ($queries | Select-Object -Unique)) {
+        $output = & gh pr list --repo $Repository --state all --search $query --json number,title,url,state,isDraft,headRefName,updatedAt,mergeable,reviewDecision,labels 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            continue
+        }
+
+        $items = (($output | Out-String) | ConvertFrom-Json)
+        if ($null -eq $items) {
+            continue
+        }
+
+        $matches = @($items)
+        if ($matches.Count -eq 0) {
+            continue
+        }
+
+        $ordered = @(
+            $matches |
+                Sort-Object {
+                    try {
+                        [datetimeoffset]([string]$_.updatedAt)
+                    } catch {
+                        [datetimeoffset]::MinValue
+                    }
+                } -Descending
+        )
+        if ($ordered.Count -gt 0) {
+            return $ordered[0]
+        }
+    }
+
+    return $null
+}
+
 function Get-GitHubIssueComments {
     param([Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][int]$IssueNumber)
 
@@ -367,7 +422,15 @@ function Get-VorceRemoteState {
 }
 
 function Get-VorceNeedsAttention {
-    param([AllowNull()][object]$Session, [AllowNull()][object]$PullRequest)
+    param([AllowNull()][object]$Issue, [AllowNull()][object]$Session, [AllowNull()][object]$PullRequest)
+
+    if ($null -ne $Issue -and [string]$Issue.state -eq "CLOSED") {
+        return "no"
+    }
+
+    if ($null -ne $PullRequest -and @("MERGED", "CLOSED") -contains [string]$PullRequest.state) {
+        return "no"
+    }
 
     if ($null -ne $Session) {
         if (@("AWAITING_PLAN_APPROVAL", "AWAITING_USER_FEEDBACK", "PAUSED", "FAILED") -contains [string]$Session.state) {
@@ -883,6 +946,14 @@ function Resolve-ProjectSingleSelectOption {
 function Get-VorceProjectStatusCandidateNames {
     param([Parameter(Mandatory)][hashtable]$Fields)
 
+    if (@("closed", "done", "completed", "merged") -contains (([string]$Fields.QueueState).Trim()).ToLowerInvariant()) {
+        return @("Done", "Completed", "Closed", "Merged")
+    }
+
+    if (([string]$Fields.IssueState).Trim().ToUpperInvariant() -eq "CLOSED") {
+        return @("Done", "Completed", "Closed", "Merged")
+    }
+
     if (@("merged", "completed", "closed") -contains [string]$Fields.RemoteState) {
         return @("Done", "Completed", "Closed", "Merged")
     }
@@ -907,6 +978,10 @@ function Get-VorceJulesSessionStatusValue {
         [AllowNull()][object]$Session,
         [AllowNull()][object]$Issue
     )
+
+    if ($null -ne $Issue -and [string]$Issue.state -eq "CLOSED") {
+        return "completed"
+    }
 
     if ($null -ne $Session) {
         switch ([string]$Session.state) {
@@ -1282,6 +1357,18 @@ function Get-JulesSessionReferenceFromIssue {
     return $null
 }
 
+function Get-JulesPreferredPrTitle {
+    param([Parameter(Mandatory)][string]$IssueTitle)
+
+    return ("PR{0}" -f $IssueTitle.Trim())
+}
+
+function Get-JulesPreferredWorkBranch {
+    param([Parameter(Mandatory)][string]$IssueTitle)
+
+    return ("B-Jules/{0}" -f $IssueTitle.Trim())
+}
+
 function Convert-IssueToJulesPrompt {
     param(
         [Parameter(Mandatory)][object]$Issue,
@@ -1299,7 +1386,9 @@ function Convert-IssueToJulesPrompt {
     $parts = @(
         "Issue #$($Issue.number): $($Issue.title)",
         "Repository: $Repository",
-        "Issue URL: $($Issue.url)"
+        "Issue URL: $($Issue.url)",
+        "Required PR Title: $(Get-JulesPreferredPrTitle -IssueTitle ([string]$Issue.title))",
+        "Required Work Branch: $(Get-JulesPreferredWorkBranch -IssueTitle ([string]$Issue.title))"
     )
 
     if ($labels.Count -gt 0) {
@@ -1318,6 +1407,10 @@ function Convert-IssueToJulesPrompt {
     if ($AutoCreatePr) {
         $parts += ""
         $parts += "---"
+        $parts += "**IMPORTANT:** Erstelle den Pull Request exakt mit diesem Titel: `$(Get-JulesPreferredPrTitle -IssueTitle ([string]$Issue.title))`."
+        $parts += "**IMPORTANT:** Arbeite exakt auf diesem Branch-Namen: `$(Get-JulesPreferredWorkBranch -IssueTitle ([string]$Issue.title))`."
+        $parts += "Verwende keine abweichenden, gekuerzten oder automatisch generierten Namen fuer Branch oder Pull Request."
+        $parts += ""
         $parts += "**IMPORTANT:** Wenn du die Pull-Request-Beschreibung fuer dieses Issue erstellst, musst du exakt diesen Block mit der echten GitHub-Issue-Nummer aufnehmen:"
         $parts += "## Verlinktes Issue"
         $parts += "Fixes #$($Issue.number)"
@@ -1340,6 +1433,13 @@ function Sync-VorceIssueTracking {
 
     $issue = Get-GitHubIssue -Repository $Repository -IssueNumber $IssueNumber
     $pullRequestUrl = if ($null -eq $Session) { $null } else { Get-JulesSessionPullRequestUrl -Session $Session }
+    if ([string]::IsNullOrWhiteSpace($pullRequestUrl)) {
+        $fallbackSessionId = if ($null -eq $Session) { $null } else { Resolve-JulesSessionId -SessionIdOrName ([string]$Session.name) }
+        $fallbackPullRequest = Find-GitHubPullRequestForIssue -Repository $Repository -IssueNumber $IssueNumber -SessionId $fallbackSessionId
+        if ($null -ne $fallbackPullRequest -and -not [string]::IsNullOrWhiteSpace([string]$fallbackPullRequest.url)) {
+            $pullRequestUrl = [string]$fallbackPullRequest.url
+        }
+    }
     $pullRequest = if ([string]::IsNullOrWhiteSpace($pullRequestUrl)) {
         $null
     } else {
@@ -1363,8 +1463,9 @@ function Sync-VorceIssueTracking {
         WorkBranch          = Get-VorceWorkBranch -PullRequest $pullRequest -StartingBranch $StartingBranch
         SourceName          = if (-not [string]::IsNullOrWhiteSpace($SourceName)) { $SourceName } elseif ($null -ne $Session) { [string]$Session.sourceContext.source } else { $null }
         PullRequestUrl      = if ($null -ne $pullRequest) { [string]$pullRequest.url } else { $pullRequestUrl }
-        NeedsAttention      = Get-VorceNeedsAttention -Session $Session -PullRequest $pullRequest
+        NeedsAttention      = Get-VorceNeedsAttention -Issue $issue -Session $Session -PullRequest $pullRequest
         LastActivitySummary = Get-VorceLastActivitySummary -Issue $issue -Session $Session -LatestActivity $LatestActivity
+        IssueState          = if ($null -eq $issue) { $null } else { [string]$issue.state }
         LastUpdate          = Resolve-LatestTrackingTimestamp -Candidates @(
             if ($null -ne $LatestActivity) { [string]$LatestActivity.createTime }
             if ($null -ne $pullRequest) { [string]$pullRequest.updatedAt }

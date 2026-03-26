@@ -24,10 +24,14 @@ $ScriptDir = Split-Path -Parent $PSCommandPath
 
 $resolvedRepository = $null
 $issue = $null
+$expectedPrTitle = $null
+$expectedWorkBranch = $null
 
 if ($IssueNumber -gt 0) {
     $resolvedRepository = Resolve-GitHubRepository -Repository $Repository
     $issue = Get-GitHubIssue -Repository $resolvedRepository -IssueNumber $IssueNumber
+    $expectedPrTitle = Get-JulesPreferredPrTitle -IssueTitle ([string]$issue.title)
+    $expectedWorkBranch = Get-JulesPreferredWorkBranch -IssueTitle ([string]$issue.title)
     $Prompt = Convert-IssueToJulesPrompt -Issue $issue -Repository $resolvedRepository -AdditionalPrompt $Prompt -AutoCreatePr:$AutoCreatePr.IsPresent
     if ([string]::IsNullOrWhiteSpace($Title)) {
         $Title = "Issue #$($issue.number): $($issue.title)"
@@ -105,6 +109,14 @@ if ($IssueNumber -gt 0 -and $resolvedRepository) {
             "- Session URL: $($session.url)"
         )
 
+        if (-not [string]::IsNullOrWhiteSpace($expectedPrTitle)) {
+            $commentLines += ('- Required PR Title: `{0}`' -f $expectedPrTitle)
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($expectedWorkBranch)) {
+            $commentLines += ('- Required Work Branch: `{0}`' -f $expectedWorkBranch)
+        }
+
         if ($AutoCreatePr.IsPresent) {
             $commentLines += '- Auto-Create-PR: `AUTO_CREATE_PR`'
         }
@@ -133,4 +145,6 @@ if ($IssueNumber -gt 0 -and $resolvedRepository) {
     RequirePlanApproval = [bool]$RequirePlanApproval.IsPresent
     SourceName          = $resolvedSourceName
     StartingBranch      = $StartingBranch
+    ExpectedPrTitle     = $expectedPrTitle
+    ExpectedWorkBranch  = $expectedWorkBranch
 }

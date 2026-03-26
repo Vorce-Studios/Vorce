@@ -315,12 +315,22 @@ function Wait-ForPullRequestMerge {
     param(
         [Parameter(Mandatory)][string]$Repository,
         [Parameter(Mandatory)][string]$PullRequestUrl,
-        [Parameter(Mandatory)][int]$PollMinutes
+        [Parameter(Mandatory)][int]$PollMinutes,
+        [string]$ExpectedTitle,
+        [string]$ExpectedBranch
     )
 
     $prNumber = $PullRequestUrl -replace '.*/pull/(\d+)$', '$1'
     while ($true) {
         $pr = gh pr view $prNumber --repo $Repository --json number,state,mergedAt,url,title,headRefName | ConvertFrom-Json
+        if (-not [string]::IsNullOrWhiteSpace($ExpectedTitle) -and [string]$pr.title -ne $ExpectedTitle) {
+            throw ("PR-Titel stimmt nicht mit dem Issue-Titel-Muster ueberein. Erwartet: '{0}' | Ist: '{1}'" -f $ExpectedTitle, [string]$pr.title)
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($ExpectedBranch) -and [string]$pr.headRefName -ne $ExpectedBranch) {
+            throw ("PR-Branch stimmt nicht mit dem Issue-Titel-Muster ueberein. Erwartet: '{0}' | Ist: '{1}'" -f $ExpectedBranch, [string]$pr.headRefName)
+        }
+
         if ($pr.state -eq "MERGED") {
             return $pr
         }
@@ -423,7 +433,7 @@ Required:
 
     Push-Location $WorktreePath
     try {
-        return (gemini -p $prompt --approval-mode yolo --yolo --sandbox false --output-format text 2>&1 | Out-String)
+        return (gemini -p $prompt --approval-mode=yolo --sandbox false --output-format text 2>&1 | Out-String)
     } finally {
         Pop-Location
     }
@@ -507,6 +517,8 @@ for ($i = 0; $i -lt $implementationNumbers.Count; $i++) {
     }
 
     Write-Step ("Bearbeite Paar {0}:{1}" -f $implNumber, $verifyNumber)
+    $expectedPrTitle = Get-JulesPreferredPrTitle -IssueTitle ([string]$implSnapshot.Issue.title)
+    $expectedWorkBranch = Get-JulesPreferredWorkBranch -IssueTitle ([string]$implSnapshot.Issue.title)
 
     $session = $null
     $sessionId = $null
@@ -581,7 +593,7 @@ for ($i = 0; $i -lt $implementationNumbers.Count; $i++) {
             throw "Jules Session $sessionId ist abgeschlossen, liefert aber keinen PR-Link und es wurde auch kein existierender PR fuer Issue #$implNumber gefunden."
         }
 
-        $mergedPr = Wait-ForPullRequestMerge -Repository $resolvedRepository -PullRequestUrl ([string]$pullRequestUrl) -PollMinutes $PollMinutes
+        $mergedPr = Wait-ForPullRequestMerge -Repository $resolvedRepository -PullRequestUrl ([string]$pullRequestUrl) -PollMinutes $PollMinutes -ExpectedTitle $expectedPrTitle -ExpectedBranch $expectedWorkBranch
         Sync-TrackingAndMirrorFields -Repository $resolvedRepository -IssueNumber $implNumber -Session $session -StartingBranch ([string]$mergedPr.headRefName)
         Update-ImplementationFields -Repository $resolvedRepository -IssueNumber $implNumber -Status "Done" -SessionId $sessionId -RemoteState "merged" -WorkBranch ([string]$mergedPr.headRefName) -LastUpdate ([string]$mergedPr.mergedAt)
         gh issue comment $implNumber --repo $resolvedRepository --body ("Implementation merged in PR #{0}." -f $mergedPr.number) | Out-Null
