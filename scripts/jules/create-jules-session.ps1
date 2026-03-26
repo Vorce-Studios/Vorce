@@ -17,7 +17,7 @@ param(
     [bool]$RemoveTodoUserLabel = $true
 )
 
-Set-StrictMode -Version Latest
+Set-StrictMode -Version 1.0
 $ScriptDir = Split-Path -Parent $PSCommandPath
 . (Join-Path $ScriptDir "jules-api.ps1")
 . (Join-Path $ScriptDir "jules-github.ps1")

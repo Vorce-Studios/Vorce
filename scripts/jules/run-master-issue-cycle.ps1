@@ -13,7 +13,7 @@ param(
     [string]$GeminiWorktreePath
 )
 
-Set-StrictMode -Version Latest
+Set-StrictMode -Version 1.0
 $ScriptDir = Split-Path -Parent $PSCommandPath
 $RepoRoot = Resolve-Path (Join-Path $ScriptDir "..\..")
 

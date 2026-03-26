@@ -1,10 +1,13 @@
 Master issue for the global rebranding of the project from current `MapFlow` and legacy `MapMap` surfaces to the finalized target identity `Vorce`. This supersedes the StageGraph-specific attempt in #1179.
 
 ## Status
+
 Planning. Canonical target fixed to `Vorce`; execution remains blocked until #1229 is explicitly approved.
 
 ## Why this issue exists
+
 The repository currently mixes several identity layers:
+
 - current user-facing brand: `MapFlow`
 - legacy/workspace slug: `mapmap`
 - legacy UI strings: `MapMap`
@@ -13,6 +16,7 @@ The repository currently mixes several identity layers:
 A safe rebranding must treat those surfaces separately instead of performing a blind search/replace.
 
 ## Canonical Rename Matrix
+
 | Surface | Current | Target | Notes |
 | --- | --- | --- | --- |
 | Product / display name | `MapFlow` | `Vorce` | user-facing name |
@@ -32,6 +36,7 @@ A safe rebranding must treat those surfaces separately instead of performing a b
 Source of truth for this matrix: #1229 and `docs/A3_PROJECT/B1_PLANNING/DOC-C15_RENAME_MATRIX_AND_COMPAT_POLICY.md`.
 
 ## Subissues
+
 - [ ] #1229 `__SI-01_MAI-001_CANONICAL_RENAME_MATRIX_AND_COMPAT_POLICY_V2`
 - [ ] #1204 `__SI-02_MAI-001_CRATES_WORKSPACE_AND_PACKAGE_RENAME_V2`
 - [ ] #1205 `__SI-03_MAI-001_SCRIPTS_ENV_AND_RUNTIME_PATHS_V2`
@@ -42,6 +47,7 @@ Source of truth for this matrix: #1229 and `docs/A3_PROJECT/B1_PLANNING/DOC-C15_
 - [ ] #1214 `__SI-08_MAI-001_WORKFLOWS_DOCS_AND_MIGRATION_NOTES_V2`
 
 ## Acceptance Criteria
+
 - [ ] the canonical rename matrix is approved in #1229
 - [ ] every breaking surface has an explicit policy: alias, deprecation window, or hard cut
 - [ ] workspace/package names, scripts, UI, protocols, file formats, release artifacts, issue tracking, and docs are migrated consistently
@@ -53,10 +59,12 @@ Source of truth for this matrix: #1229 and `docs/A3_PROJECT/B1_PLANNING/DOC-C15_
 - [ ] no unresolved placeholder such as `[NEW_NAME]`, `[NEW_SLUG]`, or `[NEW_EXT]` remains in the active rebranding plan
 
 ## Non-Goals
+
 - unrelated refactors or behavior changes outside branding and migration scope
 - removing legacy compatibility aliases before #1229 decides their lifecycle
 - repeating the abandoned StageGraph-specific rename strategy from #1179
 
 ## Notes
+
 - This work is expected to touch code, packaging, CI/CD, release artifacts, GitHub repository metadata, issue automation, and documentation.
 - The historical StageGraph attempt remains closed in #1179 and is not the source of truth for the final rename.
