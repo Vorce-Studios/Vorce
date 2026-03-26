@@ -1,6 +1,6 @@
-//! Professional video I/O for MapFlow.
+//! Professional video I/O for Vorce.
 //!
-//! This crate provides video input/output capabilities for MapFlow, including support for:
+//! This crate provides video input/output capabilities for Vorce, including support for:
 //!
 //! - **NDI** - Network Device Interface for IP-based video
 //! - **DeckLink** - Blackmagic Design SDI/HDMI capture cards
@@ -195,7 +195,7 @@ impl FeatureInfo {
 
 impl std::fmt::Display for FeatureInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "MapFlow I/O v{} (", VERSION)?;
+        write!(f, "Vorce I/O v{} (", VERSION)?;
         let mut first = true;
 
         if self.ndi {
@@ -262,7 +262,7 @@ mod tests {
     fn test_feature_info_display() {
         let features = features();
         let display = format!("{}", features);
-        assert!(display.contains("MapFlow I/O"));
+        assert!(display.contains("Vorce I/O"));
         assert!(display.contains(VERSION));
     }
 

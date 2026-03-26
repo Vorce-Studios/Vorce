@@ -163,6 +163,19 @@ function Get-LatestVerificationVerdict {
         }
     }
 
+    $issue = Get-GitHubIssue -Repository $Repository -IssueNumber $IssueNumber
+    $issueBody = if ($null -eq $issue.body) { "" } else { [string]$issue.body }
+    if ($issueBody -match '(?im)^\s*-\s*\[x\]\s+\*\*Rejected\*\*:') {
+        return "REJECT"
+    }
+
+    if (
+        [string]$issue.state -eq "CLOSED" -and
+        $issueBody -match '(?im)^\s*-\s*\[x\]\s+\*\*Confirmed\*\*:'
+    ) {
+        return "PASS"
+    }
+
     return $null
 }
 
@@ -265,13 +278,40 @@ function Sync-TrackingAndMirrorFields {
         [string]$StartingBranch
     )
 
-    $snapshot = Sync-JulesIssueTracking -Repository $Repository -IssueNumber $IssueNumber -Session $Session -LatestActivity $null -StartingBranch $StartingBranch -SourceName ([string]$Session.sourceContext.source)
-    Set-IssueFormFields -Repository $Repository -IssueNumber $IssueNumber -Updates @{
-        "jules_session" = $(if ([string]::IsNullOrWhiteSpace([string]$snapshot.SessionId)) { (Resolve-JulesSessionId -SessionIdOrName ([string]$Session.name)) } else { [string]$snapshot.SessionId })
-        "remote_state"  = [string]$snapshot.RemoteState
-        "work_branch"   = [string]$snapshot.WorkBranch
-        "last_update"   = [string]$snapshot.LastUpdate
+    $sourceName = if (
+        $null -ne $Session -and
+        $Session.PSObject.Properties.Name -contains "sourceContext" -and
+        $null -ne $Session.sourceContext -and
+        $Session.sourceContext.PSObject.Properties.Name -contains "source"
+    ) {
+        [string]$Session.sourceContext.source
+    } else {
+        $null
     }
+
+    $snapshot = Sync-JulesIssueTracking -Repository $Repository -IssueNumber $IssueNumber -Session $Session -LatestActivity $null -StartingBranch $StartingBranch -SourceName $sourceName
+    $resolvedSessionId = if (
+        $null -ne $snapshot -and
+        $snapshot.PSObject.Properties.Name -contains "SessionId" -and
+        -not [string]::IsNullOrWhiteSpace([string]$snapshot.SessionId)
+    ) {
+        [string]$snapshot.SessionId
+    } else {
+        Resolve-JulesSessionId -SessionIdOrName ([string]$Session.name)
+    }
+
+    $resolvedRemoteState = if ($null -ne $snapshot -and $snapshot.PSObject.Properties.Name -contains "RemoteState") { [string]$snapshot.RemoteState } else { "" }
+    $resolvedWorkBranch = if ($null -ne $snapshot -and $snapshot.PSObject.Properties.Name -contains "WorkBranch") { [string]$snapshot.WorkBranch } else { "" }
+    $resolvedLastUpdate = if ($null -ne $snapshot -and $snapshot.PSObject.Properties.Name -contains "LastUpdate") { [string]$snapshot.LastUpdate } else { "" }
+
+    Set-IssueFormFields -Repository $Repository -IssueNumber $IssueNumber -Updates @{
+        "jules_session" = $resolvedSessionId
+        "remote_state"  = $resolvedRemoteState
+        "work_branch"   = $resolvedWorkBranch
+        "last_update"   = $resolvedLastUpdate
+    }
+
+    return $snapshot
 }
 
 function Wait-ForJulesState {
@@ -528,12 +568,42 @@ for ($i = 0; $i -lt $implementationNumbers.Count; $i++) {
         $sessionId = [string]$implSnapshot.SessionReference.SessionId
         Write-Step ("Verwende bestehende Jules Session {0} fuer Issue #{1}" -f $sessionId, $implNumber)
         $session = Get-JulesSession -SessionIdOrName $sessionId -ApiKey $ApiKey
-        Sync-TrackingAndMirrorFields -Repository $resolvedRepository -IssueNumber $implNumber -Session $session -StartingBranch "main"
+        $trackingSnapshot = Sync-TrackingAndMirrorFields -Repository $resolvedRepository -IssueNumber $implNumber -Session $session -StartingBranch "main"
 
             $state = [string]$session.state
             if (@("AWAITING_PLAN_APPROVAL", "AWAITING_USER_FEEDBACK", "PAUSED", "FAILED") -contains $state) {
-                Update-ImplementationFields -Repository $resolvedRepository -IssueNumber $implNumber -Status "Blocked" -SessionId $sessionId -RemoteState ([string]$session.state).ToLowerInvariant() -WorkBranch "main" -LastUpdate (Get-Date -Format "yyyy-MM-dd")
-                throw ("Jules Session fuer Issue #{0} braucht Aufmerksamkeit: {1}" -f $implNumber, $state)
+                $trackingRemoteState = if ($null -ne $trackingSnapshot -and $trackingSnapshot.PSObject.Properties.Name -contains "RemoteState") {
+                    ([string]$trackingSnapshot.RemoteState).ToLowerInvariant()
+                } else {
+                    ""
+                }
+                $trackingPullRequestUrl = if ($null -ne $trackingSnapshot -and $trackingSnapshot.PSObject.Properties.Name -contains "PullRequestUrl") {
+                    [string]$trackingSnapshot.PullRequestUrl
+                } else {
+                    ""
+                }
+
+                if ($trackingRemoteState -eq "merged" -and -not [string]::IsNullOrWhiteSpace($trackingPullRequestUrl)) {
+                    $mergedPr = Get-GitHubPullRequest -Repository $resolvedRepository -PullRequestUrl $trackingPullRequestUrl
+                    if ($null -ne $mergedPr -and [string]$mergedPr.state -eq "MERGED") {
+                        $mergedAt = if ($mergedPr.PSObject.Properties.Name -contains "mergedAt" -and -not [string]::IsNullOrWhiteSpace([string]$mergedPr.mergedAt)) {
+                            [string]$mergedPr.mergedAt
+                        } elseif ($mergedPr.PSObject.Properties.Name -contains "updatedAt") {
+                            [string]$mergedPr.updatedAt
+                        } else {
+                            Get-Date -Format "yyyy-MM-dd"
+                        }
+
+                        Update-ImplementationFields -Repository $resolvedRepository -IssueNumber $implNumber -Status "Done" -SessionId $sessionId -RemoteState "merged" -WorkBranch ([string]$mergedPr.headRefName) -LastUpdate $mergedAt
+                        gh issue comment $implNumber --repo $resolvedRepository --body ("Implementation already merged in PR #{0}; vorhandene Jules Session ist {1}." -f $mergedPr.number, $state) | Out-Null
+                    } else {
+                        Update-ImplementationFields -Repository $resolvedRepository -IssueNumber $implNumber -Status "Blocked" -SessionId $sessionId -RemoteState ([string]$session.state).ToLowerInvariant() -WorkBranch "main" -LastUpdate (Get-Date -Format "yyyy-MM-dd")
+                        throw ("Jules Session fuer Issue #{0} braucht Aufmerksamkeit: {1}" -f $implNumber, $state)
+                    }
+                } else {
+                    Update-ImplementationFields -Repository $resolvedRepository -IssueNumber $implNumber -Status "Blocked" -SessionId $sessionId -RemoteState ([string]$session.state).ToLowerInvariant() -WorkBranch "main" -LastUpdate (Get-Date -Format "yyyy-MM-dd")
+                    throw ("Jules Session fuer Issue #{0} braucht Aufmerksamkeit: {1}" -f $implNumber, $state)
+                }
             }
         } else {
             Write-Step ("Starte neue Jules Session fuer Issue #{0}" -f $implNumber)
@@ -581,22 +651,25 @@ for ($i = 0; $i -lt $implementationNumbers.Count; $i++) {
             Sync-TrackingAndMirrorFields -Repository $resolvedRepository -IssueNumber $implNumber -Session $session -StartingBranch "main"
         }
 
-        $session = Wait-ForJulesState -SessionId $sessionId -InitialWaitMinutes $InitialWaitMinutes -PollMinutes $PollMinutes -ApiKey $ApiKey
-        Sync-TrackingAndMirrorFields -Repository $resolvedRepository -IssueNumber $implNumber -Session $session -StartingBranch "main"
+        $implSnapshot = Get-IssueSnapshot -Repository $resolvedRepository -IssueNumber $implNumber
+        if (-not (Test-ImplementationComplete -Snapshot $implSnapshot)) {
+            $session = Wait-ForJulesState -SessionId $sessionId -InitialWaitMinutes $InitialWaitMinutes -PollMinutes $PollMinutes -ApiKey $ApiKey
+            Sync-TrackingAndMirrorFields -Repository $resolvedRepository -IssueNumber $implNumber -Session $session -StartingBranch "main"
 
-        $pullRequestUrl = Get-JulesSessionPullRequestUrl -Session $session
-        if ([string]::IsNullOrWhiteSpace([string]$pullRequestUrl)) {
-            $pullRequestUrl = Resolve-PullRequestUrlForIssue -Repository $resolvedRepository -IssueNumber $implNumber -SessionId $sessionId
+            $pullRequestUrl = Get-JulesSessionPullRequestUrl -Session $session
+            if ([string]::IsNullOrWhiteSpace([string]$pullRequestUrl)) {
+                $pullRequestUrl = Resolve-PullRequestUrlForIssue -Repository $resolvedRepository -IssueNumber $implNumber -SessionId $sessionId
+            }
+
+            if ([string]::IsNullOrWhiteSpace([string]$pullRequestUrl)) {
+                throw "Jules Session $sessionId ist abgeschlossen, liefert aber keinen PR-Link und es wurde auch kein existierender PR fuer Issue #$implNumber gefunden."
+            }
+
+            $mergedPr = Wait-ForPullRequestMerge -Repository $resolvedRepository -PullRequestUrl ([string]$pullRequestUrl) -PollMinutes $PollMinutes -ExpectedTitle $expectedPrTitle -ExpectedBranch $expectedWorkBranch
+            Sync-TrackingAndMirrorFields -Repository $resolvedRepository -IssueNumber $implNumber -Session $session -StartingBranch ([string]$mergedPr.headRefName)
+            Update-ImplementationFields -Repository $resolvedRepository -IssueNumber $implNumber -Status "Done" -SessionId $sessionId -RemoteState "merged" -WorkBranch ([string]$mergedPr.headRefName) -LastUpdate ([string]$mergedPr.updatedAt)
+            gh issue comment $implNumber --repo $resolvedRepository --body ("Implementation merged in PR #{0}." -f $mergedPr.number) | Out-Null
         }
-
-        if ([string]::IsNullOrWhiteSpace([string]$pullRequestUrl)) {
-            throw "Jules Session $sessionId ist abgeschlossen, liefert aber keinen PR-Link und es wurde auch kein existierender PR fuer Issue #$implNumber gefunden."
-        }
-
-        $mergedPr = Wait-ForPullRequestMerge -Repository $resolvedRepository -PullRequestUrl ([string]$pullRequestUrl) -PollMinutes $PollMinutes -ExpectedTitle $expectedPrTitle -ExpectedBranch $expectedWorkBranch
-        Sync-TrackingAndMirrorFields -Repository $resolvedRepository -IssueNumber $implNumber -Session $session -StartingBranch ([string]$mergedPr.headRefName)
-        Update-ImplementationFields -Repository $resolvedRepository -IssueNumber $implNumber -Status "Done" -SessionId $sessionId -RemoteState "merged" -WorkBranch ([string]$mergedPr.headRefName) -LastUpdate ([string]$mergedPr.mergedAt)
-        gh issue comment $implNumber --repo $resolvedRepository --body ("Implementation merged in PR #{0}." -f $mergedPr.number) | Out-Null
     }
 
     $implSnapshot = Get-IssueSnapshot -Repository $resolvedRepository -IssueNumber $implNumber

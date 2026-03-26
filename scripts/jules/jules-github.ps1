@@ -1492,6 +1492,8 @@ function Sync-VorceIssueTracking {
     }
 
     return [pscustomobject]@{
+        SessionId          = $fields["SessionId"]
+        SessionName        = $fields["SessionName"]
         IssueNumber         = $IssueNumber
         QueueState          = $fields["QueueState"]
         RemoteState         = $fields["RemoteState"]

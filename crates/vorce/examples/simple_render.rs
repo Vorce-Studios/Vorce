@@ -10,12 +10,12 @@ use winit::keyboard::{Key, NamedKey};
 use winit::window::WindowAttributes;
 
 fn main() {
-    println!("MapFlow - Simple Render Example");
+    println!("Vorce - Simple Render Example");
     println!("==============================\n");
 
     let event_loop = EventLoop::new().unwrap();
     let window_attributes = WindowAttributes::default()
-        .with_title("MapFlow - Simple Render")
+        .with_title("Vorce - Simple Render")
         .with_inner_size(winit::dpi::PhysicalSize::new(800, 600));
     let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 

@@ -1,6 +1,6 @@
-//! MapFlow - Open source Vj Projection Mapping Software
+//! Vorce - Open source VJ projection mapping software.
 //!
-//! This is the main application crate for MapFlow.
+//! This is the main application crate for Vorce.
 //! VERSION: 2026-03-19-VISUAL-TEST-READY
 
 #![warn(missing_docs)]
@@ -48,7 +48,7 @@ struct MapFlowApp {
 impl ApplicationHandler for MapFlowApp {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.app.is_none() {
-            info!("Initializing MapFlow...");
+            info!("Initializing Vorce...");
 
             let config = if self.is_automation {
                 InitializationConfig::automation()
@@ -391,7 +391,7 @@ fn main() -> Result<()> {
         vorce_ui::config::AppLogLevel::Debug => tracing::Level::DEBUG,
     };
 
-    let file_appender = tracing_appender::rolling::daily("logs", "mapflow.log");
+    let file_appender = tracing_appender::rolling::daily("logs", "vorce.log");
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
 
     let env_filter = tracing_subscriber::EnvFilter::from_default_env()
@@ -419,7 +419,7 @@ fn main() -> Result<()> {
         .with(file_layer)
         .init();
 
-    info!("Starting MapFlow in {:?} mode...", args.mode);
+    info!("Starting Vorce in {:?} mode...", args.mode);
 
     match args.mode {
         Mode::Editor => run_editor()?,

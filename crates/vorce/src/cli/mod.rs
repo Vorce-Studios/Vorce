@@ -1,8 +1,8 @@
 use clap::{Parser, ValueEnum};
 
 #[derive(Parser, Debug)]
-#[command(author, version, about = "MapFlow - Professional Projection Mapping Software", long_about = None)]
-/// Command-line arguments for MapFlow.
+#[command(author, version, about = "Vorce - Professional Projection Mapping Software", long_about = None)]
+/// Command-line arguments for Vorce.
 pub struct CliArgs {
     /// Operating mode
     #[arg(short, long, value_enum, default_value_t = Mode::Editor)]
@@ -30,7 +30,7 @@ pub struct CliArgs {
 }
 
 #[derive(ValueEnum, Clone, Debug, PartialEq, Eq)]
-/// Execution mode for MapFlow.
+/// Execution mode for Vorce.
 pub enum Mode {
     /// Full MapFlow Editor and Rendering
     Editor,

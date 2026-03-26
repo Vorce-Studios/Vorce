@@ -277,7 +277,11 @@ jobs:
             }
 
             const latestStatusesByName = new Map();
-            for (const status of combinedStatus.data.statuses) {
+            for (const status of [...combinedStatus.data.statuses].sort((left, right) => {
+              const leftTime = Date.parse(left.updated_at || left.created_at || '1970-01-01T00:00:00Z');
+              const rightTime = Date.parse(right.updated_at || right.created_at || '1970-01-01T00:00:00Z');
+              return rightTime - leftTime;
+            })) {
               if (!latestStatusesByName.has(status.context)) {
                 latestStatusesByName.set(status.context, {
                   name: status.context,

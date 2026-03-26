@@ -11,7 +11,7 @@ use winit::keyboard::{Key, NamedKey};
 use winit::window::WindowAttributes;
 
 fn main() {
-    println!("MapFlow - Hello World Projection Mapping Example");
+    println!("Vorce - Hello World Projection Mapping Example");
     println!("===============================================\n");
 
     let event_loop = EventLoop::new().unwrap();
