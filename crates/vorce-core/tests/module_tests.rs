@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use vorce_core::module::{
-    HueMappingMode, MapFlowModule, ModuleManager, ModulePartType, ModulePlaybackMode,
+    HueMappingMode, VorceModule, ModuleManager, ModulePartType, ModulePlaybackMode,
     ModuleSocketType, OutputType, PartType,
 };
 
@@ -54,7 +54,7 @@ fn test_module_color_rotation() {
 
 #[test]
 fn test_socket_generation_coverage() {
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 1,
         name: "Test".to_string(),
         color: [1.0; 4],
@@ -153,7 +153,7 @@ fn test_socket_generation_coverage() {
 
 #[test]
 fn test_update_part_position_valid_id_updates() {
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 1,
         name: "Test".to_string(),
         color: [1.0; 4],
@@ -172,7 +172,7 @@ fn test_update_part_position_valid_id_updates() {
 
 #[test]
 fn test_add_remove_connection() {
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 1,
         name: "Test".to_string(),
         color: [1.0; 4],
@@ -206,7 +206,7 @@ fn test_add_remove_connection() {
 
 #[test]
 fn test_update_part_sockets() {
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 1,
         name: "Test".to_string(),
         color: [1.0; 4],
@@ -232,7 +232,7 @@ fn test_update_part_sockets() {
 
 #[test]
 fn test_update_part_sockets_removes_invalid_connections() {
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 1,
         name: "Test".to_string(),
         color: [1.0; 4],
@@ -286,7 +286,7 @@ fn test_update_part_sockets_removes_invalid_connections() {
 
 #[test]
 fn test_update_part_outputs_delegates() {
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 1,
         name: "Test".to_string(),
         color: [1.0; 4],
@@ -508,7 +508,7 @@ fn test_manager_rename_module_duplicate_fails() {
 
 #[test]
 fn test_module_add_part_creates_part_and_increments_id() {
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 1,
         name: "Test Module".to_string(),
         color: [1.0, 1.0, 1.0, 1.0],
@@ -532,7 +532,7 @@ fn test_module_add_part_creates_part_and_increments_id() {
 
 #[test]
 fn test_module_update_part_position_success() {
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 1,
         name: "Test".to_string(),
         color: [1.0; 4],
@@ -550,7 +550,7 @@ fn test_module_update_part_position_success() {
 
 #[test]
 fn test_module_add_connection_adds_to_list() {
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 1,
         name: "Test".to_string(),
         color: [1.0; 4],
@@ -580,7 +580,7 @@ fn test_module_add_connection_adds_to_list() {
 
 #[test]
 fn test_module_remove_connection_removes_exact_match() {
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 1,
         name: "Test".to_string(),
         color: [1.0; 4],

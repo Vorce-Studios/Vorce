@@ -290,7 +290,7 @@ impl Shortcut {
     }
 }
 
-/// Default shortcuts for MapFlow
+/// Default shortcuts for Vorce
 pub struct DefaultShortcuts;
 
 impl DefaultShortcuts {

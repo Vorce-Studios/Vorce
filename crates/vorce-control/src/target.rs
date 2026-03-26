@@ -1,6 +1,6 @@
 //! Control target abstraction
 //!
-//! This module provides a unified abstraction for all controllable parameters in MapFlow.
+//! This module provides a unified abstraction for all controllable parameters in Vorce.
 
 use serde::{Deserialize, Serialize};
 use std::path::{Component, Path};

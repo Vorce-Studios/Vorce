@@ -3,7 +3,7 @@
 //! Traverses the module graph and computes output values.
 //! This handles the full pipeline: Trigger -> Source -> Mask -> Effect -> Layer(Mesh) -> Output.
 
-use crate::module::{MapFlowModule, ModulePartId, ModulePartType};
+use crate::module::{VorceModule, ModulePartId, ModulePartType};
 use std::collections::HashMap;
 
 /// State for individual trigger nodes, stored in the evaluator
@@ -81,7 +81,7 @@ pub struct ModuleGraphIndices {
 
 /// Get the primary render connection index for a module part.
 pub fn primary_render_connection_idx(
-    module: &MapFlowModule,
+    module: &VorceModule,
     indices: &ModuleGraphIndices,
     part_id: ModulePartId,
 ) -> Option<usize> {

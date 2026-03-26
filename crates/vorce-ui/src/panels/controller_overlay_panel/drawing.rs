@@ -417,7 +417,7 @@ impl ControllerOverlayPanel {
             let assignment = assignments.iter().find(|a| a.element_id == element.id);
             match assignment {
                 Some(a) => match &a.target {
-                    MidiAssignmentTarget::MapFlow(_) => Color32::from_rgb(0, 150, 255), // Blue
+                    MidiAssignmentTarget::Vorce(_) => Color32::from_rgb(0, 150, 255), // Blue
                     MidiAssignmentTarget::StreamerBot(_) => Color32::from_rgb(180, 0, 255), // Purple
                     MidiAssignmentTarget::Mixxx(_) => Color32::from_rgb(255, 128, 0), // Orange
                 },

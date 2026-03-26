@@ -1,5 +1,5 @@
 use crate::audio_reactive::AudioTriggerData;
-use crate::module::{MapFlowModule, ModulePartId, SharedMediaState, TriggerType};
+use crate::module::{VorceModule, ModulePartId, SharedMediaState, TriggerType};
 use crate::module_eval::types::TriggerState;
 use crate::module_eval::ModuleEvaluator;
 use rand::RngExt;
@@ -174,7 +174,7 @@ impl ModuleEvaluator {
 
     pub(crate) fn compute_trigger_inputs(
         &self,
-        module: &MapFlowModule,
+        module: &VorceModule,
         trigger_values: &HashMap<ModulePartId, Vec<f32>>,
     ) -> HashMap<ModulePartId, f32> {
         let mut inputs = HashMap::new();
@@ -201,7 +201,7 @@ impl ModuleEvaluator {
 
     pub(crate) fn compute_socket_inputs(
         &self,
-        module: &MapFlowModule,
+        module: &VorceModule,
         trigger_values: &HashMap<ModulePartId, Vec<f32>>,
     ) -> HashMap<ModulePartId, HashMap<usize, f32>> {
         let mut inputs: HashMap<ModulePartId, HashMap<usize, f32>> = HashMap::new();

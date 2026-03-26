@@ -17,7 +17,7 @@ impl ApplicationHandler for NdiPlayerApp {
         if self.window.is_none() {
             info!("Initializing NDI Player window...");
             let attr = Window::default_attributes()
-                .with_title(format!("MapFlow NDI Player: {}", self.source));
+                .with_title(format!("Vorce NDI Player: {}", self.source));
             if let Ok(window) = event_loop.create_window(attr) {
                 self.window = Some(Arc::new(window));
             }

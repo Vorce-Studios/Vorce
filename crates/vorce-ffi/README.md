@@ -1,8 +1,8 @@
 # mapmap-ffi
 
-**MapFlow C/C++ Foreign Function Interface.**
+**Vorce C/C++ Foreign Function Interface.**
 
-`mapmap-ffi` provides C-compatible bindings for the MapFlow core, enabling integration with legacy C++ applications or other languages.
+`mapmap-ffi` provides C-compatible bindings for the Vorce core, enabling integration with legacy C++ applications or other languages.
 
 ## Purpose
 
@@ -11,5 +11,5 @@ As the Rust rewrite (`mapmap`) becomes the primary application, this crate serve
 
 ## Features
 
-- **C Header Generation:** Uses `cbindgen` to generate `mapflow.h`.
+- **C Header Generation:** Uses `cbindgen` to generate `Vorce.h`.
 - **Stable ABI:** Exposes a C-compatible API for core functionality.

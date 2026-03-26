@@ -281,7 +281,7 @@ pub fn render_output_ui(
                             Some("Pairing... (Press Bridge Button)".to_string());
                         let task = async move {
                             let result = vorce_control::hue::api::client::HueClient::register_user(
-                                &ip, "MapFlow",
+                                &ip, "Vorce",
                             )
                             .await
                             .map_err(|e| e.to_string());

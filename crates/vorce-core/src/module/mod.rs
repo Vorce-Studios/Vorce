@@ -1,6 +1,6 @@
 //! Module System - Visual Programming Graph
 //!
-//! This module defines the graph structure used for MapFlow scenes.
+//! This module defines the graph structure used for Vorce scenes.
 //! It is split into submodules for better maintainability.
 
 pub mod config;

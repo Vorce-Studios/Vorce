@@ -202,7 +202,7 @@ fn render_startup_animation_overlay(ctx: &egui::Context, app: &mut App) {
                         ))
                         .show(ui, |ui| {
                             ui.vertical_centered(|ui| {
-                                ui.heading("MapFlow");
+                                ui.heading("Vorce");
                                 ui.label("Startup Animation");
                                 ui.add_space(4.0);
                                 ui.label(source_status);

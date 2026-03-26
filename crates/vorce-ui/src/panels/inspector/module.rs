@@ -1,7 +1,7 @@
 use crate::editors::module_canvas::state::ModuleCanvas;
 use crate::UIAction;
 use egui::Ui;
-use vorce_core::module::{MapFlowModule, ModulePartId};
+use vorce_core::module::{VorceModule, ModulePartId};
 
 /// Show module properties inspector
 #[allow(clippy::too_many_arguments)]
@@ -10,7 +10,7 @@ pub fn show_module_inspector(
     canvas: &mut ModuleCanvas,
     mesh_editor: &mut crate::editors::mesh_editor::MeshEditor,
     last_mesh_edit_id: &mut Option<u64>,
-    module: &mut MapFlowModule,
+    module: &mut VorceModule,
     part_id: ModulePartId,
     shared_media_ids: &[String],
     global_actions: &mut Vec<UIAction>,

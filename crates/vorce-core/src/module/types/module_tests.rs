@@ -1,11 +1,11 @@
 #[cfg(test)]
 mod tests {
     use crate::module::types::{ModulePartType, PartType};
-    use crate::module::{MapFlowModule, ModulePlaybackMode};
+    use crate::module::{VorceModule, ModulePlaybackMode};
 
     #[test]
     fn test_module_add_part_creates_part_and_increments_id() {
-        let mut module = MapFlowModule {
+        let mut module = VorceModule {
             id: 1,
             name: "Test Module".to_string(),
             color: [1.0, 1.0, 1.0, 1.0],
@@ -29,7 +29,7 @@ mod tests {
 
     #[test]
     fn test_module_update_part_position_success() {
-        let mut module = MapFlowModule {
+        let mut module = VorceModule {
             id: 1,
             name: "Test".to_string(),
             color: [1.0; 4],
@@ -47,7 +47,7 @@ mod tests {
 
     #[test]
     fn test_module_add_connection_adds_to_list() {
-        let mut module = MapFlowModule {
+        let mut module = VorceModule {
             id: 1,
             name: "Test".to_string(),
             color: [1.0; 4],
@@ -69,7 +69,7 @@ mod tests {
 
     #[test]
     fn test_module_remove_connection_removes_exact_match() {
-        let mut module = MapFlowModule {
+        let mut module = VorceModule {
             id: 1,
             name: "Test".to_string(),
             color: [1.0; 4],
@@ -91,7 +91,7 @@ mod tests {
     #[test]
     fn test_normalize_inserted_part_type_resolves_output_id_conflict() {
         use crate::module::types::output::OutputType;
-        let mut module = MapFlowModule {
+        let mut module = VorceModule {
             id: 1,
             name: "Test".to_string(),
             color: [1.0; 4],
@@ -151,7 +151,7 @@ mod tests {
         use crate::module::types::layer::LayerType;
         use crate::layer::types::{BlendMode, MappingMode};
 
-        let mut module = MapFlowModule {
+        let mut module = VorceModule {
             id: 1,
             name: "Test".to_string(),
             color: [1.0; 4],
@@ -200,7 +200,7 @@ mod tests {
     fn test_normalize_inserted_part_type_preserves_other_types() {
         use crate::module::types::trigger::TriggerType;
 
-        let mut module = MapFlowModule {
+        let mut module = VorceModule {
             id: 1,
             name: "Test".to_string(),
             color: [1.0; 4],

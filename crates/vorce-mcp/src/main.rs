@@ -9,7 +9,7 @@ async fn main() -> Result<()> {
         .init();
 
     let server = McpServer::new(None);
-    eprintln!("Starting MapFlow MCP Server on stdio...");
+    eprintln!("Starting Vorce MCP Server on stdio...");
 
     server.run_stdio().await?;
 

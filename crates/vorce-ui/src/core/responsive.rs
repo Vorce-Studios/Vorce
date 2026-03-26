@@ -1,4 +1,4 @@
-//! Responsive Layout Helper für MapFlow UI
+//! Responsive Layout Helper für Vorce UI
 //!
 //! Dieses Modul berechnet UI-Größen dynamisch basierend auf der Viewport-Größe.
 

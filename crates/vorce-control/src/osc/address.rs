@@ -32,9 +32,9 @@ pub fn parse_osc_address(address: &str) -> Result<ControlTarget> {
 
     let parts: Vec<&str> = address.trim_start_matches('/').split('/').collect();
 
-    if parts.is_empty() || (parts[0] != "vorce" && parts[0] != "mapflow" && parts[0] != "mapmap") {
+    if parts.is_empty() || (parts[0] != "vorce" && parts[0] != "Vorce" && parts[0] != "mapmap") {
         return Err(ControlError::InvalidMessage(format!(
-            "OSC address must start with /vorce (or legacy /mapflow, /mapmap): {}",
+            "OSC address must start with /vorce (or legacy /Vorce, /mapmap): {}",
             address
         )));
     }
@@ -232,8 +232,8 @@ pub fn control_target_to_address(target: &ControlTarget) -> String {
 mod tests {
     #[test]
     fn test_legacy_namespaces() {
-        // Test /mapflow/
-        let target1 = parse_osc_address("/mapflow/layer/0/opacity").unwrap();
+        // Test /Vorce/
+        let target1 = parse_osc_address("/Vorce/layer/0/opacity").unwrap();
         assert_eq!(target1, ControlTarget::LayerOpacity(0));
 
         // Test /mapmap/
@@ -282,7 +282,7 @@ mod tests {
     #[test]
     fn test_invalid_address() {
         assert!(parse_osc_address("/invalid/address").is_err());
-        assert!(parse_osc_address("/mapflow").is_err());
+        assert!(parse_osc_address("/Vorce").is_err());
         assert!(parse_osc_address("/vorce/layer").is_err());
         assert!(parse_osc_address("/vorce/layer/notanumber/opacity").is_err());
     }

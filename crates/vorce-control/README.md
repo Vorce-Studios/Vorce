@@ -1,6 +1,6 @@
-# MapFlow Control
+# Vorce Control
 
-The control system integration layer for MapFlow, providing interfaces for external hardware and protocols.
+The control system integration layer for Vorce, providing interfaces for external hardware and protocols.
 
 ## Features
 

@@ -1,6 +1,6 @@
 use vorce_core::audio::analyzer_v2::AudioAnalysisV2;
 use vorce_core::module::{
-    AudioBand, AudioTriggerOutputConfig, MapFlowModule, ModulePartType, ModulePlaybackMode,
+    AudioBand, AudioTriggerOutputConfig, VorceModule, ModulePartType, ModulePlaybackMode,
     PartType, TriggerConfig, TriggerMappingMode, TriggerTarget, TriggerType,
 };
 use vorce_core::module_eval::ModuleEvaluator;
@@ -16,7 +16,7 @@ fn test_trigger_inversion_logic() {
     };
     evaluator.update_audio(&analysis);
 
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 1,
         name: "Inversion Test".to_string(),
         color: [1.0; 4],
@@ -60,7 +60,7 @@ fn test_trigger_inversion_logic() {
 #[test]
 fn test_trigger_target_range_mapping() {
     let mut evaluator = ModuleEvaluator::new();
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 2,
         name: "Range Mapping Test".to_string(),
         color: [1.0; 4],

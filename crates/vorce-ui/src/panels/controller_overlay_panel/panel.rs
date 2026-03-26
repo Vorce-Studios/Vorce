@@ -291,14 +291,14 @@ impl ControllerOverlayPanel {
                         let is_learning = self.is_learning();
 
                         // Vorce Learn
-                        let mapflow_btn = if is_learning
+                        let vorce_btn = if is_learning
                             && matches!(self.learn_target, Some(MidiLearnTarget::Vorce))
                         {
                             ui.add(egui::Button::new("⏳ Vorce...").fill(Color32::YELLOW))
                         } else {
                             ui.button("🎯 Vorce")
                         };
-                        if mapflow_btn.clicked() && !is_learning {
+                        if vorce_btn.clicked() && !is_learning {
                             self.learn_target = Some(MidiLearnTarget::Vorce);
                             // Will start learn when element is clicked
                         }

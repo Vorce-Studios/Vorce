@@ -1,13 +1,13 @@
 use super::super::state::ModuleCanvas;
 use super::super::utils;
 use egui::{Color32, Pos2, Rect, Stroke, Vec2};
-use vorce_core::module::MapFlowModule;
+use vorce_core::module::VorceModule;
 
 pub fn draw_mini_map(
     canvas: &ModuleCanvas,
     painter: &egui::Painter,
     canvas_rect: Rect,
-    module: &MapFlowModule,
+    module: &VorceModule,
 ) {
     if module.parts.is_empty() {
         return;

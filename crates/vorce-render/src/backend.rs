@@ -101,7 +101,7 @@ impl WgpuBackend {
 
         let (device, queue) = adapter
             .request_device(&wgpu::DeviceDescriptor {
-                label: Some("MapFlow Device"),
+                label: Some("Vorce Device"),
                 required_features: wgpu::Features::TIMESTAMP_QUERY | wgpu::Features::empty(),
                 required_limits: wgpu::Limits::default(),
                 ..Default::default()

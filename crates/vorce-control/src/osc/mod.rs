@@ -1,20 +1,20 @@
 //! OSC (Open Sound Control) system
 //!
-//! This module provides OSC server and client functionality for remote control of MapFlow.
+//! This module provides OSC server and client functionality for remote control of Vorce.
 //!
 //! ## OSC Address Space
 //!
 //! ```text
-//! /mapflow/layer/{id}/opacity       [f32: 0.0-1.0]
-//! /mapflow/layer/{id}/position      [f32, f32: x, y]
-//! /mapflow/layer/{id}/rotation      [f32: degrees]
-//! /mapflow/layer/{id}/scale         [f32: scale]
-//! /mapflow/layer/{id}/visibility    [bool]
-//! /mapflow/paint/{id}/parameter/{name}  [varies]
-//! /mapflow/effect/{id}/parameter/{name} [varies]
-//! /mapflow/playback/speed           [f32: speed multiplier]
-//! /mapflow/playback/position        [f32: 0.0-1.0]
-//! /mapflow/output/{id}/brightness   [f32: 0.0-1.0]
+//! /Vorce/layer/{id}/opacity       [f32: 0.0-1.0]
+//! /Vorce/layer/{id}/position      [f32, f32: x, y]
+//! /Vorce/layer/{id}/rotation      [f32: degrees]
+//! /Vorce/layer/{id}/scale         [f32: scale]
+//! /Vorce/layer/{id}/visibility    [bool]
+//! /Vorce/paint/{id}/parameter/{name}  [varies]
+//! /Vorce/effect/{id}/parameter/{name} [varies]
+//! /Vorce/playback/speed           [f32: speed multiplier]
+//! /Vorce/playback/position        [f32: 0.0-1.0]
+//! /Vorce/output/{id}/brightness   [f32: 0.0-1.0]
 //! ```
 //!
 //! ## Example Usage

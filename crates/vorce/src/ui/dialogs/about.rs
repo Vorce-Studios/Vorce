@@ -33,7 +33,7 @@ pub fn show(ctx: &Context, show_about: &mut bool) {
             ui.label("© 2026 MrLongNight & Vorce Team");
             ui.hyperlink_to(
                 "GitHub Repository",
-                "https://github.com/MrLongNight/MapFlow",
+                "https://github.com/MrLongNight/Vorce",
             );
 
             ui.add_space(20.0);

@@ -1,5 +1,5 @@
 use crate::module::{
-    MapFlowModule, MeshType, ModulePartId, ModulePartType, ModulizerType, SourceType,
+    VorceModule, MeshType, ModulePartId, ModulePartType, ModulizerType, SourceType,
 };
 use crate::module_eval::evaluator::RenderOp;
 use crate::module_eval::types::{
@@ -11,7 +11,7 @@ impl ModuleEvaluator {
     pub(crate) fn trace_chain_into(
         &self,
         start_node_id: ModulePartId,
-        module: &MapFlowModule,
+        module: &VorceModule,
         op: &mut RenderOp,
         default_mesh: &MeshType,
         indices: &ModuleGraphIndices,

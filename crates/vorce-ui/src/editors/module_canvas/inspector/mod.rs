@@ -14,7 +14,7 @@ use crate::UIAction;
 use egui::{Ui, Vec2};
 use std::collections::HashSet;
 use vorce_core::module::{
-    MapFlowModule, ModuleId, ModulePart, ModulePartId, ModulePartType, OutputType,
+    VorceModule, ModuleId, ModulePart, ModulePartId, ModulePartType, OutputType,
 };
 
 #[derive(Debug, Clone, Default)]
@@ -24,7 +24,7 @@ pub struct InspectorPreviewContext {
 }
 
 pub fn build_preview_context(
-    module: &MapFlowModule,
+    module: &VorceModule,
     part_id: ModulePartId,
 ) -> InspectorPreviewContext {
     let mut output_ids = Vec::new();
@@ -45,7 +45,7 @@ pub fn build_preview_context(
 }
 
 fn collect_downstream_output_ids(
-    module: &MapFlowModule,
+    module: &VorceModule,
     part_id: ModulePartId,
     visited: &mut HashSet<ModulePartId>,
     output_ids: &mut Vec<u64>,
@@ -73,7 +73,7 @@ fn collect_downstream_output_ids(
 }
 
 fn collect_upstream_source_ids(
-    module: &MapFlowModule,
+    module: &VorceModule,
     part_id: ModulePartId,
     visited: &mut HashSet<ModulePartId>,
     source_ids: &mut Vec<ModulePartId>,

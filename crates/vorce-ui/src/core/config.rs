@@ -228,8 +228,9 @@ impl fmt::Display for AnimationProfile {
 /// MIDI element assignment target
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MidiAssignmentTarget {
-    /// Assigned to MapFlow internal control
-    MapFlow(String), // Control target ID
+    /// Assigned to Vorce internal control
+    #[serde(alias = "MapFlow")]
+    Vorce(String), // Control target ID
     /// Assigned to Streamer.bot function
     StreamerBot(String), // Function name
     /// Assigned to Mixxx function
@@ -239,7 +240,7 @@ pub enum MidiAssignmentTarget {
 impl fmt::Display for MidiAssignmentTarget {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::MapFlow(id) => write!(f, "Vorce: {}", id),
+            Self::Vorce(id) => write!(f, "Vorce: {}", id),
             Self::StreamerBot(func) => write!(f, "Streamer.bot: {}", func),
             Self::Mixxx(func) => write!(f, "Mixxx: {}", func),
         }
@@ -378,7 +379,7 @@ pub struct UserConfig {
     #[serde(default = "default_ui_scale")]
     pub ui_scale: f32,
 
-    /// Persisted application log level. Takes effect after restarting MapFlow.
+    /// Persisted application log level. Takes effect after restarting Vorce.
     #[serde(default)]
     pub log_level: AppLogLevel,
 
@@ -636,10 +637,10 @@ impl UserConfig {
         Vec<&MidiAssignment>,
         Vec<&MidiAssignment>,
     ) {
-        let mapflow: Vec<_> = self
+        let vorce: Vec<_> = self
             .midi_assignments
             .iter()
-            .filter(|a| matches!(a.target, MidiAssignmentTarget::MapFlow(_)))
+            .filter(|a| matches!(a.target, MidiAssignmentTarget::Vorce(_)))
             .collect();
         let streamerbot: Vec<_> = self
             .midi_assignments
@@ -651,7 +652,7 @@ impl UserConfig {
             .iter()
             .filter(|a| matches!(a.target, MidiAssignmentTarget::Mixxx(_)))
             .collect();
-        (mapflow, streamerbot, mixxx)
+        (vorce, streamerbot, mixxx)
     }
 
     /// Stellt sicher, dass mindestens ein valides Layoutprofil verfügbar ist.
@@ -715,7 +716,7 @@ mod tests {
     fn test_serialize_deserialize() {
         let config = UserConfig {
             language: "de".to_string(),
-            last_project: Some("/path/to/project.MapFlow".to_string()),
+            last_project: Some("/path/to/project.Vorce".to_string()),
             recent_files: vec!["file1.mp4".to_string(), "file2.mp4".to_string()],
             theme: ThemeConfig::default(),
             target_fps: Some(60.0),

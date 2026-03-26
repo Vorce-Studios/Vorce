@@ -2,7 +2,7 @@ use vorce_core::module::*;
 
 #[test]
 fn test_add_part_defaults() {
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 1,
         name: "Test".to_string(),
         color: [1.0; 4],
@@ -186,7 +186,7 @@ fn test_hue_mapping_mode_serialization() {
 
 #[test]
 fn test_next_part_id_default() {
-    // Create JSON for MapFlowModule missing "next_part_id"
+    // Create JSON for VorceModule missing "next_part_id"
     let json = r#"{
         "id": 1,
         "name": "Test",
@@ -196,6 +196,6 @@ fn test_next_part_id_default() {
         "playback_mode": "LoopUntilManualSwitch"
     }"#;
 
-    let module: MapFlowModule = serde_json::from_str(json).expect("Deserialization failed");
+    let module: VorceModule = serde_json::from_str(json).expect("Deserialization failed");
     assert_eq!(module.next_part_id, 1);
 }

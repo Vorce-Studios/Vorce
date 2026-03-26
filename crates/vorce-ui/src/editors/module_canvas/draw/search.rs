@@ -1,12 +1,12 @@
 use super::super::{state::ModuleCanvas, utils};
 use egui::{Color32, Pos2, Rect, Stroke, Ui, Vec2};
-use vorce_core::module::MapFlowModule;
+use vorce_core::module::VorceModule;
 
 pub fn draw_search_popup(
     canvas: &mut ModuleCanvas,
     ui: &mut Ui,
     canvas_rect: Rect,
-    module: &mut MapFlowModule,
+    module: &mut VorceModule,
 ) {
     let popup_width = 300.0;
     let popup_height = 200.0;

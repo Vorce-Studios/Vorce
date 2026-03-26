@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::render::extract_resource::ExtractResource;
 
-/// Resource to store current audio analysis data from MapFlow.
+/// Resource to store current audio analysis data from Vorce.
 ///
 /// This resource is updated every frame by the `BevyRunner` to reflect the latest
 /// audio spectrum data (e.g., bass, mid, treble) and volume metrics. Systems can
@@ -38,10 +38,10 @@ impl AudioInputResource {
     }
 }
 
-/// Resource for sharing the rendered frame from Bevy with MapFlow.
+/// Resource for sharing the rendered frame from Bevy with Vorce.
 ///
 /// This resource holds the handle to the render target texture and a shared buffer
-/// containing the pixel data of the last rendered frame. This allows MapFlow to
+/// containing the pixel data of the last rendered frame. This allows Vorce to
 /// display the Bevy scene as a layer or texture.
 #[derive(Resource, Clone, Default, ExtractResource)]
 pub struct BevyRenderOutput {
@@ -68,10 +68,10 @@ pub struct ReadbackBuffer {
     pub size: u64,
 }
 
-/// Resource that maps MapFlow Node IDs to Bevy Entity IDs.
+/// Resource that maps Vorce Node IDs to Bevy Entity IDs.
 ///
 /// This allows the system to update existing Bevy entities when their corresponding
-/// MapFlow node properties change, rather than recreating them every frame.
+/// Vorce node properties change, rather than recreating them every frame.
 ///
 /// Key is `(module_id, part_id)`.
 #[derive(Resource, Default)]
@@ -80,14 +80,17 @@ pub struct BevyNodeMapping {
     pub entities: std::collections::HashMap<(u64, u64), Entity>,
 }
 
-/// Resource that stores the current evaluated trigger values for MapFlow nodes.
+/// Resource that stores the current evaluated trigger values for Vorce nodes.
 ///
 /// This allows Bevy systems to react to logic signals from the node graph
 /// (e.g., triggering a particle burst when a specific node activates).
 ///
 /// Key is `(module_id, part_id)`.
 #[derive(Resource, Default)]
-pub struct MapFlowTriggerResource {
+pub struct VorceTriggerResource {
     /// Map from (Module ID, Part ID) to the trigger value (0.0 - 1.0).
     pub trigger_values: std::collections::HashMap<(u64, u64), f32>,
 }
+
+/// Backward-compatible alias for older integrations.
+pub type MapFlowTriggerResource = VorceTriggerResource;

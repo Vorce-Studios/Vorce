@@ -568,48 +568,45 @@ for ($i = 0; $i -lt $implementationNumbers.Count; $i++) {
     $sessionId = $null
 
     if (-not (Test-ImplementationComplete -Snapshot $implSnapshot)) {
-    if ($implSnapshot.SessionReference) {
-        $sessionId = [string]$implSnapshot.SessionReference.SessionId
-        Write-Step ("Verwende bestehende Jules Session {0} fuer Issue #{1}" -f $sessionId, $implNumber)
-        $session = Get-JulesSession -SessionIdOrName $sessionId -ApiKey $ApiKey
-        $trackingSnapshot = Sync-TrackingAndMirrorFields -Repository $resolvedRepository -IssueNumber $implNumber -Session $session -StartingBranch "main"
+        $startNewSession = $true
+
+        if ($implSnapshot.SessionReference) {
+            $sessionId = [string]$implSnapshot.SessionReference.SessionId
+            Write-Step ("Pruefe bestehende Jules Session {0} fuer Issue #{1}" -f $sessionId, $implNumber)
+            $session = Get-JulesSession -SessionIdOrName $sessionId -ApiKey $ApiKey
+            $trackingSnapshot = Sync-TrackingAndMirrorFields -Repository $resolvedRepository -IssueNumber $implNumber -Session $session -StartingBranch "main"
 
             $state = [string]$session.state
-            if (@("AWAITING_PLAN_APPROVAL", "AWAITING_USER_FEEDBACK", "PAUSED", "FAILED") -contains $state) {
-                $trackingRemoteState = if ($null -ne $trackingSnapshot -and $trackingSnapshot.PSObject.Properties.Name -contains "RemoteState") {
-                    ([string]$trackingSnapshot.RemoteState).ToLowerInvariant()
-                } else {
-                    ""
-                }
-                $trackingPullRequestUrl = if ($null -ne $trackingSnapshot -and $trackingSnapshot.PSObject.Properties.Name -contains "PullRequestUrl") {
-                    [string]$trackingSnapshot.PullRequestUrl
-                } else {
-                    ""
-                }
+            $trackingRemoteState = if ($null -ne $trackingSnapshot -and $trackingSnapshot.PSObject.Properties.Name -contains "RemoteState") {
+                ([string]$trackingSnapshot.RemoteState).ToLowerInvariant()
+            } else {
+                ""
+            }
 
-                if ($trackingRemoteState -eq "merged" -and -not [string]::IsNullOrWhiteSpace($trackingPullRequestUrl)) {
-                    $mergedPr = Get-GitHubPullRequest -Repository $resolvedRepository -PullRequestUrl $trackingPullRequestUrl
-                    if ($null -ne $mergedPr -and [string]$mergedPr.state -eq "MERGED") {
-                        $mergedAt = if ($mergedPr.PSObject.Properties.Name -contains "mergedAt" -and -not [string]::IsNullOrWhiteSpace([string]$mergedPr.mergedAt)) {
-                            [string]$mergedPr.mergedAt
-                        } elseif ($mergedPr.PSObject.Properties.Name -contains "updatedAt") {
-                            [string]$mergedPr.updatedAt
-                        } else {
-                            Get-Date -Format "yyyy-MM-dd"
-                        }
-
-                        Update-ImplementationFields -Repository $resolvedRepository -IssueNumber $implNumber -Status "Done" -SessionId $sessionId -RemoteState "merged" -WorkBranch ([string]$mergedPr.headRefName) -LastUpdate $mergedAt
-                        gh issue comment $implNumber --repo $resolvedRepository --body ("Implementation already merged in PR #{0}; vorhandene Jules Session ist {1}." -f $mergedPr.number, $state) | Out-Null
-                    } else {
-                        Update-ImplementationFields -Repository $resolvedRepository -IssueNumber $implNumber -Status "Blocked" -SessionId $sessionId -RemoteState ([string]$session.state).ToLowerInvariant() -WorkBranch "main" -LastUpdate (Get-Date -Format "yyyy-MM-dd")
-                        throw ("Jules Session fuer Issue #{0} braucht Aufmerksamkeit: {1}" -f $implNumber, $state)
-                    }
+            if (@("QUEUED", "PLANNING", "IN_PROGRESS") -contains $state) {
+                Write-Step ("Verwende aktive Jules Session {0} fuer Issue #{1}" -f $sessionId, $implNumber)
+                $startNewSession = $false
+            } elseif (@("AWAITING_PLAN_APPROVAL", "AWAITING_USER_FEEDBACK", "PAUSED", "FAILED") -contains $state) {
+                if ($trackingRemoteState -eq "merged") {
+                    Write-Step ("Vorhandene Jules Session {0} ist historisch ({1}, merged). Starte neue Session fuer offenes Issue #{2}." -f $sessionId, $state, $implNumber)
+                    $session = $null
+                    $sessionId = $null
                 } else {
                     Update-ImplementationFields -Repository $resolvedRepository -IssueNumber $implNumber -Status "Blocked" -SessionId $sessionId -RemoteState ([string]$session.state).ToLowerInvariant() -WorkBranch "main" -LastUpdate (Get-Date -Format "yyyy-MM-dd")
                     throw ("Jules Session fuer Issue #{0} braucht Aufmerksamkeit: {1}" -f $implNumber, $state)
                 }
+            } elseif (@("COMPLETED") -contains $state -or $trackingRemoteState -eq "merged") {
+                Write-Step ("Vorhandene Jules Session {0} ist abgeschlossen/merged, aber Issue #{1} ist noch nicht Done. Starte neue Session." -f $sessionId, $implNumber)
+                $session = $null
+                $sessionId = $null
+            } else {
+                Write-Step ("Vorhandene Jules Session {0} ist in Zustand '{1}'. Starte neue Session fuer Issue #{2}." -f $sessionId, $state, $implNumber)
+                $session = $null
+                $sessionId = $null
             }
-        } else {
+        }
+
+        if ($startNewSession) {
             Write-Step ("Starte neue Jules Session fuer Issue #{0}" -f $implNumber)
             $sessionResultRaw = & "$ScriptDir\create-jules-session.ps1" -IssueNumber $implNumber -Repository $resolvedRepository -AutoCreatePr:([bool]$AutoCreatePr) -ApiKey $ApiKey
             $sessionResult = @(

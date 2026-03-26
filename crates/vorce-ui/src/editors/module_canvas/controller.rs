@@ -1,6 +1,6 @@
 use super::state::ModuleCanvas;
 use super::types::CanvasAction;
-use vorce_core::module::{MapFlowModule, ModulePartId};
+use vorce_core::module::{VorceModule, ModulePartId};
 
 #[cfg(feature = "midi")]
 pub fn process_midi_message(canvas: &mut ModuleCanvas, message: vorce_control::midi::MidiMessage) {
@@ -39,7 +39,7 @@ pub fn process_midi_message(canvas: &mut ModuleCanvas, message: vorce_control::m
 #[cfg(not(feature = "midi"))]
 pub fn process_midi_message(_canvas: &mut ModuleCanvas, _message: ()) {}
 
-pub fn safe_delete_selection(canvas: &mut ModuleCanvas, module: &mut MapFlowModule) {
+pub fn safe_delete_selection(canvas: &mut ModuleCanvas, module: &mut VorceModule) {
     if canvas.selected_parts.is_empty() {
         return;
     }
@@ -79,7 +79,7 @@ pub fn safe_delete_selection(canvas: &mut ModuleCanvas, module: &mut MapFlowModu
     canvas.selected_parts.clear();
 }
 
-pub fn apply_undo_action(module: &mut MapFlowModule, action: &CanvasAction) {
+pub fn apply_undo_action(module: &mut VorceModule, action: &CanvasAction) {
     match action {
         CanvasAction::AddPart { part_id, .. } => {
             module.parts.retain(|p| p.id != *part_id);
@@ -120,7 +120,7 @@ pub fn apply_undo_action(module: &mut MapFlowModule, action: &CanvasAction) {
     }
 }
 
-pub fn apply_redo_action(module: &mut MapFlowModule, action: &CanvasAction) {
+pub fn apply_redo_action(module: &mut VorceModule, action: &CanvasAction) {
     match action {
         CanvasAction::AddPart { part_data, .. } => {
             module.parts.push(part_data.clone());

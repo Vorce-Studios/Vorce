@@ -1,4 +1,4 @@
-//! MapFlow UI - ImGui and egui Integration
+//! Vorce UI - ImGui and egui Integration
 //!
 //! This crate provides the user interface layer using ImGui (legacy) and egui (Phase 6+), including:
 //! - ImGui context setup (Phase 0-5)

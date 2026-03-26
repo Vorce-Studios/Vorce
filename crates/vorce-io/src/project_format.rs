@@ -1,4 +1,4 @@
-//! Defines the on-disk project file format for MapFlow.
+//! Defines the on-disk project file format for Vorce.
 //!
 //! This module specifies the structure of the project file, which is serialized
 //! to and from RON or JSON. It includes metadata and the core application state.
@@ -24,7 +24,7 @@ const MAX_PROJECT_FILE_SIZE: u64 = 50 * 1024 * 1024;
 #[cfg(test)]
 const MAX_PROJECT_FILE_SIZE: u64 = 10 * 1024; // 10 KB for testing
 
-/// Represents the top-level structure of a saved MapFlow project file.
+/// Represents the top-level structure of a saved Vorce project file.
 ///
 /// This struct is what gets serialized to/from RON or JSON. It wraps the
 /// main `AppState` with metadata for versioning and tracking.

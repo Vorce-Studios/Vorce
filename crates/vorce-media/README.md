@@ -1,6 +1,6 @@
-# MapFlow Media
+# Vorce Media
 
-Video decoding and playback engine for MapFlow.
+Video decoding and playback engine for Vorce.
 
 ## Features
 

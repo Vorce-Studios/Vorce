@@ -29,7 +29,7 @@ Diese Punkte wurden durch die aktuelle Deep-Scan-Analyse der Subagents neu aufge
 
 Diese Punkte aus den Berichten vom 18.03.2026 wurden in der aktuellen Analyse als bereits adressiert oder verbessert eingestuft:
 
-*   **Node-Graph Dirty-Marking**: `DOC-C10` bemängelte, dass `get_module_mut()` den Graphen sofort dirty markiert. Die aktuelle Code-Analyse zeigt, dass dies (laut Implementierung in `mapflow-core`) entkoppelt wurde.
+*   **Node-Graph Dirty-Marking**: `DOC-C10` bemängelte, dass `get_module_mut()` den Graphen sofort dirty markiert. Die aktuelle Code-Analyse zeigt, dass dies (laut Implementierung in `Vorce-core`) entkoppelt wurde.
 *   **Doku-Migration**: Der "Loose Files"-Drift aus `DOC-C11` ist weitgehend bereinigt; die Struktur in `docs/` ist nun konsistenter (auch wenn inhaltlicher Drift bei Features bleibt).
 *   **Basis-Node-Architektur**: Die in `DOC-C10` geforderten stabilen Schema-Metadaten für Sockets scheinen in den letzten Tagen teilweise implementiert worden zu sein (identifiziert durch den Subagent-Investigator).
 
@@ -40,7 +40,7 @@ Diese Punkte aus den Berichten vom 18.03.2026 wurden in der aktuellen Analyse al
 Hier decken sich die Analysen, wobei die Archiv-Berichte oft eine höhere Detailtiefe bei der Feature-Matrix bieten:
 
 *   **Feature-Lücken in der Runtime**: Sowohl mein Audit als auch `DOC-C10/C11` bestätigen, dass **Masken, Blend-Modes und Source-Transforms** im Core deklariert, aber in der Runtime weitgehend ignoriert oder nur als Stubs vorhanden sind.
-*   **NDI/SRT/HAP Reifegrad**: Die Einstufung als "Experimental/Stub" wird durch alle Berichte gestützt. Die aktuelle Analyse bestätigt, dass `crates/mapflow-io/src/stream/srt.rs` weiterhin ein reiner Code-Stub ist.
+*   **NDI/SRT/HAP Reifegrad**: Die Einstufung als "Experimental/Stub" wird durch alle Berichte gestützt. Die aktuelle Analyse bestätigt, dass `crates/Vorce-io/src/stream/srt.rs` weiterhin ein reiner Code-Stub ist.
 *   **Legacy-imgui**: Mein Audit bestätigt die Archiv-Warnung, dass `imgui`-Reste (trotz egui-Migration) den Workspace unnötig belasten.
 
 ---

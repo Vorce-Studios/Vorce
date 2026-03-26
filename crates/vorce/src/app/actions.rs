@@ -296,7 +296,7 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
             }
             UIAction::OpenLicense => {
                 app.egui_context.open_url(egui::OpenUrl::new_tab(
-                    "https://github.com/MrLongNight/MapFlow/blob/main/LICENSE",
+                    "https://github.com/MrLongNight/Vorce/blob/main/LICENSE",
                 ));
             }
 
@@ -391,7 +391,7 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     use vorce_ui::config::MidiAssignmentTarget;
                     app.ui_state.user_config.set_midi_assignment(
                         &element_id,
-                        MidiAssignmentTarget::MapFlow(target_id.clone()),
+                        MidiAssignmentTarget::Vorce(target_id.clone()),
                     );
                     tracing::info!(
                         "MIDI Assignment set via Global Learn: {} -> {}",

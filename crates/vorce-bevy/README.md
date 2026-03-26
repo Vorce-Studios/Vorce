@@ -1,16 +1,16 @@
-# MapFlow Bevy Integration
+# Vorce Bevy Integration
 
-The **MapFlow Bevy** crate provides integration with the [Bevy](https://bevyengine.org/) game engine,
-enabling high-performance 3D rendering, particle systems, and advanced visual effects within the MapFlow ecosystem.
+The **Vorce Bevy** crate provides integration with the [Bevy](https://bevyengine.org/) game engine,
+enabling high-performance 3D rendering, particle systems, and advanced visual effects within the Vorce ecosystem.
 
 ## Overview
 
-This crate serves as the bridge between MapFlow's core architecture and Bevy's ECS (Entity Component System) and rendering capabilities.
-It allows MapFlow to leverage Bevy's robust 3D features while maintaining its own application lifecycle.
+This crate serves as the bridge between Vorce's core architecture and Bevy's ECS (Entity Component System) and rendering capabilities.
+It allows Vorce to leverage Bevy's robust 3D features while maintaining its own application lifecycle.
 
 ## Features
 
-- **Bevy ECS Integration**: Seamlessly run Bevy systems alongside MapFlow logic.
+- **Bevy ECS Integration**: Seamlessly run Bevy systems alongside Vorce logic.
 - **3D Rendering**: Full PBR (Physically Based Rendering) support via Bevy's renderer.
 - **Particle Systems**: GPU-accelerated particle effects powered by [`bevy_enoki`](https://crates.io/crates/bevy_enoki).
 - **Atmospheric Rendering**: Realistic sky and atmosphere rendering using [`bevy_atmosphere`](https://crates.io/crates/bevy_atmosphere).
