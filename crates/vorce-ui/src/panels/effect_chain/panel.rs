@@ -463,17 +463,11 @@ impl EffectChainPanel {
                                             load_preset_path = Some(preset.path.clone());
                                             close_browser = true;
                                         }
-                                        crate::widgets::custom::render_info_label(
-                                            ui,
-                                            &preset.category,
-                                        );
+                                        ui.weak(&preset.category);
                                     });
                                 }
                                 if self.presets.is_empty() {
-                                    crate::widgets::custom::render_info_label(
-                                        ui,
-                                        &locale.t("effect-no-presets"),
-                                    );
+                                    ui.label(locale.t("effect-no-presets"));
                                 }
                             });
                     });

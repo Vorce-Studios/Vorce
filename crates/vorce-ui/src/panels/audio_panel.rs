@@ -167,10 +167,7 @@ impl AudioPanel {
 
                         ui.scope_builder(egui::UiBuilder::new().max_rect(rect), |ui| {
                             ui.centered_and_justified(|ui| {
-                                crate::widgets::custom::render_info_label(
-                                    ui,
-                                    &locale.t("no-signal"),
-                                );
+                                ui.label(locale.t("no-signal"));
                             });
                         });
                     }
