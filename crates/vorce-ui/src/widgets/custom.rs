@@ -308,7 +308,10 @@ pub fn icon_button_simple(
     // Accessibility info
     let enabled = ui.is_enabled();
     let label = if hover_text.is_empty() {
-        icon.file_name().replace("ultimate_", "").replace(".svg", "").replace("_", " ")
+        icon.file_name()
+            .replace("ultimate_", "")
+            .replace(".svg", "")
+            .replace("_", " ")
     } else {
         hover_text.to_string()
     };
@@ -474,7 +477,10 @@ pub fn icon_button_compact(
     // Accessibility info
     let enabled = ui.is_enabled();
     let label = if hover_text.is_empty() {
-        icon.file_name().replace("ultimate_", "").replace(".svg", "").replace("_", " ")
+        icon.file_name()
+            .replace("ultimate_", "")
+            .replace(".svg", "")
+            .replace("_", " ")
     } else {
         hover_text.to_string()
     };
@@ -751,7 +757,11 @@ pub fn hold_to_action_icon(
     // Accessibility info
     let enabled = ui.is_enabled();
     let label = if hover_text.is_empty() {
-        let icon_name = icon.file_name().replace("ultimate_", "").replace(".svg", "").replace("_", " ");
+        let icon_name = icon
+            .file_name()
+            .replace("ultimate_", "")
+            .replace(".svg", "")
+            .replace("_", " ");
         format!("Hold to confirm {}...", icon_name)
     } else {
         format!("{} (Hold to confirm)", hover_text)
@@ -854,8 +864,15 @@ pub fn hold_to_action_icon(
     if !hover_text.is_empty() {
         response.on_hover_text(format!("{} (Hold to confirm)", hover_text));
     } else {
-        let icon_name = icon.file_name().replace("ultimate_", "").replace(".svg", "").replace("_", " ");
-        response.on_hover_text(format!("Hold to confirm {}... (Mouse or Space/Enter)", icon_name));
+        let icon_name = icon
+            .file_name()
+            .replace("ultimate_", "")
+            .replace(".svg", "")
+            .replace("_", " ");
+        response.on_hover_text(format!(
+            "Hold to confirm {}... (Mouse or Space/Enter)",
+            icon_name
+        ));
     }
 
     triggered
