@@ -49,7 +49,7 @@ crossbeam-channel = "0.5"
 ecolor = "0.33.3"
 egui = { version = "0.33.3", features = ["serde"] }
 egui-wgpu = "0.33.3"
-egui-winit = "0.33.3"
+egui-winit = "0.34.1"
 egui_extras = { version = "0.33.3", features = ["image", "file", "svg"] }
 egui_node_editor = "0.9.0"
 emath = "0.33.3"
