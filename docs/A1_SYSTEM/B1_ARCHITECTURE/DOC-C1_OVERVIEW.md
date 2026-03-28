@@ -49,6 +49,7 @@ graph TD
 Vorce trennt strikt zwischen Logik-Update (fest 60Hz) und Render-Update (VSync).
 
 ### Phase A: Logic Update (`logic.rs`)
+
 1. **Input Sampling**: Gather MIDI/OSC/Keyboard Events.
 2. **Audio Analysis**: FFT-Berechnung (9 Bänder) via `AudioAnalyzer`.
 3. **Graph Evaluation**: `ModuleEvaluator` berechnet Knoten-Zustände, Trigger und Signalfluss.
@@ -56,6 +57,7 @@ Vorce trennt strikt zwischen Logik-Update (fest 60Hz) und Render-Update (VSync).
 5. **Command Generation**: Erzeugung von `SourceCommands` und `RenderOps`.
 
 ### Phase B: Render Update (`render.rs`)
+
 1. **Texture Preparation**: Upload frischer Frames in GPU-Texturen.
 2. **Effect Processing**: Abarbeitung der WGSL-Shader-Ketten pro Layer.
 3. **Compositing**: Finale Mischung aller Layer auf die Ziel-Outputs (Warping/Masking).
@@ -68,20 +70,20 @@ Vorce trennt strikt zwischen Logik-Update (fest 60Hz) und Render-Update (VSync).
 Der fachliche Datenfluss folgt dem Prinzip:
 `TRIGGER → SOURCE → MODULIZER → LAYER → OUTPUT`
 
-*   **Trigger**: Signale (Audio, MIDI, Random), die Parameter steuern.
-*   **Source**: Video, Bild, Shader-Generator oder Live-Input.
-*   **Modulizer**: Effekte, Blend-Modes und Masken.
-*   **Layer**: Gruppierung und räumliche Anordnung.
-*   **Output**: Physikalische Ausgänge (Projektoren) inkl. Edge-Blending.
+* **Trigger**: Signale (Audio, MIDI, Random), die Parameter steuern.
+* **Source**: Video, Bild, Shader-Generator oder Live-Input.
+* **Modulizer**: Effekte, Blend-Modes und Masken.
+* **Layer**: Gruppierung und räumliche Anordnung.
+* **Output**: Physikalische Ausgänge (Projektoren) inkl. Edge-Blending.
 
 ---
 
 ## 4. Render-Pipeline & Threading
 
 Aktuell nutzt Vorce ein asynchrones Modell für Medien-Frames:
-- **Decode-Thread**: Erzeugt Frames aus Video-Quellen.
-- **Upload-Thread**: Lädt Daten via Staging-Buffer in GPU-Texturen (WGPU).
-- **Render-Thread**: Nutzt die Texturen für die Komposition.
+* **Decode-Thread**: Erzeugt Frames aus Video-Quellen.
+* **Upload-Thread**: Lädt Daten via Staging-Buffer in GPU-Texturen (WGPU).
+* **Render-Thread**: Nutzt die Texturen für die Komposition.
 
 Synchronisation erfolgt über bounded `crossbeam_channels`, um Backpressure zu kontrollieren.
 
@@ -90,8 +92,8 @@ Synchronisation erfolgt über bounded `crossbeam_channels`, um Backpressure zu k
 ## 5. UI-Architektur
 
 Das UI basiert auf `egui` (Retained Mode Style).
-- **Unified Inspector**: Kontextsensitive Steuerung, die sich automatisch an das selektierte Element (Module, Layer, Output) anpasst.
-- **Module Canvas**: Custom-Knoteneditor für die visuelle Programmierung (keine externen Node-Libs).
+* **Unified Inspector**: Kontextsensitive Steuerung, die sich automatisch an das selektierte Element (Module, Layer, Output) anpasst.
+* **Module Canvas**: Custom-Knoteneditor für die visuelle Programmierung (keine externen Node-Libs).
 
 ---
 *Referenzen: ../DOC-A1_MODULE_TREE.md (Physische Struktur)*

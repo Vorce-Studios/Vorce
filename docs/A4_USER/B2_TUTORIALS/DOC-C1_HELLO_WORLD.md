@@ -6,7 +6,7 @@ Welcome to your first projection mapping example with Vorce! This tutorial will 
 
 1. [What is Projection Mapping?](#what-is-projection-mapping)
 2. [Prerequisites](#prerequisites)
-3. [Understanding Vorce Architecture](#understanding-Vorce-architecture)
+3. [Understanding Vorce Architecture](#understanding-vorce-architecture)
 4. [Building Your First Projection](#building-your-first-projection)
 5. [Running the Example](#running-the-example)
 6. [Understanding the Code](#understanding-the-code)
@@ -83,6 +83,7 @@ Vorce/
 ## Building Your First Projection
 
 Let's create a simple "Hello World" projection mapping example that:
+
 1. Creates a window
 2. Loads a "Hello World" image or creates a colored texture
 3. Projects it onto a quad mesh with basic warping

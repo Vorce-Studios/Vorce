@@ -12,3 +12,5 @@ Detaillierte Anleitungen zur Bedienung von Vorce.
 * [**DOC-C6_SHORTCUTS.md**](./DOC-C6_SHORTCUTS.md): Effizientes Arbeiten via Tastatur.
 * [**DOC-C7_MIDI_CONTROL.md**](./DOC-C7_MIDI_CONTROL.md): Einrichtung und Verwendung von MIDI-Controllern.
 * [**DOC-C11_MIGRATION_NOTES.md**](./DOC-C11_MIGRATION_NOTES.md): Notes for migrating from MapFlow to Vorce V2.
+* [**DOC-C16_ANALYZER_MODULE.md**](./DOC-C16_ANALYZER_MODULE.md): FFT Analyzer Modul.
+* [**DOC-C17_RENDERING.md**](./DOC-C17_RENDERING.md): Export und GPU-Settings.

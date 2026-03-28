@@ -199,6 +199,7 @@ bash scripts/Vorce/package-macos-app.sh 0.2.0
 ```
 
 Notes:
+
 - The current macOS beta build uses the core UI and rendering path without the default Windows/Linux feature set.
 - The packaging script creates `target/release/Vorce.app` and copies runtime `assets/` and `resources/` into the bundle.
 
@@ -217,18 +218,18 @@ Notes:
 ### Install Dependencies
 
 1. **Install Visual Studio 2022** (Community Edition is free)
-   - Download from: https://visualstudio.microsoft.com/downloads/
+   - Download from: <https://visualstudio.microsoft.com/downloads/>
    - During installation, select:
      - "Desktop development with C++"
      - Windows 10/11 SDK
 
 2. **Install Rust**
-   - Download from: https://rustup.rs/
+   - Download from: <https://rustup.rs/>
    - Run `rustup-init.exe` and follow instructions
    - Choose "default installation"
 
 3. **Optional: Install FFmpeg** (for video playback)
-   - Download from: https://www.gyan.dev/ffmpeg/builds/
+   - Download from: <https://www.gyan.dev/ffmpeg/builds/>
    - Extract to `C:\ffmpeg`
    - Add `C:\ffmpeg\bin` to PATH
 
@@ -313,6 +314,7 @@ cargo bench
 ### Linux: "error: linker 'cc' not found"
 
 Install build essentials:
+
 ```bash
 sudo apt-get install build-essential
 ```
@@ -320,6 +322,7 @@ sudo apt-get install build-essential
 ### Linux: "could not find library -lxcb"
 
 Install X11 development libraries:
+
 ```bash
 sudo apt-get install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev
 ```
@@ -327,6 +330,7 @@ sudo apt-get install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfi
 ### macOS: "xcrun: error: invalid active developer path"
 
 Install Xcode Command Line Tools:
+
 ```bash
 xcode-select --install
 ```
@@ -340,21 +344,24 @@ Install Visual Studio 2022 with C++ desktop development workload.
 Make sure FFmpeg development libraries are installed:
 
 **Linux (Ubuntu/Debian):**
+
 ```bash
 sudo apt-get install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
 ```
 
 **macOS:**
+
 ```bash
 brew install ffmpeg
 ```
 
 **Windows:**
-Download pre-built FFmpeg libraries from https://www.gyan.dev/ffmpeg/builds/
+Download pre-built FFmpeg libraries from <https://www.gyan.dev/ffmpeg/builds/>
 
 ### Slow debug builds
 
 Use release mode or enable some optimizations in debug:
+
 ```bash
 cargo build --release
 # or
@@ -364,8 +371,9 @@ CARGO_PROFILE_DEV_OPT_LEVEL=1 cargo build
 ### GPU driver issues
 
 Ensure your GPU drivers are up-to-date:
-- **NVIDIA:** Download from https://www.nvidia.com/drivers
-- **AMD:** Download from https://www.amd.com/support
+
+- **NVIDIA:** Download from <https://www.nvidia.com/drivers>
+- **AMD:** Download from <https://www.amd.com/support>
 - **Intel:** Usually auto-updated with Windows Update
 
 ---
@@ -375,4 +383,4 @@ Ensure your GPU drivers are up-to-date:
 - **Documentation:** See [docs/](../../DOC-A0_README.md) directory
 - **Architecture:** [Architecture](../../dev/architecture/README.md)
 - **Contributing:** [CONTRIBUTING.md](../../../CONTRIBUTING.md)
-- **Issues:** https://github.com/MrLongNight/Vorce/issues
+- **Issues:** <https://github.com/MrLongNight/Vorce/issues>

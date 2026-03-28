@@ -20,14 +20,18 @@ Befehle für die `gh` CLI (GitHub CLI):
 Dateipfade relativ zum Repository-Root:
 
 ### Auto-Merge (Jules)
+
 Datei: `.github/workflows/CI-05_pr-automation.yml`
+
 ```yaml
 env:
   AUTO_MERGE_ENABLED: true # false zum Deaktivieren
 ```
 
 ### CodeQL PR-Scans
+
 Datei: `.github/workflows/CI-02_security-scan.yml`
+
 ```yaml
 env:
   SCAN_ON_PR_ENABLED: true # false zum Deaktivieren

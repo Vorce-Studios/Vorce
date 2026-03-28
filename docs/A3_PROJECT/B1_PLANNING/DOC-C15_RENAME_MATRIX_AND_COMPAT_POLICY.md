@@ -44,15 +44,18 @@ For each externally visible identifier, the following strict compatibility polic
 ## 4. Migration Note Outline
 
 ### For Contributors
+
 - All new crates must use the `vorce` prefix.
 - Use `VORCE_` and `VORCE_PROJECT_*` for environment variables.
 - Run the provided renaming scripts before opening new PRs.
 - Avoid using "MapMap" or "MapFlow" in any new documentation or code comments outside of explicit compatibility contexts.
 
 ### For Users
+
 - Your existing `.mapmap` and `.mflow` project files are safe. Opening them in the new version will automatically upgrade them, and the next save will create a `.vorce` file.
 - The application binary is now `Vorce`. Please update any custom shortcuts or startup scripts.
 
 ### For Integrators (OSC, APIs)
+
 - OSC commands must migrate to the `/vorce/` namespace. The legacy `/mapmap/` and `/mapflow/` namespaces are strictly kept as explicit compatibility aliases and will issue deprecation warnings.
 - If you rely on environment variables for automation, ensure they start with `VORCE_`.

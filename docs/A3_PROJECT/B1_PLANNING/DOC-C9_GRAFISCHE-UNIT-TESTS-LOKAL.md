@@ -224,10 +224,10 @@ Der neue `run_app`-basierte Automationsmodus kann lokal zum Erstellen von determ
 
 Die benoetigten CLI-Parameter sind:
 
-*   `--mode automation`: Aktiviert den Automationsmodus, welcher schwergewichtige Dienste wie MIDI, Hue, MCP und Audio-Ausgabe umgeht.
-*   `--fixture <PFAD_ZUM_PROJEKT>`: (Optional) Laedt sofort beim Start die angegebene `.mflow` Projektdatei.
-*   `--exit-after-frames <ANZAHL>`: (Optional) Beendet die Applikation automatisch, nachdem exakt diese Anzahl an Frames gerendert wurde.
-*   `--screenshot-dir <PFAD_ZUM_ORDNER>`: (Optional) Wenn angegeben, wird *direkt vor dem automatischen Beenden* (also nach `exit-after-frames`) ein Frame-Buffer-Readback ausgeloest und das Bild als `automation_frame_<ANZAHL>.png` in diesem Ordner abgelegt. Alternativ kann die Umgebungsvariable `Vorce_VISUAL_CAPTURE_OUTPUT_DIR` verwendet werden.
+- `--mode automation`: Aktiviert den Automationsmodus, welcher schwergewichtige Dienste wie MIDI, Hue, MCP und Audio-Ausgabe umgeht.
+- `--fixture <PFAD_ZUM_PROJEKT>`: (Optional) Laedt sofort beim Start die angegebene `.mflow` Projektdatei.
+- `--exit-after-frames <ANZAHL>`: (Optional) Beendet die Applikation automatisch, nachdem exakt diese Anzahl an Frames gerendert wurde.
+- `--screenshot-dir <PFAD_ZUM_ORDNER>`: (Optional) Wenn angegeben, wird *direkt vor dem automatischen Beenden* (also nach `exit-after-frames`) ein Frame-Buffer-Readback ausgeloest und das Bild als `automation_frame_<ANZAHL>.png` in diesem Ordner abgelegt. Alternativ kann die Umgebungsvariable `Vorce_VISUAL_CAPTURE_OUTPUT_DIR` verwendet werden.
 
 **Beispielaufruf lokal:**
 
