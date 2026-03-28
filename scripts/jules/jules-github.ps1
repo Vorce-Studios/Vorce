@@ -563,7 +563,9 @@ function Get-VorceProjectConfig {
     $projectNumberValue = $env:VORCE_PROJECT_NUMBER
     if ([string]::IsNullOrWhiteSpace($projectNumberValue)) {
         $repositoryParts = (Resolve-GitHubRepository -Repository $Repository).Split("/")
-        $projectOwnerFallback = if (-not [string]::IsNullOrWhiteSpace($env:MAPFLOW_PROJECT_OWNER)) {
+        $projectOwnerFallback = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_OWNER)) {
+            $env:VORCE_PROJECT_OWNER.Trim()
+        } elseif (-not [string]::IsNullOrWhiteSpace($env:MAPFLOW_PROJECT_OWNER)) {
             $env:MAPFLOW_PROJECT_OWNER.Trim()
         } else {
             $repositoryParts[0]
@@ -577,7 +579,10 @@ function Get-VorceProjectConfig {
                     Where-Object {
                         $_ -and
                         ($_.closed -eq $false) -and
-                        ([string]$_.title -eq "@MapFlow Project Manager")
+                        (
+                            ([string]$_.title -eq "@Vorce Project Manager") -or
+                            ([string]$_.title -eq "@MapFlow Project Manager")
+                        )
                     } |
                     Select-Object -First 1
             )
