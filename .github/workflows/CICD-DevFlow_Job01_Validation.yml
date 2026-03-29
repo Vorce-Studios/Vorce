@@ -1,6 +1,11 @@
 name: "CICD-DevFlow: Job01 Validation"
 
 on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main]
   pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
@@ -24,6 +29,8 @@ concurrency:
 
 permissions:
   contents: read
+  checks: write
+  statuses: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -225,16 +232,16 @@ jobs:
     steps:
       - name: Check Results
         run: |
-          echo "Quality: ${{ needs.quality.result }}"
-          echo "Security: ${{ needs.security.result }}"
-          echo "Linux: ${{ needs.build-linux.result }}"
-          echo "Windows: ${{ needs.build-windows.result }}"
-          echo "macOS: ${{ needs.build-macos.result }}"
+          echo \"Quality: ${{ needs.quality.result }}\"
+          echo \"Security: ${{ needs.security.result }}\"
+          echo \"Linux: ${{ needs.build-linux.result }}\"
+          echo \"Windows: ${{ needs.build-windows.result }}\"
+          echo \"macOS: ${{ needs.build-macos.result }}\"
 
-          if [ "${{ needs.quality.result }}" != "success" ]; then exit 1; fi
-          if [ "${{ needs.security.result }}" != "success" ]; then exit 1; fi
-          if [ "${{ needs.build-linux.result }}" != "success" ]; then exit 1; fi
-          if [ "${{ needs.build-windows.result }}" != "success" ]; then exit 1; fi
-          if [ "${{ needs.build-macos.result }}" != "success" ]; then exit 1; fi
+          if [ \"${{ needs.quality.result }}\" != \"success\" ]; then exit 1; fi
+          if [ \"${{ needs.security.result }}\" != \"success\" ]; then exit 1; fi
+          if [ \"${{ needs.build-linux.result }}\" != \"success\" ]; then exit 1; fi
+          if [ \"${{ needs.build-windows.result }}\" != \"success\" ]; then exit 1; fi
+          if [ \"${{ needs.build-macos.result }}\" != \"success\" ]; then exit 1; fi
 
-          echo "All Validation Checks Passed"
+          echo \"All Validation Checks Passed\"
