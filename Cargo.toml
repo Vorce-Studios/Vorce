@@ -27,7 +27,7 @@ anyhow = "1.0"
 arc-swap = "1.9"
 
 # HTTP API
-axum = "0.7"
+axum = "0.8"
 
 # Build dependencies
 bindgen = "0.72"
@@ -137,6 +137,9 @@ debug = 1     # Limited debug info for release builds to avoid massive PDBs
 
 [profile.bench]
 inherits = "release"
+
+[patch.crates-io]
+gpu-allocator = { path = "crates/vendor/gpu-allocator" }
 
 # Note: ashpd v0.8.1 (transitive dependency via rfd) triggers a future
 # incompatibility warning for Rust 2024 never type fallback. This will be
