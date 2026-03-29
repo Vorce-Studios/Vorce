@@ -1,7 +1,7 @@
 name: "CICD-DevFlow: Job00 Pre-Commit Lite"
 
 on:
-  pull_request:
+  pull_request_target:
     types: [labeled, opened, reopened, synchronize, ready_for_review]
     branches: [main]
   workflow_dispatch:
@@ -65,25 +65,38 @@ jobs:
             core.setOutput('base_sha', pr.base.sha);
 
       - name: Remove manual rerun label
-        if: github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'pre-commit ci run'
+        if: github.event_name == 'pull_request_target' && github.event.action == 'labeled' && github.event.label.name == 'pre-commit ci run'
         continue-on-error: true
         run: gh pr edit ${{ steps.resolve.outputs.pr_number }} --remove-label 'pre-commit ci run'
         env:
           GH_TOKEN: ${{ github.token }}
+
+      - name: Checkout trusted base config
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.resolve.outputs.base_sha }}
+          path: base-config
 
       - name: Checkout PR head
         uses: actions/checkout@v6
         with:
           repository: ${{ steps.resolve.outputs.head_repo }}
           ref: ${{ steps.resolve.outputs.head_ref }}
+          path: pr
           fetch-depth: 0
           persist-credentials: false
 
       - name: Fetch base commit
+        working-directory: pr
         shell: bash
         run: |
           git remote add upstream "https://github.com/${{ github.repository }}.git"
           git fetch --no-tags --depth=1 upstream "${{ steps.resolve.outputs.base_sha }}"
+
+      - name: Copy trusted pre-commit config
+        shell: bash
+        run: |
+          cp base-config/.pre-commit-config.yaml pr/.pre-commit-config.yaml
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -108,6 +121,7 @@ jobs:
       - name: Run Rust autofix hooks
         id: rust_hooks
         continue-on-error: true
+        working-directory: pr
         shell: bash
         run: |
           status=0
