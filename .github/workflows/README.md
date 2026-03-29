@@ -443,6 +443,7 @@ gh workflow run CI-06_update-changelog.yml
 
 - Check whether Branch Protection requires outdated check names
 - Verify that `pre-commit.ci - pr` is bound to the hosted `pre-commit.ci` app instead of a legacy GitHub Actions status publisher
+- Do not require the same status checks in both classic Branch Protection and repository Rulesets at the same time
 - Ensure CodeQL is not configured as a required PR check
 - Verify the required set matches the current `CICD-DevFlow` workflow names
 
@@ -621,6 +622,9 @@ Um die PR-Checks als "required" zu markieren, folge diesen Schritten:
 5. Optional: Aktiviere "Require branches to be up to date before merging"
 
 Die Checks werden dann als "Expected" im PR angezeigt und müssen vor dem Merge grün sein.
+
+> [!IMPORTANT]
+> Verwende für merge-blockierende Required Checks genau **eine** Quelle. In Vorce ist das die klassische Branch Protection auf `main`. Das Repository-Ruleset darf parallel PR-/Delete-/Create-Regeln setzen, aber nicht noch einmal denselben Required-Check-Satz spiegeln, sonst zeigt GitHub doppelte "Expected"-Einträge.
 
 ---
 
