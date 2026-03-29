@@ -27,7 +27,7 @@ anyhow = "1.0"
 arc-swap = "1.9"
 
 # HTTP API
-axum = "0.7"
+axum = "0.8"
 
 # Build dependencies
 bindgen = "0.72"
@@ -62,7 +62,7 @@ ffmpeg-next = { version = "7.1", default-features = false, features = [
     "software-resampling",
     "software-scaling",
 ] }
-ffmpeg-sys-next = "=7.1.0"
+ffmpeg-sys-next = "=7.1.3"
 fluent = "0.17"
 fluent-langneg = "0.14"
 futures = "0.3"
@@ -70,7 +70,7 @@ glam = { version = "0.32.1", features = ["serde"] }
 hex = "0.4"
 hound = "3.5"
 hyper = "1.1"
-image = "0.24"
+image = "0.25"
 # UI
 imgui = "0.12"
 imgui-wgpu = { path = "crates/vendor/imgui-wgpu" }
@@ -137,6 +137,9 @@ debug = 1     # Limited debug info for release builds to avoid massive PDBs
 
 [profile.bench]
 inherits = "release"
+
+[patch.crates-io]
+gpu-allocator = { path = "crates/vendor/gpu-allocator" }
 
 # Note: ashpd v0.8.1 (transitive dependency via rfd) triggers a future
 # incompatibility warning for Rust 2024 never type fallback. This will be
