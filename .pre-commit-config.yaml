@@ -1,5 +1,5 @@
 # Pre-commit configuration for VjMapper
-# Runs automatically via pre-commit.ci on every PR
+# The repository publishes the `pre-commit.ci - pr` status via GitHub Actions.
 
 ci:
   autofix_commit_msg: "style: auto-fix by pre-commit.ci"

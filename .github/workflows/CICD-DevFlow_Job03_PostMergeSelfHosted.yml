@@ -150,7 +150,9 @@ jobs:
             const OPTIONAL_CHECK_RUNS = [
               { name: 'Build & Test (Windows)', allowedConclusions: ['success', 'skipped', 'neutral'] },
             ];
-            const REQUIRED_STATUSES = [];
+            const REQUIRED_STATUSES = [
+              { name: 'pre-commit.ci - pr', allowedConclusions: ['success'] },
+            ];
 
             const MAX_ATTEMPTS = 20;
             const DELAY_MS = 30000; // 30 seconds
