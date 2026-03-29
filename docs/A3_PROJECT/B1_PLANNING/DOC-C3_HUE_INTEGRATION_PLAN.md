@@ -3,15 +3,15 @@
 ## Status
 *   **Current Phase**: MVP (Phase 1 & Partial Phase 2)
 *   **Implemented**:
-    *   `hue` module in `mapflow-control` (Discovery, DTLS Client, Effect Engine structures).
-    *   `OutputType::Hue` in `mapflow-core`.
+    *   `hue` module in `Vorce-control` (Discovery, DTLS Client, Effect Engine structures).
+    *   `OutputType::Hue` in `Vorce-core`.
     *   UI in `ModuleCanvas` (Discovery, Manual IP, Spatial Editor).
 
 ## Roadmap
 
 ### Phase 1: Foundation (Current PR)
-*   [x] Port `HueFlow` core logic to `mapflow-control`.
-*   [x] Add `OutputType::Hue` to `mapflow-core` data model.
+*   [x] Port `HueFlow` core logic to `Vorce-control`.
+*   [x] Add `OutputType::Hue` to `Vorce-core` data model.
 *   [x] Implement basic UI for adding Hue nodes and editing properties.
 *   [x] Implement Bridge Discovery (mDNS/N-UPnP) via `tokio` async tasks.
 *   [x] Implement 2D Spatial Editor for lamp positioning.
@@ -37,6 +37,6 @@
 *   [ ] **Performance Optimization**: Ensure DTLS streaming doesn't block the main UI thread.
 
 ## Architecture
-*   **Control**: `crates/mapflow-control/src/hue/` handles all protocol logic.
-*   **State**: `HueConfig` in `mapflow-core` stores the topology.
-*   **UI**: `mapflow-ui` renders the setup and spatial editor.
+*   **Control**: `crates/Vorce-control/src/hue/` handles all protocol logic.
+*   **State**: `HueConfig` in `Vorce-core` stores the topology.
+*   **UI**: `Vorce-ui` renders the setup and spatial editor.

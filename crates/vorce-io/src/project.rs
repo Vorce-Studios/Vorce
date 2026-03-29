@@ -1,6 +1,6 @@
 //! Project I/O - High-level API
 //!
-//! This module provides a high-level API for saving and loading MapFlow
+//! This module provides a high-level API for saving and loading Vorce
 //! project files. It handles the application-level logic, such as version
 //! validation and managing the `AppState`, while delegating the low-level
 //! serialization and file I/O to the `project_format` module.

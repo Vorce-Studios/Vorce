@@ -152,7 +152,7 @@ pub fn render_output_ui(
             ui.label("\u{1F4E1} NDI Broadcast");
             #[cfg(feature = "ndi")]
             {
-                let supported = capabilities::is_output_type_enum_supported(true, false);
+                let supported = capabilities::is_output_type_enum_supported(true, false, false);
                 if !supported {
                     #[cfg(target_os = "macos")]
                     capabilities::render_unsupported_warning(
@@ -281,7 +281,7 @@ pub fn render_output_ui(
                             Some("Pairing... (Press Bridge Button)".to_string());
                         let task = async move {
                             let result = vorce_control::hue::api::client::HueClient::register_user(
-                                &ip, "MapFlow",
+                                &ip, "Vorce",
                             )
                             .await
                             .map_err(|e| e.to_string());

@@ -234,7 +234,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
                 ),
                 (
                     ModulePartType::Output(OutputType::NdiOutput {
-                        name: "MapFlow NDI".to_string(),
+                        name: "Vorce NDI".to_string(),
                     }),
                     (650.0, 100.0),
                     None,
@@ -302,7 +302,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
                 #[cfg(target_os = "windows")]
                 (
                     ModulePartType::Output(OutputType::Spout {
-                        name: "MapFlow Spout".to_string(),
+                        name: "Vorce Spout".to_string(),
                     }),
                     (650.0, 100.0),
                     None,

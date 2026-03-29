@@ -2,13 +2,13 @@
 use super::super::{geometry, state::ModuleCanvas, utils};
 use egui::epaint::CubicBezierShape;
 use egui::{Color32, Pos2, Rect, Stroke, Ui, Vec2};
-use vorce_core::module::MapFlowModule;
+use vorce_core::module::VorceModule;
 
 pub fn draw_connections<F>(
     canvas: &mut ModuleCanvas,
     ui: &mut Ui,
     painter: &egui::Painter,
-    module: &MapFlowModule,
+    module: &VorceModule,
     to_screen: &F,
     node_animations_enabled: bool,
     animation_profile: crate::config::AnimationProfile,

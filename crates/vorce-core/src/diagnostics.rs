@@ -1,8 +1,8 @@
 //!
-//! Diagnostic tools for MapFlow modules.
+//! Diagnostic tools for Vorce modules.
 //!
 
-use crate::module::{MapFlowModule, ModulePartId};
+use crate::module::{ModulePartId, VorceModule};
 use serde::{Deserialize, Serialize};
 
 /// Represents an issue found during module diagnostics.
@@ -27,8 +27,8 @@ pub enum IssueSeverity {
     Info,
 }
 
-/// Checks the integrity of a MapFlow module and returns a list of issues.
-pub fn check_module_integrity(module: &MapFlowModule) -> Vec<ModuleIssue> {
+/// Checks the integrity of a Vorce module and returns a list of issues.
+pub fn check_module_integrity(module: &VorceModule) -> Vec<ModuleIssue> {
     let mut issues = Vec::new();
 
     // 1. Check connections validity (Topology)
@@ -121,8 +121,8 @@ mod tests {
     use super::*;
     use crate::module::{ModulePlaybackMode, ModuleSocket, ModuleSocketType, PartType};
 
-    fn create_test_module(name: &str) -> MapFlowModule {
-        MapFlowModule {
+    fn create_test_module(name: &str) -> VorceModule {
+        VorceModule {
             id: 1,
             name: name.to_string(),
             color: [0.0; 4],

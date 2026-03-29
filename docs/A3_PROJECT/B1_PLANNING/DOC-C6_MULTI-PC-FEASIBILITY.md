@@ -6,7 +6,7 @@
 
 ## 1. Executive Summary
 
-Die Erweiterung von MapFlow für den Multi-PC-Betrieb ist technisch **machbar** und positioniert die Software als professionelle Alternative zu teuren Lösungen wie Resolume Arena oder MadMapper.
+Die Erweiterung von Vorce für den Multi-PC-Betrieb ist technisch **machbar** und positioniert die Software als professionelle Alternative zu teuren Lösungen wie Resolume Arena oder MadMapper.
 
 Diese Studie analysiert **vier Architektur-Optionen** für verschiedene Hardware-Anforderungen:
 
@@ -19,6 +19,39 @@ Diese Studie analysiert **vier Architektur-Optionen** für verschiedene Hardware
 
 **Empfehlung:** Ein **Single-Binary-Ansatz** mit integrierten Modulen für alle Optionen. Die Auswahl erfolgt über Startparameter oder automatische Hardware-Erkennung.
 
+### 1.1 Planungs-Update 2026-03-29
+
+Die ursprüngliche A-D-Optionenstruktur bleibt als technische Machbarkeitsbasis nützlich, ist für die aktuelle Umsetzungsplanung aber zu transportorientiert. Die GitHub-Planung und die weitere Implementierung sollen deshalb auf **drei Betriebsmodi** umgestellt werden:
+
+| Modus | Name | Kurzbeschreibung | Primärer technischer Unterbau |
+|-------|------|------------------|-------------------------------|
+| **M1** | **Control Only** | Der Master steuert entfernte Vorce-Instanzen, die Inhalte lokal auf dem Slave rendern oder abspielen. | Control-Plane, Zeitbasis, Asset-/Content-Adressierung |
+| **M2** | **Headless Transport** | Rendering und Steuerung laufen auf dem Master; Ausgabe wird als Videostream an Slave-Instanzen verteilt. | NDI-Transport, Headless-/Player-Modus, Health/Recovery |
+| **M3** | **Multimaster** | Mehrere Instanzen verwalten eine gemeinsame Show auf Basis definierter Rollen, Prioritäten und Regeln. | Gemeinsame Control-Plane, Konfliktauflösung, Ownership-Regeln |
+
+Wichtige Architekturentscheidung:
+
+- **Multi-PC und Multi-Projektor werden nicht mehr getrennt geplant.**
+- Das **lokale Output-/Projektor-Subsystem** bleibt die Verantwortung von `MF-045 / MAI-002` (Output-Lifecycle, Per-Projector-Konfiguration, Edge Blend, Color Calibration, QA).
+- Das **verteilte Cluster-/Show-Control-System** bleibt die Verantwortung von `MF-046 / MAI-005` (Instanzrollen, Moduswahl, Control-Plane, Headless-Transport, Multimaster-Regeln).
+- Jeder Cluster-Modus nutzt das lokale Output-System pro Instanz, statt einen zweiten parallelen Output-Stack zu definieren.
+
+Priorisierte Umsetzung fuer die aktuelle Planung:
+
+1. Instanz-Topologie, Rollenmodell und Modusmatrix festziehen.
+2. Gemeinsame Control-Plane mit Zeitbasis, Health und Recovery definieren.
+3. Lokalen Output-/Window-Lifecycle und Per-Projector-Konfiguration production-ready machen.
+4. **M2 Headless Transport** als erstes echtes End-to-End-Cluster-MVP abschliessen.
+5. **M1 Control Only** mit lokaler Asset-/Content-Verfügbarkeit absichern.
+6. Cluster-QA, Reconnect, Drift-Tests und Multi-Projector-Integration absichern.
+7. **M3 Multimaster** erst nach stabiler Single-Master-Basis umsetzen.
+
+Folgerung fuer alte Optionen:
+
+- Die bisherige **Option A (NDI)** entspricht im Wesentlichen **M2 Headless Transport**.
+- Die bisherige **Option B (Distributed Rendering)** geht in **M1 Control Only** auf.
+- Die bisherigen **Optionen C und D** bleiben mögliche spätere Player-/Transport-Varianten, sind aber **kein MVP-Ziel** der aktuellen Planung.
+
 ---
 
 ## 2. Architektur-Übersicht
@@ -27,7 +60,7 @@ Diese Studie analysiert **vier Architektur-Optionen** für verschiedene Hardware
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                              MAPFLOW MASTER                                  │
+│                              Vorce MASTER                                  │
 │                          (Haupt-Rendering-PC)                               │
 │                                                                              │
 │  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────────────────┐ │
@@ -62,7 +95,7 @@ Diese Studie analysiert **vier Architektur-Optionen** für verschiedene Hardware
 
 ### 2.2 Single-Binary-Konzept
 
-Anstatt separate Anwendungen zu entwickeln, nutzt MapFlow **eine einzige ausführbare Datei** mit verschiedenen Betriebsmodi:
+Anstatt separate Anwendungen zu entwickeln, nutzt Vorce **eine einzige ausführbare Datei** mit verschiedenen Betriebsmodi:
 
 ```rust
 // main.rs - Mode Selection
@@ -118,7 +151,7 @@ Der Master-PC berechnet das **gesamte Rendering** (Mapping, Effekte, Compositing
 | **Bandbreite** | ~250 Mbps für 1080p60 (unkomprimiert) |
 
 **Lizenz-Hinweis:**
-Das NDI SDK ist proprietär. Die "NDI Runtime" muss vom Benutzer separat installiert werden (ähnlich wie bei OBS/vMix). MapFlow bindet nur die Library zur Laufzeit.
+Das NDI SDK ist proprietär. Die "NDI Runtime" muss vom Benutzer separat installiert werden (ähnlich wie bei OBS/vMix). Vorce bindet nur die Library zur Laufzeit.
 
 #### 3.2.2 GStreamer Alternative (Open Source)
 
@@ -135,7 +168,7 @@ Falls NDI-Lizenzierung ein Problem darstellt:
 #### 3.3.1 Master-Seite (NDI Sender)
 
 ```rust
-// crates/mapflow-ndi/src/sender.rs
+// crates/Vorce-ndi/src/sender.rs
 pub struct NdiSender {
     ndi_instance: NdiInstance,
     video_sender: NdiVideoSender,
@@ -180,7 +213,7 @@ impl NdiSender {
 #### 3.3.2 Player-Seite (NDI Receiver)
 
 ```rust
-// crates/mapflow-ndi/src/receiver.rs
+// crates/Vorce-ndi/src/receiver.rs
 pub struct NdiPlayerApp {
     ndi_receiver: NdiReceiver,
     texture_handle: Option<wgpu::Texture>,
@@ -264,7 +297,7 @@ Der Master sendet nur **Steuerbefehle und Szenen-Updates** über das Netzwerk. J
 #### 4.4.1 Time-Code basiert (Empfohlen)
 
 ```rust
-// crates/mapflow-sync/src/timecode.rs
+// crates/Vorce-sync/src/timecode.rs
 pub struct TimecodeSync {
     master_clock: Arc<AtomicU64>,  // Nanosekunden seit Start
     ntp_offset: i64,               // NTP-Korrektur
@@ -275,7 +308,7 @@ impl TimecodeSync {
     /// Master: Broadcast aktuellen Timecode
     pub fn broadcast_timecode(&self, osc_sender: &OscSender) {
         let tc = self.master_clock.load(Ordering::SeqCst);
-        osc_sender.send("/mapflow/timecode", tc);
+        osc_sender.send("/Vorce/timecode", tc);
     }
 
     /// Client: Berechne Frame-Nummer aus Timecode
@@ -299,20 +332,20 @@ Für frame-perfekte Synchronisation:
 ### 4.5 Asset-Distribution
 
 ```yaml
-# mapflow-project.yaml
+# Vorce-project.yaml
 assets:
   distribution: hybrid  # local, network, hybrid
 
   network_sources:
     - type: nfs
-      path: "//nas/mapflow/assets"
+      path: "//nas/Vorce/assets"
 
     - type: s3
-      bucket: "mapflow-assets"
+      bucket: "Vorce-assets"
       region: "eu-central-1"
 
   local_cache:
-    path: "/tmp/mapflow-cache"
+    path: "/tmp/Vorce-cache"
     max_size: "50GB"
 
   sync_strategy:
@@ -371,7 +404,7 @@ Der Legacy-Client nutzt **Hardware-dekodiertes H.264** anstatt NDI, um die CPU-L
 #### 5.3.2 Encoder (Master-Seite)
 
 ```rust
-// crates/mapflow-legacy/src/encoder.rs
+// crates/Vorce-legacy/src/encoder.rs
 pub struct LegacyStreamEncoder {
     encoder: x264::Encoder,      // Software-Encoder (fallback)
     hw_encoder: Option<NvEnc>,   // Hardware-Encoder (wenn verfügbar)
@@ -398,7 +431,7 @@ impl LegacyStreamEncoder {
 Für maximale Kompatibilität wird der Legacy-Player als **separates Modul** bereitgestellt:
 
 ```rust
-// crates/mapflow-legacy/src/player.rs
+// crates/Vorce-legacy/src/player.rs
 pub struct LegacyPlayer {
     ffmpeg_decoder: FfmpegDecoder,  // Hardware-beschleunigt
     display: SdlDisplay,            // SDL2 für breite Kompatibilität
@@ -489,7 +522,7 @@ wget https://dicaffeine.com/releases/dicaffeine_latest_arm64.deb
 sudo dpkg -i dicaffeine_latest_arm64.deb
 
 # Start als NDI-Receiver
-dicaffeine --source "MAPFLOW-MASTER" --fullscreen
+dicaffeine --source "Vorce-MASTER" --fullscreen
 ```
 
 **Performance (Raspberry Pi 4):**
@@ -503,13 +536,13 @@ dicaffeine --source "MAPFLOW-MASTER" --fullscreen
 - 1080p60: ✅ Stabil (erwartet)
 - 4K30: ⚠️ Experimentell
 
-#### 6.3.2 Option D2: Custom MapFlow Player (Portierung)
+#### 6.3.2 Option D2: Custom Vorce Player (Portierung)
 
-Für vollständige Integration kann MapFlow für ARM64 kompiliert werden:
+Für vollständige Integration kann Vorce für ARM64 kompiliert werden:
 
 ```rust
 // Compile Target: aarch64-unknown-linux-gnu
-// crates/mapflow-pi/src/player.rs
+// crates/Vorce-pi/src/player.rs
 
 pub struct PiPlayer {
     // Nutze wgpu mit Vulkan (Pi 5) oder OpenGL ES (Pi 4)
@@ -539,7 +572,7 @@ sudo apt install gcc-aarch64-linux-gnu
 
 # Build
 CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc \
-cargo build --target aarch64-unknown-linux-gnu --release -p mapflow-pi
+cargo build --target aarch64-unknown-linux-gnu --release -p Vorce-pi
 ```
 
 #### 6.3.3 Option D3: RTSP/H.264 mit VLC (Fallback)
@@ -589,16 +622,16 @@ hdmi_drive=2
 ```
 
 ```bash
-# /etc/systemd/system/mapflow-player.service
+# /etc/systemd/system/Vorce-player.service
 [Unit]
-Description=MapFlow Pi Player
+Description=Vorce Pi Player
 After=network.target graphical.target
 
 [Service]
 Type=simple
 User=pi
 Environment=DISPLAY=:0
-ExecStart=/usr/local/bin/mapflow --player-pi --source MAPFLOW-MASTER
+ExecStart=/usr/local/bin/Vorce --player-pi --source Vorce-MASTER
 Restart=always
 RestartSec=5
 
@@ -626,34 +659,34 @@ Der Installer bietet dem Benutzer verschiedene Installationsprofile:
 
 ```xml
 <!-- installer/wix/main.wxs -->
-<Feature Id="Complete" Title="MapFlow Complete" Level="1">
+<Feature Id="Complete" Title="Vorce Complete" Level="1">
     <Feature Id="Core" Title="Core Components" Level="1">
-        <ComponentRef Id="MapFlowExecutable" />
+        <ComponentRef Id="VorceExecutable" />
         <ComponentRef Id="RuntimeDependencies" />
     </Feature>
 
-    <Feature Id="Editor" Title="MapFlow Editor" Level="1">
+    <Feature Id="Editor" Title="Vorce Editor" Level="1">
         <ComponentRef Id="EditorShortcut" />
     </Feature>
 
-    <Feature Id="PlayerNdi" Title="MapFlow Player (NDI)" Level="1">
+    <Feature Id="PlayerNdi" Title="Vorce Player (NDI)" Level="1">
         <ComponentRef Id="PlayerNdiShortcut" />
     </Feature>
 
-    <Feature Id="PlayerLegacy" Title="MapFlow Player (Legacy)" Level="2">
+    <Feature Id="PlayerLegacy" Title="Vorce Player (Legacy)" Level="2">
         <ComponentRef Id="PlayerLegacyShortcut" />
     </Feature>
 </Feature>
 
 <!-- Shortcuts -->
-<Shortcut Id="EditorShortcut" Name="MapFlow"
-          Target="[INSTALLDIR]MapFlow.exe" />
+<Shortcut Id="EditorShortcut" Name="Vorce"
+          Target="[INSTALLDIR]Vorce.exe" />
 
-<Shortcut Id="PlayerNdiShortcut" Name="MapFlow Player (NDI)"
-          Target="[INSTALLDIR]MapFlow.exe" Arguments="--player-ndi" />
+<Shortcut Id="PlayerNdiShortcut" Name="Vorce Player (NDI)"
+          Target="[INSTALLDIR]Vorce.exe" Arguments="--player-ndi" />
 
-<Shortcut Id="PlayerLegacyShortcut" Name="MapFlow Player (Legacy)"
-          Target="[INSTALLDIR]MapFlow.exe" Arguments="--player-legacy" />
+<Shortcut Id="PlayerLegacyShortcut" Name="Vorce Player (Legacy)"
+          Target="[INSTALLDIR]Vorce.exe" Arguments="--player-legacy" />
 ```
 
 ### 7.2 Linux Packages
@@ -662,18 +695,18 @@ Der Installer bietet dem Benutzer verschiedene Installationsprofile:
 
 ```bash
 # Paket-Struktur
-mapflow_1.0.0_amd64.deb
+Vorce_1.0.0_amd64.deb
 ├── DEBIAN/
 │   ├── control
 │   ├── postinst
 │   └── prerm
 ├── usr/
-│   ├── bin/mapflow
+│   ├── bin/Vorce
 │   └── share/
 │       ├── applications/
-│       │   ├── mapflow.desktop
-│       │   ├── mapflow-player-ndi.desktop
-│       │   └── mapflow-player-legacy.desktop
+│       │   ├── Vorce.desktop
+│       │   ├── Vorce-player-ndi.desktop
+│       │   └── Vorce-player-legacy.desktop
 │       └── icons/...
 ```
 
@@ -682,9 +715,9 @@ mapflow_1.0.0_amd64.deb
 Für einfachste Installation kann ein vorkonfiguriertes Image bereitgestellt werden:
 
 ```
-mapflow-pi-player-v1.0.0.img.xz
+Vorce-pi-player-v1.0.0.img.xz
 ├── Raspberry Pi OS Lite (64-bit)
-├── MapFlow Player vorinstalliert
+├── Vorce Player vorinstalliert
 ├── Auto-Start konfiguriert
 └── Read-Only Filesystem (optional)
 ```
@@ -696,7 +729,7 @@ mapflow-pi-player-v1.0.0.img.xz
 | Windows 10/11 | MSI | Doppelklick |
 | Ubuntu 22.04+ | DEB | `dpkg -i` |
 | Fedora 38+ | RPM | `dnf install` |
-| Arch Linux | AUR | `yay -S mapflow` |
+| Arch Linux | AUR | `yay -S Vorce` |
 | Raspberry Pi | DEB / Image | `dpkg -i` oder Flash |
 | macOS | DMG | Drag & Drop |
 
@@ -818,7 +851,7 @@ mapflow-pi-player-v1.0.0.img.xz
 
 ## 11. Fazit
 
-Die Multi-PC-Architektur für MapFlow ist **technisch machbar** und wirtschaftlich sinnvoll. Der empfohlene Ansatz ist:
+Die Multi-PC-Architektur für Vorce ist **technisch machbar** und wirtschaftlich sinnvoll. Der empfohlene Ansatz ist:
 
 1. **Single-Binary** mit verschiedenen Modi (professioneller, einfache Wartung)
 2. **NDI als primäres Protokoll** (Industriestandard, geringe Latenz)
@@ -826,10 +859,10 @@ Die Multi-PC-Architektur für MapFlow ist **technisch machbar** und wirtschaftli
 4. **Raspberry Pi als optionale Budget-Lösung**
 5. **Distributed Rendering für High-End** (langfristige Perspektive)
 
-Mit diesem Ansatz positioniert sich MapFlow als **ernstzunehmende Alternative** zu kommerziellen Lösungen wie:
+Mit diesem Ansatz positioniert sich Vorce als **ernstzunehmende Alternative** zu kommerziellen Lösungen wie:
 - Resolume Arena (~€799)
 - MadMapper (~€449)
 - TouchDesigner (~$2000/Jahr)
 
 **Empfohlener erster Schritt:**
-Erstellung eines Proof-of-Concept für Option A, der einen NDI-Stream von MapFlow zu einem zweiten PC überträgt und dort fullscreen darstellt. Geschätzte Zeit: 5-7 Tage.
+Erstellung eines Proof-of-Concept für Option A, der einen NDI-Stream von Vorce zu einem zweiten PC überträgt und dort fullscreen darstellt. Geschätzte Zeit: 5-7 Tage.

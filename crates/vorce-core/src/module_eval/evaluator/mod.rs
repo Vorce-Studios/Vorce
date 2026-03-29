@@ -5,8 +5,8 @@ mod triggers;
 use crate::audio::analyzer_v2::AudioAnalysisV2;
 use crate::audio_reactive::AudioTriggerData;
 use crate::module::{
-    BlendModeType, LayerType, LinkBehavior, LinkMode, MapFlowModule, MaskType, MeshType,
-    ModulePartId, ModulePartType, ModulizerType, OutputType, SharedMediaState, SourceType,
+    BlendModeType, LayerType, LinkBehavior, LinkMode, MaskType, MeshType, ModulePartId,
+    ModulePartType, ModulizerType, OutputType, SharedMediaState, SourceType, VorceModule,
 };
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -148,7 +148,7 @@ impl ModuleEvaluator {
     /// Evaluate the module graph for the current frame.
     pub fn evaluate(
         &mut self,
-        module: &MapFlowModule,
+        module: &VorceModule,
         shared_state: &SharedMediaState,
         graph_revision: u64,
     ) -> &mut ModuleEvalResult {
@@ -624,13 +624,13 @@ mod evaluator_tests {
     use super::*;
     use crate::audio::analyzer_v2::AudioAnalysisV2;
     use crate::module::{
-        AudioTriggerOutputConfig, MapFlowModule, ModulePartType, SourceType, TriggerType,
+        AudioTriggerOutputConfig, ModulePartType, SourceType, TriggerType, VorceModule,
     };
     use crate::module_eval::ModuleEvaluator;
     use std::time::Duration;
 
-    fn create_test_module() -> MapFlowModule {
-        MapFlowModule {
+    fn create_test_module() -> VorceModule {
+        VorceModule {
             id: 1,
             name: "Test Module".to_string(),
             color: [1.0; 4],

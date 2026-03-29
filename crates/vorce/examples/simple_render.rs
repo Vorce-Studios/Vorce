@@ -10,12 +10,12 @@ use winit::keyboard::{Key, NamedKey};
 use winit::window::WindowAttributes;
 
 fn main() {
-    println!("MapFlow - Simple Render Example");
+    println!("Vorce - Simple Render Example");
     println!("==============================\n");
 
     let event_loop = EventLoop::new().unwrap();
     let window_attributes = WindowAttributes::default()
-        .with_title("MapFlow - Simple Render")
+        .with_title("Vorce - Simple Render")
         .with_inner_size(winit::dpi::PhysicalSize::new(800, 600));
     let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
@@ -84,8 +84,9 @@ fn main() {
                 ..
             } => {
                 let frame = match surface.get_current_texture() {
-                    Ok(frame) => frame,
-                    Err(_) => return,
+                    wgpu::CurrentSurfaceTexture::Success(frame)
+                    | wgpu::CurrentSurfaceTexture::Suboptimal(frame) => frame,
+                    _ => return,
                 };
 
                 let view = frame
@@ -122,6 +123,7 @@ fn main() {
                         depth_stencil_attachment: None,
                         occlusion_query_set: None,
                         timestamp_writes: None,
+                        multiview_mask: None,
                     });
 
                     quad_renderer.draw(&mut render_pass, &bind_group);

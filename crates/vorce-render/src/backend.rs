@@ -65,9 +65,9 @@ impl WgpuBackend {
         power_pref: wgpu::PowerPreference,
         preferred_gpu: Option<&str>,
     ) -> Result<Self> {
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends,
-            ..Default::default()
+            ..wgpu::InstanceDescriptor::new_without_display_handle()
         });
 
         let adapter = instance
@@ -101,7 +101,7 @@ impl WgpuBackend {
 
         let (device, queue) = adapter
             .request_device(&wgpu::DeviceDescriptor {
-                label: Some("MapFlow Device"),
+                label: Some("Vorce Device"),
                 required_features: wgpu::Features::TIMESTAMP_QUERY | wgpu::Features::empty(),
                 required_limits: wgpu::Limits::default(),
                 ..Default::default()
@@ -111,7 +111,7 @@ impl WgpuBackend {
 
         debug!("Device created successfully");
 
-        let staging_belt = StagingBelt::new(1024 * 1024); // 1MB chunks
+        let staging_belt = StagingBelt::new(device.clone(), 1024 * 1024); // 1MB chunks
 
         Ok(Self {
             instance: Arc::new(instance),

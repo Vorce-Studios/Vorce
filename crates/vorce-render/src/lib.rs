@@ -1,6 +1,6 @@
-//! MapFlow Render - Graphics Abstraction Layer
+//! Vorce Render - Graphics Abstraction Layer
 //!
-//! This crate provides the rendering abstraction for MapFlow, including:
+//! This crate provides the rendering abstraction for Vorce, including:
 //! - wgpu backend implementation
 //! - Texture pool management
 //! - Shader compilation and hot-reloading

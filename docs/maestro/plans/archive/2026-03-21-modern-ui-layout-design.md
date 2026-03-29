@@ -5,10 +5,10 @@ topic: modern-ui-layout
 date: 2026-03-21
 ---
 
-# Design-Dokument: Moderne & Modulare Mapflow-UI
+# Design-Dokument: Moderne & Modulare Vorce-UI
 
 ## 1. Problemstellung (Problem Statement)
-Die aktuelle Mapflow-UI basiert auf einem starren, statischen System (Sidebar links, Timeline unten, Inspector rechts), das modernen kreativen Workflows nicht gerecht wird.
+Die aktuelle Vorce-UI basiert auf einem starren, statischen System (Sidebar links, Timeline unten, Inspector rechts), das modernen kreativen Workflows nicht gerecht wird.
 
 **Kernprobleme:**
 - **Mangelnde Dynamik**: Fehlende Animationen bei Layout-Änderungen erschweren die visuelle Orientierung.
@@ -50,7 +50,7 @@ Wir implementieren ein **Molares Slot-System**, das Inhalte (Panels) von ihrer D
 |-----------|--------|----------------------|------------|
 | **Flexibilität** | 40% | 5/5 | Volle Kontrolle über Workspace-Belegung. |
 | **UX-Modernität** | 30% | 5/5 | Animationen & Adaptive Widgets wirken professionell. |
-| **Aufwand** | 20% | 2/5 | Hoher Refactor-Aufwand in `mapflow-ui`. |
+| **Aufwand** | 20% | 2/5 | Hoher Refactor-Aufwand in `Vorce-ui`. |
 | **Stabilität** | 10% | 4/5 | Bewährte UI-Muster aus DCC-Tools. |
 | **Summe** | | **4.6** | |
 

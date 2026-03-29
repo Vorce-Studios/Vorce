@@ -1,6 +1,6 @@
-//! MapFlow Core - Domain Model and Data Structures
+//! Vorce Core - Domain Model and Data Structures
 //!
-//! This crate contains the core domain model for MapFlow, including:
+//! This crate contains the core domain model for Vorce, including:
 //! - Paint/Mapping/Mesh hierarchy
 //! - Layer system for compositing
 //! - Project file format

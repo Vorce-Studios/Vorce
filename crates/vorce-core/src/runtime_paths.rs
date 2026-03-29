@@ -5,8 +5,8 @@ use std::path::{Path, PathBuf};
 
 const ASSETS_ENV: &str = "VORCE_ASSETS_DIR";
 const RESOURCES_ENV: &str = "VORCE_RESOURCES_DIR";
-const LEGACY_ASSETS_ENV: &str = "MAPFLOW_ASSETS_DIR";
-const LEGACY_RESOURCES_ENV: &str = "MAPFLOW_RESOURCES_DIR";
+const LEGACY_ASSETS_ENV: &str = "Vorce_ASSETS_DIR";
+const LEGACY_RESOURCES_ENV: &str = "Vorce_RESOURCES_DIR";
 
 /// Resolve the assets directory for the current runtime environment.
 pub fn assets_dir() -> PathBuf {

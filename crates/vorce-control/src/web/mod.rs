@@ -1,6 +1,6 @@
 //! Web control interface
 //!
-//! This module provides a REST API and WebSocket interface for remote control of MapFlow.
+//! This module provides a REST API and WebSocket interface for remote control of Vorce.
 //!
 //! ## REST API Endpoints
 //!

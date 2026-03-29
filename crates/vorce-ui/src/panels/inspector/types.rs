@@ -16,7 +16,7 @@ pub enum InspectorContext<'a> {
     /// A module part is selected
     Module {
         canvas: &'a mut crate::editors::module_canvas::state::ModuleCanvas,
-        module: &'a mut vorce_core::module::MapFlowModule,
+        module: &'a mut vorce_core::module::VorceModule,
         part_id: vorce_core::module::ModulePartId,
         shared_media_ids: Vec<String>,
     },

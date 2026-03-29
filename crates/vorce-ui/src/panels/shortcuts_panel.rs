@@ -168,15 +168,17 @@ impl ShortcutsPanel {
                     ui.heading(format!("Edit: {}", shortcut_desc));
                     ui.separator();
 
-                    ui.label(locale.t("shortcuts-edit-dialog-prompt"));
+                    crate::widgets::custom::render_info_label(
+                        ui,
+                        &locale.t("shortcuts-edit-dialog-prompt"),
+                    );
 
                     ui.group(|ui| {
                         ui.vertical_centered(|ui| {
                             ui.add_space(10.0);
-                            ui.label(
-                                RichText::new("Press any key combination...")
-                                    .strong()
-                                    .color(colors::CYAN_ACCENT),
+                            crate::widgets::custom::render_info_label(
+                                ui,
+                                "Press any key combination...",
                             );
                             ui.label("(Press ESC to cancel)"); // Removed Backspace instruction
                             ui.add_space(10.0);

@@ -1,11 +1,11 @@
 use std::collections::HashSet;
-use vorce_core::module::{MapFlowModule, ModulePartType, ModulePlaybackMode, TriggerType};
+use vorce_core::module::{ModulePartType, ModulePlaybackMode, TriggerType, VorceModule};
 use vorce_core::module_eval::ModuleEvaluator;
 
 #[test]
 fn test_manual_trigger() {
     let mut evaluator = ModuleEvaluator::new();
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 1,
         name: "Test".to_string(),
         color: [1.0; 4],
@@ -54,7 +54,7 @@ fn test_manual_trigger() {
 #[test]
 fn test_shortcut_trigger() {
     let mut evaluator = ModuleEvaluator::new();
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 1,
         name: "Test".to_string(),
         color: [1.0; 4],
@@ -115,7 +115,7 @@ fn test_shortcut_trigger() {
 #[test]
 fn test_midi_trigger() {
     let mut evaluator = ModuleEvaluator::new();
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 1,
         name: "Test".to_string(),
         color: [1.0; 4],
@@ -173,7 +173,7 @@ fn test_midi_trigger() {
 #[test]
 fn test_osc_trigger() {
     let mut evaluator = ModuleEvaluator::new();
-    let mut module = MapFlowModule {
+    let mut module = VorceModule {
         id: 1,
         name: "Test".to_string(),
         color: [1.0; 4],

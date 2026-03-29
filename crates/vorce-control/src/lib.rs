@@ -1,6 +1,6 @@
-//! MapFlow Control - Professional Control System Integration
+//! Vorce Control - Professional Control System Integration
 //!
-//! This crate provides comprehensive control system integration for MapFlow including:
+//! This crate provides comprehensive control system integration for Vorce including:
 //! - **MIDI**: Input/output, learn mode, controller profiles, clock sync
 //! - **OSC**: Server/client for TouchOSC, Lemur, and custom apps
 //! - **DMX**: Art-Net and sACN output for lighting control

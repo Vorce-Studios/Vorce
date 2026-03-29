@@ -563,8 +563,8 @@ function Get-VorceProjectConfig {
     $projectNumberValue = $env:VORCE_PROJECT_NUMBER
     if ([string]::IsNullOrWhiteSpace($projectNumberValue)) {
         $repositoryParts = (Resolve-GitHubRepository -Repository $Repository).Split("/")
-        $projectOwnerFallback = if (-not [string]::IsNullOrWhiteSpace($env:MAPFLOW_PROJECT_OWNER)) {
-            $env:MAPFLOW_PROJECT_OWNER.Trim()
+        $projectOwnerFallback = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_OWNER)) {
+            $env:VORCE_PROJECT_OWNER.Trim()
         } else {
             $repositoryParts[0]
         }
@@ -577,7 +577,9 @@ function Get-VorceProjectConfig {
                     Where-Object {
                         $_ -and
                         ($_.closed -eq $false) -and
-                        ([string]$_.title -eq "@MapFlow Project Manager")
+                        (
+                            ([string]$_.title -eq "@Vorce Project Manager")
+                        )
                     } |
                     Select-Object -First 1
             )
@@ -1433,7 +1435,8 @@ function Sync-VorceIssueTracking {
 
     $issue = Get-GitHubIssue -Repository $Repository -IssueNumber $IssueNumber
     $pullRequestUrl = if ($null -eq $Session) { $null } else { Get-JulesSessionPullRequestUrl -Session $Session }
-    if ([string]::IsNullOrWhiteSpace($pullRequestUrl)) {
+    $allowFallbackPullRequestLookup = $null -eq $Session
+    if ([string]::IsNullOrWhiteSpace($pullRequestUrl) -and $allowFallbackPullRequestLookup) {
         $fallbackSessionId = if ($null -eq $Session) { $null } else { Resolve-JulesSessionId -SessionIdOrName ([string]$Session.name) }
         $fallbackPullRequest = Find-GitHubPullRequestForIssue -Repository $Repository -IssueNumber $IssueNumber -SessionId $fallbackSessionId
         if ($null -ne $fallbackPullRequest -and -not [string]::IsNullOrWhiteSpace([string]$fallbackPullRequest.url)) {
@@ -1492,6 +1495,8 @@ function Sync-VorceIssueTracking {
     }
 
     return [pscustomobject]@{
+        SessionId          = $fields["SessionId"]
+        SessionName        = $fields["SessionName"]
         IssueNumber         = $IssueNumber
         QueueState          = $fields["QueueState"]
         RemoteState         = $fields["RemoteState"]

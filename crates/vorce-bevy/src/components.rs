@@ -202,7 +202,7 @@ pub struct Particle {
 
 /// Tag component for the Shared Engine Camera.
 ///
-/// This camera renders the scene to a texture that is shared with MapFlow.
+/// This camera renders the scene to a texture that is shared with Vorce.
 #[derive(Component)]
 pub struct SharedEngineCamera;
 

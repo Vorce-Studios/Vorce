@@ -1,4 +1,4 @@
-//! MapFlow Media - Video Decoding and Playback
+//! Vorce Media - Video Decoding and Playback
 //!
 //! This crate provides video decoding capabilities via FFmpeg, including:
 //! - Video decoder abstraction

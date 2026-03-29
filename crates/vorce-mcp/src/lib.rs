@@ -1,6 +1,6 @@
-//! MapFlow MCP - Model Context Protocol Server
+//! Vorce MCP - Model Context Protocol Server
 //!
-//! This crate implements the MCP server for MapFlow, allowing AI agents to control the application.
+//! This crate implements the MCP server for Vorce, allowing AI agents to control the application.
 
 #![allow(missing_docs)]
 

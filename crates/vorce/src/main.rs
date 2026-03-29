@@ -1,4 +1,4 @@
-//! Vorce - Open source Vj Projection Mapping Software
+//! Vorce - Open source VJ projection mapping software.
 //!
 //! This is the main application crate for Vorce.
 //! VERSION: 2026-03-19-VISUAL-TEST-READY
@@ -58,6 +58,12 @@ impl ApplicationHandler for VorceApp {
 
             let mut app = pollster::block_on(App::new(event_loop, config))
                 .expect("Failed to initialize application");
+
+            // Handle CLI no-splash override
+            let args = CliArgs::parse();
+            if args.no_splash {
+                app.ui_state.user_config.startup_animation_enabled = false;
+            }
 
             // Automation mode: load fixture if specified
             if self.is_automation {

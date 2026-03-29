@@ -81,12 +81,12 @@ Wenn der Build in CI fehlschlägt:
 - Workflow:
   - `.github/workflows/CICD-DevFlow_Job03_PostMergeSelfHosted.yml`
 - Hauptschalter:
-  - `MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE=true`
+  - `Vorce_ENABLE_SELF_HOSTED_POST_MERGE=true`
 - optional spaeter:
-  - `MAPFLOW_SELF_HOSTED_RUN_IGNORED_GPU_TESTS=true`
-  - `MAPFLOW_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true`
+  - `Vorce_SELF_HOSTED_RUN_IGNORED_GPU_TESTS=true`
+  - `Vorce_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true`
 - schnell global pausieren:
-  - `MAPFLOW_ENABLE_SELF_HOSTED_POST_MERGE=false`
+  - `Vorce_ENABLE_SELF_HOSTED_POST_MERGE=false`
 - einzelnen PR ausnehmen:
   - Label `skip-self-hosted-post-merge`
 

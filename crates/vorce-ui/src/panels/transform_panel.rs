@@ -86,7 +86,7 @@ impl TransformPanel {
         egui::Window::new(i18n.t("panel-transforms"))
             .open(&mut open)
             .default_size([360.0, 520.0])
-            .frame(cyber_panel_frame(&ctx.style()))
+            .frame(cyber_panel_frame(&ctx.global_style()))
             .show(ctx, |ui| {
                 render_panel_header(ui, &i18n.t("header-transform-sys"), |_| {});
                 ui.add_space(8.0);
@@ -251,13 +251,12 @@ impl TransformPanel {
                 } else {
                     ui.vertical_centered(|ui| {
                         ui.add_space(40.0);
-                        ui.label(
-                            egui::RichText::new("∅")
-                                .size(48.0)
-                                .color(colors::CYAN_ACCENT.linear_multiply(0.3)),
-                        );
+                        crate::widgets::custom::render_info_label_with_size(ui, "∅", 48.0);
                         ui.add_space(16.0);
-                        ui.label(i18n.t("transform-no-layer"));
+                        crate::widgets::custom::render_info_label(
+                            ui,
+                            &i18n.t("transform-no-layer"),
+                        );
                         crate::widgets::custom::render_info_label(
                             ui,
                             &i18n.t("transform-select-tip"),

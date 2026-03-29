@@ -24,7 +24,7 @@ pub type ModulePartId = u64;
 
 /// Represents a complete visual programming graph (Scene/Module)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct MapFlowModule {
+pub struct VorceModule {
     /// Unique identifier for this entity.
     pub id: ModuleId,
     /// Display name
@@ -102,7 +102,7 @@ impl ModuleRepairReport {
     }
 }
 
-impl MapFlowModule {
+impl VorceModule {
     /// Add a part to this module with proper socket configuration
     pub fn add_part(&mut self, part_type: PartType, position: (f32, f32)) -> ModulePartId {
         let id = self.next_part_id;

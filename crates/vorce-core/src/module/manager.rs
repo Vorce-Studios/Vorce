@@ -2,8 +2,8 @@
 
 use crate::module::config::default_color_palette;
 use crate::module::types::{
-    MapFlowModule, ModuleId, ModulePartId, ModulePlaybackMode, ModuleRepairReport, PartType,
-    SharedMediaState,
+    ModuleId, ModulePartId, ModulePlaybackMode, ModuleRepairReport, PartType, SharedMediaState,
+    VorceModule,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -12,7 +12,7 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModuleManager {
     /// The collection of all modules, indexed by ID.
-    pub modules: HashMap<ModuleId, MapFlowModule>,
+    pub modules: HashMap<ModuleId, VorceModule>,
     /// The next available module ID.
     pub next_module_id: ModuleId,
     /// The next available part ID across all modules.
@@ -101,7 +101,7 @@ impl ModuleManager {
         let color = self.color_palette[self.next_color_index % self.color_palette.len()];
         self.next_color_index += 1;
 
-        let module = MapFlowModule {
+        let module = VorceModule {
             id,
             name,
             color,
@@ -122,7 +122,7 @@ impl ModuleManager {
     }
 
     /// List all modules
-    pub fn list_modules(&self) -> Vec<&MapFlowModule> {
+    pub fn list_modules(&self) -> Vec<&VorceModule> {
         self.modules.values().collect()
     }
 
@@ -134,22 +134,22 @@ impl ModuleManager {
     }
 
     /// Get module by ID (mutable)
-    pub fn get_module_mut(&mut self, id: ModuleId) -> Option<&mut MapFlowModule> {
+    pub fn get_module_mut(&mut self, id: ModuleId) -> Option<&mut VorceModule> {
         self.modules.get_mut(&id)
     }
 
     /// Get a module by ID (immutable)
-    pub fn get_module(&self, id: ModuleId) -> Option<&MapFlowModule> {
+    pub fn get_module(&self, id: ModuleId) -> Option<&VorceModule> {
         self.modules.get(&id)
     }
 
     /// Get all modules as a slice-like iterator
-    pub fn modules(&self) -> Vec<&MapFlowModule> {
+    pub fn modules(&self) -> Vec<&VorceModule> {
         self.modules.values().collect()
     }
 
     /// Get all modules mutably
-    pub fn modules_mut(&mut self) -> Vec<&mut MapFlowModule> {
+    pub fn modules_mut(&mut self) -> Vec<&mut VorceModule> {
         self.modules.values_mut().collect()
     }
 
@@ -194,7 +194,7 @@ impl ModuleManager {
     }
 
     /// Remove a module
-    pub fn remove_module(&mut self, module_id: ModuleId) -> Option<MapFlowModule> {
+    pub fn remove_module(&mut self, module_id: ModuleId) -> Option<VorceModule> {
         self.modules.remove(&module_id)
     }
 

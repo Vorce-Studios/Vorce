@@ -1,23 +1,23 @@
-//! Bevy integration for MapFlow.
+//! Bevy integration for Vorce.
 //!
-//! This crate integrates the Bevy engine into MapFlow to provide advanced 3D rendering capabilities.
-//! It bridges MapFlow's core data structures with Bevy's ECS (Entity Component System), allowing
+//! This crate integrates the Bevy engine into Vorce to provide advanced 3D rendering capabilities.
+//! It bridges Vorce's core data structures with Bevy's ECS (Entity Component System), allowing
 //! for the creation of complex 3D scenes, particle systems, and audio-reactive visuals.
 //!
 //! ## Features
 //!
-//! - **Seamless ECS Integration**: Run Bevy systems alongside MapFlow's main loop.
+//! - **Seamless ECS Integration**: Run Bevy systems alongside Vorce's main loop.
 //! - **Audio Reactivity**: Bind 3D transform properties (scale, rotation, position) to audio analysis data.
 //! - **Particle Systems**: GPU-accelerated particle emitters with customizable lifetime, speed, and color gradients.
 //! - **Atmospheric Rendering**: Realistic sky and atmosphere simulation.
 //! - **3D Models**: Load and display 3D models (glTF) with optional outline effects.
 //! - **Hex Grid Generation**: Procedural generation of 3D hexagonal grids.
-//! - **Shared Rendering**: Efficiently share the rendered Bevy frame with MapFlow's WGPU context.
+//! - **Shared Rendering**: Efficiently share the rendered Bevy frame with Vorce's WGPU context.
 //!
 //! ## Usage
 //!
 //! This crate is primarily used by the main application to initialize the Bevy runner and update it
-//! with fresh data from the MapFlow engine.
+//! with fresh data from the Vorce engine.
 //!
 //! ```rust,no_run
 //! use vorce_bevy::BevyRunner;
@@ -42,7 +42,7 @@ use resources::*;
 use systems::*;
 use tracing::info;
 
-/// The main entry point for running Bevy within MapFlow.
+/// The main entry point for running Bevy within Vorce.
 ///
 /// This struct manages the Bevy `App` instance, handles initialization of plugins and resources,
 /// and provides methods to update the simulation and retrieve rendered frames.
@@ -61,13 +61,13 @@ impl BevyRunner {
     ///
     /// This initializes the Bevy `App` with a minimal set of plugins required for 3D rendering
     /// and logic, without opening a separate window. It registers all custom components and resources
-    /// needed for MapFlow integration.
+    /// needed for Vorce integration.
     pub fn new() -> Self {
         info!("Initializing Bevy integration (Headless 3D Mode)...");
 
         let mut app = App::new();
 
-        // MapFlow owns the outer winit event loop. Disabling Bevy's WinitPlugin keeps the
+        // Vorce owns the outer winit event loop. Disabling Bevy's WinitPlugin keeps the
         // embedded runner headless and avoids a second event-loop creation on Windows.
         app.add_plugins(
             DefaultPlugins
@@ -89,7 +89,7 @@ impl BevyRunner {
         // Register resources
         app.init_resource::<AudioInputResource>();
         app.init_resource::<BevyNodeMapping>();
-        app.init_resource::<MapFlowTriggerResource>();
+        app.init_resource::<VorceTriggerResource>();
         app.init_resource::<crate::resources::BevyRenderOutput>();
 
         // Register components
@@ -132,7 +132,7 @@ impl BevyRunner {
         Self { app }
     }
 
-    /// Update the Bevy simulation with new data from MapFlow.
+    /// Update the Bevy simulation with new data from Vorce.
     ///
     /// This method should be called once per frame. It updates the internal resources with
     /// the latest audio analysis data and trigger values, then steps the Bevy `App`.
@@ -160,7 +160,7 @@ impl BevyRunner {
         if let Some(mut res) = self
             .app
             .world_mut()
-            .get_resource_mut::<crate::resources::MapFlowTriggerResource>()
+            .get_resource_mut::<crate::resources::VorceTriggerResource>()
         {
             res.trigger_values = node_triggers.clone();
         }
@@ -189,11 +189,11 @@ impl BevyRunner {
         None
     }
 
-    /// Update the Bevy scene based on the MapFlow graph state.
+    /// Update the Bevy scene based on the Vorce graph state.
     ///
-    /// This synchronizes the Bevy entities with the configuration of a `MapFlowModule`.
+    /// This synchronizes the Bevy entities with the configuration of a `VorceModule`.
     /// It handles spawning new entities for new nodes and updating properties of existing ones.
-    pub fn apply_graph_state(&mut self, module: &vorce_core::module::MapFlowModule) {
+    pub fn apply_graph_state(&mut self, module: &vorce_core::module::VorceModule) {
         use vorce_core::module::{ModulePartType, SourceType};
         let module_id = module.id;
 

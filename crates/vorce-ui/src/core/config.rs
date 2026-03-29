@@ -8,6 +8,9 @@ use std::fmt;
 use std::fs;
 use std::path::PathBuf;
 
+const APP_CONFIG_DIR: &str = "Vorce";
+const CONFIG_FILE_NAME: &str = "config.json";
+
 /// Sichtbarkeitseinstellungen für das Hauptlayout.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub struct LayoutVisibility {
@@ -224,8 +227,8 @@ impl fmt::Display for AnimationProfile {
 /// MIDI element assignment target
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MidiAssignmentTarget {
-    /// Assigned to MapFlow internal control
-    MapFlow(String), // Control target ID
+    /// Assigned to Vorce internal control
+    Vorce(String), // Control target ID
     /// Assigned to Streamer.bot function
     StreamerBot(String), // Function name
     /// Assigned to Mixxx function
@@ -235,7 +238,7 @@ pub enum MidiAssignmentTarget {
 impl fmt::Display for MidiAssignmentTarget {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::MapFlow(id) => write!(f, "Vorce: {}", id),
+            Self::Vorce(id) => write!(f, "Vorce: {}", id),
             Self::StreamerBot(func) => write!(f, "Streamer.bot: {}", func),
             Self::Mixxx(func) => write!(f, "Mixxx: {}", func),
         }
@@ -374,7 +377,7 @@ pub struct UserConfig {
     #[serde(default = "default_ui_scale")]
     pub ui_scale: f32,
 
-    /// Persisted application log level. Takes effect after restarting MapFlow.
+    /// Persisted application log level. Takes effect after restarting Vorce.
     #[serde(default)]
     pub log_level: AppLogLevel,
 
@@ -431,7 +434,7 @@ fn default_ui_scale() -> f32 {
 }
 
 fn default_startup_animation_path() -> String {
-    "resources/app_videos/MF-Mechanical_Cube_Logo_Splash_Animation.webm".to_string()
+    "resources/app_videos/Vorce-Mechanical_Cube_Logo_Splash_Animation.webm".to_string()
 }
 
 fn default_sidebar_width() -> f32 {
@@ -491,7 +494,7 @@ impl Default for UserConfig {
             ui_scale: 1.0,
             log_level: AppLogLevel::Info,
             node_animations_enabled: true,
-            startup_animation_enabled: true,
+            startup_animation_enabled: false,
             startup_animation_path: default_startup_animation_path(),
             reduce_motion_enabled: false,
             silent_startup_enabled: false,
@@ -506,16 +509,28 @@ impl Default for UserConfig {
 impl UserConfig {
     /// Get the config file path
     fn config_path() -> Option<PathBuf> {
+        Self::config_path_for_app(APP_CONFIG_DIR)
+    }
+
+    fn config_path_for_app(app_name: &str) -> Option<PathBuf> {
         dirs::config_dir().map(|mut p| {
-            p.push("Vorce");
-            p.push("config.json");
+            p.push(app_name);
+            p.push(CONFIG_FILE_NAME);
             p
         })
     }
 
+    fn resolve_existing_config_path(primary: Option<PathBuf>) -> Option<PathBuf> {
+        primary.as_ref().filter(|path| path.exists()).cloned()
+    }
+
+    fn existing_config_path() -> Option<PathBuf> {
+        Self::resolve_existing_config_path(Self::config_path())
+    }
+
     /// Load configuration from disk
     pub fn load() -> Self {
-        let mut loaded: Self = Self::config_path()
+        let mut loaded: Self = Self::existing_config_path()
             .and_then(|path| {
                 if path.exists() {
                     fs::read_to_string(&path).ok()
@@ -609,10 +624,10 @@ impl UserConfig {
         Vec<&MidiAssignment>,
         Vec<&MidiAssignment>,
     ) {
-        let mapflow: Vec<_> = self
+        let vorce: Vec<_> = self
             .midi_assignments
             .iter()
-            .filter(|a| matches!(a.target, MidiAssignmentTarget::MapFlow(_)))
+            .filter(|a| matches!(a.target, MidiAssignmentTarget::Vorce(_)))
             .collect();
         let streamerbot: Vec<_> = self
             .midi_assignments
@@ -624,7 +639,7 @@ impl UserConfig {
             .iter()
             .filter(|a| matches!(a.target, MidiAssignmentTarget::Mixxx(_)))
             .collect();
-        (mapflow, streamerbot, mixxx)
+        (vorce, streamerbot, mixxx)
     }
 
     /// Stellt sicher, dass mindestens ein valides Layoutprofil verfügbar ist.
@@ -688,7 +703,7 @@ mod tests {
     fn test_serialize_deserialize() {
         let config = UserConfig {
             language: "de".to_string(),
-            last_project: Some("/path/to/project.MapFlow".to_string()),
+            last_project: Some("/path/to/project.Vorce".to_string()),
             recent_files: vec!["file1.mp4".to_string(), "file2.mp4".to_string()],
             theme: ThemeConfig::default(),
             target_fps: Some(60.0),
@@ -719,7 +734,7 @@ mod tests {
             ui_scale: 1.2,
             log_level: AppLogLevel::Info,
             node_animations_enabled: true,
-            startup_animation_enabled: true,
+            startup_animation_enabled: false,
             startup_animation_path: default_startup_animation_path(),
             reduce_motion_enabled: false,
             silent_startup_enabled: false,

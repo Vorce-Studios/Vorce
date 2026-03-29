@@ -1,12 +1,12 @@
 use super::super::state::ModuleCanvas;
 use egui::{Color32, Pos2, Rect, Stroke, Ui, Vec2};
-use vorce_core::module::MapFlowModule;
+use vorce_core::module::VorceModule;
 
 pub fn draw_presets_popup(
     canvas: &mut ModuleCanvas,
     ui: &mut Ui,
     canvas_rect: Rect,
-    module: &mut MapFlowModule,
+    module: &mut VorceModule,
 ) {
     let popup_width = 280.0;
     let popup_height = 220.0;
