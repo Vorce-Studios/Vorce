@@ -167,6 +167,7 @@ fn render_startup_animation_overlay(ctx: &egui::Context, app: &mut App) {
 
     egui::Area::new("startup_animation_overlay".into())
         .order(egui::Order::Foreground)
+        .interactable(false)
         .fixed_pos(ctx.content_rect().min)
         .show(ctx, |ui| {
             let rect = ctx.content_rect();
