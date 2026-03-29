@@ -454,8 +454,8 @@ impl WindowManager {
 /// Helper function to load the application icon.
 fn load_app_icon() -> Option<winit::window::Icon> {
     let search_paths = [
-        runtime_paths::existing_resource_path("app_icons/Vorce_Logo_HQ-Full-M.png"),
-        runtime_paths::existing_resource_path("app_icons/vorce.png"),
+        runtime_paths::existing_resource_path("app_icons/Vorce_Small-Logo-Only_transparent.png"),
+        runtime_paths::existing_resource_path("app_icons/Vorce_Logo_HQ-Full-transparent.png"),
     ];
 
     for path in search_paths.into_iter().flatten() {
