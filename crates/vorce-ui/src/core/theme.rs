@@ -141,7 +141,7 @@ impl ThemeConfig {
         style.spacing.button_padding = egui::vec2(10.0, 6.0);
         style.spacing.interact_size = egui::vec2(24.0, 22.0);
 
-        ctx.set_style(style);
+        ctx.set_global_style(style);
     }
 
     /// Dark theme visuals (professional video application style)
