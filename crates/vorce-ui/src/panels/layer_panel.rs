@@ -47,7 +47,7 @@ impl LayerPanel {
         egui::Window::new(i18n.t("panel-layers"))
             .open(&mut open)
             .default_size([380.0, 400.0])
-            .frame(cyber_panel_frame(&ctx.global_style()))
+            .frame(cyber_panel_frame(&ctx.style()))
             .show(ctx, |ui| {
                 render_panel_header(ui, &i18n.t("panel-layers"), |_| {});
 

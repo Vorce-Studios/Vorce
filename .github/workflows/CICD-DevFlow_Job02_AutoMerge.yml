@@ -324,12 +324,6 @@ jobs:
                   required: true,
                 },
                 {
-                  name: 'Rust Autofix',
-                  source: 'check_run',
-                  allowedConclusions: ['success'],
-                  required: true,
-                },
-                {
                   name: 'Quality Gate (Format & Lint)',
                   source: 'check_run',
                   allowedConclusions: ['success'],

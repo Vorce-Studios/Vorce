@@ -1,9 +1,7 @@
 name: "CICD-DevFlow: Job01 Validation"
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
   workflow_dispatch:
@@ -26,8 +24,6 @@ concurrency:
 
 permissions:
   contents: read
-  checks: write
-  statuses: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
