@@ -490,7 +490,7 @@ impl NodeEditor {
 
         // Zoom
         if response.hovered() {
-            let scroll = ui.input(|i| i.raw_scroll_delta.y);
+            let scroll = ui.input(|i| i.smooth_scroll_delta().y);
             if scroll != 0.0 {
                 self.zoom *= 1.0 + scroll * 0.001;
                 self.zoom = self.zoom.clamp(0.2, 3.0);

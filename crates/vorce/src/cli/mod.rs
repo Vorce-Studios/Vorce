@@ -27,6 +27,10 @@ pub struct CliArgs {
     /// Output directory for visual capture screenshots
     #[arg(long, env = "VORCE_VISUAL_CAPTURE_OUTPUT_DIR")]
     pub screenshot_dir: Option<String>,
+
+    /// Disable startup animation
+    #[arg(long)]
+    pub no_splash: bool,
 }
 
 #[derive(ValueEnum, Clone, Debug, PartialEq, Eq)]
