@@ -203,6 +203,8 @@ pub fn render_source_ui(
 
     ui.separator();
 
+    let is_bevy_node_supported = capabilities::is_bevy_node_supported(source);
+
     match source {
         SourceType::MediaFile {
             path,
@@ -753,113 +755,124 @@ pub fn render_source_ui(
         }
         SourceType::BevyCamera { mode, fov, active } => {
             ui.label("\u{1F3A5} Bevy Camera");
-            ui.checkbox(active, "Active Control");
-            ui.add(egui::Slider::new(fov, 10.0..=120.0).text("FOV"));
-
-            ui.separator();
-            ui.label("Mode:");
-
-            egui::ComboBox::from_id_salt("camera_mode")
-                .selected_text(match mode {
-                    BevyCameraMode::Orbit { .. } => "Orbit",
-                    BevyCameraMode::Fly { .. } => "Fly",
-                    BevyCameraMode::Static { .. } => "Static",
-                })
-                .show_ui(ui, |ui| {
-                    if ui
-                        .selectable_label(matches!(mode, BevyCameraMode::Orbit { .. }), "Orbit")
-                        .clicked()
-                    {
-                        *mode = BevyCameraMode::default(); // Default is Orbit
-                    }
-                    if ui
-                        .selectable_label(matches!(mode, BevyCameraMode::Fly { .. }), "Fly")
-                        .clicked()
-                    {
-                        *mode = BevyCameraMode::Fly {
-                            speed: 5.0,
-                            sensitivity: 1.0,
-                        };
-                    }
-                    if ui
-                        .selectable_label(matches!(mode, BevyCameraMode::Static { .. }), "Static")
-                        .clicked()
-                    {
-                        *mode = BevyCameraMode::Static {
-                            position: [0.0, 5.0, 10.0],
-                            look_at: [0.0, 0.0, 0.0],
-                        };
-                    }
-                });
-
-            ui.separator();
-            match mode {
-                BevyCameraMode::Orbit {
-                    radius,
-                    speed,
-                    target,
-                    height,
-                } => {
-                    ui.label("Orbit Settings");
-                    ui.add(egui::Slider::new(radius, 1.0..=50.0).text("Radius"));
-                    ui.add(egui::Slider::new(speed, -90.0..=90.0).text("Speed (°/s)"));
-                    ui.add(egui::Slider::new(height, -10.0..=20.0).text("Height"));
-
-                    ui.label("Target:");
-                    ui.horizontal(|ui| {
-                        ui.add(egui::DragValue::new(&mut target[0]).prefix("X:").speed(0.1));
-                        ui.add(egui::DragValue::new(&mut target[1]).prefix("Y:").speed(0.1));
-                        ui.add(egui::DragValue::new(&mut target[2]).prefix("Z:").speed(0.1));
-                    });
-                }
-                BevyCameraMode::Fly {
-                    speed,
-                    sensitivity: _,
-                } => {
-                    ui.label("Fly Settings");
-                    ui.add(egui::Slider::new(speed, 0.0..=50.0).text("Speed"));
-                    ui.label("Direction: Forward (Z-)");
-                }
-                BevyCameraMode::Static { position, look_at } => {
-                    ui.label("Static Settings");
-                    ui.label("Position:");
-                    ui.horizontal(|ui| {
-                        ui.add(
-                            egui::DragValue::new(&mut position[0])
-                                .prefix("X:")
-                                .speed(0.1),
-                        );
-                        ui.add(
-                            egui::DragValue::new(&mut position[1])
-                                .prefix("Y:")
-                                .speed(0.1),
-                        );
-                        ui.add(
-                            egui::DragValue::new(&mut position[2])
-                                .prefix("Z:")
-                                .speed(0.1),
-                        );
-                    });
-                    ui.label("Look At:");
-                    ui.horizontal(|ui| {
-                        ui.add(
-                            egui::DragValue::new(&mut look_at[0])
-                                .prefix("X:")
-                                .speed(0.1),
-                        );
-                        ui.add(
-                            egui::DragValue::new(&mut look_at[1])
-                                .prefix("Y:")
-                                .speed(0.1),
-                        );
-                        ui.add(
-                            egui::DragValue::new(&mut look_at[2])
-                                .prefix("Z:")
-                                .speed(0.1),
-                        );
-                    });
-                }
+            if !is_bevy_node_supported {
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "Camera control logic is currently a stub and not fully functional.",
+                );
             }
+            ui.add_enabled_ui(is_bevy_node_supported, |ui| {
+                ui.checkbox(active, "Active Control");
+                ui.add(egui::Slider::new(fov, 10.0..=120.0).text("FOV"));
+
+                ui.separator();
+                ui.label("Mode:");
+
+                egui::ComboBox::from_id_salt("camera_mode")
+                    .selected_text(match mode {
+                        BevyCameraMode::Orbit { .. } => "Orbit",
+                        BevyCameraMode::Fly { .. } => "Fly",
+                        BevyCameraMode::Static { .. } => "Static",
+                    })
+                    .show_ui(ui, |ui| {
+                        if ui
+                            .selectable_label(matches!(mode, BevyCameraMode::Orbit { .. }), "Orbit")
+                            .clicked()
+                        {
+                            *mode = BevyCameraMode::default(); // Default is Orbit
+                        }
+                        if ui
+                            .selectable_label(matches!(mode, BevyCameraMode::Fly { .. }), "Fly")
+                            .clicked()
+                        {
+                            *mode = BevyCameraMode::Fly {
+                                speed: 5.0,
+                                sensitivity: 1.0,
+                            };
+                        }
+                        if ui
+                            .selectable_label(
+                                matches!(mode, BevyCameraMode::Static { .. }),
+                                "Static",
+                            )
+                            .clicked()
+                        {
+                            *mode = BevyCameraMode::Static {
+                                position: [0.0, 5.0, 10.0],
+                                look_at: [0.0, 0.0, 0.0],
+                            };
+                        }
+                    });
+
+                ui.separator();
+                match mode {
+                    BevyCameraMode::Orbit {
+                        radius,
+                        speed,
+                        target,
+                        height,
+                    } => {
+                        ui.label("Orbit Settings");
+                        ui.add(egui::Slider::new(radius, 1.0..=50.0).text("Radius"));
+                        ui.add(egui::Slider::new(speed, -90.0..=90.0).text("Speed (°/s)"));
+                        ui.add(egui::Slider::new(height, -10.0..=20.0).text("Height"));
+
+                        ui.label("Target:");
+                        ui.horizontal(|ui| {
+                            ui.add(egui::DragValue::new(&mut target[0]).prefix("X:").speed(0.1));
+                            ui.add(egui::DragValue::new(&mut target[1]).prefix("Y:").speed(0.1));
+                            ui.add(egui::DragValue::new(&mut target[2]).prefix("Z:").speed(0.1));
+                        });
+                    }
+                    BevyCameraMode::Fly {
+                        speed,
+                        sensitivity: _,
+                    } => {
+                        ui.label("Fly Settings");
+                        ui.add(egui::Slider::new(speed, 0.0..=50.0).text("Speed"));
+                        ui.label("Direction: Forward (Z-)");
+                    }
+                    BevyCameraMode::Static { position, look_at } => {
+                        ui.label("Static Settings");
+                        ui.label("Position:");
+                        ui.horizontal(|ui| {
+                            ui.add(
+                                egui::DragValue::new(&mut position[0])
+                                    .prefix("X:")
+                                    .speed(0.1),
+                            );
+                            ui.add(
+                                egui::DragValue::new(&mut position[1])
+                                    .prefix("Y:")
+                                    .speed(0.1),
+                            );
+                            ui.add(
+                                egui::DragValue::new(&mut position[2])
+                                    .prefix("Z:")
+                                    .speed(0.1),
+                            );
+                        });
+                        ui.label("Look At:");
+                        ui.horizontal(|ui| {
+                            ui.add(
+                                egui::DragValue::new(&mut look_at[0])
+                                    .prefix("X:")
+                                    .speed(0.1),
+                            );
+                            ui.add(
+                                egui::DragValue::new(&mut look_at[1])
+                                    .prefix("Y:")
+                                    .speed(0.1),
+                            );
+                            ui.add(
+                                egui::DragValue::new(&mut look_at[2])
+                                    .prefix("Z:")
+                                    .speed(0.1),
+                            );
+                        });
+                    }
+                }
+            });
         }
         SourceType::BevyAtmosphere {
             turbidity,
@@ -1304,12 +1317,147 @@ pub fn render_source_ui(
                 });
             });
         }
-        SourceType::Bevy3DModel { .. } => {
+        SourceType::Bevy3DModel {
+            path,
+            position,
+            rotation,
+            scale,
+            color,
+            unlit,
+            outline_width,
+            outline_color,
+        } => {
             ui.label("\u{1F3AE} Bevy 3D Model");
-            ui.label("Model controls not yet implemented.");
+            if !is_bevy_node_supported {
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "3D Model rendering is currently a stub and not fully functional.",
+                );
+            }
+            ui.add_enabled_ui(is_bevy_node_supported, |ui| {
+                if path.is_empty() {
+                    ui.horizontal(|ui| {
+                        if ui.button("Select...").clicked() {
+                            actions.push(crate::UIAction::PickMediaFile(
+                                module_id,
+                                part_id,
+                                "".to_string(),
+                            ));
+                        }
+                        render_info_label(ui, "No model loaded");
+                    });
+                } else {
+                    ui.collapsing("📁 File Info", |ui| {
+                        ui.horizontal(|ui| {
+                            ui.label("Path:");
+                            ui.add(egui::TextEdit::singleline(path).desired_width(160.0));
+                            if ui
+                                .button("\u{1F4C2}")
+                                .on_hover_text("Select Model File")
+                                .clicked()
+                            {
+                                actions.push(crate::UIAction::PickMediaFile(
+                                    module_id,
+                                    part_id,
+                                    "".to_string(),
+                                ));
+                            }
+                        });
+                    });
+                }
+
+                ui.separator();
+
+                ui.horizontal(|ui| {
+                    ui.label("Color:");
+                    ui.color_edit_button_rgba_unmultiplied(color);
+                });
+
+                ui.checkbox(unlit, "Unlit (No Shading)");
+
+                ui.separator();
+
+                ui.collapsing("📐 Transform (3D)", |ui| {
+                    ui.label("Position:");
+                    ui.horizontal(|ui| {
+                        ui.add(
+                            egui::DragValue::new(&mut position[0])
+                                .speed(0.1)
+                                .prefix("X: "),
+                        );
+                        ui.add(
+                            egui::DragValue::new(&mut position[1])
+                                .speed(0.1)
+                                .prefix("Y: "),
+                        );
+                        ui.add(
+                            egui::DragValue::new(&mut position[2])
+                                .speed(0.1)
+                                .prefix("Z: "),
+                        );
+                    });
+
+                    ui.label("Rotation:");
+                    ui.horizontal(|ui| {
+                        ui.add(
+                            egui::DragValue::new(&mut rotation[0])
+                                .speed(1.0)
+                                .prefix("X: ")
+                                .suffix("°"),
+                        );
+                        ui.add(
+                            egui::DragValue::new(&mut rotation[1])
+                                .speed(1.0)
+                                .prefix("Y: ")
+                                .suffix("°"),
+                        );
+                        ui.add(
+                            egui::DragValue::new(&mut rotation[2])
+                                .speed(1.0)
+                                .prefix("Z: ")
+                                .suffix("°"),
+                        );
+                    });
+
+                    ui.label("Scale:");
+                    ui.horizontal(|ui| {
+                        ui.add(
+                            egui::DragValue::new(&mut scale[0])
+                                .speed(0.01)
+                                .prefix("X: "),
+                        );
+                        ui.add(
+                            egui::DragValue::new(&mut scale[1])
+                                .speed(0.01)
+                                .prefix("Y: "),
+                        );
+                        ui.add(
+                            egui::DragValue::new(&mut scale[2])
+                                .speed(0.01)
+                                .prefix("Z: "),
+                        );
+                    });
+                });
+
+                ui.separator();
+                ui.collapsing("Outline", |ui| {
+                    ui.horizontal(|ui| {
+                        ui.label("Width:");
+                        ui.add(egui::Slider::new(outline_width, 0.0..=10.0));
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("Color:");
+                        ui.color_edit_button_rgba_unmultiplied(outline_color);
+                    });
+                });
+            });
         }
         SourceType::Bevy => {
             ui.label("\u{1F3AE} Bevy Scene");
+            capabilities::render_unsupported_warning(
+                ui,
+                "The internal 3D scene is deprecated. Use individual Bevy nodes instead.",
+            );
             render_info_label(ui, "Rendering Internal 3D Scene");
             ui.small("The scene is rendered internally and available as 'bevy_output'");
         }
