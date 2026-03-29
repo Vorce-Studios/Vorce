@@ -62,7 +62,7 @@ ffmpeg-next = { version = "7.1", default-features = false, features = [
     "software-resampling",
     "software-scaling",
 ] }
-ffmpeg-sys-next = "=7.1.0"
+ffmpeg-sys-next = "=7.1.3"
 fluent = "0.17"
 fluent-langneg = "0.14"
 futures = "0.3"
@@ -70,7 +70,7 @@ glam = { version = "0.32.1", features = ["serde"] }
 hex = "0.4"
 hound = "3.5"
 hyper = "1.1"
-image = "0.24"
+image = "0.25"
 # UI
 imgui = "0.12"
 imgui-wgpu = { path = "crates/vendor/imgui-wgpu" }
