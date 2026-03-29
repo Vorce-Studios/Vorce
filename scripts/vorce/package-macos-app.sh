@@ -5,14 +5,14 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 VERSION="${1:-0.0.0-dev}"
 BUILD_DIR="${2:-$ROOT_DIR/target/release}"
 APP_NAME="${APP_NAME:-Vorce}"
-BUNDLE_ID="${VORCE_BUNDLE_ID:-org.vorce.app}"
+BUNDLE_ID="${VORCE_BUNDLE_ID:-info.vorcestudios.Vorce}"
 APP_DIR="${BUILD_DIR}/${APP_NAME}.app"
 CONTENTS_DIR="${APP_DIR}/Contents"
 MACOS_DIR="${CONTENTS_DIR}/MacOS"
 RESOURCES_DIR="${CONTENTS_DIR}/Resources"
 PLIST_TEMPLATE="${ROOT_DIR}/resources/macOS/Info.plist"
 BINARY_PATH="${BUILD_DIR}/${APP_NAME}"
-ICON_PATH="${ROOT_DIR}/resources/app_icons/vorce.icns"
+ICON_PATH="${ROOT_DIR}/resources/app_icons/Vorce_Small-Logo-Only_transparent.icns"
 
 if [[ ! -f "${BINARY_PATH}" ]]; then
     echo "Expected app binary at ${BINARY_PATH}" >&2

@@ -659,7 +659,7 @@ pub fn hold_to_action_button(ui: &mut Ui, text: &str, color: Color32, hover_text
 
     // Accessibility info
     let a11y_label = if hover_text.is_empty() {
-        format!("Hold to confirm {}...", text)
+        format!("Hold to confirm {}", text)
     } else {
         format!("{} (Hold to confirm)", hover_text)
     };
@@ -706,7 +706,7 @@ pub fn hold_to_action_button(ui: &mut Ui, text: &str, color: Color32, hover_text
         let display_progress = if triggered { 1.0 } else { progress };
         fill_rect.max.x = rect.min.x + rect.width() * display_progress;
         let fill_color = if triggered {
-            color // Flash brightly with solid full color on completion
+            color.linear_multiply(0.8) // Flash brightly on completion
         } else {
             color.linear_multiply(0.4) // Transparent version of action color
         };
@@ -831,9 +831,7 @@ pub fn hold_to_action_icon(
     if progress > 0.0 || triggered {
         use std::f32::consts::TAU;
         let radius = size / 2.0 + 2.0;
-
         if triggered {
-            // Full solid circular background fill on completion
             painter.circle_filled(center, radius, color);
         } else {
             let stroke = Stroke::new(2.0, color);

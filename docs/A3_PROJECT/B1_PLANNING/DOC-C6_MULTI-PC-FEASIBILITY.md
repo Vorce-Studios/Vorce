@@ -19,6 +19,39 @@ Diese Studie analysiert **vier Architektur-Optionen** für verschiedene Hardware
 
 **Empfehlung:** Ein **Single-Binary-Ansatz** mit integrierten Modulen für alle Optionen. Die Auswahl erfolgt über Startparameter oder automatische Hardware-Erkennung.
 
+### 1.1 Planungs-Update 2026-03-29
+
+Die ursprüngliche A-D-Optionenstruktur bleibt als technische Machbarkeitsbasis nützlich, ist für die aktuelle Umsetzungsplanung aber zu transportorientiert. Die GitHub-Planung und die weitere Implementierung sollen deshalb auf **drei Betriebsmodi** umgestellt werden:
+
+| Modus | Name | Kurzbeschreibung | Primärer technischer Unterbau |
+|-------|------|------------------|-------------------------------|
+| **M1** | **Control Only** | Der Master steuert entfernte Vorce-Instanzen, die Inhalte lokal auf dem Slave rendern oder abspielen. | Control-Plane, Zeitbasis, Asset-/Content-Adressierung |
+| **M2** | **Headless Transport** | Rendering und Steuerung laufen auf dem Master; Ausgabe wird als Videostream an Slave-Instanzen verteilt. | NDI-Transport, Headless-/Player-Modus, Health/Recovery |
+| **M3** | **Multimaster** | Mehrere Instanzen verwalten eine gemeinsame Show auf Basis definierter Rollen, Prioritäten und Regeln. | Gemeinsame Control-Plane, Konfliktauflösung, Ownership-Regeln |
+
+Wichtige Architekturentscheidung:
+
+- **Multi-PC und Multi-Projektor werden nicht mehr getrennt geplant.**
+- Das **lokale Output-/Projektor-Subsystem** bleibt die Verantwortung von `MF-045 / MAI-002` (Output-Lifecycle, Per-Projector-Konfiguration, Edge Blend, Color Calibration, QA).
+- Das **verteilte Cluster-/Show-Control-System** bleibt die Verantwortung von `MF-046 / MAI-005` (Instanzrollen, Moduswahl, Control-Plane, Headless-Transport, Multimaster-Regeln).
+- Jeder Cluster-Modus nutzt das lokale Output-System pro Instanz, statt einen zweiten parallelen Output-Stack zu definieren.
+
+Priorisierte Umsetzung fuer die aktuelle Planung:
+
+1. Instanz-Topologie, Rollenmodell und Modusmatrix festziehen.
+2. Gemeinsame Control-Plane mit Zeitbasis, Health und Recovery definieren.
+3. Lokalen Output-/Window-Lifecycle und Per-Projector-Konfiguration production-ready machen.
+4. **M2 Headless Transport** als erstes echtes End-to-End-Cluster-MVP abschliessen.
+5. **M1 Control Only** mit lokaler Asset-/Content-Verfügbarkeit absichern.
+6. Cluster-QA, Reconnect, Drift-Tests und Multi-Projector-Integration absichern.
+7. **M3 Multimaster** erst nach stabiler Single-Master-Basis umsetzen.
+
+Folgerung fuer alte Optionen:
+
+- Die bisherige **Option A (NDI)** entspricht im Wesentlichen **M2 Headless Transport**.
+- Die bisherige **Option B (Distributed Rendering)** geht in **M1 Control Only** auf.
+- Die bisherigen **Optionen C und D** bleiben mögliche spätere Player-/Transport-Varianten, sind aber **kein MVP-Ziel** der aktuellen Planung.
+
 ---
 
 ## 2. Architektur-Übersicht

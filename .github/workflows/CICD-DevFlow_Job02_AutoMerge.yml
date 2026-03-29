@@ -5,7 +5,7 @@ on:
     types: [opened, reopened, synchronize, labeled, unlabeled, ready_for_review]
     branches: [main]
   workflow_run:
-    workflows: ["CICD-DevFlow: Job01 Validation"]
+    workflows: ["CICD-DevFlow: Job01 Validation", "CICD-DevFlow: Job00 Pre-Commit Lite"]
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -18,8 +18,9 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   AUTO_MERGE_ENABLED: true
   AUTO_UPDATE_BRANCH_WHEN_BEHIND: true
+  PRECOMMIT_WORKFLOW_ID: CICD-DevFlow_Job00_PreCommitLite.yml
   VALIDATION_WORKFLOW_ID: CICD-DevFlow_Job01_Validation.yml
-  DEFAULT_RUST_TOOLCHAIN: ${{ vars.MAPFLOW_DEFAULT_TOOLCHAIN || '1.94.0' }}
+  DEFAULT_RUST_TOOLCHAIN: ${{ vars.VORCE_DEFAULT_TOOLCHAIN || vars.MAPFLOW_DEFAULT_TOOLCHAIN || '1.94.0' }}
 
 concurrency:
   group: auto-merge-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.event.workflow_run.head_sha || github.run_id }}
@@ -87,7 +88,6 @@ jobs:
                 });
               }
             };
-
             const VALIDATION_CHECK_NAMES = new Set([
               'Quality Gate (Format & Lint)',
               'Security Scan',
@@ -96,6 +96,7 @@ jobs:
               'Build (macOS Beta)',
               'Validation Success',
             ]);
+            const RUST_AUTOFIX_CHECK_NAMES = new Set(['Rust Autofix']);
 
             const waitForHeadShaChange = async (pullNumber, previousHeadSha) => {
               for (let attempt = 1; attempt <= 20; attempt += 1) {
@@ -115,7 +116,7 @@ jobs:
               return null;
             };
 
-            const waitForValidationChecksOnHead = async (headSha) => {
+            const getCheckRunsState = async (headSha, expectedNames) => {
               for (let attempt = 1; attempt <= 10; attempt += 1) {
                 const checks = await github.rest.checks.listForRef({
                   owner: context.repo.owner,
@@ -124,15 +125,31 @@ jobs:
                   per_page: 100,
                 });
 
-                if (checks.data.check_runs.some((run) => VALIDATION_CHECK_NAMES.has(run.name))) {
-                  return true;
+                const matchingRuns = checks.data.check_runs.filter((run) =>
+                  expectedNames.has(run.name),
+                );
+
+                if (matchingRuns.length > 0) {
+                  return {
+                    found: true,
+                    hasActiveRun: matchingRuns.some((run) => run.status !== 'completed'),
+                  };
                 }
 
                 await sleep(3000);
               }
 
-              return false;
+              return {
+                found: false,
+                hasActiveRun: false,
+              };
             };
+
+            const getValidationChecksState = async (headSha) =>
+              getCheckRunsState(headSha, VALIDATION_CHECK_NAMES);
+
+            const getRustAutofixChecksState = async (headSha) =>
+              getCheckRunsState(headSha, RUST_AUTOFIX_CHECK_NAMES);
 
             const dispatchValidationWorkflow = async (branchRef) => {
               const response = await github.request(
@@ -150,6 +167,93 @@ jobs:
               );
 
               return response.data;
+            };
+
+            const dispatchRustAutofixWorkflow = async (branchRef, prNumber) => {
+              const response = await github.request(
+                'POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches',
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  workflow_id: process.env.PRECOMMIT_WORKFLOW_ID || 'CICD-DevFlow_Job00_PreCommitLite.yml',
+                  ref: branchRef,
+                  inputs: {
+                    pr_number: String(prNumber),
+                  },
+                  return_run_details: true,
+                },
+              );
+
+              return response.data;
+            };
+
+            const recoverValidationAfterBranchUpdate = async (pr) => {
+              const headCommit = await github.rest.repos.getCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: pr.head.sha,
+              });
+
+              const commitMessage = headCommit.data.commit.message || '';
+              const authorLogin = headCommit.data.author?.login || headCommit.data.committer?.login || '';
+              const looksLikeAutomatedBranchUpdate =
+                authorLogin === 'github-actions[bot]' &&
+                commitMessage.startsWith(`Merge branch 'main' into ${pr.head.ref}`);
+
+              if (!looksLikeAutomatedBranchUpdate) {
+                return false;
+              }
+
+              const validationChecksState = await getValidationChecksState(pr.head.sha);
+              const rustAutofixChecksState = await getRustAutofixChecksState(pr.head.sha);
+              if (validationChecksState.found && rustAutofixChecksState.found) {
+                return false;
+              }
+
+              const messages = [
+                'Auto-merge hat erkannt, dass der aktuelle Head-SHA bereits durch ein automatisches Branch-Update entstanden ist.',
+              ];
+
+              if (validationChecksState.hasActiveRun) {
+                messages.push('Die Validation-Checks laufen auf dem neuen Head-SHA bereits erneut.');
+              } else if (!validationChecksState.found) {
+                try {
+                  const dispatchResult = await dispatchValidationWorkflow(pr.head.ref);
+                  const detailsSuffix = dispatchResult?.html_url
+                    ? `\n\nValidation-Run: ${dispatchResult.html_url}`
+                    : '';
+
+                  messages.push(
+                    `Da auf dem neuen Head-SHA kein Validation-Lauf registriert war, wurde \`CICD-DevFlow: Job01 Validation\` per workflow_dispatch neu gestartet.${detailsSuffix}`,
+                  );
+                } catch (error) {
+                  messages.push(
+                    `Validation konnte auf dem neuen Head-SHA nicht automatisch neu gestartet werden: ${error.message}\n\nBitte starte \`CICD-DevFlow: Job01 Validation\` manuell fuer den aktuellen Head-SHA.`,
+                  );
+                }
+              }
+
+              if (rustAutofixChecksState.hasActiveRun) {
+                messages.push('`Rust Autofix` laeuft auf dem neuen Head-SHA bereits erneut.');
+              } else if (!rustAutofixChecksState.found) {
+                try {
+                  const dispatchResult = await dispatchRustAutofixWorkflow(pr.head.ref, pr.number);
+                  const detailsSuffix = dispatchResult?.html_url
+                    ? `\n\nRust-Autofix-Run: ${dispatchResult.html_url}`
+                    : '';
+
+                  messages.push(
+                    `Da auf dem neuen Head-SHA kein \`Rust Autofix\`-Check registriert war, wurde \`CICD-DevFlow: Job00 Pre-Commit Lite\` per workflow_dispatch neu gestartet.${detailsSuffix}`,
+                  );
+                } catch (error) {
+                  messages.push(
+                    `\`Rust Autofix\` konnte auf dem neuen Head-SHA nicht automatisch neu gestartet werden: ${error.message}\n\nBitte starte \`CICD-DevFlow: Job00 Pre-Commit Lite\` manuell fuer PR #${pr.number}.`,
+                  );
+                }
+              }
+
+              await upsertManagedComment(pr.number, messages.join('\n\n'));
+              return true;
             };
 
             const updateBranchIfBehind = async (pr, phaseLabel) => {
@@ -185,35 +289,58 @@ jobs:
                 return true;
               }
 
-              const validationStartedAutomatically = await waitForValidationChecksOnHead(updatedPr.head.sha);
-              if (validationStartedAutomatically) {
-                await upsertManagedComment(
-                  pr.number,
-                  `Auto-merge hat waehrend ${phaseLabel} erkannt, dass der PR hinter \`main\` liegt, ein automatisches Branch-Update angestossen und bestaetigt, dass die Validation-Checks auf dem neuen Head-SHA erneut laufen.`,
-                );
-                return true;
+              const validationChecksState = await getValidationChecksState(updatedPr.head.sha);
+              const rustAutofixChecksState = await getRustAutofixChecksState(updatedPr.head.sha);
+              const messages = [
+                `Auto-merge hat waehrend ${phaseLabel} erkannt, dass der PR hinter \`main\` liegt und ein automatisches Branch-Update angestossen.`,
+              ];
+
+              if (validationChecksState.hasActiveRun) {
+                messages.push('Die Validation-Checks laufen auf dem neuen Head-SHA bereits erneut.');
+              } else if (validationChecksState.found) {
+                messages.push('Die Validation-Checks sind auf dem neuen Head-SHA bereits registriert.');
+              } else {
+                try {
+                  const dispatchResult = await dispatchValidationWorkflow(updatedPr.head.ref);
+                  const detailsSuffix = dispatchResult?.html_url
+                    ? `\n\nValidation-Run: ${dispatchResult.html_url}`
+                    : '';
+
+                  messages.push(
+                    `Da GitHub auf dem neuen Head-SHA keinen Validation-Lauf gestartet hat, wurde \`CICD-DevFlow: Job01 Validation\` zusaetzlich per workflow_dispatch fuer den aktualisierten Branch gestartet.${detailsSuffix}`,
+                  );
+                } catch (error) {
+                  messages.push(
+                    `Validation konnte auf dem aktualisierten Branch nicht automatisch neu angestossen werden: ${error.message}\n\nBitte starte \`CICD-DevFlow: Job01 Validation\` manuell fuer den aktualisierten Branch.`,
+                  );
+                }
               }
 
-              try {
-                const dispatchResult = await dispatchValidationWorkflow(updatedPr.head.ref);
-                const detailsSuffix = dispatchResult?.html_url
-                  ? `\n\nValidation-Run: ${dispatchResult.html_url}`
-                  : '';
+              if (rustAutofixChecksState.hasActiveRun) {
+                messages.push('`Rust Autofix` laeuft auf dem neuen Head-SHA bereits erneut.');
+              } else if (rustAutofixChecksState.found) {
+                messages.push('`Rust Autofix` ist auf dem neuen Head-SHA bereits registriert.');
+              } else {
+                try {
+                  const dispatchResult = await dispatchRustAutofixWorkflow(updatedPr.head.ref, updatedPr.number);
+                  const detailsSuffix = dispatchResult?.html_url
+                    ? `\n\nRust-Autofix-Run: ${dispatchResult.html_url}`
+                    : '';
 
-                await upsertManagedComment(
-                  pr.number,
-                  `Auto-merge hat waehrend ${phaseLabel} erkannt, dass der PR hinter \`main\` liegt und ein automatisches Branch-Update angestossen. Da GitHub auf dem neuen Head-SHA keinen neuen Validation-Lauf gestartet hat, wurde \`CICD-DevFlow: Job01 Validation\` zusaetzlich per workflow_dispatch fuer den aktualisierten Branch gestartet.${detailsSuffix}`,
-                );
-              } catch (error) {
-                await upsertManagedComment(
-                  pr.number,
-                  `Auto-merge hat den Branch aktualisiert, konnte die Validation aber nicht automatisch neu anstossen: ${error.message}\n\nBitte starte \`CICD-DevFlow: Job01 Validation\` manuell fuer den aktualisierten Branch.`,
-                );
+                  messages.push(
+                    `Da GitHub auf dem neuen Head-SHA keinen \`Rust Autofix\`-Check gestartet hat, wurde \`CICD-DevFlow: Job00 Pre-Commit Lite\` zusaetzlich per workflow_dispatch fuer den aktualisierten Branch gestartet.${detailsSuffix}`,
+                  );
+                } catch (error) {
+                  messages.push(
+                    `\`Rust Autofix\` konnte auf dem aktualisierten Branch nicht automatisch neu angestossen werden: ${error.message}\n\nBitte starte \`CICD-DevFlow: Job00 Pre-Commit Lite\` manuell fuer PR #${updatedPr.number}.`,
+                  );
+                }
               }
+
+              await upsertManagedComment(pr.number, messages.join('\n\n'));
 
               return true;
             };
-
             const findOpenPrByHeadSha = async (headSha) => {
               const prs = await github.rest.pulls.list({
                 owner: context.repo.owner,
@@ -254,6 +381,12 @@ jobs:
                 {
                   name: 'pre-commit.ci - pr',
                   source: 'status',
+                  allowedConclusions: ['success'],
+                  required: true,
+                },
+                {
+                  name: 'Rust Autofix',
+                  source: 'check_run',
                   allowedConclusions: ['success'],
                   required: true,
                 },
@@ -448,6 +581,10 @@ jobs:
             }
 
             if (!allRequiredPassed) {
+              if (await recoverValidationAfterBranchUpdate(pr)) {
+                return;
+              }
+
               await upsertManagedComment(
                 prNumber,
                 `Auto-merge wartet noch auf erfolgreiche Pflicht-Checks: ${missingOrFailed.join(', ')}.`,
