@@ -262,6 +262,27 @@ The actively used auto-merge logic now lives in `CICD-DevFlow_Job02_AutoMerge.ym
    - Add success comment to issue
 5. Exit (no re-trigger)
 
+### 9. Code Atlas Sync (`CICD-MainFlow_Job05_CodeAtlas.yml`)
+
+**Purpose:** Generate the agent-focused code atlas online and commit it directly back to `main`
+
+**Triggers:**
+
+- Push to `main`
+- Manual dispatch
+
+**Features:**
+
+- Generates `.agent/atlas/code-atlas.json` and Mermaid views on GitHub-hosted runners
+- Commits generated atlas files directly back to `main`
+- Ignores `.agent/atlas/**` as a trigger path to avoid self-trigger loops
+- Uses `[skip ci]` in the bot commit message to suppress secondary workflow cascades
+
+**Notes:**
+
+- This workflow depends on `contents: write`
+- If branch protection blocks direct pushes from `GITHUB_TOKEN`, the workflow must be granted bypass/write access for `main`
+
 ## 🏷️ Labels Used
 
 The automation system uses the following labels:

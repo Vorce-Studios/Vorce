@@ -1,0 +1,251 @@
+---
+title: vorce-core file atlas
+---
+flowchart LR
+    crates_vorce_core_src_animation_rs["src/animation.rs"]
+    crates_vorce_core_src_assignment_rs["src/assignment.rs"]
+    crates_vorce_core_src_audio_analyzer_v2_analyzer_rs["src/audio/analyzer_v2/analyzer.rs"]
+    crates_vorce_core_src_audio_analyzer_v2_beat_rs["src/audio/analyzer_v2/beat.rs"]
+    crates_vorce_core_src_audio_analyzer_v2_fft_rs["src/audio/analyzer_v2/fft.rs"]
+    crates_vorce_core_src_audio_analyzer_v2_mod_rs["src/audio/analyzer_v2/mod.rs"]
+    crates_vorce_core_src_audio_analyzer_v2_tests_rs["src/audio/analyzer_v2/tests.rs"]
+    crates_vorce_core_src_audio_analyzer_v2_types_rs["src/audio/analyzer_v2/types.rs"]
+    crates_vorce_core_src_audio_backend_rs["src/audio/backend.rs"]
+    crates_vorce_core_src_audio_mod_rs["src/audio/mod.rs"]
+    crates_vorce_core_src_audio_media_pipeline_rs["src/audio_media_pipeline.rs"]
+    crates_vorce_core_src_audio_reactive_rs["src/audio_reactive.rs"]
+    crates_vorce_core_src_codegen_rs["src/codegen.rs"]
+    crates_vorce_core_src_diagnostics_rs["src/diagnostics.rs"]
+    crates_vorce_core_src_effect_animation_rs["src/effect_animation.rs"]
+    crates_vorce_core_src_effects_rs["src/effects.rs"]
+    crates_vorce_core_src_history_rs["src/history.rs"]
+    crates_vorce_core_src_layer_composition_rs["src/layer/composition.rs"]
+    crates_vorce_core_src_layer_layer_struct_rs["src/layer/layer_struct.rs"]
+    crates_vorce_core_src_layer_manager_rs["src/layer/manager.rs"]
+    crates_vorce_core_src_layer_mod_rs["src/layer/mod.rs"]
+    crates_vorce_core_src_layer_transform_rs["src/layer/transform.rs"]
+    crates_vorce_core_src_layer_types_rs["src/layer/types.rs"]
+    crates_vorce_core_src_lib_rs["src/lib.rs"]
+    crates_vorce_core_src_logging_rs["src/logging.rs"]
+    crates_vorce_core_src_lut_rs["src/lut.rs"]
+    crates_vorce_core_src_macros_rs["src/macros.rs"]
+    crates_vorce_core_src_mapping_rs["src/mapping.rs"]
+    crates_vorce_core_src_media_library_rs["src/media_library.rs"]
+    crates_vorce_core_src_mesh_rs["src/mesh.rs"]
+    crates_vorce_core_src_module_config_rs["src/module/config.rs"]
+    crates_vorce_core_src_module_manager_rs["src/module/manager.rs"]
+    crates_vorce_core_src_module_manager_tests_rs["src/module/manager_tests.rs"]
+    crates_vorce_core_src_module_mod_rs["src/module/mod.rs"]
+    crates_vorce_core_src_module_types_connection_rs["src/module/types/connection.rs"]
+    crates_vorce_core_src_module_types_hue_rs["src/module/types/hue.rs"]
+    crates_vorce_core_src_module_types_layer_rs["src/module/types/layer.rs"]
+    crates_vorce_core_src_module_types_mask_rs["src/module/types/mask.rs"]
+    crates_vorce_core_src_module_types_mesh_rs["src/module/types/mesh.rs"]
+    crates_vorce_core_src_module_types_mod_rs["src/module/types/mod.rs"]
+    crates_vorce_core_src_module_types_module_rs["src/module/types/module.rs"]
+    crates_vorce_core_src_module_types_module_tests_rs["src/module/types/module_tests.rs"]
+    crates_vorce_core_src_module_types_modulizer_rs["src/module/types/modulizer.rs"]
+    crates_vorce_core_src_module_types_node_link_rs["src/module/types/node_link.rs"]
+    crates_vorce_core_src_module_types_output_rs["src/module/types/output.rs"]
+    crates_vorce_core_src_module_types_part_rs["src/module/types/part.rs"]
+    crates_vorce_core_src_module_types_schema_rs["src/module/types/schema.rs"]
+    crates_vorce_core_src_module_types_shared_media_rs["src/module/types/shared_media.rs"]
+    crates_vorce_core_src_module_types_socket_rs["src/module/types/socket.rs"]
+    crates_vorce_core_src_module_types_socket_tests_rs["src/module/types/socket_tests.rs"]
+    crates_vorce_core_src_module_types_source_rs["src/module/types/source.rs"]
+    crates_vorce_core_src_module_types_trigger_rs["src/module/types/trigger.rs"]
+    crates_vorce_core_src_module_eval_evaluator_mod_rs["src/module_eval/evaluator/mod.rs"]
+    crates_vorce_core_src_module_eval_evaluator_smoothing_rs["src/module_eval/evaluator/smoothing.rs"]
+    crates_vorce_core_src_module_eval_evaluator_traversal_rs["src/module_eval/evaluator/traversal.rs"]
+    crates_vorce_core_src_module_eval_evaluator_triggers_rs["src/module_eval/evaluator/triggers.rs"]
+    crates_vorce_core_src_module_eval_mod_rs["src/module_eval/mod.rs"]
+    crates_vorce_core_src_module_eval_types_rs["src/module_eval/types.rs"]
+    crates_vorce_core_src_monitor_rs["src/monitor.rs"]
+    crates_vorce_core_src_oscillator_rs["src/oscillator.rs"]
+    crates_vorce_core_src_output_rs["src/output.rs"]
+    crates_vorce_core_src_paint_rs["src/paint.rs"]
+    crates_vorce_core_src_recent_effect_configs_rs["src/recent_effect_configs.rs"]
+    crates_vorce_core_src_runtime_paths_rs["src/runtime_paths.rs"]
+    crates_vorce_core_src_shader_graph_rs["src/shader_graph.rs"]
+    crates_vorce_core_src_state_rs["src/state.rs"]
+    crates_vorce_core_src_trigger_system_rs["src/trigger_system.rs"]
+    crates_vorce_core_tests_assignment_tests_rs["tests/assignment_tests.rs"]
+    crates_vorce_core_tests_comprehensive_node_tests_rs["tests/comprehensive_node_tests.rs"]
+    crates_vorce_core_tests_layer_tests_rs["tests/layer_tests.rs"]
+    crates_vorce_core_tests_module_coverage_tests_rs["tests/module_coverage_tests.rs"]
+    crates_vorce_core_tests_module_playback_tests_rs["tests/module_playback_tests.rs"]
+    crates_vorce_core_tests_module_tests_rs["tests/module_tests.rs"]
+    crates_vorce_core_tests_trackline_tests_rs["tests/trackline_tests.rs"]
+    crates_vorce_core_tests_trigger_logic_tests_rs["tests/trigger_logic_tests.rs"]
+    crates_vorce_core_tests_trigger_system_tests_rs["tests/trigger_system_tests.rs"]
+    crates_vorce_core_tests_trigger_tests_rs["tests/trigger_tests.rs"]
+
+    crates_vorce_core_src_audio_analyzer_v2_analyzer_rs --> crates_vorce_core_src_audio_analyzer_v2_types_rs
+    crates_vorce_core_src_audio_analyzer_v2_beat_rs --> crates_vorce_core_src_audio_analyzer_v2_analyzer_rs
+    crates_vorce_core_src_audio_analyzer_v2_fft_rs --> crates_vorce_core_src_audio_analyzer_v2_analyzer_rs
+    crates_vorce_core_src_audio_analyzer_v2_mod_rs --> crates_vorce_core_src_audio_analyzer_v2_analyzer_rs
+    crates_vorce_core_src_audio_analyzer_v2_mod_rs --> crates_vorce_core_src_audio_analyzer_v2_beat_rs
+    crates_vorce_core_src_audio_analyzer_v2_mod_rs --> crates_vorce_core_src_audio_analyzer_v2_fft_rs
+    crates_vorce_core_src_audio_analyzer_v2_mod_rs --> crates_vorce_core_src_audio_analyzer_v2_tests_rs
+    crates_vorce_core_src_audio_analyzer_v2_mod_rs --> crates_vorce_core_src_audio_analyzer_v2_types_rs
+    crates_vorce_core_src_audio_analyzer_v2_tests_rs --> crates_vorce_core_src_audio_analyzer_v2_mod_rs
+    crates_vorce_core_src_audio_backend_rs --> crates_vorce_core_src_audio_mod_rs
+    crates_vorce_core_src_audio_media_pipeline_rs --> crates_vorce_core_src_audio_mod_rs
+    crates_vorce_core_src_audio_media_pipeline_rs --> crates_vorce_core_src_audio_reactive_rs
+    crates_vorce_core_src_audio_mod_rs --> crates_vorce_core_src_audio_analyzer_v2_mod_rs
+    crates_vorce_core_src_audio_mod_rs --> crates_vorce_core_src_audio_backend_rs
+    crates_vorce_core_src_audio_reactive_rs --> crates_vorce_core_src_animation_rs
+    crates_vorce_core_src_audio_reactive_rs --> crates_vorce_core_src_audio_mod_rs
+    crates_vorce_core_src_audio_reactive_rs --> crates_vorce_core_src_shader_graph_rs
+    crates_vorce_core_src_codegen_rs --> crates_vorce_core_src_shader_graph_rs
+    crates_vorce_core_src_diagnostics_rs --> crates_vorce_core_src_module_mod_rs
+    crates_vorce_core_src_effect_animation_rs --> crates_vorce_core_src_animation_rs
+    crates_vorce_core_src_effect_animation_rs --> crates_vorce_core_src_effects_rs
+    crates_vorce_core_src_history_rs --> crates_vorce_core_src_lib_rs
+    crates_vorce_core_src_layer_layer_struct_rs --> crates_vorce_core_src_layer_transform_rs
+    crates_vorce_core_src_layer_layer_struct_rs --> crates_vorce_core_src_layer_types_rs
+    crates_vorce_core_src_layer_manager_rs --> crates_vorce_core_src_layer_composition_rs
+    crates_vorce_core_src_layer_manager_rs --> crates_vorce_core_src_layer_layer_struct_rs
+    crates_vorce_core_src_layer_mod_rs --> crates_vorce_core_src_layer_composition_rs
+    crates_vorce_core_src_layer_mod_rs --> crates_vorce_core_src_layer_layer_struct_rs
+    crates_vorce_core_src_layer_mod_rs --> crates_vorce_core_src_layer_manager_rs
+    crates_vorce_core_src_layer_mod_rs --> crates_vorce_core_src_layer_transform_rs
+    crates_vorce_core_src_layer_mod_rs --> crates_vorce_core_src_layer_types_rs
+    crates_vorce_core_src_layer_transform_rs --> crates_vorce_core_src_layer_types_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_animation_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_assignment_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_audio_media_pipeline_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_audio_mod_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_audio_reactive_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_codegen_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_diagnostics_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_effect_animation_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_effects_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_history_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_layer_mod_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_logging_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_lut_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_macros_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_mapping_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_media_library_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_mesh_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_module_eval_mod_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_module_mod_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_monitor_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_oscillator_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_output_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_paint_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_recent_effect_configs_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_runtime_paths_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_shader_graph_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_state_rs
+    crates_vorce_core_src_lib_rs --> crates_vorce_core_src_trigger_system_rs
+    crates_vorce_core_src_mapping_rs --> crates_vorce_core_src_lib_rs
+    crates_vorce_core_src_module_config_rs --> crates_vorce_core_src_module_types_mod_rs
+    crates_vorce_core_src_module_eval_evaluator_mod_rs --> crates_vorce_core_src_audio_analyzer_v2_mod_rs
+    crates_vorce_core_src_module_eval_evaluator_mod_rs --> crates_vorce_core_src_audio_reactive_rs
+    crates_vorce_core_src_module_eval_evaluator_mod_rs --> crates_vorce_core_src_module_eval_evaluator_smoothing_rs
+    crates_vorce_core_src_module_eval_evaluator_mod_rs --> crates_vorce_core_src_module_eval_evaluator_traversal_rs
+    crates_vorce_core_src_module_eval_evaluator_mod_rs --> crates_vorce_core_src_module_eval_evaluator_triggers_rs
+    crates_vorce_core_src_module_eval_evaluator_mod_rs --> crates_vorce_core_src_module_eval_mod_rs
+    crates_vorce_core_src_module_eval_evaluator_mod_rs --> crates_vorce_core_src_module_eval_types_rs
+    crates_vorce_core_src_module_eval_evaluator_mod_rs --> crates_vorce_core_src_module_mod_rs
+    crates_vorce_core_src_module_eval_evaluator_smoothing_rs --> crates_vorce_core_src_module_eval_mod_rs
+    crates_vorce_core_src_module_eval_evaluator_smoothing_rs --> crates_vorce_core_src_module_mod_rs
+    crates_vorce_core_src_module_eval_evaluator_traversal_rs --> crates_vorce_core_src_module_eval_evaluator_mod_rs
+    crates_vorce_core_src_module_eval_evaluator_traversal_rs --> crates_vorce_core_src_module_eval_mod_rs
+    crates_vorce_core_src_module_eval_evaluator_traversal_rs --> crates_vorce_core_src_module_eval_types_rs
+    crates_vorce_core_src_module_eval_evaluator_traversal_rs --> crates_vorce_core_src_module_mod_rs
+    crates_vorce_core_src_module_eval_evaluator_triggers_rs --> crates_vorce_core_src_audio_reactive_rs
+    crates_vorce_core_src_module_eval_evaluator_triggers_rs --> crates_vorce_core_src_module_eval_mod_rs
+    crates_vorce_core_src_module_eval_evaluator_triggers_rs --> crates_vorce_core_src_module_eval_types_rs
+    crates_vorce_core_src_module_eval_evaluator_triggers_rs --> crates_vorce_core_src_module_mod_rs
+    crates_vorce_core_src_module_eval_mod_rs --> crates_vorce_core_src_module_eval_evaluator_mod_rs
+    crates_vorce_core_src_module_eval_mod_rs --> crates_vorce_core_src_module_eval_types_rs
+    crates_vorce_core_src_module_eval_types_rs --> crates_vorce_core_src_module_mod_rs
+    crates_vorce_core_src_module_manager_rs --> crates_vorce_core_src_module_config_rs
+    crates_vorce_core_src_module_manager_rs --> crates_vorce_core_src_module_types_mod_rs
+    crates_vorce_core_src_module_manager_tests_rs --> crates_vorce_core_src_module_mod_rs
+    crates_vorce_core_src_module_mod_rs --> crates_vorce_core_src_module_config_rs
+    crates_vorce_core_src_module_mod_rs --> crates_vorce_core_src_module_manager_rs
+    crates_vorce_core_src_module_mod_rs --> crates_vorce_core_src_module_types_mod_rs
+    crates_vorce_core_src_module_types_connection_rs --> crates_vorce_core_src_module_types_module_rs
+    crates_vorce_core_src_module_types_layer_rs --> crates_vorce_core_src_module_types_mesh_rs
+    crates_vorce_core_src_module_types_layer_rs --> crates_vorce_core_src_module_types_socket_rs
+    crates_vorce_core_src_module_types_mesh_rs --> crates_vorce_core_src_mesh_rs
+    crates_vorce_core_src_module_types_mod_rs --> crates_vorce_core_src_module_types_connection_rs
+    crates_vorce_core_src_module_types_mod_rs --> crates_vorce_core_src_module_types_hue_rs
+    crates_vorce_core_src_module_types_mod_rs --> crates_vorce_core_src_module_types_layer_rs
+    crates_vorce_core_src_module_types_mod_rs --> crates_vorce_core_src_module_types_mask_rs
+    crates_vorce_core_src_module_types_mod_rs --> crates_vorce_core_src_module_types_mesh_rs
+    crates_vorce_core_src_module_types_mod_rs --> crates_vorce_core_src_module_types_module_rs
+    crates_vorce_core_src_module_types_mod_rs --> crates_vorce_core_src_module_types_modulizer_rs
+    crates_vorce_core_src_module_types_mod_rs --> crates_vorce_core_src_module_types_node_link_rs
+    crates_vorce_core_src_module_types_mod_rs --> crates_vorce_core_src_module_types_output_rs
+    crates_vorce_core_src_module_types_mod_rs --> crates_vorce_core_src_module_types_part_rs
+    crates_vorce_core_src_module_types_mod_rs --> crates_vorce_core_src_module_types_schema_rs
+    crates_vorce_core_src_module_types_mod_rs --> crates_vorce_core_src_module_types_shared_media_rs
+    crates_vorce_core_src_module_types_mod_rs --> crates_vorce_core_src_module_types_socket_rs
+    crates_vorce_core_src_module_types_mod_rs --> crates_vorce_core_src_module_types_socket_tests_rs
+    crates_vorce_core_src_module_types_mod_rs --> crates_vorce_core_src_module_types_source_rs
+    crates_vorce_core_src_module_types_mod_rs --> crates_vorce_core_src_module_types_trigger_rs
+    crates_vorce_core_src_module_types_module_rs --> crates_vorce_core_src_module_types_connection_rs
+    crates_vorce_core_src_module_types_module_rs --> crates_vorce_core_src_module_types_hue_rs
+    crates_vorce_core_src_module_types_module_rs --> crates_vorce_core_src_module_types_layer_rs
+    crates_vorce_core_src_module_types_module_rs --> crates_vorce_core_src_module_types_mask_rs
+    crates_vorce_core_src_module_types_module_rs --> crates_vorce_core_src_module_types_modulizer_rs
+    crates_vorce_core_src_module_types_module_rs --> crates_vorce_core_src_module_types_node_link_rs
+    crates_vorce_core_src_module_types_module_rs --> crates_vorce_core_src_module_types_output_rs
+    crates_vorce_core_src_module_types_module_rs --> crates_vorce_core_src_module_types_part_rs
+    crates_vorce_core_src_module_types_module_rs --> crates_vorce_core_src_module_types_socket_rs
+    crates_vorce_core_src_module_types_module_rs --> crates_vorce_core_src_module_types_source_rs
+    crates_vorce_core_src_module_types_module_rs --> crates_vorce_core_src_module_types_trigger_rs
+    crates_vorce_core_src_module_types_module_tests_rs --> crates_vorce_core_src_layer_types_rs
+    crates_vorce_core_src_module_types_module_tests_rs --> crates_vorce_core_src_module_mod_rs
+    crates_vorce_core_src_module_types_module_tests_rs --> crates_vorce_core_src_module_types_layer_rs
+    crates_vorce_core_src_module_types_module_tests_rs --> crates_vorce_core_src_module_types_mod_rs
+    crates_vorce_core_src_module_types_module_tests_rs --> crates_vorce_core_src_module_types_output_rs
+    crates_vorce_core_src_module_types_module_tests_rs --> crates_vorce_core_src_module_types_trigger_rs
+    crates_vorce_core_src_module_types_modulizer_rs --> crates_vorce_core_src_module_types_socket_rs
+    crates_vorce_core_src_module_types_part_rs --> crates_vorce_core_src_module_types_hue_rs
+    crates_vorce_core_src_module_types_part_rs --> crates_vorce_core_src_module_types_layer_rs
+    crates_vorce_core_src_module_types_part_rs --> crates_vorce_core_src_module_types_mask_rs
+    crates_vorce_core_src_module_types_part_rs --> crates_vorce_core_src_module_types_module_rs
+    crates_vorce_core_src_module_types_part_rs --> crates_vorce_core_src_module_types_modulizer_rs
+    crates_vorce_core_src_module_types_part_rs --> crates_vorce_core_src_module_types_node_link_rs
+    crates_vorce_core_src_module_types_part_rs --> crates_vorce_core_src_module_types_output_rs
+    crates_vorce_core_src_module_types_part_rs --> crates_vorce_core_src_module_types_socket_rs
+    crates_vorce_core_src_module_types_part_rs --> crates_vorce_core_src_module_types_source_rs
+    crates_vorce_core_src_module_types_part_rs --> crates_vorce_core_src_module_types_trigger_rs
+    crates_vorce_core_src_module_types_schema_rs --> crates_vorce_core_src_module_types_part_rs
+    crates_vorce_core_src_module_types_schema_rs --> crates_vorce_core_src_module_types_socket_rs
+    crates_vorce_core_src_module_types_socket_tests_rs --> crates_vorce_core_src_module_types_hue_rs
+    crates_vorce_core_src_module_types_socket_tests_rs --> crates_vorce_core_src_module_types_layer_rs
+    crates_vorce_core_src_module_types_socket_tests_rs --> crates_vorce_core_src_module_types_mask_rs
+    crates_vorce_core_src_module_types_socket_tests_rs --> crates_vorce_core_src_module_types_mesh_rs
+    crates_vorce_core_src_module_types_socket_tests_rs --> crates_vorce_core_src_module_types_modulizer_rs
+    crates_vorce_core_src_module_types_socket_tests_rs --> crates_vorce_core_src_module_types_output_rs
+    crates_vorce_core_src_module_types_socket_tests_rs --> crates_vorce_core_src_module_types_part_rs
+    crates_vorce_core_src_module_types_socket_tests_rs --> crates_vorce_core_src_module_types_socket_rs
+    crates_vorce_core_src_module_types_socket_tests_rs --> crates_vorce_core_src_module_types_source_rs
+    crates_vorce_core_src_module_types_socket_tests_rs --> crates_vorce_core_src_module_types_trigger_rs
+    crates_vorce_core_src_module_types_source_rs --> crates_vorce_core_src_module_types_socket_rs
+    crates_vorce_core_src_module_types_trigger_rs --> crates_vorce_core_src_module_types_socket_rs
+    crates_vorce_core_src_state_rs --> crates_vorce_core_src_lib_rs
+    crates_vorce_core_src_trigger_system_rs --> crates_vorce_core_src_audio_reactive_rs
+    crates_vorce_core_src_trigger_system_rs --> crates_vorce_core_src_module_mod_rs
+    crates_vorce_core_tests_assignment_tests_rs --> crates_vorce_core_src_lib_rs
+    crates_vorce_core_tests_comprehensive_node_tests_rs --> crates_vorce_core_src_audio_analyzer_v2_mod_rs
+    crates_vorce_core_tests_comprehensive_node_tests_rs --> crates_vorce_core_src_module_eval_mod_rs
+    crates_vorce_core_tests_comprehensive_node_tests_rs --> crates_vorce_core_src_module_mod_rs
+    crates_vorce_core_tests_layer_tests_rs --> crates_vorce_core_src_lib_rs
+    crates_vorce_core_tests_module_coverage_tests_rs --> crates_vorce_core_src_module_mod_rs
+    crates_vorce_core_tests_module_playback_tests_rs --> crates_vorce_core_src_module_mod_rs
+    crates_vorce_core_tests_module_tests_rs --> crates_vorce_core_src_module_mod_rs
+    crates_vorce_core_tests_trackline_tests_rs --> crates_vorce_core_src_animation_rs
+    crates_vorce_core_tests_trigger_logic_tests_rs --> crates_vorce_core_src_module_mod_rs
+    crates_vorce_core_tests_trigger_system_tests_rs --> crates_vorce_core_src_audio_reactive_rs
+    crates_vorce_core_tests_trigger_system_tests_rs --> crates_vorce_core_src_module_mod_rs
+    crates_vorce_core_tests_trigger_system_tests_rs --> crates_vorce_core_src_trigger_system_rs
+    crates_vorce_core_tests_trigger_tests_rs --> crates_vorce_core_src_module_eval_mod_rs
+    crates_vorce_core_tests_trigger_tests_rs --> crates_vorce_core_src_module_mod_rs
