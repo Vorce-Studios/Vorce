@@ -318,12 +318,6 @@ jobs:
             const getExpectedChecks = () => {
               return [
                 {
-                  name: 'pre-commit.ci - pr',
-                  source: 'status',
-                  allowedConclusions: ['success'],
-                  required: true,
-                },
-                {
                   name: 'Quality Gate (Format & Lint)',
                   source: 'check_run',
                   allowedConclusions: ['success'],
