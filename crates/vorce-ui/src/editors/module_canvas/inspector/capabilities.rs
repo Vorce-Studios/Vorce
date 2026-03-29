@@ -96,9 +96,9 @@ pub fn is_output_type_enum_supported(
 
 /// Determines if a specific Bevy node type is fully supported.
 pub fn is_bevy_node_supported(source: &vorce_core::module::SourceType) -> bool {
-    match source {
-        vorce_core::module::SourceType::Bevy3DModel { .. } => false,
-        vorce_core::module::SourceType::BevyCamera { .. } => false,
-        _ => true,
-    }
+    !matches!(
+        source,
+        vorce_core::module::SourceType::Bevy3DModel { .. }
+            | vorce_core::module::SourceType::BevyCamera { .. }
+    )
 }
