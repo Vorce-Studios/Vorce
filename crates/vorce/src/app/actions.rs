@@ -170,7 +170,7 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                 if let Some(path) = FileDialog::new()
                     .add_filter(
                         "Vorce Project",
-                        &["vorce", "mflow", "mapmap", "ron", "json"],
+                        &["vorce", "ron", "json"],
                     )
                     .set_file_name("project.vorce")
                     .save_file()
@@ -187,7 +187,7 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     if let Some(path) = FileDialog::new()
                         .add_filter(
                             "Vorce Project",
-                            &["vorce", "mflow", "mapmap", "ron", "json"],
+                            &["vorce", "ron", "json"],
                         )
                         .set_file_name("project.vorce")
                         .save_file()
@@ -250,7 +250,7 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     if let Some(path) = FileDialog::new()
                         .add_filter(
                             "Vorce Project",
-                            &["vorce", "mflow", "mapmap", "ron", "json"],
+                            &["vorce", "ron", "json"],
                         )
                         .pick_file()
                     {
