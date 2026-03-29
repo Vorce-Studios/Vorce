@@ -32,8 +32,10 @@ fn test_audio_fft_fallback() {
         (0.0, 0.0),
     );
 
-    let mut analysis = vorce_core::audio::analyzer_v2::AudioAnalysisV2::default();
-    analysis.beat_detected = true;
+    let mut analysis = vorce_core::audio::analyzer_v2::AudioAnalysisV2 {
+        beat_detected: true,
+        ..Default::default()
+    };
     evaluator.update_audio(&analysis);
 
     let shared = vorce_core::module::SharedMediaState::default();
