@@ -286,7 +286,7 @@ The workflows require the following GitHub permissions:
 - `pull-requests: write` - For managing PRs
 - `security-events: write` - For CodeQL findings
 - `checks: read` - For reading check status
-- `statuses: read` - For reading external commit status integrations like `pre-commit.ci`
+- `statuses: read` - For reading commit status integrations like `pre-commit.ci`
 
 ## 🚀 Jules Integration Setup
 
@@ -442,6 +442,7 @@ gh workflow run CI-06_update-changelog.yml
 **Issue: Pull requests seem to hang waiting for checks**
 
 - Check whether Branch Protection requires outdated check names
+- Verify that `pre-commit.ci - pr` is bound to the hosted `pre-commit.ci` app instead of a legacy GitHub Actions status publisher
 - Ensure CodeQL is not configured as a required PR check
 - Verify the required set matches the current `CICD-DevFlow` workflow names
 
@@ -522,11 +523,26 @@ For issues with workflows:
 > 1. Stelle sicher, dass die Workflows im Repository aktiviert sind (Settings → Actions → General → "Allow all actions")
 > 2. Markiere die Jobs in den Branch Protection Rules als "required" (Settings → Branches → main → "Require status checks to pass before merging")
 > 3. Empfohlene required checks:
+>    - `pre-commit.ci - pr`
+>    - `Rust Autofix`
 >    - `Quality Gate (Format & Lint)`
 >    - `Security Scan`
 >    - `Build & Test (Linux)`
 >    - `Build & Test (Windows)`
 >    - `Validation Success`
+
+### CICD-DevFlow_Job00_PreCommitLite.yml
+
+**Aktuelle Trigger:**
+
+- Pull Request Events (`opened`, `reopened`, `synchronize`, `ready_for_review`, `labeled`)
+
+**Funktion:**
+
+- Führt `pre-commit.ci lite` auf GitHub Actions aus
+- Korrigiert `cargo fmt` und `cargo-sort` automatisch auf PR-Branches
+- Unterstützt manuelles Re-Run über das Label `pre-commit ci run`
+- Liefert den merge-relevanten Check `Rust Autofix`
 
 ### CICD-DevFlow_Job02_AutoMerge.yml
 
@@ -546,6 +562,8 @@ For issues with workflows:
 
 **Aktueller Pflichtsatz für Auto-Merge:**
 
+- `pre-commit.ci - pr`
+- `Rust Autofix`
 - `Quality Gate (Format & Lint)`
 - `Security Scan`
 - `Build & Test (Linux)`
@@ -584,6 +602,8 @@ Um die PR-Checks als "required" zu markieren, folge diesen Schritten:
 1. Gehe zu **Settings** → **Branches** → **main**
 2. Aktiviere "Require status checks to pass before merging"
 3. Wähle folgende Checks als required aus:
+   - `pre-commit.ci - pr`
+   - `Rust Autofix`
    - `Quality Gate (Format & Lint)`
    - `Security Scan`
    - `Build & Test (Linux)`
@@ -610,31 +630,35 @@ Die Checks werden dann als "Expected" im PR angezeigt und müssen vor dem Merge 
          │                       │
          ▼                       ▼
 ┌─────────────────┐    ┌─────────────────────────────────┐
-│ pre-commit.ci   │    │ GitHub Actions Validation       │
+│ pre-commit.ci   │    │ pre-commit.ci lite              │
+│ hosted service  │    │ GitHub Actions runner           │
 │                 │    │                                 │
-│ • cargo fmt     │    │ • Quality Gate                  │
-│ • trailing ws   │    │ • Security Scan                 │
-│ • YAML/TOML     │    │ • Build & Test (Linux)          │
-│ • Markdown      │    │ • Build & Test (Windows)        │
-│                 │    │ • Validation Success            │
-│ ⚡ ~30s         │    │                                 │
-│ ✅ Auto-Push   │    │ ✅ Merge-relevant gate           │
-└────────┬────────┘    └───────────────┬────��────────────┘
-         │                             │
-         └─────────────┬───────────────┘
-                       │
-                       ▼
-            ┌──────────────────────┐
-            │ Copilot Review       │
-            │ ~1-2 min             │
-            └──────────┬───────────┘
+│ • trailing ws   │    │ • cargo fmt                     │
+│ • detect-secrets│    │ • cargo-sort                    │
+│ • YAML/TOML     │    │ • safe PR autofix               │
+│ • optional MD   │    │                                 │
+│ • autoupdate    │    │ ✅ Rust system hooks            │
+│ ✅ fast status  │    └───────────────┬─────────────────┘
+└────────┬────────┘                    │
+         │                             ▼
+         │              ┌─────────────────────────────────┐
+         │              │ GitHub Actions Validation       │
+         │              │                                 │
+         │              │ • Quality Gate                  │
+         │              │ • Security Scan                 │
+         │              │ • Build & Test (Linux)          │
+         │              │ • Build & Test (Windows)        │
+         │              │ • Validation Success            │
+         │              └───────────────┬─────────────────┘
+         │                              │
+         └─────────────┬────────────────┘
                        │
                        ▼
             ┌──────────────────────┐
             │ Auto-Merge           │
-            │ • Check Status       │
-            │ • Merge if OK        │
-            │ • Or comment reason  │
+            │ • Waits on all gates │
+            │ • Merges if clean    │
+            │ • Or comments reason │
             └──────────────────────┘
 
 ✅ Zusammenfassung der Dateipfade:
@@ -644,6 +668,7 @@ Datei | Pfad | Grund
 `.markdownlint.json` | Root | Wird von `markdownlint-cli` im Root gesucht
 `.secrets.baseline` | Root | Wird von `detect-secrets` im Root gesucht
 `.pre-commit-config.yaml` | Root | Standard für `pre-commit`
+`CICD-DevFlow_Job00_PreCommitLite.yml` | `.github/workflows/` | Führt Rust-Autofixes über `pre-commit.ci lite` aus
 `copilot-instructions.md` | `.github/` | GitHub-spezifische Config
 Workflows | `.github/workflows/` | GitHub Actions Standard
 
@@ -672,5 +697,5 @@ git commit -m "ci: implement validation and auto-merge with Jules feedback"
 git push
 ```
 
-**Last Updated:** 2026-03-15 (PR-Gate vereinheitlicht, Windows immer aktiv, CodeQL aus Required Checks entfernt)
+**Last Updated:** 2026-03-29 (hosted pre-commit.ci plus pre-commit.ci lite für Rust-Autofixes)
 **Maintained By:** Vorce Team
