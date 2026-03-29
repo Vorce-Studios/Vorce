@@ -56,8 +56,14 @@ impl ApplicationHandler for VorceApp {
                 InitializationConfig::default()
             };
 
-            let mut app = pollster::block_on(App::new(event_loop, config))
-                .expect("Failed to initialize application");
+            let mut app = match pollster::block_on(App::new(event_loop, config)) {
+                Ok(app) => app,
+                Err(err) => {
+                    error!("Failed to initialize application: {err:#}");
+                    event_loop.exit();
+                    return;
+                }
+            };
 
             // Handle CLI no-splash override
             let args = CliArgs::parse();
