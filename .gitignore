@@ -55,6 +55,7 @@ Thumbs.db
 !resources/controllers/**/*.json
 
 *.json
+!.agent/atlas/code-atlas.json
 
 # Allow vcpkg files
 !vcpkg.json
