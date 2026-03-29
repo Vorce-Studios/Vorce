@@ -23,7 +23,7 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 wgpu = { workspace = true }
-wgpu-hal = { version = "29.0.0", features = ["dx12"] }
+wgpu-hal = { version = "29.0.1", features = ["dx12"] }
 winit = { workspace = true }
 
 [target.'cfg(windows)'.dependencies]
