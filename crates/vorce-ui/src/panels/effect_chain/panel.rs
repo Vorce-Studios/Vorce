@@ -82,7 +82,7 @@ impl EffectChainPanel {
             .default_size(window_size)
             .resizable(true)
             .scroll([false, true])
-            .frame(cyber_panel_frame(&ctx.style()))
+            .frame(cyber_panel_frame(&ctx.global_style()))
             .show(ctx, |ui| {
                 render_panel_header(ui, &locale.t("panel-effect-chain"), |_| {});
 
@@ -428,7 +428,7 @@ impl EffectChainPanel {
             .default_size([400.0, 300.0])
             .resizable(true)
             .open(&mut open)
-            .frame(cyber_panel_frame(&ctx.style()))
+            .frame(cyber_panel_frame(&ctx.global_style()))
             .show(ctx, |ui| {
                 render_panel_header(ui, &locale.t("effect-presets-browser"), |_| {});
                 ui.add_space(8.0);

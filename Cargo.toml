@@ -46,14 +46,14 @@ criterion = "0.8"
 crossbeam-channel = "0.5"
 
 # Phase 6: egui migration
-ecolor = "0.33.3"
-egui = { version = "0.33.3", features = ["serde"] }
-egui-wgpu = "0.33.3"
+ecolor = "0.34.1"
+egui = { version = "0.34.1", features = ["serde"] }
+egui-wgpu = "0.34.1"
 egui-winit = "0.34.1"
-egui_extras = { version = "0.33.3", features = ["image", "file", "svg"] }
-egui_node_editor = "0.9.0"
-emath = "0.33.3"
-epaint = "0.33.3"
+egui_extras = { version = "0.34.1", features = ["image", "file", "svg"] }
+egui_node_editor = { path = "crates/vendor/egui_node_editor" }
+emath = "0.34.1"
+epaint = "0.34.1"
 
 # Media
 ffmpeg-next = { version = "7.1", default-features = false, features = [
@@ -120,7 +120,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 unic-langid = "0.9"
 usvg = "0.47"
 # Core dependencies
-wgpu = "27.0.1"
+wgpu = "29.0.0"
 winit = { version = "0.30.13" }
 winres = "0.1"
 
