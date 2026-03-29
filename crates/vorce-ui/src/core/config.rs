@@ -520,9 +520,7 @@ impl UserConfig {
         })
     }
 
-    fn resolve_existing_config_path(
-        primary: Option<PathBuf>,
-    ) -> Option<PathBuf> {
+    fn resolve_existing_config_path(primary: Option<PathBuf>) -> Option<PathBuf> {
         primary.as_ref().filter(|path| path.exists()).cloned()
     }
 
