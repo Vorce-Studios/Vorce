@@ -31,4 +31,3 @@
 - `python scripts/dev-tools/generate-code-atlas.py`
 - `python scripts/dev-tools/query-code-atlas.py "crate:vorce-core tag:evaluation"`
 - `python scripts/dev-tools/query-code-atlas.py "symbol:ModuleEvaluator" --json`
-
