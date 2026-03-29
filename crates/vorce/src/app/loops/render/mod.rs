@@ -21,6 +21,7 @@ use previews::*;
 pub(crate) const PREVIEW_FLAG: u64 = 1u64 << 63;
 
 /// Renders the UI or content for the given output ID.
+#[allow(deprecated)]
 pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
     // Clone device Arc to create encoder without borrowing self
     let device = app.backend.device.clone();
@@ -121,7 +122,22 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
             None => return Ok(()),
         };
 
-        let surface_texture = window_context.surface.get_current_texture()?;
+        let surface_texture = match window_context.surface.get_current_texture() {
+            wgpu::CurrentSurfaceTexture::Success(texture)
+            | wgpu::CurrentSurfaceTexture::Suboptimal(texture) => texture,
+            wgpu::CurrentSurfaceTexture::Timeout | wgpu::CurrentSurfaceTexture::Occluded => {
+                return Ok(());
+            }
+            wgpu::CurrentSurfaceTexture::Outdated | wgpu::CurrentSurfaceTexture::Lost => {
+                window_context
+                    .surface
+                    .configure(&app.backend.device, &window_context.surface_config);
+                return Ok(());
+            }
+            wgpu::CurrentSurfaceTexture::Validation => {
+                anyhow::bail!("failed to acquire surface texture due to validation error");
+            }
+        };
         let view = surface_texture
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
