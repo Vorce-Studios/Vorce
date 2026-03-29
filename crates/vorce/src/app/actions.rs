@@ -784,28 +784,25 @@ pub fn handle_mcp_actions(app: &mut App) {
             if let Some(module) = app.state.module_manager_mut().get_module_mut(mod_id) {
                 if let Some(part) = module.parts.iter_mut().find(|p| p.id == part_id) {
                     let mut path_updated = false;
-                    if let vorce_core::module::ModulePartType::Source(source) = &mut part.part_type
+                    if let vorce_core::module::ModulePartType::Source(
+                        vorce_core::module::SourceType::MediaFile {
+                            path: ref mut current_path,
+                            ..
+                        }
+                        | vorce_core::module::SourceType::VideoUni {
+                            path: ref mut current_path,
+                            ..
+                        }
+                        | vorce_core::module::SourceType::ImageUni {
+                            path: ref mut current_path,
+                            ..
+                        },
+                    ) = &mut part.part_type
                     {
-                        match source {
-                            vorce_core::module::SourceType::MediaFile {
-                                path: ref mut current_path,
-                                ..
-                            }
-                            | vorce_core::module::SourceType::VideoUni {
-                                path: ref mut current_path,
-                                ..
-                            }
-                            | vorce_core::module::SourceType::ImageUni {
-                                path: ref mut current_path,
-                                ..
-                            } => {
-                                let new_path_str = path.to_string_lossy().to_string();
-                                if *current_path != new_path_str {
-                                    *current_path = new_path_str;
-                                    path_updated = true;
-                                }
-                            }
-                            _ => {}
+                        let new_path_str = path.to_string_lossy().to_string();
+                        if *current_path != new_path_str {
+                            *current_path = new_path_str;
+                            path_updated = true;
                         }
                     }
                     if path_updated {
