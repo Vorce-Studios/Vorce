@@ -9,7 +9,6 @@ use std::fs;
 use std::path::PathBuf;
 
 const APP_CONFIG_DIR: &str = "Vorce";
-const LEGACY_APP_CONFIG_DIR: &str = "MapFlow";
 const CONFIG_FILE_NAME: &str = "config.json";
 
 /// Sichtbarkeitseinstellungen für das Hauptlayout.
@@ -514,10 +513,6 @@ impl UserConfig {
         Self::config_path_for_app(APP_CONFIG_DIR)
     }
 
-    fn legacy_config_path() -> Option<PathBuf> {
-        Self::config_path_for_app(LEGACY_APP_CONFIG_DIR)
-    }
-
     fn config_path_for_app(app_name: &str) -> Option<PathBuf> {
         dirs::config_dir().map(|mut p| {
             p.push(app_name);
@@ -528,17 +523,12 @@ impl UserConfig {
 
     fn resolve_existing_config_path(
         primary: Option<PathBuf>,
-        legacy: Option<PathBuf>,
     ) -> Option<PathBuf> {
-        if let Some(path) = primary.as_ref().filter(|path| path.exists()) {
-            return Some(path.clone());
-        }
-
-        legacy.filter(|path| path.exists()).or(primary)
+        primary.as_ref().filter(|path| path.exists()).cloned()
     }
 
     fn existing_config_path() -> Option<PathBuf> {
-        Self::resolve_existing_config_path(Self::config_path(), Self::legacy_config_path())
+        Self::resolve_existing_config_path(Self::config_path())
     }
 
     /// Load configuration from disk
@@ -794,31 +784,7 @@ mod tests {
         assert_eq!(config.active_layout_id, "live");
         assert!(!config.set_active_layout("does-not-exist"));
     }
-
-    #[test]
-    fn test_existing_config_path_prefers_vorce_and_falls_back_to_mapflow() {
-        let root = std::env::temp_dir().join(format!("vorce-config-test-{}", std::process::id()));
-        let primary = root.join(APP_CONFIG_DIR).join(CONFIG_FILE_NAME);
-        let legacy = root.join(LEGACY_APP_CONFIG_DIR).join(CONFIG_FILE_NAME);
-
-        if root.exists() {
-            fs::remove_dir_all(&root).unwrap();
-        }
-
-        fs::create_dir_all(legacy.parent().unwrap()).unwrap();
-        fs::write(&legacy, "{}").unwrap();
-        assert_eq!(
-            UserConfig::resolve_existing_config_path(Some(primary.clone()), Some(legacy.clone())),
-            Some(legacy.clone())
-        );
-
-        fs::create_dir_all(primary.parent().unwrap()).unwrap();
-        fs::write(&primary, "{}").unwrap();
-        assert_eq!(
-            UserConfig::resolve_existing_config_path(Some(primary.clone()), Some(legacy)),
-            Some(primary)
-        );
-
-        fs::remove_dir_all(root).unwrap();
+}
+st"));
     }
 }

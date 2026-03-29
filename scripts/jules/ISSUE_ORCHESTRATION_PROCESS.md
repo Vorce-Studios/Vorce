@@ -146,7 +146,7 @@ Diese Datei enthaelt die GitHub-/Project-Helfer.
 
 Hier wurde explizit nachgezogen:
 
-- automatische Erkennung des Projekts `@Vorce Project Manager`, mit `@MapFlow Project Manager` nur noch als Legacy-Fallback und auch ohne gesetzte `VORCE_PROJECT_NUMBER`
+- automatische Erkennung des Projekts `@Vorce Project Manager`, auch ohne gesetzte `VORCE_PROJECT_NUMBER`
 - robustere User-/Org-Erkennung fuer GitHub Projects
 - GraphQL-Fehlerbehandlung ohne Strict-Mode-Absturz bei fehlender `errors`- oder `options`-Property
 

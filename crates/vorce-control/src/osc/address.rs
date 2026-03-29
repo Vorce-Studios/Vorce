@@ -32,9 +32,9 @@ pub fn parse_osc_address(address: &str) -> Result<ControlTarget> {
 
     let parts: Vec<&str> = address.trim_start_matches('/').split('/').collect();
 
-    if parts.is_empty() || (parts[0] != "vorce" && parts[0] != "Vorce" && parts[0] != "mapmap") {
+    if parts.is_empty() || (parts[0] != "vorce" && parts[0] != "Vorce") {
         return Err(ControlError::InvalidMessage(format!(
-            "OSC address must start with /vorce (or legacy /Vorce, /mapmap): {}",
+            "OSC address must start with /vorce (or legacy /Vorce): {}",
             address
         )));
     }
