@@ -444,7 +444,6 @@ gh workflow run CI-06_update-changelog.yml
 - Check whether Branch Protection requires outdated check names
 - Ensure CodeQL is not configured as a required PR check
 - Verify the required set matches the current `CICD-DevFlow` workflow names
-- Confirm `pre-commit.ci - pr` finished successfully
 
 **Issue: Issues not created from ROADMAP**
 
@@ -523,7 +522,6 @@ For issues with workflows:
 > 1. Stelle sicher, dass die Workflows im Repository aktiviert sind (Settings → Actions → General → "Allow all actions")
 > 2. Markiere die Jobs in den Branch Protection Rules als "required" (Settings → Branches → main → "Require status checks to pass before merging")
 > 3. Empfohlene required checks:
->    - `pre-commit.ci - pr`
 >    - `Quality Gate (Format & Lint)`
 >    - `Security Scan`
 >    - `Build & Test (Linux)`
@@ -548,7 +546,6 @@ For issues with workflows:
 
 **Aktueller Pflichtsatz für Auto-Merge:**
 
-- `pre-commit.ci - pr`
 - `Quality Gate (Format & Lint)`
 - `Security Scan`
 - `Build & Test (Linux)`
@@ -587,7 +584,6 @@ Um die PR-Checks als "required" zu markieren, folge diesen Schritten:
 1. Gehe zu **Settings** → **Branches** → **main**
 2. Aktiviere "Require status checks to pass before merging"
 3. Wähle folgende Checks als required aus:
-   - `pre-commit.ci - pr`
    - `Quality Gate (Format & Lint)`
    - `Security Scan`
    - `Build & Test (Linux)`
