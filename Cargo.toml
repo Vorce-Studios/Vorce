@@ -62,7 +62,7 @@ ffmpeg-next = { version = "7.1", default-features = false, features = [
     "software-resampling",
     "software-scaling",
 ] }
-ffmpeg-sys-next = "=7.1.0"
+ffmpeg-sys-next = "=7.1.3"
 fluent = "0.17"
 fluent-langneg = "0.14"
 futures = "0.3"
