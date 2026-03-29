@@ -6,7 +6,7 @@ Bevor Dateien im großen Stil gelesen werden, MUSS der Code-Atlas zur Orientieru
 - **Zweck**: Schnelle Suche nach Symbolen, Crates, Tags und Abhängigkeiten.
 - **Aktualisierung**: `python scripts/dev-tools/generate-code-atlas.py`
 - **Abfrage**: `python scripts/dev-tools/query-code-atlas.py "<begriff>"`
-- **Beispiele**: 
+- **Beispiele**:
   - `query-code-atlas.py "ffi"` (Schnittstellen finden)
   - `query-code-atlas.py "path:.wgsl"` (Shader finden)
   - `query-code-atlas.py "symbol:McpServer"` (Code-Stellen finden)
