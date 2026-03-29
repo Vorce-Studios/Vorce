@@ -65,27 +65,19 @@ pub fn is_source_type_enum_supported(
     is_shader: bool,
     is_live_input: bool,
     is_ndi: bool,
-    #[allow(unused_variables)] is_spout: bool,
+    is_spout: bool,
 ) -> bool {
-    #[cfg(target_os = "windows")]
-    if is_spout {
-        return false;
-    }
-
-    !(is_shader || is_live_input || is_ndi)
+    // Currently LiveInput, Shader, NdiInput, and SpoutInput
+    // are not fully end-to-end supported in the pipeline.
+    !(is_shader || is_live_input || is_ndi || is_spout)
 }
 
 /// Helper that checks by variant enum without needing the data
 pub fn is_output_type_enum_supported(
-    is_ndi: bool,
+    #[allow(unused_variables)] is_ndi: bool,
     #[allow(unused_variables)] is_spout: bool,
     #[allow(unused_variables)] is_syphon: bool,
 ) -> bool {
-    #[cfg(target_os = "macos")]
-    if is_ndi || is_syphon {
-        return false;
-    }
-
     // Currently NDI/Spout/Syphon outputs are not fully end-to-end supported in the pipeline
     // as per the warning message in output.rs.
     let _ = is_ndi;
