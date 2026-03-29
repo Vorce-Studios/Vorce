@@ -138,6 +138,9 @@ debug = 1     # Limited debug info for release builds to avoid massive PDBs
 [profile.bench]
 inherits = "release"
 
+[patch.crates-io]
+gpu-allocator = { path = "crates/vendor/gpu-allocator" }
+
 # Note: ashpd v0.8.1 (transitive dependency via rfd) triggers a future
 # incompatibility warning for Rust 2024 never type fallback. This will be
 # resolved when rfd is updated to v0.15+ (requires libwayland-dev system package).
