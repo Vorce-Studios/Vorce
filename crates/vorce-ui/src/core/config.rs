@@ -37,7 +37,7 @@ impl Default for LayoutVisibility {
             show_inspector: true,
             show_timeline: true,
             show_media_browser: true,
-            show_module_canvas: false,
+            show_module_canvas: true,
         }
     }
 }
@@ -484,7 +484,7 @@ impl Default for UserConfig {
             show_inspector: true,
             show_timeline: true,
             show_media_browser: true,
-            show_module_canvas: false,
+            show_module_canvas: true,
             show_controller_overlay: false,
             web_api_enabled: false,
             web_api_port: 8080,
@@ -735,7 +735,7 @@ mod tests {
             show_inspector: true,
             show_timeline: true,
             show_media_browser: true,
-            show_module_canvas: false,
+            show_module_canvas: true,
             show_controller_overlay: false,
             web_api_enabled: false,
             web_api_port: 8080,
