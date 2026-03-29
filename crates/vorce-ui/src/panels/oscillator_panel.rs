@@ -46,7 +46,7 @@ impl OscillatorPanel {
             .resizable(true)
             .default_size(window_size)
             .scroll([false, true])
-            .frame(cyber_panel_frame(&ctx.style()))
+            .frame(cyber_panel_frame(&ctx.global_style()))
             .show(ctx, |ui| {
                 render_panel_header(ui, &locale.t("oscillator-panel-title"), |_| {});
 

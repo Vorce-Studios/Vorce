@@ -142,6 +142,7 @@ jobs:
             const headSha = `${{ needs.resolve-context.outputs.pr_head_sha }}`;
             const prNumber = `${{ needs.resolve-context.outputs.pr_number }}`;
             const REQUIRED_CHECK_RUNS = [
+              { name: 'Rust Autofix', allowedConclusions: ['success'] },
               { name: 'Quality Gate (Format & Lint)', allowedConclusions: ['success'] },
               { name: 'Security Scan', allowedConclusions: ['success'] },
               { name: 'Build & Test (Linux)', allowedConclusions: ['success'] },
