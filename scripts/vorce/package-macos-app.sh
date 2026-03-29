@@ -12,7 +12,7 @@ MACOS_DIR="${CONTENTS_DIR}/MacOS"
 RESOURCES_DIR="${CONTENTS_DIR}/Resources"
 PLIST_TEMPLATE="${ROOT_DIR}/resources/macOS/Info.plist"
 BINARY_PATH="${BUILD_DIR}/${APP_NAME}"
-ICON_PATH="${ROOT_DIR}/resources/app_icons/vorce.icns"
+ICON_PATH="${ROOT_DIR}/resources/app_icons/Vorce_Small-Logo-Only_transparent.icns"
 
 if [[ ! -f "${BINARY_PATH}" ]]; then
     echo "Expected app binary at ${BINARY_PATH}" >&2
