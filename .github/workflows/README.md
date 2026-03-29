@@ -536,10 +536,13 @@ For issues with workflows:
 **Aktuelle Trigger:**
 
 - Pull Request Events (`opened`, `reopened`, `synchronize`, `ready_for_review`, `labeled`)
+- `pull_request_target` für konsistente Runs auch auf älteren offenen PR-Branches
+- Manual Dispatch mit PR-Nummer für gezielten Maintainer-Backfill
 
 **Funktion:**
 
 - Führt `pre-commit.ci lite` auf GitHub Actions aus
+- Nutzt die vertrauenswürdige `.pre-commit-config.yaml` vom Basis-Branch und arbeitet auf dem PR-Head
 - Korrigiert `cargo fmt` und `cargo-sort` automatisch auf PR-Branches
 - Unterstützt manuelles Re-Run über das Label `pre-commit ci run`
 - Liefert den merge-relevanten Check `Rust Autofix`
