@@ -85,8 +85,9 @@ fn main() {
                 ..
             } => {
                 let frame = match surface.get_current_texture() {
-                    Ok(frame) => frame,
-                    Err(_) => return,
+                    wgpu::CurrentSurfaceTexture::Success(frame)
+                    | wgpu::CurrentSurfaceTexture::Suboptimal(frame) => frame,
+                    _ => return,
                 };
 
                 let view = frame
@@ -118,6 +119,7 @@ fn main() {
                         depth_stencil_attachment: None,
                         occlusion_query_set: None,
                         timestamp_writes: None,
+                        multiview_mask: None,
                     });
 
                     quad_renderer.draw(&mut render_pass, &bind_group);
