@@ -49,7 +49,7 @@ function HeadingText {
 
 function ProjectFieldVal {
     param([string]$Body, [string]$Field)
-    $block = HeadingText -Body $Body -Names @("Vorce Project Manager")
+    $block = HeadingText -Body $Body -Names @("Vorce Project Manager", "MapFlow Project Manager")
     if ([string]::IsNullOrWhiteSpace($block)) { return $null }
     $pattern = "(?ims)^###\s+$([regex]::Escape($Field))\s*$\s*(?<value>.*?)(?=^###\s+|\z)"
     $match = [regex]::Match($block, $pattern)
@@ -82,7 +82,7 @@ function BulletVal {
     $scope = if ($Sections -and $Sections.Count -gt 0) { HeadingText -Body $Body -Names $Sections } else { BodyText -Body $Body }
     if ([string]::IsNullOrWhiteSpace($scope)) { return $null }
     foreach ($label in $Labels) {
-        $pattern = "(?im)^[\-\*]\s+$([regex]::Escape($label))\s*:\s*(?<value>.+?)\s*$"
+        $pattern = "(?im)^[\-\*\u2022]\s+$([regex]::Escape($label))\s*:\s*(?<value>.+?)\s*$"
         $match = [regex]::Match($scope, $pattern)
         if ($match.Success) { return CleanVal -Value $match.Groups["value"].Value -MaxLength $MaxLength }
     }
@@ -202,10 +202,327 @@ function Set-ProjectFieldByName {
     Set-VorceProjectFieldValue -Context $Context -ItemId $ItemId -Field $field -Value $Value
 }
 
+function Ensure-ProjectTextField {
+    param([Parameter(Mandatory)][object]$Context, [Parameter(Mandatory)][string]$FieldName, [switch]$DryRun)
+
+    $existing = Get-VorceProjectField -Context $Context -FieldName $FieldName
+    if ($null -ne $existing) { return $existing }
+    if ($DryRun.IsPresent) { return $null }
+
+    $mutation = @'
+mutation($projectId: ID!, $name: String!, $dataType: ProjectV2CustomFieldType!) {
+  createProjectV2Field(input: { projectId: $projectId, name: $name, dataType: $dataType }) {
+    projectV2Field {
+      __typename
+      ... on ProjectV2Field {
+        id
+        name
+        dataType
+      }
+    }
+  }
+}
+'@
+
+    $data = Invoke-GitHubGraphQl -Query $mutation -Variables @{
+        projectId = $Context.ProjectId
+        name      = $FieldName
+        dataType  = "TEXT"
+    }
+
+    $field = $data.createProjectV2Field.projectV2Field
+    if ($null -ne $field -and -not [string]::IsNullOrWhiteSpace([string]$field.name)) {
+        $Context.FieldsByName[[string]$field.name] = $field
+        return $field
+    }
+
+    return $null
+}
+
+function Get-GitHubPullRequests {
+    param(
+        [Parameter(Mandatory)][string]$Repository,
+        [ValidateSet("open", "closed", "merged", "all")][string]$State = "open",
+        [int]$Limit = 200
+    )
+
+    Assert-GitHubCli
+    $output = & gh pr list --repo $Repository --state $State --limit $Limit --json number,title,body,url,state,isDraft,headRefName,updatedAt,mergeable,reviewDecision,labels 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        throw (($output | Out-String).Trim())
+    }
+
+    $items = (($output | Out-String) | ConvertFrom-Json)
+    if ($null -eq $items) {
+        return @()
+    }
+
+    return @($items)
+}
+
+function Add-LookupEntry {
+    param([hashtable]$Lookup, [AllowNull()][string]$Key, [AllowNull()][object]$Value)
+    if ($null -eq $Lookup -or [string]::IsNullOrWhiteSpace($Key) -or $null -eq $Value) {
+        return
+    }
+
+    if (-not $Lookup.ContainsKey($Key)) {
+        $Lookup[$Key] = New-Object System.Collections.Generic.List[object]
+    }
+
+    $Lookup[$Key].Add($Value) | Out-Null
+}
+
+function Get-LookupFirst {
+    param([hashtable]$Lookup, [AllowNull()][string]$Key)
+    if ($null -eq $Lookup -or [string]::IsNullOrWhiteSpace($Key) -or -not $Lookup.ContainsKey($Key)) {
+        return $null
+    }
+
+    $values = @($Lookup[$Key])
+    if ($values.Count -eq 0) { return $null }
+    return $values[0]
+}
+
+function Parse-LegacyPrNumberFromMigratedPr {
+    param([AllowNull()][object]$PullRequest)
+    if ($null -eq $PullRequest) { return $null }
+
+    foreach ($text in @([string]$PullRequest.title, [string]$PullRequest.body)) {
+        if ([string]::IsNullOrWhiteSpace($text)) { continue }
+        $match = [regex]::Match($text, 'Migrated from (?:https://github\.com/)?MrLongNight/MapFlow/pull/(?<number>\d+)|Migrated from MapFlow PR #(?<legacy>\d+)', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        if ($match.Success) {
+            if ($match.Groups["number"].Success) { return [int]$match.Groups["number"].Value }
+            if ($match.Groups["legacy"].Success) { return [int]$match.Groups["legacy"].Value }
+        }
+    }
+
+    return $null
+}
+
+function Parse-PullRequestNumberFromUrl {
+    param([AllowNull()][string]$Url)
+    if ([string]::IsNullOrWhiteSpace($Url)) { return $null }
+    $match = [regex]::Match($Url, 'github\.com/[^/]+/[^/]+/pull/(?<number>\d+)', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    if (-not $match.Success) { return $null }
+    return [int]$match.Groups["number"].Value
+}
+
+function IsSpecificBranchName {
+    param([AllowNull()][string]$Branch)
+    $value = CleanVal -Value $Branch -MaxLength 120
+    if ([string]::IsNullOrWhiteSpace($value)) { return $false }
+    return ($value.ToLowerInvariant() -notin @("main", "master", "n/a", "none"))
+}
+
+function ResolveParentIssueNumber {
+    param([string]$Body)
+
+    $text = BodyText -Body $Body
+    if ([string]::IsNullOrWhiteSpace($text)) { return $null }
+
+    foreach ($pattern in @(
+        '(?im)^\s*Part of\s+(?:Vorce-Studios/Vorce)?#(?<number>\d+)\b',
+        '(?im)^\s*Parent issue:\s*(?:Vorce-Studios/Vorce)?#(?<number>\d+)\b'
+    )) {
+        $match = [regex]::Match($text, $pattern)
+        if ($match.Success) { return [int]$match.Groups["number"].Value }
+    }
+
+    return $null
+}
+
+function Get-IssueParentNumber {
+    param([Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][int]$IssueNumber)
+
+    $parts = $Repository.Split("/")
+    $query = @'
+query($owner: String!, $repo: String!, $number: Int!) {
+  repository(owner: $owner, name: $repo) {
+    issue(number: $number) {
+      parent {
+        number
+      }
+    }
+  }
+}
+'@
+
+    $data = Invoke-GitHubGraphQl -Query $query -Variables @{
+        owner  = $parts[0]
+        repo   = $parts[1]
+        number = $IssueNumber
+    }
+
+    $parent = $data.repository.issue.parent
+    if ($null -eq $parent) { return $null }
+    return [int]$parent.number
+}
+
+function Ensure-SubIssueRelationship {
+    param(
+        [Parameter(Mandatory)][string]$Repository,
+        [Parameter(Mandatory)][int]$ParentIssueNumber,
+        [Parameter(Mandatory)][int]$ChildIssueNumber,
+        [Parameter(Mandatory)][string]$ParentIssueId,
+        [Parameter(Mandatory)][string]$ChildIssueId,
+        [switch]$DryRun
+    )
+
+    if ($ParentIssueNumber -eq $ChildIssueNumber) {
+        return "skipped_self"
+    }
+
+    $currentParent = Get-IssueParentNumber -Repository $Repository -IssueNumber $ChildIssueNumber
+    if ($null -ne $currentParent) {
+        if ($currentParent -eq $ParentIssueNumber) {
+            return "already_linked"
+        }
+
+        Write-JulesWarn "Issue #$ChildIssueNumber hat bereits Parent #$currentParent und wird nicht nach #$ParentIssueNumber umgehaengt."
+        return "skipped_existing_parent"
+    }
+
+    if ($DryRun.IsPresent) {
+        return "would_link"
+    }
+
+    $mutation = @'
+mutation($issueId: ID!, $subIssueId: ID!) {
+  addSubIssue(input: { issueId: $issueId, subIssueId: $subIssueId, replaceParent: false }) {
+    issue { number }
+    subIssue { number parent { number } }
+  }
+}
+'@
+
+    Invoke-GitHubGraphQl -Query $mutation -Variables @{
+        issueId    = $ParentIssueId
+        subIssueId = $ChildIssueId
+    } | Out-Null
+
+    return "linked"
+}
+
+function QueueStateVal {
+    param([string[]]$Bodies)
+    $value = FirstFromBodies -Bodies $Bodies -Getter { param($b) CommentVal -Body $b -Names @("vorce-queue-state", "mapflow-queue-state") -MaxLength 80 }
+    if (-not [string]::IsNullOrWhiteSpace($value)) { return $value }
+    return FirstFromBodies -Bodies $Bodies -Getter {
+        param($b)
+        BulletVal -Body $b -Labels @("Queue State") -Sections @("Vorce Project Manager", "MapFlow Project Manager") -MaxLength 80
+    }
+}
+
+function RemoteStateVal {
+    param([string[]]$Bodies)
+    $value = FirstFromBodies -Bodies $Bodies -Getter { param($b) CommentVal -Body $b -Names @("vorce-remote-state", "mapflow-remote-state") -MaxLength 80 }
+    if (-not [string]::IsNullOrWhiteSpace($value)) { return $value }
+    $value = FirstFromBodies -Bodies $Bodies -Getter {
+        param($b)
+        BulletVal -Body $b -Labels @("Remote State") -Sections @("Vorce Project Manager", "MapFlow Project Manager") -MaxLength 80
+    }
+    if (-not [string]::IsNullOrWhiteSpace($value)) { return $value }
+    return FirstFromBodies -Bodies $Bodies -Getter {
+        param($b)
+        BulletVal -Body $b -Labels @("Jules Status") -Sections @("Jules Automation") -MaxLength 80
+    }
+}
+
+function LinkedPrVal {
+    param([string[]]$Bodies)
+    return FirstFromBodies -Bodies $Bodies -Getter {
+        param($b)
+        BulletVal -Body $b -Labels @("Linked PR", "GitHub PR") -Sections @("Vorce Project Manager", "MapFlow Project Manager", "Jules Automation") -MaxLength 220
+    }
+}
+
+function Add-UniqueValue {
+    param([System.Collections.Generic.List[string]]$List, [AllowNull()][string]$Value)
+    $clean = CleanVal -Value $Value -MaxLength 220
+    if ([string]::IsNullOrWhiteSpace($clean)) { return }
+    if (-not $List.Contains($clean)) {
+        $List.Add($clean) | Out-Null
+    }
+}
+
+function ResolveProjectStatus {
+    param(
+        [Parameter(Mandatory)][object]$Issue,
+        [string[]]$Labels,
+        [AllowNull()][string]$QueueState,
+        [AllowNull()][string]$RemoteState,
+        [AllowNull()][string]$LinkedPrValue,
+        [AllowNull()][object]$CurrentPr,
+        [AllowNull()][object[]]$CurrentPrChecks,
+        [bool]$HasChildren = $false
+    )
+
+    if ([string]$Issue.state -eq "CLOSED") {
+        return "Done"
+    }
+
+    if ($null -ne $CurrentPr) {
+        $currentPrState = ([string]$CurrentPr.state).Trim().ToUpperInvariant()
+        if ($currentPrState -eq "MERGED") { return "QA Test" }
+        if ($currentPrState -eq "CLOSED") { return "PR CodeRework" }
+        if ($currentPrState -eq "OPEN") {
+            if ($CurrentPr.isDraft) { return "PR-Checks" }
+            if (([string]$CurrentPr.reviewDecision).Trim().ToUpperInvariant() -eq "CHANGES_REQUESTED") { return "PR CodeRework" }
+
+            $checkStates = @(
+                $CurrentPrChecks |
+                    ForEach-Object { ([string]$_.state).Trim().ToUpperInvariant() } |
+                    Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+            )
+
+            if (($checkStates | Where-Object { $_ -in @("FAILURE", "FAILED", "ERROR", "ACTION_REQUIRED", "CANCELLED", "TIMED_OUT") }).Count -gt 0) {
+                return "PR CodeRework"
+            }
+
+            if (($checkStates | Where-Object { $_ -in @("PENDING", "IN_PROGRESS", "QUEUED", "STARTUP_FAILURE", "WAITING", "EXPECTED") }).Count -gt 0) {
+                return "PR-Checks"
+            }
+
+            return "Review PR"
+        }
+    }
+
+    $normalizedLabels = @(
+        $Labels |
+            ForEach-Object { ([string]$_).Trim().ToLowerInvariant() } |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+            Select-Object -Unique
+    )
+    $remote = ([string]$RemoteState).Trim().ToLowerInvariant()
+    $queue = ([string]$QueueState).Trim().ToLowerInvariant()
+
+    if ($normalizedLabels -contains "todo-userisu") { return "Todo" }
+    if ($normalizedLabels -contains "status: needs-review") { return "Review PR" }
+    if ($normalizedLabels -contains "status: blocked") { return "PR CodeRework" }
+    if ($remote -in @("failed", "awaiting-user-feedback", "awaiting-plan-approval", "paused")) { return "PR CodeRework" }
+    if ($normalizedLabels -contains "status: in-progress") {
+        if ($remote -in @("merged", "completed", "closed")) { return "QA Test" }
+        return "JulesSession"
+    }
+    if ($remote -in @("merged", "completed", "closed")) { return "QA Test" }
+    if ($queue -in @("user-review", "approved-awaiting-dispatch", "issue-only", "not-started")) { return "Todo" }
+    if (($normalizedLabels -contains "jules-task") -or ($remote -in @("queued", "planning", "in-progress", "running", "dispatched", "awaiting-session")) -or ($queue -in @("dispatched", "queued", "planning"))) {
+        return "JulesSession"
+    }
+    if ($HasChildren) { return "JulesSession" }
+    if (-not [string]::IsNullOrWhiteSpace($LinkedPrValue)) { return "QA Test" }
+    return "Todo"
+}
+
 $resolvedRepository = Resolve-GitHubRepository -Repository $Repository
 $projectContext = Get-VorceProjectContext -Repository $resolvedRepository
 if ($null -eq $projectContext) {
     throw "GitHub Project fuer '$resolvedRepository' konnte nicht ermittelt werden."
+}
+
+if (-not $DryRun.IsPresent) {
+    Ensure-ProjectTextField -Context $projectContext -FieldName "Linked PR" | Out-Null
 }
 
 $issues = @(
@@ -232,6 +549,52 @@ if ($legacyNumbers.Count -gt 0) {
     }
 }
 
+$currentPullRequests = @(
+    Get-GitHubPullRequests -Repository $resolvedRepository -State "all" -Limit 200 |
+        Sort-Object {
+            try { [datetimeoffset]([string]$_.updatedAt) } catch { [datetimeoffset]::MinValue }
+        } -Descending
+)
+
+$currentPrsByBranch = @{}
+$currentPrsByLegacyNumber = @{}
+$currentPrsByNumber = @{}
+foreach ($pullRequest in $currentPullRequests) {
+    $currentPrsByNumber[[int]$pullRequest.number] = $pullRequest
+    if (IsSpecificBranchName -Branch ([string]$pullRequest.headRefName)) {
+        Add-LookupEntry -Lookup $currentPrsByBranch -Key ([string]$pullRequest.headRefName) -Value $pullRequest
+    }
+
+    $legacyPrNumber = Parse-LegacyPrNumberFromMigratedPr -PullRequest $pullRequest
+    if ($null -ne $legacyPrNumber) {
+        Add-LookupEntry -Lookup $currentPrsByLegacyNumber -Key ([string]$legacyPrNumber) -Value $pullRequest
+    }
+}
+
+$currentPrChecksByNumber = @{}
+foreach ($pullRequest in @($currentPullRequests | Where-Object { [string]$_.state -eq "OPEN" })) {
+    $currentPrChecksByNumber[[int]$pullRequest.number] = @(
+        Get-GitHubPullRequestChecks -Repository $resolvedRepository -PullRequestUrl ([string]$pullRequest.url)
+    )
+}
+
+$desiredParentByIssueNumber = @{}
+foreach ($issue in $issues) {
+    $parentNumber = ResolveParentIssueNumber -Body ([string]$issue.body)
+    if ($null -ne $parentNumber) {
+        $desiredParentByIssueNumber[[int]$issue.number] = $parentNumber
+    }
+}
+
+$parentsWithChildren = @{}
+foreach ($parentNumber in $desiredParentByIssueNumber.Values) {
+    if ($null -ne $parentNumber) {
+        $parentsWithChildren[[int]$parentNumber] = $true
+    }
+}
+
+$issueContentIds = @{}
+
 $results = foreach ($issue in @($issues | Sort-Object number)) {
     $number = [int]$issue.number
     $body = BodyText -Body ([string]$issue.body)
@@ -248,9 +611,6 @@ $results = foreach ($issue in @($issues | Sort-Object number)) {
         ""
     }
     $bodies = @($body, $legacyBody)
-
-    $status = FirstFromBodies -Bodies $bodies -Getter { param($b) ProjectFieldVal -Body $b -Field "Status" }
-    if ([string]::IsNullOrWhiteSpace($status) -and [string]$issue.state -eq "CLOSED") { $status = "Done" }
 
     $taskId = FirstFromBodies -Bodies $bodies -Getter { param($b) ProjectFieldVal -Body $b -Field "task_id" }
     if ([string]::IsNullOrWhiteSpace($taskId)) {
@@ -290,18 +650,18 @@ $results = foreach ($issue in @($issues | Sort-Object number)) {
 
     $workBranch = FirstFromBodies -Bodies $bodies -Getter { param($b) ProjectFieldVal -Body $b -Field "work_branch" }
     if ([string]::IsNullOrWhiteSpace($workBranch)) {
-        $workBranch = FirstFromBodies -Bodies $bodies -Getter { param($b) CommentVal -Body $b -Names @("vorce-work-branch") -MaxLength 180 }
+        $workBranch = FirstFromBodies -Bodies $bodies -Getter { param($b) CommentVal -Body $b -Names @("vorce-work-branch", "mapflow-work-branch") -MaxLength 180 }
     }
     if ([string]::IsNullOrWhiteSpace($workBranch)) {
-        $workBranch = FirstFromBodies -Bodies $bodies -Getter { param($b) BulletVal -Body $b -Labels @("Work Branch", "Branch", "Start Branch") -Sections @("Vorce Project Manager", "Jules Automation", "Roadmap Task") -MaxLength 180 }
+        $workBranch = FirstFromBodies -Bodies $bodies -Getter { param($b) BulletVal -Body $b -Labels @("Work Branch", "Branch", "Start Branch") -Sections @("Vorce Project Manager", "MapFlow Project Manager", "Jules Automation", "Roadmap Task") -MaxLength 180 }
     }
 
     $lastUpdate = FirstFromBodies -Bodies $bodies -Getter { param($b) ProjectFieldVal -Body $b -Field "last_update" }
     if ([string]::IsNullOrWhiteSpace($lastUpdate)) {
-        $lastUpdate = FirstFromBodies -Bodies $bodies -Getter { param($b) CommentVal -Body $b -Names @("vorce-last-update") -MaxLength 80 }
+        $lastUpdate = FirstFromBodies -Bodies $bodies -Getter { param($b) CommentVal -Body $b -Names @("vorce-last-update", "mapflow-last-update") -MaxLength 80 }
     }
     if ([string]::IsNullOrWhiteSpace($lastUpdate)) {
-        $lastUpdate = FirstFromBodies -Bodies $bodies -Getter { param($b) BulletVal -Body $b -Labels @("Letztes Roadmap-Update", "Aktualisiert", "Last Update") -Sections @("Roadmap Task", "Jules Automation", "Vorce Project Manager") -MaxLength 80 }
+        $lastUpdate = FirstFromBodies -Bodies $bodies -Getter { param($b) BulletVal -Body $b -Labels @("Letztes Roadmap-Update", "Aktualisiert", "Last Update") -Sections @("Roadmap Task", "Jules Automation", "Vorce Project Manager", "MapFlow Project Manager") -MaxLength 80 }
     }
 
     $description = FirstFromBodies -Bodies $bodies -Getter { param($b) ProjectFieldVal -Body $b -Field "description" }
@@ -316,12 +676,51 @@ $results = foreach ($issue in @($issues | Sort-Object number)) {
     }
 
     $subAgent = FirstFromBodies -Bodies $bodies -Getter { param($b) ProjectFieldVal -Body $b -Field "sub_agent" }
+    $queueState = QueueStateVal -Bodies $bodies
+    $remoteState = RemoteStateVal -Bodies $bodies
+    $linkedPrFromBodies = LinkedPrVal -Bodies $bodies
+
+    $currentPr = $null
+    if (IsSpecificBranchName -Branch $workBranch) {
+        $currentPr = Get-LookupFirst -Lookup $currentPrsByBranch -Key ([string]$workBranch)
+    }
+
+    $linkedPrNumber = Parse-PullRequestNumberFromUrl -Url $linkedPrFromBodies
+    if ($null -eq $currentPr -and $null -ne $linkedPrNumber -and $linkedPrFromBodies -match 'github\.com/Vorce-Studios/Vorce/pull/') {
+        if ($currentPrsByNumber.ContainsKey($linkedPrNumber)) {
+            $currentPr = $currentPrsByNumber[$linkedPrNumber]
+        }
+    }
+    if ($null -eq $currentPr -and $null -ne $linkedPrNumber) {
+        $mappedCurrentPr = Get-LookupFirst -Lookup $currentPrsByLegacyNumber -Key ([string]$linkedPrNumber)
+        if ($null -ne $mappedCurrentPr) {
+            $currentPr = $mappedCurrentPr
+        }
+    }
+
+    $linkedPrCandidates = New-Object System.Collections.Generic.List[string]
+    if ($null -ne $currentPr) { Add-UniqueValue -List $linkedPrCandidates -Value ([string]$currentPr.url) }
+    Add-UniqueValue -List $linkedPrCandidates -Value $linkedPrFromBodies
+    $linkedPr = if ($linkedPrCandidates.Count -gt 0) {
+        Normalize-TrackingText -Value ($linkedPrCandidates -join " | ") -MaxLength 220
+    } else {
+        $null
+    }
+
+    $currentPrChecks = @()
+    if ($null -ne $currentPr -and $currentPrChecksByNumber.ContainsKey([int]$currentPr.number)) {
+        $currentPrChecks = @($currentPrChecksByNumber[[int]$currentPr.number])
+    }
+
+    $status = ResolveProjectStatus -Issue $issue -Labels $labels -QueueState $queueState -RemoteState $remoteState -LinkedPrValue $linkedPr -CurrentPr $currentPr -CurrentPrChecks $currentPrChecks -HasChildren:$parentsWithChildren.ContainsKey($number)
 
     $issueContentId = Get-GitHubIssueContentId -Repository $resolvedRepository -IssueNumber $number
+    $issueContentIds[$number] = $issueContentId
     $itemId = Ensure-VorceProjectItem -Context $projectContext -IssueContentId $issueContentId
 
     $updates = [ordered]@{
         "Status"        = $status
+        "Linked PR"     = $linkedPr
         "task_id"       = $taskId
         "area"          = $area
         "task_type"     = $taskType
@@ -345,12 +744,38 @@ $results = foreach ($issue in @($issues | Sort-Object number)) {
     }
 
     [pscustomobject]@{
+        Type          = "Issue"
         IssueNumber   = $number
         Title         = $title
         LegacyIssue   = $legacyNumber
+        ParentIssue   = if ($desiredParentByIssueNumber.ContainsKey($number)) { $desiredParentByIssueNumber[$number] } else { $null }
+        LinkedPr      = $linkedPr
         UpdatedFields = @($applied)
     }
 }
 
+$relationResults = foreach ($entry in @($desiredParentByIssueNumber.GetEnumerator() | Sort-Object Key)) {
+    $childNumber = [int]$entry.Key
+    $parentNumber = [int]$entry.Value
+    if ($childNumber -eq $parentNumber) { continue }
+
+    if (-not $issueContentIds.ContainsKey($parentNumber)) {
+        $issueContentIds[$parentNumber] = Get-GitHubIssueContentId -Repository $resolvedRepository -IssueNumber $parentNumber
+    }
+    if (-not $issueContentIds.ContainsKey($childNumber)) {
+        $issueContentIds[$childNumber] = Get-GitHubIssueContentId -Repository $resolvedRepository -IssueNumber $childNumber
+    }
+
+    $status = Ensure-SubIssueRelationship -Repository $resolvedRepository -ParentIssueNumber $parentNumber -ChildIssueNumber $childNumber -ParentIssueId ([string]$issueContentIds[$parentNumber]) -ChildIssueId ([string]$issueContentIds[$childNumber]) -DryRun:$DryRun.IsPresent
+
+    [pscustomobject]@{
+        Type        = "SubIssue"
+        ParentIssue = $parentNumber
+        ChildIssue  = $childNumber
+        Result      = $status
+    }
+}
+
 $results = @($results)
-$results
+$relationResults = @($relationResults)
+$results + $relationResults

@@ -228,7 +228,6 @@ impl fmt::Display for AnimationProfile {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MidiAssignmentTarget {
     /// Assigned to Vorce internal control
-    #[serde(alias = "MapFlow")]
     Vorce(String), // Control target ID
     /// Assigned to Streamer.bot function
     StreamerBot(String), // Function name
@@ -435,7 +434,7 @@ fn default_ui_scale() -> f32 {
 }
 
 fn default_startup_animation_path() -> String {
-    "resources/app_videos/MF-Mechanical_Cube_Logo_Splash_Animation.webm".to_string()
+    "resources/app_videos/Vorce-Mechanical_Cube_Logo_Splash_Animation.webm".to_string()
 }
 
 fn default_sidebar_width() -> f32 {
@@ -495,7 +494,7 @@ impl Default for UserConfig {
             ui_scale: 1.0,
             log_level: AppLogLevel::Info,
             node_animations_enabled: true,
-            startup_animation_enabled: true,
+            startup_animation_enabled: false,
             startup_animation_path: default_startup_animation_path(),
             reduce_motion_enabled: false,
             silent_startup_enabled: false,
@@ -737,7 +736,7 @@ mod tests {
             ui_scale: 1.2,
             log_level: AppLogLevel::Info,
             node_animations_enabled: true,
-            startup_animation_enabled: true,
+            startup_animation_enabled: false,
             startup_animation_path: default_startup_animation_path(),
             reduce_motion_enabled: false,
             silent_startup_enabled: false,
@@ -783,8 +782,5 @@ mod tests {
         assert!(config.set_active_layout("live"));
         assert_eq!(config.active_layout_id, "live");
         assert!(!config.set_active_layout("does-not-exist"));
-    }
-}
-st"));
     }
 }
