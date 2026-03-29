@@ -23,7 +23,7 @@ impl AssignmentPanel {
         egui::Window::new("Assignment Manager")
             .open(&mut self.visible)
             .default_size([400.0, 600.0])
-            .frame(cyber_panel_frame(&ctx.global_style()))
+            .frame(cyber_panel_frame(&ctx.style()))
             .show(ctx, |ui| {
                 render_panel_header(ui, "Assignments", |_| {});
                 ui.add_space(8.0);

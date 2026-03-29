@@ -55,7 +55,7 @@ impl OutputPanel {
             .default_size(window_size)
             .resizable(true)
             .scroll([false, true])
-            .frame(cyber_panel_frame(&ctx.global_style()))
+            .frame(cyber_panel_frame(&ctx.style()))
             .show(ctx, |ui| {
                 render_panel_header(ui, &i18n.t("panel-outputs"), |_| {});
 
