@@ -3,6 +3,9 @@ param(
     [int[]]$IssueNumber,
     [string]$Repository = "Vorce-Studios/Vorce",
     [string]$LegacyRepository = "MrLongNight/MapFlow",
+    [string]$LegacyProjectOwner = "MrLongNight",
+    [int]$LegacyProjectNumber = 3,
+    [string]$LegacyProjectTitle = "@Vorce Project Manager",
     [int]$IssueLimit = 200,
     [switch]$DryRun
 )
@@ -437,6 +440,190 @@ function LinkedPrVal {
     }
 }
 
+function Get-ProjectStatusMap {
+    param(
+        [Parameter(Mandatory)][string]$Owner,
+        [Parameter(Mandatory)][int]$ProjectNumber,
+        [AllowNull()][string]$ProjectTitle,
+        [Parameter(Mandatory)][string]$Repository
+    )
+
+    $repositoryParts = (Resolve-GitHubRepository -Repository $Repository).Split("/")
+    $repositoryOwner = [string]$repositoryParts[0]
+    $repositoryName = [string]$repositoryParts[1]
+
+    $userQuery = @'
+query($owner: String!, $number: Int!, $cursor: String) {
+  user(login: $owner) {
+    projectV2(number: $number) {
+      id
+      title
+      items(first: 100, after: $cursor) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          content {
+            __typename
+            ... on Issue {
+              number
+              repository {
+                name
+                owner {
+                  login
+                }
+              }
+            }
+          }
+          fieldValues(first: 40) {
+            nodes {
+              __typename
+              ... on ProjectV2ItemFieldSingleSelectValue {
+                name
+                field {
+                  ... on ProjectV2FieldCommon {
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+'@
+
+    $orgQuery = @'
+query($owner: String!, $number: Int!, $cursor: String) {
+  organization(login: $owner) {
+    projectV2(number: $number) {
+      id
+      title
+      items(first: 100, after: $cursor) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          content {
+            __typename
+            ... on Issue {
+              number
+              repository {
+                name
+                owner {
+                  login
+                }
+              }
+            }
+          }
+          fieldValues(first: 40) {
+            nodes {
+              __typename
+              ... on ProjectV2ItemFieldSingleSelectValue {
+                name
+                field {
+                  ... on ProjectV2FieldCommon {
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+'@
+
+    $statusByIssueNumber = @{}
+    $cursor = $null
+    $ownerKind = $null
+    $validatedTitle = $false
+
+    do {
+        $project = $null
+        if ([string]::IsNullOrWhiteSpace($ownerKind) -or $ownerKind -eq "user") {
+            try {
+                $data = Invoke-GitHubGraphQl -Query $userQuery -Variables @{
+                    owner  = $Owner
+                    number = $ProjectNumber
+                    cursor = $cursor
+                }
+                if ($null -ne $data.user.projectV2) {
+                    $project = $data.user.projectV2
+                    $ownerKind = "user"
+                }
+            } catch {
+                $project = $null
+            }
+        }
+
+        if ($null -eq $project -and ([string]::IsNullOrWhiteSpace($ownerKind) -or $ownerKind -eq "organization")) {
+            try {
+                $data = Invoke-GitHubGraphQl -Query $orgQuery -Variables @{
+                    owner  = $Owner
+                    number = $ProjectNumber
+                    cursor = $cursor
+                }
+                if ($null -ne $data.organization.projectV2) {
+                    $project = $data.organization.projectV2
+                    $ownerKind = "organization"
+                }
+            } catch {
+                $project = $null
+            }
+        }
+
+        if ($null -eq $project) {
+            if ($statusByIssueNumber.Count -gt 0) { break }
+            throw "Legacy-Project '$Owner#$ProjectNumber' konnte nicht geladen werden."
+        }
+
+        if (-not $validatedTitle) {
+            $validatedTitle = $true
+            if (-not [string]::IsNullOrWhiteSpace($ProjectTitle) -and ([string]$project.title -ne $ProjectTitle)) {
+                Write-JulesWarn "Legacy-Project '$Owner#$ProjectNumber' hat unerwarteten Titel '$([string]$project.title)'. Erwartet war '$ProjectTitle'."
+            }
+        }
+
+        foreach ($item in @($project.items.nodes)) {
+            if ($null -eq $item.content -or [string]$item.content.__typename -ne "Issue") {
+                continue
+            }
+
+            if ([string]$item.content.repository.owner.login -ne $repositoryOwner -or [string]$item.content.repository.name -ne $repositoryName) {
+                continue
+            }
+
+            $status = $null
+            foreach ($fieldValue in @($item.fieldValues.nodes)) {
+                if ([string]$fieldValue.__typename -ne "ProjectV2ItemFieldSingleSelectValue") {
+                    continue
+                }
+
+                if ([string]$fieldValue.field.name -eq "Status" -and -not [string]::IsNullOrWhiteSpace([string]$fieldValue.name)) {
+                    $status = [string]$fieldValue.name
+                    break
+                }
+            }
+
+            if (-not [string]::IsNullOrWhiteSpace($status)) {
+                $statusByIssueNumber[[int]$item.content.number] = $status
+            }
+        }
+
+        $pageInfo = $project.items.pageInfo
+        $cursor = if ($pageInfo.hasNextPage) { [string]$pageInfo.endCursor } else { $null }
+    } while (-not [string]::IsNullOrWhiteSpace($cursor))
+
+    return $statusByIssueNumber
+}
+
 function Add-UniqueValue {
     param([System.Collections.Generic.List[string]]$List, [AllowNull()][string]$Value)
     $clean = CleanVal -Value $Value -MaxLength 220
@@ -546,6 +733,15 @@ $legacyMap = @{}
 if ($legacyNumbers.Count -gt 0) {
     foreach ($legacyIssue in @(Get-GitHubIssues -Repository $LegacyRepository -State "all" -Limit 500)) {
         $legacyMap[[int]$legacyIssue.number] = $legacyIssue
+    }
+}
+
+$legacyProjectStatusByIssueNumber = @{}
+if ($legacyNumbers.Count -gt 0 -and -not [string]::IsNullOrWhiteSpace($LegacyProjectOwner) -and $LegacyProjectNumber -gt 0) {
+    try {
+        $legacyProjectStatusByIssueNumber = Get-ProjectStatusMap -Owner $LegacyProjectOwner -ProjectNumber $LegacyProjectNumber -ProjectTitle $LegacyProjectTitle -Repository $LegacyRepository
+    } catch {
+        Write-JulesWarn "Legacy-Project-Status konnte nicht geladen werden: $($_.Exception.Message)"
     }
 }
 
@@ -712,7 +908,16 @@ $results = foreach ($issue in @($issues | Sort-Object number)) {
         $currentPrChecks = @($currentPrChecksByNumber[[int]$currentPr.number])
     }
 
-    $status = ResolveProjectStatus -Issue $issue -Labels $labels -QueueState $queueState -RemoteState $remoteState -LinkedPrValue $linkedPr -CurrentPr $currentPr -CurrentPrChecks $currentPrChecks -HasChildren:$parentsWithChildren.ContainsKey($number)
+    $legacyProjectStatus = if ($null -ne $legacyNumber -and $legacyProjectStatusByIssueNumber.ContainsKey($legacyNumber)) {
+        [string]$legacyProjectStatusByIssueNumber[$legacyNumber]
+    } else {
+        $null
+    }
+    $status = if (-not [string]::IsNullOrWhiteSpace($legacyProjectStatus)) {
+        $legacyProjectStatus
+    } else {
+        ResolveProjectStatus -Issue $issue -Labels $labels -QueueState $queueState -RemoteState $remoteState -LinkedPrValue $linkedPr -CurrentPr $currentPr -CurrentPrChecks $currentPrChecks -HasChildren:$parentsWithChildren.ContainsKey($number)
+    }
 
     $issueContentId = Get-GitHubIssueContentId -Repository $resolvedRepository -IssueNumber $number
     $issueContentIds[$number] = $issueContentId
@@ -748,6 +953,7 @@ $results = foreach ($issue in @($issues | Sort-Object number)) {
         IssueNumber   = $number
         Title         = $title
         LegacyIssue   = $legacyNumber
+        LegacyStatus  = $legacyProjectStatus
         ParentIssue   = if ($desiredParentByIssueNumber.ContainsKey($number)) { $desiredParentByIssueNumber[$number] } else { $null }
         LinkedPr      = $linkedPr
         UpdatedFields = @($applied)
