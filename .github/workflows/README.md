@@ -286,7 +286,8 @@ The workflows require the following GitHub permissions:
 - `pull-requests: write` - For managing PRs
 - `security-events: write` - For CodeQL findings
 - `checks: read` - For reading check status
-- `statuses: read` - For reading external commit status integrations like `pre-commit.ci`
+- `statuses: read` - For reading commit status integrations like `pre-commit.ci`
+- `statuses: write` - For publishing the required `pre-commit.ci - pr` status from GitHub Actions
 
 ## 🚀 Jules Integration Setup
 
@@ -612,14 +613,14 @@ Die Checks werden dann als "Expected" im PR angezeigt und müssen vor dem Merge 
 ┌─────────────────┐    ┌─────────────────────────────────┐
 │ pre-commit.ci   │    │ GitHub Actions Validation       │
 │                 │    │                                 │
-│ • cargo fmt     │    │ • Quality Gate                  │
-│ • trailing ws   │    │ • Security Scan                 │
+│ • trailing ws   │    │ • Quality Gate                  │
+│ • detect-secrets│    │ • Security Scan                 │
 │ • YAML/TOML     │    │ • Build & Test (Linux)          │
 │ • Markdown      │    │ • Build & Test (Windows)        │
 │                 │    │ • Validation Success            │
-│ ⚡ ~30s         │    │                                 │
-│ ✅ Auto-Push   │    │ ✅ Merge-relevant gate           │
-└────────┬────────┘    └───────────────┬────��────────────┘
+│ ⚡ via Actions  │    │                                 │
+│ ✅ Status ctx   │    │ ✅ Merge-relevant gate          │
+└────────┬────────┘    └───────────────┬─────────────────┘
          │                             │
          └─────────────┬───────────────┘
                        │
@@ -644,6 +645,7 @@ Datei | Pfad | Grund
 `.markdownlint.json` | Root | Wird von `markdownlint-cli` im Root gesucht
 `.secrets.baseline` | Root | Wird von `detect-secrets` im Root gesucht
 `.pre-commit-config.yaml` | Root | Standard für `pre-commit`
+`CICD-DevFlow_Job00_PreCommitStatus.yml` | `.github/workflows/` | Veröffentlicht den Status `pre-commit.ci - pr`
 `copilot-instructions.md` | `.github/` | GitHub-spezifische Config
 Workflows | `.github/workflows/` | GitHub Actions Standard
 
