@@ -536,12 +536,14 @@ For issues with workflows:
 **Aktuelle Trigger:**
 
 - Pull Request Events (`opened`, `reopened`, `synchronize`, `ready_for_review`, `labeled`)
+- Manual Dispatch mit PR-Nummer für ältere offene Branches ohne neuen Workflow-Stand
 
 **Funktion:**
 
 - Führt `pre-commit.ci lite` auf GitHub Actions aus
 - Korrigiert `cargo fmt` und `cargo-sort` automatisch auf PR-Branches
 - Unterstützt manuelles Re-Run über das Label `pre-commit ci run`
+- Unterstützt gezielten Backfill per `workflow_dispatch`, auch wenn der PR-Branch den Workflow selbst noch nicht enthält
 - Liefert den merge-relevanten Check `Rust Autofix`
 
 ### CICD-DevFlow_Job02_AutoMerge.yml

@@ -4,13 +4,19 @@ on:
   pull_request:
     types: [labeled, opened, reopened, synchronize, ready_for_review]
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Pull request number to autofix"
+        required: true
+        type: string
 
 permissions:
   contents: read
   pull-requests: write
 
 concurrency:
-  group: pre-commit-lite-${{ github.event.number || github.run_id }}
+  group: pre-commit-lite-${{ github.event.number || github.event.inputs.pr_number || github.run_id }}
   cancel-in-progress: true
 
 env:
@@ -21,23 +27,55 @@ env:
 jobs:
   rust-autofix:
     name: "Rust Autofix"
-    if: github.event.action != 'labeled' || github.event.label.name == 'pre-commit ci run'
+    if: github.event_name == 'workflow_dispatch' || github.event.action != 'labeled' || github.event.label.name == 'pre-commit ci run'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
+      - name: Resolve PR context
+        id: resolve
+        uses: actions/github-script@v8
+        with:
+          script: |
+            let prNumber = context.payload.pull_request?.number;
+            const manualPrNumber = context.payload.inputs?.pr_number;
+
+            if (!prNumber && manualPrNumber) {
+              const parsedPrNumber = Number.parseInt(manualPrNumber, 10);
+              if (!Number.isNaN(parsedPrNumber)) {
+                prNumber = parsedPrNumber;
+              }
+            }
+
+            if (!prNumber) {
+              core.setFailed('Keine PR-Nummer verfügbar.');
+              return;
+            }
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            core.setOutput('pr_number', String(pr.number));
+            core.setOutput('head_repo', pr.head.repo.full_name);
+            core.setOutput('head_ref', pr.head.ref);
+            core.setOutput('head_sha', pr.head.sha);
+            core.setOutput('base_sha', pr.base.sha);
+
       - name: Remove manual rerun label
-        if: github.event.action == 'labeled' && github.event.label.name == 'pre-commit ci run'
+        if: github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'pre-commit ci run'
         continue-on-error: true
-        run: gh pr edit ${{ github.event.number }} --remove-label 'pre-commit ci run'
+        run: gh pr edit ${{ steps.resolve.outputs.pr_number }} --remove-label 'pre-commit ci run'
         env:
           GH_TOKEN: ${{ github.token }}
 
       - name: Checkout PR head
         uses: actions/checkout@v6
         with:
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ steps.resolve.outputs.head_repo }}
+          ref: ${{ steps.resolve.outputs.head_ref }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -45,7 +83,7 @@ jobs:
         shell: bash
         run: |
           git remote add upstream "https://github.com/${{ github.repository }}.git"
-          git fetch --no-tags --depth=1 upstream "${{ github.event.pull_request.base.sha }}"
+          git fetch --no-tags --depth=1 upstream "${{ steps.resolve.outputs.base_sha }}"
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -77,14 +115,14 @@ jobs:
           pre-commit run fmt \
             --show-diff-on-failure \
             --color always \
-            --from-ref "${{ github.event.pull_request.base.sha }}" \
-            --to-ref "${{ github.event.pull_request.head.sha }}" || status=$?
+            --from-ref "${{ steps.resolve.outputs.base_sha }}" \
+            --to-ref "${{ steps.resolve.outputs.head_sha }}" || status=$?
 
           pre-commit run cargo-sort \
             --show-diff-on-failure \
             --color always \
-            --from-ref "${{ github.event.pull_request.base.sha }}" \
-            --to-ref "${{ github.event.pull_request.head.sha }}" || status=$?
+            --from-ref "${{ steps.resolve.outputs.base_sha }}" \
+            --to-ref "${{ steps.resolve.outputs.head_sha }}" || status=$?
 
           exit $status
 
