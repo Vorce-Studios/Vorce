@@ -305,8 +305,10 @@ pub fn render_inspector_for_part(
         .auto_shrink([false, false])
         .show(ui, |ui| {
             // --- Input Configuration ---
-            trigger::render_trigger_config_ui(canvas, ui, part);
-            ui.separator();
+            if part.schema().has_trigger_mapping() {
+                trigger::render_trigger_config_ui(canvas, ui, part);
+                ui.separator();
+            }
 
             match &mut part.part_type {
                 ModulePartType::Trigger(trigger) => {
