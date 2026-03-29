@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="resources/app_icons/Vorce_Logo_HQ-Full-M.png" alt="Vorce Logo" width="500"/>
+  <img src="resources/app_icons/Vorce_Logo_HQ-Full-Gray-Background.png" alt="Vorce Logo" width="500"/>
 
 # Vorce
 
