@@ -32,14 +32,9 @@ pub fn parse_osc_address(address: &str) -> Result<ControlTarget> {
 
     let parts: Vec<&str> = address.trim_start_matches('/').split('/').collect();
 
-    if parts.is_empty()
-        || (parts[0] != "vorce"
-            && parts[0] != "Vorce"
-            && parts[0] != "mapmap"
-            && parts[0] != "MapMap")
-    {
+    if parts.is_empty() || (parts[0] != "vorce" && parts[0] != "Vorce") {
         return Err(ControlError::InvalidMessage(format!(
-            "OSC address must start with /vorce (or legacy /Vorce, /mapmap, or /MapMap): {}",
+            "OSC address must start with /vorce (or legacy /Vorce): {}",
             address
         )));
     }
@@ -244,10 +239,6 @@ mod tests {
         // Test /mapmap/
         let target2 = parse_osc_address("/mapmap/layer/5/position").unwrap();
         assert_eq!(target2, ControlTarget::LayerPosition(5));
-
-        // Test /MapMap/
-        let target3 = parse_osc_address("/MapMap/layer/7/scale").unwrap();
-        assert_eq!(target3, ControlTarget::LayerScale(7));
     }
 
     use super::*;
