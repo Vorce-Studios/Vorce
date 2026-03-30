@@ -137,7 +137,7 @@ pub fn render_output_ui(
             ui.label("\u{1F4E1} NDI Broadcast");
             #[cfg(feature = "ndi")]
             {
-                let supported = capabilities::is_output_type_enum_supported(true, false);
+                let supported = capabilities::is_output_type_enum_supported(true, false, false);
                 if !supported {
                     #[cfg(target_os = "macos")]
                     capabilities::render_unsupported_warning(
