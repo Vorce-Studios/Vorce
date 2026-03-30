@@ -203,23 +203,8 @@ impl ModuleEvaluator {
                         if let Some(&value) = values.get(idx) {
                             let current = inputs.entry(conn.to_part).or_insert(0.0);
                             *current = f32::max(*current, value);
-                        } else {
-                            tracing::warn!(
-                                "Trigger value index out of bounds: index {} for part {} (length: {})",
-                                idx,
-                                from_part.id,
-                                values.len()
-                            );
                         }
-                    } else {
-                        tracing::warn!(
-                            "Source socket '{}' not found on part {}",
-                            conn.from_socket,
-                            from_part.id
-                        );
                     }
-                } else {
-                    tracing::warn!("Source part {} not found for connection", conn.from_part);
                 }
             }
         }
@@ -249,39 +234,7 @@ impl ModuleEvaluator {
                             let part_inputs = inputs.entry(conn.to_part).or_default();
                             let current = part_inputs.entry(t_idx).or_insert(0.0);
                             *current = f32::max(*current, value);
-                        } else {
-                            tracing::warn!(
-                                "Trigger value index out of bounds: source index {} for part {} (length: {})",
-                                f_idx,
-                                src.id,
-                                values.len()
-                            );
                         }
-                    } else {
-                        if from_idx.is_none() {
-                            tracing::warn!(
-                                "Source socket '{}' not found on part {}",
-                                conn.from_socket,
-                                src.id
-                            );
-                        }
-                        if to_idx.is_none() {
-                            tracing::warn!(
-                                "Destination socket '{}' not found on part {}",
-                                conn.to_socket,
-                                dst.id
-                            );
-                        }
-                    }
-                } else {
-                    if from_part.is_none() {
-                        tracing::warn!("Source part {} not found for connection", conn.from_part);
-                    }
-                    if to_part.is_none() {
-                        tracing::warn!(
-                            "Destination part {} not found for connection",
-                            conn.to_part
-                        );
                     }
                 }
             }
