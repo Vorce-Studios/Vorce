@@ -31,20 +31,31 @@ pub fn sync_output_windows(
                     active_window_ids.insert(*id);
                     projector_configs.push((*id, name.clone(), *output_width, *output_height));
                 }
-                #[cfg(target_os = "macos")]
-                vorce_core::module::ModulePartType::Output(OutputType::NdiOutput { name }) => {
-                    // Throttled logging to avoid spam
-                    let now = std::time::Instant::now();
-                    let log_key = format!("ndi_output_unsupported_{}", name);
-                    let should_log =
-                        if let Some(last_log) = app.video_diagnostic_log_times.get(&log_key) {
-                            now.duration_since(*last_log).as_secs_f32() > 5.0
-                        } else {
-                            true
-                        };
-                    if should_log {
-                        tracing::warn!("NDI Output '{}' is currently unsupported/experimental on macOS and will not broadcast.", name);
-                        app.video_diagnostic_log_times.insert(log_key, now);
+                vorce_core::module::ModulePartType::Output(output_type) => {
+                    let unsupported_name = match output_type {
+                        OutputType::NdiOutput { name } => Some(("NDI Output", name.clone())),
+                        #[cfg(target_os = "windows")]
+                        OutputType::Spout { name } => Some(("Spout Output", name.clone())),
+                        _ => None,
+                    };
+
+                    if let Some((type_name, node_name)) = unsupported_name {
+                        let now = std::time::Instant::now();
+                        let log_key = format!("{}_unsupported_{}", type_name, node_name);
+                        let should_log =
+                            if let Some(last_log) = app.video_diagnostic_log_times.get(&log_key) {
+                                now.duration_since(*last_log).as_secs_f32() > 5.0
+                            } else {
+                                true
+                            };
+                        if should_log {
+                            tracing::warn!(
+                                "{} '{}' is currently unsupported/experimental and will not broadcast.",
+                                type_name,
+                                node_name
+                            );
+                            app.video_diagnostic_log_times.insert(log_key, now);
+                        }
                     }
                 }
                 _ => {}
