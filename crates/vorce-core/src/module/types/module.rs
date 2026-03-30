@@ -43,6 +43,9 @@ pub struct VorceModule {
     pub next_part_id: ModulePartId,
 }
 
+/// Backward-compatible alias for older API consumers.
+pub type MapFlowModule = VorceModule;
+
 /// Validation error for a graph connection.
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum ConnectionValidationError {

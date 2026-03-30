@@ -91,3 +91,6 @@ pub struct VorceTriggerResource {
     /// Map from (Module ID, Part ID) to the trigger value (0.0 - 1.0).
     pub trigger_values: std::collections::HashMap<(u64, u64), f32>,
 }
+
+/// Backward-compatible alias for older integrations.
+pub type MapFlowTriggerResource = VorceTriggerResource;
