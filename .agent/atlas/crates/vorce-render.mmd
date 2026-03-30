@@ -1,0 +1,74 @@
+---
+title: vorce-render file atlas
+---
+flowchart LR
+    crates_vorce_render_benches_mesh_renderer_bench_rs["benches/mesh_renderer_bench.rs"]
+    crates_vorce_render_src_backend_rs["src/backend.rs"]
+    crates_vorce_render_src_capture_rs["src/capture.rs"]
+    crates_vorce_render_src_color_calibration_renderer_rs["src/color_calibration_renderer.rs"]
+    crates_vorce_render_src_compositor_rs["src/compositor.rs"]
+    crates_vorce_render_src_compressed_texture_rs["src/compressed_texture.rs"]
+    crates_vorce_render_src_edge_blend_renderer_rs["src/edge_blend_renderer.rs"]
+    crates_vorce_render_src_effect_chain_renderer_apply_rs["src/effect_chain_renderer/apply.rs"]
+    crates_vorce_render_src_effect_chain_renderer_mod_rs["src/effect_chain_renderer/mod.rs"]
+    crates_vorce_render_src_effect_chain_renderer_pipeline_rs["src/effect_chain_renderer/pipeline.rs"]
+    crates_vorce_render_src_effect_chain_renderer_types_rs["src/effect_chain_renderer/types.rs"]
+    crates_vorce_render_src_hot_reload_rs["src/hot_reload.rs"]
+    crates_vorce_render_src_lib_rs["src/lib.rs"]
+    crates_vorce_render_src_mesh_buffer_cache_rs["src/mesh_buffer_cache.rs"]
+    crates_vorce_render_src_mesh_renderer_rs["src/mesh_renderer.rs"]
+    crates_vorce_render_src_oscillator_renderer_rs["src/oscillator_renderer.rs"]
+    crates_vorce_render_src_paint_texture_cache_rs["src/paint_texture_cache.rs"]
+    crates_vorce_render_src_pipeline_rs["src/pipeline.rs"]
+    crates_vorce_render_src_preset_rs["src/preset.rs"]
+    crates_vorce_render_src_quad_rs["src/quad.rs"]
+    crates_vorce_render_src_shader_rs["src/shader.rs"]
+    crates_vorce_render_src_shader_graph_integration_rs["src/shader_graph_integration.rs"]
+    crates_vorce_render_src_spout_rs["src/spout.rs"]
+    crates_vorce_render_src_texture_rs["src/texture.rs"]
+    crates_vorce_render_src_uploader_rs["src/uploader.rs"]
+    crates_vorce_render_tests_effect_chain_integration_tests_rs["tests/effect_chain_integration_tests.rs"]
+    crates_vorce_render_tests_effect_chain_tests_rs["tests/effect_chain_tests.rs"]
+    crates_vorce_render_tests_multi_output_tests_rs["tests/multi_output_tests.rs"]
+
+    crates_vorce_render_benches_mesh_renderer_bench_rs --> crates_vorce_render_src_lib_rs
+    crates_vorce_render_src_backend_rs --> crates_vorce_render_src_lib_rs
+    crates_vorce_render_src_color_calibration_renderer_rs --> crates_vorce_render_src_lib_rs
+    crates_vorce_render_src_compositor_rs --> crates_vorce_render_src_lib_rs
+    crates_vorce_render_src_edge_blend_renderer_rs --> crates_vorce_render_src_lib_rs
+    crates_vorce_render_src_effect_chain_renderer_apply_rs --> crates_vorce_render_src_effect_chain_renderer_mod_rs
+    crates_vorce_render_src_effect_chain_renderer_apply_rs --> crates_vorce_render_src_lib_rs
+    crates_vorce_render_src_effect_chain_renderer_apply_rs --> crates_vorce_render_src_pipeline_rs
+    crates_vorce_render_src_effect_chain_renderer_mod_rs --> crates_vorce_render_src_effect_chain_renderer_apply_rs
+    crates_vorce_render_src_effect_chain_renderer_mod_rs --> crates_vorce_render_src_effect_chain_renderer_pipeline_rs
+    crates_vorce_render_src_effect_chain_renderer_mod_rs --> crates_vorce_render_src_effect_chain_renderer_types_rs
+    crates_vorce_render_src_effect_chain_renderer_mod_rs --> crates_vorce_render_src_lib_rs
+    crates_vorce_render_src_effect_chain_renderer_pipeline_rs --> crates_vorce_render_src_effect_chain_renderer_mod_rs
+    crates_vorce_render_src_effect_chain_renderer_pipeline_rs --> crates_vorce_render_src_lib_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_backend_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_capture_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_color_calibration_renderer_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_compositor_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_compressed_texture_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_edge_blend_renderer_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_effect_chain_renderer_mod_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_hot_reload_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_mesh_buffer_cache_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_mesh_renderer_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_oscillator_renderer_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_paint_texture_cache_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_pipeline_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_preset_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_quad_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_shader_graph_integration_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_shader_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_spout_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_texture_rs
+    crates_vorce_render_src_lib_rs --> crates_vorce_render_src_uploader_rs
+    crates_vorce_render_src_mesh_buffer_cache_rs --> crates_vorce_render_src_mesh_renderer_rs
+    crates_vorce_render_src_mesh_renderer_rs --> crates_vorce_render_src_lib_rs
+    crates_vorce_render_src_oscillator_renderer_rs --> crates_vorce_render_src_lib_rs
+    crates_vorce_render_src_quad_rs --> crates_vorce_render_src_lib_rs
+    crates_vorce_render_src_shader_graph_integration_rs --> crates_vorce_render_src_lib_rs
+    crates_vorce_render_tests_effect_chain_integration_tests_rs --> crates_vorce_render_src_lib_rs
+    crates_vorce_render_tests_effect_chain_tests_rs --> crates_vorce_render_src_lib_rs

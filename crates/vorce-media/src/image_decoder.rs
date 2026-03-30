@@ -6,6 +6,7 @@
 
 use crate::{MediaError, Result, VideoDecoder};
 use image::{AnimationDecoder, DynamicImage};
+use std::io::BufReader;
 use std::path::Path;
 use std::time::Duration;
 use tracing::info;
@@ -160,6 +161,7 @@ impl GifDecoder {
         // Open the file
         let file = std::fs::File::open(path)
             .map_err(|e| MediaError::FileOpen(format!("Failed to open file: {}", e)))?;
+        let file = BufReader::new(file);
 
         let decoder = image::codecs::gif::GifDecoder::new(file)
             .map_err(|e| MediaError::DecoderError(format!("Failed to decode GIF: {}", e)))?;
@@ -168,6 +170,7 @@ impl GifDecoder {
         let frames_iter = decoder.into_frames();
 
         let mut frames = Vec::new();
+        let mut dimensions = None;
         let mut total_duration = Duration::ZERO;
 
         for frame_result in frames_iter {
@@ -179,20 +182,17 @@ impl GifDecoder {
                 (delay.numer_denom_ms().0 as f64 / delay.numer_denom_ms().1 as f64 * 1000.0) as u64,
             );
 
-            let image = DynamicImage::ImageRgba8(frame.into_buffer());
+            let buffer = frame.into_buffer();
+            let (frame_width, frame_height) = buffer.dimensions();
+            dimensions.get_or_insert((frame_width, frame_height));
+
+            let image = DynamicImage::ImageRgba8(buffer);
             frames.push((image.to_rgba8().into_raw(), delay_duration));
             total_duration += delay_duration;
         }
 
-        if frames.is_empty() {
-            return Err(MediaError::DecoderError("GIF has no frames".to_string()));
-        }
-
-        let (width, height) = {
-            let frame = image::load_from_memory(&frames[0].0)
-                .map_err(|e| MediaError::DecoderError(format!("Failed to decode frame: {}", e)))?;
-            (frame.width(), frame.height())
-        };
+        let (width, height) =
+            dimensions.ok_or_else(|| MediaError::DecoderError("GIF has no frames".to_string()))?;
         let fps = frames.len() as f64 / total_duration.as_secs_f64();
 
         info!(
