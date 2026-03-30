@@ -1,18 +1,4 @@
 //! System for processing module triggers (e.g., AudioFFT)
-//!
-//! This module provides the central registry and processing logic for the module graph's
-//! event-based Trigger Nodes (such as `Beat`, `Fixed`, `Random`, etc.) and control sources
-//! (like `AudioFFT` bands and `RMS/Peak` volume levels).
-//!
-//! Important distinctions based on the Node System Architecture:
-//! - **Event Triggers**: Emitting discrete pulses (e.g. `Beat`, `Shortcut`, `Random`). These
-//!   produce brief active states, typically visually represented as a live pulse in the UI.
-//! - **Control Triggers**: Emitting continuous values (e.g. `AudioFFT` RMS out, `BPM`). These
-//!   produce normalized `0.0..=1.0` signals mapped into parameters (like Opacity or Hue).
-//!
-//! The `TriggerSystem` updates per frame, integrating real-time audio analysis
-//! (`AudioTriggerData`) and internal timers, to determine which module graph
-//! outputs are active. This drives downstream visual effects and parameter automation.
 
 use crate::audio_reactive::AudioTriggerData;
 use crate::module::{ModuleManager, ModulePartType, TriggerType};
@@ -22,8 +8,7 @@ use std::collections::{HashMap, HashSet};
 /// A set of active trigger outputs. Each entry is (part_id, socket_idx).
 pub type ActiveTriggers = HashSet<(u64, usize)>;
 
-/// Internal state for a time-based trigger node.
-/// Used to maintain context between frames for nodes like `Fixed` and `Random`.
+/// State for a trigger (timer, target interval, etc.)
 #[derive(Debug, Clone, Copy)]
 pub struct TriggerState {
     /// Accumulated time since last trigger
