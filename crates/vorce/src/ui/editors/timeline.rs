@@ -13,7 +13,6 @@ pub struct TimelineContext<'a> {
 }
 
 /// Renders the timeline panel.
-#[allow(deprecated)]
 pub fn show(ctx: &Context, mut context: TimelineContext) {
     if !context.ui_state.show_timeline {
         return;

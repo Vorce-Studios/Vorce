@@ -118,7 +118,6 @@ pub(crate) fn render_content(
             depth_stencil_attachment: None,
             timestamp_writes: None,
             occlusion_query_set: None,
-            multiview_mask: None,
         });
         return Ok(());
     }
@@ -187,7 +186,6 @@ pub(crate) fn render_content(
             depth_stencil_attachment: None,
             timestamp_writes: None,
             occlusion_query_set: None,
-            multiview_mask: None,
         });
     }
 
@@ -349,7 +347,6 @@ pub(crate) fn render_content(
                 depth_stencil_attachment: None,
                 timestamp_writes: None,
                 occlusion_query_set: None,
-                multiview_mask: None,
             });
 
             mesh_renderer.draw(
@@ -436,7 +433,6 @@ pub(crate) fn render_content(
                 depth_stencil_attachment: None,
                 timestamp_writes: None,
                 occlusion_query_set: None,
-                multiview_mask: None,
             });
 
             edge_blend_renderer.render(&mut rpass, texture_bind_group, uniform_bind_group);
@@ -466,7 +462,6 @@ pub(crate) fn render_content(
                 depth_stencil_attachment: None,
                 timestamp_writes: None,
                 occlusion_query_set: None,
-                multiview_mask: None,
             });
 
             // Render egui UI

@@ -167,8 +167,8 @@ impl ShaderGraphManager {
         // Create render pipeline
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some(&format!("ShaderGraph_Pipeline_Layout_{}", id)),
-            bind_group_layouts: &[Some(bind_group_layout), Some(uniform_bind_group_layout)],
-            immediate_size: 0,
+            bind_group_layouts: &[bind_group_layout, uniform_bind_group_layout],
+            push_constant_ranges: &[],
         });
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -201,7 +201,7 @@ impl ShaderGraphManager {
             },
             depth_stencil: None,
             multisample: wgpu::MultisampleState::default(),
-            multiview_mask: None,
+            multiview: None,
             cache: None,
         });
 
@@ -288,7 +288,6 @@ impl ShaderGraphRendering for EffectChainRenderer {
             depth_stencil_attachment: None,
             timestamp_writes: None,
             occlusion_query_set: None,
-            multiview_mask: None,
         });
 
         render_pass.set_pipeline(pipeline);
