@@ -234,7 +234,7 @@ impl AssetManager {
     pub fn ui(&mut self, ui: &mut egui::Ui) -> Option<AssetManagerAction> {
         let mut action = None;
 
-        egui::TopBottomPanel::top("asset_browser_tabs").show_inside(ui, |ui| {
+        egui::Panel::top("asset_browser_tabs").show_inside(ui, |ui| {
             ui.horizontal(|ui| {
                 let _ = ui.selectable_label(false, "Effect Presets");
                 let _ = ui.selectable_label(false, "Transform Presets");
