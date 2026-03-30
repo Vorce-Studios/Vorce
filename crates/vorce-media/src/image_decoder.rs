@@ -191,8 +191,8 @@ impl GifDecoder {
             total_duration += delay_duration;
         }
 
-        let (width, height) = dimensions
-            .ok_or_else(|| MediaError::DecoderError("GIF has no frames".to_string()))?;
+        let (width, height) =
+            dimensions.ok_or_else(|| MediaError::DecoderError("GIF has no frames".to_string()))?;
         let fps = frames.len() as f64 / total_duration.as_secs_f64();
 
         info!(
