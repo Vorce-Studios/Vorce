@@ -218,33 +218,9 @@ fn render_frame(
     capture_output: bool,
     output_path: &Path,
 ) -> Result<()> {
-    let frame = match surface.get_current_texture() {
-        wgpu::CurrentSurfaceTexture::Success(frame)
-        | wgpu::CurrentSurfaceTexture::Suboptimal(frame) => frame,
-        wgpu::CurrentSurfaceTexture::Timeout => {
-            return Err(anyhow!("timed out acquiring current surface texture"));
-        }
-        wgpu::CurrentSurfaceTexture::Occluded => {
-            return Err(anyhow!(
-                "surface is occluded while acquiring current surface texture"
-            ));
-        }
-        wgpu::CurrentSurfaceTexture::Outdated => {
-            return Err(anyhow!(
-                "surface is outdated while acquiring current surface texture"
-            ));
-        }
-        wgpu::CurrentSurfaceTexture::Lost => {
-            return Err(anyhow!(
-                "surface was lost while acquiring current surface texture"
-            ));
-        }
-        wgpu::CurrentSurfaceTexture::Validation => {
-            return Err(anyhow!(
-                "validation error while acquiring current surface texture"
-            ));
-        }
-    };
+    let frame = surface
+        .get_current_texture()
+        .context("failed to acquire current surface texture")?;
     let view = frame
         .texture
         .create_view(&wgpu::TextureViewDescriptor::default());
@@ -273,7 +249,6 @@ fn render_frame(
             depth_stencil_attachment: None,
             occlusion_query_set: None,
             timestamp_writes: None,
-            multiview_mask: None,
         });
 
         quad_renderer.draw(&mut render_pass, &bind_group);

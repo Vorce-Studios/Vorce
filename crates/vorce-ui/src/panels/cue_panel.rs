@@ -48,7 +48,7 @@ impl CuePanel {
         egui::Window::new(i18n.t("panel-cues"))
             .open(&mut open)
             .default_size([300.0, 500.0])
-            .frame(cyber_panel_frame(&ctx.global_style()))
+            .frame(cyber_panel_frame(&ctx.style()))
             .show(ctx, |ui| {
                 render_panel_header(ui, &i18n.t("panel-cues"), |_| {});
 
@@ -151,7 +151,7 @@ impl CuePanel {
             let cues_to_render: Vec<_> = cue_list.cues().to_vec();
 
             if cues_to_render.is_empty() {
-                crate::widgets::custom::render_info_label(ui, &i18n.t("label-no-cues"));
+                ui.label(i18n.t("label-no-cues"));
             } else {
                 for cue in cues_to_render {
                     let is_current = current_cue_id == Some(cue.id);
