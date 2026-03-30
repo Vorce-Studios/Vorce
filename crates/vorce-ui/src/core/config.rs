@@ -67,7 +67,7 @@ pub struct LayoutVisibility {
     pub show_timeline: bool,
     #[serde(default = "default_true")]
     pub show_media_browser: bool,
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub show_module_canvas: bool,
 }
 
@@ -81,6 +81,16 @@ impl Default for LayoutVisibility {
             show_media_browser: true,
             show_module_canvas: true,
         }
+    }
+}
+
+impl LayoutVisibility {
+    fn has_primary_workspace(self) -> bool {
+        self.show_module_canvas
+            || self.show_left_sidebar
+            || self.show_inspector
+            || self.show_timeline
+            || self.show_media_browser
     }
 }
 
@@ -579,17 +589,14 @@ impl UserConfig {
         legacy.filter(|path| path.exists()).or(primary)
     }
 
-    fn existing_config_path() -> Option<PathBuf> {
-        Self::resolve_existing_config_path(Self::config_path(), Self::legacy_config_path())
-    }
-
     fn sync_legacy_visibility_fields_from_active_layout(&mut self) {
-        if let Some(layout) = self.active_layout() {
-            self.show_left_sidebar = layout.visibility.show_left_sidebar;
-            self.show_inspector = layout.visibility.show_inspector;
-            self.show_timeline = layout.visibility.show_timeline;
-            self.show_media_browser = layout.visibility.show_media_browser;
-            self.show_module_canvas = layout.visibility.show_module_canvas;
+        let visibility = self.active_layout().map(|layout| layout.visibility);
+        if let Some(visibility) = visibility {
+            self.show_left_sidebar = visibility.show_left_sidebar;
+            self.show_inspector = visibility.show_inspector;
+            self.show_timeline = visibility.show_timeline;
+            self.show_media_browser = visibility.show_media_browser;
+            self.show_module_canvas = visibility.show_module_canvas;
         }
     }
 
@@ -979,6 +986,61 @@ mod tests {
         assert!(config.set_active_layout("live"));
         assert_eq!(config.active_layout_id, "live");
         assert!(!config.set_active_layout("does-not-exist"));
+    }
+
+    #[test]
+    fn test_repair_for_startup_recovers_hidden_active_layout() {
+        let mut config = UserConfig::default();
+        if let Some(layout) = config.active_layout_mut() {
+            layout.visibility.show_toolbar = false;
+            layout.visibility.show_left_sidebar = false;
+            layout.visibility.show_inspector = false;
+            layout.visibility.show_timeline = false;
+            layout.visibility.show_media_browser = false;
+            layout.visibility.show_module_canvas = false;
+        }
+        config.show_left_sidebar = false;
+        config.show_inspector = false;
+        config.show_timeline = false;
+        config.show_media_browser = false;
+        config.show_module_canvas = false;
+
+        let mut report = UserConfigLoadReport::default();
+        let repaired = config.repair_for_startup(&mut report);
+
+        assert!(repaired);
+        assert!(config.active_layout().unwrap().visibility.show_left_sidebar);
+        assert!(
+            config
+                .active_layout()
+                .unwrap()
+                .visibility
+                .show_module_canvas
+        );
+        assert!(config.show_left_sidebar);
+        assert!(config.show_module_canvas);
+        assert!(report
+            .errors
+            .iter()
+            .any(|entry| entry.contains("Recovered unusable startup layout")));
+    }
+
+    #[test]
+    fn test_repair_for_startup_restores_missing_active_layout() {
+        let mut config = UserConfig {
+            active_layout_id: "missing".to_string(),
+            ..UserConfig::default()
+        };
+
+        let mut report = UserConfigLoadReport::default();
+        let repaired = config.repair_for_startup(&mut report);
+
+        assert!(repaired);
+        assert_eq!(config.active_layout_id, "default");
+        assert!(report
+            .errors
+            .iter()
+            .any(|entry| entry.contains("missing active layout")));
     }
 
     #[test]
