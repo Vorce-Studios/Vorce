@@ -6,9 +6,9 @@ Vorce relies on the operating system's audio infrastructure to capture audio for
 
 On Windows, Vorce uses the **WASAPI** backend. To capture desktop audio (i.e., what you hear), you need to enable an input device called **"Stereo Mix"** or **"What U Hear"**.
 
-1. **Open Sound Settings:** Right-click the speaker icon in your system tray and select "Sounds".
-2. **Go to the Recording Tab:** In the Sound control panel, click on the "Recording" tab.
-3. **Show Disabled Devices:** Right-click in the empty space in the list of devices and make sure "Show Disabled Devices" and "Show Disconnected Devices" are checked.
+1. **Open Sound Settings:** Right-click the speaker icon in your system tray and select **"Sounds"**.
+2. **Go to the Recording Tab:** In the Sound control panel, click on the **"Recording"** tab.
+3. **Show Disabled Devices:** Right-click in the empty space in the list of devices and make sure **"Show Disabled Devices"** and **"Show Disconnected Devices"** are checked.
 4. **Enable Stereo Mix:** You should see a device named "Stereo Mix", "Wave Out Mix", "Mono Mix", or something similar. Right-click on it and select **"Enable"**.
 5. **Set as Default (Optional but Recommended):** Right-click on "Stereo Mix" again and select **"Set as Default Device"**. This will make it the default input for most applications.
 
