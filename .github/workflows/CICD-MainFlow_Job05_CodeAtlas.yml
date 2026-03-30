@@ -1,0 +1,70 @@
+name: "CICD-MainFlow: Job05 Code Atlas"
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - ".agent/atlas/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: code-atlas-${{ github.ref_name || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  RUST_TOOLCHAIN: ${{ vars.VORCE_DEFAULT_TOOLCHAIN || vars.MAPFLOW_DEFAULT_TOOLCHAIN || '1.94.0' }}
+
+jobs:
+  code-atlas:
+    name: "Generate and Commit Code Atlas"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.actor != 'github-actions[bot]'
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+
+      - name: Generate code atlas
+        run: python scripts/dev-tools/generate-code-atlas.py
+
+      - name: Detect atlas changes
+        id: atlas_diff
+        shell: bash
+        run: |
+          if git diff --quiet -- .agent/atlas; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit generated atlas
+        if: steps.atlas_diff.outputs.has_changes == 'true'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .agent/atlas
+          git commit -m "docs: update generated code atlas [skip ci]"
+          git push origin HEAD:main
+
+      - name: Atlas already up to date
+        if: steps.atlas_diff.outputs.has_changes != 'true'
+        run: echo "Code atlas already matches main."

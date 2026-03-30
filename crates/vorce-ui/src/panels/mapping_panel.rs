@@ -28,7 +28,7 @@ impl MappingPanel {
         egui::Window::new(i18n.t("panel-mappings"))
             .open(&mut open)
             .default_size([380.0, 400.0])
-            .frame(cyber_panel_frame(&ctx.global_style()))
+            .frame(cyber_panel_frame(&ctx.style()))
             .show(ctx, |ui| {
                 // Header
                 panel::render_panel_header(ui, &i18n.t("panel-mappings"), |ui| {
