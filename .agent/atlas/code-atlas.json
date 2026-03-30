@@ -7241,8 +7241,8 @@
       "crate": "vorce-control",
       "crate_root": "crates/vorce-control",
       "kind": "rust-source",
-      "line_count": 425,
-      "sha256": "1d3ef5359f1a22b741c1128bc8790a626cfd9e4ef98619e9c21ab7b0e02a73b4",
+      "line_count": 421,
+      "sha256": "ba9aa738e14663ef816b4d9e1b0b2d6b4d9ae01e97de3fead7bdd1f926ac5944",
       "summary": "OSC address space parser Parses OSC addresses like `/vorce/layer/0/opacity` to control targets",
       "symbols": [
         {
@@ -29701,7 +29701,7 @@
       "crate_root": "crates/vorce-ui",
       "kind": "rust-source",
       "line_count": 784,
-      "sha256": "ebca39dc0759c2cee7ea3538efe6d57079ddf9113372c9276df1cb93782c2c4e",
+      "sha256": "4777ffbd77c645cd566fb3d10049c6be113e31c48e94aac9aeb9da3ef775794d",
       "summary": "User configuration management . Handles saving and loading user preferences including language settings.",
       "symbols": [
         {
@@ -32491,12 +32491,17 @@
       "crate": "vorce-ui",
       "crate_root": "crates/vorce-ui",
       "kind": "rust-source",
-      "line_count": 95,
-      "sha256": "cb783eb6d2e975c22e8dfd23c6276905f5b5a2d377d1548e7b70d980c6a6f574",
-      "summary": "rust-source containing has_advanced_blend_mode_support, is_blend_mode_supported, is_effect_supported",
+      "line_count": 104,
+      "sha256": "97f20a10f82a08eb8beef5aa3670cd267e57e56422e02055a832fa7562f6eacc",
+      "summary": "rust-source containing has_advanced_blend_mode_support, is_bevy_node_supported, is_blend_mode_supported",
       "symbols": [
         {
           "name": "has_advanced_blend_mode_support",
+          "kind": "fn",
+          "visibility": "pub"
+        },
+        {
+          "name": "is_bevy_node_supported",
           "kind": "fn",
           "visibility": "pub"
         },
@@ -32543,6 +32548,7 @@
       ],
       "symbol_names": [
         "has_advanced_blend_mode_support",
+        "is_bevy_node_supported",
         "is_blend_mode_supported",
         "is_effect_supported",
         "is_mapping_mode_supported",
@@ -32585,7 +32591,7 @@
       "key_facts": [
         "crate: vorce-ui",
         "module: vorce_ui::editors::module_canvas::inspector::capabilities",
-        "symbols: has_advanced_blend_mode_support, is_blend_mode_supported, is_effect_supported, is_mapping_mode_supported, is_mask_supported, ...",
+        "symbols: has_advanced_blend_mode_support, is_bevy_node_supported, is_blend_mode_supported, is_effect_supported, is_mapping_mode_supported, ...",
         "local deps: 1",
         "used by local files: 8",
         "external roots: vorce_core"
@@ -33065,8 +33071,8 @@
       "crate": "vorce-ui",
       "crate_root": "crates/vorce-ui",
       "kind": "rust-source",
-      "line_count": 1317,
-      "sha256": "76f007235b37d23c9d7241f039616fef7c2578c6c748a849df8f1317877430c8",
+      "line_count": 1465,
+      "sha256": "e41a711acd9d702c2c9e9d5c04af0ebaa47ab1d32b9b46cf0c4f6c7a496fa6b2",
       "summary": "rust-source containing render_source_ui",
       "symbols": [
         {
@@ -41351,8 +41357,8 @@
       "crate": "vorce",
       "crate_root": "crates/vorce",
       "kind": "rust-source",
-      "line_count": 805,
-      "sha256": "587b156e36d0187c7eeea14abcdae7f98b3e5ec5cbc5fe32139aafb5a1e8b710",
+      "line_count": 806,
+      "sha256": "dc721eece51be81587eec55d86833e7c14e5b1e6b92507a326a96d379211dd87",
       "summary": "rust-source containing STARTUP_OVERLAY_DURATION_SECS, fit_size_within, load_startup_animation",
       "symbols": [
         {
@@ -41833,8 +41839,8 @@
       "crate": "vorce",
       "crate_root": "crates/vorce",
       "kind": "rust-source",
-      "line_count": 484,
-      "sha256": "1fafb7c11e996321135e26f14f571e99075dc027fb6655c2e16db10a7b3b6cad",
+      "line_count": 490,
+      "sha256": "ab9a3fdc382205091229fb6d4c1e29fae5ec7d020b284f618e378f54607289c9",
       "summary": "Vorce - Open source VJ projection mapping software. This is the main application crate for Vorce. VERSION: 2026-03-19-VISUAL-TEST-READY",
       "symbols": [
         {
@@ -59261,6 +59267,9 @@
       ],
       "is_beat_detected": [
         "crates/vorce-ui/src/editors/module_canvas/interaction_logic.rs"
+      ],
+      "is_bevy_node_supported": [
+        "crates/vorce-ui/src/editors/module_canvas/inspector/capabilities.rs"
       ],
       "is_blend_mode_supported": [
         "crates/vorce-ui/src/editors/module_canvas/inspector/capabilities.rs"

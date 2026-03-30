@@ -168,10 +168,7 @@ impl ShortcutsPanel {
                     ui.heading(format!("Edit: {}", shortcut_desc));
                     ui.separator();
 
-                    crate::widgets::custom::render_info_label(
-                        ui,
-                        &locale.t("shortcuts-edit-dialog-prompt"),
-                    );
+                    ui.label(locale.t("shortcuts-edit-dialog-prompt"));
 
                     ui.group(|ui| {
                         ui.vertical_centered(|ui| {
