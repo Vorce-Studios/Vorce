@@ -86,7 +86,7 @@ impl TransformPanel {
         egui::Window::new(i18n.t("panel-transforms"))
             .open(&mut open)
             .default_size([360.0, 520.0])
-            .frame(cyber_panel_frame(&ctx.style()))
+            .frame(cyber_panel_frame(&ctx.global_style()))
             .show(ctx, |ui| {
                 render_panel_header(ui, &i18n.t("header-transform-sys"), |_| {});
                 ui.add_space(8.0);
