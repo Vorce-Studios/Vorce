@@ -191,7 +191,6 @@ fn render_startup_animation_overlay(ctx: &egui::Context, app: &mut App) {
 
     egui::Area::new("startup_animation_overlay".into())
         .order(egui::Order::Foreground)
-        .interactable(false)
         .fixed_pos(ctx.content_rect().min)
         .show(ctx, |ui| {
             let rect = ctx.content_rect();
@@ -252,6 +251,7 @@ fn render_startup_animation_overlay(ctx: &egui::Context, app: &mut App) {
 
 /// Main UI orchestration function.
 /// Renders the entire application UI layout using egui.
+#[allow(deprecated)]
 pub fn show(ctx: &egui::Context, app: &mut App) {
     app.ui_state.update_responsive_styles(ctx);
 
@@ -306,11 +306,16 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
             .min_height(if compact_height { 36.0 } else { 44.0 })
             .frame(
                 egui::Frame::default()
-                    .fill(ctx.style().visuals.window_fill())
+                    .fill(ctx.global_style().visuals.window_fill())
                     .inner_margin(egui::Margin::symmetric(16, 4))
                     .stroke(egui::Stroke::new(
                         1.0,
-                        ctx.style().visuals.widgets.noninteractive.bg_stroke.color,
+                        ctx.global_style()
+                            .visuals
+                            .widgets
+                            .noninteractive
+                            .bg_stroke
+                            .color,
                     )),
             )
             .show(ctx, |ui_obj| {
@@ -615,7 +620,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
 
     // 7. Central Panel: Module Canvas
     egui::CentralPanel::default()
-        .frame(egui::Frame::default().fill(ctx.style().visuals.panel_fill))
+        .frame(egui::Frame::default().fill(ctx.global_style().visuals.panel_fill))
         .show(ctx, |ui_obj| {
             if app.ui_state.show_module_canvas {
                 app.ui_state.module_canvas.ensure_icons_loaded(ctx);

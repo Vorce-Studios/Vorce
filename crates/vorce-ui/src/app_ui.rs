@@ -368,7 +368,7 @@ impl AppUI {
 
         let layout = crate::core::responsive::ResponsiveLayout::new(ctx);
 
-        let mut style = (*ctx.style()).clone();
+        let mut style = (*ctx.global_style()).clone();
         let base_font_size = self.user_config.theme.font_size.max(10.0);
         let user_scale = self.user_config.ui_scale.clamp(0.8, 1.4);
 
@@ -397,7 +397,7 @@ impl AppUI {
         style.spacing.item_spacing = egui::vec2(8.0, 6.0) * spacing_scale;
         style.spacing.button_padding = egui::vec2(8.0, 4.0) * spacing_scale;
 
-        ctx.set_style(style);
+        ctx.set_global_style(style);
     }
 
     /// Take all pending actions and clear the list
@@ -424,17 +424,20 @@ impl AppUI {
     }
 
     /// Render the media browser as left side panel
+    #[allow(deprecated)]
     pub fn render_media_browser(&mut self, ctx: &egui::Context) {
         if !self.show_media_browser {
             return;
         }
 
-        egui::SidePanel::left("media_browser_panel")
+        egui::Panel::left("media_browser_panel")
             .resizable(true)
-            .default_width(280.0)
-            .min_width(200.0)
-            .max_width(400.0)
-            .frame(crate::widgets::panel::cyber_panel_frame(&ctx.style()))
+            .default_size(280.0)
+            .min_size(200.0)
+            .max_size(400.0)
+            .frame(crate::widgets::panel::cyber_panel_frame(
+                &ctx.global_style(),
+            ))
             .show(ctx, |ui: &mut egui::Ui| {
                 crate::widgets::panel::render_panel_header(
                     ui,
@@ -468,7 +471,9 @@ impl AppUI {
 
         egui::Window::new(self.i18n.t("panel-playback"))
             .default_size([320.0, 360.0])
-            .frame(crate::widgets::panel::cyber_panel_frame(&ctx.style()))
+            .frame(crate::widgets::panel::cyber_panel_frame(
+                &ctx.global_style(),
+            ))
             .show(ctx, |ui| {
                 crate::widgets::panel::render_panel_header(
                     ui,
