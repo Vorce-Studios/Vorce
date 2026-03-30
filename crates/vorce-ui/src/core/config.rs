@@ -9,7 +9,6 @@ use std::fs;
 use std::path::PathBuf;
 
 const APP_CONFIG_DIR: &str = "Vorce";
-const LEGACY_APP_CONFIG_DIR: &str = "MapFlow";
 const CONFIG_FILE_NAME: &str = "config.json";
 
 /// Diagnostics captured while loading and repairing the persisted user config.
@@ -79,7 +78,7 @@ impl Default for LayoutVisibility {
             show_inspector: true,
             show_timeline: true,
             show_media_browser: true,
-            show_module_canvas: true,
+            show_module_canvas: false,
         }
     }
 }
@@ -281,7 +280,6 @@ impl fmt::Display for AnimationProfile {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MidiAssignmentTarget {
     /// Assigned to Vorce internal control
-    #[serde(alias = "MapFlow")]
     Vorce(String), // Control target ID
     /// Assigned to Streamer.bot function
     StreamerBot(String), // Function name
@@ -488,7 +486,7 @@ fn default_ui_scale() -> f32 {
 }
 
 fn default_startup_animation_path() -> String {
-    "resources/app_videos/MF-Mechanical_Cube_Logo_Splash_Animation.webm".to_string()
+    "resources/app_videos/Vorce-Mechanical_Cube_Logo_Splash_Animation.webm".to_string()
 }
 
 fn default_sidebar_width() -> f32 {
@@ -536,7 +534,7 @@ impl Default for UserConfig {
             show_inspector: true,
             show_timeline: true,
             show_media_browser: true,
-            show_module_canvas: true,
+            show_module_canvas: false,
             show_controller_overlay: false,
             web_api_enabled: false,
             web_api_port: 8080,
@@ -548,7 +546,7 @@ impl Default for UserConfig {
             ui_scale: 1.0,
             log_level: AppLogLevel::Info,
             node_animations_enabled: true,
-            startup_animation_enabled: true,
+            startup_animation_enabled: false,
             startup_animation_path: default_startup_animation_path(),
             reduce_motion_enabled: false,
             silent_startup_enabled: false,
@@ -566,10 +564,6 @@ impl UserConfig {
         Self::config_path_for_app(APP_CONFIG_DIR)
     }
 
-    fn legacy_config_path() -> Option<PathBuf> {
-        Self::config_path_for_app(LEGACY_APP_CONFIG_DIR)
-    }
-
     fn config_path_for_app(app_name: &str) -> Option<PathBuf> {
         dirs::config_dir().map(|mut p| {
             p.push(app_name);
@@ -578,19 +572,12 @@ impl UserConfig {
         })
     }
 
-    fn resolve_existing_config_path(
-        primary: Option<PathBuf>,
-        legacy: Option<PathBuf>,
-    ) -> Option<PathBuf> {
-        if let Some(path) = primary.as_ref().filter(|path| path.exists()) {
-            return Some(path.clone());
-        }
-
-        legacy.filter(|path| path.exists()).or(primary)
+    fn resolve_existing_config_path(primary: Option<PathBuf>) -> Option<PathBuf> {
+        primary.as_ref().filter(|path| path.exists()).cloned()
     }
 
     fn existing_config_path() -> Option<PathBuf> {
-        Self::resolve_existing_config_path(Self::config_path(), Self::legacy_config_path())
+        Self::resolve_existing_config_path(Self::config_path())
     }
 
     /// Load configuration from disk
@@ -787,7 +774,7 @@ mod tests {
             show_inspector: true,
             show_timeline: true,
             show_media_browser: true,
-            show_module_canvas: true,
+            show_module_canvas: false,
             show_controller_overlay: false,
             web_api_enabled: false,
             web_api_port: 8080,
@@ -799,7 +786,7 @@ mod tests {
             ui_scale: 1.2,
             log_level: AppLogLevel::Info,
             node_animations_enabled: true,
-            startup_animation_enabled: true,
+            startup_animation_enabled: false,
             startup_animation_path: default_startup_animation_path(),
             reduce_motion_enabled: false,
             silent_startup_enabled: false,
@@ -845,32 +832,5 @@ mod tests {
         assert!(config.set_active_layout("live"));
         assert_eq!(config.active_layout_id, "live");
         assert!(!config.set_active_layout("does-not-exist"));
-    }
-
-    #[test]
-    fn test_existing_config_path_prefers_vorce_and_falls_back_to_mapflow() {
-        let root = std::env::temp_dir().join(format!("vorce-config-test-{}", std::process::id()));
-        let primary = root.join(APP_CONFIG_DIR).join(CONFIG_FILE_NAME);
-        let legacy = root.join(LEGACY_APP_CONFIG_DIR).join(CONFIG_FILE_NAME);
-
-        if root.exists() {
-            fs::remove_dir_all(&root).unwrap();
-        }
-
-        fs::create_dir_all(legacy.parent().unwrap()).unwrap();
-        fs::write(&legacy, "{}").unwrap();
-        assert_eq!(
-            UserConfig::resolve_existing_config_path(Some(primary.clone()), Some(legacy.clone())),
-            Some(legacy.clone())
-        );
-
-        fs::create_dir_all(primary.parent().unwrap()).unwrap();
-        fs::write(&primary, "{}").unwrap();
-        assert_eq!(
-            UserConfig::resolve_existing_config_path(Some(primary.clone()), Some(legacy)),
-            Some(primary)
-        );
-
-        fs::remove_dir_all(root).unwrap();
     }
 }
