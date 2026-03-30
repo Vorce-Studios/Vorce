@@ -30,8 +30,3 @@ args = ["audit"]
 [tasks.doc]
 command = "cargo"
 args = ["doc", "--no-deps", "--workspace"]
-
-[tasks.code-atlas]
-description = "Generate the agent-focused code atlas and Mermaid views"
-command = "python"
-args = ["scripts/dev-tools/generate-code-atlas.py"]
