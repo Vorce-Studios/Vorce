@@ -91,6 +91,46 @@ pub fn perform_evaluation(
             // Transfer RenderOps using drain to avoid clones
             // Note: We need to access eval_result fields directly because evaluate returns a reference.
             // But since ModuleEvaluator is on app, we can just drain from its cached_result.
+            // Handle SourceCommands specifically for hardware outputs like Hue
+            for (part_id, cmd) in &app.module_evaluator.cached_result.source_commands {
+                if let vorce_core::module_eval::SourceCommand::HueOutput {
+                    brightness,
+                    hue,
+                    saturation,
+                    strobe,
+                    ids,
+                } = cmd
+                {
+                    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        app.hue_controller.update_from_command(
+                            ids.as_deref(),
+                            *brightness,
+                            *hue,
+                            *saturation,
+                            *strobe,
+                        );
+                    }))
+                    .map_err(|e| {
+                        let now = std::time::Instant::now();
+                        let log_key = format!("hue_output_panic_{}", part_id);
+                        let should_log =
+                            if let Some(last_log) = app.video_diagnostic_log_times.get(&log_key) {
+                                now.duration_since(*last_log).as_secs_f32() > 5.0
+                            } else {
+                                true
+                            };
+                        if should_log {
+                            tracing::error!(
+                                "Hue evaluation failed for node {:?}: {:?}",
+                                part_id,
+                                e
+                            );
+                            app.video_diagnostic_log_times.insert(log_key, now);
+                        }
+                    });
+                }
+            }
+
             let render_ops: Vec<_> = app
                 .module_evaluator
                 .cached_result
