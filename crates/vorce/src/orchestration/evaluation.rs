@@ -49,14 +49,23 @@ pub fn perform_evaluation(
 
             for part in &module_ref.parts {
                 if let vorce_core::module::ModulePartType::Source(source_type) = &part.part_type {
-                    let unsupported_name = match source_type {
-                        vorce_core::module::SourceType::NdiInput { .. } => Some("NDI Input"),
-                        vorce_core::module::SourceType::LiveInput { .. } => Some("Live Input"),
-                        vorce_core::module::SourceType::Shader { .. } => Some("Shader"),
+                    let mut unsupported_name = None;
+                    match source_type {
+                        vorce_core::module::SourceType::NdiInput { .. } => {
+                            unsupported_name = Some("NDI Input");
+                        }
+                        vorce_core::module::SourceType::LiveInput { .. } => {
+                            unsupported_name = Some("Live Input");
+                        }
+                        vorce_core::module::SourceType::Shader { .. } => {
+                            unsupported_name = Some("Shader");
+                        }
                         #[cfg(target_os = "windows")]
-                        vorce_core::module::SourceType::SpoutInput { .. } => Some("Spout Input"),
-                        _ => None,
-                    };
+                        vorce_core::module::SourceType::SpoutInput { .. } => {
+                            unsupported_name = Some("Spout Input");
+                        }
+                        _ => {}
+                    }
 
                     if let Some(name) = unsupported_name {
                         let now = std::time::Instant::now();
