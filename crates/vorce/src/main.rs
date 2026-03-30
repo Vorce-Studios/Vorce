@@ -65,12 +65,6 @@ impl ApplicationHandler for VorceApp {
                 }
             };
 
-            // Handle CLI no-splash override
-            let args = CliArgs::parse();
-            if args.no_splash {
-                app.ui_state.user_config.startup_animation_enabled = false;
-            }
-
             // Automation mode: load fixture if specified
             if self.is_automation {
                 if let Some(fixture_path) = &self.fixture {
