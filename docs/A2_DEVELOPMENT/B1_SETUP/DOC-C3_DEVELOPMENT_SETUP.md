@@ -7,11 +7,13 @@ This document provides guidelines for contributing to the Vorce project.
 ---
 
 ## Build Software, Docs, and Translations
+
 See the [Installation Guide](../../A4_USER/B1_MANUAL/DOC-C1_INSTALLATION.md).
 
 You will need to install markdown to build some of the documentation that comes with the software.
 
 ### Editing Translations
+
 You might need to update the files:
 
 ```bash
@@ -26,6 +28,7 @@ lrelease Vorce.pro
 ```
 
 ## Coding Style (Legacy C++/Qt)
+
 * indent with 2 spaces
 * opening curly braces on a new line
 * function and method names camelCase, with lowercase first letter
@@ -35,15 +38,18 @@ lrelease Vorce.pro
 * always add spaces between operators such as +, -, /, * casts, etc. (except pointers and references)
 
 ## Version Numbers
+
 We use Semantic Versioning 2.0.0. Given a version number MAJOR.MINOR.PATCH, increment the:
+
 * MAJOR version when you make incompatible API changes,
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
-See http://semver.org/
+See <http://semver.org/>
 
 We want the 0 series to be backward-compatible. That means that a project created with Vorce 0.1 should still work with Vorce 0.99, if we ever get to such a version number. When we will break this backward-compatibilty, we will start the 1 series and provide a migration script. This script might be ran from the command-line or on the Web. The other thing we need to be backward-compatible is the OSC interface. The rest of the software can change. This includes the names of the menu items and the appearance of the user interface. We will try to keep these consistent, though.
 
 ## Key Files
+
 * **HACKING**: (This file) What to know to contribute to the project.
 * **INSTALL**: Instructions to build and install the software.
 * **NEWS**: Release notes for each tag.
@@ -53,6 +59,7 @@ We want the 0 series to be backward-compatible. That means that a project create
 * **docs/informations/*.md**: Markdown files to generate the About dialog
 
 ## Code Management with Git
+
 * We develop in the `develop` branch. The `master` branch is only for the latest tag.
 * Create a branch for each new feature. Merge it to `develop`.
 * Create `release-x.y.z` branch for releases.
@@ -62,6 +69,7 @@ We want the 0 series to be backward-compatible. That means that a project create
 * In doubt, ask the release manager.
 
 ## How to Make a Release (Legacy)
+
 * If it's a new feature, increment minor. If it's bugfix, increment micro. If it's not backward-compatible, increment major.
 * Create a `release-x.y.z` branch
 * Verify the version number in all relevant files: `VERSION.txt`, `DMGVERSION.txt`, `Vorce.pro`, `docs/Doxyfile`, `NEWS`, `src/core/MM.cpp`
@@ -81,13 +89,15 @@ We want the 0 series to be backward-compatible. That means that a project create
 * Keep developing.
 
 ## XML File Version Number
+
 * update its minor number when you introduce new features.
 * update its major number when it's not backward-comptatible anymore with its previous versions
 * generally, we should follow the Vorce version, when new changes are introduced. (no need to increment it otherwise)
 * we will need to implement some fancy XML file version number checking in the future.
 
 ## Qt Resources System
+
 * The `Vorce.pro` file is where the packaging is done
 * The `Vorce.qrc` file is where we specify which resources are packaged with the app.
 * Images are set there. They are then available as a path-like alias such as `:/fullscreen`
-* See http://doc.qt.io/qt-5/resources.html
+* See <http://doc.qt.io/qt-5/resources.html>
