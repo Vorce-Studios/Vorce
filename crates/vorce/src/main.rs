@@ -43,6 +43,8 @@ struct VorceApp {
     fixture: Option<String>,
     exit_after_frames: Option<u64>,
     screenshot_dir: Option<String>,
+    initial_user_config: vorce_ui::config::UserConfig,
+    disable_startup_animation: bool,
 }
 
 impl ApplicationHandler for VorceApp {
@@ -56,12 +58,20 @@ impl ApplicationHandler for VorceApp {
                 InitializationConfig::default()
             };
 
-            let mut app = pollster::block_on(App::new(event_loop, config))
-                .expect("Failed to initialize application");
+            let mut app = match pollster::block_on(App::new(
+                event_loop,
+                config,
+                self.initial_user_config.clone(),
+            )) {
+                Ok(app) => app,
+                Err(err) => {
+                    error!("Failed to initialize application: {err:#}");
+                    event_loop.exit();
+                    return;
+                }
+            };
 
-            // Handle CLI no-splash override
-            let args = CliArgs::parse();
-            if args.no_splash {
+            if self.disable_startup_animation {
                 app.ui_state.user_config.startup_animation_enabled = false;
             }
 
@@ -391,7 +401,8 @@ impl App {
 
 fn main() -> Result<()> {
     let args = CliArgs::parse();
-    let initial_user_config = vorce_ui::config::UserConfig::load();
+    let (initial_user_config, initial_user_config_report) =
+        vorce_ui::config::UserConfig::load_with_report();
     let configured_log_level = match initial_user_config.log_level {
         vorce_ui::config::AppLogLevel::Info => tracing::Level::INFO,
         vorce_ui::config::AppLogLevel::Debug => tracing::Level::DEBUG,
@@ -425,11 +436,12 @@ fn main() -> Result<()> {
         .with(file_layer)
         .init();
 
+    initial_user_config_report.emit_logs();
     info!("Starting Vorce in {:?} mode...", args.mode);
 
     match args.mode {
-        Mode::Editor => run_editor()?,
-        Mode::Automation => run_automation(&args)?,
+        Mode::Editor => run_editor(initial_user_config.clone(), args.no_splash)?,
+        Mode::Automation => run_automation(&args, initial_user_config.clone())?,
         Mode::PlayerNdi => run_player_ndi(&args)?,
         Mode::PlayerDist => run_player_dist(&args)?,
         Mode::PlayerLegacy => run_player_legacy(&args)?,
@@ -439,7 +451,10 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn run_editor() -> Result<()> {
+fn run_editor(
+    initial_user_config: vorce_ui::config::UserConfig,
+    disable_startup_animation: bool,
+) -> Result<()> {
     info!("Starting Editor mode...");
     let event_loop = EventLoop::new()?;
     let mut app_handler = VorceApp {
@@ -448,12 +463,14 @@ fn run_editor() -> Result<()> {
         fixture: None,
         exit_after_frames: None,
         screenshot_dir: None,
+        initial_user_config,
+        disable_startup_animation,
     };
     event_loop.run_app(&mut app_handler)?;
     Ok(())
 }
 
-fn run_automation(args: &CliArgs) -> Result<()> {
+fn run_automation(args: &CliArgs, initial_user_config: vorce_ui::config::UserConfig) -> Result<()> {
     info!("Starting Automation mode...");
     let event_loop = EventLoop::new()?;
     let mut app_handler = VorceApp {
@@ -462,6 +479,8 @@ fn run_automation(args: &CliArgs) -> Result<()> {
         fixture: args.fixture.clone(),
         exit_after_frames: args.exit_after_frames,
         screenshot_dir: args.screenshot_dir.clone(),
+        initial_user_config,
+        disable_startup_animation: true,
     };
     event_loop.run_app(&mut app_handler)?;
     Ok(())

@@ -105,21 +105,6 @@ pub fn render_output_ui(
                     });
             });
 
-            ui.horizontal(|ui| {
-                ui.label("Width:");
-                ui.add(egui::DragValue::new(output_width).range(1..=7680));
-            });
-
-            ui.horizontal(|ui| {
-                ui.label("Height:");
-                ui.add(egui::DragValue::new(output_height).range(1..=4320));
-            });
-
-            ui.horizontal(|ui| {
-                ui.label("FPS:");
-                ui.add(egui::DragValue::new(output_fps).range(1.0..=240.0));
-            });
-
             ui.checkbox(hide_cursor, "🖱️ Hide Mouse Cursor");
 
             ui.separator();
@@ -129,18 +114,18 @@ pub fn render_output_ui(
                 ui.add(
                     egui::DragValue::new(output_width)
                         .suffix(" px")
-                        .range(0..=8192),
+                        .range(1..=8192),
                 );
                 ui.label("x");
                 ui.add(
                     egui::DragValue::new(output_height)
                         .suffix(" px")
-                        .range(0..=8192),
+                        .range(1..=8192),
                 );
             });
             ui.horizontal(|ui| {
                 ui.label("Target FPS:");
-                ui.add(egui::DragValue::new(output_fps).range(0.0..=240.0));
+                ui.add(egui::DragValue::new(output_fps).range(1.0..=240.0));
             });
 
             ui.separator();
