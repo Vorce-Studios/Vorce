@@ -3,6 +3,8 @@ name: "CICD-DevFlow: Job01 Validation"
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
