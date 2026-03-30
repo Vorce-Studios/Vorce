@@ -12,6 +12,48 @@ const APP_CONFIG_DIR: &str = "Vorce";
 const LEGACY_APP_CONFIG_DIR: &str = "MapFlow";
 const CONFIG_FILE_NAME: &str = "config.json";
 
+/// Diagnostics captured while loading and repairing the persisted user config.
+#[derive(Debug, Clone, Default)]
+pub struct UserConfigLoadReport {
+    /// Path that was used as the load source, if any.
+    pub source_path: Option<PathBuf>,
+    /// Whether the legacy MapFlow config path was used.
+    pub used_legacy_config_path: bool,
+    /// Whether defaults were used because no config existed or loading failed.
+    pub loaded_defaults: bool,
+    /// Non-fatal notes about the load process.
+    pub warnings: Vec<String>,
+    /// Recoveries or failures that should be visible in the log.
+    pub errors: Vec<String>,
+}
+
+impl UserConfigLoadReport {
+    /// Emit the collected diagnostics through tracing once logging is initialized.
+    pub fn emit_logs(&self) {
+        match &self.source_path {
+            Some(path) => {
+                if self.used_legacy_config_path {
+                    tracing::warn!("Loaded user config from legacy path {:?}", path);
+                } else {
+                    tracing::info!("Loaded user config from {:?}", path);
+                }
+            }
+            None if self.loaded_defaults => {
+                tracing::info!("No user config found. Using built-in defaults.");
+            }
+            None => {}
+        }
+
+        for warning in &self.warnings {
+            tracing::warn!("{warning}");
+        }
+
+        for error in &self.errors {
+            tracing::error!("{error}");
+        }
+    }
+}
+
 /// Sichtbarkeitseinstellungen für das Hauptlayout.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub struct LayoutVisibility {
@@ -39,6 +81,16 @@ impl Default for LayoutVisibility {
             show_media_browser: true,
             show_module_canvas: true,
         }
+    }
+}
+
+impl LayoutVisibility {
+    fn has_primary_workspace(self) -> bool {
+        self.show_module_canvas
+            || self.show_left_sidebar
+            || self.show_inspector
+            || self.show_timeline
+            || self.show_media_browser
     }
 }
 
