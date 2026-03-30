@@ -1,6 +1,5 @@
 # Pre-commit configuration for VjMapper
-# Hosted pre-commit.ci handles portable hooks, while pre-commit.ci lite
-# runs Rust hooks that need a full GitHub Actions environment.
+# Runs automatically via pre-commit.ci on every PR
 
 ci:
   autofix_commit_msg: "style: auto-fix by pre-commit.ci"
@@ -9,10 +8,8 @@ ci:
   autoupdate_commit_msg: "chore: pre-commit autoupdate"
   autoupdate_schedule: weekly
 
-  # Hosted pre-commit.ci should stay fast and portable.
-  # Rust hooks run in the dedicated pre-commit.ci lite workflow instead.
-  # Markdown linting stays disabled in hosted CI because legacy tables
-  # still trigger too many false positives.
+  # Skip Rust hooks in CI (no toolchain available)
+  # Skip markdownlint (too many false positives with tables)
   skip:
     - fmt
     - clippy
@@ -23,9 +20,7 @@ ci:
 
 repos:
   # ═══════════════════════════════════════════════════════════════
-  # RUST FORMATTING & LINTING
-  # `fmt` and `cargo-sort` auto-fix via pre-commit.ci lite.
-  # `clippy` remains manual because it is a validation gate, not a formatter.
+  # RUST FORMATTING & LINTING (local only)
   # ═══════════════════════════════════════════════════════════════
   - repo: https://github.com/doublify/pre-commit-rust
     rev: v1.0
@@ -33,6 +28,7 @@ repos:
       - id: fmt
         name: "Rust: cargo fmt"
         args: ['--all', '--']
+        stages: [manual]  # Run manually only
 
       - id: clippy
         name: "Rust: cargo clippy"
@@ -103,11 +99,12 @@ repos:
         exclude: ^(Cargo\.lock|.*\.patch|.*\.diff)$
 
   # ═══════════════════════════════════════════════════════════════
-  # CARGO.TOML SORTING
+  # CARGO.TOML SORTING (local only)
   # ═══════════════════════════════════════════════════════════════
   - repo: https://github.com/DevinR528/cargo-sort
     rev: v2.1.3
     hooks:
       - id: cargo-sort
         name: "Rust: sort Cargo.toml"
-        args: ['--grouped']
+        args: ['--workspace', '--grouped']
+        stages: [manual]  # Run manually only
