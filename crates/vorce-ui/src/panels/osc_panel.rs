@@ -17,7 +17,7 @@ pub fn show_osc_panel(
     egui::Window::new(app_ui.i18n.t("panel-osc-title"))
         .open(&mut open)
         .default_size([400.0, 500.0])
-        .frame(cyber_panel_frame(&ctx.style()))
+        .frame(cyber_panel_frame(&ctx.global_style()))
         .show(ctx, |ui| {
             render_panel_header(ui, &app_ui.i18n.t("panel-osc-title"), |_| {});
 
