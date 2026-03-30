@@ -10,6 +10,7 @@ pub(crate) use dedicated_block_allocator::DedicatedBlockAllocator;
 pub(crate) mod free_list_allocator;
 pub(crate) use free_list_allocator::FreeListAllocator;
 
+#[allow(dead_code)]
 #[derive(PartialEq, Copy, Clone, Debug)]
 #[repr(u8)]
 pub(crate) enum AllocationType {
