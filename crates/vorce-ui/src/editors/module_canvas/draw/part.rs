@@ -144,9 +144,11 @@ pub fn draw_part_with_delete(
         );
     }
 
-    if let vorce_core::module::ModulePartType::Source(vorce_core::module::SourceType::MediaFile {
-        ..
-    }) = &part.part_type
+    if let vorce_core::module::ModulePartType::Source(
+        vorce_core::module::SourceType::MediaFile { .. }
+        | vorce_core::module::SourceType::VideoUni { .. }
+        | vorce_core::module::SourceType::ImageUni { .. },
+    ) = &part.part_type
     {
         if ui.rect_contains_pointer(rect) {
             if let Some(dropped_path) = ui
@@ -295,9 +297,10 @@ pub fn draw_part_with_delete(
         );
     }
 
-    if let vorce_core::module::ModulePartType::Source(vorce_core::module::SourceType::MediaFile {
-        ..
-    }) = &part.part_type
+    if let vorce_core::module::ModulePartType::Source(
+        vorce_core::module::SourceType::MediaFile { .. }
+        | vorce_core::module::SourceType::VideoUni { .. },
+    ) = &part.part_type
     {
         if let Some(info) = canvas.player_info.get(&part.id) {
             let duration = info.duration.max(0.001);
