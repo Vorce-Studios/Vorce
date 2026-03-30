@@ -61,7 +61,7 @@ Vorce trennt strikt zwischen Logik-Update (fest 60Hz) und Render-Update (VSync).
 1. **Texture Preparation**: Upload frischer Frames in GPU-Texturen.
 2. **Effect Processing**: Abarbeitung der WGSL-Shader-Ketten pro Layer.
 3. **Compositing**: Finale Mischung aller Layer auf die Ziel-Outputs (Warping/Masking).
-4. **UI Overlay**: Egui-Rendering als letzter Pass über Output 0. 
+4. **UI Overlay**: Egui-Rendering als letzter Pass über Output 0.
 
 ---
 
