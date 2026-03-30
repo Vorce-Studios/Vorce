@@ -84,6 +84,7 @@ impl Default for LayoutVisibility {
 }
 
 impl LayoutVisibility {
+    #[allow(dead_code)]
     fn has_primary_workspace(self) -> bool {
         self.show_module_canvas
             || self.show_left_sidebar
