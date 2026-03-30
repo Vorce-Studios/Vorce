@@ -24,30 +24,37 @@ Das Projekt ist als Cargo Workspace organisiert, wobei jede Funktionalität in e
 ## Datenfluss & Pipeline
 
 ### 1. Layer & Mapping System (`Vorce-core`)
+
 Das visuelle Ergebnis entsteht durch die Kombination von:
-*   **Paints**: Die Quellen (Videos, Bilder, Shader, Live-Inputs).
-*   **Layers**: Container für Paints mit Transformation (Pos, Rot, Scale), Opacity und Blend-Modes.
-*   **Mappings**: Die Projektionsflächen (Meshes, Quads), auf die Layer projiziert werden.
-*   **Trigger**: Signale (Audio, MIDI, Random), die Parameter steuern via Node-Graph.
+
+* **Paints**: Die Quellen (Videos, Bilder, Shader, Live-Inputs).
+* **Layers**: Container für Paints mit Transformation (Pos, Rot, Scale), Opacity und Blend-Modes.
+* **Mappings**: Die Projektionsflächen (Meshes, Quads), auf die Layer projiziert werden.
+* **Trigger**: Signale (Audio, MIDI, Random), die Parameter steuern via Node-Graph.
 
 ### 2. Render Pipeline (`Vorce-render`)
+
 Die Rendering-Engine arbeitet in mehreren Pässen:
-1.  **Media Upload**: Dekodierte Video-Frames werden in GPU-Texturen geladen.
-2.  **Layer Composition**: Layer werden basierend auf Blend-Modes und Masken in einen Offscreen-Buffer gerendert.
-3.  **Effect Chain**: Post-Processing-Effekte (Blur, Color-Grade, Glitch) werden angewendet.
-4.  **Mapper / Warping**: Der fertige Composition-Buffer wird auf die 3D-Meshes (Mappings) texturiert.
-5.  **Output Processing**: Edge-Blending, Color-Calibration und Gamma-Korrektur werden final angewendet.
-6.  **Display**: Das Ergebnis wird im Projektor-Fenster (und Preview) angezeigt.
+
+1. **Media Upload**: Dekodierte Video-Frames werden in GPU-Texturen geladen.
+2. **Layer Composition**: Layer werden basierend auf Blend-Modes und Masken in einen Offscreen-Buffer gerendert.
+3. **Effect Chain**: Post-Processing-Effekte (Blur, Color-Grade, Glitch) werden angewendet.
+4. **Mapper / Warping**: Der fertige Composition-Buffer wird auf die 3D-Meshes (Mappings) texturiert.
+5. **Output Processing**: Edge-Blending, Color-Calibration und Gamma-Korrektur werden final angewendet.
+6. **Display**: Das Ergebnis wird im Projektor-Fenster (und Preview) angezeigt.
 
 ### 3. Modul-System & Node-Graph
+
 Die Logik ist Node-basiert (`module_canvas`).
-*   **Flow**: Trigger-Signale fließen durch Nodes -> Modulatoren -> Ziel-Parameter.
-*   **Evaluierung**: Das System evaluiert den Graphen jeden Frame, um Parameter-Updates zu berechnen.
+
+* **Flow**: Trigger-Signale fließen durch Nodes -> Modulatoren -> Ziel-Parameter.
+* **Evaluierung**: Das System evaluiert den Graphen jeden Frame, um Parameter-Updates zu berechnen.
 
 ---
 
 ## Audio-Integration
 
 Vorce nutzt `cpal` für Low-Level Audio I/O.
-*   **Analyse**: FFT (Fast Fourier Transform) zur Frequenzanalyse.
-*   **Reactivity**: Audio-Signale (Bass, Mids, Highs) können direkt Parameter in der Render-Pipeline steuern.
+
+* **Analyse**: FFT (Fast Fourier Transform) zur Frequenzanalyse.
+* **Reactivity**: Audio-Signale (Bass, Mids, Highs) können direkt Parameter in der Render-Pipeline steuern.

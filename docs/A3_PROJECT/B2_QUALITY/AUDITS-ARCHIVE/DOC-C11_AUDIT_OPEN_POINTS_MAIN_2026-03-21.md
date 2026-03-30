@@ -3,6 +3,7 @@
 Stand: 2026-03-21
 
 Kontext:
+
 - Geprueft wurden die Audit-/Analyse-Dokumente unter `docs/A3_PROJECT/B2_QUALITY`.
 - Der Abgleich erfolgte gegen den aktuellen lokalen Stand von `main`.
 - Parallel laufen Merges aus Feature-Branches. Dieses Dokument ist daher ein Snapshot und kein eingefrorener Endstand.
@@ -10,12 +11,14 @@ Kontext:
 ## Kurzfazit
 
 Ein grosser Teil der frueheren Audit-Punkte ist inzwischen erledigt oder zumindest abgesichert:
+
 - CI/CD ist deutlich weiter als im alten Audit.
 - die Doku-Migration der "loose files" ist weitgehend abgeschlossen.
 - die groessten P0-Basisprobleme aus dem Module-Canvas-Audit wurden bereits adressiert.
 - Visual-Automation und Screenshot-Capture existieren inzwischen real im Code.
 
 Offen sind vor allem noch:
+
 - Video-/Interop-Pfade ausserhalb des heute genutzten Standard-Renderwegs
 - mehrere end-to-end Luecken im Module-Canvas/Renderpfad
 - Doku-/Roadmap-Drift bei NDI, HAP und "Feature fertig" vs. "Feature existiert nur teilweise"
@@ -65,10 +68,12 @@ Offen sind vor allem noch:
 ### 1. ERLEDIGT: Legacy- und Parallelpfade fuer Video sind weiter unvollstaendig
 
 Quelle:
+
 - `DOC-C5_CODE_AUDIT_REPORT`
 - `DOC-C10_MODULE_NODE_SYSTEM_AUDIT_2026-03-18`
 
 Status:
+
 - Der heute aktive App-Pfad nutzt fuer Medien `crates/Vorce/src/orchestration/media.rs` und laedt Frames direkt in den `TexturePool`.
 - Damit ist der alte Audit-Hinweis zum Blackscreen nicht mehr 1:1 der produktive Hauptpfad.
 - Trotzdem bleiben parallele oder alte Video-Pfade offen:
@@ -76,17 +81,20 @@ Status:
   - `crates/Vorce-media/src/pipeline.rs`: `FramePipeline` wurde explizit als obsolete (`#[deprecated]`) markiert.
 
 Bewertung:
+
 - Kein akuter Beleg dafuer, dass `main` deswegen im Standardpfad schwarz bleibt.
 - Aber die alte Architekturgeschichte ist nicht sauber abgeschlossen, sondern teils umgangen.
 
 ### 2. NDI, SRT und HAP sind nicht end-to-end produktionsreif
 
 Quelle:
+
 - `DOC-C5_CODE_AUDIT_REPORT`
 - `DOC-C7_PROJECT_PLANNING_AUDIT`
 - `DOC-C10_MODULE_NODE_SYSTEM_AUDIT_2026-03-18`
 
 Status:
+
 - `crates/Vorce-io/src/stream/srt.rs` ist weiterhin explizit als Stub markiert.
 - `crates/Vorce-io/src/ndi/mod.rs` hat kein altes `TODO: Implement actual frame sending` mehr, enthaelt aber weiterhin den Hinweis, dass die Sender-Implementierung ein Placeholder/zu verifizierender Pfad ist.
 - `crates/Vorce-ui/src/editors/module_canvas/inspector/source.rs` zeigt weiterhin explizite Hinweise, dass bestimmte Source-Typen nicht voll an die Runtime angeschlossen sind:
@@ -99,16 +107,19 @@ Status:
   - `Vorce` aktiviert `ndi` nicht standardmaessig
 
 Bewertung:
+
 - "Standardmaessig deaktivieren, wenn nicht fertig" ist fuer NDI/SRT weitgehend eingehalten.
 - "Feature existiert im Code" ist aber weiterhin nicht dasselbe wie "produktive end-to-end Runtime vorhanden".
 
 ### 3. Oeffentliche Doku und Planungsstand ueberzeichnen Feature-Reife
 
 Quelle:
+
 - `DOC-C6_DOCUMENTATION_AUDIT`
 - `DOC-C7_PROJECT_PLANNING_AUDIT`
 
 Status:
+
 - Die prominentesten User-/Tech-Dokumente wurden inzwischen auf den tatsaechlichen Reifegrad heruntergestuft, insbesondere:
   - `docs/A4_USER/B1_MANUAL/DOC-C5_FEATURES.md`
   - `docs/A4_USER/B1_MANUAL/DOC-C4_UI_OVERVIEW.md`
@@ -117,15 +128,18 @@ Status:
 - Planungsdokumente verweisen auf GitHub Project Issues als "source of truth". Die alte `docs/project/roadmap/README.md` wurde entfernt.
 
 Bewertung:
+
 - Das eigentliche Doku-Umraeumen ist weitgehend geschafft.
 - Der sichtbarste User-/Tech-Doku-Drift ist reduziert, aber die konsistente Bereinigung ueber Planung/Roadmap ist noch offen.
 
 ### 4. Module-Canvas und Renderpfad sind weiter nicht fuer alle sichtbaren Features end-to-end geschlossen
 
 Quelle:
+
 - `DOC-C10_MODULE_NODE_SYSTEM_AUDIT_2026-03-18`
 
 Status:
+
 - Masken:
   - `crates/Vorce/src/orchestration/evaluation.rs` erzeugt weiter `masks_unsupported`.
   - `crates/Vorce-ui/src/editors/module_canvas/inspector/capabilities.rs` markiert Masken explizit als nicht voll unterstuetzt.
@@ -139,16 +153,19 @@ Status:
   - `crates/Vorce-ui/src/editors/module_canvas/inspector/output.rs` enthaelt fuer Hue-Pairing/Areas weiterhin TODOs.
 
 Bewertung:
+
 - Die groben P0-Architekturprobleme wurden reduziert.
 - Die noch sichtbaren Funktionsflaechen sind aber nicht alle ehrlich durchgeroutet.
 
 ### 5. QA-/Visual-Capture-Faehigkeit ist vorhanden, aber nicht voll "always-on"
 
 Quelle:
+
 - `DOC-C9_VISUAL_CAPTURE_READINESS`
 - `DOC-C10_MODULE_NODE_SYSTEM_AUDIT_2026-03-18`
 
 Status:
+
 - Positiv:
   - `Vorce_visual_harness` existiert.
   - Automation-Mode mit `--exit-after-frames` und `--screenshot-dir` existiert.
@@ -159,16 +176,19 @@ Status:
   - im Module-Canvas-Audit ist der finale Release-Smoke-Test weiterhin explizit offen genannt.
 
 Bewertung:
+
 - Der Unterbau ist jetzt real.
 - Die harte, dauerhafte Release-Absicherung ueber diesen Pfad ist noch nicht voll geschlossen.
 
 ### 6. Performance-Verbesserungen aus dem alten Analysebericht sind nur teilweise eingelost
 
 Quelle:
+
 - `DOC-C8_PERFORMANCE_ANALYSIS_BOLT`
 - `DOC-C3_CODE_ANALYSIS_REPORT_2025-12-29`
 
 Status:
+
 - Erledigt:
   - `visible_layers()` in `crates/Vorce-core/src/layer/manager.rs` liefert heute einen Iterator statt eines neu allokierten `Vec`.
 - Weiter offen:
@@ -179,6 +199,7 @@ Status:
     - `crates/Vorce-render/src/mesh_renderer.rs`
 
 Bewertung:
+
 - Es gab Verbesserungen.
 - Die eigentliche Render-Hot-Path-Optimierung aus dem Report ist aber nicht als abgeschlossen erkennbar.
 
@@ -193,6 +214,7 @@ Dieses Dokument ist ein Index. Es enthaelt selbst keine neuen offenen Punkte.
 Der Report ist stark branch-/PR-bezogen (`feature/node-menu-overhaul`, PR #131/#133/#129).
 Die dortigen konkreten PR-Hinweise werden nicht als aktuelle `main`-Restpunkte uebernommen.
 Uebernommen wurden nur die allgemeinen, weiterhin sichtbaren Technikthemen:
+
 - Refactoring-/Komplexitaetsdruck
 - Performance-Profiling / Render-Hot-Path
 

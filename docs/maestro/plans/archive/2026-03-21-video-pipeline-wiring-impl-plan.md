@@ -7,6 +7,7 @@ date: 2026-03-21
 # Phasenplan: Video Pipeline Wiring (FramePipeline)
 
 ## Plan-Überblick
+
 Dieser Plan integriert die bereits existierende, aber bisher nur in Tests verwendete `FramePipeline` (aus `Vorce-media`) in die Haupt-Rendering-Schleife der Anwendung.
 
 - **Gesamtphasen**: 2
@@ -22,6 +23,7 @@ Dieser Plan integriert die bereits existierende, aber bisher nur in Tests verwen
 ## Phasen-Details
 
 ### Phase 1: FramePipeline Integration
+
 - **Ziel**: `create_player_handle` in `media.rs` soll eine `FramePipeline` starten (decode_thread + upload_thread) statt einer einfachen `std::thread::spawn` Schleife.
 - **Agent**: `coder`
 - **Dateien ändern**:
@@ -32,6 +34,7 @@ Dieser Plan integriert die bereits existierende, aber bisher nur in Tests verwen
 - **Validierung**: `cargo check -p Vorce`
 
 ### Phase 2: Quality & Review
+
 - **Ziel**: Sicherstellen, dass keine Deadlocks oder verwaisten Threads entstehen.
 - **Agent**: `code_reviewer`
 - **Dateien prüfen**:
