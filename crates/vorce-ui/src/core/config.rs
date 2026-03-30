@@ -9,7 +9,50 @@ use std::fs;
 use std::path::PathBuf;
 
 const APP_CONFIG_DIR: &str = "Vorce";
+const LEGACY_APP_CONFIG_DIR: &str = "MapFlow";
 const CONFIG_FILE_NAME: &str = "config.json";
+
+/// Diagnostics captured while loading and repairing the persisted user config.
+#[derive(Debug, Clone, Default)]
+pub struct UserConfigLoadReport {
+    /// Path that was used as the load source, if any.
+    pub source_path: Option<PathBuf>,
+    /// Whether the legacy MapFlow config path was used.
+    pub used_legacy_config_path: bool,
+    /// Whether defaults were used because no config existed or loading failed.
+    pub loaded_defaults: bool,
+    /// Non-fatal notes about the load process.
+    pub warnings: Vec<String>,
+    /// Recoveries or failures that should be visible in the log.
+    pub errors: Vec<String>,
+}
+
+impl UserConfigLoadReport {
+    /// Emit the collected diagnostics through tracing once logging is initialized.
+    pub fn emit_logs(&self) {
+        match &self.source_path {
+            Some(path) => {
+                if self.used_legacy_config_path {
+                    tracing::warn!("Loaded user config from legacy path {:?}", path);
+                } else {
+                    tracing::info!("Loaded user config from {:?}", path);
+                }
+            }
+            None if self.loaded_defaults => {
+                tracing::info!("No user config found. Using built-in defaults.");
+            }
+            None => {}
+        }
+
+        for warning in &self.warnings {
+            tracing::warn!("{warning}");
+        }
+
+        for error in &self.errors {
+            tracing::error!("{error}");
+        }
+    }
+}
 
 /// Sichtbarkeitseinstellungen für das Hauptlayout.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
@@ -24,7 +67,7 @@ pub struct LayoutVisibility {
     pub show_timeline: bool,
     #[serde(default = "default_true")]
     pub show_media_browser: bool,
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub show_module_canvas: bool,
 }
 
@@ -36,8 +79,18 @@ impl Default for LayoutVisibility {
             show_inspector: true,
             show_timeline: true,
             show_media_browser: true,
-            show_module_canvas: false,
+            show_module_canvas: true,
         }
+    }
+}
+
+impl LayoutVisibility {
+    fn has_primary_workspace(self) -> bool {
+        self.show_module_canvas
+            || self.show_left_sidebar
+            || self.show_inspector
+            || self.show_timeline
+            || self.show_media_browser
     }
 }
 
@@ -228,6 +281,7 @@ impl fmt::Display for AnimationProfile {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MidiAssignmentTarget {
     /// Assigned to Vorce internal control
+    #[serde(alias = "MapFlow")]
     Vorce(String), // Control target ID
     /// Assigned to Streamer.bot function
     StreamerBot(String), // Function name
@@ -434,7 +488,7 @@ fn default_ui_scale() -> f32 {
 }
 
 fn default_startup_animation_path() -> String {
-    "resources/app_videos/Vorce-Mechanical_Cube_Logo_Splash_Animation.webm".to_string()
+    "resources/app_videos/MF-Mechanical_Cube_Logo_Splash_Animation.webm".to_string()
 }
 
 fn default_sidebar_width() -> f32 {
@@ -482,7 +536,7 @@ impl Default for UserConfig {
             show_inspector: true,
             show_timeline: true,
             show_media_browser: true,
-            show_module_canvas: false,
+            show_module_canvas: true,
             show_controller_overlay: false,
             web_api_enabled: false,
             web_api_port: 8080,
@@ -494,7 +548,7 @@ impl Default for UserConfig {
             ui_scale: 1.0,
             log_level: AppLogLevel::Info,
             node_animations_enabled: true,
-            startup_animation_enabled: false,
+            startup_animation_enabled: true,
             startup_animation_path: default_startup_animation_path(),
             reduce_motion_enabled: false,
             silent_startup_enabled: false,
@@ -512,6 +566,10 @@ impl UserConfig {
         Self::config_path_for_app(APP_CONFIG_DIR)
     }
 
+    fn legacy_config_path() -> Option<PathBuf> {
+        Self::config_path_for_app(LEGACY_APP_CONFIG_DIR)
+    }
+
     fn config_path_for_app(app_name: &str) -> Option<PathBuf> {
         dirs::config_dir().map(|mut p| {
             p.push(app_name);
@@ -520,28 +578,176 @@ impl UserConfig {
         })
     }
 
-    fn resolve_existing_config_path(primary: Option<PathBuf>) -> Option<PathBuf> {
-        primary.as_ref().filter(|path| path.exists()).cloned()
+    fn resolve_existing_config_path(
+        primary: Option<PathBuf>,
+        legacy: Option<PathBuf>,
+    ) -> Option<PathBuf> {
+        if let Some(path) = primary.as_ref().filter(|path| path.exists()) {
+            return Some(path.clone());
+        }
+
+        legacy.filter(|path| path.exists()).or(primary)
     }
 
-    fn existing_config_path() -> Option<PathBuf> {
-        Self::resolve_existing_config_path(Self::config_path())
+    fn sync_legacy_visibility_fields_from_active_layout(&mut self) {
+        let visibility = self.active_layout().map(|layout| layout.visibility);
+        if let Some(visibility) = visibility {
+            self.show_left_sidebar = visibility.show_left_sidebar;
+            self.show_inspector = visibility.show_inspector;
+            self.show_timeline = visibility.show_timeline;
+            self.show_media_browser = visibility.show_media_browser;
+            self.show_module_canvas = visibility.show_module_canvas;
+        }
+    }
+
+    fn repair_for_startup(&mut self, report: &mut UserConfigLoadReport) -> bool {
+        let mut repaired = false;
+
+        if self.layouts.is_empty() {
+            self.layouts = default_layout_profiles();
+            report.errors.push(
+                "User config contained no layout profiles. Restored the default layout."
+                    .to_string(),
+            );
+            repaired = true;
+        }
+
+        if !self.layouts.iter().any(|l| l.id == self.active_layout_id) {
+            let previous = self.active_layout_id.clone();
+            self.active_layout_id = self
+                .layouts
+                .first()
+                .map(|l| l.id.clone())
+                .unwrap_or_else(default_active_layout_id);
+            report.errors.push(format!(
+                "User config referenced missing active layout '{previous}'. Switched to '{}'.",
+                self.active_layout_id
+            ));
+            repaired = true;
+        }
+
+        if let Some(layout) = self.active_layout_mut() {
+            if !layout.visibility.has_primary_workspace() {
+                layout.visibility.show_toolbar = true;
+                layout.visibility.show_left_sidebar = true;
+                layout.visibility.show_module_canvas = true;
+                report.errors.push(format!(
+                    "Recovered unusable startup layout '{}': all primary work areas were hidden.",
+                    layout.name
+                ));
+                repaired = true;
+            }
+        }
+
+        let fallback_visibility = LayoutVisibility {
+            show_toolbar: true,
+            show_left_sidebar: self.show_left_sidebar,
+            show_inspector: self.show_inspector,
+            show_timeline: self.show_timeline,
+            show_media_browser: self.show_media_browser,
+            show_module_canvas: self.show_module_canvas,
+        };
+        if !fallback_visibility.has_primary_workspace() {
+            self.show_left_sidebar = true;
+            self.show_module_canvas = true;
+            report.errors.push(
+                "Recovered unusable fallback visibility state: all primary work areas were hidden."
+                    .to_string(),
+            );
+            repaired = true;
+        }
+
+        let before = (
+            self.show_left_sidebar,
+            self.show_inspector,
+            self.show_timeline,
+            self.show_media_browser,
+            self.show_module_canvas,
+        );
+        self.sync_legacy_visibility_fields_from_active_layout();
+        let after = (
+            self.show_left_sidebar,
+            self.show_inspector,
+            self.show_timeline,
+            self.show_media_browser,
+            self.show_module_canvas,
+        );
+        if before != after {
+            report.warnings.push(
+                "Synchronized legacy visibility flags with the active layout profile.".to_string(),
+            );
+            repaired = true;
+        }
+
+        repaired
+    }
+
+    /// Load configuration from disk with diagnostics about recovery steps and failures.
+    pub fn load_with_report() -> (Self, UserConfigLoadReport) {
+        let primary = Self::config_path();
+        let legacy = Self::legacy_config_path();
+        let selected_path = Self::resolve_existing_config_path(primary.clone(), legacy.clone());
+
+        let mut report = UserConfigLoadReport {
+            source_path: selected_path.clone(),
+            used_legacy_config_path: matches!(
+                (&selected_path, &legacy),
+                (Some(selected), Some(legacy_path)) if selected == legacy_path
+            ),
+            ..Default::default()
+        };
+
+        let mut loaded = match selected_path.as_ref() {
+            Some(path) if path.exists() => match fs::read_to_string(path) {
+                Ok(content) => match serde_json::from_str(&content) {
+                    Ok(config) => config,
+                    Err(err) => {
+                        report.loaded_defaults = true;
+                        report.errors.push(format!(
+                            "Failed to parse user config {:?}: {}. Falling back to defaults.",
+                            path, err
+                        ));
+                        Self::default()
+                    }
+                },
+                Err(err) => {
+                    report.loaded_defaults = true;
+                    report.errors.push(format!(
+                        "Failed to read user config {:?}: {}. Falling back to defaults.",
+                        path, err
+                    ));
+                    Self::default()
+                }
+            },
+            _ => {
+                report.loaded_defaults = true;
+                Self::default()
+            }
+        };
+
+        if report.used_legacy_config_path {
+            report.warnings.push(
+                "Using legacy MapFlow config path. Saving from the app will migrate it to Vorce."
+                    .to_string(),
+            );
+        }
+
+        if loaded.repair_for_startup(&mut report) {
+            if let Err(err) = loaded.save() {
+                report.errors.push(format!(
+                    "Failed to save repaired user config to the Vorce config path: {}",
+                    err
+                ));
+            }
+        }
+
+        (loaded, report)
     }
 
     /// Load configuration from disk
     pub fn load() -> Self {
-        let mut loaded: Self = Self::existing_config_path()
-            .and_then(|path| {
-                if path.exists() {
-                    fs::read_to_string(&path).ok()
-                } else {
-                    None
-                }
-            })
-            .and_then(|content| serde_json::from_str(&content).ok())
-            .unwrap_or_default();
-
-        loaded.ensure_layout_profiles();
+        let (loaded, report) = Self::load_with_report();
+        report.emit_logs();
         loaded
     }
 
@@ -722,7 +928,7 @@ mod tests {
             show_inspector: true,
             show_timeline: true,
             show_media_browser: true,
-            show_module_canvas: false,
+            show_module_canvas: true,
             show_controller_overlay: false,
             web_api_enabled: false,
             web_api_port: 8080,
@@ -734,7 +940,7 @@ mod tests {
             ui_scale: 1.2,
             log_level: AppLogLevel::Info,
             node_animations_enabled: true,
-            startup_animation_enabled: false,
+            startup_animation_enabled: true,
             startup_animation_path: default_startup_animation_path(),
             reduce_motion_enabled: false,
             silent_startup_enabled: false,
@@ -780,5 +986,87 @@ mod tests {
         assert!(config.set_active_layout("live"));
         assert_eq!(config.active_layout_id, "live");
         assert!(!config.set_active_layout("does-not-exist"));
+    }
+
+    #[test]
+    fn test_repair_for_startup_recovers_hidden_active_layout() {
+        let mut config = UserConfig::default();
+        if let Some(layout) = config.active_layout_mut() {
+            layout.visibility.show_toolbar = false;
+            layout.visibility.show_left_sidebar = false;
+            layout.visibility.show_inspector = false;
+            layout.visibility.show_timeline = false;
+            layout.visibility.show_media_browser = false;
+            layout.visibility.show_module_canvas = false;
+        }
+        config.show_left_sidebar = false;
+        config.show_inspector = false;
+        config.show_timeline = false;
+        config.show_media_browser = false;
+        config.show_module_canvas = false;
+
+        let mut report = UserConfigLoadReport::default();
+        let repaired = config.repair_for_startup(&mut report);
+
+        assert!(repaired);
+        assert!(config.active_layout().unwrap().visibility.show_left_sidebar);
+        assert!(
+            config
+                .active_layout()
+                .unwrap()
+                .visibility
+                .show_module_canvas
+        );
+        assert!(config.show_left_sidebar);
+        assert!(config.show_module_canvas);
+        assert!(report
+            .errors
+            .iter()
+            .any(|entry| entry.contains("Recovered unusable startup layout")));
+    }
+
+    #[test]
+    fn test_repair_for_startup_restores_missing_active_layout() {
+        let mut config = UserConfig {
+            active_layout_id: "missing".to_string(),
+            ..UserConfig::default()
+        };
+
+        let mut report = UserConfigLoadReport::default();
+        let repaired = config.repair_for_startup(&mut report);
+
+        assert!(repaired);
+        assert_eq!(config.active_layout_id, "default");
+        assert!(report
+            .errors
+            .iter()
+            .any(|entry| entry.contains("missing active layout")));
+    }
+
+    #[test]
+    fn test_existing_config_path_prefers_vorce_and_falls_back_to_mapflow() {
+        let root = std::env::temp_dir().join(format!("vorce-config-test-{}", std::process::id()));
+        let primary = root.join(APP_CONFIG_DIR).join(CONFIG_FILE_NAME);
+        let legacy = root.join(LEGACY_APP_CONFIG_DIR).join(CONFIG_FILE_NAME);
+
+        if root.exists() {
+            fs::remove_dir_all(&root).unwrap();
+        }
+
+        fs::create_dir_all(legacy.parent().unwrap()).unwrap();
+        fs::write(&legacy, "{}").unwrap();
+        assert_eq!(
+            UserConfig::resolve_existing_config_path(Some(primary.clone()), Some(legacy.clone())),
+            Some(legacy.clone())
+        );
+
+        fs::create_dir_all(primary.parent().unwrap()).unwrap();
+        fs::write(&primary, "{}").unwrap();
+        assert_eq!(
+            UserConfig::resolve_existing_config_path(Some(primary.clone()), Some(legacy)),
+            Some(primary)
+        );
+
+        fs::remove_dir_all(root).unwrap();
     }
 }

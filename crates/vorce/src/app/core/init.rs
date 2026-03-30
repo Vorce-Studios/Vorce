@@ -25,17 +25,15 @@ use vorce_render::{
     ColorCalibrationRenderer, Compositor, EdgeBlendRenderer, EffectChainRenderer, MeshBufferCache,
     MeshRenderer, OscillatorRenderer, QuadRenderer, TexturePool, WgpuBackend,
 };
-use vorce_ui::AppUI;
+use vorce_ui::{config::UserConfig, AppUI};
 
 impl App {
     /// Creates a new `App`.
     pub async fn new(
         elwt: &winit::event_loop::ActiveEventLoop,
         config: InitializationConfig,
+        saved_config: UserConfig,
     ) -> Result<Self> {
-        // Load user config early to get preferences
-        let saved_config = vorce_ui::config::UserConfig::load();
-
         let backend = WgpuBackend::new(saved_config.preferred_gpu.as_deref()).await?;
 
         // Version marker to confirm correct build is running
@@ -124,7 +122,7 @@ impl App {
             ),
         ];
 
-        let mut ui_state = AppUI::default();
+        let mut ui_state = AppUI::from_user_config(saved_config.clone());
         Self::init_ui_assets(&mut ui_state);
 
         // Initialize state, trying to load autosave first unless skipped
