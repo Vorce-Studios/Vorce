@@ -66,6 +66,19 @@ impl ModuleEvaluator {
                         invert,
                     );
                 }
+
+                if !output_config.frequency_bands
+                    && !output_config.volume_outputs
+                    && !output_config.beat_output
+                    && !output_config.bpm_output
+                {
+                    // Fallback to beat output
+                    push_val_internal(
+                        if audio_data.beat_detected { 1.0 } else { 0.0 },
+                        output,
+                        false,
+                    );
+                }
             }
             TriggerType::Beat => push_val_internal(
                 if audio_data.beat_detected { 1.0 } else { 0.0 },

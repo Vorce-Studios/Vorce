@@ -27,7 +27,8 @@ pub fn show(
                 for part_id in &canvas.selected_parts {
                     if let Some(part) = module.parts.iter().find(|p| p.id == *part_id) {
                         if let vorce_core::module::ModulePartType::Source(
-                            vorce_core::module::SourceType::MediaFile { .. },
+                            vorce_core::module::SourceType::MediaFile { .. }
+                            | vorce_core::module::SourceType::VideoUni { .. },
                         ) = &part.part_type
                         {
                             let is_playing = canvas
