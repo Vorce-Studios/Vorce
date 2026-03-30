@@ -349,14 +349,19 @@ pub fn render_trigger_ui(
                 let next_pulse_ms = cycle_ms.saturating_sub(phase_ms) % cycle_ms;
 
                 ui.add_space(6.0);
-                ui.label("Fixed timer cadence");
+                ui.separator();
+                ui.label("⏱️ Fixed Timer Cadence");
                 ui.add(
                     egui::ProgressBar::new(progress)
                         .desired_width(ui.available_width())
                         .text(format!("cycle {} ms", cycle_ms)),
                 );
-                ui.label(format!("Next pulse in {} ms", next_pulse_ms));
-                ui.label(format!("Offset {} ms", *offset_ms));
+                ui.horizontal(|ui| {
+                    ui.label(format!("Next pulse: {} ms", next_pulse_ms));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.label(format!("Offset: {} ms", *offset_ms));
+                    });
+                });
             });
         }
         TriggerType::Midi {
