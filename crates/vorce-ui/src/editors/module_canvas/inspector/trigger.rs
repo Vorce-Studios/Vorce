@@ -12,6 +12,16 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
         return;
     }
 
+    // Skip general mapping UI if it is a dedicated Trigger generator (except if it specifically requested inputs, but
+    // usually generators don't have trigger mapping).
+    // The issue says "Midi and AudioFFT show only suitable functions in the Inspector".
+    if matches!(
+        part.part_type,
+        vorce_core::module::ModulePartType::Trigger(_)
+    ) {
+        return;
+    }
+
     ui.add_space(5.0);
     egui::CollapsingHeader::new("\u{26A1} Trigger & Automation")
         .default_open(false)
@@ -259,6 +269,17 @@ pub fn render_trigger_ui(
         } => {
             ui.label("\u{1F50A} Audio FFT");
             ui.label("Outputs 9 frequency bands, plus volume and beat.");
+
+            ui.separator();
+            super::render_trigger_preview(canvas, ui, part_id, |ui, live_value, is_live| {
+                if is_live {
+                    ui.label(format!("Active Status: {:.2}", live_value));
+                } else {
+                    ui.label("Waiting for audio...");
+                }
+            });
+            ui.separator();
+
             ui.add(egui::Slider::new(threshold, 0.0..=1.0).text("Threshold"));
 
             ui.separator();
@@ -362,9 +383,21 @@ pub fn render_trigger_ui(
         TriggerType::Midi {
             channel,
             note,
-            device: _,
+            device,
         } => {
             ui.label("\u{1F3B9} MIDI Trigger");
+
+            ui.separator();
+            super::render_trigger_preview(canvas, ui, part_id, |ui, live_value, is_live| {
+                if is_live && live_value > 0.0 {
+                    ui.label(format!("Connected & Receiving: {:.2}", live_value));
+                } else if is_live {
+                    ui.label("Connected (No signal)");
+                } else {
+                    ui.label("Waiting for MIDI connection...");
+                }
+            });
+            ui.separator();
 
             // Available MIDI ports dropdown
             ui.horizontal(|ui| {
@@ -375,11 +408,18 @@ pub fn render_trigger_ui(
                         if ports.is_empty() {
                             crate::widgets::custom::render_info_label(ui, "No MIDI devices");
                         } else {
+                            let selected_text = if device.is_empty() {
+                                ports.first().cloned().unwrap_or_default()
+                            } else {
+                                device.clone()
+                            };
                             egui::ComboBox::from_id_salt("midi_device")
-                                .selected_text(ports.first().cloned().unwrap_or_default())
+                                .selected_text(selected_text)
                                 .show_ui(ui, |ui| {
                                     for port in &ports {
-                                        let _ = ui.selectable_label(false, port);
+                                        if ui.selectable_label(*device == *port, port).clicked() {
+                                            *device = port.clone();
+                                        }
                                     }
                                 });
                         }
@@ -459,7 +499,10 @@ pub fn render_trigger_ui(
         }
     }
 
-    if !matches!(trigger, TriggerType::Fixed { .. }) {
+    if !matches!(
+        trigger,
+        TriggerType::Fixed { .. } | TriggerType::AudioFFT { .. } | TriggerType::Midi { .. }
+    ) {
         ui.separator();
         super::render_trigger_preview(canvas, ui, part_id, |_, _, _| {});
     }
