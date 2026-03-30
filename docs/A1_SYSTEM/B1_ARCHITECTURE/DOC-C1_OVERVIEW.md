@@ -46,7 +46,7 @@ graph TD
 
 ## 2. Globaler Frame-Loop
 
-Vorce trennt strikt zwischen Logik-Update (fest 60Hz) und Render-Update (VSync).
+Vorce trennt strikt zwischen Logik-Update (fest 60Hz) und Render-Update (VSync). 
 
 ### Phase A: Logic Update (`logic.rs`)
 
