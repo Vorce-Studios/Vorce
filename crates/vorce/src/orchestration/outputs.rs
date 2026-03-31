@@ -26,10 +26,19 @@ pub fn sync_output_windows(
                     name,
                     output_width,
                     output_height,
+                    target_screen,
+                    hide_cursor,
                     ..
                 }) => {
                     active_window_ids.insert(*id);
-                    projector_configs.push((*id, name.clone(), *output_width, *output_height));
+                    projector_configs.push((
+                        *id,
+                        name.clone(),
+                        *output_width,
+                        *output_height,
+                        *target_screen,
+                        *hide_cursor,
+                    ));
                 }
                 vorce_core::module::ModulePartType::Output(output_type) => {
                     let unsupported_name = match output_type {
@@ -63,7 +72,7 @@ pub fn sync_output_windows(
         }
     }
 
-    for (id, name, output_width, output_height) in projector_configs {
+    for (id, name, output_width, output_height, target_screen, hide_cursor) in projector_configs {
         let mut config = if let Some(existing) = app.state.output_manager.get_output(id) {
             existing.clone()
         } else {
@@ -79,6 +88,8 @@ pub fn sync_output_windows(
         if output_width > 0 && output_height > 0 {
             config.resolution = (output_width, output_height);
         }
+        config.target_screen = target_screen;
+        config.hide_cursor = hide_cursor;
 
         app.state.output_manager_mut().upsert_output(config);
     }
