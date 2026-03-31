@@ -8,6 +8,7 @@
 </div>
 
 # Egui Node Graph Editor
+>
 > There you have it! Now go build your next awesome node graph thing in Rust 🦀
 
 ![Showcase image](showcase.png)
@@ -20,6 +21,7 @@ This library is a fork of [egui_node_editor](https://gitlab.com/cyloncore/egui_n
 made to compile with more recent version of egui. Development occurs in the `dev/1` branch.
 
 ## Features and goals
+
 This crate is meant to be a solid base for anyone wanting to expose a node graph
 interface to their users. Its main design goal is to be completely agnostic to
 the semantics of the graph, be it game logic, audio production, dialog trees,
@@ -31,6 +33,7 @@ the additional functionality is provided by the user by means of custom user
 types implementing several traits.
 
 ## Usage
+
 To see a node graph in action, simply clone this repository and launch the
 example using `cargo run`. This should open a window with an empty canvas. Right
 clicking anywhere on the screen will bring up the *node finder* menu.
@@ -40,6 +43,7 @@ is thoroughly commented and serves as a good introduction to embedding this
 library in your egui project.
 
 ## A note on API visibility
+
 Contrary to the general tendency in the Rust ecosytem, this library exposes all
 types and fields that may be remotely relevant to a user as public. This is done
 with the intent to be as flexible as possible, so no implementation details are
@@ -67,4 +71,5 @@ software built in Rust using egui, rend3 and wgpu.
 Are you using this crate for something cool? Add yourself to this section by sending a PR!
 
 ## Contributing
+
 Contributions are welcome! Before writing a PR, please get in touch by filing an issue 😄
