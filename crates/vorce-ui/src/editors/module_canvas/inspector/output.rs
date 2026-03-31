@@ -140,22 +140,14 @@ pub fn render_output_ui(
 
             ui.separator();
             ui.label("\u{1F4E1} NDI Broadcast");
+            // NDI is capability-gated: always shows warning since runtime path is experimental
+            capabilities::render_unsupported_warning(
+                ui,
+                "[Experimental] NDI Output has no active runtime path currently.",
+            );
             #[cfg(feature = "ndi")]
             {
-                let supported = capabilities::is_output_type_enum_supported(true, false, false);
-                if !supported {
-                    #[cfg(target_os = "macos")]
-                    capabilities::render_unsupported_warning(
-                        ui,
-                        "NDI Output is experimental/unavailable on macOS currently.",
-                    );
-                    #[cfg(not(target_os = "macos"))]
-                    capabilities::render_unsupported_warning(
-                        ui,
-                        "[Experimental] NDI Output has no active runtime path currently.",
-                    );
-                }
-                ui.add_enabled_ui(supported, |ui| {
+                ui.add_enabled_ui(false, |ui| {
                     ui.checkbox(_ndi_enabled, "Enable NDI Output");
                     if *_ndi_enabled {
                         ui.horizontal(|ui| {

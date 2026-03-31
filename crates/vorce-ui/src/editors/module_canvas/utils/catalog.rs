@@ -222,53 +222,62 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
                 mapping_mode: false,
             }),
         },
-        NodeCatalogItem {
-            label: "Single Lamp",
-            search_tags: "hue light smart home philips",
-            part_type: ModulePartType::Hue(HueNodeType::SingleLamp {
-                id: String::new(),
-                name: "New Lamp".to_string(),
-                brightness: 1.0,
-                color: [1.0, 1.0, 1.0],
-                effect: None,
-                effect_active: false,
-            }),
-        },
-        NodeCatalogItem {
-            label: "Multi Lamp",
-            search_tags: "hue light group multi smart home philips",
-            part_type: ModulePartType::Hue(HueNodeType::MultiLamp {
-                ids: Vec::new(),
-                name: "New Group".to_string(),
-                brightness: 1.0,
-                color: [1.0, 1.0, 1.0],
-                effect: None,
-                effect_active: false,
-            }),
-        },
-        NodeCatalogItem {
-            label: "Entertainment Group",
-            search_tags: "hue entertainment area spatial philips",
-            part_type: ModulePartType::Hue(HueNodeType::EntertainmentGroup {
-                name: "Entertainment Area".to_string(),
-                brightness: 1.0,
-                color: [1.0, 1.0, 1.0],
-                effect: None,
-                effect_active: false,
-            }),
-        },
-        NodeCatalogItem {
-            label: "Hue Output",
-            search_tags: "output hue bridge entertainment spatial philips",
-            part_type: ModulePartType::Output(OutputType::Hue {
-                bridge_ip: String::new(),
-                username: String::new(),
-                client_key: String::new(),
-                entertainment_area: String::new(),
-                lamp_positions: std::collections::HashMap::new(),
-                mapping_mode: HueMappingMode::Ambient,
-            }),
-        },
+    ]);
+
+    // Hue nodes (capability-gated)
+    if capabilities::is_hue_supported() {
+        catalog.extend([
+            NodeCatalogItem {
+                label: "Single Lamp",
+                search_tags: "hue light smart home philips",
+                part_type: ModulePartType::Hue(HueNodeType::SingleLamp {
+                    id: String::new(),
+                    name: "New Lamp".to_string(),
+                    brightness: 1.0,
+                    color: [1.0, 1.0, 1.0],
+                    effect: None,
+                    effect_active: false,
+                }),
+            },
+            NodeCatalogItem {
+                label: "Multi Lamp",
+                search_tags: "hue light group multi smart home philips",
+                part_type: ModulePartType::Hue(HueNodeType::MultiLamp {
+                    ids: Vec::new(),
+                    name: "New Group".to_string(),
+                    brightness: 1.0,
+                    color: [1.0, 1.0, 1.0],
+                    effect: None,
+                    effect_active: false,
+                }),
+            },
+            NodeCatalogItem {
+                label: "Entertainment Group",
+                search_tags: "hue entertainment area spatial philips",
+                part_type: ModulePartType::Hue(HueNodeType::EntertainmentGroup {
+                    name: "Entertainment Area".to_string(),
+                    brightness: 1.0,
+                    color: [1.0, 1.0, 1.0],
+                    effect: None,
+                    effect_active: false,
+                }),
+            },
+            NodeCatalogItem {
+                label: "Hue Output",
+                search_tags: "output hue bridge entertainment spatial philips",
+                part_type: ModulePartType::Output(OutputType::Hue {
+                    bridge_ip: String::new(),
+                    username: String::new(),
+                    client_key: String::new(),
+                    entertainment_area: String::new(),
+                    lamp_positions: std::collections::HashMap::new(),
+                    mapping_mode: HueMappingMode::Ambient,
+                }),
+            },
+        ]);
+    }
+
+    catalog.extend([
         NodeCatalogItem {
             label: "Projector Output",
             search_tags: "output display screen beamer",
