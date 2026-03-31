@@ -783,8 +783,17 @@ pub fn handle_mcp_actions(app: &mut App) {
             );
             if let Some(module) = app.state.module_manager_mut().get_module_mut(mod_id) {
                 if let Some(part) = module.parts.iter_mut().find(|p| p.id == part_id) {
+                    let mut path_updated = false;
                     if let vorce_core::module::ModulePartType::Source(
                         vorce_core::module::SourceType::MediaFile {
+                            path: ref mut current_path,
+                            ..
+                        }
+                        | vorce_core::module::SourceType::VideoUni {
+                            path: ref mut current_path,
+                            ..
+                        }
+                        | vorce_core::module::SourceType::ImageUni {
                             path: ref mut current_path,
                             ..
                         },
@@ -793,16 +802,19 @@ pub fn handle_mcp_actions(app: &mut App) {
                         let new_path_str = path.to_string_lossy().to_string();
                         if *current_path != new_path_str {
                             *current_path = new_path_str;
-                            app.state.dirty = true;
-
-                            // Force player reload by removing existing instance
-                            // sync_media_players will recreate it with new path
-                            if app.media_players.remove(&(mod_id, part_id)).is_some() {
-                                info!("Removed player for {} to force reload", part_id);
-                            }
-                            app.texture_pool
-                                .release(&format!("part_{}_{}", mod_id, part_id));
+                            path_updated = true;
                         }
+                    }
+                    if path_updated {
+                        app.state.dirty = true;
+
+                        // Force player reload by removing existing instance
+                        // sync_media_players will recreate it with new path
+                        if app.media_players.remove(&(mod_id, part_id)).is_some() {
+                            info!("Removed player for {} to force reload", part_id);
+                        }
+                        app.texture_pool
+                            .release(&format!("part_{}_{}", mod_id, part_id));
                     }
                 }
             }

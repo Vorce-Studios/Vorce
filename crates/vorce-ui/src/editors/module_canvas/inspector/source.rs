@@ -1153,7 +1153,7 @@ pub fn render_source_ui(
         }
         SourceType::LiveInput { device_id } => {
             ui.label("\u{1F4F9} Live Input");
-            let supported = capabilities::is_source_type_enum_supported(true, true, false, false);
+            let supported = capabilities::is_source_type_enum_supported(false, true, false, false);
             if !supported {
                 capabilities::render_unsupported_warning(
                     ui,
@@ -1174,7 +1174,7 @@ pub fn render_source_ui(
         #[cfg(feature = "ndi")]
         SourceType::NdiInput { source_name } => {
             ui.label("\u{1F4E1} NDI Input");
-            let supported = capabilities::is_source_type_enum_supported(true, false, true, false);
+            let supported = capabilities::is_source_type_enum_supported(false, false, true, false);
             if !supported {
                 capabilities::render_unsupported_warning(
                     ui,
@@ -1290,7 +1290,7 @@ pub fn render_source_ui(
         #[cfg(target_os = "windows")]
         SourceType::SpoutInput { sender_name } => {
             ui.label("\u{1F6B0} Spout Input");
-            let supported = capabilities::is_source_type_enum_supported(true, false, false, true);
+            let supported = capabilities::is_source_type_enum_supported(false, false, false, true);
             if !supported {
                 capabilities::render_unsupported_warning(
                     ui,
@@ -1304,9 +1304,101 @@ pub fn render_source_ui(
                 });
             });
         }
-        SourceType::Bevy3DModel { .. } => {
+        SourceType::Bevy3DModel {
+            path,
+            position,
+            rotation,
+            scale,
+            color,
+            unlit,
+            outline_width,
+            outline_color,
+        } => {
             ui.label("\u{1F3AE} Bevy 3D Model");
-            ui.label("Model controls not yet implemented.");
+            ui.horizontal(|ui| {
+                ui.label("Model Path:");
+                ui.text_edit_singleline(path);
+            });
+            ui.horizontal(|ui| {
+                ui.label("Tint:");
+                ui.color_edit_button_rgba_unmultiplied(color);
+            });
+            ui.checkbox(unlit, "Unlit (No Shading)");
+
+            ui.separator();
+            ui.collapsing("Transform (3D)", |ui| {
+                ui.label("Position:");
+                ui.horizontal(|ui| {
+                    ui.add(
+                        egui::DragValue::new(&mut position[0])
+                            .speed(0.1)
+                            .prefix("X: "),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut position[1])
+                            .speed(0.1)
+                            .prefix("Y: "),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut position[2])
+                            .speed(0.1)
+                            .prefix("Z: "),
+                    );
+                });
+
+                ui.label("Rotation:");
+                ui.horizontal(|ui| {
+                    ui.add(
+                        egui::DragValue::new(&mut rotation[0])
+                            .speed(1.0)
+                            .prefix("X: ")
+                            .suffix(" deg"),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut rotation[1])
+                            .speed(1.0)
+                            .prefix("Y: ")
+                            .suffix(" deg"),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut rotation[2])
+                            .speed(1.0)
+                            .prefix("Z: ")
+                            .suffix(" deg"),
+                    );
+                });
+
+                ui.label("Scale:");
+                ui.horizontal(|ui| {
+                    ui.add(
+                        egui::DragValue::new(&mut scale[0])
+                            .speed(0.01)
+                            .prefix("X: "),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut scale[1])
+                            .speed(0.01)
+                            .prefix("Y: "),
+                    );
+                    ui.add(
+                        egui::DragValue::new(&mut scale[2])
+                            .speed(0.01)
+                            .prefix("Z: "),
+                    );
+                });
+            });
+
+            ui.separator();
+            ui.collapsing("Outline", |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Width:");
+                    ui.add(egui::Slider::new(outline_width, 0.0..=10.0));
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Color:");
+                    ui.color_edit_button_rgba_unmultiplied(outline_color);
+                });
+            });
         }
         SourceType::Bevy => {
             ui.label("\u{1F3AE} Bevy Scene");

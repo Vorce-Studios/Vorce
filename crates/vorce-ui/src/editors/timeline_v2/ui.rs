@@ -53,7 +53,7 @@ pub struct TimelineV2 {
     pub full_auto_current_block_id: Option<u64>,
     /// Hybrid mode current block.
     pub hybrid_current_block_id: Option<u64>,
-    /// Hybrid mode active triggers.
+    /// Hybrid mode active triggers (aggregated from MIDI, OSC, and keyboard).
     pub hybrid_active_triggers: HashSet<String>,
     /// Selected marker ID.
     pub selected_marker_id: Option<u64>,

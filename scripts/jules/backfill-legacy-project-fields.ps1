@@ -125,7 +125,13 @@ function TitleTaskId {
     param([string]$Title)
     $text = CleanVal -Value $Title -MaxLength 140
     if ([string]::IsNullOrWhiteSpace($text)) { return $null }
+    if ($text -match '^__SI-\d+_MAI-\d+_(?<id>.+)$') { return CleanVal -Value $Matches["id"] -MaxLength 140 }
+    if ($text -match '^MAI-\d+_(?<id>.+)$') { return CleanVal -Value $Matches["id"] -MaxLength 140 }
+    if ($text -match '^I_(?<id>.+)$') { return CleanVal -Value $Matches["id"] -MaxLength 140 }
     if ($text -match '^MFuser_#\d+-(?<id>.+)$') { return CleanVal -Value $Matches["id"] -MaxLength 140 }
+    if ($text -match '^MFusr_#\d+-(?<id>.+)$') { return CleanVal -Value $Matches["id"] -MaxLength 140 }
+    if ($text -match '^MF_#\d+-(?<id>.+)$') { return CleanVal -Value $Matches["id"] -MaxLength 140 }
+    if ($text -match '^MFsub_#\d+-(?<id>.+)$') { return CleanVal -Value $Matches["id"] -MaxLength 140 }
     if ($text -match '^(?<id>[^:]+):') { return CleanVal -Value $Matches["id"] -MaxLength 140 }
     return $text
 }

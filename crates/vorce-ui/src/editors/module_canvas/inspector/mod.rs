@@ -1,6 +1,7 @@
 pub mod capabilities;
 pub mod common;
 pub mod effect;
+pub mod hue;
 pub mod layer;
 pub mod output;
 pub mod source;
@@ -305,8 +306,10 @@ pub fn render_inspector_for_part(
         .auto_shrink([false, false])
         .show(ui, |ui| {
             // --- Input Configuration ---
-            trigger::render_trigger_config_ui(canvas, ui, part);
-            ui.separator();
+            if part.schema().has_trigger_mapping() {
+                trigger::render_trigger_config_ui(canvas, ui, part);
+                ui.separator();
+            }
 
             match &mut part.part_type {
                 ModulePartType::Trigger(trigger) => {
@@ -363,13 +366,15 @@ pub fn render_inspector_for_part(
                     ui.separator();
                     output::render_output_ui(canvas, ui, output, part_id);
                 }
-                ModulePartType::Hue(_) => {
+                ModulePartType::Hue(hue_node) => {
                     ui.label("Hue Node Configuration");
                     ui.separator();
                     crate::widgets::custom::render_info_label(
                         ui,
                         "Live visual preview not available for hardware outputs. Check spatial editor or physical lamps.",
                     );
+                    ui.separator();
+                    hue::render_hue_ui(ui, hue_node);
                 }
             }
         });

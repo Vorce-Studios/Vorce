@@ -1,4 +1,4 @@
-# Pre-commit configuration for Vorce
+# Pre-commit configuration for VjMapper
 # Runs automatically via pre-commit.ci on every PR
 
 ci:
@@ -10,7 +10,11 @@ ci:
 
   # Skip Rust hooks in CI (no toolchain available)
   # Skip markdownlint (too many false positives with tables)
-  skip: []
+  skip:
+    - fmt
+    - clippy
+    - cargo-sort
+    - markdownlint-fix
 
   submodules: false
 
@@ -77,15 +81,9 @@ repos:
         args:
           - '--config'
           - '.markdownlint.json'
-          - '--ignore'
-          - 'MD013'
-          - '--ignore'
-          - 'MD033'
-          - '--ignore'
-          - 'MD041'
         files: \.(md|markdown)$
         # Exclude existing problematic files (legacy)
-        exclude: ^(CHANGELOG\.md|ROADMAP\.md|.*\.patch|\.jules/.*|\.agent/.*|docs/.*|crates/vendor/.*)$
+        exclude: ^(CHANGELOG\.md|ROADMAP\.md|.*\.patch|\.jules/.*|\.agent/.*|docs/.*)$
 
   # ═══════════════════════════════════════════════════════════════
   # SECURITY: SECRET DETECTION

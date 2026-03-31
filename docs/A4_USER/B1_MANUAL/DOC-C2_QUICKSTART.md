@@ -10,6 +10,8 @@ Run the application (`vorce` or `vorce.exe`). You will see the **Dashboard** int
 
 1. Locate the **Media Browser** panel (usually on the left).
 2. Click **"Import"** or drag-and-drop video/image files into the browser area.
+
+![Screenshot: Vorce Media Browser](docs/assets/missing/vorce-media-browser.png)
 3. Supported formats: `.mp4`, `.mov` (ProRes; HAP currently experimental), `.png`, `.jpg`, `.gif`.
 
 ## 3. Create a Projection Surface
@@ -18,11 +20,15 @@ Run the application (`vorce` or `vorce.exe`). You will see the **Dashboard** int
 2. Right-click on the canvas and select **Add Node > Layer Assignment > Single Layer**.
 3. A new **Layer Node** will appear.
 
+![Screenshot: Vorce Module Canvas Nodes](docs/assets/missing/vorce-module-canvas.png)
+
 ## 4. Connect Media to Layer
 
 1. Drag your imported media file from the Media Browser onto the Canvas. It creates a **Source Node**.
 2. Click and drag from the **Video Out** socket of the Source Node.
 3. Connect it to the **Media In** socket of the Layer Node.
+
+![Screenshot: Connect Media to Layer](docs/assets/missing/vorce-connect-nodes.png)
 
 ## 5. Output to Projector
 

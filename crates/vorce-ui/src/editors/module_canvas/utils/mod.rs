@@ -100,7 +100,7 @@ mod tests {
                 }
                 ModulePartType::Source(SourceType::LiveInput { .. }) => {
                     assert!(capabilities::is_source_type_enum_supported(
-                        true, true, false, false
+                        false, true, false, false
                     ));
                 }
                 #[cfg(feature = "ndi")]

@@ -9,11 +9,13 @@
 Die einfachste Methode ist, die `env` Variablen direkt in den Workflow-Dateien zu ändern:
 
 #### CI/CD Workflow (CI-01_build-and-test.yml)
+
 ```yaml
 # Keine globale Deaktivierung - verwende stattdessen manual dispatch mit Optionen
 ```
 
 **Manueller Run mit Optionen:**
+
 ```bash
 # Nur Linux bauen (überspringt macOS/Windows)
 gh workflow run "CI/CD" -f skip_platforms=true
@@ -26,17 +28,20 @@ gh workflow run "CI/CD" -f skip_platforms=true -f skip_tests=true
 ```
 
 #### Jules Auto-Merge (CI-05_pr-automation.yml)
+
 ```yaml
 env:
   AUTO_MERGE_ENABLED: true  # Auf 'false' setzen um zu deaktivieren
 ```
 
 **Deaktivieren:**
+
 1. Öffne `.github/workflows/CI-05_pr-automation.yml`
 2. Ändere `AUTO_MERGE_ENABLED: true` zu `AUTO_MERGE_ENABLED: false`
 3. Commit und push
 
 #### CodeQL Security Scan (CI-02_security-scan.yml)
+
 ```yaml
 env:
   SCAN_ON_PR_ENABLED: true  # Auf 'false' setzen um PR-Scans zu deaktivieren
@@ -70,6 +75,7 @@ Wenn du bestimmte Checks nicht mehr benötigst:
 ### 1. CI/CD Workflow (CI-01_build-and-test.yml)
 
 **Checks:**
+
 - **Code Quality (Format & Lint)** - 1 Job
   - `cargo fmt --check` - Prüft Code-Formatierung
   - `cargo clippy` - Prüft Code-Qualität und häufige Fehler
@@ -90,11 +96,13 @@ Wenn du bestimmte Checks nicht mehr benötigst:
 **Total:** 6 Jobs
 
 **Warum so viele?**
+
 - **3 Plattformen:** Rust-Projekt muss auf allen Plattformen laufen
 - **Quality Gates:** Verhindert, dass schlechter Code gemerged wird
 - **Security:** Wichtig für Produktion
 
 **Reduzierung möglich:**
+
 ```bash
 # Nur Linux bauen (von 6 auf 4 Jobs)
 gh workflow run "CI/CD" -f skip_platforms=true
@@ -106,16 +114,19 @@ gh workflow run "CI/CD" -f skip_tests=true
 ### 2. CodeQL Security Scan (CI-02_security-scan.yml)
 
 **Checks:**
+
 - **Analyze Code** - 1 Job
   - Deep Security Analysis von Rust Code
   - Findet potenzielle Sicherheitslücken
 
 **Warum?**
+
 - Professionelle Security-Analyse
 - Findet Bugs die normale Tests nicht finden
 - Best Practice für Open Source
 
 **Reduzierung:**
+
 - Läuft nur bei Push zu `main` und PRs
 - Kann über `SCAN_ON_PR_ENABLED: false` für PRs deaktiviert werden
 - Wöchentlicher Scan bleibt aktiv (wichtig!)
@@ -123,25 +134,30 @@ gh workflow run "CI/CD" -f skip_tests=true
 ### 3. Jules PR Auto-Merge (CI-05_pr-automation.yml)
 
 **Checks:**
+
 - **Auto-Merge Jules PR** - 1 Job
   - Merged automatisch Jules PRs wenn alle Checks bestehen
 
 **Warum?**
+
 - Automatisierung des Merge-Prozesses
 - Nur für Jules PRs aktiv
 - Normale PRs nicht betroffen
 
 **Kontrolle:**
+
 - Über `AUTO_MERGE_ENABLED` variable
 - Läuft nur wenn PR `jules-pr` Label hat
 
 ### 4. Update Documentation (CI-06_update-changelog.yml)
 
 **Checks:**
+
 - **Update Changelog** - 1 Job
   - Aktualisiert CHANGELOG.md nach Merge
 
 **Warum?**
+
 - Dokumentation aktuell halten
 - Läuft nur nach erfolgreichem Merge
 - Minimal und schnell
@@ -149,10 +165,12 @@ gh workflow run "CI/CD" -f skip_tests=true
 ### 5. Sync Labels (CI-ADMIN-01_sync-labels.yml)
 
 **Checks:**
+
 - **Sync Repository Labels** - 1 Job
   - Synchronisiert Labels aus `.github/labels.yml`
 
 **Warum?**
+
 - Läuft nur bei Änderungen an `labels.yml`
 - Sehr selten aktiv
 - Hält Label-System konsistent
@@ -160,6 +178,7 @@ gh workflow run "CI/CD" -f skip_tests=true
 ## 🔧 Empfohlene Konfiguration
 
 ### Für Entwicklung (Schnell)
+
 ```bash
 # CI/CD nur auf Linux
 gh workflow run "CI/CD" -f skip_platforms=true
@@ -169,12 +188,14 @@ gh workflow run "CI/CD" -f skip_tests=true
 ```
 
 ### Für Testing (Balance)
+
 ```bash
 # Standard: Alle Plattformen, alle Tests
 gh workflow run "CI/CD"
 ```
 
 ### Für Production (Maximal)
+
 ```bash
 # Standard + alle Checks aktiv
 # Nichts ändern, alles läuft automatisch
@@ -182,7 +203,7 @@ gh workflow run "CI/CD"
 
 ## 🚨 Warum Checks fehlschlagen könnten
 
-### Häufige Ursachen:
+### Häufige Ursachen
 
 1. **Build-Dependencies fehlen**
    - Linux: FFmpeg, fontconfig, freetype
@@ -205,7 +226,7 @@ gh workflow run "CI/CD"
    - Veraltete Dependencies
    - Lösung: `cargo update` und prüfen
 
-### Debug-Tipps:
+### Debug-Tipps
 
 ```bash
 # Lokal alle Checks ausführen (wie CI)
@@ -221,21 +242,24 @@ cargo audit
 
 Wenn du wirklich nur das Nötigste willst:
 
-### Nur Code Quality Checks behalten:
+### Nur Code Quality Checks behalten
 
 1. **Deaktiviere** in `.github/workflows/CI-02_security-scan.yml`:
+
    ```yaml
    env:
      SCAN_ON_PR_ENABLED: false
    ```
 
 2. **Deaktiviere** in `.github/workflows/CI-05_pr-automation.yml`:
+
    ```yaml
    env:
      AUTO_MERGE_ENABLED: false
    ```
 
 3. **Bei CI/CD Runs** immer mit Optionen:
+
    ```bash
    gh workflow run "CI/CD" -f skip_platforms=true -f skip_tests=true
    ```
@@ -253,6 +277,7 @@ Wenn du wirklich nur das Nötigste willst:
 | Sync Labels | 1 | <1 min | Nein (läuft selten) | Behalten |
 
 **Empfohlene Aktion:**
+
 - ✅ Alle Workflows behalten
 - ✅ Bei Bedarf CI/CD mit Optionen ausführen (`skip_platforms`, `skip_tests`)
 - ✅ CodeQL für PRs deaktivieren wenn zu langsam (`SCAN_ON_PR_ENABLED: false`)
@@ -261,6 +286,7 @@ Wenn du wirklich nur das Nötigste willst:
 ## 🆘 Support
 
 Bei Fragen oder Problemen:
+
 1. Siehe [INSTALLATION.md](../../A4_USER/B1_MANUAL/DOC-C1_INSTALLATION.md)
 2. Siehe [workflows/README.md](../../../.github/workflows/README.md)
 3. Issue öffnen mit Label `workflows`
@@ -286,6 +312,7 @@ Neu vorbereitet, aber standardmaessig deaktiviert:
   - Runner stoppen oder Label `Vorce-post-merge` entfernen
 
 Details:
+
 - [DOC-C5_SELF_HOSTED_RUNNER_WINDOWS](./DOC-C5_SELF_HOSTED_RUNNER_WINDOWS.md)
 
 ---

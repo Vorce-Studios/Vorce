@@ -1,7 +1,7 @@
 ## Roadmap Referenzen
 
-*   **MF-020-TIMELINE-KEYFRAME-INTERACTION:** Betrifft Phase 1 (Keyframe-Editor) dieses Dokuments.
-*   **MF-044-TIMELINE-ADJUSTMENTS:** Betrifft Phase 0 (Datenmodell-Schluss) und Phase 2 (Transport-Optionen).
+* **MF-020-TIMELINE-KEYFRAME-INTERACTION:** Betrifft Phase 1 (Keyframe-Editor) dieses Dokuments.
+* **MF-044-TIMELINE-ADJUSTMENTS:** Betrifft Phase 0 (Datenmodell-Schluss) und Phase 2 (Transport-Optionen).
 
 # DOC-C10_TIMELINE_GAP_ANALYSIS
 
@@ -15,71 +15,71 @@ Dieses Dokument beschreibt den aktuellen Implementierungsstand der Timeline in V
 
 ### Lokale Codebasis
 
-- `crates/Vorce-ui/src/editors/timeline_v2.rs`
-- `crates/Vorce-core/src/animation.rs`
-- `crates/Vorce-core/src/effect_animation.rs`
-- `crates/Vorce/src/app/loops/logic.rs`
-- `crates/Vorce/src/app/actions.rs`
-- `crates/Vorce-ui/tests/timeline_automation_tests.rs`
-- `crates/Vorce-ui/src/panels/cue_panel.rs`
-- `docs/A3_PROJECT/B2_QUALITY/DOC-C1_TEST_MATRIX.md`
+* `crates/Vorce-ui/src/editors/timeline_v2.rs`
+* `crates/Vorce-core/src/animation.rs`
+* `crates/Vorce-core/src/effect_animation.rs`
+* `crates/Vorce/src/app/loops/logic.rs`
+* `crates/Vorce/src/app/actions.rs`
+* `crates/Vorce-ui/tests/timeline_automation_tests.rs`
+* `crates/Vorce-ui/src/panels/cue_panel.rs`
+* `docs/A3_PROJECT/B2_QUALITY/DOC-C1_TEST_MATRIX.md`
 
 ### Offizielle externe Referenzen
 
-- MadMapper Home: https://madmapper.com/
-- MadMapper v6 Doku: https://docs.madmapper.com/madmapper/6/what%27s-new/madmapper-v6
-- Resolume Parameter Animation: https://resolume.com/support/en/parameter-animation
-- Resolume Dashboard: https://resolume.com/support/en/dashboard
-- Resolume SMPTE: https://resolume.com/support/en/smpte
+* MadMapper Home: <https://madmapper.com/>
+* MadMapper v6 Doku: <https://docs.madmapper.com/madmapper/6/what%27s-new/madmapper-v6>
+* Resolume Parameter Animation: <https://resolume.com/support/en/parameter-animation>
+* Resolume Dashboard: <https://resolume.com/support/en/dashboard>
+* Resolume SMPTE: <https://resolume.com/support/en/smpte>
 
 ## Aktueller Implementierungsstand in VJMapper
 
 ### Bereits vorhanden
 
-- Bottom-panel Timeline UI ist in der Haupt-App eingebunden.
-- Basis-Transport ist vorhanden: `Play`, `Pause`, `Stop`, `Seek`.
-- Scrubbing ueber den Time-Ruler ist vorhanden.
-- Globales `Loop` fuer den Clip ist vorhanden.
-- Snap in Sekunden ist vorhanden.
-- Zoom der Timeline ist vorhanden.
-- Keyframes und Kurven werden visualisiert.
-- Das Core-Datenmodell unterstuetzt `Constant`, `Linear`, `Smooth` und `Bezier` Interpolation.
-- Eine einfache Module-Arrangement-Spur ist vorhanden.
-- Die Show-Control-Spur unterstuetzt drei Modi:
-  - `FullyAutomated`
-  - `SemiAutomated`
-  - `Manual`
-- Im Runtime-Loop kann die Timeline die aktive Modul-Auswertung auf ein einzelnes Modul begrenzen.
-- Zwei grundlegende Automations-Tests existieren und laufen erfolgreich:
-  - `test_timeline_fully_automated_switch`
-  - `test_timeline_manual_mode_no_auto_switch`
+* Bottom-panel Timeline UI ist in der Haupt-App eingebunden.
+* Basis-Transport ist vorhanden: `Play`, `Pause`, `Stop`, `Seek`.
+* Scrubbing ueber den Time-Ruler ist vorhanden.
+* Globales `Loop` fuer den Clip ist vorhanden.
+* Snap in Sekunden ist vorhanden.
+* Zoom der Timeline ist vorhanden.
+* Keyframes und Kurven werden visualisiert.
+* Das Core-Datenmodell unterstuetzt `Constant`, `Linear`, `Smooth` und `Bezier` Interpolation.
+* Eine einfache Module-Arrangement-Spur ist vorhanden.
+* Die Show-Control-Spur unterstuetzt drei Modi:
+  * `FullyAutomated`
+  * `SemiAutomated`
+  * `Manual`
+* Im Runtime-Loop kann die Timeline die aktive Modul-Auswertung auf ein einzelnes Modul begrenzen.
+* Zwei grundlegende Automations-Tests existieren und laufen erfolgreich:
+  * `test_timeline_fully_automated_switch`
+  * `test_timeline_manual_mode_no_auto_switch`
 
 ### Teilweise vorhanden / strukturell vorbereitet
 
-- `TimelineV2` enthaelt State fuer `selected_keyframes`, `show_curve_editor` und `pan_offset`, diese werden aber aktuell nicht als vollwertige Editor-Funktionen genutzt.
-- `EffectParameterAnimator` besitzt APIs fuer `bind_parameter`, `add_keyframe`, `remove_keyframe`, `set_duration` und Playback.
-- Das Animationsmodell ist damit vorhanden, die Authoring-/Playback-Kette ist aber nicht geschlossen.
+* `TimelineV2` enthaelt State fuer `selected_keyframes`, `show_curve_editor` und `pan_offset`, diese werden aber aktuell nicht als vollwertige Editor-Funktionen genutzt.
+* `EffectParameterAnimator` besitzt APIs fuer `bind_parameter`, `add_keyframe`, `remove_keyframe`, `set_duration` und Playback.
+* Das Animationsmodell ist damit vorhanden, die Authoring-/Playback-Kette ist aber nicht geschlossen.
 
 ### Fehlende oder unvollstaendig verdrahtete Bereiche
 
-- Kein vollwertiges Keyframe-Authoring in der Timeline:
-  - keine Auswahl-Logik im UI
-  - kein Drag/Move
-  - kein Delete
-  - kein Add-Keyframe-Workflow im Editor
-  - kein Copy/Paste oder Duplicate
-- Kein echter Curve-Editor trotz vorbereitetem State.
-- Kein Track-Management fuer Automation aus der Timeline heraus.
-- Keine sichtbare produktive Bindung von Effektparametern an den `EffectParameterAnimator` ausserhalb von Tests.
-- Die von `effect_animator.update()` erzeugten Parameter-Updates werden im Hauptloop aktuell nicht auf Effekte zurueckgeschrieben.
-- Cue-System und Timeline sind nicht integriert.
-- Die Cue-UI erzeugt `UIAction::AddCue`, `GoCue`, `NextCue`, `PrevCue`, `StopCue`, `UpdateCue`, `RemoveCue`, aber in `crates/Vorce/src/app/actions.rs` ist dafuer aktuell kein Handler sichtbar.
-- Testabdeckung ist sehr schmal:
-  - keine Tests fuer `SemiAutomated`
-  - keine UI-Interaktionstests
-  - keine Tests fuer Keyframe-CRUD
-  - keine Tests fuer Persistenz
-  - keine Tests fuer Cue-/Timeline-Integration
+* Kein vollwertiges Keyframe-Authoring in der Timeline:
+  * keine Auswahl-Logik im UI
+  * kein Drag/Move
+  * kein Delete
+  * kein Add-Keyframe-Workflow im Editor
+  * kein Copy/Paste oder Duplicate
+* Kein echter Curve-Editor trotz vorbereitetem State.
+* Kein Track-Management fuer Automation aus der Timeline heraus.
+* Keine sichtbare produktive Bindung von Effektparametern an den `EffectParameterAnimator` ausserhalb von Tests.
+* Die von `effect_animator.update()` erzeugten Parameter-Updates werden im Hauptloop aktuell nicht auf Effekte zurueckgeschrieben.
+* Cue-System und Timeline sind nicht integriert.
+* Die Cue-UI erzeugt `UIAction::AddCue`, `GoCue`, `NextCue`, `PrevCue`, `StopCue`, `UpdateCue`, `RemoveCue`, aber in `crates/Vorce/src/app/actions.rs` ist dafuer aktuell kein Handler sichtbar.
+* Testabdeckung ist sehr schmal:
+  * keine Tests fuer `SemiAutomated`
+  * keine UI-Interaktionstests
+  * keine Tests fuer Keyframe-CRUD
+  * keine Tests fuer Persistenz
+  * keine Tests fuer Cue-/Timeline-Integration
 
 ## Kurzvergleich mit MadMapper und Resolume
 
@@ -108,16 +108,16 @@ Die aktuelle Timeline kann anzeigen, scrubben und ein einfaches Modul-Arrangemen
 
 Interpolation, Tracks und ein Animator existieren bereits im Core. Der eigentliche Engpass ist nicht das Modell, sondern:
 
-- fehlende Authoring-UI
-- fehlende Bindings aus dem Produktivcode
-- fehlende Anwendung der Animator-Updates auf echte Parameter
+* fehlende Authoring-UI
+* fehlende Bindings aus dem Produktivcode
+* fehlende Anwendung der Animator-Updates auf echte Parameter
 
 ### 3. Show-Control ist doppelt angelegt, aber nicht vereinheitlicht
 
 Es gibt:
 
-- eine Module-Show-Spur in der Timeline
-- ein separates Cue-System mit Crossfades und Triggern
+* eine Module-Show-Spur in der Timeline
+* ein separates Cue-System mit Crossfades und Triggern
 
 Diese beiden Systeme arbeiten derzeit nicht als ein gemeinsames Show-Control-Modell. Im Vergleich dazu wirken MadMapper und Resolume kohaerenter.
 
@@ -125,10 +125,10 @@ Diese beiden Systeme arbeiten derzeit nicht als ein gemeinsames Show-Control-Mod
 
 MadMapper und Resolume liefern vor allem:
 
-- schnellere Authoring-Workflows
-- mehr Playback-Modi
-- Trigger-/Follow-/Clock-Logik
-- bessere Improvisations- und Live-Steuerungsmoeglichkeiten
+* schnellere Authoring-Workflows
+* mehr Playback-Modi
+* Trigger-/Follow-/Clock-Logik
+* bessere Improvisations- und Live-Steuerungsmoeglichkeiten
 
 Genau dort ist VJMapper aktuell am weitesten entfernt.
 
@@ -147,8 +147,8 @@ Arbeitspakete:
 
 Definition of Done:
 
-- Ein animierter Parameter laesst sich im Projekt anlegen, speichern, abspielen und nach Reload unveraendert wiedergeben.
-- Cue-Aktionen aus dem UI fuehren zu realem Runtime-Verhalten.
+* Ein animierter Parameter laesst sich im Projekt anlegen, speichern, abspielen und nach Reload unveraendert wiedergeben.
+* Cue-Aktionen aus dem UI fuehren zu realem Runtime-Verhalten.
 
 ## Phase 1 - Keyframe-Editor fertigstellen
 
@@ -168,8 +168,8 @@ Arbeitspakete:
 
 Definition of Done:
 
-- F-020 aus `DOC-C1_TEST_MATRIX.md` ist technisch geschlossen.
-- UI-Interaktionen sind per Tests oder reproduzierbaren manuellen Testfaellen abgesichert.
+* F-020 aus `DOC-C1_TEST_MATRIX.md` ist technisch geschlossen.
+* UI-Interaktionen sind per Tests oder reproduzierbaren manuellen Testfaellen abgesichert.
 
 ## Phase 2 - Transport und Timing professionalisieren
 
@@ -188,8 +188,8 @@ Arbeitspakete:
 
 Definition of Done:
 
-- Eine Animation kann in Sekunden oder Beats editiert werden.
-- Playback-Modi sind im UI explizit sichtbar und reproduzierbar testbar.
+* Eine Animation kann in Sekunden oder Beats editiert werden.
+* Playback-Modi sind im UI explizit sichtbar und reproduzierbar testbar.
 
 ## Phase 3 - Timeline von "Trackliste" zu "Show-Struktur" ausbauen
 
@@ -208,7 +208,7 @@ Arbeitspakete:
 
 Definition of Done:
 
-- Ein Nutzer kann ein ganzes Show-Set nicht nur als lineare Parameterkurve, sondern als organisierte Sequenzstruktur bauen.
+* Ein Nutzer kann ein ganzes Show-Set nicht nur als lineare Parameterkurve, sondern als organisierte Sequenzstruktur bauen.
 
 ## Phase 4 - Cue-System und Timeline zusammenfuehren
 
@@ -216,9 +216,9 @@ Ziel: Ein gemeinsames Show-Control-Modell statt zweier halber Systeme.
 
 Empfohlene Richtung:
 
-- Cue = Snapshot/Trigger-Ereignis
-- Timeline Clip/Marker = zeitliche Ausloesung oder Segment
-- Module Arrangement = Spezialfall eines Cue-/Sequence-Blocks
+* Cue = Snapshot/Trigger-Ereignis
+* Timeline Clip/Marker = zeitliche Ausloesung oder Segment
+* Module Arrangement = Spezialfall eines Cue-/Sequence-Blocks
 
 Arbeitspakete:
 
@@ -229,7 +229,7 @@ Arbeitspakete:
 
 Definition of Done:
 
-- Ein Operator kann zwischen manueller Show-Fahrt, halbautomatischer Show und vollautomatischer Timeline umschalten, ohne verschiedene Systeme mental auseinanderhalten zu muessen.
+* Ein Operator kann zwischen manueller Show-Fahrt, halbautomatischer Show und vollautomatischer Timeline umschalten, ohne verschiedene Systeme mental auseinanderhalten zu muessen.
 
 ## Phase 5 - Audio-, Clock- und External-Sync
 
@@ -246,7 +246,7 @@ Arbeitspakete:
 
 Definition of Done:
 
-- Timeline kann entweder intern laufen oder sich an externe Show-Clock haengen.
+* Timeline kann entweder intern laufen oder sich an externe Show-Clock haengen.
 
 ## Phase 6 - Export und Produktionsmodus
 
@@ -263,26 +263,26 @@ Arbeitspakete:
 
 ### Kurzfristig
 
-- TL-01: Keyframe CRUD in `timeline_v2.rs`
-- TL-02: Produktive Parameter-Bindings fuer Animation
-- TL-03: Anwenden von Animator-Updates auf Laufzeitparameter
-- TL-04: Cue-Actions in `actions.rs` verdrahten
-- TL-05: Semi-Auto Tests und Persistenztests erweitern
+* TL-01: Keyframe CRUD in `timeline_v2.rs`
+* TL-02: Produktive Parameter-Bindings fuer Animation
+* TL-03: Anwenden von Animator-Updates auf Laufzeitparameter
+* TL-04: Cue-Actions in `actions.rs` verdrahten
+* TL-05: Semi-Auto Tests und Persistenztests erweitern
 
 ### Mittelfristig
 
-- TL-06: Curve Editor
-- TL-07: BPM-Snap / Beat-Ruler
-- TL-08: In/Out, Reverse, Ping-Pong, One-Shot
-- TL-09: Marker + Follow Actions
-- TL-10: Sequence-/Clip-Struktur statt nur Track-Kurven
+* TL-06: Curve Editor
+* TL-07: BPM-Snap / Beat-Ruler
+* TL-08: In/Out, Reverse, Ping-Pong, One-Shot
+* TL-09: Marker + Follow Actions
+* TL-10: Sequence-/Clip-Struktur statt nur Track-Kurven
 
 ### Spaeter / Pro-Funktionen
 
-- TL-11: Conductor-/Overview-Ansicht
-- TL-12: SMPTE/MTC
-- TL-13: Offline Export
-- TL-14: Vereinheitlichtes Cue-/Timeline-Modell
+* TL-11: Conductor-/Overview-Ansicht
+* TL-12: SMPTE/MTC
+* TL-13: Offline Export
+* TL-14: Vereinheitlichtes Cue-/Timeline-Modell
 
 ## Empfohlene Reihenfolge fuer die Umsetzung
 
@@ -297,8 +297,8 @@ VJMapper besitzt bereits ein brauchbares Fundament fuer Timeline-Datenmodell, Pl
 
 Die wichtigste naechste Entscheidung sollte daher nicht "noch mehr Timeline-Features" sein, sondern:
 
-- erstens den bestehenden Automationspfad funktional schliessen
-- zweitens Keyframe-Editing wirklich fertigstellen
-- drittens Cue-System und Timeline zu einem gemeinsamen Show-Control-Konzept zusammenziehen
+* erstens den bestehenden Automationspfad funktional schliessen
+* zweitens Keyframe-Editing wirklich fertigstellen
+* drittens Cue-System und Timeline zu einem gemeinsamen Show-Control-Konzept zusammenziehen
 
 Erst danach lohnt sich der Ausbau in Richtung Montage Tracks, Marker-Logik, Audio-Snap und externe Zeitsynchronisation.
