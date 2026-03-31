@@ -93,6 +93,7 @@ jobs:
               'Build & Test (Linux)',
               'Build & Test (Windows)',
               'Build (macOS Beta)',
+              'Rust Autofix',
               'Validation Success',
             ]);
 
@@ -337,6 +338,12 @@ jobs:
                 },
                 {
                   name: 'Build & Test (Windows)',
+                  source: 'check_run',
+                  allowedConclusions: ['success'],
+                  required: true,
+                },
+                {
+                  name: 'Rust Autofix',
                   source: 'check_run',
                   allowedConclusions: ['success'],
                   required: true,
