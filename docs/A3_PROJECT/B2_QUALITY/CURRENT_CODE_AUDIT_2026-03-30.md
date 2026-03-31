@@ -1,6 +1,6 @@
 # Intensiver Code-Audit-Bericht (Stand 30. März 2026)
 
-**Methodik:** 
+**Methodik:**
 1. Unabhängige statische Analyse (`cargo clippy`, `cargo audit`, Architektur-Scan) des aktuellen `main` Branches.
 2. Abgleich und Konsolidierung mit historischen Audit-Berichten (Stand 23.03.2026), um blinde Flecken der Automatisierung zu decken.
 
