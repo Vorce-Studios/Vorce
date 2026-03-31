@@ -1,17 +1,1 @@
-
-## 2024-05-24 - Cross-Platform Path Traversal Bypass in Path::components()
-**Vulnerability:** Windows-style path traversal payloads (`..\..\secret`) bypass `std::path::Path::components()` validation when executed on non-Windows systems (like Linux/macOS servers) because backslashes are not treated as path separators.
-**Learning:** Rust's `Path` behaves according to the target OS. When validating input that might originate from or target a different OS, you cannot rely solely on native path parsing.
-**Prevention:** Always normalize path separators (e.g., `.replace("\\", "/")`) before using `Path::components()` for security validation, or manually scan for both `/../` and `\..\`.
-## 2024-05-24 - Missing Target Validation in apply_control
-**Vulnerability:** The `apply_control` method validated the `ControlValue` for path traversal, but failed to call `target.validate()` on the `ControlTarget`, allowing potentially malicious target names with path traversals or control characters to bypass validation.
-**Learning:** Validation methods on complex types must be explicitly called at the boundary where they are ingested or applied; do not assume they are implicitly validated.
-**Prevention:** Always trace the data flow of user-controlled complex types (like enums with string variants) and ensure their inherent `.validate()` methods are executed before the data is used.
-## 2024-05-24 - DoS via Memory Exhaustion in File I/O
-**Vulnerability:** Loading large files entirely into memory using `read_to_end` or `read_to_string`.
-**Learning:** `std::io::copy` must be used for file transfers instead of buffering into memory arrays.
-**Prevention:** Use streaming I/O whenever possible.
-## 2024-05-18 - Avoid Legacy XSS-Protection Anti-Pattern
-**Vulnerability:** The HTTP API server in `crates/mapmap-control/src/web/server.rs` used the legacy header `X-XSS-Protection: 1; mode=block`. This feature is deprecated across modern browsers and is considered an anti-pattern as it can introduce new vulnerabilities like selective blocklist-based side-channel leaks.
-**Learning:** Using `X-XSS-Protection: 1; mode=block` can sometimes allow attackers to disable legitimate scripts on the page by tricking the browser's XSS auditor into blocking them (an XSS-Auditor bypass/denial-of-service). Modern applications should rely exclusively on Content Security Policy (CSP).
-**Prevention:** Always set `X-XSS-Protection: 0` to disable the legacy auditor and enforce strong CSP headers instead for XSS defense-in-depth.
+## 2026-03-20 - [Stabilität] **Schwachstelle:** Panics bei Initialisierung und Rendering durch `unwrap()` und `expect()`. **Lektion:** Die Verwendung von `unwrap()` in asynchronen oder UI-zentrierten Workflows kann zu plötzlichen Programmabstürzen (DoS) führen, besonders wenn Window-Contexts oder Tokio-Runtimes unerwartet nicht verfügbar sind. **Prävention:** Verwende strikt das `?`-Pattern, `ok_or_else()` oder `if let`/`match` für fehleranfälliges State-Handling, um Fail-Secure-Verhalten sicherzustellen.

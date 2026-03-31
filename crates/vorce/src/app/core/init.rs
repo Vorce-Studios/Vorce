@@ -58,7 +58,7 @@ impl App {
         let tokio_runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()
-            .expect("Failed to create Tokio runtime");
+            .map_err(|e| anyhow::anyhow!("Failed to create Tokio runtime: {}", e))?;
 
         // Create main window with saved geometry
         let main_window_id = window_manager.create_main_window_with_geometry(
@@ -85,7 +85,9 @@ impl App {
         )?;
 
         let (width, height, format, main_window_for_egui) = {
-            let main_window_context = window_manager.get(main_window_id).unwrap();
+            let main_window_context = window_manager
+                .get(main_window_id)
+                .ok_or_else(|| anyhow::anyhow!("Main window context not found"))?;
             (
                 main_window_context.surface_config.width,
                 main_window_context.surface_config.height,
@@ -519,10 +521,16 @@ impl App {
 
     fn start_mcp_server(mcp_sender: crossbeam_channel::Sender<vorce_mcp::McpAction>) {
         thread::spawn(move || {
-            let rt = tokio::runtime::Builder::new_current_thread()
+            let rt = match tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
-                .unwrap();
+            {
+                Ok(rt) => rt,
+                Err(e) => {
+                    error!("Failed to create Tokio runtime for MCP Server: {}", e);
+                    return;
+                }
+            };
             rt.block_on(async {
                 let server = McpServer::new(Some(mcp_sender));
                 if let Err(e) = server.run_stdio().await {
