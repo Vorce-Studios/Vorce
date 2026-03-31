@@ -299,7 +299,7 @@ pub fn show(ctx: &Context, context: SettingsContext) {
                         .changed();
                     if ui.button("Standard").clicked() {
                         context.ui_state.user_config.startup_animation_path =
-                            "resources/app_videos/MF-Mechanical_Cube_Logo_Splash_Animation.webm"
+                            "resources/app_videos/Vorce-Mechanical_Cube_Logo_Splash_Animation.webm"
                                 .to_string();
                         node_anim_changed = true;
                     }

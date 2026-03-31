@@ -234,9 +234,7 @@ pub fn particle_system(
                 .insert(crate::components::ParticleEmitter::default());
             continue; // Wait for next frame
         }
-        let Some(emitter) = emitter_opt.as_mut() else {
-            continue;
-        };
+        let emitter = emitter_opt.as_mut().unwrap();
 
         // Initialize mesh if missing
         if mesh_opt.is_none() {
@@ -412,12 +410,7 @@ pub fn frame_readback_system(
         let output_buffer_size = (bytes_per_row * height) as u64;
 
         // Ensure buffer exists and is correct size
-        let needs_new_buffer = match buffer_cache.as_ref() {
-            None => true,
-            Some(buf) => buf.size() != output_buffer_size,
-        };
-
-        if needs_new_buffer {
+        if buffer_cache.is_none() || buffer_cache.as_ref().unwrap().size() != output_buffer_size {
             *buffer_cache = Some(render_device.create_buffer(
                 &bevy::render::render_resource::BufferDescriptor {
                     label: Some("Readback Buffer"),
@@ -429,9 +422,7 @@ pub fn frame_readback_system(
             ));
         }
 
-        let Some(buffer) = buffer_cache.as_ref() else {
-            return;
-        };
+        let buffer = buffer_cache.as_ref().unwrap();
 
         let mut encoder = render_device.create_command_encoder(
             &bevy::render::render_resource::CommandEncoderDescriptor {

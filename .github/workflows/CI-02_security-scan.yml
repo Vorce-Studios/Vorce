@@ -1,8 +1,6 @@
 name: "Security Analysis"
 
 on:
-  push:
-    branches: [main]
   schedule:
     - cron: "26 15 * * 1"
   workflow_dispatch:

@@ -16,11 +16,24 @@ if not exist "%VCPKG_LIB%" (
 )
 
 set "EXTRA_FEATURES="
+set "NDI_BIN_DIR="
 set "MPV_LIB_DIR="
 set "MPV_BIN_DIR="
 
 if exist "C:\Program Files\NDI\NDI 6 SDK\Lib\x64\Processing.NDI.Lib.x64.lib" (
-    set "EXTRA_FEATURES=!EXTRA_FEATURES!,ndi"
+    if exist "C:\Program Files\NDI\NDI 6 Runtime\v6\Processing.NDI.Lib.x64.dll" (
+        set "NDI_BIN_DIR=C:\Program Files\NDI\NDI 6 Runtime\v6"
+    ) else if exist "C:\Program Files\NDI\NDI 6 SDK\Bin\x64\Processing.NDI.Lib.x64.dll" (
+        set "NDI_BIN_DIR=C:\Program Files\NDI\NDI 6 SDK\Bin\x64"
+    )
+
+    if defined NDI_BIN_DIR (
+        set "EXTRA_FEATURES=!EXTRA_FEATURES!,ndi"
+    ) else (
+        echo NDI SDK import library found, but Processing.NDI.Lib.x64.dll is missing.
+        echo Install the NDI Runtime or ensure the SDK Bin\x64 directory contains the runtime DLL.
+        echo Skipping optional ndi feature.
+    )
 )
 
 if not defined MPV_LIB_DIR if defined VORCE_MPV_DIR if exist "%VORCE_MPV_DIR%\lib\mpv.lib" (
@@ -76,6 +89,13 @@ if exist "%VCPKG_BIN%\*.dll" (
     xcopy /Y /D "%VCPKG_BIN%\av*.dll" "%TARGET_DIR%\" >nul 2>&1
     xcopy /Y /D "%VCPKG_BIN%\sw*.dll" "%TARGET_DIR%\" >nul 2>&1
     xcopy /Y /D "%VCPKG_BIN%\postproc*.dll" "%TARGET_DIR%\" >nul 2>&1
+)
+
+if defined NDI_BIN_DIR if exist "%NDI_BIN_DIR%\Processing.NDI.Lib.x64.dll" (
+    echo Syncing NDI runtime DLLs to %TARGET_DIR%...
+    if not exist "%TARGET_DIR%" mkdir "%TARGET_DIR%"
+    copy /Y "%NDI_BIN_DIR%\Processing.NDI.Lib.x64.dll" "%TARGET_DIR%\" >nul 2>&1
+    set "PATH=%NDI_BIN_DIR%;%PATH%"
 )
 
 if defined MPV_BIN_DIR if exist "%MPV_BIN_DIR%\mpv*.dll" (

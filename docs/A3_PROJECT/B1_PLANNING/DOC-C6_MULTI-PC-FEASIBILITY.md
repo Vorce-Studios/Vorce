@@ -1,6 +1,6 @@
 ## Roadmap Referenz
 
-*   **MF-046-MULTI-PC-MASTER-SLAVE:** Dieses Dokument dient als technische Grundlage für die Umsetzung der Master/Slave Architektur.
+* **MF-046-MULTI-PC-MASTER-SLAVE:** Dieses Dokument dient als technische Grundlage für die Umsetzung der Master/Slave Architektur.
 
 # Machbarkeitsstudie: Multi-PC Architektur
 
@@ -18,39 +18,6 @@ Diese Studie analysiert **vier Architektur-Optionen** für verschiedene Hardware
 | **D** | Raspberry Pi Player | Embedded/Budget | Optional |
 
 **Empfehlung:** Ein **Single-Binary-Ansatz** mit integrierten Modulen für alle Optionen. Die Auswahl erfolgt über Startparameter oder automatische Hardware-Erkennung.
-
-### 1.1 Planungs-Update 2026-03-29
-
-Die ursprüngliche A-D-Optionenstruktur bleibt als technische Machbarkeitsbasis nützlich, ist für die aktuelle Umsetzungsplanung aber zu transportorientiert. Die GitHub-Planung und die weitere Implementierung sollen deshalb auf **drei Betriebsmodi** umgestellt werden:
-
-| Modus | Name | Kurzbeschreibung | Primärer technischer Unterbau |
-|-------|------|------------------|-------------------------------|
-| **M1** | **Control Only** | Der Master steuert entfernte Vorce-Instanzen, die Inhalte lokal auf dem Slave rendern oder abspielen. | Control-Plane, Zeitbasis, Asset-/Content-Adressierung |
-| **M2** | **Headless Transport** | Rendering und Steuerung laufen auf dem Master; Ausgabe wird als Videostream an Slave-Instanzen verteilt. | NDI-Transport, Headless-/Player-Modus, Health/Recovery |
-| **M3** | **Multimaster** | Mehrere Instanzen verwalten eine gemeinsame Show auf Basis definierter Rollen, Prioritäten und Regeln. | Gemeinsame Control-Plane, Konfliktauflösung, Ownership-Regeln |
-
-Wichtige Architekturentscheidung:
-
-- **Multi-PC und Multi-Projektor werden nicht mehr getrennt geplant.**
-- Das **lokale Output-/Projektor-Subsystem** bleibt die Verantwortung von `MF-045 / MAI-002` (Output-Lifecycle, Per-Projector-Konfiguration, Edge Blend, Color Calibration, QA).
-- Das **verteilte Cluster-/Show-Control-System** bleibt die Verantwortung von `MF-046 / MAI-005` (Instanzrollen, Moduswahl, Control-Plane, Headless-Transport, Multimaster-Regeln).
-- Jeder Cluster-Modus nutzt das lokale Output-System pro Instanz, statt einen zweiten parallelen Output-Stack zu definieren.
-
-Priorisierte Umsetzung fuer die aktuelle Planung:
-
-1. Instanz-Topologie, Rollenmodell und Modusmatrix festziehen.
-2. Gemeinsame Control-Plane mit Zeitbasis, Health und Recovery definieren.
-3. Lokalen Output-/Window-Lifecycle und Per-Projector-Konfiguration production-ready machen.
-4. **M2 Headless Transport** als erstes echtes End-to-End-Cluster-MVP abschliessen.
-5. **M1 Control Only** mit lokaler Asset-/Content-Verfügbarkeit absichern.
-6. Cluster-QA, Reconnect, Drift-Tests und Multi-Projector-Integration absichern.
-7. **M3 Multimaster** erst nach stabiler Single-Master-Basis umsetzen.
-
-Folgerung fuer alte Optionen:
-
-- Die bisherige **Option A (NDI)** entspricht im Wesentlichen **M2 Headless Transport**.
-- Die bisherige **Option B (Distributed Rendering)** geht in **M1 Control Only** auf.
-- Die bisherigen **Optionen C und D** bleiben mögliche spätere Player-/Transport-Varianten, sind aber **kein MVP-Ziel** der aktuellen Planung.
 
 ---
 
@@ -113,10 +80,10 @@ fn main() {
 ```
 
 **Vorteile:**
-- Eine Codebasis = einfachere Wartung
-- Einheitlicher Installer
-- Automatische Feature-Discovery
-- Reduzierte Testmatrix
+* Eine Codebasis = einfachere Wartung
+* Einheitlicher Installer
+* Automatische Feature-Discovery
+* Reduzierte Testmatrix
 
 ---
 
@@ -280,17 +247,17 @@ Der Master sendet nur **Steuerbefehle und Szenen-Updates** über das Netzwerk. J
 
 ### 4.2 Vorteile
 
-- **Minimale Netzwerkbandbreite** (~100 Kbps für Steuerdaten)
-- **Unabhängige Auflösungen** pro Client
-- **Höhere Gesamtauflösung** möglich (z.B. 16K verteilt)
-- **Redundanz** bei Netzwerkausfällen (Clients rendern weiter)
+* **Minimale Netzwerkbandbreite** (~100 Kbps für Steuerdaten)
+* **Unabhängige Auflösungen** pro Client
+* **Höhere Gesamtauflösung** möglich (z.B. 16K verteilt)
+* **Redundanz** bei Netzwerkausfällen (Clients rendern weiter)
 
 ### 4.3 Nachteile
 
-- **Komplexe Synchronisation** (Genlock/Frame-Sync erforderlich)
-- **Asset-Distribution** (Videos müssen auf alle Clients kopiert werden)
-- **Höhere Hardware-Kosten** (jeder Client braucht GPU)
-- **Erhöhte Latenz-Variabilität**
+* **Komplexe Synchronisation** (Genlock/Frame-Sync erforderlich)
+* **Asset-Distribution** (Videos müssen auf alle Clients kopiert werden)
+* **Höhere Hardware-Kosten** (jeder Client braucht GPU)
+* **Erhöhte Latenz-Variabilität**
 
 ### 4.4 Synchronisations-Strategie
 
@@ -368,10 +335,10 @@ assets:
 
 Viele VJ-Setups nutzen **ältere Hardware** als Ausgabe-Clients:
 
-- Alte Laptops (2010-2015 Ära)
-- Mini-PCs ohne dedizierte GPU
-- Thin Clients
-- Embedded Industrial PCs
+* Alte Laptops (2010-2015 Ära)
+* Mini-PCs ohne dedizierte GPU
+* Thin Clients
+* Embedded Industrial PCs
 
 ### 5.2 Konzept
 
@@ -496,10 +463,10 @@ impl LegacyPlayer {
 
 Der Raspberry Pi ist eine **kostengünstige** Lösung für kleinere Installationen:
 
-- Preis: ~50-100€ pro Einheit
-- Geringer Stromverbrauch (~5-15W)
-- Kompakte Bauform
-- Zuverlässig für Dauerbetrieb
+* Preis: ~50-100€ pro Einheit
+* Geringer Stromverbrauch (~5-15W)
+* Kompakte Bauform
+* Zuverlässig für Dauerbetrieb
 
 ### 6.2 Unterstützte Modelle
 
@@ -526,15 +493,15 @@ dicaffeine --source "Vorce-MASTER" --fullscreen
 ```
 
 **Performance (Raspberry Pi 4):**
-- 720p60: ✅ Stabil
-- 1080p30: ✅ Stabil
-- 1080p60: ⚠️ Möglich mit Drops
+* 720p60: ✅ Stabil
+* 1080p30: ✅ Stabil
+* 1080p60: ⚠️ Möglich mit Drops
 
 **Performance (Raspberry Pi 5):**
-- 720p60: ✅ Stabil
-- 1080p30: ✅ Stabil
-- 1080p60: ✅ Stabil (erwartet)
-- 4K30: ⚠️ Experimentell
+* 720p60: ✅ Stabil
+* 1080p30: ✅ Stabil
+* 1080p60: ✅ Stabil (erwartet)
+* 4K30: ⚠️ Experimentell
 
 #### 6.3.2 Option D2: Custom Vorce Player (Portierung)
 
@@ -796,6 +763,7 @@ Vorce-pi-player-v1.0.0.img.xz
 ## 9. Empfohlener Implementierungsplan
 
 ### Phase 1: MVP (Option A - NDI)
+
 **Zeitraum:** Wochen 1-3
 
 1. Refactoring der Hauptanwendung für Multi-Mode-Unterstützung
@@ -806,6 +774,7 @@ Vorce-pi-player-v1.0.0.img.xz
 **Deliverable:** Funktionierender NDI-Stream von Master zu Player über LAN.
 
 ### Phase 2: Legacy Support (Option C)
+
 **Zeitraum:** Wochen 4-5
 
 1. H.264 Encoding Pipeline
@@ -816,6 +785,7 @@ Vorce-pi-player-v1.0.0.img.xz
 **Deliverable:** RTSP-basierter Player für Hardware ab 2010.
 
 ### Phase 3: Raspberry Pi (Option D)
+
 **Zeitraum:** Wochen 6-7
 
 1. ARM64 Build-Pipeline
@@ -826,6 +796,7 @@ Vorce-pi-player-v1.0.0.img.xz
 **Deliverable:** Funktionierender Raspberry Pi 4/5 als Ausgabegerät.
 
 ### Phase 4: Distributed Rendering (Option B)
+
 **Zeitraum:** Wochen 8-12 (Future)
 
 1. OSC Control Protocol
@@ -860,9 +831,9 @@ Die Multi-PC-Architektur für Vorce ist **technisch machbar** und wirtschaftlich
 5. **Distributed Rendering für High-End** (langfristige Perspektive)
 
 Mit diesem Ansatz positioniert sich Vorce als **ernstzunehmende Alternative** zu kommerziellen Lösungen wie:
-- Resolume Arena (~€799)
-- MadMapper (~€449)
-- TouchDesigner (~$2000/Jahr)
+* Resolume Arena (~€799)
+* MadMapper (~€449)
+* TouchDesigner (~$2000/Jahr)
 
 **Empfohlener erster Schritt:**
 Erstellung eines Proof-of-Concept für Option A, der einen NDI-Stream von Vorce zu einem zweiten PC überträgt und dort fullscreen darstellt. Geschätzte Zeit: 5-7 Tage.

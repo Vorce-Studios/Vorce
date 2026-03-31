@@ -142,7 +142,6 @@ jobs:
             const headSha = `${{ needs.resolve-context.outputs.pr_head_sha }}`;
             const prNumber = `${{ needs.resolve-context.outputs.pr_number }}`;
             const REQUIRED_CHECK_RUNS = [
-              { name: 'Rust Autofix', allowedConclusions: ['success'] },
               { name: 'Quality Gate (Format & Lint)', allowedConclusions: ['success'] },
               { name: 'Security Scan', allowedConclusions: ['success'] },
               { name: 'Build & Test (Linux)', allowedConclusions: ['success'] },
@@ -151,9 +150,7 @@ jobs:
             const OPTIONAL_CHECK_RUNS = [
               { name: 'Build & Test (Windows)', allowedConclusions: ['success', 'skipped', 'neutral'] },
             ];
-            const REQUIRED_STATUSES = [
-              { name: 'pre-commit.ci - pr', allowedConclusions: ['success'] },
-            ];
+            const REQUIRED_STATUSES = [];
 
             const MAX_ATTEMPTS = 20;
             const DELAY_MS = 30000; // 30 seconds

@@ -30,7 +30,7 @@ For each externally visible identifier, the following strict compatibility polic
 | **`.vorce` files** | Canonical | The new canonical standard default project file extension. All saves default to `.vorce`. |
 | **`.mapmap` and `.mflow` files** | Legacy migration surface | Kept as a read-only alias. The app will load `.mapmap` and `.mflow` files to allow migration, but all output/saves will be `.vorce`. |
 | **`/vorce/` OSC** | Canonical | The new standard canonical OSC namespace. |
-| **`/mapmap/` and `/mapflow/` OSC** | Explicit compatibility alias | OSC endpoints may temporarily listen to both `/mapmap/` and `/mapflow/` strictly as explicit compatibility aliases to support existing integrations, but will issue deprecation warnings. |
+| **`/mapmap/` and `/mapflow/` OSC** | Hard break | Legacy OSC endpoints are no longer supported. All integrations must migrate to `/vorce/`. |
 | **`VORCE_` and `VORCE_PROJECT_*` Env Vars** | Canonical | These are the canonical environment prefixes. |
 | **Old repo URLs & badges** | Hard break with migration steps | GitHub automatically redirects old URLs, but all hardcoded links and badges in documentation must be updated immediately to `Vorce`. |
 | **Old binary/app names** | Hard break with migration steps | Releasing new binaries under legacy names (`MapMap` or `MapFlow`) stops immediately. Installers will prompt to uninstall old versions if detected. |
@@ -44,15 +44,18 @@ For each externally visible identifier, the following strict compatibility polic
 ## 4. Migration Note Outline
 
 ### For Contributors
+
 - All new crates must use the `vorce` prefix.
 - Use `VORCE_` and `VORCE_PROJECT_*` for environment variables.
 - Run the provided renaming scripts before opening new PRs.
 - Avoid using "MapMap" or "MapFlow" in any new documentation or code comments outside of explicit compatibility contexts.
 
 ### For Users
+
 - Your existing `.mapmap` and `.mflow` project files are safe. Opening them in the new version will automatically upgrade them, and the next save will create a `.vorce` file.
 - The application binary is now `Vorce`. Please update any custom shortcuts or startup scripts.
 
 ### For Integrators (OSC, APIs)
+
 - OSC commands must migrate to the `/vorce/` namespace. The legacy `/mapmap/` and `/mapflow/` namespaces are strictly kept as explicit compatibility aliases and will issue deprecation warnings.
 - If you rely on environment variables for automation, ensure they start with `VORCE_`.

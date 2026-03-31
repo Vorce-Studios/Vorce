@@ -7,6 +7,7 @@ date: 2026-03-21
 # Phasenplan: Moderne & Modulare Vorce-UI
 
 ## Plan-Überblick
+
 Dieser Plan beschreibt die schrittweise Transformation der Vorce-UI in ein hochflexibles, slot-basiertes System mit adaptiven Widgets und Node-Skins.
 
 - **Gesamtphasen**: 4
@@ -14,6 +15,7 @@ Dieser Plan beschreibt die schrittweise Transformation der Vorce-UI in ein hochf
 - **Strategie**: Fundament (Slots) -> Ergonomie (Inspector) -> Ästhetik (Nodes) -> Polish (Cleanup).
 
 ## Abhängigkeitsgraph
+
 ```mermaid
 graph TD
     P1[Phase 1: Slot Core] --> P2[Phase 2: Adaptive Inspector]
@@ -34,6 +36,7 @@ graph TD
 ## Phasen-Details
 
 ### Phase 1: Slot Core (Foundations)
+
 - **Ziel**: Einführung des `LayoutTree` und der Slot-Logik zur Trennung von Inhalt und Bereich.
 - **Agent**: `architect`
 - **Dateien erstellen**:
@@ -43,6 +46,7 @@ graph TD
 - **Validierung**: `cargo check --workspace` & Manuelle Prüfung des Slot-Resizing.
 
 ### Phase 2: Adaptive Inspector (Ergonomics)
+
 - **Ziel**: Spaltensystem und Skalierbarkeit für den Inspector-Inhalt.
 - **Agent**: `ux_designer`
 - **Dateien ändern**:
@@ -51,6 +55,7 @@ graph TD
 - **Validierung**: Unit Tests für das Spalten-Umbruch-Verhalten.
 
 ### Phase 3: Custom Node Skins (Aesthetics)
+
 - **Ziel**: Data-Driven Skinning und interaktive Node-Animationen.
 - **Agent**: `design_system_engineer`
 - **Dateien ändern**:
@@ -59,6 +64,7 @@ graph TD
 - **Validierung**: Visuelle Prüfung der Flow-Animationen im Graph.
 
 ### Phase 4: Polish & Performance (Cleanup)
+
 - **Ziel**: Behebung der Audit-Reports und Optimierung der UI-Performance.
 - **Agent**: `performance_engineer`
 - **Dateien ändern**:
@@ -67,6 +73,7 @@ graph TD
 - **Validierung**: `cargo clippy` & Performance-Messung der Transition-Engine.
 
 ## Kostenabschätzung
+
 | Phase | Agent | Modell | Est. Input | Est. Output | Est. Cost |
 |-------|-------|-------|-----------|------------|----------|
 | 1 | architect | flash | 50K | 5K | $0.07 |

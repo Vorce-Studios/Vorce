@@ -1,52 +1,44 @@
 <div align="center">
-  <img src="resources/app_icons/Vorce_Logo_HQ-Full-Gray-Background.png" alt="Vorce Logo" width="500"/>
+  <img src="resources/branding/logo_banner.png" alt="Vorce Logo" width="600">
 
-## High-Performance Real-Time Visual Synthesis & Projection Mapping
+# Vorce (formerly VjMapper)
 
-<!-- markdownlint-disable MD013 -->
-[![Build & Quality](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml/badge.svg?branch=main)](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml) [![Security Analysis](https://github.com/Vorce-Studios/Vorce/actions/workflows/CI-02_security-scan.yml/badge.svg?branch=main)](https://github.com/Vorce-Studios/Vorce/actions/workflows/CI-02_security-scan.yml) [![Stable Release](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-MainFlow_Job03_Release.yml/badge.svg?branch=main)](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-MainFlow_Job03_Release.yml) ![OS: Windows | Linux | macOS](https://img.shields.io/badge/OS-Windows%20%7C%20Linux%20%7C%20macOS-blue.svg) [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE) [![Rust: 1.94+](https://img.shields.io/badge/Rust-1.94%2B-orange.svg)](https://www.rust-lang.org/) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-<!-- markdownlint-enable MD013 -->
+  **A High-Performance, Professional-Grade Projection Mapping Tool Built with Rust.**
 
-  **Vorce** is a next-generation, modular **VJ (Video Jockey) Software**
-  engineered for high-performance visual synthesis, real-time effects, and
-  professional projection mapping. Built with the speed and safety of **Rust**,
-  it empowers artists to create immersive visual experiences with unprecedented
-  flexibility.
+  [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+  [![Rust](https://img.shields.io/badge/rust-1.94%2B-orange.svg)](https://www.rust-lang.org/)
+  [![CI](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml/badge.svg)](https://github.com/Vorce-Studios/Vorce/actions)
 </div>
 
 ---
 
-## 🚀 Vision
+## 🌟 Introduction
 
-In an era of complex visual performances, Vorce bridges the gap between ease
-of use and professional power. By utilizing a **node-based architecture**,
-every parameter becomes a playground for automation, audio-reactivity, and
-external control.
-
-## ✨ Core Features
-
-### 🧩 Modular Node System
-
-Design complex visual flows by connecting video sources, generative shaders, and
-real-time filters. Every node property is a control target for our unified
-modulation system.
+**Vorce** is a modern, open-source projection mapping software designed for
+visual artists, stage designers, and live performers. It combines the
+efficiency of Rust with a powerful, real-time node-based workflow and a
+highly reactive modulation system.
 
 ### ⚡ Professional Rendering Engine
 
-Powered by **WGPU** and the **Bevy Engine**, Vorce delivers low-latency, hardware-accelerated rendering.
+Powered by **WGPU** and the **Bevy Engine**, Vorce delivers low-latency,
+hardware-accelerated rendering.
 
 * **Multi-Layer Composition**: Advanced blend modes and hierarchical grouping.
-* **3D & Particle Integration**: Native Bevy support for stunning volumetric effects and 3D scenes.
+* **3D & Particle Integration**: Native Bevy support for stunning
+  volumetric effects and 3D scenes.
 * **LUT Color Grading**: Industry-standard `.cube` support for cinematic looks.
 
 ### 🔊 Deep Audio Reactivity
 
-Our **AudioAnalyzer V2** tracks 9 frequency bands, RMS volume, and peak detection in real-time, allowing visuals to dance perfectly to the beat.
+Our **AudioAnalyzer V2** tracks 9 frequency bands, RMS volume, and peak
+detection in real-time, allowing visuals to dance perfectly to the beat.
 
 ### 📐 Precision Projection Mapping
 
 * **Bezier Warping**: Flexible mesh deformation for complex surfaces.
-* **Edge Blending**: Seamless multi-projector setups with per-output gamma correction.
+* **Edge Blending**: Seamless multi-projector setups with per-output
+  gamma correction.
 * **Advanced Masking**: Integrated shape and file-based masking tools.
 
 ### 🎛️ Unified Control
@@ -91,8 +83,10 @@ cargo run --release
 
 ### 3. Usage
 
-* Check the [**Quick Start Guide**](docs/A4_USER/B1_MANUAL/DOC-C2_QUICKSTART.md) to create your first composition.
-* Explore the [**User Manual**](docs/A4_USER/B1_MANUAL/DOC-C0_README.md) for detailed control explanations.
+* Check the [**Quick Start Guide**](docs/A4_USER/B1_MANUAL/DOC-C2_QUICKSTART.md)
+  to create your first composition.
+* Explore the [**User Manual**](docs/A4_USER/B1_MANUAL/DOC-C0_README.md)
+  for detailed control explanations.
 
 ---
 
@@ -100,9 +94,12 @@ cargo run --release
 
 Explore our comprehensive guides in the [`docs/`](docs/README.md) directory:
 
-* 📖 [**User Guide**](docs/A4_USER/B1_MANUAL/DOC-C0_README.md): Interface layout, keyboard shortcuts, and performance tips.
-* 👨‍💻 [**Developer Portal**](docs/A2_DEVELOPMENT/DOC-B0_README.md): Architecture overview, coding standards, and build instructions.
-* 🗺️ **Project Roadmap**: Current status and upcoming Phase 1.0 release goals are tracked via GitHub Project Issues.
+* 📖 [**User Guide**](docs/A4_USER/B1_MANUAL/DOC-C0_README.md): Interface layout, keyboard
+  shortcuts, and performance tips.
+* 👨‍💻 [**Developer Portal**](docs/A2_DEVELOPMENT/DOC-B0_README.md): Architecture overview,
+  coding standards, and build instructions.
+* 🗺️ **Project Roadmap**: Current status and upcoming Phase 1.0 release goals are
+  tracked via GitHub Project Issues.
 
 ---
 

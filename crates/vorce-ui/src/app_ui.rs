@@ -189,8 +189,13 @@ pub struct AppUI {
 
 impl Default for AppUI {
     fn default() -> Self {
-        // Load user config once at initialization
-        let mut user_config = config::UserConfig::load();
+        Self::from_user_config(config::UserConfig::load())
+    }
+}
+
+impl AppUI {
+    /// Create UI state from a preloaded user configuration.
+    pub fn from_user_config(mut user_config: config::UserConfig) -> Self {
         user_config.ensure_layout_profiles();
 
         let active_layout = user_config
@@ -198,14 +203,13 @@ impl Default for AppUI {
             .cloned()
             .unwrap_or_else(config::LayoutProfile::default_profile);
 
-        // Extract values before moving user_config into struct
         let saved_audio_device = user_config.selected_audio_device.clone();
         let saved_recent_files = user_config.recent_files.clone();
         let saved_language = user_config.language.clone();
         let saved_target_fps = user_config.target_fps.unwrap_or(60.0);
         let saved_show_controller_overlay = user_config.show_controller_overlay;
 
-        Self {
+        let mut app_ui = Self {
             menu_bar: menu_bar::MenuBar::default(),
             dashboard: Dashboard::default(),
             paint_panel: PaintPanel::default(),
@@ -290,11 +294,44 @@ impl Default for AppUI {
             active_keys: std::collections::HashSet::new(),
             active_sidebar_tab: 0,
             last_style_update: std::time::Instant::now(),
+        };
+
+        app_ui.ensure_startup_viability();
+        app_ui
+    }
+
+    fn has_primary_workspace(&self) -> bool {
+        self.show_module_canvas
+            || self.show_left_sidebar
+            || self.show_inspector
+            || self.show_timeline
+            || self.show_media_browser
+    }
+
+    fn ensure_startup_viability(&mut self) {
+        if self.has_primary_workspace() {
+            return;
+        }
+
+        tracing::error!(
+            "Recovered unusable UI startup state: no primary work area was visible. Re-enabling sidebar and module canvas."
+        );
+
+        self.show_left_sidebar = true;
+        self.show_module_canvas = true;
+        self.user_config.show_left_sidebar = true;
+        self.user_config.show_module_canvas = true;
+
+        if let Some(layout) = self.user_config.active_layout_mut() {
+            layout.visibility.show_left_sidebar = true;
+            layout.visibility.show_module_canvas = true;
+        }
+
+        if let Err(err) = self.user_config.save() {
+            tracing::error!("Failed to persist repaired UI startup state: {}", err);
         }
     }
-}
 
-impl AppUI {
     /// Wendet das aktive Layoutprofil auf die Runtime-Sichtbarkeitsflags an.
     pub fn apply_active_layout(&mut self) {
         if let Some(layout) = self.user_config.active_layout() {
@@ -331,7 +368,7 @@ impl AppUI {
 
         let layout = crate::core::responsive::ResponsiveLayout::new(ctx);
 
-        let mut style = (*ctx.style()).clone();
+        let mut style = (*ctx.global_style()).clone();
         let base_font_size = self.user_config.theme.font_size.max(10.0);
         let user_scale = self.user_config.ui_scale.clamp(0.8, 1.4);
 
@@ -360,7 +397,7 @@ impl AppUI {
         style.spacing.item_spacing = egui::vec2(8.0, 6.0) * spacing_scale;
         style.spacing.button_padding = egui::vec2(8.0, 4.0) * spacing_scale;
 
-        ctx.set_style(style);
+        ctx.set_global_style(style);
     }
 
     /// Take all pending actions and clear the list
@@ -387,17 +424,20 @@ impl AppUI {
     }
 
     /// Render the media browser as left side panel
+    #[allow(deprecated)]
     pub fn render_media_browser(&mut self, ctx: &egui::Context) {
         if !self.show_media_browser {
             return;
         }
 
-        egui::SidePanel::left("media_browser_panel")
+        egui::Panel::left("media_browser_panel")
             .resizable(true)
-            .default_width(280.0)
-            .min_width(200.0)
-            .max_width(400.0)
-            .frame(crate::widgets::panel::cyber_panel_frame(&ctx.style()))
+            .default_size(280.0)
+            .min_size(200.0)
+            .max_size(400.0)
+            .frame(crate::widgets::panel::cyber_panel_frame(
+                &ctx.global_style(),
+            ))
             .show(ctx, |ui: &mut egui::Ui| {
                 crate::widgets::panel::render_panel_header(
                     ui,
@@ -431,7 +471,9 @@ impl AppUI {
 
         egui::Window::new(self.i18n.t("panel-playback"))
             .default_size([320.0, 360.0])
-            .frame(crate::widgets::panel::cyber_panel_frame(&ctx.style()))
+            .frame(crate::widgets::panel::cyber_panel_frame(
+                &ctx.global_style(),
+            ))
             .show(ctx, |ui| {
                 crate::widgets::panel::render_panel_header(
                     ui,

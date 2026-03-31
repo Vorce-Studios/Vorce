@@ -730,7 +730,9 @@ Noch offen:
 - ein finaler Release-Smoke-Test steht noch aus, obwohl die eigentlichen Startblocker im Debug-Build behoben und verifiziert sind
 
 ### 12.1 Inspector Previews (Feature Update)
+
 Ein konsistenter Preview-Contract wurde fuer alle Node-Familien umgesetzt:
+
 - **Layer**: Hat weiterhin den erweiterten Preview-Panel (Direct, Linked Output, Fallback).
 - **Source, Mask, Modulizer (Effekte)**: Zeigen nun alle standardmaessig einen Live-Texture-Preview im Inspector an.
 - **Output**: Zeigt nun den Live-Texture-Preview des finalen Outputs basierend auf der Output ID an.

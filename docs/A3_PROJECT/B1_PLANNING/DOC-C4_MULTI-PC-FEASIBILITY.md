@@ -76,6 +76,7 @@ fn main() {
 ```
 
 **Vorteile:**
+
 - Eine Codebasis = einfachere Wartung
 - Einheitlicher Installer
 - Automatische Feature-Discovery
@@ -489,11 +490,13 @@ dicaffeine --source "Vorce-MASTER" --fullscreen
 ```
 
 **Performance (Raspberry Pi 4):**
+
 - 720p60: ✅ Stabil
 - 1080p30: ✅ Stabil
 - 1080p60: ⚠️ Möglich mit Drops
 
 **Performance (Raspberry Pi 5):**
+
 - 720p60: ✅ Stabil
 - 1080p30: ✅ Stabil
 - 1080p60: ✅ Stabil (erwartet)
@@ -759,6 +762,7 @@ Vorce-pi-player-v1.0.0.img.xz
 ## 9. Empfohlener Implementierungsplan
 
 ### Phase 1: MVP (Option A - NDI)
+
 **Zeitraum:** Wochen 1-3
 
 1. Refactoring der Hauptanwendung für Multi-Mode-Unterstützung
@@ -769,6 +773,7 @@ Vorce-pi-player-v1.0.0.img.xz
 **Deliverable:** Funktionierender NDI-Stream von Master zu Player über LAN.
 
 ### Phase 2: Legacy Support (Option C)
+
 **Zeitraum:** Wochen 4-5
 
 1. H.264 Encoding Pipeline
@@ -779,6 +784,7 @@ Vorce-pi-player-v1.0.0.img.xz
 **Deliverable:** RTSP-basierter Player für Hardware ab 2010.
 
 ### Phase 3: Raspberry Pi (Option D)
+
 **Zeitraum:** Wochen 6-7
 
 1. ARM64 Build-Pipeline
@@ -789,6 +795,7 @@ Vorce-pi-player-v1.0.0.img.xz
 **Deliverable:** Funktionierender Raspberry Pi 4/5 als Ausgabegerät.
 
 ### Phase 4: Distributed Rendering (Option B)
+
 **Zeitraum:** Wochen 8-12 (Future)
 
 1. OSC Control Protocol
@@ -823,14 +830,13 @@ Die Multi-PC-Architektur für Vorce ist **technisch machbar** und wirtschaftlich
 5. **Distributed Rendering für High-End** (langfristige Perspektive)
 
 Mit diesem Ansatz positioniert sich Vorce als **ernstzunehmende Alternative** zu kommerziellen Lösungen wie:
+
 - Resolume Arena (~€799)
 - MadMapper (~€449)
 - TouchDesigner (~$2000/Jahr)
 
 **Empfohlener erster Schritt:**
 Erstellung eines Proof-of-Concept für Option A, der einen NDI-Stream von Vorce zu einem zweiten PC überträgt und dort fullscreen darstellt. Geschätzte Zeit: 5-7 Tage.
-
-
 
 # Multi-PC Architektur
 
@@ -839,23 +845,26 @@ Vorce unterstützt skalierbare Setups über mehrere Computer hinweg. Dies ist no
 ## Optionen
 
 ### Option A: NDI Video-Streaming (Empfohlen)
+
 Nutzung von NDI (Network Device Interface) zur Übertragung von Video über IP.
-*   **Master**: Rendert das Composing und sendet Slices oder das Gesamtbild per NDI.
-*   **Clients**: Empfangen den NDI-Stream und zeigen ihn im Fullscreen an.
-*   **Status**: Implementiert (`Vorce-io/src/ndi`).
+- **Master**: Rendert das Composing und sendet Slices oder das Gesamtbild per NDI.
+- **Clients**: Empfangen den NDI-Stream und zeigen ihn im Fullscreen an.
+- **Status**: Implementiert (`Vorce-io/src/ndi`).
 
 ### Option B: Distributed Rendering (High-End)
+
 Szenen-Synchronisation statt Video-Streaming.
-*   **Konzept**: Der Master sendet nur Steuerdaten (OSC, Parameter, Timecode). Jeder Client rendert sein Bild lokal in voller Qualität.
-*   **Vorteil**: Geringere Netzwerkbandbreite, höhere Qualität (keine Kompressionsartefakte).
-*   **Nachteil**: Alle Clients benötigen starke GPUs.
-*   **Status**: Geplant (Phase 8).
+- **Konzept**: Der Master sendet nur Steuerdaten (OSC, Parameter, Timecode). Jeder Client rendert sein Bild lokal in voller Qualität.
+- **Vorteil**: Geringere Netzwerkbandbreite, höhere Qualität (keine Kompressionsartefakte).
+- **Nachteil**: Alle Clients benötigen starke GPUs.
+- **Status**: Geplant (Phase 8).
 
 ### Option C: Legacy Clients & Raspberry Pi
+
 Für Low-Budget oder ältere Hardware.
-*   **Raspberry Pi**: Nutzung als kompakter NDI-Player oder RTSP-Client.
-*   **Legacy**: Nutzung von H.264 Streams für PCs ohne starke GPU.
+- **Raspberry Pi**: Nutzung als kompakter NDI-Player oder RTSP-Client.
+- **Legacy**: Nutzung von H.264 Streams für PCs ohne starke GPU.
 
 ## Netzwerk-Anforderungen
-*   **LAN**: Gigabit Ethernet ist Minimum. 10GbE empfohlen für 4K NDI Streams.
-*   **Latenz**: Optimierung auf <1 Frame (16ms) ist das Ziel.
+- **LAN**: Gigabit Ethernet ist Minimum. 10GbE empfohlen für 4K NDI Streams.
+- **Latenz**: Optimierung auf <1 Frame (16ms) ist das Ziel.

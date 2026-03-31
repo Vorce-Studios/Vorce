@@ -262,27 +262,6 @@ The actively used auto-merge logic now lives in `CICD-DevFlow_Job02_AutoMerge.ym
    - Add success comment to issue
 5. Exit (no re-trigger)
 
-### 9. Code Atlas Sync (`CICD-MainFlow_Job05_CodeAtlas.yml`)
-
-**Purpose:** Generate the agent-focused code atlas online and commit it directly back to `main`
-
-**Triggers:**
-
-- Push to `main`
-- Manual dispatch
-
-**Features:**
-
-- Generates `.agent/atlas/code-atlas.json` and Mermaid views on GitHub-hosted runners
-- Commits generated atlas files directly back to `main`
-- Ignores `.agent/atlas/**` as a trigger path to avoid self-trigger loops
-- Uses `[skip ci]` in the bot commit message to suppress secondary workflow cascades
-
-**Notes:**
-
-- This workflow depends on `contents: write`
-- If branch protection blocks direct pushes from `GITHUB_TOKEN`, the workflow must be granted bypass/write access for `main`
-
 ## 🏷️ Labels Used
 
 The automation system uses the following labels:
@@ -307,7 +286,7 @@ The workflows require the following GitHub permissions:
 - `pull-requests: write` - For managing PRs
 - `security-events: write` - For CodeQL findings
 - `checks: read` - For reading check status
-- `statuses: read` - For reading commit status integrations like `pre-commit.ci`
+- `statuses: read` - For reading external commit status integrations like `pre-commit.ci`
 
 ## 🚀 Jules Integration Setup
 
@@ -321,7 +300,7 @@ The workflows require the following GitHub permissions:
 
 ### Complete Jules Automation Workflow
 
-**📋 Phase 1: Issue Creation & Session Start**
+#### 📋 Phase 1: Issue Creation & Session Start
 
 1. **Issue Creation:**
    - Manual creation via issue templates
@@ -334,7 +313,7 @@ The workflows require the following GitHub permissions:
    - Creates Jules session via API
    - Adds tracking comment to issue
 
-**🔄 Phase 2: Session Monitoring**
+#### 🔄 Phase 2: Session Monitoring
 
 1. **Continuous Monitoring (CI-08):**
 
@@ -348,7 +327,7 @@ The workflows require the following GitHub permissions:
    - Links to issue and session
    - Notifies on issue
 
-**🧪 Phase 3: Automated Testing**
+#### 🧪 Phase 3: Automated Testing
 
 1. **Current PR Gate (`CICD-DevFlow_Job01_Validation.yml`):**
 
@@ -359,7 +338,7 @@ The workflows require the following GitHub permissions:
 - Windows build and tests
 - Final success gate
 
-**✅ Phase 4: Merge Decision**
+#### ✅ Phase 4: Merge Decision
 
 1. **Current Success Path (`CICD-DevFlow_Job02_AutoMerge.yml`):**
 
@@ -375,7 +354,7 @@ The workflows require the following GitHub permissions:
 - PR is behind `main`
 - PR is draft or closed
 
-**📝 Phase 5: Post-Merge Actions**
+#### 📝 Phase 5: Post-Merge Actions
 
 1. **Documentation Updates and Follow-up Automation:**
 
@@ -447,28 +426,26 @@ gh workflow run CI-06_update-changelog.yml
 
 ### Troubleshooting
 
-**Issue: CI fails with dependency errors**
+#### Issue: CI fails with dependency errors
 
 - Check system dependencies in the active validation workflow
 - Verify FFmpeg installation
 - Check package availability on runner OS
 
-**Issue: Auto-merge not working**
+#### Issue: Auto-merge not working
 
 - Verify all required PR checks passed on the latest PR head commit
 - Ensure no merge conflicts exist
 - Review branch protection rules
 - Confirm the auto-merge workflow expects the same checks as branch protection
 
-**Issue: Pull requests seem to hang waiting for checks**
+#### Issue: Pull requests seem to hang waiting for checks
 
 - Check whether Branch Protection requires outdated check names
-- Verify that `pre-commit.ci - pr` is bound to the hosted `pre-commit.ci` app instead of a legacy GitHub Actions status publisher
-- Do not require the same status checks in both classic Branch Protection and repository Rulesets at the same time
 - Ensure CodeQL is not configured as a required PR check
 - Verify the required set matches the current `CICD-DevFlow` workflow names
 
-**Issue: Issues not created from ROADMAP**
+#### Issue: Issues not created from ROADMAP
 
 - Verify ROADMAP.md format
 - Check workflow permissions
@@ -545,29 +522,11 @@ For issues with workflows:
 > 1. Stelle sicher, dass die Workflows im Repository aktiviert sind (Settings → Actions → General → "Allow all actions")
 > 2. Markiere die Jobs in den Branch Protection Rules als "required" (Settings → Branches → main → "Require status checks to pass before merging")
 > 3. Empfohlene required checks:
->    - `pre-commit.ci - pr`
->    - `Rust Autofix`
 >    - `Quality Gate (Format & Lint)`
 >    - `Security Scan`
 >    - `Build & Test (Linux)`
 >    - `Build & Test (Windows)`
 >    - `Validation Success`
-
-### CICD-DevFlow_Job00_PreCommitLite.yml
-
-**Aktuelle Trigger:**
-
-- Pull Request Events (`opened`, `reopened`, `synchronize`, `ready_for_review`, `labeled`)
-- `pull_request_target` für konsistente Runs auch auf älteren offenen PR-Branches
-- Manual Dispatch mit PR-Nummer für gezielten Maintainer-Backfill
-
-**Funktion:**
-
-- Führt `pre-commit.ci lite` auf GitHub Actions aus
-- Nutzt die vertrauenswürdige `.pre-commit-config.yaml` vom Basis-Branch und arbeitet auf dem PR-Head
-- Korrigiert `cargo fmt` und `cargo-sort` automatisch auf PR-Branches
-- Unterstützt manuelles Re-Run über das Label `pre-commit ci run`
-- Liefert den merge-relevanten Check `Rust Autofix`
 
 ### CICD-DevFlow_Job02_AutoMerge.yml
 
@@ -587,8 +546,6 @@ For issues with workflows:
 
 **Aktueller Pflichtsatz für Auto-Merge:**
 
-- `pre-commit.ci - pr`
-- `Rust Autofix`
 - `Quality Gate (Format & Lint)`
 - `Security Scan`
 - `Build & Test (Linux)`
@@ -627,8 +584,6 @@ Um die PR-Checks als "required" zu markieren, folge diesen Schritten:
 1. Gehe zu **Settings** → **Branches** → **main**
 2. Aktiviere "Require status checks to pass before merging"
 3. Wähle folgende Checks als required aus:
-   - `pre-commit.ci - pr`
-   - `Rust Autofix`
    - `Quality Gate (Format & Lint)`
    - `Security Scan`
    - `Build & Test (Linux)`
@@ -644,9 +599,6 @@ Um die PR-Checks als "required" zu markieren, folge diesen Schritten:
 
 Die Checks werden dann als "Expected" im PR angezeigt und müssen vor dem Merge grün sein.
 
-> [!IMPORTANT]
-> Verwende für merge-blockierende Required Checks genau **eine** Quelle. In Vorce ist das die klassische Branch Protection auf `main`. Das Repository-Ruleset darf parallel PR-/Delete-/Create-Regeln setzen, aber nicht noch einmal denselben Required-Check-Satz spiegeln, sonst zeigt GitHub doppelte "Expected"-Einträge.
-
 ---
 
 📋 Current PR-Check Flow:
@@ -658,35 +610,31 @@ Die Checks werden dann als "Expected" im PR angezeigt und müssen vor dem Merge 
          │                       │
          ▼                       ▼
 ┌─────────────────┐    ┌─────────────────────────────────┐
-│ pre-commit.ci   │    │ pre-commit.ci lite              │
-│ hosted service  │    │ GitHub Actions runner           │
+│ pre-commit.ci   │    │ GitHub Actions Validation       │
 │                 │    │                                 │
-│ • trailing ws   │    │ • cargo fmt                     │
-│ • detect-secrets│    │ • cargo-sort                    │
-│ • YAML/TOML     │    │ • safe PR autofix               │
-│ • optional MD   │    │                                 │
-│ • autoupdate    │    │ ✅ Rust system hooks            │
-│ ✅ fast status  │    └───────────────┬─────────────────┘
-└────────┬────────┘                    │
-         │                             ▼
-         │              ┌─────────────────────────────────┐
-         │              │ GitHub Actions Validation       │
-         │              │                                 │
-         │              │ • Quality Gate                  │
-         │              │ • Security Scan                 │
-         │              │ • Build & Test (Linux)          │
-         │              │ • Build & Test (Windows)        │
-         │              │ • Validation Success            │
-         │              └───────────────┬─────────────────┘
-         │                              │
-         └─────────────┬────────────────┘
+│ • cargo fmt     │    │ • Quality Gate                  │
+│ • trailing ws   │    │ • Security Scan                 │
+│ • YAML/TOML     │    │ • Build & Test (Linux)          │
+│ • Markdown      │    │ • Build & Test (Windows)        │
+│                 │    │ • Validation Success            │
+│ ⚡ ~30s         │    │                                 │
+│ ✅ Auto-Push   │    │ ✅ Merge-relevant gate           │
+└────────┬────────┘    └───────────────┬────��────────────┘
+         │                             │
+         └─────────────┬───────────────┘
+                       │
+                       ▼
+            ┌──────────────────────┐
+            │ Copilot Review       │
+            │ ~1-2 min             │
+            └──────────┬───────────┘
                        │
                        ▼
             ┌──────────────────────┐
             │ Auto-Merge           │
-            │ • Waits on all gates │
-            │ • Merges if clean    │
-            │ • Or comments reason │
+            │ • Check Status       │
+            │ • Merge if OK        │
+            │ • Or comment reason  │
             └──────────────────────┘
 
 ✅ Zusammenfassung der Dateipfade:
@@ -696,7 +644,6 @@ Datei | Pfad | Grund
 `.markdownlint.json` | Root | Wird von `markdownlint-cli` im Root gesucht
 `.secrets.baseline` | Root | Wird von `detect-secrets` im Root gesucht
 `.pre-commit-config.yaml` | Root | Standard für `pre-commit`
-`CICD-DevFlow_Job00_PreCommitLite.yml` | `.github/workflows/` | Führt Rust-Autofixes über `pre-commit.ci lite` aus
 `copilot-instructions.md` | `.github/` | GitHub-spezifische Config
 Workflows | `.github/workflows/` | GitHub Actions Standard
 
@@ -725,5 +672,5 @@ git commit -m "ci: implement validation and auto-merge with Jules feedback"
 git push
 ```
 
-**Last Updated:** 2026-03-29 (hosted pre-commit.ci plus pre-commit.ci lite für Rust-Autofixes)
+**Last Updated:** 2026-03-15 (PR-Gate vereinheitlicht, Windows immer aktiv, CodeQL aus Required Checks entfernt)
 **Maintained By:** Vorce Team

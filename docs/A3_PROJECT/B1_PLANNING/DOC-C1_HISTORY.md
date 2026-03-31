@@ -7,11 +7,13 @@ Dieses Dokument fasst den Status der technischen Schulden, die Ergebnisse vergan
 Alle kritischen Architektur-Probleme (God Files, Unsafe Pointer) der frühen Phasen wurden erfolgreich behoben. Die verbleibenden Aufgaben sind in die GitHub Project Issues überführt worden.
 
 ### Erledigte Altlasten ✅
+
 - **Module Canvas**: Aufgeteilt in saubere Submodule.
 - **Evaluator**: Thread-Safe und synchronisiert.
 - **GPU Uploads**: Vollständig asynchron.
 
 ### Offene Schwerpunkte (siehe Roadmap) 🔴
+
 - **HAP Q Alpha**: Vollständige Unterstützung für Transparenz in HAP-Videos.
 - **Spout/NDI**: Performance-Optimierung und stabile Integration.
 - **Undo/Redo**: Erweiterung auf alle UI-Parameter.
@@ -33,6 +35,7 @@ Regelmäßige Audits sichern die Qualität von Vorce.
 ## 3. Phasenplanung (Historisch)
 
 Vorce wurde in 7 Kernphasen entwickelt:
+
 - **Phase 0-2**: Foundation, Multi-Projector, Shader-System.
 - **Phase 3-5**: Control (MIDI/OSC), Assets, ImGui-Interface.
 - **Phase 6**: Vollständige Migration auf **egui** (Node-Editor, Timeline).

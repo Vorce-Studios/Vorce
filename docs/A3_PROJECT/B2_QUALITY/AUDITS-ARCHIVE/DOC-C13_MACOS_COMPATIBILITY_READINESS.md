@@ -24,4 +24,5 @@ Dieses Dokument fasst den realen Reifegrad der macOS Compatibility Features im `
 | **MFsub_#1028-macOS-Native-Interop** | **[Abgeschlossen]** | Native Interop (Syphon, VirtualCamera) vorhanden/gated. |
 
 ## Abnahme & Freigabe
+
 Alle gelisteten Sub-Issues wurden als **Abgeschlossen** markiert. Die Umsetzung ist im Code, in der CI und in den Build-Flags (`macos-beta`) sichtbar.
