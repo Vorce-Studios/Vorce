@@ -77,9 +77,15 @@ repos:
         args:
           - '--config'
           - '.markdownlint.json'
+          - '--ignore'
+          - 'MD013'
+          - '--ignore'
+          - 'MD033'
+          - '--ignore'
+          - 'MD041'
         files: \.(md|markdown)$
         # Exclude existing problematic files (legacy)
-        exclude: ^(CHANGELOG\.md|ROADMAP\.md|.*\.patch|\.jules/.*|\.agent/.*|docs/.*)$
+        exclude: ^(CHANGELOG\.md|ROADMAP\.md|.*\.patch|\.jules/.*|\.agent/.*|docs/.*|crates/vendor/.*)$
 
   # ═══════════════════════════════════════════════════════════════
   # SECURITY: SECRET DETECTION

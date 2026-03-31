@@ -14,7 +14,7 @@
 
 **Crates:**
 
-```
+```text
 crates/
 ├── vorce-core       # Kernlogik, Projektmanagement
 ├── vorce-ui         # egui UI-Komponenten
@@ -29,7 +29,7 @@ crates/
 
 ### 🔴 HOCH (Immer kommentieren)
 
-**1. Memory Safety & `unsafe`**
+#### 1. Memory Safety & unsafe
 
 ```rust
 // ❌ BAD
@@ -46,7 +46,7 @@ unsafe {
 }
 ```
 
-**2. Error Handling**
+#### 2. Error Handling
 
 ```rust
 // ❌ BAD
@@ -57,7 +57,7 @@ let data = file.read()
     .map_err(|e| Error::FileRead { source: e })?;
 ```
 
-**3. Security Issues**
+#### 3. Security Issues
 
 - Unvalidated user input
 - Path traversal vulnerabilities
@@ -68,7 +68,7 @@ let data = file.read()
 
 ### 🟡 MITTEL (Bei Signifikanz)
 
-**4. Performance**
+#### 4. Performance
 
 ```rust
 // ⚠️ WARNUNG
@@ -82,7 +82,7 @@ for item in large_vec.iter() {
 }
 ```
 
-**5. Cross-Platform Issues**
+#### 5. Cross-Platform Issues
 
 ```rust
 // ❌ BAD
@@ -93,7 +93,7 @@ use std::os::windows::*; // Nur Windows
 use std::os::windows::*;
 ```
 
-**6. GPU Resource Management**
+#### 6. GPU Resource Management
 
 ```rust
 // ✅ GOOD - Implementiere Drop für Cleanup
@@ -108,7 +108,7 @@ impl Drop for GpuTexture {
 
 ### 🟢 NIEDRIG (Optional)
 
-**7. Code Style (nur bei klaren Verbesserungen)**
+#### 7. Code Style (nur bei klaren Verbesserungen)
 
 ```rust
 // Akzeptabel (wird von rustfmt gehandhabt)
@@ -118,7 +118,7 @@ fn foo(  ) {  }
 fn foo() {}
 ```
 
-**8. Micro-Optimierungen**
+#### 8. Micro-Optimierungen
 
 - Nur bei Hot Paths kommentieren
 - Mit Benchmarks belegen
@@ -202,8 +202,6 @@ drop(decoder); // Explizit cleanup bei C-Bindings
 ### 💡 Optional
 
 - [Nice-to-have Verbesserungen]
-
-```
 
 ---
 
