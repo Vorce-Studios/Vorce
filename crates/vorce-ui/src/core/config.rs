@@ -447,7 +447,6 @@ pub struct UserConfig {
     #[serde(default = "default_startup_animation_path")]
     pub startup_animation_path: String,
 
-    // Accessibility settings
     /// Reduziert Bewegungen/Animationen global für bessere Zugänglichkeit.
     #[serde(default)]
     pub reduce_motion_enabled: bool,
