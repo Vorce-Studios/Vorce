@@ -29,24 +29,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Check API Key presence
-        id: check_key
-        shell: bash
-        run: |
-          if [ -n "$JULES_API_KEY" ]; then
-            echo "present=true" >> $GITHUB_OUTPUT
-          else
-            echo "present=false" >> $GITHUB_OUTPUT
-          fi
-        env:
-          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
-
       - name: Skip when Jules API key is missing
-        if: ${{ steps.check_key.outputs.present == 'false' }}
+        if: ${{ secrets.JULES_API_KEY == '' }}
         run: echo "JULES_API_KEY is not configured. Skipping Project Manager sync."
 
       - name: Sync all tracked issues
-        if: ${{ steps.check_key.outputs.present == 'true' }}
+        if: ${{ secrets.JULES_API_KEY != '' }}
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.PROJECT_SYNC_GH_TOKEN || github.token }}
