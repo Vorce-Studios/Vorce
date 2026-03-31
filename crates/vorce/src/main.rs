@@ -402,7 +402,10 @@ impl App {
 fn main() -> Result<()> {
     // Set up panic hook early to capture startup crashes
     std::panic::set_hook(Box::new(|panic_info| {
-        let location = panic_info.location().map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column())).unwrap_or_else(|| "unknown".to_string());
+        let location = panic_info
+            .location()
+            .map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column()))
+            .unwrap_or_else(|| "unknown".to_string());
         let payload = panic_info.payload();
         let message = if let Some(s) = payload.downcast_ref::<&str>() {
             *s
