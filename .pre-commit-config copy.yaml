@@ -1,4 +1,4 @@
-# Pre-commit configuration for Vorce
+# Pre-commit configuration for VjMapper
 # Runs automatically via pre-commit.ci on every PR
 
 ci:
@@ -10,7 +10,11 @@ ci:
 
   # Skip Rust hooks in CI (no toolchain available)
   # Skip markdownlint (too many false positives with tables)
-  skip: []
+  skip:
+    - fmt
+    - clippy
+    - cargo-sort
+    - markdownlint-fix
 
   submodules: false
 
