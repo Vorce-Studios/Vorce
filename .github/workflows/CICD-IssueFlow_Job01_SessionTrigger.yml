@@ -104,15 +104,18 @@ jobs:
 
       - name: Check API Key presence
         id: check_key
+        shell: bash
         run: |
-          if [ -n "${{ secrets.JULES_API_KEY }}" ]; then
+          if [ -n "$JULES_API_KEY" ]; then
             echo "present=true" >> $GITHUB_OUTPUT
           else
             echo "present=false" >> $GITHUB_OUTPUT
           fi
+        env:
+          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
 
       - name: Note missing Jules API key
-        if: ${{ steps.guard.outputs.should_start == 'true' && !secrets.JULES_API_KEY }}
+        if: ${{ steps.guard.outputs.should_start == 'true' && steps.check_key.outputs.present == 'false' }}
         uses: actions/github-script@v8
         with:
           script: |
@@ -129,8 +132,7 @@ jobs:
             });
 
       - name: Create Jules session and sync issue tracking
-        if: ${{ steps.guard.outputs.should_start == 'true' && secrets.JULES_API_KEY }}
-
+        if: ${{ steps.guard.outputs.should_start == 'true' && steps.check_key.outputs.present == 'true' }}
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.PROJECT_SYNC_GH_TOKEN || github.token }}
