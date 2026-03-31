@@ -300,7 +300,7 @@ The workflows require the following GitHub permissions:
 
 ### Complete Jules Automation Workflow
 
-**📋 Phase 1: Issue Creation & Session Start**
+#### 📋 Phase 1: Issue Creation & Session Start
 
 1. **Issue Creation:**
    - Manual creation via issue templates
@@ -313,7 +313,7 @@ The workflows require the following GitHub permissions:
    - Creates Jules session via API
    - Adds tracking comment to issue
 
-**🔄 Phase 2: Session Monitoring**
+#### 🔄 Phase 2: Session Monitoring
 
 1. **Continuous Monitoring (CI-08):**
 
@@ -327,7 +327,7 @@ The workflows require the following GitHub permissions:
    - Links to issue and session
    - Notifies on issue
 
-**🧪 Phase 3: Automated Testing**
+#### 🧪 Phase 3: Automated Testing
 
 1. **Current PR Gate (`CICD-DevFlow_Job01_Validation.yml`):**
 
@@ -338,7 +338,7 @@ The workflows require the following GitHub permissions:
 - Windows build and tests
 - Final success gate
 
-**✅ Phase 4: Merge Decision**
+#### ✅ Phase 4: Merge Decision
 
 1. **Current Success Path (`CICD-DevFlow_Job02_AutoMerge.yml`):**
 
@@ -354,7 +354,7 @@ The workflows require the following GitHub permissions:
 - PR is behind `main`
 - PR is draft or closed
 
-**📝 Phase 5: Post-Merge Actions**
+#### 📝 Phase 5: Post-Merge Actions
 
 1. **Documentation Updates and Follow-up Automation:**
 
@@ -426,26 +426,26 @@ gh workflow run CI-06_update-changelog.yml
 
 ### Troubleshooting
 
-**Issue: CI fails with dependency errors**
+#### Issue: CI fails with dependency errors
 
 - Check system dependencies in the active validation workflow
 - Verify FFmpeg installation
 - Check package availability on runner OS
 
-**Issue: Auto-merge not working**
+#### Issue: Auto-merge not working
 
 - Verify all required PR checks passed on the latest PR head commit
 - Ensure no merge conflicts exist
 - Review branch protection rules
 - Confirm the auto-merge workflow expects the same checks as branch protection
 
-**Issue: Pull requests seem to hang waiting for checks**
+#### Issue: Pull requests seem to hang waiting for checks
 
 - Check whether Branch Protection requires outdated check names
 - Ensure CodeQL is not configured as a required PR check
 - Verify the required set matches the current `CICD-DevFlow` workflow names
 
-**Issue: Issues not created from ROADMAP**
+#### Issue: Issues not created from ROADMAP
 
 - Verify ROADMAP.md format
 - Check workflow permissions
