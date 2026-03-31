@@ -1,69 +1,142 @@
-# MAI-004 Foundation Closeout
+# MAI-004 Foundation Status Reassessment
 
-Stand: 2026-03-30
+Stand: 2026-03-31
 
 ## Zweck
 
-Dieses Dokument haelt fest, warum `Vorce-Studios/Vorce#61` auf Foundation-Ebene abgeschlossen werden kann, obwohl mehrere Downstream-Issues zur Node-Migration weiterhin offen sind.
+Dieses Dokument ersetzt die Closeout-Annahme vom 2026-03-30. Der Stand unten basiert auf einer fachlichen Gegenpruefung des aktuellen `main`-Codes sowie dem Live-Stand von GitHub-Issues, PRs und aktiven Jules-Sessions.
 
-## Abschlussentscheidung
+## Gesamtfazit
 
-- Die reine Foundation-Arbeit fuer die Node-System-Migration ist abgeschlossen.
-- Die offenen Issues `#56`, `#57`, `#60`, `#62`, `#63`, `#64`, `#65`, `#66`, `#67` und `#68` sind verbleibende Familien-, Runtime-, Inspector- oder Verifikationsarbeit.
-- Diese Folgearbeit bleibt wichtig, gehoert aber nicht mehr zur Greenfield-Grundlage von `#61`.
+- `Vorce-Studios/Vorce#61` bleibt offen. Die Closeout-Aussage vom 2026-03-30 ist nach dem erneuten Codeaudit nicht haltbar.
+- Alle bereits bearbeiteten Foundation-Subissues `#56`, `#57`, `#60`, `#62`, `#63`, `#64`, `#65`, `#66`, `#67` und `#68` stehen auf GitHub weiterhin auf `OPEN`.
+- Ein gemergter PR allein reicht hier nicht als Abschlusskriterium. Mehrere Tickets haben bereits Code auf `main`, enthalten aber noch offene fachliche Luecken oder ungeklaerte Tracker-/Jules-Zustaende.
 
-## Nachgewiesene Foundation-Bausteine
+## Statusklassen
 
-### 1. Socket- und Schema-Basis ist zentralisiert
+- `Teilweise umgesetzt`: sichtbare Fortschritte auf `main`, aber klare Restluecken gegen den Ticket-Scope.
+- `Weitgehend im Code gelandet`: Hauptscope ist im aktiven Code sichtbar, aber End-to-End-Verifikation oder sauberer Closeout fehlt noch.
+- `Aktive Folgearbeit`: offener PR oder laufende Jules-Arbeit blockiert einen Abschluss weiterhin.
 
-- `crates/vorce-core/src/module/types/socket.rs` fuehrt stabile Socket-Metadaten wie `id`, `direction`, `supports_trigger_mapping`, `is_primary` und `accepts_multiple_connections`.
-- `crates/vorce-core/src/module/types/schema.rs` liefert ueber `ModulePart::schema()` eine konsolidierte Schemaquelle fuer Node-Kind, Inputs, Outputs und Inspector-Mapping.
+## Status je Subissue
 
-### 2. Graph-Validierung und Self-Heal sind produktiv
+### `#56` Schema-Driven Inspector Completion
 
-- `crates/vorce-core/src/module/types/module.rs` validiert Verbindungen ueber `validate_connection(...)` fachlich gegen die aktuelle Socket-Definition.
-- `connect_parts(...)` ersetzt bei Bedarf unzulaessige Einzel-Input-Verbindungen deterministisch.
-- `repair_graph()` normalisiert duplizierte oder leere Output-/Layer-IDs, entfernt ungueltige Trigger-Mappings und repariert kaputte oder doppelte Verbindungen.
+- Delivery-Stand: Issue `OPEN`, `PR #85` am 2026-03-30 gemerged.
+- Fachlicher Befund:
+  - `crates/vorce-core/src/module/types/schema.rs` liefert die zentrale Schema-Abfrage `has_trigger_mapping()`.
+  - `crates/vorce-ui/src/editors/module_canvas/inspector/mod.rs` nutzt diese Schema-Abfrage bereits fuer das Trigger-Mapping-Gating.
+  - `crates/vorce-ui/src/editors/module_canvas/inspector/output.rs` zeigt Projector-Basisfelder wie `output_width`, `output_height` und `output_fps`.
+  - Gleichzeitig existieren im aktiven Inspector weiter mehrere Sonderpfade mit expliziten Unsupported-/Placeholder-Warnungen, unter anderem in `inspector/common.rs`, `inspector/layer.rs`, `inspector/source.rs` und `inspector/output.rs`.
+- Status: `Teilweise umgesetzt`. Das Ticket ist noch nicht closebar.
 
-### 3. Die Runtime arbeitet mit einer expliziten Render Queue
+### `#57` Runtime Render Queue Feature Parity
 
-- `crates/vorce/src/app/core/app_struct.rs` definiert `RuntimeRenderQueueItem`, strukturierte `RenderDiagnostic`s und die konsolidierte `RuntimeRenderQueue`.
-- `crates/vorce/src/orchestration/evaluation.rs` baut diese Queue pro Frame aus den Evaluator-Ergebnissen auf und haengt degradierte Runtime-Diagnostik an betroffene Eintraege an.
+- Delivery-Stand: Issue `OPEN`, `PR #92` seit 2026-03-30 geschlossen und nicht gemerged; aktuelle Jules-Session `17334415686066246325` steht auf `COMPLETED`, aber ohne verlinkten PR.
+- Fachlicher Befund:
+  - Die `RuntimeRenderQueue` existiert produktiv bereits.
+  - `crates/vorce/src/orchestration/evaluation.rs` erzeugt aber weiterhin `blend_mode_unsupported`- und `masks_unsupported`-Diagnostik.
+  - `crates/vorce/src/app/loops/render/content.rs` dokumentiert weiterhin, dass nur Edge Blending im sicheren Post-Processing unterstuetzt wird und Color Calibration bewusst ignoriert wird.
+- Status: `Teilweise umgesetzt`. Der Render-Queue-Unterbau ist da, Feature-Paritaet im sichtbaren Renderpfad aber nicht.
 
-### 4. Output-/Window-Reconciliation ist nicht mehr nur Altlast
+### `#60` Node Fault Isolation and Diagnostics
 
-- `crates/vorce/src/orchestration/outputs.rs` fuehrt Projector-Nodes in den `OutputManager` ueber.
-- Dasselbe Modul entfernt stale Output-Fenster deterministisch und loggt den Cleanup.
+- Delivery-Stand: Issue `OPEN`, `PR #88` am 2026-03-29 gemerged.
+- Fachlicher Befund:
+  - Strukturierte Diagnostics sind im aktiven Runtime-Pfad vorhanden.
+  - `crates/vorce/src/orchestration/outputs.rs` propagiert Fehler bei `create_output_window(...)` weiterhin per `?` aus `sync_output_windows(...)` heraus.
+  - Damit ist Fault Isolation fuer Output-/Window-Erzeugung nicht vollstaendig lokalisiert.
+- Status: `Teilweise umgesetzt`. Solide Fortschritte vorhanden, aber Acceptance Criteria noch nicht voll getroffen.
 
-### 5. Sichtbarkeit und Inspector-Gating laufen ueber einen gemeinsamen Capability-Pfad
+### `#62` Trigger Event Nodes Migration
 
-- `crates/vorce-ui/src/editors/module_canvas/utils/catalog.rs` baut den Node-Katalog capabilities-basiert auf, statt alle experimentellen Nodes blind sichtbar zu lassen.
-- `crates/vorce-ui/src/editors/module_canvas/inspector/capabilities.rs` und die daran angeschlossenen Inspector-Dateien verwenden denselben Gating-Pfad fuer sichtbare Warnungen und deaktivierte Controls.
+- Delivery-Stand: Issue `OPEN`, `PR #87` am 2026-03-30 gemerged.
+- Fachlicher Befund:
+  - `crates/vorce-ui/src/editors/module_canvas/inspector/trigger.rs` enthaelt differenzierte Inspector-Pfade fuer `Beat`, `Random`, `Fixed`, `Midi`, `Shortcut` und `AudioFFT`.
+  - Die Event-spezifische UI und die Fixed-Timer-Cadence-Vorschau sind im aktiven Code sichtbar.
+  - Das gemeinsame Trigger-Mapping-Gating laeuft ueber `part.schema().has_trigger_mapping()`.
+- Status: `Weitgehend im Code gelandet`. Aus dem aktuellen Code ergibt sich kein grober Restblocker, aber das Ticket ist noch nicht formal verifiziert und geschlossen.
 
-## Scope-Handoff nach dem Foundation-Abschluss
+### `#63` Trigger Signal Nodes Migration
 
-Die restliche Arbeit bleibt offen, ist aber nach dem aktuellen Zuschnitt fachlich sauber getrennt:
+- Delivery-Stand: Issue `OPEN`, `PR #86` am 2026-03-30 gemerged.
+- Fachlicher Befund:
+  - `crates/vorce-ui/src/editors/module_canvas/inspector/trigger.rs` zeigt passende Live-/Preview-Pfade fuer `AudioFFT` und `Midi`.
+  - `crates/vorce-core/src/module_eval/evaluator/triggers.rs` wertet `Midi`-Signale aktiv aus.
+  - Derselbe Evaluator faellt bei `AudioFFT` ohne explizit aktivierte Outputs kontrolliert auf Beat-Output zurueck.
+- Status: `Weitgehend im Code gelandet`. Das Ticket wirkt fachlich weit fortgeschritten, braucht aber noch saubere Abschlussverifikation.
 
-- `#56`: schema-/capability-getriebene Inspector-Paritaet
-- `#57`: Runtime-Render-Queue-Feature-Paritaet
-- `#60`: Fault Isolation und Diagnostics-Haertung
-- `#62` und `#63`: Trigger-Familien
-- `#64` und `#65`: Media-/Layer-/Projector-Familien
-- `#66`, `#67` und `#68`: Spezial- und Device-Nodes
-- `#58` und `#59`: Umbrella-/Pack-Koordination fuer die offenen Familien
+### `#64` Media File Source Nodes Migration
+
+- Delivery-Stand: Issue `OPEN`, `PR #89` am 2026-03-30 gemerged; die aktuelle Jules-Session `14540972759070123130` steht trotzdem noch auf `IN_PROGRESS` und verlinkt denselben PR.
+- Fachlicher Befund:
+  - `crates/vorce-ui/src/editors/module_canvas/inspector/source.rs` deckt `MediaFile`, `VideoUni`, `ImageUni`, `VideoMulti` und `ImageMulti` sichtbar ab.
+  - `crates/vorce/src/orchestration/media.rs` und `crates/vorce-core/src/module_eval/evaluator/traversal.rs` enthalten passende Runtime-/Traversal-Pfade fuer dieselben Familien.
+  - Ein offensichtlicher grober Familien-Drift ist im aktuellen Code nicht mehr sichtbar.
+- Status: `Weitgehend im Code gelandet`. Die fachliche Restarbeit liegt vor allem in Verifikation und dem inkonsistenten Jules-/Tracker-Zustand.
+
+### `#65` Layer and Projector Nodes Migration
+
+- Delivery-Stand: Issue `OPEN`, Jules-Session `10541395446807407408` ist inzwischen `COMPLETED`, `PR #125` ist aber noch `OPEN`.
+- Fachlicher Befund:
+  - `crates/vorce-ui/src/editors/module_canvas/inspector/layer.rs` markiert `LayerType::Group` weiterhin als nur Single-aehnlich und `LayerType::All` weiterhin als nicht renderbar.
+  - `crates/vorce-core/src/module_eval/evaluator/mod.rs` behandelt `LayerType::Group`, faellt fuer andere Layer-Typen aber weiter auf `continue` zurueck.
+  - `crates/vorce/src/orchestration/outputs.rs` uebernimmt fuer Projector-Konfigurationen aktuell nur `id`, `name`, `output_width` und `output_height`; Felder wie `target_screen`, `hide_cursor`, `show_in_preview_panel` und `extra_preview_window` werden dort nicht aktiv synchronisiert.
+- Status: `Teilweise umgesetzt` plus `Aktive Folgearbeit`. Das Ticket bleibt klar offen.
+
+### `#66` Bevy Source Nodes Migration
+
+- Delivery-Stand: Issue `OPEN`, `PR #95` am 2026-03-29 gemerged.
+- Fachlicher Befund:
+  - Der aktive Code enthaelt Bevy-Source-Unterbau.
+  - `crates/vorce-ui/src/editors/module_canvas/inspector/source.rs` zeigt fuer `SourceType::Bevy3DModel` aber weiterhin nur `Model controls not yet implemented.`
+- Status: `Teilweise umgesetzt`. Der Scope ist noch nicht vollstaendig im aktiven Inspector angekommen.
+
+### `#67` External IO Nodes Gating and Migration
+
+- Delivery-Stand: Issue `OPEN`, `PR #90` am 2026-03-30 gemerged.
+- Fachlicher Befund:
+  - `crates/vorce-ui/src/editors/module_canvas/inspector/capabilities.rs` markiert Shader, LiveInput, NDI und Spout weiterhin bewusst als nicht end-to-end unterstuetzt.
+  - `crates/vorce-ui/src/editors/module_canvas/utils/catalog.rs` und `draw/add_node.rs` verwenden dieses Capability-Gating.
+  - `crates/vorce/src/orchestration/evaluation.rs` loggt diese Familien zur Laufzeit explizit als unsupported/experimental.
+- Status: `Weitgehend im Code gelandet`. Fuer den Gating-Anteil ist der Code konsistent; ein formaler Closeout fehlt aber noch.
+
+### `#68` Hue Node Model Runtime Gating and Spatial Editor
+
+- Delivery-Stand: Issue `OPEN`, Jules-Session `8797109164578060998` ist `COMPLETED`, `PR #124` ist aber noch `OPEN`.
+- Fachlicher Befund:
+  - `crates/vorce-core/src/module_eval/evaluator/mod.rs` erzeugt bereits `SourceCommand::HueOutput`.
+  - `crates/vorce-ui/src/editors/module_canvas/inspector/mod.rs` zeigt fuer Hue aktuell nur einen generischen Placeholder-Block ohne echte Family-spezifische Inspector-Steuerung.
+  - Im aktuellen `main` ist die Hue-Familie damit noch nicht sauber end-to-end abgeschlossen.
+- Status: `Teilweise umgesetzt` plus `Aktive Folgearbeit`. Das Ticket ist nicht closebar, solange `PR #124` offen ist und der Main-Branch die Restarbeit noch nicht enthaelt.
+
+## Konsequenz fuer `#61`
+
+- `#61` darf weiterhin nicht als fachlich abgeschlossen beschrieben werden.
+- Die Acceptance Criteria muessen auf den realen offenen Downstream-Stand zurueckgesetzt werden.
+- Die Doku fuer MAI-004 muss einen Statustracker fuehren, keinen Closeout-Claim.
 
 ## Verifikation
 
-Die folgenden Verifikationen wurden am 2026-03-30 lokal gegen den aktuellen Workspace ausgefuehrt:
+Die Gegenpruefung fuer dieses Reassessment basiert auf dem aktiven Workspace und dem Live-Stand vom 2026-03-31:
 
-- `cargo check -p vorce-core --quiet`
-- `cargo test -p vorce-core socket_tests --quiet`
-- `cargo test -p vorce-ui test_node_catalog_hides_unsupported_items --quiet`
-- `cargo check -p vorce --quiet`
-
-Ergebnis:
-
-- `vorce-core` baut.
-- Die Socket-Schema-Tests laufen gruen.
-- Der capability-basierte Node-Katalog-Test in `vorce-ui` laeuft gruen.
-- Die `vorce`-App baut mit der aktiven Runtime-Queue-/Output-Orchestrierungsbasis.
+- GitHub-Issues: `#56`, `#57`, `#60`, `#62`, `#63`, `#64`, `#65`, `#66`, `#67`, `#68`, `#61`
+- Pull Requests: `#85`, `#86`, `#87`, `#88`, `#89`, `#90`, `#92`, `#95`, `#124`, `#125`
+- Jules-Sessions: `17334415686066246325`, `14540972759070123130`, `10541395446807407408`, `8797109164578060998`
+- Codepfade:
+  - `crates/vorce-core/src/module/types/schema.rs`
+  - `crates/vorce-core/src/module_eval/evaluator/mod.rs`
+  - `crates/vorce-core/src/module_eval/evaluator/traversal.rs`
+  - `crates/vorce-core/src/module_eval/evaluator/triggers.rs`
+  - `crates/vorce/src/orchestration/evaluation.rs`
+  - `crates/vorce/src/orchestration/media.rs`
+  - `crates/vorce/src/orchestration/outputs.rs`
+  - `crates/vorce/src/app/loops/render/content.rs`
+  - `crates/vorce-ui/src/editors/module_canvas/inspector/mod.rs`
+  - `crates/vorce-ui/src/editors/module_canvas/inspector/common.rs`
+  - `crates/vorce-ui/src/editors/module_canvas/inspector/layer.rs`
+  - `crates/vorce-ui/src/editors/module_canvas/inspector/output.rs`
+  - `crates/vorce-ui/src/editors/module_canvas/inspector/source.rs`
+  - `crates/vorce-ui/src/editors/module_canvas/inspector/trigger.rs`
+  - `crates/vorce-ui/src/editors/module_canvas/inspector/capabilities.rs`
+  - `crates/vorce-ui/src/editors/module_canvas/utils/catalog.rs`
