@@ -120,7 +120,7 @@ pub fn sync_output_windows(
     }
 
     for config in &projector_configs {
-        if let Err(err) = app.window_manager.sync_projector_window(
+        if let Err(err) = app.window_manager.create_projector_window(
             elwt,
             &app.backend,
             config.id,

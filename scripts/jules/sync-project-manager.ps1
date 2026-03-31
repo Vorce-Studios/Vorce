@@ -26,7 +26,7 @@ function Test-IsTrackedIssue {
     }
 
     $title = if ($null -eq $Issue.title) { "" } else { [string]$Issue.title }
-    if ($title -match '^(MFuser_#|MFusr_#|MF_#|MFsub_#)') {
+    if ($title -match '^(I_|MAI-\d+_|__SI-\d+_MAI-\d+_|MFuser_#|MFusr_#|MF_#|MFsub_#)') {
         return $true
     }
 
