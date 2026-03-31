@@ -49,7 +49,7 @@ pub struct BevyRenderOutput {
     pub image_handle: Handle<Image>,
     /// Thread-safe container for the last extracted frame data (BGRA8 format).
     /// This is shared between the main Bevy world and the render world.
-    pub last_frame_data: std::sync::Arc<std::sync::Mutex<Option<Vec<u8>>>>,
+    pub last_frame_data: std::sync::Arc<std::sync::Mutex<Option<std::sync::Arc<Vec<u8>>>>>,
     /// Width of the render target in pixels.
     pub width: u32,
     /// Height of the render target in pixels.
