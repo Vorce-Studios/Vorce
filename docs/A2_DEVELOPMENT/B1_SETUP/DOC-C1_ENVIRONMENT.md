@@ -7,11 +7,13 @@ Dieses Dokument enthält alle Informationen zum Einrichten der Entwicklungsumgeb
 Vorce ist eine Rust-Anwendung. Stelle sicher, dass die aktuelle Rust-Toolchain (stable) installiert ist.
 
 ### Abhängigkeiten installieren
+
 - **Windows**: Vcpkg für FFmpeg empfohlen.
 - **Linux**: `libasound2-dev`, `pkg-config`, `build-essential`.
 - **macOS**: `ffmpeg` via Homebrew.
 
 ### Build-Befehle
+
 ```bash
 cargo build          # Entwicklungs-Build
 cargo run            # Starten
@@ -29,6 +31,7 @@ cargo clippy         # Linting (Pflicht vor Commit)
 - **Fehlerbehandlung**: Kein `.unwrap()` im Produktionscode. Nutze `?` oder `.expect("Grund")`.
 
 ### Größen-Limits
+
 | Metrik | Maximum | Aktion bei Überschreitung |
 |--------|---------|---------------------------|
 | Datei (LOC) | 400 Zeilen | Refactoring in Submodule |
@@ -39,10 +42,10 @@ cargo clippy         # Linting (Pflicht vor Commit)
 
 ## 3. Pull Request (PR) Prozess
 
-1.  **Vorbereitung**: `fmt`, `clippy` und `test` müssen fehlerfrei durchlaufen.
-2.  **Naming**: PR-Titel müssen die MF-ID enthalten (z.B. `feat(ui): [MF-023] add toasts`).
-3.  **Template**: Nutze immer das PR-Template unter `.github/PULL_REQUEST_TEMPLATE.md`.
-4.  **Changelog**: Jede Änderung muss im `CHANGELOG.md` eingetragen werden.
+1. **Vorbereitung**: `fmt`, `clippy` und `test` müssen fehlerfrei durchlaufen.
+2. **Naming**: PR-Titel müssen die MF-ID enthalten (z.B. `feat(ui): [MF-023] add toasts`).
+3. **Template**: Nutze immer das PR-Template unter `.github/PULL_REQUEST_TEMPLATE.md`.
+4. **Changelog**: Jede Änderung muss im `CHANGELOG.md` eingetragen werden.
 
 ---
 

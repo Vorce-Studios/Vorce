@@ -42,15 +42,17 @@ Maintenance und Release-Management auf dem `main` Branch.
 ## 🚀 Schnellstart für Entwickler
 
 1. **Lokal arbeiten:**
-  - Führe vor jedem Commit das Skript aus:
-    - `./scripts/dev-tools/prepare-pre-commit.ps1` (Windows)
-    - `./scripts/dev-tools/prepare-pre-commit.sh` (Linux/Mac)
-  - Dies fixt Formatierung und Linting-Fehler automatisch.
 
-2. **Pull Request:**
-  - Erstelle einen PR.
-  - `Job01_Validation` läuft los.
-  - Alles grün? -> `Job02_AutoMerge` merged automatisch.
+- Führe vor jedem Commit das Skript aus:
+  - `./scripts/dev-tools/prepare-pre-commit.ps1` (Windows)
+  - `./scripts/dev-tools/prepare-pre-commit.sh` (Linux/Mac)
+- Dies fixt Formatierung und Linting-Fehler automatisch.
+
+1. **Pull Request:**
+
+- Erstelle einen PR.
+- `Job01_Validation` läuft los.
+- Alles grün? -> `Job02_AutoMerge` merged automatisch.
 
 ## 🚀 Schnellstart für User (Issues)
 
