@@ -159,6 +159,12 @@ pub struct OutputConfig {
     pub color_calibration: ColorCalibration,
     /// Whether to run in fullscreen exclusive mode
     pub fullscreen: bool,
+    /// Target screen/monitor index (0 = Primary, 1 = Monitor 1, etc.)
+    #[serde(default)]
+    pub target_screen: u8,
+    /// Whether to hide the mouse cursor in the output window
+    #[serde(default)]
+    pub hide_cursor: bool,
 }
 
 impl OutputConfig {
@@ -177,6 +183,8 @@ impl OutputConfig {
             edge_blend: EdgeBlendConfig::default(),
             color_calibration: ColorCalibration::default(),
             fullscreen: false,
+            target_screen: 0,
+            hide_cursor: false,
         }
     }
 }
