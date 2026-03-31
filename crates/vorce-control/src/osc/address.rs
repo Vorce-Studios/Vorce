@@ -32,6 +32,7 @@ pub fn parse_osc_address(address: &str) -> Result<ControlTarget> {
 
     let parts: Vec<&str> = address.trim_start_matches('/').split('/').collect();
 
+    // Resolve conflict by explicitly including all allowed namespaces
     if parts.is_empty()
         || (parts[0] != "vorce"
             && parts[0] != "Vorce"
