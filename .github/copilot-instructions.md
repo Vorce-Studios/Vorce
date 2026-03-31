@@ -13,6 +13,7 @@
 - **Build:** Cargo Workspace
 
 **Crates:**
+
 ```text
 crates/
 ├── vorce-core       # Kernlogik, Projektmanagement
@@ -122,40 +123,6 @@ fn foo() {}
 - Nur bei Hot Paths kommentieren
 - Mit Benchmarks belegen
 
-#[cfg(target_os = "windows")]
-use std::os::windows::*;
-```
-
-**6. GPU Resource Management**
-
-```rust
-// ✅ GOOD - Implementiere Drop für Cleanup
-impl Drop for GpuTexture {
-    fn drop(&mut self) {
-        self.texture.destroy();
-    }
-}
-```
-
----
-
-### 🟢 NIEDRIG (Optional)
-
-**7. Code Style (nur bei klaren Verbesserungen)**
-
-```rust
-// Akzeptabel (wird von rustfmt gehandhabt)
-fn foo(  ) {  }
-
-// Bevorzugt, aber nicht kritisch
-fn foo() {}
-```
-
-**8. Micro-Optimierungen**
-
-- Nur bei Hot Paths kommentieren
-- Mit Benchmarks belegen
-
 ---
 
 ## 🚫 NICHT Kommentieren
@@ -235,8 +202,6 @@ drop(decoder); // Explizit cleanup bei C-Bindings
 ### 💡 Optional
 
 - [Nice-to-have Verbesserungen]
-
-```
 
 ---
 
