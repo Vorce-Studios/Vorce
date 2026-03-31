@@ -108,7 +108,7 @@ INFO  Auto-connected to MIDI port: Port 1
 
 ### Schritt 2: Settings öffnen
 
-**Menü:** `File` → `Settings` (oder Toolbar ⚙️)
+**Menü:** **File** → **Settings** (oder Toolbar ⚙️)
 
 ### Schritt 3: MIDI-Section aufklappen
 

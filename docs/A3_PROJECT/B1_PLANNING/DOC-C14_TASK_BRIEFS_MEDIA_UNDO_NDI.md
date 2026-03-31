@@ -1,6 +1,7 @@
 # DOC-C14: Task Briefs fuer Media Decoder, Undo/Redo und NDI
 
 ## Status
+
 - Status: Proposed
 - Zweck: umsetzungsnahe Detailvorgaben fuer `MF-059`, `MF-056` und `MF-021`
 - Ergaenzt:
@@ -12,6 +13,7 @@
 Dieses Dokument ist kein Ersatz fuer die Roadmap. Es dient als technischer Ausfuehrungsbrief fuer Tasks, die bereits in der Roadmap existieren, dort aber noch nicht praezise genug fuer eine saubere Delegation an Subagents beschrieben sind.
 
 Ziel ist:
+
 - Scope verengen
 - eine klare technische Richtung festlegen
 - DoD und Validierung vorgeben
@@ -125,6 +127,7 @@ Aktuell existieren mehrere Undo/Redo-Ansatzpunkte parallel, aber der im Module-C
 Fuer `MF-056` ist der aktive Module-Canvas-History-Pfad die kanonische Implementierungsbasis.
 
 Das heisst konkret:
+
 - `CanvasAction` wird erweitert.
 - Kein app-weites Undo/Redo-Rewrite in diesem Task.
 - `Vorce-core/src/history.rs` und `Vorce-ui/src/core/undo_redo.rs` werden hoechstens als Referenz betrachtet, aber nicht als Pflicht-Migrationsziel fuer diesen Task.
@@ -223,6 +226,7 @@ Die NDI-Discovery ist strategisch beschrieben und in Teilen bereits im Code vorh
 Fuer `MF-021` ist `crates/Vorce-ui/src/editors/module_canvas/inspector/source.rs` die kanonische UI-Stelle fuer `SourceType::NdiInput`.
 
 Das heisst konkret:
+
 - Keine zweite parallele NDI-Inspector-Implementierung pflegen.
 - Kein toter Zwischenzustand ueber `pending_ndi_connect`, wenn die Aktion direkt in `UIAction` ausgedrueckt werden kann.
 

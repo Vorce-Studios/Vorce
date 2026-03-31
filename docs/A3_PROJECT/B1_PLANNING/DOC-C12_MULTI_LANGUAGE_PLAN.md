@@ -10,12 +10,14 @@
 ## 📋 Zusammenfassung
 
 ### Aktueller Stand
+
 - ❌ **Keine i18n-Unterstützung** im Rust-Rewrite
 - ❌ Alle UI-Texte sind als englische Strings hardcoded
 - ⚠️ Legacy `. ts`-Dateien (Qt Linguist) im `/translations`-Ordner sind **nicht nutzbar**
 - ⚠️ Die alten Übersetzungsdateien können nur als **Textvorlage** dienen
 
 ### Ziel
+
 - ✅ Mehrsprachige UI (mindestens: Englisch, Deutsch, Französisch)
 - ✅ Einfaches Hinzufügen neuer Sprachen durch Community
 - ✅ Automatische Spracherkennung basierend auf Systemeinstellungen
@@ -64,6 +66,7 @@ crates/
 ### Phase 1: Grundgerüst (Tag 1)
 
 #### 1.1 Dependency hinzufügen
+
 ```toml
 # crates/Vorce-ui/Cargo. toml
 [dependencies]
@@ -72,6 +75,7 @@ sys-locale = "0.3"  # Für automatische Spracherkennung
 ```
 
 #### 1.2 Macro initialisieren
+
 ```rust
 // crates/Vorce-ui/src/lib.rs
 rust_i18n::i18n! ("locales", fallback = "en");
@@ -86,6 +90,7 @@ pub fn init_locale() {
 ```
 
 #### 1.3 Basis-Übersetzungsdatei erstellen
+
 ```yaml
 # crates/Vorce-ui/locales/en.yml
 en:
@@ -157,6 +162,7 @@ en:
 ### Phase 2: String-Extraktion (Tag 2-3)
 
 #### Vorher (aktueller Code)
+
 ```rust
 ui.button("Play");
 ui.text("Playback Controls");
@@ -164,6 +170,7 @@ ui.slider("Speed", 0.1, 2.0, &mut self.playback_speed);
 ```
 
 #### Nachher (mit i18n)
+
 ```rust
 use rust_i18n::t;
 
@@ -173,6 +180,7 @@ ui.slider(t! ("label.speed"), 0.1, 2.0, &mut self.playback_speed);
 ```
 
 #### Betroffene Dateien
+
 | Datei | Geschätzte Strings | Aufwand |
 |-------|-------------------|---------|
 | `crates/Vorce-ui/src/lib.rs` | ~150 | 4h |
@@ -185,6 +193,7 @@ ui.slider(t! ("label.speed"), 0.1, 2.0, &mut self.playback_speed);
 ### Phase 3: Übersetzungen (Tag 4)
 
 #### Deutsche Übersetzung (`de.yml`)
+
 ```yaml
 de:
   window:
@@ -284,11 +293,13 @@ if ui.button(t! ("button.apply")) {
 Die alten Qt-Übersetzungsdateien im `/translations`-Ordner sollten:
 
 **Option A (empfohlen):** Löschen
+
 ```bash
 rm -rf translations/
 ```
 
 **Option B:** In Legacy-Ordner verschieben
+
 ```bash
 mv translations/ legacy/qt-translations/
 ```
@@ -327,7 +338,7 @@ Die Texte aus den `. ts`-Dateien können manuell als Referenz für neue YAML-Üb
 - [rust-i18n Dokumentation](https://github.com/longbridgeapp/rust-i18n)
 - [sys-locale Crate](https://crates.io/crates/sys-locale)
 - [Fluent Project](https://projectfluent.org/) (Alternative)
-- [ImGui Font Loading](https://github. com/ocornut/imgui/blob/master/docs/FONTS.md) (für CJK-Zeichen)
+- [ImGui Font Loading](<https://github>. com/ocornut/imgui/blob/master/docs/FONTS.md) (für CJK-Zeichen)
 
 ---
 

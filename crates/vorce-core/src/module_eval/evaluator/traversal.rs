@@ -50,36 +50,98 @@ impl ModuleEvaluator {
                 // If this is a source, load its base properties first
                 if let ModulePartType::Source(source_type) = &part.part_type {
                     op.source_part_id = Some(part.id);
-                    if let SourceType::MediaFile {
-                        opacity,
-                        brightness,
-                        contrast,
-                        saturation,
-                        hue_shift,
-                        scale_x,
-                        scale_y,
-                        rotation,
-                        offset_x,
-                        offset_y,
-                        flip_horizontal,
-                        flip_vertical,
-                        ..
-                    } = source_type
-                    {
-                        op.source_props = SourceProperties {
-                            opacity: *opacity,
-                            brightness: *brightness,
-                            contrast: *contrast,
-                            saturation: *saturation,
-                            hue_shift: *hue_shift,
-                            scale_x: *scale_x,
-                            scale_y: *scale_y,
-                            rotation: *rotation,
-                            offset_x: *offset_x,
-                            offset_y: *offset_y,
-                            flip_horizontal: *flip_horizontal,
-                            flip_vertical: *flip_vertical,
-                        };
+                    match source_type {
+                        SourceType::MediaFile {
+                            opacity,
+                            brightness,
+                            contrast,
+                            saturation,
+                            hue_shift,
+                            scale_x,
+                            scale_y,
+                            rotation,
+                            offset_x,
+                            offset_y,
+                            flip_horizontal,
+                            flip_vertical,
+                            ..
+                        }
+                        | SourceType::VideoUni {
+                            opacity,
+                            brightness,
+                            contrast,
+                            saturation,
+                            hue_shift,
+                            scale_x,
+                            scale_y,
+                            rotation,
+                            offset_x,
+                            offset_y,
+                            flip_horizontal,
+                            flip_vertical,
+                            ..
+                        }
+                        | SourceType::ImageUni {
+                            opacity,
+                            brightness,
+                            contrast,
+                            saturation,
+                            hue_shift,
+                            scale_x,
+                            scale_y,
+                            rotation,
+                            offset_x,
+                            offset_y,
+                            flip_horizontal,
+                            flip_vertical,
+                            ..
+                        }
+                        | SourceType::VideoMulti {
+                            opacity,
+                            brightness,
+                            contrast,
+                            saturation,
+                            hue_shift,
+                            scale_x,
+                            scale_y,
+                            rotation,
+                            offset_x,
+                            offset_y,
+                            flip_horizontal,
+                            flip_vertical,
+                            ..
+                        }
+                        | SourceType::ImageMulti {
+                            opacity,
+                            brightness,
+                            contrast,
+                            saturation,
+                            hue_shift,
+                            scale_x,
+                            scale_y,
+                            rotation,
+                            offset_x,
+                            offset_y,
+                            flip_horizontal,
+                            flip_vertical,
+                            ..
+                        } => {
+                            op.source_props = SourceProperties {
+                                opacity: *opacity,
+                                brightness: *brightness,
+                                contrast: *contrast,
+                                saturation: *saturation,
+                                hue_shift: *hue_shift,
+                                scale_x: *scale_x,
+                                scale_y: *scale_y,
+                                rotation: *rotation,
+                                offset_x: *offset_x,
+                                offset_y: *offset_y,
+                                flip_horizontal: *flip_horizontal,
+                                flip_vertical: *flip_vertical,
+                            };
+                        }
+                        _ => {}
                     }
                 }
 
