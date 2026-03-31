@@ -25,7 +25,7 @@ fn render_layer_blend_mode_ui(ui: &mut Ui, id_salt: u64, blend_mode: &mut Option
             ] {
                 ui.add_enabled_ui(capabilities::is_blend_mode_supported(&mode), |ui| {
                     if ui
-                        .selectable_label(matches!(blend_mode, Some(selected) if *selected == mode), mode.name())
+                        .selectable_label(blend_mode.as_ref() == Some(&mode), mode.name())
                         .clicked()
                     {
                         *blend_mode = Some(mode);
@@ -35,7 +35,8 @@ fn render_layer_blend_mode_ui(ui: &mut Ui, id_salt: u64, blend_mode: &mut Option
         });
 
     if !blend_mode
-        .map(|mode| capabilities::is_blend_mode_supported(&mode))
+        .as_ref()
+        .map(|mode| capabilities::is_blend_mode_supported(mode))
         .unwrap_or(true)
     {
         capabilities::render_unsupported_warning(
@@ -156,7 +157,8 @@ pub fn render_layer_ui(
 /// Renders the configuration UI for a `ModulePartType::Mask`.
 pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
     ui.label("Mask Type:");
-    match mask {
+    let supported = capabilities::is_mask_supported();
+    ui.add_enabled_ui(supported, |ui| match mask {
         MaskType::File { path } => {
             ui.label("Mask File");
             if path.is_empty() {
@@ -231,5 +233,12 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
             ui.add(egui::Slider::new(angle, 0.0..=360.0).text("Angle"));
             ui.add(egui::Slider::new(softness, 0.0..=1.0).text("Softness"));
         }
+    });
+
+    if !supported {
+        capabilities::render_unsupported_warning(
+            ui,
+            "Masks are currently gated because the active render path ignores them.",
+        );
     }
 }

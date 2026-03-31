@@ -1,8 +1,8 @@
 use crate::editors::module_canvas::inspector::capabilities;
 use vorce_core::module::{
-    AudioBand, AudioTriggerOutputConfig, BevyCameraMode, BlendModeType, EffectType,
-    HueMappingMode, HueNodeType, LayerType, MaskShape, MaskType, ModulePartType, ModulizerType,
-    OutputType, SourceType, TriggerType,
+    AudioBand, AudioTriggerOutputConfig, BevyCameraMode, BlendModeType, EffectType, HueMappingMode,
+    HueNodeType, LayerType, MaskShape, MaskType, ModulePartType, ModulizerType, OutputType,
+    SourceType, TriggerType,
 };
 
 pub struct NodeCatalogItem {

@@ -81,7 +81,8 @@ pub fn render_common_controls(
         ui.horizontal(|ui| {
             ui.label("Blend Mode:");
             let supported = blend_mode
-                .map(|mode| capabilities::is_blend_mode_supported(&mode))
+                .as_ref()
+                .map(|mode| capabilities::is_blend_mode_supported(mode))
                 .unwrap_or(true);
             if !supported {
                 capabilities::render_unsupported_warning(ui, "Blend modes partially supported");

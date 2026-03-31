@@ -1,9 +1,8 @@
 use super::super::{inspector::capabilities, utils};
 use egui::Ui;
 use vorce_core::module::{
-    BevyCameraMode, BlendModeType, EffectType, HueMappingMode, HueNodeType, LayerType,
-    MaskShape, MaskType, ModuleManager, ModulePartType, ModulizerType, OutputType, SourceType,
-    TriggerType,
+    BevyCameraMode, BlendModeType, EffectType, HueMappingMode, HueNodeType, LayerType, MaskShape,
+    MaskType, ModuleManager, ModulePartType, ModulizerType, OutputType, SourceType, TriggerType,
 };
 
 pub fn render_add_node_menu_content(
@@ -84,7 +83,6 @@ pub fn render_add_node_menu_content(
                 }));
                 ui.close();
             }
-
         });
 
         ui.menu_button("📹 Sources", |ui| {

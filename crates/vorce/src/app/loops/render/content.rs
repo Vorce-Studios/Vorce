@@ -8,6 +8,7 @@ use super::PREVIEW_FLAG;
 pub(crate) struct RenderContext<'a> {
     pub device: &'a wgpu::Device,
     pub queue: &'a wgpu::Queue,
+    pub surface_format: wgpu::TextureFormat,
     pub render_queue: &'a std::collections::HashMap<u64, Vec<RuntimeRenderQueueItem>>,
     pub output_manager: &'a vorce_core::output::OutputManager,
     pub edge_blend_renderer: &'a Option<vorce_render::EdgeBlendRenderer>,
@@ -134,24 +135,41 @@ pub(crate) fn render_content(
         })
         .unwrap_or(false)
         && ctx.edge_blend_renderer.is_some();
-    // Currently we only support edge blending for post-processing safely.
-    // Color calibration is temporarily ignored here to prevent black screen regressions.
-    let _use_color_calib = output_config_opt.is_some() && ctx.color_calibration_renderer.is_some();
+    let use_color_calib = output_config_opt
+        .as_ref()
+        .map(|cfg| cfg.color_calibration != vorce_core::ColorCalibration::default())
+        .unwrap_or(false)
+        && ctx.color_calibration_renderer.is_some();
 
-    let needs_post_processing = use_edge_blend;
+    let needs_post_processing = use_edge_blend || use_color_calib;
 
-    let intermediate_tex_name = format!("output_{}_intermediate", output_id);
+    let post_a_tex_name = format!("output_{}_post_a", output_id);
+    let post_b_tex_name = format!("output_{}_post_b", output_id);
     let mesh_target_view_ref = if needs_post_processing {
         if let Some(config) = &output_config_opt {
             ctx.texture_pool.ensure_texture(
-                &intermediate_tex_name,
-                config.resolution.0,
-                config.resolution.1,
-                wgpu::TextureFormat::Rgba8Unorm, // Always supported for RENDER_ATTACHMENT and TEXTURE_BINDING
+                &post_a_tex_name,
+                config.resolution.0.max(1),
+                config.resolution.1.max(1),
+                ctx.surface_format,
                 wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
             );
         }
-        Some(ctx.texture_pool.get_view(&intermediate_tex_name))
+        Some(ctx.texture_pool.get_view(&post_a_tex_name))
+    } else {
+        None
+    };
+    let color_target_view_ref = if use_color_calib && use_edge_blend {
+        if let Some(config) = &output_config_opt {
+            ctx.texture_pool.ensure_texture(
+                &post_b_tex_name,
+                config.resolution.0.max(1),
+                config.resolution.1.max(1),
+                ctx.surface_format,
+                wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+            );
+        }
+        Some(ctx.texture_pool.get_view(&post_b_tex_name))
     } else {
         None
     };
@@ -193,6 +211,15 @@ pub(crate) fn render_content(
 
     // Accumulate Layers
     for item in target_ops {
+        if item.diagnostics.iter().any(|diag| {
+            matches!(
+                diag.severity,
+                crate::app::core::app_struct::DiagnosticSeverity::Error
+            )
+        }) {
+            continue;
+        }
+
         let module_id = item.module_id;
         let op = &item.render_op;
         let tex_name = if let Some(src_id) = op.source_part_id {
@@ -366,80 +393,118 @@ pub(crate) fn render_content(
 
     // --- POST PROCESSING PASSES ---
     if needs_post_processing {
-        let intermediate_view = if let Some(v) = mesh_target_view_ref.as_ref() {
-            v
-        } else {
-            view
-        };
-        // Re-create the texture bind group each frame since the intermediate texture may be re-allocated by the pool,
-        // but we could optimize this later by checking if the texture's ID changed.
-        // For now, creating a texture bind group is relatively cheap compared to buffers.
-        if let Some(edge_blend_renderer) = ctx.edge_blend_renderer.as_ref() {
-            let texture_bind_group = ctx
-                .edge_blend_texture_cache
-                .entry(output_id)
-                .or_insert_with(|| {
-                    edge_blend_renderer.create_texture_bind_group(intermediate_view)
-                });
-            // Update texture bind group if view changed (TexturePool creates new textures on resize)
-            // As a simple fix to avoid holding stale views across resizes, we just recreate it.
-            *texture_bind_group = edge_blend_renderer.create_texture_bind_group(intermediate_view);
+        let mut current_view = mesh_target_view_ref
+            .as_ref()
+            .map(|view_ref| view_ref.as_ref())
+            .unwrap_or(view);
 
-            let config_to_use = if use_edge_blend {
-                output_config_opt.map(|c| c.edge_blend).unwrap_or_default()
-            } else {
-                vorce_core::EdgeBlendConfig::default()
-            };
+        if use_color_calib {
+            if let (Some(color_renderer), Some(output_config)) = (
+                ctx.color_calibration_renderer.as_ref(),
+                output_config_opt.as_ref(),
+            ) {
+                let color_target_view = color_target_view_ref
+                    .as_ref()
+                    .map(|view_ref| view_ref.as_ref())
+                    .unwrap_or(view);
+                let texture_bind_group = color_renderer.create_texture_bind_group(current_view);
+                let uniform_buffer =
+                    color_renderer.create_uniform_buffer(&output_config.color_calibration);
+                let uniform_bind_group = color_renderer.create_uniform_bind_group(&uniform_buffer);
 
-            // Simple hash for config changes
-            use std::hash::Hasher;
-            let mut hasher = std::collections::hash_map::DefaultHasher::new();
-            hasher.write(&[config_to_use.left.enabled as u8]);
-            hasher.write(&[config_to_use.right.enabled as u8]);
-            hasher.write(&[config_to_use.top.enabled as u8]);
-            hasher.write(&[config_to_use.bottom.enabled as u8]);
-            hasher.write(&config_to_use.left.width.to_le_bytes());
-            hasher.write(&config_to_use.right.width.to_le_bytes());
-            hasher.write(&config_to_use.top.width.to_le_bytes());
-            hasher.write(&config_to_use.bottom.width.to_le_bytes());
-            hasher.write(&config_to_use.gamma.to_le_bytes());
-            let config_hash = hasher.finish();
-
-            let (uniform_buffer, uniform_bind_group, last_hash) =
-                ctx.edge_blend_cache.entry(output_id).or_insert_with(|| {
-                    let buffer = edge_blend_renderer.create_uniform_buffer(&config_to_use);
-                    let bind_group = edge_blend_renderer.create_uniform_bind_group(&buffer);
-                    (buffer, bind_group, config_hash)
+                let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("Color Calibration Pass"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        depth_slice: None,
+                        view: color_target_view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })],
+                    depth_stencil_attachment: None,
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
+                    multiview_mask: None,
                 });
 
-            if *last_hash != config_hash {
-                edge_blend_renderer.update_uniform_buffer(queue, uniform_buffer, &config_to_use);
-                *last_hash = config_hash;
+                color_renderer.render(&mut rpass, &texture_bind_group, &uniform_bind_group);
+                current_view = color_target_view;
             }
+        }
 
-            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some(if use_edge_blend {
-                    "Edge Blending Pass"
+        if use_edge_blend {
+            if let Some(edge_blend_renderer) = ctx.edge_blend_renderer.as_ref() {
+                let texture_bind_group = ctx
+                    .edge_blend_texture_cache
+                    .entry(output_id)
+                    .or_insert_with(|| edge_blend_renderer.create_texture_bind_group(current_view));
+                *texture_bind_group = edge_blend_renderer.create_texture_bind_group(current_view);
+
+                let config_to_use = if use_edge_blend {
+                    output_config_opt
+                        .as_ref()
+                        .map(|config| config.edge_blend.clone())
+                        .unwrap_or_default()
                 } else {
-                    "Passthrough Pass"
-                }),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    depth_slice: None,
-                    view, // Draw to the final surface view
-                    resolve_target: None,
+                    vorce_core::EdgeBlendConfig::default()
+                };
 
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK), // Clear previous if any
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                timestamp_writes: None,
-                occlusion_query_set: None,
-                multiview_mask: None,
-            });
+                // Simple hash for config changes
+                use std::hash::Hasher;
+                let mut hasher = std::collections::hash_map::DefaultHasher::new();
+                hasher.write(&[config_to_use.left.enabled as u8]);
+                hasher.write(&[config_to_use.right.enabled as u8]);
+                hasher.write(&[config_to_use.top.enabled as u8]);
+                hasher.write(&[config_to_use.bottom.enabled as u8]);
+                hasher.write(&config_to_use.left.width.to_le_bytes());
+                hasher.write(&config_to_use.right.width.to_le_bytes());
+                hasher.write(&config_to_use.top.width.to_le_bytes());
+                hasher.write(&config_to_use.bottom.width.to_le_bytes());
+                hasher.write(&config_to_use.gamma.to_le_bytes());
+                let config_hash = hasher.finish();
 
-            edge_blend_renderer.render(&mut rpass, texture_bind_group, uniform_bind_group);
+                let (uniform_buffer, uniform_bind_group, last_hash) =
+                    ctx.edge_blend_cache.entry(output_id).or_insert_with(|| {
+                        let buffer = edge_blend_renderer.create_uniform_buffer(&config_to_use);
+                        let bind_group = edge_blend_renderer.create_uniform_bind_group(&buffer);
+                        (buffer, bind_group, config_hash)
+                    });
+
+                if *last_hash != config_hash {
+                    edge_blend_renderer.update_uniform_buffer(
+                        queue,
+                        uniform_buffer,
+                        &config_to_use,
+                    );
+                    *last_hash = config_hash;
+                }
+
+                let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some(if use_edge_blend {
+                        "Edge Blending Pass"
+                    } else {
+                        "Passthrough Pass"
+                    }),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        depth_slice: None,
+                        view, // Draw to the final surface view
+                        resolve_target: None,
+
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(wgpu::Color::BLACK), // Clear previous if any
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })],
+                    depth_stencil_attachment: None,
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
+                    multiview_mask: None,
+                });
+
+                edge_blend_renderer.render(&mut rpass, texture_bind_group, uniform_bind_group);
+            }
         }
     }
 

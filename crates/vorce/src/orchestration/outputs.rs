@@ -5,6 +5,16 @@ use anyhow::Result;
 use std::collections::HashSet;
 use vorce_core::module::OutputType;
 
+#[derive(Debug, Clone)]
+struct ProjectorGraphConfig {
+    id: u64,
+    name: String,
+    hide_cursor: bool,
+    target_screen: u8,
+    output_width: u32,
+    output_height: u32,
+}
+
 /// Synchronizes output windows with the current module graph configuration.
 pub fn sync_output_windows(
     app: &mut App,
@@ -12,10 +22,6 @@ pub fn sync_output_windows(
     _ui_needs_sync: bool,
     _graph_dirty: bool,
 ) -> Result<()> {
-    let mut active_window_ids: HashSet<u64> = HashSet::new();
-
-    // 1. Reconcile graph Projector nodes into OutputManager
-    // First, collect the required updates to avoid borrowing `app.state` mutably while iterating over it
     let mut projector_configs = Vec::new();
 
     for module in app.state.module_manager.modules() {
@@ -24,12 +30,20 @@ pub fn sync_output_windows(
                 vorce_core::module::ModulePartType::Output(OutputType::Projector {
                     id,
                     name,
+                    hide_cursor,
+                    target_screen,
                     output_width,
                     output_height,
                     ..
                 }) => {
-                    active_window_ids.insert(*id);
-                    projector_configs.push((*id, name.clone(), *output_width, *output_height));
+                    projector_configs.push(ProjectorGraphConfig {
+                        id: *id,
+                        name: name.clone(),
+                        hide_cursor: *hide_cursor,
+                        target_screen: *target_screen,
+                        output_width: *output_width,
+                        output_height: *output_height,
+                    });
                 }
                 vorce_core::module::ModulePartType::Output(output_type) => {
                     let unsupported_name = match output_type {
@@ -63,46 +77,75 @@ pub fn sync_output_windows(
         }
     }
 
-    for (id, name, output_width, output_height) in projector_configs {
-        let mut config = if let Some(existing) = app.state.output_manager.get_output(id) {
-            existing.clone()
+    let active_projector_ids: HashSet<u64> =
+        projector_configs.iter().map(|config| config.id).collect();
+
+    for config in &projector_configs {
+        let resolution = if config.output_width > 0 && config.output_height > 0 {
+            (config.output_width, config.output_height)
         } else {
-            vorce_core::OutputConfig::new(
-                id,
-                name.clone(),
-                vorce_core::CanvasRegion::new(0.0, 0.0, 1.0, 1.0),
-                (output_width, output_height),
-            )
+            (1920, 1080)
         };
 
-        config.name = name;
-        if output_width > 0 && output_height > 0 {
-            config.resolution = (output_width, output_height);
+        let mut output_config =
+            if let Some(existing) = app.state.output_manager.get_output(config.id) {
+                existing.clone()
+            } else {
+                vorce_core::OutputConfig::new(
+                    config.id,
+                    config.name.clone(),
+                    vorce_core::CanvasRegion::new(0.0, 0.0, 1.0, 1.0),
+                    resolution,
+                )
+            };
+
+        output_config.name = config.name.clone();
+        if config.output_width > 0 && config.output_height > 0 {
+            output_config.resolution = (config.output_width, config.output_height);
         }
 
-        app.state.output_manager_mut().upsert_output(config);
+        app.state.output_manager_mut().upsert_output(output_config);
     }
 
-    // 2. WindowManager strictly follows OutputManager configuration
-    for output_config in app.state.output_manager.outputs() {
-        if active_window_ids.contains(&output_config.id)
-            && !app
-                .window_manager
-                .window_ids()
-                .any(|&wid| wid == output_config.id)
-        {
-            app.window_manager
-                .create_output_window(elwt, &app.backend, output_config)?;
+    let stale_output_ids: Vec<_> = app
+        .state
+        .output_manager
+        .outputs()
+        .iter()
+        .filter(|output| output.id != 0 && !active_projector_ids.contains(&output.id))
+        .map(|output| output.id)
+        .collect();
+    for id in stale_output_ids {
+        app.state.output_manager_mut().remove_output(id);
+    }
+
+    for config in &projector_configs {
+        if let Err(err) = app.window_manager.sync_projector_window(
+            elwt,
+            &app.backend,
+            config.id,
+            &config.name,
+            false,
+            config.hide_cursor,
+            config.target_screen,
+            (config.output_width, config.output_height),
+            app.ui_state.user_config.vsync_mode,
+        ) {
+            tracing::error!(
+                "Failed to synchronize projector window '{}' (ID {}): {}",
+                config.name,
+                config.id,
+                err
+            );
         }
     }
 
-    // 3. Delete stale windows deterministically
-    let mut windows_to_remove = Vec::new();
-    for &window_id in app.window_manager.window_ids() {
-        if window_id != 0 && !active_window_ids.contains(&window_id) {
-            windows_to_remove.push(window_id);
-        }
-    }
+    let windows_to_remove: Vec<_> = app
+        .window_manager
+        .window_ids()
+        .copied()
+        .filter(|window_id| *window_id != 0 && !active_projector_ids.contains(window_id))
+        .collect();
 
     for id in windows_to_remove {
         app.window_manager.remove_window(id);
