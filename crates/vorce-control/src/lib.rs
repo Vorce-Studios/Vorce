@@ -100,6 +100,5 @@ mod tests {
     #[test]
     fn test_control_target_creation() {
         let _layer_opacity = ControlTarget::LayerOpacity(0);
-        // let _playback_speed = ControlTarget::PlaybackSpeed(None);
     }
 }
