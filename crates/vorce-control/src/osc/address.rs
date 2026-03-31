@@ -235,8 +235,6 @@ pub fn control_target_to_address(target: &ControlTarget) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn test_legacy_namespaces() {
         // Test /Vorce/
@@ -247,6 +245,8 @@ mod tests {
         let target2 = parse_osc_address("/mapmap/layer/5/position").unwrap();
         assert_eq!(target2, ControlTarget::LayerPosition(5));
     }
+
+    use super::*;
 
     #[test]
     fn test_parse_layer_opacity() {
