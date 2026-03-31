@@ -103,6 +103,8 @@ pub fn sync_output_windows(
         if config.output_width > 0 && config.output_height > 0 {
             output_config.resolution = (config.output_width, config.output_height);
         }
+        output_config.target_screen = config.target_screen;
+        output_config.hide_cursor = config.hide_cursor;
 
         app.state.output_manager_mut().upsert_output(output_config);
     }

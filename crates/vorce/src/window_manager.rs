@@ -209,22 +209,42 @@ impl WindowManager {
             output_config.name, output_id
         );
 
-        let window = Arc::new(
-            event_loop.create_window(
-                WindowAttributes::default()
-                    .with_title(format!("Vorce Output - {}", output_config.name))
-                    .with_window_icon(load_app_icon())
-                    .with_inner_size(winit::dpi::PhysicalSize::new(
-                        output_config.resolution.0,
-                        output_config.resolution.1,
-                    ))
-                    .with_fullscreen(if output_config.fullscreen {
-                        Some(Fullscreen::Borderless(None))
-                    } else {
-                        None
-                    }),
-            )?,
-        );
+        let monitors: Vec<winit::monitor::MonitorHandle> =
+            event_loop.available_monitors().collect();
+        let target_monitor = if !monitors.is_empty() {
+            let idx = (output_config.target_screen as usize).min(monitors.len() - 1);
+            Some(monitors[idx].clone())
+        } else {
+            event_loop.primary_monitor()
+        };
+
+        // Note: For non-fullscreen, we could set the initial position to the target monitor,
+        // but typically users will drag it or use fullscreen.
+        let mut attributes = WindowAttributes::default()
+            .with_title(format!("Vorce Output - {}", output_config.name))
+            .with_window_icon(load_app_icon())
+            .with_inner_size(winit::dpi::PhysicalSize::new(
+                output_config.resolution.0,
+                output_config.resolution.1,
+            ))
+            .with_fullscreen(if output_config.fullscreen {
+                Some(Fullscreen::Borderless(target_monitor.clone()))
+            } else {
+                None
+            });
+
+        // If it's not fullscreen, we can place the window on the target monitor
+        if !output_config.fullscreen {
+            if let Some(monitor) = target_monitor {
+                let position = monitor.position();
+                attributes = attributes
+                    .with_position(winit::dpi::PhysicalPosition::new(position.x, position.y));
+            }
+        }
+
+        let window = Arc::new(event_loop.create_window(attributes)?);
+
+        window.set_cursor_visible(!output_config.hide_cursor);
 
         // Re-apply icon explicitly to be sure
         if let Some(icon) = load_app_icon() {
