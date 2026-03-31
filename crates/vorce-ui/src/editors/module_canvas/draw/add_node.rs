@@ -1,8 +1,9 @@
 use super::super::{inspector::capabilities, utils};
 use egui::Ui;
 use vorce_core::module::{
-    BevyCameraMode, BlendModeType, EffectType, HueNodeType, LayerType, MaskShape, MaskType,
-    ModuleManager, ModulePartType, ModulizerType, OutputType, SourceType, TriggerType,
+    BevyCameraMode, BlendModeType, EffectType, HueMappingMode, HueNodeType, LayerType,
+    MaskShape, MaskType, ModuleManager, ModulePartType, ModulizerType, OutputType, SourceType,
+    TriggerType,
 };
 
 pub fn render_add_node_menu_content(
@@ -83,6 +84,7 @@ pub fn render_add_node_menu_content(
                 }));
                 ui.close();
             }
+
         });
 
         ui.menu_button("📹 Sources", |ui| {
@@ -156,6 +158,19 @@ pub fn render_add_node_menu_content(
                     },
                     fov: 60.0,
                     active: true,
+                }));
+                ui.close();
+            }
+            if ui.button("3D Model").clicked() {
+                add_node(ModulePartType::Source(SourceType::Bevy3DModel {
+                    path: String::new(),
+                    position: [0.0, 0.0, 0.0],
+                    rotation: [0.0, 0.0, 0.0],
+                    scale: [1.0, 1.0, 1.0],
+                    color: [1.0, 1.0, 1.0, 1.0],
+                    unlit: false,
+                    outline_width: 0.0,
+                    outline_color: [1.0, 1.0, 1.0, 1.0],
                 }));
                 ui.close();
             }
@@ -236,6 +251,38 @@ pub fn render_add_node_menu_content(
                     color: [1.0, 1.0, 1.0],
                     effect: None,
                     effect_active: false,
+                }));
+                ui.close();
+            }
+            if ui.button("Multi Lamp").clicked() {
+                add_node(ModulePartType::Hue(HueNodeType::MultiLamp {
+                    ids: Vec::new(),
+                    name: "New Group".to_string(),
+                    brightness: 1.0,
+                    color: [1.0, 1.0, 1.0],
+                    effect: None,
+                    effect_active: false,
+                }));
+                ui.close();
+            }
+            if ui.button("Entertainment Group").clicked() {
+                add_node(ModulePartType::Hue(HueNodeType::EntertainmentGroup {
+                    name: "Entertainment Area".to_string(),
+                    brightness: 1.0,
+                    color: [1.0, 1.0, 1.0],
+                    effect: None,
+                    effect_active: false,
+                }));
+                ui.close();
+            }
+            if ui.button("Hue Output").clicked() {
+                add_node(ModulePartType::Output(OutputType::Hue {
+                    bridge_ip: String::new(),
+                    username: String::new(),
+                    client_key: String::new(),
+                    entertainment_area: String::new(),
+                    lamp_positions: std::collections::HashMap::new(),
+                    mapping_mode: HueMappingMode::Ambient,
                 }));
                 ui.close();
             }

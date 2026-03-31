@@ -5,8 +5,9 @@ mod triggers;
 use crate::audio::analyzer_v2::AudioAnalysisV2;
 use crate::audio_reactive::AudioTriggerData;
 use crate::module::{
-    BlendModeType, LayerType, LinkBehavior, LinkMode, MaskType, MeshType, ModulePartId,
-    ModulePartType, ModulizerType, OutputType, SharedMediaState, SourceType, VorceModule,
+    BlendModeType, HueNodeType, LayerType, LinkBehavior, LinkMode, MaskType, MeshType,
+    ModulePartId, ModulePartType, ModulizerType, OutputType, SharedMediaState, SourceType,
+    VorceModule,
 };
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -62,6 +63,92 @@ impl Default for ModuleEvaluator {
 }
 
 impl ModuleEvaluator {
+    fn rgb_to_hue_saturation(color: [f32; 3]) -> (f32, f32) {
+        let r = color[0].clamp(0.0, 1.0);
+        let g = color[1].clamp(0.0, 1.0);
+        let b = color[2].clamp(0.0, 1.0);
+        let max = r.max(g).max(b);
+        let min = r.min(g).min(b);
+        let delta = max - min;
+
+        let hue = if delta <= f32::EPSILON {
+            0.0
+        } else if max == r {
+            (((g - b) / delta).rem_euclid(6.0)) / 6.0
+        } else if max == g {
+            (((b - r) / delta) + 2.0) / 6.0
+        } else {
+            (((r - g) / delta) + 4.0) / 6.0
+        };
+        let saturation = if max <= f32::EPSILON {
+            0.0
+        } else {
+            delta / max
+        };
+
+        (hue, saturation)
+    }
+
+    fn hue_node_defaults(
+        hue_node: &HueNodeType,
+    ) -> (
+        f32,
+        Option<f32>,
+        Option<f32>,
+        Option<f32>,
+        Option<Vec<String>>,
+    ) {
+        match hue_node {
+            HueNodeType::SingleLamp {
+                id,
+                brightness,
+                color,
+                effect_active,
+                ..
+            } => {
+                let (hue, saturation) = Self::rgb_to_hue_saturation(*color);
+                (
+                    *brightness,
+                    Some(hue),
+                    Some(saturation),
+                    effect_active.then_some(1.0),
+                    Some(vec![id.clone()]),
+                )
+            }
+            HueNodeType::MultiLamp {
+                ids,
+                brightness,
+                color,
+                effect_active,
+                ..
+            } => {
+                let (hue, saturation) = Self::rgb_to_hue_saturation(*color);
+                (
+                    *brightness,
+                    Some(hue),
+                    Some(saturation),
+                    effect_active.then_some(1.0),
+                    Some(ids.clone()),
+                )
+            }
+            HueNodeType::EntertainmentGroup {
+                brightness,
+                color,
+                effect_active,
+                ..
+            } => {
+                let (hue, saturation) = Self::rgb_to_hue_saturation(*color);
+                (
+                    *brightness,
+                    Some(hue),
+                    Some(saturation),
+                    effect_active.then_some(1.0),
+                    None,
+                )
+            }
+        }
+    }
+
     /// Create a new module evaluator
     pub fn new() -> Self {
         Self {
@@ -317,31 +404,29 @@ impl ModuleEvaluator {
 
             // Generate output commands for New Hue Nodes
             if let ModulePartType::Hue(hue_node) = &part.part_type {
-                // We need per-socket inputs here
-                let socket_inputs =
-                    self.compute_socket_inputs(module, &self.cached_result.trigger_values);
-
+                let (default_brightness, default_hue, default_saturation, default_strobe, ids) =
+                    Self::hue_node_defaults(hue_node);
                 let brightness = socket_inputs
                     .get(&part.id)
                     .and_then(|m| m.get(&0))
                     .copied()
-                    .unwrap_or(0.0);
-                let hue = socket_inputs.get(&part.id).and_then(|m| m.get(&1)).copied(); // Socket 1: Color(Hue)
-                let strobe = socket_inputs.get(&part.id).and_then(|m| m.get(&2)).copied(); // Socket 2: Strobe
-
-                // Extract IDs from node type
-                use crate::module::HueNodeType;
-                let ids = match hue_node {
-                    HueNodeType::SingleLamp { id, .. } => Some(vec![id.clone()]),
-                    HueNodeType::MultiLamp { ids, .. } => Some(ids.clone()),
-                    HueNodeType::EntertainmentGroup { .. } => None, // Broadcast to group
-                };
+                    .unwrap_or(default_brightness);
+                let hue = socket_inputs
+                    .get(&part.id)
+                    .and_then(|m| m.get(&1))
+                    .copied()
+                    .or(default_hue);
+                let strobe = socket_inputs
+                    .get(&part.id)
+                    .and_then(|m| m.get(&2))
+                    .copied()
+                    .or(default_strobe);
                 self.cached_result.source_commands.insert(
                     part.id,
                     SourceCommand::HueOutput {
                         brightness,
                         hue,
-                        saturation: None,
+                        saturation: default_saturation,
                         strobe,
                         ids,
                     },
@@ -980,5 +1065,41 @@ mod evaluator_tests {
         assert_eq!(evaluator.cached_result.render_ops.len(), 0);
         // spare_render_ops should contain the recycled one
         assert_eq!(evaluator.cached_result.spare_render_ops.len(), 1);
+    }
+
+    #[test]
+    fn test_hue_node_uses_static_defaults_without_trigger_inputs() {
+        let mut evaluator = ModuleEvaluator::new();
+        let mut module = create_test_module();
+
+        let hue_id = module.add_part_with_type(
+            ModulePartType::Hue(HueNodeType::SingleLamp {
+                id: "lamp-1".to_string(),
+                name: "Lamp 1".to_string(),
+                brightness: 0.75,
+                color: [0.2, 0.6, 1.0],
+                effect: Some("strobe".to_string()),
+                effect_active: true,
+            }),
+            (0.0, 0.0),
+        );
+
+        let result = evaluator.evaluate(&module, &crate::module::SharedMediaState::default(), 0);
+        let Some(SourceCommand::HueOutput {
+            brightness,
+            hue,
+            saturation,
+            strobe,
+            ids,
+        }) = result.source_commands.get(&hue_id)
+        else {
+            panic!("Expected HueOutput command");
+        };
+
+        assert_eq!(*brightness, 0.75);
+        assert!(hue.is_some());
+        assert!(saturation.is_some());
+        assert_eq!(*strobe, Some(1.0));
+        assert_eq!(ids.as_ref(), Some(&vec!["lamp-1".to_string()]));
     }
 }

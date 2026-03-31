@@ -1,6 +1,5 @@
 use super::super::mesh;
 use super::super::state::ModuleCanvas;
-#[cfg(feature = "ndi")]
 use super::capabilities;
 use egui::Ui;
 use vorce_core::module::{HueMappingMode, ModulePartId, OutputType};
@@ -131,7 +130,13 @@ pub fn render_output_ui(
             ui.separator();
             ui.label("👁️ Preview:");
             ui.checkbox(show_in_preview_panel, "Show in Preview Panel");
-            ui.checkbox(extra_preview_window, "Extra Preview Window");
+            ui.add_enabled_ui(false, |ui| {
+                ui.checkbox(extra_preview_window, "Extra Preview Window");
+            });
+            capabilities::render_unsupported_warning(
+                ui,
+                "Dedicated preview windows are not implemented yet. Use the Preview Panel instead.",
+            );
 
             ui.separator();
             ui.label("\u{1F4E1} NDI Broadcast");

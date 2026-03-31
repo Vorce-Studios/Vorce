@@ -80,8 +80,9 @@ pub fn render_common_controls(
 
         ui.horizontal(|ui| {
             ui.label("Blend Mode:");
-            let supported =
-                capabilities::is_blend_mode_supported(&blend_mode.unwrap_or(BlendModeType::Normal));
+            let supported = blend_mode
+                .map(|mode| capabilities::is_blend_mode_supported(&mode))
+                .unwrap_or(true);
             if !supported {
                 capabilities::render_unsupported_warning(ui, "Blend modes partially supported");
             }
@@ -93,7 +94,9 @@ pub fn render_common_controls(
                 .show_ui(ui, |ui| {
                     ui.selectable_value(blend_mode, None, "None");
                     for mode in BlendModeType::all() {
-                        ui.selectable_value(blend_mode, Some(*mode), mode.name());
+                        ui.add_enabled_ui(capabilities::is_blend_mode_supported(mode), |ui| {
+                            ui.selectable_value(blend_mode, Some(*mode), mode.name());
+                        });
                     }
                 });
         });
