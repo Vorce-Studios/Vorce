@@ -2,6 +2,8 @@ use crate::app::core::app_struct::App;
 use crate::app::core::app_struct::RuntimeRenderQueueItem;
 use std::collections::HashMap;
 use vorce_core::audio::AudioAnalysis;
+use vorce_core::module::BlendModeType;
+use vorce_core::module_eval::SourceCommand;
 
 /// Orchestrates the evaluation of the module graph and synchronizes with the Bevy engine.
 pub fn perform_evaluation(
@@ -37,6 +39,15 @@ pub fn perform_evaluation(
                 &app.state.module_manager.shared_media,
                 app.state.module_manager.graph_revision,
             );
+
+            let hue_commands: Vec<_> = eval_result
+                .source_commands
+                .iter()
+                .filter_map(|(part_id, command)| match command {
+                    SourceCommand::HueOutput { .. } => Some((*part_id, command.clone())),
+                    _ => None,
+                })
+                .collect();
 
             for (part_id, values) in &eval_result.trigger_values {
                 let max_val = values.iter().cloned().fold(0.0, f32::max);
@@ -84,6 +95,44 @@ pub fn perform_evaluation(
                             );
                             app.video_diagnostic_log_times.insert(log_key, now);
                         }
+                    }
+                }
+            }
+
+            for (part_id, command) in hue_commands {
+                let SourceCommand::HueOutput {
+                    brightness,
+                    hue,
+                    saturation,
+                    strobe,
+                    ids,
+                } = command
+                else {
+                    continue;
+                };
+
+                let hue_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    app.hue_controller.update_from_command(
+                        ids.as_deref(),
+                        brightness,
+                        hue,
+                        saturation,
+                        strobe,
+                    );
+                }));
+
+                if hue_result.is_err() {
+                    let now = std::time::Instant::now();
+                    let log_key = format!("hue_output_panic_{}", part_id);
+                    let should_log =
+                        if let Some(last_log) = app.video_diagnostic_log_times.get(&log_key) {
+                            now.duration_since(*last_log).as_secs_f32() > 5.0
+                        } else {
+                            true
+                        };
+                    if should_log {
+                        tracing::error!("Hue evaluation failed for node {}", part_id);
+                        app.video_diagnostic_log_times.insert(log_key, now);
                     }
                 }
             }
@@ -140,7 +189,10 @@ pub fn perform_evaluation(
             for render_op in render_ops {
                 let mut diagnostics = Vec::new();
 
-                if render_op.blend_mode.is_some() {
+                if matches!(
+                    render_op.blend_mode,
+                    Some(mode) if mode != BlendModeType::Normal
+                ) {
                     diagnostics.push(crate::app::core::app_struct::RenderDiagnostic {
                         module_id: *module_id,
                         part_id: render_op.layer_part_id,

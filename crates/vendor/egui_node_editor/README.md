@@ -68,7 +68,7 @@ still considered breaking.
 [Blackjack](https://gitlab.com/cyloncore/blackjack), a 3d procedural modelling
 software built in Rust using egui, rend3 and wgpu.
 ![Main interface of blackjack](https://raw.githubusercontent.com/setzer22/blackjack/main/doc/resources/showcase.png)
-Are you using this crate for something cool? Add yourself to this section by sending a PR!
+Are you using this crate for something cool? Add yourself to this section by sending a PR.
 
 ## Contributing
 

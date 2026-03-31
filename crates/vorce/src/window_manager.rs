@@ -24,6 +24,37 @@ fn vsync_mode_to_present_mode(mode: VSyncMode) -> wgpu::PresentMode {
     }
 }
 
+fn resolve_target_monitor(
+    event_loop: &ActiveEventLoop,
+    target_screen: u8,
+) -> Option<winit::monitor::MonitorHandle> {
+    let monitors: Vec<_> = event_loop.available_monitors().collect();
+    if (target_screen as usize) < monitors.len() {
+        Some(monitors[target_screen as usize].clone())
+    } else if let Some(primary) = event_loop.primary_monitor() {
+        info!(
+            "Target screen {} not found, using primary monitor",
+            target_screen
+        );
+        Some(primary)
+    } else {
+        None
+    }
+}
+
+fn fallback_projector_resolution(
+    target_monitor: Option<&winit::monitor::MonitorHandle>,
+) -> (u32, u32) {
+    if let Some(monitor) = target_monitor {
+        if let Some(mode) = monitor.video_modes().next() {
+            let size = mode.size();
+            return (size.width, size.height);
+        }
+    }
+
+    (1920, 1080)
+}
+
 /// Context for a single window, containing the `winit` window, `wgpu` surface,
 /// and other related configuration.
 pub struct WindowContext {
@@ -268,6 +299,7 @@ impl WindowManager {
         fullscreen: bool,
         hide_cursor: bool,
         target_screen: u8,
+        resolution: (u32, u32),
         vsync_mode: VSyncMode,
     ) -> Result<()> {
         // Skip if window already exists
@@ -280,32 +312,11 @@ impl WindowManager {
             name, output_id, target_screen
         );
 
-        // Get all available monitors
-        let monitors: Vec<_> = event_loop.available_monitors().collect();
-
-        // Select target monitor (default to primary if target_screen is out of range)
-        let target_monitor = if (target_screen as usize) < monitors.len() {
-            Some(monitors[target_screen as usize].clone())
-        } else if let Some(primary) = event_loop.primary_monitor() {
-            info!(
-                "Target screen {} not found, using primary monitor",
-                target_screen
-            );
-            Some(primary)
+        let target_monitor = resolve_target_monitor(event_loop, target_screen);
+        let (default_width, default_height) = if resolution.0 > 0 && resolution.1 > 0 {
+            resolution
         } else {
-            None
-        };
-
-        // Default resolution: 1920x1080 or monitor native resolution
-        let (default_width, default_height) = if let Some(ref monitor) = target_monitor {
-            if let Some(mode) = monitor.video_modes().next() {
-                let size = mode.size();
-                (size.width, size.height)
-            } else {
-                (1920, 1080)
-            }
-        } else {
-            (1920, 1080)
+            fallback_projector_resolution(target_monitor.as_ref())
         };
 
         let mut window_attributes = WindowAttributes::default()
@@ -322,6 +333,10 @@ impl WindowManager {
                 window_attributes =
                     window_attributes.with_fullscreen(Some(Fullscreen::Borderless(None)));
             }
+        } else if let Some(monitor) = target_monitor.as_ref() {
+            let position = monitor.position();
+            window_attributes = window_attributes
+                .with_position(winit::dpi::PhysicalPosition::new(position.x, position.y));
         }
 
         // Build the window
@@ -339,12 +354,13 @@ impl WindowManager {
 
         // Create surface for this output window
         let surface = backend.create_surface(window.clone())?;
+        let actual_size = window.inner_size();
 
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
             format: backend.surface_format(),
-            width: default_width,
-            height: default_height,
+            width: actual_size.width.max(1),
+            height: actual_size.height.max(1),
             present_mode: vsync_mode_to_present_mode(vsync_mode), // VSync for synchronized output
             alpha_mode: wgpu::CompositeAlphaMode::Opaque,
             view_formats: vec![],
@@ -366,6 +382,82 @@ impl WindowManager {
             "Created projector window '{}' at {}x{}",
             name, default_width, default_height
         );
+
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn sync_projector_window(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        backend: &WgpuBackend,
+        output_id: OutputId,
+        name: &str,
+        fullscreen: bool,
+        hide_cursor: bool,
+        target_screen: u8,
+        resolution: (u32, u32),
+        vsync_mode: VSyncMode,
+    ) -> Result<()> {
+        if !self.windows.contains_key(&output_id) {
+            return self.create_projector_window(
+                event_loop,
+                backend,
+                output_id,
+                name,
+                fullscreen,
+                hide_cursor,
+                target_screen,
+                resolution,
+                vsync_mode,
+            );
+        }
+
+        let target_monitor = resolve_target_monitor(event_loop, target_screen);
+        let context = self
+            .windows
+            .get_mut(&output_id)
+            .expect("checked window existence before sync");
+
+        context.window.set_title(&format!("Vorce - {}", name));
+        context.window.set_cursor_visible(!hide_cursor);
+
+        if fullscreen {
+            context
+                .window
+                .set_fullscreen(Some(Fullscreen::Borderless(target_monitor.clone())));
+        } else {
+            context.window.set_fullscreen(None);
+            if let Some(monitor) = target_monitor {
+                let position = monitor.position();
+                context
+                    .window
+                    .set_outer_position(winit::dpi::PhysicalPosition::new(position.x, position.y));
+            }
+        }
+
+        if resolution.0 > 0 && resolution.1 > 0 {
+            let _ = context
+                .window
+                .request_inner_size(winit::dpi::PhysicalSize::new(resolution.0, resolution.1));
+        }
+
+        let actual_size = context.window.inner_size();
+        let present_mode = vsync_mode_to_present_mode(vsync_mode);
+        let width = actual_size.width.max(1);
+        let height = actual_size.height.max(1);
+
+        if context.surface_config.width != width
+            || context.surface_config.height != height
+            || context.surface_config.present_mode != present_mode
+        {
+            context.surface_config.width = width;
+            context.surface_config.height = height;
+            context.surface_config.present_mode = present_mode;
+            context
+                .surface
+                .configure(&backend.device, &context.surface_config);
+        }
 
         Ok(())
     }

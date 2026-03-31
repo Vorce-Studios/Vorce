@@ -400,6 +400,23 @@ impl App {
 }
 
 fn main() -> Result<()> {
+    // Set up panic hook early to capture startup crashes
+    std::panic::set_hook(Box::new(|panic_info| {
+        let location = panic_info
+            .location()
+            .map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column()))
+            .unwrap_or_else(|| "unknown".to_string());
+        let payload = panic_info.payload();
+        let message = if let Some(s) = payload.downcast_ref::<&str>() {
+            *s
+        } else if let Some(s) = payload.downcast_ref::<String>() {
+            s.as_str()
+        } else {
+            "Box<Any>"
+        };
+        error!("APPLICATION PANIC at {}: {}", location, message);
+    }));
+
     let args = CliArgs::parse();
     let (initial_user_config, initial_user_config_report) =
         vorce_ui::config::UserConfig::load_with_report();

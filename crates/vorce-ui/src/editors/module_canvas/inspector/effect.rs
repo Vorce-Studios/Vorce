@@ -3,6 +3,21 @@ use super::common;
 use egui::Ui;
 use vorce_core::module::{BlendModeType, EffectType, ModulePartId, ModulizerType};
 
+fn render_effect_choice(
+    ui: &mut Ui,
+    current: &EffectType,
+    changed_type: &mut Option<EffectType>,
+    candidate: EffectType,
+    label: &str,
+) {
+    let supported = capabilities::is_effect_supported(&candidate);
+    ui.add_enabled_ui(supported, |ui| {
+        if ui.selectable_label(*current == candidate, label).clicked() {
+            *changed_type = Some(candidate);
+        }
+    });
+}
+
 /// Sets default parameters for a given effect type.
 pub fn set_default_effect_params(
     effect_type: EffectType,
@@ -83,134 +98,135 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                 .selected_text(effect.name())
                 .show_ui(ui, |ui| {
                     ui.label("--- Basic ---");
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::Blur), "Blur")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::Blur);
-                    }
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::Invert), "Invert")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::Invert);
-                    }
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::Sharpen), "Sharpen")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::Sharpen);
-                    }
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::Threshold), "Threshold")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::Threshold);
-                    }
+                    render_effect_choice(ui, effect, &mut changed_type, EffectType::Blur, "Blur");
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::Invert,
+                        "Invert",
+                    );
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::Sharpen,
+                        "Sharpen",
+                    );
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::Threshold,
+                        "Threshold",
+                    );
 
                     ui.label("--- Color ---");
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::Brightness), "Brightness")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::Brightness);
-                    }
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::Contrast), "Contrast")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::Contrast);
-                    }
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::Saturation), "Saturation")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::Saturation);
-                    }
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::HueShift), "Hue Shift")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::HueShift);
-                    }
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::Colorize), "Colorize")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::Colorize);
-                    }
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::Brightness,
+                        "Brightness",
+                    );
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::Contrast,
+                        "Contrast",
+                    );
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::Saturation,
+                        "Saturation",
+                    );
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::HueShift,
+                        "Hue Shift",
+                    );
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::Colorize,
+                        "Colorize",
+                    );
 
                     ui.label("--- Distortion ---");
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::Wave), "Wave")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::Wave);
-                    }
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::Spiral), "Spiral")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::Spiral);
-                    }
-                    if ui
-                        .selectable_label(
-                            matches!(effect, EffectType::Kaleidoscope),
-                            "Kaleidoscope",
-                        )
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::Kaleidoscope);
-                    }
+                    render_effect_choice(ui, effect, &mut changed_type, EffectType::Wave, "Wave");
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::Spiral,
+                        "Spiral",
+                    );
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::Kaleidoscope,
+                        "Kaleidoscope",
+                    );
 
                     ui.label("--- Stylize ---");
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::Pixelate), "Pixelate")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::Pixelate);
-                    }
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::EdgeDetect), "Edge Detect")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::EdgeDetect);
-                    }
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::Pixelate,
+                        "Pixelate",
+                    );
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::EdgeDetect,
+                        "Edge Detect",
+                    );
 
                     ui.label("--- Composite ---");
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::RgbSplit), "RGB Split")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::RgbSplit);
-                    }
-                    if ui
-                        .selectable_label(
-                            matches!(effect, EffectType::ChromaticAberration),
-                            "Chromatic",
-                        )
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::ChromaticAberration);
-                    }
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::FilmGrain), "Film Grain")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::FilmGrain);
-                    }
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::Vignette), "Vignette")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::Vignette);
-                    }
-                    if ui
-                        .selectable_label(matches!(effect, EffectType::LoadLUT), "Load 3D LUT")
-                        .clicked()
-                    {
-                        changed_type = Some(EffectType::LoadLUT);
-                    }
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::RgbSplit,
+                        "RGB Split",
+                    );
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::ChromaticAberration,
+                        "Chromatic",
+                    );
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::FilmGrain,
+                        "Film Grain",
+                    );
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::Vignette,
+                        "Vignette",
+                    );
+                    render_effect_choice(
+                        ui,
+                        effect,
+                        &mut changed_type,
+                        EffectType::LoadLUT,
+                        "Load 3D LUT",
+                    );
                 });
 
             if let Some(new_type) = changed_type {
@@ -219,7 +235,14 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
             }
 
             ui.separator();
-            match effect {
+            let effect_supported = capabilities::is_effect_supported(effect);
+            if !effect_supported {
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "This effect type has no active runtime path and is intentionally gated.",
+                );
+            }
+            ui.add_enabled_ui(effect_supported, |ui| match effect {
                 EffectType::Blur => {
                     let val = params.entry("radius".to_string()).or_insert(5.0);
                     ui.add(egui::Slider::new(val, 0.0..=50.0).text("Radius"));
@@ -255,12 +278,14 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                     ui.add(egui::Slider::new(sat, 0.0..=2.0).text("Saturation"));
                 }
                 EffectType::LoadLUT => {
-                    ui.label("LUT Loading requires a .cube file (not yet implemented in properties panel).");
+                    ui.label(
+                        "LUT Loading requires a .cube file (not yet implemented in properties panel).",
+                    );
                 }
                 _ => {
                     common::render_info_label(ui, "No configurable parameters");
                 }
-            }
+            });
         }
         ModulizerType::BlendMode(blend) => {
             ui.label("\u{1F3A8} Blend Mode");

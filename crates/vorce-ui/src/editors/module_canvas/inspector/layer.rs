@@ -5,6 +5,70 @@ use super::common;
 use egui::Ui;
 use vorce_core::module::{BlendModeType, LayerType, MaskShape, MaskType, MeshType, ModulePartId};
 
+fn render_layer_blend_mode_ui(ui: &mut Ui, id_salt: u64, blend_mode: &mut Option<BlendModeType>) {
+    let blend_text = blend_mode
+        .as_ref()
+        .map(|mode| format!("{mode:?}"))
+        .unwrap_or_else(|| "None".to_string());
+
+    egui::ComboBox::from_id_salt(("layer_blend", id_salt))
+        .selected_text(blend_text)
+        .show_ui(ui, |ui| {
+            if ui.selectable_label(blend_mode.is_none(), "None").clicked() {
+                *blend_mode = None;
+            }
+
+            for mode in [
+                BlendModeType::Normal,
+                BlendModeType::Add,
+                BlendModeType::Multiply,
+            ] {
+                ui.add_enabled_ui(capabilities::is_blend_mode_supported(&mode), |ui| {
+                    if ui
+                        .selectable_label(blend_mode.as_ref() == Some(&mode), mode.name())
+                        .clicked()
+                    {
+                        *blend_mode = Some(mode);
+                    }
+                });
+            }
+        });
+
+    if !blend_mode
+        .as_ref()
+        .map(|mode| capabilities::is_blend_mode_supported(mode))
+        .unwrap_or(true)
+    {
+        capabilities::render_unsupported_warning(
+            ui,
+            "Blend modes other than Normal are currently ignored in final render.",
+        );
+    }
+}
+
+fn render_standard_layer_controls(
+    render_mesh_ui: &mut impl FnMut(&mut Ui, &mut MeshType, u64, bool),
+    show_mesh_editor: bool,
+    ui: &mut Ui,
+    name: &mut String,
+    opacity: &mut f32,
+    blend_mode: &mut Option<BlendModeType>,
+    mesh: &mut MeshType,
+    mapping_mode: &mut bool,
+    mesh_id_salt: u64,
+) {
+    ui.text_edit_singleline(name);
+    ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
+
+    ui.horizontal(|ui| {
+        ui.label("Blend Mode:");
+        render_layer_blend_mode_ui(ui, mesh_id_salt, blend_mode);
+    });
+
+    ui.checkbox(mapping_mode, "Mapping Mode (Grid)");
+    render_mesh_ui(ui, mesh, mesh_id_salt, show_mesh_editor);
+}
+
 /// Renders the configuration UI for a `ModulePartType::Layer`.
 pub fn render_layer_ui(
     canvas: &mut ModuleCanvas,
@@ -14,9 +78,8 @@ pub fn render_layer_ui(
     layer: &mut LayerType,
     part_id: ModulePartId,
 ) {
-    ui.label("📋 Layer:");
+    ui.label("Layer:");
 
-    // Helper to render mesh UI
     let mut render_mesh_ui =
         |ui: &mut Ui, mesh: &mut MeshType, id_salt: u64, show_visual_editor: bool| {
             mesh::render_mesh_editor_ui(
@@ -41,127 +104,53 @@ pub fn render_layer_ui(
             mesh,
             mapping_mode,
         } => {
-            ui.label("🔳 Single Layer");
+            ui.label("Single Layer");
             ui.horizontal(|ui| {
                 ui.label("ID:");
                 ui.add(egui::DragValue::new(id));
             });
-            ui.text_edit_singleline(name);
-            ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
-
-            // Blend mode
-            let blend_text = blend_mode
-                .as_ref()
-                .map(|b| format!("{:?}", b))
-                .unwrap_or_else(|| "None".to_string());
-            egui::ComboBox::from_id_salt("layer_blend")
-                .selected_text(blend_text)
-                .show_ui(ui, |ui| {
-                    if ui.selectable_label(blend_mode.is_none(), "None").clicked() {
-                        *blend_mode = None;
-                    }
-                    ui.add_enabled_ui(
-                        capabilities::is_blend_mode_supported(&BlendModeType::Normal),
-                        |ui| {
-                            if ui
-                                .selectable_label(
-                                    matches!(blend_mode, Some(BlendModeType::Normal)),
-                                    "Normal",
-                                )
-                                .clicked()
-                            {
-                                *blend_mode = Some(BlendModeType::Normal);
-                            }
-                        },
-                    );
-                    ui.add_enabled_ui(
-                        capabilities::is_blend_mode_supported(&BlendModeType::Add),
-                        |ui| {
-                            if ui
-                                .selectable_label(
-                                    matches!(blend_mode, Some(BlendModeType::Add)),
-                                    "Add",
-                                )
-                                .clicked()
-                            {
-                                *blend_mode = Some(BlendModeType::Add);
-                            }
-                        },
-                    );
-                    ui.add_enabled_ui(
-                        capabilities::is_blend_mode_supported(&BlendModeType::Multiply),
-                        |ui| {
-                            if ui
-                                .selectable_label(
-                                    matches!(blend_mode, Some(BlendModeType::Multiply)),
-                                    "Multiply",
-                                )
-                                .clicked()
-                            {
-                                *blend_mode = Some(BlendModeType::Multiply);
-                            }
-                        },
-                    );
-                });
-            if !capabilities::is_blend_mode_supported(
-                blend_mode.as_ref().unwrap_or(&BlendModeType::Normal),
-            ) {
-                capabilities::render_unsupported_warning(
-                    ui,
-                    "Blend modes other than Normal are currently ignored in final render.",
-                );
-            }
-
-            ui.add_enabled_ui(capabilities::is_mapping_mode_supported(), |ui| {
-                ui.checkbox(mapping_mode, "Mapping Mode (Grid)");
-            });
-            if !capabilities::is_mapping_mode_supported() {
-                capabilities::render_unsupported_warning(
-                    ui,
-                    "Mapping mode grid is currently not end-to-end supported.",
-                );
-            }
-
-            render_mesh_ui(ui, mesh, *id, show_mesh_editor);
+            render_standard_layer_controls(
+                &mut render_mesh_ui,
+                show_mesh_editor,
+                ui,
+                name,
+                opacity,
+                blend_mode,
+                mesh,
+                mapping_mode,
+                *id,
+            );
         }
         LayerType::Group {
             name,
             opacity,
+            blend_mode,
             mesh,
             mapping_mode,
-            ..
         } => {
-            ui.add_enabled_ui(false, |ui| {
-                ui.label("📂 Group");
-                ui.text_edit_singleline(name);
-                ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
-                ui.checkbox(mapping_mode, "Mapping Mode (Grid)");
-                render_mesh_ui(ui, mesh, 9999, show_mesh_editor); // Dummy ID
-            });
-            capabilities::render_unsupported_warning(
+            ui.label("Group Layer");
+            render_standard_layer_controls(
+                &mut render_mesh_ui,
+                show_mesh_editor,
                 ui,
-                "Group layers are currently unsupported and act like a Single layer.",
+                name,
+                opacity,
+                blend_mode,
+                mesh,
+                mapping_mode,
+                9_999,
             );
-        }
-        LayerType::All { opacity, .. } => {
-            ui.add_enabled_ui(false, |ui| {
-                ui.label("🎚️ Master");
-                ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
-            });
-            capabilities::render_unsupported_warning(
-                ui,
-                "Master layers are currently unsupported and will not be rendered.",
-            );
-        }
+        } // Note: LayerType::All was removed (dead code)
     }
 }
 
 /// Renders the configuration UI for a `ModulePartType::Mask`.
 pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
     ui.label("Mask Type:");
-    match mask {
+    let supported = capabilities::is_mask_supported();
+    ui.add_enabled_ui(supported, |ui| match mask {
         MaskType::File { path } => {
-            ui.label("📁 Mask File");
+            ui.label("Mask File");
             if path.is_empty() {
                 ui.horizontal(|ui| {
                     if ui.button("Select...").clicked() {
@@ -178,7 +167,7 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
                 ui.horizontal(|ui| {
                     ui.add(egui::TextEdit::singleline(path).desired_width(120.0));
                     if ui
-                        .button("\u{1F4C2}")
+                        .button("Open")
                         .on_hover_text("Select Mask File")
                         .clicked()
                     {
@@ -193,9 +182,9 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
             }
         }
         MaskType::Shape(shape) => {
-            ui.label("\u{1F537} Shape Mask");
+            ui.label("Shape Mask");
             egui::ComboBox::from_id_salt("mask_shape")
-                .selected_text(format!("{:?}", shape))
+                .selected_text(format!("{shape:?}"))
                 .show_ui(ui, |ui| {
                     if ui
                         .selectable_label(matches!(shape, MaskShape::Circle), "Circle")
@@ -230,9 +219,16 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
                 });
         }
         MaskType::Gradient { angle, softness } => {
-            ui.label("\u{1F308} Gradient Mask");
-            ui.add(egui::Slider::new(angle, 0.0..=360.0).text("Angle Â°"));
+            ui.label("Gradient Mask");
+            ui.add(egui::Slider::new(angle, 0.0..=360.0).text("Angle"));
             ui.add(egui::Slider::new(softness, 0.0..=1.0).text("Softness"));
         }
+    });
+
+    if !supported {
+        capabilities::render_unsupported_warning(
+            ui,
+            "Masks are currently gated because the active render path ignores them.",
+        );
     }
 }

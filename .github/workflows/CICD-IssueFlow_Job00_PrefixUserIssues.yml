@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   prefix-user-issue:
-    name: Normalize queued user issue title
+    name: Normalize queued issue title
     runs-on: ubuntu-latest
     if: github.event.action == 'opened' || github.event.label.name == 'Todo-UserISU'
 
@@ -33,13 +33,14 @@ jobs:
               return;
             }
 
-            const preservedPrefixes = ['MFuser_#', 'MFusr_#', 'MF_#', 'MFsub_#'];
+            const preservedPrefixes = ['I_', 'MAI-', '__SI-', 'MFuser_#', 'MFusr_#', 'MF_#', 'MFsub_#'];
             if (preservedPrefixes.some((prefix) => issue.title.startsWith(prefix))) {
               console.log('Issue title already uses a managed prefix.');
               return;
             }
 
             let baseTitle = issue.title
+              .replace(/^I_\s*/i, '')
               .replace(/^MFuser_\s*/i, '')
               .replace(/^\[(Bug|Feature|Task)\]:\s*/i, '')
               .replace(/\s+/g, ' ')
@@ -49,7 +50,7 @@ jobs:
               baseTitle = 'User-Issue';
             }
 
-            const normalizedTitle = `MFuser_#${issue.number}-${baseTitle}`;
+            const normalizedTitle = `I_${baseTitle}`;
 
             if (normalizedTitle === issue.title) {
               console.log('Issue title already normalized.');

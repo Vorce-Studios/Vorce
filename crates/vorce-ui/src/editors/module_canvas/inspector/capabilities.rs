@@ -31,7 +31,7 @@ pub fn is_effect_supported(effect_type: &EffectType) -> bool {
 
 /// Determines if a layer's mapping mode (grid) is fully supported.
 pub fn is_mapping_mode_supported() -> bool {
-    false // Mapping mode grid is currently not end-to-end supported
+    true
 }
 
 /// Determines if source properties scale/rotation/offset are fully supported.
