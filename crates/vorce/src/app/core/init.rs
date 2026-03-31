@@ -3,7 +3,7 @@
 use super::app_struct::{App, InitializationConfig};
 use crate::media_manager_ui::MediaManagerUI;
 use crate::window_manager::WindowManager;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use crossbeam_channel::unbounded;
 use egui_wgpu::Renderer;
 use egui_winit::State;
@@ -34,19 +34,36 @@ impl App {
         config: InitializationConfig,
         saved_config: UserConfig,
     ) -> Result<Self> {
-        let backend = WgpuBackend::new(saved_config.preferred_gpu.as_deref()).await?;
+        info!("Initializing WGPU backend...");
+        let backend = WgpuBackend::new(saved_config.preferred_gpu.as_deref())
+            .await
+            .context("Failed to initialize WGPU rendering backend. Check that your graphics drivers are up to date and that your GPU supports Vulkan, Metal, DX12, or OpenGL.")?;
 
         // Version marker to confirm correct build is running
         tracing::info!(">>> BUILD VERSION: 2026-03-19-VISUAL-TEST-READY <<<");
 
-        // Initialize renderers
+        // Initialize renderers with detailed error reporting
+        info!("Initializing texture pool...");
         let texture_pool = TexturePool::new(backend.device.clone());
-        let compositor = Compositor::new(backend.device.clone(), backend.surface_format())?;
+        
+        info!("Initializing compositor...");
+        let compositor = Compositor::new(backend.device.clone(), backend.surface_format())
+            .context("Failed to create compositor. This may indicate a GPU compatibility issue.")?;
+        
+        info!("Initializing effect chain renderers...");
         let (effect_chain_renderer, preview_effect_chain_renderer) =
-            Self::init_renderers(&backend)?;
-        let mesh_renderer = MeshRenderer::new(backend.device.clone(), backend.surface_format())?;
+            Self::init_renderers(&backend)
+            .context("Failed to initialize effect chain renderers.")?;
+        
+        info!("Initializing mesh renderer...");
+        let mesh_renderer = MeshRenderer::new(backend.device.clone(), backend.surface_format())
+            .context("Failed to create mesh renderer.")?;
+        
         let mesh_buffer_cache = MeshBufferCache::new();
-        let quad_renderer = QuadRenderer::new(&backend.device, backend.surface_format())?;
+        
+        info!("Initializing quad renderer...");
+        let quad_renderer = QuadRenderer::new(&backend.device, backend.surface_format())
+            .context("Failed to create quad renderer.")?;
 
         // Initialize advanced output renderers
         let (edge_blend_renderer, color_calibration_renderer) =
@@ -58,34 +75,37 @@ impl App {
         let tokio_runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()
-            .expect("Failed to create Tokio runtime");
+            .context("Failed to create Tokio runtime. This is a critical system error.")?;
 
         // Create main window with saved geometry
-        let main_window_id = window_manager.create_main_window_with_geometry(
-            elwt,
-            &backend,
-            if config.is_automation {
-                Some(1280)
-            } else {
-                saved_config.window_width
-            },
-            if config.is_automation {
-                Some(720)
-            } else {
-                saved_config.window_height
-            },
-            saved_config.window_x,
-            saved_config.window_y,
-            if config.is_automation {
-                false
-            } else {
-                saved_config.window_maximized
-            },
-            saved_config.vsync_mode,
-        )?;
+        info!("Creating main application window...");
+        let main_window_id = window_manager
+            .create_main_window_with_geometry(
+                elwt,
+                &backend,
+                if config.is_automation {
+                    Some(1280)
+                } else {
+                    saved_config.window_width
+                },
+                if config.is_automation {
+                    Some(720)
+                } else {
+                    saved_config.window_height
+                },
+                saved_config.window_x,
+                saved_config.window_y,
+                if config.is_automation {
+                    false
+                } else {
+                    saved_config.window_maximized
+                },
+                saved_config.vsync_mode,
+            )
+            .context("Failed to create main application window. This may be a windowing system (winit) compatibility issue.")?;
 
         let (width, height, format, main_window_for_egui) = {
-            let main_window_context = window_manager.get(main_window_id).unwrap();
+            let main_window_context = window_manager.get(main_window_id).expect("Main window context should exist after creation");
             (
                 main_window_context.surface_config.width,
                 main_window_context.surface_config.height,
@@ -123,6 +143,9 @@ impl App {
         ];
 
         let mut ui_state = AppUI::from_user_config(saved_config.clone());
+        
+        // Initialize UI assets with error handling
+        info!("Initializing UI assets...");
         Self::init_ui_assets(&mut ui_state);
 
         // Initialize state, trying to load autosave first unless skipped
@@ -330,7 +353,22 @@ impl App {
                 }
                 lib
             },
-            bevy_runner: Some(vorce_bevy::BevyRunner::new()),
+            bevy_runner: {
+                // Initialize Bevy runner with error handling to prevent crashes
+                match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    vorce_bevy::BevyRunner::new()
+                })) {
+                    Ok(runner) => {
+                        info!("Bevy runner initialized successfully");
+                        Some(runner)
+                    }
+                    Err(e) => {
+                        error!("Failed to initialize Bevy runner: {:?}", e);
+                        error!("3D/Particle features will be unavailable");
+                        None
+                    }
+                }
+            },
         };
 
         app.print_init_report();
