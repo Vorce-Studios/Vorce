@@ -185,7 +185,7 @@ drop(decoder); // Explizit cleanup bei C-Bindings
 
 ## 📋 Review Template
 
-```markdown
+````markdown
 ## 🤖 Copilot Review
 
 ### ✅ Positives
@@ -202,6 +202,7 @@ drop(decoder); // Explizit cleanup bei C-Bindings
 ### 💡 Optional
 
 - [Nice-to-have Verbesserungen]
+````
 
 ---
 
@@ -213,5 +214,5 @@ drop(decoder); // Explizit cleanup bei C-Bindings
 
 ---
 
-**Version:** 1.0  
+**Version:** 1.0
 **Last Updated:** 2026-02-05
