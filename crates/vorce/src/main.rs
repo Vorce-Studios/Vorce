@@ -415,12 +415,12 @@ fn main() -> Result<()> {
         } else {
             "Box<Any>"
         };
-        
+
         let panic_msg = format!("APPLICATION PANIC at {}: {}", location, message);
-        
+
         // Always write to stderr for immediate visibility
         eprintln!("{}", panic_msg);
-        
+
         // Also attempt to write to fallback log file (even before logging is set up)
         if let Ok(mut path) = std::env::current_dir() {
             path.push("logs");
