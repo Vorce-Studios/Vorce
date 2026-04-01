@@ -11,7 +11,7 @@ Audit and replace unmaintained or unsound dependencies across the Vorce workspac
 
 ### 🛠️ Tasks (#129)
 
-- [ ] **Replace `atty`**: Replace `atty` v0.2.14 (unmaintained) with the native `std::io::IsTerminal` trait (available since Rust 1.70). This affects `env_logger` integration and any direct CLI terminal checks.  
+- [ ] **Replace `atty`**: Replace `atty` v0.2.14 (unmaintained) with the native `std::io::IsTerminal` trait (available since Rust 1.70). This affects `env_logger` integration and any direct CLI terminal checks.
 - [ ] **Consolidate `bincode`**: Currently, both v1.3.3 and v2.0.1 exist in the dependency tree.
   - v1.3.3 is unmaintained and susceptible to DoS via malicious inputs.
   - v2.0.1 is the modern version.
