@@ -1,6 +1,9 @@
 name: "CICD-DevFlow: Job01 Validation"
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main]
   pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
@@ -174,7 +177,7 @@ jobs:
   build-windows:
     name: "Build & Test (Windows)"
     runs-on: windows-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
 
     steps:
       - name: Checkout repository
