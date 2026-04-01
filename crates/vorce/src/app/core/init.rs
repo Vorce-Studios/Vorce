@@ -45,22 +45,21 @@ impl App {
         // Initialize renderers with detailed error reporting
         info!("Initializing texture pool...");
         let texture_pool = TexturePool::new(backend.device.clone());
-        
+
         info!("Initializing compositor...");
         let compositor = Compositor::new(backend.device.clone(), backend.surface_format())
             .context("Failed to create compositor. This may indicate a GPU compatibility issue.")?;
-        
+
         info!("Initializing effect chain renderers...");
-        let (effect_chain_renderer, preview_effect_chain_renderer) =
-            Self::init_renderers(&backend)
+        let (effect_chain_renderer, preview_effect_chain_renderer) = Self::init_renderers(&backend)
             .context("Failed to initialize effect chain renderers.")?;
-        
+
         info!("Initializing mesh renderer...");
         let mesh_renderer = MeshRenderer::new(backend.device.clone(), backend.surface_format())
             .context("Failed to create mesh renderer.")?;
-        
+
         let mesh_buffer_cache = MeshBufferCache::new();
-        
+
         info!("Initializing quad renderer...");
         let quad_renderer = QuadRenderer::new(&backend.device, backend.surface_format())
             .context("Failed to create quad renderer.")?;
@@ -105,7 +104,9 @@ impl App {
             .context("Failed to create main application window. This may be a windowing system (winit) compatibility issue.")?;
 
         let (width, height, format, main_window_for_egui) = {
-            let main_window_context = window_manager.get(main_window_id).expect("Main window context should exist after creation");
+            let main_window_context = window_manager
+                .get(main_window_id)
+                .expect("Main window context should exist after creation");
             (
                 main_window_context.surface_config.width,
                 main_window_context.surface_config.height,
@@ -143,7 +144,7 @@ impl App {
         ];
 
         let mut ui_state = AppUI::from_user_config(saved_config.clone());
-        
+
         // Initialize UI assets with error handling
         info!("Initializing UI assets...");
         Self::init_ui_assets(&mut ui_state);
