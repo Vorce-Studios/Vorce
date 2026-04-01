@@ -66,6 +66,7 @@ Harden the FFI boundaries in `vorce-media` when interacting with FFmpeg, libmpv,
 - [ ] **Thread Safety**: Validate that async decoder callbacks from FFmpeg/libmpv correctly interact with Rust's thread-safety guarantees (Send/Sync).
 
 ### ✅ Acceptance Criteria (#131)
+
 - [ ] All `unsafe` blocks in `vorce-media` are documented with safety justifications.
 - [ ] No raw pointer leaks or out-of-bounds access in the media pipeline.
 - [ ] Decoder stability: No segmentation faults during malformed file playback tests.
