@@ -398,7 +398,7 @@ impl ModuleEvaluator {
                 // Socket 5: strobe_in
                 let trigger_value = trigger_inputs.get(&part.id).copied().unwrap_or(0.0);
                 let socket_vals = socket_inputs.get(&part.id);
-                
+
                 let brightness = socket_vals
                     .and_then(|m| m.get(&2))
                     .copied()
@@ -406,7 +406,7 @@ impl ModuleEvaluator {
                 let hue = socket_vals.and_then(|m| m.get(&3)).copied();
                 let saturation = socket_vals.and_then(|m| m.get(&4)).copied();
                 let strobe = socket_vals.and_then(|m| m.get(&5)).copied();
-                
+
                 self.cached_result.source_commands.insert(
                     part.id,
                     SourceCommand::HueOutput {
