@@ -18,7 +18,7 @@ use super::types::*;
 
 /// The evaluator traverses the module graph and computes output values.
 pub struct ModuleEvaluator {
-    /// Current trigger data from audio analysis
+    /// Current trigger data from audio analysis. 
     pub(crate) audio_trigger_data: AudioTriggerData,
     /// Creation time for timing calculations
     pub(crate) start_time: Instant,
