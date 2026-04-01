@@ -163,7 +163,11 @@ impl ModulePartType {
                             "Saturation",
                             ModuleSocketType::Trigger,
                         ),
-                        ModuleSocket::input_mappable("strobe_in", "Strobe", ModuleSocketType::Trigger),
+                        ModuleSocket::input_mappable(
+                            "strobe_in",
+                            "Strobe",
+                            ModuleSocketType::Trigger,
+                        ),
                     ],
                     vec![],
                 ),

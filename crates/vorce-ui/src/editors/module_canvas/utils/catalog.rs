@@ -209,20 +209,18 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
             }),
     );
 
-    catalog.extend([
-        NodeCatalogItem {
-            label: "Single Layer",
-            search_tags: "layer composition",
-            part_type: ModulePartType::Layer(LayerType::Single {
-                id: 0,
-                name: "New Layer".to_string(),
-                opacity: 1.0,
-                blend_mode: None,
-                mesh: vorce_core::module::MeshType::default(),
-                mapping_mode: false,
-            }),
-        },
-    ]);
+    catalog.extend([NodeCatalogItem {
+        label: "Single Layer",
+        search_tags: "layer composition",
+        part_type: ModulePartType::Layer(LayerType::Single {
+            id: 0,
+            name: "New Layer".to_string(),
+            opacity: 1.0,
+            blend_mode: None,
+            mesh: vorce_core::module::MeshType::default(),
+            mapping_mode: false,
+        }),
+    }]);
 
     // Hue nodes (capability-gated)
     if capabilities::is_hue_supported() {
@@ -277,25 +275,23 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         ]);
     }
 
-    catalog.extend([
-        NodeCatalogItem {
-            label: "Projector Output",
-            search_tags: "output display screen beamer",
-            part_type: ModulePartType::Output(OutputType::Projector {
-                id: 1,
-                name: "Projector 1".to_string(),
-                hide_cursor: false,
-                target_screen: 0,
-                show_in_preview_panel: true,
-                extra_preview_window: false,
-                output_width: 0,
-                output_height: 0,
-                output_fps: 60.0,
-                ndi_enabled: false,
-                ndi_stream_name: String::new(),
-            }),
-        },
-    ]);
+    catalog.extend([NodeCatalogItem {
+        label: "Projector Output",
+        search_tags: "output display screen beamer",
+        part_type: ModulePartType::Output(OutputType::Projector {
+            id: 1,
+            name: "Projector 1".to_string(),
+            hide_cursor: false,
+            target_screen: 0,
+            show_in_preview_panel: true,
+            extra_preview_window: false,
+            output_width: 0,
+            output_height: 0,
+            output_fps: 60.0,
+            ndi_enabled: false,
+            ndi_stream_name: String::new(),
+        }),
+    }]);
 
     catalog
 }

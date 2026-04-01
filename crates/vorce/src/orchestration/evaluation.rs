@@ -81,7 +81,8 @@ pub fn perform_evaluation(
                     if let Some(name) = unsupported_name {
                         let now = std::time::Instant::now();
                         // Use part.id to avoid key collisions when node_name is empty or duplicated
-                        let log_key = format!("{}_unsupported_{}_{}", name, module_ref.name, part.id);
+                        let log_key =
+                            format!("{}_unsupported_{}_{}", name, module_ref.name, part.id);
                         let should_log =
                             if let Some(last_log) = app.video_diagnostic_log_times.get(&log_key) {
                                 now.duration_since(*last_log).as_secs_f32() > 5.0
