@@ -41,9 +41,8 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
         // Update Bevy Texture (if Bevy runner is available)
         if let Some(runner) = &app.bevy_runner {
             let runner: &vorce_bevy::BevyRunner = runner;
-            match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                runner.get_image_data()
-            })) {
+            match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| runner.get_image_data()))
+            {
                 Ok(Some((data, width, height))) => {
                     let tex_name = "bevy_output";
                     app.texture_pool.ensure_texture(
@@ -56,8 +55,13 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                             | wgpu::TextureUsages::RENDER_ATTACHMENT,
                     );
 
-                    app.texture_pool
-                        .upload_data(&app.backend.queue, tex_name, &data, width, height);
+                    app.texture_pool.upload_data(
+                        &app.backend.queue,
+                        tex_name,
+                        &data,
+                        width,
+                        height,
+                    );
                 }
                 Ok(None) => {
                     // No frame available yet, this is normal on startup
