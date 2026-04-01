@@ -500,14 +500,13 @@ pub fn draw_part_with_delete(
         // PERFORMANCE: Avoid redundant string allocations for case-insensitive search
         // in the main render loop by using zero-allocation byte window comparison.
         let type_bytes = type_name.as_bytes();
-        let display_name = if type_name.is_empty() {
-            socket.name.clone()
-        } else if socket.name.len() >= type_name.len()
-            && socket
-                .name
-                .as_bytes()
-                .windows(type_bytes.len())
-                .any(|w| w.eq_ignore_ascii_case(type_bytes))
+        let display_name = if type_name.is_empty()
+            || (socket.name.len() >= type_name.len()
+                && socket
+                    .name
+                    .as_bytes()
+                    .windows(type_bytes.len())
+                    .any(|w| w.eq_ignore_ascii_case(type_bytes)))
         {
             socket.name.clone()
         } else {
@@ -562,14 +561,13 @@ pub fn draw_part_with_delete(
         // PERFORMANCE: Avoid redundant string allocations for case-insensitive search
         // in the main render loop by using zero-allocation byte window comparison.
         let type_bytes = type_name.as_bytes();
-        let display_name = if type_name.is_empty() {
-            socket.name.clone()
-        } else if socket.name.len() >= type_name.len()
-            && socket
-                .name
-                .as_bytes()
-                .windows(type_bytes.len())
-                .any(|w| w.eq_ignore_ascii_case(type_bytes))
+        let display_name = if type_name.is_empty()
+            || (socket.name.len() >= type_name.len()
+                && socket
+                    .name
+                    .as_bytes()
+                    .windows(type_bytes.len())
+                    .any(|w| w.eq_ignore_ascii_case(type_bytes)))
         {
             socket.name.clone()
         } else {
