@@ -9517,7 +9517,6 @@ dependencies = [
  "bytemuck",
  "cbindgen",
  "cc",
- "chrono",
  "clap",
  "cpal 0.17.1",
  "criterion",
@@ -9578,7 +9577,7 @@ dependencies = [
  "thiserror 1.0.69",
  "tracing",
  "vorce-core",
- "wgpu 29.0.1",
+ "wgpu 24.0.5",
 ]
 
 [[package]]
