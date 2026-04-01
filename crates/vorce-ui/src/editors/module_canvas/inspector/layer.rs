@@ -36,7 +36,7 @@ fn render_layer_blend_mode_ui(ui: &mut Ui, id_salt: u64, blend_mode: &mut Option
 
     if !blend_mode
         .as_ref()
-        .map(|mode| capabilities::is_blend_mode_supported(mode))
+        .map(capabilities::is_blend_mode_supported)
         .unwrap_or(true)
     {
         capabilities::render_unsupported_warning(
@@ -46,6 +46,7 @@ fn render_layer_blend_mode_ui(ui: &mut Ui, id_salt: u64, blend_mode: &mut Option
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn render_standard_layer_controls(
     render_mesh_ui: &mut impl FnMut(&mut Ui, &mut MeshType, u64, bool),
     show_mesh_editor: bool,
