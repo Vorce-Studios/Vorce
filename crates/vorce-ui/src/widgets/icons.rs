@@ -148,7 +148,7 @@ impl IconManager {
 
         // Log the icons directory path for debugging
         tracing::info!("Loading icons from: {:?}", icons_dir);
-        
+
         // Check if icons directory exists
         if !icons_dir.exists() {
             tracing::error!(
