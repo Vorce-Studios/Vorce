@@ -84,10 +84,10 @@ impl BevyRunner {
         // Add essential rendering extensions with error handling
         info!("Initializing Bevy atmosphere plugin...");
         app.add_plugins(bevy_atmosphere::prelude::AtmospherePlugin);
-        
+
         info!("Initializing Bevy outline plugin...");
         app.add_plugins(bevy_mod_outline::OutlinePlugin);
-        
+
         info!("Initializing Bevy extract resource plugin...");
         app.add_plugins(ExtractResourcePlugin::<crate::resources::BevyRenderOutput>::default());
 
@@ -139,7 +139,7 @@ impl BevyRunner {
         info!("Finalizing Bevy app setup...");
         app.finish();
         app.cleanup();
-        
+
         info!("Bevy integration initialized successfully");
 
         Self { app }
