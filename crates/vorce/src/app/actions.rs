@@ -361,7 +361,13 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
             UIAction::ConnectNdiSource { part_id, source } => {
                 let receiver = app.ndi_receivers.entry(part_id).or_insert_with(|| {
                     info!("Creating new NdiReceiver for part {}", part_id);
-                    vorce_io::ndi::NdiReceiver::new().expect("Failed to create NDI receiver")
+                    match vorce_io::ndi::NdiReceiver::new() {
+                        Ok(r) => r,
+                        Err(e) => {
+                            error!("Failed to create NDI receiver: {}", e);
+                            return;
+                        }
+                    }
                 });
                 info!(
                     "Connecting part {} to NDI source '{}'",
