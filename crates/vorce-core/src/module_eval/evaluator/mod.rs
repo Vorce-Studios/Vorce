@@ -89,6 +89,7 @@ impl ModuleEvaluator {
         (hue, saturation)
     }
 
+    #[allow(clippy::type_complexity)]
     fn hue_node_defaults(
         hue_node: &HueNodeType,
     ) -> (
