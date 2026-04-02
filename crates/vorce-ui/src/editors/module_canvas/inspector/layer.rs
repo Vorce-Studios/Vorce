@@ -141,7 +141,17 @@ pub fn render_layer_ui(
                 mapping_mode,
                 9_999,
             );
-        } // Note: LayerType::All was removed (dead code)
+        }
+        LayerType::All { opacity, .. } => {
+            ui.add_enabled_ui(false, |ui| {
+                ui.label("Master Layer");
+                ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
+            });
+            capabilities::render_unsupported_warning(
+                ui,
+                "Master layers are currently unsupported and will not be rendered.",
+            );
+        }
     }
 }
 

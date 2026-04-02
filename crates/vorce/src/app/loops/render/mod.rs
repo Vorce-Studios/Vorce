@@ -38,37 +38,23 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
     if output_id == 0 {
         // Sync Texture Previews
         prepare_texture_previews(app, &mut encoder);
-        // Update Bevy Texture (if Bevy runner is available)
+        // Update Bevy Texture
         if let Some(runner) = &app.bevy_runner {
             let runner: &vorce_bevy::BevyRunner = runner;
-            match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| runner.get_image_data()))
-            {
-                Ok(Some((data, width, height))) => {
-                    let tex_name = "bevy_output";
-                    app.texture_pool.ensure_texture(
-                        tex_name,
-                        width,
-                        height,
-                        wgpu::TextureFormat::Bgra8UnormSrgb,
-                        wgpu::TextureUsages::TEXTURE_BINDING
-                            | wgpu::TextureUsages::COPY_DST
-                            | wgpu::TextureUsages::RENDER_ATTACHMENT,
-                    );
+            if let Some((data, width, height)) = runner.get_image_data() {
+                let tex_name = "bevy_output";
+                app.texture_pool.ensure_texture(
+                    tex_name,
+                    width,
+                    height,
+                    wgpu::TextureFormat::Bgra8UnormSrgb,
+                    wgpu::TextureUsages::TEXTURE_BINDING
+                        | wgpu::TextureUsages::COPY_DST
+                        | wgpu::TextureUsages::RENDER_ATTACHMENT,
+                );
 
-                    app.texture_pool.upload_data(
-                        &app.backend.queue,
-                        tex_name,
-                        &data,
-                        width,
-                        height,
-                    );
-                }
-                Ok(None) => {
-                    // No frame available yet, this is normal on startup
-                }
-                Err(e) => {
-                    tracing::error!("Bevy runner get_image_data panicked: {:?}", e);
-                }
+                app.texture_pool
+                    .upload_data(&app.backend.queue, tex_name, &data, width, height);
             }
         }
     }
