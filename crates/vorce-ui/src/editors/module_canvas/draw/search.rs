@@ -41,16 +41,29 @@ pub fn draw_search_popup(
             ui.add_space(8.0);
 
             let filter_lower = canvas.search_filter.to_lowercase();
+            let filter_bytes = filter_lower.as_bytes();
             let matching_parts: Vec<_> = module
                 .parts
                 .iter()
                 .filter(|p| {
-                    if filter_lower.is_empty() {
+                    if filter_bytes.is_empty() {
                         return true;
                     }
-                    let name = utils::get_part_property_text(&p.part_type).to_lowercase();
+                    let name = utils::get_part_property_text(&p.part_type);
+                    let name_bytes = name.as_bytes();
                     let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
-                    name.contains(&filter_lower) || type_name.to_lowercase().contains(&filter_lower)
+                    let type_name_bytes = type_name.as_bytes();
+
+                    (!name_bytes.is_empty()
+                        && name_bytes.len() >= filter_bytes.len()
+                        && name_bytes
+                            .windows(filter_bytes.len())
+                            .any(|w| w.eq_ignore_ascii_case(filter_bytes)))
+                        || (!type_name_bytes.is_empty()
+                            && type_name_bytes.len() >= filter_bytes.len()
+                            && type_name_bytes
+                                .windows(filter_bytes.len())
+                                .any(|w| w.eq_ignore_ascii_case(filter_bytes)))
                 })
                 .take(6)
                 .collect();
