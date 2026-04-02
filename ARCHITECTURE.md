@@ -6,10 +6,10 @@
 
 - [System Overview](#system-overview)
 - [Component Diagram](#component-diagram)
-- [Request Flow — Chat Message](#request-flow--chat-message)
-- [Request Flow — Web UI](#request-flow--web-ui)
+- [Request Flow - Chat Message](#request-flow-chat-message)
+- [Request Flow - Web UI](#request-flow-web-ui)
 - [Task Scheduler Flow](#task-scheduler-flow)
-- [Authentication Flow (Web UI Pairing)](#authentication-flow-web-ui-pairing)
+- [Authentication Flow Web UI Pairing](#authentication-flow-web-ui-pairing)
 - [Component Reference](#component-reference)
 - [Data Stores](#data-stores)
 - [Deployment Topology](#deployment-topology)
@@ -23,7 +23,7 @@ Wee-Orchestrator is a Python-based multi-channel AI orchestration platform. It r
 
 A built-in **Task Scheduler** can trigger AI jobs autonomously and deliver results back to the originating user via the same channel adapters.
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────────┐
 │                      Wee-Orchestrator Host                        │
 │                                                                   │
@@ -110,7 +110,7 @@ graph TB
 
 ---
 
-## Request Flow — Chat Message
+## Request Flow - Chat Message
 
 The following sequence shows how a Telegram message is processed end-to-end.
 
@@ -144,7 +144,7 @@ sequenceDiagram
 
 ---
 
-## Request Flow — Web UI (Streaming)
+## Request Flow - Web UI (Streaming)
 
 Chat messages from the Web UI use the SSE streaming endpoint. The browser displays a live bubble with a blinking cursor while the AI CLI is running.
 
@@ -234,7 +234,7 @@ sequenceDiagram
 
 ---
 
-## Authentication Flow (Web UI Pairing)
+## Authentication Flow Web UI Pairing
 
 ```mermaid
 flowchart LR
@@ -388,7 +388,7 @@ Factory function that builds the ASGI application. Endpoints grouped by prefix:
 
 Two environments run side-by-side on the CLI-Tools host:
 
-```
+```text
 ┌────────────────────────────────────────────────────┐
 │              CLI-Tools Host (Linux)                  │
 │                                                      │
@@ -469,10 +469,10 @@ sequenceDiagram
 
 1. Add the env-var read in `agent_manager.py` near the top of `create_api_app()`:
    ```python
+   python
    MY_FLAG = os.environ.get("MY_FLAG", "true").lower() not in ("false", "0", "no")
    ```
 2. Add it to the `GET /api/v1/config` response dict.
 3. In `app.js`, read `config.my_flag` inside the config fetch in `DOMContentLoaded` and store in `STATE`.
 4. Apply visibility in `showAppView()` (runs before UI is shown).
 5. Document in `.env.example` and this file.
-
