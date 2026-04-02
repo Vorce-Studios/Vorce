@@ -4,7 +4,7 @@
 
 **Goal:** Resolve CI/CD "hanging" and failure issues, fix duplicate markdown headings, and manually resolve PR conflicts to enable auto-merging.
 
-**Architecture:** 
+**Architecture:**
 1. Surgical updates to GitHub Workflow YAML files to adjust timeouts and concurrency.
 2. Content modification in `JULES_ISSUES.md` to satisfy linting rules.
 3. Manual git operations to resolve conflicts in open PRs.

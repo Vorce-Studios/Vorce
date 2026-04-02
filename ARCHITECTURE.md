@@ -468,10 +468,12 @@ sequenceDiagram
 ### Adding a New Feature Flag
 
 1. Add the env-var read in `agent_manager.py` near the top of `create_api_app()`:
+
    ```python
    python
    MY_FLAG = os.environ.get("MY_FLAG", "true").lower() not in ("false", "0", "no")
    ```
+
 2. Add it to the `GET /api/v1/config` response dict.
 3. In `app.js`, read `config.my_flag` inside the config fetch in `DOMContentLoaded` and store in `STATE`.
 4. Apply visibility in `showAppView()` (runs before UI is shown).
