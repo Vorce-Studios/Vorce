@@ -189,7 +189,7 @@ impl BevyRunner {
     /// - The height of the image.
     ///
     /// Returns `None` if no frame has been rendered yet.
-    pub fn get_image_data(&self) -> Option<(Vec<u8>, u32, u32)> {
+    pub fn get_image_data(&self) -> Option<(std::sync::Arc<Vec<u8>>, u32, u32)> {
         let render_output = self
             .app
             .world()
