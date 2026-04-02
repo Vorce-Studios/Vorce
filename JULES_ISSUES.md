@@ -5,11 +5,12 @@
 **Priority:** High (Infrastructure/Security)
 **Target:** Workspace Root, `vorce-io`, `vorce-core`
 
-### 📝 Description
+### 📝 Description (Issue #129)
 
 Audit and replace unmaintained or unsound dependencies across the Vorce workspace to improve security and maintainability.
 
-### 🛠️ Tasks
+### 🛠️ Tasks (Issue #129)
+
 
 - [ ] **Replace `atty`**: Replace `atty` v0.2.14 (unmaintained) with the native `std::io::IsTerminal` trait (available since Rust 1.70). This affects `env_logger` integration and any direct CLI terminal checks.
 - [ ] **Consolidate `bincode`**: Currently, both v1.3.3 and v2.0.1 exist in the dependency tree.
@@ -18,7 +19,8 @@ Audit and replace unmaintained or unsound dependencies across the Vorce workspac
   - Consolidate to a single maintained version or replace with a modern alternative like `rkyv` (zero-copy) or `postcard` if the data volume is small.
 - [ ] **Dependency Audit**: Run `cargo audit` and `cargo tree` to ensure no transitive dependencies are pulling in these legacy crates.
 
-### ✅ Acceptance Criteria
+### ✅ Acceptance Criteria (Issue #129)
+
 
 - [ ] `atty` is completely removed from the dependency tree.
 - [ ] Only one version of `bincode` (or a replacement) remains.
@@ -37,11 +39,13 @@ Optimize the data path between Bevy's ECS-driven scene management and the `vorce
 
 ### 🛠️ Tasks (Issue #130)
 
+
 - [ ] **Zero-Copy Interop**: Implement a shared `wgpu::Texture` or `wgpu::Buffer` handle mechanism between Bevy's render graph and Vorce's compositor to avoid `memcpy` of frame data.
 - [ ] **Async Texture Uploads**: Move texture data uploads to an asynchronous staging buffer pipeline (using `wgpu`'s command buffer or a dedicated upload queue) to prevent blocking the main application loop during high-resolution media playback.
 - [ ] **Profiler Integration**: Add tracing spans to measure the latency reduction in the frame handoff.
 
 ### ✅ Acceptance Criteria (Issue #130)
+
 
 - [ ] No explicit `memcpy` of raw pixel data between Bevy and Vorce-Render.
 - [ ] Texture uploads do not cause frame drops on the main thread (measured via diagnostics).
@@ -60,12 +64,14 @@ Harden the FFI boundaries in `vorce-media` when interacting with FFmpeg, libmpv,
 
 ### 🛠️ Tasks (Issue #131)
 
+
 - [ ] **FFI Audit**: Review all `unsafe` blocks in `crates/vorce-media/src/decoder.rs`, `hap_decoder.rs`, and `mpv_decoder.rs`.
 - [ ] **Boundary Hardening**: Implement robust bounds checks for raw pointers and ensure that any data passed from C to Rust (especially frame buffers) is properly owned or has validated lifetimes.
 - [ ] **Error Handling**: Replace manual pointer checks with `Result`-based safe wrappers for FFI calls.
 - [ ] **Thread Safety**: Validate that async decoder callbacks from FFmpeg/libmpv correctly interact with Rust's thread-safety guarantees (Send/Sync).
 
 ### ✅ Acceptance Criteria (Issue #131)
+
 
 - [ ] All `unsafe` blocks in `vorce-media` are documented with safety justifications.
 - [ ] No raw pointer leaks or out-of-bounds access in the media pipeline.
