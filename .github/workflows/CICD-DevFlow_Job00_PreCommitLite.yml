@@ -18,7 +18,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: pre-commit-lite-${{ github.event.pull_request.number || github.event.number || github.event.inputs.pr_number || github.run_id }}
+  group: pre-commit-lite-${{ github.event.number || github.event.inputs.pr_number || github.run_id }}
   cancel-in-progress: false
 
 env:

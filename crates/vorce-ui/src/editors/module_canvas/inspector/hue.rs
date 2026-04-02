@@ -2,13 +2,16 @@ use egui::Ui;
 use vorce_core::module::HueNodeType;
 
 pub fn render_hue_ui(ui: &mut Ui, hue_node: &mut HueNodeType) {
+    ui.label("Philips Hue Target");
+    ui.separator();
+
     match hue_node {
         HueNodeType::SingleLamp {
             id,
             name,
             brightness,
             color,
-            effect,
+            effect: _,
             effect_active,
         } => {
             ui.horizontal(|ui| {
@@ -27,11 +30,7 @@ pub fn render_hue_ui(ui: &mut Ui, hue_node: &mut HueNodeType) {
                 ui.label("Color:");
                 ui.color_edit_button_rgb(color);
             });
-            ui.horizontal(|ui| {
-                ui.label("Effect:");
-                let effect_name = effect.get_or_insert_with(String::new);
-                ui.text_edit_singleline(effect_name);
-            });
+            // effect ...
             ui.checkbox(effect_active, "Effect Active");
         }
         HueNodeType::MultiLamp {
@@ -39,7 +38,7 @@ pub fn render_hue_ui(ui: &mut Ui, hue_node: &mut HueNodeType) {
             name,
             brightness,
             color,
-            effect,
+            effect: _,
             effect_active,
         } => {
             ui.horizontal(|ui| {
@@ -47,13 +46,12 @@ pub fn render_hue_ui(ui: &mut Ui, hue_node: &mut HueNodeType) {
                 ui.text_edit_singleline(name);
             });
             ui.label("Lamp IDs (comma separated):");
-            let mut ids_text = ids.join(", ");
-            if ui.text_edit_singleline(&mut ids_text).changed() {
-                *ids = ids_text
+            let mut ids_str = ids.join(", ");
+            if ui.text_edit_singleline(&mut ids_str).changed() {
+                *ids = ids_str
                     .split(',')
-                    .map(str::trim)
-                    .filter(|entry| !entry.is_empty())
-                    .map(ToOwned::to_owned)
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
                     .collect();
             }
             ui.horizontal(|ui| {
@@ -64,18 +62,13 @@ pub fn render_hue_ui(ui: &mut Ui, hue_node: &mut HueNodeType) {
                 ui.label("Color:");
                 ui.color_edit_button_rgb(color);
             });
-            ui.horizontal(|ui| {
-                ui.label("Effect:");
-                let effect_name = effect.get_or_insert_with(String::new);
-                ui.text_edit_singleline(effect_name);
-            });
             ui.checkbox(effect_active, "Effect Active");
         }
         HueNodeType::EntertainmentGroup {
             name,
             brightness,
             color,
-            effect,
+            effect: _,
             effect_active,
         } => {
             ui.horizontal(|ui| {
@@ -89,11 +82,6 @@ pub fn render_hue_ui(ui: &mut Ui, hue_node: &mut HueNodeType) {
             ui.horizontal(|ui| {
                 ui.label("Color:");
                 ui.color_edit_button_rgb(color);
-            });
-            ui.horizontal(|ui| {
-                ui.label("Effect:");
-                let effect_name = effect.get_or_insert_with(String::new);
-                ui.text_edit_singleline(effect_name);
             });
             ui.checkbox(effect_active, "Effect Active");
         }

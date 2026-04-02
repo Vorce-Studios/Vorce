@@ -81,18 +81,25 @@ impl BevyRunner {
                 .disable::<WinitPlugin>(),
         );
 
-        // Add essential rendering extensions
+        // Add essential rendering extensions with error handling
+        info!("Initializing Bevy atmosphere plugin...");
         app.add_plugins(bevy_atmosphere::prelude::AtmospherePlugin);
+
+        info!("Initializing Bevy outline plugin...");
         app.add_plugins(bevy_mod_outline::OutlinePlugin);
+
+        info!("Initializing Bevy extract resource plugin...");
         app.add_plugins(ExtractResourcePlugin::<crate::resources::BevyRenderOutput>::default());
 
         // Register resources
+        info!("Registering Bevy resources...");
         app.init_resource::<AudioInputResource>();
         app.init_resource::<BevyNodeMapping>();
         app.init_resource::<VorceTriggerResource>();
         app.init_resource::<crate::resources::BevyRenderOutput>();
 
         // Register components
+        info!("Registering Bevy components...");
         app.register_type::<AudioReactive>();
         app.register_type::<BevyAtmosphere>();
         app.register_type::<BevyHexGrid>();
@@ -103,6 +110,7 @@ impl BevyRunner {
         app.register_type::<BevyCamera>();
 
         // Register systems
+        info!("Registering Bevy systems...");
         app.add_systems(Startup, setup_3d_scene);
         app.add_systems(Update, print_status_system);
         app.add_systems(
@@ -121,13 +129,18 @@ impl BevyRunner {
 
         if let Some(render_app) = app.get_sub_app_mut(RenderApp) {
             render_app.add_systems(Render, frame_readback_system.after(RenderSet::Render));
+        } else {
+            tracing::warn!("Bevy RenderApp not available - frame readback will not work");
         }
 
         // `App::update()` does not finalize plugin setup for us.
         // Headless integration must finish and clean up once up front,
         // otherwise render-world resources like `RenderDevice` are absent at runtime.
+        info!("Finalizing Bevy app setup...");
         app.finish();
         app.cleanup();
+
+        info!("Bevy integration initialized successfully");
 
         Self { app }
     }
@@ -176,7 +189,7 @@ impl BevyRunner {
     /// - The height of the image.
     ///
     /// Returns `None` if no frame has been rendered yet.
-    pub fn get_image_data(&self) -> Option<(Vec<u8>, u32, u32)> {
+    pub fn get_image_data(&self) -> Option<(std::sync::Arc<Vec<u8>>, u32, u32)> {
         let render_output = self
             .app
             .world()
