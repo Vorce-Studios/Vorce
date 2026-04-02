@@ -16,7 +16,7 @@ permissions:
 
 concurrency:
   group: pre-commit-lite-${{ github.event.number || github.event.inputs.pr_number || github.run_id }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
