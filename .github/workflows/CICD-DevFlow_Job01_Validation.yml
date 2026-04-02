@@ -22,7 +22,7 @@ on:
         default: "1.94.0"
 
 concurrency:
-  group: validation-pr-${{ github.event.pull_request.number || github.event.number || github.event.inputs.pr_number || github.run_id }}
+  group: validation-pr-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.run_id }}
   cancel-in-progress: false
 
 permissions:
