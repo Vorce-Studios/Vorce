@@ -62,14 +62,8 @@ impl HapVideoDecoder {
 
         // Get video parameters
         let codec_par = video_stream.parameters();
-        let (width, height, codec_id) = unsafe {
-            let ptr = codec_par.as_ptr();
-            if ptr.is_null() {
-                return Err(MediaError::DecoderError("Video codec parameters are null".to_string()));
-            }
-            // SAFETY: `ptr` is checked against null and points to valid FFmpeg allocated struct.
-            ((*ptr).width as u32, (*ptr).height as u32, (*ptr).codec_id)
-        };
+        let width = unsafe { (*codec_par.as_ptr()).width as u32 };
+        let height = unsafe { (*codec_par.as_ptr()).height as u32 };
 
         // Get frame rate
         let fps = video_stream.avg_frame_rate();
@@ -83,16 +77,10 @@ impl HapVideoDecoder {
 
         // Check codec - HAP has codec_id FOURCC 'Hap1', 'Hap5', 'HapY', etc.
         let codec_name = unsafe {
-            // SAFETY: FFmpeg provides `avcodec_get_name` which returns a static C string for valid or invalid IDs.
-            let name_ptr = ffmpeg::ffi::avcodec_get_name(codec_id);
-            if name_ptr.is_null() {
-                "unknown".to_string()
-            } else {
-                // SAFETY: `name_ptr` is validated non-null and is a null-terminated C string.
-                std::ffi::CStr::from_ptr(name_ptr)
-                    .to_string_lossy()
-                    .to_string()
-            }
+            let codec_id = (*codec_par.as_ptr()).codec_id;
+            std::ffi::CStr::from_ptr(ffmpeg::ffi::avcodec_get_name(codec_id))
+                .to_string_lossy()
+                .to_string()
         };
 
         if !codec_name.to_lowercase().contains("hap") {

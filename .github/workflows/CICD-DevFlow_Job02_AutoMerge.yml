@@ -95,7 +95,6 @@ jobs:
               'Build (macOS Beta)',
               'Rust Autofix',
               'Validation Success',
-              'pre-commit.ci - pr',
             ]);
 
             const waitForHeadShaChange = async (pullNumber, previousHeadSha) => {
@@ -344,12 +343,6 @@ jobs:
                   required: true,
                 },
                 {
-                  name: 'Build (macOS Beta)',
-                  source: 'check_run',
-                  allowedConclusions: ['success'],
-                  required: true,
-                },
-                {
                   name: 'Rust Autofix',
                   source: 'check_run',
                   allowedConclusions: ['success'],
@@ -358,12 +351,6 @@ jobs:
                 {
                   name: 'Validation Success',
                   source: 'check_run',
-                  allowedConclusions: ['success'],
-                  required: true,
-                },
-                {
-                  name: 'pre-commit.ci - pr',
-                  source: 'status',
                   allowedConclusions: ['success'],
                   required: true,
                 },

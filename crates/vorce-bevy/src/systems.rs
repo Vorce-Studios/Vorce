@@ -393,11 +393,6 @@ pub fn frame_readback_system(
     render_device: Res<bevy::render::renderer::RenderDevice>,
     render_queue: Res<bevy::render::renderer::RenderQueue>,
     mut buffer_cache: Local<Option<bevy::render::render_resource::Buffer>>,
-    mut rx_channel: Local<
-        Option<
-            std::sync::mpsc::Receiver<Result<(), bevy::render::render_resource::BufferAsyncError>>,
-        >,
-    >,
 ) {
     if let Some(gpu_image) = gpu_images.get(&render_output.image_handle) {
         let texture = &gpu_image.texture;
@@ -414,8 +409,7 @@ pub fn frame_readback_system(
 
         let output_buffer_size = (bytes_per_row * height) as u64;
 
-        // Ensure buffer exists and is correct size.
-        // If we need to recreate the buffer, we also need to clear any pending readbacks.
+        // Ensure buffer exists and is correct size
         if buffer_cache.is_none() || buffer_cache.as_ref().unwrap().size() != output_buffer_size {
             *buffer_cache = Some(render_device.create_buffer(
                 &bevy::render::render_resource::BufferDescriptor {
@@ -426,95 +420,79 @@ pub fn frame_readback_system(
                     mapped_at_creation: false,
                 },
             ));
-            *rx_channel = None;
         }
 
         let buffer = buffer_cache.as_ref().unwrap();
 
-        if let Some(rx) = rx_channel.as_ref() {
-            match rx.try_recv() {
-                Ok(Ok(_)) => {
-                    let buffer_slice = buffer.slice(..);
-                    let data = buffer_slice.get_mapped_range();
+        let mut encoder = render_device.create_command_encoder(
+            &bevy::render::render_resource::CommandEncoderDescriptor {
+                label: Some("Readback Encoder"),
+            },
+        );
 
-                    if let Ok(mut lock) = render_output.last_frame_data.lock() {
-                        if padding == 0 {
-                            *lock = Some(std::sync::Arc::new(data.to_vec()));
-                        } else {
-                            let mut unpadded =
-                                Vec::with_capacity((width * height * bytes_per_pixel) as usize);
-                            for i in 0..height {
-                                let offset = (i * bytes_per_row) as usize;
-                                let end = offset + (width * bytes_per_pixel) as usize;
-                                unpadded.extend_from_slice(&data[offset..end]);
-                            }
-                            *lock = Some(std::sync::Arc::new(unpadded));
+        encoder.copy_texture_to_buffer(
+            bevy::render::render_resource::TexelCopyTextureInfo {
+                texture,
+                mip_level: 0,
+                origin: bevy::render::render_resource::Origin3d::ZERO,
+                aspect: bevy::render::render_resource::TextureAspect::All,
+            },
+            bevy::render::render_resource::TexelCopyBufferInfo {
+                buffer,
+                layout: bevy::render::render_resource::TexelCopyBufferLayout {
+                    offset: 0,
+                    bytes_per_row: Some(bytes_per_row),
+                    rows_per_image: Some(height),
+                },
+            },
+            bevy::render::render_resource::Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
+        );
+
+        render_queue.submit(std::iter::once(encoder.finish()));
+
+        // Complete the readback in-frame so the buffer is always unmapped before the
+        // next copy. This trades some throughput for a much more stable embedded runner.
+        let (tx, rx) = std::sync::mpsc::channel();
+        let buffer_slice = buffer.slice(..);
+        buffer_slice.map_async(bevy::render::render_resource::MapMode::Read, move |res| {
+            let _ = tx.send(res);
+        });
+
+        render_device.poll(bevy::render::render_resource::Maintain::Wait);
+
+        match rx.recv() {
+            Ok(Ok(_)) => {
+                let data = buffer_slice.get_mapped_range();
+
+                if let Ok(mut lock) = render_output.last_frame_data.lock() {
+                    if padding == 0 {
+                        *lock = Some(data.to_vec());
+                    } else {
+                        let mut unpadded =
+                            Vec::with_capacity((width * height * bytes_per_pixel) as usize);
+                        for i in 0..height {
+                            let offset = (i * bytes_per_row) as usize;
+                            let end = offset + (width * bytes_per_pixel) as usize;
+                            unpadded.extend_from_slice(&data[offset..end]);
                         }
+                        *lock = Some(unpadded);
                     }
+                }
 
-                    drop(data);
-                    buffer.unmap();
-                    *rx_channel = None;
-                }
-                Ok(Err(err)) => {
-                    tracing::warn!("Bevy frame readback mapping failed: {:?}", err);
-                    buffer.unmap();
-                    *rx_channel = None;
-                }
-                Err(std::sync::mpsc::TryRecvError::Empty) => {
-                    // Still mapping, skip this frame
-                    render_device.poll(bevy::render::render_resource::Maintain::Poll);
-                    return;
-                }
-                Err(std::sync::mpsc::TryRecvError::Disconnected) => {
-                    tracing::warn!("Bevy frame readback channel disconnected");
-                    buffer.unmap();
-                    *rx_channel = None;
-                }
+                drop(data);
+                buffer.unmap();
+            }
+            Ok(Err(err)) => {
+                tracing::warn!("Bevy frame readback mapping failed: {:?}", err);
+            }
+            Err(err) => {
+                tracing::warn!("Bevy frame readback channel failed: {}", err);
             }
         }
-
-        if rx_channel.is_none() {
-            let mut encoder = render_device.create_command_encoder(
-                &bevy::render::render_resource::CommandEncoderDescriptor {
-                    label: Some("Readback Encoder"),
-                },
-            );
-
-            encoder.copy_texture_to_buffer(
-                bevy::render::render_resource::TexelCopyTextureInfo {
-                    texture,
-                    mip_level: 0,
-                    origin: bevy::render::render_resource::Origin3d::ZERO,
-                    aspect: bevy::render::render_resource::TextureAspect::All,
-                },
-                bevy::render::render_resource::TexelCopyBufferInfo {
-                    buffer,
-                    layout: bevy::render::render_resource::TexelCopyBufferLayout {
-                        offset: 0,
-                        bytes_per_row: Some(bytes_per_row),
-                        rows_per_image: Some(height),
-                    },
-                },
-                bevy::render::render_resource::Extent3d {
-                    width,
-                    height,
-                    depth_or_array_layers: 1,
-                },
-            );
-
-            render_queue.submit(std::iter::once(encoder.finish()));
-
-            let (tx, rx) = std::sync::mpsc::channel();
-            let buffer_slice = buffer.slice(..);
-            buffer_slice.map_async(bevy::render::render_resource::MapMode::Read, move |res| {
-                let _ = tx.send(res);
-            });
-
-            *rx_channel = Some(rx);
-        }
-
-        render_device.poll(bevy::render::render_resource::Maintain::Poll);
     }
 }
 
