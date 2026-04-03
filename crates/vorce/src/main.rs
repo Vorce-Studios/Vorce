@@ -428,7 +428,10 @@ fn main() -> Result<()> {
             if let Some(parent) = path.parent() {
                 let _ = std::fs::create_dir_all(parent);
             }
-            let timestamp = ::chrono::Local::now().format("%Y-%m-%d %H:%M:%S");
+            let timestamp = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_secs())
+                .unwrap_or(0);
             let log_entry = format!("[{}] FATAL: {}\n", timestamp, panic_msg);
             let _ = std::fs::OpenOptions::new()
                 .create(true)
