@@ -85,7 +85,9 @@ impl App {
         )?;
 
         let (width, height, format, main_window_for_egui) = {
-            let main_window_context = window_manager.get(main_window_id).unwrap();
+            let main_window_context = window_manager.get(main_window_id).ok_or_else(|| {
+                anyhow::anyhow!("Failed to retrieve main window context after creation")
+            })?;
             (
                 main_window_context.surface_config.width,
                 main_window_context.surface_config.height,
