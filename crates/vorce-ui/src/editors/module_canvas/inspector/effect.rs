@@ -118,11 +118,13 @@ pub fn set_default_effect_params(
     }
 }
 
+
 /// Renders the configuration UI for a `ModulePartType::Modulizer`.
 pub fn render_effect_ui(
     ui: &mut Ui,
     mod_type: &mut ModulizerType,
     part_id: ModulePartId,
+    _module_id: vorce_core::module::ModuleId,
     actions: &mut Vec<crate::UIAction>,
     animator_bindings: &[vorce_core::effect_animation::EffectParameterBinding],
 ) {

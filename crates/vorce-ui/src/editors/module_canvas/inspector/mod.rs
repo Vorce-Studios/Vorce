@@ -337,7 +337,14 @@ pub fn render_inspector_for_part(
                 ModulePartType::Modulizer(mod_type) => {
                     render_standard_texture_preview(canvas, ui, module_id, part_id);
                     ui.separator();
-                    effect::render_effect_ui(ui, mod_type, part_id, actions, animator_bindings);
+                    effect::render_effect_ui(
+                        ui,
+                        mod_type,
+                        part_id,
+                        module_id,
+                        actions,
+                        animator_bindings,
+                    );
                 }
                 ModulePartType::Layer(layer) => {
                     render_inspector_preview_toggle(canvas, ui);

@@ -728,6 +728,20 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                         let animator = std::sync::Arc::make_mut(&mut app.state.effect_animator);
                         animator.jump_prev_marker();
                     }
+                    TimelineAction::BindParameter {
+                        effect_type,
+                        module_id,
+                        parameter_name,
+                        initial_value,
+                    } => {
+                        let animator = std::sync::Arc::make_mut(&mut app.state.effect_animator);
+                        let _binding_id = animator.bind_parameter(
+                            effect_type.clone(),
+                            module_id,
+                            &parameter_name,
+                            vorce_core::animation::AnimValue::Float(initial_value),
+                        );
+                    }
                 }
             }
             _ => {
