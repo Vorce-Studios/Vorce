@@ -1,6 +1,5 @@
-<div align="center">                                                                                                    
-  <img src="resources/branding/logo_banner.png" alt="Vorce Logo" width="600">                                           
-  <img src="resources/app_icons/Vorce_Logo_HQ-Full-transparent.png" alt="Vorce Logo" width="500">                       
+<div align="center">                                                                                                                                          
+  <img src="resources/app_icons/Vorce_Logo_HQ-Full-Gray-Background-NoCorner.png" alt="Vorce Logo" width="500">                       
                                                                                                                                                                                                                      
                                                                                                                           
 **A High-Performance, Professional-Grade Projection Mapping Tool Built with Rust.**                                   
