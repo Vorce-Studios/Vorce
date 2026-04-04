@@ -256,7 +256,7 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     Ok(())
 }
 
-fn sync_web_status(app: &mut App) {
+fn sync_web_status(#[allow(unused_variables)] app: &mut App) {
     #[cfg(feature = "http-api")]
     if let Some(live_status) = &app.control_manager.live_status {
         let mut live = live_status.write();
