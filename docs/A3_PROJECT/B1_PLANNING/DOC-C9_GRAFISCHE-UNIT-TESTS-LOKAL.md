@@ -1,265 +1,98 @@
 # Visual-Capture-Readiness fuer grafische Tests
 
-Stand: 2026-03-14
+Stand: 2026-04-04
 
 ## Ziel
 
-Diese Notiz beschreibt den aktuellen Stand und die noetigen Anpassungen, damit spaeter automatisierte grafische Tests mit sichtbarem Vorce-Fenster, Screenshots und optionalen Videoaufnahmen moeglich werden.
+Diese Notiz definiert die aktuelle Baseline fuer grafische Tests und Automation-Screenshots im `vorce`-Repository. Sie dokumentiert die vorhandenen Pfade (`vorce_visual_harness` und den Automation-Modus), deren Laufzeitvoraussetzungen und grenzt sie von breiteren Themen wie Multi-Projector-QA ab.
 
-Das Zielbild ist:
-
-- Vorce startet in einem deterministischen Testmodus
-- eine definierte Szene oder Fixture wird geladen
-- die App fuehrt reproduzierbare Schritte aus
-- relevante Fenster oder Outputs werden als Bild oder Video aufgenommen
-- die Artefakte koennen automatisiert von einem multimodalen LLM ausgewertet werden
+Das Zielbild ist ein definierter Release-Smoke-Test, der heute schon auf den verfuegbaren (interaktiven Windows-)Umgebungen lauffaehig ist, auch wenn eine vollstaendig offscreen/headless ausfuehrbare CI-Loesung noch aussteht.
 
 ## Aktueller Stand
 
-Der aktuelle Testbestand ist fuer dieses Ziel noch nicht ausreichend, aber ein erster lokaler visueller Regressionstestpfad ist jetzt vorhanden.
+Der Testbestand im Repository bietet derzeit zwei visuelle Test- und Capture-Pfade, die jedoch **beide** auf eine lokale, interaktive Windows-Desktop-Session (mit GPU/Surface-Support) angewiesen sind. Echtes Headless-Testing fuer sichtbare Fenster ist derzeit nicht implementiert (Gap-Analyse siehe unten).
 
-### Was bereits umgesetzt ist
+### 1. Harness-Based Visual Capture (`vorce_visual_harness`)
 
-- dediziertes Binary `Vorce_visual_harness`
-- Screenshot-Export aus einem echten sichtbaren `winit`-Fenster
-- Pixelvergleich gegen feste Referenzbilder
-- optional fester Screenshot-Ausgabeordner ueber `Vorce_VISUAL_CAPTURE_OUTPUT_DIR`
-- drei erste lokale Szenarien:
-  - `checkerboard`
-  - `gradient`
-  - `alpha_overlay`
+Der lokale visuelle Regressionstestpfad laeuft ueber das dedizierte Binary `vorce_visual_harness`.
+Dieser Mechanismus startet ein reduziertes Fenster, erzeugt WGPU-Render-Readbacks und vergleicht sie gegen statische Referenz-PNGs.
 
-### Was heute schon gut ist
+- **Quellcode:** `crates/vorce/src/bin/vorce_visual_harness/main.rs`
+- **Tests:** `crates/vorce/tests/visual_capture_tests.rs`
+- **Szenarien:** `checkerboard`, `gradient`, `alpha_overlay`
+- **Referenz-Bilder:** `crates/vorce/tests/reference_images/README.md`
 
-- echte Fenster und echte `wgpu::Surface`-Praesentation existieren im normalen App-Lauf
-- Main- und Projektorfenster sind fuer `COPY_SRC` vorbereitet
-- es gibt bereits GPU-Readback-Code im Renderpfad
-- Output-Previews und Texturvorschauen existieren schon intern
+#### Referenzbilder neu erzeugen
+```bash
+cargo run -p vorce --bin vorce_visual_harness --no-default-features -- reference --scenario checkerboard --output crates/vorce/tests/reference_images/checkerboard.png
+cargo run -p vorce --bin vorce_visual_harness --no-default-features -- reference --scenario alpha_overlay --output crates/vorce/tests/reference_images/alpha_overlay.png
+cargo run -p vorce --bin vorce_visual_harness --no-default-features -- reference --scenario gradient --output crates/vorce/tests/reference_images/gradient.png
+```
 
-### Was heute noch fehlt
+#### Ausfuehrung des Harness-Tests
+Da eine interaktive GPU-Sitzung benoetigt wird, sind diese Tests mit `#[ignore]` markiert.
+```bash
+$env:VORCE_VISUAL_CAPTURE_OUTPUT_DIR = "artifacts/visual-capture"
+cargo test -p vorce --no-default-features --test visual_capture_tests -- --ignored --nocapture
+```
 
-- kein dedizierter GUI-Test-Harness fuer die komplette Vorce-App auf Basis des echten `run_app`-Pfads
-- keine stabile CLI oder Test-API fuer reproduzierbare UI-Szenarien
-- kein allgemeiner Screenshot- oder Videoexport fuer Tests
-- keine Artefakt-Konvention fuer spaetere automatische Auswertung
-- keine Trennung zwischen headless GPU-Tests und sichtbaren GUI-Tests
+### 2. E2E Automation Screenshot Path
 
-## Technischer Ist-Befund
+Fuer die komplette Vorce-App existiert ein Automationsmodus (`--mode automation`), der Teile der Seiteneffekte (wie MIDI, Audio, Hue) umgeht, eine Fixture-Datei laedt und nach N Frames definiert beendet, wobei optional ein Screenshot des Main-Windows gespeichert wird.
 
-Die meisten aktuellen Tests pruefen Logik, nicht sichtbare UI.
+- **Tests:** `crates/vorce/tests/app_automation_tests.rs` (Test: `test_release_smoke_automation_empty_project`)
+- **Implementierung:** Automation Lifecycle in `crates/vorce/src/main.rs`
+- **Fixture:** `tests/fixtures/empty_project.vorce`
 
-Beispiele:
+Dieser Pfad erzeugt einen E2E-Screenshot aus dem echten `run_app`-Pfad der gesamten UI.
 
-- `crates/Vorce-ui/tests/timeline_automation_tests.rs`
-- diverse `#[cfg(test)]`-Bereiche in UI-Panels und Editoren
+## Release-Smoke Baseline
 
-Die vorhandenen GPU-Tests laufen offscreen und sind derzeit ignoriert:
+Die minimale Release-Smoke Baseline fuer visuelle Capture-Tests wird durch den E2E-Automation-Test dargestellt. Dieser garantiert, dass die App vollstaendig hochfaehrt, grundlegendes GPU-Rendering funktioniert und der Window/Readback-Mechanismus intakt ist.
 
-- `crates/Vorce-render/tests/effect_chain_tests.rs`
-- `crates/Vorce-render/tests/effect_chain_integration_tests.rs`
+**Empfohlener Minimal-Smoke-Aufruf (Manuell oder auf Self-Hosted CI):**
+```bash
+cargo test -p vorce --test app_automation_tests -- --ignored --nocapture
+```
+Dieser Befehl:
+1. Ruft das `Vorce.exe` (Release oder Debug) mit `--mode automation` auf.
+2. Laedt das leere Testprojekt.
+3. Rendert 10 Frames.
+4. Exportiert einen Screenshot nach `target/automation_test_output/automation_frame_10.png`.
+5. Verifiziert dessen Abmessungen (1280x720).
 
-Der echte Fensterpfad liegt im Produktionslauf:
+## Environment-Voraussetzungen & Gaps
 
-- `crates/Vorce/src/main.rs`
-- `crates/Vorce/src/app/core/init.rs`
-- `crates/Vorce/src/window_manager.rs`
-- `crates/Vorce/src/app/loops/render.rs`
+### Die "Headless"-Luecke
+Vorce benoetigt zwingend eine gueltige `wgpu::Surface` mit Present-Mode. Weder der Harness noch der Automation-Modus koennen aktuell "echt headless" (z. B. in einer typischen reinen Linux/Docker-CI ohne X11/Wayland oder in Windows ohne gueltige interaktive Sitzung) ausgefuehrt werden.
 
-Wesentliche Schlussfolgerung:
+**Aktuelle Limitierungen:**
+- Echte sichtbare GUI-Automation und Capture schlagen fehl, wenn der Runner als reiner Hintergrunddienst ausgefuehrt wird.
+- Windows Lock-Screens brechen die `wgpu`-Surface-Konfiguration.
 
-- fuer die volle Vorce-App gilt das weiterhin
-- als erster Zwischenschritt existiert jetzt aber ein kleiner lokaler visueller Harness fuer echte sichtbare Fenster und Screenshot-Regressionen
+**Betriebsbedingungen fuer Runner:**
+- Fuer CI/Automation-Laeufe: Der Windows-Runner MUSS interaktiv in einer angemeldeten Desktop-Sitzung laufen (Auto-Logon).
+- Bildschirmsperre, Sleep und konkurrierende manuelle Nutzung muessen deaktiviert sein.
+- Umgebungsvariable `VORCE_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true` steuert ggf. CI-Skripte, aendert aber aktuell nichts an der Rust-Ebene, wo die Tests explizit `#[ignore]` sind und manuell aufgerufen werden muessen.
 
-## Wichtigste Blocker
+### Abgrenzung zu Output/Projector QA
+Diese Smoke-Baseline pruft **nur** das Main-Window, das Initial-Rendering und das `wgpu`-Readback.
+Sie ist **nicht** dafuer zustaendig, eine Matrix von Multi-Projector-Setups, unterschiedlichen Outputs (Spout, NDI), oder komplexem Window-Management (Keystone, Warping) abzudecken. Diese erweiterten Features obliegen der manuellen/erweiterten Output-QA. Die Baseline garantiert lediglich, dass die Render-Pipeline und die Export-Mechanismen fuer Automation grundsachlich funktionieren.
 
-### 1. App-Lifecycle ist nicht testfreundlich gekapselt
+## Lokale Nutzung des Automation-Modus
 
-Der sichtbare GUI-Pfad haengt am echten `ApplicationHandler` und `event_loop.run_app(...)`.
-
-Fuer spaetere GUI-Automation braucht es einen dedizierten Einstiegspunkt, der:
-
-- den Event-Loop kontrolliert startet
-- eine Fixture oder Testszene laedt
-- feste Aktionen ausfuehrt
-- Capture-Trigger setzt
-- sauber wieder beendet
-
-### 2. App-Initialisierung ist fuer GUI-Tests zu schwergewichtig
-
-Der aktuelle Startpfad initialisiert unter anderem:
-
-- Audio
-- MCP
-- Hue
-- MIDI
-- Bevy
-
-Fuer robuste visuelle Tests sollte es einen abgespeckten Testmodus geben, der diese Seiteneffekte gezielt deaktiviert oder mockt.
-
-### 3. Capture ist nur teilweise vorhanden
-
-Der bestehende Readback-Code im Renderloop ist eine gute Grundlage, aber noch kein allgemeiner Test-Capture-Mechanismus.
-
-Es fehlt noch:
-
-- PNG-Speicherung
-- Serienaufnahme fuer mehrere Frames
-- optional Videoexport
-- klare Benennung und Metadaten fuer Artefakte
-
-### 4. Timing ist noch nicht deterministisch genug
-
-Interne Previews werden aktuell gedrosselt aktualisiert. Fuer reproduzierbare Screenshots muss der Capture-Punkt exakt steuerbar sein, zum Beispiel:
-
-- nach N stabilen Frames
-- nach geladenem Fixture-Zustand
-- nach explizitem Automationsschritt
-
-## Erforderliche Anpassungen
-
-### Phase 1: GUI-Test-Harness schaffen
-
-Noetig:
-
-- sichtbaren Test- oder Automationsmodus fuer Vorce einfuehren
-- Einstiegspunkt aus `main.rs` in wiederverwendbare Bausteine extrahieren
-- Fixture-Projekte automatisiert laden koennen
-- Testschritte von aussen parametrisieren
-
-Empfohlene Richtung:
-
-- eigener CLI-Schalter fuer Automation
-- klarer Testmodus statt Missbrauch normaler `#[test]`-Funktionen
-
-### Phase 2: Capture im Renderpfad generalisieren
-
-Noetig:
-
-- vorhandenen GPU-Readback-Code aus `crates/Vorce/src/app/loops/render.rs` verallgemeinern
-- Screenshots fuer Main-Window und Projektorfenster speichern
-- Artefakte als PNG ablegen
-- optional Serienaufnahme fuer spaetere Videobildung bereitstellen
-
-Sinnvolle Metadaten pro Artefakt:
-
-- Testfall-ID
-- Szene oder Fixture-Name
-- Frame-Index
-- Fenster-Typ
-- Timestamp
-- optional Hash oder Build-Info
-
-### Phase 3: Deterministische Testfaelle definieren
-
-Noetig:
-
-- kleine Fixture-Projekte fuer Kernfeatures
-- stabile Testschritte
-- definierte Erwartungsbilder oder Erwartungsbereiche
-- klare Zuordnung zur bestehenden Testmatrix
-
-Empfohlene erste Zielkandidaten:
-
-- Main-UI Startbild
-- Output-Preview
-- einzelner Projektor-Output
-- Medienwiedergabe nach Laden einer Testszene
-- Renderzustand eines Kern-Features aus der Regressionsmatrix
-
-## Priorisierte visuelle Testszenarien
-
-Die folgenden Faelle sind fuer einen spaeteren echten Vorce-App-Harness besonders wertvoll,
-weil headless Runner oder reine Logiktests dort nicht genug Signal liefern:
-
-- Main-Window Startzustand mit leerem Testprojekt
-  - prueft Fensteraufbau, Docking-Zustand, Initial-Rendering und fehlende Panels
-- Output-Preview mit Test-Grid
-  - prueft den sichtbaren Renderpfad bis ins Preview-Fenster statt nur Datenmodelle
-- Projektor-Output mit Keystone-, Warp- oder Maskenfixture
-  - findet Geometrie- und Sampling-Regressionsfehler, die in Unit-Tests leicht unsichtbar bleiben
-- Medienwiedergabe mit festem Referenzframe
-  - prueft Decoding, Texturupload, Present und sichtbare Farb-/Alpha-Ergebnisse zusammen
-- Timeline- oder Automationsschritt mit definierter Vorher/Nachher-Aufnahme
-  - prueft, dass nicht nur der State korrekt ist, sondern der sichtbare Zustand wirklich umschaltet
-
-Die drei bereits implementierten Harness-Szenarien decken den unteren technischen Unterbau ab:
-
-- `checkerboard`: Orientierung, harte Kanten, Kanalvertauschungen, echte Surface-Praesentation
-- `gradient`: weiche Verlaeufe, Capture-Readback, sichtbare Orientierung
-- `alpha_overlay`: Alpha-Blending im echten Fensterpfad
-
-### Phase 4: CI-Integration auf self-hosted Runner
-
-Sichtbare GUI-Automation sollte spaeter nur auf einem geeigneten self-hosted Windows-Runner laufen.
-Der dedizierte Test `test_release_smoke_automation_empty_project` in `crates/Vorce/tests/app_automation_tests.rs` dient als dokumentierter minimaler Release-Smoke-Test fuer den aktuellen Automation-/Screenshot-Pfad. Er prueft den Main-Window-Startzustand und exportiert einen Screenshot.
-
-Damit dieser Automation-Test im CI-Lauf ausgefuehrt wird, muss die Umgebungsvariable `Vorce_SELF_HOSTED_RUN_VISUAL_AUTOMATION` auf `true` gesetzt sein (siehe `scripts/build/self-hosted-post-merge.ps1`). Da echte sichtbare Fenster und GPU-Surface-Praesentation getestet werden, verlangt der Test eine interaktive Windows-Sitzung. Er ist deshalb regulaer mit `#[ignore]` markiert und wird nur durch explizite CI-Konfiguration auf dem self-hosted Runner aktiviert.
-
-Diese Tests dienen als Release-/QA-Baseline fuer die Gesamt-App, waehrend spezifischere Themen in Multi-Output-/Projektor-QA (Issue #1095) vertieft werden.
-
-Als dedizierte Standard-Absicherung fuer den reinen, nicht-interaktiven Capture-Pfad fungiert `Vorce_visual_harness` (siehe `crates/Vorce/tests/visual_capture_tests.rs`). Dieser Harness laesst sich prinzipiell headless/offscreen initialisieren oder mit Mock-Surfaces betreiben, was ihn zum primaren Kandidaten fuer CI-Umgebungen ohne gueltige Desktop-Session macht, in denen dennoch grundlegende GPU-Szenarien und Frame-Readbacks abgesichert werden muessen.
-
-Wichtige Betriebsbedingung:
-
-- fuer wirklich sichtbare Fenster sollte der Runner interaktiv in einer angemeldeten Sitzung laufen, nicht nur als reiner Hintergrunddienst
-
-Zusaetzlich sicherstellen:
-
-- Sleep aus
-- Bildschirm nicht gesperrt
-- keine konkurrierende manuelle Nutzung waehrend Testlaeufen
-- fester Capture-Ordner fuer Artefakte
-
-## Konkrete Minimal-Roadmap
-
-1. Testmodus fuer App-Start und Fixture-Load extrahieren
-2. Screenshot-Export aus dem vorhandenen Render-Readback ableiten
-3. einen ersten sichtbaren Smoke-Test fuer das Hauptfenster erstellen
-4. Artefakte als CI-Artefakte ablegen
-5. erst danach Serienaufnahme oder multimodale Auswertung erweitern
-
-### Lokale Nutzung des Automation-Modus
-
-Der neue `run_app`-basierte Automationsmodus kann lokal zum Erstellen von deterministischen Screenshots verwendet werden.
-
-Die benoetigten CLI-Parameter sind:
-
-- `--mode automation`: Aktiviert den Automationsmodus, welcher schwergewichtige Dienste wie MIDI, Hue, MCP und Audio-Ausgabe umgeht.
-- `--fixture <PFAD_ZUM_PROJEKT>`: (Optional) Laedt sofort beim Start die angegebene `.mflow` Projektdatei.
-- `--exit-after-frames <ANZAHL>`: (Optional) Beendet die Applikation automatisch, nachdem exakt diese Anzahl an Frames gerendert wurde.
-- `--screenshot-dir <PFAD_ZUM_ORDNER>`: (Optional) Wenn angegeben, wird *direkt vor dem automatischen Beenden* (also nach `exit-after-frames`) ein Frame-Buffer-Readback ausgeloest und das Bild als `automation_frame_<ANZAHL>.png` in diesem Ordner abgelegt. Alternativ kann die Umgebungsvariable `Vorce_VISUAL_CAPTURE_OUTPUT_DIR` verwendet werden.
-
-**Beispielaufruf lokal:**
+Der Automationsmodus kann lokal zum Erstellen von deterministischen Screenshots verwendet werden:
 
 ```bash
 cargo run --bin Vorce -- --mode automation \
-  --fixture ./tests/fixtures/test_project.mflow \
+  --fixture ./tests/fixtures/test_project.vorce \
   --exit-after-frames 60 \
-  --screenshot-dir ./scripts/archive/logs/screenshots
+  --screenshot-dir ./target/automation_test_output
 ```
 
-Damit laedt Vorce das Test-Projekt, laesst es 60 Frames laufen (ausreichend, um sicherzustellen, dass Texturen und Shader geladen und berechnet sind), speichert einen Screenshot und beendet sich vollautomatisch, ohne auf Benutzereingaben zu warten.
+Damit laedt Vorce das Test-Projekt (`.vorce`), laesst es 60 Frames laufen, speichert einen Screenshot und beendet sich vollautomatisch.
 
-## Pragmatische Empfehlung
+## Zukuenftige Multimodale Artefaktauswertung
 
-Nicht versuchen, sichtbare GUI-Tests in das aktuelle `#[test]`-Muster zu pressen.
-
-Besser:
-
-- ein dedizierter Automationsmodus fuer die echte App
-- eigene Fixtures
-- kontrollierter Capture-Punkt
-- spaeter eine kleine Anzahl hochwertiger visueller Regressionstests statt vieler fragiler UI-Tests
-
-## Multimodale Artefaktauswertung (LLM Hook)
-
-Die erstellten Screenshots (z.B. actuals und diffs) werden vom self-hosted Post-Merge CI Runner in einem dedizierten `artifacts/visual-capture`-Ordner gesammelt.
-
-Als Anschluss fuer eine spaetere multimodale LLM-Auswertung (z.B. durch Vision-Modelle) erzeugt das CI-Skript zusaetzlich eine `run_metadata.json`-Datei in diesem Ordner. Sie enthaelt den Kontext des Testlaufs:
-
-- `pr_number`
-- `pr_head_sha`
-- `merge_commit_sha`
-- `timestamp`
-
-Alle diese Dateien werden zusammen als CI-Artefakt namens `visual-capture-<PR_NUMBER>-<RUN_ID>` hochgeladen. So kann eine spaetere Auswertungsstufe das komplette ZIP laden, die Metadaten einlesen und die Diff-Bilder gezielt zusammen mit dem PR-Kontext analysieren.
+Die erstellten Screenshots (sowohl aus dem Harness als auch dem E2E-Automation-Pfad) werden im self-hosted CI-Runner in dedizierten Ordnern wie `artifacts/visual-capture` gesammelt.
+Diese koennen zusammen mit Metadaten (`pr_number`, `commit_sha`) verpackt werden, um spaeter ueber externe Tools oder LLMs ausgewertet zu werden. Der aktuelle Code-Stand stellt dafuer die rohen PNG-Bilder bereit.
