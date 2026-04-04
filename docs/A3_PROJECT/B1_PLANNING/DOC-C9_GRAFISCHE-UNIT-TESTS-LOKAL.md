@@ -1,12 +1,13 @@
 # Visual-Capture-Readiness und Release-Smoke-Baseline
 
-Stand: 2026-03-29
+Stand: 2026-04-04
 
 ## Ziel
 
 Diese Notiz definiert die Minimal-Baseline fuer grafische Regressionstests und den Release-Smoke-Test in Vorce. Sie beschreibt die aktuell im Codebauch verfuegbaren Pfade fuer Automatisierung und visuelle Kontrolle, sowie die notwendigen Systemvoraussetzungen (Runner/Umgebung).
 
 Das Ziel ist ein stabiler, reproduzierbarer Ablauf, der sicherstellt, dass Rendering-Basisfeatures, Windowing und Screenshot-Exporte auf der tatsaechlichen Zielhardware (GPU) funktionieren.
+Diese Dokumentation stellt den minimalen Release-Smoke-Test und den Harness-basierten Workflow für den aktuellen Stand des Vorce-Repositories (Windows/GPU) dar.
 
 ## Scope & Abgrenzung
 
@@ -91,12 +92,13 @@ Sowohl die App-Automatisierung als auch der Visual-Harness erzeugen **echte sich
 - Windows wird primär vorausgesetzt, macOS/Linux können je nach Window-Manager-Setup teilweise abweichen.
 
 **Hinweis zu Headless-CI:**
-Ein komplett non-interaktiver, rein virtueller Baseline-Test ohne Swapchain ist aktuell **nicht verfuegbar**. Die Tests muessen absichtlich mit `#[ignore]` annotiert bleiben, damit Standard-CI-Laeufe nicht abbrechen. Um sie in einer self-hosted Umgebung auszufuehren, muss `VORCE_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true` gesetzt sein, wobei der Runner im interaktiven Desktop-Modus arbeiten muss.
+Ein komplett non-interaktiver, rein virtueller Baseline-Test ohne Swapchain ist aktuell **nicht verfuegbar** (Stand 2026-04). Die Tests muessen absichtlich mit `#[ignore]` annotiert bleiben, damit Standard-CI-Laeufe nicht abbrechen. Um sie in einer self-hosted Umgebung auszufuehren, muss `VORCE_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true` gesetzt sein, wobei der Runner im interaktiven Desktop-Modus arbeiten muss.
+Dieser Gap ist explizit dokumentiert und akzeptiert für den aktuellen Release-Stand.
 
 ---
 
 ## 4. Beziehung zu Output QA (Projectors)
 
-Dieser Release-Smoke-Test konzentriert sich streng auf das **Main-Window und die UI**. Er stellt sicher, dass der Rendercore und die Applikation selbst grundsaetzlich arbeitsfaehig sind.
+Dieser Release-Smoke-Test konzentriert sich streng auf das **Main-Window und die UI**. Er stellt sicher, dass der Rendercore und die Applikation selbst grundsaetzlich arbeitsfaehig sind und die minimalen Screenshot-Flows funktionieren.
 
-Weiterfuehrende Output-Tests (z.B. Multi-Monitor-Layouts, Edge-Blending, Masking auf dedizierten Projector-Nodes) werden nicht durch diese Basis-Screenshots abgedeckt, um Komplexitaet zu vermeiden. Solche weiterfuehrenden Tests sind Teil von **Issue #49** und erfordern separate Setups (z.B. physische Hardware-Dummies oder erweiterte Multiscreen-Mock-Konfigurationen).
+Weiterfuehrende Output-Tests (z.B. Multi-Monitor-Layouts, Edge-Blending, Masking auf dedizierten Projector-Nodes) werden nicht durch diese Basis-Screenshots abgedeckt, um Komplexitaet zu vermeiden. Solche weiterfuehrenden Tests sind Teil von **Issue #49** und erfordern separate Setups (z.B. physische Hardware-Dummies oder erweiterte Multiscreen-Mock-Konfigurationen). Der Release-Smoke-Test bleibt bewusst entkoppelt von der Multi-Output-QA.
