@@ -1,7 +1,7 @@
 use vorce_core::module::ModuleId;
 
 /// Actions triggered by timeline
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum TimelineAction {
     Play,
     Pause,
@@ -13,12 +13,6 @@ pub enum TimelineAction {
     ToggleMarkerPause(f32),
     JumpNextMarker,
     JumpPrevMarker,
-    BindParameter {
-        effect_type: vorce_core::effects::EffectType,
-        module_id: ModuleId,
-        parameter_name: String,
-        initial_value: f32,
-    },
 }
 
 /// Lightweight module descriptor for timeline arrangement UI.

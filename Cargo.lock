@@ -9517,7 +9517,6 @@ dependencies = [
  "bytemuck",
  "cbindgen",
  "cc",
- "chrono",
  "clap",
  "cpal 0.17.1",
  "criterion",

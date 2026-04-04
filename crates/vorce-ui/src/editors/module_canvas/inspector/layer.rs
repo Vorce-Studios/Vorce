@@ -141,7 +141,10 @@ pub fn render_layer_ui(
                 mapping_mode,
                 9_999,
             );
-        } // Note: LayerType::All was removed (dead code)
+        }
+        LayerType::All { .. } => {
+            ui.label("All Layers (Disabled/Deprecated)");
+        }
     }
 }
 
