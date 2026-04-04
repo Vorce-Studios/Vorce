@@ -310,7 +310,7 @@ function Set-ProjectFieldByName {
 $resolvedRepository = Resolve-GitHubRepository -Repository $Repository
 $issue = Get-GitHubIssue -Repository $resolvedRepository -IssueNumber $IssueNumber
 
-if ($ReopenIfClosed.IsPresent -and [string]$issue.state -eq "CLOSED") {
+if ($ReopenIfClosed.IsPresent -and (Test-GitHubIssueClosed -Issue $issue)) {
     gh issue reopen $IssueNumber --repo $resolvedRepository | Out-Null
     $issue = Get-GitHubIssue -Repository $resolvedRepository -IssueNumber $IssueNumber
 }
