@@ -3,9 +3,6 @@ use vorce_media::LoopMode;
 use vorce_ui as ui;
 
 const STARTUP_OVERLAY_DURATION_SECS: f32 = 4.0;
-const LEGACY_STARTUP_ANIMATION_FILE_NAME: &str = "MF-Mechanical_Cube_Logo_Splash_Animation.webm";
-const CURRENT_STARTUP_ANIMATION_RESOURCE: &str =
-    "app_videos/Vorce-Mechanical_Cube_Logo_Splash_Animation.webm";
 
 fn set_startup_animation_error(
     startup: &mut crate::app::core::app_struct::StartupAnimationState,
@@ -38,22 +35,7 @@ fn resolve_startup_animation_source(source_path: &str) -> Option<std::path::Path
         }
     }
 
-    if let Some(resolved) = vorce_core::runtime_paths::existing_resource_path(trimmed) {
-        return Some(resolved);
-    }
-
-    let uses_legacy_file_name = std::path::Path::new(trimmed)
-        .file_name()
-        .and_then(|name| name.to_str())
-        .is_some_and(|name| name.eq_ignore_ascii_case(LEGACY_STARTUP_ANIMATION_FILE_NAME));
-
-    if uses_legacy_file_name {
-        return vorce_core::runtime_paths::existing_resource_path(
-            CURRENT_STARTUP_ANIMATION_RESOURCE,
-        );
-    }
-
-    None
+    vorce_core::runtime_paths::existing_resource_path(trimmed)
 }
 
 fn load_startup_animation(app: &mut App, source_path: &str) {

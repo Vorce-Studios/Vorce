@@ -171,8 +171,7 @@ pub fn get_part_style(
                 LayerType::Single { .. } => "Single Layer",
                 LayerType::Group { .. } => "Layer Group",
                 LayerType::All { .. } => "All Layers (Disabled)",
-            };
-            (
+            };            (
                 Color32::from_rgb(50, 70, 60),
                 Color32::from_rgb(80, 180, 120),
                 "\u{1F4D1}",
