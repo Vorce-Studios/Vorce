@@ -11,6 +11,7 @@ param(
     [string]$ApiKey,
     [switch]$AutoCreatePr,
     [switch]$RequirePlanApproval,
+    [switch]$ForceNewSession,
     [bool]$UpdateIssueBody = $true,
     [bool]$PostIssueComment = $true,
     [bool]$ValidateSource = $true,
@@ -26,6 +27,9 @@ $resolvedRepository = $null
 $issue = $null
 $expectedPrTitle = $null
 $expectedWorkBranch = $null
+$reusedExistingSession = $false
+$duplicateGuardReason = 'not_checked'
+$duplicateActiveSessionIds = @()
 
 if ($IssueNumber -gt 0) {
     $resolvedRepository = Resolve-GitHubRepository -Repository $Repository
@@ -58,35 +62,75 @@ if ($ValidateSource) {
     Confirm-JulesSourceExists -SourceName $resolvedSourceName -ApiKey $ApiKey | Out-Null
 }
 
-$payload = @{
-    prompt = $Prompt
-    title = $Title
-    sourceContext = @{
-        source = $resolvedSourceName
-        githubRepoContext = @{
-            startingBranch = $StartingBranch
+$createdSession = $null
+$session = $null
+$sessionId = $null
+$resolvedAutomationMode = $null
+
+if ($IssueNumber -gt 0 -and $resolvedRepository -and -not $ForceNewSession.IsPresent) {
+    $guard = Get-JulesDuplicateDispatchGuard -IssueNumber $IssueNumber -Repository $resolvedRepository -ApiKey $ApiKey
+    $duplicateGuardReason = [string]$guard.Reason
+    $duplicateActiveSessionIds = @(
+        @($guard.ActiveSessions) |
+            ForEach-Object { Resolve-JulesSessionId -SessionIdOrName ([string]$_.name) }
+    )
+
+    if ([string]$guard.Status -eq 'blocked') {
+        $activeSummary = @(
+            @($guard.ActiveSessions) |
+                ForEach-Object {
+                    '{0} ({1})' -f (Resolve-JulesSessionId -SessionIdOrName ([string]$_.name)), [string]$_.state
+                }
+        ) -join ', '
+
+        $trackedSummary = if ($null -ne $guard.TrackedReference -and -not [string]::IsNullOrWhiteSpace([string]$guard.TrackedReference.SessionId)) {
+            [string]$guard.TrackedReference.SessionId
+        } else {
+            'n/a'
         }
+
+        throw ("Duplicate-Dispatch-Guard blockiert neue Jules Session fuer Issue #{0}. Grund: {1}. Tracked Session: {2}. Aktive Sessions: {3}" -f $IssueNumber, [string]$guard.Reason, $trackedSummary, $(if ([string]::IsNullOrWhiteSpace($activeSummary)) { 'none' } else { $activeSummary }))
+    }
+
+    if ([string]$guard.Status -eq 'reuse' -and $null -ne $guard.PreferredSession) {
+        $session = $guard.PreferredSession
+        $sessionId = Resolve-JulesSessionId -SessionIdOrName ([string]$session.name)
+        $createdSession = $session
+        $reusedExistingSession = $true
+        Write-JulesWarn ("Duplicate-Dispatch-Guard verwendet bestehende Jules Session {0} fuer Issue #{1}; es wird keine neue Session erstellt." -f $sessionId, $IssueNumber)
     }
 }
 
-if ($AutoCreatePr.IsPresent) {
-    $payload["automationMode"] = "AUTO_CREATE_PR"
+if ($null -eq $session) {
+    $payload = @{
+        prompt = $Prompt
+        title = $Title
+        sourceContext = @{
+            source = $resolvedSourceName
+            githubRepoContext = @{
+                startingBranch = $StartingBranch
+            }
+        }
+    }
+
+    if ($AutoCreatePr.IsPresent) {
+        $payload["automationMode"] = "AUTO_CREATE_PR"
+    }
+
+    if ($RequirePlanApproval.IsPresent) {
+        $payload["requirePlanApproval"] = $true
+    }
+
+    Write-JulesInfo "Erstelle Jules Session fuer '$Title'..."
+    $createdSession = Invoke-JulesApiRequest -Method POST -Path "sessions" -Body $payload -ApiKey $ApiKey
+    $sessionId = Resolve-JulesSessionId -SessionIdOrName ([string]$createdSession.name)
+    $session = Get-JulesSession -SessionIdOrName ([string]$createdSession.name) -ApiKey $ApiKey
+    if ($null -ne $createdSession -and [string]::IsNullOrWhiteSpace([string]$session.url) -and -not [string]::IsNullOrWhiteSpace([string]$createdSession.url)) {
+        $session | Add-Member -NotePropertyName "url" -NotePropertyValue ([string]$createdSession.url) -Force
+    }
+    Write-JulesInfo "Session erstellt: $sessionId"
 }
 
-if ($RequirePlanApproval.IsPresent) {
-    $payload["requirePlanApproval"] = $true
-}
-
-Write-JulesInfo "Erstelle Jules Session fuer '$Title'..."
-$createdSession = Invoke-JulesApiRequest -Method POST -Path "sessions" -Body $payload -ApiKey $ApiKey
-$sessionId = Resolve-JulesSessionId -SessionIdOrName ([string]$createdSession.name)
-$session = Get-JulesSession -SessionIdOrName ([string]$createdSession.name) -ApiKey $ApiKey
-if ($null -ne $createdSession -and [string]::IsNullOrWhiteSpace([string]$session.url) -and -not [string]::IsNullOrWhiteSpace([string]$createdSession.url)) {
-    $session | Add-Member -NotePropertyName "url" -NotePropertyValue ([string]$createdSession.url) -Force
-}
-Write-JulesInfo "Session erstellt: $sessionId"
-
-$resolvedAutomationMode = $null
 if ($null -ne $session -and $session.PSObject.Properties.Name -contains "automationMode") {
     $resolvedAutomationMode = [string]$session.automationMode
 } elseif ($null -ne $createdSession -and $createdSession.PSObject.Properties.Name -contains "automationMode") {
@@ -97,10 +141,10 @@ if ($null -ne $session -and $session.PSObject.Properties.Name -contains "automat
 
 if ($IssueNumber -gt 0 -and $resolvedRepository) {
     if ($UpdateIssueBody) {
-        Sync-JulesIssueTracking -Repository $resolvedRepository -IssueNumber $IssueNumber -Session $session -LatestActivity $null -StartingBranch $StartingBranch -SourceName $resolvedSourceName
+        Sync-JulesIssueTracking -Repository $resolvedRepository -IssueNumber $IssueNumber -Session $session -LatestActivity $null -StartingBranch $StartingBranch -SourceName $resolvedSourceName | Out-Null
     }
 
-    if ($PostIssueComment) {
+    if ($PostIssueComment -and -not $reusedExistingSession) {
         $commentLines = @(
             "## Jules Session erstellt",
             "",
@@ -143,6 +187,9 @@ if ($IssueNumber -gt 0 -and $resolvedRepository) {
     State               = [string]$session.state
     AutomationMode      = $resolvedAutomationMode
     RequirePlanApproval = [bool]$RequirePlanApproval.IsPresent
+    ReusedExistingSession = $reusedExistingSession
+    DuplicateGuardReason = $duplicateGuardReason
+    ActiveSessionIds    = @($duplicateActiveSessionIds)
     SourceName          = $resolvedSourceName
     StartingBranch      = $StartingBranch
     ExpectedPrTitle     = $expectedPrTitle

@@ -105,7 +105,7 @@ function Ensure-IssueOpen {
     )
 
     $issue = Get-GitHubIssue -Repository $Repository -IssueNumber $IssueNumber
-    if ([string]$issue.state -eq "CLOSED") {
+    if (Test-GitHubIssueClosed -Issue $issue) {
         gh issue reopen $IssueNumber --repo $Repository | Out-Null
     }
 }
@@ -170,7 +170,7 @@ function Get-LatestVerificationVerdict {
     }
 
     if (
-        [string]$issue.state -eq "CLOSED" -and
+        (Test-GitHubIssueClosed -Issue $issue) -and
         $issueBody -match '(?im)^\s*-\s*\[x\]\s+\*\*Confirmed\*\*:'
     ) {
         return "PASS"
@@ -227,7 +227,7 @@ function Test-VerificationRejected {
 function Test-VerificationFinalized {
     param([Parameter(Mandatory)][object]$Snapshot)
 
-    return (Test-IsFinalStatus -Status ([string]$Snapshot.Status)) -and [string]$Snapshot.Issue.state -eq "CLOSED"
+    return (Test-IsFinalStatus -Status ([string]$Snapshot.Status)) -and (Test-GitHubIssueClosed -Issue $Snapshot.Issue)
 }
 
 function Update-ImplementationFields {
