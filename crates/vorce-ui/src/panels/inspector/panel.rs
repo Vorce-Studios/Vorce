@@ -68,6 +68,7 @@ impl InspectorPanel {
                 module,
                 part_id,
                 shared_media_ids,
+                animator_bindings,
             } => {
                 show_module_inspector(
                     ui,
@@ -78,6 +79,7 @@ impl InspectorPanel {
                     part_id,
                     &shared_media_ids,
                     actions,
+                    &animator_bindings,
                 );
             }
             InspectorContext::Output(config) => {

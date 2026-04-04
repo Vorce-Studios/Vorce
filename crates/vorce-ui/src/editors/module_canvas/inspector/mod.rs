@@ -296,6 +296,7 @@ pub fn render_inspector_for_part(
     module_id: ModuleId,
     shared_media_ids: &[String],
     preview_context: &InspectorPreviewContext,
+    animator_bindings: &[vorce_core::effect_animation::EffectParameterBinding],
 ) {
     // Sync mesh editor state if needed
     mesh::sync_mesh_editor_to_current_selection(mesh_editor, last_mesh_edit_id, part);
@@ -336,7 +337,7 @@ pub fn render_inspector_for_part(
                 ModulePartType::Modulizer(mod_type) => {
                     render_standard_texture_preview(canvas, ui, module_id, part_id);
                     ui.separator();
-                    effect::render_effect_ui(ui, mod_type, part_id);
+                    effect::render_effect_ui(ui, mod_type, part_id, actions, animator_bindings);
                 }
                 ModulePartType::Layer(layer) => {
                     render_inspector_preview_toggle(canvas, ui);

@@ -589,6 +589,7 @@ impl AppUI {
         layer_manager: &vorce_core::LayerManager,
         output_manager: &vorce_core::OutputManager,
         mapping_manager: &vorce_core::MappingManager,
+        animator_bindings: &[vorce_core::effect_animation::EffectParameterBinding],
     ) {
         if !self.show_inspector {
             return;
@@ -622,6 +623,7 @@ impl AppUI {
                             module,
                             part_id,
                             shared_media_ids,
+                            animator_bindings: animator_bindings.to_vec(),
                         };
                     }
                 }

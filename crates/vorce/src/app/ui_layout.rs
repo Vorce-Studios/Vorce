@@ -606,6 +606,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                         &app.state.layer_manager,
                         &app.state.output_manager,
                         &app.state.mapping_manager,
+                        app.state.effect_animator.bindings(),
                     );
 
                     // Legacy panels (can be toggled separately or integrated)

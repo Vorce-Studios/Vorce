@@ -14,6 +14,7 @@ pub fn show_module_inspector(
     part_id: ModulePartId,
     shared_media_ids: &[String],
     global_actions: &mut Vec<UIAction>,
+    animator_bindings: &[vorce_core::effect_animation::EffectParameterBinding],
 ) {
     let preview_context =
         crate::editors::module_canvas::inspector::build_preview_context(module, part_id);
@@ -28,6 +29,7 @@ pub fn show_module_inspector(
             module.id,
             shared_media_ids,
             &preview_context,
+            animator_bindings,
         );
     }
 }

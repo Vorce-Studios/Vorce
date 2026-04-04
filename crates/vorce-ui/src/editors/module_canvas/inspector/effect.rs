@@ -18,6 +18,69 @@ fn render_effect_choice(
     });
 }
 
+#[allow(clippy::too_many_arguments)]
+fn render_param_slider(
+    ui: &mut Ui,
+    effect_type: &EffectType,
+    part_id: ModulePartId,
+    param_name: &str,
+    val: &mut f32,
+    range: std::ops::RangeInclusive<f32>,
+    label: &str,
+    actions: &mut Vec<crate::UIAction>,
+    animator_bindings: &[vorce_core::effect_animation::EffectParameterBinding],
+) {
+    ui.horizontal(|ui| {
+        ui.add(egui::Slider::new(val, range).text(label));
+        // Convert module::EffectType to vorce_core::effects::EffectType for bindings
+        let core_effect_type = match effect_type {
+            EffectType::Blur => vorce_core::effects::EffectType::Blur,
+            EffectType::Invert => vorce_core::effects::EffectType::Invert,
+            EffectType::Brightness => vorce_core::effects::EffectType::ColorAdjust,
+            EffectType::Contrast => vorce_core::effects::EffectType::ColorAdjust,
+            EffectType::Saturation => vorce_core::effects::EffectType::ColorAdjust,
+            EffectType::HueShift => vorce_core::effects::EffectType::HueShift,
+            EffectType::Wave => vorce_core::effects::EffectType::Wave,
+            EffectType::Mirror => vorce_core::effects::EffectType::Mirror,
+            EffectType::Kaleidoscope => vorce_core::effects::EffectType::Kaleidoscope,
+            EffectType::Pixelate => vorce_core::effects::EffectType::Pixelate,
+            EffectType::EdgeDetect => vorce_core::effects::EffectType::EdgeDetect,
+            EffectType::Glitch => vorce_core::effects::EffectType::Glitch,
+            EffectType::RgbSplit => vorce_core::effects::EffectType::RgbSplit,
+            EffectType::ChromaticAberration => vorce_core::effects::EffectType::ChromaticAberration,
+            EffectType::FilmGrain => vorce_core::effects::EffectType::FilmGrain,
+            EffectType::Vignette => vorce_core::effects::EffectType::Vignette,
+            EffectType::LoadLUT => vorce_core::effects::EffectType::LoadLUT {
+                path: "".to_string(),
+            },
+            EffectType::ShaderGraph(id) => vorce_core::effects::EffectType::ShaderGraph(*id),
+            _ => vorce_core::effects::EffectType::Custom,
+        };
+
+        let is_bound = animator_bindings.iter().any(|b| {
+            b.effect_type == core_effect_type
+                && b.effect_instance == part_id
+                && b.parameter_name == param_name
+        });
+
+        let button_text = if is_bound { "★" } else { "☆" };
+        let tooltip = if is_bound {
+            "Unbind from Timeline"
+        } else {
+            "Bind to Timeline"
+        };
+
+        if ui.button(button_text).on_hover_text(tooltip).clicked() {
+            actions.push(crate::UIAction::ToggleEffectParameterBinding {
+                effect_type: core_effect_type,
+                effect_instance: part_id,
+                parameter_name: param_name.to_string(),
+                default_value: *val,
+            });
+        }
+    });
+}
+
 /// Sets default parameters for a given effect type.
 pub fn set_default_effect_params(
     effect_type: EffectType,
@@ -56,7 +119,13 @@ pub fn set_default_effect_params(
 }
 
 /// Renders the configuration UI for a `ModulePartType::Modulizer`.
-pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: ModulePartId) {
+pub fn render_effect_ui(
+    ui: &mut Ui,
+    mod_type: &mut ModulizerType,
+    part_id: ModulePartId,
+    actions: &mut Vec<crate::UIAction>,
+    animator_bindings: &[vorce_core::effect_animation::EffectParameterBinding],
+) {
     ui.label("Modulator:");
     match mod_type {
         ModulizerType::Effect {
@@ -245,37 +314,37 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
             ui.add_enabled_ui(effect_supported, |ui| match effect {
                 EffectType::Blur => {
                     let val = params.entry("radius".to_string()).or_insert(5.0);
-                    ui.add(egui::Slider::new(val, 0.0..=50.0).text("Radius"));
+                    render_param_slider(ui, effect, part_id, "radius", val, 0.0..=50.0, "Radius", actions, animator_bindings);
                     let samples = params.entry("samples".to_string()).or_insert(9.0);
-                    ui.add(egui::Slider::new(samples, 1.0..=20.0).text("Samples"));
+                    render_param_slider(ui, effect, part_id, "samples", samples, 1.0..=20.0, "Samples", actions, animator_bindings);
                 }
                 EffectType::Pixelate => {
                     let val = params.entry("pixel_size".to_string()).or_insert(8.0);
-                    ui.add(egui::Slider::new(val, 1.0..=100.0).text("Pixel Size"));
+                    render_param_slider(ui, effect, part_id, "pixel_size", val, 1.0..=100.0, "Pixel Size", actions, animator_bindings);
                 }
                 EffectType::FilmGrain => {
                     let amt = params.entry("amount".to_string()).or_insert(0.1);
-                    ui.add(egui::Slider::new(amt, 0.0..=1.0).text("Amount"));
+                    render_param_slider(ui, effect, part_id, "amount", amt, 0.0..=1.0, "Amount", actions, animator_bindings);
                     let spd = params.entry("speed".to_string()).or_insert(1.0);
-                    ui.add(egui::Slider::new(spd, 0.0..=5.0).text("Speed"));
+                    render_param_slider(ui, effect, part_id, "speed", spd, 0.0..=5.0, "Speed", actions, animator_bindings);
                 }
                 EffectType::Vignette => {
                     let rad = params.entry("radius".to_string()).or_insert(0.5);
-                    ui.add(egui::Slider::new(rad, 0.0..=1.0).text("Radius"));
+                    render_param_slider(ui, effect, part_id, "radius", rad, 0.0..=1.0, "Radius", actions, animator_bindings);
                     let soft = params.entry("softness".to_string()).or_insert(0.5);
-                    ui.add(egui::Slider::new(soft, 0.0..=1.0).text("Softness"));
+                    render_param_slider(ui, effect, part_id, "softness", soft, 0.0..=1.0, "Softness", actions, animator_bindings);
                 }
                 EffectType::ChromaticAberration => {
                     let amt = params.entry("amount".to_string()).or_insert(0.01);
-                    ui.add(egui::Slider::new(amt, 0.0..=0.1).text("Amount"));
+                    render_param_slider(ui, effect, part_id, "amount", amt, 0.0..=0.1, "Amount", actions, animator_bindings);
                 }
                 EffectType::Brightness | EffectType::Contrast | EffectType::Saturation => {
                     let bri = params.entry("brightness".to_string()).or_insert(0.0);
-                    ui.add(egui::Slider::new(bri, -1.0..=1.0).text("Brightness"));
+                    render_param_slider(ui, effect, part_id, "brightness", bri, -1.0..=1.0, "Brightness", actions, animator_bindings);
                     let con = params.entry("contrast".to_string()).or_insert(1.0);
-                    ui.add(egui::Slider::new(con, 0.0..=2.0).text("Contrast"));
+                    render_param_slider(ui, effect, part_id, "contrast", con, 0.0..=2.0, "Contrast", actions, animator_bindings);
                     let sat = params.entry("saturation".to_string()).or_insert(1.0);
-                    ui.add(egui::Slider::new(sat, 0.0..=2.0).text("Saturation"));
+                    render_param_slider(ui, effect, part_id, "saturation", sat, 0.0..=2.0, "Saturation", actions, animator_bindings);
                 }
                 EffectType::LoadLUT => {
                     ui.label(

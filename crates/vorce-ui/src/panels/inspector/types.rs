@@ -19,6 +19,7 @@ pub enum InspectorContext<'a> {
         module: &'a mut vorce_core::module::VorceModule,
         part_id: vorce_core::module::ModulePartId,
         shared_media_ids: Vec<String>,
+        animator_bindings: Vec<vorce_core::effect_animation::EffectParameterBinding>,
     },
 }
 
