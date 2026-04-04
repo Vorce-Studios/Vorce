@@ -462,6 +462,16 @@ impl ModuleEvaluator {
                                     mapping_mode,
                                     ..
                                 } => (mesh, opacity, blend_mode, mapping_mode),
+                                LayerType::All {
+                                    opacity,
+                                    blend_mode,
+                                    ..
+                                } => (
+                                    &crate::module::config::default_mesh_quad(),
+                                    opacity,
+                                    blend_mode,
+                                    &false,
+                                ),
                             };
                             let mut op = self.get_spare_render_op();
                             op.output_part_id = part.id;

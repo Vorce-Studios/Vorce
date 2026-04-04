@@ -41,5 +41,14 @@ pub enum LayerType {
         /// Component property or field.
         mapping_mode: bool,
     },
-    // Note: LayerType::All was removed (dead code - always disabled in UI)
+    /// **DEPRECATED**: Backward compatibility for older MapFlow projects.
+    /// Do not expose in the UI.
+    All {
+        /// Human-readable display name.
+        name: String,
+        /// Opacity value (0.0 to 1.0).
+        opacity: f32,
+        /// Blending mode used for rendering.
+        blend_mode: Option<BlendModeType>,
+    },
 }
