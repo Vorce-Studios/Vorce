@@ -22,8 +22,8 @@ env:
   DEFAULT_RUST_TOOLCHAIN: ${{ vars.VORCE_DEFAULT_TOOLCHAIN || vars.MAPFLOW_DEFAULT_TOOLCHAIN || '1.94.0' }}
 
 concurrency:
-  group: auto-merge-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.event.workflow_run.head_sha || github.run_id }}
-  cancel-in-progress: true
+  group: auto-merge-pr-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.event.workflow_run.head_sha || github.run_id }}
+  cancel-in-progress: false
 
 permissions:
   actions: write

@@ -623,6 +623,7 @@ impl App {
 fn main() {
     install_panic_hook();
 
+<<<<<<< HEAD
     if let Err(err) = try_main() {
         emit_logged_fatal_error(&format!(
             "Application terminated with a fatal error: {err:#}"
@@ -630,6 +631,29 @@ fn main() {
         std::process::exit(1);
     }
 }
+=======
+        let panic_msg = format!("APPLICATION PANIC at {}: {}", location, message);
+
+        // Always write to stderr for immediate visibility
+        eprintln!("{}", panic_msg);
+
+        // Also attempt to write to fallback log file (even before logging is set up)
+        if let Ok(mut path) = std::env::current_dir() {
+            path.push("logs");
+            path.push("vorce-panic-fallback.log");
+            if let Some(parent) = path.parent() {
+                let _ = std::fs::create_dir_all(parent);
+            }
+            let timestamp = chrono::Local::now().format("%Y-%m-%d %H:%M:%S");
+            let log_entry = format!("[{}] FATAL: {}\n", timestamp, panic_msg);
+            let _ = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&path)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, log_entry.as_bytes()));
+        }
+    }));
+>>>>>>> 2f3596c6203eda7153b0c66b292d4518d2d1449d
 
 fn try_main() -> Result<()> {
     let args = CliArgs::parse();

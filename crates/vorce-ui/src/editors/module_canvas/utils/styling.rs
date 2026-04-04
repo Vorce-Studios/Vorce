@@ -170,7 +170,10 @@ pub fn get_part_style(
             let name = match layer {
                 LayerType::Single { .. } => "Single Layer",
                 LayerType::Group { .. } => "Layer Group",
+<<<<<<< HEAD
                 LayerType::All { .. } => "All Layers (Disabled)",
+=======
+>>>>>>> 2f3596c6203eda7153b0c66b292d4518d2d1449d
             };
             (
                 Color32::from_rgb(50, 70, 60),
@@ -330,7 +333,6 @@ pub fn get_part_property_text(part_type: &ModulePartType) -> String {
             match layer_type {
                 LayerType::Single { name, .. } => format!("\u{1F4D1} {}", name),
                 LayerType::Group { name, .. } => format!("📁 {}", name),
-                LayerType::All { .. } => "\u{1F4D1} All (Disabled)".to_string(),
             }
         }
         ModulePartType::Output(output_type) => match output_type {
