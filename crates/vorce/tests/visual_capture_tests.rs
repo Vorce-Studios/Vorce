@@ -1,3 +1,12 @@
+//! Visual capture regression tests using the visual harness.
+//!
+//! # Environment Requirements
+//! These tests require a local interactive Windows GPU/desktop session.
+//! They are ignored by default and cannot run in a headless CI environment.
+//! To run these tests on a self-hosted runner with an active desktop,
+//! set the environment variable:
+//! `VORCE_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true`
+
 #![cfg(target_os = "windows")]
 
 use image::{ImageBuffer, Rgba};

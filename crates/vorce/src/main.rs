@@ -2,6 +2,32 @@
 //!
 //! This is the main application crate for Vorce.
 //! VERSION: 2026-03-19-VISUAL-TEST-READY
+//!
+//! # Visual Capture and Automation Screenshot Testing
+//!
+//! Vorce uses a harness-based approach for unit-level visual capture and an automation mode for E2E screenshots.
+//! These tests establish the minimal release-smoke baseline for visual accuracy.
+//!
+//! **Requirements:** Both methods require a local, interactive Windows GPU/Desktop session. Headless CI is currently not supported.
+//! For self-hosted runners, export `VORCE_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true`.
+//!
+//! ## Automation Screenshots
+//! Automation mode launches the main UI, renders a predefined number of frames, and saves a screenshot.
+//!
+//! **Command:**
+//! `cargo run -p vorce --bin Vorce --release -- --mode automation --exit-after-frames 10 --screenshot-dir target/automation_test_output`
+//!
+//! **Artifact Path:** `target/automation_test_output/automation_frame_10.png`
+//!
+//! ## Visual Harness (vorce_visual_harness)
+//! The `vorce_visual_harness` binary is a dedicated application for comparing minimal wgpu surfaces against expected reference images.
+//!
+//! **Generating References:**
+//! `cargo run -p vorce --bin vorce_visual_harness --no-default-features -- reference --scenario checkerboard --output crates/vorce/tests/reference_images/checkerboard.png`
+//!
+//! **Running the capture test:**
+//! `$env:VORCE_VISUAL_CAPTURE_OUTPUT_DIR="artifacts/visual-capture"`
+//! `cargo test -p vorce --no-default-features --test visual_capture_tests -- --ignored --nocapture`
 
 #![warn(missing_docs)]
 
