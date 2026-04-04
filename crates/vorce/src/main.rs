@@ -18,9 +18,8 @@ pub mod player;
 pub mod ui;
 mod window_manager;
 
-use anyhow::{Context, Result};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::{Duration, Instant};
+use anyhow::Result;
+use std::time::Instant;
 
 use vorce_core::OutputId;
 use vorce_media::PlaybackCommand;
@@ -47,13 +46,14 @@ struct VorceApp {
     screenshot_dir: Option<String>,
     initial_user_config: vorce_ui::config::UserConfig,
     disable_startup_animation: bool,
-startup_failure: Option<String>,
-pending_main_window_state_persist_at: Option<Instant>,
+    #[allow(dead_code)]
+    startup_failure: Option<String>,
+    pending_main_window_state_persist_at: Option<Instant>,
 }
 impl VorceApp {
     fn schedule_main_window_state_persist(&mut self) {
         self.pending_main_window_state_persist_at =
-            Some(Instant::now() + Duration::from_millis(250));
+            Some(Instant::now() + std::time::Duration::from_millis(250));
     }
 
     fn persist_main_window_state_if_due(&mut self, force: bool) {
@@ -74,7 +74,6 @@ impl VorceApp {
             error!("Failed to persist main window state: {err:#}");
         }
     }
->>>>>>> main
 }
 
 impl ApplicationHandler for VorceApp {
