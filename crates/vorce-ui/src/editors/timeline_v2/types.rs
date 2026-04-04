@@ -10,7 +10,7 @@ pub enum TimelineAction {
     SelectModule(ModuleId),
     AddMarker(f32),
     RemoveMarker(u64),
-    ToggleMarkerPause(f32),
+    ToggleMarkerPause(u64),
     JumpNextMarker,
     JumpPrevMarker,
 }
