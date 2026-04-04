@@ -1,5 +1,10 @@
 #![allow(deprecated)]
 
+//! Visual capture harness for local visual regression tests.
+//!
+//! For documentation on environment prerequisites and test strategy,
+//! see `docs/A3_PROJECT/B2_QUALITY/DOC-C15_VISUAL_CAPTURE_RELEASE_SMOKE_BASELINE.md`.
+
 mod scenarios;
 
 use std::{

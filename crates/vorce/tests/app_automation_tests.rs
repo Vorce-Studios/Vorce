@@ -1,4 +1,7 @@
 //! Application E2E automation tests.
+//!
+//! For documentation on environment prerequisites and test strategy,
+//! see `docs/A3_PROJECT/B2_QUALITY/DOC-C15_VISUAL_CAPTURE_RELEASE_SMOKE_BASELINE.md`.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;

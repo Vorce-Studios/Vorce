@@ -3,6 +3,10 @@
 Diese PNG-Dateien sind die Referenzbilder fuer die lokalen visuellen Regressionstests in
 `crates/vorce/tests/visual_capture_tests.rs`.
 
+Details zu den Umgebungsvoraussetzungen und der Teststrategie sind in
+`docs/A3_PROJECT/B2_QUALITY/DOC-C15_VISUAL_CAPTURE_RELEASE_SMOKE_BASELINE.md`
+dokumentiert.
+
 ## Erste Szenarien
 
 - `checkerboard.png`

@@ -1,5 +1,9 @@
 #![cfg(target_os = "windows")]
 
+//! Visual capture tests utilizing `vorce_visual_harness`.
+//! For documentation on environment prerequisites and test strategy,
+//! see `docs/A3_PROJECT/B2_QUALITY/DOC-C15_VISUAL_CAPTURE_RELEASE_SMOKE_BASELINE.md`.
+
 use image::{ImageBuffer, Rgba};
 use std::fs;
 use std::path::{Path, PathBuf};

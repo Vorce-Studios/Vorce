@@ -193,6 +193,9 @@ Die drei bereits implementierten Harness-Szenarien decken den unteren technische
 Sichtbare GUI-Automation sollte spaeter nur auf einem geeigneten self-hosted Windows-Runner laufen.
 Der dedizierte Test `test_release_smoke_automation_empty_project` in `crates/Vorce/tests/app_automation_tests.rs` dient als dokumentierter minimaler Release-Smoke-Test fuer den aktuellen Automation-/Screenshot-Pfad. Er prueft den Main-Window-Startzustand und exportiert einen Screenshot.
 
+> **HINWEIS:** Die formalisierte Baseline und Umgebungsvoraussetzungen (z.B. aktive GUI Session, GPU) sind detailliert in
+> `docs/A3_PROJECT/B2_QUALITY/DOC-C15_VISUAL_CAPTURE_RELEASE_SMOKE_BASELINE.md` beschrieben.
+
 Damit dieser Automation-Test im CI-Lauf ausgefuehrt wird, muss die Umgebungsvariable `Vorce_SELF_HOSTED_RUN_VISUAL_AUTOMATION` auf `true` gesetzt sein (siehe `scripts/build/self-hosted-post-merge.ps1`). Da echte sichtbare Fenster und GPU-Surface-Praesentation getestet werden, verlangt der Test eine interaktive Windows-Sitzung. Er ist deshalb regulaer mit `#[ignore]` markiert und wird nur durch explizite CI-Konfiguration auf dem self-hosted Runner aktiviert.
 
 Diese Tests dienen als Release-/QA-Baseline fuer die Gesamt-App, waehrend spezifischere Themen in Multi-Output-/Projektor-QA (Issue #1095) vertieft werden.
