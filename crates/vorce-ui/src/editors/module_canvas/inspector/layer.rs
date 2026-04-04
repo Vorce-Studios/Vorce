@@ -142,19 +142,15 @@ pub fn render_layer_ui(
                 9_999,
             );
         }
-        LayerType::All {
-            opacity,
-            blend_mode,
-        } => {
-            ui.label("All Layers (Deactivated)");
-            ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
-
-            ui.horizontal(|ui| {
-                ui.label("Blend Mode:");
-                render_layer_blend_mode_ui(ui, 0, blend_mode);
+        LayerType::All { opacity, .. } => {
+            ui.add_enabled_ui(false, |ui| {
+                ui.label("Master Layer");
+                ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
             });
-
-            ui.label("Note: This special layer is currently ignored in final render.");
+            capabilities::render_unsupported_warning(
+                ui,
+                "Master layers are currently unsupported and will not be rendered.",
+            );
         }
     }
 }
