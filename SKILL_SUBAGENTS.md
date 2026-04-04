@@ -7,13 +7,17 @@ This skill enables the n8n-copilot-shim to orchestrate and delegate work to suba
 ## Key Concepts
 
 ### Subagents
+
 Subagents are specialized AI agents configured in `agents.json` that can be called to perform specific tasks. Each subagent has:
+
 - **Name**: Unique identifier for the subagent
 - **Description**: What the subagent does
 - **Path**: Working directory for the subagent
 
 ### Orchestration
+
 The n8n-copilot-shim acts as an orchestrator that:
+
 1. Reads available agents from `agents.json`
 2. Delegates tasks to appropriate subagents
 3. Tracks subagent execution status
@@ -106,6 +110,7 @@ This will dynamically display all available subagents from your `agents.json` co
 ### Session Management
 
 When you switch to a subagent:
+
 1. **New Session**: If no prior session exists, a new session is created
 2. **Session Resumption**: If a session already exists for this subagent, it's resumed
 3. **Context Isolation**: Each subagent has its own isolated session context
@@ -171,22 +176,27 @@ Each subagent call uses the currently selected runtime and model:
 Subagent sessions are stored based on the runtime:
 
 ### Copilot
+
 - Location: `~/.copilot/session-state/`
 - Format: `{session_id}.jsonl`
 
 ### OpenCode
+
 - Location: `~/.local/share/opencode/storage/session/global/`
 - Format: `{session_id}.json`
 
 ### Claude
+
 - Location: `~/.claude/debug/`
 - Format: `{session_id}.txt`
 
 ### Gemini
+
 - Location: `~/.gemini/sessions/`
 - Format: `{session_id}.json`
 
 ### CODEX
+
 - Location: `~/.codex/sessions/YYYY/MM/DD/`
 - Format: `rollout-<datetime>-{session_id}.jsonl`
 
@@ -243,22 +253,27 @@ While true parallel execution isn't available in this model, you can simulate it
 ## Debugging Subagent Calls
 
 ### View Current Agent
+
 ```bash
 /agent current
 ```
 
 ### List Available Agents
+
 ```bash
 /agent list
 ```
 
 ### Reset Agent Session
+
 ```bash
 /session reset
 ```
+
 This resets the current agent's session for a fresh start.
 
 ### View Runtime and Model
+
 ```bash
 /runtime current
 /model current
@@ -272,12 +287,14 @@ This resets the current agent's session for a fresh start.
    - orchestrator agent → code improvements
 
 2. **Document Context**: When switching agents, explain the context
+
    ```bash
    /agent set devops
    "Based on the recent outage, create a post-mortem and update procedures"
    ```
 
 3. **Check Agent Capabilities**: Verify the agent can perform the task
+
    ```bash
    /agent current
    # Review the description to ensure it's appropriate
@@ -288,6 +305,7 @@ This resets the current agent's session for a fresh start.
    - **Reset**: For completely new, unrelated tasks
 
 5. **Error Handling**: If an agent fails, try a different approach
+
    ```bash
    /agent set <same_agent>
    "I got an error: [error message]. Can you retry with a different approach?"
@@ -298,6 +316,7 @@ This resets the current agent's session for a fresh start.
 ### N8N Integration
 
 Each N8N user gets their own session map:
+
 - Location: `~/.copilot/n8n-session-map.json`
 - Format: Maps N8N session IDs to backend session data
 - Tracks: runtime, model, agent, and backend session ID per user
@@ -305,6 +324,7 @@ Each N8N user gets their own session map:
 ### Per-Agent Context
 
 When you switch agents, the system:
+
 1. Saves current agent session data
 2. Creates/retrieves the new agent's session
 3. Isolates context between agents
@@ -320,12 +340,14 @@ When you switch agents, the system:
 ## Troubleshooting
 
 ### Agent Not Found
+
 ```bash
 /agent list
 # Check if the agent name matches exactly (case-sensitive)
 ```
 
 ### Session Not Resuming
+
 ```bash
 /session reset
 /agent set <agent_name>
@@ -333,12 +355,14 @@ When you switch agents, the system:
 ```
 
 ### Agent Executing in Wrong Directory
+
 ```bash
 /agent current
 # Verify the path is correct in agents.json
 ```
 
 ### Getting Default Responses
+
 ```bash
 /runtime current
 /model current
@@ -351,6 +375,7 @@ To add a new subagent:
 
 1. Create or identify a project directory: `/path/to/project`
 2. Add to `agents.json`:
+
    ```json
    {
      "name": "my-agent",
@@ -358,7 +383,9 @@ To add a new subagent:
      "path": "/path/to/project"
    }
    ```
+
 3. Use the new agent:
+
    ```bash
    /agent set my-agent
    "Your instructions"

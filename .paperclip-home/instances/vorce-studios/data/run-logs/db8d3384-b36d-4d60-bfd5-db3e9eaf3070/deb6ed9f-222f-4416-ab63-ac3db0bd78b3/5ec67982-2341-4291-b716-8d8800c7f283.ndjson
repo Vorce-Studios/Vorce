@@ -1,0 +1,3 @@
+{"ts":"2026-04-04T07:20:17.252Z","stream":"stdout","chunk":"[paperclip] Skipping saved session resume for task \"abbf5500-1efb-4fb0-ada0-0f3ae350d0ce\" because wake reason is issue_assigned.\n"}
+{"ts":"2026-04-04T07:20:17.408Z","stream":"stdout","chunk":"PowerShell 7.6.0\r\n"}
+{"ts":"2026-04-04T07:20:17.735Z","stream":"stdout","chunk":"PS C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper> "}

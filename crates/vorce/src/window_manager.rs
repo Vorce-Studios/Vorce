@@ -108,7 +108,6 @@ impl WindowManager {
             None,
             None,
             false,
-            false,
             VSyncMode::Auto,
         )
     }
@@ -123,7 +122,6 @@ impl WindowManager {
         height: Option<u32>,
         x: Option<i32>,
         y: Option<i32>,
-        fullscreen: bool,
         maximized: bool,
         vsync_mode: VSyncMode,
     ) -> Result<OutputId> {
@@ -143,10 +141,6 @@ impl WindowManager {
         }
 
         let window = Arc::new(event_loop.create_window(window_attributes)?);
-
-        if fullscreen {
-            window.set_fullscreen(Some(Fullscreen::Borderless(window.current_monitor())));
-        }
 
         // Re-apply icon explicitly to be sure
         if let Some(icon) = load_app_icon() {
@@ -168,12 +162,11 @@ impl WindowManager {
             _ => format,
         };
 
-        let actual_size = window.inner_size();
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
             format,
-            width: actual_size.width.max(1),
-            height: actual_size.height.max(1),
+            width: default_width,
+            height: default_height,
             present_mode: vsync_mode_to_present_mode(vsync_mode),
             alpha_mode: wgpu::CompositeAlphaMode::Opaque,
             view_formats: vec![],
