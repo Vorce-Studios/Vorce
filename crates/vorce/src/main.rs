@@ -400,8 +400,7 @@ impl App {
 }
 
 fn main() -> Result<()> {
-    // Set up panic hook EARLY to capture startup crashes BEFORE logging is initialized.
-    // This hook writes to both stderr AND a fallback log file for maximum debuggability.
+    // Set up panic hook early to capture startup crashes
     std::panic::set_hook(Box::new(|panic_info| {
         let location = panic_info
             .location()
@@ -415,30 +414,7 @@ fn main() -> Result<()> {
         } else {
             "Box<Any>"
         };
-
-        let panic_msg = format!("APPLICATION PANIC at {}: {}", location, message);
-
-        // Always write to stderr for immediate visibility
-        eprintln!("{}", panic_msg);
-
-        // Also attempt to write to fallback log file (even before logging is set up)
-        if let Ok(mut path) = std::env::current_dir() {
-            path.push("logs");
-            path.push("vorce-panic-fallback.log");
-            if let Some(parent) = path.parent() {
-                let _ = std::fs::create_dir_all(parent);
-            }
-            let timestamp = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map(|d| d.as_secs())
-                .unwrap_or(0);
-            let log_entry = format!("[{}] FATAL: {}\n", timestamp, panic_msg);
-            let _ = std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(&path)
-                .and_then(|mut f| std::io::Write::write_all(&mut f, log_entry.as_bytes()));
-        }
+        error!("APPLICATION PANIC at {}: {}", location, message);
     }));
 
     let args = CliArgs::parse();
