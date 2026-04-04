@@ -30,6 +30,21 @@ Das Projekt ist als Cargo Workspace organisiert:
 -   **`scripts/`**: Automatisierungsskripte für Build, Test und CI.
 -   **`docs/`**: Projekt- und Entwicklerdokumentation.
 
+## Code-Atlas für Agenten
+
+Vor einer breiten Repository-Suche soll zuerst der Code-Atlas verwendet werden.
+
+- Aktualisieren:
+  `python scripts/dev-tools/generate-code-atlas.py`
+- Abfragen:
+  `python scripts/dev-tools/query-code-atlas.py "crate:vorce-core tag:evaluation"`
+- Artefakte:
+  - `.agent/atlas/code-atlas.json`
+  - `.agent/atlas/workspace.mmd`
+  - `.agent/atlas/crates/*.mmd`
+
+Der Atlas dient als erste Kontextschicht für Dateien, Symbole, Tags und lokale Datei-Beziehungen. Detailfragen müssen anschließend immer an den Quell-Dateien verifiziert werden.
+
 ## Architektur-Prinzipien
 
 1.  **ECS-First**: Fast alle Logik sollte in Bevy-Systemen organisiert sein.

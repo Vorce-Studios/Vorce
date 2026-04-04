@@ -18,7 +18,9 @@ pub mod player;
 pub mod ui;
 mod window_manager;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::{Duration, Instant};
 
 use vorce_core::OutputId;
 use vorce_media::PlaybackCommand;
@@ -30,7 +32,7 @@ use tracing_subscriber::prelude::*;
 use winit::application::ApplicationHandler;
 use winit::event::WindowEvent;
 use winit::event_loop::{ActiveEventLoop, EventLoop};
-use winit::window::WindowId;
+use winit::window::{Fullscreen, WindowId};
 
 use crate::app::core::app_struct::{App, InitializationConfig};
 
@@ -45,6 +47,34 @@ struct VorceApp {
     screenshot_dir: Option<String>,
     initial_user_config: vorce_ui::config::UserConfig,
     disable_startup_animation: bool,
+startup_failure: Option<String>,
+pending_main_window_state_persist_at: Option<Instant>,
+}
+impl VorceApp {
+    fn schedule_main_window_state_persist(&mut self) {
+        self.pending_main_window_state_persist_at =
+            Some(Instant::now() + Duration::from_millis(250));
+    }
+
+    fn persist_main_window_state_if_due(&mut self, force: bool) {
+        let Some(app) = &mut self.app else {
+            return;
+        };
+
+        let should_persist = force
+            || self
+                .pending_main_window_state_persist_at
+                .is_some_and(|deadline| Instant::now() >= deadline);
+        if !should_persist {
+            return;
+        }
+
+        self.pending_main_window_state_persist_at = None;
+        if let Err(err) = app.persist_main_window_state() {
+            error!("Failed to persist main window state: {err:#}");
+        }
+    }
+>>>>>>> main
 }
 
 impl ApplicationHandler for VorceApp {
@@ -103,17 +133,68 @@ impl ApplicationHandler for VorceApp {
         window_id: WindowId,
         event: WindowEvent,
     ) {
+        let mut should_persist_main_window_state = false;
+        let mut close_requested_on_main_window = false;
+
         if let Some(app) = &mut self.app {
-            let _ = app.handle_event(
+            let is_main_window = app
+                .window_manager
+                .get(0)
+                .map(|main_window| main_window.window.id() == window_id)
+                .unwrap_or(false);
+            should_persist_main_window_state = is_main_window
+                && matches!(
+                    &event,
+                    WindowEvent::Moved(_)
+                        | WindowEvent::Resized(_)
+                        | WindowEvent::ScaleFactorChanged { .. }
+                        | WindowEvent::CloseRequested
+                );
+            close_requested_on_main_window =
+                is_main_window && matches!(&event, WindowEvent::CloseRequested);
+            let should_request_main_redraw = is_main_window
+                && matches!(
+                    &event,
+                    WindowEvent::CursorMoved { .. }
+                        | WindowEvent::CursorEntered { .. }
+                        | WindowEvent::CursorLeft { .. }
+                        | WindowEvent::MouseInput { .. }
+                        | WindowEvent::MouseWheel { .. }
+                        | WindowEvent::KeyboardInput { .. }
+                        | WindowEvent::Ime(_)
+                        | WindowEvent::Focused(_)
+                        | WindowEvent::ModifiersChanged(_)
+                        | WindowEvent::Touch(_)
+                );
+
+            if let Err(err) = app.handle_event(
                 winit::event::Event::WindowEvent { window_id, event },
                 event_loop,
-            );
+            ) {
+                error!("Unhandled window event error for {:?}: {err:#}", window_id);
+            }
+
+            if should_request_main_redraw {
+                if let Some(main_window) = app.window_manager.get(0) {
+                    main_window.window.request_redraw();
+                }
+            }
+        }
+
+        if should_persist_main_window_state {
+            if close_requested_on_main_window {
+                self.persist_main_window_state_if_due(true);
+            } else {
+                self.schedule_main_window_state_persist();
+            }
         }
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
         if let Some(app) = &mut self.app {
-            let _ = app.handle_event(winit::event::Event::AboutToWait, event_loop);
+            if let Err(err) = app.handle_event(winit::event::Event::AboutToWait, event_loop) {
+                error!("Unhandled about-to-wait error: {err:#}");
+            }
 
             if self.is_automation {
                 if let Some(exit_frames) = self.exit_after_frames {
@@ -182,10 +263,85 @@ impl ApplicationHandler for VorceApp {
                 }
             }
         }
+
+        self.persist_main_window_state_if_due(false);
     }
 }
 
 impl App {
+    /// Persists the current main-window geometry and display state into the user config.
+    pub fn persist_main_window_state(&mut self) -> Result<bool> {
+        let Some(main_window) = self.window_manager.get(0) else {
+            return Ok(false);
+        };
+
+        let fullscreen = main_window.window.fullscreen().is_some();
+        let maximized = main_window.window.is_maximized();
+        let size = main_window.window.inner_size();
+        let outer_position = main_window.window.outer_position().ok();
+
+        let mut changed = false;
+        let user_config = &mut self.ui_state.user_config;
+
+        if user_config.window_fullscreen != fullscreen {
+            user_config.window_fullscreen = fullscreen;
+            changed = true;
+        }
+
+        if user_config.window_maximized != maximized {
+            user_config.window_maximized = maximized;
+            changed = true;
+        }
+
+        if !fullscreen {
+            let width = Some(size.width.max(1));
+            let height = Some(size.height.max(1));
+
+            if user_config.window_width != width {
+                user_config.window_width = width;
+                changed = true;
+            }
+            if user_config.window_height != height {
+                user_config.window_height = height;
+                changed = true;
+            }
+
+            if let Some(position) = outer_position {
+                let x = Some(position.x);
+                let y = Some(position.y);
+
+                if user_config.window_x != x {
+                    user_config.window_x = x;
+                    changed = true;
+                }
+                if user_config.window_y != y {
+                    user_config.window_y = y;
+                    changed = true;
+                }
+            }
+        }
+
+        if changed {
+            self.ui_state.user_config.save()?;
+        }
+
+        Ok(changed)
+    }
+
+    /// Applies fullscreen to the main window and immediately persists the resulting state.
+    pub fn set_main_window_fullscreen(&mut self, fullscreen: bool) -> Result<()> {
+        let Some(main_window) = self.window_manager.get(0) else {
+            anyhow::bail!("Main window context not found");
+        };
+
+        main_window.window.set_fullscreen(
+            fullscreen.then(|| Fullscreen::Borderless(main_window.window.current_monitor())),
+        );
+        main_window.window.request_redraw();
+        self.persist_main_window_state()?;
+        Ok(())
+    }
+
     /// Handles a window event.
     pub fn handle_event(
         &mut self,
@@ -300,6 +456,10 @@ impl App {
                         } else if let Some(main_window) = self.window_manager.get(0) {
                             main_window.window.request_redraw();
                         }
+                    } else if let Some(main_window) = self.window_manager.get(0) {
+                        // Keep the empty-project UI responsive: without a redraw here,
+                        // the first frame can remain frozen and user input appears dead.
+                        main_window.window.request_redraw();
                     }
 
                     elwt.set_control_flow(winit::event_loop::ControlFlow::WaitUntil(
@@ -506,6 +666,8 @@ fn run_editor(
         screenshot_dir: None,
         initial_user_config,
         disable_startup_animation,
+        startup_failure: None,
+        pending_main_window_state_persist_at: None,
     };
     event_loop.run_app(&mut app_handler)?;
     Ok(())
@@ -522,6 +684,8 @@ fn run_automation(args: &CliArgs, initial_user_config: vorce_ui::config::UserCon
         screenshot_dir: args.screenshot_dir.clone(),
         initial_user_config,
         disable_startup_animation: true,
+        startup_failure: None,
+        pending_main_window_state_persist_at: None,
     };
     event_loop.run_app(&mut app_handler)?;
     Ok(())
