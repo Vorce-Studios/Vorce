@@ -23,7 +23,9 @@ cargo test -p vorce --test app_automation_tests -- --ignored --nocapture
 Die Screenshots aus diesem Test landen im Ordner `target/automation_test_output`.
 
 ### Abgrenzung zu Output/Projector QA
+
 Der Automation-Smoke-Test und der Visual-Harness sind fokussiert auf die **Baseline-Smoke-Coverage**:
+
 - Pruefung, ob die App ohne Crash startet
 - Validierung des elementaren Main-Window Renderings (winit + wgpu)
 - Pruefung des Readback/Screenshot-Mechanismus selbst
@@ -73,6 +75,7 @@ temporaeren Ordner unter `%TEMP%`.
 Relative Pfade in `VORCE_VISUAL_CAPTURE_OUTPUT_DIR` werden gegen die Repo-Wurzel aufgeloest.
 
 ## Non-Interactive CI Gap
+
 Aktuell fehlen uns vollwertige Mock-Surfaces oder virtuelle GPU-Driver im CI, weshalb diese grafischen Tests in der Standard-CI (Linux headless oder standard Windows GitHub Runner) nicht stabil durchlaufen wuerden.
 
 Aus diesem Grund sind `app_automation_tests` und `visual_capture_tests` aktuell mit `#[ignore]` markiert und erfordern lokale, interaktive GPU-Sessions oder spezialisierte Self-Hosted Runner mit echten Displays.
