@@ -99,9 +99,14 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                 app.ui_state.show_module_canvas = !app.ui_state.show_module_canvas;
             }
             UIAction::ToggleFullscreen => {
-                app.ui_state.user_config.window_maximized =
-                    !app.ui_state.user_config.window_maximized;
-                let _ = app.ui_state.user_config.save();
+                let is_fullscreen = app
+                    .window_manager
+                    .get(0)
+                    .map(|main_window| main_window.window.fullscreen().is_some())
+                    .unwrap_or(false);
+                if let Err(err) = app.set_main_window_fullscreen(!is_fullscreen) {
+                    error!("Failed to toggle main window fullscreen: {err:#}");
+                }
             }
             UIAction::ToggleControllerOverlay => {
                 app.ui_state.show_controller_overlay = !app.ui_state.show_controller_overlay;

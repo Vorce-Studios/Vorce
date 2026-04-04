@@ -392,6 +392,9 @@ pub struct UserConfig {
     /// Window Y position
     #[serde(default)]
     pub window_y: Option<i32>,
+    /// Whether the window was in fullscreen mode
+    #[serde(default)]
+    pub window_fullscreen: bool,
     /// Whether the window was maximized
     #[serde(default)]
     pub window_maximized: bool,
@@ -544,6 +547,7 @@ impl Default for UserConfig {
             window_height: None,
             window_x: None,
             window_y: None,
+            window_fullscreen: false,
             window_maximized: false,
             // Panel visibility defaults
             show_left_sidebar: true,
@@ -1029,6 +1033,7 @@ mod tests {
             window_height: Some(1080),
             window_x: Some(100),
             window_y: Some(50),
+            window_fullscreen: false,
             window_maximized: false,
             show_left_sidebar: true,
             show_inspector: true,
