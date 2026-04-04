@@ -4012,7 +4012,7 @@ dependencies = [
  "log",
  "presser",
  "thiserror 1.0.69",
- "windows 0.58.0",
+ "windows 0.54.0",
 ]
 
 [[package]]
@@ -9213,7 +9213,7 @@ dependencies = [
  "tracing",
  "vorce-core",
  "wgpu 29.0.1",
- "windows 0.58.0",
+ "windows 0.62.2",
  "zip",
 ]
 
@@ -9279,7 +9279,7 @@ dependencies = [
  "vorce-core",
  "wgpu 29.0.1",
  "wgpu-hal 29.0.1",
- "windows 0.58.0",
+ "windows 0.62.2",
  "winit",
 ]
 
