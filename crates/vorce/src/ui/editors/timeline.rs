@@ -79,6 +79,19 @@ pub fn show(ctx: &Context, mut context: TimelineContext) {
                     }
                     TimelineAction::JumpNextMarker => animator.jump_next_marker(),
                     TimelineAction::JumpPrevMarker => animator.jump_prev_marker(),
+                    TimelineAction::BindParameter {
+                        effect_type,
+                        module_id,
+                        parameter_name,
+                        initial_value,
+                    } => {
+                        animator.bind_parameter(
+                            effect_type,
+                            module_id,
+                            &parameter_name,
+                            vorce_core::animation::AnimValue::Float(initial_value),
+                        );
+                    }
                 }
             }
         });
