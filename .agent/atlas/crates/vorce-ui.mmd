@@ -1,0 +1,397 @@
+---
+title: vorce-ui file atlas
+---
+flowchart LR
+    crates_vorce_ui_src_action_rs["src/action.rs"]
+    crates_vorce_ui_src_app_ui_rs["src/app_ui.rs"]
+    crates_vorce_ui_src_core_asset_manager_rs["src/core/asset_manager.rs"]
+    crates_vorce_ui_src_core_config_rs["src/core/config.rs"]
+    crates_vorce_ui_src_core_i18n_rs["src/core/i18n.rs"]
+    crates_vorce_ui_src_core_layout_rs["src/core/layout.rs"]
+    crates_vorce_ui_src_core_mod_rs["src/core/mod.rs"]
+    crates_vorce_ui_src_core_responsive_rs["src/core/responsive.rs"]
+    crates_vorce_ui_src_core_theme_rs["src/core/theme.rs"]
+    crates_vorce_ui_src_core_toast_rs["src/core/toast.rs"]
+    crates_vorce_ui_src_core_undo_redo_rs["src/core/undo_redo.rs"]
+    crates_vorce_ui_src_editors_mesh_editor_interaction_rs["src/editors/mesh_editor/interaction.rs"]
+    crates_vorce_ui_src_editors_mesh_editor_mod_rs["src/editors/mesh_editor/mod.rs"]
+    crates_vorce_ui_src_editors_mesh_editor_state_rs["src/editors/mesh_editor/state.rs"]
+    crates_vorce_ui_src_editors_mesh_editor_types_rs["src/editors/mesh_editor/types.rs"]
+    crates_vorce_ui_src_editors_mesh_editor_ui_rs["src/editors/mesh_editor/ui.rs"]
+    crates_vorce_ui_src_editors_mod_rs["src/editors/mod.rs"]
+    crates_vorce_ui_src_editors_module_canvas_canvas_ui_rs["src/editors/module_canvas/canvas_ui.rs"]
+    crates_vorce_ui_src_editors_module_canvas_controller_rs["src/editors/module_canvas/controller.rs"]
+    crates_vorce_ui_src_editors_module_canvas_diagnostics_rs["src/editors/module_canvas/diagnostics.rs"]
+    crates_vorce_ui_src_editors_module_canvas_draw_add_node_rs["src/editors/module_canvas/draw/add_node.rs"]
+    crates_vorce_ui_src_editors_module_canvas_draw_connections_rs["src/editors/module_canvas/draw/connections.rs"]
+    crates_vorce_ui_src_editors_module_canvas_draw_grid_rs["src/editors/module_canvas/draw/grid.rs"]
+    crates_vorce_ui_src_editors_module_canvas_draw_mini_map_rs["src/editors/module_canvas/draw/mini_map.rs"]
+    crates_vorce_ui_src_editors_module_canvas_draw_mod_rs["src/editors/module_canvas/draw/mod.rs"]
+    crates_vorce_ui_src_editors_module_canvas_draw_part_rs["src/editors/module_canvas/draw/part.rs"]
+    crates_vorce_ui_src_editors_module_canvas_draw_presets_rs["src/editors/module_canvas/draw/presets.rs"]
+    crates_vorce_ui_src_editors_module_canvas_draw_quick_create_rs["src/editors/module_canvas/draw/quick_create.rs"]
+    crates_vorce_ui_src_editors_module_canvas_draw_search_rs["src/editors/module_canvas/draw/search.rs"]
+    crates_vorce_ui_src_editors_module_canvas_geometry_rs["src/editors/module_canvas/geometry.rs"]
+    crates_vorce_ui_src_editors_module_canvas_inspector_capabilities_rs["src/editors/module_canvas/inspector/capabilities.rs"]
+    crates_vorce_ui_src_editors_module_canvas_inspector_common_rs["src/editors/module_canvas/inspector/common.rs"]
+    crates_vorce_ui_src_editors_module_canvas_inspector_effect_rs["src/editors/module_canvas/inspector/effect.rs"]
+    crates_vorce_ui_src_editors_module_canvas_inspector_layer_rs["src/editors/module_canvas/inspector/layer.rs"]
+    crates_vorce_ui_src_editors_module_canvas_inspector_mod_rs["src/editors/module_canvas/inspector/mod.rs"]
+    crates_vorce_ui_src_editors_module_canvas_inspector_output_rs["src/editors/module_canvas/inspector/output.rs"]
+    crates_vorce_ui_src_editors_module_canvas_inspector_source_rs["src/editors/module_canvas/inspector/source.rs"]
+    crates_vorce_ui_src_editors_module_canvas_inspector_trigger_rs["src/editors/module_canvas/inspector/trigger.rs"]
+    crates_vorce_ui_src_editors_module_canvas_interaction_logic_rs["src/editors/module_canvas/interaction_logic.rs"]
+    crates_vorce_ui_src_editors_module_canvas_mesh_rs["src/editors/module_canvas/mesh.rs"]
+    crates_vorce_ui_src_editors_module_canvas_mod_rs["src/editors/module_canvas/mod.rs"]
+    crates_vorce_ui_src_editors_module_canvas_node_rendering_rs["src/editors/module_canvas/node_rendering.rs"]
+    crates_vorce_ui_src_editors_module_canvas_renderer_rs["src/editors/module_canvas/renderer.rs"]
+    crates_vorce_ui_src_editors_module_canvas_state_rs["src/editors/module_canvas/state.rs"]
+    crates_vorce_ui_src_editors_module_canvas_types_rs["src/editors/module_canvas/types.rs"]
+    crates_vorce_ui_src_editors_module_canvas_utils_catalog_rs["src/editors/module_canvas/utils/catalog.rs"]
+    crates_vorce_ui_src_editors_module_canvas_utils_icons_rs["src/editors/module_canvas/utils/icons.rs"]
+    crates_vorce_ui_src_editors_module_canvas_utils_layout_rs["src/editors/module_canvas/utils/layout.rs"]
+    crates_vorce_ui_src_editors_module_canvas_utils_mod_rs["src/editors/module_canvas/utils/mod.rs"]
+    crates_vorce_ui_src_editors_module_canvas_utils_presets_rs["src/editors/module_canvas/utils/presets.rs"]
+    crates_vorce_ui_src_editors_module_canvas_utils_sockets_rs["src/editors/module_canvas/utils/sockets.rs"]
+    crates_vorce_ui_src_editors_module_canvas_utils_styling_rs["src/editors/module_canvas/utils/styling.rs"]
+    crates_vorce_ui_src_editors_node_editor_rs["src/editors/node_editor.rs"]
+    crates_vorce_ui_src_editors_shortcut_editor_rs["src/editors/shortcut_editor.rs"]
+    crates_vorce_ui_src_editors_timeline_v2_mod_rs["src/editors/timeline_v2/mod.rs"]
+    crates_vorce_ui_src_editors_timeline_v2_models_rs["src/editors/timeline_v2/models.rs"]
+    crates_vorce_ui_src_editors_timeline_v2_types_rs["src/editors/timeline_v2/types.rs"]
+    crates_vorce_ui_src_editors_timeline_v2_ui_rs["src/editors/timeline_v2/ui.rs"]
+    crates_vorce_ui_src_lib_rs["src/lib.rs"]
+    crates_vorce_ui_src_panels_assignment_panel_rs["src/panels/assignment_panel.rs"]
+    crates_vorce_ui_src_panels_audio_panel_rs["src/panels/audio_panel.rs"]
+    crates_vorce_ui_src_panels_controller_overlay_panel_drawing_rs["src/panels/controller_overlay_panel/drawing.rs"]
+    crates_vorce_ui_src_panels_controller_overlay_panel_list_rs["src/panels/controller_overlay_panel/list.rs"]
+    crates_vorce_ui_src_panels_controller_overlay_panel_midi_rs["src/panels/controller_overlay_panel/midi.rs"]
+    crates_vorce_ui_src_panels_controller_overlay_panel_mod_rs["src/panels/controller_overlay_panel/mod.rs"]
+    crates_vorce_ui_src_panels_controller_overlay_panel_panel_rs["src/panels/controller_overlay_panel/panel.rs"]
+    crates_vorce_ui_src_panels_cue_panel_rs["src/panels/cue_panel.rs"]
+    crates_vorce_ui_src_panels_edge_blend_panel_rs["src/panels/edge_blend_panel.rs"]
+    crates_vorce_ui_src_panels_effect_chain_components_rs["src/panels/effect_chain/components.rs"]
+    crates_vorce_ui_src_panels_effect_chain_mod_rs["src/panels/effect_chain/mod.rs"]
+    crates_vorce_ui_src_panels_effect_chain_models_rs["src/panels/effect_chain/models.rs"]
+    crates_vorce_ui_src_panels_effect_chain_panel_rs["src/panels/effect_chain/panel.rs"]
+    crates_vorce_ui_src_panels_effect_chain_tests_rs["src/panels/effect_chain/tests.rs"]
+    crates_vorce_ui_src_panels_effect_chain_types_rs["src/panels/effect_chain/types.rs"]
+    crates_vorce_ui_src_panels_inspector_layer_rs["src/panels/inspector/layer.rs"]
+    crates_vorce_ui_src_panels_inspector_mod_rs["src/panels/inspector/mod.rs"]
+    crates_vorce_ui_src_panels_inspector_module_rs["src/panels/inspector/module.rs"]
+    crates_vorce_ui_src_panels_inspector_output_rs["src/panels/inspector/output.rs"]
+    crates_vorce_ui_src_panels_inspector_panel_rs["src/panels/inspector/panel.rs"]
+    crates_vorce_ui_src_panels_inspector_types_rs["src/panels/inspector/types.rs"]
+    crates_vorce_ui_src_panels_inspector_ui_rs["src/panels/inspector/ui.rs"]
+    crates_vorce_ui_src_panels_layer_panel_rs["src/panels/layer_panel.rs"]
+    crates_vorce_ui_src_panels_mapping_panel_rs["src/panels/mapping_panel.rs"]
+    crates_vorce_ui_src_panels_mod_rs["src/panels/mod.rs"]
+    crates_vorce_ui_src_panels_osc_panel_rs["src/panels/osc_panel.rs"]
+    crates_vorce_ui_src_panels_oscillator_panel_rs["src/panels/oscillator_panel.rs"]
+    crates_vorce_ui_src_panels_output_panel_rs["src/panels/output_panel.rs"]
+    crates_vorce_ui_src_panels_paint_panel_rs["src/panels/paint_panel.rs"]
+    crates_vorce_ui_src_panels_preview_panel_rs["src/panels/preview_panel.rs"]
+    crates_vorce_ui_src_panels_shortcuts_panel_rs["src/panels/shortcuts_panel.rs"]
+    crates_vorce_ui_src_panels_transform_panel_rs["src/panels/transform_panel.rs"]
+    crates_vorce_ui_src_view_dashboard_rs["src/view/dashboard.rs"]
+    crates_vorce_ui_src_view_media_browser_rs["src/view/media_browser.rs"]
+    crates_vorce_ui_src_view_media_manager_wrapper_rs["src/view/media_manager_wrapper.rs"]
+    crates_vorce_ui_src_view_menu_bar_rs["src/view/menu_bar.rs"]
+    crates_vorce_ui_src_view_menu_bar_edit_menu_rs["src/view/menu_bar/edit_menu.rs"]
+    crates_vorce_ui_src_view_menu_bar_file_menu_rs["src/view/menu_bar/file_menu.rs"]
+    crates_vorce_ui_src_view_menu_bar_help_menu_rs["src/view/menu_bar/help_menu.rs"]
+    crates_vorce_ui_src_view_menu_bar_mod_rs["src/view/menu_bar/mod.rs"]
+    crates_vorce_ui_src_view_menu_bar_toolbar_rs["src/view/menu_bar/toolbar.rs"]
+    crates_vorce_ui_src_view_menu_bar_view_menu_rs["src/view/menu_bar/view_menu.rs"]
+    crates_vorce_ui_src_view_mod_rs["src/view/mod.rs"]
+    crates_vorce_ui_src_view_module_sidebar_rs["src/view/module_sidebar.rs"]
+    crates_vorce_ui_src_widgets_audio_meter_rs["src/widgets/audio_meter.rs"]
+    crates_vorce_ui_src_widgets_custom_rs["src/widgets/custom.rs"]
+    crates_vorce_ui_src_widgets_icon_demo_panel_rs["src/widgets/icon_demo_panel.rs"]
+    crates_vorce_ui_src_widgets_icons_rs["src/widgets/icons.rs"]
+    crates_vorce_ui_src_widgets_mod_rs["src/widgets/mod.rs"]
+    crates_vorce_ui_src_widgets_panel_rs["src/widgets/panel.rs"]
+    crates_vorce_ui_tests_timeline_automation_tests_rs["tests/timeline_automation_tests.rs"]
+
+    crates_vorce_ui_src_action_rs --> crates_vorce_ui_src_editors_node_editor_rs
+    crates_vorce_ui_src_action_rs --> crates_vorce_ui_src_editors_timeline_v2_mod_rs
+    crates_vorce_ui_src_app_ui_rs --> crates_vorce_ui_src_action_rs
+    crates_vorce_ui_src_app_ui_rs --> crates_vorce_ui_src_core_i18n_rs
+    crates_vorce_ui_src_app_ui_rs --> crates_vorce_ui_src_editors_mod_rs
+    crates_vorce_ui_src_app_ui_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_app_ui_rs --> crates_vorce_ui_src_panels_mod_rs
+    crates_vorce_ui_src_app_ui_rs --> crates_vorce_ui_src_view_mod_rs
+    crates_vorce_ui_src_app_ui_rs --> crates_vorce_ui_src_widgets_icon_demo_panel_rs
+    crates_vorce_ui_src_app_ui_rs --> crates_vorce_ui_src_widgets_icons_rs
+    crates_vorce_ui_src_core_config_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_core_mod_rs --> crates_vorce_ui_src_core_asset_manager_rs
+    crates_vorce_ui_src_core_mod_rs --> crates_vorce_ui_src_core_config_rs
+    crates_vorce_ui_src_core_mod_rs --> crates_vorce_ui_src_core_i18n_rs
+    crates_vorce_ui_src_core_mod_rs --> crates_vorce_ui_src_core_responsive_rs
+    crates_vorce_ui_src_core_mod_rs --> crates_vorce_ui_src_core_theme_rs
+    crates_vorce_ui_src_core_mod_rs --> crates_vorce_ui_src_core_undo_redo_rs
+    crates_vorce_ui_src_editors_mesh_editor_interaction_rs --> crates_vorce_ui_src_editors_mesh_editor_state_rs
+    crates_vorce_ui_src_editors_mesh_editor_interaction_rs --> crates_vorce_ui_src_editors_mesh_editor_types_rs
+    crates_vorce_ui_src_editors_mesh_editor_mod_rs --> crates_vorce_ui_src_editors_mesh_editor_interaction_rs
+    crates_vorce_ui_src_editors_mesh_editor_mod_rs --> crates_vorce_ui_src_editors_mesh_editor_state_rs
+    crates_vorce_ui_src_editors_mesh_editor_mod_rs --> crates_vorce_ui_src_editors_mesh_editor_types_rs
+    crates_vorce_ui_src_editors_mesh_editor_mod_rs --> crates_vorce_ui_src_editors_mesh_editor_ui_rs
+    crates_vorce_ui_src_editors_mesh_editor_state_rs --> crates_vorce_ui_src_editors_mesh_editor_types_rs
+    crates_vorce_ui_src_editors_mesh_editor_ui_rs --> crates_vorce_ui_src_editors_mesh_editor_interaction_rs
+    crates_vorce_ui_src_editors_mesh_editor_ui_rs --> crates_vorce_ui_src_editors_mesh_editor_state_rs
+    crates_vorce_ui_src_editors_mesh_editor_ui_rs --> crates_vorce_ui_src_editors_mesh_editor_types_rs
+    crates_vorce_ui_src_editors_mod_rs --> crates_vorce_ui_src_editors_mesh_editor_mod_rs
+    crates_vorce_ui_src_editors_mod_rs --> crates_vorce_ui_src_editors_module_canvas_mod_rs
+    crates_vorce_ui_src_editors_mod_rs --> crates_vorce_ui_src_editors_node_editor_rs
+    crates_vorce_ui_src_editors_mod_rs --> crates_vorce_ui_src_editors_shortcut_editor_rs
+    crates_vorce_ui_src_editors_mod_rs --> crates_vorce_ui_src_editors_timeline_v2_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_canvas_ui_rs --> crates_vorce_ui_src_editors_module_canvas_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_canvas_ui_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_editors_module_canvas_canvas_ui_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_editors_module_canvas_controller_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_editors_module_canvas_controller_rs --> crates_vorce_ui_src_editors_module_canvas_types_rs
+    crates_vorce_ui_src_editors_module_canvas_diagnostics_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_add_node_rs --> crates_vorce_ui_src_editors_module_canvas_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_connections_rs --> crates_vorce_ui_src_editors_module_canvas_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_grid_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_mini_map_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_mini_map_rs --> crates_vorce_ui_src_editors_module_canvas_utils_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_mod_rs --> crates_vorce_ui_src_editors_module_canvas_draw_add_node_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_mod_rs --> crates_vorce_ui_src_editors_module_canvas_draw_connections_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_mod_rs --> crates_vorce_ui_src_editors_module_canvas_draw_grid_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_mod_rs --> crates_vorce_ui_src_editors_module_canvas_draw_mini_map_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_mod_rs --> crates_vorce_ui_src_editors_module_canvas_draw_part_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_mod_rs --> crates_vorce_ui_src_editors_module_canvas_draw_presets_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_mod_rs --> crates_vorce_ui_src_editors_module_canvas_draw_quick_create_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_mod_rs --> crates_vorce_ui_src_editors_module_canvas_draw_search_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_part_rs --> crates_vorce_ui_src_editors_module_canvas_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_part_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_presets_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_quick_create_rs --> crates_vorce_ui_src_editors_module_canvas_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_draw_search_rs --> crates_vorce_ui_src_editors_module_canvas_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_common_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_capabilities_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_common_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_common_rs --> crates_vorce_ui_src_widgets_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_effect_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_capabilities_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_effect_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_common_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_layer_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_capabilities_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_layer_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_common_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_layer_rs --> crates_vorce_ui_src_editors_module_canvas_mesh_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_layer_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_mod_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_capabilities_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_mod_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_common_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_mod_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_effect_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_mod_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_layer_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_mod_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_output_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_mod_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_source_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_mod_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_trigger_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_mod_rs --> crates_vorce_ui_src_editors_module_canvas_mesh_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_mod_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_mod_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_output_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_capabilities_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_output_rs --> crates_vorce_ui_src_editors_module_canvas_mesh_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_output_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_source_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_capabilities_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_source_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_common_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_source_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_source_rs --> crates_vorce_ui_src_editors_module_canvas_types_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_source_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_source_rs --> crates_vorce_ui_src_widgets_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_trigger_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_editors_module_canvas_inspector_trigger_rs --> crates_vorce_ui_src_widgets_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_interaction_logic_rs --> crates_vorce_ui_src_editors_module_canvas_controller_rs
+    crates_vorce_ui_src_editors_module_canvas_interaction_logic_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_editors_module_canvas_interaction_logic_rs --> crates_vorce_ui_src_editors_module_canvas_types_rs
+    crates_vorce_ui_src_editors_module_canvas_mesh_rs --> crates_vorce_ui_src_editors_mesh_editor_ui_rs
+    crates_vorce_ui_src_editors_module_canvas_mod_rs --> crates_vorce_ui_src_editors_module_canvas_canvas_ui_rs
+    crates_vorce_ui_src_editors_module_canvas_mod_rs --> crates_vorce_ui_src_editors_module_canvas_controller_rs
+    crates_vorce_ui_src_editors_module_canvas_mod_rs --> crates_vorce_ui_src_editors_module_canvas_diagnostics_rs
+    crates_vorce_ui_src_editors_module_canvas_mod_rs --> crates_vorce_ui_src_editors_module_canvas_draw_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_mod_rs --> crates_vorce_ui_src_editors_module_canvas_geometry_rs
+    crates_vorce_ui_src_editors_module_canvas_mod_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_mod_rs --> crates_vorce_ui_src_editors_module_canvas_interaction_logic_rs
+    crates_vorce_ui_src_editors_module_canvas_mod_rs --> crates_vorce_ui_src_editors_module_canvas_mesh_rs
+    crates_vorce_ui_src_editors_module_canvas_mod_rs --> crates_vorce_ui_src_editors_module_canvas_node_rendering_rs
+    crates_vorce_ui_src_editors_module_canvas_mod_rs --> crates_vorce_ui_src_editors_module_canvas_renderer_rs
+    crates_vorce_ui_src_editors_module_canvas_mod_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_editors_module_canvas_mod_rs --> crates_vorce_ui_src_editors_module_canvas_types_rs
+    crates_vorce_ui_src_editors_module_canvas_mod_rs --> crates_vorce_ui_src_editors_module_canvas_utils_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_node_rendering_rs --> crates_vorce_ui_src_editors_module_canvas_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_node_rendering_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_editors_module_canvas_node_rendering_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_editors_module_canvas_renderer_rs --> crates_vorce_ui_src_editors_module_canvas_controller_rs
+    crates_vorce_ui_src_editors_module_canvas_renderer_rs --> crates_vorce_ui_src_editors_module_canvas_diagnostics_rs
+    crates_vorce_ui_src_editors_module_canvas_renderer_rs --> crates_vorce_ui_src_editors_module_canvas_draw_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_renderer_rs --> crates_vorce_ui_src_editors_module_canvas_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_renderer_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_editors_module_canvas_renderer_rs --> crates_vorce_ui_src_editors_module_canvas_types_rs
+    crates_vorce_ui_src_editors_module_canvas_renderer_rs --> crates_vorce_ui_src_editors_module_canvas_utils_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_renderer_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_editors_module_canvas_state_rs --> crates_vorce_ui_src_editors_mesh_editor_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_state_rs --> crates_vorce_ui_src_editors_module_canvas_types_rs
+    crates_vorce_ui_src_editors_module_canvas_state_rs --> crates_vorce_ui_src_editors_module_canvas_utils_mod_rs
+    crates_vorce_ui_src_editors_module_canvas_types_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_editors_module_canvas_utils_catalog_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_capabilities_rs
+    crates_vorce_ui_src_editors_module_canvas_utils_mod_rs --> crates_vorce_ui_src_editors_module_canvas_inspector_capabilities_rs
+    crates_vorce_ui_src_editors_module_canvas_utils_mod_rs --> crates_vorce_ui_src_editors_module_canvas_utils_catalog_rs
+    crates_vorce_ui_src_editors_module_canvas_utils_mod_rs --> crates_vorce_ui_src_editors_module_canvas_utils_icons_rs
+    crates_vorce_ui_src_editors_module_canvas_utils_mod_rs --> crates_vorce_ui_src_editors_module_canvas_utils_layout_rs
+    crates_vorce_ui_src_editors_module_canvas_utils_mod_rs --> crates_vorce_ui_src_editors_module_canvas_utils_presets_rs
+    crates_vorce_ui_src_editors_module_canvas_utils_mod_rs --> crates_vorce_ui_src_editors_module_canvas_utils_sockets_rs
+    crates_vorce_ui_src_editors_module_canvas_utils_mod_rs --> crates_vorce_ui_src_editors_module_canvas_utils_styling_rs
+    crates_vorce_ui_src_editors_module_canvas_utils_presets_rs --> crates_vorce_ui_src_editors_module_canvas_types_rs
+    crates_vorce_ui_src_editors_node_editor_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_editors_shortcut_editor_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_editors_timeline_v2_mod_rs --> crates_vorce_ui_src_editors_timeline_v2_models_rs
+    crates_vorce_ui_src_editors_timeline_v2_mod_rs --> crates_vorce_ui_src_editors_timeline_v2_types_rs
+    crates_vorce_ui_src_editors_timeline_v2_mod_rs --> crates_vorce_ui_src_editors_timeline_v2_ui_rs
+    crates_vorce_ui_src_editors_timeline_v2_ui_rs --> crates_vorce_ui_src_editors_timeline_v2_models_rs
+    crates_vorce_ui_src_editors_timeline_v2_ui_rs --> crates_vorce_ui_src_editors_timeline_v2_types_rs
+    crates_vorce_ui_src_editors_timeline_v2_ui_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_editors_timeline_v2_ui_rs --> crates_vorce_ui_src_widgets_mod_rs
+    crates_vorce_ui_src_lib_rs --> crates_vorce_ui_src_action_rs
+    crates_vorce_ui_src_lib_rs --> crates_vorce_ui_src_app_ui_rs
+    crates_vorce_ui_src_lib_rs --> crates_vorce_ui_src_core_mod_rs
+    crates_vorce_ui_src_lib_rs --> crates_vorce_ui_src_editors_mod_rs
+    crates_vorce_ui_src_lib_rs --> crates_vorce_ui_src_editors_module_canvas_types_rs
+    crates_vorce_ui_src_lib_rs --> crates_vorce_ui_src_panels_mod_rs
+    crates_vorce_ui_src_lib_rs --> crates_vorce_ui_src_view_mod_rs
+    crates_vorce_ui_src_lib_rs --> crates_vorce_ui_src_widgets_mod_rs
+    crates_vorce_ui_src_panels_assignment_panel_rs --> crates_vorce_ui_src_widgets_panel_rs
+    crates_vorce_ui_src_panels_audio_panel_rs --> crates_vorce_ui_src_core_i18n_rs
+    crates_vorce_ui_src_panels_audio_panel_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_audio_panel_rs --> crates_vorce_ui_src_widgets_mod_rs
+    crates_vorce_ui_src_panels_controller_overlay_panel_drawing_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_controller_overlay_panel_drawing_rs --> crates_vorce_ui_src_panels_controller_overlay_panel_panel_rs
+    crates_vorce_ui_src_panels_controller_overlay_panel_list_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_controller_overlay_panel_list_rs --> crates_vorce_ui_src_panels_controller_overlay_panel_panel_rs
+    crates_vorce_ui_src_panels_controller_overlay_panel_midi_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_controller_overlay_panel_midi_rs --> crates_vorce_ui_src_panels_controller_overlay_panel_panel_rs
+    crates_vorce_ui_src_panels_controller_overlay_panel_mod_rs --> crates_vorce_ui_src_panels_controller_overlay_panel_drawing_rs
+    crates_vorce_ui_src_panels_controller_overlay_panel_mod_rs --> crates_vorce_ui_src_panels_controller_overlay_panel_list_rs
+    crates_vorce_ui_src_panels_controller_overlay_panel_mod_rs --> crates_vorce_ui_src_panels_controller_overlay_panel_midi_rs
+    crates_vorce_ui_src_panels_controller_overlay_panel_mod_rs --> crates_vorce_ui_src_panels_controller_overlay_panel_panel_rs
+    crates_vorce_ui_src_panels_controller_overlay_panel_panel_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_controller_overlay_panel_panel_rs --> crates_vorce_ui_src_panels_controller_overlay_panel_drawing_rs
+    crates_vorce_ui_src_panels_cue_panel_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_edge_blend_panel_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_effect_chain_components_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_effect_chain_components_rs --> crates_vorce_ui_src_panels_effect_chain_types_rs
+    crates_vorce_ui_src_panels_effect_chain_components_rs --> crates_vorce_ui_src_widgets_custom_rs
+    crates_vorce_ui_src_panels_effect_chain_mod_rs --> crates_vorce_ui_src_panels_effect_chain_components_rs
+    crates_vorce_ui_src_panels_effect_chain_mod_rs --> crates_vorce_ui_src_panels_effect_chain_models_rs
+    crates_vorce_ui_src_panels_effect_chain_mod_rs --> crates_vorce_ui_src_panels_effect_chain_panel_rs
+    crates_vorce_ui_src_panels_effect_chain_mod_rs --> crates_vorce_ui_src_panels_effect_chain_tests_rs
+    crates_vorce_ui_src_panels_effect_chain_mod_rs --> crates_vorce_ui_src_panels_effect_chain_types_rs
+    crates_vorce_ui_src_panels_effect_chain_models_rs --> crates_vorce_ui_src_panels_effect_chain_types_rs
+    crates_vorce_ui_src_panels_effect_chain_panel_rs --> crates_vorce_ui_src_core_responsive_rs
+    crates_vorce_ui_src_panels_effect_chain_panel_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_effect_chain_panel_rs --> crates_vorce_ui_src_panels_effect_chain_models_rs
+    crates_vorce_ui_src_panels_effect_chain_panel_rs --> crates_vorce_ui_src_panels_effect_chain_types_rs
+    crates_vorce_ui_src_panels_effect_chain_panel_rs --> crates_vorce_ui_src_widgets_custom_rs
+    crates_vorce_ui_src_panels_effect_chain_panel_rs --> crates_vorce_ui_src_widgets_panel_rs
+    crates_vorce_ui_src_panels_effect_chain_tests_rs --> crates_vorce_ui_src_panels_effect_chain_models_rs
+    crates_vorce_ui_src_panels_effect_chain_tests_rs --> crates_vorce_ui_src_panels_effect_chain_panel_rs
+    crates_vorce_ui_src_panels_effect_chain_tests_rs --> crates_vorce_ui_src_panels_effect_chain_types_rs
+    crates_vorce_ui_src_panels_effect_chain_types_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_inspector_layer_rs --> crates_vorce_ui_src_editors_mesh_editor_ui_rs
+    crates_vorce_ui_src_panels_inspector_layer_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_inspector_layer_rs --> crates_vorce_ui_src_panels_inspector_mod_rs
+    crates_vorce_ui_src_panels_inspector_mod_rs --> crates_vorce_ui_src_panels_inspector_layer_rs
+    crates_vorce_ui_src_panels_inspector_mod_rs --> crates_vorce_ui_src_panels_inspector_module_rs
+    crates_vorce_ui_src_panels_inspector_mod_rs --> crates_vorce_ui_src_panels_inspector_output_rs
+    crates_vorce_ui_src_panels_inspector_mod_rs --> crates_vorce_ui_src_panels_inspector_panel_rs
+    crates_vorce_ui_src_panels_inspector_mod_rs --> crates_vorce_ui_src_panels_inspector_types_rs
+    crates_vorce_ui_src_panels_inspector_mod_rs --> crates_vorce_ui_src_panels_inspector_ui_rs
+    crates_vorce_ui_src_panels_inspector_module_rs --> crates_vorce_ui_src_editors_module_canvas_state_rs
+    crates_vorce_ui_src_panels_inspector_module_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_inspector_output_rs --> crates_vorce_ui_src_panels_inspector_mod_rs
+    crates_vorce_ui_src_panels_inspector_output_rs --> crates_vorce_ui_src_widgets_panel_rs
+    crates_vorce_ui_src_panels_inspector_panel_rs --> crates_vorce_ui_src_editors_mesh_editor_mod_rs
+    crates_vorce_ui_src_panels_inspector_panel_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_inspector_panel_rs --> crates_vorce_ui_src_panels_inspector_layer_rs
+    crates_vorce_ui_src_panels_inspector_panel_rs --> crates_vorce_ui_src_panels_inspector_module_rs
+    crates_vorce_ui_src_panels_inspector_panel_rs --> crates_vorce_ui_src_panels_inspector_output_rs
+    crates_vorce_ui_src_panels_inspector_panel_rs --> crates_vorce_ui_src_panels_inspector_types_rs
+    crates_vorce_ui_src_panels_inspector_panel_rs --> crates_vorce_ui_src_panels_transform_panel_rs
+    crates_vorce_ui_src_panels_inspector_panel_rs --> crates_vorce_ui_src_widgets_panel_rs
+    crates_vorce_ui_src_panels_inspector_ui_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_layer_panel_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_layer_panel_rs --> crates_vorce_ui_src_widgets_custom_rs
+    crates_vorce_ui_src_panels_layer_panel_rs --> crates_vorce_ui_src_widgets_icons_rs
+    crates_vorce_ui_src_panels_layer_panel_rs --> crates_vorce_ui_src_widgets_mod_rs
+    crates_vorce_ui_src_panels_layer_panel_rs --> crates_vorce_ui_src_widgets_panel_rs
+    crates_vorce_ui_src_panels_mapping_panel_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_mapping_panel_rs --> crates_vorce_ui_src_widgets_custom_rs
+    crates_vorce_ui_src_panels_mapping_panel_rs --> crates_vorce_ui_src_widgets_icons_rs
+    crates_vorce_ui_src_panels_mapping_panel_rs --> crates_vorce_ui_src_widgets_mod_rs
+    crates_vorce_ui_src_panels_mapping_panel_rs --> crates_vorce_ui_src_widgets_panel_rs
+    crates_vorce_ui_src_panels_mod_rs --> crates_vorce_ui_src_panels_assignment_panel_rs
+    crates_vorce_ui_src_panels_mod_rs --> crates_vorce_ui_src_panels_audio_panel_rs
+    crates_vorce_ui_src_panels_mod_rs --> crates_vorce_ui_src_panels_controller_overlay_panel_mod_rs
+    crates_vorce_ui_src_panels_mod_rs --> crates_vorce_ui_src_panels_cue_panel_rs
+    crates_vorce_ui_src_panels_mod_rs --> crates_vorce_ui_src_panels_edge_blend_panel_rs
+    crates_vorce_ui_src_panels_mod_rs --> crates_vorce_ui_src_panels_effect_chain_mod_rs
+    crates_vorce_ui_src_panels_mod_rs --> crates_vorce_ui_src_panels_inspector_mod_rs
+    crates_vorce_ui_src_panels_mod_rs --> crates_vorce_ui_src_panels_layer_panel_rs
+    crates_vorce_ui_src_panels_mod_rs --> crates_vorce_ui_src_panels_mapping_panel_rs
+    crates_vorce_ui_src_panels_mod_rs --> crates_vorce_ui_src_panels_osc_panel_rs
+    crates_vorce_ui_src_panels_mod_rs --> crates_vorce_ui_src_panels_oscillator_panel_rs
+    crates_vorce_ui_src_panels_mod_rs --> crates_vorce_ui_src_panels_output_panel_rs
+    crates_vorce_ui_src_panels_mod_rs --> crates_vorce_ui_src_panels_paint_panel_rs
+    crates_vorce_ui_src_panels_mod_rs --> crates_vorce_ui_src_panels_preview_panel_rs
+    crates_vorce_ui_src_panels_mod_rs --> crates_vorce_ui_src_panels_shortcuts_panel_rs
+    crates_vorce_ui_src_panels_mod_rs --> crates_vorce_ui_src_panels_transform_panel_rs
+    crates_vorce_ui_src_panels_osc_panel_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_osc_panel_rs --> crates_vorce_ui_src_widgets_panel_rs
+    crates_vorce_ui_src_panels_oscillator_panel_rs --> crates_vorce_ui_src_core_responsive_rs
+    crates_vorce_ui_src_panels_oscillator_panel_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_oscillator_panel_rs --> crates_vorce_ui_src_widgets_custom_rs
+    crates_vorce_ui_src_panels_oscillator_panel_rs --> crates_vorce_ui_src_widgets_icons_rs
+    crates_vorce_ui_src_panels_oscillator_panel_rs --> crates_vorce_ui_src_widgets_panel_rs
+    crates_vorce_ui_src_panels_output_panel_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_paint_panel_rs --> crates_vorce_ui_src_core_responsive_rs
+    crates_vorce_ui_src_panels_paint_panel_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_paint_panel_rs --> crates_vorce_ui_src_widgets_panel_rs
+    crates_vorce_ui_src_panels_shortcuts_panel_rs --> crates_vorce_ui_src_core_theme_rs
+    crates_vorce_ui_src_panels_shortcuts_panel_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_transform_panel_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_panels_transform_panel_rs --> crates_vorce_ui_src_widgets_custom_rs
+    crates_vorce_ui_src_panels_transform_panel_rs --> crates_vorce_ui_src_widgets_panel_rs
+    crates_vorce_ui_src_view_dashboard_rs --> crates_vorce_ui_src_editors_module_canvas_types_rs
+    crates_vorce_ui_src_view_dashboard_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_view_dashboard_rs --> crates_vorce_ui_src_widgets_mod_rs
+    crates_vorce_ui_src_view_media_browser_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_view_menu_bar_edit_menu_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_view_menu_bar_edit_menu_rs --> crates_vorce_ui_src_view_menu_bar_mod_rs
+    crates_vorce_ui_src_view_menu_bar_file_menu_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_view_menu_bar_file_menu_rs --> crates_vorce_ui_src_view_menu_bar_mod_rs
+    crates_vorce_ui_src_view_menu_bar_help_menu_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_view_menu_bar_help_menu_rs --> crates_vorce_ui_src_view_menu_bar_mod_rs
+    crates_vorce_ui_src_view_menu_bar_mod_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_view_menu_bar_mod_rs --> crates_vorce_ui_src_view_menu_bar_edit_menu_rs
+    crates_vorce_ui_src_view_menu_bar_mod_rs --> crates_vorce_ui_src_view_menu_bar_file_menu_rs
+    crates_vorce_ui_src_view_menu_bar_mod_rs --> crates_vorce_ui_src_view_menu_bar_help_menu_rs
+    crates_vorce_ui_src_view_menu_bar_mod_rs --> crates_vorce_ui_src_view_menu_bar_toolbar_rs
+    crates_vorce_ui_src_view_menu_bar_mod_rs --> crates_vorce_ui_src_view_menu_bar_view_menu_rs
+    crates_vorce_ui_src_view_menu_bar_toolbar_rs --> crates_vorce_ui_src_core_config_rs
+    crates_vorce_ui_src_view_menu_bar_toolbar_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_view_menu_bar_view_menu_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_view_menu_bar_view_menu_rs --> crates_vorce_ui_src_view_menu_bar_mod_rs
+    crates_vorce_ui_src_view_mod_rs --> crates_vorce_ui_src_view_dashboard_rs
+    crates_vorce_ui_src_view_mod_rs --> crates_vorce_ui_src_view_media_browser_rs
+    crates_vorce_ui_src_view_mod_rs --> crates_vorce_ui_src_view_media_manager_wrapper_rs
+    crates_vorce_ui_src_view_mod_rs --> crates_vorce_ui_src_view_menu_bar_rs
+    crates_vorce_ui_src_view_mod_rs --> crates_vorce_ui_src_view_module_sidebar_rs
+    crates_vorce_ui_src_view_module_sidebar_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_widgets_audio_meter_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_widgets_custom_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_widgets_custom_rs --> crates_vorce_ui_src_widgets_icons_rs
+    crates_vorce_ui_src_widgets_icon_demo_panel_rs --> crates_vorce_ui_src_core_responsive_rs
+    crates_vorce_ui_src_widgets_icon_demo_panel_rs --> crates_vorce_ui_src_lib_rs
+    crates_vorce_ui_src_widgets_mod_rs --> crates_vorce_ui_src_widgets_audio_meter_rs
+    crates_vorce_ui_src_widgets_mod_rs --> crates_vorce_ui_src_widgets_custom_rs
+    crates_vorce_ui_src_widgets_mod_rs --> crates_vorce_ui_src_widgets_icon_demo_panel_rs
+    crates_vorce_ui_src_widgets_mod_rs --> crates_vorce_ui_src_widgets_icons_rs
+    crates_vorce_ui_src_widgets_mod_rs --> crates_vorce_ui_src_widgets_panel_rs
+    crates_vorce_ui_tests_timeline_automation_tests_rs --> crates_vorce_ui_src_editors_timeline_v2_mod_rs

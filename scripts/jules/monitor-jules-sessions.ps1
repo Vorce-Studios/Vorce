@@ -35,10 +35,20 @@ function Resolve-MonitoredSessionNames {
         $allSessions = $null
 
         foreach ($issueId in $IssueNumber) {
+            $guard = Get-JulesDuplicateDispatchGuard -IssueNumber $issueId -Repository $resolvedRepository -ApiKey $ApiKey
+            if (@($guard.ActiveSessions).Count -gt 0) {
+                $sessionNames += @($guard.ActiveSessions | ForEach-Object { [string]$_.name })
+                continue
+            }
+
+            if ($null -ne $guard.TrackedSession) {
+                $sessionNames += [string]$guard.TrackedSession.name
+                continue
+            }
+
             $reference = Get-JulesSessionReferenceFromIssue -Repository $resolvedRepository -IssueNumber $issueId
             if ($reference) {
-                $sessionNames += $reference.SessionName
-                continue
+                Write-JulesWarn "Fuer Issue #$issueId existiert nur eine historische oder aktuell nicht aufloesbare Session-Referenz; es wird keine neue Monitor-Quelle daraus abgeleitet."
             }
 
             if ($null -eq $allSessions) {
@@ -73,10 +83,18 @@ function Get-MonitorSnapshot {
         $resolvedRepository = Resolve-GitHubRepository -Repository $Repository
     }
 
+    $guardCache = @{}
+
     $results = foreach ($sessionName in $SessionNames) {
-        $session = Get-JulesSession -SessionIdOrName $sessionName -ApiKey $ApiKey
+        try {
+            $session = Get-JulesSession -SessionIdOrName $sessionName -ApiKey $ApiKey
+        } catch {
+            Write-JulesWarn "Session '$sessionName' konnte fuer das Monitoring nicht geladen werden: $($_.Exception.Message)"
+            continue
+        }
+
         $needsAttention = Test-JulesAttentionRequired -Session $session
-        $isActive = @("QUEUED", "PLANNING", "AWAITING_PLAN_APPROVAL", "AWAITING_USER_FEEDBACK", "IN_PROGRESS", "PAUSED") -contains [string]$session.state
+        $isActive = Test-JulesSessionActiveState -Session $session
 
         if ($OnlyActive -and -not $isActive) { continue }
         if ($OnlyNeedsAttention -and -not $needsAttention) { continue }
@@ -88,6 +106,28 @@ function Get-MonitorSnapshot {
 
         $latestActivity = Get-JulesLatestActivity -Activities $activities
         $issueId = Get-IssueNumberFromSession -Session $session
+        $duplicateGuardReason = ''
+        $duplicateActiveSessionIds = @()
+        $duplicateActiveSessionsDetected = $false
+
+        if ($issueId -and $resolvedRepository) {
+            $cacheKey = [string]$issueId
+            if (-not $guardCache.ContainsKey($cacheKey)) {
+                $guardCache[$cacheKey] = Get-JulesDuplicateDispatchGuard -IssueNumber $issueId -Repository $resolvedRepository -ApiKey $ApiKey
+            }
+
+            $duplicateGuard = $guardCache[$cacheKey]
+            $duplicateGuardReason = [string]$duplicateGuard.Reason
+            $duplicateActiveSessionIds = @(
+                @($duplicateGuard.ActiveSessions) |
+                    ForEach-Object { Resolve-JulesSessionId -SessionIdOrName ([string]$_.name) }
+            )
+            $duplicateActiveSessionsDetected = ([string]$duplicateGuard.Reason -eq 'multiple_active_sessions')
+
+            if ($duplicateActiveSessionsDetected -or [string]$duplicateGuard.Reason -eq 'tracked_active_state_unresolved') {
+                $needsAttention = $true
+            }
+        }
 
         if ($SyncIssueBody -and $issueId -and $resolvedRepository) {
             Sync-JulesIssueTracking -Repository $resolvedRepository -IssueNumber $issueId -Session $session -LatestActivity $latestActivity -StartingBranch ([string]$session.sourceContext.githubRepoContext.startingBranch) -SourceName ([string]$session.sourceContext.source)
@@ -104,6 +144,9 @@ function Get-MonitorSnapshot {
             PullRequestUrl   = Get-JulesSessionPullRequestUrl -Session $session
             LastActivity     = Get-JulesActivitySummary -Activity $latestActivity
             LastActivityTime = if ($latestActivity) { [string]$latestActivity.createTime } else { $null }
+            DuplicateGuardReason = $duplicateGuardReason
+            DuplicateActiveSessionsDetected = $duplicateActiveSessionsDetected
+            DuplicateActiveSessionIds = @($duplicateActiveSessionIds)
         }
     }
 
