@@ -79,6 +79,11 @@ impl App {
             if config.is_automation {
                 false
             } else {
+                saved_config.window_fullscreen
+            },
+            if config.is_automation {
+                false
+            } else {
                 saved_config.window_maximized
             },
             saved_config.vsync_mode,

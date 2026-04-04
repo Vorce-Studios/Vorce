@@ -67,6 +67,12 @@ pub struct AppState {
     #[serde(default)]
     pub assignment_manager: Arc<AssignmentManager>,
 
+    /// Cluster Session Configuration
+    ///
+    /// Defines topology, roles, and output assignments for multi-PC/distributed usage.
+    #[serde(default)]
+    pub cluster_config: Arc<crate::cluster::ClusterSessionConfig>,
+
     /// Audio configuration
     pub audio_config: AudioConfig,
 
@@ -96,6 +102,7 @@ impl Default for AppState {
             shader_graphs: Arc::new(std::collections::HashMap::new()),
             effect_chain: Arc::new(crate::effects::EffectChain::new()),
             assignment_manager: Arc::new(AssignmentManager::default()),
+            cluster_config: Arc::new(crate::cluster::ClusterSessionConfig::default()),
             audio_config: AudioConfig::default(),
             oscillator_config: OscillatorConfig::default(),
             settings: Arc::new(AppSettings::default()),
@@ -158,6 +165,11 @@ impl AppState {
     /// Get mutable reference to AssignmentManager (CoW)
     pub fn assignment_manager_mut(&mut self) -> &mut AssignmentManager {
         Arc::make_mut(&mut self.assignment_manager)
+    }
+
+    /// Get mutable reference to ClusterSessionConfig (CoW)
+    pub fn cluster_config_mut(&mut self) -> &mut crate::cluster::ClusterSessionConfig {
+        Arc::make_mut(&mut self.cluster_config)
     }
 
     /// Get mutable reference to AppSettings (CoW)
@@ -434,6 +446,14 @@ mod tests {
             assert_eq!(Arc::strong_count(&state1.effect_chain), 2);
             let _ = state9.effect_chain_mut();
             assert_eq!(Arc::strong_count(&state1.effect_chain), 1);
+        }
+
+        // 9. Cluster Config
+        {
+            let mut state10 = state1.clone();
+            assert_eq!(Arc::strong_count(&state1.cluster_config), 2);
+            let _ = state10.cluster_config_mut();
+            assert_eq!(Arc::strong_count(&state1.cluster_config), 1);
         }
     }
 
