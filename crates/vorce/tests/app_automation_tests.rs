@@ -21,17 +21,26 @@ fn test_release_smoke_automation_empty_project() {
     }
     std::fs::create_dir_all(&output_dir).expect("failed to create output dir");
 
-    let binary_path = workspace_root.join("target/release/Vorce.exe");
-    if !binary_path.exists() {
-        // Fallback to debug if release not available, but automation tests should ideally run in release
-        let debug_path = workspace_root.join("target/debug/Vorce.exe");
-        if !debug_path.exists() {
-            panic!("Vorce binary not found. Run 'cargo build --bin Vorce' first.");
-        }
-    }
+    let exe_ext = std::env::consts::EXE_EXTENSION;
+    let binary_name = if exe_ext.is_empty() {
+        "Vorce".to_string()
+    } else {
+        format!("Vorce.{}", exe_ext)
+    };
+
+    let binary_path = workspace_root.join(format!("target/release/{}", binary_name));
+    let debug_path = workspace_root.join(format!("target/debug/{}", binary_name));
+
+    let active_binary = if binary_path.exists() {
+        binary_path
+    } else if debug_path.exists() {
+        debug_path
+    } else {
+        panic!("Vorce binary not found. Run 'cargo build --bin Vorce' first.");
+    };
 
     // Run the app in automation mode
-    let mut child = Command::new(&binary_path)
+    let mut child = Command::new(&active_binary)
         .arg("--mode")
         .arg("automation")
         .arg("--fixture")

@@ -30,10 +30,10 @@ Der Release-Smoke-Test prueft den tatsaechlichen, end-to-end gestarteten App-Lif
 Der Vorce Automation Mode laesst sich direkt starten. Er lädt optional eine Testszene, rendert eine feste Anzahl von Frames und exportiert ein Bild.
 
 **Minimaler Befehl zur Reproduktion:**
-```powershell
-cargo run -p vorce --bin Vorce --release -- --mode automation --exit-after-frames 10 --screenshot-dir target/automation_test_output
+```bash
+cargo run -p vorce --bin Vorce --release -- --mode automation --fixture tests/fixtures/empty_project.vorce --exit-after-frames 10 --screenshot-dir target/automation_test_output
 ```
-*Dieser Befehl oeffnet ein echtes Fenster, rendert 10 Frames und beendet sich.*
+*Dieser Befehl oeffnet ein echtes Fenster (auf Windows z.B. als `Vorce.exe` gestartet), rendert 10 Frames und beendet sich.*
 
 ### Integration als Cargo Test
 
@@ -44,9 +44,11 @@ cargo test -p vorce --test app_automation_tests -- --ignored --nocapture
 ```
 
 Dieser Test prueft:
-- Fehlerfreien Start des `Vorce` Binary im Automation-Modus.
+- Fehlerfreien Start des `Vorce` Binary im Automation-Modus (wobei die Extension dynamisch je nach OS, z.B. `.exe` auf Windows, ermittelt wird).
 - Lauffaehigkeit fuer 10 Frames.
 - Die korrekte Erzeugung der `automation_frame_10.png` im Verzeichnis `target/automation_test_output`.
+
+Damit etabliert dieser Test die formale Minimal-Baseline fuer den Release-Smoke-Check im aktuellen Vorce-Repository.
 
 ---
 
@@ -90,13 +92,14 @@ Sowohl die App-Automatisierung als auch der Visual-Harness erzeugen **echte sich
 - **Aktive GPU / Display Environment:** Das Betriebssystem muss ein gueltiges Display und eine Grafikkarte zur Verfuegung stellen, ansonsten scheitern die WGPU-Oberflaechen und die App bricht mit OS-Fehlern ab.
 - Windows wird primär vorausgesetzt, macOS/Linux können je nach Window-Manager-Setup teilweise abweichen.
 
-**Hinweis zu Headless-CI:**
-Ein komplett non-interaktiver, rein virtueller Baseline-Test ohne Swapchain ist aktuell **nicht verfuegbar**. Die Tests muessen absichtlich mit `#[ignore]` annotiert bleiben, damit Standard-CI-Laeufe nicht abbrechen. Um sie in einer self-hosted Umgebung auszufuehren, muss `VORCE_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true` gesetzt sein, wobei der Runner im interaktiven Desktop-Modus arbeiten muss.
+**Hinweis zu Headless-CI (Gap Documentation):**
+Ein komplett non-interaktiver, rein virtueller Baseline-Test ohne Swapchain (z. B. auf Linux Framebuffer/Xvfb ohne GPU) ist aktuell **nicht verfuegbar und technisch nicht umgesetzt**. Die WGPU-Implementierung erzwingt eine physisch aufrufbare Window-Surface. Die Tests muessen absichtlich mit `#[ignore]` annotiert bleiben, damit Standard-CI-Laeufe in GitHub Actions (die rein headless sind) nicht abbrechen.
+Anstatt diesen Zustand durch Mocks zu verdecken (Hand-waving), wird er hier explizit als Gap dokumentiert. Um die Automation dennoch auszufuehren, muss `VORCE_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true` in einer self-hosted Umgebung gesetzt sein, wobei der Runner zwingend im interaktiven Desktop-Modus arbeiten muss.
 
 ---
 
 ## 4. Beziehung zu Output QA (Projectors)
 
-Dieser Release-Smoke-Test konzentriert sich streng auf das **Main-Window und die UI**. Er stellt sicher, dass der Rendercore und die Applikation selbst grundsaetzlich arbeitsfaehig sind.
+Dieser Release-Smoke-Test konzentriert sich streng auf die Minimal-Baseline des **Main-Windows (App Automation)** und des **Visual Harness (Referenzrendering)**. Er stellt lediglich sicher, dass der Rendercore, das Hauptfenster und der Screenshot-Export grundsaetzlich arbeitsfaehig sind.
 
-Weiterfuehrende Output-Tests (z.B. Multi-Monitor-Layouts, Edge-Blending, Masking auf dedizierten Projector-Nodes) werden nicht durch diese Basis-Screenshots abgedeckt, um Komplexitaet zu vermeiden. Solche weiterfuehrenden Tests sind Teil von **Issue #49** und erfordern separate Setups (z.B. physische Hardware-Dummies oder erweiterte Multiscreen-Mock-Konfigurationen).
+Weiterfuehrende Output-Tests (z.B. Multi-Monitor-Layouts, Edge-Blending, Masking auf dedizierten Projector-Nodes, reale Hardware-Verschaltungen) werden *nicht* durch diese Basis-Screenshots abgedeckt, um den Basis-Smoke-Test schlank und deterministisch zu halten. Solche weiterfuehrenden QA-Massnahmen fallen unter die Output QA und sind explizit getrennt (Teil von **Issue #49**).
