@@ -40,6 +40,7 @@ PowerShell-Skripte fuer die Jules REST API mit optionaler GitHub-Issue-Synchroni
 - GitHub-Tracking signalisiert noch aktive Arbeit, aber die referenzierte Session ist nicht aufloesbar: neuer Start wird blockiert, bis der Status wieder sauber ist
 - nur historische oder bereits abgeschlossene Session-Referenzen blockieren keinen neuen Start
 - bewusster manueller Neustart: nur explizit mit `-ForceNewSession`
+- Discovery, Chief of Staff und Jules Builder muessen denselben GitHub-Tracking-Status ebenfalls vor jedem Dispatch respektieren; der Guard lebt also nicht nur im Create-Skript
 
 ## Orchestrierung Jules -> Gemini
 
@@ -81,7 +82,6 @@ Optional koennen abweichende Feldnamen konfiguriert werden:
 - `VORCE_PROJECT_LINKED_PR_FIELD`
 
 Wenn diese Konfiguration fehlt, bleibt der Project-Sync deaktiviert und nur der Issue-Sync wird ausgefuehrt.
-
 
 
 

@@ -138,12 +138,15 @@ Es gibt zwei Beendigungsarten:
 - analysiert offene GitHub-Issues
 - fuehrt Planning und Priorisierung aus
 - erkennt zusaetzlichen Handlungsbedarf aus Labels, Status und Projektzustand
+- importiert oder aktualisiert keine Arbeit blind, sondern leitet aus dem GitHub-Tracking vor dem Dispatch einen Barrier-Status ab:
+  `done`, `in_review`, `in_progress`, `blocked`, `backlog` oder `dispatchable`
 
 ### Jules Builder
 
 - primaerer Low-Cost-Builder
 - uebernimmt Sessions, reagiert auf Session-Zustaende und PR-Erzeugung
 - erstellt keine neue Session, wenn fuer dasselbe Issue bereits aktive Jules-Arbeit erkannt wird; historische Session-Referenzen allein sind kein Dauer-Blocker
+- respektiert denselben GitHub-Barrier-Status auch unmittelbar vor dem Jules-Start, damit geschlossene Issues, offene PRs und Attention-Faelle nicht erneut dispatcht werden
 
 ### Review Pool
 

@@ -156,6 +156,75 @@ function Get-VorceStudiosGitHubIssueUrl {
     return ('https://github.com/{0}/issues/{1}' -f $Context.Repository, [string]$Metadata['gh_issue'])
 }
 
+function Get-VorceStudiosGitHubTrackingSnapshot {
+    param(
+        [AllowNull()][object]$GitHubIssue
+    )
+
+    if ($null -eq $GitHubIssue) {
+        return [pscustomobject]@{
+            IssueState = ''
+            QueueState = ''
+            RemoteState = ''
+            WorkBranch = ''
+            SessionId = ''
+            SessionName = ''
+        }
+    }
+
+    $tracking = Get-JulesIssueTrackingFieldsFromIssueBody -Body ([string]$GitHubIssue.body)
+    return [pscustomobject]@{
+        IssueState = Get-GitHubIssueStateValue -Issue $GitHubIssue
+        QueueState = ([string]$tracking.QueueState).Trim().ToLowerInvariant()
+        RemoteState = ([string]$tracking.RemoteState).Trim().ToLowerInvariant()
+        WorkBranch = [string]$tracking.WorkBranch
+        SessionId = [string]$tracking.SessionId
+        SessionName = [string]$tracking.SessionName
+    }
+}
+
+function Get-VorceStudiosDispatchBarrier {
+    param(
+        [AllowNull()][object]$GitHubIssue
+    )
+
+    $tracking = Get-VorceStudiosGitHubTrackingSnapshot -GitHubIssue $GitHubIssue
+    $state = 'dispatchable'
+    $reason = 'ready_for_dispatch'
+
+    if ($null -eq $GitHubIssue) {
+        $state = 'blocked'
+        $reason = 'github_issue_unavailable'
+    } elseif (Test-GitHubIssueClosed -Issue $GitHubIssue) {
+        $state = 'done'
+        $reason = 'github_issue_closed'
+    } elseif (@('merged', 'completed', 'closed') -contains $tracking.RemoteState) {
+        $state = 'done'
+        $reason = 'remote_work_completed'
+    } elseif ($tracking.RemoteState -eq 'pr-open') {
+        $state = 'in_review'
+        $reason = 'existing_pull_request_open'
+    } elseif (@('awaiting-plan-approval', 'awaiting-user-feedback', 'paused', 'failed', 'stale-session-reference') -contains $tracking.RemoteState) {
+        $state = 'blocked'
+        $reason = if ($tracking.RemoteState -eq 'stale-session-reference') { 'stale_session_reference' } else { 'remote_attention_required' }
+    } elseif (@('awaiting-session', 'queued', 'planning', 'in-progress') -contains $tracking.RemoteState) {
+        $state = 'in_progress'
+        $reason = 'remote_work_active'
+    } elseif ($tracking.QueueState -eq 'user-review') {
+        $state = 'backlog'
+        $reason = 'awaiting_user_approval'
+    } elseif ($tracking.QueueState -eq 'closed') {
+        $state = 'done'
+        $reason = 'queue_closed'
+    }
+
+    return [pscustomobject]@{
+        State = $state
+        Reason = $reason
+        Tracking = $tracking
+    }
+}
+
 function Get-VorceStudiosReviewResult {
     param(
         [AllowNull()][string]$Text
@@ -351,6 +420,7 @@ function Invoke-VorceStudiosDiscovery {
         if ($existingIssueNumbers.ContainsKey([string]$ghIssue.number)) { continue }
         if ($imported -ge [int]$planningPolicy.Discovery.ImportLimit) { break }
 
+        $dispatchBarrier = Get-VorceStudiosDispatchBarrier -GitHubIssue $ghIssue
         $taskType = Get-VorceStudiosTaskType -GitHubIssue $ghIssue
         $riskClass = Get-VorceStudiosRiskClass -GitHubIssue $ghIssue
         $uiSurface = Test-VorceStudiosUiSurface -GitHubIssue $ghIssue
@@ -371,6 +441,9 @@ function Invoke-VorceStudiosDiscovery {
             planner_score = [string]$record.score
             planner_bucket = [string]$record.bucket
             planner_readiness = [string]$record.readiness
+            gh_queue_state = [string]$dispatchBarrier.Tracking.QueueState
+            gh_remote_state = [string]$dispatchBarrier.Tracking.RemoteState
+            dispatch_barrier = [string]$dispatchBarrier.Reason
             sync_origin = 'github_issue'
         }
 
@@ -378,7 +451,16 @@ function Invoke-VorceStudiosDiscovery {
         $payload = @{
             title = ('GH #{0}: {1}' -f $ghIssue.number, $ghIssue.title)
             description = $issueDescription
-            status = if ([string]$record.readiness -in @('active', 'in_review')) { 'todo' } else { 'backlog' }
+            status = switch ([string]$dispatchBarrier.State) {
+                'done' { 'done' }
+                'in_review' { 'in_review' }
+                'in_progress' { 'in_progress' }
+                'blocked' { 'blocked' }
+                'backlog' { 'backlog' }
+                default {
+                    if ([string]$record.readiness -in @('active', 'in_review')) { 'todo' } else { 'backlog' }
+                }
+            }
             priority = if ([string]$record.bucket -eq 'critical') { 'critical' } elseif ([string]$record.bucket -eq 'high') { 'high' } elseif ([string]$record.bucket -eq 'medium') { 'medium' } else { 'low' }
         }
         if ($Context.Project) {
@@ -400,6 +482,7 @@ function Invoke-VorceStudiosDiscovery {
         $metadata = Get-VorceStudiosIssueMetadata -Text ([string]$existingIssue.description)
         if ($metadata.ContainsKey('gh_issue') -and $ghIssuesByNumber.ContainsKey([string]$metadata['gh_issue'])) {
             $ghIssue = $ghIssuesByNumber[[string]$metadata['gh_issue']]
+            $dispatchBarrier = Get-VorceStudiosDispatchBarrier -GitHubIssue $ghIssue
             $planningRecord = if ($planningByIssue.ContainsKey([string]$ghIssue.number)) { $planningByIssue[[string]$ghIssue.number] } else { $null }
             $taskType = Get-VorceStudiosTaskType -GitHubIssue $ghIssue
             $riskClass = Get-VorceStudiosRiskClass -GitHubIssue $ghIssue
@@ -414,6 +497,9 @@ function Invoke-VorceStudiosDiscovery {
             $metadata['fallback_chain'] = $executorChain
             $metadata['review_chain'] = $reviewChain
             $metadata['source_of_truth'] = 'github'
+            $metadata['gh_queue_state'] = [string]$dispatchBarrier.Tracking.QueueState
+            $metadata['gh_remote_state'] = [string]$dispatchBarrier.Tracking.RemoteState
+            $metadata['dispatch_barrier'] = [string]$dispatchBarrier.Reason
             if ($null -ne $planningRecord) {
                 $metadata['planner_score'] = [string]$planningRecord.score
                 $metadata['planner_bucket'] = [string]$planningRecord.bucket
@@ -433,7 +519,17 @@ function Invoke-VorceStudiosDiscovery {
             }
 
             $status = [string]$existingIssue.status
-            if ($status -in @('backlog', 'todo')) {
+            if ([string]$dispatchBarrier.State -eq 'done') {
+                $status = 'done'
+            } elseif ([string]$dispatchBarrier.State -eq 'in_review') {
+                $status = 'in_review'
+            } elseif ([string]$dispatchBarrier.State -eq 'in_progress') {
+                $status = 'in_progress'
+            } elseif ([string]$dispatchBarrier.State -eq 'blocked') {
+                $status = 'blocked'
+            } elseif ([string]$dispatchBarrier.State -eq 'backlog') {
+                $status = 'backlog'
+            } elseif ($status -in @('backlog', 'todo')) {
                 if ($null -ne $planningRecord -and [string]$planningRecord.readiness -in @('active', 'in_review')) {
                     $status = 'todo'
                 } elseif ($null -ne $planningRecord -and [string]$planningRecord.readiness -eq 'awaiting_user_approval') {
@@ -469,6 +565,35 @@ function Invoke-VorceStudiosChiefOfStaff {
         if (-not [string]::IsNullOrWhiteSpace([string]$issue.assigneeAgentId)) { continue }
 
         $metadata = Get-VorceStudiosIssueMetadata -Text ([string]$issue.description)
+        if ($metadata.ContainsKey('gh_issue')) {
+            try {
+                $ghIssue = Get-GitHubIssue -Repository $Context.Repository -IssueNumber ([int]$metadata['gh_issue'])
+                $dispatchBarrier = Get-VorceStudiosDispatchBarrier -GitHubIssue $ghIssue
+                $metadata['gh_queue_state'] = [string]$dispatchBarrier.Tracking.QueueState
+                $metadata['gh_remote_state'] = [string]$dispatchBarrier.Tracking.RemoteState
+                $metadata['dispatch_barrier'] = [string]$dispatchBarrier.Reason
+
+                if ([string]$dispatchBarrier.State -ne 'dispatchable') {
+                    $status = switch ([string]$dispatchBarrier.State) {
+                        'done' { 'done' }
+                        'in_review' { 'in_review' }
+                        'in_progress' { 'in_progress' }
+                        'blocked' { 'blocked' }
+                        'backlog' { 'backlog' }
+                        default { [string]$issue.status }
+                    }
+
+                    Update-VorceStudiosIssueMetadataAndState -Issue $issue -Context $Context -Metadata $metadata -Patch @{
+                        status = $status
+                        comment = ('Chief of Staff skipped dispatch because GitHub already reports `{0}` ({1}).' -f [string]$dispatchBarrier.State, [string]$dispatchBarrier.Reason)
+                    } | Out-Null
+                    continue
+                }
+            } catch {
+                Write-Warning ("Chief of Staff konnte GH-Status fuer Issue '{0}' nicht auswerten: {1}" -f [string]$issue.title, $_.Exception.Message)
+            }
+        }
+
         $taskType = if ($metadata.ContainsKey('task_type')) { [string]$metadata['task_type'] } else { 'implementation' }
         $chain = if ($metadata.ContainsKey('fallback_chain')) { @($metadata['fallback_chain']) } else { Get-VorceStudiosExecutorChain -TaskType $taskType }
         $selectedTool = Get-VorceStudiosPreferredTool -Chain $chain
@@ -511,6 +636,45 @@ function Invoke-VorceStudiosJulesBuilder {
         }
 
         $ghIssueNumber = [int]$metadata['gh_issue']
+        try {
+            $ghIssue = Get-GitHubIssue -Repository $Context.Repository -IssueNumber $ghIssueNumber
+            $dispatchBarrier = Get-VorceStudiosDispatchBarrier -GitHubIssue $ghIssue
+            $metadata['gh_queue_state'] = [string]$dispatchBarrier.Tracking.QueueState
+            $metadata['gh_remote_state'] = [string]$dispatchBarrier.Tracking.RemoteState
+            $metadata['dispatch_barrier'] = [string]$dispatchBarrier.Reason
+
+            if ([string]$dispatchBarrier.State -eq 'done') {
+                Update-VorceStudiosIssueMetadataAndState -Issue $issue -Context $Context -Metadata $metadata -Patch @{
+                    status = 'done'
+                    comment = ('Jules Builder marked this task done because GitHub already reports `{0}`.' -f [string]$dispatchBarrier.Reason)
+                } | Out-Null
+                continue
+            }
+
+            if ([string]$dispatchBarrier.State -eq 'in_review') {
+                Update-VorceStudiosIssueMetadataAndState -Issue $issue -Context $Context -Metadata $metadata -Patch @{
+                    assigneeAgentId = $Context.Agents['ops'].id
+                    status = 'in_review'
+                    comment = ('Jules Builder skipped new work because GitHub already has an open PR (`{0}`).' -f [string]$dispatchBarrier.Reason)
+                } | Out-Null
+                continue
+            }
+
+            if ([string]$dispatchBarrier.State -eq 'blocked') {
+                Update-VorceStudiosIssueMetadataAndState -Issue $issue -Context $Context -Metadata $metadata -Patch @{
+                    status = 'blocked'
+                    comment = ('Jules Builder blocked by GitHub tracking state `{0}`.' -f [string]$dispatchBarrier.Reason)
+                } | Out-Null
+                continue
+            }
+
+            if ([string]$dispatchBarrier.State -eq 'in_progress' -and [string]$dispatchBarrier.Reason -eq 'remote_work_active') {
+                $metadata['human_gate'] = if ([string]$metadata['human_gate']) { [string]$metadata['human_gate'] } else { 'none' }
+            }
+        } catch {
+            Write-Warning ("Jules Builder konnte GH-Status fuer Issue '{0}' nicht auswerten: {1}" -f [string]$issue.title, $_.Exception.Message)
+        }
+
         $reference = Get-JulesSessionReferenceFromIssue -Repository $Context.Repository -IssueNumber $ghIssueNumber
         $session = $null
         if ($reference) {
