@@ -3090,7 +3090,7 @@ dependencies = [
  "log",
  "nohash-hasher",
  "profiling",
- "ron 0.12.0",
+ "ron 0.12.1",
  "serde",
  "smallvec",
  "unicode-segmentation",
@@ -7051,9 +7051,9 @@ dependencies = [
 
 [[package]]
 name = "ron"
-version = "0.12.0"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd490c5b18261893f14449cbd28cb9c0b637aebf161cd77900bfdedaff21ec32"
+checksum = "4147b952f3f819eca0e99527022f7d6a8d05f111aeb0a62960c74eb283bec8fc"
 dependencies = [
  "bitflags 2.11.0",
  "once_cell",
@@ -9071,7 +9071,7 @@ dependencies = [
  "proptest",
  "rayon",
  "rfd",
- "ron 0.12.0",
+ "ron 0.12.1",
  "rosc",
  "rustfft",
  "serde",
@@ -9160,7 +9160,7 @@ dependencies = [
  "proptest",
  "rand 0.10.0",
  "resvg 0.47.0",
- "ron 0.12.0",
+ "ron 0.12.1",
  "rustfft",
  "serde",
  "serde_json",
@@ -9199,7 +9199,7 @@ dependencies = [
  "image 0.24.9",
  "objc",
  "once_cell",
- "ron 0.12.0",
+ "ron 0.12.1",
  "rusty-spout",
  "serde",
  "serde_json",
