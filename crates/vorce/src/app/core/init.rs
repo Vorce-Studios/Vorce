@@ -77,7 +77,6 @@ impl App {
             .context("Failed to create Tokio runtime. This is a critical system error.")?;
 
         // Create main window with saved geometry
-        // Create main window with saved geometry
         info!("Creating main application window...");
         let main_window_id = window_manager
             .create_main_window_with_geometry(
@@ -95,11 +94,6 @@ impl App {
                 },
                 saved_config.window_x,
                 saved_config.window_y,
-                if config.is_automation {
-                    false
-                } else {
-                    saved_config.window_fullscreen
-                },
                 if config.is_automation {
                     false
                 } else {

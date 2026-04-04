@@ -99,14 +99,9 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                 app.ui_state.show_module_canvas = !app.ui_state.show_module_canvas;
             }
             UIAction::ToggleFullscreen => {
-                let is_fullscreen = app
-                    .window_manager
-                    .get(0)
-                    .map(|main_window| main_window.window.fullscreen().is_some())
-                    .unwrap_or(false);
-                if let Err(err) = app.set_main_window_fullscreen(!is_fullscreen) {
-                    error!("Failed to toggle main window fullscreen: {err:#}");
-                }
+                app.ui_state.user_config.window_maximized =
+                    !app.ui_state.user_config.window_maximized;
+                let _ = app.ui_state.user_config.save();
             }
             UIAction::ToggleControllerOverlay => {
                 app.ui_state.show_controller_overlay = !app.ui_state.show_controller_overlay;
@@ -699,20 +694,6 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     TimelineAction::JumpPrevMarker => {
                         let animator = std::sync::Arc::make_mut(&mut app.state.effect_animator);
                         animator.jump_prev_marker();
-                    }
-                    TimelineAction::BindParameter {
-                        effect_type,
-                        module_id,
-                        parameter_name,
-                        initial_value,
-                    } => {
-                        let animator = std::sync::Arc::make_mut(&mut app.state.effect_animator);
-                        let _binding_id = animator.bind_parameter(
-                            effect_type.clone(),
-                            module_id,
-                            &parameter_name,
-                            vorce_core::animation::AnimValue::Float(initial_value),
-                        );
                     }
                 }
             }
