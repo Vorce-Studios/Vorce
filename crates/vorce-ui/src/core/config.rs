@@ -11,6 +11,20 @@ use std::path::PathBuf;
 const APP_CONFIG_DIR: &str = "Vorce";
 const LEGACY_APP_CONFIG_DIR: &str = "MapFlow";
 const CONFIG_FILE_NAME: &str = "config.json";
+const CURRENT_STARTUP_ANIMATION_PATH: &str =
+    "resources/app_videos/Vorce-Mechanical_Cube_Logo_Splash_Animation.webm";
+const LEGACY_STARTUP_ANIMATION_PATH: &str =
+    "resources/app_videos/MF-Mechanical_Cube_Logo_Splash_Animation.webm";
+const LEGACY_STARTUP_ANIMATION_FILE_NAME: &str = "MF-Mechanical_Cube_Logo_Splash_Animation.webm";
+const MIN_WINDOW_WIDTH: u32 = 320;
+const MIN_WINDOW_HEIGHT: u32 = 240;
+const MAX_WINDOW_DIMENSION: u32 = 8192;
+const MIN_SIDEBAR_WIDTH: f32 = 180.0;
+const MAX_SIDEBAR_WIDTH: f32 = 900.0;
+const MIN_INSPECTOR_WIDTH: f32 = 220.0;
+const MAX_INSPECTOR_WIDTH: f32 = 1200.0;
+const MIN_TIMELINE_HEIGHT: f32 = 80.0;
+const MAX_TIMELINE_HEIGHT: f32 = 720.0;
 
 /// Diagnostics captured while loading and repairing the persisted user config.
 #[derive(Debug, Clone, Default)]
@@ -378,6 +392,9 @@ pub struct UserConfig {
     /// Window Y position
     #[serde(default)]
     pub window_y: Option<i32>,
+    /// Whether the window was in fullscreen mode
+    #[serde(default)]
+    pub window_fullscreen: bool,
     /// Whether the window was maximized
     #[serde(default)]
     pub window_maximized: bool,
@@ -488,7 +505,7 @@ fn default_ui_scale() -> f32 {
 }
 
 fn default_startup_animation_path() -> String {
-    "resources/app_videos/MF-Mechanical_Cube_Logo_Splash_Animation.webm".to_string()
+    CURRENT_STARTUP_ANIMATION_PATH.to_string()
 }
 
 fn default_sidebar_width() -> f32 {
@@ -530,6 +547,7 @@ impl Default for UserConfig {
             window_height: None,
             window_x: None,
             window_y: None,
+            window_fullscreen: false,
             window_maximized: false,
             // Panel visibility defaults
             show_left_sidebar: true,
@@ -600,6 +618,22 @@ impl UserConfig {
         }
     }
 
+    fn has_legacy_startup_animation_path(path: &str) -> bool {
+        let trimmed = path.trim();
+        if trimmed == LEGACY_STARTUP_ANIMATION_PATH {
+            return true;
+        }
+
+        std::path::Path::new(trimmed)
+            .file_name()
+            .and_then(|name| name.to_str())
+            .is_some_and(|name| name.eq_ignore_ascii_case(LEGACY_STARTUP_ANIMATION_FILE_NAME))
+    }
+
+    fn is_sane_panel_size(value: f32, min: f32, max: f32) -> bool {
+        value.is_finite() && value >= min && value <= max
+    }
+
     fn repair_for_startup(&mut self, report: &mut UserConfigLoadReport) -> bool {
         let mut repaired = false;
 
@@ -626,7 +660,83 @@ impl UserConfig {
             repaired = true;
         }
 
+        if let Some(width) = self.window_width {
+            if !(MIN_WINDOW_WIDTH..=MAX_WINDOW_DIMENSION).contains(&width) {
+                self.window_width = None;
+                report.errors.push(format!(
+                    "Discarded invalid saved window width {width}. Falling back to the default width."
+                ));
+                repaired = true;
+            }
+        }
+
+        if let Some(height) = self.window_height {
+            if !(MIN_WINDOW_HEIGHT..=MAX_WINDOW_DIMENSION).contains(&height) {
+                self.window_height = None;
+                report.errors.push(format!(
+                    "Discarded invalid saved window height {height}. Falling back to the default height."
+                ));
+                repaired = true;
+            }
+        }
+
+        let startup_animation_path = self.startup_animation_path.trim().to_string();
+        if startup_animation_path.is_empty() {
+            self.startup_animation_path = default_startup_animation_path();
+            report.errors.push(
+                "Startup animation path was empty. Restored the bundled Vorce splash video."
+                    .to_string(),
+            );
+            repaired = true;
+        } else if Self::has_legacy_startup_animation_path(&startup_animation_path) {
+            self.startup_animation_path = default_startup_animation_path();
+            report.warnings.push(
+                "Migrated legacy startup animation path to the current Vorce splash video."
+                    .to_string(),
+            );
+            repaired = true;
+        }
+
         if let Some(layout) = self.active_layout_mut() {
+            let layout_name = layout.name.clone();
+            let mut repaired_fields = Vec::new();
+
+            if !Self::is_sane_panel_size(
+                layout.panel_sizes.left_sidebar_width,
+                MIN_SIDEBAR_WIDTH,
+                MAX_SIDEBAR_WIDTH,
+            ) {
+                layout.panel_sizes.left_sidebar_width = default_sidebar_width();
+                repaired_fields.push("left sidebar width");
+            }
+
+            if !Self::is_sane_panel_size(
+                layout.panel_sizes.inspector_width,
+                MIN_INSPECTOR_WIDTH,
+                MAX_INSPECTOR_WIDTH,
+            ) {
+                layout.panel_sizes.inspector_width = default_inspector_width();
+                repaired_fields.push("inspector width");
+            }
+
+            if !Self::is_sane_panel_size(
+                layout.panel_sizes.timeline_height,
+                MIN_TIMELINE_HEIGHT,
+                MAX_TIMELINE_HEIGHT,
+            ) {
+                layout.panel_sizes.timeline_height = default_timeline_height();
+                repaired_fields.push("timeline height");
+            }
+
+            if !repaired_fields.is_empty() {
+                report.errors.push(format!(
+                    "Recovered invalid panel sizes in active layout '{}': {}.",
+                    layout_name,
+                    repaired_fields.join(", ")
+                ));
+                repaired = true;
+            }
+
             if !layout.visibility.has_primary_workspace() {
                 layout.visibility.show_toolbar = true;
                 layout.visibility.show_left_sidebar = true;
@@ -923,6 +1033,7 @@ mod tests {
             window_height: Some(1080),
             window_x: Some(100),
             window_y: Some(50),
+            window_fullscreen: false,
             window_maximized: false,
             show_left_sidebar: true,
             show_inspector: true,
@@ -1041,6 +1152,71 @@ mod tests {
             .errors
             .iter()
             .any(|entry| entry.contains("missing active layout")));
+    }
+
+    #[test]
+    fn test_repair_for_startup_migrates_legacy_startup_animation_path() {
+        let mut config = UserConfig {
+            startup_animation_path: LEGACY_STARTUP_ANIMATION_PATH.to_string(),
+            ..UserConfig::default()
+        };
+
+        let mut report = UserConfigLoadReport::default();
+        let repaired = config.repair_for_startup(&mut report);
+
+        assert!(repaired);
+        assert_eq!(
+            config.startup_animation_path,
+            CURRENT_STARTUP_ANIMATION_PATH
+        );
+        assert!(report
+            .warnings
+            .iter()
+            .any(|entry| entry.contains("Migrated legacy startup animation path")));
+    }
+
+    #[test]
+    fn test_repair_for_startup_discards_invalid_window_geometry_and_panel_sizes() {
+        let mut config = UserConfig {
+            window_width: Some(0),
+            window_height: Some(50_000),
+            ..UserConfig::default()
+        };
+
+        if let Some(layout) = config.active_layout_mut() {
+            layout.panel_sizes.left_sidebar_width = 0.0;
+            layout.panel_sizes.inspector_width = f32::NAN;
+            layout.panel_sizes.timeline_height = 20.0;
+        }
+
+        let mut report = UserConfigLoadReport::default();
+        let repaired = config.repair_for_startup(&mut report);
+
+        assert!(repaired);
+        assert_eq!(config.window_width, None);
+        assert_eq!(config.window_height, None);
+
+        let layout = config.active_layout().unwrap();
+        assert_eq!(
+            layout.panel_sizes.left_sidebar_width,
+            default_sidebar_width()
+        );
+        assert_eq!(
+            layout.panel_sizes.inspector_width,
+            default_inspector_width()
+        );
+        assert_eq!(
+            layout.panel_sizes.timeline_height,
+            default_timeline_height()
+        );
+        assert!(report
+            .errors
+            .iter()
+            .any(|entry| entry.contains("Discarded invalid saved window width")));
+        assert!(report
+            .errors
+            .iter()
+            .any(|entry| entry.contains("Recovered invalid panel sizes")));
     }
 
     #[test]
