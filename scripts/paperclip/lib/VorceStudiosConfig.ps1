@@ -304,6 +304,7 @@ function Get-VorceStudiosPaperclipCli {
 }
 
 function Get-VorceStudiosShellExecutable {
+    # Wir bevorzugen pwsh.exe (PowerShell 7) fuer volle Kompatibilitaet
     foreach ($candidate in @('pwsh.exe', 'pwsh', 'powershell.exe', 'powershell')) {
         $command = Get-Command $candidate -ErrorAction SilentlyContinue
         if ($null -ne $command) {
