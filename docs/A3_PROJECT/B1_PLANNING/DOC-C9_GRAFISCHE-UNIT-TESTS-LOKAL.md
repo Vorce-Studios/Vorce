@@ -191,17 +191,25 @@ Die drei bereits implementierten Harness-Szenarien decken den unteren technische
 ### Phase 4: CI-Integration auf self-hosted Runner
 
 Sichtbare GUI-Automation sollte spaeter nur auf einem geeigneten self-hosted Windows-Runner laufen.
-Der dedizierte Test `test_release_smoke_automation_empty_project` in `crates/Vorce/tests/app_automation_tests.rs` dient als dokumentierter minimaler Release-Smoke-Test fuer den aktuellen Automation-/Screenshot-Pfad. Er prueft den Main-Window-Startzustand und exportiert einen Screenshot.
+Der dedizierte Test `test_release_smoke_automation_empty_project` in `crates/vorce/tests/app_automation_tests.rs` dient als dokumentierter minimaler Release-Smoke-Test fuer den aktuellen Automation-/Screenshot-Pfad. Er prueft den Main-Window-Startzustand und exportiert einen Screenshot.
 
-Damit dieser Automation-Test im CI-Lauf ausgefuehrt wird, muss die Umgebungsvariable `Vorce_SELF_HOSTED_RUN_VISUAL_AUTOMATION` auf `true` gesetzt sein (siehe `scripts/build/self-hosted-post-merge.ps1`). Da echte sichtbare Fenster und GPU-Surface-Praesentation getestet werden, verlangt der Test eine interaktive Windows-Sitzung. Er ist deshalb regulaer mit `#[ignore]` markiert und wird nur durch explizite CI-Konfiguration auf dem self-hosted Runner aktiviert.
+Damit dieser Automation-Test im CI-Lauf ausgefuehrt wird, muss die Umgebungsvariable `VORCE_SELF_HOSTED_RUN_VISUAL_AUTOMATION` auf `true` gesetzt sein (siehe `scripts/build/self-hosted-post-merge.ps1`). Da echte sichtbare Fenster und GPU-Surface-Praesentation getestet werden, verlangt der Test eine interaktive Windows-Sitzung. Er ist deshalb regulaer mit `#[ignore]` markiert und wird nur durch explizite CI-Konfiguration auf dem self-hosted Runner aktiviert.
 
-Diese Tests dienen als Release-/QA-Baseline fuer die Gesamt-App, waehrend spezifischere Themen in Multi-Output-/Projektor-QA (Issue #1095) vertieft werden.
+Dieser Smoke-Test kann lokal mit folgendem Befehl ausgefuehrt werden:
+```bash
+cargo test -p vorce --test app_automation_tests -- --ignored --nocapture
+```
 
-Als dedizierte Standard-Absicherung fuer den reinen, nicht-interaktiven Capture-Pfad fungiert `Vorce_visual_harness` (siehe `crates/Vorce/tests/visual_capture_tests.rs`). Dieser Harness laesst sich prinzipiell headless/offscreen initialisieren oder mit Mock-Surfaces betreiben, was ihn zum primaren Kandidaten fuer CI-Umgebungen ohne gueltige Desktop-Session macht, in denen dennoch grundlegende GPU-Szenarien und Frame-Readbacks abgesichert werden muessen.
+Diese Tests dienen als grundlegende Release-/QA-Baseline fuer die Render-Pipeline der Gesamt-App. Sie stellen sicher, dass die App starten, rendern und Frames exportieren kann. Dies ist bewusst getrennt von spezifischeren Themen der Multi-Output- oder Projektor-QA (Issue #49), welche umfangreichere Hardware-Setups voraussetzen.
 
-Wichtige Betriebsbedingung:
+Als dedizierte Standard-Absicherung fuer den Capture-Pfad fungiert `vorce_visual_harness` (siehe `crates/vorce/src/bin/vorce_visual_harness/main.rs` und `crates/vorce/tests/visual_capture_tests.rs`). Dieser Harness verwendet einen eigenen Event-Loop und rendert isolierte Szenarien (wie `checkerboard` oder `alpha_overlay`) in echten Fenstern, um den Framebuffer anschliessend mit Referenzbildern abzugleichen.
 
-- fuer wirklich sichtbare Fenster sollte der Runner interaktiv in einer angemeldeten Sitzung laufen, nicht nur als reiner Hintergrunddienst
+**Explizite Luecke: Vollstaendig Non-Interaktive Headless-Baseline fehlt**
+Aktuell gibt es im Repository **keine vollstaendig headless (non-interactive) baseline** fuer grafische Tests. Sowohl der Automation-Screenshot-Pfad als auch der `vorce_visual_harness` erzwingen zwingend eine aktive, gueltige Desktop-Umgebung mit GPU-Unterstuetzung (fuer winit, wgpu und Surface-Erstellung).
+Ein Betrieb in rein virtuellen CI-Sandboxes (wie standard GitHub Actions Linux Runnern ohne echten X11/Wayland Desktop) schlaegt mit OS-Fehlern fehl.
+
+Wichtige Betriebsbedingung fuer Visual-Capture und Automation:
+- Zwingend: Der Runner muss interaktiv in einer angemeldeten Windows/Linux/macOS GUI-Sitzung laufen (nicht als reiner Hintergrunddienst ohne Desktop).
 
 Zusaetzlich sicherstellen:
 
@@ -225,15 +233,15 @@ Der neue `run_app`-basierte Automationsmodus kann lokal zum Erstellen von determ
 Die benoetigten CLI-Parameter sind:
 
 - `--mode automation`: Aktiviert den Automationsmodus, welcher schwergewichtige Dienste wie MIDI, Hue, MCP und Audio-Ausgabe umgeht.
-- `--fixture <PFAD_ZUM_PROJEKT>`: (Optional) Laedt sofort beim Start die angegebene `.mflow` Projektdatei.
+- `--fixture <PFAD_ZUM_PROJEKT>`: (Optional) Laedt sofort beim Start die angegebene `.vorce` Projektdatei.
 - `--exit-after-frames <ANZAHL>`: (Optional) Beendet die Applikation automatisch, nachdem exakt diese Anzahl an Frames gerendert wurde.
-- `--screenshot-dir <PFAD_ZUM_ORDNER>`: (Optional) Wenn angegeben, wird *direkt vor dem automatischen Beenden* (also nach `exit-after-frames`) ein Frame-Buffer-Readback ausgeloest und das Bild als `automation_frame_<ANZAHL>.png` in diesem Ordner abgelegt. Alternativ kann die Umgebungsvariable `Vorce_VISUAL_CAPTURE_OUTPUT_DIR` verwendet werden.
+- `--screenshot-dir <PFAD_ZUM_ORDNER>`: (Optional) Wenn angegeben, wird *direkt vor dem automatischen Beenden* (also nach `exit-after-frames`) ein Frame-Buffer-Readback ausgeloest und das Bild als `automation_frame_<ANZAHL>.png` in diesem Ordner abgelegt. Alternativ kann die Umgebungsvariable `VORCE_VISUAL_CAPTURE_OUTPUT_DIR` verwendet werden.
 
 **Beispielaufruf lokal:**
 
 ```bash
-cargo run --bin Vorce -- --mode automation \
-  --fixture ./tests/fixtures/test_project.mflow \
+cargo run -p vorce --bin Vorce -- --mode automation \
+  --fixture ./tests/fixtures/empty_project.vorce \
   --exit-after-frames 60 \
   --screenshot-dir ./scripts/archive/logs/screenshots
 ```
