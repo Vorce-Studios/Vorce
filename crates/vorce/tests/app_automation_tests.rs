@@ -1,16 +1,4 @@
 //! Application E2E automation tests.
-//!
-//! # Environment Requirements
-//! These tests require a local interactive GPU/desktop session.
-//! They cannot run in a headless CI environment because they spawn a real
-//! Vorce window and capture screenshots via the rendering pipeline.
-//! To execute these tests on a self-hosted runner, ensure a desktop is active
-//! and set the environment variable:
-//! `VORCE_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true`
-//!
-//! # Scope
-//! This forms the minimal release-smoke baseline for the current automation
-//! screenshot flow. Broader projector/output QA is covered separately.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
