@@ -40,30 +40,24 @@ pub fn draw_search_popup(
             });
             ui.add_space(8.0);
 
-            let filter_lower = canvas.search_filter.to_lowercase();
-            let filter_bytes = filter_lower.as_bytes();
+            let filter_str = &canvas.search_filter;
             let matching_parts: Vec<_> = module
                 .parts
                 .iter()
                 .filter(|p| {
-                    if filter_bytes.is_empty() {
+                    if filter_str.is_empty() {
                         return true;
                     }
-                    let name = utils::get_part_property_text(&p.part_type);
-                    let name_bytes = name.as_bytes();
-                    let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
-                    let type_name_bytes = type_name.as_bytes();
 
-                    (!name_bytes.is_empty()
-                        && name_bytes.len() >= filter_bytes.len()
-                        && name_bytes
-                            .windows(filter_bytes.len())
-                            .any(|w| w.eq_ignore_ascii_case(filter_bytes)))
-                        || (!type_name_bytes.is_empty()
-                            && type_name_bytes.len() >= filter_bytes.len()
-                            && type_name_bytes
-                                .windows(filter_bytes.len())
-                                .any(|w| w.eq_ignore_ascii_case(filter_bytes)))
+                    // PERFORMANCE: Avoid redundant string allocations for case-insensitive search
+                    // by using an allocation-free Unicode-aware case-insensitive iterator match.
+                    let name = utils::get_part_property_text(&p.part_type);
+                    if crate::core::text::contains_ignore_case(&name, filter_str) {
+                        return true;
+                    }
+
+                    let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
+                    crate::core::text::contains_ignore_case(type_name, filter_str)
                 })
                 .take(6)
                 .collect();
