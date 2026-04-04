@@ -59,6 +59,7 @@ impl ModuleCanvas {
         module_id: vorce_core::module::ModuleId,
         shared_media_ids: &[String],
         preview_context: &inspector::InspectorPreviewContext,
+        animator_bindings: &[vorce_core::effect_animation::EffectParameterBinding],
     ) {
         let interacting = ui.input(|i| i.pointer.any_pressed() || i.pointer.any_down());
         let release = ui.input(|i| i.pointer.any_released());
@@ -79,6 +80,7 @@ impl ModuleCanvas {
             module_id,
             shared_media_ids,
             preview_context,
+            animator_bindings,
         );
 
         let snapshot_after = part.clone();

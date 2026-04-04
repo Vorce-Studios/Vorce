@@ -80,6 +80,15 @@ impl EffectParameterAnimator {
         parameter_name: &str,
         _default_value: AnimValue,
     ) -> EffectAnimationId {
+        // Check if binding already exists to avoid duplicates
+        if let Some(existing) = self.bindings.iter().find(|b| {
+            b.effect_type == effect_type
+                && b.effect_instance == effect_instance
+                && b.parameter_name == parameter_name
+        }) {
+            return existing.id;
+        }
+
         let id = self.next_id;
         self.next_id += 1;
 

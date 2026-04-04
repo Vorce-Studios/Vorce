@@ -660,6 +660,40 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
             UIAction::ManualTrigger(_module_id, part_id) => {
                 app.module_evaluator.trigger_node(part_id);
             }
+            UIAction::ToggleEffectParameterBinding {
+                effect_type,
+                effect_instance,
+                parameter_name,
+                default_value,
+            } => {
+                let is_bound = app
+                    .state
+                    .effect_animator
+                    .bindings_for_effect(effect_type.clone(), effect_instance)
+                    .iter()
+                    .any(|b| b.parameter_name == parameter_name);
+
+                if is_bound {
+                    if let Some(binding) = app
+                        .state
+                        .effect_animator
+                        .bindings_for_effect(effect_type.clone(), effect_instance)
+                        .iter()
+                        .find(|b| b.parameter_name == parameter_name)
+                    {
+                        let id = binding.id;
+                        app.state.effect_animator_mut().unbind(id);
+                    }
+                } else {
+                    app.state.effect_animator_mut().bind_parameter(
+                        effect_type,
+                        effect_instance,
+                        &parameter_name,
+                        vorce_core::animation::AnimValue::Float(default_value),
+                    );
+                }
+                app.state.dirty = true;
+            }
             UIAction::TimelineAction(timeline_action) => {
                 use vorce_ui::TimelineAction;
                 match timeline_action {

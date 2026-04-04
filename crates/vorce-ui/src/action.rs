@@ -267,4 +267,12 @@ pub enum UIAction {
         vorce_core::module::ModuleId,
         vorce_core::module::ModuleConnection,
     ),
+
+    /// Toggle binding for an effect parameter
+    ToggleEffectParameterBinding {
+        effect_type: vorce_core::effects::EffectType,
+        effect_instance: u64,
+        parameter_name: String,
+        default_value: f32,
+    },
 }
