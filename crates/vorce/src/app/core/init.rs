@@ -217,6 +217,7 @@ impl App {
             Self::connect_hue(&mut hue_controller, &ui_state, &tokio_runtime);
         }
 
+        #[allow(unused_mut)]
         let mut control_manager = ControlManager::new();
 
         #[cfg(feature = "http-api")]
@@ -381,6 +382,7 @@ impl App {
         (edge_blend_renderer, color_calibration_renderer)
     }
 
+    #[allow(unused_variables)]
     fn init_ui_assets(ui_state: &mut AppUI) {
         #[cfg(feature = "midi")]
         {
