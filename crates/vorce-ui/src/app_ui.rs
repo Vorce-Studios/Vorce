@@ -699,7 +699,6 @@ impl AppUI {
                 crate::panels::inspector::InspectorAction::RequestClose => {
                     self.show_inspector = false;
                     self.user_config.show_inspector = false;
-                    self.sync_runtime_to_active_layout();
                     let _ = self.user_config.save();
                 }
             }
