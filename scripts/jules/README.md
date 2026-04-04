@@ -81,7 +81,3 @@ Optional koennen abweichende Feldnamen konfiguriert werden:
 - `VORCE_PROJECT_LINKED_PR_FIELD`
 
 Wenn diese Konfiguration fehlt, bleibt der Project-Sync deaktiviert und nur der Issue-Sync wird ausgefuehrt.
-
-
-
-
