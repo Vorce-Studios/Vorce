@@ -15,6 +15,15 @@ use clap::{Parser, Subcommand};
 use image::RgbaImage;
 use scenarios::{build_scenario, ScenarioName, ScenarioSpec};
 use vorce_render::{QuadRenderer, RenderBackend, TextureDescriptor, WgpuBackend};
+
+/// Visual harness documentation
+///
+/// This application runs scenarios specifically built to regression-test
+/// the visual output capabilities of the rendering stack. It requires a local
+/// interactive GPU/desktop session.
+///
+/// Note on self-hosted environments: `VORCE_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true`
+/// must be set alongside a valid desktop environment. Headless CI is unsupported.
 use winit::{
     event::{ElementState, Event, KeyEvent, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
