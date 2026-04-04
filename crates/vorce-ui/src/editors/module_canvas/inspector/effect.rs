@@ -55,55 +55,8 @@ pub fn set_default_effect_params(
     }
 }
 
-fn map_effect_type(
-    effect: &vorce_core::module::EffectType,
-) -> Option<vorce_core::effects::EffectType> {
-    match effect {
-        vorce_core::module::EffectType::ShaderGraph(id) => {
-            Some(vorce_core::effects::EffectType::ShaderGraph(*id))
-        }
-        vorce_core::module::EffectType::Blur => Some(vorce_core::effects::EffectType::Blur),
-        vorce_core::module::EffectType::Invert => Some(vorce_core::effects::EffectType::Invert),
-        vorce_core::module::EffectType::Brightness => {
-            Some(vorce_core::effects::EffectType::ColorAdjust)
-        }
-        vorce_core::module::EffectType::Contrast => {
-            Some(vorce_core::effects::EffectType::ColorAdjust)
-        }
-        vorce_core::module::EffectType::Saturation => {
-            Some(vorce_core::effects::EffectType::ColorAdjust)
-        }
-        vorce_core::module::EffectType::HueShift => Some(vorce_core::effects::EffectType::HueShift),
-        vorce_core::module::EffectType::Wave => Some(vorce_core::effects::EffectType::Wave),
-        vorce_core::module::EffectType::Mirror => Some(vorce_core::effects::EffectType::Mirror),
-        vorce_core::module::EffectType::Kaleidoscope => {
-            Some(vorce_core::effects::EffectType::Kaleidoscope)
-        }
-        vorce_core::module::EffectType::Pixelate => Some(vorce_core::effects::EffectType::Pixelate),
-        vorce_core::module::EffectType::EdgeDetect => {
-            Some(vorce_core::effects::EffectType::EdgeDetect)
-        }
-        vorce_core::module::EffectType::Glitch => Some(vorce_core::effects::EffectType::Glitch),
-        vorce_core::module::EffectType::RgbSplit => Some(vorce_core::effects::EffectType::RgbSplit),
-        vorce_core::module::EffectType::ChromaticAberration => {
-            Some(vorce_core::effects::EffectType::ChromaticAberration)
-        }
-        vorce_core::module::EffectType::FilmGrain => {
-            Some(vorce_core::effects::EffectType::FilmGrain)
-        }
-        vorce_core::module::EffectType::Vignette => Some(vorce_core::effects::EffectType::Vignette),
-        _ => None,
-    }
-}
-
 /// Renders the configuration UI for a `ModulePartType::Modulizer`.
-pub fn render_effect_ui(
-    ui: &mut Ui,
-    mod_type: &mut ModulizerType,
-    part_id: ModulePartId,
-    actions: &mut Vec<crate::action::UIAction>,
-    module_id: vorce_core::module::ModuleId,
-) {
+pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: ModulePartId) {
     ui.label("Modulator:");
     match mod_type {
         ModulizerType::Effect {
@@ -292,185 +245,37 @@ pub fn render_effect_ui(
             ui.add_enabled_ui(effect_supported, |ui| match effect {
                 EffectType::Blur => {
                     let val = params.entry("radius".to_string()).or_insert(5.0);
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Slider::new(val, 0.0..=50.0).text("Radius"));
-                        if let Some(eff) = map_effect_type(effect) {
-                            if ui.button("⧗").on_hover_text("Bind to Timeline").clicked() {
-                                actions.push(crate::action::UIAction::TimelineAction(
-                                    crate::editors::timeline_v2::TimelineAction::BindParameter {
-                                        effect_type: eff,
-                                        module_id,
-                                        parameter_name: "radius".to_string(),
-                                        initial_value: *val,
-                                    }
-                                ));
-                            }
-                        }
-                    });
+                    ui.add(egui::Slider::new(val, 0.0..=50.0).text("Radius"));
                     let samples = params.entry("samples".to_string()).or_insert(9.0);
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Slider::new(samples, 1.0..=20.0).text("Samples"));
-                        if let Some(eff) = map_effect_type(effect) {
-                            if ui.button("⧗").on_hover_text("Bind to Timeline").clicked() {
-                                actions.push(crate::action::UIAction::TimelineAction(
-                                    crate::editors::timeline_v2::TimelineAction::BindParameter {
-                                        effect_type: eff,
-                                        module_id,
-                                        parameter_name: "samples".to_string(),
-                                        initial_value: *samples,
-                                    }
-                                ));
-                            }
-                        }
-                    });
+                    ui.add(egui::Slider::new(samples, 1.0..=20.0).text("Samples"));
                 }
                 EffectType::Pixelate => {
                     let val = params.entry("pixel_size".to_string()).or_insert(8.0);
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Slider::new(val, 1.0..=100.0).text("Pixel Size"));
-                        if let Some(eff) = map_effect_type(effect) {
-                            if ui.button("⧗").on_hover_text("Bind to Timeline").clicked() {
-                                actions.push(crate::action::UIAction::TimelineAction(
-                                    crate::editors::timeline_v2::TimelineAction::BindParameter {
-                                        effect_type: eff,
-                                        module_id,
-                                        parameter_name: "pixel_size".to_string(),
-                                        initial_value: *val,
-                                    }
-                                ));
-                            }
-                        }
-                    });
+                    ui.add(egui::Slider::new(val, 1.0..=100.0).text("Pixel Size"));
                 }
                 EffectType::FilmGrain => {
                     let amt = params.entry("amount".to_string()).or_insert(0.1);
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Slider::new(amt, 0.0..=1.0).text("Amount"));
-                        if let Some(eff) = map_effect_type(effect) {
-                            if ui.button("⧗").on_hover_text("Bind to Timeline").clicked() {
-                                actions.push(crate::action::UIAction::TimelineAction(
-                                    crate::editors::timeline_v2::TimelineAction::BindParameter {
-                                        effect_type: eff,
-                                        module_id,
-                                        parameter_name: "amount".to_string(),
-                                        initial_value: *amt,
-                                    }
-                                ));
-                            }
-                        }
-                    });
+                    ui.add(egui::Slider::new(amt, 0.0..=1.0).text("Amount"));
                     let spd = params.entry("speed".to_string()).or_insert(1.0);
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Slider::new(spd, 0.0..=5.0).text("Speed"));
-                        if let Some(eff) = map_effect_type(effect) {
-                            if ui.button("⧗").on_hover_text("Bind to Timeline").clicked() {
-                                actions.push(crate::action::UIAction::TimelineAction(
-                                    crate::editors::timeline_v2::TimelineAction::BindParameter {
-                                        effect_type: eff,
-                                        module_id,
-                                        parameter_name: "speed".to_string(),
-                                        initial_value: *spd,
-                                    }
-                                ));
-                            }
-                        }
-                    });
+                    ui.add(egui::Slider::new(spd, 0.0..=5.0).text("Speed"));
                 }
                 EffectType::Vignette => {
                     let rad = params.entry("radius".to_string()).or_insert(0.5);
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Slider::new(rad, 0.0..=1.0).text("Radius"));
-                        if let Some(eff) = map_effect_type(effect) {
-                            if ui.button("⧗").on_hover_text("Bind to Timeline").clicked() {
-                                actions.push(crate::action::UIAction::TimelineAction(
-                                    crate::editors::timeline_v2::TimelineAction::BindParameter {
-                                        effect_type: eff,
-                                        module_id,
-                                        parameter_name: "radius".to_string(),
-                                        initial_value: *rad,
-                                    }
-                                ));
-                            }
-                        }
-                    });
+                    ui.add(egui::Slider::new(rad, 0.0..=1.0).text("Radius"));
                     let soft = params.entry("softness".to_string()).or_insert(0.5);
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Slider::new(soft, 0.0..=1.0).text("Softness"));
-                        if let Some(eff) = map_effect_type(effect) {
-                            if ui.button("⧗").on_hover_text("Bind to Timeline").clicked() {
-                                actions.push(crate::action::UIAction::TimelineAction(
-                                    crate::editors::timeline_v2::TimelineAction::BindParameter {
-                                        effect_type: eff,
-                                        module_id,
-                                        parameter_name: "softness".to_string(),
-                                        initial_value: *soft,
-                                    }
-                                ));
-                            }
-                        }
-                    });
+                    ui.add(egui::Slider::new(soft, 0.0..=1.0).text("Softness"));
                 }
                 EffectType::ChromaticAberration => {
                     let amt = params.entry("amount".to_string()).or_insert(0.01);
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Slider::new(amt, 0.0..=0.1).text("Amount"));
-                        if let Some(eff) = map_effect_type(effect) {
-                            if ui.button("⧗").on_hover_text("Bind to Timeline").clicked() {
-                                actions.push(crate::action::UIAction::TimelineAction(
-                                    crate::editors::timeline_v2::TimelineAction::BindParameter {
-                                        effect_type: eff,
-                                        module_id,
-                                        parameter_name: "amount".to_string(),
-                                        initial_value: *amt,
-                                    }
-                                ));
-                            }
-                        }
-                    });
+                    ui.add(egui::Slider::new(amt, 0.0..=0.1).text("Amount"));
                 }
                 EffectType::Brightness | EffectType::Contrast | EffectType::Saturation => {
                     let bri = params.entry("brightness".to_string()).or_insert(0.0);
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Slider::new(bri, -1.0..=1.0).text("Brightness"));
-                        if ui.button("⧗").on_hover_text("Bind to Timeline").clicked() {
-                            actions.push(crate::action::UIAction::TimelineAction(
-                                crate::editors::timeline_v2::TimelineAction::BindParameter {
-                                    effect_type: vorce_core::effects::EffectType::ColorAdjust,
-                                    module_id,
-                                    parameter_name: "brightness".to_string(),
-                                    initial_value: *bri,
-                                }
-                            ));
-                        }
-                    });
+                    ui.add(egui::Slider::new(bri, -1.0..=1.0).text("Brightness"));
                     let con = params.entry("contrast".to_string()).or_insert(1.0);
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Slider::new(con, 0.0..=2.0).text("Contrast"));
-                        if ui.button("⧗").on_hover_text("Bind to Timeline").clicked() {
-                            actions.push(crate::action::UIAction::TimelineAction(
-                                crate::editors::timeline_v2::TimelineAction::BindParameter {
-                                    effect_type: vorce_core::effects::EffectType::ColorAdjust,
-                                    module_id,
-                                    parameter_name: "contrast".to_string(),
-                                    initial_value: *con,
-                                }
-                            ));
-                        }
-                    });
+                    ui.add(egui::Slider::new(con, 0.0..=2.0).text("Contrast"));
                     let sat = params.entry("saturation".to_string()).or_insert(1.0);
-                    ui.horizontal(|ui| {
-                        ui.add(egui::Slider::new(sat, 0.0..=2.0).text("Saturation"));
-                        if ui.button("⧗").on_hover_text("Bind to Timeline").clicked() {
-                            actions.push(crate::action::UIAction::TimelineAction(
-                                crate::editors::timeline_v2::TimelineAction::BindParameter {
-                                    effect_type: vorce_core::effects::EffectType::ColorAdjust,
-                                    module_id,
-                                    parameter_name: "saturation".to_string(),
-                                    initial_value: *sat,
-                                }
-                            ));
-                        }
-                    });
+                    ui.add(egui::Slider::new(sat, 0.0..=2.0).text("Saturation"));
                 }
                 EffectType::LoadLUT => {
                     ui.label(

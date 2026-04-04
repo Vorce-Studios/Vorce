@@ -170,10 +170,6 @@ pub fn get_part_style(
             let name = match layer {
                 LayerType::Single { .. } => "Single Layer",
                 LayerType::Group { .. } => "Layer Group",
-<<<<<<< HEAD
-                LayerType::All { .. } => "All Layers (Disabled)",
-=======
->>>>>>> 2f3596c6203eda7153b0c66b292d4518d2d1449d
             };
             (
                 Color32::from_rgb(50, 70, 60),

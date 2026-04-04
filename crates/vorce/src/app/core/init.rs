@@ -77,35 +77,6 @@ impl App {
             .context("Failed to create Tokio runtime. This is a critical system error.")?;
 
         // Create main window with saved geometry
-<<<<<<< HEAD
-        let main_window_id = window_manager.create_main_window_with_geometry(
-            elwt,
-            &backend,
-            if config.is_automation {
-                Some(1280)
-            } else {
-                saved_config.window_width
-            },
-            if config.is_automation {
-                Some(720)
-            } else {
-                saved_config.window_height
-            },
-            saved_config.window_x,
-            saved_config.window_y,
-            if config.is_automation {
-                false
-            } else {
-                saved_config.window_fullscreen
-            },
-            if config.is_automation {
-                false
-            } else {
-                saved_config.window_maximized
-            },
-            saved_config.vsync_mode,
-        )?;
-=======
         info!("Creating main application window...");
         let main_window_id = window_manager
             .create_main_window_with_geometry(
@@ -131,7 +102,6 @@ impl App {
                 saved_config.vsync_mode,
             )
             .context("Failed to create main application window. This may be a windowing system (winit) compatibility issue.")?;
->>>>>>> 2f3596c6203eda7153b0c66b292d4518d2d1449d
 
         let (width, height, format, main_window_for_egui) = {
             let main_window_context = window_manager
