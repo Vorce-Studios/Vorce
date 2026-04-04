@@ -1,6 +1,6 @@
 # Visual-Capture-Readiness und Release-Smoke-Baseline
 
-Stand: 2026-03-29
+Stand: 2026-04-04
 
 ## Ziel
 
@@ -31,7 +31,7 @@ Der Vorce Automation Mode laesst sich direkt starten. Er lädt optional eine Tes
 
 **Minimaler Befehl zur Reproduktion:**
 ```powershell
-cargo run -p vorce --bin Vorce --release -- --mode automation --exit-after-frames 10 --screenshot-dir target/automation_test_output
+cargo run -p vorce --bin Vorce -- --mode automation --fixture tests/fixtures/empty_project.vorce --exit-after-frames 10 --screenshot-dir target/automation_test_output
 ```
 *Dieser Befehl oeffnet ein echtes Fenster, rendert 10 Frames und beendet sich.*
 
@@ -46,7 +46,7 @@ cargo test -p vorce --test app_automation_tests -- --ignored --nocapture
 Dieser Test prueft:
 - Fehlerfreien Start des `Vorce` Binary im Automation-Modus.
 - Lauffaehigkeit fuer 10 Frames.
-- Die korrekte Erzeugung der `automation_frame_10.png` im Verzeichnis `target/automation_test_output`.
+- Die korrekte Erzeugung der `automation_frame_10.png` im Verzeichnis `target/automation_test_output` auf der entsprechenden Plattform.
 
 ---
 
@@ -91,7 +91,7 @@ Sowohl die App-Automatisierung als auch der Visual-Harness erzeugen **echte sich
 - Windows wird primär vorausgesetzt, macOS/Linux können je nach Window-Manager-Setup teilweise abweichen.
 
 **Hinweis zu Headless-CI:**
-Ein komplett non-interaktiver, rein virtueller Baseline-Test ohne Swapchain ist aktuell **nicht verfuegbar**. Die Tests muessen absichtlich mit `#[ignore]` annotiert bleiben, damit Standard-CI-Laeufe nicht abbrechen. Um sie in einer self-hosted Umgebung auszufuehren, muss `VORCE_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true` gesetzt sein, wobei der Runner im interaktiven Desktop-Modus arbeiten muss.
+Ein komplett non-interaktiver, rein virtueller Baseline-Test ohne Swapchain ist aktuell **nicht verfuegbar**. Die Tests muessen absichtlich mit `#[ignore]` annotiert bleiben, damit Standard-CI-Laeufe nicht abbrechen. Wir verbergen diese Lücke nicht: Eine vollstaendig automatisierte Pipeline benoetigt derzeit diesen interaktiven Desktop-Runner. Um sie in einer self-hosted Umgebung auszufuehren, muss `VORCE_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true` gesetzt sein, wobei der Runner im interaktiven Desktop-Modus arbeiten muss. Die Automatisierung laesst sich plattformuebergreifend ausfuehren (z.B. `Vorce.exe` auf Windows, `Vorce` auf Unix), setzt aber in jedem Fall dieses grafische Environment voraus.
 
 ---
 

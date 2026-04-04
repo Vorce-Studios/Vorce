@@ -27,12 +27,14 @@ cargo run -p vorce --bin vorce_visual_harness --no-default-features -- reference
 
 ## Lokale visuelle Tests ausfuehren
 
+Um die visuellen Checks lokal oder auf dem Runner auszufuehren (erfordert eine lokale interaktive Session und ein aktives GPU / Display Environment):
+
 ```powershell
 $env:VORCE_VISUAL_CAPTURE_OUTPUT_DIR = "artifacts/visual-capture"
 cargo test -p vorce --no-default-features --test visual_capture_tests -- --ignored --nocapture
 ```
 
 Wenn `VORCE_VISUAL_CAPTURE_OUTPUT_DIR` nicht gesetzt ist, landen die Screenshots in einem
-temporaeren Ordner unter `%TEMP%`.
+temporaeren Ordner (z.B. unter `%TEMP%` auf Windows).
 
 Relative Pfade in `VORCE_VISUAL_CAPTURE_OUTPUT_DIR` werden gegen die Repo-Wurzel aufgeloest.
