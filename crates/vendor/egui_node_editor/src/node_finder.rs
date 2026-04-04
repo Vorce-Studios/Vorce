@@ -87,6 +87,10 @@ where
                     }
                 }
 
+                // ⚡ Bolt: Cache query lowercase and avoid processing if empty
+                let query_lower = self.query.to_lowercase();
+                let query_is_empty = query_lower.is_empty();
+
                 Frame::default()
                     .inner_margin(vec2(10.0, 10.0))
                     .show(ui, |ui| {
@@ -103,9 +107,10 @@ where
                                             (kind, kind_name)
                                         })
                                         .filter(|(_kind, kind_name)| {
-                                            kind_name
-                                                .to_lowercase()
-                                                .contains(self.query.to_lowercase().as_str())
+                                            if query_is_empty {
+                                                return true;
+                                            }
+                                            kind_name.to_lowercase().contains(&query_lower)
                                         })
                                         .collect();
 
