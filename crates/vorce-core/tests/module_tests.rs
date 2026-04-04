@@ -125,12 +125,8 @@ fn test_socket_generation_coverage() {
     });
     let pid_hue = module.add_part_with_type(hue_output, (400.0, 0.0));
     let part_hue = module.parts.iter().find(|p| p.id == pid_hue).unwrap();
-<<<<<<< HEAD
     // Input: Layer In, Trigger In, Brightness, Hue, Saturation, Strobe. Output: None
-=======
-    // Input: Layer In, Trigger In. Output: None
->>>>>>> 2f3596c6203eda7153b0c66b292d4518d2d1449d
-    assert_eq!(part_hue.inputs.len(), 2);
+    assert_eq!(part_hue.inputs.len(), 6);
     assert!(part_hue.outputs.is_empty());
 
     // 6. Mask
