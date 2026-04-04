@@ -1,0 +1,34 @@
+---
+title: egui_node_editor file atlas
+---
+flowchart LR
+    crates_vendor_egui_node_editor_src_color_hex_utils_rs["src/color_hex_utils.rs"]
+    crates_vendor_egui_node_editor_src_editor_ui_rs["src/editor_ui.rs"]
+    crates_vendor_egui_node_editor_src_error_rs["src/error.rs"]
+    crates_vendor_egui_node_editor_src_graph_rs["src/graph.rs"]
+    crates_vendor_egui_node_editor_src_graph_impls_rs["src/graph_impls.rs"]
+    crates_vendor_egui_node_editor_src_id_type_rs["src/id_type.rs"]
+    crates_vendor_egui_node_editor_src_index_impls_rs["src/index_impls.rs"]
+    crates_vendor_egui_node_editor_src_lib_rs["src/lib.rs"]
+    crates_vendor_egui_node_editor_src_node_finder_rs["src/node_finder.rs"]
+    crates_vendor_egui_node_editor_src_scale_rs["src/scale.rs"]
+    crates_vendor_egui_node_editor_src_traits_rs["src/traits.rs"]
+    crates_vendor_egui_node_editor_src_ui_state_rs["src/ui_state.rs"]
+    crates_vendor_egui_node_editor_src_utils_rs["src/utils.rs"]
+
+    crates_vendor_egui_node_editor_src_editor_ui_rs --> crates_vendor_egui_node_editor_src_color_hex_utils_rs
+    crates_vendor_egui_node_editor_src_editor_ui_rs --> crates_vendor_egui_node_editor_src_utils_rs
+    crates_vendor_egui_node_editor_src_lib_rs --> crates_vendor_egui_node_editor_src_color_hex_utils_rs
+    crates_vendor_egui_node_editor_src_lib_rs --> crates_vendor_egui_node_editor_src_editor_ui_rs
+    crates_vendor_egui_node_editor_src_lib_rs --> crates_vendor_egui_node_editor_src_error_rs
+    crates_vendor_egui_node_editor_src_lib_rs --> crates_vendor_egui_node_editor_src_graph_impls_rs
+    crates_vendor_egui_node_editor_src_lib_rs --> crates_vendor_egui_node_editor_src_graph_rs
+    crates_vendor_egui_node_editor_src_lib_rs --> crates_vendor_egui_node_editor_src_id_type_rs
+    crates_vendor_egui_node_editor_src_lib_rs --> crates_vendor_egui_node_editor_src_index_impls_rs
+    crates_vendor_egui_node_editor_src_lib_rs --> crates_vendor_egui_node_editor_src_node_finder_rs
+    crates_vendor_egui_node_editor_src_lib_rs --> crates_vendor_egui_node_editor_src_scale_rs
+    crates_vendor_egui_node_editor_src_lib_rs --> crates_vendor_egui_node_editor_src_traits_rs
+    crates_vendor_egui_node_editor_src_lib_rs --> crates_vendor_egui_node_editor_src_ui_state_rs
+    crates_vendor_egui_node_editor_src_lib_rs --> crates_vendor_egui_node_editor_src_utils_rs
+    crates_vendor_egui_node_editor_src_node_finder_rs --> crates_vendor_egui_node_editor_src_lib_rs
+    crates_vendor_egui_node_editor_src_ui_state_rs --> crates_vendor_egui_node_editor_src_scale_rs
