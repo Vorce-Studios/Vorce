@@ -55,8 +55,6 @@ pub fn set_default_effect_params(
     }
 }
 
-/// Renders the configuration UI for a `ModulePartType::Modulizer`.
-
 fn map_effect_type(
     effect: &vorce_core::module::EffectType,
 ) -> Option<vorce_core::effects::EffectType> {
@@ -98,6 +96,7 @@ fn map_effect_type(
     }
 }
 
+/// Renders the configuration UI for a `ModulePartType::Modulizer`.
 pub fn render_effect_ui(
     ui: &mut Ui,
     mod_type: &mut ModulizerType,

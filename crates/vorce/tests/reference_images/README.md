@@ -3,12 +3,6 @@
 Diese PNG-Dateien sind die Referenzbilder fuer die lokalen visuellen Regressionstests in
 `crates/vorce/tests/visual_capture_tests.rs`.
 
-**Hinweis zu den Systemvoraussetzungen:**
-Die Testausführung und die Generierung der Referenzbilder erfordert zwingend eine lokale,
-interaktive Windows GPU/Desktop-Sitzung. Die Ausführung in reinen headless CI-Umgebungen
-ist nicht möglich. Für selbst-gehostete Runner mit Desktop-Umgebung muss die Variable
-`VORCE_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true` gesetzt sein.
-
 ## Erste Szenarien
 
 - `checkerboard.png`
