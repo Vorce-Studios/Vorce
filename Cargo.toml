@@ -27,7 +27,7 @@ anyhow = "1.0"
 arc-swap = "1.9"
 
 # HTTP API
-axum = "0.8"
+axum = "0.7"
 
 # Build dependencies
 bindgen = "0.72"
@@ -69,7 +69,7 @@ futures = "0.3"
 glam = { version = "0.32.1", features = ["serde"] }
 hex = "0.4"
 hound = "3.5"
-hyper = "1.9"
+hyper = "1.1"
 image = "0.24"
 # UI
 imgui = "0.12"
@@ -110,7 +110,7 @@ thiserror = "1.0"
 tiny-skia = "0.12"
 
 # Async runtime
-tokio = { version = "1.51.0", features = ["full"] }
+tokio = { version = "1.50.0", features = ["full"] }
 toml = "1.1.0"
 tower = "0.5"
 

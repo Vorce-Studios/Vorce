@@ -263,20 +263,21 @@ impl EffectParameterAnimator {
         self.player.current_time = time;
     }
 
-    /// Remove a marker from the timeline by ID
-    pub fn remove_marker(&mut self, id: u64) {
-        if self.clip.remove_marker(id) {
+    /// Remove a marker from the timeline
+    pub fn remove_marker(&mut self, time: f64) {
+        if self.clip.remove_marker(time) {
             let current_time = self.get_current_time();
             self.player = AnimationPlayer::new(self.clip.clone());
             self.player.current_time = current_time;
         }
     }
 
-    /// Toggle pause state of a marker by ID
-    pub fn toggle_marker_pause(&mut self, id: u64) {
+    /// Toggle pause state of a marker
+    pub fn toggle_marker_pause(&mut self, time: f64) {
+        let epsilon = 0.001;
         let mut changed = false;
         for marker in &mut self.clip.markers {
-            if marker.id == id {
+            if (marker.time - time).abs() < epsilon {
                 marker.pause_at = !marker.pause_at;
                 changed = true;
                 break;

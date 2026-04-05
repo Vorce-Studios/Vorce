@@ -61,7 +61,7 @@ function Start-VorceStudiosBootstrapServer {
     }
     Set-VorceStudiosProcessState -State $processState
 
-    if (-not (Wait-VorceStudiosPaperclipReady -TimeoutSeconds (Get-VorceStudiosStartupTimeoutSeconds))) {
+    if (-not (Wait-VorceStudiosPaperclipReady -TimeoutSeconds 90)) {
         throw 'Paperclip wurde fuer das Bootstrap nicht rechtzeitig bereit.'
     }
 

@@ -3,7 +3,7 @@
         Name              = 'Vorce-Studios'
         Description       = 'Dynamic local Paperclip control plane for Vorce.'
         InstanceId        = 'vorce-studios'
-        PaperclipVersion  = '2026.403.0'
+        PaperclipVersion  = '2026.325.0'
         DeploymentMode    = 'local_trusted'
         ServerPort        = 3140
         DatabasePort      = 55432
@@ -37,7 +37,6 @@
     Runtime = @{
         NativeHeartbeatScheduler = $false
         DefaultMode = 'stopped'
-        StartupTimeoutSeconds = 300
         StopWaitMinutes = 20
         MaxConcurrentReviews = 1
         MaxConcurrentBuilderSessions = 2

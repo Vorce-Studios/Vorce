@@ -891,28 +891,17 @@ impl TimelineV2 {
                     let flag_rect =
                         Rect::from_min_size(Pos2::new(x, ruler_rect.min.y), Vec2::new(14.0, 14.0));
                     let is_selected = self.selected_marker_id == Some(marker.id);
-
-                    let (flag_color, label) = if marker.pause_at {
-                        let color = if is_selected {
-                            Color32::from_rgb(255, 200, 100)
-                        } else {
-                            Color32::from_rgb(200, 130, 30)
-                        };
-                        (color, "P")
+                    let flag_color = if is_selected {
+                        Color32::from_rgb(150, 255, 150)
                     } else {
-                        let color = if is_selected {
-                            Color32::from_rgb(150, 255, 150)
-                        } else {
-                            Color32::from_rgb(50, 150, 50)
-                        };
-                        (color, "M")
+                        Color32::from_rgb(50, 150, 50)
                     };
 
                     painter.rect_filled(flag_rect, 2.0, flag_color);
                     painter.text(
                         Pos2::new(x + 2.0, ruler_rect.min.y + 1.0),
                         egui::Align2::LEFT_TOP,
-                        label,
+                        "M",
                         egui::FontId::proportional(10.0),
                         Color32::WHITE,
                     );
@@ -931,15 +920,10 @@ impl TimelineV2 {
                     if marker_response.secondary_clicked() {
                         remove_marker_id = Some(marker.id);
                     }
-                    if marker_response.middle_clicked() {
-                        action = Some(TimelineAction::ToggleMarkerPause(marker.id));
-                    }
 
                     // Tooltip
-                    marker_response.on_hover_text(format!(
-                        "Marker: {}\nRight-click to remove\nMiddle-click to toggle pause",
-                        marker.name
-                    ));
+                    marker_response
+                        .on_hover_text(format!("Marker: {}\nRight-click to remove", marker.name));
                 }
             }
             if let Some(id) = remove_marker_id {
