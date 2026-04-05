@@ -163,7 +163,7 @@ mod tests {
             mapping_mode: HueMappingMode::Ambient,
         });
         let (in_sockets, out_sockets) = output_hue.get_default_sockets();
-        assert_eq!(in_sockets.len(), 2);
+        assert_eq!(in_sockets.len(), 6);
         assert_eq!(out_sockets.len(), 0);
 
         // Output - Normal

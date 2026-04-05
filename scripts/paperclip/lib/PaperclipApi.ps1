@@ -103,6 +103,112 @@ function Find-VorceStudiosCompany {
     return $matches[0]
 }
 
+function Get-VorceStudiosCompanyById {
+    param(
+        [Parameter(Mandatory)][string]$CompanyId
+    )
+
+    if ([string]::IsNullOrWhiteSpace($CompanyId)) {
+        return $null
+    }
+
+    $matches = @(
+        Get-VorceStudiosCompanies |
+            Where-Object { [string]$_.id -eq $CompanyId } |
+            Select-Object -First 1
+    )
+    if ($matches.Count -eq 0) {
+        return $null
+    }
+
+    return $matches[0]
+}
+
+function Resolve-VorceStudiosCompanyStateAgainstApi {
+    param(
+        [switch]$Persist
+    )
+
+    $state = Get-VorceStudiosCompanyState
+    if (-not (Test-VorceStudiosPaperclipReady)) {
+        return [pscustomobject]@{
+            State = $state
+            Company = $null
+            StoredCompanyId = if ($state.company -and $state.company.ContainsKey('id')) { [string]$state.company.id } else { '' }
+            Changed = $false
+            IsStale = $false
+            NeedsInitialize = $false
+        }
+    }
+
+    $system = Get-VorceStudiosSystemPolicy
+    $configuredCompanyName = [string]$system.Company.Name
+    $storedCompanyId = if ($state.company -and $state.company.ContainsKey('id')) { [string]$state.company.id } else { '' }
+    $liveById = if ([string]::IsNullOrWhiteSpace($storedCompanyId)) { $null } else { Get-VorceStudiosCompanyById -CompanyId $storedCompanyId }
+    $liveByName = Find-VorceStudiosCompany -Name $configuredCompanyName
+
+    $changed = $false
+    $isStale = (-not [string]::IsNullOrWhiteSpace($storedCompanyId)) -and ($null -eq $liveById)
+    $resolvedCompany = if ($null -ne $liveById) { $liveById } else { $liveByName }
+
+    if ($null -eq $resolvedCompany) {
+        if ($null -ne $state.company) {
+            $state['company'] = $null
+            $changed = $true
+        }
+        if ($null -ne $state.project) {
+            $state['project'] = $null
+            $changed = $true
+        }
+        if ($state.agents.Count -gt 0) {
+            $state['agents'] = @{}
+            $changed = $true
+        }
+    } else {
+        if (
+            $null -eq $state.company -or
+            [string]$state.company.id -ne [string]$resolvedCompany.id -or
+            [string]$state.company.name -ne [string]$resolvedCompany.name -or
+            [string]$state.company.issuePrefix -ne [string]$resolvedCompany.issuePrefix
+        ) {
+            $state['company'] = @{
+                id = [string]$resolvedCompany.id
+                name = [string]$resolvedCompany.name
+                issuePrefix = [string]$resolvedCompany.issuePrefix
+            }
+            $changed = $true
+        }
+
+        if ($isStale -or [string]$storedCompanyId -ne [string]$resolvedCompany.id) {
+            if ($null -ne $state.project) {
+                $state['project'] = $null
+                $changed = $true
+            }
+            if ($state.agents.Count -gt 0) {
+                $state['agents'] = @{}
+                $changed = $true
+            }
+        }
+    }
+
+    $hasProjectState = ($null -ne $state.project) -and (-not [string]::IsNullOrWhiteSpace([string]$state.project.id))
+    $hasAgentState = ($null -ne $state.agents) -and ($state.agents.Count -gt 0)
+    $needsInitialize = ($null -eq $resolvedCompany) -or (-not $hasProjectState) -or (-not $hasAgentState)
+
+    if ($Persist.IsPresent -and $changed) {
+        Set-VorceStudiosCompanyState -State $state
+    }
+
+    return [pscustomobject]@{
+        State = $state
+        Company = $resolvedCompany
+        StoredCompanyId = $storedCompanyId
+        Changed = $changed
+        IsStale = $isStale
+        NeedsInitialize = $needsInitialize
+    }
+}
+
 function New-VorceStudiosCompany {
     param(
         [Parameter(Mandatory)][string]$Name,

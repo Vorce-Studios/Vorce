@@ -304,6 +304,7 @@ function Get-VorceStudiosPaperclipCli {
 }
 
 function Get-VorceStudiosShellExecutable {
+    # Wir bevorzugen pwsh.exe (PowerShell 7) fuer volle Kompatibilitaet
     foreach ($candidate in @('pwsh.exe', 'pwsh', 'powershell.exe', 'powershell')) {
         $command = Get-Command $candidate -ErrorAction SilentlyContinue
         if ($null -ne $command) {
@@ -347,6 +348,15 @@ function Get-VorceStudiosAtlasState {
 
 function Get-VorceStudiosServerPort {
     return [int](Get-VorceStudiosSystemPolicy).Company.ServerPort
+}
+
+function Get-VorceStudiosStartupTimeoutSeconds {
+    $system = Get-VorceStudiosSystemPolicy
+    if ($system.ContainsKey('Runtime') -and $system.Runtime.ContainsKey('StartupTimeoutSeconds')) {
+        return [int]$system.Runtime.StartupTimeoutSeconds
+    }
+
+    return 300
 }
 
 function Get-VorceStudiosServerProcessInfo {

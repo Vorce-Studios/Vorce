@@ -80,7 +80,9 @@ pub fn perform_evaluation(
 
                     if let Some(name) = unsupported_name {
                         let now = std::time::Instant::now();
-                        let log_key = format!("{}_unsupported_{}", name, module_ref.name);
+                        // Use part.id to avoid key collisions when node_name is empty or duplicated
+                        let log_key =
+                            format!("{}_unsupported_{}_{}", name, module_ref.name, part.id);
                         let should_log =
                             if let Some(last_log) = app.video_diagnostic_log_times.get(&log_key) {
                                 now.duration_since(*last_log).as_secs_f32() > 5.0
@@ -89,9 +91,8 @@ pub fn perform_evaluation(
                             };
                         if should_log {
                             tracing::warn!(
-                                "{} in module '{}' is currently unsupported/experimental and will not be evaluated.",
-                                name,
-                                module_ref.name
+                                "{} (node {}) in module '{}' is currently unsupported/experimental and will not be evaluated.",
+                                name, part.id, module_ref.name
                             );
                             app.video_diagnostic_log_times.insert(log_key, now);
                         }
