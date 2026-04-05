@@ -4,7 +4,7 @@
 
 use crate::theme::colors;
 use crate::widgets::hold_to_action_button;
-use egui::{Pos2, Rect, Sense, Stroke, Ui, Vec2};
+use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use vorce_core::animation::AnimValue;
@@ -869,7 +869,7 @@ impl TimelineV2 {
                             egui::Align2::LEFT_TOP,
                             format!("{:.0}s", time),
                             egui::FontId::proportional(12.0),
-                            ui.visuals().text_color(),
+                            Color32::WHITE,
                         );
                     }
                 }
@@ -884,7 +884,7 @@ impl TimelineV2 {
                     // Marker line
                     painter.line_segment(
                         [Pos2::new(x, ruler_rect.min.y), Pos2::new(x, rect.max.y)],
-                        Stroke::new(1.0, ui.visuals().text_color().gamma_multiply(0.4)),
+                        Stroke::new(1.0, ui.visuals().text_color().gamma_multiply(0.8)),
                     );
 
                     // Marker flag
@@ -892,9 +892,9 @@ impl TimelineV2 {
                         Rect::from_min_size(Pos2::new(x, ruler_rect.min.y), Vec2::new(14.0, 14.0));
                     let is_selected = self.selected_marker_id == Some(marker.id);
                     let flag_color = if is_selected {
-                        ui.visuals().selection.bg_fill
+                        ui.visuals().text_color()
                     } else {
-                        ui.visuals().widgets.inactive.bg_fill
+                        ui.visuals().text_color().gamma_multiply(0.6)
                     };
 
                     painter.rect_filled(flag_rect, 2.0, flag_color);
@@ -903,7 +903,7 @@ impl TimelineV2 {
                         egui::Align2::LEFT_TOP,
                         "M",
                         egui::FontId::proportional(10.0),
-                        ui.visuals().text_color(),
+                        Color32::WHITE,
                     );
 
                     let interact_rect = Rect::from_min_size(
@@ -1015,11 +1015,11 @@ impl TimelineV2 {
                     let color = if self.semi_auto_pending_block_id == Some(block.id) {
                         ui.visuals().warn_fg_color
                     } else if active_block_id == Some(block.id) {
-                        ui.visuals().selection.bg_fill
+                        ui.visuals().widgets.active.bg_fill
                     } else if active_module == Some(block.module_id) {
-                        ui.visuals().text_color().gamma_multiply(0.6)
+                        ui.visuals().selection.bg_fill
                     } else {
-                        ui.visuals().widgets.inactive.bg_fill
+                        ui.visuals().widgets.noninteractive.bg_fill
                     };
 
                     painter.rect_filled(block_rect, 3.0, color);
@@ -1036,7 +1036,7 @@ impl TimelineV2 {
                         egui::Align2::LEFT_TOP,
                         label,
                         egui::FontId::proportional(12.0),
-                        ui.visuals().text_color(),
+                        Color32::WHITE,
                     );
                 }
             }
@@ -1053,7 +1053,7 @@ impl TimelineV2 {
                 );
 
                 // Draw header lane
-                let header_bg_color = ui.visuals().widgets.noninteractive.bg_fill;
+                let header_bg_color = ui.visuals().window_fill;
                 painter.rect_filled(header_rect, 0.0, header_bg_color);
 
                 let fold_icon = if is_expanded { "▼" } else { "▶" };
@@ -1071,7 +1071,7 @@ impl TimelineV2 {
                 }
 
                 let text_color = if header_response.hovered() {
-                    ui.visuals().text_color()
+                    Color32::WHITE
                 } else {
                     ui.visuals().text_color().gamma_multiply(0.8)
                 };
@@ -1098,9 +1098,9 @@ impl TimelineV2 {
 
                         // Alternating background for automation tracks
                         let bg_color = if current_lane_index % 2 == 0 {
-                            ui.visuals().extreme_bg_color
+                            ui.visuals().faint_bg_color
                         } else {
-                            ui.visuals().widgets.noninteractive.bg_fill
+                            ui.visuals().extreme_bg_color
                         };
                         painter.rect_filled(track_rect, 0.0, bg_color);
 
@@ -1120,7 +1120,7 @@ impl TimelineV2 {
                             egui::Align2::LEFT_TOP,
                             param_name,
                             egui::FontId::proportional(13.0),
-                            ui.visuals().text_color().gamma_multiply(0.8),
+                            ui.visuals().text_color().gamma_multiply(0.6),
                         );
 
                         // Draw keyframes and curves
@@ -1147,7 +1147,7 @@ impl TimelineV2 {
                             if !points.is_empty() {
                                 painter.add(egui::Shape::line(
                                     points,
-                                    Stroke::new(2.0, ui.visuals().selection.bg_fill),
+                                    Stroke::new(2.0, ui.visuals().hyperlink_color),
                                 ));
                             }
                         }
@@ -1173,8 +1173,8 @@ impl TimelineV2 {
 
                             painter.add(egui::Shape::convex_polygon(
                                 diamond,
-                                ui.visuals().warn_fg_color,
-                                Stroke::new(1.0, ui.visuals().text_color()),
+                                Color32::YELLOW,
+                                Stroke::new(1.0, Color32::WHITE),
                             ));
                         }
 
