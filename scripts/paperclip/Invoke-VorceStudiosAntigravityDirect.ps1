@@ -2,16 +2,16 @@
 param(
     [Parameter(Mandatory=$true)]
     [hashtable]$Context,
-    
+
     [Parameter(Mandatory=$true)]
     [object]$Issue,
-    
+
     [Parameter(Mandatory=$true)]
     [string]$TaskType
 )
 
 # Vorce-Studios: Direct Local Binding for Antigravity Swarm
-# Dieser Takt eliminiert den Overhead der `gemini` CLI und 
+# Dieser Takt eliminiert den Overhead der `gemini` CLI und
 # kommuniziert direkt mit dem Antigravity System Daemon.
 
 Set-StrictMode -Version Latest
