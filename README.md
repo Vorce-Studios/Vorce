@@ -1,29 +1,21 @@
-<div align="center">  
-  <img src="resources/app_icons/Vorce_Logo_HQ-Full-Gray-Background-NoCorner.png" alt="Vorce Logo" width="500">  
+<div align="center">
+  <img src="resources/app_icons/Vorce_Logo_HQ-Full-transparent.png" alt="Vorce Logo" width="500">
 
-**A High-Performance, Professional-Grade Projection Mapping Tool Built with Rust.**  
+# Vorce (formerly VjMapper)
 
-[![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)  
-[![Rust](https://img.shields.io/badge/rust-1.94%2B-orange.svg)](https://www.rust-lang.org/)  
+**A High-Performance, Professional-Grade Projection Mapping Tool Built with Rust.**
 
-[![CI](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml/badge.svg)](<https://git>  
-hub.com/Vorce-Studios/Vorce/actions)  
-<!-- markdownlint-disable MD013 -->  
-[![Build &  
-Quality](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml/badge.svg?branch=main  
-)](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml)  
-[![Security  
- Analysis](https://github.com/Vorce-Studios/Vorce/actions/workflows/CI-02_security-scan.yml/badge.svg)](<https://github.com>  
-/Vorce-Studios/Vorce/actions/workflows/CI-02_security-scan.yml)  
-[![Stable  
-Release](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-MainFlow_Job03_Release.yml/badge.svg)](<https://git>  
-hub.com/Vorce-Studios/Vorce/actions/workflows/CICD-MainFlow_Job03_Release.yml)  
-![OS: Windows | Linux](https://img.shields.io/badge/OS-Windows%20%7C%20Linux-blue.svg)  
-[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)  
-[![Rust: 1.94+](https://img.shields.io/badge/Rust-1.94%2B-orange.svg)](https://www.rust-lang.org/)  
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)  
- <!-- markdownlint-enable MD013 -->  
-</div>  
+<!-- markdownlint-disable MD013 -->
+<a href="https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml"><img src="https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml/badge.svg?branch=main" alt="Build & Quality"></a>
+<a href="https://github.com/Vorce-Studios/Vorce/actions/workflows/CI-02_security-scan.yml"><img src="https://github.com/Vorce-Studios/Vorce/actions/workflows/CI-02_security-scan.yml/badge.svg?branch=main" alt="Security Analysis"></a>
+<a href="https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-MainFlow_Job03_Release.yml"><img src="https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-MainFlow_Job03_Release.yml/badge.svg?branch=main" alt="Stable Release"></a>
+<img src="https://img.shields.io/badge/OS-Windows%20%7C%20Linux%20%7C%20macOS-blue.svg" alt="OS: Windows | Linux | macOS">
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg" alt="License: GPL-3.0"></a>
+<a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/Rust-1.94%2B-orange.svg" alt="Rust: 1.94+"></a>
+<a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome"></a>
+<!-- markdownlint-enable MD013 -->
+
+</div>
 
 ---
 
