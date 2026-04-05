@@ -83,4 +83,3 @@ nach GitHub.
 Siehe:
 
 - `docs/A3_PROJECT/B3_OPERATIONS/DOC-C5_PAPERCLIP_CONTROL_PLANE.md`
-
