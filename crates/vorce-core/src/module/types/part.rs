@@ -152,22 +152,6 @@ impl ModulePartType {
                     vec![
                         ModuleSocket::standard_layer_in(),
                         ModuleSocket::standard_trigger_in(),
-                        ModuleSocket::input_mappable(
-                            "brightness_in",
-                            "Brightness",
-                            ModuleSocketType::Trigger,
-                        ),
-                        ModuleSocket::input_mappable("hue_in", "Hue", ModuleSocketType::Trigger),
-                        ModuleSocket::input_mappable(
-                            "saturation_in",
-                            "Saturation",
-                            ModuleSocketType::Trigger,
-                        ),
-                        ModuleSocket::input_mappable(
-                            "strobe_in",
-                            "Strobe",
-                            ModuleSocketType::Trigger,
-                        ),
                     ],
                     vec![],
                 ),

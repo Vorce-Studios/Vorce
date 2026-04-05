@@ -36,7 +36,7 @@ if (-not (Test-VorceStudiosPaperclipReady)) {
     Set-VorceStudiosProcessState -State $processState
 }
 
-if (-not (Wait-VorceStudiosPaperclipReady -TimeoutSeconds (Get-VorceStudiosStartupTimeoutSeconds))) {
+if (-not (Wait-VorceStudiosPaperclipReady -TimeoutSeconds 90)) {
     throw 'Paperclip wurde nicht rechtzeitig bereit.'
 }
 
@@ -59,24 +59,13 @@ if ($serverProcess) {
     Set-VorceStudiosProcessState -State $processState
 }
 
-$companyResolution = Resolve-VorceStudiosCompanyStateAgainstApi -Persist
-$companyState = $companyResolution.State
-if ($companyResolution.IsStale) {
-    Write-Warning ("Veraltete Paperclip-Company-ID '{0}' erkannt. Initialisierung wird mit dem aktuellen Serverzustand neu aufgebaut." -f [string]$companyResolution.StoredCompanyId)
-}
-
-if ($companyResolution.NeedsInitialize) {
+$companyState = Get-VorceStudiosCompanyState
+if ($null -eq $companyState.company -or [string]::IsNullOrWhiteSpace([string]$companyState.company.id)) {
     & (Join-Path $ScriptDir 'Initialize-Vorce-Studios.ps1') -StartServer
-    $companyResolution = Resolve-VorceStudiosCompanyStateAgainstApi -Persist
-    $companyState = $companyResolution.State
+    $companyState = Get-VorceStudiosCompanyState
 }
 
-if ($null -ne $companyResolution.Company -and -not [string]::IsNullOrWhiteSpace([string]$companyResolution.Company.id)) {
-    $companyState['company'] = @{
-        id = [string]$companyResolution.Company.id
-        name = [string]$companyResolution.Company.name
-        issuePrefix = [string]$companyResolution.Company.issuePrefix
-    }
+if ($null -ne $companyState.company -and -not [string]::IsNullOrWhiteSpace([string]$companyState.company.id)) {
     $projectState = Ensure-VorceStudiosPrimaryProject -CompanyId ([string]$companyState.company.id) -NormalizeIssues
     if ($null -ne $projectState.Project) {
         $companyState['project'] = @{

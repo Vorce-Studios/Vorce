@@ -369,20 +369,12 @@ pub fn render_inspector_for_part(
                 ModulePartType::Hue(hue_node) => {
                     ui.label("Hue Node Configuration");
                     ui.separator();
-                    if !crate::editors::module_canvas::inspector::capabilities::is_hue_supported()
-                    {
-                        crate::widgets::custom::render_info_label(
-                            ui,
-                            "Hue nodes are currently unsupported in this build.",
-                        );
-                    } else {
-                        crate::widgets::custom::render_info_label(
-                            ui,
-                            "Live visual preview not available for hardware outputs. Check spatial editor or physical lamps.",
-                        );
-                        ui.separator();
-                        hue::render_hue_ui(ui, hue_node);
-                    }
+                    crate::widgets::custom::render_info_label(
+                        ui,
+                        "Live visual preview not available for hardware outputs. Check spatial editor or physical lamps.",
+                    );
+                    ui.separator();
+                    hue::render_hue_ui(ui, hue_node);
                 }
             }
         });
