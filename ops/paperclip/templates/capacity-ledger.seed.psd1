@@ -27,9 +27,9 @@
             notes = 'Limited availability; use as overflow only.'
         }
         antigravity = @{
-            status = 'manual_only'
-            mode = 'cli'
-            notes = 'Useful worker host, but not treated as a headless runtime by default.'
+            status = 'available'
+            mode = 'cli_swarm'
+            notes = 'Gemini CLI mit antigravity-swarm Extension. Fuer parallele Multi-Agent-Missionen und groessere Implementation-Tasks.'
         }
         atlas = @{
             status = 'optional'

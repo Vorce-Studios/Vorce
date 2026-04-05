@@ -20,7 +20,11 @@
         AgentIntervals = @{
             ChiefOfStaff = 60
             DiscoveryScout = 900
+            LenaAssistant = 120
             JulesBuilder = 60
+            AntigravityBuilder = 120
+            JulesSessionMonitor = 300
+            PrMonitor = 300
             ReviewPool = 120
             OpsSteward = 90
             CEO = 600

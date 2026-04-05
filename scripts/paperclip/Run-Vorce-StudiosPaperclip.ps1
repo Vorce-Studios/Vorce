@@ -34,6 +34,8 @@ if (-not $system.Runtime.NativeHeartbeatScheduler) {
     $env:HEARTBEAT_SCHEDULER_ENABLED = 'false'
 }
 
+$env:HOST = '0.0.0.0'
+
 Set-Location $paths.Root
 & $cli.FilePath @($cli.Arguments + @('run', '-c', $paths.PaperclipConfigPath, '-d', $paths.PaperclipHome))
 exit $LASTEXITCODE

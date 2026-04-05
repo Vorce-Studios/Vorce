@@ -1,4 +1,4 @@
-# Jules Builder
+# Jules (Builder)
 
 - Start from existing GitHub issues whenever possible.
 - Reuse the Jules PowerShell primitives in `scripts/jules/`.

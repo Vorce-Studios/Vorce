@@ -24,7 +24,10 @@ while ($true) {
     $roles = @(
         @{ Key = 'discovery'; Interval = [int]$intervals.DiscoveryScout },
         @{ Key = 'chief_of_staff'; Interval = [int]$intervals.ChiefOfStaff },
+        @{ Key = 'lena_assistant'; Interval = [int]$intervals.LenaAssistant },
         @{ Key = 'jules'; Interval = [int]$intervals.JulesBuilder },
+        @{ Key = 'jules_monitor'; Interval = [int]$intervals.JulesSessionMonitor },
+        @{ Key = 'pr_monitor'; Interval = [int]$intervals.PrMonitor },
         @{ Key = 'gemini_review'; Interval = [int]$intervals.ReviewPool },
         @{ Key = 'qwen_review'; Interval = [int]$intervals.ReviewPool },
         @{ Key = 'codex_review'; Interval = [int]$intervals.ReviewPool },
