@@ -382,11 +382,10 @@ impl AnimationClip {
             .sort_by(|a, b| a.time.partial_cmp(&b.time).unwrap());
     }
 
-    /// Remove a timeline marker by time in seconds
-    pub fn remove_marker(&mut self, time: f64) -> bool {
+    /// Remove a timeline marker by ID
+    pub fn remove_marker(&mut self, id: u64) -> bool {
         let old_len = self.markers.len();
-        let epsilon = 0.001;
-        self.markers.retain(|m| (m.time - time).abs() > epsilon);
+        self.markers.retain(|m| m.id != id);
         self.markers.len() < old_len
     }
 }
@@ -543,6 +542,9 @@ impl AnimationPlayer {
                 let epsilon = 0.0001;
                 let mut crossed_marker: Option<f64> = None;
                 for marker in &self.clip.markers {
+                    if !marker.pause_at {
+                        continue;
+                    }
                     let t = marker.time;
                     if self.current_direction > 0.0 {
                         if t > self.current_time + epsilon && t <= next_time {

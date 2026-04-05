@@ -68,14 +68,21 @@ pub fn show(ctx: &Context, mut context: TimelineContext) {
                     }
                     TimelineAction::AddMarker(t) => {
                         let name = format!("Marker {:.1}s", t);
-                        let id = (t * 1000.0) as u64;
+                        let max_id = animator
+                            .clip()
+                            .markers
+                            .iter()
+                            .map(|m| m.id)
+                            .max()
+                            .unwrap_or(0);
+                        let id = max_id + 1;
                         animator.add_marker(vorce_core::animation::Marker::new(id, t as f64, name));
                     }
-                    TimelineAction::RemoveMarker(t) => {
-                        animator.remove_marker(t as f64);
+                    TimelineAction::RemoveMarker(id) => {
+                        animator.remove_marker(id);
                     }
-                    TimelineAction::ToggleMarkerPause(t) => {
-                        animator.toggle_marker_pause(t as f64);
+                    TimelineAction::ToggleMarkerPause(id) => {
+                        animator.toggle_marker_pause(id);
                     }
                     TimelineAction::JumpNextMarker => animator.jump_next_marker(),
                     TimelineAction::JumpPrevMarker => animator.jump_prev_marker(),
