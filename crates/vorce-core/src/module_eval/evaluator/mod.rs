@@ -18,7 +18,7 @@ use super::types::*;
 
 /// The evaluator traverses the module graph and computes output values.
 pub struct ModuleEvaluator {
-    /// Current trigger data from audio analysis..
+    /// Current trigger data from audio analysis
     pub(crate) audio_trigger_data: AudioTriggerData,
     /// Creation time for timing calculations
     pub(crate) start_time: Instant,
@@ -390,30 +390,14 @@ impl ModuleEvaluator {
             }
             // Generate output commands for Hue (which acts like a Sink/Output)
             if let ModulePartType::Output(OutputType::Hue { .. }) = &part.part_type {
-                // Socket 0: layer_in (not used for Hue values)
-                // Socket 1: trigger_in (legacy brightness)
-                // Socket 2: brightness_in
-                // Socket 3: hue_in
-                // Socket 4: saturation_in
-                // Socket 5: strobe_in
                 let trigger_value = trigger_inputs.get(&part.id).copied().unwrap_or(0.0);
-                let socket_vals = socket_inputs.get(&part.id);
-
-                let brightness = socket_vals
-                    .and_then(|m| m.get(&2))
-                    .copied()
-                    .unwrap_or(trigger_value);
-                let hue = socket_vals.and_then(|m| m.get(&3)).copied();
-                let saturation = socket_vals.and_then(|m| m.get(&4)).copied();
-                let strobe = socket_vals.and_then(|m| m.get(&5)).copied();
-
                 self.cached_result.source_commands.insert(
                     part.id,
                     SourceCommand::HueOutput {
-                        brightness,
-                        hue,
-                        saturation,
-                        strobe,
+                        brightness: trigger_value,
+                        hue: None,
+                        saturation: None,
+                        strobe: None,
                         ids: None,
                     },
                 );
@@ -478,7 +462,7 @@ impl ModuleEvaluator {
                                     mapping_mode,
                                     ..
                                 } => (mesh, opacity, blend_mode, mapping_mode),
-                                _ => continue,
+                                LayerType::All { .. } => continue,
                             };
                             let mut op = self.get_spare_render_op();
                             op.output_part_id = part.id;
