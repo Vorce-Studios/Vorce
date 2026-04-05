@@ -50,9 +50,12 @@ pub trait AudioBackend {
 #[cfg(feature = "audio")]
 pub mod cpal_backend {
     use super::{AudioBackend, AudioError};
+    #[cfg(not(target_os = "macos"))]
     use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+    #[cfg(not(target_os = "macos"))]
     use crossbeam_channel::{unbounded, Receiver, Sender};
 
+    #[cfg(not(target_os = "macos"))]
     enum Command {
         Pause,
         Play,
@@ -60,9 +63,12 @@ pub mod cpal_backend {
 
     /// CPAL audio backend
     pub struct CpalBackend {
+        #[cfg(not(target_os = "macos"))]
         sample_receiver: Receiver<Vec<f32>>,
+        #[cfg(not(target_os = "macos"))]
         command_sender: Sender<Command>,
         #[allow(dead_code)]
+        #[cfg(not(target_os = "macos"))]
         stream: cpal::Stream,
     }
 
@@ -105,6 +111,7 @@ pub mod cpal_backend {
         }
 
         /// Build the audio stream (must be called from main thread)
+        #[cfg(not(target_os = "macos"))]
         fn build_stream(
             device_name: Option<String>,
             sample_tx: Sender<Vec<f32>>,
@@ -336,20 +343,34 @@ pub mod cpal_backend {
 
     impl AudioBackend for CpalBackend {
         fn start(&mut self) -> Result<(), AudioError> {
-            // Stream is already playing from initialization
-            let _ = self.command_sender.send(Command::Play);
+            #[cfg(not(target_os = "macos"))]
+            {
+                // Stream is already playing from initialization
+                let _ = self.command_sender.send(Command::Play);
+            }
             Ok(())
         }
 
         fn stop(&mut self) {
-            let _ = self.command_sender.send(Command::Pause);
+            #[cfg(not(target_os = "macos"))]
+            {
+                let _ = self.command_sender.send(Command::Pause);
+            }
         }
 
         fn get_samples(&mut self) -> Vec<f32> {
-            self.sample_receiver.try_iter().flatten().collect()
+            #[cfg(not(target_os = "macos"))]
+            {
+                self.sample_receiver.try_iter().flatten().collect()
+            }
+            #[cfg(target_os = "macos")]
+            {
+                Vec::new()
+            }
         }
     }
 
+    #[cfg(not(target_os = "macos"))]
     impl Drop for CpalBackend {
         fn drop(&mut self) {
             // Dropping command_sender will close the channel and
