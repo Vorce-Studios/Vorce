@@ -33,6 +33,7 @@
     Runtime = @{
         NativeHeartbeatScheduler = $false
         DefaultMode = 'stopped'
+        StartupTimeoutSeconds = 300
         StopWaitMinutes = 20
         MaxConcurrentReviews = 1
         MaxConcurrentBuilderSessions = 2

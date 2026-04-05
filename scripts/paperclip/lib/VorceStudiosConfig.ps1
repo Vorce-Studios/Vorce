@@ -350,6 +350,15 @@ function Get-VorceStudiosServerPort {
     return [int](Get-VorceStudiosSystemPolicy).Company.ServerPort
 }
 
+function Get-VorceStudiosStartupTimeoutSeconds {
+    $system = Get-VorceStudiosSystemPolicy
+    if ($system.ContainsKey('Runtime') -and $system.Runtime.ContainsKey('StartupTimeoutSeconds')) {
+        return [int]$system.Runtime.StartupTimeoutSeconds
+    }
+
+    return 300
+}
+
 function Get-VorceStudiosServerProcessInfo {
     try {
         $connection = Get-NetTCPConnection -LocalPort (Get-VorceStudiosServerPort) -State Listen -ErrorAction Stop | Select-Object -First 1
