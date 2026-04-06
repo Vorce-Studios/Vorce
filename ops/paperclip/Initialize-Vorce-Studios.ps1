@@ -89,8 +89,8 @@ function Get-VorceStudiosAgentDefinitions {
         @{ key = 'jules'; name = $routing.Roles.jules; role = 'engineer'; title = 'Primary low-cost implementation worker via Jules'; icon = 'wand'; capabilities = 'Issue implementation, Jules session orchestration'; instructionFile = 'jules-builder.md'; reportsTo = 'chief_of_staff' },
         @{ key = 'jules_monitor'; name = $routing.Roles.jules_monitor; role = 'qa'; title = 'Jules session monitoring and deadlock resolution'; icon = 'radar'; capabilities = 'Session monitoring, timeout detection, escalation'; instructionFile = 'jules-session-monitor.md'; reportsTo = 'chief_of_staff' },
         @{ key = 'pr_monitor'; name = $routing.Roles.pr_monitor; role = 'qa'; title = 'GitHub PR monitoring and CI check management'; icon = 'git-branch'; capabilities = 'PR status tracking, CI retry, conflict detection'; instructionFile = 'github-pr-monitor.md'; reportsTo = 'chief_of_staff' },
-        @{ key = 'gemini_review'; name = $routing.Roles.gemini_review; role = 'qa'; title = 'Preferred reviewer and analysis worker'; icon = 'shield'; capabilities = 'Review, triage, summary generation'; instructionFile = 'gemini-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'codex_local' },
-        @{ key = 'qwen_review'; name = $routing.Roles.qwen_review; role = 'qa'; title = 'Fallback reviewer and triage worker'; icon = 'shield'; capabilities = 'Fallback review, diff summaries, bug triage'; instructionFile = 'qwen-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'opencode_local' },
+        @{ key = 'gemini_review'; name = $routing.Roles.gemini_review; role = 'qa'; title = 'Preferred reviewer and analysis worker'; icon = 'shield'; capabilities = 'Review, triage, summary generation'; instructionFile = 'gemini-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'process' },
+        @{ key = 'qwen_review'; name = $routing.Roles.qwen_review; role = 'qa'; title = 'Fallback reviewer and triage worker'; icon = 'shield'; capabilities = 'Fallback review, diff summaries, bug triage'; instructionFile = 'qwen-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'process' },
         @{ key = 'codex_review'; name = $routing.Roles.codex_review; role = 'cto'; title = 'High-risk reviewer and architecture escalation worker'; icon = 'brain'; capabilities = 'High-risk review, architecture and difficult debugging'; instructionFile = 'codex-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'codex_local' },
         @{ key = 'ops'; name = $routing.Roles.ops; role = 'devops'; title = 'PR checks, governance and merge stewardship'; icon = 'terminal'; capabilities = 'Checks, merge gates, audit notes, status maintenance'; instructionFile = 'ops-steward.md'; reportsTo = 'chief_of_staff' },
         @{ key = 'atlas'; name = $routing.Roles.atlas; role = 'researcher'; title = 'Optional atlas-backed repo context worker'; icon = 'microscope'; capabilities = 'Atlas summaries, codebase map, context distillation'; instructionFile = 'atlas-context.md'; reportsTo = 'discovery' },
@@ -115,10 +115,6 @@ function Get-VorceStudiosAgentDefinitions {
                     env = @{
                         VORCE_STUDIOS_ROLE = $definition.key
                     }
-                }
-            } elseif ($adapterType -eq 'opencode_local') {
-                @{
-                    model = 'qwen/qwen-2.5-coder-32b'
                 }
             } elseif ($adapterType -eq 'codex_local') {
                 @{
