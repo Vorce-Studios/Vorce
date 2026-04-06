@@ -72,28 +72,22 @@ impl ShortcutsPanel {
 
         // --- Filter and Group Shortcuts ---
         let filter_lower = self.search_filter.to_lowercase();
-        let filter_bytes = filter_lower.as_bytes();
+        let filter_is_empty = filter_lower.is_empty();
         let filtered_indices: Vec<usize> = shortcuts_clone
             .iter()
             .enumerate()
             .filter(|(_, s)| {
-                if filter_bytes.is_empty() {
+                if filter_is_empty {
                     return true;
                 }
-                let desc_bytes = s.description.as_bytes();
+                if s.description.to_lowercase().contains(&filter_lower) {
+                    return true;
+                }
                 let shortcut_str = s.to_shortcut_string();
-                let shortcut_bytes = shortcut_str.as_bytes();
-
-                (!desc_bytes.is_empty()
-                    && desc_bytes.len() >= filter_bytes.len()
-                    && desc_bytes
-                        .windows(filter_bytes.len())
-                        .any(|w| w.eq_ignore_ascii_case(filter_bytes)))
-                    || (!shortcut_bytes.is_empty()
-                        && shortcut_bytes.len() >= filter_bytes.len()
-                        && shortcut_bytes
-                            .windows(filter_bytes.len())
-                            .any(|w| w.eq_ignore_ascii_case(filter_bytes)))
+                if shortcut_str.to_lowercase().contains(&filter_lower) {
+                    return true;
+                }
+                false
             })
             .map(|(i, _)| i)
             .collect();

@@ -15,27 +15,20 @@ pub fn draw_quick_create_popup(
     let popup_pos = canvas.quick_create_pos;
     let catalog = utils::build_node_catalog();
     let filter_lower = canvas.quick_create_filter.to_lowercase();
-    let filter_bytes = filter_lower.as_bytes();
+    let filter_is_empty = filter_lower.is_empty();
     let filtered_items: Vec<&utils::NodeCatalogItem> = catalog
         .iter()
         .filter(|item| {
-            if filter_bytes.is_empty() {
-                true
-            } else {
-                let label_bytes = item.label.as_bytes();
-                let search_tags_bytes = item.search_tags.as_bytes();
-
-                (!label_bytes.is_empty()
-                    && label_bytes.len() >= filter_bytes.len()
-                    && label_bytes
-                        .windows(filter_bytes.len())
-                        .any(|w| w.eq_ignore_ascii_case(filter_bytes)))
-                    || (!search_tags_bytes.is_empty()
-                        && search_tags_bytes.len() >= filter_bytes.len()
-                        && search_tags_bytes
-                            .windows(filter_bytes.len())
-                            .any(|w| w.eq_ignore_ascii_case(filter_bytes)))
+            if filter_is_empty {
+                return true;
             }
+            if item.label.to_lowercase().contains(&filter_lower) {
+                return true;
+            }
+            if item.search_tags.to_lowercase().contains(&filter_lower) {
+                return true;
+            }
+            false
         })
         .collect();
     if filtered_items.is_empty() {
