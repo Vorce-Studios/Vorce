@@ -28,7 +28,7 @@ function Set-VorceStudiosCapacityLedger {
 
 function Update-VorceStudiosCapacityLedgerFromProbe {
     $ledger = Get-VorceStudiosCapacityLedger
-    
+
     $ledger.capacity['jules'] = @{ dailySessions = 10; concurrentSessions = 2 }
     $ledger.capacity['antigravity'] = @{ dailySessions = 5; concurrentSessions = 1 }
     $ledger.capacity['codex'] = @{ dailyTokens = 500000 }

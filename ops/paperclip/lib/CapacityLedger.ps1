@@ -21,7 +21,7 @@ function Set-VorceStudiosCapacityLedger {
 
 function Update-VorceStudiosCapacityLedgerFromProbe {
     $ledger = Get-VorceStudiosCapacityLedger
-    
+
     # Static defaults for now, can be enriched by external probes
     $ledger.capacity['jules'] = @{ dailySessions = 10; concurrentSessions = 2 }
     $ledger.capacity['antigravity'] = @{ dailySessions = 5; concurrentSessions = 1 }
