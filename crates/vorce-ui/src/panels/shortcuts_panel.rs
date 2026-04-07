@@ -71,12 +71,8 @@ impl ShortcutsPanel {
         let shortcuts_clone = key_bindings.get_shortcuts().to_vec();
 
         // --- Filter and Group Shortcuts ---
-        let filter_is_empty = self.search_filter.is_empty();
-        let filter_lower = if filter_is_empty {
-            String::new()
-        } else {
-            self.search_filter.to_lowercase()
-        };
+        let filter_lower = self.search_filter.to_lowercase();
+        let filter_is_empty = filter_lower.is_empty();
         let filtered_indices: Vec<usize> = shortcuts_clone
             .iter()
             .enumerate()

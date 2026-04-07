@@ -1,5 +1,5 @@
 use crate::theme::colors;
-use egui::{Color32, Ui};
+use egui::Ui;
 
 pub fn inspector_section(
     ui: &mut Ui,
@@ -31,5 +31,9 @@ pub fn inspector_row(ui: &mut Ui, label: &str, add_contents: impl FnOnce(&mut Ui
 }
 
 pub fn inspector_value(ui: &mut Ui, text: &str) {
-    ui.label(egui::RichText::new(text).color(Color32::WHITE).size(12.0));
+    ui.label(
+        egui::RichText::new(text)
+            .color(ui.visuals().text_color())
+            .size(12.0),
+    );
 }

@@ -332,9 +332,9 @@ impl AudioPanel {
 
             let color = match mode {
                 FftVisualizationMode::ThreeBand => match i {
-                    0 => egui::Color32::from_rgb(70, 180, 255),
-                    1 => egui::Color32::from_rgb(90, 220, 150),
-                    _ => egui::Color32::from_rgb(255, 180, 80),
+                    0 => colors::CYAN_ACCENT,
+                    1 => colors::MINT_ACCENT,
+                    _ => colors::WARN_COLOR,
                 },
                 FftVisualizationMode::FullFft => {
                     if analysis.beat_detected && i < 2 {

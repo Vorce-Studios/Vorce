@@ -126,12 +126,12 @@ impl ControllerOverlayPanel {
             );
         } else {
             // Fallback: dark background
-            let bg_color = Color32::from_rgb(30, 30, 35);
+            let bg_color = ui.visuals().window_fill;
             painter.rect_filled(rect, 4.0, bg_color);
             painter.rect_stroke(
                 rect,
                 4.0,
-                Stroke::new(2.0, Color32::from_rgb(80, 80, 80)),
+                Stroke::new(2.0, ui.visuals().widgets.noninteractive.bg_stroke.color),
                 egui::StrokeKind::Middle,
             );
             painter.text(
@@ -139,7 +139,7 @@ impl ControllerOverlayPanel {
                 egui::Align2::CENTER_CENTER,
                 "Hintergrundbild wird geladen...",
                 egui::FontId::default(),
-                Color32::WHITE,
+                ui.visuals().text_color(),
             );
         }
 
@@ -230,14 +230,14 @@ impl ControllerOverlayPanel {
                                 Pos2::new(elem_rect.min.x, y_top),
                                 Pos2::new(elem_rect.max.x, y_top),
                             ],
-                            Stroke::new(1.0, Color32::RED),
+                            Stroke::new(1.0, ui.visuals().error_fg_color),
                         );
                         painter.line_segment(
                             [
                                 Pos2::new(elem_rect.min.x, y_bot),
                                 Pos2::new(elem_rect.max.x, y_bot),
                             ],
-                            Stroke::new(1.0, Color32::RED),
+                            Stroke::new(1.0, ui.visuals().error_fg_color),
                         );
 
                         painter.text(
@@ -245,14 +245,14 @@ impl ControllerOverlayPanel {
                             egui::Align2::LEFT_CENTER,
                             "Top",
                             egui::FontId::proportional(12.0),
-                            Color32::RED,
+                            ui.visuals().error_fg_color,
                         );
                         painter.text(
                             Pos2::new(elem_rect.max.x + 2.0, y_bot),
                             egui::Align2::LEFT_CENTER,
                             "Bot",
                             egui::FontId::proportional(12.0),
-                            Color32::RED,
+                            ui.visuals().error_fg_color,
                         );
                     }
 
@@ -327,10 +327,10 @@ impl ControllerOverlayPanel {
 
                     // Draw edit frame
                     let base_color = if is_selected {
-                        Color32::from_rgb(255, 0, 255)
+                        ui.visuals().selection.bg_fill
                     } else {
-                        Color32::YELLOW
-                    }; // Magenta for selected
+                        ui.visuals().warn_fg_color
+                    }; // Highlight for selected
                     let stroke = Stroke::new(if is_selected { 2.0 } else { 1.0 }, base_color);
 
                     match element.element_type {
@@ -344,7 +344,7 @@ impl ControllerOverlayPanel {
                     }
 
                     // Draw resize handle
-                    painter.rect_filled(handle_rect, 2.0, Color32::from_rgb(0, 255, 255));
+                    painter.rect_filled(handle_rect, 2.0, ui.visuals().text_color());
                 }
             }
 
@@ -400,12 +400,13 @@ impl ControllerOverlayPanel {
         // Determine frame color based on state
         let frame_color = if is_learning {
             // Pulsing yellow for learn mode
-            let t = (ui_time_seconds() * 3.0).sin() * 0.5 + 0.5;
-            Color32::from_rgba_unmultiplied(255, 220, 0, (128.0 + 127.0 * t as f32) as u8)
+            let t = ((ui_time_seconds() * 3.0).sin() * 0.5 + 0.5) as f32;
+            let alpha = 0.5 + 0.5 * t;
+            crate::theme::colors::WARN_COLOR.gamma_multiply(alpha)
         } else if is_active {
-            Color32::GREEN
+            crate::theme::colors::MINT_ACCENT
         } else if is_selected {
-            Color32::from_rgb(100, 149, 237) // Cornflower blue
+            crate::theme::colors::CYAN_ACCENT // Cornflower blue
         } else if is_hovered {
             Color32::WHITE
         } else {
@@ -417,11 +418,11 @@ impl ControllerOverlayPanel {
             let assignment = assignments.iter().find(|a| a.element_id == element.id);
             match assignment {
                 Some(a) => match &a.target {
-                    MidiAssignmentTarget::Vorce(_) => Color32::from_rgb(0, 150, 255), // Blue
-                    MidiAssignmentTarget::StreamerBot(_) => Color32::from_rgb(180, 0, 255), // Purple
-                    MidiAssignmentTarget::Mixxx(_) => Color32::from_rgb(255, 128, 0), // Orange
+                    MidiAssignmentTarget::Vorce(_) => crate::theme::colors::CYAN_ACCENT, // Blue
+                    MidiAssignmentTarget::StreamerBot(_) => crate::theme::colors::PURPLE_ACCENT, // Purple
+                    MidiAssignmentTarget::Mixxx(_) => crate::theme::colors::WARN_COLOR, // Orange
                 },
-                None => Color32::GREEN, // Green for free elements
+                None => crate::theme::colors::LIGHTER_GREY, // Neutral status for free elements
             }
         } else {
             frame_color
@@ -485,7 +486,7 @@ impl ControllerOverlayPanel {
                         ui.separator();
                         ui.horizontal(|ui| {
                             ui.label("Zuweisung:");
-                            ui.colored_label(Color32::YELLOW, assign.target.to_string());
+                            ui.colored_label(ui.visuals().warn_fg_color, assign.target.to_string());
                         });
                         crate::widgets::custom::render_info_label_with_size(
                             ui,
