@@ -4,7 +4,7 @@
 
 use crate::theme::colors;
 use crate::widgets::hold_to_action_button;
-use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
+use egui::{Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use vorce_core::animation::AnimValue;
@@ -869,7 +869,7 @@ impl TimelineV2 {
                             egui::Align2::LEFT_TOP,
                             format!("{:.0}s", time),
                             egui::FontId::proportional(12.0),
-                            Color32::WHITE,
+                            ui.visuals().text_color(),
                         );
                     }
                 }
@@ -903,7 +903,7 @@ impl TimelineV2 {
                         egui::Align2::LEFT_TOP,
                         "M",
                         egui::FontId::proportional(10.0),
-                        Color32::WHITE,
+                        ui.visuals().text_color(),
                     );
 
                     let interact_rect = Rect::from_min_size(
@@ -1036,7 +1036,7 @@ impl TimelineV2 {
                         egui::Align2::LEFT_TOP,
                         label,
                         egui::FontId::proportional(12.0),
-                        Color32::WHITE,
+                        ui.visuals().text_color(),
                     );
                 }
             }
@@ -1071,7 +1071,7 @@ impl TimelineV2 {
                 }
 
                 let text_color = if header_response.hovered() {
-                    Color32::WHITE
+                    ui.visuals().text_color()
                 } else {
                     ui.visuals().text_color().gamma_multiply(0.8)
                 };
@@ -1173,8 +1173,8 @@ impl TimelineV2 {
 
                             painter.add(egui::Shape::convex_polygon(
                                 diamond,
-                                Color32::YELLOW,
-                                Stroke::new(1.0, Color32::WHITE),
+                                ui.visuals().warn_fg_color,
+                                Stroke::new(1.0, ui.visuals().text_color()),
                             ));
                         }
 
