@@ -419,10 +419,10 @@ impl ControllerOverlayPanel {
             match assignment {
                 Some(a) => match &a.target {
                     MidiAssignmentTarget::Vorce(_) => crate::theme::colors::CYAN_ACCENT, // Blue
-                    MidiAssignmentTarget::StreamerBot(_) => Color32::from_rgb(180, 0, 255), // Keep as original, or use another predefined since we don't have ui context
+                    MidiAssignmentTarget::StreamerBot(_) => crate::theme::colors::PURPLE_ACCENT, // Purple
                     MidiAssignmentTarget::Mixxx(_) => crate::theme::colors::WARN_COLOR, // Orange
                 },
-                None => Color32::WHITE.gamma_multiply(0.8), // Neutral ok status for free elements
+                None => crate::theme::colors::LIGHTER_GREY, // Neutral status for free elements
             }
         } else {
             frame_color

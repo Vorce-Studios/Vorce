@@ -14,12 +14,8 @@ pub fn draw_quick_create_popup(
     }
     let popup_pos = canvas.quick_create_pos;
     let catalog = utils::build_node_catalog();
-    let filter_is_empty = canvas.quick_create_filter.is_empty();
-    let filter_lower = if filter_is_empty {
-        String::new()
-    } else {
-        canvas.quick_create_filter.to_lowercase()
-    };
+    let filter_lower = canvas.quick_create_filter.to_lowercase();
+    let filter_is_empty = filter_lower.is_empty();
     let filtered_items: Vec<&utils::NodeCatalogItem> = catalog
         .iter()
         .filter(|item| {
