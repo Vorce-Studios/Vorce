@@ -40,8 +40,12 @@ pub fn draw_search_popup(
             });
             ui.add_space(8.0);
 
-            let filter_lower = canvas.search_filter.to_lowercase();
-            let filter_is_empty = filter_lower.is_empty();
+            let filter_is_empty = canvas.search_filter.is_empty();
+            let filter_lower = if filter_is_empty {
+                String::new()
+            } else {
+                canvas.search_filter.to_lowercase()
+            };
             let matching_parts: Vec<_> = module
                 .parts
                 .iter()
