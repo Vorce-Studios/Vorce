@@ -841,7 +841,7 @@ impl TimelineV2 {
 
             // Draw time ruler
             let ruler_rect = Rect::from_min_size(rect.min, Vec2::new(rect.width(), 30.0));
-            painter.rect_filled(ruler_rect, 0.0, Color32::from_rgb(40, 40, 40));
+            painter.rect_filled(ruler_rect, 0.0, ui.visuals().faint_bg_color);
 
             // Draw time ticks
             let tick_interval = if self.zoom > 100.0 { 0.1 } else { 1.0 };
@@ -860,7 +860,7 @@ impl TimelineV2 {
                             Pos2::new(x, ruler_rect.max.y - h),
                             Pos2::new(x, ruler_rect.max.y),
                         ],
-                        Stroke::new(1.0, Color32::from_rgb(150, 150, 150)),
+                        Stroke::new(1.0, ui.visuals().text_color().gamma_multiply(0.6)),
                     );
 
                     if (time % 1.0).abs() < 0.001 {
@@ -884,7 +884,7 @@ impl TimelineV2 {
                     // Marker line
                     painter.line_segment(
                         [Pos2::new(x, ruler_rect.min.y), Pos2::new(x, rect.max.y)],
-                        Stroke::new(1.0, Color32::from_rgb(100, 200, 100)),
+                        Stroke::new(1.0, crate::theme::colors::MINT_ACCENT),
                     );
 
                     // Marker flag
@@ -892,9 +892,9 @@ impl TimelineV2 {
                         Rect::from_min_size(Pos2::new(x, ruler_rect.min.y), Vec2::new(14.0, 14.0));
                     let is_selected = self.selected_marker_id == Some(marker.id);
                     let flag_color = if is_selected {
-                        Color32::from_rgb(150, 255, 150)
+                        crate::theme::colors::MINT_ACCENT.linear_multiply(1.2)
                     } else {
-                        Color32::from_rgb(50, 150, 50)
+                        crate::theme::colors::MINT_ACCENT.linear_multiply(0.5)
                     };
 
                     painter.rect_filled(flag_rect, 2.0, flag_color);
@@ -937,7 +937,7 @@ impl TimelineV2 {
                     Pos2::new(playhead_x, ruler_rect.min.y),
                     Pos2::new(playhead_x, rect.max.y),
                 ],
-                Stroke::new(2.0, Color32::from_rgb(255, 50, 50)),
+                Stroke::new(2.0, crate::theme::colors::ERROR_COLOR),
             );
 
             // Handle ruler scrubbing
@@ -965,13 +965,13 @@ impl TimelineV2 {
                     Pos2::new(rect.min.x, module_track_y),
                     Vec2::new(rect.width(), module_track_height),
                 );
-                painter.rect_filled(module_rect, 0.0, Color32::from_rgb(22, 22, 22));
+                painter.rect_filled(module_rect, 0.0, ui.visuals().extreme_bg_color);
                 painter.text(
                     Pos2::new(module_rect.min.x + 5.0, module_rect.min.y + 6.0),
                     egui::Align2::LEFT_TOP,
                     "Module Track",
                     egui::FontId::proportional(13.0),
-                    Color32::from_rgb(200, 220, 255),
+                    ui.visuals().text_color().gamma_multiply(0.9),
                 );
 
                 let active_module = self.runtime_show_module(
@@ -1013,20 +1013,20 @@ impl TimelineV2 {
                     );
 
                     let color = if self.semi_auto_pending_block_id == Some(block.id) {
-                        Color32::from_rgb(255, 170, 0)
+                        crate::theme::colors::WARN_COLOR
                     } else if active_block_id == Some(block.id) {
-                        Color32::from_rgb(40, 180, 80)
+                        crate::theme::colors::MINT_ACCENT
                     } else if active_module == Some(block.module_id) {
-                        Color32::from_rgb(55, 130, 200)
+                        crate::theme::colors::CYAN_ACCENT
                     } else {
-                        Color32::from_rgb(70, 70, 90)
+                        ui.visuals().widgets.inactive.bg_fill
                     };
 
                     painter.rect_filled(block_rect, 3.0, color);
                     painter.rect_stroke(
                         block_rect,
                         3.0,
-                        Stroke::new(1.0, Color32::from_rgb(230, 230, 230)),
+                        Stroke::new(1.0, ui.visuals().widgets.inactive.fg_stroke.color),
                         egui::StrokeKind::Middle,
                     );
 
@@ -1053,7 +1053,7 @@ impl TimelineV2 {
                 );
 
                 // Draw header lane
-                let header_bg_color = Color32::from_rgb(45, 45, 45);
+                let header_bg_color = ui.visuals().widgets.noninteractive.bg_fill;
                 painter.rect_filled(header_rect, 0.0, header_bg_color);
 
                 let fold_icon = if is_expanded { "▼" } else { "▶" };
@@ -1073,7 +1073,7 @@ impl TimelineV2 {
                 let text_color = if header_response.hovered() {
                     Color32::WHITE
                 } else {
-                    Color32::from_rgb(220, 220, 220)
+                    ui.visuals().text_color().gamma_multiply(0.8)
                 };
 
                 painter.text(
@@ -1098,9 +1098,9 @@ impl TimelineV2 {
 
                         // Alternating background for automation tracks
                         let bg_color = if current_lane_index % 2 == 0 {
-                            Color32::from_rgb(30, 30, 30)
+                            ui.visuals().window_fill
                         } else {
-                            Color32::from_rgb(35, 35, 35)
+                            ui.visuals().faint_bg_color
                         };
                         painter.rect_filled(track_rect, 0.0, bg_color);
 
@@ -1110,7 +1110,7 @@ impl TimelineV2 {
                                 Pos2::new(track_rect.min.x + 15.0, track_rect.min.y),
                                 Pos2::new(track_rect.min.x + 15.0, track_rect.max.y),
                             ],
-                            Stroke::new(1.0, Color32::from_rgb(80, 80, 80)),
+                            Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color),
                         );
 
                         // Track name (parameter)
@@ -1120,7 +1120,7 @@ impl TimelineV2 {
                             egui::Align2::LEFT_TOP,
                             param_name,
                             egui::FontId::proportional(13.0),
-                            Color32::from_rgb(180, 180, 180),
+                            ui.visuals().text_color().gamma_multiply(0.7),
                         );
 
                         // Draw keyframes and curves
@@ -1147,7 +1147,7 @@ impl TimelineV2 {
                             if !points.is_empty() {
                                 painter.add(egui::Shape::line(
                                     points,
-                                    Stroke::new(2.0, Color32::from_rgb(100, 200, 255)),
+                                    Stroke::new(2.0, crate::theme::colors::CYAN_ACCENT),
                                 ));
                             }
                         }
