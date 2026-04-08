@@ -15,3 +15,8 @@
 **Vulnerability:** The HTTP API server in `crates/mapmap-control/src/web/server.rs` used the legacy header `X-XSS-Protection: 1; mode=block`. This feature is deprecated across modern browsers and is considered an anti-pattern as it can introduce new vulnerabilities like selective blocklist-based side-channel leaks.
 **Learning:** Using `X-XSS-Protection: 1; mode=block` can sometimes allow attackers to disable legitimate scripts on the page by tricking the browser's XSS auditor into blocking them (an XSS-Auditor bypass/denial-of-service). Modern applications should rely exclusively on Content Security Policy (CSP).
 **Prevention:** Always set `X-XSS-Protection: 0` to disable the legacy auditor and enforce strong CSP headers instead for XSS defense-in-depth.
+
+## 2024-06-03 - DoS via Missing Window Context in Render Loop
+**Schwachstelle:** Panik im Haupt-Render-Loop (`crates/vorce/src/app/loops/render/mod.rs`), wenn das Hauptfenster (`get(0)`) nicht mehr existiert, ausgelöst durch einen unsicheren `.unwrap()` Aufruf.
+**Lektion:** Fenster können im Lifecycle einer GUI-Applikation jederzeit geschlossen oder zerstört werden. Ein harter `.unwrap()` auf den Window-Context im synchronen Render-Loop führt unweigerlich zu einem Denial-of-Service-Absturz (DoS) der gesamten Anwendung.
+**Prävention:** Verwende immer sicheres Pattern-Matching (`if let Some(...) = ...`) beim Zugriff auf dynamische Ressourcen wie Fenster oder Hardware-Interfaces im Render-Loop, um bei fehlender Ressource den Frame sicher zu überspringen.

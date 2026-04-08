@@ -103,9 +103,10 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
 
         // 3. Handle Output (Requires another short-lived borrow of window)
         {
-            let window_context = app.window_manager.get(0).unwrap();
-            app.egui_state
-                .handle_platform_output(&window_context.window, full_output.platform_output);
+            if let Some(window_context) = app.window_manager.get(0) {
+                app.egui_state
+                    .handle_platform_output(&window_context.window, full_output.platform_output);
+            }
         }
 
         // 4. Update Textures and Buffers
