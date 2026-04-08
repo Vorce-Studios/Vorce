@@ -24,4 +24,4 @@ wgpu = "24.0.0"
 # Removing git references for now to see if standard bevy suffices
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false, features = ["wayland"] }
+bevy = { version = "0.15.0", default-features = false, features = ["wayland"] }
