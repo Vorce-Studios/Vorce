@@ -5,6 +5,13 @@
 **Erkenntnis:** "Zero-allocation" ASCII-Hacks (wie `eq_ignore_ascii_case` auf Byte-Windows) für die Textsuche in Rendering-Loops zerschießen Unicode Case-Folding (z.B. Umlaute). Die `.to_lowercase()`-Allokation ist zwingend nötig für korrekte Suchergebnisse bei internationalen Zeichen.
 **Aktion:** Verwende Lazy Evaluation und Early Returns (`if filter.is_empty() { return true; }`), um die teure String-Allokation in UI-Loops nur dann auszulösen, wenn der Nutzer *tatsächlich* eine Suchanfrage eingegeben hat. So bleiben Unicode-Suchfunktionen korrekt und im Normalfall (leeres Suchfeld) fällt kein Performance-Penalty an.
 
+<<<<<<< HEAD
 ## 2024-05-18 - [Rust/egui String Search Performance vs Unicode Case-Folding]
 **Erkenntnis:** "Zero-allocation" ASCII-Hacks (wie `eq_ignore_ascii_case` auf Byte-Windows) für die Textsuche in Rendering-Loops zerschießen Unicode Case-Folding (z.B. Umlaute). Die `.to_lowercase()`-Allokation ist zwingend nötig für korrekte Suchergebnisse bei internationalen Zeichen.
 **Aktion:** Verwende Lazy Evaluation und Early Returns (`if filter.is_empty() { return true; }`), um die teure String-Allokation in UI-Loops nur dann auszulösen, wenn der Nutzer *tatsächlich* eine Suchanfrage eingegeben hat. So bleiben Unicode-Suchfunktionen korrekt und im Normalfall (leeres Suchfeld) fällt kein Performance-Penalty an.
+=======
+## 2025-03-25 - [Redundant String Allocation in Loops]
+**Learning:** Found a common pattern in UI filtering where `String::to_lowercase()` was called inside a `.filter()` iterator closure. This causes O(N) heap allocations during search operations, degrading UI performance with large media libraries.
+**Action:** Always pre-compute and cache string transformations like `to_lowercase()` in the corresponding models (e.g. `MediaItem`, `EffectPreset`, `MediaEntry`) instead of dynamically calling `to_lowercase()` inside `filter()` closures during UI searches. This significantly reduces allocations and speeds up query operations.
+## 2025-01-20 - [Zero-Allocation String Search im Egui Render Loop] **Erkenntnis:** Die Nutzung von `.to_lowercase().contains()` innerhalb von `.filter()` während des egui-Render-Loops erzeugt massive redundante String-Allokationen (mindestens 2 pro Shortcut pro Frame bei 60 FPS), was starken Garbage Collection Druck ausübt. **Aktion:** Für Case-Insensitive Suchen in Echtzeit-Render-Schleifen stattdessen Zero-Allocation Byte-Windows verwenden (`.as_bytes().windows(len).any(|w| w.eq_ignore_ascii_case(...))`). Dabei immer vorher die Länge prüfen (`len > 0` und `source.len() >= len`), da `windows(0)` panict.
+>>>>>>> dd0bde57e (⚡ Bolt: Lazy Evaluation for UI Filtering in Shortcuts Panel)
