@@ -2,7 +2,7 @@ Set-StrictMode -Version Latest
 
 . (Join-Path $PSScriptRoot 'VorceStudiosConfig.ps1')
 . (Join-Path $PSScriptRoot 'PaperclipApi.ps1')
-. (Join-Path (Join-Path $PSScriptRoot '..\..') 'jules\jules-github.ps1')
+. (Join-Path (Join-Path $PSScriptRoot '..\..\..\scripts') 'jules\jules-github.ps1')
 
 function Get-VorceStudiosPluginSourceDefinitions {
     $paths = Get-VorceStudiosPaths

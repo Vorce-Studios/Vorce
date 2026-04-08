@@ -5,8 +5,22 @@ function Get-VorceStudiosRoot {
     return (Resolve-Path $root).Path
 }
 
+function Import-VorceStudiosPowerShellDataFile {
+    param(
+        [Parameter(Mandatory)][string]$Path
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        throw "Data file not found: $Path"
+    }
+
+    $content = Get-Content -LiteralPath $Path -Raw
+    # Simple Invoke-Expression to read the hashtable from .psd1
+    return [hashtable](Invoke-Expression $content)
+}
+
 function Get-VorceStudiosSystemPolicy {
-    return Import-PowerShellDataFile -Path (Join-Path (Get-VorceStudiosRoot) 'ops\paperclip\policies\system.psd1')
+    return Import-VorceStudiosPowerShellDataFile -Path (Join-Path (Get-VorceStudiosRoot) 'ops\paperclip\policies\system.psd1')
 }
 
 function Get-VorceStudiosPolicy {
@@ -19,7 +33,7 @@ function Get-VorceStudiosPolicy {
         throw "Policy '$Name' wurde nicht gefunden: $path"
     }
 
-    return Import-PowerShellDataFile -Path $path
+    return Import-VorceStudiosPowerShellDataFile -Path $path
 }
 
 function Get-VorceStudiosPaths {
@@ -29,7 +43,7 @@ function Get-VorceStudiosPaths {
     $paperclipHome = Join-Path $root '.paperclip-home'
     $runtimeRoot = Join-Path $paperclipHome 'runtime\vorce-studios'
 
-    return [ordered]@{
+    $paths = [ordered]@{
         Root                 = $root
         PaperclipConfigDir   = Join-Path $root '.paperclip'
         PaperclipConfigPath  = Join-Path $root '.paperclip\config.json'
@@ -50,11 +64,16 @@ function Get-VorceStudiosPaths {
         TemplatesDir         = Join-Path $root 'ops\paperclip\templates'
         InstructionsDir      = Join-Path $root 'ops\paperclip\instructions'
         AtlasDir             = Join-Path $root '.agent\atlas'
-        AtlasSummaryPath     = Join-Path $root $system.Atlas.SummaryPath
-        AtlasReadmePath      = Join-Path $root $system.Atlas.ReadmePath
-        AtlasCodePath        = Join-Path $root $system.Atlas.CodeAtlasPath
         RegressionPlaybook   = Join-Path $root 'docs\A3_PROJECT\B3_OPERATIONS\DOC-C4_REGRESSION_PLAYBOOK.md'
     }
+
+    if ($system.ContainsKey('Atlas')) {
+        $paths['AtlasSummaryPath'] = Join-Path $root $system.Atlas.SummaryPath
+        $paths['AtlasReadmePath']  = Join-Path $root $system.Atlas.ReadmePath
+        $paths['AtlasCodePath']    = Join-Path $root $system.Atlas.CodeAtlasPath
+    }
+
+    return $paths
 }
 
 function Get-VorceStudiosTimestamp {

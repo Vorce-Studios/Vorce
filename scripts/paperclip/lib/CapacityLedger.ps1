@@ -33,7 +33,23 @@ function Update-VorceStudiosCapacityLedgerFromProbe {
     $ledger.capacity['antigravity'] = @{ dailySessions = 5; concurrentSessions = 1 }
     $ledger.capacity['codex'] = @{ dailyTokens = 500000 }
     $ledger.capacity['gemini'] = @{ dailyTokens = 1000000 }
+    $ledger.capacity['qwen'] = @{ dailyTokens = 500000 }
 
     Set-VorceStudiosCapacityLedger -Ledger $ledger
     return $ledger
+}
+
+function Get-VorceStudiosPreferredTool {
+    param(
+        [Parameter(Mandatory)][string[]]$Chain
+    )
+
+    $ledger = Get-VorceStudiosCapacityLedger
+    foreach ($tool in $Chain) {
+        if ($ledger.capacity.ContainsKey($tool)) {
+            return $tool
+        }
+    }
+
+    return $Chain[0]
 }
