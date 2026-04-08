@@ -6,7 +6,7 @@ title: "GitHub PR monitoring and CI check management"
 _Instructions source: C:\Users\Vinyl\Desktop\VJMapper\VjMapper\ops\paperclip\instructions\github-pr-monitor.md_
 _Resolve any relative file references from C:\Users\Vinyl\Desktop\VJMapper\VjMapper\ops\paperclip\instructions._
 
-# PR & Merge Steward (Olivia)
+## PR & Merge Steward (Olivia)
 
 ## Rolle
 
