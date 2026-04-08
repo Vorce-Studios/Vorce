@@ -10,155 +10,6 @@ use crate::UIAction;
 use egui::{Color32, Ui, Vec2};
 use vorce_core::module::{BevyCameraMode, ModuleId, ModulePartId, SourceType};
 
-fn render_file_path_row(
-    ui: &mut Ui,
-    path: &mut String,
-    button_label: &str,
-    hover_text: &str,
-) -> bool {
-    let mut open_picker = false;
-
-    if super::common::inspector_is_compact(ui) {
-        ui.label("Path:");
-        ui.add(egui::TextEdit::singleline(path).desired_width(f32::INFINITY));
-        if ui.button(button_label).on_hover_text(hover_text).clicked() {
-            open_picker = true;
-        }
-    } else {
-        ui.horizontal(|ui| {
-            ui.label("Path:");
-            ui.add(egui::TextEdit::singleline(path).desired_width(f32::INFINITY));
-            if ui.button(button_label).on_hover_text(hover_text).clicked() {
-                open_picker = true;
-            }
-        });
-    }
-
-    open_picker
-}
-
-fn render_target_overrides(
-    ui: &mut Ui,
-    target_width: &mut Option<u32>,
-    target_height: &mut Option<u32>,
-    target_fps: Option<&mut Option<f32>>,
-) {
-    let compact = super::common::inspector_is_compact(ui);
-    let mut width_value = target_width.unwrap_or(0);
-    let mut height_value = target_height.unwrap_or(0);
-
-    if compact {
-        ui.label("Width:");
-        if ui
-            .add(egui::DragValue::new(&mut width_value).speed(1))
-            .changed()
-        {
-            *target_width = if width_value > 0 {
-                Some(width_value)
-            } else {
-                None
-            };
-        }
-        ui.label("Height:");
-        if ui
-            .add(egui::DragValue::new(&mut height_value).speed(1))
-            .changed()
-        {
-            *target_height = if height_value > 0 {
-                Some(height_value)
-            } else {
-                None
-            };
-        }
-    } else {
-        ui.horizontal(|ui| {
-            ui.label("Width:");
-            if ui
-                .add(egui::DragValue::new(&mut width_value).speed(1))
-                .changed()
-            {
-                *target_width = if width_value > 0 {
-                    Some(width_value)
-                } else {
-                    None
-                };
-            }
-            ui.label("Height:");
-            if ui
-                .add(egui::DragValue::new(&mut height_value).speed(1))
-                .changed()
-            {
-                *target_height = if height_value > 0 {
-                    Some(height_value)
-                } else {
-                    None
-                };
-            }
-        });
-    }
-
-    if let Some(target_fps) = target_fps {
-        let mut fps = target_fps.unwrap_or(0.0);
-        if compact {
-            ui.label("FPS:");
-            if ui.add(egui::DragValue::new(&mut fps).speed(1.0)).changed() {
-                *target_fps = if fps > 0.0 { Some(fps) } else { None };
-            }
-        } else {
-            ui.horizontal(|ui| {
-                ui.label("FPS:");
-                if ui.add(egui::DragValue::new(&mut fps).speed(1.0)).changed() {
-                    *target_fps = if fps > 0.0 { Some(fps) } else { None };
-                }
-            });
-        }
-    }
-}
-
-fn render_shared_media_row(
-    ui: &mut Ui,
-    shared_id: &mut String,
-    combo_id: impl std::hash::Hash,
-    shared_media_ids: &[String],
-) {
-    if super::common::inspector_is_compact(ui) {
-        ui.label("Shared ID:");
-        ui.add(
-            egui::TextEdit::singleline(shared_id)
-                .hint_text("Enter ID...")
-                .desired_width(f32::INFINITY),
-        );
-        egui::ComboBox::from_id_salt(combo_id)
-            .selected_text("Select Existing")
-            .show_ui(ui, |ui| {
-                for id in shared_media_ids {
-                    if ui.selectable_label(shared_id == id, id).clicked() {
-                        *shared_id = id.clone();
-                    }
-                }
-            });
-    } else {
-        ui.horizontal(|ui| {
-            ui.label("Shared ID:");
-            ui.add(
-                egui::TextEdit::singleline(shared_id)
-                    .hint_text("Enter ID...")
-                    .desired_width(160.0),
-            );
-
-            egui::ComboBox::from_id_salt(combo_id)
-                .selected_text("Select Existing")
-                .show_ui(ui, |ui| {
-                    for id in shared_media_ids {
-                        if ui.selectable_label(shared_id == id, id).clicked() {
-                            *shared_id = id.clone();
-                        }
-                    }
-                });
-        });
-    }
-}
-
 /// Renders the configuration UI for a `ModulePartType::Source`.
 pub fn render_source_ui(
     canvas: &mut ModuleCanvas,
@@ -413,9 +264,21 @@ pub fn render_source_ui(
                 });
             } else {
                 ui.collapsing("📁 File Info", |ui| {
-                    if render_file_path_row(ui, path, "\u{1F4C2}", "Select Media File") {
-                        actions.push(UIAction::PickMediaFile(module_id, part_id, "".to_string()));
-                    }
+                    ui.horizontal(|ui| {
+                        ui.label("Path:");
+                        ui.add(egui::TextEdit::singleline(path).desired_width(160.0));
+                        if ui
+                            .button("\u{1F4C2}")
+                            .on_hover_text("Select Media File")
+                            .clicked()
+                        {
+                            actions.push(UIAction::PickMediaFile(
+                                module_id,
+                                part_id,
+                                "".to_string(),
+                            ));
+                        }
+                    });
                 });
             }
 
@@ -505,7 +368,7 @@ pub fn render_source_ui(
             });
 
             ui.add_space(8.0);
-            if super::common::inspector_is_compact(ui) {
+            ui.horizontal(|ui| {
                 ui.label("Playback Speed:");
                 let speed_slider = styled_slider(ui, speed, 0.1..=4.0, 1.0);
                 ui.label("x");
@@ -515,19 +378,7 @@ pub fn render_source_ui(
                         MediaPlaybackCommand::SetSpeed(*speed),
                     ));
                 }
-            } else {
-                ui.horizontal(|ui| {
-                    ui.label("Playback Speed:");
-                    let speed_slider = styled_slider(ui, speed, 0.1..=4.0, 1.0);
-                    ui.label("x");
-                    if speed_slider.changed() {
-                        actions.push(UIAction::MediaCommand(
-                            part_id,
-                            MediaPlaybackCommand::SetSpeed(*speed),
-                        ));
-                    }
-                });
-            }
+            });
             ui.separator();
 
             // === VIDEO OPTIONS ===
@@ -566,7 +417,25 @@ pub fn render_source_ui(
             ui.separator();
 
             ui.collapsing("📐 Target Overrides", |ui| {
-                render_target_overrides(ui, target_width, target_height, Some(target_fps));
+                ui.horizontal(|ui| {
+                    let mut w = target_width.unwrap_or(0);
+                    let mut h = target_height.unwrap_or(0);
+                    ui.label("Width:");
+                    if ui.add(egui::DragValue::new(&mut w).speed(1)).changed() {
+                        *target_width = if w > 0 { Some(w) } else { None };
+                    }
+                    ui.label("Height:");
+                    if ui.add(egui::DragValue::new(&mut h).speed(1)).changed() {
+                        *target_height = if h > 0 { Some(h) } else { None };
+                    }
+                });
+                ui.horizontal(|ui| {
+                    let mut fps = target_fps.unwrap_or(0.0);
+                    ui.label("FPS:");
+                    if ui.add(egui::DragValue::new(&mut fps).speed(1.0)).changed() {
+                        *target_fps = if fps > 0.0 { Some(fps) } else { None };
+                    }
+                });
             });
             ui.separator();
 
@@ -620,20 +489,39 @@ pub fn render_source_ui(
                 });
             } else {
                 ui.collapsing("📁 File Info", |ui| {
-                    if render_file_path_row(ui, path, "\u{1F4C2}", "Select Image File") {
-                        actions.push(crate::UIAction::PickMediaFile(
-                            module_id,
-                            part_id,
-                            "".to_string(),
-                        ));
-                    }
+                    ui.horizontal(|ui| {
+                        ui.label("Path:");
+                        ui.add(egui::TextEdit::singleline(path).desired_width(160.0));
+                        if ui
+                            .button("\u{1F4C2}")
+                            .on_hover_text("Select Image File")
+                            .clicked()
+                        {
+                            actions.push(crate::UIAction::PickMediaFile(
+                                module_id,
+                                part_id,
+                                "".to_string(),
+                            ));
+                        }
+                    });
                 });
             }
 
             ui.separator();
 
             ui.collapsing("📐 Target Overrides", |ui| {
-                render_target_overrides(ui, target_width, target_height, None);
+                ui.horizontal(|ui| {
+                    let mut w = target_width.unwrap_or(0);
+                    let mut h = target_height.unwrap_or(0);
+                    ui.label("Width:");
+                    if ui.add(egui::DragValue::new(&mut w).speed(1)).changed() {
+                        *target_width = if w > 0 { Some(w) } else { None };
+                    }
+                    ui.label("Height:");
+                    if ui.add(egui::DragValue::new(&mut h).speed(1)).changed() {
+                        *target_height = if h > 0 { Some(h) } else { None };
+                    }
+                });
             });
             ui.separator();
 
@@ -672,7 +560,24 @@ pub fn render_source_ui(
             ..
         } => {
             ui.label("\u{1F517} Shared Video Source");
-            render_shared_media_row(ui, shared_id, "shared_media_video", shared_media_ids);
+            ui.horizontal(|ui| {
+                ui.label("Shared ID:");
+                ui.add(
+                    egui::TextEdit::singleline(shared_id)
+                        .hint_text("Enter ID...")
+                        .desired_width(140.0),
+                );
+
+                egui::ComboBox::from_id_salt("shared_media_video")
+                    .selected_text("Select Existing")
+                    .show_ui(ui, |ui| {
+                        for id in shared_media_ids {
+                            if ui.selectable_label(shared_id == id, id).clicked() {
+                                *shared_id = id.clone();
+                            }
+                        }
+                    });
+            });
             crate::widgets::custom::render_info_label_with_size(
                 ui,
                 "Use the same ID to sync multiple nodes.",
@@ -715,7 +620,24 @@ pub fn render_source_ui(
             ..
         } => {
             ui.label("\u{1F517} Shared Image Source");
-            render_shared_media_row(ui, shared_id, "shared_media_image", shared_media_ids);
+            ui.horizontal(|ui| {
+                ui.label("Shared ID:");
+                ui.add(
+                    egui::TextEdit::singleline(shared_id)
+                        .hint_text("Enter ID...")
+                        .desired_width(140.0),
+                );
+
+                egui::ComboBox::from_id_salt("shared_media_image")
+                    .selected_text("Select Existing")
+                    .show_ui(ui, |ui| {
+                        for id in shared_media_ids {
+                            if ui.selectable_label(shared_id == id, id).clicked() {
+                                *shared_id = id.clone();
+                            }
+                        }
+                    });
+            });
             crate::widgets::custom::render_info_label_with_size(
                 ui,
                 "Use the same ID to sync multiple nodes.",

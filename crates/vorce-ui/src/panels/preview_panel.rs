@@ -179,14 +179,14 @@ impl PreviewPanel {
                                                     egui::pos2(0.0, 0.0),
                                                     egui::pos2(1.0, 1.0),
                                                 ),
-                                                egui::Color32::WHITE, // Keeping WHITE here as it tints the image (we want the original colors of the image)
+                                                egui::Color32::WHITE,
                                             );
                                         } else {
                                             // Draw placeholder background
                                             ui.painter().rect_filled(
                                                 rect,
                                                 2.0,
-                                                ui.style().visuals.faint_bg_color,
+                                                egui::Color32::from_gray(40),
                                             );
 
                                             // Draw "no signal" text
@@ -195,7 +195,7 @@ impl PreviewPanel {
                                                 egui::Align2::CENTER_CENTER,
                                                 "No Signal",
                                                 egui::FontId::proportional(12.0),
-                                                ui.style().visuals.text_color().gamma_multiply(0.5),
+                                                egui::Color32::GRAY,
                                             );
                                         }
 

@@ -248,9 +248,7 @@ impl HueController {
         let b = rgb.blue;
 
         // 2. Identify targets
-        let Some(tx) = self.sender.as_ref() else {
-            return;
-        };
+        let tx = self.sender.as_ref().unwrap();
         let mut stream_updates = Vec::new();
 
         if let Some(target_ids) = ids {
