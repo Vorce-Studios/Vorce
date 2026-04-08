@@ -135,7 +135,11 @@ impl MappingManager {
 
         // Sort by depth (back to front)
         // SAFETY: Fallback to Equal to prevent panics on NaN values (DoS protection)
-        mappings.sort_by(|a, b| a.depth.partial_cmp(&b.depth).unwrap_or(std::cmp::Ordering::Equal));
+        mappings.sort_by(|a, b| {
+            a.depth
+                .partial_cmp(&b.depth)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         mappings
     }
