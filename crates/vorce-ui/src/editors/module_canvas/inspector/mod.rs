@@ -134,9 +134,9 @@ pub fn render_trigger_preview(
 
             let status = if is_live { "LIVE pulse" } else { "Waiting" };
             let color = if is_live {
-                egui::Color32::from_rgb(110, 235, 150)
+                ui.visuals().text_color().gamma_multiply(0.8)
             } else {
-                egui::Color32::from_rgb(180, 180, 180)
+                ui.visuals().text_color().gamma_multiply(0.5)
             };
             ui.colored_label(color, status);
 
@@ -336,7 +336,7 @@ pub fn render_inspector_for_part(
                 ModulePartType::Modulizer(mod_type) => {
                     render_standard_texture_preview(canvas, ui, module_id, part_id);
                     ui.separator();
-                    effect::render_effect_ui(ui, mod_type, part_id);
+                    effect::render_effect_ui(ui, mod_type, part_id, actions, module_id);
                 }
                 ModulePartType::Layer(layer) => {
                     render_inspector_preview_toggle(canvas, ui);

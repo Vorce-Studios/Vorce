@@ -141,7 +141,21 @@ pub fn render_layer_ui(
                 mapping_mode,
                 9_999,
             );
-        } // Note: LayerType::All was removed (dead code)
+        }
+        LayerType::All {
+            opacity,
+            blend_mode,
+        } => {
+            ui.label("All Layers (Deactivated)");
+            ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
+
+            ui.horizontal(|ui| {
+                ui.label("Blend Mode:");
+                render_layer_blend_mode_ui(ui, 0, blend_mode);
+            });
+
+            ui.label("Note: This special layer is currently ignored in final render.");
+        }
     }
 }
 

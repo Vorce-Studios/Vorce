@@ -1,0 +1,15 @@
+---
+title: vorce-bevy file atlas
+---
+flowchart LR
+    crates_vorce_bevy_src_components_rs["src/components.rs"]
+    crates_vorce_bevy_src_lib_rs["src/lib.rs"]
+    crates_vorce_bevy_src_resources_rs["src/resources.rs"]
+    crates_vorce_bevy_src_systems_rs["src/systems.rs"]
+
+    crates_vorce_bevy_src_lib_rs --> crates_vorce_bevy_src_components_rs
+    crates_vorce_bevy_src_lib_rs --> crates_vorce_bevy_src_resources_rs
+    crates_vorce_bevy_src_lib_rs --> crates_vorce_bevy_src_systems_rs
+    crates_vorce_bevy_src_resources_rs --> crates_vorce_bevy_src_components_rs
+    crates_vorce_bevy_src_systems_rs --> crates_vorce_bevy_src_components_rs
+    crates_vorce_bevy_src_systems_rs --> crates_vorce_bevy_src_resources_rs
