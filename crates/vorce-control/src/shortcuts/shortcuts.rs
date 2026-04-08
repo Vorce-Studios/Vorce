@@ -237,12 +237,6 @@ pub struct Shortcut {
     pub action: Action,
     pub context: ShortcutContext,
     pub description: String,
-    #[serde(skip)]
-    #[serde(default)]
-    pub description_lower: String,
-    #[serde(skip)]
-    #[serde(default)]
-    pub shortcut_str_lower: String,
     pub enabled: bool,
 }
 
@@ -255,28 +249,14 @@ impl Shortcut {
         context: ShortcutContext,
         description: String,
     ) -> Self {
-        let mut shortcut = Self {
+        Self {
             key,
             modifiers,
             action,
             context,
             description,
-            description_lower: String::new(),
-            shortcut_str_lower: String::new(),
             enabled: true,
-        };
-        shortcut.update_cached_strings();
-        shortcut
-    }
-
-    /// Update cached lowercased strings.
-    /// ⚡ Bolt: Durch das Caching der lowercased Strings in der Struktur
-    /// verhindern wir ".to_lowercase()" Allokationen in jedem Frame,
-    /// wenn nach Shortcuts gesucht wird (z.B. im ShortcutsPanel).
-    /// Das reduziert unnötigen Overhead und erhöht die UI-Performance.
-    pub fn update_cached_strings(&mut self) {
-        self.description_lower = self.description.to_lowercase();
-        self.shortcut_str_lower = self.to_shortcut_string().to_lowercase();
+        }
     }
 
     /// Check if this shortcut matches the given key and modifiers
