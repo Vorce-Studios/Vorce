@@ -152,7 +152,11 @@ impl KeyBindings {
     /// Load from JSON file
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let json = std::fs::read_to_string(path)?;
-        let data: KeyBindingsData = serde_json::from_str(&json)?;
+        let mut data: KeyBindingsData = serde_json::from_str(&json)?;
+
+        for shortcut in &mut data.shortcuts {
+            shortcut.update_cached_strings();
+        }
 
         info!(
             "Loaded {} shortcuts and {} macros",
