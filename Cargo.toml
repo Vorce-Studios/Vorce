@@ -122,7 +122,13 @@ usvg = "0.47"
 # Core dependencies
 wgpu = "29.0.0"
 winit = { version = "0.30.13" }
+windows = { version = "0.62.2" }
 winres = "0.1"
+
+[patch.crates-io]
+windows = { version = "0.62.2" }
+windows-core = { version = "0.62.2" }
+windows-targets = { version = "0.52.6" }
 
 [profile.dev]
 opt-level = 1 # Slightly optimize for better wgpu performance in debug
