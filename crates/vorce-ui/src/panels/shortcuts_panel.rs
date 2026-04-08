@@ -79,9 +79,7 @@ impl ShortcutsPanel {
                 if filter_lower.is_empty() {
                     return true;
                 }
-                let desc_lower = s.description.to_lowercase();
-                let shortcut_str_lower = s.to_shortcut_string().to_lowercase();
-                desc_lower.contains(&filter_lower) || shortcut_str_lower.contains(&filter_lower)
+                s.description_lower.contains(&filter_lower) || s.shortcut_str_lower.contains(&filter_lower)
             })
             .map(|(i, _)| i)
             .collect();
@@ -242,6 +240,7 @@ impl ShortcutsPanel {
                     let mut shortcut = shortcuts_clone[index].clone();
                     shortcut.key = new_key;
                     shortcut.modifiers = new_modifiers;
+                    shortcut.update_cached_strings();
                     key_bindings.update_shortcut(index, shortcut);
                     self.detect_conflicts(key_bindings);
                     self.editing_shortcut_index = None;
