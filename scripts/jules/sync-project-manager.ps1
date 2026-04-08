@@ -150,7 +150,7 @@ $results = foreach ($issue in @($issues | Sort-Object number)) {
     $isStale = Test-IsStaleSnapshot -Snapshot $snapshot -StaleAfterHours $StaleAfterHours
     $attention = ([string]$snapshot.NeedsAttention -eq "yes") -or $isStale
 
-    if ($attention -and -not (Test-GitHubIssueClosed -Issue $issue)) {
+    if ($attention -and [string]$issue.state -ne "CLOSED") {
         Sync-GitHubIssueStatusLabels -Repository $resolvedRepository -IssueNumber ([int]$issue.number) -Issue $issue -DesiredLabels @("status: blocked")
     }
 

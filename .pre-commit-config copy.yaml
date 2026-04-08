@@ -1,0 +1,110 @@
+# Pre-commit configuration for VjMapper
+# Runs automatically via pre-commit.ci on every PR
+
+ci:
+  autofix_commit_msg: "style: auto-fix by pre-commit.ci"
+  autofix_prs: true
+  autoupdate_branch: ""
+  autoupdate_commit_msg: "chore: pre-commit autoupdate"
+  autoupdate_schedule: weekly
+
+  # Skip Rust hooks in CI (no toolchain available)
+  # Skip markdownlint (too many false positives with tables)
+  skip:
+    - fmt
+    - clippy
+    - cargo-sort
+    - markdownlint-fix
+
+  submodules: false
+
+repos:
+  # ═══════════════════════════════════════════════════════════════
+  # RUST FORMATTING & LINTING (local only)
+  # ═══════════════════════════════════════════════════════════════
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+      - id: fmt
+        name: "Rust: cargo fmt"
+        args: ['--all', '--']
+        stages: [manual]  # Run manually only
+
+      - id: clippy
+        name: "Rust: cargo clippy"
+        args:
+          - '--workspace'
+          - '--all-targets'
+          - '--'
+          - '-D'
+          - 'warnings'
+        stages: [manual]  # Run manually only
+
+  # ═══════════════════════════════════════════════════════════════
+  # GENERAL FILE FIXES (runs in CI)
+  # ═══════════════════════════════════════════════════════════════
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+        exclude: ^(.*\.patch|.*\.diff)$
+
+      - id: end-of-file-fixer
+        exclude: ^(.*\.patch|.*\.diff|.*\.rs\.bk)$
+
+      - id: check-case-conflict
+
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+
+      - id: check-toml
+
+      - id: check-added-large-files
+        args: [--maxkb=5000]
+        exclude: ^(.*\.dll|.*\.so|.*\.dylib|assets/.*|resources/.*)$
+
+      - id: check-merge-conflict
+
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: ^(.*\.bat|.*\.cmd)$
+
+  # ═══════════════════════════════════════════════════════════════
+  # MARKDOWN LINTING (only new files, not entire repo)
+  # ═══════════════════════════════════════════════════════════════
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.48.0
+    hooks:
+      - id: markdownlint-fix
+        name: "Markdown: lint and fix"
+        args:
+          - '--config'
+          - '.markdownlint.json'
+        files: \.(md|markdown)$
+        # Exclude existing problematic files (legacy)
+        exclude: ^(CHANGELOG\.md|ROADMAP\.md|.*\.patch|\.jules/.*|\.agent/.*|docs/.*)$
+
+  # ═══════════════════════════════════════════════════════════════
+  # SECURITY: SECRET DETECTION
+  # ═══════════════════════════════════════════════════════════════
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: "Security: detect secrets"
+        args:
+          - '--baseline'
+          - '.secrets.baseline'
+        exclude: ^(Cargo\.lock|.*\.patch|.*\.diff)$
+
+  # ═══════════════════════════════════════════════════════════════
+  # CARGO.TOML SORTING (local only)
+  # ═══════════════════════════════════════════════════════════════
+  - repo: https://github.com/DevinR528/cargo-sort
+    rev: v2.1.3
+    hooks:
+      - id: cargo-sort
+        name: "Rust: sort Cargo.toml"
+        args: ['--workspace', '--grouped']
+        stages: [manual]  # Run manually only
