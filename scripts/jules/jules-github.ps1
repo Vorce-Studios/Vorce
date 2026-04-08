@@ -8,7 +8,6 @@ $script:ManagedIssueStatusLabels = @(
     "status: needs-review"
 )
 $script:VorceProjectContextCache = @{}
-$script:VorceProjectFieldSyncSuspendedReason = $null
 
 function Assert-GitHubCli {
     if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
@@ -96,102 +95,30 @@ function Invoke-GitHubApiJson {
 function Get-GitHubIssue {
     param([Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][int]$IssueNumber)
 
-    $issue = Invoke-GitHubApiJson -Arguments @("api", "repos/$Repository/issues/$IssueNumber")
-    return [pscustomobject]@{
-        number = [int]$issue.number
-        title = [string]$issue.title
-        body = if ($null -eq $issue.body) { '' } else { [string]$issue.body }
-        url = [string]$issue.html_url
-        state = [string]$issue.state
-        updatedAt = [string]$issue.updated_at
-        labels = @($issue.labels)
-    }
-}
-
-function Get-GitHubIssueStateValue {
-    param([AllowNull()][object]$Issue)
-
-    if ($null -eq $Issue) {
-        return ''
+    Assert-GitHubCli
+    $output = & gh issue view $IssueNumber --repo $Repository --json number,title,body,url,state,updatedAt,labels 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        throw (($output | Out-String).Trim())
     }
 
-    return ([string]$Issue.state).Trim().ToLowerInvariant()
-}
-
-function Test-GitHubIssueClosed {
-    param([AllowNull()][object]$Issue)
-
-    return (Get-GitHubIssueStateValue -Issue $Issue) -eq 'closed'
-}
-
-function Get-GitHubPullRequestStateValue {
-    param([AllowNull()][object]$PullRequest)
-
-    if ($null -eq $PullRequest) {
-        return ''
-    }
-
-    return ([string]$PullRequest.state).Trim().ToUpperInvariant()
+    return (($output | Out-String) | ConvertFrom-Json)
 }
 
 function Get-GitHubIssues {
     param([Parameter(Mandatory)][string]$Repository, [ValidateSet("open", "closed", "all")][string]$State = "open", [int]$Limit = 200)
 
-    $results = New-Object System.Collections.Generic.List[object]
-    $page = 1
-    $remaining = [Math]::Max(1, $Limit)
-
-    while ($remaining -gt 0) {
-        $perPage = [Math]::Min(100, [Math]::Max($remaining, 20))
-        $items = Invoke-GitHubApiJson -Arguments @("api", "repos/$Repository/issues?state=$State&per_page=$perPage&page=$page")
-        if ($null -eq $items) {
-            break
-        }
-
-        $batch = @(
-            $items |
-                Where-Object {
-                    -not ($_.PSObject.Properties.Name -contains 'pull_request')
-                }
-        )
-        if ($batch.Count -eq 0) {
-            if (@($items).Count -lt $perPage) {
-                break
-            }
-
-            $page += 1
-            continue
-        }
-
-        foreach ($item in $batch) {
-            if ($results.Count -ge $Limit) {
-                break
-            }
-
-            $results.Add([pscustomobject]@{
-                number = [int]$item.number
-                title = [string]$item.title
-                body = if ($null -eq $item.body) { '' } else { [string]$item.body }
-                url = [string]$item.html_url
-                state = [string]$item.state
-                updatedAt = [string]$item.updated_at
-                labels = @($item.labels)
-            })
-        }
-
-        if (@($items).Count -lt $perPage -or $results.Count -ge $Limit) {
-            break
-        }
-
-        $remaining = [Math]::Max(0, $Limit - $results.Count)
-        $page += 1
+    Assert-GitHubCli
+    $output = & gh issue list --repo $Repository --state $State --limit $Limit --json number,title,body,url,state,updatedAt,labels 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        throw (($output | Out-String).Trim())
     }
 
-    if ($results.Count -eq 0) {
+    $items = (($output | Out-String) | ConvertFrom-Json)
+    if ($null -eq $items) {
         return @()
     }
 
-    return @($results | ForEach-Object { $_ })
+    return @($items)
 }
 
 function Get-GitHubPullRequest {
@@ -434,7 +361,7 @@ function Get-VorceQueueState {
         return "unknown"
     }
 
-    if (Test-GitHubIssueClosed -Issue $Issue) {
+    if ([string]$Issue.state -eq "CLOSED") {
         return "closed"
     }
 
@@ -458,7 +385,7 @@ function Get-VorceRemoteState {
     param([AllowNull()][object]$Issue, [AllowNull()][object]$Session, [AllowNull()][object]$PullRequest)
 
     if ($null -ne $PullRequest) {
-        switch (Get-GitHubPullRequestStateValue -PullRequest $PullRequest) {
+        switch ([string]$PullRequest.state) {
             "MERGED" { return "merged" }
             "OPEN" { return "pr-open" }
         }
@@ -473,7 +400,7 @@ function Get-VorceRemoteState {
             if ($labels -contains "jules-task") {
                 return "awaiting-session"
             }
-            if (Test-GitHubIssueClosed -Issue $Issue) {
+            if ([string]$Issue.state -eq "CLOSED") {
                 return "closed"
             }
         }
@@ -497,11 +424,11 @@ function Get-VorceRemoteState {
 function Get-VorceNeedsAttention {
     param([AllowNull()][object]$Issue, [AllowNull()][object]$Session, [AllowNull()][object]$PullRequest)
 
-    if (Test-GitHubIssueClosed -Issue $Issue) {
+    if ($null -ne $Issue -and [string]$Issue.state -eq "CLOSED") {
         return "no"
     }
 
-    if ($null -ne $PullRequest -and @("MERGED", "CLOSED") -contains (Get-GitHubPullRequestStateValue -PullRequest $PullRequest)) {
+    if ($null -ne $PullRequest -and @("MERGED", "CLOSED") -contains [string]$PullRequest.state) {
         return "no"
     }
 
@@ -566,7 +493,7 @@ function Get-VorceLastActivitySummary {
 function Get-DesiredIssueStatusLabels {
     param([AllowNull()][object]$Issue, [AllowNull()][object]$Session, [AllowNull()][object]$PullRequest)
 
-    if ($null -eq $Issue -or (Test-GitHubIssueClosed -Issue $Issue)) {
+    if ($null -eq $Issue -or [string]$Issue.state -eq "CLOSED") {
         return @()
     }
 
@@ -575,7 +502,7 @@ function Get-DesiredIssueStatusLabels {
         return @()
     }
 
-    if ($null -ne $PullRequest -and (Get-GitHubPullRequestStateValue -PullRequest $PullRequest) -eq "OPEN") {
+    if ($null -ne $PullRequest -and [string]$PullRequest.state -eq "OPEN") {
         return @("status: needs-review")
     }
 
@@ -1025,7 +952,7 @@ function Get-VorceProjectStatusCandidateNames {
         return @("Done", "Completed", "Closed", "Merged")
     }
 
-    if (([string]$Fields.IssueState).Trim().ToLowerInvariant() -eq "closed") {
+    if (([string]$Fields.IssueState).Trim().ToUpperInvariant() -eq "CLOSED") {
         return @("Done", "Completed", "Closed", "Merged")
     }
 
@@ -1054,7 +981,7 @@ function Get-VorceJulesSessionStatusValue {
         [AllowNull()][object]$Issue
     )
 
-    if (Test-GitHubIssueClosed -Issue $Issue) {
+    if ($null -ne $Issue -and [string]$Issue.state -eq "CLOSED") {
         return "completed"
     }
 
@@ -1092,13 +1019,11 @@ function Get-VorcePrChecksStatusValue {
         return "n_a"
     }
 
-    $pullRequestState = Get-GitHubPullRequestStateValue -PullRequest $PullRequest
-
-    if ($pullRequestState -eq "MERGED") {
+    if ([string]$PullRequest.state -eq "MERGED") {
         return "merged"
     }
 
-    if ($pullRequestState -eq "CLOSED") {
+    if ([string]$PullRequest.state -eq "CLOSED") {
         return "closed"
     }
 
@@ -1147,14 +1072,6 @@ function Set-VorceProjectFieldValue {
         return
     }
 
-    $normalizedDataType = [string]$Field.DataType
-    if (
-        $normalizedDataType -match 'PULL_REQUEST' -or
-        [string]$Field.Name -match '^Linked pull requests?$'
-    ) {
-        return
-    }
-
     if ([string]::IsNullOrWhiteSpace($Value)) {
         $mutation = @'
 mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!) {
@@ -1174,6 +1091,7 @@ mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!) {
         return
     }
 
+    $normalizedDataType = [string]$Field.DataType
     switch ($normalizedDataType) {
         "SINGLE_SELECT" {
             $option = Resolve-ProjectSingleSelectOption -Options $Field.Options -Candidates @($Value)
@@ -1277,101 +1195,69 @@ mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $textValue: String!) {
 function Sync-VorceProjectFields {
     param([Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][int]$IssueNumber, [Parameter(Mandatory)][hashtable]$Fields)
 
-    if (-not [string]::IsNullOrWhiteSpace([string]$script:VorceProjectFieldSyncSuspendedReason)) {
+    $context = Get-VorceProjectContext -Repository $Repository
+    if ($null -eq $context) {
         return
     }
 
-    try {
-        $context = Get-VorceProjectContext -Repository $Repository
-        if ($null -eq $context) {
-            return
-        }
-
-        $issueContentId = Get-GitHubIssueContentId -Repository $Repository -IssueNumber $IssueNumber
-        if ([string]::IsNullOrWhiteSpace($issueContentId)) {
-            return
-        }
-
-        $itemId = Ensure-VorceProjectItem -Context $context -IssueContentId $issueContentId
-        $statusField = Get-VorceProjectField -Context $context -FieldName $context.StatusFieldName
-        if ($null -ne $statusField) {
-            $statusOption = Resolve-ProjectSingleSelectOption -Options $statusField.Options -Candidates (Get-VorceProjectStatusCandidateNames -Fields $Fields)
-            if ($null -ne $statusOption) {
-                Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field $statusField -Value ([string]$statusOption.name)
-            }
-        }
-
-        $julesSessionStatus = if ($Fields.ContainsKey("JulesSessionStatus") -and -not [string]::IsNullOrWhiteSpace([string]$Fields["JulesSessionStatus"])) {
-            [string]$Fields["JulesSessionStatus"]
-        } elseif ($Fields.ContainsKey("SessionState") -and -not [string]::IsNullOrWhiteSpace([string]$Fields["SessionState"])) {
-            Get-VorceJulesSessionStatusValue -Session ([pscustomobject]@{ state = [string]$Fields["SessionState"] }) -Issue $null
-        } else {
-            switch ((([string]$Fields["RemoteState"]).Trim()).ToLowerInvariant()) {
-                "queued" { "queued" }
-                "planning" { "planning" }
-                "in-progress" { "running" }
-                "in_progress" { "running" }
-                "awaiting-plan-approval" { "waiting" }
-                "awaiting-user-feedback" { "waiting" }
-                "paused" { "waiting" }
-                "failed" { "failed" }
-                "completed" { "completed" }
-                "pr_open" { "completed" }
-                "pr-open" { "completed" }
-                "pr_checks_pending" { "completed" }
-                "pr_failed" { "completed" }
-                "pr-failed" { "completed" }
-                "pr_draft" { "completed" }
-                "pr_closed" { "completed" }
-                "pr-closed" { "completed" }
-                "merged" { "completed" }
-                default { "n_a" }
-            }
-        }
-
-        $prChecksStatus = if ($Fields.ContainsKey("PrChecksStatus") -and -not [string]::IsNullOrWhiteSpace([string]$Fields["PrChecksStatus"])) {
-            [string]$Fields["PrChecksStatus"]
-        } elseif (-not [string]::IsNullOrWhiteSpace([string]$Fields["PullRequestUrl"])) {
-            $syncPr = Get-GitHubPullRequest -Repository $Repository -PullRequestUrl ([string]$Fields["PullRequestUrl"])
-            $syncChecks = if ($null -eq $syncPr) { @() } else { Get-GitHubPullRequestChecks -Repository $Repository -PullRequestUrl ([string]$Fields["PullRequestUrl"]) }
-            Get-VorcePrChecksStatusValue -PullRequest $syncPr -Checks $syncChecks
-        } else {
-            "n_a"
-        }
-
-        switch ($julesSessionStatus) {
-            'not_started' { $julesSessionStatus = 'queued' }
-            'unknown' { $julesSessionStatus = 'waiting' }
-        }
-
-        switch ($prChecksStatus) {
-            'merged' { $prChecksStatus = 'passed' }
-            'closed' { $prChecksStatus = 'failed' }
-            'draft' { $prChecksStatus = 'pending' }
-        }
-
-        Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.QueueFieldName) -Value $Fields.QueueState
-        Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.JulesSessionStatusFieldName) -Value $julesSessionStatus
-        Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.PrChecksStatusFieldName) -Value $prChecksStatus
-        Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.WorkBranchFieldName) -Value $Fields.WorkBranch
-        Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.LastUpdateFieldName) -Value $Fields.LastUpdate
-        Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.LinkedPrFieldName) -Value $Fields.PullRequestUrl
-    } catch {
-        $message = $_.Exception.Message
-        $isTransient = (
-            $message -match 'rate limit' -or
-            $message -match 'Project V2 .+ wurde nicht gefunden'
-        )
-        if ($isTransient) {
-            if ([string]::IsNullOrWhiteSpace([string]$script:VorceProjectFieldSyncSuspendedReason)) {
-                Write-JulesWarn "Project-Feld-Sync wird fuer diesen Lauf ausgesetzt: $message"
-            }
-            $script:VorceProjectFieldSyncSuspendedReason = $message
-            return
-        }
-
-        throw
+    $issueContentId = Get-GitHubIssueContentId -Repository $Repository -IssueNumber $IssueNumber
+    if ([string]::IsNullOrWhiteSpace($issueContentId)) {
+        return
     }
+
+    $itemId = Ensure-VorceProjectItem -Context $context -IssueContentId $issueContentId
+    $statusField = Get-VorceProjectField -Context $context -FieldName $context.StatusFieldName
+    if ($null -ne $statusField) {
+        $statusOption = Resolve-ProjectSingleSelectOption -Options $statusField.Options -Candidates (Get-VorceProjectStatusCandidateNames -Fields $Fields)
+        if ($null -ne $statusOption) {
+            Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field $statusField -Value ([string]$statusOption.name)
+        }
+    }
+
+    $julesSessionStatus = if ($Fields.ContainsKey("JulesSessionStatus") -and -not [string]::IsNullOrWhiteSpace([string]$Fields["JulesSessionStatus"])) {
+        [string]$Fields["JulesSessionStatus"]
+    } elseif ($Fields.ContainsKey("SessionState") -and -not [string]::IsNullOrWhiteSpace([string]$Fields["SessionState"])) {
+        Get-VorceJulesSessionStatusValue -Session ([pscustomobject]@{ state = [string]$Fields["SessionState"] }) -Issue $null
+    } else {
+        switch ((([string]$Fields["RemoteState"]).Trim()).ToLowerInvariant()) {
+            "queued" { "queued" }
+            "planning" { "planning" }
+            "in-progress" { "running" }
+            "in_progress" { "running" }
+            "awaiting-plan-approval" { "waiting" }
+            "awaiting-user-feedback" { "waiting" }
+            "paused" { "waiting" }
+            "failed" { "failed" }
+            "completed" { "completed" }
+            "pr_open" { "completed" }
+            "pr-open" { "completed" }
+            "pr_checks_pending" { "completed" }
+            "pr_failed" { "completed" }
+            "pr-failed" { "completed" }
+            "pr_draft" { "completed" }
+            "pr_closed" { "completed" }
+            "pr-closed" { "completed" }
+            "merged" { "completed" }
+            default { "n_a" }
+        }
+    }
+
+    $prChecksStatus = if ($Fields.ContainsKey("PrChecksStatus") -and -not [string]::IsNullOrWhiteSpace([string]$Fields["PrChecksStatus"])) {
+        [string]$Fields["PrChecksStatus"]
+    } elseif (-not [string]::IsNullOrWhiteSpace([string]$Fields["PullRequestUrl"])) {
+        $syncPr = Get-GitHubPullRequest -Repository $Repository -PullRequestUrl ([string]$Fields["PullRequestUrl"])
+        $syncChecks = if ($null -eq $syncPr) { @() } else { Get-GitHubPullRequestChecks -Repository $Repository -PullRequestUrl ([string]$Fields["PullRequestUrl"]) }
+        Get-VorcePrChecksStatusValue -PullRequest $syncPr -Checks $syncChecks
+    } else {
+        "n_a"
+    }
+
+    Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.QueueFieldName) -Value $Fields.QueueState
+    Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.JulesSessionStatusFieldName) -Value $julesSessionStatus
+    Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.PrChecksStatusFieldName) -Value $prChecksStatus
+    Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.WorkBranchFieldName) -Value $Fields.WorkBranch
+    Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.LastUpdateFieldName) -Value $Fields.LastUpdate
+    Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field (Get-VorceProjectField -Context $context -FieldName $context.LinkedPrFieldName) -Value $Fields.PullRequestUrl
 }
 
 function Format-MarkdownValue {
@@ -1433,90 +1319,29 @@ function Upsert-JulesIssueTrackingBlock {
     Set-GitHubIssueBody -Repository $Repository -IssueNumber $IssueNumber -Body $updatedBody
 }
 
-function Get-JulesIssueTrackingFieldsFromIssueBody {
-    param([AllowNull()][string]$Body)
-
-    $fields = @{
-        SessionId   = $null
-        SessionName = $null
-        QueueState  = $null
-        RemoteState = $null
-        WorkBranch  = $null
-        LastUpdate  = $null
-    }
-
-    if ([string]::IsNullOrWhiteSpace($Body)) {
-        return [pscustomobject]$fields
-    }
-
-    $patterns = @{
-        SessionId   = '<!-- jules-session-id: (?<value>[^>]*?) -->'
-        SessionName = '<!-- jules-session-name: (?<value>[^>]*?) -->'
-        QueueState  = '<!-- vorce-queue-state: (?<value>[^>]*?) -->'
-        RemoteState = '<!-- vorce-remote-state: (?<value>[^>]*?) -->'
-        WorkBranch  = '<!-- vorce-work-branch: (?<value>[^>]*?) -->'
-        LastUpdate  = '<!-- vorce-last-update: (?<value>[^>]*?) -->'
-    }
-
-    foreach ($entry in $patterns.GetEnumerator()) {
-        if ($Body -match [string]$entry.Value) {
-            $value = $Matches['value'].Trim()
-            if (-not [string]::IsNullOrWhiteSpace($value)) {
-                $fields[[string]$entry.Key] = $value
-            }
-        }
-    }
-
-    return [pscustomobject]$fields
-}
-
-function Get-JulesIssueTrackingFieldsFromIssue {
-    param([Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][int]$IssueNumber)
-
-    $issue = Get-GitHubIssue -Repository $Repository -IssueNumber $IssueNumber
-    $body = if ($null -eq $issue.body) { '' } else { [string]$issue.body }
-    return Get-JulesIssueTrackingFieldsFromIssueBody -Body $body
-}
-
-function Test-JulesIssueTrackingIndicatesActiveWork {
-    param([AllowNull()][object]$TrackingFields)
-
-    if ($null -eq $TrackingFields) {
-        return $false
-    }
-
-    $queueState = ([string]$TrackingFields.QueueState).Trim().ToLowerInvariant()
-    $remoteState = ([string]$TrackingFields.RemoteState).Trim().ToLowerInvariant()
-
-    if (@('approved-awaiting-dispatch', 'dispatched') -contains $queueState) {
-        return $true
-    }
-
-    if (@('awaiting-session', 'queued', 'planning', 'awaiting-plan-approval', 'awaiting-user-feedback', 'in-progress', 'paused', 'pr-open') -contains $remoteState) {
-        return $true
-    }
-
-    return $false
-}
-
 function Get-JulesSessionReferenceFromIssue {
     param([Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][int]$IssueNumber)
 
     $issue = Get-GitHubIssue -Repository $Repository -IssueNumber $IssueNumber
     $body = if ($null -eq $issue.body) { "" } else { [string]$issue.body }
-    $tracking = Get-JulesIssueTrackingFieldsFromIssueBody -Body $body
 
-    if (-not [string]::IsNullOrWhiteSpace([string]$tracking.SessionName)) {
-        return @{
-            SessionName = [string]$tracking.SessionName
-            SessionId   = Resolve-JulesSessionId -SessionIdOrName ([string]$tracking.SessionName)
+    if ($body -match "<!-- jules-session-name: (?<name>[^>]+?) -->") {
+        $name = $Matches["name"].Trim()
+        if (-not [string]::IsNullOrWhiteSpace($name)) {
+            return @{
+                SessionName = $name
+                SessionId   = Resolve-JulesSessionId -SessionIdOrName $name
+            }
         }
     }
 
-    if (-not [string]::IsNullOrWhiteSpace([string]$tracking.SessionId)) {
-        return @{
-            SessionName = Resolve-JulesSessionName -SessionIdOrName ([string]$tracking.SessionId)
-            SessionId   = [string]$tracking.SessionId
+    if ($body -match "<!-- jules-session-id: (?<id>[^>]+?) -->") {
+        $id = $Matches["id"].Trim()
+        if (-not [string]::IsNullOrWhiteSpace($id)) {
+            return @{
+                SessionName = Resolve-JulesSessionName -SessionIdOrName $id
+                SessionId   = $id
+            }
         }
     }
 
@@ -1532,214 +1357,6 @@ function Get-JulesSessionReferenceFromIssue {
     }
 
     return $null
-}
-
-function Get-JulesSessionRepository {
-    param([AllowNull()][object]$Session)
-
-    if ($null -eq $Session) {
-        return $null
-    }
-
-    $sourceContext = Get-JulesObjectPropertyValue -Object $Session -Name 'sourceContext'
-    $sourceName = [string](Get-JulesObjectPropertyValue -Object $sourceContext -Name 'source')
-    if ($sourceName -match '^sources/github/(?<repo>[^/\s]+/[^/\s]+)$') {
-        return $Matches['repo']
-    }
-
-    foreach ($candidate in @([string]$Session.prompt, [string]$Session.title)) {
-        if ([string]::IsNullOrWhiteSpace($candidate)) {
-            continue
-        }
-
-        if ($candidate -match '(?m)^Repository:\s*(?<repo>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)\s*$') {
-            return $Matches['repo']
-        }
-    }
-
-    return $null
-}
-
-function Test-JulesSessionTerminalState {
-    param([AllowNull()][object]$Session)
-
-    if ($null -eq $Session) {
-        return $false
-    }
-
-    @('COMPLETED', 'FAILED') -contains ([string]$Session.state).Trim().ToUpperInvariant()
-}
-
-function Test-JulesSessionActiveState {
-    param([AllowNull()][object]$Session)
-
-    if ($null -eq $Session) {
-        return $false
-    }
-
-    @('QUEUED', 'PLANNING', 'AWAITING_PLAN_APPROVAL', 'AWAITING_USER_FEEDBACK', 'IN_PROGRESS', 'PAUSED') -contains ([string]$Session.state).Trim().ToUpperInvariant()
-}
-
-function Get-JulesSessionsForIssue {
-    param(
-        [Parameter(Mandatory)][int]$IssueNumber,
-        [Parameter(Mandatory)][string]$Repository,
-        [int]$PageSize = 100,
-        [int]$MaxPages = 5,
-        [string]$ApiKey
-    )
-
-    $resolvedRepository = Resolve-GitHubRepository -Repository $Repository
-    $sessions = @(
-        Get-AllJulesSessions -PageSize $PageSize -MaxPages $MaxPages -ApiKey $ApiKey |
-            Where-Object {
-                $sessionIssue = Get-IssueNumberFromSession -Session $_
-                if ($sessionIssue -ne $IssueNumber) {
-                    return $false
-                }
-
-                $sessionRepository = Get-JulesSessionRepository -Session $_
-                if ([string]::IsNullOrWhiteSpace($sessionRepository)) {
-                    return $false
-                }
-
-                return ([string]$sessionRepository -eq $resolvedRepository)
-            } |
-            Sort-Object updateTime -Descending
-    )
-
-    if ($sessions.Count -le 1) {
-        return $sessions
-    }
-
-    $uniqueSessions = New-Object System.Collections.Generic.List[object]
-    $seenIds = @{}
-    foreach ($session in $sessions) {
-        $sessionId = Resolve-JulesSessionId -SessionIdOrName ([string]$session.name)
-        if ($seenIds.ContainsKey($sessionId)) {
-            continue
-        }
-
-        $seenIds[$sessionId] = $true
-        $uniqueSessions.Add($session)
-    }
-
-    return @($uniqueSessions | ForEach-Object { $_ })
-}
-
-function Get-JulesDuplicateDispatchGuard {
-    param(
-        [Parameter(Mandatory)][int]$IssueNumber,
-        [Parameter(Mandatory)][string]$Repository,
-        [string]$ApiKey
-    )
-
-    $resolvedRepository = Resolve-GitHubRepository -Repository $Repository
-    $issue = Get-GitHubIssue -Repository $resolvedRepository -IssueNumber $IssueNumber
-    $issueTracking = Get-JulesIssueTrackingFieldsFromIssueBody -Body ([string]$issue.body)
-    $trackedReference = Get-JulesSessionReferenceFromIssue -Repository $resolvedRepository -IssueNumber $IssueNumber
-    $trackedSession = $null
-
-    if ($null -ne $trackedReference) {
-        try {
-            $lookupKey = if (-not [string]::IsNullOrWhiteSpace([string]$trackedReference.SessionName)) {
-                [string]$trackedReference.SessionName
-            } else {
-                [string]$trackedReference.SessionId
-            }
-
-            if (-not [string]::IsNullOrWhiteSpace($lookupKey)) {
-                $trackedSession = Get-JulesSession -SessionIdOrName $lookupKey -ApiKey $ApiKey
-            }
-        } catch {
-            $trackedSession = $null
-        }
-    }
-
-    if (Test-JulesSessionActiveState -Session $trackedSession) {
-        return [pscustomobject]@{
-            IssueNumber      = $IssueNumber
-            Repository       = $resolvedRepository
-            IssueState       = Get-GitHubIssueStateValue -Issue $issue
-            Tracking         = $issueTracking
-            TrackedReference = $trackedReference
-            TrackedSession   = $trackedSession
-            ExistingSessions = @($trackedSession)
-            ActiveSessions   = @($trackedSession)
-            PreferredSession = $trackedSession
-            Status           = 'reuse'
-            Reason           = 'tracked_active_session'
-        }
-    }
-
-    $sessionList = New-Object System.Collections.Generic.List[object]
-    foreach ($session in @(Get-JulesSessionsForIssue -IssueNumber $IssueNumber -Repository $resolvedRepository -ApiKey $ApiKey)) {
-        $sessionList.Add($session)
-    }
-
-    if ($null -ne $trackedSession) {
-        $trackedSessionId = Resolve-JulesSessionId -SessionIdOrName ([string]$trackedSession.name)
-        $alreadyTracked = @(
-            $sessionList |
-                Where-Object { (Resolve-JulesSessionId -SessionIdOrName ([string]$_.name)) -eq $trackedSessionId } |
-                Select-Object -First 1
-        )
-        if ($alreadyTracked.Count -eq 0) {
-            $sessionList.Add($trackedSession)
-        }
-    }
-
-    $activeSessions = @(
-        $sessionList |
-            Where-Object { -not (Test-JulesSessionTerminalState -Session $_) } |
-            Sort-Object updateTime -Descending
-    )
-
-    $preferredSession = $null
-    $status = 'none'
-    $reason = 'no_existing_active_session'
-
-    if ($activeSessions.Count -gt 1) {
-        $status = 'blocked'
-        $reason = 'multiple_active_sessions'
-    } elseif ($activeSessions.Count -eq 1) {
-        $preferredSession = $activeSessions[0]
-        $activeSessionId = Resolve-JulesSessionId -SessionIdOrName ([string]$preferredSession.name)
-        if ($null -ne $trackedReference -and [string]$trackedReference.SessionId -eq $activeSessionId) {
-            $reason = 'tracked_active_session'
-        } elseif ($null -ne $trackedReference) {
-            $reason = 'adopt_single_active_session'
-        } else {
-            $reason = 'single_active_session'
-        }
-        $status = 'reuse'
-    } elseif (
-        $null -ne $trackedReference -and
-        $null -eq $trackedSession -and
-        -not (Test-GitHubIssueClosed -Issue $issue) -and
-        (Test-JulesIssueTrackingIndicatesActiveWork -TrackingFields $issueTracking)
-    ) {
-        $status = 'blocked'
-        $reason = 'tracked_active_state_unresolved'
-    } elseif ($null -ne $trackedReference -and $null -eq $trackedSession) {
-        $reason = 'tracked_reference_stale'
-    } elseif ($null -ne $trackedSession -and (Test-JulesSessionTerminalState -Session $trackedSession)) {
-        $reason = 'tracked_terminal_session'
-    }
-
-    return [pscustomobject]@{
-        IssueNumber      = $IssueNumber
-        Repository       = $resolvedRepository
-        IssueState       = Get-GitHubIssueStateValue -Issue $issue
-        Tracking         = $issueTracking
-        TrackedReference = $trackedReference
-        TrackedSession   = $trackedSession
-        ExistingSessions = @($sessionList | ForEach-Object { $_ })
-        ActiveSessions   = @($activeSessions)
-        PreferredSession = $preferredSession
-        Status           = $status
-        Reason           = $reason
-    }
 }
 
 function Get-JulesPreferredPrTitle {
@@ -1768,15 +1385,12 @@ function Convert-IssueToJulesPrompt {
     }
 
     $body = if ($null -eq $Issue.body) { "" } else { [string]$Issue.body }
-    $issueTitle = [string]$Issue.title
-    $requiredPrTitle = Get-JulesPreferredPrTitle -IssueTitle $issueTitle
-    $requiredWorkBranch = Get-JulesPreferredWorkBranch -IssueTitle $issueTitle
     $parts = @(
         "Issue #$($Issue.number): $($Issue.title)",
         "Repository: $Repository",
         "Issue URL: $($Issue.url)",
-        "Required PR Title: $requiredPrTitle",
-        "Required Work Branch: $requiredWorkBranch"
+        "Required PR Title: $(Get-JulesPreferredPrTitle -IssueTitle ([string]$Issue.title))",
+        "Required Work Branch: $(Get-JulesPreferredWorkBranch -IssueTitle ([string]$Issue.title))"
     )
 
     if ($labels.Count -gt 0) {
@@ -1795,8 +1409,8 @@ function Convert-IssueToJulesPrompt {
     if ($AutoCreatePr) {
         $parts += ""
         $parts += "---"
-        $parts += "**IMPORTANT:** Erstelle den Pull Request exakt mit diesem Titel: `$requiredPrTitle`."
-        $parts += "**IMPORTANT:** Arbeite exakt auf diesem Branch-Namen: `$requiredWorkBranch`."
+        $parts += "**IMPORTANT:** Erstelle den Pull Request exakt mit diesem Titel: `$(Get-JulesPreferredPrTitle -IssueTitle ([string]$Issue.title))`."
+        $parts += "**IMPORTANT:** Arbeite exakt auf diesem Branch-Namen: `$(Get-JulesPreferredWorkBranch -IssueTitle ([string]$Issue.title))`."
         $parts += "Verwende keine abweichenden, gekuerzten oder automatisch generierten Namen fuer Branch oder Pull Request."
         $parts += ""
         $parts += "**IMPORTANT:** Wenn du die Pull-Request-Beschreibung fuer dieses Issue erstellst, musst du exakt diesen Block mit der echten GitHub-Issue-Nummer aufnehmen:"

@@ -25,8 +25,8 @@ vorce-core = { path = "../vorce-core" }
 rand = "0.9.2"
 thiserror = { workspace = true }
 tracing = { workspace = true }
-# Use Bevy's own wgpu version (v24) to avoid conflicts
-wgpu = "24.0"
+# Use workspace wgpu version to avoid conflicts with main application
+wgpu = { workspace = true }
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
 bevy = { version = "0.16", default-features = false, features = ["wayland"] }
