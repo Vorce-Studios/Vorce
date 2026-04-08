@@ -5,7 +5,7 @@
         InstanceId        = 'vorce-studios'
         PaperclipVersion  = '2026.403.0'
         DeploymentMode    = 'local_trusted'
-        ServerPort        = 3140
+        ServerPort        = 3141
         DatabasePort      = 55432
         BudgetMonthlyCents = 0
     }
