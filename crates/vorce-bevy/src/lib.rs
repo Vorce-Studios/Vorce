@@ -122,7 +122,10 @@ impl BevyRunner {
         app.add_observer(audio_reaction_update_observer);
 
         if let Some(render_app) = app.get_sub_app_mut(RenderApp) {
-            render_app.add_systems(Render, frame_readback_system.after(bevy::render::RenderSystems::Render));
+            render_app.add_systems(
+                Render,
+                frame_readback_system.after(bevy::render::RenderSystems::Render),
+            );
         }
 
         // `App::update()` does not finalize plugin setup for us.
@@ -206,9 +209,7 @@ impl BevyRunner {
                     if let ModulePartType::Source(source_type) = &part.part_type {
                         let key = (module_id, part.id);
                         match source_type {
-                            SourceType::BevyAtmosphere {
-                                ..
-                            } => {
+                            SourceType::BevyAtmosphere { .. } => {
                                 // In Bevy 0.19, native atmosphere replaces bevy_atmosphere.
                                 // We rely on the DirectionalLight and native Atmosphere component
                                 // attached to the Camera3d instead.

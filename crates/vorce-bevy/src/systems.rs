@@ -207,7 +207,9 @@ pub fn setup_3d_scene(
             bevy_camera::RenderTarget::from(image_handle),
             Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
         ))
-        .insert(bevy_light::Atmosphere::earth(scattering_media.add(bevy_light::atmosphere::ScatteringMedium::earth(32, 32))))
+        .insert(bevy_light::Atmosphere::earth(
+            scattering_media.add(bevy_light::atmosphere::ScatteringMedium::earth(32, 32)),
+        ))
         .insert(crate::components::SharedEngineCamera);
 
     // Spawn Light
@@ -456,7 +458,11 @@ pub fn frame_readback_system(
 
         let width = gpu_image.texture_descriptor.size.width;
         let height = gpu_image.texture_descriptor.size.height;
-        let block_size = gpu_image.texture_descriptor.format.block_copy_size(None).unwrap_or(4);
+        let block_size = gpu_image
+            .texture_descriptor
+            .format
+            .block_copy_size(None)
+            .unwrap_or(4);
 
         // bytes_per_row must be multiple of 256
         let bytes_per_pixel = block_size;
@@ -519,10 +525,12 @@ pub fn frame_readback_system(
             let _ = tx.send(res);
         });
 
-        render_device.poll(wgpu::PollType::Wait {
-            submission_index: Some(submission_index),
-            timeout: None,
-        }).unwrap();
+        render_device
+            .poll(wgpu::PollType::Wait {
+                submission_index: Some(submission_index),
+                timeout: None,
+            })
+            .unwrap();
 
         match rx.recv() {
             Ok(Ok(_)) => {
