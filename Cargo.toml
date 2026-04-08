@@ -110,9 +110,8 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 unic-langid = "0.9"
 usvg = "0.47"
 # Core dependencies
-wgpu = "29.0.1"
+wgpu = "24.0.0"
 winit = { version = "0.30.13" }
-windows = { version = "0.62.2" }
 winres = "0.1"
 
 [profile.dev]
