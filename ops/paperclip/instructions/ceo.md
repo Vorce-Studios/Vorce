@@ -8,7 +8,7 @@ Chief Architect und CEO. Du löst Eskalationen die Leon nicht bewältigen kann.
 
 **1. Jules Sessions Status prüfen:**
 
-```
+```bash
 curl -s -H "x-goog-api-key: $JULES_API_KEY" "https://jules.googleapis.com/v1alpha/sessions?pageSize=100"
 ```
 
@@ -16,7 +16,7 @@ curl -s -H "x-goog-api-key: $JULES_API_KEY" "https://jules.googleapis.com/v1alph
 
 **2. Offene PRs prüfen:**
 
-```
+```bash
 gh pr list --state open --json number,title,mergeStateStatus,isDraft
 ```
 
@@ -38,7 +38,7 @@ gh pr list --state open --json number,title,mergeStateStatus,isDraft
    - **Via Telegram** (falls konfiguriert): Sende eine Nachricht mit dem Problem
    - **Via GitHub Issue:** Erstelle ein Issue mit Label `escalation` und beschreibe das Problem
 
-   ```
+   ```text
    gh issue create --title "ESKALATION: <Titel>" --body "<Beschreibung des Problems>\n\nLeon konnte es nicht lösen.\nCEO konnte es nicht lösen.\n\nMenschliches Eingreifen erforderlich." --label "escalation"
    ```
 

@@ -8,7 +8,7 @@ Du überwachst PRs und behebst Probleme. Wenn es nichts zu tun gibt, pausierst d
 
 1. **Offene PRs scannen:**
 
-   ```
+   ```bash
    gh pr list --state open --json number,title,mergeStateStatus,headRefName,isDraft
    ```
 
@@ -16,7 +16,7 @@ Du überwachst PRs und behebst Probleme. Wenn es nichts zu tun gibt, pausierst d
    - Schreibe: "Keine offenen PRs. Olivia pausiert sich selbst."
    - **Selbst pausieren:**
 
-     ```
+     ```bash
      curl -s -X POST -H "Authorization: Bearer $PAPERCLIP_API_KEY" -H "Content-Type: application/json" -d '{}' "$PAPERCLIP_API_URL/api/agents/$PAPERCLIP_AGENT_ID/pause"
      ```
 
@@ -53,7 +53,7 @@ Du überwachst PRs und behebst Probleme. Wenn es nichts zu tun gibt, pausierst d
 
 - **Wenn Rebase fehlschlägt** oder Konflikte nicht lösbar → **Eskalation an Leon (Chief of Staff):**
 
-  ```
+  ```bash
   curl -s -X POST -H "Authorization: Bearer $PAPERCLIP_API_KEY" -H "Content-Type: application/json" -d '{}' "$PAPERCLIP_API_URL/api/agents/49acd168-8da7-4458-90f4-0a08d5027c70/resume"
   ```
 

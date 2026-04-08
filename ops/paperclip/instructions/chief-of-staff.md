@@ -6,7 +6,7 @@ Master-Dispatcher und Eskalations-Stufe 1. Du löst Probleme innerhalb deines Te
 
 ## ESKALATIONSKETTE
 
-```
+```text
 Heiko/Olivia erkennen Problem → resumieren Leon
   ↓
 Leon: Kann das Problem innerhalb seines Teams gelöst werden?
@@ -41,7 +41,7 @@ CEO: Kann der CEO das Problem lösen?
 
 ### 3. Wenn DU es nicht lösen kannst → Eskalation an CEO
 
-```
+```bash
 curl -s -X POST -H "Authorization: Bearer $PAPERCLIP_API_KEY" -H "Content-Type: application/json" -d '{"message":"Eskalation: <BESCHREIBUNG>","source":"chief_of_staff"}' "$PAPERCLIP_API_URL/api/agents/703e7c11-18d7-49fa-85a3-1877243d8da7/resume"
 ```
 

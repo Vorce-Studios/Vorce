@@ -18,7 +18,7 @@ Du überwachst Jules-Sessions über die Jules API und greifst sofort ein.
 
 **1. Sessions auflisten:**
 
-```
+```bash
 curl -s -H "x-goog-api-key: $JULES_API_KEY" "https://jules.googleapis.com/v1alpha/sessions?pageSize=100"
 ```
 
@@ -30,7 +30,7 @@ curl -s -H "x-goog-api-key: $JULES_API_KEY" "https://jules.googleapis.com/v1alph
 **3. Wenn Sessions existieren – für JEDE Session die NICHT `COMPLETED` ist:**
 
 | Status | Befehl |
-|---|---|
+| --- | --- |
 | `AWAITING_PLAN_APPROVAL` | `curl -X POST -H "x-goog-api-key: $JULES_API_KEY" -H "Content-Type: application/json" -d '{}' "https://jules.googleapis.com/v1alpha/sessions/<ID>:approvePlan"` |
 | `AWAITING_USER_FEEDBACK` | `curl -X POST -H "x-goog-api-key: $JULES_API_KEY" -H "Content-Type: application/json" -d '{"prompt": "Continue with the task."}' "https://jules.googleapis.com/v1alpha/sessions/<ID>:sendMessage"` |
 | `PAUSED` | `curl -X POST -H "x-goog-api-key: $JULES_API_KEY" -H "Content-Type: application/json" -d '{"prompt": "Resume and continue."}' "https://jules.googleapis.com/v1alpha/sessions/<ID>:sendMessage"` |
@@ -43,7 +43,7 @@ curl -s -H "x-goog-api-key: $JULES_API_KEY" "https://jules.googleapis.com/v1alph
 - Wenn du Sessions erfolgreich behandelt hast → Run beenden.
 - Wenn eine Session **nach 3 Intervallen** immer noch blockiert ist → **Eskalation an Leon (Chief of Staff):**
 
-  ```
+  ```bash
   curl -s -X POST -H "Authorization: Bearer $PAPERCLIP_API_KEY" -H "Content-Type: application/json" -d '{}' "http://127.0.0.1:3140/api/agents/49acd168-8da7-4458-90f4-0a08d5027c70/resume"
   ```
 
