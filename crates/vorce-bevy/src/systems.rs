@@ -165,6 +165,7 @@ pub fn setup_3d_scene(
     mut commands: Commands,
     mut images: ResMut<Assets<Image>>,
     mut render_output: ResMut<crate::resources::BevyRenderOutput>,
+
 ) {
     // Create render target texture
     let size = bevy::render::render_resource::Extent3d {
@@ -450,7 +451,10 @@ pub fn frame_readback_system(
 
         let width = gpu_image.size.x;
         let height = gpu_image.size.y;
-        let block_size = gpu_image.texture_format.block_copy_size(None).unwrap_or(4);
+        let block_size = gpu_image
+            .texture_format
+            .block_copy_size(None)
+            .unwrap_or(4);
 
         // bytes_per_row must be multiple of 256
         let bytes_per_pixel = block_size;
