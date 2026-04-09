@@ -45,6 +45,7 @@ Thumbs.db
 
 # except icons files
 !resources/images/*
+!resources/branding/*
 !resources/macOS/Info.plist
 !resources/macOS/vorce.icns
 
