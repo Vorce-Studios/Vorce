@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="resources/branding/logo_banner.png" alt="Vorce Logo" width="600">
+  <img src="resources/branding/master_1024.png" alt="Vorce Logo" width="600">
 
 # Vorce (formerly VjMapper)
 

@@ -43,8 +43,9 @@ Thumbs.db
 *.LOCAL.*
 *.REMOTE.*
 
-# except icons files
+# Allow resources files
 !resources/images/*
+!resources/branding/*.png
 !resources/macOS/Info.plist
 !resources/macOS/vorce.icns
 
