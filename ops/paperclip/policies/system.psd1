@@ -17,6 +17,12 @@
 
     Supervisor = @{
         TickSeconds = 30
+        EnabledRoleKeys = @(
+            'ceo'
+            'chief_of_staff'
+            'jules_monitor'
+            'pr_monitor'
+        )
         AgentIntervals = @{
             ChiefOfStaff = 60
             DiscoveryScout = 900

@@ -46,10 +46,10 @@
     Roles = @{
         ceo = 'Victor (CEO / Chief Architect)'
         lena_assistant = 'Lena (Personal Assistant)'
-        chief_of_staff = 'Liam (Chief of Staff / Capacity Router)'
+        chief_of_staff = 'Leon (Chief of Staff / Capacity Router)'
         discovery = 'Noah (Discovery Scout)'
-        jules = 'Jules (Builder)'
-        jules_monitor = 'Jules (Session Monitor)'
+        jules = 'Julio (Builder)'
+        jules_monitor = 'Julia (Session Monitor)'
         pr_monitor = 'Olivia (GitHub PR Monitor)'
         gemini_review = 'Mia (Gemini Reviewer)'
         qwen_review = 'Elias (Qwen Reviewer)'

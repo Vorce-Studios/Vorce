@@ -78,23 +78,25 @@ function Start-VorceStudiosBootstrapServer {
 function Get-VorceStudiosAgentDefinitions {
     $paths = Get-VorceStudiosPaths
     $shell = Get-VorceStudiosShellExecutable
-    $agentScript = Join-Path $paths.Root 'scripts\paperclip\Invoke-Vorce-StudiosAgent.ps1'
+    $processAgentScript = Join-Path $paths.Root 'ops\paperclip\qwen-agent.ps1'
+    $system = Get-VorceStudiosSystemPolicy
     $routing = Get-VorceStudiosPolicy -Name 'routing'
+    $enabledHeartbeatRoleKeys = @($system.Supervisor.EnabledRoleKeys | ForEach-Object { [string]$_ })
 
     $definitions = @(
-        @{ key = 'ceo'; name = $routing.Roles.ceo; role = 'ceo'; title = 'Strategic owner, escalation and release authority'; icon = 'crown'; capabilities = 'Architecture, prioritization, escalation, release decisions'; instructionFile = 'ceo.md'; reportsTo = $null },
-        @{ key = 'lena_assistant'; name = $routing.Roles.lena_assistant; role = 'researcher'; title = 'Personal assistant to CEO, briefing and filtering'; icon = 'message-square'; capabilities = 'Issue aggregation, briefing generation, routine filtering'; instructionFile = 'lena-assistant.md'; reportsTo = 'ceo' },
-        @{ key = 'chief_of_staff'; name = $routing.Roles.chief_of_staff; role = 'pm'; title = 'Dynamic routing, queue health and capacity failover'; icon = 'radar'; capabilities = 'Routing, quota management, task assignment'; instructionFile = 'chief-of-staff.md'; reportsTo = 'ceo' },
-        @{ key = 'discovery'; name = $routing.Roles.discovery; role = 'researcher'; title = 'Proactive discovery and backlog enrichment'; icon = 'search'; capabilities = 'Issue discovery, regression scanning, stale failure triage'; instructionFile = 'discovery-scout.md'; reportsTo = 'chief_of_staff' },
-        @{ key = 'jules'; name = $routing.Roles.jules; role = 'engineer'; title = 'Primary low-cost implementation worker via Jules'; icon = 'wand'; capabilities = 'Issue implementation, Jules session orchestration'; instructionFile = 'jules-builder.md'; reportsTo = 'chief_of_staff' },
-        @{ key = 'jules_monitor'; name = $routing.Roles.jules_monitor; role = 'qa'; title = 'Jules session monitoring and deadlock resolution'; icon = 'radar'; capabilities = 'Session monitoring, timeout detection, escalation'; instructionFile = 'jules-session-monitor.md'; reportsTo = 'chief_of_staff' },
-        @{ key = 'pr_monitor'; name = $routing.Roles.pr_monitor; role = 'qa'; title = 'GitHub PR monitoring and CI check management'; icon = 'git-branch'; capabilities = 'PR status tracking, CI retry, conflict detection'; instructionFile = 'github-pr-monitor.md'; reportsTo = 'chief_of_staff' },
-        @{ key = 'gemini_review'; name = $routing.Roles.gemini_review; role = 'qa'; title = 'Preferred reviewer and analysis worker'; icon = 'shield'; capabilities = 'Review, triage, summary generation'; instructionFile = 'gemini-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'process' },
-        @{ key = 'qwen_review'; name = $routing.Roles.qwen_review; role = 'qa'; title = 'Fallback reviewer and triage worker'; icon = 'shield'; capabilities = 'Fallback review, diff summaries, bug triage'; instructionFile = 'qwen-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'process' },
-        @{ key = 'codex_review'; name = $routing.Roles.codex_review; role = 'cto'; title = 'High-risk reviewer and architecture escalation worker'; icon = 'brain'; capabilities = 'High-risk review, architecture and difficult debugging'; instructionFile = 'codex-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'codex_local' },
-        @{ key = 'ops'; name = $routing.Roles.ops; role = 'devops'; title = 'PR checks, governance and merge stewardship'; icon = 'terminal'; capabilities = 'Checks, merge gates, audit notes, status maintenance'; instructionFile = 'ops-steward.md'; reportsTo = 'chief_of_staff' },
-        @{ key = 'atlas'; name = $routing.Roles.atlas; role = 'researcher'; title = 'Optional atlas-backed repo context worker'; icon = 'microscope'; capabilities = 'Atlas summaries, codebase map, context distillation'; instructionFile = 'atlas-context.md'; reportsTo = 'discovery' },
-        @{ key = 'antigravity'; name = $routing.Roles.antigravity; role = 'engineer'; title = 'Antigravity swarm builder for parallel multi-agent missions'; icon = 'zap'; capabilities = 'Swarm orchestration, parallel execution, multi-crate work'; instructionFile = 'antigravity-builder.md'; reportsTo = 'chief_of_staff'; adapterType = 'process' }
+        @{ key = 'ceo'; name = $routing.Roles.ceo; role = 'ceo'; title = 'Strategic owner, escalation and release authority'; icon = 'crown'; capabilities = 'Architecture, prioritization, escalation, release decisions'; instructionFile = 'ceo.md'; reportsTo = $null; adapterType = 'codex_local'; timeoutSec = 900; search = $true; reasoningEffort = 'xhigh' },
+        @{ key = 'lena_assistant'; name = $routing.Roles.lena_assistant; role = 'researcher'; title = 'Personal assistant to CEO, briefing and filtering'; icon = 'message-square'; capabilities = 'Issue aggregation, briefing generation, routine filtering'; instructionFile = 'lena-assistant.md'; reportsTo = 'ceo'; adapterType = 'process'; timeoutSec = 600 },
+        @{ key = 'chief_of_staff'; name = $routing.Roles.chief_of_staff; role = 'pm'; title = 'Dynamic routing, queue health and capacity failover'; icon = 'radar'; capabilities = 'Routing, quota management, task assignment'; instructionFile = 'chief-of-staff.md'; reportsTo = 'ceo'; adapterType = 'codex_local'; timeoutSec = 900; reasoningEffort = 'high' },
+        @{ key = 'discovery'; name = $routing.Roles.discovery; role = 'researcher'; title = 'Proactive discovery and backlog enrichment'; icon = 'search'; capabilities = 'Issue discovery, regression scanning, stale failure triage'; instructionFile = 'discovery-scout.md'; reportsTo = 'chief_of_staff'; adapterType = 'gemini_local'; timeoutSec = 600 },
+        @{ key = 'jules'; name = $routing.Roles.jules; role = 'engineer'; title = 'Primary low-cost implementation worker via Jules'; icon = 'wand'; capabilities = 'Issue implementation, Jules session orchestration'; instructionFile = 'jules-builder.md'; reportsTo = 'chief_of_staff'; adapterType = 'gemini_local'; timeoutSec = 600 },
+        @{ key = 'jules_monitor'; name = $routing.Roles.jules_monitor; role = 'qa'; title = 'Jules session monitoring and deadlock resolution'; icon = 'radar'; capabilities = 'Session monitoring, timeout detection, escalation'; instructionFile = 'jules-session-monitor.md'; reportsTo = 'chief_of_staff'; adapterType = 'process'; timeoutSec = 600 },
+        @{ key = 'pr_monitor'; name = $routing.Roles.pr_monitor; role = 'qa'; title = 'GitHub PR monitoring and CI check management'; icon = 'git-branch'; capabilities = 'PR status tracking, CI retry, conflict detection'; instructionFile = 'github-pr-monitor.md'; reportsTo = 'chief_of_staff'; adapterType = 'process'; timeoutSec = 600 },
+        @{ key = 'gemini_review'; name = $routing.Roles.gemini_review; role = 'qa'; title = 'Preferred reviewer and analysis worker'; icon = 'shield'; capabilities = 'Review, triage, summary generation'; instructionFile = 'gemini-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'gemini_local'; timeoutSec = 600 },
+        @{ key = 'qwen_review'; name = $routing.Roles.qwen_review; role = 'qa'; title = 'Fallback reviewer and triage worker'; icon = 'shield'; capabilities = 'Fallback review, diff summaries, bug triage'; instructionFile = 'qwen-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'process'; timeoutSec = 600 },
+        @{ key = 'codex_review'; name = $routing.Roles.codex_review; role = 'cto'; title = 'High-risk reviewer and architecture escalation worker'; icon = 'brain'; capabilities = 'High-risk review, architecture and difficult debugging'; instructionFile = 'codex-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'codex_local'; timeoutSec = 900; reasoningEffort = 'high' },
+        @{ key = 'ops'; name = $routing.Roles.ops; role = 'devops'; title = 'PR checks, governance and merge stewardship'; icon = 'terminal'; capabilities = 'Checks, merge gates, audit notes, status maintenance'; instructionFile = 'ops-steward.md'; reportsTo = 'chief_of_staff'; adapterType = 'gemini_local'; timeoutSec = 600 },
+        @{ key = 'atlas'; name = $routing.Roles.atlas; role = 'researcher'; title = 'Optional atlas-backed repo context worker'; icon = 'microscope'; capabilities = 'Atlas summaries, codebase map, context distillation'; instructionFile = 'atlas-context.md'; reportsTo = 'discovery'; adapterType = 'gemini_local'; timeoutSec = 600 },
+        @{ key = 'antigravity'; name = $routing.Roles.antigravity; role = 'engineer'; title = 'Antigravity swarm builder for parallel multi-agent missions'; icon = 'zap'; capabilities = 'Swarm orchestration, parallel execution, multi-crate work'; instructionFile = 'antigravity-builder.md'; reportsTo = 'chief_of_staff'; adapterType = 'gemini_local'; timeoutSec = 900 }
     )
 
     foreach ($definition in $definitions) {
@@ -106,19 +108,36 @@ function Get-VorceStudiosAgentDefinitions {
             icon = $definition.icon
             capabilities = $definition.capabilities
             adapterType = $adapterType
-            heartbeatEnabled = $true
+            heartbeatEnabled = ($enabledHeartbeatRoleKeys -contains [string]$definition.key)
             adapterConfig = if ($adapterType -eq 'process') {
                 @{
                     command = $shell
-                    args = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $agentScript, '-Role', $definition.key)
+                    commandArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $processAgentScript)
                     cwd = $paths.Root
+                    graceSec = 15
+                    timeoutSec = [int]$definition.timeoutSec
                     env = @{
                         VORCE_STUDIOS_ROLE = $definition.key
                     }
                 }
             } elseif ($adapterType -eq 'codex_local') {
                 @{
-                    model = 'google/gemini-2.0-flash'
+                    cwd = $paths.Root
+                    model = 'gpt-5.4'
+                    graceSec = 15
+                    timeoutSec = [int]$definition.timeoutSec
+                    search = [bool]$definition.search
+                    modelReasoningEffort = if ($definition.ContainsKey('reasoningEffort')) { [string]$definition.reasoningEffort } else { 'high' }
+                    dangerouslyBypassApprovalsAndSandbox = $true
+                }
+            } elseif ($adapterType -eq 'gemini_local') {
+                @{
+                    cwd = $paths.Root
+                    yolo = $true
+                    model = 'auto'
+                    graceSec = 15
+                    timeoutSec = [int]$definition.timeoutSec
+                    instructionsBundleMode = 'managed'
                 }
             } else {
                 @{}
@@ -286,5 +305,7 @@ if ($StartServer.IsPresent) {
 } elseif ($startedHere) {
     Set-VorceStudiosRuntimeMode -Mode 'stopped' -Note 'Initialized; server started for bootstrap.'
 }
+
+& (Join-Path $ScriptDir 'Sync-Vorce-StudiosPaperclip.ps1') | Out-Null
 
 $companyState

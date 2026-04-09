@@ -33,10 +33,10 @@
             'QA Test' = 40
         }
         GoalAlignmentBonuses = @{
-            'G1_stability' = 30
-            'G2_feature' = 20
-            'G3_devex' = 10
-            'G4_community' = 10
+            'G1' = 30
+            'G2' = 20
+            'G3' = 18
+            'G4' = 12
         }
         DependencyAwareness = @{
             'blocked-by-other-issue' = -25

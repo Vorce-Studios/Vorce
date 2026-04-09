@@ -319,6 +319,152 @@ function Ensure-VorceStudiosCompanySecretByName {
     return New-VorceStudiosCompanySecret -CompanyId $CompanyId -Name $Name -Value $Value -Description $Description
 }
 
+function Get-VorceStudiosNamedCompanySecret {
+    param(
+        [Parameter(Mandatory)][string]$CompanyId,
+        [Parameter(Mandatory)][string]$Name
+    )
+
+    $match = @(
+        Get-VorceStudiosCompanySecrets -CompanyId $CompanyId |
+            Where-Object { [string]$_.name -eq $Name } |
+            Select-Object -First 1
+    )
+
+    if ($match.Count -eq 0) {
+        return $null
+    }
+
+    return $match[0]
+}
+
+function Get-VorceStudiosTelegramTokenFromHistory {
+    $historyCandidates = @(
+        (Join-Path $HOME '.bash_history'),
+        (Join-Path $env:APPDATA 'Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt'),
+        (Join-Path $env:APPDATA 'Microsoft\Windows\PowerShell\PSReadLine\Visual Studio Code Host_history.txt')
+    )
+
+    foreach ($historyPath in $historyCandidates) {
+        if (-not (Test-Path -LiteralPath $historyPath)) {
+            continue
+        }
+
+        $match = @(
+            Select-String -Path $historyPath -Pattern 'api\.telegram\.org/bot<?([^>/]+)>?/getUpdates' |
+                Select-Object -Last 1
+        )
+
+        if ($match.Count -eq 0) {
+            continue
+        }
+
+        $match = $match[0]
+
+        if ($null -eq $match) {
+            continue
+        }
+
+        if ($match.Matches.Count -gt 0) {
+            $token = [string]$match.Matches[0].Groups[1].Value
+            if (-not [string]::IsNullOrWhiteSpace($token)) {
+                return $token
+            }
+        }
+    }
+
+    return ''
+}
+
+function Get-VorceStudiosTelegramBotToken {
+    param(
+        [Parameter(Mandatory)][string]$CompanyId
+    )
+
+    $secret = Get-VorceStudiosNamedCompanySecret -CompanyId $CompanyId -Name 'Vorce Telegram Bot Token'
+    if ($null -ne $secret) {
+        return @{
+            token = $null
+            secret = $secret
+            source = 'company_secret'
+        }
+    }
+
+    foreach ($candidate in @(
+        [string]$env:VORCE_STUDIOS_TELEGRAM_BOT_TOKEN,
+        [string]$env:TELEGRAM_BOT_TOKEN
+    )) {
+        if (-not [string]::IsNullOrWhiteSpace($candidate)) {
+            $createdSecret = Ensure-VorceStudiosCompanySecretByName -CompanyId $CompanyId -Name 'Vorce Telegram Bot Token' -Value $candidate -Description 'Telegram bot token used by paperclip-plugin-telegram.' -RotateValue
+            return @{
+                token = $null
+                secret = $createdSecret
+                source = 'environment'
+            }
+        }
+    }
+
+    $historyToken = Get-VorceStudiosTelegramTokenFromHistory
+    if (-not [string]::IsNullOrWhiteSpace($historyToken)) {
+        $createdSecret = Ensure-VorceStudiosCompanySecretByName -CompanyId $CompanyId -Name 'Vorce Telegram Bot Token' -Value $historyToken -Description 'Telegram bot token used by paperclip-plugin-telegram.' -RotateValue
+        return @{
+            token = $null
+            secret = $createdSecret
+            source = 'history'
+        }
+    }
+
+    return @{
+        token = $null
+        secret = $null
+        source = 'missing'
+    }
+}
+
+function Get-VorceStudiosTelegramPluginDesiredConfig {
+    param(
+        [Parameter(Mandatory)][string]$CompanyId,
+        [Parameter(Mandatory)][string]$TokenSecretId
+    )
+
+    $baseUrl = Get-VorceStudiosApiBase
+    $defaultChatId = ''
+    foreach ($candidate in @(
+        [string]$env:VORCE_STUDIOS_TELEGRAM_DEFAULT_CHAT_ID,
+        [string]$env:TELEGRAM_DEFAULT_CHAT_ID
+    )) {
+        if (-not [string]::IsNullOrWhiteSpace($candidate)) {
+            $defaultChatId = $candidate.Trim()
+            break
+        }
+    }
+
+    $publicUrl = ''
+    foreach ($candidate in @(
+        [string]$env:VORCE_STUDIOS_TELEGRAM_PUBLIC_URL,
+        [string]$env:PAPERCLIP_PUBLIC_URL
+    )) {
+        if (-not [string]::IsNullOrWhiteSpace($candidate)) {
+            $publicUrl = $candidate.Trim()
+            break
+        }
+    }
+
+    return @{
+        telegramBotTokenRef = $TokenSecretId
+        defaultChatId = $defaultChatId
+        paperclipBaseUrl = $baseUrl
+        paperclipPublicUrl = $publicUrl
+        enableCommands = $true
+        enableInbound = $true
+        notifyOnIssueCreated = $true
+        notifyOnIssueDone = $true
+        notifyOnApprovalCreated = $true
+        notifyOnAgentError = $true
+        digestMode = 'off'
+    }
+}
+
 function Refresh-VorceStudiosVendorPlugin {
     param(
         [string]$PluginId,
@@ -385,7 +531,20 @@ function Ensure-VorceStudiosTelegramPlugin {
     )
 
     $plugin = Ensure-VorceStudiosPluginInstalledFromVendor -PluginId 'paperclip-plugin-telegram'
-    return $plugin
+    $companyId = [string]$Context.Company.id
+    $tokenState = Get-VorceStudiosTelegramBotToken -CompanyId $companyId
+
+    if ($null -ne $tokenState.secret) {
+        $desiredConfig = Get-VorceStudiosTelegramPluginDesiredConfig -CompanyId $companyId -TokenSecretId ([string]$tokenState.secret.id)
+        Set-VorceStudiosPluginConfig -PluginId ([string]$plugin.id) -Config $desiredConfig | Out-Null
+    }
+
+    $current = Find-VorceStudiosPlugin -PluginId 'paperclip-plugin-telegram'
+    if ($null -ne $current -and [string]$current.status -ne 'ready') {
+        Enable-VorceStudiosPlugin -PluginId ([string]$plugin.id) | Out-Null
+    }
+
+    return Find-VorceStudiosPlugin -PluginId 'paperclip-plugin-telegram'
 }
 
 function Connect-VorceStudiosGitHubPluginLinks {

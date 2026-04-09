@@ -19,7 +19,7 @@ $agents = @(Get-VorceStudiosAgents -CompanyId $companyId)
 $routing = Get-VorceStudiosPolicy -Name 'routing'
 $shell = Get-VorceStudiosShellExecutable
 $paths = Get-VorceStudiosPaths
-$agentScript = Join-Path (Get-VorceStudiosRoot) 'scripts\paperclip\Invoke-Vorce-StudiosAgent.ps1'
+$agentScript = Join-Path (Get-VorceStudiosRoot) 'ops\paperclip\qwen-agent.ps1'
 
 if ($Apply.IsPresent -and -not (Test-VorceStudiosBoardAccess)) {
     Write-Warning 'Board-Admin-Rechte fehlen. Bitte in der Paperclip-Web-UI einloggen und danach Clean-VorceStudiosAgents.ps1 -Apply erneut ausfuehren.'
@@ -161,7 +161,7 @@ function New-VorceStudiosDesiredAgentPayload {
         adapterType = 'process'
         adapterConfig = @{
             command = $shell
-            commandArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $agentScript, '-Role', $RoleKey)
+            commandArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $agentScript)
             cwd = $paths.Root
             env = @{
                 VORCE_STUDIOS_ROLE = $RoleKey
@@ -382,6 +382,12 @@ if (-not $Apply.IsPresent) {
 
 Write-Host ''
 if ($Apply.IsPresent) {
+    $syncScript = Join-Path $ScriptDir 'Sync-Vorce-StudiosPaperclip.ps1'
+    if (Test-Path -LiteralPath $syncScript) {
+        Write-Host 'Fuehre anschliessend den zentralen Paperclip-Sync aus...' -ForegroundColor Yellow
+        & $syncScript -SkipPlugins -SkipInstructions -SkipVictorSkills | Out-Null
+    }
+    Write-Host ''
     Write-Host 'Bereinigung abgeschlossen.' -ForegroundColor Cyan
 } else {
     Write-Host 'Dry-run abgeschlossen. Mit -Apply ausfuehren, um Aenderungen zu uebernehmen.' -ForegroundColor Cyan

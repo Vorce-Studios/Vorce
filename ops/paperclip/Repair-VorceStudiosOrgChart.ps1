@@ -47,7 +47,7 @@ if (-not $agentByKey.ContainsKey('ceo')) {
 }
 if (-not $agentByKey.ContainsKey('chief_of_staff')) {
     foreach ($a in $agents) {
-        if ([string]$a.role -eq 'pm' -and [string]$a.name -match 'Chief|Liam') {
+        if ([string]$a.role -eq 'pm' -and [string]$a.name -match 'Chief|Leon|Liam') {
             $agentByKey['chief_of_staff'] = $a; break
         }
     }
@@ -61,7 +61,7 @@ if (-not $agentByKey.ContainsKey('discovery')) {
 }
 if (-not $agentByKey.ContainsKey('jules')) {
     foreach ($a in $agents) {
-        if ([string]$a.role -eq 'engineer' -and [string]$a.name -match 'Jules.*Builder|Jules \(Builder\)') {
+        if ([string]$a.role -eq 'engineer' -and [string]$a.name -match 'Julio.*Builder|Jules.*Builder|Julio \(Builder\)|Jules \(Builder\)') {
             $agentByKey['jules'] = $a; break
         }
     }
@@ -107,7 +107,7 @@ Write-Host ''
 
 # ===== 2. FEHLENDE AGENTEN ERSTELLEN =====
 $shell = Get-VorceStudiosShellExecutable
-$agentScript = Join-Path (Get-VorceStudiosRoot) 'scripts\paperclip\Invoke-Vorce-StudiosAgent.ps1'
+$agentScript = Join-Path (Get-VorceStudiosRoot) 'ops\paperclip\qwen-agent.ps1'
 $paths = Get-VorceStudiosPaths
 
 $desiredAgents = [ordered]@{
@@ -144,7 +144,7 @@ foreach ($key in $desiredAgents.Keys) {
         adapterType = 'process'
         adapterConfig = @{
             command = $shell
-            commandArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $agentScript, '-Role', $key)
+            commandArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $agentScript)
             cwd = $paths.Root
             env = @{ VORCE_STUDIOS_ROLE = $key }
         }
@@ -235,3 +235,9 @@ foreach ($entry in $reportsToMap.GetEnumerator()) {
 
 Write-Host ''
 Write-Host 'Fertig. Org-Chart: http://localhost:3140/VOR/org' -ForegroundColor Cyan
+
+$syncScript = Join-Path $ScriptDir 'Sync-Vorce-StudiosPaperclip.ps1'
+if (Test-Path -LiteralPath $syncScript) {
+    Write-Host 'Fuehre anschliessend den zentralen Paperclip-Sync aus...' -ForegroundColor Yellow
+    & $syncScript -SkipPlugins -SkipInstructions -SkipVictorSkills | Out-Null
+}
