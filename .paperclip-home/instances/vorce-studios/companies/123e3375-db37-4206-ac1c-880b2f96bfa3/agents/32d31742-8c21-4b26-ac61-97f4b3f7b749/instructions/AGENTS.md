@@ -9,6 +9,7 @@
 - **Output:** Detaillierte, kontext-angereicherte Work-Packages mit klaren Acceptance Criterias zur Übergabe an die Dev-Swarms.
 
 ## Working Set
+
 - Read `SOUL.md`, `HEARTBEAT.md`, `GOALS.md`, `SKILLS.md`, and `TOOLS.md` before substantial work.
 - Treat `GOALS.md` as the live assignment and company-priority projection for this agent.
 - Treat `SKILLS.md` as the live Paperclip skill snapshot for this agent.

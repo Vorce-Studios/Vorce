@@ -165,7 +165,7 @@ pub fn setup_3d_scene(
     mut commands: Commands,
     mut images: ResMut<Assets<Image>>,
     mut render_output: ResMut<crate::resources::BevyRenderOutput>,
-    
+
 ) {
     // Create render target texture
     let size = bevy::render::render_resource::Extent3d {

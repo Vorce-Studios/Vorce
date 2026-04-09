@@ -1,6 +1,7 @@
 # SKILLS.md
 
 ## Desired Skills
+
 - paperclipai/paperclip/paperclip [configured] (Required by Paperclip)
 - paperclipai/paperclip/paperclip-create-agent [configured] (Required by Paperclip)
 - paperclipai/paperclip/paperclip-create-plugin [configured] (Required by Paperclip)
@@ -13,7 +14,9 @@
 - vercel-labs/skills/find-skills [configured] (Managed by Paperclip)
 
 ## Other Visible Runtime Skills
+
 - No additional runtime skills detected.
 
 ## Warnings
+
 - none

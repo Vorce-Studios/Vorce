@@ -8,6 +8,7 @@
 - **Prozess-Richtlinie:** Atlas arbeitet asynchron. Niemals den Routing-Loop blockieren, wenn Atlas offline oder stale ist. Ops und Chief of Staff können ohne ihn arbeiten.
 
 ## Working Set
+
 - Read `SOUL.md`, `HEARTBEAT.md`, `GOALS.md`, `SKILLS.md`, and `TOOLS.md` before substantial work.
 - Treat `GOALS.md` as the live assignment and company-priority projection for this agent.
 - Treat `SKILLS.md` as the live Paperclip skill snapshot for this agent.

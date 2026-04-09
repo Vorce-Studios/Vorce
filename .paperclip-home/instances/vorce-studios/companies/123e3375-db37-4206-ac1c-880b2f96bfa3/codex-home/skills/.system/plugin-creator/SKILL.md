@@ -17,9 +17,9 @@ description: Create and scaffold plugin directories for Codex with a required `.
 python3 .agents/skills/plugin-creator/scripts/create_basic_plugin.py <plugin-name>
 ```
 
-2. Open `<plugin-path>/.codex-plugin/plugin.json` and replace `[TODO: ...]` placeholders.
+1. Open `<plugin-path>/.codex-plugin/plugin.json` and replace `[TODO: ...]` placeholders.
 
-3. Generate or update the repo marketplace entry when the plugin should appear in Codex UI ordering:
+2. Generate or update the repo marketplace entry when the plugin should appear in Codex UI ordering:
 
 ```bash
 # marketplace.json always lives at <repo-root>/.agents/plugins/marketplace.json
@@ -35,7 +35,7 @@ python3 .agents/skills/plugin-creator/scripts/create_basic_plugin.py my-plugin \
   --with-marketplace
 ```
 
-4. Generate/adjust optional companion folders as needed:
+1. Generate/adjust optional companion folders as needed:
 
 ```bash
 python3 .agents/skills/plugin-creator/scripts/create_basic_plugin.py my-plugin --path <parent-plugin-directory> \
