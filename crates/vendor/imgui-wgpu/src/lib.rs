@@ -432,7 +432,8 @@ impl Renderer {
         let pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {
             label: Some("imgui-wgpu pipeline layout"),
             bind_group_layouts: &[&uniform_layout, &texture_layout],
-                    });
+            push_constant_ranges: &[],
+        });
 
         // Create the render pipeline.
         // Create the render pipeline.
@@ -489,7 +490,8 @@ impl Renderer {
                     write_mask: ColorWrites::ALL,
                 })],
             }),
-                    });
+            multiview: None,
+        });
 
         let mut renderer = Self {
             pipeline,

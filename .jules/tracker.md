@@ -105,7 +105,3 @@ Kritische Erkenntnisse aus Projektmanagement-Aktivitäten.
 ## 2026-03-26 - Missing Documentation for Multiple PRs and Commits
 **Erkenntnis:** Over 20 PRs and direct commits were merged to `main` between 2026-03-24 and 2026-03-26 without being documented in `CHANGELOG.md` (e.g., #1419, #1418, #1417, #1414, #1415, #1408). This indicates a systemic failure in enforcing changelog updates during the merge/PR process.
 **Aktion:** Tracker audited the git commit history, extracted 25 missing commits, and appended them to the `[Unreleased]` section of `CHANGELOG.md`. Stricter CI or PR template enforcement is needed for changelog updates.
-
-## 2026-04-09 - Massive Documentation Gap Discovery
-**Erkenntnis:** Systemischer Rückstand bei der Dokumentation entdeckt. Über 70 PRs (PR #15 bis #205 im neuen Repo `Vorce-Studios/Vorce`) wurden seit dem 26. März 2026 gemerged, ohne im `CHANGELOG.md` verzeichnet zu werden. Dies umfasst kritische Sicherheitsfixes von Sentinel, massive Performance-Optimierungen von Bolt und weitreichende UI/Core-Refactorings.
-**Aktion:** Tracker hat einen vollständigen Audit der Git-Historie und der PR-Liste durchgeführt, die Änderungen nach Typen (Security, Performance, UI, Core, Deps) kategorisiert und bereitet ein massives Update für das `CHANGELOG.md` vor. Zukünftige PR-Reviews müssen zwingend auf die Existenz eines Changelog-Eintrags prüfen.

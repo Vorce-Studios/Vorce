@@ -81,19 +81,18 @@ impl BevyRunner {
                 .disable::<WinitPlugin>(),
         );
 
-        // Add essential rendering extensions with error handling
-        info!("Initializing Bevy extract resource plugin...");
+        // Add essential rendering extensions
+        app.add_plugins(bevy::pbr::AtmospherePlugin);
+        // app.add_plugins(bevy_mod_outline::OutlinePlugin);
         app.add_plugins(ExtractResourcePlugin::<crate::resources::BevyRenderOutput>::default());
 
         // Register resources
-        info!("Registering Bevy resources...");
         app.init_resource::<AudioInputResource>();
         app.init_resource::<BevyNodeMapping>();
         app.init_resource::<VorceTriggerResource>();
         app.init_resource::<crate::resources::BevyRenderOutput>();
 
         // Register components
-        info!("Registering Bevy components...");
         app.register_type::<AudioReactive>();
         app.register_type::<BevyAtmosphere>();
         app.register_type::<BevyHexGrid>();
@@ -104,7 +103,6 @@ impl BevyRunner {
         app.register_type::<BevyCamera>();
 
         // Register systems
-        info!("Registering Bevy systems...");
         app.add_systems(Startup, setup_3d_scene);
         app.add_systems(Update, print_status_system);
         app.add_systems(
@@ -124,19 +122,17 @@ impl BevyRunner {
         app.add_observer(audio_reaction_update_observer);
 
         if let Some(render_app) = app.get_sub_app_mut(RenderApp) {
-            render_app.add_systems(Render, frame_readback_system.after(bevy::render::RenderSet::Render));
-        } else {
-            tracing::warn!("Bevy RenderApp not available - frame readback will not work");
+            render_app.add_systems(
+                Render,
+                frame_readback_system.after(bevy::render::RenderSystems::Render),
+            );
         }
 
         // `App::update()` does not finalize plugin setup for us.
         // Headless integration must finish and clean up once up front,
         // otherwise render-world resources like `RenderDevice` are absent at runtime.
-        info!("Finalizing Bevy app setup...");
         app.finish();
         app.cleanup();
-
-        info!("Bevy integration initialized successfully");
 
         Self { app }
     }

@@ -5,7 +5,7 @@ use bevy::render::mesh::{Indices, VertexAttributeValues};
 use rand::Rng;
 
 pub fn audio_reaction_observer(
-    trigger: Trigger<OnAdd, AudioReactive>,
+    trigger: bevy::prelude::On<bevy::ecs::lifecycle::Add, AudioReactive>,
     audio: Res<AudioInputResource>,
     mut query: Query<(
         &AudioReactive,
@@ -14,7 +14,7 @@ pub fn audio_reaction_observer(
     )>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    if let Ok((reaction, mut transform, mat_handle)) = query.get_mut(trigger.entity()) {
+    if let Ok((reaction, mut transform, mat_handle)) = query.get_mut(trigger.entity) {
         let energy = audio.get_energy(&reaction.source);
         let value = reaction.base + (energy * reaction.intensity);
 
@@ -45,7 +45,7 @@ pub fn audio_reaction_observer(
             }
             AudioReactiveTarget::EmissiveIntensity => {
                 if let Some(MeshMaterial3d(handle)) = mat_handle {
-                    if let Some(mat) = materials.get_mut(handle) {
+                    if let Some(mut mat) = materials.get_mut(handle) {
                         mat.emissive = LinearRgba::gray(value);
                     }
                 }
@@ -55,7 +55,7 @@ pub fn audio_reaction_observer(
 }
 
 pub fn audio_reaction_update_observer(
-    trigger: Trigger<OnInsert, AudioReactive>,
+    trigger: bevy::prelude::On<bevy::ecs::lifecycle::Insert, AudioReactive>,
     audio: Res<AudioInputResource>,
     mut query: Query<(
         &AudioReactive,
@@ -64,7 +64,7 @@ pub fn audio_reaction_update_observer(
     )>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    if let Ok((reaction, mut transform, mat_handle)) = query.get_mut(trigger.entity()) {
+    if let Ok((reaction, mut transform, mat_handle)) = query.get_mut(trigger.entity) {
         let energy = audio.get_energy(&reaction.source);
         let value = reaction.base + (energy * reaction.intensity);
 
@@ -95,7 +95,7 @@ pub fn audio_reaction_update_observer(
             }
             AudioReactiveTarget::EmissiveIntensity => {
                 if let Some(MeshMaterial3d(handle)) = mat_handle {
-                    if let Some(mat) = materials.get_mut(handle) {
+                    if let Some(mut mat) = materials.get_mut(handle) {
                         mat.emissive = LinearRgba::gray(value);
                     }
                 }
@@ -165,7 +165,7 @@ pub fn setup_3d_scene(
     mut commands: Commands,
     mut images: ResMut<Assets<Image>>,
     mut render_output: ResMut<crate::resources::BevyRenderOutput>,
-    
+    mut scattering_media: ResMut<Assets<bevy_light::atmosphere::ScatteringMedium>>,
 ) {
     // Create render target texture
     let size = bevy::render::render_resource::Extent3d {
@@ -193,22 +193,29 @@ pub fn setup_3d_scene(
     render_output.height = 720;
 
     // Spawn Shared Engine Camera
-    // Spawn Shared Engine Camera
     commands
         .spawn((
             Camera3d::default(),
             Camera {
-                clear_color: bevy::prelude::ClearColorConfig::Default,
-                target: bevy::render::camera::RenderTarget::Image(image_handle),
+                output_mode: bevy_camera::CameraOutputMode::Write {
+                    blend_state: None,
+                    clear_color: bevy_camera::ClearColorConfig::Default,
+                },
                 ..default()
             },
+            bevy_camera::CameraMainTextureUsages::default(),
+            bevy_camera::RenderTarget::from(image_handle),
             Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
         ))
+        .insert(bevy_light::Atmosphere::earth(
+            scattering_media.add(bevy_light::atmosphere::ScatteringMedium::earth(32, 32)),
+        ))
         .insert(crate::components::SharedEngineCamera);
+
     // Spawn Light
     commands.spawn((
         PointLight {
-            shadows_enabled: true,
+            shadow_maps_enabled: true,
             ..default()
         },
         Transform::from_xyz(4.0, 8.0, 4.0),
@@ -226,9 +233,9 @@ pub fn hex_grid_system(
 ) {
     for (entity, hex_config) in query.iter() {
         // Clear existing children (tiles)
-        commands.entity(entity).despawn_descendants();
+        commands.entity(entity).despawn_children();
 
-        let hex_size = hexx::Vec2::new(hex_config.radius, hex_config.radius);
+        let hex_size = hexx::Vec2::splat(hex_config.radius);
 
         let mesh = meshes.add(Cuboid::from_size(Vec3::new(
             hex_config.radius * 1.5,
@@ -243,7 +250,7 @@ pub fn hex_grid_system(
         commands.entity(entity).with_children(|parent| {
             for hex in hexx::shapes::hexagon(hexx::Hex::ZERO, hex_config.rings) {
                 let layout = hexx::HexLayout {
-                    scale: hex_size,
+                    hex_size,
                     orientation: if hex_config.pointy_top {
                         hexx::HexOrientation::Pointy
                     } else {
@@ -357,7 +364,7 @@ pub fn particle_system(
 
         // Update Mesh
         if let Some(Mesh3d(mesh_handle)) = mesh_opt {
-            if let Some(mesh) = meshes.get_mut(mesh_handle) {
+            if let Some(mut mesh) = meshes.get_mut(mesh_handle) {
                 let count = emitter.particles.len();
 
                 // Reuse existing buffers to avoid allocation
@@ -449,10 +456,11 @@ pub fn frame_readback_system(
     if let Some(gpu_image) = gpu_images.get(&render_output.image_handle) {
         let texture = &gpu_image.texture;
 
-        let width = gpu_image.size.x;
-        let height = gpu_image.size.y;
+        let width = gpu_image.texture_descriptor.size.width;
+        let height = gpu_image.texture_descriptor.size.height;
         let block_size = gpu_image
-            .texture_format
+            .texture_descriptor
+            .format
             .block_copy_size(None)
             .unwrap_or(4);
 
@@ -486,15 +494,15 @@ pub fn frame_readback_system(
         );
 
         encoder.copy_texture_to_buffer(
-            bevy::render::render_resource::ImageCopyTexture {
+            bevy::render::render_resource::TexelCopyTextureInfo {
                 texture,
                 mip_level: 0,
                 origin: bevy::render::render_resource::Origin3d::ZERO,
                 aspect: bevy::render::render_resource::TextureAspect::All,
             },
-            bevy::render::render_resource::ImageCopyBuffer {
+            bevy::render::render_resource::TexelCopyBufferInfo {
                 buffer,
-                layout: bevy::render::render_resource::ImageDataLayout {
+                layout: bevy::render::render_resource::TexelCopyBufferLayout {
                     offset: 0,
                     bytes_per_row: Some(bytes_per_row),
                     rows_per_image: Some(height),
@@ -507,7 +515,7 @@ pub fn frame_readback_system(
             },
         );
 
-        let _submission_index = render_queue.submit(std::iter::once(encoder.finish()));
+        let submission_index = render_queue.submit(std::iter::once(encoder.finish()));
 
         // Complete the readback in-frame so the buffer is always unmapped before the
         // next copy. This trades some throughput for a much more stable embedded runner.
@@ -517,7 +525,12 @@ pub fn frame_readback_system(
             let _ = tx.send(res);
         });
 
-        let _ = render_device.poll(wgpu::Maintain::Wait);
+        render_device
+            .poll(wgpu::PollType::Wait {
+                submission_index: Some(submission_index),
+                timeout: None,
+            })
+            .unwrap();
 
         match rx.recv() {
             Ok(Ok(_)) => {
@@ -557,10 +570,10 @@ pub fn text_3d_system(
 ) {
     for (entity, config) in query.iter() {
         let justify = match config.alignment {
-            crate::components::BevyTextAlignment::Left => bevy::text::JustifyText::Left,
-            crate::components::BevyTextAlignment::Center => bevy::text::JustifyText::Center,
-            crate::components::BevyTextAlignment::Right => bevy::text::JustifyText::Right,
-            crate::components::BevyTextAlignment::Justify => bevy::text::JustifyText::Justified,
+            crate::components::BevyTextAlignment::Left => Justify::Left,
+            crate::components::BevyTextAlignment::Center => Justify::Center,
+            crate::components::BevyTextAlignment::Right => Justify::Right,
+            crate::components::BevyTextAlignment::Justify => Justify::Justified,
         };
 
         let color = Color::srgba(
@@ -574,7 +587,7 @@ pub fn text_3d_system(
             Text2d::default(),
             Text::new(config.text.clone()),
             TextFont {
-                font_size: config.font_size,
+                font_size: bevy::prelude::FontSize::Px(config.font_size),
                 ..default()
             },
             TextColor(color),

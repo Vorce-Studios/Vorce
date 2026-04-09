@@ -1,29 +1,15 @@
 use crate::editors::module_canvas::inspector::capabilities;
-use std::sync::OnceLock;
 use vorce_core::module::{
     AudioBand, AudioTriggerOutputConfig, BevyCameraMode, BlendModeType, EffectType, HueMappingMode,
     HueNodeType, LayerType, MaskShape, MaskType, ModulePartType, ModulizerType, OutputType,
     SourceType, TriggerType,
 };
 
-#[derive(Clone)]
 pub struct NodeCatalogItem {
     /// User-friendly name for identifying the element.
     pub label: &'static str,
-    // ⚡ Bolt: Pre-computed lowercase label explicitly for zero-allocation Unicode-aware searches.
-    // By storing it in the static catalog cache, we prevent `.to_lowercase()` string
-    // allocations inside the `.filter()` loop every single frame.
-    pub label_lower: String,
     pub search_tags: &'static str,
     pub part_type: ModulePartType,
-}
-
-// ⚡ Bolt: Cache the entire node catalog statically to avoid allocating `Vec<NodeCatalogItem>`
-// and re-evaluating hardware capabilities every UI frame.
-static NODE_CATALOG_CACHE: OnceLock<Vec<NodeCatalogItem>> = OnceLock::new();
-
-pub fn get_node_catalog() -> &'static [NodeCatalogItem] {
-    NODE_CATALOG_CACHE.get_or_init(build_node_catalog)
 }
 
 pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
@@ -38,13 +24,11 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
     let mut catalog = vec![
         NodeCatalogItem {
             label: "Beat",
-            label_lower: "Beat".to_lowercase(),
             search_tags: "trigger time rhythm",
             part_type: ModulePartType::Trigger(TriggerType::Beat),
         },
         NodeCatalogItem {
             label: "Audio FFT",
-            label_lower: "Audio FFT".to_lowercase(),
             search_tags: "trigger sound music reactive",
             part_type: ModulePartType::Trigger(TriggerType::AudioFFT {
                 band: AudioBand::Bass,
@@ -54,7 +38,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         NodeCatalogItem {
             label: "Random",
-            label_lower: "Random".to_lowercase(),
             search_tags: "trigger chance stochastic",
             part_type: ModulePartType::Trigger(TriggerType::Random {
                 min_interval_ms: 500,
@@ -64,7 +47,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         NodeCatalogItem {
             label: "Fixed Timer",
-            label_lower: "Fixed Timer".to_lowercase(),
             search_tags: "trigger time clock loop",
             part_type: ModulePartType::Trigger(TriggerType::Fixed {
                 interval_ms: 1000,
@@ -73,7 +55,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         NodeCatalogItem {
             label: "MIDI",
-            label_lower: "MIDI".to_lowercase(),
             search_tags: "trigger control note cc",
             part_type: ModulePartType::Trigger(TriggerType::Midi {
                 channel: 1,
@@ -83,7 +64,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         NodeCatalogItem {
             label: "OSC",
-            label_lower: "OSC".to_lowercase(),
             search_tags: "trigger network control open sound control",
             part_type: ModulePartType::Trigger(TriggerType::Osc {
                 address: "/trigger".to_string(),
@@ -91,7 +71,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         NodeCatalogItem {
             label: "Shortcut",
-            label_lower: "Shortcut".to_lowercase(),
             search_tags: "trigger keyboard key input",
             part_type: ModulePartType::Trigger(TriggerType::Shortcut {
                 key_code: "Space".to_string(),
@@ -100,13 +79,11 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         NodeCatalogItem {
             label: "Media File",
-            label_lower: "Media File".to_lowercase(),
             search_tags: "source video image movie picture",
             part_type: ModulePartType::Source(SourceType::new_media_file(String::new())),
         },
         NodeCatalogItem {
             label: "3D Text",
-            label_lower: "3D Text".to_lowercase(),
             search_tags: "source bevy font label",
             part_type: ModulePartType::Source(SourceType::Bevy3DText {
                 text: "Hello 3D".to_string(),
@@ -119,7 +96,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         NodeCatalogItem {
             label: "3D Shape",
-            label_lower: "3D Shape".to_lowercase(),
             search_tags: "source bevy cube sphere geometry",
             part_type: ModulePartType::Source(SourceType::Bevy3DShape {
                 shape_type: vorce_core::module::BevyShapeType::Cube,
@@ -134,7 +110,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         NodeCatalogItem {
             label: "Camera",
-            label_lower: "Camera".to_lowercase(),
             search_tags: "source bevy view perspective orbit fly",
             part_type: ModulePartType::Source(SourceType::BevyCamera {
                 mode: BevyCameraMode::Orbit {
@@ -149,7 +124,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         NodeCatalogItem {
             label: "3D Model",
-            label_lower: "3D Model".to_lowercase(),
             search_tags: "source bevy gltf obj model mesh",
             part_type: ModulePartType::Source(SourceType::Bevy3DModel {
                 path: String::new(),
@@ -167,7 +141,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
     if shader_supported {
         catalog.push(NodeCatalogItem {
             label: "Shader",
-            label_lower: "Shader".to_lowercase(),
             search_tags: "source glsl generator procedural",
             part_type: ModulePartType::Source(SourceType::Shader {
                 name: "Default".to_string(),
@@ -180,7 +153,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
     if ndi_supported {
         catalog.push(NodeCatalogItem {
             label: "NDI Input",
-            label_lower: "NDI Input".to_lowercase(),
             search_tags: "source network video stream",
             part_type: ModulePartType::Source(SourceType::NdiInput { source_name: None }),
         });
@@ -190,7 +162,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
     if spout_supported {
         catalog.push(NodeCatalogItem {
             label: "Spout Input",
-            label_lower: "Spout Input".to_lowercase(),
             search_tags: "source texture share windows",
             part_type: ModulePartType::Source(SourceType::SpoutInput {
                 sender_name: String::new(),
@@ -202,13 +173,11 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         catalog.extend([
             NodeCatalogItem {
                 label: "Shape Mask",
-                label_lower: "Shape Mask".to_lowercase(),
                 search_tags: "mask circle rectangle alpha",
                 part_type: ModulePartType::Mask(MaskType::Shape(MaskShape::Circle)),
             },
             NodeCatalogItem {
                 label: "Gradient Mask",
-                label_lower: "Gradient Mask".to_lowercase(),
                 search_tags: "mask fade transition alpha",
                 part_type: ModulePartType::Mask(MaskType::Gradient {
                     angle: 0.0,
@@ -221,7 +190,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
     if capabilities::has_advanced_blend_mode_support() {
         catalog.push(NodeCatalogItem {
             label: "Blend Mode",
-            label_lower: "Blend Mode".to_lowercase(),
             search_tags: "modulator mix composite add multiply screen",
             part_type: ModulePartType::Modulizer(ModulizerType::BlendMode(BlendModeType::Normal)),
         });
@@ -233,7 +201,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
             .filter(|effect| capabilities::is_effect_supported(effect))
             .map(|effect| NodeCatalogItem {
                 label: effect.name(),
-                label_lower: effect.name().to_lowercase(),
                 search_tags: "modulator effect filter fx",
                 part_type: ModulePartType::Modulizer(ModulizerType::Effect {
                     effect_type: *effect,
@@ -245,7 +212,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
     catalog.extend([
         NodeCatalogItem {
             label: "Single Layer",
-            label_lower: "Single Layer".to_lowercase(),
             search_tags: "layer composition",
             part_type: ModulePartType::Layer(LayerType::Single {
                 id: 0,
@@ -258,7 +224,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         NodeCatalogItem {
             label: "Single Lamp",
-            label_lower: "Single Lamp".to_lowercase(),
             search_tags: "hue light smart home philips",
             part_type: ModulePartType::Hue(HueNodeType::SingleLamp {
                 id: String::new(),
@@ -271,7 +236,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         NodeCatalogItem {
             label: "Multi Lamp",
-            label_lower: "Multi Lamp".to_lowercase(),
             search_tags: "hue light group multi smart home philips",
             part_type: ModulePartType::Hue(HueNodeType::MultiLamp {
                 ids: Vec::new(),
@@ -284,7 +248,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         NodeCatalogItem {
             label: "Entertainment Group",
-            label_lower: "Entertainment Group".to_lowercase(),
             search_tags: "hue entertainment area spatial philips",
             part_type: ModulePartType::Hue(HueNodeType::EntertainmentGroup {
                 name: "Entertainment Area".to_string(),
@@ -296,7 +259,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         NodeCatalogItem {
             label: "Hue Output",
-            label_lower: "Hue Output".to_lowercase(),
             search_tags: "output hue bridge entertainment spatial philips",
             part_type: ModulePartType::Output(OutputType::Hue {
                 bridge_ip: String::new(),
@@ -309,7 +271,6 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
         },
         NodeCatalogItem {
             label: "Projector Output",
-            label_lower: "Projector Output".to_lowercase(),
             search_tags: "output display screen beamer",
             part_type: ModulePartType::Output(OutputType::Projector {
                 id: 1,
