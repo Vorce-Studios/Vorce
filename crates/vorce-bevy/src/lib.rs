@@ -124,7 +124,7 @@ impl BevyRunner {
         app.add_observer(audio_reaction_update_observer);
 
         if let Some(render_app) = app.get_sub_app_mut(RenderApp) {
-            render_app.add_systems(Render, frame_readback_system.after(RenderSet::Render));
+            render_app.add_systems(Render, frame_readback_system.after(bevy::render::RenderSet::Render));
         } else {
             tracing::warn!("Bevy RenderApp not available - frame readback will not work");
         }

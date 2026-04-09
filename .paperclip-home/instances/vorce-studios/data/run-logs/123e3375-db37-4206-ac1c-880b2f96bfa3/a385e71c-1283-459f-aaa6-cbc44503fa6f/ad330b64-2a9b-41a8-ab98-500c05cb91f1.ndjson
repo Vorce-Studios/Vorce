@@ -1,0 +1,5 @@
+{"ts":"2026-04-09T01:21:19.946Z","stream":"stdout","chunk":"[paperclip] Using worktree-isolated Codex home \"C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\.paperclip-home\\instances\\vorce-studios\\companies\\123e3375-db37-4206-ac1c-880b2f96bfa3\\codex-home\" (seeded from \"C:\\Users\\Vinyl\\.codex\").\n"}
+{"ts":"2026-04-09T01:21:20.897Z","stream":"stdout","chunk":"{\"type\":\"thread.started\",\"thread_id\":\"019d6fc6-63e7-7102-aa79-65cdd5a0ab4d\"}\n"}
+{"ts":"2026-04-09T01:21:20.898Z","stream":"stdout","chunk":"{\"type\":\"turn.started\"}\n"}
+{"ts":"2026-04-09T01:21:22.570Z","stream":"stdout","chunk":"{\"type\":\"error\",\"message\":\"You've hit your usage limit. Upgrade to Plus to continue using Codex (https://chatgpt.com/explore/plus), or try again at Apr 13th, 2026 3:09 PM.\"}\n"}
+{"ts":"2026-04-09T01:21:22.612Z","stream":"stdout","chunk":"{\"type\":\"turn.failed\",\"error\":{\"message\":\"You've hit your usage limit. Upgrade to Plus to continue using Codex (https://chatgpt.com/explore/plus), or try again at Apr 13th, 2026 3:09 PM.\"}}\n"}

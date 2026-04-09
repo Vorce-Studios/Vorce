@@ -18,6 +18,7 @@ $HeartbeatPolicyByRoleKey = @{
     chief_of_staff = 'ChiefOfStaff'
     lena_assistant = 'LenaAssistant'
     antigravity = 'AntigravityBuilder'
+    atlas = 'DiscoveryScout'
     codex_review = 'ReviewPool'
     gemini_review = 'ReviewPool'
     discovery = 'DiscoveryScout'
@@ -25,7 +26,7 @@ $HeartbeatPolicyByRoleKey = @{
     jules = 'JulesBuilder'
     jules_monitor = 'JulesSessionMonitor'
     pr_monitor = 'PrMonitor'
-    ops_steward = 'OpsSteward'
+    ops = 'OpsSteward'
 }
 $AutonomousAdapterTargetsByRoleKey = @{
     qwen_review = @{
@@ -171,6 +172,208 @@ function Get-VorceStudiosManagedInstructionAdapterConfig {
     }
 }
 
+function New-VorceStudiosCliProbeResult {
+    param(
+        [Parameter(Mandatory)][string]$Tool,
+        [bool]$Available = $false,
+        [string]$Reason = ''
+    )
+
+    return [ordered]@{
+        tool = $Tool
+        available = $Available
+        reason = $Reason
+    }
+}
+
+function Test-VorceStudiosCliSmoke {
+    param(
+        [Parameter(Mandatory)][string]$Tool,
+        [Parameter(Mandatory)][string[]]$Arguments
+    )
+
+    $command = Get-Command $Tool -ErrorAction SilentlyContinue
+    if ($null -eq $command) {
+        return New-VorceStudiosCliProbeResult -Tool $Tool -Reason 'command-not-found'
+    }
+
+    try {
+        $output = (& $command.Source @Arguments 2>&1 | Out-String).Trim()
+        if ($LASTEXITCODE -eq 0) {
+            return New-VorceStudiosCliProbeResult -Tool $Tool -Available $true -Reason 'ok'
+        }
+
+        if ($output -match 'QUOTA_EXHAUSTED') {
+            return New-VorceStudiosCliProbeResult -Tool $Tool -Reason 'quota-exhausted'
+        }
+
+        if ($output -match 'usage limit') {
+            return New-VorceStudiosCliProbeResult -Tool $Tool -Reason 'usage-limit'
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($output)) {
+            return New-VorceStudiosCliProbeResult -Tool $Tool -Reason $output
+        }
+    } catch {
+        return New-VorceStudiosCliProbeResult -Tool $Tool -Reason $_.Exception.Message
+    }
+
+    return New-VorceStudiosCliProbeResult -Tool $Tool -Reason 'probe-failed'
+}
+
+function Get-VorceStudiosLocalToolAvailability {
+    $availability = [ordered]@{}
+    $availability['codex'] = Test-VorceStudiosCliSmoke -Tool 'codex' -Arguments @('exec', '--dangerously-bypass-approvals-and-sandbox', '-s', 'danger-full-access', '--skip-git-repo-check', 'Reply with OK only.')
+    $availability['qwen'] = Test-VorceStudiosCliSmoke -Tool 'qwen' -Arguments @('-y', '-p', 'Reply with OK only.')
+    $availability['gemini'] = Test-VorceStudiosCliSmoke -Tool 'gemini' -Arguments @('-m', 'gemini-2.5-flash', '--output-format', 'json', '-p', 'Reply with OK only.')
+    return $availability
+}
+
+function New-VorceStudiosCodexLocalTarget {
+    param(
+        [int]$TimeoutSec = 600,
+        [switch]$Search,
+        [string]$ReasoningEffort = 'high'
+    )
+
+    return [ordered]@{
+        adapterType = 'codex_local'
+        adapterConfig = [ordered]@{
+            model = 'gpt-5.4'
+            graceSec = 15
+            timeoutSec = $TimeoutSec
+            search = $Search.IsPresent
+            modelReasoningEffort = $ReasoningEffort
+            dangerouslyBypassApprovalsAndSandbox = $true
+        }
+    }
+}
+
+function New-VorceStudiosGeminiLocalTarget {
+    param(
+        [int]$TimeoutSec = 600
+    )
+
+    return [ordered]@{
+        adapterType = 'gemini_local'
+        adapterConfig = [ordered]@{
+            yolo = $true
+            model = 'auto'
+            graceSec = 15
+            timeoutSec = $TimeoutSec
+            instructionsBundleMode = 'managed'
+        }
+    }
+}
+
+function New-VorceStudiosQwenProcessTarget {
+    param(
+        [int]$TimeoutSec = 600
+    )
+
+    $paths = Get-VorceStudiosPaths
+    $shell = Get-VorceStudiosShellExecutable
+    $scriptPath = Join-Path $paths.Root 'ops\paperclip\qwen-agent.ps1'
+
+    return [ordered]@{
+        adapterType = 'process'
+        adapterConfig = [ordered]@{
+            command = $shell
+            commandArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $scriptPath)
+            cwd = $paths.Root
+            graceSec = 15
+            timeoutSec = $TimeoutSec
+            env = @{}
+        }
+    }
+}
+
+function Get-VorceStudiosManagedInstructionProcessEnv {
+    param(
+        [Parameter(Mandatory)][string]$CompanyId,
+        [Parameter(Mandatory)][object]$Agent
+    )
+
+    $paths = Get-VorceStudiosPaths
+    $agentId = [string](Get-VorceStudiosObjectPropertyValue -Object $Agent -PropertyName 'id')
+    $roleKey = [string](Get-VorceStudiosObjectPropertyValue -Object (Get-VorceStudiosObjectPropertyValue -Object $Agent -PropertyName 'metadata') -PropertyName 'roleKey')
+    $instructionSourcePath = Resolve-VorceStudiosAgentInstructionSourcePath -Agent $Agent
+    $managedConfig = Get-VorceStudiosManagedInstructionAdapterConfig -CompanyId $CompanyId -AgentId $agentId
+
+    return [ordered]@{
+        VORCE_STUDIOS_ROLE = $roleKey
+        INSTRUCTION_PATH = $instructionSourcePath
+        POLICY_ROOT = $paths.PoliciesDir
+        INSTRUCTION_BUNDLE_ROOT = [string](Get-VorceStudiosObjectPropertyValue -Object $managedConfig -PropertyName 'instructionsRootPath')
+        INSTRUCTION_ENTRY_FILE = [string](Get-VorceStudiosObjectPropertyValue -Object $managedConfig -PropertyName 'instructionsEntryFile')
+    }
+}
+
+function Get-VorceStudiosAutonomousAdapterTarget {
+    param(
+        [Parameter(Mandatory)][string]$RoleKey,
+        [Parameter(Mandatory)][hashtable]$Availability
+    )
+
+    $codexAvailable = [bool](Get-VorceStudiosObjectPropertyValue -Object (Get-VorceStudiosObjectPropertyValue -Object $Availability -PropertyName 'codex') -PropertyName 'available')
+    $qwenAvailable = [bool](Get-VorceStudiosObjectPropertyValue -Object (Get-VorceStudiosObjectPropertyValue -Object $Availability -PropertyName 'qwen') -PropertyName 'available')
+    $geminiAvailable = [bool](Get-VorceStudiosObjectPropertyValue -Object (Get-VorceStudiosObjectPropertyValue -Object $Availability -PropertyName 'gemini') -PropertyName 'available')
+
+    switch ($RoleKey) {
+        'ceo' {
+            if ($codexAvailable) { return New-VorceStudiosCodexLocalTarget -TimeoutSec 900 -Search -ReasoningEffort 'xhigh' }
+            if ($qwenAvailable) { return New-VorceStudiosQwenProcessTarget -TimeoutSec 900 }
+            return New-VorceStudiosGeminiLocalTarget -TimeoutSec 900
+        }
+        'chief_of_staff' {
+            if ($codexAvailable) { return New-VorceStudiosCodexLocalTarget -TimeoutSec 900 -ReasoningEffort 'high' }
+            if ($qwenAvailable) { return New-VorceStudiosQwenProcessTarget -TimeoutSec 900 }
+            return New-VorceStudiosGeminiLocalTarget -TimeoutSec 900
+        }
+        'codex_review' {
+            if ($codexAvailable) { return New-VorceStudiosCodexLocalTarget -TimeoutSec 900 -ReasoningEffort 'high' }
+            if ($qwenAvailable) { return New-VorceStudiosQwenProcessTarget -TimeoutSec 900 }
+            return New-VorceStudiosGeminiLocalTarget -TimeoutSec 900
+        }
+        'lena_assistant' { if ($qwenAvailable) { return New-VorceStudiosQwenProcessTarget -TimeoutSec 600 } }
+        'jules_monitor' { if ($qwenAvailable) { return New-VorceStudiosQwenProcessTarget -TimeoutSec 600 } }
+        'pr_monitor' { if ($qwenAvailable) { return New-VorceStudiosQwenProcessTarget -TimeoutSec 600 } }
+        'qwen_review' { if ($qwenAvailable) { return New-VorceStudiosQwenProcessTarget -TimeoutSec 600 } }
+        'discovery' {
+            if ($geminiAvailable) { return New-VorceStudiosGeminiLocalTarget -TimeoutSec 600 }
+            if ($qwenAvailable) { return New-VorceStudiosQwenProcessTarget -TimeoutSec 600 }
+            if ($codexAvailable) { return New-VorceStudiosCodexLocalTarget -TimeoutSec 600 -ReasoningEffort 'medium' }
+        }
+        'jules' {
+            if ($geminiAvailable) { return New-VorceStudiosGeminiLocalTarget -TimeoutSec 600 }
+            if ($qwenAvailable) { return New-VorceStudiosQwenProcessTarget -TimeoutSec 600 }
+            if ($codexAvailable) { return New-VorceStudiosCodexLocalTarget -TimeoutSec 600 -ReasoningEffort 'medium' }
+        }
+        'gemini_review' {
+            if ($geminiAvailable) { return New-VorceStudiosGeminiLocalTarget -TimeoutSec 600 }
+            if ($qwenAvailable) { return New-VorceStudiosQwenProcessTarget -TimeoutSec 600 }
+            if ($codexAvailable) { return New-VorceStudiosCodexLocalTarget -TimeoutSec 600 -ReasoningEffort 'medium' }
+        }
+        'ops' {
+            if ($geminiAvailable) { return New-VorceStudiosGeminiLocalTarget -TimeoutSec 600 }
+            if ($qwenAvailable) { return New-VorceStudiosQwenProcessTarget -TimeoutSec 600 }
+            if ($codexAvailable) { return New-VorceStudiosCodexLocalTarget -TimeoutSec 600 -ReasoningEffort 'medium' }
+        }
+        'atlas' {
+            if ($geminiAvailable) { return New-VorceStudiosGeminiLocalTarget -TimeoutSec 600 }
+            if ($qwenAvailable) { return New-VorceStudiosQwenProcessTarget -TimeoutSec 600 }
+            if ($codexAvailable) { return New-VorceStudiosCodexLocalTarget -TimeoutSec 600 -ReasoningEffort 'medium' }
+        }
+        'antigravity' {
+            if ($geminiAvailable) { return New-VorceStudiosGeminiLocalTarget -TimeoutSec 900 }
+            if ($qwenAvailable) { return New-VorceStudiosQwenProcessTarget -TimeoutSec 900 }
+            if ($codexAvailable) { return New-VorceStudiosCodexLocalTarget -TimeoutSec 900 -ReasoningEffort 'high' }
+        }
+    }
+
+    return $null
+}
+
 function New-VorceStudiosGenericInstructionContent {
     param(
         [Parameter(Mandatory)][object]$Agent
@@ -228,6 +431,7 @@ function New-VorceStudiosSoulContent {
     $role = [string](Get-VorceStudiosObjectPropertyValue -Object $Agent -PropertyName 'role')
     $title = [string](Get-VorceStudiosObjectPropertyValue -Object $Agent -PropertyName 'title')
     $capabilities = [string](Get-VorceStudiosObjectPropertyValue -Object $Agent -PropertyName 'capabilities')
+    $strengthLine = if ([string]::IsNullOrWhiteSpace($capabilities)) { '- Use the available adapter and repository context effectively.' } else { '- {0}' -f $capabilities }
 
     return @(
         '# SOUL.md'
@@ -241,7 +445,7 @@ function New-VorceStudiosSoulContent {
         '- Prefer durable fixes over temporary workarounds when the scope is controlled.'
         ''
         '## Native Strengths'
-        (if ([string]::IsNullOrWhiteSpace($capabilities)) { '- Use the available adapter and repository context effectively.' } else { '- {0}' -f $capabilities })
+        $strengthLine
         ''
         '## Non-Negotiables'
         '- Stay consistent with the managed instructions bundle in this directory.'
@@ -346,6 +550,12 @@ function New-VorceStudiosGoalsContent {
         )
     }
 
+    $idleGuidanceLine = if (($goals.Count -eq 0) -and ($issues.Count -eq 0)) {
+        '- If there are no assigned issues and no company goals, record an idle/no-op heartbeat and stop instead of exploring speculative work.'
+    } else {
+        '- If no issue is assigned, align with the highest-priority company goal without inventing side quests.'
+    }
+
     return @(
         '# GOALS.md'
         ''
@@ -360,7 +570,7 @@ function New-VorceStudiosGoalsContent {
         ''
         '## Guidance'
         '- Prioritize explicitly assigned work first.'
-        '- If no issue is assigned, align with the highest-priority company goal without inventing side quests.'
+        $idleGuidanceLine
     ) -join "`n"
 }
 
@@ -377,7 +587,7 @@ function New-VorceStudiosSkillsContent {
         @('- No desired skills are configured.')
     } else {
         foreach ($skillKey in $desired) {
-            $entry = @($entries | Where-Object { [string]$_.key -eq [string]$skillKey } | Select-Object -First 1)[0]
+            $entry = $entries | Where-Object { [string]$_.key -eq [string]$skillKey } | Select-Object -First 1
             if ($null -eq $entry) {
                 '- {0} (not currently visible in runtime snapshot)' -f [string]$skillKey
                 continue
@@ -463,7 +673,7 @@ function Sync-VorceStudiosLocalAgentInstructionBundles {
     $plugins = @(Get-VorceStudiosPlugins)
     $agents = @(
         Get-VorceStudiosAgents -CompanyId $CompanyId |
-            Where-Object { $LocalAdapterTypes -contains [string]$_.adapterType }
+            Where-Object { ($LocalAdapterTypes -contains [string]$_.adapterType) -or ([string]$_.adapterType -eq 'process') }
     )
 
     $updatedAgents = New-Object System.Collections.Generic.List[string]
@@ -571,16 +781,19 @@ function Ensure-VorceStudiosAutonomousAgentAdapters {
 
     $paths = Get-VorceStudiosPaths
     $updated = New-Object System.Collections.Generic.List[string]
+    $resetSessions = New-Object System.Collections.Generic.List[string]
+    $availability = Get-VorceStudiosLocalToolAvailability
 
     foreach ($agent in @(Get-VorceStudiosAgents -CompanyId $CompanyId)) {
         $metadata = Get-VorceStudiosObjectPropertyValue -Object $agent -PropertyName 'metadata'
         $roleKey = [string](Get-VorceStudiosObjectPropertyValue -Object $metadata -PropertyName 'roleKey')
-        $target = Get-VorceStudiosObjectPropertyValue -Object $AutonomousAdapterTargetsByRoleKey -PropertyName $roleKey
+        $target = Get-VorceStudiosAutonomousAdapterTarget -RoleKey $roleKey -Availability $availability
         if ($null -eq $target) {
             continue
         }
 
         $adapterConfig = ConvertTo-VorceStudiosHashtable -InputObject (Get-VorceStudiosObjectPropertyValue -Object $agent -PropertyName 'adapterConfig')
+        $targetAdapterType = [string](Get-VorceStudiosObjectPropertyValue -Object $target -PropertyName 'adapterType')
         $cwd = [string](Get-VorceStudiosObjectPropertyValue -Object $adapterConfig -PropertyName 'cwd')
         if ([string]::IsNullOrWhiteSpace($cwd)) {
             $cwd = $paths.Root
@@ -590,48 +803,56 @@ function Ensure-VorceStudiosAutonomousAgentAdapters {
         $nextAdapterConfig = Merge-VorceStudiosHashtable -Base $nextAdapterConfig -Overlay @{
             cwd = $cwd
         }
+        if ($targetAdapterType -ne 'process') {
+            $nextAdapterConfig = Merge-VorceStudiosHashtable -Base $nextAdapterConfig -Overlay @{
+                command = $null
+                args = $null
+                commandArgs = $null
+            }
+        }
         $nextAdapterConfig = Merge-VorceStudiosHashtable -Base $nextAdapterConfig -Overlay (Get-VorceStudiosManagedInstructionAdapterConfig -CompanyId $CompanyId -AgentId ([string]$agent.id))
-        $targetAdapterType = [string](Get-VorceStudiosObjectPropertyValue -Object $target -PropertyName 'adapterType')
+        if ($targetAdapterType -eq 'process') {
+            $processEnv = Get-VorceStudiosManagedInstructionProcessEnv -CompanyId $CompanyId -Agent $agent
+            $nextAdapterConfig = Merge-VorceStudiosHashtable -Base $nextAdapterConfig -Overlay @{
+                env = Merge-VorceStudiosHashtable -Base (Get-VorceStudiosObjectPropertyValue -Object $nextAdapterConfig -PropertyName 'env') -Overlay $processEnv
+            }
+        }
 
-        if (([string]$agent.adapterType -ne $targetAdapterType) -or -not (Test-VorceStudiosJsonEquivalent -Left $adapterConfig -Right $nextAdapterConfig)) {
+        $adapterTypeChanged = ([string]$agent.adapterType -ne $targetAdapterType)
+        if ($adapterTypeChanged -or -not (Test-VorceStudiosJsonEquivalent -Left $adapterConfig -Right $nextAdapterConfig)) {
             Update-VorceStudiosAgent -AgentId ([string]$agent.id) -Payload @{
                 adapterType = $targetAdapterType
                 adapterConfig = $nextAdapterConfig
             } | Out-Null
             $updated.Add([string]$agent.name)
+            if ($adapterTypeChanged) {
+                Reset-VorceStudiosAgentRuntimeSession -AgentId ([string]$agent.id) | Out-Null
+                $resetSessions.Add([string]$agent.name)
+            }
         }
     }
 
     return @{
         updatedAgents = $updated.ToArray()
         updatedCount = $updated.Count
+        resetSessions = $resetSessions.ToArray()
+        resetSessionCount = $resetSessions.Count
+        availability = $availability
     }
 }
 
-function Get-VorceStudiosGeminiFallbackAdapterConfig {
+function Get-VorceStudiosQwenFallbackAdapterConfig {
     param(
         [Parameter(Mandatory)][string]$CompanyId,
         [Parameter(Mandatory)][object]$Agent
     )
 
-    $paths = Get-VorceStudiosPaths
-    $adapterConfig = ConvertTo-VorceStudiosHashtable -InputObject (Get-VorceStudiosObjectPropertyValue -Object $Agent -PropertyName 'adapterConfig')
-    $cwd = [string](Get-VorceStudiosObjectPropertyValue -Object $adapterConfig -PropertyName 'cwd')
-    if ([string]::IsNullOrWhiteSpace($cwd)) {
-        $cwd = $paths.Root
+    $target = New-VorceStudiosQwenProcessTarget -TimeoutSec 600
+    $adapterConfig = ConvertTo-VorceStudiosHashtable -InputObject (Get-VorceStudiosObjectPropertyValue -Object $target -PropertyName 'adapterConfig')
+    $processEnv = Get-VorceStudiosManagedInstructionProcessEnv -CompanyId $CompanyId -Agent $Agent
+    return Merge-VorceStudiosHashtable -Base $adapterConfig -Overlay @{
+        env = Merge-VorceStudiosHashtable -Base (Get-VorceStudiosObjectPropertyValue -Object $adapterConfig -PropertyName 'env') -Overlay $processEnv
     }
-
-    $fallback = @{
-        cwd = $cwd
-        yolo = $true
-        model = 'auto'
-        graceSec = 15
-        timeoutSec = 600
-    }
-
-    $fallback = Merge-VorceStudiosHashtable -Base $adapterConfig -Overlay $fallback
-    $fallback = Merge-VorceStudiosHashtable -Base $fallback -Overlay (Get-VorceStudiosManagedInstructionAdapterConfig -CompanyId $CompanyId -AgentId ([string]$Agent.id))
-    return $fallback
 }
 
 function Test-VorceStudiosCodexFallbackError {
@@ -653,6 +874,17 @@ function Ensure-VorceStudiosCodexFallbackAdapters {
     )
 
     $updated = New-Object System.Collections.Generic.List[string]
+    $availability = Get-VorceStudiosLocalToolAvailability
+    $codexAvailable = [bool](Get-VorceStudiosObjectPropertyValue -Object (Get-VorceStudiosObjectPropertyValue -Object $availability -PropertyName 'codex') -PropertyName 'available')
+    $qwenAvailable = [bool](Get-VorceStudiosObjectPropertyValue -Object (Get-VorceStudiosObjectPropertyValue -Object $availability -PropertyName 'qwen') -PropertyName 'available')
+    $geminiAvailable = [bool](Get-VorceStudiosObjectPropertyValue -Object (Get-VorceStudiosObjectPropertyValue -Object $availability -PropertyName 'gemini') -PropertyName 'available')
+
+    if ($codexAvailable) {
+        return @{
+            updatedAgents = @()
+            updatedCount = 0
+        }
+    }
 
     foreach ($agent in @(Get-VorceStudiosAgents -CompanyId $CompanyId | Where-Object { [string]$_.adapterType -eq 'codex_local' })) {
         $runs = @(Get-VorceStudiosHeartbeatRuns -CompanyId $CompanyId -AgentId ([string]$agent.id) -Limit 3)
@@ -670,10 +902,20 @@ function Ensure-VorceStudiosCodexFallbackAdapters {
             continue
         }
 
-        Update-VorceStudiosAgent -AgentId ([string]$agent.id) -Payload @{
-            adapterType = 'gemini_local'
-            adapterConfig = Get-VorceStudiosGeminiFallbackAdapterConfig -CompanyId $CompanyId -Agent $agent
-        } | Out-Null
+        if ($qwenAvailable) {
+            Update-VorceStudiosAgent -AgentId ([string]$agent.id) -Payload @{
+                adapterType = 'process'
+                adapterConfig = Get-VorceStudiosQwenFallbackAdapterConfig -CompanyId $CompanyId -Agent $agent
+            } | Out-Null
+        } elseif ($geminiAvailable) {
+            Update-VorceStudiosAgent -AgentId ([string]$agent.id) -Payload @{
+                adapterType = 'gemini_local'
+                adapterConfig = Get-VorceStudiosObjectPropertyValue -Object (New-VorceStudiosGeminiLocalTarget -TimeoutSec 600) -PropertyName 'adapterConfig'
+            } | Out-Null
+        } else {
+            continue
+        }
+        Reset-VorceStudiosAgentRuntimeSession -AgentId ([string]$agent.id) | Out-Null
         $updated.Add([string]$agent.name)
     }
 

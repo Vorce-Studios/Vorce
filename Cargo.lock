@@ -4034,6 +4034,12 @@ dependencies = [
 
 [[package]]
 name = "glam"
+version = "0.30.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19fc433e8437a212d1b6f1e68c7824af3aed907da60afa994e7f542d18d12aa9"
+
+[[package]]
+name = "glam"
 version = "0.32.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f70749695b063ecbf6b62949ccccde2e733ec3ecbbd71d467dca4e5c6c97cca0"
@@ -4308,6 +4314,16 @@ name = "hexf-parse"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dfa686283ad6dd069f105e5ab091b04c62850d3e4cf5d67debad1933f55023df"
+
+[[package]]
+name = "hexx"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f6e1747feec024f4fb1b56bca2e3c149814baed861fdc7044d6482ff8daf8fb0"
+dependencies = [
+ "glam 0.30.10",
+ "serde",
+]
 
 [[package]]
 name = "hkdf"
@@ -9394,11 +9410,12 @@ version = "0.2.0"
 dependencies = [
  "anyhow",
  "bevy",
+ "hexx",
  "rand 0.9.2",
  "thiserror 1.0.69",
  "tracing",
  "vorce-core",
- "wgpu 29.0.1",
+ "wgpu 23.0.1",
 ]
 
 [[package]]

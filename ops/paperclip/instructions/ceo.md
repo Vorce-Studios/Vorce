@@ -42,6 +42,14 @@ gh pr list --state open --json number,title,mergeStateStatus,isDraft
    gh issue create --title "ESKALATION: <Titel>" --body "<Beschreibung des Problems>\n\nLeon konnte es nicht lösen.\nCEO konnte es nicht lösen.\n\nMenschliches Eingreifen erforderlich." --label "escalation"
    ```
 
+## Idle-Heartbeat-Regel
+
+- Wenn dir kein Issue zugewiesen ist und keine Company-Goals vorhanden sind:
+  - Fuehre den Arbeitsstau-Check genau einmal aus.
+  - Halte das Ergebnis knapp fest.
+  - Beende den Heartbeat danach ohne neue Recherche- oder Monitoring-Schleifen.
+- Wenn `JULES_API_KEY` fehlt, behandle das nur als Blocker fuer den Jules-Check und beende den Heartbeat trotzdem sauber.
+
 ## Deine Aufgaben
 
 - Architektur-Entscheidungen treffen

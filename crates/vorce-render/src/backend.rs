@@ -111,7 +111,7 @@ impl WgpuBackend {
 
         debug!("Device created successfully");
 
-        let staging_belt = wgpu::util::StagingBelt::new(1024 * 1024); // 1MB chunks
+        let staging_belt = wgpu::util::StagingBelt::new(device.clone(), 1024 * 1024); // 1MB chunks
 
         Ok(Self {
             instance: Arc::new(instance),

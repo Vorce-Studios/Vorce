@@ -200,6 +200,20 @@ function Update-VorceStudiosAgent {
     return Invoke-VorceStudiosApi -Method PATCH -Path ("/api/agents/{0}" -f $AgentId) -Body $Payload
 }
 
+function Reset-VorceStudiosAgentRuntimeSession {
+    param(
+        [Parameter(Mandatory)][string]$AgentId,
+        [string]$TaskKey
+    )
+
+    $payload = @{}
+    if (-not [string]::IsNullOrWhiteSpace($TaskKey)) {
+        $payload.taskKey = $TaskKey
+    }
+
+    return Invoke-VorceStudiosApi -Method POST -Path ("/api/agents/{0}/runtime-state/reset-session" -f $AgentId) -Body $payload
+}
+
 function Invoke-VorceStudiosHeartbeat {
     param(
         [Parameter(Mandatory)][string]$AgentId,
