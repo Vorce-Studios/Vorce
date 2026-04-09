@@ -5,3 +5,9 @@
 ## 2025-03-25 - [Redundant String Allocation in Loops]
 **Learning:** Found a common pattern in UI filtering where `String::to_lowercase()` was called inside a `.filter()` iterator closure. This causes O(N) heap allocations during search operations, degrading UI performance with large media libraries.
 **Action:** Always pre-compute and cache string transformations like `to_lowercase()` in the corresponding models (e.g. `MediaItem`, `EffectPreset`, `MediaEntry`) instead of dynamically calling `to_lowercase()` inside `filter()` closures during UI searches. This significantly reduces allocations and speeds up query operations.
+## 2026-04-10 - Avoid per-frame string allocations in UI
+**Erkenntnis:** Bei UI-Filtern oder Sortierungen in egui (oder React) innerhalb der Render-Schleife führt der Einsatz von `.to_lowercase()` für case-insensitive Suchen zu massiven Performance-Einbußen durch String-Allokationen in jedem Frame.
+**Aktion:** Erstelle transiente Caching-Felder für Strings in den Model-Structs, ignoriere sie bei der Serialisierung mit `#[serde(skip)]` und `#[serde(default)]`, und aktualisiere sie asynchron beim Deserialisieren oder Modifizieren.
+## 2026-04-10 - Avoid per-frame string allocations in UI
+**Erkenntnis:** Bei UI-Filtern oder Sortierungen in egui (oder React) innerhalb der Render-Schleife führt der Einsatz von `.to_lowercase()` für case-insensitive Suchen zu massiven Performance-Einbußen durch String-Allokationen in jedem Frame.
+**Aktion:** Erstelle transiente Caching-Felder für Strings in den Model-Structs, ignoriere sie bei der Serialisierung mit `#[serde(skip)]` und `#[serde(default)]`, und aktualisiere sie asynchron beim Deserialisieren oder Modifizieren.
