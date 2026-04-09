@@ -165,7 +165,7 @@ impl CuePanel {
                         label = label.color(ui.visuals().selection.stroke.color).strong();
                     }
                     if is_next {
-                        label = label.color(ui.visuals().warn_fg_color);
+                        label = label.color(egui::Color32::from_rgb(255, 165, 0));
                         // Orange for next
                     }
 

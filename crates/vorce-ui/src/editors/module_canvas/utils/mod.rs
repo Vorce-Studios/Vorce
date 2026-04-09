@@ -21,13 +21,13 @@ mod tests {
 
     #[test]
     fn test_node_catalog_not_empty() {
-        let catalog = build_node_catalog();
+        let catalog = get_node_catalog();
         assert!(!catalog.is_empty(), "Node catalog should not be empty");
     }
 
     #[test]
     fn test_node_catalog_coverage() {
-        let catalog = build_node_catalog();
+        let catalog = get_node_catalog();
 
         let has_trigger = catalog
             .iter()
@@ -70,7 +70,7 @@ mod tests {
 
     #[test]
     fn test_node_catalog_search_tags() {
-        let catalog = build_node_catalog();
+        let catalog = get_node_catalog();
         for item in catalog {
             assert!(
                 !item.search_tags.is_empty(),
@@ -89,9 +89,9 @@ mod tests {
 
     #[test]
     fn test_node_catalog_hides_unsupported_items() {
-        let catalog = build_node_catalog();
+        let catalog = get_node_catalog();
 
-        for item in &catalog {
+        for item in catalog {
             match &item.part_type {
                 ModulePartType::Source(SourceType::Shader { .. }) => {
                     assert!(capabilities::is_source_type_enum_supported(
@@ -131,10 +131,10 @@ mod tests {
 
     #[test]
     fn test_node_catalog_labels_are_unique() {
-        let catalog = build_node_catalog();
+        let catalog = get_node_catalog();
         let mut labels = HashSet::new();
 
-        for item in &catalog {
+        for item in catalog {
             assert!(
                 labels.insert(item.label),
                 "Node catalog should not contain duplicate labels: {}",

@@ -66,10 +66,7 @@ pub fn save_readback_buffer(
 
     // In a real app, we might want to poll outside this function,
     // but for simple capture this is fine.
-    let _ = device.poll(wgpu::PollType::Wait {
-        submission_index: None,
-        timeout: None,
-    });
+    let _ = device.poll(wgpu::Maintain::Wait);
 
     let mapped = slice.get_mapped_range();
     let mut rgba = Vec::with_capacity((width * height * 4) as usize);

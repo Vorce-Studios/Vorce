@@ -19,9 +19,8 @@ vorce-core = { path = "../vorce-core" }
 rand = "0.9.2"
 thiserror = { workspace = true }
 tracing = { workspace = true }
-wgpu = "24.0.0"
-# bevy_light and bevy_camera are parts of bevy or separate compatible crates
-# Removing git references for now to see if standard bevy suffices
+# Use workspace wgpu version to avoid conflicts with main application
+wgpu = { workspace = true }
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
 bevy = { version = "0.15.0", default-features = false, features = ["wayland"] }

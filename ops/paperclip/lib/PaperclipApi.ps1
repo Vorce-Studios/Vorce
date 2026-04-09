@@ -18,7 +18,7 @@ function Get-VorceStudiosApiHeaders {
 function Invoke-VorceStudiosApi {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)][ValidateSet('GET', 'POST', 'PATCH', 'DELETE')][string]$Method,
+        [Parameter(Mandatory)][ValidateSet('GET', 'POST', 'PATCH', 'PUT', 'DELETE')][string]$Method,
         [Parameter(Mandatory)][string]$Path,
         [AllowNull()][object]$Body,
         [switch]$IgnoreNotFound,
@@ -275,6 +275,19 @@ function Get-VorceStudiosDashboard {
     return Invoke-VorceStudiosApi -Method GET -Path ("/api/companies/{0}/dashboard" -f $CompanyId) -IgnoreFailure
 }
 
+function Get-VorceStudiosGoals {
+    param(
+        [Parameter(Mandatory)][string]$CompanyId
+    )
+
+    $goals = Invoke-VorceStudiosApi -Method GET -Path ("/api/companies/{0}/goals" -f $CompanyId) -IgnoreFailure
+    if ($null -eq $goals) {
+        return @()
+    }
+
+    return @($goals)
+}
+
 function Try-New-VorceStudiosProject {
     param(
         [Parameter(Mandatory)][string]$CompanyId,
@@ -426,6 +439,20 @@ function Disable-VorceStudiosPlugin {
     return Invoke-VorceStudiosApi -Method POST -Path ("/api/plugins/{0}/disable" -f $PluginId) -Body @{}
 }
 
+function Upgrade-VorceStudiosPlugin {
+    param(
+        [Parameter(Mandatory)][string]$PluginId,
+        [string]$Version
+    )
+
+    $payload = @{}
+    if (-not [string]::IsNullOrWhiteSpace($Version)) {
+        $payload['version'] = $Version
+    }
+
+    return Invoke-VorceStudiosApi -Method POST -Path ("/api/plugins/{0}/upgrade" -f $PluginId) -Body $payload
+}
+
 function Uninstall-VorceStudiosPlugin {
     param(
         [Parameter(Mandatory)][string]$PluginId,
@@ -493,6 +520,99 @@ function Get-VorceStudiosCompanySecrets {
     }
 
     return @($items)
+}
+
+function Get-VorceStudiosCompanySkills {
+    param(
+        [Parameter(Mandatory)][string]$CompanyId
+    )
+
+    $items = Invoke-VorceStudiosApi -Method GET -Path ("/api/companies/{0}/skills" -f $CompanyId) -IgnoreFailure
+    if ($null -eq $items) {
+        return @()
+    }
+
+    return @($items)
+}
+
+function Import-VorceStudiosCompanySkill {
+    param(
+        [Parameter(Mandatory)][string]$CompanyId,
+        [Parameter(Mandatory)][string]$Source
+    )
+
+    return Invoke-VorceStudiosApi -Method POST -Path ("/api/companies/{0}/skills/import" -f $CompanyId) -Body @{
+        source = $Source
+    }
+}
+
+function Get-VorceStudiosAgentSkills {
+    param(
+        [Parameter(Mandatory)][string]$AgentId
+    )
+
+    $items = Invoke-VorceStudiosApi -Method GET -Path ("/api/agents/{0}/skills" -f $AgentId) -IgnoreFailure
+    if ($null -eq $items) {
+        return @()
+    }
+
+    return @($items)
+}
+
+function Sync-VorceStudiosAgentSkills {
+    param(
+        [Parameter(Mandatory)][string]$AgentId,
+        [AllowEmptyCollection()][string[]]$DesiredSkills = @()
+    )
+
+    return Invoke-VorceStudiosApi -Method POST -Path ("/api/agents/{0}/skills/sync" -f $AgentId) -Body @{
+        desiredSkills = @($DesiredSkills)
+    }
+}
+
+function Get-VorceStudiosSchedulerHeartbeats {
+    $items = Invoke-VorceStudiosApi -Method GET -Path '/api/instance/scheduler-heartbeats' -IgnoreFailure
+    if ($null -eq $items) {
+        return @()
+    }
+
+    return @($items)
+}
+
+function Get-VorceStudiosHeartbeatRuns {
+    param(
+        [Parameter(Mandatory)][string]$CompanyId,
+        [string]$AgentId,
+        [int]$Limit = 20
+    )
+
+    $query = @()
+    if (-not [string]::IsNullOrWhiteSpace($AgentId)) {
+        $query += ('agentId={0}' -f [uri]::EscapeDataString($AgentId))
+    }
+    if ($Limit -gt 0) {
+        $query += ('limit={0}' -f $Limit)
+    }
+
+    $path = "/api/companies/{0}/heartbeat-runs" -f $CompanyId
+    if ($query.Count -gt 0) {
+        $path = '{0}?{1}' -f $path, ($query -join '&')
+    }
+
+    $items = Invoke-VorceStudiosApi -Method GET -Path $path -IgnoreFailure
+    if ($null -eq $items) {
+        return @()
+    }
+
+    return @($items)
+}
+
+function Get-VorceStudiosHeartbeatRunLog {
+    param(
+        [Parameter(Mandatory)][string]$RunId
+    )
+
+    return Invoke-VorceStudiosApi -Method GET -Path ("/api/heartbeat-runs/{0}/log" -f $RunId) -IgnoreFailure
 }
 
 function New-VorceStudiosCompanySecret {
