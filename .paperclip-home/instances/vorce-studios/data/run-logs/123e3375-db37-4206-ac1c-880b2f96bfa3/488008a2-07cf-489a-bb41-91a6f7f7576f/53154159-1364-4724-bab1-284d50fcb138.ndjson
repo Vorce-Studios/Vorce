@@ -1,0 +1,4 @@
+{"ts":"2026-04-09T04:15:21.539Z","stream":"stdout","chunk":"[paperclip] No project or prior session workspace was available. Using fallback workspace \"C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\.paperclip-home\\instances\\vorce-studios\\workspaces\\488008a2-07cf-489a-bb41-91a6f7f7576f\" for this run.\n"}
+{"ts":"2026-04-09T04:15:22.669Z","stream":"stdout","chunk":"PowerShell 7.6.0"}
+{"ts":"2026-04-09T04:15:22.670Z","stream":"stdout","chunk":"\r\n"}
+{"ts":"2026-04-09T04:15:24.870Z","stream":"stdout","chunk":"PS C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper> "}

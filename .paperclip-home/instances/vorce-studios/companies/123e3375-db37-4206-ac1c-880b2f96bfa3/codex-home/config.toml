@@ -1,0 +1,26 @@
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
+approvals_reviewer = "user"
+sandbox_mode = "workspace-write"
+
+[projects.'\\?\C:\Users\Vinyl\Desktop\VJMapper\VjMapper']
+trust_level = "trusted"
+
+[projects.'C:\WINDOWS\system32']
+trust_level = "trusted"
+
+[windows]
+sandbox = "unelevated"
+
+[notice]
+hide_full_access_warning = true
+hide_rate_limit_model_nudge = true
+
+[features]
+multi_agent = true
+
+[plugins."github@openai-curated"]
+enabled = true
+
+[plugins."canva@openai-curated"]
+enabled = true
