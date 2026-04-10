@@ -50,8 +50,11 @@ pub trait AudioBackend {
 #[cfg(feature = "audio")]
 pub mod cpal_backend {
     use super::{AudioBackend, AudioError};
+    #[cfg(not(target_os = "macos"))]
     use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-    use crossbeam_channel::{unbounded, Receiver, Sender};
+    #[cfg(not(target_os = "macos"))]
+    use crossbeam_channel::unbounded;
+    use crossbeam_channel::{Receiver, Sender};
 
     enum Command {
         Pause,
@@ -74,9 +77,9 @@ pub mod cpal_backend {
             {
                 let _ = device_name; // Prevent unused variable warning
                 tracing::warn!("Audio input is currently feature-gated on macOS for stability.");
-                return Err(AudioError::NoDevicesFound(
+                Err(AudioError::NoDevicesFound(
                     "Feature gated on macOS".to_string(),
-                ));
+                ))
             }
 
             #[cfg(not(target_os = "macos"))]
@@ -105,6 +108,7 @@ pub mod cpal_backend {
         }
 
         /// Build the audio stream (must be called from main thread)
+        #[cfg(not(target_os = "macos"))]
         fn build_stream(
             device_name: Option<String>,
             sample_tx: Sender<Vec<f32>>,
@@ -293,7 +297,7 @@ pub mod cpal_backend {
             #[cfg(target_os = "macos")]
             {
                 tracing::warn!("Audio input is currently feature-gated on macOS for stability.");
-                return Ok(Some(vec![]));
+                Ok(Some(vec![]))
             }
 
             #[cfg(not(target_os = "macos"))]
