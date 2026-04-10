@@ -16,6 +16,7 @@ function Ensure-VorceStudiosWorktreeConfig {
     $paths = Get-VorceStudiosPaths
     $system = Get-VorceStudiosSystemPolicy
     if ((Test-Path -LiteralPath $paths.PaperclipConfigPath) -and (Test-Path -LiteralPath $paths.PaperclipEnvPath)) {
+        Sync-VorceStudiosWorktreeConfigFile | Out-Null
         return
     }
 
@@ -38,6 +39,8 @@ function Ensure-VorceStudiosWorktreeConfig {
     if ($LASTEXITCODE -ne 0) {
         throw 'Paperclip worktree init ist fehlgeschlagen.'
     }
+
+    Sync-VorceStudiosWorktreeConfigFile | Out-Null
 }
 
 function Start-VorceStudiosBootstrapServer {
@@ -75,69 +78,145 @@ function Start-VorceStudiosBootstrapServer {
     return $true
 }
 
+function Get-VorceStudiosManagedInstructionFilePath {
+    param(
+        [Parameter(Mandatory)][string]$RoleKey
+    )
+
+    $paths = Get-VorceStudiosPaths
+    return (Join-Path $paths.RuntimeRoot ("instruction-bundles\{0}\AGENTS.md" -f $RoleKey))
+}
+
+function Get-VorceStudiosRoleHeartbeatInterval {
+    param(
+        [Parameter(Mandatory)][string]$RoleKey
+    )
+
+    $routing = Get-VorceStudiosPolicy -Name 'routing'
+    if (
+        $routing.ContainsKey('Heartbeats') -and
+        $routing.Heartbeats.ContainsKey('IntervalsSec') -and
+        $routing.Heartbeats.IntervalsSec.ContainsKey($RoleKey)
+    ) {
+        return [int]$routing.Heartbeats.IntervalsSec[$RoleKey]
+    }
+
+    return 0
+}
+
 function Get-VorceStudiosAgentDefinitions {
     $paths = Get-VorceStudiosPaths
     $shell = Get-VorceStudiosShellExecutable
-    $agentScript = Join-Path $paths.Root 'scripts\paperclip\Invoke-Vorce-StudiosAgent.ps1'
+    $agentScript = Join-Path $paths.Root 'ops\paperclip\Invoke-Vorce-StudiosAgent.ps1'
     $routing = Get-VorceStudiosPolicy -Name 'routing'
 
     $definitions = @(
-        @{ key = 'ceo'; name = $routing.Roles.ceo; role = 'ceo'; title = 'Strategic owner, escalation and release authority'; icon = 'crown'; capabilities = 'Architecture, prioritization, escalation, release decisions'; instructionFile = 'ceo.md'; reportsTo = $null },
-        @{ key = 'lena_assistant'; name = $routing.Roles.lena_assistant; role = 'researcher'; title = 'Personal assistant to CEO, briefing and filtering'; icon = 'message-square'; capabilities = 'Issue aggregation, briefing generation, routine filtering'; instructionFile = 'lena-assistant.md'; reportsTo = 'ceo' },
-        @{ key = 'chief_of_staff'; name = $routing.Roles.chief_of_staff; role = 'pm'; title = 'Dynamic routing, queue health and capacity failover'; icon = 'radar'; capabilities = 'Routing, quota management, task assignment'; instructionFile = 'chief-of-staff.md'; reportsTo = 'ceo' },
-        @{ key = 'discovery'; name = $routing.Roles.discovery; role = 'researcher'; title = 'Proactive discovery and backlog enrichment'; icon = 'search'; capabilities = 'Issue discovery, regression scanning, stale failure triage'; instructionFile = 'discovery-scout.md'; reportsTo = 'chief_of_staff' },
-        @{ key = 'jules'; name = $routing.Roles.jules; role = 'engineer'; title = 'Primary low-cost implementation worker via Jules'; icon = 'wand'; capabilities = 'Issue implementation, Jules session orchestration'; instructionFile = 'jules-builder.md'; reportsTo = 'chief_of_staff' },
-        @{ key = 'jules_monitor'; name = $routing.Roles.jules_monitor; role = 'qa'; title = 'Jules session monitoring and deadlock resolution'; icon = 'radar'; capabilities = 'Session monitoring, timeout detection, escalation'; instructionFile = 'jules-session-monitor.md'; reportsTo = 'chief_of_staff' },
-        @{ key = 'pr_monitor'; name = $routing.Roles.pr_monitor; role = 'qa'; title = 'GitHub PR monitoring and CI check management'; icon = 'git-branch'; capabilities = 'PR status tracking, CI retry, conflict detection'; instructionFile = 'github-pr-monitor.md'; reportsTo = 'chief_of_staff' },
-        @{ key = 'gemini_review'; name = $routing.Roles.gemini_review; role = 'qa'; title = 'Preferred reviewer and analysis worker'; icon = 'shield'; capabilities = 'Review, triage, summary generation'; instructionFile = 'gemini-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'process' },
-        @{ key = 'qwen_review'; name = $routing.Roles.qwen_review; role = 'qa'; title = 'Fallback reviewer and triage worker'; icon = 'shield'; capabilities = 'Fallback review, diff summaries, bug triage'; instructionFile = 'qwen-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'process' },
-        @{ key = 'codex_review'; name = $routing.Roles.codex_review; role = 'cto'; title = 'High-risk reviewer and architecture escalation worker'; icon = 'brain'; capabilities = 'High-risk review, architecture and difficult debugging'; instructionFile = 'codex-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'codex_local' },
-        @{ key = 'ops'; name = $routing.Roles.ops; role = 'devops'; title = 'PR checks, governance and merge stewardship'; icon = 'terminal'; capabilities = 'Checks, merge gates, audit notes, status maintenance'; instructionFile = 'ops-steward.md'; reportsTo = 'chief_of_staff' },
-        @{ key = 'atlas'; name = $routing.Roles.atlas; role = 'researcher'; title = 'Optional atlas-backed repo context worker'; icon = 'microscope'; capabilities = 'Atlas summaries, codebase map, context distillation'; instructionFile = 'atlas-context.md'; reportsTo = 'discovery' },
-        @{ key = 'antigravity'; name = $routing.Roles.antigravity; role = 'engineer'; title = 'Antigravity swarm builder for parallel multi-agent missions'; icon = 'zap'; capabilities = 'Swarm orchestration, parallel execution, multi-crate work'; instructionFile = 'antigravity-builder.md'; reportsTo = 'chief_of_staff'; adapterType = 'process' }
+        @{
+            key = 'ceo'
+            name = $routing.Roles.ceo
+            role = 'ceo'
+            title = 'Release strategy, prioritization, routing and final escalation owner'
+            icon = 'crown'
+            capabilities = 'Roadmap sequencing, issue prioritization, blocker decisions, final release control'
+            instructionFile = 'ceo.md'
+            reportsTo = $null
+            adapterType = 'codex_local'
+            heartbeatEnabled = $true
+            adapterConfig = @{
+                cwd = $paths.Root
+                model = 'gpt-5.4'
+                instructionsFilePath = Get-VorceStudiosManagedInstructionFilePath -RoleKey 'ceo'
+                dangerouslyBypassApprovalsAndSandbox = $true
+                timeoutSec = 1800
+            }
+        }
+        @{
+            key = 'order_manager'
+            name = $routing.Roles.order_manager
+            role = 'pm'
+            title = 'Creates Jules sessions, tracks PRs, and drives assigned work to merge readiness'
+            icon = 'radar'
+            capabilities = 'Jules orchestration, PR tracking, merge-readiness classification, execution follow-through'
+            instructionFile = 'order-management.md'
+            reportsTo = 'ceo'
+            adapterType = 'gemini_local'
+            heartbeatEnabled = $true
+            adapterConfig = @{
+                cwd = $paths.Root
+                model = 'gemini-2.5-flash'
+                instructionsFilePath = Get-VorceStudiosManagedInstructionFilePath -RoleKey 'order_manager'
+                yolo = $true
+                timeoutSec = 1800
+            }
+        }
+        @{
+            key = 'qwen_reviewer'
+            name = $routing.Roles.qwen_reviewer
+            role = 'qa'
+            title = 'On-demand routine reviewer for concrete PRs and narrow coding follow-ups'
+            icon = 'shield'
+            capabilities = 'Routine PR review, regression checks, missing-test identification, narrow patching'
+            instructionFile = 'qwen-reviewer.md'
+            reportsTo = 'ceo'
+            adapterType = 'process'
+            heartbeatEnabled = $false
+            adapterConfig = @{
+                command = $shell
+                args = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $agentScript, '-Role', 'qwen_reviewer')
+                cwd = $paths.Root
+                env = @{
+                    VORCE_STUDIOS_ROLE = 'qwen_reviewer'
+                    VORCE_STUDIOS_POLICY_ROOT = $paths.PoliciesDir
+                    VORCE_STUDIOS_INSTRUCTIONS_FILE = Get-VorceStudiosManagedInstructionFilePath -RoleKey 'qwen_reviewer'
+                }
+                timeoutSec = 1800
+            }
+        }
+        @{
+            key = 'codex_reviewer'
+            name = $routing.Roles.codex_reviewer
+            role = 'cto'
+            title = 'On-demand escalation reviewer for hard debugging and high-risk diffs'
+            icon = 'brain'
+            capabilities = 'High-risk review, architecture analysis, difficult debugging, minimum safe implementation'
+            instructionFile = 'codex-reviewer.md'
+            reportsTo = 'ceo'
+            adapterType = 'codex_local'
+            heartbeatEnabled = $false
+            adapterConfig = @{
+                cwd = $paths.Root
+                model = 'gpt-5.4'
+                instructionsFilePath = Get-VorceStudiosManagedInstructionFilePath -RoleKey 'codex_reviewer'
+                dangerouslyBypassApprovalsAndSandbox = $true
+                timeoutSec = 1800
+            }
+        }
     )
 
     foreach ($definition in $definitions) {
-        $adapterType = if ($definition.ContainsKey('adapterType')) { $definition.adapterType } else { 'process' }
-        $payload = @{
+        $definition['payload'] = @{
             name = $definition.name
             role = $definition.role
             title = $definition.title
             icon = $definition.icon
             capabilities = $definition.capabilities
-            adapterType = $adapterType
-            heartbeatEnabled = $true
-            adapterConfig = if ($adapterType -eq 'process') {
-                @{
-                    command = $shell
-                    args = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $agentScript, '-Role', $definition.key)
-                    cwd = $paths.Root
-                    env = @{
-                        VORCE_STUDIOS_ROLE = $definition.key
-                    }
-                }
-            } elseif ($adapterType -eq 'codex_local') {
-                @{
-                    model = 'google/gemini-2.0-flash'
-                }
-            } else {
-                @{}
-            }
+            adapterType = $definition.adapterType
+            heartbeatEnabled = [bool]$definition.heartbeatEnabled
+            adapterConfig = $definition.adapterConfig
             runtimeConfig = @{
                 instructionPath = Join-Path $paths.InstructionsDir $definition.instructionFile
                 policyRoot = $paths.PoliciesDir
             }
             budgetMonthlyCents = 0
             permissions = @{
-                canCreateAgents = ($definition.key -eq 'ceo')
+                canCreateAgents = $false
             }
             metadata = @{
                 roleKey = $definition.key
                 instructionFile = $definition.instructionFile
+                heartbeatIntervalSec = Get-VorceStudiosRoleHeartbeatInterval -RoleKey $definition.key
             }
         }
-
-        $definition['payload'] = $payload
     }
 
     return $definitions
@@ -166,6 +245,8 @@ if ($null -eq $company) {
         return
     }
 }
+
+$goalsState = Ensure-VorceStudiosGoalsFromPolicy -CompanyId ([string]$company.id)
 
 $existingAgents = @{}
 $existingAgentsByRoleKey = @{}
@@ -199,7 +280,7 @@ foreach ($definition in $agentDefinitions) {
             }
         }
 
-        foreach ($property in @('runtimeConfig', 'permissions', 'metadata')) {
+        foreach ($property in @('adapterConfig', 'runtimeConfig', 'permissions', 'metadata')) {
             $currentValue = Get-VorceStudiosObjectPropertyValue -Object $agent -PropertyName $property
             $desiredValue = $definition.payload[$property]
             if (-not (Test-VorceStudiosJsonEquivalent -Left $currentValue -Right $desiredValue)) {
@@ -218,6 +299,7 @@ foreach ($definition in $agentDefinitions) {
         name = $agent.name
         role = $definition.role
         adapterType = $agent.adapterType
+        heartbeatEnabled = [bool]$definition.payload.heartbeatEnabled
     }
 }
 
@@ -248,6 +330,7 @@ foreach ($definition in $agentDefinitions) {
             name = $agent.name
             role = $definition.role
             adapterType = $agent.adapterType
+            heartbeatEnabled = [bool]$definition.payload.heartbeatEnabled
         }
     }
 }
@@ -263,6 +346,7 @@ $companyState = @{
         name = $company.name
         issuePrefix = $company.issuePrefix
     }
+    goals = $goalsState.goals
     agents = $agentState
     project = if ($null -eq $project) { $null } else { @{ id = $project.id; name = $project.name } }
     atlas = Get-VorceStudiosAtlasState
@@ -275,10 +359,27 @@ Ensure-VorceStudiosProjectFields
 Ensure-VorceStudiosPlugins -Context @{
     Company = $companyState.company
     Agents = $companyState.agents
+    Goals = $companyState.goals
     Project = $companyState.project
     Repository = Get-VorceStudiosRepositorySlug
 } | Out-Null
 Ensure-VorceStudiosGitHubLabels -Repository (Get-VorceStudiosRepositorySlug)
+if ($null -ne $companyState.project) {
+    $githubSync = Sync-VorceStudiosGitHubIssuesToPaperclip -Context @{
+        Company = $companyState.company
+        Agents = $companyState.agents
+        Goals = $companyState.goals
+        Project = $companyState.project
+        Repository = Get-VorceStudiosRepositorySlug
+    } -State 'all'
+    $planningItems = @(Invoke-VorceStudiosPlanningSweep -Repository (Get-VorceStudiosRepositorySlug))
+    $companyState['githubSync'] = $githubSync
+    $companyState['planning'] = @{
+        updatedAt = (Get-VorceStudiosPlanningSnapshot).updatedAt
+        top = @($planningItems | Select-Object -First 15)
+    }
+    Set-VorceStudiosCompanyState -State $companyState
+}
 Invoke-VorceStudiosGitHubPluginPeriodicSync -IgnoreFailure | Out-Null
 
 if ($StartServer.IsPresent) {

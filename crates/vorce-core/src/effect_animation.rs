@@ -399,6 +399,27 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_effect_parameter_animator_new() {
+        let animator = EffectParameterAnimator::new();
+        assert_eq!(animator.bindings().len(), 0);
+        assert_eq!(animator.next_id, 1);
+        assert_eq!(animator.value_cache.len(), 0);
+        assert_eq!(animator.clip().name, "Effect Automation");
+    }
+
+    #[test]
+    fn test_effect_parameter_animator_with_clip() {
+        let mut clip = AnimationClip::new("Custom Clip".to_string());
+        clip.duration = 10.0;
+        let animator = EffectParameterAnimator::with_clip(clip.clone());
+        assert_eq!(animator.bindings().len(), 0);
+        assert_eq!(animator.next_id, 1);
+        assert_eq!(animator.value_cache.len(), 0);
+        assert_eq!(animator.clip().name, "Custom Clip");
+        assert_eq!(animator.clip().duration, 10.0);
+    }
+
+    #[test]
     fn test_effect_parameter_animator() {
         let mut animator = EffectParameterAnimator::new();
 
@@ -439,5 +460,26 @@ mod tests {
 
         let bindings = animator.bindings_for_effect(EffectType::Blur, 0);
         assert_eq!(bindings.len(), 2);
+    }
+
+    #[test]
+    fn test_seek() {
+        let mut animator = EffectParameterAnimator::new();
+        animator.set_duration(10.0);
+
+        // Initial time
+        assert_eq!(animator.get_current_time(), 0.0);
+
+        // Seek to valid time
+        animator.seek(5.0);
+        assert_eq!(animator.get_current_time(), 5.0);
+
+        // Seek beyond duration (should clamp to duration)
+        animator.seek(15.0);
+        assert_eq!(animator.get_current_time(), 10.0);
+
+        // Seek before start (should clamp to 0)
+        animator.seek(-5.0);
+        assert_eq!(animator.get_current_time(), 0.0);
     }
 }
