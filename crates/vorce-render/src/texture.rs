@@ -314,61 +314,18 @@ impl TexturePool {
 
         handle.mark_used(self.start_time);
 
-        let bytes_per_pixel = 4;
-        let unpadded_bytes_per_row = width * bytes_per_pixel;
-        let align = 256;
-        let padding = (align - unpadded_bytes_per_row % align) % align;
-        let padded_bytes_per_row = unpadded_bytes_per_row + padding;
-
-        let buffer = if padding == 0 {
-            use wgpu::util::DeviceExt;
-            self.device
-                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Frame Upload Staging Buffer"),
-                    contents: data,
-                    usage: wgpu::BufferUsages::COPY_SRC,
-                })
-        } else {
-            use wgpu::util::DeviceExt;
-            let mut padded_data = Vec::with_capacity((padded_bytes_per_row * height) as usize);
-            for i in 0..height {
-                let start = (i * unpadded_bytes_per_row) as usize;
-                let end = start + unpadded_bytes_per_row as usize;
-                if end <= data.len() {
-                    padded_data.extend_from_slice(&data[start..end]);
-                    #[allow(clippy::manual_repeat_n)]
-                    padded_data.extend(std::iter::repeat(0u8).take(padding as usize));
-                }
-            }
-
-            self.device
-                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Frame Upload Staging Buffer (Padded)"),
-                    contents: &padded_data,
-                    usage: wgpu::BufferUsages::COPY_SRC,
-                })
-        };
-
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Frame Upload Encoder"),
-            });
-
-        encoder.copy_buffer_to_texture(
-            wgpu::TexelCopyBufferInfo {
-                buffer: &buffer,
-                layout: wgpu::TexelCopyBufferLayout {
-                    offset: 0,
-                    bytes_per_row: Some(padded_bytes_per_row),
-                    rows_per_image: Some(height),
-                },
-            },
+        queue.write_texture(
             wgpu::TexelCopyTextureInfo {
                 texture: &handle.texture,
                 mip_level: 0,
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
+            },
+            data,
+            wgpu::TexelCopyBufferLayout {
+                offset: 0,
+                bytes_per_row: Some(4 * width),
+                rows_per_image: Some(height),
             },
             wgpu::Extent3d {
                 width: handle.width,
@@ -376,8 +333,6 @@ impl TexturePool {
                 depth_or_array_layers: 1,
             },
         );
-
-        queue.submit(std::iter::once(encoder.finish()));
     }
 
     /// Release a texture manually.

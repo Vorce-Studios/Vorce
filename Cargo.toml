@@ -49,6 +49,7 @@ egui-wgpu = "0.34.1"
 egui-winit = "0.34.1"
 egui_extras = { version = "0.34.1", features = ["image", "file", "svg"] }
 egui_node_editor = { path = "crates/vendor/egui_node_editor" }
+
 # Media
 ffmpeg-next = { version = "8.1", default-features = false, features = [
     "codec",

@@ -41,5 +41,11 @@ pub enum LayerType {
         /// Component property or field.
         mapping_mode: bool,
     },
-    // Note: LayerType::All was removed (dead code - always disabled in UI)
+    /// Enumeration variant.
+    All {
+        /// Opacity value (0.0 to 1.0).
+        opacity: f32,
+        /// Blending mode used for rendering.
+        blend_mode: Option<BlendModeType>,
+    },
 }

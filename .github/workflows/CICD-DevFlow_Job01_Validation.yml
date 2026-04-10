@@ -1,9 +1,6 @@
 name: "CICD-DevFlow: Job01 Validation"
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
-    branches: [main]
   pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
@@ -22,8 +19,8 @@ on:
         default: "1.94.0"
 
 concurrency:
-  group: validation-pr-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.run_id }}
-  cancel-in-progress: false
+  group: validation-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -177,7 +174,7 @@ jobs:
   build-windows:
     name: "Build & Test (Windows)"
     runs-on: windows-latest
-    timeout-minutes: 90
+    timeout-minutes: 45
 
     steps:
       - name: Checkout repository
