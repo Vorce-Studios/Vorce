@@ -117,6 +117,7 @@ winres = "0.1"
 opt-level = 1 # Slightly optimize for better wgpu performance in debug
 debug = 1     # Reduce PDB size to avoid LNK1140 errors
 
+[patch.crates-io]
 
 [profile.release]
 opt-level = 3
