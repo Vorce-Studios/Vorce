@@ -94,5 +94,8 @@ temp_373/
 .gemini/
 gha-creds-*.json
 
+# Paperclip runtime data
+.paperclip-home/
+
 # Jules memory: Log files generated with date suffixes
 scripts/archive/logs/
