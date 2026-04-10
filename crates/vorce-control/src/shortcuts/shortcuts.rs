@@ -238,9 +238,24 @@ pub struct Shortcut {
     pub context: ShortcutContext,
     pub description: String,
     pub enabled: bool,
+
+    // Cached lowercase fields for fast, zero-allocation filtering in UI
+    #[serde(skip)]
+    #[serde(default)]
+    pub description_lower: String,
+
+    #[serde(skip)]
+    #[serde(default)]
+    pub shortcut_str_lower: String,
 }
 
 impl Shortcut {
+    /// Updates the runtime cache fields used for UI filtering
+    pub fn update_cache(&mut self) {
+        self.description_lower = self.description.to_lowercase();
+        self.shortcut_str_lower = self.to_shortcut_string().to_lowercase();
+    }
+
     /// Creates a new, uninitialized instance with default settings.
     pub fn new(
         key: Key,
@@ -249,14 +264,18 @@ impl Shortcut {
         context: ShortcutContext,
         description: String,
     ) -> Self {
-        Self {
+        let mut shortcut = Self {
             key,
             modifiers,
             action,
             context,
             description,
             enabled: true,
-        }
+            description_lower: String::new(),
+            shortcut_str_lower: String::new(),
+        };
+        shortcut.update_cache();
+        shortcut
     }
 
     /// Check if this shortcut matches the given key and modifiers

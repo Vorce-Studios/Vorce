@@ -45,7 +45,7 @@ pub fn audio_reaction_observer(
             }
             AudioReactiveTarget::EmissiveIntensity => {
                 if let Some(MeshMaterial3d(handle)) = mat_handle {
-                    if let Some(mut mat) = materials.get_mut(handle) {
+                    if let Some(mat) = materials.get_mut(handle) {
                         mat.emissive = LinearRgba::gray(value);
                     }
                 }
@@ -95,7 +95,7 @@ pub fn audio_reaction_update_observer(
             }
             AudioReactiveTarget::EmissiveIntensity => {
                 if let Some(MeshMaterial3d(handle)) = mat_handle {
-                    if let Some(mut mat) = materials.get_mut(handle) {
+                    if let Some(mat) = materials.get_mut(handle) {
                         mat.emissive = LinearRgba::gray(value);
                     }
                 }
@@ -193,6 +193,7 @@ pub fn setup_3d_scene(
     render_output.height = 720;
 
     // Spawn Shared Engine Camera
+    // Spawn Shared Engine Camera
     commands
         .spawn((
             Camera3d::default(),
@@ -211,7 +212,6 @@ pub fn setup_3d_scene(
             scattering_media.add(bevy_light::atmosphere::ScatteringMedium::earth(32, 32)),
         ))
         .insert(crate::components::SharedEngineCamera);
-
     // Spawn Light
     commands.spawn((
         PointLight {
@@ -235,7 +235,7 @@ pub fn hex_grid_system(
         // Clear existing children (tiles)
         commands.entity(entity).despawn_children();
 
-        let hex_size = hexx::Vec2::splat(hex_config.radius);
+        let hex_size = hexx::Vec2::new(hex_config.radius, hex_config.radius);
 
         let mesh = meshes.add(Cuboid::from_size(Vec3::new(
             hex_config.radius * 1.5,
@@ -250,7 +250,7 @@ pub fn hex_grid_system(
         commands.entity(entity).with_children(|parent| {
             for hex in hexx::shapes::hexagon(hexx::Hex::ZERO, hex_config.rings) {
                 let layout = hexx::HexLayout {
-                    hex_size,
+                    scale: hex_size,
                     orientation: if hex_config.pointy_top {
                         hexx::HexOrientation::Pointy
                     } else {

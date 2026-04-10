@@ -84,6 +84,7 @@ impl BevyRunner {
         // Add essential rendering extensions
         app.add_plugins(bevy::pbr::AtmospherePlugin);
         // app.add_plugins(bevy_mod_outline::OutlinePlugin);
+
         app.add_plugins(ExtractResourcePlugin::<crate::resources::BevyRenderOutput>::default());
 
         // Register resources
@@ -126,6 +127,8 @@ impl BevyRunner {
                 Render,
                 frame_readback_system.after(bevy::render::RenderSystems::Render),
             );
+        } else {
+            tracing::warn!("Bevy RenderApp not available - frame readback will not work");
         }
 
         // `App::update()` does not finalize plugin setup for us.
