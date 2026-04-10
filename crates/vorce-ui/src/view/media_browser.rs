@@ -877,8 +877,11 @@ impl MediaBrowser {
                 );
             } else {
                 // Placeholder
-                ui.painter()
-                    .rect_filled(thumb_rect, 2.0, ui.visuals().widgets.noninteractive.bg_fill);
+                ui.painter().rect_filled(
+                    thumb_rect,
+                    2.0,
+                    ui.visuals().widgets.noninteractive.bg_fill,
+                );
 
                 // Try to render icon, fallback to emoji
                 let mut rendered_icon = false;
