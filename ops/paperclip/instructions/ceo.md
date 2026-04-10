@@ -48,6 +48,7 @@ gh pr list --state open --json number,title,mergeStateStatus,isDraft
 - If **more than 3 PRs open** → work queue overload! Do not assign new tasks.
 
 **3. If work queue overload detected:**
+
 - Instruct Leon: "Work queue overload detected. Prioritize existing tasks."
 
 ## Delegation
