@@ -852,11 +852,11 @@ impl MediaBrowser {
 
             // Background
             let bg_color = if self.selected == Some(idx) {
-                Color32::from_rgb(60, 120, 200)
+                ui.visuals().selection.bg_fill
             } else if response.hovered() {
-                Color32::from_rgb(50, 50, 50)
+                ui.visuals().widgets.hovered.bg_fill
             } else {
-                Color32::from_rgb(35, 35, 35)
+                ui.visuals().widgets.inactive.bg_fill
             };
 
             ui.painter().rect_filled(rect, 2.0, bg_color);
@@ -878,7 +878,7 @@ impl MediaBrowser {
             } else {
                 // Placeholder
                 ui.painter()
-                    .rect_filled(thumb_rect, 2.0, Color32::from_rgb(45, 45, 45));
+                    .rect_filled(thumb_rect, 2.0, ui.visuals().widgets.noninteractive.bg_fill);
 
                 // Try to render icon, fallback to emoji
                 let mut rendered_icon = false;
@@ -897,7 +897,7 @@ impl MediaBrowser {
                                     egui::pos2(0.0, 0.0),
                                     egui::pos2(1.0, 1.0),
                                 ),
-                                Color32::from_gray(200), // Tinted slightly
+                                ui.visuals().text_color().gamma_multiply(0.8), // Tinted slightly
                             );
                             rendered_icon = true;
                         }
@@ -911,7 +911,7 @@ impl MediaBrowser {
                         egui::Align2::LEFT_TOP,
                         entry.file_type.icon(),
                         egui::FontId::proportional(40.0),
-                        Color32::from_rgb(100, 100, 100),
+                        ui.visuals().text_color().gamma_multiply(0.5),
                     );
                 }
             }
