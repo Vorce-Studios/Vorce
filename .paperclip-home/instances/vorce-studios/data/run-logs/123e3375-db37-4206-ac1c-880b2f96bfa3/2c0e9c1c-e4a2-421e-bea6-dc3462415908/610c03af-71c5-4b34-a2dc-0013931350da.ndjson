@@ -1,4 +1,0 @@
-{"ts":"2026-04-09T03:18:23.555Z","stream":"stdout","chunk":"[paperclip] No project or prior session workspace was available. Using fallback workspace \"C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\.paperclip-home\\instances\\vorce-studios\\workspaces\\2c0e9c1c-e4a2-421e-bea6-dc3462415908\" for this run.\n"}
-{"ts":"2026-04-09T03:18:23.567Z","stream":"stdout","chunk":"[paperclip] Using worktree-isolated Codex home \"C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\.paperclip-home\\instances\\vorce-studios\\companies\\123e3375-db37-4206-ac1c-880b2f96bfa3\\codex-home\" (seeded from \"C:\\Users\\Vinyl\\.codex\").\n"}
-{"ts":"2026-04-09T03:18:24.405Z","stream":"stderr","chunk":"Error: "}
-{"ts":"2026-04-09T03:18:24.407Z","stream":"stderr","chunk":"thread/resume: thread/resume failed: no rollout found for thread id 254d510f-12e3-42dd-9af7-37791d789ec8"}

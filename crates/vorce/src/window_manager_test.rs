@@ -5,7 +5,7 @@ use winit::event_loop::EventLoop;
 #[test]
 fn test_create_window_manager() {
     let wm = WindowManager::new();
-    assert!(wm.main_window_id().is_none());
+    assert_eq!(wm.window_ids().count(), 0);
 }
 
 #[test]
@@ -15,5 +15,5 @@ fn test_create_main_window() {
     let backend = pollster::block_on(WgpuBackend::new(None)).unwrap();
     let mut wm = WindowManager::new();
     let main_window_id = wm.create_main_window(&event_loop, &backend).unwrap();
-    assert_eq!(wm.main_window_id(), Some(main_window_id));
+    assert!(wm.get(main_window_id).is_some());
 }
