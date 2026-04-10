@@ -8,7 +8,7 @@ use anyhow::Result;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::info;
-use vorce_core::{runtime_paths, OutputId, OutputManager};
+use vorce_core::{runtime_paths, OutputId};
 use vorce_render::WgpuBackend;
 use vorce_ui::config::VSyncMode;
 use winit::{
@@ -70,7 +70,6 @@ pub struct WindowContext {
 pub struct WindowManager {
     windows: HashMap<OutputId, WindowContext>,
     window_id_map: HashMap<WindowId, OutputId>,
-    main_window_id: Option<OutputId>,
 }
 
 impl Default for WindowManager {
@@ -85,7 +84,6 @@ impl WindowManager {
         Self {
             windows: HashMap::new(),
             window_id_map: HashMap::new(),
-            main_window_id: None,
         }
     }
 
@@ -182,108 +180,8 @@ impl WindowManager {
 
         self.windows.insert(output_id, context);
         self.window_id_map.insert(window_id, output_id);
-        self.main_window_id = Some(output_id);
 
         Ok(output_id)
-    }
-
-    /// Creates a new output window based on an `OutputConfig`.
-    ///
-    /// If a window for the given `OutputId` already exists, this function does nothing.
-    #[allow(dead_code)] // TODO: Prüfen, ob diese Funktion dauerhaft benötigt wird!
-    pub fn create_output_window(
-        &mut self,
-        event_loop: &ActiveEventLoop,
-        backend: &WgpuBackend,
-        output_config: &vorce_core::OutputConfig,
-    ) -> Result<()> {
-        let output_id = output_config.id;
-
-        // Skip if window already exists
-        if self.windows.contains_key(&output_id) {
-            return Ok(());
-        }
-
-        info!(
-            "Creating window for output '{}' (ID: {})",
-            output_config.name, output_id
-        );
-
-        let monitors: Vec<winit::monitor::MonitorHandle> =
-            event_loop.available_monitors().collect();
-        let target_monitor = if !monitors.is_empty() {
-            let idx = (output_config.target_screen as usize).min(monitors.len() - 1);
-            Some(monitors[idx].clone())
-        } else {
-            event_loop.primary_monitor()
-        };
-
-        // Note: For non-fullscreen, we could set the initial position to the target monitor,
-        // but typically users will drag it or use fullscreen.
-        let mut attributes = WindowAttributes::default()
-            .with_title(format!("Vorce Output - {}", output_config.name))
-            .with_window_icon(load_app_icon())
-            .with_inner_size(winit::dpi::PhysicalSize::new(
-                output_config.resolution.0,
-                output_config.resolution.1,
-            ))
-            .with_fullscreen(if output_config.fullscreen {
-                Some(Fullscreen::Borderless(target_monitor.clone()))
-            } else {
-                None
-            });
-
-        // If it's not fullscreen, we can place the window on the target monitor
-        if !output_config.fullscreen {
-            if let Some(monitor) = target_monitor {
-                let position = monitor.position();
-                attributes = attributes
-                    .with_position(winit::dpi::PhysicalPosition::new(position.x, position.y));
-            }
-        }
-
-        let window = Arc::new(event_loop.create_window(attributes)?);
-
-        window.set_cursor_visible(!output_config.hide_cursor);
-
-        // Re-apply icon explicitly to be sure
-        if let Some(icon) = load_app_icon() {
-            window.set_window_icon(Some(icon));
-        }
-
-        let window_id_winit = window.id();
-
-        // Create surface for this output window
-        let surface = backend.create_surface(window.clone())?;
-
-        let surface_config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: backend.surface_format(),
-            width: output_config.resolution.0,
-            height: output_config.resolution.1,
-            present_mode: wgpu::PresentMode::Fifo, // VSync for synchronized output
-            alpha_mode: wgpu::CompositeAlphaMode::Opaque,
-            view_formats: vec![],
-            desired_maximum_frame_latency: 2,
-        };
-
-        surface.configure(&backend.device, &surface_config);
-
-        let window_context = WindowContext {
-            window,
-            surface,
-            surface_config,
-        };
-
-        self.windows.insert(output_id, window_context);
-        self.window_id_map.insert(window_id_winit, output_id);
-
-        info!(
-            "Created output window for '{}' at {}x{}",
-            output_config.name, output_config.resolution.0, output_config.resolution.1
-        );
-
-        Ok(())
     }
 
     /// Creates a new projector window from a Module OutputType::Projector.
@@ -462,44 +360,7 @@ impl WindowManager {
         Ok(())
     }
 
-    /// Synchronizes the active windows with the `OutputManager`'s configuration.
-    ///
-    /// This function will create windows for new outputs and remove windows for outputs
-    /// that no longer exist.
-    #[allow(dead_code)] // TODO: Prüfen, ob diese Funktion dauerhaft benötigt wird!
-    pub fn sync_windows(
-        &mut self,
-        event_loop: &ActiveEventLoop,
-        backend: &WgpuBackend,
-        output_manager: &OutputManager,
-    ) -> Result<()> {
-        // Create windows for new outputs
-        for output_config in output_manager.outputs() {
-            if !self.windows.contains_key(&output_config.id) {
-                self.create_output_window(event_loop, backend, output_config)?;
-            }
-        }
-
-        // Remove windows for outputs that no longer exist
-        let output_ids: Vec<OutputId> = output_manager.outputs().iter().map(|o| o.id).collect();
-
-        let mut windows_to_remove = Vec::new();
-        for &window_output_id in self.windows.keys() {
-            if window_output_id != 0 && !output_ids.contains(&window_output_id) {
-                windows_to_remove.push(window_output_id);
-            }
-        }
-
-        for output_id in windows_to_remove {
-            self.remove_window(output_id);
-            info!("Removed output window for output ID {}", output_id);
-        }
-
-        Ok(())
-    }
-
     /// Removes a window by its `OutputId`.
-    #[allow(dead_code)] // TODO: Prüfen, ob diese Funktion dauerhaft benötigt wird!
     pub fn remove_window(&mut self, output_id: OutputId) -> Option<WindowContext> {
         if let Some(context) = self.windows.remove(&output_id) {
             self.window_id_map.remove(&context.window.id());
@@ -517,12 +378,6 @@ impl WindowManager {
     /// Returns a mutable reference to a `WindowContext` by its `OutputId`.
     pub fn get_mut(&mut self, output_id: OutputId) -> Option<&mut WindowContext> {
         self.windows.get_mut(&output_id)
-    }
-
-    /// Returns the main window's `OutputId`.
-    #[allow(dead_code)] // TODO: Prüfen, ob diese Funktion dauerhaft benötigt wird!
-    pub fn main_window_id(&self) -> Option<OutputId> {
-        self.main_window_id
     }
 
     /// Returns an iterator over all `OutputId`s.
