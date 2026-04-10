@@ -129,7 +129,7 @@ impl AudioMediaPipeline {
         let running_clone = is_running.clone();
         let sample_rate = pipeline_config.sample_rate;
 
-        std::thread::Builder::new()
+        if let Err(e) = std::thread::Builder::new()
             .name("audio-processor".to_string())
             .spawn(move || {
                 let mut timestamp = 0.0;
@@ -152,7 +152,9 @@ impl AudioMediaPipeline {
                     }
                 }
             })
-            .expect("Failed to spawn audio processor thread");
+        {
+            tracing::warn!("Failed to spawn audio processor thread: {}", e);
+        }
 
         Self {
             analyzer,
