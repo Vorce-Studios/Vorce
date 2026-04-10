@@ -213,9 +213,9 @@ impl ControllerOverlayPanel {
                 ui.horizontal(|ui| {
                     // MIDI Connection Status
                     if midi_connected {
-                        ui.colored_label(ui.visuals().text_color().gamma_multiply(0.8), "🟢 MIDI");
+                        ui.colored_label(Color32::GREEN, "🟢 MIDI");
                     } else {
-                        ui.colored_label(ui.visuals().error_fg_color, "🔴 MIDI");
+                        ui.colored_label(Color32::RED, "🔴 MIDI");
                     }
 
                     ui.separator();
@@ -252,7 +252,7 @@ impl ControllerOverlayPanel {
 
                     // Assignment colors toggle
                     let assign_btn = if self.show_assignment_colors {
-                        egui::Button::new("🎨 Zuweisungen").fill(ui.visuals().widgets.active.bg_fill)
+                        egui::Button::new("🎨 Zuweisungen").fill(Color32::from_rgb(60, 80, 100))
                     } else {
                         egui::Button::new("🎨 Zuweisungen")
                     };

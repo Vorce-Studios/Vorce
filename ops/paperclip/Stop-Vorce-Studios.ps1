@@ -1,10 +1,19 @@
 [CmdletBinding()]
 param()
+
 $ScriptDir = Split-Path -Parent $PSCommandPath
 . (Join-Path $ScriptDir 'lib\VorceStudiosConfig.ps1')
+
 Set-VorceStudiosRuntimeMode -Mode 'stopped' -Note 'Manual stop.'
-$server = Get-VorceStudiosServerProcessInfo
-if ($server) {
-    Stop-Process -Id $server.pid -Force
+
+$terminated = Stop-VorceStudiosPaperclipProcesses
+$processState = Get-VorceStudiosProcessState
+$processState['paperclip'] = $null
+$processState['supervisor'] = $null
+Set-VorceStudiosProcessState -State $processState
+
+@{
+    stoppedAt = Get-VorceStudiosTimestamp
+    mode = 'stopped'
+    terminated = $terminated
 }
-@{ stoppedAt = Get-VorceStudiosTimestamp; mode = 'stopped' }

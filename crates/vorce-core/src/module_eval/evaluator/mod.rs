@@ -462,7 +462,6 @@ impl ModuleEvaluator {
                                     mapping_mode,
                                     ..
                                 } => (mesh, opacity, blend_mode, mapping_mode),
-                                LayerType::All { .. } => continue,
                             };
                             let mut op = self.get_spare_render_op();
                             op.output_part_id = part.id;

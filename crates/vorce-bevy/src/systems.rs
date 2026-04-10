@@ -4,7 +4,8 @@ use bevy::prelude::*;
 use bevy::render::mesh::{Indices, VertexAttributeValues};
 use rand::Rng;
 
-pub fn audio_reaction_system(
+pub fn audio_reaction_observer(
+    trigger: Trigger<OnAdd, AudioReactive>,
     audio: Res<AudioInputResource>,
     mut query: Query<(
         &AudioReactive,
@@ -13,7 +14,7 @@ pub fn audio_reaction_system(
     )>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    for (reaction, mut transform, mat_handle) in query.iter_mut() {
+    if let Ok((reaction, mut transform, mat_handle)) = query.get_mut(trigger.entity()) {
         let energy = audio.get_energy(&reaction.source);
         let value = reaction.base + (energy * reaction.intensity);
 
@@ -45,8 +46,56 @@ pub fn audio_reaction_system(
             AudioReactiveTarget::EmissiveIntensity => {
                 if let Some(MeshMaterial3d(handle)) = mat_handle {
                     if let Some(mat) = materials.get_mut(handle) {
-                        // Assuming emissive is white, scale intensity.
-                        // Simple MVP: Set emissive to white * value
+                        mat.emissive = LinearRgba::gray(value);
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn audio_reaction_update_observer(
+    trigger: Trigger<OnInsert, AudioReactive>,
+    audio: Res<AudioInputResource>,
+    mut query: Query<(
+        &AudioReactive,
+        &mut Transform,
+        Option<&MeshMaterial3d<StandardMaterial>>,
+    )>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    if let Ok((reaction, mut transform, mat_handle)) = query.get_mut(trigger.entity()) {
+        let energy = audio.get_energy(&reaction.source);
+        let value = reaction.base + (energy * reaction.intensity);
+
+        match reaction.target {
+            AudioReactiveTarget::Scale => {
+                transform.scale = Vec3::splat(value);
+            }
+            AudioReactiveTarget::ScaleX => {
+                transform.scale.x = value;
+            }
+            AudioReactiveTarget::ScaleY => {
+                transform.scale.y = value;
+            }
+            AudioReactiveTarget::ScaleZ => {
+                transform.scale.z = value;
+            }
+            AudioReactiveTarget::RotateX => {
+                transform.rotation = Quat::from_rotation_x(value);
+            }
+            AudioReactiveTarget::RotateY => {
+                transform.rotation = Quat::from_rotation_y(value);
+            }
+            AudioReactiveTarget::RotateZ => {
+                transform.rotation = Quat::from_rotation_z(value);
+            }
+            AudioReactiveTarget::PositionY => {
+                transform.translation.y = value;
+            }
+            AudioReactiveTarget::EmissiveIntensity => {
+                if let Some(MeshMaterial3d(handle)) = mat_handle {
+                    if let Some(mat) = materials.get_mut(handle) {
                         mat.emissive = LinearRgba::gray(value);
                     }
                 }
@@ -90,24 +139,25 @@ pub fn shape_system(
             MeshMaterial3d(materials.add(material)),
         ));
 
-        if shape.outline_width > 0.0 {
-            commands
-                .entity(entity)
-                .insert(bevy_mod_outline::OutlineVolume {
-                    visible: true,
-                    width: shape.outline_width,
-                    colour: Color::srgba(
-                        shape.outline_color[0],
-                        shape.outline_color[1],
-                        shape.outline_color[2],
-                        shape.outline_color[3],
-                    ),
-                });
-        } else {
-            commands
-                .entity(entity)
-                .remove::<bevy_mod_outline::OutlineVolume>();
-        }
+        // bevy_mod_outline temporarily disabled due to compatibility
+        // if shape.outline_width > 0.0 {
+        //     commands
+        //         .entity(entity)
+        //         .insert(bevy_mod_outline::OutlineVolume {
+        //             visible: true,
+        //             width: shape.outline_width,
+        //             colour: Color::srgba(
+        //                 shape.outline_color[0],
+        //                 shape.outline_color[1],
+        //                 shape.outline_color[2],
+        //                 shape.outline_color[3],
+        //             ),
+        //         });
+        // } else {
+        //     commands
+        //         .entity(entity)
+        //         .remove::<bevy_mod_outline::OutlineVolume>();
+        // }
     }
 }
 
@@ -128,7 +178,7 @@ pub fn setup_3d_scene(
         bevy::render::render_resource::TextureDimension::D2,
         &[0, 0, 0, 255],
         bevy::render::render_resource::TextureFormat::Bgra8UnormSrgb,
-        bevy::render::render_asset::RenderAssetUsages::default(),
+        bevy::asset::RenderAssetUsages::default(),
     );
 
     image.texture_descriptor.usage = bevy::render::render_resource::TextureUsages::RENDER_ATTACHMENT
@@ -142,17 +192,18 @@ pub fn setup_3d_scene(
     render_output.height = 720;
 
     // Spawn Shared Engine Camera
+    // Spawn Shared Engine Camera
     commands
         .spawn((
             Camera3d::default(),
             Camera {
-                target: bevy::render::camera::RenderTarget::Image(image_handle.into()),
+                clear_color: bevy::prelude::ClearColorConfig::Default,
+                target: bevy::render::camera::RenderTarget::Image(image_handle),
                 ..default()
             },
             Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
         ))
         .insert(crate::components::SharedEngineCamera);
-
     // Spawn Light
     commands.spawn((
         PointLight {
@@ -174,9 +225,9 @@ pub fn hex_grid_system(
 ) {
     for (entity, hex_config) in query.iter() {
         // Clear existing children (tiles)
-        commands.entity(entity).despawn();
+        commands.entity(entity).despawn_descendants();
 
-        let hex_size = hexx::Vec2::splat(hex_config.radius);
+        let hex_size = hexx::Vec2::new(hex_config.radius, hex_config.radius);
 
         let mesh = meshes.add(Cuboid::from_size(Vec3::new(
             hex_config.radius * 1.5,
@@ -191,7 +242,7 @@ pub fn hex_grid_system(
         commands.entity(entity).with_children(|parent| {
             for hex in hexx::shapes::hexagon(hexx::Hex::ZERO, hex_config.rings) {
                 let layout = hexx::HexLayout {
-                    hex_size,
+                    scale: hex_size,
                     orientation: if hex_config.pointy_top {
                         hexx::HexOrientation::Pointy
                     } else {
@@ -240,7 +291,7 @@ pub fn particle_system(
         if mesh_opt.is_none() {
             let mut mesh = Mesh::new(
                 bevy::render::mesh::PrimitiveTopology::TriangleList,
-                bevy::render::render_asset::RenderAssetUsages::default(),
+                bevy::asset::RenderAssetUsages::default(),
             );
             // Initial empty buffers to avoid validation errors
             mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vec![[0.0, 0.0, 0.0]; 0]);
@@ -393,17 +444,12 @@ pub fn frame_readback_system(
     render_device: Res<bevy::render::renderer::RenderDevice>,
     render_queue: Res<bevy::render::renderer::RenderQueue>,
     mut buffer_cache: Local<Option<bevy::render::render_resource::Buffer>>,
-    mut rx_channel: Local<
-        Option<
-            std::sync::mpsc::Receiver<Result<(), bevy::render::render_resource::BufferAsyncError>>,
-        >,
-    >,
 ) {
     if let Some(gpu_image) = gpu_images.get(&render_output.image_handle) {
         let texture = &gpu_image.texture;
 
-        let width = gpu_image.size.width;
-        let height = gpu_image.size.height;
+        let width = gpu_image.size.x;
+        let height = gpu_image.size.y;
         let block_size = gpu_image.texture_format.block_copy_size(None).unwrap_or(4);
 
         // bytes_per_row must be multiple of 256
@@ -414,8 +460,7 @@ pub fn frame_readback_system(
 
         let output_buffer_size = (bytes_per_row * height) as u64;
 
-        // Ensure buffer exists and is correct size.
-        // If we need to recreate the buffer, we also need to clear any pending readbacks.
+        // Ensure buffer exists and is correct size
         if buffer_cache.is_none() || buffer_cache.as_ref().unwrap().size() != output_buffer_size {
             *buffer_cache = Some(render_device.create_buffer(
                 &bevy::render::render_resource::BufferDescriptor {
@@ -426,95 +471,79 @@ pub fn frame_readback_system(
                     mapped_at_creation: false,
                 },
             ));
-            *rx_channel = None;
         }
 
         let buffer = buffer_cache.as_ref().unwrap();
 
-        if let Some(rx) = rx_channel.as_ref() {
-            match rx.try_recv() {
-                Ok(Ok(_)) => {
-                    let buffer_slice = buffer.slice(..);
-                    let data = buffer_slice.get_mapped_range();
+        let mut encoder = render_device.create_command_encoder(
+            &bevy::render::render_resource::CommandEncoderDescriptor {
+                label: Some("Readback Encoder"),
+            },
+        );
 
-                    if let Ok(mut lock) = render_output.last_frame_data.lock() {
-                        if padding == 0 {
-                            *lock = Some(std::sync::Arc::new(data.to_vec()));
-                        } else {
-                            let mut unpadded =
-                                Vec::with_capacity((width * height * bytes_per_pixel) as usize);
-                            for i in 0..height {
-                                let offset = (i * bytes_per_row) as usize;
-                                let end = offset + (width * bytes_per_pixel) as usize;
-                                unpadded.extend_from_slice(&data[offset..end]);
-                            }
-                            *lock = Some(std::sync::Arc::new(unpadded));
+        encoder.copy_texture_to_buffer(
+            bevy::render::render_resource::ImageCopyTexture {
+                texture,
+                mip_level: 0,
+                origin: bevy::render::render_resource::Origin3d::ZERO,
+                aspect: bevy::render::render_resource::TextureAspect::All,
+            },
+            bevy::render::render_resource::ImageCopyBuffer {
+                buffer,
+                layout: bevy::render::render_resource::ImageDataLayout {
+                    offset: 0,
+                    bytes_per_row: Some(bytes_per_row),
+                    rows_per_image: Some(height),
+                },
+            },
+            bevy::render::render_resource::Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
+        );
+
+        let _submission_index = render_queue.submit(std::iter::once(encoder.finish()));
+
+        // Complete the readback in-frame so the buffer is always unmapped before the
+        // next copy. This trades some throughput for a much more stable embedded runner.
+        let (tx, rx) = std::sync::mpsc::channel();
+        let buffer_slice = buffer.slice(..);
+        buffer_slice.map_async(bevy::render::render_resource::MapMode::Read, move |res| {
+            let _ = tx.send(res);
+        });
+
+        let _ = render_device.poll(wgpu::Maintain::Wait);
+
+        match rx.recv() {
+            Ok(Ok(_)) => {
+                let data = buffer_slice.get_mapped_range();
+
+                if let Ok(mut lock) = render_output.last_frame_data.lock() {
+                    if padding == 0 {
+                        *lock = Some(std::sync::Arc::new(data.to_vec()));
+                    } else {
+                        let mut unpadded =
+                            Vec::with_capacity((width * height * bytes_per_pixel) as usize);
+                        for i in 0..height {
+                            let offset = (i * bytes_per_row) as usize;
+                            let end = offset + (width * bytes_per_pixel) as usize;
+                            unpadded.extend_from_slice(&data[offset..end]);
                         }
+                        *lock = Some(std::sync::Arc::new(unpadded));
                     }
+                }
 
-                    drop(data);
-                    buffer.unmap();
-                    *rx_channel = None;
-                }
-                Ok(Err(err)) => {
-                    tracing::warn!("Bevy frame readback mapping failed: {:?}", err);
-                    buffer.unmap();
-                    *rx_channel = None;
-                }
-                Err(std::sync::mpsc::TryRecvError::Empty) => {
-                    // Still mapping, skip this frame
-                    render_device.poll(bevy::render::render_resource::Maintain::Poll);
-                    return;
-                }
-                Err(std::sync::mpsc::TryRecvError::Disconnected) => {
-                    tracing::warn!("Bevy frame readback channel disconnected");
-                    buffer.unmap();
-                    *rx_channel = None;
-                }
+                drop(data);
+                buffer.unmap();
+            }
+            Ok(Err(err)) => {
+                tracing::warn!("Bevy frame readback mapping failed: {:?}", err);
+            }
+            Err(err) => {
+                tracing::warn!("Bevy frame readback channel failed: {}", err);
             }
         }
-
-        if rx_channel.is_none() {
-            let mut encoder = render_device.create_command_encoder(
-                &bevy::render::render_resource::CommandEncoderDescriptor {
-                    label: Some("Readback Encoder"),
-                },
-            );
-
-            encoder.copy_texture_to_buffer(
-                bevy::render::render_resource::TexelCopyTextureInfo {
-                    texture,
-                    mip_level: 0,
-                    origin: bevy::render::render_resource::Origin3d::ZERO,
-                    aspect: bevy::render::render_resource::TextureAspect::All,
-                },
-                bevy::render::render_resource::TexelCopyBufferInfo {
-                    buffer,
-                    layout: bevy::render::render_resource::TexelCopyBufferLayout {
-                        offset: 0,
-                        bytes_per_row: Some(bytes_per_row),
-                        rows_per_image: Some(height),
-                    },
-                },
-                bevy::render::render_resource::Extent3d {
-                    width,
-                    height,
-                    depth_or_array_layers: 1,
-                },
-            );
-
-            render_queue.submit(std::iter::once(encoder.finish()));
-
-            let (tx, rx) = std::sync::mpsc::channel();
-            let buffer_slice = buffer.slice(..);
-            buffer_slice.map_async(bevy::render::render_resource::MapMode::Read, move |res| {
-                let _ = tx.send(res);
-            });
-
-            *rx_channel = Some(rx);
-        }
-
-        render_device.poll(bevy::render::render_resource::Maintain::Poll);
     }
 }
 
@@ -524,10 +553,10 @@ pub fn text_3d_system(
 ) {
     for (entity, config) in query.iter() {
         let justify = match config.alignment {
-            crate::components::BevyTextAlignment::Left => JustifyText::Left,
-            crate::components::BevyTextAlignment::Center => JustifyText::Center,
-            crate::components::BevyTextAlignment::Right => JustifyText::Right,
-            crate::components::BevyTextAlignment::Justify => JustifyText::Justified,
+            crate::components::BevyTextAlignment::Left => bevy::text::JustifyText::Left,
+            crate::components::BevyTextAlignment::Center => bevy::text::JustifyText::Center,
+            crate::components::BevyTextAlignment::Right => bevy::text::JustifyText::Right,
+            crate::components::BevyTextAlignment::Justify => bevy::text::JustifyText::Justified,
         };
 
         let color = Color::srgba(

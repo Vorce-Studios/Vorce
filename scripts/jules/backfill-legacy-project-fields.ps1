@@ -651,7 +651,7 @@ function ResolveProjectStatus {
         [bool]$HasChildren = $false
     )
 
-    if (Test-GitHubIssueClosed -Issue $Issue) {
+    if ([string]$Issue.state -eq "CLOSED") {
         return "Done"
     }
 
