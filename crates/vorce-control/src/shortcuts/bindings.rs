@@ -76,7 +76,8 @@ impl KeyBindings {
     }
 
     /// Add a new shortcut
-    pub fn add_shortcut(&mut self, shortcut: Shortcut) {
+    pub fn add_shortcut(&mut self, mut shortcut: Shortcut) {
+        shortcut.update_cache();
         self.shortcuts.push(shortcut);
     }
 
@@ -152,13 +153,17 @@ impl KeyBindings {
     /// Load from JSON file
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let json = std::fs::read_to_string(path)?;
-        let data: KeyBindingsData = serde_json::from_str(&json)?;
+        let mut data: KeyBindingsData = serde_json::from_str(&json)?;
 
         info!(
             "Loaded {} shortcuts and {} macros",
             data.shortcuts.len(),
             data.macros.len()
         );
+
+        for shortcut in &mut data.shortcuts {
+            shortcut.update_cache();
+        }
 
         Ok(Self {
             shortcuts: data.shortcuts,
@@ -198,7 +203,11 @@ impl KeyBindings {
 
     /// Import from JSON string
     pub fn from_json(json: &str) -> Result<Self> {
-        let data: KeyBindingsData = serde_json::from_str(json)?;
+        let mut data: KeyBindingsData = serde_json::from_str(json)?;
+
+        for shortcut in &mut data.shortcuts {
+            shortcut.update_cache();
+        }
 
         Ok(Self {
             shortcuts: data.shortcuts,
