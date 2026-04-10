@@ -1,6 +1,0 @@
-{"ts":"2026-04-09T01:08:04.871Z","stream":"stdout","chunk":"[paperclip] No project or prior session workspace was available. Using fallback workspace \"C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\.paperclip-home\\instances\\vorce-studios\\workspaces\\7cc6132b-017a-46b5-9877-30d25fe49738\" for this run.\n"}
-{"ts":"2026-04-09T01:08:04.877Z","stream":"stdout","chunk":"[paperclip] Using worktree-isolated Codex home \"C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\.paperclip-home\\instances\\vorce-studios\\companies\\123e3375-db37-4206-ac1c-880b2f96bfa3\\codex-home\" (seeded from \"C:\\Users\\Vinyl\\.codex\").\n"}
-{"ts":"2026-04-09T01:08:05.806Z","stream":"stdout","chunk":"{\"type\":\"thread.started\",\"thread_id\":\"019d6fc8-37f9-7950-919d-95ada97f64ce\"}\n"}
-{"ts":"2026-04-09T01:08:05.809Z","stream":"stdout","chunk":"{\"type\":\"turn.started\"}\n"}
-{"ts":"2026-04-09T01:08:07.514Z","stream":"stdout","chunk":"{\"type\":\"error\",\"message\":\"You've hit your usage limit. Upgrade to Plus to continue using Codex (https://chatgpt.com/explore/plus), or try again at Apr 13th, 2026 3:09 PM.\"}\n"}
-{"ts":"2026-04-09T01:08:07.632Z","stream":"stdout","chunk":"{\"type\":\"turn.failed\",\"error\":{\"message\":\"You've hit your usage limit. Upgrade to Plus to continue using Codex (https://chatgpt.com/explore/plus), or try again at Apr 13th, 2026 3:09 PM.\"}}\n"}

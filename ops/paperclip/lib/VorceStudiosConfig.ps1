@@ -103,6 +103,111 @@ function Ensure-VorceStudiosRuntimeDirectories {
     }
 }
 
+function Sync-VorceStudiosWorktreeConfigFile {
+    $paths = Get-VorceStudiosPaths
+    $system = Get-VorceStudiosSystemPolicy
+    if (-not (Test-Path -LiteralPath $paths.PaperclipConfigPath)) {
+        return $false
+    }
+
+    $expectedDbDir = Join-Path $paths.PaperclipHome ("instances\{0}\db" -f $system.Company.InstanceId)
+    $expectedLogDir = Join-Path $paths.PaperclipHome ("instances\{0}\logs" -f $system.Company.InstanceId)
+    $expectedBackupDir = Join-Path $paths.PaperclipHome ("instances\{0}\data\backups" -f $system.Company.InstanceId)
+    $expectedStorageDir = Join-Path $paths.PaperclipHome ("instances\{0}\data\storage" -f $system.Company.InstanceId)
+    $expectedSecretsKey = Join-Path $paths.PaperclipHome ("instances\{0}\secrets\master.key" -f $system.Company.InstanceId)
+
+    $config = Get-Content -LiteralPath $paths.PaperclipConfigPath -Raw -ErrorAction Stop | ConvertFrom-Json -AsHashtable
+    $updated = $false
+
+    if (-not $config.ContainsKey('database') -or $null -eq $config.database) {
+        $config['database'] = @{}
+        $updated = $true
+    }
+    if (-not $config.ContainsKey('server') -or $null -eq $config.server) {
+        $config['server'] = @{}
+        $updated = $true
+    }
+    if (-not $config.ContainsKey('logging') -or $null -eq $config.logging) {
+        $config['logging'] = @{}
+        $updated = $true
+    }
+    if (-not $config.ContainsKey('storage') -or $null -eq $config.storage) {
+        $config['storage'] = @{}
+        $updated = $true
+    }
+    if (-not $config.storage.ContainsKey('localDisk') -or $null -eq $config.storage.localDisk) {
+        $config.storage['localDisk'] = @{}
+        $updated = $true
+    }
+    if (-not $config.ContainsKey('secrets') -or $null -eq $config.secrets) {
+        $config['secrets'] = @{}
+        $updated = $true
+    }
+    if (-not $config.secrets.ContainsKey('localEncrypted') -or $null -eq $config.secrets.localEncrypted) {
+        $config.secrets['localEncrypted'] = @{}
+        $updated = $true
+    }
+
+    if ([string]$config.database.mode -ne 'embedded-postgres') {
+        $config.database['mode'] = 'embedded-postgres'
+        $updated = $true
+    }
+    if ([string]$config.database.embeddedPostgresDataDir -ne $expectedDbDir) {
+        $config.database['embeddedPostgresDataDir'] = $expectedDbDir
+        $updated = $true
+    }
+    if ([int]$config.database.embeddedPostgresPort -ne [int]$system.Company.DatabasePort) {
+        $config.database['embeddedPostgresPort'] = [int]$system.Company.DatabasePort
+        $updated = $true
+    }
+    if (-not $config.database.ContainsKey('backup') -or $null -eq $config.database.backup) {
+        $config.database['backup'] = @{}
+        $updated = $true
+    }
+    if ([string]$config.database.backup.dir -ne $expectedBackupDir) {
+        $config.database.backup['dir'] = $expectedBackupDir
+        $updated = $true
+    }
+
+    if ([string]$config.server.host -ne '127.0.0.1') {
+        $config.server['host'] = '127.0.0.1'
+        $updated = $true
+    }
+    if ([int]$config.server.port -ne [int]$system.Company.ServerPort) {
+        $config.server['port'] = [int]$system.Company.ServerPort
+        $updated = $true
+    }
+
+    if ([string]$config.logging.logDir -ne $expectedLogDir) {
+        $config.logging['logDir'] = $expectedLogDir
+        $updated = $true
+    }
+
+    if ([string]$config.storage.provider -ne 'local_disk') {
+        $config.storage['provider'] = 'local_disk'
+        $updated = $true
+    }
+    if ([string]$config.storage.localDisk.baseDir -ne $expectedStorageDir) {
+        $config.storage.localDisk['baseDir'] = $expectedStorageDir
+        $updated = $true
+    }
+
+    if ([string]$config.secrets.provider -ne 'local_encrypted') {
+        $config.secrets['provider'] = 'local_encrypted'
+        $updated = $true
+    }
+    if ([string]$config.secrets.localEncrypted.keyFilePath -ne $expectedSecretsKey) {
+        $config.secrets.localEncrypted['keyFilePath'] = $expectedSecretsKey
+        $updated = $true
+    }
+
+    if ($updated) {
+        Write-VorceStudiosJsonFile -Path $paths.PaperclipConfigPath -Value $config
+    }
+
+    return $updated
+}
+
 function ConvertTo-VorceStudiosHashtable {
     param(
         [AllowNull()][object]$InputObject
