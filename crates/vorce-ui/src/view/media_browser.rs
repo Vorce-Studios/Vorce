@@ -124,6 +124,12 @@ pub struct MediaBrowser {
     thumbnail_rx: std::sync::mpsc::Receiver<(PathBuf, Result<egui::ColorImage, String>)>,
     /// Sender for generated thumbnails
     thumbnail_tx: std::sync::mpsc::Sender<(PathBuf, Result<egui::ColorImage, String>)>,
+    /// Receiver for extracted metadata
+    metadata_rx: std::sync::mpsc::Receiver<(PathBuf, Option<f32>)>,
+    /// Sender for extracted metadata
+    metadata_tx: std::sync::mpsc::Sender<(PathBuf, Option<f32>)>,
+    /// Currently extracting metadata
+    extracting_metadata: Arc<RwLock<HashSet<PathBuf>>>,
     /// Currently generating thumbnails
     generating_thumbnails: Arc<RwLock<HashSet<PathBuf>>>,
     /// Show hidden files
@@ -177,6 +183,7 @@ impl Default for MediaFolders {
 impl MediaBrowser {
     pub fn new(initial_dir: PathBuf) -> Self {
         let (tx, rx) = std::sync::mpsc::channel();
+        let (metadata_tx, metadata_rx) = std::sync::mpsc::channel();
 
         let path_str = initial_dir.display().to_string();
         let mut browser = Self {
@@ -195,6 +202,9 @@ impl MediaBrowser {
             thumbnail_rx: rx,
             thumbnail_tx: tx,
             generating_thumbnails: Arc::new(RwLock::new(HashSet::new())),
+            metadata_rx,
+            metadata_tx,
+            extracting_metadata: Arc::new(RwLock::new(HashSet::new())),
             show_hidden: false,
             sort_mode: SortMode::Name,
             history: vec![initial_dir.clone()],
@@ -243,13 +253,31 @@ impl MediaBrowser {
                         ) {
                             let thumbnail = self.get_or_generate_thumbnail(&path);
 
+                            let duration_secs = None;
+                            if matches!(
+                                file_type,
+                                MediaType::Video | MediaType::Audio | MediaType::Hap
+                            ) {
+                                let mut extracting = self.extracting_metadata.write();
+                                if !extracting.contains(&path) {
+                                    extracting.insert(path.clone());
+                                    let tx = self.metadata_tx.clone();
+                                    let path_clone = path.clone();
+                                    rayon::spawn(move || {
+                                        let duration =
+                                            vorce_media::get_media_duration_secs(&path_clone);
+                                        let _ = tx.send((path_clone, duration));
+                                    });
+                                }
+                            }
+
                             self.entries.push(MediaEntry {
                                 path,
                                 name: name.clone(),
                                 name_lower: name.to_lowercase(),
                                 file_type,
                                 size_bytes: metadata.len(),
-                                duration_secs: None, // TODO: Extract from media file
+                                duration_secs,
                                 thumbnail,
                                 color_tag: None,
                                 tags: Vec::new(),
@@ -397,6 +425,21 @@ impl MediaBrowser {
 
     /// Render the media browser UI
     /// Process completed thumbnails and clear flags
+    /// Process completed metadata extraction and clear flags
+    pub fn process_metadata(&mut self, _ctx: &egui::Context) {
+        while let Ok((path, duration)) = self.metadata_rx.try_recv() {
+            self.extracting_metadata.write().remove(&path);
+            if let Some(dur) = duration {
+                for entry in &mut self.entries {
+                    if entry.path == path {
+                        entry.duration_secs = Some(dur);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     pub fn process_thumbnails(&mut self, ctx: &egui::Context) {
         while let Ok((path, result)) = self.thumbnail_rx.try_recv() {
             if let Ok(color_image) = result {
@@ -446,6 +489,7 @@ impl MediaBrowser {
         icons: Option<&IconManager>,
     ) -> Option<MediaBrowserAction> {
         self.process_thumbnails(ui.ctx());
+        self.process_metadata(ui.ctx());
 
         let mut action = None;
 
