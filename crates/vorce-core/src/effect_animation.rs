@@ -440,4 +440,25 @@ mod tests {
         let bindings = animator.bindings_for_effect(EffectType::Blur, 0);
         assert_eq!(bindings.len(), 2);
     }
+
+    #[test]
+    fn test_seek() {
+        let mut animator = EffectParameterAnimator::new();
+        animator.set_duration(10.0);
+
+        // Initial time
+        assert_eq!(animator.get_current_time(), 0.0);
+
+        // Seek to valid time
+        animator.seek(5.0);
+        assert_eq!(animator.get_current_time(), 5.0);
+
+        // Seek beyond duration (should clamp to duration)
+        animator.seek(15.0);
+        assert_eq!(animator.get_current_time(), 10.0);
+
+        // Seek before start (should clamp to 0)
+        animator.seek(-5.0);
+        assert_eq!(animator.get_current_time(), 0.0);
+    }
 }
