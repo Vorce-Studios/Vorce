@@ -5,29 +5,21 @@
         InstanceId        = 'vorce-studios'
         PaperclipVersion  = '2026.403.0'
         DeploymentMode    = 'local_trusted'
-        ServerPort        = 3140
-        DatabasePort      = 55432
+        ServerPort        = 3144
+        DatabasePort      = 5433
         BudgetMonthlyCents = 0
     }
 
     Project = @{
-        Name = 'Vorce Release Train'
-        Description = 'Primary local control-plane project for release planning, backlog shaping and execution.'
+        Name = 'Vorce Official Release'
+        Description = 'Primary Paperclip project for release sequencing, Jules execution, PR review and merge readiness.'
     }
 
     Supervisor = @{
         TickSeconds = 30
         AgentIntervals = @{
-            ChiefOfStaff = 60
-            DiscoveryScout = 900
-            LenaAssistant = 120
-            JulesBuilder = 60
-            AntigravityBuilder = 120
-            JulesSessionMonitor = 300
-            PrMonitor = 300
-            ReviewPool = 120
-            OpsSteward = 90
-            CEO = 600
+            CEO = 300
+            OrderManager = 180
         }
         MaintenanceIntervals = @{
             GitHubSync = 300
@@ -39,11 +31,11 @@
         DefaultMode = 'stopped'
         StopWaitMinutes = 20
         MaxConcurrentReviews = 1
-        MaxConcurrentBuilderSessions = 2
+        MaxConcurrentBuilderSessions = 1
     }
 
     Atlas = @{
-        EnabledByDefault = $true
+        EnabledByDefault = $false
         SummaryPath = '.agent/atlas/SUMMARY.md'
         ReadmePath = '.agent/atlas/README.md'
         CodeAtlasPath = '.agent/atlas/code-atlas.json'

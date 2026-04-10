@@ -2,7 +2,7 @@ Set-StrictMode -Version Latest
 
 . (Join-Path $PSScriptRoot 'VorceStudiosConfig.ps1')
 . (Join-Path $PSScriptRoot 'PaperclipApi.ps1')
-. (Join-Path (Join-Path $PSScriptRoot '..\..') 'jules\jules-github.ps1')
+. (Join-Path (Join-Path $PSScriptRoot '..\..\..') 'scripts\jules\jules-github.ps1')
 
 function Get-VorceStudiosPluginSourceDefinitions {
     $paths = Get-VorceStudiosPaths
@@ -10,11 +10,36 @@ function Get-VorceStudiosPluginSourceDefinitions {
     return @(
         @{
             PluginId = 'paperclip-plugin-github-issues'
+            SourceName = 'paperclip-plugin-github-issues'
+            PackageName = 'paperclip-plugin-github-issues'
             Repository = 'https://github.com/mvanhorn/paperclip-plugin-github-issues.git'
             LocalPath = Join-Path $paths.PluginSourcesDir 'paperclip-plugin-github-issues'
         }
         @{
+            PluginId = 'paperclip-chat'
+            SourceName = 'paperclip-plugin-chat'
+            PackageName = '@paperclipai/plugin-chat'
+            Repository = 'https://github.com/webprismdevin/paperclip-plugin-chat.git'
+            LocalPath = Join-Path $paths.PluginSourcesDir 'paperclip-plugin-chat'
+        }
+        @{
+            PluginId = 'tomismeta.paperclip-aperture'
+            SourceName = 'paperclip-aperture'
+            PackageName = '@tomismeta/paperclip-aperture'
+            Repository = 'https://github.com/tomismeta/paperclip-aperture.git'
+            LocalPath = Join-Path $paths.PluginSourcesDir 'paperclip-aperture'
+        }
+        @{
+            PluginId = 'agent-analytics.paperclip-live-analytics-plugin'
+            SourceName = 'paperclip-live-analytics-plugin'
+            PackageName = '@agent-analytics/paperclip-live-analytics-plugin'
+            Repository = 'https://github.com/Agent-Analytics/paperclip-live-analytics-plugin.git'
+            LocalPath = Join-Path $paths.PluginSourcesDir 'paperclip-live-analytics-plugin'
+        }
+        @{
             PluginId = 'paperclip-plugin-telegram'
+            SourceName = 'paperclip-plugin-telegram'
+            PackageName = 'paperclip-plugin-telegram'
             Repository = 'https://github.com/mvanhorn/paperclip-plugin-telegram.git'
             LocalPath = Join-Path $paths.PluginSourcesDir 'paperclip-plugin-telegram'
         }
@@ -23,144 +48,187 @@ function Get-VorceStudiosPluginSourceDefinitions {
 
 function Get-VorceStudiosPluginSourceDefinition {
     param(
-        [string]$PluginId
+        [Parameter(Mandatory)][string]$PluginId
     )
 
     return @(
         Get-VorceStudiosPluginSourceDefinitions |
-            Where-Object { [string]$_.PluginId -eq $PluginId } |
+            Where-Object {
+                ([string]$_.PluginId -eq $PluginId) -or
+                ([string]$_.SourceName -eq $PluginId) -or
+                ([string]$_.PackageName -eq $PluginId)
+            } |
             Select-Object -First 1
     )[0]
 }
 
 function Set-VorceStudiosVendorFileContent {
     param(
-        [string]$Path,
-        [string]$Content
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Content
     )
+
+    $directory = Split-Path -Parent $Path
+    if (-not [string]::IsNullOrWhiteSpace($directory) -and -not (Test-Path -LiteralPath $directory)) {
+        New-Item -ItemType Directory -Path $directory -Force | Out-Null
+    }
 
     [System.IO.File]::WriteAllText($Path, $Content, (New-Object System.Text.UTF8Encoding($false)))
 }
 
-function Ensure-VorceStudiosGitHubIssuesVendorOverrides {
+function Get-VorceStudiosVendorOverrideRoot {
     param(
-        [string]$LocalPath
+        [Parameter(Mandatory)][string]$PluginId
     )
 
-    $srcSyncPath = Join-Path $LocalPath 'src\sync.ts'
-    if (Test-Path -LiteralPath $srcSyncPath) {
-        $raw = Get-Content -LiteralPath $srcSyncPath -Raw -ErrorAction Stop
-        $updated = $raw
+    return (Join-Path (Join-Path $PSScriptRoot '..') ("vendor-overrides\{0}" -f $PluginId))
+}
 
-        $updated = $updated.Replace(@"
-  await ctx.state.set({
-    scopeKind: ""instance"",
-    scopeId: ""default"",
-    stateKey: linkStateKey(params.paperclipIssueId),
-    value: JSON.stringify(link),
-  });
-"@, @"
-  await ctx.state.set({
-    scopeKind: ""instance"",
-    scopeId: ""default"",
-    stateKey: linkStateKey(params.paperclipIssueId),
-  }, JSON.stringify(link));
-"@)
+function Sync-VorceStudiosVendorOverrideFiles {
+    param(
+        [Parameter(Mandatory)][string]$PluginId,
+        [Parameter(Mandatory)][string]$LocalPath
+    )
 
-        $updated = $updated.Replace(@"
-  await ctx.state.set({
-    scopeKind: ""instance"",
-    scopeId: ""default"",
-    stateKey: ghStateKey(params.ghOwner, params.ghRepo, params.ghNumber),
-    value: params.paperclipIssueId,
-  });
-"@, @"
-  await ctx.state.set({
-    scopeKind: ""instance"",
-    scopeId: ""default"",
-    stateKey: ghStateKey(params.ghOwner, params.ghRepo, params.ghNumber),
-  }, params.paperclipIssueId);
-"@)
+    $overrideRoot = Get-VorceStudiosVendorOverrideRoot -PluginId $PluginId
+    if (-not (Test-Path -LiteralPath $overrideRoot)) {
+        return @()
+    }
 
-        $updated = $updated.Replace(@"
-  await ctx.state.set({
-    scopeKind: ""instance"",
-    scopeId: ""default"",
-    stateKey: linkStateKey(link.paperclipIssueId),
-    value: JSON.stringify(link),
-  });
-"@, @"
-  await ctx.state.set({
-    scopeKind: ""instance"",
-    scopeId: ""default"",
-    stateKey: linkStateKey(link.paperclipIssueId),
-  }, JSON.stringify(link));
-"@)
+    $updated = New-Object System.Collections.Generic.List[string]
+    foreach ($sourceFile in @(Get-ChildItem -Path $overrideRoot -Recurse -File)) {
+        $relativePath = [System.IO.Path]::GetRelativePath($overrideRoot, $sourceFile.FullName)
+        $targetPath = Join-Path $LocalPath $relativePath
+        $newContent = Get-Content -LiteralPath $sourceFile.FullName -Raw -ErrorAction Stop
+        $currentContent = ''
+        if (Test-Path -LiteralPath $targetPath) {
+            $currentContent = Get-Content -LiteralPath $targetPath -Raw -ErrorAction Stop
+        }
 
-        if ($updated -ne $raw) {
-            Set-VorceStudiosVendorFileContent -Path $srcSyncPath -Content $updated
+        if ($currentContent -eq $newContent) {
+            continue
+        }
+
+        Set-VorceStudiosVendorFileContent -Path $targetPath -Content $newContent
+        $updated.Add($targetPath) | Out-Null
+    }
+
+    return $updated.ToArray()
+}
+
+function Update-VorceStudiosVendorPackageJson {
+    param(
+        [Parameter(Mandatory)][string]$PackageJsonPath,
+        [Parameter(Mandatory)][scriptblock]$Mutator
+    )
+
+    if (-not (Test-Path -LiteralPath $PackageJsonPath)) {
+        throw "package.json nicht gefunden: $PackageJsonPath"
+    }
+
+    $raw = Get-Content -LiteralPath $PackageJsonPath -Raw -ErrorAction Stop
+    $package = $raw | ConvertFrom-Json -AsHashtable
+    & $Mutator $package
+    $updated = $package | ConvertTo-Json -Depth 100
+    if ($updated -ne $raw) {
+        Set-VorceStudiosVendorFileContent -Path $PackageJsonPath -Content $updated
+    }
+}
+
+function Get-VorceStudiosVendorPackageManifestInfo {
+    param(
+        [Parameter(Mandatory)][string]$LocalPath
+    )
+
+    $packageJsonPath = Join-Path $LocalPath 'package.json'
+    if (-not (Test-Path -LiteralPath $packageJsonPath)) {
+        throw "Vendor-Plugin unter '$LocalPath' hat kein package.json."
+    }
+
+    $packageJson = Get-Content -LiteralPath $packageJsonPath -Raw -ErrorAction Stop | ConvertFrom-Json -AsHashtable
+    $paperclipPlugin = if ($packageJson.ContainsKey('paperclipPlugin')) { $packageJson['paperclipPlugin'] } else { $null }
+    $manifestRelativePath = if ($null -ne $paperclipPlugin -and $paperclipPlugin.ContainsKey('manifest')) {
+        [string]$paperclipPlugin['manifest']
+    } else {
+        'manifest.js'
+    }
+
+    return @{
+        PackageJsonPath = $packageJsonPath
+        PackageJson = $packageJson
+        ManifestRelativePath = $manifestRelativePath
+        ManifestPath = Join-Path $LocalPath $manifestRelativePath
+        HasPackageLock = Test-Path -LiteralPath (Join-Path $LocalPath 'package-lock.json')
+        HasNodeModules = Test-Path -LiteralPath (Join-Path $LocalPath 'node_modules')
+    }
+}
+
+function Get-VorceStudiosNpmExecutable {
+    $npmCommand = Get-Command 'npm.cmd' -ErrorAction SilentlyContinue
+    if ($null -ne $npmCommand) {
+        return $npmCommand.Source
+    }
+
+    $npmCommand = Get-Command 'npm' -ErrorAction SilentlyContinue
+    if ($null -ne $npmCommand) {
+        return $npmCommand.Source
+    }
+
+    throw 'npm ist nicht verfuegbar.'
+}
+
+function Invoke-VorceStudiosVendorBuildCommand {
+    param(
+        [Parameter(Mandatory)][string]$LocalPath,
+        [Parameter(Mandatory)][string[]]$Arguments
+    )
+
+    $npmExecutable = Get-VorceStudiosNpmExecutable
+    Push-Location $LocalPath
+    try {
+        & $npmExecutable @Arguments
+        if ($LASTEXITCODE -ne 0) {
+            throw ("Vendor-Plugin Build fehlgeschlagen: {0} {1}" -f $npmExecutable, ($Arguments -join ' '))
+        }
+    } finally {
+        Pop-Location
+    }
+}
+
+function Ensure-VorceStudiosGitHubIssuesVendorOverrides {
+    param(
+        [Parameter(Mandatory)][string]$LocalPath
+    )
+
+    Sync-VorceStudiosVendorOverrideFiles -PluginId 'paperclip-plugin-github-issues' -LocalPath $LocalPath | Out-Null
+}
+
+function Ensure-VorceStudiosChatVendorOverrides {
+    param(
+        [Parameter(Mandatory)][string]$LocalPath
+    )
+
+    $packageJsonPath = Join-Path $LocalPath 'package.json'
+    if (Test-Path -LiteralPath $packageJsonPath) {
+        Update-VorceStudiosVendorPackageJson -PackageJsonPath $packageJsonPath -Mutator {
+            param([hashtable]$package)
+
+            if (-not $package.ContainsKey('dependencies') -or $null -eq $package.dependencies) {
+                $package['dependencies'] = @{}
+            }
+
+            $package.dependencies['@paperclipai/plugin-sdk'] = '^2026.403.0'
+            $package.dependencies['react-markdown'] = '^10.1.0'
+            $package.dependencies['remark-gfm'] = '^4.0.1'
         }
     }
 
-    $distSyncPath = Join-Path $LocalPath 'dist\sync.js'
-    if (Test-Path -LiteralPath $distSyncPath) {
-        $raw = Get-Content -LiteralPath $distSyncPath -Raw -ErrorAction Stop
-        $updated = $raw
-
-        $updated = $updated.Replace(@"
-    await ctx.state.set({
-        scopeKind: ""instance"",
-        scopeId: ""default"",
-        stateKey: linkStateKey(params.paperclipIssueId),
-        value: JSON.stringify(link),
-    });
-"@, @"
-    await ctx.state.set({
-        scopeKind: ""instance"",
-        scopeId: ""default"",
-        stateKey: linkStateKey(params.paperclipIssueId),
-    }, JSON.stringify(link));
-"@)
-
-        $updated = $updated.Replace(@"
-    await ctx.state.set({
-        scopeKind: ""instance"",
-        scopeId: ""default"",
-        stateKey: ghStateKey(params.ghOwner, params.ghRepo, params.ghNumber),
-        value: params.paperclipIssueId,
-    });
-"@, @"
-    await ctx.state.set({
-        scopeKind: ""instance"",
-        scopeId: ""default"",
-        stateKey: ghStateKey(params.ghOwner, params.ghRepo, params.ghNumber),
-    }, params.paperclipIssueId);
-"@)
-
-        $updated = $updated.Replace(@"
-    await ctx.state.set({
-        scopeKind: ""instance"",
-        scopeId: ""default"",
-        stateKey: linkStateKey(link.paperclipIssueId),
-        value: JSON.stringify(link),
-    });
-"@, @"
-    await ctx.state.set({
-        scopeKind: ""instance"",
-        scopeId: ""default"",
-        stateKey: linkStateKey(link.paperclipIssueId),
-    }, JSON.stringify(link));
-"@)
-
-        if ($updated -ne $raw) {
-            Set-VorceStudiosVendorFileContent -Path $distSyncPath -Content $updated
-        }
-    }
+    Sync-VorceStudiosVendorOverrideFiles -PluginId 'paperclip-plugin-chat' -LocalPath $LocalPath | Out-Null
 }
 
 function Ensure-VorceStudiosVendorPluginSource {
     param(
-        [string]$PluginId
+        [Parameter(Mandatory)][string]$PluginId
     )
 
     $definition = Get-VorceStudiosPluginSourceDefinition -PluginId $PluginId
@@ -176,31 +244,35 @@ function Ensure-VorceStudiosVendorPluginSource {
         }
     }
 
-    if ([string]$PluginId -eq 'paperclip-plugin-github-issues') {
-        foreach ($manifestPath in @(
-            (Join-Path $localPath 'dist\manifest.js'),
-            (Join-Path $localPath 'src\manifest.ts')
-        )) {
-            if (-not (Test-Path -LiteralPath $manifestPath)) {
-                continue
-            }
-
-            $raw = Get-Content -LiteralPath $manifestPath -Raw -ErrorAction Stop
-            if ($raw -match '"jobs\.schedule"' -or $raw -match "'jobs\.schedule'") {
-                continue
-            }
-
-            $updated = $raw -replace '"agent\.tools\.register",', '"agent.tools.register",' + [Environment]::NewLine + '        "jobs.schedule",'
-            $updated = $updated -replace "'agent\.tools\.register',", "'agent.tools.register'," + [Environment]::NewLine + "        'jobs.schedule',"
-            if ($updated -ne $raw) {
-                Set-VorceStudiosVendorFileContent -Path $manifestPath -Content $updated
-            }
+    switch ([string]$definition.SourceName) {
+        'paperclip-plugin-github-issues' {
+            Ensure-VorceStudiosGitHubIssuesVendorOverrides -LocalPath $localPath
         }
-
-        Ensure-VorceStudiosGitHubIssuesVendorOverrides -LocalPath $localPath
+        'paperclip-plugin-chat' {
+            Ensure-VorceStudiosChatVendorOverrides -LocalPath $localPath
+        }
     }
 
     return $localPath
+}
+
+function Ensure-VorceStudiosVendorPluginBuild {
+    param(
+        [Parameter(Mandatory)][string]$LocalPath
+    )
+
+    $manifestInfo = Get-VorceStudiosVendorPackageManifestInfo -LocalPath $LocalPath
+    if (-not $manifestInfo.HasNodeModules) {
+        Invoke-VorceStudiosVendorBuildCommand -LocalPath $LocalPath -Arguments @('install')
+    }
+
+    Invoke-VorceStudiosVendorBuildCommand -LocalPath $LocalPath -Arguments @('run', 'build')
+    $manifestInfo = Get-VorceStudiosVendorPackageManifestInfo -LocalPath $LocalPath
+    if (-not (Test-Path -LiteralPath $manifestInfo.ManifestPath)) {
+        throw "Vendor-Plugin unter '$LocalPath' wurde gebaut, aber das Manifest '$($manifestInfo.ManifestRelativePath)' fehlt weiterhin."
+    }
+
+    return $manifestInfo
 }
 
 function Get-VorceStudiosPaperclipPluginLoaderPaths {
@@ -243,7 +315,7 @@ function Ensure-VorceStudiosPaperclipPluginLoaderPatched {
 
         if ($updated -ne $raw) {
             [System.IO.File]::WriteAllText($loaderPath, $updated, (New-Object System.Text.UTF8Encoding($false)))
-            $patched.Add($loaderPath)
+            $patched.Add($loaderPath) | Out-Null
         }
     }
 
@@ -286,9 +358,9 @@ function Resolve-VorceStudiosGitHubLinkToolName {
 
 function Ensure-VorceStudiosCompanySecretByName {
     param(
-        [string]$CompanyId,
-        [string]$Name,
-        [string]$Value,
+        [Parameter(Mandatory)][string]$CompanyId,
+        [Parameter(Mandatory)][string]$Name,
+        [Parameter(Mandatory)][string]$Value,
         [string]$Description = '',
         [switch]$RotateValue
     )
@@ -319,39 +391,48 @@ function Ensure-VorceStudiosCompanySecretByName {
     return New-VorceStudiosCompanySecret -CompanyId $CompanyId -Name $Name -Value $Value -Description $Description
 }
 
-function Refresh-VorceStudiosVendorPlugin {
-    param(
-        [string]$PluginId,
-        [string]$LocalPath,
-        [object]$InstalledPlugin,
-        [string[]]$Reasons = @()
-    )
-
-    Write-Host ("Refreshing vendor plugin {0}" -f $PluginId)
-    Uninstall-VorceStudiosPlugin -PluginId ([string]$InstalledPlugin.id) | Out-Null
-    Start-Sleep -Milliseconds 250
-
-    $reinstalled = Install-VorceStudiosPlugin -PackageName $LocalPath -IsLocalPath
-    return $reinstalled
-}
-
 function Ensure-VorceStudiosPluginInstalledFromVendor {
     param(
-        [string]$PluginId
+        [Parameter(Mandatory)][string]$PluginId
     )
 
+    $definition = Get-VorceStudiosPluginSourceDefinition -PluginId $PluginId
+    if ($null -eq $definition) {
+        throw "Plugin-Quelle '$PluginId' ist nicht definiert."
+    }
+
     $localPath = Ensure-VorceStudiosVendorPluginSource -PluginId $PluginId
-    $existing = Find-VorceStudiosPlugin -PluginId $PluginId
+    Ensure-VorceStudiosVendorPluginBuild -LocalPath $localPath | Out-Null
+
+    $existing = Find-VorceStudiosPlugin -PluginId ([string]$definition.PluginId)
+    if ($null -eq $existing -and -not [string]::IsNullOrWhiteSpace([string]$definition.PackageName)) {
+        $existing = Find-VorceStudiosPlugin -PluginId ([string]$definition.PackageName)
+    }
     if ($existing) {
         return $existing
     }
 
-    return Install-VorceStudiosPlugin -PackageName $localPath -IsLocalPath
+    $installed = Install-VorceStudiosPlugin -PackageName $localPath -IsLocalPath
+    return (Find-VorceStudiosPlugin -PluginId ([string]$definition.PluginId)) ?? (Find-VorceStudiosPlugin -PluginId ([string]$definition.PackageName)) ?? $installed
+}
+
+function Ensure-VorceStudiosPluginInstalledFromRegistry {
+    param(
+        [Parameter(Mandatory)][string]$PackageName,
+        [string]$Version
+    )
+
+    $existing = Find-VorceStudiosPlugin -PluginId $PackageName
+    if ($existing) {
+        return $existing
+    }
+
+    return Install-VorceStudiosPlugin -PackageName $PackageName -Version $Version
 }
 
 function Ensure-VorceStudiosGitHubPlugin {
     param(
-        [hashtable]$Context
+        [Parameter(Mandatory)][hashtable]$Context
     )
 
     $plugin = Ensure-VorceStudiosPluginInstalledFromVendor -PluginId 'paperclip-plugin-github-issues'
@@ -373,24 +454,65 @@ function Ensure-VorceStudiosGitHubPlugin {
 
     $current = Find-VorceStudiosPlugin -PluginId 'paperclip-plugin-github-issues'
     if ($null -ne $current -and [string]$current.status -ne 'ready') {
-        Enable-VorceStudiosPlugin -PluginId ([string]$plugin.id) | Out-Null
+        Enable-VorceStudiosPlugin -PluginId ([string]$current.id) | Out-Null
     }
 
     return Find-VorceStudiosPlugin -PluginId 'paperclip-plugin-github-issues'
 }
 
-function Ensure-VorceStudiosTelegramPlugin {
+function Ensure-VorceStudiosChatPlugin {
     param(
-        [hashtable]$Context
+        [Parameter(Mandatory)][hashtable]$Context
     )
 
-    $plugin = Ensure-VorceStudiosPluginInstalledFromVendor -PluginId 'paperclip-plugin-telegram'
+    $plugin = Ensure-VorceStudiosPluginInstalledFromVendor -PluginId 'paperclip-chat'
+    if ($null -ne $plugin -and [string]$plugin.status -ne 'ready') {
+        Enable-VorceStudiosPlugin -PluginId ([string]$plugin.id) | Out-Null
+        return Find-VorceStudiosPlugin -PluginId 'paperclip-chat'
+    }
+
     return $plugin
+}
+
+function Ensure-VorceStudiosAperturePlugin {
+    param(
+        [Parameter(Mandatory)][hashtable]$Context
+    )
+
+    $plugin = Ensure-VorceStudiosPluginInstalledFromVendor -PluginId 'tomismeta.paperclip-aperture'
+    if ($null -ne $plugin -and [string]$plugin.status -ne 'ready') {
+        Enable-VorceStudiosPlugin -PluginId ([string]$plugin.id) | Out-Null
+        return (Find-VorceStudiosPlugin -PluginId 'tomismeta.paperclip-aperture') ?? (Find-VorceStudiosPlugin -PluginId '@tomismeta/paperclip-aperture')
+    }
+
+    return $plugin
+}
+
+function Ensure-VorceStudiosLiveAnalyticsPlugin {
+    param(
+        [Parameter(Mandatory)][hashtable]$Context
+    )
+
+    $plugin = Ensure-VorceStudiosPluginInstalledFromVendor -PluginId 'agent-analytics.paperclip-live-analytics-plugin'
+    if ($null -ne $plugin -and [string]$plugin.status -ne 'ready') {
+        Enable-VorceStudiosPlugin -PluginId ([string]$plugin.id) | Out-Null
+        return (Find-VorceStudiosPlugin -PluginId 'agent-analytics.paperclip-live-analytics-plugin') ?? (Find-VorceStudiosPlugin -PluginId '@agent-analytics/paperclip-live-analytics-plugin')
+    }
+
+    return $plugin
+}
+
+function Ensure-VorceStudiosTelegramPlugin {
+    param(
+        [Parameter(Mandatory)][hashtable]$Context
+    )
+
+    return Ensure-VorceStudiosPluginInstalledFromVendor -PluginId 'paperclip-plugin-telegram'
 }
 
 function Connect-VorceStudiosGitHubPluginLinks {
     param(
-        [hashtable]$Context
+        [Parameter(Mandatory)][hashtable]$Context
     )
 
     return @{
@@ -404,7 +526,9 @@ function Invoke-VorceStudiosGitHubPluginPeriodicSync {
     )
 
     $plugin = Find-VorceStudiosPlugin -PluginId 'paperclip-plugin-github-issues'
-    if ($null -eq $plugin) { return $null }
+    if ($null -eq $plugin) {
+        return $null
+    }
 
     $job = @(
         Get-VorceStudiosPluginJobs -PluginId ([string]$plugin.id) |
@@ -412,27 +536,36 @@ function Invoke-VorceStudiosGitHubPluginPeriodicSync {
             Select-Object -First 1
     )[0]
 
-    if ($null -eq $job) { return $null }
+    if ($null -eq $job) {
+        return $null
+    }
 
     try {
         return Invoke-VorceStudiosPluginJob -PluginId ([string]$plugin.id) -JobId ([string]$job.id)
     } catch {
-        return $null
+        if ($IgnoreFailure.IsPresent) {
+            return $null
+        }
+        throw
     }
 }
 
 function Ensure-VorceStudiosPlugins {
     param(
-        [hashtable]$Context
+        [Parameter(Mandatory)][hashtable]$Context
     )
 
     Ensure-VorceStudiosPaperclipPluginLoaderPatched | Out-Null
     $github = Ensure-VorceStudiosGitHubPlugin -Context $Context
-    $telegram = Ensure-VorceStudiosTelegramPlugin -Context $Context
-    Connect-VorceStudiosGitHubPluginLinks -Context $Context
+    $chat = Ensure-VorceStudiosChatPlugin -Context $Context
+    $aperture = Ensure-VorceStudiosAperturePlugin -Context $Context
+    $liveAnalytics = Ensure-VorceStudiosLiveAnalyticsPlugin -Context $Context
+    Connect-VorceStudiosGitHubPluginLinks -Context $Context | Out-Null
 
     return @{
         github = $github
-        telegram = $telegram
+        chat = $chat
+        aperture = $aperture
+        liveAnalytics = $liveAnalytics
     }
 }
