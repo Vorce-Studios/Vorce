@@ -170,6 +170,116 @@ function Find-VorceStudiosProject {
     return $null
 }
 
+function Get-VorceStudiosGoals {
+    param(
+        [Parameter(Mandatory)][string]$CompanyId
+    )
+
+    $goals = Invoke-VorceStudiosApi -Method GET -Path ("/api/companies/{0}/goals" -f $CompanyId) -IgnoreFailure
+    if ($null -eq $goals) {
+        return @()
+    }
+
+    return @($goals)
+}
+
+function Find-VorceStudiosGoalByTitle {
+    param(
+        [Parameter(Mandatory)][string]$CompanyId,
+        [Parameter(Mandatory)][string]$Title
+    )
+
+    $matches = @(
+        Get-VorceStudiosGoals -CompanyId $CompanyId |
+            Where-Object { [string]$_.title -eq $Title } |
+            Select-Object -First 1
+    )
+    if ($matches.Count -eq 0) {
+        return $null
+    }
+
+    return $matches[0]
+}
+
+function New-VorceStudiosGoal {
+    param(
+        [Parameter(Mandatory)][string]$CompanyId,
+        [Parameter(Mandatory)][hashtable]$Payload
+    )
+
+    return Invoke-VorceStudiosApi -Method POST -Path ("/api/companies/{0}/goals" -f $CompanyId) -Body $Payload
+}
+
+function Update-VorceStudiosGoal {
+    param(
+        [Parameter(Mandatory)][string]$GoalId,
+        [Parameter(Mandatory)][string]$CompanyId,
+        [Parameter(Mandatory)][hashtable]$Payload
+    )
+
+    return Invoke-VorceStudiosApi -Method PATCH -Path ("/api/goals/{0}" -f $GoalId) -Body (@{
+        companyId = $CompanyId
+    } + $Payload)
+}
+
+function Ensure-VorceStudiosGoalsFromPolicy {
+    param(
+        [Parameter(Mandatory)][string]$CompanyId
+    )
+
+    $policy = Get-VorceStudiosPolicy -Name 'goals'
+    $existingByTitle = @{}
+    foreach ($goal in (Get-VorceStudiosGoals -CompanyId $CompanyId)) {
+        $existingByTitle[[string]$goal.title] = $goal
+    }
+
+    $created = New-Object System.Collections.Generic.List[string]
+    $updated = New-Object System.Collections.Generic.List[string]
+    $goalMap = @{}
+
+    foreach ($goalDefinition in @($policy.Goals)) {
+        $title = [string]$goalDefinition.Title
+        $description = [string]$goalDefinition.Description
+        $status = 'active'
+        $level = 'company'
+        $payload = @{
+            title = $title
+            description = $description
+            level = $level
+            status = $status
+        }
+
+        if ($existingByTitle.ContainsKey($title)) {
+            $existing = $existingByTitle[$title]
+            $patch = @{}
+            foreach ($property in @('title', 'description', 'level', 'status')) {
+                if ([string](Get-VorceStudiosObjectPropertyValue -Object $existing -PropertyName $property) -ne [string]$payload[$property]) {
+                    $patch[$property] = $payload[$property]
+                }
+            }
+
+            $goal = if ($patch.Count -gt 0) {
+                $updated.Add($title) | Out-Null
+                Update-VorceStudiosGoal -GoalId ([string]$existing.id) -CompanyId $CompanyId -Payload $patch
+            } else {
+                $existing
+            }
+            $goalMap[[string]$goalDefinition.Id] = $goal
+            continue
+        }
+
+        $goal = New-VorceStudiosGoal -CompanyId $CompanyId -Payload $payload
+        $created.Add($title) | Out-Null
+        $goalMap[[string]$goalDefinition.Id] = $goal
+    }
+
+    return @{
+        created = $created.ToArray()
+        updated = $updated.ToArray()
+        goals = $goalMap
+    }
+}
+
 function Get-VorceStudiosAgents {
     param(
         [Parameter(Mandatory)][string]$CompanyId
@@ -800,32 +910,201 @@ function Resolve-VorceStudiosAgentInstructionBundlePath {
     return Join-Path $paths.PaperclipHome ("instances\{0}\companies\{1}\agents\{2}\instructions\AGENTS.md" -f $system.Company.InstanceId, $CompanyId, $agentId)
 }
 
-function Get-VorceStudiosManagedInstructionBundleContent {
+function Get-VorceStudiosRoleKeyForAgent {
+    param(
+        [Parameter(Mandatory)][object]$Agent
+    )
+
+    $metadata = Get-VorceStudiosObjectPropertyValue -Object $Agent -PropertyName 'metadata'
+    return [string](Get-VorceStudiosObjectPropertyValue -Object $metadata -PropertyName 'roleKey')
+}
+
+function Get-VorceStudiosManagedInstructionBundleFiles {
     param(
         [Parameter(Mandatory)][object]$Agent,
         [Parameter(Mandatory)][string]$SourceInstructionPath
     )
 
+    $system = Get-VorceStudiosSystemPolicy
+    $routing = Get-VorceStudiosPolicy -Name 'routing'
+    $goals = Get-VorceStudiosPolicy -Name 'goals'
+    $skills = Get-VorceStudiosPolicy -Name 'skills'
     $agentName = [string](Get-VorceStudiosObjectPropertyValue -Object $Agent -PropertyName 'name')
     $agentTitle = [string](Get-VorceStudiosObjectPropertyValue -Object $Agent -PropertyName 'title')
+    $agentCapabilities = [string](Get-VorceStudiosObjectPropertyValue -Object $Agent -PropertyName 'capabilities')
+    $adapterType = [string](Get-VorceStudiosObjectPropertyValue -Object $Agent -PropertyName 'adapterType')
+    $heartbeatEnabled = [bool](Get-VorceStudiosObjectPropertyValue -Object $Agent -PropertyName 'heartbeatEnabled')
+    $roleKey = Get-VorceStudiosRoleKeyForAgent -Agent $Agent
     $instructionBody = (Get-Content -LiteralPath $SourceInstructionPath -Raw).Trim()
     $instructionBaseDir = Split-Path -Parent $SourceInstructionPath
 
     $safeName = $agentName -replace '"', '\"'
     $safeTitle = $agentTitle -replace '"', '\"'
 
-    return @(
-        '---'
-        ('name: "{0}"' -f $safeName)
-        ('title: "{0}"' -f $safeTitle)
-        '---'
+    $heartbeatInterval = ''
+    if (
+        $routing.ContainsKey('Heartbeats') -and
+        $routing.Heartbeats.ContainsKey('IntervalsSec') -and
+        $routing.Heartbeats.IntervalsSec.ContainsKey($roleKey)
+    ) {
+        $heartbeatInterval = [string]$routing.Heartbeats.IntervalsSec[$roleKey]
+    }
+
+    $roleFocus = switch ($roleKey) {
+        'ceo' {
+            @(
+                '- Sequence the release roadmap before assigning execution.'
+                '- Keep GitHub sync, CI, PR mergeability, and release blockers ahead of feature work.'
+                '- Wake reviewers only for concrete diffs or hard blockers.'
+            )
+        }
+        'order_manager' {
+            @(
+                '- Convert CEO decisions into Jules sessions and PR follow-through.'
+                '- Prevent duplicate sessions and keep issue-to-session-to-PR state current.'
+                '- Escalate only with exact failing session, PR, or check evidence.'
+            )
+        }
+        'qwen_reviewer' {
+            @(
+                '- Operate on demand only.'
+                '- Review a specific PR or narrow change request and return findings first.'
+                '- Do not start speculative work.'
+            )
+        }
+        'codex_reviewer' {
+            @(
+                '- Operate on demand only.'
+                '- Focus on high-risk review, architecture, or ugly debugging.'
+                '- If the task is routine, hand it back instead of over-working it.'
+            )
+        }
+        default {
+            @('- Follow the assigned role carefully and stop when the current action is complete.')
+        }
+    }
+
+    $assignedSkills = @(
+        $skills.Skills |
+            Where-Object { @($_.AssignedTo) -contains $roleKey }
+    )
+
+    $goalsLines = New-Object System.Collections.Generic.List[string]
+    $goalsLines.Add('# GOALS') | Out-Null
+    $goalsLines.Add('') | Out-Null
+    $goalsLines.Add(('Mission: {0}' -f [string]$goals.Mission)) | Out-Null
+    $goalsLines.Add('') | Out-Null
+    $goalsLines.Add('## Release Sequence') | Out-Null
+    $goalsLines.Add('') | Out-Null
+    foreach ($sequence in @($goals.ReleaseSequence)) {
+        $goalsLines.Add(('### {0} {1}' -f [string]$sequence.Id, [string]$sequence.Title)) | Out-Null
+        $goalsLines.Add([string]$sequence.Description) | Out-Null
+        $goalsLines.Add(('Goal gates: {0}' -f ((@($sequence.GateGoalIds) | ForEach-Object { [string]$_ }) -join ', '))) | Out-Null
+        $goalsLines.Add('') | Out-Null
+    }
+    $goalsLines.Add('## Active Company Goals') | Out-Null
+    $goalsLines.Add('') | Out-Null
+    foreach ($goal in @($goals.Goals)) {
+        $goalsLines.Add(('### {0} {1} [{2}]' -f [string]$goal.Id, [string]$goal.Title, [string]$goal.Priority)) | Out-Null
+        $goalsLines.Add([string]$goal.Description) | Out-Null
+        $goalsLines.Add(('Labels: {0}' -f ((@($goal.Labels) | ForEach-Object { [string]$_ }) -join ', '))) | Out-Null
+        $goalsLines.Add('') | Out-Null
+    }
+
+    $skillsLines = New-Object System.Collections.Generic.List[string]
+    $skillsLines.Add('# SKILLS') | Out-Null
+    $skillsLines.Add('') | Out-Null
+    $skillsLines.Add(('Role key: `{0}`' -f $roleKey)) | Out-Null
+    $skillsLines.Add('') | Out-Null
+    if ($assignedSkills.Count -eq 0) {
+        $skillsLines.Add('No role-specific skills are assigned.') | Out-Null
+    } else {
+        foreach ($skill in $assignedSkills) {
+            $skillsLines.Add(('## {0}' -f [string]$skill.Name)) | Out-Null
+            $skillsLines.Add([string]$skill.Description) | Out-Null
+            $skillsLines.Add('') | Out-Null
+        }
+    }
+
+    $heartbeatLines = New-Object System.Collections.Generic.List[string]
+    $heartbeatLines.Add('# HEARTBEAT') | Out-Null
+    $heartbeatLines.Add('') | Out-Null
+    $heartbeatLines.Add(('Heartbeat enabled: {0}' -f ($(if ($heartbeatEnabled) { 'yes' } else { 'no' })))) | Out-Null
+    if (-not [string]::IsNullOrWhiteSpace($heartbeatInterval)) {
+        $heartbeatLines.Add(('Nominal interval: {0}s' -f $heartbeatInterval)) | Out-Null
+    } else {
+        $heartbeatLines.Add('Nominal interval: on-demand only') | Out-Null
+    }
+    $heartbeatLines.Add('') | Out-Null
+    if ($heartbeatEnabled) {
+        $heartbeatLines.Add('Rules:') | Out-Null
+        $heartbeatLines.Add('- Perform one concrete management action per heartbeat and then stop.') | Out-Null
+        $heartbeatLines.Add('- If nothing actionable changed, emit a short no-op and exit.') | Out-Null
+    } else {
+        $heartbeatLines.Add('Rules:') | Out-Null
+        $heartbeatLines.Add('- This role is on-demand only.') | Out-Null
+        $heartbeatLines.Add('- If invoked without a concrete assignment, no-op immediately.') | Out-Null
+        $heartbeatLines.Add('- Do not invent work or self-queue tasks.') | Out-Null
+    }
+
+    $toolsLines = New-Object System.Collections.Generic.List[string]
+    $toolsLines.Add('# TOOLS') | Out-Null
+    $toolsLines.Add('') | Out-Null
+    $toolsLines.Add(('Primary adapter: `{0}`' -f $adapterType)) | Out-Null
+    $toolsLines.Add('Useful local tooling:') | Out-Null
+    $toolsLines.Add('- `pnpm dlx paperclipai@2026.403.0 dashboard get -c .paperclip/config.json -d .paperclip-home -C <companyId>`') | Out-Null
+    $toolsLines.Add('- `gh issue list --repo Vorce-Studios/Vorce`') | Out-Null
+    $toolsLines.Add('- `gh pr list --repo Vorce-Studios/Vorce --state open`') | Out-Null
+    $toolsLines.Add('- `gh pr checks <number> --repo Vorce-Studios/Vorce`') | Out-Null
+    $toolsLines.Add('- `pwsh -File scripts/jules/create-jules-session.ps1 -IssueNumber <n> -Repository Vorce-Studios/Vorce -AutoCreatePr`') | Out-Null
+    $toolsLines.Add('- `pwsh -File scripts/jules/monitor-jules-sessions.ps1 -Repository Vorce-Studios/Vorce -OnlyActive -IncludeActivities`') | Out-Null
+    $toolsLines.Add('- `GET http://127.0.0.1:{0}/api/health`' -f [int]$system.Company.ServerPort) | Out-Null
+
+    $soulLines = New-Object System.Collections.Generic.List[string]
+    $soulLines.Add('# SOUL') | Out-Null
+    $soulLines.Add('') | Out-Null
+    $soulLines.Add(('Company: {0}' -f [string]$system.Company.Name)) | Out-Null
+    $soulLines.Add(('Mission: {0}' -f [string]$goals.Mission)) | Out-Null
+    $soulLines.Add(('Role key: `{0}`' -f $roleKey)) | Out-Null
+    $soulLines.Add(('Capabilities: {0}' -f $agentCapabilities)) | Out-Null
+    $soulLines.Add('') | Out-Null
+    $soulLines.Add('Role focus:') | Out-Null
+    foreach ($line in $roleFocus) {
+        $soulLines.Add($line) | Out-Null
+    }
+
+    $agentsLines = New-Object System.Collections.Generic.List[string]
+    foreach ($line in @(
+        '---',
+        ('name: "{0}"' -f $safeName),
+        ('title: "{0}"' -f $safeTitle),
+        ('roleKey: "{0}"' -f ($roleKey -replace '"', '\"')),
+        '---',
+        '',
+        'Read these files in order before acting:',
+        '1. `SOUL.md`',
+        '2. `GOALS.md`',
+        '3. `HEARTBEAT.md`',
+        '4. `SKILLS.md`',
+        '5. `TOOLS.md`',
+        '',
+        ('_Instructions source: {0}_' -f $SourceInstructionPath),
+        ('_Resolve any relative file references from {0}._' -f $instructionBaseDir),
+        '',
+        $instructionBody,
         ''
-        ('_Instructions source: {0}_' -f $SourceInstructionPath)
-        ('_Resolve any relative file references from {0}._' -f $instructionBaseDir)
-        ''
-        $instructionBody
-        ''
-    ) -join "`n"
+    )) {
+        $agentsLines.Add([string]$line) | Out-Null
+    }
+
+    return [ordered]@{
+        'AGENTS.md'    = ($agentsLines -join "`n")
+        'SOUL.md'      = ($soulLines -join "`n")
+        'GOALS.md'     = ($goalsLines -join "`n")
+        'SKILLS.md'    = ($skillsLines -join "`n")
+        'HEARTBEAT.md' = ($heartbeatLines -join "`n")
+        'TOOLS.md'     = ($toolsLines -join "`n")
+    }
 }
 
 function Sync-VorceStudiosManagedAgentInstructions {
@@ -866,24 +1145,28 @@ function Sync-VorceStudiosManagedAgentInstructions {
             Ensure-VorceStudiosDirectory -Path $bundleDirectory
         }
 
-        $content = ''
+        $bundleFiles = $null
         try {
-            $content = Get-VorceStudiosManagedInstructionBundleContent -Agent $agent -SourceInstructionPath $sourceInstructionPath
+            $bundleFiles = Get-VorceStudiosManagedInstructionBundleFiles -Agent $agent -SourceInstructionPath $sourceInstructionPath
         } catch {
             $skipped++
             continue
         }
-        $current = ''
-        if (Test-Path -LiteralPath $targetBundlePath) {
-            $current = Get-Content -LiteralPath $targetBundlePath -Raw
-        }
 
-        if ($current -eq $content) {
-            continue
-        }
+        foreach ($entry in $bundleFiles.GetEnumerator()) {
+            $path = Join-Path $bundleDirectory $entry.Key
+            $current = ''
+            if (Test-Path -LiteralPath $path) {
+                $current = Get-Content -LiteralPath $path -Raw
+            }
 
-        [System.IO.File]::WriteAllText($targetBundlePath, $content, (New-Object System.Text.UTF8Encoding($false)))
-        $updated++
+            if ($current -eq [string]$entry.Value) {
+                continue
+            }
+
+            [System.IO.File]::WriteAllText($path, [string]$entry.Value, (New-Object System.Text.UTF8Encoding($false)))
+            $updated++
+        }
     }
 
     return @{
