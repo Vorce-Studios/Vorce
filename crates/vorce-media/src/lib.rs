@@ -240,3 +240,44 @@ fn open_video_file<P: AsRef<Path>>(path: P) -> Result<Box<dyn VideoDecoder>> {
         path
     )))
 }
+
+/// Gets the duration of a media file without full decoding.
+pub fn get_media_duration_secs<P: AsRef<Path>>(_path: P) -> Option<f32> {
+    #[allow(unused_variables)]
+    let path = _path;
+    #[cfg(feature = "ffmpeg")]
+    {
+        if ffmpeg_next::init().is_ok() {
+            if let Ok(input_ctx) = ffmpeg_next::format::input(&path) {
+                // Check for video stream first, then audio if no video
+                let stream = input_ctx
+                    .streams()
+                    .best(ffmpeg_next::media::Type::Video)
+                    .or_else(|| input_ctx.streams().best(ffmpeg_next::media::Type::Audio));
+
+                if let Some(stream) = stream {
+                    let time_base = stream.time_base();
+                    let raw_duration = stream.duration();
+
+                    if raw_duration != i64::MIN {
+                        let duration_secs = raw_duration as f64 * f64::from(time_base);
+                        if duration_secs > 0.0 && !duration_secs.is_nan() {
+                            return Some(duration_secs as f32);
+                        }
+                    }
+                }
+
+                // Fallback to container duration
+                let ctx_duration = input_ctx.duration();
+                if ctx_duration != i64::MIN {
+                    // AV_TIME_BASE is 1000000
+                    let duration_secs = ctx_duration as f64 / 1_000_000.0;
+                    if duration_secs > 0.0 && !duration_secs.is_nan() {
+                        return Some(duration_secs as f32);
+                    }
+                }
+            }
+        }
+    }
+    None
+}
