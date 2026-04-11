@@ -1,10 +1,14 @@
 [CmdletBinding()]
 param()
+<<<<<<< HEAD
 
+=======
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 $ScriptDir = Split-Path -Parent $PSCommandPath
 . (Join-Path $ScriptDir 'lib\VorceStudiosConfig.ps1')
 . (Join-Path $ScriptDir 'lib\PaperclipApi.ps1')
 
+<<<<<<< HEAD
 function Invoke-VorceStudiosRuntimeRepair {
     $repairScript = Join-Path $ScriptDir 'Repair-VorceStudiosPaperclipRuntimes.ps1'
     if (-not (Test-Path -LiteralPath $repairScript)) {
@@ -62,6 +66,11 @@ $staleProcesses = @(Get-VorceStudiosPaperclipProcesses)
 if (-not (Test-VorceStudiosPaperclipReady) -and $staleProcesses.Count -gt 0) {
     Stop-VorceStudiosPaperclipProcesses | Out-Null
     Start-Sleep -Seconds 1
+=======
+if (Test-VorceStudiosPaperclipReady) {
+    Set-VorceStudiosRuntimeMode -Mode 'running' -Note 'Manual start (already running).'
+    return Get-VorceStudiosRuntimeState
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 }
 
 $paths = Get-VorceStudiosPaths
@@ -81,15 +90,23 @@ $processState['paperclip'] = @{
 Set-VorceStudiosProcessState -State $processState
 
 if (Wait-VorceStudiosPaperclipReady -TimeoutSeconds 60) {
+<<<<<<< HEAD
     $sync = Invoke-VorceStudiosPostStartSync
     $note = if ($null -eq $sync -or $sync.ok) { 'Manual start success.' } else { 'Manual start success with sync warning.' }
     Set-VorceStudiosRuntimeMode -Mode 'running' -Note $note
+=======
+    Set-VorceStudiosRuntimeMode -Mode 'running' -Note 'Manual start success.'
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 } else {
     throw 'Paperclip start timed out.'
 }
 
+<<<<<<< HEAD
 @{
     runtime = Get-VorceStudiosRuntimeState
     runtimeRepair = $runtimeRepair
     sync = $sync
 }
+=======
+Get-VorceStudiosRuntimeState
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))

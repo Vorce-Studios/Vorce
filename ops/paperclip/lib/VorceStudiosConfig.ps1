@@ -5,6 +5,7 @@ function Get-VorceStudiosRoot {
     return (Resolve-Path $root).Path
 }
 
+<<<<<<< HEAD
 function Import-VorceStudiosPowerShellDataFile {
     param(
         [Parameter(Mandatory)][string]$Path
@@ -21,6 +22,10 @@ function Import-VorceStudiosPowerShellDataFile {
 
 function Get-VorceStudiosSystemPolicy {
     return Import-VorceStudiosPowerShellDataFile -Path (Join-Path (Get-VorceStudiosRoot) 'ops\paperclip\policies\system.psd1')
+=======
+function Get-VorceStudiosSystemPolicy {
+    return Import-PowerShellDataFile -Path (Join-Path (Get-VorceStudiosRoot) 'ops\paperclip\policies\system.psd1')
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 }
 
 function Get-VorceStudiosPolicy {
@@ -33,7 +38,11 @@ function Get-VorceStudiosPolicy {
         throw "Policy '$Name' wurde nicht gefunden: $path"
     }
 
+<<<<<<< HEAD
     return Import-VorceStudiosPowerShellDataFile -Path $path
+=======
+    return Import-PowerShellDataFile -Path $path
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 }
 
 function Get-VorceStudiosPaths {
@@ -43,7 +52,11 @@ function Get-VorceStudiosPaths {
     $paperclipHome = Join-Path $root '.paperclip-home'
     $runtimeRoot = Join-Path $paperclipHome 'runtime\vorce-studios'
 
+<<<<<<< HEAD
     $paths = [ordered]@{
+=======
+    return [ordered]@{
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
         Root                 = $root
         PaperclipConfigDir   = Join-Path $root '.paperclip'
         PaperclipConfigPath  = Join-Path $root '.paperclip\config.json'
@@ -64,6 +77,7 @@ function Get-VorceStudiosPaths {
         TemplatesDir         = Join-Path $root 'ops\paperclip\templates'
         InstructionsDir      = Join-Path $root 'ops\paperclip\instructions'
         AtlasDir             = Join-Path $root '.agent\atlas'
+<<<<<<< HEAD
         RegressionPlaybook   = Join-Path $root 'docs\A3_PROJECT\B3_OPERATIONS\DOC-C4_REGRESSION_PLAYBOOK.md'
     }
 
@@ -74,6 +88,13 @@ function Get-VorceStudiosPaths {
     }
 
     return $paths
+=======
+        AtlasSummaryPath     = Join-Path $root $system.Atlas.SummaryPath
+        AtlasReadmePath      = Join-Path $root $system.Atlas.ReadmePath
+        AtlasCodePath        = Join-Path $root $system.Atlas.CodeAtlasPath
+        RegressionPlaybook   = Join-Path $root 'docs\A3_PROJECT\B3_OPERATIONS\DOC-C4_REGRESSION_PLAYBOOK.md'
+    }
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 }
 
 function Get-VorceStudiosTimestamp {
@@ -103,6 +124,7 @@ function Ensure-VorceStudiosRuntimeDirectories {
     }
 }
 
+<<<<<<< HEAD
 function Sync-VorceStudiosWorktreeConfigFile {
     $paths = Get-VorceStudiosPaths
     $system = Get-VorceStudiosSystemPolicy
@@ -208,6 +230,8 @@ function Sync-VorceStudiosWorktreeConfigFile {
     return $updated
 }
 
+=======
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 function ConvertTo-VorceStudiosHashtable {
     param(
         [AllowNull()][object]$InputObject

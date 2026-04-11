@@ -18,7 +18,11 @@ function Get-VorceStudiosApiHeaders {
 function Invoke-VorceStudiosApi {
     [CmdletBinding()]
     param(
+<<<<<<< HEAD
         [Parameter(Mandatory)][ValidateSet('GET', 'POST', 'PATCH', 'PUT', 'DELETE')][string]$Method,
+=======
+        [Parameter(Mandatory)][ValidateSet('GET', 'POST', 'PATCH', 'DELETE')][string]$Method,
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
         [Parameter(Mandatory)][string]$Path,
         [AllowNull()][object]$Body,
         [switch]$IgnoreNotFound,
@@ -170,6 +174,7 @@ function Find-VorceStudiosProject {
     return $null
 }
 
+<<<<<<< HEAD
 function Get-VorceStudiosGoals {
     param(
         [Parameter(Mandatory)][string]$CompanyId
@@ -280,6 +285,8 @@ function Ensure-VorceStudiosGoalsFromPolicy {
     }
 }
 
+=======
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 function Get-VorceStudiosAgents {
     param(
         [Parameter(Mandatory)][string]$CompanyId
@@ -310,6 +317,7 @@ function Update-VorceStudiosAgent {
     return Invoke-VorceStudiosApi -Method PATCH -Path ("/api/agents/{0}" -f $AgentId) -Body $Payload
 }
 
+<<<<<<< HEAD
 function Reset-VorceStudiosAgentRuntimeSession {
     param(
         [Parameter(Mandatory)][string]$AgentId,
@@ -324,6 +332,8 @@ function Reset-VorceStudiosAgentRuntimeSession {
     return Invoke-VorceStudiosApi -Method POST -Path ("/api/agents/{0}/runtime-state/reset-session" -f $AgentId) -Body $payload
 }
 
+=======
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 function Invoke-VorceStudiosHeartbeat {
     param(
         [Parameter(Mandatory)][string]$AgentId,
@@ -399,6 +409,7 @@ function Get-VorceStudiosDashboard {
     return Invoke-VorceStudiosApi -Method GET -Path ("/api/companies/{0}/dashboard" -f $CompanyId) -IgnoreFailure
 }
 
+<<<<<<< HEAD
 function Get-VorceStudiosGoals {
     param(
         [Parameter(Mandatory)][string]$CompanyId
@@ -412,6 +423,8 @@ function Get-VorceStudiosGoals {
     return @($goals)
 }
 
+=======
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 function Try-New-VorceStudiosProject {
     param(
         [Parameter(Mandatory)][string]$CompanyId,
@@ -563,6 +576,7 @@ function Disable-VorceStudiosPlugin {
     return Invoke-VorceStudiosApi -Method POST -Path ("/api/plugins/{0}/disable" -f $PluginId) -Body @{}
 }
 
+<<<<<<< HEAD
 function Upgrade-VorceStudiosPlugin {
     param(
         [Parameter(Mandatory)][string]$PluginId,
@@ -577,6 +591,8 @@ function Upgrade-VorceStudiosPlugin {
     return Invoke-VorceStudiosApi -Method POST -Path ("/api/plugins/{0}/upgrade" -f $PluginId) -Body $payload
 }
 
+=======
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 function Uninstall-VorceStudiosPlugin {
     param(
         [Parameter(Mandatory)][string]$PluginId,
@@ -646,6 +662,7 @@ function Get-VorceStudiosCompanySecrets {
     return @($items)
 }
 
+<<<<<<< HEAD
 function Get-VorceStudiosCompanySkills {
     param(
         [Parameter(Mandatory)][string]$CompanyId
@@ -739,6 +756,8 @@ function Get-VorceStudiosHeartbeatRunLog {
     return Invoke-VorceStudiosApi -Method GET -Path ("/api/heartbeat-runs/{0}/log" -f $RunId) -IgnoreFailure
 }
 
+=======
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 function New-VorceStudiosCompanySecret {
     param(
         [Parameter(Mandatory)][string]$CompanyId,
@@ -910,6 +929,7 @@ function Resolve-VorceStudiosAgentInstructionBundlePath {
     return Join-Path $paths.PaperclipHome ("instances\{0}\companies\{1}\agents\{2}\instructions\AGENTS.md" -f $system.Company.InstanceId, $CompanyId, $agentId)
 }
 
+<<<<<<< HEAD
 function Get-VorceStudiosRoleKeyForAgent {
     param(
         [Parameter(Mandatory)][object]$Agent
@@ -920,11 +940,15 @@ function Get-VorceStudiosRoleKeyForAgent {
 }
 
 function Get-VorceStudiosManagedInstructionBundleFiles {
+=======
+function Get-VorceStudiosManagedInstructionBundleContent {
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     param(
         [Parameter(Mandatory)][object]$Agent,
         [Parameter(Mandatory)][string]$SourceInstructionPath
     )
 
+<<<<<<< HEAD
     $system = Get-VorceStudiosSystemPolicy
     $routing = Get-VorceStudiosPolicy -Name 'routing'
     $goals = Get-VorceStudiosPolicy -Name 'goals'
@@ -935,12 +959,17 @@ function Get-VorceStudiosManagedInstructionBundleFiles {
     $adapterType = [string](Get-VorceStudiosObjectPropertyValue -Object $Agent -PropertyName 'adapterType')
     $heartbeatEnabled = [bool](Get-VorceStudiosObjectPropertyValue -Object $Agent -PropertyName 'heartbeatEnabled')
     $roleKey = Get-VorceStudiosRoleKeyForAgent -Agent $Agent
+=======
+    $agentName = [string](Get-VorceStudiosObjectPropertyValue -Object $Agent -PropertyName 'name')
+    $agentTitle = [string](Get-VorceStudiosObjectPropertyValue -Object $Agent -PropertyName 'title')
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     $instructionBody = (Get-Content -LiteralPath $SourceInstructionPath -Raw).Trim()
     $instructionBaseDir = Split-Path -Parent $SourceInstructionPath
 
     $safeName = $agentName -replace '"', '\"'
     $safeTitle = $agentTitle -replace '"', '\"'
 
+<<<<<<< HEAD
     $heartbeatInterval = ''
     if (
         $routing.ContainsKey('Heartbeats') -and
@@ -1105,6 +1134,20 @@ function Get-VorceStudiosManagedInstructionBundleFiles {
         'HEARTBEAT.md' = ($heartbeatLines -join "`n")
         'TOOLS.md'     = ($toolsLines -join "`n")
     }
+=======
+    return @(
+        '---'
+        ('name: "{0}"' -f $safeName)
+        ('title: "{0}"' -f $safeTitle)
+        '---'
+        ''
+        ('_Instructions source: {0}_' -f $SourceInstructionPath)
+        ('_Resolve any relative file references from {0}._' -f $instructionBaseDir)
+        ''
+        $instructionBody
+        ''
+    ) -join "`n"
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 }
 
 function Sync-VorceStudiosManagedAgentInstructions {
@@ -1145,13 +1188,20 @@ function Sync-VorceStudiosManagedAgentInstructions {
             Ensure-VorceStudiosDirectory -Path $bundleDirectory
         }
 
+<<<<<<< HEAD
         $bundleFiles = $null
         try {
             $bundleFiles = Get-VorceStudiosManagedInstructionBundleFiles -Agent $agent -SourceInstructionPath $sourceInstructionPath
+=======
+        $content = ''
+        try {
+            $content = Get-VorceStudiosManagedInstructionBundleContent -Agent $agent -SourceInstructionPath $sourceInstructionPath
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
         } catch {
             $skipped++
             continue
         }
+<<<<<<< HEAD
 
         foreach ($entry in $bundleFiles.GetEnumerator()) {
             $path = Join-Path $bundleDirectory $entry.Key
@@ -1167,6 +1217,19 @@ function Sync-VorceStudiosManagedAgentInstructions {
             [System.IO.File]::WriteAllText($path, [string]$entry.Value, (New-Object System.Text.UTF8Encoding($false)))
             $updated++
         }
+=======
+        $current = ''
+        if (Test-Path -LiteralPath $targetBundlePath) {
+            $current = Get-Content -LiteralPath $targetBundlePath -Raw
+        }
+
+        if ($current -eq $content) {
+            continue
+        }
+
+        [System.IO.File]::WriteAllText($targetBundlePath, $content, (New-Object System.Text.UTF8Encoding($false)))
+        $updated++
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     }
 
     return @{

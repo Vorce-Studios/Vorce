@@ -2,7 +2,11 @@ Set-StrictMode -Version Latest
 
 . (Join-Path $PSScriptRoot 'VorceStudiosConfig.ps1')
 . (Join-Path $PSScriptRoot 'PaperclipApi.ps1')
+<<<<<<< HEAD
 . (Join-Path (Join-Path $PSScriptRoot '..\..\..') 'scripts\jules\jules-github.ps1')
+=======
+. (Join-Path (Join-Path $PSScriptRoot '..\..') 'jules\jules-github.ps1')
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 
 function Get-VorceStudiosPluginSourceDefinitions {
     $paths = Get-VorceStudiosPaths
@@ -10,12 +14,16 @@ function Get-VorceStudiosPluginSourceDefinitions {
     return @(
         @{
             PluginId = 'paperclip-plugin-github-issues'
+<<<<<<< HEAD
             SourceName = 'paperclip-plugin-github-issues'
             PackageName = 'paperclip-plugin-github-issues'
+=======
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
             Repository = 'https://github.com/mvanhorn/paperclip-plugin-github-issues.git'
             LocalPath = Join-Path $paths.PluginSourcesDir 'paperclip-plugin-github-issues'
         }
         @{
+<<<<<<< HEAD
             PluginId = 'paperclip-chat'
             SourceName = 'paperclip-plugin-chat'
             PackageName = '@paperclipai/plugin-chat'
@@ -40,6 +48,9 @@ function Get-VorceStudiosPluginSourceDefinitions {
             PluginId = 'paperclip-plugin-telegram'
             SourceName = 'paperclip-plugin-telegram'
             PackageName = 'paperclip-plugin-telegram'
+=======
+            PluginId = 'paperclip-plugin-telegram'
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
             Repository = 'https://github.com/mvanhorn/paperclip-plugin-telegram.git'
             LocalPath = Join-Path $paths.PluginSourcesDir 'paperclip-plugin-telegram'
         }
@@ -48,22 +59,31 @@ function Get-VorceStudiosPluginSourceDefinitions {
 
 function Get-VorceStudiosPluginSourceDefinition {
     param(
+<<<<<<< HEAD
         [Parameter(Mandatory)][string]$PluginId
+=======
+        [string]$PluginId
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     )
 
     return @(
         Get-VorceStudiosPluginSourceDefinitions |
+<<<<<<< HEAD
             Where-Object {
                 ([string]$_.PluginId -eq $PluginId) -or
                 ([string]$_.SourceName -eq $PluginId) -or
                 ([string]$_.PackageName -eq $PluginId)
             } |
+=======
+            Where-Object { [string]$_.PluginId -eq $PluginId } |
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
             Select-Object -First 1
     )[0]
 }
 
 function Set-VorceStudiosVendorFileContent {
     param(
+<<<<<<< HEAD
         [Parameter(Mandatory)][string]$Path,
         [Parameter(Mandatory)][string]$Content
     )
@@ -224,11 +244,138 @@ function Ensure-VorceStudiosChatVendorOverrides {
     }
 
     Sync-VorceStudiosVendorOverrideFiles -PluginId 'paperclip-plugin-chat' -LocalPath $LocalPath | Out-Null
+=======
+        [string]$Path,
+        [string]$Content
+    )
+
+    [System.IO.File]::WriteAllText($Path, $Content, (New-Object System.Text.UTF8Encoding($false)))
+}
+
+function Ensure-VorceStudiosGitHubIssuesVendorOverrides {
+    param(
+        [string]$LocalPath
+    )
+
+    $srcSyncPath = Join-Path $LocalPath 'src\sync.ts'
+    if (Test-Path -LiteralPath $srcSyncPath) {
+        $raw = Get-Content -LiteralPath $srcSyncPath -Raw -ErrorAction Stop
+        $updated = $raw
+
+        $updated = $updated.Replace(@"
+  await ctx.state.set({
+    scopeKind: ""instance"",
+    scopeId: ""default"",
+    stateKey: linkStateKey(params.paperclipIssueId),
+    value: JSON.stringify(link),
+  });
+"@, @"
+  await ctx.state.set({
+    scopeKind: ""instance"",
+    scopeId: ""default"",
+    stateKey: linkStateKey(params.paperclipIssueId),
+  }, JSON.stringify(link));
+"@)
+
+        $updated = $updated.Replace(@"
+  await ctx.state.set({
+    scopeKind: ""instance"",
+    scopeId: ""default"",
+    stateKey: ghStateKey(params.ghOwner, params.ghRepo, params.ghNumber),
+    value: params.paperclipIssueId,
+  });
+"@, @"
+  await ctx.state.set({
+    scopeKind: ""instance"",
+    scopeId: ""default"",
+    stateKey: ghStateKey(params.ghOwner, params.ghRepo, params.ghNumber),
+  }, params.paperclipIssueId);
+"@)
+
+        $updated = $updated.Replace(@"
+  await ctx.state.set({
+    scopeKind: ""instance"",
+    scopeId: ""default"",
+    stateKey: linkStateKey(link.paperclipIssueId),
+    value: JSON.stringify(link),
+  });
+"@, @"
+  await ctx.state.set({
+    scopeKind: ""instance"",
+    scopeId: ""default"",
+    stateKey: linkStateKey(link.paperclipIssueId),
+  }, JSON.stringify(link));
+"@)
+
+        if ($updated -ne $raw) {
+            Set-VorceStudiosVendorFileContent -Path $srcSyncPath -Content $updated
+        }
+    }
+
+    $distSyncPath = Join-Path $LocalPath 'dist\sync.js'
+    if (Test-Path -LiteralPath $distSyncPath) {
+        $raw = Get-Content -LiteralPath $distSyncPath -Raw -ErrorAction Stop
+        $updated = $raw
+
+        $updated = $updated.Replace(@"
+    await ctx.state.set({
+        scopeKind: ""instance"",
+        scopeId: ""default"",
+        stateKey: linkStateKey(params.paperclipIssueId),
+        value: JSON.stringify(link),
+    });
+"@, @"
+    await ctx.state.set({
+        scopeKind: ""instance"",
+        scopeId: ""default"",
+        stateKey: linkStateKey(params.paperclipIssueId),
+    }, JSON.stringify(link));
+"@)
+
+        $updated = $updated.Replace(@"
+    await ctx.state.set({
+        scopeKind: ""instance"",
+        scopeId: ""default"",
+        stateKey: ghStateKey(params.ghOwner, params.ghRepo, params.ghNumber),
+        value: params.paperclipIssueId,
+    });
+"@, @"
+    await ctx.state.set({
+        scopeKind: ""instance"",
+        scopeId: ""default"",
+        stateKey: ghStateKey(params.ghOwner, params.ghRepo, params.ghNumber),
+    }, params.paperclipIssueId);
+"@)
+
+        $updated = $updated.Replace(@"
+    await ctx.state.set({
+        scopeKind: ""instance"",
+        scopeId: ""default"",
+        stateKey: linkStateKey(link.paperclipIssueId),
+        value: JSON.stringify(link),
+    });
+"@, @"
+    await ctx.state.set({
+        scopeKind: ""instance"",
+        scopeId: ""default"",
+        stateKey: linkStateKey(link.paperclipIssueId),
+    }, JSON.stringify(link));
+"@)
+
+        if ($updated -ne $raw) {
+            Set-VorceStudiosVendorFileContent -Path $distSyncPath -Content $updated
+        }
+    }
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 }
 
 function Ensure-VorceStudiosVendorPluginSource {
     param(
+<<<<<<< HEAD
         [Parameter(Mandatory)][string]$PluginId
+=======
+        [string]$PluginId
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     )
 
     $definition = Get-VorceStudiosPluginSourceDefinition -PluginId $PluginId
@@ -244,6 +391,7 @@ function Ensure-VorceStudiosVendorPluginSource {
         }
     }
 
+<<<<<<< HEAD
     switch ([string]$definition.SourceName) {
         'paperclip-plugin-github-issues' {
             Ensure-VorceStudiosGitHubIssuesVendorOverrides -LocalPath $localPath
@@ -251,11 +399,36 @@ function Ensure-VorceStudiosVendorPluginSource {
         'paperclip-plugin-chat' {
             Ensure-VorceStudiosChatVendorOverrides -LocalPath $localPath
         }
+=======
+    if ([string]$PluginId -eq 'paperclip-plugin-github-issues') {
+        foreach ($manifestPath in @(
+            (Join-Path $localPath 'dist\manifest.js'),
+            (Join-Path $localPath 'src\manifest.ts')
+        )) {
+            if (-not (Test-Path -LiteralPath $manifestPath)) {
+                continue
+            }
+
+            $raw = Get-Content -LiteralPath $manifestPath -Raw -ErrorAction Stop
+            if ($raw -match '"jobs\.schedule"' -or $raw -match "'jobs\.schedule'") {
+                continue
+            }
+
+            $updated = $raw -replace '"agent\.tools\.register",', '"agent.tools.register",' + [Environment]::NewLine + '        "jobs.schedule",'
+            $updated = $updated -replace "'agent\.tools\.register',", "'agent.tools.register'," + [Environment]::NewLine + "        'jobs.schedule',"
+            if ($updated -ne $raw) {
+                Set-VorceStudiosVendorFileContent -Path $manifestPath -Content $updated
+            }
+        }
+
+        Ensure-VorceStudiosGitHubIssuesVendorOverrides -LocalPath $localPath
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     }
 
     return $localPath
 }
 
+<<<<<<< HEAD
 function Ensure-VorceStudiosVendorPluginBuild {
     param(
         [Parameter(Mandatory)][string]$LocalPath
@@ -275,6 +448,8 @@ function Ensure-VorceStudiosVendorPluginBuild {
     return $manifestInfo
 }
 
+=======
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 function Get-VorceStudiosPaperclipPluginLoaderPaths {
     $system = Get-VorceStudiosSystemPolicy
     $cacheRoot = Join-Path $env:LOCALAPPDATA 'pnpm-cache\dlx'
@@ -315,7 +490,11 @@ function Ensure-VorceStudiosPaperclipPluginLoaderPatched {
 
         if ($updated -ne $raw) {
             [System.IO.File]::WriteAllText($loaderPath, $updated, (New-Object System.Text.UTF8Encoding($false)))
+<<<<<<< HEAD
             $patched.Add($loaderPath) | Out-Null
+=======
+            $patched.Add($loaderPath)
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
         }
     }
 
@@ -358,9 +537,15 @@ function Resolve-VorceStudiosGitHubLinkToolName {
 
 function Ensure-VorceStudiosCompanySecretByName {
     param(
+<<<<<<< HEAD
         [Parameter(Mandatory)][string]$CompanyId,
         [Parameter(Mandatory)][string]$Name,
         [Parameter(Mandatory)][string]$Value,
+=======
+        [string]$CompanyId,
+        [string]$Name,
+        [string]$Value,
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
         [string]$Description = '',
         [switch]$RotateValue
     )
@@ -391,6 +576,7 @@ function Ensure-VorceStudiosCompanySecretByName {
     return New-VorceStudiosCompanySecret -CompanyId $CompanyId -Name $Name -Value $Value -Description $Description
 }
 
+<<<<<<< HEAD
 function Ensure-VorceStudiosPluginInstalledFromVendor {
     param(
         [Parameter(Mandatory)][string]$PluginId
@@ -423,16 +609,49 @@ function Ensure-VorceStudiosPluginInstalledFromRegistry {
     )
 
     $existing = Find-VorceStudiosPlugin -PluginId $PackageName
+=======
+function Refresh-VorceStudiosVendorPlugin {
+    param(
+        [string]$PluginId,
+        [string]$LocalPath,
+        [object]$InstalledPlugin,
+        [string[]]$Reasons = @()
+    )
+
+    Write-Host ("Refreshing vendor plugin {0}" -f $PluginId)
+    Uninstall-VorceStudiosPlugin -PluginId ([string]$InstalledPlugin.id) | Out-Null
+    Start-Sleep -Milliseconds 250
+
+    $reinstalled = Install-VorceStudiosPlugin -PackageName $LocalPath -IsLocalPath
+    return $reinstalled
+}
+
+function Ensure-VorceStudiosPluginInstalledFromVendor {
+    param(
+        [string]$PluginId
+    )
+
+    $localPath = Ensure-VorceStudiosVendorPluginSource -PluginId $PluginId
+    $existing = Find-VorceStudiosPlugin -PluginId $PluginId
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     if ($existing) {
         return $existing
     }
 
+<<<<<<< HEAD
     return Install-VorceStudiosPlugin -PackageName $PackageName -Version $Version
+=======
+    return Install-VorceStudiosPlugin -PackageName $localPath -IsLocalPath
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 }
 
 function Ensure-VorceStudiosGitHubPlugin {
     param(
+<<<<<<< HEAD
         [Parameter(Mandatory)][hashtable]$Context
+=======
+        [hashtable]$Context
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     )
 
     $plugin = Ensure-VorceStudiosPluginInstalledFromVendor -PluginId 'paperclip-plugin-github-issues'
@@ -454,12 +673,17 @@ function Ensure-VorceStudiosGitHubPlugin {
 
     $current = Find-VorceStudiosPlugin -PluginId 'paperclip-plugin-github-issues'
     if ($null -ne $current -and [string]$current.status -ne 'ready') {
+<<<<<<< HEAD
         Enable-VorceStudiosPlugin -PluginId ([string]$current.id) | Out-Null
+=======
+        Enable-VorceStudiosPlugin -PluginId ([string]$plugin.id) | Out-Null
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     }
 
     return Find-VorceStudiosPlugin -PluginId 'paperclip-plugin-github-issues'
 }
 
+<<<<<<< HEAD
 function Ensure-VorceStudiosChatPlugin {
     param(
         [Parameter(Mandatory)][hashtable]$Context
@@ -508,11 +732,24 @@ function Ensure-VorceStudiosTelegramPlugin {
     )
 
     return Ensure-VorceStudiosPluginInstalledFromVendor -PluginId 'paperclip-plugin-telegram'
+=======
+function Ensure-VorceStudiosTelegramPlugin {
+    param(
+        [hashtable]$Context
+    )
+
+    $plugin = Ensure-VorceStudiosPluginInstalledFromVendor -PluginId 'paperclip-plugin-telegram'
+    return $plugin
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 }
 
 function Connect-VorceStudiosGitHubPluginLinks {
     param(
+<<<<<<< HEAD
         [Parameter(Mandatory)][hashtable]$Context
+=======
+        [hashtable]$Context
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     )
 
     return @{
@@ -526,9 +763,13 @@ function Invoke-VorceStudiosGitHubPluginPeriodicSync {
     )
 
     $plugin = Find-VorceStudiosPlugin -PluginId 'paperclip-plugin-github-issues'
+<<<<<<< HEAD
     if ($null -eq $plugin) {
         return $null
     }
+=======
+    if ($null -eq $plugin) { return $null }
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 
     $job = @(
         Get-VorceStudiosPluginJobs -PluginId ([string]$plugin.id) |
@@ -536,27 +777,40 @@ function Invoke-VorceStudiosGitHubPluginPeriodicSync {
             Select-Object -First 1
     )[0]
 
+<<<<<<< HEAD
     if ($null -eq $job) {
         return $null
     }
+=======
+    if ($null -eq $job) { return $null }
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 
     try {
         return Invoke-VorceStudiosPluginJob -PluginId ([string]$plugin.id) -JobId ([string]$job.id)
     } catch {
+<<<<<<< HEAD
         if ($IgnoreFailure.IsPresent) {
             return $null
         }
         throw
+=======
+        return $null
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     }
 }
 
 function Ensure-VorceStudiosPlugins {
     param(
+<<<<<<< HEAD
         [Parameter(Mandatory)][hashtable]$Context
+=======
+        [hashtable]$Context
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     )
 
     Ensure-VorceStudiosPaperclipPluginLoaderPatched | Out-Null
     $github = Ensure-VorceStudiosGitHubPlugin -Context $Context
+<<<<<<< HEAD
     $chat = Ensure-VorceStudiosChatPlugin -Context $Context
     $aperture = Ensure-VorceStudiosAperturePlugin -Context $Context
     $liveAnalytics = Ensure-VorceStudiosLiveAnalyticsPlugin -Context $Context
@@ -567,5 +821,13 @@ function Ensure-VorceStudiosPlugins {
         chat = $chat
         aperture = $aperture
         liveAnalytics = $liveAnalytics
+=======
+    $telegram = Ensure-VorceStudiosTelegramPlugin -Context $Context
+    Connect-VorceStudiosGitHubPluginLinks -Context $Context
+
+    return @{
+        github = $github
+        telegram = $telegram
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     }
 }

@@ -2,19 +2,27 @@ Set-StrictMode -Version Latest
 
 . (Join-Path $PSScriptRoot 'VorceStudiosConfig.ps1')
 . (Join-Path $PSScriptRoot 'PaperclipApi.ps1')
+<<<<<<< HEAD
 . (Join-Path (Join-Path $PSScriptRoot '..\..\..') 'scripts\paperclip\lib\IssueMetadata.ps1')
+=======
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 
 function Get-VorceStudiosGitHubLabels {
     param(
         [Parameter(Mandatory)][string]$Repository
     )
 
+<<<<<<< HEAD
     $json = gh label list --repo $Repository --limit 200 --json name,color,description 2>$null
     if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($json)) {
         return @()
     }
 
     return @($json | ConvertFrom-Json)
+=======
+    # Mock or wrap gh label list
+    return @()
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 }
 
 function Ensure-VorceStudiosGitHubLabels {
@@ -22,6 +30,7 @@ function Ensure-VorceStudiosGitHubLabels {
         [Parameter(Mandatory)][string]$Repository
     )
 
+<<<<<<< HEAD
     $syncPolicy = Get-VorceStudiosPolicy -Name 'sync'
     $existingByName = @{}
     foreach ($label in @(Get-VorceStudiosGitHubLabels -Repository $Repository)) {
@@ -41,10 +50,14 @@ function Ensure-VorceStudiosGitHubLabels {
         gh label create $name --repo $Repository --color ([string]$desired.Color) --description ([string]$desired.Description) 2>$null | Out-Null
     }
 
+=======
+    # Simplified: could call gh label create ...
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     return $true
 }
 
 function Ensure-VorceStudiosProjectFields {
+<<<<<<< HEAD
     return $true
 }
 
@@ -408,3 +421,8 @@ function Sync-VorceStudiosIssueToGitHub {
         PullRequestUrl = if ($metadata.ContainsKey('pr_url')) { [string]$metadata['pr_url'] } else { '' }
     }
 }
+=======
+    # Stub for field sync
+    return $true
+}
+>>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
