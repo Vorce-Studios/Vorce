@@ -250,7 +250,7 @@ pub fn hex_grid_system(
         commands.entity(entity).with_children(|parent| {
             for hex in hexx::shapes::hexagon(hexx::Hex::ZERO, hex_config.rings) {
                 let layout = hexx::HexLayout {
-                    hex_size: hex_size,
+                    hex_size,
                     orientation: if hex_config.pointy_top {
                         hexx::HexOrientation::Pointy
                     } else {
