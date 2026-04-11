@@ -411,7 +411,9 @@ impl MediaBrowser {
 
                 // Filter by search query
                 if let Some(q) = &query {
-                    if !entry.name_lower.contains(q) && !entry.tags_lower.iter().any(|t| t.contains(q)) {
+                    if !entry.name_lower.contains(q)
+                        && !entry.tags_lower.iter().any(|t| t.contains(q))
+                    {
                         return false;
                     }
                 }
