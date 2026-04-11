@@ -45,7 +45,7 @@ pub fn audio_reaction_observer(
             }
             AudioReactiveTarget::EmissiveIntensity => {
                 if let Some(MeshMaterial3d(handle)) = mat_handle {
-                    if let Some(mat) = materials.get_mut(handle) {
+                    if let Some(mut mat) = materials.get_mut(handle) {
                         mat.emissive = LinearRgba::gray(value);
                     }
                 }
@@ -95,7 +95,7 @@ pub fn audio_reaction_update_observer(
             }
             AudioReactiveTarget::EmissiveIntensity => {
                 if let Some(MeshMaterial3d(handle)) = mat_handle {
-                    if let Some(mat) = materials.get_mut(handle) {
+                    if let Some(mut mat) = materials.get_mut(handle) {
                         mat.emissive = LinearRgba::gray(value);
                     }
                 }
@@ -250,7 +250,7 @@ pub fn hex_grid_system(
         commands.entity(entity).with_children(|parent| {
             for hex in hexx::shapes::hexagon(hexx::Hex::ZERO, hex_config.rings) {
                 let layout = hexx::HexLayout {
-                    scale: hex_size,
+                    hex_size,
                     orientation: if hex_config.pointy_top {
                         hexx::HexOrientation::Pointy
                     } else {
