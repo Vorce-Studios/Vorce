@@ -64,7 +64,7 @@ glam = { version = "0.32.1", features = ["serde"] }
 hex = "0.4"
 hound = "3.5"
 hyper = "1.1"
-image = "0.24"
+image = "0.25"
 libmpv2 = { version = "5.0", features = ["render"] }
 libmpv2-sys = "4.0.1"
 
