@@ -53,7 +53,8 @@ pub mod cpal_backend {
     #[cfg(not(target_os = "macos"))]
     use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
     #[cfg(not(target_os = "macos"))]
-    use crossbeam_channel::{unbounded, Receiver, Sender};
+    use crossbeam_channel::unbounded;
+    use crossbeam_channel::{Receiver, Sender};
 
     #[cfg(not(target_os = "macos"))]
     enum Command {
@@ -80,9 +81,9 @@ pub mod cpal_backend {
             {
                 let _ = device_name; // Prevent unused variable warning
                 tracing::warn!("Audio input is currently feature-gated on macOS for stability.");
-                return Err(AudioError::NoDevicesFound(
+                Err(AudioError::NoDevicesFound(
                     "Feature gated on macOS".to_string(),
-                ));
+                ))
             }
 
             #[cfg(not(target_os = "macos"))]
@@ -300,7 +301,7 @@ pub mod cpal_backend {
             #[cfg(target_os = "macos")]
             {
                 tracing::warn!("Audio input is currently feature-gated on macOS for stability.");
-                return Ok(Some(vec![]));
+                Ok(Some(vec![]))
             }
 
             #[cfg(not(target_os = "macos"))]

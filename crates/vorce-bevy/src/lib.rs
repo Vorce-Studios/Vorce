@@ -35,7 +35,7 @@ pub mod resources;
 pub mod systems;
 
 use bevy::prelude::*;
-use bevy::render::{extract_resource::ExtractResourcePlugin, Render, RenderApp, RenderSet};
+use bevy::render::{extract_resource::ExtractResourcePlugin, Render, RenderApp};
 use bevy::{log::LogPlugin, winit::WinitPlugin};
 use components::*;
 use resources::*;
@@ -82,8 +82,9 @@ impl BevyRunner {
         );
 
         // Add essential rendering extensions
-        app.add_plugins(bevy_atmosphere::prelude::AtmospherePlugin);
-        app.add_plugins(bevy_mod_outline::OutlinePlugin);
+        app.add_plugins(bevy::pbr::AtmospherePlugin);
+        // app.add_plugins(bevy_mod_outline::OutlinePlugin);
+
         app.add_plugins(ExtractResourcePlugin::<crate::resources::BevyRenderOutput>::default());
 
         // Register resources
@@ -108,7 +109,6 @@ impl BevyRunner {
         app.add_systems(
             Update,
             (
-                audio_reaction_system,
                 camera_control_system,
                 hex_grid_system,
                 model_system,
@@ -119,8 +119,16 @@ impl BevyRunner {
             ),
         );
 
+        app.add_observer(audio_reaction_observer);
+        app.add_observer(audio_reaction_update_observer);
+
         if let Some(render_app) = app.get_sub_app_mut(RenderApp) {
-            render_app.add_systems(Render, frame_readback_system.after(RenderSet::Render));
+            render_app.add_systems(
+                Render,
+                frame_readback_system.after(bevy::render::RenderSystems::Render),
+            );
+        } else {
+            tracing::warn!("Bevy RenderApp not available - frame readback will not work");
         }
 
         // `App::update()` does not finalize plugin setup for us.
@@ -204,28 +212,10 @@ impl BevyRunner {
                     if let ModulePartType::Source(source_type) = &part.part_type {
                         let key = (module_id, part.id);
                         match source_type {
-                            SourceType::BevyAtmosphere {
-                                turbidity,
-                                rayleigh,
-                                mie_coeff,
-                                mie_directional_g,
-                                sun_position,
-                                ..
-                            } => {
-                                let entity = *mapping.entities.entry(key).or_insert_with(|| {
-                                    world
-                                        .spawn(crate::components::BevyAtmosphere::default())
-                                        .id()
-                                });
-                                if let Some(mut atmosphere) =
-                                    world.get_mut::<crate::components::BevyAtmosphere>(entity)
-                                {
-                                    atmosphere.turbidity = *turbidity;
-                                    atmosphere.rayleigh = *rayleigh;
-                                    atmosphere.mie_coeff = *mie_coeff;
-                                    atmosphere.mie_directional_g = *mie_directional_g;
-                                    atmosphere.sun_position = *sun_position;
-                                }
+                            SourceType::BevyAtmosphere { .. } => {
+                                // In Bevy 0.19, native atmosphere replaces bevy_atmosphere.
+                                // We rely on the DirectionalLight and native Atmosphere component
+                                // attached to the Camera3d instead.
                             }
                             SourceType::BevyHexGrid {
                                 radius,

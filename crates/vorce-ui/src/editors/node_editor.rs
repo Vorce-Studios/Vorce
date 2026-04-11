@@ -108,14 +108,13 @@ impl NodeEditor {
         self.graph_id = Some(graph.id);
         self.nodes.clear();
         self.connections.clear();
-
-        // Sync next_id with loaded graph
-        self.next_id = graph.nodes.keys().max().map(|&id| id + 1).unwrap_or(1);
+        self.next_id = 1; // todo: sync with graph?
 
         // Map core nodes to UI nodes
         for (id, core_node) in &graph.nodes {
             let ui_node = self.core_node_to_ui(core_node);
             self.nodes.insert(*id, ui_node);
+            self.next_id = self.next_id.max(id + 1);
 
             // Reconstruct connections
             for input in &core_node.inputs {

@@ -40,18 +40,12 @@ pub struct TriggerSystem {
     ///
     /// Optimized to reduce hash lookups by storing timer and target together.
     states: HashMap<u64, TriggerState>,
-    /// Reusable set for tracking stateful parts during update to prevent allocations
-    active_state_users: HashSet<u64>,
 }
 
 impl TriggerSystem {
     /// Create a new trigger system
     pub fn new() -> Self {
-        Self {
-            active_triggers: HashSet::new(),
-            states: HashMap::new(),
-            active_state_users: HashSet::new(),
-        }
+        Self::default()
     }
 
     /// Update the trigger states based on the current audio data and module configuration.
@@ -62,10 +56,12 @@ impl TriggerSystem {
         dt: f32,
     ) {
         self.active_triggers.clear();
-        self.active_state_users.clear();
 
         // Hoist RNG initialization to avoid repeated thread-local access in the loop
         let mut rng = rand::rng();
+
+        // Track parts that actively use state to perform Garbage Collection
+        let mut active_state_users = HashSet::new();
 
         for module in module_manager.modules() {
             for part in &module.parts {
@@ -138,7 +134,7 @@ impl TriggerSystem {
                             }
                         }
                         TriggerType::Fixed { interval_ms, .. } => {
-                            self.active_state_users.insert(part.id); // Mark as using state
+                            active_state_users.insert(part.id); // Mark as using state
 
                             let interval = *interval_ms as f32 / 1000.0;
                             // Unified state lookup (O(1))
@@ -154,7 +150,7 @@ impl TriggerSystem {
                             max_interval_ms,
                             ..
                         } => {
-                            self.active_state_users.insert(part.id); // Mark as using state
+                            active_state_users.insert(part.id); // Mark as using state
 
                             // Unified state lookup (O(1)) - Handles both timer and target
                             let state = self.states.entry(part.id).or_default();
@@ -186,8 +182,7 @@ impl TriggerSystem {
         }
 
         // Garbage Collection: Remove states for parts that no longer exist or don't use state
-        self.states
-            .retain(|id, _| self.active_state_users.contains(id));
+        self.states.retain(|id, _| active_state_users.contains(id));
     }
 
     /// Check if a specific trigger output is currently active.

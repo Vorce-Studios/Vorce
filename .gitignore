@@ -45,6 +45,8 @@ Thumbs.db
 
 # except icons files
 !resources/images/*
+!resources/app_icons/*
+!resources/branding/*
 !resources/macOS/Info.plist
 !resources/macOS/vorce.icns
 
@@ -55,7 +57,6 @@ Thumbs.db
 !resources/controllers/**/*.json
 
 *.json
-!.agent/atlas/code-atlas.json
 
 # Allow vcpkg files
 !vcpkg.json
@@ -93,8 +94,12 @@ temp_373/
 .gemini/
 gha-creds-*.json
 
+# Paperclip runtime data
+.paperclip-home/
+
+# Vendor crates (should be managed by workspace)
+crates/vendor/env_logger/
+crates/vendor/rusty-spout/
+
 # Jules memory: Log files generated with date suffixes
 scripts/archive/logs/
-.paperclip-home/
-ops/paperclip/node_modules/
-ops/paperclip/.pnpm-store/
