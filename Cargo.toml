@@ -49,7 +49,6 @@ egui-wgpu = "0.34.1"
 egui-winit = "0.34.1"
 egui_extras = { version = "0.34.1", features = ["image", "file", "svg"] }
 egui_node_editor = { path = "crates/vendor/egui_node_editor" }
-
 # Media
 ffmpeg-next = { version = "8.1", default-features = false, features = [
     "codec",
@@ -117,16 +116,3 @@ winres = "0.1"
 [profile.dev]
 opt-level = 1 # Slightly optimize for better wgpu performance in debug
 debug = 1     # Reduce PDB size to avoid LNK1140 errors
-
-[patch.crates-io]
-#env_logger = { path = "crates/vendor/env_logger" }
-
-[profile.release]
-opt-level = 3
-lto = "thin"
-codegen-units = 1
-strip = false # Keep some info for now, but codegen-units=1 helps with size
-debug = 1     # Limited debug info for release builds to avoid massive PDBs
-
-[profile.bench]
-inherits = "release"
