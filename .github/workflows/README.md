@@ -559,7 +559,7 @@ For issues with workflows:
 
 **Status:** Deaktiviert.
 
-**Grund:**  
+**Grund:**
 Vorce verwendet bewusst nur noch einen zentralen Auto-Merge-Mechanismus über `CICD-DevFlow_Job02_AutoMerge.yml`, damit keine widersprüchlichen Zustände zwischen GitHub Auto-Merge und eigenem Workflow entstehen.
 
 ### CI-02_security-scan.yml

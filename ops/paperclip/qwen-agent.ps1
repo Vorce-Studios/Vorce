@@ -1,4 +1,4 @@
-﻿# qwen-agent.ps1 - Qwen Agent wrapper for Paperclip process adapter
+# qwen-agent.ps1 - Qwen Agent wrapper for Paperclip process adapter
 # Env vars: VORCE_STUDIOS_ROLE, INSTRUCTION_PATH, POLICY_ROOT
 $roleKey = $env:VORCE_STUDIOS_ROLE
 $instrPath = $env:INSTRUCTION_PATH
