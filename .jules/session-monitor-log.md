@@ -4,7 +4,7 @@
 
 ### Aktive hÃ¤ngende Sessions:
 | Session ID | State | Titel | Aktion |
-|---|---|---|---| 
+|---|---|---|---|
 | 10802273577419855782 | AWAITING_USER_FEEDBACK | Tracker: Project Management & Documentation Assistant | Eskalation Stufe 1 |
 | 11896163548412246365 | AWAITING_USER_FEEDBACK | Archivist: Repository Maintenance & Standards Manager | Eskalation Stufe 1 |
 | 13132893493122621286 | AWAITING_USER_FEEDBACK | Lina StyleUI - UI Specialist for Vorce | Eskalation Stufe 1 |
