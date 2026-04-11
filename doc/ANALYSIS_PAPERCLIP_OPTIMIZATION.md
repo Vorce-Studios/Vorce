@@ -469,14 +469,14 @@ agent_budgets:
 
 ### Wichtig (P1)
 
-5. **Wie oft läuft Bens Heartbeat aktuell?** (Konfiguration in Paperclip?)
+1. **Wie oft läuft Bens Heartbeat aktuell?** (Konfiguration in Paperclip?)
 2. **Gibt es eine `instructionsFilePath` für Ben?** (Welche Datei wird injiziert?)
 3. **Soll der Jules Disponent mehr Tools bekommen?** (write_file, agent, grep_search)
 4. **Gibt es bereits Budget-Limits in Paperclip?** (Oder muss das definiert werden?)
 
 ### Validierung (Token-Analyse)
 
-9. **Welche Dateien lädt Ben bei JEDEM Heartbeat?**
+1. **Welche Dateien lädt Ben bei JEDEM Heartbeat?**
 2. **Welche Dateien lädt Jules bei Session-Start?**
 3. **Nutzt Paperclip Context-Caching?** (Oder wird alles neu geladen?)
 4. **Gibt es redundante Docs die konsolidiert werden können?**
@@ -493,14 +493,14 @@ agent_budgets:
 
 ### Nach Freigabe
 
-4. Ben's Instruktionen aktualisieren (Eskalations-Logik)
+1. Ben's Instruktionen aktualisieren (Eskalations-Logik)
 2. PowerShell-Scripts für Auto-Continue erweitern
 3. Heartbeat-Intervall dokumentieren und optimieren
 4. Session-Budget-Limits definieren
 
 ### Langfristig
 
-8. Agent-Kontexte konsolidieren (nach Validierung der Redundanzen)
+1. Agent-Kontexte konsolidieren (nach Validierung der Redundanzen)
 2. CI-Checks für Changelog-Pflicht implementieren
 3. Token-Usage-Reports einrichten
 
