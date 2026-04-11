@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- 2026-04-10: fix(deps): Update ffmpeg-next to 8.1 and ffmpeg-sys-next to 8.1.0 for FFmpeg 8 compatibility (#195)
+- 2026-04-10: fix: PRI_Complete Bevy migration to resolve wgpu 24 vs 29 conflict (#211)
 - 2026-04-08: fix: 🛡️ Sentinel: [Sicherheitsverbesserung] Fix NaN-related panics in sorting routines (#205)
 - 2026-04-08: perf: ⚡ Bolt: Cache lowercased strings in ShortcutsPanel to remove frame-rate allocations (#203)
 - 2026-04-08: perf: ⚡ Bolt: Optimize TriggerSystem Garbage Collection Set management (#202)
