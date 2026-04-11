@@ -80,7 +80,7 @@ impl WGSLCodegen {
         // Validate graph
         self.graph
             .validate()
-            .map_err(|errors| CodegenError::ValidationError(errors.join(", ")))?;
+            .map_err(|errors: Vec<String>| CodegenError::ValidationError(errors.join(", ")))?;
 
         // Determine execution order (topological sort)
         self.compute_execution_order()?;
@@ -282,7 +282,7 @@ impl WGSLCodegen {
                 code,
                 "    return node_{}_{};",
                 source_node,
-                output_name.to_lowercase()
+                output_name.as_str().to_lowercase()
             )
             .expect("WGSL codegen failed");
         } else if let Some(default) = &output_input.default_value {
@@ -310,8 +310,25 @@ impl WGSLCodegen {
                 writeln!(code, "    let node_{}_time = uniforms.time;", node.id).expect("WGSL codegen failed");
             }
 
+            NodeType::ParameterInput => {
+                let param_name = node.parameters.get("name")
+                    .and_then(|v| if let ParameterValue::String(s) = v { Some(s) } else { None })
+                    .map(|s: &String| s.as_str())
+                    .unwrap_or("param");
+                writeln!(code, "    let node_{}_value = uniforms.{};", node.id, param_name).expect("WGSL codegen failed");
+            }
+
+            NodeType::AudioInput => {
+                writeln!(
+                    code,
+                    "    let node_{}_value = uniforms.audio_value;",
+                    node.id
+                )
+                .expect("WGSL codegen failed");
+            }
+
             NodeType::TextureInput => {
-                // Texture binding already handled in generate_texture_bindings
+                // Handled in bindings
             }
 
             NodeType::TextureSample => {
@@ -334,6 +351,45 @@ impl WGSLCodegen {
                     code,
                     "    let node_{}_alpha = node_{}_color.a;",
                     node.id, node.id
+                )
+                .expect("WGSL codegen failed");
+            }
+
+            NodeType::TextureSampleLod => {
+                let tex_input = &node.inputs[0];
+                let uv_input = &node.inputs[1];
+                let lod_input = &node.inputs[2];
+
+                let tex_var = self.get_input_variable(tex_input)?;
+                let uv_var = self.get_input_variable(uv_input)?;
+                let lod_var = self.get_input_variable(lod_input)?;
+
+                writeln!(
+                    code,
+                    "    let node_{}_color = textureSampleLevel({}, {}, {}, {});",
+                    node.id,
+                    tex_var,
+                    tex_var.replace("texture", "sampler"),
+                    uv_var,
+                    lod_var
+                )
+                .expect("WGSL codegen failed");
+            }
+
+            NodeType::TextureCombine => {
+                let tex_a = self.get_input_variable(&node.inputs[0])?;
+                let tex_b = self.get_input_variable(&node.inputs[1])?;
+                let mix_factor = self.get_input_variable(&node.inputs[2])?;
+
+                writeln!(
+                    code,
+                    "    let node_{}_color = mix(textureSample({}, {}, uv), textureSample({}, {}, uv), {});",
+                    node.id,
+                    tex_a,
+                    tex_a.replace("texture", "sampler"),
+                    tex_b,
+                    tex_b.replace("texture", "sampler"),
+                    mix_factor
                 )
                 .expect("WGSL codegen failed");
             }
@@ -370,6 +426,21 @@ impl WGSLCodegen {
                 self.generate_mix_op(code, node)?;
             }
 
+            NodeType::Remap => {
+                let val = self.get_input_variable(&node.inputs[0])?;
+                let in_min = self.get_input_variable(&node.inputs[1])?;
+                let in_max = self.get_input_variable(&node.inputs[2])?;
+                let out_min = self.get_input_variable(&node.inputs[3])?;
+                let out_max = self.get_input_variable(&node.inputs[4])?;
+
+                writeln!(
+                    code,
+                    "    let node_{}_result = {} + ({} - {}) * ({} - {}) / ({} - {});",
+                    node.id, out_min, val, in_min, out_max, out_min, in_max, in_min
+                )
+                .expect("WGSL codegen failed");
+            }
+
             NodeType::Brightness => {
                 self.generate_brightness_op(code, node)?;
             }
@@ -382,32 +453,71 @@ impl WGSLCodegen {
                 self.generate_desaturate_op(code, node)?;
             }
 
+            NodeType::ColorRamp => {
+                let input = self.get_input_variable(&node.inputs[0])?;
+                writeln!(code, "    let node_{}_color = vec4<f32>(vec3<f32>({}), 1.0);", node.id, input).expect("WGSL codegen failed");
+            }
+
+            NodeType::HSVToRGB => {
+                let input = self.get_input_variable(&node.inputs[0])?;
+                writeln!(code, "    let node_{}_output = hsv_to_rgb({});", node.id, input).expect("WGSL codegen failed");
+            }
+
+            NodeType::RGBToHSV => {
+                let input = self.get_input_variable(&node.inputs[0])?;
+                writeln!(code, "    let node_{}_output = rgb_to_hsv({});", node.id, input).expect("WGSL codegen failed");
+            }
+
             NodeType::UVTransform => {
                 self.generate_uv_transform(code, node)?;
             }
 
-            NodeType::AudioInput => {
-                // Audio values will be passed as uniforms
-                writeln!(
-                    code,
-                    "    let node_{}_value = uniforms.audio_value;",
-                    node.id
-                )
-                .expect("WGSL codegen failed");
+            NodeType::UVDistort => {
+                let uv = self.get_input_variable(&node.inputs[0])?;
+                let distortion = self.get_input_variable(&node.inputs[1])?;
+                let amount = self.get_input_variable(&node.inputs[2])?;
+                writeln!(code, "    let node_{}_uv = {} + {} * {};", node.id, uv, distortion, amount).expect("WGSL codegen failed");
+            }
+
+            NodeType::Blur => {
+                let tex = self.get_input_variable(&node.inputs[0])?;
+                let uv = self.get_input_variable(&node.inputs[1])?;
+                let radius = node.parameters.get("radius").map(|v| format!("{}", v)).unwrap_or_else(|| "1.0".to_string());
+                writeln!(code, "    let node_{}_color = blur_sample({}, {}, {}, {});", node.id, tex, tex.replace("texture", "sampler"), uv, radius).expect("WGSL codegen failed");
+            }
+
+            NodeType::Glow => {
+                let color = self.get_input_variable(&node.inputs[0])?;
+                let amount = self.get_input_variable(&node.inputs[1])?;
+                writeln!(code, "    let node_{}_color = {} * (1.0 + {});", node.id, color, amount).expect("WGSL codegen failed");
+            }
+
+            NodeType::ChromaticAberration => {
+                let color = self.get_input_variable(&node.inputs[0])?;
+                let amount = self.get_input_variable(&node.inputs[1])?;
+                writeln!(code, "    let node_{}_color = {} + vec4<f32>({}, 0.0, -{}, 0.0);", node.id, color, amount, amount).expect("WGSL codegen failed");
+            }
+
+            NodeType::Kaleidoscope => {
+                let uv = self.get_input_variable(&node.inputs[0])?;
+                let segments = self.get_input_variable(&node.inputs[1])?;
+                writeln!(code, "    let node_{}_uv = kaleidoscope({}, {});", node.id, uv, segments).expect("WGSL codegen failed");
+            }
+
+            NodeType::PixelSort | NodeType::Displacement => {
+                let color = self.get_input_variable(&node.inputs[0])?;
+                let map = self.get_input_variable(&node.inputs[1])?;
+                writeln!(code, "    let node_{}_color = mix({}, {}, 0.5); // Placeholder", node.id, color, map).expect("WGSL codegen failed");
+            }
+
+            NodeType::EdgeDetect => {
+                let tex = self.get_input_variable(&node.inputs[0])?;
+                let uv = self.get_input_variable(&node.inputs[1])?;
+                writeln!(code, "    let node_{}_color = edge_detect({}, {}, {});", node.id, tex, tex.replace("texture", "sampler"), uv).expect("WGSL codegen failed");
             }
 
             NodeType::Output => {
                 // Output node doesn't generate code, just connects
-            }
-
-            _ => {
-                // Placeholder for unimplemented nodes
-                writeln!(
-                    code,
-                    "    // TODO: Implement {}",
-                    node.node_type.display_name()
-                )
-                .expect("WGSL codegen failed");
             }
         }
 
@@ -674,7 +784,7 @@ impl WGSLCodegen {
             Ok(format!(
                 "node_{}_{}",
                 source_node,
-                output_name.to_lowercase()
+                output_name.as_str().to_lowercase()
             ))
         } else if let Some(default) = &input.default_value {
             match input.data_type {
