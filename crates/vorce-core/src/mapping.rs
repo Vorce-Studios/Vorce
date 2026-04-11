@@ -134,7 +134,11 @@ impl MappingManager {
             self.mappings.iter().filter(|m| m.is_renderable()).collect();
 
         // Sort by depth (back to front)
-        mappings.sort_by(|a, b| a.depth.partial_cmp(&b.depth).unwrap());
+        mappings.sort_by(|a, b| {
+            a.depth
+                .partial_cmp(&b.depth)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         mappings
     }
