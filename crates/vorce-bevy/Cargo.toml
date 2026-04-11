@@ -25,7 +25,7 @@ vorce-core = { path = "../vorce-core" }
 rand = "0.9.2"
 thiserror = { workspace = true }
 tracing = { workspace = true }
-# Use Bevy's own wgpu version (v24) to avoid conflicts
+# Use Bevy's own wgpu version (v29) to avoid conflicts
 wgpu = "29.0.1"
 bevy_light = { git = "https://github.com/bevyengine/bevy", branch = "main", version = "0.19.0-dev" }
 bevy_camera = { git = "https://github.com/bevyengine/bevy", branch = "main", version = "0.19.0-dev" }
