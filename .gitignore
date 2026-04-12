@@ -111,3 +111,9 @@ test.py
 
 # Jules memory: Log files generated with date suffixes
 scripts/archive/logs/
+
+# Deleted Jules scripts (prevent bot regressions)
+backfill-legacy-project-fields.ps1
+escalate-jules-sessions.ps1
+monitor-jules-sessions.ps1
+
