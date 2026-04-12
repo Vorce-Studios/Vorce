@@ -1,6 +1,5 @@
 //! Egui-based shortcuts configuration panel
 
-use crate::core::theme::colors;
 use crate::LocaleManager;
 use egui::{RichText, ScrollArea, TextEdit, Ui};
 use std::collections::HashSet;
@@ -114,9 +113,9 @@ impl ShortcutsPanel {
                             // Shortcut Key Display
                             let shortcut_text = shortcut.to_shortcut_string();
                             let text_color = if is_conflict {
-                                colors::ERROR_COLOR
+                                ui.visuals().error_fg_color
                             } else {
-                                colors::CYAN_ACCENT
+                                ui.visuals().text_color().gamma_multiply(0.8)
                             };
 
                             let key_label = ui.label(
@@ -186,7 +185,7 @@ impl ShortcutsPanel {
 
                     if self.show_conflict_warning {
                         ui.colored_label(
-                            colors::ERROR_COLOR,
+                            ui.visuals().error_fg_color,
                             format!("⚠️ {}", locale.t("shortcuts-edit-dialog-conflict-warning")),
                         );
                     }
