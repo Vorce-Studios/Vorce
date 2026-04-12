@@ -41,7 +41,7 @@ Vor dem Start: `.jules/archivist.md` lesen/erstellen.
 
 ---
 
-## MAPFLOW PROJEKTSTRUKTUR
+## Vorce PROJEKTSTRUKTUR
 
 ### 📁 Standard-Verzeichnisse:
 

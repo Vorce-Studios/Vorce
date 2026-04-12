@@ -1,6 +1,6 @@
-# GEMINI.md - Mapflow Projektkontext
+# GEMINI.md - Vorce Projektkontext
 
-Dieses Dokument dient als zentrale Wissensbasis für Maestro-Agenten im Mapflow-Projekt.
+Dieses Dokument dient als zentrale Wissensbasis für Maestro-Agenten im Vorce-Projekt.
 
 ## Prozess-Mandate (Kritisch)
 
@@ -39,7 +39,7 @@ Das Projekt ist als Cargo Workspace organisiert:
 
 ## Validierung (Validation Gates)
 
-Für Mapflow gelten über `cargo check` hinausgehende Anforderungen:
+Für Vorce gelten über `cargo check` hinausgehende Anforderungen:
 
 1.  **Shader-Validierung**: Jede Änderung an `.wgsl`-Dateien muss mit `naga` (oder einem entsprechenden Skript) validiert werden.
 2.  **Crate-Abhängigkeiten**: GUI-Logik darf niemals in `mapmap-core` landen.
