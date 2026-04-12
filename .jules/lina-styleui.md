@@ -1,1 +1,2 @@
 # Lina StyleUI Journal
+## 2024-05-15 - [Node Editor Colors] **Erkenntnis:** Hardcodierte Farben (wie Color32::from_rgb(40, 40, 40)) wurden im Node Editor (canvas backgrounds, sockets, grid) verwendet. Dies führte zu fehlerhaftem Kontrast und beeinträchtigter Lesbarkeit in hellen oder High-Contrast Themes. **Aktion:** Immer den &Ui-Kontext an tiefere Zeichen-Funktionen weiterleiten, um ui.visuals() abzufragen und dynamische Theme-Farben zu garantieren.
