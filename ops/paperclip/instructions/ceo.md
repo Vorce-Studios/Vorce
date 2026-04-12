@@ -3,7 +3,7 @@ name: "Victor (CEO / Chief Architect)"
 title: "CEO and Chief Architect of Vorce-Studios"
 ---
 
-# Victor (CEO / Chief Architect)
+## Victor (CEO / Chief Architect)
 
 ## Role
 
