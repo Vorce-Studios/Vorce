@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - 2026-04-12: perf: Bolt: Performance-Optimierung durch Vermeidung redundanter String-Allokationen in UI-Schleifen (#221)
 - 2026-04-12: feat: UI: Theme-aware colors in Node Editor (#222)
+- 2026-04-12: fix: Sentinel: Fix DoS panic on float sorting with NaN (#223)
+- 2026-04-12: feat: UI: Visuelle Theme-Konsistenz in Media Browser Widgets (#218)
+- 2026-04-11: fix: restore project-manager sync workflow gating and GitHub Project field defaults (#227)
 - 2026-04-10: fix(deps): Update ffmpeg-next to 8.1 and ffmpeg-sys-next to 8.1.0 for FFmpeg 8 compatibility (#195)
 - 2026-04-10: fix: PRI_Complete Bevy migration to resolve wgpu 24 vs 29 conflict (#211)
 - 2026-04-08: fix: 🛡️ Sentinel: [Sicherheitsverbesserung] Fix NaN-related panics in sorting routines (#205)
@@ -159,7 +162,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 2026-03-14: chore: Repository Cleanup Check - Clean State (#1109)
 - 2026-03-14: feat: Implement `winit::application::ApplicationHandler` for the core application event loop and lifecycle management. (#-)
 - 2026-03-14: feat: Add module graph evaluation, initial application framework, and module canvas UI components. (#-)
-- 2026-03-14: feat: Modernisiere UI: responsive Panels, Previewâ€‘Sidebar, Theme, Fontâ€‘Scale & Toolbarâ€‘Metriken (#1099)
+- 2026-03-14: feat: Modernisiere UI: responsive Panels, Preview—Sidebar, Theme, Font—Scale & Toolbar—Metriken (#1099)
 - 2026-03-14: feat: Enable Enter key to trigger cue jump (#1108)
 - 2026-03-14: feat: Improve empty state visibility via text muting (#1107)  
 - 2026-03-14: perf: Eliminate unnecessary f32 clone in evaluation loop (#1106)  
@@ -209,3 +212,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic shader effects.
 - 2026-04-12: perf: Bolt: Performance-Optimierung durch Vermeidung redundanter String-Allokationen in UI-Schleifen (#221)
 - 2026-04-12: feat: UI: Theme-aware colors in Node Editor (#222)
+- 2026-04-12: fix: Sentinel: Fix DoS panic on float sorting with NaN (#223)
+- 2026-04-12: feat: UI: Visuelle Theme-Konsistenz in Media Browser Widgets (#218)
