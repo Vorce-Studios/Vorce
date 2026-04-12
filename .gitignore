@@ -117,9 +117,3 @@ backfill-legacy-project-fields.ps1
 escalate-jules-sessions.ps1
 monitor-jules-sessions.ps1
 
-
-# Paperclip runtime data (managed outside of repo)
-.paperclip/
-.paperclip-home/
-ops/paperclip/
-scripts/paperclip/
