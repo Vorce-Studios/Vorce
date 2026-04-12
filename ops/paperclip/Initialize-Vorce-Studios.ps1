@@ -16,10 +16,7 @@ function Ensure-VorceStudiosWorktreeConfig {
     $paths = Get-VorceStudiosPaths
     $system = Get-VorceStudiosSystemPolicy
     if ((Test-Path -LiteralPath $paths.PaperclipConfigPath) -and (Test-Path -LiteralPath $paths.PaperclipEnvPath)) {
-<<<<<<< HEAD
         Sync-VorceStudiosWorktreeConfigFile | Out-Null
-=======
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
         return
     }
 
@@ -42,11 +39,8 @@ function Ensure-VorceStudiosWorktreeConfig {
     if ($LASTEXITCODE -ne 0) {
         throw 'Paperclip worktree init ist fehlgeschlagen.'
     }
-<<<<<<< HEAD
 
     Sync-VorceStudiosWorktreeConfigFile | Out-Null
-=======
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 }
 
 function Start-VorceStudiosBootstrapServer {
@@ -84,7 +78,6 @@ function Start-VorceStudiosBootstrapServer {
     return $true
 }
 
-<<<<<<< HEAD
 function Get-VorceStudiosManagedInstructionFilePath {
     param(
         [Parameter(Mandatory)][string]$RoleKey
@@ -202,87 +195,28 @@ function Get-VorceStudiosAgentDefinitions {
 
     foreach ($definition in $definitions) {
         $definition['payload'] = @{
-=======
-function Get-VorceStudiosAgentDefinitions {
-    $paths = Get-VorceStudiosPaths
-    $shell = Get-VorceStudiosShellExecutable
-    $agentScript = Join-Path $paths.Root 'scripts\paperclip\Invoke-Vorce-StudiosAgent.ps1'
-    $routing = Get-VorceStudiosPolicy -Name 'routing'
-
-    $definitions = @(
-        @{ key = 'ceo'; name = $routing.Roles.ceo; role = 'ceo'; title = 'Strategic owner, escalation and release authority'; icon = 'crown'; capabilities = 'Architecture, prioritization, escalation, release decisions'; instructionFile = 'ceo.md'; reportsTo = $null },
-        @{ key = 'lena_assistant'; name = $routing.Roles.lena_assistant; role = 'researcher'; title = 'Personal assistant to CEO, briefing and filtering'; icon = 'message-square'; capabilities = 'Issue aggregation, briefing generation, routine filtering'; instructionFile = 'lena-assistant.md'; reportsTo = 'ceo' },
-        @{ key = 'chief_of_staff'; name = $routing.Roles.chief_of_staff; role = 'pm'; title = 'Dynamic routing, queue health and capacity failover'; icon = 'radar'; capabilities = 'Routing, quota management, task assignment'; instructionFile = 'chief-of-staff.md'; reportsTo = 'ceo' },
-        @{ key = 'discovery'; name = $routing.Roles.discovery; role = 'researcher'; title = 'Proactive discovery and backlog enrichment'; icon = 'search'; capabilities = 'Issue discovery, regression scanning, stale failure triage'; instructionFile = 'discovery-scout.md'; reportsTo = 'chief_of_staff' },
-        @{ key = 'jules'; name = $routing.Roles.jules; role = 'engineer'; title = 'Primary low-cost implementation worker via Jules'; icon = 'wand'; capabilities = 'Issue implementation, Jules session orchestration'; instructionFile = 'jules-builder.md'; reportsTo = 'chief_of_staff' },
-        @{ key = 'jules_monitor'; name = $routing.Roles.jules_monitor; role = 'qa'; title = 'Jules session monitoring and deadlock resolution'; icon = 'radar'; capabilities = 'Session monitoring, timeout detection, escalation'; instructionFile = 'jules-session-monitor.md'; reportsTo = 'chief_of_staff' },
-        @{ key = 'pr_monitor'; name = $routing.Roles.pr_monitor; role = 'qa'; title = 'GitHub PR monitoring and CI check management'; icon = 'git-branch'; capabilities = 'PR status tracking, CI retry, conflict detection'; instructionFile = 'github-pr-monitor.md'; reportsTo = 'chief_of_staff' },
-        @{ key = 'gemini_review'; name = $routing.Roles.gemini_review; role = 'qa'; title = 'Preferred reviewer and analysis worker'; icon = 'shield'; capabilities = 'Review, triage, summary generation'; instructionFile = 'gemini-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'process' },
-        @{ key = 'qwen_review'; name = $routing.Roles.qwen_review; role = 'qa'; title = 'Fallback reviewer and triage worker'; icon = 'shield'; capabilities = 'Fallback review, diff summaries, bug triage'; instructionFile = 'qwen-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'process' },
-        @{ key = 'codex_review'; name = $routing.Roles.codex_review; role = 'cto'; title = 'High-risk reviewer and architecture escalation worker'; icon = 'brain'; capabilities = 'High-risk review, architecture and difficult debugging'; instructionFile = 'codex-reviewer.md'; reportsTo = 'chief_of_staff'; adapterType = 'codex_local' },
-        @{ key = 'ops'; name = $routing.Roles.ops; role = 'devops'; title = 'PR checks, governance and merge stewardship'; icon = 'terminal'; capabilities = 'Checks, merge gates, audit notes, status maintenance'; instructionFile = 'ops-steward.md'; reportsTo = 'chief_of_staff' },
-        @{ key = 'atlas'; name = $routing.Roles.atlas; role = 'researcher'; title = 'Optional atlas-backed repo context worker'; icon = 'microscope'; capabilities = 'Atlas summaries, codebase map, context distillation'; instructionFile = 'atlas-context.md'; reportsTo = 'discovery' },
-        @{ key = 'antigravity'; name = $routing.Roles.antigravity; role = 'engineer'; title = 'Antigravity swarm builder for parallel multi-agent missions'; icon = 'zap'; capabilities = 'Swarm orchestration, parallel execution, multi-crate work'; instructionFile = 'antigravity-builder.md'; reportsTo = 'chief_of_staff'; adapterType = 'process' }
-    )
-
-    foreach ($definition in $definitions) {
-        $adapterType = if ($definition.ContainsKey('adapterType')) { $definition.adapterType } else { 'process' }
-        $payload = @{
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
             name = $definition.name
             role = $definition.role
             title = $definition.title
             icon = $definition.icon
             capabilities = $definition.capabilities
-<<<<<<< HEAD
             adapterType = $definition.adapterType
             heartbeatEnabled = [bool]$definition.heartbeatEnabled
             adapterConfig = $definition.adapterConfig
-=======
-            adapterType = $adapterType
-            heartbeatEnabled = $true
-            adapterConfig = if ($adapterType -eq 'process') {
-                @{
-                    command = $shell
-                    args = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $agentScript, '-Role', $definition.key)
-                    cwd = $paths.Root
-                    env = @{
-                        VORCE_STUDIOS_ROLE = $definition.key
-                    }
-                }
-            } elseif ($adapterType -eq 'codex_local') {
-                @{
-                    model = 'google/gemini-2.0-flash'
-                }
-            } else {
-                @{}
-            }
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
             runtimeConfig = @{
                 instructionPath = Join-Path $paths.InstructionsDir $definition.instructionFile
                 policyRoot = $paths.PoliciesDir
             }
             budgetMonthlyCents = 0
             permissions = @{
-<<<<<<< HEAD
                 canCreateAgents = $false
-=======
-                canCreateAgents = ($definition.key -eq 'ceo')
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
             }
             metadata = @{
                 roleKey = $definition.key
                 instructionFile = $definition.instructionFile
-<<<<<<< HEAD
                 heartbeatIntervalSec = Get-VorceStudiosRoleHeartbeatInterval -RoleKey $definition.key
             }
         }
-=======
-            }
-        }
-
-        $definition['payload'] = $payload
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     }
 
     return $definitions
@@ -312,11 +246,8 @@ if ($null -eq $company) {
     }
 }
 
-<<<<<<< HEAD
 $goalsState = Ensure-VorceStudiosGoalsFromPolicy -CompanyId ([string]$company.id)
 
-=======
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 $existingAgents = @{}
 $existingAgentsByRoleKey = @{}
 foreach ($agent in (Get-VorceStudiosAgents -CompanyId $company.id)) {
@@ -349,11 +280,7 @@ foreach ($definition in $agentDefinitions) {
             }
         }
 
-<<<<<<< HEAD
         foreach ($property in @('adapterConfig', 'runtimeConfig', 'permissions', 'metadata')) {
-=======
-        foreach ($property in @('runtimeConfig', 'permissions', 'metadata')) {
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
             $currentValue = Get-VorceStudiosObjectPropertyValue -Object $agent -PropertyName $property
             $desiredValue = $definition.payload[$property]
             if (-not (Test-VorceStudiosJsonEquivalent -Left $currentValue -Right $desiredValue)) {
@@ -372,10 +299,7 @@ foreach ($definition in $agentDefinitions) {
         name = $agent.name
         role = $definition.role
         adapterType = $agent.adapterType
-<<<<<<< HEAD
         heartbeatEnabled = [bool]$definition.payload.heartbeatEnabled
-=======
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     }
 }
 
@@ -406,10 +330,7 @@ foreach ($definition in $agentDefinitions) {
             name = $agent.name
             role = $definition.role
             adapterType = $agent.adapterType
-<<<<<<< HEAD
             heartbeatEnabled = [bool]$definition.payload.heartbeatEnabled
-=======
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
         }
     }
 }
@@ -425,10 +346,7 @@ $companyState = @{
         name = $company.name
         issuePrefix = $company.issuePrefix
     }
-<<<<<<< HEAD
     goals = $goalsState.goals
-=======
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     agents = $agentState
     project = if ($null -eq $project) { $null } else { @{ id = $project.id; name = $project.name } }
     atlas = Get-VorceStudiosAtlasState
@@ -441,15 +359,11 @@ Ensure-VorceStudiosProjectFields
 Ensure-VorceStudiosPlugins -Context @{
     Company = $companyState.company
     Agents = $companyState.agents
-<<<<<<< HEAD
     Goals = $companyState.goals
-=======
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
     Project = $companyState.project
     Repository = Get-VorceStudiosRepositorySlug
 } | Out-Null
 Ensure-VorceStudiosGitHubLabels -Repository (Get-VorceStudiosRepositorySlug)
-<<<<<<< HEAD
 if ($null -ne $companyState.project) {
     $githubSync = Sync-VorceStudiosGitHubIssuesToPaperclip -Context @{
         Company = $companyState.company
@@ -466,8 +380,6 @@ if ($null -ne $companyState.project) {
     }
     Set-VorceStudiosCompanyState -State $companyState
 }
-=======
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
 Invoke-VorceStudiosGitHubPluginPeriodicSync -IgnoreFailure | Out-Null
 
 if ($StartServer.IsPresent) {

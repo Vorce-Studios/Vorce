@@ -58,7 +58,7 @@ Diese Punkte sind Organisations- und Workflow-Themen, keine reine Adapter-Frage.
 
 ### Architektur
 
-```
+```text
 Paperclip (Control Plane)
 ├── Server (Express REST API, Port 3100)
 ├── UI (React + Vite)
@@ -93,7 +93,7 @@ Paperclip (Control Plane)
 
 #### Beobachtung (aus `.Jules/session-monitor-log.md`)
 
-```
+```text
 Session 13411283997285618232: Guardian - Intervall 2/3 - AWAITING_USER_FEEDBACK
 Session 11217710755568478899: Palette - Intervall 1/3 - AWAITING_USER_FEEDBACK
 ... (6 Sessions insgesamt in AWAITING_USER_FEEDBACK)
@@ -143,7 +143,7 @@ Session 11217710755568478899: Palette - Intervall 1/3 - AWAITING_USER_FEEDBACK
 **Folgende Dateien enthalten Agent-Instruktionen:**
 
 | Datei | Zweck | Geschätzte Größe | Wird geladen von |
-|-------|-------|------------------|------------------|
+| :--- | :--- | :--- | :--- |
 | `.agent/AGENTS.md` | Jules-Anweisungen für VjMapper | ~3KB | Jules (immer) |
 | `.agent/openclaw/AGENTS.md` | OpenClaw PM Agent (Ben?) | ~1.5KB | **Unklar** |
 | `.agent/openclaw/*.md` | HEARTBEAT, IDENTITY, SOUL, TOOLS, USER | ~5KB total | **Unklar** |
@@ -178,7 +178,7 @@ Session 11217710755568478899: Palette - Intervall 1/3 - AWAITING_USER_FEEDBACK
 
 #### Was PASSIERT aktuell
 
-```
+```text
 Session hängt (AWAITING_USER_FEEDBACK)
   ↓
 Session Monitor loggt Intervall (manuell?)
@@ -190,7 +190,7 @@ Session bleibt unbegrenzt hängen
 
 #### Was PASSIERN sollte
 
-```
+```text
 Session hängt (AWAITING_USER_FEEDBACK)
   ↓
 Ben's Heartbeat erkennt Status (via MCP `get_issue` + Session-Check)
@@ -274,7 +274,7 @@ model: gemini-2.0-flash
 ### Jules Session (geschätzt)
 
 | Kontext | Größe (Token) | Häufigkeit |
-|---------|---------------|------------|
+| :--- | :--- | :--- |
 | `.agent/AGENTS.md` | ~800 | Jeder Session-Start |
 | `.Jules/JULES_INTEGRATION.md` | ~2000 | Bei Setup/Referenz |
 | `.Jules/SETUP_GUIDE.md` | ~1000 | Bei Setup? |
@@ -287,20 +287,13 @@ model: gemini-2.0-flash
 ### Ben's Heartbeat (gemini_local, geschätzt)
 
 | Kontext | Größe (Token) | Häufigkeit |
-|---------|---------------|------------|
+| :--- | :--- | :--- |
 | `.agent/openclaw/AGENTS.md` | ~400 | **Unklar** |
 | `.agent/openclaw/SOUL.md` | ~300 | **Unklar** |
 | `.agent/openclaw/HEARTBEAT.md` | ~200 | **Unklar** |
 | Paperclip Instructions | ??? | Jeder Heartbeat |
 | Issue/Session Status | ~1000 | Jeder Heartbeat |
 | **GESAMT** | **~2000+???** | Pro Heartbeat |
-
-### Offene Fragen zur Validierung
-
-1. **Lädt Ben OpenClaw-Dateien?** (Oder sind die veraltet?)
-2. **Was injiziert Paperclip als Instructions?** (Siehe `instructionsFilePath` Config)
-3. **Wie oft ist Bens Heartbeat?** (Konfigurierbar in Paperclip UI)
-4. **Gibt es Context-Caching?** (Gemini CLI `--resume` nutzt Session-History)
 
 ---
 
@@ -314,7 +307,7 @@ model: gemini-2.0-flash
 
 **Empfohlener Workflow:**
 
-```
+```text
 Heartbeat (alle X Minuten)
   ↓
 MCP Tool: list_issues (Label: jules-task, State: open)
@@ -340,7 +333,7 @@ AWAITING_USER_FEEDBACK erkannt?
 #### 2. Eskalations-Matrix definieren
 
 | Intervall | Wartezeit | Aktion | Verantwortlich |
-|-----------|-----------|--------|----------------|
+| :--- | :--- | :--- | :--- |
 | 1 | 1-6h | "Continue with task" senden | Ben (automatisch) |
 | 2 | 6-24h | Erneut "Continue" + GitHub Kommentar | Ben (automatisch) |
 | 3 | 24-48h | @MrLongNight erwähnen + "blocked" Label | Ben (automatisch) |
@@ -352,7 +345,7 @@ AWAITING_USER_FEEDBACK erkannt?
 
 **Option A - Ben erstellt Sessions:**
 
-```
+```text
 GitHub Issue (Label: jules-task) erstellt
   ↓
 Ben's Heartbeat erkennt neues Issue
@@ -364,7 +357,7 @@ Ben beginnt Monitoring
 
 **Option B - Sessions werden extern erstellt:**
 
-```
+```text
 GitHub Workflow / Manuelles Trigger erstellt Session
   ↓
 Ben's Heartbeat scannt offene Issues + Sessions
@@ -398,7 +391,7 @@ Ben erkennt neue Session → beginnt Monitoring
 
 **Empfehlung:**
 
-```
+```text
 Startphase (Jetzt):     Alle 5-10 Minuten (häufiges Monitoring)
 Nach Stabilisierung:    Alle 30-60 Minuten (reduzierter Verbrauch)
 Nachts/Weekends:        Alle 2-4 Stunden (minimaler Verbrauch)
@@ -449,86 +442,9 @@ agent_budgets:
 #### 9. Agent-Rollen klarer trennen
 
 | Agent | Verantwortung | Tools | Heartbeat |
-|-------|--------------|-------|-----------|
+| :--- | :--- | :--- | :--- |
 | Ben (PM) | Session-Monitoring, Eskalationen | MCP + PowerShell | Alle 30min |
 | Jules | Code-Implementierung | Gemini CLI | Session-basiert |
 | Tracker | QA-Checks (NICHT Changelog) | git, grep | Wöchentlich |
 | Guardian | Test-Abdeckung | cargo test | Bei PRs |
 | Sentinel | Security-Audits | cargo audit | Wöchentlich |
-
----
-
-## ❓ Offene Fragen an @MrLongNight
-
-### Kritisch (P0)
-
-1. **Wo sind Bens Instruktionen definiert?** (Paperclip UI? Datei? Beides?)
-2. **Hat Ben den Auftrag Jules Sessions zu erstellen?** Oder nur Monitoring?
-3. **Was soll Ben bei Intervall 3 tun?** (Auto-Continue? Eskalation an mich?)
-4. **Sind `.agent/openclaw/*` Dateien noch relevant für Ben?** (Oder veraltet?)
-
-### Wichtig (P1)
-
-1. **Wie oft läuft Bens Heartbeat aktuell?** (Konfiguration in Paperclip?)
-2. **Gibt es eine `instructionsFilePath` für Ben?** (Welche Datei wird injiziert?)
-3. **Soll der Jules Disponent mehr Tools bekommen?** (write_file, agent, grep_search)
-4. **Gibt es bereits Budget-Limits in Paperclip?** (Oder muss das definiert werden?)
-
-### Validierung (Token-Analyse)
-
-1. **Welche Dateien lädt Ben bei JEDEM Heartbeat?**
-2. **Welche Dateien lädt Jules bei Session-Start?**
-3. **Nutzt Paperclip Context-Caching?** (Oder wird alles neu geladen?)
-4. **Gibt es redundante Docs die konsolidiert werden können?**
-
----
-
-## 📝 Nächste Schritte
-
-### Sofort (nach Validierung)
-
-1. @MrLongNight beantwortet offene Fragen (insb. Wo sind Bens Instruktionen?)
-2. Gegencheck der Token-Annahmen (Welche Dateien werden wirklich geladen?)
-3. Eskalations-Matrix definieren und freigeben
-
-### Nach Freigabe
-
-1. Ben's Instruktionen aktualisieren (Eskalations-Logik)
-2. PowerShell-Scripts für Auto-Continue erweitern
-3. Heartbeat-Intervall dokumentieren und optimieren
-4. Session-Budget-Limits definieren
-
-### Langfristig
-
-1. Agent-Kontexte konsolidieren (nach Validierung der Redundanzen)
-2. CI-Checks für Changelog-Pflicht implementieren
-3. Token-Usage-Reports einrichten
-
----
-
-## 📚 Referenzen
-
-### Paperclip Architektur
-
-- `C:\Users\Vinyl\Desktop\VJMapper\paperclip\doc\PRODUCT.md`
-- `C:\Users\Vinyl\Desktop\VJMapper\paperclip\doc\SPEC-implementation.md`
-- `C:\Users\Vinyl\Desktop\VJMapper\paperclip\packages\adapters\gemini-local\src\index.ts`
-
-### Jules Integration
-
-- `.Jules/JULES_INTEGRATION.md`
-- `.Jules/session-monitor-log.md`
-- `scripts/jules/jules-api.ps1`
-- `scripts/jules/jules-github.ps1`
-
-### Agent Konfigurationen
-
-- `.agent/AGENTS.md`
-- `.agent/openclaw/AGENTS.md` (Status unklar!)
-- `.Jules/roles/*.md`
-
----
-
-**Letztes Update:** 2026-04-11
-**Version:** 1.0 (Entwurf - Validierung erforderlich)
-**Nächste Aktion:** User-Feedback zu offenen Fragen + Gegencheck der Token-Annahmen
