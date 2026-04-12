@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # run-gemini-agent.ps1 - Wrapper for Paperclip process adapter
 param(
     [Parameter(Mandatory)][string]$Prompt,
