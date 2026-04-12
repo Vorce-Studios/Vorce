@@ -97,6 +97,14 @@ gha-creds-*.json
 # Paperclip runtime data
 .paperclip-home/
 
+# Ghost files (prevent bot regressions)
+.pre-commit-config copy.yaml
+JULES_ISSUES.md
+taskmon.toml
+test.py
+*.patch
+*.diff
+
 # Vendor crates (should be managed by workspace)
 # crates/vendor/env_logger/
 # crates/vendor/rusty-spout/
