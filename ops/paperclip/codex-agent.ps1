@@ -1,4 +1,4 @@
-﻿# codex-agent.ps1 - Wrapper for Paperclip process adapter
+# codex-agent.ps1 - Wrapper for Paperclip process adapter
 # Env vars: VORCE_STUDIOS_ROLE, INSTRUCTION_PATH, POLICY_ROOT
 
 $roleKey = $env:VORCE_STUDIOS_ROLE
