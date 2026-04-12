@@ -2,7 +2,7 @@
 param(
     [int[]]$IssueNumber,
     [string]$Repository = "Vorce-Studios/Vorce",
-    [string]$LegacyRepository = "MrLongNight/MapFlow",
+    [string]$LegacyRepository = "Vorce-Studios/Vorce",
     [string]$LegacyProjectOwner = "MrLongNight",
     [int]$LegacyProjectNumber = 3,
     [string]$LegacyProjectTitle = "@Vorce Project Manager",
@@ -52,7 +52,7 @@ function HeadingText {
 
 function ProjectFieldVal {
     param([string]$Body, [string]$Field)
-    $block = HeadingText -Body $Body -Names @("Vorce Project Manager", "MapFlow Project Manager")
+    $block = HeadingText -Body $Body -Names @("Vorce Project Manager", "Vorce Project Manager")
     if ([string]::IsNullOrWhiteSpace($block)) { return $null }
     $pattern = "(?ims)^###\s+$([regex]::Escape($Field))\s*$\s*(?<value>.*?)(?=^###\s+|\z)"
     $match = [regex]::Match($block, $pattern)
@@ -116,7 +116,7 @@ function FirstFromBodies {
 
 function LegacyNumber {
     param([string]$Body)
-    $match = [regex]::Match((BodyText -Body $Body), 'Migrated from legacy issue MrLongNight/MapFlow#(?<number>\d+)', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    $match = [regex]::Match((BodyText -Body $Body), 'Migrated from legacy issue Vorce-Studios/Vorce#(?<number>\d+)', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
     if (-not $match.Success) { return $null }
     return [int]$match.Groups["number"].Value
 }
@@ -299,7 +299,7 @@ function Parse-LegacyPrNumberFromMigratedPr {
 
     foreach ($text in @([string]$PullRequest.title, [string]$PullRequest.body)) {
         if ([string]::IsNullOrWhiteSpace($text)) { continue }
-        $match = [regex]::Match($text, 'Migrated from (?:https://github\.com/)?MrLongNight/MapFlow/pull/(?<number>\d+)|Migrated from MapFlow PR #(?<legacy>\d+)', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        $match = [regex]::Match($text, 'Migrated from (?:https://github\.com/)?Vorce-Studios/Vorce/pull/(?<number>\d+)|Migrated from Vorce PR #(?<legacy>\d+)', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
         if ($match.Success) {
             if ($match.Groups["number"].Success) { return [int]$match.Groups["number"].Value }
             if ($match.Groups["legacy"].Success) { return [int]$match.Groups["legacy"].Value }
@@ -415,21 +415,21 @@ mutation($issueId: ID!, $subIssueId: ID!) {
 
 function QueueStateVal {
     param([string[]]$Bodies)
-    $value = FirstFromBodies -Bodies $Bodies -Getter { param($b) CommentVal -Body $b -Names @("vorce-queue-state", "mapflow-queue-state") -MaxLength 80 }
+    $value = FirstFromBodies -Bodies $Bodies -Getter { param($b) CommentVal -Body $b -Names @("vorce-queue-state", "Vorce-queue-state") -MaxLength 80 }
     if (-not [string]::IsNullOrWhiteSpace($value)) { return $value }
     return FirstFromBodies -Bodies $Bodies -Getter {
         param($b)
-        BulletVal -Body $b -Labels @("Queue State") -Sections @("Vorce Project Manager", "MapFlow Project Manager") -MaxLength 80
+        BulletVal -Body $b -Labels @("Queue State") -Sections @("Vorce Project Manager", "Vorce Project Manager") -MaxLength 80
     }
 }
 
 function RemoteStateVal {
     param([string[]]$Bodies)
-    $value = FirstFromBodies -Bodies $Bodies -Getter { param($b) CommentVal -Body $b -Names @("vorce-remote-state", "mapflow-remote-state") -MaxLength 80 }
+    $value = FirstFromBodies -Bodies $Bodies -Getter { param($b) CommentVal -Body $b -Names @("vorce-remote-state", "Vorce-remote-state") -MaxLength 80 }
     if (-not [string]::IsNullOrWhiteSpace($value)) { return $value }
     $value = FirstFromBodies -Bodies $Bodies -Getter {
         param($b)
-        BulletVal -Body $b -Labels @("Remote State") -Sections @("Vorce Project Manager", "MapFlow Project Manager") -MaxLength 80
+        BulletVal -Body $b -Labels @("Remote State") -Sections @("Vorce Project Manager", "Vorce Project Manager") -MaxLength 80
     }
     if (-not [string]::IsNullOrWhiteSpace($value)) { return $value }
     return FirstFromBodies -Bodies $Bodies -Getter {
@@ -442,7 +442,7 @@ function LinkedPrVal {
     param([string[]]$Bodies)
     return FirstFromBodies -Bodies $Bodies -Getter {
         param($b)
-        BulletVal -Body $b -Labels @("Linked PR", "GitHub PR") -Sections @("Vorce Project Manager", "MapFlow Project Manager", "Jules Automation") -MaxLength 220
+        BulletVal -Body $b -Labels @("Linked PR", "GitHub PR") -Sections @("Vorce Project Manager", "Vorce Project Manager", "Jules Automation") -MaxLength 220
     }
 }
 
@@ -852,18 +852,18 @@ $results = foreach ($issue in @($issues | Sort-Object number)) {
 
     $workBranch = FirstFromBodies -Bodies $bodies -Getter { param($b) ProjectFieldVal -Body $b -Field "work_branch" }
     if ([string]::IsNullOrWhiteSpace($workBranch)) {
-        $workBranch = FirstFromBodies -Bodies $bodies -Getter { param($b) CommentVal -Body $b -Names @("vorce-work-branch", "mapflow-work-branch") -MaxLength 180 }
+        $workBranch = FirstFromBodies -Bodies $bodies -Getter { param($b) CommentVal -Body $b -Names @("vorce-work-branch", "Vorce-work-branch") -MaxLength 180 }
     }
     if ([string]::IsNullOrWhiteSpace($workBranch)) {
-        $workBranch = FirstFromBodies -Bodies $bodies -Getter { param($b) BulletVal -Body $b -Labels @("Work Branch", "Branch", "Start Branch") -Sections @("Vorce Project Manager", "MapFlow Project Manager", "Jules Automation", "Roadmap Task") -MaxLength 180 }
+        $workBranch = FirstFromBodies -Bodies $bodies -Getter { param($b) BulletVal -Body $b -Labels @("Work Branch", "Branch", "Start Branch") -Sections @("Vorce Project Manager", "Vorce Project Manager", "Jules Automation", "Roadmap Task") -MaxLength 180 }
     }
 
     $lastUpdate = FirstFromBodies -Bodies $bodies -Getter { param($b) ProjectFieldVal -Body $b -Field "last_update" }
     if ([string]::IsNullOrWhiteSpace($lastUpdate)) {
-        $lastUpdate = FirstFromBodies -Bodies $bodies -Getter { param($b) CommentVal -Body $b -Names @("vorce-last-update", "mapflow-last-update") -MaxLength 80 }
+        $lastUpdate = FirstFromBodies -Bodies $bodies -Getter { param($b) CommentVal -Body $b -Names @("vorce-last-update", "Vorce-last-update") -MaxLength 80 }
     }
     if ([string]::IsNullOrWhiteSpace($lastUpdate)) {
-        $lastUpdate = FirstFromBodies -Bodies $bodies -Getter { param($b) BulletVal -Body $b -Labels @("Letztes Roadmap-Update", "Aktualisiert", "Last Update") -Sections @("Roadmap Task", "Jules Automation", "Vorce Project Manager", "MapFlow Project Manager") -MaxLength 80 }
+        $lastUpdate = FirstFromBodies -Bodies $bodies -Getter { param($b) BulletVal -Body $b -Labels @("Letztes Roadmap-Update", "Aktualisiert", "Last Update") -Sections @("Roadmap Task", "Jules Automation", "Vorce Project Manager", "Vorce Project Manager") -MaxLength 80 }
     }
 
     $description = FirstFromBodies -Bodies $bodies -Getter { param($b) ProjectFieldVal -Body $b -Field "description" }
