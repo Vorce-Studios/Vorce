@@ -1,6 +1,6 @@
+use super::ecler_nuo4;
 use crate::midi::profiles::ControllerProfile;
 use crate::midi::MidiMessageTemplate;
-use super::ecler_nuo4;
 
 #[test]
 fn test_ecler_nuo4_profile() {
