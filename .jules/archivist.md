@@ -116,7 +116,7 @@ Kritische Erkenntnisse aus Repository-Verwaltungsaktivitäten.
 
 ## 2026-03-12 - Root Directory Cleanup
 
-**Erkenntnis:** Es wurden MapFlow-Log-Dateien (`mapflow.log.*`) im Verzeichnis `scripts/archive/logs/` gefunden, welche fälschlicherweise in Git verfolgt wurden, da die aktuelle `.gitignore`-Regel (`/logs/` und `*.log`) das Datums-Suffix nicht erfasste.
+**Erkenntnis:** Es wurden Vorce-Log-Dateien (`Vorce.log.*`) im Verzeichnis `scripts/archive/logs/` gefunden, welche fälschlicherweise in Git verfolgt wurden, da die aktuelle `.gitignore`-Regel (`/logs/` und `*.log`) das Datums-Suffix nicht erfasste.
 **Aktion:** Log-Dateien aus Git mit `git rm` entfernt und `.gitignore` aktualisiert (`scripts/archive/logs/`), um zukünftige Verfolgung von diesen Dateien zu verhindern.
 
 ## 2026-03-02 - Temporäre Dateien im Root verschoben

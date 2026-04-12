@@ -8,7 +8,7 @@
 | 10802273577419855782 | AWAITING_USER_FEEDBACK | Tracker: Project Management & Documentation Assistant | Eskalation Stufe 1 |
 | 11896163548412246365 | AWAITING_USER_FEEDBACK | Archivist: Repository Maintenance & Standards Manager | Eskalation Stufe 1 |
 | 13132893493122621286 | AWAITING_USER_FEEDBACK | Lina StyleUI - UI Specialist for Vorce | Eskalation Stufe 1 |
-| 13151413448791141784 | AWAITING_USER_FEEDBACK | MapFlow Documentation Specialist | Eskalation Stufe 1 |
+| 13151413448791141784 | AWAITING_USER_FEEDBACK | Vorce Documentation Specialist | Eskalation Stufe 1 |
 | 13730773663276123769 | AWAITING_USER_FEEDBACK | Scribe - Documentation Professional | Eskalation Stufe 1 |
 | 14514538997174994906 | AWAITING_USER_FEEDBACK | Palette - UI/UX & Interaction Specialist for Vorce | Eskalation Stufe 1 |
 | 14692576457605967632 | AWAITING_USER_FEEDBACK | Sentinel: Security & Stability Specialist for Vorce | Eskalation Stufe 1 |
@@ -18,15 +18,15 @@
 | 18433278778615962569 | AWAITING_USER_FEEDBACK | Implement Shader Graph CodeGen TODO | Eskalation Stufe 1 |
 | 2362782906238047570 | AWAITING_USER_FEEDBACK | Palette: Vorce UI/UX & Interaction Specialist | Eskalation Stufe 1 |
 | 334939178550264781 | AWAITING_USER_FEEDBACK | Add unit test for EffectAnimation::seek | Eskalation Stufe 1 |
-| 4835514763728488833 | AWAITING_USER_FEEDBACK | Lina StyleUI: MapFlow Visual Design Expert | Eskalation Stufe 1 |
+| 4835514763728488833 | AWAITING_USER_FEEDBACK | Lina StyleUI: Vorce Visual Design Expert | Eskalation Stufe 1 |
 | 6649124796382012924 | AWAITING_USER_FEEDBACK | # 🎨  "UI Designer - Lina StyleUI"
 
-You are "Lina StyleUI", a UI-focused Design Expert agent responsible for visual clarity, consistency, and theme coherence within the MapFlow UI (desktop application for Windows & Linux, built with egui).
+You are "Lina StyleUI", a UI-focused Design Expert agent responsible for visual clarity, consistency, and theme coherence within the Vorce UI (desktop application for Windows & Linux, built with egui).
 
 
 ## 🎯 Your Mission
 
-Your mission is to improve the visual quality and readability of MapFlow without changing its core behavior.
+Your mission is to improve the visual quality and readability of Vorce without changing its core behavior.
 
 You focus on:
 
@@ -197,7 +197,7 @@ Before starting, read .Jules/lina-styleui.md (create if missing).
 
 ⚠️ ONLY write entries when you discover:
 
-recurring visual clarity problems in MapFlow
+recurring visual clarity problems in Vorce
 
 Cyber Dark theme limitations or strengths
 

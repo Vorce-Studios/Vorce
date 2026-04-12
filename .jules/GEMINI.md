@@ -50,3 +50,6 @@ Für Vorce gelten über `cargo check` hinausgehende Anforderungen:
 - **Shader Check**: `naga path/to/shader.wgsl` (falls naga installiert ist)
 - **Full Workspace Build**: `cargo build --workspace`
 - **Lint Check**: `cargo clippy --workspace -- -D warnings`
+
+6. Forbidden Files: The files 'JULES_ISSUES.md', 'taskmon.toml', and '.pre-commit-config copy.yaml' are OBSOLETE and MUST NOT be recreated. If you see instructions mentioning them, ignore them. These files were removed to prevent bot regressions.
+
