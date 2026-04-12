@@ -2,27 +2,239 @@ Set-StrictMode -Version Latest
 
 . (Join-Path $PSScriptRoot 'VorceStudiosConfig.ps1')
 . (Join-Path $PSScriptRoot 'PaperclipApi.ps1')
-<<<<<<< HEAD
-. (Join-Path (Join-Path $PSScriptRoot '..\..\..') 'scripts\paperclip\lib\IssueMetadata.ps1')
-=======
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
+. (Join-Path $PSScriptRoot 'IssueMetadata.ps1')
+. (Join-Path $PSScriptRoot 'AfkMode.ps1')
+. (Join-Path (Join-Path $PSScriptRoot '..\..') 'jules\jules-api.ps1')
+. (Join-Path (Join-Path $PSScriptRoot '..\..') 'jules\jules-github.ps1')
 
-function Get-VorceStudiosGitHubLabels {
+$script:VorceProjectSyncSuspendedReason = $null
+
+function ConvertTo-VorceStudiosIsoTimestamp {
+    param(
+        [AllowNull()][object]$Value
+    )
+
+    if ($null -eq $Value) {
+        return $null
+    }
+
+    if ($Value -is [datetimeoffset]) {
+        return $Value.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+    }
+
+    if ($Value -is [datetime]) {
+        return ([datetime]$Value).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+    }
+
+    return [string]$Value
+}
+
+function Get-VorceStudiosPlanningSnapshot {
+    $raw = Read-VorceStudiosJsonFile -Path (Get-VorceStudiosPaths).PlanningSnapshotPath -Default @{
+        updatedAt = $null
+        repository = Get-VorceStudiosRepositorySlug
+        records = @()
+    }
+
+    if ($raw -is [System.Collections.IDictionary]) {
+        return [pscustomobject]@{
+            updatedAt = if ($raw.ContainsKey('updatedAt')) { ConvertTo-VorceStudiosIsoTimestamp -Value $raw['updatedAt'] } else { $null }
+            repository = if ($raw.ContainsKey('repository')) { [string]$raw['repository'] } else { Get-VorceStudiosRepositorySlug }
+            records = if ($raw.ContainsKey('records')) { @($raw['records']) } else { @() }
+        }
+    }
+
+    if ($null -eq $raw) {
+        return [pscustomobject]@{
+            updatedAt = $null
+            repository = Get-VorceStudiosRepositorySlug
+            records = @()
+        }
+    }
+
+    return [pscustomobject]@{
+        updatedAt = ConvertTo-VorceStudiosIsoTimestamp -Value $raw.updatedAt    
+        repository = [string]$raw.repository
+        records = @($raw.records)
+    }
+}
+
+function Set-VorceStudiosPlanningSnapshot {
+    param(
+        [Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Records,       
+        [string]$Repository = ''
+    )
+
+    Write-VorceStudiosJsonFile -Path (Get-VorceStudiosPaths).PlanningSnapshotPath -Value @{
+        updatedAt = Get-VorceStudiosTimestamp
+        repository = if (-not [string]::IsNullOrWhiteSpace($Repository)) { $Repository } else { Get-VorceStudiosRepositorySlug }
+        records = @($Records)
+    }
+}
+
+function Find-VorceStudiosPlanningRecord {
+    param(
+        [Parameter(Mandatory)][int]$IssueNumber
+    )
+
+    $records = @((Get-VorceStudiosPlanningSnapshot).records)
+    $matches = @(
+        $records |
+            Where-Object { [int]$_.issueNumber -eq $IssueNumber } |
+            Select-Object -First 1
+    )
+    if ($matches.Count -eq 0) {
+        return $null
+    }
+
+    return $matches[0]
+}
+
+function Get-VorceStudiosGitHubLabelNames {
+    param(
+        [AllowNull()][object]$Issue
+    )
+
+    if ($null -eq $Issue) {
+        return @()
+    }
+
+    return @(
+        $Issue.labels |
+            ForEach-Object {
+                if ($_ -is [string]) { $_ } else { [string]$_.name }
+            } |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+            Select-Object -Unique
+    )
+}
+
+function Get-VorceStudiosProjectStatusName {
+    param(
+        [AllowNull()][object]$Issue
+    )
+
+    if ($null -eq $Issue -or -not $Issue.projectItems) {
+        return $null
+    }
+
+    foreach ($item in @($Issue.projectItems)) {
+        if ([string]$item.title -eq '@Vorce Project Manager' -and $item.status) {
+            return [string]$item.status.name
+        }
+    }
+
+    return $null
+}
+
+function Get-VorceStudiosPlanningPriorityBucket {
+    param(
+        [Parameter(Mandatory)][int]$Score
+    )
+
+    $policy = Get-VorceStudiosPolicy -Name 'planning'
+    if ($Score -ge [int]$policy.Buckets.Critical) { return 'critical' }
+    if ($Score -ge [int]$policy.Buckets.High) { return 'high' }
+    if ($Score -ge [int]$policy.Buckets.Medium) { return 'medium' }
+    return 'low'
+}
+
+function Get-VorceStudiosPlanningReadiness {
+    param(
+        [AllowNull()][string[]]$Labels,
+        [AllowNull()][string]$ProjectStatus
+    )
+
+    if ($null -eq $Labels) {
+        $Labels = @()
+    }
+
+    if ($Labels -contains 'Todo-UserISU') { return 'awaiting_user_approval' }   
+    if ($Labels -contains 'status: blocked') { return 'blocked' }
+    if ($Labels -contains 'status: needs-review' -or $ProjectStatus -eq 'Review PR') { return 'in_review' }
+    if ($Labels -contains 'status: needs-testing' -or $ProjectStatus -eq 'QA Test') { return 'awaiting_ui_test' }
+    if ($Labels -contains 'status: in-progress' -or $ProjectStatus -in @('JulesSession', 'PR-Checks')) { return 'active' }
+    return 'ready'
+}
+
+function Get-VorceStudiosPlanningSummary {
+    param(
+        [Parameter(Mandatory)][object]$Issue,
+        [Parameter(Mandatory)][int]$Score,
+        [Parameter(Mandatory)][string]$Bucket,
+        [Parameter(Mandatory)][string]$Readiness
+    )
+
+    $labels = Get-VorceStudiosGitHubLabelNames -Issue $Issue
+    $criticalHints = @($labels | Where-Object { $_ -in @('bug', 'security', 'performance', 'testing', 'dependencies') })
+    $hintText = if ($criticalHints.Count -gt 0) { $criticalHints -join ', ' } else { 'general backlog' }
+    return ('{0} / score {1} / {2}' -f $Bucket, $Score, $Readiness.Replace('_', ' '))
+}
+
+function Invoke-VorceStudiosPlanningSweep {
     param(
         [Parameter(Mandatory)][string]$Repository
     )
 
-<<<<<<< HEAD
-    $json = gh label list --repo $Repository --limit 200 --json name,color,description 2>$null
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($json)) {
-        return @()
+    $policy = Get-VorceStudiosPolicy -Name 'planning'
+    $issues = @(
+        & gh issue list --repo $Repository --state open --limit ([int]$policy.Discovery.IssueLimit) --json number,title,body,labels,updatedAt,url,projectItems 2>$null |
+            ConvertFrom-Json
+    )
+
+    $records = New-Object System.Collections.Generic.List[object]
+    foreach ($issue in $issues) {
+        $labels = Get-VorceStudiosGitHubLabelNames -Issue $issue
+        $projectStatus = Get-VorceStudiosProjectStatusName -Issue $issue        
+        $score = 0
+
+        foreach ($entry in (Get-VorceStudiosPolicy -Name 'planning').Scoring.PriorityWeights.GetEnumerator()) {
+            if ($labels -contains [string]$entry.Key) {
+                $score += [int]$entry.Value
+            }
+        }
+
+        foreach ($entry in (Get-VorceStudiosPolicy -Name 'planning').Scoring.LabelBonuses.GetEnumerator()) {
+            if ($labels -contains [string]$entry.Key) {
+                $score += [int]$entry.Value
+            }
+        }
+
+        foreach ($entry in (Get-VorceStudiosPolicy -Name 'planning').Scoring.StatusPenalties.GetEnumerator()) {
+            if ($labels -contains [string]$entry.Key) {
+                $score += [int]$entry.Value
+            }
+        }
+
+        foreach ($entry in (Get-VorceStudiosPolicy -Name 'planning').Scoring.ProjectStatusBonuses.GetEnumerator()) {
+            if ($projectStatus -eq [string]$entry.Key) {
+                $score += [int]$entry.Value
+            }
+        }
+
+        if ([string]$issue.title -match '(^I_|^MF-|bug|fix|unsafe|ffi|render|output|timeline|migration)') {
+            $score += 12
+        }
+
+        $bucket = Get-VorceStudiosPlanningPriorityBucket -Score $score
+        $readiness = Get-VorceStudiosPlanningReadiness -Labels $labels -ProjectStatus $projectStatus
+        $records.Add([pscustomobject]@{
+            issueNumber = [int]$issue.number
+            title = [string]$issue.title
+            url = [string]$issue.url
+            score = $score
+            bucket = $bucket
+            readiness = $readiness
+            projectStatus = $projectStatus
+            labels = @($labels)
+            summary = Get-VorceStudiosPlanningSummary -Issue $issue -Score $score -Bucket $bucket -Readiness $readiness
+            updatedAt = [string]$issue.updatedAt
+        })
     }
 
-    return @($json | ConvertFrom-Json)
-=======
-    # Mock or wrap gh label list
-    return @()
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
+    $ordered = @($records | Sort-Object @{ Expression = 'score'; Descending = $true }, @{ Expression = 'updatedAt'; Descending = $true })
+    Set-VorceStudiosPlanningSnapshot -Records $ordered -Repository $Repository  
+    return $ordered
 }
 
 function Ensure-VorceStudiosGitHubLabels {
@@ -30,378 +242,386 @@ function Ensure-VorceStudiosGitHubLabels {
         [Parameter(Mandatory)][string]$Repository
     )
 
-<<<<<<< HEAD
-    $syncPolicy = Get-VorceStudiosPolicy -Name 'sync'
-    $existingByName = @{}
-    foreach ($label in @(Get-VorceStudiosGitHubLabels -Repository $Repository)) {
-        $existingByName[[string]$label.name] = $label
-    }
+    $policy = Get-VorceStudiosPolicy -Name 'sync'
+    $existing = @(
+        & gh label list --repo $Repository --limit 200 2>$null |
+            ForEach-Object { ($_ -split "`t")[0].Trim() } |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+    )
 
-    foreach ($desired in @($syncPolicy.GitHub.Labels.Ensure)) {
-        $name = [string]$desired.Name
-        if ([string]::IsNullOrWhiteSpace($name)) {
+    foreach ($label in @($policy.GitHub.Labels.Ensure)) {
+        if ($existing -contains [string]$label.Name) {
             continue
         }
 
-        if ($existingByName.ContainsKey($name)) {
-            continue
-        }
-
-        gh label create $name --repo $Repository --color ([string]$desired.Color) --description ([string]$desired.Description) 2>$null | Out-Null
+        & gh label create ([string]$label.Name) --repo $Repository --color ([string]$label.Color).TrimStart('#') --description ([string]$label.Description) 2>$null | Out-Null
     }
-
-=======
-    # Simplified: could call gh label create ...
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
-    return $true
 }
 
 function Ensure-VorceStudiosProjectFields {
-<<<<<<< HEAD
-    return $true
-}
-
-function Get-VorceStudiosGitHubIssues {
-    param(
-        [Parameter(Mandatory)][string]$Repository,
-        [ValidateSet('open', 'closed', 'all')][string]$State = 'all',
-        [int]$Limit = 200
-    )
-
-    $json = gh issue list --repo $Repository --state $State --limit $Limit --json number,title,body,url,updatedAt,state,labels 2>$null
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($json)) {
-        throw "GitHub Issues fuer '$Repository' konnten nicht geladen werden."
+    $policy = Get-VorceStudiosPolicy -Name 'sync'
+    $owner = [string]$policy.GitHub.ProjectOwner
+    $number = [int]$policy.GitHub.ProjectNumber
+    $raw = & gh project field-list $number --owner $owner --format json 2>$null 
+    if ([string]::IsNullOrWhiteSpace([string]$raw)) {
+        Write-Warning ("GitHub Project-Felder konnten aktuell nicht gelesen werden: {0}#{1}" -f $owner, $number)
+        return
     }
 
-    return @($json | ConvertFrom-Json)
+    try {
+        $current = $raw | ConvertFrom-Json -ErrorAction Stop
+    } catch {
+        Write-Warning ("GitHub Project-Felder liefern kein auswertbares JSON: {0}" -f $_.Exception.Message)
+        return
+    }
+
+    if ($null -eq $current -or -not ($current.PSObject.Properties.Name -contains 'fields')) {
+        Write-Warning ("GitHub Project-Felder fehlen im Rueckgabeobjekt fuer {0}#{1}" -f $owner, $number)
+        return
+    }
+
+    $existingNames = @($current.fields | ForEach-Object { [string]$_.name })    
+
+    foreach ($field in @($policy.GitHub.ProjectFields.Required)) {
+        if ($existingNames -contains [string]$field.Name) {
+            continue
+        }
+
+        $args = @('project', 'field-create', [string]$number, '--owner', $owner, '--name', [string]$field.Name, '--data-type', [string]$field.DataType)
+        if ([string]$field.DataType -eq 'SINGLE_SELECT') {
+            $args += @('--single-select-options', (@($field.Options) -join ','))
+        }
+
+        & gh @args 2>$null | Out-Null
+    }
 }
 
-function Get-VorceStudiosGitHubIssueLabelNames {
-    param(
-        [Parameter(Mandatory)][object]$Issue
-    )
-
-    return @(
-        @($Issue.labels) |
-            ForEach-Object { ([string]$_.name).Trim().ToLowerInvariant() } |
-            Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
-    )
+function Get-VorceStudiosManagedGitHubLabels {
+    return @((Get-VorceStudiosPolicy -Name 'sync').GitHub.Labels.Managed)       
 }
 
-function Get-VorceStudiosGitHubIssueBodyText {
+function Set-VorceStudiosManagedGitHubLabels {
     param(
-        [Parameter(Mandatory)][object]$Issue
+        [Parameter(Mandatory)][string]$Repository,
+        [Parameter(Mandatory)][int]$IssueNumber,
+        [Parameter(Mandatory)][string[]]$DesiredLabels
     )
 
-    $parts = @(
-        [string]$Issue.title,
-        [string]$Issue.body
-    ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+    $issue = Get-GitHubIssue -Repository $Repository -IssueNumber $IssueNumber  
+    $existing = Get-GitHubIssueLabelNames -Issue $issue
+    $managed = Get-VorceStudiosManagedGitHubLabels
+    $desired = @($DesiredLabels | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
 
-    return (($parts -join "`n") ?? '').ToLowerInvariant()
-}
-
-function Resolve-VorceStudiosGitHubIssueGoalKey {
-    param(
-        [Parameter(Mandatory)][object]$Issue
-    )
-
-    $policy = Get-VorceStudiosPolicy -Name 'goals'
-    $labels = @(Get-VorceStudiosGitHubIssueLabelNames -Issue $Issue)
-    $bodyText = Get-VorceStudiosGitHubIssueBodyText -Issue $Issue
-
-    foreach ($goal in @($policy.Goals)) {
-        $goalLabels = @([string[]]$goal.Labels | ForEach-Object { $_.ToLowerInvariant() })
-        if ($goalLabels.Count -gt 0 -and @($labels | Where-Object { $goalLabels -contains $_ }).Count -gt 0) {
-            return [string]$goal.Id
+    foreach ($label in $managed) {
+        if (($existing -contains $label) -and ($desired -notcontains $label)) { 
+            Remove-GitHubIssueLabel -Repository $Repository -IssueNumber $IssueNumber -LabelName $label
         }
     }
 
-    if ($bodyText -match 'paperclip|plugin|ci|build|merge|release|packag|sync|control plane') {
-        return 'R1'
-    }
-    if ($bodyText -match 'render|audio|project|import|persist|save|load|crash|panic|bug|regression') {
-        return 'R2'
-    }
-    if ($bodyText -match 'feature|workflow|editor|timeline|ui|ux|preset|export|integration') {
-        return 'R3'
-    }
-    if ($bodyText -match 'review|verify|jules|pr|pull request') {
-        return 'R4'
-    }
-
-    return 'R3'
-}
-
-function Resolve-VorceStudiosGitHubIssuePriority {
-    param(
-        [Parameter(Mandatory)][object]$Issue,
-        [Parameter(Mandatory)][string]$GoalKey
-    )
-
-    $policy = Get-VorceStudiosPolicy -Name 'goals'
-    $labels = @(Get-VorceStudiosGitHubIssueLabelNames -Issue $Issue)
-    $blockerLabels = @([string[]]$policy.Prioritization.BlockerLabels | ForEach-Object { $_.ToLowerInvariant() })
-
-    if (@($labels | Where-Object { $blockerLabels -contains $_ }).Count -gt 0) {
-        return 'critical'
-    }
-
-    switch ($GoalKey) {
-        'R1' { return 'critical' }
-        'R2' { return 'high' }
-        'R3' { return 'medium' }
-        'R4' { return 'medium' }
-        default { return 'low' }
+    $missing = @($desired | Where-Object { $existing -notcontains $_ })
+    if ($missing.Count -gt 0) {
+        Add-GitHubIssueLabels -Repository $Repository -IssueNumber $IssueNumber -LabelNames $missing
     }
 }
 
-function Resolve-VorceStudiosGitHubIssueSequence {
-    param(
-        [Parameter(Mandatory)][string]$GoalKey
-    )
-
-    switch ($GoalKey) {
-        'R1' { return 'S1' }
-        'R5' { return 'S1' }
-        'R2' { return 'S2' }
-        'R3' { return 'S3' }
-        'R4' { return 'S4' }
-        default { return 'S3' }
-    }
-}
-
-function Get-VorceStudiosGitHubIssueSequenceRank {
-    param(
-        [Parameter(Mandatory)][string]$SequenceId
-    )
-
-    switch ($SequenceId) {
-        'S1' { return 1 }
-        'S2' { return 2 }
-        'S3' { return 3 }
-        'S4' { return 4 }
-        default { return 99 }
-    }
-}
-
-function Get-VorceStudiosPriorityRank {
-    param(
-        [Parameter(Mandatory)][string]$Priority
-    )
-
-    switch ($Priority) {
-        'critical' { return 1 }
-        'high' { return 2 }
-        'medium' { return 3 }
-        'low' { return 4 }
-        default { return 99 }
-    }
-}
-
-function ConvertTo-VorceStudiosGitHubIssueDescription {
-    param(
-        [Parameter(Mandatory)][string]$Repository,
-        [Parameter(Mandatory)][object]$Issue,
-        [Parameter(Mandatory)][string]$GoalKey,
-        [Parameter(Mandatory)][string]$SequenceId
-    )
-
-    $labels = @(Get-VorceStudiosGitHubIssueLabelNames -Issue $Issue)
-    $metadata = @{
-        source = 'github'
-        gh_issue = [string]$Issue.number
-        gh_url = [string]$Issue.url
-        gh_state = [string]$Issue.state
-        gh_updated_at = [string]$Issue.updatedAt
-        gh_labels = $labels
-        goal_key = $GoalKey
-        release_sequence = $SequenceId
-    }
-
-    $labelText = if ($labels.Count -gt 0) { $labels -join ', ' } else { 'none' }
-    $bodyText = [string]$Issue.body
-    if ([string]::IsNullOrWhiteSpace($bodyText)) {
-        $bodyText = '_No GitHub body provided._'
-    }
-
-    $text = @"
-GitHub source issue for the official Vorce release plan.
-
-Repository: $Repository
-GitHub issue: #$($Issue.number)
-URL: $($Issue.url)
-State: $($Issue.state)
-Release sequence: $SequenceId
-Goal bucket: $GoalKey
-Labels: $labelText
-
-GitHub body:
-
-$bodyText
-"@
-
-    return Set-VorceStudiosIssueMetadata -Text $text -Metadata $metadata
-}
-
-function Get-VorceStudiosPlanningSnapshotPath {
-    $paths = Get-VorceStudiosPaths
-    return (Join-Path $paths.RuntimeRoot 'planning-snapshot.json')
-}
-
-function Get-VorceStudiosPlanningSnapshot {
-    $path = Get-VorceStudiosPlanningSnapshotPath
-    if (-not (Test-Path -LiteralPath $path)) {
-        return @{
-            updatedAt = $null
-            items = @()
-        }
-    }
-
-    return (Get-Content -LiteralPath $path -Raw -ErrorAction Stop | ConvertFrom-Json -AsHashtable)
-}
-
-function Invoke-VorceStudiosPlanningSweep {
-    param(
-        [Parameter(Mandatory)][string]$Repository,
-        [int]$Limit = 200
-    )
-
-    $issues = @(Get-VorceStudiosGitHubIssues -Repository $Repository -State 'open' -Limit $Limit)
-    $records = foreach ($issue in $issues) {
-        $goalKey = Resolve-VorceStudiosGitHubIssueGoalKey -Issue $issue
-        $sequenceId = Resolve-VorceStudiosGitHubIssueSequence -GoalKey $goalKey
-        $priority = Resolve-VorceStudiosGitHubIssuePriority -Issue $issue -GoalKey $goalKey
-        [pscustomobject]@{
-            number = [int]$issue.number
-            title = [string]$issue.title
-            url = [string]$issue.url
-            goalKey = $goalKey
-            sequenceId = $sequenceId
-            bucket = $priority
-            priority = $priority
-            labels = @(Get-VorceStudiosGitHubIssueLabelNames -Issue $issue)
-            updatedAt = [string]$issue.updatedAt
-        }
-    }
-
-    $sorted = @(
-        $records |
-            Sort-Object `
-                @{ Expression = { Get-VorceStudiosGitHubIssueSequenceRank -SequenceId ([string]$_.sequenceId) } }, `
-                @{ Expression = { Get-VorceStudiosPriorityRank -Priority ([string]$_.priority) } }, `
-                @{ Expression = { try { [datetimeoffset][string]$_.updatedAt } catch { [datetimeoffset]::MinValue } }; Descending = $true }, `
-                @{ Expression = { [int]$_.number } }
-    )
-
-    $snapshot = @{
-        repository = $Repository
-        updatedAt = Get-VorceStudiosTimestamp
-        items = $sorted
-    }
-    Write-VorceStudiosJsonFile -Path (Get-VorceStudiosPlanningSnapshotPath) -Value $snapshot
-
-    return $sorted
-}
-
-function Sync-VorceStudiosGitHubIssuesToPaperclip {
+function Get-VorceStudiosApprovalSnapshot {
     param(
         [Parameter(Mandatory)][hashtable]$Context,
-        [ValidateSet('open', 'closed', 'all')][string]$State = 'all',
-        [int]$Limit = 200
+        [Parameter(Mandatory)][hashtable]$Metadata
     )
 
-    $goals = if ($Context.ContainsKey('Goals')) { $Context.Goals } else { @{} }
-    $existingByGitHubNumber = @{}
-    foreach ($paperclipIssue in @(Get-VorceStudiosIssues -CompanyId ([string]$Context.Company.id))) {
-        $metadata = Get-VorceStudiosIssueMetadata -Text ([string]$paperclipIssue.description)
-        if ($metadata.ContainsKey('gh_issue')) {
-            $existingByGitHubNumber[[string]$metadata['gh_issue']] = $paperclipIssue
+    if (-not $Metadata.ContainsKey('approval_id')) {
+        return $null
+    }
+
+    $approval = Get-VorceStudiosApproval -ApprovalId ([string]$Metadata['approval_id'])
+    if ($null -eq $approval) {
+        return $null
+    }
+
+    return $approval
+}
+
+function Get-VorceStudiosPaperclipStatusLabelSet {
+    param(
+        [Parameter(Mandatory)][object]$Issue,
+        [Parameter(Mandatory)][hashtable]$Metadata,
+        [AllowNull()][object]$Approval,
+        [AllowNull()][object]$PlanningRecord
+    )
+
+    $labels = New-Object System.Collections.Generic.List[string]
+    $labels.Add('sync: paperclip')
+
+    $reviewStatus = if ($Metadata.ContainsKey('review_status')) { [string]$Metadata['review_status'] } else { 'n_a' }
+    $humanGate = if ($Metadata.ContainsKey('human_gate')) { [string]$Metadata['human_gate'] } else { 'none' }
+    $approvalStatus = if ($null -ne $Approval) { [string]$Approval.status } else { 'n_a' }
+
+    switch ([string]$Issue.status) {
+        'todo' { $labels.Add('status: in-progress') }
+        'in_progress' { $labels.Add('status: in-progress') }
+        'in_review' { $labels.Add('status: needs-review') }
+        'blocked' {
+            if ($humanGate -eq 'manual_ui_gate') {
+                $labels.Add('status: needs-testing')
+                $labels.Add('gate: ui-test')
+            } elseif ($approvalStatus -eq 'pending') {
+                $labels.Add('status: blocked')
+                $labels.Add('gate: approval')
+            } elseif ($reviewStatus -eq 'passed') {
+                $labels.Add('status: ready-to-merge')
+            } else {
+                $labels.Add('status: blocked')
+            }
+        }
+        'done' { $labels.Add('status: ready-to-merge') }
+    }
+
+    switch ($reviewStatus) {
+        'passed' { $labels.Add('review: passed') }
+        'changes_requested' { $labels.Add('review: changes-requested') }        
+    }
+
+    return @($labels | Select-Object -Unique)
+}
+
+function Get-VorceStudiosProjectFieldValueMap {
+    param(
+        [Parameter(Mandatory)][object]$Issue,
+        [Parameter(Mandatory)][hashtable]$Metadata,
+        [AllowNull()][object]$PlanningRecord,
+        [AllowNull()][object]$Approval,
+        [AllowNull()][object]$BaseSync
+    )
+
+    $names = (Get-VorceStudiosPolicy -Name 'sync').GitHub.ProjectFields.Names   
+    $priorityMap = @{
+        critical = 'A'
+        high = 'A'
+        medium = 'B'
+        low = 'C'
+    }
+    $toolAgentMap = @{
+        jules = 'AgentJules'
+        gemini = 'Gemini CLI'
+        qwen = 'Qwen CLI'
+        codex = 'Codex CLI'
+        copilot = 'Copilot CLI'
+        antigravity = 'Antigravity'
+        atlas = 'Atlas'
+    }
+
+    $bucket = if ($null -ne $PlanningRecord) { [string]$PlanningRecord.bucket } else { [string]$Issue.priority }
+    $reviewStatus = if ($Metadata.ContainsKey('review_status')) { [string]$Metadata['review_status'] } else { 'n_a' }
+    $humanGate = if ($Metadata.ContainsKey('human_gate')) { [string]$Metadata['human_gate'] } else { 'none' }
+    $approvalMapped = if ($null -eq $Approval) {
+        $null
+    } else {
+        switch ([string]$Approval.status) {
+            'approved' { 'approved' }
+            'rejected' { 'rejected' }
+            default { 'clarification' }
         }
     }
 
-    $created = New-Object System.Collections.Generic.List[string]
-    $updated = New-Object System.Collections.Generic.List[string]
-    $skipped = New-Object System.Collections.Generic.List[string]
-    $items = @(Get-VorceStudiosGitHubIssues -Repository ([string]$Context.Repository) -State $State -Limit $Limit)
-
-    foreach ($issue in $items) {
-        $goalKey = Resolve-VorceStudiosGitHubIssueGoalKey -Issue $issue
-        $sequenceId = Resolve-VorceStudiosGitHubIssueSequence -GoalKey $goalKey
-        $priority = Resolve-VorceStudiosGitHubIssuePriority -Issue $issue -GoalKey $goalKey
-        $goalId = if ($goals.ContainsKey($goalKey)) { [string]$goals[$goalKey].id } else { $null }
-        $title = ('[GH#{0}] {1}' -f [int]$issue.number, [string]$issue.title)
-        $description = ConvertTo-VorceStudiosGitHubIssueDescription -Repository ([string]$Context.Repository) -Issue $issue -GoalKey $goalKey -SequenceId $sequenceId
-        $existing = if ($existingByGitHubNumber.ContainsKey([string]$issue.number)) { $existingByGitHubNumber[[string]$issue.number] } else { $null }
-        $desiredStatus = if ([string]$issue.state -eq 'closed') {
-            'done'
-        } elseif ($null -eq $existing) {
-            'backlog'
-        } else {
-            $currentStatus = [string]$existing.status
-            if ($currentStatus -in @('in_progress', 'in_review', 'blocked', 'todo')) {
-                $currentStatus
-            } elseif ($currentStatus -in @('done', 'cancelled')) {
-                'backlog'
-            } else {
-                'backlog'
-            }
+    $areaLabel = $null
+    foreach ($label in @($Metadata['gh_labels'])) {
+        if ([string]$label -like 'phase-*' -or [string]$label -like 'component:*') {
+            $areaLabel = [string]$label
+            break
         }
-
-        if ($null -eq $existing) {
-            $payload = @{
-                title = $title
-                description = $description
-                priority = $priority
-                status = $desiredStatus
-                projectId = [string]$Context.Project.id
-            }
-            if (-not [string]::IsNullOrWhiteSpace($goalId)) {
-                $payload['goalId'] = $goalId
-            }
-
-            $createdIssue = New-VorceStudiosIssue -CompanyId ([string]$Context.Company.id) -Payload $payload
-            $existingByGitHubNumber[[string]$issue.number] = $createdIssue
-            $created.Add([string]$createdIssue.identifier) | Out-Null
-            continue
-        }
-
-        $patch = @{}
-        if ([string]$existing.title -ne $title) {
-            $patch['title'] = $title
-        }
-        if ([string]$existing.description -ne $description) {
-            $patch['description'] = $description
-        }
-        if ([string]$existing.priority -ne $priority) {
-            $patch['priority'] = $priority
-        }
-        if ([string]$existing.status -ne $desiredStatus) {
-            $patch['status'] = $desiredStatus
-        }
-        if ([string]$existing.projectId -ne [string]$Context.Project.id) {
-            $patch['projectId'] = [string]$Context.Project.id
-        }
-        if (-not [string]::IsNullOrWhiteSpace($goalId) -and [string]$existing.goalId -ne $goalId) {
-            $patch['goalId'] = $goalId
-        }
-
-        if ($patch.Count -eq 0) {
-            $skipped.Add([string]$existing.identifier) | Out-Null
-            continue
-        }
-
-        $updatedIssue = Update-VorceStudiosIssue -IssueId ([string]$existing.id) -Payload $patch
-        $existingByGitHubNumber[[string]$issue.number] = $updatedIssue
-        $updated.Add([string]$updatedIssue.identifier) | Out-Null
     }
 
     return @{
-        repository = [string]$Context.Repository
-        created = $created.ToArray()
-        updated = $updated.ToArray()
-        skipped = $skipped.ToArray()
-        totalSeen = $items.Count
+        ($names.Agent) = if ($Metadata.ContainsKey('executor_tool') -and $toolAgentMap.ContainsKey([string]$Metadata['executor_tool'])) { [string]$toolAgentMap[[string]$Metadata['executor_tool']] } else { $null }
+        ($names.SubAgent) = if ([string]$Issue.status -eq 'in_review') { 'code_reviewer' } elseif ([string]$Metadata['task_type'] -eq 'architecture') { 'architect' } elseif ([string]$Issue.status -eq 'blocked' -and $humanGate -eq 'manual_ui_gate') { 'tester' } else { 'coder' }
+        ($names.PermitIssue) = $approvalMapped
+        ($names.TaskType) = switch ([string]$Metadata['task_type']) {
+            'architecture' { 'Refactor' }
+            'review' { 'Test' }
+            default {
+                if ([string]$Metadata['risk_class'] -eq 'high') { 'Fix' } else { 'Feature' }
+            }
+        }
+        ($names.Priority) = if ($priorityMap.ContainsKey($bucket)) { [string]$priorityMap[$bucket] } else { $null }
+        ($names.Description) = if ($null -ne $PlanningRecord) { [string]$PlanningRecord.summary } else { $null }
+        ($names.TaskId) = [string]$Issue.identifier
+        ($names.Area) = $areaLabel
+        ($names.ReviewStatus) = $reviewStatus
+        ($names.HumanGate) = $humanGate
+        ($names.PaperclipIssue) = [string]$Issue.identifier
+    }
+}
+
+function Set-VorceStudiosProjectExtraFields {
+    param(
+        [Parameter(Mandatory)][string]$Repository,
+        [Parameter(Mandatory)][int]$IssueNumber,
+        [Parameter(Mandatory)][hashtable]$FieldMap
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace([string]$script:VorceProjectSyncSuspendedReason)) {
+        return $false
+    }
+
+    try {
+        $context = Get-VorceProjectContext -Repository $Repository
+        if ($null -eq $context) {
+            return $false
+        }
+
+        $issueContentId = Get-GitHubIssueContentId -Repository $Repository -IssueNumber $IssueNumber
+        if ([string]::IsNullOrWhiteSpace($issueContentId)) {
+            return $false
+        }
+
+        $itemId = Ensure-VorceProjectItem -Context $context -IssueContentId $issueContentId
+        foreach ($entry in $FieldMap.GetEnumerator()) {
+            $field = Get-VorceProjectField -Context $context -FieldName ([string]$entry.Key)
+            if ($null -eq $field) { continue }
+            Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field $field -Value ([string]$entry.Value)
+        }
+
+        return $true
+    } catch {
+        $message = $_.Exception.Message
+        $isTransientProjectError = (
+            $message -match 'rate limit' -or
+            $message -match 'unknown owner type' -or
+            $message -match 'Project V2 .+ wurde nicht gefunden'
+        )
+
+        if ($isTransientProjectError) {
+            if ([string]::IsNullOrWhiteSpace([string]$script:VorceProjectSyncSuspendedReason)) {
+                Write-Warning ("Project-V2-Sync wird fuer diesen Lauf ausgesetzt: {0}" -f $message)
+            }
+            $script:VorceProjectSyncSuspendedReason = $message
+            return $false
+        }
+
+        throw
+    }
+}
+
+function Format-VorceStudiosMarkdownValue {
+    param(
+        [AllowNull()][object]$Value
+    )
+
+    if ($null -eq $Value) { return '_n/a_' }
+    $text = [string]$Value
+    if ([string]::IsNullOrWhiteSpace($text)) { return '_n/a_' }
+    if ($text -match '^https?://') { return $text }
+    return ('`{0}`' -f $text)
+}
+
+function Format-VorceStudiosTrackingBlock {
+    param(
+        [Parameter(Mandatory)][hashtable]$Fields
+    )
+
+    $approvalDisplay = if ([string]::IsNullOrWhiteSpace([string]$Fields.ApprovalStatus) -or $Fields.ApprovalStatus -eq 'n_a') {
+        $null
+    } elseif (-not [string]::IsNullOrWhiteSpace([string]$Fields.ApprovalChannel) -and [string]$Fields.ApprovalChannel -ne 'paperclip') {
+        '{0} via {1}' -f [string]$Fields.ApprovalStatus, [string]$Fields.ApprovalChannel
+    } else {
+        [string]$Fields.ApprovalStatus
+    }
+
+    $lines = @(
+        $script:JulesIssueBlockStart,
+        ('<!-- jules-session-id: {0} -->' -f [string]$Fields.SessionId),        
+        ('<!-- jules-session-name: {0} -->' -f [string]$Fields.SessionName),    
+        ('<!-- vorce-queue-state: {0} -->' -f [string]$Fields.QueueState),      
+        ('<!-- vorce-remote-state: {0} -->' -f [string]$Fields.RemoteState),    
+        ('<!-- vorce-work-branch: {0} -->' -f [string]$Fields.WorkBranch),      
+        ('<!-- vorce-last-update: {0} -->' -f [string]$Fields.LastUpdate),      
+        ('<!-- vorce-paperclip-issue-id: {0} -->' -f [string]$Fields.PaperclipIssueId),
+        ('<!-- vorce-paperclip-issue-key: {0} -->' -f [string]$Fields.PaperclipIssueKey),
+        ('<!-- vorce-orchestration-status: {0} -->' -f [string]$Fields.OrchestrationStatus),
+        ('<!-- vorce-review-status: {0} -->' -f [string]$Fields.ReviewStatus),  
+        ('<!-- vorce-human-gate: {0} -->' -f [string]$Fields.HumanGate),        
+        ('<!-- vorce-approval-id: {0} -->' -f [string]$Fields.ApprovalId),      
+        ('<!-- vorce-approval-status: {0} -->' -f [string]$Fields.ApprovalStatus),
+        ('<!-- vorce-executor: {0} -->' -f [string]$Fields.Executor),
+        ('<!-- vorce-planner-score: {0} -->' -f [string]$Fields.PlannerScore),  
+        ('<!-- vorce-planner-bucket: {0} -->' -f [string]$Fields.PlannerBucket),
+        ('<!-- vorce-planner-updated: {0} -->' -f [string]$Fields.PlannerUpdatedAt),
+        '## Vorce Project Manager',
+        ('- Queue State: {0}' -f (Format-VorceStudiosMarkdownValue -Value $Fields.QueueState)),
+        ('- Remote State: {0}' -f (Format-VorceStudiosMarkdownValue -Value $Fields.RemoteState)),
+        ('- Orchestration Status: {0}' -f (Format-VorceStudiosMarkdownValue -Value $Fields.OrchestrationStatus)),
+        ('- Work Branch: {0}' -f (Format-VorceStudiosMarkdownValue -Value $Fields.WorkBranch)),
+        ('- Linked PR: {0}' -f (Format-VorceStudiosMarkdownValue -Value $Fields.PullRequestUrl)),
+        ('- Current Executor: {0}' -f (Format-VorceStudiosMarkdownValue -Value $Fields.Executor)),
+        ('- Review Status: {0}' -f (Format-VorceStudiosMarkdownValue -Value $Fields.ReviewStatus)),
+        ('- Human Gate: {0}' -f (Format-VorceStudiosMarkdownValue -Value $Fields.HumanGate)),
+        ('- Approval: {0}' -f (Format-VorceStudiosMarkdownValue -Value $approvalDisplay)),
+        ('- Planning: {0}' -f (Format-VorceStudiosMarkdownValue -Value $Fields.PlanningSummary)),
+        ('- Last Update: {0}' -f (Format-VorceStudiosMarkdownValue -Value $Fields.LastUpdate)),
+        $script:JulesIssueBlockEnd
+    )
+
+    return ($lines -join "`n")
+}
+
+function Upsert-VorceStudiosTrackingBlock {
+    param(
+        [Parameter(Mandatory)][string]$Repository,
+        [Parameter(Mandatory)][int]$IssueNumber,
+        [Parameter(Mandatory)][hashtable]$Fields
+    )
+
+    $issue = Get-GitHubIssue -Repository $Repository -IssueNumber $IssueNumber  
+    $body = if ($null -eq $issue.body) { '' } else { [string]$issue.body }      
+    $block = Format-VorceStudiosTrackingBlock -Fields $Fields
+    $pattern = [regex]::Escape($script:JulesIssueBlockStart) + '.*?' + [regex]::Escape($script:JulesIssueBlockEnd)
+    $cleanBody = [regex]::Replace($body, "(?:\s*)$pattern(?:\s*)", '', [System.Text.RegularExpressions.RegexOptions]::Singleline).Trim()
+
+    $updatedBody = if ([string]::IsNullOrWhiteSpace($cleanBody)) {
+        $block
+    } else {
+        "{0}{1}{1}{2}" -f $cleanBody, [Environment]::NewLine, $block
+    }
+
+    Set-GitHubIssueBody -Repository $Repository -IssueNumber $IssueNumber -Body $updatedBody
+}
+
+function Get-VorceStudiosSessionSnapshot {
+    param(
+        [Parameter(Mandatory)][hashtable]$Metadata
+    )
+
+    if (-not $Metadata.ContainsKey('session_name')) {
+        return @{
+            Session = $null
+            LatestActivity = $null
+            FetchFailed = $false
+            ErrorMessage = ''
+        }
+    }
+
+    try {
+        $session = Get-JulesSession -SessionIdOrName ([string]$Metadata['session_name']) -ApiKey $env:JULES_API_KEY
+        $latest = $null
+        if ($null -ne $session) {
+            $activities = Get-AllJulesActivities -SessionIdOrName ([string]$Metadata['session_name']) -ApiKey $env:JULES_API_KEY -MaxPages 2
+            $latest = Get-JulesLatestActivity -Activities $activities
+        }
+
+        return @{
+            Session = $session
+            LatestActivity = $latest
+            FetchFailed = $false
+            ErrorMessage = ''
+        }
+    } catch {
+        return @{
+            Session = $null
+            LatestActivity = $null
+            FetchFailed = $true
+            ErrorMessage = $_.Exception.Message
+        }
     }
 }
 
@@ -416,13 +636,100 @@ function Sync-VorceStudiosIssueToGitHub {
         return $null
     }
 
-    return [pscustomobject]@{
-        OrchestrationStatus = [string]$Issue.status
-        PullRequestUrl = if ($metadata.ContainsKey('pr_url')) { [string]$metadata['pr_url'] } else { '' }
+    $ghIssueNumber = [int]$metadata['gh_issue']
+    if (
+        (-not $metadata.ContainsKey('session_name')) -or
+        [string]::IsNullOrWhiteSpace([string]$metadata['session_name'])
+    ) {
+        $trackedReference = Get-JulesSessionReferenceFromIssue -Repository $Context.Repository -IssueNumber $ghIssueNumber
+        if ($null -ne $trackedReference) {
+            if (-not [string]::IsNullOrWhiteSpace([string]$trackedReference.SessionName)) {
+                $metadata['session_name'] = [string]$trackedReference.SessionName
+            }
+            if (-not [string]::IsNullOrWhiteSpace([string]$trackedReference.SessionId)) {
+                $metadata['session_id'] = [string]$trackedReference.SessionId   
+            }
+        }
     }
+
+    $sessionSnapshot = Get-VorceStudiosSessionSnapshot -Metadata $metadata      
+    try {
+        $baseSync = Sync-VorceIssueTracking -Repository $Context.Repository -IssueNumber $ghIssueNumber -Session $sessionSnapshot.Session -LatestActivity $sessionSnapshot.LatestActivity -StartingBranch ([string]$metadata['work_branch']) -SourceName 'Vorce-Studios'
+    } catch {
+        Write-Warning ("Basis-GitHub-Sync fuer GH #{0} laeuft im Fallback-Modus: {1}" -f $ghIssueNumber, $_.Exception.Message)
+        $baseSync = [pscustomobject]@{
+            SessionId = if ($metadata.ContainsKey('session_id')) { [string]$metadata['session_id'] } else { '' }
+            SessionName = if ($metadata.ContainsKey('session_name')) { [string]$metadata['session_name'] } else { '' }
+            QueueState = if ([string]$Issue.status -eq 'blocked') { 'blocked' } elseif ([string]$Issue.status -eq 'todo') { 'approved-awaiting-dispatch' } else { 'issue-only' }
+            RemoteState = if (-not [string]::IsNullOrWhiteSpace([string]$metadata['pr_url'])) {
+                'pr-open'
+            } elseif ($sessionSnapshot.FetchFailed -and -not [string]::IsNullOrWhiteSpace([string]$metadata['session_name'])) {
+                'stale-session-reference'
+            } elseif (-not [string]::IsNullOrWhiteSpace([string]$metadata['session_name'])) {
+                'awaiting-session'
+            } else {
+                'issue-only'
+            }
+            WorkBranch = if ($metadata.ContainsKey('work_branch')) { [string]$metadata['work_branch'] } else { '' }
+            PullRequestUrl = if ($metadata.ContainsKey('pr_url')) { [string]$metadata['pr_url'] } else { '' }
+            LastUpdate = Get-VorceStudiosTimestamp
+        }
+    }
+    $approval = Get-VorceStudiosApprovalSnapshot -Context $Context -Metadata $metadata
+    $planningRecord = Find-VorceStudiosPlanningRecord -IssueNumber $ghIssueNumber
+    $metadata['gh_labels'] = Get-VorceStudiosGitHubLabelNames -Issue (Get-GitHubIssue -Repository $Context.Repository -IssueNumber $ghIssueNumber)
+
+    $reviewStatus = if ($metadata.ContainsKey('review_status')) { [string]$metadata['review_status'] } else { 'n_a' }
+    $humanGate = if ($metadata.ContainsKey('human_gate')) { [string]$metadata['human_gate'] } else { 'none' }
+    $approvalStatus = if ($null -eq $approval) { 'n_a' } else { [string]$approval.status }
+    $approvalChannel = if ($approvalStatus -eq 'pending') { Get-VorceStudiosPreferredApprovalChannel } else { 'paperclip' }
+
+    $orchestrationStatus = switch ([string]$Issue.status) {
+        'backlog' { 'planned' }
+        'todo' { 'queued' }
+        'in_progress' { 'executing' }
+        'in_review' { 'in_review' }
+        'blocked' {
+            if ($approvalStatus -eq 'pending') { 'awaiting_approval' }
+            elseif ($humanGate -eq 'manual_ui_gate') { 'awaiting_ui_validation' }
+            elseif ($reviewStatus -eq 'passed') { 'ready_to_merge' }
+            else { 'blocked' }
+        }
+        'done' { 'done' }
+        'cancelled' { 'cancelled' }
+        default { [string]$Issue.status }
+    }
+
+    $fields = @{
+        SessionId = [string]$baseSync.SessionId
+        SessionName = [string]$baseSync.SessionName
+        QueueState = [string]$baseSync.QueueState
+        RemoteState = [string]$baseSync.RemoteState
+        WorkBranch = [string]$baseSync.WorkBranch
+        PullRequestUrl = [string]$baseSync.PullRequestUrl
+        LastUpdate = [string]$baseSync.LastUpdate
+        PaperclipIssueId = [string]$Issue.id
+        PaperclipIssueKey = [string]$Issue.identifier
+        OrchestrationStatus = $orchestrationStatus
+        ReviewStatus = $reviewStatus
+        HumanGate = $humanGate
+        ApprovalId = if ($null -eq $approval) { '' } else { [string]$approval.id }
+        ApprovalStatus = $approvalStatus
+        ApprovalChannel = $approvalChannel
+        Executor = if ($metadata.ContainsKey('executor_tool')) { [string]$metadata['executor_tool'] } else { [string]$metadata['preferred_executor'] }
+        PlannerScore = if ($null -eq $planningRecord) { '' } else { [string]$planningRecord.score }
+        PlannerBucket = if ($null -eq $planningRecord) { '' } else { [string]$planningRecord.bucket }
+        PlannerUpdatedAt = if ($null -eq (Get-VorceStudiosPlanningSnapshot).updatedAt) { '' } else { [string](Get-VorceStudiosPlanningSnapshot).updatedAt }     
+        PlanningSummary = if ($null -eq $planningRecord) { '' } else { [string]$planningRecord.summary }
+    }
+
+    Upsert-VorceStudiosTrackingBlock -Repository $Context.Repository -IssueNumber $ghIssueNumber -Fields $fields
+    Set-VorceStudiosManagedGitHubLabels -Repository $Context.Repository -IssueNumber $ghIssueNumber -DesiredLabels (Get-VorceStudiosPaperclipStatusLabelSet -Issue $Issue -Metadata $metadata -Approval $approval -PlanningRecord $planningRecord)
+    try {
+        Set-VorceStudiosProjectExtraFields -Repository $Context.Repository -IssueNumber $ghIssueNumber -FieldMap (Get-VorceStudiosProjectFieldValueMap -Issue $Issue -Metadata $metadata -PlanningRecord $planningRecord -Approval $approval -BaseSync $baseSync) | Out-Null
+    } catch {
+        Write-Warning ("Project-V2-Sync fuer GH #{0} wird spaeter erneut versucht: {1}" -f $ghIssueNumber, $_.Exception.Message)
+    }
+
+    return [pscustomobject]$fields
 }
-=======
-    # Stub for field sync
-    return $true
-}
->>>>>>> 985aead14 (chore: restore Paperclip scripts and docs deleted in 4b1c517a5 (regression fix))
