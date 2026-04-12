@@ -15,7 +15,7 @@
 **Vulnerability:** The HTTP API server in `crates/mapmap-control/src/web/server.rs` used the legacy header `X-XSS-Protection: 1; mode=block`. This feature is deprecated across modern browsers and is considered an anti-pattern as it can introduce new vulnerabilities like selective blocklist-based side-channel leaks.
 **Learning:** Using `X-XSS-Protection: 1; mode=block` can sometimes allow attackers to disable legitimate scripts on the page by tricking the browser's XSS auditor into blocking them (an XSS-Auditor bypass/denial-of-service). Modern applications should rely exclusively on Content Security Policy (CSP).
 **Prevention:** Always set `X-XSS-Protection: 0` to disable the legacy auditor and enforce strong CSP headers instead for XSS defense-in-depth.
-## 2024-04-10 - DoS Panic via NaN Float Sorting
-**Schwachstelle:** Die Verwendung von `.unwrap()` nach `.partial_cmp()` bei Floating-Point-Zahlen (wie `f32` oder `f64`) in `sort_by` Closures (z.B. in `animation.rs` und `mapping.rs`) führt zu einer `Panic` und damit zu einem Absturz (Denial of Service), wenn eine der Zahlen `NaN` ist.
+## 2024-05-24 - DoS Panic via NaN Float Sorting
+**Schwachstelle:** Die Verwendung von `.unwrap()` nach `.partial_cmp()` bei Floating-Point-Zahlen (wie `f32` oder `f64`) in `sort_by` Closures führt zu einer `Panic` und damit zu einem Absturz (Denial of Service), wenn eine der Zahlen `NaN` ist.
 **Lektion:** Externe Eingaben oder Berechnungen können zu `NaN`-Werten führen. `.partial_cmp()` gibt bei Vergleichen mit `NaN` `None` zurück, was durch `.unwrap()` zum Absturz führt.
 **Prävention:** Bei Float-Sortierungen immer `.unwrap_or(std::cmp::Ordering::Equal)` verwenden, um `NaN`-Werte sicher zu behandeln und Abstürze zu verhindern.

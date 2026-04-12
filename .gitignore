@@ -98,8 +98,8 @@ gha-creds-*.json
 .paperclip-home/
 
 # Vendor crates (should be managed by workspace)
-# crates/vendor/env_logger/
-# crates/vendor/rusty-spout/
+crates/vendor/env_logger/
+crates/vendor/rusty-spout/
 
 # Jules memory: Log files generated with date suffixes
 scripts/archive/logs/

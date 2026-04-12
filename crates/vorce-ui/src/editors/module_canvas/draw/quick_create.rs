@@ -21,7 +21,8 @@ pub fn draw_quick_create_popup(
             if filter_lower.is_empty() {
                 true
             } else {
-                item.label_lower.contains(&filter_lower) || item.search_tags.contains(&filter_lower)
+                item.label.to_lowercase().contains(&filter_lower)
+                    || item.search_tags.contains(&filter_lower)
             }
         })
         .collect();
