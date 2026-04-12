@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="resources/app_icons/Vorce_Logo_HQ-Full-transparent.png" alt="Vorce Logo" width="500">
+  <img src="resources/app_icons/Vorce_Logo_HQ-Full-Gray-Background-NoCorner.png" alt="Vorce Logo" width="500">
 
 # Vorce (formerly VjMapper)
 
