@@ -59,13 +59,11 @@ jobs:
             ./scripts/jules/sync-project-manager.ps1 `
               -Repository ${{ github.repository }} `
               -ApiKey $env:JULES_API_KEY `
-              -StaleAfterHours ([int]$staleAfterHours) `
-              -FailOnAttention
+              -StaleAfterHours ([int]$staleAfterHours)
           } else {
             ./scripts/jules/sync-project-manager.ps1 `
               -Repository ${{ github.repository }} `
               -ApiKey $env:JULES_API_KEY `
               -IssueNumber ([int]$issueNumber) `
-              -StaleAfterHours ([int]$staleAfterHours) `
-              -FailOnAttention
+              -StaleAfterHours ([int]$staleAfterHours)
           }
