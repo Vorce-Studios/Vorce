@@ -49,7 +49,7 @@ pub fn draw_search_popup(
                         return true;
                     }
                     let name = utils::get_part_property_text(&p.part_type).to_lowercase();
-                    let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
+                    let (_, _, _, type_name) = utils::get_part_style(&p.part_type, ui.visuals());
                     name.contains(&filter_lower) || type_name.to_lowercase().contains(&filter_lower)
                 })
                 .take(6)
@@ -59,7 +59,8 @@ pub fn draw_search_popup(
                 .max_height(120.0)
                 .show(ui, |ui| {
                     for part in matching_parts {
-                        let (_, _, icon, type_name) = utils::get_part_style(&part.part_type);
+                        let (_, _, icon, type_name) =
+                            utils::get_part_style(&part.part_type, ui.visuals());
                         let label = format!(
                             "{} {} - {}",
                             icon,

@@ -520,7 +520,7 @@ pub fn render_canvas(
             canvas.creating_connection
         {
             if let Some(pointer_pos) = ui.input(|i| i.pointer.hover_pos()) {
-                let mut color = utils::get_socket_color(from_type);
+                let mut color = utils::get_socket_color(from_type, ui.visuals());
                 for socket in &all_sockets {
                     if socket.position.distance(pointer_pos) < 15.0 * canvas.zoom {
                         let is_valid = if socket.part_id != from_part_id

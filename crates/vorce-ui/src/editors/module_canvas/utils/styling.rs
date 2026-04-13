@@ -6,6 +6,7 @@ use vorce_core::module::{
 
 pub fn get_part_style(
     part_type: &ModulePartType,
+    visuals: &egui::Visuals,
 ) -> (Color32, Color32, &'static str, &'static str) {
     match part_type {
         ModulePartType::Trigger(trigger) => {
@@ -19,45 +20,45 @@ pub fn get_part_style(
                 TriggerType::Fixed { .. } => "Fixed Timer",
             };
             (
-                Color32::from_rgb(60, 50, 70),
-                Color32::from_rgb(130, 80, 180),
+                visuals.widgets.noninteractive.bg_fill.gamma_multiply(0.8),
+                visuals.warn_fg_color.gamma_multiply(0.9),
                 "\u{26A1}",
                 name,
             )
         }
         ModulePartType::Source(SourceType::BevyAtmosphere { .. }) => (
-            Color32::from_rgb(40, 60, 80),
-            Color32::from_rgb(100, 180, 220),
+            visuals.widgets.noninteractive.bg_fill,
+            visuals.hyperlink_color.gamma_multiply(0.9),
             "â˜ ï¸ ",
             "Atmosphere",
         ),
         ModulePartType::Source(SourceType::BevyHexGrid { .. }) => (
-            Color32::from_rgb(40, 60, 80),
-            Color32::from_rgb(100, 180, 220),
+            visuals.widgets.noninteractive.bg_fill,
+            visuals.hyperlink_color.gamma_multiply(0.9),
             "\u{1F6D1}",
             "Hex Grid",
         ),
         ModulePartType::Source(SourceType::BevyParticles { .. }) => (
-            Color32::from_rgb(40, 60, 80),
-            Color32::from_rgb(100, 180, 220),
+            visuals.widgets.noninteractive.bg_fill,
+            visuals.hyperlink_color.gamma_multiply(0.9),
             "\u{2728}",
             "Particles",
         ),
         ModulePartType::Source(SourceType::Bevy3DText { .. }) => (
-            Color32::from_rgb(40, 60, 80),
-            Color32::from_rgb(100, 220, 180),
+            visuals.widgets.noninteractive.bg_fill,
+            visuals.widgets.active.bg_fill.gamma_multiply(0.9),
             "T",
             "3D Text",
         ),
         ModulePartType::Source(SourceType::BevyCamera { .. }) => (
-            Color32::from_rgb(40, 60, 80),
-            Color32::from_rgb(180, 100, 220),
+            visuals.widgets.noninteractive.bg_fill,
+            visuals.widgets.hovered.bg_fill.gamma_multiply(0.9),
             "\u{1F3A5}",
             "Camera",
         ),
         ModulePartType::Source(SourceType::Bevy3DShape { .. }) => (
-            Color32::from_rgb(40, 60, 80),
-            Color32::from_rgb(100, 180, 220),
+            visuals.widgets.noninteractive.bg_fill,
+            visuals.hyperlink_color.gamma_multiply(0.9),
             "\u{1F9CA}",
             "3D Shape",
         ),
@@ -83,8 +84,8 @@ pub fn get_part_style(
                 SourceType::Bevy3DModel { .. } => "3D Model",
             };
             (
-                Color32::from_rgb(50, 60, 70),
-                Color32::from_rgb(80, 140, 180),
+                visuals.widgets.noninteractive.bg_fill,
+                visuals.text_color().gamma_multiply(0.8),
                 "\u{1F3AC}",
                 name,
             )
@@ -103,8 +104,8 @@ pub fn get_part_style(
                 MaskType::Gradient { .. } => "Gradient",
             };
             (
-                Color32::from_rgb(60, 55, 70),
-                Color32::from_rgb(160, 100, 180),
+                visuals.widgets.noninteractive.bg_fill,
+                visuals.warn_fg_color.gamma_multiply(0.8),
                 "\u{1F3AD}",
                 name,
             )
@@ -154,15 +155,15 @@ pub fn get_part_style(
                 ModulizerType::AudioReactive { .. } => "Audio Reactive",
             };
             (
-                egui::Color32::from_rgb(60, 60, 50),
-                egui::Color32::from_rgb(180, 140, 60),
+                visuals.widgets.noninteractive.bg_fill,
+                visuals.warn_fg_color.gamma_multiply(0.8),
                 "ã€°ï¸ ",
                 name,
             )
         }
         ModulePartType::Mesh(_) => (
-            egui::Color32::from_rgb(60, 60, 80),
-            egui::Color32::from_rgb(100, 100, 200),
+            visuals.widgets.noninteractive.bg_fill,
+            visuals.hyperlink_color.gamma_multiply(0.8),
             "🕸️ï¸ ",
             "Mesh",
         ),
@@ -173,8 +174,8 @@ pub fn get_part_style(
                 LayerType::All { .. } => "All Layers",
             };
             (
-                Color32::from_rgb(50, 70, 60),
-                Color32::from_rgb(80, 180, 120),
+                visuals.widgets.noninteractive.bg_fill,
+                visuals.widgets.active.bg_fill.gamma_multiply(0.8),
                 "\u{1F4D1}",
                 name,
             )
@@ -188,8 +189,8 @@ pub fn get_part_style(
                 OutputType::Hue { .. } => "Philips Hue",
             };
             (
-                Color32::from_rgb(70, 50, 50),
-                Color32::from_rgb(180, 80, 80),
+                visuals.widgets.noninteractive.bg_fill,
+                visuals.error_fg_color.gamma_multiply(0.8),
                 "\u{1F4FA}",
                 name,
             )
@@ -201,8 +202,8 @@ pub fn get_part_style(
                 HueNodeType::EntertainmentGroup { .. } => "Entertainment Group",
             };
             (
-                Color32::from_rgb(60, 60, 40),
-                Color32::from_rgb(200, 200, 100),
+                visuals.widgets.noninteractive.bg_fill,
+                visuals.warn_fg_color.gamma_multiply(0.8),
                 "\u{1F4A1}",
                 name,
             )
@@ -223,14 +224,14 @@ pub fn get_part_category(part_type: &ModulePartType) -> &'static str {
     }
 }
 
-pub fn get_socket_color(socket_type: &ModuleSocketType) -> Color32 {
+pub fn get_socket_color(socket_type: &ModuleSocketType, visuals: &egui::Visuals) -> Color32 {
     match socket_type {
-        ModuleSocketType::Trigger => Color32::from_rgb(200, 50, 255), // Vibrant Purple
-        ModuleSocketType::Media => Color32::from_rgb(50, 150, 255),   // Bright Blue
-        ModuleSocketType::Effect => Color32::from_rgb(255, 160, 0),   // Vivid Orange
-        ModuleSocketType::Layer => Color32::from_rgb(0, 230, 120),    // Emerald Green
-        ModuleSocketType::Output => Color32::from_rgb(255, 60, 60),   // Bright Red
-        ModuleSocketType::Link => Color32::from_rgb(180, 180, 180),   // Silver
+        ModuleSocketType::Trigger => visuals.warn_fg_color, // Vibrant Purple
+        ModuleSocketType::Media => visuals.hyperlink_color, // Bright Blue
+        ModuleSocketType::Effect => visuals.warn_fg_color.gamma_multiply(0.9), // Vivid Orange
+        ModuleSocketType::Layer => visuals.widgets.active.bg_fill, // Emerald Green
+        ModuleSocketType::Output => visuals.error_fg_color, // Bright Red
+        ModuleSocketType::Link => visuals.text_color().gamma_multiply(0.7), // Silver
     }
 }
 

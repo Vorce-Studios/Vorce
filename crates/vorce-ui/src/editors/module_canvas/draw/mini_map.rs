@@ -80,7 +80,10 @@ pub fn draw_mini_map(
         let part_max = to_map(Pos2::new(part.position.0 + 200.0, part.position.1 + height));
         let part_rect = Rect::from_min_max(part_min, part_max);
 
-        let (_, title_color, _, _) = utils::get_part_style(&part.part_type);
+        let (_, title_color, _, _) = utils::get_part_style(
+            &part.part_type,
+            &painter.ctx().global_style().visuals.clone(),
+        );
         painter.rect_filled(part_rect, 1.0, title_color);
     }
 

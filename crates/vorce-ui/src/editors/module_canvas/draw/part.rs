@@ -17,7 +17,7 @@ pub fn draw_part_with_delete(
     node_animations_enabled: bool,
     animation_profile: crate::config::AnimationProfile,
 ) {
-    let (_bg_color, title_color, icon, name) = utils::get_part_style(&part.part_type);
+    let (_bg_color, title_color, icon, name) = utils::get_part_style(&part.part_type, ui.visuals());
     let category = utils::get_part_category(&part.part_type);
 
     let is_audio_trigger = matches!(
@@ -466,7 +466,7 @@ pub fn draw_part_with_delete(
         let socket_pos = Pos2::new(rect.min.x, socket_y);
         let socket_radius = 7.0 * canvas.zoom;
 
-        let socket_color = utils::get_socket_color(&socket.socket_type);
+        let socket_color = utils::get_socket_color(&socket.socket_type, ui.visuals());
 
         let is_hovered = if let Some(pointer_pos) = ui.input(|i| i.pointer.hover_pos()) {
             socket_pos.distance(pointer_pos) < socket_radius * 1.5
@@ -521,7 +521,7 @@ pub fn draw_part_with_delete(
         let socket_pos = Pos2::new(rect.max.x, socket_y);
         let socket_radius = 7.0 * canvas.zoom;
 
-        let socket_color = utils::get_socket_color(&socket.socket_type);
+        let socket_color = utils::get_socket_color(&socket.socket_type, ui.visuals());
 
         let is_hovered = if let Some(pointer_pos) = ui.input(|i| i.pointer.hover_pos()) {
             socket_pos.distance(pointer_pos) < socket_radius * 1.5

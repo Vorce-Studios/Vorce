@@ -41,7 +41,7 @@ where
             } else {
                 &vorce_core::module::ModuleSocketType::Media
             };
-            let cable_color = utils::get_socket_color(socket_type);
+            let cable_color = utils::get_socket_color(socket_type, ui.visuals());
 
             let from_local_y = title_height
                 + socket_offset_y

@@ -79,7 +79,8 @@ pub fn draw_quick_create_popup(
                     .show(ui, |ui| {
                         for (i, item) in filtered_items.iter().enumerate() {
                             let is_selected = i == canvas.quick_create_selected_index;
-                            let (_, _, icon, _) = utils::get_part_style(&item.part_type);
+                            let (_, _, icon, _) =
+                                utils::get_part_style(&item.part_type, ui.visuals());
                             let label_text = format!("{} {}", icon, item.label);
                             let response = ui.selectable_label(is_selected, label_text);
                             if response.clicked() {
