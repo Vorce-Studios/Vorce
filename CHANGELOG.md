@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- 2026-04-13: feat: 🎨 UI: Entferne festcodierte RGB-Farben in Utilities
 - 2026-04-12: perf: Bolt: Performance-Optimierung durch Vermeidung redundanter String-Allokationen in UI-Schleifen (#221)
 - 2026-04-12: feat: UI: Theme-aware colors in Node Editor (#222)
 - 2026-04-12: fix: Sentinel: Fix DoS panic on float sorting with NaN (#223)
