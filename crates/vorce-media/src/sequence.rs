@@ -125,10 +125,7 @@ impl ImageSequenceDecoder {
     pub fn is_supported_image(path: &Path) -> bool {
         if let Some(ext) = path.extension() {
             let ext_str = ext.to_string_lossy().to_lowercase();
-            matches!(
-                ext_str.as_str(),
-                "png" | "jpg" | "jpeg" | "tif" | "tiff" | "bmp" | "webp"
-            )
+            matches!(ext_str.as_str(), "png" | "jpg" | "jpeg" | "tif" | "tiff" | "bmp" | "webp")
         } else {
             false
         }
@@ -185,9 +182,7 @@ impl VideoDecoder for ImageSequenceDecoder {
 
     fn seek(&mut self, timestamp: Duration) -> Result<()> {
         if timestamp > self.duration {
-            return Err(MediaError::SeekError(
-                "Timestamp beyond duration".to_string(),
-            ));
+            return Err(MediaError::SeekError("Timestamp beyond duration".to_string()));
         }
 
         let frame_index = (timestamp.as_secs_f64() * self.fps) as usize;
@@ -220,15 +215,9 @@ mod tests {
 
     #[test]
     fn test_image_sequence_is_supported_image() {
-        assert!(ImageSequenceDecoder::is_supported_image(Path::new(
-            "frame001.png"
-        )));
-        assert!(ImageSequenceDecoder::is_supported_image(Path::new(
-            "frame001.jpg"
-        )));
-        assert!(!ImageSequenceDecoder::is_supported_image(Path::new(
-            "frame001.mp4"
-        )));
+        assert!(ImageSequenceDecoder::is_supported_image(Path::new("frame001.png")));
+        assert!(ImageSequenceDecoder::is_supported_image(Path::new("frame001.jpg")));
+        assert!(!ImageSequenceDecoder::is_supported_image(Path::new("frame001.mp4")));
     }
 
     #[test]
