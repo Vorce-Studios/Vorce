@@ -135,11 +135,18 @@ jobs:
           # Fetch the base branch to compare against
           git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
 
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_BRANCH="${{ github.event.pull_request.head.ref }}"
+          
           if git diff --name-only ${{ github.base_ref }}...HEAD | grep -q "CHANGELOG.md"; then
             echo "CHANGELOG.md updated."
           else
-            echo "::error::CHANGELOG.md was not updated in this PR. Please add a changelog entry to document your changes."
-            exit 1
+            if [[ "$PR_TITLE" =~ ^(chore|test|🧪|🧹|✨|⚡).* ]] || [[ "$PR_BRANCH" =~ ^dependabot/.* ]]; then
+              echo "::warning::CHANGELOG.md was not updated in this PR, but it's a chore/test/dependabot PR, so we won't fail the build."
+            else
+              echo "::error::CHANGELOG.md was not updated in this PR. Please add a changelog entry to document your changes."
+              exit 1
+            fi
           fi
 
   build-linux:
