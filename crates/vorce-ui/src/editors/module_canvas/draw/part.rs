@@ -216,7 +216,7 @@ pub fn draw_part_with_delete(
             Color32::WHITE,
         );
     } else {
-        painter.rect_filled(preview_rect, 0.0, Color32::from_gray(15));
+        painter.rect_filled(preview_rect, 0.0, ui.visuals().extreme_bg_color);
     }
 
     let mut cursor_x = rect.min.x + 8.0 * canvas.zoom;
@@ -235,7 +235,7 @@ pub fn draw_part_with_delete(
     cursor_x += icon_galley.size().x + 6.0 * canvas.zoom;
 
     let category_text = category.to_uppercase();
-    let category_color = Color32::from_white_alpha(160);
+    let category_color = ui.visuals().text_color().gamma_multiply(0.6);
     let category_galley = ui.painter().layout_no_wrap(
         category_text,
         egui::FontId::proportional(10.0 * canvas.zoom),
@@ -293,7 +293,7 @@ pub fn draw_part_with_delete(
             egui::Align2::CENTER_CENTER,
             property_text,
             egui::FontId::proportional(10.0 * canvas.zoom),
-            Color32::from_gray(180),
+            ui.visuals().text_color().gamma_multiply(0.7),
         );
     }
 
@@ -315,7 +315,7 @@ pub fn draw_part_with_delete(
 
             let bar_bg =
                 Rect::from_min_size(Pos2::new(bar_x, bar_y), Vec2::new(bar_width, bar_height));
-            painter.rect_filled(bar_bg, 2.0 * canvas.zoom, Color32::from_gray(30));
+            painter.rect_filled(bar_bg, 2.0 * canvas.zoom, ui.visuals().faint_bg_color);
 
             let progress_width = (progress * bar_width).max(2.0 * canvas.zoom);
             let progress_rect = Rect::from_min_size(
@@ -418,7 +418,7 @@ pub fn draw_part_with_delete(
                     Pos2::new(meter_x, meter_y),
                     Vec2::new(meter_width, meter_height),
                 );
-                painter.rect_filled(meter_bg, 2.0, Color32::from_gray(20));
+                painter.rect_filled(meter_bg, 2.0, ui.visuals().extreme_bg_color);
 
                 let num_segments = 20;
                 let segment_spacing = 1.0 * canvas.zoom;
@@ -484,7 +484,7 @@ pub fn draw_part_with_delete(
         painter.circle_filled(
             socket_pos,
             socket_radius - 2.0 * canvas.zoom,
-            Color32::from_gray(20),
+            ui.visuals().extreme_bg_color,
         );
         painter.circle_filled(
             socket_pos,
@@ -492,7 +492,7 @@ pub fn draw_part_with_delete(
             if is_hovered {
                 socket_color
             } else {
-                Color32::from_gray(100)
+                ui.visuals().text_color().gamma_multiply(0.4)
             },
         );
 
@@ -512,7 +512,7 @@ pub fn draw_part_with_delete(
             egui::Align2::LEFT_CENTER,
             &display_name,
             egui::FontId::proportional(11.0 * canvas.zoom),
-            Color32::from_gray(230),
+            ui.visuals().text_color().gamma_multiply(0.9),
         );
     }
 
@@ -539,7 +539,7 @@ pub fn draw_part_with_delete(
         painter.circle_filled(
             socket_pos,
             socket_radius - 2.0 * canvas.zoom,
-            Color32::from_gray(20),
+            ui.visuals().extreme_bg_color,
         );
         painter.circle_filled(
             socket_pos,
@@ -547,7 +547,7 @@ pub fn draw_part_with_delete(
             if is_hovered {
                 socket_color
             } else {
-                Color32::from_gray(100)
+                ui.visuals().text_color().gamma_multiply(0.4)
             },
         );
 
@@ -567,7 +567,7 @@ pub fn draw_part_with_delete(
             egui::Align2::RIGHT_CENTER,
             &display_name,
             egui::FontId::proportional(11.0 * canvas.zoom),
-            Color32::from_gray(230),
+            ui.visuals().text_color().gamma_multiply(0.9),
         );
     }
 }
