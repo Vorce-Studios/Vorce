@@ -25,20 +25,21 @@ jobs:
   sync:
     name: Sync Project Manager Tracking
     runs-on: ubuntu-latest
+    env:
+      JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
 
     steps:
       - uses: actions/checkout@v6
 
       - name: Skip when Jules API key is missing
-        if: ${{ secrets.JULES_API_KEY == '' }}
+        if: ${{ env.JULES_API_KEY == '' }}
         run: echo "JULES_API_KEY is not configured. Skipping Project Manager sync."
 
       - name: Sync all tracked issues
-        if: ${{ secrets.JULES_API_KEY != '' }}
+        if: ${{ env.JULES_API_KEY != '' }}
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.PROJECT_SYNC_GH_TOKEN || github.token }}
-          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
           VORCE_PROJECT_OWNER: ${{ vars.VORCE_PROJECT_OWNER || github.repository_owner }}
           VORCE_PROJECT_NUMBER: ${{ vars.VORCE_PROJECT_NUMBER }}
           VORCE_PROJECT_STATUS_FIELD: ${{ vars.VORCE_PROJECT_STATUS_FIELD }}
@@ -59,13 +60,11 @@ jobs:
             ./scripts/jules/sync-project-manager.ps1 `
               -Repository ${{ github.repository }} `
               -ApiKey $env:JULES_API_KEY `
-              -StaleAfterHours ([int]$staleAfterHours) `
-              -FailOnAttention
+              -StaleAfterHours ([int]$staleAfterHours)
           } else {
             ./scripts/jules/sync-project-manager.ps1 `
               -Repository ${{ github.repository }} `
               -ApiKey $env:JULES_API_KEY `
               -IssueNumber ([int]$issueNumber) `
-              -StaleAfterHours ([int]$staleAfterHours) `
-              -FailOnAttention
+              -StaleAfterHours ([int]$staleAfterHours)
           }
