@@ -44,8 +44,12 @@ jobs:
       - name: 'Run Gemini pull request review'
         uses: 'google-github-actions/run-gemini-cli@v0' # ratchet:exclude
         id: 'gemini_pr_review'
+<<<<<<< HEAD
         if: |-
           ${{ secrets.GEMINI_API_KEY != '' || secrets.GOOGLE_API_KEY != '' || vars.GCP_WIF_PROVIDER != '' }}
+=======
+        if: ${{ secrets.GEMINI_API_KEY != '' || vars.GCP_WIF_PROVIDER != '' || secrets.GOOGLE_API_KEY != '' }}
+>>>>>>> main
         env:
           GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
           ISSUE_TITLE: '${{ github.event.pull_request.title || github.event.issue.title }}'
