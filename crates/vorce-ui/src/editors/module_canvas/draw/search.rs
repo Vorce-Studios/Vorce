@@ -48,9 +48,13 @@ pub fn draw_search_popup(
                     if filter_lower.is_empty() {
                         return true;
                     }
-                    let name = utils::get_part_property_text(&p.part_type).to_lowercase();
                     let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
-                    name.contains(&filter_lower) || type_name.to_lowercase().contains(&filter_lower)
+                    // ⚡ Bolt: Check case-sensitive properties first to potentially avoid .to_lowercase() allocations
+                    let property_text = utils::get_part_property_text(&p.part_type);
+                    property_text.contains(&filter_lower)
+                        || type_name.contains(&filter_lower)
+                        || property_text.to_lowercase().contains(&filter_lower)
+                        || type_name.to_lowercase().contains(&filter_lower)
                 })
                 .take(6)
                 .collect();
