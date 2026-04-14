@@ -450,3 +450,22 @@ fn test_bpm_beat_timestamps_limit() {
     assert!(analysis.tempo_bpm.is_some());
     assert_eq!(analyzer.beat_timestamps.len(), 16);
 }
+
+#[test]
+fn test_sample_rate() {
+    let mut config = AudioAnalyzerV2Config {
+        sample_rate: 44100,
+        ..Default::default()
+    };
+    let mut analyzer = AudioAnalyzerV2::new(config.clone());
+
+    // Initial sample rate should be 44100
+    assert_eq!(analyzer.sample_rate(), 44100);
+
+    // Update config to 48000
+    config.sample_rate = 48000;
+    analyzer.update_config(config);
+
+    // Updated sample rate should be 48000
+    assert_eq!(analyzer.sample_rate(), 48000);
+}
