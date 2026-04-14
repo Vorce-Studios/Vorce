@@ -215,3 +215,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 2026-04-12: feat: UI: Theme-aware colors in Node Editor (#222)
 - 2026-04-12: fix: Sentinel: Fix DoS panic on float sorting with NaN (#223)
 - 2026-04-12: feat: UI: Visuelle Theme-Konsistenz in Media Browser Widgets (#218)
+- 2026-04-14: test: Add missing test coverage for list_devices in audio backend (#261)
