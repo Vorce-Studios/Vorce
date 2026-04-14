@@ -428,3 +428,26 @@ pub mod mock_backend {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::mock_backend::MockBackend;
+    use super::AudioBackend;
+
+    #[test]
+    fn test_mock_backend_new() {
+        let mut backend = MockBackend::new();
+        // Test that it starts properly
+        assert!(backend.start().is_ok());
+
+        // Test that it returns samples (initial phase should give us expected values or non-empty buffer)
+        let samples = backend.get_samples();
+        assert_eq!(samples.len(), 1024);
+
+        // Check that some sine wave data is actually generated (not just zeros)
+        let has_non_zero = samples.iter().any(|&s| s != 0.0);
+        assert!(has_non_zero);
+
+        backend.stop();
+    }
+}
