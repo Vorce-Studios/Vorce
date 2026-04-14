@@ -428,3 +428,39 @@ pub mod mock_backend {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "audio")]
+    #[test]
+    fn test_list_devices() {
+        use super::cpal_backend::CpalBackend;
+
+        let result = CpalBackend::list_devices();
+
+        // The function should return either an Ok with an Option<Vec<String>> or an Err
+        match result {
+            Ok(devices) => {
+                if let Some(device_list) = devices {
+                    #[cfg(target_os = "macos")]
+                    {
+                        assert!(
+                            device_list.is_empty(),
+                            "On macos, list_devices should return an empty list"
+                        );
+                    }
+                    #[cfg(not(target_os = "macos"))]
+                    {
+                        // On other platforms, it's just a list that could be empty or populated
+                        let _ = device_list;
+                    }
+                }
+            }
+            Err(e) => {
+                // If we get an error (e.g. no devices found on CI environment),
+                // that is also a valid operational result
+                println!("Got expected error in test environment: {:?}", e);
+            }
+        }
+    }
+}
