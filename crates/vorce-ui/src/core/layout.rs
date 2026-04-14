@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Represents one of the 5 predefined layout slots.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
@@ -41,7 +41,10 @@ impl Default for SlotManager {
 
         // Default Configuration (Hybrid System Standard)
         assignments.insert(UiSlot::Top, vec![]); // Toolbar/Menu handled separately for now
-        assignments.insert(UiSlot::Left, vec![PanelId::Preview, PanelId::MediaBrowser, PanelId::Dashboard, PanelId::AudioPanel]);
+        assignments.insert(
+            UiSlot::Left,
+            vec![PanelId::Preview, PanelId::MediaBrowser, PanelId::Dashboard, PanelId::AudioPanel],
+        );
         assignments.insert(UiSlot::Right, vec![PanelId::Inspector, PanelId::EffectChain]);
         assignments.insert(UiSlot::Bottom, vec![PanelId::Timeline]);
         assignments.insert(UiSlot::Center, vec![PanelId::ModuleCanvas]);
@@ -58,10 +61,7 @@ impl Default for SlotManager {
         visibility.insert(PanelId::Preview, true);
         visibility.insert(PanelId::EffectChain, true);
 
-        Self {
-            assignments,
-            visibility,
-        }
+        Self { assignments, visibility }
     }
 }
 

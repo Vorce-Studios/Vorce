@@ -1,12 +1,12 @@
 //! OSC client for sending messages
 
 #[cfg(feature = "osc")]
-use rosc::{encoder, OscMessage, OscPacket};
+use rosc::{OscMessage, OscPacket, encoder};
 
 #[cfg(feature = "osc")]
 use std::net::{SocketAddr, UdpSocket};
 
-use crate::{error::ControlError, ControlTarget, ControlValue, Result};
+use crate::{ControlTarget, ControlValue, Result, error::ControlError};
 
 #[cfg(feature = "osc")]
 use super::{address::control_target_to_address, types::control_value_to_osc};
@@ -33,17 +33,12 @@ impl OscClient {
 
         tracing::info!("OSC client created, sending to {}", destination);
 
-        Ok(Self {
-            socket,
-            destination,
-        })
+        Ok(Self { socket, destination })
     }
 
     #[cfg(not(feature = "osc"))]
     pub fn new(_destination: &str) -> Result<Self> {
-        Err(ControlError::OscError(
-            "OSC feature not enabled".to_string(),
-        ))
+        Err(ControlError::OscError("OSC feature not enabled".to_string()))
     }
 
     /// Send a control value update
@@ -52,10 +47,7 @@ impl OscClient {
         let address = control_target_to_address(target);
         let args = control_value_to_osc(value);
 
-        let msg = OscMessage {
-            addr: address.clone(),
-            args,
-        };
+        let msg = OscMessage { addr: address.clone(), args };
 
         let packet = OscPacket::Message(msg);
         let buf = encoder::encode(&packet)
@@ -70,18 +62,13 @@ impl OscClient {
 
     #[cfg(not(feature = "osc"))]
     pub fn send_update(&self, _target: &ControlTarget, _value: &ControlValue) -> Result<()> {
-        Err(ControlError::OscError(
-            "OSC feature not enabled".to_string(),
-        ))
+        Err(ControlError::OscError("OSC feature not enabled".to_string()))
     }
 
     /// Send a raw OSC message
     #[cfg(feature = "osc")]
     pub fn send_message(&self, address: &str, args: Vec<rosc::OscType>) -> Result<()> {
-        let msg = OscMessage {
-            addr: address.to_string(),
-            args,
-        };
+        let msg = OscMessage { addr: address.to_string(), args };
 
         let packet = OscPacket::Message(msg);
         let buf = encoder::encode(&packet)
@@ -96,9 +83,7 @@ impl OscClient {
 
     #[cfg(not(feature = "osc"))]
     pub fn send_message(&self, _address: &str, _args: Vec<()>) -> Result<()> {
-        Err(ControlError::OscError(
-            "OSC feature not enabled".to_string(),
-        ))
+        Err(ControlError::OscError("OSC feature not enabled".to_string()))
     }
 
     /// Get the destination address

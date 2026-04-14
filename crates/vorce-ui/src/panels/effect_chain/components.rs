@@ -53,15 +53,9 @@ impl super::panel::EffectChainPanel {
             colors::CYAN_ACCENT.linear_multiply(0.4) // Highlight when dragging
         } else if enabled {
             // Active effect background - subtle tint
-            colors::CYAN_ACCENT
-                .linear_multiply(0.05)
-                .gamma_multiply(0.5)
+            colors::CYAN_ACCENT.linear_multiply(0.05).gamma_multiply(0.5)
         } else {
-            if is_even {
-                colors::DARK_GREY
-            } else {
-                colors::DARKER_GREY
-            }
+            if is_even { colors::DARK_GREY } else { colors::DARKER_GREY }
         };
 
         // Add stroke if dragging or enabled
@@ -84,11 +78,7 @@ impl super::panel::EffectChainPanel {
                 ui.horizontal(|ui| {
                     // Drag Handle
                     let handle_resp = ui
-                        .add(
-                            egui::Button::new("⋮⋮")
-                                .frame(false)
-                                .sense(egui::Sense::drag()),
-                        )
+                        .add(egui::Button::new("⋮⋮").frame(false).sense(egui::Sense::drag()))
                         .on_hover_text("Drag to reorder. Hold Alt+Up/Down to move.");
 
                     if handle_resp.drag_started() {
@@ -109,8 +99,7 @@ impl super::panel::EffectChainPanel {
                     }
 
                     // Enable toggle
-                    ui.checkbox(&mut enabled, "")
-                        .on_hover_text("Enable/Disable Effect");
+                    ui.checkbox(&mut enabled, "").on_hover_text("Enable/Disable Effect");
 
                     // Effect name with icon
                     let header_text = effect_type.display_name(locale);

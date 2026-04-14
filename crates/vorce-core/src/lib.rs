@@ -86,11 +86,11 @@ pub use oscillator::{
     ColorMode, CoordinateMode, OscillatorConfig, PhaseInitMode, RingParams, SimulationResolution,
 };
 pub use recent_effect_configs::{
-    EffectConfig, EffectParamValue, RecentConfigQueue, RecentEffectConfigs, MAX_RECENT_CONFIGS,
+    EffectConfig, EffectParamValue, MAX_RECENT_CONFIGS, RecentConfigQueue, RecentEffectConfigs,
 };
 
 // Geometry & Meshes
-pub use mesh::{keystone, BezierPatch, Mesh, MeshType, MeshVertex, VertexId};
+pub use mesh::{BezierPatch, Mesh, MeshType, MeshVertex, VertexId, keystone};
 pub use paint::{Paint, PaintId, PaintManager, PaintType};
 
 // Logging & Diagnostics
@@ -152,10 +152,7 @@ pub struct Vertex {
 impl Vertex {
     /// Create a new vertex
     pub fn new(x: f32, y: f32, u: f32, v: f32) -> Self {
-        Self {
-            position: Vec2::new(x, y),
-            uv: Vec2::new(u, v),
-        }
+        Self { position: Vec2::new(x, y), uv: Vec2::new(u, v) }
     }
 }
 

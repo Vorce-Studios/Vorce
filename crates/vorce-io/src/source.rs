@@ -111,12 +111,7 @@ pub struct TestVideoSource {
 impl TestVideoSource {
     /// Creates a new test video source.
     pub fn new(name: impl Into<String>, format: VideoFormat) -> Self {
-        Self {
-            name: name.into(),
-            format,
-            frame_count: 0,
-            max_frames: None,
-        }
+        Self { name: name.into(), format, frame_count: 0, max_frames: None }
     }
 
     /// Sets a maximum number of frames to produce.
@@ -149,11 +144,7 @@ impl VideoSource for TestVideoSource {
     }
 
     fn is_available(&self) -> bool {
-        if let Some(max) = self.max_frames {
-            self.frame_count < max
-        } else {
-            true
-        }
+        if let Some(max) = self.max_frames { self.frame_count < max } else { true }
     }
 
     fn frame_count(&self) -> u64 {

@@ -4,9 +4,9 @@ use super::capabilities;
 use super::common::{
     render_common_controls, render_info_label, render_timeline, render_transport_controls,
 };
+use crate::UIAction;
 use crate::theme::colors;
 use crate::widgets::styled_slider;
-use crate::UIAction;
 use egui::{Color32, Ui, Vec2};
 use vorce_core::module::{BevyCameraMode, ModuleId, ModulePartId, SourceType};
 
@@ -157,11 +157,7 @@ pub fn render_source_ui(
                     flip_vertical: false,
                 },
                 "VideoMulti" => SourceType::VideoMulti {
-                    shared_id: if shared_id.is_empty() {
-                        path
-                    } else {
-                        shared_id
-                    },
+                    shared_id: if shared_id.is_empty() { path } else { shared_id },
                     opacity: 1.0,
                     blend_mode: None,
                     brightness: 0.0,
@@ -177,11 +173,7 @@ pub fn render_source_ui(
                     flip_vertical: false,
                 },
                 "ImageMulti" => SourceType::ImageMulti {
-                    shared_id: if shared_id.is_empty() {
-                        path
-                    } else {
-                        shared_id
-                    },
+                    shared_id: if shared_id.is_empty() { path } else { shared_id },
                     opacity: 1.0,
                     blend_mode: None,
                     brightness: 0.0,
@@ -267,11 +259,7 @@ pub fn render_source_ui(
                     ui.horizontal(|ui| {
                         ui.label("Path:");
                         ui.add(egui::TextEdit::singleline(path).desired_width(160.0));
-                        if ui
-                            .button("\u{1F4C2}")
-                            .on_hover_text("Select Media File")
-                            .clicked()
-                        {
+                        if ui.button("\u{1F4C2}").on_hover_text("Select Media File").clicked() {
                             actions.push(UIAction::PickMediaFile(
                                 module_id,
                                 part_id,
@@ -283,11 +271,7 @@ pub fn render_source_ui(
             }
 
             // Playback Info
-            let player_info = canvas
-                .player_info
-                .get(&part_id)
-                .cloned()
-                .unwrap_or_default();
+            let player_info = canvas.player_info.get(&part_id).cloned().unwrap_or_default();
             let video_duration = player_info.duration.max(1.0) as f32;
             let current_pos = player_info.current_time as f32;
             let is_playing = player_info.is_playing;
@@ -343,15 +327,7 @@ pub fn render_source_ui(
             }
             ui.add_space(4.0);
 
-            render_timeline(
-                canvas,
-                ui,
-                part_id,
-                video_duration,
-                current_pos,
-                start_time,
-                end_time,
-            );
+            render_timeline(canvas, ui, part_id, video_duration, current_pos, start_time, end_time);
 
             // Safe Reset Clip (Mary StyleUX)
             ui.vertical_centered(|ui| {
@@ -492,11 +468,7 @@ pub fn render_source_ui(
                     ui.horizontal(|ui| {
                         ui.label("Path:");
                         ui.add(egui::TextEdit::singleline(path).desired_width(160.0));
-                        if ui
-                            .button("\u{1F4C2}")
-                            .on_hover_text("Select Image File")
-                            .clicked()
-                        {
+                        if ui.button("\u{1F4C2}").on_hover_text("Select Image File").clicked() {
                             actions.push(crate::UIAction::PickMediaFile(
                                 module_id,
                                 part_id,
@@ -672,30 +644,16 @@ pub fn render_source_ui(
                 );
             }
             ui.add_enabled_ui(supported, |ui| {
-                egui::Grid::new("shader_grid")
-                    .num_columns(2)
-                    .spacing([10.0, 8.0])
-                    .show(ui, |ui| {
-                        ui.label("Name:");
-                        ui.text_edit_singleline(name);
-                        ui.end_row();
-                    });
+                egui::Grid::new("shader_grid").num_columns(2).spacing([10.0, 8.0]).show(ui, |ui| {
+                    ui.label("Name:");
+                    ui.text_edit_singleline(name);
+                    ui.end_row();
+                });
             });
         }
-        SourceType::Bevy3DText {
-            text,
-            font_size,
-            color,
-            position,
-            rotation,
-            alignment,
-        } => {
+        SourceType::Bevy3DText { text, font_size, color, position, rotation, alignment } => {
             ui.label("📝 3D Text");
-            ui.add(
-                egui::TextEdit::multiline(text)
-                    .desired_rows(3)
-                    .desired_width(f32::INFINITY),
-            );
+            ui.add(egui::TextEdit::multiline(text).desired_rows(3).desired_width(f32::INFINITY));
 
             ui.horizontal(|ui| {
                 ui.label("Size:");
@@ -731,24 +689,9 @@ pub fn render_source_ui(
 
             ui.horizontal(|ui| {
                 ui.label("Rot:");
-                ui.add(
-                    egui::DragValue::new(&mut rotation[0])
-                        .speed(1.0)
-                        .prefix("X:")
-                        .suffix("°"),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut rotation[1])
-                        .speed(1.0)
-                        .prefix("Y:")
-                        .suffix("°"),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut rotation[2])
-                        .speed(1.0)
-                        .prefix("Z:")
-                        .suffix("°"),
-                );
+                ui.add(egui::DragValue::new(&mut rotation[0]).speed(1.0).prefix("X:").suffix("°"));
+                ui.add(egui::DragValue::new(&mut rotation[1]).speed(1.0).prefix("Y:").suffix("°"));
+                ui.add(egui::DragValue::new(&mut rotation[2]).speed(1.0).prefix("Z:").suffix("°"));
             });
         }
         SourceType::BevyCamera { mode, fov, active } => {
@@ -776,10 +719,7 @@ pub fn render_source_ui(
                         .selectable_label(matches!(mode, BevyCameraMode::Fly { .. }), "Fly")
                         .clicked()
                     {
-                        *mode = BevyCameraMode::Fly {
-                            speed: 5.0,
-                            sensitivity: 1.0,
-                        };
+                        *mode = BevyCameraMode::Fly { speed: 5.0, sensitivity: 1.0 };
                     }
                     if ui
                         .selectable_label(matches!(mode, BevyCameraMode::Static { .. }), "Static")
@@ -794,12 +734,7 @@ pub fn render_source_ui(
 
             ui.separator();
             match mode {
-                BevyCameraMode::Orbit {
-                    radius,
-                    speed,
-                    target,
-                    height,
-                } => {
+                BevyCameraMode::Orbit { radius, speed, target, height } => {
                     ui.label("Orbit Settings");
                     ui.add(egui::Slider::new(radius, 1.0..=50.0).text("Radius"));
                     ui.add(egui::Slider::new(speed, -90.0..=90.0).text("Speed (°/s)"));
@@ -812,10 +747,7 @@ pub fn render_source_ui(
                         ui.add(egui::DragValue::new(&mut target[2]).prefix("Z:").speed(0.1));
                     });
                 }
-                BevyCameraMode::Fly {
-                    speed,
-                    sensitivity: _,
-                } => {
+                BevyCameraMode::Fly { speed, sensitivity: _ } => {
                     ui.label("Fly Settings");
                     ui.add(egui::Slider::new(speed, 0.0..=50.0).text("Speed"));
                     ui.label("Direction: Forward (Z-)");
@@ -824,39 +756,15 @@ pub fn render_source_ui(
                     ui.label("Static Settings");
                     ui.label("Position:");
                     ui.horizontal(|ui| {
-                        ui.add(
-                            egui::DragValue::new(&mut position[0])
-                                .prefix("X:")
-                                .speed(0.1),
-                        );
-                        ui.add(
-                            egui::DragValue::new(&mut position[1])
-                                .prefix("Y:")
-                                .speed(0.1),
-                        );
-                        ui.add(
-                            egui::DragValue::new(&mut position[2])
-                                .prefix("Z:")
-                                .speed(0.1),
-                        );
+                        ui.add(egui::DragValue::new(&mut position[0]).prefix("X:").speed(0.1));
+                        ui.add(egui::DragValue::new(&mut position[1]).prefix("Y:").speed(0.1));
+                        ui.add(egui::DragValue::new(&mut position[2]).prefix("Z:").speed(0.1));
                     });
                     ui.label("Look At:");
                     ui.horizontal(|ui| {
-                        ui.add(
-                            egui::DragValue::new(&mut look_at[0])
-                                .prefix("X:")
-                                .speed(0.1),
-                        );
-                        ui.add(
-                            egui::DragValue::new(&mut look_at[1])
-                                .prefix("Y:")
-                                .speed(0.1),
-                        );
-                        ui.add(
-                            egui::DragValue::new(&mut look_at[2])
-                                .prefix("Z:")
-                                .speed(0.1),
-                        );
+                        ui.add(egui::DragValue::new(&mut look_at[0]).prefix("X:").speed(0.1));
+                        ui.add(egui::DragValue::new(&mut look_at[1]).prefix("Y:").speed(0.1));
+                        ui.add(egui::DragValue::new(&mut look_at[2]).prefix("Z:").speed(0.1));
                     });
                 }
             }
@@ -880,16 +788,8 @@ pub fn render_source_ui(
 
             ui.label("Sun Position (Azimuth, Elevation):");
             ui.horizontal(|ui| {
-                ui.add(
-                    egui::DragValue::new(&mut sun_position.0)
-                        .prefix("Az:")
-                        .speed(0.1),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut sun_position.1)
-                        .prefix("El:")
-                        .speed(0.1),
-                );
+                ui.add(egui::DragValue::new(&mut sun_position.0).prefix("Az:").speed(0.1));
+                ui.add(egui::DragValue::new(&mut sun_position.1).prefix("El:").speed(0.1));
             });
         }
         SourceType::BevyHexGrid {
@@ -911,40 +811,16 @@ pub fn render_source_ui(
 
             ui.label("Position:");
             ui.horizontal(|ui| {
-                ui.add(
-                    egui::DragValue::new(&mut position[0])
-                        .prefix("X:")
-                        .speed(0.1),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut position[1])
-                        .prefix("Y:")
-                        .speed(0.1),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut position[2])
-                        .prefix("Z:")
-                        .speed(0.1),
-                );
+                ui.add(egui::DragValue::new(&mut position[0]).prefix("X:").speed(0.1));
+                ui.add(egui::DragValue::new(&mut position[1]).prefix("Y:").speed(0.1));
+                ui.add(egui::DragValue::new(&mut position[2]).prefix("Z:").speed(0.1));
             });
 
             ui.label("Rotation:");
             ui.horizontal(|ui| {
-                ui.add(
-                    egui::DragValue::new(&mut rotation[0])
-                        .prefix("X:")
-                        .speed(1.0),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut rotation[1])
-                        .prefix("Y:")
-                        .speed(1.0),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut rotation[2])
-                        .prefix("Z:")
-                        .speed(1.0),
-                );
+                ui.add(egui::DragValue::new(&mut rotation[0]).prefix("X:").speed(1.0));
+                ui.add(egui::DragValue::new(&mut rotation[1]).prefix("Y:").speed(1.0));
+                ui.add(egui::DragValue::new(&mut rotation[2]).prefix("Z:").speed(1.0));
             });
 
             ui.add(egui::DragValue::new(scale).prefix("Scale:").speed(0.1));
@@ -962,11 +838,7 @@ pub fn render_source_ui(
             ui.separator();
 
             ui.add(egui::DragValue::new(rate).prefix("Rate:").speed(1.0));
-            ui.add(
-                egui::DragValue::new(lifetime)
-                    .prefix("Lifetime:")
-                    .speed(0.1),
-            );
+            ui.add(egui::DragValue::new(lifetime).prefix("Lifetime:").speed(0.1));
             ui.add(egui::DragValue::new(speed).prefix("Speed:").speed(0.1));
 
             ui.horizontal(|ui| {
@@ -980,40 +852,16 @@ pub fn render_source_ui(
 
             ui.label("Position:");
             ui.horizontal(|ui| {
-                ui.add(
-                    egui::DragValue::new(&mut position[0])
-                        .prefix("X:")
-                        .speed(0.1),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut position[1])
-                        .prefix("Y:")
-                        .speed(0.1),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut position[2])
-                        .prefix("Z:")
-                        .speed(0.1),
-                );
+                ui.add(egui::DragValue::new(&mut position[0]).prefix("X:").speed(0.1));
+                ui.add(egui::DragValue::new(&mut position[1]).prefix("Y:").speed(0.1));
+                ui.add(egui::DragValue::new(&mut position[2]).prefix("Z:").speed(0.1));
             });
 
             ui.label("Rotation:");
             ui.horizontal(|ui| {
-                ui.add(
-                    egui::DragValue::new(&mut rotation[0])
-                        .prefix("X:")
-                        .speed(1.0),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut rotation[1])
-                        .prefix("Y:")
-                        .speed(1.0),
-                );
-                ui.add(
-                    egui::DragValue::new(&mut rotation[2])
-                        .prefix("Z:")
-                        .speed(1.0),
-                );
+                ui.add(egui::DragValue::new(&mut rotation[0]).prefix("X:").speed(1.0));
+                ui.add(egui::DragValue::new(&mut rotation[1]).prefix("Y:").speed(1.0));
+                ui.add(egui::DragValue::new(&mut rotation[2]).prefix("Z:").speed(1.0));
             });
         }
         SourceType::Bevy3DShape {
@@ -1080,62 +928,29 @@ pub fn render_source_ui(
             ui.collapsing("📐 Transform (3D)", |ui| {
                 ui.label("Position:");
                 ui.horizontal(|ui| {
-                    ui.add(
-                        egui::DragValue::new(&mut position[0])
-                            .speed(0.1)
-                            .prefix("X: "),
-                    );
-                    ui.add(
-                        egui::DragValue::new(&mut position[1])
-                            .speed(0.1)
-                            .prefix("Y: "),
-                    );
-                    ui.add(
-                        egui::DragValue::new(&mut position[2])
-                            .speed(0.1)
-                            .prefix("Z: "),
-                    );
+                    ui.add(egui::DragValue::new(&mut position[0]).speed(0.1).prefix("X: "));
+                    ui.add(egui::DragValue::new(&mut position[1]).speed(0.1).prefix("Y: "));
+                    ui.add(egui::DragValue::new(&mut position[2]).speed(0.1).prefix("Z: "));
                 });
 
                 ui.label("Rotation:");
                 ui.horizontal(|ui| {
                     ui.add(
-                        egui::DragValue::new(&mut rotation[0])
-                            .speed(1.0)
-                            .prefix("X: ")
-                            .suffix("°"),
+                        egui::DragValue::new(&mut rotation[0]).speed(1.0).prefix("X: ").suffix("°"),
                     );
                     ui.add(
-                        egui::DragValue::new(&mut rotation[1])
-                            .speed(1.0)
-                            .prefix("Y: ")
-                            .suffix("°"),
+                        egui::DragValue::new(&mut rotation[1]).speed(1.0).prefix("Y: ").suffix("°"),
                     );
                     ui.add(
-                        egui::DragValue::new(&mut rotation[2])
-                            .speed(1.0)
-                            .prefix("Z: ")
-                            .suffix("°"),
+                        egui::DragValue::new(&mut rotation[2]).speed(1.0).prefix("Z: ").suffix("°"),
                     );
                 });
 
                 ui.label("Scale:");
                 ui.horizontal(|ui| {
-                    ui.add(
-                        egui::DragValue::new(&mut scale[0])
-                            .speed(0.01)
-                            .prefix("X: "),
-                    );
-                    ui.add(
-                        egui::DragValue::new(&mut scale[1])
-                            .speed(0.01)
-                            .prefix("Y: "),
-                    );
-                    ui.add(
-                        egui::DragValue::new(&mut scale[2])
-                            .speed(0.01)
-                            .prefix("Z: "),
-                    );
+                    ui.add(egui::DragValue::new(&mut scale[0]).speed(0.01).prefix("X: "));
+                    ui.add(egui::DragValue::new(&mut scale[1]).speed(0.01).prefix("Y: "));
+                    ui.add(egui::DragValue::new(&mut scale[2]).speed(0.01).prefix("Z: "));
                 });
             });
 
@@ -1161,14 +976,14 @@ pub fn render_source_ui(
                 );
             }
             ui.add_enabled_ui(supported, |ui| {
-                egui::Grid::new("live_input_grid")
-                    .num_columns(2)
-                    .spacing([10.0, 8.0])
-                    .show(ui, |ui| {
+                egui::Grid::new("live_input_grid").num_columns(2).spacing([10.0, 8.0]).show(
+                    ui,
+                    |ui| {
                         ui.label("Device ID:");
                         ui.add(egui::Slider::new(device_id, 0..=10));
                         ui.end_row();
-                    });
+                    },
+                );
             });
         }
         #[cfg(feature = "ndi")]
@@ -1209,9 +1024,8 @@ pub fn render_source_ui(
                     });
                 } else {
                     // Display current source
-                    let display_name = source_name
-                        .clone()
-                        .unwrap_or_else(|| "Not Connected".to_string());
+                    let display_name =
+                        source_name.clone().unwrap_or_else(|| "Not Connected".to_string());
                     ui.label(format!("Current: {}", display_name));
 
                     // Discover button
@@ -1329,21 +1143,9 @@ pub fn render_source_ui(
             ui.collapsing("Transform (3D)", |ui| {
                 ui.label("Position:");
                 ui.horizontal(|ui| {
-                    ui.add(
-                        egui::DragValue::new(&mut position[0])
-                            .speed(0.1)
-                            .prefix("X: "),
-                    );
-                    ui.add(
-                        egui::DragValue::new(&mut position[1])
-                            .speed(0.1)
-                            .prefix("Y: "),
-                    );
-                    ui.add(
-                        egui::DragValue::new(&mut position[2])
-                            .speed(0.1)
-                            .prefix("Z: "),
-                    );
+                    ui.add(egui::DragValue::new(&mut position[0]).speed(0.1).prefix("X: "));
+                    ui.add(egui::DragValue::new(&mut position[1]).speed(0.1).prefix("Y: "));
+                    ui.add(egui::DragValue::new(&mut position[2]).speed(0.1).prefix("Z: "));
                 });
 
                 ui.label("Rotation:");
@@ -1370,21 +1172,9 @@ pub fn render_source_ui(
 
                 ui.label("Scale:");
                 ui.horizontal(|ui| {
-                    ui.add(
-                        egui::DragValue::new(&mut scale[0])
-                            .speed(0.01)
-                            .prefix("X: "),
-                    );
-                    ui.add(
-                        egui::DragValue::new(&mut scale[1])
-                            .speed(0.01)
-                            .prefix("Y: "),
-                    );
-                    ui.add(
-                        egui::DragValue::new(&mut scale[2])
-                            .speed(0.01)
-                            .prefix("Z: "),
-                    );
+                    ui.add(egui::DragValue::new(&mut scale[0]).speed(0.01).prefix("X: "));
+                    ui.add(egui::DragValue::new(&mut scale[1]).speed(0.01).prefix("Y: "));
+                    ui.add(egui::DragValue::new(&mut scale[2]).speed(0.01).prefix("Z: "));
                 });
             });
 

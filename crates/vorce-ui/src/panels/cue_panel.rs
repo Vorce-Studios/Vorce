@@ -3,17 +3,17 @@ use std::time::Duration;
 
 use egui::{self, Button, ComboBox, RichText, ScrollArea, Slider, Ui};
 use vorce_control::{
-    cue::{triggers::*, Cue, CueList},
     ControlManager,
+    cue::{Cue, CueList, triggers::*},
 };
 
 use crate::{
+    UIAction,
     i18n::LocaleManager,
     icons::{AppIcon, IconManager},
     theme::colors,
     widgets::hold_to_action_icon,
     widgets::panel::{cyber_panel_frame, render_panel_header},
-    UIAction,
 };
 
 #[derive(Default)]
@@ -84,11 +84,7 @@ impl CuePanel {
 
             // --- Prev Button ---
             let prev_enabled = if let Some(current_id) = cue_list.current_cue() {
-                cue_list
-                    .cues()
-                    .iter()
-                    .position(|c| c.id == current_id)
-                    .is_some_and(|idx| idx > 0)
+                cue_list.cues().iter().position(|c| c.id == current_id).is_some_and(|idx| idx > 0)
             } else {
                 false
             };
@@ -117,14 +113,7 @@ impl CuePanel {
                     actions.push(UIAction::StopCue);
                 }
             } else {
-                self.icon_button(
-                    ui,
-                    icon_manager,
-                    AppIcon::ButtonStop,
-                    "btn-stop",
-                    i18n,
-                    false,
-                );
+                self.icon_button(ui, icon_manager, AppIcon::ButtonStop, "btn-stop", i18n, false);
             }
 
             ui.separator();
@@ -204,14 +193,7 @@ impl CuePanel {
             }
 
             if self.selected_cue_id.is_some()
-                && self.icon_button(
-                    ui,
-                    icon_manager,
-                    AppIcon::Remove,
-                    "btn-remove-cue",
-                    i18n,
-                    true,
-                )
+                && self.icon_button(ui, icon_manager, AppIcon::Remove, "btn-remove-cue", i18n, true)
             {
                 if let Some(id) = self.selected_cue_id {
                     actions.push(UIAction::RemoveCue(id));
@@ -243,10 +225,7 @@ impl CuePanel {
         ui.horizontal(|ui| {
             ui.label(i18n.t("label-fade-duration"));
             let mut fade_secs = cue.fade_duration.as_secs_f32();
-            if ui
-                .add(Slider::new(&mut fade_secs, 0.0..=30.0).suffix("s"))
-                .changed()
-            {
+            if ui.add(Slider::new(&mut fade_secs, 0.0..=30.0).suffix("s")).changed() {
                 cue.fade_duration = Duration::from_secs_f32(fade_secs);
                 changed = true;
             }
@@ -305,10 +284,7 @@ impl CuePanel {
                     });
                     ui.horizontal(|ui| {
                         let mut has_value = osc_trigger.value.is_some();
-                        if ui
-                            .checkbox(&mut has_value, i18n.t("check-osc-value"))
-                            .changed()
-                        {
+                        if ui.checkbox(&mut has_value, i18n.t("check-osc-value")).changed() {
                             changed = true;
                             if has_value {
                                 osc_trigger.value = Some(String::new());
@@ -365,7 +341,6 @@ impl CuePanel {
             }
         }
         // Fallback to text button if icons are not available
-        ui.add_enabled(enabled, Button::new(i18n.t(tooltip_key)))
-            .clicked()
+        ui.add_enabled(enabled, Button::new(i18n.t(tooltip_key))).clicked()
     }
 }

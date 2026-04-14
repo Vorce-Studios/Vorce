@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::module::types::{ModulePartType, PartType};
-    use crate::module::{VorceModule, ModulePlaybackMode};
+    use crate::module::{ModulePlaybackMode, VorceModule};
 
     #[test]
     fn test_module_add_part_creates_part_and_increments_id() {
@@ -138,7 +138,9 @@ mod tests {
         );
 
         let added_part2 = module.get_part(part_id2).unwrap();
-        if let ModulePartType::Output(OutputType::Projector { id, name, .. }) = &added_part2.part_type {
+        if let ModulePartType::Output(OutputType::Projector { id, name, .. }) =
+            &added_part2.part_type
+        {
             assert_eq!(*id, 2); // ID incremented to 2
             assert_eq!(name, "Output 2"); // Auto-generated name used 2
         } else {
@@ -148,8 +150,8 @@ mod tests {
 
     #[test]
     fn test_normalize_inserted_part_type_resolves_layer_id_conflict() {
-        use crate::module::types::layer::LayerType;
         use crate::layer::types::{BlendMode, MappingMode};
+        use crate::module::types::layer::LayerType;
 
         let mut module = VorceModule {
             id: 1,
@@ -210,10 +212,8 @@ mod tests {
             next_part_id: 1,
         };
 
-        let part_id = module.add_part_with_type(
-            ModulePartType::Trigger(TriggerType::Beat),
-            (0.0, 0.0),
-        );
+        let part_id =
+            module.add_part_with_type(ModulePartType::Trigger(TriggerType::Beat), (0.0, 0.0));
 
         let added_part = module.get_part(part_id).unwrap();
         assert!(matches!(added_part.part_type, ModulePartType::Trigger(TriggerType::Beat)));

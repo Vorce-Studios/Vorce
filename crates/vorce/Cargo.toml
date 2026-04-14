@@ -46,6 +46,11 @@ glam = { workspace = true }
 hound = { workspace = true }
 hyper = { workspace = true }
 image = { workspace = true }
+midir = { workspace = true }
+parking_lot = { workspace = true }
+pollster = { workspace = true }
+proptest = { workspace = true }
+rayon = { workspace = true }
 vorce-bevy = { path = "../vorce-bevy" }
 vorce-control = { path = "../vorce-control" }
 vorce-core = { path = "../vorce-core", features = ["winit"] }
@@ -54,11 +59,6 @@ vorce-mcp = { path = "../vorce-mcp" }
 vorce-media = { path = "../vorce-media" }
 vorce-render = { path = "../vorce-render" }
 vorce-ui = { path = "../vorce-ui" }
-midir = { workspace = true }
-parking_lot = { workspace = true }
-pollster = { workspace = true }
-proptest = { workspace = true }
-rayon = { workspace = true }
 
 rfd = "0.17"
 ron = { workspace = true }

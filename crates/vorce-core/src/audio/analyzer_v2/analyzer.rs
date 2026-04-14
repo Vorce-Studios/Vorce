@@ -1,5 +1,5 @@
 //! Audio Analyzer V2 Core
-use crossbeam_channel::{bounded, Receiver, Sender};
+use crossbeam_channel::{Receiver, Sender, bounded};
 use num_complex::Complex;
 use rustfft::{Fft, FftPlanner};
 use std::collections::VecDeque;
@@ -166,10 +166,8 @@ impl AudioAnalyzerV2 {
 
         // Sanitize input samples: replace non-finite values (NaN, Infinity) with 0.0
         // to prevent contamination of analysis metrics.
-        let sanitized_samples: Vec<f32> = samples
-            .iter()
-            .map(|&s| if s.is_finite() { s } else { 0.0 })
-            .collect();
+        let sanitized_samples: Vec<f32> =
+            samples.iter().map(|&s| if s.is_finite() { s } else { 0.0 }).collect();
         let samples = &sanitized_samples;
 
         self.current_time = timestamp;
@@ -187,8 +185,7 @@ impl AudioAnalyzerV2 {
 
         // Store waveform for visualization
         self.waveform_buffer.clear();
-        self.waveform_buffer
-            .extend_from_slice(&samples[..samples.len().min(2048)]);
+        self.waveform_buffer.extend_from_slice(&samples[..samples.len().min(2048)]);
 
         // 1. Calculate RMS from input samples
         self.rms_volume = Self::calculate_rms(samples);

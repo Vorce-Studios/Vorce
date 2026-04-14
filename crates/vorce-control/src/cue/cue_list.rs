@@ -5,7 +5,7 @@ use std::time::Duration;
 use super::crossfade::Crossfade;
 use super::cue::Cue;
 
-use crate::{error::ControlError, Result};
+use crate::{Result, error::ControlError};
 
 /// Cue list state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -105,20 +105,15 @@ impl CueList {
         if let Some(next_id) = self.next_cue {
             self.goto_cue(next_id, None)
         } else {
-            Err(ControlError::InvalidParameter(
-                "No next cue available".to_string(),
-            ))
+            Err(ControlError::InvalidParameter("No next cue available".to_string()))
         }
     }
 
     /// Go to the previous cue in the list
     pub fn prev(&mut self) -> Result<()> {
         if let Some(current_id) = self.current_cue {
-            let current_index = self
-                .cues
-                .iter()
-                .position(|c| c.id == current_id)
-                .ok_or_else(|| {
+            let current_index =
+                self.cues.iter().position(|c| c.id == current_id).ok_or_else(|| {
                     ControlError::TargetNotFound(format!("Current cue {} not found", current_id))
                 })?;
 
@@ -126,9 +121,7 @@ impl CueList {
                 let prev_id = self.cues[current_index - 1].id;
                 self.goto_cue(prev_id, None)
             } else {
-                Err(ControlError::InvalidParameter(
-                    "Already at first cue".to_string(),
-                ))
+                Err(ControlError::InvalidParameter("Already at first cue".to_string()))
             }
         } else {
             Err(ControlError::InvalidParameter("No current cue".to_string()))

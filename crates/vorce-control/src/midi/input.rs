@@ -3,7 +3,7 @@
 use super::{MidiMapping, MidiMessage};
 use crate::error::{ControlError, Result};
 use midir::{Ignore, MidiInput as MidirInput, MidiInputConnection};
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex};
 use tracing::{error, info};
 
@@ -63,9 +63,7 @@ impl MidiInputHandler {
         }
 
         let port = &ports[port_index];
-        let port_name = midi_input
-            .port_name(port)
-            .unwrap_or_else(|_| "Unknown".to_string());
+        let port_name = midi_input.port_name(port).unwrap_or_else(|_| "Unknown".to_string());
 
         info!("Connecting to MIDI input port: {}", port_name);
 

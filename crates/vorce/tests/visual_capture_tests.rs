@@ -52,27 +52,18 @@ fn run_visual_regression(scenario: &str) {
     );
 
     compare_images(&expected_path, &actual_path, &diff_path);
-    println!(
-        "Visual capture '{scenario}' saved to {}",
-        actual_path.display()
-    );
+    println!("Visual capture '{scenario}' saved to {}", actual_path.display());
 }
 
 fn compare_images(expected_path: &Path, actual_path: &Path, diff_path: &Path) {
     let expected = image::open(expected_path)
         .unwrap_or_else(|err| {
-            panic!(
-                "Failed to open reference image '{}': {err}",
-                expected_path.display()
-            )
+            panic!("Failed to open reference image '{}': {err}", expected_path.display())
         })
         .to_rgba8();
     let actual = image::open(actual_path)
         .unwrap_or_else(|err| {
-            panic!(
-                "Failed to open actual image '{}': {err}",
-                actual_path.display()
-            )
+            panic!("Failed to open actual image '{}': {err}", actual_path.display())
         })
         .to_rgba8();
 
@@ -143,22 +134,14 @@ fn unique_output_dir(scenario: &str) -> PathBuf {
         .expect("System clock drifted before UNIX_EPOCH")
         .as_millis();
     let root = capture_output_root();
-    root.join(format!(
-        "vorce_visual_capture_{scenario}_{}_{}",
-        std::process::id(),
-        timestamp
-    ))
+    root.join(format!("vorce_visual_capture_{scenario}_{}_{}", std::process::id(), timestamp))
 }
 
 fn capture_output_root() -> PathBuf {
     match std::env::var_os("VORCE_VISUAL_CAPTURE_OUTPUT_DIR") {
         Some(value) => {
             let path = PathBuf::from(value);
-            if path.is_absolute() {
-                path
-            } else {
-                workspace_root().join(path)
-            }
+            if path.is_absolute() { path } else { workspace_root().join(path) }
         }
         None => std::env::temp_dir(),
     }

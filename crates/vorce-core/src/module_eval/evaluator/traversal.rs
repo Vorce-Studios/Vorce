@@ -1,11 +1,11 @@
 use crate::module::{
     MeshType, ModulePartId, ModulePartType, ModulizerType, SourceType, VorceModule,
 };
+use crate::module_eval::ModuleEvaluator;
 use crate::module_eval::evaluator::RenderOp;
 use crate::module_eval::types::{
-    primary_render_connection_idx, ModuleGraphIndices, SourceProperties,
+    ModuleGraphIndices, SourceProperties, primary_render_connection_idx,
 };
-use crate::module_eval::ModuleEvaluator;
 
 impl ModuleEvaluator {
     pub(crate) fn trace_chain_into(

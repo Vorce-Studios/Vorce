@@ -124,9 +124,7 @@ pub fn create_player_handle(
     let path_buf = std::path::PathBuf::from(path);
     let name = texture_name.to_string();
     let mut player = vorce_media::open_path(&path_buf).map_err(anyhow::Error::from)?;
-    player
-        .set_speed(playback_speed)
-        .map_err(anyhow::Error::from)?;
+    player.set_speed(playback_speed).map_err(anyhow::Error::from)?;
     player
         .set_loop_mode(if loop_enabled {
             vorce_media::LoopMode::Loop
@@ -216,11 +214,7 @@ pub fn sync_media_players(app: &mut App) {
             let same_speed = (handle.playback_speed - desired.playback_speed).abs() < f32::EPSILON;
             let same_loop = handle.loop_enabled == desired.loop_enabled;
 
-            if same_path && same_speed && same_loop {
-                None
-            } else {
-                Some(*key)
-            }
+            if same_path && same_speed && same_loop { None } else { Some(*key) }
         })
         .collect();
 
@@ -250,37 +244,26 @@ pub fn sync_media_players(app: &mut App) {
         if app.media_players.contains_key(&key) {
             clear_video_issue(
                 &mut app.video_diagnostic_log_times,
-                format!(
-                    "video-output-missing-player:{}:{}",
-                    desired.module_id, desired.part_id
-                ),
+                format!("video-output-missing-player:{}:{}", desired.module_id, desired.part_id),
             );
             clear_video_issue(
                 &mut app.video_diagnostic_log_times,
-                format!(
-                    "video-output-open-failed:{}:{}",
-                    desired.module_id, desired.part_id
-                ),
+                format!("video-output-open-failed:{}:{}", desired.module_id, desired.part_id),
             );
             continue;
         }
 
         let source_path = std::path::PathBuf::from(&desired.path);
         if !source_path.exists() {
-            let issue_key = format!(
-                "video-output-missing-player:{}:{}",
-                desired.module_id, desired.part_id
-            );
+            let issue_key =
+                format!("video-output-missing-player:{}:{}", desired.module_id, desired.part_id);
             if should_log_video_issue(&mut app.video_diagnostic_log_times, issue_key) {
                 warn!(
                     "Fehler in Videoausgabe: Modul {} / Part {} kann '{}' nicht laden, weil die Datei oder der Ordner nicht existiert.",
-                    desired.module_id,
-                    desired.part_id,
-                    desired.path
+                    desired.module_id, desired.part_id, desired.path
                 );
             }
-            app.texture_pool
-                .release(&format!("part_{}_{}", desired.module_id, desired.part_id));
+            app.texture_pool.release(&format!("part_{}_{}", desired.module_id, desired.part_id));
             continue;
         }
 
@@ -310,24 +293,16 @@ pub fn sync_media_players(app: &mut App) {
                 );
                 clear_video_issue(
                     &mut app.video_diagnostic_log_times,
-                    format!(
-                        "video-output-open-failed:{}:{}",
-                        desired.module_id, desired.part_id
-                    ),
+                    format!("video-output-open-failed:{}:{}", desired.module_id, desired.part_id),
                 );
             }
             Err(err) => {
-                let issue_key = format!(
-                    "video-output-open-failed:{}:{}",
-                    desired.module_id, desired.part_id
-                );
+                let issue_key =
+                    format!("video-output-open-failed:{}:{}", desired.module_id, desired.part_id);
                 if should_log_video_issue(&mut app.video_diagnostic_log_times, issue_key) {
                     error!(
                         "Fehler in Videoausgabe: Modul {} / Part {} konnte '{}' nicht initialisieren, weil {}.",
-                        desired.module_id,
-                        desired.part_id,
-                        desired.path,
-                        err
+                        desired.module_id, desired.part_id, desired.path, err
                     );
                 }
                 app.texture_pool.release(&texture_name);

@@ -25,13 +25,7 @@ pub struct TimelineMarker {
 impl TimelineMarker {
     /// Create a new timeline marker
     pub fn new(id: u64, time: TimePoint, name: String) -> Self {
-        Self {
-            id,
-            time,
-            name,
-            color: None,
-            pause_at: false,
-        }
+        Self { id, time, name, color: None, pause_at: false }
     }
 }
 
@@ -79,11 +73,7 @@ pub struct Keyframe {
 impl Keyframe {
     /// Create a new keyframe from time in seconds and value
     pub fn new(time_secs: f64, value: AnimValue) -> Self {
-        Self {
-            time: (time_secs * 1_000_000.0) as u64,
-            value,
-            interpolation: Interpolation::Linear,
-        }
+        Self { time: (time_secs * 1_000_000.0) as u64, value, interpolation: Interpolation::Linear }
     }
 }
 
@@ -161,10 +151,7 @@ pub struct AnimationTrack {
 impl AnimationTrack {
     /// Create a new animation track by name
     pub fn new(name: String) -> Self {
-        Self {
-            name,
-            keyframes: BTreeMap::new(),
-        }
+        Self { name, keyframes: BTreeMap::new() }
     }
 
     /// Add a keyframe to the track
@@ -299,12 +286,10 @@ where
 
 impl From<AnimationClipSerde> for AnimationClip {
     fn from(value: AnimationClipSerde) -> Self {
-        let playback_mode = value.playback_mode.unwrap_or({
-            if value.looping {
-                PlaybackMode::Loop
-            } else {
-                PlaybackMode::OneShot
-            }
+        let playback_mode = value.playback_mode.unwrap_or(if value.looping {
+            PlaybackMode::Loop
+        } else {
+            PlaybackMode::OneShot
         });
 
         Self {
@@ -369,20 +354,14 @@ impl AnimationClip {
 
     /// Evaluate all tracks at a given time
     pub fn evaluate(&self, time: TimePoint) -> Vec<(String, AnimValue)> {
-        self.tracks
-            .iter()
-            .filter_map(|t| t.evaluate(time).map(|v| (t.name.clone(), v)))
-            .collect()
+        self.tracks.iter().filter_map(|t| t.evaluate(time).map(|v| (t.name.clone(), v))).collect()
     }
 
     /// Add a timeline marker to the clip
     pub fn add_marker(&mut self, marker: TimelineMarker) {
         self.markers.push(marker);
-        self.markers.sort_by(|a, b| {
-            a.time
-                .partial_cmp(&b.time)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
+        self.markers
+            .sort_by(|a, b| a.time.partial_cmp(&b.time).unwrap_or(std::cmp::Ordering::Equal));
     }
 
     /// Remove a timeline marker by time in seconds
@@ -444,13 +423,7 @@ struct AnimationPlayerSerde {
 
 impl From<AnimationPlayerSerde> for AnimationPlayer {
     fn from(value: AnimationPlayerSerde) -> Self {
-        let dir = value.current_direction.unwrap_or({
-            if value.clip.reverse {
-                -1.0
-            } else {
-                1.0
-            }
-        });
+        let dir = value.current_direction.unwrap_or(if value.clip.reverse { -1.0 } else { 1.0 });
         Self {
             clip: value.clip,
             current_time: value.current_time,
@@ -619,11 +592,8 @@ impl AnimationPlayer {
     /// Jump playhead to the next available marker
     pub fn jump_to_next_marker(&mut self) {
         let epsilon = 0.001;
-        if let Some(marker) = self
-            .clip
-            .markers
-            .iter()
-            .find(|m| m.time > self.current_time + epsilon)
+        if let Some(marker) =
+            self.clip.markers.iter().find(|m| m.time > self.current_time + epsilon)
         {
             self.seek(marker.time);
         }
@@ -632,12 +602,8 @@ impl AnimationPlayer {
     /// Jump playhead to the previous available marker
     pub fn jump_to_prev_marker(&mut self) {
         let epsilon = 0.001;
-        if let Some(marker) = self
-            .clip
-            .markers
-            .iter()
-            .rev()
-            .find(|m| m.time < self.current_time - epsilon)
+        if let Some(marker) =
+            self.clip.markers.iter().rev().find(|m| m.time < self.current_time - epsilon)
         {
             self.seek(marker.time);
         }

@@ -29,7 +29,7 @@ pub mod pipeline;
 
 pub use decoder::{FFmpegDecoder, HwAccelType, PixelFormat, TestPatternDecoder, VideoDecoder};
 #[cfg(feature = "hap")]
-pub use hap_decoder::{decode_hap_frame, HapError, HapFrame, HapTextureType};
+pub use hap_decoder::{HapError, HapFrame, HapTextureType, decode_hap_frame};
 // #[cfg(feature = "hap")]
 // pub use hap_player::{is_hap_file, HapVideoDecoder};
 pub use image_decoder::{GifDecoder, StillImageDecoder};
@@ -81,11 +81,7 @@ pub fn open_path_with_hw_accel<P: AsRef<Path>>(
     }
 
     // Check file extension for still images and GIFs
-    let ext = path
-        .extension()
-        .and_then(|s| s.to_str())
-        .unwrap_or("")
-        .to_lowercase();
+    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("").to_lowercase();
 
     let decoder: Box<dyn VideoDecoder> = match ext.as_str() {
         "gif" => Box::new(GifDecoder::open(path)?),
@@ -117,11 +113,7 @@ pub fn open_path<P: AsRef<Path>>(path: P) -> Result<VideoPlayer> {
     }
 
     // Check file extension for still images and GIFs
-    let ext = path
-        .extension()
-        .and_then(|s| s.to_str())
-        .unwrap_or("")
-        .to_lowercase();
+    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("").to_lowercase();
 
     let decoder: Box<dyn VideoDecoder> = match ext.as_str() {
         "gif" => Box::new(GifDecoder::open(path)?),
@@ -144,11 +136,7 @@ fn open_video_file_with_hw_accel<P: AsRef<Path>>(
     // Try FFmpeg first (stable, full frame support)
     match FFmpegDecoder::open_with_hw_accel(path, hw_accel) {
         Ok(decoder) => {
-            tracing::info!(
-                "Opened with FFmpeg decoder (hw_accel={:?}): {:?}",
-                hw_accel,
-                path
-            );
+            tracing::info!("Opened with FFmpeg decoder (hw_accel={:?}): {:?}", hw_accel, path);
             return Ok(Box::new(decoder));
         }
         Err(e) => {
@@ -171,10 +159,7 @@ fn open_video_file_with_hw_accel<P: AsRef<Path>>(
     }
 
     // Both failed, return the FFmpeg error
-    Err(MediaError::FileOpen(format!(
-        "Could not open video: {:?}",
-        path
-    )))
+    Err(MediaError::FileOpen(format!("Could not open video: {:?}", path)))
 }
 
 /// Open a video file using the best available decoder
@@ -194,18 +179,11 @@ fn open_video_file<P: AsRef<Path>>(path: P) -> Result<Box<dyn VideoDecoder>> {
 
     match FFmpegDecoder::open_with_hw_accel(path, hw_accel) {
         Ok(decoder) => {
-            tracing::info!(
-                "Opened with FFmpeg decoder (hw_accel={:?}): {:?}",
-                hw_accel,
-                path
-            );
+            tracing::info!("Opened with FFmpeg decoder (hw_accel={:?}): {:?}", hw_accel, path);
             return Ok(Box::new(decoder));
         }
         Err(e) => {
-            tracing::warn!(
-                "FFmpeg hardware decoder failed: {}. Falling back to software.",
-                e
-            );
+            tracing::warn!("FFmpeg hardware decoder failed: {}. Falling back to software.", e);
         }
     }
 
@@ -235,10 +213,7 @@ fn open_video_file<P: AsRef<Path>>(path: P) -> Result<Box<dyn VideoDecoder>> {
     }
 
     // Both failed, return the FFmpeg error
-    Err(MediaError::FileOpen(format!(
-        "Could not open video: {:?}",
-        path
-    )))
+    Err(MediaError::FileOpen(format!("Could not open video: {:?}", path)))
 }
 
 /// Gets the duration of a media file without full decoding.

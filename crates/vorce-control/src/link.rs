@@ -7,7 +7,7 @@
 
 use ableton_link_rs::link::{clock::Clock, tempo::Tempo};
 
-use crate::{error::ControlError, Result};
+use crate::{Result, error::ControlError};
 
 /// Minimal Ableton Link handle
 pub struct AbletonLinkHandle {
@@ -26,10 +26,7 @@ impl AbletonLinkHandle {
                 "Tempo must be between 20 and 300 BPM".to_string(),
             ));
         }
-        Ok(Self {
-            _tempo: Tempo::new(default_bpm),
-            _clock: Clock::default(),
-        })
+        Ok(Self { _tempo: Tempo::new(default_bpm), _clock: Clock::default() })
     }
 
     /// Return the configured default tempo.

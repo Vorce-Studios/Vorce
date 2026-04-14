@@ -5,7 +5,7 @@
 use std::net::{SocketAddr, UdpSocket};
 use std::time::{Duration, Instant};
 
-use crate::{error::ControlError, Result};
+use crate::{Result, error::ControlError};
 
 /// Art-Net sender for outputting DMX data
 pub struct ArtNetSender {
@@ -31,11 +31,7 @@ impl ArtNetSender {
             ControlError::DmxError(format!("Invalid Art-Net target address: {}", e))
         })?;
 
-        tracing::info!(
-            "Art-Net sender created for universe {} -> {}",
-            universe,
-            target
-        );
+        tracing::info!("Art-Net sender created for universe {} -> {}", universe, target);
 
         Ok(Self {
             socket,

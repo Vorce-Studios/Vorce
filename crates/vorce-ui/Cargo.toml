@@ -28,14 +28,14 @@ fluent = { workspace = true }
 fluent-langneg = { workspace = true }
 glam = { workspace = true }
 image = { workspace = true }
+once_cell = { workspace = true }
+parking_lot = { workspace = true }
+rayon.workspace = true
 vorce-control = { path = "../vorce-control", features = ["osc", "midi"] }
 vorce-core = { path = "../vorce-core" }
 vorce-io = { path = "../vorce-io", optional = true }                      # Added for NDI
 vorce-media = { path = "../vorce-media" }
 vorce-render = { path = "../vorce-render" }
-once_cell = { workspace = true }
-parking_lot = { workspace = true }
-rayon.workspace = true
 
 # SVG icon rendering
 resvg = { workspace = true }

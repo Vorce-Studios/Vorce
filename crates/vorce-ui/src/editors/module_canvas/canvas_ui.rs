@@ -3,7 +3,7 @@ use egui::Ui;
 use vorce_core::module::ModuleManager;
 
 use super::state::ModuleCanvas;
-use super::{renderer, utils, ModuleCanvasRenderOptions};
+use super::{ModuleCanvasRenderOptions, renderer, utils};
 
 impl ModuleCanvas {
     pub fn ensure_icons_loaded(&mut self, ctx: &egui::Context) {

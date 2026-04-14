@@ -10,10 +10,10 @@ use std::{
     sync::Arc,
 };
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use clap::{Parser, Subcommand};
 use image::RgbaImage;
-use scenarios::{build_scenario, ScenarioName, ScenarioSpec};
+use scenarios::{ScenarioName, ScenarioSpec, build_scenario};
 use vorce_render::{QuadRenderer, RenderBackend, TextureDescriptor, WgpuBackend};
 use winit::{
     event::{ElementState, Event, KeyEvent, WindowEvent},
@@ -23,11 +23,7 @@ use winit::{
 };
 
 #[derive(Parser)]
-#[command(
-    author,
-    version,
-    about = "Local visible visual regression harness for Vorce"
-)]
+#[command(author, version, about = "Local visible visual regression harness for Vorce")]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -69,12 +65,7 @@ fn run() -> Result<()> {
 }
 
 fn write_reference_image(scenario: &ScenarioSpec, output: &Path) -> Result<()> {
-    save_rgba_png(
-        scenario.width,
-        scenario.height,
-        &scenario.expected_pixels,
-        output,
-    )
+    save_rgba_png(scenario.width, scenario.height, &scenario.expected_pixels, output)
 }
 
 fn capture_scenario(scenario: ScenarioSpec, output: &Path) -> Result<()> {
@@ -91,10 +82,7 @@ fn capture_scenario(scenario: ScenarioSpec, output: &Path) -> Result<()> {
             .create_window(
                 WindowAttributes::default()
                     .with_title(scenario.title)
-                    .with_inner_size(winit::dpi::PhysicalSize::new(
-                        scenario.width,
-                        scenario.height,
-                    ))
+                    .with_inner_size(winit::dpi::PhysicalSize::new(scenario.width, scenario.height))
                     .with_resizable(false),
             )
             .context("failed to create visual harness window")?,
@@ -102,9 +90,8 @@ fn capture_scenario(scenario: ScenarioSpec, output: &Path) -> Result<()> {
 
     let mut backend = pollster::block_on(WgpuBackend::new(None))
         .context("failed to initialize WGPU backend for visual harness")?;
-    let surface = backend
-        .create_surface(window.clone())
-        .context("failed to create capture surface")?;
+    let surface =
+        backend.create_surface(window.clone()).context("failed to create capture surface")?;
 
     let surface_config = wgpu::SurfaceConfiguration {
         usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
@@ -145,10 +132,7 @@ fn capture_scenario(scenario: ScenarioSpec, output: &Path) -> Result<()> {
 
     event_loop
         .run(move |event, elwt| match event {
-            Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                ..
-            } => {
+            Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => {
                 elwt.exit();
             }
             Event::WindowEvent {
@@ -171,10 +155,7 @@ fn capture_scenario(scenario: ScenarioSpec, output: &Path) -> Result<()> {
                     window.request_redraw();
                 }
             }
-            Event::WindowEvent {
-                event: WindowEvent::RedrawRequested,
-                ..
-            } => {
+            Event::WindowEvent { event: WindowEvent::RedrawRequested, .. } => {
                 let current_count = render_count_cl.get() + 1;
                 render_count_cl.set(current_count);
 
@@ -225,35 +206,23 @@ fn render_frame(
             return Err(anyhow!("timed out acquiring current surface texture"));
         }
         wgpu::CurrentSurfaceTexture::Occluded => {
-            return Err(anyhow!(
-                "surface is occluded while acquiring current surface texture"
-            ));
+            return Err(anyhow!("surface is occluded while acquiring current surface texture"));
         }
         wgpu::CurrentSurfaceTexture::Outdated => {
-            return Err(anyhow!(
-                "surface is outdated while acquiring current surface texture"
-            ));
+            return Err(anyhow!("surface is outdated while acquiring current surface texture"));
         }
         wgpu::CurrentSurfaceTexture::Lost => {
-            return Err(anyhow!(
-                "surface was lost while acquiring current surface texture"
-            ));
+            return Err(anyhow!("surface was lost while acquiring current surface texture"));
         }
         wgpu::CurrentSurfaceTexture::Validation => {
-            return Err(anyhow!(
-                "validation error while acquiring current surface texture"
-            ));
+            return Err(anyhow!("validation error while acquiring current surface texture"));
         }
     };
-    let view = frame
-        .texture
-        .create_view(&wgpu::TextureViewDescriptor::default());
+    let view = frame.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
-    let mut encoder = backend
-        .device()
-        .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("Visual Harness Encoder"),
-        });
+    let mut encoder = backend.device().create_command_encoder(&wgpu::CommandEncoderDescriptor {
+        label: Some("Visual Harness Encoder"),
+    });
 
     let texture_view = texture.create_view();
     let bind_group = quad_renderer.create_bind_group(backend.device(), &texture_view);
@@ -342,11 +311,7 @@ fn queue_readback_copy(
                 rows_per_image: Some(height),
             },
         },
-        wgpu::Extent3d {
-            width,
-            height,
-            depth_or_array_layers: 1,
-        },
+        wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
     );
 
     (buffer, padded_bytes_per_row)
@@ -364,19 +329,13 @@ fn save_readback_buffer(
     let slice = buffer.slice(..);
     slice.map_async(wgpu::MapMode::Read, |_| {});
     device
-        .poll(wgpu::PollType::Wait {
-            submission_index: None,
-            timeout: None,
-        })
+        .poll(wgpu::PollType::Wait { submission_index: None, timeout: None })
         .context("failed to wait for visual harness readback")?;
 
     let mapped = slice.get_mapped_range();
     let mut rgba = Vec::with_capacity((width * height * 4) as usize);
 
-    for row in mapped
-        .chunks_exact(padded_bytes_per_row as usize)
-        .take(height as usize)
-    {
+    for row in mapped.chunks_exact(padded_bytes_per_row as usize).take(height as usize) {
         for pixel in row[..(width * 4) as usize].chunks_exact(4) {
             match format {
                 wgpu::TextureFormat::Bgra8Unorm | wgpu::TextureFormat::Bgra8UnormSrgb => {
@@ -401,8 +360,6 @@ fn save_rgba_png(width: u32, height: u32, pixels: &[u8], output_path: &Path) -> 
 
     let image = RgbaImage::from_raw(width, height, pixels.to_vec())
         .ok_or_else(|| anyhow!("failed to assemble RGBA image buffer"))?;
-    image
-        .save(output_path)
-        .with_context(|| format!("failed to save {}", output_path.display()))?;
+    image.save(output_path).with_context(|| format!("failed to save {}", output_path.display()))?;
     Ok(())
 }

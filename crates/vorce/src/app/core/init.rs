@@ -10,14 +10,15 @@ use egui_winit::State;
 use std::collections::{HashMap, VecDeque};
 use std::thread;
 use tracing::{error, info, warn};
+use vorce_control::ControlManager;
 use vorce_control::hue::controller::HueController;
 #[cfg(feature = "midi")]
 use vorce_control::midi::MidiInputHandler;
-use vorce_control::ControlManager;
 use vorce_core::{
-    audio::backend::{cpal_backend::CpalBackend, AudioBackend},
+    AppState, ModuleEvaluator,
+    audio::backend::{AudioBackend, cpal_backend::CpalBackend},
     media_library::MediaLibrary,
-    runtime_paths, AppState, ModuleEvaluator,
+    runtime_paths,
 };
 use vorce_io::load_project;
 use vorce_mcp::McpServer;
@@ -25,7 +26,7 @@ use vorce_render::{
     ColorCalibrationRenderer, Compositor, EdgeBlendRenderer, EffectChainRenderer, MeshBufferCache,
     MeshRenderer, OscillatorRenderer, QuadRenderer, TexturePool, WgpuBackend,
 };
-use vorce_ui::{config::UserConfig, AppUI};
+use vorce_ui::{AppUI, config::UserConfig};
 
 impl App {
     /// Creates a new `App`.
@@ -64,23 +65,11 @@ impl App {
         let main_window_id = window_manager.create_main_window_with_geometry(
             elwt,
             &backend,
-            if config.is_automation {
-                Some(1280)
-            } else {
-                saved_config.window_width
-            },
-            if config.is_automation {
-                Some(720)
-            } else {
-                saved_config.window_height
-            },
+            if config.is_automation { Some(1280) } else { saved_config.window_width },
+            if config.is_automation { Some(720) } else { saved_config.window_height },
             saved_config.window_x,
             saved_config.window_y,
-            if config.is_automation {
-                false
-            } else {
-                saved_config.window_maximized
-            },
+            if config.is_automation { false } else { saved_config.window_maximized },
             saved_config.vsync_mode,
         )?;
 
@@ -151,10 +140,7 @@ impl App {
                 info!("Restoring saved audio device: {}", dev);
                 Some(dev.clone())
             } else {
-                info!(
-                    "Saved audio device '{}' no longer available, using default",
-                    dev
-                );
+                info!("Saved audio device '{}' no longer available, using default", dev);
                 None
             }
         } else {
@@ -192,11 +178,8 @@ impl App {
             None,
             None,
         );
-        let egui_renderer = Renderer::new(
-            &backend.device,
-            format,
-            egui_wgpu::RendererOptions::default(),
-        );
+        let egui_renderer =
+            Renderer::new(&backend.device, format, egui_wgpu::RendererOptions::default());
         let oscillator_renderer = Self::init_oscillator_renderer(&backend, format, &state);
 
         // Initialize icons from assets directory
@@ -284,10 +267,7 @@ impl App {
             #[cfg(feature = "midi")]
             midi_ports: MidiInputHandler::list_ports().unwrap_or_default(),
             #[cfg(feature = "midi")]
-            selected_midi_port: if MidiInputHandler::list_ports()
-                .unwrap_or_default()
-                .is_empty()
-            {
+            selected_midi_port: if MidiInputHandler::list_ports().unwrap_or_default().is_empty() {
                 None
             } else {
                 Some(0)
@@ -422,23 +402,15 @@ impl App {
 
     fn run_self_heal(state: &mut AppState) {
         // --- Reconcile Output IDs ---
-        let valid_outputs: HashMap<String, u64> = state
-            .output_manager
-            .outputs()
-            .iter()
-            .map(|o| (o.name.clone(), o.id))
-            .collect();
+        let valid_outputs: HashMap<String, u64> =
+            state.output_manager.outputs().iter().map(|o| (o.name.clone(), o.id)).collect();
         let valid_ids: Vec<u64> = valid_outputs.values().cloned().collect();
 
         let mut fixed_count = 0;
         for module in state.module_manager_mut().modules_mut() {
             for part in &mut module.parts {
                 if let vorce_core::module::ModulePartType::Output(
-                    vorce_core::module::OutputType::Projector {
-                        ref mut id,
-                        ref name,
-                        ..
-                    },
+                    vorce_core::module::OutputType::Projector { ref mut id, ref name, .. },
                 ) = &mut part.part_type
                 {
                     if !valid_ids.contains(id) {
@@ -459,12 +431,8 @@ impl App {
         }
 
         // --- Ensure Output Windows exist ---
-        let existing_output_ids: std::collections::HashSet<u64> = state
-            .output_manager
-            .outputs()
-            .iter()
-            .map(|o| o.id)
-            .collect();
+        let existing_output_ids: std::collections::HashSet<u64> =
+            state.output_manager.outputs().iter().map(|o| o.id).collect();
         let mut missing_outputs = Vec::new();
         for module in state.module_manager.modules() {
             for part in &module.parts {
@@ -479,10 +447,7 @@ impl App {
             }
         }
         for (id, name) in missing_outputs {
-            info!(
-                "Self-Heal: Creating missing Output Window '{}' (ID {})",
-                name, id
-            );
+            info!("Self-Heal: Creating missing Output Window '{}' (ID {})", name, id);
             state.output_manager_mut().add_output(
                 name,
                 vorce_core::output::CanvasRegion::new(0.0, 0.0, 1.0, 1.0),
@@ -519,10 +484,7 @@ impl App {
 
     fn start_mcp_server(mcp_sender: crossbeam_channel::Sender<vorce_mcp::McpAction>) {
         thread::spawn(move || {
-            let rt = tokio::runtime::Builder::new_current_thread()
-                .enable_all()
-                .build()
-                .unwrap();
+            let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
             rt.block_on(async {
                 let server = McpServer::new(Some(mcp_sender));
                 if let Err(e) = server.run_stdio().await {
@@ -602,11 +564,7 @@ impl App {
     ) -> (wgpu::Texture, std::sync::Arc<wgpu::TextureView>) {
         let texture = backend.device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Dummy Input Texture"),
-            size: wgpu::Extent3d {
-                width,
-                height,
-                depth_or_array_layers: 1,
-            },
+            size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
@@ -649,29 +607,17 @@ impl App {
         );
         info!(
             "- Edge Blend:     {}",
-            if self.edge_blend_renderer.is_some() {
-                "ENABLED"
-            } else {
-                "DISABLED"
-            }
+            if self.edge_blend_renderer.is_some() { "ENABLED" } else { "DISABLED" }
         );
         info!(
             "- Color Calib:    {}",
-            if self.color_calibration_renderer.is_some() {
-                "ENABLED"
-            } else {
-                "DISABLED"
-            }
+            if self.color_calibration_renderer.is_some() { "ENABLED" } else { "DISABLED" }
         );
         info!("- Bevy Engine:    INITIALIZED");
         #[cfg(feature = "midi")]
         info!(
             "- MIDI System:    {}",
-            if self.midi_handler.is_some() {
-                "CONNECTED"
-            } else {
-                "DISCONNECTED"
-            }
+            if self.midi_handler.is_some() { "CONNECTED" } else { "DISCONNECTED" }
         );
         info!(
             "- Hue System:     {}",
@@ -687,27 +633,18 @@ impl App {
 
     /// Creates or recreates the dummy texture for effect input.
     pub fn create_dummy_texture(&mut self, width: u32, height: u32, format: wgpu::TextureFormat) {
-        let texture = self
-            .backend
-            .device
-            .create_texture(&wgpu::TextureDescriptor {
-                label: Some("Dummy Input Texture"),
-                size: wgpu::Extent3d {
-                    width,
-                    height,
-                    depth_or_array_layers: 1,
-                },
-                mip_level_count: 1,
-                sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format,
-                usage: wgpu::TextureUsages::TEXTURE_BINDING
-                    | wgpu::TextureUsages::RENDER_ATTACHMENT,
-                view_formats: &[],
-            });
-        self.dummy_view = Some(std::sync::Arc::new(
-            texture.create_view(&wgpu::TextureViewDescriptor::default()),
-        ));
+        let texture = self.backend.device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("Dummy Input Texture"),
+            size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            view_formats: &[],
+        });
+        self.dummy_view =
+            Some(std::sync::Arc::new(texture.create_view(&wgpu::TextureViewDescriptor::default())));
         self.dummy_texture = Some(texture);
     }
 }

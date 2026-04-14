@@ -24,6 +24,7 @@ repos:
       - id: fmt
         name: "Rust: cargo fmt"
         args: ['--all', '--']
+        exclude: ^crates/vendor/
         stages: [manual]  # Run manually only
 
       - id: clippy
@@ -34,6 +35,7 @@ repos:
           - '--'
           - '-D'
           - 'warnings'
+        exclude: ^crates/vendor/
         stages: [manual]  # Run manually only
 
   # ═══════════════════════════════════════════════════════════════
@@ -109,4 +111,5 @@ repos:
       - id: cargo-sort
         name: "Rust: sort Cargo.toml"
         args: ['--workspace', '--grouped']
+        exclude: ^crates/vendor/
         stages: [manual]  # Run manually only

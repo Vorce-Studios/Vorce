@@ -1,5 +1,5 @@
-use crate::widgets::panel::{cyber_panel_frame, render_panel_header};
 use crate::AppUI;
+use crate::widgets::panel::{cyber_panel_frame, render_panel_header};
 use egui;
 use vorce_control::ControlManager;
 

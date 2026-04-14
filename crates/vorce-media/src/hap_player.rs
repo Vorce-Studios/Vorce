@@ -9,9 +9,9 @@ use std::path::Path;
 use std::sync::Arc;
 use tracing::{debug, error, info, warn};
 
-use crate::hap_decoder::{decode_hap_frame, HapError, HapFrame, HapTextureType};
-use crate::player::{LoopMode, PlaybackState, PlayerError, VideoDecoder};
 use crate::MediaError;
+use crate::hap_decoder::{HapError, HapFrame, HapTextureType, decode_hap_frame};
+use crate::player::{LoopMode, PlaybackState, PlayerError, VideoDecoder};
 
 /// HAP-specific decoder that produces GPU-ready DXT textures
 ///
@@ -53,10 +53,8 @@ impl HapVideoDecoder {
         let ictx = ffmpeg::format::input(&path).map_err(|e| MediaError::FileOpen(e.to_string()))?;
 
         // Find video stream
-        let video_stream = ictx
-            .streams()
-            .best(ffmpeg::media::Type::Video)
-            .ok_or(MediaError::NoVideoStream)?;
+        let video_stream =
+            ictx.streams().best(ffmpeg::media::Type::Video).ok_or(MediaError::NoVideoStream)?;
 
         let video_stream_index = video_stream.index();
 
@@ -118,15 +116,7 @@ impl HapVideoDecoder {
             None
         };
 
-        Ok(Self {
-            width,
-            height,
-            fps,
-            frame_count,
-            current_frame: 0,
-            frames,
-            texture_type,
-        })
+        Ok(Self { width, height, fps, frame_count, current_frame: 0, frames, texture_type })
     }
 
     /// Decode current frame to GPU-ready DXT data
@@ -146,9 +136,7 @@ impl HapVideoDecoder {
 
     /// Check if this is a HAP Q video (needs YCoCg conversion)
     pub fn needs_ycocg_conversion(&self) -> bool {
-        self.texture_type
-            .map(|t| t.needs_ycocg_conversion())
-            .unwrap_or(false)
+        self.texture_type.map(|t| t.needs_ycocg_conversion()).unwrap_or(false)
     }
 }
 
@@ -156,9 +144,7 @@ impl HapVideoDecoder {
 #[cfg(not(feature = "ffmpeg"))]
 impl HapVideoDecoder {
     pub fn open<P: AsRef<Path>>(_path: P) -> Result<Self, MediaError> {
-        Err(MediaError::DecoderError(
-            "HAP decoding requires FFmpeg feature".to_string(),
-        ))
+        Err(MediaError::DecoderError("HAP decoding requires FFmpeg feature".to_string()))
     }
 }
 
@@ -192,9 +178,8 @@ impl VideoDecoder for HapVideoDecoder {
             return Err(MediaError::EndOfStream);
         }
 
-        let hap_frame = self
-            .decode_current_frame()
-            .map_err(|e| MediaError::DecoderError(e.to_string()))?;
+        let hap_frame =
+            self.decode_current_frame().map_err(|e| MediaError::DecoderError(e.to_string()))?;
 
         // Note: This returns DXT-compressed data, not RGBA!
         // The caller must use compressed texture upload
@@ -230,11 +215,7 @@ pub fn is_hap_file<P: AsRef<Path>>(path: P) -> bool {
     let path = path.as_ref();
 
     // HAP is typically in MOV container
-    let ext = path
-        .extension()
-        .and_then(|s| s.to_str())
-        .unwrap_or("")
-        .to_lowercase();
+    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("").to_lowercase();
 
     // Could be MOV or AVI
     if ext != "mov" && ext != "avi" {

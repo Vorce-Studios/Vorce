@@ -1,10 +1,10 @@
 use anyhow::{Context, Result};
-use vorce_core::logging::LogConfig;
 use std::fs::File;
+use vorce_core::logging::LogConfig;
 
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{
-    filter::EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt, Layer,
+    Layer, filter::EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt,
 };
 
 /// Handle to keep the logging worker thread alive
@@ -16,9 +16,7 @@ pub struct LogGuard {
 /// Initialize the logging system
 pub fn init(config: &LogConfig) -> Result<Option<LogGuard>> {
     // 1. Ensure log directory exists
-    config
-        .ensure_log_directory()
-        .context("Failed to create log directory")?;
+    config.ensure_log_directory().context("Failed to create log directory")?;
 
     // 2. Clean up old logs
     if let Err(e) = config.cleanup_old_logs() {
@@ -27,9 +25,8 @@ pub fn init(config: &LogConfig) -> Result<Option<LogGuard>> {
 
     // 3. Setup Filters
     // Parse level from config (defaulting to INFO if invalid)
-    let config_filter = EnvFilter::builder()
-        .with_default_directive(config.parse_level().into())
-        .from_env_lossy(); // RUST_LOG env var takes precedence
+    let config_filter =
+        EnvFilter::builder().with_default_directive(config.parse_level().into()).from_env_lossy(); // RUST_LOG env var takes precedence
 
     // 4. Console Layer
     let console_layer = if config.console_output {
@@ -61,21 +58,13 @@ pub fn init(config: &LogConfig) -> Result<Option<LogGuard>> {
             .with_ansi(false) // No colors in file
             .with_filter(config_filter);
 
-        (
-            Some(layer),
-            Some(LogGuard {
-                _guard: worker_guard,
-            }),
-        )
+        (Some(layer), Some(LogGuard { _guard: worker_guard }))
     } else {
         (None, None)
     };
 
     // 6. Initialize Registry
-    tracing_subscriber::registry()
-        .with(console_layer)
-        .with(file_layer)
-        .init();
+    tracing_subscriber::registry().with(console_layer).with(file_layer).init();
 
     // Log startup info
     tracing::info!("Logging initialized at level: {}", config.level);

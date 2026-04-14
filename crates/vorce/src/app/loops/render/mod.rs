@@ -4,9 +4,9 @@ use crate::app::core::app_struct::App;
 use crate::app::ui_layout;
 use anyhow::Result;
 #[cfg(feature = "ndi")]
-use std::sync::atomic::{AtomicBool, Ordering};
-#[cfg(feature = "ndi")]
 use std::sync::Arc;
+#[cfg(feature = "ndi")]
+use std::sync::atomic::{AtomicBool, Ordering};
 use vorce_core::OutputId;
 
 mod content;
@@ -26,9 +26,8 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
     // Clone device Arc to create encoder without borrowing self
     let device = app.backend.device.clone();
 
-    let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-        label: Some("Render Encoder"),
-    });
+    let mut encoder = device
+        .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("Render Encoder") });
 
     // Batch render passes.
     app.mesh_renderer.begin_frame();
@@ -53,8 +52,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                         | wgpu::TextureUsages::RENDER_ATTACHMENT,
                 );
 
-                app.texture_pool
-                    .upload_data(&app.backend.queue, tex_name, &data, width, height);
+                app.texture_pool.upload_data(&app.backend.queue, tex_name, &data, width, height);
             }
         }
     }
@@ -95,13 +93,11 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
         }
 
         // 4. Update Textures and Buffers
-        let tris = app
-            .egui_context
-            .tessellate(full_output.shapes, app.egui_context.pixels_per_point());
+        let tris =
+            app.egui_context.tessellate(full_output.shapes, app.egui_context.pixels_per_point());
 
         for (id, delta) in full_output.textures_delta.set {
-            app.egui_renderer
-                .update_texture(&device, &app.backend.queue, id, &delta);
+            app.egui_renderer.update_texture(&device, &app.backend.queue, id, &delta);
         }
 
         app.egui_renderer.update_buffers(
@@ -138,9 +134,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                 anyhow::bail!("failed to acquire surface texture due to validation error");
             }
         };
-        let view = surface_texture
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
+        let view = surface_texture.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
         // Render Content
         render_content(
@@ -278,11 +272,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                                         rows_per_image: Some(height),
                                     },
                                 },
-                                wgpu::Extent3d {
-                                    width,
-                                    height,
-                                    depth_or_array_layers: 1,
-                                },
+                                wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
                             );
 
                             let slice = buffer.slice(..);

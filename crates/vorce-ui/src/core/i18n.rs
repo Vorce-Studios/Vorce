@@ -1,5 +1,5 @@
 use fluent::{FluentBundle, FluentResource};
-use fluent_langneg::{negotiate_languages, NegotiationStrategy};
+use fluent_langneg::{NegotiationStrategy, negotiate_languages};
 use rust_embed::RustEmbed;
 use unic_langid::LanguageIdentifier;
 
@@ -22,10 +22,7 @@ impl LocaleManager {
     pub fn new(lang_id: &str) -> Self {
         let lang: LanguageIdentifier = lang_id.parse().unwrap_or_else(|_| "en-US".parse().unwrap());
         let bundle = Self::load_bundle(&lang);
-        Self {
-            bundle,
-            current_lang: lang,
-        }
+        Self { bundle, current_lang: lang }
     }
 
     fn load_bundle(lang_id: &LanguageIdentifier) -> FluentBundle<FluentResource> {
@@ -39,10 +36,8 @@ impl LocaleManager {
         // Negotiate - fluent_langneg 0.14 uses its own LanguageIdentifier
         let requested: Vec<fluent_langneg::LanguageIdentifier> =
             vec![lang_id.to_string().parse().unwrap()];
-        let available_fl: Vec<fluent_langneg::LanguageIdentifier> = available_locales
-            .iter()
-            .map(|l| l.to_string().parse().unwrap())
-            .collect();
+        let available_fl: Vec<fluent_langneg::LanguageIdentifier> =
+            available_locales.iter().map(|l| l.to_string().parse().unwrap()).collect();
         let default_fl: fluent_langneg::LanguageIdentifier = "en".parse().unwrap();
         let supported = negotiate_languages(
             &requested,

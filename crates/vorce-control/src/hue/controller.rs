@@ -2,7 +2,7 @@ use super::api;
 use super::models::{HueConfig, LightNode};
 use super::stream::{
     dtls::HueStreamer,
-    manager::{run_stream_loop, LightState},
+    manager::{LightState, run_stream_loop},
 };
 use std::collections::HashMap;
 use tokio::sync::mpsc;
@@ -47,10 +47,7 @@ impl HueController {
                 }
                 Err(api::error::HueError::LinkButtonNotPressed) => {
                     let elapsed = start_time.elapsed().as_secs();
-                    info!(
-                        "Link button not pressed yet ({}s/60s). Retrying...",
-                        elapsed
-                    );
+                    info!("Link button not pressed yet ({}s/60s). Retrying...", elapsed);
                 }
                 Err(e) => {
                     // Other errors (network, etc) should fail immediately
@@ -102,31 +99,20 @@ impl HueController {
         }
 
         info!("Fetching entertainment configuration...");
-        let groups = api::groups::get_entertainment_groups(&self.config)
-            .await
-            .map_err(|e| e.to_string())?;
+        let groups =
+            api::groups::get_entertainment_groups(&self.config).await.map_err(|e| e.to_string())?;
 
         // Find selected group
-        let group = groups
-            .iter()
-            .find(|g| g.id == self.config.entertainment_group_id)
-            .ok_or_else(|| {
-                format!(
-                    "Entertainment group '{}' not found",
-                    self.config.entertainment_group_id
-                )
-            })?;
+        let group = groups.iter().find(|g| g.id == self.config.entertainment_group_id).ok_or_else(
+            || format!("Entertainment group '{}' not found", self.config.entertainment_group_id),
+        )?;
 
         // Populate nodes map
         self.nodes.clear();
         for light in &group.lights {
             self.nodes.insert(light.id.clone(), light.clone());
         }
-        info!(
-            "Loaded {} lights for entertainment group '{}'",
-            self.nodes.len(),
-            group.name
-        );
+        info!("Loaded {} lights for entertainment group '{}'", self.nodes.len(), group.name);
 
         // 3. Activate stream on bridge via API
         info!("Activating stream mode...");
@@ -142,7 +128,10 @@ impl HueController {
         ) {
             Ok(s) => s,
             Err(e) => {
-                error!("Failed to connect to Hue Bridge DTLS: {}. Check if Windows Firewall blocks UDP port 2100.", e);
+                error!(
+                    "Failed to connect to Hue Bridge DTLS: {}. Check if Windows Firewall blocks UDP port 2100.",
+                    e
+                );
                 // Continue without streaming? Or fail?
                 // We should probably fail to connect.
                 // But we successfully got nodes.

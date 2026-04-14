@@ -4,7 +4,7 @@
 //! It replaces legacy implementations with a clean, command-driven architecture.
 
 use crate::VideoDecoder;
-use crossbeam_channel::{unbounded, Receiver, Sender};
+use crossbeam_channel::{Receiver, Sender, unbounded};
 use std::time::Duration;
 use thiserror::Error;
 use tracing::{error, info, warn};
@@ -246,18 +246,14 @@ impl VideoPlayer {
 
         info!("State transition: {:?} -> {:?}", self.state, new_state);
         self.state = new_state.clone();
-        let _ = self
-            .status_sender
-            .send(PlaybackStatus::StateChanged(new_state));
+        let _ = self.status_sender.send(PlaybackStatus::StateChanged(new_state));
         Ok(())
     }
 
     fn transition_to_error(&mut self, error: PlayerError) {
         error!("Player error: {}", error);
         self.state = PlaybackState::Error(error.clone());
-        let _ = self
-            .status_sender
-            .send(PlaybackStatus::StateChanged(self.state.clone()));
+        let _ = self.status_sender.send(PlaybackStatus::StateChanged(self.state.clone()));
     }
 
     // --- Command Implementations ---
@@ -336,8 +332,8 @@ impl VideoPlayer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::decoder::TestPatternDecoder;
     use crate::MediaError;
+    use crate::decoder::TestPatternDecoder;
 
     // A mock decoder that can be configured to fail.
     #[derive(Clone)]
@@ -348,10 +344,7 @@ mod tests {
 
     impl MockDecoder {
         fn new() -> Self {
-            Self {
-                fail_seek: false,
-                fail_next_frame: false,
-            }
+            Self { fail_seek: false, fail_next_frame: false }
         }
     }
 

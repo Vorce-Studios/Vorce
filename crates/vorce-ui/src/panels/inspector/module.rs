@@ -1,5 +1,5 @@
-use crate::editors::module_canvas::state::ModuleCanvas;
 use crate::UIAction;
+use crate::editors::module_canvas::state::ModuleCanvas;
 use egui::Ui;
 use vorce_core::module::{ModulePartId, VorceModule};
 

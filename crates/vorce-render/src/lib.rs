@@ -38,8 +38,8 @@ pub use backend::{RenderBackend, WgpuBackend};
 pub use color_calibration_renderer::ColorCalibrationRenderer;
 pub use compositor::Compositor;
 pub use compressed_texture::{
-    check_bc_support, create_compressed_texture, upload_compressed_texture,
-    CompressedTextureHandle, DxtFormat,
+    CompressedTextureHandle, DxtFormat, check_bc_support, create_compressed_texture,
+    upload_compressed_texture,
 };
 pub use edge_blend_renderer::EdgeBlendRenderer;
 pub use effect_chain_renderer::{EffectChainRenderer, EffectParams};

@@ -81,22 +81,10 @@ impl Vertex {
 
 // Fullscreen quad vertices
 const QUAD_VERTICES: &[Vertex] = &[
-    Vertex {
-        position: [-1.0, -1.0],
-        texcoord: [0.0, 1.0],
-    },
-    Vertex {
-        position: [1.0, -1.0],
-        texcoord: [1.0, 1.0],
-    },
-    Vertex {
-        position: [1.0, 1.0],
-        texcoord: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-1.0, 1.0],
-        texcoord: [0.0, 0.0],
-    },
+    Vertex { position: [-1.0, -1.0], texcoord: [0.0, 1.0] },
+    Vertex { position: [1.0, -1.0], texcoord: [1.0, 1.0] },
+    Vertex { position: [1.0, 1.0], texcoord: [1.0, 0.0] },
+    Vertex { position: [-1.0, 1.0], texcoord: [0.0, 0.0] },
 ];
 
 const QUAD_INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
@@ -512,11 +500,7 @@ impl OscillatorRenderer {
     ) -> wgpu::Texture {
         device.create_texture(&wgpu::TextureDescriptor {
             label: Some(label),
-            size: wgpu::Extent3d {
-                width,
-                height,
-                depth_or_array_layers: 1,
-            },
+            size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
@@ -699,18 +683,12 @@ impl OscillatorRenderer {
             self.time_elapsed,
             delta_time,
         );
-        self.queue.write_buffer(
-            &self.sim_uniform_buffer,
-            0,
-            bytemuck::cast_slice(&[sim_params]),
-        );
+        self.queue.write_buffer(&self.sim_uniform_buffer, 0, bytemuck::cast_slice(&[sim_params]));
 
         // Create command encoder for simulation step
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Oscillator Simulation Encoder"),
-            });
+        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("Oscillator Simulation Encoder"),
+        });
 
         // Determine which phase texture to read from and write to
         let (input_bind_group, output_view) = if self.current_phase {
@@ -772,18 +750,10 @@ impl OscillatorRenderer {
             self.sim_height,
             self.time_elapsed,
         );
-        self.queue.write_buffer(
-            &self.dist_uniform_buffer,
-            0,
-            bytemuck::cast_slice(&[dist_params]),
-        );
+        self.queue.write_buffer(&self.dist_uniform_buffer, 0, bytemuck::cast_slice(&[dist_params]));
 
         // Get current phase texture
-        let phase_view = if self.current_phase {
-            &self.phase_view_b
-        } else {
-            &self.phase_view_a
-        };
+        let phase_view = if self.current_phase { &self.phase_view_b } else { &self.phase_view_a };
 
         // Create bind group for distortion (input texture + phase texture)
         let dist_bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {

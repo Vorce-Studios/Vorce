@@ -1,5 +1,5 @@
-use crate::protocol::*;
 use crate::McpAction;
+use crate::protocol::*;
 use anyhow::Result;
 use crossbeam_channel::Sender;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
@@ -27,10 +27,7 @@ impl McpServer {
                 None
             }
         };
-        Self {
-            osc_client,
-            action_sender,
-        }
+        Self { osc_client, action_sender }
     }
 
     pub async fn run_stdio(&self) -> Result<()> {
@@ -120,10 +117,7 @@ impl McpServer {
                         "description": "List of all layers"
                     }),
                 ];
-                Some(success_response(
-                    id,
-                    serde_json::json!({ "resources": resources }),
-                ))
+                Some(success_response(id, serde_json::json!({ "resources": resources })))
             }
             "resources/read" => {
                 // Parse params
@@ -166,19 +160,13 @@ impl McpServer {
                          "arguments": []
                     }),
                 ];
-                Some(success_response(
-                    id,
-                    serde_json::json!({ "prompts": prompts }),
-                ))
+                Some(success_response(id, serde_json::json!({ "prompts": prompts })))
             }
             "prompts/get" => {
                 let params: Option<serde_json::Value> =
                     serde_json::from_value(request.params.unwrap_or(serde_json::Value::Null)).ok();
-                let name = params.and_then(|p| {
-                    p.get("name")
-                        .and_then(|v| v.as_str())
-                        .map(|s| s.to_string())
-                });
+                let name = params
+                    .and_then(|p| p.get("name").and_then(|v| v.as_str()).map(|s| s.to_string()));
 
                 if let Some(name_str) = name {
                     match name_str.as_str() {
@@ -251,11 +239,7 @@ impl McpServer {
                 return self.send_osc_msg(address, osc_args, id);
             }
         }
-        Some(error_response(
-            id,
-            -32602,
-            "Missing address or args argument",
-        ))
+        Some(error_response(id, -32602, "Missing address or args argument"))
     }
 
     #[allow(dead_code)]
@@ -279,9 +263,7 @@ impl McpServer {
                 Err(e) => Some(success_response(
                     id,
                     serde_json::json!(CallToolResult {
-                        content: vec![ToolContent::Text {
-                            text: format!("OSC Error: {}", e)
-                        }],
+                        content: vec![ToolContent::Text { text: format!("OSC Error: {}", e) }],
                         is_error: Some(true)
                     }),
                 )),
@@ -296,23 +278,14 @@ pub fn success_response(
     id: Option<serde_json::Value>,
     result: serde_json::Value,
 ) -> JsonRpcResponse {
-    JsonRpcResponse {
-        jsonrpc: "2.0".to_string(),
-        result: Some(result),
-        error: None,
-        id,
-    }
+    JsonRpcResponse { jsonrpc: "2.0".to_string(), result: Some(result), error: None, id }
 }
 
 pub fn error_response(id: Option<serde_json::Value>, code: i32, message: &str) -> JsonRpcResponse {
     JsonRpcResponse {
         jsonrpc: "2.0".to_string(),
         result: None,
-        error: Some(JsonRpcError {
-            code,
-            message: message.to_string(),
-            data: None,
-        }),
+        error: Some(JsonRpcError { code, message: message.to_string(), data: None }),
         id,
     }
 }
@@ -497,19 +470,12 @@ mod tests {
         let response = server.handle_request(&request.to_string()).await;
         assert!(response.is_some());
         let resp = response.unwrap();
-        assert!(
-            resp.error.is_none(),
-            "Response should not be an error: {:?}",
-            resp.error
-        );
+        assert!(resp.error.is_none(), "Response should not be an error: {:?}", resp.error);
 
         let result = resp.result.unwrap();
         // result is a CallToolResult
         assert_eq!(result["isError"], false);
-        assert!(result["content"][0]["text"]
-            .as_str()
-            .unwrap()
-            .contains("Sent OSC"));
+        assert!(result["content"][0]["text"].as_str().unwrap().contains("Sent OSC"));
     }
 
     #[tokio::test]
@@ -558,11 +524,7 @@ mod tests {
         });
         let ext_resp = server.handle_request(&ext_req.to_string()).await.unwrap();
         assert!(ext_resp.error.is_some());
-        assert!(ext_resp
-            .error
-            .unwrap()
-            .message
-            .contains("Extension 'sh' is not allowed"));
+        assert!(ext_resp.error.unwrap().message.contains("Extension 'sh' is not allowed"));
 
         // Test valid path
         let valid_req = json!({

@@ -6,15 +6,15 @@ use crossbeam_channel::Receiver;
 use egui::TextureHandle;
 use egui_wgpu::Renderer;
 use egui_winit::State;
+use vorce_control::ControlManager;
 use vorce_control::hue::controller::HueController;
 #[cfg(feature = "midi")]
 use vorce_control::midi::MidiInputHandler;
-use vorce_control::ControlManager;
 use vorce_core::{
+    AppState, History, ModuleEvaluator, RenderOp,
     audio::backend::cpal_backend::CpalBackend,
     media_library::MediaLibrary,
     module::{ModuleId, ModulePartId},
-    AppState, History, ModuleEvaluator, RenderOp,
 };
 use vorce_mcp::McpAction;
 // use vorce_media::player::VideoPlayer;

@@ -181,10 +181,7 @@ pub struct ToolbarMetricConfig {
 
 impl Default for ToolbarMetricConfig {
     fn default() -> Self {
-        Self {
-            visible: true,
-            mode: ToolbarMetricMode::Always,
-        }
+        Self { visible: true, mode: ToolbarMetricMode::Always }
     }
 }
 
@@ -614,11 +611,8 @@ impl UserConfig {
 
         if !self.layouts.iter().any(|l| l.id == self.active_layout_id) {
             let previous = self.active_layout_id.clone();
-            self.active_layout_id = self
-                .layouts
-                .first()
-                .map(|l| l.id.clone())
-                .unwrap_or_else(default_active_layout_id);
+            self.active_layout_id =
+                self.layouts.first().map(|l| l.id.clone()).unwrap_or_else(default_active_layout_id);
             report.errors.push(format!(
                 "User config referenced missing active layout '{previous}'. Switched to '{}'.",
                 self.active_layout_id
@@ -790,10 +784,7 @@ impl UserConfig {
         // Remove existing assignment for this element
         self.midi_assignments.retain(|a| a.element_id != element_id);
         // Add new assignment
-        self.midi_assignments.push(MidiAssignment {
-            element_id: element_id.to_string(),
-            target,
-        });
+        self.midi_assignments.push(MidiAssignment { element_id: element_id.to_string(), target });
         if let Err(e) = self.save() {
             tracing::error!("Failed to save config: {}", e);
         }
@@ -817,19 +808,13 @@ impl UserConfig {
 
     /// Get assignment for an element
     pub fn get_midi_assignment(&self, element_id: &str) -> Option<&MidiAssignment> {
-        self.midi_assignments
-            .iter()
-            .find(|a| a.element_id == element_id)
+        self.midi_assignments.iter().find(|a| a.element_id == element_id)
     }
 
     /// Get all assignments for a specific target type
     pub fn get_assignments_by_type(
         &self,
-    ) -> (
-        Vec<&MidiAssignment>,
-        Vec<&MidiAssignment>,
-        Vec<&MidiAssignment>,
-    ) {
+    ) -> (Vec<&MidiAssignment>, Vec<&MidiAssignment>, Vec<&MidiAssignment>) {
         let vorce: Vec<_> = self
             .midi_assignments
             .iter()
@@ -855,11 +840,8 @@ impl UserConfig {
         }
 
         if !self.layouts.iter().any(|l| l.id == self.active_layout_id) {
-            self.active_layout_id = self
-                .layouts
-                .first()
-                .map(|l| l.id.clone())
-                .unwrap_or_else(default_active_layout_id);
+            self.active_layout_id =
+                self.layouts.first().map(|l| l.id.clone()).unwrap_or_else(default_active_layout_id);
         }
     }
 
@@ -870,9 +852,7 @@ impl UserConfig {
 
     /// Liefert das aktive Layoutprofil als mutable Referenz.
     pub fn active_layout_mut(&mut self) -> Option<&mut LayoutProfile> {
-        self.layouts
-            .iter_mut()
-            .find(|l| l.id == self.active_layout_id)
+        self.layouts.iter_mut().find(|l| l.id == self.active_layout_id)
     }
 
     /// Wechselt das aktive Layoutprofil.
@@ -1010,37 +990,25 @@ mod tests {
 
         assert!(repaired);
         assert!(config.active_layout().unwrap().visibility.show_left_sidebar);
-        assert!(
-            config
-                .active_layout()
-                .unwrap()
-                .visibility
-                .show_module_canvas
-        );
+        assert!(config.active_layout().unwrap().visibility.show_module_canvas);
         assert!(config.show_left_sidebar);
         assert!(config.show_module_canvas);
-        assert!(report
-            .errors
-            .iter()
-            .any(|entry| entry.contains("Recovered unusable startup layout")));
+        assert!(
+            report.errors.iter().any(|entry| entry.contains("Recovered unusable startup layout"))
+        );
     }
 
     #[test]
     fn test_repair_for_startup_restores_missing_active_layout() {
-        let mut config = UserConfig {
-            active_layout_id: "missing".to_string(),
-            ..UserConfig::default()
-        };
+        let mut config =
+            UserConfig { active_layout_id: "missing".to_string(), ..UserConfig::default() };
 
         let mut report = UserConfigLoadReport::default();
         let repaired = config.repair_for_startup(&mut report);
 
         assert!(repaired);
         assert_eq!(config.active_layout_id, "default");
-        assert!(report
-            .errors
-            .iter()
-            .any(|entry| entry.contains("missing active layout")));
+        assert!(report.errors.iter().any(|entry| entry.contains("missing active layout")));
     }
 
     #[test]

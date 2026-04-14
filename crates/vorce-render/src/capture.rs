@@ -1,6 +1,6 @@
 //! Visual capture and readback utilities.
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use image::RgbaImage;
 use std::path::Path;
 
@@ -41,11 +41,7 @@ pub fn queue_readback_copy(
                 rows_per_image: Some(height),
             },
         },
-        wgpu::Extent3d {
-            width,
-            height,
-            depth_or_array_layers: 1,
-        },
+        wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
     );
 
     (buffer, padded_bytes_per_row)
@@ -66,18 +62,12 @@ pub fn save_readback_buffer(
 
     // In a real app, we might want to poll outside this function,
     // but for simple capture this is fine.
-    let _ = device.poll(wgpu::PollType::Wait {
-        timeout: None,
-        submission_index: None,
-    });
+    let _ = device.poll(wgpu::PollType::Wait { timeout: None, submission_index: None });
 
     let mapped = slice.get_mapped_range();
     let mut rgba = Vec::with_capacity((width * height * 4) as usize);
 
-    for row in mapped
-        .chunks_exact(padded_bytes_per_row as usize)
-        .take(height as usize)
-    {
+    for row in mapped.chunks_exact(padded_bytes_per_row as usize).take(height as usize) {
         for pixel in row[..(width * 4) as usize].chunks_exact(4) {
             match format {
                 wgpu::TextureFormat::Bgra8Unorm | wgpu::TextureFormat::Bgra8UnormSrgb => {
@@ -103,8 +93,6 @@ pub fn save_rgba_png(width: u32, height: u32, pixels: &[u8], output_path: &Path)
 
     let image = RgbaImage::from_raw(width, height, pixels.to_vec())
         .ok_or_else(|| anyhow!("failed to assemble RGBA image buffer"))?;
-    image
-        .save(output_path)
-        .with_context(|| format!("failed to save {}", output_path.display()))?;
+    image.save(output_path).with_context(|| format!("failed to save {}", output_path.display()))?;
     Ok(())
 }

@@ -1,9 +1,9 @@
 use crate::app::core::app_struct::RuntimeRenderQueueItem;
 use anyhow::Result;
 
+use super::PREVIEW_FLAG;
 use super::effects::build_effect_chain;
 use super::logging::{clear_video_issue, should_log_video_issue};
-use super::PREVIEW_FLAG;
 
 pub(crate) struct RenderContext<'a> {
     pub device: &'a wgpu::Device,
@@ -81,21 +81,13 @@ pub(crate) fn render_content(
 
     let empty_ops_issue_key = format!(
         "video-output-empty-ops:{real_output_id}:{}",
-        if is_preview_output {
-            "preview"
-        } else {
-            "output"
-        }
+        if is_preview_output { "preview" } else { "output" }
     );
     if target_ops.is_empty() {
         if output_id != 0 && should_log_video_issue(video_log_times, empty_ops_issue_key.clone()) {
             tracing::warn!(
                 "Fehler in Videoausgabe: {} {} bleibt leer, weil keine RenderOps fuer diesen Output erzeugt wurden.",
-                if is_preview_output {
-                    "Output-Preview"
-                } else {
-                    "Output"
-                },
+                if is_preview_output { "Output-Preview" } else { "Output" },
                 real_output_id
             );
         }
@@ -174,11 +166,8 @@ pub(crate) fn render_content(
         None
     };
 
-    let target_view = if needs_post_processing {
-        mesh_target_view_ref.as_deref().unwrap_or(view)
-    } else {
-        view
-    };
+    let target_view =
+        if needs_post_processing { mesh_target_view_ref.as_deref().unwrap_or(view) } else { view };
     // Clear Pass
     {
         let _pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -190,12 +179,7 @@ pub(crate) fn render_content(
 
                 ops: wgpu::Operations {
                     load: wgpu::LoadOp::Clear(if output_id == 0 {
-                        wgpu::Color {
-                            r: 0.05,
-                            g: 0.05,
-                            b: 0.05,
-                            a: 1.0,
-                        }
+                        wgpu::Color { r: 0.05, g: 0.05, b: 0.05, a: 1.0 }
                     } else {
                         wgpu::Color::BLACK
                     }),
@@ -212,10 +196,7 @@ pub(crate) fn render_content(
     // Accumulate Layers
     for item in target_ops {
         if item.diagnostics.iter().any(|diag| {
-            matches!(
-                diag.severity,
-                crate::app::core::app_struct::DiagnosticSeverity::Error
-            )
+            matches!(diag.severity, crate::app::core::app_struct::DiagnosticSeverity::Error)
         }) {
             continue;
         }
@@ -241,8 +222,7 @@ pub(crate) fn render_content(
                     wgpu::TextureFormat::Rgba8UnormSrgb,
                     wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
                 );
-                ctx.texture_pool
-                    .upload_data(queue, &grid_tex_name, &data, width, height);
+                ctx.texture_pool.upload_data(queue, &grid_tex_name, &data, width, height);
             }
             Some(ctx.texture_pool.get_view(&grid_tex_name))
         } else if ctx.texture_pool.has_texture(&tex_name) {
@@ -291,10 +271,8 @@ pub(crate) fn render_content(
             if !op.effects.is_empty() {
                 let effect_chain = build_effect_chain(&op.effects);
                 if !effect_chain.effects.is_empty() {
-                    let output_texture_name = format!(
-                        "effect_tmp_output_{}_layer_{}",
-                        real_output_id, op.layer_part_id
-                    );
+                    let output_texture_name =
+                        format!("effect_tmp_output_{}_layer_{}", real_output_id, op.layer_part_id);
                     let effect_width = 1024;
                     let effect_height = 1024;
                     ctx.texture_pool.ensure_texture(
@@ -368,10 +346,7 @@ pub(crate) fn render_content(
                     view: target_view,
                     resolve_target: None,
 
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Load,
-                        store: wgpu::StoreOp::Store,
-                    },
+                    ops: wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store },
                 })],
                 depth_stencil_attachment: None,
                 timestamp_writes: None,
@@ -393,16 +368,13 @@ pub(crate) fn render_content(
 
     // --- POST PROCESSING PASSES ---
     if needs_post_processing {
-        let mut current_view = mesh_target_view_ref
-            .as_ref()
-            .map(|view_ref| view_ref.as_ref())
-            .unwrap_or(view);
+        let mut current_view =
+            mesh_target_view_ref.as_ref().map(|view_ref| view_ref.as_ref()).unwrap_or(view);
 
         if use_color_calib {
-            if let (Some(color_renderer), Some(output_config)) = (
-                ctx.color_calibration_renderer.as_ref(),
-                output_config_opt.as_ref(),
-            ) {
+            if let (Some(color_renderer), Some(output_config)) =
+                (ctx.color_calibration_renderer.as_ref(), output_config_opt.as_ref())
+            {
                 let color_target_view = color_target_view_ref
                     .as_ref()
                     .map(|view_ref| view_ref.as_ref())
@@ -523,10 +495,7 @@ pub(crate) fn render_content(
                     view,
                     resolve_target: None,
 
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Load,
-                        store: wgpu::StoreOp::Store,
-                    },
+                    ops: wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store },
                 })],
                 depth_stencil_attachment: None,
                 timestamp_writes: None,

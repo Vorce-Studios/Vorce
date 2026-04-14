@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 pub struct HueStreamer {}
 
@@ -7,7 +7,9 @@ impl HueStreamer {
     ///
     /// STUBBED: OpenSSL is currently disabled due to build hangs on Windows.
     pub fn connect(_ip: &str, _application_id: &str, _client_key: &str) -> Result<Self> {
-        Err(anyhow!("Hue Entertainment streaming is currently disabled because OpenSSL support is not compiled in (build hang avoidance)."))
+        Err(anyhow!(
+            "Hue Entertainment streaming is currently disabled because OpenSSL support is not compiled in (build hang avoidance)."
+        ))
     }
 
     pub fn write_all(&mut self, _buf: &[u8]) -> Result<()> {
