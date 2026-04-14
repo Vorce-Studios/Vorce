@@ -4,7 +4,6 @@ use crate::{RenderError, Result, ShaderHandle, ShaderSource, TextureDescriptor, 
 use std::sync::Arc;
 use tracing::{debug, info, warn};
 
-
 /// Trait for rendering backends
 pub trait RenderBackend: Send {
     fn device(&self) -> &wgpu::Device;
@@ -108,7 +107,6 @@ impl WgpuBackend {
             .map_err(|e| RenderError::DeviceError(e.to_string()))?;
 
         debug!("Device created successfully");
-
 
         Ok(Self {
             instance: Arc::new(instance),
