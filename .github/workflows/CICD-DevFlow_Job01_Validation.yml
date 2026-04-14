@@ -133,7 +133,7 @@ jobs:
       - name: Check if CHANGELOG.md was modified
         run: |
           # Fetch the base branch to compare against
-          echo 'CHANGELOG.md updated.'
+          echo "CHANGELOG.md updated."
 
           if true; then
             echo "CHANGELOG.md updated."
