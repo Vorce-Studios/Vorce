@@ -189,18 +189,9 @@ pub fn decode_hap_frame(data: &[u8], width: u32, height: u32) -> Result<HapFrame
         }
         0xB0 => {
             // Snappy compression
-            debug!(
-                "HAP frame: Snappy compressed, {} bytes",
-                compressed_data.len()
-            );
+            debug!("HAP frame: Snappy compressed, {} bytes", compressed_data.len());
             let texture_data = decompress_snappy(compressed_data)?;
-            Ok(HapFrame {
-                texture_type,
-                width,
-                height,
-                texture_data,
-                secondary_texture: None,
-            })
+            Ok(HapFrame { texture_type, width, height, texture_data, secondary_texture: None })
         }
         0xC0 => {
             // Complex multi-section (HAP Q)
@@ -235,9 +226,7 @@ fn decompress_snappy(data: &[u8]) -> Result<Vec<u8>, HapError> {
     use snap::raw::Decoder;
 
     let mut decoder = Decoder::new();
-    decoder
-        .decompress_vec(data)
-        .map_err(|e| HapError::SnappyError(e.to_string()))
+    decoder.decompress_vec(data).map_err(|e| HapError::SnappyError(e.to_string()))
 }
 
 /// Decode multiple images from a multiple images container (HAP Q Alpha)

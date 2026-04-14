@@ -66,20 +66,9 @@ impl MpvDecoder {
         let duration_secs = mpv.get_property::<f64>("duration").unwrap_or(0.0);
         let fps = mpv.get_property::<f64>("container-fps").unwrap_or(30.0);
 
-        info!(
-            "Video loaded: {}x{}, {:.2}s, {:.2}fps",
-            width, height, duration_secs, fps
-        );
+        info!("Video loaded: {}x{}, {:.2}s, {:.2}fps", width, height, duration_secs, fps);
 
-        Ok(Self {
-            mpv,
-            path,
-            width,
-            height,
-            duration_secs,
-            fps,
-            current_time: Duration::ZERO,
-        })
+        Ok(Self { mpv, path, width, height, duration_secs, fps, current_time: Duration::ZERO })
     }
 
     /// Capture current frame
@@ -101,17 +90,10 @@ impl MpvDecoder {
 
             let mut cmd_screenshot = [cmd_sc.as_ptr(), cmd_sc_arg.as_ptr(), std::ptr::null()];
 
-            let mut node = mpv_node {
-                format: 0,
-                u: mpv_node__bindgen_ty_1 {
-                    string: std::ptr::null_mut(),
-                },
-            };
-            let res = mpv_command_ret(
-                handle.as_ptr(),
-                cmd_screenshot.as_mut_ptr(),
-                &mut node as *mut _,
-            );
+            let mut node =
+                mpv_node { format: 0, u: mpv_node__bindgen_ty_1 { string: std::ptr::null_mut() } };
+            let res =
+                mpv_command_ret(handle.as_ptr(), cmd_screenshot.as_mut_ptr(), &mut node as *mut _);
 
             if res >= 0 && node.format == mpv_format_MPV_FORMAT_NODE_MAP {
                 let map = node.u.list;
@@ -160,9 +142,7 @@ impl MpvDecoder {
                 actual_width * actual_height * 4,
                 extracted_data.len()
             );
-            return Err(MediaError::DecoderError(
-                "Captured frame data too small".to_string(),
-            ));
+            return Err(MediaError::DecoderError("Captured frame data too small".to_string()));
         }
 
         // screenshot-raw typically returns BGRA or BGR0 format when no format is forced.
@@ -177,12 +157,8 @@ impl MpvDecoder {
         }
 
         // Create video format using the actual dimensions returned by the screenshot
-        let format = VideoFormat::new(
-            actual_width,
-            actual_height,
-            PixelFormat::RGBA8,
-            self.fps as f32,
-        );
+        let format =
+            VideoFormat::new(actual_width, actual_height, PixelFormat::RGBA8, self.fps as f32);
 
         Ok(VideoFrame::new(final_data, format, self.current_time))
     }
