@@ -1,8 +1,7 @@
 name: "CICD-DevFlow: Job00 Pre-Commit Lite"
 
 on:
-  pull_request:
-    branches: [main]
+
   pull_request_target:
     types: [labeled, opened, reopened, synchronize, ready_for_review]
     branches: [main]
