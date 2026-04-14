@@ -9582,6 +9582,7 @@ dependencies = [
  "rfd",
  "ron",
  "rosc",
+ "rustc-hash 1.1.0",
  "rustfft",
  "serde",
  "serde_json",
