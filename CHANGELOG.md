@@ -1,3 +1,7 @@
+## [Unreleased]
+### Security
+- Fixed an insecure WebSocket Protocol authentication fallback that permitted API keys via `Sec-WebSocket-Protocol`. This method was removed in favor of standard `Authorization` headers.
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
