@@ -3,7 +3,7 @@
 use crate::{RenderError, Result, ShaderHandle, ShaderSource, TextureDescriptor, TextureHandle};
 use std::sync::Arc;
 use tracing::{debug, info, warn};
-use wgpu::util::StagingBelt;
+
 
 /// Trait for rendering backends
 pub trait RenderBackend: Send {
@@ -20,8 +20,6 @@ pub struct WgpuBackend {
     pub device: Arc<wgpu::Device>,
     pub queue: Arc<wgpu::Queue>,
     pub adapter_info: wgpu::AdapterInfo,
-    #[allow(dead_code)]
-    staging_belt: StagingBelt,
     texture_counter: u64,
     shader_counter: u64,
     start_time: std::time::Instant,
@@ -111,14 +109,12 @@ impl WgpuBackend {
 
         debug!("Device created successfully");
 
-        let staging_belt = wgpu::util::StagingBelt::new(device.clone(), 1024 * 1024); // 1MB chunks
 
         Ok(Self {
             instance: Arc::new(instance),
             device: Arc::new(device),
             queue: Arc::new(queue),
             adapter_info,
-            staging_belt,
             texture_counter: 0,
             shader_counter: 0,
             start_time: std::time::Instant::now(),
