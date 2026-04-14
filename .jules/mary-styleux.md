@@ -1,3 +1,0 @@
-## 2024-03-26 - Improve accessibility and visual feedback for hold-to-confirm actions
-**Learning:** Generic fallback text obscures meaningful screen reader information, and missing visual background fills on trigger creates uncertainty during live-performance stress on hold-to-confirm buttons.
-**Action:** Dynamically incorporate the action text (e.g., `format!("{} (Hold to confirm)", hover_text)`) when adding accessibility labels or tooltips, and always explicitly render visual feedback like full background flashes (`painter.circle_filled`) upon action completion (`progress >= 1.0` or `triggered`).
