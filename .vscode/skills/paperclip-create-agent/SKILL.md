@@ -28,36 +28,35 @@ curl -sS "$PAPERCLIP_API_URL/api/agents/me" \
   -H "Authorization: Bearer $PAPERCLIP_API_KEY"
 ```
 
-1. Discover available adapter configuration docs for this Paperclip instance.
+2. Discover available adapter configuration docs for this Paperclip instance.
 
 ```sh
 curl -sS "$PAPERCLIP_API_URL/llms/agent-configuration.txt" \
   -H "Authorization: Bearer $PAPERCLIP_API_KEY"
 ```
 
-1. Read adapter-specific docs (example: `claude_local`).
+3. Read adapter-specific docs (example: `claude_local`).
 
 ```sh
 curl -sS "$PAPERCLIP_API_URL/llms/agent-configuration/claude_local.txt" \
   -H "Authorization: Bearer $PAPERCLIP_API_KEY"
 ```
 
-1. Compare existing agent configurations in your company.
+4. Compare existing agent configurations in your company.
 
 ```sh
 curl -sS "$PAPERCLIP_API_URL/api/companies/$PAPERCLIP_COMPANY_ID/agent-configurations" \
   -H "Authorization: Bearer $PAPERCLIP_API_KEY"
 ```
 
-1. Discover allowed agent icons and pick one that matches the role.
+5. Discover allowed agent icons and pick one that matches the role.
 
 ```sh
 curl -sS "$PAPERCLIP_API_URL/llms/agent-icons.txt" \
   -H "Authorization: Bearer $PAPERCLIP_API_KEY"
 ```
 
-1. Draft the new hire config:
-
+6. Draft the new hire config:
 - role/title/name
 - icon (required in practice; use one from `/llms/agent-icons.txt`)
 - reporting line (`reportsTo`)
@@ -68,7 +67,7 @@ curl -sS "$PAPERCLIP_API_URL/llms/agent-icons.txt" \
 - run prompt in adapter config (`promptTemplate` where applicable)
 - source issue linkage (`sourceIssueId` or `sourceIssueIds`) when this hire came from an issue
 
-1. Submit hire request.
+7. Submit hire request.
 
 ```sh
 curl -sS -X POST "$PAPERCLIP_API_URL/api/companies/$PAPERCLIP_COMPANY_ID/agent-hires" \
@@ -89,8 +88,7 @@ curl -sS -X POST "$PAPERCLIP_API_URL/api/companies/$PAPERCLIP_COMPANY_ID/agent-h
   }'
 ```
 
-1. Handle governance state:
-
+8. Handle governance state:
 - if response has `approval`, hire is `pending_approval`
 - monitor and discuss on approval thread
 - when the board approves, you will be woken with `PAPERCLIP_APPROVAL_ID`; read linked issues and close/comment follow-up
@@ -125,7 +123,6 @@ curl -sS "$PAPERCLIP_API_URL/api/approvals/$PAPERCLIP_APPROVAL_ID/issues" \
 ```
 
 For each linked issue, either:
-
 - close it if approval resolved the request, or
 - comment in markdown with links to the approval and next actions.
 
