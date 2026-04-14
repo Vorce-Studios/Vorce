@@ -97,9 +97,29 @@ gha-creds-*.json
 # Paperclip runtime data
 .paperclip-home/
 
+# Ghost files (prevent bot regressions)
+.pre-commit-config copy.yaml
+JULES_ISSUES.md
+taskmon.toml
+test.py
+*.patch
+*.diff
+
 # Vendor crates (should be managed by workspace)
 # crates/vendor/env_logger/
 # crates/vendor/rusty-spout/
 
 # Jules memory: Log files generated with date suffixes
 scripts/archive/logs/
+
+# Deleted Jules scripts (prevent bot regressions)
+backfill-legacy-project-fields.ps1
+escalate-jules-sessions.ps1
+monitor-jules-sessions.ps1
+
+
+# Paperclip runtime data (managed outside of repo)
+.paperclip/
+.paperclip-home/
+ops/paperclip/
+scripts/paperclip/
