@@ -22,7 +22,7 @@ impl AbletonLinkHandle {
     /// tasks are spawned here, keeping initialization cheap.
     pub fn new(default_bpm: f64) -> Result<Self> {
         if !(20.0..=300.0).contains(&default_bpm) {
-            return Err(ControlError::LinkError(
+            return Err(ControlError::InvalidParameter(
                 "Tempo must be between 20 and 300 BPM".to_string(),
             ));
         }
@@ -40,11 +40,54 @@ impl AbletonLinkHandle {
     /// Update the tempo value locally.
     pub fn set_tempo_bpm(&mut self, bpm: f64) -> Result<()> {
         if !(20.0..=300.0).contains(&bpm) {
-            return Err(ControlError::LinkError(
+            return Err(ControlError::InvalidParameter(
                 "Tempo must be between 20 and 300 BPM".to_string(),
             ));
         }
-        self._tempo.set_bpm(bpm);
+        self._tempo.value = bpm;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_valid_tempo() {
+        let handle = AbletonLinkHandle::new(120.0);
+        assert!(handle.is_ok());
+        let handle = handle.unwrap();
+        assert_eq!(handle.tempo_bpm(), 120.0);
+    }
+
+    #[test]
+    fn test_new_invalid_tempo_low() {
+        let handle = AbletonLinkHandle::new(19.9);
+        assert!(handle.is_err());
+        match handle {
+            Err(e) => match e {
+                ControlError::InvalidParameter(msg) => {
+                    assert_eq!(msg, "Tempo must be between 20 and 300 BPM");
+                }
+                _ => panic!("Expected InvalidParameter error"),
+            },
+            Ok(_) => panic!("Expected error"),
+        }
+    }
+
+    #[test]
+    fn test_new_invalid_tempo_high() {
+        let handle = AbletonLinkHandle::new(300.1);
+        assert!(handle.is_err());
+        match handle {
+            Err(e) => match e {
+                ControlError::InvalidParameter(msg) => {
+                    assert_eq!(msg, "Tempo must be between 20 and 300 BPM");
+                }
+                _ => panic!("Expected InvalidParameter error"),
+            },
+            Ok(_) => panic!("Expected error"),
+        }
     }
 }
