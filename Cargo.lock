@@ -9812,6 +9812,7 @@ dependencies = [
  "resvg 0.47.0",
  "rfd",
  "rust-embed",
+ "rustc-hash 2.1.2",
  "serde",
  "serde_json",
  "sysinfo",
