@@ -293,7 +293,14 @@ impl ShaderNode {
         let (inputs, outputs) = Self::create_sockets(&node_type);
         let parameters = Self::create_default_parameters(&node_type);
 
-        Self { id, node_type, position: (0.0, 0.0), inputs, outputs, parameters }
+        Self {
+            id,
+            node_type,
+            position: (0.0, 0.0),
+            inputs,
+            outputs,
+            parameters,
+        }
     }
 
     /// Create input and output sockets for a node type
@@ -466,17 +473,20 @@ impl ShaderNode {
         };
 
         let outputs = match node_type {
-            NodeType::TextureInput => {
-                vec![OutputSocket { name: "Texture".to_string(), data_type: DataType::Texture }]
-            }
+            NodeType::TextureInput => vec![OutputSocket {
+                name: "Texture".to_string(),
+                data_type: DataType::Texture,
+            }],
 
-            NodeType::TimeInput => {
-                vec![OutputSocket { name: "Time".to_string(), data_type: DataType::Float }]
-            }
+            NodeType::TimeInput => vec![OutputSocket {
+                name: "Time".to_string(),
+                data_type: DataType::Float,
+            }],
 
-            NodeType::UVInput => {
-                vec![OutputSocket { name: "UV".to_string(), data_type: DataType::Vec2 }]
-            }
+            NodeType::UVInput => vec![OutputSocket {
+                name: "UV".to_string(),
+                data_type: DataType::Vec2,
+            }],
 
             NodeType::Add
             | NodeType::Subtract
@@ -487,15 +497,30 @@ impl ShaderNode {
             | NodeType::Smoothstep
             | NodeType::Sin
             | NodeType::Cos => {
-                vec![OutputSocket { name: "Result".to_string(), data_type: DataType::Float }]
+                vec![OutputSocket {
+                    name: "Result".to_string(),
+                    data_type: DataType::Float,
+                }]
             }
 
             NodeType::Split => {
                 vec![
-                    OutputSocket { name: "R".to_string(), data_type: DataType::Float },
-                    OutputSocket { name: "G".to_string(), data_type: DataType::Float },
-                    OutputSocket { name: "B".to_string(), data_type: DataType::Float },
-                    OutputSocket { name: "A".to_string(), data_type: DataType::Float },
+                    OutputSocket {
+                        name: "R".to_string(),
+                        data_type: DataType::Float,
+                    },
+                    OutputSocket {
+                        name: "G".to_string(),
+                        data_type: DataType::Float,
+                    },
+                    OutputSocket {
+                        name: "B".to_string(),
+                        data_type: DataType::Float,
+                    },
+                    OutputSocket {
+                        name: "A".to_string(),
+                        data_type: DataType::Float,
+                    },
                 ]
             }
 
@@ -506,9 +531,10 @@ impl ShaderNode {
             | NodeType::EdgeDetect
             | NodeType::Brightness
             | NodeType::Contrast
-            | NodeType::Desaturate => {
-                vec![OutputSocket { name: "Color".to_string(), data_type: DataType::Color }]
-            }
+            | NodeType::Desaturate => vec![OutputSocket {
+                name: "Color".to_string(),
+                data_type: DataType::Color,
+            }],
 
             NodeType::Output => vec![],
 
@@ -555,7 +581,12 @@ pub struct ShaderGraph {
 impl ShaderGraph {
     /// Create a new empty shader graph
     pub fn new(id: GraphId, name: String) -> Self {
-        Self { id, name, nodes: HashMap::new(), next_node_id: 1 }
+        Self {
+            id,
+            name,
+            nodes: HashMap::new(),
+            next_node_id: 1,
+        }
     }
 
     /// Add a node to the graph
@@ -599,7 +630,10 @@ impl ShaderGraph {
             .ok_or_else(|| format!("Source node {} not found", source_node))?;
 
         if !source.outputs.iter().any(|o| o.name == source_output) {
-            return Err(format!("Output '{}' not found on source node", source_output));
+            return Err(format!(
+                "Output '{}' not found on source node",
+                source_output
+            ));
         }
 
         // Update destination node input
@@ -621,8 +655,10 @@ impl ShaderGraph {
 
     /// Disconnect an input
     pub fn disconnect(&mut self, node_id: NodeId, input_name: &str) -> Result<(), String> {
-        let node =
-            self.nodes.get_mut(&node_id).ok_or_else(|| format!("Node {} not found", node_id))?;
+        let node = self
+            .nodes
+            .get_mut(&node_id)
+            .ok_or_else(|| format!("Node {} not found", node_id))?;
 
         let input = node
             .inputs
@@ -637,7 +673,9 @@ impl ShaderGraph {
 
     /// Get the output node (should be exactly one)
     pub fn output_node(&self) -> Option<&ShaderNode> {
-        self.nodes.values().find(|n| n.node_type == NodeType::Output)
+        self.nodes
+            .values()
+            .find(|n| n.node_type == NodeType::Output)
     }
 
     /// Validate the graph (check for cycles, disconnected nodes, etc.)

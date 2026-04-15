@@ -20,12 +20,20 @@ pub struct LayerManager {
 impl LayerManager {
     /// Create a new layer manager
     pub fn new() -> Self {
-        Self { layers: Vec::new(), next_id: 1, composition: Composition::default() }
+        Self {
+            layers: Vec::new(),
+            next_id: 1,
+            composition: Composition::default(),
+        }
     }
 
     /// Create layer manager with custom composition
     pub fn with_composition(composition: Composition) -> Self {
-        Self { layers: Vec::new(), next_id: 1, composition }
+        Self {
+            layers: Vec::new(),
+            next_id: 1,
+            composition,
+        }
     }
 
     /// Add a new layer
@@ -288,7 +296,10 @@ mod tests {
 
     #[test]
     fn test_manager_with_composition() {
-        let comp = Composition { master_opacity: 0.5, ..Default::default() };
+        let comp = Composition {
+            master_opacity: 0.5,
+            ..Default::default()
+        };
         let manager = LayerManager::with_composition(comp.clone());
         assert_eq!(manager.composition.master_opacity, 0.5);
     }
@@ -377,7 +388,10 @@ mod tests {
         let child_id = manager.create_layer("Child");
         manager.reparent_layer(child_id, Some(group_id));
 
-        assert_eq!(manager.get_layer(child_id).unwrap().parent_id, Some(group_id));
+        assert_eq!(
+            manager.get_layer(child_id).unwrap().parent_id,
+            Some(group_id)
+        );
         manager.remove_layer(group_id);
 
         // Child should still exist but be orphaned
