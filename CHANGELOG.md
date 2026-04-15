@@ -214,5 +214,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FFmpeg-based video decoding.
 - Simple MIDI and OSC support.
 - Basic shader effects.
--   2 0 2 6 - 0 4 - 1 4 :   p e r f :   B o l t :   O ( 1 )   L o o k u p s   i n   A p p - S t a t e - H e a l   ( E x t e n d e d )   ( # 2 6 3 )  
+-   2 0 2 6 - 0 4 - 1 4 :   p e r f :   B o l t :   O ( 1 )   L o o k u p s   i n   A p p - S t a t e - H e a l   ( E x t e n d e d )   ( # 2 6 3 ) 
+ 
  
