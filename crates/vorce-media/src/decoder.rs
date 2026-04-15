@@ -109,10 +109,7 @@ mod ffmpeg_impl {
         let mut count = 0;
         while *p != ffi::AVPixelFormat::AV_PIX_FMT_NONE {
             if count >= MAX_FORMATS {
-                warn!(
-                    "get_format_callback: format list exceeded limit of {}",
-                    MAX_FORMATS
-                );
+                warn!("get_format_callback: format list exceeded limit of {}", MAX_FORMATS);
                 break;
             }
             if *p == ffi::AVPixelFormat::AV_PIX_FMT_D3D11 {
@@ -169,10 +166,7 @@ mod ffmpeg_impl {
             let path = path.as_ref();
 
             if !path.exists() {
-                return Err(MediaError::FileOpen(format!(
-                    "File not found: {}",
-                    path.display()
-                )));
+                return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
             }
 
             // Initialize FFmpeg
@@ -554,14 +548,7 @@ pub struct TestPatternDecoder {
 impl TestPatternDecoder {
     /// Create a new test pattern decoder
     pub fn new(width: u32, height: u32, duration: Duration, fps: f64) -> Self {
-        Self {
-            width,
-            height,
-            duration,
-            fps,
-            current_time: Duration::ZERO,
-            frame_count: 0,
-        }
+        Self { width, height, duration, fps, current_time: Duration::ZERO, frame_count: 0 }
     }
 
     /// Generate a test pattern frame
@@ -611,9 +598,7 @@ impl VideoDecoder for TestPatternDecoder {
 
     fn seek(&mut self, timestamp: Duration) -> Result<()> {
         if timestamp > self.duration {
-            return Err(MediaError::SeekError(
-                "Timestamp beyond duration".to_string(),
-            ));
+            return Err(MediaError::SeekError("Timestamp beyond duration".to_string()));
         }
 
         self.current_time = timestamp;

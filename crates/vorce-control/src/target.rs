@@ -194,10 +194,7 @@ impl ControlValue {
                 // Security: Normalize path separators to correctly identify Windows-style
                 // traversal payloads across all operating systems.
                 let normalized = s.replace("\\", "/");
-                if Path::new(&normalized)
-                    .components()
-                    .any(|c| matches!(c, Component::ParentDir))
-                {
+                if Path::new(&normalized).components().any(|c| matches!(c, Component::ParentDir)) {
                     return Err("String value contains path traversal attempt (..)".to_string());
                 }
             }
@@ -337,22 +334,13 @@ mod tests {
 
     #[test]
     fn test_control_target_to_id_string() {
-        assert_eq!(
-            ControlTarget::LayerOpacity(5).to_id_string(),
-            "layer/5/opacity"
-        );
+        assert_eq!(ControlTarget::LayerOpacity(5).to_id_string(), "layer/5/opacity");
         assert_eq!(
             ControlTarget::PaintParameter(2, "brightness".into()).to_id_string(),
             "paint/2/brightness"
         );
-        assert_eq!(
-            ControlTarget::MasterOpacity.to_id_string(),
-            "master/opacity"
-        );
-        assert_eq!(
-            ControlTarget::Custom("my_param".into()).to_id_string(),
-            "custom/my_param"
-        );
+        assert_eq!(ControlTarget::MasterOpacity.to_id_string(), "master/opacity");
+        assert_eq!(ControlTarget::Custom("my_param".into()).to_id_string(), "custom/my_param");
     }
 
     #[test]

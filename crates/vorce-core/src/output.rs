@@ -24,12 +24,7 @@ pub struct CanvasRegion {
 impl CanvasRegion {
     /// Create a new canvas region
     pub fn new(x: f32, y: f32, width: f32, height: f32) -> Self {
-        Self {
-            x,
-            y,
-            width,
-            height,
-        }
+        Self { x, y, width, height }
     }
 
     /// Check if this region intersects with another region
@@ -104,11 +99,7 @@ pub struct EdgeBlendZone {
 
 impl Default for EdgeBlendZone {
     fn default() -> Self {
-        Self {
-            enabled: false,
-            width: 0.1,
-            offset: 0.0,
-        }
+        Self { enabled: false, width: 0.1, offset: 0.0 }
     }
 }
 
@@ -200,11 +191,7 @@ pub struct OutputManager {
 impl OutputManager {
     /// Create a new output manager
     pub fn new(canvas_size: (u32, u32)) -> Self {
-        Self {
-            outputs: Vec::new(),
-            canvas_size,
-            next_id: 1,
-        }
+        Self { outputs: Vec::new(), canvas_size, next_id: 1 }
     }
 
     /// Add a new output
@@ -320,26 +307,10 @@ impl OutputManager {
                 // Configure edge blending for overlapping edges
                 if let Some(output) = self.get_output_mut(id) {
                     output.edge_blend = EdgeBlendConfig {
-                        left: EdgeBlendZone {
-                            enabled: has_left,
-                            width: overlap,
-                            offset: 0.0,
-                        },
-                        right: EdgeBlendZone {
-                            enabled: has_right,
-                            width: overlap,
-                            offset: 0.0,
-                        },
-                        top: EdgeBlendZone {
-                            enabled: has_top,
-                            width: overlap,
-                            offset: 0.0,
-                        },
-                        bottom: EdgeBlendZone {
-                            enabled: has_bottom,
-                            width: overlap,
-                            offset: 0.0,
-                        },
+                        left: EdgeBlendZone { enabled: has_left, width: overlap, offset: 0.0 },
+                        right: EdgeBlendZone { enabled: has_right, width: overlap, offset: 0.0 },
+                        top: EdgeBlendZone { enabled: has_top, width: overlap, offset: 0.0 },
+                        bottom: EdgeBlendZone { enabled: has_bottom, width: overlap, offset: 0.0 },
                         gamma: 2.2,
                     };
                 }

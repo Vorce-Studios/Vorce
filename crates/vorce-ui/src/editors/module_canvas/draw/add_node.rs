@@ -11,11 +11,8 @@ pub fn render_add_node_menu_content(
     pos_override: Option<(f32, f32)>,
     active_module_id: Option<u64>,
 ) {
-    let mut module = if let Some(id) = active_module_id {
-        manager.get_module_mut(id)
-    } else {
-        None
-    };
+    let mut module =
+        if let Some(id) = active_module_id { manager.get_module_mut(id) } else { None };
 
     if let Some(module) = &mut module {
         let shader_supported =
@@ -87,9 +84,7 @@ pub fn render_add_node_menu_content(
 
         ui.menu_button("📹 Sources", |ui| {
             if ui.button("📁 Media File").clicked() {
-                add_node(ModulePartType::Source(SourceType::new_media_file(
-                    String::new(),
-                )));
+                add_node(ModulePartType::Source(SourceType::new_media_file(String::new())));
                 ui.close();
             }
 
@@ -103,9 +98,7 @@ pub fn render_add_node_menu_content(
 
             #[cfg(feature = "ndi")]
             if ndi_supported && ui.button("📡 NDI Input").clicked() {
-                add_node(ModulePartType::Source(SourceType::NdiInput {
-                    source_name: None,
-                }));
+                add_node(ModulePartType::Source(SourceType::NdiInput { source_name: None }));
                 ui.close();
             }
 

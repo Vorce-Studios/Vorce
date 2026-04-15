@@ -52,10 +52,7 @@ pub fn perform_evaluation(
             for (part_id, values) in &eval_result.trigger_values {
                 let max_val = values.iter().cloned().fold(0.0, f32::max);
                 node_triggers.insert((*module_id, *part_id), max_val);
-                app.ui_state
-                    .module_canvas
-                    .last_trigger_values
-                    .insert(*part_id, max_val);
+                app.ui_state.module_canvas.last_trigger_values.insert(*part_id, max_val);
             }
 
             for part in &module_ref.parts {
@@ -100,13 +97,7 @@ pub fn perform_evaluation(
             }
 
             for (part_id, command) in hue_commands {
-                let SourceCommand::HueOutput {
-                    brightness,
-                    hue,
-                    saturation,
-                    strobe,
-                    ids,
-                } = command
+                let SourceCommand::HueOutput { brightness, hue, saturation, strobe, ids } = command
                 else {
                     continue;
                 };
@@ -140,12 +131,8 @@ pub fn perform_evaluation(
             // Transfer RenderOps using drain to avoid clones
             // Note: We need to access eval_result fields directly because evaluate returns a reference.
             // But since ModuleEvaluator is on app, we can just drain from its cached_result.
-            let render_ops: Vec<_> = app
-                .module_evaluator
-                .cached_result
-                .render_ops
-                .drain(..)
-                .collect();
+            let render_ops: Vec<_> =
+                app.module_evaluator.cached_result.render_ops.drain(..).collect();
             for render_op in render_ops {
                 let mut diagnostics = Vec::new();
 
@@ -177,16 +164,8 @@ pub fn perform_evaluation(
                     _ => render_op.output_part_id,
                 };
 
-                let item = RuntimeRenderQueueItem {
-                    module_id: *module_id,
-                    render_op,
-                    diagnostics,
-                };
-                app.render_queue
-                    .items
-                    .entry(output_id)
-                    .or_default()
-                    .push(item);
+                let item = RuntimeRenderQueueItem { module_id: *module_id, render_op, diagnostics };
+                app.render_queue.items.entry(output_id).or_default().push(item);
             }
         }
     }

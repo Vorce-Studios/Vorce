@@ -134,32 +134,22 @@ mod tests {
         let steps = 20;
 
         // Point exactly on start
-        assert!(is_point_near_cubic_bezier(
-            p0, p0, p1, p2, p3, threshold, steps
-        ));
+        assert!(is_point_near_cubic_bezier(p0, p0, p1, p2, p3, threshold, steps));
 
         // Point exactly on end
-        assert!(is_point_near_cubic_bezier(
-            p3, p0, p1, p2, p3, threshold, steps
-        ));
+        assert!(is_point_near_cubic_bezier(p3, p0, p1, p2, p3, threshold, steps));
 
         // Point near the middle (approximate)
         // t=0.5 -> p ~ (50, 50)
         let mid = Pos2::new(50.0, 50.0);
-        assert!(is_point_near_cubic_bezier(
-            mid, p0, p1, p2, p3, threshold, steps
-        ));
+        assert!(is_point_near_cubic_bezier(mid, p0, p1, p2, p3, threshold, steps));
 
         // Point far away
         let far = Pos2::new(200.0, 200.0);
-        assert!(!is_point_near_cubic_bezier(
-            far, p0, p1, p2, p3, threshold, steps
-        ));
+        assert!(!is_point_near_cubic_bezier(far, p0, p1, p2, p3, threshold, steps));
 
         // Point slightly off but within threshold
         let near_mid = Pos2::new(52.0, 52.0); // dist to (50,50) is sqrt(8) ~ 2.8 < 5.0
-        assert!(is_point_near_cubic_bezier(
-            near_mid, p0, p1, p2, p3, threshold, steps
-        ));
+        assert!(is_point_near_cubic_bezier(near_mid, p0, p1, p2, p3, threshold, steps));
     }
 }
