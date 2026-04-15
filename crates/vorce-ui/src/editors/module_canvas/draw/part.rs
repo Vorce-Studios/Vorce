@@ -20,14 +20,17 @@ pub fn draw_part_with_delete(
     let (_bg_color, title_color, icon, name) = utils::get_part_style(&part.part_type);
     let category = utils::get_part_category(&part.part_type);
 
-    let is_audio_trigger =
-        matches!(part.part_type, ModulePartType::Trigger(TriggerType::AudioFFT { .. }));
+    let is_audio_trigger = matches!(
+        part.part_type,
+        ModulePartType::Trigger(TriggerType::AudioFFT { .. })
+    );
     let mut audio_trigger_value = 0.0;
     let mut threshold = 0.0;
     let mut is_audio_active = false;
 
-    if let ModulePartType::Trigger(TriggerType::AudioFFT { band, threshold: t, .. }) =
-        &part.part_type
+    if let ModulePartType::Trigger(TriggerType::AudioFFT {
+        band, threshold: t, ..
+    }) = &part.part_type
     {
         threshold = *t;
         let index = *band as usize;
@@ -37,10 +40,18 @@ pub fn draw_part_with_delete(
         }
     }
 
-    let generic_trigger_value = canvas.last_trigger_values.get(&part.id).copied().unwrap_or(0.0);
+    let generic_trigger_value = canvas
+        .last_trigger_values
+        .get(&part.id)
+        .copied()
+        .unwrap_or(0.0);
     let is_generic_active = generic_trigger_value > 0.1;
 
-    let trigger_value = if is_generic_active { generic_trigger_value } else { audio_trigger_value };
+    let trigger_value = if is_generic_active {
+        generic_trigger_value
+    } else {
+        audio_trigger_value
+    };
     let is_active = is_audio_active || is_generic_active;
 
     if node_animations_enabled
@@ -54,8 +65,9 @@ pub fn draw_part_with_delete(
         for i in 1..=4 {
             let expansion = i as f32 * 1.5 * canvas.zoom;
             let alpha = (100.0 / (i as f32)).min(255.0) as u8;
-            let color =
-                base_color.linear_multiply(glow_intensity).gamma_multiply(alpha as f32 / 255.0);
+            let color = base_color
+                .linear_multiply(glow_intensity)
+                .gamma_multiply(alpha as f32 / 255.0);
 
             painter.rect_stroke(
                 rect.expand(expansion),
@@ -120,7 +132,9 @@ pub fn draw_part_with_delete(
             }
             _ => (1.0, Color32::from_rgba_unmultiplied(180, 200, 255, 20)),
         };
-        let phase = (time * (anim_speed * profile_scale) + part.id as f32 * 0.11).sin().abs();
+        let phase = (time * (anim_speed * profile_scale) + part.id as f32 * 0.11)
+            .sin()
+            .abs();
         let pulse_w = 1.2 * canvas.zoom + phase * (2.4 * profile_scale) * canvas.zoom;
         painter.rect_stroke(
             rect.expand(1.5 * canvas.zoom),
@@ -137,8 +151,9 @@ pub fn draw_part_with_delete(
     ) = &part.part_type
     {
         if ui.rect_contains_pointer(rect) {
-            if let Some(dropped_path) =
-                ui.ctx().data(|d| d.get_temp::<std::path::PathBuf>(egui::Id::new("media_path")))
+            if let Some(dropped_path) = ui
+                .ctx()
+                .data(|d| d.get_temp::<std::path::PathBuf>(egui::Id::new("media_path")))
             {
                 painter.rect_stroke(
                     rect,
@@ -183,8 +198,14 @@ pub fn draw_part_with_delete(
     );
 
     let preview_rect = Rect::from_min_max(
-        Pos2::new(rect.min.x + 2.0 * canvas.zoom, rect.min.y + title_height + 2.0 * canvas.zoom),
-        Pos2::new(rect.max.x - 2.0 * canvas.zoom, rect.max.y - 2.0 * canvas.zoom),
+        Pos2::new(
+            rect.min.x + 2.0 * canvas.zoom,
+            rect.min.y + title_height + 2.0 * canvas.zoom,
+        ),
+        Pos2::new(
+            rect.max.x - 2.0 * canvas.zoom,
+            rect.max.y - 2.0 * canvas.zoom,
+        ),
     );
 
     if let Some(&texture_id) = canvas.node_previews.get(&(module_id, part.id)) {
@@ -241,7 +262,10 @@ pub fn draw_part_with_delete(
     let delete_button_rect = get_delete_button_rect(canvas, rect);
 
     let delete_id = egui::Id::new((part.id, "delete"));
-    let progress = ui.ctx().data(|d| d.get_temp::<f32>(delete_id.with("progress"))).unwrap_or(0.0);
+    let progress = ui
+        .ctx()
+        .data(|d| d.get_temp::<f32>(delete_id.with("progress")))
+        .unwrap_or(0.0);
 
     crate::widgets::custom::draw_safety_radial_fill(
         painter,
@@ -294,8 +318,10 @@ pub fn draw_part_with_delete(
             painter.rect_filled(bar_bg, 2.0 * canvas.zoom, Color32::from_gray(30));
 
             let progress_width = (progress * bar_width).max(2.0 * canvas.zoom);
-            let progress_rect =
-                Rect::from_min_size(Pos2::new(bar_x, bar_y), Vec2::new(progress_width, bar_height));
+            let progress_rect = Rect::from_min_size(
+                Pos2::new(bar_x, bar_y),
+                Vec2::new(progress_width, bar_height),
+            );
 
             let color = if is_playing {
                 Color32::from_rgb(100, 255, 100)
@@ -463,7 +489,11 @@ pub fn draw_part_with_delete(
         painter.circle_filled(
             socket_pos,
             2.0 * canvas.zoom,
-            if is_hovered { socket_color } else { Color32::from_gray(100) },
+            if is_hovered {
+                socket_color
+            } else {
+                Color32::from_gray(100)
+            },
         );
 
         let type_name = socket.socket_type.name();
@@ -516,7 +546,11 @@ pub fn draw_part_with_delete(
         painter.circle_filled(
             socket_pos,
             2.0 * canvas.zoom,
-            if is_hovered { socket_color } else { Color32::from_gray(100) },
+            if is_hovered {
+                socket_color
+            } else {
+                Color32::from_gray(100)
+            },
         );
 
         let type_name = socket.socket_type.name();
@@ -545,7 +579,10 @@ pub fn draw_part_with_delete(
 pub fn get_delete_button_rect(canvas: &ModuleCanvas, part_rect: Rect) -> Rect {
     let title_height = 28.0 * canvas.zoom;
     Rect::from_center_size(
-        Pos2::new(part_rect.max.x - 10.0 * canvas.zoom, part_rect.min.y + title_height * 0.5),
+        Pos2::new(
+            part_rect.max.x - 10.0 * canvas.zoom,
+            part_rect.min.y + title_height * 0.5,
+        ),
         Vec2::splat(20.0 * canvas.zoom),
     )
 }

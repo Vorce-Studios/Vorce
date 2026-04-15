@@ -20,7 +20,11 @@ impl Default for History {
 impl History {
     /// Create a new history manager
     pub fn new(max_history: usize) -> Self {
-        Self { undo_stack: VecDeque::new(), redo_stack: VecDeque::new(), max_history }
+        Self {
+            undo_stack: VecDeque::new(),
+            redo_stack: VecDeque::new(),
+            max_history,
+        }
     }
 
     /// Push a state to the undo stack.

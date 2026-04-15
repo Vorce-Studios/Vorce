@@ -82,8 +82,12 @@ impl MeshEditor {
             selected: false,
         });
 
-        self.faces.push(Face { vertices: [0, 1, 2] });
-        self.faces.push(Face { vertices: [0, 2, 3] });
+        self.faces.push(Face {
+            vertices: [0, 1, 2],
+        });
+        self.faces.push(Face {
+            vertices: [0, 2, 3],
+        });
     }
 
     /// Get quad corners if the mesh is a simple quad
@@ -140,8 +144,12 @@ impl MeshEditor {
 
         // Rebuild simple quad faces if 4 vertices (Standard Quad topology)
         if self.vertices.len() == 4 {
-            self.faces.push(Face { vertices: [0, 1, 2] });
-            self.faces.push(Face { vertices: [0, 2, 3] });
+            self.faces.push(Face {
+                vertices: [0, 1, 2],
+            });
+            self.faces.push(Face {
+                vertices: [0, 2, 3],
+            });
         }
     }
 
@@ -206,7 +214,9 @@ impl MeshEditor {
                     selected: false,
                 });
 
-                new_faces.push(Face { vertices: [v0, mid_idx, center_idx] });
+                new_faces.push(Face {
+                    vertices: [v0, mid_idx, center_idx],
+                });
             }
         }
 

@@ -31,7 +31,11 @@ impl ArtNetSender {
             ControlError::DmxError(format!("Invalid Art-Net target address: {}", e))
         })?;
 
-        tracing::info!("Art-Net sender created for universe {} -> {}", universe, target);
+        tracing::info!(
+            "Art-Net sender created for universe {} -> {}",
+            universe,
+            target
+        );
 
         Ok(Self {
             socket,

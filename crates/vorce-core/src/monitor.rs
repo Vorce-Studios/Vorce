@@ -34,15 +34,29 @@ impl MonitorInfo {
         scale_factor: f64,
         is_primary: bool,
     ) -> Self {
-        Self { index, name, position, size, refresh_rate, scale_factor, is_primary }
+        Self {
+            index,
+            name,
+            position,
+            size,
+            refresh_rate,
+            scale_factor,
+            is_primary,
+        }
     }
 
     /// Get a display string for UI
     pub fn display_string(&self) -> String {
-        let refresh = self.refresh_rate.map(|r| format!(" @ {}Hz", r)).unwrap_or_default();
+        let refresh = self
+            .refresh_rate
+            .map(|r| format!(" @ {}Hz", r))
+            .unwrap_or_default();
         let primary = if self.is_primary { " (Primary)" } else { "" };
 
-        format!("{}: {}x{}{}{}", self.name, self.size.0, self.size.1, refresh, primary)
+        format!(
+            "{}: {}x{}{}{}",
+            self.name, self.size.0, self.size.1, refresh, primary
+        )
     }
 }
 
@@ -63,8 +77,16 @@ impl MonitorTopology {
         } else {
             let min_x = monitors.iter().map(|m| m.position.0).min().unwrap_or(0);
             let min_y = monitors.iter().map(|m| m.position.1).min().unwrap_or(0);
-            let max_x = monitors.iter().map(|m| m.position.0 + m.size.0 as i32).max().unwrap_or(0);
-            let max_y = monitors.iter().map(|m| m.position.1 + m.size.1 as i32).max().unwrap_or(0);
+            let max_x = monitors
+                .iter()
+                .map(|m| m.position.0 + m.size.0 as i32)
+                .max()
+                .unwrap_or(0);
+            let max_y = monitors
+                .iter()
+                .map(|m| m.position.1 + m.size.1 as i32)
+                .max()
+                .unwrap_or(0);
 
             let width = (max_x - min_x) as u32;
             let height = (max_y - min_y) as u32;
@@ -72,7 +94,10 @@ impl MonitorTopology {
             (min_x, min_y, width, height)
         };
 
-        Self { monitors, total_bounds }
+        Self {
+            monitors,
+            total_bounds,
+        }
     }
 
     /// Get the primary monitor
@@ -104,7 +129,9 @@ pub fn detect_monitors_winit(event_loop: &winit::event_loop::ActiveEventLoop) ->
     let primary_handle: Option<MonitorHandle> = event_loop.primary_monitor();
 
     for (index, monitor) in event_loop.available_monitors().enumerate() {
-        let name = monitor.name().unwrap_or_else(|| format!("Monitor {}", index + 1));
+        let name = monitor
+            .name()
+            .unwrap_or_else(|| format!("Monitor {}", index + 1));
 
         let position = monitor.position().into();
         let size = monitor.size().into();
@@ -136,8 +163,24 @@ pub fn detect_monitors_winit(event_loop: &winit::event_loop::ActiveEventLoop) ->
 /// Create a simple test topology (for testing without real monitors)
 pub fn create_test_topology() -> MonitorTopology {
     let monitors = vec![
-        MonitorInfo::new(0, "Monitor 1".to_string(), (0, 0), (1920, 1080), Some(60), 1.0, true),
-        MonitorInfo::new(1, "Monitor 2".to_string(), (1920, 0), (1920, 1080), Some(60), 1.0, false),
+        MonitorInfo::new(
+            0,
+            "Monitor 1".to_string(),
+            (0, 0),
+            (1920, 1080),
+            Some(60),
+            1.0,
+            true,
+        ),
+        MonitorInfo::new(
+            1,
+            "Monitor 2".to_string(),
+            (1920, 0),
+            (1920, 1080),
+            Some(60),
+            1.0,
+            false,
+        ),
     ];
 
     MonitorTopology::new(monitors)
@@ -170,7 +213,15 @@ mod tests {
     fn test_topology_bounds() {
         let monitors = vec![
             MonitorInfo::new(0, "M1".to_string(), (0, 0), (1920, 1080), None, 1.0, true),
-            MonitorInfo::new(1, "M2".to_string(), (1920, 0), (1920, 1080), None, 1.0, false),
+            MonitorInfo::new(
+                1,
+                "M2".to_string(),
+                (1920, 0),
+                (1920, 1080),
+                None,
+                1.0,
+                false,
+            ),
         ];
 
         let topology = MonitorTopology::new(monitors);

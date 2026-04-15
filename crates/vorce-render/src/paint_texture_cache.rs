@@ -11,12 +11,24 @@ pub struct PaintTextureCache {
     device: Arc<wgpu::Device>,
     queue: Arc<wgpu::Queue>,
     /// Map of PaintId -> (TextureView, last_updated_version)
-    cache: RwLock<HashMap<PaintId, wgpu::Texture>>,
+    cache: RwLock<HashMap<PaintId, CachedTexture>>,
+}
+
+#[allow(dead_code)]
+struct CachedTexture {
+    texture: wgpu::Texture,
+    view: wgpu::TextureView,
+    width: u32,
+    height: u32,
 }
 
 impl PaintTextureCache {
     pub fn new(device: Arc<wgpu::Device>, queue: Arc<wgpu::Queue>) -> Self {
-        Self { device, queue, cache: RwLock::new(HashMap::new()) }
+        Self {
+            device,
+            queue,
+            cache: RwLock::new(HashMap::new()),
+        }
     }
 
     /// Get or create texture view for a paint
@@ -24,18 +36,46 @@ impl PaintTextureCache {
         let mut cache = self.cache.write();
 
         // Check if we already have this paint cached
-        if let Some(texture) = cache.get(&paint.id) {
+        if let Some(cached) = cache.get(&paint.id) {
             // Return a new view of the cached texture
-            return texture.create_view(&wgpu::TextureViewDescriptor::default());
+            return cached
+                .texture
+                .create_view(&wgpu::TextureViewDescriptor::default());
         }
 
         // Create new texture for this paint
         let (width, height) = (paint.dimensions.x as u32, paint.dimensions.y as u32);
         let texture = self.create_texture_for_paint(paint, width, height);
+        let _view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+        let cached = CachedTexture {
+            texture,
+            view: self
+                .device
+                .create_texture(&wgpu::TextureDescriptor {
+                    label: Some("dummy"),
+                    size: wgpu::Extent3d {
+                        width: 1,
+                        height: 1,
+                        depth_or_array_layers: 1,
+                    },
+                    mip_level_count: 1,
+                    sample_count: 1,
+                    dimension: wgpu::TextureDimension::D2,
+                    format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                    usage: wgpu::TextureUsages::TEXTURE_BINDING,
+                    view_formats: &[],
+                })
+                .create_view(&wgpu::TextureViewDescriptor::default()), // Placeholder, not used
+            width,
+            height,
+        };
 
         // Store the actual texture, get a view from it
-        let result_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-        cache.insert(paint.id, texture);
+        let result_view = cached
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+        cache.insert(paint.id, cached);
 
         result_view
     }
@@ -44,7 +84,11 @@ impl PaintTextureCache {
     fn create_texture_for_paint(&self, paint: &Paint, width: u32, height: u32) -> wgpu::Texture {
         let texture = self.device.create_texture(&wgpu::TextureDescriptor {
             label: Some(&format!("paint_{}", paint.id)),
-            size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
+            size: wgpu::Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
@@ -100,7 +144,11 @@ impl PaintTextureCache {
                 bytes_per_row: Some(width * 4),
                 rows_per_image: Some(height),
             },
-            wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
+            wgpu::Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
         );
 
         texture
