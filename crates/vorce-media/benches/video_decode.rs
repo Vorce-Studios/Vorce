@@ -4,15 +4,16 @@ use std::time::Duration;
 use vorce_media::{FFmpegDecoder, TestPatternDecoder, VideoDecoder};
 
 fn bench_video_decode(c: &mut Criterion) {
-    c.benchmark_group("video_decode").bench_function("decode_frame_1080p", |b| {
-        let pattern = TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
-        let mut decoder = FFmpegDecoder::TestPattern(pattern);
+    c.benchmark_group("video_decode")
+        .bench_function("decode_frame_1080p", |b| {
+            let pattern = TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
+            let mut decoder = FFmpegDecoder::TestPattern(pattern);
 
-        b.iter(|| {
-            let frame = decoder.next_frame().unwrap();
-            black_box(frame);
+            b.iter(|| {
+                let frame = decoder.next_frame().unwrap();
+                black_box(frame);
+            });
         });
-    });
 }
 
 criterion_group!(benches, bench_video_decode);

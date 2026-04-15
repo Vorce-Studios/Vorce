@@ -37,8 +37,10 @@ pub fn sync_mesh_editor_to_current_selection(
         }
         MeshType::BezierSurface { control_points } => {
             // Deserialize scaled points
-            let points: Vec<(f32, f32)> =
-                control_points.iter().map(|(x, y)| (x * scale, y * scale)).collect();
+            let points: Vec<(f32, f32)> = control_points
+                .iter()
+                .map(|(x, y)| (x * scale, y * scale))
+                .collect();
             mesh_editor.set_from_bezier_points(&points);
         }
         // Fallback for unsupported types - reset to default quad for now
@@ -109,7 +111,10 @@ pub fn render_mesh_editor_ui(
                 MeshType::Custom { .. } => "Custom",
             })
             .show_ui(ui, |ui| {
-                if ui.selectable_label(matches!(mesh, MeshType::Quad { .. }), "Quad").clicked() {
+                if ui
+                    .selectable_label(matches!(mesh, MeshType::Quad { .. }), "Quad")
+                    .clicked()
+                {
                     *mesh = MeshType::Quad {
                         tl: (0.0, 0.0),
                         tr: (1.0, 0.0),
@@ -118,7 +123,10 @@ pub fn render_mesh_editor_ui(
                     };
                     *last_mesh_edit_id = None; // Trigger resync
                 }
-                if ui.selectable_label(matches!(mesh, MeshType::Grid { .. }), "Grid").clicked() {
+                if ui
+                    .selectable_label(matches!(mesh, MeshType::Grid { .. }), "Grid")
+                    .clicked()
+                {
                     *mesh = MeshType::Grid { rows: 4, cols: 4 };
                     *last_mesh_edit_id = None; // Trigger resync
                 }
@@ -127,7 +135,9 @@ pub fn render_mesh_editor_ui(
                     .clicked()
                 {
                     // Default bezier
-                    *mesh = MeshType::BezierSurface { control_points: vec![] };
+                    *mesh = MeshType::BezierSurface {
+                        control_points: vec![],
+                    };
                     *last_mesh_edit_id = None;
                 }
             });
@@ -148,8 +158,10 @@ pub fn render_mesh_editor_ui(
                     }
                     MeshType::BezierSurface { control_points } => {
                         // Deserialize scaled points
-                        let points: Vec<(f32, f32)> =
-                            control_points.iter().map(|(x, y)| (x * scale, y * scale)).collect();
+                        let points: Vec<(f32, f32)> = control_points
+                            .iter()
+                            .map(|(x, y)| (x * scale, y * scale))
+                            .collect();
                         mesh_editor.set_from_bezier_points(&points);
                         *last_mesh_edit_id = Some(part_id);
                     }
@@ -198,7 +210,12 @@ pub fn render_hue_spatial_editor(
 
     // Draw background (Room representation)
     painter.rect_filled(rect, 4.0, Color32::from_gray(30));
-    painter.rect_stroke(rect, 4.0, Stroke::new(1.0, Color32::GRAY), egui::StrokeKind::Middle);
+    painter.rect_stroke(
+        rect,
+        4.0,
+        Stroke::new(1.0, Color32::GRAY),
+        egui::StrokeKind::Middle,
+    );
 
     // Draw grid
     let grid_steps = 5;

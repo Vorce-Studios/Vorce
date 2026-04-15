@@ -37,8 +37,18 @@ fn test_module_color_rotation() {
     let mut manager = ModuleManager::new();
     let id1 = manager.create_module("Module 1".to_string());
     let id2 = manager.create_module("Module 2".to_string());
-    let modules1 = manager.list_modules().iter().find(|m| m.id == id1).unwrap().color;
-    let modules2 = manager.list_modules().iter().find(|m| m.id == id2).unwrap().color;
+    let modules1 = manager
+        .list_modules()
+        .iter()
+        .find(|m| m.id == id1)
+        .unwrap()
+        .color;
+    let modules2 = manager
+        .list_modules()
+        .iter()
+        .find(|m| m.id == id2)
+        .unwrap()
+        .color;
     assert_ne!(modules1, modules2);
 }
 
@@ -58,29 +68,50 @@ fn test_socket_generation_coverage() {
     let pid_trigger = module.add_part(PartType::Trigger, (0.0, 0.0));
     let part_trigger = module.parts.iter().find(|p| p.id == pid_trigger).unwrap();
     // Should have 1 Trigger Out
-    assert!(part_trigger.outputs.iter().any(|s| s.socket_type == ModuleSocketType::Trigger));
+    assert!(part_trigger
+        .outputs
+        .iter()
+        .any(|s| s.socket_type == ModuleSocketType::Trigger));
     assert!(part_trigger.inputs.is_empty());
 
     // 2. Source (Media File)
     let pid_source = module.add_part(PartType::Source, (100.0, 0.0));
     let part_source = module.parts.iter().find(|p| p.id == pid_source).unwrap();
     // 1 Trigger In, 1 Media Out
-    assert!(part_source.inputs.iter().any(|s| s.socket_type == ModuleSocketType::Trigger));
-    assert!(part_source.outputs.iter().any(|s| s.socket_type == ModuleSocketType::Media));
+    assert!(part_source
+        .inputs
+        .iter()
+        .any(|s| s.socket_type == ModuleSocketType::Trigger));
+    assert!(part_source
+        .outputs
+        .iter()
+        .any(|s| s.socket_type == ModuleSocketType::Media));
 
     // 3. Layer
     let pid_layer = module.add_part(PartType::Layer, (200.0, 0.0));
     let part_layer = module.parts.iter().find(|p| p.id == pid_layer).unwrap();
     // Input: Media In, Trigger In. Output: Layer Out
-    assert!(part_layer.inputs.iter().any(|s| s.socket_type == ModuleSocketType::Media));
-    assert!(part_layer.inputs.iter().any(|s| s.socket_type == ModuleSocketType::Trigger));
-    assert!(part_layer.outputs.iter().any(|s| s.socket_type == ModuleSocketType::Layer));
+    assert!(part_layer
+        .inputs
+        .iter()
+        .any(|s| s.socket_type == ModuleSocketType::Media));
+    assert!(part_layer
+        .inputs
+        .iter()
+        .any(|s| s.socket_type == ModuleSocketType::Trigger));
+    assert!(part_layer
+        .outputs
+        .iter()
+        .any(|s| s.socket_type == ModuleSocketType::Layer));
 
     // 4. Output (Projector)
     let pid_output = module.add_part(PartType::Output, (300.0, 0.0));
     let part_output = module.parts.iter().find(|p| p.id == pid_output).unwrap();
     // Input: Layer In. No Output.
-    assert!(part_output.inputs.iter().any(|s| s.socket_type == ModuleSocketType::Layer));
+    assert!(part_output
+        .inputs
+        .iter()
+        .any(|s| s.socket_type == ModuleSocketType::Layer));
     assert!(part_output.outputs.is_empty());
 
     // 5. Hue Output
@@ -154,12 +185,22 @@ fn test_add_remove_connection() {
     let pid1 = module.add_part(PartType::Trigger, (0.0, 0.0));
     let pid2 = module.add_part(PartType::Source, (100.0, 0.0));
 
-    module.add_connection(pid1, "trigger_out".to_string(), pid2, "trigger_in".to_string());
+    module.add_connection(
+        pid1,
+        "trigger_out".to_string(),
+        pid2,
+        "trigger_in".to_string(),
+    );
     assert_eq!(module.connections.len(), 1);
     assert_eq!(module.connections[0].from_part, pid1);
     assert_eq!(module.connections[0].to_part, pid2);
 
-    module.remove_connection(pid1, "trigger_out".to_string(), pid2, "trigger_in".to_string());
+    module.remove_connection(
+        pid1,
+        "trigger_out".to_string(),
+        pid2,
+        "trigger_in".to_string(),
+    );
     assert!(module.connections.is_empty());
 }
 
@@ -177,7 +218,12 @@ fn test_update_part_sockets() {
 
     let pid1 = module.add_part(PartType::Trigger, (0.0, 0.0));
     let pid2 = module.add_part(PartType::Source, (100.0, 0.0));
-    module.add_connection(pid1, "trigger_out".to_string(), pid2, "trigger_in".to_string());
+    module.add_connection(
+        pid1,
+        "trigger_out".to_string(),
+        pid2,
+        "trigger_in".to_string(),
+    );
 
     // For now just test it doesn't crash on normal update and keeps valid connections
     module.update_part_sockets(pid1);
@@ -201,24 +247,30 @@ fn test_update_part_sockets_removes_invalid_connections() {
     let pid2 = module.add_part(PartType::Source, (100.0, 0.0));
 
     // Create invalid connection (socket IDs that don't exist)
-    module.connections.push(vorce_core::module::ModuleConnection {
-        from_part: pid1,
-        from_socket: "invalid_src".to_string(),
-        to_part: pid2,
-        to_socket: "trigger_in".to_string(),
-    });
-    module.connections.push(vorce_core::module::ModuleConnection {
-        from_part: pid1,
-        from_socket: "trigger_out".to_string(),
-        to_part: pid2,
-        to_socket: "invalid_dst".to_string(),
-    });
-    module.connections.push(vorce_core::module::ModuleConnection {
-        from_part: pid1,
-        from_socket: "trigger_out".to_string(),
-        to_part: pid2,
-        to_socket: "trigger_in".to_string(),
-    }); // Valid connection
+    module
+        .connections
+        .push(vorce_core::module::ModuleConnection {
+            from_part: pid1,
+            from_socket: "invalid_src".to_string(),
+            to_part: pid2,
+            to_socket: "trigger_in".to_string(),
+        });
+    module
+        .connections
+        .push(vorce_core::module::ModuleConnection {
+            from_part: pid1,
+            from_socket: "trigger_out".to_string(),
+            to_part: pid2,
+            to_socket: "invalid_dst".to_string(),
+        });
+    module
+        .connections
+        .push(vorce_core::module::ModuleConnection {
+            from_part: pid1,
+            from_socket: "trigger_out".to_string(),
+            to_part: pid2,
+            to_socket: "trigger_in".to_string(),
+        }); // Valid connection
 
     assert_eq!(module.connections.len(), 3);
 
@@ -248,12 +300,14 @@ fn test_update_part_outputs_delegates() {
     let pid2 = module.add_part(PartType::Source, (100.0, 0.0));
 
     // Push directly since add_connection would silently fail
-    module.connections.push(vorce_core::module::ModuleConnection {
-        from_part: pid1,
-        from_socket: "invalid".to_string(),
-        to_part: pid2,
-        to_socket: "trigger_in".to_string(),
-    });
+    module
+        .connections
+        .push(vorce_core::module::ModuleConnection {
+            from_part: pid1,
+            from_socket: "invalid".to_string(),
+            to_part: pid2,
+            to_socket: "trigger_in".to_string(),
+        });
 
     assert_eq!(module.connections.len(), 1);
     module.update_part_outputs(pid1); // Should call update_part_sockets and clear connection
@@ -301,7 +355,9 @@ fn test_part_compute_sockets() {
     let mut manager = ModuleManager::new();
     let id = manager.create_module("Test Module".to_string());
 
-    let part_id = manager.add_part_to_module(id, PartType::Trigger, (0.0, 0.0)).unwrap();
+    let part_id = manager
+        .add_part_to_module(id, PartType::Trigger, (0.0, 0.0))
+        .unwrap();
     let m = manager.get_module(id).unwrap();
     let part = m.parts.iter().find(|p| p.id == part_id).unwrap();
 
@@ -505,12 +561,14 @@ fn test_module_add_connection_adds_to_list() {
     };
 
     // The connections vector needs to be pushed directly since add_connection validates parts.
-    module.connections.push(vorce_core::module::ModuleConnection {
-        from_part: 1,
-        from_socket: "trigger_out".to_string(),
-        to_part: 2,
-        to_socket: "trigger_in".to_string(),
-    });
+    module
+        .connections
+        .push(vorce_core::module::ModuleConnection {
+            from_part: 1,
+            from_socket: "trigger_out".to_string(),
+            to_part: 2,
+            to_socket: "trigger_in".to_string(),
+        });
 
     assert_eq!(module.connections.len(), 1);
     let conn = &module.connections[0];
@@ -533,18 +591,22 @@ fn test_module_remove_connection_removes_exact_match() {
     };
 
     // Push directly since validate_connection fails if parts are missing
-    module.connections.push(vorce_core::module::ModuleConnection {
-        from_part: 1,
-        from_socket: "trigger_out".to_string(),
-        to_part: 2,
-        to_socket: "trigger_in".to_string(),
-    });
-    module.connections.push(vorce_core::module::ModuleConnection {
-        from_part: 1,
-        from_socket: "link_out".to_string(),
-        to_part: 3,
-        to_socket: "link_in".to_string(),
-    });
+    module
+        .connections
+        .push(vorce_core::module::ModuleConnection {
+            from_part: 1,
+            from_socket: "trigger_out".to_string(),
+            to_part: 2,
+            to_socket: "trigger_in".to_string(),
+        });
+    module
+        .connections
+        .push(vorce_core::module::ModuleConnection {
+            from_part: 1,
+            from_socket: "link_out".to_string(),
+            to_part: 3,
+            to_socket: "link_in".to_string(),
+        });
 
     module.remove_connection(1, "trigger_out".to_string(), 2, "trigger_in".to_string());
 
