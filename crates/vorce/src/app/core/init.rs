@@ -492,8 +492,7 @@ impl App {
 
         // --- Remove dangling connections ---
         for module in state.module_manager_mut().modules_mut() {
-            let part_ids: std::collections::HashSet<u64> =
-                module.parts.iter().map(|p| p.id).collect();
+            let part_ids = module.parts.iter().map(|p| p.id).collect::<rustc_hash::FxHashSet<_>>();
             module
                 .connections
                 .retain(|c| part_ids.contains(&c.from_part) && part_ids.contains(&c.to_part));
