@@ -1,7 +1,3 @@
-## [Unreleased]
-### Security
-- Fixed an insecure WebSocket Protocol authentication fallback that permitted API keys via `Sec-WebSocket-Protocol`. This method was removed in favor of standard `Authorization` headers.
-
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -10,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- 2026-04-14: test: Add missing test coverage for AbletonLinkHandle in vorce-control (#259)
+- 2026-04-14: test: 🧪 [Add comprehensive tests for AudioAnalyzerV2::new]
 - 2026-04-14: ci: Exclude .vscode/skills from markdownlint to unblock PRs (#245)
 - 2026-04-12: perf: Bolt: Performance-Optimierung durch Vermeidung redundanter String-Allokationen in UI-Schleifen (#221)
 - 2026-04-12: feat: UI: Theme-aware colors in Node Editor (#222)

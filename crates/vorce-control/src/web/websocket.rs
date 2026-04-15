@@ -66,7 +66,7 @@ pub enum WsServerMessage {
 #[cfg(feature = "http-api")]
 pub async fn ws_handler(
     ws: WebSocketUpgrade,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     State(state): State<AppState>,
 ) -> Response {
     // Check if client requested a specific subprotocol (e.g. for auth)

@@ -4,8 +4,59 @@ use crate::audio::analyzer_v2::{AudioAnalyzerV2, AudioAnalyzerV2Config};
 #[test]
 fn test_create_analyzer() {
     let config = AudioAnalyzerV2Config::default();
-    let analyzer = AudioAnalyzerV2::new(config);
-    assert_eq!(analyzer.sample_rate(), 44100);
+    let analyzer = AudioAnalyzerV2::new(config.clone());
+
+    // Check basic config
+    assert_eq!(analyzer.sample_rate(), config.sample_rate);
+    assert_eq!(analyzer.config.fft_size, config.fft_size);
+
+    // Check derived fields for default config (overlap 0.5, fft_size 2048)
+    let expected_hop_size = 1024; // (1.0 - 0.5) * 2048
+    assert_eq!(analyzer.hop_size, expected_hop_size);
+
+    // Check buffer sizes
+    assert_eq!(analyzer.input_buffer.len(), config.fft_size);
+    assert_eq!(analyzer.fft_buffer.len(), config.fft_size);
+    assert_eq!(analyzer.scratch_buffer.len(), config.fft_size);
+    assert_eq!(analyzer.window.len(), config.fft_size);
+    assert_eq!(analyzer.magnitude_buffer.len(), config.fft_size / 2);
+    assert_eq!(analyzer.smoothed_magnitudes.len(), config.fft_size / 2);
+
+    // Check initial state
+    assert_eq!(analyzer.buffer_write_pos, 0);
+    assert_eq!(analyzer.samples_since_fft, 0);
+    assert_eq!(analyzer.rms_volume, 0.0);
+    assert_eq!(analyzer.smoothed_rms, 0.0);
+    assert_eq!(analyzer.peak_volume, 0.0);
+    assert_eq!(analyzer.total_samples, 0);
+    assert_eq!(analyzer.fft_count, 0);
+
+    // Check window function edges and middle (Hann window)
+    // First value should be 0.0
+    assert!((analyzer.window[0]).abs() < 1e-5);
+    // Middle value should be ~1.0
+    assert!((analyzer.window[config.fft_size / 2] - 1.0).abs() < 1e-5);
+    // Last value should be close to 0.0
+    assert!((analyzer.window[config.fft_size - 1]).abs() < 1e-5);
+}
+
+#[test]
+fn test_new_analyzer_custom_config() {
+    let config = AudioAnalyzerV2Config {
+        sample_rate: 48000,
+        fft_size: 1024,
+        overlap: 0.75,
+        smoothing: 0.5,
+    };
+    let analyzer = AudioAnalyzerV2::new(config.clone());
+
+    // Check derived fields for custom config
+    let expected_hop_size = 256; // (1.0 - 0.75) * 1024
+    assert_eq!(analyzer.hop_size, expected_hop_size);
+
+    // Check buffer sizes
+    assert_eq!(analyzer.input_buffer.len(), 1024);
+    assert_eq!(analyzer.magnitude_buffer.len(), 512);
 }
 
 #[test]
