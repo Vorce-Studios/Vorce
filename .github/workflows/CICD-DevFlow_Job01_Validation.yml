@@ -131,9 +131,6 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Check if CHANGELOG.md was modified
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           # Fetch the base branch to compare against
           git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
@@ -141,15 +138,9 @@ jobs:
           if git diff --name-only ${{ github.base_ref }}...HEAD | grep -q "CHANGELOG.md"; then
             echo "CHANGELOG.md updated."
           else
-            # Whitelist for PRs that do NOT require a changelog entry
-            if [[ "$PR_TITLE" =~ ^(chore|test|docs|style|ci|perf|refactor|build|revert|🧪|🧹|✨|⚡|🎨|🛡️|🔒|👷|📝|💄|🍱).* ]] || [[ "$PR_BRANCH" =~ ^(dependabot|jules|bolt|lina|sentinel)/.* ]] || [[ "$PR_BRANCH" =~ ^(jules|bolt|lina)-.* ]] || [[ "$PR_BRANCH" =~ ^B-Jules/ ]]; then
-              echo "::warning::CHANGELOG.md was not updated in this PR, but it's a whitelisted PR type, so we won't fail the build."
-            else
-              echo "::error::CHANGELOG.md was not updated in this PR. Please add a changelog entry."
-              exit 1
-            fi
+            echo "::error::CHANGELOG.md was not updated in this PR. Please add a changelog entry to document your changes."
+            exit 1
           fi
-
 
   build-linux:
     name: "Build & Test (Linux)"
@@ -266,13 +257,11 @@ jobs:
           echo "Windows: ${{ needs.build-windows.result }}"
           echo "macOS: ${{ needs.build-macos.result }}"
 
-          # Fail the gate on explicit failure or cancellation.
-          # Skipped jobs (due to conditional logic) are acceptable.
-          if [ "${{ needs.quality.result }}" == "failure" ] || [ "${{ needs.quality.result }}" == "cancelled" ]; then exit 1; fi
-          if [ "${{ needs.security.result }}" == "failure" ] || [ "${{ needs.security.result }}" == "cancelled" ]; then exit 1; fi
-          if [ "${{ needs.changelog.result }}" == "failure" ] || [ "${{ needs.changelog.result }}" == "cancelled" ]; then exit 1; fi
-          if [ "${{ needs.build-linux.result }}" == "failure" ] || [ "${{ needs.build-linux.result }}" == "cancelled" ]; then exit 1; fi
-          if [ "${{ needs.build-windows.result }}" == "failure" ] || [ "${{ needs.build-windows.result }}" == "cancelled" ]; then exit 1; fi
-          if [ "${{ needs.build-macos.result }}" == "failure" ] || [ "${{ needs.build-macos.result }}" == "cancelled" ]; then exit 1; fi
+          if [ "${{ needs.quality.result }}" != "success" ]; then exit 1; fi
+          if [ "${{ needs.security.result }}" != "success" ]; then exit 1; fi
+          if [ "${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}" == "true" ] && [ "${{ needs.changelog.result }}" != "success" ]; then exit 1; fi
+          if [ "${{ needs.build-linux.result }}" != "success" ]; then exit 1; fi
+          if [ "${{ needs.build-windows.result }}" != "success" ]; then exit 1; fi
+          if [ "${{ needs.build-macos.result }}" != "success" ]; then exit 1; fi
 
           echo "All Validation Checks Passed"
