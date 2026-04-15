@@ -74,12 +74,7 @@ pub struct Assignment {
 impl Assignment {
     /// Create a new assignment
     pub fn new(source: ControlSource, target: ControlTarget) -> Self {
-        Self {
-            id: Uuid::new_v4(),
-            source,
-            target,
-            enabled: true,
-        }
+        Self { id: Uuid::new_v4(), source, target, enabled: true }
     }
 }
 
@@ -117,17 +112,9 @@ mod tests {
 
     #[test]
     fn test_control_source_creation() {
-        let midi = ControlSource::Midi {
-            channel: 0,
-            note: 60,
-        };
-        let osc = ControlSource::Osc {
-            address: "/test".to_string(),
-        };
-        let dmx = ControlSource::Dmx {
-            universe: 1,
-            channel: 1,
-        };
+        let midi = ControlSource::Midi { channel: 0, note: 60 };
+        let osc = ControlSource::Osc { address: "/test".to_string() };
+        let dmx = ControlSource::Dmx { universe: 1, channel: 1 };
 
         assert!(matches!(midi, ControlSource::Midi { .. }));
         assert!(matches!(osc, ControlSource::Osc { .. }));
@@ -136,10 +123,7 @@ mod tests {
 
     #[test]
     fn test_assignment_new() {
-        let source = ControlSource::Midi {
-            channel: 1,
-            note: 10,
-        };
+        let source = ControlSource::Midi { channel: 1, note: 10 };
         let target = ControlTarget::LayerOpacity { layer_id: 100 };
 
         let assignment = Assignment::new(source.clone(), target.clone());
@@ -156,10 +140,7 @@ mod tests {
         assert!(manager.assignments().is_empty());
 
         let a1 = Assignment::new(
-            ControlSource::Midi {
-                channel: 0,
-                note: 0,
-            },
+            ControlSource::Midi { channel: 0, note: 0 },
             ControlTarget::LayerOpacity { layer_id: 1 },
         );
         let id1 = a1.id;
@@ -169,9 +150,7 @@ mod tests {
         assert_eq!(manager.assignments()[0].id, id1);
 
         let a2 = Assignment::new(
-            ControlSource::Osc {
-                address: "/test".into(),
-            },
+            ControlSource::Osc { address: "/test".into() },
             ControlTarget::LayerOpacity { layer_id: 2 },
         );
         let id2 = a2.id;
@@ -194,10 +173,7 @@ mod tests {
 
     #[test]
     fn test_serialization() {
-        let source = ControlSource::Midi {
-            channel: 5,
-            note: 64,
-        };
+        let source = ControlSource::Midi { channel: 5, note: 64 };
         let target = ControlTarget::LayerOpacity { layer_id: 42 };
         let original = Assignment::new(source, target);
 

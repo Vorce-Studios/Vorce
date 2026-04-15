@@ -112,10 +112,7 @@ pub fn get_part_style(
         }
         ModulePartType::Modulizer(mod_type) => {
             let name = match mod_type {
-                ModulizerType::Effect {
-                    effect_type: effect,
-                    ..
-                } => match effect {
+                ModulizerType::Effect { effect_type: effect, .. } => match effect {
                     EffectType::Blur => "Blur",
                     EffectType::Sharpen => "Sharpen",
                     EffectType::Invert => "Invert",
@@ -268,20 +265,14 @@ pub fn get_part_property_text(part_type: &ModulePartType) -> String {
                 if path.is_empty() {
                     "📁 Select video...".to_string()
                 } else {
-                    format!(
-                        "\u{1F4F9} {}",
-                        path.split(['/', '\\']).next_back().unwrap_or(path)
-                    )
+                    format!("\u{1F4F9} {}", path.split(['/', '\\']).next_back().unwrap_or(path))
                 }
             }
             SourceType::ImageUni { path, .. } => {
                 if path.is_empty() {
                     "\u{1F5BC} Select image...".to_string()
                 } else {
-                    format!(
-                        "\u{1F5BC} {}",
-                        path.split(['/', '\\']).next_back().unwrap_or(path)
-                    )
+                    format!("\u{1F5BC} {}", path.split(['/', '\\']).next_back().unwrap_or(path))
                 }
             }
             SourceType::VideoMulti { shared_id, .. } => {
@@ -318,10 +309,9 @@ pub fn get_part_property_text(part_type: &ModulePartType) -> String {
             }
         },
         ModulePartType::Modulizer(modulizer_type) => match modulizer_type {
-            ModulizerType::Effect {
-                effect_type: effect,
-                ..
-            } => format!("\u{2728} {}", effect.name()),
+            ModulizerType::Effect { effect_type: effect, .. } => {
+                format!("\u{2728} {}", effect.name())
+            }
             ModulizerType::BlendMode(blend) => format!("🔄 {}", blend.name()),
             ModulizerType::AudioReactive { source } => format!("\u{1F50A} {}", source),
         },

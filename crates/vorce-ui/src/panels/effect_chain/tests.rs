@@ -65,9 +65,7 @@ mod effect_chain_tests {
         let mut panel = EffectChainPanel::new();
 
         panel.chain.add_effect(EffectType::Blur);
-        panel
-            .actions
-            .push(EffectChainAction::AddEffect(EffectType::Blur));
+        panel.actions.push(EffectChainAction::AddEffect(EffectType::Blur));
 
         let actions = panel.take_actions();
         assert_eq!(actions.len(), 1);
@@ -85,10 +83,7 @@ mod effect_chain_tests {
         }
 
         // Verify modified
-        assert_eq!(
-            chain.get_effect_mut(id).unwrap().get_param("radius", 0.0),
-            20.0
-        );
+        assert_eq!(chain.get_effect_mut(id).unwrap().get_param("radius", 0.0), 20.0);
 
         // Reset Logic (simulate what happens in UI)
         if let Some(effect) = chain.get_effect_mut(id) {
@@ -98,9 +93,6 @@ mod effect_chain_tests {
         }
 
         // Verify reset
-        assert_eq!(
-            chain.get_effect_mut(id).unwrap().get_param("radius", 0.0),
-            5.0
-        );
+        assert_eq!(chain.get_effect_mut(id).unwrap().get_param("radius", 0.0), 5.0);
     }
 }

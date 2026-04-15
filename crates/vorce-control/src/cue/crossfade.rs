@@ -25,13 +25,7 @@ pub struct Crossfade {
 impl Crossfade {
     /// Create a new crossfade
     pub fn new(from_cue_id: u32, to_cue_id: u32, duration: Duration, curve: FadeCurve) -> Self {
-        Self {
-            start_time: Instant::now(),
-            duration,
-            curve,
-            from_cue_id,
-            to_cue_id,
-        }
+        Self { start_time: Instant::now(), duration, curve, from_cue_id, to_cue_id }
     }
 
     /// Get the current progress (0.0 to 1.0)
@@ -99,10 +93,7 @@ pub fn interpolate_f32(from: f32, to: f32, progress: f32) -> f32 {
 
 /// Interpolate between two positions
 pub fn interpolate_position(from: (f32, f32), to: (f32, f32), progress: f32) -> (f32, f32) {
-    (
-        interpolate_f32(from.0, to.0, progress),
-        interpolate_f32(from.1, to.1, progress),
-    )
+    (interpolate_f32(from.0, to.0, progress), interpolate_f32(from.1, to.1, progress))
 }
 
 #[cfg(test)]

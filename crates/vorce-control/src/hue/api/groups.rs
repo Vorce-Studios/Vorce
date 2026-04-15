@@ -70,9 +70,7 @@ fn build_client() -> Result<reqwest::Client, HueError> {
     // In production, we should ideally fetch the bridge's specific cert and add it to roots.
     // For now, we use native-tls to handle standard certificates to avoid CodeQL High Severity alerts,
     // although this might mean users need to explicitly trust their bridge certs locally.
-    reqwest::Client::builder()
-        .build()
-        .map_err(HueError::Network)
+    reqwest::Client::builder().build().map_err(HueError::Network)
 }
 
 /// Fetches entertainment configurations from the v2 API.
@@ -81,16 +79,9 @@ pub async fn get_entertainment_groups(config: &HueConfig) -> Result<Vec<GroupInf
     let client = build_client()?;
 
     // Use v2 API to get entertainment configurations with channels
-    let url = format!(
-        "https://{}/clip/v2/resource/entertainment_configuration",
-        config.bridge_ip
-    );
+    let url = format!("https://{}/clip/v2/resource/entertainment_configuration", config.bridge_ip);
 
-    let resp = client
-        .get(&url)
-        .header("hue-application-key", &config.username)
-        .send()
-        .await?;
+    let resp = client.get(&url).header("hue-application-key", &config.username).send().await?;
 
     if !resp.status().is_success() {
         return Err(HueError::ApiError(format!(
@@ -124,11 +115,7 @@ pub async fn get_entertainment_groups(config: &HueConfig) -> Result<Vec<GroupInf
             });
         }
 
-        result.push(GroupInfo {
-            id: cfg.id,
-            name: cfg.metadata.name,
-            lights,
-        });
+        result.push(GroupInfo { id: cfg.id, name: cfg.metadata.name, lights });
     }
 
     Ok(result)
@@ -148,20 +135,11 @@ pub async fn set_stream_active(
         config.bridge_ip, entertainment_config_id
     );
 
-    let body = StreamAction {
-        action: if active {
-            "start".to_string()
-        } else {
-            "stop".to_string()
-        },
-    };
+    let body =
+        StreamAction { action: if active { "start".to_string() } else { "stop".to_string() } };
 
-    let resp = client
-        .put(&url)
-        .header("hue-application-key", &config.username)
-        .json(&body)
-        .send()
-        .await?;
+    let resp =
+        client.put(&url).header("hue-application-key", &config.username).json(&body).send().await?;
 
     let status = resp.status();
     let response_text = resp.text().await?;
@@ -196,20 +174,13 @@ pub async fn flash_light(config: &HueConfig, light_id: &str) -> Result<(), HueEr
         "alert": "select"
     });
 
-    let resp = client
-        .put(&url)
-        .header("X-Hue-Username", &config.username)
-        .json(&body)
-        .send()
-        .await?;
+    let resp =
+        client.put(&url).header("X-Hue-Username", &config.username).json(&body).send().await?;
 
     if resp.status().is_success() {
         Ok(())
     } else {
-        Err(HueError::ApiError(format!(
-            "Failed to flash light: {}",
-            resp.status()
-        )))
+        Err(HueError::ApiError(format!("Failed to flash light: {}", resp.status())))
     }
 }
 
