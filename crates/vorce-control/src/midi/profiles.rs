@@ -40,10 +40,9 @@ impl ControllerProfile {
 
         for profile_mapping in &self.mappings {
             let key = match profile_mapping.message_template {
-                MidiMessageTemplate::ControlChange {
-                    channel,
-                    controller,
-                } => MidiMappingKey::Control(channel, controller),
+                MidiMessageTemplate::ControlChange { channel, controller } => {
+                    MidiMappingKey::Control(channel, controller)
+                }
                 MidiMessageTemplate::Note { channel, note } => MidiMappingKey::Note(channel, note),
                 MidiMessageTemplate::PitchBend { channel } => MidiMappingKey::PitchBend(channel),
             };
@@ -178,10 +177,7 @@ impl BuiltInProfiles {
 
         // Crossfader (CC 15) -> Playback speed
         mappings.push(ProfileMapping {
-            message_template: MidiMessageTemplate::ControlChange {
-                channel: 0,
-                controller: 15,
-            },
+            message_template: MidiMessageTemplate::ControlChange { channel: 0, controller: 15 },
             target: ControlTarget::PlaybackSpeed(None),
             min_value: 0.0,
             max_value: 2.0,

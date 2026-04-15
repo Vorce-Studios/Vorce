@@ -86,19 +86,13 @@ impl ChannelAssignment {
 
     /// Get all assignments for a specific universe
     pub fn assignments_for_universe(&self, universe: u16) -> Vec<(&ControlTarget, &DmxChannel)> {
-        self.assignments
-            .iter()
-            .filter(|(_, channel)| channel.universe == universe)
-            .collect()
+        self.assignments.iter().filter(|(_, channel)| channel.universe == universe).collect()
     }
 
     /// Get all universes that have assignments
     pub fn used_universes(&self) -> Vec<u16> {
-        let mut universes: Vec<u16> = self
-            .assignments
-            .values()
-            .map(|channel| channel.universe)
-            .collect();
+        let mut universes: Vec<u16> =
+            self.assignments.values().map(|channel| channel.universe).collect();
         universes.sort_unstable();
         universes.dedup();
         universes
@@ -123,20 +117,12 @@ impl ChannelAssignment {
 impl DmxChannel {
     /// Create a new DMX channel assignment
     pub fn new(universe: u16, channel: u16) -> Self {
-        Self {
-            universe,
-            channel,
-            range: None,
-        }
+        Self { universe, channel, range: None }
     }
 
     /// Create a DMX channel with a value range
     pub fn with_range(universe: u16, channel: u16, min: u8, max: u8) -> Self {
-        Self {
-            universe,
-            channel,
-            range: Some((min, max)),
-        }
+        Self { universe, channel, range: Some((min, max)) }
     }
 }
 
@@ -210,9 +196,7 @@ mod tests {
         let mut dmx_data = HashMap::new();
         let value = ControlValue::Float(0.5);
 
-        assignment
-            .apply_value(&target, &value, &mut dmx_data)
-            .unwrap();
+        assignment.apply_value(&target, &value, &mut dmx_data).unwrap();
 
         assert_eq!(dmx_data[&0][0], 127);
     }

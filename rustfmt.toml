@@ -1,0 +1,5 @@
+# Rustfmt configuration for Vorce
+# Standard formatting options
+edition = "2021"
+newline_style = "Unix"
+use_small_heuristics = "Max"
