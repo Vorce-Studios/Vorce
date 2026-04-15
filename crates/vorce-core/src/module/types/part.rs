@@ -45,11 +45,19 @@ impl ModulePart {
         let (mut inputs, mut outputs) = self.part_type.get_default_sockets();
 
         if self.link_data.mode == LinkMode::Master {
-            outputs.push(ModuleSocket::output("link_out", "Link Out", ModuleSocketType::Link));
+            outputs.push(ModuleSocket::output(
+                "link_out",
+                "Link Out",
+                ModuleSocketType::Link,
+            ));
         }
 
         if self.link_data.mode == LinkMode::Slave {
-            inputs.push(ModuleSocket::input("link_in", "Link In", ModuleSocketType::Link));
+            inputs.push(ModuleSocket::input(
+                "link_in",
+                "Link In",
+                ModuleSocketType::Link,
+            ));
         }
 
         if self.link_data.trigger_input_enabled {
@@ -107,11 +115,17 @@ impl ModulePartType {
                 vec![ModuleSocket::standard_media_out()],
             ),
             ModulePartType::Modulizer(_) => (
-                vec![ModuleSocket::standard_media_in(), ModuleSocket::standard_trigger_in()],
+                vec![
+                    ModuleSocket::standard_media_in(),
+                    ModuleSocket::standard_trigger_in(),
+                ],
                 vec![ModuleSocket::standard_media_out()],
             ),
             ModulePartType::Layer(_) => (
-                vec![ModuleSocket::standard_media_in(), ModuleSocket::standard_trigger_in()],
+                vec![
+                    ModuleSocket::standard_media_in(),
+                    ModuleSocket::standard_trigger_in(),
+                ],
                 vec![ModuleSocket::standard_layer_out()],
             ),
             ModulePartType::Source(SourceType::BevyAtmosphere { .. })
@@ -135,7 +149,10 @@ impl ModulePartType {
             ),
             ModulePartType::Output(out) => match out {
                 OutputType::Hue { .. } => (
-                    vec![ModuleSocket::standard_layer_in(), ModuleSocket::standard_trigger_in()],
+                    vec![
+                        ModuleSocket::standard_layer_in(),
+                        ModuleSocket::standard_trigger_in(),
+                    ],
                     vec![],
                 ),
                 _ => (vec![ModuleSocket::standard_layer_in()], vec![]),
@@ -149,8 +166,10 @@ impl ModulePartType {
                         ModuleSocketType::Trigger,
                     ),
                 ],
-                vec![ModuleSocket::output("media_out", "Geometry Out", ModuleSocketType::Media)
-                    .primary()],
+                vec![
+                    ModuleSocket::output("media_out", "Geometry Out", ModuleSocketType::Media)
+                        .primary(),
+                ],
             ),
             ModulePartType::Hue(_) => (
                 vec![

@@ -66,7 +66,10 @@ impl Default for WebServerConfig {
 impl WebServerConfig {
     /// Create a new web server config
     pub fn new(port: u16) -> Self {
-        Self { port, ..Default::default() }
+        Self {
+            port,
+            ..Default::default()
+        }
     }
 
     /// Set the host address
@@ -106,7 +109,10 @@ impl WebServer {
     /// Create a new web server
     #[cfg(feature = "http-api")]
     pub fn new(config: WebServerConfig) -> Self {
-        Self { config, live_status: Arc::new(parking_lot::RwLock::new(LiveStatus::default())) }
+        Self {
+            config,
+            live_status: Arc::new(parking_lot::RwLock::new(LiveStatus::default())),
+        }
     }
 
     #[cfg(not(feature = "http-api"))]
@@ -129,7 +135,10 @@ impl WebServer {
         // Build router with state
         let app = build_router()
             .route("/ws", axum::routing::get(ws_handler))
-            .layer(middleware::from_fn_with_state(state.clone(), auth_middleware))
+            .layer(middleware::from_fn_with_state(
+                state.clone(),
+                auth_middleware,
+            ))
             .layer(middleware::from_fn(security_headers)) // Apply security headers
             .with_state(state);
 
@@ -180,7 +189,9 @@ impl WebServer {
 
     #[cfg(not(feature = "http-api"))]
     pub async fn run(self) -> Result<()> {
-        Err(ControlError::HttpError("HTTP API feature not enabled".to_string()))
+        Err(ControlError::HttpError(
+            "HTTP API feature not enabled".to_string(),
+        ))
     }
 
     /// Spawn the server in a background task
@@ -191,7 +202,9 @@ impl WebServer {
 
     #[cfg(not(feature = "http-api"))]
     pub fn spawn(self) -> Result<()> {
-        Err(ControlError::HttpError("HTTP API feature not enabled".to_string()))
+        Err(ControlError::HttpError(
+            "HTTP API feature not enabled".to_string(),
+        ))
     }
 }
 
@@ -230,7 +243,10 @@ async fn security_headers(req: Request, next: Next) -> Response {
     let headers = response.headers_mut();
 
     // Prevent MIME sniffing
-    headers.insert(header::X_CONTENT_TYPE_OPTIONS, HeaderValue::from_static("nosniff"));
+    headers.insert(
+        header::X_CONTENT_TYPE_OPTIONS,
+        HeaderValue::from_static("nosniff"),
+    );
 
     // Prevent clickjacking
     headers.insert(header::X_FRAME_OPTIONS, HeaderValue::from_static("DENY"));
@@ -239,7 +255,10 @@ async fn security_headers(req: Request, next: Next) -> Response {
     headers.insert(header::X_XSS_PROTECTION, HeaderValue::from_static("0"));
 
     // Referrer Policy
-    headers.insert(header::REFERRER_POLICY, HeaderValue::from_static("no-referrer"));
+    headers.insert(
+        header::REFERRER_POLICY,
+        HeaderValue::from_static("no-referrer"),
+    );
 
     // Content Security Policy
     // Prevent XSS and data injection attacks by restricting sources of content
@@ -264,7 +283,10 @@ async fn security_headers(req: Request, next: Next) -> Response {
 
     // Cache-Control
 
-    headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store, max-age=0"));
+    headers.insert(
+        header::CACHE_CONTROL,
+        HeaderValue::from_static("no-store, max-age=0"),
+    );
 
     // Pragma
 
@@ -288,7 +310,10 @@ mod tests {
         assert_eq!(config.host, "127.0.0.1");
         assert_eq!(config.port, 8080);
         assert!(!config.enable_cors);
-        assert_eq!(config.allowed_origins, vec!["http://localhost:3000".to_string()]);
+        assert_eq!(
+            config.allowed_origins,
+            vec!["http://localhost:3000".to_string()]
+        );
     }
 
     #[test]
@@ -320,30 +345,46 @@ mod tests {
             .route("/", axum::routing::get(|| async { "Hello" }))
             .layer(middleware::from_fn(security_headers));
 
-        let response =
-            app.call(Request::builder().uri("/").body(Body::empty()).unwrap()).await.unwrap();
+        let response = app
+            .call(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
 
         let headers = response.headers();
 
         assert_eq!(
-            headers.get("X-Content-Type-Options").and_then(|h| h.to_str().ok()),
+            headers
+                .get("X-Content-Type-Options")
+                .and_then(|h| h.to_str().ok()),
             Some("nosniff")
         );
-        assert_eq!(headers.get("X-Frame-Options").and_then(|h| h.to_str().ok()), Some("DENY"));
-        assert_eq!(headers.get("X-XSS-Protection").and_then(|h| h.to_str().ok()), Some("0"));
+        assert_eq!(
+            headers.get("X-Frame-Options").and_then(|h| h.to_str().ok()),
+            Some("DENY")
+        );
+        assert_eq!(
+            headers
+                .get("X-XSS-Protection")
+                .and_then(|h| h.to_str().ok()),
+            Some("0")
+        );
         assert_eq!(
             headers.get("Referrer-Policy").and_then(|h| h.to_str().ok()),
             Some("no-referrer")
         );
         assert_eq!(
-            headers.get("Content-Security-Policy").and_then(|h| h.to_str().ok()),
+            headers
+                .get("Content-Security-Policy")
+                .and_then(|h| h.to_str().ok()),
             Some("default-src 'none'; frame-ancestors 'none';")
         );
         // HSTS removed
         assert!(headers.get("Strict-Transport-Security").is_none());
 
         assert_eq!(
-            headers.get("Permissions-Policy").and_then(|h| h.to_str().ok()),
+            headers
+                .get("Permissions-Policy")
+                .and_then(|h| h.to_str().ok()),
             Some("microphone=(), camera=(), geolocation=(), usb=(), interest-cohort=()")
         );
 
@@ -351,12 +392,18 @@ mod tests {
             headers.get("Cache-Control").and_then(|h| h.to_str().ok()),
             Some("no-store, max-age=0")
         );
-        assert_eq!(headers.get("Pragma").and_then(|h| h.to_str().ok()), Some("no-cache"));
+        assert_eq!(
+            headers.get("Pragma").and_then(|h| h.to_str().ok()),
+            Some("no-cache")
+        );
         assert_eq!(
             headers.get("Cache-Control").and_then(|h| h.to_str().ok()),
             Some("no-store, max-age=0")
         );
-        assert_eq!(headers.get("Pragma").and_then(|h| h.to_str().ok()), Some("no-cache"));
+        assert_eq!(
+            headers.get("Pragma").and_then(|h| h.to_str().ok()),
+            Some("no-cache")
+        );
     }
 
     #[tokio::test]
@@ -381,13 +428,16 @@ mod tests {
         // Build app
         let mut app = axum::Router::new()
             .route("/ws", axum::routing::get(dummy_handler))
-            .layer(middleware::from_fn_with_state(state.clone(), auth_middleware))
+            .layer(middleware::from_fn_with_state(
+                state.clone(),
+                auth_middleware,
+            ))
             .with_state(state);
 
-        // Test request with valid token in subprotocol
+        // Test request with valid token in authorization header
         let req = Request::builder()
             .uri("/ws")
-            .header(header::SEC_WEBSOCKET_PROTOCOL, "vorce.auth.secret123")
+            .header(header::AUTHORIZATION, "Bearer secret123")
             .body(Body::empty())
             .unwrap();
 
@@ -397,7 +447,7 @@ mod tests {
         // Test request with INVALID token
         let req_invalid = Request::builder()
             .uri("/ws")
-            .header(header::SEC_WEBSOCKET_PROTOCOL, "vorce.auth.WRONG")
+            .header(header::AUTHORIZATION, "Bearer WRONG")
             .body(Body::empty())
             .unwrap();
 

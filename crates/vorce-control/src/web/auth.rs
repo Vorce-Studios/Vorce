@@ -46,7 +46,10 @@ impl AuthConfig {
 
     /// Create an auth config with authentication enabled and provided keys
     pub fn with_keys(keys: Vec<String>) -> Self {
-        let mut config = Self { enabled: true, api_keys: HashSet::new() };
+        let mut config = Self {
+            enabled: true,
+            api_keys: HashSet::new(),
+        };
         for key in keys {
             config.add_key(key);
         }
@@ -124,21 +127,6 @@ pub fn extract_api_key(headers: &http::HeaderMap, _query: Option<&str>) -> Optio
         }
     }
 
-    // Try Sec-WebSocket-Protocol header
-    // Browser WebSocket clients cannot set custom headers, so we support passing the
-    // API key as a subprotocol in the Sec-WebSocket-Protocol header.
-    // Format: vorce.auth.<TOKEN>
-    if let Some(ws_protocol_header) = headers.get(http::header::SEC_WEBSOCKET_PROTOCOL) {
-        if let Ok(protocols) = ws_protocol_header.to_str() {
-            for protocol in protocols.split(',') {
-                let protocol = protocol.trim();
-                if let Some(token) = protocol.strip_prefix("vorce.auth.") {
-                    return Some(token.to_string());
-                }
-            }
-        }
-    }
-
     None
 }
 
@@ -165,7 +153,10 @@ mod tests {
     #[test]
     fn test_extract_bearer_token() {
         let mut headers = http::HeaderMap::new();
-        headers.insert(http::header::AUTHORIZATION, "Bearer test_token".parse().unwrap());
+        headers.insert(
+            http::header::AUTHORIZATION,
+            "Bearer test_token".parse().unwrap(),
+        );
 
         let key = extract_api_key(&headers, None);
         assert_eq!(key, Some("test_token".to_string()));
@@ -234,18 +225,5 @@ mod tests {
 
         // Internal storage should match the input hash (not double-hashed)
         assert!(config.api_keys.contains(&hash));
-    }
-
-    #[test]
-    fn test_extract_websocket_protocol() {
-        let mut headers = http::HeaderMap::new();
-        // Sec-WebSocket-Protocol: vorce.auth.<TOKEN>
-        headers.insert(
-            http::header::SEC_WEBSOCKET_PROTOCOL,
-            "vorce.auth.test_key, json".parse().unwrap(),
-        );
-
-        let key = extract_api_key(&headers, None);
-        assert_eq!(key, Some("test_key".to_string()));
     }
 }

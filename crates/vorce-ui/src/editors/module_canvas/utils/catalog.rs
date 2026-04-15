@@ -197,7 +197,10 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
                 label: "Gradient Mask",
                 label_lower: "gradient mask".to_string(),
                 search_tags: "mask fade transition alpha",
-                part_type: ModulePartType::Mask(MaskType::Gradient { angle: 0.0, softness: 0.5 }),
+                part_type: ModulePartType::Mask(MaskType::Gradient {
+                    angle: 0.0,
+                    softness: 0.5,
+                }),
             },
         ]);
     }
@@ -212,8 +215,10 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
     }
 
     catalog.extend(
-        EffectType::all().iter().filter(|effect| capabilities::is_effect_supported(effect)).map(
-            |effect| NodeCatalogItem {
+        EffectType::all()
+            .iter()
+            .filter(|effect| capabilities::is_effect_supported(effect))
+            .map(|effect| NodeCatalogItem {
                 label: effect.name(),
                 label_lower: effect.name().to_lowercase(),
                 search_tags: "modulator effect filter fx",
@@ -221,8 +226,7 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
                     effect_type: *effect,
                     params: std::collections::HashMap::new(),
                 }),
-            },
-        ),
+            }),
     );
 
     catalog.extend([
