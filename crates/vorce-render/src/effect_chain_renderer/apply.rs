@@ -309,10 +309,7 @@ impl EffectChainRenderer {
             let current_input = if use_input {
                 input_view.clone()
             } else {
-                let Some(ping_pong) = self.ping_pong.as_ref() else {
-                    tracing::error!("Ping pong buffers not initialized");
-                    return;
-                };
+                let ping_pong = self.ping_pong.as_ref().unwrap();
                 ping_pong.views[current_idx].clone()
             };
 
@@ -343,10 +340,7 @@ impl EffectChainRenderer {
             let render_target = if is_last {
                 output_view
             } else {
-                let Some(ping_pong) = self.ping_pong.as_ref() else {
-                    tracing::error!("Ping pong buffers not initialized");
-                    return;
-                };
+                let ping_pong = self.ping_pong.as_ref().unwrap();
                 &ping_pong.views[1 - current_idx]
             };
 
