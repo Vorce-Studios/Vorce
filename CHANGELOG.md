@@ -215,7 +215,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simple MIDI and OSC support.
 - Basic shader effects.
 <<<<<<< HEAD
--   2 0 2 6 - 0 4 - 1 4 :   t e s t :   A d d   l i s t - d e v i c e s   c o v e r a g e   t e s t s   ( # 2 6 1 )  
+-   2 0 2 6 - 0 4 - 1 4 :   t e s t :   A d d   l i s t - d e v i c e s   c o v e r a g e   t e s t s   ( # 2 6 1 ) 
+ 
  
 =======
 <<<<<<< .merge_file_7q4J3l

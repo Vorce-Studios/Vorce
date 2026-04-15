@@ -85,7 +85,7 @@ repos:
           - 'MD041'
         files: \.(md|markdown)$
         # Exclude existing problematic files (legacy)
-        exclude: ^(CHANGELOG\.md|ROADMAP\.md|.*\.patch|\.jules/.*|\.agent/.*|\.vscode/skills/.*|docs/.*|crates/vendor/.*|\.paperclip-home/.*)$
+        exclude: ^(CHANGELOG\.md|ROADMAP\.md|.*\.patch|\.jules/.*|\.agent/.*|\.vscode/skills/.*|docs/.*|doc/.*|crates/vendor/.*|\.paperclip-home/.*)$
 
   # ═══════════════════════════════════════════════════════════════
   # SECURITY: SECRET DETECTION
