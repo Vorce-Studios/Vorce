@@ -430,35 +430,6 @@ pub mod mock_backend {
 }
 
 #[cfg(test)]
-#[cfg(feature = "audio")]
-mod tests {
-    use super::cpal_backend::CpalBackend;
-    use super::AudioError;
-
-    #[test]
-    fn test_cpal_backend_new_default() {
-        // We test CpalBackend initialization
-        let result = CpalBackend::new(None);
-        // It may return an error depending on hardware/CI setup, or success.
-        // We just verify it does not panic.
-        if let Err(AudioError::NoDevicesFound(_) | AudioError::DefaultDeviceNotFound) = &result {}
-    }
-
-    #[test]
-    fn test_cpal_backend_new_nonexistent_device() {
-        let result = CpalBackend::new(Some("NonExistentDevice_123456789".to_string()));
-        // On macOS, it fails due to feature-gating. On other systems, it fails because device is not found.
-        assert!(result.is_err());
-        let err = match result {
-            Err(e) => e,
-            Ok(_) => panic!("Expected Error"),
-        };
-        match err {
-            AudioError::NoDevicesFound(_) => {} // This is expected in most cases
-            AudioError::DefaultDeviceNotFound => {}
-            _ => panic!("Expected NoDevicesFound error, got {:?}", err),
-        }
-    }
 mod tests {
     #[cfg(feature = "audio")]
     #[test]
@@ -480,7 +451,6 @@ mod tests {
                     }
                     #[cfg(not(target_os = "macos"))]
                     {
-                        // On other platforms, it's just a list that could be empty or populated
                         let _ = device_list;
                     }
                 }

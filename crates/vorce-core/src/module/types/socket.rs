@@ -115,7 +115,10 @@ impl ModuleSocket {
         name: impl Into<String>,
         socket_type: ModuleSocketType,
     ) -> Self {
-        Self { supports_trigger_mapping: true, ..Self::input(id, name, socket_type) }
+        Self {
+            supports_trigger_mapping: true,
+            ..Self::input(id, name, socket_type)
+        }
     }
 
     /// Create a new output socket.
@@ -182,18 +185,6 @@ impl ModuleSocketType {
             ModuleSocketType::Layer => "Layer",
             ModuleSocketType::Output => "Output",
             ModuleSocketType::Link => "Link",
-        }
-    }
-
-    /// Lowercased display name to avoid runtime allocations.
-    pub fn name_lower(&self) -> &'static str {
-        match self {
-            ModuleSocketType::Trigger => "trigger",
-            ModuleSocketType::Media => "media",
-            ModuleSocketType::Effect => "effect",
-            ModuleSocketType::Layer => "layer",
-            ModuleSocketType::Output => "output",
-            ModuleSocketType::Link => "link",
         }
     }
 }
