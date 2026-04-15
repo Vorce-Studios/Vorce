@@ -26,11 +26,7 @@ pub fn render_transport_controls(
     _reverse_playback: bool,
 ) {
     ui.horizontal(|ui| {
-        let _play_btn = if is_playing {
-            ui.button("⏸ Pause")
-        } else {
-            ui.button("▶ Play")
-        };
+        let _play_btn = if is_playing { ui.button("⏸ Pause") } else { ui.button("▶ Play") };
 
         if ui.button("⏮").clicked() {
             // Seek to start
@@ -80,10 +76,8 @@ pub fn render_common_controls(
 
         ui.horizontal(|ui| {
             ui.label("Blend Mode:");
-            let supported = blend_mode
-                .as_ref()
-                .map(capabilities::is_blend_mode_supported)
-                .unwrap_or(true);
+            let supported =
+                blend_mode.as_ref().map(capabilities::is_blend_mode_supported).unwrap_or(true);
             if !supported {
                 capabilities::render_unsupported_warning(ui, "Blend modes partially supported");
             }
@@ -104,26 +98,23 @@ pub fn render_common_controls(
     });
 
     ui.collapsing("🎨 Color Adjust", |ui| {
-        egui::Grid::new("color_grid")
-            .num_columns(2)
-            .spacing([10.0, 8.0])
-            .show(ui, |ui| {
-                ui.label("Brightness:");
-                styled_slider(ui, brightness, -1.0..=1.0, 0.0);
-                ui.end_row();
+        egui::Grid::new("color_grid").num_columns(2).spacing([10.0, 8.0]).show(ui, |ui| {
+            ui.label("Brightness:");
+            styled_slider(ui, brightness, -1.0..=1.0, 0.0);
+            ui.end_row();
 
-                ui.label("Contrast:");
-                styled_slider(ui, contrast, 0.0..=2.0, 1.0);
-                ui.end_row();
+            ui.label("Contrast:");
+            styled_slider(ui, contrast, 0.0..=2.0, 1.0);
+            ui.end_row();
 
-                ui.label("Saturation:");
-                styled_slider(ui, saturation, 0.0..=2.0, 1.0);
-                ui.end_row();
+            ui.label("Saturation:");
+            styled_slider(ui, saturation, 0.0..=2.0, 1.0);
+            ui.end_row();
 
-                ui.label("Hue Shift:");
-                styled_slider(ui, hue_shift, 0.0..=1.0, 0.0);
-                ui.end_row();
-            });
+            ui.label("Hue Shift:");
+            styled_slider(ui, hue_shift, 0.0..=1.0, 0.0);
+            ui.end_row();
+        });
     });
 
     ui.collapsing("📐 Transform", |ui| {
@@ -135,35 +126,32 @@ pub fn render_common_controls(
             );
         }
         ui.add_enabled_ui(supported, |ui| {
-            egui::Grid::new("transform_grid")
-                .num_columns(2)
-                .spacing([10.0, 8.0])
-                .show(ui, |ui| {
-                    ui.label("Scale:");
-                    ui.horizontal(|ui| {
-                        styled_drag_value(ui, scale_x, 0.01, 0.0..=10.0, 1.0, "X: ", "");
-                        styled_drag_value(ui, scale_y, 0.01, 0.0..=10.0, 1.0, "Y: ", "");
-                    });
-                    ui.end_row();
-
-                    ui.label("Rotation:");
-                    styled_slider(ui, rotation, 0.0..=360.0, 0.0);
-                    ui.end_row();
-
-                    ui.label("Offset:");
-                    ui.horizontal(|ui| {
-                        styled_drag_value(ui, offset_x, 0.01, -1.0..=1.0, 0.0, "X: ", "");
-                        styled_drag_value(ui, offset_y, 0.01, -1.0..=1.0, 0.0, "Y: ", "");
-                    });
-                    ui.end_row();
-
-                    ui.label("Flip:");
-                    ui.horizontal(|ui| {
-                        ui.checkbox(flip_horizontal, "Horizontal");
-                        ui.checkbox(flip_vertical, "Vertical");
-                    });
-                    ui.end_row();
+            egui::Grid::new("transform_grid").num_columns(2).spacing([10.0, 8.0]).show(ui, |ui| {
+                ui.label("Scale:");
+                ui.horizontal(|ui| {
+                    styled_drag_value(ui, scale_x, 0.01, 0.0..=10.0, 1.0, "X: ", "");
+                    styled_drag_value(ui, scale_y, 0.01, 0.0..=10.0, 1.0, "Y: ", "");
                 });
+                ui.end_row();
+
+                ui.label("Rotation:");
+                styled_slider(ui, rotation, 0.0..=360.0, 0.0);
+                ui.end_row();
+
+                ui.label("Offset:");
+                ui.horizontal(|ui| {
+                    styled_drag_value(ui, offset_x, 0.01, -1.0..=1.0, 0.0, "X: ", "");
+                    styled_drag_value(ui, offset_y, 0.01, -1.0..=1.0, 0.0, "Y: ", "");
+                });
+                ui.end_row();
+
+                ui.label("Flip:");
+                ui.horizontal(|ui| {
+                    ui.checkbox(flip_horizontal, "Horizontal");
+                    ui.checkbox(flip_vertical, "Vertical");
+                });
+                ui.end_row();
+            });
         });
     });
 }
@@ -226,11 +214,7 @@ pub fn render_hue_spatial_editor(
         painter.circle_filled(
             screen_pos,
             8.0,
-            if lamp_resp.hovered() {
-                Color32::LIGHT_BLUE
-            } else {
-                Color32::from_rgb(255, 200, 50)
-            },
+            if lamp_resp.hovered() { Color32::LIGHT_BLUE } else { Color32::from_rgb(255, 200, 50) },
         );
         painter.text(
             screen_pos + Vec2::new(0.0, 12.0),
