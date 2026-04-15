@@ -110,7 +110,6 @@ Session 11217710755568478899: Palette - Intervall 1/3 - AWAITING_USER_FEEDBACK
 =======
 >>>>>>> e74ffd798211741b90ba3746f163a84179f38d3f
 
-
 - Welche Dateien lädt Ben (`gemini_local`) bei JEDEM Heartbeat?
 - Welche Dateien lädt Jules bei Session-Start?
 - Gibt es eine `.gemini/instructions.md` oder similar die Paperclip injiziert?
