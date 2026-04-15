@@ -146,7 +146,7 @@ impl ModuleSidebar {
                 egui::Align2::LEFT_CENTER,
                 name,
                 egui::FontId::proportional(14.0),
-                ui.visuals().text_color(),
+                Color32::WHITE,
             );
         }
 
