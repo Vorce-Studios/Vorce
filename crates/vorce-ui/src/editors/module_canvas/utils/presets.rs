@@ -9,11 +9,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
         ModulePreset {
             name: "Simple Media Chain".to_string(),
             parts: vec![
-                (
-                    ModulePartType::Trigger(TriggerType::Beat),
-                    (50.0, 100.0),
-                    None,
-                ),
+                (ModulePartType::Trigger(TriggerType::Beat), (50.0, 100.0), None),
                 (
                     ModulePartType::Source(SourceType::new_media_file(String::new())),
                     (350.0, 100.0),
@@ -46,11 +42,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
         ModulePreset {
             name: "Effect Chain".to_string(),
             parts: vec![
-                (
-                    ModulePartType::Trigger(TriggerType::Beat),
-                    (50.0, 100.0),
-                    None,
-                ),
+                (ModulePartType::Trigger(TriggerType::Beat), (50.0, 100.0), None),
                 (
                     ModulePartType::Source(SourceType::new_media_file(String::new())),
                     (350.0, 100.0),
@@ -142,21 +134,13 @@ pub fn default_presets() -> Vec<ModulePreset> {
         ModulePreset {
             name: "Masked Media".to_string(),
             parts: vec![
-                (
-                    ModulePartType::Trigger(TriggerType::Beat),
-                    (50.0, 100.0),
-                    None,
-                ),
+                (ModulePartType::Trigger(TriggerType::Beat), (50.0, 100.0), None),
                 (
                     ModulePartType::Source(SourceType::new_media_file(String::new())),
                     (350.0, 100.0),
                     None,
                 ),
-                (
-                    ModulePartType::Mask(MaskType::Shape(MaskShape::Circle)),
-                    (650.0, 100.0),
-                    None,
-                ),
+                (ModulePartType::Mask(MaskType::Shape(MaskShape::Circle)), (650.0, 100.0), None),
                 (
                     ModulePartType::Output(OutputType::Projector {
                         id: 1,
@@ -185,11 +169,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
         ModulePreset {
             name: "NDI Source".to_string(),
             parts: vec![
-                (
-                    ModulePartType::Trigger(TriggerType::Beat),
-                    (50.0, 100.0),
-                    None,
-                ),
+                (ModulePartType::Trigger(TriggerType::Beat), (50.0, 100.0), None),
                 (
                     ModulePartType::Source(SourceType::NdiInput { source_name: None }),
                     (350.0, 100.0),
@@ -222,20 +202,14 @@ pub fn default_presets() -> Vec<ModulePreset> {
         ModulePreset {
             name: "NDI Output".to_string(),
             parts: vec![
-                (
-                    ModulePartType::Trigger(TriggerType::Beat),
-                    (50.0, 100.0),
-                    None,
-                ),
+                (ModulePartType::Trigger(TriggerType::Beat), (50.0, 100.0), None),
                 (
                     ModulePartType::Source(SourceType::new_media_file(String::new())),
                     (350.0, 100.0),
                     None,
                 ),
                 (
-                    ModulePartType::Output(OutputType::NdiOutput {
-                        name: "Vorce NDI".to_string(),
-                    }),
+                    ModulePartType::Output(OutputType::NdiOutput { name: "Vorce NDI".to_string() }),
                     (650.0, 100.0),
                     None,
                 ),
@@ -249,15 +223,9 @@ pub fn default_presets() -> Vec<ModulePreset> {
         ModulePreset {
             name: "Spout Source".to_string(),
             parts: vec![
+                (ModulePartType::Trigger(TriggerType::Beat), (50.0, 100.0), None),
                 (
-                    ModulePartType::Trigger(TriggerType::Beat),
-                    (50.0, 100.0),
-                    None,
-                ),
-                (
-                    ModulePartType::Source(SourceType::SpoutInput {
-                        sender_name: String::new(),
-                    }),
+                    ModulePartType::Source(SourceType::SpoutInput { sender_name: String::new() }),
                     (350.0, 100.0),
                     None,
                 ),
@@ -289,11 +257,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
         ModulePreset {
             name: "Spout Output".to_string(),
             parts: vec![
-                (
-                    ModulePartType::Trigger(TriggerType::Beat),
-                    (50.0, 100.0),
-                    None,
-                ),
+                (ModulePartType::Trigger(TriggerType::Beat), (50.0, 100.0), None),
                 (
                     ModulePartType::Source(SourceType::new_media_file(String::new())),
                     (350.0, 100.0),
@@ -301,9 +265,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
                 ),
                 #[cfg(target_os = "windows")]
                 (
-                    ModulePartType::Output(OutputType::Spout {
-                        name: "Vorce Spout".to_string(),
-                    }),
+                    ModulePartType::Output(OutputType::Spout { name: "Vorce Spout".to_string() }),
                     (650.0, 100.0),
                     None,
                 ),

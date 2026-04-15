@@ -23,13 +23,7 @@ impl AudioMeter {
             AudioMeterStyle::Retro => 300.0,
             AudioMeterStyle::Digital => 360.0,
         };
-        Self {
-            style,
-            level_db_left,
-            level_db_right,
-            width,
-            height: None,
-        }
+        Self { style, level_db_left, level_db_right, width, height: None }
     }
 
     /// Set preferred width
@@ -161,11 +155,7 @@ fn draw_rack_frame(painter: &egui::Painter, rect: Rect) {
 fn draw_screw(painter: &egui::Painter, center: Pos2, radius: f32) {
     // Screw head
     painter.circle_filled(center, radius, Color32::from_rgb(80, 80, 85));
-    painter.circle_stroke(
-        center,
-        radius,
-        Stroke::new(0.5, Color32::from_rgb(40, 40, 45)),
-    );
+    painter.circle_stroke(center, radius, Stroke::new(0.5, Color32::from_rgb(40, 40, 45)));
 
     // Inner recess (darker)
     painter.circle_filled(center, radius * 0.7, Color32::from_rgb(50, 50, 55));
@@ -176,18 +166,12 @@ fn draw_screw(painter: &egui::Painter, center: Pos2, radius: f32) {
 
     // Horizontal line
     painter.line_segment(
-        [
-            Pos2::new(center.x - cross_len, center.y),
-            Pos2::new(center.x + cross_len, center.y),
-        ],
+        [Pos2::new(center.x - cross_len, center.y), Pos2::new(center.x + cross_len, center.y)],
         Stroke::new(1.0, cross_color),
     );
     // Vertical line
     painter.line_segment(
-        [
-            Pos2::new(center.x, center.y - cross_len),
-            Pos2::new(center.x, center.y + cross_len),
-        ],
+        [Pos2::new(center.x, center.y - cross_len), Pos2::new(center.x, center.y + cross_len)],
         Stroke::new(1.0, cross_color),
     );
 }
@@ -270,13 +254,8 @@ fn draw_single_retro_meter(painter: &egui::Painter, rect: Rect, db: f32, label: 
     }
 
     // Scale ticks
-    let ticks = [
-        (-20.0, start_angle),
-        (-10.0, -15.0),
-        (-5.0, 0.0),
-        (0.0, zero_angle),
-        (3.0, end_angle),
-    ];
+    let ticks =
+        [(-20.0, start_angle), (-10.0, -15.0), (-5.0, 0.0), (0.0, zero_angle), (3.0, end_angle)];
     for (_val, angle) in ticks {
         let p1 = angle_to_pos(angle, radius * 0.55);
         let p2 = angle_to_pos(angle, radius * 0.65);
@@ -287,11 +266,7 @@ fn draw_single_retro_meter(painter: &egui::Painter, rect: Rect, db: f32, label: 
 
     // Needle
     // If db is very negative (or NEG_INFINITY), show needle at minimum position
-    let clamped_db = if db.is_finite() {
-        db.clamp(-40.0, 6.0)
-    } else {
-        -40.0
-    };
+    let clamped_db = if db.is_finite() { db.clamp(-40.0, 6.0) } else { -40.0 };
     // Linear approximation for visualization
     let needle_angle = if clamped_db < -20.0 {
         start_angle - 5.0
@@ -313,17 +288,12 @@ fn draw_single_retro_meter(painter: &egui::Painter, rect: Rect, db: f32, label: 
     let visible_base = center + dir * t_base;
 
     // Draw needle
-    painter.line_segment(
-        [visible_base, needle_tip],
-        Stroke::new(1.5, Color32::from_rgb(180, 40, 40)),
-    );
+    painter
+        .line_segment([visible_base, needle_tip], Stroke::new(1.5, Color32::from_rgb(180, 40, 40)));
 
     // Shadow
     painter.line_segment(
-        [
-            visible_base + Vec2::new(2.0, 2.0),
-            needle_tip + Vec2::new(2.0, 2.0),
-        ],
+        [visible_base + Vec2::new(2.0, 2.0), needle_tip + Vec2::new(2.0, 2.0)],
         Stroke::new(2.0, Color32::from_black_alpha(40)),
     );
 
@@ -360,10 +330,8 @@ fn draw_digital_stereo(
     let bar_h = (total_h * 0.35).min(15.0); // Max 15px height for bar
     let scale_h = (total_h - 2.0 * bar_h).max(0.0);
 
-    let l_rect = Rect::from_min_size(
-        rect.min + Vec2::new(4.0, 2.0),
-        Vec2::new(rect.width() - 8.0, bar_h),
-    );
+    let l_rect =
+        Rect::from_min_size(rect.min + Vec2::new(4.0, 2.0), Vec2::new(rect.width() - 8.0, bar_h));
     let scale_rect = Rect::from_min_size(
         Pos2::new(rect.min.x + 4.0, l_rect.max.y),
         Vec2::new(rect.width() - 8.0, scale_h),

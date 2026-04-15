@@ -3,14 +3,7 @@ use vorce_core::module::HueNodeType;
 
 pub fn render_hue_ui(ui: &mut Ui, hue_node: &mut HueNodeType) {
     match hue_node {
-        HueNodeType::SingleLamp {
-            id,
-            name,
-            brightness,
-            color,
-            effect,
-            effect_active,
-        } => {
+        HueNodeType::SingleLamp { id, name, brightness, color, effect, effect_active } => {
             ui.horizontal(|ui| {
                 ui.label("Name:");
                 ui.text_edit_singleline(name);
@@ -34,14 +27,7 @@ pub fn render_hue_ui(ui: &mut Ui, hue_node: &mut HueNodeType) {
             });
             ui.checkbox(effect_active, "Effect Active");
         }
-        HueNodeType::MultiLamp {
-            ids,
-            name,
-            brightness,
-            color,
-            effect,
-            effect_active,
-        } => {
+        HueNodeType::MultiLamp { ids, name, brightness, color, effect, effect_active } => {
             ui.horizontal(|ui| {
                 ui.label("Group Name:");
                 ui.text_edit_singleline(name);
@@ -71,13 +57,7 @@ pub fn render_hue_ui(ui: &mut Ui, hue_node: &mut HueNodeType) {
             });
             ui.checkbox(effect_active, "Effect Active");
         }
-        HueNodeType::EntertainmentGroup {
-            name,
-            brightness,
-            color,
-            effect,
-            effect_active,
-        } => {
+        HueNodeType::EntertainmentGroup { name, brightness, color, effect, effect_active } => {
             ui.horizontal(|ui| {
                 ui.label("Area Name:");
                 ui.text_edit_singleline(name);

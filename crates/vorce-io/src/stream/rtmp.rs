@@ -67,13 +67,7 @@ impl RtmpStreamer {
             EncoderPreset::LowLatency,
         )?;
 
-        Ok(Self {
-            url,
-            encoder,
-            format,
-            frame_count: 0,
-            connected: false,
-        })
+        Ok(Self { url, encoder, format, frame_count: 0, connected: false })
     }
 
     /// Creates a default RTMP streamer for 1080p60.
@@ -217,10 +211,7 @@ impl RtmpStreamer {
         _format: crate::format::VideoFormat,
         _bitrate: u64,
     ) -> crate::error::Result<Self> {
-        Err(crate::error::IoError::feature_not_enabled(
-            "RTMP streaming",
-            "stream",
-        ))
+        Err(crate::error::IoError::feature_not_enabled("RTMP streaming", "stream"))
     }
 }
 
