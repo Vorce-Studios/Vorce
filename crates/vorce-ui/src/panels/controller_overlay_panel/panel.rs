@@ -4,14 +4,11 @@ use super::drawing::MAX_WIDTH;
 // Visual representation of the Ecler NUO 4 (or other MIDI controllers)
 // with live state visualization and MIDI Learn functionality.
 
-#[allow(unused_imports)]
-use egui::{Color32, Pos2, Rect, Response, Sense, Stroke, TextureHandle, Ui, Vec2};
+use egui::{Color32, TextureHandle};
 
-#[allow(unused_imports)]
-use crate::config::{MidiAssignment, MidiAssignmentTarget, UserConfig};
+use crate::config::UserConfig;
 
-#[allow(unused_imports)]
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 #[cfg(feature = "midi")]
 use vorce_control::midi::{ControllerElements, ElementStateManager, MidiLearnManager};
 use vorce_control::target::ControlTarget;

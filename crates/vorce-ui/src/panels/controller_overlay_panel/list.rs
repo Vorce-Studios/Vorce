@@ -1,6 +1,11 @@
-use egui::Ui;
+#[allow(unused_imports)]
+use egui::{Color32, Pos2, Rect, Response, Sense, Stroke, TextureHandle, Ui, Vec2};
 
-use crate::config::{MidiAssignmentTarget, UserConfig};
+#[allow(unused_imports)]
+use crate::config::{MidiAssignment, MidiAssignmentTarget, UserConfig};
+
+#[allow(unused_imports)]
+use std::collections::{HashMap, HashSet};
 
 use super::panel::{ControllerOverlayPanel, ElementFilter};
 

@@ -6,8 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+<<<<<<< HEAD
 - 2026-04-14: chore: 🧹 [code health] Remove dead CachedTexture struct and dummy allocations
 - 2026-04-14: chore: Code Health: Remove unused imports in controller list panel
+=======
+- 2026-04-14: chore: 🧹 [Code Health] Remove unused imports in controller overlay panel (#248)
+>>>>>>> e5903724c0db4b98572bfe1cadeda4bc7c23985d
 - 2026-04-14: ci: Exclude .vscode/skills from markdownlint to unblock PRs (#245)
 - 2026-04-12: docs: MAI-007 Render-Queue-Readiness, Parity and Optimization Tracker (#122)
 - 2026-04-12: perf: Bolt: Performance-Optimierung durch Vermeidung redundanter String-Allokationen in UI-Schleifen (#221)
