@@ -21,7 +21,11 @@ pub struct OutputPanel {
 
 impl Default for OutputPanel {
     fn default() -> Self {
-        Self { selected_output_id: None, visible: true, actions: Vec::new() }
+        Self {
+            selected_output_id: None,
+            visible: true,
+            actions: Vec::new(),
+        }
     }
 }
 
@@ -243,7 +247,8 @@ impl OutputPanel {
 
                         if updated_config != *output {
                             *output = updated_config;
-                            self.actions.push(UIAction::ConfigureOutput(output_id, output.clone()));
+                            self.actions
+                                .push(UIAction::ConfigureOutput(output_id, output.clone()));
                         }
 
                         ui.add_space(8.0);

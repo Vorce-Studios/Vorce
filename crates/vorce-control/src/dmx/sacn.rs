@@ -70,8 +70,11 @@ impl SacnSender {
         let packet = self.build_sacn_packet(channels);
 
         // Calculate multicast address: 239.255.0.0 + universe
-        let multicast_addr =
-            format!("239.255.{}.{}:5568", (self.universe >> 8) & 0xFF, self.universe & 0xFF);
+        let multicast_addr = format!(
+            "239.255.{}.{}:5568",
+            (self.universe >> 8) & 0xFF,
+            self.universe & 0xFF
+        );
 
         self.socket.send_to(&packet, multicast_addr)?;
         self.sequence = self.sequence.wrapping_add(1);

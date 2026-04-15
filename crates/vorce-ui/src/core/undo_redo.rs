@@ -178,7 +178,11 @@ pub struct SetLayerOpacityCommand {
 
 impl SetLayerOpacityCommand {
     pub fn new(layer_id: u64, old_opacity: f32, new_opacity: f32) -> Self {
-        Self { layer_id, old_opacity, new_opacity }
+        Self {
+            layer_id,
+            old_opacity,
+            new_opacity,
+        }
     }
 }
 
@@ -284,7 +288,11 @@ pub struct RenameLayerCommand {
 
 impl RenameLayerCommand {
     pub fn new(layer_id: u64, old_name: String, new_name: String) -> Self {
-        Self { layer_id, old_name, new_name }
+        Self {
+            layer_id,
+            old_name,
+            new_name,
+        }
     }
 }
 
@@ -323,7 +331,10 @@ pub struct SetMasterOpacityCommand {
 
 impl SetMasterOpacityCommand {
     pub fn new(old_opacity: f32, new_opacity: f32) -> Self {
-        Self { old_opacity, new_opacity }
+        Self {
+            old_opacity,
+            new_opacity,
+        }
     }
 }
 
