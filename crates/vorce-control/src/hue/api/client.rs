@@ -35,14 +35,9 @@ impl HueClient {
     /// Returns a HueConfig with username and client_key.
     /// Note: application_id must be fetched separately via get_application_id().
     pub async fn register_user(ip: &str, devicename: &str) -> Result<HueConfig, HueError> {
-        let client = reqwest::Client::builder()
-            .danger_accept_invalid_certs(true)
-            .build()?;
+        let client = reqwest::Client::builder().danger_accept_invalid_certs(true).build()?;
 
-        let body = RegisterBody {
-            devicetype: devicename,
-            generateclientkey: true,
-        };
+        let body = RegisterBody { devicetype: devicename, generateclientkey: true };
 
         let url = format!("https://{}/api", ip);
         let resp = client.post(&url).json(&body).send().await?;
@@ -69,9 +64,7 @@ impl HueClient {
                 }
             }
         } else {
-            Err(HueError::ApiError(
-                "Empty response from Hue Bridge".to_string(),
-            ))
+            Err(HueError::ApiError("Empty response from Hue Bridge".to_string()))
         }
     }
 
@@ -81,16 +74,10 @@ impl HueClient {
     /// The bridge returns the application ID in the response header "hue-application-id"
     /// when calling GET /auth/v1 with the hue-application-key header.
     pub async fn get_application_id(ip: &str, username: &str) -> Result<String, HueError> {
-        let client = reqwest::Client::builder()
-            .danger_accept_invalid_certs(true)
-            .build()?;
+        let client = reqwest::Client::builder().danger_accept_invalid_certs(true).build()?;
 
         let url = format!("https://{}/auth/v1", ip);
-        let resp = client
-            .get(&url)
-            .header("hue-application-key", username)
-            .send()
-            .await?;
+        let resp = client.get(&url).header("hue-application-key", username).send().await?;
 
         if !resp.status().is_success() {
             return Err(HueError::ApiError(format!(
