@@ -224,15 +224,15 @@ Access control:
 - Board users with invite permission can call it.
 - Agent callers: only the company CEO agent can call it.
 
-1. Build the copy-ready OpenClaw prompt for the board:
+2. Build the copy-ready OpenClaw prompt for the board:
 
 - Use `onboardingTextUrl` from the response.
 - Ask the board to paste that prompt into OpenClaw.
 - If the issue includes an OpenClaw URL (for example `ws://127.0.0.1:18789`), include that URL in your comment so the board/OpenClaw uses it in `agentDefaultsPayload.url`.
 
-1. Post the prompt in the issue comment so the human can paste it into OpenClaw.
+3. Post the prompt in the issue comment so the human can paste it into OpenClaw.
 
-2. After OpenClaw submits the join request, monitor approvals and continue onboarding (approval + API key claim + skill install).
+4. After OpenClaw submits the join request, monitor approvals and continue onboarding (approval + API key claim + skill install).
 
 ## Company Skills Workflow
 
@@ -472,25 +472,25 @@ npx paperclipai issue create \
   --assignee-agent-id "$PAPERCLIP_AGENT_ID"
 ```
 
-1. Trigger and watch a heartbeat for that assignee:
+2. Trigger and watch a heartbeat for that assignee:
 
 ```bash
 npx paperclipai heartbeat run --agent-id "$PAPERCLIP_AGENT_ID"
 ```
 
-1. Verify the issue transitions (`todo -> in_progress -> done` or `blocked`) and that comments are posted:
+3. Verify the issue transitions (`todo -> in_progress -> done` or `blocked`) and that comments are posted:
 
 ```bash
 npx paperclipai issue get <issue-id-or-identifier>
 ```
 
-1. Reassignment test (optional): move the same issue between `claudecoder` and `codexcoder` and confirm wake/run behavior:
+4. Reassignment test (optional): move the same issue between `claudecoder` and `codexcoder` and confirm wake/run behavior:
 
 ```bash
 npx paperclipai issue update <issue-id> --assignee-agent-id <other-agent-id> --status todo
 ```
 
-1. Cleanup: mark temporary issues done/cancelled with a clear note.
+5. Cleanup: mark temporary issues done/cancelled with a clear note.
 
 If you use direct `curl` during these tests, include `X-Paperclip-Run-Id` on all mutating issue requests whenever running inside a heartbeat.
 

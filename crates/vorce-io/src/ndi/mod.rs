@@ -37,7 +37,10 @@ pub struct NdiSource {
 #[cfg(feature = "ndi")]
 impl From<grafton_ndi::Source> for NdiSource {
     fn from(source: grafton_ndi::Source) -> Self {
-        Self { name: source.name.clone(), url_address: source.url_address.clone() }
+        Self {
+            name: source.name.clone(),
+            url_address: source.url_address.clone(),
+        }
     }
 }
 
@@ -155,8 +158,10 @@ impl NdiReceiver {
         ndi_find.wait_for_sources(2000);
         let sources = ndi_find.get_sources(1000);
 
-        let matching_source =
-            sources.into_iter().find(|s| s.name == source.name).ok_or_else(|| {
+        let matching_source = sources
+            .into_iter()
+            .find(|s| s.name == source.name)
+            .ok_or_else(|| {
                 IoError::NdiError(format!("Source '{}' not found on network", source.name))
             })?;
 
@@ -211,8 +216,12 @@ impl NdiReceiver {
                     return Ok(None);
                 };
 
-                let format =
-                    VideoFormat { width, height, pixel_format: PixelFormat::BGRA8, frame_rate };
+                let format = VideoFormat {
+                    width,
+                    height,
+                    pixel_format: PixelFormat::BGRA8,
+                    frame_rate,
+                };
 
                 self._format = format.clone();
                 self.frame_count += 1;
@@ -301,7 +310,13 @@ impl NdiSender {
 
         info!("NDI Sender '{}' created successfully", name);
 
-        Ok(Self { _handle: handle, name, _format, frame_count: 0, send: Some(send) })
+        Ok(Self {
+            _handle: handle,
+            name,
+            _format,
+            frame_count: 0,
+            send: Some(send),
+        })
     }
 
     /// Sends a video frame.

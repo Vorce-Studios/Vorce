@@ -120,7 +120,11 @@ pub fn upload_compressed_texture(
             bytes_per_row: Some(bytes_per_row),
             rows_per_image: Some(aligned_height.div_ceil(4)), // Number of block rows
         },
-        wgpu::Extent3d { width: aligned_width, height: aligned_height, depth_or_array_layers: 1 },
+        wgpu::Extent3d {
+            width: aligned_width,
+            height: aligned_height,
+            depth_or_array_layers: 1,
+        },
     );
 }
 
@@ -146,12 +150,25 @@ impl CompressedTextureHandle {
         let texture = create_compressed_texture(device, width, height, format, label);
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
 
-        Self { texture: Arc::new(texture), view: Arc::new(view), width, height, format }
+        Self {
+            texture: Arc::new(texture),
+            view: Arc::new(view),
+            width,
+            height,
+            format,
+        }
     }
 
     /// Upload compressed data
     pub fn upload(&self, queue: &wgpu::Queue, data: &[u8]) {
-        upload_compressed_texture(queue, &self.texture, data, self.width, self.height, self.format);
+        upload_compressed_texture(
+            queue,
+            &self.texture,
+            data,
+            self.width,
+            self.height,
+            self.format,
+        );
     }
 
     /// Get expected data size
@@ -183,7 +200,13 @@ mod tests {
 
     #[test]
     fn test_wgpu_formats() {
-        assert_eq!(DxtFormat::Bc1.wgpu_format(), wgpu::TextureFormat::Bc1RgbaUnorm);
-        assert_eq!(DxtFormat::Bc3.wgpu_format(), wgpu::TextureFormat::Bc3RgbaUnorm);
+        assert_eq!(
+            DxtFormat::Bc1.wgpu_format(),
+            wgpu::TextureFormat::Bc1RgbaUnorm
+        );
+        assert_eq!(
+            DxtFormat::Bc3.wgpu_format(),
+            wgpu::TextureFormat::Bc3RgbaUnorm
+        );
     }
 }

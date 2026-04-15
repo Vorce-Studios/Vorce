@@ -26,7 +26,10 @@ impl AbletonLinkHandle {
                 "Tempo must be between 20 and 300 BPM".to_string(),
             ));
         }
-        Ok(Self { _tempo: Tempo::new(default_bpm), _clock: Clock::default() })
+        Ok(Self {
+            _tempo: Tempo::new(default_bpm),
+            _clock: Clock::default(),
+        })
     }
 
     /// Return the configured default tempo.
