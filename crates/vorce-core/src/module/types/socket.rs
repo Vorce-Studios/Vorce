@@ -184,6 +184,18 @@ impl ModuleSocketType {
             ModuleSocketType::Link => "Link",
         }
     }
+
+    /// Lowercased display name to avoid runtime allocations.
+    pub fn name_lower(&self) -> &'static str {
+        match self {
+            ModuleSocketType::Trigger => "trigger",
+            ModuleSocketType::Media => "media",
+            ModuleSocketType::Effect => "effect",
+            ModuleSocketType::Layer => "layer",
+            ModuleSocketType::Output => "output",
+            ModuleSocketType::Link => "link",
+        }
+    }
 }
 
 /// Blend mode types
