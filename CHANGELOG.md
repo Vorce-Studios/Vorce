@@ -6,13 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-<<<<<<< HEAD
-- 2026-04-14: chore: Remove unused staging_belt dead code from WgpuBackend
-=======
-- 2026-04-14: perf: ⚡ Bolt: Optimiere String-Allokationen beim UI-Rendering der Module-Sockets
-- 2026-04-14: chore: 🧹 [code health] Remove dead CachedTexture struct and dummy allocations
-- 2026-04-14: chore: Code Health: Remove unused imports in controller list panel
->>>>>>> e74ffd798211741b90ba3746f163a84179f38d3f
+- 2026-04-14: fix: 🧹 Remove unused dead_code macros in hue api groups (#254)
 - 2026-04-14: ci: Exclude .vscode/skills from markdownlint to unblock PRs (#245)
 - 2026-04-12: perf: Bolt: Performance-Optimierung durch Vermeidung redundanter String-Allokationen in UI-Schleifen (#221)
 - 2026-04-12: feat: UI: Theme-aware colors in Node Editor (#222)
