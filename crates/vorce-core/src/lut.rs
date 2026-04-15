@@ -59,12 +59,7 @@ impl Lut3D {
             }
         }
 
-        Self {
-            name: "Identity".to_string(),
-            size,
-            data,
-            file_path: None,
-        }
+        Self { name: "Identity".to_string(), size, data, file_path: None }
     }
 
     /// Load a LUT from a file (.cube or .png)
@@ -83,10 +78,7 @@ impl Lut3D {
                 Self::parse_cube(&content, Some(path.to_path_buf()))
             }
             "png" => Self::from_png_file(path),
-            _ => Err(LutError::ParseError(format!(
-                "Unsupported file extension: {}",
-                extension
-            ))),
+            _ => Err(LutError::ParseError(format!("Unsupported file extension: {}", extension))),
         }
     }
 
@@ -161,11 +153,7 @@ impl Lut3D {
         }
 
         Ok(Self {
-            name: path
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("PNG LUT")
-                .to_string(),
+            name: path.file_stem().and_then(|s| s.to_str()).unwrap_or("PNG LUT").to_string(),
             size,
             data: target_data,
             file_path: Some(path.to_path_buf()),
@@ -193,11 +181,7 @@ impl Lut3D {
 
             // Parse header
             if line.starts_with("TITLE") {
-                name = line
-                    .split_whitespace()
-                    .skip(1)
-                    .collect::<Vec<_>>()
-                    .join(" ");
+                name = line.split_whitespace().skip(1).collect::<Vec<_>>().join(" ");
                 name = name.trim_matches('"').to_string();
                 continue;
             }
@@ -251,12 +235,7 @@ impl Lut3D {
             )));
         }
 
-        Ok(Self {
-            name,
-            size,
-            data,
-            file_path,
-        })
+        Ok(Self { name, size, data, file_path })
     }
 
     /// Apply LUT to a color (CPU-side, for testing)
@@ -505,10 +484,7 @@ pub struct LutManager {
 impl LutManager {
     /// Create a new LUT manager
     pub fn new() -> Self {
-        let mut manager = Self {
-            luts: Vec::new(),
-            active_lut_index: None,
-        };
+        let mut manager = Self { luts: Vec::new(), active_lut_index: None };
 
         // Add identity LUT by default
         manager.add_lut(Lut3D::identity(LUT_SIZE_32));
@@ -670,10 +646,7 @@ LUT_3D_SIZE 2
     fn test_lut_texture_conversion() {
         let lut = Lut3D::identity(LUT_SIZE_32);
         let texture_data = lut.to_texture_data();
-        assert_eq!(
-            texture_data.len(),
-            LUT_SIZE_32 * LUT_SIZE_32 * LUT_SIZE_32 * 4
-        );
+        assert_eq!(texture_data.len(), LUT_SIZE_32 * LUT_SIZE_32 * LUT_SIZE_32 * 4);
 
         let (data_2d, width, height) = lut.to_2d_texture_data();
         assert_eq!(width as usize, LUT_SIZE_32);

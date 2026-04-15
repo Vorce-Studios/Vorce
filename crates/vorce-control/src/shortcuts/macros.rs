@@ -48,11 +48,7 @@ pub struct MacroRecorder {
 impl MacroRecorder {
     /// Creates a new, uninitialized instance with default settings.
     pub fn new() -> Self {
-        Self {
-            state: RecordingState::Idle,
-            recorded_actions: Vec::new(),
-            last_action_time: None,
-        }
+        Self { state: RecordingState::Idle, recorded_actions: Vec::new(), last_action_time: None }
     }
 
     /// Start recording a macro
@@ -315,14 +311,8 @@ mod tests {
             name: "Test".to_string(),
             description: "Test".to_string(),
             actions: vec![
-                MacroAction {
-                    action: Action::Play,
-                    delay: Duration::ZERO,
-                },
-                MacroAction {
-                    action: Action::Stop,
-                    delay: Duration::from_millis(10),
-                },
+                MacroAction { action: Action::Play, delay: Duration::ZERO },
+                MacroAction { action: Action::Stop, delay: Duration::from_millis(10) },
             ],
             created_at: "2024-01-01T00:00:00Z".to_string(),
         };
@@ -342,10 +332,7 @@ mod tests {
         let macro_def = Macro {
             name: "Test".to_string(),
             description: "Test macro".to_string(),
-            actions: vec![MacroAction {
-                action: Action::Play,
-                delay: Duration::ZERO,
-            }],
+            actions: vec![MacroAction { action: Action::Play, delay: Duration::ZERO }],
             created_at: "2024-01-01T00:00:00Z".to_string(),
         };
 

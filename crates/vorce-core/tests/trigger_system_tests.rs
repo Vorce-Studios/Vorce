@@ -40,10 +40,7 @@ fn test_update_audio_fft_bands() {
     let module = module_manager.get_module_mut(module_id).unwrap();
 
     // Add AudioFFT Trigger with all frequency bands enabled
-    let config = AudioTriggerOutputConfig {
-        frequency_bands: true,
-        ..Default::default()
-    };
+    let config = AudioTriggerOutputConfig { frequency_bands: true, ..Default::default() };
     // The band parameter here is technically the "primary" band,
     // but the output_config enables all individual band outputs.
     let part_type = ModulePartType::Trigger(TriggerType::AudioFFT {
@@ -60,11 +57,7 @@ fn test_update_audio_fft_bands() {
 
         system.update(&module_manager, &audio_data, 0.016);
 
-        assert!(
-            system.is_active(part_id, i),
-            "Band index {} should be active",
-            i
-        );
+        assert!(system.is_active(part_id, i), "Band index {} should be active", i);
 
         // Ensure others are not active (basic check)
         let active_count = system.get_active_triggers().len();
@@ -111,18 +104,9 @@ fn test_update_audio_volume_beat() {
     // Bands: Disabled (0)
     // Volume: Enabled -> RMS at 0, Peak at 1
     // Beat: Enabled -> Beat at 2
-    assert!(
-        system.is_active(part_id, 0),
-        "RMS trigger (socket 0) should be active"
-    );
-    assert!(
-        !system.is_active(part_id, 1),
-        "Peak trigger (socket 1) should NOT be active"
-    );
-    assert!(
-        system.is_active(part_id, 2),
-        "Beat trigger (socket 2) should be active"
-    );
+    assert!(system.is_active(part_id, 0), "RMS trigger (socket 0) should be active");
+    assert!(!system.is_active(part_id, 1), "Peak trigger (socket 1) should NOT be active");
+    assert!(system.is_active(part_id, 2), "Beat trigger (socket 2) should be active");
 }
 
 #[test]
@@ -151,10 +135,7 @@ fn test_update_clears_previous_state() {
 
     // 2. Activate
     // Bands(0) + Vol(0) + Beat(1) -> Beat is at index 0
-    let mut audio_data = AudioTriggerData {
-        beat_detected: true,
-        ..AudioTriggerData::default()
-    };
+    let mut audio_data = AudioTriggerData { beat_detected: true, ..AudioTriggerData::default() };
     system.update(&module_manager, &audio_data, 0.016);
     assert!(system.is_active(part_id, 0));
 
@@ -172,10 +153,7 @@ fn test_trigger_system_update_thresholds() {
     let module_id = module_manager.create_module("Test Module".to_string());
     let module = module_manager.get_module_mut(module_id).unwrap();
 
-    let config = AudioTriggerOutputConfig {
-        frequency_bands: true,
-        ..Default::default()
-    };
+    let config = AudioTriggerOutputConfig { frequency_bands: true, ..Default::default() };
     let part_type = ModulePartType::Trigger(TriggerType::AudioFFT {
         band: AudioBand::Bass,
         threshold: 0.8, // High threshold
@@ -236,10 +214,7 @@ fn test_dynamic_socket_indexing() {
     assert!(system.is_active(part_id, 0), "RMS should be active");
     assert!(system.is_active(part_id, 1), "Peak should be active");
     assert!(system.is_active(part_id, 2), "Beat should be active");
-    assert!(
-        !system.is_active(part_id, 3),
-        "BPM should NOT be active (reserved)"
-    );
+    assert!(!system.is_active(part_id, 3), "BPM should NOT be active (reserved)");
 }
 
 #[test]
@@ -265,15 +240,9 @@ fn test_fallback_behavior() {
     });
     let part_id = module.add_part_with_type(part_type, (0.0, 0.0));
 
-    let audio_data = AudioTriggerData {
-        beat_detected: true,
-        ..AudioTriggerData::default()
-    };
+    let audio_data = AudioTriggerData { beat_detected: true, ..AudioTriggerData::default() };
 
     system.update(&module_manager, &audio_data, 0.016);
 
-    assert!(
-        system.is_active(part_id, 0),
-        "Fallback Beat Output should be active"
-    );
+    assert!(system.is_active(part_id, 0), "Fallback Beat Output should be active");
 }
