@@ -302,11 +302,8 @@ pub fn render_canvas(
                     Stroke::new(1.5, Color32::from_gray(40)),
                 );
 
-                let resize_response = ui.interact(
-                    handle_rect,
-                    egui::Id::new((part.id, "resize")),
-                    Sense::drag(),
-                );
+                let resize_response =
+                    ui.interact(handle_rect, egui::Id::new((part.id, "resize")), Sense::drag());
 
                 if resize_response.drag_started() {
                     canvas.resizing_part = Some((part.id, (w, h)));
@@ -378,11 +375,8 @@ pub fn render_canvas(
             }
 
             let interact_rect = part_rect.shrink(2.0);
-            let part_response = ui.interact(
-                interact_rect,
-                egui::Id::new(part_id),
-                Sense::click_and_drag(),
-            );
+            let part_response =
+                ui.interact(interact_rect, egui::Id::new(part_id), Sense::click_and_drag());
 
             if part_response.hovered() {
                 clicked_on_part = true;
@@ -467,10 +461,7 @@ pub fn render_canvas(
                             (target.part_id, target.socket_id.clone(), from_part, from_id)
                         };
 
-                        if module
-                            .connect_parts(out_part, out_id, in_part, in_id)
-                            .unwrap_or(false)
-                        {
+                        if module.connect_parts(out_part, out_id, in_part, in_id).unwrap_or(false) {
                             module_changed = true;
                             needs_repair = true;
                             ui.ctx().request_repaint();
@@ -541,17 +532,11 @@ pub fn render_canvas(
                                     from_id.clone(),
                                 )
                             };
-                            module
-                                .validate_connection(out_part, out_id, in_part, in_id)
-                                .is_ok()
+                            module.validate_connection(out_part, out_id, in_part, in_id).is_ok()
                         } else {
                             false
                         };
-                        color = if is_valid {
-                            Color32::GREEN
-                        } else {
-                            Color32::RED
-                        };
+                        color = if is_valid { Color32::GREEN } else { Color32::RED };
                         break;
                     }
                 }
@@ -590,9 +575,8 @@ pub fn render_canvas(
 
         if !ui.memory(|m| m.focused().is_some()) && ui.input(|i| i.key_pressed(egui::Key::Tab)) {
             canvas.show_quick_create = true;
-            canvas.quick_create_pos = ui
-                .input(|i| i.pointer.hover_pos())
-                .unwrap_or(canvas_rect.center());
+            canvas.quick_create_pos =
+                ui.input(|i| i.pointer.hover_pos()).unwrap_or(canvas_rect.center());
             canvas.quick_create_filter.clear();
             canvas.quick_create_selected_index = 0;
         }
@@ -734,10 +718,8 @@ pub fn render_canvas(
     }
 
     if let Some((inner, canvas_pos)) = open_add_menu {
-        let before_parts = manager
-            .get_module(module_id)
-            .map(|module| module.parts.len())
-            .unwrap_or(0);
+        let before_parts =
+            manager.get_module(module_id).map(|module| module.parts.len()).unwrap_or(0);
         ui.scope_builder(egui::UiBuilder::new().max_rect(inner), |ui| {
             ui.vertical(|ui| {
                 ui.heading("\u{2795} Add Node");

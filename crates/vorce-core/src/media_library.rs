@@ -75,38 +75,14 @@ mod tests {
 
     #[test]
     fn test_from_path_valid_extension_returns_type() {
-        assert_eq!(
-            MediaType::from_path(Path::new("test.mp4")),
-            MediaType::Video
-        );
-        assert_eq!(
-            MediaType::from_path(Path::new("test.mkv")),
-            MediaType::Video
-        );
-        assert_eq!(
-            MediaType::from_path(Path::new("test.webm")),
-            MediaType::Video
-        );
-        assert_eq!(
-            MediaType::from_path(Path::new("test.jpg")),
-            MediaType::Image
-        );
-        assert_eq!(
-            MediaType::from_path(Path::new("test.png")),
-            MediaType::Image
-        );
-        assert_eq!(
-            MediaType::from_path(Path::new("test.mp3")),
-            MediaType::Audio
-        );
-        assert_eq!(
-            MediaType::from_path(Path::new("test.wav")),
-            MediaType::Audio
-        );
-        assert_eq!(
-            MediaType::from_path(Path::new("test.txt")),
-            MediaType::Unknown
-        );
+        assert_eq!(MediaType::from_path(Path::new("test.mp4")), MediaType::Video);
+        assert_eq!(MediaType::from_path(Path::new("test.mkv")), MediaType::Video);
+        assert_eq!(MediaType::from_path(Path::new("test.webm")), MediaType::Video);
+        assert_eq!(MediaType::from_path(Path::new("test.jpg")), MediaType::Image);
+        assert_eq!(MediaType::from_path(Path::new("test.png")), MediaType::Image);
+        assert_eq!(MediaType::from_path(Path::new("test.mp3")), MediaType::Audio);
+        assert_eq!(MediaType::from_path(Path::new("test.wav")), MediaType::Audio);
+        assert_eq!(MediaType::from_path(Path::new("test.txt")), MediaType::Unknown);
         assert_eq!(MediaType::from_path(Path::new("test")), MediaType::Unknown);
     }
 
@@ -236,10 +212,7 @@ impl MediaLibrary {
         'outer: for root in self.scanned_paths.clone() {
             for entry in WalkDir::new(&root).into_iter().filter_map(|e| e.ok()) {
                 if self.items.len() >= MAX_MEDIA_ITEMS {
-                    warn!(
-                        "Media library limit reached ({}) - stopping scan",
-                        MAX_MEDIA_ITEMS
-                    );
+                    warn!("Media library limit reached ({}) - stopping scan", MAX_MEDIA_ITEMS);
                     break 'outer;
                 }
 
@@ -250,11 +223,8 @@ impl MediaLibrary {
                         let metadata = std::fs::metadata(path).ok();
                         let size = metadata.map(|m| m.len()).unwrap_or(0);
 
-                        let name = path
-                            .file_name()
-                            .unwrap_or_default()
-                            .to_string_lossy()
-                            .to_string();
+                        let name =
+                            path.file_name().unwrap_or_default().to_string_lossy().to_string();
                         let item = MediaItem {
                             path: path.to_path_buf(),
                             name: name.clone(),
@@ -281,10 +251,7 @@ impl MediaLibrary {
 
     /// Create a new empty playlist
     pub fn create_playlist(&mut self, name: String) {
-        self.playlists.push(Playlist {
-            name,
-            items: Vec::new(),
-        });
+        self.playlists.push(Playlist { name, items: Vec::new() });
     }
 
     /// Remove a playlist by name

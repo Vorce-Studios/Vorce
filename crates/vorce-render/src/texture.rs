@@ -21,8 +21,7 @@ pub struct TextureHandle {
 impl TextureHandle {
     /// Create a texture view
     pub fn create_view(&self) -> wgpu::TextureView {
-        self.texture
-            .create_view(&wgpu::TextureViewDescriptor::default())
+        self.texture.create_view(&wgpu::TextureViewDescriptor::default())
     }
 
     /// Get texture size in bytes
@@ -98,11 +97,7 @@ impl TexturePool {
 
         let texture = self.device.create_texture(&wgpu::TextureDescriptor {
             label: Some(name),
-            size: wgpu::Extent3d {
-                width,
-                height,
-                depth_or_array_layers: 1,
-            },
+            size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
@@ -115,14 +110,8 @@ impl TexturePool {
 
         let last_used_clone = last_used.clone();
 
-        let handle = TextureHandle {
-            id,
-            texture: Arc::new(texture),
-            width,
-            height,
-            format,
-            last_used,
-        };
+        let handle =
+            TextureHandle { id, texture: Arc::new(texture), width, height, format, last_used };
 
         let view = handle.create_view();
         let view_arc = Arc::new(view);
@@ -130,9 +119,7 @@ impl TexturePool {
         let name_owned = name.to_string();
 
         self.textures.write().insert(name_owned.clone(), handle);
-        self.views
-            .write()
-            .insert(name_owned.clone(), (view_arc, last_used_clone));
+        self.views.write().insert(name_owned.clone(), (view_arc, last_used_clone));
 
         name_owned
     }
@@ -155,9 +142,7 @@ impl TexturePool {
         };
 
         // Update cache on slow path
-        self.views
-            .write()
-            .insert(name.to_string(), (view.clone(), last_used));
+        self.views.write().insert(name.to_string(), (view.clone(), last_used));
 
         view
     }
@@ -180,14 +165,10 @@ impl TexturePool {
             let handle_clone = handle.clone();
             drop(textures);
 
-            self.textures
-                .write()
-                .insert(dest_name.to_string(), handle_clone);
+            self.textures.write().insert(dest_name.to_string(), handle_clone);
 
             if let Some((view, last_used)) = self.views.read().get(src_name).cloned() {
-                self.views
-                    .write()
-                    .insert(dest_name.to_string(), (view, last_used));
+                self.views.write().insert(dest_name.to_string(), (view, last_used));
             }
             true
         } else {
@@ -269,10 +250,9 @@ impl TexturePool {
                 handle.mark_used(self.start_time);
 
                 let new_view = handle.create_view();
-                self.views.write().insert(
-                    name.to_string(),
-                    (Arc::new(new_view), handle.last_used.clone()),
-                );
+                self.views
+                    .write()
+                    .insert(name.to_string(), (Arc::new(new_view), handle.last_used.clone()));
             }
         }
     }
@@ -305,10 +285,7 @@ impl TexturePool {
                 );
                 let textures = self.textures.read();
                 // Safe fallback: texture was just created above.
-                textures
-                    .get(name)
-                    .cloned()
-                    .expect("texture must exist after creation")
+                textures.get(name).cloned().expect("texture must exist after creation")
             }
         };
 
@@ -327,11 +304,7 @@ impl TexturePool {
                 bytes_per_row: Some(4 * width),
                 rows_per_image: Some(height),
             },
-            wgpu::Extent3d {
-                width: handle.width,
-                height: handle.height,
-                depth_or_array_layers: 1,
-            },
+            wgpu::Extent3d { width: handle.width, height: handle.height, depth_or_array_layers: 1 },
         );
     }
 
@@ -380,11 +353,7 @@ impl TexturePool {
         let textures = self.textures.read();
         let total_memory = textures.values().map(|h| h.size_bytes()).sum();
 
-        PoolStats {
-            total_textures: textures.len(),
-            free_textures: 0,
-            total_memory,
-        }
+        PoolStats { total_textures: textures.len(), free_textures: 0, total_memory }
     }
 }
 

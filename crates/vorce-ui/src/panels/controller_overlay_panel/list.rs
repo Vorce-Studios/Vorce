@@ -15,31 +15,19 @@ impl ControllerOverlayPanel {
         // Filter buttons
         ui.horizontal(|ui| {
             ui.label("Filter:");
-            if ui
-                .selectable_label(self.element_filter == ElementFilter::All, "Alle")
-                .clicked()
-            {
+            if ui.selectable_label(self.element_filter == ElementFilter::All, "Alle").clicked() {
                 self.element_filter = ElementFilter::All;
             }
-            if ui
-                .selectable_label(self.element_filter == ElementFilter::Vorce, "Vorce")
-                .clicked()
-            {
+            if ui.selectable_label(self.element_filter == ElementFilter::Vorce, "Vorce").clicked() {
                 self.element_filter = ElementFilter::Vorce;
             }
             if ui
-                .selectable_label(
-                    self.element_filter == ElementFilter::StreamerBot,
-                    "Streamer.bot",
-                )
+                .selectable_label(self.element_filter == ElementFilter::StreamerBot, "Streamer.bot")
                 .clicked()
             {
                 self.element_filter = ElementFilter::StreamerBot;
             }
-            if ui
-                .selectable_label(self.element_filter == ElementFilter::Mixxx, "Mixxx")
-                .clicked()
-            {
+            if ui.selectable_label(self.element_filter == ElementFilter::Mixxx, "Mixxx").clicked() {
                 self.element_filter = ElementFilter::Mixxx;
             }
             if ui

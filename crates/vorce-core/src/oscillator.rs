@@ -89,11 +89,7 @@ pub struct RingParams {
 
 impl Default for RingParams {
     fn default() -> Self {
-        Self {
-            distance: 0.5,
-            width: 0.2,
-            coupling: 1.0,
-        }
+        Self { distance: 0.5, width: 0.2, coupling: 1.0 }
     }
 }
 
@@ -144,26 +140,10 @@ impl Default for OscillatorConfig {
             simulation_resolution: SimulationResolution::Medium,
             kernel_radius: 16.0,
             rings: [
-                RingParams {
-                    distance: 0.2,
-                    width: 0.1,
-                    coupling: 1.0,
-                },
-                RingParams {
-                    distance: 0.5,
-                    width: 0.15,
-                    coupling: -0.5,
-                },
-                RingParams {
-                    distance: 0.8,
-                    width: 0.2,
-                    coupling: 0.3,
-                },
-                RingParams {
-                    distance: 0.0,
-                    width: 0.0,
-                    coupling: 0.0,
-                },
+                RingParams { distance: 0.2, width: 0.1, coupling: 1.0 },
+                RingParams { distance: 0.5, width: 0.15, coupling: -0.5 },
+                RingParams { distance: 0.8, width: 0.2, coupling: 0.3 },
+                RingParams { distance: 0.0, width: 0.0, coupling: 0.0 },
             ],
             frequency_min: 0.5,
             frequency_max: 2.0,
@@ -213,26 +193,10 @@ impl OscillatorConfig {
             frequency_min: 1.0,
             frequency_max: 4.0,
             rings: [
-                RingParams {
-                    distance: 0.25,
-                    width: 0.15,
-                    coupling: 2.0,
-                },
-                RingParams {
-                    distance: 0.5,
-                    width: 0.2,
-                    coupling: -1.5,
-                },
-                RingParams {
-                    distance: 0.75,
-                    width: 0.25,
-                    coupling: 1.0,
-                },
-                RingParams {
-                    distance: 0.0,
-                    width: 0.0,
-                    coupling: 0.0,
-                },
+                RingParams { distance: 0.25, width: 0.15, coupling: 2.0 },
+                RingParams { distance: 0.5, width: 0.2, coupling: -1.5 },
+                RingParams { distance: 0.75, width: 0.25, coupling: 1.0 },
+                RingParams { distance: 0.0, width: 0.0, coupling: 0.0 },
             ],
             ..Default::default()
         }
@@ -247,26 +211,10 @@ impl OscillatorConfig {
             frequency_min: 0.5,
             frequency_max: 2.0,
             rings: [
-                RingParams {
-                    distance: 0.3,
-                    width: 0.1,
-                    coupling: 3.0,
-                },
-                RingParams {
-                    distance: 0.5,
-                    width: 0.1,
-                    coupling: -2.0,
-                },
-                RingParams {
-                    distance: 0.7,
-                    width: 0.1,
-                    coupling: 1.5,
-                },
-                RingParams {
-                    distance: 0.0,
-                    width: 0.0,
-                    coupling: 0.0,
-                },
+                RingParams { distance: 0.3, width: 0.1, coupling: 3.0 },
+                RingParams { distance: 0.5, width: 0.1, coupling: -2.0 },
+                RingParams { distance: 0.7, width: 0.1, coupling: 1.5 },
+                RingParams { distance: 0.0, width: 0.0, coupling: 0.0 },
             ],
             ..Default::default()
         }

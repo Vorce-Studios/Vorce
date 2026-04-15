@@ -20,9 +20,7 @@ impl ResponsiveLayout {
     /// Erstellt neue ResponsiveLayout-Instanz basierend auf aktuellem Context
     pub fn new(ctx: &Context) -> Self {
         let size = ctx.input(|i| i.content_rect().size());
-        Self {
-            viewport_size: size,
-        }
+        Self { viewport_size: size }
     }
 
     /// Berechnet Panel-Breite als Prozent des Viewports
@@ -94,9 +92,7 @@ mod tests {
 
     #[test]
     fn test_panel_width_clamps() {
-        let layout = ResponsiveLayout {
-            viewport_size: egui::Vec2::new(1920.0, 1080.0),
-        };
+        let layout = ResponsiveLayout { viewport_size: egui::Vec2::new(1920.0, 1080.0) };
 
         assert_eq!(layout.panel_width(0.1), 192.0);
         assert_eq!(layout.panel_width(0.05), 150.0); // Min clamp
@@ -105,14 +101,10 @@ mod tests {
 
     #[test]
     fn test_is_compact() {
-        let desktop = ResponsiveLayout {
-            viewport_size: egui::Vec2::new(1920.0, 1080.0),
-        };
+        let desktop = ResponsiveLayout { viewport_size: egui::Vec2::new(1920.0, 1080.0) };
         assert!(!desktop.is_compact());
 
-        let tablet = ResponsiveLayout {
-            viewport_size: egui::Vec2::new(1000.0, 768.0),
-        };
+        let tablet = ResponsiveLayout { viewport_size: egui::Vec2::new(1000.0, 768.0) };
         assert!(tablet.is_compact());
     }
 }

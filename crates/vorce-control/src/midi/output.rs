@@ -16,10 +16,7 @@ impl MidiOutputHandler {
     pub fn new() -> Result<Self> {
         let midi_output = MidirOutput::new("Vorce MIDI Output")?;
 
-        Ok(Self {
-            _midi_output: midi_output,
-            connection: None,
-        })
+        Ok(Self { _midi_output: midi_output, connection: None })
     }
 
     /// List available MIDI output ports
@@ -53,9 +50,7 @@ impl MidiOutputHandler {
         }
 
         let port = &ports[port_index];
-        let port_name = midi_output
-            .port_name(port)
-            .unwrap_or_else(|_| "Unknown".to_string());
+        let port_name = midi_output.port_name(port).unwrap_or_else(|_| "Unknown".to_string());
 
         info!("Connecting to MIDI output port: {}", port_name);
 

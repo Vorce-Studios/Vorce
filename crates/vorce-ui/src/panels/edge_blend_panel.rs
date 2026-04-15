@@ -144,9 +144,7 @@ impl EdgeBlendPanel {
         if let Some(values) = &mut self.edge_blend_values {
             ui.collapsing(i18n.t("header-edge-blend"), |ui| {
                 // Left
-                changed |= ui
-                    .checkbox(&mut values.left_enabled, i18n.t("check-left"))
-                    .changed();
+                changed |= ui.checkbox(&mut values.left_enabled, i18n.t("check-left")).changed();
                 if values.left_enabled {
                     ui.indent("left_indent", |ui| {
                         changed |= ui
@@ -164,9 +162,7 @@ impl EdgeBlendPanel {
                     });
                 }
                 // Right
-                changed |= ui
-                    .checkbox(&mut values.right_enabled, i18n.t("check-right"))
-                    .changed();
+                changed |= ui.checkbox(&mut values.right_enabled, i18n.t("check-right")).changed();
                 if values.right_enabled {
                     ui.indent("right_indent", |ui| {
                         changed |= ui
@@ -184,9 +180,7 @@ impl EdgeBlendPanel {
                     });
                 }
                 // Top
-                changed |= ui
-                    .checkbox(&mut values.top_enabled, i18n.t("check-top"))
-                    .changed();
+                changed |= ui.checkbox(&mut values.top_enabled, i18n.t("check-top")).changed();
                 if values.top_enabled {
                     ui.indent("top_indent", |ui| {
                         changed |= ui
@@ -204,9 +198,8 @@ impl EdgeBlendPanel {
                     });
                 }
                 // Bottom
-                changed |= ui
-                    .checkbox(&mut values.bottom_enabled, i18n.t("check-bottom"))
-                    .changed();
+                changed |=
+                    ui.checkbox(&mut values.bottom_enabled, i18n.t("check-bottom")).changed();
                 if values.bottom_enabled {
                     ui.indent("bottom_indent", |ui| {
                         changed |= ui
@@ -302,10 +295,8 @@ impl EdgeBlendPanel {
             });
 
             if changed {
-                self.last_action = Some(EdgeBlendAction::UpdateColorCalibration(
-                    output_id,
-                    values.clone(),
-                ));
+                self.last_action =
+                    Some(EdgeBlendAction::UpdateColorCalibration(output_id, values.clone()));
             }
         }
     }
