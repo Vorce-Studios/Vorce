@@ -55,14 +55,7 @@ impl SharedMediaState {
 
     /// Method implementation.
     pub fn register(&mut self, id: String, path: String, media_type: SharedMediaType) {
-        self.items.insert(
-            id.clone(),
-            SharedMediaItem {
-                id,
-                path,
-                media_type,
-            },
-        );
+        self.items.insert(id.clone(), SharedMediaItem { id, path, media_type });
     }
 
     /// Method implementation.

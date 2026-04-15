@@ -16,11 +16,7 @@ pub struct SocketInfo {
     pub position: Pos2,
 }
 
-pub type PresetPart = (
-    vorce_core::module::ModulePartType,
-    (f32, f32),
-    Option<(f32, f32)>,
-);
+pub type PresetPart = (vorce_core::module::ModulePartType, (f32, f32), Option<(f32, f32)>);
 pub type PresetConnection = (usize, String, usize, String); // from_idx, from_socket_id, to_idx, to_socket_id
 
 /// A saved module preset/template

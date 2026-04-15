@@ -215,9 +215,8 @@ impl TransformPanel {
 
                     // By default, any change updates the transform.
                     if changed {
-                        self.last_action = Some(TransformAction::UpdateTransform(
-                            self.current_transform.clone(),
-                        ));
+                        self.last_action =
+                            Some(TransformAction::UpdateTransform(self.current_transform.clone()));
                     }
 
                     // Preset buttons
