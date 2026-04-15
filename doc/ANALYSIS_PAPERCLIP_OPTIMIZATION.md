@@ -78,7 +78,7 @@ Session 11217710755568478899: Palette - Intervall 1/3 - AWAITING_USER_FEEDBACK
 #### Offene Fragen :
 1. **Wo sind Bens Instruktionen definiert?** (Paperclip UI → Agent Config?)
 2. **Hat Ben den Auftrag Sessions zu erstellen?** Beides
-3. **Was soll Ben bei Intervall 3 tun?** Eskalation an CEO damit der klärt was zu tun ist 
+3. **Was soll Ben bei Intervall 3 tun?** Eskalation an CEO damit der klärt was zu tun ist
 
 ---
 
@@ -98,7 +98,7 @@ Session 11217710755568478899: Palette - Intervall 1/3 - AWAITING_USER_FEEDBACK
 | `.Jules/DOC-C4_AGENT_OPERATIONS.md` | Agent Operations | ~6KB | Jules? |
 | `.Jules/roles/*.md` | Role-spezifische Anweisungen | ~10KB+ | Role-Agents |
 
-**KRITISCHE FRAGE:** 
+**KRITISCHE FRAGE:**
 - Welche Dateien lädt Ben (`gemini_local`) bei JEDEM Heartbeat?
 - Welche Dateien lädt Jules bei Session-Start?
 - Gibt es eine `.gemini/instructions.md` oder similar die Paperclip injiziert?
@@ -254,7 +254,7 @@ Für jedes Issue: Session-Status prüfen (via jules-api.ps1)
   ↓
 AWAITING_USER_FEEDBACK erkannt?
   ├─ Intervall 1-2: "Continue with task" senden
-  └─ Intervall 3+: 
+  └─ Intervall 3+:
       ├─ @MrLongNight erwähnen (GitHub Kommentar)
       ├─ Label "status: blocked" setzen
       └─ Session pausieren (wenn > 48h)
@@ -341,7 +341,7 @@ agent_budgets:
     max_duration_hours: 48
     auto_pause_after_idle_hours: 12
     alert_threshold_percent: 80
-    
+
   ben_heartbeat:
     max_tokens_per_run: 50000
     max_issues_per_scan: 20
