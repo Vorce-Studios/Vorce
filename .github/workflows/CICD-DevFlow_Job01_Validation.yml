@@ -1,8 +1,8 @@
 name: "CICD-DevFlow: Job01 Validation"
 
 on:
-  pull_request:
-    types: [labeled, opened, synchronize, reopened, ready_for_review]
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
   workflow_dispatch:
     inputs:
@@ -131,9 +131,6 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Check if CHANGELOG.md was modified
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           # Fetch the base branch to compare against
           git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
@@ -144,7 +141,6 @@ jobs:
             echo "::error::CHANGELOG.md was not updated in this PR. Please add a changelog entry to document your changes."
             exit 1
           fi
-
 
   build-linux:
     name: "Build & Test (Linux)"

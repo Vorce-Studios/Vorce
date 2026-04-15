@@ -15,8 +15,13 @@ pub struct ModuleCanvasContext<'a> {
 /// Renders the module canvas inside the provided UI.
 pub fn show(ui: &mut Ui, context: ModuleCanvasContext) {
     // Update available outputs for the ModuleCanvas dropdown
-    context.ui_state.module_canvas.available_outputs =
-        context.state.output_manager.outputs().iter().map(|o| (o.id, o.name.clone())).collect();
+    context.ui_state.module_canvas.available_outputs = context
+        .state
+        .output_manager
+        .outputs()
+        .iter()
+        .map(|o| (o.id, o.name.clone()))
+        .collect();
 
     context.ui_state.module_canvas.show(
         ui,

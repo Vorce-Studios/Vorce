@@ -60,7 +60,10 @@ impl PixelFormat {
 
     /// Returns true if this is a planar format.
     pub fn is_planar(&self) -> bool {
-        matches!(self, PixelFormat::YUV420P | PixelFormat::YUV422P | PixelFormat::NV12)
+        matches!(
+            self,
+            PixelFormat::YUV420P | PixelFormat::YUV422P | PixelFormat::NV12
+        )
     }
 
     /// Returns true if this is a YUV format.
@@ -73,7 +76,10 @@ impl PixelFormat {
 
     /// Returns true if this is an RGB format.
     pub fn is_rgb(&self) -> bool {
-        matches!(self, PixelFormat::RGBA8 | PixelFormat::BGRA8 | PixelFormat::RGB8)
+        matches!(
+            self,
+            PixelFormat::RGBA8 | PixelFormat::BGRA8 | PixelFormat::RGB8
+        )
     }
 
     /// Returns the format name as a string.
@@ -114,7 +120,12 @@ pub struct VideoFormat {
 impl VideoFormat {
     /// Creates a new video format.
     pub fn new(width: u32, height: u32, pixel_format: PixelFormat, frame_rate: f32) -> Self {
-        Self { width, height, pixel_format, frame_rate }
+        Self {
+            width,
+            height,
+            pixel_format,
+            frame_rate,
+        }
     }
 
     /// Creates a standard 1080p60 RGBA format.
@@ -175,7 +186,11 @@ impl VideoFormat {
 
 impl std::fmt::Display for VideoFormat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}x{} @ {}fps ({})", self.width, self.height, self.frame_rate, self.pixel_format)
+        write!(
+            f,
+            "{}x{} @ {}fps ({})",
+            self.width, self.height, self.frame_rate, self.pixel_format
+        )
     }
 }
 
@@ -204,7 +219,10 @@ impl FrameMetadata {
 
     /// Creates metadata with a source name.
     pub fn with_source(source_name: impl Into<String>) -> Self {
-        Self { source_name: source_name.into(), ..Default::default() }
+        Self {
+            source_name: source_name.into(),
+            ..Default::default()
+        }
     }
 
     /// Sets the frame number.
@@ -277,7 +295,12 @@ impl VideoFrame {
         timestamp: Duration,
         metadata: FrameMetadata,
     ) -> Self {
-        Self { data: FrameData::Cpu(Arc::new(data)), format, timestamp, metadata }
+        Self {
+            data: FrameData::Cpu(Arc::new(data)),
+            format,
+            timestamp,
+            metadata,
+        }
     }
 
     /// Creates an empty frame (black) with the given format.

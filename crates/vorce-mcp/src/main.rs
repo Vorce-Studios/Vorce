@@ -4,7 +4,9 @@ use vorce_mcp::McpServer;
 #[tokio::main]
 async fn main() -> Result<()> {
     // Initialize logging (stderr only, as stdout is used for MCP protocol)
-    tracing_subscriber::fmt().with_writer(std::io::stderr).init();
+    tracing_subscriber::fmt()
+        .with_writer(std::io::stderr)
+        .init();
 
     let server = McpServer::new(None);
     eprintln!("Starting Vorce MCP Server on stdio...");

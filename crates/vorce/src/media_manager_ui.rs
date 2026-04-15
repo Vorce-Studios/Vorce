@@ -82,7 +82,10 @@ impl MediaManagerUI {
 
             ui.separator();
 
-            if ui.selectable_label(self.selected_playlist.is_none(), "All Media").clicked() {
+            if ui
+                .selectable_label(self.selected_playlist.is_none(), "All Media")
+                .clicked()
+            {
                 self.selected_playlist = None;
             }
 
@@ -121,10 +124,16 @@ impl MediaManagerUI {
                 ui.text_edit_singleline(&mut self.search_query);
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.selectable_label(self.view_mode == ViewMode::List, "List").clicked() {
+                    if ui
+                        .selectable_label(self.view_mode == ViewMode::List, "List")
+                        .clicked()
+                    {
                         self.view_mode = ViewMode::List;
                     }
-                    if ui.selectable_label(self.view_mode == ViewMode::Grid, "Grid").clicked() {
+                    if ui
+                        .selectable_label(self.view_mode == ViewMode::Grid, "Grid")
+                        .clicked()
+                    {
                         self.view_mode = ViewMode::Grid;
                     }
                     ui.add(egui::Slider::new(&mut self.thumbnail_size, 50.0..=200.0).text("Size"));
@@ -150,22 +159,24 @@ impl MediaManagerUI {
                 let mut iter2;
                 let mut iter3;
 
-                let items: &mut dyn Iterator<Item = &MediaItem> = if let Some(playlist_name) =
-                    &self.selected_playlist
-                {
-                    if let Some(playlist) =
-                        library.playlists.iter().find(|p| &p.name == playlist_name)
-                    {
-                        iter1 = playlist.items.iter().filter_map(|path| library.items.get(path));
-                        &mut iter1
+                let items: &mut dyn Iterator<Item = &MediaItem> =
+                    if let Some(playlist_name) = &self.selected_playlist {
+                        if let Some(playlist) =
+                            library.playlists.iter().find(|p| &p.name == playlist_name)
+                        {
+                            iter1 = playlist
+                                .items
+                                .iter()
+                                .filter_map(|path| library.items.get(path));
+                            &mut iter1
+                        } else {
+                            iter2 = std::iter::empty();
+                            &mut iter2
+                        }
                     } else {
-                        iter2 = std::iter::empty();
-                        &mut iter2
-                    }
-                } else {
-                    iter3 = library.items.values();
-                    &mut iter3
-                };
+                        iter3 = library.items.values();
+                        &mut iter3
+                    };
 
                 let mut filtered_items =
                     items.filter(|item| query.is_empty() || item.name_lower.contains(&query));
@@ -233,7 +244,8 @@ impl MediaManagerUI {
 
                 // Drag Source
                 if response.drag_started() {
-                    ui.ctx().data_mut(|d| d.insert_temp(Id::new("media_path"), item.path.clone()));
+                    ui.ctx()
+                        .data_mut(|d| d.insert_temp(Id::new("media_path"), item.path.clone()));
                 }
             }
         });
@@ -251,11 +263,14 @@ impl MediaManagerUI {
                 ui.label(icon);
 
                 let response = ui.label(&item.name).interact(Sense::click_and_drag());
-                ui.label(format_size(item.metadata.as_ref().map(|m| m.file_size).unwrap_or(0)));
+                ui.label(format_size(
+                    item.metadata.as_ref().map(|m| m.file_size).unwrap_or(0),
+                ));
 
                 // Drag Source
                 if response.drag_started() {
-                    ui.ctx().data_mut(|d| d.insert_temp(Id::new("media_path"), item.path.clone()));
+                    ui.ctx()
+                        .data_mut(|d| d.insert_temp(Id::new("media_path"), item.path.clone()));
                 }
             });
         }

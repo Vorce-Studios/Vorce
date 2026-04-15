@@ -19,7 +19,12 @@ impl EntertainmentEngine {
         nodes: Vec<LightNode>,
         effect: Box<dyn LightEffect>,
     ) -> Self {
-        Self { audio_rx, dtls_tx, nodes, effect }
+        Self {
+            audio_rx,
+            dtls_tx,
+            nodes,
+            effect,
+        }
     }
 
     pub fn set_effect(&mut self, effect: Box<dyn LightEffect>) {
