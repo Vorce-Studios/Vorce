@@ -11,19 +11,12 @@ pub fn draw_presets_popup(
     let popup_width = 280.0;
     let popup_height = 220.0;
     let popup_rect = Rect::from_min_size(
-        Pos2::new(
-            canvas_rect.center().x - popup_width / 2.0,
-            canvas_rect.min.y + 50.0,
-        ),
+        Pos2::new(canvas_rect.center().x - popup_width / 2.0, canvas_rect.min.y + 50.0),
         Vec2::new(popup_width, popup_height),
     );
 
     let painter = ui.painter();
-    painter.rect_filled(
-        popup_rect,
-        0.0,
-        Color32::from_rgba_unmultiplied(30, 35, 45, 245),
-    );
+    painter.rect_filled(popup_rect, 0.0, Color32::from_rgba_unmultiplied(30, 35, 45, 245));
     painter.rect_stroke(
         popup_rect,
         0.0,
@@ -37,49 +30,44 @@ pub fn draw_presets_popup(
             ui.heading("📋 Presets / Templates");
             ui.add_space(8.0);
 
-            egui::ScrollArea::vertical()
-                .max_height(150.0)
-                .show(ui, |ui| {
-                    let presets = canvas.presets.clone();
-                    if presets.is_empty() {
-                        crate::widgets::custom::render_info_label(ui, "No presets found.");
-                    }
-                    for preset in &presets {
-                        ui.horizontal(|ui| {
-                            if ui.button(&preset.name).clicked() {
-                                module.parts.clear();
-                                module.connections.clear();
-                                module.next_part_id = 1;
-                                let mut part_ids = Vec::new();
-                                for (part_type, position, size) in &preset.parts {
-                                    let id =
-                                        module.add_part_with_type(part_type.clone(), *position);
-                                    if let Some(part) =
-                                        module.parts.iter_mut().find(|part| part.id == id)
-                                    {
-                                        part.size = *size;
-                                    }
-                                    part_ids.push(id);
-                                }
-                                for (from_idx, from_socket, to_idx, to_socket) in
-                                    &preset.connections
+            egui::ScrollArea::vertical().max_height(150.0).show(ui, |ui| {
+                let presets = canvas.presets.clone();
+                if presets.is_empty() {
+                    crate::widgets::custom::render_info_label(ui, "No presets found.");
+                }
+                for preset in &presets {
+                    ui.horizontal(|ui| {
+                        if ui.button(&preset.name).clicked() {
+                            module.parts.clear();
+                            module.connections.clear();
+                            module.next_part_id = 1;
+                            let mut part_ids = Vec::new();
+                            for (part_type, position, size) in &preset.parts {
+                                let id = module.add_part_with_type(part_type.clone(), *position);
+                                if let Some(part) =
+                                    module.parts.iter_mut().find(|part| part.id == id)
                                 {
-                                    if *from_idx < part_ids.len() && *to_idx < part_ids.len() {
-                                        let _ = module.connect_parts(
-                                            part_ids[*from_idx],
-                                            from_socket.clone(),
-                                            part_ids[*to_idx],
-                                            to_socket.clone(),
-                                        );
-                                    }
+                                    part.size = *size;
                                 }
-                                let _ = module.repair_graph();
-                                canvas.show_presets = false;
+                                part_ids.push(id);
                             }
-                            ui.label(format!("({} nodes)", preset.parts.len()));
-                        });
-                    }
-                });
+                            for (from_idx, from_socket, to_idx, to_socket) in &preset.connections {
+                                if *from_idx < part_ids.len() && *to_idx < part_ids.len() {
+                                    let _ = module.connect_parts(
+                                        part_ids[*from_idx],
+                                        from_socket.clone(),
+                                        part_ids[*to_idx],
+                                        to_socket.clone(),
+                                    );
+                                }
+                            }
+                            let _ = module.repair_graph();
+                            canvas.show_presets = false;
+                        }
+                        ui.label(format!("({} nodes)", preset.parts.len()));
+                    });
+                }
+            });
 
             ui.separator();
             ui.horizontal(|ui| {
@@ -107,13 +95,11 @@ pub fn draw_presets_popup(
                         }
                     }
 
-                    canvas
-                        .presets
-                        .push(crate::editors::module_canvas::types::ModulePreset {
-                            name: canvas.new_preset_name.clone(),
-                            parts,
-                            connections,
-                        });
+                    canvas.presets.push(crate::editors::module_canvas::types::ModulePreset {
+                        name: canvas.new_preset_name.clone(),
+                        parts,
+                        connections,
+                    });
                     canvas.new_preset_name.clear();
                 }
             });
