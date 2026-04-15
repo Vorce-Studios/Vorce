@@ -53,22 +53,10 @@ impl Vertex {
 
 // Fullscreen quad vertices (NDC coordinates)
 const QUAD_VERTICES: &[Vertex] = &[
-    Vertex {
-        position: [-1.0, -1.0],
-        texcoord: [0.0, 1.0],
-    },
-    Vertex {
-        position: [1.0, -1.0],
-        texcoord: [1.0, 1.0],
-    },
-    Vertex {
-        position: [1.0, 1.0],
-        texcoord: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-1.0, 1.0],
-        texcoord: [0.0, 0.0],
-    },
+    Vertex { position: [-1.0, -1.0], texcoord: [0.0, 1.0] },
+    Vertex { position: [1.0, -1.0], texcoord: [1.0, 1.0] },
+    Vertex { position: [1.0, 1.0], texcoord: [1.0, 0.0] },
+    Vertex { position: [-1.0, 1.0], texcoord: [0.0, 0.0] },
 ];
 
 const QUAD_INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
@@ -243,12 +231,11 @@ impl EdgeBlendRenderer {
     pub fn create_uniform_buffer(&self, config: &EdgeBlendConfig) -> wgpu::Buffer {
         let uniforms = self.config_to_uniforms(config);
 
-        self.device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Edge Blend Uniform Buffer"),
-                contents: bytemuck::cast_slice(&[uniforms]),
-                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            })
+        self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Edge Blend Uniform Buffer"),
+            contents: bytemuck::cast_slice(&[uniforms]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        })
     }
 
     /// Updates an existing uniform buffer with new configuration
@@ -264,26 +251,10 @@ impl EdgeBlendRenderer {
 
     fn config_to_uniforms(&self, config: &EdgeBlendConfig) -> EdgeBlendUniforms {
         EdgeBlendUniforms {
-            left_width: if config.left.enabled {
-                config.left.width
-            } else {
-                0.0
-            },
-            right_width: if config.right.enabled {
-                config.right.width
-            } else {
-                0.0
-            },
-            top_width: if config.top.enabled {
-                config.top.width
-            } else {
-                0.0
-            },
-            bottom_width: if config.bottom.enabled {
-                config.bottom.width
-            } else {
-                0.0
-            },
+            left_width: if config.left.enabled { config.left.width } else { 0.0 },
+            right_width: if config.right.enabled { config.right.width } else { 0.0 },
+            top_width: if config.top.enabled { config.top.width } else { 0.0 },
+            bottom_width: if config.bottom.enabled { config.bottom.width } else { 0.0 },
             gamma: config.gamma,
             _padding: [0.0; 7],
         }
@@ -294,10 +265,7 @@ impl EdgeBlendRenderer {
         self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Edge Blend Uniform Bind Group"),
             layout: &self.uniform_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: buffer.as_entire_binding(),
-            }],
+            entries: &[wgpu::BindGroupEntry { binding: 0, resource: buffer.as_entire_binding() }],
         })
     }
 

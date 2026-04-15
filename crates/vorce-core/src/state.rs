@@ -107,10 +107,7 @@ impl Default for AppState {
 impl AppState {
     /// Create a new empty project state
     pub fn new(name: impl Into<String>) -> Self {
-        Self {
-            name: name.into(),
-            ..Default::default()
-        }
+        Self { name: name.into(), ..Default::default() }
     }
 
     /// Get mutable reference to PaintManager (CoW)
@@ -240,10 +237,7 @@ mod tests {
     #[test]
     fn test_app_settings_partial_eq() {
         let settings_1 = AppSettings::default();
-        let settings_2 = AppSettings {
-            master_volume: 0.5,
-            ..Default::default()
-        };
+        let settings_2 = AppSettings { master_volume: 0.5, ..Default::default() };
         assert_ne!(settings_1, settings_2);
     }
 
@@ -343,9 +337,7 @@ mod tests {
         assert_eq!(Arc::strong_count(&state1.paint_manager), 2);
 
         // Mutate state2's paint manager
-        state2
-            .paint_manager_mut()
-            .add_paint(crate::Paint::color(1, "Test", [1.0, 0.0, 0.0, 1.0]));
+        state2.paint_manager_mut().add_paint(crate::Paint::color(1, "Test", [1.0, 0.0, 0.0, 1.0]));
 
         // Now they should have split
         assert_eq!(Arc::strong_count(&state1.paint_manager), 1);
@@ -364,9 +356,7 @@ mod tests {
         {
             let mut state2 = state1.clone();
             assert_eq!(Arc::strong_count(&state1.mapping_manager), 2);
-            state2
-                .mapping_manager_mut()
-                .add_mapping(crate::mapping::Mapping::quad(1, "Test", 1));
+            state2.mapping_manager_mut().add_mapping(crate::mapping::Mapping::quad(1, "Test", 1));
             assert_eq!(Arc::strong_count(&state1.mapping_manager), 1);
             assert!(state1.mapping_manager.mappings().is_empty());
             assert!(!state2.mapping_manager.mappings().is_empty());
@@ -386,9 +376,7 @@ mod tests {
         {
             let mut state4 = state1.clone();
             assert_eq!(Arc::strong_count(&state1.module_manager), 2);
-            state4
-                .module_manager_mut()
-                .create_module("Test Module".to_string());
+            state4.module_manager_mut().create_module("Test Module".to_string());
             assert_eq!(Arc::strong_count(&state1.module_manager), 1);
             assert!(state1.module_manager.list_modules().is_empty());
             assert!(!state4.module_manager.list_modules().is_empty());

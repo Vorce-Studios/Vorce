@@ -246,18 +246,14 @@ impl VideoPlayer {
 
         info!("State transition: {:?} -> {:?}", self.state, new_state);
         self.state = new_state.clone();
-        let _ = self
-            .status_sender
-            .send(PlaybackStatus::StateChanged(new_state));
+        let _ = self.status_sender.send(PlaybackStatus::StateChanged(new_state));
         Ok(())
     }
 
     fn transition_to_error(&mut self, error: PlayerError) {
         error!("Player error: {}", error);
         self.state = PlaybackState::Error(error.clone());
-        let _ = self
-            .status_sender
-            .send(PlaybackStatus::StateChanged(self.state.clone()));
+        let _ = self.status_sender.send(PlaybackStatus::StateChanged(self.state.clone()));
     }
 
     // --- Command Implementations ---
@@ -348,10 +344,7 @@ mod tests {
 
     impl MockDecoder {
         fn new() -> Self {
-            Self {
-                fail_seek: false,
-                fail_next_frame: false,
-            }
+            Self { fail_seek: false, fail_next_frame: false }
         }
     }
 

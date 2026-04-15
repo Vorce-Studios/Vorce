@@ -21,10 +21,7 @@ pub struct TriggerState {
 
 impl Default for TriggerState {
     fn default() -> Self {
-        Self {
-            timer: 0.0,
-            target: -1.0,
-        }
+        Self { timer: 0.0, target: -1.0 }
     }
 }
 
@@ -67,11 +64,7 @@ impl TriggerSystem {
             for part in &module.parts {
                 if let ModulePartType::Trigger(trigger) = &part.part_type {
                     match trigger {
-                        TriggerType::AudioFFT {
-                            band: _,
-                            threshold,
-                            output_config,
-                        } => {
+                        TriggerType::AudioFFT { band: _, threshold, output_config } => {
                             let mut socket_index = 0;
                             let mut any_output_enabled = false;
 
@@ -145,11 +138,7 @@ impl TriggerSystem {
                                 self.active_triggers.insert((part.id, 0));
                             }
                         }
-                        TriggerType::Random {
-                            min_interval_ms,
-                            max_interval_ms,
-                            ..
-                        } => {
+                        TriggerType::Random { min_interval_ms, max_interval_ms, .. } => {
                             active_state_users.insert(part.id); // Mark as using state
 
                             // Unified state lookup (O(1)) - Handles both timer and target
@@ -213,9 +202,7 @@ mod tests {
         });
 
         // add_part creates a default trigger (Beat), we replace it
-        let part_id = manager
-            .add_part_to_module(module_id, PartType::Trigger, (0.0, 0.0))
-            .unwrap();
+        let part_id = manager.add_part_to_module(module_id, PartType::Trigger, (0.0, 0.0)).unwrap();
 
         if let Some(module) = manager.get_module_mut(module_id) {
             if let Some(part) = module.parts.iter_mut().find(|p| p.id == part_id) {
@@ -255,9 +242,7 @@ mod tests {
             probability: 1.0,
         });
 
-        let part_id = manager
-            .add_part_to_module(module_id, PartType::Trigger, (0.0, 0.0))
-            .unwrap();
+        let part_id = manager.add_part_to_module(module_id, PartType::Trigger, (0.0, 0.0)).unwrap();
 
         if let Some(module) = manager.get_module_mut(module_id) {
             if let Some(part) = module.parts.iter_mut().find(|p| p.id == part_id) {
@@ -272,10 +257,7 @@ mod tests {
         system.update(&manager, &audio, 0.01);
 
         // Verify state exists and has valid target
-        let state = system
-            .states
-            .get(&part_id)
-            .expect("State should be initialized");
+        let state = system.states.get(&part_id).expect("State should be initialized");
         assert!(state.target >= 0.1 && state.target <= 0.2);
         assert!(state.timer > 0.0);
 
@@ -305,9 +287,7 @@ mod tests {
             probability: 1.0,
         });
 
-        let part_id = manager
-            .add_part_to_module(module_id, PartType::Trigger, (0.0, 0.0))
-            .unwrap();
+        let part_id = manager.add_part_to_module(module_id, PartType::Trigger, (0.0, 0.0)).unwrap();
 
         if let Some(module) = manager.get_module_mut(module_id) {
             if let Some(part) = module.parts.iter_mut().find(|p| p.id == part_id) {
@@ -320,10 +300,7 @@ mod tests {
 
         // 1. Update to initialize state
         system.update(&manager, &audio, 0.01);
-        assert!(
-            system.states.contains_key(&part_id),
-            "State should be created"
-        );
+        assert!(system.states.contains_key(&part_id), "State should be created");
 
         // 2. Remove the part
         if let Some(module) = manager.get_module_mut(module_id) {
@@ -334,10 +311,7 @@ mod tests {
         system.update(&manager, &audio, 0.01);
 
         // 4. Assert state is gone
-        assert!(
-            !system.states.contains_key(&part_id),
-            "State should be garbage collected"
-        );
+        assert!(!system.states.contains_key(&part_id), "State should be garbage collected");
     }
 
     #[test]
@@ -364,9 +338,7 @@ mod tests {
             output_config: config,
         });
 
-        let part_id = manager
-            .add_part_to_module(module_id, PartType::Trigger, (0.0, 0.0))
-            .unwrap();
+        let part_id = manager.add_part_to_module(module_id, PartType::Trigger, (0.0, 0.0)).unwrap();
 
         if let Some(module) = manager.get_module_mut(module_id) {
             if let Some(part) = module.parts.iter_mut().find(|p| p.id == part_id) {
