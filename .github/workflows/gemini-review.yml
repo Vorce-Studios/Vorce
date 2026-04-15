@@ -28,8 +28,7 @@ jobs:
     steps:
       - name: 'Mint identity token'
         id: 'mint_identity_token'
-        if: |-
-          ${{ vars.APP_ID }}
+        if: '${{ vars.APP_ID }}'
         uses: 'actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859' # ratchet:actions/create-github-app-token@v2
         with:
           app-id: '${{ vars.APP_ID }}'
@@ -44,7 +43,7 @@ jobs:
       - name: 'Run Gemini pull request review'
         uses: 'google-github-actions/run-gemini-cli@v0' # ratchet:exclude
         id: 'gemini_pr_review'
-        if: ${{ secrets.GEMINI_API_KEY != '' }}
+        if: '${{ secrets.GEMINI_API_KEY != "" }}'
         env:
           GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
           ISSUE_TITLE: '${{ github.event.pull_request.title || github.event.issue.title }}'
