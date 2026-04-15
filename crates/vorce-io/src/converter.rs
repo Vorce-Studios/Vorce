@@ -83,11 +83,7 @@ impl FormatConverter {
     fn rgba_to_bgra(&self, frame: &VideoFrame, target_format: &VideoFormat) -> Result<VideoFrame> {
         let data = match &frame.data {
             FrameData::Cpu(data) => data,
-            _ => {
-                return Err(IoError::InvalidFrameData(
-                    "Expected CPU frame data".to_string(),
-                ))
-            }
+            _ => return Err(IoError::InvalidFrameData("Expected CPU frame data".to_string())),
         };
         let mut output = Vec::with_capacity(data.len());
 
@@ -116,11 +112,7 @@ impl FormatConverter {
     fn rgb_to_rgba(&self, frame: &VideoFrame, target_format: &VideoFormat) -> Result<VideoFrame> {
         let data = match &frame.data {
             FrameData::Cpu(data) => data,
-            _ => {
-                return Err(IoError::InvalidFrameData(
-                    "Expected CPU frame data".to_string(),
-                ))
-            }
+            _ => return Err(IoError::InvalidFrameData("Expected CPU frame data".to_string())),
         };
         let pixel_count = (frame.format.width * frame.format.height) as usize;
         let mut output = Vec::with_capacity(pixel_count * 4);
@@ -144,11 +136,7 @@ impl FormatConverter {
     fn rgba_to_rgb(&self, frame: &VideoFrame, target_format: &VideoFormat) -> Result<VideoFrame> {
         let data = match &frame.data {
             FrameData::Cpu(data) => data,
-            _ => {
-                return Err(IoError::InvalidFrameData(
-                    "Expected CPU frame data".to_string(),
-                ))
-            }
+            _ => return Err(IoError::InvalidFrameData("Expected CPU frame data".to_string())),
         };
         let pixel_count = (frame.format.width * frame.format.height) as usize;
         let mut output = Vec::with_capacity(pixel_count * 3);
@@ -178,11 +166,7 @@ impl FormatConverter {
     ) -> Result<VideoFrame> {
         let data = match &frame.data {
             FrameData::Cpu(data) => data,
-            _ => {
-                return Err(IoError::InvalidFrameData(
-                    "Expected CPU frame data".to_string(),
-                ))
-            }
+            _ => return Err(IoError::InvalidFrameData("Expected CPU frame data".to_string())),
         };
         let width = frame.format.width as usize;
         let height = frame.format.height as usize;
@@ -239,11 +223,7 @@ impl FormatConverter {
     ) -> Result<VideoFrame> {
         let data = match &frame.data {
             FrameData::Cpu(data) => data,
-            _ => {
-                return Err(IoError::InvalidFrameData(
-                    "Expected CPU frame data".to_string(),
-                ))
-            }
+            _ => return Err(IoError::InvalidFrameData("Expected CPU frame data".to_string())),
         };
         let width = frame.format.width as usize;
         let height = frame.format.height as usize;
@@ -295,20 +275,14 @@ impl FormatConverter {
     fn uyvy_to_rgba(&self, frame: &VideoFrame, target_format: &VideoFormat) -> Result<VideoFrame> {
         let data = match &frame.data {
             FrameData::Cpu(data) => data,
-            _ => {
-                return Err(IoError::InvalidFrameData(
-                    "Expected CPU frame data".to_string(),
-                ))
-            }
+            _ => return Err(IoError::InvalidFrameData("Expected CPU frame data".to_string())),
         };
         let width = frame.format.width as usize;
         let height = frame.format.height as usize;
         let expected_size = width * height * 2;
 
         if data.len() < expected_size {
-            return Err(IoError::InvalidFrameData(
-                "Insufficient data for UYVY frame".to_string(),
-            ));
+            return Err(IoError::InvalidFrameData("Insufficient data for UYVY frame".to_string()));
         }
 
         let mut output = vec![0u8; width * height * 4];
@@ -354,11 +328,7 @@ impl FormatConverter {
     fn nv12_to_rgba(&self, frame: &VideoFrame, target_format: &VideoFormat) -> Result<VideoFrame> {
         let data = match &frame.data {
             FrameData::Cpu(data) => data,
-            _ => {
-                return Err(IoError::InvalidFrameData(
-                    "Expected CPU frame data".to_string(),
-                ))
-            }
+            _ => return Err(IoError::InvalidFrameData("Expected CPU frame data".to_string())),
         };
         let width = frame.format.width as usize;
         let height = frame.format.height as usize;
@@ -366,9 +336,7 @@ impl FormatConverter {
         let uv_size = y_size / 2;
 
         if data.len() < y_size + uv_size {
-            return Err(IoError::InvalidFrameData(
-                "Insufficient data for NV12 frame".to_string(),
-            ));
+            return Err(IoError::InvalidFrameData("Insufficient data for NV12 frame".to_string()));
         }
 
         let y_plane = &data[0..y_size];
@@ -421,11 +389,7 @@ fn yuv_to_rgb(y: i32, u: i32, v: i32) -> (u8, u8, u8) {
     let g = y - (88 * u + 183 * v) / 256;
     let b = y + (454 * u) / 256;
 
-    (
-        r.clamp(0, 255) as u8,
-        g.clamp(0, 255) as u8,
-        b.clamp(0, 255) as u8,
-    )
+    (r.clamp(0, 255) as u8, g.clamp(0, 255) as u8, b.clamp(0, 255) as u8)
 }
 
 #[cfg(test)]

@@ -33,10 +33,7 @@ const MAX_BATCH_SIZE: usize = 100;
 #[serde(tag = "type")]
 pub enum WsClientMessage {
     #[serde(rename = "set_parameter")]
-    SetParameter {
-        target: ControlTarget,
-        value: ControlValue,
-    },
+    SetParameter { target: ControlTarget, value: ControlValue },
     #[serde(rename = "subscribe")]
     Subscribe { targets: Vec<ControlTarget> },
     #[serde(rename = "unsubscribe")]
@@ -50,10 +47,7 @@ pub enum WsClientMessage {
 #[serde(tag = "type")]
 pub enum WsServerMessage {
     #[serde(rename = "parameter_changed")]
-    ParameterChanged {
-        target: ControlTarget,
-        value: ControlValue,
-    },
+    ParameterChanged { target: ControlTarget, value: ControlValue },
     #[serde(rename = "stats")]
     Stats { fps: f32, frame_time_ms: f32 },
     #[serde(rename = "error")]
@@ -69,9 +63,9 @@ pub async fn ws_handler(
     _headers: HeaderMap,
     State(state): State<AppState>,
 ) -> Response {
+
     // Set max message size to prevent DoS attacks
-    ws.max_message_size(MAX_MESSAGE_SIZE)
-        .on_upgrade(|socket| handle_socket(socket, state))
+    ws.max_message_size(MAX_MESSAGE_SIZE).on_upgrade(|socket| handle_socket(socket, state))
 }
 
 #[cfg(not(feature = "http-api"))]
@@ -93,10 +87,7 @@ async fn handle_socket(socket: WebSocket, _state: AppState) {
         loop {
             interval.tick().await;
 
-            let stats = WsServerMessage::Stats {
-                fps: 60.0,
-                frame_time_ms: 16.6,
-            };
+            let stats = WsServerMessage::Stats { fps: 60.0, frame_time_ms: 16.6 };
 
             if let Ok(json) = serde_json::to_string(&stats) {
                 if sender.send(Message::Text(json)).await.is_err() {
@@ -151,12 +142,8 @@ async fn handle_text_message(text: &str) -> Result<(), String> {
     match message {
         WsClientMessage::SetParameter { target, value } => {
             // Security check: validate input
-            target
-                .validate()
-                .map_err(|e| format!("Invalid target: {}", e))?;
-            value
-                .validate()
-                .map_err(|e| format!("Invalid value: {}", e))?;
+            target.validate().map_err(|e| format!("Invalid target: {}", e))?;
+            value.validate().map_err(|e| format!("Invalid value: {}", e))?;
 
             tracing::debug!("WebSocket set parameter: {:?} = {:?}", target, value);
             // In a real implementation, this would update the project state
@@ -171,9 +158,7 @@ async fn handle_text_message(text: &str) -> Result<(), String> {
 
             // Security check: validate targets
             for target in &targets {
-                target
-                    .validate()
-                    .map_err(|e| format!("Invalid subscription target: {}", e))?;
+                target.validate().map_err(|e| format!("Invalid subscription target: {}", e))?;
             }
 
             tracing::debug!("WebSocket subscribe: {:?}", targets);
@@ -220,10 +205,7 @@ mod tests {
 
     #[test]
     fn test_ws_server_message_serialization() {
-        let msg = WsServerMessage::Stats {
-            fps: 60.0,
-            frame_time_ms: 16.6,
-        };
+        let msg = WsServerMessage::Stats { fps: 60.0, frame_time_ms: 16.6 };
 
         let json = serde_json::to_string(&msg).unwrap();
         assert!(json.contains("stats"));
@@ -271,9 +253,7 @@ mod tests {
     #[tokio::test]
     async fn test_validation_rejects_invalid_subscription() {
         let long_name = "a".repeat(300);
-        let msg = WsClientMessage::Subscribe {
-            targets: vec![ControlTarget::Custom(long_name)],
-        };
+        let msg = WsClientMessage::Subscribe { targets: vec![ControlTarget::Custom(long_name)] };
         let json = serde_json::to_string(&msg).unwrap();
 
         let result = handle_text_message(&json).await;
@@ -285,9 +265,8 @@ mod tests {
     #[tokio::test]
     async fn test_validation_rejects_large_batch() {
         // Create more targets than allowed
-        let targets: Vec<ControlTarget> = (0..MAX_BATCH_SIZE + 1)
-            .map(|i| ControlTarget::LayerOpacity(i as u32))
-            .collect();
+        let targets: Vec<ControlTarget> =
+            (0..MAX_BATCH_SIZE + 1).map(|i| ControlTarget::LayerOpacity(i as u32)).collect();
 
         let msg = WsClientMessage::Subscribe { targets };
         // We need to increase the recursion limit for serde if the struct is deeply nested,
@@ -298,4 +277,5 @@ mod tests {
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Too many targets"));
     }
+
 }

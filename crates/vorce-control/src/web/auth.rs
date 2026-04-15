@@ -46,10 +46,7 @@ impl AuthConfig {
 
     /// Create an auth config with authentication enabled and provided keys
     pub fn with_keys(keys: Vec<String>) -> Self {
-        let mut config = Self {
-            enabled: true,
-            api_keys: HashSet::new(),
-        };
+        let mut config = Self { enabled: true, api_keys: HashSet::new() };
         for key in keys {
             config.add_key(key);
         }
@@ -153,10 +150,7 @@ mod tests {
     #[test]
     fn test_extract_bearer_token() {
         let mut headers = http::HeaderMap::new();
-        headers.insert(
-            http::header::AUTHORIZATION,
-            "Bearer test_token".parse().unwrap(),
-        );
+        headers.insert(http::header::AUTHORIZATION, "Bearer test_token".parse().unwrap());
 
         let key = extract_api_key(&headers, None);
         assert_eq!(key, Some("test_token".to_string()));

@@ -46,12 +46,7 @@ impl InspectorPanel {
                     crate::widgets::custom::render_info_label(ui, "No selection");
                 });
             }
-            InspectorContext::Layer {
-                layer,
-                transform,
-                index,
-                first_mapping,
-            } => {
+            InspectorContext::Layer { layer, transform, index, first_mapping } => {
                 action = render_layer_inspector(
                     &mut self.mesh_editor,
                     &mut self.last_mesh_edit_id,
@@ -63,12 +58,7 @@ impl InspectorPanel {
                     i18n,
                 );
             }
-            InspectorContext::Module {
-                canvas,
-                module,
-                part_id,
-                shared_media_ids,
-            } => {
+            InspectorContext::Module { canvas, module, part_id, shared_media_ids } => {
                 show_module_inspector(
                     ui,
                     canvas,
