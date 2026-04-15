@@ -24,17 +24,9 @@ pub enum UIAction {
     /// Load a video file
     LoadVideo(String),
     /// Open file picker for media source
-    PickMediaFile(
-        vorce_core::module::ModuleId,
-        vorce_core::module::ModulePartId,
-        String,
-    ),
+    PickMediaFile(vorce_core::module::ModuleId, vorce_core::module::ModulePartId, String),
     /// Set media file for source
-    SetMediaFile(
-        vorce_core::module::ModuleId,
-        vorce_core::module::ModulePartId,
-        String,
-    ),
+    SetMediaFile(vorce_core::module::ModuleId, vorce_core::module::ModulePartId, String),
 
     /// Save current project
     SaveProject(String),
@@ -256,15 +248,9 @@ pub enum UIAction {
     ),
 
     /// Manually fire a trigger node
-    ManualTrigger(
-        vorce_core::module::ModuleId,
-        vorce_core::module::ModulePartId,
-    ),
+    ManualTrigger(vorce_core::module::ModuleId, vorce_core::module::ModulePartId),
 
     // Module Connection Deletion
     /// Delete a connection between two module parts
-    DeleteConnection(
-        vorce_core::module::ModuleId,
-        vorce_core::module::ModuleConnection,
-    ),
+    DeleteConnection(vorce_core::module::ModuleId, vorce_core::module::ModuleConnection),
 }

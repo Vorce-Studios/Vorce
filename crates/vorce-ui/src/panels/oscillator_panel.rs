@@ -103,62 +103,59 @@ impl OscillatorPanel {
     ) -> bool {
         let mut sim_changed = false;
 
-        egui::Grid::new("sim_params_grid")
-            .num_columns(2)
-            .spacing([8.0, 4.0])
-            .show(ui, |ui| {
-                ui.label(locale.t("oscillator-frequency-min"));
-                sim_changed |= custom::styled_drag_value(
-                    ui,
-                    &mut config.frequency_min,
-                    0.1,
-                    0.0..=100.0,
-                    0.5,
-                    "",
-                    " Hz",
-                )
-                .changed();
-                ui.end_row();
+        egui::Grid::new("sim_params_grid").num_columns(2).spacing([8.0, 4.0]).show(ui, |ui| {
+            ui.label(locale.t("oscillator-frequency-min"));
+            sim_changed |= custom::styled_drag_value(
+                ui,
+                &mut config.frequency_min,
+                0.1,
+                0.0..=100.0,
+                0.5,
+                "",
+                " Hz",
+            )
+            .changed();
+            ui.end_row();
 
-                ui.label(locale.t("oscillator-frequency-max"));
-                sim_changed |= custom::styled_drag_value(
-                    ui,
-                    &mut config.frequency_max,
-                    0.1,
-                    0.0..=100.0,
-                    2.0,
-                    "",
-                    " Hz",
-                )
-                .changed();
-                ui.end_row();
+            ui.label(locale.t("oscillator-frequency-max"));
+            sim_changed |= custom::styled_drag_value(
+                ui,
+                &mut config.frequency_max,
+                0.1,
+                0.0..=100.0,
+                2.0,
+                "",
+                " Hz",
+            )
+            .changed();
+            ui.end_row();
 
-                ui.label(locale.t("oscillator-kernel-radius"));
-                sim_changed |= custom::styled_drag_value(
-                    ui,
-                    &mut config.kernel_radius,
-                    0.5,
-                    1.0..=64.0,
-                    16.0,
-                    "",
-                    " px",
-                )
-                .changed();
-                ui.end_row();
+            ui.label(locale.t("oscillator-kernel-radius"));
+            sim_changed |= custom::styled_drag_value(
+                ui,
+                &mut config.kernel_radius,
+                0.5,
+                1.0..=64.0,
+                16.0,
+                "",
+                " px",
+            )
+            .changed();
+            ui.end_row();
 
-                ui.label(locale.t("oscillator-noise-amount"));
-                sim_changed |= custom::styled_drag_value(
-                    ui,
-                    &mut config.noise_amount,
-                    0.01,
-                    0.0..=1.0,
-                    0.1,
-                    "",
-                    "",
-                )
-                .changed();
-                ui.end_row();
-            });
+            ui.label(locale.t("oscillator-noise-amount"));
+            sim_changed |= custom::styled_drag_value(
+                ui,
+                &mut config.noise_amount,
+                0.01,
+                0.0..=1.0,
+                0.1,
+                "",
+                "",
+            )
+            .changed();
+            ui.end_row();
+        });
 
         sim_changed
     }
@@ -171,49 +168,46 @@ impl OscillatorPanel {
     ) -> bool {
         let mut dist_changed = false;
 
-        egui::Grid::new("dist_params_grid")
-            .num_columns(2)
-            .spacing([8.0, 4.0])
-            .show(ui, |ui| {
-                ui.label(locale.t("oscillator-distortion-amount"));
-                dist_changed |= custom::styled_drag_value(
-                    ui,
-                    &mut config.distortion_amount,
-                    0.01,
-                    0.0..=1.0,
-                    0.5,
-                    "",
-                    "",
-                )
-                .changed();
-                ui.end_row();
+        egui::Grid::new("dist_params_grid").num_columns(2).spacing([8.0, 4.0]).show(ui, |ui| {
+            ui.label(locale.t("oscillator-distortion-amount"));
+            dist_changed |= custom::styled_drag_value(
+                ui,
+                &mut config.distortion_amount,
+                0.01,
+                0.0..=1.0,
+                0.5,
+                "",
+                "",
+            )
+            .changed();
+            ui.end_row();
 
-                ui.label(locale.t("oscillator-distortion-scale"));
-                dist_changed |= custom::styled_drag_value(
-                    ui,
-                    &mut config.distortion_scale,
-                    0.001,
-                    0.0..=0.1,
-                    0.02,
-                    "",
-                    "",
-                )
-                .changed();
-                ui.end_row();
+            ui.label(locale.t("oscillator-distortion-scale"));
+            dist_changed |= custom::styled_drag_value(
+                ui,
+                &mut config.distortion_scale,
+                0.001,
+                0.0..=0.1,
+                0.02,
+                "",
+                "",
+            )
+            .changed();
+            ui.end_row();
 
-                ui.label(locale.t("oscillator-distortion-speed"));
-                dist_changed |= custom::styled_drag_value(
-                    ui,
-                    &mut config.distortion_speed,
-                    0.01,
-                    0.0..=4.0,
-                    1.0,
-                    "",
-                    "x",
-                )
-                .changed();
-                ui.end_row();
-            });
+            ui.label(locale.t("oscillator-distortion-speed"));
+            dist_changed |= custom::styled_drag_value(
+                ui,
+                &mut config.distortion_speed,
+                0.01,
+                0.0..=4.0,
+                1.0,
+                "",
+                "x",
+            )
+            .changed();
+            ui.end_row();
+        });
 
         dist_changed
     }
@@ -226,62 +220,59 @@ impl OscillatorPanel {
     ) -> bool {
         let mut viz_changed = false;
 
-        egui::Grid::new("viz_params_grid")
-            .num_columns(2)
-            .spacing([8.0, 4.0])
-            .show(ui, |ui| {
-                ui.label(locale.t("oscillator-overlay-opacity"));
-                viz_changed |= custom::styled_drag_value(
-                    ui,
-                    &mut config.overlay_opacity,
-                    0.01,
-                    0.0..=1.0,
-                    0.0,
-                    "",
-                    "",
-                )
-                .changed();
-                ui.end_row();
-                ui.label(locale.t("oscillator-color-mode"));
-                let selected_text = format!("{:?}", config.color_mode);
-                viz_changed |= ComboBox::from_id_salt("color_mode")
-                    .selected_text(selected_text)
-                    .show_ui(ui, |ui| {
-                        let mut changed = false;
-                        changed |= ui
-                            .selectable_value(
-                                &mut config.color_mode,
-                                ColorMode::Off,
-                                locale.t("oscillator-color-mode-off"),
-                            )
-                            .changed();
-                        changed |= ui
-                            .selectable_value(
-                                &mut config.color_mode,
-                                ColorMode::Rainbow,
-                                locale.t("oscillator-color-mode-rainbow"),
-                            )
-                            .changed();
-                        changed |= ui
-                            .selectable_value(
-                                &mut config.color_mode,
-                                ColorMode::BlackWhite,
-                                locale.t("oscillator-color-mode-black-white"),
-                            )
-                            .changed();
-                        changed |= ui
-                            .selectable_value(
-                                &mut config.color_mode,
-                                ColorMode::Complementary,
-                                locale.t("oscillator-color-mode-complementary"),
-                            )
-                            .changed();
-                        changed
-                    })
-                    .inner
-                    .unwrap_or(false);
-                ui.end_row();
-            });
+        egui::Grid::new("viz_params_grid").num_columns(2).spacing([8.0, 4.0]).show(ui, |ui| {
+            ui.label(locale.t("oscillator-overlay-opacity"));
+            viz_changed |= custom::styled_drag_value(
+                ui,
+                &mut config.overlay_opacity,
+                0.01,
+                0.0..=1.0,
+                0.0,
+                "",
+                "",
+            )
+            .changed();
+            ui.end_row();
+            ui.label(locale.t("oscillator-color-mode"));
+            let selected_text = format!("{:?}", config.color_mode);
+            viz_changed |= ComboBox::from_id_salt("color_mode")
+                .selected_text(selected_text)
+                .show_ui(ui, |ui| {
+                    let mut changed = false;
+                    changed |= ui
+                        .selectable_value(
+                            &mut config.color_mode,
+                            ColorMode::Off,
+                            locale.t("oscillator-color-mode-off"),
+                        )
+                        .changed();
+                    changed |= ui
+                        .selectable_value(
+                            &mut config.color_mode,
+                            ColorMode::Rainbow,
+                            locale.t("oscillator-color-mode-rainbow"),
+                        )
+                        .changed();
+                    changed |= ui
+                        .selectable_value(
+                            &mut config.color_mode,
+                            ColorMode::BlackWhite,
+                            locale.t("oscillator-color-mode-black-white"),
+                        )
+                        .changed();
+                    changed |= ui
+                        .selectable_value(
+                            &mut config.color_mode,
+                            ColorMode::Complementary,
+                            locale.t("oscillator-color-mode-complementary"),
+                        )
+                        .changed();
+                    changed
+                })
+                .inner
+                .unwrap_or(false);
+            ui.end_row();
+        });
 
         viz_changed
     }

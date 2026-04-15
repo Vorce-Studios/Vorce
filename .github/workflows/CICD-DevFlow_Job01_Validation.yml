@@ -2,7 +2,7 @@ name: "CICD-DevFlow: Job01 Validation"
 
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [labeled, opened, synchronize, reopened, ready_for_review]
     branches: [main]
   workflow_dispatch:
     inputs:
@@ -131,12 +131,12 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Check if CHANGELOG.md was modified
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           # Fetch the base branch to compare against
           git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
-
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          PR_BRANCH="${{ github.event.pull_request.head.ref }}"
 
           if git diff --name-only ${{ github.base_ref }}...HEAD | grep -q "CHANGELOG.md"; then
             echo "CHANGELOG.md updated."
@@ -149,6 +149,7 @@ jobs:
               exit 1
             fi
           fi
+
 
   build-linux:
     name: "Build & Test (Linux)"
