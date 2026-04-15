@@ -282,14 +282,9 @@ impl VorceModule {
             let (new_inputs, new_outputs) = part.compute_sockets();
             part.inputs = new_inputs;
             part.outputs = new_outputs;
-            let valid_mappable_inputs: HashSet<usize> = part
-                .schema()
-                .inspector
-                .mappable_input_indices
-                .into_iter()
-                .collect();
-            part.trigger_targets
-                .retain(|socket_idx, _| valid_mappable_inputs.contains(socket_idx));
+            let valid_mappable_inputs: HashSet<usize> =
+                part.schema().inspector.mappable_input_indices.into_iter().collect();
+            part.trigger_targets.retain(|socket_idx, _| valid_mappable_inputs.contains(socket_idx));
         }
         let _ = self.repair_graph();
     }
@@ -316,12 +311,10 @@ impl VorceModule {
             return Err(ConnectionValidationError::SelfConnection);
         }
 
-        let source = self
-            .part(from_part)
-            .ok_or(ConnectionValidationError::MissingSourcePart(from_part))?;
-        let target = self
-            .part(to_part)
-            .ok_or(ConnectionValidationError::MissingTargetPart(to_part))?;
+        let source =
+            self.part(from_part).ok_or(ConnectionValidationError::MissingSourcePart(from_part))?;
+        let target =
+            self.part(to_part).ok_or(ConnectionValidationError::MissingTargetPart(to_part))?;
 
         let source_socket = source.outputs.iter().find(|s| s.id == from_socket).ok_or(
             ConnectionValidationError::InvalidSourceSocket {
@@ -370,12 +363,7 @@ impl VorceModule {
                 .retain(|conn| !(conn.to_part == to_part && conn.to_socket == to_socket));
         }
 
-        let candidate = ModuleConnection {
-            from_part,
-            from_socket,
-            to_part,
-            to_socket,
-        };
+        let candidate = ModuleConnection { from_part, from_socket, to_part, to_socket };
         if self.connections.contains(&candidate) {
             return Ok(false);
         }
@@ -441,15 +429,10 @@ impl VorceModule {
                 report.refreshed_parts += 1;
             }
 
-            let valid_mappable_inputs: HashSet<usize> = part
-                .schema()
-                .inspector
-                .mappable_input_indices
-                .into_iter()
-                .collect();
+            let valid_mappable_inputs: HashSet<usize> =
+                part.schema().inspector.mappable_input_indices.into_iter().collect();
             let before_targets = part.trigger_targets.len();
-            part.trigger_targets
-                .retain(|socket_idx, _| valid_mappable_inputs.contains(socket_idx));
+            part.trigger_targets.retain(|socket_idx, _| valid_mappable_inputs.contains(socket_idx));
             report.removed_trigger_targets += before_targets - part.trigger_targets.len();
 
             if normalized {
@@ -457,8 +440,8 @@ impl VorceModule {
             }
         }
 
-        let existing_part_ids: HashSet<ModulePartId> =
-            self.parts.iter().map(|part| part.id).collect();
+        let existing_part_ids =
+            self.parts.iter().map(|part| part.id).collect::<rustc_hash::FxHashSet<_>>();
         let mut seen_connections = HashSet::new();
         let mut repaired_connections = Vec::with_capacity(self.connections.len());
 

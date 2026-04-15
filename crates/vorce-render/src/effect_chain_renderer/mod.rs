@@ -158,22 +158,10 @@ impl EffectChainRenderer {
         }
 
         let vertices = [
-            Vertex {
-                position: [-1.0, -1.0],
-                uv: [0.0, 1.0],
-            },
-            Vertex {
-                position: [1.0, -1.0],
-                uv: [1.0, 1.0],
-            },
-            Vertex {
-                position: [1.0, 1.0],
-                uv: [1.0, 0.0],
-            },
-            Vertex {
-                position: [-1.0, 1.0],
-                uv: [0.0, 0.0],
-            },
+            Vertex { position: [-1.0, -1.0], uv: [0.0, 1.0] },
+            Vertex { position: [1.0, -1.0], uv: [1.0, 1.0] },
+            Vertex { position: [1.0, 1.0], uv: [1.0, 0.0] },
+            Vertex { position: [-1.0, 1.0], uv: [0.0, 0.0] },
         ];
 
         let indices: [u16; 6] = [0, 1, 2, 0, 2, 3];
@@ -195,9 +183,7 @@ impl EffectChainRenderer {
 
         // Create built-in effect pipelines
         let effect_types = [
-            EffectType::LoadLUT {
-                path: String::new(),
-            },
+            EffectType::LoadLUT { path: String::new() },
             EffectType::ColorAdjust,
             EffectType::Blur,
             EffectType::ChromaticAberration,
@@ -264,8 +250,7 @@ impl EffectChainRenderer {
         // So buffers are stable. We can keep the cache!
 
         // Prune dead texture bind groups
-        self.texture_bg_cache
-            .retain(|_, (weak, _)| weak.strong_count() > 0);
+        self.texture_bg_cache.retain(|_, (weak, _)| weak.strong_count() > 0);
 
         self.frame_count += 1;
 
@@ -283,12 +268,8 @@ impl EffectChainRenderer {
     pub(crate) fn ensure_ping_pong(&mut self, width: u32, height: u32) {
         if self.ping_pong.is_none() || self.current_size != (width, height) {
             debug!("Creating ping-pong buffers: {}x{}", width, height);
-            self.ping_pong = Some(PingPongBuffer::new(
-                &self.device,
-                width,
-                height,
-                self.target_format,
-            ));
+            self.ping_pong =
+                Some(PingPongBuffer::new(&self.device, width, height, self.target_format));
             self.current_size = (width, height);
         }
     }
@@ -296,12 +277,10 @@ impl EffectChainRenderer {
     /// Reload a custom shader for an effect
     pub fn reload_custom_shader(&mut self, effect_id: u64, shader_source: &str) -> Result<()> {
         // Validate shader by attempting to create a module
-        let _shader_module = self
-            .device
-            .create_shader_module(wgpu::ShaderModuleDescriptor {
-                label: Some(&format!("Custom Effect Shader: {}", effect_id)),
-                source: wgpu::ShaderSource::Wgsl(shader_source.into()),
-            });
+        let _shader_module = self.device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some(&format!("Custom Effect Shader: {}", effect_id)),
+            source: wgpu::ShaderSource::Wgsl(shader_source.into()),
+        });
 
         // If we get here, shader compiled successfully
         // In a full implementation, we'd store the custom pipeline
