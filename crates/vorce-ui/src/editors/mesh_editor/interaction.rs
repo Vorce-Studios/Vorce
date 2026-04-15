@@ -69,8 +69,10 @@ impl MeshEditorInteraction for MeshEditor {
             EditMode::Remove => {
                 if input.clicked {
                     // Remove vertex under pointer
-                    if let Some(idx) =
-                        self.vertices.iter().position(|v| v.position.distance(pointer_pos) < 10.0)
+                    if let Some(idx) = self
+                        .vertices
+                        .iter()
+                        .position(|v| v.position.distance(pointer_pos) < 10.0)
                     {
                         self.vertices.remove(idx);
                         // Remove faces referencing this vertex

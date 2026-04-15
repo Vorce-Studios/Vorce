@@ -6,10 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- 2026-04-14: chore: 🧹 [code health] Remove dead CachedTexture struct and dummy allocations
-- 2026-04-14: chore: Code Health: Remove unused imports in controller list panel
 - 2026-04-14: ci: Exclude .vscode/skills from markdownlint to unblock PRs (#245)
-- 2026-04-12: docs: MAI-007 Render-Queue-Readiness, Parity and Optimization Tracker (#122)
 - 2026-04-12: perf: Bolt: Performance-Optimierung durch Vermeidung redundanter String-Allokationen in UI-Schleifen (#221)
 - 2026-04-12: feat: UI: Theme-aware colors in Node Editor (#222)
 - 2026-04-12: fix: Sentinel: Fix DoS panic on float sorting with NaN (#223)
@@ -214,5 +211,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FFmpeg-based video decoding.
 - Simple MIDI and OSC support.
 - Basic shader effects.
--   2 0 2 6 - 0 4 - 1 4 :   t e s t :   A d d   l i s t - d e v i c e s   c o v e r a g e   t e s t s   ( # 2 6 1 )  
- 
+- 2026-04-12: perf: Bolt: Performance-Optimierung durch Vermeidung redundanter String-Allokationen in UI-Schleifen (#221)
+- 2026-04-12: feat: UI: Theme-aware colors in Node Editor (#222)
+- 2026-04-12: fix: Sentinel: Fix DoS panic on float sorting with NaN (#223)
+- 2026-04-12: feat: UI: Visuelle Theme-Konsistenz in Media Browser Widgets (#218)
+- 2026-04-14: test: Add missing test coverage for list_devices in audio backend (#261)
