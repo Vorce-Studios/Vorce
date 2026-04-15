@@ -6,7 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- 2026-04-14: perf: ⚡ Bolt: Optimiere String-Allokationen beim UI-Rendering der Module-Sockets
 - 2026-04-14: chore: 🧹 [code health] Remove dead CachedTexture struct and dummy allocations
 - 2026-04-14: chore: Code Health: Remove unused imports in controller list panel
 - 2026-04-14: ci: Exclude .vscode/skills from markdownlint to unblock PRs (#245)
@@ -216,6 +215,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FFmpeg-based video decoding.
 - Simple MIDI and OSC support.
 - Basic shader effects.
--   2 0 2 6 - 0 4 - 1 4 :   p e r f :   B o l t :   C a c h e   c o m m o n   e g u i   s t y l e s   u n d   s h a p e s   ( # 2 4 2 ) 
- 
- 
