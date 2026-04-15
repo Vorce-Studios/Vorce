@@ -6,11 +6,7 @@ pub(crate) fn build_effect_chain(modulizers: &[ModulizerType]) -> EffectChain {
     let mut next_id = 1u64;
 
     for modulizer in modulizers {
-        let ModulizerType::Effect {
-            effect_type,
-            params,
-        } = modulizer
-        else {
+        let ModulizerType::Effect { effect_type, params } = modulizer else {
             continue;
         };
 
@@ -20,9 +16,7 @@ pub(crate) fn build_effect_chain(modulizers: &[ModulizerType]) -> EffectChain {
 
         let mut effect = Effect::new(next_id, chain_effect_type);
         // Optimize: avoid deep cloning the entire HashMap by iterating and mapping keys/values
-        effect
-            .parameters
-            .extend(params.iter().map(|(k, v)| (k.clone(), *v)));
+        effect.parameters.extend(params.iter().map(|(k, v)| (k.clone(), *v)));
         chain.effects.push(effect);
         next_id += 1;
     }
@@ -67,10 +61,7 @@ mod tests {
 
     #[test]
     fn test_map_effect_type() {
-        assert_eq!(
-            map_effect_type(ModEffectType::Blur),
-            Some(ChainEffectType::Blur)
-        );
+        assert_eq!(map_effect_type(ModEffectType::Blur), Some(ChainEffectType::Blur));
         assert_eq!(map_effect_type(ModEffectType::LoadLUT), None);
     }
 }
