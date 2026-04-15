@@ -69,9 +69,33 @@ pub async fn ws_handler(
     _headers: HeaderMap,
     State(state): State<AppState>,
 ) -> Response {
+    // Check if client requested a specific subprotocol (e.g. for auth)
+    let protocol = extract_auth_protocol(&headers);
+
+    let ws = if let Some(protocol) = protocol {
+        ws.protocols([protocol])
+    } else {
+        ws
+    };
+
     // Set max message size to prevent DoS attacks
     ws.max_message_size(MAX_MESSAGE_SIZE)
         .on_upgrade(|socket| handle_socket(socket, state))
+}
+
+/// Extract auth protocol from headers
+#[cfg(feature = "http-api")]
+fn extract_auth_protocol(headers: &HeaderMap) -> Option<String> {
+    headers
+        .get(axum::http::header::SEC_WEBSOCKET_PROTOCOL)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|protocols| {
+            protocols
+                .split(',')
+                .map(|p| p.trim())
+                .find(|p| p.starts_with("vorce.auth."))
+                .map(|p| p.to_string())
+        })
 }
 
 #[cfg(not(feature = "http-api"))]
@@ -297,5 +321,29 @@ mod tests {
         let result = handle_text_message(&json).await;
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Too many targets"));
+    }
+
+    #[cfg(feature = "http-api")]
+    #[test]
+    fn test_extract_auth_protocol() {
+        use axum::http::HeaderMap;
+
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "Sec-WebSocket-Protocol",
+            "vorce.auth.secret, json".parse().unwrap(),
+        );
+
+        let proto = extract_auth_protocol(&headers);
+        assert_eq!(proto, Some("vorce.auth.secret".to_string()));
+
+        let headers_empty = HeaderMap::new();
+        let proto_empty = extract_auth_protocol(&headers_empty);
+        assert_eq!(proto_empty, None);
+
+        let mut headers_other = HeaderMap::new();
+        headers_other.insert("Sec-WebSocket-Protocol", "json, xml".parse().unwrap());
+        let proto_other = extract_auth_protocol(&headers_other);
+        assert_eq!(proto_other, None);
     }
 }
