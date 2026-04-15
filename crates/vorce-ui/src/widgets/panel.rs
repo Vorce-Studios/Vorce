@@ -10,7 +10,9 @@ pub struct StyledPanel {
 
 impl StyledPanel {
     pub fn new(title: impl Into<String>) -> Self {
-        Self { title: title.into() }
+        Self {
+            title: title.into(),
+        }
     }
 
     pub fn show<R>(self, ui: &mut Ui, add_contents: impl FnOnce(&mut Ui) -> R) -> R {
@@ -56,7 +58,10 @@ pub fn render_panel_header<R>(
         .fill(crate::theme::colors::LIGHTER_GREY)
         .inner_margin(egui::Margin::symmetric(8, 4))
         .corner_radius(egui::CornerRadius::ZERO)
-        .stroke(egui::Stroke { width: 1.0, color: crate::theme::colors::STROKE_GREY })
+        .stroke(egui::Stroke {
+            width: 1.0,
+            color: crate::theme::colors::STROKE_GREY,
+        })
         .show(ui, |ui| {
             ui.set_width(ui.available_width());
             ui.horizontal(|ui| {

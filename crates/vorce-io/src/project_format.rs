@@ -45,7 +45,10 @@ impl ProjectFile {
         let now = Utc::now();
         Self {
             version: PROJECT_FILE_VERSION.to_string(),
-            metadata: ProjectMetadata { created_at: now, modified_at: now },
+            metadata: ProjectMetadata {
+                created_at: now,
+                modified_at: now,
+            },
             app_state,
         }
     }
@@ -55,7 +58,10 @@ impl ProjectFile {
     /// This function handles the low-level deserialization from either RON or JSON,
     /// depending on the file extension.
     pub fn load(path: &Path) -> Result<Self> {
-        let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("ron");
+        let extension = path
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .unwrap_or("ron");
 
         match extension {
             "json" | "ron" | "mapmap" | "mflow" | "vorce" => {}
@@ -72,7 +78,8 @@ impl ProjectFile {
         }
 
         let mut content = String::with_capacity(metadata.len() as usize);
-        file.take(MAX_PROJECT_FILE_SIZE + 1).read_to_string(&mut content)?;
+        file.take(MAX_PROJECT_FILE_SIZE + 1)
+            .read_to_string(&mut content)?;
 
         if content.len() as u64 > MAX_PROJECT_FILE_SIZE {
             return Err(IoError::FileTooLarge {
@@ -99,7 +106,10 @@ impl ProjectFile {
     /// This function handles the low-level serialization to either RON or JSON,
     /// depending on the file extension. It also updates the `modified_at` timestamp.
     pub fn save(&mut self, path: &Path) -> Result<()> {
-        let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("ron");
+        let extension = path
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .unwrap_or("ron");
 
         // Update the modification timestamp
         self.metadata.modified_at = Utc::now();
@@ -155,7 +165,10 @@ mod tests {
         assert_eq!(project_file.app_state, loaded_project_file.app_state);
 
         // Check timestamps - modified_at should be different, created_at should be the same
-        assert_eq!(project_file.metadata.created_at, loaded_project_file.metadata.created_at);
+        assert_eq!(
+            project_file.metadata.created_at,
+            loaded_project_file.metadata.created_at
+        );
         assert!(project_file.metadata.modified_at <= loaded_project_file.metadata.modified_at);
     }
 

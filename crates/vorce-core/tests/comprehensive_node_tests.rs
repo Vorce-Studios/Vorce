@@ -9,7 +9,11 @@ use vorce_core::module_eval::ModuleEvaluator;
 fn test_trigger_inversion_logic() {
     let mut evaluator = ModuleEvaluator::new();
 
-    let analysis = AudioAnalysisV2 { beat_detected: true, rms_volume: 0.8, ..Default::default() };
+    let analysis = AudioAnalysisV2 {
+        beat_detected: true,
+        rms_volume: 0.8,
+        ..Default::default()
+    };
     evaluator.update_audio(&analysis);
 
     let mut module = VorceModule {
@@ -22,8 +26,11 @@ fn test_trigger_inversion_logic() {
         next_part_id: 1,
     };
 
-    let mut config =
-        AudioTriggerOutputConfig { beat_output: true, volume_outputs: false, ..Default::default() };
+    let mut config = AudioTriggerOutputConfig {
+        beat_output: true,
+        volume_outputs: false,
+        ..Default::default()
+    };
     config.inverted_outputs.insert("Beat Out".to_string());
 
     let trigger_type = ModulePartType::Trigger(TriggerType::AudioFFT {
@@ -40,7 +47,10 @@ fn test_trigger_inversion_logic() {
     let values = &result.trigger_values[&t_id];
     assert_eq!(values[0], 0.0, "Beat output should be inverted to 0.0");
 
-    let analysis_no_beat = AudioAnalysisV2 { beat_detected: false, ..Default::default() };
+    let analysis_no_beat = AudioAnalysisV2 {
+        beat_detected: false,
+        ..Default::default()
+    };
     evaluator.update_audio(&analysis_no_beat);
     let result_no_beat = evaluator.evaluate(&module, &shared, 0);
     let values_no_beat = &result_no_beat.trigger_values[&t_id];
@@ -62,7 +72,10 @@ fn test_trigger_target_range_mapping() {
 
     // 1. Constant Trigger (1.0)
     let t_id = module.add_part_with_type(
-        ModulePartType::Trigger(TriggerType::Fixed { interval_ms: 0, offset_ms: 0 }),
+        ModulePartType::Trigger(TriggerType::Fixed {
+            interval_ms: 0,
+            offset_ms: 0,
+        }),
         (0.0, 0.0),
     );
 
@@ -77,7 +90,12 @@ fn test_trigger_target_range_mapping() {
 
     // CONNECTIONS:
     // Trigger -> Source Trigger In (Socket 0)
-    module.add_connection(t_id, "trigger_out".to_string(), s_id, "trigger_in".to_string());
+    module.add_connection(
+        t_id,
+        "trigger_out".to_string(),
+        s_id,
+        "trigger_in".to_string(),
+    );
     // Source -> Layer Input (Socket 0)
     module.add_connection(s_id, "media_out".to_string(), l_id, "media_in".to_string());
     // Layer -> Output Input (Socket 0)
