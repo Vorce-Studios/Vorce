@@ -3,7 +3,10 @@ use vorce_core::{Assignment, AssignmentManager, ControlSource, ControlTarget};
 
 #[test]
 fn test_assignment_creation() {
-    let source = ControlSource::Midi { channel: 0, note: 60 };
+    let source = ControlSource::Midi {
+        channel: 0,
+        note: 60,
+    };
     let target = ControlTarget::LayerOpacity { layer_id: 1 };
     let assignment = Assignment::new(source.clone(), target.clone());
 
@@ -20,7 +23,9 @@ fn test_assignment_manager_crud() {
     assert!(manager.assignments().is_empty());
 
     let a1 = Assignment::new(
-        ControlSource::Osc { address: "/test/1".into() },
+        ControlSource::Osc {
+            address: "/test/1".into(),
+        },
         ControlTarget::LayerOpacity { layer_id: 1 },
     );
     let id1 = a1.id;
@@ -29,7 +34,10 @@ fn test_assignment_manager_crud() {
     assert_eq!(manager.assignments().len(), 1);
 
     let a2 = Assignment::new(
-        ControlSource::Midi { channel: 1, note: 10 },
+        ControlSource::Midi {
+            channel: 1,
+            note: 10,
+        },
         ControlTarget::EffectParamF32 {
             layer_id: 1,
             effect_id: Uuid::new_v4(),
@@ -52,7 +60,10 @@ fn test_assignment_manager_crud() {
 fn test_assignment_serialization() {
     let mut manager = AssignmentManager::new();
     manager.add(Assignment::new(
-        ControlSource::Dmx { universe: 1, channel: 1 },
+        ControlSource::Dmx {
+            universe: 1,
+            channel: 1,
+        },
         ControlTarget::LayerOpacity { layer_id: 99 },
     ));
 
@@ -64,12 +75,26 @@ fn test_assignment_serialization() {
 
 #[test]
 fn test_control_source_variants() {
-    let midi = ControlSource::Midi { channel: 1, note: 64 };
-    let osc = ControlSource::Osc { address: "/test".into() };
-    let dmx = ControlSource::Dmx { universe: 0, channel: 255 };
+    let midi = ControlSource::Midi {
+        channel: 1,
+        note: 64,
+    };
+    let osc = ControlSource::Osc {
+        address: "/test".into(),
+    };
+    let dmx = ControlSource::Dmx {
+        universe: 0,
+        channel: 255,
+    };
 
     // Ensure equality works
-    assert_eq!(midi, ControlSource::Midi { channel: 1, note: 64 });
+    assert_eq!(
+        midi,
+        ControlSource::Midi {
+            channel: 1,
+            note: 64
+        }
+    );
     assert_ne!(midi, osc);
     assert_ne!(osc, dmx);
 }

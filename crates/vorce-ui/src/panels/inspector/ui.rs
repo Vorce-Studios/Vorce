@@ -7,16 +7,18 @@ pub fn inspector_section(
     default_open: bool,
     add_contents: impl FnOnce(&mut Ui),
 ) {
-    egui::CollapsingHeader::new(title).default_open(default_open).show(ui, |ui| {
-        egui::Frame::NONE
-            .fill(colors::LIGHTER_GREY)
-            .inner_margin(8.0)
-            .corner_radius(egui::CornerRadius::ZERO)
-            .show(ui, |ui| {
-                ui.set_min_width(ui.available_width());
-                add_contents(ui);
-            });
-    });
+    egui::CollapsingHeader::new(title)
+        .default_open(default_open)
+        .show(ui, |ui| {
+            egui::Frame::NONE
+                .fill(colors::LIGHTER_GREY)
+                .inner_margin(8.0)
+                .corner_radius(egui::CornerRadius::ZERO)
+                .show(ui, |ui| {
+                    ui.set_min_width(ui.available_width());
+                    add_contents(ui);
+                });
+        });
 }
 
 pub fn inspector_row(ui: &mut Ui, label: &str, add_contents: impl FnOnce(&mut Ui)) {

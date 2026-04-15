@@ -39,7 +39,10 @@ pub fn build_preview_context(
     source_ids.sort_unstable();
     source_ids.dedup();
 
-    InspectorPreviewContext { output_ids, upstream_source_part_ids: source_ids }
+    InspectorPreviewContext {
+        output_ids,
+        upstream_source_part_ids: source_ids,
+    }
 }
 
 fn collect_downstream_output_ids(
@@ -52,8 +55,16 @@ fn collect_downstream_output_ids(
         return;
     }
 
-    for connection in module.connections.iter().filter(|conn| conn.from_part == part_id) {
-        if let Some(next_part) = module.parts.iter().find(|part| part.id == connection.to_part) {
+    for connection in module
+        .connections
+        .iter()
+        .filter(|conn| conn.from_part == part_id)
+    {
+        if let Some(next_part) = module
+            .parts
+            .iter()
+            .find(|part| part.id == connection.to_part)
+        {
             match &next_part.part_type {
                 ModulePartType::Output(OutputType::Projector { id, .. }) => output_ids.push(*id),
                 _ => collect_downstream_output_ids(module, next_part.id, visited, output_ids),
@@ -79,7 +90,11 @@ fn collect_upstream_source_ids(
         }
     }
 
-    for connection in module.connections.iter().filter(|conn| conn.to_part == part_id) {
+    for connection in module
+        .connections
+        .iter()
+        .filter(|conn| conn.to_part == part_id)
+    {
         collect_upstream_source_ids(module, connection.from_part, visited, source_ids);
     }
 }
@@ -101,7 +116,11 @@ pub fn render_trigger_preview(
 ) {
     render_inspector_preview_toggle(canvas, ui);
     if canvas.show_inspector_previews {
-        let live_value = canvas.last_trigger_values.get(&part_id).copied().unwrap_or(0.0);
+        let live_value = canvas
+            .last_trigger_values
+            .get(&part_id)
+            .copied()
+            .unwrap_or(0.0);
         let is_live = live_value > 0.1;
         ui.ctx().request_repaint();
 
