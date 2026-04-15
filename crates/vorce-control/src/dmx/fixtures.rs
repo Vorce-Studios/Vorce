@@ -164,13 +164,7 @@ impl Fixture {
         universe: u16,
         start_address: u16,
     ) -> Self {
-        Self {
-            id,
-            name,
-            profile,
-            universe,
-            start_address,
-        }
+        Self { id, name, profile, universe, start_address }
     }
 
     /// Get the end address of this fixture

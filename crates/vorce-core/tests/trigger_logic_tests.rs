@@ -13,11 +13,7 @@ fn test_trigger_config_defaults() {
 
 #[test]
 fn test_trigger_config_apply_direct() {
-    let mut config = TriggerConfig {
-        min_value: 0.0,
-        max_value: 100.0,
-        ..TriggerConfig::default()
-    };
+    let mut config = TriggerConfig { min_value: 0.0, max_value: 100.0, ..TriggerConfig::default() };
 
     // Direct mapping
     assert_eq!(config.apply(0.0), 0.0);

@@ -11,19 +11,12 @@ pub fn draw_search_popup(
     let popup_width = 300.0;
     let popup_height = 200.0;
     let popup_rect = Rect::from_min_size(
-        Pos2::new(
-            canvas_rect.center().x - popup_width / 2.0,
-            canvas_rect.min.y + 50.0,
-        ),
+        Pos2::new(canvas_rect.center().x - popup_width / 2.0, canvas_rect.min.y + 50.0),
         Vec2::new(popup_width, popup_height),
     );
 
     let painter = ui.painter();
-    painter.rect_filled(
-        popup_rect,
-        0.0,
-        Color32::from_rgba_unmultiplied(30, 30, 40, 240),
-    );
+    painter.rect_filled(popup_rect, 0.0, Color32::from_rgba_unmultiplied(30, 30, 40, 240));
     painter.rect_stroke(
         popup_rect,
         0.0,
@@ -59,29 +52,27 @@ pub fn draw_search_popup(
                 .take(6)
                 .collect();
 
-            egui::ScrollArea::vertical()
-                .max_height(120.0)
-                .show(ui, |ui| {
-                    for part in matching_parts {
-                        let (_, _, icon, type_name) = utils::get_part_style(&part.part_type);
-                        let label = format!(
-                            "{} {} - {}",
-                            icon,
-                            type_name,
-                            utils::get_part_property_text(&part.part_type)
-                        );
-                        if ui
-                            .selectable_label(canvas.selected_parts.contains(&part.id), &label)
-                            .clicked()
-                        {
-                            canvas.selected_parts.clear();
-                            canvas.selected_parts.push(part.id);
-                            canvas.pan_offset =
-                                Vec2::new(-part.position.0 + 200.0, -part.position.1 + 150.0);
-                            canvas.show_search = false;
-                        }
+            egui::ScrollArea::vertical().max_height(120.0).show(ui, |ui| {
+                for part in matching_parts {
+                    let (_, _, icon, type_name) = utils::get_part_style(&part.part_type);
+                    let label = format!(
+                        "{} {} - {}",
+                        icon,
+                        type_name,
+                        utils::get_part_property_text(&part.part_type)
+                    );
+                    if ui
+                        .selectable_label(canvas.selected_parts.contains(&part.id), &label)
+                        .clicked()
+                    {
+                        canvas.selected_parts.clear();
+                        canvas.selected_parts.push(part.id);
+                        canvas.pan_offset =
+                            Vec2::new(-part.position.0 + 200.0, -part.position.1 + 150.0);
+                        canvas.show_search = false;
                     }
-                });
+                }
+            });
         });
     });
 }

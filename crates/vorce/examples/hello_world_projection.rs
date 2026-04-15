@@ -50,19 +50,14 @@ fn main() {
 
     let texture = backend.create_texture(tex_desc).unwrap();
     let texture_data = create_hello_world_texture(512, 512, paint.color);
-    backend
-        .upload_texture(texture.clone(), &texture_data)
-        .unwrap();
+    backend.upload_texture(texture.clone(), &texture_data).unwrap();
 
     event_loop.set_control_flow(ControlFlow::Poll);
 
     #[allow(deprecated)]
     event_loop
         .run(move |event, elwt| match event {
-            Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                ..
-            } => {
+            Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => {
                 elwt.exit();
             }
             Event::WindowEvent {
@@ -80,26 +75,19 @@ fn main() {
             } => {
                 elwt.exit();
             }
-            Event::WindowEvent {
-                event: WindowEvent::RedrawRequested,
-                ..
-            } => {
+            Event::WindowEvent { event: WindowEvent::RedrawRequested, .. } => {
                 let frame = match surface.get_current_texture() {
                     wgpu::CurrentSurfaceTexture::Success(frame)
                     | wgpu::CurrentSurfaceTexture::Suboptimal(frame) => frame,
                     _ => return,
                 };
 
-                let view = frame
-                    .texture
-                    .create_view(&wgpu::TextureViewDescriptor::default());
+                let view = frame.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
                 let mut encoder =
-                    backend
-                        .device()
-                        .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                            label: Some("Render Encoder"),
-                        });
+                    backend.device().create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                        label: Some("Render Encoder"),
+                    });
 
                 let texture_view = texture.create_view();
                 let bind_group = quad_renderer.create_bind_group(backend.device(), &texture_view);

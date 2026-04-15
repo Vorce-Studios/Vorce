@@ -53,11 +53,7 @@ fn test_release_smoke_automation_empty_project() {
 
     // Verify screenshot was created
     let screenshot_path = output_dir.join("automation_frame_10.png");
-    assert!(
-        screenshot_path.exists(),
-        "screenshot was not created at {:?}",
-        screenshot_path
-    );
+    assert!(screenshot_path.exists(), "screenshot was not created at {:?}", screenshot_path);
 
     let img = image::open(&screenshot_path).expect("failed to open created screenshot");
     assert_eq!(img.width(), 1280);
