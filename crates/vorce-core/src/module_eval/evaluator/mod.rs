@@ -80,7 +80,11 @@ impl ModuleEvaluator {
         } else {
             (((r - g) / delta) + 4.0) / 6.0
         };
-        let saturation = if max <= f32::EPSILON { 0.0 } else { delta / max };
+        let saturation = if max <= f32::EPSILON {
+            0.0
+        } else {
+            delta / max
+        };
 
         (hue, saturation)
     }
@@ -88,9 +92,21 @@ impl ModuleEvaluator {
     #[allow(clippy::type_complexity)]
     fn hue_node_defaults(
         hue_node: &HueNodeType,
-    ) -> (f32, Option<f32>, Option<f32>, Option<f32>, Option<Vec<String>>) {
+    ) -> (
+        f32,
+        Option<f32>,
+        Option<f32>,
+        Option<f32>,
+        Option<Vec<String>>,
+    ) {
         match hue_node {
-            HueNodeType::SingleLamp { id, brightness, color, effect_active, .. } => {
+            HueNodeType::SingleLamp {
+                id,
+                brightness,
+                color,
+                effect_active,
+                ..
+            } => {
                 let (hue, saturation) = Self::rgb_to_hue_saturation(*color);
                 (
                     *brightness,
@@ -100,7 +116,13 @@ impl ModuleEvaluator {
                     Some(vec![id.clone()]),
                 )
             }
-            HueNodeType::MultiLamp { ids, brightness, color, effect_active, .. } => {
+            HueNodeType::MultiLamp {
+                ids,
+                brightness,
+                color,
+                effect_active,
+                ..
+            } => {
                 let (hue, saturation) = Self::rgb_to_hue_saturation(*color);
                 (
                     *brightness,
@@ -110,9 +132,20 @@ impl ModuleEvaluator {
                     Some(ids.clone()),
                 )
             }
-            HueNodeType::EntertainmentGroup { brightness, color, effect_active, .. } => {
+            HueNodeType::EntertainmentGroup {
+                brightness,
+                color,
+                effect_active,
+                ..
+            } => {
                 let (hue, saturation) = Self::rgb_to_hue_saturation(*color);
-                (*brightness, Some(hue), Some(saturation), effect_active.then_some(1.0), None)
+                (
+                    *brightness,
+                    Some(hue),
+                    Some(saturation),
+                    effect_active.then_some(1.0),
+                    None,
+                )
             }
         }
     }
@@ -170,31 +203,34 @@ impl ModuleEvaluator {
 
     /// Get a spare RenderOp from the cache or create a new one (Object Pooling)
     fn get_spare_render_op(&mut self) -> RenderOp {
-        self.cached_result.spare_render_ops.pop().unwrap_or_else(|| RenderOp {
-            output_part_id: 0,
-            output_type: OutputType::Projector {
-                id: 0,
-                name: String::new(),
-                hide_cursor: false,
-                target_screen: 0,
-                show_in_preview_panel: true,
-                extra_preview_window: false,
-                output_width: 1920,
-                output_height: 1080,
-                output_fps: 60.0,
-                ndi_enabled: false,
-                ndi_stream_name: String::new(),
-            },
-            layer_part_id: 0,
-            mesh: MeshType::default(),
-            opacity: 1.0,
-            blend_mode: None,
-            mapping_mode: false,
-            source_part_id: None,
-            source_props: SourceProperties::default_identity(),
-            effects: Vec::new(),
-            masks: Vec::new(),
-        })
+        self.cached_result
+            .spare_render_ops
+            .pop()
+            .unwrap_or_else(|| RenderOp {
+                output_part_id: 0,
+                output_type: OutputType::Projector {
+                    id: 0,
+                    name: String::new(),
+                    hide_cursor: false,
+                    target_screen: 0,
+                    show_in_preview_panel: true,
+                    extra_preview_window: false,
+                    output_width: 1920,
+                    output_height: 1080,
+                    output_fps: 60.0,
+                    ndi_enabled: false,
+                    ndi_stream_name: String::new(),
+                },
+                layer_part_id: 0,
+                mesh: MeshType::default(),
+                opacity: 1.0,
+                blend_mode: None,
+                mapping_mode: false,
+                source_part_id: None,
+                source_props: SourceProperties::default_identity(),
+                effects: Vec::new(),
+                masks: Vec::new(),
+            })
     }
 
     /// Evaluate the module graph for the current frame.
@@ -207,7 +243,10 @@ impl ModuleEvaluator {
         let mut rng = rand::rng();
         let now = Instant::now();
 
-        self.current_dt = now.duration_since(self.last_eval_time).as_secs_f32().min(0.5);
+        self.current_dt = now
+            .duration_since(self.last_eval_time)
+            .as_secs_f32()
+            .min(0.5);
         self.last_eval_time = now;
         self.current_frame = self.current_frame.wrapping_add(1);
 
@@ -226,7 +265,10 @@ impl ModuleEvaluator {
                 part_index_cache.insert(part.id, idx);
             }
             for (idx, conn) in module.connections.iter().enumerate() {
-                conn_index_cache.entry(conn.to_part).or_insert_with(Vec::new).push(idx);
+                conn_index_cache
+                    .entry(conn.to_part)
+                    .or_insert_with(Vec::new)
+                    .push(idx);
             }
             self.indices_cache.insert(
                 module.id,
@@ -245,7 +287,11 @@ impl ModuleEvaluator {
         for part in &module.parts {
             if let ModulePartType::Trigger(trigger_type) = &part.part_type {
                 let state = self.trigger_states.entry(part.id).or_default();
-                let values = self.cached_result.trigger_values.entry(part.id).or_default();
+                let values = self
+                    .cached_result
+                    .trigger_values
+                    .entry(part.id)
+                    .or_default();
                 values.clear();
 
                 let manual_fired = self.manual_triggers.contains(&part.id);
@@ -272,7 +318,11 @@ impl ModuleEvaluator {
                 }
                 if !part.outputs.is_empty() {
                     let output_count = part.outputs.len();
-                    let values = self.cached_result.trigger_values.entry(part.id).or_default();
+                    let values = self
+                        .cached_result
+                        .trigger_values
+                        .entry(part.id)
+                        .or_default();
                     values.clear();
                     values.resize(output_count, 0.0);
                     values[output_count - 1] = activity;
@@ -362,10 +412,16 @@ impl ModuleEvaluator {
                     .and_then(|m| m.get(&0))
                     .copied()
                     .unwrap_or(default_brightness);
-                let hue =
-                    socket_inputs.get(&part.id).and_then(|m| m.get(&1)).copied().or(default_hue);
-                let strobe =
-                    socket_inputs.get(&part.id).and_then(|m| m.get(&2)).copied().or(default_strobe);
+                let hue = socket_inputs
+                    .get(&part.id)
+                    .and_then(|m| m.get(&1))
+                    .copied()
+                    .or(default_hue);
+                let strobe = socket_inputs
+                    .get(&part.id)
+                    .and_then(|m| m.get(&2))
+                    .copied()
+                    .or(default_strobe);
                 self.cached_result.source_commands.insert(
                     part.id,
                     SourceCommand::HueOutput {
@@ -453,39 +509,51 @@ impl ModuleEvaluator {
                 if path.is_empty() {
                     return None;
                 }
-                Some(SourceCommand::PlayMedia { path: path.clone(), trigger_value })
-            }
-            SourceType::VideoMulti { shared_id, .. } | SourceType::ImageMulti { shared_id, .. } => {
-                shared_state.get(shared_id).map(|item| SourceCommand::PlaySharedMedia {
-                    id: shared_id.clone(),
-                    path: item.path.clone(),
+                Some(SourceCommand::PlayMedia {
+                    path: path.clone(),
                     trigger_value,
                 })
+            }
+            SourceType::VideoMulti { shared_id, .. } | SourceType::ImageMulti { shared_id, .. } => {
+                shared_state
+                    .get(shared_id)
+                    .map(|item| SourceCommand::PlaySharedMedia {
+                        id: shared_id.clone(),
+                        path: item.path.clone(),
+                        trigger_value,
+                    })
             }
             SourceType::Shader { name, params } => Some(SourceCommand::PlayShader {
                 name: name.clone(),
                 params: params.clone(),
                 trigger_value,
             }),
-            SourceType::NdiInput { source_name } => {
-                Some(SourceCommand::NdiInput { source_name: source_name.clone(), trigger_value })
-            }
-            SourceType::LiveInput { device_id } => {
-                Some(SourceCommand::LiveInput { device_id: *device_id, trigger_value })
-            }
+            SourceType::NdiInput { source_name } => Some(SourceCommand::NdiInput {
+                source_name: source_name.clone(),
+                trigger_value,
+            }),
+            SourceType::LiveInput { device_id } => Some(SourceCommand::LiveInput {
+                device_id: *device_id,
+                trigger_value,
+            }),
             #[cfg(target_os = "windows")]
-            SourceType::SpoutInput { sender_name } => {
-                Some(SourceCommand::SpoutInput { sender_name: sender_name.clone(), trigger_value })
-            }
-            SourceType::Bevy3DModel { path, position, rotation, scale, .. } => {
-                Some(SourceCommand::Bevy3DModel {
-                    path: path.clone(),
-                    position: *position,
-                    rotation: *rotation,
-                    scale: *scale,
-                    trigger_value,
-                })
-            }
+            SourceType::SpoutInput { sender_name } => Some(SourceCommand::SpoutInput {
+                sender_name: sender_name.clone(),
+                trigger_value,
+            }),
+            SourceType::Bevy3DModel {
+                path,
+                position,
+                rotation,
+                scale,
+                ..
+            } => Some(SourceCommand::Bevy3DModel {
+                path: path.clone(),
+                position: *position,
+                rotation: *rotation,
+                scale: *scale,
+                trigger_value,
+            }),
             _ => Some(SourceCommand::BevyInput { trigger_value }),
         }
     }
@@ -671,8 +739,10 @@ mod evaluator_tests {
         let shared = crate::module::SharedMediaState::default();
 
         let mut module = create_test_module();
-        let trigger_part =
-            ModulePartType::Trigger(TriggerType::Fixed { interval_ms: 100, offset_ms: 0 });
+        let trigger_part = ModulePartType::Trigger(TriggerType::Fixed {
+            interval_ms: 100,
+            offset_ms: 0,
+        });
         let part_id = module.add_part_with_type(trigger_part, (0.0, 0.0));
 
         // Initial eval - t=0, phase=0, duration=10, 0 < 10 -> 1.0
@@ -697,8 +767,11 @@ mod evaluator_tests {
         let mut evaluator = ModuleEvaluator::new();
 
         // Setup Audio Analysis with a "Beat"
-        let analysis =
-            AudioAnalysisV2 { beat_detected: true, rms_volume: 0.8, ..Default::default() };
+        let analysis = AudioAnalysisV2 {
+            beat_detected: true,
+            rms_volume: 0.8,
+            ..Default::default()
+        };
 
         evaluator.update_audio(&analysis);
 
@@ -737,12 +810,20 @@ mod evaluator_tests {
         let mut module = create_test_module();
 
         // 1. Trigger (Fixed -> always 1.0 at start)
-        let t_type = ModulePartType::Trigger(TriggerType::Fixed { interval_ms: 0, offset_ms: 0 }); // 0 interval = always on
+        let t_type = ModulePartType::Trigger(TriggerType::Fixed {
+            interval_ms: 0,
+            offset_ms: 0,
+        }); // 0 interval = always on
         let t_id = module.add_part_with_type(t_type, (0.0, 0.0));
 
         // 2. Source (Target)
         let s_id = module.add_part(crate::module::PartType::Source, (200.0, 0.0));
-        module.add_connection(t_id, "trigger_out".to_string(), s_id, "trigger_in".to_string()); // Trigger Out -> Source Trigger In
+        module.add_connection(
+            t_id,
+            "trigger_out".to_string(),
+            s_id,
+            "trigger_in".to_string(),
+        ); // Trigger Out -> Source Trigger In
 
         let shared = crate::module::SharedMediaState::default();
         let _result = evaluator.evaluate(&module, &shared, 0);
@@ -763,7 +844,12 @@ mod evaluator_tests {
         assert!(result.source_commands.contains_key(&s_id));
 
         // Now remove connection
-        module.remove_connection(t_id, "trigger_out".to_string(), s_id, "trigger_in".to_string());
+        module.remove_connection(
+            t_id,
+            "trigger_out".to_string(),
+            s_id,
+            "trigger_in".to_string(),
+        );
 
         let result = evaluator.evaluate(&module, &shared, 1);
 
@@ -779,7 +865,10 @@ mod evaluator_tests {
         // Graph: FixedTrigger(Always) -> Source -> Layer -> Output
 
         // 1. Trigger
-        let t_type = ModulePartType::Trigger(TriggerType::Fixed { interval_ms: 0, offset_ms: 0 });
+        let t_type = ModulePartType::Trigger(TriggerType::Fixed {
+            interval_ms: 0,
+            offset_ms: 0,
+        });
         let t_id = module.add_part_with_type(t_type, (0.0, 0.0));
 
         // 2. Source
@@ -798,7 +887,12 @@ mod evaluator_tests {
         let o_id = module.add_part(crate::module::PartType::Output, (300.0, 0.0));
 
         // Connections
-        module.add_connection(t_id, "trigger_out".to_string(), s_id, "trigger_in".to_string());
+        module.add_connection(
+            t_id,
+            "trigger_out".to_string(),
+            s_id,
+            "trigger_in".to_string(),
+        );
         module.add_connection(s_id, "media_out".to_string(), l_id, "media_in".to_string());
         module.add_connection(l_id, "layer_out".to_string(), o_id, "layer_in".to_string());
 
@@ -826,7 +920,10 @@ mod evaluator_tests {
         let mut module = create_test_module();
 
         let t_id = module.add_part_with_type(
-            ModulePartType::Trigger(TriggerType::Fixed { interval_ms: 0, offset_ms: 0 }),
+            ModulePartType::Trigger(TriggerType::Fixed {
+                interval_ms: 0,
+                offset_ms: 0,
+            }),
             (0.0, 0.0),
         );
 
@@ -843,7 +940,12 @@ mod evaluator_tests {
 
         // Repro: if the trigger connection is inserted first, the render trace must
         // still follow layer socket 0 (visual chain) rather than socket 1 (trigger).
-        module.add_connection(t_id, "trigger_out".to_string(), l_id, "trigger_in".to_string());
+        module.add_connection(
+            t_id,
+            "trigger_out".to_string(),
+            l_id,
+            "trigger_in".to_string(),
+        );
         module.add_connection(s_id, "media_out".to_string(), l_id, "media_in".to_string());
         module.add_connection(l_id, "layer_out".to_string(), o_id, "layer_in".to_string());
 
@@ -862,7 +964,10 @@ mod evaluator_tests {
         let mut module = create_test_module();
 
         // Master Node (Trigger Type for simplicity, acting as master)
-        let m_type = ModulePartType::Trigger(TriggerType::Fixed { interval_ms: 0, offset_ms: 0 });
+        let m_type = ModulePartType::Trigger(TriggerType::Fixed {
+            interval_ms: 0,
+            offset_ms: 0,
+        });
         let m_id = module.add_part_with_type(m_type, (0.0, 0.0));
 
         // Configure as Master
@@ -887,12 +992,20 @@ mod evaluator_tests {
 
         // Driving Trigger
         let t_id = module.add_part_with_type(
-            ModulePartType::Trigger(TriggerType::Fixed { interval_ms: 0, offset_ms: 0 }),
+            ModulePartType::Trigger(TriggerType::Fixed {
+                interval_ms: 0,
+                offset_ms: 0,
+            }),
             (-100.0, 0.0),
         );
 
         // Connect Driving Trigger -> Master Trigger In (Vis)
-        module.add_connection(t_id, "trigger_out".to_string(), m_id, "trigger_vis_in".to_string());
+        module.add_connection(
+            t_id,
+            "trigger_out".to_string(),
+            m_id,
+            "trigger_vis_in".to_string(),
+        );
 
         // Slave Node (Layer)
         let s_id = module.add_part(crate::module::PartType::Layer, (100.0, 0.0));
@@ -973,8 +1086,13 @@ mod evaluator_tests {
         );
 
         let result = evaluator.evaluate(&module, &crate::module::SharedMediaState::default(), 0);
-        let Some(SourceCommand::HueOutput { brightness, hue, saturation, strobe, ids }) =
-            result.source_commands.get(&hue_id)
+        let Some(SourceCommand::HueOutput {
+            brightness,
+            hue,
+            saturation,
+            strobe,
+            ids,
+        }) = result.source_commands.get(&hue_id)
         else {
             panic!("Expected HueOutput command");
         };

@@ -199,7 +199,10 @@ impl Compositor {
         base_view: &Arc<wgpu::TextureView>,
         blend_view: &Arc<wgpu::TextureView>,
     ) -> Arc<wgpu::BindGroup> {
-        let key = (Arc::as_ptr(base_view) as usize, Arc::as_ptr(blend_view) as usize);
+        let key = (
+            Arc::as_ptr(base_view) as usize,
+            Arc::as_ptr(blend_view) as usize,
+        );
 
         if let Some(cached) = self.bind_group_cache.get(&key) {
             if cached.base_weak.upgrade().is_some() && cached.blend_weak.upgrade().is_some() {
@@ -251,11 +254,12 @@ impl Compositor {
             _padding: [0.0; 2],
         };
 
-        self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Compositor Uniform Buffer"),
-            contents: bytemuck::cast_slice(&[params]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        })
+        self.device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Compositor Uniform Buffer"),
+                contents: bytemuck::cast_slice(&[params]),
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            })
     }
 
     /// Reset cache index at start of frame
@@ -283,11 +287,13 @@ impl Compositor {
                 _padding: [0.0; 2],
             };
 
-            let buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Compositor Uniform Buffer"),
-                contents: bytemuck::cast_slice(&[params]),
-                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            });
+            let buffer = self
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Compositor Uniform Buffer"),
+                    contents: bytemuck::cast_slice(&[params]),
+                    usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                });
 
             let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
                 label: Some("Compositor Uniform Bind Group"),
@@ -318,7 +324,9 @@ impl Compositor {
             cache_entry.last_params = Some(params);
         }
 
-        let bind_group = self.uniform_cache[self.current_cache_index].bind_group.clone();
+        let bind_group = self.uniform_cache[self.current_cache_index]
+            .bind_group
+            .clone();
         self.current_cache_index += 1;
 
         bind_group

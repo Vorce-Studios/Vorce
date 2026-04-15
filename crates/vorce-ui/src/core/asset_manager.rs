@@ -133,7 +133,8 @@ impl AssetManager {
                     if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
                         if let Ok(data) = std::fs::read_to_string(entry.path()) {
                             if let Ok(template) = serde_json::from_str::<ProjectTemplate>(&data) {
-                                self.project_templates.insert(template.name.clone(), template);
+                                self.project_templates
+                                    .insert(template.name.clone(), template);
                             }
                         }
                     }
@@ -205,19 +206,28 @@ impl AssetManager {
             .filter(|preset| {
                 preset.name_lower.contains(&query_lower)
                     || preset.description_lower.contains(&query_lower)
-                    || preset.tags_lower.iter().any(|tag| tag.contains(&query_lower))
+                    || preset
+                        .tags_lower
+                        .iter()
+                        .any(|tag| tag.contains(&query_lower))
             })
             .collect()
     }
 
     /// Get effect presets by category
     pub fn effect_presets_by_category(&self, category: &str) -> Vec<&EffectPreset> {
-        self.effect_presets.values().filter(|preset| preset.category == category).collect()
+        self.effect_presets
+            .values()
+            .filter(|preset| preset.category == category)
+            .collect()
     }
 
     /// Get favorite effect presets
     pub fn favorite_effect_presets(&self) -> Vec<&EffectPreset> {
-        self.effect_presets.values().filter(|preset| preset.favorite).collect()
+        self.effect_presets
+            .values()
+            .filter(|preset| preset.favorite)
+            .collect()
     }
 
     /// Render asset browser UI
