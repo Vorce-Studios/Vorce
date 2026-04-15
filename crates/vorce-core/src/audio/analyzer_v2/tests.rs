@@ -19,7 +19,10 @@ fn test_rms_calculation() {
 
 #[test]
 fn test_process_samples() {
-    let config = AudioAnalyzerV2Config { fft_size: 1024, ..Default::default() };
+    let config = AudioAnalyzerV2Config {
+        fft_size: 1024,
+        ..Default::default()
+    };
     let mut analyzer = AudioAnalyzerV2::new(config);
 
     // Generate test samples (440Hz sine wave)
@@ -32,17 +35,33 @@ fn test_process_samples() {
     analyzer.process_samples(&samples, 0.0);
 
     let analysis = analyzer.get_latest_analysis();
-    assert!(analysis.rms_volume > 0.0, "RMS should be > 0, was {}", analysis.rms_volume);
-    assert!(analysis.peak_volume > 0.0, "Peak should be > 0, was {}", analysis.peak_volume);
+    assert!(
+        analysis.rms_volume > 0.0,
+        "RMS should be > 0, was {}",
+        analysis.rms_volume
+    );
+    assert!(
+        analysis.peak_volume > 0.0,
+        "Peak should be > 0, was {}",
+        analysis.peak_volume
+    );
 
     // Check that FFT was performed (magnitudes should have values)
     let mag_sum: f32 = analysis.fft_magnitudes.iter().sum();
-    assert!(mag_sum > 0.0, "FFT magnitudes should have values, sum={}", mag_sum);
+    assert!(
+        mag_sum > 0.0,
+        "FFT magnitudes should have values, sum={}",
+        mag_sum
+    );
 }
 
 #[test]
 fn test_frequency_bands() {
-    let config = AudioAnalyzerV2Config { fft_size: 2048, sample_rate: 44100, ..Default::default() };
+    let config = AudioAnalyzerV2Config {
+        fft_size: 2048,
+        sample_rate: 44100,
+        ..Default::default()
+    };
     let mut analyzer = AudioAnalyzerV2::new(config);
 
     // Generate 100Hz sine (should appear in bass band)
@@ -192,7 +211,10 @@ fn test_bpm_estimation_simulation() {
 
 #[test]
 fn test_update_config_resizes_buffers() {
-    let mut config = AudioAnalyzerV2Config { fft_size: 1024, ..Default::default() };
+    let mut config = AudioAnalyzerV2Config {
+        fft_size: 1024,
+        ..Default::default()
+    };
     let mut analyzer = AudioAnalyzerV2::new(config.clone());
 
     // Check initial sizes
@@ -236,12 +258,22 @@ fn test_sanitization_of_bad_input() {
 
     // 3. Magnitudes should all be finite
     for (i, mag) in analysis.fft_magnitudes.iter().enumerate() {
-        assert!(mag.is_finite(), "FFT Magnitude at {} is non-finite: {}", i, mag);
+        assert!(
+            mag.is_finite(),
+            "FFT Magnitude at {} is non-finite: {}",
+            i,
+            mag
+        );
     }
 
     // 4. Band energies should be finite
     for (i, band) in analysis.band_energies.iter().enumerate() {
-        assert!(band.is_finite(), "Band Energy at {} is non-finite: {}", i, band);
+        assert!(
+            band.is_finite(),
+            "Band Energy at {} is non-finite: {}",
+            i,
+            band
+        );
     }
 }
 
@@ -278,7 +310,10 @@ fn test_calculate_bpm_sparse_data() {
 
     // Should have detected beats
     // But BPM should be None because we only have 3 beats (2 intervals)
-    assert_eq!(analysis.tempo_bpm, None, "BPM should be None for sparse data (only 3 beats)");
+    assert_eq!(
+        analysis.tempo_bpm, None,
+        "BPM should be None for sparse data (only 3 beats)"
+    );
 }
 
 #[test]
@@ -399,8 +434,9 @@ fn test_bpm_beat_timestamps_limit() {
     let mut analyzer = AudioAnalyzerV2::new(config);
 
     let silence = vec![0.0f32; 1024];
-    let kick: Vec<f32> =
-        (0..1024).map(|i| (2.0 * std::f32::consts::PI * 60.0 * i as f32 / 44100.0).sin()).collect();
+    let kick: Vec<f32> = (0..1024)
+        .map(|i| (2.0 * std::f32::consts::PI * 60.0 * i as f32 / 44100.0).sin())
+        .collect();
 
     // Feed enough beats to exceed the 16 beat limit for calculating BPM.
     for i in 0..40 {

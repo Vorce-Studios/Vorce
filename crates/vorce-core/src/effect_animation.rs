@@ -51,13 +51,25 @@ impl EffectParameterAnimator {
     pub fn new() -> Self {
         let clip = AnimationClip::new("Effect Automation".to_string());
         let player = AnimationPlayer::new(clip.clone());
-        Self { clip, player, bindings: Vec::new(), next_id: 1, value_cache: HashMap::new() }
+        Self {
+            clip,
+            player,
+            bindings: Vec::new(),
+            next_id: 1,
+            value_cache: HashMap::new(),
+        }
     }
 
     /// Create an animator with an existing clip
     pub fn with_clip(clip: AnimationClip) -> Self {
         let player = AnimationPlayer::new(clip.clone());
-        Self { clip, player, bindings: Vec::new(), next_id: 1, value_cache: HashMap::new() }
+        Self {
+            clip,
+            player,
+            bindings: Vec::new(),
+            next_id: 1,
+            value_cache: HashMap::new(),
+        }
     }
 
     /// Add a parameter binding and create a track for it

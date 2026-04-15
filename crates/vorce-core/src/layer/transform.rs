@@ -38,27 +38,42 @@ impl Transform {
 
     /// Create transform with position
     pub fn with_position(position: Vec2) -> Self {
-        Self { position, ..Default::default() }
+        Self {
+            position,
+            ..Default::default()
+        }
     }
 
     /// Create transform with scale
     pub fn with_scale(scale: Vec2) -> Self {
-        Self { scale, ..Default::default() }
+        Self {
+            scale,
+            ..Default::default()
+        }
     }
 
     /// Create transform with uniform scale
     pub fn with_uniform_scale(scale: f32) -> Self {
-        Self { scale: Vec2::splat(scale), ..Default::default() }
+        Self {
+            scale: Vec2::splat(scale),
+            ..Default::default()
+        }
     }
 
     /// Create transform with rotation (in radians)
     pub fn with_rotation(rotation: Vec3) -> Self {
-        Self { rotation, ..Default::default() }
+        Self {
+            rotation,
+            ..Default::default()
+        }
     }
 
     /// Set Z rotation (most common for 2D)
     pub fn with_rotation_z(angle: f32) -> Self {
-        Self { rotation: Vec3::new(0.0, 0.0, angle), ..Default::default() }
+        Self {
+            rotation: Vec3::new(0.0, 0.0, angle),
+            ..Default::default()
+        }
     }
 
     /// Calculate 4x4 transformation matrix

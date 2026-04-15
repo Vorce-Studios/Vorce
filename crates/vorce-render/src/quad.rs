@@ -29,10 +29,22 @@ impl QuadVertex {
 
 /// Fullscreen quad vertices
 const QUAD_VERTICES: &[QuadVertex] = &[
-    QuadVertex { position: [-1.0, -1.0, 0.0], uv: [0.0, 1.0] },
-    QuadVertex { position: [1.0, -1.0, 0.0], uv: [1.0, 1.0] },
-    QuadVertex { position: [1.0, 1.0, 0.0], uv: [1.0, 0.0] },
-    QuadVertex { position: [-1.0, 1.0, 0.0], uv: [0.0, 0.0] },
+    QuadVertex {
+        position: [-1.0, -1.0, 0.0],
+        uv: [0.0, 1.0],
+    },
+    QuadVertex {
+        position: [1.0, -1.0, 0.0],
+        uv: [1.0, 1.0],
+    },
+    QuadVertex {
+        position: [1.0, 1.0, 0.0],
+        uv: [1.0, 0.0],
+    },
+    QuadVertex {
+        position: [-1.0, 1.0, 0.0],
+        uv: [0.0, 0.0],
+    },
 ];
 
 const QUAD_INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
@@ -145,7 +157,13 @@ impl QuadRenderer {
             cache: None,
         });
 
-        Ok(Self { vertex_buffer, index_buffer, pipeline, bind_group_layout, sampler })
+        Ok(Self {
+            vertex_buffer,
+            index_buffer,
+            pipeline,
+            bind_group_layout,
+            sampler,
+        })
     }
 
     /// Create a bind group for a texture
@@ -200,7 +218,10 @@ mod tests {
 
     #[test]
     fn test_quad_vertex_size() {
-        assert_eq!(std::mem::size_of::<QuadVertex>(), 5 * std::mem::size_of::<f32>());
+        assert_eq!(
+            std::mem::size_of::<QuadVertex>(),
+            5 * std::mem::size_of::<f32>()
+        );
     }
 
     #[test]
