@@ -14,8 +14,5 @@ pub struct AssignmentContext<'a> {
 
 /// Renders the assignment panel.
 pub fn show(ctx: &Context, context: AssignmentContext) {
-    context
-        .ui_state
-        .assignment_panel
-        .show(ctx, &context.state.assignment_manager);
+    context.ui_state.assignment_panel.show(ctx, &context.state.assignment_manager);
 }

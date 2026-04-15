@@ -9,30 +9,15 @@ pub(crate) fn get_mappings() -> Vec<ProfileMapping> {
         // ============================================
 
         // CC Controls
-        cc_mapping(
-            0,
-            16,
-            "CH2 Gain",
-            ControlTarget::EffectParameter(0, "ch2_gain".to_string()),
-        ),
+        cc_mapping(0, 16, "CH2 Gain", ControlTarget::EffectParameter(0, "ch2_gain".to_string())),
         cc_mapping(
             0,
             17,
             "CH2 Treble",
             ControlTarget::EffectParameter(0, "ch2_treble".to_string()),
         ),
-        cc_mapping(
-            0,
-            18,
-            "CH2 Mid",
-            ControlTarget::EffectParameter(0, "ch2_mid".to_string()),
-        ),
-        cc_mapping(
-            0,
-            19,
-            "CH2 Bass",
-            ControlTarget::EffectParameter(0, "ch2_bass".to_string()),
-        ),
+        cc_mapping(0, 18, "CH2 Mid", ControlTarget::EffectParameter(0, "ch2_mid".to_string())),
+        cc_mapping(0, 19, "CH2 Bass", ControlTarget::EffectParameter(0, "ch2_bass".to_string())),
         cc_mapping(
             0,
             12,
@@ -41,45 +26,20 @@ pub(crate) fn get_mappings() -> Vec<ProfileMapping> {
         ),
         cc_mapping(0, 7, "CH2 Fader", ControlTarget::LayerOpacity(0)),
         // Note Controls
-        note_mapping(
-            0,
-            50,
-            "CH2 Bass OFF",
-            ControlTarget::Custom("ch2_bass_off".to_string()),
-        ),
-        note_mapping(
-            0,
-            51,
-            "CH2 PFL",
-            ControlTarget::Custom("ch2_pfl".to_string()),
-        ),
+        note_mapping(0, 50, "CH2 Bass OFF", ControlTarget::Custom("ch2_bass_off".to_string())),
+        note_mapping(0, 51, "CH2 PFL", ControlTarget::Custom("ch2_pfl".to_string())),
         // ============================================
         // CHANNEL 3 MIDI MODE (MIDI Channel 2, 0-indexed = 1)
         // ============================================
-        cc_mapping(
-            1,
-            16,
-            "CH3 Gain",
-            ControlTarget::EffectParameter(1, "ch3_gain".to_string()),
-        ),
+        cc_mapping(1, 16, "CH3 Gain", ControlTarget::EffectParameter(1, "ch3_gain".to_string())),
         cc_mapping(
             1,
             17,
             "CH3 Treble",
             ControlTarget::EffectParameter(1, "ch3_treble".to_string()),
         ),
-        cc_mapping(
-            1,
-            18,
-            "CH3 Mid",
-            ControlTarget::EffectParameter(1, "ch3_mid".to_string()),
-        ),
-        cc_mapping(
-            1,
-            19,
-            "CH3 Bass",
-            ControlTarget::EffectParameter(1, "ch3_bass".to_string()),
-        ),
+        cc_mapping(1, 18, "CH3 Mid", ControlTarget::EffectParameter(1, "ch3_mid".to_string())),
+        cc_mapping(1, 19, "CH3 Bass", ControlTarget::EffectParameter(1, "ch3_bass".to_string())),
         cc_mapping(
             1,
             12,
@@ -87,18 +47,8 @@ pub(crate) fn get_mappings() -> Vec<ProfileMapping> {
             ControlTarget::EffectParameter(1, "ch3_fx_send".to_string()),
         ),
         cc_mapping(1, 7, "CH3 Fader", ControlTarget::LayerOpacity(1)),
-        note_mapping(
-            1,
-            50,
-            "CH3 Bass OFF",
-            ControlTarget::Custom("ch3_bass_off".to_string()),
-        ),
-        note_mapping(
-            1,
-            51,
-            "CH3 PFL",
-            ControlTarget::Custom("ch3_pfl".to_string()),
-        ),
+        note_mapping(1, 50, "CH3 Bass OFF", ControlTarget::Custom("ch3_bass_off".to_string())),
+        note_mapping(1, 51, "CH3 PFL", ControlTarget::Custom("ch3_pfl".to_string())),
         // ============================================
         // CROSSFADER (MIDI Channel 1)
         // ============================================
@@ -159,30 +109,10 @@ pub(crate) fn get_mappings() -> Vec<ProfileMapping> {
             ControlTarget::Custom("push_enc_4_a1".to_string()),
         ),
         // Push Switches 1-4: Note 4-7
-        note_mapping(
-            15,
-            4,
-            "Switch 1 (A/L1)",
-            ControlTarget::Custom("switch_1_a1".to_string()),
-        ),
-        note_mapping(
-            15,
-            5,
-            "Switch 2 (A/L1)",
-            ControlTarget::Custom("switch_2_a1".to_string()),
-        ),
-        note_mapping(
-            15,
-            6,
-            "Switch 3 (A/L1)",
-            ControlTarget::Custom("switch_3_a1".to_string()),
-        ),
-        note_mapping(
-            15,
-            7,
-            "Switch 4 (A/L1)",
-            ControlTarget::Custom("switch_4_a1".to_string()),
-        ),
+        note_mapping(15, 4, "Switch 1 (A/L1)", ControlTarget::Custom("switch_1_a1".to_string())),
+        note_mapping(15, 5, "Switch 2 (A/L1)", ControlTarget::Custom("switch_2_a1".to_string())),
+        note_mapping(15, 6, "Switch 3 (A/L1)", ControlTarget::Custom("switch_3_a1".to_string())),
+        note_mapping(15, 7, "Switch 4 (A/L1)", ControlTarget::Custom("switch_4_a1".to_string())),
         // ============================================
         // Bank B, Layout 1
         // ============================================
@@ -238,30 +168,10 @@ pub(crate) fn get_mappings() -> Vec<ProfileMapping> {
             ControlTarget::Custom("push_enc_4_b1".to_string()),
         ),
         // Push Switches 1-4: Note 12-15
-        note_mapping(
-            15,
-            12,
-            "Switch 1 (B/L1)",
-            ControlTarget::Custom("switch_1_b1".to_string()),
-        ),
-        note_mapping(
-            15,
-            13,
-            "Switch 2 (B/L1)",
-            ControlTarget::Custom("switch_2_b1".to_string()),
-        ),
-        note_mapping(
-            15,
-            14,
-            "Switch 3 (B/L1)",
-            ControlTarget::Custom("switch_3_b1".to_string()),
-        ),
-        note_mapping(
-            15,
-            15,
-            "Switch 4 (B/L1)",
-            ControlTarget::Custom("switch_4_b1".to_string()),
-        ),
+        note_mapping(15, 12, "Switch 1 (B/L1)", ControlTarget::Custom("switch_1_b1".to_string())),
+        note_mapping(15, 13, "Switch 2 (B/L1)", ControlTarget::Custom("switch_2_b1".to_string())),
+        note_mapping(15, 14, "Switch 3 (B/L1)", ControlTarget::Custom("switch_3_b1".to_string())),
+        note_mapping(15, 15, "Switch 4 (B/L1)", ControlTarget::Custom("switch_4_b1".to_string())),
         // ============================================
         // Bank A, Layout 2
         // ============================================
@@ -317,30 +227,10 @@ pub(crate) fn get_mappings() -> Vec<ProfileMapping> {
             ControlTarget::Custom("push_enc_4_a2".to_string()),
         ),
         // Push Switches: Note 20-23
-        note_mapping(
-            15,
-            20,
-            "Switch 1 (A/L2)",
-            ControlTarget::Custom("switch_1_a2".to_string()),
-        ),
-        note_mapping(
-            15,
-            21,
-            "Switch 2 (A/L2)",
-            ControlTarget::Custom("switch_2_a2".to_string()),
-        ),
-        note_mapping(
-            15,
-            22,
-            "Switch 3 (A/L2)",
-            ControlTarget::Custom("switch_3_a2".to_string()),
-        ),
-        note_mapping(
-            15,
-            23,
-            "Switch 4 (A/L2)",
-            ControlTarget::Custom("switch_4_a2".to_string()),
-        ),
+        note_mapping(15, 20, "Switch 1 (A/L2)", ControlTarget::Custom("switch_1_a2".to_string())),
+        note_mapping(15, 21, "Switch 2 (A/L2)", ControlTarget::Custom("switch_2_a2".to_string())),
+        note_mapping(15, 22, "Switch 3 (A/L2)", ControlTarget::Custom("switch_3_a2".to_string())),
+        note_mapping(15, 23, "Switch 4 (A/L2)", ControlTarget::Custom("switch_4_a2".to_string())),
         // ============================================
         // Bank B, Layout 2
         // ============================================
@@ -396,30 +286,10 @@ pub(crate) fn get_mappings() -> Vec<ProfileMapping> {
             ControlTarget::Custom("push_enc_4_b2".to_string()),
         ),
         // Push Switches: Note 28-31
-        note_mapping(
-            15,
-            28,
-            "Switch 1 (B/L2)",
-            ControlTarget::Custom("switch_1_b2".to_string()),
-        ),
-        note_mapping(
-            15,
-            29,
-            "Switch 2 (B/L2)",
-            ControlTarget::Custom("switch_2_b2".to_string()),
-        ),
-        note_mapping(
-            15,
-            30,
-            "Switch 3 (B/L2)",
-            ControlTarget::Custom("switch_3_b2".to_string()),
-        ),
-        note_mapping(
-            15,
-            31,
-            "Switch 4 (B/L2)",
-            ControlTarget::Custom("switch_4_b2".to_string()),
-        ),
+        note_mapping(15, 28, "Switch 1 (B/L2)", ControlTarget::Custom("switch_1_b2".to_string())),
+        note_mapping(15, 29, "Switch 2 (B/L2)", ControlTarget::Custom("switch_2_b2".to_string())),
+        note_mapping(15, 30, "Switch 3 (B/L2)", ControlTarget::Custom("switch_3_b2".to_string())),
+        note_mapping(15, 31, "Switch 4 (B/L2)", ControlTarget::Custom("switch_4_b2".to_string())),
         // ============================================
         // Bank A, Layout 3
         // ============================================
@@ -475,30 +345,10 @@ pub(crate) fn get_mappings() -> Vec<ProfileMapping> {
             ControlTarget::Custom("push_enc_4_a3".to_string()),
         ),
         // Push Switches: Note 36-39
-        note_mapping(
-            15,
-            36,
-            "Switch 1 (A/L3)",
-            ControlTarget::Custom("switch_1_a3".to_string()),
-        ),
-        note_mapping(
-            15,
-            37,
-            "Switch 2 (A/L3)",
-            ControlTarget::Custom("switch_2_a3".to_string()),
-        ),
-        note_mapping(
-            15,
-            38,
-            "Switch 3 (A/L3)",
-            ControlTarget::Custom("switch_3_a3".to_string()),
-        ),
-        note_mapping(
-            15,
-            39,
-            "Switch 4 (A/L3)",
-            ControlTarget::Custom("switch_4_a3".to_string()),
-        ),
+        note_mapping(15, 36, "Switch 1 (A/L3)", ControlTarget::Custom("switch_1_a3".to_string())),
+        note_mapping(15, 37, "Switch 2 (A/L3)", ControlTarget::Custom("switch_2_a3".to_string())),
+        note_mapping(15, 38, "Switch 3 (A/L3)", ControlTarget::Custom("switch_3_a3".to_string())),
+        note_mapping(15, 39, "Switch 4 (A/L3)", ControlTarget::Custom("switch_4_a3".to_string())),
         // ============================================
         // Bank B, Layout 3
         // ============================================

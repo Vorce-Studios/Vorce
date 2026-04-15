@@ -88,12 +88,11 @@ impl ModuleCanvas {
         if let Some(before) = self.edit_snapshot.take() {
             if release {
                 if before != snapshot_after {
-                    self.undo_stack
-                        .push(super::types::CanvasAction::UpdatePart {
-                            part_id: part.id,
-                            before: Box::new(before),
-                            after: Box::new(snapshot_after),
-                        });
+                    self.undo_stack.push(super::types::CanvasAction::UpdatePart {
+                        part_id: part.id,
+                        before: Box::new(before),
+                        after: Box::new(snapshot_after),
+                    });
                     self.redo_stack.clear();
                 }
             } else {
@@ -102,12 +101,11 @@ impl ModuleCanvas {
             }
         } else if snapshot_before != snapshot_after {
             // Immediate change without dragging (e.g. keypress, combo box)
-            self.undo_stack
-                .push(super::types::CanvasAction::UpdatePart {
-                    part_id: part.id,
-                    before: Box::new(snapshot_before),
-                    after: Box::new(snapshot_after),
-                });
+            self.undo_stack.push(super::types::CanvasAction::UpdatePart {
+                part_id: part.id,
+                before: Box::new(snapshot_before),
+                after: Box::new(snapshot_after),
+            });
             self.redo_stack.clear();
         }
     }

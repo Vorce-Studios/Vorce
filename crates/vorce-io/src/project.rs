@@ -94,15 +94,9 @@ pub fn export_project(state: &AppState, path: &Path) -> Result<()> {
         for module in module_manager.modules.values_mut() {
             for part in &mut module.parts {
                 if let vorce_core::module::ModulePartType::Source(
-                    SourceType::MediaFile {
-                        path: ref mut p, ..
-                    }
-                    | SourceType::VideoUni {
-                        path: ref mut p, ..
-                    }
-                    | SourceType::ImageUni {
-                        path: ref mut p, ..
-                    },
+                    SourceType::MediaFile { path: ref mut p, .. }
+                    | SourceType::VideoUni { path: ref mut p, .. }
+                    | SourceType::ImageUni { path: ref mut p, .. },
                 ) = &mut part.part_type
                 {
                     if !p.is_empty() {
@@ -124,21 +118,18 @@ pub fn export_project(state: &AppState, path: &Path) -> Result<()> {
     save_project(&export_state, &project_path)?;
 
     // 2. Add project file to ZIP
-    zip.start_file("project.vorce", options)
-        .map_err(crate::IoError::from)?;
+    zip.start_file("project.vorce", options).map_err(crate::IoError::from)?;
     let mut project_file = File::open(&project_path)?;
     std::io::copy(&mut project_file, &mut zip)?;
 
     // 3. Add media files to ZIP
-    zip.add_directory("media/", options)
-        .map_err(crate::IoError::from)?;
+    zip.add_directory("media/", options).map_err(crate::IoError::from)?;
 
     for media_path in media_files {
         if media_path.exists() {
             if let Some(file_name) = media_path.file_name() {
                 let zip_path = format!("media/{}", file_name.to_string_lossy());
-                zip.start_file(zip_path, options)
-                    .map_err(crate::IoError::from)?;
+                zip.start_file(zip_path, options).map_err(crate::IoError::from)?;
                 let mut media_file = File::open(&media_path)?;
                 std::io::copy(&mut media_file, &mut zip)?;
             }

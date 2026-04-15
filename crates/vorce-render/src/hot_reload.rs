@@ -253,16 +253,12 @@ impl ShaderHotReload {
 
     /// Get the fallback source for a shader (last known working version)
     pub fn get_fallback(&self, path: &Path) -> Option<&str> {
-        self.shader_status
-            .get(path)
-            .and_then(|s| s.fallback_source.as_deref())
+        self.shader_status.get(path).and_then(|s| s.fallback_source.as_deref())
     }
 
     /// Get the current source for a shader
     pub fn get_source(&self, path: &Path) -> Option<&str> {
-        self.shader_status
-            .get(path)
-            .map(|s| s.current_source.as_str())
+        self.shader_status.get(path).map(|s| s.current_source.as_str())
     }
 
     /// Get status for all watched shaders
@@ -287,10 +283,7 @@ impl ShaderHotReload {
 
     /// Get all shaders with errors
     pub fn errors(&self) -> Vec<&ShaderStatus> {
-        self.shader_status
-            .values()
-            .filter(|s| !s.is_valid)
-            .collect()
+        self.shader_status.values().filter(|s| !s.is_valid).collect()
     }
 }
 
@@ -303,10 +296,7 @@ pub struct HotReloadIntegration {
 impl HotReloadIntegration {
     /// Create a new hot-reload integration
     pub fn new(shader_dir: PathBuf) -> Result<Self> {
-        Ok(Self {
-            hot_reload: ShaderHotReload::new(shader_dir)?,
-            pending_reloads: Vec::new(),
-        })
+        Ok(Self { hot_reload: ShaderHotReload::new(shader_dir)?, pending_reloads: Vec::new() })
     }
 
     /// Update and collect pending shader reloads

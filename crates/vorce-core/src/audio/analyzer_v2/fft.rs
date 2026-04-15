@@ -17,8 +17,7 @@ impl AudioAnalyzerV2 {
         }
 
         // Perform FFT in-place
-        self.fft
-            .process_with_scratch(&mut self.fft_buffer, &mut self.scratch_buffer);
+        self.fft.process_with_scratch(&mut self.fft_buffer, &mut self.scratch_buffer);
 
         // Extract magnitudes (only first half - positive frequencies)
         let half_size = self.magnitude_buffer.len();
@@ -39,11 +38,7 @@ impl AudioAnalyzerV2 {
         // Trace log every 100 FFTs
         #[allow(clippy::manual_is_multiple_of)]
         if self.fft_count % 100 == 0 {
-            trace!(
-                "FFT #{}: bands={:?}",
-                self.fft_count,
-                &self.smoothed_bands[..3]
-            );
+            trace!("FFT #{}: bands={:?}", self.fft_count, &self.smoothed_bands[..3]);
         }
     }
 
