@@ -74,11 +74,14 @@ impl SpoutReceiver {
     pub fn list_senders() -> Result<Vec<SpoutSenderInfo>> {
         let mut spout = RustySpout::new();
         spout.get_spout().map_err(|_| IoError::SpoutInitFailed)?;
-        let count = spout.get_sender_count().map_err(|e| IoError::SpoutError(e.to_string()))?;
+        let count = spout
+            .get_sender_count()
+            .map_err(|e| IoError::SpoutError(e.to_string()))?;
         let mut senders = Vec::new();
         for i in 0..count {
-            let (_, name) =
-                spout.get_sender(i, 256).map_err(|e| IoError::SpoutError(e.to_string()))?;
+            let (_, name) = spout
+                .get_sender(i, 256)
+                .map_err(|e| IoError::SpoutError(e.to_string()))?;
             let mut width = 0;
             let mut height = 0;
             let mut handle = std::ptr::null_mut();
@@ -89,7 +92,12 @@ impl SpoutReceiver {
             if success {
                 senders.push(SpoutSenderInfo {
                     name,
-                    format: VideoFormat { width, height, framerate: 0.0, fourcc: 0 },
+                    format: VideoFormat {
+                        width,
+                        height,
+                        framerate: 0.0,
+                        fourcc: 0,
+                    },
                 });
             }
         }
@@ -101,12 +109,21 @@ impl SpoutReceiver {
         self.spout
             .set_receiver_name(sender_name)
             .map_err(|e| IoError::SpoutError(e.to_string()))?;
-        let width =
-            self.spout.get_sender_width().map_err(|e| IoError::SpoutError(e.to_string()))?;
-        let height =
-            self.spout.get_sender_height().map_err(|e| IoError::SpoutError(e.to_string()))?;
+        let width = self
+            .spout
+            .get_sender_width()
+            .map_err(|e| IoError::SpoutError(e.to_string()))?;
+        let height = self
+            .spout
+            .get_sender_height()
+            .map_err(|e| IoError::SpoutError(e.to_string()))?;
         self.name = sender_name.to_string();
-        self.format = VideoFormat { width, height, framerate: 0.0, fourcc: 0 };
+        self.format = VideoFormat {
+            width,
+            height,
+            framerate: 0.0,
+            fourcc: 0,
+        };
         Ok(())
     }
 }
@@ -131,16 +148,24 @@ impl VideoSource for SpoutReceiver {
             return Err(IoError::SpoutError("No new frame available".to_string()));
         }
 
-        let handle =
-            self.spout.get_sender_handle().map_err(|e| IoError::SpoutError(e.to_string()))?;
+        let handle = self
+            .spout
+            .get_sender_handle()
+            .map_err(|e| IoError::SpoutError(e.to_string()))?;
         let non_null_handle = std::ptr::NonNull::new(handle)
             .ok_or(IoError::SpoutError("Received null handle".to_string()))?;
-        let width =
-            self.spout.get_sender_width().map_err(|e| IoError::SpoutError(e.to_string()))?;
-        let height =
-            self.spout.get_sender_height().map_err(|e| IoError::SpoutError(e.to_string()))?;
-        let format =
-            self.spout.get_sender_format().map_err(|e| IoError::SpoutError(e.to_string()))?;
+        let width = self
+            .spout
+            .get_sender_width()
+            .map_err(|e| IoError::SpoutError(e.to_string()))?;
+        let height = self
+            .spout
+            .get_sender_height()
+            .map_err(|e| IoError::SpoutError(e.to_string()))?;
+        let format = self
+            .spout
+            .get_sender_format()
+            .map_err(|e| IoError::SpoutError(e.to_string()))?;
 
         // Convert the DXGI format to a wgpu::TextureFormat
         let texture_format = match format {
@@ -206,11 +231,19 @@ impl SpoutSender {
         let mut spout = RustySpout::new();
         spout.get_spout().map_err(|_| IoError::SpoutInitFailed)?;
         let name = name.into();
-        spout.set_sender_name(&name).map_err(|e| IoError::SpoutError(e.to_string()))?;
+        spout
+            .set_sender_name(&name)
+            .map_err(|e| IoError::SpoutError(e.to_string()))?;
         spout
             .create_sender(&name, format.width, format.height, 0)
             .map_err(|e| IoError::SpoutError(e.to_string()))?;
-        Ok(Self { spout, name, format, frame_count: 0, device })
+        Ok(Self {
+            spout,
+            name,
+            format,
+            frame_count: 0,
+            device,
+        })
     }
 }
 
@@ -259,8 +292,10 @@ impl VideoSink for SpoutSender {
                     }
                 };
 
-                let spout_ffi =
-                    self.spout.get_spout().map_err(|e| IoError::SpoutError(e.to_string()))?;
+                let spout_ffi = self
+                    .spout
+                    .get_spout()
+                    .map_err(|e| IoError::SpoutError(e.to_string()))?;
                 let c_name = CString::new(self.name.clone()).unwrap();
 
                 let success = unsafe {

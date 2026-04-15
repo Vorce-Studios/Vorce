@@ -146,7 +146,12 @@ pub struct TestVideoSink {
 impl TestVideoSink {
     /// Creates a new test video sink.
     pub fn new(name: impl Into<String>, format: VideoFormat) -> Self {
-        Self { name: name.into(), format, frame_count: 0, should_fail: false }
+        Self {
+            name: name.into(),
+            format,
+            frame_count: 0,
+            should_fail: false,
+        }
     }
 
     /// Configures the sink to fail on send.
