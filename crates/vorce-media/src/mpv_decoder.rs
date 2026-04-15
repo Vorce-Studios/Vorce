@@ -115,13 +115,34 @@ impl MpvDecoder {
 
             if res >= 0 && node.format == mpv_format_MPV_FORMAT_NODE_MAP {
                 let map = node.u.list;
-                let keys = std::slice::from_raw_parts((*map).keys, (*map).num as usize);
-                let vals = std::slice::from_raw_parts((*map).values, (*map).num as usize);
+                if map.is_null() {
+                    return Err(MediaError::DecoderError("MPV screenshot map is null".to_string()));
+                }
 
-                for i in 0..(*map).num as usize {
-                    let key = std::ffi::CStr::from_ptr(keys[i]).to_str().unwrap_or("");
+                // SAFETY: We checked map is not null. libmpv guarantees `keys` and `values` arrays
+                // are valid up to `num` elements for MPV_FORMAT_NODE_MAP.
+                let num_elements = (*map).num as usize;
+                if (*map).keys.is_null() || (*map).values.is_null() {
+                    return Err(MediaError::DecoderError("MPV screenshot map keys or values are null".to_string()));
+                }
+
+                let keys = std::slice::from_raw_parts((*map).keys, num_elements);
+                let vals = std::slice::from_raw_parts((*map).values, num_elements);
+
+                for i in 0..num_elements {
+                    let key_ptr = keys[i];
+                    if key_ptr.is_null() {
+                        continue;
+                    }
+
+                    // SAFETY: key_ptr is verified non-null. libmpv provides valid null-terminated strings for keys.
+                    let key = std::ffi::CStr::from_ptr(key_ptr).to_str().unwrap_or("");
                     if key == "data" && vals[i].format == mpv_format_MPV_FORMAT_BYTE_ARRAY {
                         let ba = vals[i].u.ba;
+                        if ba.is_null() || (*ba).data.is_null() {
+                            return Err(MediaError::DecoderError("MPV byte array data is null".to_string()));
+                        }
+                        // SAFETY: ba and ba.data are verified non-null. libmpv provides a valid buffer of `size`.
                         let data_slice = std::slice::from_raw_parts(
                             (*ba).data as *const u8,
                             (*ba).size as usize,
@@ -147,23 +168,7 @@ impl MpvDecoder {
             mpv_free_node_contents(&mut node);
         }
 
-        if extracted_data.is_empty() {
-            return Err(MediaError::DecoderError(
-                "No data returned from screenshot-raw".to_string(),
-            ));
-        }
-
-        // Validate data size (BGRA or RGBA expected: width * height * 4)
-        if extracted_data.len() < (actual_width * actual_height * 4) as usize {
-            warn!(
-                "Captured frame data too small. Expected {} bytes, got {}",
-                actual_width * actual_height * 4,
-                extracted_data.len()
-            );
-            return Err(MediaError::DecoderError(
-                "Captured frame data too small".to_string(),
-            ));
-        }
+        validate_screenshot_buffer(extracted_data.len(), actual_width, actual_height)?;
 
         // screenshot-raw typically returns BGRA or BGR0 format when no format is forced.
         // We will swap R and B channels to output standard RGBA
@@ -234,5 +239,93 @@ mod tests {
     fn test_mpv_decoder_creation() {
         // This test requires MPV to be installed
         // Skip if not available
+    }
+}
+
+/// Validates the screenshot buffer size using checked math.
+fn validate_screenshot_buffer(data_len: usize, width: u32, height: u32) -> Result<()> {
+    if data_len == 0 {
+        return Err(MediaError::DecoderError(
+            "No data returned from screenshot-raw".to_string(),
+        ));
+    }
+
+    let expected_size = width
+        .checked_mul(height)
+        .and_then(|pixels| pixels.checked_mul(4))
+        .map(|s| s as usize)
+        .ok_or_else(|| {
+            MediaError::DecoderError("Frame dimensions cause overflow when calculating buffer size".to_string())
+        })?;
+
+    if data_len < expected_size {
+        warn!(
+            "Captured frame data too small. Expected {} bytes, got {}",
+            expected_size, data_len
+        );
+        return Err(MediaError::DecoderError(
+            "Captured frame data too small".to_string(),
+        ));
+    }
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests_validate {
+    use super::*;
+
+    #[test]
+    fn test_validate_screenshot_buffer_valid() {
+        let width = 1920;
+        let height = 1080;
+        let expected_size = (width * height * 4) as usize;
+
+        let result = validate_screenshot_buffer(expected_size, width, height);
+        assert!(result.is_ok());
+
+        let result_larger = validate_screenshot_buffer(expected_size + 10, width, height);
+        assert!(result_larger.is_ok());
+    }
+
+    #[test]
+    fn test_validate_screenshot_buffer_short() {
+        let width = 1920;
+        let height = 1080;
+        let expected_size = (width * height * 4) as usize;
+
+        let result = validate_screenshot_buffer(expected_size - 1, width, height);
+        assert!(result.is_err());
+        if let Err(MediaError::DecoderError(msg)) = result {
+            assert!(msg.contains("too small"));
+        } else {
+            panic!("Expected DecoderError for small buffer");
+        }
+    }
+
+    #[test]
+    fn test_validate_screenshot_buffer_empty() {
+        let result = validate_screenshot_buffer(0, 1920, 1080);
+        assert!(result.is_err());
+        if let Err(MediaError::DecoderError(msg)) = result {
+            assert!(msg.contains("No data returned"));
+        } else {
+            panic!("Expected DecoderError for empty buffer");
+        }
+    }
+
+    #[test]
+    fn test_validate_screenshot_buffer_overflow() {
+        // large width and height that will cause u32 * u32 * 4 to overflow
+        let width = u32::MAX;
+        let height = u32::MAX;
+
+        let result = validate_screenshot_buffer(100, width, height);
+        assert!(result.is_err());
+        if let Err(MediaError::DecoderError(msg)) = result {
+            assert!(msg.contains("overflow"));
+        } else {
+            panic!("Expected DecoderError for overflow");
+        }
     }
 }

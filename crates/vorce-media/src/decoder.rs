@@ -92,6 +92,8 @@ mod ffmpeg_impl {
     use std::path::PathBuf;
 
     #[cfg(target_os = "windows")]
+    // SAFETY: Assumes `fmt` is a valid null-terminated array of AVPixelFormat if not null.
+    // The caller (FFmpeg) must ensure the provided pointers are valid.
     unsafe extern "C" fn get_format_callback(
         ctx: *mut ffi::AVCodecContext,
         fmt: *const ffi::AVPixelFormat,
@@ -124,6 +126,8 @@ mod ffmpeg_impl {
     }
 
     struct SendContext(ffmpeg::software::scaling::Context);
+    // SAFETY: ffmpeg::software::scaling::Context is safe to Send across threads as long as we
+    // don't concurrently mutate it from multiple threads, which we prevent by wrapping it properly.
     unsafe impl Send for SendContext {}
     impl std::ops::Deref for SendContext {
         type Target = ffmpeg::software::scaling::Context;
@@ -309,6 +313,8 @@ mod ffmpeg_impl {
                 HwAccelType::None => Ok(HwAccelType::None),
                 #[cfg(target_os = "windows")]
                 HwAccelType::D3D11VA => unsafe {
+                    // SAFETY: We initialize hw_device_ctx to null and pass it to FFmpeg to create a new D3D11VA context.
+                    // The function initializes it or leaves it null if it fails.
                     let mut hw_device_ctx: *mut ffi::AVBufferRef = std::ptr::null_mut();
                     let ret = ffi::av_hwdevice_ctx_create(
                         &mut hw_device_ctx,
@@ -327,14 +333,18 @@ mod ffmpeg_impl {
                     }
 
                     let codec_ctx = _decoder.as_mut_ptr();
-                    if codec_ctx.is_null() {
-                        ffi::av_buffer_unref(&mut hw_device_ctx);
+                    if codec_ctx.is_null() || hw_device_ctx.is_null() {
+                        if !hw_device_ctx.is_null() {
+                            // SAFETY: hw_device_ctx is guaranteed non-null here, and we unref it.
+                            ffi::av_buffer_unref(&mut hw_device_ctx);
+                        }
                         return Err(MediaError::DecoderError(
                             "Codec context is null".to_string(),
                         ));
                     }
 
                     // Transfer ownership of hw_device_ctx to codec_ctx
+                    // SAFETY: codec_ctx is verified non-null above. We transfer ownership of hw_device_ctx.
                     (*codec_ctx).hw_device_ctx = hw_device_ctx;
                     (*codec_ctx).get_format = Some(get_format_callback);
 
@@ -373,14 +383,24 @@ mod ffmpeg_impl {
                 if self.decoder.receive_frame(&mut decoded).is_ok() {
                     #[allow(unused_variables, unused_mut)]
                     let mut sw_frame = ffmpeg::util::frame::Video::empty();
+                    let decoded_ptr = decoded.as_ptr();
+                    if decoded_ptr.is_null() {
+                        return Err(MediaError::DecoderError("Decoded frame pointer is null".to_string()));
+                    }
                     let frame_ptr = if unsafe {
-                        (*decoded.as_ptr()).format == ffi::AVPixelFormat::AV_PIX_FMT_D3D11 as i32
+                        // SAFETY: decoded_ptr is verified non-null above.
+                        (*decoded_ptr).format == ffi::AVPixelFormat::AV_PIX_FMT_D3D11 as i32
                     } {
                         #[cfg(target_os = "windows")]
+                        // SAFETY: decoded_ptr is non-null. sw_frame is freshly allocated, and its pointer must be checked.
                         unsafe {
+                            let sw_ptr = sw_frame.as_mut_ptr();
+                            if sw_ptr.is_null() {
+                                return Err(MediaError::DecoderError("SW frame pointer is null".to_string()));
+                            }
                             let ret = ffi::av_hwframe_transfer_data(
-                                sw_frame.as_mut_ptr(),
-                                decoded.as_ptr(),
+                                sw_ptr,
+                                decoded_ptr,
                                 0,
                             );
                             if ret < 0 {
@@ -389,7 +409,8 @@ mod ffmpeg_impl {
                                     ret
                                 )));
                             }
-                            ffi::av_frame_copy_props(sw_frame.as_mut_ptr(), decoded.as_ptr());
+                            // SAFETY: Both sw_ptr and decoded_ptr are verified non-null.
+                            ffi::av_frame_copy_props(sw_ptr, decoded_ptr);
                             &sw_frame
                         }
                         #[cfg(not(target_os = "windows"))]
