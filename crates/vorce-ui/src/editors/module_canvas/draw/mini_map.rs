@@ -25,11 +25,7 @@ pub fn draw_mini_map(
     );
 
     // Background
-    painter.rect_filled(
-        map_rect,
-        0.0,
-        Color32::from_rgba_unmultiplied(30, 30, 40, 200),
-    );
+    painter.rect_filled(map_rect, 0.0, Color32::from_rgba_unmultiplied(30, 30, 40, 200));
     painter.rect_stroke(
         map_rect,
         0.0,
@@ -85,10 +81,8 @@ pub fn draw_mini_map(
     }
 
     // Draw viewport rectangle
-    let viewport_min = to_map(Pos2::new(
-        -canvas.pan_offset.x / canvas.zoom,
-        -canvas.pan_offset.y / canvas.zoom,
-    ));
+    let viewport_min =
+        to_map(Pos2::new(-canvas.pan_offset.x / canvas.zoom, -canvas.pan_offset.y / canvas.zoom));
     let viewport_max = to_map(Pos2::new(
         (-canvas.pan_offset.x + canvas_rect.width()) / canvas.zoom,
         (-canvas.pan_offset.y + canvas_rect.height()) / canvas.zoom,

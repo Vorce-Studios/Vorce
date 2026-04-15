@@ -104,10 +104,8 @@ impl ApplicationHandler for VorceApp {
         event: WindowEvent,
     ) {
         if let Some(app) = &mut self.app {
-            let _ = app.handle_event(
-                winit::event::Event::WindowEvent { window_id, event },
-                event_loop,
-            );
+            let _ =
+                app.handle_event(winit::event::Event::WindowEvent { window_id, event }, event_loop);
         }
     }
 
@@ -173,10 +171,7 @@ impl ApplicationHandler for VorceApp {
                             }
                         }
 
-                        info!(
-                            "Automation mode: Reached frame limit ({}). Exiting.",
-                            exit_frames
-                        );
+                        info!("Automation mode: Reached frame limit ({}). Exiting.", exit_frames);
                         event_loop.exit();
                     }
                 }
@@ -204,10 +199,8 @@ impl App {
                     }
                 }
 
-                let output_id = self
-                    .window_manager
-                    .get_output_id_from_window_id(*window_id)
-                    .unwrap_or(0);
+                let output_id =
+                    self.window_manager.get_output_id_from_window_id(*window_id).unwrap_or(0);
 
                 match event {
                     WindowEvent::CloseRequested => {
@@ -341,13 +334,9 @@ impl App {
 
                 if cmd == MediaPlaybackCommand::Reload {
                     if self.media_players.remove(&player_key).is_some() {
-                        info!(
-                            "Removed old media player for part_id={} for reload",
-                            part_id
-                        );
+                        info!("Removed old media player for part_id={} for reload", part_id);
                     }
-                    self.texture_pool
-                        .release(&format!("part_{}_{}", mod_id, part_id));
+                    self.texture_pool.release(&format!("part_{}_{}", mod_id, part_id));
                     crate::orchestration::media::sync_media_players(self);
                     continue;
                 }
@@ -447,11 +436,7 @@ fn main() -> Result<()> {
         .with_target(true)
         .with_writer(non_blocking);
 
-    tracing_subscriber::registry()
-        .with(env_filter)
-        .with(console_layer)
-        .with(file_layer)
-        .init();
+    tracing_subscriber::registry().with(env_filter).with(console_layer).with(file_layer).init();
 
     initial_user_config_report.emit_logs();
     info!("Starting Vorce in {:?} mode...", args.mode);

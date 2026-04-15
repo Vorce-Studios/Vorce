@@ -109,10 +109,8 @@ impl ControllerOverlayPanel {
         let panel_height = base_h * self.scale;
 
         // Allocate space for the overlay
-        let (response, painter) = ui.allocate_painter(
-            Vec2::new(panel_width, panel_height),
-            Sense::click_and_drag(),
-        );
+        let (response, painter) =
+            ui.allocate_painter(Vec2::new(panel_width, panel_height), Sense::click_and_drag());
 
         let rect = response.rect;
 
@@ -226,17 +224,11 @@ impl ControllerOverlayPanel {
 
                         // Draw Handles
                         painter.line_segment(
-                            [
-                                Pos2::new(elem_rect.min.x, y_top),
-                                Pos2::new(elem_rect.max.x, y_top),
-                            ],
+                            [Pos2::new(elem_rect.min.x, y_top), Pos2::new(elem_rect.max.x, y_top)],
                             Stroke::new(1.0, Color32::RED),
                         );
                         painter.line_segment(
-                            [
-                                Pos2::new(elem_rect.min.x, y_bot),
-                                Pos2::new(elem_rect.max.x, y_bot),
-                            ],
+                            [Pos2::new(elem_rect.min.x, y_bot), Pos2::new(elem_rect.max.x, y_bot)],
                             Stroke::new(1.0, Color32::RED),
                         );
 
@@ -326,11 +318,8 @@ impl ControllerOverlayPanel {
                     );
 
                     // Draw edit frame
-                    let base_color = if is_selected {
-                        Color32::from_rgb(255, 0, 255)
-                    } else {
-                        Color32::YELLOW
-                    }; // Magenta for selected
+                    let base_color =
+                        if is_selected { Color32::from_rgb(255, 0, 255) } else { Color32::YELLOW }; // Magenta for selected
                     let stroke = Stroke::new(if is_selected { 2.0 } else { 1.0 }, base_color);
 
                     match element.element_type {
@@ -385,10 +374,7 @@ impl ControllerOverlayPanel {
         let val = state.map(|s| s.value as f32 / 127.0).unwrap_or(0.0);
         Self::draw_asset(painter, &self.assets, self.scale, elem_rect, element, val);
 
-        let is_hovered = response
-            .hover_pos()
-            .map(|pos| elem_rect.contains(pos))
-            .unwrap_or(false);
+        let is_hovered = response.hover_pos().map(|pos| elem_rect.contains(pos)).unwrap_or(false);
         let is_selected = self.selected_element.as_ref() == Some(&element.id);
         let is_learning = self.learn_manager.is_learning()
             && self.learn_manager.state().target_element() == Some(element.id.as_str());
@@ -451,11 +437,7 @@ impl ControllerOverlayPanel {
         if response.clicked() && is_hovered {
             if let Some(target) = &self.learn_target {
                 self.learn_manager.start_learning(&element.id);
-                tracing::info!(
-                    "Started MIDI learn for {} with target {:?}",
-                    element.id,
-                    target
-                );
+                tracing::info!("Started MIDI learn for {} with target {:?}", element.id, target);
             } else {
                 self.selected_element = Some(element.id.clone());
             }

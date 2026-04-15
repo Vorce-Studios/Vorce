@@ -23,26 +23,17 @@ impl ModuleEvaluator {
         // Helper to push and optionally invert/manual override value
         let push_val_internal = |val: f32, out: &mut Vec<f32>, invert: bool| {
             let base_val = if manual_fired { 1.0 } else { val };
-            let final_val = if invert {
-                1.0 - base_val.clamp(0.0, 1.0)
-            } else {
-                base_val
-            };
+            let final_val = if invert { 1.0 - base_val.clamp(0.0, 1.0) } else { base_val };
             out.push(final_val);
         };
 
         match trigger_type {
-            TriggerType::AudioFFT {
-                threshold,
-                output_config,
-                ..
-            } => {
+            TriggerType::AudioFFT { threshold, output_config, .. } => {
                 if output_config.frequency_bands {
                     for i in 0..9 {
                         let val = audio_data.band_energies[i];
-                        let invert = output_config
-                            .inverted_outputs
-                            .contains(&format!("Band {}", i));
+                        let invert =
+                            output_config.inverted_outputs.contains(&format!("Band {}", i));
                         push_val_internal(if val > *threshold { val } else { 0.0 }, output, invert);
                     }
                 }
@@ -80,16 +71,10 @@ impl ModuleEvaluator {
                     );
                 }
             }
-            TriggerType::Beat => push_val_internal(
-                if audio_data.beat_detected { 1.0 } else { 0.0 },
-                output,
-                false,
-            ),
-            TriggerType::Random {
-                min_interval_ms,
-                max_interval_ms,
-                probability,
-            } => {
+            TriggerType::Beat => {
+                push_val_internal(if audio_data.beat_detected { 1.0 } else { 0.0 }, output, false)
+            }
+            TriggerType::Random { min_interval_ms, max_interval_ms, probability } => {
                 let elapsed_ms = start_time.elapsed().as_millis() as u64;
                 let min_interval = u64::from(*min_interval_ms);
                 let max_interval = u64::from((*max_interval_ms).max(*min_interval_ms));
@@ -114,10 +99,7 @@ impl ModuleEvaluator {
 
                 push_val_internal(if triggered { 1.0 } else { 0.0 }, output, false);
             }
-            TriggerType::Fixed {
-                interval_ms,
-                offset_ms,
-            } => {
+            TriggerType::Fixed { interval_ms, offset_ms } => {
                 let elapsed_ms = start_time.elapsed().as_millis() as u64;
                 let adjusted_time = elapsed_ms.saturating_sub(u64::from(*offset_ms));
                 let interval = u64::from(*interval_ms);
@@ -155,10 +137,7 @@ impl ModuleEvaluator {
                 }
                 output.push(active_val);
             }
-            TriggerType::Shortcut {
-                key_code,
-                modifiers,
-            } => {
+            TriggerType::Shortcut { key_code, modifiers } => {
                 let is_pressed = active_keys.contains(key_code);
 
                 // Check modifiers bitmask (1=Shift, 2=Control, 4=Alt)
@@ -173,11 +152,7 @@ impl ModuleEvaluator {
                     modifiers_match = false;
                 }
                 push_val_internal(
-                    if is_pressed && modifiers_match {
-                        1.0
-                    } else {
-                        0.0
-                    },
+                    if is_pressed && modifiers_match { 1.0 } else { 0.0 },
                     output,
                     false,
                 );
@@ -195,10 +170,8 @@ impl ModuleEvaluator {
             if let Some(values) = trigger_values.get(&conn.from_part) {
                 // Find index of the output socket ID
                 if let Some(from_part) = module.parts.iter().find(|p| p.id == conn.from_part) {
-                    if let Some(idx) = from_part
-                        .outputs
-                        .iter()
-                        .position(|s| s.id == conn.from_socket)
+                    if let Some(idx) =
+                        from_part.outputs.iter().position(|s| s.id == conn.from_socket)
                     {
                         if let Some(&value) = values.get(idx) {
                             let current = inputs.entry(conn.to_part).or_insert(0.0);
