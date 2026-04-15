@@ -88,7 +88,11 @@ pub enum McpAction {
     /// Set beat detection threshold
     AudioSetThreshold(f32),
     /// Configure audio analysis (fft_size, smoothing, bands)
-    AudioAnalysisConfig { fft_size: u32, smoothing: f32, bands: u32 },
+    AudioAnalysisConfig {
+        fft_size: u32,
+        smoothing: f32,
+        bands: u32,
+    },
 
     // === Phase 3: Effects & Shaders ===
     /// Add effect to layer (layer_id, effect_type)
@@ -108,7 +112,13 @@ pub enum McpAction {
 
     // === Phase 4: Timeline & Keyframes ===
     /// Add keyframe (layer_id, param, time, value, easing)
-    TimelineAddKeyframe { layer_id: u64, param: String, time: f64, value: f32, easing: String },
+    TimelineAddKeyframe {
+        layer_id: u64,
+        param: String,
+        time: f64,
+        value: f32,
+        easing: String,
+    },
     /// Remove keyframe (keyframe_id)
     TimelineRemoveKeyframe(u64),
     /// Get keyframes for layer/param

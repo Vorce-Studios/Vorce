@@ -74,21 +74,23 @@ pub fn draw_quick_create_popup(
             if filtered_items.is_empty() {
                 crate::widgets::custom::render_info_label(ui, "No matching nodes found.");
             } else {
-                egui::ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
-                    for (i, item) in filtered_items.iter().enumerate() {
-                        let is_selected = i == canvas.quick_create_selected_index;
-                        let (_, _, icon, _) = utils::get_part_style(&item.part_type);
-                        let label_text = format!("{} {}", icon, item.label);
-                        let response = ui.selectable_label(is_selected, label_text);
-                        if response.clicked() {
-                            canvas.quick_create_selected_index = i;
-                            commit_creation = true;
+                egui::ScrollArea::vertical()
+                    .max_height(300.0)
+                    .show(ui, |ui| {
+                        for (i, item) in filtered_items.iter().enumerate() {
+                            let is_selected = i == canvas.quick_create_selected_index;
+                            let (_, _, icon, _) = utils::get_part_style(&item.part_type);
+                            let label_text = format!("{} {}", icon, item.label);
+                            let response = ui.selectable_label(is_selected, label_text);
+                            if response.clicked() {
+                                canvas.quick_create_selected_index = i;
+                                commit_creation = true;
+                            }
+                            if is_selected {
+                                response.scroll_to_me(Some(egui::Align::Center));
+                            }
                         }
-                        if is_selected {
-                            response.scroll_to_me(Some(egui::Align::Center));
-                        }
-                    }
-                });
+                    });
             }
         });
     });

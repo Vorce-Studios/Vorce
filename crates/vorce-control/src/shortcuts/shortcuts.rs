@@ -107,19 +107,32 @@ impl Modifiers {
     }
 
     pub fn ctrl() -> Self {
-        Self { ctrl: true, ..Default::default() }
+        Self {
+            ctrl: true,
+            ..Default::default()
+        }
     }
 
     pub fn alt() -> Self {
-        Self { alt: true, ..Default::default() }
+        Self {
+            alt: true,
+            ..Default::default()
+        }
     }
 
     pub fn shift() -> Self {
-        Self { shift: true, ..Default::default() }
+        Self {
+            shift: true,
+            ..Default::default()
+        }
     }
 
     pub fn ctrl_shift() -> Self {
-        Self { ctrl: true, shift: true, ..Default::default() }
+        Self {
+            ctrl: true,
+            shift: true,
+            ..Default::default()
+        }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -506,10 +519,14 @@ mod tests {
         assert!(!shortcuts.is_empty());
 
         // Check for essential shortcuts
-        let has_play = shortcuts.iter().any(|s| matches!(s.action, Action::TogglePlayPause));
+        let has_play = shortcuts
+            .iter()
+            .any(|s| matches!(s.action, Action::TogglePlayPause));
         assert!(has_play);
 
-        let has_save = shortcuts.iter().any(|s| matches!(s.action, Action::SaveProject));
+        let has_save = shortcuts
+            .iter()
+            .any(|s| matches!(s.action, Action::SaveProject));
         assert!(has_save);
     }
 

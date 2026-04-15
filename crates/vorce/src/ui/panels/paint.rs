@@ -27,11 +27,13 @@ pub fn handle_actions(ui_state: &mut AppUI, state: &mut AppState) {
     if let Some(action) = ui_state.paint_panel.take_action() {
         match action {
             vorce_ui::PaintPanelAction::AddPaint => {
-                state.paint_manager_mut().add_paint(vorce_core::paint::Paint::color(
-                    0,
-                    "New Color",
-                    [1.0, 1.0, 1.0, 1.0],
-                ));
+                state
+                    .paint_manager_mut()
+                    .add_paint(vorce_core::paint::Paint::color(
+                        0,
+                        "New Color",
+                        [1.0, 1.0, 1.0, 1.0],
+                    ));
                 state.dirty = true;
             }
             vorce_ui::PaintPanelAction::RemovePaint(id) => {

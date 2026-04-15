@@ -72,7 +72,11 @@ pub struct GlobalState {
 
 impl Default for GlobalState {
     fn default() -> Self {
-        Self { playback_speed: 1.0, playback_position: 0.0, output_brightness: HashMap::new() }
+        Self {
+            playback_speed: 1.0,
+            playback_position: 0.0,
+            output_brightness: HashMap::new(),
+        }
     }
 }
 
@@ -98,7 +102,10 @@ impl Cue {
 
     /// Create a cue with a name and description
     pub fn with_description(id: u32, name: String, description: String) -> Self {
-        Self { description, ..Self::new(id, name) }
+        Self {
+            description,
+            ..Self::new(id, name)
+        }
     }
 
     /// Set the fade duration
@@ -151,19 +158,33 @@ impl LayerState {
         rotation: f32,
         scale: f32,
     ) -> Self {
-        Self { opacity, visible, position, rotation, scale }
+        Self {
+            opacity,
+            visible,
+            position,
+            rotation,
+            scale,
+        }
     }
 
     /// Create a default visible layer
     pub fn default_visible() -> Self {
-        Self { opacity: 1.0, visible: true, position: (0.0, 0.0), rotation: 0.0, scale: 1.0 }
+        Self {
+            opacity: 1.0,
+            visible: true,
+            position: (0.0, 0.0),
+            rotation: 0.0,
+            scale: 1.0,
+        }
     }
 }
 
 impl PaintState {
     /// Create a new paint state
     pub fn new() -> Self {
-        Self { parameters: HashMap::new() }
+        Self {
+            parameters: HashMap::new(),
+        }
     }
 
     /// Set a parameter value
@@ -181,7 +202,10 @@ impl Default for PaintState {
 impl EffectState {
     /// Create a new effect state
     pub fn new(enabled: bool) -> Self {
-        Self { enabled, parameters: HashMap::new() }
+        Self {
+            enabled,
+            parameters: HashMap::new(),
+        }
     }
 
     /// Set a parameter value
