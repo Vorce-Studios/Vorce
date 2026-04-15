@@ -7,8 +7,7 @@ use tracing::{error, info};
 use vorce_control::osc::client::OscClient;
 
 pub struct McpServer {
-    // Optional OSC client (currently unused but will be used for OSC tools)
-    #[allow(dead_code)]
+    // Optional OSC client for OSC tools
     osc_client: Option<OscClient>,
     // Channel to send actions to main app
     pub action_sender: Option<Sender<McpAction>>,
@@ -234,7 +233,6 @@ impl McpServer {
         }
     }
 
-    #[allow(dead_code)]
     pub fn handle_send_osc(
         &self,
         id: Option<serde_json::Value>,
@@ -258,7 +256,6 @@ impl McpServer {
         ))
     }
 
-    #[allow(dead_code)]
     fn send_osc_msg(
         &self,
         address: &str,
