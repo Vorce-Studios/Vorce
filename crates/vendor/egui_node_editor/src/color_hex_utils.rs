@@ -33,7 +33,10 @@ pub fn color_from_hex(hex: &str) -> Result<Color32, String> {
         ));
     }
 
-    Err(format!("Error parsing hex: {}. Example of valid formats: #FFFFFF or #ffffffff", hex))
+    Err(format!(
+        "Error parsing hex: {}. Example of valid formats: #FFFFFF or #ffffffff",
+        hex
+    ))
 }
 
 /// Converts a Color32 into its canonical hexadecimal representation.
@@ -43,7 +46,13 @@ pub fn color_from_hex(hex: &str) -> Result<Color32, String> {
 #[allow(dead_code)]
 pub fn color_to_hex(color: Color32) -> String {
     if color.a() < 255 {
-        format!("#{:02x?}{:02x?}{:02x?}{:02x?}", color.r(), color.g(), color.b(), color.a())
+        format!(
+            "#{:02x?}{:02x?}{:02x?}{:02x?}",
+            color.r(),
+            color.g(),
+            color.b(),
+            color.a()
+        )
     } else {
         format!("#{:02x?}{:02x?}{:02x?}", color.r(), color.g(), color.b())
     }
@@ -55,16 +64,28 @@ mod tests {
 
     #[test]
     pub fn test_color_from_and_to_hex() {
-        assert_eq!(color_from_hex("#00ff00").unwrap(), Color32::from_rgb(0, 255, 0));
-        assert_eq!(color_from_hex("#5577AA").unwrap(), Color32::from_rgb(85, 119, 170));
+        assert_eq!(
+            color_from_hex("#00ff00").unwrap(),
+            Color32::from_rgb(0, 255, 0)
+        );
+        assert_eq!(
+            color_from_hex("#5577AA").unwrap(),
+            Color32::from_rgb(85, 119, 170)
+        );
         assert_eq!(
             color_from_hex("#E2e2e277").unwrap(),
             Color32::from_rgba_premultiplied(226, 226, 226, 119)
         );
         assert!(color_from_hex("abcdefgh").is_err());
 
-        assert_eq!(color_to_hex(Color32::from_rgb(0, 255, 0)), "#00ff00".to_string());
-        assert_eq!(color_to_hex(Color32::from_rgb(85, 119, 170)), "#5577aa".to_string());
+        assert_eq!(
+            color_to_hex(Color32::from_rgb(0, 255, 0)),
+            "#00ff00".to_string()
+        );
+        assert_eq!(
+            color_to_hex(Color32::from_rgb(85, 119, 170)),
+            "#5577aa".to_string()
+        );
         assert_eq!(
             color_to_hex(Color32::from_rgba_premultiplied(226, 226, 226, 119)),
             "#e2e2e277".to_string()

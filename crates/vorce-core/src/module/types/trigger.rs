@@ -99,12 +99,19 @@ impl Default for TriggerConfig {
 impl TriggerConfig {
     /// Associated function.
     pub fn for_target(target: TriggerTarget) -> Self {
-        Self { target, ..Default::default() }
+        Self {
+            target,
+            ..Default::default()
+        }
     }
 
     /// Method implementation.
     pub fn apply(&self, raw_value: f32) -> f32 {
-        let value = if self.invert { 1.0 - raw_value } else { raw_value };
+        let value = if self.invert {
+            1.0 - raw_value
+        } else {
+            raw_value
+        };
 
         match &self.mode {
             TriggerMappingMode::Direct => {
@@ -276,15 +283,27 @@ impl AudioTriggerOutputConfig {
         }
 
         if self.beat_output {
-            outputs.push(ModuleSocket::output("beat_out", "Beat Out", ModuleSocketType::Trigger));
+            outputs.push(ModuleSocket::output(
+                "beat_out",
+                "Beat Out",
+                ModuleSocketType::Trigger,
+            ));
         }
 
         if self.bpm_output {
-            outputs.push(ModuleSocket::output("bpm_out", "BPM Out", ModuleSocketType::Trigger));
+            outputs.push(ModuleSocket::output(
+                "bpm_out",
+                "BPM Out",
+                ModuleSocketType::Trigger,
+            ));
         }
 
         if outputs.is_empty() {
-            outputs.push(ModuleSocket::output("beat_out", "Beat Out", ModuleSocketType::Trigger));
+            outputs.push(ModuleSocket::output(
+                "beat_out",
+                "Beat Out",
+                ModuleSocketType::Trigger,
+            ));
         }
 
         outputs

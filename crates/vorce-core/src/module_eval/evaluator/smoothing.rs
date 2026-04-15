@@ -15,7 +15,11 @@ impl ModuleEvaluator {
             let (mut current_val, last_frame) =
                 cache.get(&state_key).copied().unwrap_or((target_val, 0));
             if last_frame != self.current_frame {
-                let time_constant = if target_val > current_val { *attack } else { *release };
+                let time_constant = if target_val > current_val {
+                    *attack
+                } else {
+                    *release
+                };
                 if time_constant > 0.001 {
                     let alpha = 1.0 - (-self.current_dt / time_constant).exp();
                     current_val = current_val + (target_val - current_val) * alpha;

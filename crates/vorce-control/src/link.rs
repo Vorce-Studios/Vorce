@@ -22,11 +22,14 @@ impl AbletonLinkHandle {
     /// tasks are spawned here, keeping initialization cheap.
     pub fn new(default_bpm: f64) -> Result<Self> {
         if !(20.0..=300.0).contains(&default_bpm) {
-            return Err(ControlError::LinkError(
+            return Err(ControlError::InvalidParameter(
                 "Tempo must be between 20 and 300 BPM".to_string(),
             ));
         }
-        Ok(Self { _tempo: Tempo::new(default_bpm), _clock: Clock::default() })
+        Ok(Self {
+            _tempo: Tempo::new(default_bpm),
+            _clock: Clock::default(),
+        })
     }
 
     /// Return the configured default tempo.
@@ -37,11 +40,57 @@ impl AbletonLinkHandle {
     /// Update the tempo value locally.
     pub fn set_tempo_bpm(&mut self, bpm: f64) -> Result<()> {
         if !(20.0..=300.0).contains(&bpm) {
-            return Err(ControlError::LinkError(
+            return Err(ControlError::InvalidParameter(
                 "Tempo must be between 20 and 300 BPM".to_string(),
             ));
         }
-        self._tempo.set_bpm(bpm);
+        self._tempo = ableton_link_rs::link::tempo::Tempo::new(bpm);
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ableton_link_handle_new_valid() {
+        let handle = AbletonLinkHandle::new(120.0).unwrap();
+        assert_eq!(handle.tempo_bpm(), 120.0);
+    }
+
+    #[test]
+    fn test_ableton_link_handle_new_invalid_too_low() {
+        let handle = AbletonLinkHandle::new(19.9);
+        assert!(handle.is_err());
+    }
+
+    #[test]
+    fn test_ableton_link_handle_new_invalid_too_high() {
+        let handle = AbletonLinkHandle::new(300.1);
+        assert!(handle.is_err());
+    }
+
+    #[test]
+    fn test_ableton_link_handle_set_tempo_valid() {
+        let mut handle = AbletonLinkHandle::new(120.0).unwrap();
+        handle.set_tempo_bpm(150.0).unwrap();
+        assert_eq!(handle.tempo_bpm(), 150.0);
+    }
+
+    #[test]
+    fn test_ableton_link_handle_set_tempo_invalid_too_low() {
+        let mut handle = AbletonLinkHandle::new(120.0).unwrap();
+        let result = handle.set_tempo_bpm(19.9);
+        assert!(result.is_err());
+        assert_eq!(handle.tempo_bpm(), 120.0); // Should not mutate
+    }
+
+    #[test]
+    fn test_ableton_link_handle_set_tempo_invalid_too_high() {
+        let mut handle = AbletonLinkHandle::new(120.0).unwrap();
+        let result = handle.set_tempo_bpm(300.1);
+        assert!(result.is_err());
+        assert_eq!(handle.tempo_bpm(), 120.0); // Should not mutate
     }
 }

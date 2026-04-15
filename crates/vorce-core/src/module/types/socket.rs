@@ -115,7 +115,10 @@ impl ModuleSocket {
         name: impl Into<String>,
         socket_type: ModuleSocketType,
     ) -> Self {
-        Self { supports_trigger_mapping: true, ..Self::input(id, name, socket_type) }
+        Self {
+            supports_trigger_mapping: true,
+            ..Self::input(id, name, socket_type)
+        }
     }
 
     /// Create a new output socket.
