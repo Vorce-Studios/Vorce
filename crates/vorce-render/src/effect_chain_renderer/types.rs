@@ -51,7 +51,11 @@ impl PingPongBuffer {
         let create_texture = || {
             device.create_texture(&wgpu::TextureDescriptor {
                 label: Some("Effect Chain Ping-Pong Texture"),
-                size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
+                size: wgpu::Extent3d {
+                    width,
+                    height,
+                    depth_or_array_layers: 1,
+                },
                 mip_level_count: 1,
                 sample_count: 1,
                 dimension: wgpu::TextureDimension::D2,
@@ -69,7 +73,11 @@ impl PingPongBuffer {
         let view_a = Arc::new(tex_a.create_view(&wgpu::TextureViewDescriptor::default()));
         let view_b = Arc::new(tex_b.create_view(&wgpu::TextureViewDescriptor::default()));
 
-        Self { textures: [tex_a, tex_b], views: [view_a, view_b], current: 0 }
+        Self {
+            textures: [tex_a, tex_b],
+            views: [view_a, view_b],
+            current: 0,
+        }
     }
 
     pub(crate) fn current_view(&self) -> &Arc<wgpu::TextureView> {

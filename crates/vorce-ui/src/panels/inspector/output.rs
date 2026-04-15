@@ -12,7 +12,10 @@ pub fn show_output_inspector(ui: &mut Ui, output: &OutputConfig) {
     // Resolution section
     inspector_section(ui, "Resolution", true, |ui| {
         inspector_row(ui, "Size", |ui| {
-            inspector_value(ui, &format!("{}x{}", output.resolution.0, output.resolution.1));
+            inspector_value(
+                ui,
+                &format!("{}x{}", output.resolution.0, output.resolution.1),
+            );
         });
     });
 

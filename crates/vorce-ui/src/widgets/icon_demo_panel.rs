@@ -16,7 +16,10 @@ pub struct IconDemoPanel {
 
 impl Default for IconDemoPanel {
     fn default() -> Self {
-        Self { visible: false, icon_size: 48.0 }
+        Self {
+            visible: false,
+            icon_size: 48.0,
+        }
     }
 }
 
@@ -73,41 +76,43 @@ impl IconDemoPanel {
                             .floor()
                             .max(1.0) as usize;
 
-                        egui::Grid::new("icon_grid").spacing([16.0, 16.0]).show(ui, |ui| {
-                            for (i, icon) in AppIcon::all().iter().enumerate() {
-                                ui.vertical(|ui| {
-                                    ui.set_width(display_icon_size + 60.0);
+                        egui::Grid::new("icon_grid")
+                            .spacing([16.0, 16.0])
+                            .show(ui, |ui| {
+                                for (i, icon) in AppIcon::all().iter().enumerate() {
+                                    ui.vertical(|ui| {
+                                        ui.set_width(display_icon_size + 60.0);
 
-                                    // Icon background
-                                    egui::Frame::default()
-                                        .fill(egui::Color32::from_rgb(30, 35, 45))
-                                        .corner_radius(egui::CornerRadius::ZERO)
-                                        .inner_margin(12.0)
-                                        .show(ui, |ui| {
-                                            ui.centered_and_justified(|ui| {
-                                                if let Some(img) =
-                                                    icon_manager.image(*icon, display_icon_size)
-                                                {
-                                                    ui.add(img);
-                                                } else {
-                                                    ui.label("❌");
-                                                }
+                                        // Icon background
+                                        egui::Frame::default()
+                                            .fill(egui::Color32::from_rgb(30, 35, 45))
+                                            .corner_radius(egui::CornerRadius::ZERO)
+                                            .inner_margin(12.0)
+                                            .show(ui, |ui| {
+                                                ui.centered_and_justified(|ui| {
+                                                    if let Some(img) =
+                                                        icon_manager.image(*icon, display_icon_size)
+                                                    {
+                                                        ui.add(img);
+                                                    } else {
+                                                        ui.label("❌");
+                                                    }
+                                                });
                                             });
-                                        });
 
-                                    // Icon name
-                                    crate::widgets::custom::render_info_label_with_size(
-                                        ui,
-                                        &format!("{:?}", icon),
-                                        10.0,
-                                    );
-                                });
+                                        // Icon name
+                                        crate::widgets::custom::render_info_label_with_size(
+                                            ui,
+                                            &format!("{:?}", icon),
+                                            10.0,
+                                        );
+                                    });
 
-                                if (i + 1) % cols == 0 {
-                                    ui.end_row();
+                                    if (i + 1) % cols == 0 {
+                                        ui.end_row();
+                                    }
                                 }
-                            }
-                        });
+                            });
                     });
                 } else {
                     ui.colored_label(
