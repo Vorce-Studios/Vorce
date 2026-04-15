@@ -95,7 +95,7 @@ Session 11217710755568478899: Palette - Intervall 1/3 - AWAITING_USER_FEEDBACK
 **Folgende Dateien enthalten Agent-Instruktionen:**
 
 | Datei | Zweck | Geschätzte Größe | Wird geladen von |
-|-------|-------|------------------|------------------|
+| :--- | :--- | :--- | :--- |
 | `.agent/AGENTS.md` | Jules-Anweisungen für VjMapper | ~3KB | Jules (immer) |
 | `.agent/openclaw/AGENTS.md` | OpenClaw PM Agent (Ben?) | ~1.5KB | **Unklar** |
 | `.agent/openclaw/*.md` | HEARTBEAT, IDENTITY, SOUL, TOOLS, USER | ~5KB total | **Unklar** |
@@ -292,7 +292,7 @@ AWAITING_USER_FEEDBACK erkannt?
 #### 2. Eskalations-Matrix definieren
 
 | Intervall | Wartezeit | Aktion | Verantwortlich |
-|-----------|-----------|--------|----------------|
+| :--- | :--- | :--- | :--- |
 | 1 | 1-6h | "Continue with task" senden | Ben (automatisch) |
 | 2 | 6-24h | Erneut "Continue" + GitHub Kommentar | Ben (automatisch) |
 | 3 | 24-48h | @MrLongNight erwähnen + "blocked" Label | Ben (automatisch) |
@@ -401,7 +401,7 @@ agent_budgets:
 #### 9. Agent-Rollen klarer trennen
 
 | Agent | Verantwortung | Tools | Heartbeat |
-|-------|--------------|-------|-----------|
+| :--- | :--- | :--- | :--- |
 | Ben (PM) | Session-Monitoring, Eskalationen | MCP + PowerShell | Alle 30min |
 | Jules | Code-Implementierung | Gemini CLI | Session-basiert |
 | Tracker | QA-Checks (NICHT Changelog) | git, grep | Wöchentlich |
