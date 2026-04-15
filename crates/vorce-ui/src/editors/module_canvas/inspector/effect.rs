@@ -59,7 +59,10 @@ pub fn set_default_effect_params(
 pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: ModulePartId) {
     ui.label("Modulator:");
     match mod_type {
-        ModulizerType::Effect { effect_type: effect, params } => {
+        ModulizerType::Effect {
+            effect_type: effect,
+            params,
+        } => {
             // === LIVE HEADER ===
             ui.add_space(5.0);
 
@@ -389,7 +392,10 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                 egui::ComboBox::from_id_salt("audio_source")
                     .selected_text(source.as_str())
                     .show_ui(ui, |ui| {
-                        if ui.selectable_label(source == "SubBass", "SubBass").clicked() {
+                        if ui
+                            .selectable_label(source == "SubBass", "SubBass")
+                            .clicked()
+                        {
                             *source = "SubBass".to_string();
                         }
                         if ui.selectable_label(source == "Bass", "Bass").clicked() {
@@ -401,13 +407,22 @@ pub fn render_effect_ui(ui: &mut Ui, mod_type: &mut ModulizerType, part_id: Modu
                         if ui.selectable_label(source == "Mid", "Mid").clicked() {
                             *source = "Mid".to_string();
                         }
-                        if ui.selectable_label(source == "HighMid", "HighMid").clicked() {
+                        if ui
+                            .selectable_label(source == "HighMid", "HighMid")
+                            .clicked()
+                        {
                             *source = "HighMid".to_string();
                         }
-                        if ui.selectable_label(source == "Presence", "Presence").clicked() {
+                        if ui
+                            .selectable_label(source == "Presence", "Presence")
+                            .clicked()
+                        {
                             *source = "Presence".to_string();
                         }
-                        if ui.selectable_label(source == "Brilliance", "Brilliance").clicked() {
+                        if ui
+                            .selectable_label(source == "Brilliance", "Brilliance")
+                            .clicked()
+                        {
                             *source = "Brilliance".to_string();
                         }
                         if ui.selectable_label(source == "RMS", "RMS Volume").clicked() {
