@@ -81,9 +81,7 @@ pub mod cpal_backend {
             {
                 let _ = device_name; // Prevent unused variable warning
                 tracing::warn!("Audio input is currently feature-gated on macOS for stability.");
-                Err(AudioError::NoDevicesFound(
-                    "Feature gated on macOS".to_string(),
-                ))
+                Err(AudioError::NoDevicesFound("Feature gated on macOS".to_string()))
             }
 
             #[cfg(not(target_os = "macos"))]
@@ -103,11 +101,7 @@ pub mod cpal_backend {
                     })
                     .ok();
 
-                Ok(Self {
-                    sample_receiver: sample_rx,
-                    command_sender: command_tx,
-                    stream,
-                })
+                Ok(Self { sample_receiver: sample_rx, command_sender: command_tx, stream })
             }
         }
 
@@ -394,10 +388,7 @@ pub mod mock_backend {
 
     impl Default for MockBackend {
         fn default() -> Self {
-            Self {
-                phase: 0.0,
-                sample_rate: 44100.0,
-            }
+            Self { phase: 0.0, sample_rate: 44100.0 }
         }
     }
 
@@ -430,7 +421,6 @@ pub mod mock_backend {
 }
 
 #[cfg(test)]
-<<<<<<< .merge_file_JnWCT3
 #[cfg(feature = "audio")]
 mod tests {
     use super::cpal_backend::CpalBackend;
@@ -458,39 +448,29 @@ mod tests {
             AudioError::NoDevicesFound(_) => {} // This is expected in most cases
             AudioError::DefaultDeviceNotFound => {}
             _ => panic!("Expected NoDevicesFound error, got {:?}", err),
-=======
-mod tests {
-    #[cfg(feature = "audio")]
-    #[test]
-    fn test_list_devices() {
-        use super::cpal_backend::CpalBackend;
-
-        let result = CpalBackend::list_devices();
-
-        // The function should return either an Ok with an Option<Vec<String>> or an Err
-        match result {
-            Ok(devices) => {
-                if let Some(device_list) = devices {
-                    #[cfg(target_os = "macos")]
-                    {
-                        assert!(
-                            device_list.is_empty(),
-                            "On macos, list_devices should return an empty list"
-                        );
-                    }
-                    #[cfg(not(target_os = "macos"))]
-                    {
-                        // On other platforms, it's just a list that could be empty or populated
-                        let _ = device_list;
-                    }
-                }
-            }
-            Err(e) => {
-                // If we get an error (e.g. no devices found on CI environment),
-                // that is also a valid operational result
-                println!("Got expected error in test environment: {:?}", e);
-            }
->>>>>>> .merge_file_wfdA8v
         }
+    }
+}
+
+#[cfg(test)]
+mod tests_mock {
+    use super::mock_backend::MockBackend;
+    use super::AudioBackend;
+
+    #[test]
+    fn test_mock_backend_new() {
+        let mut backend = MockBackend::new();
+        // Test that it starts properly
+        assert!(backend.start().is_ok());
+
+        // Test that it returns samples (initial phase should give us expected values or non-empty buffer)
+        let samples = backend.get_samples();
+        assert_eq!(samples.len(), 1024);
+
+        // Check that some sine wave data is actually generated (not just zeros)
+        let has_non_zero = samples.iter().any(|&s| s != 0.0);
+        assert!(has_non_zero);
+
+        backend.stop();
     }
 }
