@@ -54,11 +54,7 @@ impl EffectConfig {
         // Generate a descriptive name from parameters
         let name = Self::generate_name(&params);
 
-        Self {
-            timestamp,
-            name,
-            params,
-        }
+        Self { timestamp, name, params }
     }
 
     /// Create with a custom name
@@ -68,11 +64,7 @@ impl EffectConfig {
             .map(|d| d.as_secs())
             .unwrap_or(0);
 
-        Self {
-            timestamp,
-            name,
-            params,
-        }
+        Self { timestamp, name, params }
     }
 
     /// Generate a descriptive name from key parameters
@@ -120,9 +112,7 @@ pub struct RecentConfigQueue {
 impl RecentConfigQueue {
     /// Create a new empty queue
     pub fn new() -> Self {
-        Self {
-            configs: VecDeque::new(),
-        }
+        Self { configs: VecDeque::new() }
     }
 
     /// Add a new configuration to the recent list
@@ -189,10 +179,7 @@ pub struct RecentEffectConfigs {
 impl RecentEffectConfigs {
     /// Create a new manager
     pub fn new() -> Self {
-        Self {
-            configs: HashMap::new(),
-            config_path: None,
-        }
+        Self { configs: HashMap::new(), config_path: None }
     }
 
     /// Create with persistence path
@@ -206,10 +193,7 @@ impl RecentEffectConfigs {
     pub fn add_config(&mut self, effect_type: &str, config: EffectConfig) {
         debug!("Adding recent config for effect: {}", effect_type);
 
-        self.configs
-            .entry(effect_type.to_string())
-            .or_default()
-            .add(config);
+        self.configs.entry(effect_type.to_string()).or_default().add(config);
 
         // Auto-save if persistence is enabled
         if let Some(path) = &self.config_path {
@@ -314,14 +298,8 @@ pub fn create_blur_config(radius: f32, sigma: f32) -> EffectConfig {
 pub fn create_color_config(hue: f32, saturation: f32, brightness: f32) -> EffectConfig {
     let mut params = HashMap::new();
     params.insert("hue".to_string(), EffectParamValue::Float(hue));
-    params.insert(
-        "saturation".to_string(),
-        EffectParamValue::Float(saturation),
-    );
-    params.insert(
-        "brightness".to_string(),
-        EffectParamValue::Float(brightness),
-    );
+    params.insert("saturation".to_string(), EffectParamValue::Float(saturation));
+    params.insert("brightness".to_string(), EffectParamValue::Float(brightness));
     EffectConfig::new(params)
 }
 
@@ -345,10 +323,7 @@ mod tests {
 
         // Most recent should be the last added (6.0)
         let recent = queue.most_recent().unwrap();
-        assert_eq!(
-            recent.params.get("value"),
-            Some(&EffectParamValue::Float(6.0))
-        );
+        assert_eq!(recent.params.get("value"), Some(&EffectParamValue::Float(6.0)));
     }
 
     #[test]
@@ -381,9 +356,6 @@ mod tests {
 
         // Most recent blur should be radius=10
         let recent = manager.get_most_recent("blur").unwrap();
-        assert_eq!(
-            recent.params.get("radius"),
-            Some(&EffectParamValue::Float(10.0))
-        );
+        assert_eq!(recent.params.get("radius"), Some(&EffectParamValue::Float(10.0)));
     }
 }

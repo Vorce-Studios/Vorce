@@ -4,18 +4,9 @@ use crate::{AppUI, UIAction};
 
 pub fn show(ui: &mut egui::Ui, ui_state: &AppUI, actions: &mut Vec<UIAction>, compact_menu: bool) {
     let menu_file_label = ui_state.i18n.t("menu-file");
-    let top_label = if compact_menu {
-        "📁"
-    } else {
-        &menu_file_label
-    };
+    let top_label = if compact_menu { "📁" } else { &menu_file_label };
     let response = ui.menu_button(top_label, |ui| {
-        if menu_item(
-            ui,
-            ui_state,
-            ui_state.i18n.t("menu-file-new-project"),
-            Some(AppIcon::Add),
-        ) {
+        if menu_item(ui, ui_state, ui_state.i18n.t("menu-file-new-project"), Some(AppIcon::Add)) {
             actions.push(UIAction::NewProject);
             ui.close();
         }
@@ -64,24 +55,14 @@ pub fn show(ui: &mut egui::Ui, ui_state: &AppUI, actions: &mut Vec<UIAction>, co
 
         ui.separator();
 
-        if menu_item(
-            ui,
-            ui_state,
-            ui_state.i18n.t("menu-file-settings"),
-            Some(AppIcon::Cog),
-        ) {
+        if menu_item(ui, ui_state, ui_state.i18n.t("menu-file-settings"), Some(AppIcon::Cog)) {
             actions.push(UIAction::OpenSettings);
             ui.close();
         }
 
         ui.separator();
 
-        if menu_item(
-            ui,
-            ui_state,
-            ui_state.i18n.t("menu-file-exit"),
-            Some(AppIcon::ButtonStop),
-        ) {
+        if menu_item(ui, ui_state, ui_state.i18n.t("menu-file-exit"), Some(AppIcon::ButtonStop)) {
             actions.push(UIAction::Exit);
             ui.close();
         }

@@ -129,8 +129,7 @@ impl Layer {
         source_size: Vec2,
         target_size: Vec2,
     ) {
-        self.transform
-            .apply_resize_mode(mode, source_size, target_size);
+        self.transform.apply_resize_mode(mode, source_size, target_size);
     }
 
     /// Get transform matrix for rendering
@@ -163,10 +162,8 @@ mod tests_guardian {
 
     #[test]
     fn test_layer_builder_methods() {
-        let layer = Layer::new(1, "Test")
-            .with_paint(100)
-            .with_blend_mode(BlendMode::Add)
-            .with_opacity(0.5);
+        let layer =
+            Layer::new(1, "Test").with_paint(100).with_blend_mode(BlendMode::Add).with_opacity(0.5);
         assert_eq!(layer.paint_id, Some(100));
         assert_eq!(layer.blend_mode, BlendMode::Add);
         assert_eq!(layer.opacity, 0.5);
