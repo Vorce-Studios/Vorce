@@ -57,3 +57,7 @@ usvg = { workspace = true }
 
 wgpu = { workspace = true }
 winit = { workspace = true }
+
+
+[dev-dependencies]
+criterion.workspace = true

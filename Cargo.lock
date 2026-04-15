@@ -9796,6 +9796,7 @@ version = "0.2.0"
 dependencies = [
  "anyhow",
  "cpal 0.17.1",
+ "criterion",
  "dirs",
  "egui",
  "egui-wgpu",

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 
 /// Represents one of the 5 predefined layout slots.
@@ -72,13 +72,18 @@ impl SlotManager {
 
     /// Assigns a panel to a slot.
     pub fn assign_to_slot(&mut self, panel: PanelId, slot: UiSlot) {
-        // Remove from any existing slot first
+        // Remove from any existing slot first.
+        // Converting to a HashSet before the loop requires a small refactor
+        // but provides significant algorithmic improvement by avoiding an O(N)
+        // contains check on every iteration inside retain.
+        let remove_set: HashSet<_> = std::iter::once(panel).collect();
         for panels in self.assignments.values_mut() {
-            panels.retain(|&p| p != panel);
+            panels.retain(|p| !remove_set.contains(p));
         }
 
         if let Some(panels) = self.assignments.get_mut(&slot) {
-            if !panels.contains(&panel) {
+            // We use the same HashSet to avoid O(N) contains lookup on the target slice
+            if !remove_set.iter().any(|p| panels.contains(p)) {
                 panels.push(panel);
             }
         }
