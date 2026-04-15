@@ -44,12 +44,11 @@ impl EffectChainRenderer {
 
     /// Create a uniform buffer for effect parameters
     pub fn create_uniform_buffer(&self, params: &EffectParams) -> wgpu::Buffer {
-        self.device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Effect Chain Uniform Buffer"),
-                contents: bytemuck::cast_slice(&[*params]),
-                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            })
+        self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Effect Chain Uniform Buffer"),
+            contents: bytemuck::cast_slice(&[*params]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        })
     }
 
     /// Get or create a uniform bind group
@@ -102,9 +101,7 @@ impl EffectChainRenderer {
         if enabled_effects.is_empty() {
             // No effects, use quad renderer to copy input to output
             debug!("No effects enabled, passing through with QuadRenderer");
-            let bind_group = self
-                .quad_renderer
-                .create_bind_group(&self.device, input_view);
+            let bind_group = self.quad_renderer.create_bind_group(&self.device, input_view);
             let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Passthrough Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -326,9 +323,7 @@ impl EffectChainRenderer {
             );
 
             // Allocate uniform buffer from pool
-            let allocation = self
-                .allocator
-                .allocate(&self.queue, bytemuck::cast_slice(&[params]));
+            let allocation = self.allocator.allocate(&self.queue, bytemuck::cast_slice(&[params]));
             let size = std::mem::size_of::<EffectParams>() as u64;
 
             let uniform_bind_group = Self::get_uniform_bind_group_static(

@@ -17,13 +17,8 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     let ui_needs_sync = handle_ui_actions(app).unwrap_or(false);
 
     // 3. Get all module IDs
-    let all_module_ids: Vec<u64> = app
-        .state
-        .module_manager
-        .modules()
-        .iter()
-        .map(|m| m.id)
-        .collect();
+    let all_module_ids: Vec<u64> =
+        app.state.module_manager.modules().iter().map(|m| m.id).collect();
 
     // --- Performance Optimization: Early return if idle ---
     if all_module_ids.is_empty() {
@@ -36,9 +31,8 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     // 4. Update evaluator with reaktive events
     app.module_evaluator.set_delta_time(dt);
 
-    let active_keys: HashSet<String> = app
-        .egui_context
-        .input(|i| i.keys_down.iter().map(|k| format!("{:?}", k)).collect());
+    let active_keys: HashSet<String> =
+        app.egui_context.input(|i| i.keys_down.iter().map(|k| format!("{:?}", k)).collect());
     app.module_evaluator.update_keys(&active_keys);
 
     // --- Control System Update ---
@@ -53,21 +47,11 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
 
         for msg in &midi_events {
             match msg {
-                vorce_control::midi::MidiMessage::NoteOn {
-                    channel,
-                    note,
-                    velocity,
-                } => {
+                vorce_control::midi::MidiMessage::NoteOn { channel, note, velocity } => {
                     shared.active_midi_events.push((*channel, *note, *velocity));
                 }
-                vorce_control::midi::MidiMessage::ControlChange {
-                    channel,
-                    controller,
-                    value,
-                } => {
-                    shared
-                        .active_midi_cc
-                        .insert((*channel, *controller), *value);
+                vorce_control::midi::MidiMessage::ControlChange { channel, controller, value } => {
+                    shared.active_midi_cc.insert((*channel, *controller), *value);
                 }
                 _ => {}
             }
@@ -94,18 +78,10 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     // Update hybrid active triggers from events before running show_module
     app.ui_state.timeline_panel.hybrid_active_triggers.clear();
     for key in &active_keys {
-        app.ui_state
-            .timeline_panel
-            .hybrid_active_triggers
-            .insert(key.clone());
+        app.ui_state.timeline_panel.hybrid_active_triggers.insert(key.clone());
     }
     for msg in &midi_events {
-        if let vorce_control::midi::MidiMessage::NoteOn {
-            channel,
-            note,
-            velocity,
-        } = msg
-        {
+        if let vorce_control::midi::MidiMessage::NoteOn { channel, note, velocity } = msg {
             if *velocity > 0 {
                 app.ui_state
                     .timeline_panel
@@ -116,10 +92,7 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     }
     for packet in &osc_packets {
         if let rosc::OscPacket::Message(msg) = packet {
-            app.ui_state
-                .timeline_panel
-                .hybrid_active_triggers
-                .insert(msg.addr.clone());
+            app.ui_state.timeline_panel.hybrid_active_triggers.insert(msg.addr.clone());
         }
     }
 
@@ -129,9 +102,7 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
         &all_module_ids,
     );
     if let Some(active_module_id) = show_module_id {
-        app.ui_state
-            .module_canvas
-            .set_active_module(Some(active_module_id));
+        app.ui_state.module_canvas.set_active_module(Some(active_module_id));
     }
     let modules_for_eval: Vec<u64> = if let Some(module_id) = show_module_id {
         vec![module_id]
@@ -164,10 +135,8 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     // 7. Graph Evaluation & Bevy Sync (MODULARIZED)
     let mut graph_dirty = app.state.module_manager.graph_revision != app.last_graph_revision;
     if graph_dirty {
-        let repaired = app
-            .state
-            .module_manager_mut()
-            .repair_modules(modules_for_eval.iter().copied());
+        let repaired =
+            app.state.module_manager_mut().repair_modules(modules_for_eval.iter().copied());
         if !repaired.is_empty() {
             tracing::warn!(
                 "Self-heal repaired {} module graph(s) before evaluation.",
@@ -181,12 +150,8 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     // 8. UI State Sync
     app.ui_state.current_audio_level = analysis_v1.rms_volume;
     app.ui_state.current_bpm = analysis_v1.tempo_bpm;
-    app.ui_state
-        .dashboard
-        .set_audio_analysis(analysis_v1.clone());
-    app.ui_state
-        .dashboard
-        .set_audio_devices(app.audio_devices.clone());
+    app.ui_state.dashboard.set_audio_analysis(analysis_v1.clone());
+    app.ui_state.dashboard.set_audio_devices(app.audio_devices.clone());
     app.ui_state.current_fps = app.current_fps;
     app.ui_state.current_frame_time_ms = app.current_frame_time_ms;
 
@@ -197,8 +162,7 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
 
         // Refresh only the current process
         if let Ok(pid) = sysinfo::get_current_pid() {
-            app.sys_info
-                .refresh_processes(sysinfo::ProcessesToUpdate::Some(&[pid]), true);
+            app.sys_info.refresh_processes(sysinfo::ProcessesToUpdate::Some(&[pid]), true);
         }
 
         app.last_sysinfo_refresh = std::time::Instant::now();

@@ -24,11 +24,9 @@ impl From<&MidiMessage> for Option<MidiMappingKey> {
                 Some(MidiMappingKey::Note(*channel, *note))
             }
             MidiMessage::NoteOff { channel, note } => Some(MidiMappingKey::Note(*channel, *note)),
-            MidiMessage::ControlChange {
-                channel,
-                controller,
-                ..
-            } => Some(MidiMappingKey::Control(*channel, *controller)),
+            MidiMessage::ControlChange { channel, controller, .. } => {
+                Some(MidiMappingKey::Control(*channel, *controller))
+            }
             MidiMessage::PitchBend { channel, .. } => Some(MidiMappingKey::PitchBend(*channel)),
             MidiMessage::ProgramChange { channel, .. } => {
                 Some(MidiMappingKey::ProgramChange(*channel))
@@ -78,15 +76,7 @@ impl MidiMapping {
         max_value: f32,
         curve: MappingCurve,
     ) {
-        self.map.insert(
-            key,
-            MidiControlMapping {
-                target,
-                min_value,
-                max_value,
-                curve,
-            },
-        );
+        self.map.insert(key, MidiControlMapping { target, min_value, max_value, curve });
     }
 
     /// Remove a mapping
@@ -160,19 +150,9 @@ mod tests {
 
         let key = MidiMappingKey::Control(0, 7); // CC 7 on Ch 0
 
-        mapping.add_mapping(
-            key,
-            ControlTarget::LayerOpacity(0),
-            0.0,
-            1.0,
-            MappingCurve::Linear,
-        );
+        mapping.add_mapping(key, ControlTarget::LayerOpacity(0), 0.0, 1.0, MappingCurve::Linear);
 
-        let msg = MidiMessage::ControlChange {
-            channel: 0,
-            controller: 7,
-            value: 64,
-        };
+        let msg = MidiMessage::ControlChange { channel: 0, controller: 7, value: 64 };
 
         let (target, value) = mapping.get_control_value(&msg).unwrap();
         assert_eq!(target, ControlTarget::LayerOpacity(0));
@@ -235,44 +215,22 @@ mod tests {
     fn test_midi_mapping_unmapped() {
         let mut mapping = MidiMapping::new();
         let key = MidiMappingKey::Control(0, 10);
-        mapping.add_mapping(
-            key,
-            ControlTarget::MasterOpacity,
-            0.0,
-            1.0,
-            MappingCurve::Linear,
-        );
+        mapping.add_mapping(key, ControlTarget::MasterOpacity, 0.0, 1.0, MappingCurve::Linear);
 
         // Mapped message
-        let msg_mapped = MidiMessage::ControlChange {
-            channel: 0,
-            controller: 10,
-            value: 127,
-        };
+        let msg_mapped = MidiMessage::ControlChange { channel: 0, controller: 10, value: 127 };
         assert!(mapping.get_control_value(&msg_mapped).is_some());
 
         // Unmapped controller
-        let msg_unmapped_cc = MidiMessage::ControlChange {
-            channel: 0,
-            controller: 11,
-            value: 127,
-        };
+        let msg_unmapped_cc = MidiMessage::ControlChange { channel: 0, controller: 11, value: 127 };
         assert!(mapping.get_control_value(&msg_unmapped_cc).is_none());
 
         // Unmapped channel
-        let msg_unmapped_ch = MidiMessage::ControlChange {
-            channel: 1,
-            controller: 10,
-            value: 127,
-        };
+        let msg_unmapped_ch = MidiMessage::ControlChange { channel: 1, controller: 10, value: 127 };
         assert!(mapping.get_control_value(&msg_unmapped_ch).is_none());
 
         // Unmapped message type (Note On)
-        let msg_note = MidiMessage::NoteOn {
-            channel: 0,
-            note: 10,
-            velocity: 127,
-        };
+        let msg_note = MidiMessage::NoteOn { channel: 0, note: 10, velocity: 127 };
         assert!(mapping.get_control_value(&msg_note).is_none());
     }
 }
