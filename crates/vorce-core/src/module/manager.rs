@@ -70,7 +70,9 @@ impl ModuleManager {
         position: (f32, f32),
     ) -> Option<ModulePartId> {
         self.mark_dirty();
-        self.modules.get_mut(&module_id).map(|module| module.add_part(part_type, position))
+        self.modules
+            .get_mut(&module_id)
+            .map(|module| module.add_part(part_type, position))
     }
 
     /// Get the next available unique name for a module
@@ -175,7 +177,11 @@ impl ModuleManager {
     /// Rename a module
     pub fn rename_module(&mut self, module_id: ModuleId, new_name: String) -> bool {
         // Check uniqueness
-        if self.modules.values().any(|m| m.name == new_name && m.id != module_id) {
+        if self
+            .modules
+            .values()
+            .any(|m| m.name == new_name && m.id != module_id)
+        {
             return false;
         }
 
@@ -297,7 +303,10 @@ mod tests {
         let id = manager.create_module("Test Module".to_string());
         let duplicate_id = manager.duplicate_module(id).unwrap();
         assert_eq!(manager.modules.len(), 2);
-        assert_eq!(manager.modules.get(&duplicate_id).unwrap().name, "Test Module (Copy) 1");
+        assert_eq!(
+            manager.modules.get(&duplicate_id).unwrap().name,
+            "Test Module (Copy) 1"
+        );
     }
 
     #[test]

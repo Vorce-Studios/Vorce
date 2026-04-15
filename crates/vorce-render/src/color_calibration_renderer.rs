@@ -55,10 +55,22 @@ impl Vertex {
 
 // Fullscreen quad vertices (NDC coordinates)
 const QUAD_VERTICES: &[Vertex] = &[
-    Vertex { position: [-1.0, -1.0], texcoord: [0.0, 1.0] },
-    Vertex { position: [1.0, -1.0], texcoord: [1.0, 1.0] },
-    Vertex { position: [1.0, 1.0], texcoord: [1.0, 0.0] },
-    Vertex { position: [-1.0, 1.0], texcoord: [0.0, 0.0] },
+    Vertex {
+        position: [-1.0, -1.0],
+        texcoord: [0.0, 1.0],
+    },
+    Vertex {
+        position: [1.0, -1.0],
+        texcoord: [1.0, 1.0],
+    },
+    Vertex {
+        position: [1.0, 1.0],
+        texcoord: [1.0, 0.0],
+    },
+    Vertex {
+        position: [-1.0, 1.0],
+        texcoord: [0.0, 0.0],
+    },
 ];
 
 const QUAD_INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
@@ -242,11 +254,12 @@ impl ColorCalibrationRenderer {
             _padding: 0.0,
         };
 
-        self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Color Calibration Uniform Buffer"),
-            contents: bytemuck::cast_slice(&[uniforms]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        })
+        self.device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Color Calibration Uniform Buffer"),
+                contents: bytemuck::cast_slice(&[uniforms]),
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            })
     }
 
     /// Create a uniform bind group
@@ -254,7 +267,10 @@ impl ColorCalibrationRenderer {
         self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Color Calibration Uniform Bind Group"),
             layout: &self.uniform_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry { binding: 0, resource: buffer.as_entire_binding() }],
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: buffer.as_entire_binding(),
+            }],
         })
     }
 

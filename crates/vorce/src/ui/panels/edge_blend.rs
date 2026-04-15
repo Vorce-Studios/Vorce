@@ -11,5 +11,8 @@ pub struct EdgeBlendContext<'a> {
 
 /// Renders the edge blend panel.
 pub fn show(ctx: &Context, context: EdgeBlendContext) {
-    context.ui_state.edge_blend_panel.show(ctx, &context.ui_state.i18n);
+    context
+        .ui_state
+        .edge_blend_panel
+        .show(ctx, &context.ui_state.i18n);
 }

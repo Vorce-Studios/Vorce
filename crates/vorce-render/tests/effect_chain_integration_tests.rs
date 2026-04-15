@@ -29,7 +29,11 @@ where
         queue,
         &TextureDescriptor {
             label: Some("Input Test Texture"),
-            size: Extent3d { width, height, depth_or_array_layers: 1 },
+            size: Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
@@ -45,7 +49,11 @@ where
     // Create output texture
     let output_texture = device.create_texture(&TextureDescriptor {
         label: Some("Output Test Texture"),
-        size: Extent3d { width, height, depth_or_array_layers: 1 },
+        size: Extent3d {
+            width,
+            height,
+            depth_or_array_layers: 1,
+        },
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
@@ -72,8 +80,9 @@ where
         mapped_at_creation: false,
     });
 
-    let mut encoder = device
-        .create_command_encoder(&CommandEncoderDescriptor { label: Some("Readback Encoder") });
+    let mut encoder = device.create_command_encoder(&CommandEncoderDescriptor {
+        label: Some("Readback Encoder"),
+    });
 
     let bytes_per_row = {
         let alignment = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
@@ -96,7 +105,11 @@ where
                 rows_per_image: Some(height),
             },
         },
-        Extent3d { width, height, depth_or_array_layers: 1 },
+        Extent3d {
+            width,
+            height,
+            depth_or_array_layers: 1,
+        },
     );
 
     let _index = queue.submit(Some(encoder.finish()));
@@ -107,7 +120,12 @@ where
     // Map the buffer and get the data
     let slice = output_buffer.slice(..);
     slice.map_async(wgpu::MapMode::Read, |_| {});
-    device.poll(wgpu::PollType::Wait { submission_index: None, timeout: None }).unwrap();
+    device
+        .poll(wgpu::PollType::Wait {
+            submission_index: None,
+            timeout: None,
+        })
+        .unwrap();
     let data = {
         let view = slice.get_mapped_range();
         view.chunks_exact(bytes_per_row as usize)
@@ -129,7 +147,9 @@ async fn test_passthrough_no_effects() {
             let chain = EffectChain::new();
             let mut encoder = renderer
                 .device()
-                .create_command_encoder(&CommandEncoderDescriptor { label: Some("Test Encoder") });
+                .create_command_encoder(&CommandEncoderDescriptor {
+                    label: Some("Test Encoder"),
+                });
             let shader_graph_manager = vorce_render::ShaderGraphManager::new();
             renderer.apply_chain(
                 &mut encoder,
