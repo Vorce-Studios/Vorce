@@ -36,7 +36,11 @@ async fn test_simple_invert() {
         queue,
         &TextureDescriptor {
             label: Some("Input Texture"),
-            size: Extent3d { width, height, depth_or_array_layers: 1 },
+            size: Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
@@ -52,7 +56,11 @@ async fn test_simple_invert() {
     // Create output texture
     let output_texture = device.create_texture(&TextureDescriptor {
         label: Some("Output Texture"),
-        size: Extent3d { width, height, depth_or_array_layers: 1 },
+        size: Extent3d {
+            width,
+            height,
+            depth_or_array_layers: 1,
+        },
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
@@ -66,8 +74,9 @@ async fn test_simple_invert() {
     let mut chain = EffectChain::new();
     chain.add_effect(EffectType::Invert);
 
-    let mut encoder =
-        device.create_command_encoder(&CommandEncoderDescriptor { label: Some("Test Encoder") });
+    let mut encoder = device.create_command_encoder(&CommandEncoderDescriptor {
+        label: Some("Test Encoder"),
+    });
 
     let shader_graph_manager = vorce_render::ShaderGraphManager::new();
     renderer.apply_chain(
@@ -92,8 +101,9 @@ async fn test_simple_invert() {
         mapped_at_creation: false,
     });
 
-    let mut encoder = device
-        .create_command_encoder(&CommandEncoderDescriptor { label: Some("Readback Encoder") });
+    let mut encoder = device.create_command_encoder(&CommandEncoderDescriptor {
+        label: Some("Readback Encoder"),
+    });
 
     let bytes_per_row = width * bytes_per_pixel;
     encoder.copy_texture_to_buffer(
@@ -111,14 +121,23 @@ async fn test_simple_invert() {
                 rows_per_image: Some(height),
             },
         },
-        Extent3d { width, height, depth_or_array_layers: 1 },
+        Extent3d {
+            width,
+            height,
+            depth_or_array_layers: 1,
+        },
     );
 
     queue.submit(Some(encoder.finish()));
 
     let slice = output_buffer.slice(..);
     slice.map_async(wgpu::MapMode::Read, |_| {});
-    device.poll(wgpu::PollType::Wait { submission_index: None, timeout: None }).unwrap();
+    device
+        .poll(wgpu::PollType::Wait {
+            submission_index: None,
+            timeout: None,
+        })
+        .unwrap();
 
     let data = slice.get_mapped_range();
     // First pixel should be cyan (inverted red) [0, 255, 255, 255]

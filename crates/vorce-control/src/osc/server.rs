@@ -56,17 +56,24 @@ impl OscServer {
             Self::run_receiver(socket, sender);
         });
 
-        Ok(Self { receiver, _handle: Some(handle) })
+        Ok(Self {
+            receiver,
+            _handle: Some(handle),
+        })
     }
 
     #[cfg(not(feature = "osc"))]
     pub fn new(_port: u16) -> Result<Self> {
-        Err(ControlError::OscError("OSC feature not enabled".to_string()))
+        Err(ControlError::OscError(
+            "OSC feature not enabled".to_string(),
+        ))
     }
 
     #[cfg(not(feature = "osc"))]
     pub fn new_with_host(_host: &str, _port: u16) -> Result<Self> {
-        Err(ControlError::OscError("OSC feature not enabled".to_string()))
+        Err(ControlError::OscError(
+            "OSC feature not enabled".to_string(),
+        ))
     }
 
     /// Run the receiver loop (blocking)
@@ -136,7 +143,9 @@ mod tests {
         let client = OscClient::new("127.0.0.1:18001").unwrap();
 
         // Send a message
-        client.send_message("/vorce/layer/0/opacity", vec![OscType::Float(0.5)]).unwrap();
+        client
+            .send_message("/vorce/layer/0/opacity", vec![OscType::Float(0.5)])
+            .unwrap();
 
         // Wait a bit for the message to arrive
         thread::sleep(Duration::from_millis(100));

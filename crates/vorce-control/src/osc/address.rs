@@ -45,7 +45,10 @@ pub fn parse_osc_address(address: &str) -> Result<ControlTarget> {
     }
 
     if parts.len() < 2 {
-        return Err(ControlError::InvalidMessage(format!("Invalid OSC address: {}", address)));
+        return Err(ControlError::InvalidMessage(format!(
+            "Invalid OSC address: {}",
+            address
+        )));
     }
 
     match parts[1] {
@@ -55,19 +58,27 @@ pub fn parse_osc_address(address: &str) -> Result<ControlTarget> {
         "effect" => parse_effect_address(&parts[2..]),
         "playback" => parse_playback_address(&parts[2..]),
         "output" => parse_output_address(&parts[2..]),
-        _ => Err(ControlError::InvalidMessage(format!("Unknown OSC category: {}", parts[1]))),
+        _ => Err(ControlError::InvalidMessage(format!(
+            "Unknown OSC category: {}",
+            parts[1]
+        ))),
     }
 }
 
 fn parse_master_address(parts: &[&str]) -> Result<ControlTarget> {
     if parts.is_empty() {
-        return Err(ControlError::InvalidMessage("Missing master parameter".to_string()));
+        return Err(ControlError::InvalidMessage(
+            "Missing master parameter".to_string(),
+        ));
     }
 
     match parts[0] {
         "opacity" => Ok(ControlTarget::MasterOpacity),
         "blackout" => Ok(ControlTarget::MasterBlackout),
-        _ => Err(ControlError::InvalidMessage(format!("Unknown master parameter: {}", parts[0]))),
+        _ => Err(ControlError::InvalidMessage(format!(
+            "Unknown master parameter: {}",
+            parts[0]
+        ))),
     }
 }
 
@@ -81,7 +92,9 @@ fn parse_layer_address(parts: &[&str]) -> Result<ControlTarget> {
         .map_err(|_| ControlError::InvalidMessage(format!("Invalid layer ID: {}", parts[0])))?;
 
     if parts.len() < 2 {
-        return Err(ControlError::InvalidMessage("Missing layer parameter".to_string()));
+        return Err(ControlError::InvalidMessage(
+            "Missing layer parameter".to_string(),
+        ));
     }
 
     match parts[1] {
@@ -90,7 +103,10 @@ fn parse_layer_address(parts: &[&str]) -> Result<ControlTarget> {
         "rotation" => Ok(ControlTarget::LayerRotation(layer_id)),
         "scale" => Ok(ControlTarget::LayerScale(layer_id)),
         "visibility" => Ok(ControlTarget::LayerVisibility(layer_id)),
-        _ => Err(ControlError::InvalidMessage(format!("Unknown layer parameter: {}", parts[1]))),
+        _ => Err(ControlError::InvalidMessage(format!(
+            "Unknown layer parameter: {}",
+            parts[1]
+        ))),
     }
 }
 
@@ -122,7 +138,9 @@ fn parse_paint_address(parts: &[&str]) -> Result<ControlTarget> {
 
 fn parse_effect_address(parts: &[&str]) -> Result<ControlTarget> {
     if parts.is_empty() {
-        return Err(ControlError::InvalidMessage("Missing effect ID".to_string()));
+        return Err(ControlError::InvalidMessage(
+            "Missing effect ID".to_string(),
+        ));
     }
 
     let effect_id: u32 = parts[0]
@@ -148,19 +166,26 @@ fn parse_effect_address(parts: &[&str]) -> Result<ControlTarget> {
 
 fn parse_playback_address(parts: &[&str]) -> Result<ControlTarget> {
     if parts.is_empty() {
-        return Err(ControlError::InvalidMessage("Missing playback parameter".to_string()));
+        return Err(ControlError::InvalidMessage(
+            "Missing playback parameter".to_string(),
+        ));
     }
 
     match parts[0] {
         "speed" => Ok(ControlTarget::PlaybackSpeed(None)),
         "position" => Ok(ControlTarget::PlaybackPosition),
-        _ => Err(ControlError::InvalidMessage(format!("Unknown playback parameter: {}", parts[0]))),
+        _ => Err(ControlError::InvalidMessage(format!(
+            "Unknown playback parameter: {}",
+            parts[0]
+        ))),
     }
 }
 
 fn parse_output_address(parts: &[&str]) -> Result<ControlTarget> {
     if parts.is_empty() {
-        return Err(ControlError::InvalidMessage("Missing output ID".to_string()));
+        return Err(ControlError::InvalidMessage(
+            "Missing output ID".to_string(),
+        ));
     }
 
     let output_id: u32 = parts[0]
@@ -168,12 +193,17 @@ fn parse_output_address(parts: &[&str]) -> Result<ControlTarget> {
         .map_err(|_| ControlError::InvalidMessage(format!("Invalid output ID: {}", parts[0])))?;
 
     if parts.len() < 2 {
-        return Err(ControlError::InvalidMessage("Missing output parameter".to_string()));
+        return Err(ControlError::InvalidMessage(
+            "Missing output parameter".to_string(),
+        ));
     }
 
     match parts[1] {
         "brightness" => Ok(ControlTarget::OutputBrightness(output_id)),
-        _ => Err(ControlError::InvalidMessage(format!("Unknown output parameter: {}", parts[1]))),
+        _ => Err(ControlError::InvalidMessage(format!(
+            "Unknown output parameter: {}",
+            parts[1]
+        ))),
     }
 }
 
@@ -233,13 +263,19 @@ mod tests {
     #[test]
     fn test_parse_paint_parameter() {
         let target = parse_osc_address("/vorce/paint/3/parameter/speed").unwrap();
-        assert_eq!(target, ControlTarget::PaintParameter(3, "speed".to_string()));
+        assert_eq!(
+            target,
+            ControlTarget::PaintParameter(3, "speed".to_string())
+        );
     }
 
     #[test]
     fn test_parse_effect_parameter() {
         let target = parse_osc_address("/vorce/effect/1/parameter/intensity").unwrap();
-        assert_eq!(target, ControlTarget::EffectParameter(1, "intensity".to_string()));
+        assert_eq!(
+            target,
+            ControlTarget::EffectParameter(1, "intensity".to_string())
+        );
     }
 
     #[test]
@@ -262,7 +298,10 @@ mod tests {
         assert_eq!(control_target_to_address(&target), "/vorce/layer/0/opacity");
 
         let target = ControlTarget::PaintParameter(3, "speed".to_string());
-        assert_eq!(control_target_to_address(&target), "/vorce/paint/3/parameter/speed");
+        assert_eq!(
+            control_target_to_address(&target),
+            "/vorce/paint/3/parameter/speed"
+        );
     }
 
     #[test]
@@ -338,7 +377,10 @@ mod tests {
 
     #[test]
     fn test_round_trip_playback_targets() {
-        let targets = vec![ControlTarget::PlaybackSpeed(None), ControlTarget::PlaybackPosition];
+        let targets = vec![
+            ControlTarget::PlaybackSpeed(None),
+            ControlTarget::PlaybackPosition,
+        ];
 
         for target in targets {
             let address = control_target_to_address(&target);

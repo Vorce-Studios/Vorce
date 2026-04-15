@@ -181,9 +181,10 @@ impl AudioPanel {
                 ui.add_space(8.0);
 
                 // Controls Section
-                egui::Grid::new("audio_controls_grid").num_columns(2).spacing([8.0, 8.0]).show(
-                    ui,
-                    |ui| {
+                egui::Grid::new("audio_controls_grid")
+                    .num_columns(2)
+                    .spacing([8.0, 8.0])
+                    .show(ui, |ui| {
                         // Gain
                         ui.label(locale.t("audio-gain"));
                         let mut gain = config.gain;
@@ -255,8 +256,7 @@ impl AudioPanel {
                                 }
                             });
                         ui.end_row();
-                    },
-                );
+                    });
             });
         });
 

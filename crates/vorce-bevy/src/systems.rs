@@ -7,7 +7,11 @@ use rand::Rng;
 pub fn audio_reaction_observer(
     trigger: bevy::prelude::On<bevy::ecs::lifecycle::Add, AudioReactive>,
     audio: Res<AudioInputResource>,
-    mut query: Query<(&AudioReactive, &mut Transform, Option<&MeshMaterial3d<StandardMaterial>>)>,
+    mut query: Query<(
+        &AudioReactive,
+        &mut Transform,
+        Option<&MeshMaterial3d<StandardMaterial>>,
+    )>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     if let Ok((reaction, mut transform, mat_handle)) = query.get_mut(trigger.entity) {
@@ -53,7 +57,11 @@ pub fn audio_reaction_observer(
 pub fn audio_reaction_update_observer(
     trigger: bevy::prelude::On<bevy::ecs::lifecycle::Insert, AudioReactive>,
     audio: Res<AudioInputResource>,
-    mut query: Query<(&AudioReactive, &mut Transform, Option<&MeshMaterial3d<StandardMaterial>>)>,
+    mut query: Query<(
+        &AudioReactive,
+        &mut Transform,
+        Option<&MeshMaterial3d<StandardMaterial>>,
+    )>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     if let Ok((reaction, mut transform, mat_handle)) = query.get_mut(trigger.entity) {
@@ -126,9 +134,10 @@ pub fn shape_system(
             ..default()
         };
 
-        commands
-            .entity(entity)
-            .insert((Mesh3d(meshes.add(mesh)), MeshMaterial3d(materials.add(material))));
+        commands.entity(entity).insert((
+            Mesh3d(meshes.add(mesh)),
+            MeshMaterial3d(materials.add(material)),
+        ));
 
         // bevy_mod_outline temporarily disabled due to compatibility
         // if shape.outline_width > 0.0 {
@@ -205,7 +214,10 @@ pub fn setup_3d_scene(
         .insert(crate::components::SharedEngineCamera);
     // Spawn Light
     commands.spawn((
-        PointLight { shadow_maps_enabled: true, ..default() },
+        PointLight {
+            shadow_maps_enabled: true,
+            ..default()
+        },
         Transform::from_xyz(4.0, 8.0, 4.0),
     ));
 }
@@ -230,8 +242,10 @@ pub fn hex_grid_system(
             0.2,
             hex_config.radius * 1.5,
         )));
-        let material =
-            materials.add(StandardMaterial { base_color: Color::srgb(0.2, 0.2, 0.8), ..default() });
+        let material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.2, 0.2, 0.8),
+            ..default()
+        });
 
         commands.entity(entity).with_children(|parent| {
             for hex in hexx::shapes::hexagon(hexx::Hex::ZERO, hex_config.rings) {
@@ -274,7 +288,9 @@ pub fn particle_system(
     for (entity, config, mut emitter_opt, mesh_opt) in query.iter_mut() {
         // Initialize emitter if missing
         if emitter_opt.is_none() {
-            commands.entity(entity).insert(crate::components::ParticleEmitter::default());
+            commands
+                .entity(entity)
+                .insert(crate::components::ParticleEmitter::default());
             continue; // Wait for next frame
         }
         let emitter = emitter_opt.as_mut().unwrap();
@@ -298,7 +314,9 @@ pub fn particle_system(
                 ..default()
             });
 
-            commands.entity(entity).insert((Mesh3d(mesh_handle), MeshMaterial3d(material_handle)));
+            commands
+                .entity(entity)
+                .insert((Mesh3d(mesh_handle), MeshMaterial3d(material_handle)));
             continue;
         }
 
@@ -440,7 +458,11 @@ pub fn frame_readback_system(
 
         let width = gpu_image.texture_descriptor.size.width;
         let height = gpu_image.texture_descriptor.size.height;
-        let block_size = gpu_image.texture_descriptor.format.block_copy_size(None).unwrap_or(4);
+        let block_size = gpu_image
+            .texture_descriptor
+            .format
+            .block_copy_size(None)
+            .unwrap_or(4);
 
         // bytes_per_row must be multiple of 256
         let bytes_per_pixel = block_size;
@@ -486,7 +508,11 @@ pub fn frame_readback_system(
                     rows_per_image: Some(height),
                 },
             },
-            bevy::render::render_resource::Extent3d { width, height, depth_or_array_layers: 1 },
+            bevy::render::render_resource::Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
         );
 
         let submission_index = render_queue.submit(std::iter::once(encoder.finish()));
@@ -500,7 +526,10 @@ pub fn frame_readback_system(
         });
 
         render_device
-            .poll(wgpu::PollType::Wait { submission_index: Some(submission_index), timeout: None })
+            .poll(wgpu::PollType::Wait {
+                submission_index: Some(submission_index),
+                timeout: None,
+            })
             .unwrap();
 
         match rx.recv() {
@@ -547,15 +576,25 @@ pub fn text_3d_system(
             crate::components::BevyTextAlignment::Justify => Justify::Justified,
         };
 
-        let color =
-            Color::srgba(config.color[0], config.color[1], config.color[2], config.color[3]);
+        let color = Color::srgba(
+            config.color[0],
+            config.color[1],
+            config.color[2],
+            config.color[3],
+        );
 
         commands.entity(entity).insert((
             Text2d::default(),
             Text::new(config.text.clone()),
-            TextFont { font_size: bevy::prelude::FontSize::Px(config.font_size), ..default() },
+            TextFont {
+                font_size: bevy::prelude::FontSize::Px(config.font_size),
+                ..default()
+            },
             TextColor(color),
-            TextLayout { justify, ..default() },
+            TextLayout {
+                justify,
+                ..default()
+            },
         ));
     }
 }
