@@ -2,7 +2,7 @@ name: "CICD-DevFlow: Job01 Validation"
 
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [labeled, opened, synchronize, reopened, ready_for_review]
     branches: [main]
   workflow_dispatch:
     inputs:
