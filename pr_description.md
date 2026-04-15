@@ -11,6 +11,7 @@ Significantly reduces memory pressure and CPU overhead in the hot rendering path
 
 **🔬 Messung:**
 Created a microbenchmark simulating the rendering loop with 10 million iterations.
+
 - Baseline (unconditional `.to_lowercase()`): ~86.8 ms
 - Optimized (lazy evaluation): ~92 ns
 This effectively drops the overhead to zero when no search string is present.
