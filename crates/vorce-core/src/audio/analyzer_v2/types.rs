@@ -56,11 +56,6 @@ pub struct AudioAnalyzerV2Config {
 
 impl Default for AudioAnalyzerV2Config {
     fn default() -> Self {
-        Self {
-            sample_rate: 44100,
-            fft_size: 2048,
-            overlap: 0.5,
-            smoothing: 0.7,
-        }
+        Self { sample_rate: 44100, fft_size: 2048, overlap: 0.5, smoothing: 0.7 }
     }
 }

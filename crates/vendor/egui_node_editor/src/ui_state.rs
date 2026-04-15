@@ -38,10 +38,7 @@ impl<NodeData, DataType, ValueType, NodeKind, UserState>
     GraphEditorState<NodeData, DataType, ValueType, NodeKind, UserState>
 {
     pub fn new(default_zoom: f32) -> Self {
-        Self {
-            pan_zoom: PanZoom::new(default_zoom),
-            ..Default::default()
-        }
+        Self { pan_zoom: PanZoom::new(default_zoom), ..Default::default() }
     }
 }
 impl<NodeData, DataType, ValueType, NodeKind, UserState> Default

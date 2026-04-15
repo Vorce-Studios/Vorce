@@ -61,9 +61,7 @@ impl PluginApi {
 
     /// Creates a new, uninitialized instance with default settings.
     pub fn new() -> Self {
-        Self {
-            version: Self::VERSION,
-        }
+        Self { version: Self::VERSION }
     }
 }
 

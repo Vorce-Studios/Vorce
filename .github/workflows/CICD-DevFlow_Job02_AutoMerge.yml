@@ -19,6 +19,7 @@ env:
   AUTO_MERGE_ENABLED: true
   AUTO_UPDATE_BRANCH_WHEN_BEHIND: true
   VALIDATION_WORKFLOW_ID: CICD-DevFlow_Job01_Validation.yml
+  PRECOMMIT_WORKFLOW_ID: CICD-DevFlow_Job00_PreCommitLite.yml
   DEFAULT_RUST_TOOLCHAIN: ${{ vars.VORCE_DEFAULT_TOOLCHAIN || vars.MAPFLOW_DEFAULT_TOOLCHAIN || '1.94.0' }}
 
 concurrency:
@@ -162,6 +163,19 @@ jobs:
               return response.data;
             };
 
+            const dispatchPreCommitWorkflow = async (branchRef) => {
+              const response = await github.request(
+                'POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches',
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  workflow_id: process.env.PRECOMMIT_WORKFLOW_ID || 'CICD-DevFlow_Job00_PreCommitLite.yml',
+                  ref: branchRef,
+                },
+              );
+              return response.data;
+            };
+
             const recoverValidationAfterBranchUpdate = async (pr) => {
               const headCommit = await github.rest.repos.getCommit({
                 owner: context.repo.owner,
@@ -193,14 +207,14 @@ jobs:
               }
 
               try {
-                const dispatchResult = await dispatchValidationWorkflow(pr.head.ref);
-                const detailsSuffix = dispatchResult?.html_url
-                  ? `\n\nValidation-Run: ${dispatchResult.html_url}`
-                  : '';
+                await Promise.all([
+                  dispatchValidationWorkflow(pr.head.ref),
+                  dispatchPreCommitWorkflow(pr.head.ref),
+                ]);
 
                 await upsertManagedComment(
                   pr.number,
-                  `Auto-merge hat erkannt, dass der PR-Branch bereits automatisiert auf \`main\` aktualisiert wurde, aber auf dem neuen Head-SHA kein Validation-Lauf gestartet wurde. Deshalb wurde \`CICD-DevFlow: Job01 Validation\` nachtraeglich per workflow_dispatch gestartet.${detailsSuffix}`,
+                  'Auto-merge hat erkannt, dass der PR-Branch bereits automatisiert auf `main` aktualisiert wurde, aber auf dem neuen Head-SHA Checks fehlen. Deshalb wurden `CICD-DevFlow: Job01 Validation` und `Job00 Pre-Commit Lite` nachtraeglich per workflow_dispatch gestartet.',
                 );
               } catch (error) {
                 await upsertManagedComment(
@@ -263,19 +277,19 @@ jobs:
               }
 
               try {
-                const dispatchResult = await dispatchValidationWorkflow(updatedPr.head.ref);
-                const detailsSuffix = dispatchResult?.html_url
-                  ? `\n\nValidation-Run: ${dispatchResult.html_url}`
-                  : '';
+                await Promise.all([
+                  dispatchValidationWorkflow(updatedPr.head.ref),
+                  dispatchPreCommitWorkflow(updatedPr.head.ref),
+                ]);
 
                 await upsertManagedComment(
                   pr.number,
-                  `Auto-merge hat waehrend ${phaseLabel} erkannt, dass der PR hinter \`main\` liegt und ein automatisches Branch-Update angestossen. Da GitHub auf dem neuen Head-SHA keinen neuen Validation-Lauf gestartet hat, wurde \`CICD-DevFlow: Job01 Validation\` zusaetzlich per workflow_dispatch fuer den aktualisierten Branch gestartet.${detailsSuffix}`,
+                  `Auto-merge hat waehrend ${phaseLabel} erkannt, dass der PR hinter \`main\` liegt und ein automatisches Branch-Update angestossen. Da GitHub auf dem neuen Head-SHA keine neuen Checks gestartet hat, wurden \`CICD-DevFlow: Job01 Validation\` und \`Job00 Pre-Commit Lite\` zusaetzlich per workflow_dispatch fuer den aktualisierten Branch gestartet.`,
                 );
               } catch (error) {
                 await upsertManagedComment(
                   pr.number,
-                  `Auto-merge hat den Branch aktualisiert, konnte die Validation aber nicht automatisch neu anstossen: ${error.message}\n\nBitte starte \`CICD-DevFlow: Job01 Validation\` manuell fuer den aktualisierten Branch.`,
+                  `Auto-merge hat den Branch aktualisiert, konnte die Checks aber nicht automatisch neu anstossen: ${error.message}\n\nBitte starte \`CICD-DevFlow: Job01 Validation\` und \`Job00 Pre-Commit Lite\` manuell fuer den aktualisierten Branch.`,
                 );
               }
 
