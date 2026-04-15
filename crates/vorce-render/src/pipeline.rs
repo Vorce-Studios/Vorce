@@ -96,7 +96,11 @@ impl UniformBufferAllocator {
             let offset = self.current_offset;
             let page_index = self.current_page;
             self.current_offset += padded_size;
-            Allocation { buffer: page, offset, page_index }
+            Allocation {
+                buffer: page,
+                offset,
+                page_index,
+            }
         }
     }
 }

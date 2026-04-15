@@ -18,7 +18,12 @@ pub fn get_part_style(
                 TriggerType::Random { .. } => "Random",
                 TriggerType::Fixed { .. } => "Fixed Timer",
             };
-            (Color32::from_rgb(60, 50, 70), Color32::from_rgb(130, 80, 180), "\u{26A1}", name)
+            (
+                Color32::from_rgb(60, 50, 70),
+                Color32::from_rgb(130, 80, 180),
+                "\u{26A1}",
+                name,
+            )
         }
         ModulePartType::Source(SourceType::BevyAtmosphere { .. }) => (
             Color32::from_rgb(40, 60, 80),
@@ -38,12 +43,18 @@ pub fn get_part_style(
             "\u{2728}",
             "Particles",
         ),
-        ModulePartType::Source(SourceType::Bevy3DText { .. }) => {
-            (Color32::from_rgb(40, 60, 80), Color32::from_rgb(100, 220, 180), "T", "3D Text")
-        }
-        ModulePartType::Source(SourceType::BevyCamera { .. }) => {
-            (Color32::from_rgb(40, 60, 80), Color32::from_rgb(180, 100, 220), "\u{1F3A5}", "Camera")
-        }
+        ModulePartType::Source(SourceType::Bevy3DText { .. }) => (
+            Color32::from_rgb(40, 60, 80),
+            Color32::from_rgb(100, 220, 180),
+            "T",
+            "3D Text",
+        ),
+        ModulePartType::Source(SourceType::BevyCamera { .. }) => (
+            Color32::from_rgb(40, 60, 80),
+            Color32::from_rgb(180, 100, 220),
+            "\u{1F3A5}",
+            "Camera",
+        ),
         ModulePartType::Source(SourceType::Bevy3DShape { .. }) => (
             Color32::from_rgb(40, 60, 80),
             Color32::from_rgb(100, 180, 220),
@@ -71,7 +82,12 @@ pub fn get_part_style(
                 SourceType::Bevy3DShape { .. } => "3D Shape",
                 SourceType::Bevy3DModel { .. } => "3D Model",
             };
-            (Color32::from_rgb(50, 60, 70), Color32::from_rgb(80, 140, 180), "\u{1F3AC}", name)
+            (
+                Color32::from_rgb(50, 60, 70),
+                Color32::from_rgb(80, 140, 180),
+                "\u{1F3AC}",
+                name,
+            )
         }
 
         ModulePartType::Mask(mask) => {
@@ -86,11 +102,19 @@ pub fn get_part_style(
                 },
                 MaskType::Gradient { .. } => "Gradient",
             };
-            (Color32::from_rgb(60, 55, 70), Color32::from_rgb(160, 100, 180), "\u{1F3AD}", name)
+            (
+                Color32::from_rgb(60, 55, 70),
+                Color32::from_rgb(160, 100, 180),
+                "\u{1F3AD}",
+                name,
+            )
         }
         ModulePartType::Modulizer(mod_type) => {
             let name = match mod_type {
-                ModulizerType::Effect { effect_type: effect, .. } => match effect {
+                ModulizerType::Effect {
+                    effect_type: effect,
+                    ..
+                } => match effect {
                     EffectType::Blur => "Blur",
                     EffectType::Sharpen => "Sharpen",
                     EffectType::Invert => "Invert",
@@ -148,7 +172,12 @@ pub fn get_part_style(
                 LayerType::Group { .. } => "Layer Group",
                 LayerType::All { .. } => "All Layers",
             };
-            (Color32::from_rgb(50, 70, 60), Color32::from_rgb(80, 180, 120), "\u{1F4D1}", name)
+            (
+                Color32::from_rgb(50, 70, 60),
+                Color32::from_rgb(80, 180, 120),
+                "\u{1F4D1}",
+                name,
+            )
         }
         ModulePartType::Output(output) => {
             let name = match output {
@@ -158,7 +187,12 @@ pub fn get_part_style(
                 OutputType::Spout { .. } => "Spout Output",
                 OutputType::Hue { .. } => "Philips Hue",
             };
-            (Color32::from_rgb(70, 50, 50), Color32::from_rgb(180, 80, 80), "\u{1F4FA}", name)
+            (
+                Color32::from_rgb(70, 50, 50),
+                Color32::from_rgb(180, 80, 80),
+                "\u{1F4FA}",
+                name,
+            )
         }
         ModulePartType::Hue(hue) => {
             let name = match hue {
@@ -166,7 +200,12 @@ pub fn get_part_style(
                 HueNodeType::MultiLamp { .. } => "Multi Lamp",
                 HueNodeType::EntertainmentGroup { .. } => "Entertainment Group",
             };
-            (Color32::from_rgb(60, 60, 40), Color32::from_rgb(200, 200, 100), "\u{1F4A1}", name)
+            (
+                Color32::from_rgb(60, 60, 40),
+                Color32::from_rgb(200, 200, 100),
+                "\u{1F4A1}",
+                name,
+            )
         }
     }
 }
@@ -228,14 +267,20 @@ pub fn get_part_property_text(part_type: &ModulePartType) -> String {
                 if path.is_empty() {
                     "📁 Select video...".to_string()
                 } else {
-                    format!("\u{1F4F9} {}", path.split(['/', '\\']).next_back().unwrap_or(path))
+                    format!(
+                        "\u{1F4F9} {}",
+                        path.split(['/', '\\']).next_back().unwrap_or(path)
+                    )
                 }
             }
             SourceType::ImageUni { path, .. } => {
                 if path.is_empty() {
                     "\u{1F5BC} Select image...".to_string()
                 } else {
-                    format!("\u{1F5BC} {}", path.split(['/', '\\']).next_back().unwrap_or(path))
+                    format!(
+                        "\u{1F5BC} {}",
+                        path.split(['/', '\\']).next_back().unwrap_or(path)
+                    )
                 }
             }
             SourceType::VideoMulti { shared_id, .. } => {
@@ -272,9 +317,10 @@ pub fn get_part_property_text(part_type: &ModulePartType) -> String {
             }
         },
         ModulePartType::Modulizer(modulizer_type) => match modulizer_type {
-            ModulizerType::Effect { effect_type: effect, .. } => {
-                format!("\u{2728} {}", effect.name())
-            }
+            ModulizerType::Effect {
+                effect_type: effect,
+                ..
+            } => format!("\u{2728} {}", effect.name()),
             ModulizerType::BlendMode(blend) => format!("🔄 {}", blend.name()),
             ModulizerType::AudioReactive { source } => format!("\u{1F50A} {}", source),
         },

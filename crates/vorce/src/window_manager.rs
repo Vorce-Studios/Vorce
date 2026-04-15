@@ -32,7 +32,10 @@ fn resolve_target_monitor(
     if (target_screen as usize) < monitors.len() {
         Some(monitors[target_screen as usize].clone())
     } else if let Some(primary) = event_loop.primary_monitor() {
-        info!("Target screen {} not found, using primary monitor", target_screen);
+        info!(
+            "Target screen {} not found, using primary monitor",
+            target_screen
+        );
         Some(primary)
     } else {
         None
@@ -78,7 +81,10 @@ impl Default for WindowManager {
 impl WindowManager {
     /// Creates a new, empty `WindowManager`.
     pub fn new() -> Self {
-        Self { windows: HashMap::new(), window_id_map: HashMap::new() }
+        Self {
+            windows: HashMap::new(),
+            window_id_map: HashMap::new(),
+        }
     }
 
     /// Creates the main control window.
@@ -166,7 +172,11 @@ impl WindowManager {
         };
         surface.configure(&backend.device, &surface_config);
 
-        let context = WindowContext { window, surface, surface_config };
+        let context = WindowContext {
+            window,
+            surface,
+            surface_config,
+        };
 
         self.windows.insert(output_id, context);
         self.window_id_map.insert(window_id, output_id);
@@ -257,12 +267,19 @@ impl WindowManager {
 
         surface.configure(&backend.device, &surface_config);
 
-        let window_context = WindowContext { window, surface, surface_config };
+        let window_context = WindowContext {
+            window,
+            surface,
+            surface_config,
+        };
 
         self.windows.insert(output_id, window_context);
         self.window_id_map.insert(window_id_winit, output_id);
 
-        info!("Created projector window '{}' at {}x{}", name, default_width, default_height);
+        info!(
+            "Created projector window '{}' at {}x{}",
+            name, default_width, default_height
+        );
 
         Ok(())
     }
@@ -295,14 +312,18 @@ impl WindowManager {
         }
 
         let target_monitor = resolve_target_monitor(event_loop, target_screen);
-        let context =
-            self.windows.get_mut(&output_id).expect("checked window existence before sync");
+        let context = self
+            .windows
+            .get_mut(&output_id)
+            .expect("checked window existence before sync");
 
         context.window.set_title(&format!("Vorce - {}", name));
         context.window.set_cursor_visible(!hide_cursor);
 
         if fullscreen {
-            context.window.set_fullscreen(Some(Fullscreen::Borderless(target_monitor.clone())));
+            context
+                .window
+                .set_fullscreen(Some(Fullscreen::Borderless(target_monitor.clone())));
         } else {
             context.window.set_fullscreen(None);
             if let Some(monitor) = target_monitor {
@@ -331,7 +352,9 @@ impl WindowManager {
             context.surface_config.width = width;
             context.surface_config.height = height;
             context.surface_config.present_mode = present_mode;
-            context.surface.configure(&backend.device, &context.surface_config);
+            context
+                .surface
+                .configure(&backend.device, &context.surface_config);
         }
 
         Ok(())
@@ -388,7 +411,9 @@ impl WindowManager {
         let present_mode = vsync_mode_to_present_mode(mode);
         for context in self.windows.values_mut() {
             context.surface_config.present_mode = present_mode;
-            context.surface.configure(&backend.device, &context.surface_config);
+            context
+                .surface
+                .configure(&backend.device, &context.surface_config);
         }
     }
 }
