@@ -109,7 +109,12 @@ impl VideoEncoder {
             _preset
         );
 
-        Ok(Self { codec, format, bitrate, frame_count: 0 })
+        Ok(Self {
+            codec,
+            format,
+            bitrate,
+            frame_count: 0,
+        })
     }
 
     /// Creates a default H.264 encoder for 1080p60 streaming.
@@ -159,7 +164,11 @@ impl VideoEncoder {
         // In a full implementation, this would use FFmpeg to encode the frame
         self.frame_count += 1;
 
-        tracing::trace!("Encoding frame {}: timestamp={:?}", self.frame_count, frame.timestamp);
+        tracing::trace!(
+            "Encoding frame {}: timestamp={:?}",
+            self.frame_count,
+            frame.timestamp
+        );
 
         #[allow(clippy::manual_is_multiple_of)]
         let is_keyframe = self.frame_count == 1 || self.frame_count % 60 == 0; // Keyframe on first frame and every 60 frames
@@ -232,7 +241,10 @@ pub struct VideoEncoder;
 impl VideoEncoder {
     /// Create a new video encoder (returns error when feature is disabled)
     pub fn new() -> crate::error::Result<Self> {
-        Err(crate::error::IoError::feature_not_enabled("Stream encoding", "stream"))
+        Err(crate::error::IoError::feature_not_enabled(
+            "Stream encoding",
+            "stream",
+        ))
     }
 }
 

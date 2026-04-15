@@ -103,7 +103,13 @@ impl LogConfig {
 
         let mut log_files: Vec<_> = fs::read_dir(&self.log_path)?
             .filter_map(|entry| entry.ok())
-            .filter(|entry| entry.path().extension().map(|ext| ext == "log").unwrap_or(false))
+            .filter(|entry| {
+                entry
+                    .path()
+                    .extension()
+                    .map(|ext| ext == "log")
+                    .unwrap_or(false)
+            })
             .collect();
 
         if log_files.len() <= self.max_files {
@@ -146,7 +152,10 @@ mod tests {
 
     #[test]
     fn test_parse_level() {
-        let mut config = LogConfig { level: "debug".to_string(), ..Default::default() };
+        let mut config = LogConfig {
+            level: "debug".to_string(),
+            ..Default::default()
+        };
         assert_eq!(config.parse_level(), Level::DEBUG);
 
         config.level = "WARN".to_string();
@@ -165,7 +174,10 @@ mod tests {
 
     #[test]
     fn test_current_log_path() {
-        let config = LogConfig { log_path: PathBuf::from("my_logs"), ..Default::default() };
+        let config = LogConfig {
+            log_path: PathBuf::from("my_logs"),
+            ..Default::default()
+        };
         let path = config.current_log_path();
         assert!(path.starts_with("my_logs"));
         assert!(path.to_string_lossy().contains("vorce_"));
@@ -177,7 +189,10 @@ mod tests {
         let temp_dir = tempfile::tempdir().unwrap();
         let log_dir = temp_dir.path().join("test_logs");
 
-        let config = LogConfig { log_path: log_dir.clone(), ..Default::default() };
+        let config = LogConfig {
+            log_path: log_dir.clone(),
+            ..Default::default()
+        };
 
         config.ensure_log_directory().unwrap();
         assert!(log_dir.exists());
@@ -203,7 +218,11 @@ mod tests {
         let non_log = log_dir.join("ignore.txt");
         fs::write(&non_log, "ignore me").unwrap();
 
-        let config = LogConfig { log_path: log_dir.clone(), max_files: 2, ..Default::default() };
+        let config = LogConfig {
+            log_path: log_dir.clone(),
+            max_files: 2,
+            ..Default::default()
+        };
 
         config.cleanup_old_logs().unwrap();
 

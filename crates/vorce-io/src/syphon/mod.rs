@@ -76,7 +76,9 @@ impl VideoSource for SyphonClient {
     }
 
     fn receive_frame(&mut self) -> Result<VideoFrame> {
-        Err(IoError::SyphonError("Syphon framework not available".to_string()))
+        Err(IoError::SyphonError(
+            "Syphon framework not available".to_string(),
+        ))
     }
 
     fn is_available(&self) -> bool {
@@ -124,7 +126,9 @@ impl VideoSink for SyphonServer {
     }
 
     fn send_frame(&mut self, _frame: &VideoFrame) -> Result<()> {
-        Err(IoError::SyphonError("Syphon framework not available".to_string()))
+        Err(IoError::SyphonError(
+            "Syphon framework not available".to_string(),
+        ))
     }
 
     fn is_available(&self) -> bool {
@@ -151,7 +155,9 @@ impl SyphonClient {
         ));
 
         #[cfg(target_os = "macos")]
-        Err(crate::error::IoError::feature_not_enabled("Syphon", "syphon"))
+        Err(crate::error::IoError::feature_not_enabled(
+            "Syphon", "syphon",
+        ))
     }
 
     /// List available Syphon servers (returns error when feature is disabled or on non-macOS platforms)
@@ -162,7 +168,9 @@ impl SyphonClient {
         ));
 
         #[cfg(target_os = "macos")]
-        Err(crate::error::IoError::feature_not_enabled("Syphon", "syphon"))
+        Err(crate::error::IoError::feature_not_enabled(
+            "Syphon", "syphon",
+        ))
     }
 }
 
@@ -183,7 +191,9 @@ impl SyphonServer {
         ));
 
         #[cfg(target_os = "macos")]
-        Err(crate::error::IoError::feature_not_enabled("Syphon", "syphon"))
+        Err(crate::error::IoError::feature_not_enabled(
+            "Syphon", "syphon",
+        ))
     }
 }
 

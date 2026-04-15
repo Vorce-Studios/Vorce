@@ -43,7 +43,10 @@ mod tests {
         // Should be dragging ControlOut of vertex 0
         match editor.dragging_element {
             Some(DragElement::ControlOut(0, _)) => {}
-            _ => panic!("Should be dragging ControlOut, got {:?}", editor.dragging_element),
+            _ => panic!(
+                "Should be dragging ControlOut, got {:?}",
+                editor.dragging_element
+            ),
         }
 
         // 2. Test Dragging
@@ -64,7 +67,11 @@ mod tests {
 
         let v = &editor.vertices[0];
         let ctrl_out = v.control_out.unwrap();
-        assert!((ctrl_out.x - 48.0).abs() < 0.001, "Expected 48.0, got {}", ctrl_out.x);
+        assert!(
+            (ctrl_out.x - 48.0).abs() < 0.001,
+            "Expected 48.0, got {}",
+            ctrl_out.x
+        );
 
         // 3. Test Drag Stop
         let input_stop = InteractionInput {

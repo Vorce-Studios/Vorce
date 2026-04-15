@@ -66,9 +66,20 @@ impl MpvDecoder {
         let duration_secs = mpv.get_property::<f64>("duration").unwrap_or(0.0);
         let fps = mpv.get_property::<f64>("container-fps").unwrap_or(30.0);
 
-        info!("Video loaded: {}x{}, {:.2}s, {:.2}fps", width, height, duration_secs, fps);
+        info!(
+            "Video loaded: {}x{}, {:.2}s, {:.2}fps",
+            width, height, duration_secs, fps
+        );
 
-        Ok(Self { mpv, path, width, height, duration_secs, fps, current_time: Duration::ZERO })
+        Ok(Self {
+            mpv,
+            path,
+            width,
+            height,
+            duration_secs,
+            fps,
+            current_time: Duration::ZERO,
+        })
     }
 
     /// Capture current frame
@@ -90,22 +101,33 @@ impl MpvDecoder {
 
             let mut cmd_screenshot = [cmd_sc.as_ptr(), cmd_sc_arg.as_ptr(), std::ptr::null()];
 
-            let mut node =
-                mpv_node { format: 0, u: mpv_node__bindgen_ty_1 { string: std::ptr::null_mut() } };
-            let res =
-                mpv_command_ret(handle.as_ptr(), cmd_screenshot.as_mut_ptr(), &mut node as *mut _);
+            let mut node = mpv_node {
+                format: 0,
+                u: mpv_node__bindgen_ty_1 {
+                    string: std::ptr::null_mut(),
+                },
+            };
+            let res = mpv_command_ret(
+                handle.as_ptr(),
+                cmd_screenshot.as_mut_ptr(),
+                &mut node as *mut _,
+            );
 
             if res >= 0 && node.format == mpv_format_MPV_FORMAT_NODE_MAP {
                 let map = node.u.list;
                 if map.is_null() {
-                    return Err(MediaError::DecoderError("MPV screenshot map is null".to_string()));
+                    return Err(MediaError::DecoderError(
+                        "MPV screenshot map is null".to_string(),
+                    ));
                 }
 
                 // SAFETY: We checked map is not null. libmpv guarantees `keys` and `values` arrays
                 // are valid up to `num` elements for MPV_FORMAT_NODE_MAP.
                 let num_elements = (*map).num as usize;
                 if (*map).keys.is_null() || (*map).values.is_null() {
-                    return Err(MediaError::DecoderError("MPV screenshot map keys or values are null".to_string()));
+                    return Err(MediaError::DecoderError(
+                        "MPV screenshot map keys or values are null".to_string(),
+                    ));
                 }
 
                 let keys = std::slice::from_raw_parts((*map).keys, num_elements);
@@ -122,13 +144,13 @@ impl MpvDecoder {
                     if key == "data" && vals[i].format == mpv_format_MPV_FORMAT_BYTE_ARRAY {
                         let ba = vals[i].u.ba;
                         if ba.is_null() || (*ba).data.is_null() {
-                            return Err(MediaError::DecoderError("MPV byte array data is null".to_string()));
+                            return Err(MediaError::DecoderError(
+                                "MPV byte array data is null".to_string(),
+                            ));
                         }
                         // SAFETY: ba and ba.data are verified non-null. libmpv provides a valid buffer of `size`.
-                        let data_slice = std::slice::from_raw_parts(
-                            (*ba).data as *const u8,
-                            (*ba).size as usize,
-                        );
+                        let data_slice =
+                            std::slice::from_raw_parts((*ba).data as *const u8, (*ba).size);
                         extracted_data.extend_from_slice(data_slice);
                     } else if key == "w" && vals[i].format == mpv_format_MPV_FORMAT_INT64 {
                         actual_width = vals[i].u.int64 as u32;
@@ -157,15 +179,17 @@ impl MpvDecoder {
         // libmpv usually outputs BGRA layout on most platforms for `screenshot-raw`
         let mut final_data = extracted_data;
         for chunk in final_data.chunks_exact_mut(4) {
-            let b = chunk[0];
-            chunk[0] = chunk[2];
-            chunk[2] = b;
+            chunk.swap(0, 2);
             chunk[3] = 255; // Ensure alpha is fully opaque
         }
 
         // Create video format using the actual dimensions returned by the screenshot
-        let format =
-            VideoFormat::new(actual_width, actual_height, PixelFormat::RGBA8, self.fps as f32);
+        let format = VideoFormat::new(
+            actual_width,
+            actual_height,
+            PixelFormat::RGBA8,
+            self.fps as f32,
+        );
 
         Ok(VideoFrame::new(final_data, format, self.current_time))
     }
@@ -233,7 +257,9 @@ fn validate_screenshot_buffer(data_len: usize, width: u32, height: u32) -> Resul
         .and_then(|pixels| pixels.checked_mul(4))
         .map(|s| s as usize)
         .ok_or_else(|| {
-            MediaError::DecoderError("Frame dimensions cause overflow when calculating buffer size".to_string())
+            MediaError::DecoderError(
+                "Frame dimensions cause overflow when calculating buffer size".to_string(),
+            )
         })?;
 
     if data_len < expected_size {

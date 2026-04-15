@@ -109,7 +109,10 @@ mod ffmpeg_impl {
         let mut count = 0;
         while *p != ffi::AVPixelFormat::AV_PIX_FMT_NONE {
             if count >= MAX_FORMATS {
-                warn!("get_format_callback: format list exceeded limit of {}", MAX_FORMATS);
+                warn!(
+                    "get_format_callback: format list exceeded limit of {}",
+                    MAX_FORMATS
+                );
                 break;
             }
             if *p == ffi::AVPixelFormat::AV_PIX_FMT_D3D11 {
@@ -166,7 +169,10 @@ mod ffmpeg_impl {
             let path = path.as_ref();
 
             if !path.exists() {
-                return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
+                return Err(MediaError::FileOpen(format!(
+                    "File not found: {}",
+                    path.display()
+                )));
             }
 
             // Initialize FFmpeg
@@ -377,9 +383,12 @@ mod ffmpeg_impl {
                 if self.decoder.receive_frame(&mut decoded).is_ok() {
                     #[allow(unused_variables, unused_mut)]
                     let mut sw_frame = ffmpeg::util::frame::Video::empty();
-                    let decoded_ptr = decoded.as_ptr();
+                    // SAFETY: `decoded` is initialized, and `as_ptr()` returns a pointer to its internal AVFrame.
+                    let decoded_ptr = unsafe { decoded.as_ptr() };
                     if decoded_ptr.is_null() {
-                        return Err(MediaError::DecoderError("Decoded frame pointer is null".to_string()));
+                        return Err(MediaError::DecoderError(
+                            "Decoded frame pointer is null".to_string(),
+                        ));
                     }
                     let frame_ptr = if unsafe {
                         // SAFETY: decoded_ptr is verified non-null above.
@@ -390,13 +399,11 @@ mod ffmpeg_impl {
                         unsafe {
                             let sw_ptr = sw_frame.as_mut_ptr();
                             if sw_ptr.is_null() {
-                                return Err(MediaError::DecoderError("SW frame pointer is null".to_string()));
+                                return Err(MediaError::DecoderError(
+                                    "SW frame pointer is null".to_string(),
+                                ));
                             }
-                            let ret = ffi::av_hwframe_transfer_data(
-                                sw_ptr,
-                                decoded_ptr,
-                                0,
-                            );
+                            let ret = ffi::av_hwframe_transfer_data(sw_ptr, decoded_ptr, 0);
                             if ret < 0 {
                                 return Err(MediaError::DecoderError(format!(
                                     "Failed to transfer HW frame: {}",
@@ -548,7 +555,14 @@ pub struct TestPatternDecoder {
 impl TestPatternDecoder {
     /// Create a new test pattern decoder
     pub fn new(width: u32, height: u32, duration: Duration, fps: f64) -> Self {
-        Self { width, height, duration, fps, current_time: Duration::ZERO, frame_count: 0 }
+        Self {
+            width,
+            height,
+            duration,
+            fps,
+            current_time: Duration::ZERO,
+            frame_count: 0,
+        }
     }
 
     /// Generate a test pattern frame
@@ -598,7 +612,9 @@ impl VideoDecoder for TestPatternDecoder {
 
     fn seek(&mut self, timestamp: Duration) -> Result<()> {
         if timestamp > self.duration {
-            return Err(MediaError::SeekError("Timestamp beyond duration".to_string()));
+            return Err(MediaError::SeekError(
+                "Timestamp beyond duration".to_string(),
+            ));
         }
 
         self.current_time = timestamp;

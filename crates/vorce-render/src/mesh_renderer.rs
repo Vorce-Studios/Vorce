@@ -257,20 +257,27 @@ impl MeshRenderer {
     /// Create GPU buffers from a mesh
     pub fn create_mesh_buffers(&self, mesh: &Mesh) -> (wgpu::Buffer, wgpu::Buffer) {
         // Convert mesh vertices to GPU format
-        let vertices: Vec<GpuVertex> =
-            mesh.vertices.iter().map(GpuVertex::from_mesh_vertex).collect();
+        let vertices: Vec<GpuVertex> = mesh
+            .vertices
+            .iter()
+            .map(GpuVertex::from_mesh_vertex)
+            .collect();
 
-        let vertex_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Mesh Vertex Buffer"),
-            contents: bytemuck::cast_slice(&vertices),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
+        let vertex_buffer = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Mesh Vertex Buffer"),
+                contents: bytemuck::cast_slice(&vertices),
+                usage: wgpu::BufferUsages::VERTEX,
+            });
 
-        let index_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Mesh Index Buffer"),
-            contents: bytemuck::cast_slice(&mesh.indices),
-            usage: wgpu::BufferUsages::INDEX,
-        });
+        let index_buffer = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Mesh Index Buffer"),
+                contents: bytemuck::cast_slice(&mesh.indices),
+                usage: wgpu::BufferUsages::INDEX,
+            });
 
         (vertex_buffer, index_buffer)
     }
@@ -297,11 +304,12 @@ impl MeshRenderer {
             _padding: 0.0,
         };
 
-        self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Mesh Uniform Buffer"),
-            contents: bytemuck::cast_slice(&[uniforms]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        })
+        self.device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Mesh Uniform Buffer"),
+                contents: bytemuck::cast_slice(&[uniforms]),
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            })
     }
 
     /// Create a uniform bind group (Legacy/Helper)
@@ -321,7 +329,8 @@ impl MeshRenderer {
         self.current_cache_index = 0;
 
         // Prune dead texture bind groups
-        self.texture_bind_group_cache.retain(|_, (weak, _)| weak.strong_count() > 0);
+        self.texture_bind_group_cache
+            .retain(|_, (weak, _)| weak.strong_count() > 0);
     }
 
     /// Get a uniform bind group with updated parameters, reusing cached resources
@@ -347,11 +356,13 @@ impl MeshRenderer {
 
         // Expand cache if needed
         if self.current_cache_index >= self.uniform_cache.len() {
-            let buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Mesh Uniform Buffer"),
-                contents: bytemuck::cast_slice(&[uniforms]),
-                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            });
+            let buffer = self
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Mesh Uniform Buffer"),
+                    contents: bytemuck::cast_slice(&[uniforms]),
+                    usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                });
 
             let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
                 label: Some("Mesh Uniform Bind Group"),
@@ -413,11 +424,13 @@ impl MeshRenderer {
 
         // Expand cache if needed
         if self.current_cache_index >= self.uniform_cache.len() {
-            let buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Mesh Uniform Buffer"),
-                contents: bytemuck::cast_slice(&[uniforms]),
-                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            });
+            let buffer = self
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Mesh Uniform Buffer"),
+                    contents: bytemuck::cast_slice(&[uniforms]),
+                    usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                });
 
             let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
                 label: Some("Mesh Uniform Bind Group"),
@@ -480,7 +493,8 @@ impl MeshRenderer {
         });
 
         let bg = Arc::new(bind_group);
-        self.texture_bind_group_cache.insert(key, (Arc::downgrade(texture_view), bg.clone()));
+        self.texture_bind_group_cache
+            .insert(key, (Arc::downgrade(texture_view), bg.clone()));
 
         bg
     }
