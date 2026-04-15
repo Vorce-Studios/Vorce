@@ -130,12 +130,8 @@ impl EffectPreset {
         let mut preset: EffectPreset = serde_json::from_str(&content)?;
         preset.metadata.name_lower = preset.metadata.name.to_lowercase();
         preset.metadata.description_lower = preset.metadata.description.to_lowercase();
-        preset.metadata.tags_lower = preset
-            .metadata
-            .tags
-            .iter()
-            .map(|t| t.to_lowercase())
-            .collect();
+        preset.metadata.tags_lower =
+            preset.metadata.tags.iter().map(|t| t.to_lowercase()).collect();
         debug!("Loaded preset: {}", preset.metadata.name);
         Ok(preset)
     }
@@ -168,11 +164,7 @@ impl PresetLibrary {
             info!("Created preset directory: {:?}", preset_dir);
         }
 
-        let mut library = Self {
-            preset_dir,
-            cache: HashMap::new(),
-            categories: Vec::new(),
-        };
+        let mut library = Self { preset_dir, cache: HashMap::new(), categories: Vec::new() };
 
         // Scan for existing presets
         library.refresh()?;
@@ -233,11 +225,7 @@ impl PresetLibrary {
         self.categories = categories_set.into_iter().collect();
         self.categories.sort();
 
-        info!(
-            "Loaded {} presets in {} categories",
-            self.cache.len(),
-            self.categories.len()
-        );
+        info!("Loaded {} presets in {} categories", self.cache.len(), self.categories.len());
         Ok(())
     }
 
@@ -248,18 +236,12 @@ impl PresetLibrary {
 
     /// Get presets by category
     pub fn presets_by_category(&self, category: &str) -> Vec<(&PathBuf, &EffectPreset)> {
-        self.cache
-            .iter()
-            .filter(|(_, p)| p.metadata.category == category)
-            .collect()
+        self.cache.iter().filter(|(_, p)| p.metadata.category == category).collect()
     }
 
     /// Get favorite presets
     pub fn favorites(&self) -> Vec<(&PathBuf, &EffectPreset)> {
-        self.cache
-            .iter()
-            .filter(|(_, p)| p.metadata.is_favorite)
-            .collect()
+        self.cache.iter().filter(|(_, p)| p.metadata.is_favorite).collect()
     }
 
     /// Search presets by name or tags
@@ -269,10 +251,7 @@ impl PresetLibrary {
             .iter()
             .filter(|(_, p)| {
                 p.metadata.name_lower.contains(&query_lower)
-                    || p.metadata
-                        .tags_lower
-                        .iter()
-                        .any(|t| t.contains(&query_lower))
+                    || p.metadata.tags_lower.iter().any(|t| t.contains(&query_lower))
                     || p.metadata.description_lower.contains(&query_lower)
             })
             .collect()
@@ -383,11 +362,7 @@ impl PresetLibrary {
                 description: "Classic cinematic color grading with vignette and subtle grain"
                     .to_string(),
                 category: "Factory".to_string(),
-                tags: vec![
-                    "cinema".to_string(),
-                    "film".to_string(),
-                    "color".to_string(),
-                ],
+                tags: vec!["cinema".to_string(), "film".to_string(), "color".to_string()],
                 is_favorite: false,
                 ..Default::default()
             },
@@ -419,11 +394,7 @@ impl PresetLibrary {
                 description: "90s VHS aesthetic with chromatic aberration and heavy grain"
                     .to_string(),
                 category: "Factory".to_string(),
-                tags: vec![
-                    "retro".to_string(),
-                    "vhs".to_string(),
-                    "vintage".to_string(),
-                ],
+                tags: vec!["retro".to_string(), "vhs".to_string(), "vintage".to_string()],
                 is_favorite: false,
                 ..Default::default()
             },

@@ -33,10 +33,7 @@ impl StillImageDecoder {
         let path = path.as_ref();
 
         if !path.exists() {
-            return Err(MediaError::FileOpen(format!(
-                "File not found: {}",
-                path.display()
-            )));
+            return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
         }
 
         // Load image using the `image` crate
@@ -50,29 +47,16 @@ impl StillImageDecoder {
         let rgba_image = image.to_rgba8();
         let frame_data = rgba_image.into_raw();
 
-        info!(
-            "Still image loaded: {}x{} from {}",
-            width,
-            height,
-            path.display()
-        );
+        info!("Still image loaded: {}x{} from {}", width, height, path.display());
 
-        Ok(Self {
-            width,
-            height,
-            frame_data,
-            has_been_read: false,
-        })
+        Ok(Self { width, height, frame_data, has_been_read: false })
     }
 
     /// Check if the file format is supported
     pub fn supports_format<P: AsRef<Path>>(path: P) -> bool {
         if let Some(ext) = path.as_ref().extension() {
             let ext_str = ext.to_string_lossy().to_lowercase();
-            matches!(
-                ext_str.as_str(),
-                "png" | "jpg" | "jpeg" | "tif" | "tiff" | "bmp" | "webp"
-            )
+            matches!(ext_str.as_str(), "png" | "jpg" | "jpeg" | "tif" | "tiff" | "bmp" | "webp")
         } else {
             false
         }
@@ -151,10 +135,7 @@ impl GifDecoder {
         let path = path.as_ref();
 
         if !path.exists() {
-            return Err(MediaError::FileOpen(format!(
-                "File not found: {}",
-                path.display()
-            )));
+            return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
         }
 
         // Open the file
@@ -255,9 +236,7 @@ impl VideoDecoder for GifDecoder {
 
     fn seek(&mut self, timestamp: Duration) -> Result<()> {
         if timestamp > self.total_duration {
-            return Err(MediaError::SeekError(
-                "Timestamp beyond duration".to_string(),
-            ));
+            return Err(MediaError::SeekError("Timestamp beyond duration".to_string()));
         }
 
         // Find the frame at the given timestamp

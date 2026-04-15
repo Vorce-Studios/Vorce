@@ -14,10 +14,8 @@ pub struct DiscoveredBridge {
 /// Discover Hue Bridges using the meethue.com N-UPnP API
 /// Returns all discovered bridges, sorted by reachability
 pub async fn discover_bridges() -> Result<Vec<DiscoveredBridge>, HueError> {
-    let client = Client::builder()
-        .timeout(Duration::from_secs(10))
-        .build()
-        .map_err(HueError::Network)?;
+    let client =
+        Client::builder().timeout(Duration::from_secs(10)).build().map_err(HueError::Network)?;
 
     let resp = client.get("https://discovery.meethue.com").send().await?;
 
@@ -74,8 +72,5 @@ pub async fn discover_bridge() -> Result<String, HueError> {
     let bridges = discover_bridges().await?;
 
     // Return the first bridge (which should be the first reachable one)
-    bridges
-        .first()
-        .map(|b| b.ip.clone())
-        .ok_or(HueError::DiscoveryFailed)
+    bridges.first().map(|b| b.ip.clone()).ok_or(HueError::DiscoveryFailed)
 }
