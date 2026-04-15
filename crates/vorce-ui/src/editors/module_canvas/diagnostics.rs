@@ -16,11 +16,7 @@ pub fn render_diagnostics_popup(canvas: &mut ModuleCanvas, ui: &mut Ui) {
 
     // Background
     let painter = ui.painter();
-    painter.rect_filled(
-        popup_rect,
-        0.0,
-        Color32::from_rgba_unmultiplied(30, 35, 45, 245),
-    );
+    painter.rect_filled(popup_rect, 0.0, Color32::from_rgba_unmultiplied(30, 35, 45, 245));
     painter.rect_stroke(
         popup_rect,
         0.0,
@@ -44,27 +40,23 @@ pub fn render_diagnostics_popup(canvas: &mut ModuleCanvas, ui: &mut Ui) {
                     "No issues found. Your module looks good!",
                 );
             } else {
-                egui::ScrollArea::vertical()
-                    .max_height(150.0)
-                    .show(ui, |ui| {
-                        for issue in &canvas.diagnostic_issues {
-                            let (icon, color) = match issue.severity {
-                                vorce_core::diagnostics::IssueSeverity::Error => {
-                                    ("❌", Color32::RED)
-                                }
-                                vorce_core::diagnostics::IssueSeverity::Warning => {
-                                    ("\u{26A0}", Color32::YELLOW)
-                                }
-                                vorce_core::diagnostics::IssueSeverity::Info => {
-                                    ("\u{2139}", Color32::LIGHT_BLUE)
-                                }
-                            };
-                            ui.horizontal(|ui| {
-                                ui.colored_label(color, icon);
-                                ui.label(&issue.message);
-                            });
-                        }
-                    });
+                egui::ScrollArea::vertical().max_height(150.0).show(ui, |ui| {
+                    for issue in &canvas.diagnostic_issues {
+                        let (icon, color) = match issue.severity {
+                            vorce_core::diagnostics::IssueSeverity::Error => ("❌", Color32::RED),
+                            vorce_core::diagnostics::IssueSeverity::Warning => {
+                                ("\u{26A0}", Color32::YELLOW)
+                            }
+                            vorce_core::diagnostics::IssueSeverity::Info => {
+                                ("\u{2139}", Color32::LIGHT_BLUE)
+                            }
+                        };
+                        ui.horizontal(|ui| {
+                            ui.colored_label(color, icon);
+                            ui.label(&issue.message);
+                        });
+                    }
+                });
             }
 
             ui.add_space(8.0);

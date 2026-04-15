@@ -73,10 +73,7 @@ mod tests {
         assert_eq!(cli.mode, Mode::Automation);
         assert_eq!(cli.fixture.as_deref(), Some("test_fixture.vorce"));
         assert_eq!(cli.exit_after_frames, Some(100));
-        assert_eq!(
-            cli.screenshot_dir.as_deref(),
-            Some("/tmp/vorce-screenshots")
-        );
+        assert_eq!(cli.screenshot_dir.as_deref(), Some("/tmp/vorce-screenshots"));
     }
 
     #[test]

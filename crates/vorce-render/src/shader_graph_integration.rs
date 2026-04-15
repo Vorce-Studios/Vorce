@@ -72,11 +72,7 @@ impl Default for ShaderGraphManager {
 impl ShaderGraphManager {
     /// Create a new shader graph manager
     pub fn new() -> Self {
-        Self {
-            graphs: HashMap::new(),
-            compiled: HashMap::new(),
-            next_id: 1,
-        }
+        Self { graphs: HashMap::new(), compiled: HashMap::new(), next_id: 1 }
     }
 
     /// Register a new shader graph
@@ -116,16 +112,11 @@ impl ShaderGraphManager {
 
     /// Compile a shader graph to WGSL
     pub fn compile_to_wgsl(&self, id: GraphId) -> Result<String, ShaderGraphIntegrationError> {
-        let graph = self
-            .graphs
-            .get(&id)
-            .ok_or(ShaderGraphIntegrationError::GraphNotFound(id))?;
+        let graph = self.graphs.get(&id).ok_or(ShaderGraphIntegrationError::GraphNotFound(id))?;
 
         // Validate the graph first
         if let Err(errors) = graph.validate() {
-            return Err(ShaderGraphIntegrationError::ValidationFailed(
-                errors.join("; "),
-            ));
+            return Err(ShaderGraphIntegrationError::ValidationFailed(errors.join("; ")));
         }
 
         // Generate WGSL code
@@ -148,10 +139,7 @@ impl ShaderGraphManager {
         uniform_bind_group_layout: &wgpu::BindGroupLayout,
         target_format: wgpu::TextureFormat,
     ) -> Result<(), ShaderGraphIntegrationError> {
-        let graph = self
-            .graphs
-            .get(&id)
-            .ok_or(ShaderGraphIntegrationError::GraphNotFound(id))?;
+        let graph = self.graphs.get(&id).ok_or(ShaderGraphIntegrationError::GraphNotFound(id))?;
 
         let name = graph.name.clone();
 
@@ -227,18 +215,12 @@ impl ShaderGraphManager {
 
     /// List all registered graphs
     pub fn list_graphs(&self) -> Vec<(GraphId, &str)> {
-        self.graphs
-            .iter()
-            .map(|(id, g)| (*id, g.name.as_str()))
-            .collect()
+        self.graphs.iter().map(|(id, g)| (*id, g.name.as_str())).collect()
     }
 
     /// Check if a graph is compiled and ready
     pub fn is_compiled(&self, id: GraphId) -> bool {
-        self.compiled
-            .get(&id)
-            .map(|c| c.is_ready())
-            .unwrap_or(false)
+        self.compiled.get(&id).map(|c| c.is_ready()).unwrap_or(false)
     }
 }
 
