@@ -3,7 +3,6 @@
 Routines are recurring tasks. Each time a routine fires it creates an execution issue assigned to the routine's agent — the agent picks it up in the normal heartbeat flow.
 
 A routine has:
-
 - One assigned agent and one project
 - One or more triggers (`schedule`, `webhook`, or `api`)
 - A concurrency policy (what to do when a previous run is still active)
