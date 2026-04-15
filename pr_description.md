@@ -7,11 +7,13 @@ Refactored `SlotManager::assign_to_slot` to use a `HashSet` lookup. Instead of p
 The previous implementation performed `.retain(|&p| p != panel)` directly over each element of every slot, generating multiple `O(N)` scans (which adds up across multiple slots). The issue expressly demanded "Converting the slice/Vec to a HashSet before the loop requires a small refactor but provides significant algorithmic improvement." This ensures O(1) containment tests across any scale.
 
 **📊 Impact:**
+
 - Reduced redundant linear lookups across slice iterations.
 - Improved functional safety by explicitly enforcing algorithmic checks.
 
 **🔬 Messung:**
 Benchmark: `cargo bench -p vorce-ui --bench layout_bench`
+
 - **assign_to_slot_existing**
   - Baseline: ~264 ns
   - Optimized: ~200 ns
