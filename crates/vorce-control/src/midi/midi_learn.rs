@@ -89,7 +89,10 @@ impl MidiLearnState {
                 _ => {}
             }
 
-            *self = Self::Detected { message, target_element: target_element.clone() };
+            *self = Self::Detected {
+                message,
+                target_element: target_element.clone(),
+            };
             true
         } else {
             false
@@ -98,9 +101,16 @@ impl MidiLearnState {
 
     /// Check for timeout and update state
     pub fn check_timeout(&mut self) -> bool {
-        if let Self::WaitingForInput { target_element, started_at, timeout } = self {
+        if let Self::WaitingForInput {
+            target_element,
+            started_at,
+            timeout,
+        } = self
+        {
             if started_at.elapsed() > *timeout {
-                *self = Self::TimedOut { target_element: target_element.clone() };
+                *self = Self::TimedOut {
+                    target_element: target_element.clone(),
+                };
                 return true;
             }
         }
@@ -119,7 +129,12 @@ impl MidiLearnState {
 
     /// Get remaining time if waiting
     pub fn remaining_time(&self) -> Option<Duration> {
-        if let Self::WaitingForInput { started_at, timeout, .. } = self {
+        if let Self::WaitingForInput {
+            started_at,
+            timeout,
+            ..
+        } = self
+        {
             let elapsed = started_at.elapsed();
             if elapsed < *timeout {
                 Some(*timeout - elapsed)
@@ -137,9 +152,11 @@ fn midi_message_to_key(message: &MidiMessage) -> Option<MidiMappingKey> {
     match message {
         MidiMessage::NoteOn { channel, note, .. } => Some(MidiMappingKey::Note(*channel, *note)),
         MidiMessage::NoteOff { channel, note } => Some(MidiMappingKey::Note(*channel, *note)),
-        MidiMessage::ControlChange { channel, controller, .. } => {
-            Some(MidiMappingKey::Control(*channel, *controller))
-        }
+        MidiMessage::ControlChange {
+            channel,
+            controller,
+            ..
+        } => Some(MidiMappingKey::Control(*channel, *controller)),
         MidiMessage::PitchBend { channel, .. } => Some(MidiMappingKey::PitchBend(*channel)),
         MidiMessage::ProgramChange { channel, .. } => Some(MidiMappingKey::ProgramChange(*channel)),
         _ => None,
@@ -157,7 +174,10 @@ pub struct MidiLearnManager {
 impl MidiLearnManager {
     /// Creates a new, uninitialized instance with default settings.
     pub fn new() -> Self {
-        Self { state: MidiLearnState::Inactive, default_timeout: 10 }
+        Self {
+            state: MidiLearnState::Inactive,
+            default_timeout: 10,
+        }
     }
 
     /// Set default timeout
@@ -193,7 +213,11 @@ impl MidiLearnManager {
 
     /// Accept detected mapping and reset
     pub fn accept(&mut self) -> Option<(String, MidiMappingKey)> {
-        if let MidiLearnState::Detected { target_element, message } = &self.state {
+        if let MidiLearnState::Detected {
+            target_element,
+            message,
+        } = &self.state
+        {
             let result = midi_message_to_key(message).map(|key| (target_element.clone(), key));
             self.state.reset();
             result
@@ -231,7 +255,11 @@ mod tests {
         assert!(manager.is_learning());
 
         // Simulate MIDI CC message
-        let cc = MidiMessage::ControlChange { channel: 0, controller: 16, value: 64 };
+        let cc = MidiMessage::ControlChange {
+            channel: 0,
+            controller: 16,
+            value: 64,
+        };
 
         let detected = manager.process(cc);
         assert!(detected);
@@ -257,7 +285,11 @@ mod tests {
         assert!(manager.is_learning()); // Still waiting
 
         // But note messages should work
-        let note = MidiMessage::NoteOn { channel: 15, note: 36, velocity: 127 };
+        let note = MidiMessage::NoteOn {
+            channel: 15,
+            note: 36,
+            velocity: 127,
+        };
         let detected = manager.process(note);
         assert!(detected);
     }

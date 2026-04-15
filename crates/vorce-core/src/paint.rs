@@ -123,7 +123,10 @@ pub struct PaintManager {
 impl PaintManager {
     /// Create a new paint manager
     pub fn new() -> Self {
-        Self { paints: Vec::new(), next_id: 1 }
+        Self {
+            paints: Vec::new(),
+            next_id: 1,
+        }
     }
 
     /// Add a paint
@@ -139,7 +142,10 @@ impl PaintManager {
 
     /// Remove a paint
     pub fn remove_paint(&mut self, id: PaintId) -> Option<Paint> {
-        self.paints.iter().position(|p| p.id == id).map(|index| self.paints.remove(index))
+        self.paints
+            .iter()
+            .position(|p| p.id == id)
+            .map(|index| self.paints.remove(index))
     }
 
     /// Get a paint by ID
