@@ -30,26 +30,17 @@ pub enum MidiTriggerType {
 impl MidiTrigger {
     /// Create a note trigger
     pub fn note(channel: u8, note: u8) -> Self {
-        Self {
-            channel,
-            trigger_type: MidiTriggerType::Note { note },
-        }
+        Self { channel, trigger_type: MidiTriggerType::Note { note } }
     }
 
     /// Create a control change trigger
     pub fn control_change(channel: u8, controller: u8, value: u8) -> Self {
-        Self {
-            channel,
-            trigger_type: MidiTriggerType::ControlChange { controller, value },
-        }
+        Self { channel, trigger_type: MidiTriggerType::ControlChange { controller, value } }
     }
 
     /// Create a program change trigger
     pub fn program_change(channel: u8, program: u8) -> Self {
-        Self {
-            channel,
-            trigger_type: MidiTriggerType::ProgramChange { program },
-        }
+        Self { channel, trigger_type: MidiTriggerType::ProgramChange { program } }
     }
 
     /// Check if a MIDI message matches this trigger
@@ -58,11 +49,7 @@ impl MidiTrigger {
         match (&self.trigger_type, message) {
             (
                 MidiTriggerType::Note { note },
-                MidiMessage::NoteOn {
-                    channel,
-                    note: msg_note,
-                    ..
-                },
+                MidiMessage::NoteOn { channel, note: msg_note, .. },
             ) => *channel == self.channel && *msg_note == *note,
 
             (
@@ -76,10 +63,7 @@ impl MidiTrigger {
 
             (
                 MidiTriggerType::ProgramChange { program },
-                MidiMessage::ProgramChange {
-                    channel,
-                    program: msg_program,
-                },
+                MidiMessage::ProgramChange { channel, program: msg_program },
             ) => *channel == self.channel && *msg_program == *program,
 
             _ => false,
@@ -107,11 +91,7 @@ impl TimeTrigger {
     /// Create a new time trigger
     pub fn new(hour: u8, minute: u8, second: u8) -> Option<Self> {
         if hour < 24 && minute < 60 && second < 60 {
-            Some(Self {
-                hour,
-                minute,
-                second,
-            })
+            Some(Self { hour, minute, second })
         } else {
             None
         }
@@ -148,18 +128,12 @@ pub struct OscTrigger {
 impl OscTrigger {
     /// Create a new OSC trigger
     pub fn new(address: String) -> Self {
-        Self {
-            address,
-            value: None,
-        }
+        Self { address, value: None }
     }
 
     /// Create an OSC trigger with a specific value
     pub fn with_value(address: String, value: String) -> Self {
-        Self {
-            address,
-            value: Some(value),
-        }
+        Self { address, value: Some(value) }
     }
 
     /// Check if an OSC address matches this trigger
@@ -185,10 +159,7 @@ mod tests {
         assert_eq!(trigger.channel, 0);
         matches!(
             trigger.trigger_type,
-            MidiTriggerType::ControlChange {
-                controller: 7,
-                value: 127
-            }
+            MidiTriggerType::ControlChange { controller: 7, value: 127 }
         );
     }
 
@@ -197,25 +168,13 @@ mod tests {
     fn test_midi_trigger_matching() {
         let trigger = MidiTrigger::note(0, 60);
 
-        let matching_msg = MidiMessage::NoteOn {
-            channel: 0,
-            note: 60,
-            velocity: 100,
-        };
+        let matching_msg = MidiMessage::NoteOn { channel: 0, note: 60, velocity: 100 };
         assert!(trigger.matches(&matching_msg));
 
-        let non_matching_msg = MidiMessage::NoteOn {
-            channel: 0,
-            note: 61,
-            velocity: 100,
-        };
+        let non_matching_msg = MidiMessage::NoteOn { channel: 0, note: 61, velocity: 100 };
         assert!(!trigger.matches(&non_matching_msg));
 
-        let wrong_channel = MidiMessage::NoteOn {
-            channel: 1,
-            note: 60,
-            velocity: 100,
-        };
+        let wrong_channel = MidiMessage::NoteOn { channel: 1, note: 60, velocity: 100 };
         assert!(!trigger.matches(&wrong_channel));
     }
 

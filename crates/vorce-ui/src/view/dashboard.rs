@@ -90,11 +90,9 @@ impl Dashboard {
 
         if self.visible {
             let mut is_open = self.visible;
-            egui::Window::new("Dashboard")
-                .open(&mut is_open)
-                .show(ctx, |ui| {
-                    action = self.render_contents(ui, locale, icon_manager);
-                });
+            egui::Window::new("Dashboard").open(&mut is_open).show(ctx, |ui| {
+                action = self.render_contents(ui, locale, icon_manager);
+            });
             self.visible = is_open;
         }
 
@@ -130,17 +128,11 @@ impl Dashboard {
                 };
 
                 // Play
-                if icon_btn(
-                    Some(crate::icons::AppIcon::ArrowRight),
-                    &locale.t("btn-play"),
-                ) {
+                if icon_btn(Some(crate::icons::AppIcon::ArrowRight), &locale.t("btn-play")) {
                     action = Some(DashboardAction::SendCommand(MediaPlaybackCommand::Play));
                 }
                 // Pause
-                if icon_btn(
-                    Some(crate::icons::AppIcon::ButtonPause),
-                    &locale.t("btn-pause"),
-                ) {
+                if icon_btn(Some(crate::icons::AppIcon::ButtonPause), &locale.t("btn-pause")) {
                     action = Some(DashboardAction::SendCommand(MediaPlaybackCommand::Pause));
                 }
                 // Stop
@@ -188,22 +180,15 @@ impl Dashboard {
                     .changed()
                 {
                     let new_speed = self.speed;
-                    action = Some(DashboardAction::SendCommand(
-                        MediaPlaybackCommand::SetSpeed(new_speed),
-                    ));
+                    action = Some(DashboardAction::SendCommand(MediaPlaybackCommand::SetSpeed(
+                        new_speed,
+                    )));
                 }
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let mut looping = self.loop_mode == LoopMode::Loop;
-                    if ui
-                        .checkbox(&mut looping, locale.t("dashboard-loop"))
-                        .changed()
-                    {
-                        self.loop_mode = if looping {
-                            LoopMode::Loop
-                        } else {
-                            LoopMode::PlayOnce
-                        };
+                    if ui.checkbox(&mut looping, locale.t("dashboard-loop")).changed() {
+                        self.loop_mode = if looping { LoopMode::Loop } else { LoopMode::PlayOnce };
                         action = Some(DashboardAction::SendCommand(MediaPlaybackCommand::SetLoop(
                             looping,
                         )));
@@ -237,10 +222,7 @@ impl Dashboard {
 
                 let peak_x = rect.min.x + width * peak;
                 ui.painter().line_segment(
-                    [
-                        egui::pos2(peak_x, rect.min.y),
-                        egui::pos2(peak_x, rect.max.y),
-                    ],
+                    [egui::pos2(peak_x, rect.min.y), egui::pos2(peak_x, rect.max.y)],
                     egui::Stroke::new(2.0, colors::WARN_COLOR),
                 );
             }
