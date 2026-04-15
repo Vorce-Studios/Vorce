@@ -7,11 +7,7 @@ pub fn process_midi_message(canvas: &mut ModuleCanvas, message: vorce_control::m
     // Check if we're in learn mode for any part
     if let Some(part_id) = canvas.midi_learn_part_id {
         match message {
-            vorce_control::midi::MidiMessage::ControlChange {
-                channel,
-                controller,
-                ..
-            } => {
+            vorce_control::midi::MidiMessage::ControlChange { channel, controller, .. } => {
                 tracing::info!(
                     "MIDI Learn: Part {:?} assigned to CC {} on channel {}",
                     part_id,
@@ -60,9 +56,7 @@ pub fn safe_delete_selection(canvas: &mut ModuleCanvas, module: &mut VorceModule
 
     for part_id in &parts_to_delete {
         if let Some(part) = module.parts.iter().find(|p| p.id == *part_id) {
-            actions.push(CanvasAction::DeletePart {
-                part_data: part.clone(),
-            });
+            actions.push(CanvasAction::DeletePart { part_data: part.clone() });
         }
     }
 
@@ -84,9 +78,7 @@ pub fn apply_undo_action(module: &mut VorceModule, action: &CanvasAction) {
         CanvasAction::AddPart { part_id, .. } => {
             module.parts.retain(|p| p.id != *part_id);
         }
-        CanvasAction::UpdatePart {
-            part_id, before, ..
-        } => {
+        CanvasAction::UpdatePart { part_id, before, .. } => {
             if let Some(part) = module.parts.iter_mut().find(|p| p.id == *part_id) {
                 *part = *before.clone();
             }
@@ -94,9 +86,7 @@ pub fn apply_undo_action(module: &mut VorceModule, action: &CanvasAction) {
         CanvasAction::DeletePart { part_data } => {
             module.parts.push(part_data.clone());
         }
-        CanvasAction::MovePart {
-            part_id, old_pos, ..
-        } => {
+        CanvasAction::MovePart { part_id, old_pos, .. } => {
             if let Some(part) = module.parts.iter_mut().find(|p| p.id == *part_id) {
                 part.position = *old_pos;
             }
@@ -133,9 +123,7 @@ pub fn apply_redo_action(module: &mut VorceModule, action: &CanvasAction) {
         CanvasAction::DeletePart { part_data } => {
             module.parts.retain(|p| p.id != part_data.id);
         }
-        CanvasAction::MovePart {
-            part_id, new_pos, ..
-        } => {
+        CanvasAction::MovePart { part_id, new_pos, .. } => {
             if let Some(part) = module.parts.iter_mut().find(|p| p.id == *part_id) {
                 part.position = *new_pos;
             }

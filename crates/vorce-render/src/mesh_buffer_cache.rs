@@ -60,8 +60,7 @@ impl MeshBufferCache {
             if cached.mesh_revision != mesh.revision {
                 // Update Vertices (using scratch to avoid allocation)
                 self.scratch_vertices.clear();
-                self.scratch_vertices
-                    .extend(mesh.vertices.iter().map(GpuVertex::from_mesh_vertex));
+                self.scratch_vertices.extend(mesh.vertices.iter().map(GpuVertex::from_mesh_vertex));
 
                 queue.write_buffer(
                     &cached.vertex_buffer,
@@ -78,23 +77,15 @@ impl MeshBufferCache {
                 cached.mesh_revision = mesh.revision;
             }
 
-            return (
-                &cached.vertex_buffer,
-                &cached.index_buffer,
-                cached.index_count,
-            );
+            return (&cached.vertex_buffer, &cached.index_buffer, cached.index_count);
         }
 
         // Cache miss or topology change - create new buffers
         // Use scratch buffer for initial creation too to avoid temp Vec allocation
         self.scratch_vertices.clear();
-        self.scratch_vertices.reserve(
-            mesh.vertices
-                .len()
-                .saturating_sub(self.scratch_vertices.capacity()),
-        );
         self.scratch_vertices
-            .extend(mesh.vertices.iter().map(GpuVertex::from_mesh_vertex));
+            .reserve(mesh.vertices.len().saturating_sub(self.scratch_vertices.capacity()));
+        self.scratch_vertices.extend(mesh.vertices.iter().map(GpuVertex::from_mesh_vertex));
 
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some(&format!("Mesh Vertex Buffer {}", mapping_id)),
@@ -120,15 +111,9 @@ impl MeshBufferCache {
         };
 
         self.cache.insert(mapping_id, cached);
-        let cached_ref = self
-            .cache
-            .get(&mapping_id)
-            .expect("cached mesh must exist after insertion");
-        (
-            &cached_ref.vertex_buffer,
-            &cached_ref.index_buffer,
-            cached_ref.index_count,
-        )
+        let cached_ref =
+            self.cache.get(&mapping_id).expect("cached mesh must exist after insertion");
+        (&cached_ref.vertex_buffer, &cached_ref.index_buffer, cached_ref.index_count)
     }
 
     /// Remove a mapping from the cache

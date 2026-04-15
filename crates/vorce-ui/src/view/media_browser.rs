@@ -88,9 +88,7 @@ pub struct ThumbnailHandle {
 
 impl std::fmt::Debug for ThumbnailHandle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ThumbnailHandle")
-            .field("size", &self.size)
-            .finish()
+        f.debug_struct("ThumbnailHandle").field("size", &self.size).finish()
     }
 }
 
@@ -455,14 +453,9 @@ impl MediaBrowser {
                     },
                 );
 
-                let handle = ThumbnailHandle {
-                    texture_handle: texture,
-                    size,
-                };
+                let handle = ThumbnailHandle { texture_handle: texture, size };
 
-                self.thumbnail_cache
-                    .write()
-                    .insert(path.clone(), handle.clone());
+                self.thumbnail_cache.write().insert(path.clone(), handle.clone());
 
                 // Update the corresponding entry in the list
                 for entry in &mut self.entries {
@@ -497,51 +490,29 @@ impl MediaBrowser {
         ui.horizontal(|ui| {
             // Navigation buttons (compact, icons only)
             ui.add_enabled_ui(self.history_index > 0, |ui| {
-                if ui
-                    .button("◀")
-                    .clone()
-                    .on_hover_text(locale.t("media-browser-back"))
-                    .clicked()
+                if ui.button("◀").clone().on_hover_text(locale.t("media-browser-back")).clicked()
                 {
                     self.navigate_back();
                 }
             });
 
             ui.add_enabled_ui(self.history_index < self.history.len() - 1, |ui| {
-                if ui
-                    .button("▶")
-                    .clone()
-                    .on_hover_text(locale.t("media-browser-forward"))
-                    .clicked()
+                if ui.button("▶").clone().on_hover_text(locale.t("media-browser-forward")).clicked()
                 {
                     self.navigate_forward();
                 }
             });
 
-            if ui
-                .button("⬆")
-                .clone()
-                .on_hover_text(locale.t("media-browser-up"))
-                .clicked()
-            {
+            if ui.button("⬆").clone().on_hover_text(locale.t("media-browser-up")).clicked() {
                 self.navigate_up();
             }
 
-            if ui
-                .button("🔄")
-                .clone()
-                .on_hover_text(locale.t("media-browser-refresh"))
-                .clicked()
+            if ui.button("🔄").clone().on_hover_text(locale.t("media-browser-refresh")).clicked()
             {
                 self.refresh();
             }
 
-            if ui
-                .button("⚙")
-                .clone()
-                .on_hover_text("Folder Settings")
-                .clicked()
-            {
+            if ui.button("⚙").clone().on_hover_text("Folder Settings").clicked() {
                 self.show_folder_settings = !self.show_folder_settings;
             }
 
@@ -621,85 +592,80 @@ impl MediaBrowser {
         ui.separator();
 
         // Search and filter bar - wrapped in horizontal scroll to prevent forcing sidebar width
-        egui::ScrollArea::horizontal()
-            .id_salt("media_filter_scroll")
-            .show(ui, |ui| {
-                ui.horizontal(|ui| {
-                    ui.label("🔍");
-                    let search_response = ui.text_edit_singleline(&mut self.search_query);
-                    if search_response.changed() {
-                        // Search query changed
-                    }
+        egui::ScrollArea::horizontal().id_salt("media_filter_scroll").show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.label("🔍");
+                let search_response = ui.text_edit_singleline(&mut self.search_query);
+                if search_response.changed() {
+                    // Search query changed
+                }
 
-                    ui.separator();
+                ui.separator();
 
-                    ui.label(locale.t("media-browser-filter"));
-                    ui.selectable_value(&mut self.filter_type, None, locale.t("media-browser-all"));
-                    ui.selectable_value(
-                        &mut self.filter_type,
-                        Some(MediaType::Video),
-                        locale.t("media-browser-video"),
-                    );
-                    ui.selectable_value(
-                        &mut self.filter_type,
-                        Some(MediaType::Image),
-                        locale.t("media-browser-image"),
-                    );
-                    ui.selectable_value(
-                        &mut self.filter_type,
-                        Some(MediaType::Audio),
-                        locale.t("media-browser-audio"),
-                    );
+                ui.label(locale.t("media-browser-filter"));
+                ui.selectable_value(&mut self.filter_type, None, locale.t("media-browser-all"));
+                ui.selectable_value(
+                    &mut self.filter_type,
+                    Some(MediaType::Video),
+                    locale.t("media-browser-video"),
+                );
+                ui.selectable_value(
+                    &mut self.filter_type,
+                    Some(MediaType::Image),
+                    locale.t("media-browser-image"),
+                );
+                ui.selectable_value(
+                    &mut self.filter_type,
+                    Some(MediaType::Audio),
+                    locale.t("media-browser-audio"),
+                );
 
-                    ui.separator();
+                ui.separator();
 
-                    // View mode
-                    ui.selectable_value(
-                        &mut self.view_mode,
-                        ViewMode::Grid,
-                        locale.t("media-browser-view-grid"),
-                    );
-                    ui.selectable_value(
-                        &mut self.view_mode,
-                        ViewMode::List,
-                        locale.t("media-browser-view-list"),
-                    );
+                // View mode
+                ui.selectable_value(
+                    &mut self.view_mode,
+                    ViewMode::Grid,
+                    locale.t("media-browser-view-grid"),
+                );
+                ui.selectable_value(
+                    &mut self.view_mode,
+                    ViewMode::List,
+                    locale.t("media-browser-view-list"),
+                );
 
-                    ui.separator();
+                ui.separator();
 
-                    // Sort mode
-                    egui::ComboBox::from_label(locale.t("media-browser-sort"))
-                        .selected_text(format!("{:?}", self.sort_mode))
-                        .show_ui(ui, |ui| {
-                            ui.selectable_value(
-                                &mut self.sort_mode,
-                                SortMode::Name,
-                                locale.t("media-browser-sort-name"),
-                            );
-                            ui.selectable_value(
-                                &mut self.sort_mode,
-                                SortMode::Type,
-                                locale.t("media-browser-sort-type"),
-                            );
-                            ui.selectable_value(
-                                &mut self.sort_mode,
-                                SortMode::Size,
-                                locale.t("media-browser-sort-size"),
-                            );
-                        });
-                });
+                // Sort mode
+                egui::ComboBox::from_label(locale.t("media-browser-sort"))
+                    .selected_text(format!("{:?}", self.sort_mode))
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(
+                            &mut self.sort_mode,
+                            SortMode::Name,
+                            locale.t("media-browser-sort-name"),
+                        );
+                        ui.selectable_value(
+                            &mut self.sort_mode,
+                            SortMode::Type,
+                            locale.t("media-browser-sort-type"),
+                        );
+                        ui.selectable_value(
+                            &mut self.sort_mode,
+                            SortMode::Size,
+                            locale.t("media-browser-sort-size"),
+                        );
+                    });
             });
+        });
 
         ui.separator();
 
         // Content area
         egui::ScrollArea::vertical().show(ui, |ui| {
             // Collect indices to avoid borrowing issues
-            let entry_indices: Vec<usize> = self
-                .filtered_entries()
-                .into_iter()
-                .map(|(i, _)| i)
-                .collect();
+            let entry_indices: Vec<usize> =
+                self.filtered_entries().into_iter().map(|(i, _)| i).collect();
 
             if entry_indices.is_empty() {
                 ui.vertical_centered(|ui| {
@@ -738,10 +704,9 @@ impl MediaBrowser {
         let available_width = ui.available_width();
         let columns = (available_width / (item_size.x + 8.0)).floor().max(1.0) as usize;
 
-        egui::Grid::new("media_grid")
-            .spacing([8.0, 8.0])
-            .min_col_width(item_size.x)
-            .show(ui, |ui| {
+        egui::Grid::new("media_grid").spacing([8.0, 8.0]).min_col_width(item_size.x).show(
+            ui,
+            |ui| {
                 for (i, &idx) in entry_indices.iter().enumerate() {
                     if i > 0 && i % columns == 0 {
                         ui.end_row();
@@ -764,7 +729,8 @@ impl MediaBrowser {
                         self.hover_start = Some(Instant::now());
                     }
                 }
-            });
+            },
+        );
 
         // Check for preview trigger
         if let Some(hover_time) = self.hover_start {

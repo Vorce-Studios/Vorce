@@ -24,11 +24,7 @@ pub struct MeshVertex {
 impl MeshVertex {
     /// Create a new vertex with position and texture coordinates
     pub fn new(position: Vec2, tex_coords: Vec2) -> Self {
-        Self {
-            position,
-            tex_coords,
-            selected: false,
-        }
+        Self { position, tex_coords, selected: false }
     }
 }
 
@@ -74,12 +70,7 @@ impl Mesh {
             0, 2, 3, // Second triangle
         ];
 
-        Self {
-            mesh_type: MeshType::Quad,
-            vertices,
-            indices,
-            revision: 0,
-        }
+        Self { mesh_type: MeshType::Quad, vertices, indices, revision: 0 }
     }
 
     /// Create a quad mesh with specific dimensions
@@ -104,12 +95,7 @@ impl Mesh {
 
         let indices = vec![0, 1, 2];
 
-        Self {
-            mesh_type: MeshType::Triangle,
-            vertices,
-            indices,
-            revision: 0,
-        }
+        Self { mesh_type: MeshType::Triangle, vertices, indices, revision: 0 }
     }
 
     /// Create an ellipse mesh (approximated by N segments)
@@ -142,12 +128,7 @@ impl Mesh {
         indices.push(segments as u16);
         indices.push(1);
 
-        Self {
-            mesh_type: MeshType::Ellipse,
-            vertices,
-            indices,
-            revision: 0,
-        }
+        Self { mesh_type: MeshType::Ellipse, vertices, indices, revision: 0 }
     }
 
     /// Get mutable vertex by index
@@ -184,12 +165,7 @@ impl Mesh {
 
     /// Get selected vertices
     pub fn selected_vertices(&self) -> Vec<VertexId> {
-        self.vertices
-            .iter()
-            .enumerate()
-            .filter(|(_, v)| v.selected)
-            .map(|(i, _)| i)
-            .collect()
+        self.vertices.iter().enumerate().filter(|(_, v)| v.selected).map(|(i, _)| i).collect()
     }
 
     /// Translate selected vertices
@@ -282,12 +258,7 @@ impl Mesh {
             }
         }
 
-        Self {
-            mesh_type: MeshType::Custom,
-            vertices,
-            indices,
-            revision: 0,
-        }
+        Self { mesh_type: MeshType::Custom, vertices, indices, revision: 0 }
     }
 }
 
@@ -500,12 +471,8 @@ mod phase2_tests {
     #[test]
     fn test_bezier_patch_corners() {
         let mut patch = BezierPatch::new();
-        let corners = [
-            Vec2::new(0.1, 0.1),
-            Vec2::new(0.9, 0.2),
-            Vec2::new(0.8, 0.9),
-            Vec2::new(0.2, 0.8),
-        ];
+        let corners =
+            [Vec2::new(0.1, 0.1), Vec2::new(0.9, 0.2), Vec2::new(0.8, 0.9), Vec2::new(0.2, 0.8)];
         patch.set_corners(corners);
 
         // Verify corners
@@ -518,12 +485,8 @@ mod phase2_tests {
     #[test]
     fn test_keystone_application() {
         let mut mesh = Mesh::quad();
-        let corners = [
-            Vec2::new(0.1, 0.1),
-            Vec2::new(0.9, 0.1),
-            Vec2::new(1.0, 1.0),
-            Vec2::new(0.0, 1.0),
-        ];
+        let corners =
+            [Vec2::new(0.1, 0.1), Vec2::new(0.9, 0.1), Vec2::new(1.0, 1.0), Vec2::new(0.0, 1.0)];
 
         mesh.apply_keystone(corners);
 

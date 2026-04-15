@@ -165,19 +165,13 @@ pub fn styled_slider(
     let t = (*value - *range.start()) / (*range.end() - *range.start());
     let fill_rect = Rect::from_min_max(
         rect.min,
-        Pos2::new(
-            lerp((rect.left())..=(rect.right()), t.clamp(0.0, 1.0)),
-            rect.max.y,
-        ),
+        Pos2::new(lerp((rect.left())..=(rect.right()), t.clamp(0.0, 1.0)), rect.max.y),
     );
 
     // Accent color logic
     let is_changed = (*value - default_value).abs() > 0.001;
-    let fill_color = if is_changed {
-        colors::CYAN_ACCENT
-    } else {
-        colors::CYAN_ACCENT.linear_multiply(0.7)
-    };
+    let fill_color =
+        if is_changed { colors::CYAN_ACCENT } else { colors::CYAN_ACCENT.linear_multiply(0.7) };
 
     ui.painter().rect(
         fill_rect,
@@ -258,13 +252,8 @@ pub fn styled_drag_value(
     let is_changed = (*value - default_value).abs() > 0.001;
 
     // Use scope to customize spacing or style if needed
-    let response = ui.add(
-        egui::DragValue::new(value)
-            .speed(speed)
-            .range(range)
-            .prefix(prefix)
-            .suffix(suffix),
-    );
+    let response =
+        ui.add(egui::DragValue::new(value).speed(speed).range(range).prefix(prefix).suffix(suffix));
 
     if response.double_clicked() {
         *value = default_value;
@@ -308,10 +297,7 @@ pub fn icon_button_simple(
     // Accessibility info
     let enabled = ui.is_enabled();
     let label = if hover_text.is_empty() {
-        icon.file_name()
-            .replace("ultimate_", "")
-            .replace(".svg", "")
-            .replace("_", " ")
+        icon.file_name().replace("ultimate_", "").replace(".svg", "").replace("_", " ")
     } else {
         hover_text.to_string()
     };
@@ -320,26 +306,14 @@ pub fn icon_button_simple(
     let visuals = ui.style().interact(&response);
 
     // Background fill logic
-    let bg_fill = if response.hovered() {
-        ui.visuals().widgets.hovered.bg_fill
-    } else {
-        visuals.bg_fill
-    };
+    let bg_fill =
+        if response.hovered() { ui.visuals().widgets.hovered.bg_fill } else { visuals.bg_fill };
 
     // Stroke logic
-    let stroke = if response.hovered() {
-        ui.visuals().widgets.hovered.bg_stroke
-    } else {
-        visuals.bg_stroke
-    };
+    let stroke =
+        if response.hovered() { ui.visuals().widgets.hovered.bg_stroke } else { visuals.bg_stroke };
 
-    ui.painter().rect(
-        rect,
-        CornerRadius::ZERO,
-        bg_fill,
-        stroke,
-        egui::StrokeKind::Middle,
-    );
+    ui.painter().rect(rect, CornerRadius::ZERO, bg_fill, stroke, egui::StrokeKind::Middle);
 
     // Draw focus ring if focused
     if response.has_focus() {
@@ -355,11 +329,7 @@ pub fn icon_button_simple(
     if let Some(mgr) = icon_manager {
         if let Some(texture) = mgr.get(icon) {
             let icon_rect = Rect::from_center_size(rect.center(), Vec2::splat(size));
-            let tint = if response.hovered() {
-                Color32::WHITE
-            } else {
-                ui.visuals().text_color()
-            };
+            let tint = if response.hovered() { Color32::WHITE } else { ui.visuals().text_color() };
             ui.painter().image(
                 texture.id(),
                 icon_rect,
@@ -418,19 +388,9 @@ pub fn icon_button(
     };
 
     // Stroke logic
-    let stroke = if is_active {
-        Stroke::new(1.0, active_color)
-    } else {
-        visuals.bg_stroke
-    };
+    let stroke = if is_active { Stroke::new(1.0, active_color) } else { visuals.bg_stroke };
 
-    ui.painter().rect(
-        rect,
-        CornerRadius::ZERO,
-        bg_fill,
-        stroke,
-        egui::StrokeKind::Middle,
-    );
+    ui.painter().rect(rect, CornerRadius::ZERO, bg_fill, stroke, egui::StrokeKind::Middle);
 
     // Draw focus ring if focused
     if response.has_focus() {
@@ -446,11 +406,7 @@ pub fn icon_button(
 
     // Text color logic: Black if active or hovered with color
     let is_colored = is_active || (response.hovered() && hover_color != Color32::TRANSPARENT);
-    let text_color = if is_colored {
-        Color32::BLACK
-    } else {
-        ui.visuals().text_color()
-    };
+    let text_color = if is_colored { Color32::BLACK } else { ui.visuals().text_color() };
 
     ui.painter().text(
         text_pos,
@@ -477,10 +433,7 @@ pub fn icon_button_compact(
     // Accessibility info
     let enabled = ui.is_enabled();
     let label = if hover_text.is_empty() {
-        icon.file_name()
-            .replace("ultimate_", "")
-            .replace(".svg", "")
-            .replace("_", " ")
+        icon.file_name().replace("ultimate_", "").replace(".svg", "").replace("_", " ")
     } else {
         hover_text.to_string()
     };
@@ -496,13 +449,7 @@ pub fn icon_button_compact(
         visuals.bg_fill
     };
 
-    painter.rect(
-        rect,
-        CornerRadius::ZERO,
-        bg_fill,
-        visuals.bg_stroke,
-        egui::StrokeKind::Middle,
-    );
+    painter.rect(rect, CornerRadius::ZERO, bg_fill, visuals.bg_stroke, egui::StrokeKind::Middle);
 
     // Draw focus ring if focused
     if response.has_focus() {
@@ -714,11 +661,7 @@ pub fn hold_to_action_button(ui: &mut Ui, text: &str, color: Color32, hover_text
     }
 
     // 3. Text
-    let text_color = if triggered {
-        color
-    } else {
-        visuals.text_color()
-    };
+    let text_color = if triggered { color } else { visuals.text_color() };
     painter.text(
         rect.center(),
         egui::Align2::CENTER_CENTER,
@@ -757,11 +700,8 @@ pub fn hold_to_action_icon(
     // Accessibility info
     let enabled = ui.is_enabled();
     let label = if hover_text.is_empty() {
-        let icon_name = icon
-            .file_name()
-            .replace("ultimate_", "")
-            .replace(".svg", "")
-            .replace("_", " ");
+        let icon_name =
+            icon.file_name().replace("ultimate_", "").replace(".svg", "").replace("_", " ");
         format!("Hold to confirm {}...", icon_name)
     } else {
         format!("{} (Hold to confirm)", hover_text)
@@ -862,15 +802,9 @@ pub fn hold_to_action_icon(
     if !hover_text.is_empty() {
         response.on_hover_text(format!("{} (Hold to confirm)", hover_text));
     } else {
-        let icon_name = icon
-            .file_name()
-            .replace("ultimate_", "")
-            .replace(".svg", "")
-            .replace("_", " ");
-        response.on_hover_text(format!(
-            "Hold to confirm {}... (Mouse or Space/Enter)",
-            icon_name
-        ));
+        let icon_name =
+            icon.file_name().replace("ultimate_", "").replace(".svg", "").replace("_", " ");
+        response.on_hover_text(format!("Hold to confirm {}... (Mouse or Space/Enter)", icon_name));
     }
 
     triggered
