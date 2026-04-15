@@ -104,9 +104,16 @@ impl ShortcutsPanel {
                         ui.label(""); // Edit button column
                         ui.end_row();
 
+                        let mut is_conflict_cache = vec![false; shortcuts_clone.len()];
+                        for &conflict_idx in &self.conflicts {
+                            if conflict_idx < is_conflict_cache.len() {
+                                is_conflict_cache[conflict_idx] = true;
+                            }
+                        }
+
                         for index in filtered_indices {
                             let shortcut = &shortcuts_clone[index];
-                            let is_conflict = self.conflicts.contains(&index);
+                            let is_conflict = is_conflict_cache[index];
 
                             // Description
                             ui.label(&shortcut.description);
