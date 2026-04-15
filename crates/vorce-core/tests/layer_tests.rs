@@ -174,8 +174,14 @@ fn test_layer_manager_group_and_reparent() {
     manager.reparent_layer(child_id, Some(group_id));
     manager.reparent_layer(grandchild_id, Some(child_id));
 
-    assert_eq!(manager.get_layer(child_id).unwrap().parent_id, Some(group_id));
-    assert_eq!(manager.get_layer(grandchild_id).unwrap().parent_id, Some(child_id));
+    assert_eq!(
+        manager.get_layer(child_id).unwrap().parent_id,
+        Some(group_id)
+    );
+    assert_eq!(
+        manager.get_layer(grandchild_id).unwrap().parent_id,
+        Some(child_id)
+    );
 
     // Descendant check
     assert!(manager.is_descendant(grandchild_id, group_id));

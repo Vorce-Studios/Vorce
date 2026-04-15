@@ -384,7 +384,10 @@ mod tests {
 
     #[test]
     fn test_frame_size_mismatch() {
-        let err = IoError::FrameSizeMismatch { expected: 1920 * 1080 * 4, actual: 1000 };
+        let err = IoError::FrameSizeMismatch {
+            expected: 1920 * 1080 * 4,
+            actual: 1000,
+        };
         let err_str = err.to_string();
         assert!(err_str.contains("expected"));
         assert!(err_str.contains("got"));

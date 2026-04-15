@@ -97,8 +97,11 @@ impl TimelineV2 {
     }
 
     fn sorted_enabled_blocks(&self) -> Vec<&ModuleArrangementItem> {
-        let mut blocks: Vec<&ModuleArrangementItem> =
-            self.module_arrangement.iter().filter(|item| item.enabled).collect();
+        let mut blocks: Vec<&ModuleArrangementItem> = self
+            .module_arrangement
+            .iter()
+            .filter(|item| item.enabled)
+            .collect();
         blocks.sort_by(|a, b| a.start_time.total_cmp(&b.start_time).then(a.id.cmp(&b.id)));
         blocks
     }
@@ -115,7 +118,9 @@ impl TimelineV2 {
     }
 
     fn find_block(&self, block_id: u64) -> Option<&ModuleArrangementItem> {
-        self.module_arrangement.iter().find(|item| item.id == block_id)
+        self.module_arrangement
+            .iter()
+            .find(|item| item.id == block_id)
     }
 
     fn first_enabled_block_id(&self) -> Option<u64> {
@@ -162,7 +167,8 @@ impl TimelineV2 {
 
     fn cleanup_missing_modules(&mut self, available_module_ids: &[ModuleId]) {
         let valid: HashSet<ModuleId> = available_module_ids.iter().copied().collect();
-        self.module_arrangement.retain(|item| valid.contains(&item.module_id));
+        self.module_arrangement
+            .retain(|item| valid.contains(&item.module_id));
 
         let has_block = |id: Option<u64>, blocks: &[ModuleArrangementItem]| {
             id.is_some_and(|block_id| blocks.iter().any(|item| item.id == block_id))
@@ -186,8 +192,11 @@ impl TimelineV2 {
     }
 
     fn add_module_block(&mut self, module_id: ModuleId) {
-        let default_start =
-            self.module_arrangement.iter().map(ModuleArrangementItem::end_time).fold(0.0, f32::max);
+        let default_start = self
+            .module_arrangement
+            .iter()
+            .map(ModuleArrangementItem::end_time)
+            .fold(0.0, f32::max);
         let id = self.next_arrangement_id;
         self.next_arrangement_id = self.next_arrangement_id.saturating_add(1);
 
@@ -206,7 +215,9 @@ impl TimelineV2 {
     }
 
     fn module_for_block_id(&self, block_id: Option<u64>) -> Option<ModuleId> {
-        block_id.and_then(|id| self.find_block(id)).map(|block| block.module_id)
+        block_id
+            .and_then(|id| self.find_block(id))
+            .map(|block| block.module_id)
     }
 
     /// Returns the module that should be active for show playback.
@@ -324,7 +335,10 @@ impl TimelineV2 {
         }
 
         let next_index = if let Some(current_id) = self.manual_current_block_id {
-            let idx = block_ids.iter().position(|id| *id == current_id).unwrap_or(0);
+            let idx = block_ids
+                .iter()
+                .position(|id| *id == current_id)
+                .unwrap_or(0);
             (idx + 1) % block_ids.len()
         } else {
             0
@@ -343,7 +357,10 @@ impl TimelineV2 {
         }
 
         let prev_index = if let Some(current_id) = self.manual_current_block_id {
-            let idx = block_ids.iter().position(|id| *id == current_id).unwrap_or(0);
+            let idx = block_ids
+                .iter()
+                .position(|id| *id == current_id)
+                .unwrap_or(0);
             if idx == 0 {
                 block_ids.len() - 1
             } else {
@@ -371,7 +388,10 @@ impl TimelineV2 {
         }
 
         let next_index = if let Some(current_id) = self.semi_auto_current_block_id {
-            let idx = block_ids.iter().position(|id| *id == current_id).unwrap_or(0);
+            let idx = block_ids
+                .iter()
+                .position(|id| *id == current_id)
+                .unwrap_or(0);
             (idx + 1).min(block_ids.len().saturating_sub(1))
         } else {
             0
@@ -543,7 +563,11 @@ impl TimelineV2 {
 
             ui.label("In:");
             if ui
-                .add(egui::DragValue::new(&mut in_pt).speed(0.1).range(0.0..=out_pt - 0.1))
+                .add(
+                    egui::DragValue::new(&mut in_pt)
+                        .speed(0.1)
+                        .range(0.0..=out_pt - 0.1),
+                )
                 .changed()
             {
                 pts_changed = true;
@@ -783,8 +807,11 @@ impl TimelineV2 {
             > = std::collections::BTreeMap::new();
             for track in &clip.tracks {
                 let parts: Vec<&str> = track.name.split('.').collect();
-                let group_name =
-                    if parts.len() > 1 { parts[0].to_string() } else { "General".to_string() };
+                let group_name = if parts.len() > 1 {
+                    parts[0].to_string()
+                } else {
+                    "General".to_string()
+                };
                 track_groups.entry(group_name).or_default().push(track);
             }
 
@@ -796,7 +823,11 @@ impl TimelineV2 {
                 }
             }
 
-            let module_track_height = if self.module_arrangement.is_empty() { 0.0 } else { 64.0 };
+            let module_track_height = if self.module_arrangement.is_empty() {
+                0.0
+            } else {
+                64.0
+            };
 
             let available_height = 50.0 + (visible_lanes_count as f32 * 60.0) + module_track_height;
             let available_width = (duration * self.zoom).max(ui.available_width());
@@ -817,11 +848,18 @@ impl TimelineV2 {
             let mut time = 0.0;
             while time <= duration {
                 let x = rect.min.x + time * self.zoom;
-                let h = if (time % 1.0).abs() < 0.001 { 15.0 } else { 8.0 };
+                let h = if (time % 1.0).abs() < 0.001 {
+                    15.0
+                } else {
+                    8.0
+                };
 
                 if x >= rect.min.x && x <= rect.max.x {
                     painter.line_segment(
-                        [Pos2::new(x, ruler_rect.max.y - h), Pos2::new(x, ruler_rect.max.y)],
+                        [
+                            Pos2::new(x, ruler_rect.max.y - h),
+                            Pos2::new(x, ruler_rect.max.y),
+                        ],
                         Stroke::new(1.0, ui.visuals().text_color().gamma_multiply(0.6)),
                     );
 
@@ -895,7 +933,10 @@ impl TimelineV2 {
             // Draw playhead
             let playhead_x = rect.min.x + self.playhead * self.zoom;
             painter.line_segment(
-                [Pos2::new(playhead_x, ruler_rect.min.y), Pos2::new(playhead_x, rect.max.y)],
+                [
+                    Pos2::new(playhead_x, ruler_rect.min.y),
+                    Pos2::new(playhead_x, rect.max.y),
+                ],
                 Stroke::new(2.0, crate::theme::colors::ERROR_COLOR),
             );
 

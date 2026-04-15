@@ -16,11 +16,19 @@ pub struct ApiResponse<T> {
 
 impl<T> ApiResponse<T> {
     pub fn success(data: T) -> Self {
-        Self { success: true, data: Some(data), error: None }
+        Self {
+            success: true,
+            data: Some(data),
+            error: None,
+        }
     }
 
     pub fn error(message: String) -> Self {
-        Self { success: false, data: None, error: Some(message) }
+        Self {
+            success: false,
+            data: None,
+            error: Some(message),
+        }
     }
 }
 
@@ -45,7 +53,12 @@ pub struct LiveStatus {
 
 impl Default for LiveStatus {
     fn default() -> Self {
-        Self { uptime_seconds: 0, active_layers: 0, fps: 0.0, layer_info: Vec::new() }
+        Self {
+            uptime_seconds: 0,
+            active_layers: 0,
+            fps: 0.0,
+            layer_info: Vec::new(),
+        }
     }
 }
 
@@ -227,7 +240,12 @@ mod tests {
 
     #[test]
     fn test_layer_info_serialization() {
-        let info = LayerInfo { id: 1, name: "Layer 1".to_string(), opacity: 1.0, visible: true };
+        let info = LayerInfo {
+            id: 1,
+            name: "Layer 1".to_string(),
+            opacity: 1.0,
+            visible: true,
+        };
         let json = serde_json::to_string(&info).unwrap();
         assert!(json.contains("Layer 1"));
         assert!(json.contains("opacity"));

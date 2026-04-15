@@ -41,7 +41,10 @@ pub fn run(args: &CliArgs) -> Result<()> {
     info!("Starting NDI Player mode for source: {}", args.source);
 
     let event_loop = EventLoop::new()?;
-    let mut app_handler = NdiPlayerApp { source: args.source.clone(), window: None };
+    let mut app_handler = NdiPlayerApp {
+        source: args.source.clone(),
+        window: None,
+    };
 
     event_loop.run_app(&mut app_handler)?;
 
