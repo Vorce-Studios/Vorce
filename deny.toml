@@ -14,6 +14,11 @@ ignore = [
     "RUSTSEC-2025-0141",
     # paste is unmaintained
     "RUSTSEC-2024-0436",
+    # atty is unmaintained and unsound (potential unaligned read)
+    "RUSTSEC-2024-0375",
+    "RUSTSEC-2021-0145",
+    # rand is unsound with a custom logger using rand::rng()
+    "RUSTSEC-2026-0097",
 ]
 
 [licenses]
