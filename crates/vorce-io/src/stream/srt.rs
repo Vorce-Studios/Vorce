@@ -64,15 +64,27 @@ impl SrtStreamer {
 
         // Validate SRT URL
         if !url.starts_with("srt://") {
-            return Err(IoError::InvalidParameter("SRT URL must start with srt://".to_string()));
+            return Err(IoError::InvalidParameter(
+                "SRT URL must start with srt://".to_string(),
+            ));
         }
 
-        let encoder =
-            VideoEncoder::new(VideoCodec::H264, format.clone(), bitrate, EncoderPreset::UltraFast)?;
+        let encoder = VideoEncoder::new(
+            VideoCodec::H264,
+            format.clone(),
+            bitrate,
+            EncoderPreset::UltraFast,
+        )?;
 
         tracing::info!("Created SRT streamer for {}", url);
 
-        Ok(Self { url, encoder, format, connected: false, frame_count: 0 })
+        Ok(Self {
+            url,
+            encoder,
+            format,
+            connected: false,
+            frame_count: 0,
+        })
     }
 
     /// Creates a default SRT streamer for 1080p60.
@@ -193,7 +205,10 @@ impl SrtStreamer {
         _format: crate::format::VideoFormat,
         _bitrate: u64,
     ) -> crate::error::Result<Self> {
-        Err(crate::error::IoError::feature_not_enabled("SRT streaming", "stream"))
+        Err(crate::error::IoError::feature_not_enabled(
+            "SRT streaming",
+            "stream",
+        ))
     }
 }
 

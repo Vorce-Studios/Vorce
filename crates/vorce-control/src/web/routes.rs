@@ -60,7 +60,12 @@ async fn get_layer(
     State(_state): State<AppState>,
 ) -> Result<Json<ApiResponse<LayerInfo>>, StatusCode> {
     // In a real implementation, this would query the actual layer
-    let layer = LayerInfo { id, name: format!("Layer {}", id + 1), opacity: 1.0, visible: true };
+    let layer = LayerInfo {
+        id,
+        name: format!("Layer {}", id + 1),
+        opacity: 1.0,
+        visible: true,
+    };
 
     Ok(Json(ApiResponse::success(layer)))
 }

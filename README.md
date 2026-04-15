@@ -1,20 +1,13 @@
 <div align="center">
-  <img src="resources/app_icons/Vorce_Logo_HQ-Full-Gray-Background-NoCorner.png" alt="Vorce Logo" width="500">
+  <img src="resources/branding/logo_banner.png" alt="Vorce Logo" width="600">
 
 # Vorce (formerly VjMapper)
 
-**A High-Performance, Professional-Grade Projection Mapping Tool Built with Rust.**
+  **A High-Performance, Professional-Grade Projection Mapping Tool Built with Rust.**
 
-<!-- markdownlint-disable MD013 -->
-[![Build & Quality](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml/badge.svg?branch=main)](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml)
-[![Security Analysis](https://github.com/Vorce-Studios/Vorce/actions/workflows/CI-02_security-scan.yml/badge.svg)](https://github.com/Vorce-Studios/Vorce/actions/workflows/CI-02_security-scan.yml)
-[![Stable Release](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-MainFlow_Job03_Release.yml/badge.svg?branch=main)](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-MainFlow_Job03_Release.yml)
-![OS: Windows | Linux | macOS](https://img.shields.io/badge/OS-Windows%20%7C%20Linux%20%7C%20macOS-blue.svg)
-[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
-[![Rust: 1.94+](https://img.shields.io/badge/Rust-1.94%2B-orange.svg)](https://www.rust-lang.org/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-<!-- markdownlint-enable MD013 -->
-
+  [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+  [![Rust](https://img.shields.io/badge/rust-1.94%2B-orange.svg)](https://www.rust-lang.org/)
+  [![CI](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml/badge.svg)](https://github.com/Vorce-Studios/Vorce/actions)
 </div>
 
 ---
@@ -51,7 +44,8 @@ detection in real-time, allowing visuals to dance perfectly to the beat.
 ### 🎛️ Unified Control
 
 Seamlessly integrate with your performance setup via **OSC**, **MIDI**, and
-**Ableton Link**.
+**Ableton Link**. Our built-in **Jules AI assistant** is always ready to help
+you extend the software's capabilities.
 
 ---
 
@@ -100,10 +94,10 @@ cargo run --release
 
 Explore our comprehensive guides in the [`docs/`](docs/README.md) directory:
 
-* 📖 [**User Guide**](docs/A4_USER/B1_MANUAL/DOC-C0_README.md): Interface
-  layout, keyboard shortcuts, and performance tips.
-* 👨‍💻 [**Developer Portal**](docs/A2_DEVELOPMENT/DOC-B0_README.md): Architecture
-  overview, coding standards, and build instructions.
+* 📖 [**User Guide**](docs/A4_USER/B1_MANUAL/DOC-C0_README.md): Interface layout, keyboard
+  shortcuts, and performance tips.
+* 👨‍💻 [**Developer Portal**](docs/A2_DEVELOPMENT/DOC-B0_README.md): Architecture overview,
+  coding standards, and build instructions.
 * 🗺️ **Project Roadmap**: Current status and upcoming Phase 1.0 release goals are
   tracked via GitHub Project Issues.
 

@@ -621,8 +621,8 @@ function Get-VorceProjectConfig {
         QueueFieldName     = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_QUEUE_STATE_FIELD)) { $env:VORCE_PROJECT_QUEUE_STATE_FIELD.Trim() } else { "Queue State" }
         JulesSessionStatusFieldName = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_JULES_SESSION_STATUS_FIELD)) { $env:VORCE_PROJECT_JULES_SESSION_STATUS_FIELD.Trim() } else { "jules_session_status" }
         PrChecksStatusFieldName = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_PR_CHECKS_STATUS_FIELD)) { $env:VORCE_PROJECT_PR_CHECKS_STATUS_FIELD.Trim() } else { "pr_checks_status" }
-        WorkBranchFieldName = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_WORK_BRANCH_FIELD)) { $env:VORCE_PROJECT_WORK_BRANCH_FIELD.Trim() } else { "work_branch" }
-        LastUpdateFieldName = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_LAST_UPDATE_FIELD)) { $env:VORCE_PROJECT_LAST_UPDATE_FIELD.Trim() } else { "last_update" }
+        WorkBranchFieldName = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_WORK_BRANCH_FIELD)) { $env:VORCE_PROJECT_WORK_BRANCH_FIELD.Trim() } else { "Work Branch" }
+        LastUpdateFieldName = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_LAST_UPDATE_FIELD)) { $env:VORCE_PROJECT_LAST_UPDATE_FIELD.Trim() } else { "Last Update" }
         LinkedPrFieldName   = if (-not [string]::IsNullOrWhiteSpace($env:VORCE_PROJECT_LINKED_PR_FIELD)) { $env:VORCE_PROJECT_LINKED_PR_FIELD.Trim() } else { "Linked PR" }
     }
 }

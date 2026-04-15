@@ -73,7 +73,7 @@ VjMapper ist ein Rewrite einer C++/Qt-Anwendung in Rust. Ziel ist eine hochperfo
 ```yaml
 ---
 name: jules_disponent
-tools: [run_shell_command, read_file, write_file, agent, grep_search]
+tools: [run_shell_command, read_file]
 model: gemini-2.0-flash
 ---
 ```

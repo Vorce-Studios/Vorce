@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=MapFlow
+Comment=Professional Projection Mapping Software
+Exec=MapFlow
+Icon=mapflow
+Terminal=false
+Type=Application
+Categories=Graphics;Video;AudioVideo;
+Keywords=projection;mapping;vj;
+StartupNotify=true

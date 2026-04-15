@@ -1,6 +1,11 @@
-use egui::Ui;
+#[allow(unused_imports)]
+use egui::{Color32, Pos2, Rect, Response, Sense, Stroke, TextureHandle, Ui, Vec2};
 
-use crate::config::{MidiAssignmentTarget, UserConfig};
+#[allow(unused_imports)]
+use crate::config::{MidiAssignment, MidiAssignmentTarget, UserConfig};
+
+#[allow(unused_imports)]
+use std::collections::{HashMap, HashSet};
 
 use super::panel::{ControllerOverlayPanel, ElementFilter};
 
@@ -10,19 +15,31 @@ impl ControllerOverlayPanel {
         // Filter buttons
         ui.horizontal(|ui| {
             ui.label("Filter:");
-            if ui.selectable_label(self.element_filter == ElementFilter::All, "Alle").clicked() {
+            if ui
+                .selectable_label(self.element_filter == ElementFilter::All, "Alle")
+                .clicked()
+            {
                 self.element_filter = ElementFilter::All;
             }
-            if ui.selectable_label(self.element_filter == ElementFilter::Vorce, "Vorce").clicked() {
+            if ui
+                .selectable_label(self.element_filter == ElementFilter::Vorce, "Vorce")
+                .clicked()
+            {
                 self.element_filter = ElementFilter::Vorce;
             }
             if ui
-                .selectable_label(self.element_filter == ElementFilter::StreamerBot, "Streamer.bot")
+                .selectable_label(
+                    self.element_filter == ElementFilter::StreamerBot,
+                    "Streamer.bot",
+                )
                 .clicked()
             {
                 self.element_filter = ElementFilter::StreamerBot;
             }
-            if ui.selectable_label(self.element_filter == ElementFilter::Mixxx, "Mixxx").clicked() {
+            if ui
+                .selectable_label(self.element_filter == ElementFilter::Mixxx, "Mixxx")
+                .clicked()
+            {
                 self.element_filter = ElementFilter::Mixxx;
             }
             if ui

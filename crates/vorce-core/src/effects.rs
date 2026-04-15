@@ -60,7 +60,9 @@ impl EffectType {
     /// instance with empty/default data.
     pub fn normalized(&self) -> Self {
         match self {
-            EffectType::LoadLUT { .. } => EffectType::LoadLUT { path: String::new() },
+            EffectType::LoadLUT { .. } => EffectType::LoadLUT {
+                path: String::new(),
+            },
             _ => self.clone(),
         }
     }
@@ -173,7 +175,14 @@ impl Effect {
             _ => {}
         }
 
-        Self { id, effect_type, enabled: true, intensity: 1.0, parameters, custom_shader: None }
+        Self {
+            id,
+            effect_type,
+            enabled: true,
+            intensity: 1.0,
+            parameters,
+            custom_shader: None,
+        }
     }
 
     /// Get a parameter value with default fallback
@@ -199,7 +208,10 @@ pub struct EffectChain {
 impl EffectChain {
     /// Create a new empty effect chain
     pub fn new() -> Self {
-        Self { effects: Vec::new(), next_id: 1 }
+        Self {
+            effects: Vec::new(),
+            next_id: 1,
+        }
     }
 
     /// Add an effect to the chain

@@ -261,9 +261,12 @@ impl AudioAnalyzer {
         }
 
         let onset_detected = if self.onset_history.len() >= 4 {
-            let recent_avg: f32 =
-                self.onset_history.iter().take(self.onset_history.len() - 1).sum::<f32>()
-                    / (self.onset_history.len() - 1) as f32;
+            let recent_avg: f32 = self
+                .onset_history
+                .iter()
+                .take(self.onset_history.len() - 1)
+                .sum::<f32>()
+                / (self.onset_history.len() - 1) as f32;
             current_energy > recent_avg * 1.5 && current_energy > 0.05
         } else {
             false
@@ -456,7 +459,9 @@ mod tests {
     impl MockAudioBackend {
         /// Creates a new, uninitialized instance with default settings.
         pub fn new() -> Self {
-            Self { samples_recorded: Mutex::new(Vec::new()) }
+            Self {
+                samples_recorded: Mutex::new(Vec::new()),
+            }
         }
 
         pub fn provide_samples(&self, samples: &[f32]) {
@@ -467,7 +472,10 @@ mod tests {
         }
 
         pub fn get_recorded_count(&self) -> usize {
-            self.samples_recorded.lock().expect("MockAudioBackend mutex poisoned").len()
+            self.samples_recorded
+                .lock()
+                .expect("MockAudioBackend mutex poisoned")
+                .len()
         }
     }
 
@@ -493,7 +501,10 @@ mod tests {
             release: 0.3,
         };
 
-        let analysis = AudioAnalysis { rms_volume: 0.5, ..Default::default() };
+        let analysis = AudioAnalysis {
+            rms_volume: 0.5,
+            ..Default::default()
+        };
 
         let value = mapping.apply(&analysis, 0.0, 0.016);
         assert!(value > 0.0 && value <= 1.0);
@@ -620,8 +631,10 @@ mod tests {
         assert!(value > 0.0);
 
         // Test Beat mapping
-        let beat_mapping =
-            AudioReactiveMapping { mapping_type: AudioMappingType::Beat, ..mapping.clone() };
+        let beat_mapping = AudioReactiveMapping {
+            mapping_type: AudioMappingType::Beat,
+            ..mapping.clone()
+        };
         let beat_value = beat_mapping.apply(&analysis, 0.0, 0.016);
         assert!(beat_value > 0.0); // Should be 1.0 for beat detected
 
@@ -666,8 +679,14 @@ mod tests {
             release: 0.5, // Slower release
         };
 
-        let analysis_high = AudioAnalysis { rms_volume: 1.0, ..Default::default() };
-        let analysis_low = AudioAnalysis { rms_volume: 0.0, ..Default::default() };
+        let analysis_high = AudioAnalysis {
+            rms_volume: 1.0,
+            ..Default::default()
+        };
+        let analysis_low = AudioAnalysis {
+            rms_volume: 0.0,
+            ..Default::default()
+        };
 
         // Attack: value should increase
         let v1 = mapping.apply(&analysis_high, 0.0, 0.016);
