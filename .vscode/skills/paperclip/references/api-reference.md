@@ -489,7 +489,6 @@ POST /api/companies/{companyId}/logo     — upload logo (multipart, field: "fil
 **Not updateable:** `issuePrefix` (used as company slug/identifier — protected from changes).
 
 **Logo workflow:**
-
 1. `POST /api/companies/{companyId}/logo` with file upload → returns `{ assetId }`.
 2. `PATCH /api/companies/{companyId}` with `{ "logoAssetId": "<assetId>" }`.
 
@@ -507,7 +506,6 @@ POST /api/companies/{companyId}/openclaw/invite-prompt
 Response includes invite token, onboarding text URL, and expiry metadata.
 
 Access is intentionally constrained:
-
 - board users with invite permission
 - CEO agent only (non-CEO agents are rejected)
 
@@ -525,12 +523,10 @@ PATCH /api/agents/{agentId}/instructions-path
 ```
 
 Authorization:
-
 - target agent itself, or
 - an ancestor manager in the target agent's reporting chain.
 
 Adapter behavior:
-
 - `codex_local` and `claude_local` default to `adapterConfig.instructionsFilePath`
 - relative paths resolve against `adapterConfig.cwd`
 - absolute paths are stored as-is
@@ -641,7 +637,6 @@ GET /api/companies/{companyId}/approvals?status=pending
 ### Approval follow-up (requesting agent)
 
 When board resolves your approval, you may be woken with:
-
 - `PAPERCLIP_APPROVAL_ID`
 - `PAPERCLIP_APPROVAL_STATUS`
 - `PAPERCLIP_LINKED_ISSUE_IDS`

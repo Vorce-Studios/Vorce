@@ -184,7 +184,7 @@ pub fn styled_slider(
     // Value Text
     let text = format!("{:.2}", value);
     let text_color = if response.hovered() || response.dragged() {
-        Color32::WHITE
+        ui.visuals().strong_text_color()
     } else if is_changed {
         colors::CYAN_ACCENT
     } else {
@@ -329,7 +329,11 @@ pub fn icon_button_simple(
     if let Some(mgr) = icon_manager {
         if let Some(texture) = mgr.get(icon) {
             let icon_rect = Rect::from_center_size(rect.center(), Vec2::splat(size));
-            let tint = if response.hovered() { Color32::WHITE } else { ui.visuals().text_color() };
+            let tint = if response.hovered() {
+                ui.visuals().strong_text_color()
+            } else {
+                ui.visuals().text_color()
+            };
             ui.painter().image(
                 texture.id(),
                 icon_rect,
@@ -468,7 +472,7 @@ pub fn icon_button_compact(
         if let Some(texture) = mgr.get(icon) {
             let icon_rect = Rect::from_center_size(center, Vec2::splat(size));
             let tint = if response.hovered() || response.has_focus() {
-                Color32::WHITE
+                ui.visuals().strong_text_color()
             } else {
                 ui.visuals().text_color()
             };
@@ -736,7 +740,7 @@ pub fn hold_to_action_icon(
         if let Some(texture) = mgr.get(icon) {
             let icon_rect = Rect::from_center_size(center, Vec2::splat(size));
             let tint = if response.hovered() || is_interacting {
-                Color32::WHITE
+                ui.visuals().strong_text_color()
             } else {
                 colors::LIGHTER_GREY
             };
