@@ -440,8 +440,8 @@ impl VorceModule {
             }
         }
 
-        let existing_part_ids: HashSet<ModulePartId> =
-            self.parts.iter().map(|part| part.id).collect();
+        let existing_part_ids =
+            self.parts.iter().map(|part| part.id).collect::<rustc_hash::FxHashSet<_>>();
         let mut seen_connections = HashSet::new();
         let mut repaired_connections = Vec::with_capacity(self.connections.len());
 
