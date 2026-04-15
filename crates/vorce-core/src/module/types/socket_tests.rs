@@ -19,10 +19,7 @@ mod tests {
         let trigger_fft = ModulePartType::Trigger(TriggerType::AudioFFT {
             band: crate::module::types::trigger::AudioBand::Bass,
             threshold: 0.5,
-            output_config: AudioTriggerOutputConfig {
-                frequency_bands: true,
-                ..Default::default()
-            },
+            output_config: AudioTriggerOutputConfig { frequency_bands: true, ..Default::default() },
         });
         let (in_sockets, out_sockets) = trigger_fft.get_default_sockets();
         assert_eq!(in_sockets.len(), 0);
@@ -117,12 +114,7 @@ mod tests {
             name: "Layer".into(),
             opacity: 1.0,
             blend_mode: None,
-            mesh: MeshType::Quad {
-                tl: (0., 0.),
-                tr: (1., 0.),
-                br: (1., 1.),
-                bl: (0., 1.),
-            },
+            mesh: MeshType::Quad { tl: (0., 0.), tr: (1., 0.), br: (1., 1.), bl: (0., 1.) },
             mapping_mode: false,
         });
         let (in_sockets, out_sockets) = layer.get_default_sockets();
@@ -167,9 +159,8 @@ mod tests {
         assert_eq!(out_sockets.len(), 0);
 
         // Output - Normal
-        let output_projector = ModulePartType::Output(OutputType::NdiOutput {
-            name: "test".into(),
-        });
+        let output_projector =
+            ModulePartType::Output(OutputType::NdiOutput { name: "test".into() });
         let (in_sockets, out_sockets) = output_projector.get_default_sockets();
         assert_eq!(in_sockets.len(), 1);
         assert_eq!(out_sockets.len(), 0);
