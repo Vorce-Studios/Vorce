@@ -386,14 +386,14 @@ fn draw_digital_stereo(
         egui::Align2::LEFT_CENTER,
         "L",
         egui::FontId::proportional(10.0),
-        Color32::WHITE,
+        ui.visuals().text_color(),
     );
     painter.text(
         r_rect.left_center() + Vec2::new(4.0, 0.0),
         egui::Align2::LEFT_CENTER,
         "R",
         egui::FontId::proportional(10.0),
-        Color32::WHITE,
+        ui.visuals().text_color(),
     );
 }
 
