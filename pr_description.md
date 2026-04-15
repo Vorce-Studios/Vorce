@@ -11,6 +11,7 @@ This changes an `O(N * M)` search operation into an `O(N + M)` operation during 
 
 **🔬 Messung:**
 Based on a synthetic benchmark measuring `10000` nodes and `1000` selected nodes over `1000` iterations:
+
 - **Baseline:** ~4.280s
 - **Optimized:** ~0.179s
 This results in a ~23x performance improvement in the lookup phase for heavily populated graphs with massive selections.
