@@ -16,11 +16,7 @@ pub struct PaintTextureCache {
 
 impl PaintTextureCache {
     pub fn new(device: Arc<wgpu::Device>, queue: Arc<wgpu::Queue>) -> Self {
-        Self {
-            device,
-            queue,
-            cache: RwLock::new(HashMap::new()),
-        }
+        Self { device, queue, cache: RwLock::new(HashMap::new()) }
     }
 
     /// Get or create texture view for a paint
@@ -48,11 +44,7 @@ impl PaintTextureCache {
     fn create_texture_for_paint(&self, paint: &Paint, width: u32, height: u32) -> wgpu::Texture {
         let texture = self.device.create_texture(&wgpu::TextureDescriptor {
             label: Some(&format!("paint_{}", paint.id)),
-            size: wgpu::Extent3d {
-                width,
-                height,
-                depth_or_array_layers: 1,
-            },
+            size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
@@ -108,11 +100,7 @@ impl PaintTextureCache {
                 bytes_per_row: Some(width * 4),
                 rows_per_image: Some(height),
             },
-            wgpu::Extent3d {
-                width,
-                height,
-                depth_or_array_layers: 1,
-            },
+            wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
         );
 
         texture

@@ -62,40 +62,20 @@ impl ControllerOverlayPanel {
         // if we import MidiConfig at module level
         match (message, config) {
             (
-                MidiMessage::ControlChange {
-                    channel,
-                    controller,
-                    ..
-                },
-                vorce_control::midi::MidiConfig::Cc {
-                    channel: cfg_ch,
-                    controller: cfg_cc,
-                },
+                MidiMessage::ControlChange { channel, controller, .. },
+                vorce_control::midi::MidiConfig::Cc { channel: cfg_ch, controller: cfg_cc },
             ) => *channel == *cfg_ch && *controller == *cfg_cc,
             (
-                MidiMessage::ControlChange {
-                    channel,
-                    controller,
-                    ..
-                },
-                vorce_control::midi::MidiConfig::CcRelative {
-                    channel: cfg_ch,
-                    controller: cfg_cc,
-                },
+                MidiMessage::ControlChange { channel, controller, .. },
+                vorce_control::midi::MidiConfig::CcRelative { channel: cfg_ch, controller: cfg_cc },
             ) => *channel == *cfg_ch && *controller == *cfg_cc,
             (
                 MidiMessage::NoteOn { channel, note, .. },
-                vorce_control::midi::MidiConfig::Note {
-                    channel: cfg_ch,
-                    note: cfg_note,
-                },
+                vorce_control::midi::MidiConfig::Note { channel: cfg_ch, note: cfg_note },
             ) => *channel == *cfg_ch && *note == *cfg_note,
             (
                 MidiMessage::NoteOff { channel, note },
-                vorce_control::midi::MidiConfig::Note {
-                    channel: cfg_ch,
-                    note: cfg_note,
-                },
+                vorce_control::midi::MidiConfig::Note { channel: cfg_ch, note: cfg_note },
             ) => *channel == *cfg_ch && *note == *cfg_note,
             _ => false,
         }

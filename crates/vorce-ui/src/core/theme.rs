@@ -513,15 +513,9 @@ pub fn theme_picker(ui: &mut egui::Ui, theme: &mut Theme) -> bool {
     ui.horizontal(|ui| {
         changed |= ui.selectable_value(theme, Theme::Dark, "Dark").clicked();
         changed |= ui.selectable_value(theme, Theme::Light, "Light").clicked();
-        changed |= ui
-            .selectable_value(theme, Theme::HighContrast, "High Contrast")
-            .clicked();
-        changed |= ui
-            .selectable_value(theme, Theme::Resolume, "Resolume")
-            .clicked();
-        changed |= ui
-            .selectable_value(theme, Theme::Synthwave, "Synthwave")
-            .clicked();
+        changed |= ui.selectable_value(theme, Theme::HighContrast, "High Contrast").clicked();
+        changed |= ui.selectable_value(theme, Theme::Resolume, "Resolume").clicked();
+        changed |= ui.selectable_value(theme, Theme::Synthwave, "Synthwave").clicked();
     });
 
     changed

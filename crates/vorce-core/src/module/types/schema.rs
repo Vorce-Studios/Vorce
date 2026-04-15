@@ -87,10 +87,7 @@ impl ModulePart {
             kind: ModuleNodeKind::from(&self.part_type),
             inputs,
             outputs,
-            inspector: ModuleInspectorSchema {
-                mappable_input_indices,
-                supports_link_config: true,
-            },
+            inspector: ModuleInspectorSchema { mappable_input_indices, supports_link_config: true },
         }
     }
 }
