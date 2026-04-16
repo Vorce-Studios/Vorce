@@ -81,7 +81,9 @@ pub mod cpal_backend {
             {
                 let _ = device_name; // Prevent unused variable warning
                 tracing::warn!("Audio input is currently feature-gated on macOS for stability.");
-                Err(AudioError::NoDevicesFound("Feature gated on macOS".to_string()))
+                Err(AudioError::NoDevicesFound(
+                    "Feature gated on macOS".to_string(),
+                ))
             }
 
             #[cfg(not(target_os = "macos"))]
@@ -101,7 +103,11 @@ pub mod cpal_backend {
                     })
                     .ok();
 
-                Ok(Self { sample_receiver: sample_rx, command_sender: command_tx, stream })
+                Ok(Self {
+                    sample_receiver: sample_rx,
+                    command_sender: command_tx,
+                    stream,
+                })
             }
         }
 
@@ -388,7 +394,10 @@ pub mod mock_backend {
 
     impl Default for MockBackend {
         fn default() -> Self {
-            Self { phase: 0.0, sample_rate: 44100.0 }
+            Self {
+                phase: 0.0,
+                sample_rate: 44100.0,
+            }
         }
     }
 
