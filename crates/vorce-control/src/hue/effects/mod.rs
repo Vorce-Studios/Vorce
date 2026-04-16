@@ -60,9 +60,8 @@ impl LightEffect for MultiBandEffect {
         }
 
         // Check if we have position data (at least one node has non-zero coordinate)
-        let has_positions = nodes
-            .iter()
-            .any(|n| n.x.abs() > 0.001 || n.y.abs() > 0.001 || n.z.abs() > 0.001);
+        let has_positions =
+            nodes.iter().any(|n| n.x.abs() > 0.001 || n.y.abs() > 0.001 || n.z.abs() > 0.001);
 
         if !has_positions {
             // Modulo channel_id fallback

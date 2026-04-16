@@ -51,10 +51,7 @@ pub struct UIEffectChain {
 impl UIEffectChain {
     /// Creates a new, uninitialized instance with default settings.
     pub fn new() -> Self {
-        Self {
-            effects: Vec::new(),
-            next_id: 1,
-        }
+        Self { effects: Vec::new(), next_id: 1 }
     }
 
     pub fn add_effect(&mut self, effect_type: EffectType) -> u64 {

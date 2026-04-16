@@ -81,9 +81,7 @@ pub mod cpal_backend {
             {
                 let _ = device_name; // Prevent unused variable warning
                 tracing::warn!("Audio input is currently feature-gated on macOS for stability.");
-                Err(AudioError::NoDevicesFound(
-                    "Feature gated on macOS".to_string(),
-                ))
+                Err(AudioError::NoDevicesFound("Feature gated on macOS".to_string()))
             }
 
             #[cfg(not(target_os = "macos"))]
@@ -103,11 +101,7 @@ pub mod cpal_backend {
                     })
                     .ok();
 
-                Ok(Self {
-                    sample_receiver: sample_rx,
-                    command_sender: command_tx,
-                    stream,
-                })
+                Ok(Self { sample_receiver: sample_rx, command_sender: command_tx, stream })
             }
         }
 
@@ -394,10 +388,7 @@ pub mod mock_backend {
 
     impl Default for MockBackend {
         fn default() -> Self {
-            Self {
-                phase: 0.0,
-                sample_rate: 44100.0,
-            }
+            Self { phase: 0.0, sample_rate: 44100.0 }
         }
     }
 
@@ -425,6 +416,38 @@ pub mod mock_backend {
                 }
             }
             buffer
+        }
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "audio")]
+mod tests {
+    use super::cpal_backend::CpalBackend;
+    use super::AudioError;
+
+    #[test]
+    fn test_cpal_backend_new_default() {
+        // We test CpalBackend initialization
+        let result = CpalBackend::new(None);
+        // It may return an error depending on hardware/CI setup, or success.
+        // We just verify it does not panic.
+        if let Err(AudioError::NoDevicesFound(_) | AudioError::DefaultDeviceNotFound) = &result {}
+    }
+
+    #[test]
+    fn test_cpal_backend_new_nonexistent_device() {
+        let result = CpalBackend::new(Some("NonExistentDevice_123456789".to_string()));
+        // On macOS, it fails due to feature-gating. On other systems, it fails because device is not found.
+        assert!(result.is_err());
+        let err = match result {
+            Err(e) => e,
+            Ok(_) => panic!("Expected Error"),
+        };
+        match err {
+            AudioError::NoDevicesFound(_) => {} // This is expected in most cases
+            AudioError::DefaultDeviceNotFound => {}
+            _ => panic!("Expected NoDevicesFound error, got {:?}", err),
         }
     }
 }

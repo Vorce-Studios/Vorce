@@ -76,25 +76,20 @@ impl LayerPanel {
                 // The order in the list is preserved from the main layer list, so reordering works.
                 let mut children_map: HashMap<Option<u64>, Vec<u64>> = HashMap::new();
                 for layer in layer_manager.layers() {
-                    children_map
-                        .entry(layer.parent_id)
-                        .or_default()
-                        .push(layer.id);
+                    children_map.entry(layer.parent_id).or_default().push(layer.id);
                 }
 
-                egui::ScrollArea::vertical()
-                    .max_height(300.0)
-                    .show(ui, |ui| {
-                        Self::render_tree(
-                            ui,
-                            None,
-                            &children_map,
-                            layer_manager,
-                            selected_layer_id,
-                            actions,
-                            i18n,
-                        );
-                    });
+                egui::ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
+                    Self::render_tree(
+                        ui,
+                        None,
+                        &children_map,
+                        layer_manager,
+                        selected_layer_id,
+                        actions,
+                        i18n,
+                    );
+                });
 
                 ui.separator();
 
