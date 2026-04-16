@@ -218,7 +218,7 @@ jobs:
       - name: Build MSI Installer
         shell: pwsh
         run: |
-          cargo wix -p vorce --no-build
+          cargo wix -p vorce --no-build -- --release
           $MsiPath = Get-ChildItem -Path "target/wix/*.msi" -File -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
           if (-not $MsiPath) {
             Write-Error "No MSI artifact was generated in target/wix."
@@ -350,7 +350,6 @@ jobs:
     needs: [resolve-release, build-windows, build-linux, build-macos]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
       - name: Download Artifacts
         uses: actions/download-artifact@v8
         with:
