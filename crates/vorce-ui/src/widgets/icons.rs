@@ -146,17 +146,6 @@ impl IconManager {
         let mut icons = HashMap::new();
         let icons_dir = assets_dir.join("icons");
 
-        // Log the icons directory path for debugging
-        tracing::info!("Loading icons from: {:?}", icons_dir);
-
-        // Check if icons directory exists
-        if !icons_dir.exists() {
-            tracing::error!(
-                "Icons directory does not exist at {:?}. This may cause UI issues.",
-                icons_dir
-            );
-        }
-
         for icon in AppIcon::all() {
             let icon_path = icons_dir.join(icon.file_name());
             if let Some(texture) = Self::load_svg_icon(ctx, &icon_path, icon_size) {
@@ -166,7 +155,7 @@ impl IconManager {
             }
         }
 
-        tracing::info!("Loaded {} / {} icons", icons.len(), AppIcon::all().len());
+        tracing::info!("Loaded {} icons", icons.len());
 
         Self { icons, icon_size }
     }

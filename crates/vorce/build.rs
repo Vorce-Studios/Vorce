@@ -9,7 +9,7 @@ fn main() {
         #[cfg(windows)]
         {
             let mut res = winres::WindowsResource::new();
-            res.set_icon("../../resources/app_icons/vorce.ico");
+            res.set_icon("../../resources/app_icons/Vorce_Logo_LQ-Full.ico");
             res.compile().unwrap();
         }
     }
@@ -23,27 +23,13 @@ fn copy_runtime_dlls() {
     let manifest_dir =
         PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR missing"));
     let out_dir = PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR missing"));
-    let profile_dir = out_dir
-        .ancestors()
-        .nth(3)
-        .expect("Failed to resolve target profile dir")
-        .to_path_buf();
+    let profile_dir =
+        out_dir.ancestors().nth(3).expect("Failed to resolve target profile dir").to_path_buf();
     let workspace_root = manifest_dir.join("..").join("..");
     let runtime_dirs = [
-        workspace_root
-            .join("vcpkg_installed")
-            .join("x64-windows")
-            .join("bin"),
-        workspace_root
-            .join("vcpkg")
-            .join("packages")
-            .join("ffmpeg_x64-windows")
-            .join("bin"),
-        workspace_root
-            .join("vcpkg")
-            .join("installed")
-            .join("x64-windows")
-            .join("bin"),
+        workspace_root.join("vcpkg_installed").join("x64-windows").join("bin"),
+        workspace_root.join("vcpkg").join("packages").join("ffmpeg_x64-windows").join("bin"),
+        workspace_root.join("vcpkg").join("installed").join("x64-windows").join("bin"),
     ];
 
     for runtime_dir in &runtime_dirs {
@@ -54,12 +40,7 @@ fn copy_runtime_dlls() {
     let mut copied_names = HashSet::new();
     let mut copied_any = false;
 
-    if copy_prefixed_runtime_dlls(
-        &profile_dir,
-        &runtime_dirs,
-        &dll_prefixes,
-        &mut copied_names,
-    ) {
+    if copy_prefixed_runtime_dlls(&profile_dir, &runtime_dirs, &dll_prefixes, &mut copied_names) {
         copied_any = true;
     }
 
@@ -87,10 +68,7 @@ fn copy_runtime_dlls() {
     }
 
     if !copied_any {
-        println!(
-            "cargo:warning=No runtime DLLs were copied into {}",
-            profile_dir.display()
-        );
+        println!("cargo:warning=No runtime DLLs were copied into {}", profile_dir.display());
     }
 }
 
@@ -127,9 +105,7 @@ fn copy_prefixed_runtime_dlls(
                 .and_then(|ext| ext.to_str())
                 .map(|ext| ext.eq_ignore_ascii_case("dll"))
                 .unwrap_or(false)
-                && dll_prefixes
-                    .iter()
-                    .any(|prefix| file_name.starts_with(prefix));
+                && dll_prefixes.iter().any(|prefix| file_name.starts_with(prefix));
             if !is_runtime_dll {
                 continue;
             }
@@ -175,10 +151,7 @@ fn copy_runtime_dll(
     }
 
     if !is_valid_runtime_dll(source) {
-        println!(
-            "cargo:warning=Skipping invalid runtime DLL candidate: {}",
-            source.display()
-        );
+        println!("cargo:warning=Skipping invalid runtime DLL candidate: {}", source.display());
         return false;
     }
 
@@ -242,11 +215,8 @@ fn env_dir(name: &str) -> Option<std::path::PathBuf> {
 fn is_valid_runtime_dll(path: &std::path::Path) -> bool {
     use std::io::{Read, Seek, SeekFrom};
 
-    let file_name = path
-        .file_name()
-        .and_then(|name| name.to_str())
-        .unwrap_or_default()
-        .to_ascii_lowercase();
+    let file_name =
+        path.file_name().and_then(|name| name.to_str()).unwrap_or_default().to_ascii_lowercase();
     if file_name.starts_with("pkgconf") {
         return true;
     }

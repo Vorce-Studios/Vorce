@@ -22,8 +22,8 @@ env:
   DEFAULT_RUST_TOOLCHAIN: ${{ vars.VORCE_DEFAULT_TOOLCHAIN || vars.MAPFLOW_DEFAULT_TOOLCHAIN || '1.94.0' }}
 
 concurrency:
-  group: auto-merge-pr-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.event.workflow_run.head_sha || github.run_id }}
-  cancel-in-progress: false
+  group: auto-merge-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.event.workflow_run.head_sha || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   actions: write
@@ -95,7 +95,6 @@ jobs:
               'Build (macOS Beta)',
               'Rust Autofix',
               'Validation Success',
-              'pre-commit.ci - pr',
             ]);
 
             const waitForHeadShaChange = async (pullNumber, previousHeadSha) => {
@@ -358,12 +357,6 @@ jobs:
                 {
                   name: 'Validation Success',
                   source: 'check_run',
-                  allowedConclusions: ['success'],
-                  required: true,
-                },
-                {
-                  name: 'pre-commit.ci - pr',
-                  source: 'status',
                   allowedConclusions: ['success'],
                   required: true,
                 },

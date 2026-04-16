@@ -144,11 +144,7 @@ pub fn handle_tool_call(
                     }
                 }
             }
-            Some(crate::server::error_response(
-                id,
-                -32602,
-                "Missing layer name",
-            ))
+            Some(crate::server::error_response(id, -32602, "Missing layer name"))
         }
         "layer_delete" => {
             if let Some(args) = params.arguments {
@@ -171,11 +167,7 @@ pub fn handle_tool_call(
                     }
                 }
             }
-            Some(crate::server::error_response(
-                id,
-                -32602,
-                "Missing layer_id",
-            ))
+            Some(crate::server::error_response(id, -32602, "Missing layer_id"))
         }
         "layer_set_opacity" => {
             if let Some(args) = params.arguments {
@@ -204,11 +196,7 @@ pub fn handle_tool_call(
                     }
                 }
             }
-            Some(crate::server::error_response(
-                id,
-                -32602,
-                "Missing arguments",
-            ))
+            Some(crate::server::error_response(id, -32602, "Missing arguments"))
         }
         "layer_set_visibility" => {
             if let Some(args) = params.arguments {
@@ -237,11 +225,7 @@ pub fn handle_tool_call(
                     }
                 }
             }
-            Some(crate::server::error_response(
-                id,
-                -32602,
-                "Missing arguments",
-            ))
+            Some(crate::server::error_response(id, -32602, "Missing arguments"))
         }
         "cue_trigger" => {
             if let Some(args) = params.arguments {
@@ -277,10 +261,7 @@ pub fn handle_tool_call(
                     ));
                 }
             }
-            Some(crate::server::success_response(
-                id,
-                serde_json::json!({"status":"queued"}),
-            ))
+            Some(crate::server::success_response(id, serde_json::json!({"status":"queued"})))
         }
         "cue_previous" => {
             if let Some(sender) = &server.action_sender {
@@ -293,10 +274,7 @@ pub fn handle_tool_call(
                     ));
                 }
             }
-            Some(crate::server::success_response(
-                id,
-                serde_json::json!({"status":"queued"}),
-            ))
+            Some(crate::server::success_response(id, serde_json::json!({"status":"queued"})))
         }
         "media_play" => {
             if let Some(sender) = &server.action_sender {
@@ -309,10 +287,7 @@ pub fn handle_tool_call(
                     ));
                 }
             }
-            Some(crate::server::success_response(
-                id,
-                serde_json::json!({"status":"queued"}),
-            ))
+            Some(crate::server::success_response(id, serde_json::json!({"status":"queued"})))
         }
         "media_pause" => {
             if let Some(sender) = &server.action_sender {
@@ -325,10 +300,7 @@ pub fn handle_tool_call(
                     ));
                 }
             }
-            Some(crate::server::success_response(
-                id,
-                serde_json::json!({"status":"queued"}),
-            ))
+            Some(crate::server::success_response(id, serde_json::json!({"status":"queued"})))
         }
         "media_stop" => {
             if let Some(sender) = &server.action_sender {
@@ -341,18 +313,12 @@ pub fn handle_tool_call(
                     ));
                 }
             }
-            Some(crate::server::success_response(
-                id,
-                serde_json::json!({"status":"queued"}),
-            ))
+            Some(crate::server::success_response(id, serde_json::json!({"status":"queued"})))
         }
         "layer_list" => {
             // Mock empty list for now
             let layers: Vec<String> = vec![];
-            Some(crate::server::success_response(
-                id,
-                serde_json::json!({"layers": layers}),
-            ))
+            Some(crate::server::success_response(id, serde_json::json!({"layers": layers})))
         }
         "send_osc" => {
             if let Some(args) = params.arguments {
@@ -364,11 +330,7 @@ pub fn handle_tool_call(
                     }
                 }
             } else {
-                Some(crate::server::error_response(
-                    id,
-                    -32602,
-                    "Missing arguments for send_osc",
-                ))
+                Some(crate::server::error_response(id, -32602, "Missing arguments for send_osc"))
             }
         }
         _ => Some(crate::server::error_response(id, -32601, "Tool not found")),

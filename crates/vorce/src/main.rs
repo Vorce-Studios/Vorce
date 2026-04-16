@@ -104,10 +104,8 @@ impl ApplicationHandler for VorceApp {
         event: WindowEvent,
     ) {
         if let Some(app) = &mut self.app {
-            let _ = app.handle_event(
-                winit::event::Event::WindowEvent { window_id, event },
-                event_loop,
-            );
+            let _ =
+                app.handle_event(winit::event::Event::WindowEvent { window_id, event }, event_loop);
         }
     }
 
@@ -173,10 +171,7 @@ impl ApplicationHandler for VorceApp {
                             }
                         }
 
-                        info!(
-                            "Automation mode: Reached frame limit ({}). Exiting.",
-                            exit_frames
-                        );
+                        info!("Automation mode: Reached frame limit ({}). Exiting.", exit_frames);
                         event_loop.exit();
                     }
                 }
@@ -204,10 +199,8 @@ impl App {
                     }
                 }
 
-                let output_id = self
-                    .window_manager
-                    .get_output_id_from_window_id(*window_id)
-                    .unwrap_or(0);
+                let output_id =
+                    self.window_manager.get_output_id_from_window_id(*window_id).unwrap_or(0);
 
                 match event {
                     WindowEvent::CloseRequested => {
@@ -341,13 +334,9 @@ impl App {
 
                 if cmd == MediaPlaybackCommand::Reload {
                     if self.media_players.remove(&player_key).is_some() {
-                        info!(
-                            "Removed old media player for part_id={} for reload",
-                            part_id
-                        );
+                        info!("Removed old media player for part_id={} for reload", part_id);
                     }
-                    self.texture_pool
-                        .release(&format!("part_{}_{}", mod_id, part_id));
+                    self.texture_pool.release(&format!("part_{}_{}", mod_id, part_id));
                     crate::orchestration::media::sync_media_players(self);
                     continue;
                 }
@@ -400,8 +389,7 @@ impl App {
 }
 
 fn main() -> Result<()> {
-    // Set up panic hook EARLY to capture startup crashes BEFORE logging is initialized.
-    // This hook writes to both stderr AND a fallback log file for maximum debuggability.
+    // Set up panic hook early to capture startup crashes
     std::panic::set_hook(Box::new(|panic_info| {
         let location = panic_info
             .location()
@@ -415,27 +403,7 @@ fn main() -> Result<()> {
         } else {
             "Box<Any>"
         };
-
-        let panic_msg = format!("APPLICATION PANIC at {}: {}", location, message);
-
-        // Always write to stderr for immediate visibility
-        eprintln!("{}", panic_msg);
-
-        // Also attempt to write to fallback log file (even before logging is set up)
-        if let Ok(mut path) = std::env::current_dir() {
-            path.push("logs");
-            path.push("vorce-panic-fallback.log");
-            if let Some(parent) = path.parent() {
-                let _ = std::fs::create_dir_all(parent);
-            }
-            let timestamp = chrono::Local::now().format("%Y-%m-%d %H:%M:%S");
-            let log_entry = format!("[{}] FATAL: {}\n", timestamp, panic_msg);
-            let _ = std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(&path)
-                .and_then(|mut f| std::io::Write::write_all(&mut f, log_entry.as_bytes()));
-        }
+        error!("APPLICATION PANIC at {}: {}", location, message);
     }));
 
     let args = CliArgs::parse();
@@ -468,11 +436,7 @@ fn main() -> Result<()> {
         .with_target(true)
         .with_writer(non_blocking);
 
-    tracing_subscriber::registry()
-        .with(env_filter)
-        .with(console_layer)
-        .with(file_layer)
-        .init();
+    tracing_subscriber::registry().with(env_filter).with(console_layer).with(file_layer).init();
 
     initial_user_config_report.emit_logs();
     info!("Starting Vorce in {:?} mode...", args.mode);

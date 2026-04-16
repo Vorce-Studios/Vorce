@@ -104,15 +104,12 @@ jobs:
 
       - name: Check API Key presence
         id: check_key
-        shell: bash
         run: |
-          if [ -n "$JULES_API_KEY" ]; then
+          if [ -n "${{ secrets.JULES_API_KEY }}" ]; then
             echo "present=true" >> $GITHUB_OUTPUT
           else
             echo "present=false" >> $GITHUB_OUTPUT
           fi
-        env:
-          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
 
       - name: Note missing Jules API key
         if: ${{ steps.guard.outputs.should_start == 'true' && steps.check_key.outputs.present == 'false' }}

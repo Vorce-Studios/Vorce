@@ -79,9 +79,8 @@ impl ShortcutsPanel {
                 if filter_lower.is_empty() {
                     return true;
                 }
-                let desc_lower = s.description.to_lowercase();
-                let shortcut_str_lower = s.to_shortcut_string().to_lowercase();
-                desc_lower.contains(&filter_lower) || shortcut_str_lower.contains(&filter_lower)
+                s.description_lower.contains(&filter_lower)
+                    || s.shortcut_str_lower.contains(&filter_lower)
             })
             .map(|(i, _)| i)
             .collect();
@@ -114,11 +113,8 @@ impl ShortcutsPanel {
 
                             // Shortcut Key Display
                             let shortcut_text = shortcut.to_shortcut_string();
-                            let text_color = if is_conflict {
-                                colors::ERROR_COLOR
-                            } else {
-                                colors::CYAN_ACCENT
-                            };
+                            let text_color =
+                                if is_conflict { colors::ERROR_COLOR } else { colors::CYAN_ACCENT };
 
                             let key_label = ui.label(
                                 RichText::new(if shortcut_text.is_empty() {
@@ -137,10 +133,7 @@ impl ShortcutsPanel {
                             }
 
                             // Edit Button
-                            if ui
-                                .add(egui::Button::new(locale.t("shortcuts-edit")))
-                                .clicked()
-                            {
+                            if ui.add(egui::Button::new(locale.t("shortcuts-edit"))).clicked() {
                                 self.editing_shortcut_index = Some(index);
                                 self.show_conflict_warning = false;
                             }
@@ -193,10 +186,7 @@ impl ShortcutsPanel {
                     }
 
                     ui.separator();
-                    if ui
-                        .button(locale.t("shortcuts-edit-dialog-cancel"))
-                        .clicked()
-                    {
+                    if ui.button(locale.t("shortcuts-edit-dialog-cancel")).clicked() {
                         self.editing_shortcut_index = None;
                     }
 
@@ -206,9 +196,7 @@ impl ShortcutsPanel {
                     if input.key_pressed(egui::Key::Escape) {
                         self.editing_shortcut_index = None;
                     } else if let Some(key) = input.events.iter().find_map(|e| match e {
-                        egui::Event::Key {
-                            key, pressed: true, ..
-                        } => Some(key),
+                        egui::Event::Key { key, pressed: true, .. } => Some(key),
                         _ => None,
                     }) {
                         // Ignore modifier-only presses
