@@ -130,6 +130,8 @@ pub struct MediaBrowser {
     extracting_metadata: Arc<RwLock<HashSet<PathBuf>>>,
     /// Currently generating thumbnails
     generating_thumbnails: Arc<RwLock<HashSet<PathBuf>>>,
+    /// Map of path to index in entries for O(1) lookup
+    path_to_index: HashMap<PathBuf, usize>,
     /// Show hidden files
     show_hidden: bool,
     /// Sort mode
@@ -203,6 +205,7 @@ impl MediaBrowser {
             metadata_rx,
             metadata_tx,
             extracting_metadata: Arc::new(RwLock::new(HashSet::new())),
+            path_to_index: HashMap::new(),
             show_hidden: false,
             sort_mode: SortMode::Name,
             history: vec![initial_dir.clone()],
@@ -290,6 +293,14 @@ impl MediaBrowser {
         self.sort_entries();
     }
 
+    /// Rebuild the path-to-index map for O(1) lookups
+    fn rebuild_index_map(&mut self) {
+        self.path_to_index.clear();
+        for (i, entry) in self.entries.iter().enumerate() {
+            self.path_to_index.insert(entry.path.clone(), i);
+        }
+    }
+
     /// Sort entries based on sort mode
     fn sort_entries(&mut self) {
         match self.sort_mode {
@@ -300,6 +311,7 @@ impl MediaBrowser {
                 // Would need to store modification time
             }
         }
+        self.rebuild_index_map();
     }
 
     /// Get or generate thumbnail for a file
@@ -428,10 +440,12 @@ impl MediaBrowser {
         while let Ok((path, duration)) = self.metadata_rx.try_recv() {
             self.extracting_metadata.write().remove(&path);
             if let Some(dur) = duration {
-                for entry in &mut self.entries {
-                    if entry.path == path {
-                        entry.duration_secs = Some(dur);
-                        break;
+                // O(1) update using index map
+                if let Some(&idx) = self.path_to_index.get(&path) {
+                    if let Some(entry) = self.entries.get_mut(idx) {
+                        if entry.path == path {
+                            entry.duration_secs = Some(dur);
+                        }
                     }
                 }
             }
@@ -455,15 +469,16 @@ impl MediaBrowser {
 
                 let handle = ThumbnailHandle { texture_handle: texture, size };
 
-                self.thumbnail_cache.write().insert(path.clone(), handle.clone());
-
-                // Update the corresponding entry in the list
-                for entry in &mut self.entries {
-                    if entry.path == path {
-                        entry.thumbnail = Some(handle.clone());
-                        break;
+                // O(1) update using index map
+                if let Some(&idx) = self.path_to_index.get(&path) {
+                    if let Some(entry) = self.entries.get_mut(idx) {
+                        if entry.path == path {
+                            entry.thumbnail = Some(handle.clone());
+                        }
                     }
                 }
+
+                self.thumbnail_cache.write().insert(path.clone(), handle);
 
                 // Trigger a UI update to reflect the new thumbnail
                 ctx.request_repaint();
