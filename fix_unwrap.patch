@@ -1,0 +1,1753 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index 05e0bbe..7a01324 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -348,9 +348,9 @@ dependencies = [
+
+ [[package]]
+ name = "arc-swap"
+-version = "1.9.1"
++version = "1.9.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "6a3a1fd6f75306b68087b831f025c712524bcb19aad54e557b1129cfa0a2b207"
++checksum = "a07d1f37ff60921c83bdfc7407723bdefe89b44b98a9b772f225c8f9d67141a6"
+ dependencies = [
+  "rustversion",
+ ]
+@@ -679,14 +679,14 @@ dependencies = [
+
+ [[package]]
+ name = "axum"
+-version = "0.8.8"
++version = "0.7.9"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "8b52af3cb4058c895d37317bb27508dccc8e5f2d39454016b297bf4a400597b8"
++checksum = "edca88bc138befd0323b20752846e6587272d3b03b0343c8ea28a6f819e6e71f"
+ dependencies = [
++ "async-trait",
+  "axum-core",
+  "base64 0.22.1",
+  "bytes",
+- "form_urlencoded",
+  "futures-util",
+  "http",
+  "http-body",
+@@ -699,7 +699,8 @@ dependencies = [
+  "mime",
+  "percent-encoding",
+  "pin-project-lite",
+- "serde_core",
++ "rustversion",
++ "serde",
+  "serde_json",
+  "serde_path_to_error",
+  "serde_urlencoded",
+@@ -715,17 +716,19 @@ dependencies = [
+
+ [[package]]
+ name = "axum-core"
+-version = "0.5.6"
++version = "0.4.5"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "08c78f31d7b1291f7ee735c1c6780ccde7785daae9a9206026862dab7d8792d1"
++checksum = "09f2bd6146b97ae3359fa0cc6d6b376d9539582c7b4220f041a33ec24c226199"
+ dependencies = [
++ "async-trait",
+  "bytes",
+- "futures-core",
++ "futures-util",
+  "http",
+  "http-body",
+  "http-body-util",
+  "mime",
+  "pin-project-lite",
++ "rustversion",
+  "sync_wrapper",
+  "tower-layer",
+  "tower-service",
+@@ -1812,6 +1815,29 @@ dependencies = [
+  "virtue",
+ ]
+
++[[package]]
++name = "bindgen"
++version = "0.69.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "271383c67ccabffb7381723dea0672a673f292304fcb45c01cc648c7a8d58088"
++dependencies = [
++ "bitflags 2.11.0",
++ "cexpr",
++ "clang-sys",
++ "itertools 0.10.5",
++ "lazy_static",
++ "lazycell",
++ "log",
++ "prettyplease",
++ "proc-macro2",
++ "quote",
++ "regex",
++ "rustc-hash 1.1.0",
++ "shlex",
++ "syn 2.0.117",
++ "which",
++]
++
+ [[package]]
+ name = "bindgen"
+ version = "0.70.1"
+@@ -3067,7 +3093,7 @@ dependencies = [
+  "log",
+  "nohash-hasher",
+  "profiling",
+- "ron 0.12.1",
++ "ron 0.12.0",
+  "serde",
+  "smallvec",
+  "unicode-segmentation",
+@@ -3986,7 +4012,7 @@ dependencies = [
+  "log",
+  "presser",
+  "thiserror 1.0.69",
+- "windows 0.54.0",
++ "windows 0.58.0",
+ ]
+
+ [[package]]
+@@ -4025,16 +4051,13 @@ dependencies = [
+
+ [[package]]
+ name = "grafton-ndi"
+-version = "0.11.0"
++version = "0.2.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "83fc4d5740ce73851ed15845aba8e26088bfc70f51c62ad00b883c20c09cc773"
++checksum = "f6cdee7a1ed65b4178d0086e8d96e52a278751ef6d43263360b81c50caf634c6"
+ dependencies = [
+- "bindgen 0.72.1",
++ "bindgen 0.69.5",
+  "lodepng",
+- "num_enum",
+- "once_cell",
+- "png 0.18.1",
+- "thiserror 2.0.18",
++ "png 0.17.16",
+ ]
+
+ [[package]]
+@@ -4250,9 +4273,9 @@ checksum = "135b12329e5e3ce057a9f972339ea52bc954fe1e9358ef27f95e89716fbc5424"
+
+ [[package]]
+ name = "hyper"
+-version = "1.9.0"
++version = "1.8.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "6299f016b246a94207e63da54dbe807655bf9e00044f73ded42c3ac5305fbcca"
++checksum = "2ab2d4f250c3d7b1c9fcdff1cece94ea4e2dfbec68614f7b87cb205f24ca9d11"
+ dependencies = [
+  "atomic-waker",
+  "bytes",
+@@ -4264,6 +4287,7 @@ dependencies = [
+  "httpdate",
+  "itoa",
+  "pin-project-lite",
++ "pin-utils",
+  "smallvec",
+  "tokio",
+  "want",
+@@ -5089,9 +5113,9 @@ dependencies = [
+
+ [[package]]
+ name = "matchit"
+-version = "0.8.4"
++version = "0.7.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3"
++checksum = "0e7465ac9959cc2b1404e8e2367b43684a6d13790fe23056cc8c6c5a6b7bcb94"
+
+ [[package]]
+ name = "memchr"
+@@ -6274,6 +6298,12 @@ version = "0.2.17"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
+
++[[package]]
++name = "pin-utils"
++version = "0.1.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
++
+ [[package]]
+ name = "piper"
+ version = "0.2.5"
+@@ -6898,7 +6928,7 @@ dependencies = [
+  "tokio",
+  "tokio-rustls",
+  "tower",
+- "tower-http",
++ "tower-http 0.6.8",
+  "tower-service",
+  "url",
+  "wasm-bindgen",
+@@ -7024,9 +7054,9 @@ dependencies = [
+
+ [[package]]
+ name = "ron"
+-version = "0.12.1"
++version = "0.12.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "4147b952f3f819eca0e99527022f7d6a8d05f111aeb0a62960c74eb283bec8fc"
++checksum = "fd490c5b18261893f14449cbd28cb9c0b637aebf161cd77900bfdedaff21ec32"
+ dependencies = [
+  "bitflags 2.11.0",
+  "once_cell",
+@@ -8313,9 +8343,9 @@ dependencies = [
+
+ [[package]]
+ name = "tokio"
+-version = "1.51.0"
++version = "1.50.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "2bd1c4c0fc4a7ab90fc15ef6daaa3ec3b893f004f915f2392557ed23237820cd"
++checksum = "27ad5e34374e03cfffefc301becb44e9dc3c17584f414349ebe29ed26661822d"
+ dependencies = [
+  "bytes",
+  "libc",
+@@ -8330,9 +8360,9 @@ dependencies = [
+
+ [[package]]
+ name = "tokio-macros"
+-version = "2.7.0"
++version = "2.6.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "385a6cb71ab9ab790c5fe8d67f1645e6c450a7ce006a33de03daa956cf70a496"
++checksum = "5c55a2eff8b69ce66c84f85e1da1c233edc36ceb85a2058d11b0d6a3c7e7569c"
+ dependencies = [
+  "proc-macro2",
+  "quote",
+@@ -8351,9 +8381,9 @@ dependencies = [
+
+ [[package]]
+ name = "tokio-tungstenite"
+-version = "0.28.0"
++version = "0.24.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "d25a406cddcc431a75d3d9afc6a7c0f7428d4891dd973e4d54c56b46127bf857"
++checksum = "edc5f74e248dc973e0dbb7b74c7e0d6fcc301c694ff50049504004ef4d0cdcd9"
+ dependencies = [
+  "futures-util",
+  "log",
+@@ -8478,6 +8508,22 @@ dependencies = [
+  "tracing",
+ ]
+
++[[package]]
++name = "tower-http"
++version = "0.5.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "1e9cd434a998747dd2c4276bc96ee2e0c7a2eadf3cae88e52be55a05fa9053f5"
++dependencies = [
++ "bitflags 2.11.0",
++ "bytes",
++ "http",
++ "http-body",
++ "http-body-util",
++ "pin-project-lite",
++ "tower-layer",
++ "tower-service",
++]
++
+ [[package]]
+ name = "tower-http"
+ version = "0.6.8"
+@@ -8656,18 +8702,19 @@ dependencies = [
+
+ [[package]]
+ name = "tungstenite"
+-version = "0.28.0"
++version = "0.24.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "8628dcc84e5a09eb3d8423d6cb682965dea9133204e8fb3efee74c2a0c259442"
++checksum = "18e5b8366ee7a95b16d32197d0b2604b43a0be89dc5fac9f8e96ccafbaedda8a"
+ dependencies = [
++ "byteorder",
+  "bytes",
+  "data-encoding",
+  "http",
+  "httparse",
+  "log",
+- "rand 0.9.2",
++ "rand 0.8.5",
+  "sha1",
+- "thiserror 2.0.18",
++ "thiserror 1.0.69",
+  "utf-8",
+ ]
+
+@@ -9028,7 +9075,7 @@ dependencies = [
+  "proptest",
+  "rayon",
+  "rfd",
+- "ron 0.12.1",
++ "ron 0.12.0",
+  "rosc",
+  "rustfft",
+  "serde",
+@@ -9092,7 +9139,7 @@ dependencies = [
+  "thiserror 1.0.69",
+  "tokio",
+  "tower",
+- "tower-http",
++ "tower-http 0.5.2",
+  "tracing",
+  "uuid",
+ ]
+@@ -9117,7 +9164,7 @@ dependencies = [
+  "proptest",
+  "rand 0.10.0",
+  "resvg 0.47.0",
+- "ron 0.12.1",
++ "ron 0.12.0",
+  "rustfft",
+  "serde",
+  "serde_json",
+@@ -9150,13 +9197,13 @@ dependencies = [
+  "cc",
+  "chrono",
+  "cocoa",
+- "core-foundation 0.10.1",
++ "core-foundation 0.9.4",
+  "ffmpeg-next",
+  "grafton-ndi",
+  "image 0.24.9",
+  "objc",
+  "once_cell",
+- "ron 0.12.1",
++ "ron 0.12.0",
+  "rusty-spout",
+  "serde",
+  "serde_json",
+@@ -9166,7 +9213,7 @@ dependencies = [
+  "tracing",
+  "vorce-core",
+  "wgpu 29.0.1",
+- "windows 0.62.2",
++ "windows 0.58.0",
+  "zip",
+ ]
+
+@@ -9232,7 +9279,7 @@ dependencies = [
+  "vorce-core",
+  "wgpu 29.0.1",
+  "wgpu-hal 29.0.1",
+- "windows 0.62.2",
++ "windows 0.58.0",
+  "winit",
+ ]
+
+@@ -10900,9 +10947,9 @@ dependencies = [
+
+ [[package]]
+ name = "zip"
+-version = "8.5.0"
++version = "8.4.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "2726508a48f38dceb22b35ecbbd2430efe34ff05c62bd3285f965d7911b33464"
++checksum = "7756d0206d058333667493c4014f545f4b9603c4330ccd6d9b3f86dcab59f7d9"
+ dependencies = [
+  "aes",
+  "bzip2",
+diff --git a/Cargo.toml b/Cargo.toml
+index 791a2e4..b03150a 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -27,7 +27,7 @@ anyhow = "1.0"
+ arc-swap = "1.9"
+
+ # HTTP API
+-axum = "0.8"
++axum = "0.7"
+
+ # Build dependencies
+ bindgen = "0.72"
+@@ -69,7 +69,7 @@ futures = "0.3"
+ glam = { version = "0.32.1", features = ["serde"] }
+ hex = "0.4"
+ hound = "3.5"
+-hyper = "1.9"
++hyper = "1.1"
+ image = "0.24"
+ # UI
+ imgui = "0.12"
+@@ -110,7 +110,7 @@ thiserror = "1.0"
+ tiny-skia = "0.12"
+
+ # Async runtime
+-tokio = { version = "1.51.0", features = ["full"] }
++tokio = { version = "1.50.0", features = ["full"] }
+ toml = "1.1.0"
+ tower = "0.5"
+
+diff --git a/JULES_ISSUES.md b/JULES_ISSUES.md
+new file mode 100644
+index 0000000..e131487
+--- /dev/null
++++ b/JULES_ISSUES.md
+@@ -0,0 +1,72 @@
++# 🎯 Optimized Jules Issue Descriptions
++
++## Issue #129: MF-StMa_Remove-Legacy-Atty-Bincode-From-Dependency-Graph
++
++**Priority:** High (Infrastructure/Security)
++**Target:** Workspace Root, `vorce-io`, `vorce-core`
++
++### 📝 Description (#129)
++
++Audit and replace unmaintained or unsound dependencies across the Vorce workspace to improve security and maintainability.
++
++### 🛠️ Tasks (#129)
++
++- [ ] **Replace `atty`**: Replace `atty` v0.2.14 (unmaintained) with the native `std::io::IsTerminal` trait (available since Rust 1.70). This affects `env_logger` integration and any direct CLI terminal checks.
++- [ ] **Consolidate `bincode`**: Currently, both v1.3.3 and v2.0.1 exist in the dependency tree.
++  - v1.3.3 is unmaintained and susceptible to DoS via malicious inputs.
++  - v2.0.1 is the modern version.
++  - Consolidate to a single maintained version or replace with a modern alternative like `rkyv` (zero-copy) or `postcard` if the data volume is small.
++- [ ] **Dependency Audit**: Run `cargo audit` and `cargo tree` to ensure no transitive dependencies are pulling in these legacy crates.
++
++### ✅ Acceptance Criteria (#129)
++
++- [ ] `atty` is completely removed from the dependency tree.
++- [ ] Only one version of `bincode` (or a replacement) remains.
++- [ ] `cargo audit` passes without warnings for these crates.
++
++---
++
++## Issue #130: MF-StMa_Zero-Copy-Bevy-Interop-And-Async-Texture-Uploads
++
++**Priority:** Critical (Performance)
++**Target:** `vorce-bevy`, `vorce-render`
++
++### 📝 Description (#130)
++
++Optimize the data path between Bevy's ECS-driven scene management and the `vorce-render` compositor. Current implementation may involve redundant copies of texture data when passing frames from Bevy to the main output pipeline.
++
++### 🛠️ Tasks (#130)
++
++- [ ] **Zero-Copy Interop**: Implement a shared `wgpu::Texture` or `wgpu::Buffer` handle mechanism between Bevy's render graph and Vorce's compositor to avoid `memcpy` of frame data.
++- [ ] **Async Texture Uploads**: Move texture data uploads to an asynchronous staging buffer pipeline (using `wgpu`'s command buffer or a dedicated upload queue) to prevent blocking the main application loop during high-resolution media playback.
++- [ ] **Profiler Integration**: Add tracing spans to measure the latency reduction in the frame handoff.
++
++### ✅ Acceptance Criteria (#130)
++
++- [ ] No explicit `memcpy` of raw pixel data between Bevy and Vorce-Render.
++- [ ] Texture uploads do not cause frame drops on the main thread (measured via diagnostics).
++- [ ] Performance improvement of >15% in high-load multi-window scenarios.
++
++---
++
++## Issue #131: MF-StMa_Media-Decoder-FFI-Safety-Boundary-Checks
++
++**Priority:** High (Reliability)
++**Target:** `vorce-media`
++
++### 📝 Description (#131)
++
++Harden the FFI boundaries in `vorce-media` when interacting with FFmpeg, libmpv, and HAP decoders. Unsafe blocks must be properly audited and wrapped in safe abstractions.
++
++### 🛠️ Tasks (#131)
++
++- [ ] **FFI Audit**: Review all `unsafe` blocks in `crates/vorce-media/src/decoder.rs`, `hap_decoder.rs`, and `mpv_decoder.rs`.
++- [ ] **Boundary Hardening**: Implement robust bounds checks for raw pointers and ensure that any data passed from C to Rust (especially frame buffers) is properly owned or has validated lifetimes.
++- [ ] **Error Handling**: Replace manual pointer checks with `Result`-based safe wrappers for FFI calls.
++- [ ] **Thread Safety**: Validate that async decoder callbacks from FFmpeg/libmpv correctly interact with Rust's thread-safety guarantees (Send/Sync).
++
++### ✅ Acceptance Criteria (#131)
++
++- [ ] All `unsafe` blocks in `vorce-media` are documented with safety justifications.
++- [ ] No raw pointer leaks or out-of-bounds access in the media pipeline.
++- [ ] Decoder stability: No segmentation faults during malformed file playback tests.
+diff --git a/README.md b/README.md
+index ec2d232..55741ac 100644
+--- a/README.md
++++ b/README.md
+@@ -1,29 +1,30 @@
+-<div align="center">
+-  <img src="resources/app_icons/Vorce_Logo_HQ-Full-Gray-Background-NoCorner.png" alt="Vorce Logo" width="500">
+-
+-**A High-Performance, Professional-Grade Projection Mapping Tool Built with Rust.**
+-
+-[![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+-[![Rust](https://img.shields.io/badge/rust-1.94%2B-orange.svg)](https://www.rust-lang.org/)
+-
+-[![CI](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml/badge.svg)](<https://git>
+-hub.com/Vorce-Studios/Vorce/actions)
+-<!-- markdownlint-disable MD013 -->
+-[![Build &
+-Quality](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml/badge.svg?branch=main
+-)](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml)
+-[![Security
+- Analysis](https://github.com/Vorce-Studios/Vorce/actions/workflows/CI-02_security-scan.yml/badge.svg)](<https://github.com>
+-/Vorce-Studios/Vorce/actions/workflows/CI-02_security-scan.yml)
+-[![Stable
+-Release](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-MainFlow_Job03_Release.yml/badge.svg)](<https://git>
+-hub.com/Vorce-Studios/Vorce/actions/workflows/CICD-MainFlow_Job03_Release.yml)
+-![OS: Windows | Linux](https://img.shields.io/badge/OS-Windows%20%7C%20Linux-blue.svg)
+-[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
+-[![Rust: 1.94+](https://img.shields.io/badge/Rust-1.94%2B-orange.svg)](https://www.rust-lang.org/)
+-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+- <!-- markdownlint-enable MD013 -->
+-</div>
++<div align="center">
++  <img src="resources/app_icons/Vorce_Logo_HQ-Full-Gray-Background-NoCorner.png" alt="Vorce Logo" width="500">
++
++
++**A High-Performance, Professional-Grade Projection Mapping Tool Built with Rust.**
++
++[![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
++[![Rust](https://img.shields.io/badge/rust-1.94%2B-orange.svg)](https://www.rust-lang.org/)
++
++[![CI](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml/badge.svg)](https://git
++hub.com/Vorce-Studios/Vorce/actions)
++<!-- markdownlint-disable MD013 -->
++[![Build &
++Quality](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml/badge.svg?branch=main
++)](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml)
++[![Security
++ Analysis](https://github.com/Vorce-Studios/Vorce/actions/workflows/CI-02_security-scan.yml/badge.svg)](https://github.com
++/Vorce-Studios/Vorce/actions/workflows/CI-02_security-scan.yml)
++[![Stable
++Release](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-MainFlow_Job03_Release.yml/badge.svg)](https://git
++hub.com/Vorce-Studios/Vorce/actions/workflows/CICD-MainFlow_Job03_Release.yml)
++![OS: Windows | Linux](https://img.shields.io/badge/OS-Windows%20%7C%20Linux-blue.svg)
++[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
++[![Rust: 1.94+](https://img.shields.io/badge/Rust-1.94%2B-orange.svg)](https://www.rust-lang.org/)
++[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
++ <!-- markdownlint-enable MD013 -->
++</div>
+
+ ---
+
+diff --git a/crates/vorce-control/Cargo.toml b/crates/vorce-control/Cargo.toml
+index 5695b3e..90c0258 100644
+--- a/crates/vorce-control/Cargo.toml
++++ b/crates/vorce-control/Cargo.toml
+@@ -44,7 +44,7 @@ subtle = "2.6.1"
+ thiserror = { workspace = true }
+ tokio = { workspace = true, features = ["full"] }
+ tower = { version = "0.5", optional = true }
+-tower-http = { version = "0.6", features = ["cors"], optional = true }
++tower-http = { version = "0.5", features = ["cors"], optional = true }
+ tracing = { workspace = true }
+
+ # DMX dependencies
+diff --git a/crates/vorce-core/src/animation.rs b/crates/vorce-core/src/animation.rs
+index 100837b..d03e6b4 100644
+--- a/crates/vorce-core/src/animation.rs
++++ b/crates/vorce-core/src/animation.rs
+@@ -382,10 +382,11 @@ impl AnimationClip {
+             .sort_by(|a, b| a.time.partial_cmp(&b.time).unwrap());
+     }
+
+-    /// Remove a timeline marker by ID
+-    pub fn remove_marker(&mut self, id: u64) -> bool {
++    /// Remove a timeline marker by time in seconds
++    pub fn remove_marker(&mut self, time: f64) -> bool {
+         let old_len = self.markers.len();
+-        self.markers.retain(|m| m.id != id);
++        let epsilon = 0.001;
++        self.markers.retain(|m| (m.time - time).abs() > epsilon);
+         self.markers.len() < old_len
+     }
+ }
+@@ -542,9 +543,6 @@ impl AnimationPlayer {
+                 let epsilon = 0.0001;
+                 let mut crossed_marker: Option<f64> = None;
+                 for marker in &self.clip.markers {
+-                    if !marker.pause_at {
+-                        continue;
+-                    }
+                     let t = marker.time;
+                     if self.current_direction > 0.0 {
+                         if t > self.current_time + epsilon && t <= next_time {
+diff --git a/crates/vorce-core/src/effect_animation.rs b/crates/vorce-core/src/effect_animation.rs
+index 5ca5adb..17ec60c 100644
+--- a/crates/vorce-core/src/effect_animation.rs
++++ b/crates/vorce-core/src/effect_animation.rs
+@@ -263,20 +263,21 @@ impl EffectParameterAnimator {
+         self.player.current_time = time;
+     }
+
+-    /// Remove a marker from the timeline by ID
+-    pub fn remove_marker(&mut self, id: u64) {
+-        if self.clip.remove_marker(id) {
++    /// Remove a marker from the timeline
++    pub fn remove_marker(&mut self, time: f64) {
++        if self.clip.remove_marker(time) {
+             let current_time = self.get_current_time();
+             self.player = AnimationPlayer::new(self.clip.clone());
+             self.player.current_time = current_time;
+         }
+     }
+
+-    /// Toggle pause state of a marker by ID
+-    pub fn toggle_marker_pause(&mut self, id: u64) {
++    /// Toggle pause state of a marker
++    pub fn toggle_marker_pause(&mut self, time: f64) {
++        let epsilon = 0.001;
+         let mut changed = false;
+         for marker in &mut self.clip.markers {
+-            if marker.id == id {
++            if (marker.time - time).abs() < epsilon {
+                 marker.pause_at = !marker.pause_at;
+                 changed = true;
+                 break;
+diff --git a/crates/vorce-core/src/module/types/part.rs b/crates/vorce-core/src/module/types/part.rs
+index d46d63e..84db727 100644
+--- a/crates/vorce-core/src/module/types/part.rs
++++ b/crates/vorce-core/src/module/types/part.rs
+@@ -152,22 +152,6 @@ impl ModulePartType {
+                     vec![
+                         ModuleSocket::standard_layer_in(),
+                         ModuleSocket::standard_trigger_in(),
+-                        ModuleSocket::input_mappable(
+-                            "brightness_in",
+-                            "Brightness",
+-                            ModuleSocketType::Trigger,
+-                        ),
+-                        ModuleSocket::input_mappable("hue_in", "Hue", ModuleSocketType::Trigger),
+-                        ModuleSocket::input_mappable(
+-                            "saturation_in",
+-                            "Saturation",
+-                            ModuleSocketType::Trigger,
+-                        ),
+-                        ModuleSocket::input_mappable(
+-                            "strobe_in",
+-                            "Strobe",
+-                            ModuleSocketType::Trigger,
+-                        ),
+                     ],
+                     vec![],
+                 ),
+diff --git a/crates/vorce-core/src/module/types/socket_tests.rs b/crates/vorce-core/src/module/types/socket_tests.rs
+index 19996aa..3ba6f42 100644
+--- a/crates/vorce-core/src/module/types/socket_tests.rs
++++ b/crates/vorce-core/src/module/types/socket_tests.rs
+@@ -163,7 +163,7 @@ mod tests {
+             mapping_mode: HueMappingMode::Ambient,
+         });
+         let (in_sockets, out_sockets) = output_hue.get_default_sockets();
+-        assert_eq!(in_sockets.len(), 6);
++        assert_eq!(in_sockets.len(), 2);
+         assert_eq!(out_sockets.len(), 0);
+
+         // Output - Normal
+diff --git a/crates/vorce-core/src/module_eval/evaluator/mod.rs b/crates/vorce-core/src/module_eval/evaluator/mod.rs
+index 24e8ad7..b958d75 100644
+--- a/crates/vorce-core/src/module_eval/evaluator/mod.rs
++++ b/crates/vorce-core/src/module_eval/evaluator/mod.rs
+@@ -18,7 +18,7 @@ use super::types::*;
+
+ /// The evaluator traverses the module graph and computes output values.
+ pub struct ModuleEvaluator {
+-    /// Current trigger data from audio analysis..
++    /// Current trigger data from audio analysis
+     pub(crate) audio_trigger_data: AudioTriggerData,
+     /// Creation time for timing calculations
+     pub(crate) start_time: Instant,
+@@ -390,30 +390,14 @@ impl ModuleEvaluator {
+             }
+             // Generate output commands for Hue (which acts like a Sink/Output)
+             if let ModulePartType::Output(OutputType::Hue { .. }) = &part.part_type {
+-                // Socket 0: layer_in (not used for Hue values)
+-                // Socket 1: trigger_in (legacy brightness)
+-                // Socket 2: brightness_in
+-                // Socket 3: hue_in
+-                // Socket 4: saturation_in
+-                // Socket 5: strobe_in
+                 let trigger_value = trigger_inputs.get(&part.id).copied().unwrap_or(0.0);
+-                let socket_vals = socket_inputs.get(&part.id);
+-
+-                let brightness = socket_vals
+-                    .and_then(|m| m.get(&2))
+-                    .copied()
+-                    .unwrap_or(trigger_value);
+-                let hue = socket_vals.and_then(|m| m.get(&3)).copied();
+-                let saturation = socket_vals.and_then(|m| m.get(&4)).copied();
+-                let strobe = socket_vals.and_then(|m| m.get(&5)).copied();
+-
+                 self.cached_result.source_commands.insert(
+                     part.id,
+                     SourceCommand::HueOutput {
+-                        brightness,
+-                        hue,
+-                        saturation,
+-                        strobe,
++                        brightness: trigger_value,
++                        hue: None,
++                        saturation: None,
++                        strobe: None,
+                         ids: None,
+                     },
+                 );
+diff --git a/crates/vorce-core/tests/module_tests.rs b/crates/vorce-core/tests/module_tests.rs
+index 1a5a8df..930360e 100644
+--- a/crates/vorce-core/tests/module_tests.rs
++++ b/crates/vorce-core/tests/module_tests.rs
+@@ -125,8 +125,8 @@ fn test_socket_generation_coverage() {
+     });
+     let pid_hue = module.add_part_with_type(hue_output, (400.0, 0.0));
+     let part_hue = module.parts.iter().find(|p| p.id == pid_hue).unwrap();
+-    // Input: Layer In, Trigger In, Brightness, Hue, Saturation, Strobe. Output: None
+-    assert_eq!(part_hue.inputs.len(), 6);
++    // Input: Layer In, Trigger In. Output: None
++    assert_eq!(part_hue.inputs.len(), 2);
+     assert!(part_hue.outputs.is_empty());
+
+     // 6. Mask
+diff --git a/crates/vorce-core/tests/trackline_tests.rs b/crates/vorce-core/tests/trackline_tests.rs
+index 9067c7d..b1cd937 100644
+--- a/crates/vorce-core/tests/trackline_tests.rs
++++ b/crates/vorce-core/tests/trackline_tests.rs
+@@ -7,13 +7,8 @@ mod trackline_tests {
+         let mut clip = AnimationClip::new("test".into());
+         clip.duration = 10.0;
+         // Trackline mode is now implemented via a flag on the player
+-        let mut marker1 = Marker::new(1, 2.0, "Pause 1".into());
+-        marker1.pause_at = true;
+-        clip.add_marker(marker1);
+-
+-        let mut marker2 = Marker::new(2, 5.0, "Pause 2".into());
+-        marker2.pause_at = true;
+-        clip.add_marker(marker2);
++        clip.add_marker(Marker::new(1, 2.0, "Pause 1".into()));
++        clip.add_marker(Marker::new(2, 5.0, "Pause 2".into()));
+
+         let mut player = AnimationPlayer::new(clip);
+         player.pause_at_markers = true;
+diff --git a/crates/vorce-io/Cargo.toml b/crates/vorce-io/Cargo.toml
+index e61b09d..c6d55d1 100644
+--- a/crates/vorce-io/Cargo.toml
++++ b/crates/vorce-io/Cargo.toml
+@@ -32,7 +32,7 @@ chrono = { workspace = true }
+
+ # Media encoding/decoding
+ ffmpeg-next = { workspace = true, optional = true }
+-grafton-ndi = { version = "0.11.0", optional = true }
++grafton-ndi = { version = "0.2.4", optional = true }
+
+ # Format conversion
+ image = { workspace = true }
+@@ -49,17 +49,17 @@ tokio = { workspace = true, optional = true }
+ tracing = { workspace = true }
+ # Core dependencies
+ wgpu = { workspace = true }
+-zip = "8.5"
++zip = "8.4"
+
+ [target.'cfg(target_os = "macos")'.dependencies]
+ cocoa = { version = "0.26", optional = true }
+-core-foundation = { version = "0.10", optional = true }
++core-foundation = { version = "0.9", optional = true }
+ objc = { version = "0.2", optional = true }
+
+ # Platform-specific dependencies
+ [target.'cfg(windows)'.dependencies]
+ rusty-spout = { git = "https://github.com/virtual-puppet-project/rusty-spout", optional = true }
+-windows = { version = "0.62", features = [
++windows = { version = "0.58", features = [
+     "Win32_Graphics_Direct3D11",
+     "Win32_Graphics_Dxgi",
+     "Win32_System_Com",
+diff --git a/crates/vorce-render/Cargo.toml b/crates/vorce-render/Cargo.toml
+index 9ded60f..a63c79d 100644
+--- a/crates/vorce-render/Cargo.toml
++++ b/crates/vorce-render/Cargo.toml
+@@ -24,14 +24,14 @@ thiserror = { workspace = true }
+ tracing = { workspace = true }
+ wgpu = { workspace = true }
+ wgpu-hal = { version = "29.0.0", features = ["dx12"] }
+-windows = { version = "0.62.2", features = ["Win32_Graphics_Direct3D12", "Win32_Foundation", "Win32_Security", "Win32_Graphics_Dxgi_Common"] }
++windows = { version = "0.58.0", features = ["Win32_Graphics_Direct3D12", "Win32_Foundation", "Win32_Security", "Win32_Graphics_Dxgi_Common"] }
+ winit = { workspace = true }
+
+ [dev-dependencies]
+ criterion = { workspace = true }
+ futures-channel = "0.3.30"
+ pollster = { workspace = true }
+-tokio = { version = "1.51.0", features = ["macros", "rt-multi-thread"] }
++tokio = { version = "1.35.1", features = ["macros", "rt-multi-thread"] }
+ wgpu = { workspace = true }
+
+ [[bench]]
+diff --git a/crates/vorce-ui/src/core/config.rs b/crates/vorce-ui/src/core/config.rs
+index 846b8d5..795629f 100644
+--- a/crates/vorce-ui/src/core/config.rs
++++ b/crates/vorce-ui/src/core/config.rs
+@@ -11,6 +11,20 @@ use std::path::PathBuf;
+ const APP_CONFIG_DIR: &str = "Vorce";
+ const LEGACY_APP_CONFIG_DIR: &str = "MapFlow";
+ const CONFIG_FILE_NAME: &str = "config.json";
++const CURRENT_STARTUP_ANIMATION_PATH: &str =
++    "resources/app_videos/Vorce-Mechanical_Cube_Logo_Splash_Animation.webm";
++const LEGACY_STARTUP_ANIMATION_PATH: &str =
++    "resources/app_videos/MF-Mechanical_Cube_Logo_Splash_Animation.webm";
++const LEGACY_STARTUP_ANIMATION_FILE_NAME: &str = "MF-Mechanical_Cube_Logo_Splash_Animation.webm";
++const MIN_WINDOW_WIDTH: u32 = 320;
++const MIN_WINDOW_HEIGHT: u32 = 240;
++const MAX_WINDOW_DIMENSION: u32 = 8192;
++const MIN_SIDEBAR_WIDTH: f32 = 180.0;
++const MAX_SIDEBAR_WIDTH: f32 = 900.0;
++const MIN_INSPECTOR_WIDTH: f32 = 220.0;
++const MAX_INSPECTOR_WIDTH: f32 = 1200.0;
++const MIN_TIMELINE_HEIGHT: f32 = 80.0;
++const MAX_TIMELINE_HEIGHT: f32 = 720.0;
+
+ /// Diagnostics captured while loading and repairing the persisted user config.
+ #[derive(Debug, Clone, Default)]
+@@ -491,7 +505,7 @@ fn default_ui_scale() -> f32 {
+ }
+
+ fn default_startup_animation_path() -> String {
+-    "resources/app_videos/MF-Mechanical_Cube_Logo_Splash_Animation.webm".to_string()
++    CURRENT_STARTUP_ANIMATION_PATH.to_string()
+ }
+
+ fn default_sidebar_width() -> f32 {
+@@ -604,6 +618,22 @@ impl UserConfig {
+         }
+     }
+
++    fn has_legacy_startup_animation_path(path: &str) -> bool {
++        let trimmed = path.trim();
++        if trimmed == LEGACY_STARTUP_ANIMATION_PATH {
++            return true;
++        }
++
++        std::path::Path::new(trimmed)
++            .file_name()
++            .and_then(|name| name.to_str())
++            .is_some_and(|name| name.eq_ignore_ascii_case(LEGACY_STARTUP_ANIMATION_FILE_NAME))
++    }
++
++    fn is_sane_panel_size(value: f32, min: f32, max: f32) -> bool {
++        value.is_finite() && value >= min && value <= max
++    }
++
+     fn repair_for_startup(&mut self, report: &mut UserConfigLoadReport) -> bool {
+         let mut repaired = false;
+
+@@ -630,7 +660,83 @@ impl UserConfig {
+             repaired = true;
+         }
+
++        if let Some(width) = self.window_width {
++            if !(MIN_WINDOW_WIDTH..=MAX_WINDOW_DIMENSION).contains(&width) {
++                self.window_width = None;
++                report.errors.push(format!(
++                    "Discarded invalid saved window width {width}. Falling back to the default width."
++                ));
++                repaired = true;
++            }
++        }
++
++        if let Some(height) = self.window_height {
++            if !(MIN_WINDOW_HEIGHT..=MAX_WINDOW_DIMENSION).contains(&height) {
++                self.window_height = None;
++                report.errors.push(format!(
++                    "Discarded invalid saved window height {height}. Falling back to the default height."
++                ));
++                repaired = true;
++            }
++        }
++
++        let startup_animation_path = self.startup_animation_path.trim().to_string();
++        if startup_animation_path.is_empty() {
++            self.startup_animation_path = default_startup_animation_path();
++            report.errors.push(
++                "Startup animation path was empty. Restored the bundled Vorce splash video."
++                    .to_string(),
++            );
++            repaired = true;
++        } else if Self::has_legacy_startup_animation_path(&startup_animation_path) {
++            self.startup_animation_path = default_startup_animation_path();
++            report.warnings.push(
++                "Migrated legacy startup animation path to the current Vorce splash video."
++                    .to_string(),
++            );
++            repaired = true;
++        }
++
+         if let Some(layout) = self.active_layout_mut() {
++            let layout_name = layout.name.clone();
++            let mut repaired_fields = Vec::new();
++
++            if !Self::is_sane_panel_size(
++                layout.panel_sizes.left_sidebar_width,
++                MIN_SIDEBAR_WIDTH,
++                MAX_SIDEBAR_WIDTH,
++            ) {
++                layout.panel_sizes.left_sidebar_width = default_sidebar_width();
++                repaired_fields.push("left sidebar width");
++            }
++
++            if !Self::is_sane_panel_size(
++                layout.panel_sizes.inspector_width,
++                MIN_INSPECTOR_WIDTH,
++                MAX_INSPECTOR_WIDTH,
++            ) {
++                layout.panel_sizes.inspector_width = default_inspector_width();
++                repaired_fields.push("inspector width");
++            }
++
++            if !Self::is_sane_panel_size(
++                layout.panel_sizes.timeline_height,
++                MIN_TIMELINE_HEIGHT,
++                MAX_TIMELINE_HEIGHT,
++            ) {
++                layout.panel_sizes.timeline_height = default_timeline_height();
++                repaired_fields.push("timeline height");
++            }
++
++            if !repaired_fields.is_empty() {
++                report.errors.push(format!(
++                    "Recovered invalid panel sizes in active layout '{}': {}.",
++                    layout_name,
++                    repaired_fields.join(", ")
++                ));
++                repaired = true;
++            }
++
+             if !layout.visibility.has_primary_workspace() {
+                 layout.visibility.show_toolbar = true;
+                 layout.visibility.show_left_sidebar = true;
+@@ -1048,6 +1154,71 @@ mod tests {
+             .any(|entry| entry.contains("missing active layout")));
+     }
+
++    #[test]
++    fn test_repair_for_startup_migrates_legacy_startup_animation_path() {
++        let mut config = UserConfig {
++            startup_animation_path: LEGACY_STARTUP_ANIMATION_PATH.to_string(),
++            ..UserConfig::default()
++        };
++
++        let mut report = UserConfigLoadReport::default();
++        let repaired = config.repair_for_startup(&mut report);
++
++        assert!(repaired);
++        assert_eq!(
++            config.startup_animation_path,
++            CURRENT_STARTUP_ANIMATION_PATH
++        );
++        assert!(report
++            .warnings
++            .iter()
++            .any(|entry| entry.contains("Migrated legacy startup animation path")));
++    }
++
++    #[test]
++    fn test_repair_for_startup_discards_invalid_window_geometry_and_panel_sizes() {
++        let mut config = UserConfig {
++            window_width: Some(0),
++            window_height: Some(50_000),
++            ..UserConfig::default()
++        };
++
++        if let Some(layout) = config.active_layout_mut() {
++            layout.panel_sizes.left_sidebar_width = 0.0;
++            layout.panel_sizes.inspector_width = f32::NAN;
++            layout.panel_sizes.timeline_height = 20.0;
++        }
++
++        let mut report = UserConfigLoadReport::default();
++        let repaired = config.repair_for_startup(&mut report);
++
++        assert!(repaired);
++        assert_eq!(config.window_width, None);
++        assert_eq!(config.window_height, None);
++
++        let layout = config.active_layout().unwrap();
++        assert_eq!(
++            layout.panel_sizes.left_sidebar_width,
++            default_sidebar_width()
++        );
++        assert_eq!(
++            layout.panel_sizes.inspector_width,
++            default_inspector_width()
++        );
++        assert_eq!(
++            layout.panel_sizes.timeline_height,
++            default_timeline_height()
++        );
++        assert!(report
++            .errors
++            .iter()
++            .any(|entry| entry.contains("Discarded invalid saved window width")));
++        assert!(report
++            .errors
++            .iter()
++            .any(|entry| entry.contains("Recovered invalid panel sizes")));
++    }
++
+     #[test]
+     fn test_existing_config_path_prefers_vorce_and_falls_back_to_mapflow() {
+         let root = std::env::temp_dir().join(format!("vorce-config-test-{}", std::process::id()));
+diff --git a/crates/vorce-ui/src/editors/module_canvas/inspector/capabilities.rs b/crates/vorce-ui/src/editors/module_canvas/inspector/capabilities.rs
+index d893418..66b48de 100644
+--- a/crates/vorce-ui/src/editors/module_canvas/inspector/capabilities.rs
++++ b/crates/vorce-ui/src/editors/module_canvas/inspector/capabilities.rs
+@@ -44,11 +44,6 @@ pub fn is_mask_supported() -> bool {
+     false // masks currently ignored in final render according to DOC-C10
+ }
+
+-/// Determines if Hue nodes/outputs are fully supported.
+-pub fn is_hue_supported() -> bool {
+-    true // Hue bridge communication is implemented
+-}
+-
+ /// Determines if exposing the blend-mode node makes sense for the current runtime.
+ pub fn has_advanced_blend_mode_support() -> bool {
+     BlendModeType::all()
+diff --git a/crates/vorce-ui/src/editors/module_canvas/inspector/mod.rs b/crates/vorce-ui/src/editors/module_canvas/inspector/mod.rs
+index 98224c7..65dc521 100644
+--- a/crates/vorce-ui/src/editors/module_canvas/inspector/mod.rs
++++ b/crates/vorce-ui/src/editors/module_canvas/inspector/mod.rs
+@@ -369,20 +369,12 @@ pub fn render_inspector_for_part(
+                 ModulePartType::Hue(hue_node) => {
+                     ui.label("Hue Node Configuration");
+                     ui.separator();
+-                    if !crate::editors::module_canvas::inspector::capabilities::is_hue_supported()
+-                    {
+-                        crate::widgets::custom::render_info_label(
+-                            ui,
+-                            "Hue nodes are currently unsupported in this build.",
+-                        );
+-                    } else {
+-                        crate::widgets::custom::render_info_label(
+-                            ui,
+-                            "Live visual preview not available for hardware outputs. Check spatial editor or physical lamps.",
+-                        );
+-                        ui.separator();
+-                        hue::render_hue_ui(ui, hue_node);
+-                    }
++                    crate::widgets::custom::render_info_label(
++                        ui,
++                        "Live visual preview not available for hardware outputs. Check spatial editor or physical lamps.",
++                    );
++                    ui.separator();
++                    hue::render_hue_ui(ui, hue_node);
+                 }
+             }
+         });
+diff --git a/crates/vorce-ui/src/editors/module_canvas/inspector/output.rs b/crates/vorce-ui/src/editors/module_canvas/inspector/output.rs
+index 2acca9e..47a74f1 100644
+--- a/crates/vorce-ui/src/editors/module_canvas/inspector/output.rs
++++ b/crates/vorce-ui/src/editors/module_canvas/inspector/output.rs
+@@ -140,14 +140,22 @@ pub fn render_output_ui(
+
+             ui.separator();
+             ui.label("\u{1F4E1} NDI Broadcast");
+-            // NDI is capability-gated: always shows warning since runtime path is experimental
+-            capabilities::render_unsupported_warning(
+-                ui,
+-                "[Experimental] NDI Output has no active runtime path currently.",
+-            );
+             #[cfg(feature = "ndi")]
+             {
+-                ui.add_enabled_ui(false, |ui| {
++                let supported = capabilities::is_output_type_enum_supported(true, false, false);
++                if !supported {
++                    #[cfg(target_os = "macos")]
++                    capabilities::render_unsupported_warning(
++                        ui,
++                        "NDI Output is experimental/unavailable on macOS currently.",
++                    );
++                    #[cfg(not(target_os = "macos"))]
++                    capabilities::render_unsupported_warning(
++                        ui,
++                        "[Experimental] NDI Output has no active runtime path currently.",
++                    );
++                }
++                ui.add_enabled_ui(supported, |ui| {
+                     ui.checkbox(_ndi_enabled, "Enable NDI Output");
+                     if *_ndi_enabled {
+                         ui.horizontal(|ui| {
+diff --git a/crates/vorce-ui/src/editors/module_canvas/utils/catalog.rs b/crates/vorce-ui/src/editors/module_canvas/utils/catalog.rs
+index 61d742d..bf4a161 100644
+--- a/crates/vorce-ui/src/editors/module_canvas/utils/catalog.rs
++++ b/crates/vorce-ui/src/editors/module_canvas/utils/catalog.rs
+@@ -209,89 +209,84 @@ pub fn build_node_catalog() -> Vec<NodeCatalogItem> {
+             }),
+     );
+
+-    catalog.extend([NodeCatalogItem {
+-        label: "Single Layer",
+-        search_tags: "layer composition",
+-        part_type: ModulePartType::Layer(LayerType::Single {
+-            id: 0,
+-            name: "New Layer".to_string(),
+-            opacity: 1.0,
+-            blend_mode: None,
+-            mesh: vorce_core::module::MeshType::default(),
+-            mapping_mode: false,
+-        }),
+-    }]);
+-
+-    // Hue nodes (capability-gated)
+-    if capabilities::is_hue_supported() {
+-        catalog.extend([
+-            NodeCatalogItem {
+-                label: "Single Lamp",
+-                search_tags: "hue light smart home philips",
+-                part_type: ModulePartType::Hue(HueNodeType::SingleLamp {
+-                    id: String::new(),
+-                    name: "New Lamp".to_string(),
+-                    brightness: 1.0,
+-                    color: [1.0, 1.0, 1.0],
+-                    effect: None,
+-                    effect_active: false,
+-                }),
+-            },
+-            NodeCatalogItem {
+-                label: "Multi Lamp",
+-                search_tags: "hue light group multi smart home philips",
+-                part_type: ModulePartType::Hue(HueNodeType::MultiLamp {
+-                    ids: Vec::new(),
+-                    name: "New Group".to_string(),
+-                    brightness: 1.0,
+-                    color: [1.0, 1.0, 1.0],
+-                    effect: None,
+-                    effect_active: false,
+-                }),
+-            },
+-            NodeCatalogItem {
+-                label: "Entertainment Group",
+-                search_tags: "hue entertainment area spatial philips",
+-                part_type: ModulePartType::Hue(HueNodeType::EntertainmentGroup {
+-                    name: "Entertainment Area".to_string(),
+-                    brightness: 1.0,
+-                    color: [1.0, 1.0, 1.0],
+-                    effect: None,
+-                    effect_active: false,
+-                }),
+-            },
+-            NodeCatalogItem {
+-                label: "Hue Output",
+-                search_tags: "output hue bridge entertainment spatial philips",
+-                part_type: ModulePartType::Output(OutputType::Hue {
+-                    bridge_ip: String::new(),
+-                    username: String::new(),
+-                    client_key: String::new(),
+-                    entertainment_area: String::new(),
+-                    lamp_positions: std::collections::HashMap::new(),
+-                    mapping_mode: HueMappingMode::Ambient,
+-                }),
+-            },
+-        ]);
+-    }
+-
+-    catalog.extend([NodeCatalogItem {
+-        label: "Projector Output",
+-        search_tags: "output display screen beamer",
+-        part_type: ModulePartType::Output(OutputType::Projector {
+-            id: 1,
+-            name: "Projector 1".to_string(),
+-            hide_cursor: false,
+-            target_screen: 0,
+-            show_in_preview_panel: true,
+-            extra_preview_window: false,
+-            output_width: 0,
+-            output_height: 0,
+-            output_fps: 60.0,
+-            ndi_enabled: false,
+-            ndi_stream_name: String::new(),
+-        }),
+-    }]);
++    catalog.extend([
++        NodeCatalogItem {
++            label: "Single Layer",
++            search_tags: "layer composition",
++            part_type: ModulePartType::Layer(LayerType::Single {
++                id: 0,
++                name: "New Layer".to_string(),
++                opacity: 1.0,
++                blend_mode: None,
++                mesh: vorce_core::module::MeshType::default(),
++                mapping_mode: false,
++            }),
++        },
++        NodeCatalogItem {
++            label: "Single Lamp",
++            search_tags: "hue light smart home philips",
++            part_type: ModulePartType::Hue(HueNodeType::SingleLamp {
++                id: String::new(),
++                name: "New Lamp".to_string(),
++                brightness: 1.0,
++                color: [1.0, 1.0, 1.0],
++                effect: None,
++                effect_active: false,
++            }),
++        },
++        NodeCatalogItem {
++            label: "Multi Lamp",
++            search_tags: "hue light group multi smart home philips",
++            part_type: ModulePartType::Hue(HueNodeType::MultiLamp {
++                ids: Vec::new(),
++                name: "New Group".to_string(),
++                brightness: 1.0,
++                color: [1.0, 1.0, 1.0],
++                effect: None,
++                effect_active: false,
++            }),
++        },
++        NodeCatalogItem {
++            label: "Entertainment Group",
++            search_tags: "hue entertainment area spatial philips",
++            part_type: ModulePartType::Hue(HueNodeType::EntertainmentGroup {
++                name: "Entertainment Area".to_string(),
++                brightness: 1.0,
++                color: [1.0, 1.0, 1.0],
++                effect: None,
++                effect_active: false,
++            }),
++        },
++        NodeCatalogItem {
++            label: "Hue Output",
++            search_tags: "output hue bridge entertainment spatial philips",
++            part_type: ModulePartType::Output(OutputType::Hue {
++                bridge_ip: String::new(),
++                username: String::new(),
++                client_key: String::new(),
++                entertainment_area: String::new(),
++                lamp_positions: std::collections::HashMap::new(),
++                mapping_mode: HueMappingMode::Ambient,
++            }),
++        },
++        NodeCatalogItem {
++            label: "Projector Output",
++            search_tags: "output display screen beamer",
++            part_type: ModulePartType::Output(OutputType::Projector {
++                id: 1,
++                name: "Projector 1".to_string(),
++                hide_cursor: false,
++                target_screen: 0,
++                show_in_preview_panel: true,
++                extra_preview_window: false,
++                output_width: 0,
++                output_height: 0,
++                output_fps: 60.0,
++                ndi_enabled: false,
++                ndi_stream_name: String::new(),
++            }),
++        },
++    ]);
+
+     catalog
+ }
+diff --git a/crates/vorce-ui/src/editors/timeline_v2/types.rs b/crates/vorce-ui/src/editors/timeline_v2/types.rs
+index ee70162..52bc71e 100644
+--- a/crates/vorce-ui/src/editors/timeline_v2/types.rs
++++ b/crates/vorce-ui/src/editors/timeline_v2/types.rs
+@@ -10,7 +10,7 @@ pub enum TimelineAction {
+     SelectModule(ModuleId),
+     AddMarker(f32),
+     RemoveMarker(u64),
+-    ToggleMarkerPause(u64),
++    ToggleMarkerPause(f32),
+     JumpNextMarker,
+     JumpPrevMarker,
+     BindParameter {
+diff --git a/crates/vorce-ui/src/editors/timeline_v2/ui.rs b/crates/vorce-ui/src/editors/timeline_v2/ui.rs
+index f0490d9..d94a4d0 100644
+--- a/crates/vorce-ui/src/editors/timeline_v2/ui.rs
++++ b/crates/vorce-ui/src/editors/timeline_v2/ui.rs
+@@ -891,28 +891,17 @@ impl TimelineV2 {
+                     let flag_rect =
+                         Rect::from_min_size(Pos2::new(x, ruler_rect.min.y), Vec2::new(14.0, 14.0));
+                     let is_selected = self.selected_marker_id == Some(marker.id);
+-
+-                    let (flag_color, label) = if marker.pause_at {
+-                        let color = if is_selected {
+-                            Color32::from_rgb(255, 200, 100)
+-                        } else {
+-                            Color32::from_rgb(200, 130, 30)
+-                        };
+-                        (color, "P")
++                    let flag_color = if is_selected {
++                        Color32::from_rgb(150, 255, 150)
+                     } else {
+-                        let color = if is_selected {
+-                            Color32::from_rgb(150, 255, 150)
+-                        } else {
+-                            Color32::from_rgb(50, 150, 50)
+-                        };
+-                        (color, "M")
++                        Color32::from_rgb(50, 150, 50)
+                     };
+
+                     painter.rect_filled(flag_rect, 2.0, flag_color);
+                     painter.text(
+                         Pos2::new(x + 2.0, ruler_rect.min.y + 1.0),
+                         egui::Align2::LEFT_TOP,
+-                        label,
++                        "M",
+                         egui::FontId::proportional(10.0),
+                         Color32::WHITE,
+                     );
+@@ -931,15 +920,10 @@ impl TimelineV2 {
+                     if marker_response.secondary_clicked() {
+                         remove_marker_id = Some(marker.id);
+                     }
+-                    if marker_response.middle_clicked() {
+-                        action = Some(TimelineAction::ToggleMarkerPause(marker.id));
+-                    }
+
+                     // Tooltip
+-                    marker_response.on_hover_text(format!(
+-                        "Marker: {}\nRight-click to remove\nMiddle-click to toggle pause",
+-                        marker.name
+-                    ));
++                    marker_response
++                        .on_hover_text(format!("Marker: {}\nRight-click to remove", marker.name));
+                 }
+             }
+             if let Some(id) = remove_marker_id {
+diff --git a/crates/vorce/src/app/actions.rs b/crates/vorce/src/app/actions.rs
+index cef0523..3b3175a 100644
+--- a/crates/vorce/src/app/actions.rs
++++ b/crates/vorce/src/app/actions.rs
+@@ -674,23 +674,17 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
+                     TimelineAction::AddMarker(t) => {
+                         let animator = std::sync::Arc::make_mut(&mut app.state.effect_animator);
+                         let name = format!("Marker {:.1}s", t);
+-                        let max_id = animator
+-                            .clip()
+-                            .markers
+-                            .iter()
+-                            .map(|m| m.id)
+-                            .max()
+-                            .unwrap_or(0);
+-                        let id = max_id + 1;
++                        // Simple ID generation for markers
++                        let id = (t * 1000.0) as u64;
+                         animator.add_marker(vorce_core::animation::Marker::new(id, t as f64, name));
+                     }
+-                    TimelineAction::RemoveMarker(id) => {
++                    TimelineAction::RemoveMarker(t) => {
+                         let animator = std::sync::Arc::make_mut(&mut app.state.effect_animator);
+-                        animator.remove_marker(id);
++                        animator.remove_marker(t as f64);
+                     }
+-                    TimelineAction::ToggleMarkerPause(id) => {
++                    TimelineAction::ToggleMarkerPause(t) => {
+                         let animator = std::sync::Arc::make_mut(&mut app.state.effect_animator);
+-                        animator.toggle_marker_pause(id);
++                        animator.toggle_marker_pause(t as f64);
+                     }
+                     TimelineAction::JumpNextMarker => {
+                         let animator = std::sync::Arc::make_mut(&mut app.state.effect_animator);
+diff --git a/crates/vorce/src/app/core/init.rs b/crates/vorce/src/app/core/init.rs
+index 9bb7281..c33bcbf 100644
+--- a/crates/vorce/src/app/core/init.rs
++++ b/crates/vorce/src/app/core/init.rs
+@@ -90,7 +90,9 @@ impl App {
+         )?;
+
+         let (width, height, format, main_window_for_egui) = {
+-            let main_window_context = window_manager.get(main_window_id).unwrap();
++            let main_window_context = window_manager.get(main_window_id).ok_or_else(|| {
++                anyhow::anyhow!("Failed to retrieve main window context after creation")
++            })?;
+             (
+                 main_window_context.surface_config.width,
+                 main_window_context.surface_config.height,
+diff --git a/crates/vorce/src/app/loops/render/mod.rs b/crates/vorce/src/app/loops/render/mod.rs
+index 8868339..7295675 100644
+--- a/crates/vorce/src/app/loops/render/mod.rs
++++ b/crates/vorce/src/app/loops/render/mod.rs
+@@ -88,10 +88,11 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
+         });
+
+         // 3. Handle Output (Requires another short-lived borrow of window)
+-        {
+-            let window_context = app.window_manager.get(0).unwrap();
++        if let Some(window_context) = app.window_manager.get(0) {
+             app.egui_state
+                 .handle_platform_output(&window_context.window, full_output.platform_output);
++        } else {
++            return Ok(());
+         }
+
+         // 4. Update Textures and Buffers
+diff --git a/crates/vorce/src/app/ui_layout.rs b/crates/vorce/src/app/ui_layout.rs
+index ffaf39e..df76398 100644
+--- a/crates/vorce/src/app/ui_layout.rs
++++ b/crates/vorce/src/app/ui_layout.rs
+@@ -3,6 +3,9 @@ use vorce_media::LoopMode;
+ use vorce_ui as ui;
+
+ const STARTUP_OVERLAY_DURATION_SECS: f32 = 4.0;
++const LEGACY_STARTUP_ANIMATION_FILE_NAME: &str = "MF-Mechanical_Cube_Logo_Splash_Animation.webm";
++const CURRENT_STARTUP_ANIMATION_RESOURCE: &str =
++    "app_videos/Vorce-Mechanical_Cube_Logo_Splash_Animation.webm";
+
+ fn set_startup_animation_error(
+     startup: &mut crate::app::core::app_struct::StartupAnimationState,
+@@ -35,7 +38,22 @@ fn resolve_startup_animation_source(source_path: &str) -> Option<std::path::Path
+         }
+     }
+
+-    vorce_core::runtime_paths::existing_resource_path(trimmed)
++    if let Some(resolved) = vorce_core::runtime_paths::existing_resource_path(trimmed) {
++        return Some(resolved);
++    }
++
++    let uses_legacy_file_name = std::path::Path::new(trimmed)
++        .file_name()
++        .and_then(|name| name.to_str())
++        .is_some_and(|name| name.eq_ignore_ascii_case(LEGACY_STARTUP_ANIMATION_FILE_NAME));
++
++    if uses_legacy_file_name {
++        return vorce_core::runtime_paths::existing_resource_path(
++            CURRENT_STARTUP_ANIMATION_RESOURCE,
++        );
++    }
++
++    None
+ }
+
+ fn load_startup_animation(app: &mut App, source_path: &str) {
+diff --git a/crates/vorce/src/main.rs b/crates/vorce/src/main.rs
+index ee2861f..45ae4d3 100644
+--- a/crates/vorce/src/main.rs
++++ b/crates/vorce/src/main.rs
+@@ -18,8 +18,9 @@ pub mod player;
+ pub mod ui;
+ mod window_manager;
+
+-use anyhow::Result;
+-use std::time::Instant;
++use anyhow::{Context, Result};
++use std::sync::atomic::{AtomicBool, Ordering};
++use std::time::{Duration, Instant};
+
+ use vorce_core::OutputId;
+ use vorce_media::PlaybackCommand;
+@@ -38,6 +39,59 @@ use crate::app::core::app_struct::{App, InitializationConfig};
+ use crate::cli::{CliArgs, Mode};
+ use clap::Parser;
+
++static LOGGING_INITIALIZED: AtomicBool = AtomicBool::new(false);
++
++fn append_fallback_fatal_log(message: &str) {
++    if let Ok(mut path) = std::env::current_dir() {
++        path.push("logs");
++        path.push("vorce-panic-fallback.log");
++        if let Some(parent) = path.parent() {
++            let _ = std::fs::create_dir_all(parent);
++        }
++        let timestamp = std::time::SystemTime::now()
++            .duration_since(std::time::UNIX_EPOCH)
++            .map(|d| d.as_secs())
++            .unwrap_or(0);
++        let log_entry = format!("[{}] FATAL: {}\n", timestamp, message);
++        let _ = std::fs::OpenOptions::new()
++            .create(true)
++            .append(true)
++            .open(&path)
++            .and_then(|mut f| std::io::Write::write_all(&mut f, log_entry.as_bytes()));
++    }
++}
++
++fn emit_fatal_message(message: &str) {
++    eprintln!("{message}");
++    append_fallback_fatal_log(message);
++}
++
++fn emit_logged_fatal_error(message: &str) {
++    if LOGGING_INITIALIZED.load(Ordering::SeqCst) {
++        error!("{message}");
++    }
++    emit_fatal_message(message);
++}
++
++fn install_panic_hook() {
++    std::panic::set_hook(Box::new(|panic_info| {
++        let location = panic_info
++            .location()
++            .map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column()))
++            .unwrap_or_else(|| "unknown".to_string());
++        let payload = panic_info.payload();
++        let message = if let Some(s) = payload.downcast_ref::<&str>() {
++            *s
++        } else if let Some(s) = payload.downcast_ref::<String>() {
++            s.as_str()
++        } else {
++            "Box<Any>"
++        };
++
++        emit_fatal_message(&format!("APPLICATION PANIC at {}: {}", location, message));
++    }));
++}
++
+ struct VorceApp {
+     app: Option<App>,
+     is_automation: bool,
+@@ -46,14 +100,14 @@ struct VorceApp {
+     screenshot_dir: Option<String>,
+     initial_user_config: vorce_ui::config::UserConfig,
+     disable_startup_animation: bool,
+-    #[allow(dead_code)]
+     startup_failure: Option<String>,
+     pending_main_window_state_persist_at: Option<Instant>,
+ }
++
+ impl VorceApp {
+     fn schedule_main_window_state_persist(&mut self) {
+         self.pending_main_window_state_persist_at =
+-            Some(Instant::now() + std::time::Duration::from_millis(250));
++            Some(Instant::now() + Duration::from_millis(250));
+     }
+
+     fn persist_main_window_state_if_due(&mut self, force: bool) {
+@@ -94,7 +148,9 @@ impl ApplicationHandler for VorceApp {
+             )) {
+                 Ok(app) => app,
+                 Err(err) => {
+-                    error!("Failed to initialize application: {err:#}");
++                    let message = format!("Failed to initialize application: {err:#}");
++                    error!("{message}");
++                    self.startup_failure = Some(message);
+                     event_loop.exit();
+                     return;
+                 }
+@@ -115,8 +171,14 @@ impl ApplicationHandler for VorceApp {
+                             info!("Fixture loaded successfully.");
+                         }
+                         Err(e) => {
+-                            error!("Automation mode: Failed to load fixture: {}", e);
++                            let message = format!(
++                                "Automation mode: Failed to load fixture '{}': {}",
++                                fixture_path, e
++                            );
++                            error!("{message}");
++                            self.startup_failure = Some(message);
+                             event_loop.exit();
++                            return;
+                         }
+                     }
+                 }
+@@ -558,48 +620,18 @@ impl App {
+     }
+ }
+
+-fn main() -> Result<()> {
+-    // Set up panic hook EARLY to capture startup crashes BEFORE logging is initialized.
+-    // This hook writes to both stderr AND a fallback log file for maximum debuggability.
+-    std::panic::set_hook(Box::new(|panic_info| {
+-        let location = panic_info
+-            .location()
+-            .map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column()))
+-            .unwrap_or_else(|| "unknown".to_string());
+-        let payload = panic_info.payload();
+-        let message = if let Some(s) = payload.downcast_ref::<&str>() {
+-            *s
+-        } else if let Some(s) = payload.downcast_ref::<String>() {
+-            s.as_str()
+-        } else {
+-            "Box<Any>"
+-        };
+-
+-        let panic_msg = format!("APPLICATION PANIC at {}: {}", location, message);
++fn main() {
++    install_panic_hook();
+
+-        // Always write to stderr for immediate visibility
+-        eprintln!("{}", panic_msg);
+-
+-        // Also attempt to write to fallback log file (even before logging is set up)
+-        if let Ok(mut path) = std::env::current_dir() {
+-            path.push("logs");
+-            path.push("vorce-panic-fallback.log");
+-            if let Some(parent) = path.parent() {
+-                let _ = std::fs::create_dir_all(parent);
+-            }
+-            let timestamp = std::time::SystemTime::now()
+-                .duration_since(std::time::UNIX_EPOCH)
+-                .map(|d| d.as_secs())
+-                .unwrap_or(0);
+-            let log_entry = format!("[{}] FATAL: {}\n", timestamp, panic_msg);
+-            let _ = std::fs::OpenOptions::new()
+-                .create(true)
+-                .append(true)
+-                .open(&path)
+-                .and_then(|mut f| std::io::Write::write_all(&mut f, log_entry.as_bytes()));
+-        }
+-    }));
++    if let Err(err) = try_main() {
++        emit_logged_fatal_error(&format!(
++            "Application terminated with a fatal error: {err:#}"
++        ));
++        std::process::exit(1);
++    }
++}
+
++fn try_main() -> Result<()> {
+     let args = CliArgs::parse();
+     let (initial_user_config, initial_user_config_report) =
+         vorce_ui::config::UserConfig::load_with_report();
+@@ -613,10 +645,26 @@ fn main() -> Result<()> {
+
+     let env_filter = tracing_subscriber::EnvFilter::from_default_env()
+         .add_directive(configured_log_level.into())
+-        .add_directive("wgpu_core=warn".parse().unwrap())
+-        .add_directive("wgpu_hal=warn".parse().unwrap())
+-        .add_directive("naga=warn".parse().unwrap())
+-        .add_directive("winit=info".parse().unwrap());
++        .add_directive(
++            "wgpu_core=warn"
++                .parse()
++                .unwrap_or_else(|_| tracing_subscriber::filter::LevelFilter::WARN.into()),
++        )
++        .add_directive(
++            "wgpu_hal=warn"
++                .parse()
++                .unwrap_or_else(|_| tracing_subscriber::filter::LevelFilter::WARN.into()),
++        )
++        .add_directive(
++            "naga=warn"
++                .parse()
++                .unwrap_or_else(|_| tracing_subscriber::filter::LevelFilter::WARN.into()),
++        )
++        .add_directive(
++            "winit=info"
++                .parse()
++                .unwrap_or_else(|_| tracing_subscriber::filter::LevelFilter::INFO.into()),
++        );
+
+     let console_layer = tracing_subscriber::fmt::layer()
+         .with_ansi(true)
+@@ -635,6 +683,7 @@ fn main() -> Result<()> {
+         .with(console_layer)
+         .with(file_layer)
+         .init();
++    LOGGING_INITIALIZED.store(true, Ordering::SeqCst);
+
+     initial_user_config_report.emit_logs();
+     info!("Starting Vorce in {:?} mode...", args.mode);
+@@ -656,7 +705,7 @@ fn run_editor(
+     disable_startup_animation: bool,
+ ) -> Result<()> {
+     info!("Starting Editor mode...");
+-    let event_loop = EventLoop::new()?;
++    let event_loop = EventLoop::new().context("Failed to create editor event loop")?;
+     let mut app_handler = VorceApp {
+         app: None,
+         is_automation: false,
+@@ -668,13 +717,18 @@ fn run_editor(
+         startup_failure: None,
+         pending_main_window_state_persist_at: None,
+     };
+-    event_loop.run_app(&mut app_handler)?;
++    event_loop
++        .run_app(&mut app_handler)
++        .context("Editor event loop terminated unexpectedly")?;
++    if let Some(startup_failure) = app_handler.startup_failure.take() {
++        return Err(anyhow::anyhow!(startup_failure));
++    }
+     Ok(())
+ }
+
+ fn run_automation(args: &CliArgs, initial_user_config: vorce_ui::config::UserConfig) -> Result<()> {
+     info!("Starting Automation mode...");
+-    let event_loop = EventLoop::new()?;
++    let event_loop = EventLoop::new().context("Failed to create automation event loop")?;
+     let mut app_handler = VorceApp {
+         app: None,
+         is_automation: true,
+@@ -686,7 +740,12 @@ fn run_automation(args: &CliArgs, initial_user_config: vorce_ui::config::UserCon
+         startup_failure: None,
+         pending_main_window_state_persist_at: None,
+     };
+-    event_loop.run_app(&mut app_handler)?;
++    event_loop
++        .run_app(&mut app_handler)
++        .context("Automation event loop terminated unexpectedly")?;
++    if let Some(startup_failure) = app_handler.startup_failure.take() {
++        return Err(anyhow::anyhow!(startup_failure));
++    }
+     Ok(())
+ }
+
+diff --git a/crates/vorce/src/orchestration/evaluation.rs b/crates/vorce/src/orchestration/evaluation.rs
+index d8aadd5..9542f96 100644
+--- a/crates/vorce/src/orchestration/evaluation.rs
++++ b/crates/vorce/src/orchestration/evaluation.rs
+@@ -80,9 +80,7 @@ pub fn perform_evaluation(
+
+                     if let Some(name) = unsupported_name {
+                         let now = std::time::Instant::now();
+-                        // Use part.id to avoid key collisions when node_name is empty or duplicated
+-                        let log_key =
+-                            format!("{}_unsupported_{}_{}", name, module_ref.name, part.id);
++                        let log_key = format!("{}_unsupported_{}", name, module_ref.name);
+                         let should_log =
+                             if let Some(last_log) = app.video_diagnostic_log_times.get(&log_key) {
+                                 now.duration_since(*last_log).as_secs_f32() > 5.0
+@@ -91,8 +89,9 @@ pub fn perform_evaluation(
+                             };
+                         if should_log {
+                             tracing::warn!(
+-                                "{} (node {}) in module '{}' is currently unsupported/experimental and will not be evaluated.",
+-                                name, part.id, module_ref.name
++                                "{} in module '{}' is currently unsupported/experimental and will not be evaluated.",
++                                name,
++                                module_ref.name
+                             );
+                             app.video_diagnostic_log_times.insert(log_key, now);
+                         }
+diff --git a/crates/vorce/src/ui/editors/timeline.rs b/crates/vorce/src/ui/editors/timeline.rs
+index 0275eb9..c5c675c 100644
+--- a/crates/vorce/src/ui/editors/timeline.rs
++++ b/crates/vorce/src/ui/editors/timeline.rs
+@@ -68,21 +68,14 @@ pub fn show(ctx: &Context, mut context: TimelineContext) {
+                     }
+                     TimelineAction::AddMarker(t) => {
+                         let name = format!("Marker {:.1}s", t);
+-                        let max_id = animator
+-                            .clip()
+-                            .markers
+-                            .iter()
+-                            .map(|m| m.id)
+-                            .max()
+-                            .unwrap_or(0);
+-                        let id = max_id + 1;
++                        let id = (t * 1000.0) as u64;
+                         animator.add_marker(vorce_core::animation::Marker::new(id, t as f64, name));
+                     }
+-                    TimelineAction::RemoveMarker(id) => {
+-                        animator.remove_marker(id);
++                    TimelineAction::RemoveMarker(t) => {
++                        animator.remove_marker(t as f64);
+                     }
+-                    TimelineAction::ToggleMarkerPause(id) => {
+-                        animator.toggle_marker_pause(id);
++                    TimelineAction::ToggleMarkerPause(t) => {
++                        animator.toggle_marker_pause(t as f64);
+                     }
+                     TimelineAction::JumpNextMarker => animator.jump_next_marker(),
+                     TimelineAction::JumpPrevMarker => animator.jump_prev_marker(),
+diff --git a/fix_config.py b/fix_config.py
+new file mode 100644
+index 0000000..18a7a42
+--- /dev/null
++++ b/fix_config.py
+@@ -0,0 +1,9 @@
++import re
++
++with open('crates/vorce-ui/src/core/config.rs', 'r') as f:
++    content = f.read()
++
++content = content.replace('Self::MapFlow(id) => write!(f, "MapFlow: {}", id),', 'Self::MapFlow(id) => write!(f, "Vorce: {}", id),')
++
++with open('crates/vorce-ui/src/core/config.rs', 'w') as f:
++    f.write(content)
