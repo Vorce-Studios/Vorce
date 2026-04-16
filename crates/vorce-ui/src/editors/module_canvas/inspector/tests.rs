@@ -5,10 +5,7 @@ use vorce_core::module::{BlendModeType, EffectType};
 fn test_is_blend_mode_supported() {
     for mode in BlendModeType::all() {
         if matches!(mode, BlendModeType::Normal) {
-            assert!(
-                is_blend_mode_supported(mode),
-                "Normal blend mode should be supported"
-            );
+            assert!(is_blend_mode_supported(mode), "Normal blend mode should be supported");
         } else {
             assert!(
                 !is_blend_mode_supported(mode),
@@ -34,10 +31,7 @@ fn test_is_effect_supported() {
 
 #[test]
 fn test_is_mask_supported() {
-    assert!(
-        !is_mask_supported(),
-        "Masks should currently be unsupported per DOC-C10"
-    );
+    assert!(!is_mask_supported(), "Masks should currently be unsupported per DOC-C10");
 }
 
 #[test]
