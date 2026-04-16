@@ -343,6 +343,12 @@ jobs:
                   required: true,
                 },
                 {
+                  name: 'Build (macOS Beta)',
+                  source: 'check_run',
+                  allowedConclusions: ['success'],
+                  required: true,
+                },
+                {
                   name: 'Rust Autofix',
                   source: 'check_run',
                   allowedConclusions: ['success'],
