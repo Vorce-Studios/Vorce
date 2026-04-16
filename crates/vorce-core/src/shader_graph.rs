@@ -640,6 +640,11 @@ impl ShaderGraph {
         self.nodes.values().find(|n| n.node_type == NodeType::Output)
     }
 
+    /// Get the next node ID to be assigned
+    pub fn next_node_id(&self) -> NodeId {
+        self.next_node_id
+    }
+
     /// Validate the graph (check for cycles, disconnected nodes, etc.)
     pub fn validate(&self) -> Result<(), Vec<String>> {
         let mut errors = Vec::new();

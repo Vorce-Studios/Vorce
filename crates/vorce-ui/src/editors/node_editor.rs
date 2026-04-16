@@ -104,7 +104,7 @@ impl NodeEditor {
         self.graph_id = Some(graph.id);
         self.nodes.clear();
         self.connections.clear();
-        self.next_id = 1; // todo: sync with graph?
+        self.next_id = graph.next_node_id();
 
         // Map core nodes to UI nodes
         for (id, core_node) in &graph.nodes {
