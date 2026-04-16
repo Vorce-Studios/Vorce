@@ -175,7 +175,7 @@ pub async fn set_stream_active(
         )));
     }
 
-    // Check for error in response body (substring match)
+    // Check for error in response body
     if response_text.contains("\"error\"") {
         return Err(HueError::ApiError(format!(
             "Failed to {} stream: {}",
