@@ -6,17 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- 2026-04-14: chore: 🧹 [code health] Remove dead CachedTexture struct and dummy allocations
-- 2026-04-14: chore: Code Health: Remove unused imports in controller list panel
-- 2026-04-14: ci: Exclude .vscode/skills from markdownlint to unblock PRs (#245)
-- 2026-04-12: docs: MAI-007 Render-Queue-Readiness, Parity and Optimization Tracker (#122)
-- 2026-04-12: perf: Bolt: Performance-Optimierung durch Vermeidung redundanter String-Allokationen in UI-Schleifen (#221)
-- 2026-04-12: feat: UI: Theme-aware colors in Node Editor (#222)
-- 2026-04-12: fix: Sentinel: Fix DoS panic on float sorting with NaN (#223)
-- 2026-04-12: feat: UI: Visuelle Theme-Konsistenz in Media Browser Widgets (#218)
-- 2026-04-11: fix: restore project-manager sync workflow gating and GitHub Project field defaults (#227)
-- 2026-04-10: fix(deps): Update ffmpeg-next to 8.1 and ffmpeg-sys-next to 8.1.0 for FFmpeg 8 compatibility (#195)
-- 2026-04-10: fix: PRI_Complete Bevy migration to resolve wgpu 24 vs 29 conflict (#211)
 - 2026-04-08: fix: 🛡️ Sentinel: [Sicherheitsverbesserung] Fix NaN-related panics in sorting routines (#205)
 - 2026-04-08: perf: ⚡ Bolt: Cache lowercased strings in ShortcutsPanel to remove frame-rate allocations (#203)
 - 2026-04-08: perf: ⚡ Bolt: Optimize TriggerSystem Garbage Collection Set management (#202)
