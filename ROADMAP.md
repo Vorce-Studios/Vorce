@@ -6,8 +6,7 @@ Ship Vorce toward a production-ready 1.0 by improving render stability, media pi
 ## Active Phases
 
 ### Phase 7: Packaging & Distribution [In Progress]
-- [/] **VOR-23:** Verify Windows Installer (WiX) DLL bundling and shortcuts (Fixed build regression)
-- [x] **VOR-31:** Fix hanging PR checks by unifying triggers to `pull_request_target`
+- [ ] **VOR-23:** Verify Windows Installer (WiX) DLL bundling and shortcuts
 - [ ] **VOR-24:** Set up cargo-deb for Linux (.deb) packaging
 - [ ] **VOR-25:** Evaluate AppImage vs Flatpak for Linux distribution
 

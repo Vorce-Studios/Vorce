@@ -3,14 +3,17 @@
 use crate::core::theme::colors;
 use crate::LocaleManager;
 use egui::{RichText, ScrollArea, TextEdit, Ui};
-use std::collections::HashSet;
 use vorce_control::shortcuts::KeyBindings;
 
 /// Panel for viewing and configuring keyboard shortcuts
 #[derive(Default)]
 pub struct ShortcutsPanel {
     editing_shortcut_index: Option<usize>,
-    conflicts: HashSet<usize>,
+    // Performance Boost: We store conflicts as a flat map instead of a HashSet.
+    // In immediate-mode GUIs (egui), `HashSet::contains` inside hot loops causes
+    // constant SipHash allocator/execution overhead. A pre-allocated `Vec<bool>` gives
+    // true O(1) loop iteration overhead.
+    conflict_map: Vec<bool>,
     show_conflict_warning: bool,
     search_filter: String,
 }
@@ -18,8 +21,11 @@ pub struct ShortcutsPanel {
 impl ShortcutsPanel {
     /// Map of keyboard shortcuts to application actions.
     pub fn detect_conflicts(&mut self, key_bindings: &KeyBindings) {
-        self.conflicts.clear();
         let shortcuts = key_bindings.get_shortcuts();
+        // Resize and clear map for fast flat lookups in the UI thread
+        self.conflict_map.clear();
+        self.conflict_map.resize(shortcuts.len(), false);
+
         for i in 0..shortcuts.len() {
             for j in (i + 1)..shortcuts.len() {
                 if shortcuts[i].key == shortcuts[j].key
@@ -30,8 +36,8 @@ impl ShortcutsPanel {
                         || shortcuts[j].context
                             == vorce_control::shortcuts::ShortcutContext::Global)
                 {
-                    self.conflicts.insert(i);
-                    self.conflicts.insert(j);
+                    self.conflict_map[i] = true;
+                    self.conflict_map[j] = true;
                 }
             }
         }
@@ -106,7 +112,7 @@ impl ShortcutsPanel {
 
                         for index in filtered_indices {
                             let shortcut = &shortcuts_clone[index];
-                            let is_conflict = self.conflicts.contains(&index);
+                            let is_conflict = *self.conflict_map.get(index).unwrap_or(&false);
 
                             // Description
                             ui.label(&shortcut.description);
