@@ -1,0 +1,10 @@
+--- CHANGELOG.md
++++ CHANGELOG.md
+@@ -9,6 +9,7 @@
+
+ ### Changed
+ - Refactored module processing structure for nodes.
++- Improved performance of controller overlay by caching midi assignments lookup.
+
+ ### Fixed
+ - Removed unused functions to improve code health.
