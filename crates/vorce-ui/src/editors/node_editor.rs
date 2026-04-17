@@ -515,8 +515,6 @@ impl NodeEditor {
         // Using values_mut() safely
         let mut nodes_vec: Vec<_> = self.nodes.values_mut().collect();
         nodes_vec.sort_by_key(|n| n.id);
-        let selected_nodes_set: std::collections::HashSet<NodeId> =
-            self.selected_nodes.iter().copied().collect();
 
         let selected_set: rustc_hash::FxHashSet<_> = self.selected_nodes.iter().copied().collect();
 
