@@ -18,7 +18,6 @@ pub enum LayerInspectorViewMode {
     MeshEditor,
 }
 
-#[allow(dead_code)]
 pub struct ModuleCanvas {
     /// The ID of the currently active/edited module
     pub active_module_id: Option<u64>,
