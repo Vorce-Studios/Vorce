@@ -270,6 +270,8 @@ pub fn render_canvas(
         let mut delete_part_id = None;
         let mut resize_ops = Vec::new();
         let mut drag_delta = Vec2::ZERO;
+        let selected_parts_set: std::collections::HashSet<vorce_core::module::ModulePartId> =
+            canvas.selected_parts.iter().copied().collect();
 
         for part in &mut module.parts {
             let part_pos = to_screen(Pos2::new(part.position.0, part.position.1));
@@ -279,7 +281,7 @@ pub fn render_canvas(
             });
             let part_rect = Rect::from_min_size(part_pos, Vec2::new(w, h) * canvas.zoom);
 
-            if canvas.selected_parts.contains(&part.id) {
+            if selected_parts_set.contains(&part.id) {
                 let highlight_rect = part_rect.expand(4.0 * canvas.zoom);
                 painter.rect_stroke(
                     highlight_rect,
@@ -385,12 +387,12 @@ pub fn render_canvas(
             if part_response.clicked() {
                 clicked_on_part = true;
                 if ui.input(|i| i.modifiers.shift) {
-                    if canvas.selected_parts.contains(&part_id) {
+                    if selected_parts_set.contains(&part_id) {
                         canvas.selected_parts.retain(|&id| id != part_id);
                     } else {
                         canvas.selected_parts.push(part_id);
                     }
-                } else if !canvas.selected_parts.contains(&part_id) {
+                } else if !selected_parts_set.contains(&part_id) {
                     canvas.selected_parts.clear();
                     canvas.selected_parts.push(part_id);
                 }
@@ -399,7 +401,7 @@ pub fn render_canvas(
             if part_response.drag_started() {
                 clicked_on_part = true;
                 if canvas.creating_connection.is_none() {
-                    if !canvas.selected_parts.contains(&part_id) {
+                    if !selected_parts_set.contains(&part_id) {
                         if !ui.input(|i| i.modifiers.shift) {
                             canvas.selected_parts.clear();
                         }
