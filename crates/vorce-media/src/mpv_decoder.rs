@@ -85,8 +85,12 @@ impl MpvDecoder {
             use libmpv2_sys::*;
             let handle = self.mpv.ctx;
 
-            let cmd_sc = std::ffi::CString::new("screenshot-raw").unwrap();
-            let cmd_sc_arg = std::ffi::CString::new("video").unwrap();
+            let cmd_sc = std::ffi::CString::new("screenshot-raw").map_err(|_| {
+                MediaError::DecoderError("Failed to create CString for screenshot-raw".to_string())
+            })?;
+            let cmd_sc_arg = std::ffi::CString::new("video").map_err(|_| {
+                MediaError::DecoderError("Failed to create CString for video".to_string())
+            })?;
 
             let mut cmd_screenshot = [cmd_sc.as_ptr(), cmd_sc_arg.as_ptr(), std::ptr::null()];
 
@@ -97,18 +101,45 @@ impl MpvDecoder {
 
             if res >= 0 && node.format == mpv_format_MPV_FORMAT_NODE_MAP {
                 let map = node.u.list;
-                let keys = std::slice::from_raw_parts((*map).keys, (*map).num as usize);
-                let vals = std::slice::from_raw_parts((*map).values, (*map).num as usize);
+
+                if map.is_null() {
+                    error!("MPV frame capture failed: map is null");
+                    return Err(MediaError::DecoderError(
+                        "MPV screenshot-raw returned null map".to_string(),
+                    ));
+                }
+
+                let num_elements = (*map).num as usize;
+                let keys = if num_elements == 0 || (*map).keys.is_null() {
+                    &[]
+                } else {
+                    std::slice::from_raw_parts((*map).keys, num_elements)
+                };
+                let vals = if num_elements == 0 || (*map).values.is_null() {
+                    &[]
+                } else {
+                    std::slice::from_raw_parts((*map).values, num_elements)
+                };
 
                 for i in 0..(*map).num as usize {
-                    let key = std::ffi::CStr::from_ptr(keys[i]).to_str().unwrap_or("");
+                    let key = if i < keys.len() && !keys[i].is_null() {
+                        std::ffi::CStr::from_ptr(keys[i]).to_str().unwrap_or("")
+                    } else {
+                        ""
+                    };
+
                     if key == "data" && vals[i].format == mpv_format_MPV_FORMAT_BYTE_ARRAY {
                         let ba = vals[i].u.ba;
-                        let data_slice = std::slice::from_raw_parts(
-                            (*ba).data as *const u8,
-                            (*ba).size as usize,
-                        );
-                        extracted_data.extend_from_slice(data_slice);
+                        if !ba.is_null() && !(*ba).data.is_null() {
+                            let size = (*ba).size;
+                            if size > 0 {
+                                let data_slice =
+                                    std::slice::from_raw_parts((*ba).data as *const u8, size);
+                                extracted_data.extend_from_slice(data_slice);
+                            }
+                        } else {
+                            error!("MPV frame capture failed: byte array or data is null");
+                        }
                     } else if key == "w" && vals[i].format == mpv_format_MPV_FORMAT_INT64 {
                         actual_width = vals[i].u.int64 as u32;
                     } else if key == "h" && vals[i].format == mpv_format_MPV_FORMAT_INT64 {
@@ -150,9 +181,7 @@ impl MpvDecoder {
         // libmpv usually outputs BGRA layout on most platforms for `screenshot-raw`
         let mut final_data = extracted_data;
         for chunk in final_data.chunks_exact_mut(4) {
-            let b = chunk[0];
-            chunk[0] = chunk[2];
-            chunk[2] = b;
+            chunk.swap(0, 2);
             chunk[3] = 255; // Ensure alpha is fully opaque
         }
 
