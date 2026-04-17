@@ -296,6 +296,29 @@ mod tests {
     use crossbeam_channel::unbounded;
     use serde_json::json;
 
+    #[test]
+    fn test_error_response_with_id() {
+        let id = json!(123);
+        let response = error_response(Some(id.clone()), -32600, "Invalid Request");
+
+        assert_eq!(response.jsonrpc, "2.0");
+        assert!(response.result.is_none());
+        assert_eq!(response.id, Some(id));
+
+        let error = response.error.unwrap();
+        assert_eq!(error.code, -32600);
+        assert_eq!(error.message, "Invalid Request");
+        assert!(error.data.is_none());
+    }
+
+    #[test]
+    fn test_error_response_without_id() {
+        let response = error_response(None, -32700, "Parse error");
+
+        assert_eq!(response.id, None);
+        assert_eq!(response.error.unwrap().code, -32700);
+    }
+
     #[tokio::test]
     async fn test_handle_layer_create() {
         let (tx, rx) = unbounded();
