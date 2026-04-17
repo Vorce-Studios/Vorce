@@ -8,7 +8,7 @@ use anyhow::Result;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::info;
-use vorce_core::{runtime_paths, OutputId, OutputManager};
+use vorce_core::{runtime_paths, OutputId};
 use vorce_render::WgpuBackend;
 use vorce_ui::config::VSyncMode;
 use winit::{
