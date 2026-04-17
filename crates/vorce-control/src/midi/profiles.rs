@@ -262,7 +262,12 @@ mod tests {
         let profile = BuiltInProfiles::ecler_nuo4();
 
         // If file is found, it should have the correct name
-        if profile.description.contains("Loaded from JSON") {
+        if profile
+            .description
+            .split(" ")
+            .collect::<std::collections::HashSet<_>>()
+            .contains("Loaded")
+        {
             assert_eq!(profile.name, "Ecler NUO 4");
             assert!(!profile.mappings.is_empty());
         } else {
