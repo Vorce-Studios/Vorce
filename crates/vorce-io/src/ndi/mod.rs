@@ -138,7 +138,7 @@ impl NdiReceiver {
                             let width = v.width() as u32;
                             let height = v.height() as u32;
                             let fr = v.frame_rate_n() as f32 / v.frame_rate_d().max(1) as f32;
-                            
+
                             let data = v.data().to_vec();
                             let video_format = VideoFormat {
                                 width,
@@ -186,7 +186,7 @@ impl NdiReceiver {
     fn internal_connect(ndi: &NDI, source: &NdiSource) -> Result<Receiver> {
         let finder_options = FinderOptions::builder().show_local_sources(true).build();
         let finder = Finder::new(ndi, &finder_options).map_err(|e| IoError::NdiError(e.to_string()))?;
-        
+
         let sources = finder.find_sources(Duration::from_secs(2)).map_err(|e| IoError::NdiError(e.to_string()))?;
 
         let matching_source = sources
