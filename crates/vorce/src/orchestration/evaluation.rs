@@ -59,9 +59,6 @@ pub fn perform_evaluation(
                 if let vorce_core::module::ModulePartType::Source(source_type) = &part.part_type {
                     let mut unsupported_name = None;
                     match source_type {
-                        vorce_core::module::SourceType::NdiInput { .. } => {
-                            unsupported_name = Some("NDI Input");
-                        }
                         vorce_core::module::SourceType::LiveInput { .. } => {
                             unsupported_name = Some("Live Input");
                         }

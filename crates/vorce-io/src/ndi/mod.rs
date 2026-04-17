@@ -9,12 +9,17 @@
 #[cfg(feature = "ndi")]
 use crate::error::{IoError, Result};
 #[cfg(feature = "ndi")]
-use crate::format::{FrameData, PixelFormat, VideoFormat, VideoFrame};
+use crate::format::{FrameData, PixelFormat as VorcePixelFormat, VideoFormat, VideoFrame};
+#[cfg(feature = "ndi")]
+use crate::source::VideoSource;
 
 #[cfg(feature = "ndi")]
-use grafton_ndi::{Find, Finder, FrameType, Receiver, Recv, RecvBandwidth, RecvColorFormat, NDI};
+use grafton_ndi::{
+    Finder, FinderOptions, NDI, PixelFormat as NdiPixelFormat, Receiver, ReceiverBandwidth,
+    ReceiverColorFormat, ReceiverOptions, Sender, SenderOptions, VideoFrameBuilder,
+};
 #[cfg(feature = "ndi")]
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 #[cfg(feature = "ndi")]
 use std::time::Duration;
 #[cfg(feature = "ndi")]
@@ -26,103 +31,188 @@ pub use grafton_ndi::Source;
 
 /// Wrapper for NDI Source that is Send + Sync safe
 #[cfg(feature = "ndi")]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct NdiSource {
     /// The name of the NDI source
     pub name: String,
     /// The URL/address of the source (if available)
-    pub url_address: Option<String>,
+    pub address: Option<String>,
 }
 
 #[cfg(feature = "ndi")]
 impl From<grafton_ndi::Source> for NdiSource {
     fn from(source: grafton_ndi::Source) -> Self {
-        Self { name: source.name.clone(), url_address: source.url_address.clone() }
+        Self { name: source.name.clone(), address: Some(source.address.to_string()) }
     }
 }
 
 /// NDI library handle - ensures NDI is initialized
 #[cfg(feature = "ndi")]
-struct NdiHandle {
-    _ndi: NDI,
+pub struct NdiHandle {
+    ndi: Arc<NDI>,
 }
 
 #[cfg(feature = "ndi")]
 impl NdiHandle {
-    fn new() -> Result<Self> {
+    /// Creates a new NDI handle.
+    pub fn new() -> Result<Self> {
         let ndi = NDI::new().map_err(|e| {
             error!("Failed to initialize NDI library: {}", e);
             IoError::NdiError(format!("Failed to initialize NDI: {}", e))
         })?;
         info!("NDI library initialized successfully");
-        Ok(Self { _ndi: ndi })
+        Ok(Self { ndi: Arc::new(ndi) })
     }
 }
 
-/// NDI receiver for capturing video from NDI sources.
+/// NDI receiver host for capturing video from NDI sources in a thread-safe way.
 #[cfg(feature = "ndi")]
 pub struct NdiReceiver {
-    /// NDI library handle
-    _handle: NdiHandle,
-    /// Current source info
+    name: String,
     source_info: Option<NdiSource>,
-    /// Video format
-    _format: VideoFormat,
-    /// Frame counter
-    frame_count: u64,
-    /// NDI receiver instance
-    recv: Option<Recv>,
+    format: Arc<Mutex<VideoFormat>>,
+    frame_count: Arc<std::sync::atomic::AtomicU64>,
+    receiver_tx: std::sync::mpsc::Sender<ReceiverCommand>,
+    frame_rx: std::sync::mpsc::Receiver<VideoFrame>,
+    is_available: Arc<std::sync::atomic::AtomicBool>,
+}
+
+#[cfg(feature = "ndi")]
+enum ReceiverCommand {
+    Connect(NdiSource),
+    Stop,
 }
 
 #[cfg(feature = "ndi")]
 impl NdiReceiver {
     /// Creates a new NDI receiver.
     pub fn new() -> Result<Self> {
-        info!("Creating NDI Receiver");
-        let handle = NdiHandle::new()?;
+        info!("Creating NDI Receiver Host");
+        let (receiver_tx, receiver_rx) = std::sync::mpsc::channel();
+        let (frame_tx, frame_rx) = std::sync::mpsc::channel();
+
+        let format = Arc::new(Mutex::new(VideoFormat::hd_1080p30_rgba()));
+        let frame_count = Arc::new(std::sync::atomic::AtomicU64::new(0));
+        let is_available = Arc::new(std::sync::atomic::AtomicBool::new(true));
+
+        let format_clone = format.clone();
+        let frame_count_clone = frame_count.clone();
+        let is_available_clone = is_available.clone();
+
+        std::thread::spawn(move || {
+            let handle = match NdiHandle::new() {
+                Ok(h) => h,
+                Err(e) => {
+                    error!("NDI Receiver thread failed to initialize: {}", e);
+                    is_available_clone.store(false, std::sync::atomic::Ordering::SeqCst);
+                    return;
+                }
+            };
+
+            let mut receiver: Option<Receiver> = None;
+
+            loop {
+                // Handle commands
+                while let Ok(cmd) = receiver_rx.try_recv() {
+                    match cmd {
+                        ReceiverCommand::Connect(source) => {
+                            info!("NDI Receiver connecting to {}", source.name);
+                            match Self::internal_connect(&handle.ndi, &source) {
+                                Ok(r) => {
+                                    receiver = Some(r);
+                                    info!("NDI Receiver connected to {}", source.name);
+                                }
+                                Err(e) => {
+                                    error!("NDI Receiver connection failed: {}", e);
+                                }
+                            }
+                        }
+                        ReceiverCommand::Stop => return,
+                    }
+                }
+
+                // Poll for frames if connected
+                if let Some(ref r) = receiver {
+                    match r.capture_video(Duration::from_millis(16)) {
+                        Ok(v) => {
+                            let width = v.width() as u32;
+                            let height = v.height() as u32;
+                            let fr = v.frame_rate_n() as f32 / v.frame_rate_d().max(1) as f32;
+                            
+                            let data = v.data().to_vec();
+                            let video_format = VideoFormat {
+                                width,
+                                height,
+                                pixel_format: VorcePixelFormat::BGRA8,
+                                frame_rate: fr,
+                            };
+
+                            {
+                                let mut fmt = format_clone.lock().unwrap();
+                                *fmt = video_format.clone();
+                            }
+
+                            let frame = VideoFrame {
+                                data: FrameData::Cpu(Arc::new(data)),
+                                format: video_format,
+                                timestamp: Duration::from_nanos(v.timestamp() as u64),
+                                metadata: Default::default(),
+                            };
+
+                            let _ = frame_tx.send(frame);
+                            frame_count_clone.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                        }
+                        Err(_e) => {
+                            // Skip errors (timeout etc)
+                        }
+                    }
+                } else {
+                    std::thread::sleep(Duration::from_millis(100));
+                }
+            }
+        });
 
         Ok(Self {
-            _handle: handle,
+            name: "NDI Receiver".to_string(),
             source_info: None,
-            _format: VideoFormat::hd_1080p30_rgba(),
-            frame_count: 0,
-            recv: None,
+            format,
+            frame_count,
+            receiver_tx,
+            frame_rx,
+            is_available,
         })
     }
 
+    fn internal_connect(ndi: &NDI, source: &NdiSource) -> Result<Receiver> {
+        let finder_options = FinderOptions::builder().show_local_sources(true).build();
+        let finder = Finder::new(ndi, &finder_options).map_err(|e| IoError::NdiError(e.to_string()))?;
+        
+        let sources = finder.find_sources(Duration::from_secs(2)).map_err(|e| IoError::NdiError(e.to_string()))?;
+
+        let matching_source = sources
+            .into_iter()
+            .find(|s| s.name == source.name)
+            .ok_or_else(|| IoError::NdiError(format!("Source '{}' not found", source.name)))?;
+
+        let options = ReceiverOptions::builder(matching_source)
+            .color(ReceiverColorFormat::BGRX_BGRA)
+            .bandwidth(ReceiverBandwidth::Highest)
+            .name(format!("Vorce-{}", source.name))
+            .build();
+
+        Receiver::new(ndi, &options).map_err(|e| IoError::NdiError(e.to_string()))
+    }
+
     /// Discovers available NDI sources on the network.
-    ///
-    /// This is a blocking call that waits for the specified timeout.
     pub fn discover_sources(timeout_ms: u32) -> Result<Vec<NdiSource>> {
         info!("Starting NDI source discovery for {}ms", timeout_ms);
 
-        // Initialize NDI temporarily for discovery
-        let _ndi = NDI::new().map_err(|e| {
-            error!("Failed to initialize NDI for discovery: {}", e);
-            IoError::NdiError(format!("Failed to initialize NDI: {}", e))
-        })?;
+        let handle = NdiHandle::new()?;
+        let finder_options = FinderOptions::builder().show_local_sources(true).build();
+        let finder = Finder::new(&handle.ndi, &finder_options).map_err(|e| IoError::NdiError(e.to_string()))?;
 
-        let finder = Finder::default();
-        let ndi_find = Find::new(finder).map_err(|e| {
-            error!("Failed to create NDI finder: {}", e);
-            IoError::NdiError(format!("Failed to create NDI finder: {}", e))
-        })?;
-
-        // Wait for sources
-        if !ndi_find.wait_for_sources(timeout_ms) {
-            info!("No NDI sources found within timeout");
-            return Ok(vec![]);
-        }
-
-        let sources = ndi_find.get_sources(timeout_ms);
-        let ndi_sources: Vec<NdiSource> = sources.into_iter().map(|s| s.into()).collect();
-
-        info!("Found {} NDI sources", ndi_sources.len());
-        for source in &ndi_sources {
-            info!("  - {}", source.name);
-        }
-
-        Ok(ndi_sources)
+        let sources = finder.find_sources(Duration::from_millis(timeout_ms as u64)).map_err(|e| IoError::NdiError(e.to_string()))?;
+        Ok(sources.into_iter().map(|s| s.into()).collect())
     }
 
     /// Discovers sources asynchronously via a channel
@@ -140,100 +230,10 @@ impl NdiReceiver {
 
     /// Connects to a specific NDI source by name.
     pub fn connect(&mut self, source: &NdiSource) -> Result<()> {
-        info!("Connecting to NDI source: {}", source.name);
-
-        // We need a Source object for the receiver
-        // First, discover to find the matching source
-        let _ndi = NDI::new()
-            .map_err(|e| IoError::NdiError(format!("Failed to initialize NDI: {}", e)))?;
-
-        let finder = Finder::default();
-        let ndi_find = Find::new(finder)
-            .map_err(|e| IoError::NdiError(format!("Failed to create finder: {}", e)))?;
-
-        // Wait briefly for sources
-        ndi_find.wait_for_sources(2000);
-        let sources = ndi_find.get_sources(1000);
-
-        let matching_source =
-            sources.into_iter().find(|s| s.name == source.name).ok_or_else(|| {
-                IoError::NdiError(format!("Source '{}' not found on network", source.name))
-            })?;
-
-        // Create receiver
-        let receiver = Receiver::new(
-            matching_source,
-            RecvColorFormat::UYVY_BGRA, // BGRA for easy GPU upload
-            RecvBandwidth::Highest,
-            false, // No interlaced fields
-            Some(format!("Vorce-{}", source.name)),
-        );
-
-        let recv = Recv::new(receiver).map_err(|e| {
-            error!("Failed to create NDI receiver: {}", e);
-            IoError::NdiError(format!("Failed to create receiver: {}", e))
-        })?;
-
-        self.recv = Some(recv);
         self.source_info = Some(source.clone());
-
-        info!("Successfully connected to NDI source: {}", source.name);
-        Ok(())
-    }
-
-    /// Receives a frame with a timeout.
-    /// Returns Ok(Some(frame)) if a frame was received,
-    /// Ok(None) if no frame was available within the timeout.
-    pub fn receive(&mut self, timeout: Duration) -> Result<Option<VideoFrame>> {
-        let recv = self
-            .recv
-            .as_ref()
-            .ok_or_else(|| IoError::NdiError("Not connected to any source".to_string()))?;
-
-        let timeout_ms = timeout.as_millis() as u32;
-
-        match recv.capture(timeout_ms) {
-            Ok(FrameType::Video(video_frame)) => {
-                // Extract frame data from fields
-                let width = video_frame.xres as u32;
-                let height = video_frame.yres as u32;
-                let frame_rate =
-                    video_frame.frame_rate_n as f32 / video_frame.frame_rate_d.max(1) as f32;
-
-                // Calculate data size (BGRA = 4 bytes per pixel)
-                let data_size = (width * height * 4) as usize;
-
-                // Extract data from raw pointer (unsafe but necessary for NDI)
-                let data = if !video_frame.p_data.is_null() && data_size > 0 {
-                    unsafe { std::slice::from_raw_parts(video_frame.p_data, data_size).to_vec() }
-                } else {
-                    warn!("NDI frame has null data pointer");
-                    return Ok(None);
-                };
-
-                let format =
-                    VideoFormat { width, height, pixel_format: PixelFormat::BGRA8, frame_rate };
-
-                self._format = format.clone();
-                self.frame_count += 1;
-
-                let frame = VideoFrame {
-                    data: FrameData::Cpu(Arc::new(data)),
-                    format,
-                    timestamp: Duration::from_nanos(video_frame.timestamp.max(0) as u64),
-                    metadata: Default::default(),
-                };
-
-                Ok(Some(frame))
-            }
-            Ok(FrameType::None) => Ok(None),
-            Ok(FrameType::Audio(_)) => Ok(None), // Ignore audio frames
-            Ok(FrameType::Metadata(_)) => Ok(None), // Ignore metadata
-            Err(e) => {
-                warn!("NDI capture error: {:?}", e);
-                Ok(None)
-            }
-        }
+        self.receiver_tx
+            .send(ReceiverCommand::Connect(source.clone()))
+            .map_err(|_| IoError::NdiError("Receiver thread disconnected".to_string()))
     }
 
     /// Returns the name of the connected source, if any.
@@ -243,75 +243,85 @@ impl NdiReceiver {
 
     /// Returns whether a source is connected.
     pub fn is_connected(&self) -> bool {
-        self.recv.is_some()
+        self.source_info.is_some()
+    }
+}
+
+#[cfg(feature = "ndi")]
+impl VideoSource for NdiReceiver {
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn format(&self) -> VideoFormat {
+        self.format.lock().unwrap().clone()
+    }
+
+    fn receive_frame(&mut self) -> Result<VideoFrame> {
+        self.frame_rx.try_recv().map_err(|_| IoError::NoFrameAvailable)
+    }
+
+    fn is_available(&self) -> bool {
+        self.is_available.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    fn frame_count(&self) -> u64 {
+        self.frame_count.load(std::sync::atomic::Ordering::SeqCst)
     }
 }
 
 #[cfg(feature = "ndi")]
 impl Default for NdiReceiver {
     fn default() -> Self {
-        Self::new().expect("Failed to create default NdiReceiver")
+        Self::new().unwrap_or_else(|e| {
+            error!("Failed to create default NDI receiver: {}", e);
+            let (tx, _) = std::sync::mpsc::channel();
+            let (_, rx) = std::sync::mpsc::channel();
+            Self {
+                name: "NDI Receiver (Failed)".to_string(),
+                source_info: None,
+                format: Arc::new(Mutex::new(VideoFormat::hd_1080p30_rgba())),
+                frame_count: Arc::new(std::sync::atomic::AtomicU64::new(0)),
+                receiver_tx: tx,
+                frame_rx: rx,
+                is_available: Arc::new(std::sync::atomic::AtomicBool::new(false)),
+            }
+        })
     }
 }
 
-// Note: NdiReceiver cannot implement VideoSource trait because Recv is not Send.
-// The receiver must be used on the same thread where it was created.
-// For cross-thread usage, wrap in a dedicated thread with channels.
-
 /// NDI sender for broadcasting video to the network.
-///
-/// **[Experimental] / [Gated]**
-/// Note: Sender implementation is a placeholder - grafton-ndi Send API needs verification.
 #[cfg(feature = "ndi")]
 pub struct NdiSender {
-    /// NDI library handle
     _handle: NdiHandle,
-    /// Sender name
     name: String,
-    /// Video format
     _format: VideoFormat,
-    /// Frame counter
     frame_count: u64,
-    /// NDI send instance
-    send: Option<grafton_ndi::Send>,
+    sender: Sender,
 }
 
 #[cfg(feature = "ndi")]
 impl NdiSender {
     /// Creates a new NDI sender with the given name.
-    pub fn new(name: impl Into<String>, _format: VideoFormat) -> Result<Self> {
+    pub fn new(name: impl Into<String>, format: VideoFormat) -> Result<Self> {
         let name = name.into();
         info!("Creating NDI Sender: {}", name);
 
         let handle = NdiHandle::new()?;
+        let options = SenderOptions::builder(&name).build();
 
-        // Create sender - using Sender struct directly
-        // Note: The exact API for Send creation in grafton-ndi 0.2.4 may vary
-        let sender = grafton_ndi::Sender {
-            name: name.clone(),
-            groups: None,
-            clock_video: false,
-            clock_audio: false,
-        };
-
-        let send = grafton_ndi::Send::new(sender).map_err(|e| {
+        let sender = Sender::new(&handle.ndi, &options).map_err(|e| {
             error!("Failed to create NDI sender: {}", e);
             IoError::NdiSenderFailed(format!("Failed to create sender: {}", e))
         })?;
 
         info!("NDI Sender '{}' created successfully", name);
 
-        Ok(Self { _handle: handle, name, _format, frame_count: 0, send: Some(send) })
+        Ok(Self { _handle: handle, name, _format: format, frame_count: 0, sender })
     }
 
     /// Sends a video frame.
     pub fn send_frame(&mut self, frame: &VideoFrame) -> Result<()> {
-        let send = self
-            .send
-            .as_ref()
-            .ok_or_else(|| IoError::NdiSenderFailed("Sender not initialized".to_string()))?;
-
-        // Extract CPU data
         let data = match &frame.data {
             FrameData::Cpu(data) => data,
             FrameData::Gpu(_) => {
@@ -321,28 +331,17 @@ impl NdiSender {
             }
         };
 
-        // Create NDI video frame and send
-        // Construct a VideoFrame
-        let video_frame = grafton_ndi::VideoFrame {
-            xres: frame.format.width as i32,
-            yres: frame.format.height as i32,
-            fourcc: grafton_ndi::FourCCVideoType::BGRA,
-            frame_rate_n: (frame.format.frame_rate * 1000.0) as i32,
-            frame_rate_d: 1000,
-            picture_aspect_ratio: frame.format.width as f32 / frame.format.height as f32,
-            frame_format_type: grafton_ndi::FrameFormatType::Progressive,
-            timecode: 0, // Use 0 or appropriate value if NDI_LIB_SEND_TIME_VALID is not available
-            p_data: data.as_ptr() as *mut u8,
-            line_stride_or_size: grafton_ndi::LineStrideOrSize {
-                line_stride_in_bytes: (frame.format.width * 4) as i32,
-            },
-            ..Default::default()
-        };
+        let ndi_frame = VideoFrameBuilder::new()
+            .width(frame.format.width as i32)
+            .height(frame.format.height as i32)
+            .pixel_format(NdiPixelFormat::BGRA)
+            .frame_rate(frame.format.frame_rate as i32, 1)
+            .build(data.as_slice())
+            .map_err(|e| IoError::NdiSenderFailed(format!("Failed to build NDI frame: {}", e)))?;
 
-        send.send_video(&video_frame);
+        self.sender.send_video(&ndi_frame);
 
         self.frame_count += 1;
-
         Ok(())
     }
 
@@ -358,25 +357,21 @@ impl NdiSender {
 }
 
 // Stub implementations when NDI feature is disabled
-/// NDI receiver stub (NDI feature disabled)
 #[cfg(not(feature = "ndi"))]
 pub struct NdiReceiver;
 
 #[cfg(not(feature = "ndi"))]
 impl NdiReceiver {
-    /// Create a new NDI receiver stub
     pub fn new() -> std::result::Result<Self, String> {
         Err("NDI feature not enabled".to_string())
     }
 }
 
-/// NDI sender stub (NDI feature disabled)
 #[cfg(not(feature = "ndi"))]
 pub struct NdiSender;
 
 #[cfg(not(feature = "ndi"))]
 impl NdiSender {
-    /// Create a new NDI sender stub
     pub fn new(
         _name: impl Into<String>,
         _format: crate::format::VideoFormat,
@@ -385,12 +380,9 @@ impl NdiSender {
     }
 }
 
-/// NDI source stub (NDI feature disabled)
 #[cfg(not(feature = "ndi"))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct NdiSource {
-    /// Source name
     pub name: String,
-    /// Source URL
-    pub url_address: Option<String>,
+    pub address: Option<String>,
 }

@@ -2,6 +2,7 @@ use crate::app::actions::{handle_mcp_actions, handle_ui_actions};
 use crate::app::core::app_struct::App;
 use crate::orchestration::evaluation::perform_evaluation;
 use crate::orchestration::media::{sync_media_players, update_media_players};
+use crate::orchestration::ndi::{sync_ndi_receivers, sync_ndi_senders, update_ndi_sources};
 use crate::orchestration::outputs::sync_output_windows;
 use anyhow::Result;
 use std::collections::HashSet;
@@ -130,6 +131,14 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     // 6. Media & Animation Updates
     sync_media_players(app);
     update_media_players(app, dt);
+    
+    #[cfg(feature = "ndi")]
+    {
+        sync_ndi_receivers(app);
+        sync_ndi_senders(app);
+        update_ndi_sources(app);
+    }
+    
     let _param_updates = app.state.effect_animator_mut().update(dt as f64);
 
     // 7. Graph Evaluation & Bevy Sync (MODULARIZED)
