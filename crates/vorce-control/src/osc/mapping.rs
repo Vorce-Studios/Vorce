@@ -92,7 +92,7 @@ mod tests {
     }
 
     #[test]
-    fn test_serialization() {
+    fn test_serialization() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let mut mapping = OscMapping::new();
         mapping.set_mapping("/a".into(), ControlTarget::LayerOpacity(0));
         mapping.set_mapping("/b".into(), ControlTarget::PlaybackSpeed(None));
@@ -101,6 +101,7 @@ mod tests {
         let loaded: OscMapping = serde_json::from_str(&json)?;
 
         assert_eq!(mapping, loaded);
+        Ok(())
     }
 
     #[test]

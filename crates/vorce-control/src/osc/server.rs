@@ -129,7 +129,8 @@ mod tests {
     }
 
     #[test]
-    fn test_osc_server_client_communication() {
+    fn test_osc_server_client_communication() -> std::result::Result<(), Box<dyn std::error::Error>>
+    {
         use crate::osc::client::OscClient;
         use rosc::OscType;
 
@@ -155,10 +156,11 @@ mod tests {
         } else {
             panic!("Expected OSC packet");
         }
+        Ok(())
     }
 
     #[test]
-    fn test_osc_backpressure() {
+    fn test_osc_backpressure() -> std::result::Result<(), Box<dyn std::error::Error>> {
         use crate::osc::client::OscClient;
         use rosc::OscType;
 
@@ -222,5 +224,6 @@ mod tests {
             }
         }
         assert!(found_alive, "Server should be responsive after flood");
+        Ok(())
     }
 }

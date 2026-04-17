@@ -236,7 +236,7 @@ pub fn control_target_to_address(target: &ControlTarget) -> String {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn test_legacy_namespaces() {
+    fn test_legacy_namespaces() -> std::result::Result<(), Box<dyn std::error::Error>> {
         // Test /Vorce/
         let target1 = parse_osc_address("/Vorce/layer/0/opacity")?;
         assert_eq!(target1, ControlTarget::LayerOpacity(0));
@@ -244,44 +244,50 @@ mod tests {
         // Test /mapmap/
         let target2 = parse_osc_address("/mapmap/layer/5/position")?;
         assert_eq!(target2, ControlTarget::LayerPosition(5));
+        Ok(())
     }
 
     use super::*;
 
     #[test]
-    fn test_parse_layer_opacity() {
+    fn test_parse_layer_opacity() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let target = parse_osc_address("/vorce/layer/0/opacity")?;
         assert_eq!(target, ControlTarget::LayerOpacity(0));
+        Ok(())
     }
 
     #[test]
-    fn test_parse_layer_position() {
+    fn test_parse_layer_position() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let target = parse_osc_address("/vorce/layer/5/position")?;
         assert_eq!(target, ControlTarget::LayerPosition(5));
+        Ok(())
     }
 
     #[test]
-    fn test_parse_paint_parameter() {
+    fn test_parse_paint_parameter() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let target = parse_osc_address("/vorce/paint/3/parameter/speed")?;
         assert_eq!(
             target,
             ControlTarget::PaintParameter(3, "speed".to_string())
         );
+        Ok(())
     }
 
     #[test]
-    fn test_parse_effect_parameter() {
+    fn test_parse_effect_parameter() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let target = parse_osc_address("/vorce/effect/1/parameter/intensity")?;
         assert_eq!(
             target,
             ControlTarget::EffectParameter(1, "intensity".to_string())
         );
+        Ok(())
     }
 
     #[test]
-    fn test_parse_playback_speed() {
+    fn test_parse_playback_speed() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let target = parse_osc_address("/vorce/playback/speed")?;
         assert_eq!(target, ControlTarget::PlaybackSpeed(None));
+        Ok(())
     }
 
     #[test]
@@ -305,49 +311,56 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_layer_rotation() {
+    fn test_parse_layer_rotation() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let target = parse_osc_address("/vorce/layer/2/rotation")?;
         assert_eq!(target, ControlTarget::LayerRotation(2));
+        Ok(())
     }
 
     #[test]
-    fn test_parse_layer_scale() {
+    fn test_parse_layer_scale() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let target = parse_osc_address("/vorce/layer/7/scale")?;
         assert_eq!(target, ControlTarget::LayerScale(7));
+        Ok(())
     }
 
     #[test]
-    fn test_parse_layer_visibility() {
+    fn test_parse_layer_visibility() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let target = parse_osc_address("/vorce/layer/10/visibility")?;
         assert_eq!(target, ControlTarget::LayerVisibility(10));
+        Ok(())
     }
 
     #[test]
-    fn test_parse_playback_position() {
+    fn test_parse_playback_position() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let target = parse_osc_address("/vorce/playback/position")?;
         assert_eq!(target, ControlTarget::PlaybackPosition);
+        Ok(())
     }
 
     #[test]
-    fn test_parse_output_brightness() {
+    fn test_parse_output_brightness() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let target = parse_osc_address("/vorce/output/0/brightness")?;
         assert_eq!(target, ControlTarget::OutputBrightness(0));
+        Ok(())
     }
 
     #[test]
-    fn test_parse_master_opacity() {
+    fn test_parse_master_opacity() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let target = parse_osc_address("/vorce/master/opacity")?;
         assert_eq!(target, ControlTarget::MasterOpacity);
+        Ok(())
     }
 
     #[test]
-    fn test_parse_master_blackout() {
+    fn test_parse_master_blackout() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let target = parse_osc_address("/vorce/master/blackout")?;
         assert_eq!(target, ControlTarget::MasterBlackout);
+        Ok(())
     }
 
     #[test]
-    fn test_round_trip_layer_targets() {
+    fn test_round_trip_layer_targets() -> std::result::Result<(), Box<dyn std::error::Error>> {
         // Test that parsing the address generated from a target gives back the same target
         let targets = vec![
             ControlTarget::LayerOpacity(5),
@@ -362,10 +375,11 @@ mod tests {
             let parsed = parse_osc_address(&address)?;
             assert_eq!(parsed, target);
         }
+        Ok(())
     }
 
     #[test]
-    fn test_round_trip_master_targets() {
+    fn test_round_trip_master_targets() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let targets = vec![ControlTarget::MasterOpacity, ControlTarget::MasterBlackout];
 
         for target in targets {
@@ -373,10 +387,11 @@ mod tests {
             let parsed = parse_osc_address(&address)?;
             assert_eq!(parsed, target);
         }
+        Ok(())
     }
 
     #[test]
-    fn test_round_trip_playback_targets() {
+    fn test_round_trip_playback_targets() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let targets = vec![
             ControlTarget::PlaybackSpeed(None),
             ControlTarget::PlaybackPosition,
@@ -387,6 +402,7 @@ mod tests {
             let parsed = parse_osc_address(&address)?;
             assert_eq!(parsed, target);
         }
+        Ok(())
     }
 
     #[test]
