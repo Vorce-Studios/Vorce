@@ -6,18 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-<<<<<<< HEAD
-- 2026-04-14: chore: 🧹 [Code Health] Remove unused imports in controller overlay panel (#248)
+- 2026-04-16: refactor: Sync next_id with graph in NodeEditor
 - 2026-04-14: chore: 🧹 [code health] Remove dead CachedTexture struct and dummy allocations
 - 2026-04-14: chore: Code Health: Remove unused imports in controller list panel
-=======
-<<<<<<< HEAD
-- 2026-04-14: chore: 🧹 [code health] Remove dead CachedTexture struct and dummy allocations
-- 2026-04-14: chore: Code Health: Remove unused imports in controller list panel
-=======
-- 2026-04-14: chore: 🧹 [Code Health] Remove unused imports in controller overlay panel (#248)
->>>>>>> e5903724c0db4b98572bfe1cadeda4bc7c23985d
->>>>>>> 72b4c41e9680b2ed702879cecfc942f8681337e9
 - 2026-04-14: ci: Exclude .vscode/skills from markdownlint to unblock PRs (#245)
 - 2026-04-12: docs: MAI-007 Render-Queue-Readiness, Parity and Optimization Tracker (#122)
 - 2026-04-12: perf: Bolt: Performance-Optimierung durch Vermeidung redundanter String-Allokationen in UI-Schleifen (#221)
@@ -41,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 2026-04-05: fix: 🛡️ Sentinel: [HIGH] Fix DoS vulnerability via panic-propagation in decoder thread (#190)
 - 2026-04-05: fix: 🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap panics in Hue Controller (#186)
 - 2026-04-05: feat: 🎨 UX: Improve hold to action accessibility labels and tooltips (#142)
-- 2026-04-04: chore: Update dependencies (tower-http, core-foundation, hyper, grafton-ndi, ron, windows, tokio, axum, zip, arc-swap) (#185, #184, #183, #182, #181, #179, #178, #177, #176)
+- 2026-04-04: chore: Update dependencies (tower-http, core-foundation, hyper, grafton-ndi, ron, windows, tokio, axum, zip, arc-swap) (#185, #184, #183, #182, #181, #180, #179, #178, #177, #176)
 - 2026-04-04: perf: ⚡ Bolt: Optimize NodeFinder text filtering performance (#173)
 - 2026-04-04: feat: SI-07_MAI-002: Produktive Parameter-Bindings fuer Timeline-Automation (#170)
 - 2026-04-04: feat: SI-07_MAI-007: Visual-Capture-Release-Smoke-Baseline benchmarks (#168, #165, #160)
