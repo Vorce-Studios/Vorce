@@ -782,9 +782,11 @@ impl TimelineV2 {
                 Vec<&vorce_core::animation::AnimationTrack>,
             > = std::collections::BTreeMap::new();
             for track in &clip.tracks {
-                let parts: Vec<&str> = track.name.split('.').collect();
-                let group_name =
-                    if parts.len() > 1 { parts[0].to_string() } else { "General".to_string() };
+                let group_name = if let Some((part0, _)) = track.name.split_once('.') {
+                    part0.to_string()
+                } else {
+                    "General".to_string()
+                };
                 track_groups.entry(group_name).or_default().push(track);
             }
 
