@@ -22,6 +22,7 @@ pub struct WgpuBackend {
     pub adapter_info: wgpu::AdapterInfo,
     #[allow(dead_code)]
     staging_belt: StagingBelt,
+    uploader: crate::uploader::WgpuFrameUploader,
     texture_counter: u64,
     shader_counter: u64,
     start_time: std::time::Instant,
@@ -113,12 +114,17 @@ impl WgpuBackend {
 
         let staging_belt = wgpu::util::StagingBelt::new(device.clone(), 1024 * 1024); // 1MB chunks
 
+        let dev_arc = Arc::new(device);
+        let queue_arc = Arc::new(queue);
+        let uploader = crate::uploader::WgpuFrameUploader::new(dev_arc.clone(), queue_arc.clone());
+
         Ok(Self {
             instance: Arc::new(instance),
-            device: Arc::new(device),
-            queue: Arc::new(queue),
+            device: dev_arc,
+            queue: queue_arc,
             adapter_info,
             staging_belt,
+            uploader,
             texture_counter: 0,
             shader_counter: 0,
             start_time: std::time::Instant::now(),
@@ -199,26 +205,8 @@ impl RenderBackend for WgpuBackend {
     }
 
     fn upload_texture(&mut self, handle: TextureHandle, data: &[u8]) -> Result<()> {
-        let bytes_per_pixel = 4; // Assume RGBA8
-        self.queue.write_texture(
-            wgpu::TexelCopyTextureInfo {
-                texture: &handle.texture,
-                mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All,
-            },
-            data,
-            wgpu::TexelCopyBufferLayout {
-                offset: 0,
-                bytes_per_row: Some(handle.width * bytes_per_pixel),
-                rows_per_image: Some(handle.height),
-            },
-            wgpu::Extent3d {
-                width: handle.width,
-                height: handle.height,
-                depth_or_array_layers: 1,
-            },
-        );
+        self.uploader
+            .upload(&handle.texture, data, handle.width, handle.height);
         Ok(())
     }
 

@@ -66,12 +66,15 @@ impl Default for TextureDescriptor {
 
 type CachedTextureView = (Arc<wgpu::TextureView>, Arc<AtomicU64>);
 
+use crate::uploader::WgpuFrameUploader;
+
 /// Texture pool for reusing allocations
 pub struct TexturePool {
     device: Arc<wgpu::Device>,
     textures: RwLock<HashMap<String, TextureHandle>>,
     views: RwLock<HashMap<String, CachedTextureView>>,
     start_time: Instant,
+    uploader: parking_lot::RwLock<Option<WgpuFrameUploader>>,
 }
 
 impl TexturePool {
@@ -81,6 +84,7 @@ impl TexturePool {
             textures: RwLock::new(HashMap::new()),
             views: RwLock::new(HashMap::new()),
             start_time: Instant::now(),
+            uploader: parking_lot::RwLock::new(None),
         }
     }
 
@@ -314,25 +318,24 @@ impl TexturePool {
 
         handle.mark_used(self.start_time);
 
-        queue.write_texture(
-            wgpu::TexelCopyTextureInfo {
-                texture: &handle.texture,
-                mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All,
-            },
-            data,
-            wgpu::TexelCopyBufferLayout {
-                offset: 0,
-                bytes_per_row: Some(4 * width),
-                rows_per_image: Some(height),
-            },
-            wgpu::Extent3d {
-                width: handle.width,
-                height: handle.height,
-                depth_or_array_layers: 1,
-            },
-        );
+        // Ensure uploader is initialized
+        {
+            let uploader_guard = self.uploader.read();
+            if uploader_guard.is_none() {
+                drop(uploader_guard);
+                let mut uploader_write = self.uploader.write();
+                if uploader_write.is_none() {
+                    *uploader_write = Some(WgpuFrameUploader::new(
+                        self.device.clone(),
+                        Arc::new(queue.clone()),
+                    ));
+                }
+            }
+        }
+
+        let uploader_guard = self.uploader.read();
+        let uploader = uploader_guard.as_ref().unwrap();
+        uploader.upload(&handle.texture, data, handle.width, handle.height);
     }
 
     /// Release a texture manually.

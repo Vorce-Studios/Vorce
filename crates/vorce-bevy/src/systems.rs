@@ -445,13 +445,22 @@ pub fn particle_system(
 use bevy::render::render_asset::RenderAssets;
 use bevy::render::texture::GpuImage;
 
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+
+pub struct ReadbackState {
+    pub buffer: bevy::render::render_resource::Buffer,
+    pub is_mapping: bool,
+    pub map_finished: Arc<AtomicBool>,
+}
+
 pub fn frame_readback_system(
     // RenderAssets<GpuImage> maps Handle<Image> -> GpuImage
     gpu_images: Res<RenderAssets<GpuImage>>,
     render_output: Res<crate::resources::BevyRenderOutput>,
     render_device: Res<bevy::render::renderer::RenderDevice>,
     render_queue: Res<bevy::render::renderer::RenderQueue>,
-    mut buffer_cache: Local<Option<bevy::render::render_resource::Buffer>>,
+    mut buffer_cache: Local<Option<ReadbackState>>,
 ) {
     if let Some(gpu_image) = gpu_images.get(&render_output.image_handle) {
         let texture = &gpu_image.texture;
@@ -473,68 +482,43 @@ pub fn frame_readback_system(
         let output_buffer_size = (bytes_per_row * height) as u64;
 
         // Ensure buffer exists and is correct size
-        if buffer_cache.is_none() || buffer_cache.as_ref().unwrap().size() != output_buffer_size {
-            *buffer_cache = Some(render_device.create_buffer(
-                &bevy::render::render_resource::BufferDescriptor {
-                    label: Some("Readback Buffer"),
-                    size: output_buffer_size,
-                    usage: bevy::render::render_resource::BufferUsages::MAP_READ
-                        | bevy::render::render_resource::BufferUsages::COPY_DST,
-                    mapped_at_creation: false,
-                },
-            ));
+        if buffer_cache.is_none()
+            || buffer_cache.as_ref().unwrap().buffer.size() != output_buffer_size
+        {
+            *buffer_cache = Some(ReadbackState {
+                buffer: render_device.create_buffer(
+                    &bevy::render::render_resource::BufferDescriptor {
+                        label: Some("Readback Buffer"),
+                        size: output_buffer_size,
+                        usage: bevy::render::render_resource::BufferUsages::MAP_READ
+                            | bevy::render::render_resource::BufferUsages::COPY_DST,
+                        mapped_at_creation: false,
+                    },
+                ),
+                is_mapping: false,
+                map_finished: Arc::new(AtomicBool::new(false)),
+            });
         }
 
-        let buffer = buffer_cache.as_ref().unwrap();
+        let state = buffer_cache.as_mut().unwrap();
+        let buffer = &state.buffer;
 
-        let mut encoder = render_device.create_command_encoder(
-            &bevy::render::render_resource::CommandEncoderDescriptor {
-                label: Some("Readback Encoder"),
-            },
-        );
+        // If a mapping is currently in progress, poll to advance it.
+        if state.is_mapping {
+            let _ = render_device.poll(wgpu::PollType::Wait {
+                submission_index: None,
+                timeout: Some(std::time::Duration::from_millis(0)),
+            });
 
-        encoder.copy_texture_to_buffer(
-            bevy::render::render_resource::TexelCopyTextureInfo {
-                texture,
-                mip_level: 0,
-                origin: bevy::render::render_resource::Origin3d::ZERO,
-                aspect: bevy::render::render_resource::TextureAspect::All,
-            },
-            bevy::render::render_resource::TexelCopyBufferInfo {
-                buffer,
-                layout: bevy::render::render_resource::TexelCopyBufferLayout {
-                    offset: 0,
-                    bytes_per_row: Some(bytes_per_row),
-                    rows_per_image: Some(height),
-                },
-            },
-            bevy::render::render_resource::Extent3d {
-                width,
-                height,
-                depth_or_array_layers: 1,
-            },
-        );
+            // Is it ready?
+            if !state.map_finished.load(Ordering::SeqCst) {
+                // Not ready yet, skip this frame
+                return;
+            }
 
-        let submission_index = render_queue.submit(std::iter::once(encoder.finish()));
-
-        // Complete the readback in-frame so the buffer is always unmapped before the
-        // next copy. This trades some throughput for a much more stable embedded runner.
-        let (tx, rx) = std::sync::mpsc::channel();
-        let buffer_slice = buffer.slice(..);
-        buffer_slice.map_async(bevy::render::render_resource::MapMode::Read, move |res| {
-            let _ = tx.send(res);
-        });
-
-        render_device
-            .poll(wgpu::PollType::Wait {
-                submission_index: Some(submission_index),
-                timeout: None,
-            })
-            .unwrap();
-
-        match rx.recv() {
-            Ok(Ok(_)) => {
-                let data = buffer_slice.get_mapped_range();
+            // It's mapped, grab the data
+            {
+                let data = buffer.slice(..).get_mapped_range();
 
                 if let Ok(mut lock) = render_output.last_frame_data.lock() {
                     if padding == 0 {
@@ -550,16 +534,65 @@ pub fn frame_readback_system(
                         *lock = Some(std::sync::Arc::new(unpadded));
                     }
                 }
+            }
 
-                drop(data);
-                buffer.unmap();
-            }
-            Ok(Err(err)) => {
-                tracing::warn!("Bevy frame readback mapping failed: {:?}", err);
-            }
-            Err(err) => {
-                tracing::warn!("Bevy frame readback channel failed: {}", err);
-            }
+            // Unmap and mark as not mapping
+            buffer.unmap();
+            state.is_mapping = false;
+            state.map_finished.store(false, Ordering::SeqCst);
+        }
+
+        // Only start a new copy/map if we are NOT mapping.
+        if !state.is_mapping {
+            let mut encoder = render_device.create_command_encoder(
+                &bevy::render::render_resource::CommandEncoderDescriptor {
+                    label: Some("Readback Encoder"),
+                },
+            );
+
+            encoder.copy_texture_to_buffer(
+                bevy::render::render_resource::TexelCopyTextureInfo {
+                    texture,
+                    mip_level: 0,
+                    origin: bevy::render::render_resource::Origin3d::ZERO,
+                    aspect: bevy::render::render_resource::TextureAspect::All,
+                },
+                bevy::render::render_resource::TexelCopyBufferInfo {
+                    buffer,
+                    layout: bevy::render::render_resource::TexelCopyBufferLayout {
+                        offset: 0,
+                        bytes_per_row: Some(bytes_per_row),
+                        rows_per_image: Some(height),
+                    },
+                },
+                bevy::render::render_resource::Extent3d {
+                    width,
+                    height,
+                    depth_or_array_layers: 1,
+                },
+            );
+
+            render_queue.submit(std::iter::once(encoder.finish()));
+
+            // Start mapping asynchronously
+            state.is_mapping = true;
+            state.map_finished.store(false, Ordering::SeqCst);
+            let buffer_slice = buffer.slice(..);
+            let map_finished_clone = state.map_finished.clone();
+
+            buffer_slice.map_async(bevy::render::render_resource::MapMode::Read, move |res| {
+                if res.is_ok() {
+                    map_finished_clone.store(true, Ordering::SeqCst);
+                } else {
+                    tracing::warn!("Bevy frame readback mapping failed");
+                }
+            });
+
+            // Poll once to prompt the GPU to process the submitted mapping request.
+            let _ = render_device.poll(wgpu::PollType::Wait {
+                submission_index: None,
+                timeout: Some(std::time::Duration::from_millis(0)),
+            });
         }
     }
 }

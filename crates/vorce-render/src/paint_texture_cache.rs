@@ -1,5 +1,6 @@
 //! Paint texture cache - manages GPU textures for paints
 
+use crate::uploader::WgpuFrameUploader;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -9,7 +10,9 @@ use wgpu;
 /// Caches GPU textures for paints to avoid recreating them every frame
 pub struct PaintTextureCache {
     device: Arc<wgpu::Device>,
+    #[allow(dead_code)]
     queue: Arc<wgpu::Queue>,
+    uploader: WgpuFrameUploader,
     /// Map of PaintId -> (TextureView, last_updated_version)
     cache: RwLock<HashMap<PaintId, CachedTexture>>,
 }
@@ -24,9 +27,11 @@ struct CachedTexture {
 
 impl PaintTextureCache {
     pub fn new(device: Arc<wgpu::Device>, queue: Arc<wgpu::Queue>) -> Self {
+        let uploader = WgpuFrameUploader::new(device.clone(), queue.clone());
         Self {
             device,
             queue,
+            uploader,
             cache: RwLock::new(HashMap::new()),
         }
     }
@@ -130,26 +135,8 @@ impl PaintTextureCache {
             }
         };
 
-        // Upload to GPU
-        self.queue.write_texture(
-            wgpu::TexelCopyTextureInfo {
-                texture: &texture,
-                mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All,
-            },
-            &data,
-            wgpu::TexelCopyBufferLayout {
-                offset: 0,
-                bytes_per_row: Some(width * 4),
-                rows_per_image: Some(height),
-            },
-            wgpu::Extent3d {
-                width,
-                height,
-                depth_or_array_layers: 1,
-            },
-        );
+        // Upload to GPU using staging buffer
+        self.uploader.upload(&texture, &data, width, height);
 
         texture
     }
