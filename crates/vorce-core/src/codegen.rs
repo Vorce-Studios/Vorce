@@ -85,8 +85,14 @@ impl WGSLCodegen {
 
         // Generate shader structure
         writeln!(code, "// Auto-generated WGSL shader from shader graph")
+<<<<<<< HEAD
             .expect("WGSL codegen failed");
         writeln!(code, "// Graph: {}\n", self.graph.name).expect("WGSL codegen failed");
+=======
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "// Graph: {}\n", self.graph.name)
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         // Generate uniforms
         self.generate_uniforms(&mut code)?;
@@ -156,33 +162,65 @@ impl WGSLCodegen {
 
     /// Generate uniform declarations
     fn generate_uniforms(&self, code: &mut String) -> Result<()> {
+<<<<<<< HEAD
         writeln!(code, "// Uniforms").expect("WGSL codegen failed");
         writeln!(code, "struct Uniforms {{").expect("WGSL codegen failed");
         writeln!(code, "    time: f32,").expect("WGSL codegen failed");
         writeln!(code, "    resolution: vec2<f32>,").expect("WGSL codegen failed");
         writeln!(code, "    mouse: vec2<f32>,").expect("WGSL codegen failed");
+=======
+        writeln!(code, "// Uniforms")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "struct Uniforms {{")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    time: f32,")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    resolution: vec2<f32>,")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    mouse: vec2<f32>,")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         // Add parameter uniforms
         for node_id in &self.node_execution_order {
             if let Some(node) = self.graph.nodes.get(node_id) {
                 if node.node_type == NodeType::ParameterInput {
                     for name in node.parameters.keys() {
+<<<<<<< HEAD
                         writeln!(code, "    param_{}: f32,", name).expect("WGSL codegen failed");
+=======
+                        writeln!(code, "    param_{}: f32,", name)
+                            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
                     }
                 }
             }
         }
 
+<<<<<<< HEAD
         writeln!(code, "}}").expect("WGSL codegen failed");
         writeln!(code, "@group(0) @binding(0) var<uniform> uniforms: Uniforms;\n")
             .expect("WGSL codegen failed");
+=======
+        writeln!(code, "}}").unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "@group(0) @binding(0) var<uniform> uniforms: Uniforms;\n"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         Ok(())
     }
 
     /// Generate texture binding declarations
     fn generate_texture_bindings(&self, code: &mut String) -> Result<()> {
+<<<<<<< HEAD
         writeln!(code, "// Textures").expect("WGSL codegen failed");
+=======
+        writeln!(code, "// Textures")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         let mut texture_count = 0;
         for node_id in &self.node_execution_order {
@@ -194,26 +232,43 @@ impl WGSLCodegen {
                         "@group(0) @binding({}) var texture_{}: texture_2d<f32>;",
                         binding, node.id
                     )
+<<<<<<< HEAD
                     .expect("WGSL codegen failed");
+=======
+                    .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
                     writeln!(
                         code,
                         "@group(0) @binding({}) var sampler_{}: sampler;",
                         binding + 1,
                         node.id
                     )
+<<<<<<< HEAD
                     .expect("WGSL codegen failed");
+=======
+                    .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
                     texture_count += 2;
                 }
             }
         }
 
+<<<<<<< HEAD
         writeln!(code).expect("WGSL codegen failed");
+=======
+        writeln!(code).unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
         Ok(())
     }
 
     /// Generate helper functions for node operations
     fn generate_helper_functions(&mut self, code: &mut String) -> Result<()> {
+<<<<<<< HEAD
         writeln!(code, "// Helper Functions\n").expect("WGSL codegen failed");
+=======
+        writeln!(code, "// Helper Functions\n")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         // Generate functions for complex node types
         // Optimization: Iterate directly over node_execution_order without cloning.
@@ -250,11 +305,23 @@ impl WGSLCodegen {
 
     /// Generate main fragment shader
     fn generate_fragment_shader(&self, code: &mut String) -> Result<()> {
+<<<<<<< HEAD
         writeln!(code, "// Fragment Shader").expect("WGSL codegen failed");
         writeln!(code, "@fragment").expect("WGSL codegen failed");
         writeln!(code, "fn fs_main(").expect("WGSL codegen failed");
         writeln!(code, "    @location(0) uv: vec2<f32>,").expect("WGSL codegen failed");
         writeln!(code, ") -> @location(0) vec4<f32> {{").expect("WGSL codegen failed");
+=======
+        writeln!(code, "// Fragment Shader")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "@fragment").unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "fn fs_main(")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    @location(0) uv: vec2<f32>,")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, ") -> @location(0) vec4<f32> {{")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         // Generate variable declarations and computations
         for node_id in &self.node_execution_order {
@@ -264,7 +331,14 @@ impl WGSLCodegen {
         }
 
         // Return output
+<<<<<<< HEAD
         let output_node = self.graph.output_node().expect("WGSL codegen failed");
+=======
+        let output_node = self
+            .graph
+            .output_node()
+            .unwrap_or_else(|| panic!("Graph has no output node"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
         let output_input = &output_node.inputs[0];
 
         if let Some((source_node, output_name)) = &output_input.connected_output {
@@ -274,17 +348,28 @@ impl WGSLCodegen {
                 source_node,
                 output_name.as_str().to_lowercase()
             )
+<<<<<<< HEAD
             .expect("WGSL codegen failed");
+=======
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
         } else if let Some(default) = &output_input.default_value {
             writeln!(
                 code,
                 "    return vec4<f32>({}, {}, {}, {});",
                 default.x, default.y, default.z, default.w
             )
+<<<<<<< HEAD
             .expect("WGSL codegen failed");
         }
 
         writeln!(code, "}}").expect("WGSL codegen failed");
+=======
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        }
+
+        writeln!(code, "}}").unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         Ok(())
     }
@@ -293,11 +378,17 @@ impl WGSLCodegen {
     fn generate_node_code(&self, code: &mut String, node: &ShaderNode) -> Result<()> {
         match node.node_type {
             NodeType::UVInput => {
+<<<<<<< HEAD
                 writeln!(code, "    let node_{}_uv = uv;", node.id).expect("WGSL codegen failed");
+=======
+                writeln!(code, "    let node_{}_uv = uv;", node.id)
+                    .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
             }
 
             NodeType::TimeInput => {
                 writeln!(code, "    let node_{}_time = uniforms.time;", node.id)
+<<<<<<< HEAD
                     .expect("WGSL codegen failed");
             }
 
@@ -315,6 +406,9 @@ impl WGSLCodegen {
             NodeType::AudioInput => {
                 writeln!(code, "    let node_{}_value = uniforms.audio_value;", node.id)
                     .expect("WGSL codegen failed");
+=======
+                    .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
             }
 
             NodeType::TextureInput => {
@@ -336,6 +430,7 @@ impl WGSLCodegen {
                     tex_var.replace("texture", "sampler"),
                     uv_var
                 )
+<<<<<<< HEAD
                 .expect("WGSL codegen failed");
                 writeln!(code, "    let node_{}_alpha = node_{}_color.a;", node.id, node.id)
                     .expect("WGSL codegen failed");
@@ -350,6 +445,9 @@ impl WGSLCodegen {
                 let uv_var = self.get_input_variable(uv_input)?;
                 let lod_var = self.get_input_variable(lod_input)?;
 
+=======
+                .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
                 writeln!(
                     code,
                     "    let node_{}_color = textureSampleLevel({}, {}, {}, {});",
@@ -359,6 +457,7 @@ impl WGSLCodegen {
                     uv_var,
                     lod_var
                 )
+<<<<<<< HEAD
                 .expect("WGSL codegen failed");
             }
 
@@ -378,6 +477,9 @@ impl WGSLCodegen {
                     mix_factor
                 )
                 .expect("WGSL codegen failed");
+=======
+                .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
             }
 
             NodeType::Add | NodeType::Subtract | NodeType::Multiply | NodeType::Divide => {
@@ -474,6 +576,7 @@ impl WGSLCodegen {
                     "    let node_{}_uv = {} + {} * {};",
                     node.id, uv, distortion, amount
                 )
+<<<<<<< HEAD
                 .expect("WGSL codegen failed");
             }
 
@@ -545,11 +648,27 @@ impl WGSLCodegen {
                     uv
                 )
                 .expect("WGSL codegen failed");
+=======
+                .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
             }
 
             NodeType::Output => {
                 // Output node doesn't generate code, just connects
             }
+<<<<<<< HEAD
+=======
+
+            _ => {
+                // Placeholder for unimplemented nodes
+                writeln!(
+                    code,
+                    "    // TODO: Implement {}",
+                    node.node_type.display_name()
+                )
+                .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+            }
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
         }
 
         Ok(())
@@ -561,7 +680,11 @@ impl WGSLCodegen {
         let b = self.get_input_variable(&node.inputs[1])?;
 
         writeln!(code, "    let node_{}_result = pow({}, {});", node.id, a, b)
+<<<<<<< HEAD
             .expect("WGSL codegen failed");
+=======
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         Ok(())
     }
@@ -572,8 +695,17 @@ impl WGSLCodegen {
         let min = self.get_input_variable(&node.inputs[1])?;
         let max = self.get_input_variable(&node.inputs[2])?;
 
+<<<<<<< HEAD
         writeln!(code, "    let node_{}_result = clamp({}, {}, {});", node.id, val, min, max)
             .expect("WGSL codegen failed");
+=======
+        writeln!(
+            code,
+            "    let node_{}_result = clamp({}, {}, {});",
+            node.id, val, min, max
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         Ok(())
     }
@@ -589,7 +721,11 @@ impl WGSLCodegen {
             "    let node_{}_result = smoothstep({}, {}, {});",
             node.id, edge0, edge1, x
         )
+<<<<<<< HEAD
         .expect("WGSL codegen failed");
+=======
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         Ok(())
     }
@@ -601,8 +737,17 @@ impl WGSLCodegen {
         let b = self.get_input_variable(&node.inputs[2])?;
         let a = self.get_input_variable(&node.inputs[3])?;
 
+<<<<<<< HEAD
         writeln!(code, "    let node_{}_color = vec4<f32>({}, {}, {}, {});", node.id, r, g, b, a)
             .expect("WGSL codegen failed");
+=======
+        writeln!(
+            code,
+            "    let node_{}_color = vec4<f32>({}, {}, {}, {});",
+            node.id, r, g, b, a
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         Ok(())
     }
@@ -611,10 +756,21 @@ impl WGSLCodegen {
     fn generate_split_op(&self, code: &mut String, node: &ShaderNode) -> Result<()> {
         let color = self.get_input_variable(&node.inputs[0])?;
 
+<<<<<<< HEAD
         writeln!(code, "    let node_{}_r = {}.r;", node.id, color).expect("WGSL codegen failed");
         writeln!(code, "    let node_{}_g = {}.g;", node.id, color).expect("WGSL codegen failed");
         writeln!(code, "    let node_{}_b = {}.b;", node.id, color).expect("WGSL codegen failed");
         writeln!(code, "    let node_{}_a = {}.a;", node.id, color).expect("WGSL codegen failed");
+=======
+        writeln!(code, "    let node_{}_r = {}.r;", node.id, color)
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let node_{}_g = {}.g;", node.id, color)
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let node_{}_b = {}.b;", node.id, color)
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let node_{}_a = {}.a;", node.id, color)
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         Ok(())
     }
@@ -632,8 +788,17 @@ impl WGSLCodegen {
             _ => return Err(CodegenError::GenerationError("Invalid math op".to_string())),
         };
 
+<<<<<<< HEAD
         writeln!(code, "    let node_{}_result = {} {} {};", node.id, a, op, b)
             .expect("WGSL codegen failed");
+=======
+        writeln!(
+            code,
+            "    let node_{}_result = {} {} {};",
+            node.id, a, op, b
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         Ok(())
     }
@@ -648,8 +813,17 @@ impl WGSLCodegen {
             _ => return Err(CodegenError::GenerationError("Invalid trig op".to_string())),
         };
 
+<<<<<<< HEAD
         writeln!(code, "    let node_{}_result = {}({});", node.id, func, input)
             .expect("WGSL codegen failed");
+=======
+        writeln!(
+            code,
+            "    let node_{}_result = {}({});",
+            node.id, func, input
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         Ok(())
     }
@@ -660,8 +834,17 @@ impl WGSLCodegen {
         let b = self.get_input_variable(&node.inputs[1])?;
         let t = self.get_input_variable(&node.inputs[2])?;
 
+<<<<<<< HEAD
         writeln!(code, "    let node_{}_result = mix({}, {}, {});", node.id, a, b, t)
             .expect("WGSL codegen failed");
+=======
+        writeln!(
+            code,
+            "    let node_{}_result = mix({}, {}, {});",
+            node.id, a, b, t
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         Ok(())
     }
@@ -680,7 +863,11 @@ impl WGSLCodegen {
             "    let node_{}_result = {} + vec4<f32>({}, {}, {}, 0.0);",
             node.id, color, amount, amount, amount
         )
+<<<<<<< HEAD
         .expect("WGSL codegen failed");
+=======
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         Ok(())
     }
@@ -694,8 +881,17 @@ impl WGSLCodegen {
             .map(|v| format!("{}", v))
             .unwrap_or_else(|| "1.0".to_string());
 
+<<<<<<< HEAD
         writeln!(code, "    let node_{}_result = ({} - 0.5) * {} + 0.5;", node.id, color, amount)
             .expect("WGSL codegen failed");
+=======
+        writeln!(
+            code,
+            "    let node_{}_result = ({} - 0.5) * {} + 0.5;",
+            node.id, color, amount
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         Ok(())
     }
@@ -704,14 +900,27 @@ impl WGSLCodegen {
     fn generate_desaturate_op(&self, code: &mut String, node: &ShaderNode) -> Result<()> {
         let color = self.get_input_variable(&node.inputs[0])?;
 
+<<<<<<< HEAD
         writeln!(code, "    let gray = dot({}.rgb, vec3<f32>(0.299, 0.587, 0.114));", color)
             .expect("WGSL codegen failed");
+=======
+        writeln!(
+            code,
+            "    let gray = dot({}.rgb, vec3<f32>(0.299, 0.587, 0.114));",
+            color
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
         writeln!(
             code,
             "    let node_{}_result = vec4<f32>(vec3<f32>(gray), {}.a);",
             node.id, color
         )
+<<<<<<< HEAD
         .expect("WGSL codegen failed");
+=======
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         Ok(())
     }
@@ -725,6 +934,7 @@ impl WGSLCodegen {
         let translation_val =
             node.parameters.get("translation").unwrap_or(&ParameterValue::Vec2([0.0, 0.0]));
 
+<<<<<<< HEAD
         writeln!(code, "    // UV Transform").expect("WGSL codegen failed");
         writeln!(code, "    var node_{}_uv_temp = {} - vec2<f32>(0.5, 0.5);", node.id, uv)
             .expect("WGSL codegen failed");
@@ -742,21 +952,68 @@ impl WGSLCodegen {
 
         writeln!(code, "    let node_{}_rot_uv = vec2<f32>(", node.id)
             .expect("WGSL codegen failed");
+=======
+        writeln!(code, "    // UV Transform")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "    var node_{}_uv_temp = {} - vec2<f32>(0.5, 0.5);",
+            node.id, uv
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let node_{}_scale = {};", node.id, scale_val)
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let node_{}_rot = {};", node.id, rotation_val)
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "    let node_{}_trans = {};",
+            node.id, translation_val
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+
+        writeln!(
+            code,
+            "    let node_{}_cos_r = cos(node_{}_rot);",
+            node.id, node.id
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "    let node_{}_sin_r = sin(node_{}_rot);",
+            node.id, node.id
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+
+        writeln!(code, "    let node_{}_rot_uv = vec2<f32>(", node.id)
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
         writeln!(
             code,
             "        node_{}_uv_temp.x * node_{}_cos_r - node_{}_uv_temp.y * node_{}_sin_r,",
             node.id, node.id, node.id, node.id
         )
+<<<<<<< HEAD
         .expect("WGSL codegen failed");
+=======
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
         writeln!(
             code,
             "        node_{}_uv_temp.x * node_{}_sin_r + node_{}_uv_temp.y * node_{}_cos_r",
             node.id, node.id, node.id, node.id
         )
+<<<<<<< HEAD
         .expect("WGSL codegen failed");
         writeln!(code, "    );").expect("WGSL codegen failed");
 
         writeln!(code, "    let node_{}_uv = (node_{}_rot_uv / node_{}_scale) + vec2<f32>(0.5, 0.5) + node_{}_trans;", node.id, node.id, node.id, node.id).expect("WGSL codegen failed");
+=======
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    );").unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+
+        writeln!(code, "    let node_{}_uv = (node_{}_rot_uv / node_{}_scale) + vec2<f32>(0.5, 0.5) + node_{}_trans;", node.id, node.id, node.id, node.id).unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         Ok(())
     }
@@ -798,6 +1055,7 @@ impl WGSLCodegen {
             return Ok(());
         }
 
+<<<<<<< HEAD
         writeln!(code, "fn blur_sample(tex: texture_2d<f32>, samp: sampler, uv: vec2<f32>, radius: f32) -> vec4<f32> {{").expect("WGSL codegen failed");
         writeln!(code, "    var color = vec4<f32>(0.0);").expect("WGSL codegen failed");
         writeln!(code, "    let samples = 9;").expect("WGSL codegen failed");
@@ -812,6 +1070,35 @@ impl WGSLCodegen {
         writeln!(code, "    }}").expect("WGSL codegen failed");
         writeln!(code, "    return color / f32(samples);").expect("WGSL codegen failed");
         writeln!(code, "}}\n").expect("WGSL codegen failed");
+=======
+        writeln!(code, "fn blur_sample(tex: texture_2d<f32>, samp: sampler, uv: vec2<f32>, radius: f32) -> vec4<f32> {{").unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    var color = vec4<f32>(0.0);")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let samples = 9;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let offset = radius / 100.0;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    for (var x = -1; x <= 1; x++) {{")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "        for (var y = -1; y <= 1; y++) {{")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "            let sample_uv = uv + vec2<f32>(f32(x), f32(y)) * offset;"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "            color += textureSample(tex, samp, sample_uv);"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "        }}")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    }}").unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    return color / f32(samples);")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "}}\n").unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         generated_functions.insert("blur".to_string());
         Ok(())
@@ -825,6 +1112,7 @@ impl WGSLCodegen {
             return Ok(());
         }
 
+<<<<<<< HEAD
         writeln!(code, "fn chromatic_aberration(tex: texture_2d<f32>, samp: sampler, uv: vec2<f32>, amount: f32) -> vec4<f32> {{").expect("WGSL codegen failed");
         writeln!(code, "    let offset = (uv - 0.5) * amount;").expect("WGSL codegen failed");
         writeln!(code, "    let r = textureSample(tex, samp, uv + offset).r;")
@@ -834,6 +1122,20 @@ impl WGSLCodegen {
             .expect("WGSL codegen failed");
         writeln!(code, "    return vec4<f32>(r, g, b, 1.0);").expect("WGSL codegen failed");
         writeln!(code, "}}\n").expect("WGSL codegen failed");
+=======
+        writeln!(code, "fn chromatic_aberration(tex: texture_2d<f32>, samp: sampler, uv: vec2<f32>, amount: f32) -> vec4<f32> {{").unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let offset = (uv - 0.5) * amount;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let r = textureSample(tex, samp, uv + offset).r;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let g = textureSample(tex, samp, uv).g;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let b = textureSample(tex, samp, uv - offset).b;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    return vec4<f32>(r, g, b, 1.0);")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "}}\n").unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         generated_functions.insert("chromatic_aberration".to_string());
         Ok(())
@@ -851,6 +1153,7 @@ impl WGSLCodegen {
             code,
             "fn edge_detect(tex: texture_2d<f32>, samp: sampler, uv: vec2<f32>) -> vec4<f32> {{"
         )
+<<<<<<< HEAD
         .expect("WGSL codegen failed");
         writeln!(code, "    let offset = 1.0 / 512.0;").expect("WGSL codegen failed");
         writeln!(code, "    let c = textureSample(tex, samp, uv).rgb;")
@@ -867,6 +1170,41 @@ impl WGSLCodegen {
             .expect("WGSL codegen failed");
         writeln!(code, "    return vec4<f32>(edge, 1.0);").expect("WGSL codegen failed");
         writeln!(code, "}}\n").expect("WGSL codegen failed");
+=======
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let offset = 1.0 / 512.0;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let c = textureSample(tex, samp, uv).rgb;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "    let t = textureSample(tex, samp, uv + vec2<f32>(0.0, offset)).rgb;"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "    let b = textureSample(tex, samp, uv - vec2<f32>(0.0, offset)).rgb;"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "    let l = textureSample(tex, samp, uv - vec2<f32>(offset, 0.0)).rgb;"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "    let r = textureSample(tex, samp, uv + vec2<f32>(offset, 0.0)).rgb;"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "    let edge = abs(c - t) + abs(c - b) + abs(c - l) + abs(c - r);"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    return vec4<f32>(edge, 1.0);")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "}}\n").unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         generated_functions.insert("edge_detect".to_string());
         Ok(())
@@ -880,6 +1218,7 @@ impl WGSLCodegen {
             return Ok(());
         }
 
+<<<<<<< HEAD
         writeln!(code, "fn kaleidoscope(uv: vec2<f32>, segments: f32) -> vec2<f32> {{")
             .expect("WGSL codegen failed");
         writeln!(code, "    let center = uv - 0.5;").expect("WGSL codegen failed");
@@ -891,6 +1230,32 @@ impl WGSLCodegen {
         writeln!(code, "    return vec2<f32>(cos(new_angle), sin(new_angle)) * radius + 0.5;")
             .expect("WGSL codegen failed");
         writeln!(code, "}}\n").expect("WGSL codegen failed");
+=======
+        writeln!(
+            code,
+            "fn kaleidoscope(uv: vec2<f32>, segments: f32) -> vec2<f32> {{"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let center = uv - 0.5;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let angle = atan2(center.y, center.x);")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let radius = length(center);")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let slice = 6.28318530718 / segments;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "    let new_angle = abs((angle % slice) - slice * 0.5) + slice * 0.5;"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "    return vec2<f32>(cos(new_angle), sin(new_angle)) * radius + 0.5;"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "}}\n").unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         generated_functions.insert("kaleidoscope".to_string());
         Ok(())
@@ -905,6 +1270,7 @@ impl WGSLCodegen {
         }
 
         writeln!(code, "fn hsv_to_rgb(hsv: vec3<f32>) -> vec3<f32> {{")
+<<<<<<< HEAD
             .expect("WGSL codegen failed");
         writeln!(code, "    let h = hsv.x * 6.0;").expect("WGSL codegen failed");
         writeln!(code, "    let s = hsv.y;").expect("WGSL codegen failed");
@@ -927,6 +1293,50 @@ impl WGSLCodegen {
         writeln!(code, "    else {{ rgb = vec3<f32>(c, 0.0, x); }}").expect("WGSL codegen failed");
         writeln!(code, "    return rgb + m;").expect("WGSL codegen failed");
         writeln!(code, "}}\n").expect("WGSL codegen failed");
+=======
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let h = hsv.x * 6.0;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let s = hsv.y;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let v = hsv.z;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let c = v * s;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let x = c * (1.0 - abs((h % 2.0) - 1.0));")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let m = v - c;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    var rgb = vec3<f32>(0.0);")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    if (h < 1.0) {{ rgb = vec3<f32>(c, x, 0.0); }}")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "    else if (h < 2.0) {{ rgb = vec3<f32>(x, c, 0.0); }}"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "    else if (h < 3.0) {{ rgb = vec3<f32>(0.0, c, x); }}"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "    else if (h < 4.0) {{ rgb = vec3<f32>(0.0, x, c); }}"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "    else if (h < 5.0) {{ rgb = vec3<f32>(x, 0.0, c); }}"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    else {{ rgb = vec3<f32>(c, 0.0, x); }}")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    return rgb + m;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "}}\n").unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         generated_functions.insert("hsv_to_rgb".to_string());
         Ok(())
@@ -941,6 +1351,7 @@ impl WGSLCodegen {
         }
 
         writeln!(code, "fn rgb_to_hsv(rgb: vec3<f32>) -> vec3<f32> {{")
+<<<<<<< HEAD
             .expect("WGSL codegen failed");
         writeln!(code, "    let max_c = max(max(rgb.r, rgb.g), rgb.b);")
             .expect("WGSL codegen failed");
@@ -961,6 +1372,42 @@ impl WGSLCodegen {
             .expect("WGSL codegen failed");
         writeln!(code, "    return vec3<f32>(h, s, max_c);").expect("WGSL codegen failed");
         writeln!(code, "}}\n").expect("WGSL codegen failed");
+=======
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let max_c = max(max(rgb.r, rgb.g), rgb.b);")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let min_c = min(min(rgb.r, rgb.g), rgb.b);")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let delta = max_c - min_c;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    var h = 0.0;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    if (delta > 0.0) {{")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "        if (max_c == rgb.r) {{ h = ((rgb.g - rgb.b) / delta) % 6.0; }}"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "        else if (max_c == rgb.g) {{ h = (rgb.b - rgb.r) / delta + 2.0; }}"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(
+            code,
+            "        else {{ h = (rgb.r - rgb.g) / delta + 4.0; }}"
+        )
+        .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "        h = h / 6.0;")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    }}").unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    let s = select(0.0, delta / max_c, max_c > 0.0);")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "    return vec3<f32>(h, s, max_c);")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        writeln!(code, "}}\n").unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         generated_functions.insert("rgb_to_hsv".to_string());
         Ok(())
@@ -998,17 +1445,33 @@ mod tests {
         let sample_node = graph.add_node(NodeType::TextureSample);
         let output_node = graph.add_node(NodeType::Output);
 
+<<<<<<< HEAD
         graph.connect(uv_node, "UV", sample_node, "UV").expect("WGSL codegen failed");
         graph
             .connect(texture_node, "Texture", sample_node, "Texture")
             .expect("WGSL codegen failed");
         graph.connect(sample_node, "Color", output_node, "Color").expect("WGSL codegen failed");
+=======
+        graph
+            .connect(uv_node, "UV", sample_node, "UV")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        graph
+            .connect(texture_node, "Texture", sample_node, "Texture")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        graph
+            .connect(sample_node, "Color", output_node, "Color")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         let mut codegen = WGSLCodegen::new(graph);
         let result = codegen.generate();
 
         assert!(result.is_ok());
+<<<<<<< HEAD
         let code = result.expect("WGSL codegen failed");
+=======
+        let code = result.unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
         assert!(code.contains("@fragment"));
         assert!(code.contains("textureSample"));
     }
@@ -1022,8 +1485,17 @@ mod tests {
         let sin_node = graph.add_node(NodeType::Sin);
         let output_node = graph.add_node(NodeType::Output);
 
+<<<<<<< HEAD
         graph.connect(time_node, "Time", sin_node, "A").expect("WGSL codegen failed");
         graph.connect(sin_node, "Result", output_node, "Color").expect("WGSL codegen failed");
+=======
+        graph
+            .connect(time_node, "Time", sin_node, "A")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        graph
+            .connect(sin_node, "Result", output_node, "Color")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         let mut codegen = WGSLCodegen::new(graph);
         let result = codegen.generate();
@@ -1043,24 +1515,52 @@ mod tests {
         let smoothstep_node = graph.add_node(NodeType::Smoothstep);
         let output_node = graph.add_node(NodeType::Output);
 
+<<<<<<< HEAD
         graph.connect(combine_node, "Color", split_node, "Color").expect("WGSL codegen failed");
         graph.connect(split_node, "R", power_node, "A").expect("WGSL codegen failed");
         graph.connect(power_node, "Result", clamp_node, "Value").expect("WGSL codegen failed");
         graph.connect(clamp_node, "Result", smoothstep_node, "X").expect("WGSL codegen failed");
+=======
+        graph
+            .connect(combine_node, "Color", split_node, "Color")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        graph
+            .connect(split_node, "R", power_node, "A")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        graph
+            .connect(power_node, "Result", clamp_node, "Value")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        graph
+            .connect(clamp_node, "Result", smoothstep_node, "X")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
         // Since smoothstep is not connected to output, it will trigger an error due to being missing in topological sort,
         // unless we connect it to output. But Output requires Color. Let's create a Mix node to convert float to color or connect smoothstep somewhere.
         // Or we just test the generation of these by not expecting is_ok(), but wait, WGSLCodegen will error out if there's disconnected logic.
         // Actually, topological sort starts from Output node and goes backwards. So nodes not connected to Output are ignored.
         // To test their codegen, we must connect them to output!
         let final_combine = graph.add_node(NodeType::Combine);
+<<<<<<< HEAD
         graph.connect(smoothstep_node, "Result", final_combine, "R").expect("WGSL codegen failed");
         graph.connect(final_combine, "Color", output_node, "Color").expect("WGSL codegen failed");
+=======
+        graph
+            .connect(smoothstep_node, "Result", final_combine, "R")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+        graph
+            .connect(final_combine, "Color", output_node, "Color")
+            .unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         let mut codegen = WGSLCodegen::new(graph);
         let result = codegen.generate();
 
         assert!(result.is_ok());
+<<<<<<< HEAD
         let code = result.expect("WGSL codegen failed");
+=======
+        let code = result.unwrap_or_else(|_| panic!("Failed to format WGSL code buffer"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
         assert!(code.contains("vec4<f32>"));
         assert!(code.contains("pow("));
         assert!(code.contains("clamp("));

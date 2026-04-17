@@ -181,8 +181,9 @@ impl EffectChainPanel {
                                                     if ui.button(config.name.to_string()).clone().on_hover_text(format!("{:?}", config.params)).clicked() {
                                                          self.chain.add_effect(*effect_type);
 
-                                                         let id = self.chain.effects.last().unwrap().id;
-                                                         let effect = self.chain.get_effect_mut(id).unwrap();
+                                                         if let Some(last_effect) = self.chain.effects.last() {
+                                                             let id = last_effect.id;
+                                                             if let Some(effect) = self.chain.get_effect_mut(id) {
 
                                                          let mut f32_params = std::collections::HashMap::new();
                                                          for (k, v) in &config.params {
@@ -195,6 +196,8 @@ impl EffectChainPanel {
                                                          self.actions.push(EffectChainAction::AddEffectWithParams(*effect_type, f32_params));
                                                          ui.close();
                                                          self.show_add_menu = false;
+                                                             }
+                                                         }
                                                     }
                                                 }
                                             }

@@ -151,9 +151,13 @@ impl AudioMediaPipeline {
                     }
                 }
             })
+<<<<<<< HEAD
         {
             tracing::warn!("Failed to spawn audio processor thread: {}", e);
         }
+=======
+            .unwrap_or_else(|_| panic!("Failed to spawn audio processor thread"));
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         Self {
             analyzer,

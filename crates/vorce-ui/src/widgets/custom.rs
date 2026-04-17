@@ -84,7 +84,7 @@ pub fn cyber_list_item<R>(
     });
 
     // The closure is guaranteed to run, so ret will be Some
-    ret.expect("Closure should have been executed")
+    ret.unwrap_or_else(|| panic!("Closure should have been executed"))
 }
 
 pub fn colored_progress_bar(ui: &mut Ui, value: f32) -> Response {
@@ -572,7 +572,7 @@ pub fn check_hold_state(ui: &mut Ui, id: egui::Id, is_interacting: bool) -> (boo
             ui.data_mut(|d| d.insert_temp(start_time_id, start_time));
         }
 
-        let elapsed = now - start_time.unwrap();
+        let elapsed = now - start_time.unwrap_or(now);
         progress = (elapsed as f32 / hold_duration).clamp(0.0, 1.0);
 
         // Store progress for external visualization if needed

@@ -419,10 +419,10 @@ fn main() -> Result<()> {
 
     let env_filter = tracing_subscriber::EnvFilter::from_default_env()
         .add_directive(configured_log_level.into())
-        .add_directive("wgpu_core=warn".parse().unwrap())
-        .add_directive("wgpu_hal=warn".parse().unwrap())
-        .add_directive("naga=warn".parse().unwrap())
-        .add_directive("winit=info".parse().unwrap());
+        .add_directive("wgpu_core=warn".parse().unwrap_or_else(|_| unreachable!()))
+        .add_directive("wgpu_hal=warn".parse().unwrap_or_else(|_| unreachable!()))
+        .add_directive("naga=warn".parse().unwrap_or_else(|_| unreachable!()))
+        .add_directive("winit=info".parse().unwrap_or_else(|_| unreachable!()));
 
     let console_layer = tracing_subscriber::fmt::layer()
         .with_ansi(true)

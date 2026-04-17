@@ -135,7 +135,9 @@ impl TexturePool {
         // Slow path: create from handle
         let (view, last_used) = {
             let textures = self.textures.read();
-            let handle = textures.get(name).expect("Texture not found in pool");
+            let handle = textures
+                .get(name)
+                .unwrap_or_else(|| panic!("Texture not found in pool"));
 
             handle.mark_used(self.start_time);
             (Arc::new(handle.create_view()), handle.last_used.clone())
@@ -285,7 +287,14 @@ impl TexturePool {
                 );
                 let textures = self.textures.read();
                 // Safe fallback: texture was just created above.
+<<<<<<< HEAD
                 textures.get(name).cloned().expect("texture must exist after creation")
+=======
+                textures
+                    .get(name)
+                    .cloned()
+                    .unwrap_or_else(|| panic!("texture must exist after creation"))
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
             }
         };
 

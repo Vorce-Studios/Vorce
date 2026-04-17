@@ -128,7 +128,15 @@ impl MappingManager {
             self.mappings.iter().filter(|m| m.is_renderable()).collect();
 
         // Sort by depth (back to front)
+<<<<<<< HEAD
         mappings.sort_by(|a, b| a.depth.partial_cmp(&b.depth).unwrap_or(std::cmp::Ordering::Equal));
+=======
+        mappings.sort_by(|a, b| {
+            a.depth
+                .partial_cmp(&b.depth)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
 
         mappings
     }

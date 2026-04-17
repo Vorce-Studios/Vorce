@@ -277,7 +277,9 @@ pub fn particle_system(
             commands.entity(entity).insert(crate::components::ParticleEmitter::default());
             continue; // Wait for next frame
         }
-        let emitter = emitter_opt.as_mut().unwrap();
+        let emitter = emitter_opt
+            .as_mut()
+            .unwrap_or_else(|| panic!("emitter must exist"));
 
         // Initialize mesh if missing
         if mesh_opt.is_none() {
@@ -450,8 +452,18 @@ pub fn frame_readback_system(
 
         let output_buffer_size = (bytes_per_row * height) as u64;
 
+<<<<<<< HEAD
         // Ensure buffer exists and is correct size
         if buffer_cache.is_none() || buffer_cache.as_ref().unwrap().size() != output_buffer_size {
+=======
+        // Ensure buffer exists and is correct size.
+        // If we need to recreate the buffer, we also need to clear any pending readbacks.
+        if buffer_cache.is_none()
+            || buffer_cache
+                .as_ref()
+                .is_some_and(|b| b.size() != output_buffer_size)
+        {
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
             *buffer_cache = Some(render_device.create_buffer(
                 &bevy::render::render_resource::BufferDescriptor {
                     label: Some("Readback Buffer"),
@@ -463,7 +475,9 @@ pub fn frame_readback_system(
             ));
         }
 
-        let buffer = buffer_cache.as_ref().unwrap();
+        let buffer = buffer_cache
+            .as_ref()
+            .unwrap_or_else(|| panic!("Readback buffer should exist"));
 
         let mut encoder = render_device.create_command_encoder(
             &bevy::render::render_resource::CommandEncoderDescriptor {

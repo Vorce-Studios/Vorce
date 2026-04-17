@@ -362,8 +362,16 @@ impl AnimationClip {
     /// Add a timeline marker to the clip
     pub fn add_marker(&mut self, marker: TimelineMarker) {
         self.markers.push(marker);
+<<<<<<< HEAD
         self.markers
             .sort_by(|a, b| a.time.partial_cmp(&b.time).unwrap_or(std::cmp::Ordering::Equal));
+=======
+        self.markers.sort_by(|a, b| {
+            a.time
+                .partial_cmp(&b.time)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+>>>>>>> 7eb72e26f (🛡️ Sentinel: [Sicherheitsverbesserung] Fix unwrap/expect panic vectors)
     }
 
     /// Remove a timeline marker by time in seconds
