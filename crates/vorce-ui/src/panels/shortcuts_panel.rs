@@ -1,19 +1,15 @@
 //! Egui-based shortcuts configuration panel
 
-use crate::core::theme::colors;
 use crate::LocaleManager;
 use egui::{RichText, ScrollArea, TextEdit, Ui};
+use std::collections::HashSet;
 use vorce_control::shortcuts::KeyBindings;
 
 /// Panel for viewing and configuring keyboard shortcuts
 #[derive(Default)]
 pub struct ShortcutsPanel {
     editing_shortcut_index: Option<usize>,
-    // Performance Boost: We store conflicts as a flat map instead of a HashSet.
-    // In immediate-mode GUIs (egui), `HashSet::contains` inside hot loops causes
-    // constant SipHash allocator/execution overhead. A pre-allocated `Vec<bool>` gives
-    // true O(1) loop iteration overhead.
-    conflict_map: Vec<bool>,
+    conflicts: HashSet<usize>,
     show_conflict_warning: bool,
     search_filter: String,
 }
@@ -21,11 +17,8 @@ pub struct ShortcutsPanel {
 impl ShortcutsPanel {
     /// Map of keyboard shortcuts to application actions.
     pub fn detect_conflicts(&mut self, key_bindings: &KeyBindings) {
+        self.conflicts.clear();
         let shortcuts = key_bindings.get_shortcuts();
-        // Resize and clear map for fast flat lookups in the UI thread
-        self.conflict_map.clear();
-        self.conflict_map.resize(shortcuts.len(), false);
-
         for i in 0..shortcuts.len() {
             for j in (i + 1)..shortcuts.len() {
                 if shortcuts[i].key == shortcuts[j].key
@@ -36,8 +29,8 @@ impl ShortcutsPanel {
                         || shortcuts[j].context
                             == vorce_control::shortcuts::ShortcutContext::Global)
                 {
-                    self.conflict_map[i] = true;
-                    self.conflict_map[j] = true;
+                    self.conflicts.insert(i);
+                    self.conflicts.insert(j);
                 }
             }
         }
@@ -112,15 +105,18 @@ impl ShortcutsPanel {
 
                         for index in filtered_indices {
                             let shortcut = &shortcuts_clone[index];
-                            let is_conflict = *self.conflict_map.get(index).unwrap_or(&false);
+                            let is_conflict = self.conflicts.contains(&index);
 
                             // Description
                             ui.label(&shortcut.description);
 
                             // Shortcut Key Display
                             let shortcut_text = shortcut.to_shortcut_string();
-                            let text_color =
-                                if is_conflict { colors::ERROR_COLOR } else { colors::CYAN_ACCENT };
+                            let text_color = if is_conflict {
+                                ui.visuals().error_fg_color
+                            } else {
+                                ui.visuals().text_color().gamma_multiply(0.8)
+                            };
 
                             let key_label = ui.label(
                                 RichText::new(if shortcut_text.is_empty() {
@@ -139,7 +135,10 @@ impl ShortcutsPanel {
                             }
 
                             // Edit Button
-                            if ui.add(egui::Button::new(locale.t("shortcuts-edit"))).clicked() {
+                            if ui
+                                .add(egui::Button::new(locale.t("shortcuts-edit")))
+                                .clicked()
+                            {
                                 self.editing_shortcut_index = Some(index);
                                 self.show_conflict_warning = false;
                             }
@@ -186,13 +185,16 @@ impl ShortcutsPanel {
 
                     if self.show_conflict_warning {
                         ui.colored_label(
-                            colors::ERROR_COLOR,
+                            ui.visuals().error_fg_color,
                             format!("⚠️ {}", locale.t("shortcuts-edit-dialog-conflict-warning")),
                         );
                     }
 
                     ui.separator();
-                    if ui.button(locale.t("shortcuts-edit-dialog-cancel")).clicked() {
+                    if ui
+                        .button(locale.t("shortcuts-edit-dialog-cancel"))
+                        .clicked()
+                    {
                         self.editing_shortcut_index = None;
                     }
 
@@ -202,7 +204,9 @@ impl ShortcutsPanel {
                     if input.key_pressed(egui::Key::Escape) {
                         self.editing_shortcut_index = None;
                     } else if let Some(key) = input.events.iter().find_map(|e| match e {
-                        egui::Event::Key { key, pressed: true, .. } => Some(key),
+                        egui::Event::Key {
+                            key, pressed: true, ..
+                        } => Some(key),
                         _ => None,
                     }) {
                         // Ignore modifier-only presses
