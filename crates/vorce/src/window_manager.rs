@@ -424,7 +424,7 @@ impl WindowManager {
         let context = self
             .windows
             .get_mut(&output_id)
-            .expect("checked window existence before sync");
+            .unwrap_or_else(|| panic!("checked window existence before sync"));
 
         context.window.set_title(&format!("Vorce - {}", name));
         context.window.set_cursor_visible(!hide_cursor);

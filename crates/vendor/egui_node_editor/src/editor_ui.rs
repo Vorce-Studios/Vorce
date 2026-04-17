@@ -228,7 +228,10 @@ where
         /* Draw nodes */
         for node_id in self.node_order.iter().copied() {
             let responses = GraphNodeWidget {
-                position: self.node_positions.get_mut(node_id).unwrap(),
+                position: self
+                    .node_positions
+                    .get_mut(node_id)
+                    .unwrap_or_else(|| panic!("Missing node position")),
                 graph: &mut self.graph,
                 port_locations: &mut port_locations,
                 node_rects: &mut node_rects,
@@ -284,7 +287,10 @@ where
 
         /* Draw connections */
         if let Some((_, ref locator)) = self.connection_in_progress {
-            let port_type = self.graph.any_param_type(*locator).unwrap();
+            let port_type = self
+                .graph
+                .any_param_type(*locator)
+                .unwrap_or_else(|_| panic!("Missing value"));
             let connection_color = port_type.data_type_color(user_state);
             let start_pos = port_locations[locator];
 
@@ -361,7 +367,7 @@ where
             let port_type = self
                 .graph
                 .any_param_type(AnyParameterId::Output(output))
-                .unwrap();
+                .unwrap_or_else(|_| panic!("Missing value"));
             let connection_color = port_type.data_type_color(user_state);
             let src_pos = port_locations[&AnyParameterId::Output(output)];
             let dst_pos = port_locations[&AnyParameterId::Input(input)];
@@ -425,7 +431,7 @@ where
                         .node_order
                         .iter()
                         .position(|id| *id == *node_id)
-                        .expect("Node to be raised should be in `node_order`");
+                        .unwrap_or_else(|| panic!("Node to be raised should be in node_order"));
                     self.node_order.remove(old_pos);
                     self.node_order.push(*node_id);
                 }
@@ -598,11 +604,13 @@ where
         let background_color;
         let text_color;
         if ui.visuals().dark_mode {
-            background_color = color_from_hex("#3f3f3f").unwrap();
-            text_color = color_from_hex("#fefefe").unwrap();
+            background_color =
+                color_from_hex("#3f3f3f").unwrap_or_else(|_| panic!("Missing value"));
+            text_color = color_from_hex("#fefefe").unwrap_or_else(|_| panic!("Missing value"));
         } else {
-            background_color = color_from_hex("#ffffff").unwrap();
-            text_color = color_from_hex("#505050").unwrap();
+            background_color =
+                color_from_hex("#ffffff").unwrap_or_else(|_| panic!("Missing value"));
+            text_color = color_from_hex("#505050").unwrap_or_else(|_| panic!("Missing value"));
         }
 
         ui.visuals_mut().widgets.noninteractive.fg_stroke =
@@ -777,7 +785,9 @@ where
             UserResponse: UserResponseTrait,
             NodeData: NodeDataTrait,
         {
-            let port_type = graph.any_param_type(param_id).unwrap();
+            let port_type = graph
+                .any_param_type(param_id)
+                .unwrap_or_else(|_| panic!("Missing value"));
 
             let port_rect =
                 Rect::from_center_size(port_pos, egui::vec2(10.0, 10.0) * pan_zoom.zoom);
@@ -814,7 +824,7 @@ where
                     let input = param_id.assume_input();
                     let corresp_output = graph
                         .connection(input)
-                        .expect("Connection data should be valid");
+                        .unwrap_or_else(|| panic!("Connection data should be valid"));
                     responses.push(NodeResponse::DisconnectEvent {
                         input: param_id.assume_input(),
                         output: corresp_output,
@@ -828,7 +838,10 @@ where
                 && origin_node != node_id
             {
                 // Don't allow self-loops
-                if graph.any_param_type(origin_param).unwrap() == port_type
+                if graph
+                    .any_param_type(origin_param)
+                    .unwrap_or_else(|_| panic!("Missing value"))
+                    == port_type
                     && close_enough
                     && ui.input(|i| i.pointer.any_released())
                 {
@@ -1014,22 +1027,22 @@ where
         let dark_mode = ui.visuals().dark_mode;
         let color = if resp.clicked() {
             if dark_mode {
-                color_from_hex("#ffffff").unwrap()
+                color_from_hex("#ffffff").unwrap_or_else(|_| panic!("Missing value"))
             } else {
-                color_from_hex("#000000").unwrap()
+                color_from_hex("#000000").unwrap_or_else(|_| panic!("Missing value"))
             }
         } else if resp.hovered() {
             if dark_mode {
-                color_from_hex("#dddddd").unwrap()
+                color_from_hex("#dddddd").unwrap_or_else(|_| panic!("Missing value"))
             } else {
-                color_from_hex("#222222").unwrap()
+                color_from_hex("#222222").unwrap_or_else(|_| panic!("Missing value"))
             }
         } else {
             #[allow(clippy::collapsible_else_if)]
             if dark_mode {
-                color_from_hex("#aaaaaa").unwrap()
+                color_from_hex("#aaaaaa").unwrap_or_else(|_| panic!("Missing value"))
             } else {
-                color_from_hex("#555555").unwrap()
+                color_from_hex("#555555").unwrap_or_else(|_| panic!("Missing value"))
             }
         };
         let stroke = Stroke {

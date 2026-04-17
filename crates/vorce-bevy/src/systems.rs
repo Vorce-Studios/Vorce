@@ -234,7 +234,9 @@ pub fn particle_system(
                 .insert(crate::components::ParticleEmitter::default());
             continue; // Wait for next frame
         }
-        let emitter = emitter_opt.as_mut().unwrap();
+        let emitter = emitter_opt
+            .as_mut()
+            .unwrap_or_else(|| panic!("emitter must exist"));
 
         // Initialize mesh if missing
         if mesh_opt.is_none() {
@@ -416,7 +418,11 @@ pub fn frame_readback_system(
 
         // Ensure buffer exists and is correct size.
         // If we need to recreate the buffer, we also need to clear any pending readbacks.
-        if buffer_cache.is_none() || buffer_cache.as_ref().unwrap().size() != output_buffer_size {
+        if buffer_cache.is_none()
+            || buffer_cache
+                .as_ref()
+                .is_some_and(|b| b.size() != output_buffer_size)
+        {
             *buffer_cache = Some(render_device.create_buffer(
                 &bevy::render::render_resource::BufferDescriptor {
                     label: Some("Readback Buffer"),
@@ -429,7 +435,9 @@ pub fn frame_readback_system(
             *rx_channel = None;
         }
 
-        let buffer = buffer_cache.as_ref().unwrap();
+        let buffer = buffer_cache
+            .as_ref()
+            .unwrap_or_else(|| panic!("Readback buffer should exist"));
 
         if let Some(rx) = rx_channel.as_ref() {
             match rx.try_recv() {

@@ -344,12 +344,8 @@ impl EffectChainRenderer {
             let render_target = if is_last {
                 output_view
             } else {
-                if let Some(ping_pong) = self.ping_pong.as_ref() {
-                    &ping_pong.views[1 - current_idx]
-                } else {
-                    // Fallback to output view if ping pong is missing
-                    output_view
-                }
+                let ping_pong = self.ping_pong.as_ref().unwrap();
+                &ping_pong.views[1 - current_idx]
             };
 
             if let EffectType::ShaderGraph(graph_id) = effect.effect_type {

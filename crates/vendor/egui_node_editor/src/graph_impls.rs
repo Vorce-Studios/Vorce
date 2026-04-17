@@ -104,7 +104,10 @@ impl<NodeData, DataType, ValueType> Graph<NodeData, DataType, ValueType> {
         for output in self[node_id].output_ids().collect::<SVec<_>>() {
             self.outputs.remove(output);
         }
-        let removed_node = self.nodes.remove(node_id).expect("Node should exist");
+        let removed_node = self
+            .nodes
+            .remove(node_id)
+            .unwrap_or_else(|| panic!("Node should exist"));
 
         (removed_node, disconnect_events)
     }

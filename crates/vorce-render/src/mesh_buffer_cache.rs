@@ -54,7 +54,7 @@ impl MeshBufferCache {
             let cached = self
                 .cache
                 .get_mut(&mapping_id)
-                .expect("cache entry must exist when can_reuse=true");
+                .unwrap_or_else(|| panic!("cache entry must exist when can_reuse=true"));
 
             // If revision changed, update the content
             if cached.mesh_revision != mesh.revision {
@@ -123,7 +123,7 @@ impl MeshBufferCache {
         let cached_ref = self
             .cache
             .get(&mapping_id)
-            .expect("cached mesh must exist after insertion");
+            .unwrap_or_else(|| panic!("cached mesh must exist after insertion"));
         (
             &cached_ref.vertex_buffer,
             &cached_ref.index_buffer,

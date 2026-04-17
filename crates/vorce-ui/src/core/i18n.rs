@@ -20,7 +20,11 @@ impl Default for LocaleManager {
 
 impl LocaleManager {
     pub fn new(lang_id: &str) -> Self {
-        let lang: LanguageIdentifier = lang_id.parse().unwrap_or_else(|_| "en-US".parse().unwrap());
+        let lang: LanguageIdentifier = lang_id.parse().unwrap_or_else(|_| {
+            "en-US"
+                .parse()
+                .unwrap_or_else(|_| panic!("Failed to parse default lang"))
+        });
         let bundle = Self::load_bundle(&lang);
         Self {
             bundle,
@@ -33,17 +37,29 @@ impl LocaleManager {
 
         // Determine available locales
         // Note: This must match folders in locales/
-        let available_locales: Vec<LanguageIdentifier> =
-            vec!["en".parse().unwrap(), "de".parse().unwrap()];
+        let available_locales: Vec<LanguageIdentifier> = vec![
+            "en".parse()
+                .unwrap_or_else(|_| panic!("Failed parsing default")),
+            "de".parse()
+                .unwrap_or_else(|_| panic!("Failed parsing default")),
+        ];
 
         // Negotiate - fluent_langneg 0.14 uses its own LanguageIdentifier
-        let requested: Vec<fluent_langneg::LanguageIdentifier> =
-            vec![lang_id.to_string().parse().unwrap()];
+        let requested: Vec<fluent_langneg::LanguageIdentifier> = vec![lang_id
+            .to_string()
+            .parse()
+            .unwrap_or_else(|_| panic!("Failed parsing default"))];
         let available_fl: Vec<fluent_langneg::LanguageIdentifier> = available_locales
             .iter()
-            .map(|l| l.to_string().parse().unwrap())
+            .map(|l| {
+                l.to_string()
+                    .parse()
+                    .unwrap_or_else(|_| panic!("Failed parsing default"))
+            })
             .collect();
-        let default_fl: fluent_langneg::LanguageIdentifier = "en".parse().unwrap();
+        let default_fl: fluent_langneg::LanguageIdentifier = "en"
+            .parse()
+            .unwrap_or_else(|_| panic!("Failed parsing default"));
         let supported = negotiate_languages(
             &requested,
             &available_fl,
@@ -52,7 +68,9 @@ impl LocaleManager {
         );
 
         // Load resources
-        let active_lang = supported.first().unwrap();
+        let active_lang = supported
+            .first()
+            .unwrap_or_else(|| panic!("Supported languages list is empty"));
         // Use just the language code ("en", "de") for folder names
         let lang_key = active_lang.language.as_str();
 
@@ -83,7 +101,11 @@ impl LocaleManager {
     }
 
     pub fn set_locale(&mut self, lang_id: &str) {
-        let lang: LanguageIdentifier = lang_id.parse().unwrap_or_else(|_| "en-US".parse().unwrap());
+        let lang: LanguageIdentifier = lang_id.parse().unwrap_or_else(|_| {
+            "en-US"
+                .parse()
+                .unwrap_or_else(|_| panic!("Failed to parse default lang"))
+        });
         self.bundle = Self::load_bundle(&lang);
         self.current_lang = lang;
     }

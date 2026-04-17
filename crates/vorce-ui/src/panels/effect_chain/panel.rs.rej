@@ -1,0 +1,17 @@
+--- crates/vorce-ui/src/panels/effect_chain/panel.rs
++++ crates/vorce-ui/src/panels/effect_chain/panel.rs
+@@ -183,5 +183,6 @@
+
+-                                                         let id = self.chain.effects.last().unwrap().id;
+-                                                         let effect = self.chain.get_effect_mut(id).unwrap();
++                                                         if let Some(last_effect) = self.chain.effects.last() {
++                                                             let id = last_effect.id;
++                                                             if let Some(effect) = self.chain.get_effect_mut(id) {
+
+                                                          let mut f32_params = std::collections::HashMap::new();
+@@ -197,3 +198,5 @@
+                                                          self.actions.push(EffectChainAction::AddEffectWithParams(*effect_type, f32_params));
+                                                          ui.close_menu();
+                                                          self.show_add_menu = false;
++                                                             }
++                                                         }

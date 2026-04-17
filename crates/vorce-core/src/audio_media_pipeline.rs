@@ -152,7 +152,7 @@ impl AudioMediaPipeline {
                     }
                 }
             })
-            .expect("Failed to spawn audio processor thread");
+            .unwrap_or_else(|_| panic!("Failed to spawn audio processor thread"));
 
         Self {
             analyzer,

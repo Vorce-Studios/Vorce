@@ -148,7 +148,9 @@ impl TexturePool {
         // Slow path: create from handle
         let (view, last_used) = {
             let textures = self.textures.read();
-            let handle = textures.get(name).expect("Texture not found in pool");
+            let handle = textures
+                .get(name)
+                .unwrap_or_else(|| panic!("Texture not found in pool"));
 
             handle.mark_used(self.start_time);
             (Arc::new(handle.create_view()), handle.last_used.clone())
@@ -308,7 +310,7 @@ impl TexturePool {
                 textures
                     .get(name)
                     .cloned()
-                    .expect("texture must exist after creation")
+                    .unwrap_or_else(|| panic!("texture must exist after creation"))
             }
         };
 
