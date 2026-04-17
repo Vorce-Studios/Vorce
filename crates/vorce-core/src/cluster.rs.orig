@@ -41,7 +41,13 @@ pub struct InstanceConfig {
 impl InstanceConfig {
     /// Create a new instance configuration
     pub fn new(id: InstanceId, name: String, role: InstanceRole, address: String) -> Self {
-        Self { id, name, role, address, local_outputs: Vec::new() }
+        Self {
+            id,
+            name,
+            role,
+            address,
+            local_outputs: Vec::new(),
+        }
     }
 
     /// Assign a local output to this instance
