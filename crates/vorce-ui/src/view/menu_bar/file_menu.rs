@@ -21,10 +21,9 @@ pub fn show(ui: &mut egui::Ui, ui_state: &AppUI, actions: &mut Vec<UIAction>, co
         }
 
         // Recent files submenu
-        let recent_files = ui_state.recent_files.clone();
-        if !recent_files.is_empty() {
+        if !ui_state.recent_files.is_empty() {
             ui.menu_button(ui_state.i18n.t("menu-file-open-recent"), |ui| {
-                for path in &recent_files {
+                for path in &ui_state.recent_files {
                     if ui.button(path).clicked() {
                         actions.push(UIAction::LoadRecentProject(path.clone()));
                         ui.close();
