@@ -301,11 +301,11 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
         {
             // Collect all NdiOutput part IDs from the render queue that are not projectors
             let virtual_output_ids: Vec<_> = app.render_queue.items.keys()
-                .filter(|&&id| !app.window_manager.contains_output_id(id))
+                .filter(|&&id| app.window_manager.get(id).is_none())
                 .cloned()
                 .collect();
 
-            for vid in virtual_output_ids {
+            for _vid in virtual_output_ids {
                 // For now, we just skip these if they don't have a window,
                 // but in a future iteration we should render them to an offscreen texture.
                 // However, NDI Sender currently reads from the window's surface.
