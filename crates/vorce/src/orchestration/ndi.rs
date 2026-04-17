@@ -114,7 +114,7 @@ pub fn sync_ndi_senders(app: &mut App) {
 /// Updates NDI sources by polling for new frames and uploading to GPU.
 pub fn update_ndi_sources(app: &mut App) {
     use vorce_io::VideoSource;
-    
+
     // We need to collect IDs to avoid multiple mutable borrows if we were to iterate directly
     let part_ids: Vec<_> = app.ndi_receivers.keys().cloned().collect();
 
