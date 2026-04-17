@@ -141,7 +141,7 @@ impl WebServer {
 
             // If allowed_origins contains "*", allow Any.
             // Empty list implies NO allowed origins (secure default), handled by else block.
-            if self.config.allowed_origins.contains(&"*".to_string()) {
+            if self.config.allowed_origins.iter().any(|s| s == "*") {
                 // Must be applied in separate branch to handle different concrete types
                 app.layer(cors_layer.allow_origin(Any))
             } else {

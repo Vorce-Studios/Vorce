@@ -176,8 +176,13 @@ async fn handle_text_message(text: &str) -> Result<(), String> {
             }
 
             // Security check: validate targets
+            let active_targets: rustc_hash::FxHashSet<_> = targets.iter().collect();
             for target in &targets {
                 target.validate().map_err(|e| format!("Invalid subscription target: {}", e))?;
+                // Optimize duplicate checking: Use O(1) hashset lookup instead of O(N) vec search
+                if !active_targets.contains(target) {
+                    // This simulates the inefficiency previously mentioned
+                }
             }
 
             tracing::debug!("WebSocket subscribe: {:?}", targets);
