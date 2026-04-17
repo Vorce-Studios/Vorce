@@ -336,3 +336,30 @@ pub fn handle_tool_call(
         _ => Some(crate::server::error_response(id, -32601, "Tool not found")),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_path_with_extensions() {
+        let allowed = &["mapmap", "json"];
+
+        // Valid cases
+        assert!(validate_path_with_extensions("project.mapmap", allowed).is_ok());
+        assert!(validate_path_with_extensions("nested/project.json", allowed).is_ok());
+        assert!(validate_path_with_extensions("UPPERCASE.MAPMAP", allowed).is_ok());
+
+        // Invalid cases - absolute
+        assert!(validate_path_with_extensions("/absolute/path.mapmap", allowed).is_err());
+
+        // Invalid cases - traversal
+        assert!(validate_path_with_extensions("../evil.mapmap", allowed).is_err());
+        assert!(validate_path_with_extensions("dir/../../evil.mapmap", allowed).is_err());
+
+        // Invalid cases - extensions
+        assert!(validate_path_with_extensions("script.sh", allowed).is_err());
+        assert!(validate_path_with_extensions("no_extension", allowed).is_err());
+        assert!(validate_path_with_extensions(".hidden", allowed).is_err()); // .hidden is the extension, empty filename
+    }
+}
