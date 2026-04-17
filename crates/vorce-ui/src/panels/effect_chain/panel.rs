@@ -436,13 +436,12 @@ impl EffectChainPanel {
                     .inner_margin(4.0)
                     .show(ui, |ui| {
                         egui::ScrollArea::vertical().max_height(200.0).show(ui, |ui| {
-                            let search_lower = (!self.preset_search.is_empty())
-                                .then(|| self.preset_search.to_lowercase());
+                            let search_lower = self.preset_search.to_lowercase();
                             for preset in &self.presets {
-                                if let Some(search) = &search_lower {
-                                    if !preset.name_lower.contains(search) {
-                                        continue;
-                                    }
+                                if !self.preset_search.is_empty()
+                                    && !preset.name_lower.contains(&search_lower)
+                                {
+                                    continue;
                                 }
                                 ui.horizontal(|ui| {
                                     let star = if preset.is_favorite { "⭐" } else { "☆" };

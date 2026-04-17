@@ -310,7 +310,8 @@ impl MediaBrowser {
         }
 
         // Check if already generating
-        if self.generating_thumbnails.read().contains(path) {
+        let mut generating = self.generating_thumbnails.write();
+        if generating.contains(path) {
             return None;
         }
 
@@ -322,7 +323,7 @@ impl MediaBrowser {
 
         // Generate thumbnail in background for supported media types
         if matches!(file_type, MediaType::Image) {
-            self.generating_thumbnails.write().insert(path.to_path_buf());
+            generating.insert(path.to_path_buf());
             let tx = self.thumbnail_tx.clone();
             let path_clone = path.to_path_buf();
 

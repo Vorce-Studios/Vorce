@@ -6,7 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- 2026-04-16: refactor: Sync next_id with graph in NodeEditor
 - 2026-04-14: chore: 🧹 [code health] Remove dead CachedTexture struct and dummy allocations
 - 2026-04-14: chore: Code Health: Remove unused imports in controller list panel
 - 2026-04-14: ci: Exclude .vscode/skills from markdownlint to unblock PRs (#245)
