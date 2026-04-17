@@ -15,8 +15,8 @@ use crate::source::VideoSource;
 
 #[cfg(feature = "ndi")]
 use grafton_ndi::{
-    Finder, FinderOptions, NDI, PixelFormat as NdiPixelFormat, Receiver, ReceiverBandwidth,
-    ReceiverColorFormat, ReceiverOptions, Sender, SenderOptions, VideoFrameBuilder,
+    Finder, FinderOptions, PixelFormat as NdiPixelFormat, Receiver, ReceiverBandwidth,
+    ReceiverColorFormat, ReceiverOptions, Sender, SenderOptions, VideoFrameBuilder, NDI,
 };
 #[cfg(feature = "ndi")]
 use std::sync::{Arc, Mutex};
@@ -185,9 +185,12 @@ impl NdiReceiver {
 
     fn internal_connect(ndi: &NDI, source: &NdiSource) -> Result<Receiver> {
         let finder_options = FinderOptions::builder().show_local_sources(true).build();
-        let finder = Finder::new(ndi, &finder_options).map_err(|e| IoError::NdiError(e.to_string()))?;
+        let finder =
+            Finder::new(ndi, &finder_options).map_err(|e| IoError::NdiError(e.to_string()))?;
 
-        let sources = finder.find_sources(Duration::from_secs(2)).map_err(|e| IoError::NdiError(e.to_string()))?;
+        let sources = finder
+            .find_sources(Duration::from_secs(2))
+            .map_err(|e| IoError::NdiError(e.to_string()))?;
 
         let matching_source = sources
             .into_iter()
@@ -209,9 +212,12 @@ impl NdiReceiver {
 
         let handle = NdiHandle::new()?;
         let finder_options = FinderOptions::builder().show_local_sources(true).build();
-        let finder = Finder::new(&handle.ndi, &finder_options).map_err(|e| IoError::NdiError(e.to_string()))?;
+        let finder = Finder::new(&handle.ndi, &finder_options)
+            .map_err(|e| IoError::NdiError(e.to_string()))?;
 
-        let sources = finder.find_sources(Duration::from_millis(timeout_ms as u64)).map_err(|e| IoError::NdiError(e.to_string()))?;
+        let sources = finder
+            .find_sources(Duration::from_millis(timeout_ms as u64))
+            .map_err(|e| IoError::NdiError(e.to_string()))?;
         Ok(sources.into_iter().map(|s| s.into()).collect())
     }
 
