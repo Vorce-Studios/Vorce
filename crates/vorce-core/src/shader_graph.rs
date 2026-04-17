@@ -558,11 +558,6 @@ impl ShaderGraph {
         Self { id, name, nodes: HashMap::new(), next_node_id: 1 }
     }
 
-    /// Get the next node ID to be assigned
-    pub fn next_node_id(&self) -> NodeId {
-        self.next_node_id
-    }
-
     /// Add a node to the graph
     pub fn add_node(&mut self, node_type: NodeType) -> NodeId {
         let id = self.next_node_id;

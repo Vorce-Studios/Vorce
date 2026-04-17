@@ -1,4 +1,4 @@
-use egui::{Context, RichText, Window};
+use egui::{Color32, Context, RichText, Window};
 use vorce_control::hue::controller::HueController;
 use vorce_core::AppState;
 use vorce_render::WgpuBackend;
@@ -42,10 +42,7 @@ pub fn show(ctx: &Context, context: SettingsContext) {
     Window::new(
         RichText::new(format!("⚙ {}", context.ui_state.i18n.t("settings").to_uppercase()))
             .strong()
-            .color(
-                #[allow(deprecated)]
-                ctx.style().visuals.strong_text_color(),
-            ),
+            .color(Color32::from_rgb(0, 255, 255)),
     )
     .open(&mut show_settings)
     .resizable(true)
@@ -69,7 +66,7 @@ pub fn show(ctx: &Context, context: SettingsContext) {
             ui.add_space(4.0);
 
             if active_tab == 0 {
-                ui.heading(RichText::new("General").color(ui.visuals().strong_text_color()));
+                ui.heading(RichText::new("General").color(Color32::WHITE));
                 ui.add_space(4.0);
                 ui.horizontal(|ui| {
                     ui.label(format!("{}:", context.ui_state.i18n.t("language")));
@@ -96,8 +93,7 @@ pub fn show(ctx: &Context, context: SettingsContext) {
                 ui.add_space(10.0);
                 ui.separator();
                 ui.heading(
-                    RichText::new(context.ui_state.i18n.t("appearance"))
-                        .color(ui.visuals().strong_text_color()),
+                    RichText::new(context.ui_state.i18n.t("appearance")).color(Color32::WHITE),
                 );
                 ui.add_space(4.0);
                 ui.horizontal(|ui| {
@@ -164,9 +160,7 @@ pub fn show(ctx: &Context, context: SettingsContext) {
 
                 ui.add_space(10.0);
                 ui.separator();
-                ui.heading(
-                    RichText::new("Toolbar-Metriken").color(ui.visuals().strong_text_color()),
-                );
+                ui.heading(RichText::new("Toolbar-Metriken").color(Color32::WHITE));
                 ui.add_space(4.0);
 
                 let mut save_needed = false;
@@ -219,7 +213,7 @@ pub fn show(ctx: &Context, context: SettingsContext) {
 
                 ui.add_space(10.0);
                 ui.separator();
-                ui.heading(RichText::new("Logging").color(ui.visuals().strong_text_color()));
+                ui.heading(RichText::new("Logging").color(Color32::WHITE));
                 ui.add_space(4.0);
 
                 let previous_log_level = context.ui_state.user_config.log_level;
@@ -260,9 +254,7 @@ pub fn show(ctx: &Context, context: SettingsContext) {
             }
 
             if active_tab == 1 {
-                ui.heading(
-                    RichText::new("Node-Animationen").color(ui.visuals().strong_text_color()),
-                );
+                ui.heading(RichText::new("Node-Animationen").color(Color32::WHITE));
                 ui.add_space(4.0);
                 let mut node_anim_changed = false;
                 node_anim_changed |= ui
@@ -340,9 +332,7 @@ pub fn show(ctx: &Context, context: SettingsContext) {
                 ui.add_space(10.0);
                 ui.separator();
 
-                ui.heading(
-                    RichText::new("Layout Profiles").color(ui.visuals().strong_text_color()),
-                );
+                ui.heading(RichText::new("Layout Profiles").color(Color32::WHITE));
                 ui.add_space(4.0);
 
                 let active_layout_before = context.ui_state.user_config.active_layout_id.clone();
@@ -478,7 +468,7 @@ pub fn show(ctx: &Context, context: SettingsContext) {
                         context.ui_state.i18n.t("graphics"),
                         context.ui_state.i18n.t("performance")
                     ))
-                    .color(ui.visuals().strong_text_color()),
+                    .color(Color32::WHITE),
                 );
                 ui.add_space(4.0);
                 egui::Grid::new("perf_grid").num_columns(2).spacing([20.0, 8.0]).show(ui, |ui| {
@@ -530,10 +520,7 @@ pub fn show(ctx: &Context, context: SettingsContext) {
             }
 
             if active_tab == 3 {
-                ui.heading(
-                    RichText::new(context.ui_state.i18n.t("audio"))
-                        .color(ui.visuals().strong_text_color()),
-                );
+                ui.heading(RichText::new(context.ui_state.i18n.t("audio")).color(Color32::WHITE));
                 if cfg!(target_os = "macos") {
                     ui.add_space(8.0);
                     vorce_ui::widgets::custom::render_info_label(
@@ -646,7 +633,7 @@ pub fn show(ctx: &Context, context: SettingsContext) {
                     if ui
                         .button(
                             RichText::new(context.ui_state.i18n.t("restart-app"))
-                                .color(ui.visuals().error_fg_color)
+                                .color(Color32::RED)
                                 .strong(),
                         )
                         .clicked()
