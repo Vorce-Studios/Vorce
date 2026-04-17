@@ -170,14 +170,15 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
             // Find if this output has an NDI sender
             let part_id = app.render_queue.items.get(&output_id).and_then(|items| {
                 items.iter().find_map(|item| {
-                    if let vorce_core::module::OutputType::Projector { id, .. } =
-                        &item.render_op.output_type
-                    {
-                        if *id == output_id {
-                            return Some(item.render_op.output_part_id);
+                    match &item.render_op.output_type {
+                        vorce_core::module::OutputType::Projector { id, .. } if *id == output_id => {
+                            Some(item.render_op.output_part_id)
                         }
+                        vorce_core::module::OutputType::NdiOutput { .. } if output_id == item.render_op.output_part_id => {
+                            Some(item.render_op.output_part_id)
+                        }
+                        _ => None,
                     }
-                    None
                 })
             });
 
@@ -291,6 +292,26 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
         app.backend.queue.submit(std::iter::once(encoder.finish()));
         window_context.window.pre_present_notify();
         surface_texture.present();
+    }
+
+    // --- Virtual Outputs Pass (NDI, Spout) ---
+    // Handle outputs that don't have a physical window
+    if output_id == 0 {
+        #[cfg(feature = "ndi")]
+        {
+            // Collect all NdiOutput part IDs from the render queue that are not projectors
+            let virtual_output_ids: Vec<_> = app.render_queue.items.keys()
+                .filter(|&&id| !app.window_manager.contains_output_id(id))
+                .cloned()
+                .collect();
+
+            for vid in virtual_output_ids {
+                // For now, we just skip these if they don't have a window,
+                // but in a future iteration we should render them to an offscreen texture.
+                // However, NDI Sender currently reads from the window's surface.
+                // TODO: Implement offscreen rendering for dedicated NdiOutput nodes.
+            }
+        }
     }
 
     if output_id == 0 {

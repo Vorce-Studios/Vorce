@@ -104,13 +104,12 @@ impl NodeEditor {
         self.graph_id = Some(graph.id);
         self.nodes.clear();
         self.connections.clear();
-        self.next_id = 1; // todo: sync with graph?
+        self.next_id = graph.next_node_id();
 
         // Map core nodes to UI nodes
         for (id, core_node) in &graph.nodes {
             let ui_node = self.core_node_to_ui(core_node);
             self.nodes.insert(*id, ui_node);
-            self.next_id = self.next_id.max(id + 1);
 
             // Reconstruct connections
             for input in &core_node.inputs {
@@ -519,11 +518,13 @@ impl NodeEditor {
         let selected_nodes_set: std::collections::HashSet<NodeId> =
             self.selected_nodes.iter().copied().collect();
 
+        let selected_set: rustc_hash::FxHashSet<_> = self.selected_nodes.iter().copied().collect();
+
         for node in nodes_vec {
             let node_screen_pos = to_screen(node.position);
             let node_screen_rect = Rect::from_min_size(node_screen_pos, node.size * zoom);
 
-            let is_selected = selected_nodes_set.contains(&node.id);
+            let is_selected = selected_set.contains(&node.id);
 
             let node_response =
                 Self::draw_node(ui, &painter, node, node_screen_rect, locale, zoom, is_selected);

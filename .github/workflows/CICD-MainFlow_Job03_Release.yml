@@ -350,6 +350,7 @@ jobs:
     needs: [resolve-release, build-windows, build-linux, build-macos]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
       - name: Download Artifacts
         uses: actions/download-artifact@v8
         with:
