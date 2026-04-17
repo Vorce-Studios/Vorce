@@ -7,6 +7,9 @@ pub mod output;
 pub mod source;
 pub mod trigger;
 
+#[cfg(test)]
+mod tests;
+
 pub use effect::set_default_effect_params;
 
 use super::mesh;
