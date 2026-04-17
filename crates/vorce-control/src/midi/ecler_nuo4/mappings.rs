@@ -554,9 +554,29 @@ pub(crate) fn get_mappings() -> Vec<ProfileMapping> {
             ControlTarget::Custom("push_enc_4_b3".to_string()),
         ),
         // Push Switches: Note 44-47
-        note_mapping(15, 44, "Switch 1 (B/L3)", ControlTarget::Custom("switch_1_b3".to_string())),
-        note_mapping(15, 45, "Switch 2 (B/L3)", ControlTarget::Custom("switch_2_b3".to_string())),
-        note_mapping(15, 46, "Switch 3 (B/L3)", ControlTarget::Custom("switch_3_b3".to_string())),
-        note_mapping(15, 47, "Switch 4 (B/L3)", ControlTarget::Custom("switch_4_b3".to_string())),
+        note_mapping(
+            15,
+            44,
+            "Switch 1 (B/L3)",
+            ControlTarget::Custom("switch_1_b3".to_string()),
+        ),
+        note_mapping(
+            15,
+            45,
+            "Switch 2 (B/L3)",
+            ControlTarget::Custom("switch_2_b3".to_string()),
+        ),
+        note_mapping(
+            15,
+            46,
+            "Switch 3 (B/L3)",
+            ControlTarget::Custom("switch_3_b3".to_string()),
+        ),
+        note_mapping(
+            15,
+            47,
+            "Switch 4 (B/L3)",
+            ControlTarget::Custom("switch_4_b3".to_string()),
+        ),
     ]
 }

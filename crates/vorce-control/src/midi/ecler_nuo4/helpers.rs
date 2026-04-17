@@ -9,7 +9,10 @@ pub(crate) fn cc_mapping(
     target: ControlTarget,
 ) -> ProfileMapping {
     ProfileMapping {
-        message_template: MidiMessageTemplate::ControlChange { channel, controller },
+        message_template: MidiMessageTemplate::ControlChange {
+            channel,
+            controller,
+        },
         target,
         min_value: 0.0,
         max_value: 1.0,
