@@ -34,8 +34,10 @@ impl Default for EffectParams {
 
 /// Ping-pong buffer for multi-pass rendering
 pub(crate) struct PingPongBuffer {
+    #[allow(dead_code)]
     pub(crate) textures: [wgpu::Texture; 2],
     pub(crate) views: [Arc<wgpu::TextureView>; 2],
+    #[allow(dead_code)]
     pub(crate) current: usize,
 }
 
@@ -78,14 +80,17 @@ impl PingPongBuffer {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn current_view(&self) -> &Arc<wgpu::TextureView> {
         &self.views[self.current]
     }
 
+    #[allow(dead_code)]
     pub(crate) fn next_view(&self) -> &Arc<wgpu::TextureView> {
         &self.views[1 - self.current]
     }
 
+    #[allow(dead_code)]
     pub(crate) fn swap(&mut self) {
         self.current = 1 - self.current;
     }
