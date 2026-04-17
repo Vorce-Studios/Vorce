@@ -12,20 +12,20 @@ pub struct GroupInfo {
 }
 
 // V2 API structures
-
+#[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 struct V2Response<T> {
     data: Vec<T>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 struct V2EntertainmentConfig {
     id: String,
     metadata: V2Metadata,
     channels: Vec<V2Channel>,
     #[serde(default)]
-    #[serde(rename = "status")]
-    _status: String,
+    status: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -53,11 +53,11 @@ struct V2ChannelMember {
     service: Option<V2ServiceRef>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 struct V2ServiceRef {
     rid: String,
-    #[serde(rename = "rtype")]
-    _rtype: String,
+    rtype: String,
 }
 
 #[derive(Serialize)]

@@ -434,10 +434,10 @@ mod tests {
             ))
             .with_state(state);
 
-        // Test request with valid token in authorization header
+        // Test request with valid token in subprotocol
         let req = Request::builder()
             .uri("/ws")
-            .header(header::AUTHORIZATION, "Bearer secret123")
+            .header(header::SEC_WEBSOCKET_PROTOCOL, "vorce.auth.secret123")
             .body(Body::empty())
             .unwrap();
 
@@ -447,7 +447,7 @@ mod tests {
         // Test request with INVALID token
         let req_invalid = Request::builder()
             .uri("/ws")
-            .header(header::AUTHORIZATION, "Bearer WRONG")
+            .header(header::SEC_WEBSOCKET_PROTOCOL, "vorce.auth.WRONG")
             .body(Body::empty())
             .unwrap();
 

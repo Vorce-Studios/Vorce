@@ -30,6 +30,7 @@ pub mod assignment;
 pub mod audio;
 pub mod audio_media_pipeline;
 pub mod audio_reactive;
+pub mod cluster;
 pub mod codegen;
 pub mod diagnostics;
 pub mod effect_animation;
@@ -102,6 +103,8 @@ pub use module_eval::{
 };
 
 // Output & Display
+// Cluster System
+pub use cluster::{ClusterSessionConfig, InstanceConfig, InstanceId, InstanceRole};
 pub use mapping::{Mapping, MappingId, MappingManager};
 pub use monitor::{MonitorInfo, MonitorTopology};
 pub use output::{

@@ -1,7 +1,3 @@
-## [Unreleased]
-### Security
-- Fixed an insecure WebSocket Protocol authentication fallback that permitted API keys via `Sec-WebSocket-Protocol`. This method was removed in favor of standard `Authorization` headers.
-
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -219,3 +215,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 2026-04-12: feat: UI: Theme-aware colors in Node Editor (#222)
 - 2026-04-12: fix: Sentinel: Fix DoS panic on float sorting with NaN (#223)
 - 2026-04-12: feat: UI: Visuelle Theme-Konsistenz in Media Browser Widgets (#218)
+- 2026-04-14: test: Add test coverage for upsert_instance in cluster.rs (#256)
