@@ -18,15 +18,26 @@ fn test_is_blend_mode_supported() {
 
 #[test]
 fn test_is_effect_supported() {
-    // Test some known supported effects
-    assert!(is_effect_supported(&EffectType::Blur));
-    assert!(is_effect_supported(&EffectType::Invert));
-    assert!(is_effect_supported(&EffectType::Wave));
-
-    // Test some known unsupported effects (at the time of writing)
-    assert!(!is_effect_supported(&EffectType::Sharpen));
-    assert!(!is_effect_supported(&EffectType::Threshold));
-    assert!(!is_effect_supported(&EffectType::Posterize));
+    for effect in EffectType::all() {
+        let expected = matches!(
+            effect,
+            EffectType::Blur
+                | EffectType::Invert
+                | EffectType::HueShift
+                | EffectType::Wave
+                | EffectType::Mirror
+                | EffectType::Kaleidoscope
+                | EffectType::Pixelate
+                | EffectType::EdgeDetect
+                | EffectType::Glitch
+                | EffectType::RgbSplit
+                | EffectType::ChromaticAberration
+                | EffectType::FilmGrain
+                | EffectType::Vignette
+        );
+        assert_eq!(is_effect_supported(effect), expected, "Mismatch for effect {:?}", effect);
+    }
+    assert!(is_effect_supported(&EffectType::ShaderGraph(0)));
 }
 
 #[test]
