@@ -56,7 +56,7 @@ impl Default for WebServerConfig {
         Self {
             host: "127.0.0.1".to_string(),
             port: 8080,
-            enable_cors: true,
+            enable_cors: false,
             allowed_origins: default_allowed_origins(),
             auth: AuthConfig::new(),
         }
@@ -295,6 +295,12 @@ mod tests {
     fn test_web_server_default_origins() {
         let config = WebServerConfig::default();
         assert!(config.allowed_origins.is_empty());
+    }
+
+    #[test]
+    fn test_web_server_default_cors() {
+        let config = WebServerConfig::default();
+        assert!(!config.enable_cors);
     }
 
     #[test]
