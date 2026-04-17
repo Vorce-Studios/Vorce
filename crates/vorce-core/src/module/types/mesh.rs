@@ -67,7 +67,12 @@ pub enum MeshType {
 
 impl Default for MeshType {
     fn default() -> Self {
-        Self::Quad { tl: (0.0, 0.0), tr: (1.0, 0.0), br: (1.0, 1.0), bl: (0.0, 1.0) }
+        Self::Quad {
+            tl: (0.0, 0.0),
+            tr: (1.0, 0.0),
+            br: (1.0, 1.0),
+            bl: (0.0, 1.0),
+        }
     }
 }
 
@@ -98,7 +103,10 @@ impl MeshType {
             MeshType::TriMesh => {
                 2u8.hash(&mut hasher);
             }
-            MeshType::Circle { segments, arc_angle } => {
+            MeshType::Circle {
+                segments,
+                arc_angle,
+            } => {
                 3u8.hash(&mut hasher);
                 segments.hash(&mut hasher);
                 arc_angle.to_bits().hash(&mut hasher);
@@ -124,7 +132,10 @@ impl MeshType {
                 segments.hash(&mut hasher);
                 height.to_bits().hash(&mut hasher);
             }
-            MeshType::Sphere { lat_segments, lon_segments } => {
+            MeshType::Sphere {
+                lat_segments,
+                lon_segments,
+            } => {
                 7u8.hash(&mut hasher);
                 lat_segments.hash(&mut hasher);
                 lon_segments.hash(&mut hasher);
@@ -181,14 +192,19 @@ impl MeshType {
                 } else {
                     use crate::mesh::{MeshType as CoreMeshType, MeshVertex};
 
-                    let center =
-                        vertices.iter().fold((0.0, 0.0), |acc, v| (acc.0 + v.0, acc.1 + v.1));
-                    let center =
-                        (center.0 / vertices.len() as f32, center.1 / vertices.len() as f32);
+                    let center = vertices
+                        .iter()
+                        .fold((0.0, 0.0), |acc, v| (acc.0 + v.0, acc.1 + v.1));
+                    let center = (
+                        center.0 / vertices.len() as f32,
+                        center.1 / vertices.len() as f32,
+                    );
 
                     let mut mesh_vertices = Vec::with_capacity(vertices.len() + 1);
-                    mesh_vertices
-                        .push(MeshVertex::new(Vec2::new(center.0, center.1), Vec2::new(0.5, 0.5)));
+                    mesh_vertices.push(MeshVertex::new(
+                        Vec2::new(center.0, center.1),
+                        Vec2::new(0.5, 0.5),
+                    ));
 
                     for v in vertices {
                         mesh_vertices
@@ -215,7 +231,10 @@ impl MeshType {
                 let cols = (*segments).max(3);
                 Mesh::create_grid(rows, cols)
             }
-            MeshType::Sphere { lat_segments, lon_segments } => {
+            MeshType::Sphere {
+                lat_segments,
+                lon_segments,
+            } => {
                 use crate::mesh::{MeshType as CoreMeshType, MeshVertex};
 
                 let lat_segs = (*lat_segments).max(3);

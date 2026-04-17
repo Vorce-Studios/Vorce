@@ -167,7 +167,10 @@ impl ControlManager {
 
     /// Initialize Art-Net sender
     pub fn init_artnet(&mut self, universe: u16, target: &str) -> Result<()> {
-        info!("Initializing Art-Net sender for universe {} to {}", universe, target);
+        info!(
+            "Initializing Art-Net sender for universe {} to {}",
+            universe, target
+        );
         match ArtNetSender::new(universe, target) {
             Ok(sender) => {
                 self.artnet_sender = Some(sender);
@@ -182,7 +185,10 @@ impl ControlManager {
 
     /// Initialize sACN sender
     pub fn init_sacn(&mut self, universe: u16, source_name: &str) -> Result<()> {
-        info!("Initializing sACN sender for universe {} with source {}", universe, source_name);
+        info!(
+            "Initializing sACN sender for universe {} with source {}",
+            universe, source_name
+        );
         match SacnSender::new(universe, source_name) {
             Ok(sender) => {
                 self.sacn_sender = Some(sender);
@@ -242,7 +248,11 @@ impl ControlManager {
                     crate::midi::MidiMessage::NoteOn { channel, note, .. } => {
                         self.raw_midi_events.push((*channel, *note));
                     }
-                    crate::midi::MidiMessage::ControlChange { channel, controller, .. } => {
+                    crate::midi::MidiMessage::ControlChange {
+                        channel,
+                        controller,
+                        ..
+                    } => {
                         self.raw_midi_events.push((*channel, *controller));
                     }
                     _ => {}
@@ -321,7 +331,10 @@ impl ControlManager {
                 ControlTarget::Custom(name) => name.clone(),
                 _ => target.name(),
             };
-            warn!("Security violation in apply_control value for {}: {}", name, e);
+            warn!(
+                "Security violation in apply_control value for {}: {}",
+                name, e
+            );
             return;
         }
 
@@ -338,7 +351,11 @@ impl ControlManager {
         #[cfg(feature = "osc")]
         for client in &mut self.osc_clients {
             if let Err(e) = client.send_update(&target, &value) {
-                warn!("Failed to send OSC feedback to {}: {}", client.destination_str(), e);
+                warn!(
+                    "Failed to send OSC feedback to {}: {}",
+                    client.destination_str(),
+                    e
+                );
             }
         }
     }
@@ -376,7 +393,9 @@ impl ControlManager {
         if let Some(sender) = &mut self.artnet_sender {
             sender.send_dmx(channels, target)?;
         } else {
-            return Err(ControlError::DmxError("Art-Net not initialized".to_string()));
+            return Err(ControlError::DmxError(
+                "Art-Net not initialized".to_string(),
+            ));
         }
         Ok(())
     }

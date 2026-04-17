@@ -80,11 +80,18 @@ impl WgpuBackend {
             .map_err(|e| RenderError::DeviceError(e.to_string()))?;
 
         let adapter_info = adapter.get_info();
-        info!("Using GPU: {} ({:?})", adapter_info.name, adapter_info.backend);
+        info!(
+            "Using GPU: {} ({:?})",
+            adapter_info.name, adapter_info.backend
+        );
 
         // Filter based on preferred GPU name if provided
         if let Some(preferred) = preferred_gpu {
-            if !adapter_info.name.to_lowercase().contains(&preferred.to_lowercase()) {
+            if !adapter_info
+                .name
+                .to_lowercase()
+                .contains(&preferred.to_lowercase())
+            {
                 warn!(
                     "Current GPU '{}' does not match preferred '{}'. This might be a secondary adapter.",
                     adapter_info.name, preferred
@@ -104,7 +111,7 @@ impl WgpuBackend {
 
         debug!("Device created successfully");
 
-        let staging_belt = wgpu::util::StagingBelt::new(device.clone(), 1024 * 1024); // 1MB chunks
+        let staging_belt = StagingBelt::new(device.clone(), 1024 * 1024); // 1MB chunks
 
         Ok(Self {
             instance: Arc::new(instance),
@@ -184,7 +191,10 @@ impl RenderBackend for WgpuBackend {
         };
 
         self.texture_counter += 1;
-        debug!("Created texture {} ({}x{})", handle.id, desc.width, desc.height);
+        debug!(
+            "Created texture {} ({}x{})",
+            handle.id, desc.width, desc.height
+        );
         Ok(handle)
     }
 
@@ -203,20 +213,29 @@ impl RenderBackend for WgpuBackend {
                 bytes_per_row: Some(handle.width * bytes_per_pixel),
                 rows_per_image: Some(handle.height),
             },
-            wgpu::Extent3d { width: handle.width, height: handle.height, depth_or_array_layers: 1 },
+            wgpu::Extent3d {
+                width: handle.width,
+                height: handle.height,
+                depth_or_array_layers: 1,
+            },
         );
         Ok(())
     }
 
     fn create_shader(&mut self, source: ShaderSource) -> Result<ShaderHandle> {
-        let module = self.device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some(&format!("Shader {}", self.shader_counter)),
-            source: match source {
-                ShaderSource::Wgsl(s) => wgpu::ShaderSource::Wgsl(s.into()),
-            },
-        });
+        let module = self
+            .device
+            .create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some(&format!("Shader {}", self.shader_counter)),
+                source: match source {
+                    ShaderSource::Wgsl(s) => wgpu::ShaderSource::Wgsl(s.into()),
+                },
+            });
 
-        let handle = ShaderHandle { id: self.shader_counter, module: Arc::new(module) };
+        let handle = ShaderHandle {
+            id: self.shader_counter,
+            module: Arc::new(module),
+        };
 
         self.shader_counter += 1;
         Ok(handle)

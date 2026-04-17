@@ -1,5 +1,2 @@
-## 2024-05-18 - Replacing Hardcoded Colors with Theme Variables
-
-**Erkenntnis:** Many UI components in `vorce-ui` (like `audio_meter.rs`, `custom.rs`, and `module_sidebar.rs`) use hardcoded colors such as `Color32::WHITE` for text. This breaks contrast when switching to light themes or different dark modes, as the text might become unreadable or lack visual harmony.
-
-**Aktion:** Always use dynamic theme variables like `ui.visuals().text_color()` for text colors. This ensures consistency across all themes and avoids contrast issues when users change their theme. Avoid `Color32::WHITE` and other hardcoded colors whenever they are intended to render standard text or icons that should adapt to the theme.
+# Lina StyleUI Journal
+## 2024-05-24 - Visuelle Ruhe für Toolbar-Metriken **Erkenntnis:** Hardcodierte Warn- und Error-Farben (z. B. grelles Grün für 'OK') erzeugen zu viel visuelles 'Rauschen', wenn eigentlich alles in Ordnung ist. Zudem kollidieren hartcodierte Farben (wie Color32::YELLOW oder Color32::from_rgb) in den Metriken mit verschiedenen Theme-Varianten. **Aktion:** Nutze für den 'OK'-Zustand immer neutrale Farben (z. B. `ui.visuals().text_color().gamma_multiply(0.8)`), damit Fehler visuell stärker hervortreten. Verwende für Warnungen und Fehler immer `ui.visuals().warn_fg_color` bzw. `ui.visuals().error_fg_color`, um 100% Theme-Kohärenz zu gewährleisten.

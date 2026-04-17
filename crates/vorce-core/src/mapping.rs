@@ -83,7 +83,10 @@ pub struct MappingManager {
 impl MappingManager {
     /// Create a new mapping manager
     pub fn new() -> Self {
-        Self { mappings: Vec::new(), next_id: 1 }
+        Self {
+            mappings: Vec::new(),
+            next_id: 1,
+        }
     }
 
     /// Add a mapping
@@ -99,7 +102,10 @@ impl MappingManager {
 
     /// Remove a mapping
     pub fn remove_mapping(&mut self, id: MappingId) -> Option<Mapping> {
-        self.mappings.iter().position(|m| m.id == id).map(|index| self.mappings.remove(index))
+        self.mappings
+            .iter()
+            .position(|m| m.id == id)
+            .map(|index| self.mappings.remove(index))
     }
 
     /// Get a mapping by ID
@@ -128,14 +134,17 @@ impl MappingManager {
             self.mappings.iter().filter(|m| m.is_renderable()).collect();
 
         // Sort by depth (back to front)
-        mappings.sort_by(|a, b| a.depth.partial_cmp(&b.depth).unwrap_or(std::cmp::Ordering::Equal));
+        mappings.sort_by(|a, b| a.depth.partial_cmp(&b.depth).unwrap());
 
         mappings
     }
 
     /// Get mappings for a specific paint
     pub fn mappings_for_paint(&self, paint_id: PaintId) -> Vec<&Mapping> {
-        self.mappings.iter().filter(|m| m.paint_id == paint_id).collect()
+        self.mappings
+            .iter()
+            .filter(|m| m.paint_id == paint_id)
+            .collect()
     }
 
     /// Check if any mapping is in solo mode
@@ -145,7 +154,10 @@ impl MappingManager {
 
     /// Get solo mappings only
     pub fn solo_mappings(&self) -> Vec<&Mapping> {
-        self.mappings.iter().filter(|m| m.solo && m.visible).collect()
+        self.mappings
+            .iter()
+            .filter(|m| m.solo && m.visible)
+            .collect()
     }
 
     /// Move mapping up in Z-order
@@ -265,11 +277,31 @@ mod tests_guardian {
         let mut manager = MappingManager::new();
 
         // Add mappings with mixed depths and insertion order
-        let m1 = Mapping { id: 1, depth: 2.0, opacity: 1.0, ..Mapping::quad(1, "Top", 0) };
-        let m2 = Mapping { id: 2, depth: 0.0, opacity: 1.0, ..Mapping::quad(2, "Bottom", 0) };
-        let m3 = Mapping { id: 3, depth: 1.0, opacity: 1.0, ..Mapping::quad(3, "Middle", 0) };
+        let m1 = Mapping {
+            id: 1,
+            depth: 2.0,
+            opacity: 1.0,
+            ..Mapping::quad(1, "Top", 0)
+        };
+        let m2 = Mapping {
+            id: 2,
+            depth: 0.0,
+            opacity: 1.0,
+            ..Mapping::quad(2, "Bottom", 0)
+        };
+        let m3 = Mapping {
+            id: 3,
+            depth: 1.0,
+            opacity: 1.0,
+            ..Mapping::quad(3, "Middle", 0)
+        };
         // Same depth as m3
-        let m4 = Mapping { id: 4, depth: 1.0, opacity: 1.0, ..Mapping::quad(4, "Middle 2", 0) };
+        let m4 = Mapping {
+            id: 4,
+            depth: 1.0,
+            opacity: 1.0,
+            ..Mapping::quad(4, "Middle 2", 0)
+        };
 
         manager.add_mapping(m3.clone()); // Middle first
         manager.add_mapping(m1.clone()); // Top

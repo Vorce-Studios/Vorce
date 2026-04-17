@@ -71,16 +71,23 @@ impl ShortcutsPanel {
         let shortcuts_clone = key_bindings.get_shortcuts().to_vec();
 
         // --- Filter and Group Shortcuts ---
-        let filter_lower = self.search_filter.to_lowercase();
+        let filter_str = &self.search_filter;
         let filtered_indices: Vec<usize> = shortcuts_clone
             .iter()
             .enumerate()
             .filter(|(_, s)| {
-                if filter_lower.is_empty() {
+                if filter_str.is_empty() {
                     return true;
                 }
-                s.description_lower.contains(&filter_lower)
-                    || s.shortcut_str_lower.contains(&filter_lower)
+
+                // PERFORMANCE: Avoid redundant string allocations for case-insensitive search
+                // by using an allocation-free Unicode-aware case-insensitive iterator match.
+                if crate::core::text::contains_ignore_case(&s.description, filter_str) {
+                    return true;
+                }
+
+                let shortcut_str = s.to_shortcut_string();
+                crate::core::text::contains_ignore_case(&shortcut_str, filter_str)
             })
             .map(|(i, _)| i)
             .collect();
@@ -113,8 +120,11 @@ impl ShortcutsPanel {
 
                             // Shortcut Key Display
                             let shortcut_text = shortcut.to_shortcut_string();
-                            let text_color =
-                                if is_conflict { colors::ERROR_COLOR } else { colors::CYAN_ACCENT };
+                            let text_color = if is_conflict {
+                                colors::ERROR_COLOR
+                            } else {
+                                colors::CYAN_ACCENT
+                            };
 
                             let key_label = ui.label(
                                 RichText::new(if shortcut_text.is_empty() {
@@ -133,7 +143,10 @@ impl ShortcutsPanel {
                             }
 
                             // Edit Button
-                            if ui.add(egui::Button::new(locale.t("shortcuts-edit"))).clicked() {
+                            if ui
+                                .add(egui::Button::new(locale.t("shortcuts-edit")))
+                                .clicked()
+                            {
                                 self.editing_shortcut_index = Some(index);
                                 self.show_conflict_warning = false;
                             }
@@ -186,7 +199,10 @@ impl ShortcutsPanel {
                     }
 
                     ui.separator();
-                    if ui.button(locale.t("shortcuts-edit-dialog-cancel")).clicked() {
+                    if ui
+                        .button(locale.t("shortcuts-edit-dialog-cancel"))
+                        .clicked()
+                    {
                         self.editing_shortcut_index = None;
                     }
 
@@ -196,7 +212,9 @@ impl ShortcutsPanel {
                     if input.key_pressed(egui::Key::Escape) {
                         self.editing_shortcut_index = None;
                     } else if let Some(key) = input.events.iter().find_map(|e| match e {
-                        egui::Event::Key { key, pressed: true, .. } => Some(key),
+                        egui::Event::Key {
+                            key, pressed: true, ..
+                        } => Some(key),
                         _ => None,
                     }) {
                         // Ignore modifier-only presses

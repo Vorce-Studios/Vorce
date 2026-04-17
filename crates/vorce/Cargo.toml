@@ -77,7 +77,7 @@ tracing-subscriber = { workspace = true }
 
 wgpu = { workspace = true }
 winit = { workspace = true }
-rustc-hash = "2.1.2"
+chrono.workspace = true
 
 [build-dependencies]
 winres = { workspace = true }

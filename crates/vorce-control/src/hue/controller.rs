@@ -47,7 +47,10 @@ impl HueController {
                 }
                 Err(api::error::HueError::LinkButtonNotPressed) => {
                     let elapsed = start_time.elapsed().as_secs();
-                    info!("Link button not pressed yet ({}s/60s). Retrying...", elapsed);
+                    info!(
+                        "Link button not pressed yet ({}s/60s). Retrying...",
+                        elapsed
+                    );
                 }
                 Err(e) => {
                     // Other errors (network, etc) should fail immediately
@@ -99,20 +102,31 @@ impl HueController {
         }
 
         info!("Fetching entertainment configuration...");
-        let groups =
-            api::groups::get_entertainment_groups(&self.config).await.map_err(|e| e.to_string())?;
+        let groups = api::groups::get_entertainment_groups(&self.config)
+            .await
+            .map_err(|e| e.to_string())?;
 
         // Find selected group
-        let group = groups.iter().find(|g| g.id == self.config.entertainment_group_id).ok_or_else(
-            || format!("Entertainment group '{}' not found", self.config.entertainment_group_id),
-        )?;
+        let group = groups
+            .iter()
+            .find(|g| g.id == self.config.entertainment_group_id)
+            .ok_or_else(|| {
+                format!(
+                    "Entertainment group '{}' not found",
+                    self.config.entertainment_group_id
+                )
+            })?;
 
         // Populate nodes map
         self.nodes.clear();
         for light in &group.lights {
             self.nodes.insert(light.id.clone(), light.clone());
         }
-        info!("Loaded {} lights for entertainment group '{}'", self.nodes.len(), group.name);
+        info!(
+            "Loaded {} lights for entertainment group '{}'",
+            self.nodes.len(),
+            group.name
+        );
 
         // 3. Activate stream on bridge via API
         info!("Activating stream mode...");
@@ -234,9 +248,7 @@ impl HueController {
         let b = rgb.blue;
 
         // 2. Identify targets
-        let Some(tx) = self.sender.as_ref() else {
-            return;
-        };
+        let tx = self.sender.as_ref().unwrap();
         let mut stream_updates = Vec::new();
 
         if let Some(target_ids) = ids {

@@ -84,8 +84,10 @@ fn update_startup_animation_texture(
 ) -> Option<(egui::TextureId, egui::Vec2)> {
     let startup = &mut app.startup_animation;
     let now = std::time::Instant::now();
-    let dt =
-        startup.last_update.map(|last| now.saturating_duration_since(last)).unwrap_or_default();
+    let dt = startup
+        .last_update
+        .map(|last| now.saturating_duration_since(last))
+        .unwrap_or_default();
     startup.last_update = Some(now);
 
     let player = startup.player.as_mut()?;
@@ -141,6 +143,50 @@ fn fit_size_within(source_size: egui::Vec2, max_size: egui::Vec2) -> egui::Vec2 
     source_size * scale
 }
 
+fn save_user_config(app: &mut App, reason: &str) {
+    app.ui_state.sync_runtime_to_active_layout();
+    if let Err(err) = app.ui_state.user_config.save() {
+        tracing::error!("Failed to save user config after {}: {}", reason, err);
+    }
+}
+
+fn update_panel_sizes(
+    app: &mut App,
+    left_sidebar_width: Option<f32>,
+    inspector_width: Option<f32>,
+    timeline_height: Option<f32>,
+) -> bool {
+    let mut changed = false;
+
+    if let Some(layout) = app.ui_state.user_config.active_layout_mut() {
+        if let Some(width) = left_sidebar_width.filter(|value| value.is_finite() && *value > 0.0) {
+            let width = width.clamp(180.0, 1200.0);
+            if (layout.panel_sizes.left_sidebar_width - width).abs() > 1.0 {
+                layout.panel_sizes.left_sidebar_width = width;
+                changed = true;
+            }
+        }
+
+        if let Some(width) = inspector_width.filter(|value| value.is_finite() && *value > 0.0) {
+            let width = width.clamp(220.0, 1400.0);
+            if (layout.panel_sizes.inspector_width - width).abs() > 1.0 {
+                layout.panel_sizes.inspector_width = width;
+                changed = true;
+            }
+        }
+
+        if let Some(height) = timeline_height.filter(|value| value.is_finite() && *value > 0.0) {
+            let height = height.clamp(80.0, 900.0);
+            if (layout.panel_sizes.timeline_height - height).abs() > 1.0 {
+                layout.panel_sizes.timeline_height = height;
+                changed = true;
+            }
+        }
+    }
+
+    changed
+}
+
 fn render_startup_animation_overlay(ctx: &egui::Context, app: &mut App) {
     if !app.ui_state.user_config.startup_animation_enabled
         || app.ui_state.user_config.reduce_motion_enabled
@@ -160,11 +206,19 @@ fn render_startup_animation_overlay(ctx: &egui::Context, app: &mut App) {
     let fade_out = ((1.0 - t) / 0.25).clamp(0.0, 1.0);
     let alpha = fade_in.min(fade_out);
 
-    let source_path = app.ui_state.user_config.startup_animation_path.trim().to_string();
+    let source_path = app
+        .ui_state
+        .user_config
+        .startup_animation_path
+        .trim()
+        .to_string();
     load_startup_animation(app, &source_path);
 
-    let source_status =
-        app.startup_animation.error.clone().unwrap_or_else(|| "Startup-Video aktiv".to_string());
+    let source_status = app
+        .startup_animation
+        .error
+        .clone()
+        .unwrap_or_else(|| "Startup-Video aktiv".to_string());
     let resolved_path = app
         .startup_animation
         .resolved_path
@@ -181,6 +235,7 @@ fn render_startup_animation_overlay(ctx: &egui::Context, app: &mut App) {
 
     egui::Area::new("startup_animation_overlay".into())
         .order(egui::Order::Foreground)
+        .interactable(false)
         .fixed_pos(ctx.content_rect().min)
         .show(ctx, |ui| {
             let rect = ctx.content_rect();
@@ -251,8 +306,15 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
     let compact_height = viewport_height < 760.0;
 
     let active_layout = app.ui_state.user_config.active_layout().cloned();
-    let layout_sizes = active_layout.as_ref().map(|layout| layout.panel_sizes).unwrap_or_default();
-    let layout_locked = active_layout.as_ref().map(|layout| layout.lock_layout).unwrap_or(false);
+    let layout_sizes = active_layout
+        .as_ref()
+        .map(|layout| layout.panel_sizes)
+        .unwrap_or_default();
+    let layout_locked = active_layout
+        .as_ref()
+        .map(|layout| layout.lock_layout)
+        .unwrap_or(false);
+    let mut user_config_dirty = false;
 
     let sidebar_default = if layout_sizes.left_sidebar_width > 0.0 {
         layout_sizes.left_sidebar_width
@@ -294,7 +356,12 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                     .inner_margin(egui::Margin::symmetric(16, 4))
                     .stroke(egui::Stroke::new(
                         1.0,
-                        ctx.global_style().visuals.widgets.noninteractive.bg_stroke.color,
+                        ctx.global_style()
+                            .visuals
+                            .widgets
+                            .noninteractive
+                            .bg_stroke
+                            .color,
                     )),
             )
             .show(ctx, |ui_obj| {
@@ -309,7 +376,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                     {
                         app.ui_state.show_left_sidebar = !app.ui_state.show_left_sidebar;
                         app.ui_state.user_config.show_left_sidebar = app.ui_state.show_left_sidebar;
-                        let _ = app.ui_state.user_config.save();
+                        user_config_dirty = true;
                     }
                     if ui_obj
                         .small_button(if app.ui_state.show_inspector {
@@ -321,7 +388,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                     {
                         app.ui_state.show_inspector = !app.ui_state.show_inspector;
                         app.ui_state.user_config.show_inspector = app.ui_state.show_inspector;
-                        let _ = app.ui_state.user_config.save();
+                        user_config_dirty = true;
                     }
                     if ui_obj
                         .small_button(if app.ui_state.show_timeline {
@@ -333,7 +400,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                     {
                         app.ui_state.show_timeline = !app.ui_state.show_timeline;
                         app.ui_state.user_config.show_timeline = app.ui_state.show_timeline;
-                        let _ = app.ui_state.user_config.save();
+                        user_config_dirty = true;
                     }
                     ui_obj.separator();
                     ui::view::menu_bar::toolbar::show(ui_obj, &mut app.ui_state);
@@ -343,7 +410,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
 
     // 3. Left Panel: Sidebar (Collapsible & Resizable)
     if app.ui_state.show_left_sidebar {
-        egui::SidePanel::left("left_sidebar_panel")
+        let sidebar_panel = egui::SidePanel::left("left_sidebar_panel")
             .resizable(!layout_locked)
             .default_width(sidebar_default)
             .min_width(if compact_height { 180.0 } else { 220.0 })
@@ -485,11 +552,14 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                         });
                 });
             });
+        if update_panel_sizes(app, Some(sidebar_panel.response.rect.width()), None, None) {
+            user_config_dirty = true;
+        }
     }
 
     // 4. Right Panel: Inspector (Docked & Resizable)
     if app.ui_state.show_inspector {
-        egui::SidePanel::right("right_panel")
+        let inspector_panel = egui::SidePanel::right("right_panel")
             .resizable(!layout_locked)
             .default_width(inspector_default)
             .min_width(if compact_height { 220.0 } else { 260.0 })
@@ -497,10 +567,14 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
             .show(ctx, |ui_obj| {
                 ui_obj.horizontal(|ui| {
                     ui.heading(app.ui_state.i18n.t("inspector"));
-                    if ui.small_button("✕").on_hover_text("Inspector ausblenden").clicked() {
+                    if ui
+                        .small_button("✕")
+                        .on_hover_text("Inspector ausblenden")
+                        .clicked()
+                    {
                         app.ui_state.show_inspector = false;
                         app.ui_state.user_config.show_inspector = false;
-                        let _ = app.ui_state.user_config.save();
+                        user_config_dirty = true;
                     }
                 });
 
@@ -536,21 +610,28 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                         });
                 });
             });
+        if update_panel_sizes(app, None, Some(inspector_panel.response.rect.width()), None) {
+            user_config_dirty = true;
+        }
     }
 
     // 5. Bottom Panel: Timeline (Resizable)
     if app.ui_state.show_timeline {
-        egui::TopBottomPanel::bottom("bottom_panel")
+        let timeline_panel = egui::TopBottomPanel::bottom("bottom_panel")
             .resizable(!layout_locked)
             .default_height(timeline_default_height)
             .min_height(if compact_height { 80.0 } else { 100.0 })
             .show(ctx, |ui_obj| {
                 ui_obj.horizontal(|ui| {
                     ui.heading(app.ui_state.i18n.t("timeline"));
-                    if ui.small_button("✕").on_hover_text("Timeline ausblenden").clicked() {
+                    if ui
+                        .small_button("✕")
+                        .on_hover_text("Timeline ausblenden")
+                        .clicked()
+                    {
                         app.ui_state.show_timeline = false;
                         app.ui_state.user_config.show_timeline = false;
-                        let _ = app.ui_state.user_config.save();
+                        user_config_dirty = true;
                     }
                 });
 
@@ -569,9 +650,14 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                 modules.sort_by_key(|m| m.id);
 
                 if let Some(action) = app.ui_state.timeline_panel.ui(ui_obj, animator, &modules) {
-                    app.ui_state.actions.push(ui::UIAction::TimelineAction(action));
+                    app.ui_state
+                        .actions
+                        .push(ui::UIAction::TimelineAction(action));
                 }
             });
+        if update_panel_sizes(app, None, None, Some(timeline_panel.response.rect.height())) {
+            user_config_dirty = true;
+        }
     }
 
     // 6. Floating Windows / Overlays
@@ -664,7 +750,10 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                             !app.ui_state.module_canvas.show_search;
                     }
 
-                    if ui_obj.button(egui::RichText::new("➕ Neues Modul").strong()).clicked() {
+                    if ui_obj
+                        .button(egui::RichText::new("➕ Neues Modul").strong())
+                        .clicked()
+                    {
                         let new_id = std::sync::Arc::make_mut(&mut app.state.module_manager)
                             .create_module("New Module".to_string());
                         app.ui_state.module_canvas.set_active_module(Some(new_id));
@@ -709,7 +798,9 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
 
     crate::ui::panels::edge_blend::show(
         ctx,
-        crate::ui::panels::edge_blend::EdgeBlendContext { ui_state: &mut app.ui_state },
+        crate::ui::panels::edge_blend::EdgeBlendContext {
+            ui_state: &mut app.ui_state,
+        },
     );
 
     crate::ui::panels::mapping::show(
@@ -786,6 +877,12 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
         crate::ui::dialogs::settings::show(ctx, context);
     }
 
-    app.ui_state.assignment_panel.show(ctx, &app.state.assignment_manager);
+    app.ui_state
+        .assignment_panel
+        .show(ctx, &app.state.assignment_manager);
     app.ui_state.shortcut_editor.show(ctx, &app.ui_state.i18n);
+
+    if user_config_dirty {
+        save_user_config(app, "layout update");
+    }
 }

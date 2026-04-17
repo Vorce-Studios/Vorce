@@ -12,12 +12,14 @@ impl MediaManagerUIWrapper {
             return;
         }
         let mut open = self.visible;
-        egui::Window::new("Media Manager").open(&mut open).show(ctx, |ui| {
-            ui.label("Media Manager Placeholder");
-            if ui.button("Refresh").clicked() {
-                library.refresh();
-            }
-        });
+        egui::Window::new("Media Manager")
+            .open(&mut open)
+            .show(ctx, |ui| {
+                ui.label("Media Manager Placeholder");
+                if ui.button("Refresh").clicked() {
+                    library.refresh();
+                }
+            });
         self.visible = open;
     }
 }

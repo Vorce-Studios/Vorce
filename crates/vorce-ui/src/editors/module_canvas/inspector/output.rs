@@ -36,7 +36,10 @@ pub fn render_hue_bridge_discovery(
         ui.separator();
         ui.label("Select Bridge:");
         for bridge in &canvas.hue_bridges {
-            if ui.button(format!("{} ({})", bridge.id, bridge.ip)).clicked() {
+            if ui
+                .button(format!("{} ({})", bridge.id, bridge.ip))
+                .clicked()
+            {
                 *current_ip = bridge.ip.clone();
             }
         }
@@ -107,9 +110,17 @@ pub fn render_output_ui(
             ui.label("⚙️ Advanced Setup:");
             ui.horizontal(|ui| {
                 ui.label("Resolution:");
-                ui.add(egui::DragValue::new(output_width).suffix(" px").range(1..=8192));
+                ui.add(
+                    egui::DragValue::new(output_width)
+                        .suffix(" px")
+                        .range(1..=8192),
+                );
                 ui.label("x");
-                ui.add(egui::DragValue::new(output_height).suffix(" px").range(1..=8192));
+                ui.add(
+                    egui::DragValue::new(output_height)
+                        .suffix(" px")
+                        .range(1..=8192),
+                );
             });
             ui.horizontal(|ui| {
                 ui.label("Target FPS:");
@@ -129,22 +140,14 @@ pub fn render_output_ui(
 
             ui.separator();
             ui.label("\u{1F4E1} NDI Broadcast");
+            // NDI is capability-gated: always shows warning since runtime path is experimental
+            capabilities::render_unsupported_warning(
+                ui,
+                "[Experimental] NDI Output has no active runtime path currently.",
+            );
             #[cfg(feature = "ndi")]
             {
-                let supported = capabilities::is_output_type_enum_supported(true, false, false);
-                if !supported {
-                    #[cfg(target_os = "macos")]
-                    capabilities::render_unsupported_warning(
-                        ui,
-                        "NDI Output is experimental/unavailable on macOS currently.",
-                    );
-                    #[cfg(not(target_os = "macos"))]
-                    capabilities::render_unsupported_warning(
-                        ui,
-                        "[Experimental] NDI Output has no active runtime path currently.",
-                    );
-                }
-                ui.add_enabled_ui(supported, |ui| {
+                ui.add_enabled_ui(false, |ui| {
                     ui.checkbox(_ndi_enabled, "Enable NDI Output");
                     if *_ndi_enabled {
                         ui.horizontal(|ui| {
@@ -308,9 +311,17 @@ pub fn render_output_ui(
 
                 ui.separator();
                 ui.label("Mapping Mode:");
-                ui.radio_value(mapping_mode, HueMappingMode::Ambient, "Ambient (Average Color)");
+                ui.radio_value(
+                    mapping_mode,
+                    HueMappingMode::Ambient,
+                    "Ambient (Average Color)",
+                );
                 ui.radio_value(mapping_mode, HueMappingMode::Spatial, "Spatial (2D Map)");
-                ui.radio_value(mapping_mode, HueMappingMode::Trigger, "Trigger (Strobe/Pulse)");
+                ui.radio_value(
+                    mapping_mode,
+                    HueMappingMode::Trigger,
+                    "Trigger (Strobe/Pulse)",
+                );
             });
 
             if *mapping_mode == HueMappingMode::Spatial {

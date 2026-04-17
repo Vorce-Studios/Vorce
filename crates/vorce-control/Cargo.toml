@@ -49,12 +49,3 @@ tracing = { workspace = true }
 
 # DMX dependencies
 uuid = { version = "1.22", features = ["v4"] }
-webrtc-dtls = "0.12.0"
-webrtc-util = "0.17.1"
-
-[[bench]]
-name = "hue_groups_contains_bench"
-harness = false
-
-[dev-dependencies]
-criterion.workspace = true

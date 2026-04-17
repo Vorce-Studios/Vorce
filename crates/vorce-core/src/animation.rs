@@ -25,7 +25,13 @@ pub struct TimelineMarker {
 impl TimelineMarker {
     /// Create a new timeline marker
     pub fn new(id: u64, time: TimePoint, name: String) -> Self {
-        Self { id, time, name, color: None, pause_at: false }
+        Self {
+            id,
+            time,
+            name,
+            color: None,
+            pause_at: false,
+        }
     }
 }
 
@@ -73,7 +79,11 @@ pub struct Keyframe {
 impl Keyframe {
     /// Create a new keyframe from time in seconds and value
     pub fn new(time_secs: f64, value: AnimValue) -> Self {
-        Self { time: (time_secs * 1_000_000.0) as u64, value, interpolation: Interpolation::Linear }
+        Self {
+            time: (time_secs * 1_000_000.0) as u64,
+            value,
+            interpolation: Interpolation::Linear,
+        }
     }
 }
 
@@ -151,7 +161,10 @@ pub struct AnimationTrack {
 impl AnimationTrack {
     /// Create a new animation track by name
     pub fn new(name: String) -> Self {
-        Self { name, keyframes: BTreeMap::new() }
+        Self {
+            name,
+            keyframes: BTreeMap::new(),
+        }
     }
 
     /// Add a keyframe to the track
@@ -356,21 +369,23 @@ impl AnimationClip {
 
     /// Evaluate all tracks at a given time
     pub fn evaluate(&self, time: TimePoint) -> Vec<(String, AnimValue)> {
-        self.tracks.iter().filter_map(|t| t.evaluate(time).map(|v| (t.name.clone(), v))).collect()
+        self.tracks
+            .iter()
+            .filter_map(|t| t.evaluate(time).map(|v| (t.name.clone(), v)))
+            .collect()
     }
 
     /// Add a timeline marker to the clip
     pub fn add_marker(&mut self, marker: TimelineMarker) {
         self.markers.push(marker);
         self.markers
-            .sort_by(|a, b| a.time.partial_cmp(&b.time).unwrap_or(std::cmp::Ordering::Equal));
+            .sort_by(|a, b| a.time.partial_cmp(&b.time).unwrap());
     }
 
-    /// Remove a timeline marker by time in seconds
-    pub fn remove_marker(&mut self, time: f64) -> bool {
+    /// Remove a timeline marker by ID
+    pub fn remove_marker(&mut self, id: u64) -> bool {
         let old_len = self.markers.len();
-        let epsilon = 0.001;
-        self.markers.retain(|m| (m.time - time).abs() > epsilon);
+        self.markers.retain(|m| m.id != id);
         self.markers.len() < old_len
     }
 }
@@ -527,6 +542,9 @@ impl AnimationPlayer {
                 let epsilon = 0.0001;
                 let mut crossed_marker: Option<f64> = None;
                 for marker in &self.clip.markers {
+                    if !marker.pause_at {
+                        continue;
+                    }
                     let t = marker.time;
                     if self.current_direction > 0.0 {
                         if t > self.current_time + epsilon && t <= next_time {
@@ -600,8 +618,11 @@ impl AnimationPlayer {
     /// Jump playhead to the next available marker
     pub fn jump_to_next_marker(&mut self) {
         let epsilon = 0.001;
-        if let Some(marker) =
-            self.clip.markers.iter().find(|m| m.time > self.current_time + epsilon)
+        if let Some(marker) = self
+            .clip
+            .markers
+            .iter()
+            .find(|m| m.time > self.current_time + epsilon)
         {
             self.seek(marker.time);
         }
@@ -610,8 +631,12 @@ impl AnimationPlayer {
     /// Jump playhead to the previous available marker
     pub fn jump_to_prev_marker(&mut self) {
         let epsilon = 0.001;
-        if let Some(marker) =
-            self.clip.markers.iter().rev().find(|m| m.time < self.current_time - epsilon)
+        if let Some(marker) = self
+            .clip
+            .markers
+            .iter()
+            .rev()
+            .find(|m| m.time < self.current_time - epsilon)
         {
             self.seek(marker.time);
         }

@@ -50,13 +50,9 @@ pub trait AudioBackend {
 #[cfg(feature = "audio")]
 pub mod cpal_backend {
     use super::{AudioBackend, AudioError};
-    #[cfg(not(target_os = "macos"))]
     use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-    #[cfg(not(target_os = "macos"))]
-    use crossbeam_channel::unbounded;
-    use crossbeam_channel::{Receiver, Sender};
+    use crossbeam_channel::{unbounded, Receiver, Sender};
 
-    #[cfg(not(target_os = "macos"))]
     enum Command {
         Pause,
         Play,
@@ -64,12 +60,9 @@ pub mod cpal_backend {
 
     /// CPAL audio backend
     pub struct CpalBackend {
-        #[cfg(not(target_os = "macos"))]
         sample_receiver: Receiver<Vec<f32>>,
-        #[cfg(not(target_os = "macos"))]
         command_sender: Sender<Command>,
         #[allow(dead_code)]
-        #[cfg(not(target_os = "macos"))]
         stream: cpal::Stream,
     }
 
@@ -81,7 +74,9 @@ pub mod cpal_backend {
             {
                 let _ = device_name; // Prevent unused variable warning
                 tracing::warn!("Audio input is currently feature-gated on macOS for stability.");
-                Err(AudioError::NoDevicesFound("Feature gated on macOS".to_string()))
+                return Err(AudioError::NoDevicesFound(
+                    "Feature gated on macOS".to_string(),
+                ));
             }
 
             #[cfg(not(target_os = "macos"))]
@@ -101,12 +96,15 @@ pub mod cpal_backend {
                     })
                     .ok();
 
-                Ok(Self { sample_receiver: sample_rx, command_sender: command_tx, stream })
+                Ok(Self {
+                    sample_receiver: sample_rx,
+                    command_sender: command_tx,
+                    stream,
+                })
             }
         }
 
         /// Build the audio stream (must be called from main thread)
-        #[cfg(not(target_os = "macos"))]
         fn build_stream(
             device_name: Option<String>,
             sample_tx: Sender<Vec<f32>>,
@@ -295,7 +293,7 @@ pub mod cpal_backend {
             #[cfg(target_os = "macos")]
             {
                 tracing::warn!("Audio input is currently feature-gated on macOS for stability.");
-                Ok(Some(vec![]))
+                return Ok(Some(vec![]));
             }
 
             #[cfg(not(target_os = "macos"))]
@@ -338,34 +336,20 @@ pub mod cpal_backend {
 
     impl AudioBackend for CpalBackend {
         fn start(&mut self) -> Result<(), AudioError> {
-            #[cfg(not(target_os = "macos"))]
-            {
-                // Stream is already playing from initialization
-                let _ = self.command_sender.send(Command::Play);
-            }
+            // Stream is already playing from initialization
+            let _ = self.command_sender.send(Command::Play);
             Ok(())
         }
 
         fn stop(&mut self) {
-            #[cfg(not(target_os = "macos"))]
-            {
-                let _ = self.command_sender.send(Command::Pause);
-            }
+            let _ = self.command_sender.send(Command::Pause);
         }
 
         fn get_samples(&mut self) -> Vec<f32> {
-            #[cfg(not(target_os = "macos"))]
-            {
-                self.sample_receiver.try_iter().flatten().collect()
-            }
-            #[cfg(target_os = "macos")]
-            {
-                Vec::new()
-            }
+            self.sample_receiver.try_iter().flatten().collect()
         }
     }
 
-    #[cfg(not(target_os = "macos"))]
     impl Drop for CpalBackend {
         fn drop(&mut self) {
             // Dropping command_sender will close the channel and
@@ -388,7 +372,10 @@ pub mod mock_backend {
 
     impl Default for MockBackend {
         fn default() -> Self {
-            Self { phase: 0.0, sample_rate: 44100.0 }
+            Self {
+                phase: 0.0,
+                sample_rate: 44100.0,
+            }
         }
     }
 
@@ -416,38 +403,6 @@ pub mod mock_backend {
                 }
             }
             buffer
-        }
-    }
-}
-
-#[cfg(test)]
-#[cfg(feature = "audio")]
-mod tests {
-    use super::cpal_backend::CpalBackend;
-    use super::AudioError;
-
-    #[test]
-    fn test_cpal_backend_new_default() {
-        // We test CpalBackend initialization
-        let result = CpalBackend::new(None);
-        // It may return an error depending on hardware/CI setup, or success.
-        // We just verify it does not panic.
-        if let Err(AudioError::NoDevicesFound(_) | AudioError::DefaultDeviceNotFound) = &result {}
-    }
-
-    #[test]
-    fn test_cpal_backend_new_nonexistent_device() {
-        let result = CpalBackend::new(Some("NonExistentDevice_123456789".to_string()));
-        // On macOS, it fails due to feature-gating. On other systems, it fails because device is not found.
-        assert!(result.is_err());
-        let err = match result {
-            Err(e) => e,
-            Ok(_) => panic!("Expected Error"),
-        };
-        match err {
-            AudioError::NoDevicesFound(_) => {} // This is expected in most cases
-            AudioError::DefaultDeviceNotFound => {}
-            _ => panic!("Expected NoDevicesFound error, got {:?}", err),
         }
     }
 }

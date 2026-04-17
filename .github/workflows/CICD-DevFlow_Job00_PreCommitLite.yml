@@ -1,7 +1,6 @@
 name: "CICD-DevFlow: Job00 Pre-Commit Lite"
 
 on:
-
   pull_request_target:
     types: [labeled, opened, reopened, synchronize, ready_for_review]
     branches: [main]
@@ -18,7 +17,7 @@ permissions:
 
 concurrency:
   group: pre-commit-lite-${{ github.event.number || github.event.inputs.pr_number || github.run_id }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

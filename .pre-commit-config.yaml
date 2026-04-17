@@ -44,10 +44,10 @@ repos:
     hooks:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
-        exclude: ^(.*\.patch|.*\.diff|\.paperclip-home/.*)$
+        exclude: ^(.*\.patch|.*\.diff)$
 
       - id: end-of-file-fixer
-        exclude: ^(.*\.patch|.*\.diff|.*\.rs\.bk|\.paperclip-home/.*)$
+        exclude: ^(.*\.patch|.*\.diff|.*\.rs\.bk)$
 
       - id: check-case-conflict
 
@@ -85,7 +85,7 @@ repos:
           - 'MD041'
         files: \.(md|markdown)$
         # Exclude existing problematic files (legacy)
-        exclude: ^(CHANGELOG\.md|ROADMAP\.md|.*\.patch|\.jules/.*|\.agent/.*|\.vscode/skills/.*|docs/.*|doc/.*|crates/vendor/.*|\.paperclip-home/.*)$
+        exclude: ^(CHANGELOG\.md|ROADMAP\.md|.*\.patch|\.jules/.*|\.agent/.*|docs/.*|crates/vendor/.*)$
 
   # ═══════════════════════════════════════════════════════════════
   # SECURITY: SECRET DETECTION

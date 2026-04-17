@@ -66,9 +66,20 @@ impl MpvDecoder {
         let duration_secs = mpv.get_property::<f64>("duration").unwrap_or(0.0);
         let fps = mpv.get_property::<f64>("container-fps").unwrap_or(30.0);
 
-        info!("Video loaded: {}x{}, {:.2}s, {:.2}fps", width, height, duration_secs, fps);
+        info!(
+            "Video loaded: {}x{}, {:.2}s, {:.2}fps",
+            width, height, duration_secs, fps
+        );
 
-        Ok(Self { mpv, path, width, height, duration_secs, fps, current_time: Duration::ZERO })
+        Ok(Self {
+            mpv,
+            path,
+            width,
+            height,
+            duration_secs,
+            fps,
+            current_time: Duration::ZERO,
+        })
     }
 
     /// Capture current frame
@@ -81,6 +92,8 @@ impl MpvDecoder {
         let mut actual_width = self.width;
         let mut actual_height = self.height;
 
+        // SAFETY: We interact with libmpv's C API to execute a command and read its output.
+        // All pointers accessed from the output node are validated before dereferencing or slicing.
         unsafe {
             use libmpv2_sys::*;
             let handle = self.mpv.ctx;
@@ -90,24 +103,64 @@ impl MpvDecoder {
 
             let mut cmd_screenshot = [cmd_sc.as_ptr(), cmd_sc_arg.as_ptr(), std::ptr::null()];
 
-            let mut node =
-                mpv_node { format: 0, u: mpv_node__bindgen_ty_1 { string: std::ptr::null_mut() } };
-            let res =
-                mpv_command_ret(handle.as_ptr(), cmd_screenshot.as_mut_ptr(), &mut node as *mut _);
+            let mut node = mpv_node {
+                format: 0,
+                u: mpv_node__bindgen_ty_1 {
+                    string: std::ptr::null_mut(),
+                },
+            };
+
+            // SAFETY: `handle` is a valid mpv context, `cmd_screenshot` is a null-terminated array of valid C strings.
+            let res = mpv_command_ret(
+                handle.as_ptr(),
+                cmd_screenshot.as_mut_ptr(),
+                &mut node as *mut _,
+            );
 
             if res >= 0 && node.format == mpv_format_MPV_FORMAT_NODE_MAP {
                 let map = node.u.list;
-                let keys = std::slice::from_raw_parts((*map).keys, (*map).num as usize);
-                let vals = std::slice::from_raw_parts((*map).values, (*map).num as usize);
+                if map.is_null() {
+                    mpv_free_node_contents(&mut node);
+                    return Err(MediaError::DecoderError(
+                        "Returned node map is null".to_string(),
+                    ));
+                }
+
+                let keys_ptr = (*map).keys;
+                let values_ptr = (*map).values;
+
+                if keys_ptr.is_null() || values_ptr.is_null() {
+                    mpv_free_node_contents(&mut node);
+                    return Err(MediaError::DecoderError(
+                        "Node map keys or values are null".to_string(),
+                    ));
+                }
+
+                // SAFETY: `keys_ptr` and `values_ptr` are validated as non-null. The `num` field is the length.
+                let keys = std::slice::from_raw_parts(keys_ptr, (*map).num as usize);
+                let vals = std::slice::from_raw_parts(values_ptr, (*map).num as usize);
 
                 for i in 0..(*map).num as usize {
-                    let key = std::ffi::CStr::from_ptr(keys[i]).to_str().unwrap_or("");
+                    let key_ptr = keys[i];
+                    if key_ptr.is_null() {
+                        continue;
+                    }
+
+                    // SAFETY: `key_ptr` is checked against null and points to a null-terminated string.
+                    let key = std::ffi::CStr::from_ptr(key_ptr).to_str().unwrap_or("");
                     if key == "data" && vals[i].format == mpv_format_MPV_FORMAT_BYTE_ARRAY {
                         let ba = vals[i].u.ba;
-                        let data_slice = std::slice::from_raw_parts(
-                            (*ba).data as *const u8,
-                            (*ba).size as usize,
-                        );
+                        if ba.is_null() {
+                            continue;
+                        }
+
+                        let data_ptr = (*ba).data as *const u8;
+                        if data_ptr.is_null() && (*ba).size > 0 {
+                            continue;
+                        }
+
+                        // SAFETY: `data_ptr` is validated, and `size` represents the allocated length.
+                        let data_slice = std::slice::from_raw_parts(data_ptr, (*ba).size as usize);
                         extracted_data.extend_from_slice(data_slice);
                     } else if key == "w" && vals[i].format == mpv_format_MPV_FORMAT_INT64 {
                         actual_width = vals[i].u.int64 as u32;
@@ -120,12 +173,15 @@ impl MpvDecoder {
                     "MPV frame capture failed. Return code: {}, Node format: {}",
                     res, node.format
                 );
+                // SAFETY: `node` must be freed even if we return an error.
+                mpv_free_node_contents(&mut node);
                 return Err(MediaError::DecoderError(format!(
                     "MPV screenshot-raw failed. Error: {}",
                     res
                 )));
             }
 
+            // SAFETY: Free the allocated contents of the node.
             mpv_free_node_contents(&mut node);
         }
 
@@ -142,7 +198,9 @@ impl MpvDecoder {
                 actual_width * actual_height * 4,
                 extracted_data.len()
             );
-            return Err(MediaError::DecoderError("Captured frame data too small".to_string()));
+            return Err(MediaError::DecoderError(
+                "Captured frame data too small".to_string(),
+            ));
         }
 
         // screenshot-raw typically returns BGRA or BGR0 format when no format is forced.
@@ -157,8 +215,12 @@ impl MpvDecoder {
         }
 
         // Create video format using the actual dimensions returned by the screenshot
-        let format =
-            VideoFormat::new(actual_width, actual_height, PixelFormat::RGBA8, self.fps as f32);
+        let format = VideoFormat::new(
+            actual_width,
+            actual_height,
+            PixelFormat::RGBA8,
+            self.fps as f32,
+        );
 
         Ok(VideoFrame::new(final_data, format, self.current_time))
     }

@@ -40,7 +40,12 @@ pub struct ElementPosition {
 
 impl Default for ElementPosition {
     fn default() -> Self {
-        Self { x: 0.0, y: 0.0, width: 0.05, height: 0.05 }
+        Self {
+            x: 0.0,
+            y: 0.0,
+            width: 0.05,
+            height: 0.05,
+        }
     }
 }
 
@@ -100,7 +105,12 @@ pub struct ElementState {
 
 impl Default for ElementState {
     fn default() -> Self {
-        Self { value: 0, normalized: 0.0, active: false, last_update: Instant::now() }
+        Self {
+            value: 0,
+            normalized: 0.0,
+            active: false,
+            last_update: Instant::now(),
+        }
     }
 }
 
@@ -161,7 +171,10 @@ impl ControllerElements {
 
     /// Get elements by section
     pub fn by_section(&self, section: &str) -> Vec<&ControllerElement> {
-        self.elements.iter().filter(|e| e.section == section).collect()
+        self.elements
+            .iter()
+            .filter(|e| e.section == section)
+            .collect()
     }
 
     /// Get all unique sections
@@ -262,7 +275,10 @@ mod tests {
                 section: "test".to_string(),
                 label: "Test Knob".to_string(),
                 position: ElementPosition::default(),
-                midi: Some(MidiConfig::Cc { channel: 0, controller: 16 }),
+                midi: Some(MidiConfig::Cc {
+                    channel: 0,
+                    controller: 16,
+                }),
                 layout_aware: false,
                 ab_aware: false,
                 asset: None,

@@ -11,41 +11,6 @@
 /logs/
 /.gemini/
 
-# Project Metadata/Secondary Config
-.gitattributes
-.markdownlint.json
-.secrets.baseline
-.pre-commit-config.yaml
-deny.toml
-rust-toolchain.toml
-vcpkg.json
-vcpkg-configuration.json
-
-# Build/test output files
-check_*.txt
-*.pdb
-*.tmp
-*.bak
-*.rs.bk
-
-# EXCEPTIONS: Allow branding and icon visibility for Gemini CLI
-!/resources/images/**
-!/resources/app_icons/**
-!/resources/branding/**
-!/resources/images/**/*.png
-!/resources/app_icons/**/*.png
-!/resources/branding/**/*.png
-!/resources/images/**/*.ico
-!/resources/app_icons/**/*.ico
-!/resources/branding/**/*.ico
-!/resources/macOS/Info.plist
-!/resources/macOS/vorce.icns
-!/assets/icons/*.svg
-!/resources/windows_resource.rc
-!/resources/linux/mapflow.desktop
-!/resources/texts/mapflow.desktop
-!/resources/texts/mapflow.xml
-
 # Assets and resources (usually too big for context)
 /assets/
 /resources/
@@ -69,3 +34,20 @@ check_*.txt
 *.ai
 *.zip
 *.mmp
+
+# Project Metadata/Secondary Config
+.gitattributes
+.markdownlint.json
+.secrets.baseline
+.pre-commit-config.yaml
+deny.toml
+rust-toolchain.toml
+vcpkg.json
+vcpkg-configuration.json
+
+# Build/test output files
+check_*.txt
+*.pdb
+*.tmp
+*.bak
+*.rs.bk

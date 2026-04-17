@@ -49,7 +49,10 @@ pub fn show(ctx: &Context, mut context: TimelineContext) {
                 .collect::<Vec<_>>();
 
             if let Some(action) =
-                context.ui_state.timeline_panel.ui(ui, animator, &timeline_modules)
+                context
+                    .ui_state
+                    .timeline_panel
+                    .ui(ui, animator, &timeline_modules)
             {
                 use vorce_ui::TimelineAction;
                 match action {
@@ -58,21 +61,44 @@ pub fn show(ctx: &Context, mut context: TimelineContext) {
                     TimelineAction::Stop => animator.stop(),
                     TimelineAction::Seek(t) => animator.seek(t as f64),
                     TimelineAction::SelectModule(module_id) => {
-                        context.ui_state.module_canvas.set_active_module(Some(module_id));
+                        context
+                            .ui_state
+                            .module_canvas
+                            .set_active_module(Some(module_id));
                     }
                     TimelineAction::AddMarker(t) => {
                         let name = format!("Marker {:.1}s", t);
-                        let id = (t * 1000.0) as u64;
+                        let max_id = animator
+                            .clip()
+                            .markers
+                            .iter()
+                            .map(|m| m.id)
+                            .max()
+                            .unwrap_or(0);
+                        let id = max_id + 1;
                         animator.add_marker(vorce_core::animation::Marker::new(id, t as f64, name));
                     }
-                    TimelineAction::RemoveMarker(t) => {
-                        animator.remove_marker(t as f64);
+                    TimelineAction::RemoveMarker(id) => {
+                        animator.remove_marker(id);
                     }
-                    TimelineAction::ToggleMarkerPause(t) => {
-                        animator.toggle_marker_pause(t as f64);
+                    TimelineAction::ToggleMarkerPause(id) => {
+                        animator.toggle_marker_pause(id);
                     }
                     TimelineAction::JumpNextMarker => animator.jump_next_marker(),
                     TimelineAction::JumpPrevMarker => animator.jump_prev_marker(),
+                    TimelineAction::BindParameter {
+                        effect_type,
+                        module_id,
+                        parameter_name,
+                        initial_value,
+                    } => {
+                        animator.bind_parameter(
+                            effect_type,
+                            module_id,
+                            &parameter_name,
+                            vorce_core::animation::AnimValue::Float(initial_value),
+                        );
+                    }
                 }
             }
         });

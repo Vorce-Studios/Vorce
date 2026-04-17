@@ -44,6 +44,11 @@ pub fn is_mask_supported() -> bool {
     false // masks currently ignored in final render according to DOC-C10
 }
 
+/// Determines if Hue nodes/outputs are fully supported.
+pub fn is_hue_supported() -> bool {
+    true // Hue bridge communication is implemented
+}
+
 /// Determines if exposing the blend-mode node makes sense for the current runtime.
 pub fn has_advanced_blend_mode_support() -> bool {
     BlendModeType::all()
