@@ -27,7 +27,7 @@ anyhow = "1.0"
 arc-swap = "1.9"
 
 # HTTP API
-axum = "0.8"
+axum = "0.7"
 
 # Build dependencies
 bindgen = "0.72"
@@ -44,19 +44,25 @@ criterion = "0.8"
 
 # Concurrency
 crossbeam-channel = "0.5"
+
+# Phase 6: egui migration
+ecolor = "0.34.1"
 egui = { version = "0.34.1", features = ["serde"] }
 egui-wgpu = "0.34.1"
 egui-winit = "0.34.1"
 egui_extras = { version = "0.34.1", features = ["image", "file", "svg"] }
 egui_node_editor = { path = "crates/vendor/egui_node_editor" }
+emath = "0.34.1"
+epaint = "0.34.1"
+
 # Media
-ffmpeg-next = { version = "8.1", default-features = false, features = [
+ffmpeg-next = { version = "7.1", default-features = false, features = [
     "codec",
     "format",
     "software-resampling",
     "software-scaling",
 ] }
-ffmpeg-sys-next = "=8.1.0"
+ffmpeg-sys-next = "=7.1.0"
 fluent = "0.17"
 fluent-langneg = "0.14"
 futures = "0.3"
@@ -65,6 +71,10 @@ hex = "0.4"
 hound = "3.5"
 hyper = "1.1"
 image = "0.24"
+# UI
+imgui = "0.12"
+imgui-wgpu = { path = "crates/vendor/imgui-wgpu" }
+imgui-winit-support = "0.12"
 libmpv2 = { version = "5.0", features = ["render"] }
 libmpv2-sys = "4.0.1"
 
@@ -93,9 +103,10 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 # Crypto
-sha2 = "0.11"
+sha2 = "0.10"
+tests_bin = "0.1"
 # Error handling
-thiserror = "2.0"
+thiserror = "1.0"
 tiny-skia = "0.12"
 
 # Async runtime
@@ -109,10 +120,25 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 unic-langid = "0.9"
 usvg = "0.47"
 # Core dependencies
-wgpu = "29.0.1"
+wgpu = "29.0.0"
 winit = { version = "0.30.13" }
 winres = "0.1"
 
 [profile.dev]
 opt-level = 1 # Slightly optimize for better wgpu performance in debug
 debug = 1     # Reduce PDB size to avoid LNK1140 errors
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = false # Keep some info for now, but codegen-units=1 helps with size
+debug = 1     # Limited debug info for release builds to avoid massive PDBs
+
+[profile.bench]
+inherits = "release"
+
+# Note: ashpd v0.8.1 (transitive dependency via rfd) triggers a future
+# incompatibility warning for Rust 2024 never type fallback. This will be
+# resolved when rfd is updated to v0.15+ (requires libwayland-dev system package).
+# The warning does not affect functionality in current Rust versions.

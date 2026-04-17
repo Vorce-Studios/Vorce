@@ -45,8 +45,6 @@ Thumbs.db
 
 # except icons files
 !resources/images/*
-!resources/app_icons/*
-!resources/branding/*
 !resources/macOS/Info.plist
 !resources/macOS/vorce.icns
 
@@ -57,6 +55,7 @@ Thumbs.db
 !resources/controllers/**/*.json
 
 *.json
+!.agent/atlas/code-atlas.json
 
 # Allow vcpkg files
 !vcpkg.json
@@ -94,32 +93,8 @@ temp_373/
 .gemini/
 gha-creds-*.json
 
-# Paperclip runtime data
-.paperclip-home/
-
-# Ghost files (prevent bot regressions)
-.pre-commit-config copy.yaml
-JULES_ISSUES.md
-taskmon.toml
-test.py
-*.patch
-*.diff
-
-# Vendor crates (should be managed by workspace)
-# crates/vendor/env_logger/
-# crates/vendor/rusty-spout/
-
 # Jules memory: Log files generated with date suffixes
 scripts/archive/logs/
-
-# Deleted Jules scripts (prevent bot regressions)
-backfill-legacy-project-fields.ps1
-escalate-jules-sessions.ps1
-monitor-jules-sessions.ps1
-
-
-# Paperclip runtime data (managed outside of repo)
-.paperclip/
 .paperclip-home/
-ops/paperclip/
-scripts/paperclip/
+ops/paperclip/node_modules/
+ops/paperclip/.pnpm-store/

@@ -4,6 +4,8 @@ use crate::widgets::{styled_drag_value, styled_slider};
 use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use vorce_core::module::{BlendModeType, ModulePartId};
 
+const COMPACT_INSPECTOR_BREAKPOINT: f32 = 360.0;
+
 /// Standardized informational label, used as an explicit fallback when no active preview is available.
 pub fn render_info_label(ui: &mut Ui, text: &str) {
     crate::widgets::custom::render_info_label(ui, text);
@@ -16,6 +18,22 @@ pub fn render_missing_preview_banner(ui: &mut Ui, text: &str) {
     });
 }
 
+pub fn inspector_is_compact(ui: &Ui) -> bool {
+    ui.available_width() < COMPACT_INSPECTOR_BREAKPOINT
+}
+
+fn labeled_row(ui: &mut Ui, label: &str, add_contents: impl FnOnce(&mut Ui)) {
+    if inspector_is_compact(ui) {
+        ui.label(label);
+        add_contents(ui);
+    } else {
+        ui.horizontal(|ui| {
+            ui.label(label);
+            add_contents(ui);
+        });
+    }
+}
+
 pub fn render_transport_controls(
     _canvas: &mut ModuleCanvas,
     ui: &mut Ui,
@@ -26,7 +44,11 @@ pub fn render_transport_controls(
     _reverse_playback: bool,
 ) {
     ui.horizontal(|ui| {
-        let _play_btn = if is_playing { ui.button("⏸ Pause") } else { ui.button("▶ Play") };
+        let _play_btn = if is_playing {
+            ui.button("⏸ Pause")
+        } else {
+            ui.button("▶ Play")
+        };
 
         if ui.button("⏮").clicked() {
             // Seek to start
@@ -43,12 +65,10 @@ pub fn render_timeline(
     _start_time: &mut f32,
     _end_time: &mut f32,
 ) {
-    ui.horizontal(|ui| {
-        ui.add(
-            egui::ProgressBar::new(current_pos / duration)
-                .desired_width(ui.available_width() - 60.0),
-        );
-    });
+    ui.add(
+        egui::ProgressBar::new(current_pos / duration)
+            .desired_width((ui.available_width() - 8.0).max(120.0)),
+    );
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -69,15 +89,15 @@ pub fn render_common_controls(
     flip_vertical: &mut bool,
 ) {
     ui.collapsing("🌓 Opacity & Blend", |ui| {
-        ui.horizontal(|ui| {
-            ui.label("Opacity:");
+        labeled_row(ui, "Opacity:", |ui| {
             styled_slider(ui, opacity, 0.0..=1.0, 1.0);
         });
 
-        ui.horizontal(|ui| {
-            ui.label("Blend Mode:");
-            let supported =
-                blend_mode.as_ref().map(capabilities::is_blend_mode_supported).unwrap_or(true);
+        labeled_row(ui, "Blend Mode:", |ui| {
+            let supported = blend_mode
+                .as_ref()
+                .map(capabilities::is_blend_mode_supported)
+                .unwrap_or(true);
             if !supported {
                 capabilities::render_unsupported_warning(ui, "Blend modes partially supported");
             }
@@ -98,23 +118,41 @@ pub fn render_common_controls(
     });
 
     ui.collapsing("🎨 Color Adjust", |ui| {
-        egui::Grid::new("color_grid").num_columns(2).spacing([10.0, 8.0]).show(ui, |ui| {
-            ui.label("Brightness:");
-            styled_slider(ui, brightness, -1.0..=1.0, 0.0);
-            ui.end_row();
+        if inspector_is_compact(ui) {
+            labeled_row(ui, "Brightness:", |ui| {
+                styled_slider(ui, brightness, -1.0..=1.0, 0.0);
+            });
+            labeled_row(ui, "Contrast:", |ui| {
+                styled_slider(ui, contrast, 0.0..=2.0, 1.0);
+            });
+            labeled_row(ui, "Saturation:", |ui| {
+                styled_slider(ui, saturation, 0.0..=2.0, 1.0);
+            });
+            labeled_row(ui, "Hue Shift:", |ui| {
+                styled_slider(ui, hue_shift, 0.0..=1.0, 0.0);
+            });
+        } else {
+            egui::Grid::new("color_grid")
+                .num_columns(2)
+                .spacing([10.0, 8.0])
+                .show(ui, |ui| {
+                    ui.label("Brightness:");
+                    styled_slider(ui, brightness, -1.0..=1.0, 0.0);
+                    ui.end_row();
 
-            ui.label("Contrast:");
-            styled_slider(ui, contrast, 0.0..=2.0, 1.0);
-            ui.end_row();
+                    ui.label("Contrast:");
+                    styled_slider(ui, contrast, 0.0..=2.0, 1.0);
+                    ui.end_row();
 
-            ui.label("Saturation:");
-            styled_slider(ui, saturation, 0.0..=2.0, 1.0);
-            ui.end_row();
+                    ui.label("Saturation:");
+                    styled_slider(ui, saturation, 0.0..=2.0, 1.0);
+                    ui.end_row();
 
-            ui.label("Hue Shift:");
-            styled_slider(ui, hue_shift, 0.0..=1.0, 0.0);
-            ui.end_row();
-        });
+                    ui.label("Hue Shift:");
+                    styled_slider(ui, hue_shift, 0.0..=1.0, 0.0);
+                    ui.end_row();
+                });
+        }
     });
 
     ui.collapsing("📐 Transform", |ui| {
@@ -126,32 +164,59 @@ pub fn render_common_controls(
             );
         }
         ui.add_enabled_ui(supported, |ui| {
-            egui::Grid::new("transform_grid").num_columns(2).spacing([10.0, 8.0]).show(ui, |ui| {
-                ui.label("Scale:");
-                ui.horizontal(|ui| {
-                    styled_drag_value(ui, scale_x, 0.01, 0.0..=10.0, 1.0, "X: ", "");
-                    styled_drag_value(ui, scale_y, 0.01, 0.0..=10.0, 1.0, "Y: ", "");
+            if inspector_is_compact(ui) {
+                labeled_row(ui, "Scale:", |ui| {
+                    ui.vertical(|ui| {
+                        styled_drag_value(ui, scale_x, 0.01, 0.0..=10.0, 1.0, "X: ", "");
+                        styled_drag_value(ui, scale_y, 0.01, 0.0..=10.0, 1.0, "Y: ", "");
+                    });
                 });
-                ui.end_row();
-
-                ui.label("Rotation:");
-                styled_slider(ui, rotation, 0.0..=360.0, 0.0);
-                ui.end_row();
-
-                ui.label("Offset:");
-                ui.horizontal(|ui| {
-                    styled_drag_value(ui, offset_x, 0.01, -1.0..=1.0, 0.0, "X: ", "");
-                    styled_drag_value(ui, offset_y, 0.01, -1.0..=1.0, 0.0, "Y: ", "");
+                labeled_row(ui, "Rotation:", |ui| {
+                    styled_slider(ui, rotation, 0.0..=360.0, 0.0);
                 });
-                ui.end_row();
-
-                ui.label("Flip:");
-                ui.horizontal(|ui| {
-                    ui.checkbox(flip_horizontal, "Horizontal");
-                    ui.checkbox(flip_vertical, "Vertical");
+                labeled_row(ui, "Offset:", |ui| {
+                    ui.vertical(|ui| {
+                        styled_drag_value(ui, offset_x, 0.01, -1.0..=1.0, 0.0, "X: ", "");
+                        styled_drag_value(ui, offset_y, 0.01, -1.0..=1.0, 0.0, "Y: ", "");
+                    });
                 });
-                ui.end_row();
-            });
+                labeled_row(ui, "Flip:", |ui| {
+                    ui.vertical(|ui| {
+                        ui.checkbox(flip_horizontal, "Horizontal");
+                        ui.checkbox(flip_vertical, "Vertical");
+                    });
+                });
+            } else {
+                egui::Grid::new("transform_grid")
+                    .num_columns(2)
+                    .spacing([10.0, 8.0])
+                    .show(ui, |ui| {
+                        ui.label("Scale:");
+                        ui.horizontal(|ui| {
+                            styled_drag_value(ui, scale_x, 0.01, 0.0..=10.0, 1.0, "X: ", "");
+                            styled_drag_value(ui, scale_y, 0.01, 0.0..=10.0, 1.0, "Y: ", "");
+                        });
+                        ui.end_row();
+
+                        ui.label("Rotation:");
+                        styled_slider(ui, rotation, 0.0..=360.0, 0.0);
+                        ui.end_row();
+
+                        ui.label("Offset:");
+                        ui.horizontal(|ui| {
+                            styled_drag_value(ui, offset_x, 0.01, -1.0..=1.0, 0.0, "X: ", "");
+                            styled_drag_value(ui, offset_y, 0.01, -1.0..=1.0, 0.0, "Y: ", "");
+                        });
+                        ui.end_row();
+
+                        ui.label("Flip:");
+                        ui.horizontal(|ui| {
+                            ui.checkbox(flip_horizontal, "Horizontal");
+                            ui.checkbox(flip_vertical, "Vertical");
+                        });
+                        ui.end_row();
+                    });
+            }
         });
     });
 }
@@ -214,7 +279,11 @@ pub fn render_hue_spatial_editor(
         painter.circle_filled(
             screen_pos,
             8.0,
-            if lamp_resp.hovered() { Color32::LIGHT_BLUE } else { Color32::from_rgb(255, 200, 50) },
+            if lamp_resp.hovered() {
+                Color32::LIGHT_BLUE
+            } else {
+                Color32::from_rgb(255, 200, 50)
+            },
         );
         painter.text(
             screen_pos + Vec2::new(0.0, 12.0),

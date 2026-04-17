@@ -129,8 +129,9 @@ impl AudioMediaPipeline {
         let running_clone = is_running.clone();
         let sample_rate = pipeline_config.sample_rate;
 
-        if let Err(e) =
-            std::thread::Builder::new().name("audio-processor".to_string()).spawn(move || {
+        std::thread::Builder::new()
+            .name("audio-processor".to_string())
+            .spawn(move || {
                 let mut timestamp = 0.0;
                 let dt = 1.0 / sample_rate as f64;
 
@@ -151,9 +152,7 @@ impl AudioMediaPipeline {
                     }
                 }
             })
-        {
-            tracing::warn!("Failed to spawn audio processor thread: {}", e);
-        }
+            .expect("Failed to spawn audio processor thread");
 
         Self {
             analyzer,
@@ -183,7 +182,8 @@ impl AudioMediaPipeline {
                 self.audio_position += samples.len() as f64 / self.config.sample_rate as f64;
             }
             Err(crossbeam_channel::TrySendError::Full(_)) => {
-                self.dropped_samples.fetch_add(samples.len() as u64, Ordering::Relaxed);
+                self.dropped_samples
+                    .fetch_add(samples.len() as u64, Ordering::Relaxed);
             }
             Err(crossbeam_channel::TrySendError::Disconnected(_)) => {}
         }
@@ -252,7 +252,10 @@ impl AudioMediaPipeline {
         }
 
         // Beat detection uses OR logic (any beat in buffer counts)
-        smoothed.beat_detected = self.analysis_buffer.iter().any(|a| a.analysis.beat_detected);
+        smoothed.beat_detected = self
+            .analysis_buffer
+            .iter()
+            .any(|a| a.analysis.beat_detected);
 
         Some(smoothed)
     }

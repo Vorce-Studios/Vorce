@@ -67,6 +67,12 @@ pub struct AppState {
     #[serde(default)]
     pub assignment_manager: Arc<AssignmentManager>,
 
+    /// Cluster Session Configuration
+    ///
+    /// Defines topology, roles, and output assignments for multi-PC/distributed usage.
+    #[serde(default)]
+    pub cluster_config: Arc<crate::cluster::ClusterSessionConfig>,
+
     /// Audio configuration
     pub audio_config: AudioConfig,
 
@@ -96,6 +102,7 @@ impl Default for AppState {
             shader_graphs: Arc::new(std::collections::HashMap::new()),
             effect_chain: Arc::new(crate::effects::EffectChain::new()),
             assignment_manager: Arc::new(AssignmentManager::default()),
+            cluster_config: Arc::new(crate::cluster::ClusterSessionConfig::default()),
             audio_config: AudioConfig::default(),
             oscillator_config: OscillatorConfig::default(),
             settings: Arc::new(AppSettings::default()),
@@ -107,7 +114,10 @@ impl Default for AppState {
 impl AppState {
     /// Create a new empty project state
     pub fn new(name: impl Into<String>) -> Self {
-        Self { name: name.into(), ..Default::default() }
+        Self {
+            name: name.into(),
+            ..Default::default()
+        }
     }
 
     /// Get mutable reference to PaintManager (CoW)
@@ -155,6 +165,11 @@ impl AppState {
     /// Get mutable reference to AssignmentManager (CoW)
     pub fn assignment_manager_mut(&mut self) -> &mut AssignmentManager {
         Arc::make_mut(&mut self.assignment_manager)
+    }
+
+    /// Get mutable reference to ClusterSessionConfig (CoW)
+    pub fn cluster_config_mut(&mut self) -> &mut crate::cluster::ClusterSessionConfig {
+        Arc::make_mut(&mut self.cluster_config)
     }
 
     /// Get mutable reference to AppSettings (CoW)
@@ -237,7 +252,10 @@ mod tests {
     #[test]
     fn test_app_settings_partial_eq() {
         let settings_1 = AppSettings::default();
-        let settings_2 = AppSettings { master_volume: 0.5, ..Default::default() };
+        let settings_2 = AppSettings {
+            master_volume: 0.5,
+            ..Default::default()
+        };
         assert_ne!(settings_1, settings_2);
     }
 
@@ -337,7 +355,9 @@ mod tests {
         assert_eq!(Arc::strong_count(&state1.paint_manager), 2);
 
         // Mutate state2's paint manager
-        state2.paint_manager_mut().add_paint(crate::Paint::color(1, "Test", [1.0, 0.0, 0.0, 1.0]));
+        state2
+            .paint_manager_mut()
+            .add_paint(crate::Paint::color(1, "Test", [1.0, 0.0, 0.0, 1.0]));
 
         // Now they should have split
         assert_eq!(Arc::strong_count(&state1.paint_manager), 1);
@@ -356,7 +376,9 @@ mod tests {
         {
             let mut state2 = state1.clone();
             assert_eq!(Arc::strong_count(&state1.mapping_manager), 2);
-            state2.mapping_manager_mut().add_mapping(crate::mapping::Mapping::quad(1, "Test", 1));
+            state2
+                .mapping_manager_mut()
+                .add_mapping(crate::mapping::Mapping::quad(1, "Test", 1));
             assert_eq!(Arc::strong_count(&state1.mapping_manager), 1);
             assert!(state1.mapping_manager.mappings().is_empty());
             assert!(!state2.mapping_manager.mappings().is_empty());
@@ -376,7 +398,9 @@ mod tests {
         {
             let mut state4 = state1.clone();
             assert_eq!(Arc::strong_count(&state1.module_manager), 2);
-            state4.module_manager_mut().create_module("Test Module".to_string());
+            state4
+                .module_manager_mut()
+                .create_module("Test Module".to_string());
             assert_eq!(Arc::strong_count(&state1.module_manager), 1);
             assert!(state1.module_manager.list_modules().is_empty());
             assert!(!state4.module_manager.list_modules().is_empty());
@@ -422,6 +446,14 @@ mod tests {
             assert_eq!(Arc::strong_count(&state1.effect_chain), 2);
             let _ = state9.effect_chain_mut();
             assert_eq!(Arc::strong_count(&state1.effect_chain), 1);
+        }
+
+        // 9. Cluster Config
+        {
+            let mut state10 = state1.clone();
+            assert_eq!(Arc::strong_count(&state1.cluster_config), 2);
+            let _ = state10.cluster_config_mut();
+            assert_eq!(Arc::strong_count(&state1.cluster_config), 1);
         }
     }
 

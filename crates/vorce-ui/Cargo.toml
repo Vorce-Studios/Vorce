@@ -57,4 +57,3 @@ usvg = { workspace = true }
 
 wgpu = { workspace = true }
 winit = { workspace = true }
-rustc-hash = "2.1.2"

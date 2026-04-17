@@ -49,7 +49,10 @@ pub fn show(ctx: &Context, mut context: TimelineContext) {
                 .collect::<Vec<_>>();
 
             if let Some(action) =
-                context.ui_state.timeline_panel.ui(ui, animator, &timeline_modules)
+                context
+                    .ui_state
+                    .timeline_panel
+                    .ui(ui, animator, &timeline_modules)
             {
                 use vorce_ui::TimelineAction;
                 match action {
@@ -58,7 +61,10 @@ pub fn show(ctx: &Context, mut context: TimelineContext) {
                     TimelineAction::Stop => animator.stop(),
                     TimelineAction::Seek(t) => animator.seek(t as f64),
                     TimelineAction::SelectModule(module_id) => {
-                        context.ui_state.module_canvas.set_active_module(Some(module_id));
+                        context
+                            .ui_state
+                            .module_canvas
+                            .set_active_module(Some(module_id));
                     }
                     TimelineAction::AddMarker(t) => {
                         let name = format!("Marker {:.1}s", t);
@@ -73,6 +79,19 @@ pub fn show(ctx: &Context, mut context: TimelineContext) {
                     }
                     TimelineAction::JumpNextMarker => animator.jump_next_marker(),
                     TimelineAction::JumpPrevMarker => animator.jump_prev_marker(),
+                    TimelineAction::BindParameter {
+                        effect_type,
+                        module_id,
+                        parameter_name,
+                        initial_value,
+                    } => {
+                        animator.bind_parameter(
+                            effect_type,
+                            module_id,
+                            &parameter_name,
+                            vorce_core::animation::AnimValue::Float(initial_value),
+                        );
+                    }
                 }
             }
         });

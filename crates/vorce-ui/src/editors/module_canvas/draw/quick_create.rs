@@ -15,14 +15,20 @@ pub fn draw_quick_create_popup(
     let popup_pos = canvas.quick_create_pos;
     let catalog = utils::build_node_catalog();
     let filter_lower = canvas.quick_create_filter.to_lowercase();
+    let filter_is_empty = filter_lower.is_empty();
     let filtered_items: Vec<&utils::NodeCatalogItem> = catalog
         .iter()
         .filter(|item| {
-            if filter_lower.is_empty() {
-                true
-            } else {
-                item.label_lower.contains(&filter_lower) || item.search_tags.contains(&filter_lower)
+            if filter_is_empty {
+                return true;
             }
+            if item.label.to_lowercase().contains(&filter_lower) {
+                return true;
+            }
+            if item.search_tags.to_lowercase().contains(&filter_lower) {
+                return true;
+            }
+            false
         })
         .collect();
     if filtered_items.is_empty() {
@@ -74,21 +80,23 @@ pub fn draw_quick_create_popup(
             if filtered_items.is_empty() {
                 crate::widgets::custom::render_info_label(ui, "No matching nodes found.");
             } else {
-                egui::ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
-                    for (i, item) in filtered_items.iter().enumerate() {
-                        let is_selected = i == canvas.quick_create_selected_index;
-                        let (_, _, icon, _) = utils::get_part_style(&item.part_type);
-                        let label_text = format!("{} {}", icon, item.label);
-                        let response = ui.selectable_label(is_selected, label_text);
-                        if response.clicked() {
-                            canvas.quick_create_selected_index = i;
-                            commit_creation = true;
+                egui::ScrollArea::vertical()
+                    .max_height(300.0)
+                    .show(ui, |ui| {
+                        for (i, item) in filtered_items.iter().enumerate() {
+                            let is_selected = i == canvas.quick_create_selected_index;
+                            let (_, _, icon, _) = utils::get_part_style(&item.part_type);
+                            let label_text = format!("{} {}", icon, item.label);
+                            let response = ui.selectable_label(is_selected, label_text);
+                            if response.clicked() {
+                                canvas.quick_create_selected_index = i;
+                                commit_creation = true;
+                            }
+                            if is_selected {
+                                response.scroll_to_me(Some(egui::Align::Center));
+                            }
                         }
-                        if is_selected {
-                            response.scroll_to_me(Some(egui::Align::Center));
-                        }
-                    }
-                });
+                    });
             }
         });
     });

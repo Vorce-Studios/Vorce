@@ -82,7 +82,8 @@ impl AudioReactiveController {
         self.last_update_time = current_time;
 
         // Clean up removed mappings from previous_values
-        self.previous_values.retain(|key, _| self.mappings.contains_key(key));
+        self.previous_values
+            .retain(|key, _| self.mappings.contains_key(key));
 
         for (param_path, mapping) in &self.mappings {
             let previous = self.previous_values.get(param_path).copied().unwrap_or(0.0);
@@ -482,7 +483,10 @@ mod tests {
 
         controller.add_mapping("1.opacity".to_string(), mapping);
 
-        let audio = AudioAnalysis { rms_volume: 0.8, ..Default::default() };
+        let audio = AudioAnalysis {
+            rms_volume: 0.8,
+            ..Default::default()
+        };
 
         let values = controller.update(&audio, 0.0);
         assert!(values.contains_key("1.opacity"));

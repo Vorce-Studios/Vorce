@@ -1,0 +1,36 @@
+---
+title: VjMapper workspace atlas
+---
+flowchart LR
+    egui_node_editor["egui_node_editor"]
+    vorce["vorce"]
+    vorce_bevy["vorce-bevy"]
+    vorce_control["vorce-control"]
+    vorce_core["vorce-core"]
+    vorce_ffi["vorce-ffi"]
+    vorce_io["vorce-io"]
+    vorce_mcp["vorce-mcp"]
+    vorce_media["vorce-media"]
+    vorce_render["vorce-render"]
+    vorce_ui["vorce-ui"]
+
+    vorce --> vorce_bevy
+    vorce --> vorce_control
+    vorce --> vorce_core
+    vorce --> vorce_io
+    vorce --> vorce_mcp
+    vorce --> vorce_media
+    vorce --> vorce_render
+    vorce --> vorce_ui
+    vorce_bevy --> vorce_core
+    vorce_io --> vorce_core
+    vorce_mcp --> vorce_control
+    vorce_mcp --> vorce_core
+    vorce_media --> vorce_io
+    vorce_render --> vorce_core
+    vorce_ui --> egui_node_editor
+    vorce_ui --> vorce_control
+    vorce_ui --> vorce_core
+    vorce_ui --> vorce_io
+    vorce_ui --> vorce_media
+    vorce_ui --> vorce_render

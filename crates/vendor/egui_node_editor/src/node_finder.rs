@@ -51,8 +51,9 @@ where
 
         ui.visuals_mut().widgets.noninteractive.fg_stroke = Stroke::new(2.0, text_color);
 
-        let frame =
-            Frame::dark_canvas(ui.style()).fill(background_color).inner_margin(vec2(5.0, 5.0));
+        let frame = Frame::dark_canvas(ui.style())
+            .fill(background_color)
+            .inner_margin(vec2(5.0, 5.0));
 
         // The archetype that will be returned.
         let mut submitted_archetype = None;
@@ -86,54 +87,67 @@ where
                     }
                 }
 
-                Frame::default().inner_margin(vec2(10.0, 10.0)).show(ui, |ui| {
-                    ScrollArea::vertical().max_height(max_height).show(ui, |ui| {
-                        ui.set_width(scroll_area_width);
-                        for (category, kinds) in categories {
-                            let filtered_kinds: Vec<_> = kinds
-                                .into_iter()
-                                .map(|kind| {
-                                    let kind_name = kind.node_finder_label(user_state).to_string();
-                                    (kind, kind_name)
-                                })
-                                .filter(|(_kind, kind_name)| {
-                                    kind_name
-                                        .to_lowercase()
-                                        .contains(self.query.to_lowercase().as_str())
-                                })
-                                .collect();
+                // ⚡ Bolt: Cache query lowercase and avoid processing if empty
+                let query_lower = self.query.to_lowercase();
+                let query_is_empty = query_lower.is_empty();
 
-                            if !filtered_kinds.is_empty() {
-                                let default_open = !self.query.is_empty();
-
-                                CollapsingHeader::new(&category)
-                                    .default_open(default_open)
-                                    .open(update_open.then_some(default_open))
-                                    .show(ui, |ui| {
-                                        for (kind, kind_name) in filtered_kinds {
-                                            if ui.selectable_label(false, kind_name).clicked() {
-                                                submitted_archetype = Some(kind.clone());
-                                            } else if query_submit {
-                                                submitted_archetype = Some(kind.clone());
-                                                query_submit = false;
+                Frame::default()
+                    .inner_margin(vec2(10.0, 10.0))
+                    .show(ui, |ui| {
+                        ScrollArea::vertical()
+                            .max_height(max_height)
+                            .show(ui, |ui| {
+                                ui.set_width(scroll_area_width);
+                                for (category, kinds) in categories {
+                                    let filtered_kinds: Vec<_> = kinds
+                                        .into_iter()
+                                        .map(|kind| {
+                                            let kind_name =
+                                                kind.node_finder_label(user_state).to_string();
+                                            (kind, kind_name)
+                                        })
+                                        .filter(|(_kind, kind_name)| {
+                                            if query_is_empty {
+                                                return true;
                                             }
-                                        }
-                                    });
-                            }
-                        }
+                                            kind_name.to_lowercase().contains(&query_lower)
+                                        })
+                                        .collect();
 
-                        for kind in orphan_kinds {
-                            let kind_name = kind.node_finder_label(user_state).to_string();
+                                    if !filtered_kinds.is_empty() {
+                                        let default_open = !self.query.is_empty();
 
-                            if ui.selectable_label(false, kind_name).clicked() {
-                                submitted_archetype = Some(kind.clone());
-                            } else if query_submit {
-                                submitted_archetype = Some(kind.clone());
-                                query_submit = false;
-                            }
-                        }
+                                        CollapsingHeader::new(&category)
+                                            .default_open(default_open)
+                                            .open(update_open.then_some(default_open))
+                                            .show(ui, |ui| {
+                                                for (kind, kind_name) in filtered_kinds {
+                                                    if ui
+                                                        .selectable_label(false, kind_name)
+                                                        .clicked()
+                                                    {
+                                                        submitted_archetype = Some(kind.clone());
+                                                    } else if query_submit {
+                                                        submitted_archetype = Some(kind.clone());
+                                                        query_submit = false;
+                                                    }
+                                                }
+                                            });
+                                    }
+                                }
+
+                                for kind in orphan_kinds {
+                                    let kind_name = kind.node_finder_label(user_state).to_string();
+
+                                    if ui.selectable_label(false, kind_name).clicked() {
+                                        submitted_archetype = Some(kind.clone());
+                                    } else if query_submit {
+                                        submitted_archetype = Some(kind.clone());
+                                        query_submit = false;
+                                    }
+                                }
+                            });
                     });
-                });
             });
         });
 

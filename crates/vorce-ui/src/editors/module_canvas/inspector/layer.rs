@@ -6,17 +6,23 @@ use egui::Ui;
 use vorce_core::module::{BlendModeType, LayerType, MaskShape, MaskType, MeshType, ModulePartId};
 
 fn render_layer_blend_mode_ui(ui: &mut Ui, id_salt: u64, blend_mode: &mut Option<BlendModeType>) {
-    let blend_text =
-        blend_mode.as_ref().map(|mode| format!("{mode:?}")).unwrap_or_else(|| "None".to_string());
+    let blend_text = blend_mode
+        .as_ref()
+        .map(|mode| format!("{mode:?}"))
+        .unwrap_or_else(|| "None".to_string());
 
-    egui::ComboBox::from_id_salt(("layer_blend", id_salt)).selected_text(blend_text).show_ui(
-        ui,
-        |ui| {
+    egui::ComboBox::from_id_salt(("layer_blend", id_salt))
+        .selected_text(blend_text)
+        .show_ui(ui, |ui| {
             if ui.selectable_label(blend_mode.is_none(), "None").clicked() {
                 *blend_mode = None;
             }
 
-            for mode in [BlendModeType::Normal, BlendModeType::Add, BlendModeType::Multiply] {
+            for mode in [
+                BlendModeType::Normal,
+                BlendModeType::Add,
+                BlendModeType::Multiply,
+            ] {
                 ui.add_enabled_ui(capabilities::is_blend_mode_supported(&mode), |ui| {
                     if ui
                         .selectable_label(blend_mode.as_ref() == Some(&mode), mode.name())
@@ -26,10 +32,13 @@ fn render_layer_blend_mode_ui(ui: &mut Ui, id_salt: u64, blend_mode: &mut Option
                     }
                 });
             }
-        },
-    );
+        });
 
-    if !blend_mode.as_ref().map(capabilities::is_blend_mode_supported).unwrap_or(true) {
+    if !blend_mode
+        .as_ref()
+        .map(capabilities::is_blend_mode_supported)
+        .unwrap_or(true)
+    {
         capabilities::render_unsupported_warning(
             ui,
             "Blend modes other than Normal are currently ignored in final render.",
@@ -88,7 +97,14 @@ pub fn render_layer_ui(
     let show_mesh_editor = canvas.layer_inspector_view_mode == LayerInspectorViewMode::MeshEditor;
 
     match layer {
-        LayerType::Single { id, name, opacity, blend_mode, mesh, mapping_mode } => {
+        LayerType::Single {
+            id,
+            name,
+            opacity,
+            blend_mode,
+            mesh,
+            mapping_mode,
+        } => {
             ui.label("Single Layer");
             ui.horizontal(|ui| {
                 ui.label("ID:");
@@ -106,7 +122,13 @@ pub fn render_layer_ui(
                 *id,
             );
         }
-        LayerType::Group { name, opacity, blend_mode, mesh, mapping_mode } => {
+        LayerType::Group {
+            name,
+            opacity,
+            blend_mode,
+            mesh,
+            mapping_mode,
+        } => {
             ui.label("Group Layer");
             render_standard_layer_controls(
                 &mut render_mesh_ui,
@@ -120,15 +142,19 @@ pub fn render_layer_ui(
                 9_999,
             );
         }
-        LayerType::All { opacity, .. } => {
-            ui.add_enabled_ui(false, |ui| {
-                ui.label("Master Layer");
-                ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
+        LayerType::All {
+            opacity,
+            blend_mode,
+        } => {
+            ui.label("All Layers (Deactivated)");
+            ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
+
+            ui.horizontal(|ui| {
+                ui.label("Blend Mode:");
+                render_layer_blend_mode_ui(ui, 0, blend_mode);
             });
-            capabilities::render_unsupported_warning(
-                ui,
-                "Master layers are currently unsupported and will not be rendered.",
-            );
+
+            ui.label("Note: This special layer is currently ignored in final render.");
         }
     }
 }
@@ -155,7 +181,11 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
             } else {
                 ui.horizontal(|ui| {
                     ui.add(egui::TextEdit::singleline(path).desired_width(120.0));
-                    if ui.button("Open").on_hover_text("Select Mask File").clicked() {
+                    if ui
+                        .button("Open")
+                        .on_hover_text("Select Mask File")
+                        .clicked()
+                    {
                         if let Some(picked) = rfd::FileDialog::new()
                             .add_filter("Image", &["png", "jpg", "jpeg", "webp", "bmp"])
                             .pick_file()
@@ -168,10 +198,13 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
         }
         MaskType::Shape(shape) => {
             ui.label("Shape Mask");
-            egui::ComboBox::from_id_salt("mask_shape").selected_text(format!("{shape:?}")).show_ui(
-                ui,
-                |ui| {
-                    if ui.selectable_label(matches!(shape, MaskShape::Circle), "Circle").clicked() {
+            egui::ComboBox::from_id_salt("mask_shape")
+                .selected_text(format!("{shape:?}"))
+                .show_ui(ui, |ui| {
+                    if ui
+                        .selectable_label(matches!(shape, MaskShape::Circle), "Circle")
+                        .clicked()
+                    {
                         *shape = MaskShape::Circle;
                     }
                     if ui
@@ -186,15 +219,19 @@ pub fn render_mask_ui(ui: &mut Ui, mask: &mut MaskType) {
                     {
                         *shape = MaskShape::Triangle;
                     }
-                    if ui.selectable_label(matches!(shape, MaskShape::Star), "Star").clicked() {
+                    if ui
+                        .selectable_label(matches!(shape, MaskShape::Star), "Star")
+                        .clicked()
+                    {
                         *shape = MaskShape::Star;
                     }
-                    if ui.selectable_label(matches!(shape, MaskShape::Ellipse), "Ellipse").clicked()
+                    if ui
+                        .selectable_label(matches!(shape, MaskShape::Ellipse), "Ellipse")
+                        .clicked()
                     {
                         *shape = MaskShape::Ellipse;
                     }
-                },
-            );
+                });
         }
         MaskType::Gradient { angle, softness } => {
             ui.label("Gradient Mask");
