@@ -321,10 +321,9 @@ impl WindowManager {
         }
 
         let target_monitor = resolve_target_monitor(event_loop, target_screen);
-        let context = self
-            .windows
-            .get_mut(&output_id)
-            .expect("checked window existence before sync");
+        let context = self.windows.get_mut(&output_id).ok_or_else(|| {
+            anyhow::anyhow!("Window with ID {} unexpectedly missing during sync", output_id)
+        })?;
 
         context.window.set_title(&format!("Vorce - {}", name));
         context.window.set_cursor_visible(!hide_cursor);
