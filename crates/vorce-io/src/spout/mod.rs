@@ -263,8 +263,9 @@ impl VideoSink for SpoutSender {
                     .spout
                     .get_spout()
                     .map_err(|e| IoError::SpoutError(e.to_string()))?;
-                let c_name = CString::new(self.name.clone())
-                    .map_err(|e| IoError::SpoutError(format!("Sender name contains null byte: {}", e)))?;
+                let c_name = CString::new(self.name.clone()).map_err(|e| {
+                    IoError::SpoutError(format!("Sender name contains null byte: {}", e))
+                })?;
 
 
                 let success = unsafe {
