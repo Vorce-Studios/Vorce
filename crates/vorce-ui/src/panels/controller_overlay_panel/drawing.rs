@@ -143,7 +143,8 @@ impl ControllerOverlayPanel {
 
         // Draw elements with frames
         #[cfg(feature = "midi")]
-        let assignments_map: HashMap<&str, &MidiAssignment> = assignments.iter().map(|a| (a.element_id.as_str(), a)).collect();
+        let assignments_map: HashMap<&str, &MidiAssignment> =
+            assignments.iter().map(|a| (a.element_id.as_str(), a)).collect();
         #[cfg(feature = "midi")]
         if self.is_edit_mode {
             // Local state to avoid borrow conflicts
