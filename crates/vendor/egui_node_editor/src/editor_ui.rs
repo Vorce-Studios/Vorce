@@ -224,6 +224,8 @@ where
         }
 
         /* Draw nodes */
+        let selected_nodes_set =
+            self.selected_nodes.iter().copied().collect::<std::collections::HashSet<_>>();
         for node_id in self.node_order.iter().copied() {
             let responses = GraphNodeWidget {
                 position: self.node_positions.get_mut(node_id).unwrap(),
@@ -232,7 +234,7 @@ where
                 node_rects: &mut node_rects,
                 node_id,
                 ongoing_drag: self.connection_in_progress,
-                selected: self.selected_nodes.contains(&node_id),
+                selected: selected_nodes_set.contains(&node_id),
                 pan: self.pan_zoom.pan + editor_rect.min.to_vec2(),
             }
             .show(&self.pan_zoom, ui, user_state);
