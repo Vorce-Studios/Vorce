@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- 2026-04-17: refactor: remove redundant `main_window_id` and unused `WindowManager` functions (#-)
 - 2026-03-29: ci: add a GitHub Actions workflow that generates and commits the code atlas back to main (#-)
 - 2026-03-29: feat: add an agent-focused code atlas generator, query CLI, Mermaid outputs, and agent guidance for faster repository discovery (#-)
 - 2026-03-26: feat: Introduce a PowerShell script for GitHub API interactions and a new directory for user manual screenshots. (#c900b1a9)
