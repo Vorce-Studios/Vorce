@@ -238,11 +238,11 @@ mod tests {
     #[test]
     fn test_legacy_namespaces() {
         // Test /Vorce/
-        let target1 = parse_osc_address("/Vorce/layer/0/opacity").unwrap();
+        let target1 = parse_osc_address("/Vorce/layer/0/opacity")?;
         assert_eq!(target1, ControlTarget::LayerOpacity(0));
 
         // Test /mapmap/
-        let target2 = parse_osc_address("/mapmap/layer/5/position").unwrap();
+        let target2 = parse_osc_address("/mapmap/layer/5/position")?;
         assert_eq!(target2, ControlTarget::LayerPosition(5));
     }
 
@@ -250,19 +250,19 @@ mod tests {
 
     #[test]
     fn test_parse_layer_opacity() {
-        let target = parse_osc_address("/vorce/layer/0/opacity").unwrap();
+        let target = parse_osc_address("/vorce/layer/0/opacity")?;
         assert_eq!(target, ControlTarget::LayerOpacity(0));
     }
 
     #[test]
     fn test_parse_layer_position() {
-        let target = parse_osc_address("/vorce/layer/5/position").unwrap();
+        let target = parse_osc_address("/vorce/layer/5/position")?;
         assert_eq!(target, ControlTarget::LayerPosition(5));
     }
 
     #[test]
     fn test_parse_paint_parameter() {
-        let target = parse_osc_address("/vorce/paint/3/parameter/speed").unwrap();
+        let target = parse_osc_address("/vorce/paint/3/parameter/speed")?;
         assert_eq!(
             target,
             ControlTarget::PaintParameter(3, "speed".to_string())
@@ -271,7 +271,7 @@ mod tests {
 
     #[test]
     fn test_parse_effect_parameter() {
-        let target = parse_osc_address("/vorce/effect/1/parameter/intensity").unwrap();
+        let target = parse_osc_address("/vorce/effect/1/parameter/intensity")?;
         assert_eq!(
             target,
             ControlTarget::EffectParameter(1, "intensity".to_string())
@@ -280,7 +280,7 @@ mod tests {
 
     #[test]
     fn test_parse_playback_speed() {
-        let target = parse_osc_address("/vorce/playback/speed").unwrap();
+        let target = parse_osc_address("/vorce/playback/speed")?;
         assert_eq!(target, ControlTarget::PlaybackSpeed(None));
     }
 
@@ -306,43 +306,43 @@ mod tests {
 
     #[test]
     fn test_parse_layer_rotation() {
-        let target = parse_osc_address("/vorce/layer/2/rotation").unwrap();
+        let target = parse_osc_address("/vorce/layer/2/rotation")?;
         assert_eq!(target, ControlTarget::LayerRotation(2));
     }
 
     #[test]
     fn test_parse_layer_scale() {
-        let target = parse_osc_address("/vorce/layer/7/scale").unwrap();
+        let target = parse_osc_address("/vorce/layer/7/scale")?;
         assert_eq!(target, ControlTarget::LayerScale(7));
     }
 
     #[test]
     fn test_parse_layer_visibility() {
-        let target = parse_osc_address("/vorce/layer/10/visibility").unwrap();
+        let target = parse_osc_address("/vorce/layer/10/visibility")?;
         assert_eq!(target, ControlTarget::LayerVisibility(10));
     }
 
     #[test]
     fn test_parse_playback_position() {
-        let target = parse_osc_address("/vorce/playback/position").unwrap();
+        let target = parse_osc_address("/vorce/playback/position")?;
         assert_eq!(target, ControlTarget::PlaybackPosition);
     }
 
     #[test]
     fn test_parse_output_brightness() {
-        let target = parse_osc_address("/vorce/output/0/brightness").unwrap();
+        let target = parse_osc_address("/vorce/output/0/brightness")?;
         assert_eq!(target, ControlTarget::OutputBrightness(0));
     }
 
     #[test]
     fn test_parse_master_opacity() {
-        let target = parse_osc_address("/vorce/master/opacity").unwrap();
+        let target = parse_osc_address("/vorce/master/opacity")?;
         assert_eq!(target, ControlTarget::MasterOpacity);
     }
 
     #[test]
     fn test_parse_master_blackout() {
-        let target = parse_osc_address("/vorce/master/blackout").unwrap();
+        let target = parse_osc_address("/vorce/master/blackout")?;
         assert_eq!(target, ControlTarget::MasterBlackout);
     }
 
@@ -359,7 +359,7 @@ mod tests {
 
         for target in targets {
             let address = control_target_to_address(&target);
-            let parsed = parse_osc_address(&address).unwrap();
+            let parsed = parse_osc_address(&address)?;
             assert_eq!(parsed, target);
         }
     }
@@ -370,7 +370,7 @@ mod tests {
 
         for target in targets {
             let address = control_target_to_address(&target);
-            let parsed = parse_osc_address(&address).unwrap();
+            let parsed = parse_osc_address(&address)?;
             assert_eq!(parsed, target);
         }
     }
@@ -384,7 +384,7 @@ mod tests {
 
         for target in targets {
             let address = control_target_to_address(&target);
-            let parsed = parse_osc_address(&address).unwrap();
+            let parsed = parse_osc_address(&address)?;
             assert_eq!(parsed, target);
         }
     }

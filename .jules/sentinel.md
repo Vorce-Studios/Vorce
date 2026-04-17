@@ -1,0 +1,4 @@
+## 2024-05-15 - Panic-Schutz bei Code-Generierung, Bevy-Rendering und Netzwerk-Input
+**Schwachstelle:** Zahlreiche `.unwrap()` und `.expect()` Aufrufe in kritischen Pfaden (WGSL Code-Generierung, wgpu readback polls im Bevy Plugin, OSC Message-Parsing und Socket-Initialisierung in `vorce-control`). Diese konnten zu Denial of Service (DoS) Panics durch fehlerhafte Benutzereingaben, korrumpierte Shader-Graphen oder volle Kernel-Puffer führen.
+**Lektion:** "Security Theater" oder einfaches Ignorieren von Linter-Warnungen löst das Problem nicht. Insbesondere bei asynchronen Abläufen oder Netzwerkkommunikation darf ein Fehler in einem Modul nicht die gesamte Applikation beenden.
+**Prävention:** Konsequente Nutzung von sauberem Pattern Matching (`?`, `match`, `if let`, `unwrap_or`, `ok_or`) für sicheres Fehlerhandling (Fail Securely) einführen. Ein Fehler soll als `Err` propagiert oder geloggt werden, um den laufenden Betrieb (z.B. Audio/Video) nicht zu unterbrechen.

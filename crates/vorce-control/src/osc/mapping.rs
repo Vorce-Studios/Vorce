@@ -97,8 +97,8 @@ mod tests {
         mapping.set_mapping("/a".into(), ControlTarget::LayerOpacity(0));
         mapping.set_mapping("/b".into(), ControlTarget::PlaybackSpeed(None));
 
-        let json = serde_json::to_string(&mapping).unwrap();
-        let loaded: OscMapping = serde_json::from_str(&json).unwrap();
+        let json = serde_json::to_string(&mapping)?;
+        let loaded: OscMapping = serde_json::from_str(&json)?;
 
         assert_eq!(mapping, loaded);
     }
