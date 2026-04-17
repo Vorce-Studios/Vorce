@@ -131,14 +131,14 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     // 6. Media & Animation Updates
     sync_media_players(app);
     update_media_players(app, dt);
-    
+
     #[cfg(feature = "ndi")]
     {
         sync_ndi_receivers(app);
         sync_ndi_senders(app);
         update_ndi_sources(app);
     }
-    
+
     let _param_updates = app.state.effect_animator_mut().update(dt as f64);
 
     // 7. Graph Evaluation & Bevy Sync (MODULARIZED)
