@@ -14,3 +14,4 @@
 ## 2025-02-12 - Prevent Heap Allocations in Search Filter Loop
 **Erkenntnis:** Calling `.to_lowercase()` inside a high-frequency UI rendering loop (like in the preset search panel) generates unnecessary heap allocations on every frame when the search query is empty.
 **Aktion:** I optimized `search_lower` assignment using lazy evaluation (`(!preset_search.is_empty()).then(|| preset_search.to_lowercase())`) so `.to_lowercase()` is never called when the search field is empty.
+## 2026-04-17 - [UI Loop Assignments Cache] **Erkenntnis:** O(N) element search within `assignments` in `show_overlay_view` loop degraded performance. **Aktion:** Pre-index assignments per frame into a HashMap outside the main elements loop to upgrade to O(1) rendering cache lookups.

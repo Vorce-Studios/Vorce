@@ -143,6 +143,8 @@ impl ControllerOverlayPanel {
 
         // Draw elements with frames
         #[cfg(feature = "midi")]
+        let assignments_map: HashMap<&str, &MidiAssignment> = assignments.iter().map(|a| (a.element_id.as_str(), a)).collect();
+        #[cfg(feature = "midi")]
         if self.is_edit_mode {
             // Local state to avoid borrow conflicts
             let mut next_selection = self.selected_element.clone();
@@ -342,7 +344,7 @@ impl ControllerOverlayPanel {
             self.clipboard_size = next_clipboard;
         } else if let Some(elements) = self.elements.clone() {
             for element in &elements.elements {
-                self.draw_element_with_frame(&painter, rect, element, &response, assignments);
+                self.draw_element_with_frame(&painter, rect, element, &response, &assignments_map);
             }
         }
     }
@@ -353,7 +355,7 @@ impl ControllerOverlayPanel {
         container: Rect,
         element: &ControllerElement,
         response: &Response,
-        assignments: &[MidiAssignment],
+        assignments_map: &HashMap<&str, &MidiAssignment>,
     ) {
         // Calculate element rect based on relative position
         let elem_rect = Rect::from_min_size(
@@ -400,7 +402,7 @@ impl ControllerOverlayPanel {
 
         // Override colors assignments view is active
         let frame_color = if self.show_assignment_colors {
-            let assignment = assignments.iter().find(|a| a.element_id == element.id);
+            let assignment = assignments_map.get(element.id.as_str()).copied();
             match assignment {
                 Some(a) => match &a.target {
                     MidiAssignmentTarget::Vorce(_) => Color32::from_rgb(0, 150, 255), // Blue
@@ -462,7 +464,7 @@ impl ControllerOverlayPanel {
                     }
 
                     // Show assignment info
-                    let assignment = assignments.iter().find(|a| a.element_id == element.id);
+                    let assignment = assignments_map.get(element.id.as_str()).copied();
                     if let Some(assign) = assignment {
                         ui.separator();
                         ui.horizontal(|ui| {
