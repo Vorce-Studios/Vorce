@@ -47,7 +47,10 @@ pub fn osc_to_control_value(osc_args: &[OscType]) -> Result<ControlValue> {
     };
 
     if let Err(e) = val.validate() {
-        return Err(ControlError::InvalidMessage(format!("Invalid OSC value: {}", e)));
+        return Err(ControlError::InvalidMessage(format!(
+            "Invalid OSC value: {}",
+            e
+        )));
     }
 
     Ok(val)
@@ -66,19 +69,30 @@ pub fn osc_to_vec2(osc_args: &[OscType]) -> Result<ControlValue> {
         OscType::Float(f) => *f,
         OscType::Int(i) => *i as f32,
         OscType::Double(d) => *d as f32,
-        _ => return Err(ControlError::InvalidMessage("Invalid OSC type for Vec2 x".to_string())),
+        _ => {
+            return Err(ControlError::InvalidMessage(
+                "Invalid OSC type for Vec2 x".to_string(),
+            ))
+        }
     };
 
     let y = match &osc_args[1] {
         OscType::Float(f) => *f,
         OscType::Int(i) => *i as f32,
         OscType::Double(d) => *d as f32,
-        _ => return Err(ControlError::InvalidMessage("Invalid OSC type for Vec2 y".to_string())),
+        _ => {
+            return Err(ControlError::InvalidMessage(
+                "Invalid OSC type for Vec2 y".to_string(),
+            ))
+        }
     };
 
     let val = ControlValue::Vec2(x, y);
     if let Err(e) = val.validate() {
-        return Err(ControlError::InvalidMessage(format!("Invalid OSC Vec2: {}", e)));
+        return Err(ControlError::InvalidMessage(format!(
+            "Invalid OSC Vec2: {}",
+            e
+        )));
     }
 
     Ok(val)
@@ -97,26 +111,41 @@ pub fn osc_to_vec3(osc_args: &[OscType]) -> Result<ControlValue> {
         OscType::Float(f) => *f,
         OscType::Int(i) => *i as f32,
         OscType::Double(d) => *d as f32,
-        _ => return Err(ControlError::InvalidMessage("Invalid OSC type for Vec3 x".to_string())),
+        _ => {
+            return Err(ControlError::InvalidMessage(
+                "Invalid OSC type for Vec3 x".to_string(),
+            ))
+        }
     };
 
     let y = match &osc_args[1] {
         OscType::Float(f) => *f,
         OscType::Int(i) => *i as f32,
         OscType::Double(d) => *d as f32,
-        _ => return Err(ControlError::InvalidMessage("Invalid OSC type for Vec3 y".to_string())),
+        _ => {
+            return Err(ControlError::InvalidMessage(
+                "Invalid OSC type for Vec3 y".to_string(),
+            ))
+        }
     };
 
     let z = match &osc_args[2] {
         OscType::Float(f) => *f,
         OscType::Int(i) => *i as f32,
         OscType::Double(d) => *d as f32,
-        _ => return Err(ControlError::InvalidMessage("Invalid OSC type for Vec3 z".to_string())),
+        _ => {
+            return Err(ControlError::InvalidMessage(
+                "Invalid OSC type for Vec3 z".to_string(),
+            ))
+        }
     };
 
     let val = ControlValue::Vec3(x, y, z);
     if let Err(e) = val.validate() {
-        return Err(ControlError::InvalidMessage(format!("Invalid OSC Vec3: {}", e)));
+        return Err(ControlError::InvalidMessage(format!(
+            "Invalid OSC Vec3: {}",
+            e
+        )));
     }
 
     Ok(val)
@@ -137,7 +166,12 @@ pub fn control_value_to_osc(value: &ControlValue) -> Vec<OscType> {
             let green = ((c >> 16) & 0xFF) as u8;
             let blue = ((c >> 8) & 0xFF) as u8;
             let alpha = (c & 0xFF) as u8;
-            vec![OscType::Color(rosc::OscColor { red, green, blue, alpha })]
+            vec![OscType::Color(rosc::OscColor {
+                red,
+                green,
+                blue,
+                alpha,
+            })]
         }
         ControlValue::Vec2(x, y) => vec![OscType::Float(*x), OscType::Float(*y)],
         ControlValue::Vec3(x, y, z) => {
@@ -151,30 +185,34 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_osc_to_control_value() {
+    fn test_osc_to_control_value() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let args = vec![OscType::Float(0.5)];
-        let value = osc_to_control_value(&args).unwrap();
+        let value = osc_to_control_value(&args)?;
         assert_eq!(value, ControlValue::Float(0.5));
 
         let args = vec![OscType::Int(42)];
-        let value = osc_to_control_value(&args).unwrap();
+        let value = osc_to_control_value(&args)?;
         assert_eq!(value, ControlValue::Int(42));
 
         let args = vec![OscType::Bool(true)];
-        let value = osc_to_control_value(&args).unwrap();
+        let value = osc_to_control_value(&args)?;
         assert_eq!(value, ControlValue::Bool(true));
+        Ok(())
     }
 
     #[test]
-    fn test_osc_to_vec2() {
+    fn test_osc_to_vec2() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let args = vec![OscType::Float(1.0), OscType::Float(2.0)];
-        let value = osc_to_vec2(&args).unwrap();
+        let value = osc_to_vec2(&args)?;
         assert_eq!(value, ControlValue::Vec2(1.0, 2.0));
 
         // Mixed types
         let args = vec![OscType::Int(1), OscType::Float(2.0)];
-        let value = osc_to_vec2(&args).unwrap();
+        let value = osc_to_vec2(&args)?;
         assert_eq!(value, ControlValue::Vec2(1.0, 2.0));
+        Ok(())
     }
 
     #[test]

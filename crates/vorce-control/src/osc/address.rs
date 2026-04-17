@@ -45,7 +45,10 @@ pub fn parse_osc_address(address: &str) -> Result<ControlTarget> {
     }
 
     if parts.len() < 2 {
-        return Err(ControlError::InvalidMessage(format!("Invalid OSC address: {}", address)));
+        return Err(ControlError::InvalidMessage(format!(
+            "Invalid OSC address: {}",
+            address
+        )));
     }
 
     match parts[1] {
@@ -55,19 +58,27 @@ pub fn parse_osc_address(address: &str) -> Result<ControlTarget> {
         "effect" => parse_effect_address(&parts[2..]),
         "playback" => parse_playback_address(&parts[2..]),
         "output" => parse_output_address(&parts[2..]),
-        _ => Err(ControlError::InvalidMessage(format!("Unknown OSC category: {}", parts[1]))),
+        _ => Err(ControlError::InvalidMessage(format!(
+            "Unknown OSC category: {}",
+            parts[1]
+        ))),
     }
 }
 
 fn parse_master_address(parts: &[&str]) -> Result<ControlTarget> {
     if parts.is_empty() {
-        return Err(ControlError::InvalidMessage("Missing master parameter".to_string()));
+        return Err(ControlError::InvalidMessage(
+            "Missing master parameter".to_string(),
+        ));
     }
 
     match parts[0] {
         "opacity" => Ok(ControlTarget::MasterOpacity),
         "blackout" => Ok(ControlTarget::MasterBlackout),
-        _ => Err(ControlError::InvalidMessage(format!("Unknown master parameter: {}", parts[0]))),
+        _ => Err(ControlError::InvalidMessage(format!(
+            "Unknown master parameter: {}",
+            parts[0]
+        ))),
     }
 }
 
@@ -81,7 +92,9 @@ fn parse_layer_address(parts: &[&str]) -> Result<ControlTarget> {
         .map_err(|_| ControlError::InvalidMessage(format!("Invalid layer ID: {}", parts[0])))?;
 
     if parts.len() < 2 {
-        return Err(ControlError::InvalidMessage("Missing layer parameter".to_string()));
+        return Err(ControlError::InvalidMessage(
+            "Missing layer parameter".to_string(),
+        ));
     }
 
     match parts[1] {
@@ -90,7 +103,10 @@ fn parse_layer_address(parts: &[&str]) -> Result<ControlTarget> {
         "rotation" => Ok(ControlTarget::LayerRotation(layer_id)),
         "scale" => Ok(ControlTarget::LayerScale(layer_id)),
         "visibility" => Ok(ControlTarget::LayerVisibility(layer_id)),
-        _ => Err(ControlError::InvalidMessage(format!("Unknown layer parameter: {}", parts[1]))),
+        _ => Err(ControlError::InvalidMessage(format!(
+            "Unknown layer parameter: {}",
+            parts[1]
+        ))),
     }
 }
 
@@ -122,7 +138,9 @@ fn parse_paint_address(parts: &[&str]) -> Result<ControlTarget> {
 
 fn parse_effect_address(parts: &[&str]) -> Result<ControlTarget> {
     if parts.is_empty() {
-        return Err(ControlError::InvalidMessage("Missing effect ID".to_string()));
+        return Err(ControlError::InvalidMessage(
+            "Missing effect ID".to_string(),
+        ));
     }
 
     let effect_id: u32 = parts[0]
@@ -148,19 +166,26 @@ fn parse_effect_address(parts: &[&str]) -> Result<ControlTarget> {
 
 fn parse_playback_address(parts: &[&str]) -> Result<ControlTarget> {
     if parts.is_empty() {
-        return Err(ControlError::InvalidMessage("Missing playback parameter".to_string()));
+        return Err(ControlError::InvalidMessage(
+            "Missing playback parameter".to_string(),
+        ));
     }
 
     match parts[0] {
         "speed" => Ok(ControlTarget::PlaybackSpeed(None)),
         "position" => Ok(ControlTarget::PlaybackPosition),
-        _ => Err(ControlError::InvalidMessage(format!("Unknown playback parameter: {}", parts[0]))),
+        _ => Err(ControlError::InvalidMessage(format!(
+            "Unknown playback parameter: {}",
+            parts[0]
+        ))),
     }
 }
 
 fn parse_output_address(parts: &[&str]) -> Result<ControlTarget> {
     if parts.is_empty() {
-        return Err(ControlError::InvalidMessage("Missing output ID".to_string()));
+        return Err(ControlError::InvalidMessage(
+            "Missing output ID".to_string(),
+        ));
     }
 
     let output_id: u32 = parts[0]
@@ -168,12 +193,17 @@ fn parse_output_address(parts: &[&str]) -> Result<ControlTarget> {
         .map_err(|_| ControlError::InvalidMessage(format!("Invalid output ID: {}", parts[0])))?;
 
     if parts.len() < 2 {
-        return Err(ControlError::InvalidMessage("Missing output parameter".to_string()));
+        return Err(ControlError::InvalidMessage(
+            "Missing output parameter".to_string(),
+        ));
     }
 
     match parts[1] {
         "brightness" => Ok(ControlTarget::OutputBrightness(output_id)),
-        _ => Err(ControlError::InvalidMessage(format!("Unknown output parameter: {}", parts[1]))),
+        _ => Err(ControlError::InvalidMessage(format!(
+            "Unknown output parameter: {}",
+            parts[1]
+        ))),
     }
 }
 
@@ -206,46 +236,64 @@ pub fn control_target_to_address(target: &ControlTarget) -> String {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn test_legacy_namespaces() {
+    fn test_legacy_namespaces() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         // Test /Vorce/
-        let target1 = parse_osc_address("/Vorce/layer/0/opacity").unwrap();
+        let target1 = parse_osc_address("/Vorce/layer/0/opacity")?;
         assert_eq!(target1, ControlTarget::LayerOpacity(0));
 
         // Test /mapmap/
-        let target2 = parse_osc_address("/mapmap/layer/5/position").unwrap();
+        let target2 = parse_osc_address("/mapmap/layer/5/position")?;
         assert_eq!(target2, ControlTarget::LayerPosition(5));
+        Ok(())
     }
 
     use super::*;
 
     #[test]
-    fn test_parse_layer_opacity() {
-        let target = parse_osc_address("/vorce/layer/0/opacity").unwrap();
+    fn test_parse_layer_opacity() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
+        let target = parse_osc_address("/vorce/layer/0/opacity")?;
         assert_eq!(target, ControlTarget::LayerOpacity(0));
+        Ok(())
     }
 
     #[test]
-    fn test_parse_layer_position() {
-        let target = parse_osc_address("/vorce/layer/5/position").unwrap();
+    fn test_parse_layer_position() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
+        let target = parse_osc_address("/vorce/layer/5/position")?;
         assert_eq!(target, ControlTarget::LayerPosition(5));
+        Ok(())
     }
 
     #[test]
-    fn test_parse_paint_parameter() {
-        let target = parse_osc_address("/vorce/paint/3/parameter/speed").unwrap();
-        assert_eq!(target, ControlTarget::PaintParameter(3, "speed".to_string()));
+    fn test_parse_paint_parameter() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
+        let target = parse_osc_address("/vorce/paint/3/parameter/speed")?;
+        assert_eq!(
+            target,
+            ControlTarget::PaintParameter(3, "speed".to_string())
+        );
+        Ok(())
     }
 
     #[test]
-    fn test_parse_effect_parameter() {
-        let target = parse_osc_address("/vorce/effect/1/parameter/intensity").unwrap();
-        assert_eq!(target, ControlTarget::EffectParameter(1, "intensity".to_string()));
+    fn test_parse_effect_parameter() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
+        let target = parse_osc_address("/vorce/effect/1/parameter/intensity")?;
+        assert_eq!(
+            target,
+            ControlTarget::EffectParameter(1, "intensity".to_string())
+        );
+        Ok(())
     }
 
     #[test]
-    fn test_parse_playback_speed() {
-        let target = parse_osc_address("/vorce/playback/speed").unwrap();
+    fn test_parse_playback_speed() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
+        let target = parse_osc_address("/vorce/playback/speed")?;
         assert_eq!(target, ControlTarget::PlaybackSpeed(None));
+        Ok(())
     }
 
     #[test]
@@ -262,53 +310,71 @@ mod tests {
         assert_eq!(control_target_to_address(&target), "/vorce/layer/0/opacity");
 
         let target = ControlTarget::PaintParameter(3, "speed".to_string());
-        assert_eq!(control_target_to_address(&target), "/vorce/paint/3/parameter/speed");
+        assert_eq!(
+            control_target_to_address(&target),
+            "/vorce/paint/3/parameter/speed"
+        );
     }
 
     #[test]
-    fn test_parse_layer_rotation() {
-        let target = parse_osc_address("/vorce/layer/2/rotation").unwrap();
+    fn test_parse_layer_rotation() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
+        let target = parse_osc_address("/vorce/layer/2/rotation")?;
         assert_eq!(target, ControlTarget::LayerRotation(2));
+        Ok(())
     }
 
     #[test]
-    fn test_parse_layer_scale() {
-        let target = parse_osc_address("/vorce/layer/7/scale").unwrap();
+    fn test_parse_layer_scale() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
+        let target = parse_osc_address("/vorce/layer/7/scale")?;
         assert_eq!(target, ControlTarget::LayerScale(7));
+        Ok(())
     }
 
     #[test]
-    fn test_parse_layer_visibility() {
-        let target = parse_osc_address("/vorce/layer/10/visibility").unwrap();
+    fn test_parse_layer_visibility() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
+        let target = parse_osc_address("/vorce/layer/10/visibility")?;
         assert_eq!(target, ControlTarget::LayerVisibility(10));
+        Ok(())
     }
 
     #[test]
-    fn test_parse_playback_position() {
-        let target = parse_osc_address("/vorce/playback/position").unwrap();
+    fn test_parse_playback_position() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
+        let target = parse_osc_address("/vorce/playback/position")?;
         assert_eq!(target, ControlTarget::PlaybackPosition);
+        Ok(())
     }
 
     #[test]
-    fn test_parse_output_brightness() {
-        let target = parse_osc_address("/vorce/output/0/brightness").unwrap();
+    fn test_parse_output_brightness() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
+        let target = parse_osc_address("/vorce/output/0/brightness")?;
         assert_eq!(target, ControlTarget::OutputBrightness(0));
+        Ok(())
     }
 
     #[test]
-    fn test_parse_master_opacity() {
-        let target = parse_osc_address("/vorce/master/opacity").unwrap();
+    fn test_parse_master_opacity() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
+        let target = parse_osc_address("/vorce/master/opacity")?;
         assert_eq!(target, ControlTarget::MasterOpacity);
+        Ok(())
     }
 
     #[test]
-    fn test_parse_master_blackout() {
-        let target = parse_osc_address("/vorce/master/blackout").unwrap();
+    fn test_parse_master_blackout() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
+        let target = parse_osc_address("/vorce/master/blackout")?;
         assert_eq!(target, ControlTarget::MasterBlackout);
+        Ok(())
     }
 
     #[test]
-    fn test_round_trip_layer_targets() {
+    fn test_round_trip_layer_targets() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         // Test that parsing the address generated from a target gives back the same target
         let targets = vec![
             ControlTarget::LayerOpacity(5),
@@ -320,31 +386,39 @@ mod tests {
 
         for target in targets {
             let address = control_target_to_address(&target);
-            let parsed = parse_osc_address(&address).unwrap();
+            let parsed = parse_osc_address(&address)?;
             assert_eq!(parsed, target);
         }
+        Ok(())
     }
 
     #[test]
-    fn test_round_trip_master_targets() {
+    fn test_round_trip_master_targets() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let targets = vec![ControlTarget::MasterOpacity, ControlTarget::MasterBlackout];
 
         for target in targets {
             let address = control_target_to_address(&target);
-            let parsed = parse_osc_address(&address).unwrap();
+            let parsed = parse_osc_address(&address)?;
             assert_eq!(parsed, target);
         }
+        Ok(())
     }
 
     #[test]
-    fn test_round_trip_playback_targets() {
-        let targets = vec![ControlTarget::PlaybackSpeed(None), ControlTarget::PlaybackPosition];
+    fn test_round_trip_playback_targets() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
+        let targets = vec![
+            ControlTarget::PlaybackSpeed(None),
+            ControlTarget::PlaybackPosition,
+        ];
 
         for target in targets {
             let address = control_target_to_address(&target);
-            let parsed = parse_osc_address(&address).unwrap();
+            let parsed = parse_osc_address(&address)?;
             assert_eq!(parsed, target);
         }
+        Ok(())
     }
 
     #[test]

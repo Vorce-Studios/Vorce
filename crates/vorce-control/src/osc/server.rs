@@ -56,17 +56,24 @@ impl OscServer {
             Self::run_receiver(socket, sender);
         });
 
-        Ok(Self { receiver, _handle: Some(handle) })
+        Ok(Self {
+            receiver,
+            _handle: Some(handle),
+        })
     }
 
     #[cfg(not(feature = "osc"))]
     pub fn new(_port: u16) -> Result<Self> {
-        Err(ControlError::OscError("OSC feature not enabled".to_string()))
+        Err(ControlError::OscError(
+            "OSC feature not enabled".to_string(),
+        ))
     }
 
     #[cfg(not(feature = "osc"))]
     pub fn new_with_host(_host: &str, _port: u16) -> Result<Self> {
-        Err(ControlError::OscError("OSC feature not enabled".to_string()))
+        Err(ControlError::OscError(
+            "OSC feature not enabled".to_string(),
+        ))
     }
 
     /// Run the receiver loop (blocking)
@@ -122,21 +129,22 @@ mod tests {
     }
 
     #[test]
-    fn test_osc_server_client_communication() {
+    fn test_osc_server_client_communication() -> std::result::Result<(), Box<dyn std::error::Error>>
+    {
         use crate::osc::client::OscClient;
         use rosc::OscType;
 
         // Create server on a high port
-        let server = OscServer::new(18001).unwrap();
+        let server = OscServer::new(18001)?;
 
         // Give server time to start
         thread::sleep(Duration::from_millis(100));
 
         // Create client
-        let client = OscClient::new("127.0.0.1:18001").unwrap();
+        let client = OscClient::new("127.0.0.1:18001")?;
 
         // Send a message
-        client.send_message("/vorce/layer/0/opacity", vec![OscType::Float(0.5)]).unwrap();
+        client.send_message("/vorce/layer/0/opacity", vec![OscType::Float(0.5)])?;
 
         // Wait a bit for the message to arrive
         thread::sleep(Duration::from_millis(100));
@@ -148,22 +156,23 @@ mod tests {
         } else {
             panic!("Expected OSC packet");
         }
+        Ok(())
     }
 
     #[test]
-    fn test_osc_backpressure() {
+    fn test_osc_backpressure() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         use crate::osc::client::OscClient;
         use rosc::OscType;
 
         // Use a different port to avoid conflict
         let port = 18002;
-        let server = OscServer::new(port).expect("Failed to bind server");
+        let server = OscServer::new(port)?;
 
         // Give server time to start
         thread::sleep(Duration::from_millis(100));
 
-        let client =
-            OscClient::new(&format!("127.0.0.1:{}", port)).expect("Failed to create client");
+        let client = OscClient::new(&format!("127.0.0.1:{}", port))?;
 
         // Send more packets than the buffer size (MAX_PENDING_PACKETS = 1024)
         // We send 2000 packets quickly to trigger backpressure.
@@ -200,7 +209,7 @@ mod tests {
         assert!(count > 0, "Should have received packets");
 
         // Verify server is still responsive
-        client.send_message("/test/alive", vec![]).unwrap();
+        client.send_message("/test/alive", vec![])?;
         thread::sleep(Duration::from_millis(100));
 
         let mut found_alive = false;
@@ -216,5 +225,6 @@ mod tests {
             }
         }
         assert!(found_alive, "Server should be responsive after flood");
+        Ok(())
     }
 }
