@@ -15,12 +15,7 @@ fn test_ecler_nuo4_profile() {
     // Crossfader: 1 CC = 1
     // Dedicated MIDI: 6 layouts × (4 CC + 4 Push Enc + 4 Switch) = 6 × 12 = 72
     // Total: 8 + 8 + 1 + 72 = 89
-    assert_eq!(
-        profile.mappings.len(),
-        89,
-        "Expected 89 mappings, got {}",
-        profile.mappings.len()
-    );
+    assert_eq!(profile.mappings.len(), 89, "Expected 89 mappings, got {}", profile.mappings.len());
 }
 
 #[test]
@@ -35,17 +30,11 @@ fn test_ecler_nuo4_channel_mappings() {
         .expect("CH2 Gain mapping not found");
 
     match &ch2_gain.message_template {
-        MidiMessageTemplate::ControlChange {
-            channel,
-            controller,
-        } => {
+        MidiMessageTemplate::ControlChange { channel, controller } => {
             assert_eq!(*channel, 0, "CH2 should be on MIDI channel 1 (0-indexed)");
             assert_eq!(*controller, 16, "CH2 Gain should be CC 16");
         }
-        _ => panic!(
-            "CH2 Gain should be a CC message, got {:?}",
-            ch2_gain.message_template
-        ),
+        _ => panic!("CH2 Gain should be a CC message, got {:?}", ch2_gain.message_template),
     }
 }
 
@@ -61,20 +50,11 @@ fn test_ecler_nuo4_midi_control_section() {
         .expect("Encoder 3 (A/L1) mapping not found");
 
     match &enc3_a1.message_template {
-        MidiMessageTemplate::ControlChange {
-            channel,
-            controller,
-        } => {
-            assert_eq!(
-                *channel, 15,
-                "MIDI Control should be on MIDI channel 16 (15 indexed)"
-            );
+        MidiMessageTemplate::ControlChange { channel, controller } => {
+            assert_eq!(*channel, 15, "MIDI Control should be on MIDI channel 16 (15 indexed)");
             assert_eq!(*controller, 22, "Encoder 3 (A/L1) should be CC 22");
         }
-        _ => panic!(
-            "Encoder should be a CC message, got {:?}",
-            enc3_a1.message_template
-        ),
+        _ => panic!("Encoder should be a CC message, got {:?}", enc3_a1.message_template),
     }
 }
 

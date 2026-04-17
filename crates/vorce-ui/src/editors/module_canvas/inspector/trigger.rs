@@ -15,19 +15,25 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
     // Skip general mapping UI if it is a dedicated Trigger generator (except if it specifically requested inputs, but
     // usually generators don't have trigger mapping).
     // The issue says "Midi and AudioFFT show only suitable functions in the Inspector".
-    if matches!(part.part_type, vorce_core::module::ModulePartType::Trigger(_)) {
+    if matches!(
+        part.part_type,
+        vorce_core::module::ModulePartType::Trigger(_)
+    ) {
         return;
     }
 
     ui.add_space(5.0);
-    egui::CollapsingHeader::new("\u{26A1} Trigger & Automation").default_open(false).show(
-        ui,
-        |ui| {
+    egui::CollapsingHeader::new("\u{26A1} Trigger & Automation")
+        .default_open(false)
+        .show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label("MIDI Assignment:");
                 let is_learning = canvas.midi_learn_part_id == Some(part.id);
-                let btn_text =
-                    if is_learning { "\u{1F6D1} Stop Learning" } else { "\u{1F3B9} MIDI Learn" };
+                let btn_text = if is_learning {
+                    "\u{1F6D1} Stop Learning"
+                } else {
+                    "\u{1F3B9} MIDI Learn"
+                };
                 if ui.selectable_label(is_learning, btn_text).clicked() {
                     if is_learning {
                         canvas.midi_learn_part_id = None;
@@ -141,9 +147,9 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
                                 TriggerMappingMode::Smoothed { .. } => "Smoothed",
                             };
 
-                            egui::ComboBox::from_id_salt("mode").selected_text(mode_name).show_ui(
-                                ui,
-                                |ui| {
+                            egui::ComboBox::from_id_salt("mode")
+                                .selected_text(mode_name)
+                                .show_ui(ui, |ui| {
                                     ui.selectable_value(
                                         &mut config.mode,
                                         TriggerMappingMode::Direct,
@@ -160,15 +166,16 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
                                         "Random",
                                     );
                                     // For smoothed, we preserve existing params if already smoothed, else default
-                                    let default_smoothed =
-                                        TriggerMappingMode::Smoothed { attack: 0.1, release: 0.1 };
+                                    let default_smoothed = TriggerMappingMode::Smoothed {
+                                        attack: 0.1,
+                                        release: 0.1,
+                                    };
                                     ui.selectable_value(
                                         &mut config.mode,
                                         default_smoothed,
                                         "Smoothed",
                                     );
-                                },
-                            );
+                                });
                         });
 
                         // Params based on Mode
@@ -234,8 +241,7 @@ pub fn render_trigger_config_ui(canvas: &mut ModuleCanvas, ui: &mut Ui, part: &m
                     }
                 });
             }
-        },
-    );
+        });
 }
 
 /// Renders the configuration UI for a `ModulePartType::Trigger`.
@@ -256,7 +262,11 @@ pub fn render_trigger_ui(
                 "Event node: Output is sent via Event connections.",
             );
         }
-        TriggerType::AudioFFT { band: _band, threshold, output_config } => {
+        TriggerType::AudioFFT {
+            band: _band,
+            threshold,
+            output_config,
+        } => {
             ui.label("\u{1F50A} Audio FFT");
             ui.label("Outputs 9 frequency bands, plus volume and beat.");
 
@@ -276,8 +286,14 @@ pub fn render_trigger_ui(
             ui.label("\u{1F4E4} Output Configuration:");
             ui.checkbox(&mut output_config.beat_output, "🥁 Beat Detection");
             ui.checkbox(&mut output_config.bpm_output, "⏱️ BPM");
-            ui.checkbox(&mut output_config.volume_outputs, "\u{1F4CA} Volume (RMS, Peak)");
-            ui.checkbox(&mut output_config.frequency_bands, "\u{1F3B5} Frequency Bands (9)");
+            ui.checkbox(
+                &mut output_config.volume_outputs,
+                "\u{1F4CA} Volume (RMS, Peak)",
+            );
+            ui.checkbox(
+                &mut output_config.frequency_bands,
+                "\u{1F3B5} Frequency Bands (9)",
+            );
 
             ui.separator();
             ui.collapsing("\u{1F504} Invert Signals (NOT Logic)", |ui| {
@@ -321,7 +337,11 @@ pub fn render_trigger_ui(
 
             ui.label("Threshold is used for the node's visual glow effect.");
         }
-        TriggerType::Random { min_interval_ms, max_interval_ms, probability } => {
+        TriggerType::Random {
+            min_interval_ms,
+            max_interval_ms,
+            probability,
+        } => {
             ui.label("\u{1F3B2} Random");
             ui.add(egui::Slider::new(min_interval_ms, 50..=5000).text("Min (ms)"));
             ui.add(egui::Slider::new(max_interval_ms, 100..=10000).text("Max (ms)"));
@@ -332,7 +352,11 @@ pub fn render_trigger_ui(
                 "Event node: Output is sent via Event connections.",
             );
         }
-        TriggerType::Fixed { interval_ms, offset_ms, .. } => {
+        TriggerType::Fixed {
+            interval_ms,
+            offset_ms,
+            ..
+        } => {
             ui.label("⏱️ Fixed Timer");
             ui.add(egui::Slider::new(interval_ms, 16..=10000).text("Interval (ms)"));
             ui.add(egui::Slider::new(offset_ms, 0..=5000).text("Offset (ms)"));
@@ -356,7 +380,11 @@ pub fn render_trigger_ui(
                 ui.label(format!("Offset {} ms", *offset_ms));
             });
         }
-        TriggerType::Midi { channel, note, device } => {
+        TriggerType::Midi {
+            channel,
+            note,
+            device,
+        } => {
             ui.label("\u{1F3B9} MIDI Trigger");
 
             ui.separator();
@@ -410,8 +438,11 @@ pub fn render_trigger_ui(
 
             // MIDI Learn button
             let is_learning = canvas.midi_learn_part_id == Some(part_id);
-            let learn_text =
-                if is_learning { "â ³ Waiting for MIDI..." } else { "🎯 MIDI Learn" };
+            let learn_text = if is_learning {
+                "â ³ Waiting for MIDI..."
+            } else {
+                "🎯 MIDI Learn"
+            };
             if ui.button(learn_text).clicked() {
                 if is_learning {
                     canvas.midi_learn_part_id = None;
@@ -442,7 +473,10 @@ pub fn render_trigger_ui(
                 "Event node: Output is sent via Event connections.",
             );
         }
-        TriggerType::Shortcut { key_code, modifiers } => {
+        TriggerType::Shortcut {
+            key_code,
+            modifiers,
+        } => {
             ui.label("âŒ¨ï¸  Shortcut");
             ui.horizontal(|ui| {
                 ui.label("Key:");
