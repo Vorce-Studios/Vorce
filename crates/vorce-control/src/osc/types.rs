@@ -186,6 +186,7 @@ mod tests {
 
     #[test]
     fn test_osc_to_control_value() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let args = vec![OscType::Float(0.5)];
         let value = osc_to_control_value(&args)?;
         assert_eq!(value, ControlValue::Float(0.5));
@@ -202,6 +203,7 @@ mod tests {
 
     #[test]
     fn test_osc_to_vec2() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let args = vec![OscType::Float(1.0), OscType::Float(2.0)];
         let value = osc_to_vec2(&args)?;
         assert_eq!(value, ControlValue::Vec2(1.0, 2.0));

@@ -161,6 +161,7 @@ mod tests {
 
     #[test]
     fn test_osc_backpressure() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         use crate::osc::client::OscClient;
         use rosc::OscType;
 

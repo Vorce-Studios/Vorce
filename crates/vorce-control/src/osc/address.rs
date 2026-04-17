@@ -237,6 +237,7 @@ pub fn control_target_to_address(target: &ControlTarget) -> String {
 mod tests {
     #[test]
     fn test_legacy_namespaces() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         // Test /Vorce/
         let target1 = parse_osc_address("/Vorce/layer/0/opacity")?;
         assert_eq!(target1, ControlTarget::LayerOpacity(0));
@@ -251,6 +252,7 @@ mod tests {
 
     #[test]
     fn test_parse_layer_opacity() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let target = parse_osc_address("/vorce/layer/0/opacity")?;
         assert_eq!(target, ControlTarget::LayerOpacity(0));
         Ok(())
@@ -258,6 +260,7 @@ mod tests {
 
     #[test]
     fn test_parse_layer_position() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let target = parse_osc_address("/vorce/layer/5/position")?;
         assert_eq!(target, ControlTarget::LayerPosition(5));
         Ok(())
@@ -265,6 +268,7 @@ mod tests {
 
     #[test]
     fn test_parse_paint_parameter() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let target = parse_osc_address("/vorce/paint/3/parameter/speed")?;
         assert_eq!(
             target,
@@ -275,6 +279,7 @@ mod tests {
 
     #[test]
     fn test_parse_effect_parameter() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let target = parse_osc_address("/vorce/effect/1/parameter/intensity")?;
         assert_eq!(
             target,
@@ -285,6 +290,7 @@ mod tests {
 
     #[test]
     fn test_parse_playback_speed() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let target = parse_osc_address("/vorce/playback/speed")?;
         assert_eq!(target, ControlTarget::PlaybackSpeed(None));
         Ok(())
@@ -312,6 +318,7 @@ mod tests {
 
     #[test]
     fn test_parse_layer_rotation() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let target = parse_osc_address("/vorce/layer/2/rotation")?;
         assert_eq!(target, ControlTarget::LayerRotation(2));
         Ok(())
@@ -319,6 +326,7 @@ mod tests {
 
     #[test]
     fn test_parse_layer_scale() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let target = parse_osc_address("/vorce/layer/7/scale")?;
         assert_eq!(target, ControlTarget::LayerScale(7));
         Ok(())
@@ -326,6 +334,7 @@ mod tests {
 
     #[test]
     fn test_parse_layer_visibility() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let target = parse_osc_address("/vorce/layer/10/visibility")?;
         assert_eq!(target, ControlTarget::LayerVisibility(10));
         Ok(())
@@ -333,6 +342,7 @@ mod tests {
 
     #[test]
     fn test_parse_playback_position() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let target = parse_osc_address("/vorce/playback/position")?;
         assert_eq!(target, ControlTarget::PlaybackPosition);
         Ok(())
@@ -340,6 +350,7 @@ mod tests {
 
     #[test]
     fn test_parse_output_brightness() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let target = parse_osc_address("/vorce/output/0/brightness")?;
         assert_eq!(target, ControlTarget::OutputBrightness(0));
         Ok(())
@@ -347,6 +358,7 @@ mod tests {
 
     #[test]
     fn test_parse_master_opacity() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let target = parse_osc_address("/vorce/master/opacity")?;
         assert_eq!(target, ControlTarget::MasterOpacity);
         Ok(())
@@ -354,6 +366,7 @@ mod tests {
 
     #[test]
     fn test_parse_master_blackout() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let target = parse_osc_address("/vorce/master/blackout")?;
         assert_eq!(target, ControlTarget::MasterBlackout);
         Ok(())
@@ -361,6 +374,7 @@ mod tests {
 
     #[test]
     fn test_round_trip_layer_targets() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         // Test that parsing the address generated from a target gives back the same target
         let targets = vec![
             ControlTarget::LayerOpacity(5),
@@ -380,6 +394,7 @@ mod tests {
 
     #[test]
     fn test_round_trip_master_targets() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let targets = vec![ControlTarget::MasterOpacity, ControlTarget::MasterBlackout];
 
         for target in targets {
@@ -392,6 +407,7 @@ mod tests {
 
     #[test]
     fn test_round_trip_playback_targets() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let targets = vec![
             ControlTarget::PlaybackSpeed(None),
             ControlTarget::PlaybackPosition,

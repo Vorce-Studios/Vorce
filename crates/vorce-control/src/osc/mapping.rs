@@ -93,6 +93,7 @@ mod tests {
 
     #[test]
     fn test_serialization() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        #[allow(unreachable_code)]
         let mut mapping = OscMapping::new();
         mapping.set_mapping("/a".into(), ControlTarget::LayerOpacity(0));
         mapping.set_mapping("/b".into(), ControlTarget::PlaybackSpeed(None));
