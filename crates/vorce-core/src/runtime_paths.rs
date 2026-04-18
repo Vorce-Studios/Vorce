@@ -134,10 +134,7 @@ mod tests {
         fn set(var: &str, value: &Path) -> Self {
             let original = env::var_os(var);
             env::set_var(var, value);
-            Self {
-                var: var.to_string(),
-                original,
-            }
+            Self { var: var.to_string(), original }
         }
     }
 
