@@ -3,6 +3,7 @@
 //! Media library, effect preset browser, project templates,
 //! and import/export workflows.
 
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -93,18 +94,26 @@ impl AssetManager {
         let effects_path = self.library_path.join("effects");
         if effects_path.exists() {
             if let Ok(entries) = std::fs::read_dir(effects_path) {
-                for entry in entries.flatten() {
-                    if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
-                        if let Ok(data) = std::fs::read_to_string(entry.path()) {
-                            if let Ok(mut preset) = serde_json::from_str::<EffectPreset>(&data) {
-                                preset.name_lower = preset.name.to_lowercase();
-                                preset.description_lower = preset.description.to_lowercase();
-                                preset.tags_lower =
-                                    preset.tags.iter().map(|t| t.to_lowercase()).collect();
-                                self.effect_presets.insert(preset.name.clone(), preset);
-                            }
-                        }
-                    }
+                let paths: Vec<_> = entries
+                    .flatten()
+                    .map(|e| e.path())
+                    .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("json"))
+                    .collect();
+
+                let loaded_presets: Vec<_> = paths
+                    .into_par_iter()
+                    .filter_map(|path| std::fs::read_to_string(path).ok())
+                    .filter_map(|data| serde_json::from_str::<EffectPreset>(&data).ok())
+                    .map(|mut preset| {
+                        preset.name_lower = preset.name.to_lowercase();
+                        preset.description_lower = preset.description.to_lowercase();
+                        preset.tags_lower = preset.tags.iter().map(|t| t.to_lowercase()).collect();
+                        (preset.name.clone(), preset)
+                    })
+                    .collect();
+
+                for (name, preset) in loaded_presets {
+                    self.effect_presets.insert(name, preset);
                 }
             }
         }
@@ -113,14 +122,21 @@ impl AssetManager {
         let transforms_path = self.library_path.join("transforms");
         if transforms_path.exists() {
             if let Ok(entries) = std::fs::read_dir(transforms_path) {
-                for entry in entries.flatten() {
-                    if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
-                        if let Ok(data) = std::fs::read_to_string(entry.path()) {
-                            if let Ok(preset) = serde_json::from_str::<TransformPreset>(&data) {
-                                self.transform_presets.insert(preset.name.clone(), preset);
-                            }
-                        }
-                    }
+                let paths: Vec<_> = entries
+                    .flatten()
+                    .map(|e| e.path())
+                    .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("json"))
+                    .collect();
+
+                let loaded_presets: Vec<_> = paths
+                    .into_par_iter()
+                    .filter_map(|path| std::fs::read_to_string(path).ok())
+                    .filter_map(|data| serde_json::from_str::<TransformPreset>(&data).ok())
+                    .map(|preset| (preset.name.clone(), preset))
+                    .collect();
+
+                for (name, preset) in loaded_presets {
+                    self.transform_presets.insert(name, preset);
                 }
             }
         }
@@ -131,19 +147,19 @@ impl AssetManager {
             if let Ok(entries) = std::fs::read_dir(templates_path) {
                 let paths: Vec<_> = entries
                     .flatten()
-                    .filter(|e| e.path().extension().and_then(|s| s.to_str()) == Some("json"))
                     .map(|e| e.path())
+                    .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("json"))
                     .collect();
 
-                use rayon::prelude::*;
-                let templates: Vec<_> = paths
-                    .par_iter()
+                let loaded_templates: Vec<_> = paths
+                    .into_par_iter()
                     .filter_map(|path| std::fs::read_to_string(path).ok())
                     .filter_map(|data| serde_json::from_str::<ProjectTemplate>(&data).ok())
+                    .map(|template| (template.name.clone(), template))
                     .collect();
 
-                for template in templates {
-                    self.project_templates.insert(template.name.clone(), template);
+                for (name, template) in loaded_templates {
+                    self.project_templates.insert(name, template);
                 }
             }
         }
