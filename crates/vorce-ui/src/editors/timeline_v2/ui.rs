@@ -161,7 +161,7 @@ impl TimelineV2 {
     }
 
     fn cleanup_missing_modules(&mut self, available_module_ids: &[ModuleId]) {
-        let valid: HashSet<ModuleId> = available_module_ids.iter().copied().collect();
+        let valid: rustc_hash::FxHashSet<ModuleId> = available_module_ids.iter().copied().collect();
         self.module_arrangement.retain(|item| valid.contains(&item.module_id));
 
         let has_block = |id: Option<u64>, blocks: &[ModuleArrangementItem]| {

@@ -14,3 +14,7 @@
 ## 2025-02-12 - Prevent Heap Allocations in Search Filter Loop
 **Erkenntnis:** Calling `.to_lowercase()` inside a high-frequency UI rendering loop (like in the preset search panel) generates unnecessary heap allocations on every frame when the search query is empty.
 **Aktion:** I optimized `search_lower` assignment using lazy evaluation (`(!preset_search.is_empty()).then(|| preset_search.to_lowercase())`) so `.to_lowercase()` is never called when the search field is empty.
+
+## 2025-02-18 - [Performance Boost] Optimize O(N) loops and allocations in vorce-ui
+**Erkenntnis:** O(N) array/vector lookups in high-frequency rendering and updating loops (`canvas.selected_parts`, `timeline_v2` module cleanup) cause severe algorithmic bottlenecks. Additionally, repeatedly evaluating string transformations like `.to_lowercase()` directly on user input bindings generates completely unnecessary per-frame heap allocations when strings are empty or unused.
+**Aktion:** I replaced standard generic `HashSet` and linear `Vec` lookups with the highly optimized `rustc_hash::FxHashSet` for `u64` IDs, accelerating lookup speed drastically without crypto hash overhead. Moreover, I used `Option<String>` mapping via `(!str.is_empty()).then(|| str.to_lowercase())` in multiple string matching UI search paths, lazily skipping string duplication memory allocations when empty.

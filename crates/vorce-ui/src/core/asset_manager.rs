@@ -199,13 +199,17 @@ impl AssetManager {
 
     /// Search presets by query
     pub fn search_effect_presets(&self, query: &str) -> Vec<&EffectPreset> {
-        let query_lower = query.to_lowercase();
+        let query_lower = (!query.is_empty()).then(|| query.to_lowercase());
         self.effect_presets
             .values()
             .filter(|preset| {
-                preset.name_lower.contains(&query_lower)
-                    || preset.description_lower.contains(&query_lower)
-                    || preset.tags_lower.iter().any(|tag| tag.contains(&query_lower))
+                if let Some(q) = &query_lower {
+                    preset.name_lower.contains(q)
+                        || preset.description_lower.contains(q)
+                        || preset.tags_lower.iter().any(|tag| tag.contains(q))
+                } else {
+                    true
+                }
             })
             .collect()
     }
