@@ -403,7 +403,7 @@ impl App {
         // --- Reconcile Output IDs ---
         let valid_outputs: HashMap<String, u64> =
             state.output_manager.outputs().iter().map(|o| (o.name.clone(), o.id)).collect();
-        let valid_ids: Vec<u64> = valid_outputs.values().cloned().collect();
+        let valid_ids: rustc_hash::FxHashSet<u64> = valid_outputs.values().cloned().collect();
 
         let mut fixed_count = 0;
         for module in state.module_manager_mut().modules_mut() {
