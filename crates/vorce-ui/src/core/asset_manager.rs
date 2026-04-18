@@ -151,7 +151,24 @@ impl AssetManager {
         preset.description_lower = preset.description.to_lowercase();
         preset.tags_lower = preset.tags.iter().map(|t| t.to_lowercase()).collect();
 
+        let canonical_effects_path = effects_path.canonicalize()?;
+
         let file_path = effects_path.join(format!("{}.json", preset.name));
+        if let Some(parent) = file_path.parent() {
+            std::fs::create_dir_all(parent)?;
+            let canonical_parent = parent.canonicalize()?;
+            if !canonical_parent.starts_with(&canonical_effects_path) {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::PermissionDenied,
+                    "Path traversal detected",
+                ));
+            }
+        } else {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Invalid preset name",
+            ));
+        }
         let data = serde_json::to_string_pretty(&preset)?;
         std::fs::write(file_path, data)?;
 
@@ -164,7 +181,24 @@ impl AssetManager {
         let transforms_path = self.library_path.join("transforms");
         std::fs::create_dir_all(&transforms_path)?;
 
+        let canonical_transforms_path = transforms_path.canonicalize()?;
+
         let file_path = transforms_path.join(format!("{}.json", preset.name));
+        if let Some(parent) = file_path.parent() {
+            std::fs::create_dir_all(parent)?;
+            let canonical_parent = parent.canonicalize()?;
+            if !canonical_parent.starts_with(&canonical_transforms_path) {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::PermissionDenied,
+                    "Path traversal detected",
+                ));
+            }
+        } else {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Invalid preset name",
+            ));
+        }
         let data = serde_json::to_string_pretty(&preset)?;
         std::fs::write(file_path, data)?;
 
