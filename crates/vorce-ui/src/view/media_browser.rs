@@ -417,12 +417,7 @@ impl MediaBrowser {
 
     /// Get filtered and searched entries
     fn filtered_entries(&self) -> Vec<(usize, &MediaEntry)> {
-        let query = if !self.search_query.is_empty() {
-            Some(self.search_query.to_lowercase())
-        } else {
-            None
-        };
-
+        let query = (!self.search_query.is_empty()).then(|| self.search_query.to_lowercase());
         self.entries
             .iter()
             .enumerate()

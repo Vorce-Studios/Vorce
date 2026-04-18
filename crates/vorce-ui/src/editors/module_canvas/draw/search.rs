@@ -40,12 +40,12 @@ pub fn draw_search_popup(
                 .parts
                 .iter()
                 .filter(|p| {
-                    let Some(filter_lower) = &filter_lower else {
+                    let Some(f) = &filter_lower else {
                         return true;
                     };
                     let name = utils::get_part_property_text(&p.part_type).to_lowercase();
                     let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
-                    name.contains(filter_lower) || type_name.to_lowercase().contains(filter_lower)
+                    name.contains(f) || type_name.to_lowercase().contains(f)
                 })
                 .take(6)
                 .collect();

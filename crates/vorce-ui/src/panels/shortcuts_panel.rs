@@ -84,11 +84,10 @@ impl ShortcutsPanel {
             .iter()
             .enumerate()
             .filter(|(_, s)| {
-                let Some(filter_lower) = &filter_lower else {
+                let Some(f) = &filter_lower else {
                     return true;
                 };
-                s.description_lower.contains(filter_lower)
-                    || s.shortcut_str_lower.contains(filter_lower)
+                s.description_lower.contains(f) || s.shortcut_str_lower.contains(f)
             })
             .map(|(i, _)| i)
             .collect();

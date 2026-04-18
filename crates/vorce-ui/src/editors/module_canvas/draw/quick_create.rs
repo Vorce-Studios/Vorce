@@ -20,8 +20,8 @@ pub fn draw_quick_create_popup(
     let filtered_items: Vec<&utils::NodeCatalogItem> = catalog
         .iter()
         .filter(|item| {
-            if let Some(filter_lower) = &filter_lower {
-                item.label_lower.contains(filter_lower) || item.search_tags.contains(filter_lower)
+            if let Some(f) = &filter_lower {
+                item.label_lower.contains(f) || item.search_tags.contains(f)
             } else {
                 true
             }
