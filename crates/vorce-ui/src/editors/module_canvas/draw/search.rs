@@ -2,6 +2,41 @@ use super::super::{state::ModuleCanvas, utils};
 use egui::{Color32, Pos2, Rect, Stroke, Ui, Vec2};
 use vorce_core::module::VorceModule;
 
+fn case_insensitive_contains(haystack: &str, needle: &str) -> bool {
+    // If needle is empty it's always contained
+    if needle.is_empty() {
+        return true;
+    }
+
+    // Fast path: ASCII
+    if haystack.is_ascii() && needle.is_ascii() {
+        let needle_len = needle.len();
+        let haystack_bytes = haystack.as_bytes();
+        let needle_bytes = needle.as_bytes();
+
+        if haystack_bytes.len() < needle_len {
+            return false;
+        }
+
+        for i in 0..=(haystack_bytes.len() - needle_len) {
+            let mut matches = true;
+            for j in 0..needle_len {
+                if !haystack_bytes[i + j].eq_ignore_ascii_case(&needle_bytes[j]) {
+                    matches = false;
+                    break;
+                }
+            }
+            if matches {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Fallback: Unicode
+    haystack.to_lowercase().contains(needle)
+}
+
 pub fn draw_search_popup(
     canvas: &mut ModuleCanvas,
     ui: &mut Ui,
@@ -43,9 +78,9 @@ pub fn draw_search_popup(
                     let Some(f) = &filter_lower else {
                         return true;
                     };
-                    let name = utils::get_part_property_text(&p.part_type).to_lowercase();
+                    let name = utils::get_part_property_text(&p.part_type);
                     let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
-                    name.contains(f) || type_name.to_lowercase().contains(f)
+                    case_insensitive_contains(&name, f) || case_insensitive_contains(type_name, f)
                 })
                 .take(6)
                 .collect();
