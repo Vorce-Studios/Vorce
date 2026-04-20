@@ -109,9 +109,10 @@ impl MpvDecoder {
             let handle = self.mpv.ctx;
 
             let cmd_sc = std::ffi::CString::new("screenshot-raw")
-                .map_err(|e| MediaError::DecoderError(format!("NulError in cmd: {}", e)))?;
+                .map_err(|e| MediaError::DecoderError(format!("NulError in MPV screenshot command: {}", e)))?;
             let cmd_sc_arg = std::ffi::CString::new("video")
-                .map_err(|e| MediaError::DecoderError(format!("NulError in cmd arg: {}", e)))?;
+                .map_err(|e| MediaError::DecoderError(format!("NulError in MPV screenshot argument: {}", e)))?;
+
 
             let mut cmd_screenshot = [cmd_sc.as_ptr(), cmd_sc_arg.as_ptr(), std::ptr::null()];
 
