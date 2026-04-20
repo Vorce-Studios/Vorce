@@ -129,14 +129,21 @@ impl AssetManager {
         let templates_path = self.library_path.join("templates");
         if templates_path.exists() {
             if let Ok(entries) = std::fs::read_dir(templates_path) {
-                for entry in entries.flatten() {
-                    if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
-                        if let Ok(data) = std::fs::read_to_string(entry.path()) {
-                            if let Ok(template) = serde_json::from_str::<ProjectTemplate>(&data) {
-                                self.project_templates.insert(template.name.clone(), template);
-                            }
-                        }
-                    }
+                let paths: Vec<_> = entries
+                    .flatten()
+                    .filter(|e| e.path().extension().and_then(|s| s.to_str()) == Some("json"))
+                    .map(|e| e.path())
+                    .collect();
+
+                use rayon::prelude::*;
+                let templates: Vec<_> = paths
+                    .par_iter()
+                    .filter_map(|path| std::fs::read_to_string(path).ok())
+                    .filter_map(|data| serde_json::from_str::<ProjectTemplate>(&data).ok())
+                    .collect();
+
+                for template in templates {
+                    self.project_templates.insert(template.name.clone(), template);
                 }
             }
         }
