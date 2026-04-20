@@ -270,7 +270,7 @@ pub fn render_canvas(
         let mut delete_part_id = None;
         let mut resize_ops = Vec::new();
         let mut drag_delta = Vec2::ZERO;
-        let selected_parts_set: std::collections::HashSet<vorce_core::module::ModulePartId> =
+        let selected_parts_set: rustc_hash::FxHashSet<vorce_core::module::ModulePartId> =
             canvas.selected_parts.iter().copied().collect();
 
         for part in &mut module.parts {
