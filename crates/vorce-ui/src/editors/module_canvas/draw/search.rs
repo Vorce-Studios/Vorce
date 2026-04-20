@@ -68,14 +68,19 @@ pub fn draw_search_popup(
             });
             ui.add_space(8.0);
 
+            // ⚡ Bolt: Prevent per-frame String allocations when search is empty using lazy evaluation
+            let filter_lower =
+                (!canvas.search_filter.is_empty()).then(|| canvas.search_filter.to_lowercase());
             let matching_parts: Vec<_> = module
                 .parts
                 .iter()
                 .filter(|p| {
+                    let Some(f) = &filter_lower else {
+                        return true;
+                    };
                     let name = utils::get_part_property_text(&p.part_type);
                     let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
-                    case_insensitive_contains(&name, &canvas.search_filter)
-                        || case_insensitive_contains(type_name, &canvas.search_filter)
+                    case_insensitive_contains(&name, f) || case_insensitive_contains(type_name, f)
                 })
                 .take(6)
                 .collect();
