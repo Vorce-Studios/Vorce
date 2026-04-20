@@ -259,16 +259,23 @@ impl MediaBrowser {
                                 file_type,
                                 MediaType::Video | MediaType::Audio | MediaType::Hap
                             ) {
-                                let mut extracting = self.extracting_metadata.write();
-                                if !extracting.contains(&path) {
-                                    extracting.insert(path.clone());
-                                    let tx = self.metadata_tx.clone();
-                                    let path_clone = path.clone();
-                                    rayon::spawn(move || {
-                                        let duration =
-                                            vorce_media::get_media_duration_secs(&path_clone);
-                                        let _ = tx.send((path_clone, duration));
-                                    });
+                                let is_extracting = {
+                                    let extracting = self.extracting_metadata.read();
+                                    extracting.contains(&path)
+                                };
+
+                                if !is_extracting {
+                                    let mut extracting = self.extracting_metadata.write();
+                                    if !extracting.contains(&path) {
+                                        extracting.insert(path.clone());
+                                        let tx = self.metadata_tx.clone();
+                                        let path_clone = path.clone();
+                                        rayon::spawn(move || {
+                                            let duration =
+                                                vorce_media::get_media_duration_secs(&path_clone);
+                                            let _ = tx.send((path_clone, duration));
+                                        });
+                                    }
                                 }
                             }
 
@@ -322,8 +329,12 @@ impl MediaBrowser {
         }
 
         // Check if already generating
-        let mut generating = self.generating_thumbnails.write();
-        if generating.contains(path) {
+        let is_generating = {
+            let generating = self.generating_thumbnails.read();
+            generating.contains(path)
+        };
+
+        if is_generating {
             return None;
         }
 
@@ -335,6 +346,10 @@ impl MediaBrowser {
 
         // Generate thumbnail in background for supported media types
         if matches!(file_type, MediaType::Image) {
+            let mut generating = self.generating_thumbnails.write();
+            if generating.contains(path) {
+                return None;
+            }
             generating.insert(path.to_path_buf());
             let tx = self.thumbnail_tx.clone();
             let path_clone = path.to_path_buf();
