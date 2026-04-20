@@ -33,17 +33,19 @@ pub fn draw_search_popup(
             });
             ui.add_space(8.0);
 
-            let filter_lower = canvas.search_filter.to_lowercase();
+            // ⚡ Bolt: Prevent per-frame String allocations when search is empty using lazy evaluation
+            let filter_lower =
+                (!canvas.search_filter.is_empty()).then(|| canvas.search_filter.to_lowercase());
             let matching_parts: Vec<_> = module
                 .parts
                 .iter()
                 .filter(|p| {
-                    if filter_lower.is_empty() {
+                    let Some(filter_lower) = &filter_lower else {
                         return true;
-                    }
+                    };
                     let name = utils::get_part_property_text(&p.part_type).to_lowercase();
                     let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
-                    name.contains(&filter_lower) || type_name.to_lowercase().contains(&filter_lower)
+                    name.contains(filter_lower) || type_name.to_lowercase().contains(filter_lower)
                 })
                 .take(6)
                 .collect();

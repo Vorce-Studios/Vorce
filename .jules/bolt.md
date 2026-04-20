@@ -14,3 +14,7 @@
 ## 2025-02-12 - Prevent Heap Allocations in Search Filter Loop
 **Erkenntnis:** Calling `.to_lowercase()` inside a high-frequency UI rendering loop (like in the preset search panel) generates unnecessary heap allocations on every frame when the search query is empty.
 **Aktion:** I optimized `search_lower` assignment using lazy evaluation (`(!preset_search.is_empty()).then(|| preset_search.to_lowercase())`) so `.to_lowercase()` is never called when the search field is empty.
+
+## 2025-04-20 - Prevent Heap Allocations in String Filtering Loops
+**Erkenntnis:** Calling `.to_lowercase()` inside a high-frequency UI rendering loop (like in search panels or quick create menus) generates unnecessary heap allocations on every frame when the search query is empty.
+**Aktion:** Optimized assignment using lazy evaluation (`(!self.search_filter.is_empty()).then(|| self.search_filter.to_lowercase())`) combined with `if let Some` in the `.filter` closures so `.to_lowercase()` is never called when the search field is empty.
