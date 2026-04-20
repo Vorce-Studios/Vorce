@@ -47,7 +47,6 @@ pub fn sync_output_windows(
                 }
                 vorce_core::module::ModulePartType::Output(output_type) => {
                     let unsupported_name: Option<(&'static str, String)> = match output_type {
-
                         #[cfg(target_os = "windows")]
                         OutputType::Spout { name } => Some(("Spout Output", name.clone())),
                         _ => None,
