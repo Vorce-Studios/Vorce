@@ -204,12 +204,12 @@ pub fn draw_part_with_delete(
     let icon_galley = ui.painter().layout_no_wrap(
         icon.to_string(),
         egui::FontId::proportional(16.0 * canvas.zoom),
-        Color32::WHITE,
+        ui.visuals().text_color(),
     );
     painter.galley(
         Pos2::new(cursor_x, center_y - icon_galley.size().y / 2.0),
         icon_galley.clone(),
-        Color32::WHITE,
+        ui.visuals().text_color(),
     );
     cursor_x += icon_galley.size().x + 6.0 * canvas.zoom;
 
@@ -230,12 +230,12 @@ pub fn draw_part_with_delete(
     let name_galley = ui.painter().layout_no_wrap(
         name.to_string(),
         egui::FontId::proportional(14.0 * canvas.zoom),
-        Color32::WHITE,
+        ui.visuals().text_color(),
     );
     painter.galley(
         Pos2::new(cursor_x, center_y - name_galley.size().y / 2.0),
         name_galley,
-        Color32::WHITE,
+        ui.visuals().text_color(),
     );
 
     let delete_button_rect = get_delete_button_rect(canvas, rect);
@@ -450,7 +450,7 @@ pub fn draw_part_with_delete(
 
         let ring_stroke = if is_hovered {
             let pulse = (ui.input(|i| i.time) * 10.0).sin() as f32 * 0.2 + 0.8;
-            Stroke::new(3.0 * canvas.zoom, Color32::WHITE.linear_multiply(pulse))
+            Stroke::new(3.0 * canvas.zoom, ui.visuals().strong_text_color().linear_multiply(pulse))
         } else {
             Stroke::new(2.0 * canvas.zoom, socket_color)
         };
@@ -497,7 +497,7 @@ pub fn draw_part_with_delete(
 
         let ring_stroke = if is_hovered {
             let pulse = (ui.input(|i| i.time) * 10.0).sin() as f32 * 0.2 + 0.8;
-            Stroke::new(3.0 * canvas.zoom, Color32::WHITE.linear_multiply(pulse))
+            Stroke::new(3.0 * canvas.zoom, ui.visuals().strong_text_color().linear_multiply(pulse))
         } else {
             Stroke::new(2.0 * canvas.zoom, socket_color)
         };
