@@ -276,6 +276,7 @@ impl VideoSink for SpoutSender {
                 let c_name = CString::new(self.name.clone()).map_err(|e| {
                     tracing::error!("NulError in Spout sender name: {}", e);
                     IoError::SpoutError(format!("Invalid Spout sender name: {}", e))
+
                 })?;
 
                 // SAFETY: We interface with the C++ Spout API via FFI.
