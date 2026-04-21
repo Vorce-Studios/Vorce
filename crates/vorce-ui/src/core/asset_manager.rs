@@ -163,7 +163,6 @@ impl AssetManager {
                 for template in loaded_templates {
                     self.project_templates.insert(template.name.clone(), template);
                 }
-                }
             }
         }
     }
