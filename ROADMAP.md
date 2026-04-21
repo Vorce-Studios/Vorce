@@ -23,6 +23,7 @@ Ship Vorce toward a production-ready 1.0 by improving render stability, media pi
 - [x] **VOR-34:** Resolved complex merge conflicts in AssetManager and Outputs
 - [x] **VOR-35:** Re-applied Path Traversal security fixes (PR #331)
 - [x] **VOR-36:** Hardened FFI against DoS by removing unsafe unwraps (PR #333)
+- [x] **VOR-37:** Resolved merge conflicts and NDI build errors in PR #343 and #345
 
 ## Recently Completed
 - **VOR-22:** Roadmap-Analyse und Zerlegung (Ben)
