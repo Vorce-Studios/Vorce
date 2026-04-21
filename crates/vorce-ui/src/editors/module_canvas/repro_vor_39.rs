@@ -15,7 +15,7 @@ mod tests {
         let mut last_mesh_edit_id = None;
         let mut actions = Vec::new();
         let ctx = Context::default();
-        
+
         let mut part1 = ModulePart {
             id: 1,
             part_type: ModulePartType::Trigger(TriggerType::Beat),
