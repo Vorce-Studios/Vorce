@@ -352,6 +352,11 @@ impl WindowManager {
         self.windows.get(&output_id)
     }
 
+    /// Returns whether a window exists for the given `OutputId`.
+    pub fn contains_output_id(&self, output_id: OutputId) -> bool {
+        self.windows.contains_key(&output_id)
+    }
+
     /// Returns a mutable reference to a `WindowContext` by its `OutputId`.
     pub fn get_mut(&mut self, output_id: OutputId) -> Option<&mut WindowContext> {
         self.windows.get_mut(&output_id)
