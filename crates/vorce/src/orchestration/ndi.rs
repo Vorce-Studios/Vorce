@@ -47,10 +47,7 @@ pub fn sync_ndi_receivers(app: &mut App) {
                 }
             };
 
-            let source = vorce_io::ndi::NdiSource {
-                name: source_name.clone(),
-                address: None,
-            };
+            let source = vorce_io::ndi::NdiSource { name: source_name.clone(), address: None };
 
             if let Err(e) = receiver.connect(&source) {
                 warn!("Failed to connect NDI receiver: {}", e);
@@ -72,7 +69,12 @@ pub fn sync_ndi_senders(app: &mut App) {
                 desired_senders.push((part.id, name.clone()));
             }
             // Also handle Projectors with NDI enabled
-            if let ModulePartType::Output(OutputType::Projector { ndi_enabled, ndi_stream_name, .. }) = &part.part_type {
+            if let ModulePartType::Output(OutputType::Projector {
+                ndi_enabled,
+                ndi_stream_name,
+                ..
+            }) = &part.part_type
+            {
                 if *ndi_enabled {
                     desired_senders.push((part.id, ndi_stream_name.clone()));
                 }
