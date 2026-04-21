@@ -20,6 +20,8 @@ pub use anyhow::Result;
 #[derive(Debug, Clone)]
 pub enum McpAction {
     // === Project Management ===
+    /// Get the full project state as a JSON string.
+    GetProjectState(crossbeam_channel::Sender<String>),
     /// Save the project.
     SaveProject(PathBuf),
     /// Load a project.
