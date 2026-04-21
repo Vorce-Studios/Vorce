@@ -49,10 +49,7 @@ pub fn sync_ndi_receivers(app: &mut App) {
                 }
             };
 
-            let source = vorce_io::ndi::NdiSource {
-                name: source_name.clone(),
-                address: None,
-            };
+            let source = vorce_io::ndi::NdiSource { name: source_name.clone(), address: None };
 
             if let Err(e) = receiver.connect(&source) {
                 warn!("Failed to connect NDI receiver: {}", e);
