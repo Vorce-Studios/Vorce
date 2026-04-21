@@ -365,21 +365,25 @@ impl NdiSender {
 }
 
 // Stub implementations when NDI feature is disabled
+/// Stub implementation of NDI receiver when the feature is disabled.
 #[cfg(not(feature = "ndi"))]
 pub struct NdiReceiver;
 
 #[cfg(not(feature = "ndi"))]
 impl NdiReceiver {
+    /// Creates a new NDI receiver (always returns an error when NDI is disabled).
     pub fn new() -> std::result::Result<Self, String> {
         Err("NDI feature not enabled".to_string())
     }
 }
 
+/// Stub implementation of NDI sender when the feature is disabled.
 #[cfg(not(feature = "ndi"))]
 pub struct NdiSender;
 
 #[cfg(not(feature = "ndi"))]
 impl NdiSender {
+    /// Creates a new NDI sender (always returns an error when NDI is disabled).
     pub fn new(
         _name: impl Into<String>,
         _format: crate::format::VideoFormat,
@@ -388,9 +392,12 @@ impl NdiSender {
     }
 }
 
+/// Data structure representing an NDI source (stub when feature is disabled).
 #[cfg(not(feature = "ndi"))]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct NdiSource {
+    /// The name of the NDI source.
     pub name: String,
+    /// The URL/address of the source.
     pub address: Option<String>,
 }
