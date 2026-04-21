@@ -18,7 +18,7 @@ def fix_cursor_execute():
         old_cmd = 'const command = asString(config.command, "node").trim();'
         # Use a raw string (r'') to prevent issues with backslashes in the path
         new_cmd = r'const command = asString(config.command, "C:\Users\Vinyl\AppData\Local\cursor-agent\agent.cmd").trim();'
-        
+
         if old_cmd in content:
             content = content.replace(old_cmd, new_cmd)
             with open(path, 'w', encoding='utf-8') as f:
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     if not os.path.isdir(BASE_PATH):
         print(f"FATAL: The directory '{BASE_PATH}' does not exist. Please verify the path.", file=sys.stderr)
         sys.exit(1)
-    
+
     print("Starting adapter fix script...")
     fix_cursor_execute()
     print("Adapter fix script finished.")
