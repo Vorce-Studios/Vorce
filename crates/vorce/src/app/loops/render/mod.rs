@@ -304,7 +304,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                 .render_queue
                 .items
                 .keys()
-                .filter(|&&id| app.window_manager.get(id).is_none())
+                .filter(|&&id| !app.window_manager.contains_output_id(id))
                 .cloned()
                 .collect();
 

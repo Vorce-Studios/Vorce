@@ -135,11 +135,11 @@ impl NdiReceiver {
                 if let Some(ref r) = receiver {
                     match r.capture_video(Duration::from_millis(16)) {
                         Ok(v) => {
-                            let width = v.width as u32;
-                            let height = v.height as u32;
-                            let fr = v.frame_rate_n as f32 / v.frame_rate_d.max(1) as f32;
+                            let width = v.width() as u32;
+                            let height = v.height() as u32;
+                            let fr = v.frame_rate_n() as f32 / v.frame_rate_d().max(1) as f32;
 
-                            let data = v.data.clone();
+                            let data = v.data().to_vec();
                             let video_format = VideoFormat {
                                 width,
                                 height,
@@ -371,25 +371,25 @@ impl NdiSender {
 }
 
 // Stub implementations when NDI feature is disabled
+/// Stub implementation of NDI receiver when the feature is disabled.
 #[cfg(not(feature = "ndi"))]
-/// Stub NDI receiver implementation when the NDI feature is disabled.
 pub struct NdiReceiver;
 
 #[cfg(not(feature = "ndi"))]
 impl NdiReceiver {
-    /// Creates a new NDI receiver stub that returns an error since NDI is not enabled.
+    /// Creates a new NDI receiver (always returns an error when NDI is disabled).
     pub fn new() -> std::result::Result<Self, String> {
         Err("NDI feature not enabled".to_string())
     }
 }
 
+/// Stub implementation of NDI sender when the feature is disabled.
 #[cfg(not(feature = "ndi"))]
-/// Stub NDI sender implementation when the NDI feature is disabled.
 pub struct NdiSender;
 
 #[cfg(not(feature = "ndi"))]
 impl NdiSender {
-    /// Creates a new NDI sender stub that returns an error since NDI is not enabled.
+    /// Creates a new NDI sender (always returns an error when NDI is disabled).
     pub fn new(
         _name: impl Into<String>,
         _format: crate::format::VideoFormat,
@@ -398,12 +398,12 @@ impl NdiSender {
     }
 }
 
+/// Data structure representing an NDI source (stub when feature is disabled).
 #[cfg(not(feature = "ndi"))]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
-/// Represents an NDI source when the NDI feature is disabled.
 pub struct NdiSource {
     /// The name of the NDI source.
     pub name: String,
-    /// Optional address of the NDI source.
+    /// The URL/address of the source.
     pub address: Option<String>,
 }
