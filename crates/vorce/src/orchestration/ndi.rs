@@ -1,3 +1,4 @@
+#![cfg(feature = "ndi")]
 //! NDI Orchestration - Synchronizes NDI sources and senders with the module graph.
 
 #[cfg(feature = "ndi")]
