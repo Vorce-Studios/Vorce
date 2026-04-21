@@ -10,7 +10,7 @@ Ship Vorce toward a production-ready 1.0 by improving render stability, media pi
 - [ ] **VOR-24:** Set up cargo-deb for Linux (.deb) packaging
 - [ ] **VOR-25:** Evaluate AppImage vs Flatpak for Linux distribution
 
-### Phase 8.1: NDI Video Streaming [Ready for Delivery]
+### Phase 8.1: NDI Video Streaming [Status: QA-Bereit]
 - [x] **VOR-26:** Scaffolding of Vorce-ndi crate and grafton-ndi integration
 - [x] **VOR-27:** Implementation of NDI Sender (wgpu Texture to NDI) (PR #307)
 - [x] **VOR-28:** Implementation of NDI Receiver (NDI to Fullscreen) (PR #307)
