@@ -100,20 +100,20 @@ impl AssetManager {
                     .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("json"))
                     .collect();
 
-                let loaded_presets: Vec<_> = paths
+                let loaded_presets: Vec<EffectPreset> = paths
                     .into_par_iter()
-                    .filter_map(|path| std::fs::read_to_string(path).ok())
-                    .filter_map(|data| serde_json::from_str::<EffectPreset>(&data).ok())
-                    .map(|mut preset| {
+                    .filter_map(|path| {
+                        let data = std::fs::read_to_string(path).ok()?;
+                        let mut preset = serde_json::from_str::<EffectPreset>(&data).ok()?;
                         preset.name_lower = preset.name.to_lowercase();
                         preset.description_lower = preset.description.to_lowercase();
                         preset.tags_lower = preset.tags.iter().map(|t| t.to_lowercase()).collect();
-                        (preset.name.clone(), preset)
+                        Some(preset)
                     })
                     .collect();
 
-                for (name, preset) in loaded_presets {
-                    self.effect_presets.insert(name, preset);
+                for preset in loaded_presets {
+                    self.effect_presets.insert(preset.name.clone(), preset);
                 }
             }
         }
@@ -128,15 +128,16 @@ impl AssetManager {
                     .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("json"))
                     .collect();
 
-                let loaded_presets: Vec<_> = paths
+                let loaded_presets: Vec<TransformPreset> = paths
                     .into_par_iter()
-                    .filter_map(|path| std::fs::read_to_string(path).ok())
-                    .filter_map(|data| serde_json::from_str::<TransformPreset>(&data).ok())
-                    .map(|preset| (preset.name.clone(), preset))
+                    .filter_map(|path| {
+                        let data = std::fs::read_to_string(path).ok()?;
+                        serde_json::from_str::<TransformPreset>(&data).ok()
+                    })
                     .collect();
 
-                for (name, preset) in loaded_presets {
-                    self.transform_presets.insert(name, preset);
+                for preset in loaded_presets {
+                    self.transform_presets.insert(preset.name.clone(), preset);
                 }
             }
         }
@@ -151,15 +152,16 @@ impl AssetManager {
                     .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("json"))
                     .collect();
 
-                let loaded_templates: Vec<_> = paths
+                let loaded_templates: Vec<ProjectTemplate> = paths
                     .into_par_iter()
-                    .filter_map(|path| std::fs::read_to_string(path).ok())
-                    .filter_map(|data| serde_json::from_str::<ProjectTemplate>(&data).ok())
-                    .map(|template| (template.name.clone(), template))
+                    .filter_map(|path| {
+                        let data = std::fs::read_to_string(path).ok()?;
+                        serde_json::from_str::<ProjectTemplate>(&data).ok()
+                    })
                     .collect();
 
-                for (name, template) in loaded_templates {
-                    self.project_templates.insert(name, template);
+                for template in loaded_templates {
+                    self.project_templates.insert(template.name.clone(), template);
                 }
             }
         }
