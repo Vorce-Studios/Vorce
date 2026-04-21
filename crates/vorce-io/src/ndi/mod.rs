@@ -135,11 +135,11 @@ impl NdiReceiver {
                 if let Some(ref r) = receiver {
                     match r.capture_video(Duration::from_millis(16)) {
                         Ok(v) => {
-                            let width = v.width() as u32;
-                            let height = v.height() as u32;
-                            let fr = v.frame_rate_n() as f32 / v.frame_rate_d().max(1) as f32;
+                            let width = v.width as u32;
+                            let height = v.height as u32;
+                            let fr = v.frame_rate_n as f32 / v.frame_rate_d.max(1) as f32;
 
-                            let data = v.data().to_vec();
+                            let data = v.data.clone();
                             let video_format = VideoFormat {
                                 width,
                                 height,
