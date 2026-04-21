@@ -23,7 +23,7 @@ use std::sync::{Arc, Mutex};
 #[cfg(feature = "ndi")]
 use std::time::Duration;
 #[cfg(feature = "ndi")]
-use tracing::{error, info, warn};
+use tracing::{error, info};
 
 /// Re-export Source type for external use
 #[cfg(feature = "ndi")]
@@ -42,7 +42,7 @@ pub struct NdiSource {
 #[cfg(feature = "ndi")]
 impl From<grafton_ndi::Source> for NdiSource {
     fn from(source: grafton_ndi::Source) -> Self {
-        Self { name: source.name.clone(), address: Some(source.address.to_string()) }
+        Self { name: source.name.clone(), address: Some(format!("{:?}", source.address)) }
     }
 }
 
@@ -135,11 +135,11 @@ impl NdiReceiver {
                 if let Some(ref r) = receiver {
                     match r.capture_video(Duration::from_millis(16)) {
                         Ok(v) => {
-                            let width = v.width() as u32;
-                            let height = v.height() as u32;
-                            let fr = v.frame_rate_n() as f32 / v.frame_rate_d().max(1) as f32;
+                            let width = v.width as u32;
+                            let height = v.height as u32;
+                            let fr = v.frame_rate_n as f32 / v.frame_rate_d.max(1) as f32;
 
-                            let data = v.data().to_vec();
+                            let data = v.data.clone();
                             let video_format = VideoFormat {
                                 width,
                                 height,
@@ -155,7 +155,7 @@ impl NdiReceiver {
                             let frame = VideoFrame {
                                 data: FrameData::Cpu(Arc::new(data)),
                                 format: video_format,
-                                timestamp: Duration::from_nanos(v.timestamp() as u64),
+                                timestamp: Duration::from_nanos(v.timestamp as u64),
                                 metadata: Default::default(),
                             };
 
@@ -277,6 +277,13 @@ impl VideoSource for NdiReceiver {
 }
 
 #[cfg(feature = "ndi")]
+impl Drop for NdiReceiver {
+    fn drop(&mut self) {
+        let _ = self.receiver_tx.send(ReceiverCommand::Stop);
+    }
+}
+
+#[cfg(feature = "ndi")]
 impl Default for NdiReceiver {
     fn default() -> Self {
         Self::new().unwrap_or_else(|e| {
@@ -337,13 +344,14 @@ impl NdiSender {
             }
         };
 
-        let ndi_frame = VideoFrameBuilder::new()
-            .width(frame.format.width as i32)
-            .height(frame.format.height as i32)
+        let mut ndi_frame = VideoFrameBuilder::new()
+            .resolution(frame.format.width as i32, frame.format.height as i32)
             .pixel_format(NdiPixelFormat::BGRA)
             .frame_rate(frame.format.frame_rate as i32, 1)
-            .build(data.as_slice())
+            .build()
             .map_err(|e| IoError::NdiSenderFailed(format!("Failed to build NDI frame: {}", e)))?;
+
+        ndi_frame.data = data.as_slice().to_vec();
 
         self.sender.send_video(&ndi_frame);
 

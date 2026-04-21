@@ -6,8 +6,6 @@ use crate::app::core::app_struct::App;
 use tracing::{info, warn};
 #[cfg(feature = "ndi")]
 use vorce_core::module::{ModulePartType, OutputType, SourceType};
-
-#[cfg(feature = "ndi")]
 /// Synchronizes NDI receivers with the current module graph.
 pub fn sync_ndi_receivers(app: &mut App) {
     let mut desired_ndi_sources = Vec::new();
@@ -50,7 +48,10 @@ pub fn sync_ndi_receivers(app: &mut App) {
                 }
             };
 
-            let source = vorce_io::ndi::NdiSource { name: source_name.clone(), address: None };
+            let source = vorce_io::ndi::NdiSource {
+                name: source_name.clone(),
+                address: None,
+            };
 
             if let Err(e) = receiver.connect(&source) {
                 warn!("Failed to connect NDI receiver: {}", e);
