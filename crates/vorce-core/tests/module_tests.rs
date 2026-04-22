@@ -52,6 +52,7 @@ fn test_socket_generation_coverage() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     // 1. Trigger (Beat)
@@ -130,6 +131,7 @@ fn test_update_part_position_valid_id_updates() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     let pid = module.add_part(PartType::Trigger, (0.0, 0.0));
@@ -149,6 +151,7 @@ fn test_add_remove_connection() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     let pid1 = module.add_part(PartType::Trigger, (0.0, 0.0));
@@ -173,6 +176,7 @@ fn test_update_part_sockets() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     let pid1 = module.add_part(PartType::Trigger, (0.0, 0.0));
@@ -194,6 +198,7 @@ fn test_update_part_sockets_removes_invalid_connections() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     // Add part that initially has outputs
@@ -242,6 +247,7 @@ fn test_update_part_outputs_delegates() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     let pid1 = module.add_part(PartType::Trigger, (0.0, 0.0));
@@ -460,6 +466,7 @@ fn test_module_add_part_creates_part_and_increments_id() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     let part_id = module.add_part(PartType::Source, (10.0, 20.0));
@@ -484,6 +491,7 @@ fn test_module_update_part_position_success() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     let part_id = module.add_part(PartType::Trigger, (0.0, 0.0));
@@ -502,6 +510,7 @@ fn test_module_add_connection_adds_to_list() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     // The connections vector needs to be pushed directly since add_connection validates parts.
@@ -530,6 +539,7 @@ fn test_module_remove_connection_removes_exact_match() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     // Push directly since validate_connection fails if parts are missing
