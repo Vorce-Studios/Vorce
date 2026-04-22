@@ -287,7 +287,7 @@ impl VorceModule {
             let (new_inputs, new_outputs) = part.compute_sockets();
             part.inputs = new_inputs;
             part.outputs = new_outputs;
-            let valid_mappable_inputs: HashSet<usize> =
+            let valid_mappable_inputs: rustc_hash::FxHashSet<usize> =
                 part.schema().inspector.mappable_input_indices.into_iter().collect();
             part.trigger_targets.retain(|socket_idx, _| valid_mappable_inputs.contains(socket_idx));
         }
@@ -455,7 +455,7 @@ impl VorceModule {
                 report.refreshed_parts += 1;
             }
 
-            let valid_mappable_inputs: HashSet<usize> =
+            let valid_mappable_inputs: rustc_hash::FxHashSet<usize> =
                 part.schema().inspector.mappable_input_indices.into_iter().collect();
             let before_targets = part.trigger_targets.len();
             part.trigger_targets.retain(|socket_idx, _| valid_mappable_inputs.contains(socket_idx));
@@ -517,7 +517,7 @@ impl VorceModule {
                 ndi_enabled,
                 ndi_stream_name,
             }) => {
-                let used_ids: HashSet<u64> = self
+                let used_ids: rustc_hash::FxHashSet<u64> = self
                     .parts
                     .iter()
                     .filter_map(|part| {
@@ -560,7 +560,7 @@ impl VorceModule {
                 mesh,
                 mapping_mode,
             }) => {
-                let used_ids: HashSet<u64> = self
+                let used_ids: rustc_hash::FxHashSet<u64> = self
                     .parts
                     .iter()
                     .filter_map(|part| {
