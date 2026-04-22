@@ -21,3 +21,7 @@
 ## 2026-04-20 - ⚡ Bolt: Global O(N) Reductions & Lazy Evaluation Patterns
 **Erkenntnis:** Systemic O(N) lookups in high-frequency loops (e.g., `canvas.selected_parts`) and per-frame string allocations (e.g., `.to_lowercase()` in empty search filters) were degrading UI responsiveness.
 **Aktion:** Replaced linear searches with `FxHashSet` for O(1) lookups and implemented lazy string evaluation (`(!str.is_empty()).then(|| str.to_lowercase())`) across all search and filtering paths. Additionally, integrated a high-performance zero-allocation case-insensitive string comparator with an ASCII fast-path to further reduce allocator pressure.
+
+## 2026-04-22 - [Optimize TriggerSystem lookup collections]
+**Erkenntnis:** Using default cryptographic HashMap/HashSet inside the high-frequency evaluation loop in `TriggerSystem::update` adds unnecessary hashing overhead when querying small integer keys like `u64` IDs.
+**Aktion:** Replaced `ActiveTriggers` and `states` inside `TriggerSystem` to use `FxHashSet` and `FxHashMap` for O(1) lookups and significantly lower hashing cost.
