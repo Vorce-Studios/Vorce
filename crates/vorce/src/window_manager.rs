@@ -85,7 +85,6 @@ impl WindowManager {
     ///
     /// This is the primary window for the application, where the UI is displayed.
     /// It is assigned a reserved `OutputId` of `0`.
-    #[allow(dead_code)] // Used for tests and as simple API wrapper
     pub fn create_main_window(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -376,7 +375,6 @@ impl WindowManager {
     ///
     /// This avoids the need for the caller to collect window IDs and iterate manually,
     /// preventing unnecessary allocations in the hot loop.
-    #[allow(dead_code)] // Helper for cleaner main loop
     pub fn request_redraw_all(&self) {
         for context in self.windows.values() {
             context.window.request_redraw();
