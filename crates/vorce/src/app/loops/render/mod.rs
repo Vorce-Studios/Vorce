@@ -169,16 +169,16 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
         {
             // Find if this output has an NDI sender
             let part_id = app.render_queue.items.get(&output_id).and_then(|items| {
-                items.iter().find_map(|item| {
-                    match &item.render_op.output_type {
-                        vorce_core::module::OutputType::Projector { id, .. } if *id == output_id => {
-                            Some(item.render_op.output_part_id)
-                        }
-                        vorce_core::module::OutputType::NdiOutput { .. } if output_id == item.render_op.output_part_id => {
-                            Some(item.render_op.output_part_id)
-                        }
-                        _ => None,
+                items.iter().find_map(|item| match &item.render_op.output_type {
+                    vorce_core::module::OutputType::Projector { id, .. } if *id == output_id => {
+                        Some(item.render_op.output_part_id)
                     }
+                    vorce_core::module::OutputType::NdiOutput { .. }
+                        if output_id == item.render_op.output_part_id =>
+                    {
+                        Some(item.render_op.output_part_id)
+                    }
+                    _ => None,
                 })
             });
 
@@ -300,7 +300,10 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
         #[cfg(feature = "ndi")]
         {
             // Collect all NdiOutput part IDs from the render queue that are not projectors
-            let virtual_output_ids: Vec<_> = app.render_queue.items.keys()
+            let virtual_output_ids: Vec<_> = app
+                .render_queue
+                .items
+                .keys()
                 .filter(|&&id| app.window_manager.get(id).is_none())
                 .cloned()
                 .collect();

@@ -15,8 +15,8 @@ use crate::source::VideoSource;
 
 #[cfg(feature = "ndi")]
 use grafton_ndi::{
-    Finder, FinderOptions, NDI, PixelFormat as NdiPixelFormat, Receiver, ReceiverBandwidth,
-    ReceiverColorFormat, ReceiverOptions, Sender, SenderOptions, VideoFrameBuilder,
+    Finder, FinderOptions, PixelFormat as NdiPixelFormat, Receiver, ReceiverBandwidth,
+    ReceiverColorFormat, ReceiverOptions, Sender, SenderOptions, VideoFrameBuilder, NDI,
 };
 #[cfg(feature = "ndi")]
 use std::sync::{Arc, Mutex};
@@ -185,9 +185,12 @@ impl NdiReceiver {
 
     fn internal_connect(ndi: &NDI, source: &NdiSource) -> Result<Receiver> {
         let finder_options = FinderOptions::builder().show_local_sources(true).build();
-        let finder = Finder::new(ndi, &finder_options).map_err(|e| IoError::NdiError(e.to_string()))?;
+        let finder =
+            Finder::new(ndi, &finder_options).map_err(|e| IoError::NdiError(e.to_string()))?;
 
-        let sources = finder.find_sources(Duration::from_secs(2)).map_err(|e| IoError::NdiError(e.to_string()))?;
+        let sources = finder
+            .find_sources(Duration::from_secs(2))
+            .map_err(|e| IoError::NdiError(e.to_string()))?;
 
         let matching_source = sources
             .into_iter()
@@ -209,9 +212,12 @@ impl NdiReceiver {
 
         let handle = NdiHandle::new()?;
         let finder_options = FinderOptions::builder().show_local_sources(true).build();
-        let finder = Finder::new(&handle.ndi, &finder_options).map_err(|e| IoError::NdiError(e.to_string()))?;
+        let finder = Finder::new(&handle.ndi, &finder_options)
+            .map_err(|e| IoError::NdiError(e.to_string()))?;
 
-        let sources = finder.find_sources(Duration::from_millis(timeout_ms as u64)).map_err(|e| IoError::NdiError(e.to_string()))?;
+        let sources = finder
+            .find_sources(Duration::from_millis(timeout_ms as u64))
+            .map_err(|e| IoError::NdiError(e.to_string()))?;
         Ok(sources.into_iter().map(|s| s.into()).collect())
     }
 
@@ -366,31 +372,66 @@ impl NdiSender {
 
 // Stub implementations when NDI feature is disabled
 #[cfg(not(feature = "ndi"))]
+/// Stub NDI Receiver for when the 'ndi' feature is disabled.
 pub struct NdiReceiver;
 
 #[cfg(not(feature = "ndi"))]
 impl NdiReceiver {
+    /// Stub constructor.
     pub fn new() -> std::result::Result<Self, String> {
+        Err("NDI feature not enabled".to_string())
+    }
+
+    /// Stub connect method.
+    pub fn connect(&mut self, _source: &NdiSource) -> std::result::Result<(), String> {
+        Err("NDI feature not enabled".to_string())
+    }
+
+    /// Stub source_name method.
+    pub fn source_name(&self) -> Option<&str> {
+        None
+    }
+
+    /// Stub receive_frame method.
+    pub fn receive_frame(&mut self) -> std::result::Result<crate::format::VideoFrame, String> {
         Err("NDI feature not enabled".to_string())
     }
 }
 
+/// Stub NDI Sender for when the 'ndi' feature is disabled.
 #[cfg(not(feature = "ndi"))]
 pub struct NdiSender;
 
 #[cfg(not(feature = "ndi"))]
 impl NdiSender {
+    /// Stub constructor.
     pub fn new(
         _name: impl Into<String>,
         _format: crate::format::VideoFormat,
     ) -> std::result::Result<Self, String> {
         Err("NDI feature not enabled".to_string())
     }
+
+    /// Stub send_frame method.
+    pub fn send_frame(
+        &mut self,
+        _frame: &crate::format::VideoFrame,
+    ) -> std::result::Result<(), String> {
+        Err("NDI feature not enabled".to_string())
+    }
+
+    /// Stub name method.
+    pub fn name(&self) -> &str {
+        "NDI Stub"
+    }
 }
 
+/// Stub NDI Source for when the 'ndi' feature is disabled.
 #[cfg(not(feature = "ndi"))]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct NdiSource {
+    /// The name of the NDI source.
     pub name: String,
+    /// The address of the NDI source.
     pub address: Option<String>,
 }

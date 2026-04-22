@@ -70,7 +70,7 @@ pub fn safe_delete_selection(canvas: &mut ModuleCanvas, module: &mut VorceModule
 
     canvas.undo_stack.push(batch_action);
     canvas.redo_stack.clear();
-    canvas.selected_parts.clear();
+    canvas.clear_selection();
 }
 
 pub fn apply_undo_action(module: &mut VorceModule, action: &CanvasAction) {
