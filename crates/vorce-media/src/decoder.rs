@@ -427,7 +427,11 @@ mod ffmpeg_impl {
                                 *cache = Some((frame_format, self.width, self.height, new_scaler));
                             }
 
-                            let scaler = &mut cache.as_mut().unwrap().3;
+                            let Some((_, _, _, ref mut scaler)) = cache.as_mut() else {
+                                return Err(MediaError::DecoderError(
+                                    "Scaler cache unexpectedly empty".into(),
+                                ));
+                            };
                             let mut rgb = ffmpeg::util::frame::Video::empty();
                             scaler.run(frame_ptr, &mut rgb).map_err(|e| {
                                 MediaError::DecoderError(format!("Scaler run failed: {}", e))
