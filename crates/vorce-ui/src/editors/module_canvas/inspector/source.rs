@@ -7,7 +7,7 @@ use super::common::{
 use crate::theme::colors;
 use crate::widgets::styled_slider;
 use crate::UIAction;
-use egui::{Color32, Ui, Vec2};
+use egui::{Ui, Vec2};
 use vorce_core::module::{BevyCameraMode, ModuleId, ModulePartId, SourceType};
 
 /// Renders the configuration UI for a `ModulePartType::Source`.
@@ -300,9 +300,9 @@ pub fn render_source_ui(
                     .size(22.0)
                     .strong()
                     .color(if is_playing {
-                        Color32::from_rgb(100, 255, 150)
+                        ui.visuals().strong_text_color()
                     } else {
-                        Color32::from_rgb(200, 200, 200)
+                        ui.visuals().text_color()
                     }),
                 );
             });

@@ -1,5 +1,5 @@
 use super::super::{state::ModuleCanvas, utils};
-use egui::{Color32, Pos2, Rect, Stroke, Ui, Vec2};
+use egui::{Pos2, Rect, Ui, Vec2};
 use vorce_core::module::VorceModule;
 
 fn case_insensitive_contains(haystack: &str, needle: &str) -> bool {
@@ -51,13 +51,9 @@ pub fn draw_search_popup(
     );
 
     let painter = ui.painter();
-    painter.rect_filled(popup_rect, 0.0, Color32::from_rgba_unmultiplied(30, 30, 40, 240));
-    painter.rect_stroke(
-        popup_rect,
-        0.0,
-        Stroke::new(2.0, Color32::from_rgb(80, 120, 200)),
-        egui::StrokeKind::Middle,
-    );
+    let visuals = ui.visuals();
+    painter.rect_filled(popup_rect, 4.0, visuals.window_fill);
+    painter.rect_stroke(popup_rect, 0.0, visuals.window_stroke, egui::StrokeKind::Middle);
 
     let inner_rect = popup_rect.shrink(10.0);
     ui.scope_builder(egui::UiBuilder::new().max_rect(inner_rect), |ui| {
