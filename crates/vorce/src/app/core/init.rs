@@ -430,7 +430,7 @@ impl App {
         }
 
         // --- Ensure Output Windows exist ---
-        let existing_output_ids: std::collections::HashSet<u64> =
+        let existing_output_ids: rustc_hash::FxHashSet<u64> =
             state.output_manager.outputs().iter().map(|o| o.id).collect();
         let mut missing_outputs = Vec::new();
         for module in state.module_manager.modules() {
