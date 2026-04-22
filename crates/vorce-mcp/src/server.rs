@@ -129,17 +129,26 @@ impl McpServer {
                 if let Some(uri) = uri {
                     match uri.as_str() {
                         "project://current" => {
-                            // TODO: Implement shared state reading
-                            Some(success_response(
-                                id,
-                                serde_json::json!({
-                                    "contents": [{
-                                        "uri": uri,
-                                        "mimeType": "application/json",
-                                        "text": "{\"error\": \"Shared state access not yet implemented\"}"
-                                    }]
-                                }),
-                            ))
+                            let (tx, rx) = crossbeam_channel::bounded(1);
+                            if let Some(sender) = &self.action_sender {
+                                if sender.send(crate::McpAction::ReadProjectState(tx)).is_ok() {
+                                    if let Ok(state_json) =
+                                        rx.recv_timeout(std::time::Duration::from_secs(5))
+                                    {
+                                        return Some(success_response(
+                                            id,
+                                            serde_json::json!({
+                                                "contents": [{
+                                                    "uri": uri,
+                                                    "mimeType": "application/json",
+                                                    "text": state_json
+                                                }]
+                                            }),
+                                        ));
+                                    }
+                                }
+                            }
+                            Some(error_response(id, -32603, "Failed to read project state"))
                         }
                         _ => Some(error_response(id, -32602, "Resource not found")),
                     }
