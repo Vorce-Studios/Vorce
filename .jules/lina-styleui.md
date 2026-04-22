@@ -11,3 +11,7 @@
 ## 2026-06-25 - Hartcodierte Farben in Timeline und Module Canvas
 **Erkenntnis:** Weitere Komponenten (`timeline_v2/ui.rs`, `module_canvas/draw/part.rs`, `toast.rs` und `inspector/ui.rs`) verwendeten hartcodiertes `Color32::WHITE` für Text, Icons und interaktive Ring-Effekte.
 **Aktion:** Diese wurden systematisch auf `ui.visuals().text_color()` und `ui.visuals().strong_text_color()` (für Hover-States) umgestellt. Die Multiplikation der Intensität (z. B. bei Hover-Ringen oder Toasts) bleibt erhalten, wendet sich jedoch nun korrekt auf die Theme-spezifische Basis-Farbe an.
+
+## 2026-10-31 - Dynamische Hintergrundfarben in Grid und Minimap
+**Erkenntnis:** Im `draw_grid` (Canvas & Mesh Editor) und `draw_mini_map` wurden hartcodierte Farbwerte (z.B. `Color32::from_rgb(40, 40, 40)`) für Hintergründe, Gitterlinien und Rahmen verwendet. Dies führt in anderen Dark- oder Light-Themes zu Kontrast- und Lesbarkeitsproblemen.
+**Aktion:** Gitterlinien- und Hintergrundfarben in Canvas- und Editor-Komponenten sollten immer über Theme-Variablen wie `ui.visuals().panel_fill.gamma_multiply(0.9)`, `ui.visuals().window_stroke().color` oder abgedimmte Textfarben (`ui.visuals().text_color().gamma_multiply(0.1)`) realisiert werden, um sicheren Kontrast in jedem Theme zu garantieren.

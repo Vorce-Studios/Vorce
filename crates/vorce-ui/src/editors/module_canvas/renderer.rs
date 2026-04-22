@@ -560,7 +560,7 @@ pub fn render_canvas(
             }
         }
 
-        draw::draw_mini_map(canvas, &painter, canvas_rect, module);
+        draw::draw_mini_map(canvas, ui, &painter, canvas_rect, module);
 
         if canvas.show_search {
             draw::draw_search_popup(canvas, ui, canvas_rect, module);
