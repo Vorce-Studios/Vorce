@@ -85,7 +85,6 @@ impl WindowManager {
     ///
     /// This is the primary window for the application, where the UI is displayed.
     /// It is assigned a reserved `OutputId` of `0`.
-    #[allow(dead_code)] // Used for tests and as simple API wrapper
     pub fn create_main_window(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -352,6 +351,11 @@ impl WindowManager {
         self.windows.get(&output_id)
     }
 
+    /// Returns whether a window exists for the given `OutputId`.
+    pub fn contains_output_id(&self, output_id: OutputId) -> bool {
+        self.windows.contains_key(&output_id)
+    }
+
     /// Returns a mutable reference to a `WindowContext` by its `OutputId`.
     pub fn get_mut(&mut self, output_id: OutputId) -> Option<&mut WindowContext> {
         self.windows.get_mut(&output_id)
@@ -376,7 +380,6 @@ impl WindowManager {
     ///
     /// This avoids the need for the caller to collect window IDs and iterate manually,
     /// preventing unnecessary allocations in the hot loop.
-    #[allow(dead_code)] // Helper for cleaner main loop
     pub fn request_redraw_all(&self) {
         for context in self.windows.values() {
             context.window.request_redraw();

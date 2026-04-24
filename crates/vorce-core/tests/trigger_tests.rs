@@ -13,6 +13,7 @@ fn test_audio_fft_fallback() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     // All outputs disabled, should fallback to Beat Out
@@ -65,6 +66,7 @@ fn test_manual_trigger() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     // Add a trigger node
@@ -99,6 +101,7 @@ fn test_shortcut_trigger() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     // Add a shortcut trigger
@@ -145,6 +148,7 @@ fn test_midi_trigger() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     // Add a MIDI trigger (Channel 1, Note 60)
@@ -188,6 +192,7 @@ fn test_osc_trigger() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     // Add an OSC trigger

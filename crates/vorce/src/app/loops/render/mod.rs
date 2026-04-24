@@ -308,7 +308,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                 .cloned()
                 .collect();
 
-            for vid in virtual_output_ids {
+            for _vid in virtual_output_ids {
                 // For now, we just skip these if they don't have a window,
                 // but in a future iteration we should render them to an offscreen texture.
                 // However, NDI Sender currently reads from the window's surface.

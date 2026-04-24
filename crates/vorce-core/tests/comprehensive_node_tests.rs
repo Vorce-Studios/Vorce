@@ -20,6 +20,7 @@ fn test_trigger_inversion_logic() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     let mut config =
@@ -58,6 +59,7 @@ fn test_trigger_target_range_mapping() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     // 1. Constant Trigger (1.0)

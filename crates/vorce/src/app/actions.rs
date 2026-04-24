@@ -735,16 +735,21 @@ fn handle_node_action(app: &mut App, action: NodeEditorAction) -> Result<()> {
 /// Process pending MCP actions
 pub fn handle_mcp_actions(app: &mut App) {
     while let Ok(action) = app.mcp_receiver.try_recv() {
-        if let vorce_mcp::McpAction::ReadProjectState(reply_tx) = action {
-            if let Ok(state_json) = serde_json::to_string(&app.state) {
-                let _ = reply_tx.send(state_json);
-            } else {
-                let _ =
-                    reply_tx.send("{\"error\": \"Failed to serialize project state\"}".to_string());
+        if let vorce_mcp::McpAction::GetProjectState(tx) = &action {
+            tracing::info!("MCP: GetProjectState");
+            match serde_json::to_string(&app.state) {
+                Ok(json) => {
+                    if let Err(e) = tx.send(json) {
+                        tracing::error!("Failed to send project state back to MCP: {}", e);
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("Failed to serialize project state for MCP: {}", e);
+                    let _ = tx.send(format!("{{\"error\": \"Serialization failed: {e}\"}}"));
+                }
             }
             continue;
         }
-
         if let vorce_mcp::McpAction::SetModuleSourcePath(mod_id, part_id, path) = action {
             info!("MCP: SetModuleSourcePath({}, {}, {:?})", mod_id, part_id, path);
             if let Some(module) = app.state.module_manager_mut().get_module_mut(mod_id) {

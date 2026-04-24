@@ -53,6 +53,10 @@ pub enum CodegenError {
     /// Error: Code generation failed.
     /// Error: Code generation failed.
     GenerationError(String),
+
+    /// Error: Formatting failed.
+    #[error("Formatting error: {0}")]
+    FormatError(#[from] std::fmt::Error),
 }
 
 /// Result type for codegen operations
@@ -84,9 +88,8 @@ impl WGSLCodegen {
         let mut code = String::new();
 
         // Generate shader structure
-        writeln!(code, "// Auto-generated WGSL shader from shader graph")
-            .expect("WGSL codegen failed");
-        writeln!(code, "// Graph: {}\n", self.graph.name).expect("WGSL codegen failed");
+        writeln!(code, "// Auto-generated WGSL shader from shader graph")?;
+        writeln!(code, "// Graph: {}\n", self.graph.name)?;
 
         // Generate uniforms
         self.generate_uniforms(&mut code)?;
@@ -156,33 +159,32 @@ impl WGSLCodegen {
 
     /// Generate uniform declarations
     fn generate_uniforms(&self, code: &mut String) -> Result<()> {
-        writeln!(code, "// Uniforms").expect("WGSL codegen failed");
-        writeln!(code, "struct Uniforms {{").expect("WGSL codegen failed");
-        writeln!(code, "    time: f32,").expect("WGSL codegen failed");
-        writeln!(code, "    resolution: vec2<f32>,").expect("WGSL codegen failed");
-        writeln!(code, "    mouse: vec2<f32>,").expect("WGSL codegen failed");
+        writeln!(code, "// Uniforms")?;
+        writeln!(code, "struct Uniforms {{")?;
+        writeln!(code, "    time: f32,")?;
+        writeln!(code, "    resolution: vec2<f32>,")?;
+        writeln!(code, "    mouse: vec2<f32>,")?;
 
         // Add parameter uniforms
         for node_id in &self.node_execution_order {
             if let Some(node) = self.graph.nodes.get(node_id) {
                 if node.node_type == NodeType::ParameterInput {
                     for name in node.parameters.keys() {
-                        writeln!(code, "    param_{}: f32,", name).expect("WGSL codegen failed");
+                        writeln!(code, "    param_{}: f32,", name)?;
                     }
                 }
             }
         }
 
-        writeln!(code, "}}").expect("WGSL codegen failed");
-        writeln!(code, "@group(0) @binding(0) var<uniform> uniforms: Uniforms;\n")
-            .expect("WGSL codegen failed");
+        writeln!(code, "}}")?;
+        writeln!(code, "@group(0) @binding(0) var<uniform> uniforms: Uniforms;\n")?;
 
         Ok(())
     }
 
     /// Generate texture binding declarations
     fn generate_texture_bindings(&self, code: &mut String) -> Result<()> {
-        writeln!(code, "// Textures").expect("WGSL codegen failed");
+        writeln!(code, "// Textures")?;
 
         let mut texture_count = 0;
         for node_id in &self.node_execution_order {
@@ -193,27 +195,25 @@ impl WGSLCodegen {
                         code,
                         "@group(0) @binding({}) var texture_{}: texture_2d<f32>;",
                         binding, node.id
-                    )
-                    .expect("WGSL codegen failed");
+                    )?;
                     writeln!(
                         code,
                         "@group(0) @binding({}) var sampler_{}: sampler;",
                         binding + 1,
                         node.id
-                    )
-                    .expect("WGSL codegen failed");
+                    )?;
                     texture_count += 2;
                 }
             }
         }
 
-        writeln!(code).expect("WGSL codegen failed");
+        writeln!(code)?;
         Ok(())
     }
 
     /// Generate helper functions for node operations
     fn generate_helper_functions(&mut self, code: &mut String) -> Result<()> {
-        writeln!(code, "// Helper Functions\n").expect("WGSL codegen failed");
+        writeln!(code, "// Helper Functions\n")?;
 
         // Generate functions for complex node types
         // Optimization: Iterate directly over node_execution_order without cloning.
@@ -250,11 +250,11 @@ impl WGSLCodegen {
 
     /// Generate main fragment shader
     fn generate_fragment_shader(&self, code: &mut String) -> Result<()> {
-        writeln!(code, "// Fragment Shader").expect("WGSL codegen failed");
-        writeln!(code, "@fragment").expect("WGSL codegen failed");
-        writeln!(code, "fn fs_main(").expect("WGSL codegen failed");
-        writeln!(code, "    @location(0) uv: vec2<f32>,").expect("WGSL codegen failed");
-        writeln!(code, ") -> @location(0) vec4<f32> {{").expect("WGSL codegen failed");
+        writeln!(code, "// Fragment Shader")?;
+        writeln!(code, "@fragment")?;
+        writeln!(code, "fn fs_main(")?;
+        writeln!(code, "    @location(0) uv: vec2<f32>,")?;
+        writeln!(code, ") -> @location(0) vec4<f32> {{")?;
 
         // Generate variable declarations and computations
         for node_id in &self.node_execution_order {
@@ -264,7 +264,7 @@ impl WGSLCodegen {
         }
 
         // Return output
-        let output_node = self.graph.output_node().expect("WGSL codegen failed");
+        let output_node = self.graph.output_node().ok_or(CodegenError::NoOutputNode)?;
         let output_input = &output_node.inputs[0];
 
         if let Some((source_node, output_name)) = &output_input.connected_output {
@@ -273,18 +273,16 @@ impl WGSLCodegen {
                 "    return node_{}_{};",
                 source_node,
                 output_name.as_str().to_lowercase()
-            )
-            .expect("WGSL codegen failed");
+            )?;
         } else if let Some(default) = &output_input.default_value {
             writeln!(
                 code,
                 "    return vec4<f32>({}, {}, {}, {});",
                 default.x, default.y, default.z, default.w
-            )
-            .expect("WGSL codegen failed");
+            )?;
         }
 
-        writeln!(code, "}}").expect("WGSL codegen failed");
+        writeln!(code, "}}")?;
 
         Ok(())
     }
@@ -293,12 +291,11 @@ impl WGSLCodegen {
     fn generate_node_code(&self, code: &mut String, node: &ShaderNode) -> Result<()> {
         match node.node_type {
             NodeType::UVInput => {
-                writeln!(code, "    let node_{}_uv = uv;", node.id).expect("WGSL codegen failed");
+                writeln!(code, "    let node_{}_uv = uv;", node.id)?;
             }
 
             NodeType::TimeInput => {
-                writeln!(code, "    let node_{}_time = uniforms.time;", node.id)
-                    .expect("WGSL codegen failed");
+                writeln!(code, "    let node_{}_time = uniforms.time;", node.id)?;
             }
 
             NodeType::ParameterInput => {
@@ -308,13 +305,11 @@ impl WGSLCodegen {
                     .and_then(|v| if let ParameterValue::String(s) = v { Some(s) } else { None })
                     .map(|s: &String| s.as_str())
                     .unwrap_or("param");
-                writeln!(code, "    let node_{}_value = uniforms.{};", node.id, param_name)
-                    .expect("WGSL codegen failed");
+                writeln!(code, "    let node_{}_value = uniforms.{};", node.id, param_name)?;
             }
 
             NodeType::AudioInput => {
-                writeln!(code, "    let node_{}_value = uniforms.audio_value;", node.id)
-                    .expect("WGSL codegen failed");
+                writeln!(code, "    let node_{}_value = uniforms.audio_value;", node.id)?;
             }
 
             NodeType::TextureInput => {
@@ -335,10 +330,8 @@ impl WGSLCodegen {
                     tex_var,
                     tex_var.replace("texture", "sampler"),
                     uv_var
-                )
-                .expect("WGSL codegen failed");
-                writeln!(code, "    let node_{}_alpha = node_{}_color.a;", node.id, node.id)
-                    .expect("WGSL codegen failed");
+                )?;
+                writeln!(code, "    let node_{}_alpha = node_{}_color.a;", node.id, node.id)?;
             }
 
             NodeType::TextureSampleLod => {
@@ -358,8 +351,7 @@ impl WGSLCodegen {
                     tex_var.replace("texture", "sampler"),
                     uv_var,
                     lod_var
-                )
-                .expect("WGSL codegen failed");
+                )?;
             }
 
             NodeType::TextureCombine => {
@@ -377,7 +369,7 @@ impl WGSLCodegen {
                     tex_b.replace("texture", "sampler"),
                     mix_factor
                 )
-                .expect("WGSL codegen failed");
+                ?;
             }
 
             NodeType::Add | NodeType::Subtract | NodeType::Multiply | NodeType::Divide => {
@@ -423,8 +415,7 @@ impl WGSLCodegen {
                     code,
                     "    let node_{}_result = {} + ({} - {}) * ({} - {}) / ({} - {});",
                     node.id, out_min, val, in_min, out_max, out_min, in_max, in_min
-                )
-                .expect("WGSL codegen failed");
+                )?;
             }
 
             NodeType::Brightness => {
@@ -445,20 +436,17 @@ impl WGSLCodegen {
                     code,
                     "    let node_{}_color = vec4<f32>(vec3<f32>({}), 1.0);",
                     node.id, input
-                )
-                .expect("WGSL codegen failed");
+                )?;
             }
 
             NodeType::HSVToRGB => {
                 let input = self.get_input_variable(&node.inputs[0])?;
-                writeln!(code, "    let node_{}_output = hsv_to_rgb({});", node.id, input)
-                    .expect("WGSL codegen failed");
+                writeln!(code, "    let node_{}_output = hsv_to_rgb({});", node.id, input)?;
             }
 
             NodeType::RGBToHSV => {
                 let input = self.get_input_variable(&node.inputs[0])?;
-                writeln!(code, "    let node_{}_output = rgb_to_hsv({});", node.id, input)
-                    .expect("WGSL codegen failed");
+                writeln!(code, "    let node_{}_output = rgb_to_hsv({});", node.id, input)?;
             }
 
             NodeType::UVTransform => {
@@ -473,8 +461,7 @@ impl WGSLCodegen {
                     code,
                     "    let node_{}_uv = {} + {} * {};",
                     node.id, uv, distortion, amount
-                )
-                .expect("WGSL codegen failed");
+                )?;
             }
 
             NodeType::Blur => {
@@ -493,15 +480,13 @@ impl WGSLCodegen {
                     tex.replace("texture", "sampler"),
                     uv,
                     radius
-                )
-                .expect("WGSL codegen failed");
+                )?;
             }
 
             NodeType::Glow => {
                 let color = self.get_input_variable(&node.inputs[0])?;
                 let amount = self.get_input_variable(&node.inputs[1])?;
-                writeln!(code, "    let node_{}_color = {} * (1.0 + {});", node.id, color, amount)
-                    .expect("WGSL codegen failed");
+                writeln!(code, "    let node_{}_color = {} * (1.0 + {});", node.id, color, amount)?;
             }
 
             NodeType::ChromaticAberration => {
@@ -511,15 +496,17 @@ impl WGSLCodegen {
                     code,
                     "    let node_{}_color = {} + vec4<f32>({}, 0.0, -{}, 0.0);",
                     node.id, color, amount, amount
-                )
-                .expect("WGSL codegen failed");
+                )?;
             }
 
             NodeType::Kaleidoscope => {
                 let uv = self.get_input_variable(&node.inputs[0])?;
                 let segments = self.get_input_variable(&node.inputs[1])?;
-                writeln!(code, "    let node_{}_uv = kaleidoscope({}, {});", node.id, uv, segments)
-                    .expect("WGSL codegen failed");
+                writeln!(
+                    code,
+                    "    let node_{}_uv = kaleidoscope({}, {});",
+                    node.id, uv, segments
+                )?;
             }
 
             NodeType::PixelSort | NodeType::Displacement => {
@@ -529,8 +516,7 @@ impl WGSLCodegen {
                     code,
                     "    let node_{}_color = mix({}, {}, 0.5); // Placeholder",
                     node.id, color, map
-                )
-                .expect("WGSL codegen failed");
+                )?;
             }
 
             NodeType::EdgeDetect => {
@@ -543,8 +529,7 @@ impl WGSLCodegen {
                     tex,
                     tex.replace("texture", "sampler"),
                     uv
-                )
-                .expect("WGSL codegen failed");
+                )?;
             }
 
             NodeType::Output => {
@@ -560,8 +545,7 @@ impl WGSLCodegen {
         let a = self.get_input_variable(&node.inputs[0])?;
         let b = self.get_input_variable(&node.inputs[1])?;
 
-        writeln!(code, "    let node_{}_result = pow({}, {});", node.id, a, b)
-            .expect("WGSL codegen failed");
+        writeln!(code, "    let node_{}_result = pow({}, {});", node.id, a, b)?;
 
         Ok(())
     }
@@ -572,8 +556,7 @@ impl WGSLCodegen {
         let min = self.get_input_variable(&node.inputs[1])?;
         let max = self.get_input_variable(&node.inputs[2])?;
 
-        writeln!(code, "    let node_{}_result = clamp({}, {}, {});", node.id, val, min, max)
-            .expect("WGSL codegen failed");
+        writeln!(code, "    let node_{}_result = clamp({}, {}, {});", node.id, val, min, max)?;
 
         Ok(())
     }
@@ -588,8 +571,7 @@ impl WGSLCodegen {
             code,
             "    let node_{}_result = smoothstep({}, {}, {});",
             node.id, edge0, edge1, x
-        )
-        .expect("WGSL codegen failed");
+        )?;
 
         Ok(())
     }
@@ -601,8 +583,7 @@ impl WGSLCodegen {
         let b = self.get_input_variable(&node.inputs[2])?;
         let a = self.get_input_variable(&node.inputs[3])?;
 
-        writeln!(code, "    let node_{}_color = vec4<f32>({}, {}, {}, {});", node.id, r, g, b, a)
-            .expect("WGSL codegen failed");
+        writeln!(code, "    let node_{}_color = vec4<f32>({}, {}, {}, {});", node.id, r, g, b, a)?;
 
         Ok(())
     }
@@ -611,10 +592,10 @@ impl WGSLCodegen {
     fn generate_split_op(&self, code: &mut String, node: &ShaderNode) -> Result<()> {
         let color = self.get_input_variable(&node.inputs[0])?;
 
-        writeln!(code, "    let node_{}_r = {}.r;", node.id, color).expect("WGSL codegen failed");
-        writeln!(code, "    let node_{}_g = {}.g;", node.id, color).expect("WGSL codegen failed");
-        writeln!(code, "    let node_{}_b = {}.b;", node.id, color).expect("WGSL codegen failed");
-        writeln!(code, "    let node_{}_a = {}.a;", node.id, color).expect("WGSL codegen failed");
+        writeln!(code, "    let node_{}_r = {}.r;", node.id, color)?;
+        writeln!(code, "    let node_{}_g = {}.g;", node.id, color)?;
+        writeln!(code, "    let node_{}_b = {}.b;", node.id, color)?;
+        writeln!(code, "    let node_{}_a = {}.a;", node.id, color)?;
 
         Ok(())
     }
@@ -632,8 +613,7 @@ impl WGSLCodegen {
             _ => return Err(CodegenError::GenerationError("Invalid math op".to_string())),
         };
 
-        writeln!(code, "    let node_{}_result = {} {} {};", node.id, a, op, b)
-            .expect("WGSL codegen failed");
+        writeln!(code, "    let node_{}_result = {} {} {};", node.id, a, op, b)?;
 
         Ok(())
     }
@@ -648,8 +628,7 @@ impl WGSLCodegen {
             _ => return Err(CodegenError::GenerationError("Invalid trig op".to_string())),
         };
 
-        writeln!(code, "    let node_{}_result = {}({});", node.id, func, input)
-            .expect("WGSL codegen failed");
+        writeln!(code, "    let node_{}_result = {}({});", node.id, func, input)?;
 
         Ok(())
     }
@@ -660,8 +639,7 @@ impl WGSLCodegen {
         let b = self.get_input_variable(&node.inputs[1])?;
         let t = self.get_input_variable(&node.inputs[2])?;
 
-        writeln!(code, "    let node_{}_result = mix({}, {}, {});", node.id, a, b, t)
-            .expect("WGSL codegen failed");
+        writeln!(code, "    let node_{}_result = mix({}, {}, {});", node.id, a, b, t)?;
 
         Ok(())
     }
@@ -679,8 +657,7 @@ impl WGSLCodegen {
             code,
             "    let node_{}_result = {} + vec4<f32>({}, {}, {}, 0.0);",
             node.id, color, amount, amount, amount
-        )
-        .expect("WGSL codegen failed");
+        )?;
 
         Ok(())
     }
@@ -694,8 +671,7 @@ impl WGSLCodegen {
             .map(|v| format!("{}", v))
             .unwrap_or_else(|| "1.0".to_string());
 
-        writeln!(code, "    let node_{}_result = ({} - 0.5) * {} + 0.5;", node.id, color, amount)
-            .expect("WGSL codegen failed");
+        writeln!(code, "    let node_{}_result = ({} - 0.5) * {} + 0.5;", node.id, color, amount)?;
 
         Ok(())
     }
@@ -704,14 +680,12 @@ impl WGSLCodegen {
     fn generate_desaturate_op(&self, code: &mut String, node: &ShaderNode) -> Result<()> {
         let color = self.get_input_variable(&node.inputs[0])?;
 
-        writeln!(code, "    let gray = dot({}.rgb, vec3<f32>(0.299, 0.587, 0.114));", color)
-            .expect("WGSL codegen failed");
+        writeln!(code, "    let gray = dot({}.rgb, vec3<f32>(0.299, 0.587, 0.114));", color)?;
         writeln!(
             code,
             "    let node_{}_result = vec4<f32>(vec3<f32>(gray), {}.a);",
             node.id, color
-        )
-        .expect("WGSL codegen failed");
+        )?;
 
         Ok(())
     }
@@ -725,38 +699,29 @@ impl WGSLCodegen {
         let translation_val =
             node.parameters.get("translation").unwrap_or(&ParameterValue::Vec2([0.0, 0.0]));
 
-        writeln!(code, "    // UV Transform").expect("WGSL codegen failed");
-        writeln!(code, "    var node_{}_uv_temp = {} - vec2<f32>(0.5, 0.5);", node.id, uv)
-            .expect("WGSL codegen failed");
-        writeln!(code, "    let node_{}_scale = {};", node.id, scale_val)
-            .expect("WGSL codegen failed");
-        writeln!(code, "    let node_{}_rot = {};", node.id, rotation_val)
-            .expect("WGSL codegen failed");
-        writeln!(code, "    let node_{}_trans = {};", node.id, translation_val)
-            .expect("WGSL codegen failed");
+        writeln!(code, "    // UV Transform")?;
+        writeln!(code, "    var node_{}_uv_temp = {} - vec2<f32>(0.5, 0.5);", node.id, uv)?;
+        writeln!(code, "    let node_{}_scale = {};", node.id, scale_val)?;
+        writeln!(code, "    let node_{}_rot = {};", node.id, rotation_val)?;
+        writeln!(code, "    let node_{}_trans = {};", node.id, translation_val)?;
 
-        writeln!(code, "    let node_{}_cos_r = cos(node_{}_rot);", node.id, node.id)
-            .expect("WGSL codegen failed");
-        writeln!(code, "    let node_{}_sin_r = sin(node_{}_rot);", node.id, node.id)
-            .expect("WGSL codegen failed");
+        writeln!(code, "    let node_{}_cos_r = cos(node_{}_rot);", node.id, node.id)?;
+        writeln!(code, "    let node_{}_sin_r = sin(node_{}_rot);", node.id, node.id)?;
 
-        writeln!(code, "    let node_{}_rot_uv = vec2<f32>(", node.id)
-            .expect("WGSL codegen failed");
+        writeln!(code, "    let node_{}_rot_uv = vec2<f32>(", node.id)?;
         writeln!(
             code,
             "        node_{}_uv_temp.x * node_{}_cos_r - node_{}_uv_temp.y * node_{}_sin_r,",
             node.id, node.id, node.id, node.id
-        )
-        .expect("WGSL codegen failed");
+        )?;
         writeln!(
             code,
             "        node_{}_uv_temp.x * node_{}_sin_r + node_{}_uv_temp.y * node_{}_cos_r",
             node.id, node.id, node.id, node.id
-        )
-        .expect("WGSL codegen failed");
-        writeln!(code, "    );").expect("WGSL codegen failed");
+        )?;
+        writeln!(code, "    );")?;
 
-        writeln!(code, "    let node_{}_uv = (node_{}_rot_uv / node_{}_scale) + vec2<f32>(0.5, 0.5) + node_{}_trans;", node.id, node.id, node.id, node.id).expect("WGSL codegen failed");
+        writeln!(code, "    let node_{}_uv = (node_{}_rot_uv / node_{}_scale) + vec2<f32>(0.5, 0.5) + node_{}_trans;", node.id, node.id, node.id, node.id)?;
 
         Ok(())
     }
@@ -798,20 +763,18 @@ impl WGSLCodegen {
             return Ok(());
         }
 
-        writeln!(code, "fn blur_sample(tex: texture_2d<f32>, samp: sampler, uv: vec2<f32>, radius: f32) -> vec4<f32> {{").expect("WGSL codegen failed");
-        writeln!(code, "    var color = vec4<f32>(0.0);").expect("WGSL codegen failed");
-        writeln!(code, "    let samples = 9;").expect("WGSL codegen failed");
-        writeln!(code, "    let offset = radius / 100.0;").expect("WGSL codegen failed");
-        writeln!(code, "    for (var x = -1; x <= 1; x++) {{").expect("WGSL codegen failed");
-        writeln!(code, "        for (var y = -1; y <= 1; y++) {{").expect("WGSL codegen failed");
-        writeln!(code, "            let sample_uv = uv + vec2<f32>(f32(x), f32(y)) * offset;")
-            .expect("WGSL codegen failed");
-        writeln!(code, "            color += textureSample(tex, samp, sample_uv);")
-            .expect("WGSL codegen failed");
-        writeln!(code, "        }}").expect("WGSL codegen failed");
-        writeln!(code, "    }}").expect("WGSL codegen failed");
-        writeln!(code, "    return color / f32(samples);").expect("WGSL codegen failed");
-        writeln!(code, "}}\n").expect("WGSL codegen failed");
+        writeln!(code, "fn blur_sample(tex: texture_2d<f32>, samp: sampler, uv: vec2<f32>, radius: f32) -> vec4<f32> {{")?;
+        writeln!(code, "    var color = vec4<f32>(0.0);")?;
+        writeln!(code, "    let samples = 9;")?;
+        writeln!(code, "    let offset = radius / 100.0;")?;
+        writeln!(code, "    for (var x = -1; x <= 1; x++) {{")?;
+        writeln!(code, "        for (var y = -1; y <= 1; y++) {{")?;
+        writeln!(code, "            let sample_uv = uv + vec2<f32>(f32(x), f32(y)) * offset;")?;
+        writeln!(code, "            color += textureSample(tex, samp, sample_uv);")?;
+        writeln!(code, "        }}")?;
+        writeln!(code, "    }}")?;
+        writeln!(code, "    return color / f32(samples);")?;
+        writeln!(code, "}}\n")?;
 
         generated_functions.insert("blur".to_string());
         Ok(())
@@ -825,15 +788,13 @@ impl WGSLCodegen {
             return Ok(());
         }
 
-        writeln!(code, "fn chromatic_aberration(tex: texture_2d<f32>, samp: sampler, uv: vec2<f32>, amount: f32) -> vec4<f32> {{").expect("WGSL codegen failed");
-        writeln!(code, "    let offset = (uv - 0.5) * amount;").expect("WGSL codegen failed");
-        writeln!(code, "    let r = textureSample(tex, samp, uv + offset).r;")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    let g = textureSample(tex, samp, uv).g;").expect("WGSL codegen failed");
-        writeln!(code, "    let b = textureSample(tex, samp, uv - offset).b;")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    return vec4<f32>(r, g, b, 1.0);").expect("WGSL codegen failed");
-        writeln!(code, "}}\n").expect("WGSL codegen failed");
+        writeln!(code, "fn chromatic_aberration(tex: texture_2d<f32>, samp: sampler, uv: vec2<f32>, amount: f32) -> vec4<f32> {{")?;
+        writeln!(code, "    let offset = (uv - 0.5) * amount;")?;
+        writeln!(code, "    let r = textureSample(tex, samp, uv + offset).r;")?;
+        writeln!(code, "    let g = textureSample(tex, samp, uv).g;")?;
+        writeln!(code, "    let b = textureSample(tex, samp, uv - offset).b;")?;
+        writeln!(code, "    return vec4<f32>(r, g, b, 1.0);")?;
+        writeln!(code, "}}\n")?;
 
         generated_functions.insert("chromatic_aberration".to_string());
         Ok(())
@@ -850,23 +811,16 @@ impl WGSLCodegen {
         writeln!(
             code,
             "fn edge_detect(tex: texture_2d<f32>, samp: sampler, uv: vec2<f32>) -> vec4<f32> {{"
-        )
-        .expect("WGSL codegen failed");
-        writeln!(code, "    let offset = 1.0 / 512.0;").expect("WGSL codegen failed");
-        writeln!(code, "    let c = textureSample(tex, samp, uv).rgb;")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    let t = textureSample(tex, samp, uv + vec2<f32>(0.0, offset)).rgb;")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    let b = textureSample(tex, samp, uv - vec2<f32>(0.0, offset)).rgb;")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    let l = textureSample(tex, samp, uv - vec2<f32>(offset, 0.0)).rgb;")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    let r = textureSample(tex, samp, uv + vec2<f32>(offset, 0.0)).rgb;")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    let edge = abs(c - t) + abs(c - b) + abs(c - l) + abs(c - r);")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    return vec4<f32>(edge, 1.0);").expect("WGSL codegen failed");
-        writeln!(code, "}}\n").expect("WGSL codegen failed");
+        )?;
+        writeln!(code, "    let offset = 1.0 / 512.0;")?;
+        writeln!(code, "    let c = textureSample(tex, samp, uv).rgb;")?;
+        writeln!(code, "    let t = textureSample(tex, samp, uv + vec2<f32>(0.0, offset)).rgb;")?;
+        writeln!(code, "    let b = textureSample(tex, samp, uv - vec2<f32>(0.0, offset)).rgb;")?;
+        writeln!(code, "    let l = textureSample(tex, samp, uv - vec2<f32>(offset, 0.0)).rgb;")?;
+        writeln!(code, "    let r = textureSample(tex, samp, uv + vec2<f32>(offset, 0.0)).rgb;")?;
+        writeln!(code, "    let edge = abs(c - t) + abs(c - b) + abs(c - l) + abs(c - r);")?;
+        writeln!(code, "    return vec4<f32>(edge, 1.0);")?;
+        writeln!(code, "}}\n")?;
 
         generated_functions.insert("edge_detect".to_string());
         Ok(())
@@ -880,17 +834,14 @@ impl WGSLCodegen {
             return Ok(());
         }
 
-        writeln!(code, "fn kaleidoscope(uv: vec2<f32>, segments: f32) -> vec2<f32> {{")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    let center = uv - 0.5;").expect("WGSL codegen failed");
-        writeln!(code, "    let angle = atan2(center.y, center.x);").expect("WGSL codegen failed");
-        writeln!(code, "    let radius = length(center);").expect("WGSL codegen failed");
-        writeln!(code, "    let slice = 6.28318530718 / segments;").expect("WGSL codegen failed");
-        writeln!(code, "    let new_angle = abs((angle % slice) - slice * 0.5) + slice * 0.5;")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    return vec2<f32>(cos(new_angle), sin(new_angle)) * radius + 0.5;")
-            .expect("WGSL codegen failed");
-        writeln!(code, "}}\n").expect("WGSL codegen failed");
+        writeln!(code, "fn kaleidoscope(uv: vec2<f32>, segments: f32) -> vec2<f32> {{")?;
+        writeln!(code, "    let center = uv - 0.5;")?;
+        writeln!(code, "    let angle = atan2(center.y, center.x);")?;
+        writeln!(code, "    let radius = length(center);")?;
+        writeln!(code, "    let slice = 6.28318530718 / segments;")?;
+        writeln!(code, "    let new_angle = abs((angle % slice) - slice * 0.5) + slice * 0.5;")?;
+        writeln!(code, "    return vec2<f32>(cos(new_angle), sin(new_angle)) * radius + 0.5;")?;
+        writeln!(code, "}}\n")?;
 
         generated_functions.insert("kaleidoscope".to_string());
         Ok(())
@@ -904,29 +855,22 @@ impl WGSLCodegen {
             return Ok(());
         }
 
-        writeln!(code, "fn hsv_to_rgb(hsv: vec3<f32>) -> vec3<f32> {{")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    let h = hsv.x * 6.0;").expect("WGSL codegen failed");
-        writeln!(code, "    let s = hsv.y;").expect("WGSL codegen failed");
-        writeln!(code, "    let v = hsv.z;").expect("WGSL codegen failed");
-        writeln!(code, "    let c = v * s;").expect("WGSL codegen failed");
-        writeln!(code, "    let x = c * (1.0 - abs((h % 2.0) - 1.0));")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    let m = v - c;").expect("WGSL codegen failed");
-        writeln!(code, "    var rgb = vec3<f32>(0.0);").expect("WGSL codegen failed");
-        writeln!(code, "    if (h < 1.0) {{ rgb = vec3<f32>(c, x, 0.0); }}")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    else if (h < 2.0) {{ rgb = vec3<f32>(x, c, 0.0); }}")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    else if (h < 3.0) {{ rgb = vec3<f32>(0.0, c, x); }}")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    else if (h < 4.0) {{ rgb = vec3<f32>(0.0, x, c); }}")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    else if (h < 5.0) {{ rgb = vec3<f32>(x, 0.0, c); }}")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    else {{ rgb = vec3<f32>(c, 0.0, x); }}").expect("WGSL codegen failed");
-        writeln!(code, "    return rgb + m;").expect("WGSL codegen failed");
-        writeln!(code, "}}\n").expect("WGSL codegen failed");
+        writeln!(code, "fn hsv_to_rgb(hsv: vec3<f32>) -> vec3<f32> {{")?;
+        writeln!(code, "    let h = hsv.x * 6.0;")?;
+        writeln!(code, "    let s = hsv.y;")?;
+        writeln!(code, "    let v = hsv.z;")?;
+        writeln!(code, "    let c = v * s;")?;
+        writeln!(code, "    let x = c * (1.0 - abs((h % 2.0) - 1.0));")?;
+        writeln!(code, "    let m = v - c;")?;
+        writeln!(code, "    var rgb = vec3<f32>(0.0);")?;
+        writeln!(code, "    if (h < 1.0) {{ rgb = vec3<f32>(c, x, 0.0); }}")?;
+        writeln!(code, "    else if (h < 2.0) {{ rgb = vec3<f32>(x, c, 0.0); }}")?;
+        writeln!(code, "    else if (h < 3.0) {{ rgb = vec3<f32>(0.0, c, x); }}")?;
+        writeln!(code, "    else if (h < 4.0) {{ rgb = vec3<f32>(0.0, x, c); }}")?;
+        writeln!(code, "    else if (h < 5.0) {{ rgb = vec3<f32>(x, 0.0, c); }}")?;
+        writeln!(code, "    else {{ rgb = vec3<f32>(c, 0.0, x); }}")?;
+        writeln!(code, "    return rgb + m;")?;
+        writeln!(code, "}}\n")?;
 
         generated_functions.insert("hsv_to_rgb".to_string());
         Ok(())
@@ -940,27 +884,23 @@ impl WGSLCodegen {
             return Ok(());
         }
 
-        writeln!(code, "fn rgb_to_hsv(rgb: vec3<f32>) -> vec3<f32> {{")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    let max_c = max(max(rgb.r, rgb.g), rgb.b);")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    let min_c = min(min(rgb.r, rgb.g), rgb.b);")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    let delta = max_c - min_c;").expect("WGSL codegen failed");
-        writeln!(code, "    var h = 0.0;").expect("WGSL codegen failed");
-        writeln!(code, "    if (delta > 0.0) {{").expect("WGSL codegen failed");
-        writeln!(code, "        if (max_c == rgb.r) {{ h = ((rgb.g - rgb.b) / delta) % 6.0; }}")
-            .expect("WGSL codegen failed");
-        writeln!(code, "        else if (max_c == rgb.g) {{ h = (rgb.b - rgb.r) / delta + 2.0; }}")
-            .expect("WGSL codegen failed");
-        writeln!(code, "        else {{ h = (rgb.r - rgb.g) / delta + 4.0; }}")
-            .expect("WGSL codegen failed");
-        writeln!(code, "        h = h / 6.0;").expect("WGSL codegen failed");
-        writeln!(code, "    }}").expect("WGSL codegen failed");
-        writeln!(code, "    let s = select(0.0, delta / max_c, max_c > 0.0);")
-            .expect("WGSL codegen failed");
-        writeln!(code, "    return vec3<f32>(h, s, max_c);").expect("WGSL codegen failed");
-        writeln!(code, "}}\n").expect("WGSL codegen failed");
+        writeln!(code, "fn rgb_to_hsv(rgb: vec3<f32>) -> vec3<f32> {{")?;
+        writeln!(code, "    let max_c = max(max(rgb.r, rgb.g), rgb.b);")?;
+        writeln!(code, "    let min_c = min(min(rgb.r, rgb.g), rgb.b);")?;
+        writeln!(code, "    let delta = max_c - min_c;")?;
+        writeln!(code, "    var h = 0.0;")?;
+        writeln!(code, "    if (delta > 0.0) {{")?;
+        writeln!(code, "        if (max_c == rgb.r) {{ h = ((rgb.g - rgb.b) / delta) % 6.0; }}")?;
+        writeln!(
+            code,
+            "        else if (max_c == rgb.g) {{ h = (rgb.b - rgb.r) / delta + 2.0; }}"
+        )?;
+        writeln!(code, "        else {{ h = (rgb.r - rgb.g) / delta + 4.0; }}")?;
+        writeln!(code, "        h = h / 6.0;")?;
+        writeln!(code, "    }}")?;
+        writeln!(code, "    let s = select(0.0, delta / max_c, max_c > 0.0);")?;
+        writeln!(code, "    return vec3<f32>(h, s, max_c);")?;
+        writeln!(code, "}}\n")?;
 
         generated_functions.insert("rgb_to_hsv".to_string());
         Ok(())
@@ -990,7 +930,7 @@ mod tests {
     use crate::shader_graph::{NodeType, ShaderGraph};
 
     #[test]
-    fn test_simple_shader_generation() {
+    fn test_simple_shader_generation() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let mut graph = ShaderGraph::new(1, "Test Shader".to_string());
 
         let uv_node = graph.add_node(NodeType::UVInput);
@@ -998,42 +938,42 @@ mod tests {
         let sample_node = graph.add_node(NodeType::TextureSample);
         let output_node = graph.add_node(NodeType::Output);
 
-        graph.connect(uv_node, "UV", sample_node, "UV").expect("WGSL codegen failed");
-        graph
-            .connect(texture_node, "Texture", sample_node, "Texture")
-            .expect("WGSL codegen failed");
-        graph.connect(sample_node, "Color", output_node, "Color").expect("WGSL codegen failed");
+        graph.connect(uv_node, "UV", sample_node, "UV")?;
+        graph.connect(texture_node, "Texture", sample_node, "Texture")?;
+        graph.connect(sample_node, "Color", output_node, "Color")?;
 
         let mut codegen = WGSLCodegen::new(graph);
         let result = codegen.generate();
 
         assert!(result.is_ok());
-        let code = result.expect("WGSL codegen failed");
+        let code = result?;
         assert!(code.contains("@fragment"));
         assert!(code.contains("textureSample"));
+        Ok(())
     }
 
     #[test]
     #[ignore]
-    fn test_math_nodes() {
+    fn test_math_nodes() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let mut graph = ShaderGraph::new(1, "Math Test".to_string());
 
         let time_node = graph.add_node(NodeType::TimeInput);
         let sin_node = graph.add_node(NodeType::Sin);
         let output_node = graph.add_node(NodeType::Output);
 
-        graph.connect(time_node, "Time", sin_node, "A").expect("WGSL codegen failed");
-        graph.connect(sin_node, "Result", output_node, "Color").expect("WGSL codegen failed");
+        graph.connect(time_node, "Time", sin_node, "A")?;
+        graph.connect(sin_node, "Result", output_node, "Color")?;
 
         let mut codegen = WGSLCodegen::new(graph);
         let result = codegen.generate();
 
         assert!(result.is_ok());
+        Ok(())
     }
 
     #[test]
     #[ignore]
-    fn test_math_nodes_advanced() {
+    fn test_math_nodes_advanced() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let mut graph = ShaderGraph::new(1, "Advanced Math Test".to_string());
 
         let combine_node = graph.add_node(NodeType::Combine);
@@ -1043,28 +983,29 @@ mod tests {
         let smoothstep_node = graph.add_node(NodeType::Smoothstep);
         let output_node = graph.add_node(NodeType::Output);
 
-        graph.connect(combine_node, "Color", split_node, "Color").expect("WGSL codegen failed");
-        graph.connect(split_node, "R", power_node, "A").expect("WGSL codegen failed");
-        graph.connect(power_node, "Result", clamp_node, "Value").expect("WGSL codegen failed");
-        graph.connect(clamp_node, "Result", smoothstep_node, "X").expect("WGSL codegen failed");
+        graph.connect(combine_node, "Color", split_node, "Color")?;
+        graph.connect(split_node, "R", power_node, "A")?;
+        graph.connect(power_node, "Result", clamp_node, "Value")?;
+        graph.connect(clamp_node, "Result", smoothstep_node, "X")?;
         // Since smoothstep is not connected to output, it will trigger an error due to being missing in topological sort,
         // unless we connect it to output. But Output requires Color. Let's create a Mix node to convert float to color or connect smoothstep somewhere.
         // Or we just test the generation of these by not expecting is_ok(), but wait, WGSLCodegen will error out if there's disconnected logic.
         // Actually, topological sort starts from Output node and goes backwards. So nodes not connected to Output are ignored.
         // To test their codegen, we must connect them to output!
         let final_combine = graph.add_node(NodeType::Combine);
-        graph.connect(smoothstep_node, "Result", final_combine, "R").expect("WGSL codegen failed");
-        graph.connect(final_combine, "Color", output_node, "Color").expect("WGSL codegen failed");
+        graph.connect(smoothstep_node, "Result", final_combine, "R")?;
+        graph.connect(final_combine, "Color", output_node, "Color")?;
 
         let mut codegen = WGSLCodegen::new(graph);
         let result = codegen.generate();
 
         assert!(result.is_ok());
-        let code = result.expect("WGSL codegen failed");
+        let code = result?;
         assert!(code.contains("vec4<f32>"));
         assert!(code.contains("pow("));
         assert!(code.contains("clamp("));
         assert!(code.contains("smoothstep("));
         assert!(code.contains(".r;"));
+        Ok(())
     }
 }

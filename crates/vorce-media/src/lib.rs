@@ -19,13 +19,9 @@ pub mod hap_decoder;
 pub mod image_decoder;
 #[cfg(feature = "libmpv")]
 pub mod mpv_decoder;
+pub mod pipeline;
 pub mod player;
 pub mod sequence;
-// TODO: Enable pipeline with thread-local scaler approach
-// The pipeline module requires VideoDecoder to be Send, but FFmpeg's scaler (SwsContext) is not thread-safe.
-// Solution: Use thread-local scaler - create scaler once in decode thread, avoiding Send requirement.
-// This provides zero overhead and clean separation. See pipeline.rs for implementation details.
-pub mod pipeline;
 
 pub use decoder::{FFmpegDecoder, HwAccelType, PixelFormat, TestPatternDecoder, VideoDecoder};
 #[cfg(feature = "hap")]
