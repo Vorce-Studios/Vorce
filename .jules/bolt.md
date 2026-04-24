@@ -29,3 +29,7 @@
 ## 2025-05-19 - [Prevent String Allocations in Vendor NodeFinder Search]
 **Erkenntnis:** The vendor crate `egui_node_editor` had an unoptimized loop in `node_finder.rs` where `kind_name.to_lowercase()` and `self.query.to_lowercase()` were computed for every node type on every UI render frame when rendering the Node Finder, creating an O(N) allocation bottleneck even when the search query was empty.
 **Aktion:** I introduced lazy evaluation for the string conversion (`let query_lower = (!self.query.is_empty()).then(|| self.query.to_lowercase());`) prior to the iteration and checked it with `if let Some(q) = &query_lower` inside the closure. This completely bypassed string allocations during the common case (empty filter) and reduced redundant computations during search filtering.
+
+## 2026-04-23 - [Zero-Allocation Case-Insensitive String Contains Optimization]
+**Erkenntnis:** Using `.to_lowercase().contains(&...to_lowercase())` inside hot paths (e.g., UI rendering loops in `ModuleCanvas` and `AssetManager`) creates unnecessary string heap allocations on every render frame for every matching item.
+**Aktion:** Exported the `case_insensitive_contains` function from `crates/vorce-ui/src/editors/module_canvas/draw/search.rs` as a public method and refactored string comparisons in `draw_part_with_delete` (in `part.rs`) to use this zero-allocation method, effectively avoiding heap allocations in hot paths.

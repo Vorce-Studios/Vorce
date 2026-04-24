@@ -2,7 +2,7 @@ use super::super::{state::ModuleCanvas, utils};
 use egui::{Pos2, Rect, Ui, Vec2};
 use vorce_core::module::VorceModule;
 
-fn case_insensitive_contains(haystack: &str, needle: &str) -> bool {
+pub fn case_insensitive_contains(haystack: &str, needle: &str) -> bool {
     // If needle is empty it's always contained
     if needle.is_empty() {
         return true;
