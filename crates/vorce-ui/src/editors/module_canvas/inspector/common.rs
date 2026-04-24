@@ -1,7 +1,7 @@
 use super::super::state::ModuleCanvas;
 use super::capabilities;
 use crate::widgets::{styled_drag_value, styled_slider};
-use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
+use egui::{Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use vorce_core::module::{BlendModeType, ModulePartId};
 
 /// Standardized informational label, used as an explicit fallback when no active preview is available.
@@ -167,14 +167,14 @@ pub fn render_hue_spatial_editor(
 
     // Draw background grid
     let painter = ui.painter();
-    painter.rect_filled(rect, 0.0, Color32::from_black_alpha(100));
+    painter.rect_filled(rect, 0.0, ui.visuals().window_fill.linear_multiply(0.5));
 
     // Draw reference screen
     let screen_rect = Rect::from_center_size(rect.center(), Vec2::new(size * 0.6, size * 0.4));
     painter.rect_stroke(
         screen_rect,
         2.0,
-        Stroke::new(1.0, Color32::WHITE),
+        Stroke::new(1.0, ui.visuals().strong_text_color()),
         egui::StrokeKind::Inside,
     );
     painter.text(
@@ -182,7 +182,7 @@ pub fn render_hue_spatial_editor(
         egui::Align2::CENTER_CENTER,
         "SCREEN",
         egui::FontId::proportional(12.0),
-        Color32::WHITE,
+        ui.visuals().strong_text_color(),
     );
 
     // Draw and handle lamps
@@ -214,14 +214,18 @@ pub fn render_hue_spatial_editor(
         painter.circle_filled(
             screen_pos,
             8.0,
-            if lamp_resp.hovered() { Color32::LIGHT_BLUE } else { Color32::from_rgb(255, 200, 50) },
+            if lamp_resp.hovered() {
+                ui.visuals().text_color()
+            } else {
+                ui.visuals().strong_text_color()
+            },
         );
         painter.text(
             screen_pos + Vec2::new(0.0, 12.0),
             egui::Align2::CENTER_TOP,
             id,
             egui::FontId::proportional(10.0),
-            Color32::WHITE,
+            ui.visuals().strong_text_color(),
         );
     }
 
