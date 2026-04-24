@@ -5,29 +5,35 @@ Ziel: Jules-Sessions reproduzierbar starten, aktive Sessions knapp monitoren, ha
 ## Standardfluss
 
 1. Session anlegen
+
 - `create-jules-session.ps1 -IssueNumber <n> -Repository <owner/repo> -AutoCreatePr`
 - Optional `-RequirePlanApproval`, wenn die Aufgabe erst nach Planfreigabe loslaufen soll.
 
-2. Session monitoren
+1. Session monitoren
+
 - `monitor-jules-sessions.ps1 -Repository <owner/repo> -OnlyActive -IncludeActivities`
 - Optional `-SyncIssueBody`, um den Managed-Block im GitHub-Issue nachzuziehen.
 
-3. Attention-Zustaende behandeln
+1. Attention-Zustaende behandeln
+
 - `AWAITING_PLAN_APPROVAL`: mit `respond-jules-session.ps1 -IssueNumber <n> -ApprovePlan`
 - `AWAITING_USER_FEEDBACK` oder `PAUSED`: entweder gezielte Rueckmeldung mit `respond-jules-session.ps1 -Message ...`
 - Fuer konservative Auto-Hilfe: `monitor-jules-sessions.ps1 -OnlyActive -AutoRespondAttention`
 
-4. PRs monitoren
+1. PRs monitoren
+
 - `monitor-jules-prs.ps1 -Repository <owner/repo>`
 - Bei Bedarf `-AutoNudgeJules`, damit Jules direkt wegen Merge-Konflikten oder failing checks nacharbeitet.
 
-5. Abschluss
+1. Abschluss
+
 - Wenn Session `COMPLETED` und PR/checks gruen sind: normales Review/Merge.
 - Wenn Session `FAILED`: neuen Lauf nur starten, wenn der eigentliche Blocker verstanden ist.
 
 ## Empfohlene Routinen
 
 ### Jules Session Sweep
+
 - Besitzer: Ben
 - Frequenz: alle 15 Minuten waehrend aktiver Delivery-Phasen
 - Kommando:
@@ -37,6 +43,7 @@ Ziel: Jules-Sessions reproduzierbar starten, aktive Sessions knapp monitoren, ha
 ```
 
 ### Jules Attention Unblock
+
 - Besitzer: Ben
 - Trigger: `AWAITING_PLAN_APPROVAL`, `AWAITING_USER_FEEDBACK`, `PAUSED`
 - Kommando:
@@ -48,6 +55,7 @@ Ziel: Jules-Sessions reproduzierbar starten, aktive Sessions knapp monitoren, ha
 Nur fuer konservative Standardantworten verwenden. Produktentscheidungen oder inhaltliche Aenderungen weiter manuell schicken.
 
 ### Jules PR Sweep
+
 - Besitzer: Ben oder Lisa
 - Frequenz: alle 20 Minuten waehrend offene Jules-PRs existieren
 - Kommando:
@@ -57,6 +65,7 @@ Nur fuer konservative Standardantworten verwenden. Produktentscheidungen oder in
 ```
 
 ### Jules PR Recovery
+
 - Besitzer: Ben
 - Trigger: Merge-Konflikt oder failing required checks
 - Kommando:
