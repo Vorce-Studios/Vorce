@@ -373,12 +373,28 @@ impl NdiSender {
 // Stub implementations when NDI feature is disabled
 /// Stub implementation of NDI receiver when the feature is disabled.
 #[cfg(not(feature = "ndi"))]
+/// Stub NDI Receiver for when the 'ndi' feature is disabled.
 pub struct NdiReceiver;
 
 #[cfg(not(feature = "ndi"))]
 impl NdiReceiver {
     /// Creates a new NDI receiver (always returns an error when NDI is disabled).
     pub fn new() -> std::result::Result<Self, String> {
+        Err("NDI feature not enabled".to_string())
+    }
+
+    /// Stub connect method.
+    pub fn connect(&mut self, _source: &NdiSource) -> std::result::Result<(), String> {
+        Err("NDI feature not enabled".to_string())
+    }
+
+    /// Stub source_name method.
+    pub fn source_name(&self) -> Option<&str> {
+        None
+    }
+
+    /// Stub receive_frame method.
+    pub fn receive_frame(&mut self) -> std::result::Result<crate::format::VideoFrame, String> {
         Err("NDI feature not enabled".to_string())
     }
 }
@@ -395,6 +411,19 @@ impl NdiSender {
         _format: crate::format::VideoFormat,
     ) -> std::result::Result<Self, String> {
         Err("NDI feature not enabled".to_string())
+    }
+
+    /// Stub send_frame method.
+    pub fn send_frame(
+        &mut self,
+        _frame: &crate::format::VideoFrame,
+    ) -> std::result::Result<(), String> {
+        Err("NDI feature not enabled".to_string())
+    }
+
+    /// Stub name method.
+    pub fn name(&self) -> &str {
+        "NDI Stub"
     }
 }
 

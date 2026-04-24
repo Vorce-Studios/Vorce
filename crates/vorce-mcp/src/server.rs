@@ -135,7 +135,7 @@ impl McpServer {
                                     // In a production setup, we might use async channels, but since this
                                     // runs in its own task blocking on a channel bounded(1) is fine.
                                     let result_text = match tokio::task::spawn_blocking(move || {
-                                        rx.recv()
+                                        rx.recv_timeout(std::time::Duration::from_secs(5))
                                     })
                                     .await
                                     {
