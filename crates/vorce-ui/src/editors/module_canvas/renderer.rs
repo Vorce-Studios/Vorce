@@ -159,7 +159,7 @@ pub fn render_canvas(
             if canvas.show_search {
                 canvas.show_search = false;
             } else {
-                canvas.selected_parts.clear();
+                canvas.clear_selection();
             }
         }
 
@@ -392,8 +392,8 @@ pub fn render_canvas(
                     } else {
                         canvas.selected_parts.push(part_id);
                     }
-                } else if !selected_parts_set.contains(&part_id) {
-                    canvas.selected_parts.clear();
+                } else if !canvas.selected_parts.contains(&part_id) {
+                    canvas.clear_selection();
                     canvas.selected_parts.push(part_id);
                 }
             }
@@ -403,7 +403,7 @@ pub fn render_canvas(
                 if canvas.creating_connection.is_none() {
                     if !selected_parts_set.contains(&part_id) {
                         if !ui.input(|i| i.modifiers.shift) {
-                            canvas.selected_parts.clear();
+                            canvas.clear_selection();
                         }
                         canvas.selected_parts.push(part_id);
                     }
@@ -500,6 +500,10 @@ pub fn render_canvas(
             canvas.panning_canvas = true;
         }
 
+        if response.clicked() && !clicked_on_part {
+            canvas.clear_selection();
+        }
+
         if let Some(pid) = delete_part_id {
             module
                 .connections
@@ -561,7 +565,7 @@ pub fn render_canvas(
             }
         }
 
-        draw::draw_mini_map(canvas, &painter, canvas_rect, module);
+        draw::draw_mini_map(canvas, ui, &painter, canvas_rect, module);
 
         if canvas.show_search {
             draw::draw_search_popup(canvas, ui, canvas_rect, module);

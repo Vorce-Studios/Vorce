@@ -107,6 +107,7 @@ impl ModuleManager {
             connections: Vec::new(),
             playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
             next_part_id: 1,
+            part_index: Default::default(),
         };
 
         self.modules.insert(id, module);

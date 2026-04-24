@@ -1,10 +1,11 @@
 use super::super::state::ModuleCanvas;
 use super::super::utils;
-use egui::{Pos2, Rect, Stroke, Vec2};
+use egui::{Pos2, Rect, Stroke, Ui, Vec2};
 use vorce_core::module::VorceModule;
 
 pub fn draw_mini_map(
     canvas: &ModuleCanvas,
+    ui: &Ui,
     painter: &egui::Painter,
     canvas_rect: Rect,
     module: &VorceModule,
@@ -25,9 +26,13 @@ pub fn draw_mini_map(
     );
 
     // Background
-    let visuals = &painter.ctx().global_style().visuals;
-    painter.rect_filled(map_rect, 4.0, visuals.window_fill);
-    painter.rect_stroke(map_rect, 0.0, visuals.window_stroke, egui::StrokeKind::Middle);
+    painter.rect_filled(map_rect, 0.0, ui.visuals().panel_fill.gamma_multiply(0.9));
+    painter.rect_stroke(
+        map_rect,
+        0.0,
+        Stroke::new(1.0, ui.visuals().window_stroke().color),
+        egui::StrokeKind::Middle,
+    );
 
     // Calculate bounds of all parts
     let mut min_x = f32::MAX;
@@ -87,7 +92,7 @@ pub fn draw_mini_map(
     painter.rect_stroke(
         viewport_rect,
         0.0,
-        Stroke::new(1.5, visuals.strong_text_color()),
+        Stroke::new(1.5, ui.visuals().strong_text_color()),
         egui::StrokeKind::Middle,
     );
 }

@@ -94,7 +94,7 @@ pub fn draw_search_popup(
                         .selectable_label(canvas.selected_parts.contains(&part.id), &label)
                         .clicked()
                     {
-                        canvas.selected_parts.clear();
+                        canvas.clear_selection();
                         canvas.selected_parts.push(part.id);
                         canvas.pan_offset =
                             Vec2::new(-part.position.0 + 200.0, -part.position.1 + 150.0);

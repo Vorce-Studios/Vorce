@@ -188,6 +188,7 @@ pub fn render_source_ui(
                     flip_horizontal: false,
                     flip_vertical: false,
                 },
+                "NdiInput" => SourceType::NdiInput { source_name: None },
                 _ => source.clone(),
             };
         }

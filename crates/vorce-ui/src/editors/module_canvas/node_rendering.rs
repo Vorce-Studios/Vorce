@@ -63,7 +63,9 @@ impl ModuleCanvas {
         let interacting = ui.input(|i| i.pointer.any_pressed() || i.pointer.any_down());
         let release = ui.input(|i| i.pointer.any_released());
 
-        if interacting && self.edit_snapshot.is_none() {
+        if interacting
+            && (self.edit_snapshot.is_none() || self.edit_snapshot.as_ref().unwrap().id != part.id)
+        {
             self.edit_snapshot = Some(part.clone());
         }
 
