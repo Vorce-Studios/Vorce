@@ -15,3 +15,7 @@
 ## 2026-10-31 - Dynamische Hintergrundfarben in Grid und Minimap
 **Erkenntnis:** Im `draw_grid` (Canvas & Mesh Editor) und `draw_mini_map` wurden hartcodierte Farbwerte (z.B. `Color32::from_rgb(40, 40, 40)`) für Hintergründe, Gitterlinien und Rahmen verwendet. Dies führt in anderen Dark- oder Light-Themes zu Kontrast- und Lesbarkeitsproblemen.
 **Aktion:** Gitterlinien- und Hintergrundfarben in Canvas- und Editor-Komponenten sollten immer über Theme-Variablen wie `ui.visuals().panel_fill.gamma_multiply(0.9)`, `ui.visuals().window_stroke().color` oder abgedimmte Textfarben (`ui.visuals().text_color().gamma_multiply(0.1)`) realisiert werden, um sicheren Kontrast in jedem Theme zu garantieren.
+
+## 2026-04-24 - Dynamische Hintergrundfarben in Preview Panel
+**Erkenntnis:** Im `PreviewPanel` wurden hartcodierte Farbwerte (`Color32::from_gray(40)` und `Color32::GRAY`) für den Placeholder-Hintergrund und den "No Signal"-Text verwendet. Dies bricht den Kontrast und die Lesbarkeit, wenn Nutzer in hellere oder alternative Dark-Mode-Themes wechseln.
+**Aktion:** Immer `ui.visuals().extreme_bg_color` für dunklere Hintergründe und abgedimmte Textfarben wie `ui.visuals().text_color().gamma_multiply(0.5)` für Platzhalter-Texte verwenden. Bild-Tint-Farben (`Color32::WHITE`) bleiben erhalten, um die originalen Bildfarben zu schützen.

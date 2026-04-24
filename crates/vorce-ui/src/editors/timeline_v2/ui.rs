@@ -4,7 +4,7 @@
 
 use crate::theme::colors;
 use crate::widgets::hold_to_action_button;
-use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
+use egui::{Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use vorce_core::animation::AnimValue;
@@ -1134,7 +1134,7 @@ impl TimelineV2 {
 
                             painter.add(egui::Shape::convex_polygon(
                                 diamond,
-                                Color32::YELLOW,
+                                ui.visuals().warn_fg_color,
                                 Stroke::new(1.0, ui.visuals().text_color()),
                             ));
                         }
