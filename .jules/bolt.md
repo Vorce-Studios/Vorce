@@ -25,3 +25,7 @@
 ## 2026-04-22 - [Optimize TriggerSystem lookup collections]
 **Erkenntnis:** Using default cryptographic HashMap/HashSet inside the high-frequency evaluation loop in `TriggerSystem::update` adds unnecessary hashing overhead when querying small integer keys like `u64` IDs.
 **Aktion:** Replaced `ActiveTriggers` and `states` inside `TriggerSystem` to use `FxHashSet` and `FxHashMap` for O(1) lookups and significantly lower hashing cost.
+
+## 2025-05-19 - [Prevent String Allocations in Vendor NodeFinder Search]
+**Erkenntnis:** The vendor crate `egui_node_editor` had an unoptimized loop in `node_finder.rs` where `kind_name.to_lowercase()` and `self.query.to_lowercase()` were computed for every node type on every UI render frame when rendering the Node Finder, creating an O(N) allocation bottleneck even when the search query was empty.
+**Aktion:** I introduced lazy evaluation for the string conversion (`let query_lower = (!self.query.is_empty()).then(|| self.query.to_lowercase());`) prior to the iteration and checked it with `if let Some(q) = &query_lower` inside the closure. This completely bypassed string allocations during the common case (empty filter) and reduced redundant computations during search filtering.
