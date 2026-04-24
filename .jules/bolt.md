@@ -33,4 +33,3 @@
 ## 2026-04-23 - [Zero-Allocation Case-Insensitive String Contains Optimization]
 **Erkenntnis:** Using `.to_lowercase().contains(&...to_lowercase())` inside hot paths (e.g., UI rendering loops in `ModuleCanvas` and `AssetManager`) creates unnecessary string heap allocations on every render frame for every matching item.
 **Aktion:** Exported the `case_insensitive_contains` function from `crates/vorce-ui/src/editors/module_canvas/draw/search.rs` as a public method and refactored string comparisons in `draw_part_with_delete` (in `part.rs`) to use this zero-allocation method, effectively avoiding heap allocations in hot paths.
-
