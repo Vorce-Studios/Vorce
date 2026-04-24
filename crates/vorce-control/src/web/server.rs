@@ -376,9 +376,8 @@ mod tests {
         use tower::Service;
 
         // Setup config with wildcard origin (which should be ignored)
-        let config = WebServerConfig::new(18081)
-            .with_cors(true)
-            .with_allowed_origins(vec!["*".to_string()]);
+        let config =
+            WebServerConfig::new(18081).with_cors(true).with_allowed_origins(vec!["*".to_string()]);
 
         let state = AppState {
             auth: Arc::new(TokioRwLock::new(AuthConfig::new())),
