@@ -63,7 +63,7 @@ tracing = { workspace = true }
 vorce-core = { path = "../vorce-core" }
 # Core dependencies
 wgpu = { workspace = true }
-zip = "8.4"
+zip = "8.6"
 
 [build-dependencies]
 bindgen = { workspace = true, optional = true }
