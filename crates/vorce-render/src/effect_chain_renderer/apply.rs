@@ -306,7 +306,7 @@ impl EffectChainRenderer {
             let current_input = if use_input {
                 input_view.clone()
             } else {
-                let ping_pong = self.ping_pong.as_ref().unwrap();
+                let Some(ping_pong) = self.ping_pong.as_ref() else { return; };
                 ping_pong.current_view().clone()
             };
 
@@ -335,7 +335,7 @@ impl EffectChainRenderer {
             let render_target = if is_last {
                 output_view
             } else {
-                let ping_pong = self.ping_pong.as_ref().unwrap();
+                let Some(ping_pong) = self.ping_pong.as_ref() else { return; };
                 ping_pong.next_view()
             };
 
