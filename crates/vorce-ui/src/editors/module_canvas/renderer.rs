@@ -387,7 +387,7 @@ pub fn render_canvas(
             if part_response.clicked() {
                 clicked_on_part = true;
                 if ui.input(|i| i.modifiers.shift) {
-                    if selected_parts_set.contains(&part_id) {
+                    if canvas.selected_parts.contains(&part_id) {
                         canvas.selected_parts.retain(|&id| id != part_id);
                     } else {
                         canvas.selected_parts.push(part_id);
@@ -401,7 +401,7 @@ pub fn render_canvas(
             if part_response.drag_started() {
                 clicked_on_part = true;
                 if canvas.creating_connection.is_none() {
-                    if !selected_parts_set.contains(&part_id) {
+                    if !canvas.selected_parts.contains(&part_id) {
                         if !ui.input(|i| i.modifiers.shift) {
                             canvas.clear_selection();
                         }
