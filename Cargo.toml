@@ -79,7 +79,7 @@ pollster = "0.4"
 
 # Testing
 proptest = "1.4"
-rayon = "1.8"
+rayon = "1.12"
 
 # SVG rendering for icons
 resvg = "0.47"
