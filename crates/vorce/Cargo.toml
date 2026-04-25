@@ -82,5 +82,19 @@ winit = { workspace = true }
 [build-dependencies]
 winres = { workspace = true }
 
+[package.metadata.deb]
+name = "vorce"
+maintainer = "Vorce Contributors <info@vorce-studios.com>"
+copyright = "2026, Vorce Contributors"
+license-file = ["../../LICENSE", "0"]
+depends = "libc6 (>= 2.31), libasound2, libavcodec58 | libavcodec-extra58, libavformat58, libavutil56, libswscale5, libswresample3, libfontconfig1, libfreetype6, libudev1, libxcb1, libx11-6, libxcursor1, libxi6, libxrandr2, libxinerama1, libwayland-client0, libxkbcommon0"
+section = "utils"
+priority = "optional"
+assets = [
+    ["../../target/release/Vorce", "usr/bin/vorce", "755"],
+    ["../../README.md", "usr/share/doc/vorce/README.md", "644"],
+    ["../../resources/app_icons/vorce.png", "usr/share/icons/hicolor/512x512/apps/vorce.png", "644"],
+]
+
 [dev-dependencies]
 image = { workspace = true }
