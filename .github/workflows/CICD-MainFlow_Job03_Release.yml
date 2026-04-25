@@ -348,13 +348,43 @@ jobs:
   publish-release:
     name: "Publish Release"
     needs: [resolve-release, build-windows, build-linux, build-macos]
+    if: always() && needs.resolve-release.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: Download Artifacts
+      - name: Gate – at least one build must succeed
+        shell: bash
+        env:
+          WIN: ${{ needs.build-windows.result }}
+          LIN: ${{ needs.build-linux.result }}
+          MAC: ${{ needs.build-macos.result }}
+        run: |
+          echo "Build results  →  Windows=$WIN  Linux=$LIN  macOS=$MAC"
+          if [[ "$WIN" != "success" && "$LIN" != "success" && "$MAC" != "success" ]]; then
+            echo "::error::All three OS builds failed – nothing to release."
+            exit 1
+          fi
+
+      - name: Download Windows Artifacts
+        if: needs.build-windows.result == 'success'
         uses: actions/download-artifact@v8
         with:
+          name: windows-artifacts
           path: release-artifacts
-          merge-multiple: true
+
+      - name: Download Linux Artifacts
+        if: needs.build-linux.result == 'success'
+        uses: actions/download-artifact@v8
+        with:
+          name: linux-artifacts
+          path: release-artifacts
+
+      - name: Download macOS Artifacts
+        if: needs.build-macos.result == 'success'
+        uses: actions/download-artifact@v8
+        with:
+          name: macos-artifacts
+          path: release-artifacts
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -364,12 +394,28 @@ jobs:
         run: |
           set -euo pipefail
 
-          assets=(
-            "release-artifacts/Vorce-$RELEASE_VERSION-Windows-x64.zip"
-            "release-artifacts/Vorce-$RELEASE_VERSION-x64.msi"
-            "release-artifacts/Vorce-$RELEASE_VERSION-Linux-x64.tar.gz"
-            "release-artifacts/Vorce-$RELEASE_VERSION-macOS-beta.dmg"
-          )
+          echo "=== Available release artifacts ==="
+          ls -lhR release-artifacts/ || true
+
+          # Collect only the artifacts that actually exist
+          assets=()
+          for f in \
+            "release-artifacts/Vorce-$RELEASE_VERSION-Windows-x64.zip" \
+            "release-artifacts/Vorce-$RELEASE_VERSION-x64.msi" \
+            "release-artifacts/Vorce-$RELEASE_VERSION-Linux-x64.tar.gz" \
+            "release-artifacts/Vorce-$RELEASE_VERSION-macOS-beta.dmg"; do
+            if [[ -f "$f" ]]; then
+              echo "✅ Found: $f"
+              assets+=("$f")
+            else
+              echo "⚠️  Missing (build may have failed): $f"
+            fi
+          done
+
+          if [[ ${#assets[@]} -eq 0 ]]; then
+            echo "::error::No release artifacts found despite passing gate."
+            exit 1
+          fi
 
           args=(
             "$RELEASE_VERSION"

@@ -14,21 +14,25 @@ pub fn draw_quick_create_popup(
     }
     let popup_pos = canvas.quick_create_pos;
     let catalog = utils::build_node_catalog();
-    let filter_str = &canvas.quick_create_filter;
+    let filter_is_empty = canvas.quick_create_filter.is_empty();
+    let filter_lower = if filter_is_empty {
+        String::new()
+    } else {
+        canvas.quick_create_filter.to_lowercase()
+    };
     let filtered_items: Vec<&utils::NodeCatalogItem> = catalog
         .iter()
         .filter(|item| {
-            if filter_str.is_empty() {
+            if filter_is_empty {
                 return true;
             }
-
-            // PERFORMANCE: Avoid redundant string allocations for case-insensitive search
-            // by using an allocation-free Unicode-aware case-insensitive iterator match.
-            if crate::core::text::contains_ignore_case(item.label, filter_str) {
+            if item.label.to_lowercase().contains(&filter_lower) {
                 return true;
             }
-
-            crate::core::text::contains_ignore_case(item.search_tags, filter_str)
+            if item.search_tags.to_lowercase().contains(&filter_lower) {
+                return true;
+            }
+            false
         })
         .collect();
     if filtered_items.is_empty() {

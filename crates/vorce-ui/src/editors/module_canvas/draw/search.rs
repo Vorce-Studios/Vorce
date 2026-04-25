@@ -40,24 +40,28 @@ pub fn draw_search_popup(
             });
             ui.add_space(8.0);
 
-            let filter_str = &canvas.search_filter;
+            let filter_is_empty = canvas.search_filter.is_empty();
+            let filter_lower = if filter_is_empty {
+                String::new()
+            } else {
+                canvas.search_filter.to_lowercase()
+            };
             let matching_parts: Vec<_> = module
                 .parts
                 .iter()
                 .filter(|p| {
-                    if filter_str.is_empty() {
+                    if filter_is_empty {
                         return true;
                     }
-
-                    // PERFORMANCE: Avoid redundant string allocations for case-insensitive search
-                    // by using an allocation-free Unicode-aware case-insensitive iterator match.
                     let name = utils::get_part_property_text(&p.part_type);
-                    if crate::core::text::contains_ignore_case(&name, filter_str) {
+                    if name.to_lowercase().contains(&filter_lower) {
                         return true;
                     }
-
                     let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
-                    crate::core::text::contains_ignore_case(type_name, filter_str)
+                    if type_name.to_lowercase().contains(&filter_lower) {
+                        return true;
+                    }
+                    false
                 })
                 .take(6)
                 .collect();

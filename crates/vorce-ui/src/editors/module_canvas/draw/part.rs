@@ -498,9 +498,15 @@ pub fn draw_part_with_delete(
 
         let type_name = socket.socket_type.name();
         // PERFORMANCE: Avoid redundant string allocations for case-insensitive search
-        // in the main render loop by using an allocation-free Unicode-aware case-insensitive iterator match.
+        // in the main render loop by using zero-allocation byte window comparison.
+        let type_bytes = type_name.as_bytes();
         let display_name = if type_name.is_empty()
-            || crate::core::text::contains_ignore_case(&socket.name, type_name)
+            || (socket.name.len() >= type_name.len()
+                && socket
+                    .name
+                    .as_bytes()
+                    .windows(type_bytes.len())
+                    .any(|w| w.eq_ignore_ascii_case(type_bytes)))
         {
             socket.name.clone()
         } else {
@@ -553,9 +559,15 @@ pub fn draw_part_with_delete(
 
         let type_name = socket.socket_type.name();
         // PERFORMANCE: Avoid redundant string allocations for case-insensitive search
-        // in the main render loop by using an allocation-free Unicode-aware case-insensitive iterator match.
+        // in the main render loop by using zero-allocation byte window comparison.
+        let type_bytes = type_name.as_bytes();
         let display_name = if type_name.is_empty()
-            || crate::core::text::contains_ignore_case(&socket.name, type_name)
+            || (socket.name.len() >= type_name.len()
+                && socket
+                    .name
+                    .as_bytes()
+                    .windows(type_bytes.len())
+                    .any(|w| w.eq_ignore_ascii_case(type_bytes)))
         {
             socket.name.clone()
         } else {

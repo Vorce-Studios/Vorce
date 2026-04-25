@@ -674,23 +674,17 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     TimelineAction::AddMarker(t) => {
                         let animator = std::sync::Arc::make_mut(&mut app.state.effect_animator);
                         let name = format!("Marker {:.1}s", t);
-                        let max_id = animator
-                            .clip()
-                            .markers
-                            .iter()
-                            .map(|m| m.id)
-                            .max()
-                            .unwrap_or(0);
-                        let id = max_id + 1;
+                        // Simple ID generation for markers
+                        let id = (t * 1000.0) as u64;
                         animator.add_marker(vorce_core::animation::Marker::new(id, t as f64, name));
                     }
-                    TimelineAction::RemoveMarker(id) => {
+                    TimelineAction::RemoveMarker(t) => {
                         let animator = std::sync::Arc::make_mut(&mut app.state.effect_animator);
-                        animator.remove_marker(id);
+                        animator.remove_marker(t as f64);
                     }
-                    TimelineAction::ToggleMarkerPause(id) => {
+                    TimelineAction::ToggleMarkerPause(t) => {
                         let animator = std::sync::Arc::make_mut(&mut app.state.effect_animator);
-                        animator.toggle_marker_pause(id);
+                        animator.toggle_marker_pause(t as f64);
                     }
                     TimelineAction::JumpNextMarker => {
                         let animator = std::sync::Arc::make_mut(&mut app.state.effect_animator);

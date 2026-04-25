@@ -449,9 +449,14 @@ impl EffectChainPanel {
                         egui::ScrollArea::vertical()
                             .max_height(200.0)
                             .show(ui, |ui| {
-                                let search_lower = self.preset_search.to_lowercase();
+                                let search_is_empty = self.preset_search.is_empty();
+                                let search_lower = if search_is_empty {
+                                    String::new()
+                                } else {
+                                    self.preset_search.to_lowercase()
+                                };
                                 for preset in &self.presets {
-                                    if !self.preset_search.is_empty()
+                                    if !search_is_empty
                                         && !preset.name_lower.contains(&search_lower)
                                     {
                                         continue;

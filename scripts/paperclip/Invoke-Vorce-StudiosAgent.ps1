@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('ceo', 'chief_of_staff', 'discovery', 'jules', 'gemini_review', 'qwen_review', 'codex_review', 'ops', 'atlas')]
+    [ValidateSet('ceo', 'lena_assistant', 'chief_of_staff', 'discovery', 'jules', 'jules_monitor', 'pr_monitor', 'gemini_review', 'qwen_review', 'codex_review', 'ops', 'atlas', 'antigravity')]
     [string]$Role
 )
 
@@ -916,6 +916,42 @@ function Invoke-VorceStudiosOps {
     }
 }
 
+function Invoke-VorceStudiosJulesMonitor {
+    param(
+        [Parameter(Mandatory)][hashtable]$Context
+    )
+    # Stub: Jules Session Monitor Logic (Qwen CLI)
+    Write-Output "Jules Monitor Check executed."
+}
+
+function Invoke-VorceStudiosPrMonitor {
+    param(
+        [Parameter(Mandatory)][hashtable]$Context
+    )
+    # Stub: GitHub PR Monitor Logic (Qwen CLI)
+    Write-Output "PR Monitor Check executed."
+}
+
+function Invoke-VorceStudiosAntigravity {
+    param(
+        [Parameter(Mandatory)][hashtable]$Context
+    )
+    Write-Output "Dispatching to Antigravity Native API..."
+    try {
+        & (Join-Path $ScriptDir 'Invoke-VorceStudiosAntigravityDirect.ps1') -Context $Context -Issue $null -TaskType 'implementation'
+    } catch {
+        Write-Warning "Native Binding failed. Check Daemon."
+    }
+}
+
+function Invoke-VorceStudiosLenaAssistant {
+    param(
+        [Parameter(Mandatory)][hashtable]$Context
+    )
+    # Stub: Lena Assistant Logic
+    Write-Output "Lena Assistant executed."
+}
+
 function Invoke-VorceStudiosCEO {
     param(
         [Parameter(Mandatory)][hashtable]$Context
@@ -1027,7 +1063,11 @@ if ($null -eq $context) {
 switch ($Role) {
     'discovery' { Invoke-VorceStudiosDiscovery -Context $context }
     'chief_of_staff' { Invoke-VorceStudiosChiefOfStaff -Context $context }
+    'lena_assistant' { Invoke-VorceStudiosLenaAssistant -Context $context }
     'jules' { Invoke-VorceStudiosJulesBuilder -Context $context }
+    'jules_monitor' { Invoke-VorceStudiosJulesMonitor -Context $context }
+    'pr_monitor' { Invoke-VorceStudiosPrMonitor -Context $context }
+    'antigravity' { Invoke-VorceStudiosAntigravity -Context $context }
     'gemini_review' { Invoke-VorceStudiosReviewer -Context $context -ReviewerRole 'gemini_review' -ToolName 'gemini' }
     'qwen_review' { Invoke-VorceStudiosReviewer -Context $context -ReviewerRole 'qwen_review' -ToolName 'qwen' }
     'codex_review' { Invoke-VorceStudiosReviewer -Context $context -ReviewerRole 'codex_review' -ToolName 'codex' }

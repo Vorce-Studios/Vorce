@@ -71,23 +71,27 @@ impl ShortcutsPanel {
         let shortcuts_clone = key_bindings.get_shortcuts().to_vec();
 
         // --- Filter and Group Shortcuts ---
-        let filter_str = &self.search_filter;
+        let filter_is_empty = self.search_filter.is_empty();
+        let filter_lower = if filter_is_empty {
+            String::new()
+        } else {
+            self.search_filter.to_lowercase()
+        };
         let filtered_indices: Vec<usize> = shortcuts_clone
             .iter()
             .enumerate()
             .filter(|(_, s)| {
-                if filter_str.is_empty() {
+                if filter_is_empty {
                     return true;
                 }
-
-                // PERFORMANCE: Avoid redundant string allocations for case-insensitive search
-                // by using an allocation-free Unicode-aware case-insensitive iterator match.
-                if crate::core::text::contains_ignore_case(&s.description, filter_str) {
+                if s.description.to_lowercase().contains(&filter_lower) {
                     return true;
                 }
-
                 let shortcut_str = s.to_shortcut_string();
-                crate::core::text::contains_ignore_case(&shortcut_str, filter_str)
+                if shortcut_str.to_lowercase().contains(&filter_lower) {
+                    return true;
+                }
+                false
             })
             .map(|(i, _)| i)
             .collect();
