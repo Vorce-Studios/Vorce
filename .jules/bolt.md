@@ -33,3 +33,11 @@
 ## 2026-04-23 - [Zero-Allocation Case-Insensitive String Contains Optimization]
 **Erkenntnis:** Using `.to_lowercase().contains(&...to_lowercase())` inside hot paths (e.g., UI rendering loops in `ModuleCanvas` and `AssetManager`) creates unnecessary string heap allocations on every render frame for every matching item.
 **Aktion:** Exported the `case_insensitive_contains` function from `crates/vorce-ui/src/editors/module_canvas/draw/search.rs` as a public method and refactored string comparisons in `draw_part_with_delete` (in `part.rs`) to use this zero-allocation method, effectively avoiding heap allocations in hot paths.
+
+## 2026-04-25 - [Prevent String Allocations in MediaManagerUI Search]
+**Erkenntnis:** Similar to other UI views, `MediaManagerUI::render_main_content` called `self.search_query.to_lowercase()` unconditionally on every UI frame. This generated unnecessary heap allocations continuously when the search query was empty, increasing allocator pressure and degrading UI responsiveness.
+**Aktion:** Refactored the search filter to use lazy evaluation (`let query_lower = (!self.search_query.is_empty()).then(|| self.search_query.to_lowercase());`), ensuring the heap allocation only occurs when an active filter string is present.
+
+## 2026-04-26 - [Prevent String Allocations with Caching in MediaManagerUI Search]
+**Erkenntnis:** During code review, it was identified that evaluating `.to_lowercase()` using `(!self.search_query.is_empty()).then(|| self.search_query.to_lowercase())` inside the UI loop did not actually solve the allocation issue when the user *has* an active search query, because it would then continuously allocate a new `String` on every frame while the user isn't even typing.
+**Aktion:** Refactored `MediaManagerUI` to cache the lowercased search query in the state struct (`self.search_query_lower`), and only recalculate it when `ui.text_edit_singleline(...).changed()` returns true. This completely eliminates per-frame string allocations for filtering, regardless of whether the query is empty or not.
