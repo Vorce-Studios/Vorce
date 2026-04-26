@@ -65,18 +65,25 @@ pub fn sync_ndi_senders(app: &mut App) {
     // Check dedicated NdiOutput nodes
     for module in app.state.module_manager.modules() {
         for part in &module.parts {
-            if let ModulePartType::Output(OutputType::NdiOutput { name }) = &part.part_type {
-                desired_senders.push((part.id, name.clone()));
+            if let ModulePartType::Output(OutputType::NdiOutput { name, width, height }) = &part.part_type {
+                let stream_name = if name.is_empty() {
+                    "Vorce NDI".to_string()
+                } else {
+                    name.clone()
+                };
+                desired_senders.push((part.id, stream_name, *width, *height));
             }
             // Also handle Projectors with NDI enabled
             if let ModulePartType::Output(OutputType::Projector {
                 ndi_enabled,
                 ndi_stream_name,
+                output_width,
+                output_height,
                 ..
             }) = &part.part_type
             {
                 if *ndi_enabled {
-                    desired_senders.push((part.id, ndi_stream_name.clone()));
+                    desired_senders.push((part.id, ndi_stream_name.clone(), *output_width, *output_height));
                 }
             }
         }
@@ -85,23 +92,30 @@ pub fn sync_ndi_senders(app: &mut App) {
     // Remove stale senders
     let current_ids: Vec<_> = app.ndi_senders.keys().cloned().collect();
     for id in current_ids {
-        if !desired_senders.iter().any(|(pid, _)| *pid == id) {
+        if !desired_senders.iter().any(|(pid, ..)| *pid == id) {
             info!("Removing NDI sender for part {}", id);
             app.ndi_senders.remove(&id);
         }
     }
 
     // Add new or update existing senders
-    for (part_id, name) in desired_senders {
+    for (part_id, name, width, height) in desired_senders {
         let needs_recreate = if let Some(sender) = app.ndi_senders.get(&part_id) {
             sender.name() != name.as_str()
+            // Note: We don't currently expose format on sender to check resolution, 
+            // but NdiSender::new takes it. Recreating on name change for now.
         } else {
             true
         };
 
         if needs_recreate {
-            info!("Creating NDI sender for part {} with name {}", part_id, name);
-            let format = vorce_io::format::VideoFormat::hd_1080p60_rgba();
+            info!("Creating NDI sender for part {} with name {} ({}x{})", part_id, name, width, height);
+            let format = vorce_io::format::VideoFormat::new(
+                width.max(128),
+                height.max(128),
+                vorce_io::format::PixelFormat::BGRA8,
+                60.0,
+            );
             match vorce_io::ndi::NdiSender::new(name, format) {
                 Ok(sender) => {
                     app.ndi_senders.insert(part_id, sender);
@@ -143,4 +157,34 @@ pub fn update_ndi_sources(app: &mut App) {
             }
         }
     }
+}
+
+/// Syncs NDI runtime status to UI canvas state so inspectors can reflect connection status.
+pub fn sync_ndi_status_to_ui(app: &mut App) {
+    use vorce_ui::editors::module_canvas::state::{NdiInputStatus, ModuleCanvas};
+
+    // Update input status: reflect what receivers we have and their connected sources
+    for (part_id, receiver) in &app.ndi_receivers {
+        let status = NdiInputStatus {
+            connected: receiver.source_name().is_some(),
+            source_name: receiver.source_name().map(|s| s.to_string()),
+            last_frame_time_ms: None,
+        };
+        app.ui_state.module_canvas.ndi_input_status.insert(*part_id, status);
+    }
+
+    // Remove status for parts that no longer have receivers
+    app.ui_state.module_canvas.ndi_input_status.retain(|part_id, _| {
+        app.ndi_receivers.contains_key(part_id)
+    });
+
+    // Update output status: reflect what senders we have (indicates active sending)
+    for (part_id, _) in &app.ndi_senders {
+        app.ui_state.module_canvas.ndi_output_status.insert(*part_id, true);
+    }
+
+    // Remove status for parts that no longer have senders
+    app.ui_state.module_canvas.ndi_output_status.retain(|part_id, _| {
+        app.ndi_senders.contains_key(part_id)
+    });
 }

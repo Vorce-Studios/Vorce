@@ -138,6 +138,7 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
         sync_ndi_receivers(app);
         sync_ndi_senders(app);
         update_ndi_sources(app);
+        sync_ndi_status_to_ui(app);
     }
 
     let _param_updates = app.state.effect_animator_mut().update(dt as f64);

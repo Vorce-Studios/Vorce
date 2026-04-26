@@ -12,6 +12,14 @@ use vorce_io::ndi::NdiSource;
 use super::types::*;
 use super::utils;
 
+#[cfg(feature = "ndi")]
+#[derive(Debug, Clone)]
+pub struct NdiInputStatus {
+    pub connected: bool,
+    pub source_name: Option<String>,
+    pub last_frame_time_ms: Option<f64>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LayerInspectorViewMode {
     Preview,
@@ -77,6 +85,12 @@ pub struct ModuleCanvas {
     /// Channel to receive discovered NDI sources from async task
     #[cfg(feature = "ndi")]
     pub ndi_discovery_rx: Option<mpsc::Receiver<Vec<NdiSource>>>,
+    /// NDI Input connection status (part_id -> connected source name)
+    #[cfg(feature = "ndi")]
+    pub ndi_input_status: std::collections::HashMap<ModulePartId, NdiInputStatus>,
+    /// NDI Output sending status (part_id -> is actively sending)
+    #[cfg(feature = "ndi")]
+    pub ndi_output_status: std::collections::HashMap<ModulePartId, bool>,
     /// Available outputs (id, name) for output node selection
     pub available_outputs: Vec<(u64, String)>,
     /// ID of the part being edited in a popup
@@ -138,8 +152,10 @@ pub struct ModuleCanvas {
     /// Index of the currently selected item in the quick create list
     pub quick_create_selected_index: usize,
 
-    /// Snapshot of a part before editing, used to create Undo/Redo commands when an edit finishes.
+    /// Snapshot of part being edited for undo tracking during drag operations
     pub edit_snapshot: Option<vorce_core::module::ModulePart>,
+    /// Snapshot of all selected parts before editing, used to create Undo/Redo commands.
+    pub selection_snapshot: Vec<vorce_core::module::ModulePart>,
 }
 
 impl Default for ModuleCanvas {
@@ -174,6 +190,10 @@ impl Default for ModuleCanvas {
             ndi_sources: Vec::new(),
             #[cfg(feature = "ndi")]
             ndi_discovery_rx: None,
+            #[cfg(feature = "ndi")]
+            ndi_input_status: std::collections::HashMap::new(),
+            #[cfg(feature = "ndi")]
+            ndi_output_status: std::collections::HashMap::new(),
             available_outputs: Vec::new(),
             editing_part_id: None,
             node_previews: std::collections::HashMap::new(),
@@ -199,6 +219,7 @@ impl Default for ModuleCanvas {
             quick_create_pos: Pos2::ZERO,
             quick_create_selected_index: 0,
             edit_snapshot: None,
+            selection_snapshot: Vec::new(),
         }
     }
 }
