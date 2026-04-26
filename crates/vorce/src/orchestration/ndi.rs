@@ -102,7 +102,7 @@ pub fn sync_ndi_senders(app: &mut App) {
     for (part_id, name, width, height) in desired_senders {
         let needs_recreate = if let Some(sender) = app.ndi_senders.get(&part_id) {
             sender.name() != name.as_str()
-            // Note: We don't currently expose format on sender to check resolution, 
+            // Note: We don't currently expose format on sender to check resolution,
             // but NdiSender::new takes it. Recreating on name change for now.
         } else {
             true
