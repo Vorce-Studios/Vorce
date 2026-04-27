@@ -22,19 +22,19 @@ function Get-ChecksSummary {
     }
     $checks = @($Checks)
 
-    $failed = @($checks | Where-Object { 
+    $failed = @($checks | Where-Object {
         $state = Get-JulesObjectPropertyValue -Object $_ -Name "state"
         $bucket = Get-JulesObjectPropertyValue -Object $_ -Name "bucket"
-        @("FAILURE", "TIMED_OUT", "CANCELLED", "ERROR") -contains [string]$state -or @("fail", "error") -contains [string]$bucket 
+        @("FAILURE", "TIMED_OUT", "CANCELLED", "ERROR") -contains [string]$state -or @("fail", "error") -contains [string]$bucket
     })
     if ($failed.Count -gt 0) {
         return "failing: " + (($failed | ForEach-Object { [string]$_.name } | Select-Object -Unique) -join ", ")
     }
 
-    $pending = @($checks | Where-Object { 
+    $pending = @($checks | Where-Object {
         $state = Get-JulesObjectPropertyValue -Object $_ -Name "state"
         $bucket = Get-JulesObjectPropertyValue -Object $_ -Name "bucket"
-        @("PENDING", "QUEUED", "IN_PROGRESS", "STARTUP_FAILURE") -contains [string]$state -or @("pending", "skipping") -contains [string]$bucket 
+        @("PENDING", "QUEUED", "IN_PROGRESS", "STARTUP_FAILURE") -contains [string]$state -or @("pending", "skipping") -contains [string]$bucket
     })
     if ($pending.Count -gt 0) {
         return "pending: " + (($pending | ForEach-Object { [string]$_.name } | Select-Object -Unique) -join ", ")
