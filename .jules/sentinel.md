@@ -13,3 +13,11 @@
 **Lektion:** CORS-Policies sollten niemals standardmäßig oder durch einfache Konfiguration Wildcards erlauben, insbesondere bei APIs, die sensitive Aktionen ausführen können.
 
 **Prävention:** Wildcards in CORS-Einstellungen sollten im Code explizit abgefangen und ignoriert werden. Erlaubte Origins müssen als spezifische, vertrauenswürdige Domains konfiguriert werden.
+
+## 2025-05-24 - DoS via Option::expect() in NDI receiver
+
+**Schwachstelle:** Ein `expect()` Aufruf befand sich im NDI Receiver (`crates/vorce/src/app/actions.rs` in `UIAction::ConnectNdiSource`), wenn das NDI Receiver-Objekt erstellt wurde.
+
+**Lektion:** Falls das Neu-Anlegen des NDI-Receivers fehlschlägt (z.B. wegen fehlender Bibliotheken oder Ressourcen), stürzt die gesamte Anwendung durch Panic ab (Denial of Service), wenn nur ein neuer NDI-Stream verbunden werden soll.
+
+**Prävention:** Das Erstellen von NDI-Ressourcen sollte immer über sichere `match` oder `if let` Pattern gelöst werden, und bei Fehlschlag stattdessen ein gracefully Error in die Logs geschrieben und die Aktion abgebrochen werden, ohne die Applikation abstürzen zu lassen.
