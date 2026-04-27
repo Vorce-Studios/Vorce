@@ -291,4 +291,8 @@ pub struct App {
     pub media_library: MediaLibrary,
     /// Bevy runner for 3D/Particles
     pub bevy_runner: Option<vorce_bevy::BevyRunner>,
+    /// Offscreen textures for virtual NDI outputs (PartID -> Texture, View)
+    #[cfg(feature = "ndi")]
+    pub ndi_offscreen_textures:
+        std::collections::HashMap<vorce_core::module::ModulePartId, (wgpu::Texture, std::sync::Arc<wgpu::TextureView>)>,
 }

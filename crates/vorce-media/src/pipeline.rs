@@ -247,7 +247,8 @@ impl FramePipeline {
 
         if let Some(thread) = self.decode_thread.take() {
             if let Err(e) = thread.join() {
-                tracing::error!("Failed to join decode thread: {:?}", e);
+                tracing::error!("Decode thread panicked: {:?}", e);
+
             }
         }
     }

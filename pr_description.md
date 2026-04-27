@@ -1,14 +1,14 @@
+## Verlinktes Issue
+Fixes #370
+
 🎯 **What:**
-The vulnerability fixed is a Path Traversal issue in the `save_effect_preset` and `save_transform_preset` functions within `AssetManager`. Previously, a malicious or malformed `preset.name` containing relative path separators (like `../`) could write files outside of the designated library directories.
+Enabled NDI input and output capabilities in the module inspector UI and updated their runtime status.
 
-⚠️ **Risk:**
-If left unfixed, an attacker could supply a preset name starting with `../../../` to save arbitrary JSON data anywhere on the user's filesystem where the process has write permissions. This could lead to data overwrite, arbitrary code execution (e.g. overwriting config files), or denial of service by polluting the filesystem.
+💡 **Why:**
+As requested in Issue #370 (and Paperclip VOR-38), NdiOutput is now considered active and needs to reflect its proper status in the UI so that users know it's fully supported instead of experimental.
 
-🛡️ **Solution:**
-The fix addresses the vulnerability by strictly canonicalizing the destination paths and comparing them. We extract the file's parent directory, ensure it exists via `std::fs::create_dir_all`, canonicalize it, and verify that the resolved directory strictly starts with the canonical base path of the intended effects or transforms directory. Any path resolving outside of the target base directory will return a `PermissionDenied` I/O error instead of executing the file write.
+✅ **Verification:**
+Updated existing unit tests for `is_source_type_enum_supported` and `is_output_type_enum_supported` to expect `true` for NDI, and verified all tests pass via `cargo test -p vorce-ui`.
 
-🚨 **Schweregrad:** HIGH
-💡 **Schwachstelle:** Path Traversal / Arbitrary File Write
-🎯 **Impact:** Arbitrary files can be overwritten or created anywhere on the user's filesystem if the process has permission, potentially leading to RCE or DoS.
-🔧 **Fix:** Introduced rigorous canonicalization checks `canonical_parent.starts_with(&canonical_base)` on `file_path.parent()` prior to issuing writes for both `save_effect_preset` and `save_transform_preset`.
-✅ **Verifikation:** Added canonicalization validation ensuring malformed inputs return `Err(PermissionDenied)`. Confirmed `cargo test -p vorce-ui` continues to pass, ensuring normal path behaviors remain unbroken.
+✨ **Result:**
+The inspector UI for NDI Input and Output nodes now displays a positive "Runtime Active" indicator in MINT_ACCENT color instead of an unsupported warning, and capabilities correctly reflect NDI as a supported format.
