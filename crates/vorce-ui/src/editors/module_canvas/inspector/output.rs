@@ -234,6 +234,8 @@ pub fn render_output_ui(
                         ui,
                         "[Experimental] NDI Output has no active runtime path currently.",
                     );
+                } else {
+                    capabilities::render_runtime_active_info(ui);
                 }
                 ui.add_enabled_ui(supported, |ui| {
                     ui.checkbox(_ndi_enabled, "Enable NDI Output");
@@ -256,10 +258,7 @@ pub fn render_output_ui(
         #[cfg(feature = "ndi")]
         OutputType::NdiOutput { name } => {
             ui.label("\u{1F4E1} NDI Output");
-            capabilities::render_unsupported_warning(
-                ui,
-                "[Experimental] NDI Output has no active runtime path currently.",
-            );
+            capabilities::render_runtime_active_info(ui);
             ui.horizontal(|ui| {
                 ui.label("Stream Name:");
                 ui.text_edit_singleline(name);

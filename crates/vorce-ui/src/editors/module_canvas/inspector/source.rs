@@ -996,6 +996,8 @@ pub fn render_source_ui(
                     ui,
                     "[Experimental] NDI Input has no active polling/upload path in the current runtime.",
                 );
+            } else {
+                capabilities::render_runtime_active_info(ui);
             }
 
             ui.add_enabled_ui(supported, |ui| {
