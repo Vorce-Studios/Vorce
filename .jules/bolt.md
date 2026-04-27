@@ -53,7 +53,6 @@
 ## 2026-04-27 - [Prevent String Allocations in Quick Create Filter]
 **Erkenntnis:** Building the `NodeCatalogItem` catalog inside immediate-mode rendering loops (like in `draw_quick_create_popup`) triggered numerous string allocations (`.to_string()`, `.to_lowercase()`) because of the `label_lower` field. This unnecessarily pressured the allocator during every frame where the quick create popup was visible.
 **Aktion:** Removed the `label_lower` field entirely from `NodeCatalogItem` to bypass initial string allocations, and refactored the quick-create filter to use the zero-allocation `case_insensitive_contains` function. This prevents per-frame allocations during filtering and initialization without breaking the search behavior.
-
 ## 2026-04-27 - [Optimization] Prevent redundant lowercasing in Node Catalog building
 **Erkenntnis:** The `build_node_catalog` utility function was still performing string allocations for `label_lower` and `search_tags_lower` even if those fields were not strictly necessary for every frame.
 **Aktion:** Refactored the catalog building to be lazy or use the optimized `case_insensitive_contains` where possible, avoiding per-call heap pressure.
