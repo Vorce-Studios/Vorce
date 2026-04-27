@@ -3,7 +3,7 @@ use crate::app::core::app_struct::App;
 use crate::orchestration::evaluation::perform_evaluation;
 use crate::orchestration::media::{sync_media_players, update_media_players};
 #[cfg(feature = "ndi")]
-use crate::orchestration::ndi::{sync_ndi_receivers, sync_ndi_senders, update_ndi_sources};
+use crate::orchestration::ndi::{sync_ndi_receivers, sync_ndi_senders, sync_ndi_status_to_ui, update_ndi_sources};
 use crate::orchestration::outputs::sync_output_windows;
 use anyhow::Result;
 use std::collections::HashSet;

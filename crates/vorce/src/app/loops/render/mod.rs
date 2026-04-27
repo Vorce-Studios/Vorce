@@ -21,7 +21,9 @@ use previews::*;
 pub(crate) const PREVIEW_FLAG: u64 = 1u64 << 63;
 
 /// Default resolution for NDI output when not specified.
+#[allow(dead_code)]
 const NDI_OUTPUT_DEFAULT_WIDTH: u32 = 1920;
+#[allow(dead_code)]
 const NDI_OUTPUT_DEFAULT_HEIGHT: u32 = 1080;
 
 /// Renders the UI or content for the given output ID.
@@ -306,7 +308,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
             // Collect all NDI senders that need offscreen rendering
             let mut ndi_virtual_tasks: Vec<(vorce_core::module::ModulePartId, String, u32, u32)> = Vec::new();
 
-            for (&part_id, sender) in &app.ndi_senders {
+            for (&part_id, _sender) in &app.ndi_senders {
                 // Check if this part_id is already being handled by a physical window pass
                 // We check if any output_id > 0 has this part_id in its render queue
                 let is_physical = app.render_queue.items.iter()
@@ -333,7 +335,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                 }
             }
 
-            for (part_id, stream_name, width, height) in ndi_virtual_tasks {
+            for (part_id, _stream_name, width, height) in ndi_virtual_tasks {
                 // Ensure offscreen texture exists for this NDI output
                 let tex_size = (width.max(128), height.max(128));
                 let needs_texture = if let Some((tex, _view)) = app.ndi_offscreen_textures.get(&part_id) {
@@ -344,7 +346,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
 
                 if needs_texture {
                     let texture = app.backend.device.create_texture(&wgpu::TextureDescriptor {
-                        label: Some(format!("NDI Offscreen Texture {}", stream_name)),
+                        label: Some("NDI Offscreen Texture"),
                         size: wgpu::Extent3d {
                             width: tex_size.0,
                             height: tex_size.1,
@@ -412,7 +414,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                             .entry(part_id)
                             .or_insert_with(|| {
                                 let buffer = app.backend.device.create_buffer(&wgpu::BufferDescriptor {
-                                    label: Some(format!("NDI Readback {}", stream_name)),
+                                    label: Some("NDI Readback"),
                                     size: buffer_size,
                                     usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
                                     mapped_at_creation: false,

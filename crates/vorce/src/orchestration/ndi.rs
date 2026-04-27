@@ -161,7 +161,7 @@ pub fn update_ndi_sources(app: &mut App) {
 
 /// Syncs NDI runtime status to UI canvas state so inspectors can reflect connection status.
 pub fn sync_ndi_status_to_ui(app: &mut App) {
-    use vorce_ui::editors::module_canvas::state::{NdiInputStatus, ModuleCanvas};
+    use vorce_ui::editors::module_canvas::state::NdiInputStatus;
 
     // Update input status: reflect what receivers we have and their connected sources
     for (part_id, receiver) in &app.ndi_receivers {
