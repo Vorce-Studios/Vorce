@@ -18,7 +18,8 @@ pub fn draw_quick_create_popup(
         .iter()
         .filter(|item| {
             if let Some(f) = canvas.quick_create_filter_lower.as_deref() {
-                item.label_lower.contains(f) || item.search_tags.contains(f)
+                super::search::case_insensitive_contains(item.label, f)
+                    || super::search::case_insensitive_contains(item.search_tags, f)
             } else {
                 true
             }
