@@ -270,8 +270,6 @@ pub fn render_canvas(
         let mut delete_part_id = None;
         let mut resize_ops = Vec::new();
         let mut drag_delta = Vec2::ZERO;
-        let selected_parts_set: rustc_hash::FxHashSet<vorce_core::module::ModulePartId> =
-            canvas.selected_parts.iter().copied().collect();
 
         for part in &mut module.parts {
             let part_pos = to_screen(Pos2::new(part.position.0, part.position.1));
@@ -281,7 +279,7 @@ pub fn render_canvas(
             });
             let part_rect = Rect::from_min_size(part_pos, Vec2::new(w, h) * canvas.zoom);
 
-            if selected_parts_set.contains(&part.id) {
+            if canvas.selected_parts.contains(&part.id) {
                 let highlight_rect = part_rect.expand(4.0 * canvas.zoom);
                 painter.rect_stroke(
                     highlight_rect,
