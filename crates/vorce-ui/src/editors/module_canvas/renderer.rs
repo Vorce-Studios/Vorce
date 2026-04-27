@@ -257,6 +257,22 @@ pub fn render_canvas(
         let initial_selected_set: rustc_hash::FxHashSet<vorce_core::module::ModulePartId> =
             canvas.selected_parts.iter().copied().collect();
 
+        // Apply drag delta BEFORE drawing for immediate visual feedback
+        if let Some((_dragged_id, _accumulator)) = canvas.dragging_part {
+            if response.dragged() && canvas.creating_connection.is_none() {
+                drag_delta = response.drag_delta() / canvas.zoom;
+
+                // Mutate positions right away before drawing
+                for pid in &canvas.selected_parts {
+                    if let Some(part) = module.parts.iter_mut().find(|part| part.id == *pid) {
+                        part.position.0 += drag_delta.x;
+                        part.position.1 += drag_delta.y;
+                        module_changed = true;
+                    }
+                }
+            }
+        }
+
         // --- Pass 1: Interaction ---
         for part in &module.parts {
             let part_id = part.id;
@@ -383,12 +399,6 @@ pub fn render_canvas(
                 }
             }
 
-            if let Some((dragged_id, _accumulator)) = canvas.dragging_part {
-                if dragged_id == part_id && canvas.creating_connection.is_none() {
-                    drag_delta = part_response.drag_delta() / canvas.zoom;
-                }
-            }
-
             if part_response.drag_stopped() {
                 canvas.dragging_part = None;
             }
@@ -448,13 +458,6 @@ pub fn render_canvas(
         }
 
         if drag_delta != Vec2::ZERO {
-            for pid in &canvas.selected_parts {
-                if let Some(part) = module.parts.iter_mut().find(|part| part.id == *pid) {
-                    part.position.0 += drag_delta.x;
-                    part.position.1 += drag_delta.y;
-                    module_changed = true;
-                }
-            }
             if ui.input(|i| i.pointer.any_released()) && !canvas.selection_snapshot.is_empty() {
                 let mut position_changes = Vec::new();
                 for snapshot_part in &canvas.selection_snapshot {
@@ -477,7 +480,6 @@ pub fn render_canvas(
                 canvas.selection_snapshot.clear();
             }
         }
-
         for (part_id, delta) in resize_ops {
             if let Some(part) = module.parts.iter_mut().find(|part| part.id == part_id) {
                 let current_size = part.size.unwrap_or_else(|| {
