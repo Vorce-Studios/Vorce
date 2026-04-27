@@ -135,14 +135,8 @@ impl ModulePartType {
             ),
             ModulePartType::Output(out) => match out {
                 OutputType::Hue { .. } => (
-<<<<<<< HEAD
-                    vec![
-                        ModuleSocket::standard_layer_in(),
-                        ModuleSocket::standard_trigger_in(),
-                    ],
-=======
                     vec![ModuleSocket::standard_layer_in(), ModuleSocket::standard_trigger_in()],
->>>>>>> origin/main
+
                     vec![],
                 ),
                 _ => (vec![ModuleSocket::standard_layer_in()], vec![]),
