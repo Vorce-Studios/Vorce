@@ -69,7 +69,7 @@ libmpv2 = { version = "5.0", features = ["render"] }
 libmpv2-sys = "4.0.1"
 
 # Control
-midir = "0.10"
+midir = "0.11"
 
 # File watching
 notify = "8.2"
@@ -79,7 +79,7 @@ pollster = "0.4"
 
 # Testing
 proptest = "1.4"
-rayon = "1.8"
+rayon = "1.12"
 
 # SVG rendering for icons
 resvg = "0.47"
@@ -99,7 +99,7 @@ thiserror = "2.0"
 tiny-skia = "0.12"
 
 # Async runtime
-tokio = { version = "1.50.0", features = ["full"] }
+tokio = { version = "1.52.1", features = ["full"] }
 toml = "1.1.0"
 tower = "0.5"
 

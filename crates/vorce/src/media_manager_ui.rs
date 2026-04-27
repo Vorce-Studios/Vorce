@@ -5,6 +5,7 @@ use vorce_ui::responsive::ResponsiveLayout;
 pub struct MediaManagerUI {
     pub visible: bool, // Toggle visibility
     search_query: String,
+    search_query_lower: String,
     view_mode: ViewMode,
     selected_playlist: Option<String>,
     new_playlist_name: String,
@@ -22,6 +23,7 @@ impl Default for MediaManagerUI {
         Self {
             visible: false,
             search_query: String::new(),
+            search_query_lower: String::new(),
             view_mode: ViewMode::Grid,
             selected_playlist: None,
             new_playlist_name: String::new(),
@@ -118,7 +120,9 @@ impl MediaManagerUI {
             // Toolbar
             ui.horizontal(|ui| {
                 ui.label("Search:");
-                ui.text_edit_singleline(&mut self.search_query);
+                if ui.text_edit_singleline(&mut self.search_query).changed() {
+                    self.search_query_lower = self.search_query.to_lowercase();
+                }
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if ui.selectable_label(self.view_mode == ViewMode::List, "List").clicked() {
@@ -143,9 +147,8 @@ impl MediaManagerUI {
             ui.separator();
 
             // Content Area
+            let search_lower = self.search_query_lower.clone();
             egui::ScrollArea::vertical().show(ui, |ui| {
-                let query = self.search_query.to_lowercase();
-
                 let mut iter1;
                 let mut iter2;
                 let mut iter3;
@@ -167,8 +170,9 @@ impl MediaManagerUI {
                     &mut iter3
                 };
 
-                let mut filtered_items =
-                    items.filter(|item| query.is_empty() || item.name_lower.contains(&query));
+                let mut filtered_items = items.filter(|item| {
+                    search_lower.is_empty() || item.name_lower.contains(&search_lower)
+                });
 
                 match self.view_mode {
                     ViewMode::Grid => self.render_grid(ui, &mut filtered_items),

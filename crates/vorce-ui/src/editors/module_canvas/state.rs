@@ -50,6 +50,8 @@ pub struct ModuleCanvas {
     pub clipboard: Vec<(vorce_core::module::ModulePartType, (f32, f32))>,
     /// Search filter text
     pub search_filter: String,
+    /// Lowercased cached search filter
+    pub search_filter_lower: Option<String>,
     /// Whether search popup is visible
     pub show_search: bool,
     /// Undo history stack
@@ -147,6 +149,8 @@ pub struct ModuleCanvas {
     pub show_quick_create: bool,
     /// Filter text for quick create
     pub quick_create_filter: String,
+    /// Lowercased cached quick create filter
+    pub quick_create_filter_lower: Option<String>,
     /// Screen position for the quick create popup
     pub quick_create_pos: Pos2,
     /// Index of the currently selected item in the quick create list
@@ -172,6 +176,7 @@ impl Default for ModuleCanvas {
             selected_parts: Vec::new(),
             clipboard: Vec::new(),
             search_filter: String::new(),
+            search_filter_lower: None,
             show_search: false,
             undo_stack: Vec::new(),
             redo_stack: Vec::new(),
@@ -216,6 +221,7 @@ impl Default for ModuleCanvas {
             last_mesh_edit_id: None,
             show_quick_create: false,
             quick_create_filter: String::new(),
+            quick_create_filter_lower: None,
             quick_create_pos: Pos2::ZERO,
             quick_create_selected_index: 0,
             edit_snapshot: None,
