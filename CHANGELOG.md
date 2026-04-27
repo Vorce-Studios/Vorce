@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- 2026-04-27: fix: Fix stale selection feedback in module-canvas and node-editor
 - 2026-04-24: test(ci): VOR-41 Add Windows packaging smoke test to validate installer artifact (#356)
 - 2026-04-22: fix: Resolve merge conflicts and restore NDI build stability in master integration session (#343)
 
