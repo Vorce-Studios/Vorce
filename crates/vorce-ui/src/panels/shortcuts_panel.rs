@@ -85,6 +85,7 @@ impl ShortcutsPanel {
         let shortcuts_clone = key_bindings.get_shortcuts().to_vec();
 
         // --- Filter and Group Shortcuts ---
+
         let filtered_indices: Vec<usize> = shortcuts_clone
             .iter()
             .enumerate()
@@ -93,6 +94,7 @@ impl ShortcutsPanel {
                     return true;
                 };
                 s.description_lower.contains(f) || s.shortcut_str_lower.contains(f)
+
             })
             .map(|(i, _)| i)
             .collect();

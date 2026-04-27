@@ -23,6 +23,7 @@ pub fn draw_quick_create_popup(
             } else {
                 true
             }
+
         })
         .collect();
     if filtered_items.is_empty() {

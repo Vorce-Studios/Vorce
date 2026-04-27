@@ -471,7 +471,21 @@ pub fn draw_part_with_delete(
         );
 
         let type_name = socket.socket_type.name();
+<<<<<<< HEAD
+        // PERFORMANCE: Avoid redundant string allocations for case-insensitive search
+        // in the main render loop by using zero-allocation byte window comparison.
+        let type_bytes = type_name.as_bytes();
+        let display_name = if type_name.is_empty()
+            || (socket.name.len() >= type_name.len()
+                && socket
+                    .name
+                    .as_bytes()
+                    .windows(type_bytes.len())
+                    .any(|w| w.eq_ignore_ascii_case(type_bytes)))
+        {
+=======
         let display_name = if super::search::case_insensitive_contains(&socket.name, type_name) {
+>>>>>>> origin/main
             socket.name.clone()
         } else {
             format!("{} ({})", socket.name, type_name)
@@ -518,7 +532,21 @@ pub fn draw_part_with_delete(
         );
 
         let type_name = socket.socket_type.name();
+<<<<<<< HEAD
+        // PERFORMANCE: Avoid redundant string allocations for case-insensitive search
+        // in the main render loop by using zero-allocation byte window comparison.
+        let type_bytes = type_name.as_bytes();
+        let display_name = if type_name.is_empty()
+            || (socket.name.len() >= type_name.len()
+                && socket
+                    .name
+                    .as_bytes()
+                    .windows(type_bytes.len())
+                    .any(|w| w.eq_ignore_ascii_case(type_bytes)))
+        {
+=======
         let display_name = if super::search::case_insensitive_contains(&socket.name, type_name) {
+>>>>>>> origin/main
             socket.name.clone()
         } else {
             format!("{} ({})", socket.name, type_name)

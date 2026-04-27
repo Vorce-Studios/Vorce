@@ -109,7 +109,7 @@ async fn handle_socket(socket: WebSocket, _state: AppState) {
             let stats = WsServerMessage::Stats { fps: 60.0, frame_time_ms: 16.6 };
 
             if let Ok(json) = serde_json::to_string(&stats) {
-                if sender.send(Message::Text(json.into())).await.is_err() {
+                if sender.send(Message::Text(json)).await.is_err() {
                     break;
                 }
             } else {

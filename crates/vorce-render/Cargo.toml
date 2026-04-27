@@ -29,11 +29,13 @@ winit = { workspace = true }
 wgpu-hal = { version = "29.0.0", features = ["dx12"] }
 windows = { version = "0.62.2", features = ["Win32_Graphics_Direct3D12", "Win32_Foundation", "Win32_Security", "Win32_Graphics_Dxgi_Common"] }
 
+
 [dev-dependencies]
 criterion = { workspace = true }
 futures-channel = "0.3.30"
 pollster = { workspace = true }
 tokio = { version = "1.52.1", features = ["macros", "rt-multi-thread"] }
+
 wgpu = { workspace = true }
 
 [[bench]]

@@ -26,20 +26,6 @@ all-io = ["ndi", "decklink", "syphon", "stream", "virtual-camera"]
 # CI-safe feature for Linux builds (excludes platform-specific: spout, syphon, ndi)
 ci-linux = ["virtual-camera"]
 
-[target.'cfg(target_os = "macos")'.dependencies]
-cocoa = { version = "0.26", optional = true }
-core-foundation = { version = "0.10", optional = true }
-objc = { version = "0.2", optional = true }
-
-# Platform-specific dependencies
-[target.'cfg(windows)'.dependencies]
-rusty-spout = { git = "https://github.com/virtual-puppet-project/rusty-spout", optional = true }
-windows = { version = "0.62", features = [
-    "Win32_Graphics_Direct3D11",
-    "Win32_Graphics_Dxgi",
-    "Win32_System_Com",
-], optional = true }
-
 [dependencies]
 bytemuck = { workspace = true }
 chrono = { workspace = true }
@@ -64,6 +50,7 @@ vorce-core = { path = "../vorce-core" }
 # Core dependencies
 wgpu = { workspace = true }
 zip = "8.6"
+
 
 [build-dependencies]
 bindgen = { workspace = true, optional = true }

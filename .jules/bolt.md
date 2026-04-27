@@ -1,3 +1,7 @@
+## 2024-05-18 - [Rust/egui String Search Performance vs Unicode Case-Folding]
+**Erkenntnis:** "Zero-allocation" ASCII-Hacks (wie `eq_ignore_ascii_case` auf Byte-Windows) für die Textsuche in Rendering-Loops zerschießen Unicode Case-Folding (z.B. Umlaute). Die `.to_lowercase()`-Allokation ist zwingend nötig für korrekte Suchergebnisse bei internationalen Zeichen.
+**Aktion:** Verwende Lazy Evaluation und Early Returns (`if filter.is_empty() { return true; }`), um die teure String-Allokation in UI-Loops nur dann auszulösen, wenn der Nutzer *tatsächlich* eine Suchanfrage eingegeben hat. So bleiben Unicode-Suchfunktionen korrekt und im Normalfall (leeres Suchfeld) fällt kein Performance-Penalty an.
+
 ## 2026-04-18 - [Parallelize AssetManager loading]
 **Erkenntnis:** Synchronous file reading inside loops during `load_library` in `AssetManager` blocked the main thread significantly due to I/O constraints when processing many preset files. The code inherently processes multiple independent files.
 **Aktion:** Replaced sequential nested file iteration (directories and reads) with `rayon`'s `into_par_iter()`. By collecting JSON strings and parsing them in parallel threads, initialization time for asset management on 10,000 files dropped from ~145ms to ~63ms (a 2.29x speedup). Memory handling was kept safe by returning values from the par_iter and collecting into HashMap synchronously, avoiding potential mutex locking overhead.
@@ -49,3 +53,7 @@
 ## 2026-04-27 - [Prevent String Allocations in Quick Create Filter]
 **Erkenntnis:** Building the `NodeCatalogItem` catalog inside immediate-mode rendering loops (like in `draw_quick_create_popup`) triggered numerous string allocations (`.to_string()`, `.to_lowercase()`) because of the `label_lower` field. This unnecessarily pressured the allocator during every frame where the quick create popup was visible.
 **Aktion:** Removed the `label_lower` field entirely from `NodeCatalogItem` to bypass initial string allocations, and refactored the quick-create filter to use the zero-allocation `case_insensitive_contains` function. This prevents per-frame allocations during filtering and initialization without breaking the search behavior.
+<<<<<<< HEAD
+=======
+
+>>>>>>> B-Jules/__SI-01_MAI-003_macOS-Build-Bootstrap-18235718128476890029
