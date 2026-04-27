@@ -375,22 +375,14 @@ impl AppUI {
         // Scale font sizes
         let scaled_size = layout.scale_font(base_font_size) * user_scale;
 
-        style.text_styles.insert(
-            egui::TextStyle::Body,
-            egui::FontId::proportional(scaled_size),
-        );
-        style.text_styles.insert(
-            egui::TextStyle::Button,
-            egui::FontId::proportional(scaled_size),
-        );
-        style.text_styles.insert(
-            egui::TextStyle::Heading,
-            egui::FontId::proportional(scaled_size * 1.4),
-        );
-        style.text_styles.insert(
-            egui::TextStyle::Small,
-            egui::FontId::proportional(scaled_size * 0.85),
-        );
+        style.text_styles.insert(egui::TextStyle::Body, egui::FontId::proportional(scaled_size));
+        style.text_styles.insert(egui::TextStyle::Button, egui::FontId::proportional(scaled_size));
+        style
+            .text_styles
+            .insert(egui::TextStyle::Heading, egui::FontId::proportional(scaled_size * 1.4));
+        style
+            .text_styles
+            .insert(egui::TextStyle::Small, egui::FontId::proportional(scaled_size * 0.85));
 
         // Scale spacing
         let spacing_scale = (layout.scale_font(1.0) / 14.0) * user_scale; // Normalize scale factor
@@ -414,8 +406,7 @@ impl AppUI {
 
     /// Render the icon demo panel
     pub fn render_icon_demo(&mut self, ctx: &egui::Context) {
-        self.icon_demo_panel
-            .ui(ctx, self.icon_manager.as_ref(), &self.i18n);
+        self.icon_demo_panel.ui(ctx, self.icon_manager.as_ref(), &self.i18n);
     }
 
     /// Toggle icon demo panel visibility
@@ -435,31 +426,21 @@ impl AppUI {
             .default_size(280.0)
             .min_size(200.0)
             .max_size(400.0)
-            .frame(crate::widgets::panel::cyber_panel_frame(
-                &ctx.global_style(),
-            ))
+            .frame(crate::widgets::panel::cyber_panel_frame(&ctx.global_style()))
             .show(ctx, |ui: &mut egui::Ui| {
                 crate::widgets::panel::render_panel_header(
                     ui,
                     &self.i18n.t("panel-media-browser"),
                     |ui| {
-                        if ui
-                            .button("✕")
-                            .on_hover_text("Close Media Browser")
-                            .clicked()
-                        {
+                        if ui.button("✕").on_hover_text("Close Media Browser").clicked() {
                             self.show_media_browser = false;
                         }
                     },
                 );
 
-                egui::Frame::default()
-                    .inner_margin(egui::Margin::symmetric(8, 8))
-                    .show(ui, |ui| {
-                        let _ = self
-                            .media_browser
-                            .ui(ui, &self.i18n, self.icon_manager.as_ref());
-                    });
+                egui::Frame::default().inner_margin(egui::Margin::symmetric(8, 8)).show(ui, |ui| {
+                    let _ = self.media_browser.ui(ui, &self.i18n, self.icon_manager.as_ref());
+                });
             });
     }
 
@@ -471,9 +452,7 @@ impl AppUI {
 
         egui::Window::new(self.i18n.t("panel-playback"))
             .default_size([320.0, 360.0])
-            .frame(crate::widgets::panel::cyber_panel_frame(
-                &ctx.global_style(),
-            ))
+            .frame(crate::widgets::panel::cyber_panel_frame(&ctx.global_style()))
             .show(ctx, |ui| {
                 crate::widgets::panel::render_panel_header(
                     ui,
@@ -523,8 +502,7 @@ impl AppUI {
                             )
                             .clicked()
                         {
-                            self.actions
-                                .push(UIAction::SetLoopMode(vorce_media::LoopMode::Loop));
+                            self.actions.push(UIAction::SetLoopMode(vorce_media::LoopMode::Loop));
                         }
                         if ui
                             .selectable_value(
@@ -632,11 +610,7 @@ impl AppUI {
         if matches!(context, crate::panels::inspector::InspectorContext::None) {
             if let Some(id) = self.selected_layer_id {
                 if let Some(layer) = layer_manager.get_layer(id) {
-                    let index = layer_manager
-                        .layers()
-                        .iter()
-                        .position(|l| l.id == id)
-                        .unwrap_or(0);
+                    let index = layer_manager.layers().iter().position(|l| l.id == id).unwrap_or(0);
 
                     let first_mapping = layer
                         .mapping_ids
@@ -662,16 +636,12 @@ impl AppUI {
             }
         }
 
-        let action = self
-            .inspector_panel
-            .show(ui, context, &self.i18n, &mut self.actions);
+        let action = self.inspector_panel.show(ui, context, &self.i18n, &mut self.actions);
 
         if let Some((module_id, part_id, before_part)) = module_part_snapshot {
             let mut inspector_changed = false;
             if let Some(module) = module_manager.get_module_mut(module_id) {
-                if let Some(after_part) =
-                    module.parts.iter().find(|part| part.id == part_id).cloned()
-                {
+                if let Some(after_part) = module.part(part_id).cloned() {
                     if after_part != before_part {
                         module.update_part_sockets(part_id);
                         inspector_changed = true;
@@ -689,17 +659,14 @@ impl AppUI {
                     self.actions.push(crate::UIAction::SetLayerOpacity(id, val));
                 }
                 crate::panels::inspector::InspectorAction::UpdateTransform(id, transform) => {
-                    self.actions
-                        .push(crate::UIAction::SetLayerTransform(id, transform));
+                    self.actions.push(crate::UIAction::SetLayerTransform(id, transform));
                 }
                 crate::panels::inspector::InspectorAction::UpdateMappingMesh(id, mesh) => {
-                    self.actions
-                        .push(crate::UIAction::UpdateMappingMesh(id, mesh));
+                    self.actions.push(crate::UIAction::UpdateMappingMesh(id, mesh));
                 }
                 crate::panels::inspector::InspectorAction::RequestClose => {
                     self.show_inspector = false;
                     self.user_config.show_inspector = false;
-                    self.sync_runtime_to_active_layout();
                     let _ = self.user_config.save();
                 }
             }
@@ -715,11 +682,12 @@ impl AppUI {
             return;
         }
 
-        egui::Window::new(self.i18n.t("panel-master"))
-            .default_size([360.0, 300.0])
-            .show(ctx, |ui: &mut egui::Ui| {
+        egui::Window::new(self.i18n.t("panel-master")).default_size([360.0, 300.0]).show(
+            ctx,
+            |ui: &mut egui::Ui| {
                 self.render_master_controls_embedded(ui, layer_manager);
-            });
+            },
+        );
     }
 
     /// Render master controls content (embedded)
@@ -750,8 +718,7 @@ impl AppUI {
             &mut self.actions,
         );
         if (composition.master_opacity - old_master_opacity).abs() > 0.001 {
-            self.actions
-                .push(UIAction::SetMasterOpacity(composition.master_opacity));
+            self.actions.push(UIAction::SetMasterOpacity(composition.master_opacity));
         }
 
         // Master Speed
@@ -770,8 +737,7 @@ impl AppUI {
             &mut self.actions,
         );
         if (composition.master_speed - old_master_speed).abs() > 0.001 {
-            self.actions
-                .push(UIAction::SetMasterSpeed(composition.master_speed));
+            self.actions.push(UIAction::SetMasterSpeed(composition.master_speed));
         }
     }
 

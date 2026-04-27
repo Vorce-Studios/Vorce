@@ -44,12 +44,11 @@ impl EffectChainRenderer {
 
     /// Create a uniform buffer for effect parameters
     pub fn create_uniform_buffer(&self, params: &EffectParams) -> wgpu::Buffer {
-        self.device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Effect Chain Uniform Buffer"),
-                contents: bytemuck::cast_slice(&[*params]),
-                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            })
+        self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Effect Chain Uniform Buffer"),
+            contents: bytemuck::cast_slice(&[*params]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        })
     }
 
     /// Get or create a uniform bind group
@@ -102,9 +101,7 @@ impl EffectChainRenderer {
         if enabled_effects.is_empty() {
             // No effects, use quad renderer to copy input to output
             debug!("No effects enabled, passing through with QuadRenderer");
-            let bind_group = self
-                .quad_renderer
-                .create_bind_group(&self.device, input_view);
+            let bind_group = self.quad_renderer.create_bind_group(&self.device, input_view);
             let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Passthrough Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -131,7 +128,7 @@ impl EffectChainRenderer {
 
         // We need to handle this differently to avoid borrow checker issues
         // by not holding mutable borrow of ping_pong across the loop
-        let mut current_idx = 0usize;
+
         let mut use_input = true;
 
         for (i, effect) in enabled_effects.iter().enumerate() {
@@ -310,7 +307,7 @@ impl EffectChainRenderer {
                 input_view.clone()
             } else {
                 let ping_pong = self.ping_pong.as_ref().unwrap();
-                ping_pong.views[current_idx].clone()
+                ping_pong.current_view().clone()
             };
 
             // Create bind groups
@@ -323,9 +320,7 @@ impl EffectChainRenderer {
             );
 
             // Allocate uniform buffer from pool
-            let allocation = self
-                .allocator
-                .allocate(&self.queue, bytemuck::cast_slice(&[params]));
+            let allocation = self.allocator.allocate(&self.queue, bytemuck::cast_slice(&[params]));
             let size = std::mem::size_of::<EffectParams>() as u64;
 
             let uniform_bind_group = Self::get_uniform_bind_group_static(
@@ -341,7 +336,7 @@ impl EffectChainRenderer {
                 output_view
             } else {
                 let ping_pong = self.ping_pong.as_ref().unwrap();
-                &ping_pong.views[1 - current_idx]
+                ping_pong.next_view()
             };
 
             if let EffectType::ShaderGraph(graph_id) = effect.effect_type {
@@ -402,7 +397,9 @@ impl EffectChainRenderer {
 
             // Swap ping-pong for next iteration
             if !is_last {
-                current_idx = 1 - current_idx;
+                if let Some(ping_pong) = self.ping_pong.as_mut() {
+                    ping_pong.swap();
+                }
                 use_input = false;
             }
         }

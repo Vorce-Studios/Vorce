@@ -35,20 +35,11 @@ pub fn existing_asset_path(relative: impl AsRef<Path>) -> Option<PathBuf> {
 
 /// Resolve an existing path inside the resources directory.
 pub fn existing_resource_path(relative: impl AsRef<Path>) -> Option<PathBuf> {
-    resolve_existing_path(
-        RESOURCES_ENV,
-        LEGACY_RESOURCES_ENV,
-        "resources",
-        relative.as_ref(),
-    )
+    resolve_existing_path(RESOURCES_ENV, LEGACY_RESOURCES_ENV, "resources", relative.as_ref())
 }
 
 fn resolve_named_dir(env_var: &str, dir_name: &str) -> PathBuf {
-    let legacy_env = if env_var == ASSETS_ENV {
-        LEGACY_ASSETS_ENV
-    } else {
-        LEGACY_RESOURCES_ENV
-    };
+    let legacy_env = if env_var == ASSETS_ENV { LEGACY_ASSETS_ENV } else { LEGACY_RESOURCES_ENV };
     candidate_dirs(env_var, legacy_env, dir_name)
         .into_iter()
         .find(|path| path.exists())
@@ -72,16 +63,12 @@ fn candidate_dirs(env_var: &str, legacy_env_var: &str, dir_name: &str) -> Vec<Pa
 
     push_unique(
         &mut candidates,
-        env::var_os(env_var)
-            .map(PathBuf::from)
-            .filter(|path| !path.as_os_str().is_empty()),
+        env::var_os(env_var).map(PathBuf::from).filter(|path| !path.as_os_str().is_empty()),
     );
 
     push_unique(
         &mut candidates,
-        env::var_os(legacy_env_var)
-            .map(PathBuf::from)
-            .filter(|path| !path.as_os_str().is_empty()),
+        env::var_os(legacy_env_var).map(PathBuf::from).filter(|path| !path.as_os_str().is_empty()),
     );
 
     if let Some(exe_dir) = current_exe_dir() {
@@ -100,9 +87,7 @@ fn candidate_dirs(env_var: &str, legacy_env_var: &str, dir_name: &str) -> Vec<Pa
 }
 
 fn current_exe_dir() -> Option<PathBuf> {
-    env::current_exe()
-        .ok()
-        .and_then(|path| path.parent().map(Path::to_path_buf))
+    env::current_exe().ok().and_then(|path| path.parent().map(Path::to_path_buf))
 }
 
 fn bundle_resources_dir_from_exe_dir(exe_dir: &Path) -> Option<PathBuf> {
@@ -135,6 +120,51 @@ fn push_unique_ancestors_with_child(candidates: &mut Vec<PathBuf>, start: &Path,
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+    use tempfile::tempdir;
+
+    static ENV_MUTEX: Mutex<()> = Mutex::new(());
+
+    struct EnvGuard {
+        var: String,
+        original: Option<std::ffi::OsString>,
+    }
+
+    impl EnvGuard {
+        fn set(var: &str, value: &Path) -> Self {
+            let original = env::var_os(var);
+            env::set_var(var, value);
+            Self { var: var.to_string(), original }
+        }
+    }
+
+    impl Drop for EnvGuard {
+        fn drop(&mut self) {
+            if let Some(ref val) = self.original {
+                env::set_var(&self.var, val);
+            } else {
+                env::remove_var(&self.var);
+            }
+        }
+    }
+
+    #[test]
+    fn resolves_assets_dir_from_env() {
+        let _lock = ENV_MUTEX.lock().unwrap();
+        let dir = tempdir().unwrap();
+        let _guard = EnvGuard::set(ASSETS_ENV, dir.path());
+
+        assert_eq!(assets_dir(), dir.path());
+    }
+
+    #[test]
+    fn resolves_resources_dir_from_env() {
+        let _lock = ENV_MUTEX.lock().unwrap();
+        let dir = tempdir().unwrap();
+        let _guard = EnvGuard::set(RESOURCES_ENV, dir.path());
+
+        assert_eq!(resources_dir(), dir.path());
+    }
 
     #[test]
     fn detects_macos_bundle_resources_dir() {

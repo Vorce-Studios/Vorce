@@ -63,7 +63,9 @@ impl ModuleCanvas {
         let interacting = ui.input(|i| i.pointer.any_pressed() || i.pointer.any_down());
         let release = ui.input(|i| i.pointer.any_released());
 
-        if interacting && self.edit_snapshot.is_none() {
+        if interacting
+            && (self.edit_snapshot.is_none() || self.edit_snapshot.as_ref().unwrap().id != part.id)
+        {
             self.edit_snapshot = Some(part.clone());
         }
 
@@ -88,12 +90,11 @@ impl ModuleCanvas {
         if let Some(before) = self.edit_snapshot.take() {
             if release {
                 if before != snapshot_after {
-                    self.undo_stack
-                        .push(super::types::CanvasAction::UpdatePart {
-                            part_id: part.id,
-                            before: Box::new(before),
-                            after: Box::new(snapshot_after),
-                        });
+                    self.undo_stack.push(super::types::CanvasAction::UpdatePart {
+                        part_id: part.id,
+                        before: Box::new(before),
+                        after: Box::new(snapshot_after),
+                    });
                     self.redo_stack.clear();
                 }
             } else {
@@ -102,12 +103,11 @@ impl ModuleCanvas {
             }
         } else if snapshot_before != snapshot_after {
             // Immediate change without dragging (e.g. keypress, combo box)
-            self.undo_stack
-                .push(super::types::CanvasAction::UpdatePart {
-                    part_id: part.id,
-                    before: Box::new(snapshot_before),
-                    after: Box::new(snapshot_after),
-                });
+            self.undo_stack.push(super::types::CanvasAction::UpdatePart {
+                part_id: part.id,
+                before: Box::new(snapshot_before),
+                after: Box::new(snapshot_after),
+            });
             self.redo_stack.clear();
         }
     }

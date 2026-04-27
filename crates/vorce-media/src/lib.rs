@@ -19,13 +19,9 @@ pub mod hap_decoder;
 pub mod image_decoder;
 #[cfg(feature = "libmpv")]
 pub mod mpv_decoder;
+pub mod pipeline;
 pub mod player;
 pub mod sequence;
-// TODO: Enable pipeline with thread-local scaler approach
-// The pipeline module requires VideoDecoder to be Send, but FFmpeg's scaler (SwsContext) is not thread-safe.
-// Solution: Use thread-local scaler - create scaler once in decode thread, avoiding Send requirement.
-// This provides zero overhead and clean separation. See pipeline.rs for implementation details.
-pub mod pipeline;
 
 pub use decoder::{FFmpegDecoder, HwAccelType, PixelFormat, TestPatternDecoder, VideoDecoder};
 #[cfg(feature = "hap")]
@@ -81,11 +77,7 @@ pub fn open_path_with_hw_accel<P: AsRef<Path>>(
     }
 
     // Check file extension for still images and GIFs
-    let ext = path
-        .extension()
-        .and_then(|s| s.to_str())
-        .unwrap_or("")
-        .to_lowercase();
+    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("").to_lowercase();
 
     let decoder: Box<dyn VideoDecoder> = match ext.as_str() {
         "gif" => Box::new(GifDecoder::open(path)?),
@@ -117,11 +109,7 @@ pub fn open_path<P: AsRef<Path>>(path: P) -> Result<VideoPlayer> {
     }
 
     // Check file extension for still images and GIFs
-    let ext = path
-        .extension()
-        .and_then(|s| s.to_str())
-        .unwrap_or("")
-        .to_lowercase();
+    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("").to_lowercase();
 
     let decoder: Box<dyn VideoDecoder> = match ext.as_str() {
         "gif" => Box::new(GifDecoder::open(path)?),
@@ -144,11 +132,7 @@ fn open_video_file_with_hw_accel<P: AsRef<Path>>(
     // Try FFmpeg first (stable, full frame support)
     match FFmpegDecoder::open_with_hw_accel(path, hw_accel) {
         Ok(decoder) => {
-            tracing::info!(
-                "Opened with FFmpeg decoder (hw_accel={:?}): {:?}",
-                hw_accel,
-                path
-            );
+            tracing::info!("Opened with FFmpeg decoder (hw_accel={:?}): {:?}", hw_accel, path);
             return Ok(Box::new(decoder));
         }
         Err(e) => {
@@ -171,10 +155,7 @@ fn open_video_file_with_hw_accel<P: AsRef<Path>>(
     }
 
     // Both failed, return the FFmpeg error
-    Err(MediaError::FileOpen(format!(
-        "Could not open video: {:?}",
-        path
-    )))
+    Err(MediaError::FileOpen(format!("Could not open video: {:?}", path)))
 }
 
 /// Open a video file using the best available decoder
@@ -194,18 +175,11 @@ fn open_video_file<P: AsRef<Path>>(path: P) -> Result<Box<dyn VideoDecoder>> {
 
     match FFmpegDecoder::open_with_hw_accel(path, hw_accel) {
         Ok(decoder) => {
-            tracing::info!(
-                "Opened with FFmpeg decoder (hw_accel={:?}): {:?}",
-                hw_accel,
-                path
-            );
+            tracing::info!("Opened with FFmpeg decoder (hw_accel={:?}): {:?}", hw_accel, path);
             return Ok(Box::new(decoder));
         }
         Err(e) => {
-            tracing::warn!(
-                "FFmpeg hardware decoder failed: {}. Falling back to software.",
-                e
-            );
+            tracing::warn!("FFmpeg hardware decoder failed: {}. Falling back to software.", e);
         }
     }
 
@@ -235,8 +209,46 @@ fn open_video_file<P: AsRef<Path>>(path: P) -> Result<Box<dyn VideoDecoder>> {
     }
 
     // Both failed, return the FFmpeg error
-    Err(MediaError::FileOpen(format!(
-        "Could not open video: {:?}",
-        path
-    )))
+    Err(MediaError::FileOpen(format!("Could not open video: {:?}", path)))
+}
+
+/// Gets the duration of a media file without full decoding.
+pub fn get_media_duration_secs<P: AsRef<Path>>(_path: P) -> Option<f32> {
+    #[allow(unused_variables)]
+    let path = _path;
+    #[cfg(feature = "ffmpeg")]
+    {
+        if ffmpeg_next::init().is_ok() {
+            if let Ok(input_ctx) = ffmpeg_next::format::input(&path) {
+                // Check for video stream first, then audio if no video
+                let stream = input_ctx
+                    .streams()
+                    .best(ffmpeg_next::media::Type::Video)
+                    .or_else(|| input_ctx.streams().best(ffmpeg_next::media::Type::Audio));
+
+                if let Some(stream) = stream {
+                    let time_base = stream.time_base();
+                    let raw_duration = stream.duration();
+
+                    if raw_duration != i64::MIN {
+                        let duration_secs = raw_duration as f64 * f64::from(time_base);
+                        if duration_secs > 0.0 && !duration_secs.is_nan() {
+                            return Some(duration_secs as f32);
+                        }
+                    }
+                }
+
+                // Fallback to container duration
+                let ctx_duration = input_ctx.duration();
+                if ctx_duration != i64::MIN {
+                    // AV_TIME_BASE is 1000000
+                    let duration_secs = ctx_duration as f64 / 1_000_000.0;
+                    if duration_secs > 0.0 && !duration_secs.is_nan() {
+                        return Some(duration_secs as f32);
+                    }
+                }
+            }
+        }
+    }
+    None
 }

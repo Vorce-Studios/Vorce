@@ -10,23 +10,25 @@ repository.workspace = true
 [dependencies]
 anyhow = { workspace = true }
 # Bevy 0.16 Upgrade to align with egui/wgpu v27
-bevy = { version = "0.16", features = [
+bevy = { git = "https://github.com/bevyengine/bevy", branch = "main", features = [
     "tonemapping_luts",
     "default_font",
 ] }
 
 # Extensions compatible with Bevy 0.16
-bevy_atmosphere = "0.13"
+# bevy_atmosphere = "0.13"
 # bevy_enoki = "0.6" # Check version
-bevy_mod_outline = "0.10"
+# bevy_mod_outline = { git = "https://github.com/johanhelsing/bevy_mod_outline", branch = "main" }
 hexx = "0.18" # Version compatible with Bevy 0.16
 
 vorce-core = { path = "../vorce-core" }
 rand = "0.9.2"
 thiserror = { workspace = true }
 tracing = { workspace = true }
-# Use Bevy's own wgpu version (v24) to avoid conflicts
-wgpu = "24.0"
+# Use Bevy's own wgpu version (v29) to avoid conflicts
+wgpu = "29.0.1"
+bevy_light = { git = "https://github.com/bevyengine/bevy", branch = "main", version = "0.19.0-dev" }
+bevy_camera = { git = "https://github.com/bevyengine/bevy", branch = "main", version = "0.19.0-dev" }
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
-bevy = { version = "0.16", default-features = false, features = ["wayland"] }
+bevy = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false, features = ["wayland"] }

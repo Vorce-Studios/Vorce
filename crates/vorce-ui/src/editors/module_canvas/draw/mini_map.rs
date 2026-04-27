@@ -1,10 +1,11 @@
 use super::super::state::ModuleCanvas;
 use super::super::utils;
-use egui::{Color32, Pos2, Rect, Stroke, Vec2};
+use egui::{Pos2, Rect, Stroke, Ui, Vec2};
 use vorce_core::module::VorceModule;
 
 pub fn draw_mini_map(
     canvas: &ModuleCanvas,
+    ui: &Ui,
     painter: &egui::Painter,
     canvas_rect: Rect,
     module: &VorceModule,
@@ -25,15 +26,11 @@ pub fn draw_mini_map(
     );
 
     // Background
-    painter.rect_filled(
-        map_rect,
-        0.0,
-        Color32::from_rgba_unmultiplied(30, 30, 40, 200),
-    );
+    painter.rect_filled(map_rect, 0.0, ui.visuals().panel_fill.gamma_multiply(0.9));
     painter.rect_stroke(
         map_rect,
         0.0,
-        Stroke::new(1.0, Color32::from_gray(80)),
+        Stroke::new(1.0, ui.visuals().window_stroke().color),
         egui::StrokeKind::Middle,
     );
 
@@ -85,10 +82,8 @@ pub fn draw_mini_map(
     }
 
     // Draw viewport rectangle
-    let viewport_min = to_map(Pos2::new(
-        -canvas.pan_offset.x / canvas.zoom,
-        -canvas.pan_offset.y / canvas.zoom,
-    ));
+    let viewport_min =
+        to_map(Pos2::new(-canvas.pan_offset.x / canvas.zoom, -canvas.pan_offset.y / canvas.zoom));
     let viewport_max = to_map(Pos2::new(
         (-canvas.pan_offset.x + canvas_rect.width()) / canvas.zoom,
         (-canvas.pan_offset.y + canvas_rect.height()) / canvas.zoom,
@@ -97,7 +92,7 @@ pub fn draw_mini_map(
     painter.rect_stroke(
         viewport_rect,
         0.0,
-        Stroke::new(1.5, Color32::WHITE),
+        Stroke::new(1.5, ui.visuals().strong_text_color()),
         egui::StrokeKind::Middle,
     );
 }

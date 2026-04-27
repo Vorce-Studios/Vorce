@@ -14,25 +14,15 @@ pub fn draw_quick_create_popup(
     }
     let popup_pos = canvas.quick_create_pos;
     let catalog = utils::build_node_catalog();
-    let filter_is_empty = canvas.quick_create_filter.is_empty();
-    let filter_lower = if filter_is_empty {
-        String::new()
-    } else {
-        canvas.quick_create_filter.to_lowercase()
-    };
     let filtered_items: Vec<&utils::NodeCatalogItem> = catalog
         .iter()
         .filter(|item| {
-            if filter_is_empty {
-                return true;
+            if let Some(f) = canvas.quick_create_filter_lower.as_deref() {
+                item.label_lower.contains(f) || item.search_tags.contains(f)
+            } else {
+                true
             }
-            if item.label.to_lowercase().contains(&filter_lower) {
-                return true;
-            }
-            if item.search_tags.to_lowercase().contains(&filter_lower) {
-                return true;
-            }
-            false
+
         })
         .collect();
     if filtered_items.is_empty() {
@@ -74,6 +64,10 @@ pub fn draw_quick_create_popup(
                     .hint_text("Type to create...")
                     .lock_focus(true),
             );
+            if response.changed() {
+                canvas.quick_create_filter_lower = (!canvas.quick_create_filter.is_empty())
+                    .then(|| canvas.quick_create_filter.to_lowercase());
+            }
             if canvas.show_quick_create && response.changed() {
                 response.request_focus();
             }
@@ -84,23 +78,21 @@ pub fn draw_quick_create_popup(
             if filtered_items.is_empty() {
                 crate::widgets::custom::render_info_label(ui, "No matching nodes found.");
             } else {
-                egui::ScrollArea::vertical()
-                    .max_height(300.0)
-                    .show(ui, |ui| {
-                        for (i, item) in filtered_items.iter().enumerate() {
-                            let is_selected = i == canvas.quick_create_selected_index;
-                            let (_, _, icon, _) = utils::get_part_style(&item.part_type);
-                            let label_text = format!("{} {}", icon, item.label);
-                            let response = ui.selectable_label(is_selected, label_text);
-                            if response.clicked() {
-                                canvas.quick_create_selected_index = i;
-                                commit_creation = true;
-                            }
-                            if is_selected {
-                                response.scroll_to_me(Some(egui::Align::Center));
-                            }
+                egui::ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
+                    for (i, item) in filtered_items.iter().enumerate() {
+                        let is_selected = i == canvas.quick_create_selected_index;
+                        let (_, _, icon, _) = utils::get_part_style(&item.part_type);
+                        let label_text = format!("{} {}", icon, item.label);
+                        let response = ui.selectable_label(is_selected, label_text);
+                        if response.clicked() {
+                            canvas.quick_create_selected_index = i;
+                            commit_creation = true;
                         }
-                    });
+                        if is_selected {
+                            response.scroll_to_me(Some(egui::Align::Center));
+                        }
+                    }
+                });
             }
         });
     });
@@ -124,5 +116,6 @@ pub fn draw_quick_create_popup(
     if close_popup {
         canvas.show_quick_create = false;
         canvas.quick_create_filter.clear();
+        canvas.quick_create_filter_lower = None;
     }
 }

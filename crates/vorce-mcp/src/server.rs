@@ -8,7 +8,6 @@ use vorce_control::osc::client::OscClient;
 
 pub struct McpServer {
     // Optional OSC client (currently unused but will be used for OSC tools)
-    #[allow(dead_code)]
     osc_client: Option<OscClient>,
     // Channel to send actions to main app
     pub action_sender: Option<Sender<McpAction>>,
@@ -27,10 +26,7 @@ impl McpServer {
                 None
             }
         };
-        Self {
-            osc_client,
-            action_sender,
-        }
+        Self { osc_client, action_sender }
     }
 
     pub async fn run_stdio(&self) -> Result<()> {
@@ -120,10 +116,7 @@ impl McpServer {
                         "description": "List of all layers"
                     }),
                 ];
-                Some(success_response(
-                    id,
-                    serde_json::json!({ "resources": resources }),
-                ))
+                Some(success_response(id, serde_json::json!({ "resources": resources })))
             }
             "resources/read" => {
                 // Parse params
@@ -135,17 +128,44 @@ impl McpServer {
                 if let Some(uri) = uri {
                     match uri.as_str() {
                         "project://current" => {
-                            // TODO: Implement shared state reading
-                            Some(success_response(
-                                id,
-                                serde_json::json!({
-                                    "contents": [{
-                                        "uri": uri,
-                                        "mimeType": "application/json",
-                                        "text": "{\"error\": \"Shared state access not yet implemented\"}"
-                                    }]
-                                }),
-                            ))
+                            if let Some(sender) = &self.action_sender {
+                                let (tx, rx) = crossbeam_channel::bounded(1);
+                                if sender.send(crate::McpAction::GetProjectState(tx)).is_ok() {
+                                    // Block on receiving the state since we must reply inline
+                                    // In a production setup, we might use async channels, but since this
+                                    // runs in its own task blocking on a channel bounded(1) is fine.
+                                    let result_text = match tokio::task::spawn_blocking(move || {
+                                        rx.recv_timeout(std::time::Duration::from_secs(5))
+                                    })
+                                    .await
+                                    {
+                                        Ok(Ok(state_json)) => state_json,
+                                        _ => {
+                                            "{\"error\": \"Failed to receive state from main app\"}"
+                                                .to_string()
+                                        }
+                                    };
+
+                                    Some(success_response(
+                                        id,
+                                        serde_json::json!({
+                                            "contents": [{
+                                                "uri": uri,
+                                                "mimeType": "application/json",
+                                                "text": result_text
+                                            }]
+                                        }),
+                                    ))
+                                } else {
+                                    Some(error_response(
+                                        id,
+                                        -32000,
+                                        "Failed to send state request action",
+                                    ))
+                                }
+                            } else {
+                                Some(error_response(id, -32000, "Action sender not initialized"))
+                            }
                         }
                         _ => Some(error_response(id, -32602, "Resource not found")),
                     }
@@ -166,19 +186,13 @@ impl McpServer {
                          "arguments": []
                     }),
                 ];
-                Some(success_response(
-                    id,
-                    serde_json::json!({ "prompts": prompts }),
-                ))
+                Some(success_response(id, serde_json::json!({ "prompts": prompts })))
             }
             "prompts/get" => {
                 let params: Option<serde_json::Value> =
                     serde_json::from_value(request.params.unwrap_or(serde_json::Value::Null)).ok();
-                let name = params.and_then(|p| {
-                    p.get("name")
-                        .and_then(|v| v.as_str())
-                        .map(|s| s.to_string())
-                });
+                let name = params
+                    .and_then(|p| p.get("name").and_then(|v| v.as_str()).map(|s| s.to_string()));
 
                 if let Some(name_str) = name {
                     match name_str.as_str() {
@@ -234,7 +248,6 @@ impl McpServer {
         }
     }
 
-    #[allow(dead_code)]
     pub fn handle_send_osc(
         &self,
         id: Option<serde_json::Value>,
@@ -251,14 +264,9 @@ impl McpServer {
                 return self.send_osc_msg(address, osc_args, id);
             }
         }
-        Some(error_response(
-            id,
-            -32602,
-            "Missing address or args argument",
-        ))
+        Some(error_response(id, -32602, "Missing address or args argument"))
     }
 
-    #[allow(dead_code)]
     fn send_osc_msg(
         &self,
         address: &str,
@@ -279,9 +287,7 @@ impl McpServer {
                 Err(e) => Some(success_response(
                     id,
                     serde_json::json!(CallToolResult {
-                        content: vec![ToolContent::Text {
-                            text: format!("OSC Error: {}", e)
-                        }],
+                        content: vec![ToolContent::Text { text: format!("OSC Error: {}", e) }],
                         is_error: Some(true)
                     }),
                 )),
@@ -296,23 +302,14 @@ pub fn success_response(
     id: Option<serde_json::Value>,
     result: serde_json::Value,
 ) -> JsonRpcResponse {
-    JsonRpcResponse {
-        jsonrpc: "2.0".to_string(),
-        result: Some(result),
-        error: None,
-        id,
-    }
+    JsonRpcResponse { jsonrpc: "2.0".to_string(), result: Some(result), error: None, id }
 }
 
 pub fn error_response(id: Option<serde_json::Value>, code: i32, message: &str) -> JsonRpcResponse {
     JsonRpcResponse {
         jsonrpc: "2.0".to_string(),
         result: None,
-        error: Some(JsonRpcError {
-            code,
-            message: message.to_string(),
-            data: None,
-        }),
+        error: Some(JsonRpcError { code, message: message.to_string(), data: None }),
         id,
     }
 }
@@ -322,6 +319,29 @@ mod tests {
     use super::*;
     use crossbeam_channel::unbounded;
     use serde_json::json;
+
+    #[test]
+    fn test_error_response_with_id() {
+        let id = json!(123);
+        let response = error_response(Some(id.clone()), -32600, "Invalid Request");
+
+        assert_eq!(response.jsonrpc, "2.0");
+        assert!(response.result.is_none());
+        assert_eq!(response.id, Some(id));
+
+        let error = response.error.unwrap();
+        assert_eq!(error.code, -32600);
+        assert_eq!(error.message, "Invalid Request");
+        assert!(error.data.is_none());
+    }
+
+    #[test]
+    fn test_error_response_without_id() {
+        let response = error_response(None, -32700, "Parse error");
+
+        assert_eq!(response.id, None);
+        assert_eq!(response.error.unwrap().code, -32700);
+    }
 
     #[tokio::test]
     async fn test_handle_layer_create() {
@@ -497,19 +517,12 @@ mod tests {
         let response = server.handle_request(&request.to_string()).await;
         assert!(response.is_some());
         let resp = response.unwrap();
-        assert!(
-            resp.error.is_none(),
-            "Response should not be an error: {:?}",
-            resp.error
-        );
+        assert!(resp.error.is_none(), "Response should not be an error: {:?}", resp.error);
 
         let result = resp.result.unwrap();
         // result is a CallToolResult
         assert_eq!(result["isError"], false);
-        assert!(result["content"][0]["text"]
-            .as_str()
-            .unwrap()
-            .contains("Sent OSC"));
+        assert!(result["content"][0]["text"].as_str().unwrap().contains("Sent OSC"));
     }
 
     #[tokio::test]
@@ -558,11 +571,7 @@ mod tests {
         });
         let ext_resp = server.handle_request(&ext_req.to_string()).await.unwrap();
         assert!(ext_resp.error.is_some());
-        assert!(ext_resp
-            .error
-            .unwrap()
-            .message
-            .contains("Extension 'sh' is not allowed"));
+        assert!(ext_resp.error.unwrap().message.contains("Extension 'sh' is not allowed"));
 
         // Test valid path
         let valid_req = json!({

@@ -183,9 +183,7 @@ where
         let editor_rect = ui.max_rect();
         let resp = ui.allocate_rect(editor_rect, Sense::hover());
 
-        let cursor_pos = ui
-            .ctx()
-            .input(|i| i.pointer.hover_pos().unwrap_or(Pos2::ZERO));
+        let cursor_pos = ui.ctx().input(|i| i.pointer.hover_pos().unwrap_or(Pos2::ZERO));
         let mut cursor_in_editor = resp.contains_pointer();
         let mut cursor_in_finder = false;
 
@@ -226,6 +224,8 @@ where
         }
 
         /* Draw nodes */
+        let selected_nodes_set =
+            self.selected_nodes.iter().copied().collect::<std::collections::HashSet<_>>();
         for node_id in self.node_order.iter().copied() {
             let responses = GraphNodeWidget {
                 position: self.node_positions.get_mut(node_id).unwrap(),
@@ -234,7 +234,7 @@ where
                 node_rects: &mut node_rects,
                 node_id,
                 ongoing_drag: self.connection_in_progress,
-                selected: self.selected_nodes.contains(&node_id),
+                selected: selected_nodes_set.contains(&node_id),
                 pan: self.pan_zoom.pan + editor_rect.min.to_vec2(),
             }
             .show(&self.pan_zoom, ui, user_state);
@@ -348,30 +348,15 @@ where
                     start_pos,
                 ),
             };
-            draw_connection(
-                &self.pan_zoom,
-                ui.painter(),
-                src_pos,
-                dst_pos,
-                connection_color,
-            );
+            draw_connection(&self.pan_zoom, ui.painter(), src_pos, dst_pos, connection_color);
         }
 
         for (input, output) in self.graph.iter_connections() {
-            let port_type = self
-                .graph
-                .any_param_type(AnyParameterId::Output(output))
-                .unwrap();
+            let port_type = self.graph.any_param_type(AnyParameterId::Output(output)).unwrap();
             let connection_color = port_type.data_type_color(user_state);
             let src_pos = port_locations[&AnyParameterId::Output(output)];
             let dst_pos = port_locations[&AnyParameterId::Input(input)];
-            draw_connection(
-                &self.pan_zoom,
-                ui.painter(),
-                src_pos,
-                dst_pos,
-                connection_color,
-            );
+            draw_connection(&self.pan_zoom, ui.painter(), src_pos, dst_pos, connection_color);
         }
 
         /* Handle responses from drawing nodes */
@@ -405,10 +390,7 @@ where
                     );
                     // Pass the full node as a response so library users can
                     // listen for it and get their user data.
-                    extra_responses.push(NodeResponse::DeleteNodeFull {
-                        node_id: *node_id,
-                        node,
-                    });
+                    extra_responses.push(NodeResponse::DeleteNodeFull { node_id: *node_id, node });
                     self.node_positions.remove(*node_id);
                     // Make sure to not leave references to old nodes hanging
                     self.selected_nodes.retain(|id| *id != *node_id);
@@ -464,13 +446,11 @@ where
 
             self.selected_nodes = node_rects
                 .into_iter()
-                .filter_map(|(node_id, rect)| {
-                    if selection_rect.intersects(rect) {
-                        Some(node_id)
-                    } else {
-                        None
-                    }
-                })
+                .filter_map(
+                    |(node_id, rect)| {
+                        if selection_rect.intersects(rect) { Some(node_id) } else { None }
+                    },
+                )
                 .collect();
         }
 
@@ -512,11 +492,7 @@ where
             self.ongoing_box_selection = None;
         }
 
-        GraphResponse {
-            node_responses: delayed_responses,
-            cursor_in_editor,
-            cursor_in_finder,
-        }
+        GraphResponse { node_responses: delayed_responses, cursor_in_editor, cursor_in_finder }
     }
 }
 
@@ -527,10 +503,7 @@ fn draw_connection(
     dst_pos: Pos2,
     color: Color32,
 ) {
-    let connection_stroke = egui::Stroke {
-        width: 5.0 * pan_zoom.zoom,
-        color,
-    };
+    let connection_stroke = egui::Stroke { width: 5.0 * pan_zoom.zoom, color };
 
     let control_scale = ((dst_pos.x - src_pos.x) * pan_zoom.zoom / 2.0).max(30.0 * pan_zoom.zoom);
     let src_control = src_pos + Vec2::X * control_scale;
@@ -629,9 +602,7 @@ where
         let interaction_rect = ui
             .ctx()
             .memory_mut(|mem| {
-                mem.data
-                    .get_temp::<OuterRectMemory>(child_ui.id())
-                    .map(|stored| stored.0)
+                mem.data.get_temp::<OuterRectMemory>(child_ui.id()).map(|stored| stored.0)
             })
             .unwrap_or(outer_rect_bounds);
         // After 0.20, layers added over others can block hover interaction. Call this first
@@ -754,10 +725,7 @@ where
         let port_right = outer_rect.right();
 
         // Save expanded rect to memory.
-        ui.ctx().memory_mut(|mem| {
-            mem.data
-                .insert_temp(child_ui.id(), OuterRectMemory(outer_rect))
-        });
+        ui.ctx().memory_mut(|mem| mem.data.insert_temp(child_ui.id(), OuterRectMemory(outer_rect)));
 
         #[allow(clippy::too_many_arguments)]
         fn draw_port<NodeData, DataType, ValueType, UserResponse, UserState>(
@@ -782,11 +750,8 @@ where
             let port_rect =
                 Rect::from_center_size(port_pos, egui::vec2(10.0, 10.0) * pan_zoom.zoom);
 
-            let sense = if ongoing_drag.is_some() {
-                Sense::hover()
-            } else {
-                Sense::click_and_drag()
-            };
+            let sense =
+                if ongoing_drag.is_some() { Sense::hover() } else { Sense::click_and_drag() };
 
             let resp = ui.allocate_rect(port_rect, sense);
 
@@ -797,24 +762,15 @@ where
                 false
             };
 
-            let port_color = if close_enough {
-                Color32::WHITE
-            } else {
-                port_type.data_type_color(user_state)
-            };
-            ui.painter().circle(
-                port_rect.center(),
-                5.0 * pan_zoom.zoom,
-                port_color,
-                Stroke::NONE,
-            );
+            let port_color =
+                if close_enough { Color32::WHITE } else { port_type.data_type_color(user_state) };
+            ui.painter().circle(port_rect.center(), 5.0 * pan_zoom.zoom, port_color, Stroke::NONE);
 
             if resp.drag_started() {
                 if is_connected_input {
                     let input = param_id.assume_input();
-                    let corresp_output = graph
-                        .connection(input)
-                        .expect("Connection data should be valid");
+                    let corresp_output =
+                        graph.connection(input).expect("Connection data should be valid");
                     responses.push(NodeResponse::DisconnectEvent {
                         input: param_id.assume_input(),
                         output: corresp_output,
@@ -846,10 +802,8 @@ where
         }
 
         // Input ports
-        for ((_, param), port_height) in self.graph[self.node_id]
-            .inputs
-            .iter()
-            .zip(input_port_heights.into_iter())
+        for ((_, param), port_height) in
+            self.graph[self.node_id].inputs.iter().zip(input_port_heights.into_iter())
         {
             let should_draw = match self.graph[*param].kind() {
                 InputParamKind::ConnectionOnly => true,
@@ -876,10 +830,8 @@ where
         }
 
         // Output ports
-        for ((_, param), port_height) in self.graph[self.node_id]
-            .outputs
-            .iter()
-            .zip(output_port_heights.into_iter())
+        for ((_, param), port_height) in
+            self.graph[self.node_id].outputs.iter().zip(output_port_heights.into_iter())
         {
             let pos_right = pos2(port_right, port_height);
             draw_port(
@@ -981,10 +933,7 @@ where
         // Movement
         let drag_delta = window_response.drag_delta();
         if drag_delta.length_sq() > 0.0 {
-            responses.push(NodeResponse::MoveNode {
-                node: self.node_id,
-                drag_delta,
-            });
+            responses.push(NodeResponse::MoveNode { node: self.node_id, drag_delta });
             responses.push(NodeResponse::RaiseNode(self.node_id));
         }
 
@@ -1032,15 +981,10 @@ where
                 color_from_hex("#555555").unwrap()
             }
         };
-        let stroke = Stroke {
-            width: stroke_width,
-            color,
-        };
+        let stroke = Stroke { width: stroke_width, color };
 
-        ui.painter()
-            .line_segment([rect.left_top(), rect.right_bottom()], stroke);
-        ui.painter()
-            .line_segment([rect.right_top(), rect.left_bottom()], stroke);
+        ui.painter().line_segment([rect.left_top(), rect.right_bottom()], stroke);
+        ui.painter().line_segment([rect.right_top(), rect.left_bottom()], stroke);
 
         resp
     }

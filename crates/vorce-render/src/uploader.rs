@@ -12,6 +12,24 @@ impl WgpuFrameUploader {
         Self { device, queue }
     }
 
+    pub fn upload_direct(&self, texture: &wgpu::Texture, data: &[u8], width: u32, height: u32) {
+        self.queue.write_texture(
+            wgpu::TexelCopyTextureInfo {
+                texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            data,
+            wgpu::TexelCopyBufferLayout {
+                offset: 0,
+                bytes_per_row: Some(width * 4),
+                rows_per_image: Some(height),
+            },
+            wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
+        );
+    }
+
     /// Upload frame data to a texture.
     ///
     /// This method uses a staging buffer (created with `create_buffer_init`) and
@@ -29,12 +47,11 @@ impl WgpuFrameUploader {
 
         let buffer = if padding == 0 {
             // Data is already aligned, direct upload
-            self.device
-                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Frame Upload Staging Buffer"),
-                    contents: data,
-                    usage: wgpu::BufferUsages::COPY_SRC,
-                })
+            self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Frame Upload Staging Buffer"),
+                contents: data,
+                usage: wgpu::BufferUsages::COPY_SRC,
+            })
         } else {
             // Data is not aligned, need to repack
             let mut padded_data = Vec::with_capacity((padded_bytes_per_row * height) as usize);
@@ -48,20 +65,17 @@ impl WgpuFrameUploader {
                 }
             }
 
-            self.device
-                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Frame Upload Staging Buffer (Padded)"),
-                    contents: &padded_data,
-                    usage: wgpu::BufferUsages::COPY_SRC,
-                })
+            self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Frame Upload Staging Buffer (Padded)"),
+                contents: &padded_data,
+                usage: wgpu::BufferUsages::COPY_SRC,
+            })
         };
 
         // Create command encoder for the copy
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Frame Upload Encoder"),
-            });
+        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("Frame Upload Encoder"),
+        });
 
         // Copy from staging buffer to texture
         encoder.copy_buffer_to_texture(
@@ -79,11 +93,7 @@ impl WgpuFrameUploader {
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
             },
-            wgpu::Extent3d {
-                width,
-                height,
-                depth_or_array_layers: 1,
-            },
+            wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
         );
 
         // Submit the command buffer

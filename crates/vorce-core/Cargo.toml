@@ -31,6 +31,7 @@ once_cell = { workspace = true }
 parking_lot = { workspace = true }
 rand = "0.10.0"
 resvg.workspace = true
+rustc-hash = "2.1.2"
 rustfft = { workspace = true }
 serde = { workspace = true, features = ["rc"] }
 serde_json = { workspace = true }
@@ -41,7 +42,7 @@ thiserror = { workspace = true }
 tobj = "4.0.3"
 tracing = { workspace = true }
 usvg.workspace = true
-uuid = { version = "1.22.0", features = ["v4", "serde"] }
+uuid = { version = "1.23.1", features = ["v4", "serde"] }
 walkdir = "2.5.0"
 winit = { workspace = true, optional = true }
 

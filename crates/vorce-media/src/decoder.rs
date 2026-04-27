@@ -92,18 +92,11 @@ mod ffmpeg_impl {
     use std::path::PathBuf;
 
     #[cfg(target_os = "windows")]
-    // SAFETY: This is a callback provided to FFmpeg. We must ensure it doesn't cause UB.
-    // It takes raw pointers, which we check before dereferencing.
     unsafe extern "C" fn get_format_callback(
         ctx: *mut ffi::AVCodecContext,
         fmt: *const ffi::AVPixelFormat,
     ) -> ffi::AVPixelFormat {
         const MAX_FORMATS: usize = 128;
-
-        if ctx.is_null() {
-            warn!("get_format_callback: ctx is null");
-            return ffi::AVPixelFormat::AV_PIX_FMT_NONE;
-        }
 
         if fmt.is_null() {
             warn!("get_format_callback: fmt is null");
@@ -112,50 +105,24 @@ mod ffmpeg_impl {
 
         let mut p = fmt;
         let mut count = 0;
-
-        // SAFETY: We checked `fmt` is not null. FFmpeg guarantees `fmt` is a null-terminated array of formats.
-        // We also enforce `MAX_FORMATS` limit to prevent infinite loops in case of malformed lists.
-        while unsafe { *p } != ffi::AVPixelFormat::AV_PIX_FMT_NONE {
+        while *p != ffi::AVPixelFormat::AV_PIX_FMT_NONE {
             if count >= MAX_FORMATS {
-                warn!(
-                    "get_format_callback: format list exceeded limit of {}",
-                    MAX_FORMATS
-                );
+                warn!("get_format_callback: format list exceeded limit of {}", MAX_FORMATS);
                 break;
             }
-            // SAFETY: Safe to read from `p` inside the bounds of the format array.
-            if unsafe { *p } == ffi::AVPixelFormat::AV_PIX_FMT_D3D11 {
-                return unsafe { *p };
+            if *p == ffi::AVPixelFormat::AV_PIX_FMT_D3D11 {
+                return *p;
             }
-            // SAFETY: Incrementing the pointer is safe as it's part of an array.
-            p = unsafe { p.offset(1) };
+            p = p.offset(1);
             count += 1;
         }
 
-        // SAFETY: Both `ctx` and `fmt` are checked against null and originate from FFmpeg.
-        unsafe { ffi::avcodec_default_get_format(ctx, fmt) }
-    }
-
-    struct SendContext(ffmpeg::software::scaling::Context);
-    // SAFETY: The FFmpeg swscale Context structure is thread-safe to move between threads.
-    unsafe impl Send for SendContext {}
-    impl std::ops::Deref for SendContext {
-        type Target = ffmpeg::software::scaling::Context;
-        fn deref(&self) -> &Self::Target {
-            &self.0
-        }
-    }
-    impl std::ops::DerefMut for SendContext {
-        fn deref_mut(&mut self) -> &mut Self::Target {
-            &mut self.0
-        }
+        ffi::avcodec_default_get_format(ctx, fmt)
     }
 
     pub struct RealFFmpegDecoder {
         input_ctx: ffmpeg::format::context::Input,
         decoder: ffmpeg::codec::decoder::Video,
-        // Wrapped in SendContext to allow moving to decode thread
-        scaler: SendContext,
         video_stream_idx: usize,
         time_base: ffmpeg::Rational,
         duration: Duration,
@@ -179,10 +146,7 @@ mod ffmpeg_impl {
             let path = path.as_ref();
 
             if !path.exists() {
-                return Err(MediaError::FileOpen(format!(
-                    "File not found: {}",
-                    path.display()
-                )));
+                return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
             }
 
             // Initialize FFmpeg
@@ -274,19 +238,6 @@ mod ffmpeg_impl {
             let width = decoder.width();
             let height = decoder.height();
 
-            // Create scaler to convert to RGBA
-            let scaler = ffmpeg::software::scaling::Context::get(
-                decoder.format(),
-                width,
-                height,
-                ffmpeg::format::Pixel::RGBA,
-                width,
-                height,
-                ffmpeg::software::scaling::Flags::BILINEAR,
-            )
-            .map_err(|e| MediaError::DecoderError(e.to_string()))
-            .map(SendContext)?;
-
             info!(
                 "Decoder initialized successfully: {}x{} @ {:.2} fps, duration: {:.2}s, hw_accel: {:?}",
                 width,
@@ -301,7 +252,6 @@ mod ffmpeg_impl {
             Ok(Self {
                 input_ctx,
                 decoder,
-                scaler,
                 video_stream_idx,
                 time_base,
                 duration,
@@ -322,59 +272,52 @@ mod ffmpeg_impl {
             match requested {
                 HwAccelType::None => Ok(HwAccelType::None),
                 #[cfg(target_os = "windows")]
-                HwAccelType::D3D11VA => {
-                    // SAFETY: We are initializing a hardware device context with FFmpeg's API.
-                    // Pointer dereferencing and buffer unreferencing are properly checked.
-                    unsafe {
-                        let mut hw_device_ctx: *mut ffi::AVBufferRef = std::ptr::null_mut();
+                HwAccelType::D3D11VA => unsafe {
+                    let mut hw_device_ctx: *mut ffi::AVBufferRef = std::ptr::null_mut();
+                    let ret = ffi::av_hwdevice_ctx_create(
+                        &mut hw_device_ctx,
+                        ffi::AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA,
+                        std::ptr::null(),
+                        std::ptr::null_mut(),
+                        0,
+                    );
 
-                        // SAFETY: FFmpeg handles the initialization safely, providing valid device type and returning context via pointer.
-                        let ret = ffi::av_hwdevice_ctx_create(
-                            &mut hw_device_ctx,
-                            ffi::AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA,
-                            std::ptr::null(),
-                            std::ptr::null_mut(),
-                            0,
-                        );
-
-                        if ret < 0 {
-                            // Return error so we can log it properly in caller
-                            return Err(MediaError::DecoderError(format!(
-                                "Failed to create D3D11VA device context: {}",
-                                ret
-                            )));
-                        }
-
-                        if hw_device_ctx.is_null() {
-                            return Err(MediaError::DecoderError(
-                                "Created D3D11VA device context is null".to_string(),
-                            ));
-                        }
-
-                        let codec_ctx = _decoder.as_mut_ptr();
-                        if codec_ctx.is_null() {
-                            // SAFETY: `hw_device_ctx` is confirmed non-null from above checks.
-                            ffi::av_buffer_unref(&mut hw_device_ctx);
-                            return Err(MediaError::DecoderError(
-                                "Codec context is null".to_string(),
-                            ));
-                        }
-
-                        // Transfer ownership of hw_device_ctx to codec_ctx
-                        // SAFETY: `codec_ctx` is checked against null.
-                        (*codec_ctx).hw_device_ctx = hw_device_ctx;
-                        (*codec_ctx).get_format = Some(get_format_callback);
-
-                        info!("D3D11VA hardware acceleration initialized");
-                        Ok(HwAccelType::D3D11VA)
+                    if ret < 0 {
+                        // Return error so we can log it properly in caller
+                        return Err(MediaError::DecoderError(format!(
+                            "Failed to create D3D11VA device context: {}",
+                            ret
+                        )));
                     }
-                }
+
+                    let codec_ctx = _decoder.as_mut_ptr();
+                    if codec_ctx.is_null() {
+                        ffi::av_buffer_unref(&mut hw_device_ctx);
+                        return Err(MediaError::DecoderError("Codec context is null".to_string()));
+                    }
+
+                    // Transfer ownership of hw_device_ctx to codec_ctx
+                    (*codec_ctx).hw_device_ctx = hw_device_ctx;
+                    (*codec_ctx).get_format = Some(get_format_callback);
+
+                    info!("D3D11VA hardware acceleration initialized");
+                    Ok(HwAccelType::D3D11VA)
+                },
                 _ => {
                     // Just fallback for unsupported types
                     Ok(HwAccelType::None)
                 }
             }
         }
+    }
+
+    thread_local! {
+        static SCALER_CACHE: std::cell::RefCell<Option<(
+            ffmpeg::format::Pixel,
+            u32,
+            u32,
+            ffmpeg::software::scaling::Context,
+        )>> = const { std::cell::RefCell::new(None) };
     }
 
     impl super::VideoDecoder for RealFFmpegDecoder {
@@ -401,43 +344,24 @@ mod ffmpeg_impl {
                 if self.decoder.receive_frame(&mut decoded).is_ok() {
                     #[allow(unused_variables, unused_mut)]
                     let mut sw_frame = ffmpeg::util::frame::Video::empty();
-                    // SAFETY: Check `decoded.as_ptr()` is not null before checking format.
-                    let is_d3d11 = unsafe {
-                        let ptr = decoded.as_ptr();
-                        if !ptr.is_null() {
-                            (*ptr).format == ffi::AVPixelFormat::AV_PIX_FMT_D3D11 as i32
-                        } else {
-                            false
-                        }
-                    };
-
-                    let frame_ptr = if is_d3d11 {
+                    let frame_ptr = if unsafe {
+                        (*decoded.as_ptr()).format == ffi::AVPixelFormat::AV_PIX_FMT_D3D11 as i32
+                    } {
                         #[cfg(target_os = "windows")]
-                        {
-                            // SAFETY: Transferring hardware frame data to software frame via FFmpeg API.
-                            unsafe {
-                                let sw_ptr = sw_frame.as_mut_ptr();
-                                let dec_ptr = decoded.as_ptr();
-
-                                if sw_ptr.is_null() || dec_ptr.is_null() {
-                                    return Err(MediaError::DecoderError(
-                                        "Software or hardware frame pointer is null".to_string(),
-                                    ));
-                                }
-
-                                // SAFETY: Both pointers checked against null. FFmpeg manages the transfer logic.
-                                let ret = ffi::av_hwframe_transfer_data(sw_ptr, dec_ptr, 0);
-                                if ret < 0 {
-                                    return Err(MediaError::DecoderError(format!(
-                                        "Failed to transfer HW frame: {}",
-                                        ret
-                                    )));
-                                }
-
-                                // SAFETY: Valid pointers, copying properties.
-                                ffi::av_frame_copy_props(sw_ptr, dec_ptr);
-                                &sw_frame
+                        unsafe {
+                            let ret = ffi::av_hwframe_transfer_data(
+                                sw_frame.as_mut_ptr(),
+                                decoded.as_ptr(),
+                                0,
+                            );
+                            if ret < 0 {
+                                return Err(MediaError::DecoderError(format!(
+                                    "Failed to transfer HW frame: {}",
+                                    ret
+                                )));
                             }
+                            ffi::av_frame_copy_props(sw_frame.as_mut_ptr(), decoded.as_ptr());
+                            &sw_frame
                         }
                         #[cfg(not(target_os = "windows"))]
                         {
@@ -466,34 +390,55 @@ mod ffmpeg_impl {
                             frame_format
                         );
 
-                        let new_scaler = ffmpeg::software::scaling::Context::get(
-                            frame_format,
-                            frame_width,
-                            frame_height,
-                            ffmpeg::format::Pixel::RGBA,
-                            frame_width,
-                            frame_height,
-                            ffmpeg::software::scaling::Flags::BILINEAR,
-                        )
-                        .map_err(|e| {
-                            MediaError::DecoderError(format!("Failed to recreate scaler: {}", e))
-                        })
-                        .map(SendContext)?;
-
-                        self.scaler = new_scaler;
                         self.width = frame_width;
                         self.height = frame_height;
                         self.current_format = frame_format;
                     }
 
-                    // Scale to RGBA
-                    let mut rgb_frame = ffmpeg::util::frame::Video::empty();
-                    self.scaler.run(frame_ptr, &mut rgb_frame).map_err(|e| {
-                        MediaError::DecoderError(format!(
-                            "Decoder error: Input changed? Scaler run failed: {}",
-                            e
-                        ))
-                    })?;
+                    // Scale to RGBA using thread-local scaler
+                    let rgb_frame =
+                        SCALER_CACHE.with(|cache| -> Result<ffmpeg::util::frame::Video> {
+                            let mut cache = cache.borrow_mut();
+
+                            let need_new = match &*cache {
+                                Some((fmt, w, h, _)) => {
+                                    *fmt != frame_format || *w != self.width || *h != self.height
+                                }
+                                None => true,
+                            };
+
+                            if need_new {
+                                let new_scaler = ffmpeg::software::scaling::Context::get(
+                                    frame_format,
+                                    frame_width,
+                                    frame_height,
+                                    ffmpeg::format::Pixel::RGBA,
+                                    self.width,
+                                    self.height,
+                                    ffmpeg::software::scaling::Flags::BILINEAR,
+                                )
+                                .map_err(|e| {
+                                    MediaError::DecoderError(format!(
+                                        "Failed to recreate scaler: {}",
+                                        e
+                                    ))
+                                })?;
+
+                                *cache = Some((frame_format, self.width, self.height, new_scaler));
+                            }
+
+                            let Some((_, _, _, ref mut scaler)) = cache.as_mut() else {
+                                return Err(MediaError::DecoderError(
+                                    "Scaler cache unexpectedly empty".into(),
+                                ));
+                            };
+                            let mut rgb = ffmpeg::util::frame::Video::empty();
+                            scaler.run(frame_ptr, &mut rgb).map_err(|e| {
+                                MediaError::DecoderError(format!("Scaler run failed: {}", e))
+                            })?;
+
+                            Ok(rgb)
+                        })?;
 
                     let pts = Duration::from_secs_f64(
                         decoded.timestamp().unwrap_or(0) as f64 * f64::from(self.time_base),
@@ -580,14 +525,7 @@ pub struct TestPatternDecoder {
 impl TestPatternDecoder {
     /// Create a new test pattern decoder
     pub fn new(width: u32, height: u32, duration: Duration, fps: f64) -> Self {
-        Self {
-            width,
-            height,
-            duration,
-            fps,
-            current_time: Duration::ZERO,
-            frame_count: 0,
-        }
+        Self { width, height, duration, fps, current_time: Duration::ZERO, frame_count: 0 }
     }
 
     /// Generate a test pattern frame
@@ -637,9 +575,7 @@ impl VideoDecoder for TestPatternDecoder {
 
     fn seek(&mut self, timestamp: Duration) -> Result<()> {
         if timestamp > self.duration {
-            return Err(MediaError::SeekError(
-                "Timestamp beyond duration".to_string(),
-            ));
+            return Err(MediaError::SeekError("Timestamp beyond duration".to_string()));
         }
 
         self.current_time = timestamp;

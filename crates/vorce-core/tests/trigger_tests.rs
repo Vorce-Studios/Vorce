@@ -13,6 +13,7 @@ fn test_audio_fft_fallback() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     // All outputs disabled, should fallback to Beat Out
@@ -42,15 +43,8 @@ fn test_audio_fft_fallback() {
     let res = evaluator.evaluate(&module, &shared, 0);
 
     let values = res.trigger_values.get(&t_id).unwrap();
-    assert_eq!(
-        values.len(),
-        1,
-        "Should fallback to exactly 1 output (beat_out)"
-    );
-    assert_eq!(
-        values[0], 1.0,
-        "Fallback beat output should be 1.0 when beat is detected"
-    );
+    assert_eq!(values.len(), 1, "Should fallback to exactly 1 output (beat_out)");
+    assert_eq!(values[0], 1.0, "Fallback beat output should be 1.0 when beat is detected");
 
     // Test with beat detected false
     analysis.beat_detected = false;
@@ -72,6 +66,7 @@ fn test_manual_trigger() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     // Add a trigger node
@@ -80,33 +75,18 @@ fn test_manual_trigger() {
     // Evaluate without manual trigger
     let shared = vorce_core::module::SharedMediaState::default();
     let res = evaluator.evaluate(&module, &shared, 0);
-    let val = res
-        .trigger_values
-        .get(&t_id)
-        .and_then(|v| v.first())
-        .copied()
-        .unwrap_or(0.0);
+    let val = res.trigger_values.get(&t_id).and_then(|v| v.first()).copied().unwrap_or(0.0);
     assert_eq!(val, 0.0);
 
     // Fire manual trigger
     evaluator.trigger_node(t_id);
     let res = evaluator.evaluate(&module, &shared, 0);
-    let val = res
-        .trigger_values
-        .get(&t_id)
-        .and_then(|v| v.first())
-        .copied()
-        .unwrap_or(0.0);
+    let val = res.trigger_values.get(&t_id).and_then(|v| v.first()).copied().unwrap_or(0.0);
     assert_eq!(val, 1.0);
 
     // Verify it's cleared next frame
     let res = evaluator.evaluate(&module, &shared, 0);
-    let val = res
-        .trigger_values
-        .get(&t_id)
-        .and_then(|v| v.first())
-        .copied()
-        .unwrap_or(0.0);
+    let val = res.trigger_values.get(&t_id).and_then(|v| v.first()).copied().unwrap_or(0.0);
     assert_eq!(val, 0.0);
 }
 
@@ -121,6 +101,7 @@ fn test_shortcut_trigger() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     // Add a shortcut trigger
@@ -136,12 +117,7 @@ fn test_shortcut_trigger() {
 
     // No key pressed
     let res = evaluator.evaluate(&module, &shared, 0);
-    let val = res
-        .trigger_values
-        .get(&t_id)
-        .and_then(|v| v.first())
-        .copied()
-        .unwrap_or(0.0);
+    let val = res.trigger_values.get(&t_id).and_then(|v| v.first()).copied().unwrap_or(0.0);
     assert_eq!(val, 0.0);
 
     // Press Space
@@ -150,24 +126,14 @@ fn test_shortcut_trigger() {
     evaluator.update_keys(&keys);
 
     let res = evaluator.evaluate(&module, &shared, 0);
-    let val = res
-        .trigger_values
-        .get(&t_id)
-        .and_then(|v| v.first())
-        .copied()
-        .unwrap_or(0.0);
+    let val = res.trigger_values.get(&t_id).and_then(|v| v.first()).copied().unwrap_or(0.0);
     assert_eq!(val, 1.0);
 
     // Release Space
     keys.clear();
     evaluator.update_keys(&keys);
     let res = evaluator.evaluate(&module, &shared, 0);
-    let val = res
-        .trigger_values
-        .get(&t_id)
-        .and_then(|v| v.first())
-        .copied()
-        .unwrap_or(0.0);
+    let val = res.trigger_values.get(&t_id).and_then(|v| v.first()).copied().unwrap_or(0.0);
     assert_eq!(val, 0.0);
 }
 
@@ -182,6 +148,7 @@ fn test_midi_trigger() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     // Add a MIDI trigger (Channel 1, Note 60)
@@ -198,34 +165,19 @@ fn test_midi_trigger() {
 
     // No MIDI
     let res = evaluator.evaluate(&module, &shared, 0);
-    let val = res
-        .trigger_values
-        .get(&t_id)
-        .and_then(|v| v.first())
-        .copied()
-        .unwrap_or(0.0);
+    let val = res.trigger_values.get(&t_id).and_then(|v| v.first()).copied().unwrap_or(0.0);
     assert_eq!(val, 0.0);
 
     // Send MIDI
     let mut shared_midi = shared.clone();
     shared_midi.active_midi_events.push((1, 60, 127));
     let res = evaluator.evaluate(&module, &shared_midi, 0);
-    let val = res
-        .trigger_values
-        .get(&t_id)
-        .and_then(|v| v.first())
-        .copied()
-        .unwrap_or(0.0);
+    let val = res.trigger_values.get(&t_id).and_then(|v| v.first()).copied().unwrap_or(0.0);
     assert_eq!(val, 1.0);
 
     // Verify cleared
     let res = evaluator.evaluate(&module, &shared, 0);
-    let val = res
-        .trigger_values
-        .get(&t_id)
-        .and_then(|v| v.first())
-        .copied()
-        .unwrap_or(0.0);
+    let val = res.trigger_values.get(&t_id).and_then(|v| v.first()).copied().unwrap_or(0.0);
     assert_eq!(val, 0.0);
 }
 
@@ -240,13 +192,12 @@ fn test_osc_trigger() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
+        part_index: Default::default(),
     };
 
     // Add an OSC trigger
     let t_id = module.add_part_with_type(
-        ModulePartType::Trigger(TriggerType::Osc {
-            address: "/trigger/1".to_string(),
-        }),
+        ModulePartType::Trigger(TriggerType::Osc { address: "/trigger/1".to_string() }),
         (0.0, 0.0),
     );
 
@@ -254,35 +205,18 @@ fn test_osc_trigger() {
 
     // No OSC
     let res = evaluator.evaluate(&module, &shared, 0);
-    let val = res
-        .trigger_values
-        .get(&t_id)
-        .and_then(|v| v.first())
-        .copied()
-        .unwrap_or(0.0);
+    let val = res.trigger_values.get(&t_id).and_then(|v| v.first()).copied().unwrap_or(0.0);
     assert_eq!(val, 0.0);
 
     // Send OSC
-    shared
-        .active_osc_messages
-        .insert("/trigger/1".to_string(), vec![1.0]);
+    shared.active_osc_messages.insert("/trigger/1".to_string(), vec![1.0]);
     let res = evaluator.evaluate(&module, &shared, 0);
-    let val = res
-        .trigger_values
-        .get(&t_id)
-        .and_then(|v| v.first())
-        .copied()
-        .unwrap_or(0.0);
+    let val = res.trigger_values.get(&t_id).and_then(|v| v.first()).copied().unwrap_or(0.0);
     assert_eq!(val, 1.0);
 
     // Verify cleared
     shared.active_osc_messages.clear();
     let res = evaluator.evaluate(&module, &shared, 0);
-    let val = res
-        .trigger_values
-        .get(&t_id)
-        .and_then(|v| v.first())
-        .copied()
-        .unwrap_or(0.0);
+    let val = res.trigger_values.get(&t_id).and_then(|v| v.first()).copied().unwrap_or(0.0);
     assert_eq!(val, 0.0);
 }

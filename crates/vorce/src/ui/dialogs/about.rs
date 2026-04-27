@@ -1,15 +1,14 @@
-use egui::{Color32, Context, RichText, Window};
+use egui::{Context, RichText, Window};
 
 /// Renders the About dialog.
 pub fn show(ctx: &Context, show_about: &mut bool) {
     let mut is_open = *show_about;
     let mut close_clicked = false;
 
-    Window::new(
-        RichText::new("ℹ ABOUT VORCE")
-            .strong()
-            .color(Color32::from_rgb(0, 255, 255)),
-    )
+    Window::new(RichText::new("ℹ ABOUT VORCE").strong().color(
+        #[allow(deprecated)]
+        ctx.style().visuals.strong_text_color(),
+    ))
     .open(&mut is_open)
     .resizable(false)
     .collapsible(false)
@@ -20,7 +19,10 @@ pub fn show(ctx: &Context, show_about: &mut bool) {
             ui.heading(RichText::new("Vorce VJ").size(24.0).strong());
 
             let version = env!("CARGO_PKG_VERSION");
-            ui.label(RichText::new(format!("Version {}", version)).color(Color32::GRAY));
+            ui.label(
+                RichText::new(format!("Version {}", version))
+                    .color(ui.visuals().text_color().gamma_multiply(0.6)),
+            );
 
             ui.add_space(10.0);
             ui.label("Professional Projection Mapping & VJ Software");
@@ -31,10 +33,7 @@ pub fn show(ctx: &Context, show_about: &mut bool) {
             ui.add_space(10.0);
 
             ui.label("© 2026 MrLongNight & Vorce Team");
-            ui.hyperlink_to(
-                "GitHub Repository",
-                "https://github.com/Vorce-Studios/Vorce",
-            );
+            ui.hyperlink_to("GitHub Repository", "https://github.com/Vorce-Studios/Vorce");
 
             ui.add_space(20.0);
             if ui.button("Close").clicked() {

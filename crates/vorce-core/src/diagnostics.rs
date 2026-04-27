@@ -39,20 +39,14 @@ pub fn check_module_integrity(module: &VorceModule) -> Vec<ModuleIssue> {
         if from_part.is_none() {
             issues.push(ModuleIssue {
                 severity: IssueSeverity::Error,
-                message: format!(
-                    "Connection #{} has invalid FROM Part ID {}",
-                    idx, conn.from_part
-                ),
+                message: format!("Connection #{} has invalid FROM Part ID {}", idx, conn.from_part),
                 part_id: None,
             });
         }
         if to_part.is_none() {
             issues.push(ModuleIssue {
                 severity: IssueSeverity::Error,
-                message: format!(
-                    "Connection #{} has invalid TO Part ID {}",
-                    idx, conn.to_part
-                ),
+                message: format!("Connection #{} has invalid TO Part ID {}", idx, conn.to_part),
                 part_id: None,
             });
         }
@@ -130,6 +124,7 @@ mod tests {
             connections: vec![],
             playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
             next_part_id: 1,
+            part_index: Default::default(),
         }
     }
 
@@ -146,11 +141,9 @@ mod tests {
         module.add_part(PartType::Source, (0.0, 0.0));
         let issues = check_module_integrity(&module);
         // Only info for unconnected inputs by default
-        assert!(issues
-            .iter()
-            .all(|i| matches!(i.severity, IssueSeverity::Info)
-                || matches!(i.severity, IssueSeverity::Error)
-                || matches!(i.severity, IssueSeverity::Warning)));
+        assert!(issues.iter().all(|i| matches!(i.severity, IssueSeverity::Info)
+            || matches!(i.severity, IssueSeverity::Error)
+            || matches!(i.severity, IssueSeverity::Warning)));
     }
 
     #[test]

@@ -154,10 +154,7 @@ pub struct Vertex {
 impl Vertex {
     /// Create a new vertex
     pub fn new(x: f32, y: f32, u: f32, v: f32) -> Self {
-        Self {
-            position: Vec2::new(x, y),
-            uv: Vec2::new(u, v),
-        }
+        Self { position: Vec2::new(x, y), uv: Vec2::new(u, v) }
     }
 }
 

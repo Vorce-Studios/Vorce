@@ -33,11 +33,7 @@ impl KeyBindings {
 
     /// Create an empty key bindings manager
     pub fn empty() -> Self {
-        Self {
-            shortcuts: Vec::new(),
-            macros: HashMap::new(),
-            context: ShortcutContext::Global,
-        }
+        Self { shortcuts: Vec::new(), macros: HashMap::new(), context: ShortcutContext::Global }
     }
 
     /// Set the current context
@@ -76,7 +72,8 @@ impl KeyBindings {
     }
 
     /// Add a new shortcut
-    pub fn add_shortcut(&mut self, shortcut: Shortcut) {
+    pub fn add_shortcut(&mut self, mut shortcut: Shortcut) {
+        shortcut.update_cache();
         self.shortcuts.push(shortcut);
     }
 
@@ -106,10 +103,7 @@ impl KeyBindings {
 
     /// Find shortcuts for a specific action
     pub fn find_shortcuts_for_action(&self, action: &Action) -> Vec<&Shortcut> {
-        self.shortcuts
-            .iter()
-            .filter(|s| &s.action == action)
-            .collect()
+        self.shortcuts.iter().filter(|s| &s.action == action).collect()
     }
 
     /// Check if a key combination is already bound
@@ -152,13 +146,13 @@ impl KeyBindings {
     /// Load from JSON file
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let json = std::fs::read_to_string(path)?;
-        let data: KeyBindingsData = serde_json::from_str(&json)?;
+        let mut data: KeyBindingsData = serde_json::from_str(&json)?;
 
-        info!(
-            "Loaded {} shortcuts and {} macros",
-            data.shortcuts.len(),
-            data.macros.len()
-        );
+        info!("Loaded {} shortcuts and {} macros", data.shortcuts.len(), data.macros.len());
+
+        for shortcut in &mut data.shortcuts {
+            shortcut.update_cache();
+        }
 
         Ok(Self {
             shortcuts: data.shortcuts,
@@ -169,36 +163,32 @@ impl KeyBindings {
 
     /// Save to JSON file
     pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        let data = KeyBindingsData {
-            shortcuts: self.shortcuts.clone(),
-            macros: self.macros.clone(),
-        };
+        let data =
+            KeyBindingsData { shortcuts: self.shortcuts.clone(), macros: self.macros.clone() };
 
         let json = serde_json::to_string_pretty(&data)?;
         std::fs::write(path, json)?;
 
-        info!(
-            "Saved {} shortcuts and {} macros",
-            self.shortcuts.len(),
-            self.macros.len()
-        );
+        info!("Saved {} shortcuts and {} macros", self.shortcuts.len(), self.macros.len());
 
         Ok(())
     }
 
     /// Export to JSON string
     pub fn to_json(&self) -> Result<String> {
-        let data = KeyBindingsData {
-            shortcuts: self.shortcuts.clone(),
-            macros: self.macros.clone(),
-        };
+        let data =
+            KeyBindingsData { shortcuts: self.shortcuts.clone(), macros: self.macros.clone() };
 
         Ok(serde_json::to_string_pretty(&data)?)
     }
 
     /// Import from JSON string
     pub fn from_json(json: &str) -> Result<Self> {
-        let data: KeyBindingsData = serde_json::from_str(json)?;
+        let mut data: KeyBindingsData = serde_json::from_str(json)?;
+
+        for shortcut in &mut data.shortcuts {
+            shortcut.update_cache();
+        }
 
         Ok(Self {
             shortcuts: data.shortcuts,

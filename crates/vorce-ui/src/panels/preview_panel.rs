@@ -34,12 +34,7 @@ pub struct PreviewPanel {
 
 impl Default for PreviewPanel {
     fn default() -> Self {
-        Self {
-            expanded: true,
-            panel_height: 150.0,
-            outputs: Vec::new(),
-            selected_output: None,
-        }
+        Self { expanded: true, panel_height: 150.0, outputs: Vec::new(), selected_output: None }
     }
 }
 
@@ -92,18 +87,12 @@ impl PreviewPanel {
 
                 // Height adjustment
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui
-                        .button("−")
-                        .on_hover_text("Decrease Panel Height")
-                        .clicked()
+                    if ui.button("−").on_hover_text("Decrease Panel Height").clicked()
                         && self.panel_height > 80.0
                     {
                         self.panel_height -= 20.0;
                     }
-                    if ui
-                        .button("+")
-                        .on_hover_text("Increase Panel Height")
-                        .clicked()
+                    if ui.button("+").on_hover_text("Increase Panel Height").clicked()
                         && self.panel_height < 300.0
                     {
                         self.panel_height += 20.0;
@@ -186,7 +175,7 @@ impl PreviewPanel {
                                             ui.painter().rect_filled(
                                                 rect,
                                                 2.0,
-                                                egui::Color32::from_gray(40),
+                                                ui.visuals().extreme_bg_color,
                                             );
 
                                             // Draw "no signal" text
@@ -195,7 +184,7 @@ impl PreviewPanel {
                                                 egui::Align2::CENTER_CENTER,
                                                 "No Signal",
                                                 egui::FontId::proportional(12.0),
-                                                egui::Color32::GRAY,
+                                                ui.visuals().text_color().gamma_multiply(0.5),
                                             );
                                         }
 

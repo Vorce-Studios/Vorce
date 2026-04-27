@@ -159,7 +159,7 @@ pub fn render_canvas(
             if canvas.show_search {
                 canvas.show_search = false;
             } else {
-                canvas.selected_parts.clear();
+                canvas.clear_selection();
             }
         }
 
@@ -270,6 +270,8 @@ pub fn render_canvas(
         let mut delete_part_id = None;
         let mut resize_ops = Vec::new();
         let mut drag_delta = Vec2::ZERO;
+        let selected_parts_set: rustc_hash::FxHashSet<vorce_core::module::ModulePartId> =
+            canvas.selected_parts.iter().copied().collect();
 
         for part in &mut module.parts {
             let part_pos = to_screen(Pos2::new(part.position.0, part.position.1));
@@ -279,12 +281,12 @@ pub fn render_canvas(
             });
             let part_rect = Rect::from_min_size(part_pos, Vec2::new(w, h) * canvas.zoom);
 
-            if canvas.selected_parts.contains(&part.id) {
+            if selected_parts_set.contains(&part.id) {
                 let highlight_rect = part_rect.expand(4.0 * canvas.zoom);
                 painter.rect_stroke(
                     highlight_rect,
                     0.0,
-                    Stroke::new(2.0 * canvas.zoom, Color32::from_rgb(0, 229, 255)),
+                    Stroke::new(2.0 * canvas.zoom, ui.visuals().selection.bg_fill),
                     egui::StrokeKind::Middle,
                 );
 
@@ -293,20 +295,17 @@ pub fn render_canvas(
                     Pos2::new(part_rect.max.x - handle_size, part_rect.max.y - handle_size),
                     Vec2::splat(handle_size),
                 );
-                painter.rect_filled(handle_rect, 0.0, Color32::from_rgb(0, 229, 255));
+                painter.rect_filled(handle_rect, 0.0, ui.visuals().selection.bg_fill);
                 painter.line_segment(
                     [
                         handle_rect.min + Vec2::new(3.0, handle_size - 3.0),
                         handle_rect.min + Vec2::new(handle_size - 3.0, 3.0),
                     ],
-                    Stroke::new(1.5, Color32::from_gray(40)),
+                    Stroke::new(1.5, ui.visuals().extreme_bg_color),
                 );
 
-                let resize_response = ui.interact(
-                    handle_rect,
-                    egui::Id::new((part.id, "resize")),
-                    Sense::drag(),
-                );
+                let resize_response =
+                    ui.interact(handle_rect, egui::Id::new((part.id, "resize")), Sense::drag());
 
                 if resize_response.drag_started() {
                     canvas.resizing_part = Some((part.id, (w, h)));
@@ -378,11 +377,8 @@ pub fn render_canvas(
             }
 
             let interact_rect = part_rect.shrink(2.0);
-            let part_response = ui.interact(
-                interact_rect,
-                egui::Id::new(part_id),
-                Sense::click_and_drag(),
-            );
+            let part_response =
+                ui.interact(interact_rect, egui::Id::new(part_id), Sense::click_and_drag());
 
             if part_response.hovered() {
                 clicked_on_part = true;
@@ -397,7 +393,7 @@ pub fn render_canvas(
                         canvas.selected_parts.push(part_id);
                     }
                 } else if !canvas.selected_parts.contains(&part_id) {
-                    canvas.selected_parts.clear();
+                    canvas.clear_selection();
                     canvas.selected_parts.push(part_id);
                 }
             }
@@ -407,7 +403,7 @@ pub fn render_canvas(
                 if canvas.creating_connection.is_none() {
                     if !canvas.selected_parts.contains(&part_id) {
                         if !ui.input(|i| i.modifiers.shift) {
-                            canvas.selected_parts.clear();
+                            canvas.clear_selection();
                         }
                         canvas.selected_parts.push(part_id);
                     }
@@ -467,10 +463,7 @@ pub fn render_canvas(
                             (target.part_id, target.socket_id.clone(), from_part, from_id)
                         };
 
-                        if module
-                            .connect_parts(out_part, out_id, in_part, in_id)
-                            .unwrap_or(false)
-                        {
+                        if module.connect_parts(out_part, out_id, in_part, in_id).unwrap_or(false) {
                             module_changed = true;
                             needs_repair = true;
                             ui.ctx().request_repaint();
@@ -507,6 +500,10 @@ pub fn render_canvas(
             canvas.panning_canvas = true;
         }
 
+        if response.clicked() && !clicked_on_part {
+            canvas.clear_selection();
+        }
+
         if let Some(pid) = delete_part_id {
             module
                 .connections
@@ -541,35 +538,34 @@ pub fn render_canvas(
                                     from_id.clone(),
                                 )
                             };
-                            module
-                                .validate_connection(out_part, out_id, in_part, in_id)
-                                .is_ok()
+                            module.validate_connection(out_part, out_id, in_part, in_id).is_ok()
                         } else {
                             false
                         };
                         color = if is_valid {
-                            Color32::GREEN
+                            ui.visuals().strong_text_color()
                         } else {
-                            Color32::RED
+                            ui.visuals().error_fg_color
                         };
                         break;
                     }
                 }
 
-                let preview_stroke =
-                    if options.short_circuit_animation_enabled && color == Color32::RED {
-                        let pulse = (ui.input(|i| i.time) as f32 * 10.0).sin().abs();
-                        Stroke::new(3.0 + pulse * 2.0, color.gamma_multiply(0.8 + pulse * 0.2))
-                    } else {
-                        Stroke::new(3.0, color)
-                    };
+                let preview_stroke = if options.short_circuit_animation_enabled
+                    && color == ui.visuals().error_fg_color
+                {
+                    let pulse = (ui.input(|i| i.time) as f32 * 10.0).sin().abs();
+                    Stroke::new(3.0 + pulse * 2.0, color.gamma_multiply(0.8 + pulse * 0.2))
+                } else {
+                    Stroke::new(3.0, color)
+                };
 
                 painter.line_segment([start_pos, pointer_pos], preview_stroke);
                 painter.circle_filled(pointer_pos, 5.0, color);
             }
         }
 
-        draw::draw_mini_map(canvas, &painter, canvas_rect, module);
+        draw::draw_mini_map(canvas, ui, &painter, canvas_rect, module);
 
         if canvas.show_search {
             draw::draw_search_popup(canvas, ui, canvas_rect, module);
@@ -590,9 +586,8 @@ pub fn render_canvas(
 
         if !ui.memory(|m| m.focused().is_some()) && ui.input(|i| i.key_pressed(egui::Key::Tab)) {
             canvas.show_quick_create = true;
-            canvas.quick_create_pos = ui
-                .input(|i| i.pointer.hover_pos())
-                .unwrap_or(canvas_rect.center());
+            canvas.quick_create_pos =
+                ui.input(|i| i.pointer.hover_pos()).unwrap_or(canvas_rect.center());
             canvas.quick_create_filter.clear();
             canvas.quick_create_selected_index = 0;
         }
@@ -616,7 +611,7 @@ pub fn render_canvas(
                     painter.rect_stroke(
                         menu_rect,
                         4.0,
-                        Stroke::new(1.0, Color32::from_rgb(200, 80, 80)),
+                        Stroke::new(1.0, ui.visuals().error_fg_color),
                         egui::StrokeKind::Middle,
                     );
 
@@ -659,7 +654,7 @@ pub fn render_canvas(
                     painter.rect_stroke(
                         menu_rect,
                         4.0,
-                        Stroke::new(1.0, Color32::from_rgb(80, 100, 150)),
+                        Stroke::new(1.0, ui.visuals().text_color().linear_multiply(0.5)),
                         egui::StrokeKind::Middle,
                     );
 
@@ -701,7 +696,7 @@ pub fn render_canvas(
                             ui.label(
                                 egui::RichText::new(format!("{:.0}%", canvas.zoom * 100.0))
                                     .size(11.0)
-                                    .color(Color32::WHITE),
+                                    .color(ui.visuals().strong_text_color()),
                             );
                         });
                     },
@@ -734,10 +729,8 @@ pub fn render_canvas(
     }
 
     if let Some((inner, canvas_pos)) = open_add_menu {
-        let before_parts = manager
-            .get_module(module_id)
-            .map(|module| module.parts.len())
-            .unwrap_or(0);
+        let before_parts =
+            manager.get_module(module_id).map(|module| module.parts.len()).unwrap_or(0);
         ui.scope_builder(egui::UiBuilder::new().max_rect(inner), |ui| {
             ui.vertical(|ui| {
                 ui.heading("\u{2795} Add Node");

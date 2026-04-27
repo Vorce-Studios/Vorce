@@ -26,9 +26,8 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
     // Clone device Arc to create encoder without borrowing self
     let device = app.backend.device.clone();
 
-    let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-        label: Some("Render Encoder"),
-    });
+    let mut encoder = device
+        .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("Render Encoder") });
 
     // Batch render passes.
     app.mesh_renderer.begin_frame();
@@ -53,8 +52,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                         | wgpu::TextureUsages::RENDER_ATTACHMENT,
                 );
 
-                app.texture_pool
-                    .upload_data(&app.backend.queue, tex_name, &data, width, height);
+                app.texture_pool.upload_data(&app.backend.queue, tex_name, &data, width, height);
             }
         }
     }
@@ -95,13 +93,11 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
         }
 
         // 4. Update Textures and Buffers
-        let tris = app
-            .egui_context
-            .tessellate(full_output.shapes, app.egui_context.pixels_per_point());
+        let tris =
+            app.egui_context.tessellate(full_output.shapes, app.egui_context.pixels_per_point());
 
         for (id, delta) in full_output.textures_delta.set {
-            app.egui_renderer
-                .update_texture(&device, &app.backend.queue, id, &delta);
+            app.egui_renderer.update_texture(&device, &app.backend.queue, id, &delta);
         }
 
         app.egui_renderer.update_buffers(
@@ -138,9 +134,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                 anyhow::bail!("failed to acquire surface texture due to validation error");
             }
         };
-        let view = surface_texture
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
+        let view = surface_texture.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
         // Render Content
         render_content(
@@ -175,15 +169,16 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
         {
             // Find if this output has an NDI sender
             let part_id = app.render_queue.items.get(&output_id).and_then(|items| {
-                items.iter().find_map(|item| {
-                    if let vorce_core::module::OutputType::Projector { id, .. } =
-                        &item.render_op.output_type
-                    {
-                        if *id == output_id {
-                            return Some(item.render_op.output_part_id);
-                        }
+                items.iter().find_map(|item| match &item.render_op.output_type {
+                    vorce_core::module::OutputType::Projector { id, .. } if *id == output_id => {
+                        Some(item.render_op.output_part_id)
                     }
-                    None
+                    vorce_core::module::OutputType::NdiOutput { .. }
+                        if output_id == item.render_op.output_part_id =>
+                    {
+                        Some(item.render_op.output_part_id)
+                    }
+                    _ => None,
                 })
             });
 
@@ -278,11 +273,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                                         rows_per_image: Some(height),
                                     },
                                 },
-                                wgpu::Extent3d {
-                                    width,
-                                    height,
-                                    depth_or_array_layers: 1,
-                                },
+                                wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
                             );
 
                             let slice = buffer.slice(..);
@@ -301,6 +292,29 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
         app.backend.queue.submit(std::iter::once(encoder.finish()));
         window_context.window.pre_present_notify();
         surface_texture.present();
+    }
+
+    // --- Virtual Outputs Pass (NDI, Spout) ---
+    // Handle outputs that don't have a physical window
+    if output_id == 0 {
+        #[cfg(feature = "ndi")]
+        {
+            // Collect all NdiOutput part IDs from the render queue that are not projectors
+            let virtual_output_ids: Vec<_> = app
+                .render_queue
+                .items
+                .keys()
+                .filter(|&&id| !app.window_manager.contains_output_id(id))
+                .cloned()
+                .collect();
+
+            for _vid in virtual_output_ids {
+                // For now, we just skip these if they don't have a window,
+                // but in a future iteration we should render them to an offscreen texture.
+                // However, NDI Sender currently reads from the window's surface.
+                // TODO: Implement offscreen rendering for dedicated NdiOutput nodes.
+            }
+        }
     }
 
     if output_id == 0 {

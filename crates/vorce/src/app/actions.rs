@@ -26,9 +26,7 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
     for action in actions {
         match action {
             UIAction::NodeAction(node_action) => {
-                app.ui_state
-                    .node_editor_panel
-                    .handle_action(node_action.clone());
+                app.ui_state.node_editor_panel.handle_action(node_action.clone());
                 if let Err(e) = handle_node_action(app, node_action) {
                     eprintln!("Error handling node action: {}", e);
                 }
@@ -40,10 +38,7 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                 app.ui_state.user_config.selected_audio_device = Some(device.clone());
                 app.state.dirty = true;
                 let _ = app.ui_state.user_config.save();
-                info!(
-                    "Selected audio device: {:?}",
-                    app.ui_state.selected_audio_device
-                );
+                info!("Selected audio device: {:?}", app.ui_state.selected_audio_device);
             }
             UIAction::UpdateAudioConfig(cfg) => {
                 app.state.audio_config = cfg.clone();
@@ -99,14 +94,9 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                 app.ui_state.show_module_canvas = !app.ui_state.show_module_canvas;
             }
             UIAction::ToggleFullscreen => {
-                let is_fullscreen = app
-                    .window_manager
-                    .get(0)
-                    .map(|main_window| main_window.window.fullscreen().is_some())
-                    .unwrap_or(false);
-                if let Err(err) = app.set_main_window_fullscreen(!is_fullscreen) {
-                    error!("Failed to toggle main window fullscreen: {err:#}");
-                }
+                app.ui_state.user_config.window_maximized =
+                    !app.ui_state.user_config.window_maximized;
+                let _ = app.ui_state.user_config.save();
             }
             UIAction::ToggleControllerOverlay => {
                 app.ui_state.show_controller_overlay = !app.ui_state.show_controller_overlay;
@@ -142,16 +132,12 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
             UIAction::SetSpeed(s) => {
                 app.state.effect_animator_mut().set_speed(s);
                 for handle in app.media_players.values_mut() {
-                    let _ = handle
-                        .command_tx
-                        .send(vorce_media::PlaybackCommand::SetSpeed(s));
+                    let _ = handle.command_tx.send(vorce_media::PlaybackCommand::SetSpeed(s));
                 }
             }
             UIAction::SetLoopMode(m) => {
                 for handle in app.media_players.values_mut() {
-                    let _ = handle
-                        .command_tx
-                        .send(vorce_media::PlaybackCommand::SetLoopMode(m));
+                    let _ = handle.command_tx.send(vorce_media::PlaybackCommand::SetLoopMode(m));
                 }
             }
             UIAction::ToggleMediaManager => {
@@ -222,9 +208,7 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                         if let Some(handle) = rfd::AsyncFileDialog::new()
                             .add_filter(
                                 "Media",
-                                &[
-                                    "mp4", "mov", "avi", "mkv", "webm", "gif", "png", "jpg", "jpeg",
-                                ],
+                                &["mp4", "mov", "avi", "mkv", "webm", "gif", "png", "jpg", "jpeg"],
                             )
                             .pick_file()
                             .await
@@ -307,13 +291,11 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
             UIAction::AddPaint => {
                 app.history.push(app.state.clone());
                 let count = app.state.paint_manager.paints().len();
-                app.state
-                    .paint_manager_mut()
-                    .add_paint(vorce_core::Paint::color(
-                        0,
-                        format!("Paint {}", count + 1),
-                        [1.0, 1.0, 1.0, 1.0],
-                    ));
+                app.state.paint_manager_mut().add_paint(vorce_core::Paint::color(
+                    0,
+                    format!("Paint {}", count + 1),
+                    [1.0, 1.0, 1.0, 1.0],
+                ));
                 app.state.dirty = true;
             }
             UIAction::RemovePaint(id) => {
@@ -325,13 +307,11 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
             UIAction::AddMapping => {
                 app.history.push(app.state.clone());
                 let count = app.state.mapping_manager.mappings().len();
-                app.state
-                    .mapping_manager_mut()
-                    .add_mapping(vorce_core::Mapping::quad(
-                        0,
-                        format!("Mapping {}", count + 1),
-                        0,
-                    ));
+                app.state.mapping_manager_mut().add_mapping(vorce_core::Mapping::quad(
+                    0,
+                    format!("Mapping {}", count + 1),
+                    0,
+                ));
                 app.state.dirty = true;
             }
             UIAction::RemoveMapping(id) => {
@@ -351,9 +331,7 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
 
             UIAction::AddOutput(name, region, size) => {
                 app.history.push(app.state.clone());
-                app.state
-                    .output_manager_mut()
-                    .add_output(name, region, size);
+                app.state.output_manager_mut().add_output(name, region, size);
                 app.state.dirty = true;
             }
             UIAction::RemoveOutput(id) => {
@@ -368,10 +346,7 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     info!("Creating new NdiReceiver for part {}", part_id);
                     vorce_io::ndi::NdiReceiver::new().expect("Failed to create NDI receiver")
                 });
-                info!(
-                    "Connecting part {} to NDI source '{}'",
-                    part_id, source.name
-                );
+                info!("Connecting part {} to NDI source '{}'", part_id, source.name);
                 if let Err(e) = receiver.connect(&source) {
                     error!("Failed to connect to NDI source: {}", e);
                 }
@@ -511,9 +486,7 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
             }
             UIAction::AddLayer => {
                 let count = app.state.layer_manager.len();
-                app.state
-                    .layer_manager_mut()
-                    .create_layer(format!("Layer {}", count + 1));
+                app.state.layer_manager_mut().create_layer(format!("Layer {}", count + 1));
                 app.state.dirty = true;
             }
             UIAction::UpdateMappingMesh(id, mesh) => {
@@ -526,9 +499,7 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
             }
             UIAction::CreateGroup => {
                 let count = app.state.layer_manager.len();
-                app.state
-                    .layer_manager_mut()
-                    .create_group(format!("Group {}", count + 1));
+                app.state.layer_manager_mut().create_group(format!("Group {}", count + 1));
                 app.state.dirty = true;
             }
             UIAction::ReparentLayer(id, parent_id) => {
@@ -606,17 +577,11 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                 }
             }
             UIAction::SetMasterOpacity(val) => {
-                app.state
-                    .layer_manager_mut()
-                    .composition
-                    .set_master_opacity(val);
+                app.state.layer_manager_mut().composition.set_master_opacity(val);
                 app.state.dirty = true;
             }
             UIAction::SetMasterSpeed(val) => {
-                app.state
-                    .layer_manager_mut()
-                    .composition
-                    .set_master_speed(val);
+                app.state.layer_manager_mut().composition.set_master_speed(val);
                 app.state.dirty = true;
             }
             UIAction::SetMasterBlackout(val) => {
@@ -629,17 +594,10 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
             }
             UIAction::ConfigureOutput(id, config) => {
                 let fs = config.fullscreen;
-                app.state
-                    .output_manager_mut()
-                    .update_output(id, config.clone());
+                app.state.output_manager_mut().update_output(id, config.clone());
 
-                let all_ids: Vec<_> = app
-                    .state
-                    .output_manager
-                    .list_outputs()
-                    .iter()
-                    .map(|o| o.id)
-                    .collect();
+                let all_ids: Vec<_> =
+                    app.state.output_manager.list_outputs().iter().map(|o| o.id).collect();
                 for oid in all_ids {
                     if let Some(other) = app.state.output_manager_mut().get_output_mut(oid) {
                         if other.fullscreen != fs {
@@ -652,10 +610,7 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                 app.state.dirty = true;
             }
             UIAction::MediaCommand(part_id, command) => {
-                app.ui_state
-                    .module_canvas
-                    .pending_playback_commands
-                    .push((part_id, command));
+                app.ui_state.module_canvas.pending_playback_commands.push((part_id, command));
             }
             UIAction::ManualTrigger(_module_id, part_id) => {
                 app.module_evaluator.trigger_node(part_id);
@@ -667,10 +622,9 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     TimelineAction::Pause => app.state.effect_animator_mut().pause(),
                     TimelineAction::Stop => app.state.effect_animator_mut().stop(),
                     TimelineAction::Seek(time) => app.state.effect_animator_mut().seek(time as f64),
-                    TimelineAction::SelectModule(module_id) => app
-                        .ui_state
-                        .module_canvas
-                        .set_active_module(Some(module_id)),
+                    TimelineAction::SelectModule(module_id) => {
+                        app.ui_state.module_canvas.set_active_module(Some(module_id))
+                    }
                     TimelineAction::AddMarker(t) => {
                         let animator = std::sync::Arc::make_mut(&mut app.state.effect_animator);
                         let name = format!("Marker {:.1}s", t);
@@ -693,20 +647,6 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     TimelineAction::JumpPrevMarker => {
                         let animator = std::sync::Arc::make_mut(&mut app.state.effect_animator);
                         animator.jump_prev_marker();
-                    }
-                    TimelineAction::BindParameter {
-                        effect_type,
-                        module_id,
-                        parameter_name,
-                        initial_value,
-                    } => {
-                        let animator = std::sync::Arc::make_mut(&mut app.state.effect_animator);
-                        let _binding_id = animator.bind_parameter(
-                            effect_type.clone(),
-                            module_id,
-                            &parameter_name,
-                            vorce_core::animation::AnimValue::Float(initial_value),
-                        );
                     }
                 }
             }
@@ -795,11 +735,23 @@ fn handle_node_action(app: &mut App, action: NodeEditorAction) -> Result<()> {
 /// Process pending MCP actions
 pub fn handle_mcp_actions(app: &mut App) {
     while let Ok(action) = app.mcp_receiver.try_recv() {
+        if let vorce_mcp::McpAction::GetProjectState(tx) = &action {
+            tracing::info!("MCP: GetProjectState");
+            match serde_json::to_string(&app.state) {
+                Ok(json) => {
+                    if let Err(e) = tx.send(json) {
+                        tracing::error!("Failed to send project state back to MCP: {}", e);
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("Failed to serialize project state for MCP: {}", e);
+                    let _ = tx.send(format!("{{\"error\": \"Serialization failed: {e}\"}}"));
+                }
+            }
+            continue;
+        }
         if let vorce_mcp::McpAction::SetModuleSourcePath(mod_id, part_id, path) = action {
-            info!(
-                "MCP: SetModuleSourcePath({}, {}, {:?})",
-                mod_id, part_id, path
-            );
+            info!("MCP: SetModuleSourcePath({}, {}, {:?})", mod_id, part_id, path);
             if let Some(module) = app.state.module_manager_mut().get_module_mut(mod_id) {
                 if let Some(part) = module.parts.iter_mut().find(|p| p.id == part_id) {
                     let mut path_updated = false;
@@ -809,12 +761,10 @@ pub fn handle_mcp_actions(app: &mut App) {
                             ..
                         }
                         | vorce_core::module::SourceType::VideoUni {
-                            path: ref mut current_path,
-                            ..
+                            path: ref mut current_path, ..
                         }
                         | vorce_core::module::SourceType::ImageUni {
-                            path: ref mut current_path,
-                            ..
+                            path: ref mut current_path, ..
                         },
                     ) = &mut part.part_type
                     {
@@ -832,8 +782,7 @@ pub fn handle_mcp_actions(app: &mut App) {
                         if app.media_players.remove(&(mod_id, part_id)).is_some() {
                             info!("Removed player for {} to force reload", part_id);
                         }
-                        app.texture_pool
-                            .release(&format!("part_{}_{}", mod_id, part_id));
+                        app.texture_pool.release(&format!("part_{}_{}", mod_id, part_id));
                     }
                 }
             }

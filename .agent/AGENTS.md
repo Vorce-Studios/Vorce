@@ -10,25 +10,6 @@ VjMapper ist ein Rewrite einer C++/Qt-Anwendung in Rust. Ziel ist eine hochperfo
 
 **Kommuniziere mit dem Benutzer ausschließlich auf Deutsch.** Alle Pläne, Fragen und Antworten müssen auf Deutsch sein.
 
-## Code Atlas zuerst
-
-Vor einer breiten Suche im Repository soll zuerst der Code-Atlas geprüft werden.
-
-- Atlas generieren oder aktualisieren:
-  ```bash
-  python scripts/dev-tools/generate-code-atlas.py
-  ```
-- Zielgerichtet suchen:
-  ```bash
-  python scripts/dev-tools/query-code-atlas.py "crate:vorce-core tag:evaluation"
-  ```
-- Atlas-Artefakte:
-  - `.agent/atlas/code-atlas.json`
-  - `.agent/atlas/workspace.mmd`
-  - `.agent/atlas/crates/*.mmd`
-
-Der Atlas ist die bevorzugte erste Anlaufstelle für Dateien, Symbole, Tags und lokale Verbindungen. Erst danach sollten umfangreich Dateien geöffnet werden.
-
 ## Setup & Build-Befehle
 
 -   **Abhängigkeiten installieren:** (Siehe `README.md` für plattformspezifische Bibliotheken)
@@ -92,7 +73,7 @@ Der Atlas ist die bevorzugte erste Anlaufstelle für Dateien, Symbole, Tags und 
 ```yaml
 ---
 name: jules_disponent
-tools: [run_shell_command, read_file]
+tools: [run_shell_command, read_file, write_file, agent, grep_search]
 model: gemini-2.0-flash
 ---
 ```

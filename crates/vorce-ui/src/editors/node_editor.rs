@@ -61,11 +61,7 @@ pub struct Socket {
 impl Socket {
     /// Human-readable display name.
     pub fn new(name: &str, data_type: DataType) -> Self {
-        Self {
-            name: name.to_string(),
-            data_type,
-            connected: false,
-        }
+        Self { name: name.to_string(), data_type, connected: false }
     }
 }
 
@@ -108,9 +104,7 @@ impl NodeEditor {
         self.graph_id = Some(graph.id);
         self.nodes.clear();
         self.connections.clear();
-
-        // Sync next_id with loaded graph
-        self.next_id = graph.nodes.keys().max().map(|&id| id + 1).unwrap_or(1);
+        self.next_id = graph.next_node_id();
 
         // Map core nodes to UI nodes
         for (id, core_node) in &graph.nodes {
@@ -140,16 +134,10 @@ impl NodeEditor {
 
     /// Create UI node from core node
     fn core_node_to_ui(&self, core_node: &vorce_core::shader_graph::ShaderNode) -> Node {
-        let inputs: Vec<Socket> = core_node
-            .inputs
-            .iter()
-            .map(|s| Socket::new(&s.name, s.data_type))
-            .collect();
-        let outputs: Vec<Socket> = core_node
-            .outputs
-            .iter()
-            .map(|s| Socket::new(&s.name, s.data_type))
-            .collect();
+        let inputs: Vec<Socket> =
+            core_node.inputs.iter().map(|s| Socket::new(&s.name, s.data_type)).collect();
+        let outputs: Vec<Socket> =
+            core_node.outputs.iter().map(|s| Socket::new(&s.name, s.data_type)).collect();
 
         // Calculate dynamic height
         let height = 80.0 + (inputs.len().max(outputs.len()) as f32 * 24.0);
@@ -230,8 +218,7 @@ impl NodeEditor {
     /// Remove a node from the graph
     pub fn remove_node(&mut self, node_id: NodeId) {
         self.nodes.remove(&node_id);
-        self.connections
-            .retain(|c| c.from_node != node_id && c.to_node != node_id);
+        self.connections.retain(|c| c.from_node != node_id && c.to_node != node_id);
         self.selected_nodes.retain(|id| *id != node_id);
     }
 
@@ -314,15 +301,12 @@ impl NodeEditor {
 
     fn get_socket_pos(node: &Node, socket_idx: usize, is_input: bool) -> Pos2 {
         let socket_y = node.position.y + 40.0 + (socket_idx as f32 * 24.0);
-        let socket_x = if is_input {
-            node.position.x
-        } else {
-            node.position.x + node.size.x
-        };
+        let socket_x = if is_input { node.position.x } else { node.position.x + node.size.x };
         Pos2::new(socket_x, socket_y)
     }
 
     fn draw_socket(
+        ui: &Ui,
         painter: &egui::Painter,
         pos: Pos2,
         data_type: DataType,
@@ -331,7 +315,7 @@ impl NodeEditor {
     ) {
         let radius = 6.0 * zoom.clamp(0.1, 10.0);
         painter.circle_filled(pos, radius, data_type.color());
-        painter.circle_stroke(pos, radius, Stroke::new(2.0, Color32::WHITE));
+        painter.circle_stroke(pos, radius, Stroke::new(2.0, ui.visuals().text_color()));
     }
 
     /// Draw a node
@@ -346,30 +330,22 @@ impl NodeEditor {
     ) -> Response {
         let response = ui.interact(rect, egui::Id::new(node.id), Sense::click_and_drag());
 
-        let bg_color = if is_selected {
-            Color32::from_rgb(50, 100, 150)
-        } else {
-            Color32::from_rgb(40, 40, 40)
-        };
+        let bg_color =
+            if is_selected { ui.visuals().selection.bg_fill } else { ui.visuals().window_fill() };
 
         // Node background
         painter.rect_filled(rect, 4.0, bg_color);
-        painter.rect_stroke(
-            rect,
-            4.0,
-            Stroke::new(2.0, Color32::from_rgb(80, 80, 80)),
-            egui::StrokeKind::Middle,
-        );
+        painter.rect_stroke(rect, 4.0, ui.visuals().window_stroke(), egui::StrokeKind::Middle);
 
         // Title bar
         let title_rect = Rect::from_min_size(rect.min, Vec2::new(rect.width(), 24.0 * zoom));
-        painter.rect_filled(title_rect, 4.0, Color32::from_rgb(30, 30, 30));
+        painter.rect_filled(title_rect, 4.0, ui.visuals().extreme_bg_color);
         painter.text(
             title_rect.center(),
             egui::Align2::CENTER_CENTER,
             node.node_type.ui_name(locale),
             egui::FontId::proportional(14.0 * zoom.clamp(0.1, 10.0)),
-            Color32::WHITE,
+            ui.visuals().text_color(),
         );
 
         // Content Area
@@ -379,7 +355,7 @@ impl NodeEditor {
         // Input sockets
         for (i, input) in node.inputs.iter().enumerate() {
             let socket_pos = Self::get_socket_pos(node, i, true);
-            Self::draw_socket(painter, socket_pos, input.data_type, true, zoom);
+            Self::draw_socket(ui, painter, socket_pos, input.data_type, true, zoom);
 
             // Draw label
             let text_pos = socket_pos + Vec2::new(10.0 * zoom, 0.0);
@@ -388,14 +364,14 @@ impl NodeEditor {
                 egui::Align2::LEFT_CENTER,
                 &input.name,
                 egui::FontId::proportional(12.0 * zoom.clamp(0.1, 10.0)),
-                Color32::LIGHT_GRAY,
+                ui.visuals().text_color().gamma_multiply(0.8),
             );
         }
 
         // Output sockets
         for (i, output) in node.outputs.iter().enumerate() {
             let socket_pos = Self::get_socket_pos(node, i, false);
-            Self::draw_socket(painter, socket_pos, output.data_type, false, zoom);
+            Self::draw_socket(ui, painter, socket_pos, output.data_type, false, zoom);
 
             // Draw label
             let text_pos = socket_pos - Vec2::new(10.0 * zoom, 0.0);
@@ -404,7 +380,7 @@ impl NodeEditor {
                 egui::Align2::RIGHT_CENTER,
                 &output.name,
                 egui::FontId::proportional(12.0 * zoom.clamp(0.1, 10.0)),
-                Color32::LIGHT_GRAY,
+                ui.visuals().text_color().gamma_multiply(0.8),
             );
         }
 
@@ -418,7 +394,7 @@ impl NodeEditor {
     }
 
     fn draw_media_node_content(
-        _ui: &Ui,
+        ui: &Ui,
         painter: &egui::Painter,
         node: &mut Node,
         rect: Rect,
@@ -435,8 +411,8 @@ impl NodeEditor {
 
         painter.add(egui::Shape::convex_polygon(
             vec![p1, p2, p3],
-            Color32::from_rgb(100, 200, 100),
-            Stroke::new(1.0, Color32::WHITE),
+            ui.visuals().widgets.active.bg_fill,
+            Stroke::new(1.0, ui.visuals().text_color()),
         ));
 
         // Filename label if parameter exists
@@ -452,7 +428,7 @@ impl NodeEditor {
                 egui::Align2::CENTER_TOP,
                 file_name,
                 egui::FontId::proportional(10.0 * zoom),
-                Color32::LIGHT_GRAY,
+                ui.visuals().text_color().gamma_multiply(0.8),
             );
         }
     }
@@ -512,18 +488,14 @@ impl NodeEditor {
             |pos: Pos2| -> Pos2 { canvas_rect.min + (pos.to_vec2() + pan_offset) * zoom };
 
         // Draw grid
-        self.draw_grid(&painter, canvas_rect);
+        self.draw_grid(ui, &painter, canvas_rect);
 
         // Draw connections
         for conn in &self.connections {
-            if let (Some(from_node), Some(to_node)) = (
-                self.nodes.get(&conn.from_node),
-                self.nodes.get(&conn.to_node),
-            ) {
-                let from_idx = from_node
-                    .outputs
-                    .iter()
-                    .position(|s| s.name == conn.from_socket);
+            if let (Some(from_node), Some(to_node)) =
+                (self.nodes.get(&conn.from_node), self.nodes.get(&conn.to_node))
+            {
+                let from_idx = from_node.outputs.iter().position(|s| s.name == conn.from_socket);
                 let to_idx = to_node.inputs.iter().position(|s| s.name == conn.to_socket);
 
                 if let (Some(f_idx), Some(t_idx)) = (from_idx, to_idx) {
@@ -544,21 +516,16 @@ impl NodeEditor {
         let mut nodes_vec: Vec<_> = self.nodes.values_mut().collect();
         nodes_vec.sort_by_key(|n| n.id);
 
+        let selected_set: rustc_hash::FxHashSet<_> = self.selected_nodes.iter().copied().collect();
+
         for node in nodes_vec {
             let node_screen_pos = to_screen(node.position);
             let node_screen_rect = Rect::from_min_size(node_screen_pos, node.size * zoom);
 
-            let is_selected = self.selected_nodes.contains(&node.id);
+            let is_selected = selected_set.contains(&node.id);
 
-            let node_response = Self::draw_node(
-                ui,
-                &painter,
-                node,
-                node_screen_rect,
-                locale,
-                zoom,
-                is_selected,
-            );
+            let node_response =
+                Self::draw_node(ui, &painter, node, node_screen_rect, locale, zoom, is_selected);
 
             if node_response.clicked() {
                 self.selected_nodes.clear();
@@ -588,7 +555,7 @@ impl NodeEditor {
                     &painter,
                     *start_pos,
                     pointer_pos,
-                    Color32::from_rgb(150, 150, 150),
+                    ui.visuals().text_color().gamma_multiply(0.5),
                 );
 
                 if response.clicked() {
@@ -600,9 +567,9 @@ impl NodeEditor {
         // Node palette popup
         if self.show_palette {
             if let Some(pos) = self.palette_pos {
-                egui::Area::new(egui::Id::new("node_palette"))
-                    .fixed_pos(pos)
-                    .show(ui.ctx(), |ui| {
+                egui::Area::new(egui::Id::new("node_palette")).fixed_pos(pos).show(
+                    ui.ctx(),
+                    |ui| {
                         egui::Frame::default().show(ui, |ui| {
                             ui.set_min_width(200.0);
                             ui.label(locale.t("node-add"));
@@ -631,7 +598,8 @@ impl NodeEditor {
                                     Some(NodeEditorAction::AddNode(node_type, world_pos.to_pos2()));
                             }
                         });
-                    });
+                    },
+                );
             }
 
             if response.clicked() {
@@ -643,9 +611,9 @@ impl NodeEditor {
     }
 
     /// Draw grid background (Uses &self, but is called before mutable iteration)
-    fn draw_grid(&self, painter: &egui::Painter, rect: Rect) {
+    fn draw_grid(&self, ui: &Ui, painter: &egui::Painter, rect: Rect) {
         let grid_size = 20.0 * self.zoom;
-        let color = Color32::from_rgb(40, 40, 40);
+        let color = ui.visuals().text_color().gamma_multiply(0.1);
 
         let start_x = (rect.min.x / grid_size).floor() * grid_size;
         let start_y = (rect.min.y / grid_size).floor() * grid_size;

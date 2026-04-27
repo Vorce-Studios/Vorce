@@ -266,12 +266,7 @@ pub enum BevyCameraMode {
 
 impl Default for BevyCameraMode {
     fn default() -> Self {
-        Self::Orbit {
-            radius: 10.0,
-            speed: 20.0,
-            target: Vec3::ZERO,
-            height: 2.0,
-        }
+        Self::Orbit { radius: 10.0, speed: 20.0, target: Vec3::ZERO, height: 2.0 }
     }
 }
 

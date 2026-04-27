@@ -7,21 +7,6 @@
 //! - Upload thread: Uploads decoded frames to GPU textures
 //! - Render thread: Renders the uploaded textures (runs in main thread)
 //!
-//! ## Thread-Local Scaler Implementation Plan
-//!
-//! Currently disabled due to FFmpeg's SwsContext not being thread-safe.
-//! To re-enable multi-threading:
-//!
-//! 1. Modify FFmpegDecoder to create scaler in the thread where decoding happens
-//! 2. Remove scaler from struct, create as local variable in next_frame()
-//! 3. Or: Use thread_local! macro to cache scaler per thread
-//! 4. This makes VideoDecoder Send-safe without performance overhead
-//!
-//! Benefits:
-//! - Zero overhead compared to single-threaded
-//! - Clean separation of concerns
-//! - Pre-buffering prevents frame stutters
-//! - Overlapped decode + GPU upload
 
 use crate::VideoPlayer;
 use crossbeam_channel::{bounded, Receiver, Sender};
@@ -145,57 +130,51 @@ impl FramePipeline {
         let stats = self.stats.clone();
         let enable_drop = self.config.enable_frame_drop;
 
-        let thread = thread::Builder::new()
-            .name("decode-thread".to_string())
-            .spawn(move || {
-                info!("Decode thread started");
-                let mut sequence = 0u64;
+        let thread = thread::Builder::new().name("decode-thread".to_string()).spawn(move || {
+            info!("Decode thread started");
+            let mut sequence = 0u64;
 
-                while running.load(Ordering::Relaxed) {
-                    let start = std::time::Instant::now();
+            while running.load(Ordering::Relaxed) {
+                let start = std::time::Instant::now();
 
-                    // Update player and get next frame
-                    if let Some(frame) = player.update(Duration::from_secs_f64(1.0 / player.fps()))
-                    {
-                        let pipeline_frame = PipelineFrame {
-                            frame,
-                            sequence,
-                            priority: Priority::Normal,
-                        };
+                // Update player and get next frame
+                if let Some(frame) = player.update(Duration::from_secs_f64(1.0 / player.fps())) {
+                    let pipeline_frame =
+                        PipelineFrame { frame, sequence, priority: Priority::Normal };
 
-                        // Try to send frame to upload thread
-                        let result = if enable_drop {
-                            decode_tx.try_send(pipeline_frame)
-                        } else {
-                            decode_tx.send(pipeline_frame).map_err(|e| e.into())
-                        };
+                    // Try to send frame to upload thread
+                    let result = if enable_drop {
+                        decode_tx.try_send(pipeline_frame)
+                    } else {
+                        decode_tx.send(pipeline_frame).map_err(|e| e.into())
+                    };
 
-                        match result {
-                            Ok(_) => {
-                                sequence += 1;
-                                let mut stats = stats.write();
-                                stats.decoded_frames += 1;
-                                stats.decode_time_ms = start.elapsed().as_secs_f64() * 1000.0;
-                            }
-                            Err(_) => {
-                                if enable_drop {
-                                    stats.write().dropped_frames += 1;
-                                    debug!("Dropped frame {} (queue full)", sequence);
-                                }
+                    match result {
+                        Ok(_) => {
+                            sequence += 1;
+                            let mut stats = stats.write();
+                            stats.decoded_frames += 1;
+                            stats.decode_time_ms = start.elapsed().as_secs_f64() * 1000.0;
+                        }
+                        Err(_) => {
+                            if enable_drop {
+                                stats.write().dropped_frames += 1;
+                                debug!("Dropped frame {} (queue full)", sequence);
                             }
                         }
                     }
-
-                    // Throttle to approximately match video FPS
-                    let elapsed = start.elapsed();
-                    let frame_duration = Duration::from_secs_f64(1.0 / player.fps());
-                    if elapsed < frame_duration {
-                        std::thread::sleep(frame_duration - elapsed);
-                    }
                 }
 
-                info!("Decode thread stopped");
-            });
+                // Throttle to approximately match video FPS
+                let elapsed = start.elapsed();
+                let frame_duration = Duration::from_secs_f64(1.0 / player.fps());
+                if elapsed < frame_duration {
+                    std::thread::sleep(frame_duration - elapsed);
+                }
+            }
+
+            info!("Decode thread stopped");
+        });
 
         if let Ok(thread_handle) = thread {
             self.decode_thread = Some(thread_handle);
@@ -216,9 +195,8 @@ impl FramePipeline {
         let running = self.running.clone();
         let stats = self.stats.clone();
 
-        let thread_result = thread::Builder::new()
-            .name("upload-thread".to_string())
-            .spawn(move || {
+        let thread_result =
+            thread::Builder::new().name("upload-thread".to_string()).spawn(move || {
                 info!("Upload thread started");
 
                 while running.load(Ordering::Relaxed) {
@@ -270,6 +248,7 @@ impl FramePipeline {
         if let Some(thread) = self.decode_thread.take() {
             if let Err(e) = thread.join() {
                 tracing::error!("Decode thread panicked: {:?}", e);
+
             }
         }
     }
@@ -301,31 +280,22 @@ pub struct FrameScheduler {
 
 impl FrameScheduler {
     pub fn new(max_frames: usize) -> Self {
-        Self {
-            frames: VecDeque::with_capacity(max_frames),
-            max_frames,
-        }
+        Self { frames: VecDeque::with_capacity(max_frames), max_frames }
     }
 
     /// Add a frame to the scheduler
     pub fn push(&mut self, frame: PipelineFrame) {
         if self.frames.len() >= self.max_frames {
             // Remove lowest priority frame
-            if let Some(min_idx) = self
-                .frames
-                .iter()
-                .enumerate()
-                .min_by_key(|(_, f)| f.priority)
-                .map(|(i, _)| i)
+            if let Some(min_idx) =
+                self.frames.iter().enumerate().min_by_key(|(_, f)| f.priority).map(|(i, _)| i)
             {
                 self.frames.remove(min_idx);
             }
         }
 
         self.frames.push_back(frame);
-        self.frames
-            .make_contiguous()
-            .sort_by_key(|f| std::cmp::Reverse(f.priority));
+        self.frames.make_contiguous().sort_by_key(|f| std::cmp::Reverse(f.priority));
     }
 
     /// Get the highest priority frame

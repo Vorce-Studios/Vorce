@@ -3,6 +3,7 @@
 //! Media library, effect preset browser, project templates,
 //! and import/export workflows.
 
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -93,18 +94,26 @@ impl AssetManager {
         let effects_path = self.library_path.join("effects");
         if effects_path.exists() {
             if let Ok(entries) = std::fs::read_dir(effects_path) {
-                for entry in entries.flatten() {
-                    if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
-                        if let Ok(data) = std::fs::read_to_string(entry.path()) {
-                            if let Ok(mut preset) = serde_json::from_str::<EffectPreset>(&data) {
-                                preset.name_lower = preset.name.to_lowercase();
-                                preset.description_lower = preset.description.to_lowercase();
-                                preset.tags_lower =
-                                    preset.tags.iter().map(|t| t.to_lowercase()).collect();
-                                self.effect_presets.insert(preset.name.clone(), preset);
-                            }
-                        }
-                    }
+                let paths: Vec<_> = entries
+                    .flatten()
+                    .map(|e| e.path())
+                    .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("json"))
+                    .collect();
+
+                let loaded_presets: Vec<EffectPreset> = paths
+                    .into_par_iter()
+                    .filter_map(|path| {
+                        let data = std::fs::read_to_string(path).ok()?;
+                        let mut preset = serde_json::from_str::<EffectPreset>(&data).ok()?;
+                        preset.name_lower = preset.name.to_lowercase();
+                        preset.description_lower = preset.description.to_lowercase();
+                        preset.tags_lower = preset.tags.iter().map(|t| t.to_lowercase()).collect();
+                        Some(preset)
+                    })
+                    .collect();
+
+                for preset in loaded_presets {
+                    self.effect_presets.insert(preset.name.clone(), preset);
                 }
             }
         }
@@ -113,14 +122,22 @@ impl AssetManager {
         let transforms_path = self.library_path.join("transforms");
         if transforms_path.exists() {
             if let Ok(entries) = std::fs::read_dir(transforms_path) {
-                for entry in entries.flatten() {
-                    if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
-                        if let Ok(data) = std::fs::read_to_string(entry.path()) {
-                            if let Ok(preset) = serde_json::from_str::<TransformPreset>(&data) {
-                                self.transform_presets.insert(preset.name.clone(), preset);
-                            }
-                        }
-                    }
+                let paths: Vec<_> = entries
+                    .flatten()
+                    .map(|e| e.path())
+                    .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("json"))
+                    .collect();
+
+                let loaded_presets: Vec<TransformPreset> = paths
+                    .into_par_iter()
+                    .filter_map(|path| {
+                        let data = std::fs::read_to_string(path).ok()?;
+                        serde_json::from_str::<TransformPreset>(&data).ok()
+                    })
+                    .collect();
+
+                for preset in loaded_presets {
+                    self.transform_presets.insert(preset.name.clone(), preset);
                 }
             }
         }
@@ -129,15 +146,22 @@ impl AssetManager {
         let templates_path = self.library_path.join("templates");
         if templates_path.exists() {
             if let Ok(entries) = std::fs::read_dir(templates_path) {
-                for entry in entries.flatten() {
-                    if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
-                        if let Ok(data) = std::fs::read_to_string(entry.path()) {
-                            if let Ok(template) = serde_json::from_str::<ProjectTemplate>(&data) {
-                                self.project_templates
-                                    .insert(template.name.clone(), template);
-                            }
-                        }
-                    }
+                let paths: Vec<_> = entries
+                    .flatten()
+                    .map(|e| e.path())
+                    .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("json"))
+                    .collect();
+
+                let loaded_templates: Vec<ProjectTemplate> = paths
+                    .into_par_iter()
+                    .filter_map(|path| {
+                        let data = std::fs::read_to_string(path).ok()?;
+                        serde_json::from_str::<ProjectTemplate>(&data).ok()
+                    })
+                    .collect();
+
+                for template in loaded_templates {
+                    self.project_templates.insert(template.name.clone(), template);
                 }
             }
         }
@@ -152,7 +176,24 @@ impl AssetManager {
         preset.description_lower = preset.description.to_lowercase();
         preset.tags_lower = preset.tags.iter().map(|t| t.to_lowercase()).collect();
 
+        let canonical_effects_path = effects_path.canonicalize()?;
+
         let file_path = effects_path.join(format!("{}.json", preset.name));
+        if let Some(parent) = file_path.parent() {
+            std::fs::create_dir_all(parent)?;
+            let canonical_parent = parent.canonicalize()?;
+            if !canonical_parent.starts_with(&canonical_effects_path) {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::PermissionDenied,
+                    "Path traversal detected",
+                ));
+            }
+        } else {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Invalid preset name",
+            ));
+        }
         let data = serde_json::to_string_pretty(&preset)?;
         std::fs::write(file_path, data)?;
 
@@ -165,7 +206,24 @@ impl AssetManager {
         let transforms_path = self.library_path.join("transforms");
         std::fs::create_dir_all(&transforms_path)?;
 
+        let canonical_transforms_path = transforms_path.canonicalize()?;
+
         let file_path = transforms_path.join(format!("{}.json", preset.name));
+        if let Some(parent) = file_path.parent() {
+            std::fs::create_dir_all(parent)?;
+            let canonical_parent = parent.canonicalize()?;
+            if !canonical_parent.starts_with(&canonical_transforms_path) {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::PermissionDenied,
+                    "Path traversal detected",
+                ));
+            }
+        } else {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Invalid preset name",
+            ));
+        }
         let data = serde_json::to_string_pretty(&preset)?;
         std::fs::write(file_path, data)?;
 
@@ -200,34 +258,29 @@ impl AssetManager {
 
     /// Search presets by query
     pub fn search_effect_presets(&self, query: &str) -> Vec<&EffectPreset> {
-        let query_lower = query.to_lowercase();
+        let query_lower = (!query.is_empty()).then(|| query.to_lowercase());
         self.effect_presets
             .values()
             .filter(|preset| {
-                preset.name_lower.contains(&query_lower)
-                    || preset.description_lower.contains(&query_lower)
-                    || preset
-                        .tags_lower
-                        .iter()
-                        .any(|tag| tag.contains(&query_lower))
+                if let Some(q) = &query_lower {
+                    preset.name_lower.contains(q)
+                        || preset.description_lower.contains(q)
+                        || preset.tags_lower.iter().any(|tag| tag.contains(q))
+                } else {
+                    true
+                }
             })
             .collect()
     }
 
     /// Get effect presets by category
     pub fn effect_presets_by_category(&self, category: &str) -> Vec<&EffectPreset> {
-        self.effect_presets
-            .values()
-            .filter(|preset| preset.category == category)
-            .collect()
+        self.effect_presets.values().filter(|preset| preset.category == category).collect()
     }
 
     /// Get favorite effect presets
     pub fn favorite_effect_presets(&self) -> Vec<&EffectPreset> {
-        self.effect_presets
-            .values()
-            .filter(|preset| preset.favorite)
-            .collect()
+        self.effect_presets.values().filter(|preset| preset.favorite).collect()
     }
 
     /// Render asset browser UI
