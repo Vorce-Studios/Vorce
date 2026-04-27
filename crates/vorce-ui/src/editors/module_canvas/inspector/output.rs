@@ -224,6 +224,21 @@ pub fn render_output_ui(
             #[cfg(feature = "ndi")]
             {
                 let supported = capabilities::is_output_type_enum_supported(true, false, false);
+                let supported = capabilities::is_output_type_enum_supported(true, false, false);
+                if !supported {
+                    #[cfg(target_os = "macos")]
+                    capabilities::render_unsupported_warning(
+                        ui,
+                        "NDI Output is experimental/unavailable on macOS currently.",
+                    );
+                    #[cfg(not(target_os = "macos"))]
+                    capabilities::render_unsupported_warning(
+                        ui,
+                        "NDI runtime missing or not initialized. Please install the NDI SDK/Runtime.",
+                    );
+                } else {
+                    capabilities::render_runtime_active_info(ui);
+                }
                 ui.add_enabled_ui(supported, |ui| {
                     ui.checkbox(_ndi_enabled, "Enable NDI Output");
                 });
@@ -250,7 +265,6 @@ pub fn render_output_ui(
         #[cfg(feature = "ndi")]
         OutputType::NdiOutput { name, width, height } => {
             ui.label("\u{1F4E1} NDI Output");
-
             let supported = capabilities::is_output_type_enum_supported(true, false, false);
             if !supported {
                 capabilities::render_unsupported_warning(

@@ -997,6 +997,8 @@ pub fn render_source_ui(
                     ui,
                     "NDI runtime missing or not initialized. Please install the NDI SDK/Runtime.",
                 );
+            } else {
+                capabilities::render_runtime_active_info(ui);
             }
 
             if let Some(status) = canvas.ndi_input_status.get(&part_id) {
