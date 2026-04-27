@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- 2026-04-27: fix: Correct snapshot/mutation order in renderer.rs and node_editor.rs to ensure immediate visual feedback on click/drag (#369)
 - 2026-04-24: test(ci): VOR-41 Add Windows packaging smoke test to validate installer artifact (#356)
 - 2026-04-22: fix: Resolve merge conflicts and restore NDI build stability in master integration session (#343)
 
