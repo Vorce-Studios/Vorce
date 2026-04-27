@@ -68,7 +68,6 @@ pub fn draw_search_popup(
             });
             ui.add_space(8.0);
 
-
             let matching_parts: Vec<_> = module
                 .parts
                 .iter()
