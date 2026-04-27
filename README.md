@@ -4,8 +4,9 @@
 
 # Vorce (formerly VjMapper)
 
-  **A High-Performance, Professional-Grade Projection Mapping Tool Built with Rust.**
+**A High-Performance, Professional-Grade Projection Mapping Tool Built with Rust.**
 =======
+
   <img src="resources/app_icons/Vorce_Logo_HQ-Full-Gray-Background-NoCorner.png" alt="Vorce Logo" width="500">
 
 # Vorce (formerly VjMapper)
