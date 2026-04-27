@@ -258,10 +258,27 @@ pub fn render_output_ui(
         #[cfg(feature = "ndi")]
         OutputType::NdiOutput { name } => {
             ui.label("\u{1F4E1} NDI Output");
-            capabilities::render_runtime_active_info(ui);
-            ui.horizontal(|ui| {
-                ui.label("Stream Name:");
-                ui.text_edit_singleline(name);
+            let supported = capabilities::is_output_type_enum_supported(true, false, false);
+            if !supported {
+                #[cfg(target_os = "macos")]
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "NDI Output is experimental/unavailable on macOS currently.",
+                );
+                #[cfg(not(target_os = "macos"))]
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "[Experimental] NDI Output has no active runtime path currently.",
+                );
+            } else {
+                capabilities::render_runtime_active_info(ui);
+            }
+
+            ui.add_enabled_ui(supported, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Stream Name:");
+                    ui.text_edit_singleline(name);
+                });
             });
         }
         #[cfg(not(feature = "ndi"))]

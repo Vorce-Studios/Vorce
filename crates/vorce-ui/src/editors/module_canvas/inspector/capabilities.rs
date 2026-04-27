@@ -71,12 +71,13 @@ pub fn render_runtime_active_info(ui: &mut egui::Ui) {
 pub fn is_source_type_enum_supported(
     is_shader: bool,
     is_live_input: bool,
-    #[allow(unused_variables)] is_ndi: bool,
+    is_ndi: bool,
     is_spout: bool,
 ) -> bool {
     // Currently LiveInput, Shader, and SpoutInput
     // are not fully end-to-end supported in the pipeline.
-    !(is_shader || is_live_input || is_spout)
+    // NDI is explicitly supported.
+    is_ndi || !(is_shader || is_live_input || is_spout)
 }
 
 /// Helper that checks by variant enum without needing the data
