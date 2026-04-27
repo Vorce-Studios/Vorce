@@ -28,6 +28,7 @@ Ship Vorce toward a production-ready 1.0 by improving render stability, media pi
 - [x] **VOR-38:** Fixed startup crash caused by redundant AtmospherePlugin in Bevy integration
 
 ## Recently Completed
+- **VOR-39:** Merged 9 Dependabot PRs (#374-#382) and resolved CI validation blockers (Antigravity)
 - **VOR-22:** Roadmap-Analyse und Zerlegung (Ben)
 - **VOR-20:** Fix workspace formatting and line-ending drift (Ben)
 - **VOR-19:** Decided PR #227 merge path (Ben)

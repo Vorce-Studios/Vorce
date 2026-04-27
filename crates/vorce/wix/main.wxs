@@ -42,6 +42,7 @@
                     </Component>
                     <Component Id='NDI_Runtime' Guid='*' Win64='yes'>
                         <File Id='Processing.NDI.Lib.x64.dll' Name='Processing.NDI.Lib.x64.dll' Source='$(var.CargoTargetBinDir)\Processing.NDI.Lib.x64.dll' KeyPath='yes' />
+
                     </Component>
                 </Directory>
             </Directory>
@@ -62,6 +63,7 @@
             <ComponentRef Id='swscale' />
             <ComponentRef Id='pkgconf' />
             <ComponentRef Id='NDI_Runtime' />
+
         </Feature>
         <Component Id="ProgramMenuDir" Directory="ProgramMenuDir" Guid="*" Win64='yes'>
             <RemoveFolder Id='ProgramMenuDir' On='uninstall' />
