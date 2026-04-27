@@ -990,29 +990,14 @@ pub fn render_source_ui(
         #[cfg(feature = "ndi")]
         SourceType::NdiInput { source_name } => {
             ui.label("\u{1F4E1} NDI Input");
-
             let supported = capabilities::is_source_type_enum_supported(false, false, true, false);
             if !supported {
                 capabilities::render_unsupported_warning(
                     ui,
-                    "NDI runtime missing or not initialized. Please install the NDI SDK/Runtime.",
+                    "[Experimental] NDI Input has no active polling/upload path in the current runtime.",
                 );
             } else {
                 capabilities::render_runtime_active_info(ui);
-            }
-
-            if let Some(status) = canvas.ndi_input_status.get(&part_id) {
-                if status.connected {
-                    ui.horizontal(|ui| {
-                        ui.label(egui::RichText::new("●").color(colors::MINT_ACCENT));
-                        ui.label(format!("Connected: {}", status.source_name.as_deref().unwrap_or("Unknown")));
-                    });
-                } else {
-                    ui.horizontal(|ui| {
-                        ui.label(egui::RichText::new("○").color(colors::WARN_COLOR));
-                        ui.label("Disconnected");
-                    });
-                }
             }
 
             ui.add_enabled_ui(supported, |ui| {
@@ -1103,6 +1088,20 @@ pub fn render_source_ui(
                                     }
                                 }
                             });
+
+                        if let Some(status) = canvas.ndi_input_status.get(&part_id) {
+                            if status.connected {
+                                ui.horizontal(|ui| {
+                                    ui.label(egui::RichText::new("●").color(colors::MINT_ACCENT));
+                                    ui.label(format!("Connected: {}", status.source_name.as_deref().unwrap_or("Unknown")));
+                                });
+                            } else {
+                                ui.horizontal(|ui| {
+                                    ui.label(egui::RichText::new("○").color(colors::WARN_COLOR));
+                                    ui.label("Disconnected");
+                                });
+                            }
+                        }
 
                         ui.label(format!("Found {} source(s)", canvas.ndi_sources.len()));
                     } else if canvas.ndi_discovery_rx.is_none() {

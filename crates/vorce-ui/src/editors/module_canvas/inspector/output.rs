@@ -1,7 +1,6 @@
 use super::super::mesh;
 use super::super::state::ModuleCanvas;
 use super::capabilities;
-use crate::theme::colors;
 use egui::Ui;
 use vorce_core::module::{HueMappingMode, ModulePartId, OutputType};
 
@@ -140,7 +139,7 @@ pub fn render_output_ui(
     canvas: &mut ModuleCanvas,
     ui: &mut Ui,
     output: &mut OutputType,
-    part_id: ModulePartId,
+    _part_id: ModulePartId,
 ) {
     ui.label("Output:");
     match output {
@@ -233,28 +232,23 @@ pub fn render_output_ui(
                     #[cfg(not(target_os = "macos"))]
                     capabilities::render_unsupported_warning(
                         ui,
-                        "NDI runtime missing or not initialized. Please install the NDI SDK/Runtime.",
+                        "[Experimental] NDI Output has no active runtime path currently.",
                     );
                 } else {
                     capabilities::render_runtime_active_info(ui);
                 }
                 ui.add_enabled_ui(supported, |ui| {
                     ui.checkbox(_ndi_enabled, "Enable NDI Output");
-                });
-                if !supported {
-                    capabilities::render_unsupported_warning(
-                        ui,
-                        "NDI runtime missing or not initialized. Please install the NDI SDK/Runtime.",
-                    );
-                } else if *_ndi_enabled {
-                    ui.horizontal(|ui| {
-                        ui.label("Stream Name:");
-                        ui.text_edit_singleline(_ndi_stream_name);
-                    });
-                    if _ndi_stream_name.is_empty() {
-                        ui.small(format!("Default: {}", name));
+                    if *_ndi_enabled {
+                        ui.horizontal(|ui| {
+                            ui.label("Stream Name:");
+                            ui.text_edit_singleline(_ndi_stream_name);
+                        });
+                        if _ndi_stream_name.is_empty() {
+                            ui.small(format!("Default: {}", name));
+                        }
                     }
-                }
+                });
             }
             #[cfg(not(feature = "ndi"))]
             {
@@ -262,48 +256,12 @@ pub fn render_output_ui(
             }
         }
         #[cfg(feature = "ndi")]
-        OutputType::NdiOutput { name, width, height } => {
+        OutputType::NdiOutput { name } => {
             ui.label("\u{1F4E1} NDI Output");
-            let supported = capabilities::is_output_type_enum_supported(true, false, false);
-            if !supported {
-                capabilities::render_unsupported_warning(
-                    ui,
-                    "NDI runtime missing or not initialized. Please install the NDI SDK/Runtime.",
-                );
-            } else if let Some(sending) = canvas.ndi_output_status.get(&part_id) {
-                if *sending {
-                    ui.horizontal(|ui| {
-                        ui.label(egui::RichText::new("●").color(colors::MINT_ACCENT));
-                        ui.label("Sending");
-                    });
-                } else {
-                    ui.horizontal(|ui| {
-                        ui.label(egui::RichText::new("○").color(colors::WARN_COLOR));
-                        ui.label("Idle");
-                    });
-                }
-            } else {
-                ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new("○").color(colors::WARN_COLOR));
-                    ui.label("Idle");
-                });
-            }
-
-            ui.add_enabled_ui(supported, |ui| {
-                ui.horizontal(|ui| {
-                    ui.label("Stream Name:");
-                    ui.text_edit_singleline(name);
-                });
-                if name.is_empty() {
-                    ui.small("Stream name defaults to 'Vorce NDI'");
-                }
-
-                ui.horizontal(|ui| {
-                    ui.label("Resolution:");
-                    ui.add(egui::DragValue::new(width).range(128..=7680).suffix("px"));
-                    ui.label("x");
-                    ui.add(egui::DragValue::new(height).range(128..=4320).suffix("px"));
-                });
+            capabilities::render_runtime_active_info(ui);
+            ui.horizontal(|ui| {
+                ui.label("Stream Name:");
+                ui.text_edit_singleline(name);
             });
         }
         #[cfg(not(feature = "ndi"))]

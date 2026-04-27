@@ -1,5 +1,4 @@
 ## Verlinktes Issue
-
 Fixes #370
 
 🎯 **What:**
