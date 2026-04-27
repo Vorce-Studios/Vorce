@@ -269,9 +269,24 @@ pub fn render_canvas(
         let mut clicked_on_part = false;
         let mut delete_part_id = None;
         let mut resize_ops = Vec::new();
-        let mut drag_delta = Vec2::ZERO;
         let selected_parts_set: rustc_hash::FxHashSet<vorce_core::module::ModulePartId> =
             canvas.selected_parts.iter().copied().collect();
+
+        // Apply drag delta BEFORE drawing for immediate visual feedback
+        if let Some((_dragged_id, _accumulator)) = canvas.dragging_part {
+            if response.dragged() && canvas.creating_connection.is_none() {
+                let current_drag_delta = response.drag_delta() / canvas.zoom;
+
+                // Mutate positions right away before drawing
+                for pid in &canvas.selected_parts {
+                    if let Some(part) = module.parts.iter_mut().find(|part| part.id == *pid) {
+                        part.position.0 += current_drag_delta.x;
+                        part.position.1 += current_drag_delta.y;
+                        module_changed = true;
+                    }
+                }
+            }
+        }
 
         for part in &mut module.parts {
             let part_pos = to_screen(Pos2::new(part.position.0, part.position.1));
@@ -411,12 +426,6 @@ pub fn render_canvas(
                 }
             }
 
-            if let Some((dragged_id, _accumulator)) = canvas.dragging_part {
-                if dragged_id == part_id && canvas.creating_connection.is_none() {
-                    drag_delta = part_response.drag_delta() / canvas.zoom;
-                }
-            }
-
             if part_response.drag_stopped() {
                 canvas.dragging_part = None;
             }
@@ -469,16 +478,6 @@ pub fn render_canvas(
                             ui.ctx().request_repaint();
                         }
                     }
-                }
-            }
-        }
-
-        if drag_delta != Vec2::ZERO {
-            for pid in &canvas.selected_parts {
-                if let Some(part) = module.parts.iter_mut().find(|part| part.id == *pid) {
-                    part.position.0 += drag_delta.x;
-                    part.position.1 += drag_delta.y;
-                    module_changed = true;
                 }
             }
         }

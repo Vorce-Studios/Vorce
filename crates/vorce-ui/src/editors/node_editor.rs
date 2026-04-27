@@ -518,6 +518,17 @@ impl NodeEditor {
 
         let selected_set: rustc_hash::FxHashSet<_> = self.selected_nodes.iter().copied().collect();
 
+        // Apply node dragging before drawing to ensure immediate visual feedback
+        if let Some((node_id, _)) = self.dragging_node {
+            if response.dragged() {
+                if let Some(node) = nodes_vec.iter_mut().find(|n| n.id == node_id) {
+                    node.position += response.drag_delta() / zoom;
+                }
+            } else {
+                self.dragging_node = None;
+            }
+        }
+
         for node in nodes_vec {
             let node_screen_pos = to_screen(node.position);
             let node_screen_rect = Rect::from_min_size(node_screen_pos, node.size * zoom);
@@ -534,16 +545,9 @@ impl NodeEditor {
             }
 
             if node_response.dragged() {
-                self.dragging_node = Some((node.id, response.drag_delta() / zoom));
+                self.dragging_node = Some((node.id, Vec2::ZERO));
             }
-        }
-
-        // Apply node dragging
-        if let Some((node_id, delta)) = self.dragging_node {
-            if let Some(node) = self.nodes.get_mut(&node_id) {
-                node.position += delta;
-            }
-            if !response.dragged() {
+            if node_response.drag_stopped() {
                 self.dragging_node = None;
             }
         }
