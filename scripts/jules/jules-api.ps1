@@ -4,6 +4,7 @@ $script:JulesApiBaseUri = "https://jules.googleapis.com/v1alpha"
 
 $script:JulesMaxConcurrentSessions = if ($env:JULES_MAX_CONCURRENT_SESSIONS) { [int]$env:JULES_MAX_CONCURRENT_SESSIONS } else { 10 }
 $script:JulesRateLimitDelayMs = if ($env:JULES_RATE_LIMIT_DELAY_MS) { [int]$env:JULES_RATE_LIMIT_DELAY_MS } else { 800 }
+$script:JulesThrottleMode = if ($env:JULES_THROTTLE_MODE) { $env:JULES_THROTTLE_MODE } else { "balanced" }
 $script:JulesActiveSessions = @()
 $script:JulesSessionThrottleLock = [System.Threading.Mutex]::new($false)
 
@@ -36,6 +37,23 @@ function Get-JulesRateLimitDelayMs {
     if ($Override -gt 0) { return $Override }
     if ($env:JULES_RATE_LIMIT_DELAY_MS) { return [int]$env:JULES_RATE_LIMIT_DELAY_MS }
     return $script:JulesRateLimitDelayMs
+}
+
+function Get-JulesThrottleMode {
+    param([string]$Mode)
+    if ($Mode) { return $Mode }
+    return $script:JulesThrottleMode
+}
+
+function Get-JulesThrottlePresets {
+    param([string]$Mode)
+    $mode = Get-JulesThrottleMode -Mode $Mode
+    switch ($mode.ToLower()) {
+        "fast" { return @{ MaxConcurrent = 15; RateLimitDelayMs = 400 } }
+        "balanced" { return @{ MaxConcurrent = 10; RateLimitDelayMs = 800 } }
+        "slow" { return @{ MaxConcurrent = 5; RateLimitDelayMs = 1500 } }
+        default { return @{ MaxConcurrent = 10; RateLimitDelayMs = 800 } }
+    }
 }
 
 function Register-JulesActiveSession {
