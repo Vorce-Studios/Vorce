@@ -45,6 +45,7 @@
 ## 2026-04-26 - [Prevent String Allocations with Caching in MediaManagerUI Search]
 **Erkenntnis:** During code review, it was identified that evaluating `.to_lowercase()` using `(!self.search_query.is_empty()).then(|| self.search_query.to_lowercase())` inside the UI loop did not actually solve the allocation issue when the user *has* an active search query, because it would then continuously allocate a new `String` on every frame while the user isn't even typing.
 **Aktion:** Refactored `MediaManagerUI` to cache the lowercased search query in the state struct (`self.search_query_lower`), and only recalculate it when `ui.text_edit_singleline(...).changed()` returns true. This completely eliminates per-frame string allocations for filtering, regardless of whether the query is empty or not.
+<<<<<<< HEAD
 
 ## 2026-04-26 - [Cache Search Queries in UI States]
 **Erkenntnis:** Using `(!str.is_empty()).then(|| str.to_lowercase())` inside immediate-mode UI rendering loops like egui successfully avoids allocations for empty queries, but continuously creates new String heap allocations every frame when there IS an active search query. This introduces allocator overhead whenever a user filters items in `MediaBrowser`, `EffectChainPanel`, `ShortcutsPanel`, and `ModuleCanvas`.

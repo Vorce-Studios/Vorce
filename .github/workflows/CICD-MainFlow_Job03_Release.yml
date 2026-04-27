@@ -361,7 +361,6 @@ jobs:
     if: always() && needs.resolve-release.result == 'success'
     runs-on: ubuntu-latest
     steps:
-<<<<<<< HEAD
       - name: Gate – at least one build must succeed
         shell: bash
         env:
@@ -377,10 +376,6 @@ jobs:
 
       - name: Download Windows Artifacts
         if: needs.build-windows.result == 'success'
-=======
-      - uses: actions/checkout@v6
-      - name: Download Artifacts
->>>>>>> origin/main
         uses: actions/download-artifact@v8
         with:
           name: windows-artifacts
@@ -409,7 +404,6 @@ jobs:
         run: |
           set -euo pipefail
 
-<<<<<<< HEAD
           echo "=== Available release artifacts ==="
           ls -lhR release-artifacts/ || true
 
@@ -419,6 +413,7 @@ jobs:
             "release-artifacts/Vorce-$RELEASE_VERSION-Windows-x64.zip" \
             "release-artifacts/Vorce-$RELEASE_VERSION-x64.msi" \
             "release-artifacts/Vorce-$RELEASE_VERSION-Linux-x64.tar.gz" \
+            "release-artifacts/vorce-$RELEASE_VERSION-x64.deb" \
             "release-artifacts/Vorce-$RELEASE_VERSION-macOS-beta.dmg"; do
             if [[ -f "$f" ]]; then
               echo "✅ Found: $f"
@@ -432,15 +427,6 @@ jobs:
             echo "::error::No release artifacts found despite passing gate."
             exit 1
           fi
-=======
-          assets=(
-            "release-artifacts/Vorce-$RELEASE_VERSION-Windows-x64.zip"
-            "release-artifacts/Vorce-$RELEASE_VERSION-x64.msi"
-            "release-artifacts/Vorce-$RELEASE_VERSION-Linux-x64.tar.gz"
-            "release-artifacts/vorce-$RELEASE_VERSION-x64.deb"
-            "release-artifacts/Vorce-$RELEASE_VERSION-macOS-beta.dmg"
-          )
->>>>>>> origin/main
 
           args=(
             "$RELEASE_VERSION"

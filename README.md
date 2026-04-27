@@ -1,12 +1,4 @@
 <div align="center">
-<<<<<<< HEAD
-  <img src="resources/branding/logo_banner.png" alt="Vorce Logo" width="600">
-
-# Vorce (formerly VjMapper)
-
-**A High-Performance, Professional-Grade Projection Mapping Tool Built with Rust.**
-=======
-
   <img src="resources/app_icons/Vorce_Logo_HQ-Full-Gray-Background-NoCorner.png" alt="Vorce Logo" width="500">
 
 # Vorce (formerly VjMapper)
@@ -22,7 +14,6 @@
 [![Rust: 1.94+](https://img.shields.io/badge/Rust-1.94%2B-orange.svg)](https://www.rust-lang.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 <!-- markdownlint-enable MD013 -->
->>>>>>> origin/main
 
   [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
   [![Rust](https://img.shields.io/badge/rust-1.94%2B-orange.svg)](https://www.rust-lang.org/)
