@@ -561,6 +561,8 @@ fn run_editor(
         screenshot_dir: None,
         initial_user_config,
         disable_startup_animation,
+        startup_failure: None,
+        pending_main_window_state_persist_at: None,
     };
     event_loop
         .run_app(&mut app_handler)
@@ -582,6 +584,8 @@ fn run_automation(args: &CliArgs, initial_user_config: vorce_ui::config::UserCon
         screenshot_dir: args.screenshot_dir.clone(),
         initial_user_config,
         disable_startup_animation: true,
+        startup_failure: None,
+        pending_main_window_state_persist_at: None,
     };
     event_loop
         .run_app(&mut app_handler)

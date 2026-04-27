@@ -512,12 +512,6 @@ impl NodeEditor {
         }
 
         // Draw nodes
-        // Pass 1: Handle interactions first to update selection/dragging state
-        let mut nodes_vec: Vec<_> = self.nodes.values_mut().collect();
-        nodes_vec.sort_by_key(|n| n.id);
-
-        let selected_set: rustc_hash::FxHashSet<_> = self.selected_nodes.iter().copied().collect();
-
         // Apply node dragging before drawing to ensure immediate visual feedback
         if let Some((node_id, _)) = self.dragging_node {
             if response.dragged() {
@@ -528,6 +522,10 @@ impl NodeEditor {
                 self.dragging_node = None;
             }
         }
+
+        // Pass 1: Handle interactions first to update selection/dragging state
+        let mut nodes_vec: Vec<_> = self.nodes.values_mut().collect();
+        nodes_vec.sort_by_key(|n| n.id);
 
         // Pass 1: Handle interactions first to update selection/dragging state
         for node in &mut nodes_vec {
@@ -559,9 +557,6 @@ impl NodeEditor {
             let is_selected = selected_set.contains(&node.id);
 
             Self::draw_node(ui, &painter, node, node_screen_rect, locale, zoom, is_selected);
-        }
-                self.dragging_node = None;
-            }
         }
 
         // Draw connection being created
