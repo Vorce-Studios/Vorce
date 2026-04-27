@@ -36,15 +36,19 @@ function Get-JulesApiKey {
 function Get-JulesHttpErrorMessage {
     param([System.Management.Automation.ErrorRecord]$ErrorRecord)
 
-    if (-not $ErrorRecord) {
+    if ($null -eq $ErrorRecord) {
         return "Unbekannter HTTP-Fehler."
     }
 
-    if (-not [string]::IsNullOrWhiteSpace($ErrorRecord.ErrorDetails.Message)) {
+    if ($null -ne $ErrorRecord.ErrorDetails -and -not [string]::IsNullOrWhiteSpace($ErrorRecord.ErrorDetails.Message)) {
         return $ErrorRecord.ErrorDetails.Message
     }
 
-    return $ErrorRecord.Exception.Message
+    if ($null -ne $ErrorRecord.Exception) {
+        return $ErrorRecord.Exception.Message
+    }
+
+    return "Unbekannter Fehler: $ErrorRecord"
 }
 
 function ConvertTo-JulesQueryString {

@@ -17,17 +17,25 @@ $ScriptDir = Split-Path -Parent $PSCommandPath
 function Get-ChecksSummary {
     param([object[]]$Checks)
 
-    $checks = @($Checks)
-    if ($checks.Count -eq 0) {
+    if (-not $Checks -or @($Checks).Length -eq 0) {
         return "no-required-checks"
     }
+    $checks = @($Checks)
 
-    $failed = @($checks | Where-Object { @("FAILURE", "TIMED_OUT", "CANCELLED", "ERROR") -contains [string]$_.state -or @("fail", "error") -contains [string]$_.bucket })
+    $failed = @($checks | Where-Object { 
+        $state = Get-JulesObjectPropertyValue -Object $_ -Name "state"
+        $bucket = Get-JulesObjectPropertyValue -Object $_ -Name "bucket"
+        @("FAILURE", "TIMED_OUT", "CANCELLED", "ERROR") -contains [string]$state -or @("fail", "error") -contains [string]$bucket 
+    })
     if ($failed.Count -gt 0) {
         return "failing: " + (($failed | ForEach-Object { [string]$_.name } | Select-Object -Unique) -join ", ")
     }
 
-    $pending = @($checks | Where-Object { @("PENDING", "QUEUED", "IN_PROGRESS", "STARTUP_FAILURE") -contains [string]$_.state -or @("pending", "skipping") -contains [string]$_.bucket })
+    $pending = @($checks | Where-Object { 
+        $state = Get-JulesObjectPropertyValue -Object $_ -Name "state"
+        $bucket = Get-JulesObjectPropertyValue -Object $_ -Name "bucket"
+        @("PENDING", "QUEUED", "IN_PROGRESS", "STARTUP_FAILURE") -contains [string]$state -or @("pending", "skipping") -contains [string]$bucket 
+    })
     if ($pending.Count -gt 0) {
         return "pending: " + (($pending | ForEach-Object { [string]$_.name } | Select-Object -Unique) -join ", ")
     }
@@ -81,12 +89,20 @@ $rows = foreach ($issue in $issues) {
         continue
     }
 
-    $session = Get-JulesSession -SessionIdOrName $reference.SessionName -ApiKey $ApiKey
-    $latestActivity = if ($SyncIssueBody -or $AutoNudgeJules.IsPresent) {
-        $activities = @(Get-AllJulesActivities -SessionIdOrName ([string]$session.name) -PageSize $ActivityPageSize -MaxPages 1 -ApiKey $ApiKey)
-        Get-JulesLatestActivity -Activities $activities
-    } else {
-        $null
+    $session = $null
+    $latestActivity = $null
+    try {
+        $session = Get-JulesSession -SessionIdOrName $reference.SessionName -ApiKey $ApiKey
+        if ($SyncIssueBody -or $AutoNudgeJules.IsPresent) {
+            $activities = @(Get-AllJulesActivities -SessionIdOrName ([string]$session.name) -PageSize $ActivityPageSize -MaxPages 1 -ApiKey $ApiKey)
+            $latestActivity = Get-JulesLatestActivity -Activities $activities
+        }
+    } catch {
+        Write-JulesWarn "Session '$($reference.SessionName)' konnte nicht abgerufen werden: $($_.Exception.Message)"
+    }
+
+    if ($null -eq $session) {
+        continue
     }
 
     $pullRequest = Find-GitHubPullRequestForIssue -Repository $resolvedRepository -IssueNumber $currentIssueNumber -SessionId (Resolve-JulesSessionId -SessionIdOrName ([string]$session.name))
