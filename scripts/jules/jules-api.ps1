@@ -2,6 +2,11 @@ Set-StrictMode -Version Latest
 
 $script:JulesApiBaseUri = "https://jules.googleapis.com/v1alpha"
 
+$script:JulesMaxConcurrentSessions = if ($env:JULES_MAX_CONCURRENT_SESSIONS) { [int]$env:JULES_MAX_CONCURRENT_SESSIONS } else { 10 }
+$script:JulesRateLimitDelayMs = if ($env:JULES_RATE_LIMIT_DELAY_MS) { [int]$env:JULES_RATE_LIMIT_DELAY_MS } else { 800 }
+$script:JulesActiveSessions = @()
+$script:JulesSessionThrottleLock = [System.Threading.Mutex]::new($false)
+
 function Initialize-JulesConsole {
     $utf8 = [System.Text.Encoding]::UTF8
     $global:OutputEncoding = $utf8
@@ -17,6 +22,92 @@ function Write-JulesInfo {
 function Write-JulesWarn {
     param([string]$Message)
     Write-Warning $Message
+}
+
+function Get-JulesMaxConcurrentSessions {
+    param([int]$Override)
+    if ($Override -gt 0) { return $Override }
+    if ($env:JULES_MAX_CONCURRENT_SESSIONS) { return [int]$env:JULES_MAX_CONCURRENT_SESSIONS }
+    return $script:JulesMaxConcurrentSessions
+}
+
+function Get-JulesRateLimitDelayMs {
+    param([int]$Override)
+    if ($Override -gt 0) { return $Override }
+    if ($env:JULES_RATE_LIMIT_DELAY_MS) { return [int]$env:JULES_RATE_LIMIT_DELAY_MS }
+    return $script:JulesRateLimitDelayMs
+}
+
+function Register-JulesActiveSession {
+    param([Parameter(Mandatory)][string]$SessionId)
+    $script:JulesActiveSessions += $SessionId
+}
+
+function Unregister-JulesActiveSession {
+    param([Parameter(Mandatory)][string]$SessionId)
+    $script:JulesActiveSessions = $script:JulesActiveSessions | Where-Object { $_ -ne $SessionId }
+}
+
+function Get-JulesActiveSessionCount {
+    return $script:JulesActiveSessions.Count
+}
+
+function Wait-ForJulesSessionSlot {
+    [CmdletBinding()]
+    param(
+        [int]$MaxConcurrent,
+        [int]$TimeoutSeconds = 300
+    )
+
+    $max = if ($MaxConcurrent -gt 0) { $MaxConcurrent } else { Get-JulesMaxConcurrentSessions }
+    $start = Get-Date
+    $waited = $false
+
+    while ($script:JulesActiveSessions.Count -ge $max) {
+        if ((New-TimeSpan -Start $start -End (Get-Date)).TotalSeconds -gt $TimeoutSeconds) {
+            throw "Timeout beim Warten auf freien Jules Session-Slot nach $TimeoutSeconds Sekunden."
+        }
+        Write-JulesInfo "Warte auf freien Session-Slot... ($($script:JulesActiveSessions.Count)/$max aktiv)"
+        Start-Sleep -Milliseconds 500
+        $waited = $true
+    }
+
+    if ($waited) {
+        Write-JulesInfo "Slot verfuegbar, starte neue Session..."
+    }
+}
+
+function Invoke-ThrottledJulesApiRequest {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][ValidateSet("GET", "POST", "DELETE")][string]$Method,
+        [Parameter(Mandatory)][string]$Path,
+        [hashtable]$Query,
+        [AllowNull()][object]$Body,
+        [string]$ApiKey,
+        [string]$SessionId,
+        [int]$MaxConcurrent,
+        [int]$RateLimitDelayMs
+    )
+
+    Wait-ForJulesSessionSlot -MaxConcurrent $MaxConcurrent
+
+    if ($RateLimitDelayMs -gt 0 -or $script:JulesRateLimitDelayMs -gt 0) {
+        $delay = if ($RateLimitDelayMs -gt 0) { $RateLimitDelayMs } else { $script:JulesRateLimitDelayMs }
+        Start-Sleep -Milliseconds $delay
+    }
+
+    if ($SessionId) {
+        Register-JulesActiveSession -SessionId $SessionId
+    }
+
+    try {
+        return Invoke-JulesApiRequest -Method $Method -Path $Path -Query $Query -Body $Body -ApiKey $ApiKey
+    } finally {
+        if ($SessionId) {
+            Unregister-JulesActiveSession -SessionId $SessionId
+        }
+    }
 }
 
 function Get-JulesApiKey {

@@ -197,6 +197,13 @@ impl ApplicationHandler for VorceApp {
         event: WindowEvent,
     ) {
         if let Some(app) = &mut self.app {
+            match &event {
+                WindowEvent::Resized(_) | WindowEvent::Moved(_) => {
+                    self.schedule_main_window_state_persist();
+                }
+                _ => {}
+            }
+
             let _ =
                 app.handle_event(winit::event::Event::WindowEvent { window_id, event }, event_loop);
         }
@@ -205,6 +212,8 @@ impl ApplicationHandler for VorceApp {
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
         if let Some(app) = &mut self.app {
             let _ = app.handle_event(winit::event::Event::AboutToWait, event_loop);
+
+            self.persist_main_window_state_if_due(false);
 
             if self.is_automation {
                 if let Some(exit_frames) = self.exit_after_frames {
