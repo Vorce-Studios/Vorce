@@ -256,12 +256,48 @@ pub fn render_output_ui(
             }
         }
         #[cfg(feature = "ndi")]
-        OutputType::NdiOutput { name } => {
+        OutputType::NdiOutput { name, width, height } => {
             ui.label("\u{1F4E1} NDI Output");
-            capabilities::render_runtime_active_info(ui);
-            ui.horizontal(|ui| {
-                ui.label("Stream Name:");
-                ui.text_edit_singleline(name);
+            let supported = capabilities::is_output_type_enum_supported(true, false, false);
+            if !supported {
+                capabilities::render_unsupported_warning(
+                    ui,
+                    "NDI runtime missing or not initialized. Please install the NDI SDK/Runtime.",
+                );
+            } else if let Some(sending) = canvas.ndi_output_status.get(&part_id) {
+                if *sending {
+                    ui.horizontal(|ui| {
+                        ui.label(egui::RichText::new("●").color(colors::MINT_ACCENT));
+                        ui.label("Sending");
+                    });
+                } else {
+                    ui.horizontal(|ui| {
+                        ui.label(egui::RichText::new("○").color(colors::WARN_COLOR));
+                        ui.label("Idle");
+                    });
+                }
+            } else {
+                ui.horizontal(|ui| {
+                    ui.label(egui::RichText::new("○").color(colors::WARN_COLOR));
+                    ui.label("Idle");
+                });
+            }
+
+            ui.add_enabled_ui(supported, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Stream Name:");
+                    ui.text_edit_singleline(name);
+                });
+                if name.is_empty() {
+                    ui.small("Stream name defaults to 'Vorce NDI'");
+                }
+
+                ui.horizontal(|ui| {
+                    ui.label("Resolution:");
+                    ui.add(egui::DragValue::new(width).range(128..=7680).suffix("px"));
+                    ui.label("x");
+                    ui.add(egui::DragValue::new(height).range(128..=4320).suffix("px"));
+                });
             });
         }
         #[cfg(not(feature = "ndi"))]
