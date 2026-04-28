@@ -28,6 +28,9 @@ pub enum UIAction {
     /// Set media file for source
     SetMediaFile(vorce_core::module::ModuleId, vorce_core::module::ModulePartId, String),
 
+    /// Request NDI Sender runtime status
+    GetNdiSenderStatus(vorce_core::module::ModulePartId, crossbeam_channel::Sender<Option<u64>>),
+
     /// Save current project
     SaveProject(String),
     /// Save project as new file

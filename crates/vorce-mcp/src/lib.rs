@@ -42,6 +42,10 @@ pub enum McpAction {
     // === Cue Management ===
     /// Trigger a cue by ID.
     TriggerCue(u64),
+
+    // === NDI Management ===
+    /// Get the runtime status of an NDI sender (part_id, Sender).
+    GetNdiSenderStatus(u64, crossbeam_channel::Sender<Option<u64>>),
     /// Go to the next cue.
     NextCue,
     /// Go to the previous cue.

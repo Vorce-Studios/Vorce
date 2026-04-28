@@ -227,6 +227,9 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     PathBuf::from(path),
                 ));
             }
+            UIAction::GetNdiSenderStatus(part_id, tx) => {
+                let _ = app.action_sender.send(McpAction::GetNdiSenderStatus(part_id, tx));
+            }
 
             UIAction::LoadProject(path_str) => {
                 let path = if path_str.is_empty() {
@@ -747,6 +750,22 @@ pub fn handle_mcp_actions(app: &mut App) {
                     tracing::error!("Failed to serialize project state for MCP: {}", e);
                     let _ = tx.send(format!("{{\"error\": \"Serialization failed: {e}\"}}"));
                 }
+            }
+            continue;
+        }
+        if let vorce_mcp::McpAction::GetNdiSenderStatus(part_id, tx) = action {
+            #[cfg(feature = "ndi")]
+            {
+                if let Some(sender) = app.ndi_senders.get(&part_id) {
+                    let _ = tx.send(Some(sender.frame_count()));
+                } else {
+                    let _ = tx.send(None);
+                }
+            }
+            #[cfg(not(feature = "ndi"))]
+            {
+                let _ = part_id;
+                let _ = tx.send(None);
             }
             continue;
         }

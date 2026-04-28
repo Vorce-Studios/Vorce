@@ -140,6 +140,7 @@ pub fn render_output_ui(
     ui: &mut Ui,
     output: &mut OutputType,
     _part_id: ModulePartId,
+    _actions: &mut Vec<crate::action::UIAction>,
 ) {
     ui.label("Output:");
     match output {
@@ -255,22 +256,54 @@ pub fn render_output_ui(
         }
         #[cfg(feature = "ndi")]
         OutputType::NdiOutput { name } => {
-            ui.label("\u{1F4E1} NDI Output");
-            capabilities::render_unsupported_warning(
-                ui,
-                "[Experimental] NDI Output has no active runtime path currently.",
-            );
+            ui.label("\u{1F4E1} NDI Output Configuration");
+            ui.separator();
             ui.horizontal(|ui| {
                 ui.label("Stream Name:");
                 ui.text_edit_singleline(name);
             });
+            ui.separator();
+            ui.label("⚙️ Runtime Status");
+
+            // Process incoming status results
+            if let Some(rx) = canvas.ndi_status_rx.get(&_part_id) {
+                if let Ok(status) = rx.try_recv() {
+                    canvas.ndi_sender_status.insert(_part_id, status);
+                    canvas.ndi_status_rx.remove(&_part_id);
+                }
+            }
+
+            if let Some(status) = canvas.ndi_sender_status.get(&_part_id) {
+                match status {
+                    Some(frames) => {
+                        ui.label(
+                            egui::RichText::new(format!("🟢 Running (Sent frames: {})", frames))
+                                .color(crate::theme::colors::SUCCESS_COLOR),
+                        );
+                    }
+                    None => {
+                        ui.label(
+                            egui::RichText::new("🟡 Waiting for runtime...")
+                                .color(crate::theme::colors::WARN_COLOR),
+                        );
+                    }
+                }
+            } else {
+                ui.label("Status: Unknown");
+            }
+
+            if ui.button("🔄 Refresh Status").clicked() {
+                let (tx, rx) = crossbeam_channel::unbounded();
+                canvas.ndi_status_rx.insert(_part_id, rx);
+                _actions.push(crate::action::UIAction::GetNdiSenderStatus(_part_id, tx));
+            }
         }
         #[cfg(not(feature = "ndi"))]
         OutputType::NdiOutput { .. } => {
             ui.label("\u{1F4E1} NDI Output (Feature Disabled)");
             crate::editors::module_canvas::inspector::capabilities::render_unsupported_warning(
                 ui,
-                "[Experimental] NDI feature is disabled in this build.",
+                "NDI feature is disabled in this build.",
             );
         }
         #[cfg(target_os = "windows")]

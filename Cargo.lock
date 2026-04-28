@@ -9806,6 +9806,7 @@ version = "0.2.0"
 dependencies = [
  "anyhow",
  "cpal 0.17.1",
+ "crossbeam-channel",
  "dirs",
  "egui",
  "egui-wgpu",

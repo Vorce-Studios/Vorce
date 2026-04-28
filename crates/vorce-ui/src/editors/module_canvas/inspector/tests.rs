@@ -45,17 +45,19 @@ fn test_is_source_type_enum_supported() {
     // Fully supported: standard (none of the special flags)
     assert!(is_source_type_enum_supported(false, false, false, false));
 
+    // Supported ones
+    assert!(is_source_type_enum_supported(false, false, true, false)); // ndi
+
     // Unsupported ones
     assert!(!is_source_type_enum_supported(true, false, false, false)); // shader
     assert!(!is_source_type_enum_supported(false, true, false, false)); // live input
-    assert!(!is_source_type_enum_supported(false, false, true, false)); // ndi
     assert!(!is_source_type_enum_supported(false, false, false, true)); // spout
 }
 
 #[test]
 fn test_is_output_type_enum_supported() {
-    // Currently all special output types are unsupported in this helper
-    assert!(!is_output_type_enum_supported(true, false, false));
+    // Currently all special output types except NDI are unsupported in this helper
+    assert!(is_output_type_enum_supported(true, false, false)); // ndi
     assert!(!is_output_type_enum_supported(false, true, false));
     assert!(!is_output_type_enum_supported(false, false, true));
     assert!(!is_output_type_enum_supported(false, false, false));

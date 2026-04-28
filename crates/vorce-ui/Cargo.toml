@@ -16,6 +16,7 @@ tokio = ["dep:tokio"]
 [dependencies]
 anyhow = { workspace = true }
 cpal = { workspace = true, optional = true }
+crossbeam-channel.workspace = true
 dirs = "6.0"
 
 # Phase 6: egui migration
