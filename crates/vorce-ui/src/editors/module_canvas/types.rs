@@ -17,7 +17,6 @@ pub struct SocketInfo {
 }
 
 pub type PresetPart = (vorce_core::module::ModulePartType, (f32, f32), Option<(f32, f32)>);
-pub type SelectionPositionChange = (ModulePartId, (f32, f32), (f32, f32));
 pub type PresetConnection = (usize, String, usize, String); // from_idx, from_socket_id, to_idx, to_socket_id
 
 /// A saved module preset/template
@@ -30,6 +29,8 @@ pub struct ModulePreset {
 }
 
 /// Actions that can be undone/redone
+pub type PositionChange = (ModulePartId, (f32, f32), (f32, f32));
+
 #[derive(Debug, Clone)]
 pub enum CanvasAction {
     AddPart {
@@ -56,7 +57,7 @@ pub enum CanvasAction {
         connection: vorce_core::module::ModuleConnection,
     },
     MoveSelection {
-        part_positions: Vec<SelectionPositionChange>, // (id, old_pos, new_pos)
+        part_positions: Vec<PositionChange>, // (id, old_pos, new_pos)
     },
     Batch(Vec<CanvasAction>),
 }
