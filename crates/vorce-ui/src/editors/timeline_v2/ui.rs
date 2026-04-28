@@ -161,7 +161,7 @@ impl TimelineV2 {
     }
 
     fn cleanup_missing_modules(&mut self, available_module_ids: &[ModuleId]) {
-        let valid: rustc_hash::FxHashSet<ModuleId> = available_module_ids.iter().copied().collect();
+        let valid: HashSet<ModuleId> = available_module_ids.iter().copied().collect();
         self.module_arrangement.retain(|item| valid.contains(&item.module_id));
 
         let has_block = |id: Option<u64>, blocks: &[ModuleArrangementItem]| {
@@ -814,7 +814,6 @@ impl TimelineV2 {
             let ruler_rect = Rect::from_min_size(rect.min, Vec2::new(rect.width(), 30.0));
             painter.rect_filled(ruler_rect, 0.0, ui.visuals().faint_bg_color);
 
-
             // Draw time ticks
             let tick_interval = if self.zoom > 100.0 { 0.1 } else { 1.0 };
             let mut time = 0.0;
@@ -826,7 +825,6 @@ impl TimelineV2 {
                     painter.line_segment(
                         [Pos2::new(x, ruler_rect.max.y - h), Pos2::new(x, ruler_rect.max.y)],
                         Stroke::new(1.0, ui.visuals().text_color().gamma_multiply(0.6)),
-
                     );
 
                     if (time % 1.0).abs() < 0.001 {
@@ -835,7 +833,7 @@ impl TimelineV2 {
                             egui::Align2::LEFT_TOP,
                             format!("{:.0}s", time),
                             egui::FontId::proportional(12.0),
-                            ui.visuals().text_color(),
+                            ui.visuals().strong_text_color(),
                         );
                     }
                 }
@@ -851,7 +849,6 @@ impl TimelineV2 {
                     painter.line_segment(
                         [Pos2::new(x, ruler_rect.min.y), Pos2::new(x, rect.max.y)],
                         Stroke::new(1.0, crate::theme::colors::MINT_ACCENT),
-
                     );
 
                     // Marker flag
@@ -862,7 +859,6 @@ impl TimelineV2 {
                         crate::theme::colors::MINT_ACCENT.linear_multiply(1.2)
                     } else {
                         crate::theme::colors::MINT_ACCENT.linear_multiply(0.5)
-
                     };
 
                     painter.rect_filled(flag_rect, 2.0, flag_color);
@@ -871,7 +867,7 @@ impl TimelineV2 {
                         egui::Align2::LEFT_TOP,
                         "M",
                         egui::FontId::proportional(10.0),
-                        ui.visuals().text_color(),
+                        ui.visuals().strong_text_color(),
                     );
 
                     let interact_rect = Rect::from_min_size(
@@ -903,7 +899,6 @@ impl TimelineV2 {
             painter.line_segment(
                 [Pos2::new(playhead_x, ruler_rect.min.y), Pos2::new(playhead_x, rect.max.y)],
                 Stroke::new(2.0, crate::theme::colors::ERROR_COLOR),
-
             );
 
             // Handle ruler scrubbing
@@ -938,7 +933,6 @@ impl TimelineV2 {
                     "Module Track",
                     egui::FontId::proportional(13.0),
                     ui.visuals().text_color().gamma_multiply(0.9),
-
                 );
 
                 let active_module = self.runtime_show_module(
@@ -985,7 +979,6 @@ impl TimelineV2 {
                         crate::theme::colors::MINT_ACCENT
                     } else if active_module == Some(block.module_id) {
                         crate::theme::colors::CYAN_ACCENT
-
                     } else {
                         ui.visuals().widgets.inactive.bg_fill
                     };
@@ -995,7 +988,6 @@ impl TimelineV2 {
                         block_rect,
                         3.0,
                         Stroke::new(1.0, ui.visuals().widgets.inactive.fg_stroke.color),
-
                         egui::StrokeKind::Middle,
                     );
 
@@ -1005,7 +997,7 @@ impl TimelineV2 {
                         egui::Align2::LEFT_TOP,
                         label,
                         egui::FontId::proportional(12.0),
-                        ui.visuals().text_color(),
+                        ui.visuals().strong_text_color(),
                     );
                 }
             }
@@ -1041,7 +1033,6 @@ impl TimelineV2 {
 
                 let text_color = if header_response.hovered() {
                     ui.visuals().strong_text_color()
-
                 } else {
                     ui.visuals().text_color().gamma_multiply(0.8)
                 };
@@ -1071,7 +1062,6 @@ impl TimelineV2 {
                             ui.visuals().window_fill
                         } else {
                             ui.visuals().faint_bg_color
-
                         };
                         painter.rect_filled(track_rect, 0.0, bg_color);
 
@@ -1092,7 +1082,6 @@ impl TimelineV2 {
                             param_name,
                             egui::FontId::proportional(13.0),
                             ui.visuals().text_color().gamma_multiply(0.7),
-
                         );
 
                         // Draw keyframes and curves
@@ -1120,7 +1109,6 @@ impl TimelineV2 {
                                 painter.add(egui::Shape::line(
                                     points,
                                     Stroke::new(2.0, crate::theme::colors::CYAN_ACCENT),
-
                                 ));
                             }
                         }
@@ -1146,8 +1134,8 @@ impl TimelineV2 {
 
                             painter.add(egui::Shape::convex_polygon(
                                 diamond,
-                                ui.visuals().warn_fg_color,
-                                Stroke::new(1.0, ui.visuals().text_color()),
+                                crate::theme::colors::WARN_COLOR,
+                                Stroke::new(1.0, ui.visuals().strong_text_color()),
                             ));
                         }
 

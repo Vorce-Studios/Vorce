@@ -342,27 +342,13 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
 
             #[cfg(feature = "ndi")]
             UIAction::ConnectNdiSource { part_id, source } => {
-                let mut receiver_exists = true;
-                if !app.ndi_receivers.contains_key(&part_id) {
+                let receiver = app.ndi_receivers.entry(part_id).or_insert_with(|| {
                     info!("Creating new NdiReceiver for part {}", part_id);
-                    match vorce_io::ndi::NdiReceiver::new() {
-                        Ok(new_receiver) => {
-                            app.ndi_receivers.insert(part_id, new_receiver);
-                        }
-                        Err(e) => {
-                            error!("Failed to create NDI receiver for part {}: {}", part_id, e);
-                            receiver_exists = false;
-                        }
-                    }
-                }
-
-                if receiver_exists {
-                    if let Some(receiver) = app.ndi_receivers.get_mut(&part_id) {
-                        info!("Connecting part {} to NDI source '{}'", part_id, source.name);
-                        if let Err(e) = receiver.connect(&source) {
-                            error!("Failed to connect to NDI source: {}", e);
-                        }
-                    }
+                    vorce_io::ndi::NdiReceiver::new().expect("Failed to create NDI receiver")
+                });
+                info!("Connecting part {} to NDI source '{}'", part_id, source.name);
+                if let Err(e) = receiver.connect(&source) {
+                    error!("Failed to connect to NDI source: {}", e);
                 }
             }
             #[cfg(feature = "ndi")]
@@ -749,21 +735,6 @@ fn handle_node_action(app: &mut App, action: NodeEditorAction) -> Result<()> {
 /// Process pending MCP actions
 pub fn handle_mcp_actions(app: &mut App) {
     while let Ok(action) = app.mcp_receiver.try_recv() {
-        if let vorce_mcp::McpAction::GetProjectState(tx) = &action {
-            tracing::info!("MCP: GetProjectState");
-            match serde_json::to_string(&app.state) {
-                Ok(json) => {
-                    if let Err(e) = tx.send(json) {
-                        tracing::error!("Failed to send project state back to MCP: {}", e);
-                    }
-                }
-                Err(e) => {
-                    tracing::error!("Failed to serialize project state for MCP: {}", e);
-                    let _ = tx.send(format!("{{\"error\": \"Serialization failed: {e}\"}}"));
-                }
-            }
-            continue;
-        }
         if let vorce_mcp::McpAction::SetModuleSourcePath(mod_id, part_id, path) = action {
             info!("MCP: SetModuleSourcePath({}, {}, {:?})", mod_id, part_id, path);
             if let Some(module) = app.state.module_manager_mut().get_module_mut(mod_id) {

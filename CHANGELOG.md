@@ -6,15 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- 2026-04-27: fix: Resolve repository merge blockers, restore NDI build stability, and fix Bevy compatibility for rustc 1.94.0 (#386, #394, #395, #385)
-- 2026-04-27: fix: Fix stale selection feedback in module-canvas and node-editor (#396)
-- 2026-04-27: fix: Correct syntax error in render/mod.rs and restore missing persist_main_window_state method in App
-- 2026-04-27: fix: Correct snapshot/mutation order in renderer.rs and node_editor.rs to ensure immediate visual feedback on click/drag (#369)
-- 2026-04-25: fix(installer): Bundle NDI DLL (Processing.NDI.Lib.x64.dll) in WiX installer (#373)
-- 2026-04-24: test(ci): VOR-41 Add Windows packaging smoke test to validate installer artifact (#356)
-- 2026-04-22: fix: Resolve merge conflicts and restore NDI build stability in master integration session (#343)
-
-- 2026-04-21: feat(mcp): implement shared state reading for project://current resource (#132)
 - 2026-04-16: refactor: Sync next_id with graph in NodeEditor
 - 2026-04-14: chore: 🧹 [code health] Remove dead CachedTexture struct and dummy allocations
 - 2026-04-14: chore: Code Health: Remove unused imports in controller list panel

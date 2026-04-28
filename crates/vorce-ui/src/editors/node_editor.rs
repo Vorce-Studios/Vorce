@@ -314,7 +314,7 @@ impl NodeEditor {
         zoom: f32,
     ) {
         let radius = 6.0 * zoom.clamp(0.1, 10.0);
-        painter.circle_filled(pos, radius, data_type.color());
+        painter.circle_filled(pos, radius, data_type.color(ui));
         painter.circle_stroke(pos, radius, Stroke::new(2.0, ui.visuals().text_color()));
     }
 
@@ -505,49 +505,17 @@ impl NodeEditor {
                     let from_screen = to_screen(from_pos);
                     let to_screen = to_screen(to_pos);
 
-                    let color = from_node.outputs[f_idx].data_type.color();
+                    let color = from_node.outputs[f_idx].data_type.color(ui);
                     Self::draw_connection(&painter, from_screen, to_screen, color);
                 }
             }
         }
 
         // Draw nodes
-        // Apply node dragging before drawing to ensure immediate visual feedback
-        if let Some((node_id, _)) = self.dragging_node {
-            if response.dragged() {
-                if let Some(node) = self.nodes.get_mut(&node_id) {
-                    node.position += response.drag_delta() / zoom;
-                }
-            } else {
-                self.dragging_node = None;
-            }
-        }
-
-        // Pass 1: Handle interactions first to update selection/dragging state
+        // Using values_mut() safely
         let mut nodes_vec: Vec<_> = self.nodes.values_mut().collect();
         nodes_vec.sort_by_key(|n| n.id);
 
-        // Pass 1: Handle interactions first to update selection/dragging state
-        for node in &mut nodes_vec {
-            let node_screen_pos = to_screen(node.position);
-            let node_screen_rect = Rect::from_min_size(node_screen_pos, node.size * zoom);
-            let node_response = ui.interact(node_screen_rect, egui::Id::new(node.id), Sense::click_and_drag());
-
-            if node_response.clicked() {
-                self.selected_nodes.clear();
-                self.selected_nodes.push(node.id);
-                action = Some(NodeEditorAction::SelectNode(node.id));
-            }
-
-            if node_response.dragged() {
-                self.dragging_node = Some((node.id, Vec2::ZERO));
-            }
-            if node_response.drag_stopped() {
-                self.dragging_node = None;
-            }
-        }
-
-        // Pass 2: Rendering with up-to-date selection
         let selected_set: rustc_hash::FxHashSet<_> = self.selected_nodes.iter().copied().collect();
 
         for node in nodes_vec {
@@ -556,7 +524,28 @@ impl NodeEditor {
 
             let is_selected = selected_set.contains(&node.id);
 
-            Self::draw_node(ui, &painter, node, node_screen_rect, locale, zoom, is_selected);
+            let node_response =
+                Self::draw_node(ui, &painter, node, node_screen_rect, locale, zoom, is_selected);
+
+            if node_response.clicked() {
+                self.selected_nodes.clear();
+                self.selected_nodes.push(node.id);
+                action = Some(NodeEditorAction::SelectNode(node.id));
+            }
+
+            if node_response.dragged() {
+                self.dragging_node = Some((node.id, response.drag_delta() / zoom));
+            }
+        }
+
+        // Apply node dragging
+        if let Some((node_id, delta)) = self.dragging_node {
+            if let Some(node) = self.nodes.get_mut(&node_id) {
+                node.position += delta;
+            }
+            if !response.dragged() {
+                self.dragging_node = None;
+            }
         }
 
         // Draw connection being created
@@ -702,20 +691,20 @@ impl NodeTypeUI for NodeType {
 
 /// Extension trait for DataType to get UI colors
 pub trait DataTypeUI {
-    fn color(&self) -> Color32;
+    fn color(&self, ui: &egui::Ui) -> Color32;
     fn compatible_with(&self, other: &DataType) -> bool;
 }
 
 impl DataTypeUI for DataType {
-    fn color(&self) -> Color32 {
+    fn color(&self, ui: &egui::Ui) -> Color32 {
         match self {
-            DataType::Float => Color32::from_rgb(100, 150, 255),
-            DataType::Vec2 => Color32::from_rgb(150, 100, 255),
-            DataType::Vec3 => Color32::from_rgb(200, 100, 200),
-            DataType::Vec4 => Color32::from_rgb(255, 100, 255),
-            DataType::Color => Color32::from_rgb(255, 150, 100),
-            DataType::Texture => Color32::from_rgb(255, 200, 100),
-            DataType::Sampler => Color32::from_rgb(150, 150, 150),
+            DataType::Float => crate::theme::colors::CYAN_ACCENT.linear_multiply(0.8),
+            DataType::Vec2 => ui.visuals().warn_fg_color,
+            DataType::Vec3 => crate::theme::colors::MINT_ACCENT,
+            DataType::Vec4 => crate::theme::colors::ERROR_COLOR.linear_multiply(0.8),
+            DataType::Color => ui.visuals().error_fg_color.linear_multiply(0.9),
+            DataType::Texture => crate::theme::colors::WARN_COLOR,
+            DataType::Sampler => ui.visuals().text_color().gamma_multiply(0.6),
         }
     }
 

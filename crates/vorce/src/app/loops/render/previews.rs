@@ -119,6 +119,8 @@ pub(crate) fn prepare_texture_previews(app: &mut App, encoder: &mut wgpu::Comman
                 preview_effect_chain_renderer: &mut app.preview_effect_chain_renderer,
                 shader_graph_manager: &app.shader_graph_manager,
                 texture_pool: &app.texture_pool,
+                compositor: &mut app.compositor,
+                layer_ping_pong: &mut app.layer_ping_pong,
                 _dummy_view: &app.dummy_view,
                 mesh_buffer_cache: &mut app.mesh_buffer_cache,
                 egui_renderer: &mut app.egui_renderer,

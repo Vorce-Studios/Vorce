@@ -124,7 +124,6 @@ mod tests {
             connections: vec![],
             playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
             next_part_id: 1,
-            part_index: Default::default(),
         }
     }
 
