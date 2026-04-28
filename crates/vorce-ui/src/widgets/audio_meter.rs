@@ -217,7 +217,13 @@ fn draw_retro_stereo(ui: &mut egui::Ui, rect: Rect, db_left: f32, db_right: f32)
     );
 }
 
-fn draw_single_retro_meter(_ui: &egui::Ui, painter: &egui::Painter, rect: Rect, db: f32, label: &str) {
+fn draw_single_retro_meter(
+    _ui: &egui::Ui,
+    painter: &egui::Painter,
+    rect: Rect,
+    db: f32,
+    label: &str,
+) {
     // Meter face background
     painter.rect_filled(rect, 0.0, Color32::from_rgb(230, 225, 210)); // Cream/vintage color
 
