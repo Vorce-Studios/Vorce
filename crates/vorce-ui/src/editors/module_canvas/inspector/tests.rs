@@ -48,7 +48,7 @@ fn test_is_source_type_enum_supported() {
     // Unsupported ones
     assert!(!is_source_type_enum_supported(true, false, false, false)); // shader
     assert!(!is_source_type_enum_supported(false, true, false, false)); // live input
-    // assert!(is_source_type_enum_supported(false, false, true, false)); // ndi may not be supported on runner
+                                                                        // assert!(is_source_type_enum_supported(false, false, true, false)); // ndi may not be supported on runner
     assert!(!is_source_type_enum_supported(false, false, false, true)); // spout
 }
 

@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- 2026-04-28: refactor: Code Health: Refactor excessively long TimelineV2 UI method (#401)
 - 2026-04-27: fix: Resolve repository merge blockers, restore NDI build stability, and fix Bevy compatibility for rustc 1.94.0 (#386, #394, #395, #385)
 - 2026-04-27: fix: Fix stale selection feedback in module-canvas and node-editor (#396)
 - 2026-04-27: fix: Correct syntax error in render/mod.rs and restore missing persist_main_window_state method in App
