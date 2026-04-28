@@ -1,6 +1,7 @@
 use super::super::mesh;
 use super::super::state::ModuleCanvas;
 use super::capabilities;
+#[cfg(feature = "ndi")]
 use crate::theme::colors;
 use egui::Ui;
 use vorce_core::module::{HueMappingMode, ModulePartId, OutputType};
@@ -140,7 +141,7 @@ pub fn render_output_ui(
     canvas: &mut ModuleCanvas,
     ui: &mut Ui,
     output: &mut OutputType,
-    part_id: ModulePartId,
+    _part_id: ModulePartId,
 ) {
     ui.label("Output:");
     match output {
@@ -273,7 +274,7 @@ pub fn render_output_ui(
                 );
             } else {
                 capabilities::render_runtime_active_info(ui);
-                if let Some(sending) = canvas.ndi_output_status.get(&part_id) {
+                if let Some(sending) = canvas.ndi_output_status.get(&_part_id) {
                     if *sending {
                         ui.horizontal(|ui| {
                             ui.label(egui::RichText::new("●").color(colors::MINT_ACCENT));
