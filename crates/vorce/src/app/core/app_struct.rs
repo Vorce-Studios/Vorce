@@ -293,6 +293,8 @@ pub struct App {
     pub bevy_runner: Option<vorce_bevy::BevyRunner>,
     /// Offscreen textures for virtual NDI outputs (PartID -> Texture, View)
     #[cfg(feature = "ndi")]
-    pub ndi_offscreen_textures:
-        std::collections::HashMap<vorce_core::module::ModulePartId, (wgpu::Texture, std::sync::Arc<wgpu::TextureView>)>,
+    pub ndi_offscreen_textures: std::collections::HashMap<
+        vorce_core::module::ModulePartId,
+        (wgpu::Texture, std::sync::Arc<wgpu::TextureView>),
+    >,
 }

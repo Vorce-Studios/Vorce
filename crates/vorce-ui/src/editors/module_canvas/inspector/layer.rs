@@ -120,10 +120,7 @@ pub fn render_layer_ui(
                 9_999,
             );
         }
-        LayerType::All {
-            opacity,
-            blend_mode,
-        } => {
+        LayerType::All { opacity, blend_mode } => {
             ui.label("All Layers (Deactivated)");
             ui.add(egui::Slider::new(opacity, 0.0..=1.0).text("Opacity"));
 
