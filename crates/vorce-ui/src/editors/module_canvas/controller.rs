@@ -111,13 +111,6 @@ pub fn apply_undo_action(module: &mut VorceModule, action: &CanvasAction) {
                 apply_undo_action(module, action);
             }
         }
-        CanvasAction::MoveSelection { part_positions } => {
-            for (part_id, old_pos, _) in part_positions {
-                if let Some(part) = module.parts.iter_mut().find(|p| p.id == *part_id) {
-                    part.position = *old_pos;
-                }
-            }
-        }
     }
 }
 
@@ -153,13 +146,6 @@ pub fn apply_redo_action(module: &mut VorceModule, action: &CanvasAction) {
         CanvasAction::Batch(actions) => {
             for action in actions.iter() {
                 apply_redo_action(module, action);
-            }
-        }
-        CanvasAction::MoveSelection { part_positions } => {
-            for (part_id, _, new_pos) in part_positions {
-                if let Some(part) = module.parts.iter_mut().find(|p| p.id == *part_id) {
-                    part.position = *new_pos;
-                }
             }
         }
     }

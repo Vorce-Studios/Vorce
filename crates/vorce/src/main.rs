@@ -18,10 +18,7 @@ pub mod player;
 pub mod ui;
 mod window_manager;
 
-use anyhow::{Context, Result};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::{Duration, Instant};
-
+use anyhow::Result;
 
 use vorce_core::OutputId;
 use vorce_media::PlaybackCommand;
@@ -40,59 +37,6 @@ use crate::app::core::app_struct::{App, InitializationConfig};
 use crate::cli::{CliArgs, Mode};
 use clap::Parser;
 
-static LOGGING_INITIALIZED: AtomicBool = AtomicBool::new(false);
-
-fn append_fallback_fatal_log(message: &str) {
-    if let Ok(mut path) = std::env::current_dir() {
-        path.push("logs");
-        path.push("vorce-panic-fallback.log");
-        if let Some(parent) = path.parent() {
-            let _ = std::fs::create_dir_all(parent);
-        }
-        let timestamp = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_secs())
-            .unwrap_or(0);
-        let log_entry = format!("[{}] FATAL: {}\n", timestamp, message);
-        let _ = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&path)
-            .and_then(|mut f| std::io::Write::write_all(&mut f, log_entry.as_bytes()));
-    }
-}
-
-fn emit_fatal_message(message: &str) {
-    eprintln!("{message}");
-    append_fallback_fatal_log(message);
-}
-
-fn emit_logged_fatal_error(message: &str) {
-    if LOGGING_INITIALIZED.load(Ordering::SeqCst) {
-        error!("{message}");
-    }
-    emit_fatal_message(message);
-}
-
-fn install_panic_hook() {
-    std::panic::set_hook(Box::new(|panic_info| {
-        let location = panic_info
-            .location()
-            .map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column()))
-            .unwrap_or_else(|| "unknown".to_string());
-        let payload = panic_info.payload();
-        let message = if let Some(s) = payload.downcast_ref::<&str>() {
-            *s
-        } else if let Some(s) = payload.downcast_ref::<String>() {
-            s.as_str()
-        } else {
-            "Box<Any>"
-        };
-
-        emit_fatal_message(&format!("APPLICATION PANIC at {}: {}", location, message));
-    }));
-}
-
 struct VorceApp {
     app: Option<App>,
     is_automation: bool,
@@ -101,35 +45,6 @@ struct VorceApp {
     screenshot_dir: Option<String>,
     initial_user_config: vorce_ui::config::UserConfig,
     disable_startup_animation: bool,
-    startup_failure: Option<String>,
-    pending_main_window_state_persist_at: Option<Instant>,
-}
-
-impl VorceApp {
-    fn schedule_main_window_state_persist(&mut self) {
-        self.pending_main_window_state_persist_at =
-            Some(Instant::now() + Duration::from_millis(250));
-    }
-
-    fn persist_main_window_state_if_due(&mut self, force: bool) {
-        let Some(app) = &mut self.app else {
-            return;
-        };
-
-        let should_persist = force
-            || self
-                .pending_main_window_state_persist_at
-                .is_some_and(|deadline| Instant::now() >= deadline);
-        if !should_persist {
-            return;
-        }
-
-        self.pending_main_window_state_persist_at = None;
-        if let Err(err) = app.persist_main_window_state() {
-            error!("Failed to persist main window state: {err:#}");
-        }
-    }
-
 }
 
 impl ApplicationHandler for VorceApp {
@@ -150,9 +65,7 @@ impl ApplicationHandler for VorceApp {
             )) {
                 Ok(app) => app,
                 Err(err) => {
-                    let message = format!("Failed to initialize application: {err:#}");
-                    error!("{message}");
-                    self.startup_failure = Some(message);
+                    error!("Failed to initialize application: {err:#}");
                     event_loop.exit();
                     return;
                 }
@@ -173,14 +86,8 @@ impl ApplicationHandler for VorceApp {
                             info!("Fixture loaded successfully.");
                         }
                         Err(e) => {
-                            let message = format!(
-                                "Automation mode: Failed to load fixture '{}': {}",
-                                fixture_path, e
-                            );
-                            error!("{message}");
-                            self.startup_failure = Some(message);
+                            error!("Automation mode: Failed to load fixture: {}", e);
                             event_loop.exit();
-                            return;
                         }
                     }
                 }
@@ -196,13 +103,6 @@ impl ApplicationHandler for VorceApp {
         window_id: WindowId,
         event: WindowEvent,
     ) {
-        match &event {
-            WindowEvent::Resized(_) | WindowEvent::Moved(_) => {
-                self.schedule_main_window_state_persist();
-            }
-            _ => {}
-        }
-
         if let Some(app) = &mut self.app {
             let _ =
                 app.handle_event(winit::event::Event::WindowEvent { window_id, event }, event_loop);
@@ -212,12 +112,8 @@ impl ApplicationHandler for VorceApp {
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
         if let Some(app) = &mut self.app {
             let _ = app.handle_event(winit::event::Event::AboutToWait, event_loop);
-        }
 
-        self.persist_main_window_state_if_due(false);
-
-        if self.is_automation {
-            if let Some(app) = &self.app {
+            if self.is_automation {
                 if let Some(exit_frames) = self.exit_after_frames {
                     if app.frame_counter >= exit_frames {
                         if let Some(dir) = &self.screenshot_dir {
@@ -492,19 +388,24 @@ impl App {
     }
 }
 
-fn main() {
-    install_panic_hook();
+fn main() -> Result<()> {
+    // Set up panic hook early to capture startup crashes
+    std::panic::set_hook(Box::new(|panic_info| {
+        let location = panic_info
+            .location()
+            .map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column()))
+            .unwrap_or_else(|| "unknown".to_string());
+        let payload = panic_info.payload();
+        let message = if let Some(s) = payload.downcast_ref::<&str>() {
+            *s
+        } else if let Some(s) = payload.downcast_ref::<String>() {
+            s.as_str()
+        } else {
+            "Box<Any>"
+        };
+        error!("APPLICATION PANIC at {}: {}", location, message);
+    }));
 
-    if let Err(err) = try_main() {
-        emit_logged_fatal_error(&format!(
-            "Application terminated with a fatal error: {err:#}"
-        ));
-        std::process::exit(1);
-    }
-}
-
-
-fn try_main() -> Result<()> {
     let args = CliArgs::parse();
     let (initial_user_config, initial_user_config_report) =
         vorce_ui::config::UserConfig::load_with_report();
@@ -535,13 +436,7 @@ fn try_main() -> Result<()> {
         .with_target(true)
         .with_writer(non_blocking);
 
-    tracing_subscriber::registry()
-        .with(env_filter)
-        .with(console_layer)
-        .with(file_layer)
-        .init();
-    LOGGING_INITIALIZED.store(true, Ordering::SeqCst);
-
+    tracing_subscriber::registry().with(env_filter).with(console_layer).with(file_layer).init();
 
     initial_user_config_report.emit_logs();
     info!("Starting Vorce in {:?} mode...", args.mode);
@@ -563,7 +458,7 @@ fn run_editor(
     disable_startup_animation: bool,
 ) -> Result<()> {
     info!("Starting Editor mode...");
-    let event_loop = EventLoop::new().context("Failed to create editor event loop")?;
+    let event_loop = EventLoop::new()?;
     let mut app_handler = VorceApp {
         app: None,
         is_automation: false,
@@ -572,21 +467,14 @@ fn run_editor(
         screenshot_dir: None,
         initial_user_config,
         disable_startup_animation,
-        startup_failure: None,
-        pending_main_window_state_persist_at: None,
     };
-    event_loop
-        .run_app(&mut app_handler)
-        .context("Editor event loop terminated unexpectedly")?;
-    if let Some(startup_failure) = app_handler.startup_failure.take() {
-        return Err(anyhow::anyhow!(startup_failure));
-    }
+    event_loop.run_app(&mut app_handler)?;
     Ok(())
 }
 
 fn run_automation(args: &CliArgs, initial_user_config: vorce_ui::config::UserConfig) -> Result<()> {
     info!("Starting Automation mode...");
-    let event_loop = EventLoop::new().context("Failed to create automation event loop")?;
+    let event_loop = EventLoop::new()?;
     let mut app_handler = VorceApp {
         app: None,
         is_automation: true,
@@ -595,15 +483,8 @@ fn run_automation(args: &CliArgs, initial_user_config: vorce_ui::config::UserCon
         screenshot_dir: args.screenshot_dir.clone(),
         initial_user_config,
         disable_startup_animation: true,
-        startup_failure: None,
-        pending_main_window_state_persist_at: None,
     };
-    event_loop
-        .run_app(&mut app_handler)
-        .context("Automation event loop terminated unexpectedly")?;
-    if let Some(startup_failure) = app_handler.startup_failure.take() {
-        return Err(anyhow::anyhow!(startup_failure));
-    }
+    event_loop.run_app(&mut app_handler)?;
     Ok(())
 }
 

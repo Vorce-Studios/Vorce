@@ -1,5 +1,8 @@
 //! NDI (Network Device Interface) support.
 //!
+//! **[Experimental] / [Gated]**
+//! This feature is currently experimental and not fully integrated into the production render path.
+//!
 //! This module provides NDI input (receiving) and output (sending) capabilities
 //! using the grafton-ndi crate which wraps the official NDI SDK.
 
@@ -47,28 +50,6 @@ impl From<grafton_ndi::Source> for NdiSource {
 #[cfg(feature = "ndi")]
 pub struct NdiHandle {
     ndi: Arc<NDI>,
-}
-
-#[cfg(feature = "ndi")]
-static NDI_SUPPORTED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-
-#[cfg(feature = "ndi")]
-fn check_ndi_supported() -> bool {
-    *NDI_SUPPORTED.get_or_init(|| NdiHandle::new().is_ok())
-}
-
-/// Checks if NDI is supported and initialized on this system.
-#[cfg(feature = "ndi")]
-pub fn is_supported() -> bool {
-    check_ndi_supported()
-}
-
-/// Checks if NDI output (sending) is available.
-/// This uses the same underlying check as NdiReceiver since both require
-/// the NDI runtime to be initialized.
-#[cfg(feature = "ndi")]
-pub fn is_output_supported() -> bool {
-    check_ndi_supported()
 }
 
 #[cfg(feature = "ndi")]
@@ -402,11 +383,6 @@ impl NdiReceiver {
         Err("NDI feature not enabled".to_string())
     }
 
-    /// Checks if NDI is supported (always false when feature is disabled).
-    pub fn is_supported() -> bool {
-        false
-    }
-
     /// Stub connect method.
     pub fn connect(&mut self, _source: &NdiSource) -> std::result::Result<(), String> {
         Err("NDI feature not enabled".to_string())
@@ -449,12 +425,6 @@ impl NdiSender {
     pub fn name(&self) -> &str {
         "NDI Stub"
     }
-}
-
-/// Stub for NDI output capability check when feature is disabled.
-#[cfg(not(feature = "ndi"))]
-pub fn is_output_supported() -> bool {
-    false
 }
 
 /// Data structure representing an NDI source (stub when feature is disabled).

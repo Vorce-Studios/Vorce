@@ -1089,20 +1089,6 @@ pub fn render_source_ui(
                                 }
                             });
 
-                        if let Some(status) = canvas.ndi_input_status.get(&part_id) {
-                            if status.connected {
-                                ui.horizontal(|ui| {
-                                    ui.label(egui::RichText::new("●").color(colors::MINT_ACCENT));
-                                    ui.label(format!("Connected: {}", status.source_name.as_deref().unwrap_or("Unknown")));
-                                });
-                            } else {
-                                ui.horizontal(|ui| {
-                                    ui.label(egui::RichText::new("○").color(colors::WARN_COLOR));
-                                    ui.label("Disconnected");
-                                });
-                            }
-                        }
-
                         ui.label(format!("Found {} source(s)", canvas.ndi_sources.len()));
                     } else if canvas.ndi_discovery_rx.is_none() {
                         ui.label("Click 'Discover' to find NDI sources");

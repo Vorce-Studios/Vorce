@@ -214,6 +214,22 @@ pub fn render_canvas(
             }
         };
 
+        if let Some(idx) = super::draw::draw_connections(
+            canvas,
+            ui,
+            &painter,
+            module,
+            &to_screen,
+            options.node_animations_enabled,
+            animation_profile,
+        ) {
+            if idx < module.connections.len() {
+                module.connections.remove(idx);
+                module_changed = true;
+                needs_repair = true;
+            }
+        }
+
         let mut all_sockets = Vec::new();
         let node_width = 200.0;
         let title_height = 28.0;
@@ -254,28 +270,10 @@ pub fn render_canvas(
         let mut delete_part_id = None;
         let mut resize_ops = Vec::new();
         let mut drag_delta = Vec2::ZERO;
-        let initial_selected_set: rustc_hash::FxHashSet<vorce_core::module::ModulePartId> =
+        let selected_parts_set: rustc_hash::FxHashSet<vorce_core::module::ModulePartId> =
             canvas.selected_parts.iter().copied().collect();
 
-        // Apply drag delta BEFORE drawing for immediate visual feedback
-        if let Some((_dragged_id, _accumulator)) = canvas.dragging_part {
-            if response.dragged() && canvas.creating_connection.is_none() {
-                drag_delta = response.drag_delta() / canvas.zoom;
-
-                // Mutate positions right away before drawing
-                for pid in &canvas.selected_parts {
-                    if let Some(part) = module.parts.iter_mut().find(|part| part.id == *pid) {
-                        part.position.0 += drag_delta.x;
-                        part.position.1 += drag_delta.y;
-                        module_changed = true;
-                    }
-                }
-            }
-        }
-
-        // --- Pass 1: Interaction ---
-        for part in &module.parts {
-            let part_id = part.id;
+        for part in &mut module.parts {
             let part_pos = to_screen(Pos2::new(part.position.0, part.position.1));
             let (w, h) = part.size.unwrap_or_else(|| {
                 let h = 80.0 + (part.inputs.len().max(part.outputs.len()) as f32) * 20.0;
@@ -283,25 +281,41 @@ pub fn render_canvas(
             });
             let part_rect = Rect::from_min_size(part_pos, Vec2::new(w, h) * canvas.zoom);
 
-            // Handle Resize Interaction
-            if initial_selected_set.contains(&part_id) {
+            if selected_parts_set.contains(&part.id) {
+                let highlight_rect = part_rect.expand(4.0 * canvas.zoom);
+                painter.rect_stroke(
+                    highlight_rect,
+                    0.0,
+                    Stroke::new(2.0 * canvas.zoom, ui.visuals().selection.bg_fill),
+                    egui::StrokeKind::Middle,
+                );
+
                 let handle_size = 12.0 * canvas.zoom;
                 let handle_rect = Rect::from_min_size(
                     Pos2::new(part_rect.max.x - handle_size, part_rect.max.y - handle_size),
                     Vec2::splat(handle_size),
                 );
+                painter.rect_filled(handle_rect, 0.0, ui.visuals().selection.bg_fill);
+                painter.line_segment(
+                    [
+                        handle_rect.min + Vec2::new(3.0, handle_size - 3.0),
+                        handle_rect.min + Vec2::new(handle_size - 3.0, 3.0),
+                    ],
+                    Stroke::new(1.5, ui.visuals().extreme_bg_color),
+                );
+
                 let resize_response =
-                    ui.interact(handle_rect, egui::Id::new((part_id, "resize")), Sense::drag());
+                    ui.interact(handle_rect, egui::Id::new((part.id, "resize")), Sense::drag());
 
                 if resize_response.drag_started() {
-                    canvas.resizing_part = Some((part_id, (w, h)));
+                    canvas.resizing_part = Some((part.id, (w, h)));
                 }
 
                 if resize_response.dragged() {
                     if let Some((id, _original_size)) = canvas.resizing_part {
-                        if id == part_id {
+                        if id == part.id {
                             let delta = resize_response.drag_delta() / canvas.zoom;
-                            resize_ops.push((part_id, delta));
+                            resize_ops.push((part.id, delta));
                         }
                     }
                 }
@@ -311,7 +325,21 @@ pub fn render_canvas(
                 }
             }
 
-            // Handle Socket Interaction
+            draw::draw_part_with_delete(
+                canvas,
+                ui,
+                &painter,
+                part,
+                part_rect,
+                actions,
+                module.id,
+                options.meter_style,
+                options.node_animations_enabled,
+                animation_profile,
+            );
+
+            let part_id = part.id;
+
             for socket_info in &all_sockets {
                 if socket_info.part_id != part_id {
                     continue;
@@ -348,7 +376,6 @@ pub fn render_canvas(
                 }
             }
 
-            // Handle Part Interaction (Click/Drag)
             let interact_rect = part_rect.shrink(2.0);
             let part_response =
                 ui.interact(interact_rect, egui::Id::new(part_id), Sense::click_and_drag());
@@ -381,21 +408,12 @@ pub fn render_canvas(
                         canvas.selected_parts.push(part_id);
                     }
                     canvas.dragging_part = Some((part_id, Vec2::ZERO));
-                    // Capture selection snapshot for undo when drag starts.
-                    // Update snapshot if empty or if current selected parts differ from the stored snapshot.
-                    if !canvas.selected_parts.is_empty() {
-                        let current_ids: Vec<u64> = module.parts.iter()
-                            .filter(|p| canvas.selected_parts.contains(&p.id))
-                            .map(|p| p.id)
-                            .collect();
-                        let snapshot_ids: Vec<u64> = canvas.selection_snapshot.iter().map(|p| p.id).collect();
-                        if canvas.selection_snapshot.is_empty() || snapshot_ids != current_ids {
-                            canvas.selection_snapshot = module.parts.iter()
-                                .filter(|p| canvas.selected_parts.contains(&p.id))
-                                .cloned()
-                                .collect();
-                        }
-                    }
+                }
+            }
+
+            if let Some((dragged_id, _accumulator)) = canvas.dragging_part {
+                if dragged_id == part_id && canvas.creating_connection.is_none() {
+                    drag_delta = part_response.drag_delta() / canvas.zoom;
                 }
             }
 
@@ -403,7 +421,6 @@ pub fn render_canvas(
                 canvas.dragging_part = None;
             }
 
-            // Handle Delete Interaction
             let delete_rect = draw::get_delete_button_rect(canvas, part_rect);
             let delete_id = egui::Id::new((part_id, "delete"));
             let delete_response = ui.interact(delete_rect, delete_id, Sense::click());
@@ -420,7 +437,6 @@ pub fn render_canvas(
             }
         }
 
-        // Apply mutations
         if ui.input(|i| i.pointer.any_released()) {
             if let Some((from_part, from_id, is_output, _from_type, _)) =
                 canvas.creating_connection.take()
@@ -458,28 +474,15 @@ pub fn render_canvas(
         }
 
         if drag_delta != Vec2::ZERO {
-            if ui.input(|i| i.pointer.any_released()) && !canvas.selection_snapshot.is_empty() {
-                let mut position_changes = Vec::new();
-                for snapshot_part in &canvas.selection_snapshot {
-                    if let Some(current_part) = module.parts.iter().find(|p| p.id == snapshot_part.id) {
-                        if snapshot_part.position != current_part.position {
-                            position_changes.push((
-                                snapshot_part.id,
-                                snapshot_part.position,
-                                current_part.position,
-                            ));
-                        }
-                    }
+            for pid in &canvas.selected_parts {
+                if let Some(part) = module.parts.iter_mut().find(|part| part.id == *pid) {
+                    part.position.0 += drag_delta.x;
+                    part.position.1 += drag_delta.y;
+                    module_changed = true;
                 }
-                if !position_changes.is_empty() {
-                    canvas.undo_stack.push(super::types::CanvasAction::MoveSelection {
-                        part_positions: position_changes,
-                    });
-                    canvas.redo_stack.clear();
-                }
-                canvas.selection_snapshot.clear();
             }
         }
+
         for (part_id, delta) in resize_ops {
             if let Some(part) = module.parts.iter_mut().find(|part| part.id == part_id) {
                 let current_size = part.size.unwrap_or_else(|| {
@@ -491,73 +494,6 @@ pub fn render_canvas(
                 part.size = Some((new_w, new_h));
                 module_changed = true;
             }
-        }
-
-        // --- Pass 2: Rendering ---
-        // Draw connections first (but using potentially updated part positions)
-        if let Some(idx) = super::draw::draw_connections(
-            canvas,
-            ui,
-            &painter,
-            module,
-            &to_screen,
-            options.node_animations_enabled,
-            animation_profile,
-        ) {
-            if idx < module.connections.len() {
-                module.connections.remove(idx);
-                module_changed = true;
-                needs_repair = true;
-            }
-        }
-
-        let selected_parts_set: rustc_hash::FxHashSet<vorce_core::module::ModulePartId> =
-            canvas.selected_parts.iter().copied().collect();
-
-        for part in &mut module.parts {
-            let part_pos = to_screen(Pos2::new(part.position.0, part.position.1));
-            let (w, h) = part.size.unwrap_or_else(|| {
-                let h = 80.0 + (part.inputs.len().max(part.outputs.len()) as f32) * 20.0;
-                (200.0, h)
-            });
-            let part_rect = Rect::from_min_size(part_pos, Vec2::new(w, h) * canvas.zoom);
-
-            if selected_parts_set.contains(&part.id) {
-                let highlight_rect = part_rect.expand(4.0 * canvas.zoom);
-                painter.rect_stroke(
-                    highlight_rect,
-                    0.0,
-                    Stroke::new(2.0 * canvas.zoom, ui.visuals().selection.bg_fill),
-                    egui::StrokeKind::Middle,
-                );
-
-                let handle_size = 12.0 * canvas.zoom;
-                let handle_rect = Rect::from_min_size(
-                    Pos2::new(part_rect.max.x - handle_size, part_rect.max.y - handle_size),
-                    Vec2::splat(handle_size),
-                );
-                painter.rect_filled(handle_rect, 0.0, ui.visuals().selection.bg_fill);
-                painter.line_segment(
-                    [
-                        handle_rect.min + Vec2::new(3.0, handle_size - 3.0),
-                        handle_rect.min + Vec2::new(handle_size - 3.0, 3.0),
-                    ],
-                    Stroke::new(1.5, ui.visuals().extreme_bg_color),
-                );
-            }
-
-            draw::draw_part_with_delete(
-                canvas,
-                ui,
-                &painter,
-                part,
-                part_rect,
-                actions,
-                module.id,
-                options.meter_style,
-                options.node_animations_enabled,
-                animation_profile,
-            );
         }
 
         if drag_started_on_empty && !clicked_on_part && !middle_button {
