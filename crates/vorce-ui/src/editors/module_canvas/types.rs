@@ -1,3 +1,4 @@
+#![allow(clippy::type_complexity)]
 use crate::theme::colors;
 use egui::Pos2;
 use egui_node_editor::*;

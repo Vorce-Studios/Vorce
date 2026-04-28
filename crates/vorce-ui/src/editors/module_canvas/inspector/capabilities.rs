@@ -94,11 +94,7 @@ pub fn is_source_type_enum_supported(
 }
 
 /// Helper that checks by variant enum without needing the data
-pub fn is_output_type_enum_supported(
-    is_ndi: bool,
-    is_spout: bool,
-    is_syphon: bool,
-) -> bool {
+pub fn is_output_type_enum_supported(is_ndi: bool, is_spout: bool, is_syphon: bool) -> bool {
     // NDI Output is supported if the feature is enabled AND the runtime library is present
     if is_ndi {
         #[cfg(feature = "ndi")]
