@@ -48,17 +48,32 @@ fn test_is_source_type_enum_supported() {
     // Unsupported ones
     assert!(!is_source_type_enum_supported(true, false, false, false)); // shader
     assert!(!is_source_type_enum_supported(false, true, false, false)); // live input
-    assert!(is_source_type_enum_supported(false, false, true, false)); // ndi is supported
+    #[cfg(feature = "ndi")]
+    if vorce_io::ndi::is_supported() {
+        assert!(is_source_type_enum_supported(false, false, true, false));
+    } else {
+        assert!(!is_source_type_enum_supported(false, false, true, false));
+    }
+    #[cfg(not(feature = "ndi"))]
+    assert!(!is_source_type_enum_supported(false, false, true, false));
     assert!(!is_source_type_enum_supported(false, false, false, true)); // spout
 }
 
 #[test]
 fn test_is_output_type_enum_supported() {
     // NDI output is supported, others are unsupported
-    assert!(is_output_type_enum_supported(true, false, false)); // ndi is supported
+    #[cfg(feature = "ndi")]
+    if vorce_io::ndi::is_output_supported() {
+        assert!(is_output_type_enum_supported(true, false, false));
+    } else {
+        assert!(!is_output_type_enum_supported(true, false, false));
+    }
+    #[cfg(not(feature = "ndi"))]
+    assert!(!is_output_type_enum_supported(true, false, false));
     assert!(!is_output_type_enum_supported(false, true, false));
     assert!(!is_output_type_enum_supported(false, false, true));
-    assert!(!is_output_type_enum_supported(false, false, false));
+    // Output type without NDI/Spout/Syphon is generic screen, which is supported.
+    assert!(is_output_type_enum_supported(false, false, false));
 }
 
 #[test]
