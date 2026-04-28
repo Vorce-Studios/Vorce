@@ -30,6 +30,7 @@ pub struct ModulePreset {
 
 /// Actions that can be undone/redone
 #[derive(Debug, Clone)]
+#[allow(clippy::type_complexity)]
 pub enum CanvasAction {
     AddPart {
         part_id: ModulePartId,

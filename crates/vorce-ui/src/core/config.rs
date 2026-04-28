@@ -1129,10 +1129,7 @@ mod tests {
         let repaired = config.repair_for_startup(&mut report);
 
         assert!(repaired);
-        assert_eq!(
-            config.startup_animation_path,
-            CURRENT_STARTUP_ANIMATION_PATH
-        );
+        assert_eq!(config.startup_animation_path, CURRENT_STARTUP_ANIMATION_PATH);
         assert!(report
             .warnings
             .iter()
@@ -1161,26 +1158,14 @@ mod tests {
         assert_eq!(config.window_height, None);
 
         let layout = config.active_layout().unwrap();
-        assert_eq!(
-            layout.panel_sizes.left_sidebar_width,
-            default_sidebar_width()
-        );
-        assert_eq!(
-            layout.panel_sizes.inspector_width,
-            default_inspector_width()
-        );
-        assert_eq!(
-            layout.panel_sizes.timeline_height,
-            default_timeline_height()
-        );
+        assert_eq!(layout.panel_sizes.left_sidebar_width, default_sidebar_width());
+        assert_eq!(layout.panel_sizes.inspector_width, default_inspector_width());
+        assert_eq!(layout.panel_sizes.timeline_height, default_timeline_height());
         assert!(report
             .errors
             .iter()
             .any(|entry| entry.contains("Discarded invalid saved window width")));
-        assert!(report
-            .errors
-            .iter()
-            .any(|entry| entry.contains("Recovered invalid panel sizes")));
+        assert!(report.errors.iter().any(|entry| entry.contains("Recovered invalid panel sizes")));
     }
 
     #[test]

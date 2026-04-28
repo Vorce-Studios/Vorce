@@ -260,47 +260,12 @@ fn render_startup_animation_overlay(ctx: &egui::Context, app: &mut App) {
 /// Main UI orchestration function.
 /// Renders the entire application UI layout using egui.
 #[allow(deprecated)]
-pub fn show(ctx: &egui::Context, app: &mut App) {
-    app.ui_state.update_responsive_styles(ctx);
-
-    let viewport_rect = ctx.content_rect();
-    let viewport_width = viewport_rect.width();
-    let viewport_height = viewport_rect.height();
-    let compact_height = viewport_height < 760.0;
-
-    let active_layout = app.ui_state.user_config.active_layout().cloned();
-    let layout_sizes = active_layout.as_ref().map(|layout| layout.panel_sizes).unwrap_or_default();
-    let layout_locked = active_layout.as_ref().map(|layout| layout.lock_layout).unwrap_or(false);
-
-    let sidebar_default = if layout_sizes.left_sidebar_width > 0.0 {
-        layout_sizes.left_sidebar_width
-    } else {
-        (viewport_width * 0.2).clamp(240.0, 420.0)
-    }
-    .clamp(220.0, (viewport_width * 0.45).max(340.0));
-
-    let inspector_default = if layout_sizes.inspector_width > 0.0 {
-        layout_sizes.inspector_width
-    } else {
-        (viewport_width * 0.24).clamp(260.0, 520.0)
-    }
-    .clamp(260.0, (viewport_width * 0.5).max(420.0));
-
-    let timeline_default_height = if layout_sizes.timeline_height > 0.0 {
-        layout_sizes.timeline_height
-    } else if compact_height {
-        (viewport_height * 0.22).clamp(90.0, 150.0)
-    } else {
-        (viewport_height * 0.26).clamp(140.0, 300.0)
-    }
-    .clamp(100.0, 500.0);
-
-    // 1. Global Menu Bar (Top-most)
-    let menu_actions = ui::view::menu_bar::show(ctx, &mut app.ui_state);
-    for action in menu_actions {
-        app.ui_state.actions.push(action);
-    }
-
+fn show_toolbar_panel(
+    ctx: &egui::Context,
+    app: &mut App,
+    compact_height: bool,
+    layout_locked: bool,
+) {
     // 2. Toolbar (Separate Panel below Menu)
     if app.ui_state.show_toolbar {
         egui::TopBottomPanel::top("toolbar_panel")
@@ -358,153 +323,173 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                 });
             });
     }
+}
 
+#[allow(deprecated)]
+fn show_left_sidebar_panel(
+    ctx: &egui::Context,
+    app: &mut App,
+    compact_height: bool,
+    layout_locked: bool,
+    sidebar_default: f32,
+    viewport_width: f32,
+) {
     // 3. Left Panel: Sidebar (Collapsible & Resizable)
     if app.ui_state.show_left_sidebar {
         egui::SidePanel::left("left_sidebar_panel")
-            .resizable(!layout_locked)
-            .default_width(sidebar_default)
-            .min_width(if compact_height { 180.0 } else { 220.0 })
-            .max_width((viewport_width * 0.45).max(340.0))
-            .show(ctx, |ui_obj| {
-                egui::TopBottomPanel::bottom("left_sidebar_preview")
-                    .resizable(true)
-                    .default_height(if compact_height { 120.0 } else { 180.0 })
-                    .min_height(110.0)
-                    .show_inside(ui_obj, |ui_obj| {
-                        ui_obj.horizontal(|ui| {
-                            ui.heading(app.ui_state.i18n.t("preview"));
-                        });
-                        use vorce_core::module::{ModulePartType, OutputType};
-                        let preview_outputs = app
-                            .state
-                            .module_manager
-                            .modules()
-                            .iter()
-                            .flat_map(|m| m.parts.iter())
-                            .filter_map(|part| {
-                                if let ModulePartType::Output(OutputType::Projector {
-                                    id,
-                                    name,
-                                    show_in_preview_panel,
-                                    ..
-                                }) = &part.part_type
-                                {
-                                    Some(ui::OutputPreviewInfo {
-                                        id: *id,
-                                        name: name.clone(),
-                                        show_in_panel: *show_in_preview_panel,
-                                        texture_name: None,
-                                        texture_id: app
-                                            .output_preview_cache
-                                            .get(id)
-                                            .map(|(texture_id, _)| *texture_id),
-                                    })
-                                } else {
-                                    None
-                                }
-                            })
-                            .collect::<Vec<_>>();
-
-                        app.ui_state.module_canvas.output_previews = preview_outputs
-                            .iter()
-                            .filter_map(|output| {
-                                output.texture_id.map(|texture_id| (output.id, texture_id))
-                            })
-                            .collect();
-                        if app.ui_state.show_preview_panel {
-                            app.ui_state.preview_panel.update_outputs(preview_outputs);
-                            app.ui_state.preview_panel.show(ui_obj);
-                        }
+        .resizable(!layout_locked)
+        .default_width(sidebar_default)
+        .min_width(if compact_height { 180.0 } else { 220.0 })
+        .max_width((viewport_width * 0.45).max(340.0))
+        .show(ctx, |ui_obj| {
+            egui::TopBottomPanel::bottom("left_sidebar_preview")
+                .resizable(true)
+                .default_height(if compact_height { 120.0 } else { 180.0 })
+                .min_height(110.0)
+                .show_inside(ui_obj, |ui_obj| {
+                    ui_obj.horizontal(|ui| {
+                        ui.heading(app.ui_state.i18n.t("preview"));
                     });
+                    use vorce_core::module::{ModulePartType, OutputType};
+                    let preview_outputs = app
+                        .state
+                        .module_manager
+                        .modules()
+                        .iter()
+                        .flat_map(|m| m.parts.iter())
+                        .filter_map(|part| {
+                            if let ModulePartType::Output(OutputType::Projector {
+                                id,
+                                name,
+                                show_in_preview_panel,
+                                ..
+                            }) = &part.part_type
+                            {
+                                Some(ui::OutputPreviewInfo {
+                                    id: *id,
+                                    name: name.clone(),
+                                    show_in_panel: *show_in_preview_panel,
+                                    texture_name: None,
+                                    texture_id: app
+                                        .output_preview_cache
+                                        .get(id)
+                                        .map(|(texture_id, _)| *texture_id),
+                                })
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<Vec<_>>();
 
-                egui::TopBottomPanel::bottom("left_sidebar_media")
-                    .resizable(true)
-                    .default_height(if compact_height { 160.0 } else { 240.0 })
-                    .min_height(120.0)
-                    .show_inside(ui_obj, |ui_obj| {
-                        egui::CollapsingHeader::new(app.ui_state.i18n.t("media"))
-                            .default_open(true)
-                            .show(ui_obj, |ui| {
-                                if app.ui_state.show_media_browser {
-                                    let _ = app.ui_state.media_browser.ui(
-                                        ui,
-                                        &app.ui_state.i18n,
-                                        app.ui_state.icon_manager.as_ref(),
-                                    );
-                                } else {
-                                    ui.label(app.ui_state.i18n.t("media-sidebar-placeholder"));
-                                }
-                            });
-                    });
+                    app.ui_state.module_canvas.output_previews = preview_outputs
+                        .iter()
+                        .filter_map(|output| {
+                            output.texture_id.map(|texture_id| (output.id, texture_id))
+                        })
+                        .collect();
+                    if app.ui_state.show_preview_panel {
+                        app.ui_state.preview_panel.update_outputs(preview_outputs);
+                        app.ui_state.preview_panel.show(ui_obj);
+                    }
+                });
 
-                egui::ScrollArea::vertical().show(ui_obj, |ui_obj| {
-                    egui::CollapsingHeader::new(app.ui_state.i18n.t("dashboard"))
+            egui::TopBottomPanel::bottom("left_sidebar_media")
+                .resizable(true)
+                .default_height(if compact_height { 160.0 } else { 240.0 })
+                .min_height(120.0)
+                .show_inside(ui_obj, |ui_obj| {
+                    egui::CollapsingHeader::new(app.ui_state.i18n.t("media"))
                         .default_open(true)
                         .show(ui_obj, |ui| {
-                            if let Some(dash_action) = app.ui_state.dashboard.render_contents(
-                                ui,
-                                &app.ui_state.i18n,
-                                app.ui_state.icon_manager.as_ref(),
-                            ) {
-                                match dash_action {
-                                    ui::view::dashboard::DashboardAction::SendCommand(cmd) => {
-                                        if let Some(_module_id) = app.ui_state.module_canvas.active_module_id {
-                                            if let Some(part_id) = app.ui_state.module_canvas.get_selected_part_id() {
-                                                app.ui_state.actions.push(ui::UIAction::MediaCommand(part_id, cmd));
-                                            }
-                                        }
-                                    }
-                                    ui::view::dashboard::DashboardAction::ToggleAudioPanel => {
-                                        app.ui_state.show_audio = !app.ui_state.show_audio;
-                                    }
-                                    _ => {}
-                                }
-                            }
-                        });
-                    ui_obj.separator();
-
-                    if app.ui_state.show_master_controls {
-                        egui::CollapsingHeader::new(app.ui_state.i18n.t("panel-master"))
-                            .default_open(true)
-                            .show(ui_obj, |ui| {
-                                let mut layer_manager = std::sync::Arc::make_mut(&mut app.state.layer_manager).clone();
-                                app.ui_state.render_master_controls_embedded(ui, &mut layer_manager);
-                                if layer_manager != *app.state.layer_manager {
-                                    *std::sync::Arc::make_mut(&mut app.state.layer_manager) = layer_manager;
-                                    app.state.dirty = true;
-                                }
-                            });
-                        ui_obj.separator();
-                    }
-
-                    egui::CollapsingHeader::new(app.ui_state.i18n.t("audio"))
-                        .default_open(app.ui_state.show_audio)
-                        .show(ui_obj, |ui| {
-                            let analysis = app.audio_analyzer.get_latest_analysis();
-                            if let Some(audio_action) = app.ui_state.audio_panel.ui(
-                                ui,
-                                &app.ui_state.i18n,
-                                Some(&analysis),
-                                &app.state.audio_config,
-                                app.ui_state.user_config.meter_style,
-                                &mut app.ui_state.show_audio_panel_meters,
-                                &mut app.ui_state.audio_fft_mode,
-                            ) {
-                                match audio_action {
-                                    ui::panels::audio_panel::AudioPanelAction::ConfigChanged(cfg) => {
-                                        app.ui_state.actions.push(ui::UIAction::UpdateAudioConfig(cfg));
-                                    }
-                                    ui::panels::audio_panel::AudioPanelAction::MeterStyleChanged(style) => {
-                                        app.ui_state.actions.push(ui::UIAction::SetMeterStyle(style));
-                                    }
-                                }
+                            if app.ui_state.show_media_browser {
+                                let _ = app.ui_state.media_browser.ui(
+                                    ui,
+                                    &app.ui_state.i18n,
+                                    app.ui_state.icon_manager.as_ref(),
+                                );
+                            } else {
+                                ui.label(app.ui_state.i18n.t("media-sidebar-placeholder"));
                             }
                         });
                 });
-            });
-    }
 
+            egui::ScrollArea::vertical().show(ui_obj, |ui_obj| {
+                egui::CollapsingHeader::new(app.ui_state.i18n.t("dashboard"))
+                    .default_open(true)
+                    .show(ui_obj, |ui| {
+                        if let Some(dash_action) = app.ui_state.dashboard.render_contents(
+                            ui,
+                            &app.ui_state.i18n,
+                            app.ui_state.icon_manager.as_ref(),
+                        ) {
+                            match dash_action {
+                                ui::view::dashboard::DashboardAction::SendCommand(cmd) => {
+                                    if let Some(_module_id) = app.ui_state.module_canvas.active_module_id {
+                                        if let Some(part_id) = app.ui_state.module_canvas.get_selected_part_id() {
+                                            app.ui_state.actions.push(ui::UIAction::MediaCommand(part_id, cmd));
+                                        }
+                                    }
+                                }
+                                ui::view::dashboard::DashboardAction::ToggleAudioPanel => {
+                                    app.ui_state.show_audio = !app.ui_state.show_audio;
+                                }
+                                _ => {}
+                            }
+                        }
+                    });
+                ui_obj.separator();
+
+                if app.ui_state.show_master_controls {
+                    egui::CollapsingHeader::new(app.ui_state.i18n.t("panel-master"))
+                        .default_open(true)
+                        .show(ui_obj, |ui| {
+                            let mut layer_manager = std::sync::Arc::make_mut(&mut app.state.layer_manager).clone();
+                            app.ui_state.render_master_controls_embedded(ui, &mut layer_manager);
+                            if layer_manager != *app.state.layer_manager {
+                                *std::sync::Arc::make_mut(&mut app.state.layer_manager) = layer_manager;
+                                app.state.dirty = true;
+                            }
+                        });
+                    ui_obj.separator();
+                }
+
+                egui::CollapsingHeader::new(app.ui_state.i18n.t("audio"))
+                    .default_open(app.ui_state.show_audio)
+                    .show(ui_obj, |ui| {
+                        let analysis = app.audio_analyzer.get_latest_analysis();
+                        if let Some(audio_action) = app.ui_state.audio_panel.ui(
+                            ui,
+                            &app.ui_state.i18n,
+                            Some(&analysis),
+                            &app.state.audio_config,
+                            app.ui_state.user_config.meter_style,
+                            &mut app.ui_state.show_audio_panel_meters,
+                            &mut app.ui_state.audio_fft_mode,
+                        ) {
+                            match audio_action {
+                                ui::panels::audio_panel::AudioPanelAction::ConfigChanged(cfg) => {
+                                    app.ui_state.actions.push(ui::UIAction::UpdateAudioConfig(cfg));
+                                }
+                                ui::panels::audio_panel::AudioPanelAction::MeterStyleChanged(style) => {
+                                    app.ui_state.actions.push(ui::UIAction::SetMeterStyle(style));
+                                }
+                            }
+                        }
+                    });
+            });
+        });
+    }
+}
+
+#[allow(deprecated)]
+fn show_right_inspector_panel(
+    ctx: &egui::Context,
+    app: &mut App,
+    compact_height: bool,
+    layout_locked: bool,
+    inspector_default: f32,
+    viewport_width: f32,
+) {
     // 4. Right Panel: Inspector (Docked & Resizable)
     if app.ui_state.show_inspector {
         egui::SidePanel::right("right_panel")
@@ -555,7 +540,16 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                 });
             });
     }
+}
 
+#[allow(deprecated)]
+fn show_bottom_timeline_panel(
+    ctx: &egui::Context,
+    app: &mut App,
+    compact_height: bool,
+    layout_locked: bool,
+    timeline_default_height: f32,
+) {
     // 5. Bottom Panel: Timeline (Resizable)
     if app.ui_state.show_timeline {
         egui::TopBottomPanel::bottom("bottom_panel")
@@ -591,6 +585,73 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                 }
             });
     }
+}
+
+#[allow(deprecated)]
+/// Main UI orchestration function.
+/// Renders the entire application UI layout using egui.
+pub fn show(ctx: &egui::Context, app: &mut App) {
+    app.ui_state.update_responsive_styles(ctx);
+
+    let viewport_rect = ctx.content_rect();
+    let viewport_width = viewport_rect.width();
+    let viewport_height = viewport_rect.height();
+    let compact_height = viewport_height < 760.0;
+
+    let active_layout = app.ui_state.user_config.active_layout().cloned();
+    let layout_sizes = active_layout.as_ref().map(|layout| layout.panel_sizes).unwrap_or_default();
+    let layout_locked = active_layout.as_ref().map(|layout| layout.lock_layout).unwrap_or(false);
+
+    let sidebar_default = if layout_sizes.left_sidebar_width > 0.0 {
+        layout_sizes.left_sidebar_width
+    } else {
+        (viewport_width * 0.2).clamp(240.0, 420.0)
+    }
+    .clamp(220.0, (viewport_width * 0.45).max(340.0));
+
+    let inspector_default = if layout_sizes.inspector_width > 0.0 {
+        layout_sizes.inspector_width
+    } else {
+        (viewport_width * 0.24).clamp(260.0, 520.0)
+    }
+    .clamp(260.0, (viewport_width * 0.5).max(420.0));
+
+    let timeline_default_height = if layout_sizes.timeline_height > 0.0 {
+        layout_sizes.timeline_height
+    } else if compact_height {
+        (viewport_height * 0.22).clamp(90.0, 150.0)
+    } else {
+        (viewport_height * 0.26).clamp(140.0, 300.0)
+    }
+    .clamp(100.0, 500.0);
+
+    // 1. Global Menu Bar (Top-most)
+    let menu_actions = ui::view::menu_bar::show(ctx, &mut app.ui_state);
+    for action in menu_actions {
+        app.ui_state.actions.push(action);
+    }
+
+    show_toolbar_panel(ctx, app, compact_height, layout_locked);
+
+    show_left_sidebar_panel(
+        ctx,
+        app,
+        compact_height,
+        layout_locked,
+        sidebar_default,
+        viewport_width,
+    );
+
+    show_right_inspector_panel(
+        ctx,
+        app,
+        compact_height,
+        layout_locked,
+        inspector_default,
+        viewport_width,
+    );
+
+    show_bottom_timeline_panel(ctx, app, compact_height, layout_locked, timeline_default_height);
 
     // 6. Floating Windows / Overlays
 
