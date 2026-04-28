@@ -400,7 +400,39 @@ impl TimelineV2 {
 
         let duration = animator.duration() as f32;
 
-        // Toolbar
+        if let Some(act) = self.draw_toolbar(ui, animator) {
+            action = Some(act);
+        }
+
+        ui.separator();
+
+        if self.selected_module_id.is_none() {
+            self.selected_module_id = modules.first().map(|m| m.id);
+        }
+
+        if let Some(act) =
+            self.draw_module_arrangement(ui, modules, &module_names, &available_module_ids)
+        {
+            action = Some(act);
+        }
+
+        ui.separator();
+
+        if let Some(act) =
+            self.draw_timeline_area(ui, animator, duration, &module_names, &available_module_ids)
+        {
+            action = Some(act);
+        }
+
+        action
+    }
+
+    fn draw_toolbar(
+        &mut self,
+        ui: &mut Ui,
+        animator: &mut EffectParameterAnimator,
+    ) -> Option<TimelineAction> {
+        let mut action = None;
         ui.horizontal(|ui| {
             if animator.is_playing() {
                 if ui.button("Pause").clicked() {
@@ -646,13 +678,17 @@ impl TimelineV2 {
                 }
             }
         });
+        action
+    }
 
-        ui.separator();
-
-        if self.selected_module_id.is_none() {
-            self.selected_module_id = modules.first().map(|m| m.id);
-        }
-
+    fn draw_module_arrangement(
+        &mut self,
+        ui: &mut Ui,
+        modules: &[TimelineModule<'_>],
+        module_names: &HashMap<ModuleId, &str>,
+        available_module_ids: &[ModuleId],
+    ) -> Option<TimelineAction> {
+        let mut action = None;
         ui.group(|ui| {
             ui.label("Module Arrangement");
             ui.horizontal(|ui| {
@@ -660,7 +696,7 @@ impl TimelineV2 {
                     crate::widgets::custom::render_info_label(ui, "No modules available");
                 } else {
                     let selected = self.selected_module_id.unwrap_or(modules[0].id);
-                    let selected_label = Self::module_name(&module_names, selected);
+                    let selected_label = Self::module_name(module_names, selected);
                     egui::ComboBox::from_id_salt("timeline_module_select")
                         .selected_text(selected_label)
                         .show_ui(ui, |ui| {
@@ -703,7 +739,7 @@ impl TimelineV2 {
                 ui.horizontal(|ui| {
                     ui.checkbox(&mut block.enabled, "");
 
-                    let selected_label = Self::module_name(&module_names, block.module_id);
+                    let selected_label = Self::module_name(module_names, block.module_id);
                     egui::ComboBox::from_id_salt(format!("timeline_block_module_{}", block.id))
                         .selected_text(selected_label)
                         .show_ui(ui, |ui| {
@@ -766,13 +802,21 @@ impl TimelineV2 {
 
             if let Some(id) = remove_block_id {
                 self.module_arrangement.retain(|block| block.id != id);
-                self.cleanup_missing_modules(&available_module_ids);
+                self.cleanup_missing_modules(available_module_ids);
             }
         });
+        action
+    }
 
-        ui.separator();
-
-        // Timeline area
+    fn draw_timeline_area(
+        &mut self,
+        ui: &mut Ui,
+        animator: &mut EffectParameterAnimator,
+        duration: f32,
+        module_names: &HashMap<ModuleId, &str>,
+        available_module_ids: &[ModuleId],
+    ) -> Option<TimelineAction> {
+        let mut action = None;
         egui::ScrollArea::both().show(ui, |ui| {
             let clip = animator.clip(); // Get immutable ref first to calculate size
 
@@ -814,7 +858,6 @@ impl TimelineV2 {
             let ruler_rect = Rect::from_min_size(rect.min, Vec2::new(rect.width(), 30.0));
             painter.rect_filled(ruler_rect, 0.0, ui.visuals().faint_bg_color);
 
-
             // Draw time ticks
             let tick_interval = if self.zoom > 100.0 { 0.1 } else { 1.0 };
             let mut time = 0.0;
@@ -826,7 +869,6 @@ impl TimelineV2 {
                     painter.line_segment(
                         [Pos2::new(x, ruler_rect.max.y - h), Pos2::new(x, ruler_rect.max.y)],
                         Stroke::new(1.0, ui.visuals().text_color().gamma_multiply(0.6)),
-
                     );
 
                     if (time % 1.0).abs() < 0.001 {
@@ -851,7 +893,6 @@ impl TimelineV2 {
                     painter.line_segment(
                         [Pos2::new(x, ruler_rect.min.y), Pos2::new(x, rect.max.y)],
                         Stroke::new(1.0, crate::theme::colors::MINT_ACCENT),
-
                     );
 
                     // Marker flag
@@ -862,7 +903,6 @@ impl TimelineV2 {
                         crate::theme::colors::MINT_ACCENT.linear_multiply(1.2)
                     } else {
                         crate::theme::colors::MINT_ACCENT.linear_multiply(0.5)
-
                     };
 
                     painter.rect_filled(flag_rect, 2.0, flag_color);
@@ -890,8 +930,11 @@ impl TimelineV2 {
                     }
 
                     // Tooltip
-                    marker_response
-                        .on_hover_text(format!("Marker: {}\nRight-click to remove", marker.name));
+                    marker_response.on_hover_text(format!(
+                        "Marker: {}
+Right-click to remove",
+                        marker.name
+                    ));
                 }
             }
             if let Some(id) = remove_marker_id {
@@ -903,7 +946,6 @@ impl TimelineV2 {
             painter.line_segment(
                 [Pos2::new(playhead_x, ruler_rect.min.y), Pos2::new(playhead_x, rect.max.y)],
                 Stroke::new(2.0, crate::theme::colors::ERROR_COLOR),
-
             );
 
             // Handle ruler scrubbing
@@ -938,20 +980,16 @@ impl TimelineV2 {
                     "Module Track",
                     egui::FontId::proportional(13.0),
                     ui.visuals().text_color().gamma_multiply(0.9),
-
                 );
 
                 let active_module = self.runtime_show_module(
                     self.playhead,
                     animator.is_playing(),
-                    &available_module_ids,
+                    available_module_ids,
                 );
 
                 // TRIGGER ACTION IF CHANGED
                 if let Some(mod_id) = active_module {
-                    // Check if we need to emit a select action (only if not already the active one in the app)
-                    // We use a simple heuristic: if it's the first frame or the ID changed.
-                    // For now, we just emit it, the handler in actions.rs should be idempotent.
                     if action.is_none()
                         && animator.is_playing()
                         && (self.show_mode == ShowMode::FullyAutomated
@@ -985,7 +1023,6 @@ impl TimelineV2 {
                         crate::theme::colors::MINT_ACCENT
                     } else if active_module == Some(block.module_id) {
                         crate::theme::colors::CYAN_ACCENT
-
                     } else {
                         ui.visuals().widgets.inactive.bg_fill
                     };
@@ -995,11 +1032,10 @@ impl TimelineV2 {
                         block_rect,
                         3.0,
                         Stroke::new(1.0, ui.visuals().widgets.inactive.fg_stroke.color),
-
                         egui::StrokeKind::Middle,
                     );
 
-                    let label = Self::module_name(&module_names, block.module_id);
+                    let label = Self::module_name(module_names, block.module_id);
                     painter.text(
                         Pos2::new(block_rect.min.x + 4.0, block_rect.min.y + 6.0),
                         egui::Align2::LEFT_TOP,
@@ -1041,7 +1077,6 @@ impl TimelineV2 {
 
                 let text_color = if header_response.hovered() {
                     ui.visuals().strong_text_color()
-
                 } else {
                     ui.visuals().text_color().gamma_multiply(0.8)
                 };
@@ -1071,7 +1106,6 @@ impl TimelineV2 {
                             ui.visuals().window_fill
                         } else {
                             ui.visuals().faint_bg_color
-
                         };
                         painter.rect_filled(track_rect, 0.0, bg_color);
 
@@ -1092,7 +1126,6 @@ impl TimelineV2 {
                             param_name,
                             egui::FontId::proportional(13.0),
                             ui.visuals().text_color().gamma_multiply(0.7),
-
                         );
 
                         // Draw keyframes and curves
@@ -1120,7 +1153,6 @@ impl TimelineV2 {
                                 painter.add(egui::Shape::line(
                                     points,
                                     Stroke::new(2.0, crate::theme::colors::CYAN_ACCENT),
-
                                 ));
                             }
                         }
