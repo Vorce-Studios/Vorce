@@ -269,16 +269,23 @@ pub fn render_canvas(
         let mut clicked_on_part = false;
         let mut delete_part_id = None;
         let mut resize_ops = Vec::new();
-        let mut drag_delta = Vec2::ZERO;
+
         let selected_parts_set: rustc_hash::FxHashSet<vorce_core::module::ModulePartId> =
             canvas.selected_parts.iter().copied().collect();
 
         for part in &mut module.parts {
-            let part_pos = to_screen(Pos2::new(part.position.0, part.position.1));
             let (w, h) = part.size.unwrap_or_else(|| {
                 let h = 80.0 + (part.inputs.len().max(part.outputs.len()) as f32) * 20.0;
                 (200.0, h)
             });
+            if let Some((_, delta)) = canvas.dragging_part {
+                if selected_parts_set.contains(&part.id) {
+                    part.position.0 += delta.x;
+                    part.position.1 += delta.y;
+                }
+            }
+
+            let part_pos = to_screen(Pos2::new(part.position.0, part.position.1));
             let part_rect = Rect::from_min_size(part_pos, Vec2::new(w, h) * canvas.zoom);
 
             if selected_parts_set.contains(&part.id) {
@@ -413,7 +420,13 @@ pub fn render_canvas(
 
             if let Some((dragged_id, _accumulator)) = canvas.dragging_part {
                 if dragged_id == part_id && canvas.creating_connection.is_none() {
-                    drag_delta = part_response.drag_delta() / canvas.zoom;
+                    let drag_delta = part_response.drag_delta() / canvas.zoom;
+                    if drag_delta != Vec2::ZERO {
+                        canvas.dragging_part = Some((part_id, drag_delta));
+                        module_changed = true;
+                    } else {
+                        canvas.dragging_part = Some((part_id, Vec2::ZERO));
+                    }
                 }
             }
 
@@ -473,15 +486,7 @@ pub fn render_canvas(
             }
         }
 
-        if drag_delta != Vec2::ZERO {
-            for pid in &canvas.selected_parts {
-                if let Some(part) = module.parts.iter_mut().find(|part| part.id == *pid) {
-                    part.position.0 += drag_delta.x;
-                    part.position.1 += drag_delta.y;
-                    module_changed = true;
-                }
-            }
-        }
+
 
         for (part_id, delta) in resize_ops {
             if let Some(part) = module.parts.iter_mut().find(|part| part.id == part_id) {

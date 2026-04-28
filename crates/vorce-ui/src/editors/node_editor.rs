@@ -523,6 +523,12 @@ impl NodeEditor {
             let node_screen_rect = Rect::from_min_size(node_screen_pos, node.size * zoom);
 
             let is_selected = selected_set.contains(&node.id);
+            if let Some((dragging_id, delta)) = self.dragging_node {
+                if dragging_id == node.id {
+                    node.position += delta;
+                }
+            }
+
 
             let node_response =
                 Self::draw_node(ui, &painter, node, node_screen_rect, locale, zoom, is_selected);
@@ -538,14 +544,8 @@ impl NodeEditor {
             }
         }
 
-        // Apply node dragging
-        if let Some((node_id, delta)) = self.dragging_node {
-            if let Some(node) = self.nodes.get_mut(&node_id) {
-                node.position += delta;
-            }
-            if !response.dragged() {
-                self.dragging_node = None;
-            }
+        if !response.dragged() {
+            self.dragging_node = None;
         }
 
         // Draw connection being created
