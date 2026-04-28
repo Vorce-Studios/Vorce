@@ -102,6 +102,8 @@ pub struct MediaBrowser {
     entries: Vec<MediaEntry>,
     /// Search query
     search_query: String,
+    /// Lowercase cached search query
+    search_query_lower: Option<String>,
     /// Filter by type
     filter_type: Option<MediaType>,
     /// View mode
@@ -191,6 +193,7 @@ impl MediaBrowser {
             path_input: path_str,
             entries: Vec::new(),
             search_query: String::new(),
+            search_query_lower: None,
             filter_type: None,
             view_mode: ViewMode::Grid,
             thumbnail_size: 80.0, // Reduced from 120 for compact view
@@ -259,16 +262,23 @@ impl MediaBrowser {
                                 file_type,
                                 MediaType::Video | MediaType::Audio | MediaType::Hap
                             ) {
-                                let mut extracting = self.extracting_metadata.write();
-                                if !extracting.contains(&path) {
-                                    extracting.insert(path.clone());
-                                    let tx = self.metadata_tx.clone();
-                                    let path_clone = path.clone();
-                                    rayon::spawn(move || {
-                                        let duration =
-                                            vorce_media::get_media_duration_secs(&path_clone);
-                                        let _ = tx.send((path_clone, duration));
-                                    });
+                                let is_extracting = {
+                                    let extracting = self.extracting_metadata.read();
+                                    extracting.contains(&path)
+                                };
+
+                                if !is_extracting {
+                                    let mut extracting = self.extracting_metadata.write();
+                                    if !extracting.contains(&path) {
+                                        extracting.insert(path.clone());
+                                        let tx = self.metadata_tx.clone();
+                                        let path_clone = path.clone();
+                                        rayon::spawn(move || {
+                                            let duration =
+                                                vorce_media::get_media_duration_secs(&path_clone);
+                                            let _ = tx.send((path_clone, duration));
+                                        });
+                                    }
                                 }
                             }
 
@@ -322,8 +332,12 @@ impl MediaBrowser {
         }
 
         // Check if already generating
-        let mut generating = self.generating_thumbnails.write();
-        if generating.contains(path) {
+        let is_generating = {
+            let generating = self.generating_thumbnails.read();
+            generating.contains(path)
+        };
+
+        if is_generating {
             return None;
         }
 
@@ -335,6 +349,10 @@ impl MediaBrowser {
 
         // Generate thumbnail in background for supported media types
         if matches!(file_type, MediaType::Image) {
+            let mut generating = self.generating_thumbnails.write();
+            if generating.contains(path) {
+                return None;
+            }
             generating.insert(path.to_path_buf());
             let tx = self.thumbnail_tx.clone();
             let path_clone = path.to_path_buf();
@@ -402,12 +420,6 @@ impl MediaBrowser {
 
     /// Get filtered and searched entries
     fn filtered_entries(&self) -> Vec<(usize, &MediaEntry)> {
-        let query = if !self.search_query.is_empty() {
-            Some(self.search_query.to_lowercase())
-        } else {
-            None
-        };
-
         self.entries
             .iter()
             .enumerate()
@@ -420,7 +432,7 @@ impl MediaBrowser {
                 }
 
                 // Filter by search query
-                if let Some(q) = &query {
+                if let Some(q) = self.search_query_lower.as_deref() {
                     if !entry.name_lower.contains(q)
                         && !entry.tags_lower.iter().any(|t| t.contains(q))
                     {
@@ -612,7 +624,8 @@ impl MediaBrowser {
                 ui.label("🔍");
                 let search_response = ui.text_edit_singleline(&mut self.search_query);
                 if search_response.changed() {
-                    // Search query changed
+                    self.search_query_lower =
+                        (!self.search_query.is_empty()).then(|| self.search_query.to_lowercase());
                 }
 
                 ui.separator();
@@ -833,11 +846,11 @@ impl MediaBrowser {
 
             // Background
             let bg_color = if self.selected == Some(idx) {
-                Color32::from_rgb(60, 120, 200)
+                ui.visuals().selection.bg_fill
             } else if response.hovered() {
-                Color32::from_rgb(50, 50, 50)
+                ui.visuals().widgets.hovered.bg_fill
             } else {
-                Color32::from_rgb(35, 35, 35)
+                ui.visuals().widgets.inactive.bg_fill
             };
 
             ui.painter().rect_filled(rect, 2.0, bg_color);
@@ -858,7 +871,7 @@ impl MediaBrowser {
                 );
             } else {
                 // Placeholder
-                ui.painter().rect_filled(thumb_rect, 2.0, Color32::from_rgb(45, 45, 45));
+                ui.painter().rect_filled(thumb_rect, 2.0, ui.visuals().extreme_bg_color);
 
                 // Try to render icon, fallback to emoji
                 let mut rendered_icon = false;
@@ -877,7 +890,7 @@ impl MediaBrowser {
                                     egui::pos2(0.0, 0.0),
                                     egui::pos2(1.0, 1.0),
                                 ),
-                                Color32::from_gray(200), // Tinted slightly
+                                ui.visuals().text_color(), // Tinted slightly
                             );
                             rendered_icon = true;
                         }
@@ -891,7 +904,7 @@ impl MediaBrowser {
                         egui::Align2::LEFT_TOP,
                         entry.file_type.icon(),
                         egui::FontId::proportional(40.0),
-                        Color32::from_rgb(100, 100, 100),
+                        ui.visuals().text_color().gamma_multiply(0.5),
                     );
                 }
             }

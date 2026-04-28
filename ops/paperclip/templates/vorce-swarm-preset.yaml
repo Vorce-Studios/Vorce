@@ -1,0 +1,56 @@
+# Vorce-Studios Antigravity Swarm Presets
+# ----------------------------------------
+# Custom Presets fuer antigravity-swarm Extension.
+# Werden von der Paperclip Control Plane referenziert,
+# wenn Aufgaben an den Antigravity Builder geroutet werden.
+#
+# Nutzung:
+#   python scripts/planner.py --preset vorce_impl "Mission description"
+#   python scripts/orchestrator.py --yes
+
+vorce_impl:
+  description: "Vorce implementation team for multi-crate changes"
+  agents:
+    - {name: Architect, mode: serial}
+    - {name: Implementer_A, mode: parallel}
+    - {name: Implementer_B, mode: parallel}
+    - {name: TestWriter, mode: serial}
+    - {name: Quality_Validator, mode: validator}
+
+vorce_review:
+  description: "Vorce deep code review team"
+  agents:
+    - {name: SecurityAuditor, mode: parallel}
+    - {name: PerformanceAnalyst, mode: parallel}
+    - {name: ApiConsistencyChecker, mode: serial}
+    - {name: Quality_Validator, mode: validator}
+
+vorce_docs:
+  description: "Vorce documentation generation team"
+  agents:
+    - {name: ApiDocWriter, mode: parallel}
+    - {name: ChangelogWriter, mode: parallel}
+    - {name: ReadmeUpdater, mode: serial}
+    - {name: Quality_Validator, mode: validator}
+
+vorce_test:
+  description: "Vorce test generation team"
+  agents:
+    - {name: UnitTestWriter, mode: parallel}
+    - {name: IntegrationTestWriter, mode: parallel}
+    - {name: Quality_Validator, mode: validator}
+
+vorce_quick:
+  description: "Fast single-agent for small Vorce tasks"
+  agents:
+    - {name: VorceDev, mode: serial}
+    - {name: Quality_Validator, mode: validator}
+
+vorce_refactor:
+  description: "Multi-crate refactoring with safety checks"
+  agents:
+    - {name: DependencyAnalyst, mode: serial}
+    - {name: Refactorer_A, mode: parallel}
+    - {name: Refactorer_B, mode: parallel}
+    - {name: BreakingChangeChecker, mode: serial}
+    - {name: Quality_Validator, mode: validator}

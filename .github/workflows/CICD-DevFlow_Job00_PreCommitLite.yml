@@ -7,6 +7,7 @@ on:
   pull_request_target:
     types: [labeled]
     branches: [main]
+
   workflow_dispatch:
     inputs:
       pr_number:
@@ -37,7 +38,7 @@ jobs:
     steps:
       - name: Resolve PR context
         id: resolve
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         with:
           script: |
             let prNumber = context.payload.pull_request?.number;
@@ -68,7 +69,7 @@ jobs:
             core.setOutput('base_sha', pr.base.sha);
 
       - name: Remove manual rerun label
-        if: github.event_name == 'pull_request_target' && github.event.action == 'labeled' && github.event.label.name == 'pre-commit ci run'
+        if: github.event.action == 'labeled' && github.event.label.name == 'pre-commit ci run'
         continue-on-error: true
         run: gh pr edit ${{ steps.resolve.outputs.pr_number }} --remove-label 'pre-commit ci run'
         env:

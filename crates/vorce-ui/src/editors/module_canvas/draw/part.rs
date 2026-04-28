@@ -48,8 +48,7 @@ pub fn draw_part_with_delete(
         && is_active
     {
         let glow_intensity = (trigger_value * 2.0).min(1.0);
-        let base_color =
-            Color32::from_rgba_unmultiplied(255, (160.0 * glow_intensity) as u8, 0, 255);
+        let base_color = ui.visuals().warn_fg_color.linear_multiply(glow_intensity);
 
         for i in 1..=4 {
             let expansion = i as f32 * 1.5 * canvas.zoom;
@@ -70,7 +69,7 @@ pub fn draw_part_with_delete(
             0.0,
             Stroke::new(
                 2.0 * canvas.zoom,
-                Color32::WHITE.gamma_multiply(180.0 * glow_intensity / 255.0),
+                ui.visuals().strong_text_color().gamma_multiply(180.0 * glow_intensity / 255.0),
             ),
             egui::StrokeKind::Middle,
         );
@@ -80,7 +79,7 @@ pub fn draw_part_with_delete(
     if is_midi_learn {
         let time = ui.input(|i| i.time);
         let pulse = (time * 8.0).sin().abs() as f32;
-        let learn_color = Color32::from_rgb(0, 200, 255).linear_multiply(pulse);
+        let learn_color = ui.visuals().selection.bg_fill.linear_multiply(pulse);
 
         painter.rect_stroke(
             rect.expand(4.0 * canvas.zoom),
@@ -94,7 +93,7 @@ pub fn draw_part_with_delete(
             egui::Align2::CENTER_CENTER,
             "WAITING FOR MIDI...",
             egui::FontId::proportional(12.0 * canvas.zoom),
-            Color32::WHITE.gamma_multiply(200.0 * pulse / 255.0),
+            ui.visuals().strong_text_color().gamma_multiply(200.0 * pulse / 255.0),
         );
     }
 
@@ -109,16 +108,18 @@ pub fn draw_part_with_delete(
             crate::config::AnimationProfile::Off => 0.0,
         };
         let (anim_speed, anim_color) = match &part.part_type {
-            ModulePartType::Source(_) => (0.9, Color32::from_rgba_unmultiplied(0, 210, 255, 32)),
+            ModulePartType::Source(_) => (0.9, ui.visuals().selection.bg_fill.linear_multiply(0.1)),
             ModulePartType::Modulizer(_) => {
-                (1.6, Color32::from_rgba_unmultiplied(255, 100, 220, 28))
+                (1.6, ui.visuals().strong_text_color().linear_multiply(0.1))
             }
-            ModulePartType::Trigger(_) => (2.3, Color32::from_rgba_unmultiplied(255, 170, 80, 38)),
-            ModulePartType::Output(_) => (1.2, Color32::from_rgba_unmultiplied(140, 255, 140, 24)),
+            ModulePartType::Trigger(_) => (2.3, ui.visuals().warn_fg_color.linear_multiply(0.15)),
+            ModulePartType::Output(_) => {
+                (1.2, ui.visuals().strong_text_color().linear_multiply(0.1))
+            }
             ModulePartType::Layer(_) | ModulePartType::Mask(_) => {
-                (1.35, Color32::from_rgba_unmultiplied(190, 170, 255, 24))
+                (1.35, ui.visuals().text_color().linear_multiply(0.1))
             }
-            _ => (1.0, Color32::from_rgba_unmultiplied(180, 200, 255, 20)),
+            _ => (1.0, ui.visuals().text_color().linear_multiply(0.08)),
         };
         let phase = (time * (anim_speed * profile_scale) + part.id as f32 * 0.11).sin().abs();
         let pulse_w = 1.2 * canvas.zoom + phase * (2.4 * profile_scale) * canvas.zoom;
@@ -143,7 +144,7 @@ pub fn draw_part_with_delete(
                 painter.rect_stroke(
                     rect,
                     0.0,
-                    egui::Stroke::new(2.0, egui::Color32::YELLOW),
+                    egui::Stroke::new(2.0, ui.visuals().warn_fg_color),
                     egui::StrokeKind::Middle,
                 );
 
@@ -192,10 +193,10 @@ pub fn draw_part_with_delete(
             texture_id,
             preview_rect,
             Rect::from_min_max(Pos2::new(0.0, 0.0), Pos2::new(1.0, 1.0)),
-            Color32::WHITE,
+            Color32::WHITE, // Keeping White for texture tinting to preserve hues
         );
     } else {
-        painter.rect_filled(preview_rect, 0.0, Color32::from_gray(15));
+        painter.rect_filled(preview_rect, 0.0, ui.visuals().window_fill.linear_multiply(0.5));
     }
 
     let mut cursor_x = rect.min.x + 8.0 * canvas.zoom;
@@ -204,17 +205,17 @@ pub fn draw_part_with_delete(
     let icon_galley = ui.painter().layout_no_wrap(
         icon.to_string(),
         egui::FontId::proportional(16.0 * canvas.zoom),
-        Color32::WHITE,
+        ui.visuals().text_color(),
     );
     painter.galley(
         Pos2::new(cursor_x, center_y - icon_galley.size().y / 2.0),
         icon_galley.clone(),
-        Color32::WHITE,
+        ui.visuals().text_color(),
     );
     cursor_x += icon_galley.size().x + 6.0 * canvas.zoom;
 
     let category_text = category.to_uppercase();
-    let category_color = Color32::from_white_alpha(160);
+    let category_color = ui.visuals().text_color().linear_multiply(0.6);
     let category_galley = ui.painter().layout_no_wrap(
         category_text,
         egui::FontId::proportional(10.0 * canvas.zoom),
@@ -230,12 +231,12 @@ pub fn draw_part_with_delete(
     let name_galley = ui.painter().layout_no_wrap(
         name.to_string(),
         egui::FontId::proportional(14.0 * canvas.zoom),
-        Color32::WHITE,
+        ui.visuals().text_color(),
     );
     painter.galley(
         Pos2::new(cursor_x, center_y - name_galley.size().y / 2.0),
         name_galley,
-        Color32::WHITE,
+        ui.visuals().text_color(),
     );
 
     let delete_button_rect = get_delete_button_rect(canvas, rect);
@@ -248,7 +249,7 @@ pub fn draw_part_with_delete(
         delete_button_rect.center(),
         10.0 * canvas.zoom,
         progress,
-        Color32::from_rgb(255, 50, 50),
+        ui.visuals().error_fg_color,
     );
 
     painter.text(
@@ -256,7 +257,7 @@ pub fn draw_part_with_delete(
         egui::Align2::CENTER_CENTER,
         "x",
         egui::FontId::proportional(16.0 * canvas.zoom),
-        Color32::from_rgba_unmultiplied(255, 100, 100, 200),
+        ui.visuals().error_fg_color.linear_multiply(0.8),
     );
 
     let property_text = utils::get_part_property_text(&part.part_type);
@@ -269,7 +270,7 @@ pub fn draw_part_with_delete(
             egui::Align2::CENTER_CENTER,
             property_text,
             egui::FontId::proportional(10.0 * canvas.zoom),
-            Color32::from_gray(180),
+            ui.visuals().text_color().linear_multiply(0.7),
         );
     }
 
@@ -291,16 +292,16 @@ pub fn draw_part_with_delete(
 
             let bar_bg =
                 Rect::from_min_size(Pos2::new(bar_x, bar_y), Vec2::new(bar_width, bar_height));
-            painter.rect_filled(bar_bg, 2.0 * canvas.zoom, Color32::from_gray(30));
+            painter.rect_filled(bar_bg, 2.0 * canvas.zoom, ui.visuals().extreme_bg_color);
 
             let progress_width = (progress * bar_width).max(2.0 * canvas.zoom);
             let progress_rect =
                 Rect::from_min_size(Pos2::new(bar_x, bar_y), Vec2::new(progress_width, bar_height));
 
             let color = if is_playing {
-                Color32::from_rgb(100, 255, 100)
+                ui.visuals().strong_text_color()
             } else {
-                Color32::from_rgb(255, 200, 50)
+                ui.visuals().warn_fg_color
             };
 
             painter.rect_filled(progress_rect, 2.0 * canvas.zoom, color);
@@ -347,7 +348,7 @@ pub fn draw_part_with_delete(
                     Pos2::new(meter_x, meter_y),
                     Vec2::new(meter_width, meter_height),
                 );
-                painter.rect_filled(meter_bg, 2.0, Color32::from_rgb(230, 225, 210));
+                painter.rect_filled(meter_bg, 2.0, ui.visuals().text_color());
 
                 let arc_rect = meter_bg.shrink(2.0 * canvas.zoom);
                 let clamped_val = trigger_value.clamp(0.0, 1.0);
@@ -371,19 +372,22 @@ pub fn draw_part_with_delete(
                         Pos2::new(meter_x + meter_width * 0.8, meter_y + meter_height * 0.5),
                         Pos2::new(meter_x + meter_width * 0.95, meter_y + meter_height * 0.5),
                     ],
-                    Stroke::new(1.0 * canvas.zoom, Color32::from_rgb(200, 50, 50)),
+                    Stroke::new(1.0 * canvas.zoom, ui.visuals().error_fg_color),
                 );
 
                 let visible_base = Pos2::new(pivot.x, meter_bg.max.y);
                 painter.line_segment(
                     [visible_base, bounded_tip],
-                    Stroke::new(1.5 * canvas.zoom, Color32::from_rgb(180, 40, 40)),
+                    Stroke::new(
+                        1.5 * canvas.zoom,
+                        ui.visuals().error_fg_color.linear_multiply(0.8),
+                    ),
                 );
 
                 painter.rect_stroke(
                     meter_bg,
                     2.0,
-                    Stroke::new(1.0, Color32::from_white_alpha(40)),
+                    Stroke::new(1.0, ui.visuals().text_color().linear_multiply(0.15)),
                     egui::StrokeKind::Inside,
                 );
             }
@@ -392,7 +396,7 @@ pub fn draw_part_with_delete(
                     Pos2::new(meter_x, meter_y),
                     Vec2::new(meter_width, meter_height),
                 );
-                painter.rect_filled(meter_bg, 2.0, Color32::from_gray(20));
+                painter.rect_filled(meter_bg, 2.0, ui.visuals().extreme_bg_color);
 
                 let num_segments = 20;
                 let segment_spacing = 1.0 * canvas.zoom;
@@ -412,11 +416,11 @@ pub fn draw_part_with_delete(
                     );
 
                     let seg_color = if t < 0.6 {
-                        Color32::from_rgb(0, 255, 100)
+                        ui.visuals().strong_text_color()
                     } else if t < 0.85 {
-                        Color32::from_rgb(255, 180, 0)
+                        ui.visuals().warn_fg_color
                     } else {
-                        Color32::from_rgb(255, 50, 50)
+                        ui.visuals().error_fg_color
                     };
 
                     painter.rect_filled(seg_rect, 1.0, seg_color);
@@ -428,7 +432,7 @@ pub fn draw_part_with_delete(
                         Pos2::new(threshold_x, meter_y - 2.0),
                         Pos2::new(threshold_x, meter_y + meter_height + 2.0),
                     ],
-                    Stroke::new(1.5, Color32::from_rgba_unmultiplied(255, 50, 50, 200)),
+                    Stroke::new(1.5, ui.visuals().error_fg_color.linear_multiply(0.8)),
                 );
             }
         }
@@ -450,7 +454,7 @@ pub fn draw_part_with_delete(
 
         let ring_stroke = if is_hovered {
             let pulse = (ui.input(|i| i.time) * 10.0).sin() as f32 * 0.2 + 0.8;
-            Stroke::new(3.0 * canvas.zoom, Color32::WHITE.linear_multiply(pulse))
+            Stroke::new(3.0 * canvas.zoom, ui.visuals().strong_text_color().linear_multiply(pulse))
         } else {
             Stroke::new(2.0 * canvas.zoom, socket_color)
         };
@@ -458,16 +462,26 @@ pub fn draw_part_with_delete(
         painter.circle_filled(
             socket_pos,
             socket_radius - 2.0 * canvas.zoom,
-            Color32::from_gray(20),
+            ui.visuals().extreme_bg_color,
         );
         painter.circle_filled(
             socket_pos,
             2.0 * canvas.zoom,
-            if is_hovered { socket_color } else { Color32::from_gray(100) },
+            if is_hovered { socket_color } else { ui.visuals().text_color().linear_multiply(0.4) },
         );
 
         let type_name = socket.socket_type.name();
-        let display_name = if socket.name.to_lowercase().contains(&type_name.to_lowercase()) {
+        // PERFORMANCE: Avoid redundant string allocations for case-insensitive search
+        // in the main render loop by using zero-allocation byte window comparison.
+        let type_bytes = type_name.as_bytes();
+        let display_name = if type_name.is_empty()
+            || (socket.name.len() >= type_name.len()
+                && socket
+                    .name
+                    .as_bytes()
+                    .windows(type_bytes.len())
+                    .any(|w| w.eq_ignore_ascii_case(type_bytes)))
+        {
             socket.name.clone()
         } else {
             format!("{} ({})", socket.name, type_name)
@@ -478,7 +492,7 @@ pub fn draw_part_with_delete(
             egui::Align2::LEFT_CENTER,
             &display_name,
             egui::FontId::proportional(11.0 * canvas.zoom),
-            Color32::from_gray(230),
+            ui.visuals().text_color(),
         );
     }
 
@@ -497,7 +511,7 @@ pub fn draw_part_with_delete(
 
         let ring_stroke = if is_hovered {
             let pulse = (ui.input(|i| i.time) * 10.0).sin() as f32 * 0.2 + 0.8;
-            Stroke::new(3.0 * canvas.zoom, Color32::WHITE.linear_multiply(pulse))
+            Stroke::new(3.0 * canvas.zoom, ui.visuals().strong_text_color().linear_multiply(pulse))
         } else {
             Stroke::new(2.0 * canvas.zoom, socket_color)
         };
@@ -505,16 +519,26 @@ pub fn draw_part_with_delete(
         painter.circle_filled(
             socket_pos,
             socket_radius - 2.0 * canvas.zoom,
-            Color32::from_gray(20),
+            ui.visuals().extreme_bg_color,
         );
         painter.circle_filled(
             socket_pos,
             2.0 * canvas.zoom,
-            if is_hovered { socket_color } else { Color32::from_gray(100) },
+            if is_hovered { socket_color } else { ui.visuals().text_color().linear_multiply(0.4) },
         );
 
         let type_name = socket.socket_type.name();
-        let display_name = if socket.name.to_lowercase().contains(&type_name.to_lowercase()) {
+        // PERFORMANCE: Avoid redundant string allocations for case-insensitive search
+        // in the main render loop by using zero-allocation byte window comparison.
+        let type_bytes = type_name.as_bytes();
+        let display_name = if type_name.is_empty()
+            || (socket.name.len() >= type_name.len()
+                && socket
+                    .name
+                    .as_bytes()
+                    .windows(type_bytes.len())
+                    .any(|w| w.eq_ignore_ascii_case(type_bytes)))
+        {
             socket.name.clone()
         } else {
             format!("{} ({})", socket.name, type_name)
@@ -525,7 +549,7 @@ pub fn draw_part_with_delete(
             egui::Align2::RIGHT_CENTER,
             &display_name,
             egui::FontId::proportional(11.0 * canvas.zoom),
-            Color32::from_gray(230),
+            ui.visuals().text_color(),
         );
     }
 }

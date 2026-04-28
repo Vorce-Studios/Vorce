@@ -1,10 +1,11 @@
-use egui::{Color32, Id, Sense, Ui, Vec2};
+use egui::{Id, Sense, Ui, Vec2};
 use vorce_core::media_library::{MediaItem, MediaLibrary, MediaType};
 use vorce_ui::responsive::ResponsiveLayout;
 
 pub struct MediaManagerUI {
     pub visible: bool, // Toggle visibility
     search_query: String,
+    search_query_lower: String,
     view_mode: ViewMode,
     selected_playlist: Option<String>,
     new_playlist_name: String,
@@ -22,6 +23,7 @@ impl Default for MediaManagerUI {
         Self {
             visible: false,
             search_query: String::new(),
+            search_query_lower: String::new(),
             view_mode: ViewMode::Grid,
             selected_playlist: None,
             new_playlist_name: String::new(),
@@ -118,7 +120,9 @@ impl MediaManagerUI {
             // Toolbar
             ui.horizontal(|ui| {
                 ui.label("Search:");
-                ui.text_edit_singleline(&mut self.search_query);
+                if ui.text_edit_singleline(&mut self.search_query).changed() {
+                    self.search_query_lower = self.search_query.to_lowercase();
+                }
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if ui.selectable_label(self.view_mode == ViewMode::List, "List").clicked() {
@@ -143,9 +147,8 @@ impl MediaManagerUI {
             ui.separator();
 
             // Content Area
+            let search_lower = self.search_query_lower.clone();
             egui::ScrollArea::vertical().show(ui, |ui| {
-                let query = self.search_query.to_lowercase();
-
                 let mut iter1;
                 let mut iter2;
                 let mut iter3;
@@ -167,8 +170,9 @@ impl MediaManagerUI {
                     &mut iter3
                 };
 
-                let mut filtered_items =
-                    items.filter(|item| query.is_empty() || item.name_lower.contains(&query));
+                let mut filtered_items = items.filter(|item| {
+                    search_lower.is_empty() || item.name_lower.contains(&search_lower)
+                });
 
                 match self.view_mode {
                     ViewMode::Grid => self.render_grid(ui, &mut filtered_items),
@@ -194,7 +198,7 @@ impl MediaManagerUI {
 
                 // Draw thumbnail placeholder
                 if ui.is_rect_visible(rect) {
-                    ui.painter().rect_filled(rect, 2.0, Color32::from_gray(50));
+                    ui.painter().rect_filled(rect, 2.0, ui.visuals().extreme_bg_color);
 
                     // Icon based on type
                     let icon = match item.media_type {
@@ -203,12 +207,15 @@ impl MediaManagerUI {
                         MediaType::Audio => "🔊",
                         MediaType::Unknown => "?",
                     };
+
+                    let text_color = ui.visuals().text_color();
+
                     ui.painter().text(
                         rect.center(),
                         egui::Align2::CENTER_CENTER,
                         icon,
                         egui::FontId::proportional(size.y * 0.5),
-                        Color32::WHITE,
+                        text_color,
                     );
 
                     // Name
@@ -217,7 +224,7 @@ impl MediaManagerUI {
                         egui::Align2::CENTER_BOTTOM,
                         &item.name,
                         egui::FontId::proportional(12.0),
-                        Color32::WHITE,
+                        text_color,
                     );
 
                     // Hover effect
@@ -225,7 +232,7 @@ impl MediaManagerUI {
                         ui.painter().rect_stroke(
                             rect,
                             2.0,
-                            egui::Stroke::new(2.0, Color32::LIGHT_BLUE),
+                            egui::Stroke::new(2.0, ui.visuals().selection.bg_fill),
                             egui::StrokeKind::Middle,
                         );
                     }

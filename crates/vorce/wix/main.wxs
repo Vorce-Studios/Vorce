@@ -11,10 +11,11 @@
                     <Component Id='MainExecutable' Guid='*' Win64='yes'>
                         <File Id='VorceEXE' Name='Vorce.exe' Source='$(var.CargoTargetBinDir)\Vorce.exe' KeyPath='yes'>
                             <Shortcut Id='startmenuVorce' Directory='ProgramMenuDir' Name='Vorce' WorkingDirectory='INSTALLFOLDER' Icon='VorceIcon.exe' IconIndex='0' Advertise='yes' />
+                            <Shortcut Id='startmenuVorcePlayer' Directory='ProgramMenuDir' Name='Vorce Player (NDI)' Arguments='--player-ndi' WorkingDirectory='INSTALLFOLDER' Icon='VorceIcon.exe' IconIndex='0' Advertise='yes' />
                             <Shortcut Id='desktopVorce' Directory='DesktopFolder' Name='Vorce' WorkingDirectory='INSTALLFOLDER' Icon='VorceIcon.exe' IconIndex='0' Advertise='yes' />
                         </File>
                     </Component>
-                    <!-- FFmpeg DLLs (FFmpeg 7.1 / vcpkg versions) -->
+                    <!-- FFmpeg and Runtime DLLs (FFmpeg 7.1 / vcpkg versions) -->
                     <Component Id='avcodec' Guid='*' Win64='yes'>
                         <File Id='avcodec' Name='avcodec-61.dll' Source='$(var.CargoTargetBinDir)\avcodec-61.dll' KeyPath='yes' />
                     </Component>
@@ -36,6 +37,13 @@
                     <Component Id='swscale' Guid='*' Win64='yes'>
                         <File Id='swscale' Name='swscale-8.dll' Source='$(var.CargoTargetBinDir)\swscale-8.dll' KeyPath='yes' />
                     </Component>
+                    <Component Id='pkgconf' Guid='*' Win64='yes'>
+                        <File Id='pkgconf' Name='pkgconf-7.dll' Source='$(var.CargoTargetBinDir)\pkgconf-7.dll' KeyPath='yes' />
+                    </Component>
+                    <Component Id='NDI_Runtime' Guid='*' Win64='yes'>
+                        <File Id='Processing.NDI.Lib.x64.dll' Name='Processing.NDI.Lib.x64.dll' Source='$(var.CargoTargetBinDir)\Processing.NDI.Lib.x64.dll' KeyPath='yes' />
+
+                    </Component>
                 </Directory>
             </Directory>
             <Directory Id="ProgramMenuFolder" Name="Programs">
@@ -53,6 +61,9 @@
             <ComponentRef Id='avutil' />
             <ComponentRef Id='swresample' />
             <ComponentRef Id='swscale' />
+            <ComponentRef Id='pkgconf' />
+            <ComponentRef Id='NDI_Runtime' />
+
         </Feature>
         <Component Id="ProgramMenuDir" Directory="ProgramMenuDir" Guid="*" Win64='yes'>
             <RemoveFolder Id='ProgramMenuDir' On='uninstall' />

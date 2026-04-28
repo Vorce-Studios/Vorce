@@ -13,7 +13,6 @@ bytemuck = { workspace = true }
 crossbeam-channel = { workspace = true }
 glam = { workspace = true }
 image = { workspace = true }
-vorce-core = { path = "../vorce-core" }
 notify = { workspace = true }
 parking_lot = { workspace = true }
 pollster = { workspace = true }
@@ -22,19 +21,21 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
+vorce-core = { path = "../vorce-core" }
 wgpu = { workspace = true }
 winit = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 wgpu-hal = { version = "29.0.0", features = ["dx12"] }
-windows = { version = "0.62.2", features = ["Win32_Graphics_Direct3D12", "Win32_Foundation", "Win32_Security", "Win32_Graphics_Dxgi_Common"] }
+windows = { version = "0.54.0", features = ["Win32_Graphics_Direct3D12", "Win32_Foundation", "Win32_Security", "Win32_Graphics_Dxgi_Common"] }
 
 
 [dev-dependencies]
 criterion = { workspace = true }
 futures-channel = "0.3.30"
 pollster = { workspace = true }
-tokio = { version = "1.35.1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.52.1", features = ["macros", "rt-multi-thread"] }
+
 wgpu = { workspace = true }
 
 [[bench]]
