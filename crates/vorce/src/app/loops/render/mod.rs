@@ -308,27 +308,56 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
         #[cfg(feature = "ndi")]
         {
             // Collect all NDI senders that need offscreen rendering
-            let mut ndi_virtual_tasks: Vec<(vorce_core::module::ModulePartId, String, u32, u32)> = Vec::new();
+            let mut ndi_virtual_tasks: Vec<(vorce_core::module::ModulePartId, String, u32, u32)> =
+                Vec::new();
 
             for (&part_id, _sender) in &app.ndi_senders {
                 // Check if this part_id is already being handled by a physical window pass
                 // We check if any output_id > 0 has this part_id in its render queue
-                let is_physical = app.render_queue.items.iter()
-                    .any(|(&oid, items)| {
-                        oid != 0 && items.iter().any(|item| item.render_op.output_part_id == part_id)
-                    });
+                let is_physical = app.render_queue.items.iter().any(|(&oid, items)| {
+                    oid != 0 && items.iter().any(|item| item.render_op.output_part_id == part_id)
+                });
 
                 if !is_physical {
                     // It's a virtual output (no window), so we need offscreen rendering.
                     // We need to find its intended resolution from the module graph.
-                    if let Some(module) = app.state.module_manager.modules().iter().find(|m| m.parts.iter().any(|p| p.id == part_id)) {
+                    if let Some(module) = app
+                        .state
+                        .module_manager
+                        .modules()
+                        .iter()
+                        .find(|m| m.parts.iter().any(|p| p.id == part_id))
+                    {
                         if let Some(part) = module.parts.iter().find(|p| p.id == part_id) {
                             match &part.part_type {
-                                vorce_core::module::ModulePartType::Output(vorce_core::module::OutputType::NdiOutput { name, width, height }) => {
-                                    ndi_virtual_tasks.push((part_id, name.clone(), *width, *height));
+                                vorce_core::module::ModulePartType::Output(
+                                    vorce_core::module::OutputType::NdiOutput {
+                                        name,
+                                        width,
+                                        height,
+                                    },
+                                ) => {
+                                    ndi_virtual_tasks.push((
+                                        part_id,
+                                        name.clone(),
+                                        *width,
+                                        *height,
+                                    ));
                                 }
-                                vorce_core::module::ModulePartType::Output(vorce_core::module::OutputType::Projector { ndi_stream_name, output_width, output_height, .. }) => {
-                                    ndi_virtual_tasks.push((part_id, ndi_stream_name.clone(), *output_width, *output_height));
+                                vorce_core::module::ModulePartType::Output(
+                                    vorce_core::module::OutputType::Projector {
+                                        ndi_stream_name,
+                                        output_width,
+                                        output_height,
+                                        ..
+                                    },
+                                ) => {
+                                    ndi_virtual_tasks.push((
+                                        part_id,
+                                        ndi_stream_name.clone(),
+                                        *output_width,
+                                        *output_height,
+                                    ));
                                 }
                                 _ => {}
                             }
@@ -340,11 +369,12 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
             for (part_id, _stream_name, width, height) in ndi_virtual_tasks {
                 // Ensure offscreen texture exists for this NDI output
                 let tex_size = (width.max(128), height.max(128));
-                let needs_texture = if let Some((tex, _view)) = app.ndi_offscreen_textures.get(&part_id) {
-                    tex.width() != tex_size.0 || tex.height() != tex_size.1
-                } else {
-                    true
-                };
+                let needs_texture =
+                    if let Some((tex, _view)) = app.ndi_offscreen_textures.get(&part_id) {
+                        tex.width() != tex_size.0 || tex.height() != tex_size.1
+                    } else {
+                        true
+                    };
 
                 if needs_texture {
                     let texture = app.backend.device.create_texture(&wgpu::TextureDescriptor {
@@ -363,14 +393,16 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                             | wgpu::TextureUsages::COPY_SRC,
                         view_formats: &[],
                     });
-                    let view = std::sync::Arc::new(texture.create_view(&wgpu::TextureViewDescriptor::default()));
+                    let view = std::sync::Arc::new(
+                        texture.create_view(&wgpu::TextureViewDescriptor::default()),
+                    );
                     app.ndi_offscreen_textures.insert(part_id, (texture, view));
                 }
 
                 if let Some((texture, view)) = app.ndi_offscreen_textures.get(&part_id) {
                     // Create a new encoder for offscreen rendering
                     let mut offscreen_encoder = app.backend.device.create_command_encoder(
-                        &wgpu::CommandEncoderDescriptor { label: Some("NDI Offscreen Encoder") }
+                        &wgpu::CommandEncoderDescriptor { label: Some("NDI Offscreen Encoder") },
                     );
 
                     // Render content to offscreen texture using the part_id as the output ID
@@ -414,17 +446,21 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                         let buffer_size = (bytes_per_row * height) as u64;
 
                         // Get or create readback buffer
-                        let (buffer, mapping_requested) = app.ndi_readbacks
+                        let (buffer, mapping_requested) = app
+                            .ndi_readbacks
                             .entry(part_id)
                             .or_insert_with(|| {
-                                let buffer = app.backend.device.create_buffer(&wgpu::BufferDescriptor {
-                                    label: Some("NDI Readback"),
-                                    size: buffer_size,
-                                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
-                                    mapped_at_creation: false,
-                                });
+                                let buffer =
+                                    app.backend.device.create_buffer(&wgpu::BufferDescriptor {
+                                        label: Some("NDI Readback"),
+                                        size: buffer_size,
+                                        usage: wgpu::BufferUsages::COPY_DST
+                                            | wgpu::BufferUsages::MAP_READ,
+                                        mapped_at_creation: false,
+                                    });
                                 (buffer, std::sync::Arc::new(AtomicBool::new(false)))
-                            }).clone();
+                            })
+                            .clone();
 
                         app.backend.queue.submit(std::iter::once(offscreen_encoder.finish()));
 
@@ -442,7 +478,9 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                                     let frame_data = view.to_vec();
 
                                     let video_frame = vorce_io::format::VideoFrame {
-                                        data: vorce_io::format::FrameData::Cpu(Arc::new(frame_data)),
+                                        data: vorce_io::format::FrameData::Cpu(Arc::new(
+                                            frame_data,
+                                        )),
                                         format: vorce_io::format::VideoFormat {
                                             width,
                                             height,
@@ -464,7 +502,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
 
                         // Queue new readback
                         let mut new_encoder = app.backend.device.create_command_encoder(
-                            &wgpu::CommandEncoderDescriptor { label: Some("NDI Readback Encoder") }
+                            &wgpu::CommandEncoderDescriptor { label: Some("NDI Readback Encoder") },
                         );
                         new_encoder.copy_texture_to_buffer(
                             wgpu::TexelCopyTextureInfo {
