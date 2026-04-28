@@ -93,7 +93,6 @@ impl ShortcutsPanel {
                     return true;
                 };
                 s.description_lower.contains(f) || s.shortcut_str_lower.contains(f)
-
             })
             .map(|(i, _)| i)
             .collect();

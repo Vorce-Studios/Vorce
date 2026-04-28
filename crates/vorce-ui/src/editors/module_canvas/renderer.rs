@@ -384,13 +384,18 @@ pub fn render_canvas(
                     // Capture selection snapshot for undo when drag starts.
                     // Update snapshot if empty or if current selected parts differ from the stored snapshot.
                     if !canvas.selected_parts.is_empty() {
-                        let current_ids: Vec<u64> = module.parts.iter()
+                        let current_ids: Vec<u64> = module
+                            .parts
+                            .iter()
                             .filter(|p| canvas.selected_parts.contains(&p.id))
                             .map(|p| p.id)
                             .collect();
-                        let snapshot_ids: Vec<u64> = canvas.selection_snapshot.iter().map(|p| p.id).collect();
+                        let snapshot_ids: Vec<u64> =
+                            canvas.selection_snapshot.iter().map(|p| p.id).collect();
                         if canvas.selection_snapshot.is_empty() || snapshot_ids != current_ids {
-                            canvas.selection_snapshot = module.parts.iter()
+                            canvas.selection_snapshot = module
+                                .parts
+                                .iter()
                                 .filter(|p| canvas.selected_parts.contains(&p.id))
                                 .cloned()
                                 .collect();
@@ -457,28 +462,29 @@ pub fn render_canvas(
             }
         }
 
-        if drag_delta != Vec2::ZERO {
-            if ui.input(|i| i.pointer.any_released()) && !canvas.selection_snapshot.is_empty() {
-                let mut position_changes = Vec::new();
-                for snapshot_part in &canvas.selection_snapshot {
-                    if let Some(current_part) = module.parts.iter().find(|p| p.id == snapshot_part.id) {
-                        if snapshot_part.position != current_part.position {
-                            position_changes.push((
-                                snapshot_part.id,
-                                snapshot_part.position,
-                                current_part.position,
-                            ));
-                        }
+        if drag_delta != Vec2::ZERO
+            && ui.input(|i| i.pointer.any_released())
+            && !canvas.selection_snapshot.is_empty()
+        {
+            let mut position_changes = Vec::new();
+            for snapshot_part in &canvas.selection_snapshot {
+                if let Some(current_part) = module.parts.iter().find(|p| p.id == snapshot_part.id) {
+                    if snapshot_part.position != current_part.position {
+                        position_changes.push((
+                            snapshot_part.id,
+                            snapshot_part.position,
+                            current_part.position,
+                        ));
                     }
                 }
-                if !position_changes.is_empty() {
-                    canvas.undo_stack.push(super::types::CanvasAction::MoveSelection {
-                        part_positions: position_changes,
-                    });
-                    canvas.redo_stack.clear();
-                }
-                canvas.selection_snapshot.clear();
             }
+            if !position_changes.is_empty() {
+                canvas.undo_stack.push(super::types::CanvasAction::MoveSelection {
+                    part_positions: position_changes,
+                });
+                canvas.redo_stack.clear();
+            }
+            canvas.selection_snapshot.clear();
         }
         for (part_id, delta) in resize_ops {
             if let Some(part) = module.parts.iter_mut().find(|part| part.id == part_id) {

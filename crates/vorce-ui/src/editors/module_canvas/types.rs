@@ -29,6 +29,8 @@ pub struct ModulePreset {
 }
 
 /// Actions that can be undone/redone
+pub type PositionChange = (ModulePartId, (f32, f32), (f32, f32));
+
 #[derive(Debug, Clone)]
 pub enum CanvasAction {
     AddPart {
@@ -55,7 +57,7 @@ pub enum CanvasAction {
         connection: vorce_core::module::ModuleConnection,
     },
     MoveSelection {
-        part_positions: Vec<(ModulePartId, (f32, f32), (f32, f32))>, // (id, old_pos, new_pos)
+        part_positions: Vec<PositionChange>, // (id, old_pos, new_pos)
     },
     Batch(Vec<CanvasAction>),
 }

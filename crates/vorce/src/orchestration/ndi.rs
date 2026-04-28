@@ -65,12 +65,11 @@ pub fn sync_ndi_senders(app: &mut App) {
     // Check dedicated NdiOutput nodes
     for module in app.state.module_manager.modules() {
         for part in &module.parts {
-            if let ModulePartType::Output(OutputType::NdiOutput { name, width, height }) = &part.part_type {
-                let stream_name = if name.is_empty() {
-                    "Vorce NDI".to_string()
-                } else {
-                    name.clone()
-                };
+            if let ModulePartType::Output(OutputType::NdiOutput { name, width, height }) =
+                &part.part_type
+            {
+                let stream_name =
+                    if name.is_empty() { "Vorce NDI".to_string() } else { name.clone() };
                 desired_senders.push((part.id, stream_name, *width, *height));
             }
             // Also handle Projectors with NDI enabled
@@ -83,7 +82,12 @@ pub fn sync_ndi_senders(app: &mut App) {
             }) = &part.part_type
             {
                 if *ndi_enabled {
-                    desired_senders.push((part.id, ndi_stream_name.clone(), *output_width, *output_height));
+                    desired_senders.push((
+                        part.id,
+                        ndi_stream_name.clone(),
+                        *output_width,
+                        *output_height,
+                    ));
                 }
             }
         }
@@ -109,7 +113,10 @@ pub fn sync_ndi_senders(app: &mut App) {
         };
 
         if needs_recreate {
-            info!("Creating NDI sender for part {} with name {} ({}x{})", part_id, name, width, height);
+            info!(
+                "Creating NDI sender for part {} with name {} ({}x{})",
+                part_id, name, width, height
+            );
             let format = vorce_io::format::VideoFormat::new(
                 width.max(128),
                 height.max(128),
@@ -174,9 +181,10 @@ pub fn sync_ndi_status_to_ui(app: &mut App) {
     }
 
     // Remove status for parts that no longer have receivers
-    app.ui_state.module_canvas.ndi_input_status.retain(|part_id, _| {
-        app.ndi_receivers.contains_key(part_id)
-    });
+    app.ui_state
+        .module_canvas
+        .ndi_input_status
+        .retain(|part_id, _| app.ndi_receivers.contains_key(part_id));
 
     // Update output status: reflect what senders we have (indicates active sending)
     for (part_id, _) in &app.ndi_senders {
@@ -184,7 +192,8 @@ pub fn sync_ndi_status_to_ui(app: &mut App) {
     }
 
     // Remove status for parts that no longer have senders
-    app.ui_state.module_canvas.ndi_output_status.retain(|part_id, _| {
-        app.ndi_senders.contains_key(part_id)
-    });
+    app.ui_state
+        .module_canvas
+        .ndi_output_status
+        .retain(|part_id, _| app.ndi_senders.contains_key(part_id));
 }
