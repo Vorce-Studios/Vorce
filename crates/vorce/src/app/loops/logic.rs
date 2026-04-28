@@ -3,7 +3,9 @@ use crate::app::core::app_struct::App;
 use crate::orchestration::evaluation::perform_evaluation;
 use crate::orchestration::media::{sync_media_players, update_media_players};
 #[cfg(feature = "ndi")]
-use crate::orchestration::ndi::{sync_ndi_receivers, sync_ndi_senders, sync_ndi_status_to_ui, update_ndi_sources};
+use crate::orchestration::ndi::{
+    sync_ndi_receivers, sync_ndi_senders, sync_ndi_status_to_ui, update_ndi_sources,
+};
 use crate::orchestration::outputs::sync_output_windows;
 use anyhow::Result;
 use std::collections::HashSet;
@@ -231,6 +233,7 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     Ok(())
 }
 
+#[allow(unused_variables)]
 fn sync_web_status(app: &mut App) {
     #[cfg(feature = "http-api")]
     if let Some(live_status) = &app.control_manager.live_status {

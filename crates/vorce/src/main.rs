@@ -22,7 +22,6 @@ use anyhow::{Context, Result};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
-
 use vorce_core::OutputId;
 use vorce_media::PlaybackCommand;
 use vorce_ui::types::MediaPlaybackCommand;
@@ -129,7 +128,6 @@ impl VorceApp {
             error!("Failed to persist main window state: {err:#}");
         }
     }
-
 }
 
 impl ApplicationHandler for VorceApp {
@@ -496,13 +494,10 @@ fn main() {
     install_panic_hook();
 
     if let Err(err) = try_main() {
-        emit_logged_fatal_error(&format!(
-            "Application terminated with a fatal error: {err:#}"
-        ));
+        emit_logged_fatal_error(&format!("Application terminated with a fatal error: {err:#}"));
         std::process::exit(1);
     }
 }
-
 
 fn try_main() -> Result<()> {
     let args = CliArgs::parse();
@@ -535,13 +530,8 @@ fn try_main() -> Result<()> {
         .with_target(true)
         .with_writer(non_blocking);
 
-    tracing_subscriber::registry()
-        .with(env_filter)
-        .with(console_layer)
-        .with(file_layer)
-        .init();
+    tracing_subscriber::registry().with(env_filter).with(console_layer).with(file_layer).init();
     LOGGING_INITIALIZED.store(true, Ordering::SeqCst);
-
 
     initial_user_config_report.emit_logs();
     info!("Starting Vorce in {:?} mode...", args.mode);
@@ -575,9 +565,7 @@ fn run_editor(
         startup_failure: None,
         pending_main_window_state_persist_at: None,
     };
-    event_loop
-        .run_app(&mut app_handler)
-        .context("Editor event loop terminated unexpectedly")?;
+    event_loop.run_app(&mut app_handler).context("Editor event loop terminated unexpectedly")?;
     if let Some(startup_failure) = app_handler.startup_failure.take() {
         return Err(anyhow::anyhow!(startup_failure));
     }
