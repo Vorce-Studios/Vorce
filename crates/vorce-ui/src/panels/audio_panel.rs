@@ -4,6 +4,7 @@
 //! and controls for audio analysis parameters.
 
 use crate::core::i18n::LocaleManager;
+use crate::theme::colors;
 use crate::widgets::{custom, panel};
 use egui::{Rect, Sense, Stroke, Ui};
 use vorce_core::audio::{AudioAnalysis, AudioConfig};
@@ -155,12 +156,12 @@ impl AudioPanel {
                         ui.painter().rect_filled(
                             rect,
                             egui::CornerRadius::ZERO,
-                            ui.visuals().extreme_bg_color,
+                            colors::DARKER_GREY,
                         );
                         ui.painter().rect_stroke(
                             rect,
                             egui::CornerRadius::ZERO,
-                            Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color),
+                            Stroke::new(1.0, colors::STROKE_GREY),
                             egui::StrokeKind::Middle,
                         );
 
@@ -275,11 +276,11 @@ impl AudioPanel {
         let painter = ui.painter();
 
         // Background
-        painter.rect_filled(rect, egui::CornerRadius::ZERO, ui.visuals().extreme_bg_color);
+        painter.rect_filled(rect, egui::CornerRadius::ZERO, colors::DARKER_GREY);
         painter.rect_stroke(
             rect,
             egui::CornerRadius::ZERO,
-            Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color),
+            Stroke::new(1.0, colors::STROKE_GREY),
             egui::StrokeKind::Middle,
         );
 
@@ -307,7 +308,7 @@ impl AudioPanel {
             let y = rect.max.y - tick * (rect.height() - spacing * 2.0) - spacing;
             painter.line_segment(
                 [egui::pos2(rect.min.x, y), egui::pos2(rect.max.x, y)],
-                Stroke::new(1.0, ui.visuals().text_color().linear_multiply(0.4)),
+                Stroke::new(1.0, colors::STROKE_GREY.linear_multiply(0.4)),
             );
             let db = -60.0 + tick * 60.0;
             painter.text(
@@ -315,7 +316,7 @@ impl AudioPanel {
                 egui::Align2::LEFT_BOTTOM,
                 format!("{db:.0}"),
                 egui::TextStyle::Small.resolve(ui.style()),
-                ui.visuals().text_color(),
+                colors::STROKE_GREY,
             );
         }
 
@@ -331,15 +332,15 @@ impl AudioPanel {
 
             let color = match mode {
                 FftVisualizationMode::ThreeBand => match i {
-                    0 => ui.visuals().hyperlink_color,
-                    1 => ui.visuals().warn_fg_color,
-                    _ => ui.visuals().error_fg_color,
+                    0 => egui::Color32::from_rgb(70, 180, 255),
+                    1 => egui::Color32::from_rgb(90, 220, 150),
+                    _ => egui::Color32::from_rgb(255, 180, 80),
                 },
                 FftVisualizationMode::FullFft => {
                     if analysis.beat_detected && i < 2 {
-                        ui.visuals().warn_fg_color
+                        colors::MINT_ACCENT
                     } else {
-                        ui.visuals().hyperlink_color.linear_multiply(0.6 + (energy * 0.4))
+                        colors::CYAN_ACCENT.linear_multiply(0.6 + (energy * 0.4))
                     }
                 }
             };

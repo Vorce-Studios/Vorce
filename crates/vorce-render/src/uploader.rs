@@ -12,24 +12,6 @@ impl WgpuFrameUploader {
         Self { device, queue }
     }
 
-    pub fn upload_direct(&self, texture: &wgpu::Texture, data: &[u8], width: u32, height: u32) {
-        self.queue.write_texture(
-            wgpu::TexelCopyTextureInfo {
-                texture,
-                mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All,
-            },
-            data,
-            wgpu::TexelCopyBufferLayout {
-                offset: 0,
-                bytes_per_row: Some(width * 4),
-                rows_per_image: Some(height),
-            },
-            wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
-        );
-    }
-
     /// Upload frame data to a texture.
     ///
     /// This method uses a staging buffer (created with `create_buffer_init`) and

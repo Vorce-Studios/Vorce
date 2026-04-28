@@ -46,14 +46,6 @@ pub fn default_output_fps() -> f32 {
 pub fn default_hue_color() -> [f32; 3] {
     [1.0, 1.0, 1.0]
 }
-/// Returns the default NDI output width.
-pub fn default_ndi_width() -> u32 {
-    1920
-}
-/// Returns the default NDI output height.
-pub fn default_ndi_height() -> u32 {
-    1080
-}
 /// Returns the default color palette with a variety of preset colors.
 pub fn default_color_palette() -> Vec<[f32; 4]> {
     vec![

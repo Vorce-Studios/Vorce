@@ -512,43 +512,10 @@ impl NodeEditor {
         }
 
         // Draw nodes
-        // Apply node dragging before drawing to ensure immediate visual feedback
-        if let Some((node_id, _)) = self.dragging_node {
-            if response.dragged() {
-                if let Some(node) = self.nodes.get_mut(&node_id) {
-                    node.position += response.drag_delta() / zoom;
-                }
-            } else {
-                self.dragging_node = None;
-            }
-        }
-
-        // Pass 1: Handle interactions first to update selection/dragging state
+        // Using values_mut() safely
         let mut nodes_vec: Vec<_> = self.nodes.values_mut().collect();
         nodes_vec.sort_by_key(|n| n.id);
 
-        // Pass 1: Handle interactions first to update selection/dragging state
-        for node in &mut nodes_vec {
-            let node_screen_pos = to_screen(node.position);
-            let node_screen_rect = Rect::from_min_size(node_screen_pos, node.size * zoom);
-            let node_response =
-                ui.interact(node_screen_rect, egui::Id::new(node.id), Sense::click_and_drag());
-
-            if node_response.clicked() {
-                self.selected_nodes.clear();
-                self.selected_nodes.push(node.id);
-                action = Some(NodeEditorAction::SelectNode(node.id));
-            }
-
-            if node_response.dragged() {
-                self.dragging_node = Some((node.id, Vec2::ZERO));
-            }
-            if node_response.drag_stopped() {
-                self.dragging_node = None;
-            }
-        }
-
-        // Pass 2: Rendering with up-to-date selection
         let selected_set: rustc_hash::FxHashSet<_> = self.selected_nodes.iter().copied().collect();
 
         for node in nodes_vec {
@@ -557,7 +524,28 @@ impl NodeEditor {
 
             let is_selected = selected_set.contains(&node.id);
 
-            Self::draw_node(ui, &painter, node, node_screen_rect, locale, zoom, is_selected);
+            let node_response =
+                Self::draw_node(ui, &painter, node, node_screen_rect, locale, zoom, is_selected);
+
+            if node_response.clicked() {
+                self.selected_nodes.clear();
+                self.selected_nodes.push(node.id);
+                action = Some(NodeEditorAction::SelectNode(node.id));
+            }
+
+            if node_response.dragged() {
+                self.dragging_node = Some((node.id, response.drag_delta() / zoom));
+            }
+        }
+
+        // Apply node dragging
+        if let Some((node_id, delta)) = self.dragging_node {
+            if let Some(node) = self.nodes.get_mut(&node_id) {
+                node.position += delta;
+            }
+            if !response.dragged() {
+                self.dragging_node = None;
+            }
         }
 
         // Draw connection being created

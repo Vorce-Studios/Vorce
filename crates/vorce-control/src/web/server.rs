@@ -11,7 +11,7 @@ use axum::{
 };
 
 #[cfg(feature = "http-api")]
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{Any, CorsLayer};
 
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -139,30 +139,25 @@ impl WebServer {
                 .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
                 .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
 
-            // Wildcard origins are explicitly disallowed for security.
-            // Each origin must be a specific, trusted domain.
-            let origins: Result<Vec<HeaderValue>> = self
-                .config
-                .allowed_origins
-                .iter()
-                .filter(|&o| {
-                    if o == "*" {
-                        tracing::warn!(
-                            "Wildcard '*' detected in allowed_origins; ignoring for security."
-                        );
-                        false
-                    } else {
-                        true
-                    }
-                })
-                .map(|o| {
-                    o.parse::<HeaderValue>().map_err(|e| {
-                        ControlError::HttpError(format!("Invalid origin header: {}", e))
+            // If allowed_origins contains "*", allow Any.
+            // Empty list implies NO allowed origins (secure default), handled by else block.
+            if self.config.allowed_origins.contains(&"*".to_string()) {
+                // Must be applied in separate branch to handle different concrete types
+                app.layer(cors_layer.allow_origin(Any))
+            } else {
+                let origins: Result<Vec<HeaderValue>> = self
+                    .config
+                    .allowed_origins
+                    .iter()
+                    .map(|o| {
+                        o.parse::<HeaderValue>().map_err(|e| {
+                            ControlError::HttpError(format!("Invalid origin header: {}", e))
+                        })
                     })
-                })
-                .collect();
+                    .collect();
 
-            app.layer(cors_layer.allow_origin(origins?))
+                app.layer(cors_layer.allow_origin(origins?))
+            }
         } else {
             app
         };
@@ -368,55 +363,6 @@ mod tests {
             Some("no-store, max-age=0")
         );
         assert_eq!(headers.get("Pragma").and_then(|h| h.to_str().ok()), Some("no-cache"));
-    }
-
-    #[tokio::test]
-    async fn test_cors_wildcard_disallowed() {
-        use axum::body::Body;
-        use tower::Service;
-
-        // Setup config with wildcard origin (which should be ignored)
-        let config =
-            WebServerConfig::new(18081).with_cors(true).with_allowed_origins(vec!["*".to_string()]);
-
-        let state = AppState {
-            auth: Arc::new(TokioRwLock::new(AuthConfig::new())),
-            live_status: Arc::new(parking_lot::RwLock::new(LiveStatus::default())),
-        };
-
-        // Build app similar to how WebServer::run does it
-        let cors_layer = CorsLayer::new()
-            .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
-            .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
-
-        // Re-apply the logic from run() to ensure it's tested
-        let origins: Result<Vec<HeaderValue>> = config
-            .allowed_origins
-            .iter()
-            .filter(|&o| o != "*")
-            .map(|o| o.parse::<HeaderValue>().map_err(|e| ControlError::HttpError(e.to_string())))
-            .collect();
-
-        let app = axum::Router::new()
-            .route("/", axum::routing::get(|| async { "OK" }))
-            .layer(cors_layer.allow_origin(origins.unwrap()))
-            .with_state(state);
-
-        let mut app = app;
-
-        // Test request with an origin that would be allowed if Any was used
-        let req = Request::builder()
-            .uri("/")
-            .header(header::ORIGIN, "http://malicious.com")
-            .header(header::ACCESS_CONTROL_REQUEST_METHOD, "GET")
-            .method(Method::OPTIONS)
-            .body(Body::empty())
-            .unwrap();
-
-        let response = app.call(req).await.unwrap();
-
-        // If CORS disallowed it, it should NOT have the Access-Control-Allow-Origin header
-        assert!(response.headers().get(header::ACCESS_CONTROL_ALLOW_ORIGIN).is_none());
     }
 
     #[tokio::test]

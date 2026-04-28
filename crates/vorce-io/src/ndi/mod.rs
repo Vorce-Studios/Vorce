@@ -1,5 +1,8 @@
 //! NDI (Network Device Interface) support.
 //!
+//! **[Experimental] / [Gated]**
+//! This feature is currently experimental and not fully integrated into the production render path.
+//!
 //! This module provides NDI input (receiving) and output (sending) capabilities
 //! using the grafton-ndi crate which wraps the official NDI SDK.
 
@@ -20,7 +23,7 @@ use std::sync::{Arc, Mutex};
 #[cfg(feature = "ndi")]
 use std::time::Duration;
 #[cfg(feature = "ndi")]
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 /// Re-export Source type for external use
 #[cfg(feature = "ndi")]
@@ -39,7 +42,7 @@ pub struct NdiSource {
 #[cfg(feature = "ndi")]
 impl From<grafton_ndi::Source> for NdiSource {
     fn from(source: grafton_ndi::Source) -> Self {
-        Self { name: source.name.clone(), address: Some(format!("{:?}", source.address)) }
+        Self { name: source.name.clone(), address: Some(source.address.to_string()) }
     }
 }
 
@@ -47,28 +50,6 @@ impl From<grafton_ndi::Source> for NdiSource {
 #[cfg(feature = "ndi")]
 pub struct NdiHandle {
     ndi: Arc<NDI>,
-}
-
-#[cfg(feature = "ndi")]
-static NDI_SUPPORTED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-
-#[cfg(feature = "ndi")]
-fn check_ndi_supported() -> bool {
-    *NDI_SUPPORTED.get_or_init(|| NdiHandle::new().is_ok())
-}
-
-/// Checks if NDI is supported and initialized on this system.
-#[cfg(feature = "ndi")]
-pub fn is_supported() -> bool {
-    check_ndi_supported()
-}
-
-/// Checks if NDI output (sending) is available.
-/// This uses the same underlying check as NdiReceiver since both require
-/// the NDI runtime to be initialized.
-#[cfg(feature = "ndi")]
-pub fn is_output_supported() -> bool {
-    check_ndi_supported()
 }
 
 #[cfg(feature = "ndi")]
@@ -154,11 +135,11 @@ impl NdiReceiver {
                 if let Some(ref r) = receiver {
                     match r.capture_video(Duration::from_millis(16)) {
                         Ok(v) => {
-                            let width = v.width as u32;
-                            let height = v.height as u32;
-                            let fr = v.frame_rate_n as f32 / v.frame_rate_d.max(1) as f32;
+                            let width = v.width() as u32;
+                            let height = v.height() as u32;
+                            let fr = v.frame_rate_n() as f32 / v.frame_rate_d().max(1) as f32;
 
-                            let data = v.data.clone();
+                            let data = v.data().to_vec();
                             let video_format = VideoFormat {
                                 width,
                                 height,
@@ -174,7 +155,7 @@ impl NdiReceiver {
                             let frame = VideoFrame {
                                 data: FrameData::Cpu(Arc::new(data)),
                                 format: video_format,
-                                timestamp: Duration::from_nanos(v.timestamp as u64),
+                                timestamp: Duration::from_nanos(v.timestamp() as u64),
                                 metadata: Default::default(),
                             };
 
@@ -296,13 +277,6 @@ impl VideoSource for NdiReceiver {
 }
 
 #[cfg(feature = "ndi")]
-impl Drop for NdiReceiver {
-    fn drop(&mut self) {
-        let _ = self.receiver_tx.send(ReceiverCommand::Stop);
-    }
-}
-
-#[cfg(feature = "ndi")]
 impl Default for NdiReceiver {
     fn default() -> Self {
         Self::new().unwrap_or_else(|e| {
@@ -363,14 +337,13 @@ impl NdiSender {
             }
         };
 
-        let mut ndi_frame = VideoFrameBuilder::new()
-            .resolution(frame.format.width as i32, frame.format.height as i32)
+        let ndi_frame = VideoFrameBuilder::new()
+            .width(frame.format.width as i32)
+            .height(frame.format.height as i32)
             .pixel_format(NdiPixelFormat::BGRA)
             .frame_rate(frame.format.frame_rate as i32, 1)
-            .build()
+            .build(data.as_slice())
             .map_err(|e| IoError::NdiSenderFailed(format!("Failed to build NDI frame: {}", e)))?;
-
-        ndi_frame.data = data.as_slice().to_vec();
 
         self.sender.send_video(&ndi_frame);
 
@@ -390,79 +363,39 @@ impl NdiSender {
 }
 
 // Stub implementations when NDI feature is disabled
-/// Stub implementation of NDI receiver when the feature is disabled.
 #[cfg(not(feature = "ndi"))]
-/// Stub NDI Receiver for when the 'ndi' feature is disabled.
+/// Stub NDI receiver implementation when the NDI feature is disabled.
 pub struct NdiReceiver;
 
 #[cfg(not(feature = "ndi"))]
 impl NdiReceiver {
-    /// Creates a new NDI receiver (always returns an error when NDI is disabled).
+    /// Creates a new NDI receiver stub that returns an error since NDI is not enabled.
     pub fn new() -> std::result::Result<Self, String> {
-        Err("NDI feature not enabled".to_string())
-    }
-
-    /// Checks if NDI is supported (always false when feature is disabled).
-    pub fn is_supported() -> bool {
-        false
-    }
-
-    /// Stub connect method.
-    pub fn connect(&mut self, _source: &NdiSource) -> std::result::Result<(), String> {
-        Err("NDI feature not enabled".to_string())
-    }
-
-    /// Stub source_name method.
-    pub fn source_name(&self) -> Option<&str> {
-        None
-    }
-
-    /// Stub receive_frame method.
-    pub fn receive_frame(&mut self) -> std::result::Result<crate::format::VideoFrame, String> {
         Err("NDI feature not enabled".to_string())
     }
 }
 
-/// Stub implementation of NDI sender when the feature is disabled.
 #[cfg(not(feature = "ndi"))]
+/// Stub NDI sender implementation when the NDI feature is disabled.
 pub struct NdiSender;
 
 #[cfg(not(feature = "ndi"))]
 impl NdiSender {
-    /// Creates a new NDI sender (always returns an error when NDI is disabled).
+    /// Creates a new NDI sender stub that returns an error since NDI is not enabled.
     pub fn new(
         _name: impl Into<String>,
         _format: crate::format::VideoFormat,
     ) -> std::result::Result<Self, String> {
         Err("NDI feature not enabled".to_string())
     }
-
-    /// Stub send_frame method.
-    pub fn send_frame(
-        &mut self,
-        _frame: &crate::format::VideoFrame,
-    ) -> std::result::Result<(), String> {
-        Err("NDI feature not enabled".to_string())
-    }
-
-    /// Stub name method.
-    pub fn name(&self) -> &str {
-        "NDI Stub"
-    }
 }
 
-/// Stub for NDI output capability check when feature is disabled.
-#[cfg(not(feature = "ndi"))]
-pub fn is_output_supported() -> bool {
-    false
-}
-
-/// Data structure representing an NDI source (stub when feature is disabled).
 #[cfg(not(feature = "ndi"))]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
+/// Represents an NDI source when the NDI feature is disabled.
 pub struct NdiSource {
     /// The name of the NDI source.
     pub name: String,
-    /// The URL/address of the source.
+    /// Optional address of the NDI source.
     pub address: Option<String>,
 }

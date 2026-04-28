@@ -2,6 +2,7 @@
 
 use crate::app::core::app_struct::App;
 use anyhow::Result;
+use std::collections::HashSet;
 use vorce_core::module::OutputType;
 
 #[derive(Debug, Clone)]
@@ -45,7 +46,7 @@ pub fn sync_output_windows(
                     });
                 }
                 vorce_core::module::ModulePartType::Output(output_type) => {
-                    let unsupported_name: Option<(&'static str, String)> = match output_type {
+                    let unsupported_name: Option<(&str, String)> = match output_type {
                         #[cfg(target_os = "windows")]
                         OutputType::Spout { name } => Some(("Spout Output", name.clone())),
                         _ => None,
@@ -75,7 +76,7 @@ pub fn sync_output_windows(
         }
     }
 
-    let active_projector_ids: rustc_hash::FxHashSet<u64> =
+    let active_projector_ids: HashSet<u64> =
         projector_configs.iter().map(|config| config.id).collect();
 
     for config in &projector_configs {
