@@ -40,6 +40,10 @@
                     <Component Id='pkgconf' Guid='*' Win64='yes'>
                         <File Id='pkgconf' Name='pkgconf-7.dll' Source='$(var.CargoTargetBinDir)\pkgconf-7.dll' KeyPath='yes' />
                     </Component>
+                    <Component Id='postproc' Guid='*' Win64='yes'>
+                        <File Id='postproc' Name='postproc-58.dll' Source='$(var.CargoTargetBinDir)\postproc-58.dll' KeyPath='yes' />
+                    </Component>
+
                     <Component Id='NDI_Runtime' Guid='*' Win64='yes'>
                         <File Id='Processing.NDI.Lib.x64.dll' Name='Processing.NDI.Lib.x64.dll' Source='$(var.CargoTargetBinDir)\Processing.NDI.Lib.x64.dll' KeyPath='yes' />
 
@@ -62,6 +66,8 @@
             <ComponentRef Id='swresample' />
             <ComponentRef Id='swscale' />
             <ComponentRef Id='pkgconf' />
+            <ComponentRef Id='postproc' />
+
             <ComponentRef Id='NDI_Runtime' />
 
         </Feature>

@@ -18,5 +18,6 @@ copy /Y "%VCPKG_BIN%\avutil-59.dll" "%TARGET_DIR%\" >nul 2>&1
 copy /Y "%VCPKG_BIN%\swresample-5.dll" "%TARGET_DIR%\" >nul 2>&1
 copy /Y "%VCPKG_BIN%\swscale-8.dll" "%TARGET_DIR%\" >nul 2>&1
 copy /Y "%VCPKG_BIN%\pkgconf-7.dll" "%TARGET_DIR%\" >nul 2>&1
+copy /Y "%VCPKG_BIN%\postproc-58.dll" "%TARGET_DIR%\" >nul 2>&1
 
 echo Done! All FFmpeg DLLs copied.
