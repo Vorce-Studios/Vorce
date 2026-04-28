@@ -462,12 +462,13 @@ pub fn render_canvas(
             }
         }
 
-        if drag_delta != Vec2::ZERO && ui.input(|i| i.pointer.any_released()) && !canvas.selection_snapshot.is_empty() {
+        if drag_delta != Vec2::ZERO
+            && ui.input(|i| i.pointer.any_released())
+            && !canvas.selection_snapshot.is_empty()
+        {
             let mut position_changes = Vec::new();
             for snapshot_part in &canvas.selection_snapshot {
-                if let Some(current_part) =
-                    module.parts.iter().find(|p| p.id == snapshot_part.id)
-                {
+                if let Some(current_part) = module.parts.iter().find(|p| p.id == snapshot_part.id) {
                     if snapshot_part.position != current_part.position {
                         position_changes.push((
                             snapshot_part.id,
