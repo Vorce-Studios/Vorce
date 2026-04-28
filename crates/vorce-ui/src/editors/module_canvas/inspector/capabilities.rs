@@ -71,23 +71,48 @@ pub fn render_runtime_active_info(ui: &mut egui::Ui) {
 pub fn is_source_type_enum_supported(
     is_shader: bool,
     is_live_input: bool,
-    #[allow(unused_variables)] is_ndi: bool,
+    is_ndi: bool,
     is_spout: bool,
 ) -> bool {
+    // NDI Input is supported if the feature is enabled AND the runtime library is present
+    if is_ndi {
+        #[cfg(feature = "ndi")]
+        {
+            if !vorce_io::ndi::is_supported() {
+                return false;
+            }
+        }
+        #[cfg(not(feature = "ndi"))]
+        {
+            return false;
+        }
+    }
     // Currently LiveInput, Shader, and SpoutInput
     // are not fully end-to-end supported in the pipeline.
-    !(is_shader || is_live_input || is_spout)
+    // NDI is explicitly supported.
+    is_ndi || !(is_shader || is_live_input || is_spout)
 }
 
 /// Helper that checks by variant enum without needing the data
 pub fn is_output_type_enum_supported(
     is_ndi: bool,
-    #[allow(unused_variables)] is_spout: bool,
-    #[allow(unused_variables)] is_syphon: bool,
+    is_spout: bool,
+    is_syphon: bool,
 ) -> bool {
-    // Currently Spout/Syphon outputs are not fully end-to-end supported in the pipeline
-    // as per the warning message in output.rs.
-    let _ = is_spout;
-    let _ = is_syphon;
-    is_ndi
+    // NDI Output is supported if the feature is enabled AND the runtime library is present
+    if is_ndi {
+        #[cfg(feature = "ndi")]
+        {
+            if !vorce_io::ndi::is_output_supported() {
+                return false;
+            }
+        }
+        #[cfg(not(feature = "ndi"))]
+        {
+            return false;
+        }
+    }
+
+    // Spout and Syphon are not yet supported
+    !is_spout && !is_syphon
 }

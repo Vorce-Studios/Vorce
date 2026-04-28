@@ -26,4 +26,7 @@
 ## 2024-05-24 - Toolbar Theme-Kompatibilität
 **Erkenntnis:** Hardcodierte RGB-Farben für Toolbar-Metriken (FPS, Status, Auslastung) sowie Warn-Buttons brechen in verschiedenen Theme-Varianten die Lesbarkeit.
 **Aktion:** Immer `ui.visuals().warn_fg_color`, `ui.visuals().error_fg_color` und abgedimmte Varianten von `ui.visuals().text_color()` für Statusanzeigen nutzen, anstatt `Color32::from_rgb` zu verwenden.
-## 2026-04-27 - Audio-Panel Theme-Breaker **Erkenntnis:** Das Audio-Panel nutzt in der FFT-Visualisierung hartcodierte RGB-Werte und Konstanten (wie DARKER_GREY), die in alternativen Themes unleserlich oder unstimmig wirken. **Aktion:** Generell ui.visuals() Eigenschaften (z.B. extreme_bg_color, warn_fg_color) für UI-Elemente wie Audio-Bands anwenden, um Theme-Kohärenz zu sichern.
+<<<<<<< HEAD
+## 2026-04-27 - Audio-Panel Theme-Breaker
+**Erkenntnis:** Das Audio-Panel nutzt in der FFT-Visualisierung hartcodierte RGB-Werte und Konstanten (wie DARKER_GREY), die in alternativen Themes unleserlich oder unstimmig wirken.
+**Aktion:** Generell ui.visuals() Eigenschaften (z.B. extreme_bg_color, warn_fg_color) für UI-Elemente wie Audio-Bands anwenden, um Theme-Kohärenz zu sichern.

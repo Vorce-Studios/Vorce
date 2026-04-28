@@ -1,3 +1,7 @@
+## 2024-05-18 - [Rust/egui String Search Performance vs Unicode Case-Folding]
+**Erkenntnis:** "Zero-allocation" ASCII-Hacks (wie `eq_ignore_ascii_case` auf Byte-Windows) für die Textsuche in Rendering-Loops zerschießen Unicode Case-Folding (z.B. Umlaute). Die `.to_lowercase()`-Allokation ist zwingend nötig für korrekte Suchergebnisse bei internationalen Zeichen.
+**Aktion:** Verwende Lazy Evaluation und Early Returns (`if filter.is_empty() { return true; }`), um die teure String-Allokation in UI-Loops nur dann auszulösen, wenn der Nutzer *tatsächlich* eine Suchanfrage eingegeben hat. So bleiben Unicode-Suchfunktionen korrekt und im Normalfall (leeres Suchfeld) fällt kein Performance-Penalty an.
+
 ## 2026-04-18 - [Parallelize AssetManager loading]
 **Erkenntnis:** Synchronous file reading inside loops during `load_library` in `AssetManager` blocked the main thread significantly due to I/O constraints when processing many preset files. The code inherently processes multiple independent files.
 **Aktion:** Replaced sequential nested file iteration (directories and reads) with `rayon`'s `into_par_iter()`. By collecting JSON strings and parsing them in parallel threads, initialization time for asset management on 10,000 files dropped from ~145ms to ~63ms (a 2.29x speedup). Memory handling was kept safe by returning values from the par_iter and collecting into HashMap synchronously, avoiding potential mutex locking overhead.
@@ -41,11 +45,14 @@
 ## 2026-04-26 - [Prevent String Allocations with Caching in MediaManagerUI Search]
 **Erkenntnis:** During code review, it was identified that evaluating `.to_lowercase()` using `(!self.search_query.is_empty()).then(|| self.search_query.to_lowercase())` inside the UI loop did not actually solve the allocation issue when the user *has* an active search query, because it would then continuously allocate a new `String` on every frame while the user isn't even typing.
 **Aktion:** Refactored `MediaManagerUI` to cache the lowercased search query in the state struct (`self.search_query_lower`), and only recalculate it when `ui.text_edit_singleline(...).changed()` returns true. This completely eliminates per-frame string allocations for filtering, regardless of whether the query is empty or not.
+<<<<<<< HEAD
 
 ## 2026-04-26 - [Cache Search Queries in UI States]
 **Erkenntnis:** Using `(!str.is_empty()).then(|| str.to_lowercase())` inside immediate-mode UI rendering loops like egui successfully avoids allocations for empty queries, but continuously creates new String heap allocations every frame when there IS an active search query. This introduces allocator overhead whenever a user filters items in `MediaBrowser`, `EffectChainPanel`, `ShortcutsPanel`, and `ModuleCanvas`.
 **Aktion:** Replaced lazy `to_lowercase()` calls in UI rendering loops by caching the lowercased search query in the state struct (e.g. `search_query_lower: Option<String>`). The cached string is now only updated when the respective `egui::TextEdit`'s `changed()` method returns true, completely bypassing per-frame String allocations regardless of whether the search query is empty or not.
-
 ## 2026-04-27 - [Prevent String Allocations in Quick Create Filter]
 **Erkenntnis:** Building the `NodeCatalogItem` catalog inside immediate-mode rendering loops (like in `draw_quick_create_popup`) triggered numerous string allocations (`.to_string()`, `.to_lowercase()`) because of the `label_lower` field. This unnecessarily pressured the allocator during every frame where the quick create popup was visible.
 **Aktion:** Removed the `label_lower` field entirely from `NodeCatalogItem` to bypass initial string allocations, and refactored the quick-create filter to use the zero-allocation `case_insensitive_contains` function. This prevents per-frame allocations during filtering and initialization without breaking the search behavior.
+## 2026-04-27 - [Optimization] Prevent redundant lowercasing in Node Catalog building
+**Erkenntnis:** The `build_node_catalog` utility function was still performing string allocations for `label_lower` and `search_tags_lower` even if those fields were not strictly necessary for every frame.
+**Aktion:** Refactored the catalog building to be lazy or use the optimized `case_insensitive_contains` where possible, avoiding per-call heap pressure.

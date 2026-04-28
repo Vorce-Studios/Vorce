@@ -160,7 +160,7 @@ mod tests {
 
         // Output - Normal
         let output_projector =
-            ModulePartType::Output(OutputType::NdiOutput { name: "test".into() });
+            ModulePartType::Output(OutputType::NdiOutput { name: "test".into(), width: 1920, height: 1080 });
         let (in_sockets, out_sockets) = output_projector.get_default_sockets();
         assert_eq!(in_sockets.len(), 1);
         assert_eq!(out_sockets.len(), 0);

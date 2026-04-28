@@ -78,6 +78,7 @@ pub fn draw_search_popup(
                     let name = utils::get_part_property_text(&p.part_type);
                     let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
                     case_insensitive_contains(&name, f) || case_insensitive_contains(type_name, f)
+
                 })
                 .take(6)
                 .collect();
