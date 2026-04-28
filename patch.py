@@ -1,8 +1,10 @@
-with open('crates/vorce-bevy/src/systems.rs', 'r') as f:
-    data = f.read()
+import re
 
-data = data.replace('if let Some(mat) = materials.get_mut(handle) {', 'if let Some(mut mat) = materials.get_mut(handle) {')
-data = data.replace('scale: hex_size,', 'hex_size,')
+file_path = 'crates/vorce/src/app/loops/render/content.rs'
+with open(file_path, 'r') as f:
+    content = f.read()
 
-with open('crates/vorce-bevy/src/systems.rs', 'w') as f:
-    f.write(data)
+# Instead of modifying existing layer loops to ping_pong, we might need a more comprehensive rewrite of layer accumulation
+# We first find where target_view is used to draw the mesh, and wrap the accumulation using compositor if blend_mode requires it
+
+# Let's inspect carefully how to integrate Compositor in content.rs

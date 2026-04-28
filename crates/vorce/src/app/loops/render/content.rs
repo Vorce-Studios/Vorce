@@ -21,6 +21,8 @@ pub(crate) struct RenderContext<'a> {
     pub preview_effect_chain_renderer: &'a mut vorce_render::EffectChainRenderer,
     pub shader_graph_manager: &'a vorce_render::ShaderGraphManager,
     pub texture_pool: &'a vorce_render::TexturePool,
+    pub compositor: &'a mut vorce_render::Compositor,
+    pub layer_ping_pong: &'a mut [String; 2],
     pub _dummy_view: &'a Option<std::sync::Arc<wgpu::TextureView>>,
     pub mesh_buffer_cache: &'a mut vorce_render::MeshBufferCache,
     pub egui_renderer: &'a mut egui_wgpu::Renderer,
@@ -172,15 +174,47 @@ pub(crate) fn render_content(
 
     let target_view =
         if needs_post_processing { mesh_target_view_ref.as_deref().unwrap_or(view) } else { view };
-    // Clear Pass
+
+    let (target_width, target_height) =
+        output_config_opt.as_ref().map(|cfg| cfg.resolution).unwrap_or((1920, 1080));
+
+    let ping_pong_0 = format!("{}_{}", ctx.layer_ping_pong[0], output_id);
+    let ping_pong_1 = format!("{}_{}", ctx.layer_ping_pong[1], output_id);
+    let scratch_name = format!("layer_scratch_{}", output_id);
+
+    ctx.texture_pool.ensure_texture(
+        &ping_pong_0,
+        target_width.max(1),
+        target_height.max(1),
+        ctx.surface_format,
+        wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+    );
+    ctx.texture_pool.ensure_texture(
+        &ping_pong_1,
+        target_width.max(1),
+        target_height.max(1),
+        ctx.surface_format,
+        wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+    );
+    ctx.texture_pool.ensure_texture(
+        &scratch_name,
+        target_width.max(1),
+        target_height.max(1),
+        ctx.surface_format,
+        wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+    );
+
+    let mut active_accum = 0;
+
+    // Clear initial accumulator
     {
+        let accum_view = ctx.texture_pool.get_view(&ping_pong_0);
         let _pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: Some("Clear Output Pass"),
+            label: Some("Clear Accumulator Pass"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                 depth_slice: None,
-                view: target_view,
+                view: &accum_view,
                 resolve_target: None,
-
                 ops: wgpu::Operations {
                     load: wgpu::LoadOp::Clear(if output_id == 0 {
                         wgpu::Color { r: 0.05, g: 0.05, b: 0.05, a: 1.0 }
@@ -343,31 +377,158 @@ pub(crate) fn render_content(
                 &op.mesh.to_mesh(),
             );
 
-            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Mesh Layer Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    depth_slice: None,
-                    view: target_view,
-                    resolve_target: None,
+            let blend_mode = op.blend_mode.unwrap_or(vorce_core::module::BlendModeType::Normal);
+            let is_normal_blend = matches!(blend_mode, vorce_core::module::BlendModeType::Normal);
 
-                    ops: wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store },
-                })],
-                depth_stencil_attachment: None,
-                timestamp_writes: None,
-                occlusion_query_set: None,
-                multiview_mask: None,
-            });
+            let current_accum_name = if active_accum == 0 { &ping_pong_0 } else { &ping_pong_1 };
+            let render_target_name =
+                if is_normal_blend { current_accum_name } else { &scratch_name };
 
-            mesh_renderer.draw(
-                &mut rpass,
-                vb,
-                ib,
-                cnt,
-                &uniform_bind_group,
-                &texture_bind_group,
-                true,
-            );
+            let render_target_view = ctx.texture_pool.get_view(render_target_name);
+
+            {
+                let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("Mesh Layer Pass"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        depth_slice: None,
+                        view: &render_target_view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: if is_normal_blend {
+                                wgpu::LoadOp::Load
+                            } else {
+                                wgpu::LoadOp::Clear(wgpu::Color::TRANSPARENT)
+                            },
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })],
+                    depth_stencil_attachment: None,
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
+                    multiview_mask: None,
+                });
+
+                mesh_renderer.draw(
+                    &mut rpass,
+                    vb,
+                    ib,
+                    cnt,
+                    &uniform_bind_group,
+                    &texture_bind_group,
+                    true,
+                );
+            }
+
+            if !is_normal_blend {
+                let next_accum = (active_accum + 1) % 2;
+                let next_accum_name = if next_accum == 0 { &ping_pong_0 } else { &ping_pong_1 };
+
+                let base_view = ctx.texture_pool.get_view(current_accum_name);
+                let blend_view = ctx.texture_pool.get_view(&scratch_name);
+                let out_view = ctx.texture_pool.get_view(next_accum_name);
+
+                // Map ModuleBlendModeType to LayerBlendMode
+                // Note: The UI/core might use different enums, we need to convert to vorce_core::BlendMode
+                let core_blend_mode = match blend_mode {
+                    vorce_core::module::BlendModeType::Normal => {
+                        vorce_core::layer::BlendMode::Normal
+                    }
+                    vorce_core::module::BlendModeType::Add => vorce_core::layer::BlendMode::Add,
+                    vorce_core::module::BlendModeType::Multiply => {
+                        vorce_core::layer::BlendMode::Multiply
+                    }
+                    vorce_core::module::BlendModeType::Screen => {
+                        vorce_core::layer::BlendMode::Screen
+                    }
+                    vorce_core::module::BlendModeType::Overlay => {
+                        vorce_core::layer::BlendMode::Overlay
+                    }
+                    vorce_core::module::BlendModeType::Difference => {
+                        vorce_core::layer::BlendMode::Difference
+                    }
+                    vorce_core::module::BlendModeType::Exclusion => {
+                        vorce_core::layer::BlendMode::Exclusion
+                    }
+                };
+
+                let bind_group = ctx.compositor.create_bind_group(&base_view, &blend_view);
+                let uniform_bind_group =
+                    ctx.compositor.get_uniform_bind_group(queue, core_blend_mode, 1.0);
+
+                // We need a full screen quad to composite
+                // We can use the mesh_buffer_cache for a full screen quad or let the compositor do it internally?
+                // Compositor handles its own quad in `composite`
+                // Wait, `composite` needs vertex and index buffers.
+                // Looking at compositor.rs, it doesn't provide default buffers, we must pass them.
+                // We can get a quad from mesh_buffer_cache if we pass layer 0 and a full screen quad?
+                // Actually, let's look at `vorce_render::Compositor::composite` signature:
+                // composite(&mut render_pass, vertex_buffer, index_buffer, bind_group, uniform_bind_group)
+                // Let's use mesh_buffer_cache with a unit quad.
+                let quad_mesh = vorce_core::module::MeshType::default().to_mesh();
+                let (quad_vb, quad_ib, _quad_cnt) =
+                    ctx.mesh_buffer_cache.get_buffers(device, queue, 999999, &quad_mesh);
+
+                let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("Compositor Pass"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        depth_slice: None,
+                        view: &out_view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(wgpu::Color::TRANSPARENT),
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })],
+                    depth_stencil_attachment: None,
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
+                    multiview_mask: None,
+                });
+
+                ctx.compositor.composite(
+                    &mut rpass,
+                    quad_vb,
+                    quad_ib,
+                    &bind_group,
+                    &uniform_bind_group,
+                );
+
+                active_accum = next_accum;
+            }
         }
+    }
+
+    // Copy final accumulator to target_view
+    {
+        let final_accum_name = if active_accum == 0 { &ping_pong_0 } else { &ping_pong_1 };
+        let final_accum_view = ctx.texture_pool.get_view(final_accum_name);
+
+        let quad_mesh = vorce_core::module::MeshType::default().to_mesh();
+        let (quad_vb, quad_ib, _quad_cnt) =
+            ctx.mesh_buffer_cache.get_buffers(device, queue, 999998, &quad_mesh);
+
+        let bind_group = ctx.compositor.create_bind_group(&final_accum_view, &final_accum_view); // second view ignored for Normal blend
+        let uniform_bind_group =
+            ctx.compositor.get_uniform_bind_group(queue, vorce_core::layer::BlendMode::Normal, 1.0);
+
+        let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("Copy to Target View Pass"),
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                depth_slice: None,
+                view: target_view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                    store: wgpu::StoreOp::Store,
+                },
+            })],
+            depth_stencil_attachment: None,
+            timestamp_writes: None,
+            occlusion_query_set: None,
+            multiview_mask: None,
+        });
+
+        ctx.compositor.composite(&mut rpass, quad_vb, quad_ib, &bind_group, &uniform_bind_group);
     }
 
     // --- POST PROCESSING PASSES ---
