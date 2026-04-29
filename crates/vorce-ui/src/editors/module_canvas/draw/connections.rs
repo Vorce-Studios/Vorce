@@ -119,17 +119,17 @@ where
                 if alt_held {
                     if progress > 0.0 {
                         let pulse = (ui.input(|i| i.time) * 20.0).sin().abs() as f32;
-                        let color = ui.visuals().error_fg_color.linear_multiply(0.5 + 0.5 * pulse);
+                        let color = Color32::RED.linear_multiply(0.5 + 0.5 * pulse);
                         (
                             (4.0 + progress * 4.0) * canvas.zoom,
                             color,
                             (10.0 + progress * 20.0) * canvas.zoom,
                         )
                     } else {
-                        (4.0 * canvas.zoom, ui.visuals().error_fg_color, 10.0 * canvas.zoom)
+                        (4.0 * canvas.zoom, Color32::RED, 10.0 * canvas.zoom)
                     }
                 } else {
-                    (3.0 * canvas.zoom, ui.visuals().strong_text_color(), 8.0 * canvas.zoom)
+                    (3.0 * canvas.zoom, Color32::WHITE, 8.0 * canvas.zoom)
                 }
             } else {
                 (2.0 * canvas.zoom, cable_color, 6.0 * canvas.zoom)
@@ -173,7 +173,7 @@ where
                 painter.circle_filled(
                     flow_pos,
                     3.0 * canvas.zoom,
-                    ui.visuals().strong_text_color().linear_multiply(0.6),
+                    Color32::from_rgba_unmultiplied(255, 255, 255, 150),
                 );
             }
             if let Some(texture) = canvas.plug_icons.get(icon_name) {
@@ -208,7 +208,7 @@ where
                             mesh.vertices.push(egui::epaint::Vertex {
                                 pos: pos + rotation * corners[i].to_vec2(),
                                 uv: uvs[i],
-                                color: ui.visuals().strong_text_color(),
+                                color: Color32::WHITE,
                             });
                         }
                         mesh.add_triangle(0, 1, 2);
@@ -255,12 +255,12 @@ where
 
                     use std::f32::consts::TAU;
                     let radius = 15.0 * canvas.zoom;
-                    let stroke = Stroke::new(3.0 * canvas.zoom, ui.visuals().error_fg_color);
+                    let stroke = Stroke::new(3.0 * canvas.zoom, Color32::RED);
 
                     overlay_painter.circle_stroke(
                         pos,
                         radius,
-                        Stroke::new(2.0, ui.visuals().error_fg_color.linear_multiply(0.2)),
+                        Stroke::new(2.0, Color32::RED.linear_multiply(0.2)),
                     );
 
                     let start_angle = -TAU / 4.0;
@@ -281,7 +281,7 @@ where
                         egui::Align2::CENTER_TOP,
                         "HOLD TO DELETE",
                         egui::FontId::proportional(10.0 * canvas.zoom),
-                        ui.visuals().error_fg_color,
+                        Color32::RED,
                     );
                 }
             }

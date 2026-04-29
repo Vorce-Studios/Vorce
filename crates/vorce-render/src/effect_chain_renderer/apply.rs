@@ -128,7 +128,6 @@ impl EffectChainRenderer {
 
         // We need to handle this differently to avoid borrow checker issues
         // by not holding mutable borrow of ping_pong across the loop
-
         let mut use_input = true;
 
         for (i, effect) in enabled_effects.iter().enumerate() {

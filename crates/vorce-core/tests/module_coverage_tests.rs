@@ -10,7 +10,6 @@ fn test_add_part_defaults() {
         connections: vec![],
         playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
         next_part_id: 1,
-        part_index: Default::default(),
     };
 
     // 1. Trigger -> Should default to Beat
