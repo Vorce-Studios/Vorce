@@ -148,7 +148,8 @@ impl NdiReceiver {
                             };
 
                             {
-                                let mut fmt = format_clone.lock().unwrap();
+                                let mut fmt =
+                                    format_clone.lock().unwrap_or_else(|e| e.into_inner());
                                 *fmt = video_format.clone();
                             }
 
@@ -260,7 +261,7 @@ impl VideoSource for NdiReceiver {
     }
 
     fn format(&self) -> VideoFormat {
-        self.format.lock().unwrap().clone()
+        self.format.lock().unwrap_or_else(|e| e.into_inner()).clone()
     }
 
     fn receive_frame(&mut self) -> Result<VideoFrame> {
