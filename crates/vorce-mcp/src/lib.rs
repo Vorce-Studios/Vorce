@@ -24,6 +24,8 @@ pub enum McpAction {
     SaveProject(PathBuf),
     /// Load a project.
     LoadProject(PathBuf),
+    /// Get the current project state as JSON.
+    GetProjectState(crossbeam_channel::Sender<String>),
 
     // === Layer Management ===
     /// Add a new layer.
