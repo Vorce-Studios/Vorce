@@ -11,7 +11,7 @@ use axum::{
 };
 
 #[cfg(feature = "http-api")]
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::CorsLayer;
 
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -139,24 +139,24 @@ impl WebServer {
                 .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
                 .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
 
-            // If allowed_origins contains "*", allow Any.
-            // Empty list implies NO allowed origins (secure default), handled by else block.
-            if self.config.allowed_origins.contains(&"*".to_string()) {
-                // Must be applied in separate branch to handle different concrete types
-                app.layer(cors_layer.allow_origin(Any))
-            } else {
-                let origins: Result<Vec<HeaderValue>> = self
-                    .config
-                    .allowed_origins
-                    .iter()
-                    .map(|o| {
-                        o.parse::<HeaderValue>().map_err(|e| {
-                            ControlError::HttpError(format!("Invalid origin header: {}", e))
-                        })
+            let origins: Result<Vec<HeaderValue>> = self
+                .config
+                .allowed_origins
+                .iter()
+                .filter(|o| *o != "*")
+                .map(|o| {
+                    o.parse::<HeaderValue>().map_err(|e| {
+                        ControlError::HttpError(format!("Invalid origin header: {}", e))
                     })
-                    .collect();
+                })
+                .collect();
 
-                app.layer(cors_layer.allow_origin(origins?))
+            let parsed_origins = origins?;
+            if parsed_origins.is_empty() {
+                // Fallback: If list is empty after filtering out wildcards, allow nothing by passing an empty list
+                app.layer(cors_layer.allow_origin(Vec::<HeaderValue>::new()))
+            } else {
+                app.layer(cors_layer.allow_origin(parsed_origins))
             }
         } else {
             app
