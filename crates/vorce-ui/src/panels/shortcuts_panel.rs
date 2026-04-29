@@ -65,9 +65,12 @@ impl ShortcutsPanel {
         // --- Search Bar ---
         ui.horizontal(|ui| {
             ui.label("🔍");
-            let response = ui.add(TextEdit::singleline(&mut self.search_filter).hint_text("Search shortcuts..."));
+            let response = ui.add(
+                TextEdit::singleline(&mut self.search_filter).hint_text("Search shortcuts..."),
+            );
             if response.changed() {
-                self.search_filter_lower = (!self.search_filter.is_empty()).then(|| self.search_filter.to_lowercase());
+                self.search_filter_lower =
+                    (!self.search_filter.is_empty()).then(|| self.search_filter.to_lowercase());
             }
 
             if !self.search_filter.is_empty()
