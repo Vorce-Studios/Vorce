@@ -12,7 +12,7 @@ $criticalSessions = New-Object System.Collections.Generic.List[object]
 
 foreach ($session in $sessions) {
     $state = [string](Get-JulesObjectPropertyValue -Object $session -Name "state")
-    
+
     # Filter by states requested by user
     if ($state -ne "AWAITING_USER_FEEDBACK" -and $state -ne "FAILED") {
         continue
@@ -22,10 +22,10 @@ foreach ($session in $sessions) {
     $githubRepoContext = Get-JulesObjectPropertyValue -Object $sourceContext -Name "githubRepoContext"
     $repo = [string](Get-JulesObjectPropertyValue -Object $githubRepoContext -Name "repository")
     $source = [string](Get-JulesObjectPropertyValue -Object $sourceContext -Name "source")
-    
+
     $isVorce = ($repo -like "*Vorce*" -or $source -like "*Vorce*" -or [string]::IsNullOrWhiteSpace($repo))
     $isExcluded = ($repo -like "*MrLongNight*" -or $source -like "*MrLongNight*")
-    
+
     if ($isVorce -and -not $isExcluded) {
         $criticalSessions.Add($session)
     }
@@ -42,7 +42,7 @@ Write-Host ""
 foreach ($session in $criticalSessions) {
     $sourceContext = Get-JulesObjectPropertyValue -Object $session -Name "sourceContext"
     $githubRepoContext = Get-JulesObjectPropertyValue -Object $sourceContext -Name "githubRepoContext"
-    
+
     $repo = [string](Get-JulesObjectPropertyValue -Object $githubRepoContext -Name "repository")
     $issueNum = Get-JulesObjectPropertyValue -Object $githubRepoContext -Name "issueNumber"
     $state = [string](Get-JulesObjectPropertyValue -Object $session -Name "state")
@@ -52,26 +52,26 @@ foreach ($session in $criticalSessions) {
 
     # Fetch latest activities (increased to 10 for better failure detection)
     $activities = @(Get-AllJulesActivities -SessionIdOrName $name -PageSize 10 -MaxPages 1 -ApiKey $apiKey)
-    
+
     $bestActivity = $null
     if ($state -eq "FAILED") {
         # For FAILED sessions, explicitly look for the failure reason in the activity log
         $bestActivity = $activities | Where-Object { $null -ne (Get-JulesObjectPropertyValue -Object $_ -Name "sessionFailed") } | Select-Object -First 1
     }
-    
+
     if ($null -eq $bestActivity) {
         # Fallback to absolute latest if no specific failure found or for other states
         $bestActivity = Get-JulesLatestActivity -Activities $activities
     }
-    
+
     $summary = Get-JulesActivitySummary -Activity $bestActivity
 
     $color = if ($state -eq "FAILED") { "Red" } else { "Magenta" }
 
-    $displayTitle = if (-not [string]::IsNullOrWhiteSpace($repo)) { 
-        "Issue #$issueNum - $repo" 
-    } else { 
-        "Session: $name (Unknown Repo)" 
+    $displayTitle = if (-not [string]::IsNullOrWhiteSpace($repo)) {
+        "Issue #$issueNum - $repo"
+    } else {
+        "Session: $name (Unknown Repo)"
     }
 
     Write-Host $displayTitle -ForegroundColor $color
