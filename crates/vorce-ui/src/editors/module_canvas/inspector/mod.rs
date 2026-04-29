@@ -118,9 +118,9 @@ pub fn render_trigger_preview(
 
             let status = if is_live { "LIVE pulse" } else { "Waiting" };
             let color = if is_live {
-                ui.visuals().strong_text_color().linear_multiply(0.8)
+                egui::Color32::from_rgb(110, 235, 150)
             } else {
-                ui.visuals().text_color().linear_multiply(0.6)
+                egui::Color32::from_rgb(180, 180, 180)
             };
             ui.colored_label(color, status);
 

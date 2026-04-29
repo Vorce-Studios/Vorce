@@ -272,28 +272,18 @@ jobs:
             ffmpeg
       - name: Build (Release)
         run: cargo build --release -p vorce --features "audio,ffmpeg"
-
-      - name: Install cargo-deb
-        run: cargo install cargo-deb --locked || true
-
-      - name: Build .deb Package
-        run: cargo deb -p vorce --no-build --output "vorce-${{ needs.resolve-release.outputs.version }}-x64.deb"
-
       - name: Create Tarball
         run: |
           VERSION="${{ needs.resolve-release.outputs.version }}"
           TAR_NAME="Vorce-$VERSION-Linux-x64.tar.gz"
           cd target/release
           tar -czf "../../$TAR_NAME" Vorce
-
       - name: Upload Artifacts
         uses: actions/upload-artifact@v7
         with:
           name: linux-artifacts
           if-no-files-found: error
-          path: |
-            Vorce-${{ needs.resolve-release.outputs.version }}-Linux-x64.tar.gz
-            vorce-${{ needs.resolve-release.outputs.version }}-x64.deb
+          path: Vorce-${{ needs.resolve-release.outputs.version }}-Linux-x64.tar.gz
 
   build-macos:
     name: "Build (macOS Beta)"
@@ -379,7 +369,6 @@ jobs:
             "release-artifacts/Vorce-$RELEASE_VERSION-Windows-x64.zip"
             "release-artifacts/Vorce-$RELEASE_VERSION-x64.msi"
             "release-artifacts/Vorce-$RELEASE_VERSION-Linux-x64.tar.gz"
-            "release-artifacts/vorce-$RELEASE_VERSION-x64.deb"
             "release-artifacts/Vorce-$RELEASE_VERSION-macOS-beta.dmg"
           )
 

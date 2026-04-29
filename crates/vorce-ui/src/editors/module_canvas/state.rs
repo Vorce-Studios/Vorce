@@ -107,12 +107,6 @@ pub struct ModuleCanvas {
     pub hue_pairing_rx:
         Option<std::sync::mpsc::Receiver<Result<vorce_control::hue::models::HueConfig, String>>>,
     /// Status message for Hue operations
-    /// Fetched Hue entertainment groups
-    pub hue_groups: Option<Vec<vorce_control::hue::api::groups::GroupInfo>>,
-    /// Channel for Hue groups fetching results
-    pub hue_groups_rx: Option<
-        std::sync::mpsc::Receiver<Result<Vec<vorce_control::hue::api::groups::GroupInfo>, String>>,
-    >,
     pub hue_status_message: Option<String>,
     /// Last known trigger values for visualization (Part ID -> Value 0.0-1.0)
     pub last_trigger_values: std::collections::HashMap<ModulePartId, f32>,
@@ -190,8 +184,6 @@ impl Default for ModuleCanvas {
             hue_bridges: Vec::new(),
             hue_discovery_rx: None,
             hue_pairing_rx: None,
-            hue_groups: None,
-            hue_groups_rx: None,
             hue_status_message: None,
             last_trigger_values: std::collections::HashMap::new(),
             ndi_sender_status: std::collections::HashMap::new(),

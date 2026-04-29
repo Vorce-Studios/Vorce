@@ -1,10 +1,13 @@
-#![cfg(feature = "ndi")]
 //! NDI Orchestration - Synchronizes NDI sources and senders with the module graph.
 
+#[cfg(feature = "ndi")]
 use crate::app::core::app_struct::App;
+#[cfg(feature = "ndi")]
 use tracing::{info, warn};
+#[cfg(feature = "ndi")]
 use vorce_core::module::{ModulePartType, OutputType, SourceType};
 
+#[cfg(feature = "ndi")]
 /// Synchronizes NDI receivers with the current module graph.
 pub fn sync_ndi_receivers(app: &mut App) {
     let mut desired_ndi_sources = Vec::new();
@@ -32,7 +35,7 @@ pub fn sync_ndi_receivers(app: &mut App) {
     // Add new or update existing receivers
     for (part_id, source_name) in desired_ndi_sources {
         let needs_reconnect = if let Some(receiver) = app.ndi_receivers.get(&part_id) {
-            receiver.source_name() != Some(source_name.as_str())
+            receiver.source_name() != Some(&source_name)
         } else {
             true
         };
@@ -58,6 +61,7 @@ pub fn sync_ndi_receivers(app: &mut App) {
     }
 }
 
+#[cfg(feature = "ndi")]
 /// Synchronizes NDI senders with the current module graph.
 pub fn sync_ndi_senders(app: &mut App) {
     let mut desired_senders = Vec::new();
@@ -94,7 +98,7 @@ pub fn sync_ndi_senders(app: &mut App) {
     // Add new or update existing senders
     for (part_id, name) in desired_senders {
         let needs_recreate = if let Some(sender) = app.ndi_senders.get(&part_id) {
-            sender.name() != name.as_str()
+            sender.name() != name
         } else {
             true
         };
@@ -114,6 +118,7 @@ pub fn sync_ndi_senders(app: &mut App) {
     }
 }
 
+#[cfg(feature = "ndi")]
 /// Updates NDI sources by polling for new frames and uploading to GPU.
 pub fn update_ndi_sources(app: &mut App) {
     use vorce_io::VideoSource;
@@ -123,7 +128,7 @@ pub fn update_ndi_sources(app: &mut App) {
 
     for part_id in part_ids {
         if let Some(receiver) = app.ndi_receivers.get_mut(&part_id) {
-            match VideoSource::receive_frame(receiver) {
+            match receiver.receive_frame() {
                 Ok(frame) => {
                     let texture_name = format!("part_{}", part_id);
                     if let vorce_io::format::FrameData::Cpu(data) = frame.data {

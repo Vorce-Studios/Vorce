@@ -89,11 +89,6 @@ where
                 Frame::default().inner_margin(vec2(10.0, 10.0)).show(ui, |ui| {
                     ScrollArea::vertical().max_height(max_height).show(ui, |ui| {
                         ui.set_width(scroll_area_width);
-
-                        // ⚡ Bolt: Prevent per-frame String allocations when search is empty using lazy evaluation
-                        let query_lower =
-                            (!self.query.is_empty()).then(|| self.query.to_lowercase());
-
                         for (category, kinds) in categories {
                             let filtered_kinds: Vec<_> = kinds
                                 .into_iter()
@@ -102,11 +97,9 @@ where
                                     (kind, kind_name)
                                 })
                                 .filter(|(_kind, kind_name)| {
-                                    if let Some(q) = &query_lower {
-                                        kind_name.to_lowercase().contains(q)
-                                    } else {
-                                        true
-                                    }
+                                    kind_name
+                                        .to_lowercase()
+                                        .contains(self.query.to_lowercase().as_str())
                                 })
                                 .collect();
 

@@ -1,0 +1,5 @@
+$body = @{
+    body = "## Status Update\n\nI attempted to check Jules sessions as requested using `scripts/jules/check-vorce-sessions.ps1`, but `JULES_API_KEY` is not configured in this environment. The script requires this API key to query the Jules API for active/stuck sessions in Vorce-Studios/Vorce.\n\n**Blocker:** Missing `JULES_API_KEY` environment variable.\n\nTo proceed:\n1. Set `JULES_API_KEY` environment variable, or\n2. Provide a way to check Jules sessions via another method (Paperclip API, gh CLI Jules integration, etc.)\n\nThe scripts/foundry/scripts/julesREADME.md documents the required setup and available scripts for Jules session management."
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri 'http://127.0.0.1:3100/api/issues/df9e18f9-13b0-445a-ae2d-7b897addca65/comments' -Method Post -Body $body -ContentType 'application/json'

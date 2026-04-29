@@ -4,98 +4,7 @@ use super::capabilities;
 use egui::Ui;
 use vorce_core::module::{HueMappingMode, ModulePartId, OutputType};
 
-/// Renders the hue entertainment area selection UI.
-pub fn render_hue_area_selection(
-    canvas: &mut ModuleCanvas,
-    ui: &mut Ui,
-    bridge_ip: &str,
-    username: &str,
-    entertainment_area: &mut String,
-    lamp_positions: &mut std::collections::HashMap<String, (f32, f32)>,
-) {
-    if !username.is_empty() {
-        ui.separator();
-        if let Some(rx) = &canvas.hue_groups_rx {
-            if let Ok(result) = rx.try_recv() {
-                canvas.hue_groups_rx = None;
-                match result {
-                    Ok(groups) => canvas.hue_groups = Some(groups),
-                    Err(e) => {
-                        canvas.hue_status_message = Some(format!("Failed to fetch areas: {}", e))
-                    }
-                }
-            } else {
-                ui.horizontal(|ui| {
-                    ui.spinner();
-                    ui.label("Fetching areas...");
-                });
-            }
-        }
-
-        if ui.button("🔄 Fetch Areas").clicked() {
-            let (tx, rx) = std::sync::mpsc::channel();
-            canvas.hue_groups_rx = Some(rx);
-            let bridge_ip = bridge_ip.to_owned();
-            let username = username.to_owned();
-
-            #[cfg(feature = "tokio")]
-            {
-                tokio::spawn(async move {
-                    let config = vorce_control::hue::models::HueConfig {
-                        bridge_ip,
-                        username,
-                        client_key: String::new(),
-                        application_id: String::new(),
-                        entertainment_group_id: String::new(),
-                    };
-                    let result = vorce_control::hue::api::groups::get_entertainment_groups(&config)
-                        .await
-                        .map_err(|e| e.to_string());
-                    let _ = tx.send(result);
-                });
-            }
-            #[cfg(not(feature = "tokio"))]
-            {
-                let _ = tx;
-                let _ = bridge_ip;
-                let _ = username;
-            }
-        }
-
-        if let Some(groups) = &canvas.hue_groups {
-            if groups.is_empty() {
-                ui.label("No entertainment areas found.");
-            } else {
-                // Find the name of the currently selected area, if any
-                let mut selected_name = "Select Area...".to_string();
-                for group in groups {
-                    if group.id == *entertainment_area {
-                        selected_name = group.name.clone();
-                        break;
-                    }
-                }
-
-                egui::ComboBox::from_id_salt("hue_area_select")
-                    .selected_text(selected_name)
-                    .show_ui(ui, |ui| {
-                        for group in groups {
-                            if ui
-                                .selectable_value(entertainment_area, group.id.clone(), &group.name)
-                                .clicked()
-                            {
-                                *lamp_positions = group
-                                    .lights
-                                    .iter()
-                                    .map(|l| (l.id.clone(), (l.x as f32, l.y as f32)))
-                                    .collect();
-                            }
-                        }
-                    });
-            }
-        }
-    }
-}
-
+/// Renders the hue bridge discovery UI.
 pub fn render_hue_bridge_discovery(
     canvas: &mut ModuleCanvas,
     ui: &mut Ui,
@@ -428,15 +337,7 @@ pub fn render_output_ui(
             ui.collapsing("\u{1F3AD} Area & Mode", |ui| {
                 ui.label("Entertainment Area:");
                 ui.text_edit_singleline(entertainment_area);
-
-                render_hue_area_selection(
-                    canvas,
-                    ui,
-                    bridge_ip,
-                    username,
-                    entertainment_area,
-                    lamp_positions,
-                );
+                // TODO: Fetch areas from bridge if paired
 
                 ui.separator();
                 ui.label("Mapping Mode:");

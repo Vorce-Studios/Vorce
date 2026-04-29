@@ -77,17 +77,16 @@ impl ShortcutsPanel {
         let shortcuts_clone = key_bindings.get_shortcuts().to_vec();
 
         // --- Filter and Group Shortcuts ---
-        // ⚡ Bolt: Prevent per-frame String allocations when search is empty using lazy evaluation
-        let filter_lower =
-            (!self.search_filter.is_empty()).then(|| self.search_filter.to_lowercase());
+        let filter_lower = self.search_filter.to_lowercase();
         let filtered_indices: Vec<usize> = shortcuts_clone
             .iter()
             .enumerate()
             .filter(|(_, s)| {
-                let Some(f) = &filter_lower else {
+                if filter_lower.is_empty() {
                     return true;
-                };
-                s.description_lower.contains(f) || s.shortcut_str_lower.contains(f)
+                }
+                s.description_lower.contains(&filter_lower)
+                    || s.shortcut_str_lower.contains(&filter_lower)
             })
             .map(|(i, _)| i)
             .collect();

@@ -42,14 +42,10 @@ pub fn safe_delete_selection(canvas: &mut ModuleCanvas, module: &mut VorceModule
 
     let mut actions = Vec::new();
     let parts_to_delete: Vec<ModulePartId> = canvas.selected_parts.clone();
-    let parts_to_delete_set: rustc_hash::FxHashSet<ModulePartId> =
-        parts_to_delete.iter().copied().collect();
     let mut connections_to_delete = Vec::new();
 
     for conn in module.connections.iter() {
-        if parts_to_delete_set.contains(&conn.from_part)
-            || parts_to_delete_set.contains(&conn.to_part)
-        {
+        if parts_to_delete.contains(&conn.from_part) || parts_to_delete.contains(&conn.to_part) {
             connections_to_delete.push(conn.clone());
         }
     }
@@ -67,14 +63,14 @@ pub fn safe_delete_selection(canvas: &mut ModuleCanvas, module: &mut VorceModule
     let batch_action = CanvasAction::Batch(actions);
 
     module.connections.retain(|c| {
-        !parts_to_delete_set.contains(&c.from_part) && !parts_to_delete_set.contains(&c.to_part)
+        !parts_to_delete.contains(&c.from_part) && !parts_to_delete.contains(&c.to_part)
     });
 
-    module.parts.retain(|p| !parts_to_delete_set.contains(&p.id));
+    module.parts.retain(|p| !parts_to_delete.contains(&p.id));
 
     canvas.undo_stack.push(batch_action);
     canvas.redo_stack.clear();
-    canvas.clear_selection();
+    canvas.selected_parts.clear();
 }
 
 pub fn apply_undo_action(module: &mut VorceModule, action: &CanvasAction) {

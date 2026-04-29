@@ -13,7 +13,6 @@ mod tests {
             connections: vec![],
             playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
             next_part_id: 1,
-            part_index: Default::default(),
         };
 
         let part_id = module.add_part(PartType::Source, (10.0, 20.0));
@@ -38,7 +37,6 @@ mod tests {
             connections: vec![],
             playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
             next_part_id: 1,
-            part_index: Default::default(),
         };
 
         let part_id = module.add_part(PartType::Trigger, (0.0, 0.0));
@@ -57,7 +55,6 @@ mod tests {
             connections: vec![],
             playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
             next_part_id: 1,
-            part_index: Default::default(),
         };
 
         module.add_connection(1, 0, 2, 0);
@@ -80,7 +77,6 @@ mod tests {
             connections: vec![],
             playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
             next_part_id: 1,
-            part_index: Default::default(),
         };
 
         module.add_connection(1, 0, 2, 0);
@@ -103,7 +99,6 @@ mod tests {
             connections: vec![],
             playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
             next_part_id: 1,
-            part_index: Default::default(),
         };
 
         // Add a part with id 1
@@ -164,7 +159,6 @@ mod tests {
             connections: vec![],
             playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
             next_part_id: 1,
-            part_index: Default::default(),
         };
 
         // Add a part with id 1
@@ -214,7 +208,6 @@ mod tests {
             connections: vec![],
             playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
             next_part_id: 1,
-            part_index: Default::default(),
         };
 
         let part_id = module.add_part_with_type(

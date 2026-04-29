@@ -26,6 +26,31 @@ all-io = ["ndi", "decklink", "syphon", "stream", "virtual-camera"]
 # CI-safe feature for Linux builds (excludes platform-specific: spout, syphon, ndi)
 ci-linux = ["virtual-camera"]
 
+[dependencies]
+bytemuck = { workspace = true }
+chrono = { workspace = true }
+
+# Media encoding/decoding
+ffmpeg-next = { workspace = true, optional = true }
+grafton-ndi = { version = "0.11.0", optional = true }
+
+# Format conversion
+image = { workspace = true }
+vorce-core = { path = "../vorce-core" }
+once_cell = { workspace = true }
+ron.workspace = true
+serde = { workspace = true }
+serde_json = { workspace = true }
+tempfile = "3.27"
+thiserror = { workspace = true }
+
+# Async runtime
+tokio = { workspace = true, optional = true }
+tracing = { workspace = true }
+# Core dependencies
+wgpu = { workspace = true }
+zip = "8.4"
+
 [target.'cfg(target_os = "macos")'.dependencies]
 cocoa = { version = "0.26", optional = true }
 core-foundation = { version = "0.10", optional = true }
@@ -39,31 +64,6 @@ windows = { version = "0.62", features = [
     "Win32_Graphics_Dxgi",
     "Win32_System_Com",
 ], optional = true }
-
-[dependencies]
-bytemuck = { workspace = true }
-chrono = { workspace = true }
-
-# Media encoding/decoding
-ffmpeg-next = { workspace = true, optional = true }
-grafton-ndi = { version = "0.11.0", optional = true }
-
-# Format conversion
-image = { workspace = true }
-once_cell = { workspace = true }
-ron.workspace = true
-serde = { workspace = true }
-serde_json = { workspace = true }
-tempfile = "3.27"
-thiserror = { workspace = true }
-
-# Async runtime
-tokio = { workspace = true, optional = true }
-tracing = { workspace = true }
-vorce-core = { path = "../vorce-core" }
-# Core dependencies
-wgpu = { workspace = true }
-zip = "8.4"
 
 [build-dependencies]
 bindgen = { workspace = true, optional = true }

@@ -122,17 +122,11 @@ impl VideoSource for SpoutReceiver {
     }
 
     fn receive_frame(&mut self) -> Result<VideoFrame> {
-        if !self.spout.is_connected().map_err(|e| {
-            tracing::error!("Failed to check if spout is connected: {}", e);
-            IoError::SpoutError(e.to_string())
-        })? {
+        if !self.spout.is_connected().unwrap_or(false) {
             return Err(IoError::SpoutError("Not connected to a sender".to_string()));
         }
 
-        if !self.spout.is_frame_new().map_err(|e| {
-            tracing::error!("Failed to check if spout frame is new: {}", e);
-            IoError::SpoutError(e.to_string())
-        })? {
+        if !self.spout.is_frame_new().unwrap_or(false) {
             // Return an empty frame or a special status? For now, an error.
             return Err(IoError::SpoutError("No new frame available".to_string()));
         }
@@ -154,8 +148,6 @@ impl VideoSource for SpoutReceiver {
             _ => wgpu::TextureFormat::Bgra8UnormSrgb,  // Default to BGRA
         };
 
-        // SAFETY: The handle is a valid DirectX shared resource handle received from Spout.
-        // `texture_from_shared_handle` correctly transfers ownership or borrows the resource without outliving the backend device.
         let texture = unsafe {
             vorce_render::spout::texture_from_shared_handle(
                 &self.device,
@@ -176,10 +168,7 @@ impl VideoSource for SpoutReceiver {
     }
 
     fn is_available(&self) -> bool {
-        self.spout.is_connected().unwrap_or_else(|e| {
-            tracing::error!("Failed to check spout connection: {}", e);
-            false
-        })
+        self.spout.is_connected().unwrap_or(false)
     }
 
     fn frame_count(&self) -> u64 {
@@ -254,7 +243,6 @@ impl VideoSink for SpoutSender {
             FrameData::Gpu(texture) => {
                 // This is the GPU-accelerated path.
                 // It uses an FFI call to the Spout library to update the sender with a shared texture handle.
-                // SAFETY: We extract a shared handle for the texture on the GPU device safely, which will be consumed by Spout.
                 let handle = unsafe {
                     vorce_render::spout::shared_handle_from_texture(&self.device, texture)
                 }
@@ -273,13 +261,8 @@ impl VideoSink for SpoutSender {
 
                 let spout_ffi =
                     self.spout.get_spout().map_err(|e| IoError::SpoutError(e.to_string()))?;
-                let c_name = CString::new(self.name.clone()).map_err(|e| {
-                    tracing::error!("NulError in Spout sender name: {}", e);
-                    IoError::SpoutError(format!("Invalid Spout sender name: {}", e))
-                })?;
+                let c_name = CString::new(self.name.clone()).unwrap();
 
-                // SAFETY: We interface with the C++ Spout API via FFI.
-                // We ensure `c_name` is null-terminated and valid, and `handle` is a valid DirectX handle.
                 let success = unsafe {
                     spout_ffi.UpdateSender(
                         c_name.as_ptr(),

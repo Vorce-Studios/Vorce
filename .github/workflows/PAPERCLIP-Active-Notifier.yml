@@ -1,0 +1,73 @@
+name: "PAPERCLIP: Active PR Notifier"
+
+on:
+  check_run:
+    types: [completed]
+  pull_request:
+    types: [synchronize, opened, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: read
+
+jobs:
+  notify-paperclip:
+    # Nur ausführen, wenn ein Check fehlgeschlagen ist ODER ein PR aktualisiert wurde (für Konflikt-Check)
+    if: |
+      (github.event_name == 'check_run' && github.event.check_run.conclusion == 'failure') ||
+      (github.event_name == 'pull_request')
+    
+    # WICHTIG: Nutze den Self-Hosted Runner, um die lokale Paperclip-API zu erreichen!
+    runs-on: [self-hosted, Windows, X64]
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Notify Paperclip via Local API
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $prUrl = ""
+          if ("${{ github.event_name }}" -eq "check_run") {
+            $prUrl = "${{ github.event.check_run.pull_requests[0].url }}"
+          } else {
+            $prUrl = "${{ github.event.pull_request.url }}"
+          }
+
+          if ([string]::IsNullOrWhiteSpace($prUrl)) {
+            Write-Host "Keine PR-URL gefunden. Überspringe."
+            exit 0
+          }
+
+          # 1. Hole PR Details um Issue-ID zu finden
+          $pr = gh pr view $prUrl --json title,body,mergeable | ConvertFrom-Json
+          $issueId = if ($pr.title -match "(MF-[A-Z]+-[0-9]+)") { $Matches[1] } else { $null }
+
+          if (-not $issueId) {
+            Write-Host "Keine Paperclip Issue-ID im PR-Titel gefunden. Überspringe."
+            exit 0
+          }
+
+          # 2. Prüfe auf Konflikte oder Fehler
+          $message = ""
+          $statusUpdate = ""
+
+          if ($pr.mergeable -eq "CONFLICTING") {
+            $message = "⚠️ **Achtung:** Dieser PR hat Merge-Konflikte! Bitte sofort beheben."
+            $statusUpdate = "blocked"
+          } elseif ("${{ github.event.check_run.conclusion }}" -eq "failure") {
+            $checkName = "${{ github.event.check_run.name }}"
+            $message = "❌ **Check fehlgeschlagen:** Der Check '$checkName' war nicht erfolgreich. Der Task wird auf 'blocked' gesetzt."
+            $statusUpdate = "blocked"
+          }
+
+          # 3. Sende Nachricht an die lokale Paperclip API (da wir auf self-hosted sind)
+          if ($message) {
+            .\scripts\paperclip\notify-issue-event.ps1 `
+              -IssueIdentifier $issueId `
+              -Message $message `
+              -StatusUpdate $statusUpdate
+          }
