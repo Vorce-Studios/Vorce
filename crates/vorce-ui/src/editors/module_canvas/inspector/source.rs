@@ -1093,7 +1093,10 @@ pub fn render_source_ui(
                             if status.connected {
                                 ui.horizontal(|ui| {
                                     ui.label(egui::RichText::new("●").color(colors::MINT_ACCENT));
-                                    ui.label(format!("Connected: {}", status.source_name.as_deref().unwrap_or("Unknown")));
+                                    ui.label(format!(
+                                        "Connected: {}",
+                                        status.source_name.as_deref().unwrap_or("Unknown")
+                                    ));
                                 });
                             } else {
                                 ui.horizontal(|ui| {

@@ -531,7 +531,8 @@ impl NodeEditor {
         for node in &mut nodes_vec {
             let node_screen_pos = to_screen(node.position);
             let node_screen_rect = Rect::from_min_size(node_screen_pos, node.size * zoom);
-            let node_response = ui.interact(node_screen_rect, egui::Id::new(node.id), Sense::click_and_drag());
+            let node_response =
+                ui.interact(node_screen_rect, egui::Id::new(node.id), Sense::click_and_drag());
 
             if node_response.clicked() {
                 self.selected_nodes.clear();
