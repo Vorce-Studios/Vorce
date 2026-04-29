@@ -18,3 +18,7 @@
 ## 2025-02-18 - Prevent Heap Allocations in Media Browser Search Filter Loop
 **Erkenntnis:** Calling `.to_lowercase()` inside the high-frequency UI rendering loop (`filtered_entries`) in `MediaBrowser` generates unnecessary heap allocations on every frame even when the search query remains unchanged, harming performance.
 **Aktion:** I cached the lowercased search query in `MediaBrowser::search_query_lower` (`Option<String>`) and only updated it when `egui::TextEdit::changed()` returns true. This eliminated the allocation overhead completely during idle rendering frames.
+
+## 2025-04-29 - Prevent Heap Allocations in Shortcuts Panel Search Loop
+**Erkenntnis:** Calling `.to_lowercase()` inside a high-frequency UI rendering loop (`filtered_indices`) in `ShortcutsPanel` generates unnecessary heap allocations on every frame when the search query remains unchanged, harming performance.
+**Aktion:** I cached the lowercased search query in `ShortcutsPanel::search_filter_lower` (`Option<String>`) and only updated it when `egui::TextEdit::changed()` returns true. This eliminated the allocation overhead completely during idle rendering frames.
