@@ -529,7 +529,6 @@ impl NodeEditor {
                 }
             }
 
-
             let node_response =
                 Self::draw_node(ui, &painter, node, node_screen_rect, locale, zoom, is_selected);
 

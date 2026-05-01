@@ -269,7 +269,6 @@ pub fn render_canvas(
         let mut clicked_on_part = false;
         let mut delete_part_id = None;
         let mut resize_ops = Vec::new();
-        let mut drag_delta = Vec2::ZERO;
 
         let selected_parts_set: rustc_hash::FxHashSet<vorce_core::module::ModulePartId> =
             canvas.selected_parts.iter().copied().collect();
@@ -486,8 +485,6 @@ pub fn render_canvas(
                 }
             }
         }
-
-
 
         for (part_id, delta) in resize_ops {
             if let Some(part) = module.parts.iter_mut().find(|part| part.id == part_id) {
