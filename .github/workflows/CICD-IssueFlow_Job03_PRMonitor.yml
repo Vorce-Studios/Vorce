@@ -65,14 +65,14 @@ jobs:
           try {
             # Run the PR monitoring script
             .\scripts\jules\monitor-jules-prs.ps1
-            
+
             # Capture output
             $reportPath = Join-Path $env:TEMP "jules-pr-monitoring-report.md"
             if (Test-Path $reportPath) {
               $report = Get-Content $reportPath -Raw
-              
+
               $issueNum = $env:MONITOR_ISSUE_ID -replace 'VOR-', ''
-              
+
               # Only post if there are results or force report is enabled
               if ($report -match '\| #' -or $env:FORCE_REPORT -eq 'true') {
                 gh issue comment $issueNum --body $report --repo ${{ github.repository }}

@@ -22,12 +22,14 @@ Created the missing Paperclip API helper scripts in `ops/paperclip/`:
 Created `scripts/jules/monitor-jules-prs.ps1`:
 
 **Features:**
+
 - Monitors PR status for all Jules-managed issues
 - Tracks PR check status (build, test, lint)
 - Identifies PRs needing attention
 - Generates markdown report with summary statistics
 
 **Usage:**
+
 ```powershell
 .\scripts\jules\monitor-jules-prs.ps1
 ```
@@ -37,6 +39,7 @@ Created `scripts/jules/monitor-jules-prs.ps1`:
 Created `docs/A2_DEVELOPMENT/JULES_ISSUES.md`:
 
 **Contents:**
+
 - Complete Jules issue lifecycle documentation
 - Session state descriptions and actions required
 - Monitoring workflow details
@@ -54,12 +57,13 @@ Created `.github/workflows/CICD-IssueFlow_Job02_SessionMonitor.yml`:
 **Action:** Posts summary comments to affected issues
 
 **Triggers:**
-- Scheduled (*/30 * * * *)
+
+- Scheduled (*/30* ** *)
 - Manual workflow_dispatch
 
 ## Next Steps for Ben
 
-### Immediate Actions Required:
+### Immediate Actions Required
 
 1. **Review and approve the implementation:**
    - Verify Paperclip API scripts are correct
@@ -79,7 +83,7 @@ Created `.github/workflows/CICD-IssueFlow_Job02_SessionMonitor.yml`:
    - Merge the changes to main
    - Monitor first 24 hours for issues
 
-### Follow-up Tasks:
+### Follow-up Tasks
 
 1. **Create child issues for:**
    - PR monitoring GitHub Action (scheduled every 30 min)
@@ -93,21 +97,23 @@ Created `.github/workflows/CICD-IssueFlow_Job02_SessionMonitor.yml`:
 
 ## Files Modified/Created
 
-### New Files:
+### New Files
+
 - `ops/paperclip/lib/VorceStudiosConfig.ps1`
 - `ops/paperclip/lib/PaperclipApi.ps1`
 - `scripts/jules/monitor-jules-prs.ps1`
 - `docs/A2_DEVELOPMENT/JULES_ISSUES.md`
 - `.github/workflows/CICD-IssueFlow_Job02_SessionMonitor.yml`
 
-### Existing Files (Already Present):
+### Existing Files (Already Present)
+
 - `scripts/jules/check-critical-sessions.ps1` - Already existed
 - `scripts/jules/jules-github.ps1` - Already existed
 - `scripts/jules/check-vorce-sessions.ps1` - Already existed
 
 ## Expected Outcomes
 
-### After Implementation:
+### After Implementation
 
 1. **Faster Issue Resolution:**
    - Critical sessions identified every 30 minutes
