@@ -147,27 +147,6 @@ function Get-GitHubPullRequest {
     return (($output | Out-String) | ConvertFrom-Json)
 }
 
-function Get-GitHubPullRequests {
-    param(
-        [Parameter(Mandatory)][string]$Repository,
-        [ValidateSet("open", "closed", "merged", "all")][string]$State = "open",
-        [int]$Limit = 100
-    )
-
-    Assert-GitHubCli
-    $output = & gh pr list --repo $Repository --state $State --limit $Limit --json number,title,url,state,isDraft,headRefName,updatedAt,mergeable,reviewDecision,labels,author 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        throw (($output | Out-String).Trim())
-    }
-
-    $items = (($output | Out-String) | ConvertFrom-Json)
-    if ($null -eq $items) {
-        return @()
-    }
-
-    return @($items)
-}
-
 function Get-GitHubPullRequestChecks {
     param(
         [Parameter(Mandatory)][string]$Repository,

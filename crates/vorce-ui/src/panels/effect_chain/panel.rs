@@ -27,9 +27,6 @@ pub struct EffectChainPanel {
     /// Preset search query
     preset_search: String,
 
-    /// Lowercase cached preset search query
-    preset_search_lower: Option<String>,
-
     /// Available presets
     presets: Vec<PresetEntry>,
 
@@ -49,7 +46,6 @@ impl EffectChainPanel {
             show_add_menu: false,
             show_preset_browser: false,
             preset_search: String::new(),
-            preset_search_lower: None,
             presets: Vec::new(),
             dragging_effect: None,
             save_preset_name: String::new(),
@@ -427,14 +423,10 @@ impl EffectChainPanel {
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
                     ui.label("🔍");
-                    let preset_search_response = ui.add(
+                    ui.add(
                         egui::TextEdit::singleline(&mut self.preset_search)
                             .hint_text(locale.t("effect-search")),
                     );
-                    if preset_search_response.changed() {
-                        self.preset_search_lower = (!self.preset_search.is_empty())
-                            .then(|| self.preset_search.to_lowercase());
-                    }
                 });
                 ui.separator();
                 egui::Frame::default()
@@ -444,8 +436,10 @@ impl EffectChainPanel {
                     .inner_margin(4.0)
                     .show(ui, |ui| {
                         egui::ScrollArea::vertical().max_height(200.0).show(ui, |ui| {
+                            let search_lower = (!self.preset_search.is_empty())
+                                .then(|| self.preset_search.to_lowercase());
                             for preset in &self.presets {
-                                if let Some(search) = self.preset_search_lower.as_deref() {
+                                if let Some(search) = &search_lower {
                                     if !preset.name_lower.contains(search) {
                                         continue;
                                     }

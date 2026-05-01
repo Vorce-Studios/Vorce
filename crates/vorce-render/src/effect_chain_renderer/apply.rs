@@ -128,7 +128,6 @@ impl EffectChainRenderer {
 
         // We need to handle this differently to avoid borrow checker issues
         // by not holding mutable borrow of ping_pong across the loop
-
         let mut use_input = true;
 
         for (i, effect) in enabled_effects.iter().enumerate() {
@@ -306,11 +305,12 @@ impl EffectChainRenderer {
             let current_input = if use_input {
                 input_view.clone()
             } else {
-                let Some(ping_pong) = self.ping_pong.as_ref() else {
-                    tracing::error!("PingPong buffer missing during effect chain render");
+                if let Some(ping_pong) = self.ping_pong.as_ref() {
+                    ping_pong.current_view().clone()
+                } else {
+                    tracing::warn!("Ping-pong buffer not available in effect chain");
                     return;
-                };
-                ping_pong.current_view().clone()
+                }
             };
 
             // Create bind groups
@@ -338,11 +338,12 @@ impl EffectChainRenderer {
             let render_target = if is_last {
                 output_view
             } else {
-                let Some(ping_pong) = self.ping_pong.as_ref() else {
-                    tracing::error!("PingPong buffer missing during effect chain render");
+                if let Some(ping_pong) = self.ping_pong.as_ref() {
+                    ping_pong.next_view()
+                } else {
+                    tracing::warn!("Ping-pong buffer not available in effect chain");
                     return;
-                };
-                ping_pong.next_view()
+                }
             };
 
             if let EffectType::ShaderGraph(graph_id) = effect.effect_type {

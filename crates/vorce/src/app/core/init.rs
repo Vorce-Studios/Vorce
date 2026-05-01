@@ -222,13 +222,13 @@ impl App {
             ui_state,
             backend,
             texture_pool: std::sync::Arc::new(texture_pool),
-            _compositor: compositor,
+            compositor,
             effect_chain_renderer,
             preview_effect_chain_renderer,
             mesh_renderer,
             mesh_buffer_cache,
             _quad_renderer: quad_renderer,
-            _composite_texture: composite_texture,
+            composite_texture,
             layer_ping_pong,
             state,
             history: vorce_core::History::default(),
@@ -277,6 +277,8 @@ impl App {
             ndi_senders: std::collections::HashMap::new(),
             #[cfg(feature = "ndi")]
             ndi_readbacks: std::collections::HashMap::new(),
+            #[cfg(feature = "ndi")]
+            ndi_offscreen_textures: std::collections::HashMap::new(),
 
             output_assignments: std::collections::HashMap::new(),
             shader_graph_manager: vorce_render::ShaderGraphManager::new(),
@@ -403,7 +405,7 @@ impl App {
         // --- Reconcile Output IDs ---
         let valid_outputs: HashMap<String, u64> =
             state.output_manager.outputs().iter().map(|o| (o.name.clone(), o.id)).collect();
-        let valid_ids: rustc_hash::FxHashSet<u64> = valid_outputs.values().cloned().collect();
+        let valid_ids: Vec<u64> = valid_outputs.values().cloned().collect();
 
         let mut fixed_count = 0;
         for module in state.module_manager_mut().modules_mut() {
@@ -430,7 +432,7 @@ impl App {
         }
 
         // --- Ensure Output Windows exist ---
-        let existing_output_ids: rustc_hash::FxHashSet<u64> =
+        let existing_output_ids: std::collections::HashSet<u64> =
             state.output_manager.outputs().iter().map(|o| o.id).collect();
         let mut missing_outputs = Vec::new();
         for module in state.module_manager.modules() {

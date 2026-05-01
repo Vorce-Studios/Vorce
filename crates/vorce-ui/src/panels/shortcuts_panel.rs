@@ -16,6 +16,7 @@ pub struct ShortcutsPanel {
     conflict_map: Vec<bool>,
     show_conflict_warning: bool,
     search_filter: String,
+    // Performance Boost: Cache the lowercased search query to avoid heap allocations per frame
     search_filter_lower: Option<String>,
 }
 
@@ -54,6 +55,7 @@ impl ShortcutsPanel {
                     key_bindings.reset_to_defaults();
                     self.detect_conflicts(key_bindings);
                     self.search_filter.clear();
+                    self.search_filter_lower = None;
                 }
             });
         });
@@ -63,13 +65,14 @@ impl ShortcutsPanel {
         // --- Search Bar ---
         ui.horizontal(|ui| {
             ui.label("🔍");
-            let text_edit_response = ui.add(
+            let response = ui.add(
                 TextEdit::singleline(&mut self.search_filter).hint_text("Search shortcuts..."),
             );
-            if text_edit_response.changed() {
+            if response.changed() {
                 self.search_filter_lower =
                     (!self.search_filter.is_empty()).then(|| self.search_filter.to_lowercase());
             }
+
             if !self.search_filter.is_empty()
                 && ui.button("✖").on_hover_text("Clear Search").clicked()
             {
@@ -89,10 +92,11 @@ impl ShortcutsPanel {
             .iter()
             .enumerate()
             .filter(|(_, s)| {
-                let Some(f) = self.search_filter_lower.as_deref() else {
+                let Some(filter_lower) = &self.search_filter_lower else {
                     return true;
                 };
-                s.description_lower.contains(f) || s.shortcut_str_lower.contains(f)
+                s.description_lower.contains(filter_lower)
+                    || s.shortcut_str_lower.contains(filter_lower)
             })
             .map(|(i, _)| i)
             .collect();
