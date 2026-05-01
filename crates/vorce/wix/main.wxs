@@ -36,6 +36,9 @@
                     <Component Id='swscale' Guid='*' Win64='yes'>
                         <File Id='swscale' Name='swscale-8.dll' Source='$(var.CargoTargetBinDir)\swscale-8.dll' KeyPath='yes' />
                     </Component>
+                    <Component Id='ndi_lib' Guid='*' Win64='yes'>
+                        <File Id='ndi_lib' Name='Processing.NDI.Lib.x64.dll' Source='$(var.CargoTargetBinDir)\Processing.NDI.Lib.x64.dll' KeyPath='yes' />
+                    </Component>
                 </Directory>
             </Directory>
             <Directory Id="ProgramMenuFolder" Name="Programs">
@@ -53,6 +56,7 @@
             <ComponentRef Id='avutil' />
             <ComponentRef Id='swresample' />
             <ComponentRef Id='swscale' />
+            <ComponentRef Id='ndi_lib' />
         </Feature>
         <Component Id="ProgramMenuDir" Directory="ProgramMenuDir" Guid="*" Win64='yes'>
             <RemoveFolder Id='ProgramMenuDir' On='uninstall' />
