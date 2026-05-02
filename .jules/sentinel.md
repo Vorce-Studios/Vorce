@@ -20,3 +20,11 @@
 **Lektion:** CORS-Policies sollten niemals standardmäßig oder durch einfache Konfiguration Wildcards erlauben, insbesondere bei APIs, die sensitive Aktionen ausführen können.
 
 **Prävention:** Wildcards in CORS-Einstellungen sollten im Code explizit abgefangen und ignoriert werden. Erlaubte Origins müssen als spezifische, vertrauenswürdige Domains konfiguriert werden.
+
+## 2025-05-24 - Potential Null Pointer Dereference in HAP player
+
+**Schwachstelle:** In `crates/vorce-media/src/hap_player.rs` wurde der von `ffmpeg_next::codec::Parameters::as_ptr()` zurückgegebene Rohzeiger ohne vorherige Null-Prüfung dereferenziert.
+
+**Lektion:** Rohzeiger aus externen Bibliotheken (wie FFmpeg) müssen immer auf Null geprüft werden, bevor sie in einem `unsafe`-Block dereferenziert werden, um Abstürze oder undefiniertes Verhalten zu vermeiden.
+
+**Prävention:** Vor dem Zugriff auf Felder eines durch einen Rohzeiger repräsentierten C-Structs muss eine explizite Prüfung mit `.is_null()` durchgeführt werden. Schlägt diese fehl, sollte der Fehler sauber über den Ergebnistyp (`Result`) zurückgegeben werden.

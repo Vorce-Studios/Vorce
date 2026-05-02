@@ -62,8 +62,14 @@ impl HapVideoDecoder {
 
         // Get video parameters
         let codec_par = video_stream.parameters();
-        let width = unsafe { (*codec_par.as_ptr()).width as u32 };
-        let height = unsafe { (*codec_par.as_ptr()).height as u32 };
+        let codec_par_ptr = codec_par.as_ptr();
+        if codec_par_ptr.is_null() {
+            return Err(MediaError::DecoderError(
+                "Failed to get codec parameters".to_string(),
+            ));
+        }
+        let width = unsafe { (*codec_par_ptr).width as u32 };
+        let height = unsafe { (*codec_par_ptr).height as u32 };
 
         // Get frame rate
         let fps = video_stream.avg_frame_rate();
@@ -77,7 +83,7 @@ impl HapVideoDecoder {
 
         // Check codec - HAP has codec_id FOURCC 'Hap1', 'Hap5', 'HapY', etc.
         let codec_name = unsafe {
-            let codec_id = (*codec_par.as_ptr()).codec_id;
+            let codec_id = (*codec_par_ptr).codec_id;
             std::ffi::CStr::from_ptr(ffmpeg::ffi::avcodec_get_name(codec_id))
                 .to_string_lossy()
                 .to_string()
