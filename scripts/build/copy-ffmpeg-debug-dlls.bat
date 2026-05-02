@@ -27,6 +27,7 @@ copy /Y "%VCPKG_DEBUG_BIN%\avutil-59.dll" "%TARGET_DIR%" >nul 2>&1
 copy /Y "%VCPKG_DEBUG_BIN%\swresample-5.dll" "%TARGET_DIR%" >nul 2>&1
 copy /Y "%VCPKG_DEBUG_BIN%\swscale-8.dll" "%TARGET_DIR%" >nul 2>&1
 copy /Y "%VCPKG_DEBUG_BIN%\pkgconf-7.dll" "%TARGET_DIR%" >nul 2>&1
+copy /Y "%VCPKG_DEBUG_BIN%\postproc-58.dll" "%TARGET_DIR%" >nul 2>&1
 
 echo Copying NDI DLL to %TARGET_DIR%...
 if exist "C:\Program Files\NDI\NDI 6 Runtime\v6\Processing.NDI.Lib.x64.dll" (
