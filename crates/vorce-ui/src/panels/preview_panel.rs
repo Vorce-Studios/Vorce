@@ -175,7 +175,7 @@ impl PreviewPanel {
                                             ui.painter().rect_filled(
                                                 rect,
                                                 2.0,
-                                                ui.visuals().extreme_bg_color,
+                                                egui::Color32::from_gray(40),
                                             );
 
                                             // Draw "no signal" text
@@ -184,7 +184,7 @@ impl PreviewPanel {
                                                 egui::Align2::CENTER_CENTER,
                                                 "No Signal",
                                                 egui::FontId::proportional(12.0),
-                                                ui.visuals().text_color().gamma_multiply(0.5),
+                                                egui::Color32::GRAY,
                                             );
                                         }
 

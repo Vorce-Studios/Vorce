@@ -135,16 +135,10 @@ impl TexturePool {
         // Slow path: create from handle
         let (view, last_used) = {
             let textures = self.textures.read();
-            if let Some(handle) = textures.get(name) {
-                handle.mark_used(self.start_time);
-                (Arc::new(handle.create_view()), handle.last_used.clone())
-            } else {
-                tracing::error!(
-                    "Texture '{}' not found in pool. Returning empty dummy texture.",
-                    name
-                );
-                panic!("Texture '{}' not found in pool.", name);
-            }
+            let handle = textures.get(name).expect("Texture not found in pool");
+
+            handle.mark_used(self.start_time);
+            (Arc::new(handle.create_view()), handle.last_used.clone())
         };
 
         // Update cache on slow path
@@ -291,11 +285,7 @@ impl TexturePool {
                 );
                 let textures = self.textures.read();
                 // Safe fallback: texture was just created above.
-                if let Some(h) = textures.get(name).cloned() {
-                    h
-                } else {
-                    unreachable!("texture must exist after creation");
-                }
+                textures.get(name).cloned().expect("texture must exist after creation")
             }
         };
 

@@ -20,4 +20,11 @@ copy /Y "%VCPKG_BIN%\swscale-8.dll" "%TARGET_DIR%\" >nul 2>&1
 copy /Y "%VCPKG_BIN%\pkgconf-7.dll" "%TARGET_DIR%\" >nul 2>&1
 copy /Y "%VCPKG_BIN%\postproc-58.dll" "%TARGET_DIR%\" >nul 2>&1
 
+echo Copying NDI DLL to %TARGET_DIR%...
+if exist "C:\Program Files\NDI\NDI 6 Runtime\v6\Processing.NDI.Lib.x64.dll" (
+    copy /Y "C:\Program Files\NDI\NDI 6 Runtime\v6\Processing.NDI.Lib.x64.dll" "%TARGET_DIR%\" >nul 2>&1
+) else if exist "C:\Program Files\NDI\NDI 6 SDK\Bin\x64\Processing.NDI.Lib.x64.dll" (
+    copy /Y "C:\Program Files\NDI\NDI 6 SDK\Bin\x64\Processing.NDI.Lib.x64.dll" "%TARGET_DIR%\" >nul 2>&1
+)
+
 echo Done! All FFmpeg DLLs copied.

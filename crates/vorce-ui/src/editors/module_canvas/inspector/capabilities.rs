@@ -60,33 +60,27 @@ pub fn render_unsupported_warning(ui: &mut egui::Ui, text: &str) {
     );
 }
 
-/// Renders a standardized runtime active info label for UI gating.
-pub fn render_runtime_active_info(ui: &mut egui::Ui) {
-    ui.label(
-        egui::RichText::new("[✓] Runtime Active").color(crate::theme::colors::MINT_ACCENT).small(),
-    );
-}
-
 /// Helper that checks by variant enum without needing the data
 pub fn is_source_type_enum_supported(
     is_shader: bool,
     is_live_input: bool,
-    #[allow(unused_variables)] is_ndi: bool,
+    is_ndi: bool,
     is_spout: bool,
 ) -> bool {
     // Currently LiveInput, Shader, and SpoutInput
     // are not fully end-to-end supported in the pipeline.
-    !(is_shader || is_live_input || is_spout)
+    // NDI Input is supported.
+    is_ndi || !(is_shader || is_live_input || is_spout)
 }
 
 /// Helper that checks by variant enum without needing the data
 pub fn is_output_type_enum_supported(
-    is_ndi: bool,
+    #[allow(unused_variables)] is_ndi: bool,
     #[allow(unused_variables)] is_spout: bool,
     #[allow(unused_variables)] is_syphon: bool,
 ) -> bool {
     // Currently Spout/Syphon outputs are not fully end-to-end supported in the pipeline
-    // as per the warning message in output.rs.
+    // as per the warning message in output.rs. NDI is supported.
     let _ = is_spout;
     let _ = is_syphon;
     is_ndi
