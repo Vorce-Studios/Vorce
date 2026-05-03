@@ -204,17 +204,17 @@ pub fn draw_part_with_delete(
     let icon_galley = ui.painter().layout_no_wrap(
         icon.to_string(),
         egui::FontId::proportional(16.0 * canvas.zoom),
-        Color32::WHITE,
+        ui.visuals().text_color(),
     );
     painter.galley(
         Pos2::new(cursor_x, center_y - icon_galley.size().y / 2.0),
         icon_galley.clone(),
-        Color32::WHITE,
+        ui.visuals().text_color(),
     );
     cursor_x += icon_galley.size().x + 6.0 * canvas.zoom;
 
     let category_text = category.to_uppercase();
-    let category_color = Color32::from_white_alpha(160);
+    let category_color = ui.visuals().text_color().gamma_multiply(160.0 / 255.0);
     let category_galley = ui.painter().layout_no_wrap(
         category_text,
         egui::FontId::proportional(10.0 * canvas.zoom),
@@ -230,12 +230,12 @@ pub fn draw_part_with_delete(
     let name_galley = ui.painter().layout_no_wrap(
         name.to_string(),
         egui::FontId::proportional(14.0 * canvas.zoom),
-        Color32::WHITE,
+        ui.visuals().text_color(),
     );
     painter.galley(
         Pos2::new(cursor_x, center_y - name_galley.size().y / 2.0),
         name_galley,
-        Color32::WHITE,
+        ui.visuals().text_color(),
     );
 
     let delete_button_rect = get_delete_button_rect(canvas, rect);
@@ -269,7 +269,7 @@ pub fn draw_part_with_delete(
             egui::Align2::CENTER_CENTER,
             property_text,
             egui::FontId::proportional(10.0 * canvas.zoom),
-            Color32::from_gray(180),
+            ui.visuals().text_color().gamma_multiply(180.0 / 255.0),
         );
     }
 
@@ -478,7 +478,7 @@ pub fn draw_part_with_delete(
             egui::Align2::LEFT_CENTER,
             &display_name,
             egui::FontId::proportional(11.0 * canvas.zoom),
-            Color32::from_gray(230),
+            ui.visuals().text_color(),
         );
     }
 
@@ -525,7 +525,7 @@ pub fn draw_part_with_delete(
             egui::Align2::RIGHT_CENTER,
             &display_name,
             egui::FontId::proportional(11.0 * canvas.zoom),
-            Color32::from_gray(230),
+            ui.visuals().text_color(),
         );
     }
 }

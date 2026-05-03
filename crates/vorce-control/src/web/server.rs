@@ -139,6 +139,7 @@ impl WebServer {
                 .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
                 .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
 
+            // Filter out wildcard origins to prevent overly permissive CORS policies
             let origins: Result<Vec<HeaderValue>> = self
                 .config
                 .allowed_origins
@@ -153,7 +154,7 @@ impl WebServer {
 
             let parsed_origins = origins?;
             if parsed_origins.is_empty() {
-                // Fallback: If list is empty after filtering out wildcards, allow nothing by passing an empty list
+                // Fallback: If list is empty after filtering out wildcards, allow nothing
                 app.layer(cors_layer.allow_origin(Vec::<HeaderValue>::new()))
             } else {
                 app.layer(cors_layer.allow_origin(parsed_origins))

@@ -245,6 +245,12 @@ pub struct App {
     #[cfg(feature = "ndi")]
     pub ndi_senders:
         std::collections::HashMap<vorce_core::module::ModulePartId, vorce_io::ndi::NdiSender>,
+    /// NDI Offscreen textures for virtual NDI outputs
+    #[cfg(feature = "ndi")]
+    pub ndi_offscreen_textures: std::collections::HashMap<
+        vorce_core::module::ModulePartId,
+        (wgpu::Texture, std::sync::Arc<wgpu::TextureView>),
+    >,
     /// NDI Readback buffers (OutputID -> (Buffer, MappedState))
     #[cfg(feature = "ndi")]
     pub ndi_readbacks: std::collections::HashMap<

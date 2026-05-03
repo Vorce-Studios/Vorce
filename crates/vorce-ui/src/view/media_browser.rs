@@ -102,6 +102,8 @@ pub struct MediaBrowser {
     entries: Vec<MediaEntry>,
     /// Search query
     search_query: String,
+    /// Cached lowercased search query to prevent per-frame allocation
+    search_query_lower: Option<String>,
     /// Filter by type
     filter_type: Option<MediaType>,
     /// View mode
@@ -191,6 +193,7 @@ impl MediaBrowser {
             path_input: path_str,
             entries: Vec::new(),
             search_query: String::new(),
+            search_query_lower: None,
             filter_type: None,
             view_mode: ViewMode::Grid,
             thumbnail_size: 80.0, // Reduced from 120 for compact view
@@ -402,12 +405,6 @@ impl MediaBrowser {
 
     /// Get filtered and searched entries
     fn filtered_entries(&self) -> Vec<(usize, &MediaEntry)> {
-        let query = if !self.search_query.is_empty() {
-            Some(self.search_query.to_lowercase())
-        } else {
-            None
-        };
-
         self.entries
             .iter()
             .enumerate()
@@ -420,7 +417,7 @@ impl MediaBrowser {
                 }
 
                 // Filter by search query
-                if let Some(q) = &query {
+                if let Some(q) = &self.search_query_lower {
                     if !entry.name_lower.contains(q)
                         && !entry.tags_lower.iter().any(|t| t.contains(q))
                     {
@@ -612,7 +609,11 @@ impl MediaBrowser {
                 ui.label("🔍");
                 let search_response = ui.text_edit_singleline(&mut self.search_query);
                 if search_response.changed() {
-                    // Search query changed
+                    self.search_query_lower = if self.search_query.is_empty() {
+                        None
+                    } else {
+                        Some(self.search_query.to_lowercase())
+                    };
                 }
 
                 ui.separator();
