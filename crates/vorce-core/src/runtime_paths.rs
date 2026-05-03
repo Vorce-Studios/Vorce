@@ -120,6 +120,51 @@ fn push_unique_ancestors_with_child(candidates: &mut Vec<PathBuf>, start: &Path,
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+    use tempfile::tempdir;
+
+    static ENV_MUTEX: Mutex<()> = Mutex::new(());
+
+    struct EnvGuard {
+        var: String,
+        original: Option<std::ffi::OsString>,
+    }
+
+    impl EnvGuard {
+        fn set(var: &str, value: &Path) -> Self {
+            let original = env::var_os(var);
+            env::set_var(var, value);
+            Self { var: var.to_string(), original }
+        }
+    }
+
+    impl Drop for EnvGuard {
+        fn drop(&mut self) {
+            if let Some(ref val) = self.original {
+                env::set_var(&self.var, val);
+            } else {
+                env::remove_var(&self.var);
+            }
+        }
+    }
+
+    #[test]
+    fn resolves_assets_dir_from_env() {
+        let _lock = ENV_MUTEX.lock().unwrap();
+        let dir = tempdir().unwrap();
+        let _guard = EnvGuard::set(ASSETS_ENV, dir.path());
+
+        assert_eq!(assets_dir(), dir.path());
+    }
+
+    #[test]
+    fn resolves_resources_dir_from_env() {
+        let _lock = ENV_MUTEX.lock().unwrap();
+        let dir = tempdir().unwrap();
+        let _guard = EnvGuard::set(RESOURCES_ENV, dir.path());
+
+        assert_eq!(resources_dir(), dir.path());
+    }
 
     #[test]
     fn detects_macos_bundle_resources_dir() {

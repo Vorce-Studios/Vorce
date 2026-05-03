@@ -84,14 +84,14 @@ pub fn check_module_integrity(module: &VorceModule) -> Vec<ModuleIssue> {
             match source_type {
                 SourceType::MediaFile { path, .. }
                 | SourceType::VideoUni { path, .. }
-                | SourceType::ImageUni { path, .. } => {
-                    if path.is_empty() {
-                        issues.push(ModuleIssue {
-                            severity: IssueSeverity::Warning,
-                            message: "Media source has no file path selected.".to_string(),
-                            part_id: Some(part.id),
-                        });
-                    }
+                | SourceType::ImageUni { path, .. }
+                    if path.is_empty() =>
+                {
+                    issues.push(ModuleIssue {
+                        severity: IssueSeverity::Warning,
+                        message: "Media source has no file path selected.".to_string(),
+                        part_id: Some(part.id),
+                    });
                 }
                 _ => {}
             }
@@ -124,6 +124,7 @@ mod tests {
             connections: vec![],
             playback_mode: ModulePlaybackMode::LoopUntilManualSwitch,
             next_part_id: 1,
+            part_index: Default::default(),
         }
     }
 

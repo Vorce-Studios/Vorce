@@ -33,6 +33,9 @@ pub struct VorceModule {
     pub color: [f32; 4],
     /// List of nodes (parts)
     pub parts: Vec<ModulePart>,
+    /// Cached index for O(1) part lookups
+    #[serde(skip, default)]
+    pub part_index: HashMap<ModulePartId, usize>,
     /// List of wires (connections)
     pub connections: Vec<ModuleConnection>,
     /// How the module plays back
@@ -210,6 +213,7 @@ impl VorceModule {
         part.outputs = outputs;
 
         self.parts.push(part);
+        self.rebuild_part_index();
         id
     }
 
@@ -239,6 +243,7 @@ impl VorceModule {
         part.outputs = outputs;
 
         self.parts.push(part);
+        self.rebuild_part_index();
         id
     }
 
@@ -282,7 +287,7 @@ impl VorceModule {
             let (new_inputs, new_outputs) = part.compute_sockets();
             part.inputs = new_inputs;
             part.outputs = new_outputs;
-            let valid_mappable_inputs: HashSet<usize> =
+            let valid_mappable_inputs: rustc_hash::FxHashSet<usize> =
                 part.schema().inspector.mappable_input_indices.into_iter().collect();
             part.trigger_targets.retain(|socket_idx, _| valid_mappable_inputs.contains(socket_idx));
         }
@@ -294,9 +299,30 @@ impl VorceModule {
         self.update_part_sockets(part_id);
     }
 
+    /// Rebuilds the internal part index map for O(1) lookups.
+    pub fn rebuild_part_index(&mut self) {
+        self.part_index.clear();
+        for (index, part) in self.parts.iter().enumerate() {
+            self.part_index.insert(part.id, index);
+        }
+    }
+
     /// Get a part by ID.
     pub fn part(&self, part_id: ModulePartId) -> Option<&ModulePart> {
-        self.parts.iter().find(|part| part.id == part_id)
+        self.part_index
+            .get(&part_id)
+            .and_then(|&idx| self.parts.get(idx))
+            .or_else(|| self.parts.iter().find(|part| part.id == part_id))
+    }
+
+    /// Get a mutable part by ID.
+    pub fn part_mut(&mut self, part_id: ModulePartId) -> Option<&mut ModulePart> {
+        if let Some(&idx) = self.part_index.get(&part_id) {
+            if idx < self.parts.len() && self.parts[idx].id == part_id {
+                return self.parts.get_mut(idx);
+            }
+        }
+        self.parts.iter_mut().find(|part| part.id == part_id)
     }
 
     /// Validate a connection against the current schema.
@@ -429,7 +455,7 @@ impl VorceModule {
                 report.refreshed_parts += 1;
             }
 
-            let valid_mappable_inputs: HashSet<usize> =
+            let valid_mappable_inputs: rustc_hash::FxHashSet<usize> =
                 part.schema().inspector.mappable_input_indices.into_iter().collect();
             let before_targets = part.trigger_targets.len();
             part.trigger_targets.retain(|socket_idx, _| valid_mappable_inputs.contains(socket_idx));
@@ -472,6 +498,7 @@ impl VorceModule {
         }
 
         self.connections = repaired_connections;
+        self.rebuild_part_index();
         report
     }
 
@@ -490,7 +517,7 @@ impl VorceModule {
                 ndi_enabled,
                 ndi_stream_name,
             }) => {
-                let used_ids: HashSet<u64> = self
+                let used_ids: rustc_hash::FxHashSet<u64> = self
                     .parts
                     .iter()
                     .filter_map(|part| {
@@ -533,7 +560,7 @@ impl VorceModule {
                 mesh,
                 mapping_mode,
             }) => {
-                let used_ids: HashSet<u64> = self
+                let used_ids: rustc_hash::FxHashSet<u64> = self
                     .parts
                     .iter()
                     .filter_map(|part| {

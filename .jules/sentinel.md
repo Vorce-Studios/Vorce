@@ -1,8 +1,3 @@
-## 2025-05-18 - [Fix Wildcard CORS Policy] **Schwachstelle:** `tower_http::cors::Any` allowed a wildcard origin `*` bypassing strict CORS policies. **Lektion:** Insecure default wildcard handling in CORS allowed all origins to access endpoints when they shouldn`t have, which introduces a potential security risk in web endpoints handling control flow. **Prävention:** Use exact origin matching and strict filtering on `allowed_origins` during configuration load rather than relying on wildcard matching tools.
-
-## 2024-05-18 - [NDI Receiver Thread Panic] **Schwachstelle:** format_clone.lock().unwrap() im NDI-Receiver Thread führt zum Absturz des Netzwerk-Threads bei einem PoisonError. **Lektion:** Mutex-Poisoning bei asynchronen Netzwerk/Media-Threads kann Folge-Abstürze provozieren (DoS auf den Video-Stream). **Prävention:** PoisonError explizit mit match oder unwrap_or_else abfangen, um robuste Fehlererholung zu ermöglichen.
-
-
 ## 2025-05-24 - DoS via Option::unwrap() in ffmpeg scaler
 
 **Schwachstelle:** Ein `unwrap()` Aufruf befand sich im Media-Decoder (`crates/vorce-media/src/decoder.rs` auf Zeile 430), wenn die gecachte Skalierungsvariable (`SCALER_CACHE`) zurückgegeben wurde.
@@ -11,13 +6,7 @@
 
 **Prävention:** Optionen und Caches sollten immer mit Pattern Matching oder `if let Some()` / `let Some() = else {}` sicher aufgelöst werden. Wenn der Zustand ungültig ist, sollte ein sauber gekapselter Fehlerwert (wie `MediaError::DecoderError`) zurückgeliefert werden.
 
-
-## 2025-05-24 - DoS via Option::unwrap() in ping-pong buffer
-
-**Schwachstelle:** Ein `unwrap()` Aufruf befand sich in der `apply()` Funktion des Effect Chain Renderers (`crates/vorce-render/src/effect_chain_renderer/apply.rs`), wenn auf den Ping-Pong-Buffer zugegriffen wurde.
-**Lektion:** Wenn `self.ping_pong` aufgrund von Fehlern im Backend (z. B. Out-of-Memory oder invaliden Größen) auf `None` bleibt, führt die Ausführung der Render-Pipeline zum sofortigen Absturz (DoS).
-**Prävention:** Bei kritischen Render-Pfaden müssen Resourcen sicher mit `if let Some()` oder pattern matching entpackt werden. Schlägt dies fehl, kann der Render-Pass sicher übersprungen oder mit einer Warnung abgebrochen werden, ohne die gesamte Applikation zum Absturz zu bringen.
-
+<<<<<<< HEAD
 ## 2025-05-24 - [CRITICAL] Overly Permissive CORS Policy
 
 **Schwachstelle:** Die CORS-Konfiguration erlaubte explizit den Wildcard-Origin `*` (`tower_http::cors::Any`), wenn dieser in der Konfiguration vorhanden war. Dies ermöglichte es beliebigen Webseiten, Anfragen an die Control-API zu stellen.
@@ -26,10 +15,15 @@
 
 **Prävention:** Wildcards in CORS-Einstellungen sollten im Code explizit abgefangen und ignoriert werden. Erlaubte Origins müssen als spezifische, vertrauenswürdige Domains konfiguriert werden.
 
-## 2025-05-24 - Potential Null Pointer Dereference in HAP player
+## 2025-05-24 - DoS via Option::expect() in NDI receiver
 
-**Schwachstelle:** In `crates/vorce-media/src/hap_player.rs` wurde der von `ffmpeg_next::codec::Parameters::as_ptr()` zurückgegebene Rohzeiger ohne vorherige Null-Prüfung dereferenziert.
+**Schwachstelle:** Ein `expect()` Aufruf befand sich im NDI Receiver (`crates/vorce/src/app/actions.rs` in `UIAction::ConnectNdiSource`), wenn das NDI Receiver-Objekt erstellt wurde.
 
-**Lektion:** Rohzeiger aus externen Bibliotheken (wie FFmpeg) müssen immer auf Null geprüft werden, bevor sie in einem `unsafe`-Block dereferenziert werden, um Abstürze oder undefiniertes Verhalten zu vermeiden.
+**Lektion:** Falls das Neu-Anlegen des NDI-Receivers fehlschlägt (z.B. wegen fehlender Bibliotheken oder Ressourcen), stürzt die gesamte Anwendung durch Panic ab (Denial of Service), wenn nur ein neuer NDI-Stream verbunden werden soll.
 
-**Prävention:** Vor dem Zugriff auf Felder eines durch einen Rohzeiger repräsentierten C-Structs muss eine explizite Prüfung mit `.is_null()` durchgeführt werden. Schlägt diese fehl, sollte der Fehler sauber über den Ergebnistyp (`Result`) zurückgegeben werden.
+**Prävention:** Das Erstellen von NDI-Ressourcen sollte immer über sichere `match` oder `if let` Pattern gelöst werden, und bei Fehlschlag stattdessen ein gracefully Error in die Logs geschrieben und die Aktion abgebrochen werden, ohne die Applikation abstürzen zu lassen.
+
+## 2026-04-25 - DoS via Option::unwrap() in EffectChainRenderer
+**Schwachstelle:** Ein `unwrap()` Aufruf befand sich im `EffectChainRenderer` (`crates/vorce-render/src/effect_chain_renderer/apply.rs` auf Zeilen 309 und 338), beim Zugriff auf den `ping_pong` Puffer.
+**Lektion:** Falls der `ping_pong` Puffer aus irgendeinem Grund zur Laufzeit fehlt, führt dies zu einem direkten Absturz durch Panic (Denial of Service) beim Rendering.
+**Prävention:** Caches oder Buffer, die lazy erzeugt werden (wie Option<PingPongBuffer>), sollten immer mit `if let Some()` oder `let Some() = ... else { return; }` sicher aufgelöst werden, statt mit `unwrap()`.

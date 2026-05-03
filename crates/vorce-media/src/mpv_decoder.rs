@@ -16,6 +16,26 @@ use libmpv2::Mpv;
 ///
 /// Uses libmpv2 for video decoding.
 /// Uses screenshot-raw command for frame extraction to maintain thread safety and compatibility.
+
+fn validate_screenshot_buffer(width: u32, height: u32, actual_size: usize) -> Result<()> {
+    let expected_size =
+        width.checked_mul(height).and_then(|h| h.checked_mul(4)).ok_or_else(|| {
+            MediaError::DecoderError(
+                "Frame dimensions too large to calculate expected size".to_string(),
+            )
+        })? as usize;
+
+    if actual_size < expected_size {
+        warn!(
+            "Captured frame data too small. Expected {} bytes, got {}",
+            expected_size, actual_size
+        );
+        return Err(MediaError::DecoderError("Captured frame data too small".to_string()));
+    }
+
+    Ok(())
+}
+
 pub struct MpvDecoder {
     mpv: Mpv,
     path: PathBuf,
@@ -81,12 +101,19 @@ impl MpvDecoder {
         let mut actual_width = self.width;
         let mut actual_height = self.height;
 
+        // SAFETY: We interact with the libmpv C-API. We ensure `cmd_sc` and `cmd_sc_arg` are valid CStrings,
+        // handle the node safely via checking formats before accessing union fields,
+        // explicitly check returned pointers for null before creating Rust slices, and call `mpv_free_node_contents` to avoid memory leaks.
         unsafe {
             use libmpv2_sys::*;
             let handle = self.mpv.ctx;
 
-            let cmd_sc = std::ffi::CString::new("screenshot-raw").unwrap();
-            let cmd_sc_arg = std::ffi::CString::new("video").unwrap();
+            let cmd_sc = std::ffi::CString::new("screenshot-raw").map_err(|e| {
+                MediaError::DecoderError(format!("NulError in MPV screenshot command: {}", e))
+            })?;
+            let cmd_sc_arg = std::ffi::CString::new("video").map_err(|e| {
+                MediaError::DecoderError(format!("NulError in MPV screenshot argument: {}", e))
+            })?;
 
             let mut cmd_screenshot = [cmd_sc.as_ptr(), cmd_sc_arg.as_ptr(), std::ptr::null()];
 
@@ -97,13 +124,25 @@ impl MpvDecoder {
 
             if res >= 0 && node.format == mpv_format_MPV_FORMAT_NODE_MAP {
                 let map = node.u.list;
+                if map.is_null() || (*map).keys.is_null() || (*map).values.is_null() {
+                    return Err(MediaError::DecoderError(
+                        "Received null pointers from MPV node map".to_string(),
+                    ));
+                }
+
                 let keys = std::slice::from_raw_parts((*map).keys, (*map).num as usize);
                 let vals = std::slice::from_raw_parts((*map).values, (*map).num as usize);
 
                 for i in 0..(*map).num as usize {
+                    if keys[i].is_null() {
+                        continue;
+                    }
                     let key = std::ffi::CStr::from_ptr(keys[i]).to_str().unwrap_or("");
                     if key == "data" && vals[i].format == mpv_format_MPV_FORMAT_BYTE_ARRAY {
                         let ba = vals[i].u.ba;
+                        if ba.is_null() || (*ba).data.is_null() {
+                            continue;
+                        }
                         let data_slice = std::slice::from_raw_parts(
                             (*ba).data as *const u8,
                             (*ba).size as usize,
@@ -135,15 +174,8 @@ impl MpvDecoder {
             ));
         }
 
-        // Validate data size (BGRA or RGBA expected: width * height * 4)
-        if extracted_data.len() < (actual_width * actual_height * 4) as usize {
-            warn!(
-                "Captured frame data too small. Expected {} bytes, got {}",
-                actual_width * actual_height * 4,
-                extracted_data.len()
-            );
-            return Err(MediaError::DecoderError("Captured frame data too small".to_string()));
-        }
+        // Validate data size
+        validate_screenshot_buffer(actual_width, actual_height, extracted_data.len())?;
 
         // screenshot-raw typically returns BGRA or BGR0 format when no format is forced.
         // We will swap R and B channels to output standard RGBA

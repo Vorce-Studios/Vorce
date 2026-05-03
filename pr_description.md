@@ -1,7 +1,15 @@
-## 🛡️ Sicherheits-Update
+## Verlinktes Issue
 
-**🚨 Schweregrad:** MITTEL
-**💡 Schwachstelle:** In `crates/vorce-control/src/web/server.rs` erlaubte die Verwendung von `tower_http::cors::Any` zusammen mit einem Wildcard-Origin (`*`) potenziell unsichere Cross-Origin-Anfragen. Dies ist problematisch für einen Kontroll-Server, da es externe Webseiten ermächtigen könnte, unerlaubt auf die API von Vorce zuzugreifen (CORS Bypass / CSRF-ähnliches Risiko bei Authentifizierungslücken).
-**🎯 Impact:** Bösartige Webseiten könnten im Browser des Nutzers API-Aufrufe gegen Vorce absetzen, wenn der Nutzer die Vorce Web-Oberfläche nutzt und der Server so konfiguriert wurde, dass er `*` als Origin akzeptiert.
-**🔧 Fix:** Die Verwendung von `Any` wurde entfernt. Stattdessen werden Wildcard-Einträge in `allowed_origins` beim Konfigurieren des Webservers herausgefiltert und die explizit angegebenen Origins streng geparst und der `CorsLayer` übergeben. Dadurch wird verhindert, dass versehentlich ein Wildcard-CORS konfiguriert wird.
-**✅ Verifikation:** Alle CI Tests und Pre-Commit-Skripte (`scripts/jules/pre-pr-checks.sh`) wurden erfolgreich lokal durchlaufen und validiert. `cargo check` und `cargo test` für `vorce-control` waren erfolgreich.
+Fixes #370
+
+🎯 **What:**
+Enabled NDI input and output capabilities in the module inspector UI and updated their runtime status.
+
+💡 **Why:**
+As requested in Issue #370 (and Paperclip VOR-38), NdiOutput is now considered active and needs to reflect its proper status in the UI so that users know it's fully supported instead of experimental.
+
+✅ **Verification:**
+Updated existing unit tests for `is_source_type_enum_supported` and `is_output_type_enum_supported` to expect `true` for NDI, and verified all tests pass via `cargo test -p vorce-ui`.
+
+✨ **Result:**
+The inspector UI for NDI Input and Output nodes now displays a positive "Runtime Active" indicator in MINT_ACCENT color instead of an unsupported warning, and capabilities correctly reflect NDI as a supported format.

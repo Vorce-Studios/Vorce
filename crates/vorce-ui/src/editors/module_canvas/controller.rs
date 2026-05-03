@@ -42,10 +42,14 @@ pub fn safe_delete_selection(canvas: &mut ModuleCanvas, module: &mut VorceModule
 
     let mut actions = Vec::new();
     let parts_to_delete: Vec<ModulePartId> = canvas.selected_parts.clone();
+    let parts_to_delete_set: rustc_hash::FxHashSet<ModulePartId> =
+        parts_to_delete.iter().copied().collect();
     let mut connections_to_delete = Vec::new();
 
     for conn in module.connections.iter() {
-        if parts_to_delete.contains(&conn.from_part) || parts_to_delete.contains(&conn.to_part) {
+        if parts_to_delete_set.contains(&conn.from_part)
+            || parts_to_delete_set.contains(&conn.to_part)
+        {
             connections_to_delete.push(conn.clone());
         }
     }
@@ -63,14 +67,14 @@ pub fn safe_delete_selection(canvas: &mut ModuleCanvas, module: &mut VorceModule
     let batch_action = CanvasAction::Batch(actions);
 
     module.connections.retain(|c| {
-        !parts_to_delete.contains(&c.from_part) && !parts_to_delete.contains(&c.to_part)
+        !parts_to_delete_set.contains(&c.from_part) && !parts_to_delete_set.contains(&c.to_part)
     });
 
-    module.parts.retain(|p| !parts_to_delete.contains(&p.id));
+    module.parts.retain(|p| !parts_to_delete_set.contains(&p.id));
 
     canvas.undo_stack.push(batch_action);
     canvas.redo_stack.clear();
-    canvas.selected_parts.clear();
+    canvas.clear_selection();
 }
 
 pub fn apply_undo_action(module: &mut VorceModule, action: &CanvasAction) {
@@ -105,6 +109,13 @@ pub fn apply_undo_action(module: &mut VorceModule, action: &CanvasAction) {
         CanvasAction::Batch(actions) => {
             for action in actions.iter().rev() {
                 apply_undo_action(module, action);
+            }
+        }
+        CanvasAction::MoveSelection { part_positions } => {
+            for (part_id, old_pos, _) in part_positions {
+                if let Some(part) = module.parts.iter_mut().find(|p| p.id == *part_id) {
+                    part.position = *old_pos;
+                }
             }
         }
     }
@@ -142,6 +153,13 @@ pub fn apply_redo_action(module: &mut VorceModule, action: &CanvasAction) {
         CanvasAction::Batch(actions) => {
             for action in actions.iter() {
                 apply_redo_action(module, action);
+            }
+        }
+        CanvasAction::MoveSelection { part_positions } => {
+            for (part_id, _, new_pos) in part_positions {
+                if let Some(part) = module.parts.iter_mut().find(|p| p.id == *part_id) {
+                    part.position = *new_pos;
+                }
             }
         }
     }

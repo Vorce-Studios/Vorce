@@ -33,14 +33,13 @@ impl Default for EffectParams {
 }
 
 /// Ping-pong buffer for multi-pass rendering
-#[allow(dead_code)]
 pub(crate) struct PingPongBuffer {
+    #[allow(dead_code)]
     pub(crate) textures: [wgpu::Texture; 2],
     pub(crate) views: [Arc<wgpu::TextureView>; 2],
     pub(crate) current: usize,
 }
 
-#[allow(dead_code)]
 impl PingPongBuffer {
     pub(crate) fn new(
         device: &wgpu::Device,
