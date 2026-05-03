@@ -95,7 +95,7 @@ impl ToastManager {
                                     ToastType::Error => "✖",
                                 };
                                 ui.label(egui::RichText::new(icon).color(color).strong());
-                                ui.label(egui::RichText::new(&toast.message).color(Color32::WHITE.linear_multiply(alpha)));
+                                ui.label(egui::RichText::new(&toast.message).color(ui.visuals().text_color().linear_multiply(alpha)));
                             });
                         });
                 });

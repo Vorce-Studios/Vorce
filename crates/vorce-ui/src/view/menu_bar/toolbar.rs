@@ -96,7 +96,9 @@ pub fn show(ui: &mut egui::Ui, ui_state: &mut AppUI) {
                 ui.separator();
 
                 let learn_btn = if ui_state.is_midi_learn_mode {
-                    egui::Button::new("Learn").fill(egui::Color32::YELLOW)
+                    egui::Button::new("Learn")
+                        .fill(ui.visuals().warn_fg_color.linear_multiply(0.4))
+                        .stroke(egui::Stroke::new(1.0, ui.visuals().warn_fg_color))
                 } else {
                     egui::Button::new("Learn")
                 };
@@ -125,32 +127,34 @@ pub fn show(ui: &mut egui::Ui, ui_state: &mut AppUI) {
                 let gpu = ui_state.gpu_usage;
                 let ram = ui_state.ram_usage_mb;
 
+                let visuals = ui.visuals().clone();
+
                 let traffic_light = |value: f32, warn: f32, crit: f32| -> egui::Color32 {
                     if value >= crit {
-                        egui::Color32::from_rgb(255, 50, 50)
+                        visuals.error_fg_color
                     } else if value >= warn {
-                        egui::Color32::from_rgb(255, 200, 50)
+                        visuals.warn_fg_color
                     } else {
-                        egui::Color32::from_rgb(50, 200, 50)
+                        visuals.text_color().gamma_multiply(0.6)
                     }
                 };
 
                 let fps_ratio = fps / target_fps.max(1.0);
                 let fps_color = if fps_ratio >= 0.95 {
-                    egui::Color32::from_rgb(50, 200, 50)
+                    visuals.text_color().gamma_multiply(0.6)
                 } else if fps_ratio >= 0.8 {
-                    egui::Color32::from_rgb(255, 200, 50)
+                    visuals.warn_fg_color
                 } else {
-                    egui::Color32::from_rgb(255, 50, 50)
+                    visuals.error_fg_color
                 };
 
                 if show_metric(&metrics.status) {
                     let overall_color = if cpu >= 90.0 || gpu >= 90.0 || fps_ratio < 0.8 {
-                        egui::Color32::from_rgb(255, 50, 50)
+                        visuals.error_fg_color
                     } else if cpu >= 70.0 || gpu >= 70.0 || fps_ratio < 0.95 {
-                        egui::Color32::from_rgb(255, 200, 50)
+                        visuals.warn_fg_color
                     } else {
-                        egui::Color32::from_rgb(50, 200, 50)
+                        visuals.text_color().gamma_multiply(0.4)
                     };
                     let (rect, _) =
                         ui.allocate_exact_size(egui::vec2(14.0, 14.0), egui::Sense::hover());

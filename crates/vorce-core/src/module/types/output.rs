@@ -46,6 +46,12 @@ pub enum OutputType {
     NdiOutput {
         /// Human-readable display name.
         name: String,
+        #[serde(default = "crate::module::config::default_ndi_width")]
+        /// Output width in pixels.
+        width: u32,
+        #[serde(default = "crate::module::config::default_ndi_height")]
+        /// Output height in pixels.
+        height: u32,
     },
     #[cfg(target_os = "windows")]
     /// Enumeration variant.

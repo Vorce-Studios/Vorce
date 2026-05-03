@@ -14,14 +14,14 @@ on:
       toolchain:
         description: "Rust toolchain version"
         required: true
-        default: "1.95.0"
+        default: "1.94.0"
   workflow_call:
     inputs:
       toolchain:
         description: "Rust toolchain version"
         required: false
         type: string
-        default: "1.95.0"
+        default: "1.94.0"
 
 permissions:
   contents: read
@@ -53,7 +53,7 @@ jobs:
     steps:
       - name: Resolve PR details and activation guard
         id: resolve
-        uses: actions/github-script@v9
+        uses: actions/github-script@v9.0.0
         env:
           INPUT_PR_NUMBER: ${{ github.event.inputs.pr_number || '' }}
         with:
@@ -136,7 +136,7 @@ jobs:
 
     steps:
       - name: Verify required GitHub-hosted PR checks succeeded
-        uses: actions/github-script@v9
+        uses: actions/github-script@v9.0.0
         with:
           script: |
             const headSha = `${{ needs.resolve-context.outputs.pr_head_sha }}`;
@@ -278,10 +278,10 @@ jobs:
         id: toolchain
         shell: powershell
         env:
-          toolchain: ${{ github.event.inputs.toolchain || inputs.toolchain || vars.VORCE_DEFAULT_TOOLCHAIN || '1.95.0' }}
+          toolchain: ${{ github.event.inputs.toolchain || inputs.toolchain || vars.VORCE_DEFAULT_TOOLCHAIN || '1.94.0' }}
           RUNNER_OS: ${{ runner.os }}
         run: |
-          $resolvedToolchain = if ([string]::IsNullOrWhiteSpace($env:toolchain)) { "1.95.0" } else { $env:toolchain.Trim() }
+          $resolvedToolchain = if ([string]::IsNullOrWhiteSpace($env:toolchain)) { "1.94.0" } else { $env:toolchain.Trim() }
           Add-Content -Path $env:GITHUB_OUTPUT -Value "toolchain=$resolvedToolchain"
 
       - name: Set up Rust

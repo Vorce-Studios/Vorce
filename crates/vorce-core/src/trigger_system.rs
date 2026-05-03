@@ -3,10 +3,10 @@
 use crate::audio_reactive::AudioTriggerData;
 use crate::module::{ModuleManager, ModulePartType, TriggerType};
 use rand::RngExt;
-use std::collections::{HashMap, HashSet};
+use rustc_hash::{FxHashMap, FxHashSet};
 
 /// A set of active trigger outputs. Each entry is (part_id, socket_idx).
-pub type ActiveTriggers = HashSet<(u64, usize)>;
+pub type ActiveTriggers = FxHashSet<(u64, usize)>;
 
 /// State for a trigger (timer, target interval, etc.)
 #[derive(Debug, Clone, Copy)]
@@ -36,7 +36,7 @@ pub struct TriggerSystem {
     /// Unified states for triggers (Part ID -> State)
     ///
     /// Optimized to reduce hash lookups by storing timer and target together.
-    states: HashMap<u64, TriggerState>,
+    states: FxHashMap<u64, TriggerState>,
 }
 
 impl TriggerSystem {
@@ -58,7 +58,7 @@ impl TriggerSystem {
         let mut rng = rand::rng();
 
         // Track parts that actively use state to perform Garbage Collection
-        let mut active_state_users = HashSet::new();
+        let mut active_state_users = FxHashSet::default();
 
         for module in module_manager.modules() {
             for part in &module.parts {
@@ -121,11 +121,10 @@ impl TriggerSystem {
                             // Silence unused assignment warning for the last increment
                             let _ = socket_index;
                         }
-                        TriggerType::Beat => {
-                            if audio_data.beat_detected {
-                                self.active_triggers.insert((part.id, 0));
-                            }
+                        TriggerType::Beat if audio_data.beat_detected => {
+                            self.active_triggers.insert((part.id, 0));
                         }
+                        TriggerType::Beat => {}
                         TriggerType::Fixed { interval_ms, .. } => {
                             active_state_users.insert(part.id); // Mark as using state
 

@@ -427,6 +427,16 @@ pub fn particle_system(
 use bevy::render::render_asset::RenderAssets;
 use bevy::render::texture::GpuImage;
 
+pub struct ReadbackState {
+    pub submission_index: wgpu::SubmissionIndex,
+    pub rx: std::sync::mpsc::Receiver<Result<(), bevy::render::render_resource::BufferAsyncError>>,
+    pub width: u32,
+    pub height: u32,
+    pub bytes_per_pixel: u32,
+    pub bytes_per_row: u32,
+    pub padding: u32,
+}
+
 pub fn frame_readback_system(
     // RenderAssets<GpuImage> maps Handle<Image> -> GpuImage
     gpu_images: Res<RenderAssets<GpuImage>>,
@@ -434,7 +444,58 @@ pub fn frame_readback_system(
     render_device: Res<bevy::render::renderer::RenderDevice>,
     render_queue: Res<bevy::render::renderer::RenderQueue>,
     mut buffer_cache: Local<Option<bevy::render::render_resource::Buffer>>,
+    mut readback_state: Local<Option<ReadbackState>>,
 ) {
+    // 1. Process previous frame's readback (N-1 Strategy)
+    if let Some(state) = readback_state.take() {
+        let buffer = buffer_cache.as_ref().unwrap();
+        render_device
+            .poll(wgpu::PollType::Wait {
+                submission_index: Some(state.submission_index.clone()),
+                timeout: Some(std::time::Duration::from_millis(0)),
+            })
+            .unwrap();
+
+        match state.rx.try_recv() {
+            Ok(Ok(_)) => {
+                let buffer_slice = buffer.slice(..);
+                let data = buffer_slice.get_mapped_range();
+
+                if let Ok(mut lock) = render_output.last_frame_data.lock() {
+                    if state.padding == 0 {
+                        *lock = Some(std::sync::Arc::new(data.to_vec()));
+                    } else {
+                        let mut unpadded = Vec::with_capacity(
+                            (state.width * state.height * state.bytes_per_pixel) as usize,
+                        );
+                        for i in 0..state.height {
+                            let offset = (i * state.bytes_per_row) as usize;
+                            let end = offset + (state.width * state.bytes_per_pixel) as usize;
+                            unpadded.extend_from_slice(&data[offset..end]);
+                        }
+                        *lock = Some(std::sync::Arc::new(unpadded));
+                    }
+                }
+
+                drop(data);
+                buffer.unmap();
+            }
+            Ok(Err(err)) => {
+                tracing::warn!("Bevy frame readback mapping failed: {:?}", err);
+                buffer.unmap();
+            }
+            Err(std::sync::mpsc::TryRecvError::Empty) => {
+                // Not ready yet, save it for next frame
+                *readback_state = Some(state);
+                return;
+            }
+            Err(err) => {
+                tracing::warn!("Bevy frame readback channel failed: {}", err);
+                buffer.unmap();
+            }
+        }
+    }
+    // 2. Initiate new readback for current frame
     if let Some(gpu_image) = gpu_images.get(&render_output.image_handle) {
         let texture = &gpu_image.texture;
 
@@ -442,7 +503,6 @@ pub fn frame_readback_system(
         let height = gpu_image.texture_descriptor.size.height;
         let block_size = gpu_image.texture_descriptor.format.block_copy_size(None).unwrap_or(4);
 
-        // bytes_per_row must be multiple of 256
         let bytes_per_pixel = block_size;
         let unpadded_bytes_per_row = width * bytes_per_pixel;
         let padding = (256 - (unpadded_bytes_per_row % 256)) % 256;
@@ -450,7 +510,6 @@ pub fn frame_readback_system(
 
         let output_buffer_size = (bytes_per_row * height) as u64;
 
-        // Ensure buffer exists and is correct size
         if buffer_cache.is_none() || buffer_cache.as_ref().unwrap().size() != output_buffer_size {
             *buffer_cache = Some(render_device.create_buffer(
                 &bevy::render::render_resource::BufferDescriptor {
@@ -491,50 +550,23 @@ pub fn frame_readback_system(
 
         let submission_index = render_queue.submit(std::iter::once(encoder.finish()));
 
-        // Complete the readback in-frame so the buffer is always unmapped before the
-        // next copy. This trades some throughput for a much more stable embedded runner.
         let (tx, rx) = std::sync::mpsc::channel();
         let buffer_slice = buffer.slice(..);
         buffer_slice.map_async(bevy::render::render_resource::MapMode::Read, move |res| {
             let _ = tx.send(res);
         });
 
-        render_device
-            .poll(wgpu::PollType::Wait { submission_index: Some(submission_index), timeout: None })
-            .unwrap();
-
-        match rx.recv() {
-            Ok(Ok(_)) => {
-                let data = buffer_slice.get_mapped_range();
-
-                if let Ok(mut lock) = render_output.last_frame_data.lock() {
-                    if padding == 0 {
-                        *lock = Some(std::sync::Arc::new(data.to_vec()));
-                    } else {
-                        let mut unpadded =
-                            Vec::with_capacity((width * height * bytes_per_pixel) as usize);
-                        for i in 0..height {
-                            let offset = (i * bytes_per_row) as usize;
-                            let end = offset + (width * bytes_per_pixel) as usize;
-                            unpadded.extend_from_slice(&data[offset..end]);
-                        }
-                        *lock = Some(std::sync::Arc::new(unpadded));
-                    }
-                }
-
-                drop(data);
-                buffer.unmap();
-            }
-            Ok(Err(err)) => {
-                tracing::warn!("Bevy frame readback mapping failed: {:?}", err);
-            }
-            Err(err) => {
-                tracing::warn!("Bevy frame readback channel failed: {}", err);
-            }
-        }
+        *readback_state = Some(ReadbackState {
+            submission_index,
+            rx,
+            width,
+            height,
+            bytes_per_pixel,
+            bytes_per_row,
+            padding,
+        });
     }
 }
-
 pub fn text_3d_system(
     mut commands: Commands,
     query: Query<(Entity, &crate::components::Bevy3DText), Changed<crate::components::Bevy3DText>>,

@@ -120,25 +120,9 @@ mod ffmpeg_impl {
         ffi::avcodec_default_get_format(ctx, fmt)
     }
 
-    struct SendContext(ffmpeg::software::scaling::Context);
-    unsafe impl Send for SendContext {}
-    impl std::ops::Deref for SendContext {
-        type Target = ffmpeg::software::scaling::Context;
-        fn deref(&self) -> &Self::Target {
-            &self.0
-        }
-    }
-    impl std::ops::DerefMut for SendContext {
-        fn deref_mut(&mut self) -> &mut Self::Target {
-            &mut self.0
-        }
-    }
-
     pub struct RealFFmpegDecoder {
         input_ctx: ffmpeg::format::context::Input,
         decoder: ffmpeg::codec::decoder::Video,
-        // Wrapped in SendContext to allow moving to decode thread
-        scaler: SendContext,
         video_stream_idx: usize,
         time_base: ffmpeg::Rational,
         duration: Duration,
@@ -254,19 +238,6 @@ mod ffmpeg_impl {
             let width = decoder.width();
             let height = decoder.height();
 
-            // Create scaler to convert to RGBA
-            let scaler = ffmpeg::software::scaling::Context::get(
-                decoder.format(),
-                width,
-                height,
-                ffmpeg::format::Pixel::RGBA,
-                width,
-                height,
-                ffmpeg::software::scaling::Flags::BILINEAR,
-            )
-            .map_err(|e| MediaError::DecoderError(e.to_string()))
-            .map(SendContext)?;
-
             info!(
                 "Decoder initialized successfully: {}x{} @ {:.2} fps, duration: {:.2}s, hw_accel: {:?}",
                 width,
@@ -281,7 +252,6 @@ mod ffmpeg_impl {
             Ok(Self {
                 input_ctx,
                 decoder,
-                scaler,
                 video_stream_idx,
                 time_base,
                 duration,
@@ -339,6 +309,15 @@ mod ffmpeg_impl {
                 }
             }
         }
+    }
+
+    thread_local! {
+        static SCALER_CACHE: std::cell::RefCell<Option<(
+            ffmpeg::format::Pixel,
+            u32,
+            u32,
+            ffmpeg::software::scaling::Context,
+        )>> = const { std::cell::RefCell::new(None) };
     }
 
     impl super::VideoDecoder for RealFFmpegDecoder {
@@ -411,34 +390,55 @@ mod ffmpeg_impl {
                             frame_format
                         );
 
-                        let new_scaler = ffmpeg::software::scaling::Context::get(
-                            frame_format,
-                            frame_width,
-                            frame_height,
-                            ffmpeg::format::Pixel::RGBA,
-                            frame_width,
-                            frame_height,
-                            ffmpeg::software::scaling::Flags::BILINEAR,
-                        )
-                        .map_err(|e| {
-                            MediaError::DecoderError(format!("Failed to recreate scaler: {}", e))
-                        })
-                        .map(SendContext)?;
-
-                        self.scaler = new_scaler;
                         self.width = frame_width;
                         self.height = frame_height;
                         self.current_format = frame_format;
                     }
 
-                    // Scale to RGBA
-                    let mut rgb_frame = ffmpeg::util::frame::Video::empty();
-                    self.scaler.run(frame_ptr, &mut rgb_frame).map_err(|e| {
-                        MediaError::DecoderError(format!(
-                            "Decoder error: Input changed? Scaler run failed: {}",
-                            e
-                        ))
-                    })?;
+                    // Scale to RGBA using thread-local scaler
+                    let rgb_frame =
+                        SCALER_CACHE.with(|cache| -> Result<ffmpeg::util::frame::Video> {
+                            let mut cache = cache.borrow_mut();
+
+                            let need_new = match &*cache {
+                                Some((fmt, w, h, _)) => {
+                                    *fmt != frame_format || *w != self.width || *h != self.height
+                                }
+                                None => true,
+                            };
+
+                            if need_new {
+                                let new_scaler = ffmpeg::software::scaling::Context::get(
+                                    frame_format,
+                                    frame_width,
+                                    frame_height,
+                                    ffmpeg::format::Pixel::RGBA,
+                                    self.width,
+                                    self.height,
+                                    ffmpeg::software::scaling::Flags::BILINEAR,
+                                )
+                                .map_err(|e| {
+                                    MediaError::DecoderError(format!(
+                                        "Failed to recreate scaler: {}",
+                                        e
+                                    ))
+                                })?;
+
+                                *cache = Some((frame_format, self.width, self.height, new_scaler));
+                            }
+
+                            let Some((_, _, _, ref mut scaler)) = cache.as_mut() else {
+                                return Err(MediaError::DecoderError(
+                                    "Scaler cache unexpectedly empty".into(),
+                                ));
+                            };
+                            let mut rgb = ffmpeg::util::frame::Video::empty();
+                            scaler.run(frame_ptr, &mut rgb).map_err(|e| {
+                                MediaError::DecoderError(format!("Scaler run failed: {}", e))
+                            })?;
+
+                            Ok(rgb)
+                        })?;
 
                     let pts = Duration::from_secs_f64(
                         decoded.timestamp().unwrap_or(0) as f64 * f64::from(self.time_base),

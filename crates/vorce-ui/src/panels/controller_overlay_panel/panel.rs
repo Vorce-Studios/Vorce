@@ -4,7 +4,7 @@ use super::drawing::MAX_WIDTH;
 // Visual representation of the Ecler NUO 4 (or other MIDI controllers)
 // with live state visualization and MIDI Learn functionality.
 
-use egui::{Color32, TextureHandle};
+use egui::TextureHandle;
 
 use crate::config::UserConfig;
 
@@ -210,9 +210,9 @@ impl ControllerOverlayPanel {
                 ui.horizontal(|ui| {
                     // MIDI Connection Status
                     if midi_connected {
-                        ui.colored_label(Color32::GREEN, "🟢 MIDI");
+                        ui.label("🟢 MIDI");
                     } else {
-                        ui.colored_label(Color32::RED, "🔴 MIDI");
+                        ui.label("🔴 MIDI");
                     }
 
                     ui.separator();
@@ -249,7 +249,7 @@ impl ControllerOverlayPanel {
 
                     // Assignment colors toggle
                     let assign_btn = if self.show_assignment_colors {
-                        egui::Button::new("🎨 Zuweisungen").fill(Color32::from_rgb(60, 80, 100))
+                        egui::Button::new("🎨 Zuweisungen").fill(ui.visuals().selection.bg_fill)
                     } else {
                         egui::Button::new("🎨 Zuweisungen")
                     };
@@ -260,7 +260,7 @@ impl ControllerOverlayPanel {
                     ui.separator();
 
                     let edit_btn = if self.is_edit_mode {
-                        egui::Button::new("✏️ Edit").fill(Color32::YELLOW)
+                        egui::Button::new("✏️ Edit").fill(ui.visuals().selection.bg_fill)
                     } else {
                         egui::Button::new("✏️ Edit")
                     };
@@ -291,7 +291,7 @@ impl ControllerOverlayPanel {
                         let vorce_btn = if is_learning
                             && matches!(self.learn_target, Some(MidiLearnTarget::Vorce))
                         {
-                            ui.add(egui::Button::new("⏳ Vorce...").fill(Color32::YELLOW))
+                            ui.add(egui::Button::new("⏳ Vorce...").fill(ui.visuals().selection.bg_fill))
                         } else {
                             ui.button("🎯 Vorce")
                         };
@@ -312,7 +312,7 @@ impl ControllerOverlayPanel {
                         let sb_btn = if is_learning
                             && matches!(self.learn_target, Some(MidiLearnTarget::StreamerBot(_)))
                         {
-                            ui.add(egui::Button::new("⏳...").fill(Color32::YELLOW))
+                            ui.add(egui::Button::new("⏳...").fill(ui.visuals().selection.bg_fill))
                         } else {
                             ui.button("🎯")
                         };
@@ -335,7 +335,7 @@ impl ControllerOverlayPanel {
                         let mx_btn = if is_learning
                             && matches!(self.learn_target, Some(MidiLearnTarget::Mixxx(_)))
                         {
-                            ui.add(egui::Button::new("⏳...").fill(Color32::YELLOW))
+                            ui.add(egui::Button::new("⏳...").fill(ui.visuals().selection.bg_fill))
                         } else {
                             ui.button("🎯")
                         };

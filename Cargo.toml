@@ -27,7 +27,7 @@ anyhow = "1.0"
 arc-swap = "1.9"
 
 # HTTP API
-axum = "0.8"
+axum = "0.7"
 
 # Build dependencies
 bindgen = "0.72"
@@ -79,7 +79,7 @@ pollster = "0.4"
 
 # Testing
 proptest = "1.4"
-rayon = "1.8"
+rayon = "1.12"
 
 # SVG rendering for icons
 resvg = "0.47"
@@ -99,7 +99,7 @@ thiserror = "2.0"
 tiny-skia = "0.12"
 
 # Async runtime
-tokio = { version = "1.50.0", features = ["full"] }
+tokio = { version = "1.52.1", features = ["full"] }
 toml = "1.1.0"
 tower = "0.5"
 
@@ -109,7 +109,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 unic-langid = "0.9"
 usvg = "0.47"
 # Core dependencies
-wgpu = "29.0.3"
+wgpu = "29.0.1"
 winit = { version = "0.30.13" }
 winres = "0.1"
 
