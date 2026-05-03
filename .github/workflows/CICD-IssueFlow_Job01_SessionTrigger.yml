@@ -34,7 +34,7 @@ jobs:
 
       - name: Resolve issue and guard against duplicate dispatch
         id: guard
-        uses: actions/github-script@v9.0.0
+        uses: actions/github-script@v8
         with:
           script: |
             core.setOutput('should_start', 'false');
@@ -113,7 +113,7 @@ jobs:
 
       - name: Note missing Jules API key
         if: ${{ steps.guard.outputs.should_start == 'true' && steps.check_key.outputs.present == 'false' }}
-        uses: actions/github-script@v9.0.0
+        uses: actions/github-script@v8
         with:
           script: |
             const issueNumber = Number.parseInt('${{ steps.guard.outputs.issue_number }}', 10);

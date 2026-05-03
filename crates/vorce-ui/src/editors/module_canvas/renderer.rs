@@ -159,7 +159,7 @@ pub fn render_canvas(
             if canvas.show_search {
                 canvas.show_search = false;
             } else {
-                canvas.clear_selection();
+                canvas.selected_parts.clear();
             }
         }
 
@@ -269,16 +269,23 @@ pub fn render_canvas(
         let mut clicked_on_part = false;
         let mut delete_part_id = None;
         let mut resize_ops = Vec::new();
-        let mut drag_delta = Vec2::ZERO;
+
         let selected_parts_set: rustc_hash::FxHashSet<vorce_core::module::ModulePartId> =
             canvas.selected_parts.iter().copied().collect();
 
         for part in &mut module.parts {
-            let part_pos = to_screen(Pos2::new(part.position.0, part.position.1));
             let (w, h) = part.size.unwrap_or_else(|| {
                 let h = 80.0 + (part.inputs.len().max(part.outputs.len()) as f32) * 20.0;
                 (200.0, h)
             });
+            if let Some((_, delta)) = canvas.dragging_part {
+                if selected_parts_set.contains(&part.id) {
+                    part.position.0 += delta.x;
+                    part.position.1 += delta.y;
+                }
+            }
+
+            let part_pos = to_screen(Pos2::new(part.position.0, part.position.1));
             let part_rect = Rect::from_min_size(part_pos, Vec2::new(w, h) * canvas.zoom);
 
             if selected_parts_set.contains(&part.id) {
@@ -286,7 +293,7 @@ pub fn render_canvas(
                 painter.rect_stroke(
                     highlight_rect,
                     0.0,
-                    Stroke::new(2.0 * canvas.zoom, ui.visuals().selection.bg_fill),
+                    Stroke::new(2.0 * canvas.zoom, Color32::from_rgb(0, 229, 255)),
                     egui::StrokeKind::Middle,
                 );
 
@@ -295,13 +302,13 @@ pub fn render_canvas(
                     Pos2::new(part_rect.max.x - handle_size, part_rect.max.y - handle_size),
                     Vec2::splat(handle_size),
                 );
-                painter.rect_filled(handle_rect, 0.0, ui.visuals().selection.bg_fill);
+                painter.rect_filled(handle_rect, 0.0, Color32::from_rgb(0, 229, 255));
                 painter.line_segment(
                     [
                         handle_rect.min + Vec2::new(3.0, handle_size - 3.0),
                         handle_rect.min + Vec2::new(handle_size - 3.0, 3.0),
                     ],
-                    Stroke::new(1.5, ui.visuals().extreme_bg_color),
+                    Stroke::new(1.5, Color32::from_gray(40)),
                 );
 
                 let resize_response =
@@ -392,8 +399,8 @@ pub fn render_canvas(
                     } else {
                         canvas.selected_parts.push(part_id);
                     }
-                } else if !canvas.selected_parts.contains(&part_id) {
-                    canvas.clear_selection();
+                } else if !selected_parts_set.contains(&part_id) {
+                    canvas.selected_parts.clear();
                     canvas.selected_parts.push(part_id);
                 }
             }
@@ -403,7 +410,7 @@ pub fn render_canvas(
                 if canvas.creating_connection.is_none() {
                     if !selected_parts_set.contains(&part_id) {
                         if !ui.input(|i| i.modifiers.shift) {
-                            canvas.clear_selection();
+                            canvas.selected_parts.clear();
                         }
                         canvas.selected_parts.push(part_id);
                     }
@@ -413,7 +420,13 @@ pub fn render_canvas(
 
             if let Some((dragged_id, _accumulator)) = canvas.dragging_part {
                 if dragged_id == part_id && canvas.creating_connection.is_none() {
-                    drag_delta = part_response.drag_delta() / canvas.zoom;
+                    let drag_delta = part_response.drag_delta() / canvas.zoom;
+                    if drag_delta != Vec2::ZERO {
+                        canvas.dragging_part = Some((part_id, drag_delta));
+                        module_changed = true;
+                    } else {
+                        canvas.dragging_part = Some((part_id, Vec2::ZERO));
+                    }
                 }
             }
 
@@ -473,16 +486,6 @@ pub fn render_canvas(
             }
         }
 
-        if drag_delta != Vec2::ZERO {
-            for pid in &canvas.selected_parts {
-                if let Some(part) = module.parts.iter_mut().find(|part| part.id == *pid) {
-                    part.position.0 += drag_delta.x;
-                    part.position.1 += drag_delta.y;
-                    module_changed = true;
-                }
-            }
-        }
-
         for (part_id, delta) in resize_ops {
             if let Some(part) = module.parts.iter_mut().find(|part| part.id == part_id) {
                 let current_size = part.size.unwrap_or_else(|| {
@@ -498,10 +501,6 @@ pub fn render_canvas(
 
         if drag_started_on_empty && !clicked_on_part && !middle_button {
             canvas.panning_canvas = true;
-        }
-
-        if response.clicked() && !clicked_on_part {
-            canvas.clear_selection();
         }
 
         if let Some(pid) = delete_part_id {
@@ -542,30 +541,25 @@ pub fn render_canvas(
                         } else {
                             false
                         };
-                        color = if is_valid {
-                            ui.visuals().strong_text_color()
-                        } else {
-                            ui.visuals().error_fg_color
-                        };
+                        color = if is_valid { Color32::GREEN } else { Color32::RED };
                         break;
                     }
                 }
 
-                let preview_stroke = if options.short_circuit_animation_enabled
-                    && color == ui.visuals().error_fg_color
-                {
-                    let pulse = (ui.input(|i| i.time) as f32 * 10.0).sin().abs();
-                    Stroke::new(3.0 + pulse * 2.0, color.gamma_multiply(0.8 + pulse * 0.2))
-                } else {
-                    Stroke::new(3.0, color)
-                };
+                let preview_stroke =
+                    if options.short_circuit_animation_enabled && color == Color32::RED {
+                        let pulse = (ui.input(|i| i.time) as f32 * 10.0).sin().abs();
+                        Stroke::new(3.0 + pulse * 2.0, color.gamma_multiply(0.8 + pulse * 0.2))
+                    } else {
+                        Stroke::new(3.0, color)
+                    };
 
                 painter.line_segment([start_pos, pointer_pos], preview_stroke);
                 painter.circle_filled(pointer_pos, 5.0, color);
             }
         }
 
-        draw::draw_mini_map(canvas, ui, &painter, canvas_rect, module);
+        draw::draw_mini_map(canvas, ui, canvas_rect, module);
 
         if canvas.show_search {
             draw::draw_search_popup(canvas, ui, canvas_rect, module);
@@ -611,7 +605,7 @@ pub fn render_canvas(
                     painter.rect_stroke(
                         menu_rect,
                         4.0,
-                        Stroke::new(1.0, ui.visuals().error_fg_color),
+                        Stroke::new(1.0, Color32::from_rgb(200, 80, 80)),
                         egui::StrokeKind::Middle,
                     );
 
@@ -654,7 +648,7 @@ pub fn render_canvas(
                     painter.rect_stroke(
                         menu_rect,
                         4.0,
-                        Stroke::new(1.0, ui.visuals().text_color().linear_multiply(0.5)),
+                        Stroke::new(1.0, Color32::from_rgb(80, 100, 150)),
                         egui::StrokeKind::Middle,
                     );
 
@@ -696,7 +690,7 @@ pub fn render_canvas(
                             ui.label(
                                 egui::RichText::new(format!("{:.0}%", canvas.zoom * 100.0))
                                     .size(11.0)
-                                    .color(ui.visuals().strong_text_color()),
+                                    .color(Color32::WHITE),
                             );
                         });
                     },
