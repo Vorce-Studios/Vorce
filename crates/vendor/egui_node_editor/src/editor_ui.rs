@@ -802,8 +802,7 @@ where
         }
 
         // Input ports
-        for ((_, param), port_height) in
-            self.graph[self.node_id].inputs.iter().zip(input_port_heights.into_iter())
+            self.graph[self.node_id].inputs.iter().zip(input_port_heights)
         {
             let should_draw = match self.graph[*param].kind() {
                 InputParamKind::ConnectionOnly => true,
@@ -830,8 +829,7 @@ where
         }
 
         // Output ports
-        for ((_, param), port_height) in
-            self.graph[self.node_id].outputs.iter().zip(output_port_heights.into_iter())
+            self.graph[self.node_id].outputs.iter().zip(output_port_heights)
         {
             let pos_right = pos2(port_right, port_height);
             draw_port(
