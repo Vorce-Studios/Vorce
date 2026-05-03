@@ -140,11 +140,11 @@ impl WebServer {
                 .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
 
             // Filter out wildcard origins to prevent overly permissive CORS policies
-            let mut secure_origins = self.config.allowed_origins.clone();
-            secure_origins.retain(|o| o != "*");
-
-            let origins: Result<Vec<HeaderValue>> = secure_origins
+            let origins: Result<Vec<HeaderValue>> = self
+                .config
+                .allowed_origins
                 .iter()
+                .filter(|o| *o != "*")
                 .map(|o| {
                     o.parse::<HeaderValue>().map_err(|e| {
                         ControlError::HttpError(format!("Invalid origin header: {}", e))
@@ -152,7 +152,13 @@ impl WebServer {
                 })
                 .collect();
 
-            app.layer(cors_layer.allow_origin(origins?))
+            let parsed_origins = origins?;
+            if parsed_origins.is_empty() {
+                // Fallback: If list is empty after filtering out wildcards, allow nothing
+                app.layer(cors_layer.allow_origin(Vec::<HeaderValue>::new()))
+            } else {
+                app.layer(cors_layer.allow_origin(parsed_origins))
+            }
         } else {
             app
         };

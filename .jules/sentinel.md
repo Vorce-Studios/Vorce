@@ -1,3 +1,5 @@
+## 2025-05-18 - [Fix Wildcard CORS Policy] **Schwachstelle:** `tower_http::cors::Any` allowed a wildcard origin `*` bypassing strict CORS policies. **Lektion:** Insecure default wildcard handling in CORS allowed all origins to access endpoints when they shouldn`t have, which introduces a potential security risk in web endpoints handling control flow. **Prävention:** Use exact origin matching and strict filtering on `allowed_origins` during configuration load rather than relying on wildcard matching tools.
+
 ## 2025-05-24 - DoS via Option::unwrap() in ffmpeg scaler
 
 **Schwachstelle:** Ein `unwrap()` Aufruf befand sich im Media-Decoder (`crates/vorce-media/src/decoder.rs` auf Zeile 430), wenn die gecachte Skalierungsvariable (`SCALER_CACHE`) zurückgegeben wurde.
