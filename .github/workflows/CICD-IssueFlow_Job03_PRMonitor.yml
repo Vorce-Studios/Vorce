@@ -1,0 +1,88 @@
+name: "CICD-IssueFlow: Job03 PR Monitor"
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      force_report:
+        description: "Force report generation even if no critical PRs"
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+env:
+  JULES_AUTOMATION_ENABLED: true
+  MONITOR_ISSUE_ID: "VOR-70"
+
+jobs:
+  monitor-jules-prs:
+    name: Monitor Jules PRs
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 10
+
+    concurrency:
+      group: issue-flow-pr-monitor-${{ github.repository }}
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check API Key presence
+        id: check_key
+        run: |
+          if [ -n "${{ secrets.JULES_API_KEY }}" ]; then
+            echo "present=true" >> $GITHUB_OUTPUT
+          else
+            echo "present=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Note missing Jules API key
+        if: ${{ steps.check_key.outputs.present == 'false' }}
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const issueId = process.env.MONITOR_ISSUE_ID || 'VOR-70';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parseInt(issueId.replace('VOR-', '')),
+              body: '⚠️ **PR Monitor Failed:** `JULES_API_KEY` fehlt. PR-Monitoring ist nicht möglich.',
+            });
+
+      - name: Run PR monitoring
+        if: ${{ steps.check_key.outputs.present == 'true' }}
+        shell: pwsh
+        env:
+          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+          MONITOR_ISSUE_ID: ${{ env.MONITOR_ISSUE_ID }}
+          FORCE_REPORT: ${{ github.event.inputs.force_report || 'false' }}
+        run: |
+          try {
+            # Run the PR monitoring script
+            .\scripts\jules\monitor-jules-prs.ps1
+
+            # Capture output
+            $reportPath = Join-Path $env:TEMP "jules-pr-monitoring-report.md"
+            if (Test-Path $reportPath) {
+              $report = Get-Content $reportPath -Raw
+
+              $issueNum = $env:MONITOR_ISSUE_ID -replace 'VOR-', ''
+
+              # Only post if there are results or force report is enabled
+              if ($report -match '\| #' -or $env:FORCE_REPORT -eq 'true') {
+                gh issue comment $issueNum --body $report --repo ${{ github.repository }}
+              } else {
+                Write-Host "No PRs to report. Use force_report=true to generate empty report."
+              }
+            }
+          } catch {
+            $issueNum = $env:MONITOR_ISSUE_ID -replace 'VOR-', ''
+            $errorMessage = $_.Exception.Message -replace '[\r\n]', ' '
+            gh issue comment $issueNum --body "⚠️ **PR Monitor Error:** $errorMessage" --repo ${{ github.repository }}
+            throw
+          }
