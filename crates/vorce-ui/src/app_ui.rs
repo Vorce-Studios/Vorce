@@ -641,9 +641,7 @@ impl AppUI {
         if let Some((module_id, part_id, before_part)) = module_part_snapshot {
             let mut inspector_changed = false;
             if let Some(module) = module_manager.get_module_mut(module_id) {
-                if let Some(after_part) =
-                    module.parts.iter().find(|part| part.id == part_id).cloned()
-                {
+                if let Some(after_part) = module.part(part_id).cloned() {
                     if after_part != before_part {
                         module.update_part_sockets(part_id);
                         inspector_changed = true;
