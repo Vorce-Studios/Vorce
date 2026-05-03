@@ -19,7 +19,7 @@ env:
   AUTO_MERGE_ENABLED: true
   AUTO_UPDATE_BRANCH_WHEN_BEHIND: false
   VALIDATION_WORKFLOW_ID: CICD-DevFlow_Job01_Validation.yml
-  DEFAULT_RUST_TOOLCHAIN: ${{ vars.VORCE_DEFAULT_TOOLCHAIN || vars.MAPFLOW_DEFAULT_TOOLCHAIN || '1.94.0' }}
+  DEFAULT_RUST_TOOLCHAIN: ${{ vars.VORCE_DEFAULT_TOOLCHAIN || vars.MAPFLOW_DEFAULT_TOOLCHAIN || '1.95.0' }}
 
 concurrency:
   group: auto-merge-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.event.workflow_run.head_sha || github.run_id }}
@@ -93,7 +93,6 @@ jobs:
               'Build & Test (Linux)',
               'Build & Test (Windows)',
               'Build (macOS Beta)',
-              'Rust Autofix',
               'Validation Success',
             ]);
 
@@ -153,7 +152,7 @@ jobs:
                   workflow_id: process.env.VALIDATION_WORKFLOW_ID || 'CICD-DevFlow_Job01_Validation.yml',
                   ref: branchRef,
                   inputs: {
-                    toolchain: process.env.DEFAULT_RUST_TOOLCHAIN || '1.94.0',
+                    toolchain: process.env.DEFAULT_RUST_TOOLCHAIN || '1.95.0',
                   },
                   return_run_details: true,
                 },
@@ -344,12 +343,6 @@ jobs:
                 },
                 {
                   name: 'Build (macOS Beta)',
-                  source: 'check_run',
-                  allowedConclusions: ['success'],
-                  required: true,
-                },
-                {
-                  name: 'Rust Autofix',
                   source: 'check_run',
                   allowedConclusions: ['success'],
                   required: true,
