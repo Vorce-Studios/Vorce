@@ -9,14 +9,14 @@ on:
       toolchain:
         description: "Rust toolchain version"
         required: true
-        default: "1.94.0"
+        default: "1.95.0"
   workflow_call:
     inputs:
       toolchain:
         description: "Rust toolchain version"
         required: false
         type: string
-        default: "1.94.0"
+        default: "1.95.0"
 
 concurrency:
   group: validation-${{ github.event.pull_request.number || github.ref || github.run_id }}
@@ -27,7 +27,7 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  RUST_TOOLCHAIN: ${{ github.event.inputs.toolchain || inputs.toolchain || vars.VORCE_DEFAULT_TOOLCHAIN || '1.94.0' }}
+  RUST_TOOLCHAIN: ${{ github.event.inputs.toolchain || inputs.toolchain || vars.VORCE_DEFAULT_TOOLCHAIN || '1.95.0' }}
 
 jobs:
   quality:
