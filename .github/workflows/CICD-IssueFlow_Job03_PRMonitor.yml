@@ -43,7 +43,7 @@ jobs:
 
       - name: Note missing Jules API key
         if: ${{ steps.check_key.outputs.present == 'false' }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const issueId = process.env.MONITOR_ISSUE_ID || 'VOR-70';
