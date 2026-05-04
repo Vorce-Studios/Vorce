@@ -30,3 +30,6 @@
 ## 2026-04-27 - Audio-Panel Theme-Breaker
 **Erkenntnis:** Das Audio-Panel nutzt in der FFT-Visualisierung hartcodierte RGB-Werte und Konstanten (wie DARKER_GREY), die in alternativen Themes unleserlich oder unstimmig wirken.
 **Aktion:** Generell ui.visuals() Eigenschaften (z.B. extreme_bg_color, warn_fg_color) für UI-Elemente wie Audio-Bands anwenden, um Theme-Kohärenz zu sichern.
+## 2026-05-04 - Digital Audio Meter Theme-Breaker
+**Erkenntnis:** Im Digital Audio Meter wurden hartcodierte Farbwerte wie `DARKER_GREY` und `Color32::from_gray` für Skalenstriche und Texte verwendet, was die Lesbarkeit in hellen Themes einschränkt.
+**Aktion:** Diese wurden auf dynamische egui-Visuals wie `extreme_bg_color` und `text_color` umgestellt.
