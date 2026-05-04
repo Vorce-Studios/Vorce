@@ -1,0 +1,89 @@
+name: "CICD-IssueFlow: Job03 PR Monitoring"
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Optional single issue number"
+        required: false
+        type: string
+      auto_nudge:
+        description: "Auto-nudge Jules for failing PRs"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+env:
+  JULES_AUTOMATION_ENABLED: true
+
+jobs:
+  pr-monitor:
+    name: PR Status Monitoring
+    runs-on: ubuntu-latest
+    env:
+      JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Skip when Jules API key is missing
+        if: ${{ env.JULES_API_KEY == '' }}
+        run: echo "JULES_API_KEY is not configured. Skipping PR monitoring."
+
+      - name: Run PR monitoring
+        if: ${{ env.JULES_API_KEY != '' }}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_SYNC_GH_TOKEN || github.token }}
+        run: |
+          $issueNumber = "${{ github.event.inputs.issue_number }}"
+          $autoNudge = "${{ github.event.inputs.auto_nudge }}"
+
+          $scriptArgs = @(
+            "-Repository", "${{ github.repository }}",
+            "-ApiKey", "$env:JULES_API_KEY"
+          )
+
+          if (-not [string]::IsNullOrWhiteSpace($issueNumber)) {
+            $scriptArgs += "-IssueNumber"
+            $scriptArgs += [int]$issueNumber
+          }
+
+          if ($autoNudge -eq "true") {
+            $scriptArgs += "-AutoNudgeJules"
+          }
+
+          ./scripts/jules/monitor-jules-prs.ps1 @scriptArgs
+
+      - name: Report attention issues
+        if: ${{ env.JULES_API_KEY != '' }}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_SYNC_GH_TOKEN || github.token }}
+        run: |
+          $issueNumber = "${{ github.event.inputs.issue_number }}"
+          $autoNudge = "${{ github.event.inputs.auto_nudge }}"
+
+          $scriptArgs = @(
+            "-Repository", "${{ github.repository }}",
+            "-ApiKey", "$env:JULES_API_KEY",
+            "-FailOnAttention"
+          )
+
+          if (-not [string]::IsNullOrWhiteSpace($issueNumber)) {
+            $scriptArgs += "-IssueNumber"
+            $scriptArgs += [int]$issueNumber
+          }
+
+          $result = ./scripts/jules/monitor-jules-prs.ps1 @scriptArgs 2>&1
+
+          if ($LASTEXITCODE -eq 2) {
+            Write-Output "Attention issues detected - see output above"
+          }

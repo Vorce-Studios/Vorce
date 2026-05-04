@@ -15,7 +15,7 @@ on:
         type: string
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
   AUTO_MERGE_ENABLED: true
   AUTO_UPDATE_BRANCH_WHEN_BEHIND: true
   VALIDATION_WORKFLOW_ID: CICD-DevFlow_Job01_Validation.yml
