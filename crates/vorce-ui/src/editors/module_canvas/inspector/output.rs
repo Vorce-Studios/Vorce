@@ -4,7 +4,98 @@ use super::capabilities;
 use egui::Ui;
 use vorce_core::module::{HueMappingMode, ModulePartId, OutputType};
 
-/// Renders the hue bridge discovery UI.
+/// Renders the hue entertainment area selection UI.
+pub fn render_hue_area_selection(
+    canvas: &mut ModuleCanvas,
+    ui: &mut Ui,
+    bridge_ip: &str,
+    username: &str,
+    entertainment_area: &mut String,
+    lamp_positions: &mut std::collections::HashMap<String, (f32, f32)>,
+) {
+    if !username.is_empty() {
+        ui.separator();
+        if let Some(rx) = &canvas.hue_groups_rx {
+            if let Ok(result) = rx.try_recv() {
+                canvas.hue_groups_rx = None;
+                match result {
+                    Ok(groups) => canvas.hue_groups = Some(groups),
+                    Err(e) => {
+                        canvas.hue_status_message = Some(format!("Failed to fetch areas: {}", e))
+                    }
+                }
+            } else {
+                ui.horizontal(|ui| {
+                    ui.spinner();
+                    ui.label("Fetching areas...");
+                });
+            }
+        }
+
+        if ui.button("🔄 Fetch Areas").clicked() {
+            let (tx, rx) = std::sync::mpsc::channel();
+            canvas.hue_groups_rx = Some(rx);
+            let bridge_ip = bridge_ip.to_owned();
+            let username = username.to_owned();
+
+            #[cfg(feature = "tokio")]
+            {
+                tokio::spawn(async move {
+                    let config = vorce_control::hue::models::HueConfig {
+                        bridge_ip,
+                        username,
+                        client_key: String::new(),
+                        application_id: String::new(),
+                        entertainment_group_id: String::new(),
+                    };
+                    let result = vorce_control::hue::api::groups::get_entertainment_groups(&config)
+                        .await
+                        .map_err(|e| e.to_string());
+                    let _ = tx.send(result);
+                });
+            }
+            #[cfg(not(feature = "tokio"))]
+            {
+                let _ = tx;
+                let _ = bridge_ip;
+                let _ = username;
+            }
+        }
+
+        if let Some(groups) = &canvas.hue_groups {
+            if groups.is_empty() {
+                ui.label("No entertainment areas found.");
+            } else {
+                // Find the name of the currently selected area, if any
+                let mut selected_name = "Select Area...".to_string();
+                for group in groups {
+                    if group.id == *entertainment_area {
+                        selected_name = group.name.clone();
+                        break;
+                    }
+                }
+
+                egui::ComboBox::from_id_salt("hue_area_select")
+                    .selected_text(selected_name)
+                    .show_ui(ui, |ui| {
+                        for group in groups {
+                            if ui
+                                .selectable_value(entertainment_area, group.id.clone(), &group.name)
+                                .clicked()
+                            {
+                                *lamp_positions = group
+                                    .lights
+                                    .iter()
+                                    .map(|l| (l.id.clone(), (l.x as f32, l.y as f32)))
+                                    .collect();
+                            }
+                        }
+                    });
+            }
+        }
+    }
+}
+
 pub fn render_hue_bridge_discovery(
     canvas: &mut ModuleCanvas,
     ui: &mut Ui,
@@ -49,7 +140,6 @@ pub fn render_output_ui(
     ui: &mut Ui,
     output: &mut OutputType,
     _part_id: ModulePartId,
-    _actions: &mut Vec<crate::action::UIAction>,
 ) {
     ui.label("Output:");
     match output {
@@ -165,54 +255,22 @@ pub fn render_output_ui(
         }
         #[cfg(feature = "ndi")]
         OutputType::NdiOutput { name } => {
-            ui.label("\u{1F4E1} NDI Output Configuration");
-            ui.separator();
+            ui.label("\u{1F4E1} NDI Output");
+            capabilities::render_unsupported_warning(
+                ui,
+                "[Experimental] NDI Output has no active runtime path currently.",
+            );
             ui.horizontal(|ui| {
                 ui.label("Stream Name:");
                 ui.text_edit_singleline(name);
             });
-            ui.separator();
-            ui.label("⚙️ Runtime Status");
-
-            // Process incoming status results
-            if let Some(rx) = canvas.ndi_status_rx.get(&_part_id) {
-                if let Ok(status) = rx.try_recv() {
-                    canvas.ndi_sender_status.insert(_part_id, status);
-                    canvas.ndi_status_rx.remove(&_part_id);
-                }
-            }
-
-            if let Some(status) = canvas.ndi_sender_status.get(&_part_id) {
-                match status {
-                    Some(frames) => {
-                        ui.label(
-                            egui::RichText::new(format!("🟢 Running (Sent frames: {})", frames))
-                                .color(crate::theme::colors::SUCCESS_COLOR),
-                        );
-                    }
-                    None => {
-                        ui.label(
-                            egui::RichText::new("🟡 Waiting for runtime...")
-                                .color(crate::theme::colors::WARN_COLOR),
-                        );
-                    }
-                }
-            } else {
-                ui.label("Status: Unknown");
-            }
-
-            if ui.button("🔄 Refresh Status").clicked() {
-                let (tx, rx) = crossbeam_channel::unbounded();
-                canvas.ndi_status_rx.insert(_part_id, rx);
-                _actions.push(crate::action::UIAction::GetNdiSenderStatus(_part_id, tx));
-            }
         }
         #[cfg(not(feature = "ndi"))]
         OutputType::NdiOutput { .. } => {
             ui.label("\u{1F4E1} NDI Output (Feature Disabled)");
             crate::editors::module_canvas::inspector::capabilities::render_unsupported_warning(
                 ui,
-                "NDI feature is disabled in this build.",
+                "[Experimental] NDI feature is disabled in this build.",
             );
         }
         #[cfg(target_os = "windows")]
@@ -337,7 +395,15 @@ pub fn render_output_ui(
             ui.collapsing("\u{1F3AD} Area & Mode", |ui| {
                 ui.label("Entertainment Area:");
                 ui.text_edit_singleline(entertainment_area);
-                // TODO: Fetch areas from bridge if paired
+
+                render_hue_area_selection(
+                    canvas,
+                    ui,
+                    bridge_ip,
+                    username,
+                    entertainment_area,
+                    lamp_positions,
+                );
 
                 ui.separator();
                 ui.label("Mapping Mode:");

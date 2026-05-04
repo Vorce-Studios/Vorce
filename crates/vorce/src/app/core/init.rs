@@ -194,7 +194,6 @@ impl App {
             Self::connect_hue(&mut hue_controller, &ui_state, &tokio_runtime);
         }
 
-        #[allow(unused_mut)]
         let mut control_manager = ControlManager::new();
 
         #[cfg(feature = "http-api")]
@@ -278,8 +277,6 @@ impl App {
             ndi_senders: std::collections::HashMap::new(),
             #[cfg(feature = "ndi")]
             ndi_readbacks: std::collections::HashMap::new(),
-            #[cfg(feature = "ndi")]
-            ndi_offscreen_textures: std::collections::HashMap::new(),
 
             output_assignments: std::collections::HashMap::new(),
             shader_graph_manager: vorce_render::ShaderGraphManager::new(),
@@ -358,7 +355,6 @@ impl App {
         (edge_blend_renderer, color_calibration_renderer)
     }
 
-    #[allow(unused_variables)]
     fn init_ui_assets(ui_state: &mut AppUI) {
         #[cfg(feature = "midi")]
         {
@@ -648,23 +644,5 @@ impl App {
         self.dummy_view =
             Some(std::sync::Arc::new(texture.create_view(&wgpu::TextureViewDescriptor::default())));
         self.dummy_texture = Some(texture);
-    }
-
-    /// Persists the current main window geometry to user config.
-    pub fn persist_main_window_state(&mut self) -> anyhow::Result<()> {
-        if let Some(main_window) = self.window_manager.get(0) {
-            let inner_size = main_window.window.inner_size();
-            let outer_pos = main_window.window.outer_position().unwrap_or_default();
-            let maximized = main_window.window.is_maximized();
-
-            self.ui_state.user_config.window_width = Some(inner_size.width);
-            self.ui_state.user_config.window_height = Some(inner_size.height);
-            self.ui_state.user_config.window_x = Some(outer_pos.x);
-            self.ui_state.user_config.window_y = Some(outer_pos.y);
-            self.ui_state.user_config.window_maximized = maximized;
-
-            self.ui_state.user_config.save().map_err(|e| anyhow::anyhow!(e))?;
-        }
-        Ok(())
     }
 }

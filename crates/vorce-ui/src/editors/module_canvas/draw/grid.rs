@@ -1,9 +1,10 @@
 use super::super::state::ModuleCanvas;
-use egui::{Color32, Pos2, Rect, Stroke};
+use egui::{Pos2, Rect, Stroke};
 
 pub fn draw_grid(canvas: &ModuleCanvas, painter: &egui::Painter, rect: Rect) {
     let grid_size = 20.0 * canvas.zoom;
-    let color = Color32::from_rgb(40, 40, 40);
+    let visuals = &painter.ctx().global_style().visuals;
+    let color = visuals.text_color().linear_multiply(0.05);
     let mut x = rect.left() - canvas.pan_offset.x % grid_size;
     while x < rect.right() {
         painter.line_segment(

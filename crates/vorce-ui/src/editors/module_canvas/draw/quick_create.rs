@@ -14,14 +14,16 @@ pub fn draw_quick_create_popup(
     }
     let popup_pos = canvas.quick_create_pos;
     let catalog = utils::build_node_catalog();
-    let filter_lower = canvas.quick_create_filter.to_lowercase();
+    // ⚡ Bolt: Prevent per-frame String allocations when search is empty using lazy evaluation
+    let filter_lower =
+        (!canvas.quick_create_filter.is_empty()).then(|| canvas.quick_create_filter.to_lowercase());
     let filtered_items: Vec<&utils::NodeCatalogItem> = catalog
         .iter()
         .filter(|item| {
-            if filter_lower.is_empty() {
-                true
+            if let Some(f) = &filter_lower {
+                item.label_lower.contains(f) || item.search_tags.contains(f)
             } else {
-                item.label_lower.contains(&filter_lower) || item.search_tags.contains(&filter_lower)
+                true
             }
         })
         .collect();

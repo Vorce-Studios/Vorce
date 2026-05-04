@@ -203,12 +203,15 @@ impl MediaManagerUI {
                         MediaType::Audio => "🔊",
                         MediaType::Unknown => "?",
                     };
+
+                    let text_color = ui.visuals().text_color();
+
                     ui.painter().text(
                         rect.center(),
                         egui::Align2::CENTER_CENTER,
                         icon,
                         egui::FontId::proportional(size.y * 0.5),
-                        ui.visuals().text_color(),
+                        text_color,
                     );
 
                     // Name
@@ -217,7 +220,7 @@ impl MediaManagerUI {
                         egui::Align2::CENTER_BOTTOM,
                         &item.name,
                         egui::FontId::proportional(12.0),
-                        ui.visuals().text_color(),
+                        text_color,
                     );
 
                     // Hover effect

@@ -153,8 +153,6 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                 preview_effect_chain_renderer: &mut app.preview_effect_chain_renderer,
                 shader_graph_manager: &app.shader_graph_manager,
                 texture_pool: &app.texture_pool,
-                compositor: &mut app.compositor,
-                layer_ping_pong: &mut app.layer_ping_pong,
                 _dummy_view: &app.dummy_view,
                 mesh_buffer_cache: &mut app.mesh_buffer_cache,
                 egui_renderer: &mut app.egui_renderer,
@@ -306,11 +304,11 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                 .render_queue
                 .items
                 .keys()
-                .filter(|&&id| !app.window_manager.windows.contains_key(id))
+                .filter(|&&id| !app.window_manager.contains_output_id(id))
                 .cloned()
                 .collect();
 
-            for vid in virtual_output_ids {
+            for _vid in virtual_output_ids {
                 // For now, we just skip these if they don't have a window,
                 // but in a future iteration we should render them to an offscreen texture.
                 // However, NDI Sender currently reads from the window's surface.
