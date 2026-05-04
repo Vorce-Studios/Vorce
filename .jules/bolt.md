@@ -56,3 +56,8 @@
 ## 2026-04-27 - [Optimization] Prevent redundant lowercasing in Node Catalog building
 **Erkenntnis:** The `build_node_catalog` utility function was still performing string allocations for `label_lower` and `search_tags_lower` even if those fields were not strictly necessary for every frame.
 **Aktion:** Refactored the catalog building to be lazy or use the optimized `case_insensitive_contains` where possible, avoiding per-call heap pressure.
+
+
+## 2026-05-04 - [Prevent Search Allocation Overhead in Vendor NodeFinder]
+**Erkenntnis:** In the vendor crate `egui_node_editor`, the `NodeFinder` UI loop evaluated `.to_lowercase()` for the search query and every node label on every frame, generating O(N) continuous heap allocations even when the text input hadn't changed.
+**Aktion:** I cached the lowercased query in the `NodeFinder` struct, only updating it when `ui.text_edit_singleline().changed()` is true, and introduced a zero-allocation ASCII-optimized `case_insensitive_contains` helper to bypass heap allocations per node label during filtering.
