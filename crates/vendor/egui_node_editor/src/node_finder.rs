@@ -11,9 +11,8 @@ pub struct NodeFinder<NodeTemplate> {
     /// Reset every frame. When set, the node finder will be moved at that position
     pub position: Option<Pos2>,
     pub just_spawned: bool,
-// ⚡ Bolt: Zero-allocation case-insensitive search to prevent continuous String heap allocations
-// inside the high-frequency immediate-mode UI rendering loops.
-
+    // ⚡ Bolt: Zero-allocation case-insensitive search to prevent continuous String heap allocations
+    // inside the high-frequency immediate-mode UI rendering loops.
     _phantom: PhantomData<NodeTemplate>,
 }
 
