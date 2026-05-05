@@ -500,9 +500,11 @@ pub fn render_canvas(
     }
 }
 
-
-
-fn handle_canvas_shortcuts(ui: &mut Ui, canvas: &mut ModuleCanvas, module: &mut vorce_core::module::VorceModule) -> (bool, bool) {
+fn handle_canvas_shortcuts(
+    ui: &mut Ui,
+    canvas: &mut ModuleCanvas,
+    module: &mut vorce_core::module::VorceModule,
+) -> (bool, bool) {
     let mut module_changed = false;
     let mut needs_repair = false;
     let ctrl_held = ui.input(|i| i.modifiers.ctrl);
@@ -609,7 +611,8 @@ fn handle_part_interactions(
     to_screen: &impl Fn(Pos2) -> Pos2,
     actions: &mut Vec<UIAction>,
     module_id: ModuleId,
-) -> (bool, Option<vorce_core::module::ModulePartId>, Vec<(vorce_core::module::ModulePartId, Vec2)>) {
+) -> (bool, Option<vorce_core::module::ModulePartId>, Vec<(vorce_core::module::ModulePartId, Vec2)>)
+{
     let mut clicked_on_part = false;
     let mut delete_part_id = None;
     let mut resize_ops = Vec::new();
@@ -723,13 +726,18 @@ fn handle_part_interactions(
                 canvas.dragging_part = Some((part_id, Vec2::ZERO));
                 // Capture selection snapshot for undo when drag starts.
                 if !canvas.selected_parts.is_empty() {
-                    let current_ids: Vec<u64> = module.parts.iter()
+                    let current_ids: Vec<u64> = module
+                        .parts
+                        .iter()
                         .filter(|p| canvas.selected_parts.contains(&p.id))
                         .map(|p| p.id)
                         .collect();
-                    let snapshot_ids: Vec<u64> = canvas.selection_snapshot.iter().map(|p| p.id).collect();
+                    let snapshot_ids: Vec<u64> =
+                        canvas.selection_snapshot.iter().map(|p| p.id).collect();
                     if canvas.selection_snapshot.is_empty() || snapshot_ids != current_ids {
-                        canvas.selection_snapshot = module.parts.iter()
+                        canvas.selection_snapshot = module
+                            .parts
+                            .iter()
                             .filter(|p| canvas.selected_parts.contains(&p.id))
                             .cloned()
                             .collect();
@@ -810,7 +818,10 @@ fn apply_drag_and_resize_mutations(
         }
     }
 
-    if drag_delta != Vec2::ZERO && ui.input(|i| i.pointer.any_released()) && !canvas.selection_snapshot.is_empty() {
+    if drag_delta != Vec2::ZERO
+        && ui.input(|i| i.pointer.any_released())
+        && !canvas.selection_snapshot.is_empty()
+    {
         let mut position_changes = Vec::new();
         for snapshot_part in &canvas.selection_snapshot {
             if let Some(current_part) = module.parts.iter().find(|p| p.id == snapshot_part.id) {
