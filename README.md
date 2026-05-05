@@ -15,9 +15,6 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 <!-- markdownlint-enable MD013 -->
 
-  [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
-  [![Rust](https://img.shields.io/badge/rust-1.94%2B-orange.svg)](https://www.rust-lang.org/)
-  [![CI](https://github.com/Vorce-Studios/Vorce/actions/workflows/CICD-DevFlow_Job01_Validation.yml/badge.svg)](https://github.com/Vorce-Studios/Vorce/actions)
 </div>
 
 ---

@@ -5,7 +5,6 @@ mod clock;
 #[cfg(feature = "midi")]
 mod controller_element;
 #[cfg(feature = "midi")]
-mod ecler_nuo4;
 #[cfg(feature = "midi")]
 mod input;
 #[cfg(feature = "midi")]
@@ -22,7 +21,6 @@ pub use clock::*;
 #[cfg(feature = "midi")]
 pub use controller_element::*;
 #[cfg(feature = "midi")]
-pub use ecler_nuo4::*;
 #[cfg(feature = "midi")]
 pub use input::*;
 #[cfg(feature = "midi")]

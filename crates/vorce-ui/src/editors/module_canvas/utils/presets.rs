@@ -209,11 +209,7 @@ pub fn default_presets() -> Vec<ModulePreset> {
                     None,
                 ),
                 (
-                    ModulePartType::Output(OutputType::NdiOutput {
-                        name: "Vorce NDI".to_string(),
-                        width: 1920,
-                        height: 1080,
-                    }),
+                    ModulePartType::Output(OutputType::NdiOutput { name: "Vorce NDI".to_string() }),
                     (650.0, 100.0),
                     None,
                 ),

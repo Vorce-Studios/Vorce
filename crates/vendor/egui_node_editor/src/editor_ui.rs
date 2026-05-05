@@ -690,12 +690,13 @@ where
             let outputs = self.graph[self.node_id].outputs.clone();
             for (param_name, param_id) in outputs {
                 let height_before = ui.min_rect().bottom();
-                responses.extend(
-                    self.graph[self.node_id]
-                        .user_data
-                        .output_ui(ui, self.node_id, self.graph, user_state, &param_name)
-                        .into_iter(),
-                );
+                responses.extend(self.graph[self.node_id].user_data.output_ui(
+                    ui,
+                    self.node_id,
+                    self.graph,
+                    user_state,
+                    &param_name,
+                ));
 
                 self.graph[self.node_id].user_data.separator(
                     ui,

@@ -13,11 +13,6 @@ impl ModuleCanvas {
         self.selected_parts.last().copied()
     }
 
-    pub fn clear_selection(&mut self) {
-        self.selected_parts.clear();
-        self.edit_snapshot = None;
-    }
-
     pub fn set_active_module(&mut self, module_id: Option<u64>) {
         self.active_module_id = module_id;
         // Also clear selection when switching modules
@@ -26,7 +21,6 @@ impl ModuleCanvas {
         self.creating_connection = None;
         self.undo_stack.clear();
         self.redo_stack.clear();
-        self.edit_snapshot = None;
     }
 
     pub fn active_module_id(&self) -> Option<u64> {
