@@ -16,3 +16,4 @@
 ## 2026-06-01 - Floating Overlay Theme Colors
 **Erkenntnis:** Hardcoded backgrounds and strokes in module canvas floating overlays (minimap, search, presets) break visual consistency in various theme variants.
 **Aktion:** Use dynamic theme properties like ui.visuals().window_fill() and ui.visuals().widgets.noninteractive.bg_stroke.color instead of static Color32 values.
+## 2026-05-05 - [Hue Spatial Editor Colors] **Erkenntnis:** Hardcoded colors in hue_spatial_editor break theme consistency and readability in different modes. **Aktion:** Always use ui.visuals() equivalents instead of Color32 constants in egui render loops.
