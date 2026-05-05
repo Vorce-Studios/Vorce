@@ -11,7 +11,46 @@ pub struct NodeFinder<NodeTemplate> {
     /// Reset every frame. When set, the node finder will be moved at that position
     pub position: Option<Pos2>,
     pub just_spawned: bool,
+    // ⚡ Bolt: Zero-allocation case-insensitive search to prevent continuous String heap allocations
+    // inside the high-frequency immediate-mode UI rendering loops.
     _phantom: PhantomData<NodeTemplate>,
+}
+
+// ⚡ Bolt: Zero-allocation case-insensitive search to prevent continuous String heap allocations
+// inside the high-frequency immediate-mode UI rendering loops.
+fn case_insensitive_contains(haystack: &str, needle_lower: &str) -> bool {
+    // If needle is empty it's always contained
+    if needle_lower.is_empty() {
+        return true;
+    }
+
+    // Fast path: ASCII
+    if haystack.is_ascii() && needle_lower.is_ascii() {
+        let needle_len = needle_lower.len();
+        let haystack_bytes = haystack.as_bytes();
+        let needle_bytes = needle_lower.as_bytes();
+
+        if haystack_bytes.len() < needle_len {
+            return false;
+        }
+
+        for i in 0..=(haystack_bytes.len() - needle_len) {
+            let mut matches = true;
+            for j in 0..needle_len {
+                if !haystack_bytes[i + j].eq_ignore_ascii_case(&needle_bytes[j]) {
+                    matches = false;
+                    break;
+                }
+            }
+            if matches {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Fallback: Unicode (needle_lower is assumed to be already lowercased)
+    haystack.to_lowercase().contains(needle_lower)
 }
 
 impl<NodeTemplate, NodeData, UserState, CategoryType> NodeFinder<NodeTemplate>
@@ -89,6 +128,11 @@ where
                 Frame::default().inner_margin(vec2(10.0, 10.0)).show(ui, |ui| {
                     ScrollArea::vertical().max_height(max_height).show(ui, |ui| {
                         ui.set_width(scroll_area_width);
+
+                        // ⚡ Bolt: Prevent per-frame String allocations when search is empty using lazy evaluation
+                        let query_lower =
+                            (!self.query.is_empty()).then(|| self.query.to_lowercase());
+
                         for (category, kinds) in categories {
                             let filtered_kinds: Vec<_> = kinds
                                 .into_iter()
@@ -97,9 +141,11 @@ where
                                     (kind, kind_name)
                                 })
                                 .filter(|(_kind, kind_name)| {
-                                    kind_name
-                                        .to_lowercase()
-                                        .contains(self.query.to_lowercase().as_str())
+                                    if let Some(q) = &query_lower {
+                                        case_insensitive_contains(kind_name, q)
+                                    } else {
+                                        true
+                                    }
                                 })
                                 .collect();
 

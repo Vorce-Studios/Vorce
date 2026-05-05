@@ -4,6 +4,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
+  pull_request_target:
+    types: [labeled, unlabeled]
+    branches: [main]
   workflow_dispatch:
     inputs:
       toolchain:
@@ -226,6 +229,13 @@ jobs:
 
       - name: Build
         run: cargo build --release --verbose --no-default-features --features "audio"
+
+      - name: Packaging Smoke Test (Windows)
+        shell: pwsh
+        run: |
+          # DLLs are not bundled in CI (no FFmpeg vcpkg install), so skip DLL checks.
+          # The script still validates Vorce.exe and the icon file are present.
+          .\scripts\build\smoke-test-windows-packaging.ps1 -SkipDlls
 
   build-macos:
     name: "Build (macOS Beta)"

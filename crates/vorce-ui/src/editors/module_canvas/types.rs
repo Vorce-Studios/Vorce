@@ -30,6 +30,7 @@ pub struct ModulePreset {
 
 /// Actions that can be undone/redone
 #[derive(Debug, Clone)]
+#[allow(clippy::type_complexity)]
 pub enum CanvasAction {
     AddPart {
         part_id: ModulePartId,
@@ -53,6 +54,9 @@ pub enum CanvasAction {
     },
     DeleteConnection {
         connection: vorce_core::module::ModuleConnection,
+    },
+    MoveSelection {
+        part_positions: Vec<(ModulePartId, (f32, f32), (f32, f32))>, // (id, old_pos, new_pos)
     },
     Batch(Vec<CanvasAction>),
 }

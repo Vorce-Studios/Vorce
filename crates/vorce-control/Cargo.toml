@@ -35,6 +35,7 @@ reqwest = { version = "0.12", default-features = false, features = ["json", "rus
 
 # OSC (optional)
 rosc = { workspace = true, optional = true }
+rustc-hash = "2.1.2"
 # Core dependencies
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -44,17 +45,17 @@ subtle = "2.6.1"
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 tower = { version = "0.5", optional = true }
-tower-http = { version = "0.6", features = ["cors"], optional = true }
+tower-http = { version = "0.5", features = ["cors"], optional = true }
 tracing = { workspace = true }
 
 # DMX dependencies
-uuid = { version = "1.22", features = ["v4"] }
+uuid = { version = "1.23", features = ["v4"] }
 webrtc-dtls = "0.12.0"
 webrtc-util = "0.17.1"
+
+[dev-dependencies]
+criterion.workspace = true
 
 [[bench]]
 name = "hue_groups_contains_bench"
 harness = false
-
-[dev-dependencies]
-criterion.workspace = true

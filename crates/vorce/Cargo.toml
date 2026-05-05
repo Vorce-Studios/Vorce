@@ -7,6 +7,20 @@ license.workspace = true
 repository.workspace = true
 description = "Vorce - Professional Projection Mapping Software"
 
+[package.metadata.deb]
+name = "vorce"
+maintainer = "Vorce Contributors <info@vorce-studios.com>"
+copyright = "2026, Vorce Contributors"
+license-file = ["../../LICENSE", "0"]
+depends = "libc6 (>= 2.31), libasound2, libavcodec58 | libavcodec-extra58, libavformat58, libavutil56, libswscale5, libswresample3, libfontconfig1, libfreetype6, libudev1, libxcb1, libx11-6, libxcursor1, libxi6, libxrandr2, libxinerama1, libwayland-client0, libxkbcommon0"
+section = "utils"
+priority = "optional"
+assets = [
+    ["../../target/release/Vorce", "usr/bin/vorce", "755"],
+    ["../../README.md", "usr/share/doc/vorce/README.md", "644"],
+    ["../../resources/app_icons/vorce.png", "usr/share/icons/hicolor/512x512/apps/vorce.png", "644"],
+]
+
 [[bin]]
 name = "Vorce"
 path = "src/main.rs"
@@ -30,7 +44,7 @@ bindgen = { workspace = true }
 bytemuck = { workspace = true }
 cbindgen = { workspace = true }
 cc = { workspace = true }
-clap = { version = "4.6.0", features = ["derive", "env"] }
+clap = { version = "4.6.1", features = ["derive", "env"] }
 cpal = { workspace = true }
 criterion = { workspace = true }
 crossbeam-channel = { workspace = true }
@@ -46,14 +60,6 @@ glam = { workspace = true }
 hound = { workspace = true }
 hyper = { workspace = true }
 image = { workspace = true }
-vorce-bevy = { path = "../vorce-bevy" }
-vorce-control = { path = "../vorce-control" }
-vorce-core = { path = "../vorce-core", features = ["winit"] }
-vorce-io = { path = "../vorce-io" }
-vorce-mcp = { path = "../vorce-mcp" }
-vorce-media = { path = "../vorce-media" }
-vorce-render = { path = "../vorce-render" }
-vorce-ui = { path = "../vorce-ui" }
 midir = { workspace = true }
 parking_lot = { workspace = true }
 pollster = { workspace = true }
@@ -63,6 +69,7 @@ rayon = { workspace = true }
 rfd = "0.17"
 ron = { workspace = true }
 rosc = { workspace = true }
+rustc-hash = "2.1.2"
 rustfft = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -74,10 +81,17 @@ tower = { workspace = true }
 tracing = { workspace = true }
 tracing-appender = "0.2"
 tracing-subscriber = { workspace = true }
+vorce-bevy = { path = "../vorce-bevy" }
+vorce-control = { path = "../vorce-control" }
+vorce-core = { path = "../vorce-core", features = ["winit"] }
+vorce-io = { path = "../vorce-io" }
+vorce-mcp = { path = "../vorce-mcp" }
+vorce-media = { path = "../vorce-media" }
+vorce-render = { path = "../vorce-render" }
+vorce-ui = { path = "../vorce-ui" }
 
 wgpu = { workspace = true }
 winit = { workspace = true }
-rustc-hash = "2.1.2"
 
 [build-dependencies]
 winres = { workspace = true }
