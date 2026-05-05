@@ -20,3 +20,11 @@
 **Lektion:** CORS-Policies sollten niemals standardmäßig oder durch einfache Konfiguration Wildcards erlauben, insbesondere bei APIs, die sensitive Aktionen ausführen können.
 
 **Prävention:** Wildcards in CORS-Einstellungen sollten im Code explizit abgefangen und ignoriert werden. Erlaubte Origins müssen als spezifische, vertrauenswürdige Domains konfiguriert werden.
+
+## 2025-05-24 - DoS via Option::unwrap() in mpv_decoder
+
+**Schwachstelle:** Zwei `unwrap()` Aufrufe befanden sich im Media-Decoder (`crates/vorce-media/src/mpv_decoder.rs` auf Zeilen 88 und 89) bei der Erstellung von `CString` aus String-Literalen.
+
+**Lektion:** Obwohl die verwendeten String-Literale keine Null-Bytes enthalten und die Aufrufe in der Praxis sicher sind, kann ein versehentliches Ändern oder dynamisches Erzeugen dieser Strings ohne Null-Prüfung zu Paniken und damit zum Absturz der gesamten Anwendung führen.
+
+**Prävention:** Verwende stattdessen sauberes Error Handling und fange Fehler elegant ab, z.B. durch `map_err`, das zu einem `MediaError::DecoderError` aufgelöst wird.
