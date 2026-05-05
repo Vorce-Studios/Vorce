@@ -27,7 +27,7 @@ Ship Vorce toward a production-ready 1.0 by improving render stability, media pi
 - [x] **VOR-37:** Resolved merge conflicts and NDI build errors in PR #343 and #345
 - [x] **VOR-38:** Fixed startup crash caused by redundant AtmospherePlugin in Bevy integration
 - [x] **VOR-40:** Resolved critical repository merge blockers, fixed Bevy compatibility, and restored NDI build health (Antigravity)
-- [x] **VOR-41:** Resolved merge conflicts in PR #404 and #401, cleaned up 11 stale local branches and identified redundant PR #400 (Antigravity)
+- [x] **VOR-41:** Resolved merge conflicts in PR #404 and #401, cleaned up 11 stale local branches and identified redundant PR #400 (Closed) (Antigravity)
 
 ## Recently Completed
 - **VOR-39:** Merged 9 Dependabot PRs (#374-#382) and resolved CI validation blockers (Antigravity)
