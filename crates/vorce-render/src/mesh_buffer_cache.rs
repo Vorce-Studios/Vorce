@@ -51,41 +51,33 @@ impl MeshBufferCache {
         };
 
         if can_reuse {
-            // Because we already checked can_reuse, we can safely unwrap get_mut,
-            // but to avoid `expect_used`, we use `if let Some` and `else unreachable!()`.
-            if let Some(cached) = self.cache.get_mut(&mapping_id) {
-                // If revision changed, update the content
-                if cached.mesh_revision != mesh.revision {
-                    // Update Vertices (using scratch to avoid allocation)
-                    self.scratch_vertices.clear();
-                    self.scratch_vertices
-                        .extend(mesh.vertices.iter().map(GpuVertex::from_mesh_vertex));
+            let cached = self
+                .cache
+                .get_mut(&mapping_id)
+                .expect("cache entry must exist when can_reuse=true");
 
-                    queue.write_buffer(
-                        &cached.vertex_buffer,
-                        0,
-                        bytemuck::cast_slice(&self.scratch_vertices),
-                    );
+            // If revision changed, update the content
+            if cached.mesh_revision != mesh.revision {
+                // Update Vertices (using scratch to avoid allocation)
+                self.scratch_vertices.clear();
+                self.scratch_vertices.extend(mesh.vertices.iter().map(GpuVertex::from_mesh_vertex));
 
-                    // Update Indices
-                    queue.write_buffer(
-                        &cached.index_buffer,
-                        0,
-                        bytemuck::cast_slice(&mesh.indices),
-                    );
+                queue.write_buffer(
+                    &cached.vertex_buffer,
+                    0,
+                    bytemuck::cast_slice(&self.scratch_vertices),
+                );
 
-                    cached.mesh_revision = mesh.revision;
-                }
-            } else {
-                unreachable!("Cache item must exist if can_reuse is true");
+                // Update Indices
+                // Note: We assume indices might change if revision changes, to be safe.
+                // Optimally we'd only update if they actually differ, but that requires readback or shadow copy.
+                // Write is cheap enough.
+                queue.write_buffer(&cached.index_buffer, 0, bytemuck::cast_slice(&mesh.indices));
+
+                cached.mesh_revision = mesh.revision;
             }
 
-            // We must drop the mutable borrow above before returning an immutable one.
-            if let Some(cached) = self.cache.get(&mapping_id) {
-                return (&cached.vertex_buffer, &cached.index_buffer, cached.index_count);
-            } else {
-                unreachable!("Cache item must exist if can_reuse is true");
-            }
+            return (&cached.vertex_buffer, &cached.index_buffer, cached.index_count);
         }
 
         // Cache miss or topology change - create new buffers
@@ -119,11 +111,9 @@ impl MeshBufferCache {
         };
 
         self.cache.insert(mapping_id, cached);
-        if let Some(cached_ref) = self.cache.get(&mapping_id) {
-            (&cached_ref.vertex_buffer, &cached_ref.index_buffer, cached_ref.index_count)
-        } else {
-            unreachable!("Cache item must exist after insertion");
-        }
+        let cached_ref =
+            self.cache.get(&mapping_id).expect("cached mesh must exist after insertion");
+        (&cached_ref.vertex_buffer, &cached_ref.index_buffer, cached_ref.index_count)
     }
 
     /// Remove a mapping from the cache

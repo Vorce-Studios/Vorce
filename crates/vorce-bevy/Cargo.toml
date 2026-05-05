@@ -10,7 +10,7 @@ repository.workspace = true
 [dependencies]
 anyhow = { workspace = true }
 # Bevy 0.16 Upgrade to align with egui/wgpu v27
-bevy = { git = "https://github.com/bevyengine/bevy", rev = "5330b01ed6dfe8ee9ea98c97ded72e44ca336c74", features = [
+bevy = { git = "https://github.com/bevyengine/bevy", branch = "main", features = [
     "tonemapping_luts",
     "default_font",
 ] }
@@ -18,7 +18,7 @@ bevy = { git = "https://github.com/bevyengine/bevy", rev = "5330b01ed6dfe8ee9ea9
 # Extensions compatible with Bevy 0.16
 # bevy_atmosphere = "0.13"
 # bevy_enoki = "0.6" # Check version
-# bevy_mod_outline = { git = "https://github.com/johanhelsing/bevy_mod_outline", rev = "5330b01ed6dfe8ee9ea98c97ded72e44ca336c74" }
+# bevy_mod_outline = { git = "https://github.com/johanhelsing/bevy_mod_outline", branch = "main" }
 hexx = "0.18" # Version compatible with Bevy 0.16
 
 vorce-core = { path = "../vorce-core" }
@@ -27,8 +27,8 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 # Use Bevy's own wgpu version (v29) to avoid conflicts
 wgpu = "29.0.1"
-bevy_light = { git = "https://github.com/bevyengine/bevy", rev = "5330b01ed6dfe8ee9ea98c97ded72e44ca336c74", version = "0.19.0-dev" }
-bevy_camera = { git = "https://github.com/bevyengine/bevy", rev = "5330b01ed6dfe8ee9ea98c97ded72e44ca336c74", version = "0.19.0-dev" }
+bevy_light = { git = "https://github.com/bevyengine/bevy", branch = "main", version = "0.19.0-dev" }
+bevy_camera = { git = "https://github.com/bevyengine/bevy", branch = "main", version = "0.19.0-dev" }
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy", rev = "5330b01ed6dfe8ee9ea98c97ded72e44ca336c74", default-features = false, features = ["wayland"] }
+bevy = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false, features = ["wayland"] }

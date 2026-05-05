@@ -7,6 +7,21 @@
 //! - Upload thread: Uploads decoded frames to GPU textures
 //! - Render thread: Renders the uploaded textures (runs in main thread)
 //!
+//! ## Thread-Local Scaler Implementation Plan
+//!
+//! Currently disabled due to FFmpeg's SwsContext not being thread-safe.
+//! To re-enable multi-threading:
+//!
+//! 1. Modify FFmpegDecoder to create scaler in the thread where decoding happens
+//! 2. Remove scaler from struct, create as local variable in next_frame()
+//! 3. Or: Use thread_local! macro to cache scaler per thread
+//! 4. This makes VideoDecoder Send-safe without performance overhead
+//!
+//! Benefits:
+//! - Zero overhead compared to single-threaded
+//! - Clean separation of concerns
+//! - Pre-buffering prevents frame stutters
+//! - Overlapped decode + GPU upload
 
 use crate::VideoPlayer;
 use crossbeam_channel::{bounded, Receiver, Sender};
@@ -246,9 +261,7 @@ impl FramePipeline {
         self.running.store(false, Ordering::Relaxed);
 
         if let Some(thread) = self.decode_thread.take() {
-            if let Err(e) = thread.join() {
-                tracing::error!("Decode thread panicked: {:?}", e);
-            }
+            thread.join().expect("Failed to join decode thread");
         }
     }
 

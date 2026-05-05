@@ -161,7 +161,7 @@ impl TimelineV2 {
     }
 
     fn cleanup_missing_modules(&mut self, available_module_ids: &[ModuleId]) {
-        let valid: rustc_hash::FxHashSet<ModuleId> = available_module_ids.iter().copied().collect();
+        let valid: HashSet<ModuleId> = available_module_ids.iter().copied().collect();
         self.module_arrangement.retain(|item| valid.contains(&item.module_id));
 
         let has_block = |id: Option<u64>, blocks: &[ModuleArrangementItem]| {
@@ -276,8 +276,7 @@ impl TimelineV2 {
                         .collect();
 
                     // Sort by whether they require triggers (those without triggers are defaults)
-                    active_blocks
-                        .sort_by(|a, b| a.start_trigger.is_some().cmp(&b.start_trigger.is_some()));
+                    active_blocks.sort_by_key(|a| a.start_trigger.is_some());
 
                     let mut next_block_id = self.hybrid_current_block_id;
 
@@ -833,7 +832,7 @@ impl TimelineV2 {
                             egui::Align2::LEFT_TOP,
                             format!("{:.0}s", time),
                             egui::FontId::proportional(12.0),
-                            ui.visuals().text_color(),
+                            ui.visuals().strong_text_color(),
                         );
                     }
                 }
@@ -867,7 +866,7 @@ impl TimelineV2 {
                         egui::Align2::LEFT_TOP,
                         "M",
                         egui::FontId::proportional(10.0),
-                        ui.visuals().text_color(),
+                        ui.visuals().strong_text_color(),
                     );
 
                     let interact_rect = Rect::from_min_size(
@@ -997,7 +996,7 @@ impl TimelineV2 {
                         egui::Align2::LEFT_TOP,
                         label,
                         egui::FontId::proportional(12.0),
-                        ui.visuals().text_color(),
+                        ui.visuals().strong_text_color(),
                     );
                 }
             }
@@ -1134,8 +1133,8 @@ impl TimelineV2 {
 
                             painter.add(egui::Shape::convex_polygon(
                                 diamond,
-                                ui.visuals().warn_fg_color,
-                                Stroke::new(1.0, ui.visuals().text_color()),
+                                crate::theme::colors::WARN_COLOR,
+                                Stroke::new(1.0, ui.visuals().strong_text_color()),
                             ));
                         }
 

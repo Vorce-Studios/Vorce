@@ -18,7 +18,6 @@ pub mod layer;
 pub use layer::{BlendMode, Composition, Layer, LayerManager, ResizeMode, Transform};
 
 // Phase 2: Multi-output and projection mapping
-pub mod cluster;
 pub mod mapping;
 pub mod mesh;
 pub mod monitor;
@@ -103,7 +102,6 @@ pub use module_eval::{
 };
 
 // Output & Display
-pub use cluster::{ClusterSessionConfig, InstanceConfig, InstanceId, InstanceRole};
 pub use mapping::{Mapping, MappingId, MappingManager};
 pub use monitor::{MonitorInfo, MonitorTopology};
 pub use output::{
