@@ -8,6 +8,7 @@ use vorce_control::osc::client::OscClient;
 
 pub struct McpServer {
     // Optional OSC client (currently unused but will be used for OSC tools)
+    #[allow(dead_code)]
     osc_client: Option<OscClient>,
     // Channel to send actions to main app
     pub action_sender: Option<Sender<McpAction>>,
@@ -128,44 +129,17 @@ impl McpServer {
                 if let Some(uri) = uri {
                     match uri.as_str() {
                         "project://current" => {
-                            if let Some(sender) = &self.action_sender {
-                                let (tx, rx) = crossbeam_channel::bounded(1);
-                                if sender.send(crate::McpAction::GetProjectState(tx)).is_ok() {
-                                    // Block on receiving the state since we must reply inline
-                                    // In a production setup, we might use async channels, but since this
-                                    // runs in its own task blocking on a channel bounded(1) is fine.
-                                    let result_text = match tokio::task::spawn_blocking(move || {
-                                        rx.recv_timeout(std::time::Duration::from_secs(5))
-                                    })
-                                    .await
-                                    {
-                                        Ok(Ok(state_json)) => state_json,
-                                        _ => {
-                                            "{\"error\": \"Failed to receive state from main app\"}"
-                                                .to_string()
-                                        }
-                                    };
-
-                                    Some(success_response(
-                                        id,
-                                        serde_json::json!({
-                                            "contents": [{
-                                                "uri": uri,
-                                                "mimeType": "application/json",
-                                                "text": result_text
-                                            }]
-                                        }),
-                                    ))
-                                } else {
-                                    Some(error_response(
-                                        id,
-                                        -32000,
-                                        "Failed to send state request action",
-                                    ))
-                                }
-                            } else {
-                                Some(error_response(id, -32000, "Action sender not initialized"))
-                            }
+                            // TODO: Implement shared state reading
+                            Some(success_response(
+                                id,
+                                serde_json::json!({
+                                    "contents": [{
+                                        "uri": uri,
+                                        "mimeType": "application/json",
+                                        "text": "{\"error\": \"Shared state access not yet implemented\"}"
+                                    }]
+                                }),
+                            ))
                         }
                         _ => Some(error_response(id, -32602, "Resource not found")),
                     }
@@ -248,6 +222,7 @@ impl McpServer {
         }
     }
 
+    #[allow(dead_code)]
     pub fn handle_send_osc(
         &self,
         id: Option<serde_json::Value>,
@@ -267,6 +242,7 @@ impl McpServer {
         Some(error_response(id, -32602, "Missing address or args argument"))
     }
 
+    #[allow(dead_code)]
     fn send_osc_msg(
         &self,
         address: &str,

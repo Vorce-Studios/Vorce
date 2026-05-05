@@ -284,12 +284,12 @@ pub fn get_part_property_text(part_type: &ModulePartType) -> String {
             match layer_type {
                 LayerType::Single { name, .. } => format!("\u{1F4D1} {}", name),
                 LayerType::Group { name, .. } => format!("📁 {}", name),
-                LayerType::All { .. } => "\u{1F4D1} All (Disabled)".to_string(),
+                LayerType::All { .. } => "\u{1F4D1} All Layers".to_string(),
             }
         }
         ModulePartType::Output(output_type) => match output_type {
             OutputType::Projector { name, .. } => format!("\u{1F4FA} {}", name),
-            OutputType::NdiOutput { name, .. } => format!("\u{1F4E1} {}", name),
+            OutputType::NdiOutput { name } => format!("\u{1F4E1} {}", name),
             #[cfg(target_os = "windows")]
             OutputType::Spout { name } => format!("\u{1F6B0} {}", name),
             OutputType::Hue { bridge_ip, .. } => {

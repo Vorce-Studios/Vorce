@@ -7,7 +7,7 @@ use super::common::{
 use crate::theme::colors;
 use crate::widgets::styled_slider;
 use crate::UIAction;
-use egui::{Ui, Vec2};
+use egui::{Color32, Ui, Vec2};
 use vorce_core::module::{BevyCameraMode, ModuleId, ModulePartId, SourceType};
 
 /// Renders the configuration UI for a `ModulePartType::Source`.
@@ -188,7 +188,6 @@ pub fn render_source_ui(
                     flip_horizontal: false,
                     flip_vertical: false,
                 },
-                "NdiInput" => SourceType::NdiInput { source_name: None },
                 _ => source.clone(),
             };
         }
@@ -301,9 +300,9 @@ pub fn render_source_ui(
                     .size(22.0)
                     .strong()
                     .color(if is_playing {
-                        ui.visuals().strong_text_color()
+                        Color32::from_rgb(100, 255, 150)
                     } else {
-                        ui.visuals().text_color()
+                        Color32::from_rgb(200, 200, 200)
                     }),
                 );
             });
@@ -996,8 +995,6 @@ pub fn render_source_ui(
                     ui,
                     "[Experimental] NDI Input has no active polling/upload path in the current runtime.",
                 );
-            } else {
-                capabilities::render_runtime_active_info(ui);
             }
 
             ui.add_enabled_ui(supported, |ui| {
@@ -1088,23 +1085,6 @@ pub fn render_source_ui(
                                     }
                                 }
                             });
-
-                        if let Some(status) = canvas.ndi_input_status.get(&part_id) {
-                            if status.connected {
-                                ui.horizontal(|ui| {
-                                    ui.label(egui::RichText::new("●").color(colors::MINT_ACCENT));
-                                    ui.label(format!(
-                                        "Connected: {}",
-                                        status.source_name.as_deref().unwrap_or("Unknown")
-                                    ));
-                                });
-                            } else {
-                                ui.horizontal(|ui| {
-                                    ui.label(egui::RichText::new("○").color(colors::WARN_COLOR));
-                                    ui.label("Disconnected");
-                                });
-                            }
-                        }
 
                         ui.label(format!("Found {} source(s)", canvas.ndi_sources.len()));
                     } else if canvas.ndi_discovery_rx.is_none() {

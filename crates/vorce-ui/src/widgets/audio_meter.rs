@@ -192,8 +192,8 @@ fn draw_retro_stereo(ui: &mut egui::Ui, rect: Rect, db_left: f32, db_right: f32)
     );
 
     // Draw each meter
-    draw_single_retro_meter(painter, left_rect, db_left, "L");
-    draw_single_retro_meter(painter, right_rect, db_right, "R");
+    draw_single_retro_meter(ui, painter, left_rect, db_left, "L");
+    draw_single_retro_meter(ui, painter, right_rect, db_right, "R");
 
     // Glass overlay effect (covers entire area)
     let glass_rect = rect.shrink(1.0);
@@ -217,7 +217,13 @@ fn draw_retro_stereo(ui: &mut egui::Ui, rect: Rect, db_left: f32, db_right: f32)
     );
 }
 
-fn draw_single_retro_meter(painter: &egui::Painter, rect: Rect, db: f32, label: &str) {
+fn draw_single_retro_meter(
+    _ui: &egui::Ui,
+    painter: &egui::Painter,
+    rect: Rect,
+    db: f32,
+    label: &str,
+) {
     // Meter face background
     painter.rect_filled(rect, 0.0, Color32::from_rgb(230, 225, 210)); // Cream/vintage color
 
@@ -319,7 +325,7 @@ fn draw_digital_stereo(
     let painter = ui.painter();
 
     // Dark background
-    painter.rect_filled(rect, 0.0, ui.visuals().extreme_bg_color);
+    painter.rect_filled(rect, 0.0, crate::theme::colors::DARKER_GREY);
 
     // Layout:
     // Top: L
@@ -346,7 +352,7 @@ fn draw_digital_stereo(
     draw_horizontal_led_bar(painter, r_rect, db_right, peak_r);
 
     // Draw Scale
-    draw_horizontal_scale(painter, ui.visuals(), scale_rect);
+    draw_horizontal_scale(ui, painter, scale_rect);
 
     // Labels overlay
     painter.text(
@@ -409,7 +415,7 @@ fn draw_horizontal_led_bar(painter: &egui::Painter, rect: Rect, db: f32, peak: f
     }
 }
 
-fn draw_horizontal_scale(painter: &egui::Painter, visuals: &egui::Visuals, rect: Rect) {
+fn draw_horizontal_scale(ui: &egui::Ui, painter: &egui::Painter, rect: Rect) {
     let min_db = -60.0;
     let max_db = 3.0;
 
@@ -423,7 +429,7 @@ fn draw_horizontal_scale(painter: &egui::Painter, visuals: &egui::Visuals, rect:
         let x = db_to_x(val);
         painter.line_segment(
             [Pos2::new(x, rect.min.y), Pos2::new(x, rect.max.y)],
-            Stroke::new(1.0, visuals.text_color().linear_multiply(0.2)),
+            Stroke::new(1.0, Color32::from_gray(60)),
         );
 
         if rect.height() > 8.0 && (val == -40.0 || val == -20.0 || val == 0.0) {
@@ -432,7 +438,7 @@ fn draw_horizontal_scale(painter: &egui::Painter, visuals: &egui::Visuals, rect:
                 egui::Align2::CENTER_CENTER,
                 format!("{:.0}", val),
                 egui::FontId::proportional(9.0),
-                visuals.text_color().linear_multiply(0.6),
+                ui.visuals().text_color().gamma_multiply(0.6),
             );
         }
     }

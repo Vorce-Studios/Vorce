@@ -124,12 +124,12 @@ impl ControllerOverlayPanel {
             );
         } else {
             // Fallback: dark background
-            let bg_color = ui.visuals().extreme_bg_color;
+            let bg_color = Color32::from_rgb(30, 30, 35);
             painter.rect_filled(rect, 4.0, bg_color);
             painter.rect_stroke(
                 rect,
                 4.0,
-                Stroke::new(2.0, ui.visuals().window_stroke().color),
+                Stroke::new(2.0, Color32::from_rgb(80, 80, 80)),
                 egui::StrokeKind::Middle,
             );
             painter.text(
@@ -137,7 +137,7 @@ impl ControllerOverlayPanel {
                 egui::Align2::CENTER_CENTER,
                 "Hintergrundbild wird geladen...",
                 egui::FontId::default(),
-                ui.visuals().text_color().gamma_multiply(0.5),
+                Color32::WHITE,
             );
         }
 
@@ -467,10 +467,7 @@ impl ControllerOverlayPanel {
                         ui.separator();
                         ui.horizontal(|ui| {
                             ui.label("Zuweisung:");
-                            ui.colored_label(
-                                ui.visuals().strong_text_color(),
-                                assign.target.to_string(),
-                            );
+                            ui.colored_label(Color32::YELLOW, assign.target.to_string());
                         });
                         crate::widgets::custom::render_info_label_with_size(
                             ui,
