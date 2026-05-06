@@ -7,7 +7,7 @@ use super::utils;
 use super::ModuleCanvasRenderOptions;
 use crate::i18n::LocaleManager;
 use crate::UIAction;
-use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
+use egui::{Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use vorce_core::module::{ModuleId, ModuleManager, TriggerType};
 
 pub fn show(
@@ -188,7 +188,7 @@ pub fn render_canvas(
             }
         }
 
-        draw::draw_grid(canvas, &painter, canvas_rect);
+        draw::draw_grid(canvas, ui, &painter, canvas_rect);
 
         let zoom = canvas.zoom;
         let pan_offset = canvas.pan_offset;
@@ -290,7 +290,7 @@ pub fn render_canvas(
                 painter.rect_stroke(
                     highlight_rect,
                     0.0,
-                    Stroke::new(2.0 * canvas.zoom, Color32::from_rgb(0, 229, 255)),
+                    Stroke::new(2.0 * canvas.zoom, crate::theme::colors::CYAN_ACCENT),
                     egui::StrokeKind::Middle,
                 );
 
@@ -299,13 +299,13 @@ pub fn render_canvas(
                     Pos2::new(part_rect.max.x - handle_size, part_rect.max.y - handle_size),
                     Vec2::splat(handle_size),
                 );
-                painter.rect_filled(handle_rect, 0.0, Color32::from_rgb(0, 229, 255));
+                painter.rect_filled(handle_rect, 0.0, crate::theme::colors::CYAN_ACCENT);
                 painter.line_segment(
                     [
                         handle_rect.min + Vec2::new(3.0, handle_size - 3.0),
                         handle_rect.min + Vec2::new(handle_size - 3.0, 3.0),
                     ],
-                    Stroke::new(1.5, Color32::from_gray(40)),
+                    Stroke::new(1.5, ui.visuals().window_fill),
                 );
 
                 let resize_response =
@@ -538,18 +538,23 @@ pub fn render_canvas(
                         } else {
                             false
                         };
-                        color = if is_valid { Color32::GREEN } else { Color32::RED };
+                        color = if is_valid {
+                            crate::theme::colors::MINT_ACCENT
+                        } else {
+                            ui.visuals().error_fg_color
+                        };
                         break;
                     }
                 }
 
-                let preview_stroke =
-                    if options.short_circuit_animation_enabled && color == Color32::RED {
-                        let pulse = (ui.input(|i| i.time) as f32 * 10.0).sin().abs();
-                        Stroke::new(3.0 + pulse * 2.0, color.gamma_multiply(0.8 + pulse * 0.2))
-                    } else {
-                        Stroke::new(3.0, color)
-                    };
+                let preview_stroke = if options.short_circuit_animation_enabled
+                    && color == ui.visuals().error_fg_color
+                {
+                    let pulse = (ui.input(|i| i.time) as f32 * 10.0).sin().abs();
+                    Stroke::new(3.0 + pulse * 2.0, color.gamma_multiply(0.8 + pulse * 0.2))
+                } else {
+                    Stroke::new(3.0, color)
+                };
 
                 painter.line_segment([start_pos, pointer_pos], preview_stroke);
                 painter.circle_filled(pointer_pos, 5.0, color);
@@ -597,12 +602,12 @@ pub fn render_canvas(
                     painter.rect_filled(
                         menu_rect,
                         4.0,
-                        Color32::from_rgba_unmultiplied(30, 30, 40, 245),
+                        ui.visuals().window_fill.gamma_multiply(0.96),
                     );
                     painter.rect_stroke(
                         menu_rect,
                         4.0,
-                        Stroke::new(1.0, Color32::from_rgb(200, 80, 80)),
+                        Stroke::new(1.0, ui.visuals().error_fg_color.linear_multiply(0.8)),
                         egui::StrokeKind::Middle,
                     );
 
@@ -640,12 +645,12 @@ pub fn render_canvas(
                     painter.rect_filled(
                         menu_rect,
                         4.0,
-                        Color32::from_rgba_unmultiplied(30, 30, 40, 245),
+                        ui.visuals().window_fill.gamma_multiply(0.96),
                     );
                     painter.rect_stroke(
                         menu_rect,
                         4.0,
-                        Stroke::new(1.0, Color32::from_rgb(80, 100, 150)),
+                        Stroke::new(1.0, ui.visuals().window_stroke.color),
                         egui::StrokeKind::Middle,
                     );
 
@@ -687,7 +692,7 @@ pub fn render_canvas(
                             ui.label(
                                 egui::RichText::new(format!("{:.0}%", canvas.zoom * 100.0))
                                     .size(11.0)
-                                    .color(Color32::WHITE),
+                                    .color(ui.visuals().text_color()),
                             );
                         });
                     },
