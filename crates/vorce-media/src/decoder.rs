@@ -161,6 +161,10 @@ mod ffmpeg_impl {
         pub fn open<P: AsRef<Path>>(path: P, hw_accel: HwAccelType) -> Result<Self> {
             let path = path.as_ref();
 
+            if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+                return Err(MediaError::FileOpen("Path Traversal attempt blocked".into()));
+            }
+
             if !path.exists() {
                 return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
             }

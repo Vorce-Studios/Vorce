@@ -20,3 +20,9 @@
 **Lektion:** CORS-Policies sollten niemals standardmäßig oder durch einfache Konfiguration Wildcards erlauben, insbesondere bei APIs, die sensitive Aktionen ausführen können.
 
 **Prävention:** Wildcards in CORS-Einstellungen sollten im Code explizit abgefangen und ignoriert werden. Erlaubte Origins müssen als spezifische, vertrauenswürdige Domains konfiguriert werden.
+
+## 2026-05-02 - [CRITICAL] Path Traversal in Media Loaders
+
+**Schwachstelle:** Media-Loader in `vorce-media` (wie `StillImageDecoder`, `GifDecoder`, `MpvDecoder`, `FFmpegDecoder` und `ImageSequenceDecoder`) öffneten Dateipfade ohne Validierung von relativen Pfad-Komponenten (`..`).
+**Lektion:** Externe oder benutzergesteuerte Pfade in Projektdateien können aus dem Sandbox-Verzeichnis ausbrechen und sensible Systemdateien lesen, wenn nicht validiert wird.
+**Prävention:** Vor dem Öffnen von Dateien immer `path.components().any(|c| matches!(c, std::path::Component::ParentDir))` prüfen und im Fehlerfall den Vorgang blockieren.
