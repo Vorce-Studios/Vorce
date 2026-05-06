@@ -167,6 +167,7 @@ pub fn render_canvas(
             canvas.show_search = !canvas.show_search;
             if canvas.show_search {
                 canvas.search_filter.clear();
+                canvas.search_filter_lower = None;
             }
         }
 
@@ -583,6 +584,7 @@ pub fn render_canvas(
             canvas.quick_create_pos =
                 ui.input(|i| i.pointer.hover_pos()).unwrap_or(canvas_rect.center());
             canvas.quick_create_filter.clear();
+            canvas.quick_create_filter_lower = None;
             canvas.quick_create_selected_index = 0;
         }
 
