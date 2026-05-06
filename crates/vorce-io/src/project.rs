@@ -45,6 +45,12 @@ pub fn save_project(state: &AppState, path: &Path) -> Result<()> {
 /// A `Result` containing the loaded `AppState` on success, or an `IoError`
 /// on failure (e.g., file not found, deserialization error, version mismatch).
 pub fn load_project(path: &Path) -> Result<AppState> {
+    if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+        tracing::warn!(path = %path.display(), "Path traversal component (..) detected in project path");
+    }
+    if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+        tracing::warn!(path = %path.display(), "Path traversal component (..) detected in project path");
+    }
     let project_file = ProjectFile::load(path)?;
 
     // Basic version validation. A more sophisticated migration system could be

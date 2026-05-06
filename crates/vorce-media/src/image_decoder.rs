@@ -30,14 +30,11 @@ pub struct StillImageDecoder {
 impl StillImageDecoder {
     /// Load a still image from a file
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let p = path.as_ref();
-        if p.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
-            tracing::warn!(
-                "Path traversal component (..) detected in open path: {:?}",
-                p.display()
-            );
+        let path_ref: &std::path::Path = path.as_ref();
+        if path_ref.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+            tracing::warn!(path = %path_ref.display(), "Path traversal component (..) detected in media decoder path");
         }
-        let path = path.as_ref();
+        let path: &std::path::Path = path_ref;
 
         if !path.exists() {
             return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
@@ -139,14 +136,11 @@ pub struct GifDecoder {
 impl GifDecoder {
     /// Load an animated GIF from a file
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let p = path.as_ref();
-        if p.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
-            tracing::warn!(
-                "Path traversal component (..) detected in open path: {:?}",
-                p.display()
-            );
+        let path_ref: &std::path::Path = path.as_ref();
+        if path_ref.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+            tracing::warn!(path = %path_ref.display(), "Path traversal component (..) detected in media decoder path");
         }
-        let path = path.as_ref();
+        let path: &std::path::Path = path_ref;
 
         if !path.exists() {
             return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
@@ -318,6 +312,12 @@ mod tests {
     #[test]
     fn test_gif_decoder_new_not_found() {
         let result = GifDecoder::open("a_file_that_does_not_exist.gif");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_path_traversal_warning() {
+        let result = StillImageDecoder::open("../../../some_fake_file.png");
         assert!(result.is_err());
     }
 }

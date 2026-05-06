@@ -29,7 +29,11 @@ pub struct MpvDecoder {
 impl MpvDecoder {
     /// Open a video file with MPV
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let path = path.as_ref().to_path_buf();
+        let path_ref: &std::path::Path = path.as_ref();
+        if path_ref.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+            tracing::warn!(path = %path_ref.display(), "Path traversal component (..) detected in media decoder path");
+        }
+        let path = path_ref.to_path_buf();
 
         info!("Opening video with MPV: {:?}", path);
 

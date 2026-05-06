@@ -55,6 +55,12 @@ impl ProjectFile {
     /// This function handles the low-level deserialization from either RON or JSON,
     /// depending on the file extension.
     pub fn load(path: &Path) -> Result<Self> {
+        if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+            tracing::warn!(path = %path.display(), "Path traversal component (..) detected in project path");
+        }
+        if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+            tracing::warn!(path = %path.display(), "Path traversal component (..) detected in project path");
+        }
         let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("ron");
 
         match extension {
