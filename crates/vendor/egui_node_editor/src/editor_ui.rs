@@ -690,12 +690,13 @@ where
             let outputs = self.graph[self.node_id].outputs.clone();
             for (param_name, param_id) in outputs {
                 let height_before = ui.min_rect().bottom();
-                responses.extend(
-                    self.graph[self.node_id]
-                        .user_data
-                        .output_ui(ui, self.node_id, self.graph, user_state, &param_name)
-                        .into_iter(),
-                );
+                responses.extend(self.graph[self.node_id].user_data.output_ui(
+                    ui,
+                    self.node_id,
+                    self.graph,
+                    user_state,
+                    &param_name,
+                ));
 
                 self.graph[self.node_id].user_data.separator(
                     ui,
@@ -803,7 +804,7 @@ where
 
         // Input ports
         for ((_, param), port_height) in
-            self.graph[self.node_id].inputs.iter().zip(input_port_heights.into_iter())
+            self.graph[self.node_id].inputs.iter().zip(input_port_heights)
         {
             let should_draw = match self.graph[*param].kind() {
                 InputParamKind::ConnectionOnly => true,
@@ -831,7 +832,7 @@ where
 
         // Output ports
         for ((_, param), port_height) in
-            self.graph[self.node_id].outputs.iter().zip(output_port_heights.into_iter())
+            self.graph[self.node_id].outputs.iter().zip(output_port_heights)
         {
             let pos_right = pos2(port_right, port_height);
             draw_port(

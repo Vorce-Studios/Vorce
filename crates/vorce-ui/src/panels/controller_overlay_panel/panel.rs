@@ -249,7 +249,7 @@ impl ControllerOverlayPanel {
 
                     // Assignment colors toggle
                     let assign_btn = if self.show_assignment_colors {
-                        egui::Button::new("🎨 Zuweisungen").fill(Color32::from_rgb(60, 80, 100))
+                        egui::Button::new("🎨 Zuweisungen").fill(ui.visuals().selection.bg_fill)
                     } else {
                         egui::Button::new("🎨 Zuweisungen")
                     };
@@ -260,7 +260,7 @@ impl ControllerOverlayPanel {
                     ui.separator();
 
                     let edit_btn = if self.is_edit_mode {
-                        egui::Button::new("✏️ Edit").fill(Color32::YELLOW)
+                        egui::Button::new("✏️ Edit").fill(ui.visuals().warn_fg_color.linear_multiply(0.8))
                     } else {
                         egui::Button::new("✏️ Edit")
                     };

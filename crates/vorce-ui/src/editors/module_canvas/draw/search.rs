@@ -1,5 +1,5 @@
 use super::super::{state::ModuleCanvas, utils};
-use egui::{Color32, Pos2, Rect, Stroke, Ui, Vec2};
+use egui::{Pos2, Rect, Stroke, Ui, Vec2};
 use vorce_core::module::VorceModule;
 
 pub fn draw_search_popup(
@@ -16,11 +16,11 @@ pub fn draw_search_popup(
     );
 
     let painter = ui.painter();
-    painter.rect_filled(popup_rect, 0.0, Color32::from_rgba_unmultiplied(30, 30, 40, 240));
+    painter.rect_filled(popup_rect, 0.0, ui.visuals().window_fill());
     painter.rect_stroke(
         popup_rect,
         0.0,
-        Stroke::new(2.0, Color32::from_rgb(80, 120, 200)),
+        Stroke::new(2.0, ui.visuals().widgets.noninteractive.bg_stroke.color),
         egui::StrokeKind::Middle,
     );
 
@@ -29,24 +29,42 @@ pub fn draw_search_popup(
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
                 ui.label("🔍");
-                if ui.text_edit_singleline(&mut canvas.search_filter).changed() {
-                    canvas.search_filter_lower =
-                        (!canvas.search_filter.is_empty()).then(|| canvas.search_filter.to_lowercase());
+                let response = ui.text_edit_singleline(&mut canvas.search_filter);
+                if response.changed() {
+                    canvas.search_filter_lower = (!canvas.search_filter.is_empty())
+                        .then(|| canvas.search_filter.to_lowercase());
                 }
             });
             ui.add_space(8.0);
 
-            let filter_lower_opt = canvas.search_filter_lower.clone();
             let matching_parts: Vec<_> = module
                 .parts
                 .iter()
                 .filter(|p| {
-                    let Some(filter_lower) = &filter_lower_opt else {
+                    let Some(filter_lower) = &canvas.search_filter_lower else {
                         return true;
                     };
-                    let name = utils::get_part_property_text(&p.part_type).to_lowercase();
+                    let name = utils::get_part_property_text(&p.part_type);
                     let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
-                    name.contains(filter_lower) || type_name.to_lowercase().contains(filter_lower)
+                    let contains_ignore_case = |haystack: &str, needle: &str| -> bool {
+                        if needle.is_empty() {
+                            return true;
+                        }
+                        if haystack.len() < needle.len() {
+                            return false;
+                        }
+                        haystack.char_indices().any(|(i, _)| {
+                            haystack[i..]
+                                .chars()
+                                .flat_map(|c| c.to_lowercase())
+                                .zip(needle.chars())
+                                .take_while(|(h, n)| h == n)
+                                .count()
+                                == needle.chars().count()
+                        })
+                    };
+                    contains_ignore_case(&name, filter_lower)
+                        || contains_ignore_case(type_name, filter_lower)
                 })
                 .take(6)
                 .collect();
@@ -69,6 +87,8 @@ pub fn draw_search_popup(
                         canvas.pan_offset =
                             Vec2::new(-part.position.0 + 200.0, -part.position.1 + 150.0);
                         canvas.show_search = false;
+                        canvas.search_filter.clear();
+                        canvas.search_filter_lower = None;
                     }
                 }
             });

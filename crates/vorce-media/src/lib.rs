@@ -14,8 +14,6 @@ use thiserror::Error;
 pub mod decoder;
 #[cfg(feature = "hap")]
 pub mod hap_decoder;
-// #[cfg(feature = "hap")]
-// pub mod hap_player;
 pub mod image_decoder;
 #[cfg(feature = "libmpv")]
 pub mod mpv_decoder;
@@ -30,8 +28,6 @@ pub mod pipeline;
 pub use decoder::{FFmpegDecoder, HwAccelType, PixelFormat, TestPatternDecoder, VideoDecoder};
 #[cfg(feature = "hap")]
 pub use hap_decoder::{decode_hap_frame, HapError, HapFrame, HapTextureType};
-// #[cfg(feature = "hap")]
-// pub use hap_player::{is_hap_file, HapVideoDecoder};
 pub use image_decoder::{GifDecoder, StillImageDecoder};
 #[cfg(feature = "libmpv")]
 pub use mpv_decoder::MpvDecoder;

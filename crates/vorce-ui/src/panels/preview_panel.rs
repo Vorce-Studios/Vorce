@@ -62,7 +62,7 @@ impl PreviewPanel {
         }
 
         let mut final_outputs: Vec<_> = best_previews.into_values().collect();
-        final_outputs.sort_by(|a, b| a.id.cmp(&b.id));
+        final_outputs.sort_by_key(|a| a.id);
         self.outputs = final_outputs;
     }
 

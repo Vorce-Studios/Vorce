@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+## 2025-02-12 - Prevent Per-Frame String Allocation in UI Hot Paths
+**Erkenntnis:** Immediate-mode UIs wie egui rufen Render-Funktionen 60x pro Sekunde auf. Wenn man innerhalb einer Schleife in `draw_search_popup` und `draw_quick_create_popup` kontinuierlich `.to_lowercase()` auf dem Such-Filter ausführt, erzeugt dies massive, unnötige Heap-Allokationen (String-Instanziierungen). Dies belastet den Garbage Collector (bzw. führt in Rust zu unnötigem Speicherdruck) und verlangsamt den Render-Thread erheblich, vor allem bei langen Listen.
+**Aktion:** Zustände, die für Vergleiche transformiert werden müssen (wie lowercased Strings), sollten im State-Struct ge-cached und NUR aktualisiert werden, wenn sich das Original ändert (`response.changed()`). Die Eigenschaft muss gekapselt oder das `changed()`-Signal der UI-Komponente genutzt werden.
+=======
 ## 2023-10-27 - [Optimization] `node_editor.rs` Selected Nodes Check Optimization
 **Erkenntnis:** In `NodeEditor`, the `.contains(&node.id)` check on a `Vec<u64>` within the nodes rendering loop was very inefficient (`O(n)` per iteration where `n` is `selected_nodes.len()`).
 **Aktion:** I changed it so `selected_nodes` is pre-collected into an `FxHashSet<u64>` (from `rustc-hash`), providing `O(1)` amortized lookups instead. Benchmark results show a ~13.7x improvement for lookups compared to the original `Vec` implementation.
@@ -26,3 +31,4 @@
 ## 2025-05-18 - ⚡ Bolt: Prevent Heap Allocations in Quick Create and Search Filter Loops
 **Erkenntnis:** Calling `.to_lowercase()` inside high-frequency UI rendering loops (`filtered_items` in `QuickCreate` and `matching_parts` in `SearchPopup`) generates unnecessary heap allocations on every frame when the search query remains unchanged, harming performance.
 **Aktion:** I cached the lowercased search query in `ModuleCanvas::search_filter_lower` and `ModuleCanvas::quick_create_filter_lower` (`Option<String>`) and only updated them when `egui::TextEdit::changed()` returns true. This eliminated the allocation overhead completely during idle rendering frames.
+>>>>>>> 8b188fb (⚡ Bolt: Prevent Heap Allocations in Quick Create and Search Filter Loops)

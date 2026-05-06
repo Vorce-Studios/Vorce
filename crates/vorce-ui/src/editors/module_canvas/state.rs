@@ -42,6 +42,7 @@ pub struct ModuleCanvas {
     pub clipboard: Vec<(vorce_core::module::ModulePartType, (f32, f32))>,
     /// Search filter text
     pub search_filter: String,
+    /// Cached lowercased search filter text
     pub search_filter_lower: Option<String>,
     /// Whether search popup is visible
     pub show_search: bool,
@@ -134,6 +135,7 @@ pub struct ModuleCanvas {
     pub show_quick_create: bool,
     /// Filter text for quick create
     pub quick_create_filter: String,
+    /// Cached lowercased quick create filter text
     pub quick_create_filter_lower: Option<String>,
     /// Screen position for the quick create popup
     pub quick_create_pos: Pos2,
