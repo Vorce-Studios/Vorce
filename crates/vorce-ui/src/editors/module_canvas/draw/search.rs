@@ -29,21 +29,24 @@ pub fn draw_search_popup(
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
                 ui.label("🔍");
-                ui.text_edit_singleline(&mut canvas.search_filter);
+                if ui.text_edit_singleline(&mut canvas.search_filter).changed() {
+                    canvas.search_filter_lower =
+                        (!canvas.search_filter.is_empty()).then(|| canvas.search_filter.to_lowercase());
+                }
             });
             ui.add_space(8.0);
 
-            let filter_lower = canvas.search_filter.to_lowercase();
+            let filter_lower_opt = canvas.search_filter_lower.clone();
             let matching_parts: Vec<_> = module
                 .parts
                 .iter()
                 .filter(|p| {
-                    if filter_lower.is_empty() {
+                    let Some(filter_lower) = &filter_lower_opt else {
                         return true;
-                    }
+                    };
                     let name = utils::get_part_property_text(&p.part_type).to_lowercase();
                     let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
-                    name.contains(&filter_lower) || type_name.to_lowercase().contains(&filter_lower)
+                    name.contains(filter_lower) || type_name.to_lowercase().contains(filter_lower)
                 })
                 .take(6)
                 .collect();

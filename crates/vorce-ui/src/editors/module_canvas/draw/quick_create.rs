@@ -14,14 +14,13 @@ pub fn draw_quick_create_popup(
     }
     let popup_pos = canvas.quick_create_pos;
     let catalog = utils::build_node_catalog();
-    let filter_lower = canvas.quick_create_filter.to_lowercase();
     let filtered_items: Vec<&utils::NodeCatalogItem> = catalog
         .iter()
         .filter(|item| {
-            if filter_lower.is_empty() {
-                true
+            if let Some(filter_lower) = &canvas.quick_create_filter_lower {
+                item.label_lower.contains(filter_lower) || item.search_tags.contains(filter_lower)
             } else {
-                item.label_lower.contains(&filter_lower) || item.search_tags.contains(&filter_lower)
+                true
             }
         })
         .collect();
@@ -65,6 +64,8 @@ pub fn draw_quick_create_popup(
                     .lock_focus(true),
             );
             if canvas.show_quick_create && response.changed() {
+                canvas.quick_create_filter_lower = (!canvas.quick_create_filter.is_empty())
+                    .then(|| canvas.quick_create_filter.to_lowercase());
                 response.request_focus();
             }
             if canvas.show_quick_create && !response.has_focus() {
@@ -112,5 +113,6 @@ pub fn draw_quick_create_popup(
     if close_popup {
         canvas.show_quick_create = false;
         canvas.quick_create_filter.clear();
+        canvas.quick_create_filter_lower = None;
     }
 }
