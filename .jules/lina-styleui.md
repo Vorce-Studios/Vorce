@@ -11,3 +11,9 @@
 ## 2026-04-30 - Hardcoded Colors in Module Canvas Node Parts
 **Erkenntnis:** The `vorce-ui` component `part.rs` inside the module canvas editor contained several instances of hardcoded colors (`Color32::WHITE`, `Color32::from_white_alpha(160)`, `Color32::from_gray(180)`, `Color32::from_gray(230)`) for drawing text galleys and labels, breaking visual consistency across themes.
 **Aktion:** Replaced hardcoded text colors with dynamic theme variables like `ui.visuals().text_color()` and utilized `gamma_multiply()` to achieve the desired opacity/dimming effect while ensuring contrast and readability in any theme.
+## 2026-05-01 - Media Manager UI Colors **Erkenntnis:** Hardcoded colors in media manager grid break contrast across different themes. **Aktion:** Replace hardcoded Color32 with ui.visuals() theme properties.
+
+## 2026-06-01 - Floating Overlay Theme Colors
+**Erkenntnis:** Hardcoded backgrounds and strokes in module canvas floating overlays (minimap, search, presets) break visual consistency in various theme variants.
+**Aktion:** Use dynamic theme properties like ui.visuals().window_fill() and ui.visuals().widgets.noninteractive.bg_stroke.color instead of static Color32 values.
+## 2026-05-05 - [Hue Spatial Editor Colors] **Erkenntnis:** Hardcoded colors in hue_spatial_editor break theme consistency and readability in different modes. **Aktion:** Always use ui.visuals() equivalents instead of Color32 constants in egui render loops.

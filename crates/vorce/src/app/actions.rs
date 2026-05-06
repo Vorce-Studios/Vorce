@@ -532,10 +532,10 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     app.state.dirty = true;
                 }
             }
-            UIAction::RenameLayer(id, name) => {
-                if app.state.layer_manager_mut().rename_layer(id, name) {
-                    app.state.dirty = true;
-                }
+            UIAction::RenameLayer(id, name)
+                if app.state.layer_manager_mut().rename_layer(id, name.clone()) =>
+            {
+                app.state.dirty = true;
             }
             UIAction::ToggleLayerSolo(id) => {
                 if let Some(layer) = app.state.layer_manager_mut().get_layer_mut(id) {

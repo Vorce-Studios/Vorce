@@ -203,10 +203,8 @@ impl App {
                     self.window_manager.get_output_id_from_window_id(*window_id).unwrap_or(0);
 
                 match event {
-                    WindowEvent::CloseRequested => {
-                        if output_id == 0 {
-                            elwt.exit();
-                        }
+                    WindowEvent::CloseRequested if output_id == 0 => {
+                        elwt.exit();
                     }
                     WindowEvent::Resized(size) => {
                         let new_size =

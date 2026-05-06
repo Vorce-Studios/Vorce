@@ -168,7 +168,7 @@ pub fn perform_evaluation(
     }
 
     for ops in app.render_queue.items.values_mut() {
-        ops.sort_by(|a, b| b.render_op.output_part_id.cmp(&a.render_op.output_part_id));
+        ops.sort_by_key(|b| std::cmp::Reverse(b.render_op.output_part_id));
     }
 
     // Sync with Bevy (only if runner exists)

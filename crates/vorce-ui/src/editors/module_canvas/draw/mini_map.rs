@@ -1,17 +1,19 @@
 use super::super::state::ModuleCanvas;
 use super::super::utils;
-use egui::{Color32, Pos2, Rect, Stroke, Vec2};
+use egui::{Pos2, Rect, Stroke, Vec2};
 use vorce_core::module::VorceModule;
 
 pub fn draw_mini_map(
     canvas: &ModuleCanvas,
-    painter: &egui::Painter,
+    ui: &egui::Ui,
     canvas_rect: Rect,
     module: &VorceModule,
 ) {
     if module.parts.is_empty() {
         return;
     }
+
+    let painter = ui.painter();
 
     // Mini-map size and position
     let map_size = Vec2::new(150.0, 100.0);
@@ -25,11 +27,11 @@ pub fn draw_mini_map(
     );
 
     // Background
-    painter.rect_filled(map_rect, 0.0, Color32::from_rgba_unmultiplied(30, 30, 40, 200));
+    painter.rect_filled(map_rect, 0.0, ui.visuals().window_fill());
     painter.rect_stroke(
         map_rect,
         0.0,
-        Stroke::new(1.0, Color32::from_gray(80)),
+        Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color),
         egui::StrokeKind::Middle,
     );
 
@@ -91,7 +93,7 @@ pub fn draw_mini_map(
     painter.rect_stroke(
         viewport_rect,
         0.0,
-        Stroke::new(1.5, Color32::WHITE),
+        Stroke::new(1.5, ui.visuals().text_color()),
         egui::StrokeKind::Middle,
     );
 }

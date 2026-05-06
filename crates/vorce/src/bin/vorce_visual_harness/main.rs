@@ -150,10 +150,8 @@ fn capture_scenario(scenario: ScenarioSpec, output: &Path) -> Result<()> {
             } => {
                 elwt.exit();
             }
-            Event::AboutToWait => {
-                if !finished_cl.get() {
-                    window.request_redraw();
-                }
+            Event::AboutToWait if !finished_cl.get() => {
+                window.request_redraw();
             }
             Event::WindowEvent { event: WindowEvent::RedrawRequested, .. } => {
                 let current_count = render_count_cl.get() + 1;
