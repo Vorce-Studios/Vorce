@@ -1,3 +1,7 @@
 ## 2025-02-12 - Prevent Per-Frame String Allocation in UI Hot Paths
 **Erkenntnis:** Immediate-mode UIs wie egui rufen Render-Funktionen 60x pro Sekunde auf. Wenn man innerhalb einer Schleife in `draw_search_popup` und `draw_quick_create_popup` kontinuierlich `.to_lowercase()` auf dem Such-Filter ausführt, erzeugt dies massive, unnötige Heap-Allokationen (String-Instanziierungen). Dies belastet den Garbage Collector (bzw. führt in Rust zu unnötigem Speicherdruck) und verlangsamt den Render-Thread erheblich, vor allem bei langen Listen.
 **Aktion:** Zustände, die für Vergleiche transformiert werden müssen (wie lowercased Strings), sollten im State-Struct ge-cached und NUR aktualisiert werden, wenn sich das Original ändert (`response.changed()`). Die Eigenschaft muss gekapselt oder das `changed()`-Signal der UI-Komponente genutzt werden.
+
+## 2025-02-12 - Prevent Per-Frame String Allocation in UI Hot Paths (EffectChainPanel)
+**Erkenntnis:** Immediate-mode UIs wie egui rufen Render-Funktionen 60x pro Sekunde auf. Das Ausführen von `.to_lowercase()` auf UI-State wie Suchfiltern *jeden Frame*, selbst wenn es außerhalb einer inneren Schleife passiert, erzeugt kontinuierlich unnötige Heap-Allokationen (String-Instanziierungen). Dies belastet den Memory Allocator und kann zu unerwarteten Stottern im Render-Thread führen.
+**Aktion:** Zustände, die für Vergleiche transformiert werden müssen (wie lowercased Strings), sollten im State-Struct ge-cached und NUR aktualisiert werden, wenn sich das Original ändert (z.B. durch `response.changed()`).
