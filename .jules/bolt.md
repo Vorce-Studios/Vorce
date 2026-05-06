@@ -22,3 +22,6 @@
 ## 2025-04-29 - Prevent Heap Allocations in Shortcuts Panel Search Loop
 **Erkenntnis:** Calling `.to_lowercase()` inside a high-frequency UI rendering loop (`filtered_indices`) in `ShortcutsPanel` generates unnecessary heap allocations on every frame when the search query remains unchanged, harming performance.
 **Aktion:** I cached the lowercased search query in `ShortcutsPanel::search_filter_lower` (`Option<String>`) and only updated it when `egui::TextEdit::changed()` returns true. This eliminated the allocation overhead completely during idle rendering frames.
+## 2023-05-01 - Prevent Heap Allocations in Search Loops
+**Erkenntnis:** Calling `.to_lowercase()` inside high-frequency UI rendering loops (like in the module canvas search and quick create popups) generates unnecessary heap allocations on every frame when the search query remains unchanged or is empty, harming performance.
+**Aktion:** Cached the lowercased search queries in `ModuleCanvas` state and only updated them when `egui::TextEdit::changed()` returns true. Eliminated allocation overhead during idle frames.
