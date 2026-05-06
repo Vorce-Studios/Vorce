@@ -14,15 +14,13 @@ pub fn draw_quick_create_popup(
     }
     let popup_pos = canvas.quick_create_pos;
     let catalog = utils::build_node_catalog();
-    let filter_lower = canvas.quick_create_filter.to_lowercase();
     let filtered_items: Vec<&utils::NodeCatalogItem> = catalog
         .iter()
         .filter(|item| {
-            if filter_lower.is_empty() {
-                true
-            } else {
-                item.label_lower.contains(&filter_lower) || item.search_tags.contains(&filter_lower)
-            }
+            let Some(filter_lower) = &canvas.quick_create_filter_lower else {
+                return true;
+            };
+            item.label_lower.contains(filter_lower) || item.search_tags.contains(filter_lower)
         })
         .collect();
     if filtered_items.is_empty() {
@@ -64,6 +62,10 @@ pub fn draw_quick_create_popup(
                     .hint_text("Type to create...")
                     .lock_focus(true),
             );
+            if response.changed() {
+                canvas.quick_create_filter_lower = (!canvas.quick_create_filter.is_empty())
+                    .then(|| canvas.quick_create_filter.to_lowercase());
+            }
             if canvas.show_quick_create && response.changed() {
                 response.request_focus();
             }
