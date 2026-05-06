@@ -14,7 +14,7 @@ pub fn draw_quick_create_popup(
     }
     let popup_pos = canvas.quick_create_pos;
     let catalog = utils::build_node_catalog();
-    let filter_lower = canvas.quick_create_filter.to_lowercase();
+    let filter_lower = canvas.quick_create_filter_lower.as_deref().unwrap_or("");
     let filtered_items: Vec<&utils::NodeCatalogItem> = catalog
         .iter()
         .filter(|item| {
@@ -64,6 +64,9 @@ pub fn draw_quick_create_popup(
                     .hint_text("Type to create...")
                     .lock_focus(true),
             );
+            if response.changed() {
+                canvas.quick_create_filter_lower = (!canvas.quick_create_filter.is_empty()).then(|| canvas.quick_create_filter.to_lowercase());
+            }
             if canvas.show_quick_create && response.changed() {
                 response.request_focus();
             }
@@ -112,5 +115,6 @@ pub fn draw_quick_create_popup(
     if close_popup {
         canvas.show_quick_create = false;
         canvas.quick_create_filter.clear();
+        canvas.quick_create_filter_lower = None;
     }
 }

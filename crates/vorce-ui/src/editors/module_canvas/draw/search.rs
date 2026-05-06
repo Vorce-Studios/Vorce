@@ -29,11 +29,14 @@ pub fn draw_search_popup(
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
                 ui.label("🔍");
-                ui.text_edit_singleline(&mut canvas.search_filter);
+                let response = ui.text_edit_singleline(&mut canvas.search_filter);
+                if response.changed() {
+                    canvas.search_filter_lower = (!canvas.search_filter.is_empty()).then(|| canvas.search_filter.to_lowercase());
+                }
             });
             ui.add_space(8.0);
 
-            let filter_lower = canvas.search_filter.to_lowercase();
+            let filter_lower = canvas.search_filter_lower.as_deref().unwrap_or("");
             let matching_parts: Vec<_> = module
                 .parts
                 .iter()
