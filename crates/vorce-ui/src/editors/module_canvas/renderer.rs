@@ -270,16 +270,13 @@ pub fn render_canvas(
         let mut delete_part_id = None;
         let mut resize_ops = Vec::new();
 
-        let selected_parts_set: rustc_hash::FxHashSet<vorce_core::module::ModulePartId> =
-            canvas.selected_parts.iter().copied().collect();
-
         for part in &mut module.parts {
             let (w, h) = part.size.unwrap_or_else(|| {
                 let h = 80.0 + (part.inputs.len().max(part.outputs.len()) as f32) * 20.0;
                 (200.0, h)
             });
             if let Some((_, delta)) = canvas.dragging_part {
-                if selected_parts_set.contains(&part.id) {
+                if canvas.selected_parts.contains(&part.id) {
                     part.position.0 += delta.x;
                     part.position.1 += delta.y;
                 }
@@ -288,7 +285,7 @@ pub fn render_canvas(
             let part_pos = to_screen(Pos2::new(part.position.0, part.position.1));
             let part_rect = Rect::from_min_size(part_pos, Vec2::new(w, h) * canvas.zoom);
 
-            if selected_parts_set.contains(&part.id) {
+            if canvas.selected_parts.contains(&part.id) {
                 let highlight_rect = part_rect.expand(4.0 * canvas.zoom);
                 painter.rect_stroke(
                     highlight_rect,
@@ -394,12 +391,12 @@ pub fn render_canvas(
             if part_response.clicked() {
                 clicked_on_part = true;
                 if ui.input(|i| i.modifiers.shift) {
-                    if selected_parts_set.contains(&part_id) {
+                    if canvas.selected_parts.contains(&part_id) {
                         canvas.selected_parts.retain(|&id| id != part_id);
                     } else {
                         canvas.selected_parts.push(part_id);
                     }
-                } else if !selected_parts_set.contains(&part_id) {
+                } else if !canvas.selected_parts.contains(&part_id) {
                     canvas.selected_parts.clear();
                     canvas.selected_parts.push(part_id);
                 }
@@ -408,7 +405,7 @@ pub fn render_canvas(
             if part_response.drag_started() {
                 clicked_on_part = true;
                 if canvas.creating_connection.is_none() {
-                    if !selected_parts_set.contains(&part_id) {
+                    if !canvas.selected_parts.contains(&part_id) {
                         if !ui.input(|i| i.modifiers.shift) {
                             canvas.selected_parts.clear();
                         }
