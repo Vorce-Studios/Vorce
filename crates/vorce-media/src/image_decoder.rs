@@ -30,6 +30,13 @@ pub struct StillImageDecoder {
 impl StillImageDecoder {
     /// Load a still image from a file
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let p = path.as_ref();
+        if p.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+            tracing::warn!(
+                "Path traversal component (..) detected in open path: {:?}",
+                p.display()
+            );
+        }
         let path = path.as_ref();
 
         if !path.exists() {
@@ -132,6 +139,13 @@ pub struct GifDecoder {
 impl GifDecoder {
     /// Load an animated GIF from a file
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let p = path.as_ref();
+        if p.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+            tracing::warn!(
+                "Path traversal component (..) detected in open path: {:?}",
+                p.display()
+            );
+        }
         let path = path.as_ref();
 
         if !path.exists() {
