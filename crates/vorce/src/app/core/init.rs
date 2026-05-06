@@ -649,17 +649,29 @@ impl App {
     }
 
     /// Persists the current main window geometry to user config.
+    ///
+    /// When the window is maximized the reported inner size and outer position
+    /// reflect the maximized state, not the normal (restored) geometry.
+    /// Persisting those values would overwrite the correct restored dimensions
+    /// so that un-maximizing after restart would produce a wrong window size.
+    /// Therefore we only update width/height/position when the window is *not*
+    /// maximized.
     pub fn persist_main_window_state(&mut self) -> anyhow::Result<()> {
         if let Some(main_window) = self.window_manager.get(0) {
-            let inner_size = main_window.window.inner_size();
-            let outer_pos = main_window.window.outer_position().unwrap_or_default();
             let maximized = main_window.window.is_maximized();
-
-            self.ui_state.user_config.window_width = Some(inner_size.width);
-            self.ui_state.user_config.window_height = Some(inner_size.height);
-            self.ui_state.user_config.window_x = Some(outer_pos.x);
-            self.ui_state.user_config.window_y = Some(outer_pos.y);
             self.ui_state.user_config.window_maximized = maximized;
+
+            // Only persist the normal geometry when not maximized to avoid
+            // overwriting the restored dimensions with the maximized ones.
+            if !maximized {
+                let inner_size = main_window.window.inner_size();
+                let outer_pos = main_window.window.outer_position().unwrap_or_default();
+
+                self.ui_state.user_config.window_width = Some(inner_size.width);
+                self.ui_state.user_config.window_height = Some(inner_size.height);
+                self.ui_state.user_config.window_x = Some(outer_pos.x);
+                self.ui_state.user_config.window_y = Some(outer_pos.y);
+            }
 
             self.ui_state.user_config.save().map_err(|e| anyhow::anyhow!(e))?;
         }

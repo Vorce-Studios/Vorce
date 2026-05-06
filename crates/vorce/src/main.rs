@@ -280,6 +280,11 @@ impl ApplicationHandler for VorceApp {
             }
         }
     }
+
+    fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
+        // Safety net: force-persist window state when the event loop is about to terminate.
+        self.persist_main_window_state_if_due(true);
+    }
 }
 
 impl App {
@@ -290,6 +295,10 @@ impl App {
         elwt: &winit::event_loop::ActiveEventLoop,
     ) -> Result<()> {
         if self.exit_requested {
+            // Force-persist window geometry before shutting down
+            if let Err(err) = self.persist_main_window_state() {
+                error!("Failed to persist main window state on exit: {err:#}");
+            }
             elwt.exit();
         }
 
@@ -307,6 +316,10 @@ impl App {
                 match event {
                     WindowEvent::CloseRequested => {
                         if output_id == 0 {
+                            // Force-persist window geometry before shutting down
+                            if let Err(err) = self.persist_main_window_state() {
+                                error!("Failed to persist main window state on close: {err:#}");
+                            }
                             elwt.exit();
                         }
                     }
