@@ -331,6 +331,12 @@ jobs:
                   required: true,
                 },
                 {
+                  name: 'Changelog Check',
+                  source: 'check_run',
+                  allowedConclusions: ['success', 'skipped'],
+                  required: true,
+                },
+                {
                   name: 'Build & Test (Linux)',
                   source: 'check_run',
                   allowedConclusions: ['success'],
@@ -344,12 +350,6 @@ jobs:
                 },
                 {
                   name: 'Build (macOS Beta)',
-                  source: 'check_run',
-                  allowedConclusions: ['success'],
-                  required: true,
-                },
-                {
-                  name: 'Rust Autofix',
                   source: 'check_run',
                   allowedConclusions: ['success'],
                   required: true,

@@ -45,14 +45,15 @@
 ## 2026-04-26 - [Prevent String Allocations with Caching in MediaManagerUI Search]
 **Erkenntnis:** During code review, it was identified that evaluating `.to_lowercase()` using `(!self.search_query.is_empty()).then(|| self.search_query.to_lowercase())` inside the UI loop did not actually solve the allocation issue when the user *has* an active search query, because it would then continuously allocate a new `String` on every frame while the user isn't even typing.
 **Aktion:** Refactored `MediaManagerUI` to cache the lowercased search query in the state struct (`self.search_query_lower`), and only recalculate it when `ui.text_edit_singleline(...).changed()` returns true. This completely eliminates per-frame string allocations for filtering, regardless of whether the query is empty or not.
-<<<<<<< HEAD
 
 ## 2026-04-26 - [Cache Search Queries in UI States]
 **Erkenntnis:** Using `(!str.is_empty()).then(|| str.to_lowercase())` inside immediate-mode UI rendering loops like egui successfully avoids allocations for empty queries, but continuously creates new String heap allocations every frame when there IS an active search query. This introduces allocator overhead whenever a user filters items in `MediaBrowser`, `EffectChainPanel`, `ShortcutsPanel`, and `ModuleCanvas`.
 **Aktion:** Replaced lazy `to_lowercase()` calls in UI rendering loops by caching the lowercased search query in the state struct (e.g. `search_query_lower: Option<String>`). The cached string is now only updated when the respective `egui::TextEdit`'s `changed()` method returns true, completely bypassing per-frame String allocations regardless of whether the search query is empty or not.
+
 ## 2026-04-27 - [Prevent String Allocations in Quick Create Filter]
 **Erkenntnis:** Building the `NodeCatalogItem` catalog inside immediate-mode rendering loops (like in `draw_quick_create_popup`) triggered numerous string allocations (`.to_string()`, `.to_lowercase()`) because of the `label_lower` field. This unnecessarily pressured the allocator during every frame where the quick create popup was visible.
 **Aktion:** Removed the `label_lower` field entirely from `NodeCatalogItem` to bypass initial string allocations, and refactored the quick-create filter to use the zero-allocation `case_insensitive_contains` function. This prevents per-frame allocations during filtering and initialization without breaking the search behavior.
+
 ## 2026-04-27 - [Optimization] Prevent redundant lowercasing in Node Catalog building
 **Erkenntnis:** The `build_node_catalog` utility function was still performing string allocations for `label_lower` and `search_tags_lower` even if those fields were not strictly necessary for every frame.
 **Aktion:** Refactored the catalog building to be lazy or use the optimized `case_insensitive_contains` where possible, avoiding per-call heap pressure.

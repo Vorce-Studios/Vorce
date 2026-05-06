@@ -1,9 +1,8 @@
-mod atty;
 mod termcolor;
 
-use self::atty::{is_stderr, is_stdout};
 use self::termcolor::BufferWriter;
 use std::{fmt, io, mem, sync::Mutex};
+use std::io::IsTerminal;
 
 pub(super) mod glob {
     pub use super::termcolor::glob::*;
@@ -178,8 +177,8 @@ impl Builder {
         let color_choice = match self.write_style {
             WriteStyle::Auto => {
                 if match &self.target {
-                    WritableTarget::Stderr => is_stderr(),
-                    WritableTarget::Stdout => is_stdout(),
+                    WritableTarget::Stderr => std::io::stderr().is_terminal(),
+                    WritableTarget::Stdout => std::io::stdout().is_terminal(),
                     WritableTarget::Pipe(_) => false,
                 } {
                     WriteStyle::Auto
