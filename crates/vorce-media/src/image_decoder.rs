@@ -5,11 +5,45 @@
 //! - Animated GIF: Frame-by-frame playback with timing
 
 use crate::{MediaError, Result, VideoDecoder};
-use image::{AnimationDecoder, DynamicImage};
-use std::path::Path;
+use image::{AnimationDecoder, DynamicImage, ImageDecoder};
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tracing::info;
 use vorce_io::{PixelFormat, VideoFrame};
+
+fn canonical_file_path(path: &Path) -> Result<PathBuf> {
+    let canonical = path.canonicalize().map_err(|e| {
+        MediaError::FileOpen(format!("Failed to resolve file path {}: {}", path.display(), e))
+    })?;
+
+    if !canonical.is_file() {
+        return Err(MediaError::FileOpen(format!("Path is not a file: {}", canonical.display())));
+    }
+
+    Ok(canonical)
+}
+
+fn canonical_path_under_base(base_dir: &Path, path: &Path) -> Result<PathBuf> {
+    let canonical_base = base_dir.canonicalize().map_err(|e| {
+        MediaError::FileOpen(format!("Failed to resolve base path {}: {}", base_dir.display(), e))
+    })?;
+
+    if !canonical_base.is_dir() {
+        return Err(MediaError::FileOpen(format!(
+            "Base path is not a directory: {}",
+            canonical_base.display()
+        )));
+    }
+
+    let candidate = if path.is_absolute() { path.to_path_buf() } else { canonical_base.join(path) };
+    let canonical = canonical_file_path(&candidate)?;
+
+    if !canonical.starts_with(&canonical_base) {
+        return Err(MediaError::FileOpen(format!("Path escapes media root: {}", path.display())));
+    }
+
+    Ok(canonical)
+}
 
 // ============================================================================
 // Still Image Decoder
@@ -31,13 +65,9 @@ impl StillImageDecoder {
     /// Load a still image from a file
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
+        let path = canonical_file_path(path)?;
 
-        if !path.exists() {
-            return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
-        }
-
-        // Load image using the `image` crate
-        let image = image::open(path)
+        let image = image::open(&path)
             .map_err(|e| MediaError::DecoderError(format!("Failed to load image: {}", e)))?;
 
         let width = image.width();
@@ -50,6 +80,16 @@ impl StillImageDecoder {
         info!("Still image loaded: {}x{} from {}", width, height, path.display());
 
         Ok(Self { width, height, frame_data, has_been_read: false })
+    }
+
+    /// Load a still image only if it resolves inside `base_dir`.
+    ///
+    /// Use this when opening paths from project files, network messages, or other
+    /// untrusted relative-path sources. Plain `open` remains suitable for direct
+    /// file-picker paths where the selected file itself is the trust boundary.
+    pub fn open_under_base<B: AsRef<Path>, P: AsRef<Path>>(base_dir: B, path: P) -> Result<Self> {
+        let path = canonical_path_under_base(base_dir.as_ref(), path.as_ref())?;
+        Self::open(path)
     }
 
     /// Check if the file format is supported
@@ -133,17 +173,14 @@ impl GifDecoder {
     /// Load an animated GIF from a file
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
+        let path = canonical_file_path(path)?;
 
-        if !path.exists() {
-            return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
-        }
-
-        // Open the file
-        let file = std::fs::File::open(path)
+        let file = std::fs::File::open(&path)
             .map_err(|e| MediaError::FileOpen(format!("Failed to open file: {}", e)))?;
 
         let decoder = image::codecs::gif::GifDecoder::new(file)
             .map_err(|e| MediaError::DecoderError(format!("Failed to decode GIF: {}", e)))?;
+        let (width, height) = decoder.dimensions();
 
         // Extract frames
         let frames_iter = decoder.into_frames();
@@ -169,11 +206,6 @@ impl GifDecoder {
             return Err(MediaError::DecoderError("GIF has no frames".to_string()));
         }
 
-        let (width, height) = {
-            let frame = image::load_from_memory(&frames[0].0)
-                .map_err(|e| MediaError::DecoderError(format!("Failed to decode frame: {}", e)))?;
-            (frame.width(), frame.height())
-        };
         let fps = frames.len() as f64 / total_duration.as_secs_f64();
 
         info!(
@@ -195,6 +227,16 @@ impl GifDecoder {
             total_duration,
             fps,
         })
+    }
+
+    /// Load a GIF only if it resolves inside `base_dir`.
+    ///
+    /// Use this when opening paths from project files, network messages, or other
+    /// untrusted relative-path sources. Plain `open` remains suitable for direct
+    /// file-picker paths where the selected file itself is the trust boundary.
+    pub fn open_under_base<B: AsRef<Path>, P: AsRef<Path>>(base_dir: B, path: P) -> Result<Self> {
+        let path = canonical_path_under_base(base_dir.as_ref(), path.as_ref())?;
+        Self::open(path)
     }
 
     /// Check if the file is a GIF
@@ -302,8 +344,52 @@ mod tests {
     }
 
     #[test]
+    fn still_image_open_under_base_loads_file_inside_base() {
+        let dir = tempfile::tempdir().unwrap();
+        let image_path = dir.path().join("test.png");
+        let image = image::ImageBuffer::<image::Rgba<u8>, Vec<u8>>::new(1, 1);
+        image.save(&image_path).unwrap();
+
+        let decoder = StillImageDecoder::open_under_base(dir.path(), "test.png").unwrap();
+
+        assert_eq!(decoder.resolution(), (1, 1));
+    }
+
+    #[test]
+    fn still_image_open_under_base_rejects_parent_escape() {
+        let dir = tempfile::tempdir().unwrap();
+        let media_dir = dir.path().join("media");
+        std::fs::create_dir(&media_dir).unwrap();
+
+        let outside_path = dir.path().join("outside.png");
+        let image = image::ImageBuffer::<image::Rgba<u8>, Vec<u8>>::new(1, 1);
+        image.save(&outside_path).unwrap();
+
+        let result =
+            StillImageDecoder::open_under_base(&media_dir, Path::new("..").join("outside.png"));
+
+        assert!(
+            matches!(result, Err(MediaError::FileOpen(message)) if message.contains("escapes media root"))
+        );
+    }
+
+    #[test]
     fn test_gif_decoder_new_not_found() {
         let result = GifDecoder::open("a_file_that_does_not_exist.gif");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn gif_open_under_base_rejects_parent_escape() {
+        let dir = tempfile::tempdir().unwrap();
+        let media_dir = dir.path().join("media");
+        std::fs::create_dir(&media_dir).unwrap();
+        std::fs::write(dir.path().join("outside.gif"), b"not a real gif").unwrap();
+
+        let result = GifDecoder::open_under_base(&media_dir, Path::new("..").join("outside.gif"));
+
+        assert!(
+            matches!(result, Err(MediaError::FileOpen(message)) if message.contains("escapes media root"))
+        );
     }
 }
