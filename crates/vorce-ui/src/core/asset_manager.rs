@@ -7,6 +7,7 @@ use crossbeam_channel::{unbounded, Receiver, Sender};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
+use rayon::prelude::*;
 
 enum LoadedAsset {
     Effect(EffectPreset),
@@ -117,27 +118,30 @@ impl AssetManager {
         }
     }
 
-    /// Load library from disk
+    /// Load library from disk in a background thread
     fn spawn_load_library(library_path: PathBuf, sender: Sender<LoadedAsset>) {
         std::thread::spawn(move || {
             // Load effect presets
             let effects_path = library_path.join("effects");
             if effects_path.exists() {
                 if let Ok(entries) = std::fs::read_dir(effects_path) {
-                    for entry in entries.flatten() {
-                        if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
-                            if let Ok(data) = std::fs::read_to_string(entry.path()) {
-                                if let Ok(mut preset) = serde_json::from_str::<EffectPreset>(&data)
-                                {
-                                    preset.name_lower = preset.name.to_lowercase();
-                                    preset.description_lower = preset.description.to_lowercase();
-                                    preset.tags_lower =
-                                        preset.tags.iter().map(|t| t.to_lowercase()).collect();
-                                    let _ = sender.send(LoadedAsset::Effect(preset));
-                                }
-                            }
-                        }
-                    }
+                    let paths: Vec<_> = entries
+                        .flatten()
+                        .map(|e| e.path())
+                        .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("json"))
+                        .collect();
+
+                    paths
+                        .par_iter()
+                        .filter_map(|path| std::fs::read_to_string(path).ok())
+                        .filter_map(|data| serde_json::from_str::<EffectPreset>(&data).ok())
+                        .for_each(|mut preset| {
+                            preset.name_lower = preset.name.to_lowercase();
+                            preset.description_lower = preset.description.to_lowercase();
+                            preset.tags_lower =
+                                preset.tags.iter().map(|t| t.to_lowercase()).collect();
+                            let _ = sender.send(LoadedAsset::Effect(preset));
+                        });
                 }
             }
 
@@ -145,15 +149,19 @@ impl AssetManager {
             let transforms_path = library_path.join("transforms");
             if transforms_path.exists() {
                 if let Ok(entries) = std::fs::read_dir(transforms_path) {
-                    for entry in entries.flatten() {
-                        if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
-                            if let Ok(data) = std::fs::read_to_string(entry.path()) {
-                                if let Ok(preset) = serde_json::from_str::<TransformPreset>(&data) {
-                                    let _ = sender.send(LoadedAsset::Transform(preset));
-                                }
-                            }
-                        }
-                    }
+                    let paths: Vec<_> = entries
+                        .flatten()
+                        .map(|e| e.path())
+                        .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("json"))
+                        .collect();
+
+                    paths
+                        .par_iter()
+                        .filter_map(|path| std::fs::read_to_string(path).ok())
+                        .filter_map(|data| serde_json::from_str::<TransformPreset>(&data).ok())
+                        .for_each(|preset| {
+                            let _ = sender.send(LoadedAsset::Transform(preset));
+                        });
                 }
             }
 
@@ -161,16 +169,19 @@ impl AssetManager {
             let templates_path = library_path.join("templates");
             if templates_path.exists() {
                 if let Ok(entries) = std::fs::read_dir(templates_path) {
-                    for entry in entries.flatten() {
-                        if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
-                            if let Ok(data) = std::fs::read_to_string(entry.path()) {
-                                if let Ok(template) = serde_json::from_str::<ProjectTemplate>(&data)
-                                {
-                                    let _ = sender.send(LoadedAsset::Template(template));
-                                }
-                            }
-                        }
-                    }
+                    let paths: Vec<_> = entries
+                        .flatten()
+                        .map(|e| e.path())
+                        .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("json"))
+                        .collect();
+
+                    paths
+                        .par_iter()
+                        .filter_map(|path| std::fs::read_to_string(path).ok())
+                        .filter_map(|data| serde_json::from_str::<ProjectTemplate>(&data).ok())
+                        .for_each(|template| {
+                            let _ = sender.send(LoadedAsset::Template(template));
+                        });
                 }
             }
         });
@@ -185,7 +196,7 @@ impl AssetManager {
         preset.description_lower = preset.description.to_lowercase();
         preset.tags_lower = preset.tags.iter().map(|t| t.to_lowercase()).collect();
 
-        let file_path = effects_path.join(format!("{}.json", preset.name));
+        let file_path = effects_path.join(format!("{}.json", preset.name));     
         let data = serde_json::to_string_pretty(&preset)?;
         std::fs::write(file_path, data)?;
 
@@ -198,7 +209,7 @@ impl AssetManager {
         let transforms_path = self.library_path.join("transforms");
         std::fs::create_dir_all(&transforms_path)?;
 
-        let file_path = transforms_path.join(format!("{}.json", preset.name));
+        let file_path = transforms_path.join(format!("{}.json", preset.name));  
         let data = serde_json::to_string_pretty(&preset)?;
         std::fs::write(file_path, data)?;
 
@@ -207,7 +218,7 @@ impl AssetManager {
     }
 
     /// Get effect preset by name
-    pub fn get_effect_preset(&self, name: &str) -> Option<&EffectPreset> {
+    pub fn get_effect_preset(&self, name: &str) -> Option<&EffectPreset> {      
         self.effect_presets.get(name)
     }
 
@@ -222,17 +233,17 @@ impl AssetManager {
     }
 
     /// Get all transform presets
-    pub fn transform_presets(&self) -> &HashMap<String, TransformPreset> {
+    pub fn transform_presets(&self) -> &HashMap<String, TransformPreset> {      
         &self.transform_presets
     }
 
     /// Get all project templates
-    pub fn project_templates(&self) -> &HashMap<String, ProjectTemplate> {
+    pub fn project_templates(&self) -> &HashMap<String, ProjectTemplate> {      
         &self.project_templates
     }
 
     /// Search presets by query
-    pub fn search_effect_presets(&self, query: &str) -> Vec<&EffectPreset> {
+    pub fn search_effect_presets(&self, query: &str) -> Vec<&EffectPreset> {    
         let query_lower = query.to_lowercase();
         self.effect_presets
             .values()
@@ -251,19 +262,19 @@ impl AssetManager {
 
     /// Get favorite effect presets
     pub fn favorite_effect_presets(&self) -> Vec<&EffectPreset> {
-        self.effect_presets.values().filter(|preset| preset.favorite).collect()
+        self.effect_presets.values().filter(|preset| preset.favorite).collect() 
     }
 
     /// Render asset browser UI
-    pub fn ui(&mut self, ui: &mut egui::Ui) -> Option<AssetManagerAction> {
+    pub fn ui(&mut self, ui: &mut egui::Ui) -> Option<AssetManagerAction> {     
         self.update();
         let mut action = None;
 
         egui::Panel::top("asset_browser_tabs").show_inside(ui, |ui| {
             ui.horizontal(|ui| {
                 let _ = ui.selectable_label(false, "Effect Presets");
-                let _ = ui.selectable_label(false, "Transform Presets");
-                let _ = ui.selectable_label(false, "Project Templates");
+                let _ = ui.selectable_label(false, "Transform Presets");        
+                let _ = ui.selectable_label(false, "Project Templates");        
             });
         });
 
@@ -272,7 +283,7 @@ impl AssetManager {
             for preset in self.effect_presets.values() {
                 ui.horizontal(|ui| {
                     if preset.favorite {
-                        ui.label("⭐");
+                        ui.label("â­");
                     }
 
                     if ui.button(&preset.name).clicked() {
