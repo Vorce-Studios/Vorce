@@ -28,3 +28,11 @@
 **Lektion:** Obwohl die verwendeten String-Literale keine Null-Bytes enthalten und die Aufrufe in der Praxis sicher sind, kann ein versehentliches Ändern oder dynamisches Erzeugen dieser Strings ohne Null-Prüfung zu Paniken und damit zum Absturz der gesamten Anwendung führen.
 
 **Prävention:** Verwende stattdessen sauberes Error Handling und fange Fehler elegant ab, z.B. durch `map_err`, das zu einem `MediaError::DecoderError` aufgelöst wird.
+
+## 2025-05-24 - DoS via Option::unwrap() in media_library.rs tests
+
+**Schwachstelle:** Ein `unwrap()` Aufruf befand sich im `test_media_library_limit` Test in `crates/vorce-core/src/media_library.rs` beim Erstellen von Verzeichnissen und Dateien.
+
+**Lektion:** Wenn Fehler beim Erstellen von Verzeichnissen oder Dateien durch unwrap() ignoriert werden, führt dies zu einem direkten Absturz durch Panic. Auch in Tests ist es besser, Fehler sauber mit `Result` zurückzugeben.
+
+**Prävention:** Verwende `Result` in Test-Signaturen und `?` zur Propagierung von Dateisystem-Fehlern anstelle von `unwrap()`.
