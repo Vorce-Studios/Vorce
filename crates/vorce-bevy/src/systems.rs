@@ -129,26 +129,6 @@ pub fn shape_system(
         commands
             .entity(entity)
             .insert((Mesh3d(meshes.add(mesh)), MeshMaterial3d(materials.add(material))));
-
-        // bevy_mod_outline temporarily disabled due to compatibility
-        // if shape.outline_width > 0.0 {
-        //     commands
-        //         .entity(entity)
-        //         .insert(bevy_mod_outline::OutlineVolume {
-        //             visible: true,
-        //             width: shape.outline_width,
-        //             colour: Color::srgba(
-        //                 shape.outline_color[0],
-        //                 shape.outline_color[1],
-        //                 shape.outline_color[2],
-        //                 shape.outline_color[3],
-        //             ),
-        //         });
-        // } else {
-        //     commands
-        //         .entity(entity)
-        //         .remove::<bevy_mod_outline::OutlineVolume>();
-        // }
     }
 }
 
