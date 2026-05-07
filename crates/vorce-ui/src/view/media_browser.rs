@@ -143,6 +143,13 @@ pub struct MediaBrowser {
     history_index: usize,
     /// Media folders per type
     pub media_folders: MediaFolders,
+    /// Active scan flag
+    /// Active scan flag
+    scan_tasks_active: Arc<std::sync::atomic::AtomicUsize>,
+    /// Receiver for directory scan results
+    scan_rx: std::sync::mpsc::Receiver<(PathBuf, Vec<MediaEntry>)>,
+    /// Sender for directory scan results
+    scan_tx: std::sync::mpsc::Sender<(PathBuf, Vec<MediaEntry>)>,
     /// Show folder settings
     show_folder_settings: bool,
 }
@@ -187,6 +194,8 @@ impl MediaBrowser {
         let (tx, rx) = std::sync::mpsc::channel();
         let (metadata_tx, metadata_rx) = std::sync::mpsc::channel();
 
+        let (scan_tx, scan_rx) = std::sync::mpsc::channel();
+
         let path_str = initial_dir.display().to_string();
         let mut browser = Self {
             current_dir: initial_dir.clone(),
@@ -213,6 +222,9 @@ impl MediaBrowser {
             sort_mode: SortMode::Name,
             history: vec![initial_dir.clone()],
             history_index: 0,
+            scan_tasks_active: Arc::new(std::sync::atomic::AtomicUsize::new(0)),
+            scan_rx,
+            scan_tx,
             media_folders: MediaFolders {
                 video_folder: initial_dir.clone(),
                 image_folder: initial_dir.clone(),
@@ -227,73 +239,109 @@ impl MediaBrowser {
 
     /// Refresh the file list
     pub fn refresh(&mut self) {
+        // Prevent concurrent scans of the same or different directories if one is already running
+        // Or we could just let them run and overwrite. We'll set the flag.
+        self.scan_tasks_active.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         self.entries.clear();
-        if let Ok(entries) = std::fs::read_dir(&self.current_dir) {
-            for entry in entries.flatten() {
-                if let Ok(metadata) = entry.metadata() {
-                    if metadata.is_file() {
-                        let path = entry.path();
-                        let name = entry.file_name().to_string_lossy().to_string();
 
-                        // Skip hidden files if not showing them
-                        if !self.show_hidden && name.starts_with('.') {
-                            continue;
-                        }
+        let path = self.current_dir.clone();
+        let show_hidden = self.show_hidden;
+        let tx = self.scan_tx.clone();
+        let scan_tasks_active = self.scan_tasks_active.clone();
 
-                        let file_type = path
-                            .extension()
-                            .and_then(|e| e.to_str())
-                            .map(MediaType::from_extension)
-                            .unwrap_or(MediaType::Unknown);
+        // These are needed for get_or_generate_thumbnail logic inside the background thread
+        // Wait, getting thumbnails also accesses self.thumbnail_cache and self.generating_thumbnails,
+        // which are Arc<RwLock>. We can just skip thumbnail generation in the background thread
+        // and do it in the main thread when we receive the entries.
+        // That avoids sending Arcs to the background thread unnecessarily.
 
-                        // Only include media files
-                        if matches!(
-                            file_type,
-                            MediaType::Video
-                                | MediaType::Image
-                                | MediaType::ImageSequence
-                                | MediaType::Audio
-                                | MediaType::Hap
-                        ) {
-                            let thumbnail = self.get_or_generate_thumbnail(&path);
+        rayon::spawn(move || {
+            let mut entries = Vec::new();
+            if let Ok(dir_entries) = std::fs::read_dir(&path) {
+                for entry in dir_entries.flatten() {
+                    if let Ok(metadata) = entry.metadata() {
+                        if metadata.is_file() {
+                            let entry_path = entry.path();
+                            let name = entry.file_name().to_string_lossy().to_string();
 
-                            let duration_secs = None;
-                            if matches!(
-                                file_type,
-                                MediaType::Video | MediaType::Audio | MediaType::Hap
-                            ) {
-                                let mut extracting = self.extracting_metadata.write();
-                                if !extracting.contains(&path) {
-                                    extracting.insert(path.clone());
-                                    let tx = self.metadata_tx.clone();
-                                    let path_clone = path.clone();
-                                    rayon::spawn(move || {
-                                        let duration =
-                                            vorce_media::get_media_duration_secs(&path_clone);
-                                        let _ = tx.send((path_clone, duration));
-                                    });
-                                }
+                            // Skip hidden files if not showing them
+                            if !show_hidden && name.starts_with('.') {
+                                continue;
                             }
 
-                            self.entries.push(MediaEntry {
-                                path,
-                                name: name.clone(),
-                                name_lower: name.to_lowercase(),
+                            let file_type = entry_path
+                                .extension()
+                                .and_then(|e| e.to_str())
+                                .map(MediaType::from_extension)
+                                .unwrap_or(MediaType::Unknown);
+
+                            // Only include media files
+                            if matches!(
                                 file_type,
-                                size_bytes: metadata.len(),
-                                duration_secs,
-                                thumbnail,
-                                color_tag: None,
-                                tags: Vec::new(),
-                                tags_lower: Vec::new(),
-                            });
+                                MediaType::Video
+                                    | MediaType::Image
+                                    | MediaType::ImageSequence
+                                    | MediaType::Audio
+                                    | MediaType::Hap
+                            ) {
+                                entries.push(MediaEntry {
+                                    path: entry_path,
+                                    name: name.clone(),
+                                    name_lower: name.to_lowercase(),
+                                    file_type,
+                                    size_bytes: metadata.len(),
+                                    duration_secs: None,
+                                    thumbnail: None, // Will be populated in main thread
+                                    color_tag: None,
+                                    tags: Vec::new(),
+                                    tags_lower: Vec::new(),
+                                });
+                            }
                         }
                     }
                 }
             }
+
+            scan_tasks_active.fetch_sub(1, std::sync::atomic::Ordering::SeqCst);
+            let _ = tx.send((path, entries));
+        });
+    }
+
+    /// Process directory scan results
+    pub fn process_scans(&mut self) {
+        // Only process the latest scan if there are multiple in the queue
+        let mut latest_scan = None;
+        while let Ok((path, entries)) = self.scan_rx.try_recv() {
+            // Only accept scan results for the current directory
+            // (in case we navigated away before the scan finished)
+            if path == self.current_dir {
+                latest_scan = Some(entries);
+            }
         }
 
-        self.sort_entries();
+        if let Some(mut entries) = latest_scan {
+            // Now that we have the entries on the main thread,
+            // trigger thumbnail generation and metadata extraction
+            for entry in &mut entries {
+                entry.thumbnail = self.get_or_generate_thumbnail(&entry.path);
+
+                if matches!(entry.file_type, MediaType::Video | MediaType::Audio | MediaType::Hap) {
+                    let mut extracting = self.extracting_metadata.write();
+                    if !extracting.contains(&entry.path) {
+                        extracting.insert(entry.path.clone());
+                        let tx = self.metadata_tx.clone();
+                        let path_clone = entry.path.clone();
+                        rayon::spawn(move || {
+                            let duration = vorce_media::get_media_duration_secs(&path_clone);
+                            let _ = tx.send((path_clone, duration));
+                        });
+                    }
+                }
+            }
+
+            self.entries = entries;
+            self.sort_entries();
+        }
     }
 
     /// Rebuild the path-to-index map for O(1) lookups
@@ -495,6 +543,7 @@ impl MediaBrowser {
     ) -> Option<MediaBrowserAction> {
         self.process_thumbnails(ui.ctx());
         self.process_metadata(ui.ctx());
+        self.process_scans();
 
         let mut action = None;
 
@@ -679,6 +728,15 @@ impl MediaBrowser {
 
         // Content area
         egui::ScrollArea::vertical().show(ui, |ui| {
+            if self.scan_tasks_active.load(std::sync::atomic::Ordering::SeqCst) > 0 {
+                ui.vertical_centered(|ui| {
+                    ui.add_space(40.0);
+                    ui.spinner();
+                    ui.label(locale.t("media-browser-loading"));
+                });
+                return;
+            }
+
             // Collect indices to avoid borrowing issues
             let entry_indices: Vec<usize> =
                 self.filtered_entries().into_iter().map(|(i, _)| i).collect();
