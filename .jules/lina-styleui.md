@@ -18,3 +18,4 @@
 **Aktion:** Use dynamic theme properties like ui.visuals().window_fill() and ui.visuals().widgets.noninteractive.bg_stroke.color instead of static Color32 values.
 ## 2026-05-05 - [Hue Spatial Editor Colors] **Erkenntnis:** Hardcoded colors in hue_spatial_editor break theme consistency and readability in different modes. **Aktion:** Always use ui.visuals() equivalents instead of Color32 constants in egui render loops.
 ## 2026-05-06 - Module Canvas Visual Consistency **Erkenntnis:** Hardcoded Color32 colors were used throughout the module canvas causing visual inconsistencies in different themes. **Aktion:** Replaced hardcoded Color32 colors with dynamic theme colors from ui.visuals() or crate::theme::colors.
+## 2026-05-07 - Toolbar Metric Colors **Erkenntnis:** Hardcoded colors in the toolbar metrics break visual consistency across different themes. **Aktion:** Replace hardcoded Color32 with ui.visuals() theme properties.
