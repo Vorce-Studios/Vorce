@@ -159,11 +159,8 @@ mod ffmpeg_impl {
     impl RealFFmpegDecoder {
         /// Open a video file with optional hardware acceleration
         pub fn open<P: AsRef<Path>>(path: P, hw_accel: HwAccelType) -> Result<Self> {
-            let path_ref: &std::path::Path = path.as_ref();
-            if path_ref.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
-                tracing::warn!(path = %path_ref.display(), "Path traversal component (..) detected in media decoder path");
-            }
-            let path: &std::path::Path = path_ref;
+            let path = path.as_ref();
+            crate::reject_path_traversal(path)?;
 
             if !path.exists() {
                 return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));

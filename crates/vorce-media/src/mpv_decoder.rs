@@ -3,7 +3,7 @@
 //! This module provides video decoding via the MPV library, which supports
 //! virtually all video formats with hardware acceleration.
 
-use crate::{MediaError, Result, VideoDecoder};
+use crate::{reject_path_traversal, MediaError, Result, VideoDecoder};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tracing::{error, info, warn};
@@ -29,10 +29,8 @@ pub struct MpvDecoder {
 impl MpvDecoder {
     /// Open a video file with MPV
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let path_ref: &std::path::Path = path.as_ref();
-        if path_ref.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
-            tracing::warn!(path = %path_ref.display(), "Path traversal component (..) detected in media decoder path");
-        }
+        let path_ref = path.as_ref();
+        reject_path_traversal(path_ref)?;
         let path = path_ref.to_path_buf();
 
         info!("Opening video with MPV: {:?}", path);

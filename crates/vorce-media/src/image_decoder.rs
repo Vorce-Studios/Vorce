@@ -4,7 +4,7 @@
 //! - Still images: PNG, JPEG, TIFF via `image` crate
 //! - Animated GIF: Frame-by-frame playback with timing
 
-use crate::{MediaError, Result, VideoDecoder};
+use crate::{reject_path_traversal, MediaError, Result, VideoDecoder};
 use image::{AnimationDecoder, DynamicImage};
 use std::path::Path;
 use std::time::Duration;
@@ -30,11 +30,8 @@ pub struct StillImageDecoder {
 impl StillImageDecoder {
     /// Load a still image from a file
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let path_ref: &std::path::Path = path.as_ref();
-        if path_ref.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
-            tracing::warn!(path = %path_ref.display(), "Path traversal component (..) detected in media decoder path");
-        }
-        let path: &std::path::Path = path_ref;
+        let path = path.as_ref();
+        reject_path_traversal(path)?;
 
         if !path.exists() {
             return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
@@ -136,11 +133,8 @@ pub struct GifDecoder {
 impl GifDecoder {
     /// Load an animated GIF from a file
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let path_ref: &std::path::Path = path.as_ref();
-        if path_ref.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
-            tracing::warn!(path = %path_ref.display(), "Path traversal component (..) detected in media decoder path");
-        }
-        let path: &std::path::Path = path_ref;
+        let path = path.as_ref();
+        reject_path_traversal(path)?;
 
         if !path.exists() {
             return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
@@ -316,8 +310,18 @@ mod tests {
     }
 
     #[test]
-    fn test_path_traversal_warning() {
+    fn still_image_decoder_rejects_path_traversal() {
         let result = StillImageDecoder::open("../../../some_fake_file.png");
-        assert!(result.is_err());
+        assert!(
+            matches!(result, Err(MediaError::FileOpen(message)) if message.contains("Path traversal"))
+        );
+    }
+
+    #[test]
+    fn gif_decoder_rejects_path_traversal() {
+        let result = GifDecoder::open("../../../some_fake_file.gif");
+        assert!(
+            matches!(result, Err(MediaError::FileOpen(message)) if message.contains("Path traversal"))
+        );
     }
 }
