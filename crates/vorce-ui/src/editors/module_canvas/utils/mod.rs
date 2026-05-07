@@ -114,3 +114,5 @@ mod tests {
         }
     }
 }
+pub mod string;
+pub use string::*;
