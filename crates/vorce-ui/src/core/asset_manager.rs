@@ -89,56 +89,76 @@ impl AssetManager {
 
     /// Load library from disk
     fn load_library(&mut self) {
-        // Load effect presets
-        let effects_path = self.library_path.join("effects");
-        if effects_path.exists() {
-            if let Ok(entries) = std::fs::read_dir(effects_path) {
-                for entry in entries.flatten() {
-                    if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
-                        if let Ok(data) = std::fs::read_to_string(entry.path()) {
-                            if let Ok(mut preset) = serde_json::from_str::<EffectPreset>(&data) {
-                                preset.name_lower = preset.name.to_lowercase();
-                                preset.description_lower = preset.description.to_lowercase();
-                                preset.tags_lower =
-                                    preset.tags.iter().map(|t| t.to_lowercase()).collect();
-                                self.effect_presets.insert(preset.name.clone(), preset);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        let library_path = self.library_path.clone();
 
-        // Load transform presets
-        let transforms_path = self.library_path.join("transforms");
-        if transforms_path.exists() {
-            if let Ok(entries) = std::fs::read_dir(transforms_path) {
-                for entry in entries.flatten() {
-                    if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
-                        if let Ok(data) = std::fs::read_to_string(entry.path()) {
-                            if let Ok(preset) = serde_json::from_str::<TransformPreset>(&data) {
-                                self.transform_presets.insert(preset.name.clone(), preset);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        // Spawn a thread to do the I/O-heavy directory reading and JSON parsing
+        let handle = std::thread::spawn(move || {
+            let mut effect_presets = HashMap::new();
+            let mut transform_presets = HashMap::new();
+            let mut project_templates = HashMap::new();
 
-        // Load project templates
-        let templates_path = self.library_path.join("templates");
-        if templates_path.exists() {
-            if let Ok(entries) = std::fs::read_dir(templates_path) {
-                for entry in entries.flatten() {
-                    if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
-                        if let Ok(data) = std::fs::read_to_string(entry.path()) {
-                            if let Ok(template) = serde_json::from_str::<ProjectTemplate>(&data) {
-                                self.project_templates.insert(template.name.clone(), template);
+            // Load effect presets
+            let effects_path = library_path.join("effects");
+            if effects_path.exists() {
+                if let Ok(entries) = std::fs::read_dir(effects_path) {
+                    for entry in entries.flatten() {
+                        if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
+                            if let Ok(data) = std::fs::read_to_string(entry.path()) {
+                                if let Ok(mut preset) = serde_json::from_str::<EffectPreset>(&data)
+                                {
+                                    preset.name_lower = preset.name.to_lowercase();
+                                    preset.description_lower = preset.description.to_lowercase();
+                                    preset.tags_lower =
+                                        preset.tags.iter().map(|t| t.to_lowercase()).collect();
+                                    effect_presets.insert(preset.name.clone(), preset);
+                                }
                             }
                         }
                     }
                 }
             }
+
+            // Load transform presets
+            let transforms_path = library_path.join("transforms");
+            if transforms_path.exists() {
+                if let Ok(entries) = std::fs::read_dir(transforms_path) {
+                    for entry in entries.flatten() {
+                        if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
+                            if let Ok(data) = std::fs::read_to_string(entry.path()) {
+                                if let Ok(preset) = serde_json::from_str::<TransformPreset>(&data) {
+                                    transform_presets.insert(preset.name.clone(), preset);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Load project templates
+            let templates_path = library_path.join("templates");
+            if templates_path.exists() {
+                if let Ok(entries) = std::fs::read_dir(templates_path) {
+                    for entry in entries.flatten() {
+                        if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
+                            if let Ok(data) = std::fs::read_to_string(entry.path()) {
+                                if let Ok(template) = serde_json::from_str::<ProjectTemplate>(&data)
+                                {
+                                    project_templates.insert(template.name.clone(), template);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            (effect_presets, transform_presets, project_templates)
+        });
+
+        // Wait for the background thread to finish and load the parsed results
+        if let Ok((effects, transforms, templates)) = handle.join() {
+            self.effect_presets.extend(effects);
+            self.transform_presets.extend(transforms);
+            self.project_templates.extend(templates);
         }
     }
 
