@@ -38,6 +38,7 @@ fn canonical_path_under_base(base_dir: &Path, path: &Path) -> Result<PathBuf> {
     let candidate = if path.is_absolute() { path.to_path_buf() } else { canonical_base.join(path) };
     let canonical = canonical_file_path(&candidate)?;
 
+    // Ensure the canonical path is a sub-path of the base directory.
     if !canonical.starts_with(&canonical_base) {
         return Err(MediaError::FileOpen(format!("Path escapes media root: {}", path.display())));
     }
@@ -83,10 +84,6 @@ impl StillImageDecoder {
     }
 
     /// Load a still image only if it resolves inside `base_dir`.
-    ///
-    /// Use this when opening paths from project files, network messages, or other
-    /// untrusted relative-path sources. Plain `open` remains suitable for direct
-    /// file-picker paths where the selected file itself is the trust boundary.
     pub fn open_under_base<B: AsRef<Path>, P: AsRef<Path>>(base_dir: B, path: P) -> Result<Self> {
         let path = canonical_path_under_base(base_dir.as_ref(), path.as_ref())?;
         Self::open(path)
@@ -105,9 +102,6 @@ impl StillImageDecoder {
 
 impl VideoDecoder for StillImageDecoder {
     fn next_frame(&mut self) -> Result<VideoFrame> {
-        // Still images can be read repeatedly
-        // For proper "video" behavior, we only return the frame once
-        // and then return EndOfStream to match video semantics
         if self.has_been_read {
             return Err(MediaError::EndOfStream);
         }
@@ -127,13 +121,11 @@ impl VideoDecoder for StillImageDecoder {
     }
 
     fn seek(&mut self, _timestamp: Duration) -> Result<()> {
-        // Seeking in a still image resets to beginning
         self.has_been_read = false;
         Ok(())
     }
 
     fn duration(&self) -> Duration {
-        // Still images have "infinite" duration represented as a very long time
         Duration::from_secs(3600 * 24 * 365) // 1 year
     }
 
@@ -142,7 +134,6 @@ impl VideoDecoder for StillImageDecoder {
     }
 
     fn fps(&self) -> f64 {
-        // Still images don't have FPS, but we return 1 for consistency
         1.0
     }
 
@@ -182,7 +173,6 @@ impl GifDecoder {
             .map_err(|e| MediaError::DecoderError(format!("Failed to decode GIF: {}", e)))?;
         let (width, height) = decoder.dimensions();
 
-        // Extract frames
         let frames_iter = decoder.into_frames();
 
         let mut frames = Vec::new();
@@ -230,10 +220,6 @@ impl GifDecoder {
     }
 
     /// Load a GIF only if it resolves inside `base_dir`.
-    ///
-    /// Use this when opening paths from project files, network messages, or other
-    /// untrusted relative-path sources. Plain `open` remains suitable for direct
-    /// file-picker paths where the selected file itself is the trust boundary.
     pub fn open_under_base<B: AsRef<Path>, P: AsRef<Path>>(base_dir: B, path: P) -> Result<Self> {
         let path = canonical_path_under_base(base_dir.as_ref(), path.as_ref())?;
         Self::open(path)
@@ -281,7 +267,6 @@ impl VideoDecoder for GifDecoder {
             return Err(MediaError::SeekError("Timestamp beyond duration".to_string()));
         }
 
-        // Find the frame at the given timestamp
         let mut accumulated_time = Duration::ZERO;
         for (idx, (_image, delay)) in self.frames.iter().enumerate() {
             if accumulated_time + *delay > timestamp {
@@ -292,7 +277,6 @@ impl VideoDecoder for GifDecoder {
             accumulated_time += *delay;
         }
 
-        // If we get here, seek to last frame
         self.current_frame = self.frames.len() - 1;
         self.current_time = self.total_duration;
         Ok(())
@@ -390,6 +374,27 @@ mod tests {
 
         assert!(
             matches!(result, Err(MediaError::FileOpen(message)) if message.contains("escapes media root"))
+        );
+    }
+
+    #[test]
+    fn test_canonical_path_component_check_rejects_escape() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let base_dir = temp_dir.path().join("media");
+        std::fs::create_dir(&base_dir).unwrap();
+        let subdir = base_dir.join("subdir");
+        std::fs::create_dir(&subdir).unwrap();
+        let file_path = subdir.join("test.png");
+        std::fs::write(&file_path, b"dummy image data").unwrap();
+
+        let escaped_path = Path::new("subdir/../../outside.png");
+        let outside_file = temp_dir.path().join("outside.png");
+        std::fs::write(&outside_file, b"this should not be read").unwrap();
+
+        let result = canonical_path_under_base(&base_dir, escaped_path);
+
+        assert!(
+            matches!(result, Err(MediaError::FileOpen(message)) if message.contains("Path escapes media root"))
         );
     }
 }
