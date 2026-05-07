@@ -365,7 +365,15 @@ mod ffmpeg_impl {
                 if self.decoder.receive_frame(&mut decoded).is_ok() {
                     #[allow(unused_variables, unused_mut)]
                     let mut sw_frame = ffmpeg::util::frame::Video::empty();
+
+                    if decoded.as_ptr().is_null() {
+                        return Err(MediaError::DecoderError(
+                            "Decoded frame pointer is null".to_string(),
+                        ));
+                    }
+
                     let frame_ptr = if unsafe {
+                        // SAFETY: decoded.as_ptr() is checked for null above
                         (*decoded.as_ptr()).format == ffi::AVPixelFormat::AV_PIX_FMT_D3D11 as i32
                     } {
                         #[cfg(target_os = "windows")]
