@@ -4,8 +4,8 @@ param(
     [int[]]$IssueNumbers = @(371, 370, 369, 368, 367),
     [string]$Repository = "Vorce-Studios/Vorce",
     [switch]$AutoCreatePr,
-    [int]$MaxConcurrent = 10,
-    [int]$RateLimitDelayMs = 800
+    [int]$MaxConcurrent = 5,
+    [int]$RateLimitDelayMs = 1500
 )
 
 Set-StrictMode -Version 1.0
