@@ -366,7 +366,7 @@ mod ffmpeg_impl {
                     #[allow(unused_variables, unused_mut)]
                     let mut sw_frame = ffmpeg::util::frame::Video::empty();
 
-                    if decoded.as_ptr().is_null() {
+                    if unsafe { decoded.as_ptr().is_null() } {
                         return Err(MediaError::DecoderError(
                             "Decoded frame pointer is null".to_string(),
                         ));
