@@ -209,7 +209,9 @@ impl MediaLibrary {
 
     /// Refresh the library by re-scanning all paths
     pub fn refresh(&mut self) {
-        'outer: for root in self.scanned_paths.clone() {
+        let paths_to_scan = self.scanned_paths.clone();
+
+        'outer: for root in paths_to_scan {
             for entry in WalkDir::new(&root).into_iter().filter_map(|e| e.ok()) {
                 if self.items.len() >= MAX_MEDIA_ITEMS {
                     warn!("Media library limit reached ({}) - stopping scan", MAX_MEDIA_ITEMS);
@@ -217,28 +219,34 @@ impl MediaLibrary {
                 }
 
                 let path = entry.path();
-                if path.is_file() {
-                    let media_type = MediaType::from_path(path);
-                    if media_type != MediaType::Unknown {
-                        let metadata = std::fs::metadata(path).ok();
-                        let size = metadata.map(|m| m.len()).unwrap_or(0);
+                // Extremely fast early-out that avoids ANY allocations
+                // when a file is already in the library or not a file
+                if !entry.file_type().is_file() || self.items.contains_key(path) {
+                    continue;
+                }
 
-                        let name =
-                            path.file_name().unwrap_or_default().to_string_lossy().to_string();
-                        let item = MediaItem {
-                            path: path.to_path_buf(),
-                            name: name.clone(),
-                            name_lower: name.to_lowercase(),
-                            media_type,
-                            metadata: Some(MediaMetadata {
-                                duration: None, // Requires FFmpeg
-                                width: None,    // Requires FFmpeg/Image
-                                height: None,   // Requires FFmpeg/Image
-                                file_size: size,
-                            }),
-                        };
-                        self.items.insert(path.to_path_buf(), item);
-                    }
+                let media_type = MediaType::from_path(path);
+                if media_type != MediaType::Unknown {
+                    // Only perform metadata syscall when we actually need to insert a new media item
+                    let size = entry.metadata().map(|m| m.len()).unwrap_or(0);
+
+                    // Zero-allocation path conversion via COW
+                    let name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
+                    let name_lower = name.to_lowercase();
+
+                    let item = MediaItem {
+                        path: path.to_path_buf(),
+                        name,
+                        name_lower,
+                        media_type,
+                        metadata: Some(MediaMetadata {
+                            duration: None, // Requires FFmpeg
+                            width: None,    // Requires FFmpeg/Image
+                            height: None,   // Requires FFmpeg/Image
+                            file_size: size,
+                        }),
+                    };
+                    self.items.insert(path.to_path_buf(), item);
                 }
             }
         }
