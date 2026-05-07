@@ -332,7 +332,9 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                     if let Some(_) = app.ndi_senders.get(&pid) {
                         has_sender = true;
                     }
-                    if !has_sender { continue; }
+                    if !has_sender {
+                        continue;
+                    }
 
                     let width = 1920;
                     let height = 1080;
@@ -347,7 +349,9 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                                 | wgpu::TextureUsages::TEXTURE_BINDING
                                 | wgpu::TextureUsages::COPY_SRC,
                         );
-                        let view = std::sync::Arc::new(texture.create_view(&wgpu::TextureViewDescriptor::default()));
+                        let view = std::sync::Arc::new(
+                            texture.create_view(&wgpu::TextureViewDescriptor::default()),
+                        );
                         app.ndi_offscreen_textures.insert(pid, (texture, view));
                     }
 
@@ -355,7 +359,9 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                     let view_arc = app.ndi_offscreen_textures.get(&pid).unwrap().1.clone();
                     let view = view_arc.as_ref();
 
-                    let mut encoder = app.backend.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("NDI Offscreen Encoder") });
+                    let mut encoder = app.backend.device.create_command_encoder(
+                        &wgpu::CommandEncoderDescriptor { label: Some("NDI Offscreen Encoder") },
+                    );
 
                     // Render Content
                     let _ = render_content(
@@ -401,7 +407,13 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
                             mapped_at_creation: false,
                         });
-                        app.ndi_readbacks.insert(pid, (buffer, std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false))));
+                        app.ndi_readbacks.insert(
+                            pid,
+                            (
+                                buffer,
+                                std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
+                            ),
+                        );
                     }
 
                     if let Some((buffer, mapping_requested)) = app.ndi_readbacks.get_mut(&pid) {
@@ -423,13 +435,11 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                             wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
                         );
 
-                        // Submit BEFORE map_async according to wgpu model
-                        app.backend.queue.submit(std::iter::once(encoder.finish()));
-
                         let slice = buffer.slice(..);
                         let requested_clone = mapping_requested.clone();
 
-                        // Check mapping first
+                        app.backend.queue.submit(std::iter::once(encoder.finish()));
+
                         if mapping_requested.load(Ordering::SeqCst) {
                             let _ = app.backend.device.poll(wgpu::PollType::Wait {
                                 submission_index: None,
@@ -457,21 +467,25 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
 
                                     if let Some(sender) = app.ndi_senders.get_mut(&pid) {
                                         if let Err(e) = sender.send_frame(&video_frame) {
-                                            tracing::warn!("Failed to send offscreen NDI frame: {}", e);
+                                            tracing::warn!(
+                                                "Failed to send offscreen NDI frame: {}",
+                                                e
+                                            );
                                         }
                                     }
                                 }
                                 buffer.unmap();
                                 mapping_requested.store(false, Ordering::SeqCst);
                             }
+                        } else {
+                            slice.map_async(wgpu::MapMode::Read, move |res| {
+                                if res.is_ok() {
+                                    requested_clone.store(true, Ordering::SeqCst);
+                                }
+                            });
                         }
-
-                        // THEN trigger the NEXT map async
-                        slice.map_async(wgpu::MapMode::Read, move |res| {
-                            if res.is_ok() {
-                                requested_clone.store(true, Ordering::SeqCst);
-                            }
-                        });
+                    } else {
+                        app.backend.queue.submit(std::iter::once(encoder.finish()));
                     }
                 }
             }
