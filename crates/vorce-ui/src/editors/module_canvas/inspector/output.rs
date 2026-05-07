@@ -337,7 +337,84 @@ pub fn render_output_ui(
             ui.collapsing("\u{1F3AD} Area & Mode", |ui| {
                 ui.label("Entertainment Area:");
                 ui.text_edit_singleline(entertainment_area);
-                // TODO: Fetch areas from bridge if paired
+
+                if !username.is_empty() {
+                    if ui.button("🔄 Fetch Areas").clicked() {
+                        let (tx, rx) = std::sync::mpsc::channel();
+                        canvas.hue_areas_rx = Some(rx);
+                        canvas.hue_fetching_areas = true;
+
+                        let config = vorce_control::hue::models::HueConfig {
+                            bridge_ip: bridge_ip.clone(),
+                            username: username.clone(),
+                            client_key: _client_key.clone(),
+                            application_id: String::new(),
+                            entertainment_group_id: String::new(),
+                        };
+
+                        #[cfg(feature = "tokio")]
+                        {
+                            let task = async move {
+                                let result =
+                                    vorce_control::hue::api::groups::get_entertainment_groups(
+                                        &config,
+                                    )
+                                    .await
+                                    .map_err(|e| e.to_string());
+                                let _ = tx.send(result);
+                            };
+                            tokio::spawn(task);
+                        }
+
+                        #[cfg(not(feature = "tokio"))]
+                        {
+                            let _ = tx;
+                            let _ = config;
+                            canvas.hue_status_message =
+                                Some("Async runtime not available".to_string());
+                        }
+                    }
+
+                    if let Some(rx) = &canvas.hue_areas_rx {
+                        if let Ok(result) = rx.try_recv() {
+                            canvas.hue_areas_rx = None;
+                            canvas.hue_fetching_areas = false;
+                            match result {
+                                Ok(areas) => {
+                                    canvas.hue_areas = areas;
+                                }
+                                Err(e) => {
+                                    canvas.hue_status_message =
+                                        Some(format!("Failed to fetch areas: {}", e));
+                                }
+                            }
+                        }
+                    }
+
+                    if canvas.hue_fetching_areas {
+                        ui.horizontal(|ui| {
+                            ui.spinner();
+                            ui.label("Fetching areas...");
+                        });
+                    } else if !canvas.hue_areas.is_empty() {
+                        ui.label("Available Areas:");
+                        for area in &canvas.hue_areas {
+                            if ui
+                                .selectable_value(entertainment_area, area.id.clone(), &area.name)
+                                .clicked()
+                            {
+                                // Clear existing lamps
+                                lamp_positions.clear();
+                                // Pre-fill with area lights
+                                for light in &area.lights {
+                                    // Use x and y for 2D position
+                                    lamp_positions
+                                        .insert(light.id.clone(), (light.x as f32, light.y as f32));
+                                }
+                            }
+                        }
+                    }
+                }
 
                 ui.separator();
                 ui.label("Mapping Mode:");
