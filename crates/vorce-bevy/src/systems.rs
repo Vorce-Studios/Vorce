@@ -257,7 +257,11 @@ pub fn particle_system(
             commands.entity(entity).insert(crate::components::ParticleEmitter::default());
             continue; // Wait for next frame
         }
-        let emitter = emitter_opt.as_mut().unwrap();
+        let emitter = if let Some(e) = emitter_opt.as_mut() {
+            e
+        } else {
+            continue;
+        };
 
         // Initialize mesh if missing
         if mesh_opt.is_none() {
@@ -431,7 +435,14 @@ pub fn frame_readback_system(
         let output_buffer_size = (bytes_per_row * height) as u64;
 
         // Ensure buffer exists and is correct size
-        if buffer_cache.is_none() || buffer_cache.as_ref().unwrap().size() != output_buffer_size {
+        let mut needs_new_buffer = buffer_cache.is_none();
+        if let Some(buf) = buffer_cache.as_ref() {
+            if buf.size() != output_buffer_size {
+                needs_new_buffer = true;
+            }
+        }
+
+        if needs_new_buffer {
             *buffer_cache = Some(render_device.create_buffer(
                 &bevy::render::render_resource::BufferDescriptor {
                     label: Some("Readback Buffer"),
@@ -443,7 +454,11 @@ pub fn frame_readback_system(
             ));
         }
 
-        let buffer = buffer_cache.as_ref().unwrap();
+        let buffer = if let Some(buf) = buffer_cache.as_ref() {
+            buf
+        } else {
+            return;
+        };
 
         let mut encoder = render_device.create_command_encoder(
             &bevy::render::render_resource::CommandEncoderDescriptor {
@@ -479,9 +494,12 @@ pub fn frame_readback_system(
             let _ = tx.send(res);
         });
 
-        render_device
+        if let Err(e) = render_device
             .poll(wgpu::PollType::Wait { submission_index: Some(submission_index), timeout: None })
-            .unwrap();
+        {
+            tracing::error!("Failed to poll render device for Bevy output readback: {}", e);
+            return;
+        }
 
         match rx.recv() {
             Ok(Ok(_)) => {
