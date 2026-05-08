@@ -196,7 +196,7 @@ impl AssetManager {
         preset.description_lower = preset.description.to_lowercase();
         preset.tags_lower = preset.tags.iter().map(|t| t.to_lowercase()).collect();
 
-        let file_path = effects_path.join(format!("{}.json", preset.name));     
+        let file_path = effects_path.join(format!("{}.json", preset.name));
         let data = serde_json::to_string_pretty(&preset)?;
         std::fs::write(file_path, data)?;
 
@@ -209,7 +209,7 @@ impl AssetManager {
         let transforms_path = self.library_path.join("transforms");
         std::fs::create_dir_all(&transforms_path)?;
 
-        let file_path = transforms_path.join(format!("{}.json", preset.name));  
+        let file_path = transforms_path.join(format!("{}.json", preset.name));
         let data = serde_json::to_string_pretty(&preset)?;
         std::fs::write(file_path, data)?;
 
@@ -218,7 +218,7 @@ impl AssetManager {
     }
 
     /// Get effect preset by name
-    pub fn get_effect_preset(&self, name: &str) -> Option<&EffectPreset> {      
+    pub fn get_effect_preset(&self, name: &str) -> Option<&EffectPreset> {
         self.effect_presets.get(name)
     }
 
@@ -233,17 +233,17 @@ impl AssetManager {
     }
 
     /// Get all transform presets
-    pub fn transform_presets(&self) -> &HashMap<String, TransformPreset> {      
+    pub fn transform_presets(&self) -> &HashMap<String, TransformPreset> {
         &self.transform_presets
     }
 
     /// Get all project templates
-    pub fn project_templates(&self) -> &HashMap<String, ProjectTemplate> {      
+    pub fn project_templates(&self) -> &HashMap<String, ProjectTemplate> {
         &self.project_templates
     }
 
     /// Search presets by query
-    pub fn search_effect_presets(&self, query: &str) -> Vec<&EffectPreset> {    
+    pub fn search_effect_presets(&self, query: &str) -> Vec<&EffectPreset> {
         let query_lower = query.to_lowercase();
         self.effect_presets
             .values()
@@ -262,19 +262,19 @@ impl AssetManager {
 
     /// Get favorite effect presets
     pub fn favorite_effect_presets(&self) -> Vec<&EffectPreset> {
-        self.effect_presets.values().filter(|preset| preset.favorite).collect() 
+        self.effect_presets.values().filter(|preset| preset.favorite).collect()
     }
 
     /// Render asset browser UI
-    pub fn ui(&mut self, ui: &mut egui::Ui) -> Option<AssetManagerAction> {     
+    pub fn ui(&mut self, ui: &mut egui::Ui) -> Option<AssetManagerAction> {
         self.update();
         let mut action = None;
 
         egui::Panel::top("asset_browser_tabs").show_inside(ui, |ui| {
             ui.horizontal(|ui| {
                 let _ = ui.selectable_label(false, "Effect Presets");
-                let _ = ui.selectable_label(false, "Transform Presets");        
-                let _ = ui.selectable_label(false, "Project Templates");        
+                let _ = ui.selectable_label(false, "Transform Presets");
+                let _ = ui.selectable_label(false, "Project Templates");
             });
         });
 
