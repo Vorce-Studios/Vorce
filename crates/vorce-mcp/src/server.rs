@@ -302,7 +302,7 @@ mod tests {
         assert!(response.result.is_none());
         assert_eq!(response.id, Some(id));
 
-        let error = response.error.unwrap();
+        let error = response.error.expect("Expected valid result");
         assert_eq!(error.code, -32600);
         assert_eq!(error.message, "Invalid Request");
         assert!(error.data.is_none());
@@ -313,7 +313,7 @@ mod tests {
         let response = error_response(None, -32700, "Parse error");
 
         assert_eq!(response.id, None);
-        assert_eq!(response.error.unwrap().code, -32700);
+        assert_eq!(response.error.expect("Expected valid result").code, -32700);
     }
 
     #[tokio::test]
@@ -336,7 +336,7 @@ mod tests {
         let response = server.handle_request(&request.to_string()).await;
         assert!(response.is_some());
 
-        let action = rx.try_recv().unwrap();
+        let action = rx.try_recv().expect("Expected valid result");
         match action {
             McpAction::AddLayer(name) => assert_eq!(name, "Test Layer"),
             other => panic!("Expected AddLayer action, got {:?}", other),
@@ -361,7 +361,7 @@ mod tests {
         });
 
         server.handle_request(&request.to_string()).await;
-        let action = rx.try_recv().unwrap();
+        let action = rx.try_recv().expect("Expected valid result");
         match action {
             McpAction::RemoveLayer(id) => assert_eq!(id, 42),
             other => panic!("Expected RemoveLayer action, got {:?}", other),
@@ -386,7 +386,7 @@ mod tests {
         });
 
         server.handle_request(&request.to_string()).await;
-        let action = rx.try_recv().unwrap();
+        let action = rx.try_recv().expect("Expected valid result");
         match action {
             McpAction::TriggerCue(id) => assert_eq!(id, 5),
             other => panic!("Expected TriggerCue action, got {:?}", other),
@@ -409,7 +409,7 @@ mod tests {
             }
         });
         server.handle_request(&next_req.to_string()).await;
-        assert!(matches!(rx.try_recv().unwrap(), McpAction::NextCue));
+        assert!(matches!(rx.try_recv().expect("Expected valid result"), McpAction::NextCue));
 
         // Test Previous
         let prev_req = json!({
@@ -422,7 +422,7 @@ mod tests {
             }
         });
         server.handle_request(&prev_req.to_string()).await;
-        assert!(matches!(rx.try_recv().unwrap(), McpAction::PrevCue));
+        assert!(matches!(rx.try_recv().expect("Expected valid result"), McpAction::PrevCue));
     }
 
     #[tokio::test]
@@ -443,9 +443,11 @@ mod tests {
             }
         });
         server.handle_request(&save_req.to_string()).await;
-        let action = rx.try_recv().unwrap();
+        let action = rx.try_recv().expect("Expected valid result");
         match action {
-            McpAction::SaveProject(path) => assert_eq!(path.to_str().unwrap(), "test.mapmap"),
+            McpAction::SaveProject(path) => {
+                assert_eq!(path.to_str().expect("Expected valid result"), "test.mapmap")
+            }
             other => panic!("Expected SaveProject action, got {:?}", other),
         }
 
@@ -462,9 +464,11 @@ mod tests {
             }
         });
         server.handle_request(&load_req.to_string()).await;
-        let action = rx.try_recv().unwrap();
+        let action = rx.try_recv().expect("Expected valid result");
         match action {
-            McpAction::LoadProject(path) => assert_eq!(path.to_str().unwrap(), "other.mapmap"),
+            McpAction::LoadProject(path) => {
+                assert_eq!(path.to_str().expect("Expected valid result"), "other.mapmap")
+            }
             other => panic!("Expected LoadProject action, got {:?}", other),
         }
     }
@@ -489,13 +493,16 @@ mod tests {
 
         let response = server.handle_request(&request.to_string()).await;
         assert!(response.is_some());
-        let resp = response.unwrap();
+        let resp = response.expect("Expected response");
         assert!(resp.error.is_none(), "Response should not be an error: {:?}", resp.error);
 
-        let result = resp.result.unwrap();
+        let result = resp.result.expect("Expected result");
         // result is a CallToolResult
         assert_eq!(result["isError"], false);
-        assert!(result["content"][0]["text"].as_str().unwrap().contains("Sent OSC"));
+        assert!(result["content"][0]["text"]
+            .as_str()
+            .expect("Expected text value")
+            .contains("Sent OSC"));
     }
 
     #[tokio::test]
@@ -517,12 +524,12 @@ mod tests {
         });
 
         let response = server.handle_request(&save_req.to_string()).await;
-        let resp = response.unwrap();
+        let resp = response.expect("Expected response");
 
         // Should fail now
         assert!(resp.error.is_some(), "Should fail after fix (secure)");
 
-        let error = resp.error.unwrap();
+        let error = resp.error.expect("Expected valid result");
         assert!(error.message.contains("Invalid path"));
         // Could be traversal or extension error depending on order, but we check generic "Invalid path" prefix
         assert!(error.message.contains("Path traversal") || error.message.contains("Extension"));
@@ -542,9 +549,14 @@ mod tests {
                 }
             }
         });
-        let ext_resp = server.handle_request(&ext_req.to_string()).await.unwrap();
+        let ext_resp =
+            server.handle_request(&ext_req.to_string()).await.expect("Expected valid result");
         assert!(ext_resp.error.is_some());
-        assert!(ext_resp.error.unwrap().message.contains("Extension 'sh' is not allowed"));
+        assert!(ext_resp
+            .error
+            .expect("Expected valid result")
+            .message
+            .contains("Extension 'sh' is not allowed"));
 
         // Test valid path
         let valid_req = json!({
@@ -560,15 +572,15 @@ mod tests {
         });
 
         let valid_response = server.handle_request(&valid_req.to_string()).await;
-        let valid_resp = valid_response.unwrap();
+        let valid_resp = valid_response.expect("Expected valid result");
         assert!(valid_resp.error.is_none());
-        assert_eq!(valid_resp.result.unwrap()["status"], "queued");
+        assert_eq!(valid_resp.result.expect("Expected valid result")["status"], "queued");
 
         // Verify valid action sent
-        let valid_action = rx.try_recv().unwrap();
+        let valid_action = rx.try_recv().expect("Expected valid result");
         match valid_action {
             McpAction::SaveProject(path) => {
-                assert_eq!(path.to_str().unwrap(), "good_project.mapmap")
+                assert_eq!(path.to_str().expect("Expected valid result"), "good_project.mapmap")
             }
             other => panic!("Expected SaveProject action, got {:?}", other),
         }
