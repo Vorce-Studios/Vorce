@@ -46,8 +46,7 @@ pub fn draw_search_popup(
                     };
                     let name = utils::get_part_property_text(&p.part_type).to_lowercase();
                     let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
-                    name.contains(filter_lower)
-                        || utils::case_insensitive_contains(type_name, filter_lower)
+                    name.contains(filter_lower) || type_name.to_lowercase().contains(filter_lower)
                 })
                 .take(6)
                 .collect();
