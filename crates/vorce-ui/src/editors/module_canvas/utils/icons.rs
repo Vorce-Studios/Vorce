@@ -75,3 +75,37 @@ fn load_svg_icon(path: &std::path::Path, ctx: &egui::Context) -> Option<TextureH
         },
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_ensure_icons_loaded_already_loaded() {
+        let mut plug_icons = HashMap::new();
+        // Insert a dummy to make it non-empty
+        // TextureHandle is usually constructed via Context, but since we just check is_empty we can't easily mock TextureHandle without a Context.
+        // Actually, TextureHandle does not have a public default or easy mock unless we have a Context.
+        let ctx = egui::Context::default();
+        let handle =
+            ctx.load_texture("dummy", egui::ColorImage::example(), egui::TextureOptions::default());
+        plug_icons.insert("dummy".to_string(), handle);
+
+        let initial_len = plug_icons.len();
+        ensure_icons_loaded(&mut plug_icons, &ctx);
+        // Should return early because it's not empty, so len remains same
+        assert_eq!(plug_icons.len(), initial_len);
+    }
+
+    #[test]
+    fn test_ensure_icons_loaded_empty() {
+        let mut plug_icons = HashMap::new();
+        let ctx = egui::Context::default();
+
+        // This will try to load from the filesystem.
+        // In CI/sandbox, it might fail to find the icons, leaving the map empty,
+        // or if it finds them, it will load them. We just assert it doesn't panic.
+        ensure_icons_loaded(&mut plug_icons, &ctx);
+    }
+}
