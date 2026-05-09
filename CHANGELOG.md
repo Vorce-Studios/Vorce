@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - 2026-05-08: feat(mcp): implement shared state reading for project://current
 n* Upgrade Rust toolchain to `1.95.0` to satisfy dependencies (`bevy@0.19.0-dev`).
+- 2026-05-09: fix: Enable multi-threaded video pipeline and thread-local scaler (#1411)
 - 2026-04-16: refactor: Sync next_id with graph in NodeEditor
 - 2026-04-14: chore: 🧹 [code health] Remove dead CachedTexture struct and dummy allocations
 - 2026-04-14: chore: Code Health: Remove unused imports in controller list panel
