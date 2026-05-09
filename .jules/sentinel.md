@@ -20,3 +20,9 @@
 **Lektion:** CORS-Policies sollten niemals standardmäßig oder durch einfache Konfiguration Wildcards erlauben, insbesondere bei APIs, die sensitive Aktionen ausführen können.
 
 **Prävention:** Wildcards in CORS-Einstellungen sollten im Code explizit abgefangen und ignoriert werden. Erlaubte Origins müssen als spezifische, vertrauenswürdige Domains konfiguriert werden.
+
+## 2025-05-24 - DoS via Null-Pointer Dereference in MPV FFI
+
+**Schwachstelle:** Beim Iterieren über die von MPV gelieferten Node-Maps (`crates/vorce-media/src/mpv_decoder.rs`) wurden C-Pointer (`keys[i]`) ohne Prüfung auf Null an `CStr::from_ptr` übergeben.
+**Lektion:** FFI-Bibliotheken in C können bei internen Fehlern oder korruptem Input (wie hier manipulierten Video-Dateien) Null-Pointer zurückgeben. Die direkte Verwendung solcher Pointer in Rust's unsafe Blöcken führt zum sofortigen Absturz (Panic/DoS) und somit zu einem Stabilitäts- und Sicherheitsrisiko für das Gesamtsystem.
+**Prävention:** Alle von FFI empfangenen raw Pointer müssen mit `.is_null()` geprüft werden, bevor sie dereferenziert oder an sichere Wrapper-Funktionen wie `CStr::from_ptr` weitergegeben werden.
