@@ -136,6 +136,7 @@ export default function App() {
   const [historicalData, setHistoricalData] = useState<QuotaData[]>([]);
   const [activeSessions, setActiveSessions] = useState<any | null>(null);
   const [registry, setRegistry] = useState<RegistryData | null>(null);
+  const [ghIssues, setGhIssues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // New UI States
@@ -144,14 +145,16 @@ export default function App() {
 
   const fetchData = async () => {
     try {
-      const [dataRes, sessionsRes, registryRes] = await Promise.all([
+      const [dataRes, sessionsRes, registryRes, ghIssuesRes] = await Promise.all([
         fetch('/data.json').catch(() => null),
         fetch('/active-sessions.json').catch(() => null),
-        fetch('/registry.json').catch(() => null)
+        fetch('/registry.json').catch(() => null),
+        fetch('/github-issues.json').catch(() => null)
       ]);
 
       if (dataRes?.ok) setHistoricalData(await dataRes.json());
       if (sessionsRes?.ok) setActiveSessions(await sessionsRes.json());
+      if (ghIssuesRes?.ok) setGhIssues(await ghIssuesRes.json());
       
       if (registryRes?.ok) {
         const reg = await registryRes.json();
@@ -246,6 +249,22 @@ export default function App() {
       });
     });
   }
+
+  // --- Merge GitHub Issues into Task Board ---
+  ghIssues.forEach((issue: any) => {
+    const issueIdStr = issue.number.toString();
+    const alreadyTracked = unifiedTasks.find(t => t.id === issueIdStr);
+    
+    if (!alreadyTracked) {
+      unifiedTasks.push({
+        id: issueIdStr,
+        title: issue.title,
+        status: issue.state === 'OPEN' ? 'QUEUED' : 'IN_REVIEW',
+        timestamp: issue.updatedAt,
+        raw: issue
+      });
+    }
+  });
 
   // Sort tasks by status severity (RUNNING > ERROR > IN_REVIEW > PENDING > QUEUED)
   const statusWeight = { 'RUNNING': 5, 'ERROR': 4, 'PENDING_INPUT': 3, 'IN_REVIEW': 2, 'QUEUED': 1 };
