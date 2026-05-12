@@ -23,7 +23,17 @@
                                                          "monitoring"
                                                      ],
                                          "command":  "gemini",
-                                         "auth_env_var":  "GEMINI_API_KEY",
+                                         "cli_args":  [
+                                                          "-p",
+                                                          "{PROMPT}",
+                                                          "-y",
+                                                          "--output-format",
+                                                          "json",
+                                                          "--sandbox",
+                                                          "false"
+                                                      ],
+                                         "stats_format":  "gemini_json",
+                                         "auth_env_var":  null,
                                          "models":  {
                                                         "cheap":  {
                                                                       "name":  "gemini-3.1-flash-lite",
@@ -41,8 +51,10 @@
                                          "daily_limit":  200,
                                          "daily_budget_usd":  5.00,
                                          "usage_today":  {
-                                                             "calls":  0,
-                                                             "estimated_cost_usd":  0
+                                                             "calls":  1,
+                                                             "estimated_cost_usd":  0.01,
+                                                             "total_input_tokens":  0,
+                                                             "total_output_tokens":  0
                                                          }
                                      },
                       "kiro_cli":  {
@@ -52,7 +64,14 @@
                                                        "planning",
                                                        "spec_generation"
                                                    ],
-                                       "command":  "kiro",
+                                       "command":  "kiro-cli",
+                                       "cli_args":  [
+                                                        "chat",
+                                                        "--no-interactive",
+                                                        "--trust-all-tools",
+                                                        "{PROMPT}"
+                                                    ],
+                                       "stats_format":  "none",
                                        "auth_env_var":  null,
                                        "models":  {
                                                       "default":  {
@@ -63,8 +82,8 @@
                                        "daily_limit":  100,
                                        "daily_budget_usd":  5.00,
                                        "usage_today":  {
-                                                           "calls":  3,
-                                                           "estimated_cost_usd":  0.3
+                                                           "calls":  0,
+                                                           "estimated_cost_usd":  0
                                                        }
                                    },
                       "cline_cli":  {
@@ -75,6 +94,12 @@
                                                         "fallback_coding"
                                                     ],
                                         "command":  "cline",
+                                        "cli_args":  [
+                                                         "-y",
+                                                         "{PROMPT}",
+                                                         "--json"
+                                                     ],
+                                        "stats_format":  "cline_json",
                                         "auth_env_var":  null,
                                         "models":  {
                                                        "default":  {
@@ -97,7 +122,15 @@
                                                           "debugging"
                                                       ],
                                           "command":  "claude",
-                                          "auth_env_var":  "ANTHROPIC_API_KEY",
+                                          "cli_args":  [
+                                                           "-p",
+                                                           "{PROMPT}",
+                                                           "--output-format",
+                                                           "json",
+                                                           "--dangerously-skip-permissions"
+                                                       ],
+                                          "stats_format":  "claude_json",
+                                          "auth_env_var":  null,
                                           "models":  {
                                                          "balanced":  {
                                                                           "name":  "claude-sonnet-4",
@@ -112,7 +145,9 @@
                                           "daily_budget_usd":  10.00,
                                           "usage_today":  {
                                                               "calls":  0,
-                                                              "estimated_cost_usd":  0
+                                                              "estimated_cost_usd":  0,
+                                                              "total_input_tokens":  0,
+                                                              "total_output_tokens":  0
                                                           }
                                       },
                       "copilot_cli":  {
@@ -122,6 +157,14 @@
                                                           "planning"
                                                       ],
                                           "command":  "copilot",
+                                          "cli_args":  [
+                                                           "-p",
+                                                           "{PROMPT}",
+                                                           "--output-format",
+                                                           "json",
+                                                           "--yolo"
+                                                       ],
+                                          "stats_format":  "copilot_json",
                                           "auth_env_var":  null,
                                           "models":  {
                                                          "default":  {
@@ -133,7 +176,8 @@
                                           "daily_budget_usd":  5.00,
                                           "usage_today":  {
                                                               "calls":  0,
-                                                              "estimated_cost_usd":  0
+                                                              "estimated_cost_usd":  0,
+                                                              "premium_requests":  0
                                                           }
                                       }
                   },
