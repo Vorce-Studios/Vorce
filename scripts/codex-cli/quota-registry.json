@@ -11,8 +11,7 @@
                                     "daily_limit":  100,
                                     "estimated_cost_per_call_usd":  0.00,
                                     "usage_today":  {
-                                                        "calls":  0,
-                                                        "estimated_cost_usd":  0
+
                                                     }
                                 },
                       "gemini_cli":  {
@@ -48,13 +47,10 @@
                                                                         "estimated_cost_per_call_usd":  0.50
                                                                     }
                                                     },
-                                         "daily_limit":  200,
-                                         "daily_budget_usd":  5.00,
+                                         "daily_limit":  1500,
+                                         "daily_budget_usd":  20,
                                          "usage_today":  {
-                                                             "calls":  1,
-                                                             "estimated_cost_usd":  0.01,
-                                                             "total_input_tokens":  0,
-                                                             "total_output_tokens":  0
+
                                                          }
                                      },
                       "kiro_cli":  {
@@ -82,8 +78,7 @@
                                        "daily_limit":  100,
                                        "daily_budget_usd":  5.00,
                                        "usage_today":  {
-                                                           "calls":  0,
-                                                           "estimated_cost_usd":  0
+
                                                        }
                                    },
                       "cline_cli":  {
@@ -110,8 +105,7 @@
                                         "daily_limit":  100,
                                         "daily_budget_usd":  5.00,
                                         "usage_today":  {
-                                                            "calls":  0,
-                                                            "estimated_cost_usd":  0
+
                                                         }
                                     },
                       "claude_code":  {
@@ -144,10 +138,7 @@
                                           "daily_limit":  50,
                                           "daily_budget_usd":  10.00,
                                           "usage_today":  {
-                                                              "calls":  0,
-                                                              "estimated_cost_usd":  0,
-                                                              "total_input_tokens":  0,
-                                                              "total_output_tokens":  0
+
                                                           }
                                       },
                       "copilot_cli":  {
@@ -175,14 +166,47 @@
                                           "daily_limit":  100,
                                           "daily_budget_usd":  5.00,
                                           "usage_today":  {
-                                                              "calls":  0,
-                                                              "estimated_cost_usd":  0,
-                                                              "premium_requests":  0
+
                                                           }
-                                      }
+                                      },
+                      "codex_orchestrator":  {
+                                                 "enabled":  true,
+                                                 "purpose":  [
+                                                                 "planning",
+                                                                 "monitoring"
+                                                             ],
+                                                 "command":  "copilot",
+                                                 "cli_args":  [
+                                                                  "-p",
+                                                                  "{PROMPT}",
+                                                                  "--model",
+                                                                  "{MODEL}",
+                                                                  "--output-format",
+                                                                  "json",
+                                                                  "--yolo"
+                                                              ],
+                                                 "stats_format":  "copilot_json",
+                                                 "auth_env_var":  null,
+                                                 "models":  {
+                                                                "planning":  {
+                                                                                 "name":  "gpt-5.5",
+                                                                                 "estimated_cost_per_call_usd":  0.20
+                                                                             },
+                                                                "monitoring":  {
+                                                                                   "name":  "gpt-5-mini",
+                                                                                   "estimated_cost_per_call_usd":  0.02
+                                                                               }
+                                                            },
+                                                 "daily_limit":  1000,
+                                                 "daily_budget_usd":  20,
+                                                 "usage_today":  {
+
+                                                                 }
+                                             }
                   },
     "routing_rules":  {
                           "monitoring":  [
+                                             "codex_orchestrator:monitoring",
                                              "gemini_cli:cheap"
                                          ],
                           "simple_review":  [
@@ -200,6 +224,7 @@
                                                  "gemini_cli:premium"
                                              ],
                           "planning":  [
+                                           "codex_orchestrator:planning",
                                            "gemini_cli:balanced",
                                            "kiro_cli:default",
                                            "copilot_cli:default"
