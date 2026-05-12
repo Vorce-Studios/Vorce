@@ -1,0 +1,172 @@
+﻿{
+    "schema_version":  1,
+    "daily_reset_hour_utc":  0,
+    "last_reset_date":  "2026-05-12",
+    "providers":  {
+                      "jules":  {
+                                    "enabled":  true,
+                                    "purpose":  [
+                                                    "coding"
+                                                ],
+                                    "daily_limit":  100,
+                                    "estimated_cost_per_call_usd":  0.00,
+                                    "usage_today":  {
+                                                        "calls":  0,
+                                                        "estimated_cost_usd":  0
+                                                    }
+                                },
+                      "gemini_cli":  {
+                                         "enabled":  true,
+                                         "purpose":  [
+                                                         "review",
+                                                         "planning",
+                                                         "monitoring"
+                                                     ],
+                                         "command":  "gemini",
+                                         "auth_env_var":  "GEMINI_API_KEY",
+                                         "models":  {
+                                                        "cheap":  {
+                                                                      "name":  "gemini-3.1-flash-lite",
+                                                                      "estimated_cost_per_call_usd":  0.01
+                                                                  },
+                                                        "balanced":  {
+                                                                         "name":  "gemini-3.1-flash",
+                                                                         "estimated_cost_per_call_usd":  0.05
+                                                                     },
+                                                        "premium":  {
+                                                                        "name":  "gemini-3.1-pro",
+                                                                        "estimated_cost_per_call_usd":  0.50
+                                                                    }
+                                                    },
+                                         "daily_limit":  200,
+                                         "daily_budget_usd":  5.00,
+                                         "usage_today":  {
+                                                             "calls":  0,
+                                                             "estimated_cost_usd":  0
+                                                         }
+                                     },
+                      "kiro_cli":  {
+                                       "enabled":  true,
+                                       "purpose":  [
+                                                       "review",
+                                                       "planning",
+                                                       "spec_generation"
+                                                   ],
+                                       "command":  "kiro",
+                                       "auth_env_var":  null,
+                                       "models":  {
+                                                      "default":  {
+                                                                      "name":  "default",
+                                                                      "estimated_cost_per_call_usd":  0.10
+                                                                  }
+                                                  },
+                                       "daily_limit":  100,
+                                       "daily_budget_usd":  5.00,
+                                       "usage_today":  {
+                                                           "calls":  3,
+                                                           "estimated_cost_usd":  0.3
+                                                       }
+                                   },
+                      "cline_cli":  {
+                                        "enabled":  true,
+                                        "purpose":  [
+                                                        "review",
+                                                        "debugging",
+                                                        "fallback_coding"
+                                                    ],
+                                        "command":  "cline",
+                                        "auth_env_var":  null,
+                                        "models":  {
+                                                       "default":  {
+                                                                       "name":  "default",
+                                                                       "estimated_cost_per_call_usd":  0.10
+                                                                   }
+                                                   },
+                                        "daily_limit":  100,
+                                        "daily_budget_usd":  5.00,
+                                        "usage_today":  {
+                                                            "calls":  0,
+                                                            "estimated_cost_usd":  0
+                                                        }
+                                    },
+                      "claude_code":  {
+                                          "enabled":  true,
+                                          "purpose":  [
+                                                          "complex_review",
+                                                          "architecture",
+                                                          "debugging"
+                                                      ],
+                                          "command":  "claude",
+                                          "auth_env_var":  "ANTHROPIC_API_KEY",
+                                          "models":  {
+                                                         "balanced":  {
+                                                                          "name":  "claude-sonnet-4",
+                                                                          "estimated_cost_per_call_usd":  0.30
+                                                                      },
+                                                         "premium":  {
+                                                                         "name":  "claude-opus-4",
+                                                                         "estimated_cost_per_call_usd":  1.50
+                                                                     }
+                                                     },
+                                          "daily_limit":  50,
+                                          "daily_budget_usd":  10.00,
+                                          "usage_today":  {
+                                                              "calls":  0,
+                                                              "estimated_cost_usd":  0
+                                                          }
+                                      },
+                      "copilot_cli":  {
+                                          "enabled":  true,
+                                          "purpose":  [
+                                                          "review",
+                                                          "planning"
+                                                      ],
+                                          "command":  "copilot",
+                                          "auth_env_var":  null,
+                                          "models":  {
+                                                         "default":  {
+                                                                         "name":  "default",
+                                                                         "estimated_cost_per_call_usd":  0.05
+                                                                     }
+                                                     },
+                                          "daily_limit":  100,
+                                          "daily_budget_usd":  5.00,
+                                          "usage_today":  {
+                                                              "calls":  0,
+                                                              "estimated_cost_usd":  0
+                                                          }
+                                      }
+                  },
+    "routing_rules":  {
+                          "monitoring":  [
+                                             "gemini_cli:cheap"
+                                         ],
+                          "simple_review":  [
+                                                "gemini_cli:cheap",
+                                                "copilot_cli:default",
+                                                "cline_cli:default"
+                                            ],
+                          "code_review":  [
+                                              "gemini_cli:balanced",
+                                              "kiro_cli:default",
+                                              "claude_code:balanced"
+                                          ],
+                          "complex_review":  [
+                                                 "claude_code:balanced",
+                                                 "gemini_cli:premium"
+                                             ],
+                          "planning":  [
+                                           "gemini_cli:balanced",
+                                           "kiro_cli:default",
+                                           "copilot_cli:default"
+                                       ],
+                          "debugging":  [
+                                            "claude_code:balanced",
+                                            "cline_cli:default",
+                                            "gemini_cli:premium"
+                                        ],
+                          "coding":  [
+                                         "jules"
+                                     ]
+                      }
+}
