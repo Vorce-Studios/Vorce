@@ -1,0 +1,10 @@
+{
+    "files.autoSave": "onFocusChange",
+    "css.lint.unknownAtRules": "ignore",
+    "scss.lint.unknownAtRules": "ignore",
+    "tailwindCSS.includeLanguages": {
+        "plaintext": "ts",
+        "typescript": "ts",
+        "typescriptreact": "tsx"
+    }
+}
