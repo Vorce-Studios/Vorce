@@ -143,7 +143,7 @@ impl ShortcutsPanel {
                             );
 
                             if is_conflict {
-                                key_label.clone().on_hover_text(
+                                key_label.on_hover_text(
                                     "⚠️ Conflict: This shortcut is used by multiple actions.",
                                 );
                             }
@@ -207,23 +207,25 @@ impl ShortcutsPanel {
                     }
 
                     // Input Handling
-                    let input = ui.input(|i| i.clone());
-
-                    if input.key_pressed(egui::Key::Escape) {
-                        self.editing_shortcut_index = None;
-                    } else if let Some(key) = input.events.iter().find_map(|e| match e {
-                        egui::Event::Key { key, pressed: true, .. } => Some(key),
-                        _ => None,
-                    }) {
-                        // Ignore modifier-only presses
-                        if !matches!(key, egui::Key::PageUp | egui::Key::PageDown) {
-                            let modifiers = input.modifiers;
-                            if let Some(vorce_key) = to_vorce_key(*key) {
-                                new_shortcut_key =
-                                    Some(Some((vorce_key, to_vorce_modifiers(modifiers))));
+                    // ⚡ Bolt: Avoid cloning `egui::InputState` per frame. We pass a closure to `ui.input`
+                    // to borrow the state directly, eliminating an unnecessary and expensive memory allocation.
+                    ui.input(|input| {
+                        if input.key_pressed(egui::Key::Escape) {
+                            self.editing_shortcut_index = None;
+                        } else if let Some(key) = input.events.iter().find_map(|e| match e {
+                            egui::Event::Key { key, pressed: true, .. } => Some(key),
+                            _ => None,
+                        }) {
+                            // Ignore modifier-only presses
+                            if !matches!(key, egui::Key::PageUp | egui::Key::PageDown) {
+                                let modifiers = input.modifiers;
+                                if let Some(vorce_key) = to_vorce_key(*key) {
+                                    new_shortcut_key =
+                                        Some(Some((vorce_key, to_vorce_modifiers(modifiers))));
+                                }
                             }
                         }
-                    }
+                    });
                 });
 
             if !is_open {

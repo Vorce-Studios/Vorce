@@ -21,3 +21,5 @@
 ## 2025-05-10 - Avoid Caching UI State for Public Fields (ModuleCanvas Search)
 **Erkenntnis:** Caching lowercased search strings in `egui` state structs using `response.changed()` causes state desynchronization bugs when the source fields (like `search_filter` or `quick_create_filter`) are `pub` and can be modified programmatically elsewhere. This pattern attempts to avoid per-frame allocations but introduces subtle bugs.
 **Aktion:** Instead of caching derived string state for `pub` fields, remove the cached state entirely. Use the zero-allocation `utils::case_insensitive_contains` inside the filter loops directly with the original string. This achieves both zero per-frame allocations and guaranteed state synchronization.
+
+## 2024-05-18 - [Vorce UI Shortcuts Panel - Prevent allocations in input event handler] **Erkenntnis:** Avoid calling `ui.input(|i| i.clone())` which clones the entire `egui::InputState` per frame during the shortcuts panel edit dialog. Instead, borrow it directly using `ui.input(|i| { ... })`. **Aktion:** Pass a closure that uses the borrowed input state to evaluate key bindings, avoiding unnecessary memory allocation.
