@@ -31,26 +31,18 @@ pub fn render_transport_controls(
         if ui.button(play_text).clicked() {
             canvas.pending_playback_commands.push((
                 part_id,
-                if is_playing {
-                    MediaPlaybackCommand::Pause
-                } else {
-                    MediaPlaybackCommand::Play
-                },
+                if is_playing { MediaPlaybackCommand::Pause } else { MediaPlaybackCommand::Play },
             ));
         }
 
         if ui.button("⏮").clicked() {
-            canvas.pending_playback_commands.push((
-                part_id,
-                MediaPlaybackCommand::Seek(0.0),
-            ));
+            canvas.pending_playback_commands.push((part_id, MediaPlaybackCommand::Seek(0.0)));
         }
-        
+
         if ui.checkbox(&mut loop_enabled, "Loop").clicked() {
-             canvas.pending_playback_commands.push((
-                part_id,
-                MediaPlaybackCommand::SetLoop(loop_enabled),
-            ));
+            canvas
+                .pending_playback_commands
+                .push((part_id, MediaPlaybackCommand::SetLoop(loop_enabled)));
         }
     });
 }
@@ -91,7 +83,16 @@ pub fn render_common_controls(
 ) {
     render_opacity_blend(ui, opacity, blend_mode);
     render_color_adjust(ui, brightness, contrast, saturation, hue_shift);
-    render_transform(ui, scale_x, scale_y, rotation, offset_x, offset_y, flip_horizontal, flip_vertical);
+    render_transform(
+        ui,
+        scale_x,
+        scale_y,
+        rotation,
+        offset_x,
+        offset_y,
+        flip_horizontal,
+        flip_vertical,
+    );
 }
 
 fn render_opacity_blend(ui: &mut Ui, opacity: &mut f32, blend_mode: &mut Option<BlendModeType>) {
@@ -116,19 +117,22 @@ fn render_opacity_blend(ui: &mut Ui, opacity: &mut f32, blend_mode: &mut Option<
                 .show_ui(ui, |ui| {
                     ui.selectable_value(blend_mode, None, "None");
                     for mode in BlendModeType::all() {
-                        ui.add_enabled_ui(
-                            capabilities::is_blend_mode_supported(mode),
-                            |ui| {
-                                ui.selectable_value(blend_mode, Some(*mode), mode.name());
-                            },
-                        );
+                        ui.add_enabled_ui(capabilities::is_blend_mode_supported(mode), |ui| {
+                            ui.selectable_value(blend_mode, Some(*mode), mode.name());
+                        });
                     }
                 });
         });
     });
 }
 
-fn render_color_adjust(ui: &mut Ui, brightness: &mut f32, contrast: &mut f32, saturation: &mut f32, hue_shift: &mut f32) {
+fn render_color_adjust(
+    ui: &mut Ui,
+    brightness: &mut f32,
+    contrast: &mut f32,
+    saturation: &mut f32,
+    hue_shift: &mut f32,
+) {
     egui::Grid::new("color_grid").num_columns(2).spacing([10.0, 8.0]).show(ui, |ui| {
         ui.label("Brightness:");
         styled_slider(ui, brightness, -1.0..=1.0, 0.0);
