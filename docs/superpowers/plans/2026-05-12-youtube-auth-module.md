@@ -34,7 +34,7 @@ def get_authenticated_service():
     client_secrets_file = os.path.join(os.path.dirname(__file__), "client_secret.json")
     if not os.path.exists(client_secrets_file):
         raise FileNotFoundError(f"Missing {client_secrets_file}. Bitte erstelle diese in der Google Cloud Console.")
-        
+
     flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
         client_secrets_file, SCOPES)
     credentials = flow.run_local_server(port=0)
