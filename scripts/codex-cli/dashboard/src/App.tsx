@@ -495,7 +495,15 @@ export default function App() {
                   <div className="flex flex-col overflow-hidden">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-sm text-muted">#{task.id}</span>
-                      <span className="font-bold text-white truncate" title={task.title}>{task.title}</span>
+                      <a 
+                        href={task.raw?.url || `https://github.com/Vorce-Studios/Vorce/issues/${task.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-bold text-white truncate hover:text-primary transition-colors"
+                        title={task.title}
+                      >
+                        {task.title}
+                      </a>
                     </div>
                     {task.timestamp && (
                       <span className="text-[10px] text-muted flex items-center gap-1 mt-1">
