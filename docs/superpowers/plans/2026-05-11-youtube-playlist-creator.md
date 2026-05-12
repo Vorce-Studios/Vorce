@@ -171,7 +171,7 @@ def main():
 
     print(f"Searching similar tracks for: {video_id}...")
     similar_ids = client.get_related_videos(video_id)
-    
+
     playlist_id = client.create_playlist(f"Similar to {video_id}", "Automated discovery")
     print(f"Created playlist: {playlist_id}")
 
