@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Activity, BrainCircuit, Cpu, DollarSign, RefreshCw, Layers, Clock, Link as LinkIcon, BarChart3 } from 'lucide-react';
 
@@ -32,7 +32,11 @@ interface RegistryData {
 interface TaskItem {
   id: string;
   title: string;
-  status: 'RUNNING' | 'QUEUED' | 'PENDING_INPUT' | 'IN_REVIEW' | 'ERROR';
+  status: 'IN_PROGRESS' | 'QUEUED' | 'PENDING_INPUT' | 'IN_REVIEW' | 'COMPLETED' | 'ERROR';
+  gh_status: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  task_type: string;
+  sub_issues: { total: number, completed: number };
   jules_session_id?: string;
   timestamp?: string;
   raw?: any;
@@ -139,17 +143,20 @@ export default function App() {
   const [ghIssues, setGhIssues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // New UI States
   const [activeTab, setActiveTab] = useState<string>('');
   const [chartMetric, setChartMetric] = useState<'cost'|'tokens_in'|'tokens_out'|'reasoning'>('cost');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
+      const ts = new Date().getTime();
       const [dataRes, sessionsRes, registryRes, ghIssuesRes] = await Promise.all([
-        fetch('/data.json').catch(() => null),
-        fetch('/active-sessions.json').catch(() => null),
-        fetch('/registry.json').catch(() => null),
-        fetch('/github-issues.json').catch(() => null)
+        fetch(`/data.json?t=${ts}`).catch(() => null),
+        fetch(`/active-sessions.json?t=${ts}`).catch(() => null),
+        fetch(`/registry.json?t=${ts}`).catch(() => null),
+        fetch(`/github-issues.json?t=${ts}`).catch(() => null)
       ]);
 
       if (dataRes?.ok) setHistoricalData(await dataRes.json());
@@ -170,13 +177,13 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
 
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 15000);
     return () => clearInterval(interval);
-  }, [activeTab]); // re-run if needed, but primarily polling
+  }, [fetchData]);
 
   if (loading) {
     return (
@@ -206,12 +213,42 @@ export default function App() {
   // --- Unified Task Board Processing ---
   const unifiedTasks: TaskItem[] = [];
   
+  const parseIssueMetadata = (issue: any) => {
+    const labels = issue.labels?.map((l: any) => typeof l === 'string' ? l : l.name) || [];
+    const priority = labels.find((l: string) => ['low', 'medium', 'high', 'urgent'].includes(l.toLowerCase())) || 'medium';
+    const taskType = labels.find((l: string) => ['bug', 'feature', 'enhancement', 'task'].includes(l.toLowerCase())) || 'task';
+    
+    const body = issue.body || '';
+    const taskMatches = body.match(/-\s*\[([ xX])\]/g) || [];
+    const completed = taskMatches.filter((m: string) => m.toLowerCase().includes('x')).length;
+    
+    return { priority: priority.toLowerCase() as any, taskType, subIssues: { total: taskMatches.length, completed } };
+  };
+
+  const getUnifiedStatus = (task: any, source: 'JULES' | 'GITHUB'): TaskItem['status'] => {
+    if (source === 'JULES') {
+      if (task.jules_state === 'ERROR' || task.status === 'ERROR') return 'ERROR';
+      if (task.jules_state === 'IN_PROGRESS' || task.jules_state === 'RUNNING') return 'IN_PROGRESS';
+      if (task.jules_state === 'PENDING_INPUT' || task.status === 'PENDING_INPUT') return 'PENDING_INPUT';
+      if (task.jules_state === 'IN_REVIEW' || task.status === 'IN_REVIEW') return 'IN_REVIEW';
+      return 'QUEUED';
+    } else {
+      if (task.state === 'CLOSED') return 'COMPLETED';
+      return 'QUEUED';
+    }
+  };
+
   if (activeSessions) {
     activeSessions.active_delegations?.forEach((d: any) => {
+      const meta = parseIssueMetadata(d);
       unifiedTasks.push({
         id: d.issue_number?.toString() || '?',
         title: d.issue_title || 'Unknown Delegation',
-        status: d.jules_state === 'ERROR' ? 'ERROR' : (d.jules_state === 'QUEUED' ? 'QUEUED' : 'RUNNING'),
+        status: getUnifiedStatus(d, 'JULES'),
+        gh_status: d.github_state || 'OPEN',
+        priority: meta.priority,
+        task_type: meta.taskType,
+        sub_issues: meta.subIssues,
         jules_session_id: d.jules_session_id,
         timestamp: d.last_checked_at,
         raw: d
@@ -219,58 +256,67 @@ export default function App() {
     });
 
     activeSessions.decisions_pending?.forEach((d: any) => {
+      const meta = parseIssueMetadata(d);
       unifiedTasks.push({
         id: d.issue_number?.toString() || 'Pending',
-        title: d.issue_title || 'Waiting for User/Codex Input',
+        title: d.issue_title || 'Waiting for Input',
         status: 'PENDING_INPUT',
+        gh_status: 'OPEN',
+        priority: meta.priority,
+        task_type: meta.taskType,
+        sub_issues: meta.subIssues,
         timestamp: new Date().toISOString(),
         raw: d
       });
     });
 
     activeSessions.review_queue?.forEach((d: any) => {
+      const meta = parseIssueMetadata(d);
       unifiedTasks.push({
         id: d.issue_number?.toString() || 'PR',
-        title: d.issue_title || 'Awaiting PR Merge / Review',
+        title: d.issue_title || 'Awaiting Review',
         status: 'IN_REVIEW',
+        gh_status: 'OPEN',
+        priority: meta.priority,
+        task_type: meta.taskType,
+        sub_issues: meta.subIssues,
         timestamp: new Date().toISOString(),
         raw: d
       });
     });
-
-    activeSessions.error_log?.forEach((err: any) => {
-      // Errors might just be system errors, adding them as tasks to fix
-      unifiedTasks.push({
-        id: 'SYS-ERR',
-        title: err.message || 'System Error',
-        status: 'ERROR',
-        timestamp: err.timestamp,
-        raw: err
-      });
-    });
   }
 
-  // --- Merge GitHub Issues into Task Board ---
   ghIssues.forEach((issue: any) => {
     const issueIdStr = issue.number.toString();
     const alreadyTracked = unifiedTasks.find(t => t.id === issueIdStr);
     
     if (!alreadyTracked) {
+      const meta = parseIssueMetadata(issue);
       unifiedTasks.push({
         id: issueIdStr,
         title: issue.title,
-        status: issue.state === 'OPEN' ? 'QUEUED' : 'IN_REVIEW',
+        status: getUnifiedStatus(issue, 'GITHUB'),
+        gh_status: issue.state,
+        priority: meta.priority,
+        task_type: meta.taskType,
+        sub_issues: meta.subIssues,
         timestamp: issue.updatedAt,
         raw: issue
       });
     }
   });
 
-  // Sort tasks by status severity (RUNNING > ERROR > IN_REVIEW > PENDING > QUEUED)
-  const statusWeight = { 'RUNNING': 5, 'ERROR': 4, 'PENDING_INPUT': 3, 'IN_REVIEW': 2, 'QUEUED': 1 };
-  unifiedTasks.sort((a, b) => statusWeight[b.status] - statusWeight[a.status]);
+  const filteredTasks = unifiedTasks.filter(task => {
+    const matchesStatus = filterStatus === 'all' || task.status === filterStatus;
+    const matchesPriority = filterPriority === 'all' || task.priority === filterPriority;
+    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) || task.id.includes(searchQuery);
+    return matchesStatus && matchesPriority && matchesSearch;
+  });
 
-  const activeCount = unifiedTasks.filter(t => t.status === 'RUNNING').length;
+  const statusWeight = { 'ERROR': 6, 'IN_PROGRESS': 5, 'PENDING_INPUT': 4, 'IN_REVIEW': 3, 'QUEUED': 2, 'COMPLETED': 1 };
+  filteredTasks.sort((a, b) => statusWeight[b.status] - statusWeight[a.status]);
+
+  const activeCount = unifiedTasks.filter(t => t.status === 'IN_PROGRESS').length;
 
   // --- Advanced Chart Processing ---
   const chartMap = new Map<string, any>();
@@ -281,7 +327,7 @@ export default function App() {
       chartMap.set(curr.date, { date: curr.date });
     }
     const dayData = chartMap.get(curr.date);
-    const key = curr.model_name;
+    const key = `${curr.provider_name}: ${curr.model_name}`;
     modelsInChart.add(key);
 
     let val = 0;
@@ -298,22 +344,24 @@ export default function App() {
 
   const getStatusColor = (status: string) => {
     switch(status) {
-      case 'RUNNING': return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'IN_PROGRESS': return 'bg-green-500/20 text-green-400 border-green-500/30';
       case 'ERROR': return 'bg-red-500/20 text-red-400 border-red-500/30';
       case 'PENDING_INPUT': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       case 'IN_REVIEW': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
       case 'QUEUED': return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+      case 'COMPLETED': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
       default: return 'bg-surface text-white border-white/10';
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch(status) {
-      case 'RUNNING': return 'In Progress';
+      case 'IN_PROGRESS': return 'In Progress';
       case 'ERROR': return 'Blocked / Error';
       case 'PENDING_INPUT': return 'Pending Input';
       case 'IN_REVIEW': return 'In Review';
       case 'QUEUED': return 'Queued';
+      case 'COMPLETED': return 'Completed';
       default: return status;
     }
   };
@@ -469,22 +517,56 @@ export default function App() {
       {/* UNIFIED TASK BOARD */}
       {activeSessions && (
         <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: '200ms' }}>
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <RefreshCw size={20} className="text-secondary" />
-              Unified Task Board (GitHub Sync)
+              Unified Task Board (Sync: {ghIssues.length > 0 ? 'Active' : 'Initializing...'})
             </h2>
-            <div className="text-xs bg-surface px-3 py-1 rounded text-muted">Total: {unifiedTasks.length}</div>
+            
+            <div className="flex flex-wrap gap-2 items-center">
+              <input 
+                type="text" 
+                placeholder="Search issues..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:border-primary outline-none min-w-[200px]"
+              />
+              <select 
+                value={filterStatus} 
+                onChange={e => setFilterStatus(e.target.value)}
+                className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:border-primary outline-none"
+              >
+                <option value="all">All Status</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="PENDING_INPUT">Pending Input</option>
+                <option value="ERROR">Blocked</option>
+                <option value="IN_REVIEW">In Review</option>
+                <option value="QUEUED">Queued</option>
+                <option value="COMPLETED">Completed</option>
+              </select>
+              <select 
+                value={filterPriority} 
+                onChange={e => setFilterPriority(e.target.value)}
+                className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:border-primary outline-none"
+              >
+                <option value="all">All Priority</option>
+                <option value="urgent">Urgent</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+              <div className="text-xs bg-surface px-3 py-2 rounded text-muted border border-white/5">Matches: {filteredTasks.length}</div>
+            </div>
           </div>
           
           <div className="grid grid-cols-1 gap-3">
-            {unifiedTasks.length === 0 && (
+            {filteredTasks.length === 0 && (
               <div className="text-center py-10 text-muted border border-dashed border-white/10 rounded-xl">
-                No active tasks in the system.
+                No tasks matching your filters.
               </div>
             )}
             
-            {unifiedTasks.map((task, idx) => (
+            {filteredTasks.map((task, idx) => (
               <div key={idx} className="bg-surface/30 rounded-xl p-4 border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-surface/50 transition-colors">
                 
                 <div className="flex items-center gap-4 flex-1 overflow-hidden">
@@ -492,37 +574,64 @@ export default function App() {
                     {getStatusLabel(task.status)}
                   </div>
                   
-                  <div className="flex flex-col overflow-hidden">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm text-muted">#{task.id}</span>
+                  <div className="flex flex-col overflow-hidden flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-mono text-xs text-muted">#{task.id}</span>
                       <a 
                         href={task.raw?.url || `https://github.com/Vorce-Studios/Vorce/issues/${task.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-bold text-white truncate hover:text-primary transition-colors"
+                        className="font-bold text-white truncate hover:text-primary transition-colors text-sm md:text-base"
                         title={task.title}
                       >
                         {task.title}
                       </a>
                     </div>
-                    {task.timestamp && (
-                      <span className="text-[10px] text-muted flex items-center gap-1 mt-1">
-                        <Clock size={10} /> {new Date(task.timestamp).toLocaleString()}
-                      </span>
-                    )}
+                    <div className="flex flex-wrap items-center gap-3">
+                      {task.priority && (
+                        <span className={`text-[10px] uppercase font-black px-1.5 py-0.5 rounded ${
+                          task.priority === 'urgent' ? 'bg-red-500 text-white' : 
+                          task.priority === 'high' ? 'bg-orange-500 text-white' : 
+                          task.priority === 'medium' ? 'bg-blue-500 text-white' : 'bg-gray-500 text-white'
+                        }`}>
+                          {task.priority}
+                        </span>
+                      )}
+                      {task.task_type && (
+                        <span className="text-[10px] text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded border border-white/5 italic">
+                          {task.task_type}
+                        </span>
+                      )}
+                      {task.sub_issues && task.sub_issues.total > 0 && (
+                        <span className="text-[10px] text-primary flex items-center gap-1 font-bold">
+                          <Layers size={10} /> Sub-Tasks: {task.sub_issues.completed}/{task.sub_issues.total}
+                        </span>
+                      )}
+                      {task.timestamp && (
+                        <span className="text-[10px] text-muted flex items-center gap-1">
+                          <Clock size={10} /> {new Date(task.timestamp).toLocaleTimeString()}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {task.jules_session_id && (
-                  <a 
-                    href={`https://jules.google.com/session/${task.jules_session_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-primary text-xs font-mono transition-colors whitespace-nowrap"
-                  >
-                    <LinkIcon size={12} /> {task.jules_session_id}
-                  </a>
-                )}
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-end mr-4">
+                    <span className="text-[10px] text-muted uppercase font-bold">GH State</span>
+                    <span className={`text-xs font-mono ${task.gh_status === 'OPEN' ? 'text-green-400' : 'text-purple-400'}`}>{task.gh_status}</span>
+                  </div>
+                  {task.jules_session_id && (
+                    <a 
+                      href={`https://jules.google.com/session/${task.jules_session_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-mono border border-primary/20 transition-colors whitespace-nowrap"
+                    >
+                      <LinkIcon size={12} /> JULES SESSION
+                    </a>
+                  )}
+                </div>
               </div>
             ))}
           </div>

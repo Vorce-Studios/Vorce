@@ -9,6 +9,10 @@ $ScriptDir = Join-Path $PSScriptRoot ".."
 $DashboardPublicDir = Join-Path $ScriptDir "dashboard\public"
 if (-not (Test-Path $DashboardPublicDir)) { New-Item -ItemType Directory -Path $DashboardPublicDir | Out-Null }
 
+$ConfigPath = Join-Path $ScriptDir "autopilot-config.json"
+$Config = if (Test-Path $ConfigPath) { Get-Content $ConfigPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
+$Repository = if ($Config -and -not [string]::IsNullOrWhiteSpace([string]$Config.repository)) { [string]$Config.repository } else { "Vorce-Studios/Vorce" }
+
 $lastGhFetch = [datetime]::MinValue
 $ghFetchIntervalSec = 120 # Alle 2 Minuten GitHub abfragen
 
@@ -27,7 +31,21 @@ while ($true) {
         foreach ($prop in $registry.providers.PSObject.Properties) {
             $providerName = $prop.Name
             $provider = $prop.Value
-            foreach ($modelProp in $provider.usage_today.PSObject.Properties) {
+            Ensure-ProviderUsageToday -Provider $provider
+            $modelBuckets = @($provider.usage_today.PSObject.Properties | Where-Object {
+                $_.Name -notin @("calls", "estimated_cost_usd") -and
+                $null -ne $_.Value -and
+                (Test-ObjectProperty -Object $_.Value -Name "calls")
+            })
+
+            if ($modelBuckets.Count -eq 0) {
+                $totals = Get-ProviderUsageTotals -Provider $provider
+                if ([int]$totals.calls -gt 0) {
+                    Save-DailyUsage -Date $reportDate -ProviderName $providerName -ModelName "aggregate" -Calls ([int]$totals.calls) -CostUsd ([double]$totals.estimated_cost_usd) -InputTokens 0 -OutputTokens 0 -CachedTokens 0 -ReasoningTokens 0 -ToolTokens 0 -DurationMs 0
+                }
+            }
+
+            foreach ($modelProp in $modelBuckets) {
                 $modelName = $modelProp.Name
                 $modUsage = $modelProp.Value
                 $calls = [int]($modUsage.calls)
@@ -47,22 +65,32 @@ while ($true) {
 
         # --- File Export ---
         $DbPath = Join-Path $ScriptDir "historical-quota-db.json"
-        if (Test-Path $DbPath) { Copy-Item $DbPath -Destination (Join-Path $DashboardPublicDir "data.json") -Force }
+        if (Test-Path $DbPath) {
+            $db = Read-JsonLocked -Path $DbPath
+            if ($null -eq $db) { $db = @() }
+            Write-JsonLocked -Path (Join-Path $DashboardPublicDir "data.json") -Data @($db) | Out-Null
+        }
         
         $StatePath = Join-Path $ScriptDir "autopilot-state.json"
-        if (Test-Path $StatePath) { Copy-Item $StatePath -Destination (Join-Path $DashboardPublicDir "active-sessions.json") -Force }
+        if (Test-Path $StatePath) {
+            $state = Read-JsonLocked -Path $StatePath
+            if ($null -ne $state) { Write-JsonLocked -Path (Join-Path $DashboardPublicDir "active-sessions.json") -Data $state | Out-Null }
+        }
         
         $RegistryPath = Join-Path $ScriptDir "quota-registry.json"
-        if (Test-Path $RegistryPath) { Copy-Item $RegistryPath -Destination (Join-Path $DashboardPublicDir "registry.json") -Force }
+        if (Test-Path $RegistryPath) {
+            Write-JsonLocked -Path (Join-Path $DashboardPublicDir "registry.json") -Data $registry | Out-Null
+        }
 
         # --- GitHub Polling (Throttled) ---
         $now = Get-Date
         if (($now - $lastGhFetch).TotalSeconds -ge $ghFetchIntervalSec) {
             Write-Host "[STATS] Polling GitHub Issues..." -ForegroundColor Gray
-            $repo = "Vorce-Studios/Vorce"
-            $issuesRaw = gh issue list --repo $repo --state all --limit 100 --json number,title,state,url,updatedAt 2>$null
+            $issuesRaw = gh issue list --repo $Repository --state all --limit 100 --json number,title,state,url,updatedAt,labels,body 2>$null
             if ($LASTEXITCODE -eq 0) {
-                $issuesRaw | Out-File (Join-Path $DashboardPublicDir "github-issues.json") -Encoding utf8
+                $issueJson = $issuesRaw | Out-String
+                $issueData = $issueJson | ConvertFrom-Json -ErrorAction Stop
+                Write-JsonLocked -Path (Join-Path $DashboardPublicDir "github-issues.json") -Data @($issueData) | Out-Null
                 $lastGhFetch = $now
                 Write-Host "[STATS] GitHub Issues updated." -ForegroundColor Gray
             }
