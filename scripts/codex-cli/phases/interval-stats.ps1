@@ -5,6 +5,7 @@ Set-StrictMode -Version Latest
 $ScriptDir = Join-Path $PSScriptRoot ".."
 . (Join-Path $ScriptDir "lib\quota-manager.ps1")
 . (Join-Path $ScriptDir "lib\database-manager.ps1")
+. (Join-Path $ScriptDir "lib\telemetry-manager.ps1")
 
 $DashboardPublicDir = Join-Path $ScriptDir "dashboard\public"
 if (-not (Test-Path $DashboardPublicDir)) { New-Item -ItemType Directory -Path $DashboardPublicDir | Out-Null }
@@ -12,9 +13,10 @@ if (-not (Test-Path $DashboardPublicDir)) { New-Item -ItemType Directory -Path $
 $ConfigPath = Join-Path $ScriptDir "autopilot-config.json"
 $Config = if (Test-Path $ConfigPath) { Get-Content $ConfigPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
 $Repository = if ($Config -and -not [string]::IsNullOrWhiteSpace([string]$Config.repository)) { [string]$Config.repository } else { "Vorce-Studios/Vorce" }
+$StatePath = Join-Path $ScriptDir "autopilot-state.json"
 
 $lastGhFetch = [datetime]::MinValue
-$ghFetchIntervalSec = 120 # Alle 2 Minuten GitHub abfragen
+$ghFetchIntervalSec = 300 # Alle 5 Minuten GitHub abfragen
 
 Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host " VORCE AUTOPILOT - Persistent Dashboard Sync" -ForegroundColor Cyan
@@ -24,6 +26,7 @@ Write-Host "[STATS] Sync Loop gestartet (Ctrl+C zum Beenden)..."
 while ($true) {
     try {
         $registry = Read-QuotaRegistry
+        $registry = Sync-AutopilotTelemetry -Registry $registry -Config $Config -StatePath $StatePath
         $currentDate = Get-Date -Format "yyyy-MM-dd"
         $reportDate = if (-not [string]::IsNullOrWhiteSpace($registry.last_reset_date)) { $registry.last_reset_date } else { $currentDate }
 
@@ -32,8 +35,10 @@ while ($true) {
             $providerName = $prop.Name
             $provider = $prop.Value
             Ensure-ProviderUsageToday -Provider $provider
+            Clear-DailyUsageForProvider -Date $reportDate -ProviderName $providerName
+
             $modelBuckets = @($provider.usage_today.PSObject.Properties | Where-Object {
-                $_.Name -notin @("calls", "estimated_cost_usd") -and
+                $_.Name -notin @("calls", "estimated_cost_usd", "source", "last_synced_at", "rate_limits", "active_sessions", "completed_sessions", "failed_sessions", "pending_sessions", "api_sessions_seen", "last_error") -and
                 $null -ne $_.Value -and
                 (Test-ObjectProperty -Object $_.Value -Name "calls")
             })
@@ -71,7 +76,6 @@ while ($true) {
             Write-JsonLocked -Path (Join-Path $DashboardPublicDir "data.json") -Data @($db) | Out-Null
         }
         
-        $StatePath = Join-Path $ScriptDir "autopilot-state.json"
         if (Test-Path $StatePath) {
             $state = Read-JsonLocked -Path $StatePath
             if ($null -ne $state) { Write-JsonLocked -Path (Join-Path $DashboardPublicDir "active-sessions.json") -Data $state | Out-Null }

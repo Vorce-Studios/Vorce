@@ -17,6 +17,7 @@ interface QuotaData {
 }
 
 interface RegistryData {
+  last_reset_date?: string;
   providers: {
     [key: string]: {
       enabled: boolean;
@@ -24,6 +25,7 @@ interface RegistryData {
       daily_limit: number;
       purpose: string[];
       models?: { [key: string]: { name: string, estimated_cost_per_call_usd: number } };
+      usage_today?: { [key: string]: any };
     }
   }
 }
@@ -135,6 +137,79 @@ function ProviderCard({ name, providerReg, modelsData }: { name: string, provide
 
 // Random colors for dynamic area charts
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+const USAGE_META_KEYS = new Set([
+  'calls',
+  'estimated_cost_usd',
+  'source',
+  'last_synced_at',
+  'rate_limits',
+  'active_sessions',
+  'completed_sessions',
+  'failed_sessions',
+  'pending_sessions',
+  'api_sessions_seen',
+  'last_error'
+]);
+
+function asNumber(value: unknown): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function mergeQuotaRows(baseRows: QuotaData[], liveRows: QuotaData[]): QuotaData[] {
+  const rows = new Map<string, QuotaData>();
+  baseRows.forEach(row => rows.set(`${row.date}|${row.provider_name}|${row.model_name}`, row));
+  liveRows.forEach(row => rows.set(`${row.date}|${row.provider_name}|${row.model_name}`, row));
+  return Array.from(rows.values());
+}
+
+function getLiveQuotaRows(registry: RegistryData | null, today: string): QuotaData[] {
+  if (!registry?.providers || registry.last_reset_date !== today) return [];
+
+  const rows: QuotaData[] = [];
+  Object.entries(registry.providers).forEach(([providerName, provider]) => {
+    const usage = provider.usage_today;
+    if (!usage) return;
+
+    Object.entries(usage).forEach(([modelName, modelUsage]) => {
+      if (USAGE_META_KEYS.has(modelName) || !modelUsage || typeof modelUsage !== 'object' || !('calls' in modelUsage)) {
+        return;
+      }
+
+      rows.push({
+        date: today,
+        provider_name: providerName,
+        model_name: modelName,
+        calls: asNumber(modelUsage.calls),
+        cost_usd: asNumber(modelUsage.estimated_cost_usd),
+        input_tokens: asNumber(modelUsage.total_input_tokens),
+        output_tokens: asNumber(modelUsage.total_output_tokens),
+        cached_tokens: asNumber(modelUsage.cached_tokens),
+        reasoning_tokens: asNumber(modelUsage.reasoning_tokens),
+        tool_tokens: asNumber(modelUsage.tool_tokens),
+        total_duration_ms: asNumber(modelUsage.total_duration_ms)
+      });
+    });
+
+    if (!rows.some(row => row.provider_name === providerName) && asNumber(usage.calls) > 0) {
+      rows.push({
+        date: today,
+        provider_name: providerName,
+        model_name: 'aggregate',
+        calls: asNumber(usage.calls),
+        cost_usd: asNumber(usage.estimated_cost_usd),
+        input_tokens: 0,
+        output_tokens: 0,
+        cached_tokens: 0,
+        reasoning_tokens: 0,
+        tool_tokens: 0,
+        total_duration_ms: 0
+      });
+    }
+  });
+
+  return rows;
+}
 
 export default function App() {
   const [historicalData, setHistoricalData] = useState<QuotaData[]>([]);
@@ -181,7 +256,7 @@ export default function App() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 15000);
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
@@ -197,7 +272,9 @@ export default function App() {
   }
 
   const today = new Date().toISOString().split('T')[0];
-  const todayData = historicalData.filter(d => d.date === today);
+  const liveQuotaRows = getLiveQuotaRows(registry, today);
+  const chartSourceData = mergeQuotaRows(historicalData, liveQuotaRows);
+  const todayData = mergeQuotaRows(historicalData.filter(d => d.date === today), liveQuotaRows);
   
   const totalCost = todayData.reduce((acc, curr) => acc + curr.cost_usd, 0);
   const totalInputTokens = todayData.reduce((acc, curr) => acc + curr.input_tokens, 0);
@@ -216,26 +293,37 @@ export default function App() {
   const parseIssueMetadata = (issue: any) => {
     const labels = issue.labels?.map((l: any) => typeof l === 'string' ? l : l.name) || [];
     const priority = labels.find((l: string) => ['low', 'medium', 'high', 'urgent'].includes(l.toLowerCase())) || 'medium';
-    const taskType = labels.find((l: string) => ['bug', 'feature', 'enhancement', 'task'].includes(l.toLowerCase())) || 'task';
     
     const body = issue.body || '';
     const taskMatches = body.match(/-\s*\[([ xX])\]/g) || [];
     const completed = taskMatches.filter((m: string) => m.toLowerCase().includes('x')).length;
     
-    return { priority: priority.toLowerCase() as any, taskType, subIssues: { total: taskMatches.length, completed } };
+    // Naming convention parsing
+    let typeIcon = 'task';
+    if (issue.title.includes('MF-StMa_')) typeIcon = 'Master';
+    if (issue.title.includes('MF-StIs_')) typeIcon = 'Standard';
+    if (issue.title.includes('MF-User_')) typeIcon = 'User';
+    if (issue.title.includes('__MF-SubI_')) typeIcon = 'Sub';
+
+    return { priority: priority.toLowerCase() as any, taskType: typeIcon, subIssues: { total: taskMatches.length, completed } };
   };
 
-  const getUnifiedStatus = (task: any, source: 'JULES' | 'GITHUB'): TaskItem['status'] => {
-    if (source === 'JULES') {
+  const getUnifiedStatus = (task: any, source: 'JULES' | 'GITHUB' | 'REVIEW'): TaskItem['status'] => {
+    // GH CLOSED is always COMPLETED
+    if (task.github_state === 'CLOSED' || task.state === 'CLOSED') return 'COMPLETED';
+
+    if (source === 'JULES' || task.jules_session_id) {
       if (task.jules_state === 'ERROR' || task.status === 'ERROR') return 'ERROR';
-      if (task.jules_state === 'IN_PROGRESS' || task.jules_state === 'RUNNING') return 'IN_PROGRESS';
       if (task.jules_state === 'PENDING_INPUT' || task.status === 'PENDING_INPUT') return 'PENDING_INPUT';
+      if (task.jules_state === 'IN_PROGRESS' || task.jules_state === 'RUNNING') return 'IN_PROGRESS';
       if (task.jules_state === 'IN_REVIEW' || task.status === 'IN_REVIEW') return 'IN_REVIEW';
-      return 'QUEUED';
-    } else {
-      if (task.state === 'CLOSED') return 'COMPLETED';
-      return 'QUEUED';
     }
+
+    if (source === 'REVIEW' || task.pr_url) {
+      return 'IN_REVIEW';
+    }
+
+    return 'QUEUED';
   };
 
   if (activeSessions) {
@@ -275,7 +363,7 @@ export default function App() {
       unifiedTasks.push({
         id: d.issue_number?.toString() || 'PR',
         title: d.issue_title || 'Awaiting Review',
-        status: 'IN_REVIEW',
+        status: getUnifiedStatus(d, 'REVIEW'),
         gh_status: 'OPEN',
         priority: meta.priority,
         task_type: meta.taskType,
@@ -322,7 +410,7 @@ export default function App() {
   const chartMap = new Map<string, any>();
   const modelsInChart = new Set<string>();
 
-  historicalData.forEach(curr => {
+  chartSourceData.forEach(curr => {
     if (!chartMap.has(curr.date)) {
       chartMap.set(curr.date, { date: curr.date });
     }
@@ -354,15 +442,20 @@ export default function App() {
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    switch(status) {
-      case 'IN_PROGRESS': return 'In Progress';
-      case 'ERROR': return 'Blocked / Error';
-      case 'PENDING_INPUT': return 'Pending Input';
-      case 'IN_REVIEW': return 'In Review';
-      case 'QUEUED': return 'Queued';
-      case 'COMPLETED': return 'Completed';
-      default: return status;
+  const getStatusLabel = (task: TaskItem) => {
+    const raw = task.raw || {};
+    switch(task.status) {
+      case 'IN_PROGRESS': return 'Jules: Working';
+      case 'ERROR': return `Error: ${raw.message || 'Unknown'}`;
+      case 'PENDING_INPUT': return 'Input Required';
+      case 'IN_REVIEW': {
+        if (raw.pr_checks_status === 'FAILURE') return 'Review: Checks Failed';
+        if (raw.pr_checks_status === 'SUCCESS') return 'Review: Ready to Merge';
+        return 'Review: Pending';
+      }
+      case 'QUEUED': return 'GitHub: Open / Queued';
+      case 'COMPLETED': return 'GitHub: Completed / Closed';
+      default: return task.status;
     }
   };
 
@@ -378,11 +471,12 @@ export default function App() {
             Live System Analytics & Telemetry
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-col items-end gap-2">
           <div className="glass px-4 py-2 rounded-full flex items-center gap-3">
             <div className={`w-2 h-2 rounded-full ${activeCount > 0 ? 'bg-green-500 animate-pulse' : 'bg-blue-500'}`} />
             <span className="text-sm font-medium text-white">{activeCount > 0 ? `${activeCount} Tasks Running` : 'System Idle'}</span>
           </div>
+          <div className="text-[10px] text-muted-foreground font-mono">Last Sync: {new Date().toLocaleTimeString()}</div>
         </div>
       </header>
 
@@ -570,8 +664,8 @@ export default function App() {
               <div key={idx} className="bg-surface/30 rounded-xl p-4 border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-surface/50 transition-colors">
                 
                 <div className="flex items-center gap-4 flex-1 overflow-hidden">
-                  <div className={`px-3 py-1 rounded border text-xs font-bold whitespace-nowrap min-w-[120px] text-center ${getStatusColor(task.status)}`}>
-                    {getStatusLabel(task.status)}
+                  <div className={`px-3 py-1 rounded border text-xs font-bold whitespace-nowrap min-w-[150px] text-center ${getStatusColor(task.status)}`}>
+                    {getStatusLabel(task)}
                   </div>
                   
                   <div className="flex flex-col overflow-hidden flex-1">
@@ -617,10 +711,6 @@ export default function App() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="flex flex-col items-end mr-4">
-                    <span className="text-[10px] text-muted uppercase font-bold">GH State</span>
-                    <span className={`text-xs font-mono ${task.gh_status === 'OPEN' ? 'text-green-400' : 'text-purple-400'}`}>{task.gh_status}</span>
-                  </div>
                   {task.jules_session_id && (
                     <a 
                       href={`https://jules.google.com/session/${task.jules_session_id}`}
