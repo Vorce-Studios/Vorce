@@ -318,6 +318,29 @@ mod tests {
     use serde_json::json;
 
     #[test]
+    fn test_success_response_with_id() {
+        let id = json!(456);
+        let result = json!({"status": "ok"});
+        let response = success_response(Some(id.clone()), result.clone());
+
+        assert_eq!(response.jsonrpc, "2.0");
+        assert_eq!(response.id, Some(id));
+        assert_eq!(response.result, Some(result));
+        assert!(response.error.is_none());
+    }
+
+    #[test]
+    fn test_success_response_without_id() {
+        let result = json!([1, 2, 3]);
+        let response = success_response(None, result.clone());
+
+        assert_eq!(response.jsonrpc, "2.0");
+        assert_eq!(response.id, None);
+        assert_eq!(response.result, Some(result));
+        assert!(response.error.is_none());
+    }
+
+    #[test]
     fn test_error_response_with_id() {
         let id = json!(123);
         let response = error_response(Some(id.clone()), -32600, "Invalid Request");
