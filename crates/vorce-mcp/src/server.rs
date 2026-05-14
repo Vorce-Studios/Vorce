@@ -121,8 +121,10 @@ impl McpServer {
             }
             "resources/read" => {
                 // Parse params
-                let params: Option<serde_json::Value> =
-                    serde_json::from_value(request.params.unwrap_or(serde_json::Value::Null)).ok();
+                let params: Option<serde_json::Value> = serde_json::from_value(
+                    request.params.clone().unwrap_or(serde_json::Value::Null),
+                )
+                .ok();
                 let uri = params
                     .and_then(|p| p.get("uri").and_then(|v| v.as_str()).map(|s| s.to_string()));
 
@@ -180,8 +182,10 @@ impl McpServer {
                 Some(success_response(id, serde_json::json!({ "prompts": prompts })))
             }
             "prompts/get" => {
-                let params: Option<serde_json::Value> =
-                    serde_json::from_value(request.params.unwrap_or(serde_json::Value::Null)).ok();
+                let params: Option<serde_json::Value> = serde_json::from_value(
+                    request.params.clone().unwrap_or(serde_json::Value::Null),
+                )
+                .ok();
                 let name = params
                     .and_then(|p| p.get("name").and_then(|v| v.as_str()).map(|s| s.to_string()));
 
