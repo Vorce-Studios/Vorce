@@ -185,8 +185,8 @@ impl EffectChainPanel {
                                                     if ui.button(config.name.to_string()).clone().on_hover_text(format!("{:?}", config.params)).clicked() {
                                                          self.chain.add_effect(*effect_type);
 
-                                                         let id = self.chain.effects.last().unwrap().id;
-                                                         let effect = self.chain.get_effect_mut(id).unwrap();
+                                                         let id = if let Some(last_effect) = self.chain.effects.last() { last_effect.id } else { return; };
+                                                         let effect = if let Some(e) = self.chain.get_effect_mut(id) { e } else { return; };
 
                                                          let mut f32_params = std::collections::HashMap::new();
                                                          for (k, v) in &config.params {
