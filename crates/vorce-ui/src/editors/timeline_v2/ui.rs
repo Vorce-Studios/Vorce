@@ -35,6 +35,10 @@ pub struct TimelineV2 {
     pub expanded_tracks: HashSet<String>,
     /// Enable module arrangement show-control.
     pub show_control_enabled: bool,
+    /// Selected show mode.
+    pub show_mode: ShowMode,
+    /// Scheduled module blocks.
+    pub module_arrangement: Vec<ModuleArrangementItem>,
     /// UI add-block module selection.
     pub selected_module_id: Option<ModuleId>,
     /// ID counter for arrangement blocks.
@@ -67,6 +71,8 @@ impl Default for TimelineV2 {
             show_curve_editor: false,
             expanded_tracks: HashSet::new(),
             show_control_enabled: true,
+            show_mode: ShowMode::FullyAutomated,
+            module_arrangement: Vec::new(),
             selected_module_id: None,
             next_arrangement_id: 1,
             manual_current_block_id: None,
@@ -90,18 +96,15 @@ impl TimelineV2 {
         }
     }
 
-    fn sorted_enabled_blocks<'a>(
-        &self,
-        animator: &'a EffectParameterAnimator,
-    ) -> Vec<&'a ModuleArrangementItem> {
+    fn sorted_enabled_blocks(&self) -> Vec<&ModuleArrangementItem> {
         let mut blocks: Vec<&ModuleArrangementItem> =
-            animator.module_arrangement.iter().filter(|item| item.enabled).collect();
+            self.module_arrangement.iter().filter(|item| item.enabled).collect();
         blocks.sort_by(|a, b| a.start_time.total_cmp(&b.start_time).then(a.id.cmp(&b.id)));
         blocks
     }
 
-    fn sorted_enabled_block_ids(&self, animator: &EffectParameterAnimator) -> Vec<u64> {
-        let mut pairs: Vec<(u64, f32)> = animator
+    fn sorted_enabled_block_ids(&self) -> Vec<u64> {
+        let mut pairs: Vec<(u64, f32)> = self
             .module_arrangement
             .iter()
             .filter(|item| item.enabled)
@@ -111,24 +114,16 @@ impl TimelineV2 {
         pairs.into_iter().map(|(id, _)| id).collect()
     }
 
-    fn find_block<'a>(
-        &self,
-        block_id: u64,
-        animator: &'a EffectParameterAnimator,
-    ) -> Option<&'a ModuleArrangementItem> {
-        animator.module_arrangement.iter().find(|item| item.id == block_id)
+    fn find_block(&self, block_id: u64) -> Option<&ModuleArrangementItem> {
+        self.module_arrangement.iter().find(|item| item.id == block_id)
     }
 
-    fn first_enabled_block_id(&self, animator: &EffectParameterAnimator) -> Option<u64> {
-        self.sorted_enabled_blocks(animator).first().map(|item| item.id)
+    fn first_enabled_block_id(&self) -> Option<u64> {
+        self.sorted_enabled_blocks().first().map(|item| item.id)
     }
 
-    fn active_block_for_time<'a>(
-        &self,
-        time: f32,
-        animator: &'a EffectParameterAnimator,
-    ) -> Option<&'a ModuleArrangementItem> {
-        let blocks = self.sorted_enabled_blocks(animator);
+    fn active_block_for_time(&self, time: f32) -> Option<&ModuleArrangementItem> {
+        let blocks = self.sorted_enabled_blocks();
         if blocks.is_empty() {
             return None;
         }
@@ -157,16 +152,6 @@ impl TimelineV2 {
             .unwrap_or_else(|| format!("Module {}", module_id))
     }
 
-    pub fn reset_transient_state(&mut self) {
-        self.manual_current_block_id = None;
-        self.semi_auto_current_block_id = None;
-        self.semi_auto_pending_block_id = None;
-        self.full_auto_current_block_id = None;
-        self.hybrid_current_block_id = None;
-        self.hybrid_active_triggers.clear();
-        self.selected_marker_id = None;
-    }
-
     fn reset_runtime_selection(&mut self) {
         self.manual_current_block_id = None;
         self.semi_auto_current_block_id = None;
@@ -175,45 +160,38 @@ impl TimelineV2 {
         self.hybrid_current_block_id = None;
     }
 
-    fn cleanup_missing_modules(
-        &mut self,
-        available_module_ids: &[ModuleId],
-        animator: &mut EffectParameterAnimator,
-    ) {
+    fn cleanup_missing_modules(&mut self, available_module_ids: &[ModuleId]) {
         let valid: HashSet<ModuleId> = available_module_ids.iter().copied().collect();
-        animator.module_arrangement.retain(|item| valid.contains(&item.module_id));
+        self.module_arrangement.retain(|item| valid.contains(&item.module_id));
 
         let has_block = |id: Option<u64>, blocks: &[ModuleArrangementItem]| {
             id.is_some_and(|block_id| blocks.iter().any(|item| item.id == block_id))
         };
 
-        if !has_block(self.manual_current_block_id, &animator.module_arrangement) {
+        if !has_block(self.manual_current_block_id, &self.module_arrangement) {
             self.manual_current_block_id = None;
         }
-        if !has_block(self.semi_auto_current_block_id, &animator.module_arrangement) {
+        if !has_block(self.semi_auto_current_block_id, &self.module_arrangement) {
             self.semi_auto_current_block_id = None;
         }
-        if !has_block(self.semi_auto_pending_block_id, &animator.module_arrangement) {
+        if !has_block(self.semi_auto_pending_block_id, &self.module_arrangement) {
             self.semi_auto_pending_block_id = None;
         }
-        if !has_block(self.full_auto_current_block_id, &animator.module_arrangement) {
+        if !has_block(self.full_auto_current_block_id, &self.module_arrangement) {
             self.full_auto_current_block_id = None;
         }
-        if !has_block(self.hybrid_current_block_id, &animator.module_arrangement) {
+        if !has_block(self.hybrid_current_block_id, &self.module_arrangement) {
             self.hybrid_current_block_id = None;
         }
     }
 
-    fn add_module_block(&mut self, module_id: ModuleId, animator: &mut EffectParameterAnimator) {
-        let default_start = animator
-            .module_arrangement
-            .iter()
-            .map(ModuleArrangementItem::end_time)
-            .fold(0.0, f32::max);
+    fn add_module_block(&mut self, module_id: ModuleId) {
+        let default_start =
+            self.module_arrangement.iter().map(ModuleArrangementItem::end_time).fold(0.0, f32::max);
         let id = self.next_arrangement_id;
         self.next_arrangement_id = self.next_arrangement_id.saturating_add(1);
 
-        animator.module_arrangement.push(ModuleArrangementItem {
+        self.module_arrangement.push(ModuleArrangementItem {
             id,
             module_id,
             start_time: default_start,
@@ -227,12 +205,8 @@ impl TimelineV2 {
         self.manual_current_block_id = block_id;
     }
 
-    fn module_for_block_id(
-        &self,
-        block_id: Option<u64>,
-        animator: &EffectParameterAnimator,
-    ) -> Option<ModuleId> {
-        block_id.and_then(|id| self.find_block(id, animator)).map(|block| block.module_id)
+    fn module_for_block_id(&self, block_id: Option<u64>) -> Option<ModuleId> {
+        block_id.and_then(|id| self.find_block(id)).map(|block| block.module_id)
     }
 
     /// Returns the module that should be active for show playback.
@@ -241,33 +215,32 @@ impl TimelineV2 {
         &mut self,
         current_time: f32,
         is_playing: bool,
-        _available_module_ids: &[ModuleId],
-        animator: &EffectParameterAnimator,
+        available_module_ids: &[ModuleId],
     ) -> Option<ModuleId> {
-        // self.cleanup_missing_modules(available_module_ids);
+        self.cleanup_missing_modules(available_module_ids);
 
         if !self.show_control_enabled {
             return None;
         }
-        if self.sorted_enabled_blocks(animator).is_empty() {
+        if self.sorted_enabled_blocks().is_empty() {
             return None;
         }
 
-        match animator.show_mode {
+        match self.show_mode {
             ShowMode::FullyAutomated | ShowMode::Trackline => {
-                let active_id = self.active_block_for_time(current_time, animator).map(|b| b.id);
+                let active_id = self.active_block_for_time(current_time).map(|b| b.id);
                 self.full_auto_current_block_id = active_id;
                 self.manual_current_block_id = active_id;
-                self.module_for_block_id(active_id, animator)
+                self.module_for_block_id(active_id)
             }
             ShowMode::SemiAutomated => {
                 if self.semi_auto_current_block_id.is_none() {
-                    self.semi_auto_current_block_id = self.first_enabled_block_id(animator);
+                    self.semi_auto_current_block_id = self.first_enabled_block_id();
                 }
 
                 if is_playing {
                     if let Some(time_block_id) =
-                        self.active_block_for_time(current_time, animator).map(|b| b.id)
+                        self.active_block_for_time(current_time).map(|b| b.id)
                     {
                         if self.semi_auto_current_block_id != Some(time_block_id) {
                             self.semi_auto_pending_block_id = Some(time_block_id);
@@ -276,24 +249,24 @@ impl TimelineV2 {
                 }
 
                 if self.semi_auto_current_block_id.is_none() {
-                    self.semi_auto_current_block_id = self.first_enabled_block_id(animator);
+                    self.semi_auto_current_block_id = self.first_enabled_block_id();
                 }
 
-                self.module_for_block_id(self.semi_auto_current_block_id, animator)
+                self.module_for_block_id(self.semi_auto_current_block_id)
             }
             ShowMode::Manual => {
                 if self.manual_current_block_id.is_none() {
-                    self.manual_current_block_id = self.first_enabled_block_id(animator);
+                    self.manual_current_block_id = self.first_enabled_block_id();
                 }
-                self.module_for_block_id(self.manual_current_block_id, animator)
+                self.module_for_block_id(self.manual_current_block_id)
             }
             ShowMode::Hybrid => {
                 if self.hybrid_current_block_id.is_none() {
-                    self.hybrid_current_block_id = self.first_enabled_block_id(animator);
+                    self.hybrid_current_block_id = self.first_enabled_block_id();
                 }
 
                 if is_playing {
-                    let blocks = self.sorted_enabled_blocks(animator);
+                    let blocks = self.sorted_enabled_blocks();
 
                     // Find all blocks that overlap with the current time
                     let mut active_blocks: Vec<&ModuleArrangementItem> = blocks
@@ -336,14 +309,14 @@ impl TimelineV2 {
                     }
                 }
 
-                self.module_for_block_id(self.hybrid_current_block_id, animator)
+                self.module_for_block_id(self.hybrid_current_block_id)
             }
         }
     }
 
     /// In manual mode, advance to next arranged module.
-    pub fn step_manual_next(&mut self, animator: &EffectParameterAnimator) -> Option<ModuleId> {
-        let block_ids = self.sorted_enabled_block_ids(animator);
+    pub fn step_manual_next(&mut self) -> Option<ModuleId> {
+        let block_ids = self.sorted_enabled_block_ids();
         if block_ids.is_empty() {
             self.manual_current_block_id = None;
             return None;
@@ -357,12 +330,12 @@ impl TimelineV2 {
         };
 
         self.manual_current_block_id = Some(block_ids[next_index]);
-        self.module_for_block_id(self.manual_current_block_id, animator)
+        self.module_for_block_id(self.manual_current_block_id)
     }
 
     /// In manual mode, go to previous arranged module.
-    pub fn step_manual_prev(&mut self, animator: &EffectParameterAnimator) -> Option<ModuleId> {
-        let block_ids = self.sorted_enabled_block_ids(animator);
+    pub fn step_manual_prev(&mut self) -> Option<ModuleId> {
+        let block_ids = self.sorted_enabled_block_ids();
         if block_ids.is_empty() {
             self.manual_current_block_id = None;
             return None;
@@ -380,17 +353,17 @@ impl TimelineV2 {
         };
 
         self.manual_current_block_id = Some(block_ids[prev_index]);
-        self.module_for_block_id(self.manual_current_block_id, animator)
+        self.module_for_block_id(self.manual_current_block_id)
     }
 
     /// In semi-auto mode, confirm or advance to next module.
-    pub fn step_semi_auto_next(&mut self, animator: &EffectParameterAnimator) -> Option<ModuleId> {
+    pub fn step_semi_auto_next(&mut self) -> Option<ModuleId> {
         if let Some(pending) = self.semi_auto_pending_block_id.take() {
             self.semi_auto_current_block_id = Some(pending);
-            return self.module_for_block_id(self.semi_auto_current_block_id, animator);
+            return self.module_for_block_id(self.semi_auto_current_block_id);
         }
 
-        let block_ids = self.sorted_enabled_block_ids(animator);
+        let block_ids = self.sorted_enabled_block_ids();
         if block_ids.is_empty() {
             self.semi_auto_current_block_id = None;
             return None;
@@ -404,7 +377,7 @@ impl TimelineV2 {
         };
 
         self.semi_auto_current_block_id = Some(block_ids[next_index]);
-        self.module_for_block_id(self.semi_auto_current_block_id, animator)
+        self.module_for_block_id(self.semi_auto_current_block_id)
     }
 
     /// Render the timeline UI interacting with the EffectParameterAnimator
@@ -413,17 +386,13 @@ impl TimelineV2 {
         ui: &mut Ui,
         animator: &mut EffectParameterAnimator,
         modules: &[TimelineModule<'_>],
-    ) -> (Option<TimelineAction>, bool) {
+    ) -> Option<TimelineAction> {
         let mut action = None;
-        let _initial_arrangement = animator.module_arrangement.clone();
-        let _initial_show_mode = animator.show_mode;
-        let initial_arrangement = animator.module_arrangement.clone();
-        let initial_show_mode = animator.show_mode;
         let module_names = Self::module_name_map(modules);
         let available_module_ids: Vec<ModuleId> = modules.iter().map(|m| m.id).collect();
 
         // Ensure pause_at_markers reflects the current ShowMode
-        animator.set_pause_at_markers(animator.show_mode == ShowMode::Trackline);
+        animator.set_pause_at_markers(self.show_mode == ShowMode::Trackline);
 
         // Sync local playhead with animator
         self.playhead = animator.get_current_time() as f32;
@@ -606,51 +575,51 @@ impl TimelineV2 {
             ui.checkbox(&mut self.show_control_enabled, "Module Show");
             if self.show_control_enabled {
                 egui::ComboBox::from_id_salt("show_mode_combo")
-                    .selected_text(animator.show_mode.label())
+                    .selected_text(self.show_mode.label())
                     .show_ui(ui, |ui| {
                         ui.selectable_value(
-                            &mut animator.show_mode,
+                            &mut self.show_mode,
                             ShowMode::FullyAutomated,
                             ShowMode::FullyAutomated.label(),
                         );
                         ui.selectable_value(
-                            &mut animator.show_mode,
+                            &mut self.show_mode,
                             ShowMode::SemiAutomated,
                             ShowMode::SemiAutomated.label(),
                         );
                         ui.selectable_value(
-                            &mut animator.show_mode,
+                            &mut self.show_mode,
                             ShowMode::Manual,
                             ShowMode::Manual.label(),
                         );
                         ui.selectable_value(
-                            &mut animator.show_mode,
+                            &mut self.show_mode,
                             ShowMode::Hybrid,
                             ShowMode::Hybrid.label(),
                         );
                         ui.selectable_value(
-                            &mut animator.show_mode,
+                            &mut self.show_mode,
                             ShowMode::Trackline,
                             ShowMode::Trackline.label(),
                         );
                     });
 
-                match animator.show_mode {
+                match self.show_mode {
                     ShowMode::SemiAutomated => {
                         if ui.button("GO Next").clicked() {
-                            if let Some(module_id) = self.step_semi_auto_next(animator) {
+                            if let Some(module_id) = self.step_semi_auto_next() {
                                 action = Some(TimelineAction::SelectModule(module_id));
                             }
                         }
                     }
                     ShowMode::Manual => {
                         if ui.button("Prev").clicked() {
-                            if let Some(module_id) = self.step_manual_prev(animator) {
+                            if let Some(module_id) = self.step_manual_prev() {
                                 action = Some(TimelineAction::SelectModule(module_id));
                             }
                         }
                         if ui.button("Next").clicked() {
-                            if let Some(module_id) = self.step_manual_next(animator) {
+                            if let Some(module_id) = self.step_manual_next() {
                                 action = Some(TimelineAction::SelectModule(module_id));
                             }
                         }
@@ -705,13 +674,13 @@ impl TimelineV2 {
 
                     if ui.button("Add Block").clicked() {
                         if let Some(module_id) = self.selected_module_id {
-                            self.add_module_block(module_id, animator);
+                            self.add_module_block(module_id);
                         }
                     }
                 }
 
                 if ui.button("Sort").clicked() {
-                    animator.module_arrangement.sort_by(|a, b| {
+                    self.module_arrangement.sort_by(|a, b| {
                         a.start_time.total_cmp(&b.start_time).then(a.id.cmp(&b.id))
                     });
                 }
@@ -721,7 +690,7 @@ impl TimelineV2 {
                     crate::theme::colors::WARN_COLOR,
                     "Clear",
                 ) {
-                    animator.module_arrangement.clear();
+                    self.module_arrangement.clear();
                     self.reset_runtime_selection();
                 }
             });
@@ -729,7 +698,7 @@ impl TimelineV2 {
             let mut remove_block_id: Option<u64> = None;
             let mut jump_to_block: Option<(f32, u64)> = None;
 
-            for block in &mut animator.module_arrangement {
+            for block in &mut self.module_arrangement {
                 ui.horizontal(|ui| {
                     ui.checkbox(&mut block.enabled, "");
 
@@ -762,7 +731,7 @@ impl TimelineV2 {
                             .range(0.1..=36000.0),
                     );
 
-                    if animator.show_mode == ShowMode::Hybrid {
+                    if self.show_mode == ShowMode::Hybrid {
                         let mut trigger_str = block.start_trigger.clone().unwrap_or_default();
                         let response = ui.add(
                             egui::TextEdit::singleline(&mut trigger_str)
@@ -789,14 +758,14 @@ impl TimelineV2 {
 
             if let Some((start_time, block_id)) = jump_to_block {
                 action = Some(TimelineAction::Seek(start_time));
-                if animator.show_mode == ShowMode::Manual {
+                if self.show_mode == ShowMode::Manual {
                     self.set_manual_current(Some(block_id));
                 }
             }
 
             if let Some(id) = remove_block_id {
-                animator.module_arrangement.retain(|block| block.id != id);
-                self.cleanup_missing_modules(&available_module_ids, animator);
+                self.module_arrangement.retain(|block| block.id != id);
+                self.cleanup_missing_modules(&available_module_ids);
             }
         });
 
@@ -828,8 +797,7 @@ impl TimelineV2 {
                 }
             }
 
-            let module_track_height =
-                if animator.module_arrangement.is_empty() { 0.0 } else { 64.0 };
+            let module_track_height = if self.module_arrangement.is_empty() { 0.0 } else { 64.0 };
 
             let available_height = 50.0 + (visible_lanes_count as f32 * 60.0) + module_track_height;
             let available_width = (duration * self.zoom).max(ui.available_width());
@@ -970,7 +938,6 @@ impl TimelineV2 {
                     self.playhead,
                     animator.is_playing(),
                     &available_module_ids,
-                    animator,
                 );
 
                 // TRIGGER ACTION IF CHANGED
@@ -980,15 +947,15 @@ impl TimelineV2 {
                     // For now, we just emit it, the handler in actions.rs should be idempotent.
                     if action.is_none()
                         && animator.is_playing()
-                        && (animator.show_mode == ShowMode::FullyAutomated
-                            || animator.show_mode == ShowMode::Hybrid
-                            || animator.show_mode == ShowMode::Trackline)
+                        && (self.show_mode == ShowMode::FullyAutomated
+                            || self.show_mode == ShowMode::Hybrid
+                            || self.show_mode == ShowMode::Trackline)
                     {
                         action = Some(TimelineAction::SelectModule(mod_id));
                     }
                 }
 
-                let active_block_id = match animator.show_mode {
+                let active_block_id = match self.show_mode {
                     ShowMode::FullyAutomated | ShowMode::Trackline => {
                         self.full_auto_current_block_id
                     }
@@ -997,7 +964,7 @@ impl TimelineV2 {
                     ShowMode::Hybrid => self.hybrid_current_block_id,
                 };
 
-                for block in self.sorted_enabled_blocks(animator) {
+                for block in self.sorted_enabled_blocks() {
                     let block_x = rect.min.x + block.start_time * self.zoom;
                     let block_w = (block.duration * self.zoom).max(8.0);
                     let block_rect = Rect::from_min_size(
@@ -1177,8 +1144,6 @@ impl TimelineV2 {
             }
         });
 
-        let changed = initial_arrangement != animator.module_arrangement
-            || initial_show_mode != animator.show_mode;
-        (action, changed)
+        action
     }
 }

@@ -81,14 +81,10 @@ impl<NodeData, DataType, ValueType> Graph<NodeData, DataType, ValueType> {
     /// any incoming or outgoing connections from that node
     ///
     /// This function returns the list of connections that has been removed
-    #[allow(clippy::type_complexity)]
     /// after deleting this node as input-output pairs. Note that one of the two
     /// ids in the pair (the one on `node_id`'s end) will be invalid after
     /// calling this function.
-    pub fn remove_node(
-        &mut self,
-        node_id: NodeId,
-    ) -> Option<(Node<NodeData>, Vec<(InputId, OutputId)>)> {
+    pub fn remove_node(&mut self, node_id: NodeId) -> (Node<NodeData>, Vec<(InputId, OutputId)>) {
         let mut disconnect_events = vec![];
 
         self.connections.retain(|i, o| {
@@ -108,9 +104,9 @@ impl<NodeData, DataType, ValueType> Graph<NodeData, DataType, ValueType> {
         for output in self[node_id].output_ids().collect::<SVec<_>>() {
             self.outputs.remove(output);
         }
-        let removed_node = self.nodes.remove(node_id)?;
+        let removed_node = self.nodes.remove(node_id).expect("Node should exist");
 
-        Some((removed_node, disconnect_events))
+        (removed_node, disconnect_events)
     }
 
     pub fn remove_connection(&mut self, input_id: InputId) -> Option<OutputId> {

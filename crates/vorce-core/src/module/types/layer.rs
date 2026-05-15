@@ -19,7 +19,7 @@ pub enum LayerType {
         opacity: f32,
         /// Blending mode used for rendering.
         blend_mode: Option<BlendModeType>,
-        #[serde(default)]
+        #[serde(default = "crate::module::config::default_mesh_quad")]
         /// Component property or field.
         mesh: MeshType,
         #[serde(default)]
@@ -34,7 +34,7 @@ pub enum LayerType {
         opacity: f32,
         /// Blending mode used for rendering.
         blend_mode: Option<BlendModeType>,
-        #[serde(default)]
+        #[serde(default = "crate::module::config::default_mesh_quad")]
         /// Component property or field.
         mesh: MeshType,
         #[serde(default)]

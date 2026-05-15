@@ -166,7 +166,7 @@ impl VorceModule {
                 name: "Layer 1".to_string(),
                 opacity: 1.0,
                 blend_mode: None,
-                mesh: crate::module::types::mesh::MeshType::default(),
+                mesh: crate::module::config::default_mesh_quad(),
                 mapping_mode: false,
             }),
 

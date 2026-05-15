@@ -1,9 +1,9 @@
 //! Egui-based transform controls panel (Phase 6)
 use crate::i18n::LocaleManager;
 use crate::theme::colors;
-use crate::widgets::custom::labeled_row;
 use crate::widgets::custom::{styled_button, styled_drag_value, styled_slider};
 use crate::widgets::panel::{cyber_panel_frame, render_panel_header};
+use egui::*;
 use vorce_core::ResizeMode;
 
 #[derive(Debug, Clone, Default)]
@@ -41,6 +41,15 @@ impl Default for TransformPanel {
             selected_layer_name: None,
         }
     }
+}
+
+// Helper for labeled rows (moved outside to avoid impl Trait in closure issues)
+fn labeled_row(ui: &mut Ui, label: &str, content: impl FnOnce(&mut Ui)) {
+    ui.horizontal(|ui| {
+        ui.label(label);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), content);
+    });
+    ui.add_space(4.0);
 }
 
 impl TransformPanel {
