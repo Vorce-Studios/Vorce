@@ -218,7 +218,7 @@ fn draw_retro_stereo(ui: &mut egui::Ui, rect: Rect, db_left: f32, db_right: f32)
 }
 
 fn draw_single_retro_meter(
-    _ui: &egui::Ui,
+    ui: &egui::Ui,
     painter: &egui::Painter,
     rect: Rect,
     db: f32,
@@ -309,7 +309,7 @@ fn draw_single_retro_meter(
         egui::Align2::CENTER_CENTER,
         label,
         egui::FontId::proportional(12.0),
-        Color32::from_gray(80),
+        ui.visuals().text_color().gamma_multiply(0.8),
     );
 }
 
@@ -429,7 +429,7 @@ fn draw_horizontal_scale(ui: &egui::Ui, painter: &egui::Painter, rect: Rect) {
         let x = db_to_x(val);
         painter.line_segment(
             [Pos2::new(x, rect.min.y), Pos2::new(x, rect.max.y)],
-            Stroke::new(1.0, Color32::from_gray(60)),
+            Stroke::new(1.0, ui.visuals().text_color().gamma_multiply(0.2)),
         );
 
         if rect.height() > 8.0 && (val == -40.0 || val == -20.0 || val == 0.0) {
