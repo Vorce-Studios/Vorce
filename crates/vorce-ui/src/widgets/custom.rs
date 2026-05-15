@@ -12,7 +12,6 @@ pub use safety::*;
 #[cfg(test)]
 mod tests {
 
-
     use crate::widgets::icons::AppIcon;
     use egui::{Color32, Ui};
 
