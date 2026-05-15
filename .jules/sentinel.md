@@ -50,4 +50,3 @@
 **Prävention:** Bei jeglichem Einlesen von Dateien über externe oder dynamische Pfade muss vor dem Aufruf von `File::open` oder `fs::read` zwingend eine Validierung der Pfadkomponenten stattfinden, idealerweise durch den Ausschluss von `Component::ParentDir` oder eine strikte Sandboxing-Architektur.
 
 ## 2024-05-24 - [Path Traversal] **Schwachstelle:** Path Traversal in `load_from_file` für Key Bindings **Lektion:** Die Funktion lud Konfigurationsdateien über `std::fs::read_to_string` basierend auf externen Pfaden, ohne diese vorher auf Traversierungs-Komponenten (..) zu prüfen. **Prävention:** Alle Dateioperationen, die Pfade akzeptieren, müssen auf `Component::ParentDir` geprüft werden, um sicherzustellen, dass keine Systemdateien ausgelesen oder überschrieben werden können.
-
