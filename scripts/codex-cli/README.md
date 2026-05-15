@@ -94,6 +94,10 @@ Jules-Wartestatus:
 - PRs mit Merge-Konflikten werden primaer ueber die CLI-Route `merge_conflict_resolution` geloest. Diese Route bevorzugt Gemini CLI und faellt danach auf weitere CLI-Provider zurueck.
 - Nur wenn die CLI-Route explizit `Result: TOO_MANY_CONFLICTS` meldet, wird der alte Konflikt-PR geschlossen, der Branch geloescht und eine frische Jules-Neuimplementierung von der aktuellen Basis gestartet.
 - PRs mit roten Checks bekommen primaer einen deduplizierten `@Jules`-Kommentar auf demselben PR, damit Jules den bestehenden Branch nachbessert.
+- Nach einem erfolgreichen Merge entscheidet die neue Route `qa_disposition` ueber den Abschluss:
+  - `QA_TEST`: Issue bleibt offen, Projektstatus wird auf `QA Test` gesetzt und das Label `status: needs-testing` markiert den manuellen Funktionstest.
+  - `DONE`: Issue wird auf `Done` gesetzt und geschlossen.
+- `qa_disposition` bevorzugt `codex_orchestrator:monitoring`, damit die Abschlussentscheidung beim Orchestrator bleibt; nur bei fehlender Verfuegbarkeit wird auf weitere Provider zurueckgefallen.
 - Wenn Jules unter `jules.max_concurrent_sessions` faellt, kann Monitoring aus `delegation_backlog` neue Issue-Sessions starten. Die Planning-Session fuellt diesen Backlog aus delegierbaren GitHub-Issues.
 
 CLI-Issue-Discovery in der deterministischen Planning-Phase ist standardmaessig deaktiviert (`planning.enable_cli_issue_discovery=false`). Dadurch wird nach der Codex-CEO-Planning-Session nicht zusaetzlich Gemini/Kiro/Cursor als `planning`-Route gestartet. Bei Bedarf kann dieser Zusatzschritt in `autopilot-config.json` wieder aktiviert werden.

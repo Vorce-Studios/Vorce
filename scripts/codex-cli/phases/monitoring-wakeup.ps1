@@ -167,6 +167,131 @@ function Test-PrActionExists {
     }).Count -gt 0
 }
 
+function Test-PostMergeDispositionExists {
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][int]$PullRequestNumber
+    )
+
+    return @($State.post_merge_dispositions | Where-Object { [int]$_.pr_number -eq $PullRequestNumber }).Count -gt 0
+}
+
+function Get-VorceIssueStatusAgentName {
+    param([string]$ProviderName)
+
+    switch ($ProviderName) {
+        "codex_orchestrator" { return "Codex CLI" }
+        "gemini_cli" { return "Gemini CLI" }
+        default { return $ProviderName }
+    }
+}
+
+function Invoke-PostMergeIssueDisposition {
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][object]$QuotaRegistry,
+        [Parameter(Mandatory)][string]$JulesScriptDir,
+        [Parameter(Mandatory)][string]$Repository,
+        [Parameter(Mandatory)][object]$ReviewItem,
+        [switch]$DryRun
+    )
+
+    $prNum = [int]$ReviewItem.pr_number
+    if ($prNum -le 0 -or (Test-PostMergeDispositionExists -State $State -PullRequestNumber $prNum)) {
+        return $false
+    }
+
+    $prJson = & gh pr view $prNum --repo $Repository --json number,title,body,url,state,mergedAt,headRefName,closingIssuesReferences,files 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning ("[MONITOR]   Post-Merge-Check fuer PR #{0} fehlgeschlagen: {1}" -f $prNum, ($prJson | Out-String))
+        return $false
+    }
+
+    $pr = ($prJson | Out-String) | ConvertFrom-Json -ErrorAction Stop
+    if ([string]$pr.state -ne "MERGED" -or [string]::IsNullOrWhiteSpace([string]$pr.mergedAt)) {
+        return $false
+    }
+
+    $issueNum = [int]$ReviewItem.issue_number
+    if ($issueNum -le 0) {
+        $closingIssues = @($pr.closingIssuesReferences)
+        if ($closingIssues.Count -gt 0) {
+            $issueNum = [int]$closingIssues[0].number
+        }
+    }
+    if ($issueNum -le 0) {
+        Write-Warning ("[MONITOR]   PR #{0} ist gemerged, aber ohne zuordenbares Issue." -f $prNum)
+        return $false
+    }
+
+    $issueJson = & gh issue view $issueNum --repo $Repository --json number,title,body,state 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning ("[MONITOR]   Issue #{0} fuer PR #{1} konnte nicht geladen werden." -f $issueNum, $prNum)
+        return $false
+    }
+    $issue = ($issueJson | Out-String) | ConvertFrom-Json -ErrorAction Stop
+    $changedFiles = @($pr.files | ForEach-Object { [string]$_.path }) -join "`n"
+    $prompt = Get-VorcePostMergeQaDispositionPrompt `
+        -Repository $Repository `
+        -PullRequestNumber $prNum `
+        -IssueNumber $issueNum `
+        -PullRequestTitle ([string]$pr.title) `
+        -PullRequestBody ([string]$pr.body) `
+        -ChangedFiles $changedFiles `
+        -IssueTitle ([string]$issue.title) `
+        -IssueBody ([string]$issue.body)
+
+    Write-Host ("[MONITOR]   PR #{0} ist gemerged; lasse QA-Disposition bestimmen." -f $prNum) -ForegroundColor Cyan
+    $result = Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType "qa_disposition" -Prompt $prompt -DryRun:$DryRun
+    $output = [string]$result.output
+    $qaTestRequired = $output -match '(?im)^Disposition:\s*QA_TEST\s*$'
+    $reasonMatch = [regex]::Match($output, '(?im)^Reason:\s*(?<reason>.+)$')
+    $reason = if ($reasonMatch.Success) { $reasonMatch.Groups["reason"].Value.Trim() } else { "Disposition konnte nicht sicher geparst werden." }
+    if (-not $result.success -or ($output -notmatch '(?im)^Disposition:\s*(QA_TEST|DONE)\s*$')) {
+        $qaTestRequired = $true
+        $reason = "Fallback auf QA Test, weil die Orchestrator-Entscheidung nicht eindeutig war."
+    }
+
+    $status = if ($qaTestRequired) { "QA Test" } else { "Done" }
+    $queueState = if ($qaTestRequired) { "user-review" } else { "closed" }
+    $agent = Get-VorceIssueStatusAgentName -ProviderName ([string]$result.provider)
+
+    if (-not $DryRun.IsPresent) {
+        & "$JulesScriptDir\set-managed-issue-state.ps1" `
+            -Repository $Repository `
+            -IssueNumber $issueNum `
+            -Status $status `
+            -Agent $agent `
+            -RemoteState "merged" `
+            -QueueState $queueState `
+            -PullRequestUrl ([string]$pr.url) `
+            -LastUpdate ([string]$pr.mergedAt) `
+            -ReopenIfClosed:$qaTestRequired | Out-Null
+
+        if ($qaTestRequired) {
+            & gh issue comment $issueNum --repo $Repository --body ("PR #{0} wurde gemerged. Status auf `QA Test` gesetzt: {1}" -f $prNum, $reason) | Out-Null
+        } else {
+            $currentIssue = (& gh issue view $issueNum --repo $Repository --json state | Out-String) | ConvertFrom-Json
+            if ([string]$currentIssue.state -ne "CLOSED") {
+                & gh issue close $issueNum --repo $Repository --reason completed | Out-Null
+            }
+        }
+
+        $State.post_merge_dispositions += @([ordered]@{
+            pr_number    = $prNum
+            issue_number = $issueNum
+            disposition  = if ($qaTestRequired) { "QA_TEST" } else { "DONE" }
+            reason       = $reason
+            provider     = [string]$result.provider
+            decided_at   = (Get-Date -Format 'o')
+        })
+        Save-AutopilotState -State $State
+    }
+
+    Write-Host ("[MONITOR]   -> Issue #{0}: {1} ({2})" -f $issueNum, $status, $reason) -ForegroundColor $(if ($qaTestRequired) { "Yellow" } else { "Green" })
+    return $true
+}
+
 function Start-JulesPrAction {
     param(
         [Parameter(Mandatory)][object]$State,
@@ -736,6 +861,15 @@ function Invoke-MonitoringWakeUp {
         }
     } catch {
         Write-Warning "[MONITOR] PR-Check fehlgeschlagen: $_"
+    }
+
+    # --- Step 2b: Decide post-merge QA disposition for reviewed PRs ---
+    foreach ($review in @($State.review_queue)) {
+        try {
+            Invoke-PostMergeIssueDisposition -State $State -QuotaRegistry $QuotaRegistry -JulesScriptDir $JulesScriptDir -Repository $repo -ReviewItem $review -DryRun:$DryRun | Out-Null
+        } catch {
+            Write-Warning ("[MONITOR] Post-Merge-Disposition fuer PR #{0} fehlgeschlagen: {1}" -f ([int]$review.pr_number), $_.Exception.Message)
+        }
     }
 
     # --- Step 3: Process review queue ---

@@ -155,7 +155,7 @@ function Repair-AutopilotState {
     param([Parameter(Mandatory)][object]$State)
 
     $changed = $false
-    foreach ($arrayProp in @("active_delegations", "active_pr_actions", "delegation_backlog", "review_queue", "autopilot_created_issues", "completed_this_session", "decisions_pending", "error_log", "jules_feedback_responses")) {
+    foreach ($arrayProp in @("active_delegations", "active_pr_actions", "delegation_backlog", "review_queue", "post_merge_dispositions", "autopilot_created_issues", "completed_this_session", "decisions_pending", "error_log", "jules_feedback_responses")) {
         if (Ensure-StateArrayProperty -State $State -Name $arrayProp) { $changed = $true }
     }
 
@@ -211,6 +211,7 @@ function New-AutopilotState {
         active_pr_actions       = @()
         delegation_backlog      = @()
         review_queue            = @()
+        post_merge_dispositions = @()
         autopilot_created_issues = @()
         completed_this_session  = @()
         decisions_pending       = @()
