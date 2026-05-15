@@ -1,3 +1,20 @@
+#[inline]
+fn case_insensitive_contains(haystack: &str, needle: &str) -> bool {
+    if needle.is_empty() {
+        return true;
+    }
+    let needle_len = needle.len();
+    if haystack.len() < needle_len {
+        return false;
+    }
+    haystack.char_indices().any(|(i, _)| {
+        let tail = &haystack[i..];
+        tail.len() >= needle_len
+            && tail.is_char_boundary(needle_len)
+            && tail[..needle_len].eq_ignore_ascii_case(needle)
+    })
+}
+
 use std::{collections::BTreeMap, marker::PhantomData};
 
 use crate::{CategoryTrait, NodeTemplateIter, NodeTemplateTrait, color_hex_utils::*};
@@ -97,9 +114,7 @@ where
                                     (kind, kind_name)
                                 })
                                 .filter(|(_kind, kind_name)| {
-                                    kind_name
-                                        .to_lowercase()
-                                        .contains(self.query.to_lowercase().as_str())
+                                    case_insensitive_contains(kind_name, &self.query)
                                 })
                                 .collect();
 
