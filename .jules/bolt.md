@@ -21,3 +21,7 @@
 ## 2025-05-10 - Avoid Caching UI State for Public Fields (ModuleCanvas Search)
 **Erkenntnis:** Caching lowercased search strings in `egui` state structs using `response.changed()` causes state desynchronization bugs when the source fields (like `search_filter` or `quick_create_filter`) are `pub` and can be modified programmatically elsewhere. This pattern attempts to avoid per-frame allocations but introduces subtle bugs.
 **Aktion:** Instead of caching derived string state for `pub` fields, remove the cached state entirely. Use the zero-allocation `utils::case_insensitive_contains` inside the filter loops directly with the original string. This achieves both zero per-frame allocations and guaranteed state synchronization.
+
+## 2024-05-15 - [Vermeidung von Input-State Cloning in egui]
+**Erkenntnis:** Das Klonen des kompletten `InputState` oder `PointerState` pro Frame in `egui` (wie `ui.input(|i| i.clone())` oder `ui.ctx().input(|i| i.pointer.clone())`) führt zu signifikanten, unnötigen Speicherallokationen (besonders durch große Listen von Events) und kann die UI-Performance negativ beeinflussen.
+**Aktion:** Immer spezifische Werte direkt im Closure extrahieren (z.B. `ui.input(|i| (i.key_pressed(Key::Escape), ...))`), anstatt den ganzen State zu klonen.
