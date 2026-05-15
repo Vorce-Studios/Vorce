@@ -9,56 +9,32 @@ use tracing::Level;
 
 /// Logging configuration
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(default)]
 pub struct LogConfig {
     /// Log level: "trace", "debug", "info", "warn", "error"
-    #[serde(default = "default_log_level")]
     pub level: String,
 
     /// Directory for log files
-    #[serde(default = "default_log_path")]
     pub log_path: PathBuf,
 
     /// Maximum number of log files to keep
-    #[serde(default = "default_max_files")]
     pub max_files: usize,
 
     /// Enable console output
-    #[serde(default = "default_console_output")]
     pub console_output: bool,
 
     /// Enable file output
-    #[serde(default = "default_file_output")]
     pub file_output: bool,
-}
-
-fn default_log_level() -> String {
-    "info".to_string()
-}
-
-fn default_log_path() -> PathBuf {
-    PathBuf::from("logs")
-}
-
-fn default_max_files() -> usize {
-    10
-}
-
-fn default_console_output() -> bool {
-    true
-}
-
-fn default_file_output() -> bool {
-    true
 }
 
 impl Default for LogConfig {
     fn default() -> Self {
         Self {
-            level: default_log_level(),
-            log_path: default_log_path(),
-            max_files: default_max_files(),
-            console_output: default_console_output(),
-            file_output: default_file_output(),
+            level: "info".to_string(),
+            log_path: PathBuf::from("logs"),
+            max_files: 10,
+            console_output: true,
+            file_output: true,
         }
     }
 }

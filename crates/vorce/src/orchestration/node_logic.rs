@@ -17,6 +17,7 @@ pub fn load_project_file(app: &mut App, path: &Path) -> Result<()> {
     // Clear selections to avoid referencing deleted IDs
     app.ui_state.selected_layer_id = None;
     app.ui_state.selected_output_id = None;
+    app.ui_state.timeline_panel.reset_transient_state();
     app.ui_state.module_canvas.selected_parts.clear();
 
     // Notify subsystems of new state

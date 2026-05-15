@@ -170,6 +170,7 @@ impl AppState {
 /// Global application settings (not strictly project, but persisted with it or separately in user config)
 /// For now, we include it in project file for simplicity, or we can split it later.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(default)]
 pub struct AppSettings {
     /// Global master volume
     pub master_volume: f32,
@@ -180,15 +181,9 @@ pub struct AppSettings {
     /// UI Language code (en, de)
     pub language: String,
     /// Logging configuration
-    #[serde(default)]
     pub log_config: LogConfig,
     /// Number of output windows (projectors/beamers)
-    #[serde(default = "default_output_count")]
     pub output_count: u8,
-}
-
-fn default_output_count() -> u8 {
-    1
 }
 
 impl Default for AppSettings {

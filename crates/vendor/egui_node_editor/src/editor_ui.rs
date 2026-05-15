@@ -228,7 +228,10 @@ where
             self.selected_nodes.iter().copied().collect::<std::collections::HashSet<_>>();
         for node_id in self.node_order.iter().copied() {
             let responses = GraphNodeWidget {
-                position: self.node_positions.get_mut(node_id).unwrap(),
+                position: match self.node_positions.get_mut(node_id) {
+                    Some(p) => p,
+                    None => continue,
+                },
                 graph: &mut self.graph,
                 port_locations: &mut port_locations,
                 node_rects: &mut node_rects,
@@ -284,7 +287,10 @@ where
 
         /* Draw connections */
         if let Some((_, ref locator)) = self.connection_in_progress {
-            let port_type = self.graph.any_param_type(*locator).unwrap();
+            let port_type = match self.graph.any_param_type(*locator) {
+                Ok(p) => p,
+                Err(_) => return Default::default(),
+            };
             let connection_color = port_type.data_type_color(user_state);
             let start_pos = port_locations[locator];
 
@@ -352,7 +358,10 @@ where
         }
 
         for (input, output) in self.graph.iter_connections() {
-            let port_type = self.graph.any_param_type(AnyParameterId::Output(output)).unwrap();
+            let port_type = match self.graph.any_param_type(AnyParameterId::Output(output)) {
+                Ok(p) => p,
+                Err(_) => continue,
+            };
             let connection_color = port_type.data_type_color(user_state);
             let src_pos = port_locations[&AnyParameterId::Output(output)];
             let dst_pos = port_locations[&AnyParameterId::Input(input)];
@@ -380,7 +389,9 @@ where
                     self.selected_nodes = Vec::from([*node_id]);
                 }
                 NodeResponse::DeleteNodeUi(node_id) => {
-                    let (node, disc_events) = self.graph.remove_node(*node_id);
+                    let Some((node, disc_events)) = self.graph.remove_node(*node_id) else {
+                        continue;
+                    };
                     // Pass the disconnection responses first so user code can perform cleanup
                     // before node removal response.
                     extra_responses.extend(
@@ -403,11 +414,11 @@ where
                         Some((other_node, AnyParameterId::Output(*output)));
                 }
                 NodeResponse::RaiseNode(node_id) => {
-                    let old_pos = self
-                        .node_order
-                        .iter()
-                        .position(|id| *id == *node_id)
-                        .expect("Node to be raised should be in `node_order`");
+                    let old_pos = match self.node_order.iter().position(|id| *id == *node_id) {
+                        Some(p) => p,
+                        None => continue,
+                    };
+
                     self.node_order.remove(old_pos);
                     self.node_order.push(*node_id);
                 }
@@ -462,9 +473,16 @@ where
         /* Mouse input handling */
 
         // This locks the context, so don't hold on to it for too long.
-        let mouse = &ui.ctx().input(|i| i.pointer.clone());
+        let (any_released, any_click, primary_down, primary_released) = ui.ctx().input(|i| {
+            (
+                i.pointer.any_released(),
+                i.pointer.any_click(),
+                i.pointer.primary_down(),
+                i.pointer.primary_released(),
+            )
+        });
 
-        if mouse.any_released() && self.connection_in_progress.is_some() {
+        if any_released && self.connection_in_progress.is_some() {
             self.connection_in_progress = None;
         }
         if secondary_click_on_background && !cursor_in_finder {
@@ -480,15 +498,15 @@ where
 
         // Deselect and deactivate finder if the editor backround is clicked,
         // *or* if the the mouse clicks off the ui
-        if click_on_background || (mouse.any_click() && !cursor_in_editor) {
+        if click_on_background || (any_click && !cursor_in_editor) {
             self.selected_nodes = Vec::new();
             self.node_finder = None;
         }
 
-        if drag_started_on_background && mouse.primary_down() {
+        if drag_started_on_background && primary_down {
             self.ongoing_box_selection = Some(cursor_pos);
         }
-        if mouse.primary_released() || drag_released_on_background {
+        if primary_released || drag_released_on_background {
             self.ongoing_box_selection = None;
         }
 
@@ -571,11 +589,11 @@ where
         let background_color;
         let text_color;
         if ui.visuals().dark_mode {
-            background_color = color_from_hex("#3f3f3f").unwrap();
-            text_color = color_from_hex("#fefefe").unwrap();
+            background_color = color_from_hex("#3f3f3f").unwrap_or(egui::Color32::WHITE);
+            text_color = color_from_hex("#fefefe").unwrap_or(egui::Color32::WHITE);
         } else {
-            background_color = color_from_hex("#ffffff").unwrap();
-            text_color = color_from_hex("#505050").unwrap();
+            background_color = color_from_hex("#ffffff").unwrap_or(egui::Color32::WHITE);
+            text_color = color_from_hex("#505050").unwrap_or(egui::Color32::WHITE);
         }
 
         ui.visuals_mut().widgets.noninteractive.fg_stroke =
@@ -752,7 +770,10 @@ where
             UserResponse: UserResponseTrait,
             NodeData: NodeDataTrait,
         {
-            let port_type = graph.any_param_type(param_id).unwrap();
+            let port_type = match graph.any_param_type(param_id) {
+                Ok(p) => p,
+                Err(_) => return,
+            };
 
             let port_rect =
                 Rect::from_center_size(port_pos, egui::vec2(10.0, 10.0) * pan_zoom.zoom);
@@ -776,8 +797,10 @@ where
             if resp.drag_started() {
                 if is_connected_input {
                     let input = param_id.assume_input();
-                    let corresp_output =
-                        graph.connection(input).expect("Connection data should be valid");
+                    let corresp_output = match graph.connection(input) {
+                        Some(c) => c,
+                        None => return,
+                    };
                     responses.push(NodeResponse::DisconnectEvent {
                         input: param_id.assume_input(),
                         output: corresp_output,
@@ -791,7 +814,7 @@ where
                 && origin_node != node_id
             {
                 // Don't allow self-loops
-                if graph.any_param_type(origin_param).unwrap() == port_type
+                if graph.any_param_type(origin_param).unwrap_or(port_type) == port_type
                     && close_enough
                     && ui.input(|i| i.pointer.any_released())
                 {
@@ -945,10 +968,12 @@ where
         }
 
         // Node selection
-        //
-        // HACK: Only set the select response when no other response is active.
-        // This prevents some issues.
-        if responses.is_empty() && window_response.clicked_by(PointerButton::Primary) {
+        // In modern egui, `window_response.clicked_by` correctly returns false if a child widget
+        // consumed the click, so we don't need the `responses.is_empty()` hack anymore.
+        // We also select the node if the user starts dragging it and it's not already selected.
+        if window_response.clicked_by(PointerButton::Primary)
+            || (window_response.drag_started_by(PointerButton::Primary) && !self.selected)
+        {
             responses.push(NodeResponse::SelectNode(self.node_id));
             responses.push(NodeResponse::RaiseNode(self.node_id));
         }
@@ -970,22 +995,22 @@ where
         let dark_mode = ui.visuals().dark_mode;
         let color = if resp.clicked() {
             if dark_mode {
-                color_from_hex("#ffffff").unwrap()
+                color_from_hex("#ffffff").unwrap_or(egui::Color32::WHITE)
             } else {
-                color_from_hex("#000000").unwrap()
+                color_from_hex("#000000").unwrap_or(egui::Color32::WHITE)
             }
         } else if resp.hovered() {
             if dark_mode {
-                color_from_hex("#dddddd").unwrap()
+                color_from_hex("#dddddd").unwrap_or(egui::Color32::WHITE)
             } else {
-                color_from_hex("#222222").unwrap()
+                color_from_hex("#222222").unwrap_or(egui::Color32::WHITE)
             }
         } else {
             #[allow(clippy::collapsible_else_if)]
             if dark_mode {
-                color_from_hex("#aaaaaa").unwrap()
+                color_from_hex("#aaaaaa").unwrap_or(egui::Color32::WHITE)
             } else {
-                color_from_hex("#555555").unwrap()
+                color_from_hex("#555555").unwrap_or(egui::Color32::WHITE)
             }
         };
         let stroke = Stroke { width: stroke_width, color };

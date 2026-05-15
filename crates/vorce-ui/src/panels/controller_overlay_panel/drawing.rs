@@ -1,10 +1,7 @@
-#[allow(unused_imports)]
 use egui::{Color32, Pos2, Rect, Response, Sense, Stroke, TextureHandle, Ui, Vec2};
 
-#[allow(unused_imports)]
-use crate::config::{MidiAssignment, MidiAssignmentTarget, UserConfig};
+use crate::config::{MidiAssignment, MidiAssignmentTarget};
 
-#[allow(unused_imports)]
 use std::collections::{HashMap, HashSet};
 #[cfg(feature = "midi")]
 use vorce_control::midi::{ControllerElement, ElementState, ElementType};
@@ -226,11 +223,11 @@ impl ControllerOverlayPanel {
                         // Draw Handles
                         painter.line_segment(
                             [Pos2::new(elem_rect.min.x, y_top), Pos2::new(elem_rect.max.x, y_top)],
-                            Stroke::new(1.0, Color32::RED),
+                            Stroke::new(1.0, ui.visuals().error_fg_color),
                         );
                         painter.line_segment(
                             [Pos2::new(elem_rect.min.x, y_bot), Pos2::new(elem_rect.max.x, y_bot)],
-                            Stroke::new(1.0, Color32::RED),
+                            Stroke::new(1.0, ui.visuals().error_fg_color),
                         );
 
                         painter.text(
@@ -238,14 +235,14 @@ impl ControllerOverlayPanel {
                             egui::Align2::LEFT_CENTER,
                             "Top",
                             egui::FontId::proportional(12.0),
-                            Color32::RED,
+                            ui.visuals().error_fg_color,
                         );
                         painter.text(
                             Pos2::new(elem_rect.max.x + 2.0, y_bot),
                             egui::Align2::LEFT_CENTER,
                             "Bot",
                             egui::FontId::proportional(12.0),
-                            Color32::RED,
+                            ui.visuals().error_fg_color,
                         );
                     }
 

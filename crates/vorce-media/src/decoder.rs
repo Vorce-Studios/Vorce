@@ -144,6 +144,7 @@ mod ffmpeg_impl {
         /// Open a video file with optional hardware acceleration
         pub fn open<P: AsRef<Path>>(path: P, hw_accel: HwAccelType) -> Result<Self> {
             let path = path.as_ref();
+            crate::reject_path_traversal(path)?;
 
             if !path.exists() {
                 return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
@@ -334,7 +335,7 @@ mod ffmpeg_impl {
                 let mut decoded = ffmpeg::util::frame::Video::empty();
 
                 if self.decoder.receive_frame(&mut decoded).is_ok() {
-                    #[allow(unused_variables, unused_mut)]
+                    #[cfg(target_os = "windows")]
                     let mut sw_frame = ffmpeg::util::frame::Video::empty();
                     let frame_ptr = if unsafe {
                         (*decoded.as_ptr()).format == ffi::AVPixelFormat::AV_PIX_FMT_D3D11 as i32

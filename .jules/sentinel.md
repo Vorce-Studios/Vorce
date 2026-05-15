@@ -45,6 +45,9 @@
 
 ## 2025-05-24 - [HIGH] Path Traversal in Project Loader
 
-**Schwachstelle:** `load_project` in `crates/vorce-io/src/project.rs` hat Dateipfade nicht auf `..` Komponenten validiert, wodurch Path Traversal beim Laden von Projekten mÃ¶glich war.
+**Schwachstelle:** `load_project` in `crates/vorce-io/src/project.rs` hat Dateipfade nicht auf `..` Komponenten validiert, wodurch Path Traversal beim Laden von Projekten möglich war.
 **Lektion:** Es fehlte eine Validierungsschicht zwischen externen Pfaden und dem Dateisystemzugriff.
-**PrÃ¤vention:** Bei jeglichem Einlesen von Dateien über externe oder dynamische Pfade muss vor dem Aufruf von `File::open` oder `fs::read` zwingend eine Validierung der Pfadkomponenten stattfinden, idealerweise durch den Ausschluss von `Component::ParentDir` oder eine strikte Sandboxing-Architektur.
+**Prävention:** Bei jeglichem Einlesen von Dateien über externe oder dynamische Pfade muss vor dem Aufruf von `File::open` oder `fs::read` zwingend eine Validierung der Pfadkomponenten stattfinden, idealerweise durch den Ausschluss von `Component::ParentDir` oder eine strikte Sandboxing-Architektur.
+
+## 2024-05-24 - [Path Traversal] **Schwachstelle:** Path Traversal in `load_from_file` für Key Bindings **Lektion:** Die Funktion lud Konfigurationsdateien über `std::fs::read_to_string` basierend auf externen Pfaden, ohne diese vorher auf Traversierungs-Komponenten (..) zu prüfen. **Prävention:** Alle Dateioperationen, die Pfade akzeptieren, müssen auf `Component::ParentDir` geprüft werden, um sicherzustellen, dass keine Systemdateien ausgelesen oder überschrieben werden können.
+

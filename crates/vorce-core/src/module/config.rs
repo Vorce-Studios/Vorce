@@ -1,6 +1,6 @@
 //! Module Configuration Defaults
 
-use crate::module::types::{MeshType, ModulePartId};
+use crate::module::types::ModulePartId;
 
 /// Returns the default playback speed for media.
 pub fn default_speed() -> f32 {
@@ -29,10 +29,6 @@ pub fn default_scale() -> f32 {
 /// Returns the default starting ID for module parts.
 pub fn default_next_part_id() -> ModulePartId {
     1
-}
-/// Returns a default quad mesh spanning from (0,0) to (1,1).
-pub fn default_mesh_quad() -> MeshType {
-    MeshType::Quad { tl: (0.0, 0.0), tr: (1.0, 0.0), br: (1.0, 1.0), bl: (0.0, 1.0) }
 }
 /// Returns a default boolean true value for deserialization.
 pub fn default_true() -> bool {
