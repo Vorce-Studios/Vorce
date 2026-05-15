@@ -952,10 +952,12 @@ where
         }
 
         // Node selection
-        //
-        // HACK: Only set the select response when no other response is active.
-        // This prevents some issues.
-        if responses.is_empty() && window_response.clicked_by(PointerButton::Primary) {
+        // In modern egui, `window_response.clicked_by` correctly returns false if a child widget
+        // consumed the click, so we don't need the `responses.is_empty()` hack anymore.
+        // We also select the node if the user starts dragging it and it's not already selected.
+        if window_response.clicked_by(PointerButton::Primary)
+            || (window_response.drag_started_by(PointerButton::Primary) && !self.selected)
+        {
             responses.push(NodeResponse::SelectNode(self.node_id));
             responses.push(NodeResponse::RaiseNode(self.node_id));
         }
