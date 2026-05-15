@@ -43,7 +43,7 @@ pub struct EffectParameterAnimator {
     /// Next binding ID
     next_id: EffectAnimationId,
     /// Cache of last evaluated values
-    value_cache: HashMap<EffectAnimationId, AnimValue>,
+    value_cache: std::collections::HashMap<EffectAnimationId, AnimValue>,
 }
 
 impl EffectParameterAnimator {
@@ -51,13 +51,25 @@ impl EffectParameterAnimator {
     pub fn new() -> Self {
         let clip = AnimationClip::new("Effect Automation".to_string());
         let player = AnimationPlayer::new(clip.clone());
-        Self { clip, player, bindings: Vec::new(), next_id: 1, value_cache: HashMap::new() }
+        Self {
+            clip,
+            player,
+            bindings: Vec::new(),
+            next_id: 1,
+            value_cache: std::collections::HashMap::new(),
+        }
     }
 
     /// Create an animator with an existing clip
     pub fn with_clip(clip: AnimationClip) -> Self {
         let player = AnimationPlayer::new(clip.clone());
-        Self { clip, player, bindings: Vec::new(), next_id: 1, value_cache: HashMap::new() }
+        Self {
+            clip,
+            player,
+            bindings: Vec::new(),
+            next_id: 1,
+            value_cache: std::collections::HashMap::new(),
+        }
     }
 
     /// Add a parameter binding and create a track for it

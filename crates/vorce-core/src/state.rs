@@ -43,6 +43,10 @@ pub struct AppState {
     #[serde(default)]
     pub module_manager: Arc<ModuleManager>,
 
+    /// Show control orchestration model
+    #[serde(default)]
+    pub show_control: Arc<crate::show_control::ShowControlModel>,
+
     /// Effect automation
     ///
     /// Stored in an `Arc` for thread-safe shared access and cheap cloning (CoW) for undo/redo snapshots.
@@ -95,6 +99,7 @@ impl Default for AppState {
             layer_manager: Arc::new(LayerManager::new()),
             output_manager: Arc::new(OutputManager::new((1920, 1080))),
             module_manager: Arc::new(ModuleManager::default()),
+            show_control: Arc::new(crate::show_control::ShowControlModel::default()),
             effect_animator: Arc::new(crate::EffectParameterAnimator::default()),
             shader_graphs: Arc::new(std::collections::HashMap::new()),
             effect_chain: Arc::new(crate::effects::EffectChain::new()),
@@ -137,6 +142,11 @@ impl AppState {
     /// Get mutable reference to ModuleManager (CoW)
     pub fn module_manager_mut(&mut self) -> &mut ModuleManager {
         Arc::make_mut(&mut self.module_manager)
+    }
+
+    /// Get mutable reference to ShowControlModel (CoW)
+    pub fn show_control_mut(&mut self) -> &mut crate::show_control::ShowControlModel {
+        Arc::make_mut(&mut self.show_control)
     }
 
     /// Get mutable reference to EffectParameterAnimator (CoW)

@@ -48,6 +48,8 @@ pub mod oscillator;
 pub mod recent_effect_configs;
 pub mod runtime_paths;
 pub mod shader_graph;
+/// Show control models
+pub mod show_control;
 pub mod state;
 pub mod trigger_system;
 

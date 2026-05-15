@@ -102,6 +102,7 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
         app.state.effect_animator.get_current_time() as f32,
         app.state.effect_animator.is_playing(),
         &all_module_ids,
+        &app.state.show_control,
     );
     if let Some(active_module_id) = show_module_id {
         app.ui_state.module_canvas.set_active_module(Some(active_module_id));

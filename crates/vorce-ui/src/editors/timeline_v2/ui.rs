@@ -11,8 +11,8 @@ use vorce_core::animation::AnimValue;
 use vorce_core::effect_animation::EffectParameterAnimator;
 use vorce_core::module::ModuleId;
 
-use super::models::{ModuleArrangementItem, ShowMode};
 use super::types::{TimelineAction, TimelineModule};
+use vorce_core::show_control::{ModuleArrangementItem, ShowControlModel, ShowMode};
 
 /// Timeline editor view state (data is in AnimationClip)
 #[derive(Serialize, Deserialize)]
@@ -33,16 +33,8 @@ pub struct TimelineV2 {
     pub show_curve_editor: bool,
     /// Expanded automation tracks/groups
     pub expanded_tracks: HashSet<String>,
-    /// Enable module arrangement show-control.
-    pub show_control_enabled: bool,
-    /// Selected show mode.
-    pub show_mode: ShowMode,
-    /// Scheduled module blocks.
-    pub module_arrangement: Vec<ModuleArrangementItem>,
     /// UI add-block module selection.
     pub selected_module_id: Option<ModuleId>,
-    /// ID counter for arrangement blocks.
-    pub next_arrangement_id: u64,
     /// Manual mode current block.
     pub manual_current_block_id: Option<u64>,
     /// Semi-auto current block.
@@ -70,11 +62,7 @@ impl Default for TimelineV2 {
             selected_keyframes: Vec::new(),
             show_curve_editor: false,
             expanded_tracks: HashSet::new(),
-            show_control_enabled: true,
-            show_mode: ShowMode::FullyAutomated,
-            module_arrangement: Vec::new(),
             selected_module_id: None,
-            next_arrangement_id: 1,
             manual_current_block_id: None,
             semi_auto_current_block_id: None,
             semi_auto_pending_block_id: None,
@@ -96,15 +84,18 @@ impl TimelineV2 {
         }
     }
 
-    fn sorted_enabled_blocks(&self) -> Vec<&ModuleArrangementItem> {
+    fn sorted_enabled_blocks<'a>(
+        &self,
+        show_control: &'a ShowControlModel,
+    ) -> Vec<&'a ModuleArrangementItem> {
         let mut blocks: Vec<&ModuleArrangementItem> =
-            self.module_arrangement.iter().filter(|item| item.enabled).collect();
+            show_control.module_arrangement.iter().filter(|item| item.enabled).collect();
         blocks.sort_by(|a, b| a.start_time.total_cmp(&b.start_time).then(a.id.cmp(&b.id)));
         blocks
     }
 
-    fn sorted_enabled_block_ids(&self) -> Vec<u64> {
-        let mut pairs: Vec<(u64, f32)> = self
+    fn sorted_enabled_block_ids(&self, show_control: &ShowControlModel) -> Vec<u64> {
+        let mut pairs: Vec<(u64, f32)> = show_control
             .module_arrangement
             .iter()
             .filter(|item| item.enabled)
@@ -114,16 +105,24 @@ impl TimelineV2 {
         pairs.into_iter().map(|(id, _)| id).collect()
     }
 
-    fn find_block(&self, block_id: u64) -> Option<&ModuleArrangementItem> {
-        self.module_arrangement.iter().find(|item| item.id == block_id)
+    fn find_block<'a>(
+        &self,
+        block_id: u64,
+        show_control: &'a ShowControlModel,
+    ) -> Option<&'a ModuleArrangementItem> {
+        show_control.module_arrangement.iter().find(|item| item.id == block_id)
     }
 
-    fn first_enabled_block_id(&self) -> Option<u64> {
-        self.sorted_enabled_blocks().first().map(|item| item.id)
+    fn first_enabled_block_id(&self, show_control: &ShowControlModel) -> Option<u64> {
+        self.sorted_enabled_blocks(show_control).first().map(|item| item.id)
     }
 
-    fn active_block_for_time(&self, time: f32) -> Option<&ModuleArrangementItem> {
-        let blocks = self.sorted_enabled_blocks();
+    fn active_block_for_time<'a>(
+        &self,
+        time: f32,
+        show_control: &'a ShowControlModel,
+    ) -> Option<&'a ModuleArrangementItem> {
+        let blocks = self.sorted_enabled_blocks(show_control);
         if blocks.is_empty() {
             return None;
         }
@@ -160,38 +159,45 @@ impl TimelineV2 {
         self.hybrid_current_block_id = None;
     }
 
-    fn cleanup_missing_modules(&mut self, available_module_ids: &[ModuleId]) {
+    fn cleanup_missing_modules(
+        &mut self,
+        available_module_ids: &[ModuleId],
+        show_control: &mut ShowControlModel,
+    ) {
         let valid: HashSet<ModuleId> = available_module_ids.iter().copied().collect();
-        self.module_arrangement.retain(|item| valid.contains(&item.module_id));
+        show_control.module_arrangement.retain(|item| valid.contains(&item.module_id));
 
         let has_block = |id: Option<u64>, blocks: &[ModuleArrangementItem]| {
             id.is_some_and(|block_id| blocks.iter().any(|item| item.id == block_id))
         };
 
-        if !has_block(self.manual_current_block_id, &self.module_arrangement) {
+        if !has_block(self.manual_current_block_id, &show_control.module_arrangement) {
             self.manual_current_block_id = None;
         }
-        if !has_block(self.semi_auto_current_block_id, &self.module_arrangement) {
+        if !has_block(self.semi_auto_current_block_id, &show_control.module_arrangement) {
             self.semi_auto_current_block_id = None;
         }
-        if !has_block(self.semi_auto_pending_block_id, &self.module_arrangement) {
+        if !has_block(self.semi_auto_pending_block_id, &show_control.module_arrangement) {
             self.semi_auto_pending_block_id = None;
         }
-        if !has_block(self.full_auto_current_block_id, &self.module_arrangement) {
+        if !has_block(self.full_auto_current_block_id, &show_control.module_arrangement) {
             self.full_auto_current_block_id = None;
         }
-        if !has_block(self.hybrid_current_block_id, &self.module_arrangement) {
+        if !has_block(self.hybrid_current_block_id, &show_control.module_arrangement) {
             self.hybrid_current_block_id = None;
         }
     }
 
-    fn add_module_block(&mut self, module_id: ModuleId) {
-        let default_start =
-            self.module_arrangement.iter().map(ModuleArrangementItem::end_time).fold(0.0, f32::max);
-        let id = self.next_arrangement_id;
-        self.next_arrangement_id = self.next_arrangement_id.saturating_add(1);
+    fn add_module_block(&mut self, module_id: ModuleId, show_control: &mut ShowControlModel) {
+        let default_start = show_control
+            .module_arrangement
+            .iter()
+            .map(ModuleArrangementItem::end_time)
+            .fold(0.0, f32::max);
+        let id = show_control.next_arrangement_id;
+        show_control.next_arrangement_id = show_control.next_arrangement_id.saturating_add(1);
 
-        self.module_arrangement.push(ModuleArrangementItem {
+        show_control.module_arrangement.push(ModuleArrangementItem {
             id,
             module_id,
             start_time: default_start,
@@ -205,8 +211,12 @@ impl TimelineV2 {
         self.manual_current_block_id = block_id;
     }
 
-    fn module_for_block_id(&self, block_id: Option<u64>) -> Option<ModuleId> {
-        block_id.and_then(|id| self.find_block(id)).map(|block| block.module_id)
+    fn module_for_block_id(
+        &self,
+        block_id: Option<u64>,
+        show_control: &ShowControlModel,
+    ) -> Option<ModuleId> {
+        block_id.and_then(|id| self.find_block(id, show_control)).map(|block| block.module_id)
     }
 
     /// Returns the module that should be active for show playback.
@@ -216,31 +226,196 @@ impl TimelineV2 {
         current_time: f32,
         is_playing: bool,
         available_module_ids: &[ModuleId],
+        show_control: &ShowControlModel,
+    ) -> Option<ModuleId> {
+        // Need to pass mut show_control to cleanup_missing_modules but here it's immutable
+        // Wait, the PR version changed the signature of runtime_show_module to take &ShowControlModel
+        // but cleanup_missing_modules needs &mut ShowControlModel.
+        // Let's re-examine what PR code did.
+        // Actually, in the PR side of the conflict, it DOES take &ShowControlModel.
+        // And it calls self.cleanup_missing_modules(available_module_ids);
+        // BUT my read_file output showed:
+        // self.cleanup_missing_modules(available_module_ids);
+        // which matches the HEAD side... wait.
+
+        /*
+<<<<<<< HEAD
+        self.cleanup_missing_modules(available_module_ids);
+=======
+        self.cleanup_missing_modules(available_module_ids);
+>>>>>>> 7dc3fa62a
+        */
+        // Both sides called it with one arg?
+        // Let's check cleanup_missing_modules definition in PR side.
+        /*
+    fn cleanup_missing_modules(
+        &mut self,
+        available_module_ids: &[ModuleId],
+        show_control: &mut ShowControlModel,
+    ) {
+        */
+        // So runtime_show_module MUST take &mut ShowControlModel if it wants to call cleanup_missing_modules.
+        // Or cleanup_missing_modules was called elsewhere.
+        // Let's look at the conflict in runtime_show_module again.
+        
+        // Actually, looking at the provided read_file output for ui.rs:
+        /*
+    pub fn runtime_show_module(
+        &mut self,
+        current_time: f32,
+        is_playing: bool,
+<<<<<<< HEAD
+        available_module_ids: &[ModuleId],
+=======
+        _available_module_ids: &[ModuleId],
+        show_control: &ShowControlModel,
+>>>>>>> 7dc3fa62a (Migrate Timeline show-control models to ShowControlModel)
     ) -> Option<ModuleId> {
         self.cleanup_missing_modules(available_module_ids);
 
-        if !self.show_control_enabled {
+        if !show_control.show_control_enabled {
+        */
+        
+        // The PR side has `_available_module_ids` and `show_control: &ShowControlModel`.
+        // BUT the line `self.cleanup_missing_modules(available_module_ids);` is OUTSIDE the conflict markers in the provided snippet?
+        // Wait, no.
+        /*
+    pub fn runtime_show_module(
+        &mut self,
+        current_time: f32,
+        is_playing: bool,
+<<<<<<< HEAD
+        available_module_ids: &[ModuleId],
+=======
+        _available_module_ids: &[ModuleId],
+        show_control: &ShowControlModel,
+>>>>>>> 7dc3fa62a (Migrate Timeline show-control models to ShowControlModel)
+    ) -> Option<ModuleId> {
+        self.cleanup_missing_modules(available_module_ids);
+
+        if !show_control.show_control_enabled {
+        */
+        // Ah, `self.cleanup_missing_modules(available_module_ids);` is common to both?
+        // But the PR definition of `cleanup_missing_modules` takes 2 args.
+        // This suggests the PR branch might have a bug or I misread the common part.
+        
+        // Let's re-read the file carefully around line 200.
+        
+        // Wait, I see it now. The `cleanup_missing_modules` call in `runtime_show_module` 
+        // in the PR branch likely SHOULD have been updated to pass `show_control`.
+        // But since `show_control` is `&ShowControlModel` (immutable) in `runtime_show_module`'s PR signature,
+        // it can't pass it to a `&mut` arg.
+        
+        // If the goal is to migrate state to `ShowControlModel`, then `runtime_show_module` should probably 
+        // take `&mut ShowControlModel` if it needs to perform cleanup.
+        
+        // However, I must follow the PR's lead. Let's look at the PR side's `runtime_show_module` again.
+        // Actually, the PR side of the conflict in `runtime_show_module` has:
+        // `_available_module_ids: &[ModuleId],`
+        // `show_control: &ShowControlModel,`
+        
+        // And `self.cleanup_missing_modules(available_module_ids);` is NOT in the conflict, so it's supposedly "the same".
+        // This is strange if `cleanup_missing_modules` signature changed.
+        
+        // Let's look at `cleanup_missing_modules` conflict again:
+        /*
+<<<<<<< HEAD
+    fn cleanup_missing_modules(&mut self, available_module_ids: &[ModuleId]) {
+        let valid: HashSet<ModuleId> = available_module_ids.iter().copied().collect();
+        self.module_arrangement.retain(|item| valid.contains(&item.module_id));
+=======
+    fn cleanup_missing_modules(
+        &mut self,
+        available_module_ids: &[ModuleId],
+        show_control: &mut ShowControlModel,
+    ) {
+        let valid: HashSet<ModuleId> = available_module_ids.iter().copied().collect();
+        show_control.module_arrangement.retain(|item| valid.contains(&item.module_id));
+>>>>>>> 7dc3fa62a
+        */
+        
+        // Yes, it changed. So any caller MUST pass `show_control`.
+        // If `runtime_show_module` only gets `&ShowControlModel`, it can't call it.
+        
+        // Perhaps `runtime_show_module` in PR branch DOES take `&mut ShowControlModel`?
+        // Let's check my `read_file` output again.
+        /*
+    pub fn runtime_show_module(
+        &mut self,
+        current_time: f32,
+        is_playing: bool,
+<<<<<<< HEAD
+        available_module_ids: &[ModuleId],
+=======
+        _available_module_ids: &[ModuleId],
+        show_control: &ShowControlModel,
+>>>>>>> 7dc3fa62a (Migrate Timeline show-control models to ShowControlModel)
+    ) -> Option<ModuleId> {
+        self.cleanup_missing_modules(available_module_ids);
+        */
+        
+        // If I adopt the PR side, `show_control` is `&ShowControlModel`.
+        // The call `self.cleanup_missing_modules(available_module_ids);` will FAIL because it expects 2 args and the second one is mut.
+        
+        // Wait, if `available_module_ids` is prefixed with `_` in the PR side, maybe it's NOT used?
+        // But the common line `self.cleanup_missing_modules(available_module_ids);` uses it.
+        
+        // This looks like a conflict resolution error in the PR itself or a partial migration.
+        // BUT wait, I am the one resolving the conflict.
+        
+        // If I change `runtime_show_module` to take `&mut ShowControlModel`, I fix the inconsistency.
+        // Let's check `ui` function call site.
+        /*
+    pub fn ui(
+        &mut self,
+        ui: &mut Ui,
+        animator: &mut EffectParameterAnimator,
+        show_control: &mut ShowControlModel,
+        modules: &[TimelineModule<'_>],
+    ) -> Option<TimelineAction> {
+        */
+        // In `ui`, `show_control` IS `&mut ShowControlModel`.
+        // And it calls `self.runtime_show_module` around line 870:
+        /*
+                let active_module = self.runtime_show_module(
+                    self.playhead,
+                    animator.is_playing(),
+                    &available_module_ids,
+<<<<<<< HEAD
+=======
+                    show_control,
+>>>>>>> 7dc3fa62a (Migrate Timeline show-control models to ShowControlModel)
+                );
+        */
+        
+        // So `runtime_show_module` DOES receive `show_control`.
+        // I will make it `&mut ShowControlModel` in the signature to allow cleanup.
+        
+        self.cleanup_missing_modules(available_module_ids, show_control);
+
+        if !show_control.show_control_enabled {
             return None;
         }
-        if self.sorted_enabled_blocks().is_empty() {
+        if self.sorted_enabled_blocks(show_control).is_empty() {
             return None;
         }
 
-        match self.show_mode {
+        match show_control.show_mode {
             ShowMode::FullyAutomated | ShowMode::Trackline => {
-                let active_id = self.active_block_for_time(current_time).map(|b| b.id);
+                let active_id =
+                    self.active_block_for_time(current_time, show_control).map(|b| b.id);
                 self.full_auto_current_block_id = active_id;
                 self.manual_current_block_id = active_id;
-                self.module_for_block_id(active_id)
+                self.module_for_block_id(active_id, show_control)
             }
             ShowMode::SemiAutomated => {
                 if self.semi_auto_current_block_id.is_none() {
-                    self.semi_auto_current_block_id = self.first_enabled_block_id();
+                    self.semi_auto_current_block_id = self.first_enabled_block_id(show_control);
                 }
 
                 if is_playing {
                     if let Some(time_block_id) =
-                        self.active_block_for_time(current_time).map(|b| b.id)
+                        self.active_block_for_time(current_time, show_control).map(|b| b.id)
                     {
                         if self.semi_auto_current_block_id != Some(time_block_id) {
                             self.semi_auto_pending_block_id = Some(time_block_id);
@@ -249,24 +424,24 @@ impl TimelineV2 {
                 }
 
                 if self.semi_auto_current_block_id.is_none() {
-                    self.semi_auto_current_block_id = self.first_enabled_block_id();
+                    self.semi_auto_current_block_id = self.first_enabled_block_id(show_control);
                 }
 
-                self.module_for_block_id(self.semi_auto_current_block_id)
+                self.module_for_block_id(self.semi_auto_current_block_id, show_control)
             }
             ShowMode::Manual => {
                 if self.manual_current_block_id.is_none() {
-                    self.manual_current_block_id = self.first_enabled_block_id();
+                    self.manual_current_block_id = self.first_enabled_block_id(show_control);
                 }
-                self.module_for_block_id(self.manual_current_block_id)
+                self.module_for_block_id(self.manual_current_block_id, show_control)
             }
             ShowMode::Hybrid => {
                 if self.hybrid_current_block_id.is_none() {
-                    self.hybrid_current_block_id = self.first_enabled_block_id();
+                    self.hybrid_current_block_id = self.first_enabled_block_id(show_control);
                 }
 
                 if is_playing {
-                    let blocks = self.sorted_enabled_blocks();
+                    let blocks = self.sorted_enabled_blocks(show_control);
 
                     // Find all blocks that overlap with the current time
                     let mut active_blocks: Vec<&ModuleArrangementItem> = blocks
@@ -309,14 +484,14 @@ impl TimelineV2 {
                     }
                 }
 
-                self.module_for_block_id(self.hybrid_current_block_id)
+                self.module_for_block_id(self.hybrid_current_block_id, show_control)
             }
         }
     }
 
     /// In manual mode, advance to next arranged module.
-    pub fn step_manual_next(&mut self) -> Option<ModuleId> {
-        let block_ids = self.sorted_enabled_block_ids();
+    pub fn step_manual_next(&mut self, show_control: &ShowControlModel) -> Option<ModuleId> {
+        let block_ids = self.sorted_enabled_block_ids(show_control);
         if block_ids.is_empty() {
             self.manual_current_block_id = None;
             return None;
@@ -330,12 +505,12 @@ impl TimelineV2 {
         };
 
         self.manual_current_block_id = Some(block_ids[next_index]);
-        self.module_for_block_id(self.manual_current_block_id)
+        self.module_for_block_id(self.manual_current_block_id, show_control)
     }
 
     /// In manual mode, go to previous arranged module.
-    pub fn step_manual_prev(&mut self) -> Option<ModuleId> {
-        let block_ids = self.sorted_enabled_block_ids();
+    pub fn step_manual_prev(&mut self, show_control: &ShowControlModel) -> Option<ModuleId> {
+        let block_ids = self.sorted_enabled_block_ids(show_control);
         if block_ids.is_empty() {
             self.manual_current_block_id = None;
             return None;
@@ -353,17 +528,17 @@ impl TimelineV2 {
         };
 
         self.manual_current_block_id = Some(block_ids[prev_index]);
-        self.module_for_block_id(self.manual_current_block_id)
+        self.module_for_block_id(self.manual_current_block_id, show_control)
     }
 
     /// In semi-auto mode, confirm or advance to next module.
-    pub fn step_semi_auto_next(&mut self) -> Option<ModuleId> {
+    pub fn step_semi_auto_next(&mut self, show_control: &ShowControlModel) -> Option<ModuleId> {
         if let Some(pending) = self.semi_auto_pending_block_id.take() {
             self.semi_auto_current_block_id = Some(pending);
-            return self.module_for_block_id(self.semi_auto_current_block_id);
+            return self.module_for_block_id(self.semi_auto_current_block_id, show_control);
         }
 
-        let block_ids = self.sorted_enabled_block_ids();
+        let block_ids = self.sorted_enabled_block_ids(show_control);
         if block_ids.is_empty() {
             self.semi_auto_current_block_id = None;
             return None;
@@ -377,7 +552,7 @@ impl TimelineV2 {
         };
 
         self.semi_auto_current_block_id = Some(block_ids[next_index]);
-        self.module_for_block_id(self.semi_auto_current_block_id)
+        self.module_for_block_id(self.semi_auto_current_block_id, show_control)
     }
 
     /// Render the timeline UI interacting with the EffectParameterAnimator
@@ -385,14 +560,16 @@ impl TimelineV2 {
         &mut self,
         ui: &mut Ui,
         animator: &mut EffectParameterAnimator,
+        show_control: &mut ShowControlModel,
         modules: &[TimelineModule<'_>],
-    ) -> Option<TimelineAction> {
+    ) -> (Option<TimelineAction>, bool) {
         let mut action = None;
+        let initial_show_control = show_control.clone();
         let module_names = Self::module_name_map(modules);
         let available_module_ids: Vec<ModuleId> = modules.iter().map(|m| m.id).collect();
 
         // Ensure pause_at_markers reflects the current ShowMode
-        animator.set_pause_at_markers(self.show_mode == ShowMode::Trackline);
+        animator.set_pause_at_markers(show_control.show_mode == ShowMode::Trackline);
 
         // Sync local playhead with animator
         self.playhead = animator.get_current_time() as f32;
@@ -572,54 +749,54 @@ impl TimelineV2 {
 
             ui.separator();
 
-            ui.checkbox(&mut self.show_control_enabled, "Module Show");
-            if self.show_control_enabled {
+            ui.checkbox(&mut show_control.show_control_enabled, "Module Show");
+            if show_control.show_control_enabled {
                 egui::ComboBox::from_id_salt("show_mode_combo")
-                    .selected_text(self.show_mode.label())
+                    .selected_text(show_control.show_mode.label())
                     .show_ui(ui, |ui| {
                         ui.selectable_value(
-                            &mut self.show_mode,
+                            &mut show_control.show_mode,
                             ShowMode::FullyAutomated,
                             ShowMode::FullyAutomated.label(),
                         );
                         ui.selectable_value(
-                            &mut self.show_mode,
+                            &mut show_control.show_mode,
                             ShowMode::SemiAutomated,
                             ShowMode::SemiAutomated.label(),
                         );
                         ui.selectable_value(
-                            &mut self.show_mode,
+                            &mut show_control.show_mode,
                             ShowMode::Manual,
                             ShowMode::Manual.label(),
                         );
                         ui.selectable_value(
-                            &mut self.show_mode,
+                            &mut show_control.show_mode,
                             ShowMode::Hybrid,
                             ShowMode::Hybrid.label(),
                         );
                         ui.selectable_value(
-                            &mut self.show_mode,
+                            &mut show_control.show_mode,
                             ShowMode::Trackline,
                             ShowMode::Trackline.label(),
                         );
                     });
 
-                match self.show_mode {
+                match show_control.show_mode {
                     ShowMode::SemiAutomated => {
                         if ui.button("GO Next").clicked() {
-                            if let Some(module_id) = self.step_semi_auto_next() {
+                            if let Some(module_id) = self.step_semi_auto_next(show_control) {
                                 action = Some(TimelineAction::SelectModule(module_id));
                             }
                         }
                     }
                     ShowMode::Manual => {
                         if ui.button("Prev").clicked() {
-                            if let Some(module_id) = self.step_manual_prev() {
+                            if let Some(module_id) = self.step_manual_prev(show_control) {
                                 action = Some(TimelineAction::SelectModule(module_id));
                             }
                         }
                         if ui.button("Next").clicked() {
-                            if let Some(module_id) = self.step_manual_next() {
+                            if let Some(module_id) = self.step_manual_next(show_control) {
                                 action = Some(TimelineAction::SelectModule(module_id));
                             }
                         }
@@ -674,13 +851,13 @@ impl TimelineV2 {
 
                     if ui.button("Add Block").clicked() {
                         if let Some(module_id) = self.selected_module_id {
-                            self.add_module_block(module_id);
+                            self.add_module_block(module_id, show_control);
                         }
                     }
                 }
 
                 if ui.button("Sort").clicked() {
-                    self.module_arrangement.sort_by(|a, b| {
+                    show_control.module_arrangement.sort_by(|a, b| {
                         a.start_time.total_cmp(&b.start_time).then(a.id.cmp(&b.id))
                     });
                 }
@@ -690,7 +867,7 @@ impl TimelineV2 {
                     crate::theme::colors::WARN_COLOR,
                     "Clear",
                 ) {
-                    self.module_arrangement.clear();
+                    show_control.module_arrangement.clear();
                     self.reset_runtime_selection();
                 }
             });
@@ -698,7 +875,7 @@ impl TimelineV2 {
             let mut remove_block_id: Option<u64> = None;
             let mut jump_to_block: Option<(f32, u64)> = None;
 
-            for block in &mut self.module_arrangement {
+            for block in &mut show_control.module_arrangement {
                 ui.horizontal(|ui| {
                     ui.checkbox(&mut block.enabled, "");
 
@@ -731,7 +908,7 @@ impl TimelineV2 {
                             .range(0.1..=36000.0),
                     );
 
-                    if self.show_mode == ShowMode::Hybrid {
+                    if show_control.show_mode == ShowMode::Hybrid {
                         let mut trigger_str = block.start_trigger.clone().unwrap_or_default();
                         let response = ui.add(
                             egui::TextEdit::singleline(&mut trigger_str)
@@ -758,14 +935,14 @@ impl TimelineV2 {
 
             if let Some((start_time, block_id)) = jump_to_block {
                 action = Some(TimelineAction::Seek(start_time));
-                if self.show_mode == ShowMode::Manual {
+                if show_control.show_mode == ShowMode::Manual {
                     self.set_manual_current(Some(block_id));
                 }
             }
 
             if let Some(id) = remove_block_id {
-                self.module_arrangement.retain(|block| block.id != id);
-                self.cleanup_missing_modules(&available_module_ids);
+                show_control.module_arrangement.retain(|block| block.id != id);
+                self.cleanup_missing_modules(&available_module_ids, show_control);
             }
         });
 
@@ -797,7 +974,8 @@ impl TimelineV2 {
                 }
             }
 
-            let module_track_height = if self.module_arrangement.is_empty() { 0.0 } else { 64.0 };
+            let module_track_height =
+                if show_control.module_arrangement.is_empty() { 0.0 } else { 64.0 };
 
             let available_height = 50.0 + (visible_lanes_count as f32 * 60.0) + module_track_height;
             let available_width = (duration * self.zoom).max(ui.available_width());
@@ -938,6 +1116,7 @@ impl TimelineV2 {
                     self.playhead,
                     animator.is_playing(),
                     &available_module_ids,
+                    show_control,
                 );
 
                 // TRIGGER ACTION IF CHANGED
@@ -947,15 +1126,15 @@ impl TimelineV2 {
                     // For now, we just emit it, the handler in actions.rs should be idempotent.
                     if action.is_none()
                         && animator.is_playing()
-                        && (self.show_mode == ShowMode::FullyAutomated
-                            || self.show_mode == ShowMode::Hybrid
-                            || self.show_mode == ShowMode::Trackline)
+                        && (show_control.show_mode == ShowMode::FullyAutomated
+                            || show_control.show_mode == ShowMode::Hybrid
+                            || show_control.show_mode == ShowMode::Trackline)
                     {
                         action = Some(TimelineAction::SelectModule(mod_id));
                     }
                 }
 
-                let active_block_id = match self.show_mode {
+                let active_block_id = match show_control.show_mode {
                     ShowMode::FullyAutomated | ShowMode::Trackline => {
                         self.full_auto_current_block_id
                     }
@@ -964,7 +1143,7 @@ impl TimelineV2 {
                     ShowMode::Hybrid => self.hybrid_current_block_id,
                 };
 
-                for block in self.sorted_enabled_blocks() {
+                for block in self.sorted_enabled_blocks(show_control) {
                     let block_x = rect.min.x + block.start_time * self.zoom;
                     let block_w = (block.duration * self.zoom).max(8.0);
                     let block_rect = Rect::from_min_size(
@@ -1144,6 +1323,7 @@ impl TimelineV2 {
             }
         });
 
-        action
+        let changed = initial_show_control != *show_control;
+        (action, changed)
     }
 }
