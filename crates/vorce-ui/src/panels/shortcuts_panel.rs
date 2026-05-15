@@ -207,28 +207,20 @@ impl ShortcutsPanel {
                     }
 
                     // Input Handling
-                    // ⚡ Bolt: Vermeidung von InputState Cloning pro Frame (`ui.input(|i| i.clone())`).
-                    // Verhindert Performance-Impact durch Allokationen großer Event-Listen jeden Frame.
-                    let escape_pressed = ui.input(|i| i.key_pressed(egui::Key::Escape));
+                    let input = ui.input(|i| i.clone());
 
-                    if escape_pressed {
+                    if input.key_pressed(egui::Key::Escape) {
                         self.editing_shortcut_index = None;
-                    } else {
-                        let (pressed_key, modifiers) = ui.input(|i| {
-                            let key = i.events.iter().find_map(|e| match e {
-                                egui::Event::Key { key, pressed: true, .. } => Some(*key),
-                                _ => None,
-                            });
-                            (key, i.modifiers)
-                        });
-
-                        if let Some(key) = pressed_key {
-                            // Ignore modifier-only presses
-                            if !matches!(key, egui::Key::PageUp | egui::Key::PageDown) {
-                                if let Some(vorce_key) = to_vorce_key(key) {
-                                    new_shortcut_key =
-                                        Some(Some((vorce_key, to_vorce_modifiers(modifiers))));
-                                }
+                    } else if let Some(key) = input.events.iter().find_map(|e| match e {
+                        egui::Event::Key { key, pressed: true, .. } => Some(key),
+                        _ => None,
+                    }) {
+                        // Ignore modifier-only presses
+                        if !matches!(key, egui::Key::PageUp | egui::Key::PageDown) {
+                            let modifiers = input.modifiers;
+                            if let Some(vorce_key) = to_vorce_key(*key) {
+                                new_shortcut_key =
+                                    Some(Some((vorce_key, to_vorce_modifiers(modifiers))));
                             }
                         }
                     }

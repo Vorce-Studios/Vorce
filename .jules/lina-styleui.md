@@ -22,6 +22,3 @@
 ## 2026-05-19 - Vorce UI Theme Colors Compliance
 **Erkenntnis:** Several components (`icon_demo_panel.rs`, `cue_panel.rs`, `controller_overlay_panel`, `preview_panel.rs`) still used hardcoded `Color32` equivalents instead of dynamic `ui.visuals()` or `crate::theme::colors` references, which broke appearance across different active themes.
 **Aktion:** Replaced hardcoded constants like `Color32::YELLOW`, `Color32::GREEN`, `Color32::RED`, `Color32::GRAY` with `ui.visuals().warn_fg_color`, `crate::theme::colors::MINT_ACCENT`, `ui.visuals().error_fg_color`, and `ui.style().visuals.text_color().gamma_multiply(0.6)` respectively. Ensuring dynamic rendering fixes UI contrast problems instantly.
-## 2026-06-15 - Hardcoded Colors in Mesh Editor and Audio Meter
-**Erkenntnis:** The `mesh_editor` and `audio_meter` in `vorce-ui` contained several hardcoded colors (`Color32::from_rgb`, `Color32::WHITE`) that broke visual consistency across different themes, especially breaking contrast and failing to utilize the app's dynamic theme variables.
-**Aktion:** Replaced hardcoded constants with dynamic `ui.visuals()` calls and `crate::theme::colors` references. Ensured correct closure signatures (passing `&egui::Ui`) were used to access `ui.visuals()`.
