@@ -13,4 +13,5 @@ Ran `scripts/jules/pre-pr-checks.sh`. No failures or broken dependencies were fo
 The codebase is now cleaner, having properly deprecated an unused `Mixxx` assignment target while gracefully handling old configurations.
 
 ## Verlinktes Issue
+
 Fixes #1234
