@@ -145,6 +145,12 @@ impl KeyBindings {
 
     /// Load from JSON file
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
+        if path.as_ref().components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+            return Err(crate::error::ControlError::IoError(std::io::Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                "Path Traversal Versuch blockiert",
+            )));
+        }
         let json = std::fs::read_to_string(path)?;
         let mut data: KeyBindingsData = serde_json::from_str(&json)?;
 
