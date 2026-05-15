@@ -451,7 +451,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
                             .default_open(true)
                             .show(ui_obj, |ui| {
                                 let mut layer_manager = std::sync::Arc::make_mut(&mut app.state.layer_manager).clone();
-                                app.ui_state.render_master_controls_embedded(ui, &mut layer_manager);
+                                vorce_ui::panels::render_master_controls_embedded(&mut app.ui_state, ui, &mut layer_manager);
                                 if layer_manager != *app.state.layer_manager {
                                     *std::sync::Arc::make_mut(&mut app.state.layer_manager) = layer_manager;
                                     app.state.dirty = true;
@@ -728,7 +728,7 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
         },
     );
 
-    app.ui_state.render_controls(ctx);
+    vorce_ui::panels::render_controls(&mut app.ui_state, ctx);
 
     vorce_ui::panels::osc_panel::show_osc_panel(ctx, &mut app.ui_state, &mut app.control_manager);
 
