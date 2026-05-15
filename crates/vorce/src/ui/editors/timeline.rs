@@ -48,12 +48,9 @@ pub fn show(ctx: &Context, mut context: TimelineContext) {
                 })
                 .collect::<Vec<_>>();
 
-            let (action, changed) =
-                context.ui_state.timeline_panel.ui(ui, animator, &timeline_modules);
-            if changed {
-                state.dirty = true;
-            }
-            if let Some(action) = action {
+            if let Some(action) =
+                context.ui_state.timeline_panel.ui(ui, animator, &timeline_modules)
+            {
                 use vorce_ui::TimelineAction;
                 match action {
                     TimelineAction::Play => animator.play(),

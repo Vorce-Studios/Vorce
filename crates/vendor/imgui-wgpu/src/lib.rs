@@ -735,32 +735,33 @@ impl Renderer {
 
                 // Set scissors on the renderpass.
                 let end = start + count as u32;
-                let left = clip_rect[0].max(0.0).floor() as u32;
-                let top = clip_rect[1].max(0.0).floor() as u32;
-                let right = clip_rect[2].max(0.0).ceil() as u32;
-                let bottom = clip_rect[3].max(0.0).ceil() as u32;
+                if clip_rect[0] < fb_size[0]
+                    && clip_rect[1] < fb_size[1]
+                    && clip_rect[2] >= 0.0
+                    && clip_rect[3] >= 0.0
+                {
+                    let scissors = (
+                        clip_rect[0].max(0.0).floor() as u32,
+                        clip_rect[1].max(0.0).floor() as u32,
+                        (clip_rect[2].min(fb_size[0]) - clip_rect[0].max(0.0))
+                            .abs()
+                            .ceil() as u32,
+                        (clip_rect[3].min(fb_size[1]) - clip_rect[1].max(0.0))
+                            .abs()
+                            .ceil() as u32,
+                    );
 
-                let fb_width = fb_size[0] as u32;
-                let fb_height = fb_size[1] as u32;
+                    // XXX: Work-around for wgpu issue [1] by only issuing draw
+                    // calls if the scissor rect is valid (by wgpu's flawed
+                    // logic). Regardless, a zero-width or zero-height scissor
+                    // is essentially a no-op render anyway, so just skip it.
+                    // [1]: https://github.com/gfx-rs/wgpu/issues/1750
+                    if scissors.2 > 0 && scissors.3 > 0 {
+                        rpass.set_scissor_rect(scissors.0, scissors.1, scissors.2, scissors.3);
 
-                let left = left.min(fb_width);
-                let top = top.min(fb_height);
-                let right = right.min(fb_width);
-                let bottom = bottom.min(fb_height);
-
-                let width = if right > left { right - left } else { 0 };
-                let height = if bottom > top { bottom - top } else { 0 };
-
-                // XXX: Work-around for wgpu issue [1] by only issuing draw
-                // calls if the scissor rect is valid (by wgpu's flawed
-                // logic). Regardless, a zero-width or zero-height scissor
-                // is essentially a no-op render anyway, so just skip it.
-                // [1]: https://github.com/gfx-rs/wgpu/issues/1750
-                if width > 0 && height > 0 {
-                    rpass.set_scissor_rect(left, top, width, height);
-
-                    // Draw the current batch of vertices with the renderpass.
-                    rpass.draw_indexed(start..end, vertex_base, 0..1);
+                        // Draw the current batch of vertices with the renderpass.
+                        rpass.draw_indexed(start..end, vertex_base, 0..1);
+                    }
                 }
 
                 // Increment the index regardless of whether or not this batch

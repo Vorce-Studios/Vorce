@@ -20,9 +20,7 @@ impl Default for LocaleManager {
 
 impl LocaleManager {
     pub fn new(lang_id: &str) -> Self {
-        let lang: LanguageIdentifier = lang_id.parse().unwrap_or_else(|_| {
-            "en-US".parse().unwrap_or_else(|_| panic!("Should be a valid language ID"))
-        });
+        let lang: LanguageIdentifier = lang_id.parse().unwrap_or_else(|_| "en-US".parse().unwrap());
         let bundle = Self::load_bundle(&lang);
         Self { bundle, current_lang: lang }
     }
@@ -32,24 +30,15 @@ impl LocaleManager {
 
         // Determine available locales
         // Note: This must match folders in locales/
-        let available_locales: Vec<LanguageIdentifier> = vec![
-            "en".parse().unwrap_or_else(|_| panic!("Should be a valid language ID")),
-            "de".parse().unwrap_or_else(|_| panic!("Should be a valid language ID")),
-        ];
+        let available_locales: Vec<LanguageIdentifier> =
+            vec!["en".parse().unwrap(), "de".parse().unwrap()];
 
         // Negotiate - fluent_langneg 0.14 uses its own LanguageIdentifier
-        let requested: Vec<fluent_langneg::LanguageIdentifier> = vec![lang_id
-            .to_string()
-            .parse()
-            .unwrap_or_else(|_| panic!("Should be a valid language ID"))];
-        let available_fl: Vec<fluent_langneg::LanguageIdentifier> = available_locales
-            .iter()
-            .map(|l| {
-                l.to_string().parse().unwrap_or_else(|_| panic!("Should be a valid language ID"))
-            })
-            .collect();
-        let default_fl: fluent_langneg::LanguageIdentifier =
-            "en".parse().unwrap_or_else(|_| panic!("Should be a valid language ID"));
+        let requested: Vec<fluent_langneg::LanguageIdentifier> =
+            vec![lang_id.to_string().parse().unwrap()];
+        let available_fl: Vec<fluent_langneg::LanguageIdentifier> =
+            available_locales.iter().map(|l| l.to_string().parse().unwrap()).collect();
+        let default_fl: fluent_langneg::LanguageIdentifier = "en".parse().unwrap();
         let supported = negotiate_languages(
             &requested,
             &available_fl,
@@ -58,8 +47,7 @@ impl LocaleManager {
         );
 
         // Load resources
-        let active_lang =
-            supported.first().unwrap_or_else(|| panic!("Should be a valid language ID"));
+        let active_lang = supported.first().unwrap();
         // Use just the language code ("en", "de") for folder names
         let lang_key = active_lang.language.as_str();
 
@@ -90,9 +78,7 @@ impl LocaleManager {
     }
 
     pub fn set_locale(&mut self, lang_id: &str) {
-        let lang: LanguageIdentifier = lang_id.parse().unwrap_or_else(|_| {
-            "en-US".parse().unwrap_or_else(|_| panic!("Should be a valid language ID"))
-        });
+        let lang: LanguageIdentifier = lang_id.parse().unwrap_or_else(|_| "en-US".parse().unwrap());
         self.bundle = Self::load_bundle(&lang);
         self.current_lang = lang;
     }

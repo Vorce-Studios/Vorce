@@ -8,6 +8,7 @@ use crate::animation::{
 };
 use crate::effects::EffectType;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use tracing::debug;
 
 /// ID for an effect parameter automation binding
@@ -42,11 +43,7 @@ pub struct EffectParameterAnimator {
     /// Next binding ID
     next_id: EffectAnimationId,
     /// Cache of last evaluated values
-    value_cache: std::collections::HashMap<EffectAnimationId, AnimValue>,
-    /// Scheduled module blocks
-    pub module_arrangement: Vec<ModuleArrangementItem>,
-    /// Selected show mode
-    pub show_mode: ShowMode,
+    value_cache: HashMap<EffectAnimationId, AnimValue>,
 }
 
 impl EffectParameterAnimator {
@@ -54,29 +51,13 @@ impl EffectParameterAnimator {
     pub fn new() -> Self {
         let clip = AnimationClip::new("Effect Automation".to_string());
         let player = AnimationPlayer::new(clip.clone());
-        Self {
-            clip,
-            player,
-            bindings: Vec::new(),
-            next_id: 1,
-            value_cache: std::collections::HashMap::new(),
-            module_arrangement: Vec::new(),
-            show_mode: ShowMode::default(),
-        }
+        Self { clip, player, bindings: Vec::new(), next_id: 1, value_cache: HashMap::new() }
     }
 
     /// Create an animator with an existing clip
     pub fn with_clip(clip: AnimationClip) -> Self {
         let player = AnimationPlayer::new(clip.clone());
-        Self {
-            clip,
-            player,
-            bindings: Vec::new(),
-            next_id: 1,
-            value_cache: std::collections::HashMap::new(),
-            module_arrangement: Vec::new(),
-            show_mode: ShowMode::default(),
-        }
+        Self { clip, player, bindings: Vec::new(), next_id: 1, value_cache: HashMap::new() }
     }
 
     /// Add a parameter binding and create a track for it
@@ -488,73 +469,5 @@ mod tests {
         // Seek before start (should clamp to 0)
         animator.seek(-5.0);
         assert_eq!(animator.get_current_time(), 0.0);
-    }
-}
-
-use crate::module::ModuleId;
-/// Show orchestration mode for module arrangement.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
-pub enum ShowMode {
-    /// Fully automatic module switching by timeline time.
-    #[default]
-    FullyAutomated,
-    /// Timeline advances automatically, module switch is confirmed manually.
-    SemiAutomated,
-    /// Module switching is manual only (timeline acts as arrangement board).
-    Manual,
-    /// Hybrid logic combining time and triggers.
-    Hybrid,
-    /// Playback stops at markers, waiting for explicit trigger to continue.
-    Trackline,
-}
-
-impl ShowMode {
-    /// Get a human readable label
-    pub fn label(self) -> &'static str {
-        match self {
-            Self::FullyAutomated => "Fully Auto",
-            Self::SemiAutomated => "Semi Auto",
-            Self::Manual => "Manual",
-            Self::Hybrid => "Hybrid",
-            Self::Trackline => "Trackline",
-        }
-    }
-}
-
-/// A scheduled module block on the show timeline.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(default)]
-pub struct ModuleArrangementItem {
-    /// Unique ID for stable runtime selection.
-    pub id: u64,
-    /// Target module.
-    pub module_id: ModuleId,
-    /// Block start time in seconds.
-    pub start_time: f32,
-    /// Block duration in seconds.
-    pub duration: f32,
-    /// Whether this block is active in runtime.
-    pub enabled: bool,
-    /// Trigger that must be active to start this block (Hybrid Mode).
-    pub start_trigger: Option<String>,
-}
-
-impl Default for ModuleArrangementItem {
-    fn default() -> Self {
-        Self {
-            id: 0,
-            module_id: 0,
-            start_time: 0.0,
-            duration: 8.0,
-            enabled: true,
-            start_trigger: None,
-        }
-    }
-}
-
-impl ModuleArrangementItem {
-    /// Get the end time of the block
-    pub fn end_time(&self) -> f32 {
-        self.start_time + self.duration.max(0.1)
     }
 }
