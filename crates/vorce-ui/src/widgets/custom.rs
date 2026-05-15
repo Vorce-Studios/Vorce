@@ -969,7 +969,13 @@ mod tests {
     #[test]
     fn test_icon_button() {
         test_ui(|ui| {
-            icon_button(ui, "Test Icon", Color32::WHITE, Color32::WHITE, false);
+            icon_button(
+                ui,
+                "Test Icon",
+                ui.visuals().text_color(),
+                ui.visuals().text_color(),
+                false,
+            );
         });
     }
 

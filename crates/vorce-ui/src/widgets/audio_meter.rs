@@ -52,7 +52,7 @@ impl Widget for AudioMeter {
             let painter = ui.painter();
 
             // Draw rack frame
-            draw_rack_frame(painter, rect);
+            draw_rack_frame(ui, painter, rect);
 
             // Inner content rect (inset for frame)
             let frame_width = 8.0;
@@ -108,7 +108,7 @@ impl Widget for AudioMeter {
 }
 
 /// Draws the mounting frame with 4 phillips screws
-fn draw_rack_frame(painter: &egui::Painter, rect: Rect) {
+fn draw_rack_frame(ui: &egui::Ui, painter: &egui::Painter, rect: Rect) {
     let frame_color = crate::theme::colors::LIGHTER_GREY;
     let frame_highlight = crate::theme::colors::STROKE_GREY;
     let frame_shadow = crate::theme::colors::DARK_GREY;
@@ -146,23 +146,27 @@ fn draw_rack_frame(painter: &egui::Painter, rect: Rect) {
         ];
 
         for pos in screw_positions {
-            draw_screw(painter, pos, 4.0);
+            draw_screw(ui, painter, pos, 4.0);
         }
     }
 }
 
 /// Draws a realistic phillips head screw
-fn draw_screw(painter: &egui::Painter, center: Pos2, radius: f32) {
+fn draw_screw(ui: &egui::Ui, painter: &egui::Painter, center: Pos2, radius: f32) {
     // Screw head
-    painter.circle_filled(center, radius, Color32::from_rgb(80, 80, 85));
-    painter.circle_stroke(center, radius, Stroke::new(0.5, Color32::from_rgb(40, 40, 45)));
+    painter.circle_filled(center, radius, ui.visuals().widgets.noninteractive.bg_stroke.color);
+    painter.circle_stroke(
+        center,
+        radius,
+        Stroke::new(0.5, ui.visuals().widgets.noninteractive.bg_fill),
+    );
 
     // Inner recess (darker)
-    painter.circle_filled(center, radius * 0.7, Color32::from_rgb(50, 50, 55));
+    painter.circle_filled(center, radius * 0.7, ui.visuals().widgets.noninteractive.weak_bg_fill);
 
     // Phillips cross (+)
     let cross_len = radius * 0.6;
-    let cross_color = Color32::from_rgb(30, 30, 35);
+    let cross_color = ui.visuals().widgets.noninteractive.bg_fill;
 
     // Horizontal line
     painter.line_segment(
@@ -181,7 +185,7 @@ fn draw_retro_stereo(ui: &mut egui::Ui, rect: Rect, db_left: f32, db_right: f32)
     let painter = ui.painter();
 
     // Dark background behind glass
-    painter.rect_filled(rect, 0.0, Color32::from_rgb(230, 225, 210)); // Cream/vintage color
+    painter.rect_filled(rect, 0.0, ui.visuals().extreme_bg_color); // Cream/vintage color
 
     // Split into left and right meters
     let meter_width = (rect.width() - 4.0) / 2.0;
@@ -218,14 +222,14 @@ fn draw_retro_stereo(ui: &mut egui::Ui, rect: Rect, db_left: f32, db_right: f32)
 }
 
 fn draw_single_retro_meter(
-    _ui: &egui::Ui,
+    ui: &egui::Ui,
     painter: &egui::Painter,
     rect: Rect,
     db: f32,
     label: &str,
 ) {
     // Meter face background
-    painter.rect_filled(rect, 0.0, Color32::from_rgb(230, 225, 210)); // Cream/vintage color
+    painter.rect_filled(rect, 0.0, ui.visuals().extreme_bg_color); // Cream/vintage color
 
     // Calculate geometry
     // We want the pivot to be well below the rect
@@ -255,7 +259,7 @@ fn draw_single_retro_meter(
     if red_points.len() >= 2 {
         painter.add(egui::Shape::line(
             red_points,
-            Stroke::new(5.0, Color32::from_rgba_premultiplied(200, 60, 60, 100)),
+            Stroke::new(5.0, crate::theme::colors::ERROR_COLOR.linear_multiply(0.4)),
         ));
     }
 
@@ -265,7 +269,7 @@ fn draw_single_retro_meter(
     for (_val, angle) in ticks {
         let p1 = angle_to_pos(angle, radius * 0.55);
         let p2 = angle_to_pos(angle, radius * 0.65);
-        painter.line_segment([p1, p2], Stroke::new(1.5, Color32::from_gray(50)));
+        painter.line_segment([p1, p2], Stroke::new(1.5, crate::theme::colors::STROKE_GREY));
 
         // Labels could be added here if space permits
     }
@@ -294,8 +298,10 @@ fn draw_single_retro_meter(
     let visible_base = center + dir * t_base;
 
     // Draw needle
-    painter
-        .line_segment([visible_base, needle_tip], Stroke::new(1.5, Color32::from_rgb(180, 40, 40)));
+    painter.line_segment(
+        [visible_base, needle_tip],
+        Stroke::new(1.5, crate::theme::colors::ERROR_COLOR),
+    );
 
     // Shadow
     painter.line_segment(
@@ -309,7 +315,7 @@ fn draw_single_retro_meter(
         egui::Align2::CENTER_CENTER,
         label,
         egui::FontId::proportional(12.0),
-        Color32::from_gray(80),
+        ui.visuals().text_color().gamma_multiply(0.6),
     );
 }
 
@@ -391,11 +397,11 @@ fn draw_horizontal_led_bar(painter: &egui::Painter, rect: Rect, db: f32, peak: f
             && peak < (threshold_db + (max_db - min_db) / segment_count as f32);
 
         let color = if threshold_db >= 0.0 {
-            Color32::from_rgb(255, 50, 50)
+            crate::theme::colors::ERROR_COLOR
         } else if threshold_db >= -10.0 {
-            Color32::from_rgb(255, 200, 0)
+            crate::theme::colors::WARN_COLOR
         } else {
-            Color32::from_rgb(0, 255, 0)
+            crate::theme::colors::MINT_ACCENT
         };
 
         let final_color = if active {
@@ -429,7 +435,7 @@ fn draw_horizontal_scale(ui: &egui::Ui, painter: &egui::Painter, rect: Rect) {
         let x = db_to_x(val);
         painter.line_segment(
             [Pos2::new(x, rect.min.y), Pos2::new(x, rect.max.y)],
-            Stroke::new(1.0, Color32::from_gray(60)),
+            Stroke::new(1.0, crate::theme::colors::STROKE_GREY),
         );
 
         if rect.height() > 8.0 && (val == -40.0 || val == -20.0 || val == 0.0) {
