@@ -867,6 +867,15 @@ pub fn collapsing_header_with_reset(
     reset_clicked
 }
 
+/// Helper for labeled rows.
+pub fn labeled_row(ui: &mut Ui, label: &str, content: impl FnOnce(&mut Ui)) {
+    ui.horizontal(|ui| {
+        ui.label(label);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), content);
+    });
+    ui.add_space(4.0);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
