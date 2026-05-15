@@ -13,7 +13,7 @@ pub use safety::*;
 mod tests {
 
     use crate::widgets::icons::AppIcon;
-    use egui::{Color32, Ui};
+    use egui::Ui;
 
     use super::*;
     use egui::Context;
