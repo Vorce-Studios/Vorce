@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Activity, BrainCircuit, Cpu, DollarSign, RefreshCw, Layers, Clock, Link as LinkIcon, BarChart3 } from 'lucide-react';
+import { Activity, BrainCircuit, Cpu, RefreshCw, Layers, Clock, Link as LinkIcon, BarChart3, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface QuotaData {
   date: string;
@@ -31,10 +31,23 @@ interface RegistryData {
 }
 
 // Unified Task Item
+type TaskStatus =
+  | 'JULES_RUNNING'
+  | 'JULES_PLANNING'
+  | 'JULES_QUEUED'
+  | 'JULES_WAITING'
+  | 'JULES_FAILED'
+  | 'PR_REVIEW'
+  | 'PR_CHECK_FAILED'
+  | 'MERGE_CONFLICT'
+  | 'GITHUB_OPEN'
+  | 'COMPLETED'
+  | 'ERROR';
+
 interface TaskItem {
   id: string;
   title: string;
-  status: 'IN_PROGRESS' | 'QUEUED' | 'PENDING_INPUT' | 'IN_REVIEW' | 'COMPLETED' | 'ERROR';
+  status: TaskStatus;
   gh_status: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   task_type: string;
@@ -69,14 +82,68 @@ function ProgressBar({ current, max, colorClass }: { current: number, max: numbe
   );
 }
 
-function ProviderCard({ name, providerReg, modelsData }: { name: string, providerReg: any, modelsData: QuotaData[] }) {
-  const budget = providerReg?.daily_budget_usd || 0;
-  const limit = providerReg?.daily_limit || 0;
-  
-  const totalCost = modelsData.reduce((acc, curr) => acc + curr.cost_usd, 0);
-  const totalCalls = modelsData.reduce((acc, curr) => acc + curr.calls, 0);
+function formatTokens(val: number): string {
+  if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(2)}M`;
+  if (val >= 1000) return `${(val / 1000).toFixed(1)}k`;
+  return val.toString();
+}
 
-  const formatTokens = (val: number) => val >= 1000 ? (val/1000).toFixed(1) + 'k' : val.toString();
+function getRowTotalTokens(row: QuotaData): number {
+  return row.input_tokens + row.output_tokens;
+}
+
+function getJulesScopedUsage(registry: RegistryData | null): any {
+  return registry?.providers?.jules?.usage_today || {};
+}
+
+function formatQuotaWindow(minutes: unknown): string {
+  const value = asNumber(minutes);
+  if (value === 300) return '5h';
+  if (value === 10080) return 'Weekly';
+  if (value >= 1440) return `${Math.round(value / 1440)}d`;
+  if (value >= 60) return `${Math.round(value / 60)}h`;
+  return value > 0 ? `${value}m` : 'Quota';
+}
+
+function formatResetTime(value: unknown): string {
+  const seconds = asNumber(value);
+  if (seconds <= 0) return 'n/a';
+  return new Date(seconds * 1000).toLocaleTimeString();
+}
+
+function formatDuration(secondsValue: unknown): string {
+  const seconds = Math.max(0, Math.round(asNumber(secondsValue)));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
+
+function formatDateTime(value: unknown): string {
+  if (!value) return 'n/a';
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return 'n/a';
+  return date.toLocaleTimeString();
+}
+
+function ProviderCard({ name, providerReg, modelsData }: { name: string, providerReg: any, modelsData: QuotaData[] }) {
+  const limit = providerReg?.daily_limit || 0;
+  const usage = providerReg?.usage_today || {};
+  const rateLimits = usage.rate_limits;
+  const julesQuotaObserved = asNumber(usage.account_sessions_observed_rolling_24h || usage.calls);
+  
+  const totalCalls = modelsData.reduce((acc, curr) => acc + curr.calls, 0);
+  const totalInput = modelsData.reduce((acc, curr) => acc + curr.input_tokens, 0);
+  const totalOutput = modelsData.reduce((acc, curr) => acc + curr.output_tokens, 0);
+  const totalCached = modelsData.reduce((acc, curr) => acc + curr.cached_tokens, 0);
+  const totalTokens = totalInput + totalOutput;
+  const cachePct = totalInput > 0 ? (totalCached / totalInput) * 100 : 0;
+  const callPct = limit > 0 ? (totalCalls / limit) * 100 : 0;
+  const primaryQuotaPct = rateLimits?.primary ? asNumber(rateLimits.primary.used_percent) : callPct;
+  const secondaryQuotaPct = rateLimits?.secondary ? asNumber(rateLimits.secondary.used_percent) : null;
+  const primaryLabel = rateLimits?.primary ? (rateLimits.primary.label || `${formatQuotaWindow(rateLimits.primary.window_minutes)} limit`) : 'Daily quota';
+  const secondaryLabel = rateLimits?.secondary ? (rateLimits.secondary.label || `${formatQuotaWindow(rateLimits.secondary.window_minutes)} limit`) : 'Fallback signal';
+  const isJules = name === 'jules';
 
   return (
     <div className="glass-card p-6 border border-white/5 animate-fade-in">
@@ -95,17 +162,72 @@ function ProviderCard({ name, providerReg, modelsData }: { name: string, provide
           )}
         </div>
         <div className="px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-bold border border-primary/30">
-          {totalCalls} / {limit} calls
+          {isJules ? `${julesQuotaObserved} observed / ${limit}` : `${totalCalls} / ${limit} calls`}
         </div>
       </div>
       
       <div className="mb-6 bg-surface/50 p-4 rounded-xl border border-white/5">
         <div className="flex justify-between items-end mb-2">
-          <span className="text-muted text-sm font-medium">Budget Usage</span>
-          <span className="text-lg font-bold text-accent">${totalCost.toFixed(2)} <span className="text-sm font-normal text-muted">/ ${budget.toFixed(2)}</span></span>
+          <span className="text-muted text-sm font-medium">{isJules ? 'Session Throughput' : 'Token Load Today'}</span>
+          <span className="text-lg font-bold text-accent">
+            {isJules ? `${julesQuotaObserved} sessions` : formatTokens(totalTokens)}
+          </span>
         </div>
-        <ProgressBar current={totalCost} max={budget} colorClass="bg-accent" />
+        <ProgressBar current={isJules ? julesQuotaObserved : primaryQuotaPct} max={isJules ? limit : 100} colorClass="bg-accent" />
       </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6 text-xs">
+        <div className="bg-background rounded-lg p-3 border border-white/5">
+          <div className="text-muted mb-1">Source</div>
+          <div className="text-white font-medium truncate" title={usage.source}>{usage.source || 'registry'}</div>
+        </div>
+        <div className="bg-background rounded-lg p-3 border border-white/5">
+          <div className="text-muted mb-1">Last Sync</div>
+          <div className="text-white font-medium">{usage.last_synced_at ? new Date(usage.last_synced_at).toLocaleTimeString() : 'n/a'}</div>
+        </div>
+        <div className="bg-background rounded-lg p-3 border border-white/5">
+          <div className="text-muted mb-1">{isJules ? 'API Observed 24h' : primaryLabel}</div>
+          <div className="text-white font-medium">{isJules ? `${julesQuotaObserved}/${limit}` : `${primaryQuotaPct.toFixed(1)}%`}</div>
+          {!isJules && (
+            <div className="text-[10px] text-muted mt-1">
+              {rateLimits?.primary ? `Reset ${formatResetTime(rateLimits.primary.resets_at)}` : `${totalCalls}/${limit} calls`}
+            </div>
+          )}
+        </div>
+        <div className="bg-background rounded-lg p-3 border border-white/5">
+          <div className="text-muted mb-1">{isJules ? 'Vorce Live/Waiting' : secondaryLabel}</div>
+          <div className="text-white font-medium">
+            {isJules
+              ? `${asNumber(usage.active_sessions)}/${asNumber(usage.pending_sessions)}`
+              : secondaryQuotaPct !== null ? `${secondaryQuotaPct.toFixed(1)}%` : `${cachePct.toFixed(1)}% cache`}
+          </div>
+          {!isJules && rateLimits?.secondary && (
+            <div className="text-[10px] text-muted mt-1">Reset {formatResetTime(rateLimits.secondary.resets_at)}</div>
+          )}
+          {isJules && (
+            <div className="text-[10px] text-muted mt-1">calendar day: {asNumber(usage.account_sessions_observed_today)}</div>
+          )}
+        </div>
+      </div>
+
+      {!isJules && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+          <div className="bg-background rounded-lg p-3 border border-white/5">
+            <div className="flex justify-between text-xs mb-2">
+              <span className="text-muted">{primaryLabel} used</span>
+              <span className="text-white font-medium">{primaryQuotaPct.toFixed(1)}%</span>
+            </div>
+            <ProgressBar current={primaryQuotaPct} max={100} colorClass="bg-primary" />
+          </div>
+          <div className="bg-background rounded-lg p-3 border border-white/5">
+            <div className="flex justify-between text-xs mb-2">
+              <span className="text-muted">{secondaryQuotaPct !== null ? `${secondaryLabel} used` : 'Cache reuse'}</span>
+              <span className="text-white font-medium">{secondaryQuotaPct !== null ? `${secondaryQuotaPct.toFixed(1)}%` : `${cachePct.toFixed(1)}%`}</span>
+            </div>
+            <ProgressBar current={secondaryQuotaPct !== null ? secondaryQuotaPct : cachePct} max={100} colorClass="bg-secondary" />
+          </div>
+        </div>
+      )}
       
       <div className="space-y-3">
         <div className="text-sm font-bold text-white/70 uppercase tracking-wider border-b border-white/10 pb-2 mb-3">Model Breakdown</div>
@@ -120,9 +242,10 @@ function ProviderCard({ name, providerReg, modelsData }: { name: string, provide
           <div key={idx} className="bg-background rounded-xl p-4 border border-white/5 hover:border-white/10 transition-colors">
             <div className="flex justify-between items-center font-bold text-white mb-3">
               <span className="text-base">{mdl.model_name}</span>
-              <span className="text-accent bg-accent/10 px-2 py-1 rounded text-sm">${mdl.cost_usd.toFixed(3)}</span>
+              <span className="text-accent bg-accent/10 px-2 py-1 rounded text-sm">{mdl.calls} calls</span>
             </div>
-            <div className="grid grid-cols-4 gap-3 text-xs">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+              <div className="flex flex-col bg-surface/30 p-2 rounded"><span className="text-muted mb-1">Total</span><span className="font-medium text-white">{formatTokens(getRowTotalTokens(mdl))}</span></div>
               <div className="flex flex-col bg-surface/30 p-2 rounded"><span className="text-muted mb-1">In/Out</span><span className="font-medium text-white">{formatTokens(mdl.input_tokens)}/{formatTokens(mdl.output_tokens)}</span></div>
               <div className="flex flex-col bg-surface/30 p-2 rounded"><span className="text-muted mb-1">Cached</span><span className="font-medium text-secondary">{formatTokens(mdl.cached_tokens)}</span></div>
               <div className="flex flex-col bg-surface/30 p-2 rounded"><span className="text-muted mb-1">Reasoning</span><span className="font-medium text-primary">{formatTokens(mdl.reasoning_tokens)}</span></div>
@@ -143,12 +266,17 @@ const USAGE_META_KEYS = new Set([
   'source',
   'last_synced_at',
   'rate_limits',
+  'quota_buckets',
+  'quota_source',
+  'quota_synced_at',
+  'quota_error',
   'active_sessions',
   'completed_sessions',
   'failed_sessions',
   'pending_sessions',
   'api_sessions_seen',
-  'last_error'
+  'last_error',
+  'api_sessions_today'
 ]);
 
 function asNumber(value: unknown): number {
@@ -216,27 +344,31 @@ export default function App() {
   const [activeSessions, setActiveSessions] = useState<any | null>(null);
   const [registry, setRegistry] = useState<RegistryData | null>(null);
   const [ghIssues, setGhIssues] = useState<any[]>([]);
+  const [pullRequests, setPullRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState<string>('');
-  const [chartMetric, setChartMetric] = useState<'cost'|'tokens_in'|'tokens_out'|'reasoning'>('cost');
+  const [chartMetric, setChartMetric] = useState<'total_tokens'|'tokens_in'|'tokens_out'|'reasoning'|'calls'>('total_tokens');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [expandedIssueIds, setExpandedIssueIds] = useState<Set<string>>(new Set());
 
   const fetchData = useCallback(async () => {
     try {
       const ts = new Date().getTime();
-      const [dataRes, sessionsRes, registryRes, ghIssuesRes] = await Promise.all([
+      const [dataRes, sessionsRes, registryRes, ghIssuesRes, pullRequestsRes] = await Promise.all([
         fetch(`/data.json?t=${ts}`).catch(() => null),
         fetch(`/active-sessions.json?t=${ts}`).catch(() => null),
         fetch(`/registry.json?t=${ts}`).catch(() => null),
-        fetch(`/github-issues.json?t=${ts}`).catch(() => null)
+        fetch(`/github-issues.json?t=${ts}`).catch(() => null),
+        fetch(`/pull-requests.json?t=${ts}`).catch(() => null)
       ]);
 
       if (dataRes?.ok) setHistoricalData(await dataRes.json());
       if (sessionsRes?.ok) setActiveSessions(await sessionsRes.json());
       if (ghIssuesRes?.ok) setGhIssues(await ghIssuesRes.json());
+      if (pullRequestsRes?.ok) setPullRequests(await pullRequestsRes.json());
       
       if (registryRes?.ok) {
         const reg = await registryRes.json();
@@ -256,7 +388,7 @@ export default function App() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000);
+    const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
@@ -276,135 +408,212 @@ export default function App() {
   const chartSourceData = mergeQuotaRows(historicalData, liveQuotaRows);
   const todayData = mergeQuotaRows(historicalData.filter(d => d.date === today), liveQuotaRows);
   
-  const totalCost = todayData.reduce((acc, curr) => acc + curr.cost_usd, 0);
   const totalInputTokens = todayData.reduce((acc, curr) => acc + curr.input_tokens, 0);
   const totalOutputTokens = todayData.reduce((acc, curr) => acc + curr.output_tokens, 0);
+  const totalCachedTokens = todayData.reduce((acc, curr) => acc + curr.cached_tokens, 0);
   const totalReasoning = todayData.reduce((acc, curr) => acc + (curr.reasoning_tokens || 0), 0);
+  const totalProviderCalls = todayData.reduce((acc, curr) => acc + curr.calls, 0);
+  const totalTokens = totalInputTokens + totalOutputTokens;
+  const cacheReusePct = totalInputTokens > 0 ? (totalCachedTokens / totalInputTokens) * 100 : 0;
 
-  let totalBudget = 0;
   const providersList = registry?.providers ? Object.entries(registry.providers).filter(([_, p]) => p.enabled) : [];
-  providersList.forEach(([_, p]) => {
-    totalBudget += p.daily_budget_usd || 0;
-  });
 
-  // --- Unified Task Board Processing ---
-  const unifiedTasks: TaskItem[] = [];
+  // --- Issue Board Processing ---
+  const issueTasks: TaskItem[] = [];
   
   const parseIssueMetadata = (issue: any) => {
     const labels = issue.labels?.map((l: any) => typeof l === 'string' ? l : l.name) || [];
-    const priority = labels.find((l: string) => ['low', 'medium', 'high', 'urgent'].includes(l.toLowerCase())) || 'medium';
+    const normalizedLabels = labels.map((label: string) => label.toLowerCase());
+    const priority =
+      normalizedLabels.find((label: string) => ['low', 'medium', 'high', 'urgent'].includes(label)) ||
+      normalizedLabels.find((label: string) => /^priority:\s*(low|medium|high|critical)$/.test(label)) ||
+      'medium';
+    const title = String(issue.title || issue.issue_title || issue.topic || '');
     
     const body = issue.body || '';
     const taskMatches = body.match(/-\s*\[([ xX])\]/g) || [];
     const completed = taskMatches.filter((m: string) => m.toLowerCase().includes('x')).length;
     
     // Naming convention parsing
-    let typeIcon = 'task';
-    if (issue.title.includes('MF-StMa_')) typeIcon = 'Master';
-    if (issue.title.includes('MF-StIs_')) typeIcon = 'Standard';
-    if (issue.title.includes('MF-User_')) typeIcon = 'User';
-    if (issue.title.includes('__MF-SubI_')) typeIcon = 'Sub';
+    let typeIcon = 'Issue';
+    if (title.includes('MF-StMa_') || /\[MASTER\]$/.test(title)) typeIcon = 'Master';
+    if (title.includes('MF-StIs_') || /\[ISSUE\]$/.test(title)) typeIcon = 'Issue';
+    if (title.includes('MF-User_')) typeIcon = 'User';
+    if (title.includes('__MF-SubI_') || /\[M\d+-S\d{2}\]$/.test(title)) typeIcon = 'Sub';
 
-    return { priority: priority.toLowerCase() as any, taskType: typeIcon, subIssues: { total: taskMatches.length, completed } };
+    const normalizedPriority = priority.startsWith('priority:')
+      ? priority.replace(/^priority:\s*/, '')
+      : priority;
+
+    return {
+      priority: (normalizedPriority === 'critical' ? 'urgent' : normalizedPriority) as any,
+      taskType: typeIcon,
+      subIssues: { total: taskMatches.length, completed }
+    };
   };
 
-  const getUnifiedStatus = (task: any, source: 'JULES' | 'GITHUB' | 'REVIEW'): TaskItem['status'] => {
-    // GH CLOSED is always COMPLETED
+  const getParentIssueNumber = (issue: any): number | null => {
+    const body = String(issue.body || '');
+    const match = body.match(/(?:Part of|Parent issue:)\s+(?:[\w-]+\/[\w-]+)?#(\d+)/i);
+    return match ? Number(match[1]) : null;
+  };
+
+  const getIssueRemoteState = (issue: any): string => {
+    const body = String(issue.body || '');
+    const match = body.match(/<!--\s*vorce-remote-state:\s*([a-z-]+)\s*-->/i);
+    return match ? match[1].toUpperCase().replace(/-/g, '_') : '';
+  };
+
+  const getUnifiedStatus = (task: any, source: 'JULES' | 'GITHUB' | 'REVIEW'): TaskStatus => {
     if (task.github_state === 'CLOSED' || task.state === 'CLOSED') return 'COMPLETED';
 
     if (source === 'JULES' || task.jules_session_id) {
-      if (task.jules_state === 'ERROR' || task.status === 'ERROR') return 'ERROR';
-      if (task.jules_state === 'PENDING_INPUT' || task.status === 'PENDING_INPUT') return 'PENDING_INPUT';
-      if (task.jules_state === 'IN_PROGRESS' || task.jules_state === 'RUNNING') return 'IN_PROGRESS';
-      if (task.jules_state === 'IN_REVIEW' || task.status === 'IN_REVIEW') return 'IN_REVIEW';
+      const state = String(task.jules_state || task.status || '').toUpperCase();
+      if (/FAILED|ERROR|CANCEL/.test(state)) return 'JULES_FAILED';
+      if (/AWAITING|PENDING|PAUSED|FEEDBACK|APPROVAL/.test(state)) return 'JULES_WAITING';
+      if (/PLANNING|PLAN/.test(state)) return 'JULES_PLANNING';
+      if (/QUEUED/.test(state)) return 'JULES_QUEUED';
+      if (/IN_PROGRESS|RUNNING|ACTIVE|WORKING/.test(state)) return 'JULES_RUNNING';
+      if (/COMPLETE|DONE/.test(state)) return task.pr_url ? 'PR_REVIEW' : 'COMPLETED';
     }
 
     if (source === 'REVIEW' || task.pr_url) {
-      return 'IN_REVIEW';
+      return 'PR_REVIEW';
     }
 
-    return 'QUEUED';
+    return 'GITHUB_OPEN';
   };
 
-  if (activeSessions) {
-    activeSessions.active_delegations?.forEach((d: any) => {
-      const meta = parseIssueMetadata(d);
-      unifiedTasks.push({
-        id: d.issue_number?.toString() || '?',
-        title: d.issue_title || 'Unknown Delegation',
-        status: getUnifiedStatus(d, 'JULES'),
-        gh_status: d.github_state || 'OPEN',
-        priority: meta.priority,
-        task_type: meta.taskType,
-        sub_issues: meta.subIssues,
-        jules_session_id: d.jules_session_id,
-        timestamp: d.last_checked_at,
-        raw: d
-      });
+  const getPrChecks = (pr: any) => {
+    const checks = Array.isArray(pr.statusCheckRollup) ? pr.statusCheckRollup : [];
+    const failing = checks.filter((check: any) => {
+      const conclusion = String(check.conclusion || '').toUpperCase();
+      const status = String(check.status || '').toUpperCase();
+      const state = String(check.state || '').toUpperCase();
+      return ['FAILURE', 'ERROR', 'CANCELLED', 'TIMED_OUT', 'ACTION_REQUIRED'].includes(conclusion) ||
+        status === 'FAILURE' ||
+        status === 'ERROR' ||
+        state === 'FAILURE' ||
+        state === 'ERROR';
     });
-
-    activeSessions.decisions_pending?.forEach((d: any) => {
-      const meta = parseIssueMetadata(d);
-      unifiedTasks.push({
-        id: d.issue_number?.toString() || 'Pending',
-        title: d.issue_title || 'Waiting for Input',
-        status: 'PENDING_INPUT',
-        gh_status: 'OPEN',
-        priority: meta.priority,
-        task_type: meta.taskType,
-        sub_issues: meta.subIssues,
-        timestamp: new Date().toISOString(),
-        raw: d
-      });
+    const pending = checks.filter((check: any) => {
+      const conclusion = String(check.conclusion || '').toUpperCase();
+      const status = String(check.status || '').toUpperCase();
+      const state = String(check.state || '').toUpperCase();
+      return (!conclusion && status && status !== 'COMPLETED' && status !== 'SUCCESS') || state === 'PENDING';
     });
+    return { failing, pending };
+  };
 
-    activeSessions.review_queue?.forEach((d: any) => {
-      const meta = parseIssueMetadata(d);
-      unifiedTasks.push({
-        id: d.issue_number?.toString() || 'PR',
-        title: d.issue_title || 'Awaiting Review',
-        status: getUnifiedStatus(d, 'REVIEW'),
-        gh_status: 'OPEN',
-        priority: meta.priority,
-        task_type: meta.taskType,
-        sub_issues: meta.subIssues,
-        timestamp: new Date().toISOString(),
-        raw: d
-      });
-    });
-  }
+  const openIssueNumbers = new Set(
+    ghIssues
+      .filter((issue: any) => String(issue.state || '').toUpperCase() === 'OPEN')
+      .map((issue: any) => Number(issue.number))
+  );
+  const parentNumbersWithOpenChildren = new Set(
+    ghIssues
+      .filter((issue: any) => String(issue.state || '').toUpperCase() === 'OPEN')
+      .map((issue: any) => getParentIssueNumber(issue))
+      .filter((issueNumber: number | null): issueNumber is number => Number(issueNumber) > 0)
+  );
 
-  ghIssues.forEach((issue: any) => {
+  ghIssues
+    .filter((issue: any) =>
+      openIssueNumbers.has(Number(issue.number)) ||
+      parentNumbersWithOpenChildren.has(Number(issue.number))
+    )
+    .forEach((issue: any) => {
     const issueIdStr = issue.number.toString();
-    const alreadyTracked = unifiedTasks.find(t => t.id === issueIdStr);
-    
-    if (!alreadyTracked) {
-      const meta = parseIssueMetadata(issue);
-      unifiedTasks.push({
-        id: issueIdStr,
-        title: issue.title,
-        status: getUnifiedStatus(issue, 'GITHUB'),
-        gh_status: issue.state,
-        priority: meta.priority,
-        task_type: meta.taskType,
-        sub_issues: meta.subIssues,
-        timestamp: issue.updatedAt,
-        raw: issue
-      });
-    }
+    const meta = parseIssueMetadata(issue);
+    const delegation = activeSessions?.active_delegations?.find((d: any) => Number(d.issue_number) === Number(issue.number));
+    const review = activeSessions?.review_queue?.find((d: any) => Number(d.issue_number) === Number(issue.number));
+    const bodyRemoteState = getIssueRemoteState(issue);
+    const status = delegation
+      ? getUnifiedStatus(delegation, 'JULES')
+      : review
+        ? getUnifiedStatus(review, 'REVIEW')
+        : bodyRemoteState
+          ? getUnifiedStatus({ ...issue, jules_state: bodyRemoteState, jules_session_id: 'from-issue-body' }, 'JULES')
+          : getUnifiedStatus(issue, 'GITHUB');
+
+    issueTasks.push({
+      id: issueIdStr,
+      title: issue.title,
+      status,
+      gh_status: issue.state,
+      priority: meta.priority,
+      task_type: meta.taskType,
+      sub_issues: meta.subIssues,
+      jules_session_id: delegation?.jules_session_id,
+      timestamp: delegation?.last_checked_at || issue.updatedAt,
+      raw: {
+        ...issue,
+        parent_issue_number: getParentIssueNumber(issue),
+        body_remote_state: bodyRemoteState,
+        delegation,
+        review
+      }
+    });
   });
 
-  const filteredTasks = unifiedTasks.filter(task => {
+  const filteredIssues = issueTasks.filter(task => {
     const matchesStatus = filterStatus === 'all' || task.status === filterStatus;
     const matchesPriority = filterPriority === 'all' || task.priority === filterPriority;
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) || task.id.includes(searchQuery);
     return matchesStatus && matchesPriority && matchesSearch;
   });
 
-  const statusWeight = { 'ERROR': 6, 'IN_PROGRESS': 5, 'PENDING_INPUT': 4, 'IN_REVIEW': 3, 'QUEUED': 2, 'COMPLETED': 1 };
-  filteredTasks.sort((a, b) => statusWeight[b.status] - statusWeight[a.status]);
+  const statusWeight: Record<TaskStatus, number> = {
+    ERROR: 10,
+    JULES_FAILED: 9,
+    PR_CHECK_FAILED: 8,
+    MERGE_CONFLICT: 8,
+    JULES_WAITING: 7,
+    JULES_RUNNING: 6,
+    JULES_PLANNING: 5,
+    PR_REVIEW: 4,
+    JULES_QUEUED: 3,
+    GITHUB_OPEN: 2,
+    COMPLETED: 1
+  };
+  filteredIssues.sort((a, b) => statusWeight[b.status] - statusWeight[a.status] || Number(b.id) - Number(a.id));
+  const subIssuesByParent = new Map<number, TaskItem[]>();
+  filteredIssues.forEach(issue => {
+    const parentNumber = Number(issue.raw?.parent_issue_number || 0);
+    if (parentNumber > 0) {
+      const items = subIssuesByParent.get(parentNumber) || [];
+      items.push(issue);
+      subIssuesByParent.set(parentNumber, items);
+    }
+  });
+  const visibleRootIssues = filteredIssues.filter(issue => !issue.raw?.parent_issue_number || !filteredIssues.some(candidate => Number(candidate.id) === Number(issue.raw.parent_issue_number)));
+  const activeIssueStatuses: TaskStatus[] = ['JULES_RUNNING', 'JULES_PLANNING', 'JULES_QUEUED', 'JULES_WAITING', 'JULES_FAILED', 'PR_REVIEW'];
+  const openIssueCount = issueTasks.filter(issue => issue.gh_status === 'OPEN').length;
+  const activeIssueCount = issueTasks.filter(issue => issue.gh_status === 'OPEN' && activeIssueStatuses.includes(issue.status)).length;
+  const inactiveIssueCount = openIssueCount - activeIssueCount;
+  const masterIssueCount = issueTasks.filter(issue => issue.gh_status === 'OPEN' && issue.task_type === 'Master').length;
+  const subIssueCount = issueTasks.filter(issue => issue.gh_status === 'OPEN' && issue.task_type === 'Sub').length;
 
-  const activeCount = unifiedTasks.filter(t => t.status === 'IN_PROGRESS').length;
+  const julesUsage = getJulesScopedUsage(registry);
+  const scopedActiveJules = asNumber(julesUsage.scoped_live_capacity_sessions ?? julesUsage.active_sessions);
+  const scopedWaitingJules = asNumber(julesUsage.scoped_live_waiting_sessions ?? julesUsage.pending_sessions);
+  const openPullRequests = pullRequests.filter(pr => String(pr.state || 'OPEN').toUpperCase() === 'OPEN');
+  const reviewQueue = activeSessions?.review_queue || [];
+  const activePrActions = activeSessions?.active_pr_actions || [];
+  const prChecksRun = openPullRequests.filter(pr => getPrChecks(pr).pending.length > 0).length;
+  const prCheckFails = openPullRequests.filter(pr => getPrChecks(pr).failing.length > 0).length;
+  const prMergeConflicts = openPullRequests.filter(pr => pr.mergeable === 'CONFLICTING').length;
+  const prReviewRun = reviewQueue.filter((review: any) => review.review_status === 'running').length;
+  const prReviewNeeded = openPullRequests.filter(pr => {
+    const { failing, pending } = getPrChecks(pr);
+    const hasReview = reviewQueue.some((review: any) => Number(review.pr_number) === Number(pr.number));
+    return pr.mergeable === 'MERGEABLE' && failing.length === 0 && pending.length === 0 && !hasReview;
+  }).length;
+  const prReworkNeeded = activePrActions.filter((action: any) =>
+    (action.action_type === 'check_fix_comment' && action.status === 'COMMENTED') ||
+    (action.action_type === 'merge_conflict_cli' && ['FAILED', 'BLOCKED'].includes(String(action.status)))
+  ).length;
+  const scheduler = activeSessions?.scheduler || {};
 
   // --- Advanced Chart Processing ---
   const chartMap = new Map<string, any>();
@@ -419,10 +628,11 @@ export default function App() {
     modelsInChart.add(key);
 
     let val = 0;
-    if (chartMetric === 'cost') val = curr.cost_usd;
+    if (chartMetric === 'total_tokens') val = getRowTotalTokens(curr);
     if (chartMetric === 'tokens_in') val = curr.input_tokens;
     if (chartMetric === 'tokens_out') val = curr.output_tokens;
     if (chartMetric === 'reasoning') val = curr.reasoning_tokens || 0;
+    if (chartMetric === 'calls') val = curr.calls;
 
     dayData[key] = (dayData[key] || 0) + val;
   });
@@ -432,11 +642,16 @@ export default function App() {
 
   const getStatusColor = (status: string) => {
     switch(status) {
-      case 'IN_PROGRESS': return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'JULES_RUNNING': return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'JULES_PLANNING': return 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
+      case 'JULES_QUEUED': return 'bg-slate-500/20 text-slate-300 border-slate-500/30';
+      case 'JULES_WAITING': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+      case 'JULES_FAILED': return 'bg-red-500/20 text-red-400 border-red-500/30';
+      case 'PR_CHECK_FAILED': return 'bg-red-500/20 text-red-300 border-red-500/30';
+      case 'MERGE_CONFLICT': return 'bg-orange-500/20 text-orange-300 border-orange-500/30';
+      case 'PR_REVIEW': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      case 'GITHUB_OPEN': return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
       case 'ERROR': return 'bg-red-500/20 text-red-400 border-red-500/30';
-      case 'PENDING_INPUT': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-      case 'IN_REVIEW': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      case 'QUEUED': return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
       case 'COMPLETED': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
       default: return 'bg-surface text-white border-white/10';
     }
@@ -445,18 +660,115 @@ export default function App() {
   const getStatusLabel = (task: TaskItem) => {
     const raw = task.raw || {};
     switch(task.status) {
-      case 'IN_PROGRESS': return 'Jules: Working';
+      case 'JULES_RUNNING': return 'Jules: Working';
+      case 'JULES_PLANNING': return 'Jules: Planning';
+      case 'JULES_QUEUED': return 'Jules: Queued';
+      case 'JULES_WAITING': return 'Jules: Waiting';
+      case 'JULES_FAILED': return 'Jules: Failed';
       case 'ERROR': return `Error: ${raw.message || 'Unknown'}`;
-      case 'PENDING_INPUT': return 'Input Required';
-      case 'IN_REVIEW': {
-        if (raw.pr_checks_status === 'FAILURE') return 'Review: Checks Failed';
-        if (raw.pr_checks_status === 'SUCCESS') return 'Review: Ready to Merge';
+      case 'PR_CHECK_FAILED': return `PR: ${raw.failing_checks?.length || 0} Checks Failed`;
+      case 'MERGE_CONFLICT': return 'PR: Merge Conflict';
+      case 'PR_REVIEW': {
         return 'Review: Pending';
       }
-      case 'QUEUED': return 'GitHub: Open / Queued';
+      case 'GITHUB_OPEN': return 'GitHub: Open';
       case 'COMPLETED': return 'GitHub: Completed / Closed';
       default: return task.status;
     }
+  };
+
+  const toggleIssueExpansion = (issueId: string) => {
+    setExpandedIssueIds(prev => {
+      const next = new Set(prev);
+      if (next.has(issueId)) next.delete(issueId);
+      else next.add(issueId);
+      return next;
+    });
+  };
+
+  const renderIssueRow = (task: TaskItem, isChild = false) => {
+    const childIssues = subIssuesByParent.get(Number(task.id)) || [];
+    const isExpanded = expandedIssueIds.has(task.id);
+    return (
+      <div key={task.id} className={isChild ? 'ml-8 border-l border-white/10 pl-4' : ''}>
+        <div className="bg-surface/30 rounded-xl p-4 border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-surface/50 transition-colors">
+          <div className="flex items-center gap-4 flex-1 overflow-hidden">
+            <div className="w-6 shrink-0">
+              {childIssues.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => toggleIssueExpansion(task.id)}
+                  className="text-muted hover:text-white transition-colors"
+                  title={isExpanded ? 'Sub-Issues einklappen' : 'Sub-Issues ausklappen'}
+                >
+                  {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                </button>
+              )}
+            </div>
+            <div className={`px-3 py-1 rounded border text-xs font-bold whitespace-nowrap min-w-[150px] text-center ${getStatusColor(task.status)}`}>
+              {getStatusLabel(task)}
+            </div>
+            <div className="flex flex-col overflow-hidden flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-mono text-xs text-muted">#{task.id}</span>
+                <a 
+                  href={task.raw?.url || `https://github.com/Vorce-Studios/Vorce/issues/${task.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-white truncate hover:text-primary transition-colors text-sm md:text-base"
+                  title={task.title}
+                >
+                  {task.title}
+                </a>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className={`text-[10px] uppercase font-black px-1.5 py-0.5 rounded ${
+                  task.priority === 'urgent' ? 'bg-red-500 text-white' : 
+                  task.priority === 'high' ? 'bg-orange-500 text-white' : 
+                  task.priority === 'medium' ? 'bg-blue-500 text-white' : 'bg-gray-500 text-white'
+                }`}>
+                  {task.priority}
+                </span>
+                <span className="text-[10px] text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded border border-white/5 italic">
+                  {task.task_type}
+                </span>
+                {childIssues.length > 0 && (
+                  <span className="text-[10px] text-primary flex items-center gap-1 font-bold">
+                    <Layers size={10} /> Sub-Issues: {childIssues.length}
+                  </span>
+                )}
+                {task.timestamp && (
+                  <span className="text-[10px] text-muted flex items-center gap-1">
+                    <Clock size={10} /> {new Date(task.timestamp).toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="hidden lg:flex flex-col items-end mr-2">
+              <span className="text-[10px] text-muted uppercase font-bold">State</span>
+              <span className="text-xs font-mono text-white/70">{task.gh_status}</span>
+            </div>
+            {task.jules_session_id && (
+              <a 
+                href={`https://jules.google.com/session/${task.jules_session_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-mono border border-primary/20 transition-colors whitespace-nowrap"
+              >
+                <LinkIcon size={12} /> JULES SESSION
+              </a>
+            )}
+          </div>
+        </div>
+        {isExpanded && childIssues.length > 0 && (
+          <div className="grid grid-cols-1 gap-3 mt-3">
+            {childIssues.map(child => renderIssueRow(child, true))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -473,36 +785,38 @@ export default function App() {
         </div>
         <div className="flex flex-col items-end gap-2">
           <div className="glass px-4 py-2 rounded-full flex items-center gap-3">
-            <div className={`w-2 h-2 rounded-full ${activeCount > 0 ? 'bg-green-500 animate-pulse' : 'bg-blue-500'}`} />
-            <span className="text-sm font-medium text-white">{activeCount > 0 ? `${activeCount} Tasks Running` : 'System Idle'}</span>
+            <div className={`w-2 h-2 rounded-full ${scopedActiveJules > 0 ? 'bg-green-500 animate-pulse' : 'bg-blue-500'}`} />
+            <span className="text-sm font-medium text-white">{scopedActiveJules > 0 ? `${scopedActiveJules} Jules Active` : 'System Idle'}</span>
           </div>
           <div className="text-[10px] text-muted-foreground font-mono">Last Sync: {new Date().toLocaleTimeString()}</div>
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-10">
         <StatCard 
-          title="Daily Quota Usage (Total USD)" 
-          value={`$${totalCost.toFixed(2)}`} 
+          title="Token Load Today" 
+          value={formatTokens(totalTokens)} 
           highlightClass="text-accent"
-          icon={DollarSign}
-          tooltip="Gesamte geschätzte bzw. echte USD-Kosten aller aufgerufenen LLMs heute."
+          icon={Cpu}
+          tooltip="Gesamte Input- und Output-Tokens heute. Dieser Wert ist die Hauptbasis für spätere Modellumschaltung."
           subtitle={
             <div>
-              <div className="mb-1">Limit: ${totalBudget.toFixed(2)}</div>
-              {totalBudget > 0 && <ProgressBar current={totalCost} max={totalBudget} colorClass="bg-accent" />}
+              <div className="flex justify-between mt-1 text-xs">
+                <span className="text-primary">In: {formatTokens(totalInputTokens)}</span>
+                <span className="text-secondary">Out: {formatTokens(totalOutputTokens)}</span>
+              </div>
             </div>
           }
         />
         <StatCard 
-          title="Tokens Processed" 
-          value={((totalInputTokens + totalOutputTokens) / 1000).toFixed(1) + 'k'} 
-          icon={Cpu}
-          tooltip="Die Summe aller gelesenen (Input) und generierten (Output) Tokens heute."
+          title="Context Reuse" 
+          value={`${cacheReusePct.toFixed(1)}%`} 
+          icon={RefreshCw}
+          tooltip="Anteil gecachter Input-Tokens. Hoher Cache-Anteil bedeutet niedrigere echte Kontextlast."
           subtitle={
             <div className="flex justify-between mt-1 text-xs">
-              <span className="text-primary">In: {(totalInputTokens / 1000).toFixed(1)}k</span>
-              <span className="text-secondary">Out: {(totalOutputTokens / 1000).toFixed(1)}k</span>
+              <span className="text-secondary">Cached: {formatTokens(totalCachedTokens)}</span>
+              <span className="text-muted">Input: {formatTokens(totalInputTokens)}</span>
             </div>
           }
         />
@@ -515,16 +829,76 @@ export default function App() {
           subtitle="Tokens spent on internal reasoning"
         />
         <StatCard 
-          title="System Task Queue" 
-          value={unifiedTasks.length} 
+          title="Provider Calls" 
+          value={totalProviderCalls} 
           icon={Layers}
-          tooltip="Alle aktiven und wartenden Aufgaben im Autopilot-System."
-          subtitle={
-            <div className="flex gap-3 mt-1 text-xs">
-              <span className="text-green-400">{activeCount} Running</span>
-              <span className="text-yellow-400">{unifiedTasks.filter(t=>t.status==='PENDING_INPUT').length} Pending</span>
-            </div>
-          }
+          tooltip="Summe der heute beobachteten Provider-Aufrufe aus den Telemetrie-Snapshots."
+          subtitle="Codex, Gemini, Jules und weitere Provider"
+        />
+        <StatCard
+          title="Next Monitor"
+          value={formatDuration(scheduler.next_monitoring_in_seconds)}
+          icon={Clock}
+          highlightClass="text-yellow-300"
+          tooltip="Zeit bis zum naechsten geplanten Monitoring-Run."
+          subtitle={`at ${formatDateTime(scheduler.next_monitoring_at)}`}
+        />
+        <StatCard
+          title="Next Planning"
+          value={formatDuration(scheduler.next_planning_in_seconds)}
+          icon={Clock}
+          highlightClass="text-cyan-300"
+          tooltip="Zeit bis zum naechsten geplanten Planning-Run."
+          subtitle={`at ${formatDateTime(scheduler.next_planning_at)}`}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-10">
+        <StatCard
+          title="Jules Active"
+          value={scopedActiveJules}
+          icon={Activity}
+          highlightClass="text-green-300"
+          tooltip="Aktive Jules-Sessions nur fuer die konfigurierte Vorce-Source."
+          subtitle={`${scopedWaitingJules} need clarification`}
+        />
+        <StatCard
+          title="Checks Run"
+          value={prChecksRun}
+          icon={RefreshCw}
+          tooltip="Offene PRs mit mindestens einem noch laufenden Check."
+          subtitle={`${openPullRequests.length} open PRs`}
+        />
+        <StatCard
+          title="Check Fails"
+          value={prCheckFails}
+          icon={Activity}
+          highlightClass="text-red-300"
+          tooltip="Offene PRs mit mindestens einem fehlgeschlagenen Check."
+          subtitle="needs fix"
+        />
+        <StatCard
+          title="Merge Conflict"
+          value={prMergeConflicts}
+          icon={Layers}
+          highlightClass="text-orange-300"
+          tooltip="Offene PRs, die GitHub aktuell als CONFLICTING meldet."
+          subtitle="CLI-first handling"
+        />
+        <StatCard
+          title="Review Needed"
+          value={prReviewNeeded}
+          icon={BrainCircuit}
+          tooltip="Offene, saubere und mergebare PRs ohne laufende oder bereits eingereihte Review."
+          subtitle={`${prReviewRun} review running`}
+        />
+        <StatCard
+          title="Rework Needed"
+          value={prReworkNeeded}
+          icon={Clock}
+          highlightClass="text-yellow-300"
+          tooltip="PRs, fuer die bereits Nacharbeit angefordert wurde oder deren Konfliktloesung blockiert ist."
+          subtitle="follow-up required"
         />
       </div>
 
@@ -560,7 +934,7 @@ export default function App() {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <BarChart3 size={20} className="text-secondary" />
-              Historical Quota Burn
+              Historical Token Load
             </h2>
             <div className="flex gap-2">
               <select 
@@ -568,10 +942,11 @@ export default function App() {
                 onChange={e => setChartMetric(e.target.value as any)}
                 className="bg-surface border border-white/10 rounded-lg px-3 py-1 text-sm text-white focus:outline-none focus:border-primary"
               >
-                <option value="cost">Cost (USD)</option>
+                <option value="total_tokens">Total Tokens</option>
                 <option value="tokens_in">Input Tokens</option>
                 <option value="tokens_out">Output Tokens</option>
                 <option value="reasoning">Reasoning Tokens</option>
+                <option value="calls">Calls / Sessions</option>
               </select>
             </div>
           </div>
@@ -585,11 +960,11 @@ export default function App() {
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                 <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickMargin={10} />
-                <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(val) => chartMetric === 'cost' ? `$${val}` : `${(val/1000).toFixed(0)}k`} />
+                <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(val) => chartMetric === 'calls' ? `${val}` : formatTokens(Number(val))} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#151520', borderColor: '#2e2e3d', borderRadius: '12px' }}
                   itemStyle={{ color: '#f8fafc' }}
-                  formatter={(value: any) => chartMetric === 'cost' ? `$${Number(value).toFixed(2)}` : Number(value).toLocaleString()}
+                  formatter={(value: any) => chartMetric === 'calls' ? Number(value).toLocaleString() : formatTokens(Number(value))}
                 />
                 {modelsArray.map((modelName, idx) => (
                   <Area 
@@ -608,13 +983,13 @@ export default function App() {
         </div>
       </div>
       
-      {/* UNIFIED TASK BOARD */}
+      {/* ISSUE BOARD */}
       {activeSessions && (
         <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: '200ms' }}>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <RefreshCw size={20} className="text-secondary" />
-              Unified Task Board (Sync: {ghIssues.length > 0 ? 'Active' : 'Initializing...'})
+              Issue Overview
             </h2>
             
             <div className="flex flex-wrap gap-2 items-center">
@@ -631,11 +1006,16 @@ export default function App() {
                 className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:border-primary outline-none"
               >
                 <option value="all">All Status</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="PENDING_INPUT">Pending Input</option>
-                <option value="ERROR">Blocked</option>
-                <option value="IN_REVIEW">In Review</option>
-                <option value="QUEUED">Queued</option>
+                <option value="JULES_RUNNING">Jules Running</option>
+                <option value="JULES_PLANNING">Jules Planning</option>
+                <option value="JULES_QUEUED">Jules Queued</option>
+                <option value="JULES_WAITING">Jules Waiting</option>
+                <option value="JULES_FAILED">Jules Failed</option>
+                <option value="PR_CHECK_FAILED">PR Checks Failed</option>
+                <option value="MERGE_CONFLICT">Merge Conflict</option>
+                <option value="PR_REVIEW">PR Review</option>
+                <option value="GITHUB_OPEN">GitHub Open</option>
+                <option value="ERROR">System Error</option>
                 <option value="COMPLETED">Completed</option>
               </select>
               <select 
@@ -649,81 +1029,25 @@ export default function App() {
                 <option value="medium">Medium</option>
                 <option value="low">Low</option>
               </select>
-              <div className="text-xs bg-surface px-3 py-2 rounded text-muted border border-white/5">Matches: {filteredTasks.length}</div>
+              <div className="text-xs bg-surface px-3 py-2 rounded text-muted border border-white/5">Matches: {filteredIssues.length}</div>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6 text-sm">
+            <div className="bg-background rounded-lg p-3 border border-white/5"><div className="text-muted text-xs">Open Issues</div><div className="text-white font-bold text-lg">{openIssueCount}</div></div>
+            <div className="bg-background rounded-lg p-3 border border-white/5"><div className="text-muted text-xs">Active</div><div className="text-green-300 font-bold text-lg">{activeIssueCount}</div></div>
+            <div className="bg-background rounded-lg p-3 border border-white/5"><div className="text-muted text-xs">Inactive</div><div className="text-white font-bold text-lg">{inactiveIssueCount}</div></div>
+            <div className="bg-background rounded-lg p-3 border border-white/5"><div className="text-muted text-xs">Master</div><div className="text-cyan-300 font-bold text-lg">{masterIssueCount}</div></div>
+            <div className="bg-background rounded-lg p-3 border border-white/5"><div className="text-muted text-xs">Sub-Issues</div><div className="text-primary font-bold text-lg">{subIssueCount}</div></div>
           </div>
           
           <div className="grid grid-cols-1 gap-3">
-            {filteredTasks.length === 0 && (
+            {visibleRootIssues.length === 0 && (
               <div className="text-center py-10 text-muted border border-dashed border-white/10 rounded-xl">
-                No tasks matching your filters.
+                No issues matching your filters.
               </div>
             )}
-            
-            {filteredTasks.map((task, idx) => (
-              <div key={idx} className="bg-surface/30 rounded-xl p-4 border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-surface/50 transition-colors">
-                
-                <div className="flex items-center gap-4 flex-1 overflow-hidden">
-                  <div className={`px-3 py-1 rounded border text-xs font-bold whitespace-nowrap min-w-[150px] text-center ${getStatusColor(task.status)}`}>
-                    {getStatusLabel(task)}
-                  </div>
-                  
-                  <div className="flex flex-col overflow-hidden flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-mono text-xs text-muted">#{task.id}</span>
-                      <a 
-                        href={task.raw?.url || `https://github.com/Vorce-Studios/Vorce/issues/${task.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-bold text-white truncate hover:text-primary transition-colors text-sm md:text-base"
-                        title={task.title}
-                      >
-                        {task.title}
-                      </a>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      {task.priority && (
-                        <span className={`text-[10px] uppercase font-black px-1.5 py-0.5 rounded ${
-                          task.priority === 'urgent' ? 'bg-red-500 text-white' : 
-                          task.priority === 'high' ? 'bg-orange-500 text-white' : 
-                          task.priority === 'medium' ? 'bg-blue-500 text-white' : 'bg-gray-500 text-white'
-                        }`}>
-                          {task.priority}
-                        </span>
-                      )}
-                      {task.task_type && (
-                        <span className="text-[10px] text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded border border-white/5 italic">
-                          {task.task_type}
-                        </span>
-                      )}
-                      {task.sub_issues && task.sub_issues.total > 0 && (
-                        <span className="text-[10px] text-primary flex items-center gap-1 font-bold">
-                          <Layers size={10} /> Sub-Tasks: {task.sub_issues.completed}/{task.sub_issues.total}
-                        </span>
-                      )}
-                      {task.timestamp && (
-                        <span className="text-[10px] text-muted flex items-center gap-1">
-                          <Clock size={10} /> {new Date(task.timestamp).toLocaleTimeString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {task.jules_session_id && (
-                    <a 
-                      href={`https://jules.google.com/session/${task.jules_session_id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-mono border border-primary/20 transition-colors whitespace-nowrap"
-                    >
-                      <LinkIcon size={12} /> JULES SESSION
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
+            {visibleRootIssues.map(task => renderIssueRow(task))}
           </div>
         </div>
       )}

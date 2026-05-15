@@ -1,241 +1,527 @@
-﻿{
-    "schema_version":  1,
-    "daily_reset_hour_utc":  0,
-    "last_reset_date":  "2026-05-12",
-    "providers":  {
-                      "jules":  {
-                                    "enabled":  true,
-                                    "purpose":  [
-                                                    "coding"
-                                                ],
-                                    "daily_limit":  100,
-                                    "estimated_cost_per_call_usd":  0.00,
-                                    "usage_today":  {
-
-                                                    }
-                                },
-                      "gemini_cli":  {
-                                         "enabled":  true,
-                                         "purpose":  [
-                                                         "review",
-                                                         "planning",
-                                                         "monitoring"
-                                                     ],
-                                         "command":  "gemini",
-                                         "cli_args":  [
-                                                          "-p",
-                                                          "{PROMPT}",
-                                                          "-y",
-                                                          "--output-format",
-                                                          "json",
-                                                          "--sandbox",
-                                                          "false"
-                                                      ],
-                                         "stats_format":  "gemini_json",
-                                         "auth_env_var":  null,
-                                         "models":  {
-                                                        "cheap":  {
-                                                                      "name":  "gemini-3.1-flash-lite",
-                                                                      "estimated_cost_per_call_usd":  0.01
-                                                                  },
-                                                        "balanced":  {
-                                                                         "name":  "gemini-3.1-flash",
-                                                                         "estimated_cost_per_call_usd":  0.05
-                                                                     },
-                                                        "premium":  {
-                                                                        "name":  "gemini-3.1-pro",
-                                                                        "estimated_cost_per_call_usd":  0.50
-                                                                    }
-                                                    },
-                                         "daily_limit":  1500,
-                                         "daily_budget_usd":  20,
-                                         "usage_today":  {
-
-                                                         }
-                                     },
-                      "kiro_cli":  {
-                                       "enabled":  true,
-                                       "purpose":  [
-                                                       "review",
-                                                       "planning",
-                                                       "spec_generation"
-                                                   ],
-                                       "command":  "kiro-cli",
-                                       "cli_args":  [
-                                                        "chat",
-                                                        "--no-interactive",
-                                                        "--trust-all-tools",
-                                                        "{PROMPT}"
-                                                    ],
-                                       "stats_format":  "none",
-                                       "auth_env_var":  null,
-                                       "models":  {
-                                                      "default":  {
-                                                                      "name":  "default",
-                                                                      "estimated_cost_per_call_usd":  0.10
-                                                                  }
-                                                  },
-                                       "daily_limit":  100,
-                                       "daily_budget_usd":  5.00,
-                                       "usage_today":  {
-
-                                                       }
-                                   },
-                      "cline_cli":  {
-                                        "enabled":  true,
-                                        "purpose":  [
-                                                        "review",
-                                                        "debugging",
-                                                        "fallback_coding"
-                                                    ],
-                                        "command":  "cline",
-                                        "cli_args":  [
-                                                         "-y",
-                                                         "{PROMPT}",
-                                                         "--json"
-                                                     ],
-                                        "stats_format":  "cline_json",
-                                        "auth_env_var":  null,
-                                        "models":  {
-                                                       "default":  {
-                                                                       "name":  "default",
-                                                                       "estimated_cost_per_call_usd":  0.10
-                                                                   }
-                                                   },
-                                        "daily_limit":  100,
-                                        "daily_budget_usd":  5.00,
-                                        "usage_today":  {
-
-                                                        }
-                                    },
-                      "claude_code":  {
-                                          "enabled":  true,
-                                          "purpose":  [
-                                                          "complex_review",
-                                                          "architecture",
-                                                          "debugging"
-                                                      ],
-                                          "command":  "claude",
-                                          "cli_args":  [
-                                                           "-p",
-                                                           "{PROMPT}",
-                                                           "--output-format",
-                                                           "json",
-                                                           "--dangerously-skip-permissions"
-                                                       ],
-                                          "stats_format":  "claude_json",
-                                          "auth_env_var":  null,
-                                          "models":  {
-                                                         "balanced":  {
-                                                                          "name":  "claude-sonnet-4",
-                                                                          "estimated_cost_per_call_usd":  0.30
-                                                                      },
-                                                         "premium":  {
-                                                                         "name":  "claude-opus-4",
-                                                                         "estimated_cost_per_call_usd":  1.50
-                                                                     }
-                                                     },
-                                          "daily_limit":  50,
-                                          "daily_budget_usd":  10.00,
-                                          "usage_today":  {
-
-                                                          }
-                                      },
-                      "copilot_cli":  {
-                                          "enabled":  true,
-                                          "purpose":  [
-                                                          "review",
-                                                          "planning"
-                                                      ],
-                                          "command":  "copilot",
-                                          "cli_args":  [
-                                                           "-p",
-                                                           "{PROMPT}",
-                                                           "--output-format",
-                                                           "json",
-                                                           "--yolo"
-                                                       ],
-                                          "stats_format":  "copilot_json",
-                                          "auth_env_var":  null,
-                                          "models":  {
-                                                         "default":  {
-                                                                         "name":  "default",
-                                                                         "estimated_cost_per_call_usd":  0.05
-                                                                     }
-                                                     },
-                                          "daily_limit":  100,
-                                          "daily_budget_usd":  5.00,
-                                          "usage_today":  {
-
-                                                          }
-                                      },
-                      "codex_orchestrator":  {
-                                                 "enabled":  true,
-                                                 "purpose":  [
-                                                                 "planning",
-                                                                 "monitoring"
-                                                             ],
-                                                 "command":  "copilot",
-                                                 "cli_args":  [
-                                                                  "-p",
-                                                                  "{PROMPT}",
-                                                                  "--model",
-                                                                  "{MODEL}",
-                                                                  "--output-format",
-                                                                  "json",
-                                                                  "--yolo"
-                                                              ],
-                                                 "stats_format":  "copilot_json",
-                                                 "auth_env_var":  null,
-                                                 "models":  {
-                                                                "planning":  {
-                                                                                 "name":  "gpt-5.5",
-                                                                                 "estimated_cost_per_call_usd":  0.20
-                                                                             },
-                                                                "monitoring":  {
-                                                                                   "name":  "gpt-5-mini",
-                                                                                   "estimated_cost_per_call_usd":  0.02
-                                                                               }
-                                                            },
-                                                 "daily_limit":  1000,
-                                                 "daily_budget_usd":  20,
-                                                 "usage_today":  {
-
-                                                                 }
-                                             }
-                  },
-    "routing_rules":  {
-                          "monitoring":  [
-                                             "codex_orchestrator:monitoring",
-                                             "gemini_cli:cheap"
-                                         ],
-                          "simple_review":  [
-                                                "gemini_cli:cheap",
-                                                "copilot_cli:default",
-                                                "cline_cli:default"
-                                            ],
-                          "code_review":  [
-                                              "gemini_cli:balanced",
-                                              "kiro_cli:default",
-                                              "claude_code:balanced"
-                                          ],
-                          "complex_review":  [
-                                                 "claude_code:balanced",
-                                                 "gemini_cli:premium"
-                                             ],
-                          "planning":  [
-                                           "codex_orchestrator:planning",
-                                           "gemini_cli:balanced",
-                                           "kiro_cli:default",
-                                           "copilot_cli:default"
-                                       ],
-                          "debugging":  [
-                                            "claude_code:balanced",
-                                            "cline_cli:default",
-                                            "gemini_cli:premium"
-                                        ],
-                          "coding":  [
-                                         "jules"
-                                     ]
-                      }
+{
+  "schema_version": 1,
+  "daily_reset_hour_utc": 0,
+  "last_reset_date": "2026-05-15",
+  "providers": {
+    "jules": {
+      "enabled": true,
+      "purpose": [
+        "coding"
+      ],
+      "daily_limit": 100,
+      "estimated_cost_per_call_usd": 0.0,
+      "usage_today": {
+        "calls": 31,
+        "estimated_cost_usd": 0.0,
+        "source": "jules-api",
+        "last_synced_at": "2026-05-15T13:35:54.9083583Z",
+        "active_sessions": 11,
+        "completed_sessions": 17,
+        "failed_sessions": 0,
+        "pending_sessions": 5,
+        "live_capacity_sessions": 15,
+        "live_in_progress_sessions": 13,
+        "live_queued_sessions": 2,
+        "live_waiting_sessions": 46,
+        "account_sessions_observed_today": 31,
+        "account_sessions_observed_rolling_24h": 35,
+        "scoped_live_capacity_sessions": 11,
+        "scoped_live_in_progress_sessions": 11,
+        "scoped_live_queued_sessions": 0,
+        "scoped_live_waiting_sessions": 5,
+        "api_sessions_seen": 740,
+        "api_sessions_today": 31,
+        "sessions": {
+          "calls": 31,
+          "estimated_cost_usd": 0.0,
+          "total_input_tokens": 0,
+          "total_output_tokens": 0,
+          "cached_tokens": 0,
+          "reasoning_tokens": 0,
+          "tool_tokens": 0,
+          "total_duration_ms": 0
+        }
+      }
+    },
+    "gemini_cli": {
+      "enabled": true,
+      "purpose": [
+        "review",
+        "planning",
+        "monitoring"
+      ],
+      "command": "gemini",
+      "cli_args": [
+        "-p",
+        "{PROMPT}",
+        "-y",
+        "--output-format",
+        "json",
+        "--sandbox",
+        "false"
+      ],
+      "stats_format": "gemini_json",
+      "auth_env_var": null,
+      "models": {
+        "cheap": {
+          "name": "gemini-3.1-flash-lite",
+          "estimated_cost_per_call_usd": 0.01
+        },
+        "balanced": {
+          "name": "gemini-3-flash-preview",
+          "estimated_cost_per_call_usd": 0.05
+        },
+        "premium": {
+          "name": "gemini-3.1-pro-preview",
+          "estimated_cost_per_call_usd": 0.5
+        }
+      },
+      "daily_limit": 1500,
+      "daily_budget_usd": 20,
+      "usage_today": {
+        "calls": 39,
+        "estimated_cost_usd": 1.91,
+        "source": "gemini-local-jsonl+cli-quota",
+        "last_synced_at": "2026-05-15T13:38:04.9646513Z",
+        "quota_source": "gemini-cli-retrieveUserQuota",
+        "quota_synced_at": "2026-05-15T13:38:08.6970000Z",
+        "rate_limits": {
+          "limit_id": "gemini-cli",
+          "limit_name": "Gemini CLI quota",
+          "primary": {
+            "label": "Gemini quota",
+            "used_percent": 3.5,
+            "remaining": 193,
+            "limit": 200,
+            "resets_at": 1778931489,
+            "source": "gemini-cli"
+          },
+          "secondary": {
+            "label": "Max model bucket",
+            "used_percent": 7.0,
+            "remaining": 93,
+            "limit": 100,
+            "resets_at": 1778856809,
+            "model_id": "gemini-2.5-flash",
+            "source": "gemini-cli"
+          },
+          "buckets": [
+            {
+              "model_id": "gemini-2.5-flash",
+              "used_percent": 7.0,
+              "remaining": 93,
+              "limit": 100,
+              "resets_at": 1778856809
+            },
+            {
+              "model_id": "gemini-2.5-flash-lite",
+              "used_percent": 1.0,
+              "remaining": 99,
+              "limit": 100,
+              "resets_at": 1778856802
+            },
+            {
+              "model_id": "gemini-2.5-pro",
+              "used_percent": 0.0,
+              "remaining": 100,
+              "limit": 100,
+              "resets_at": 1778931489
+            },
+            {
+              "model_id": "gemini-3-flash-preview",
+              "used_percent": 7.0,
+              "remaining": 93,
+              "limit": 100,
+              "resets_at": 1778856809
+            },
+            {
+              "model_id": "gemini-3-pro-preview",
+              "used_percent": 0.0,
+              "remaining": 100,
+              "limit": 100,
+              "resets_at": 1778931489
+            },
+            {
+              "model_id": "gemini-3.1-flash-lite",
+              "used_percent": 1.0,
+              "remaining": 99,
+              "limit": 100,
+              "resets_at": 1778856802
+            },
+            {
+              "model_id": "gemini-3.1-flash-lite-preview",
+              "used_percent": 1.0,
+              "remaining": 99,
+              "limit": 100,
+              "resets_at": 1778856802
+            },
+            {
+              "model_id": "gemini-3.1-pro-preview",
+              "used_percent": 0.0,
+              "remaining": 100,
+              "limit": 100,
+              "resets_at": 1778931489
+            }
+          ],
+          "plan_type": null,
+          "rate_limit_reached_type": null
+        },
+        "quota_buckets": [
+          {
+            "model_id": "gemini-2.5-flash",
+            "used_percent": 7.0,
+            "remaining": 93,
+            "limit": 100,
+            "resets_at": 1778856809
+          },
+          {
+            "model_id": "gemini-2.5-flash-lite",
+            "used_percent": 1.0,
+            "remaining": 99,
+            "limit": 100,
+            "resets_at": 1778856802
+          },
+          {
+            "model_id": "gemini-2.5-pro",
+            "used_percent": 0.0,
+            "remaining": 100,
+            "limit": 100,
+            "resets_at": 1778931489
+          },
+          {
+            "model_id": "gemini-3-flash-preview",
+            "used_percent": 7.0,
+            "remaining": 93,
+            "limit": 100,
+            "resets_at": 1778856809
+          },
+          {
+            "model_id": "gemini-3-pro-preview",
+            "used_percent": 0.0,
+            "remaining": 100,
+            "limit": 100,
+            "resets_at": 1778931489
+          },
+          {
+            "model_id": "gemini-3.1-flash-lite",
+            "used_percent": 1.0,
+            "remaining": 99,
+            "limit": 100,
+            "resets_at": 1778856802
+          },
+          {
+            "model_id": "gemini-3.1-flash-lite-preview",
+            "used_percent": 1.0,
+            "remaining": 99,
+            "limit": 100,
+            "resets_at": 1778856802
+          },
+          {
+            "model_id": "gemini-3.1-pro-preview",
+            "used_percent": 0.0,
+            "remaining": 100,
+            "limit": 100,
+            "resets_at": 1778931489
+          }
+        ],
+        "gemini-3-flash-preview": {
+          "calls": 38,
+          "estimated_cost_usd": 1.9,
+          "total_input_tokens": 1777125,
+          "total_output_tokens": 11539,
+          "cached_tokens": 1236256,
+          "reasoning_tokens": 7363,
+          "tool_tokens": 0,
+          "total_duration_ms": 0
+        },
+        "gemini-3.1-flash-lite": {
+          "calls": 1,
+          "estimated_cost_usd": 0.01,
+          "total_input_tokens": 21073,
+          "total_output_tokens": 3,
+          "cached_tokens": 0,
+          "reasoning_tokens": 0,
+          "tool_tokens": 0,
+          "total_duration_ms": 0
+        }
+      }
+    },
+    "kiro_cli": {
+      "enabled": true,
+      "purpose": [
+        "review",
+        "planning",
+        "spec_generation"
+      ],
+      "command": "kiro-cli",
+      "cli_args": [
+        "chat",
+        "--no-interactive",
+        "--trust-all-tools",
+        "{PROMPT}"
+      ],
+      "stats_format": "none",
+      "auth_env_var": null,
+      "models": {
+        "default": {
+          "name": "default",
+          "estimated_cost_per_call_usd": 0.1
+        }
+      },
+      "daily_limit": 100,
+      "daily_budget_usd": 5.0,
+      "usage_today": {
+        "calls": 0,
+        "estimated_cost_usd": 0.0
+      }
+    },
+    "cline_cli": {
+      "enabled": true,
+      "purpose": [
+        "review",
+        "debugging",
+        "fallback_coding"
+      ],
+      "command": "cline",
+      "cli_args": [
+        "-y",
+        "{PROMPT}",
+        "--json"
+      ],
+      "stats_format": "cline_json",
+      "auth_env_var": null,
+      "models": {
+        "default": {
+          "name": "default",
+          "estimated_cost_per_call_usd": 0.1
+        }
+      },
+      "daily_limit": 100,
+      "daily_budget_usd": 5.0,
+      "usage_today": {
+        "calls": 0,
+        "estimated_cost_usd": 0.0
+      }
+    },
+    "claude_code": {
+      "enabled": true,
+      "purpose": [
+        "complex_review",
+        "architecture",
+        "debugging"
+      ],
+      "command": "claude",
+      "cli_args": [
+        "-p",
+        "{PROMPT}",
+        "--output-format",
+        "json",
+        "--dangerously-skip-permissions"
+      ],
+      "stats_format": "claude_json",
+      "auth_env_var": null,
+      "models": {
+        "balanced": {
+          "name": "claude-sonnet-4",
+          "estimated_cost_per_call_usd": 0.3
+        },
+        "premium": {
+          "name": "claude-opus-4",
+          "estimated_cost_per_call_usd": 1.5
+        }
+      },
+      "daily_limit": 50,
+      "daily_budget_usd": 10.0,
+      "usage_today": {
+        "calls": 0,
+        "estimated_cost_usd": 0.0
+      }
+    },
+    "copilot_cli": {
+      "enabled": true,
+      "purpose": [
+        "review",
+        "planning"
+      ],
+      "command": "copilot",
+      "cli_args": [
+        "-p",
+        "{PROMPT}",
+        "--output-format",
+        "json",
+        "--yolo"
+      ],
+      "stats_format": "copilot_json",
+      "auth_env_var": null,
+      "models": {
+        "default": {
+          "name": "default",
+          "estimated_cost_per_call_usd": 0.05
+        }
+      },
+      "daily_limit": 100,
+      "daily_budget_usd": 5.0,
+      "usage_today": {
+        "calls": 0,
+        "estimated_cost_usd": 0.0
+      }
+    },
+    "cursor_agent": {
+      "enabled": true,
+      "purpose": [
+        "review",
+        "planning",
+        "monitoring"
+      ],
+      "command": "cursor-agent",
+      "cli_args": [
+        "--print",
+        "--output-format",
+        "json",
+        "--mode",
+        "plan",
+        "--trust",
+        "--workspace",
+        ".",
+        "{PROMPT}"
+      ],
+      "stats_format": "cursor_json",
+      "auth_env_var": null,
+      "models": {
+        "default": {
+          "name": "default",
+          "estimated_cost_per_call_usd": 0.05
+        }
+      },
+      "daily_limit": 100,
+      "daily_budget_usd": 5.0,
+      "usage_today": {
+        "calls": 0,
+        "estimated_cost_usd": 0.0
+      }
+    },
+    "codex_orchestrator": {
+      "enabled": true,
+      "purpose": [
+        "planning",
+        "monitoring"
+      ],
+      "command": "codex",
+      "cli_args": [
+        "exec",
+        "--model",
+        "{MODEL}",
+        "--sandbox",
+        "danger-full-access",
+        "--ask-for-approval",
+        "never",
+        "--json",
+        "{PROMPT}"
+      ],
+      "stats_format": "codex_json",
+      "auth_env_var": null,
+      "models": {
+        "planning": {
+          "name": "gpt-5.5",
+          "estimated_cost_per_call_usd": 0.2
+        },
+        "monitoring": {
+          "name": "gpt-5.4-mini",
+          "estimated_cost_per_call_usd": 0.02
+        }
+      },
+      "daily_limit": 1000,
+      "daily_budget_usd": 20,
+      "usage_today": {
+        "calls": 265,
+        "estimated_cost_usd": 0.0,
+        "source": "codex-local-jsonl",
+        "last_synced_at": "2026-05-15T13:38:01.3225111Z",
+        "codex": {
+          "calls": 265,
+          "estimated_cost_usd": 0.0,
+          "total_input_tokens": 21613708,
+          "total_output_tokens": 278065,
+          "cached_tokens": 17785344,
+          "reasoning_tokens": 120386,
+          "tool_tokens": 0,
+          "total_duration_ms": 0
+        },
+        "rate_limits": {
+          "limit_id": "codex",
+          "limit_name": null,
+          "primary": {
+            "used_percent": 84.0,
+            "window_minutes": 300,
+            "resets_at": 1778853512
+          },
+          "secondary": {
+            "used_percent": 66.0,
+            "window_minutes": 10080,
+            "resets_at": 1779250893
+          },
+          "credits": null,
+          "plan_type": "plus",
+          "rate_limit_reached_type": null
+        }
+      }
+    }
+  },
+  "routing_rules": {
+    "monitoring": [
+      "gemini_cli:cheap",
+      "cursor_agent:default",
+      "copilot_cli:default",
+      "codex_orchestrator:monitoring"
+    ],
+    "simple_review": [
+      "gemini_cli:cheap",
+      "copilot_cli:default",
+      "cline_cli:default"
+    ],
+    "code_review": [
+      "gemini_cli:balanced",
+      "kiro_cli:default",
+      "cursor_agent:default",
+      "claude_code:balanced"
+    ],
+    "complex_review": [
+      "claude_code:balanced",
+      "gemini_cli:premium"
+    ],
+    "planning": [
+      "gemini_cli:balanced",
+      "kiro_cli:default",
+      "cursor_agent:default",
+      "copilot_cli:default",
+      "codex_orchestrator:planning"
+    ],
+    "analysis": [
+      "gemini_cli:cheap",
+      "kiro_cli:default",
+      "cursor_agent:default",
+      "copilot_cli:default"
+    ],
+    "documentation": [
+      "gemini_cli:cheap",
+      "kiro_cli:default",
+      "cursor_agent:default",
+      "copilot_cli:default"
+    ],
+    "merge_conflict_resolution": [
+      "gemini_cli:balanced",
+      "kiro_cli:default",
+      "cursor_agent:default",
+      "cline_cli:default",
+      "claude_code:balanced"
+    ],
+    "debugging": [
+      "claude_code:balanced",
+      "cline_cli:default",
+      "gemini_cli:premium"
+    ],
+    "coding": [
+      "jules"
+    ]
+  }
 }

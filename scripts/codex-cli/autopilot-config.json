@@ -4,17 +4,37 @@
     "planning_minutes": 120,
     "monitoring_minutes": 15
   },
+  "planning": {
+    "enable_cli_issue_discovery": false
+  },
+  "issue_naming": {
+    "master_suffix": "[MASTER]",
+    "standard_suffix": "[ISSUE]",
+    "sub_issue_suffix_format": "[M{parent_number}-S{sequence_2d}]",
+    "notes": [
+      "Master issues end with [MASTER].",
+      "Standalone issues end with [ISSUE].",
+      "Sub-issues end with [M<parent issue number>-S<two digit todo order>], e.g. [M510-S01].",
+      "Parent links remain authoritative in the issue body via Part of #<number>."
+    ]
+  },
   "jules": {
     "max_daily_sessions": 100,
     "max_concurrent_sessions": 15,
+    "session_poll_max_pages": 20,
     "auto_approve_plans": true,
-    "auto_retry_feedback_max": 2
+    "auto_retry_feedback_max": 4,
+    "monitor_untracked_sessions": true,
+    "max_feedback_sessions_per_cycle": 20,
+    "max_pr_actions_per_cycle": 3,
+    "max_backlog_starts_per_monitoring_cycle": 5,
+    "enable_auto_merge_ready_prs": true
   },
   "gemini_worktree_path": "../VjMapper-gemini",
   "issue_filters": {
-    "include_labels": ["jules-task", "priority-high", "bug"],
+    "include_labels": ["jules-task", "priority-high", "priority: high", "priority: critical", "bug", "refactoring"],
     "exclude_labels": ["wontfix", "duplicate", "on-hold"],
     "autopilot_label": "autopilot-created"
   },
-  "max_issues_per_planning_cycle": 5
+  "max_issues_per_planning_cycle": 15
 }

@@ -232,7 +232,6 @@ function Invoke-CliTask {
     Write-Host "[ROUTER] Verwende $providerName ($modelTier) fuer '$TaskType'" -ForegroundColor Cyan
 
     if ($DryRun.IsPresent) {
-        Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
         return [ordered]@{
             success  = $true
             provider = $providerName
@@ -245,7 +244,7 @@ function Invoke-CliTask {
 
     # Get model name for this tier
     $modelName = $null
-    $hasModels = $providerConfig.PSObject.Properties.Name -contains "models"
+    $hasModels = Test-ObjectProperty -Object $providerConfig -Name "models"
     if ($hasModels -and $providerConfig.models -and $providerConfig.models.$modelTier) {
         $modelName = $providerConfig.models.$modelTier.name
     }
@@ -308,28 +307,27 @@ function Invoke-CliTask {
     # Parse real stats from output
     $parsedStats = Parse-CliStats -ProviderName $providerName -RawOutput $output -TelemetryFile $telemetryFile
 
+    $provider = $QuotaRegistry.providers.$providerName
+    Ensure-ProviderUsageToday -Provider $provider
+    $estimatedCost = Get-EstimatedCost -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
+
     # Register the call with real cost if available, otherwise use estimate
     if ($parsedStats.real_cost_usd -or $parsedStats.input_tokens) {
-        $provider = $QuotaRegistry.providers.$providerName
-        
         $modelUsedKey = "unknown"
         if ($parsedStats.model_used) { $modelUsedKey = $parsedStats.model_used }
         elseif ($modelName) { $modelUsedKey = $modelName }
 
-        # Initialize model block if missing
-        if (-not $provider.usage_today.PSObject.Properties[$modelUsedKey]) {
-            $provider.usage_today | Add-Member -MemberType NoteProperty -Name $modelUsedKey -Value @{
-                calls = 0; estimated_cost_usd = 0.0; total_input_tokens = 0; total_output_tokens = 0; 
-                cached_tokens = 0; reasoning_tokens = 0; tool_tokens = 0; total_duration_ms = 0
-            }
-        }
-
-        $modUsage = $provider.usage_today.$modelUsedKey
+        $modUsage = Ensure-ModelUsageBucket -Provider $provider -ModelName $modelUsedKey
         $modUsage.calls = [int]$modUsage.calls + 1
+
+        $provider.usage_today.calls = [int]$provider.usage_today.calls + 1
         
+        $costToAdd = $estimatedCost
         if ($parsedStats.real_cost_usd) {
-            $modUsage.estimated_cost_usd = [Math]::Round([double]$modUsage.estimated_cost_usd + [double]$parsedStats.real_cost_usd, 4)
+            $costToAdd = [double]$parsedStats.real_cost_usd
         }
+        $modUsage.estimated_cost_usd = [Math]::Round([double]$modUsage.estimated_cost_usd + $costToAdd, 4)
+        $provider.usage_today.estimated_cost_usd = [Math]::Round([double]$provider.usage_today.estimated_cost_usd + $costToAdd, 4)
         
         if ($parsedStats.input_tokens) { $modUsage.total_input_tokens = [int]$modUsage.total_input_tokens + [int]$parsedStats.input_tokens }
         if ($parsedStats.output_tokens) { $modUsage.total_output_tokens = [int]$modUsage.total_output_tokens + [int]$parsedStats.output_tokens }

@@ -16,7 +16,53 @@ $Repository = if ($Config -and -not [string]::IsNullOrWhiteSpace([string]$Config
 $StatePath = Join-Path $ScriptDir "autopilot-state.json"
 
 $lastGhFetch = [datetime]::MinValue
-$ghFetchIntervalSec = 300 # Alle 5 Minuten GitHub abfragen
+$dashboardSyncIntervalSec = 60
+$ghFetchIntervalSec = 300 # Alle 5 Minuten GitHub und PRs abfragen
+
+function Add-SchedulerSnapshot {
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][object]$Config
+    )
+
+    $now = Get-Date
+    $planMinutes = [int]$Config.wake_intervals.planning_minutes
+    $monitoringMinutes = [int]$Config.wake_intervals.monitoring_minutes
+
+    $lastPlanning = $null
+    $lastMonitoring = $null
+    try {
+        if (-not [string]::IsNullOrWhiteSpace([string]$State.last_planning_at)) {
+            $lastPlanning = [datetimeoffset]::Parse([string]$State.last_planning_at).LocalDateTime
+        }
+    } catch { }
+    try {
+        if (-not [string]::IsNullOrWhiteSpace([string]$State.last_monitoring_at)) {
+            $lastMonitoring = [datetimeoffset]::Parse([string]$State.last_monitoring_at).LocalDateTime
+        }
+    } catch { }
+
+    if ($null -eq $lastPlanning) { $lastPlanning = $now }
+    if ($null -eq $lastMonitoring) { $lastMonitoring = $now }
+
+    $nextPlanning = $lastPlanning.AddMinutes($planMinutes)
+    $nextMonitoring = $lastMonitoring.AddMinutes($monitoringMinutes)
+
+    $scheduler = [pscustomobject]@{
+        planning_interval_minutes = $planMinutes
+        monitoring_interval_minutes = $monitoringMinutes
+        last_planning_at = $State.last_planning_at
+        last_monitoring_at = $State.last_monitoring_at
+        next_planning_at = $nextPlanning.ToString("o")
+        next_monitoring_at = $nextMonitoring.ToString("o")
+        next_planning_in_seconds = [Math]::Max(0, [int][Math]::Round(($nextPlanning - $now).TotalSeconds))
+        next_monitoring_in_seconds = [Math]::Max(0, [int][Math]::Round(($nextMonitoring - $now).TotalSeconds))
+        generated_at = $now.ToString("o")
+    }
+
+    $State | Add-Member -MemberType NoteProperty -Name "scheduler" -Value $scheduler -Force
+    return $State
+}
 
 Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host " VORCE AUTOPILOT - Persistent Dashboard Sync" -ForegroundColor Cyan
@@ -38,7 +84,7 @@ while ($true) {
             Clear-DailyUsageForProvider -Date $reportDate -ProviderName $providerName
 
             $modelBuckets = @($provider.usage_today.PSObject.Properties | Where-Object {
-                $_.Name -notin @("calls", "estimated_cost_usd", "source", "last_synced_at", "rate_limits", "active_sessions", "completed_sessions", "failed_sessions", "pending_sessions", "api_sessions_seen", "last_error") -and
+                $_.Name -notin @("calls", "estimated_cost_usd", "source", "last_synced_at", "rate_limits", "quota_buckets", "quota_source", "quota_synced_at", "quota_error", "active_sessions", "completed_sessions", "failed_sessions", "pending_sessions", "api_sessions_seen", "api_sessions_today", "account_sessions_observed_today", "account_sessions_observed_rolling_24h", "live_capacity_sessions", "live_in_progress_sessions", "live_queued_sessions", "live_waiting_sessions", "scoped_live_capacity_sessions", "scoped_live_in_progress_sessions", "scoped_live_queued_sessions", "scoped_live_waiting_sessions", "last_error") -and
                 $null -ne $_.Value -and
                 (Test-ObjectProperty -Object $_.Value -Name "calls")
             })
@@ -78,7 +124,10 @@ while ($true) {
         
         if (Test-Path $StatePath) {
             $state = Read-JsonLocked -Path $StatePath
-            if ($null -ne $state) { Write-JsonLocked -Path (Join-Path $DashboardPublicDir "active-sessions.json") -Data $state | Out-Null }
+            if ($null -ne $state) {
+                $state = Add-SchedulerSnapshot -State $state -Config $Config
+                Write-JsonLocked -Path (Join-Path $DashboardPublicDir "active-sessions.json") -Data $state | Out-Null
+            }
         }
         
         $RegistryPath = Join-Path $ScriptDir "quota-registry.json"
@@ -86,23 +135,32 @@ while ($true) {
             Write-JsonLocked -Path (Join-Path $DashboardPublicDir "registry.json") -Data $registry | Out-Null
         }
 
-        # --- GitHub Polling (Throttled) ---
+        # --- GitHub / PR Polling (Throttled) ---
         $now = Get-Date
         if (($now - $lastGhFetch).TotalSeconds -ge $ghFetchIntervalSec) {
             Write-Host "[STATS] Polling GitHub Issues..." -ForegroundColor Gray
-            $issuesRaw = gh issue list --repo $Repository --state all --limit 100 --json number,title,state,url,updatedAt,labels,body 2>$null
+            $issuesRaw = gh issue list --repo $Repository --state all --limit 1000 --json number,title,state,url,updatedAt,createdAt,labels,body,assignees,milestone 2>$null
             if ($LASTEXITCODE -eq 0) {
                 $issueJson = $issuesRaw | Out-String
                 $issueData = $issueJson | ConvertFrom-Json -ErrorAction Stop
                 Write-JsonLocked -Path (Join-Path $DashboardPublicDir "github-issues.json") -Data @($issueData) | Out-Null
-                $lastGhFetch = $now
                 Write-Host "[STATS] GitHub Issues updated." -ForegroundColor Gray
             }
+
+            $prsRaw = gh pr list --repo $Repository --state open --limit 1000 --json number,title,state,url,updatedAt,headRefName,baseRefName,mergeable,statusCheckRollup 2>$null
+            if ($LASTEXITCODE -eq 0) {
+                $prJson = $prsRaw | Out-String
+                $prData = $prJson | ConvertFrom-Json -ErrorAction Stop
+                Write-JsonLocked -Path (Join-Path $DashboardPublicDir "pull-requests.json") -Data @($prData) | Out-Null
+                Write-Host "[STATS] Pull Requests updated." -ForegroundColor Gray
+            }
+
+            $lastGhFetch = $now
         }
 
     } catch {
         Write-Warning "[STATS] Sync Fehler: $($_.Exception.Message)"
     }
 
-    Start-Sleep -Seconds 15
+    Start-Sleep -Seconds $dashboardSyncIntervalSec
 }

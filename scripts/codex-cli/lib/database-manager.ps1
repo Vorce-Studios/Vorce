@@ -3,6 +3,9 @@
 
 Set-StrictMode -Version Latest
 
+# Dot-source state-manager to get Read-JsonLocked/Write-JsonLocked
+. (Join-Path $PSScriptRoot "state-manager.ps1")
+
 $ScriptDir = Join-Path $PSScriptRoot ".."
 $DbPath = [System.IO.Path]::GetFullPath((Join-Path $ScriptDir "historical-quota-db.json"))
 
@@ -23,10 +26,7 @@ function Read-Database {
     Reads the historical database into an array of objects.
     #>
     Initialize-Database
-    $content = Get-Content -Path $DbPath -Raw -ErrorAction Stop
-    if ([string]::IsNullOrWhiteSpace($content)) { return @() }
-    
-    $data = $content | ConvertFrom-Json -ErrorAction Stop
+    $data = Read-JsonLocked -Path $DbPath
     if ($null -eq $data) { return @() }
     
     # Ensure it's an array
@@ -44,7 +44,7 @@ function Write-Database {
     param(
         [Parameter(Mandatory)][array]$Data
     )
-    ConvertTo-Json -InputObject $Data -Depth 5 | Set-Content -Path $DbPath -Encoding UTF8
+    Write-JsonLocked -Path $DbPath -Data $Data | Out-Null
 }
 
 function Save-DailyUsage {
@@ -66,46 +66,69 @@ function Save-DailyUsage {
         [Parameter(Mandatory)][int]$DurationMs
     )
 
-    [array]$db = Read-Database
+    Update-JsonLocked -Path $DbPath -DefaultValue @() -Updater {
+        param($currentData)
 
-    # Check if entry already exists for this date, provider, and model
-    $existingEntry = $null
-    for ($i = 0; $i -lt $db.Count; $i++) {
-        if ($db[$i].date -eq $Date -and $db[$i].provider_name -eq $ProviderName -and $db[$i].model_name -eq $ModelName) {
-            $existingEntry = $db[$i]
-            break
+        [array]$db = if ($null -eq $currentData) { @() } elseif ($currentData -is [array]) { $currentData } else { @($currentData) }
+
+        # Check if entry already exists for this date, provider, and model
+        $existingEntry = $null
+        for ($i = 0; $i -lt $db.Count; $i++) {
+            if ($db[$i].date -eq $Date -and $db[$i].provider_name -eq $ProviderName -and $db[$i].model_name -eq $ModelName) {
+                $existingEntry = $db[$i]
+                break
+            }
         }
-    }
 
-    if ($null -ne $existingEntry) {
-        # Update existing
-        $existingEntry.calls = $Calls
-        $existingEntry.cost_usd = $CostUsd
-        $existingEntry.input_tokens = $InputTokens
-        $existingEntry.output_tokens = $OutputTokens
-        $existingEntry.cached_tokens = $CachedTokens
-        $existingEntry.reasoning_tokens = $ReasoningTokens
-        $existingEntry.tool_tokens = $ToolTokens
-        $existingEntry.total_duration_ms = $DurationMs
-        Write-Host "[DB] Updated usage for $ProviderName ($ModelName) on $Date" -ForegroundColor DarkGray
-    } else {
-        # Add new
-        $newEntry = [ordered]@{
-            date              = $Date
-            provider_name     = $ProviderName
-            model_name        = $ModelName
-            calls             = $Calls
-            cost_usd          = $CostUsd
-            input_tokens      = $InputTokens
-            output_tokens     = $OutputTokens
-            cached_tokens     = $CachedTokens
-            reasoning_tokens  = $ReasoningTokens
-            tool_tokens       = $ToolTokens
-            total_duration_ms = $DurationMs
+        if ($null -ne $existingEntry) {
+            # Update existing
+            $existingEntry.calls = $Calls
+            $existingEntry.cost_usd = $CostUsd
+            $existingEntry.input_tokens = $InputTokens
+            $existingEntry.output_tokens = $OutputTokens
+            $existingEntry.cached_tokens = $CachedTokens
+            $existingEntry.reasoning_tokens = $ReasoningTokens
+            $existingEntry.tool_tokens = $ToolTokens
+            $existingEntry.total_duration_ms = $DurationMs
+            Write-Host "[DB] Updated usage for $ProviderName ($ModelName) on $Date" -ForegroundColor DarkGray
+        } else {
+            # Add new
+            $newEntry = [ordered]@{
+                date              = $Date
+                provider_name     = $ProviderName
+                model_name        = $ModelName
+                calls             = $Calls
+                cost_usd          = $CostUsd
+                input_tokens      = $InputTokens
+                output_tokens     = $OutputTokens
+                cached_tokens     = $CachedTokens
+                reasoning_tokens  = $ReasoningTokens
+                tool_tokens       = $ToolTokens
+                total_duration_ms = $DurationMs
+            }
+            $db += $newEntry
+            Write-Host "[DB] Inserted new usage for $ProviderName ($ModelName) on $Date" -ForegroundColor DarkGray
         }
-        $db += $newEntry
-        Write-Host "[DB] Inserted new usage for $ProviderName ($ModelName) on $Date" -ForegroundColor DarkGray
-    }
 
-    Write-Database -Data $db
+        return @($db)
+    } | Out-Null
+}
+
+function Clear-DailyUsageForProvider {
+    <#
+    .SYNOPSIS
+    Removes all rows for a provider on a date before writing a fresh telemetry snapshot.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Date,
+        [Parameter(Mandatory)][string]$ProviderName
+    )
+
+    Update-JsonLocked -Path $DbPath -DefaultValue @() -Updater {
+        param($currentData)
+
+        [array]$db = if ($null -eq $currentData) { @() } elseif ($currentData -is [array]) { $currentData } else { @($currentData) }
+        $filtered = @($db | Where-Object { -not ($_.date -eq $Date -and $_.provider_name -eq $ProviderName) })
+        return @($filtered)
+    } | Out-Null
 }
