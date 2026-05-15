@@ -1,10 +1,7 @@
-#[allow(unused_imports)]
 use egui::{Color32, Pos2, Rect, Response, Sense, Stroke, TextureHandle, Ui, Vec2};
 
-#[allow(unused_imports)]
-use crate::config::{MidiAssignment, MidiAssignmentTarget, UserConfig};
+use crate::config::{MidiAssignment, MidiAssignmentTarget};
 
-#[allow(unused_imports)]
 use std::collections::{HashMap, HashSet};
 #[cfg(feature = "midi")]
 use vorce_control::midi::{ControllerElement, ElementState, ElementType};
