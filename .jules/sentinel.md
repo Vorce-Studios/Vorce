@@ -42,3 +42,8 @@
 **Lektion:** Robust error handling is crucial for operations dependent on user input and serialized project files to prevent denial-of-service vulnerabilities.
 **PrÃ¤vention:** Use `.map_err()` to propagate errors up the call stack, explicitly defining error types like `CodegenError` where appropriate.
 ## 2025-01-20 - [Denial of Service (DoS)] **Schwachstelle:** `expect()` calls exist in `vorce-media/src/pipeline.rs` and `vorce-render/src/mesh_buffer_cache.rs` and `vorce-render/src/texture.rs`. **Lektion:** Code relied on expect() which can panic and cause DoS. **Prävention:** Use safe error handling or fallback defaults.
+
+## 2025-05-24 - [DoS via Option::unwrap() in hold_to_confirm_button]
+**Schwachstelle:** Ein `unwrap()` Aufruf befand sich im `hold_to_confirm_button` Widget (`crates/vorce-ui/src/widgets/custom.rs` auf Zeile 575), wenn auf den `start_time` zugegriffen wurde.
+**Lektion:** Wenn `start_time` aus irgendeinem Grund `None` bleibt (z.B. UI state desync), führt die Ausführung der Render-Pipeline zum sofortigen Absturz (DoS).
+**Prävention:** Bei UI Interaktionen müssen Resourcen sicher mit `if let Some()` oder pattern matching entpackt werden. Schlägt dies fehl, kann man auf Default Werte zurückgreifen.
