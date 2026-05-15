@@ -517,6 +517,32 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_handle_send_osc_missing_args() {
+        let (tx, _rx) = unbounded();
+        let server = McpServer::new(Some(tx));
+
+        let request = json!({
+            "jsonrpc": "2.0",
+            "id": 9,
+            "method": "tools/call",
+            "params": {
+                "name": "send_osc",
+                "arguments": {
+                    "address": "/test/addr"
+                }
+            }
+        });
+
+        let response = server.handle_request(&request.to_string()).await;
+        assert!(response.is_some());
+        let resp = response.unwrap();
+        assert!(resp.error.is_some());
+        let error = resp.error.unwrap();
+        assert_eq!(error.code, -32602);
+        assert_eq!(error.message, "Missing address or args argument");
+    }
+
+    #[tokio::test]
     async fn test_handle_send_osc() {
         let (tx, _rx) = unbounded();
         let server = McpServer::new(Some(tx));
