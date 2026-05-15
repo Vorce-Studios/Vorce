@@ -1,6 +1,6 @@
 //! Module Configuration Defaults
 
-use crate::module::types::{MeshType, ModulePartId};
+use crate::module::types::ModulePartId;
 
 /// Returns the default playback speed for media.
 pub fn default_speed() -> f32 {
