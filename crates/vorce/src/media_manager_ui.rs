@@ -1,4 +1,4 @@
-use egui::{Id, Sense, Ui, Vec2};
+use egui::{Color32, Id, Sense, Ui, Vec2};
 use vorce_core::media_library::{MediaItem, MediaLibrary, MediaType};
 use vorce_ui::responsive::ResponsiveLayout;
 
@@ -194,7 +194,7 @@ impl MediaManagerUI {
 
                 // Draw thumbnail placeholder
                 if ui.is_rect_visible(rect) {
-                    ui.painter().rect_filled(rect, 2.0, ui.visuals().extreme_bg_color);
+                    ui.painter().rect_filled(rect, 2.0, Color32::from_gray(50));
 
                     // Icon based on type
                     let icon = match item.media_type {
@@ -208,7 +208,7 @@ impl MediaManagerUI {
                         egui::Align2::CENTER_CENTER,
                         icon,
                         egui::FontId::proportional(size.y * 0.5),
-                        ui.visuals().text_color(),
+                        Color32::WHITE,
                     );
 
                     // Name
@@ -217,7 +217,7 @@ impl MediaManagerUI {
                         egui::Align2::CENTER_BOTTOM,
                         &item.name,
                         egui::FontId::proportional(12.0),
-                        ui.visuals().text_color(),
+                        Color32::WHITE,
                     );
 
                     // Hover effect
@@ -225,7 +225,7 @@ impl MediaManagerUI {
                         ui.painter().rect_stroke(
                             rect,
                             2.0,
-                            egui::Stroke::new(2.0, ui.visuals().selection.bg_fill),
+                            egui::Stroke::new(2.0, Color32::LIGHT_BLUE),
                             egui::StrokeKind::Middle,
                         );
                     }

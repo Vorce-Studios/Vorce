@@ -16,7 +16,7 @@ members = [
 [workspace.package]
 version = "0.2.0"
 edition = "2021"
-rust-version = "1.95.0"
+rust-version = "1.94.0"
 authors = ["Vorce Contributors"]
 license = "GPL-3.0-only"
 repository = "https://github.com/Vorce-Studios/Vorce"
@@ -69,7 +69,7 @@ libmpv2 = { version = "5.0", features = ["render"] }
 libmpv2-sys = "4.0.1"
 
 # Control
-midir = "0.11"
+midir = "0.10"
 
 # File watching
 notify = "8.2"
@@ -99,7 +99,7 @@ thiserror = "2.0"
 tiny-skia = "0.12"
 
 # Async runtime
-tokio = { version = "1.52.3", features = ["full"] }
+tokio = { version = "1.50.0", features = ["full"] }
 toml = "1.1.0"
 tower = "0.5"
 

@@ -150,7 +150,7 @@ pub struct App {
     /// Texture pool for intermediate textures.
     pub texture_pool: std::sync::Arc<TexturePool>,
     /// The main compositor.
-    pub compositor: Compositor,
+    pub _compositor: Compositor,
     /// The effect chain renderer.
     pub effect_chain_renderer: EffectChainRenderer,
     /// Dedicated effect chain renderer for sidebar previews to avoid VRAM thrashing.
@@ -162,7 +162,7 @@ pub struct App {
     /// Quad renderer for passthrough.
     pub _quad_renderer: QuadRenderer,
     /// Final composite texture before output processing.
-    pub composite_texture: String,
+    pub _composite_texture: String,
     /// Ping-pong textures for layer composition.
     pub layer_ping_pong: [String; 2],
     /// The application state (project data).
@@ -245,12 +245,6 @@ pub struct App {
     #[cfg(feature = "ndi")]
     pub ndi_senders:
         std::collections::HashMap<vorce_core::module::ModulePartId, vorce_io::ndi::NdiSender>,
-    /// NDI Offscreen textures for virtual NDI outputs
-    #[cfg(feature = "ndi")]
-    pub ndi_offscreen_textures: std::collections::HashMap<
-        vorce_core::module::ModulePartId,
-        (wgpu::Texture, std::sync::Arc<wgpu::TextureView>),
-    >,
     /// NDI Readback buffers (OutputID -> (Buffer, MappedState))
     #[cfg(feature = "ndi")]
     pub ndi_readbacks: std::collections::HashMap<

@@ -62,7 +62,7 @@ impl PreviewPanel {
         }
 
         let mut final_outputs: Vec<_> = best_previews.into_values().collect();
-        final_outputs.sort_by_key(|a| a.id);
+        final_outputs.sort_by(|a, b| a.id.cmp(&b.id));
         self.outputs = final_outputs;
     }
 
@@ -175,7 +175,7 @@ impl PreviewPanel {
                                             ui.painter().rect_filled(
                                                 rect,
                                                 2.0,
-                                                ui.style().visuals.widgets.noninteractive.bg_stroke.color,
+                                                egui::Color32::from_gray(40),
                                             );
 
                                             // Draw "no signal" text
@@ -184,7 +184,7 @@ impl PreviewPanel {
                                                 egui::Align2::CENTER_CENTER,
                                                 "No Signal",
                                                 egui::FontId::proportional(12.0),
-                                                ui.style().visuals.text_color().gamma_multiply(0.6),
+                                                egui::Color32::GRAY,
                                             );
                                         }
 

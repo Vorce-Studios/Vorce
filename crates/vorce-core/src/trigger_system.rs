@@ -121,8 +121,10 @@ impl TriggerSystem {
                             // Silence unused assignment warning for the last increment
                             let _ = socket_index;
                         }
-                        TriggerType::Beat if audio_data.beat_detected => {
-                            self.active_triggers.insert((part.id, 0));
+                        TriggerType::Beat => {
+                            if audio_data.beat_detected {
+                                self.active_triggers.insert((part.id, 0));
+                            }
                         }
                         TriggerType::Fixed { interval_ms, .. } => {
                             active_state_users.insert(part.id); // Mark as using state

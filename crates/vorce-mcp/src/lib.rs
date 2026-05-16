@@ -24,8 +24,6 @@ pub enum McpAction {
     SaveProject(PathBuf),
     /// Load a project.
     LoadProject(PathBuf),
-    /// Get the current project state as JSON.
-    GetProjectState(crossbeam_channel::Sender<String>),
 
     // === Layer Management ===
     /// Add a new layer.
@@ -42,10 +40,6 @@ pub enum McpAction {
     // === Cue Management ===
     /// Trigger a cue by ID.
     TriggerCue(u64),
-
-    // === NDI Management ===
-    /// Get the runtime status of an NDI sender (part_id, Sender).
-    GetNdiSenderStatus(u64, crossbeam_channel::Sender<Option<u64>>),
     /// Go to the next cue.
     NextCue,
     /// Go to the previous cue.

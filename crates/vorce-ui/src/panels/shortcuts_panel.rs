@@ -16,8 +16,6 @@ pub struct ShortcutsPanel {
     conflict_map: Vec<bool>,
     show_conflict_warning: bool,
     search_filter: String,
-    // Performance Boost: Cache the lowercased search query to avoid heap allocations per frame
-    search_filter_lower: Option<String>,
 }
 
 impl ShortcutsPanel {
@@ -55,7 +53,6 @@ impl ShortcutsPanel {
                     key_bindings.reset_to_defaults();
                     self.detect_conflicts(key_bindings);
                     self.search_filter.clear();
-                    self.search_filter_lower = None;
                 }
             });
         });
@@ -65,19 +62,11 @@ impl ShortcutsPanel {
         // --- Search Bar ---
         ui.horizontal(|ui| {
             ui.label("🔍");
-            let response = ui.add(
-                TextEdit::singleline(&mut self.search_filter).hint_text("Search shortcuts..."),
-            );
-            if response.changed() {
-                self.search_filter_lower =
-                    (!self.search_filter.is_empty()).then(|| self.search_filter.to_lowercase());
-            }
-
+            ui.add(TextEdit::singleline(&mut self.search_filter).hint_text("Search shortcuts..."));
             if !self.search_filter.is_empty()
                 && ui.button("✖").on_hover_text("Clear Search").clicked()
             {
                 self.search_filter.clear();
-                self.search_filter_lower = None;
             }
         });
 
@@ -88,15 +77,16 @@ impl ShortcutsPanel {
         let shortcuts_clone = key_bindings.get_shortcuts().to_vec();
 
         // --- Filter and Group Shortcuts ---
+        let filter_lower = self.search_filter.to_lowercase();
         let filtered_indices: Vec<usize> = shortcuts_clone
             .iter()
             .enumerate()
             .filter(|(_, s)| {
-                let Some(filter_lower) = &self.search_filter_lower else {
+                if filter_lower.is_empty() {
                     return true;
-                };
-                s.description_lower.contains(filter_lower)
-                    || s.shortcut_str_lower.contains(filter_lower)
+                }
+                s.description_lower.contains(&filter_lower)
+                    || s.shortcut_str_lower.contains(&filter_lower)
             })
             .map(|(i, _)| i)
             .collect();

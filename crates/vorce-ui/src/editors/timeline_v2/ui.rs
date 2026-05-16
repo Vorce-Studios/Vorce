@@ -4,7 +4,7 @@
 
 use crate::theme::colors;
 use crate::widgets::hold_to_action_button;
-use egui::{Pos2, Rect, Sense, Stroke, Ui, Vec2};
+use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use vorce_core::animation::AnimValue;
@@ -276,7 +276,8 @@ impl TimelineV2 {
                         .collect();
 
                     // Sort by whether they require triggers (those without triggers are defaults)
-                    active_blocks.sort_by_key(|a| a.start_trigger.is_some());
+                    active_blocks
+                        .sort_by(|a, b| a.start_trigger.is_some().cmp(&b.start_trigger.is_some()));
 
                     let mut next_block_id = self.hybrid_current_block_id;
 
@@ -832,7 +833,7 @@ impl TimelineV2 {
                             egui::Align2::LEFT_TOP,
                             format!("{:.0}s", time),
                             egui::FontId::proportional(12.0),
-                            ui.visuals().strong_text_color(),
+                            Color32::WHITE,
                         );
                     }
                 }
@@ -866,7 +867,7 @@ impl TimelineV2 {
                         egui::Align2::LEFT_TOP,
                         "M",
                         egui::FontId::proportional(10.0),
-                        ui.visuals().strong_text_color(),
+                        Color32::WHITE,
                     );
 
                     let interact_rect = Rect::from_min_size(
@@ -996,7 +997,7 @@ impl TimelineV2 {
                         egui::Align2::LEFT_TOP,
                         label,
                         egui::FontId::proportional(12.0),
-                        ui.visuals().strong_text_color(),
+                        Color32::WHITE,
                     );
                 }
             }
@@ -1031,7 +1032,7 @@ impl TimelineV2 {
                 }
 
                 let text_color = if header_response.hovered() {
-                    ui.visuals().strong_text_color()
+                    Color32::WHITE
                 } else {
                     ui.visuals().text_color().gamma_multiply(0.8)
                 };
@@ -1133,8 +1134,8 @@ impl TimelineV2 {
 
                             painter.add(egui::Shape::convex_polygon(
                                 diamond,
-                                crate::theme::colors::WARN_COLOR,
-                                Stroke::new(1.0, ui.visuals().strong_text_color()),
+                                Color32::YELLOW,
+                                Stroke::new(1.0, Color32::WHITE),
                             ));
                         }
 

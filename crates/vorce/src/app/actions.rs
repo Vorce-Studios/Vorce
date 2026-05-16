@@ -227,9 +227,6 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     PathBuf::from(path),
                 ));
             }
-            UIAction::GetNdiSenderStatus(part_id, tx) => {
-                let _ = app.action_sender.send(McpAction::GetNdiSenderStatus(part_id, tx));
-            }
 
             UIAction::LoadProject(path_str) => {
                 let path = if path_str.is_empty() {
@@ -532,10 +529,10 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                     app.state.dirty = true;
                 }
             }
-            UIAction::RenameLayer(id, name)
-                if app.state.layer_manager_mut().rename_layer(id, name.clone()) =>
-            {
-                app.state.dirty = true;
+            UIAction::RenameLayer(id, name) => {
+                if app.state.layer_manager_mut().rename_layer(id, name) {
+                    app.state.dirty = true;
+                }
             }
             UIAction::ToggleLayerSolo(id) => {
                 if let Some(layer) = app.state.layer_manager_mut().get_layer_mut(id) {
@@ -738,37 +735,6 @@ fn handle_node_action(app: &mut App, action: NodeEditorAction) -> Result<()> {
 /// Process pending MCP actions
 pub fn handle_mcp_actions(app: &mut App) {
     while let Ok(action) = app.mcp_receiver.try_recv() {
-        if let vorce_mcp::McpAction::GetProjectState(tx) = &action {
-            tracing::info!("MCP: GetProjectState");
-            match serde_json::to_string(&app.state) {
-                Ok(json) => {
-                    if let Err(e) = tx.send(json) {
-                        tracing::error!("Failed to send project state back to MCP: {}", e);
-                    }
-                }
-                Err(e) => {
-                    tracing::error!("Failed to serialize project state for MCP: {}", e);
-                    let _ = tx.send(format!("{{\"error\": \"Serialization failed: {e}\"}}"));
-                }
-            }
-            continue;
-        }
-        if let vorce_mcp::McpAction::GetNdiSenderStatus(part_id, tx) = action {
-            #[cfg(feature = "ndi")]
-            {
-                if let Some(sender) = app.ndi_senders.get(&part_id) {
-                    let _ = tx.send(Some(sender.frame_count()));
-                } else {
-                    let _ = tx.send(None);
-                }
-            }
-            #[cfg(not(feature = "ndi"))]
-            {
-                let _ = part_id;
-                let _ = tx.send(None);
-            }
-            continue;
-        }
         if let vorce_mcp::McpAction::SetModuleSourcePath(mod_id, part_id, path) = action {
             info!("MCP: SetModuleSourcePath({}, {}, {:?})", mod_id, part_id, path);
             if let Some(module) = app.state.module_manager_mut().get_module_mut(mod_id) {

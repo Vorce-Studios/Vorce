@@ -44,7 +44,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_media_library_limit() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_media_library_limit() {
         use std::fs::File;
         use std::path::PathBuf;
 
@@ -56,14 +56,14 @@ mod tests {
         }
 
         let path = std::env::temp_dir().join(format!("vorce_test_limit_{}", uuid::Uuid::new_v4()));
-        std::fs::create_dir_all(&path)?;
+        std::fs::create_dir_all(&path).unwrap();
         let _guard = TempDir(path.clone()); // Ensures cleanup on panic
 
         // Create MAX_MEDIA_ITEMS + 10 files
         // MAX_MEDIA_ITEMS is 100 in test
         for i in 0..(MAX_MEDIA_ITEMS + 10) {
             let file_path = path.join(format!("test_{}.jpg", i));
-            File::create(&file_path)?;
+            File::create(&file_path).unwrap();
         }
 
         let mut library = MediaLibrary::new();
@@ -71,7 +71,6 @@ mod tests {
         library.refresh();
 
         assert_eq!(library.items.len(), MAX_MEDIA_ITEMS);
-        Ok(())
     }
 
     #[test]
@@ -210,9 +209,7 @@ impl MediaLibrary {
 
     /// Refresh the library by re-scanning all paths
     pub fn refresh(&mut self) {
-        let paths_to_scan = self.scanned_paths.clone();
-
-        'outer: for root in paths_to_scan {
+        'outer: for root in self.scanned_paths.clone() {
             for entry in WalkDir::new(&root).into_iter().filter_map(|e| e.ok()) {
                 if self.items.len() >= MAX_MEDIA_ITEMS {
                     warn!("Media library limit reached ({}) - stopping scan", MAX_MEDIA_ITEMS);
@@ -220,34 +217,28 @@ impl MediaLibrary {
                 }
 
                 let path = entry.path();
-                // Extremely fast early-out that avoids ANY allocations
-                // when a file is already in the library or not a file
-                if !entry.file_type().is_file() || self.items.contains_key(path) {
-                    continue;
-                }
+                if path.is_file() {
+                    let media_type = MediaType::from_path(path);
+                    if media_type != MediaType::Unknown {
+                        let metadata = std::fs::metadata(path).ok();
+                        let size = metadata.map(|m| m.len()).unwrap_or(0);
 
-                let media_type = MediaType::from_path(path);
-                if media_type != MediaType::Unknown {
-                    // Only perform metadata syscall when we actually need to insert a new media item
-                    let size = entry.metadata().map(|m| m.len()).unwrap_or(0);
-
-                    // Zero-allocation path conversion via COW
-                    let name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
-                    let name_lower = name.to_lowercase();
-
-                    let item = MediaItem {
-                        path: path.to_path_buf(),
-                        name,
-                        name_lower,
-                        media_type,
-                        metadata: Some(MediaMetadata {
-                            duration: None, // Requires FFmpeg
-                            width: None,    // Requires FFmpeg/Image
-                            height: None,   // Requires FFmpeg/Image
-                            file_size: size,
-                        }),
-                    };
-                    self.items.insert(path.to_path_buf(), item);
+                        let name =
+                            path.file_name().unwrap_or_default().to_string_lossy().to_string();
+                        let item = MediaItem {
+                            path: path.to_path_buf(),
+                            name: name.clone(),
+                            name_lower: name.to_lowercase(),
+                            media_type,
+                            metadata: Some(MediaMetadata {
+                                duration: None, // Requires FFmpeg
+                                width: None,    // Requires FFmpeg/Image
+                                height: None,   // Requires FFmpeg/Image
+                                file_size: size,
+                            }),
+                        };
+                        self.items.insert(path.to_path_buf(), item);
+                    }
                 }
             }
         }

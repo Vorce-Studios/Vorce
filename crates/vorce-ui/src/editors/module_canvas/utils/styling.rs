@@ -18,46 +18,35 @@ pub fn get_part_style(
                 TriggerType::Random { .. } => "Random",
                 TriggerType::Fixed { .. } => "Fixed Timer",
             };
-            (
-                crate::theme::colors::CYAN_ACCENT.linear_multiply(0.2),
-                crate::theme::colors::CYAN_ACCENT,
-                "⚡",
-                name,
-            )
+            (Color32::from_rgb(60, 50, 70), Color32::from_rgb(130, 80, 180), "\u{26A1}", name)
         }
         ModulePartType::Source(SourceType::BevyAtmosphere { .. }) => (
-            crate::theme::colors::CYAN_ACCENT.linear_multiply(0.15),
-            crate::theme::colors::CYAN_ACCENT,
+            Color32::from_rgb(40, 60, 80),
+            Color32::from_rgb(100, 180, 220),
             "â˜ ï¸ ",
             "Atmosphere",
         ),
         ModulePartType::Source(SourceType::BevyHexGrid { .. }) => (
-            crate::theme::colors::CYAN_ACCENT.linear_multiply(0.15),
-            crate::theme::colors::CYAN_ACCENT,
+            Color32::from_rgb(40, 60, 80),
+            Color32::from_rgb(100, 180, 220),
             "\u{1F6D1}",
             "Hex Grid",
         ),
         ModulePartType::Source(SourceType::BevyParticles { .. }) => (
-            crate::theme::colors::CYAN_ACCENT.linear_multiply(0.15),
-            crate::theme::colors::CYAN_ACCENT,
+            Color32::from_rgb(40, 60, 80),
+            Color32::from_rgb(100, 180, 220),
             "\u{2728}",
             "Particles",
         ),
-        ModulePartType::Source(SourceType::Bevy3DText { .. }) => (
-            crate::theme::colors::CYAN_ACCENT.linear_multiply(0.15),
-            crate::theme::colors::CYAN_ACCENT,
-            "T",
-            "3D Text",
-        ),
-        ModulePartType::Source(SourceType::BevyCamera { .. }) => (
-            crate::theme::colors::CYAN_ACCENT.linear_multiply(0.15),
-            crate::theme::colors::CYAN_ACCENT,
-            "🎥",
-            "Camera",
-        ),
+        ModulePartType::Source(SourceType::Bevy3DText { .. }) => {
+            (Color32::from_rgb(40, 60, 80), Color32::from_rgb(100, 220, 180), "T", "3D Text")
+        }
+        ModulePartType::Source(SourceType::BevyCamera { .. }) => {
+            (Color32::from_rgb(40, 60, 80), Color32::from_rgb(180, 100, 220), "\u{1F3A5}", "Camera")
+        }
         ModulePartType::Source(SourceType::Bevy3DShape { .. }) => (
-            crate::theme::colors::CYAN_ACCENT.linear_multiply(0.15),
-            crate::theme::colors::CYAN_ACCENT,
+            Color32::from_rgb(40, 60, 80),
+            Color32::from_rgb(100, 180, 220),
             "\u{1F9CA}",
             "3D Shape",
         ),
@@ -82,12 +71,7 @@ pub fn get_part_style(
                 SourceType::Bevy3DShape { .. } => "3D Shape",
                 SourceType::Bevy3DModel { .. } => "3D Model",
             };
-            (
-                crate::theme::colors::CYAN_ACCENT.linear_multiply(0.2),
-                crate::theme::colors::CYAN_ACCENT,
-                "🎬",
-                name,
-            )
+            (Color32::from_rgb(50, 60, 70), Color32::from_rgb(80, 140, 180), "\u{1F3AC}", name)
         }
 
         ModulePartType::Mask(mask) => {
@@ -102,12 +86,7 @@ pub fn get_part_style(
                 },
                 MaskType::Gradient { .. } => "Gradient",
             };
-            (
-                crate::theme::colors::CYAN_ACCENT.linear_multiply(0.25),
-                crate::theme::colors::CYAN_ACCENT,
-                "🎭",
-                name,
-            )
+            (Color32::from_rgb(60, 55, 70), Color32::from_rgb(160, 100, 180), "\u{1F3AD}", name)
         }
         ModulePartType::Modulizer(mod_type) => {
             let name = match mod_type {
@@ -151,15 +130,15 @@ pub fn get_part_style(
                 ModulizerType::AudioReactive { .. } => "Audio Reactive",
             };
             (
-                crate::theme::colors::WARN_COLOR.linear_multiply(0.2),
-                crate::theme::colors::WARN_COLOR,
+                egui::Color32::from_rgb(60, 60, 50),
+                egui::Color32::from_rgb(180, 140, 60),
                 "ã€°ï¸ ",
                 name,
             )
         }
         ModulePartType::Mesh(_) => (
-            crate::theme::colors::CYAN_ACCENT.linear_multiply(0.2),
-            crate::theme::colors::CYAN_ACCENT,
+            egui::Color32::from_rgb(60, 60, 80),
+            egui::Color32::from_rgb(100, 100, 200),
             "🕸️ï¸ ",
             "Mesh",
         ),
@@ -169,12 +148,7 @@ pub fn get_part_style(
                 LayerType::Group { .. } => "Layer Group",
                 LayerType::All { .. } => "All Layers",
             };
-            (
-                crate::theme::colors::MINT_ACCENT.linear_multiply(0.2),
-                crate::theme::colors::MINT_ACCENT,
-                "📑",
-                name,
-            )
+            (Color32::from_rgb(50, 70, 60), Color32::from_rgb(80, 180, 120), "\u{1F4D1}", name)
         }
         ModulePartType::Output(output) => {
             let name = match output {
@@ -184,12 +158,7 @@ pub fn get_part_style(
                 OutputType::Spout { .. } => "Spout Output",
                 OutputType::Hue { .. } => "Philips Hue",
             };
-            (
-                crate::theme::colors::ERROR_COLOR.linear_multiply(0.2),
-                crate::theme::colors::ERROR_COLOR,
-                "📺",
-                name,
-            )
+            (Color32::from_rgb(70, 50, 50), Color32::from_rgb(180, 80, 80), "\u{1F4FA}", name)
         }
         ModulePartType::Hue(hue) => {
             let name = match hue {
@@ -197,12 +166,7 @@ pub fn get_part_style(
                 HueNodeType::MultiLamp { .. } => "Multi Lamp",
                 HueNodeType::EntertainmentGroup { .. } => "Entertainment Group",
             };
-            (
-                crate::theme::colors::WARN_COLOR.linear_multiply(0.2),
-                crate::theme::colors::WARN_COLOR,
-                "💡",
-                name,
-            )
+            (Color32::from_rgb(60, 60, 40), Color32::from_rgb(200, 200, 100), "\u{1F4A1}", name)
         }
     }
 }
@@ -222,12 +186,12 @@ pub fn get_part_category(part_type: &ModulePartType) -> &'static str {
 
 pub fn get_socket_color(socket_type: &ModuleSocketType) -> Color32 {
     match socket_type {
-        ModuleSocketType::Trigger => crate::theme::colors::CYAN_ACCENT.linear_multiply(0.8),
-        ModuleSocketType::Media => crate::theme::colors::CYAN_ACCENT,
-        ModuleSocketType::Effect => crate::theme::colors::WARN_COLOR,
-        ModuleSocketType::Layer => crate::theme::colors::MINT_ACCENT,
-        ModuleSocketType::Output => crate::theme::colors::ERROR_COLOR,
-        ModuleSocketType::Link => crate::theme::colors::STROKE_GREY,
+        ModuleSocketType::Trigger => Color32::from_rgb(200, 50, 255), // Vibrant Purple
+        ModuleSocketType::Media => Color32::from_rgb(50, 150, 255),   // Bright Blue
+        ModuleSocketType::Effect => Color32::from_rgb(255, 160, 0),   // Vivid Orange
+        ModuleSocketType::Layer => Color32::from_rgb(0, 230, 120),    // Emerald Green
+        ModuleSocketType::Output => Color32::from_rgb(255, 60, 60),   // Bright Red
+        ModuleSocketType::Link => Color32::from_rgb(180, 180, 180),   // Silver
     }
 }
 

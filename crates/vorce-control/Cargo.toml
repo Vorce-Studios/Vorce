@@ -35,6 +35,7 @@ reqwest = { version = "0.12", default-features = false, features = ["json", "rus
 
 # OSC (optional)
 rosc = { workspace = true, optional = true }
+rustc-hash = "2.1.2"
 # Core dependencies
 serde = { workspace = true }
 serde_json = { workspace = true }
