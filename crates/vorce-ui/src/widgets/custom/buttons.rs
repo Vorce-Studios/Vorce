@@ -274,3 +274,51 @@ pub fn move_down_button(ui: &mut Ui) -> Response {
     icon_button(ui, "⏷", Color32::TRANSPARENT, Color32::TRANSPARENT, false)
         .on_hover_text("Move Down")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::widgets::icons::AppIcon;
+    use egui::Color32;
+    use egui::{Context, Ui};
+
+    fn test_ui(func: impl FnMut(&mut Ui)) {
+        let ctx = Context::default();
+        let mut func = func;
+        #[allow(deprecated)]
+        let _ = ctx.run(Default::default(), |ctx| {
+            #[allow(deprecated)]
+            egui::CentralPanel::default().show(ctx, |ui| {
+                func(ui);
+            });
+        });
+    }
+
+    #[test]
+    fn test_styled_button() {
+        test_ui(|ui| {
+            styled_button(ui, "Test Button", false);
+        });
+    }
+
+    #[test]
+    fn test_icon_button() {
+        test_ui(|ui| {
+            icon_button(ui, "Test Icon", Color32::WHITE, Color32::WHITE, false);
+        });
+    }
+
+    #[test]
+    fn test_icon_button_simple() {
+        test_ui(|ui| {
+            icon_button_simple(ui, None, AppIcon::Add, 16.0, "Test Icon");
+        });
+    }
+
+    #[test]
+    fn test_icon_button_compact() {
+        test_ui(|ui| {
+            icon_button_compact(ui, None, AppIcon::Add, "Test Icon");
+        });
+    }
+}

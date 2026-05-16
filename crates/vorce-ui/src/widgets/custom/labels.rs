@@ -39,3 +39,49 @@ pub fn render_missing_preview_banner(ui: &mut Ui) {
         render_info_label(ui, "No preview available yet.");
     });
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use egui::{Context, Ui};
+
+    fn test_ui(func: impl FnMut(&mut Ui)) {
+        let ctx = Context::default();
+        let mut func = func;
+        #[allow(deprecated)]
+        let _ = ctx.run(Default::default(), |ctx| {
+            #[allow(deprecated)]
+            egui::CentralPanel::default().show(ctx, |ui| {
+                func(ui);
+            });
+        });
+    }
+
+    #[test]
+    fn test_render_header() {
+        test_ui(|ui| {
+            render_header(ui, "Test Header");
+        });
+    }
+
+    #[test]
+    fn test_render_info_label() {
+        test_ui(|ui| {
+            render_info_label(ui, "Test Label");
+        });
+    }
+
+    #[test]
+    fn test_render_info_label_with_size() {
+        test_ui(|ui| {
+            render_info_label_with_size(ui, "Test Label", 12.0);
+        });
+    }
+
+    #[test]
+    fn test_render_missing_preview_banner() {
+        test_ui(|ui| {
+            render_missing_preview_banner(ui);
+        });
+    }
+}

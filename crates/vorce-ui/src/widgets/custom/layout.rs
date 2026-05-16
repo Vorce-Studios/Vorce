@@ -68,3 +68,37 @@ pub fn collapsing_header_with_reset(
         });
     reset_clicked
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use egui::{Context, Ui};
+
+    fn test_ui(func: impl FnMut(&mut Ui)) {
+        let ctx = Context::default();
+        let mut func = func;
+        #[allow(deprecated)]
+        let _ = ctx.run(Default::default(), |ctx| {
+            #[allow(deprecated)]
+            egui::CentralPanel::default().show(ctx, |ui| {
+                func(ui);
+            });
+        });
+    }
+
+    #[test]
+    fn test_cyber_list_item() {
+        test_ui(|ui| {
+            let id = ui.id().with("test_list_item");
+            cyber_list_item(ui, id, false, false, |ui| {
+                ui.label("List item content");
+            });
+            cyber_list_item(ui, id.with("2"), true, false, |ui| {
+                ui.label("List item content");
+            });
+            cyber_list_item(ui, id.with("3"), false, true, |ui| {
+                ui.label("List item content");
+            });
+        });
+    }
+}

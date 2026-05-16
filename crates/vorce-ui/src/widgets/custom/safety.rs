@@ -298,3 +298,36 @@ pub fn draw_safety_radial_fill(
         painter.add(egui::Shape::line(points, stroke));
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use egui::{Context, Ui};
+
+    fn test_ui(func: impl FnMut(&mut Ui)) {
+        let ctx = Context::default();
+        let mut func = func;
+        #[allow(deprecated)]
+        let _ = ctx.run(Default::default(), |ctx| {
+            #[allow(deprecated)]
+            egui::CentralPanel::default().show(ctx, |ui| {
+                func(ui);
+            });
+        });
+    }
+
+    #[test]
+    fn test_check_hold_state() {
+        test_ui(|ui| {
+            let id = ui.id().with("test_hold");
+            let (triggered, progress) = check_hold_state(ui, id, false);
+            assert!(!triggered);
+            assert_eq!(progress, 0.0);
+
+            // Test interaction starting
+            let (triggered, progress) = check_hold_state(ui, id, true);
+            assert!(!triggered);
+            assert!(progress >= 0.0);
+        });
+    }
+}
