@@ -3,9 +3,16 @@
 //! Media library, effect preset browser, project templates,
 //! and import/export workflows.
 
+use crossbeam_channel::{unbounded, Receiver, Sender};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
+
+enum LoadedAsset {
+    Effect(EffectPreset),
+    Transform(TransformPreset),
+    Template(ProjectTemplate),
+}
 
 /// Asset manager for managing presets, templates, and media libraries
 pub struct AssetManager {
@@ -17,6 +24,8 @@ pub struct AssetManager {
     project_templates: HashMap<String, ProjectTemplate>,
     /// User library path
     library_path: PathBuf,
+    /// Receiver for assets loaded in the background
+    asset_receiver: Option<Receiver<LoadedAsset>>,
 }
 
 /// Effect preset (saved effect configuration)
@@ -77,26 +86,40 @@ pub enum PresetParameter {
 
 impl AssetManager {
     pub fn new(library_path: PathBuf) -> Self {
-        let mut manager = Self {
+        let (sender, receiver) = unbounded();
+        let manager = Self {
             effect_presets: HashMap::new(),
             transform_presets: HashMap::new(),
             project_templates: HashMap::new(),
-            library_path,
+            library_path: library_path.clone(),
+            asset_receiver: Some(receiver),
         };
-        manager.load_library();
+        Self::spawn_load_library(library_path, sender);
         manager
     }
 
+    /// Poll for loaded assets from the background thread
+    pub fn update(&mut self) {
+        if let Some(receiver) = &self.asset_receiver {
+            while let Ok(asset) = receiver.try_recv() {
+                match asset {
+                    LoadedAsset::Effect(preset) => {
+                        self.effect_presets.insert(preset.name.clone(), preset);
+                    }
+                    LoadedAsset::Transform(preset) => {
+                        self.transform_presets.insert(preset.name.clone(), preset);
+                    }
+                    LoadedAsset::Template(template) => {
+                        self.project_templates.insert(template.name.clone(), template);
+                    }
+                }
+            }
+        }
+    }
+
     /// Load library from disk
-    fn load_library(&mut self) {
-        let library_path = self.library_path.clone();
-
-        // Spawn a thread to do the I/O-heavy directory reading and JSON parsing
-        let handle = std::thread::spawn(move || {
-            let mut effect_presets = HashMap::new();
-            let mut transform_presets = HashMap::new();
-            let mut project_templates = HashMap::new();
-
+    fn spawn_load_library(library_path: PathBuf, sender: Sender<LoadedAsset>) {
+        std::thread::spawn(move || {
             // Load effect presets
             let effects_path = library_path.join("effects");
             if effects_path.exists() {
@@ -110,7 +133,7 @@ impl AssetManager {
                                     preset.description_lower = preset.description.to_lowercase();
                                     preset.tags_lower =
                                         preset.tags.iter().map(|t| t.to_lowercase()).collect();
-                                    effect_presets.insert(preset.name.clone(), preset);
+                                    let _ = sender.send(LoadedAsset::Effect(preset));
                                 }
                             }
                         }
@@ -126,7 +149,7 @@ impl AssetManager {
                         if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
                             if let Ok(data) = std::fs::read_to_string(entry.path()) {
                                 if let Ok(preset) = serde_json::from_str::<TransformPreset>(&data) {
-                                    transform_presets.insert(preset.name.clone(), preset);
+                                    let _ = sender.send(LoadedAsset::Transform(preset));
                                 }
                             }
                         }
@@ -143,23 +166,14 @@ impl AssetManager {
                             if let Ok(data) = std::fs::read_to_string(entry.path()) {
                                 if let Ok(template) = serde_json::from_str::<ProjectTemplate>(&data)
                                 {
-                                    project_templates.insert(template.name.clone(), template);
+                                    let _ = sender.send(LoadedAsset::Template(template));
                                 }
                             }
                         }
                     }
                 }
             }
-
-            (effect_presets, transform_presets, project_templates)
         });
-
-        // Wait for the background thread to finish and load the parsed results
-        if let Ok((effects, transforms, templates)) = handle.join() {
-            self.effect_presets.extend(effects);
-            self.transform_presets.extend(transforms);
-            self.project_templates.extend(templates);
-        }
     }
 
     /// Save effect preset
@@ -242,6 +256,7 @@ impl AssetManager {
 
     /// Render asset browser UI
     pub fn ui(&mut self, ui: &mut egui::Ui) -> Option<AssetManagerAction> {
+        self.update();
         let mut action = None;
 
         egui::Panel::top("asset_browser_tabs").show_inside(ui, |ui| {

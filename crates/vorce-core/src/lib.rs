@@ -39,6 +39,7 @@ pub mod lut;
 /// Global macros
 #[macro_use]
 pub mod macros;
+pub mod cluster;
 /// Media asset management
 pub mod media_library;
 pub mod module;
@@ -115,6 +116,9 @@ pub use shader_graph::{
     DataType, GraphId, InputSocket, NodeId, NodeType, OutputSocket, ParameterValue, ShaderGraph,
     ShaderNode,
 };
+
+// Cluster & Topology
+pub use cluster::{ClusterConfig, InstanceConfig, InstanceId, InstanceRole, OutputAssignment};
 
 // State & Project
 pub use state::{AppSettings, AppState};
