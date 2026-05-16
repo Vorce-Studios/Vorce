@@ -114,6 +114,7 @@ mod tests {
 
     #[test]
     fn test_icon_button() {
+        use egui::Color32;
         test_ui(|ui| {
             icon_button(ui, "Test Icon", Color32::WHITE, Color32::WHITE, false);
         });
