@@ -276,7 +276,8 @@ impl TimelineV2 {
                         .collect();
 
                     // Sort by whether they require triggers (those without triggers are defaults)
-                    active_blocks.sort_by_key(|a| a.start_trigger.is_some());
+                    active_blocks
+                        .sort_by(|a, b| a.start_trigger.is_some().cmp(&b.start_trigger.is_some()));
 
                     let mut next_block_id = self.hybrid_current_block_id;
 

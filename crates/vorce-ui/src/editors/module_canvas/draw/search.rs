@@ -1,5 +1,5 @@
 use super::super::{state::ModuleCanvas, utils};
-use egui::{Pos2, Rect, Stroke, Ui, Vec2};
+use egui::{Color32, Pos2, Rect, Stroke, Ui, Vec2};
 use vorce_core::module::VorceModule;
 
 pub fn draw_search_popup(
@@ -16,11 +16,11 @@ pub fn draw_search_popup(
     );
 
     let painter = ui.painter();
-    painter.rect_filled(popup_rect, 0.0, ui.visuals().window_fill());
+    painter.rect_filled(popup_rect, 0.0, Color32::from_rgba_unmultiplied(30, 30, 40, 240));
     painter.rect_stroke(
         popup_rect,
         0.0,
-        Stroke::new(2.0, ui.visuals().widgets.noninteractive.bg_stroke.color),
+        Stroke::new(2.0, Color32::from_rgb(80, 120, 200)),
         egui::StrokeKind::Middle,
     );
 
@@ -33,20 +33,17 @@ pub fn draw_search_popup(
             });
             ui.add_space(8.0);
 
+            let filter_lower = canvas.search_filter.to_lowercase();
             let matching_parts: Vec<_> = module
                 .parts
                 .iter()
                 .filter(|p| {
-                    if canvas.search_filter.is_empty() {
+                    if filter_lower.is_empty() {
                         return true;
                     }
-                    let name = utils::get_part_property_text(&p.part_type);
+                    let name = utils::get_part_property_text(&p.part_type).to_lowercase();
                     let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
-
-                    // Perf: Avoid .to_lowercase() allocations per frame
-                    // case_insensitive_contains performs a zero-allocation ASCII comparison
-                    utils::case_insensitive_contains(&name, &canvas.search_filter)
-                        || utils::case_insensitive_contains(type_name, &canvas.search_filter)
+                    name.contains(&filter_lower) || type_name.to_lowercase().contains(&filter_lower)
                 })
                 .take(6)
                 .collect();

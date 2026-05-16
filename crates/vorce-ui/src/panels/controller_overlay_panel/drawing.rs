@@ -123,14 +123,13 @@ impl ControllerOverlayPanel {
                 Color32::WHITE,
             );
         } else {
-            // Fallback: theme background
-            let visuals = painter.ctx().global_style().visuals.clone();
-            let bg_color = visuals.panel_fill;
+            // Fallback: dark background
+            let bg_color = Color32::from_rgb(30, 30, 35);
             painter.rect_filled(rect, 4.0, bg_color);
             painter.rect_stroke(
                 rect,
                 4.0,
-                visuals.widgets.noninteractive.bg_stroke,
+                Stroke::new(2.0, Color32::from_rgb(80, 80, 80)),
                 egui::StrokeKind::Middle,
             );
             painter.text(
@@ -138,7 +137,7 @@ impl ControllerOverlayPanel {
                 egui::Align2::CENTER_CENTER,
                 "Hintergrundbild wird geladen...",
                 egui::FontId::default(),
-                visuals.text_color(),
+                Color32::WHITE,
             );
         }
 
@@ -319,9 +318,8 @@ impl ControllerOverlayPanel {
                     );
 
                     // Draw edit frame
-                    let visuals = painter.ctx().global_style().visuals.clone();
                     let base_color =
-                        if is_selected { visuals.selection.bg_fill } else { visuals.warn_fg_color };
+                        if is_selected { Color32::from_rgb(255, 0, 255) } else { Color32::YELLOW }; // Magenta for selected
                     let stroke = Stroke::new(if is_selected { 2.0 } else { 1.0 }, base_color);
 
                     match element.element_type {
@@ -335,7 +333,7 @@ impl ControllerOverlayPanel {
                     }
 
                     // Draw resize handle
-                    painter.rect_filled(handle_rect, 2.0, visuals.hyperlink_color);
+                    painter.rect_filled(handle_rect, 2.0, Color32::from_rgb(0, 255, 255));
                 }
             }
 
@@ -385,19 +383,17 @@ impl ControllerOverlayPanel {
             .map(|s: &ElementState| s.last_update.elapsed().as_millis() < 200)
             .unwrap_or(false);
 
-        let visuals = painter.ctx().global_style().visuals.clone();
-
         // Determine frame color based on state
         let frame_color = if is_learning {
-            // Pulsing warn color for learn mode
+            // Pulsing yellow for learn mode
             let t = (ui_time_seconds() * 3.0).sin() * 0.5 + 0.5;
-            visuals.warn_fg_color.linear_multiply(0.5 + 0.5 * t as f32)
+            Color32::from_rgba_unmultiplied(255, 220, 0, (128.0 + 127.0 * t as f32) as u8)
         } else if is_active {
-            visuals.selection.bg_fill.linear_multiply(1.5)
+            Color32::GREEN
         } else if is_selected {
-            visuals.selection.bg_fill
+            Color32::from_rgb(100, 149, 237) // Cornflower blue
         } else if is_hovered {
-            visuals.widgets.hovered.fg_stroke.color
+            Color32::WHITE
         } else {
             Color32::TRANSPARENT
         };
@@ -407,11 +403,11 @@ impl ControllerOverlayPanel {
             let assignment = assignments.iter().find(|a| a.element_id == element.id);
             match assignment {
                 Some(a) => match &a.target {
-                    MidiAssignmentTarget::Vorce(_) => visuals.hyperlink_color,
-                    MidiAssignmentTarget::StreamerBot(_) => visuals.warn_fg_color,
-                    MidiAssignmentTarget::Mixxx(_) => visuals.error_fg_color,
+                    MidiAssignmentTarget::Vorce(_) => Color32::from_rgb(0, 150, 255), // Blue
+                    MidiAssignmentTarget::StreamerBot(_) => Color32::from_rgb(180, 0, 255), // Purple
+                    MidiAssignmentTarget::Mixxx(_) => Color32::from_rgb(255, 128, 0), // Orange
                 },
-                None => visuals.selection.bg_fill, // Theme's selection color for free elements
+                None => Color32::GREEN, // Green for free elements
             }
         } else {
             frame_color
@@ -471,7 +467,7 @@ impl ControllerOverlayPanel {
                         ui.separator();
                         ui.horizontal(|ui| {
                             ui.label("Zuweisung:");
-                            ui.colored_label(ui.visuals().warn_fg_color, assign.target.to_string());
+                            ui.colored_label(Color32::YELLOW, assign.target.to_string());
                         });
                         crate::widgets::custom::render_info_label_with_size(
                             ui,

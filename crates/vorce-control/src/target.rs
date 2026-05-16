@@ -198,14 +198,20 @@ impl ControlValue {
                     return Err("String value contains path traversal attempt (..)".to_string());
                 }
             }
-            ControlValue::Float(f) if !f.is_finite() => {
-                return Err("Float value must be finite".to_string());
+            ControlValue::Float(f) => {
+                if !f.is_finite() {
+                    return Err("Float value must be finite".to_string());
+                }
             }
-            ControlValue::Vec2(x, y) if (!x.is_finite() || !y.is_finite()) => {
-                return Err("Vec2 components must be finite".to_string());
+            ControlValue::Vec2(x, y) => {
+                if !x.is_finite() || !y.is_finite() {
+                    return Err("Vec2 components must be finite".to_string());
+                }
             }
-            ControlValue::Vec3(x, y, z) if (!x.is_finite() || !y.is_finite() || !z.is_finite()) => {
-                return Err("Vec3 components must be finite".to_string());
+            ControlValue::Vec3(x, y, z) => {
+                if !x.is_finite() || !y.is_finite() || !z.is_finite() {
+                    return Err("Vec3 components must be finite".to_string());
+                }
             }
             _ => {}
         }

@@ -277,6 +277,8 @@ impl App {
             ndi_senders: std::collections::HashMap::new(),
             #[cfg(feature = "ndi")]
             ndi_readbacks: std::collections::HashMap::new(),
+            #[cfg(feature = "ndi")]
+            ndi_offscreen_textures: std::collections::HashMap::new(),
 
             output_assignments: std::collections::HashMap::new(),
             shader_graph_manager: vorce_render::ShaderGraphManager::new(),

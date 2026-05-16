@@ -15,7 +15,7 @@ on:
         type: string
 
 env:
-
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   AUTO_MERGE_ENABLED: true
   AUTO_UPDATE_BRANCH_WHEN_BEHIND: false
   VALIDATION_WORKFLOW_ID: CICD-DevFlow_Job01_Validation.yml
@@ -41,7 +41,7 @@ jobs:
 
     steps:
       - name: Evaluate Auto-Merge Eligibility
-        uses: actions/github-script@v9
+        uses: actions/github-script@v8
         with:
           script: |
             if (process.env.AUTO_MERGE_ENABLED !== 'true') {
@@ -93,6 +93,7 @@ jobs:
               'Build & Test (Linux)',
               'Build & Test (Windows)',
               'Build (macOS Beta)',
+              'Rust Autofix',
               'Validation Success',
             ]);
 
@@ -343,6 +344,12 @@ jobs:
                 },
                 {
                   name: 'Build (macOS Beta)',
+                  source: 'check_run',
+                  allowedConclusions: ['success'],
+                  required: true,
+                },
+                {
+                  name: 'Rust Autofix',
                   source: 'check_run',
                   allowedConclusions: ['success'],
                   required: true,

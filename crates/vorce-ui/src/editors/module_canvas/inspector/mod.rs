@@ -117,8 +117,11 @@ pub fn render_trigger_preview(
             );
 
             let status = if is_live { "LIVE pulse" } else { "Waiting" };
-            let color =
-                if is_live { crate::theme::colors::MINT_ACCENT } else { ui.visuals().text_color() };
+            let color = if is_live {
+                egui::Color32::from_rgb(110, 235, 150)
+            } else {
+                egui::Color32::from_rgb(180, 180, 180)
+            };
             ui.colored_label(color, status);
 
             extra_ui(ui, live_value, is_live);

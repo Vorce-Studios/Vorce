@@ -1,8 +1,7 @@
 use super::super::state::ModuleCanvas;
-use super::super::types::MediaPlaybackCommand;
 use super::capabilities;
 use crate::widgets::{styled_drag_value, styled_slider};
-use egui::{Pos2, Rect, Sense, Stroke, Ui, Vec2};
+use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use vorce_core::module::{BlendModeType, ModulePartId};
 
 /// Standardized informational label, used as an explicit fallback when no active preview is available.
@@ -18,31 +17,19 @@ pub fn render_missing_preview_banner(ui: &mut Ui, text: &str) {
 }
 
 pub fn render_transport_controls(
-    canvas: &mut ModuleCanvas,
+    _canvas: &mut ModuleCanvas,
     ui: &mut Ui,
-    part_id: ModulePartId,
+    _part_id: ModulePartId,
     is_playing: bool,
     _current_pos: f32,
-    mut loop_enabled: bool,
+    _loop_enabled: bool,
     _reverse_playback: bool,
 ) {
     ui.horizontal(|ui| {
-        let play_text = if is_playing { "⏸ Pause" } else { "▶ Play" };
-        if ui.button(play_text).clicked() {
-            canvas.pending_playback_commands.push((
-                part_id,
-                if is_playing { MediaPlaybackCommand::Pause } else { MediaPlaybackCommand::Play },
-            ));
-        }
+        let _play_btn = if is_playing { ui.button("⏸ Pause") } else { ui.button("▶ Play") };
 
         if ui.button("⏮").clicked() {
-            canvas.pending_playback_commands.push((part_id, MediaPlaybackCommand::Seek(0.0)));
-        }
-
-        if ui.checkbox(&mut loop_enabled, "Loop").clicked() {
-            canvas
-                .pending_playback_commands
-                .push((part_id, MediaPlaybackCommand::SetLoop(loop_enabled)));
+            // Seek to start
         }
     });
 }
@@ -58,7 +45,7 @@ pub fn render_timeline(
 ) {
     ui.horizontal(|ui| {
         ui.add(
-            egui::ProgressBar::new(if duration > 0.0 { current_pos / duration } else { 0.0 })
+            egui::ProgressBar::new(current_pos / duration)
                 .desired_width(ui.available_width() - 60.0),
         );
     });
@@ -81,21 +68,6 @@ pub fn render_common_controls(
     flip_horizontal: &mut bool,
     flip_vertical: &mut bool,
 ) {
-    render_opacity_blend(ui, opacity, blend_mode);
-    render_color_adjust(ui, brightness, contrast, saturation, hue_shift);
-    render_transform(
-        ui,
-        scale_x,
-        scale_y,
-        rotation,
-        offset_x,
-        offset_y,
-        flip_horizontal,
-        flip_vertical,
-    );
-}
-
-fn render_opacity_blend(ui: &mut Ui, opacity: &mut f32, blend_mode: &mut Option<BlendModeType>) {
     ui.collapsing("🌓 Opacity & Blend", |ui| {
         ui.horizontal(|ui| {
             ui.label("Opacity:");
@@ -124,78 +96,62 @@ fn render_opacity_blend(ui: &mut Ui, opacity: &mut f32, blend_mode: &mut Option<
                 });
         });
     });
-}
 
-fn render_color_adjust(
-    ui: &mut Ui,
-    brightness: &mut f32,
-    contrast: &mut f32,
-    saturation: &mut f32,
-    hue_shift: &mut f32,
-) {
-    egui::Grid::new("color_grid").num_columns(2).spacing([10.0, 8.0]).show(ui, |ui| {
-        ui.label("Brightness:");
-        styled_slider(ui, brightness, -1.0..=1.0, 0.0);
-        ui.end_row();
+    ui.collapsing("🎨 Color Adjust", |ui| {
+        egui::Grid::new("color_grid").num_columns(2).spacing([10.0, 8.0]).show(ui, |ui| {
+            ui.label("Brightness:");
+            styled_slider(ui, brightness, -1.0..=1.0, 0.0);
+            ui.end_row();
 
-        ui.label("Contrast:");
-        styled_slider(ui, contrast, 0.0..=2.0, 1.0);
-        ui.end_row();
+            ui.label("Contrast:");
+            styled_slider(ui, contrast, 0.0..=2.0, 1.0);
+            ui.end_row();
 
-        ui.label("Saturation:");
-        styled_slider(ui, saturation, 0.0..=2.0, 1.0);
-        ui.end_row();
+            ui.label("Saturation:");
+            styled_slider(ui, saturation, 0.0..=2.0, 1.0);
+            ui.end_row();
 
-        ui.label("Hue Shift:");
-        styled_slider(ui, hue_shift, 0.0..=1.0, 0.0);
-        ui.end_row();
+            ui.label("Hue Shift:");
+            styled_slider(ui, hue_shift, 0.0..=1.0, 0.0);
+            ui.end_row();
+        });
     });
-}
 
-#[allow(clippy::too_many_arguments)]
-fn render_transform(
-    ui: &mut Ui,
-    scale_x: &mut f32,
-    scale_y: &mut f32,
-    rotation: &mut f32,
-    offset_x: &mut f32,
-    offset_y: &mut f32,
-    flip_horizontal: &mut bool,
-    flip_vertical: &mut bool,
-) {
-    let supported = capabilities::is_transform_supported();
-    if !supported {
-        capabilities::render_unsupported_warning(
-            ui,
-            "Transform properties currently not supported in render pipeline.",
-        );
-    }
-    ui.add_enabled_ui(supported, |ui| {
-        egui::Grid::new("transform_grid").num_columns(2).spacing([10.0, 8.0]).show(ui, |ui| {
-            ui.label("Scale:");
-            ui.horizontal(|ui| {
-                styled_drag_value(ui, scale_x, 0.01, 0.0..=10.0, 1.0, "X: ", "");
-                styled_drag_value(ui, scale_y, 0.01, 0.0..=10.0, 1.0, "Y: ", "");
+    ui.collapsing("📐 Transform", |ui| {
+        let supported = capabilities::is_transform_supported();
+        if !supported {
+            capabilities::render_unsupported_warning(
+                ui,
+                "Transform properties currently not supported in render pipeline.",
+            );
+        }
+        ui.add_enabled_ui(supported, |ui| {
+            egui::Grid::new("transform_grid").num_columns(2).spacing([10.0, 8.0]).show(ui, |ui| {
+                ui.label("Scale:");
+                ui.horizontal(|ui| {
+                    styled_drag_value(ui, scale_x, 0.01, 0.0..=10.0, 1.0, "X: ", "");
+                    styled_drag_value(ui, scale_y, 0.01, 0.0..=10.0, 1.0, "Y: ", "");
+                });
+                ui.end_row();
+
+                ui.label("Rotation:");
+                styled_slider(ui, rotation, 0.0..=360.0, 0.0);
+                ui.end_row();
+
+                ui.label("Offset:");
+                ui.horizontal(|ui| {
+                    styled_drag_value(ui, offset_x, 0.01, -1.0..=1.0, 0.0, "X: ", "");
+                    styled_drag_value(ui, offset_y, 0.01, -1.0..=1.0, 0.0, "Y: ", "");
+                });
+                ui.end_row();
+
+                ui.label("Flip:");
+                ui.horizontal(|ui| {
+                    ui.checkbox(flip_horizontal, "Horizontal");
+                    ui.checkbox(flip_vertical, "Vertical");
+                });
+                ui.end_row();
             });
-            ui.end_row();
-
-            ui.label("Rotation:");
-            styled_slider(ui, rotation, 0.0..=360.0, 0.0);
-            ui.end_row();
-
-            ui.label("Offset:");
-            ui.horizontal(|ui| {
-                styled_drag_value(ui, offset_x, 0.01, -1.0..=1.0, 0.0, "X: ", "");
-                styled_drag_value(ui, offset_y, 0.01, -1.0..=1.0, 0.0, "Y: ", "");
-            });
-            ui.end_row();
-
-            ui.label("Flip:");
-            ui.horizontal(|ui| {
-                ui.checkbox(flip_horizontal, "Horizontal");
-                ui.checkbox(flip_vertical, "Vertical");
-            });
-            ui.end_row();
         });
     });
 }
@@ -211,14 +167,14 @@ pub fn render_hue_spatial_editor(
 
     // Draw background grid
     let painter = ui.painter();
-    painter.rect_filled(rect, 0.0, ui.visuals().faint_bg_color);
+    painter.rect_filled(rect, 0.0, Color32::from_black_alpha(100));
 
     // Draw reference screen
     let screen_rect = Rect::from_center_size(rect.center(), Vec2::new(size * 0.6, size * 0.4));
     painter.rect_stroke(
         screen_rect,
         2.0,
-        Stroke::new(1.0, ui.visuals().text_color()),
+        Stroke::new(1.0, Color32::WHITE),
         egui::StrokeKind::Inside,
     );
     painter.text(
@@ -226,7 +182,7 @@ pub fn render_hue_spatial_editor(
         egui::Align2::CENTER_CENTER,
         "SCREEN",
         egui::FontId::proportional(12.0),
-        ui.visuals().text_color(),
+        Color32::WHITE,
     );
 
     // Draw and handle lamps
@@ -258,18 +214,14 @@ pub fn render_hue_spatial_editor(
         painter.circle_filled(
             screen_pos,
             8.0,
-            if lamp_resp.hovered() {
-                ui.visuals().widgets.hovered.bg_fill
-            } else {
-                ui.visuals().warn_fg_color
-            },
+            if lamp_resp.hovered() { Color32::LIGHT_BLUE } else { Color32::from_rgb(255, 200, 50) },
         );
         painter.text(
             screen_pos + Vec2::new(0.0, 12.0),
             egui::Align2::CENTER_TOP,
             id,
             egui::FontId::proportional(10.0),
-            ui.visuals().text_color(),
+            Color32::WHITE,
         );
     }
 

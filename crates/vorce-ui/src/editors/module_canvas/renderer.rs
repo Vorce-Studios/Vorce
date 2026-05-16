@@ -7,7 +7,7 @@ use super::utils;
 use super::ModuleCanvasRenderOptions;
 use crate::i18n::LocaleManager;
 use crate::UIAction;
-use egui::{Pos2, Rect, Sense, Stroke, Ui, Vec2};
+use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use vorce_core::module::{ModuleId, ModuleManager, TriggerType};
 
 pub fn show(
@@ -188,7 +188,7 @@ pub fn render_canvas(
             }
         }
 
-        draw::draw_grid(canvas, ui, &painter, canvas_rect);
+        draw::draw_grid(canvas, &painter, canvas_rect);
 
         let zoom = canvas.zoom;
         let pan_offset = canvas.pan_offset;
@@ -270,13 +270,16 @@ pub fn render_canvas(
         let mut delete_part_id = None;
         let mut resize_ops = Vec::new();
 
+        let selected_parts_set: rustc_hash::FxHashSet<vorce_core::module::ModulePartId> =
+            canvas.selected_parts.iter().copied().collect();
+
         for part in &mut module.parts {
             let (w, h) = part.size.unwrap_or_else(|| {
                 let h = 80.0 + (part.inputs.len().max(part.outputs.len()) as f32) * 20.0;
                 (200.0, h)
             });
             if let Some((_, delta)) = canvas.dragging_part {
-                if canvas.selected_parts.contains(&part.id) {
+                if selected_parts_set.contains(&part.id) {
                     part.position.0 += delta.x;
                     part.position.1 += delta.y;
                 }
@@ -285,19 +288,27 @@ pub fn render_canvas(
             let part_pos = to_screen(Pos2::new(part.position.0, part.position.1));
             let part_rect = Rect::from_min_size(part_pos, Vec2::new(w, h) * canvas.zoom);
 
-            if canvas.selected_parts.contains(&part.id) {
+            if selected_parts_set.contains(&part.id) {
+                let highlight_rect = part_rect.expand(4.0 * canvas.zoom);
+                painter.rect_stroke(
+                    highlight_rect,
+                    0.0,
+                    Stroke::new(2.0 * canvas.zoom, Color32::from_rgb(0, 229, 255)),
+                    egui::StrokeKind::Middle,
+                );
+
                 let handle_size = 12.0 * canvas.zoom;
                 let handle_rect = Rect::from_min_size(
                     Pos2::new(part_rect.max.x - handle_size, part_rect.max.y - handle_size),
                     Vec2::splat(handle_size),
                 );
-                draw::primitives::draw_node_selection(
-                    &painter,
-                    part_rect,
-                    handle_rect,
-                    handle_size,
-                    canvas.zoom,
-                    ui.visuals().window_fill,
+                painter.rect_filled(handle_rect, 0.0, Color32::from_rgb(0, 229, 255));
+                painter.line_segment(
+                    [
+                        handle_rect.min + Vec2::new(3.0, handle_size - 3.0),
+                        handle_rect.min + Vec2::new(handle_size - 3.0, 3.0),
+                    ],
+                    Stroke::new(1.5, Color32::from_gray(40)),
                 );
 
                 let resize_response =
@@ -383,12 +394,12 @@ pub fn render_canvas(
             if part_response.clicked() {
                 clicked_on_part = true;
                 if ui.input(|i| i.modifiers.shift) {
-                    if canvas.selected_parts.contains(&part_id) {
+                    if selected_parts_set.contains(&part_id) {
                         canvas.selected_parts.retain(|&id| id != part_id);
                     } else {
                         canvas.selected_parts.push(part_id);
                     }
-                } else if !canvas.selected_parts.contains(&part_id) {
+                } else if !selected_parts_set.contains(&part_id) {
                     canvas.selected_parts.clear();
                     canvas.selected_parts.push(part_id);
                 }
@@ -397,7 +408,7 @@ pub fn render_canvas(
             if part_response.drag_started() {
                 clicked_on_part = true;
                 if canvas.creating_connection.is_none() {
-                    if !canvas.selected_parts.contains(&part_id) {
+                    if !selected_parts_set.contains(&part_id) {
                         if !ui.input(|i| i.modifiers.shift) {
                             canvas.selected_parts.clear();
                         }
@@ -530,35 +541,25 @@ pub fn render_canvas(
                         } else {
                             false
                         };
-                        color = if is_valid {
-                            crate::theme::colors::MINT_ACCENT
-                        } else {
-                            ui.visuals().error_fg_color
-                        };
+                        color = if is_valid { Color32::GREEN } else { Color32::RED };
                         break;
                     }
                 }
 
-                let preview_stroke = if options.short_circuit_animation_enabled
-                    && color == ui.visuals().error_fg_color
-                {
-                    let pulse = (ui.input(|i| i.time) as f32 * 10.0).sin().abs();
-                    Stroke::new(3.0 + pulse * 2.0, color.gamma_multiply(0.8 + pulse * 0.2))
-                } else {
-                    Stroke::new(3.0, color)
-                };
+                let preview_stroke =
+                    if options.short_circuit_animation_enabled && color == Color32::RED {
+                        let pulse = (ui.input(|i| i.time) as f32 * 10.0).sin().abs();
+                        Stroke::new(3.0 + pulse * 2.0, color.gamma_multiply(0.8 + pulse * 0.2))
+                    } else {
+                        Stroke::new(3.0, color)
+                    };
 
-                draw::primitives::draw_connection_preview(
-                    &painter,
-                    start_pos,
-                    pointer_pos,
-                    color,
-                    preview_stroke,
-                );
+                painter.line_segment([start_pos, pointer_pos], preview_stroke);
+                painter.circle_filled(pointer_pos, 5.0, color);
             }
         }
 
-        draw::draw_mini_map(canvas, ui, canvas_rect, module);
+        draw::draw_mini_map(canvas, &painter, canvas_rect, module);
 
         if canvas.show_search {
             draw::draw_search_popup(canvas, ui, canvas_rect, module);
@@ -596,11 +597,16 @@ pub fn render_canvas(
                     canvas.context_menu_connection = None;
                 } else {
                     let painter = ui.painter();
-                    draw::primitives::draw_context_menu_bg(
-                        painter,
+                    painter.rect_filled(
                         menu_rect,
-                        ui.visuals().error_fg_color.linear_multiply(0.8),
-                        ui.visuals().window_fill,
+                        4.0,
+                        Color32::from_rgba_unmultiplied(30, 30, 40, 245),
+                    );
+                    painter.rect_stroke(
+                        menu_rect,
+                        4.0,
+                        Stroke::new(1.0, Color32::from_rgb(200, 80, 80)),
+                        egui::StrokeKind::Middle,
                     );
 
                     let inner = menu_rect.shrink(8.0);
@@ -634,11 +640,16 @@ pub fn render_canvas(
                     canvas.context_menu_pos = None;
                 } else {
                     let painter = ui.painter();
-                    draw::primitives::draw_context_menu_bg(
-                        painter,
+                    painter.rect_filled(
                         menu_rect,
-                        ui.visuals().window_stroke.color,
-                        ui.visuals().window_fill,
+                        4.0,
+                        Color32::from_rgba_unmultiplied(30, 30, 40, 245),
+                    );
+                    painter.rect_stroke(
+                        menu_rect,
+                        4.0,
+                        Stroke::new(1.0, Color32::from_rgb(80, 100, 150)),
+                        egui::StrokeKind::Middle,
                     );
 
                     let inner = menu_rect.shrink(8.0);
@@ -679,7 +690,7 @@ pub fn render_canvas(
                             ui.label(
                                 egui::RichText::new(format!("{:.0}%", canvas.zoom * 100.0))
                                     .size(11.0)
-                                    .color(ui.visuals().text_color()),
+                                    .color(Color32::WHITE),
                             );
                         });
                     },

@@ -129,8 +129,8 @@ impl UserResponseTrait for MyResponse {}
 impl DataTypeTrait<MyUserState> for MyDataType {
     fn data_type_color(&self, _user_state: &mut MyUserState) -> egui::Color32 {
         match self {
-            MyDataType::Trigger => crate::theme::colors::CYAN_ACCENT.linear_multiply(0.8),
-            MyDataType::Media => crate::theme::colors::CYAN_ACCENT,
+            MyDataType::Trigger => egui::Color32::from_rgb(180, 100, 220),
+            MyDataType::Media => egui::Color32::from_rgb(100, 180, 220),
             MyDataType::Effect => colors::WARN_COLOR,
             MyDataType::Layer => colors::MINT_ACCENT,
             MyDataType::Output => colors::ERROR_COLOR,

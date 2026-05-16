@@ -160,74 +160,78 @@ impl EffectChainRenderer {
             let mut lut_bind_group_resource = None;
 
             match &effect.effect_type {
-                EffectType::LoadLUT { path } if !path.is_empty() => {
-                    if !self.lut_cache.contains_key(path) {
-                        // Load LUT
-                        match vorce_core::lut::Lut3D::from_file(path) {
-                            Ok(lut) => {
-                                let (data, width, height) = lut.to_2d_texture_data();
-                                let lut_size = lut.size as f32;
+                EffectType::LoadLUT { path } => {
+                    if !path.is_empty() {
+                        if !self.lut_cache.contains_key(path) {
+                            // Load LUT
+                            match vorce_core::lut::Lut3D::from_file(path) {
+                                Ok(lut) => {
+                                    let (data, width, height) = lut.to_2d_texture_data();
+                                    let lut_size = lut.size as f32;
 
-                                let texture = self.device.create_texture_with_data(
-                                    &self.queue,
-                                    &wgpu::TextureDescriptor {
-                                        label: Some(&format!("LUT Texture: {}", path)),
-                                        size: wgpu::Extent3d {
-                                            width,
-                                            height,
-                                            depth_or_array_layers: 1,
+                                    let texture = self.device.create_texture_with_data(
+                                        &self.queue,
+                                        &wgpu::TextureDescriptor {
+                                            label: Some(&format!("LUT Texture: {}", path)),
+                                            size: wgpu::Extent3d {
+                                                width,
+                                                height,
+                                                depth_or_array_layers: 1,
+                                            },
+                                            mip_level_count: 1,
+                                            sample_count: 1,
+                                            dimension: wgpu::TextureDimension::D2,
+                                            format: wgpu::TextureFormat::Rgba8Unorm,
+                                            usage: wgpu::TextureUsages::TEXTURE_BINDING
+                                                | wgpu::TextureUsages::COPY_DST,
+                                            view_formats: &[],
                                         },
-                                        mip_level_count: 1,
-                                        sample_count: 1,
-                                        dimension: wgpu::TextureDimension::D2,
-                                        format: wgpu::TextureFormat::Rgba8Unorm,
-                                        usage: wgpu::TextureUsages::TEXTURE_BINDING
-                                            | wgpu::TextureUsages::COPY_DST,
-                                        view_formats: &[],
-                                    },
-                                    wgpu::util::TextureDataOrder::LayerMajor,
-                                    &data,
-                                );
+                                        wgpu::util::TextureDataOrder::LayerMajor,
+                                        &data,
+                                    );
 
-                                let view =
-                                    texture.create_view(&wgpu::TextureViewDescriptor::default());
+                                    let view = texture
+                                        .create_view(&wgpu::TextureViewDescriptor::default());
 
-                                let bind_group =
-                                    self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-                                        label: Some(&format!("LUT Bind Group: {}", path)),
-                                        layout: &self.lut_bind_group_layout,
-                                        entries: &[
-                                            wgpu::BindGroupEntry {
-                                                binding: 0,
-                                                resource: wgpu::BindingResource::TextureView(&view),
-                                            },
-                                            wgpu::BindGroupEntry {
-                                                binding: 1,
-                                                resource: wgpu::BindingResource::Sampler(
-                                                    &self.sampler,
-                                                ),
-                                            },
-                                        ],
-                                    });
+                                    let bind_group =
+                                        self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                                            label: Some(&format!("LUT Bind Group: {}", path)),
+                                            layout: &self.lut_bind_group_layout,
+                                            entries: &[
+                                                wgpu::BindGroupEntry {
+                                                    binding: 0,
+                                                    resource: wgpu::BindingResource::TextureView(
+                                                        &view,
+                                                    ),
+                                                },
+                                                wgpu::BindGroupEntry {
+                                                    binding: 1,
+                                                    resource: wgpu::BindingResource::Sampler(
+                                                        &self.sampler,
+                                                    ),
+                                                },
+                                            ],
+                                        });
 
-                                self.lut_cache.insert(
-                                    path.clone(),
-                                    Some((lut_size, view, Arc::new(bind_group))),
-                                );
-                            }
-                            Err(e) => {
-                                warn_once!("Failed to load LUT from {}: {}", path, e);
-                                self.lut_cache.insert(path.clone(), None);
+                                    self.lut_cache.insert(
+                                        path.clone(),
+                                        Some((lut_size, view, Arc::new(bind_group))),
+                                    );
+                                }
+                                Err(e) => {
+                                    warn_once!("Failed to load LUT from {}: {}", path, e);
+                                    self.lut_cache.insert(path.clone(), None);
+                                }
                             }
                         }
-                    }
 
-                    // Mark as used
-                    self.lut_last_used.insert(path.clone(), self.frame_count);
+                        // Mark as used
+                        self.lut_last_used.insert(path.clone(), self.frame_count);
 
-                    if let Some(Some((size, _, bg))) = self.lut_cache.get(path) {
-                        params.param_a = *size;
-                        lut_bind_group_resource = Some(bg.clone());
+                        if let Some(Some((size, _, bg))) = self.lut_cache.get(path) {
+                            params.param_a = *size;
+                            lut_bind_group_resource = Some(bg.clone());
+                        }
                     }
                 }
                 EffectType::ColorAdjust => {

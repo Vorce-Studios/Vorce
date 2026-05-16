@@ -1,5 +1,5 @@
 use super::state::ModuleCanvas;
-use egui::{Pos2, Stroke, Ui, Vec2};
+use egui::{Color32, Pos2, Stroke, Ui, Vec2};
 
 pub fn render_diagnostics_popup(canvas: &mut ModuleCanvas, ui: &mut Ui) {
     if !canvas.show_diagnostics {
@@ -16,11 +16,11 @@ pub fn render_diagnostics_popup(canvas: &mut ModuleCanvas, ui: &mut Ui) {
 
     // Background
     let painter = ui.painter();
-    painter.rect_filled(popup_rect, 0.0, ui.visuals().window_fill);
+    painter.rect_filled(popup_rect, 0.0, Color32::from_rgba_unmultiplied(30, 35, 45, 245));
     painter.rect_stroke(
         popup_rect,
         0.0,
-        Stroke::new(2.0, ui.visuals().error_fg_color.linear_multiply(0.7)),
+        Stroke::new(2.0, Color32::from_rgb(180, 100, 80)),
         egui::StrokeKind::Middle,
     );
 
@@ -28,9 +28,9 @@ pub fn render_diagnostics_popup(canvas: &mut ModuleCanvas, ui: &mut Ui) {
     ui.scope_builder(egui::UiBuilder::new().max_rect(inner_rect), |ui| {
         ui.vertical(|ui| {
             ui.heading(if canvas.diagnostic_issues.is_empty() {
-                "✓ Module Check: OK"
+                "âœ“ Module Check: OK"
             } else {
-                "⚠ Module Check: Issues Found"
+                "\u{26A0} Module Check: Issues Found"
             });
             ui.add_space(8.0);
 
@@ -43,14 +43,12 @@ pub fn render_diagnostics_popup(canvas: &mut ModuleCanvas, ui: &mut Ui) {
                 egui::ScrollArea::vertical().max_height(150.0).show(ui, |ui| {
                     for issue in &canvas.diagnostic_issues {
                         let (icon, color) = match issue.severity {
-                            vorce_core::diagnostics::IssueSeverity::Error => {
-                                ("❌", ui.visuals().error_fg_color)
-                            }
+                            vorce_core::diagnostics::IssueSeverity::Error => ("❌", Color32::RED),
                             vorce_core::diagnostics::IssueSeverity::Warning => {
-                                ("⚠", ui.visuals().warn_fg_color)
+                                ("\u{26A0}", Color32::YELLOW)
                             }
                             vorce_core::diagnostics::IssueSeverity::Info => {
-                                ("ℹ", ui.visuals().hyperlink_color) // using hyperlink color as proxy for info blue
+                                ("\u{2139}", Color32::LIGHT_BLUE)
                             }
                         };
                         ui.horizontal(|ui| {

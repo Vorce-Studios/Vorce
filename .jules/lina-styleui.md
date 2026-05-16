@@ -11,14 +11,3 @@
 ## 2026-04-30 - Hardcoded Colors in Module Canvas Node Parts
 **Erkenntnis:** The `vorce-ui` component `part.rs` inside the module canvas editor contained several instances of hardcoded colors (`Color32::WHITE`, `Color32::from_white_alpha(160)`, `Color32::from_gray(180)`, `Color32::from_gray(230)`) for drawing text galleys and labels, breaking visual consistency across themes.
 **Aktion:** Replaced hardcoded text colors with dynamic theme variables like `ui.visuals().text_color()` and utilized `gamma_multiply()` to achieve the desired opacity/dimming effect while ensuring contrast and readability in any theme.
-## 2026-05-01 - Media Manager UI Colors **Erkenntnis:** Hardcoded colors in media manager grid break contrast across different themes. **Aktion:** Replace hardcoded Color32 with ui.visuals() theme properties.
-
-## 2026-06-01 - Floating Overlay Theme Colors
-**Erkenntnis:** Hardcoded backgrounds and strokes in module canvas floating overlays (minimap, search, presets) break visual consistency in various theme variants.
-**Aktion:** Use dynamic theme properties like ui.visuals().window_fill() and ui.visuals().widgets.noninteractive.bg_stroke.color instead of static Color32 values.
-## 2026-05-05 - [Hue Spatial Editor Colors] **Erkenntnis:** Hardcoded colors in hue_spatial_editor break theme consistency and readability in different modes. **Aktion:** Always use ui.visuals() equivalents instead of Color32 constants in egui render loops.
-## 2026-05-06 - Module Canvas Visual Consistency **Erkenntnis:** Hardcoded Color32 colors were used throughout the module canvas causing visual inconsistencies in different themes. **Aktion:** Replaced hardcoded Color32 colors with dynamic theme colors from ui.visuals() or crate::theme::colors.
-## 2026-05-07 - Toolbar Metric Colors **Erkenntnis:** Hardcoded colors in the toolbar metrics break visual consistency across different themes. **Aktion:** Replace hardcoded Color32 with ui.visuals() theme properties.
-## 2026-05-19 - Vorce UI Theme Colors Compliance
-**Erkenntnis:** Several components (`icon_demo_panel.rs`, `cue_panel.rs`, `controller_overlay_panel`, `preview_panel.rs`) still used hardcoded `Color32` equivalents instead of dynamic `ui.visuals()` or `crate::theme::colors` references, which broke appearance across different active themes.
-**Aktion:** Replaced hardcoded constants like `Color32::YELLOW`, `Color32::GREEN`, `Color32::RED`, `Color32::GRAY` with `ui.visuals().warn_fg_color`, `crate::theme::colors::MINT_ACCENT`, `ui.visuals().error_fg_color`, and `ui.style().visuals.text_color().gamma_multiply(0.6)` respectively. Ensuring dynamic rendering fixes UI contrast problems instantly.

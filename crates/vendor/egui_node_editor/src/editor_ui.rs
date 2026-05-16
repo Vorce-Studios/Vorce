@@ -637,11 +637,8 @@ where
             title_height = ui.min_size().y;
 
             // First pass: Draw the inner fields. Compute port heights
-            let inputs_len = self.graph[self.node_id].inputs.len();
-            for i in 0..inputs_len {
-                let param_id = self.graph[self.node_id].inputs[i].1;
-                let param_name = self.graph[self.node_id].inputs[i].0.clone();
-
+            let inputs = self.graph[self.node_id].inputs.clone();
+            for (param_name, param_id) in inputs {
                 if self.graph[param_id].shown_inline {
                     let height_before = ui.min_rect().bottom();
                     // NOTE: We want to pass the `user_data` to
@@ -690,19 +687,15 @@ where
                 }
             }
 
-            let outputs_len = self.graph[self.node_id].outputs.len();
-            for i in 0..outputs_len {
-                let param_id = self.graph[self.node_id].outputs[i].1;
-                let param_name = self.graph[self.node_id].outputs[i].0.clone();
-
+            let outputs = self.graph[self.node_id].outputs.clone();
+            for (param_name, param_id) in outputs {
                 let height_before = ui.min_rect().bottom();
-                responses.extend(self.graph[self.node_id].user_data.output_ui(
-                    ui,
-                    self.node_id,
-                    self.graph,
-                    user_state,
-                    &param_name,
-                ));
+                responses.extend(
+                    self.graph[self.node_id]
+                        .user_data
+                        .output_ui(ui, self.node_id, self.graph, user_state, &param_name)
+                        .into_iter(),
+                );
 
                 self.graph[self.node_id].user_data.separator(
                     ui,
@@ -810,7 +803,7 @@ where
 
         // Input ports
         for ((_, param), port_height) in
-            self.graph[self.node_id].inputs.iter().zip(input_port_heights)
+            self.graph[self.node_id].inputs.iter().zip(input_port_heights.into_iter())
         {
             let should_draw = match self.graph[*param].kind() {
                 InputParamKind::ConnectionOnly => true,
@@ -838,7 +831,7 @@ where
 
         // Output ports
         for ((_, param), port_height) in
-            self.graph[self.node_id].outputs.iter().zip(output_port_heights)
+            self.graph[self.node_id].outputs.iter().zip(output_port_heights.into_iter())
         {
             let pos_right = pos2(port_right, port_height);
             draw_port(
