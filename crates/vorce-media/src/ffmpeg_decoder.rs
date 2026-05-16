@@ -1,7 +1,7 @@
 //! FFmpeg-based video decoder
 
-use crate::decoder::{HwAccelType, TestPatternDecoder, VideoDecoder};
-use crate::{MediaError, Result};
+use crate::test_pattern_decoder::TestPatternDecoder;
+use crate::{HwAccelType, MediaError, Result, VideoDecoder};
 use std::path::Path;
 use std::time::Duration;
 use tracing::info;
