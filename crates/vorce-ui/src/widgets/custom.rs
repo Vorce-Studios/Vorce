@@ -1,3 +1,5 @@
+#[cfg(test)]
+use egui::Color32;
 pub mod buttons;
 pub mod controls;
 pub mod labels;
