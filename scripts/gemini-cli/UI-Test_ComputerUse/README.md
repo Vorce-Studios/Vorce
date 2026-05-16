@@ -3,6 +3,7 @@
 This directory contains test harnesses and automation scripts for validating the Vorce UI.
 
 ## Smoke Test
+
 A deterministic smoke test (`vorce_smoke_test.py`) allows basic UI flow validation locally without needing full computer use orchestration.
 
 ```bash
