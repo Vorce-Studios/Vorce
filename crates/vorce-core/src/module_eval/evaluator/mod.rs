@@ -1,16 +1,15 @@
 mod smoothing;
+mod state;
 mod traversal;
 mod triggers;
-mod state;
 
 pub use state::*;
 
 use crate::audio::analyzer_v2::AudioAnalysisV2;
 use crate::audio_reactive::AudioTriggerData;
 use crate::module::{
-    HueNodeType, LayerType, LinkBehavior, LinkMode, MeshType,
-    ModulePartId, ModulePartType, OutputType, SharedMediaState, SourceType,
-    VorceModule,
+    HueNodeType, LayerType, LinkBehavior, LinkMode, MeshType, ModulePartId, ModulePartType,
+    OutputType, SharedMediaState, SourceType, VorceModule,
 };
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -493,7 +492,6 @@ impl ModuleEvaluator {
         }
     }
 }
-
 
 #[cfg(test)]
 mod evaluator_tests {

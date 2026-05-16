@@ -1,7 +1,7 @@
 //! Evaluation Result.
-use std::collections::HashMap;
+use super::{RenderOp, SourceCommand};
 use crate::module::ModulePartId;
-use super::{SourceCommand, RenderOp};
+use std::collections::HashMap;
 
 /// Evaluation result for a single frame
 #[derive(Debug, Clone, Default)]
