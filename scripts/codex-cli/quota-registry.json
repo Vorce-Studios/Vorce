@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "daily_reset_hour_utc": 0,
-  "last_reset_date": "2026-05-15",
+  "last_reset_date": "2026-05-16",
   "providers": {
     "jules": {
       "enabled": true,
@@ -11,28 +11,28 @@
       "daily_limit": 100,
       "estimated_cost_per_call_usd": 0.0,
       "usage_today": {
-        "calls": 36,
+        "calls": 25,
         "estimated_cost_usd": 0.0,
         "source": "jules-api",
-        "last_synced_at": "2026-05-15T14:17:48.0804674Z",
-        "active_sessions": 12,
-        "completed_sessions": 21,
-        "failed_sessions": 0,
-        "pending_sessions": 5,
-        "live_capacity_sessions": 16,
-        "live_in_progress_sessions": 14,
+        "last_synced_at": "2026-05-16T19:47:32.1262995Z",
+        "active_sessions": 2,
+        "completed_sessions": 15,
+        "failed_sessions": 1,
+        "pending_sessions": 10,
+        "live_capacity_sessions": 4,
+        "live_in_progress_sessions": 2,
         "live_queued_sessions": 2,
-        "live_waiting_sessions": 46,
-        "account_sessions_observed_today": 36,
-        "account_sessions_observed_rolling_24h": 39,
-        "scoped_live_capacity_sessions": 12,
-        "scoped_live_in_progress_sessions": 12,
+        "live_waiting_sessions": 56,
+        "account_sessions_observed_today": 25,
+        "account_sessions_observed_rolling_24h": 25,
+        "scoped_live_capacity_sessions": 2,
+        "scoped_live_in_progress_sessions": 2,
         "scoped_live_queued_sessions": 0,
-        "scoped_live_waiting_sessions": 5,
-        "api_sessions_seen": 745,
-        "api_sessions_today": 36,
+        "scoped_live_waiting_sessions": 10,
+        "api_sessions_seen": 781,
+        "api_sessions_today": 25,
         "sessions": {
-          "calls": 36,
+          "calls": 25,
           "estimated_cost_usd": 0.0,
           "total_input_tokens": 0,
           "total_output_tokens": 0,
@@ -79,88 +79,88 @@
       "daily_limit": 1500,
       "daily_budget_usd": 20,
       "usage_today": {
-        "calls": 39,
-        "estimated_cost_usd": 1.91,
+        "calls": 12,
+        "estimated_cost_usd": 0.6,
         "source": "gemini-local-jsonl+cli-quota",
-        "last_synced_at": "2026-05-15T14:20:02.5667123Z",
+        "last_synced_at": "2026-05-16T19:47:25.2272158Z",
         "quota_source": "gemini-cli-retrieveUserQuota",
-        "quota_synced_at": "2026-05-15T14:20:07.6110000Z",
+        "quota_synced_at": "2026-05-16T19:47:28.669Z",
         "rate_limits": {
           "limit_id": "gemini-cli",
           "limit_name": "Gemini CLI quota",
           "primary": {
             "label": "Gemini quota",
-            "used_percent": 3.5,
-            "remaining": 193,
+            "used_percent": 14.0,
+            "remaining": 172,
             "limit": 200,
-            "resets_at": 1778934007,
+            "resets_at": 1778972686,
             "source": "gemini-cli"
           },
           "secondary": {
             "label": "Max model bucket",
-            "used_percent": 7.0,
-            "remaining": 93,
+            "used_percent": 22.0,
+            "remaining": 78,
             "limit": 100,
-            "resets_at": 1778856809,
-            "model_id": "gemini-2.5-flash",
+            "resets_at": 1778972686,
+            "model_id": "gemini-2.5-pro",
             "source": "gemini-cli"
           },
           "buckets": [
             {
               "model_id": "gemini-2.5-flash",
-              "used_percent": 7.0,
-              "remaining": 93,
+              "used_percent": 6.0,
+              "remaining": 94,
               "limit": 100,
-              "resets_at": 1778856809
+              "resets_at": 1778972322
             },
             {
               "model_id": "gemini-2.5-flash-lite",
-              "used_percent": 1.0,
-              "remaining": 99,
+              "used_percent": 0.0,
+              "remaining": 100,
               "limit": 100,
-              "resets_at": 1778856802
+              "resets_at": 1778972320
             },
             {
               "model_id": "gemini-2.5-pro",
-              "used_percent": 0.0,
-              "remaining": 100,
+              "used_percent": 22.0,
+              "remaining": 78,
               "limit": 100,
-              "resets_at": 1778934007
+              "resets_at": 1778972686
             },
             {
               "model_id": "gemini-3-flash-preview",
-              "used_percent": 7.0,
-              "remaining": 93,
+              "used_percent": 6.0,
+              "remaining": 94,
               "limit": 100,
-              "resets_at": 1778856809
+              "resets_at": 1778972322
             },
             {
               "model_id": "gemini-3-pro-preview",
-              "used_percent": 0.0,
-              "remaining": 100,
+              "used_percent": 22.0,
+              "remaining": 78,
               "limit": 100,
-              "resets_at": 1778934007
+              "resets_at": 1778972686
             },
             {
               "model_id": "gemini-3.1-flash-lite",
-              "used_percent": 1.0,
-              "remaining": 99,
-              "limit": 100,
-              "resets_at": 1778856802
-            },
-            {
-              "model_id": "gemini-3.1-flash-lite-preview",
-              "used_percent": 1.0,
-              "remaining": 99,
-              "limit": 100,
-              "resets_at": 1778856802
-            },
-            {
-              "model_id": "gemini-3.1-pro-preview",
               "used_percent": 0.0,
               "remaining": 100,
               "limit": 100,
-              "resets_at": 1778934007
+              "resets_at": 1778972320
+            },
+            {
+              "model_id": "gemini-3.1-flash-lite-preview",
+              "used_percent": 0.0,
+              "remaining": 100,
+              "limit": 100,
+              "resets_at": 1778972320
+            },
+            {
+              "model_id": "gemini-3.1-pro-preview",
+              "used_percent": 22.0,
+              "remaining": 78,
+              "limit": 100,
+              "resets_at": 1778972686
             }
           ],
           "plan_type": null,
@@ -169,78 +169,68 @@
         "quota_buckets": [
           {
             "model_id": "gemini-2.5-flash",
-            "used_percent": 7.0,
-            "remaining": 93,
+            "used_percent": 6.0,
+            "remaining": 94,
             "limit": 100,
-            "resets_at": 1778856809
+            "resets_at": 1778972322
           },
           {
             "model_id": "gemini-2.5-flash-lite",
-            "used_percent": 1.0,
-            "remaining": 99,
+            "used_percent": 0.0,
+            "remaining": 100,
             "limit": 100,
-            "resets_at": 1778856802
+            "resets_at": 1778972320
           },
           {
             "model_id": "gemini-2.5-pro",
-            "used_percent": 0.0,
-            "remaining": 100,
+            "used_percent": 22.0,
+            "remaining": 78,
             "limit": 100,
-            "resets_at": 1778934007
+            "resets_at": 1778972686
           },
           {
             "model_id": "gemini-3-flash-preview",
-            "used_percent": 7.0,
-            "remaining": 93,
+            "used_percent": 6.0,
+            "remaining": 94,
             "limit": 100,
-            "resets_at": 1778856809
+            "resets_at": 1778972322
           },
           {
             "model_id": "gemini-3-pro-preview",
-            "used_percent": 0.0,
-            "remaining": 100,
+            "used_percent": 22.0,
+            "remaining": 78,
             "limit": 100,
-            "resets_at": 1778934007
+            "resets_at": 1778972686
           },
           {
             "model_id": "gemini-3.1-flash-lite",
-            "used_percent": 1.0,
-            "remaining": 99,
-            "limit": 100,
-            "resets_at": 1778856802
-          },
-          {
-            "model_id": "gemini-3.1-flash-lite-preview",
-            "used_percent": 1.0,
-            "remaining": 99,
-            "limit": 100,
-            "resets_at": 1778856802
-          },
-          {
-            "model_id": "gemini-3.1-pro-preview",
             "used_percent": 0.0,
             "remaining": 100,
             "limit": 100,
-            "resets_at": 1778934007
+            "resets_at": 1778972320
+          },
+          {
+            "model_id": "gemini-3.1-flash-lite-preview",
+            "used_percent": 0.0,
+            "remaining": 100,
+            "limit": 100,
+            "resets_at": 1778972320
+          },
+          {
+            "model_id": "gemini-3.1-pro-preview",
+            "used_percent": 22.0,
+            "remaining": 78,
+            "limit": 100,
+            "resets_at": 1778972686
           }
         ],
         "gemini-3-flash-preview": {
-          "calls": 38,
-          "estimated_cost_usd": 1.9,
-          "total_input_tokens": 1777125,
-          "total_output_tokens": 11539,
-          "cached_tokens": 1236256,
-          "reasoning_tokens": 7363,
-          "tool_tokens": 0,
-          "total_duration_ms": 0
-        },
-        "gemini-3.1-flash-lite": {
-          "calls": 1,
-          "estimated_cost_usd": 0.01,
-          "total_input_tokens": 21073,
-          "total_output_tokens": 3,
-          "cached_tokens": 0,
-          "reasoning_tokens": 0,
+          "calls": 12,
+          "estimated_cost_usd": 0.6,
+          "total_input_tokens": 1244482,
+          "total_output_tokens": 2590,
+          "cached_tokens": 907644,
+          "reasoning_tokens": 2271,
           "tool_tokens": 0,
           "total_duration_ms": 0
         }
@@ -433,17 +423,17 @@
       "daily_limit": 1000,
       "daily_budget_usd": 20,
       "usage_today": {
-        "calls": 328,
+        "calls": 180,
         "estimated_cost_usd": 0.0,
         "source": "codex-local-jsonl",
-        "last_synced_at": "2026-05-15T14:19:58.3956291Z",
+        "last_synced_at": "2026-05-16T19:47:16.556103Z",
         "codex": {
-          "calls": 328,
+          "calls": 180,
           "estimated_cost_usd": 0.0,
-          "total_input_tokens": 28191489,
-          "total_output_tokens": 352297,
-          "cached_tokens": 23279232,
-          "reasoning_tokens": 148452,
+          "total_input_tokens": 13305003,
+          "total_output_tokens": 173252,
+          "cached_tokens": 10629760,
+          "reasoning_tokens": 91434,
           "tool_tokens": 0,
           "total_duration_ms": 0
         },
@@ -451,17 +441,17 @@
           "limit_id": "codex",
           "limit_name": null,
           "primary": {
-            "used_percent": 96.0,
-            "window_minutes": 300,
-            "resets_at": 1778853512
-          },
-          "secondary": {
-            "used_percent": 68.0,
+            "used_percent": 100.0,
             "window_minutes": 10080,
-            "resets_at": 1779250893
+            "resets_at": 1779497720
           },
-          "credits": null,
-          "plan_type": "plus",
+          "secondary": null,
+          "credits": {
+            "has_credits": false,
+            "unlimited": false,
+            "balance": null
+          },
+          "plan_type": "free",
           "rate_limit_reached_type": null
         }
       }

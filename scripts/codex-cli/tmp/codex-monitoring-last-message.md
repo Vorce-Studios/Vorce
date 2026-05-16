@@ -1,0 +1,3 @@
+Journal aktualisiert in [autopilot-tasks.md](C:/Users/Vinyl/Desktop/VJMapper/VjMapper/scripts/codex-cli/autopilot-tasks.md).
+
+Festgehalten sind die geprueften Quellen, der aktuelle Queue-Stand mit PR `#471` als mergeable aber durch fehlenden `Security Scan` blockiert, die laufende Jules-Session `2321348200447364872` mit `AWAITING_USER_FEEDBACK`, die aktive Lock-Datei, sowie der naechste Controller-Schritt: erst Run `25883424570` auslaufen lassen, dann den Security-Scan-Fehler zuweisen und `#449` nur als `address-review` behandeln, falls es wieder im offenen PR-Set auftaucht.
