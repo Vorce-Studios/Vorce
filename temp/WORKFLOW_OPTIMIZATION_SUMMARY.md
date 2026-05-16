@@ -2,8 +2,8 @@
 
 ## Issue: VOR-70 Optimierung interner Develoment Workflows
 
-**Status:** Implementation in progress  
-**Owner:** Ben (delegated to Jules for implementation)  
+**Status:** Implementation in progress
+**Owner:** Ben (delegated to Jules for implementation)
 **Priority:** Critical
 
 ## What Was Done
@@ -52,8 +52,8 @@ Created `docs/A2_DEVELOPMENT/JULES_ISSUES.md`:
 
 Created `.github/workflows/CICD-IssueFlow_Job02_SessionMonitor.yml`:
 
-**Schedule:** Runs every 30 minutes  
-**Monitors:** AWAITING_USER_FEEDBACK and FAILED sessions  
+**Schedule:** Runs every 30 minutes
+**Monitors:** AWAITING_USER_FEEDBACK and FAILED sessions
 **Action:** Posts summary comments to affected issues
 
 **Triggers:**

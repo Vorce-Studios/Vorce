@@ -85,8 +85,12 @@ impl MpvDecoder {
             use libmpv2_sys::*;
             let handle = self.mpv.ctx;
 
-            let cmd_sc = std::ffi::CString::new("screenshot-raw").unwrap();
-            let cmd_sc_arg = std::ffi::CString::new("video").unwrap();
+            let cmd_sc = std::ffi::CString::new("screenshot-raw").map_err(|e| {
+                MediaError::DecoderError(format!("Failed to create CString: {}", e))
+            })?;
+            let cmd_sc_arg = std::ffi::CString::new("video").map_err(|e| {
+                MediaError::DecoderError(format!("Failed to create CString: {}", e))
+            })?;
 
             let mut cmd_screenshot = [cmd_sc.as_ptr(), cmd_sc_arg.as_ptr(), std::ptr::null()];
 
@@ -155,9 +159,7 @@ impl MpvDecoder {
         // libmpv usually outputs BGRA layout on most platforms for `screenshot-raw`
         let mut final_data = extracted_data;
         for chunk in final_data.chunks_exact_mut(4) {
-            let b = chunk[0];
-            chunk[0] = chunk[2];
-            chunk[2] = b;
+            chunk.swap(0, 2);
             chunk[3] = 255; // Ensure alpha is fully opaque
         }
 

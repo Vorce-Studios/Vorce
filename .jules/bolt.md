@@ -1,24 +1,23 @@
-## 2023-10-27 - [Optimization] `node_editor.rs` Selected Nodes Check Optimization
-**Erkenntnis:** In `NodeEditor`, the `.contains(&node.id)` check on a `Vec<u64>` within the nodes rendering loop was very inefficient (`O(n)` per iteration where `n` is `selected_nodes.len()`).
-**Aktion:** I changed it so `selected_nodes` is pre-collected into an `FxHashSet<u64>` (from `rustc-hash`), providing `O(1)` amortized lookups instead. Benchmark results show a ~13.7x improvement for lookups compared to the original `Vec` implementation.
+## 2025-02-12 - Prevent Per-Frame String Allocation in UI Hot Paths
+**Erkenntnis:** Immediate-mode UIs wie egui rufen Render-Funktionen 60x pro Sekunde auf. Wenn man innerhalb einer Schleife in `draw_search_popup` und `draw_quick_create_popup` kontinuierlich `.to_lowercase()` auf dem Such-Filter ausführt, erzeugt dies massive, unnötige Heap-Allokationen (String-Instanziierungen). Dies belastet den Garbage Collector (bzw. führt in Rust zu unnötigem Speicherdruck) und verlangsamt den Render-Thread erheblich, vor allem bei langen Listen.
+**Aktion:** Zustände, die für Vergleiche transformiert werden müssen (wie lowercased Strings), sollten im State-Struct ge-cached und NUR aktualisiert werden, wenn sich das Original ändert (`response.changed()`). Die Eigenschaft muss gekapselt oder das `changed()`-Signal der UI-Komponente genutzt werden.
 
-## 2025-02-18 - ⚡ Bolt: Optimize lock contention in media browser thumbnail generation
-**Erkenntnis:** Calling `.contains()` inside a loop using a write lock creates heavy thread contention, which decreases application performance and locks out other threads unnecessarily when performing read-only queries.
+## 2025-02-12 - Prevent Per-Frame String Allocation in UI Hot Paths (EffectChainPanel)
+**Erkenntnis:** Immediate-mode UIs wie egui rufen Render-Funktionen 60x pro Sekunde auf. Das Ausführen von `.to_lowercase()` auf UI-State wie Suchfiltern *jeden Frame*, selbst wenn es außerhalb einer inneren Schleife passiert, erzeugt kontinuierlich unnötige Heap-Allokationen (String-Instanziierungen). Dies belastet den Memory Allocator und kann zu unerwarteten Stottern im Render-Thread führen.
+**Aktion:** Zustände, die für Vergleiche transformiert werden müssen (wie lowercased Strings), sollten im State-Struct ge-cached und NUR aktualisiert werden, wenn sich das Original ändert (z.B. durch `response.changed()`).
 
-**Aktion:** Optimized `get_or_generate_thumbnail` in `crates/vorce-ui/src/view/media_browser.rs` to take a `.read()` lock for the initial `.contains()` query, falling back to a `.write()` lock only when inserting a new `PathBuf`. This yielded a measured ~1.36x speedup during simulated lock contention benchmarks.
+## 2024-05-19 - N+1 Disk IO with WalkDir in hot path
+**Erkenntnis:** The `MediaLibrary::refresh` loop was triggering N+1 disk I/O and excessive string allocations. Using `path.is_file()` issued an unnecessary `stat` syscall, while `path.to_string_lossy().to_string()` allocated multiple times in the hot loop even for pre-scanned files.
+**Aktion:** Replaced `path.is_file()` with `entry.file_type().is_file()` (which leverages WalkDir's internal directory traversal cache) and short-circuited `|| self.items.contains_key(path)` to prevent string allocations via `into_owned()` and metadata syscalls for existing paths.
 
-## 2023-10-25 - [Performance Boost] Optimize O(N^2) connection retain loop with FxHashSet
-**Erkenntnis:** Using `Vec::contains` inside a `.retain` loop for connection processing results in an O(N*M) algorithmic bottleneck, particularly when validating large numbers of part connections.
-**Aktion:** Replaced the `Vec` collection with a `rustc_hash::FxHashSet` constructed prior to the loop. This changes the lookup cost from O(N) to O(1), improving the overall loop execution to O(M) and yielding a ~280x performance boost in microbenchmarks. Applied the turbofish syntax `collect::<rustc_hash::FxHashSet<_>>()` to ensure types resolve correctly regardless of diff contexts.
+## 2025-05-07 - Zero-Allocation Case-Insensitive Search in Hot Paths
+**Erkenntnis:** Using `.to_lowercase().contains(...)` inside iterators or UI render loops for searches allocates memory continuously every frame. While `socket.name` and `type_name` seem innocuous, their constant allocation creates hidden latency and pressure on the memory allocator.
+**Aktion:** Replaced dynamic lowercase allocation with a custom `utils::case_insensitive_contains` function that does zero-allocation ASCII-aware comparisons using `.eq_ignore_ascii_case()` combined with a substring search window, significantly improving continuous render loop performance during active searches.
 
-## 2025-02-12 - Prevent Heap Allocations in Search Filter Loop
-**Erkenntnis:** Calling `.to_lowercase()` inside a high-frequency UI rendering loop (like in the preset search panel) generates unnecessary heap allocations on every frame when the search query is empty.
-**Aktion:** I optimized `search_lower` assignment using lazy evaluation (`(!preset_search.is_empty()).then(|| preset_search.to_lowercase())`) so `.to_lowercase()` is never called when the search field is empty.
+## 2025-02-12 - Zero-Allocation Case-Insensitive Search in Hot Paths (Search Popup)
+**Erkenntnis:** Immediate-mode UIs wie egui rufen Render-Funktionen 60x pro Sekunde auf. Das Ausführen von `.to_lowercase()` innerhalb eines Iterators in der Such-Funktion `draw_search_popup` erzeugt jeden Frame unzählige überflüssige Heap-Allokationen (String-Instanziierungen).
+**Aktion:** Der Ansatz wurde durch die Verwendung der bestehenden Methode `utils::case_insensitive_contains` ersetzt, welche den Vergleich ASCII-basiert ohne Speicherallokationen (zero-allocation) ausführt. Zustände, die für Vergleiche transformiert werden müssen, sollten ge-cached werden. Wenn dies nicht möglich ist, ist eine allocation-freie String-Vergleichsfunktion entscheidend.
 
-## 2025-02-18 - Prevent Heap Allocations in Media Browser Search Filter Loop
-**Erkenntnis:** Calling `.to_lowercase()` inside the high-frequency UI rendering loop (`filtered_entries`) in `MediaBrowser` generates unnecessary heap allocations on every frame even when the search query remains unchanged, harming performance.
-**Aktion:** I cached the lowercased search query in `MediaBrowser::search_query_lower` (`Option<String>`) and only updated it when `egui::TextEdit::changed()` returns true. This eliminated the allocation overhead completely during idle rendering frames.
-
-## 2025-04-29 - Prevent Heap Allocations in Shortcuts Panel Search Loop
-**Erkenntnis:** Calling `.to_lowercase()` inside a high-frequency UI rendering loop (`filtered_indices`) in `ShortcutsPanel` generates unnecessary heap allocations on every frame when the search query remains unchanged, harming performance.
-**Aktion:** I cached the lowercased search query in `ShortcutsPanel::search_filter_lower` (`Option<String>`) and only updated it when `egui::TextEdit::changed()` returns true. This eliminated the allocation overhead completely during idle rendering frames.
+## 2025-05-10 - Avoid Caching UI State for Public Fields (ModuleCanvas Search)
+**Erkenntnis:** Caching lowercased search strings in `egui` state structs using `response.changed()` causes state desynchronization bugs when the source fields (like `search_filter` or `quick_create_filter`) are `pub` and can be modified programmatically elsewhere. This pattern attempts to avoid per-frame allocations but introduces subtle bugs.
+**Aktion:** Instead of caching derived string state for `pub` fields, remove the cached state entirely. Use the zero-allocation `utils::case_insensitive_contains` inside the filter loops directly with the original string. This achieves both zero per-frame allocations and guaranteed state synchronization.
