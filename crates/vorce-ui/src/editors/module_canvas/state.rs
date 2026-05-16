@@ -108,8 +108,22 @@ pub struct ModuleCanvas {
         Option<std::sync::mpsc::Receiver<Result<vorce_control::hue::models::HueConfig, String>>>,
     /// Status message for Hue operations
     pub hue_status_message: Option<String>,
+    /// Fetched Hue entertainment areas
+    pub hue_areas: Vec<vorce_control::hue::api::groups::GroupInfo>,
+    /// Channel for Hue areas results
+    pub hue_areas_rx: Option<
+        std::sync::mpsc::Receiver<Result<Vec<vorce_control::hue::api::groups::GroupInfo>, String>>,
+    >,
+    /// Whether we are currently fetching areas
+    pub hue_fetching_areas: bool,
     /// Last known trigger values for visualization (Part ID -> Value 0.0-1.0)
     pub last_trigger_values: std::collections::HashMap<ModulePartId, f32>,
+
+    /// NDI Sender runtime status responses (Part ID -> Option<Frame Count>)
+    pub ndi_sender_status: std::collections::HashMap<ModulePartId, Option<u64>>,
+    /// Channel for NDI sender status results
+    pub ndi_status_rx:
+        std::collections::HashMap<ModulePartId, crossbeam_channel::Receiver<Option<u64>>>,
     /// Whether inspector previews should be shown where available.
     pub show_inspector_previews: bool,
     /// Shared workspace mode for layer nodes inside the inspector.
@@ -180,7 +194,12 @@ impl Default for ModuleCanvas {
             hue_discovery_rx: None,
             hue_pairing_rx: None,
             hue_status_message: None,
+            hue_areas: Vec::new(),
+            hue_areas_rx: None,
+            hue_fetching_areas: false,
             last_trigger_values: std::collections::HashMap::new(),
+            ndi_sender_status: std::collections::HashMap::new(),
+            ndi_status_rx: std::collections::HashMap::new(),
             show_inspector_previews: true,
             layer_inspector_view_mode: LayerInspectorViewMode::MeshEditor,
             mesh_editor: MeshEditor::new(),

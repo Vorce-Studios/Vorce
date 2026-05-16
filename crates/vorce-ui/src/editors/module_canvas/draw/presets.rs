@@ -1,5 +1,5 @@
 use super::super::state::ModuleCanvas;
-use egui::{Color32, Pos2, Rect, Stroke, Ui, Vec2};
+use egui::{Pos2, Rect, Stroke, Ui, Vec2};
 use vorce_core::module::VorceModule;
 
 pub fn draw_presets_popup(
@@ -16,11 +16,11 @@ pub fn draw_presets_popup(
     );
 
     let painter = ui.painter();
-    painter.rect_filled(popup_rect, 0.0, Color32::from_rgba_unmultiplied(30, 35, 45, 245));
+    painter.rect_filled(popup_rect, 0.0, ui.visuals().window_fill());
     painter.rect_stroke(
         popup_rect,
         0.0,
-        Stroke::new(2.0, Color32::from_rgb(100, 180, 80)),
+        Stroke::new(2.0, ui.visuals().widgets.noninteractive.bg_stroke.color),
         egui::StrokeKind::Middle,
     );
 

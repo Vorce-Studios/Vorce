@@ -4,9 +4,6 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
-  pull_request_target:
-    types: [labeled]
-    branches: [main]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -30,14 +27,14 @@ env:
 jobs:
   rust-autofix:
     name: "Rust Autofix"
-    if: github.event_name == 'workflow_dispatch' || github.event.action != 'labeled' || github.event.label.name == 'pre-commit ci run'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
       - name: Resolve PR context
         id: resolve
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             let prNumber = context.payload.pull_request?.number;

@@ -62,10 +62,8 @@ impl MidiClock {
                 info!("MIDI Clock: Continue");
                 self.state = ClockState::Playing;
             }
-            MidiMessage::Clock => {
-                if self.state == ClockState::Playing {
-                    self.process_clock_tick();
-                }
+            MidiMessage::Clock if self.state == ClockState::Playing => {
+                self.process_clock_tick();
             }
             _ => {}
         }
