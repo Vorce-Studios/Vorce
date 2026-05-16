@@ -44,7 +44,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_media_library_limit() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_media_library_limit() {
         use std::fs::File;
         use std::path::PathBuf;
 
@@ -56,14 +56,14 @@ mod tests {
         }
 
         let path = std::env::temp_dir().join(format!("vorce_test_limit_{}", uuid::Uuid::new_v4()));
-        std::fs::create_dir_all(&path)?;
+        std::fs::create_dir_all(&path).unwrap();
         let _guard = TempDir(path.clone()); // Ensures cleanup on panic
 
         // Create MAX_MEDIA_ITEMS + 10 files
         // MAX_MEDIA_ITEMS is 100 in test
         for i in 0..(MAX_MEDIA_ITEMS + 10) {
             let file_path = path.join(format!("test_{}.jpg", i));
-            File::create(&file_path)?;
+            File::create(&file_path).unwrap();
         }
 
         let mut library = MediaLibrary::new();
@@ -71,7 +71,6 @@ mod tests {
         library.refresh();
 
         assert_eq!(library.items.len(), MAX_MEDIA_ITEMS);
-        Ok(())
     }
 
     #[test]

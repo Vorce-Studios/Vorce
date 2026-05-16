@@ -34,7 +34,7 @@ jobs:
     steps:
       - name: Resolve PR context
         id: resolve
-        uses: actions/github-script@v9
+        uses: actions/github-script@v8
         with:
           script: |
             let prNumber = context.payload.pull_request?.number;

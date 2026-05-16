@@ -80,9 +80,6 @@ pub struct AppState {
     /// Dirty flag (has changes?) - Not serialized
     #[serde(skip)]
     pub dirty: bool,
-    /// Cluster configuration
-    #[serde(default)]
-    pub cluster_config: Arc<crate::cluster::ClusterConfig>,
 }
 
 impl Default for AppState {
@@ -102,7 +99,6 @@ impl Default for AppState {
             audio_config: AudioConfig::default(),
             oscillator_config: OscillatorConfig::default(),
             settings: Arc::new(AppSettings::default()),
-            cluster_config: Arc::new(crate::cluster::ClusterConfig::default()),
             dirty: false,
         }
     }

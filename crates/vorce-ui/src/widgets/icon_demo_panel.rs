@@ -80,7 +80,7 @@ impl IconDemoPanel {
 
                                     // Icon background
                                     egui::Frame::default()
-                                        .fill(ui.visuals().widgets.noninteractive.bg_fill)
+                                        .fill(egui::Color32::from_rgb(30, 35, 45))
                                         .corner_radius(egui::CornerRadius::ZERO)
                                         .inner_margin(12.0)
                                         .show(ui, |ui| {
@@ -111,7 +111,7 @@ impl IconDemoPanel {
                     });
                 } else {
                     ui.colored_label(
-                        ui.visuals().warn_fg_color,
+                        egui::Color32::YELLOW,
                         "⚠ Icons not loaded. Make sure assets/icons folder exists.",
                     );
 

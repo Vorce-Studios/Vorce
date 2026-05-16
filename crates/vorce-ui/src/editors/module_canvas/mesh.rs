@@ -240,20 +240,20 @@ pub fn render_hue_spatial_editor(
             egui::FontId::proportional(14.0),
             ui.visuals().text_color().gamma_multiply(0.5),
         );
+        // Typically we would populate this from the Entertainment Area config
+        if ui.button("Add Test Lamps").clicked() {
+            lamp_positions.insert("1".to_string(), (0.2, 0.2)); // Front Left
+            lamp_positions.insert("2".to_string(), (0.8, 0.2)); // Front Right
+            lamp_positions.insert("3".to_string(), (0.2, 0.8)); // Rear Left
+            lamp_positions.insert("4".to_string(), (0.8, 0.8)); // Rear Right
+        }
         return;
     }
 
-    // Map Coordinates from [-1.0, 1.0] Hue Space to [0.0, 1.0] Screen Space
     let to_screen = |x: f32, y: f32| -> Pos2 {
-        // x goes from -1 (left) to 1 (right) -> map to 0..1
-        // y goes from -1 (front) to 1 (back) -> map to 0..1
-        // Note: Coordinates in Hue: x(-1=left, 1=right), y(-1=front, 1=back), z(-1=bottom, 1=top)
-        let normalized_x = (x + 1.0) / 2.0;
-        let normalized_y = (y + 1.0) / 2.0;
-
         Pos2::new(
-            rect.min.x + normalized_x.clamp(0.0, 1.0) * rect.width(),
-            rect.min.y + normalized_y.clamp(0.0, 1.0) * rect.height(),
+            rect.min.x + x.clamp(0.0, 1.0) * rect.width(),
+            rect.min.y + y.clamp(0.0, 1.0) * rect.height(),
         )
     };
 

@@ -471,7 +471,7 @@ impl ControllerOverlayPanel {
                         ui.separator();
                         ui.horizontal(|ui| {
                             ui.label("Zuweisung:");
-                            ui.colored_label(ui.visuals().warn_fg_color, assign.target.to_string());
+                            ui.colored_label(Color32::YELLOW, assign.target.to_string());
                         });
                         crate::widgets::custom::render_info_label_with_size(
                             ui,
