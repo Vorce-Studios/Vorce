@@ -44,7 +44,7 @@ rfd = "0.17"
 rust-embed = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-sysinfo = "0.38"
+sysinfo = "0.39"
 thiserror = { workspace = true }
 tiny-skia = { workspace = true }
 tokio = { workspace = true, optional = true, features = [
@@ -59,3 +59,11 @@ usvg = { workspace = true }
 wgpu = { workspace = true }
 winit = { workspace = true }
 rustc-hash = "2.1.2"
+
+[dev-dependencies]
+criterion = "0.5"
+tempfile = "3.8"
+
+[[bench]]
+name = "asset_manager"
+harness = false

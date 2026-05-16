@@ -96,7 +96,7 @@ pub fn show(ui: &mut egui::Ui, ui_state: &mut AppUI) {
                 ui.separator();
 
                 let learn_btn = if ui_state.is_midi_learn_mode {
-                    egui::Button::new("Learn").fill(egui::Color32::YELLOW)
+                    egui::Button::new("Learn").fill(ui.visuals().warn_fg_color)
                 } else {
                     egui::Button::new("Learn")
                 };
@@ -125,32 +125,33 @@ pub fn show(ui: &mut egui::Ui, ui_state: &mut AppUI) {
                 let gpu = ui_state.gpu_usage;
                 let ram = ui_state.ram_usage_mb;
 
-                let traffic_light = |value: f32, warn: f32, crit: f32| -> egui::Color32 {
-                    if value >= crit {
-                        egui::Color32::from_rgb(255, 50, 50)
-                    } else if value >= warn {
-                        egui::Color32::from_rgb(255, 200, 50)
-                    } else {
-                        egui::Color32::from_rgb(50, 200, 50)
-                    }
-                };
+                let traffic_light =
+                    |value: f32, warn: f32, crit: f32, visuals: &egui::Visuals| -> egui::Color32 {
+                        if value >= crit {
+                            visuals.error_fg_color
+                        } else if value >= warn {
+                            visuals.warn_fg_color
+                        } else {
+                            visuals.text_color()
+                        }
+                    };
 
                 let fps_ratio = fps / target_fps.max(1.0);
                 let fps_color = if fps_ratio >= 0.95 {
-                    egui::Color32::from_rgb(50, 200, 50)
+                    ui.visuals().text_color()
                 } else if fps_ratio >= 0.8 {
-                    egui::Color32::from_rgb(255, 200, 50)
+                    ui.visuals().warn_fg_color
                 } else {
-                    egui::Color32::from_rgb(255, 50, 50)
+                    ui.visuals().error_fg_color
                 };
 
                 if show_metric(&metrics.status) {
                     let overall_color = if cpu >= 90.0 || gpu >= 90.0 || fps_ratio < 0.8 {
-                        egui::Color32::from_rgb(255, 50, 50)
+                        ui.visuals().error_fg_color
                     } else if cpu >= 70.0 || gpu >= 70.0 || fps_ratio < 0.95 {
-                        egui::Color32::from_rgb(255, 200, 50)
+                        ui.visuals().warn_fg_color
                     } else {
-                        egui::Color32::from_rgb(50, 200, 50)
+                        ui.visuals().text_color()
                     };
                     let (rect, _) =
                         ui.allocate_exact_size(egui::vec2(14.0, 14.0), egui::Sense::hover());
@@ -161,11 +162,11 @@ pub fn show(ui: &mut egui::Ui, ui_state: &mut AppUI) {
                     ui.label(format!("RAM:{ram:.0}MB"));
                 }
                 if show_metric(&metrics.gpu) {
-                    let gpu_color = traffic_light(gpu, 70.0, 90.0);
+                    let gpu_color = traffic_light(gpu, 70.0, 90.0, ui.visuals());
                     ui.colored_label(gpu_color, format!("Load:{gpu:.0}%"));
                 }
                 if show_metric(&metrics.cpu) {
-                    let cpu_color = traffic_light(cpu, 70.0, 90.0);
+                    let cpu_color = traffic_light(cpu, 70.0, 90.0, ui.visuals());
                     ui.colored_label(cpu_color, format!("CPU:{cpu:.0}%"));
                 }
                 if show_metric(&metrics.frame_time) {
