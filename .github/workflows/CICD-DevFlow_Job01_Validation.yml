@@ -145,7 +145,8 @@ jobs:
             if [[ "$PR_TITLE" =~ ^(chore|test|docs|style|ci|perf|refactor|build|revert|🧪|🧹|✨|⚡|🎨|🛡️|🔒|👷|📝|💄|🍱).* ]] || [[ "$PR_BRANCH" =~ ^(dependabot|jules|bolt|lina|sentinel)/.* ]] || [[ "$PR_BRANCH" =~ ^(jules|bolt|lina|sentinel)-.* ]] || [[ "$PR_BRANCH" =~ ^B-Jules/ ]]; then
               echo "::warning::CHANGELOG.md was not updated in this PR, but it's a whitelisted PR type or branch, so we won't fail the build."
             else
-              echo "::warning::CHANGELOG.md was not updated in this PR. Please consider adding a changelog entry."
+              echo "::error::CHANGELOG.md was not updated in this PR. Please add a changelog entry."
+              exit 1
             fi
           fi
 

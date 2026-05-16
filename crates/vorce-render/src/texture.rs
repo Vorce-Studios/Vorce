@@ -135,27 +135,10 @@ impl TexturePool {
         // Slow path: create from handle
         let (view, last_used) = {
             let textures = self.textures.read();
-            if let Some(handle) = textures.get(name) {
-                handle.mark_used(self.start_time);
-                (Arc::new(handle.create_view()), handle.last_used.clone())
-            } else {
-                // If it isn't in the pool, create a 1x1 dummy texture to prevent panics and DoS
-                drop(textures);
-                self.create(
-                    name,
-                    1,
-                    1,
-                    wgpu::TextureFormat::Rgba8UnormSrgb,
-                    wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-                );
-                let textures = self.textures.read();
-                // Should definitely exist now, but fallback if not
-                let handle = textures
-                    .get(name)
-                    .unwrap_or_else(|| unreachable!("dummy texture was just created"));
-                handle.mark_used(self.start_time);
-                (Arc::new(handle.create_view()), handle.last_used.clone())
-            }
+            let handle = textures.get(name).expect("Texture not found in pool");
+
+            handle.mark_used(self.start_time);
+            (Arc::new(handle.create_view()), handle.last_used.clone())
         };
 
         // Update cache on slow path
@@ -302,11 +285,7 @@ impl TexturePool {
                 );
                 let textures = self.textures.read();
                 // Safe fallback: texture was just created above.
-                if let Some(handle) = textures.get(name).cloned() {
-                    handle
-                } else {
-                    return; // Unreachable but safe
-                }
+                textures.get(name).cloned().expect("texture must exist after creation")
             }
         };
 
