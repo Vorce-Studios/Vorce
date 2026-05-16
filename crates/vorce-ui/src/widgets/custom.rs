@@ -16,6 +16,7 @@ mod tests {
     use egui::Ui;
 
     use super::*;
+    use egui::Color32;
     use egui::Context;
 
     fn test_ui(func: impl FnMut(&mut Ui)) {
