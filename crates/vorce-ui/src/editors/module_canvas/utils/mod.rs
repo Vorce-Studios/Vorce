@@ -12,6 +12,24 @@ pub use presets::*;
 pub use sockets::*;
 pub use styling::*;
 
+/// Perform a case-insensitive substring search without heap allocations.
+/// Uses .eq_ignore_ascii_case() internally for efficient comparison.
+pub fn case_insensitive_contains(haystack: &str, needle: &str) -> bool {
+    if needle.is_empty() {
+        return true;
+    }
+    let needle_len = needle.len();
+    if haystack.len() < needle_len {
+        return false;
+    }
+    haystack.char_indices().any(|(i, _)| {
+        let tail = &haystack[i..];
+        tail.len() >= needle_len
+            && tail.is_char_boundary(needle_len)
+            && tail[..needle_len].eq_ignore_ascii_case(needle)
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

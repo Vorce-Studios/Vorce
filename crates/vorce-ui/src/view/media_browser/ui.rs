@@ -1,96 +1,17 @@
-//! Phase 6: Media Browser UI
-//!
-//! File browsing interface with thumbnails, search/filter, drag-and-drop support,
-//! color coding, and hover preview playback.
+//! Media Browser UI
 
+use super::data::{
+    format_duration, format_size, MediaBrowserAction, MediaEntry, MediaFolders, MediaType,
+    SortMode, ThumbnailHandle, ViewMode,
+};
 use crate::i18n::LocaleManager;
-use crate::icons::{AppIcon, IconManager};
+use crate::icons::IconManager;
 use egui::{Color32, Response, Sense, Ui, Vec2};
 use parking_lot::RwLock;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Instant;
-
-/// Media file entry in the browser
-#[derive(Debug, Clone)]
-pub struct MediaEntry {
-    /// File system path to the asset or resource.
-    pub path: PathBuf,
-    /// Human-readable display name.
-    pub name: String,
-    /// Lowercased name for fast searching without allocation
-    pub name_lower: String,
-    pub file_type: MediaType,
-    pub size_bytes: u64,
-    pub duration_secs: Option<f32>,
-    pub thumbnail: Option<ThumbnailHandle>,
-    pub color_tag: Option<Color32>,
-    pub tags: Vec<String>,
-    /// Lowercased tags for fast searching without allocation
-    pub tags_lower: Vec<String>,
-}
-
-/// Media type classification
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MediaType {
-    Video,
-    Image,
-    ImageSequence,
-    Audio,
-    /// HAP video (GPU-accelerated codec)
-    Hap,
-    Unknown,
-}
-
-impl MediaType {
-    pub fn from_extension(ext: &str) -> Self {
-        match ext.to_lowercase().as_str() {
-            "mp4" | "avi" | "mpeg" | "mpg" | "mkv" | "webm" => Self::Video,
-            // MOV can be HAP or regular video - we'll detect at open time
-            "mov" => Self::Video, // Could be HAP, will be detected when opened
-            "png" | "jpg" | "jpeg" | "tiff" | "tif" | "bmp" | "dds" => Self::Image,
-            "gif" => Self::ImageSequence,
-            "wav" | "mp3" | "aac" | "flac" | "ogg" => Self::Audio,
-            _ => Self::Unknown,
-        }
-    }
-
-    pub fn icon(&self) -> &'static str {
-        match self {
-            Self::Video => "🎬",
-            Self::Image => "🖼",
-            Self::ImageSequence => "🎞",
-            Self::Audio => "🎵",
-            Self::Hap => "⚡", // Lightning for GPU-accelerated
-            Self::Unknown => "📄",
-        }
-    }
-
-    pub fn app_icon(&self) -> Option<AppIcon> {
-        match self {
-            Self::Video => Some(AppIcon::VideoFile),
-            Self::Image => Some(AppIcon::ImageFile),
-            Self::ImageSequence => Some(AppIcon::VideoFile),
-            Self::Audio => Some(AppIcon::AudioFile),
-            Self::Hap => Some(AppIcon::VideoPlayer), // Use VideoPlayer for HAP
-            Self::Unknown => None,
-        }
-    }
-}
-
-/// Thumbnail handle (reference to generated thumbnail)
-#[derive(Clone)]
-pub struct ThumbnailHandle {
-    pub texture_handle: egui::TextureHandle,
-    pub size: (u32, u32),
-}
-
-impl std::fmt::Debug for ThumbnailHandle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ThumbnailHandle").field("size", &self.size).finish()
-    }
-}
 
 /// Media browser state
 pub struct MediaBrowser {
@@ -143,49 +64,23 @@ pub struct MediaBrowser {
     history_index: usize,
     /// Media folders per type
     pub media_folders: MediaFolders,
+    /// Active scan flag
+    /// Active scan flag
+    scan_tasks_active: Arc<std::sync::atomic::AtomicUsize>,
+    /// Receiver for directory scan results
+    scan_rx: std::sync::mpsc::Receiver<(PathBuf, Vec<MediaEntry>)>,
+    /// Sender for directory scan results
+    scan_tx: std::sync::mpsc::Sender<(PathBuf, Vec<MediaEntry>)>,
     /// Show folder settings
     show_folder_settings: bool,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ViewMode {
-    Grid,
-    List,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SortMode {
-    Name,
-    Type,
-    Size,
-    DateModified,
-}
-
-/// Media folder configuration per type
-#[derive(Debug, Clone)]
-pub struct MediaFolders {
-    pub video_folder: PathBuf,
-    pub image_folder: PathBuf,
-    pub audio_folder: PathBuf,
-    pub default_folder: PathBuf,
-}
-
-impl Default for MediaFolders {
-    fn default() -> Self {
-        let default = std::env::current_dir().unwrap_or_default();
-        Self {
-            video_folder: dirs::video_dir().unwrap_or(default.clone()),
-            image_folder: dirs::picture_dir().unwrap_or(default.clone()),
-            audio_folder: dirs::audio_dir().unwrap_or(default.clone()),
-            default_folder: default,
-        }
-    }
 }
 
 impl MediaBrowser {
     pub fn new(initial_dir: PathBuf) -> Self {
         let (tx, rx) = std::sync::mpsc::channel();
         let (metadata_tx, metadata_rx) = std::sync::mpsc::channel();
+
+        let (scan_tx, scan_rx) = std::sync::mpsc::channel();
 
         let path_str = initial_dir.display().to_string();
         let mut browser = Self {
@@ -213,6 +108,9 @@ impl MediaBrowser {
             sort_mode: SortMode::Name,
             history: vec![initial_dir.clone()],
             history_index: 0,
+            scan_tasks_active: Arc::new(std::sync::atomic::AtomicUsize::new(0)),
+            scan_rx,
+            scan_tx,
             media_folders: MediaFolders {
                 video_folder: initial_dir.clone(),
                 image_folder: initial_dir.clone(),
@@ -227,73 +125,64 @@ impl MediaBrowser {
 
     /// Refresh the file list
     pub fn refresh(&mut self) {
+        // Prevent concurrent scans of the same or different directories if one is already running
+        // Or we could just let them run and overwrite. We'll set the flag.
+        self.scan_tasks_active.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         self.entries.clear();
-        if let Ok(entries) = std::fs::read_dir(&self.current_dir) {
-            for entry in entries.flatten() {
-                if let Ok(metadata) = entry.metadata() {
-                    if metadata.is_file() {
-                        let path = entry.path();
-                        let name = entry.file_name().to_string_lossy().to_string();
 
-                        // Skip hidden files if not showing them
-                        if !self.show_hidden && name.starts_with('.') {
-                            continue;
-                        }
+        let path = self.current_dir.clone();
+        let show_hidden = self.show_hidden;
+        let tx = self.scan_tx.clone();
+        let scan_tasks_active = self.scan_tasks_active.clone();
 
-                        let file_type = path
-                            .extension()
-                            .and_then(|e| e.to_str())
-                            .map(MediaType::from_extension)
-                            .unwrap_or(MediaType::Unknown);
+        // These are needed for get_or_generate_thumbnail logic inside the background thread
+        // Wait, getting thumbnails also accesses self.thumbnail_cache and self.generating_thumbnails,
+        // which are Arc<RwLock>. We can just skip thumbnail generation in the background thread
+        // and do it in the main thread when we receive the entries.
+        // That avoids sending Arcs to the background thread unnecessarily.
 
-                        // Only include media files
-                        if matches!(
-                            file_type,
-                            MediaType::Video
-                                | MediaType::Image
-                                | MediaType::ImageSequence
-                                | MediaType::Audio
-                                | MediaType::Hap
-                        ) {
-                            let thumbnail = self.get_or_generate_thumbnail(&path);
+        rayon::spawn(move || {
+            let entries = super::scanner::Scanner::scan_directory(&path, show_hidden);
+            scan_tasks_active.fetch_sub(1, std::sync::atomic::Ordering::SeqCst);
+            let _ = tx.send((path, entries));
+        });
+    }
 
-                            let duration_secs = None;
-                            if matches!(
-                                file_type,
-                                MediaType::Video | MediaType::Audio | MediaType::Hap
-                            ) {
-                                let mut extracting = self.extracting_metadata.write();
-                                if !extracting.contains(&path) {
-                                    extracting.insert(path.clone());
-                                    let tx = self.metadata_tx.clone();
-                                    let path_clone = path.clone();
-                                    rayon::spawn(move || {
-                                        let duration =
-                                            vorce_media::get_media_duration_secs(&path_clone);
-                                        let _ = tx.send((path_clone, duration));
-                                    });
-                                }
-                            }
-
-                            self.entries.push(MediaEntry {
-                                path,
-                                name: name.clone(),
-                                name_lower: name.to_lowercase(),
-                                file_type,
-                                size_bytes: metadata.len(),
-                                duration_secs,
-                                thumbnail,
-                                color_tag: None,
-                                tags: Vec::new(),
-                                tags_lower: Vec::new(),
-                            });
-                        }
-                    }
-                }
+    /// Process directory scan results
+    pub fn process_scans(&mut self) {
+        // Only process the latest scan if there are multiple in the queue
+        let mut latest_scan = None;
+        while let Ok((path, entries)) = self.scan_rx.try_recv() {
+            // Only accept scan results for the current directory
+            // (in case we navigated away before the scan finished)
+            if path == self.current_dir {
+                latest_scan = Some(entries);
             }
         }
 
-        self.sort_entries();
+        if let Some(mut entries) = latest_scan {
+            // Now that we have the entries on the main thread,
+            // trigger thumbnail generation and metadata extraction
+            for entry in &mut entries {
+                entry.thumbnail = self.get_or_generate_thumbnail(&entry.path);
+
+                if matches!(entry.file_type, MediaType::Video | MediaType::Audio | MediaType::Hap) {
+                    let mut extracting = self.extracting_metadata.write();
+                    if !extracting.contains(&entry.path) {
+                        extracting.insert(entry.path.clone());
+                        let tx = self.metadata_tx.clone();
+                        let path_clone = entry.path.clone();
+                        rayon::spawn(move || {
+                            let duration = vorce_media::get_media_duration_secs(&path_clone);
+                            let _ = tx.send((path_clone, duration));
+                        });
+                    }
+                }
+            }
+
+            self.entries = entries;
+            self.sort_entries();
+        }
     }
 
     /// Rebuild the path-to-index map for O(1) lookups
@@ -495,6 +384,7 @@ impl MediaBrowser {
     ) -> Option<MediaBrowserAction> {
         self.process_thumbnails(ui.ctx());
         self.process_metadata(ui.ctx());
+        self.process_scans();
 
         let mut action = None;
 
@@ -679,6 +569,15 @@ impl MediaBrowser {
 
         // Content area
         egui::ScrollArea::vertical().show(ui, |ui| {
+            if self.scan_tasks_active.load(std::sync::atomic::Ordering::SeqCst) > 0 {
+                ui.vertical_centered(|ui| {
+                    ui.add_space(40.0);
+                    ui.spinner();
+                    ui.label(locale.t("media-browser-loading"));
+                });
+                return;
+            }
+
             // Collect indices to avoid borrowing issues
             let entry_indices: Vec<usize> =
                 self.filtered_entries().into_iter().map(|(i, _)| i).collect();
@@ -922,34 +821,4 @@ impl MediaBrowser {
 
         response
     }
-}
-
-/// Actions that can be triggered by the media browser
-#[derive(Debug, Clone)]
-pub enum MediaBrowserAction {
-    FileSelected(PathBuf),
-    FileDoubleClicked(PathBuf),
-    StartPreview(PathBuf),
-    StopPreview,
-}
-
-/// Format file size for display
-fn format_size(bytes: u64) -> String {
-    const UNITS: &[&str] = &["B", "KB", "MB", "GB", "TB"];
-    let mut size = bytes as f64;
-    let mut unit_idx = 0;
-
-    while size >= 1024.0 && unit_idx < UNITS.len() - 1 {
-        size /= 1024.0;
-        unit_idx += 1;
-    }
-
-    format!("{:.1} {}", size, UNITS[unit_idx])
-}
-
-/// Format duration for display
-fn format_duration(seconds: f32) -> String {
-    let minutes = (seconds / 60.0).floor() as u32;
-    let secs = (seconds % 60.0).floor() as u32;
-    format!("{:02}:{:02}", minutes, secs)
 }
