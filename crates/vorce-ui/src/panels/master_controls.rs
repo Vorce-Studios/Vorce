@@ -11,12 +11,11 @@ pub fn render_master_controls(
         return;
     }
 
-    egui::Window::new(app_ui.i18n.t("panel-master")).default_size([360.0, 300.0]).show(
-        ctx,
-        |ui: &mut Ui| {
+    egui::Window::new(app_ui.i18n.t("panel-master"))
+        .default_size([360.0, 300.0])
+        .show(ctx, |ui: &mut Ui| {
             render_master_controls_embedded(app_ui, ui, layer_manager);
-        },
-    );
+        });
 }
 
 pub fn render_master_controls_embedded(

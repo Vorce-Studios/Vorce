@@ -443,7 +443,6 @@ impl AppUI {
                 });
             });
     }
-
     /// Render the right-side inspector panel (docked)
     pub fn render_inspector(
         &mut self,
@@ -559,7 +558,6 @@ impl AppUI {
             }
         }
     }
-
     /// Helper for Global MIDI Learn (Way 1)
     /// Call this after adding a widget to enable hover-based learning
     pub fn midi_learn_helper(

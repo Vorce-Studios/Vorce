@@ -65,7 +65,8 @@ pub fn render_controls(app_ui: &mut AppUI, ctx: &Context) {
                         )
                         .clicked()
                     {
-                        app_ui.actions.push(UIAction::SetLoopMode(vorce_media::LoopMode::PlayOnce));
+                        app_ui.actions
+                            .push(UIAction::SetLoopMode(vorce_media::LoopMode::PlayOnce));
                     }
                 });
         });
