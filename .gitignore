@@ -125,3 +125,9 @@ ops/paperclip/
 scripts/paperclip/
 
 autopilot-state.json
+
+# Vorce Autopilot runtime state
+/scripts/codex-cli/tmp/
+/scripts/codex-cli/autopilot-session-lock.md
+/scripts/codex-cli/autopilot-tasks.md
+/scripts/codex-cli/autopilot.wakeup

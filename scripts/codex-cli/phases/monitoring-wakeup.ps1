@@ -231,6 +231,9 @@ function Invoke-PostMergeIssueDisposition {
     }
     $issue = ($issueJson | Out-String) | ConvertFrom-Json -ErrorAction Stop
     $changedFiles = @($pr.files | ForEach-Object { [string]$_.path }) -join "`n"
+    if ([string]::IsNullOrWhiteSpace($changedFiles)) {
+        $changedFiles = "(keine Dateiliste verfuegbar)"
+    }
     $prompt = Get-VorcePostMergeQaDispositionPrompt `
         -Repository $Repository `
         -PullRequestNumber $prNum `
@@ -501,7 +504,14 @@ function Invoke-CliPrConflictResolution {
         & git -C $worktreePath merge --no-edit ("origin/{0}" -f $base) 2>&1 | Out-Null
     }
 
-    $result = Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType "merge_conflict_resolution" -Prompt $prompt -WorkingDirectory $(if ($DryRun.IsPresent) { $repoRoot } else { $worktreePath }) -DryRun:$DryRun
+    $result = $null
+    try {
+        $result = Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType "merge_conflict_resolution" -Prompt $prompt -WorkingDirectory $(if ($DryRun.IsPresent) { $repoRoot } else { $worktreePath }) -DryRun:$DryRun
+    } finally {
+        if (-not $DryRun.IsPresent -and -not [string]::IsNullOrWhiteSpace($worktreePath)) {
+            Remove-AutopilotTempPrWorktree -RepoRoot $repoRoot -WorktreeRoot $worktreeRoot -WorktreePath $worktreePath
+        }
+    }
 
     if ($DryRun.IsPresent) { return [bool]$result.success }
 
@@ -543,8 +553,6 @@ function Invoke-CliPrConflictResolution {
             $status = "FAILED"
             $State.active_pr_actions[-1].status = $status
             Save-AutopilotState -State $State
-        } else {
-            & git -C $repoRoot worktree remove --force $worktreePath 2>&1 | Out-Null
         }
     }
 
@@ -561,6 +569,27 @@ function Invoke-CliPrConflictResolution {
     }
 
     return ($status -eq "COMPLETED")
+}
+
+function Remove-AutopilotTempPrWorktree {
+    param(
+        [Parameter(Mandatory)][string]$RepoRoot,
+        [Parameter(Mandatory)][string]$WorktreeRoot,
+        [Parameter(Mandatory)][string]$WorktreePath
+    )
+
+    $resolvedRoot = [System.IO.Path]::GetFullPath($WorktreeRoot)
+    $resolvedPath = [System.IO.Path]::GetFullPath($WorktreePath)
+    if (-not $resolvedPath.StartsWith($resolvedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        Write-Warning "[MONITOR] Temp-Worktree Cleanup verweigert ausserhalb von $resolvedRoot"
+        return
+    }
+
+    & git -C $RepoRoot worktree remove --force $resolvedPath 2>&1 | Out-Null
+    if (Test-Path -LiteralPath $resolvedPath) {
+        Remove-Item -LiteralPath $resolvedPath -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    & git -C $RepoRoot worktree prune 2>&1 | Out-Null
 }
 
 function Start-JulesBacklogDelegation {
@@ -733,7 +762,7 @@ function Invoke-MonitoringWakeUp {
         Write-Host "[MONITOR] Pruefe $($State.active_pr_actions.Count) aktive PR-Actions..." -ForegroundColor Cyan
     }
     foreach ($prAction in @($State.active_pr_actions)) {
-        $sessionId = [string]$prAction.jules_session_id
+        $sessionId = if ($prAction.PSObject.Properties.Name -contains "jules_session_id") { [string]$prAction.jules_session_id } else { "" }
         if ([string]::IsNullOrWhiteSpace($sessionId) -or $sessionId -eq "unknown") { continue }
         try {
             $session = Get-JulesSession -SessionIdOrName $sessionId -ApiKey $env:JULES_API_KEY
@@ -762,7 +791,9 @@ function Invoke-MonitoringWakeUp {
         $handled = 0
         Write-Host "[MONITOR] Pruefe ungetrackte Jules Sessions mit User-Feedback-Status..." -ForegroundColor Cyan
         try {
-            $trackedIds = @($State.active_delegations | ForEach-Object { [string]$_.jules_session_id }) + @($State.active_pr_actions | ForEach-Object { [string]$_.jules_session_id })
+            $trackedIds = @($State.active_delegations | ForEach-Object { [string]$_.jules_session_id }) + @($State.active_pr_actions | ForEach-Object {
+                if ($_.PSObject.Properties.Name -contains "jules_session_id") { [string]$_.jules_session_id }
+            })
             $sessions = @($allLiveJulesSessions | Sort-Object {
                 $updatedAt = Get-JulesObjectPropertyValue -Object $_ -Name "updateTime"
                 if ([string]::IsNullOrWhiteSpace([string]$updatedAt)) {
@@ -825,24 +856,28 @@ function Invoke-MonitoringWakeUp {
             $failingChecks = @($statusCheckRollup | Where-Object {
                 $conclusion = if ($_.PSObject.Properties.Name -contains "conclusion") { [string]$_.conclusion } else { "" }
                 $status = if ($_.PSObject.Properties.Name -contains "status") { [string]$_.status } else { "" }
-                $state = if ($_.PSObject.Properties.Name -contains "state") { [string]$_.state } else { "" }
+                $checkState = if ($_.PSObject.Properties.Name -contains "state") { [string]$_.state } else { "" }
                 $conclusion -in @("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED") -or
                 $status -in @("FAILURE", "ERROR") -or
-                $state -in @("FAILURE", "ERROR")
+                $checkState -in @("FAILURE", "ERROR")
             })
             $pendingChecks = @($statusCheckRollup | Where-Object {
                 $conclusion = if ($_.PSObject.Properties.Name -contains "conclusion") { [string]$_.conclusion } else { "" }
                 $status = if ($_.PSObject.Properties.Name -contains "status") { [string]$_.status } else { "" }
-                $state = if ($_.PSObject.Properties.Name -contains "state") { [string]$_.state } else { "" }
+                $checkState = if ($_.PSObject.Properties.Name -contains "state") { [string]$_.state } else { "" }
                 ([string]::IsNullOrWhiteSpace($conclusion) -and -not [string]::IsNullOrWhiteSpace($status) -and $status -notin @("COMPLETED", "SUCCESS")) -or
-                $state -eq "PENDING"
+                $checkState -eq "PENDING"
             })
 
             if ($failingChecks.Count -gt 0) {
-                $failNames = ($failingChecks | ForEach-Object { $_.name }) -join ", "
+                $failNames = ($failingChecks | ForEach-Object {
+                    if ($_.PSObject.Properties.Name -contains "name" -and -not [string]::IsNullOrWhiteSpace([string]$_.name)) { [string]$_.name } else { "<unknown>" }
+                }) -join ", "
                 Write-Host ("[MONITOR]   PR #{0} {1} Checks fehlgeschlagen ({2})" -f $prNum, $failingChecks.Count, $failNames) -ForegroundColor Red
                 if ($prActionsStarted -lt $maxPrActions -and $mergeable -ne "CONFLICTING") {
-                    if (Add-JulesCheckFixComment -State $State -Repository $repo -PullRequest $pr -FailingChecks @($failingChecks | ForEach-Object { [string]($_.name) }) -DryRun:$DryRun) {
+                    if (Add-JulesCheckFixComment -State $State -Repository $repo -PullRequest $pr -FailingChecks @($failingChecks | ForEach-Object {
+                        if ($_.PSObject.Properties.Name -contains "name") { [string]$_.name } else { "<unknown>" }
+                    }) -DryRun:$DryRun) {
                         $prActionsStarted++
                     }
                 }

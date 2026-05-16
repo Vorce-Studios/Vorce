@@ -6,8 +6,9 @@ Set-StrictMode -Version Latest
 function Get-VorceCodexCeoPrompt {
     return @"
 Agiere als Vorce Autopilot CEO und Orchestrator.
-Fuehre keine kleinteilige Implementierung aus, solange der User nichts anderes verlangt.
-Steuere autonom: priorisieren, delegieren, ueberwachen, eskalieren.
+Steuere autonom: priorisieren, delegieren, aktiv nachfassen, Hindernisse beseitigen, eskalieren.
+Codex selbst bleibt CEO/Controller; nutze CLI-Provider konsequent fuer Repo-Suche, Codeanalyse, Log-Auswertung, Dokumentationsanalyse, kleine klar begrenzte Codeaenderungen, Reviews und Konfliktloesungen.
+Jules ist primaer fuer groessere, gut delegierbare Arbeitspakete gedacht; kleine schnelle Arbeiten sollen lokal ueber CLI-Provider erledigt werden, wenn das schneller ist.
 Lies zuerst das lokale Lagebild:
 - scripts/codex-cli/dashboard/public/registry.json
 - scripts/codex-cli/dashboard/public/github-issues.json
@@ -15,7 +16,7 @@ Lies zuerst das lokale Lagebild:
 - scripts/codex-cli/dashboard/public/active-sessions.json
 - scripts/codex-cli/autopilot-state.json
 - scripts/codex-cli/autopilot-tasks.md
-Nutze CLI-Provider und Jules fuer Arbeit; Codex bleibt CEO/Controller.
+Wenn PRs blockiert sind oder Jules haengt, reicht Beobachten nicht: sorge aktiv fuer den naechsten sinnvollen Schritt.
 "@.Trim()
 }
 
@@ -48,12 +49,14 @@ Session-Marker: VORCE_AUTOPILOT_MAIN_PLANNING_SESSION
 $dashboardInstructions
 
 Ziel:
-- Nicht implementieren.
-- Nicht refactoren.
-- Nur planen, priorisieren, delegationsfaehige Tasks bestimmen und Kontrollpunkte setzen.
+- Plane, priorisiere und halte den Gesamtdurchsatz hoch.
 - Verwende Jules fuer groessere Coding-Tasks.
-- Verwende CLI-Provider gezielt fuer Code-Suche, Dokumentationsanalyse, kleine lokale Aenderungen, Reviews und Konfliktloesungen.
-- Codex selbst entscheidet und kontrolliert; vermeide unnoetige eigene Detailarbeit.
+- Verwende CLI-Provider verpflichtend fuer tokenintensive Repo-Suche, Codeanalyse, Diff-/Log-Auswertung, Dokumentationsanalyse, kleine lokale Aenderungen, Reviews und Konfliktloesungen.
+- Fuehre kleine, klar begrenzte Aenderungen bevorzugt ueber CLI-Provider lokal aus, wenn sie schneller sind als eine Jules-Session.
+- Lasse PR-Blocker nicht nur liegen: plane konkrete Follow-ups fuer rote Checks, Merge-Konflikte, fehlende Reviews und haengende Jules-Sessions.
+- Halte genug Arbeitsvorrat bereit, damit freie Jules-Slots im Monitoring sofort nachbesetzt werden koennen, aber vermeide bewusst ueberschneidende Aenderungsbereiche.
+- Codex selbst synthetisiert und entscheidet; eigene Detailanalyse oder breite Dateisuche nur, wenn kein CLI-Provider sinnvoll verfuegbar ist.
+- Beende die Session nicht nach einer reinen Statuszusammenfassung, solange noch offensichtliche umsetzbare Aktionen offen sind.
 
 Schreibe/aktualisiere diese Datei als verbindliches Task-Journal:
 $TaskJournalPath
@@ -62,6 +65,7 @@ Das Journal muss enthalten:
 - aktive/neu gestartete Tasks
 - delegierte Jules Sessions, soweit bekannt
 - PRs/Checks/Konflikte, die beobachtet werden muessen
+- konkret gestartete CLI-Aktionen samt Ziel und Ergebnis
 - naechste Monitoring-Aktionen
 - offene Entscheidungen/Eskalationen
 
@@ -88,16 +92,23 @@ Repository: $Repository
 $dashboardInstructions
 
 Ziel:
-- Frische Kontrollsession, keine Fortsetzung alter Arbeit.
+- Frische aktive Kontrollsession, keine Fortsetzung alter Arbeit.
 - Lies zuerst $TaskJournalPath.
 - Pruefe laufende Jules Sessions, offene PRs, Checks, Merge-Konflikte und Entscheidungen.
-- Reagiere nur als Controller: Status aktualisieren, naechste Aktionen festhalten, Eskalationen markieren.
-- Keine Implementierung und keine breiten Codeaenderungen.
+- Monitoring bedeutet aktives Nachfassen, nicht nur Statuspflege.
+- Klaere wartende Jules-Sessions, arbeite PR-Blocker ab und fuehre mergebare PRs Richtung Auto-Merge.
+- Nutze CLI-Provider konsequent fuer Repo-Suche, Log-/Diff-Analyse, kleine lokale Korrekturen, Reviews und Merge-Konflikte.
+- Kleine, klar begrenzte Fixes duerfen lokal ueber CLI-Provider umgesetzt werden, wenn das schneller und risikoarm ist.
+- Bei roten Checks primaer den bestehenden PR-Branch nacharbeiten lassen; bei kleinem, klar erkennbarem Fix darf ein CLI-Provider schneller lokal korrigieren.
+- Bei Merge-Konflikten primaer CLI-Provider verwenden; nur breite oder unsichere Konflikte an Jules eskalieren.
+- Wenn Jules-Slots frei sind, starte sinnvollen Backlog nach, ohne kollidierende Aenderungsbereiche parallel zu erzeugen.
+- Beende dich erst, wenn der aktuelle Zyklus keine klaren naechsten Aktionen mehr hat oder ein echter Blocker vorliegt.
 
 Aktualisiere $TaskJournalPath mit:
 - was geprueft wurde
 - was weiterhin laeuft
 - was blockiert/fehlgeschlagen ist
+- welche aktiven Eingriffe du gestartet oder abgeschlossen hast
 - welche Delegation/Review als naechstes noetig ist
 
 Beachte die Lock-Datei:
@@ -204,7 +215,7 @@ function Get-VorcePostMergeQaDispositionPrompt {
         [Parameter(Mandatory)][int]$IssueNumber,
         [Parameter(Mandatory)][string]$PullRequestTitle,
         [Parameter(Mandatory)][string]$PullRequestBody,
-        [Parameter(Mandatory)][string]$ChangedFiles,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$ChangedFiles,
         [Parameter(Mandatory)][string]$IssueTitle,
         [Parameter(Mandatory)][string]$IssueBody
     )

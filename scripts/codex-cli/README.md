@@ -102,7 +102,14 @@ Jules-Wartestatus:
 
 CLI-Issue-Discovery in der deterministischen Planning-Phase ist standardmaessig deaktiviert (`planning.enable_cli_issue_discovery=false`). Dadurch wird nach der Codex-CEO-Planning-Session nicht zusaetzlich Gemini/Kiro/Cursor als `planning`-Route gestartet. Bei Bedarf kann dieser Zusatzschritt in `autopilot-config.json` wieder aktiviert werden.
 
-Die sichtbare CEO-Planning-Session soll fuer Code-Suche, Dokumentationsanalyse, kleine lokale Aenderungen und Reviews gezielt CLI-Provider einsetzen. Codex bleibt fuer Priorisierung, Synthese und Steuerung reserviert; Jules ist fuer groessere Implementierungen gedacht, nicht fuer jede kleine Aufgabe.
+Die sichtbare CEO-Planning-Session soll fuer Code-Suche, Dokumentationsanalyse, Log-/Diff-Auswertung, kleine lokale Aenderungen und Reviews gezielt CLI-Provider einsetzen. Codex bleibt fuer Priorisierung, Synthese und Steuerung reserviert; Jules ist fuer groessere Implementierungen gedacht, nicht fuer jede kleine Aufgabe.
+
+Planning und Monitoring sind aktive Arbeitslaeufe:
+
+- Wenn PRs an roten Checks, Reviews oder Merge-Konflikten haengen, reicht ein Statushinweis nicht aus. Der Lauf muss den naechsten konkreten Bearbeitungsschritt starten.
+- Kleine, klar begrenzte Aenderungen duerfen und sollen ueber CLI-Provider lokal ausgefuehrt werden, wenn das schneller ist als eine Jules-Session.
+- Tokenintensive Repo-Suche, Codeanalyse und Dokumentationsarbeit werden an CLI-Provider delegiert, bevor Codex selbst breite Detailanalyse betreibt.
+- Der Jules-Backlog soll gross genug bleiben, damit freie Slots im Monitoring sofort nachbesetzt werden koennen, aber Aufgaben mit stark ueberlappenden Aenderungsbereichen sollen nicht gleichzeitig laufen.
 
 ## Issue-Namen und Hierarchie
 
@@ -128,6 +135,10 @@ Im Dashboard zeigt die `Issue Overview` nur echte offene GitHub-Issues. Interne 
 - `tmp/codex-*-last-message.md`: letzte Antwort headless ausgefuehrter Codex-Sessions.
 - `tmp/codex-*-visible.log`: Start-/Exit-Log sichtbarer Codex-Sessions.
 - `tmp/codex-*-status.json`: Statusdatei fuer interaktive sichtbare Codex-Sessions. Der Autopilot-Loop prueft diese Datei alle 30 Sekunden.
+
+`tmp/`, `autopilot-session-lock.md`, `autopilot-tasks.md` und `autopilot.wakeup` sind Laufzeitdaten und werden nicht versioniert. Die Dateien werden lokal bei Bedarf automatisch erzeugt.
+
+PR-Worktrees werden nur fuer branch-spezifische Konfliktloesungen verwendet, weil dabei ein anderer PR-Branch gegen `origin/main` gemergt wird. Nach jedem CLI-Konfliktlauf werden sie in einem `finally`-Cleanup entfernt und per `git worktree prune` bereinigt. Normale kleine lokale Aenderungen sollen direkt im Repository erfolgen, zeitnah committed/gepusht werden und nur temporaer von Remote abweichen.
 
 Der Autopilot-Loop schreibt sichtbare Meldungen fuer geplante Codex-Aufrufe, deren Ende und Fehler. Laufende Codex-Planning-Aktivitaet ist im separaten Codex-Terminal sichtbar; die Skriptfenster erzeugen keine periodischen Heartbeat-Ausgaben.
 

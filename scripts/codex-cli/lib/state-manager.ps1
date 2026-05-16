@@ -196,6 +196,20 @@ function Repair-AutopilotState {
     }
     $State.active_delegations = @($validDelegations)
 
+    foreach ($prAction in @($State.active_pr_actions)) {
+        foreach ($prop in @(
+            @{ Name = "jules_session_id"; Value = $null },
+            @{ Name = "status"; Value = "UNKNOWN" },
+            @{ Name = "started_at"; Value = (Get-Date -Format 'o') },
+            @{ Name = "last_checked_at"; Value = (Get-Date -Format 'o') }
+        )) {
+            if (-not ($prAction.PSObject.Properties.Name -contains $prop.Name)) {
+                $prAction | Add-Member -MemberType NoteProperty -Name $prop.Name -Value $prop.Value -Force
+                $changed = $true
+            }
+        }
+    }
+
     return $changed
 }
 

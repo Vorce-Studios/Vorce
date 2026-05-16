@@ -26,8 +26,8 @@
     "auto_retry_feedback_max": 4,
     "monitor_untracked_sessions": true,
     "max_feedback_sessions_per_cycle": 20,
-    "max_pr_actions_per_cycle": 3,
-    "max_backlog_starts_per_monitoring_cycle": 5,
+    "max_pr_actions_per_cycle": 10,
+    "max_backlog_starts_per_monitoring_cycle": 15,
     "enable_auto_merge_ready_prs": true
   },
   "gemini_worktree_path": "../VjMapper-gemini",
