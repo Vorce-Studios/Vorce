@@ -52,81 +52,30 @@ pub(crate) fn render_content(
         output_id,
     );
 
-    if target_ops.is_empty() && output_id != 0 {
-        let _pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: Some("Clear Pass"),
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                depth_slice: None,
-                view,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                    store: wgpu::StoreOp::Store,
-                },
-            })],
-            depth_stencil_attachment: None,
-            timestamp_writes: None,
-            occlusion_query_set: None,
-            multiview_mask: None,
-        });
+    if crate::app::loops::render::scene::clear::process_clear_pass(
+        encoder,
+        view,
+        target_ops.is_empty(),
+        output_id,
+    ) {
         return Ok(());
     }
 
-    let output_config_opt = ctx.output_manager.get_output(real_output_id).cloned();
-    let use_edge_blend = output_config_opt
-        .as_ref()
-        .map(|cfg| {
-            cfg.edge_blend.left.enabled
-                || cfg.edge_blend.right.enabled
-                || cfg.edge_blend.top.enabled
-                || cfg.edge_blend.bottom.enabled
-        })
-        .unwrap_or(false)
-        && ctx.edge_blend_renderer.is_some();
-    let use_color_calib = output_config_opt
-        .as_ref()
-        .map(|cfg| cfg.color_calibration != vorce_core::ColorCalibration::default())
-        .unwrap_or(false)
-        && ctx.color_calibration_renderer.is_some();
+    let targets = crate::app::loops::render::scene::targets::setup_render_targets(
+        ctx.output_manager,
+        ctx.texture_pool,
+        ctx.surface_format,
+        real_output_id,
+        output_id,
+        ctx.edge_blend_renderer.is_some(),
+        ctx.color_calibration_renderer.is_some(),
+    );
 
-    let needs_post_processing = use_edge_blend || use_color_calib;
-
-    let post_a_tex_name = format!("output_{}_post_a", output_id);
-    let post_b_tex_name = format!("output_{}_post_b", output_id);
-    let mesh_target_view_ref = if needs_post_processing {
-        if let Some(config) = &output_config_opt {
-            ctx.texture_pool.ensure_texture(
-                &post_a_tex_name,
-                config.resolution.0.max(1),
-                config.resolution.1.max(1),
-                ctx.surface_format,
-                wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
-            );
-        }
-        Some(ctx.texture_pool.get_view(&post_a_tex_name))
+    let target_view_ref = if targets.needs_post_processing {
+        targets.mesh_target_view_ref.as_deref().unwrap_or(view)
     } else {
-        None
+        view
     };
-    let color_target_view_ref = if use_color_calib && use_edge_blend {
-        if let Some(config) = &output_config_opt {
-            ctx.texture_pool.ensure_texture(
-                &post_b_tex_name,
-                config.resolution.0.max(1),
-                config.resolution.1.max(1),
-                ctx.surface_format,
-                wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
-            );
-        }
-        Some(ctx.texture_pool.get_view(&post_b_tex_name))
-    } else {
-        None
-    };
-
-    let target_view =
-        if needs_post_processing { mesh_target_view_ref.as_deref().unwrap_or(view) } else { view };
-
-    let (target_width, target_height) =
-        output_config_opt.as_ref().map(|cfg| cfg.resolution).unwrap_or((1920, 1080));
 
     crate::app::loops::render::scene::accumulation::render_accumulation(
         ctx.layer_ping_pong,
@@ -143,15 +92,15 @@ pub(crate) fn render_content(
         ctx.compositor,
         target_ops,
         encoder,
-        target_view,
+        target_view_ref,
         is_preview_output,
         output_id,
         real_output_id,
-        target_width,
-        target_height,
+        targets.target_width,
+        targets.target_height,
     );
 
-    if needs_post_processing {
+    if targets.needs_post_processing {
         crate::app::loops::render::scene::post_processing::render_post_processing(
             ctx.color_calibration_renderer,
             ctx.edge_blend_renderer,
@@ -160,12 +109,12 @@ pub(crate) fn render_content(
             ctx.queue,
             encoder,
             view,
-            mesh_target_view_ref.as_ref(),
-            color_target_view_ref.as_ref(),
+            targets.mesh_target_view_ref.as_ref(),
+            targets.color_target_view_ref.as_ref(),
             output_id,
-            use_edge_blend,
-            use_color_calib,
-            output_config_opt.as_ref(),
+            targets.use_edge_blend,
+            targets.use_color_calib,
+            targets.output_config_opt.as_ref(),
         );
     }
 
