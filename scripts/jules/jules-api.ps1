@@ -30,6 +30,16 @@ function Get-JulesApiKey {
         return $env:JULES_API_KEY.Trim()
     }
 
+    $userApiKey = [Environment]::GetEnvironmentVariable("JULES_API_KEY", "User")
+    if (-not [string]::IsNullOrWhiteSpace($userApiKey)) {
+        return $userApiKey.Trim()
+    }
+
+    $machineApiKey = [Environment]::GetEnvironmentVariable("JULES_API_KEY", "Machine")
+    if (-not [string]::IsNullOrWhiteSpace($machineApiKey)) {
+        return $machineApiKey.Trim()
+    }
+
     throw "JULES_API_KEY fehlt. Bitte -ApiKey angeben oder JULES_API_KEY setzen."
 }
 
