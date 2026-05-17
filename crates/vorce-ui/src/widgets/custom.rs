@@ -99,7 +99,7 @@ mod tests {
     fn test_styled_drag_value() {
         test_ui(|ui| {
             let mut value = 0.5;
-            styled_drag_value(ui, &mut value, 0.01, 0.0..=1.0, 0.5, "", "");    
+            styled_drag_value(ui, &mut value, 0.01, 0.0..=1.0, 0.5, "", "");
         });
     }
 
