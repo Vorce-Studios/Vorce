@@ -10,6 +10,7 @@ This folder contains scripts for testing the Vorce UI programmatically.
 - `psutil` for process management
 
 Install dependencies via:
+
 ```bash
 pip install pyautogui pillow psutil
 ```
