@@ -21,9 +21,8 @@ pub mod mpv_decoder;
 pub mod pipeline;
 pub mod player;
 pub mod sequence;
-pub mod test_pattern_decoder;
 
-pub use decoder::{HwAccelType, PixelFormat, VideoDecoder};
+pub use decoder::{HwAccelType, PixelFormat, TestPatternDecoder, VideoDecoder};
 pub use ffmpeg_decoder::FFmpegDecoder;
 #[cfg(feature = "hap")]
 pub use hap_decoder::{decode_hap_frame, HapError, HapFrame, HapTextureType};
@@ -36,7 +35,6 @@ pub use player::{
     LoopMode, PlaybackCommand, PlaybackState, PlaybackStatus, PlayerError, VideoPlayer,
 };
 pub use sequence::ImageSequenceDecoder;
-pub use test_pattern_decoder::TestPatternDecoder;
 
 /// Media errors
 #[derive(Error, Debug)]
