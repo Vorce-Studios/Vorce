@@ -22,3 +22,6 @@
 ## 2026-05-19 - Vorce UI Theme Colors Compliance
 **Erkenntnis:** Several components (`icon_demo_panel.rs`, `cue_panel.rs`, `controller_overlay_panel`, `preview_panel.rs`) still used hardcoded `Color32` equivalents instead of dynamic `ui.visuals()` or `crate::theme::colors` references, which broke appearance across different active themes.
 **Aktion:** Replaced hardcoded constants like `Color32::YELLOW`, `Color32::GREEN`, `Color32::RED`, `Color32::GRAY` with `ui.visuals().warn_fg_color`, `crate::theme::colors::MINT_ACCENT`, `ui.visuals().error_fg_color`, and `ui.style().visuals.text_color().gamma_multiply(0.6)` respectively. Ensuring dynamic rendering fixes UI contrast problems instantly.
+## 2026-05-20 - Media Browser and Mesh Editor Theme Consistency
+**Erkenntnis:** Hardcoded `Color32` values in the `media_browser` and `mesh_editor` components were causing visual inconsistencies and contrast issues when switching between different theme variants (e.g., from dark to light mode or between custom dark themes).
+**Aktion:** Replaced hardcoded `Color32::from_rgb` and `Color32::WHITE` constants with dynamic `ui.visuals()` properties such as `selection.bg_fill`, `widgets.hovered.bg_fill`, `text_color`, `warn_fg_color`, and `error_fg_color`. This ensures that grid rendering, background fills, and text elements adapt naturally to any selected theme.
