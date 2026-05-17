@@ -29,7 +29,11 @@ pub fn draw_search_popup(
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
                 ui.label("🔍");
-                ui.text_edit_singleline(&mut canvas.search_filter);
+                let response = ui.text_edit_singleline(&mut canvas.search_filter);
+                if response.changed() {
+                    canvas.search_filter_lower = (!canvas.search_filter.is_empty())
+                        .then(|| canvas.search_filter.to_lowercase());
+                }
             });
             ui.add_space(8.0);
 
@@ -37,16 +41,16 @@ pub fn draw_search_popup(
                 .parts
                 .iter()
                 .filter(|p| {
-                    if canvas.search_filter.is_empty() {
+                    let Some(filter_lower) = &canvas.search_filter_lower else {
                         return true;
-                    }
+                    };
                     let name = utils::get_part_property_text(&p.part_type);
                     let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
 
                     // Perf: Avoid .to_lowercase() allocations per frame
                     // case_insensitive_contains performs a zero-allocation ASCII comparison
-                    utils::case_insensitive_contains(&name, &canvas.search_filter)
-                        || utils::case_insensitive_contains(type_name, &canvas.search_filter)
+                    utils::case_insensitive_contains(&name, filter_lower)
+                        || utils::case_insensitive_contains(type_name, filter_lower)
                 })
                 .take(6)
                 .collect();

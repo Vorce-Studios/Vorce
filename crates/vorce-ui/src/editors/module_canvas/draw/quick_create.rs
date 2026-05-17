@@ -17,13 +17,10 @@ pub fn draw_quick_create_popup(
     let filtered_items: Vec<&utils::NodeCatalogItem> = catalog
         .iter()
         .filter(|item| {
-            if canvas.quick_create_filter.is_empty() {
+            let Some(filter_lower) = &canvas.quick_create_filter_lower else {
                 return true;
-            }
-            // Perf: Avoid .to_lowercase() allocations and derived state caching bugs for pub fields.
-            // case_insensitive_contains performs a zero-allocation ASCII comparison.
-            utils::case_insensitive_contains(item.label, &canvas.quick_create_filter)
-                || utils::case_insensitive_contains(item.search_tags, &canvas.quick_create_filter)
+            };
+            item.label_lower.contains(filter_lower) || item.search_tags.contains(filter_lower)
         })
         .collect();
     if filtered_items.is_empty() {
@@ -65,6 +62,10 @@ pub fn draw_quick_create_popup(
                     .hint_text("Type to create...")
                     .lock_focus(true),
             );
+            if response.changed() {
+                canvas.quick_create_filter_lower = (!canvas.quick_create_filter.is_empty())
+                    .then(|| canvas.quick_create_filter.to_lowercase());
+            }
             if canvas.show_quick_create && response.changed() {
                 response.request_focus();
             }

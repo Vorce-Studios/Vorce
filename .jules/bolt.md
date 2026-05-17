@@ -17,7 +17,3 @@
 ## 2025-02-12 - Zero-Allocation Case-Insensitive Search in Hot Paths (Search Popup)
 **Erkenntnis:** Immediate-mode UIs wie egui rufen Render-Funktionen 60x pro Sekunde auf. Das Ausführen von `.to_lowercase()` innerhalb eines Iterators in der Such-Funktion `draw_search_popup` erzeugt jeden Frame unzählige überflüssige Heap-Allokationen (String-Instanziierungen).
 **Aktion:** Der Ansatz wurde durch die Verwendung der bestehenden Methode `utils::case_insensitive_contains` ersetzt, welche den Vergleich ASCII-basiert ohne Speicherallokationen (zero-allocation) ausführt. Zustände, die für Vergleiche transformiert werden müssen, sollten ge-cached werden. Wenn dies nicht möglich ist, ist eine allocation-freie String-Vergleichsfunktion entscheidend.
-
-## 2025-05-10 - Avoid Caching UI State for Public Fields (ModuleCanvas Search)
-**Erkenntnis:** Caching lowercased search strings in `egui` state structs using `response.changed()` causes state desynchronization bugs when the source fields (like `search_filter` or `quick_create_filter`) are `pub` and can be modified programmatically elsewhere. This pattern attempts to avoid per-frame allocations but introduces subtle bugs.
-**Aktion:** Instead of caching derived string state for `pub` fields, remove the cached state entirely. Use the zero-allocation `utils::case_insensitive_contains` inside the filter loops directly with the original string. This achieves both zero per-frame allocations and guaranteed state synchronization.
