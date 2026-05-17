@@ -354,7 +354,6 @@ pub fn render_output_ui(
 
                         #[cfg(feature = "tokio")]
                         {
-                            canvas.hue_status_message = Some("Fetching areas...".to_string());
                             let task = async move {
                                 let result =
                                     vorce_control::hue::api::groups::get_entertainment_groups(
@@ -383,8 +382,6 @@ pub fn render_output_ui(
                             match result {
                                 Ok(areas) => {
                                     canvas.hue_areas = areas;
-                                    canvas.hue_status_message =
-                                        Some(format!("Found {} areas", canvas.hue_areas.len()));
                                 }
                                 Err(e) => {
                                     canvas.hue_status_message =
