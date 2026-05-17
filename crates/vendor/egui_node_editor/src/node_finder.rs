@@ -118,7 +118,9 @@ where
                                     (kind, kind_name)
                                 })
                                 .filter(|(_kind, kind_name)| {
-                                    case_insensitive_contains(kind_name, &self.query)
+                                    kind_name
+                                        .to_lowercase()
+                                        .contains(self.query.to_lowercase().as_str())
                                 })
                                 .collect();
 
