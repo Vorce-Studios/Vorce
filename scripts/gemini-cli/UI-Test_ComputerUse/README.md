@@ -1,32 +1,11 @@
-# Vorce UI Automation Harness
+# Vorce Computer Use Test Automation
 
-This directory contains the Python-based UI test harness for Vorce, designed for Gemini Computer Use and deterministic smoke tests.
+This directory contains test harnesses and automation scripts for validating the Vorce UI.
 
-## Invoking the Harness
+## Smoke Test
 
-To run the harness, execute `vorce_master_test.py` from the repository root:
-
-```bash
-python scripts/gemini-cli/UI-Test_ComputerUse/vorce_master_test.py
-```
-
-Or you can use a specific task:
+A deterministic smoke test (`vorce_smoke_test.py`) allows basic UI flow validation locally without needing full computer use orchestration.
 
 ```bash
-python scripts/gemini-cli/UI-Test_ComputerUse/vorce_master_test.py --task "Verify main window launches"
+python3 scripts/gemini-cli/UI-Test_ComputerUse/vorce_smoke_test.py
 ```
-
-## Prerequisites
-
-- Windows OS
-- Python 3.10+
-- `pip install -r requirements.txt` (see below for packages like `pyautogui`, `pillow`, `google-genai`, `psutil`)
-- `GEMINI_API_KEY` environment variable set (if using Gemini Vision loop)
-- Vorce must build successfully via `cargo run --release`
-
-## Artifacts
-
-All run artifacts are saved under an ignored `output/` directory in this folder:
-- `run_report.json`: Structured pass/fail status and run metadata.
-- `launch_log.txt`: Captured stdout/stderr from the Vorce process.
-- `failure_screenshot.png`: Screenshot taken if a failure occurs.
