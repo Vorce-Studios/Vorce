@@ -101,6 +101,7 @@ impl ControllerOverlayPanel {
         // Handle deletion request outside of borrow loop
         if let Some(id) = element_to_remove {
             user_config.remove_midi_assignment(&id);
+            let _ = user_config.save();
         }
     }
 }

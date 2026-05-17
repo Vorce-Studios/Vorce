@@ -3,56 +3,14 @@
 //! Handles saving and loading user preferences including language settings.
 
 use crate::theme::ThemeConfig;
+pub mod io;
+pub use io::*;
+
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use std::fs;
-use std::path::PathBuf;
 
-const APP_CONFIG_DIR: &str = "Vorce";
-const LEGACY_APP_CONFIG_DIR: &str = "MapFlow";
-const CONFIG_FILE_NAME: &str = "config.json";
 
-/// Diagnostics captured while loading and repairing the persisted user config.
-#[derive(Debug, Clone, Default)]
-pub struct UserConfigLoadReport {
-    /// Path that was used as the load source, if any.
-    pub source_path: Option<PathBuf>,
-    /// Whether the legacy MapFlow config path was used.
-    pub used_legacy_config_path: bool,
-    /// Whether defaults were used because no config existed or loading failed.
-    pub loaded_defaults: bool,
-    /// Non-fatal notes about the load process.
-    pub warnings: Vec<String>,
-    /// Recoveries or failures that should be visible in the log.
-    pub errors: Vec<String>,
-}
 
-impl UserConfigLoadReport {
-    /// Emit the collected diagnostics through tracing once logging is initialized.
-    pub fn emit_logs(&self) {
-        match &self.source_path {
-            Some(path) => {
-                if self.used_legacy_config_path {
-                    tracing::warn!("Loaded user config from legacy path {:?}", path);
-                } else {
-                    tracing::info!("Loaded user config from {:?}", path);
-                }
-            }
-            None if self.loaded_defaults => {
-                tracing::info!("No user config found. Using built-in defaults.");
-            }
-            None => {}
-        }
-
-        for warning in &self.warnings {
-            tracing::warn!("{warning}");
-        }
-
-        for error in &self.errors {
-            tracing::error!("{error}");
-        }
-    }
-}
 
 /// Sichtbarkeitseinstellungen für das Hauptlayout.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
@@ -555,33 +513,13 @@ impl Default for UserConfig {
 }
 
 impl UserConfig {
-    /// Get the config file path
-    fn config_path() -> Option<PathBuf> {
-        Self::config_path_for_app(APP_CONFIG_DIR)
-    }
 
-    fn legacy_config_path() -> Option<PathBuf> {
-        Self::config_path_for_app(LEGACY_APP_CONFIG_DIR)
-    }
 
-    fn config_path_for_app(app_name: &str) -> Option<PathBuf> {
-        dirs::config_dir().map(|mut p| {
-            p.push(app_name);
-            p.push(CONFIG_FILE_NAME);
-            p
-        })
-    }
 
-    fn resolve_existing_config_path(
-        primary: Option<PathBuf>,
-        legacy: Option<PathBuf>,
-    ) -> Option<PathBuf> {
-        if let Some(path) = primary.as_ref().filter(|path| path.exists()) {
-            return Some(path.clone());
-        }
 
-        legacy.filter(|path| path.exists()).or(primary)
-    }
+
+
+
 
     fn sync_legacy_visibility_fields_from_active_layout(&mut self) {
         let visibility = self.active_layout().map(|layout| layout.visibility);
@@ -673,94 +611,15 @@ impl UserConfig {
         repaired
     }
 
-    /// Load configuration from disk with diagnostics about recovery steps and failures.
-    pub fn load_with_report() -> (Self, UserConfigLoadReport) {
-        let primary = Self::config_path();
-        let legacy = Self::legacy_config_path();
-        let selected_path = Self::resolve_existing_config_path(primary.clone(), legacy.clone());
 
-        let mut report = UserConfigLoadReport {
-            source_path: selected_path.clone(),
-            used_legacy_config_path: matches!(
-                (&selected_path, &legacy),
-                (Some(selected), Some(legacy_path)) if selected == legacy_path
-            ),
-            ..Default::default()
-        };
 
-        let mut loaded = match selected_path.as_ref() {
-            Some(path) if path.exists() => match fs::read_to_string(path) {
-                Ok(content) => match serde_json::from_str(&content) {
-                    Ok(config) => config,
-                    Err(err) => {
-                        report.loaded_defaults = true;
-                        report.errors.push(format!(
-                            "Failed to parse user config {:?}: {}. Falling back to defaults.",
-                            path, err
-                        ));
-                        Self::default()
-                    }
-                },
-                Err(err) => {
-                    report.loaded_defaults = true;
-                    report.errors.push(format!(
-                        "Failed to read user config {:?}: {}. Falling back to defaults.",
-                        path, err
-                    ));
-                    Self::default()
-                }
-            },
-            _ => {
-                report.loaded_defaults = true;
-                Self::default()
-            }
-        };
 
-        if report.used_legacy_config_path {
-            report.warnings.push(
-                "Using legacy MapFlow config path. Saving from the app will migrate it to Vorce."
-                    .to_string(),
-            );
-        }
 
-        if loaded.repair_for_startup(&mut report) {
-            if let Err(err) = loaded.save() {
-                report.errors.push(format!(
-                    "Failed to save repaired user config to the Vorce config path: {}",
-                    err
-                ));
-            }
-        }
 
-        (loaded, report)
-    }
-
-    /// Load configuration from disk
-    pub fn load() -> Self {
-        let (loaded, report) = Self::load_with_report();
-        report.emit_logs();
-        loaded
-    }
-
-    /// Save configuration to disk
-    pub fn save(&self) -> Result<(), std::io::Error> {
-        if let Some(path) = Self::config_path() {
-            // Ensure parent directory exists
-            if let Some(parent) = path.parent() {
-                fs::create_dir_all(parent)?;
-            }
-            let content = serde_json::to_string_pretty(self)?;
-            fs::write(&path, content)?;
-        }
-        Ok(())
-    }
 
     /// Update language and save
     pub fn set_language(&mut self, lang: &str) {
         self.language = lang.to_string();
-        if let Err(e) = self.save() {
-            tracing::error!("Failed to save config: {}", e);
-        }
     }
 
     /// Add a file to recent files list
@@ -771,9 +630,6 @@ impl UserConfig {
         self.recent_files.insert(0, path.to_string());
         // Keep max 10 recent files
         self.recent_files.truncate(10);
-        if let Err(e) = self.save() {
-            tracing::error!("Failed to save config: {}", e);
-        }
     }
 
     /// Set or update a MIDI assignment
@@ -782,25 +638,16 @@ impl UserConfig {
         self.midi_assignments.retain(|a| a.element_id != element_id);
         // Add new assignment
         self.midi_assignments.push(MidiAssignment { element_id: element_id.to_string(), target });
-        if let Err(e) = self.save() {
-            tracing::error!("Failed to save config: {}", e);
-        }
     }
 
     /// Remove a MIDI assignment
     pub fn remove_midi_assignment(&mut self, element_id: &str) {
         self.midi_assignments.retain(|a| a.element_id != element_id);
-        if let Err(e) = self.save() {
-            tracing::error!("Failed to save config: {}", e);
-        }
     }
 
     /// Set and save the selected audio device
     pub fn set_audio_device(&mut self, device: Option<String>) {
         self.selected_audio_device = device;
-        if let Err(e) = self.save() {
-            tracing::error!("Failed to save config: {}", e);
-        }
     }
 
     /// Get assignment for an element
@@ -867,6 +714,7 @@ impl UserConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
 
     #[test]
     fn test_default_config() {
