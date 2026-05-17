@@ -121,7 +121,7 @@ while ($true) {
             if ($null -eq $db) { $db = @() }
             Write-JsonLocked -Path (Join-Path $DashboardPublicDir "data.json") -Data @($db) | Out-Null
         }
-
+        
         if (Test-Path $StatePath) {
             $state = Read-JsonLocked -Path $StatePath
             if ($null -ne $state) {
@@ -129,7 +129,7 @@ while ($true) {
                 Write-JsonLocked -Path (Join-Path $DashboardPublicDir "active-sessions.json") -Data $state | Out-Null
             }
         }
-
+        
         $RegistryPath = Join-Path $ScriptDir "quota-registry.json"
         if (Test-Path $RegistryPath) {
             Write-JsonLocked -Path (Join-Path $DashboardPublicDir "registry.json") -Data $registry | Out-Null

@@ -28,7 +28,7 @@ function Read-Database {
     Initialize-Database
     $data = Read-JsonLocked -Path $DbPath
     if ($null -eq $data) { return @() }
-
+    
     # Ensure it's an array
     if ($data -isnot [array]) {
         return @($data)

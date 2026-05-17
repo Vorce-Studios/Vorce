@@ -167,7 +167,7 @@ while ($true) {
     $nextPlan = $lastPlanTime.AddMinutes($planMinutes)
     $nextMon = $lastMonTime.AddMinutes($monMinutes)
     $nextWake = @($nextPlan, $nextMon) | Sort-Object | Select-Object -First 1
-
+    
     # Defaults to 60 seconds if something goes wrong with date math
     $sleepSeconds = 60
     try {

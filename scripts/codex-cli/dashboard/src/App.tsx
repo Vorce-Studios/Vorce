@@ -131,7 +131,7 @@ function ProviderCard({ name, providerReg, modelsData }: { name: string, provide
   const usage = providerReg?.usage_today || {};
   const rateLimits = usage.rate_limits;
   const julesQuotaObserved = asNumber(usage.account_sessions_observed_rolling_24h || usage.calls);
-
+  
   const totalCalls = modelsData.reduce((acc, curr) => acc + curr.calls, 0);
   const totalInput = modelsData.reduce((acc, curr) => acc + curr.input_tokens, 0);
   const totalOutput = modelsData.reduce((acc, curr) => acc + curr.output_tokens, 0);
@@ -165,7 +165,7 @@ function ProviderCard({ name, providerReg, modelsData }: { name: string, provide
           {isJules ? `${julesQuotaObserved} observed / ${limit}` : `${totalCalls} / ${limit} calls`}
         </div>
       </div>
-
+      
       <div className="mb-6 bg-surface/50 p-4 rounded-xl border border-white/5">
         <div className="flex justify-between items-end mb-2">
           <span className="text-muted text-sm font-medium">{isJules ? 'Session Throughput' : 'Token Load Today'}</span>
@@ -228,10 +228,10 @@ function ProviderCard({ name, providerReg, modelsData }: { name: string, provide
           </div>
         </div>
       )}
-
+      
       <div className="space-y-3">
         <div className="text-sm font-bold text-white/70 uppercase tracking-wider border-b border-white/10 pb-2 mb-3">Model Breakdown</div>
-
+        
         {modelsData.length === 0 && (
           <div className="text-sm text-muted italic text-center py-6 bg-surface/20 rounded-xl border border-dashed border-white/10">
             No active usage recorded for {name} today.
@@ -369,7 +369,7 @@ export default function App() {
       if (sessionsRes?.ok) setActiveSessions(await sessionsRes.json());
       if (ghIssuesRes?.ok) setGhIssues(await ghIssuesRes.json());
       if (pullRequestsRes?.ok) setPullRequests(await pullRequestsRes.json());
-
+      
       if (registryRes?.ok) {
         const reg = await registryRes.json();
         setRegistry(reg);
@@ -407,7 +407,7 @@ export default function App() {
   const liveQuotaRows = getLiveQuotaRows(registry, today);
   const chartSourceData = mergeQuotaRows(historicalData, liveQuotaRows);
   const todayData = mergeQuotaRows(historicalData.filter(d => d.date === today), liveQuotaRows);
-
+  
   const totalInputTokens = todayData.reduce((acc, curr) => acc + curr.input_tokens, 0);
   const totalOutputTokens = todayData.reduce((acc, curr) => acc + curr.output_tokens, 0);
   const totalCachedTokens = todayData.reduce((acc, curr) => acc + curr.cached_tokens, 0);
@@ -420,7 +420,7 @@ export default function App() {
 
   // --- Issue Board Processing ---
   const issueTasks: TaskItem[] = [];
-
+  
   const parseIssueMetadata = (issue: any) => {
     const labels = issue.labels?.map((l: any) => typeof l === 'string' ? l : l.name) || [];
     const normalizedLabels = labels.map((label: string) => label.toLowerCase());
@@ -429,11 +429,11 @@ export default function App() {
       normalizedLabels.find((label: string) => /^priority:\s*(low|medium|high|critical)$/.test(label)) ||
       'medium';
     const title = String(issue.title || issue.issue_title || issue.topic || '');
-
+    
     const body = issue.body || '';
     const taskMatches = body.match(/-\s*\[([ xX])\]/g) || [];
     const completed = taskMatches.filter((m: string) => m.toLowerCase().includes('x')).length;
-
+    
     // Naming convention parsing
     let typeIcon = 'Issue';
     if (title.includes('MF-StMa_') || /\[MASTER\]$/.test(title)) typeIcon = 'Master';
@@ -711,7 +711,7 @@ export default function App() {
             <div className="flex flex-col overflow-hidden flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-mono text-xs text-muted">#{task.id}</span>
-                <a
+                <a 
                   href={task.raw?.url || `https://github.com/Vorce-Studios/Vorce/issues/${task.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -723,8 +723,8 @@ export default function App() {
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <span className={`text-[10px] uppercase font-black px-1.5 py-0.5 rounded ${
-                  task.priority === 'urgent' ? 'bg-red-500 text-white' :
-                  task.priority === 'high' ? 'bg-orange-500 text-white' :
+                  task.priority === 'urgent' ? 'bg-red-500 text-white' : 
+                  task.priority === 'high' ? 'bg-orange-500 text-white' : 
                   task.priority === 'medium' ? 'bg-blue-500 text-white' : 'bg-gray-500 text-white'
                 }`}>
                   {task.priority}
@@ -751,7 +751,7 @@ export default function App() {
               <span className="text-xs font-mono text-white/70">{task.gh_status}</span>
             </div>
             {task.jules_session_id && (
-              <a
+              <a 
                 href={`https://jules.google.com/session/${task.jules_session_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -793,9 +793,9 @@ export default function App() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-10">
-        <StatCard
-          title="Token Load Today"
-          value={formatTokens(totalTokens)}
+        <StatCard 
+          title="Token Load Today" 
+          value={formatTokens(totalTokens)} 
           highlightClass="text-accent"
           icon={Cpu}
           tooltip="Gesamte Input- und Output-Tokens heute. Dieser Wert ist die Hauptbasis für spätere Modellumschaltung."
@@ -808,9 +808,9 @@ export default function App() {
             </div>
           }
         />
-        <StatCard
-          title="Context Reuse"
-          value={`${cacheReusePct.toFixed(1)}%`}
+        <StatCard 
+          title="Context Reuse" 
+          value={`${cacheReusePct.toFixed(1)}%`} 
           icon={RefreshCw}
           tooltip="Anteil gecachter Input-Tokens. Hoher Cache-Anteil bedeutet niedrigere echte Kontextlast."
           subtitle={
@@ -820,17 +820,17 @@ export default function App() {
             </div>
           }
         />
-        <StatCard
-          title="Thinking Capacity"
-          value={(totalReasoning / 1000).toFixed(1) + 'k'}
+        <StatCard 
+          title="Thinking Capacity" 
+          value={(totalReasoning / 1000).toFixed(1) + 'k'} 
           icon={BrainCircuit}
           highlightClass="text-primary"
           tooltip="Anzahl der Tokens, die das Modell heute für internes 'Nachdenken' / Reasoning verwendet hat."
           subtitle="Tokens spent on internal reasoning"
         />
-        <StatCard
-          title="Provider Calls"
-          value={totalProviderCalls}
+        <StatCard 
+          title="Provider Calls" 
+          value={totalProviderCalls} 
           icon={Layers}
           tooltip="Summe der heute beobachteten Provider-Aufrufe aus den Telemetrie-Snapshots."
           subtitle="Codex, Gemini, Jules und weitere Provider"
@@ -904,7 +904,7 @@ export default function App() {
 
       {/* TABS & CHARTS SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-
+        
         {/* Left: Provider Tabs */}
         <div className="glass-card flex flex-col overflow-hidden animate-slide-up">
           <div className="p-4 border-b border-white/10 flex items-center gap-2 overflow-x-auto custom-scrollbar">
@@ -920,10 +920,10 @@ export default function App() {
           </div>
           <div className="p-6 flex-1 bg-surface/10">
             {activeTab && registry?.providers[activeTab] && (
-              <ProviderCard
-                name={activeTab}
-                providerReg={registry.providers[activeTab]}
-                modelsData={todayData.filter(d => d.provider_name === activeTab)}
+              <ProviderCard 
+                name={activeTab} 
+                providerReg={registry.providers[activeTab]} 
+                modelsData={todayData.filter(d => d.provider_name === activeTab)} 
               />
             )}
           </div>
@@ -937,8 +937,8 @@ export default function App() {
               Historical Token Load
             </h2>
             <div className="flex gap-2">
-              <select
-                value={chartMetric}
+              <select 
+                value={chartMetric} 
                 onChange={e => setChartMetric(e.target.value as any)}
                 className="bg-surface border border-white/10 rounded-lg px-3 py-1 text-sm text-white focus:outline-none focus:border-primary"
               >
@@ -961,20 +961,20 @@ export default function App() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                 <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickMargin={10} />
                 <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(val) => chartMetric === 'calls' ? `${val}` : formatTokens(Number(val))} />
-                <Tooltip
+                <Tooltip 
                   contentStyle={{ backgroundColor: '#151520', borderColor: '#2e2e3d', borderRadius: '12px' }}
                   itemStyle={{ color: '#f8fafc' }}
                   formatter={(value: any) => chartMetric === 'calls' ? Number(value).toLocaleString() : formatTokens(Number(value))}
                 />
                 {modelsArray.map((modelName, idx) => (
-                  <Area
+                  <Area 
                     key={modelName}
-                    type="monotone"
-                    dataKey={modelName}
+                    type="monotone" 
+                    dataKey={modelName} 
                     stackId="1"
-                    stroke={COLORS[idx % COLORS.length]}
-                    fill={COLORS[idx % COLORS.length]}
-                    fillOpacity={0.6}
+                    stroke={COLORS[idx % COLORS.length]} 
+                    fill={COLORS[idx % COLORS.length]} 
+                    fillOpacity={0.6} 
                   />
                 ))}
               </AreaChart>
@@ -982,7 +982,7 @@ export default function App() {
           </div>
         </div>
       </div>
-
+      
       {/* ISSUE BOARD */}
       {activeSessions && (
         <div className="glass-card p-6 animate-slide-up" style={{ animationDelay: '200ms' }}>
@@ -991,17 +991,17 @@ export default function App() {
               <RefreshCw size={20} className="text-secondary" />
               Issue Overview
             </h2>
-
+            
             <div className="flex flex-wrap gap-2 items-center">
-              <input
-                type="text"
+              <input 
+                type="text" 
                 placeholder="Search issues..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:border-primary outline-none min-w-[200px]"
               />
-              <select
-                value={filterStatus}
+              <select 
+                value={filterStatus} 
                 onChange={e => setFilterStatus(e.target.value)}
                 className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:border-primary outline-none"
               >
@@ -1018,8 +1018,8 @@ export default function App() {
                 <option value="ERROR">System Error</option>
                 <option value="COMPLETED">Completed</option>
               </select>
-              <select
-                value={filterPriority}
+              <select 
+                value={filterPriority} 
                 onChange={e => setFilterPriority(e.target.value)}
                 className="bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:border-primary outline-none"
               >
@@ -1040,7 +1040,7 @@ export default function App() {
             <div className="bg-background rounded-lg p-3 border border-white/5"><div className="text-muted text-xs">Master</div><div className="text-cyan-300 font-bold text-lg">{masterIssueCount}</div></div>
             <div className="bg-background rounded-lg p-3 border border-white/5"><div className="text-muted text-xs">Sub-Issues</div><div className="text-primary font-bold text-lg">{subIssueCount}</div></div>
           </div>
-
+          
           <div className="grid grid-cols-1 gap-3">
             {visibleRootIssues.length === 0 && (
               <div className="text-center py-10 text-muted border border-dashed border-white/10 rounded-xl">
