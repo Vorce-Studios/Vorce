@@ -114,13 +114,13 @@ function Parse-CliStats {
                         $stats.model_used = $modelProp.Name
                         if ($modelProp.Value.tokens) {
                             $totalInput += [int]$modelProp.Value.tokens.input
-                            $totalOutput += [int]$modelProp.Value.tokens.candidates  
+                            $totalOutput += [int]$modelProp.Value.tokens.candidates
                         }
                     }
                     $stats.input_tokens = $totalInput
                     $stats.output_tokens = $totalOutput
                 }
-                
+
                 # Overwrite with precise OpenTelemetry data if available
                 if ($TelemetryFile -and (Test-Path $TelemetryFile)) {
                     $lines = Get-Content $TelemetryFile -ReadCount 0
@@ -148,7 +148,7 @@ function Parse-CliStats {
             "claude_code" {
                 if ($json) {
                     if ($json.total_cost_usd) {
-                        $stats.real_cost_usd = [double]$json.total_cost_usd        
+                        $stats.real_cost_usd = [double]$json.total_cost_usd
                     }
                     if ($json.modelUsage) {
                         $totalInput = 0
@@ -169,7 +169,7 @@ function Parse-CliStats {
                 $lines = $RawOutput -split "`n"
                 foreach ($line in $lines) {
                     if ($line -match '"type"\s*:\s*"result"') {
-                        $cJson = $line | ConvertFrom-Json -ErrorAction SilentlyContinue 
+                        $cJson = $line | ConvertFrom-Json -ErrorAction SilentlyContinue
                         if ($cJson.usage) {
                             $stats.premium_requests = [int]$cJson.usage.premiumRequests
                         }
@@ -183,9 +183,9 @@ function Parse-CliStats {
                 foreach ($line in $lines) {
                     if ($line -match '"modelInfo"' -and $line -match '"modelId"') {
                         try {
-                            $cJson = $line | ConvertFrom-Json -ErrorAction SilentlyContinue 
+                            $cJson = $line | ConvertFrom-Json -ErrorAction SilentlyContinue
                             if ($cJson.modelInfo -and $cJson.modelInfo.modelId) {
-                                $stats.model_used = $cJson.modelInfo.modelId    
+                                $stats.model_used = $cJson.modelInfo.modelId
                             }
                         } catch { }
                         break
@@ -321,14 +321,14 @@ function Invoke-CliTask {
         $modUsage.calls = [int]$modUsage.calls + 1
 
         $provider.usage_today.calls = [int]$provider.usage_today.calls + 1
-        
+
         $costToAdd = $estimatedCost
         if ($parsedStats.real_cost_usd) {
             $costToAdd = [double]$parsedStats.real_cost_usd
         }
         $modUsage.estimated_cost_usd = [Math]::Round([double]$modUsage.estimated_cost_usd + $costToAdd, 4)
         $provider.usage_today.estimated_cost_usd = [Math]::Round([double]$provider.usage_today.estimated_cost_usd + $costToAdd, 4)
-        
+
         if ($parsedStats.input_tokens) { $modUsage.total_input_tokens = [int]$modUsage.total_input_tokens + [int]$parsedStats.input_tokens }
         if ($parsedStats.output_tokens) { $modUsage.total_output_tokens = [int]$modUsage.total_output_tokens + [int]$parsedStats.output_tokens }
         if ($parsedStats.cached_tokens) { $modUsage.cached_tokens = [int]$modUsage.cached_tokens + [int]$parsedStats.cached_tokens }
