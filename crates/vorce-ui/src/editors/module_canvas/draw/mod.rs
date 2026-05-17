@@ -15,5 +15,3 @@ pub use part::*;
 pub use presets::*;
 pub use quick_create::*;
 pub use search::*;
-pub mod primitives;
-pub use primitives::*;
