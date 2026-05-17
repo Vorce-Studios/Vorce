@@ -12,7 +12,6 @@ use std::path::Path;
 use thiserror::Error;
 
 pub mod decoder;
-pub mod ffmpeg_decoder;
 #[cfg(feature = "hap")]
 pub mod hap_decoder;
 pub mod image_decoder;
@@ -22,8 +21,7 @@ pub mod pipeline;
 pub mod player;
 pub mod sequence;
 
-pub use decoder::{HwAccelType, PixelFormat, TestPatternDecoder, VideoDecoder};
-pub use ffmpeg_decoder::FFmpegDecoder;
+pub use decoder::{FFmpegDecoder, HwAccelType, PixelFormat, TestPatternDecoder, VideoDecoder};
 #[cfg(feature = "hap")]
 pub use hap_decoder::{decode_hap_frame, HapError, HapFrame, HapTextureType};
 pub use image_decoder::{GifDecoder, StillImageDecoder};

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use vorce_core::OscillatorConfig;
 use wgpu::util::DeviceExt;
 
-use super::types::{DistortionParams, Vertex};
+use super::types::{DistortionParams, Vertex, QUAD_INDICES, QUAD_VERTICES};
 
 pub struct OscillatorDistortion {
     pipeline: wgpu::RenderPipeline,
@@ -13,91 +13,118 @@ pub struct OscillatorDistortion {
     _uniform_layout: wgpu::BindGroupLayout,
 
     // Buffers
+    vertex_buffer: wgpu::Buffer,
+    index_buffer: wgpu::Buffer,
     uniform_buffer: wgpu::Buffer,
 
     // Bind groups
     uniform_bind_group: wgpu::BindGroup,
 
-    // Resources
-    resources: Arc<crate::oscillator_renderer::resources::OscillatorResources>,
+    // Samplers
+    sampler: wgpu::Sampler,
+    non_filtering_sampler: wgpu::Sampler,
+
+    // Device reference
+    device: Arc<wgpu::Device>,
+    queue: Arc<wgpu::Queue>,
 }
 
 impl OscillatorDistortion {
     pub fn new(
-        resources: Arc<crate::oscillator_renderer::resources::OscillatorResources>,
+        device: Arc<wgpu::Device>,
+        queue: Arc<wgpu::Queue>,
         target_format: wgpu::TextureFormat,
         config: &OscillatorConfig,
         sim_width: u32,
         sim_height: u32,
     ) -> Result<Self> {
-        let texture_layout =
-            resources.device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("Dist Texture Bind Group Layout"),
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            multisampled: false,
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 2,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            sample_type: wgpu::TextureSampleType::Float { filterable: false },
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            multisampled: false,
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 3,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::NonFiltering),
-                        count: None,
-                    },
-                ],
-            });
+        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            label: Some("Oscillator Sampler"),
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::MipmapFilterMode::Linear,
+            ..Default::default()
+        });
 
-        let uniform_layout =
-            resources.device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("Dist Uniform Bind Group Layout"),
-                entries: &[wgpu::BindGroupLayoutEntry {
+        let non_filtering_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            label: Some("Oscillator Non-Filtering Sampler"),
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Nearest,
+            min_filter: wgpu::FilterMode::Nearest,
+            mipmap_filter: wgpu::MipmapFilterMode::Nearest,
+            ..Default::default()
+        });
+
+        let texture_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("Dist Texture Bind Group Layout"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
                     binding: 0,
                     visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
                     },
                     count: None,
-                }],
-            });
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: false },
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 3,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::NonFiltering),
+                    count: None,
+                },
+            ],
+        });
+
+        let uniform_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("Dist Uniform Bind Group Layout"),
+            entries: &[wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            }],
+        });
 
         let shader_source = include_str!("../../../../shaders/oscillator_distortion.wgsl");
-        let shader = resources.device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Oscillator Distortion Shader"),
             source: wgpu::ShaderSource::Wgsl(shader_source.into()),
         });
 
-        let pipeline_layout =
-            resources.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Dist Pipeline Layout"),
-                bind_group_layouts: &[Some(&texture_layout), Some(&uniform_layout)],
-                immediate_size: 0,
-            });
+        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("Dist Pipeline Layout"),
+            bind_group_layouts: &[Some(&texture_layout), Some(&uniform_layout)],
+            immediate_size: 0,
+        });
 
-        let pipeline = resources.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Distortion Pipeline"),
             layout: Some(&pipeline_layout),
             vertex: wgpu::VertexState {
@@ -135,15 +162,26 @@ impl OscillatorDistortion {
             cache: None,
         });
 
-        let dist_params = Self::create_dist_params(config, 1920, 1080, sim_width, sim_height, 0.0);
-        let uniform_buffer =
-            resources.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Dist Uniform Buffer"),
-                contents: bytemuck::cast_slice(&[dist_params]),
-                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            });
+        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Oscillator Vertex Buffer"),
+            contents: bytemuck::cast_slice(QUAD_VERTICES),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
 
-        let uniform_bind_group = resources.device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Oscillator Index Buffer"),
+            contents: bytemuck::cast_slice(QUAD_INDICES),
+            usage: wgpu::BufferUsages::INDEX,
+        });
+
+        let dist_params = Self::create_dist_params(config, 1920, 1080, sim_width, sim_height, 0.0);
+        let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Dist Uniform Buffer"),
+            contents: bytemuck::cast_slice(&[dist_params]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+
+        let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Dist Uniform Bind Group"),
             layout: &uniform_layout,
             entries: &[wgpu::BindGroupEntry {
@@ -156,9 +194,14 @@ impl OscillatorDistortion {
             pipeline,
             texture_layout,
             _uniform_layout: uniform_layout,
+            vertex_buffer,
+            index_buffer,
             uniform_buffer,
             uniform_bind_group,
-            resources,
+            sampler,
+            non_filtering_sampler,
+            device,
+            queue,
         })
     }
 
@@ -203,13 +246,9 @@ impl OscillatorDistortion {
     ) {
         let dist_params =
             Self::create_dist_params(config, width, height, sim_width, sim_height, time_elapsed);
-        self.resources.queue.write_buffer(
-            &self.uniform_buffer,
-            0,
-            bytemuck::cast_slice(&[dist_params]),
-        );
+        self.queue.write_buffer(&self.uniform_buffer, 0, bytemuck::cast_slice(&[dist_params]));
 
-        let dist_bind_group = self.resources.device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let dist_bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Dist Bind Group"),
             layout: &self.texture_layout,
             entries: &[
@@ -219,7 +258,7 @@ impl OscillatorDistortion {
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&self.resources.sampler),
+                    resource: wgpu::BindingResource::Sampler(&self.sampler),
                 },
                 wgpu::BindGroupEntry {
                     binding: 2,
@@ -227,7 +266,7 @@ impl OscillatorDistortion {
                 },
                 wgpu::BindGroupEntry {
                     binding: 3,
-                    resource: wgpu::BindingResource::Sampler(&self.resources.non_filtering_sampler),
+                    resource: wgpu::BindingResource::Sampler(&self.non_filtering_sampler),
                 },
             ],
         });
@@ -253,9 +292,8 @@ impl OscillatorDistortion {
             render_pass.set_pipeline(&self.pipeline);
             render_pass.set_bind_group(0, &dist_bind_group, &[]);
             render_pass.set_bind_group(1, &self.uniform_bind_group, &[]);
-            render_pass.set_vertex_buffer(0, self.resources.vertex_buffer.slice(..));
-            render_pass
-                .set_index_buffer(self.resources.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             render_pass.draw_indexed(0..6, 0, 0..1);
         }
     }

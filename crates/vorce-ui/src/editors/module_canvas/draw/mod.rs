@@ -17,5 +17,3 @@ pub use quick_create::*;
 pub use search::*;
 pub mod primitives;
 pub use primitives::*;
-pub mod canvas_controls;
-pub use canvas_controls::*;
