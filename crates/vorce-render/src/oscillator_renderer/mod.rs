@@ -1,7 +1,6 @@
 //! Oscillator rendering and simulation module
 
 mod distortion;
-pub mod resources;
 mod simulation;
 mod types;
 
@@ -11,7 +10,6 @@ use tracing::info;
 use vorce_core::{OscillatorConfig, PhaseInitMode};
 
 use self::distortion::OscillatorDistortion;
-use self::resources::OscillatorResources;
 use self::simulation::OscillatorSimulation;
 
 /// Oscillator distortion renderer
@@ -32,11 +30,10 @@ impl OscillatorRenderer {
         info!("Creating oscillator renderer");
 
         let (sim_width, sim_height) = config.simulation_resolution.dimensions();
-        let resources = Arc::new(OscillatorResources::new(device, queue));
 
-        let simulation = OscillatorSimulation::new(resources.clone(), config)?;
+        let simulation = OscillatorSimulation::new(device.clone(), queue.clone(), config)?;
         let distortion =
-            OscillatorDistortion::new(resources, target_format, config, sim_width, sim_height)?;
+            OscillatorDistortion::new(device, queue, target_format, config, sim_width, sim_height)?;
 
         Ok(Self { simulation, distortion, time_elapsed: 0.0 })
     }
