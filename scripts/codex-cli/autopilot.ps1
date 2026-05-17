@@ -7,11 +7,12 @@ param(
     [switch]$DryRun,
     [switch]$PlanOnce,
     [switch]$MonitorOnce,
+    [switch]$ForcePlanningOnStart,
     [int]$PlanningIntervalOverride,
     [int]$MonitoringIntervalOverride
 )
 
-Set-StrictMode -Version Latest
+# Set-StrictMode -Version Latest
 $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
@@ -22,6 +23,8 @@ $ScriptDir = Split-Path -Parent $PSCommandPath
 . (Join-Path $ScriptDir "lib\state-manager.ps1")
 . (Join-Path $ScriptDir "lib\quota-manager.ps1")
 . (Join-Path $ScriptDir "lib\cli-router.ps1")
+. (Join-Path $ScriptDir "lib\autopilot-prompts.ps1")
+. (Join-Path $ScriptDir "lib\autopilot-session-manager.ps1")
 . (Join-Path $ScriptDir "phases\planning-wakeup.ps1")
 . (Join-Path $ScriptDir "phases\monitoring-wakeup.ps1")
 
@@ -57,6 +60,8 @@ $QuotaRegistry = Read-QuotaRegistry
 
 # --- Single-shot modes ---
 if ($PlanOnce.IsPresent) {
+    $planningPrompt = Get-VorceCodexPlanningSessionPrompt -Repository ([string]$Config.repository) -TaskJournalPath (Get-AutopilotTaskJournalPath) -SessionLockPath (Get-AutopilotSessionLockPath)
+    Invoke-AutopilotCodexSession -SessionType "planning" -Prompt $planningPrompt -State $State -Model "gpt-5.5" -ResumeMainSession -VisibleTerminal -DryRun:$DryRun | Out-Null
     Invoke-PlanningWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
     Write-Host $summary -ForegroundColor DarkGray
@@ -64,6 +69,8 @@ if ($PlanOnce.IsPresent) {
 }
 
 if ($MonitorOnce.IsPresent) {
+    $monitoringPrompt = Get-VorceCodexMonitoringSessionPrompt -Repository ([string]$Config.repository) -TaskJournalPath (Get-AutopilotTaskJournalPath) -SessionLockPath (Get-AutopilotSessionLockPath)
+    Invoke-AutopilotCodexSession -SessionType "monitoring" -Prompt $monitoringPrompt -State $State -Model "gpt-5.4-mini" -DryRun:$DryRun | Out-Null
     Invoke-MonitoringWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
     Write-Host $summary -ForegroundColor DarkGray
@@ -71,16 +78,20 @@ if ($MonitorOnce.IsPresent) {
 }
 
 # --- Main loop ---
-$lastPlanTime = if ($State.last_planning_at) {
-    [datetimeoffset]::Parse($State.last_planning_at).LocalDateTime
-} else {
-    [datetime]::MinValue
+# Robustly parse last activity times
+[datetime]$lastPlanTime = [datetime]::MinValue
+if ($State.last_planning_at) {
+    try { $lastPlanTime = [datetimeoffset]::Parse($State.last_planning_at).LocalDateTime } catch { }
+}
+if ($ForcePlanningOnStart.IsPresent) {
+    Write-Host "[LOOP] ForcePlanningOnStart aktiv: sichtbare Planning-Session wird beim Start erzwungen." -ForegroundColor Yellow
+    Add-AutopilotJournalEvent -SessionType "planning" -Message "ForcePlanningOnStart active; forcing visible planning session on loop start."
+    $lastPlanTime = [datetime]::MinValue
 }
 
-$lastMonTime = if ($State.last_monitoring_at) {
-    [datetimeoffset]::Parse($State.last_monitoring_at).LocalDateTime
-} else {
-    [datetime]::MinValue
+[datetime]$lastMonTime = [datetime]::MinValue
+if ($State.last_monitoring_at) {
+    try { $lastMonTime = [datetimeoffset]::Parse($State.last_monitoring_at).LocalDateTime } catch { }
 }
 
 Write-Host "[LOOP] Starte Hauptschleife. Ctrl+C zum Beenden." -ForegroundColor Green
@@ -89,22 +100,39 @@ Write-Host ""
 while ($true) {
     $now = Get-Date
     $QuotaRegistry = Read-QuotaRegistry
+    $planningRanThisCycle = $false
+
+    # Ensure lastPlanTime and lastMonTime are always valid DateTimes
+    if ($null -eq $lastPlanTime) { $lastPlanTime = [datetime]::MinValue }
+    if ($null -eq $lastMonTime) { $lastMonTime = [datetime]::MinValue }
 
     $planDue = ($now - $lastPlanTime).TotalMinutes -ge $planMinutes
     $monDue = ($now - $lastMonTime).TotalMinutes -ge $monMinutes
 
     if ($planDue) {
         try {
+            Write-Host "[LOOP] Starte Planning-Zyklus: sichtbare Codex-Planning-Session wird geoeffnet." -ForegroundColor Green
+            $planningPrompt = Get-VorceCodexPlanningSessionPrompt -Repository ([string]$Config.repository) -TaskJournalPath (Get-AutopilotTaskJournalPath) -SessionLockPath (Get-AutopilotSessionLockPath)
+            Invoke-AutopilotCodexSession -SessionType "planning" -Prompt $planningPrompt -State $State -Model "gpt-5.5" -ResumeMainSession -VisibleTerminal -DryRun:$DryRun | Out-Null
+            Write-Host "[LOOP] Codex-Planning beendet. Starte deterministischen Planning-Wake-Up." -ForegroundColor Green
             Invoke-PlanningWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
             $lastPlanTime = Get-Date
+            $lastMonTime = $lastPlanTime
+            $monDue = $false
+            $planningRanThisCycle = $true
+            Write-Host "[LOOP] Monitoring-Intervall startet nach Planning-Ende neu: $($lastMonTime.ToString('HH:mm:ss'))" -ForegroundColor DarkGray
         } catch {
             Write-Host "[LOOP] Planning-Fehler: $_" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "Planning wake-up failed" -Context $_.Exception.Message
         }
     }
 
-    if ($monDue) {
+    if ($monDue -and -not $planningRanThisCycle) {
         try {
+            Write-Host "[LOOP] Starte Monitoring-Zyklus: headless Codex-Monitoring plus deterministische Checks." -ForegroundColor Green
+            $monitoringPrompt = Get-VorceCodexMonitoringSessionPrompt -Repository ([string]$Config.repository) -TaskJournalPath (Get-AutopilotTaskJournalPath) -SessionLockPath (Get-AutopilotSessionLockPath)
+            Invoke-AutopilotCodexSession -SessionType "monitoring" -Prompt $monitoringPrompt -State $State -Model "gpt-5.4-mini" -VisibleExecTerminal -DryRun:$DryRun | Out-Null
+            Write-Host "[LOOP] Codex-Monitoring beendet. Starte deterministischen Monitoring-Wake-Up." -ForegroundColor Green
             Invoke-MonitoringWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
             $lastMonTime = Get-Date
         } catch {
@@ -115,10 +143,10 @@ while ($true) {
 
     # --- Status report ---
     $timeStr = $now.ToString("HH:mm:ss")
-    $delegCount = $State.active_delegations.Count
-    $reviewCount = $State.review_queue.Count
-    $doneCount = $State.completed_this_session.Count
-    $decCount = $State.decisions_pending.Count
+    $delegCount = if ($State.active_delegations) { $State.active_delegations.Count } else { 0 }
+    $reviewCount = if ($State.review_queue) { $State.review_queue.Count } else { 0 }
+    $doneCount = if ($State.completed_this_session) { $State.completed_this_session.Count } else { 0 }
+    $decCount = if ($State.decisions_pending) { $State.decisions_pending.Count } else { 0 }
 
     Write-Host ""
     Write-Host "[$timeStr] Status: Delegiert=$delegCount Review=$reviewCount Fertig=$doneCount Entscheidungen=$decCount" -ForegroundColor DarkGray
@@ -139,9 +167,15 @@ while ($true) {
     $nextPlan = $lastPlanTime.AddMinutes($planMinutes)
     $nextMon = $lastMonTime.AddMinutes($monMinutes)
     $nextWake = @($nextPlan, $nextMon) | Sort-Object | Select-Object -First 1
-    $sleepSeconds = [Math]::Max(10, ($nextWake - (Get-Date)).TotalSeconds)
+    
+    # Defaults to 60 seconds if something goes wrong with date math
+    $sleepSeconds = 60
+    try {
+        $diff = ($nextWake - (Get-Date)).TotalSeconds
+        $sleepSeconds = [Math]::Max(10, $diff)
+    } catch { }
 
-    if ($nextWake -eq $nextPlan) { $nextType = "Planning" } else { $nextType = "Monitoring" }
+    $nextType = if ($nextWake -eq $nextPlan) { "Planning" } else { "Monitoring" }
     $sleepMin = [Math]::Round($sleepSeconds / 60, 1)
     $nextTimeStr = $nextWake.ToString("HH:mm:ss")
     $loopMsg = "[LOOP] Naechster Wake-Up ({0}): {1} (in {2} min)" -f $nextType, $nextTimeStr, $sleepMin
@@ -149,5 +183,21 @@ while ($true) {
     Write-Host ""
 
     Save-AutopilotState -State $State
-    Start-Sleep -Seconds $sleepSeconds
+
+    # --- Responsive Sleep ---
+    $wakeupFile = Join-Path $ScriptDir "autopilot.wakeup"
+    $remainingSleep = $sleepSeconds
+    $step = 10
+
+    while ($remainingSleep -gt 0) {
+        if (Test-Path $wakeupFile) {
+            Write-Host "[LOOP] Wake-up Trigger gefunden. Breche Sleep ab." -ForegroundColor Yellow
+            try { Remove-Item $wakeupFile -ErrorAction SilentlyContinue } catch {}
+            break
+        }
+
+        $currentStep = [Math]::Min($step, $remainingSleep)
+        Start-Sleep -Seconds $currentStep
+        $remainingSleep -= $currentStep
+    }
 }
