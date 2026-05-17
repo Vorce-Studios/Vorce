@@ -1,63 +1,55 @@
 use crate::app::core::app_struct::RuntimeRenderQueueItem;
+use crate::app::loops::render::content::RenderContext;
 use crate::app::loops::render::effects::build_effect_chain;
 use crate::app::loops::render::logging::{clear_video_issue, should_log_video_issue};
 use crate::app::loops::render::texture_gen::{
     ensure_missing_texture_fallback, generate_grid_texture,
 };
+use anyhow::Result;
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn render_accumulation(
-    layer_ping_pong: &[String; 2],
-    texture_pool: &vorce_render::TexturePool,
-    surface_format: wgpu::TextureFormat,
-    queue: &wgpu::Queue,
-    video_diagnostic_log_times: &mut std::collections::HashMap<String, std::time::Instant>,
-    preview_effect_chain_renderer: &mut vorce_render::EffectChainRenderer,
-    effect_chain_renderer: &mut vorce_render::EffectChainRenderer,
-    shader_graph_manager: &vorce_render::ShaderGraphManager,
-    mesh_renderer: &mut vorce_render::MeshRenderer,
-    mesh_buffer_cache: &mut vorce_render::MeshBufferCache,
-    device: &wgpu::Device,
-    compositor: &mut vorce_render::Compositor,
-    target_ops: &[RuntimeRenderQueueItem],
+pub(crate) fn render_scene_2d(
+    ctx: &mut RenderContext<'_>,
+    output_id: u64,
     encoder: &mut wgpu::CommandEncoder,
     target_view: &wgpu::TextureView,
-    is_preview_output: bool,
-    output_id: u64,
+    target_ops: &[RuntimeRenderQueueItem],
     real_output_id: u64,
+    is_preview_output: bool,
     target_width: u32,
     target_height: u32,
-) {
-    let ping_pong_0 = format!("{}_{}", layer_ping_pong[0], output_id);
-    let ping_pong_1 = format!("{}_{}", layer_ping_pong[1], output_id);
+) -> Result<()> {
+    let ping_pong_0 = format!("{}_{}", ctx.layer_ping_pong[0], output_id);
+    let ping_pong_1 = format!("{}_{}", ctx.layer_ping_pong[1], output_id);
     let scratch_name = format!("layer_scratch_{}", output_id);
 
-    texture_pool.ensure_texture(
+    ctx.texture_pool.ensure_texture(
         &ping_pong_0,
         target_width.max(1),
         target_height.max(1),
-        surface_format,
+        ctx.surface_format,
         wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
     );
-    texture_pool.ensure_texture(
+    ctx.texture_pool.ensure_texture(
         &ping_pong_1,
         target_width.max(1),
         target_height.max(1),
-        surface_format,
+        ctx.surface_format,
         wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
     );
-    texture_pool.ensure_texture(
+    ctx.texture_pool.ensure_texture(
         &scratch_name,
         target_width.max(1),
         target_height.max(1),
-        surface_format,
+        ctx.surface_format,
         wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
     );
 
     let mut active_accum = 0;
 
+    // Clear initial accumulator
     {
-        let accum_view = texture_pool.get_view(&ping_pong_0);
+        let accum_view = ctx.texture_pool.get_view(&ping_pong_0);
         let _pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Clear Accumulator Pass"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -80,6 +72,7 @@ pub(crate) fn render_accumulation(
         });
     }
 
+    // Accumulate Layers
     for item in target_ops {
         if item.diagnostics.iter().any(|diag| {
             matches!(diag.severity, crate::app::core::app_struct::DiagnosticSeverity::Error)
@@ -97,44 +90,45 @@ pub(crate) fn render_accumulation(
 
         let source_view = if op.mapping_mode {
             let grid_tex_name = format!("grid_layer_{}", op.layer_part_id);
-            if !texture_pool.has_texture(&grid_tex_name) {
+            if !ctx.texture_pool.has_texture(&grid_tex_name) {
                 let width = 512;
                 let height = 512;
                 let data = generate_grid_texture(width, height, op.layer_part_id);
-                texture_pool.ensure_texture(
+                ctx.texture_pool.ensure_texture(
                     &grid_tex_name,
                     width,
                     height,
                     wgpu::TextureFormat::Rgba8UnormSrgb,
                     wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
                 );
-                texture_pool.upload_data(queue, &grid_tex_name, &data, width, height);
+                ctx.texture_pool.upload_data(ctx.queue, &grid_tex_name, &data, width, height);
             }
-            Some(texture_pool.get_view(&grid_tex_name))
-        } else if texture_pool.has_texture(&tex_name) {
+            Some(ctx.texture_pool.get_view(&grid_tex_name))
+        } else if ctx.texture_pool.has_texture(&tex_name) {
             clear_video_issue(
-                video_diagnostic_log_times,
+                ctx.video_diagnostic_log_times,
                 format!(
                     "video-output-missing-texture:{real_output_id}:{module_id}:{}",
                     op.source_part_id.unwrap_or_default()
                 ),
             );
-            Some(texture_pool.get_view(&tex_name))
-        } else if texture_pool.has_texture("bevy_output") {
+            Some(ctx.texture_pool.get_view(&tex_name))
+        } else if ctx.texture_pool.has_texture("bevy_output") {
+            // Fallback for Bevy nodes
             clear_video_issue(
-                video_diagnostic_log_times,
+                ctx.video_diagnostic_log_times,
                 format!(
                     "video-output-missing-texture:{real_output_id}:{module_id}:{}",
                     op.source_part_id.unwrap_or_default()
                 ),
             );
-            Some(texture_pool.get_view("bevy_output"))
+            Some(ctx.texture_pool.get_view("bevy_output"))
         } else {
             if let Some(source_part_id) = op.source_part_id {
                 let issue_key = format!(
                     "video-output-missing-texture:{real_output_id}:{module_id}:{source_part_id}"
                 );
-                if should_log_video_issue(video_diagnostic_log_times, issue_key) {
+                if should_log_video_issue(ctx.video_diagnostic_log_times, issue_key) {
                     tracing::warn!(
                         "Fehler in Videoausgabe: {} {} kann Modul {} / Part {} nicht rendern, weil die erwartete Textur '{}' im TexturePool fehlt.",
                         if is_preview_output { "Preview fuer Output" } else { "Output" },
@@ -145,8 +139,9 @@ pub(crate) fn render_accumulation(
                     );
                 }
             }
-            ensure_missing_texture_fallback(texture_pool, queue);
-            Some(texture_pool.get_view("missing_texture_fallback"))
+            // BLACK FALLBACK for missing textures
+            ensure_missing_texture_fallback(ctx.texture_pool, ctx.queue);
+            Some(ctx.texture_pool.get_view("missing_texture_fallback"))
         };
 
         if let Some(src_ref) = source_view {
@@ -159,7 +154,7 @@ pub(crate) fn render_accumulation(
                         format!("effect_tmp_output_{}_layer_{}", real_output_id, op.layer_part_id);
                     let effect_width = 1024;
                     let effect_height = 1024;
-                    texture_pool.ensure_texture(
+                    ctx.texture_pool.ensure_texture(
                         &output_texture_name,
                         effect_width,
                         effect_height,
@@ -169,25 +164,25 @@ pub(crate) fn render_accumulation(
                             | wgpu::TextureUsages::COPY_DST,
                     );
 
-                    let output_effect_view = texture_pool.get_view(&output_texture_name);
+                    let output_effect_view = ctx.texture_pool.get_view(&output_texture_name);
                     if is_preview_output {
-                        preview_effect_chain_renderer.apply_chain(
+                        ctx.preview_effect_chain_renderer.apply_chain(
                             encoder,
                             &src_ref,
                             &output_effect_view,
                             &effect_chain,
-                            shader_graph_manager,
+                            ctx.shader_graph_manager,
                             0.0,
                             effect_width,
                             effect_height,
                         );
                     } else {
-                        effect_chain_renderer.apply_chain(
+                        ctx.effect_chain_renderer.apply_chain(
                             encoder,
                             &src_ref,
                             &output_effect_view,
                             &effect_chain,
-                            shader_graph_manager,
+                            ctx.shader_graph_manager,
                             0.0,
                             effect_width,
                             effect_height,
@@ -203,8 +198,8 @@ pub(crate) fn render_accumulation(
                 glam::Quat::from_rotation_z(op.source_props.rotation.to_radians()),
                 glam::vec3(op.source_props.offset_x, op.source_props.offset_y, 0.0),
             );
-            let uniform_bind_group = mesh_renderer.get_uniform_bind_group_with_source_props(
-                queue,
+            let uniform_bind_group = ctx.mesh_renderer.get_uniform_bind_group_with_source_props(
+                ctx.queue,
                 transform,
                 op.opacity * op.source_props.opacity,
                 op.source_props.flip_horizontal,
@@ -215,9 +210,13 @@ pub(crate) fn render_accumulation(
                 op.source_props.hue_shift,
             );
 
-            let texture_bind_group = mesh_renderer.get_texture_bind_group(&final_source_view);
-            let (vb, ib, cnt) =
-                mesh_buffer_cache.get_buffers(device, queue, op.layer_part_id, &op.mesh.to_mesh());
+            let texture_bind_group = ctx.mesh_renderer.get_texture_bind_group(&final_source_view);
+            let (vb, ib, cnt) = ctx.mesh_buffer_cache.get_buffers(
+                ctx.device,
+                ctx.queue,
+                op.layer_part_id,
+                &op.mesh.to_mesh(),
+            );
 
             let blend_mode = op.blend_mode.unwrap_or(vorce_core::module::BlendModeType::Normal);
             let is_normal_blend = matches!(blend_mode, vorce_core::module::BlendModeType::Normal);
@@ -226,7 +225,7 @@ pub(crate) fn render_accumulation(
             let render_target_name =
                 if is_normal_blend { current_accum_name } else { &scratch_name };
 
-            let render_target_view = texture_pool.get_view(render_target_name);
+            let render_target_view = ctx.texture_pool.get_view(render_target_name);
 
             {
                 let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -250,7 +249,7 @@ pub(crate) fn render_accumulation(
                     multiview_mask: None,
                 });
 
-                mesh_renderer.draw(
+                ctx.mesh_renderer.draw(
                     &mut rpass,
                     vb,
                     ib,
@@ -265,9 +264,9 @@ pub(crate) fn render_accumulation(
                 let next_accum = (active_accum + 1) % 2;
                 let next_accum_name = if next_accum == 0 { &ping_pong_0 } else { &ping_pong_1 };
 
-                let base_view = texture_pool.get_view(current_accum_name);
-                let blend_view = texture_pool.get_view(&scratch_name);
-                let out_view = texture_pool.get_view(next_accum_name);
+                let base_view = ctx.texture_pool.get_view(current_accum_name);
+                let blend_view = ctx.texture_pool.get_view(&scratch_name);
+                let out_view = ctx.texture_pool.get_view(next_accum_name);
 
                 let core_blend_mode = match blend_mode {
                     vorce_core::module::BlendModeType::Normal => {
@@ -291,13 +290,13 @@ pub(crate) fn render_accumulation(
                     }
                 };
 
-                let bind_group = compositor.create_bind_group(&base_view, &blend_view);
+                let bind_group = ctx.compositor.create_bind_group(&base_view, &blend_view);
                 let uniform_bind_group =
-                    compositor.get_uniform_bind_group(queue, core_blend_mode, 1.0);
+                    ctx.compositor.get_uniform_bind_group(ctx.queue, core_blend_mode, 1.0);
 
                 let quad_mesh = vorce_core::module::MeshType::default().to_mesh();
                 let (quad_vb, quad_ib, _quad_cnt) =
-                    mesh_buffer_cache.get_buffers(device, queue, 999999, &quad_mesh);
+                    ctx.mesh_buffer_cache.get_buffers(ctx.device, ctx.queue, 999999, &quad_mesh);
 
                 let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: Some("Compositor Pass"),
@@ -316,7 +315,7 @@ pub(crate) fn render_accumulation(
                     multiview_mask: None,
                 });
 
-                compositor.composite(
+                ctx.compositor.composite(
                     &mut rpass,
                     quad_vb,
                     quad_ib,
@@ -329,17 +328,21 @@ pub(crate) fn render_accumulation(
         }
     }
 
+    // Copy final accumulator to target_view
     {
         let final_accum_name = if active_accum == 0 { &ping_pong_0 } else { &ping_pong_1 };
-        let final_accum_view = texture_pool.get_view(final_accum_name);
+        let final_accum_view = ctx.texture_pool.get_view(final_accum_name);
 
         let quad_mesh = vorce_core::module::MeshType::default().to_mesh();
         let (quad_vb, quad_ib, _quad_cnt) =
-            mesh_buffer_cache.get_buffers(device, queue, 999998, &quad_mesh);
+            ctx.mesh_buffer_cache.get_buffers(ctx.device, ctx.queue, 999998, &quad_mesh);
 
-        let bind_group = compositor.create_bind_group(&final_accum_view, &final_accum_view);
-        let uniform_bind_group =
-            compositor.get_uniform_bind_group(queue, vorce_core::layer::BlendMode::Normal, 1.0);
+        let bind_group = ctx.compositor.create_bind_group(&final_accum_view, &final_accum_view); // second view ignored for Normal blend
+        let uniform_bind_group = ctx.compositor.get_uniform_bind_group(
+            ctx.queue,
+            vorce_core::layer::BlendMode::Normal,
+            1.0,
+        );
 
         let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Copy to Target View Pass"),
@@ -358,6 +361,8 @@ pub(crate) fn render_accumulation(
             multiview_mask: None,
         });
 
-        compositor.composite(&mut rpass, quad_vb, quad_ib, &bind_group, &uniform_bind_group);
+        ctx.compositor.composite(&mut rpass, quad_vb, quad_ib, &bind_group, &uniform_bind_group);
     }
+
+    Ok(())
 }

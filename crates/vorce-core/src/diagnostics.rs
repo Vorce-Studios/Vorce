@@ -93,6 +93,10 @@ pub fn check_module_integrity(module: &VorceModule) -> Vec<ModuleIssue> {
                         part_id: Some(part.id),
                     });
                 }
+                SourceType::MediaFile { .. }
+                | SourceType::VideoUni { .. }
+                | SourceType::ImageUni { .. } => {}
+
                 _ => {}
             }
         }

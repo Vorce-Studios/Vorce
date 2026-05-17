@@ -1,17 +1,96 @@
-//! Media Browser UI
+//! Phase 6: Media Browser UI
+//!
+//! File browsing interface with thumbnails, search/filter, drag-and-drop support,
+//! color coding, and hover preview playback.
 
-use super::data::{
-    format_duration, format_size, MediaBrowserAction, MediaEntry, MediaFolders, MediaType,
-    SortMode, ThumbnailHandle, ViewMode,
-};
 use crate::i18n::LocaleManager;
-use crate::icons::IconManager;
+use crate::icons::{AppIcon, IconManager};
 use egui::{Color32, Response, Sense, Ui, Vec2};
 use parking_lot::RwLock;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Instant;
+
+/// Media file entry in the browser
+#[derive(Debug, Clone)]
+pub struct MediaEntry {
+    /// File system path to the asset or resource.
+    pub path: PathBuf,
+    /// Human-readable display name.
+    pub name: String,
+    /// Lowercased name for fast searching without allocation
+    pub name_lower: String,
+    pub file_type: MediaType,
+    pub size_bytes: u64,
+    pub duration_secs: Option<f32>,
+    pub thumbnail: Option<ThumbnailHandle>,
+    pub color_tag: Option<Color32>,
+    pub tags: Vec<String>,
+    /// Lowercased tags for fast searching without allocation
+    pub tags_lower: Vec<String>,
+}
+
+/// Media type classification
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MediaType {
+    Video,
+    Image,
+    ImageSequence,
+    Audio,
+    /// HAP video (GPU-accelerated codec)
+    Hap,
+    Unknown,
+}
+
+impl MediaType {
+    pub fn from_extension(ext: &str) -> Self {
+        match ext.to_lowercase().as_str() {
+            "mp4" | "avi" | "mpeg" | "mpg" | "mkv" | "webm" => Self::Video,
+            // MOV can be HAP or regular video - we'll detect at open time
+            "mov" => Self::Video, // Could be HAP, will be detected when opened
+            "png" | "jpg" | "jpeg" | "tiff" | "tif" | "bmp" | "dds" => Self::Image,
+            "gif" => Self::ImageSequence,
+            "wav" | "mp3" | "aac" | "flac" | "ogg" => Self::Audio,
+            _ => Self::Unknown,
+        }
+    }
+
+    pub fn icon(&self) -> &'static str {
+        match self {
+            Self::Video => "🎬",
+            Self::Image => "🖼",
+            Self::ImageSequence => "🎞",
+            Self::Audio => "🎵",
+            Self::Hap => "⚡", // Lightning for GPU-accelerated
+            Self::Unknown => "📄",
+        }
+    }
+
+    pub fn app_icon(&self) -> Option<AppIcon> {
+        match self {
+            Self::Video => Some(AppIcon::VideoFile),
+            Self::Image => Some(AppIcon::ImageFile),
+            Self::ImageSequence => Some(AppIcon::VideoFile),
+            Self::Audio => Some(AppIcon::AudioFile),
+            Self::Hap => Some(AppIcon::VideoPlayer), // Use VideoPlayer for HAP
+            Self::Unknown => None,
+        }
+    }
+}
+
+/// Thumbnail handle (reference to generated thumbnail)
+#[derive(Clone)]
+pub struct ThumbnailHandle {
+    pub texture_handle: egui::TextureHandle,
+    pub size: (u32, u32),
+}
+
+impl std::fmt::Debug for ThumbnailHandle {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ThumbnailHandle").field("size", &self.size).finish()
+    }
+}
 
 /// Media browser state
 pub struct MediaBrowser {
@@ -73,6 +152,41 @@ pub struct MediaBrowser {
     scan_tx: std::sync::mpsc::Sender<(PathBuf, Vec<MediaEntry>)>,
     /// Show folder settings
     show_folder_settings: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ViewMode {
+    Grid,
+    List,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SortMode {
+    Name,
+    Type,
+    Size,
+    DateModified,
+}
+
+/// Media folder configuration per type
+#[derive(Debug, Clone)]
+pub struct MediaFolders {
+    pub video_folder: PathBuf,
+    pub image_folder: PathBuf,
+    pub audio_folder: PathBuf,
+    pub default_folder: PathBuf,
+}
+
+impl Default for MediaFolders {
+    fn default() -> Self {
+        let default = std::env::current_dir().unwrap_or_default();
+        Self {
+            video_folder: dirs::video_dir().unwrap_or(default.clone()),
+            image_folder: dirs::picture_dir().unwrap_or(default.clone()),
+            audio_folder: dirs::audio_dir().unwrap_or(default.clone()),
+            default_folder: default,
+        }
+    }
 }
 
 impl MediaBrowser {
@@ -142,7 +256,52 @@ impl MediaBrowser {
         // That avoids sending Arcs to the background thread unnecessarily.
 
         rayon::spawn(move || {
-            let entries = super::scanner::Scanner::scan_directory(&path, show_hidden);
+            let mut entries = Vec::new();
+            if let Ok(dir_entries) = std::fs::read_dir(&path) {
+                for entry in dir_entries.flatten() {
+                    if let Ok(metadata) = entry.metadata() {
+                        if metadata.is_file() {
+                            let entry_path = entry.path();
+                            let name = entry.file_name().to_string_lossy().to_string();
+
+                            // Skip hidden files if not showing them
+                            if !show_hidden && name.starts_with('.') {
+                                continue;
+                            }
+
+                            let file_type = entry_path
+                                .extension()
+                                .and_then(|e| e.to_str())
+                                .map(MediaType::from_extension)
+                                .unwrap_or(MediaType::Unknown);
+
+                            // Only include media files
+                            if matches!(
+                                file_type,
+                                MediaType::Video
+                                    | MediaType::Image
+                                    | MediaType::ImageSequence
+                                    | MediaType::Audio
+                                    | MediaType::Hap
+                            ) {
+                                entries.push(MediaEntry {
+                                    path: entry_path,
+                                    name: name.clone(),
+                                    name_lower: name.to_lowercase(),
+                                    file_type,
+                                    size_bytes: metadata.len(),
+                                    duration_secs: None,
+                                    thumbnail: None, // Will be populated in main thread
+                                    color_tag: None,
+                                    tags: Vec::new(),
+                                    tags_lower: Vec::new(),
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
             scan_tasks_active.fetch_sub(1, std::sync::atomic::Ordering::SeqCst);
             let _ = tx.send((path, entries));
         });
@@ -733,11 +892,11 @@ impl MediaBrowser {
 
             // Background
             let bg_color = if self.selected == Some(idx) {
-                Color32::from_rgb(60, 120, 200)
+                ui.visuals().selection.bg_fill
             } else if response.hovered() {
-                Color32::from_rgb(50, 50, 50)
+                ui.visuals().widgets.hovered.bg_fill
             } else {
-                Color32::from_rgb(35, 35, 35)
+                ui.visuals().widgets.inactive.bg_fill
             };
 
             ui.painter().rect_filled(rect, 2.0, bg_color);
@@ -758,7 +917,7 @@ impl MediaBrowser {
                 );
             } else {
                 // Placeholder
-                ui.painter().rect_filled(thumb_rect, 2.0, Color32::from_rgb(45, 45, 45));
+                ui.painter().rect_filled(thumb_rect, 2.0, ui.visuals().extreme_bg_color);
 
                 // Try to render icon, fallback to emoji
                 let mut rendered_icon = false;
@@ -777,7 +936,7 @@ impl MediaBrowser {
                                     egui::pos2(0.0, 0.0),
                                     egui::pos2(1.0, 1.0),
                                 ),
-                                Color32::from_gray(200), // Tinted slightly
+                                ui.visuals().text_color().gamma_multiply(0.8), // Tinted slightly
                             );
                             rendered_icon = true;
                         }
@@ -791,7 +950,7 @@ impl MediaBrowser {
                         egui::Align2::LEFT_TOP,
                         entry.file_type.icon(),
                         egui::FontId::proportional(40.0),
-                        Color32::from_rgb(100, 100, 100),
+                        ui.visuals().text_color().gamma_multiply(0.4),
                     );
                 }
             }
@@ -821,4 +980,34 @@ impl MediaBrowser {
 
         response
     }
+}
+
+/// Actions that can be triggered by the media browser
+#[derive(Debug, Clone)]
+pub enum MediaBrowserAction {
+    FileSelected(PathBuf),
+    FileDoubleClicked(PathBuf),
+    StartPreview(PathBuf),
+    StopPreview,
+}
+
+/// Format file size for display
+fn format_size(bytes: u64) -> String {
+    const UNITS: &[&str] = &["B", "KB", "MB", "GB", "TB"];
+    let mut size = bytes as f64;
+    let mut unit_idx = 0;
+
+    while size >= 1024.0 && unit_idx < UNITS.len() - 1 {
+        size /= 1024.0;
+        unit_idx += 1;
+    }
+
+    format!("{:.1} {}", size, UNITS[unit_idx])
+}
+
+/// Format duration for display
+fn format_duration(seconds: f32) -> String {
+    let minutes = (seconds / 60.0).floor() as u32;
+    let secs = (seconds % 60.0).floor() as u32;
+    format!("{:02}:{:02}", minutes, secs)
 }

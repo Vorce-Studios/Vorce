@@ -1,7 +1,9 @@
-use super::SettingsContext;
-use egui::{Context, RichText};
+use egui::{RichText, Ui};
 
-pub fn show(_ctx: &Context, ui: &mut egui::Ui, context: &mut SettingsContext) {
+use crate::ui::dialogs::settings::SettingsContext;
+
+/// Rendert den Tab 'Layout'
+pub fn render_tab(ui: &mut Ui, context: &mut SettingsContext) {
     ui.heading(RichText::new("Node-Animationen").color(ui.visuals().strong_text_color()));
     ui.add_space(4.0);
     let mut node_anim_changed = false;

@@ -1,9 +1,11 @@
-use super::SettingsContext;
-use egui::{Context, RichText};
+use egui::{RichText, Ui};
 use vorce_ui::core::config::{AppLogLevel, ToolbarMetricMode};
 use vorce_ui::UIAction;
 
-pub fn show(ctx: &Context, ui: &mut egui::Ui, context: &mut SettingsContext) {
+use crate::ui::dialogs::settings::SettingsContext;
+
+/// Rendert den Tab 'General'
+pub fn render_tab(ui: &mut Ui, context: &mut SettingsContext) {
     ui.heading(RichText::new("General").color(ui.visuals().strong_text_color()));
     ui.add_space(4.0);
     ui.horizontal(|ui| {
@@ -47,7 +49,7 @@ pub fn show(ctx: &Context, ui: &mut egui::Ui, context: &mut SettingsContext) {
                     if ui.selectable_label(current_theme == theme, format!("{:?}", theme)).clicked()
                     {
                         context.ui_state.user_config.theme.theme = theme;
-                        context.ui_state.user_config.theme.apply(ctx);
+                        context.ui_state.user_config.theme.apply(ui.ctx());
                         let _ = context.ui_state.user_config.save();
                     }
                 }
@@ -73,7 +75,7 @@ pub fn show(ctx: &Context, ui: &mut egui::Ui, context: &mut SettingsContext) {
         {
             context.ui_state.user_config.theme.font_size =
                 14.0 * (font_scale_percent as f32 / 100.0);
-            context.ui_state.user_config.theme.apply(ctx);
+            context.ui_state.user_config.theme.apply(ui.ctx());
             let _ = context.ui_state.user_config.save();
         }
     });
