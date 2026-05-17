@@ -278,8 +278,6 @@ pub fn move_down_button(ui: &mut Ui) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::widgets::icons::AppIcon;
-    use egui::Color32;
     use egui::{Context, Ui};
 
     fn test_ui(func: impl FnMut(&mut Ui)) {
