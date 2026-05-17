@@ -32,7 +32,6 @@ const MIN_SCALE: f32 = 0.3;
 pub enum MidiLearnTarget {
     Vorce,
     StreamerBot(String), // Function name
-    Mixxx(String),       // Function name
 }
 
 pub struct ControllerOverlayPanel {
@@ -53,9 +52,6 @@ pub struct ControllerOverlayPanel {
 
     #[allow(dead_code)]
     streamerbot_function: String,
-
-    #[allow(dead_code)]
-    mixxx_function: String,
 
     pub(crate) show_labels: bool,
 
@@ -97,7 +93,6 @@ pub enum ElementFilter {
     All,
     Vorce,
     StreamerBot,
-    Mixxx,
     Unassigned,
 }
 
@@ -121,7 +116,6 @@ impl ControllerOverlayPanel {
             last_active_element: None,
             last_active_time: None,
             streamerbot_function: String::new(),
-            mixxx_function: String::new(),
 
             show_labels: true,
             show_values: true,
@@ -253,7 +247,7 @@ impl ControllerOverlayPanel {
                     } else {
                         egui::Button::new("🎨 Zuweisungen")
                     };
-                    if ui.add(assign_btn).clone().on_hover_text("Zeigt alle Elemente farblich nach Zuweisung:\n🟢 Frei\n🔵 Vorce\n🟣 Streamer.bot\n🟠 Mixxx").clicked() {
+                    if ui.add(assign_btn).clone().on_hover_text("Zeigt alle Elemente farblich nach Zuweisung:\n🟢 Frei\n🔵 Vorce\n🟣 Streamer.bot").clicked() {
                         self.show_assignment_colors = !self.show_assignment_colors;
                     }
 
@@ -324,25 +318,6 @@ impl ControllerOverlayPanel {
                         }
 
                         ui.separator();
-
-                        // Mixxx Learn with input
-                        ui.label("Mixxx:");
-                        ui.add(
-                            egui::TextEdit::singleline(&mut self.mixxx_function)
-                                .desired_width(100.0)
-                                .hint_text("Funktion"),
-                        );
-                        let mx_btn = if is_learning
-                            && matches!(self.learn_target, Some(MidiLearnTarget::Mixxx(_)))
-                        {
-                            ui.add(egui::Button::new("⏳...").fill(ui.visuals().warn_fg_color))
-                        } else {
-                            ui.button("🎯")
-                        };
-                        if mx_btn.clicked() && !is_learning && !self.mixxx_function.is_empty() {
-                            self.learn_target =
-                                Some(MidiLearnTarget::Mixxx(self.mixxx_function.clone()));
-                        }
 
                         // Cancel button
                         if is_learning && ui.button("❌ Abbrechen").clicked() {
