@@ -27,6 +27,7 @@ python scripts/gemini-cli/UI-Test_ComputerUse/vorce_master_test.py --task "Verif
 ## Artifacts
 
 All run artifacts are saved under an ignored `output/` directory in this folder:
+
 - `run_report.json`: Structured pass/fail status and run metadata.
 - `launch_log.txt`: Captured stdout/stderr from the Vorce process.
 - `failure_screenshot.png`: Screenshot taken if a failure occurs.
