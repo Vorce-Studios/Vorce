@@ -869,6 +869,7 @@ pub fn collapsing_header_with_reset(
 
 #[cfg(test)]
 mod tests {
+    use egui::Color32;
     use super::*;
     use egui::Context;
 
