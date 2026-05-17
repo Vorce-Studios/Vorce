@@ -5,7 +5,7 @@ use egui::{Pos2, Rect, Sense, Stroke, Ui};
 
 pub trait MeshEditorUi {
     fn ui(&mut self, ui: &mut Ui) -> Option<MeshEditorAction>;
-    fn draw_grid(&self, ui: &egui::Ui, painter: &egui::Painter, rect: Rect);
+    fn draw_grid(&self, painter: &egui::Painter, rect: Rect, visuals: &egui::Visuals);
 }
 
 impl MeshEditorUi for MeshEditor {
@@ -53,7 +53,7 @@ impl MeshEditorUi for MeshEditor {
 
         // Draw grid if enabled
         if self.snap_to_grid {
-            self.draw_grid(ui, &painter, response.rect);
+            self.draw_grid(&painter, response.rect, ui.visuals());
         }
 
         // Draw mesh faces
@@ -67,39 +67,41 @@ impl MeshEditorUi for MeshEditor {
             painter.add(egui::Shape::convex_polygon(
                 points.to_vec(),
                 ui.visuals().selection.bg_fill.gamma_multiply(0.2),
-                Stroke::new(1.0, ui.visuals().selection.bg_fill),
+                Stroke::new(1.0, ui.visuals().selection.bg_fill.gamma_multiply(0.8)),
             ));
         }
 
         // Draw vertices
         for vertex in self.vertices.iter() {
             let color = if vertex.selected {
-                ui.visuals().selection.bg_fill
+                ui.visuals().warn_fg_color
             } else {
                 ui.visuals().text_color()
             };
 
             painter.circle_filled(vertex.position, 6.0, color);
-            painter.circle_stroke(vertex.position, 6.0, Stroke::new(2.0, ui.visuals().window_fill));
+            painter.circle_stroke(
+                vertex.position,
+                6.0,
+                Stroke::new(2.0, ui.visuals().window_fill()),
+            );
 
             // Draw Bezier control points if in Bezier mode
             if self.mode == EditMode::Bezier {
+                let ctrl_color1 = ui.visuals().selection.bg_fill;
+                let ctrl_color2 = ui.visuals().warn_fg_color;
                 if let Some(ctrl_in) = vertex.control_in {
                     let ctrl_pos = vertex.position + ctrl_in;
-                    painter.line_segment(
-                        [vertex.position, ctrl_pos],
-                        Stroke::new(1.0, ui.visuals().warn_fg_color),
-                    );
-                    painter.circle_filled(ctrl_pos, 4.0, ui.visuals().warn_fg_color);
+                    painter
+                        .line_segment([vertex.position, ctrl_pos], Stroke::new(1.0, ctrl_color1));
+                    painter.circle_filled(ctrl_pos, 4.0, ctrl_color1);
                 }
 
                 if let Some(ctrl_out) = vertex.control_out {
                     let ctrl_pos = vertex.position + ctrl_out;
-                    painter.line_segment(
-                        [vertex.position, ctrl_pos],
-                        Stroke::new(1.0, ui.visuals().error_fg_color),
-                    );
-                    painter.circle_filled(ctrl_pos, 4.0, ui.visuals().error_fg_color);
+                    painter
+                        .line_segment([vertex.position, ctrl_pos], Stroke::new(1.0, ctrl_color2));
+                    painter.circle_filled(ctrl_pos, 4.0, ctrl_color2);
                 }
             }
         }
@@ -124,8 +126,8 @@ impl MeshEditorUi for MeshEditor {
     }
 
     /// Draw grid background
-    fn draw_grid(&self, ui: &egui::Ui, painter: &egui::Painter, rect: Rect) {
-        let color = ui.visuals().widgets.noninteractive.bg_stroke.color;
+    fn draw_grid(&self, painter: &egui::Painter, rect: Rect, visuals: &egui::Visuals) {
+        let color = visuals.widgets.noninteractive.bg_stroke.color;
 
         let mut x = 0.0;
         while x < rect.width() {
