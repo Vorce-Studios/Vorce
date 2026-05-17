@@ -42,8 +42,6 @@ pub struct ModuleCanvas {
     pub clipboard: Vec<(vorce_core::module::ModulePartType, (f32, f32))>,
     /// Search filter text
     pub search_filter: String,
-    /// Cached lowercased search filter text
-    pub search_filter_lower: Option<String>,
     /// Whether search popup is visible
     pub show_search: bool,
     /// Undo history stack
@@ -112,12 +110,12 @@ pub struct ModuleCanvas {
     pub hue_status_message: Option<String>,
     /// Fetched Hue entertainment areas
     pub hue_areas: Vec<vorce_control::hue::api::groups::GroupInfo>,
-    /// Channel for fetching Hue entertainment areas
+    /// Channel for Hue areas results
     pub hue_areas_rx: Option<
-        std::sync::mpsc::Receiver<
-            Result<Vec<vorce_control::hue::api::groups::GroupInfo>, String>,
-        >,
+        std::sync::mpsc::Receiver<Result<Vec<vorce_control::hue::api::groups::GroupInfo>, String>>,
     >,
+    /// Whether we are currently fetching areas
+    pub hue_fetching_areas: bool,
     /// Last known trigger values for visualization (Part ID -> Value 0.0-1.0)
     pub last_trigger_values: std::collections::HashMap<ModulePartId, f32>,
 
@@ -143,8 +141,6 @@ pub struct ModuleCanvas {
     pub show_quick_create: bool,
     /// Filter text for quick create
     pub quick_create_filter: String,
-    /// Cached lowercased quick create filter text
-    pub quick_create_filter_lower: Option<String>,
     /// Screen position for the quick create popup
     pub quick_create_pos: Pos2,
     /// Index of the currently selected item in the quick create list
@@ -168,7 +164,6 @@ impl Default for ModuleCanvas {
             selected_parts: Vec::new(),
             clipboard: Vec::new(),
             search_filter: String::new(),
-            search_filter_lower: None,
             show_search: false,
             undo_stack: Vec::new(),
             redo_stack: Vec::new(),
@@ -201,6 +196,7 @@ impl Default for ModuleCanvas {
             hue_status_message: None,
             hue_areas: Vec::new(),
             hue_areas_rx: None,
+            hue_fetching_areas: false,
             last_trigger_values: std::collections::HashMap::new(),
             ndi_sender_status: std::collections::HashMap::new(),
             ndi_status_rx: std::collections::HashMap::new(),
@@ -211,7 +207,6 @@ impl Default for ModuleCanvas {
             last_mesh_edit_id: None,
             show_quick_create: false,
             quick_create_filter: String::new(),
-            quick_create_filter_lower: None,
             quick_create_pos: Pos2::ZERO,
             quick_create_selected_index: 0,
             edit_snapshot: None,

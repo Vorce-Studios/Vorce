@@ -65,11 +65,11 @@ hex = "0.4"
 hound = "3.5"
 hyper = "1.1"
 image = "0.24"
-libmpv2 = { version = "5.0", features = ["render"] }
+libmpv2 = { version = "6.0", features = ["render"] }
 libmpv2-sys = "4.0.1"
 
 # Control
-midir = "0.10"
+midir = "0.11"
 
 # File watching
 notify = "8.2"
@@ -99,7 +99,7 @@ thiserror = "2.0"
 tiny-skia = "0.12"
 
 # Async runtime
-tokio = { version = "1.50.0", features = ["full"] }
+tokio = { version = "1.52.3", features = ["full"] }
 toml = "1.1.0"
 tower = "0.5"
 
