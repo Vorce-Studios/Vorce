@@ -13,11 +13,11 @@
   .glass {
     @apply bg-surface/60 backdrop-blur-md border border-white/5 shadow-xl;
   }
-  
+
   .glass-card {
     @apply glass rounded-2xl transition-all duration-300 hover:shadow-primary/10 hover:border-white/10;
   }
-  
+
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent;
   }
