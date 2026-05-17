@@ -948,11 +948,6 @@ function Resolve-ProjectSingleSelectOption {
 function Get-VorceProjectStatusCandidateNames {
     param([Parameter(Mandatory)][hashtable]$Fields)
 
-    $issueStatus = if ($Fields.ContainsKey("IssueStatus")) { ([string]$Fields.IssueStatus).Trim() } elseif ($Fields.ContainsKey("Status")) { ([string]$Fields.Status).Trim() } else { "" }
-    if ($issueStatus -eq "QA Test") {
-        return @("QA Test")
-    }
-
     if (@("closed", "done", "completed", "merged") -contains (([string]$Fields.QueueState).Trim()).ToLowerInvariant()) {
         return @("Done", "Completed", "Closed", "Merged")
     }

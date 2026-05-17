@@ -5,7 +5,7 @@ use egui::{Pos2, Rect, Sense, Stroke, Ui};
 
 pub trait MeshEditorUi {
     fn ui(&mut self, ui: &mut Ui) -> Option<MeshEditorAction>;
-    fn draw_grid(&self, painter: &egui::Painter, rect: Rect, visuals: &egui::Visuals);
+    fn draw_grid(&self, ui: &Ui, painter: &egui::Painter, rect: Rect);
 }
 
 impl MeshEditorUi for MeshEditor {
@@ -53,7 +53,7 @@ impl MeshEditorUi for MeshEditor {
 
         // Draw grid if enabled
         if self.snap_to_grid {
-            self.draw_grid(&painter, response.rect, ui.visuals());
+            self.draw_grid(ui, &painter, response.rect);
         }
 
         // Draw mesh faces
@@ -124,8 +124,8 @@ impl MeshEditorUi for MeshEditor {
     }
 
     /// Draw grid background
-    fn draw_grid(&self, painter: &egui::Painter, rect: Rect, visuals: &egui::Visuals) {
-        let color = visuals.text_color().gamma_multiply(0.1);
+    fn draw_grid(&self, ui: &Ui, painter: &egui::Painter, rect: Rect) {
+        let color = ui.visuals().text_color().gamma_multiply(0.1);
 
         let mut x = 0.0;
         while x < rect.width() {
