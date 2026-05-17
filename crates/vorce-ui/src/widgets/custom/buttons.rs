@@ -1,5 +1,4 @@
 use crate::theme::colors;
-use crate::widgets::custom::hold_action::hold_to_action_button;
 use crate::widgets::icons::{AppIcon, IconManager};
 use egui::{
     Color32, CornerRadius, Pos2, Rect, Response, Sense, Stroke, Ui, Vec2, WidgetInfo, WidgetType,
@@ -254,6 +253,7 @@ pub fn duplicate_button(ui: &mut Ui) -> Response {
 }
 
 pub fn delete_button(ui: &mut Ui) -> bool {
+    use crate::widgets::custom::hold_to_action_button;
     hold_to_action_button(ui, "🗑", colors::ERROR_COLOR, "Delete")
 }
 
@@ -273,50 +273,4 @@ pub fn move_up_button(ui: &mut Ui) -> Response {
 pub fn move_down_button(ui: &mut Ui) -> Response {
     icon_button(ui, "⏷", Color32::TRANSPARENT, Color32::TRANSPARENT, false)
         .on_hover_text("Move Down")
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use egui::Context;
-
-    fn test_ui(func: impl FnMut(&mut egui::Ui)) {
-        let ctx = Context::default();
-        let mut func = func;
-        #[allow(deprecated)]
-        let _ = ctx.run(Default::default(), |ctx| {
-            #[allow(deprecated)]
-            egui::CentralPanel::default().show(ctx, |ui| {
-                func(ui);
-            });
-        });
-    }
-
-    #[test]
-    fn test_styled_button() {
-        test_ui(|ui| {
-            styled_button(ui, "Test Button", false);
-        });
-    }
-
-    #[test]
-    fn test_icon_button() {
-        test_ui(|ui| {
-            icon_button(ui, "Test Icon", Color32::WHITE, Color32::WHITE, false);
-        });
-    }
-
-    #[test]
-    fn test_icon_button_simple() {
-        test_ui(|ui| {
-            icon_button_simple(ui, None, AppIcon::Add, 16.0, "Test Icon");
-        });
-    }
-
-    #[test]
-    fn test_icon_button_compact() {
-        test_ui(|ui| {
-            icon_button_compact(ui, None, AppIcon::Add, "Test Icon");
-        });
-    }
 }
