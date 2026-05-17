@@ -83,6 +83,7 @@ function Resolve-ProjectStatusValue {
 
     switch -Regex ([string]$Value) {
         '^(Done|Completed|Closed|Merged)$' { return "Done" }
+        '^QA Test$' { return "QA Test" }
         '^Blocked$' { return "PR CodeRework" }
         '^Todo$' { return "Todo" }
         default { return "In Progress" }
@@ -395,6 +396,7 @@ if ($null -ne $projectContext) {
 }
 
 Sync-VorceProjectFields -Repository $resolvedRepository -IssueNumber $IssueNumber -Fields @{
+    IssueStatus        = $resolvedStatus
     JulesSessionStatus = Resolve-ProjectJulesSessionStatusValue -RemoteState $resolvedRemoteState -AgentValue $Agent -SessionId $JulesSessionId
     PrChecksStatus     = Resolve-ProjectPrChecksStatusValue -Repository $resolvedRepository -PullRequestUrl $resolvedPullRequestUrl -AgentValue $Agent
     QueueState     = $resolvedQueueState
@@ -407,6 +409,8 @@ Sync-VorceProjectFields -Repository $resolvedRepository -IssueNumber $IssueNumbe
 
 $desiredLabels = if (Test-IsFinalStatus -Value $resolvedStatus) {
     @()
+} elseif ($resolvedStatus -eq "QA Test") {
+    @("status: needs-testing")
 } elseif ($resolvedStatus -eq "Blocked") {
     @("status: blocked")
 } else {
