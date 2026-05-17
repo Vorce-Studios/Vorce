@@ -9,14 +9,12 @@ pub use controls::*;
 pub use labels::*;
 pub use layout::*;
 pub use safety::*;
+
 #[cfg(test)]
 mod tests {
-
-    use crate::widgets::icons::AppIcon;
-    use egui::Ui;
-
     use super::*;
     use egui::Context;
+    use egui::Ui;
 
     fn test_ui(func: impl FnMut(&mut Ui)) {
         let ctx = Context::default();
@@ -101,7 +99,7 @@ mod tests {
     fn test_styled_drag_value() {
         test_ui(|ui| {
             let mut value = 0.5;
-            styled_drag_value(ui, &mut value, 0.01, 0.0..=1.0, 0.5, "", "");
+            styled_drag_value(ui, &mut value, 0.01, 0.0..=1.0, 0.5, "", "");    
         });
     }
 
@@ -122,14 +120,14 @@ mod tests {
     #[test]
     fn test_icon_button_simple() {
         test_ui(|ui| {
-            icon_button_simple(ui, None, AppIcon::Add, 16.0, "Test Icon");
+            icon_button_simple(ui, None, crate::widgets::icons::AppIcon::Add, 16.0, "Test Icon");
         });
     }
 
     #[test]
     fn test_icon_button_compact() {
         test_ui(|ui| {
-            icon_button_compact(ui, None, AppIcon::Add, "Test Icon");
+            icon_button_compact(ui, None, crate::widgets::icons::AppIcon::Add, "Test Icon");
         });
     }
 

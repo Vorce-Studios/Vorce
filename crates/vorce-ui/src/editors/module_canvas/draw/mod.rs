@@ -6,6 +6,7 @@ pub mod part;
 pub mod presets;
 pub mod quick_create;
 pub mod search;
+pub mod primitives;
 
 pub use add_node::*;
 pub use connections::*;
@@ -15,5 +16,4 @@ pub use part::*;
 pub use presets::*;
 pub use quick_create::*;
 pub use search::*;
-pub mod primitives;
 pub use primitives::*;
