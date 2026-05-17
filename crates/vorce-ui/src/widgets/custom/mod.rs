@@ -9,3 +9,6 @@ pub use controls::*;
 pub use labels::*;
 pub use layout::*;
 pub use safety::*;
+
+#[cfg(test)]
+mod tests;
