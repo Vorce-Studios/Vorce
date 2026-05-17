@@ -82,15 +82,7 @@ pub fn show(
     if let Some(module_id) = canvas.active_module_id {
         render_canvas(canvas, ui, manager, module_id, locale, actions, options);
     } else {
-        ui.centered_and_justified(|ui| {
-            ui.vertical_centered(|ui| {
-                ui.add_space(50.0);
-                ui.heading("\u{1F527} Module Canvas");
-                ui.add_space(10.0);
-                ui.label("Click '\u{2795} New Module' to create a module.");
-                ui.label("Please select an existing module from the toolbar above.");
-            });
-        });
+        draw::draw_empty_canvas(ui);
     }
 }
 
@@ -286,26 +278,18 @@ pub fn render_canvas(
             let part_rect = Rect::from_min_size(part_pos, Vec2::new(w, h) * canvas.zoom);
 
             if canvas.selected_parts.contains(&part.id) {
-                let highlight_rect = part_rect.expand(4.0 * canvas.zoom);
-                painter.rect_stroke(
-                    highlight_rect,
-                    0.0,
-                    Stroke::new(2.0 * canvas.zoom, crate::theme::colors::CYAN_ACCENT),
-                    egui::StrokeKind::Middle,
-                );
-
                 let handle_size = 12.0 * canvas.zoom;
                 let handle_rect = Rect::from_min_size(
                     Pos2::new(part_rect.max.x - handle_size, part_rect.max.y - handle_size),
                     Vec2::splat(handle_size),
                 );
-                painter.rect_filled(handle_rect, 0.0, crate::theme::colors::CYAN_ACCENT);
-                painter.line_segment(
-                    [
-                        handle_rect.min + Vec2::new(3.0, handle_size - 3.0),
-                        handle_rect.min + Vec2::new(handle_size - 3.0, 3.0),
-                    ],
-                    Stroke::new(1.5, ui.visuals().window_fill),
+                draw::primitives::draw_node_selection(
+                    &painter,
+                    part_rect,
+                    handle_rect,
+                    handle_size,
+                    canvas.zoom,
+                    ui.visuals().window_fill,
                 );
 
                 let resize_response =
@@ -556,8 +540,13 @@ pub fn render_canvas(
                     Stroke::new(3.0, color)
                 };
 
-                painter.line_segment([start_pos, pointer_pos], preview_stroke);
-                painter.circle_filled(pointer_pos, 5.0, color);
+                draw::primitives::draw_connection_preview(
+                    &painter,
+                    start_pos,
+                    pointer_pos,
+                    color,
+                    preview_stroke,
+                );
             }
         }
 
@@ -599,37 +588,23 @@ pub fn render_canvas(
                     canvas.context_menu_connection = None;
                 } else {
                     let painter = ui.painter();
-                    painter.rect_filled(
+                    draw::primitives::draw_context_menu_bg(
+                        painter,
                         menu_rect,
-                        4.0,
-                        ui.visuals().window_fill.gamma_multiply(0.96),
-                    );
-                    painter.rect_stroke(
-                        menu_rect,
-                        4.0,
-                        Stroke::new(1.0, ui.visuals().error_fg_color.linear_multiply(0.8)),
-                        egui::StrokeKind::Middle,
+                        ui.visuals().error_fg_color.linear_multiply(0.8),
+                        ui.visuals().window_fill,
                     );
 
                     let inner = menu_rect.shrink(8.0);
-                    ui.scope_builder(egui::UiBuilder::new().max_rect(inner), |ui| {
-                        ui.vertical(|ui| {
-                            if crate::widgets::custom::hold_to_action_button(
-                                ui,
-                                "\u{1F5D1} Delete Connection",
-                                crate::theme::colors::ERROR_COLOR,
-                                "Delete Connection",
-                            ) {
-                                if conn_idx < module.connections.len() {
-                                    module.connections.remove(conn_idx);
-                                    module_changed = true;
-                                    needs_repair = true;
-                                }
-                                canvas.context_menu_connection = None;
-                                ui.ctx().request_repaint();
-                            }
-                        });
-                    });
+                    if draw::draw_connection_context_menu(ui, inner) {
+                        if conn_idx < module.connections.len() {
+                            module.connections.remove(conn_idx);
+                            module_changed = true;
+                            needs_repair = true;
+                        }
+                        canvas.context_menu_connection = None;
+                        ui.ctx().request_repaint();
+                    }
                 }
             }
         } else if canvas.context_menu_part.is_none() {
@@ -642,16 +617,11 @@ pub fn render_canvas(
                     canvas.context_menu_pos = None;
                 } else {
                     let painter = ui.painter();
-                    painter.rect_filled(
+                    draw::primitives::draw_context_menu_bg(
+                        painter,
                         menu_rect,
-                        4.0,
-                        ui.visuals().window_fill.gamma_multiply(0.96),
-                    );
-                    painter.rect_stroke(
-                        menu_rect,
-                        4.0,
-                        Stroke::new(1.0, ui.visuals().window_stroke.color),
-                        egui::StrokeKind::Middle,
+                        ui.visuals().window_stroke.color,
+                        ui.visuals().window_fill,
                     );
 
                     let inner = menu_rect.shrink(8.0);
@@ -660,44 +630,7 @@ pub fn render_canvas(
             }
         }
 
-        egui::Area::new(egui::Id::new("canvas_zoom_area"))
-            .anchor(egui::Align2::RIGHT_BOTTOM, egui::vec2(-20.0, -20.0))
-            .show(ui.ctx(), |ui| {
-                crate::widgets::panel::cyber_panel_frame(ui.style()).show(
-                    ui,
-                    |ui: &mut egui::Ui| {
-                        ui.horizontal(|ui: &mut egui::Ui| {
-                            ui.spacing_mut().item_spacing.x = 4.0;
-                            if ui
-                                .button(egui::RichText::new("-").strong())
-                                .on_hover_text("Zoom Out")
-                                .clicked()
-                            {
-                                canvas.zoom = (canvas.zoom / 1.2).max(0.1);
-                            }
-
-                            ui.add(
-                                egui::Slider::new(&mut canvas.zoom, 0.1..=2.0)
-                                    .show_value(false)
-                                    .trailing_fill(true),
-                            );
-
-                            if ui
-                                .button(egui::RichText::new("+").strong())
-                                .on_hover_text("Zoom In")
-                                .clicked()
-                            {
-                                canvas.zoom = (canvas.zoom * 1.2).min(2.0);
-                            }
-                            ui.label(
-                                egui::RichText::new(format!("{:.0}%", canvas.zoom * 100.0))
-                                    .size(11.0)
-                                    .color(ui.visuals().text_color()),
-                            );
-                        });
-                    },
-                );
-            });
+        draw::draw_zoom_controls(canvas, ui);
 
         if needs_repair {
             let repair_report = module.repair_graph();
