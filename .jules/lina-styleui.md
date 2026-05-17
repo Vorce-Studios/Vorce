@@ -25,3 +25,7 @@
 ## 2026-06-15 - Hardcoded Colors in Mesh Editor and Audio Meter
 **Erkenntnis:** The `mesh_editor` and `audio_meter` in `vorce-ui` contained several hardcoded colors (`Color32::from_rgb`, `Color32::WHITE`) that broke visual consistency across different themes, especially breaking contrast and failing to utilize the app's dynamic theme variables.
 **Aktion:** Replaced hardcoded constants with dynamic `ui.visuals()` calls and `crate::theme::colors` references. Ensured correct closure signatures (passing `&egui::Ui`) were used to access `ui.visuals()`.
+
+## 2026-05-20 - Media Browser and Mesh Editor Theme Consistency
+**Erkenntnis:** Hardcoded `Color32` values in the `media_browser` and `mesh_editor` components were causing visual inconsistencies and contrast issues when switching between different theme variants (e.g., from dark to light mode or between custom dark themes).
+**Aktion:** Replaced hardcoded `Color32::from_rgb` and `Color32::WHITE` constants with dynamic `ui.visuals()` properties such as `selection.bg_fill`, `widgets.hovered.bg_fill`, `text_color`, `warn_fg_color`, and `error_fg_color`. This ensures that grid rendering, background fills, and text elements adapt naturally to any selected theme.
