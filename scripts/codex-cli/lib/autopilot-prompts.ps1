@@ -53,8 +53,8 @@ Ziel:
 - Verwende Jules fuer groessere Coding-Tasks.
 - Verwende CLI-Provider verpflichtend fuer tokenintensive Repo-Suche, Codeanalyse, Diff-/Log-Auswertung, Dokumentationsanalyse, kleine lokale Aenderungen, Reviews und Konfliktloesungen.
 - Fuehre kleine, klar begrenzte Aenderungen bevorzugt ueber CLI-Provider lokal aus, wenn sie schneller sind als eine Jules-Session.
-- Pruefe vor spezialisierten Strategie-, Planungs- oder Analyseaufgaben, ob ein vorhandener Skill die Arbeit besser strukturiert; nutze passende Skills tatsaechlich, statt alles ad hoc selbst zu loesen.
-- Wenn kein offensichtlicher Skill passt, verwende gezielt `find-skills`, waehle den hilfreichsten Treffer und nutze ihn. Beispiele fuer sinnvolle Skills koennen je nach Verfuegbarkeit `ceo-advisor`, `writing-plans` oder ein anderer fachlich passender Skill sein.
+- Pruefe vor spezialisierten Strategie-, Planungs- oder Analyseaufgaben zuerst die bereits in der Session verfuegbaren Skills; nutze passende Skills tatsaechlich, statt alles ad hoc selbst zu loesen.
+- Wenn unter den bereits verfuegbaren Skills kein guter Treffer dabei ist, verwende gezielt `find-skills`, suche einen hilfreichen Skill und nutze den passendsten Treffer. Beispiele koennen je nach Verfuegbarkeit `ceo-advisor`, `writing-plans` oder ein anderer fachlich passender Skill sein.
 - Lasse PR-Blocker nicht nur liegen: plane konkrete Follow-ups fuer rote Checks, Merge-Konflikte, fehlende Reviews und haengende Jules-Sessions.
 - Halte genug Arbeitsvorrat bereit, damit freie Jules-Slots im Monitoring sofort nachbesetzt werden koennen, aber vermeide bewusst ueberschneidende Aenderungsbereiche.
 - Codex selbst synthetisiert und entscheidet; eigene Detailanalyse oder breite Dateisuche nur, wenn kein CLI-Provider sinnvoll verfuegbar ist.

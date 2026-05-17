@@ -109,7 +109,7 @@ Planning und Monitoring sind aktive Arbeitslaeufe:
 - Wenn PRs an roten Checks, Reviews oder Merge-Konflikten haengen, reicht ein Statushinweis nicht aus. Der Lauf muss den naechsten konkreten Bearbeitungsschritt starten.
 - Kleine, klar begrenzte Aenderungen duerfen und sollen ueber CLI-Provider lokal ausgefuehrt werden, wenn das schneller ist als eine Jules-Session.
 - Tokenintensive Repo-Suche, Codeanalyse und Dokumentationsarbeit werden an CLI-Provider delegiert, bevor Codex selbst breite Detailanalyse betreibt.
-- Vor spezialisierten Strategie-, Planungs- oder Analyseaufgaben prueft die Planning-Session vorhandene Skills. Wenn kein passender Skill offensichtlich ist, soll sie per `find-skills` gezielt nach einem hilfreichen Skill suchen und den passenden Treffer wirklich anwenden.
+- Vor spezialisierten Strategie-, Planungs- oder Analyseaufgaben prueft die Planning-Session zuerst die bereits verfuegbaren Skills. Wenn darunter kein guter Treffer ist, soll sie per `find-skills` gezielt nach einem hilfreichen Skill suchen und den passendsten Treffer wirklich anwenden.
 - Der Jules-Backlog soll gross genug bleiben, damit freie Slots im Monitoring sofort nachbesetzt werden koennen, aber Aufgaben mit stark ueberlappenden Aenderungsbereichen sollen nicht gleichzeitig laufen.
 
 ## Issue-Namen und Hierarchie
