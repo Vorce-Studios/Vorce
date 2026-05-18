@@ -1,15 +1,7 @@
-## Verlinktes Issue
+## 🛡️ Sicherheits-Update
 
-Fixes #105
-
-## Goal
-
-Ein belastbares Modell fuer Instanz-Topologie, Rollen, Session-Konfiguration und Output-Zuordnung definieren, auf dem alle Cluster-Modi aufbauen.
-
-## Changes Made
-
-- Added `cluster.rs` module defining data structures for `InstanceConfig`, `InstanceRole`, `OutputAssignment`, and `ClusterConfig`.
-- Exposed these new types in the public API via `crates/vorce-core/src/lib.rs`.
-- Integrated `ClusterConfig` into the top-level `AppState` within `crates/vorce-core/src/state.rs`.
-- Made sure the new field handles serialization safely using `#[serde(default)]` and `#[serde(skip)]`.
-- Followed clean code principles by relying on derived traits (e.g. `#[derive(Default)]` with `#[default]` for the enum variant).
+**🚨 Schweregrad:** HIGH
+**💡 Schwachstelle:** Denial of Service (DoS) durch `unwrap()` und `expect()` in diversen I/O- und UI-Rendering-Schichten.
+**🎯 Impact:** Bei unerwarteten Datei-Ladevorgängen oder fehlenden UI-Objekten konnte die gesamte Vorce-Applikation durch einen Panic abstürzen.
+**🔧 Fix:** Kritische `unwrap()`- und `expect()`-Aufrufe wurden in sichere `unwrap_or_else()`- oder Default-Werte übersetzt, um einen sauberen Fallback zu gewährleisten und Linter-Warnungen abzustellen.
+**✅ Verifikation:** `cargo clippy --workspace -- -D clippy::unwrap_used -D clippy::expect_used` und `cargo test` laufen erfolgreich durch. Das Journal in `.jules/sentinel.md` wurde aktualisiert.

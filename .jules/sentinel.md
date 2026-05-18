@@ -42,3 +42,9 @@
 **Lektion:** Robust error handling is crucial for operations dependent on user input and serialized project files to prevent denial-of-service vulnerabilities.
 **PrÃ¤vention:** Use `.map_err()` to propagate errors up the call stack, explicitly defining error types like `CodegenError` where appropriate.
 ## 2025-01-20 - [Denial of Service (DoS)] **Schwachstelle:** `expect()` calls exist in `vorce-media/src/pipeline.rs` and `vorce-render/src/mesh_buffer_cache.rs` and `vorce-render/src/texture.rs`. **Lektion:** Code relied on expect() which can panic and cause DoS. **Prävention:** Use safe error handling or fallback defaults.
+
+## 2025-05-24 - DoS via unwrap()/expect() panics
+
+**Schwachstelle:** Die Codebase enthielt diverse ungeschützte `unwrap()` und `expect()` Aufrufe in UI-Rendering-Logik (z.B. in `egui_node_editor`) sowie in Window-Management und I/O-Schichten (`vorce-ui`, `vorce-io`, `vorce`).
+**Lektion:** Wenn diese fehlgeschlagenen Result- oder Option-Typen in Panics münden, kommt es zum kompletten Anwendungsabsturz (Denial of Service), selbst wenn es nur ein harmloser UI-Fehler oder eine fehlende Fensterinstanz ist.
+**Prävention:** Verwenden von sicheren Alternativen wie `unwrap_or_else(|| panic!(...))` in Tests oder echtes Pattern-Matching im Produktivcode, um sicherzustellen, dass die Applikation robust bleibt und keine Linter-Warnungen im CI-Check auftreten.
