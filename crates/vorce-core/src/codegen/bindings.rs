@@ -1,14 +1,13 @@
-use std::fmt::Write;
 use super::error::{CodegenError, Result};
 use super::generator::WGSLCodegen;
 use crate::shader_graph::NodeType;
+use std::fmt::Write;
 
 pub(crate) fn generate_uniforms(codegen: &WGSLCodegen, code: &mut String) -> Result<()> {
     writeln!(code, "// Uniforms").map_err(|e| CodegenError::GenerationError(e.to_string()))?;
     writeln!(code, "struct Uniforms {{")
         .map_err(|e| CodegenError::GenerationError(e.to_string()))?;
-    writeln!(code, "    time: f32,")
-        .map_err(|e| CodegenError::GenerationError(e.to_string()))?;
+    writeln!(code, "    time: f32,").map_err(|e| CodegenError::GenerationError(e.to_string()))?;
     writeln!(code, "    resolution: vec2<f32>,")
         .map_err(|e| CodegenError::GenerationError(e.to_string()))?;
     writeln!(code, "    mouse: vec2<f32>,")
