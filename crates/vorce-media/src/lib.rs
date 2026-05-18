@@ -12,6 +12,7 @@ use std::path::Path;
 use thiserror::Error;
 
 pub mod decoder;
+pub mod ffmpeg_decoder;
 #[cfg(feature = "hap")]
 pub mod hap_decoder;
 pub mod image_decoder;
@@ -21,7 +22,8 @@ pub mod pipeline;
 pub mod player;
 pub mod sequence;
 
-pub use decoder::{FFmpegDecoder, HwAccelType, PixelFormat, TestPatternDecoder, VideoDecoder};
+pub use decoder::{HwAccelType, PixelFormat, TestPatternDecoder, VideoDecoder};
+pub use ffmpeg_decoder::FFmpegDecoder;
 #[cfg(feature = "hap")]
 pub use hap_decoder::{decode_hap_frame, HapError, HapFrame, HapTextureType};
 pub use image_decoder::{GifDecoder, StillImageDecoder};
@@ -58,17 +60,6 @@ pub enum MediaError {
 
 /// Result type for media operations
 pub type Result<T> = std::result::Result<T, MediaError>;
-
-pub(crate) fn reject_path_traversal(path: &Path) -> Result<()> {
-    if path.components().any(|component| matches!(component, std::path::Component::ParentDir)) {
-        return Err(MediaError::FileOpen(format!(
-            "Path traversal is not allowed: {}",
-            path.display()
-        )));
-    }
-
-    Ok(())
-}
 
 /// Open a media file or image sequence and create a video player with specific hardware acceleration
 pub fn open_path_with_hw_accel<P: AsRef<Path>>(
