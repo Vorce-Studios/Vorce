@@ -7,7 +7,9 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Instant;
 
-use super::types::{MediaBrowserAction, MediaEntry, MediaFolders, MediaType, SortMode, ThumbnailHandle, ViewMode};
+use super::types::{
+    MediaBrowserAction, MediaEntry, MediaFolders, MediaType, SortMode, ThumbnailHandle, ViewMode,
+};
 use super::ui::render_ui;
 
 /// Media browser state

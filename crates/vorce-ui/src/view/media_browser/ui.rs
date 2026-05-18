@@ -190,7 +190,8 @@ pub fn render_ui(
             return;
         }
 
-        let entry_indices: Vec<usize> = browser.filtered_entries().into_iter().map(|(i, _)| i).collect();
+        let entry_indices: Vec<usize> =
+            browser.filtered_entries().into_iter().map(|(i, _)| i).collect();
 
         if entry_indices.is_empty() {
             ui.vertical_centered(|ui| {
@@ -227,33 +228,30 @@ fn render_grid_view(
     let available_width = ui.available_width();
     let columns = (available_width / (item_size.x + 8.0)).floor().max(1.0) as usize;
 
-    egui::Grid::new("media_grid").spacing([8.0, 8.0]).min_col_width(item_size.x).show(
-        ui,
-        |ui| {
-            for (i, &idx) in entry_indices.iter().enumerate() {
-                if i > 0 && i % columns == 0 {
-                    ui.end_row();
-                }
-
-                let entry = &browser.entries[idx];
-                let response = render_thumbnail_item(browser, ui, entry, idx, icons);
-
-                if response.clicked() {
-                    browser.selected = Some(idx);
-                    action = Some(MediaBrowserAction::FileSelected(entry.path.clone()));
-                }
-
-                if response.double_clicked() {
-                    action = Some(MediaBrowserAction::FileDoubleClicked(entry.path.clone()));
-                }
-
-                if response.hovered() && browser.hovered != Some(idx) {
-                    browser.hovered = Some(idx);
-                    browser.hover_start = Some(Instant::now());
-                }
+    egui::Grid::new("media_grid").spacing([8.0, 8.0]).min_col_width(item_size.x).show(ui, |ui| {
+        for (i, &idx) in entry_indices.iter().enumerate() {
+            if i > 0 && i % columns == 0 {
+                ui.end_row();
             }
-        },
-    );
+
+            let entry = &browser.entries[idx];
+            let response = render_thumbnail_item(browser, ui, entry, idx, icons);
+
+            if response.clicked() {
+                browser.selected = Some(idx);
+                action = Some(MediaBrowserAction::FileSelected(entry.path.clone()));
+            }
+
+            if response.double_clicked() {
+                action = Some(MediaBrowserAction::FileDoubleClicked(entry.path.clone()));
+            }
+
+            if response.hovered() && browser.hovered != Some(idx) {
+                browser.hovered = Some(idx);
+                browser.hover_start = Some(Instant::now());
+            }
+        }
+    });
 
     if let Some(hover_time) = browser.hover_start {
         if hover_time.elapsed().as_secs_f32() > browser.preview_delay {
@@ -361,7 +359,8 @@ fn render_thumbnail_item(
                 if let Some(app_icon) = entry.file_type.app_icon() {
                     if let Some(texture) = mgr.get(app_icon) {
                         let icon_size = Vec2::new(64.0, 64.0).min(thumb_rect.size() * 0.8);
-                        let icon_rect = egui::Rect::from_center_size(thumb_rect.center(), icon_size);
+                        let icon_rect =
+                            egui::Rect::from_center_size(thumb_rect.center(), icon_size);
 
                         ui.painter().image(
                             texture.id(),
