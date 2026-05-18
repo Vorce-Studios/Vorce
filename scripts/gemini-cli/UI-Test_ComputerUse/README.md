@@ -22,6 +22,12 @@ To verify your environment without altering app data:
 python scripts/gemini-cli/UI-Test_ComputerUse/harness.py --env-check
 ```
 
+To run the deterministic UI smoke test (exercises a fixed set of UI interactions quickly):
+
+```bash
+python scripts/gemini-cli/UI-Test_ComputerUse/vorce_smoke_test.py
+```
+
 To run the harness:
 
 ```bash
