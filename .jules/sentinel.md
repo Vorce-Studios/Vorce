@@ -48,3 +48,4 @@
 **Schwachstelle:** `load_project` in `crates/vorce-io/src/project.rs` hat Dateipfade nicht auf `..` Komponenten validiert, wodurch Path Traversal beim Laden von Projekten mÃ¶glich war.
 **Lektion:** Es fehlte eine Validierungsschicht zwischen externen Pfaden und dem Dateisystemzugriff.
 **PrÃ¤vention:** Bei jeglichem Einlesen von Dateien über externe oder dynamische Pfade muss vor dem Aufruf von `File::open` oder `fs::read` zwingend eine Validierung der Pfadkomponenten stattfinden, idealerweise durch den Ausschluss von `Component::ParentDir` oder eine strikte Sandboxing-Architektur.
+## 2025-01-20 - [Fix: Defense-in-depth on OSC and Config deserialization] **Schwachstelle:** Panic possible due to `unwrap`/`expect` during OSC network parsing and config loading. **Lektion:** Never unwrap network inputs or untrusted file configs since it can cause DoS. **Prävention:** Use `match` to properly handle `Result` types for robust error handling.

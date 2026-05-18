@@ -482,13 +482,19 @@ impl App {
 
     fn start_mcp_server(mcp_sender: crossbeam_channel::Sender<vorce_mcp::McpAction>) {
         thread::spawn(move || {
-            let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
-            rt.block_on(async {
-                let server = McpServer::new(Some(mcp_sender));
-                if let Err(e) = server.run_stdio().await {
-                    error!("MCP Server error: {}", e);
+            match tokio::runtime::Builder::new_current_thread().enable_all().build() {
+                Ok(rt) => {
+                    rt.block_on(async {
+                        let server = McpServer::new(Some(mcp_sender));
+                        if let Err(e) = server.run_stdio().await {
+                            error!("MCP Server error: {}", e);
+                        }
+                    });
                 }
-            });
+                Err(e) => {
+                    error!("Failed to create Tokio runtime for MCP server: {}", e);
+                }
+            }
         });
     }
 
