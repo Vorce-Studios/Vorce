@@ -27,7 +27,11 @@ pub fn check_hold_state(ui: &mut Ui, id: egui::Id, is_interacting: bool) -> (boo
             ui.data_mut(|d| d.insert_temp(start_time_id, start_time));
         }
 
-        let elapsed = now - start_time.unwrap();
+        let elapsed = if let Some(st) = start_time {
+            now - st
+        } else {
+            0.0
+        };
         progress = (elapsed as f32 / hold_duration).clamp(0.0, 1.0);
 
         // Store progress for external visualization if needed
