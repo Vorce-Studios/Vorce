@@ -1,7 +1,7 @@
 use super::state::*;
 use super::types::*;
 use crate::editors::mesh_editor::interaction::MeshEditorInteraction;
-use egui::{Pos2, Rect, Sense, Stroke, Ui};
+use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui};
 
 pub trait MeshEditorUi {
     fn ui(&mut self, ui: &mut Ui) -> Option<MeshEditorAction>;
@@ -74,9 +74,9 @@ impl MeshEditorUi for MeshEditor {
         // Draw vertices
         for vertex in self.vertices.iter() {
             let color = if vertex.selected {
-                ui.visuals().warn_fg_color
+                ui.visuals().selection.bg_fill
             } else {
-                ui.visuals().text_color()
+                Color32::from_rgb(200, 200, 200)
             };
 
             painter.circle_filled(vertex.position, 6.0, color);

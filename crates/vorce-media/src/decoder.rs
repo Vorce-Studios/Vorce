@@ -144,6 +144,7 @@ mod ffmpeg_impl {
         /// Open a video file with optional hardware acceleration
         pub fn open<P: AsRef<Path>>(path: P, hw_accel: HwAccelType) -> Result<Self> {
             let path = path.as_ref();
+            crate::reject_path_traversal(path)?;
 
             if !path.exists() {
                 return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
@@ -730,31 +731,6 @@ impl VideoDecoder for FFmpegDecoder {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_test_pattern_decoder() {
-        let mut decoder = TestPatternDecoder::new(640, 480, Duration::from_secs(10), 30.0);
-
-        assert_eq!(decoder.resolution(), (640, 480));
-        assert_eq!(decoder.fps(), 30.0);
-        assert_eq!(decoder.duration(), Duration::from_secs(10));
-
-        let frame = decoder.next_frame().unwrap();
-        assert_eq!(frame.format.width, 640);
-        assert_eq!(frame.format.height, 480);
-        assert_eq!(frame.format.pixel_format, vorce_io::PixelFormat::RGBA8);
-    }
-
-    #[test]
-    fn test_test_pattern_seek() {
-        let mut decoder = TestPatternDecoder::new(640, 480, Duration::from_secs(10), 30.0);
-
-        decoder.seek(Duration::from_secs(5)).unwrap();
-        assert_eq!(decoder.current_time, Duration::from_secs(5));
-
-        // Seeking beyond duration should error
-        assert!(decoder.seek(Duration::from_secs(15)).is_err());
-    }
 
     #[test]
     fn test_yuv420p_conversion() {

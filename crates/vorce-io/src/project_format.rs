@@ -24,6 +24,17 @@ const MAX_PROJECT_FILE_SIZE: u64 = 50 * 1024 * 1024;
 #[cfg(test)]
 const MAX_PROJECT_FILE_SIZE: u64 = 10 * 1024; // 10 KB for testing
 
+fn reject_path_traversal(path: &Path) -> Result<()> {
+    if path.components().any(|component| matches!(component, std::path::Component::ParentDir)) {
+        return Err(IoError::Io(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            format!("Path traversal is not allowed: {}", path.display()),
+        )));
+    }
+
+    Ok(())
+}
+
 /// Represents the top-level structure of a saved Vorce project file.
 ///
 /// This struct is what gets serialized to/from RON or JSON. It wraps the
@@ -55,6 +66,7 @@ impl ProjectFile {
     /// This function handles the low-level deserialization from either RON or JSON,
     /// depending on the file extension.
     pub fn load(path: &Path) -> Result<Self> {
+        reject_path_traversal(path)?;
         let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("ron");
 
         match extension {
@@ -215,5 +227,13 @@ mod tests {
             Err(e) => panic!("Wrong error type: {:?}", e),
             Ok(_) => panic!("Should have failed"),
         }
+    }
+
+    #[test]
+    fn project_file_load_rejects_path_traversal() {
+        let result = ProjectFile::load(Path::new("../../../project.vorce"));
+        assert!(
+            matches!(result, Err(IoError::Io(error)) if error.kind() == std::io::ErrorKind::InvalidInput)
+        );
     }
 }
