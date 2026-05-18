@@ -1,325 +1,9 @@
-use crate::Result;
-use std::sync::Arc;
-use vorce_core::{OscillatorConfig, PhaseInitMode};
-use wgpu::util::DeviceExt;
+use super::types::*;
+use super::OscillatorRenderer;
+use vorce_core::OscillatorConfig;
 
-use super::types::{SimulationParams, Vertex};
-
-pub struct OscillatorSimulation {
-    pipeline: wgpu::RenderPipeline,
-
-    // Bind group layouts
-    _texture_layout: wgpu::BindGroupLayout,
-    _uniform_layout: wgpu::BindGroupLayout,
-
-    // Phase textures (ping-pong)
-    phase_texture_a: wgpu::Texture,
-    pub phase_view_a: wgpu::TextureView,
-    phase_texture_b: wgpu::Texture,
-    pub phase_view_b: wgpu::TextureView,
-
-    // Framebuffers
-    fbo_a: wgpu::TextureView,
-    fbo_b: wgpu::TextureView,
-
-    // Buffers
-    uniform_buffer: wgpu::Buffer,
-
-    // Bind groups
-    bind_group_a: wgpu::BindGroup,
-    bind_group_b: wgpu::BindGroup,
-    uniform_bind_group: wgpu::BindGroup,
-
-    // State
-    pub sim_width: u32,
-    pub sim_height: u32,
-    pub current_phase: bool, // false = A, true = B
-
-    // Resources
-    resources: Arc<crate::oscillator_renderer::resources::OscillatorResources>,
-}
-
-impl OscillatorSimulation {
-    pub fn new(
-        resources: Arc<crate::oscillator_renderer::resources::OscillatorResources>,
-        config: &OscillatorConfig,
-    ) -> Result<Self> {
-        let (sim_width, sim_height) = config.simulation_resolution.dimensions();
-
-        let phase_texture_a =
-            Self::create_phase_texture(&resources.device, sim_width, sim_height, "Phase Texture A");
-        let phase_view_a = phase_texture_a.create_view(&wgpu::TextureViewDescriptor::default());
-        let fbo_a = phase_texture_a.create_view(&wgpu::TextureViewDescriptor::default());
-
-        let phase_texture_b =
-            Self::create_phase_texture(&resources.device, sim_width, sim_height, "Phase Texture B");
-        let phase_view_b = phase_texture_b.create_view(&wgpu::TextureViewDescriptor::default());
-        let fbo_b = phase_texture_b.create_view(&wgpu::TextureViewDescriptor::default());
-
-        let texture_layout =
-            resources.device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("Sim Texture Bind Group Layout"),
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            sample_type: wgpu::TextureSampleType::Float { filterable: false },
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            multisampled: false,
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::NonFiltering),
-                        count: None,
-                    },
-                ],
-            });
-
-        let uniform_layout =
-            resources.device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("Sim Uniform Bind Group Layout"),
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }],
-            });
-
-        let shader_source = include_str!("../../../../shaders/oscillator_simulation.wgsl");
-        let shader = resources.device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Oscillator Simulation Shader"),
-            source: wgpu::ShaderSource::Wgsl(shader_source.into()),
-        });
-
-        let pipeline_layout =
-            resources.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Sim Pipeline Layout"),
-                bind_group_layouts: &[Some(&texture_layout), Some(&uniform_layout)],
-                immediate_size: 0,
-            });
-
-        let pipeline = resources.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Simulation Pipeline"),
-            layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: Some("vs_main"),
-                buffers: &[Vertex::desc()],
-                compilation_options: Default::default(),
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: Some("fs_main"),
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::R32Float,
-                    blend: None,
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-                compilation_options: Default::default(),
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: None,
-                unclipped_depth: false,
-                polygon_mode: wgpu::PolygonMode::Fill,
-                conservative: false,
-            },
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState {
-                count: 1,
-                mask: !0,
-                alpha_to_coverage_enabled: false,
-            },
-            multiview_mask: None,
-            cache: None,
-        });
-
-        let sim_params = Self::create_sim_params(config, sim_width, sim_height, 0.0, 0.016);
-        let uniform_buffer =
-            resources.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Sim Uniform Buffer"),
-                contents: bytemuck::cast_slice(&[sim_params]),
-                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            });
-
-        let bind_group_a = resources.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Sim Bind Group A"),
-            layout: &texture_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&phase_view_a),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&resources.non_filtering_sampler),
-                },
-            ],
-        });
-
-        let bind_group_b = resources.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Sim Bind Group B"),
-            layout: &texture_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&phase_view_b),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&resources.non_filtering_sampler),
-                },
-            ],
-        });
-
-        let uniform_bind_group = resources.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Sim Uniform Bind Group"),
-            layout: &uniform_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: uniform_buffer.as_entire_binding(),
-            }],
-        });
-
-        Ok(Self {
-            pipeline,
-            _texture_layout: texture_layout,
-            _uniform_layout: uniform_layout,
-            phase_texture_a,
-            phase_view_a,
-            phase_texture_b,
-            phase_view_b,
-            fbo_a,
-            fbo_b,
-            uniform_buffer,
-            bind_group_a,
-            bind_group_b,
-            uniform_bind_group,
-            sim_width,
-            sim_height,
-            current_phase: false,
-            resources,
-        })
-    }
-
-    fn create_phase_texture(
-        device: &wgpu::Device,
-        width: u32,
-        height: u32,
-        label: &str,
-    ) -> wgpu::Texture {
-        device.create_texture(&wgpu::TextureDescriptor {
-            label: Some(label),
-            size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::R32Float,
-            usage: wgpu::TextureUsages::TEXTURE_BINDING
-                | wgpu::TextureUsages::RENDER_ATTACHMENT
-                | wgpu::TextureUsages::COPY_DST,
-            view_formats: &[],
-        })
-    }
-
-    pub fn initialize_phases(&mut self, mode: PhaseInitMode) {
-        tracing::debug!("Initializing phases with mode: {:?}", mode);
-
-        let size = (self.sim_width * self.sim_height) as usize;
-        let mut phase_data = vec![0.0f32; size];
-
-        match mode {
-            PhaseInitMode::Random => {
-                use rand::RngExt;
-                let mut rng = rand::rng();
-                for phase in &mut phase_data {
-                    *phase = rng.random::<f32>() * 2.0 * std::f32::consts::PI;
-                }
-            }
-            PhaseInitMode::Uniform => {}
-            PhaseInitMode::PlaneHorizontal => {
-                for y in 0..self.sim_height {
-                    for x in 0..self.sim_width {
-                        let u = x as f32 / self.sim_width as f32;
-                        let idx = (y * self.sim_width + x) as usize;
-                        phase_data[idx] = u * 2.0 * std::f32::consts::PI;
-                    }
-                }
-            }
-            PhaseInitMode::PlaneVertical => {
-                for y in 0..self.sim_height {
-                    for x in 0..self.sim_width {
-                        let v = y as f32 / self.sim_height as f32;
-                        let idx = (y * self.sim_width + x) as usize;
-                        phase_data[idx] = v * 2.0 * std::f32::consts::PI;
-                    }
-                }
-            }
-            PhaseInitMode::PlaneDiagonal => {
-                for y in 0..self.sim_height {
-                    for x in 0..self.sim_width {
-                        let u = x as f32 / self.sim_width as f32;
-                        let v = y as f32 / self.sim_height as f32;
-                        let idx = (y * self.sim_width + x) as usize;
-                        phase_data[idx] = (u + v) * std::f32::consts::PI;
-                    }
-                }
-            }
-        }
-
-        self.resources.queue.write_texture(
-            wgpu::TexelCopyTextureInfo {
-                texture: &self.phase_texture_a,
-                mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All,
-            },
-            bytemuck::cast_slice(&phase_data),
-            wgpu::TexelCopyBufferLayout {
-                offset: 0,
-                bytes_per_row: Some(self.sim_width * 4),
-                rows_per_image: Some(self.sim_height),
-            },
-            wgpu::Extent3d {
-                width: self.sim_width,
-                height: self.sim_height,
-                depth_or_array_layers: 1,
-            },
-        );
-
-        self.resources.queue.write_texture(
-            wgpu::TexelCopyTextureInfo {
-                texture: &self.phase_texture_b,
-                mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All,
-            },
-            bytemuck::cast_slice(&phase_data),
-            wgpu::TexelCopyBufferLayout {
-                offset: 0,
-                bytes_per_row: Some(self.sim_width * 4),
-                rows_per_image: Some(self.sim_height),
-            },
-            wgpu::Extent3d {
-                width: self.sim_width,
-                height: self.sim_height,
-                depth_or_array_layers: 1,
-            },
-        );
-    }
-
-    fn create_sim_params(
+impl OscillatorRenderer {
+    pub(crate) fn create_sim_params(
         config: &OscillatorConfig,
         sim_width: u32,
         sim_height: u32,
@@ -361,31 +45,37 @@ impl OscillatorSimulation {
         }
     }
 
-    pub fn update(&mut self, delta_time: f32, time_elapsed: f32, config: &OscillatorConfig) {
+    pub fn update(&mut self, delta_time: f32, config: &OscillatorConfig) {
+        self.time_elapsed += delta_time;
+
+        // Update simulation uniforms
         let sim_params = Self::create_sim_params(
             config,
             self.sim_width,
             self.sim_height,
-            time_elapsed,
+            self.time_elapsed,
             delta_time,
         );
         self.resources.queue.write_buffer(
-            &self.uniform_buffer,
+            &self.resources.sim_uniform_buffer,
             0,
             bytemuck::cast_slice(&[sim_params]),
         );
 
+        // Create command encoder for simulation step
         let mut encoder =
             self.resources.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Oscillator Simulation Encoder"),
             });
 
+        // Determine which phase texture to read from and write to
         let (input_bind_group, output_view) = if self.current_phase {
-            (&self.bind_group_b, &self.fbo_a)
+            (&self.resources.sim_bind_group_b, &self.resources.sim_fbo_a)
         } else {
-            (&self.bind_group_a, &self.fbo_b)
+            (&self.resources.sim_bind_group_a, &self.resources.sim_fbo_b)
         };
 
+        // Run simulation pass
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Oscillator Simulation Pass"),
@@ -393,6 +83,7 @@ impl OscillatorSimulation {
                     depth_slice: None,
                     view: output_view,
                     resolve_target: None,
+
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
                         store: wgpu::StoreOp::Store,
@@ -404,9 +95,9 @@ impl OscillatorSimulation {
                 multiview_mask: None,
             });
 
-            render_pass.set_pipeline(&self.pipeline);
+            render_pass.set_pipeline(&self.resources.simulation_pipeline);
             render_pass.set_bind_group(0, input_bind_group, &[]);
-            render_pass.set_bind_group(1, &self.uniform_bind_group, &[]);
+            render_pass.set_bind_group(1, &self.resources.sim_uniform_bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.resources.vertex_buffer.slice(..));
             render_pass
                 .set_index_buffer(self.resources.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
@@ -415,6 +106,7 @@ impl OscillatorSimulation {
 
         self.resources.queue.submit(std::iter::once(encoder.finish()));
 
+        // Swap phase textures
         self.current_phase = !self.current_phase;
     }
 }
