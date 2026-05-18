@@ -1,7 +1,7 @@
 use super::state::*;
 use super::types::*;
 use crate::editors::mesh_editor::interaction::MeshEditorInteraction;
-use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui};
+use egui::{Pos2, Rect, Sense, Stroke, Ui};
 
 pub trait MeshEditorUi {
     fn ui(&mut self, ui: &mut Ui) -> Option<MeshEditorAction>;
@@ -74,9 +74,9 @@ impl MeshEditorUi for MeshEditor {
         // Draw vertices
         for vertex in self.vertices.iter() {
             let color = if vertex.selected {
-                ui.visuals().selection.bg_fill
+                ui.visuals().warn_fg_color
             } else {
-                Color32::from_rgb(200, 200, 200)
+                ui.visuals().text_color()
             };
 
             painter.circle_filled(vertex.position, 6.0, color);
@@ -90,16 +90,20 @@ impl MeshEditorUi for MeshEditor {
             if self.mode == EditMode::Bezier {
                 if let Some(ctrl_in) = vertex.control_in {
                     let ctrl_pos = vertex.position + ctrl_in;
-                    let color = ui.visuals().hyperlink_color;
-                    painter.line_segment([vertex.position, ctrl_pos], Stroke::new(1.0, color));
-                    painter.circle_filled(ctrl_pos, 4.0, color);
+                    painter.line_segment(
+                        [vertex.position, ctrl_pos],
+                        Stroke::new(1.0, ui.visuals().hyperlink_color),
+                    );
+                    painter.circle_filled(ctrl_pos, 4.0, ui.visuals().hyperlink_color);
                 }
 
                 if let Some(ctrl_out) = vertex.control_out {
                     let ctrl_pos = vertex.position + ctrl_out;
-                    let color = ui.visuals().warn_fg_color;
-                    painter.line_segment([vertex.position, ctrl_pos], Stroke::new(1.0, color));
-                    painter.circle_filled(ctrl_pos, 4.0, color);
+                    painter.line_segment(
+                        [vertex.position, ctrl_pos],
+                        Stroke::new(1.0, ui.visuals().warn_fg_color),
+                    );
+                    painter.circle_filled(ctrl_pos, 4.0, ui.visuals().warn_fg_color);
                 }
             }
         }

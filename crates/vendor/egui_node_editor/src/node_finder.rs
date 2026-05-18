@@ -16,6 +16,7 @@ pub struct NodeFinder<NodeTemplate> {
 
 // ⚡ Bolt: Inline function for zero-allocation case-insensitive string search.
 #[inline]
+#[allow(dead_code)]
 fn case_insensitive_contains(haystack: &str, needle: &str) -> bool {
     if needle.is_empty() {
         return true;
@@ -117,9 +118,7 @@ where
                                     (kind, kind_name)
                                 })
                                 .filter(|(_kind, kind_name)| {
-                                    kind_name
-                                        .to_lowercase()
-                                        .contains(self.query.to_lowercase().as_str())
+                                    case_insensitive_contains(kind_name, &self.query)
                                 })
                                 .collect();
 

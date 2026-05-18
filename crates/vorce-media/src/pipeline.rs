@@ -321,8 +321,8 @@ impl FrameScheduler {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::decoder::TestPatternDecoder;
     use crate::player::VideoPlayer;
-    use crate::test_pattern_decoder::TestPatternDecoder;
 
     #[test]
     fn test_pipeline_config_default() {
