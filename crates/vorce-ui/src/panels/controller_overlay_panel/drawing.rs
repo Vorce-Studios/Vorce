@@ -409,7 +409,6 @@ impl ControllerOverlayPanel {
                 Some(a) => match &a.target {
                     MidiAssignmentTarget::Vorce(_) => visuals.hyperlink_color,
                     MidiAssignmentTarget::StreamerBot(_) => visuals.warn_fg_color,
-                    MidiAssignmentTarget::Mixxx(_) => visuals.error_fg_color,
                 },
                 None => visuals.selection.bg_fill, // Theme's selection color for free elements
             }
