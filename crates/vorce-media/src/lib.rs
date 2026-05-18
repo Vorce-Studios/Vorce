@@ -14,24 +14,17 @@ use thiserror::Error;
 pub mod decoder;
 #[cfg(feature = "hap")]
 pub mod hap_decoder;
-// #[cfg(feature = "hap")]
-// pub mod hap_player;
 pub mod image_decoder;
 #[cfg(feature = "libmpv")]
 pub mod mpv_decoder;
+pub mod pipeline;
 pub mod player;
 pub mod sequence;
-// TODO: Enable pipeline with thread-local scaler approach
-// The pipeline module requires VideoDecoder to be Send, but FFmpeg's scaler (SwsContext) is not thread-safe.
-// Solution: Use thread-local scaler - create scaler once in decode thread, avoiding Send requirement.
-// This provides zero overhead and clean separation. See pipeline.rs for implementation details.
-pub mod pipeline;
+pub mod test_pattern_decoder;
 
 pub use decoder::{FFmpegDecoder, HwAccelType, PixelFormat, TestPatternDecoder, VideoDecoder};
 #[cfg(feature = "hap")]
 pub use hap_decoder::{decode_hap_frame, HapError, HapFrame, HapTextureType};
-// #[cfg(feature = "hap")]
-// pub use hap_player::{is_hap_file, HapVideoDecoder};
 pub use image_decoder::{GifDecoder, StillImageDecoder};
 #[cfg(feature = "libmpv")]
 pub use mpv_decoder::MpvDecoder;
@@ -66,6 +59,17 @@ pub enum MediaError {
 
 /// Result type for media operations
 pub type Result<T> = std::result::Result<T, MediaError>;
+
+pub(crate) fn reject_path_traversal(path: &Path) -> Result<()> {
+    if path.components().any(|component| matches!(component, std::path::Component::ParentDir)) {
+        return Err(MediaError::FileOpen(format!(
+            "Path traversal is not allowed: {}",
+            path.display()
+        )));
+    }
+
+    Ok(())
+}
 
 /// Open a media file or image sequence and create a video player with specific hardware acceleration
 pub fn open_path_with_hw_accel<P: AsRef<Path>>(

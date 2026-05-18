@@ -93,6 +93,10 @@ pub fn check_module_integrity(module: &VorceModule) -> Vec<ModuleIssue> {
                         });
                     }
                 }
+                SourceType::MediaFile { .. }
+                | SourceType::VideoUni { .. }
+                | SourceType::ImageUni { .. } => {}
+
                 _ => {}
             }
         }
