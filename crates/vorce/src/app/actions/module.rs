@@ -3,10 +3,10 @@
 use crate::app::core::app_struct::App;
 #[cfg(feature = "ndi")]
 use crossbeam_channel::Sender;
+#[cfg(feature = "ndi")]
+use tracing::{error, info};
 use vorce_mcp::McpAction;
 use vorce_ui::UIAction;
-#[cfg(feature = "ndi")]
-use tracing::{info, error};
 /// Handle UI actions
 pub fn handle(app: &mut App, action: UIAction, _needs_sync: &mut bool) -> bool {
     match action {

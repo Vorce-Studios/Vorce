@@ -3,9 +3,9 @@
 use crate::app::core::app_struct::App;
 #[cfg(feature = "ndi")]
 use crossbeam_channel::Sender;
-use vorce_ui::UIAction;
 #[cfg(feature = "ndi")]
-use tracing::{info, error};
+use tracing::{error, info};
+use vorce_ui::UIAction;
 /// Handle UI actions
 pub fn handle(app: &mut App, action: UIAction, _needs_sync: &mut bool) -> bool {
     match action {
