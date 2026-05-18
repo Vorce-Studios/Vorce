@@ -44,9 +44,12 @@ pub fn draw_search_popup(
                     let Some(filter_lower) = &canvas.search_filter_lower else {
                         return true;
                     };
-                    let name = utils::get_part_property_text(&p.part_type).to_lowercase();
+                    // ⚡ Bolt Performance Boost: Vermeidung von String-Allokationen im Render-Frame
+                    // Anstatt jeden Frame `to_lowercase()` aufzurufen (was den Heap belastet),
+                    // verwenden wir eine zero-allocation case-insensitive Vergleichsfunktion.
+                    let name = utils::get_part_property_text(&p.part_type);
                     let (_, _, _, type_name) = utils::get_part_style(&p.part_type);
-                    name.contains(filter_lower)
+                    utils::case_insensitive_contains(&name, filter_lower)
                         || utils::case_insensitive_contains(type_name, filter_lower)
                 })
                 .take(6)

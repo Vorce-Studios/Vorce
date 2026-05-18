@@ -13,3 +13,7 @@
 ## 2025-05-07 - Zero-Allocation Case-Insensitive Search in Hot Paths
 **Erkenntnis:** Using `.to_lowercase().contains(...)` inside iterators or UI render loops for searches allocates memory continuously every frame. While `socket.name` and `type_name` seem innocuous, their constant allocation creates hidden latency and pressure on the memory allocator.
 **Aktion:** Replaced dynamic lowercase allocation with a custom `utils::case_insensitive_contains` function that does zero-allocation ASCII-aware comparisons using `.eq_ignore_ascii_case()` combined with a substring search window, significantly improving continuous render loop performance during active searches.
+
+## 2026-05-08 - Zero-Allocation Search and Cache Pessimization
+**Erkenntnis:** Das Ersetzen von `.to_lowercase()` durch eine eigene `case_insensitive_contains`-Funktion ist nur dann eine echte Performance-Verbesserung, wenn dies direkt im Render-Loop (Hot Path) geschieht. Das Entfernen von vorberechneten (ge-cachten) Lowercase-Strings in Datenmodellen und das Ersetzen durch dynamische "On-the-fly"-Vergleiche oder Generatoren (wie `to_shortcut_string()`) verschlechtert die Performance dramatisch, da die Arbeit von einer einmaligen Initialisierung in den Render-Frame verlagert wird.
+**Aktion:** Beim Optimieren von Suchen in Immediate-Mode-UIs immer prüfen, ob die Strings dynamisch im Frame generiert werden. Caching-Mechanismen beibehalten und nur solche Transformationen optimieren, die unvermeidlich bei jedem Render-Aufruf stattfinden (wie in `draw_search_popup`).
