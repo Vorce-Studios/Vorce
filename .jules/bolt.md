@@ -22,4 +22,12 @@
 **Erkenntnis:** Caching lowercased search strings in `egui` state structs using `response.changed()` causes state desynchronization bugs when the source fields (like `search_filter` or `quick_create_filter`) are `pub` and can be modified programmatically elsewhere. This pattern attempts to avoid per-frame allocations but introduces subtle bugs.
 **Aktion:** Instead of caching derived string state for `pub` fields, remove the cached state entirely. Use the zero-allocation `utils::case_insensitive_contains` inside the filter loops directly with the original string. This achieves both zero per-frame allocations and guaranteed state synchronization.
 
+<<<<<<< HEAD
 ## 2024-05-18 - [Vorce UI Shortcuts Panel - Prevent allocations in input event handler] **Erkenntnis:** Avoid calling `ui.input(|i| i.clone())` which clones the entire `egui::InputState` per frame during the shortcuts panel edit dialog. Instead, borrow it directly using `ui.input(|i| { ... })`. **Aktion:** Pass a closure that uses the borrowed input state to evaluate key bindings, avoiding unnecessary memory allocation.
+=======
+## 2025-02-24 - Avoid cloning InputState in egui
+**Erkenntnis:** In immediate-mode GUIs (egui), when handling user input (like keyboard shortcuts), avoid cloning the entire `InputState` using `let input = ui.input(|i| i.clone());` on every frame. This creates unnecessary allocations in the hot loop, which can cause micro-stutters.
+**Aktion:** Use the closure to directly borrow and evaluate the required state (e.g., `ui.input(|i| { /* process events inline */ })`) to perform all necessary checks without allocating new memory.
+
+## 2025-01-01 - Avoid cloning entire Pointer state in egui **Erkenntnis:** In egui-Anwendungen kann das Klonen großer Zustandsstrukturen wie `ui.ctx().input(|i| i.pointer.clone())` pro Frame zu signifikanten unnötigen Allokationen führen. Dies ist besonders kritisch in Immediate Mode GUIs, wo dieser Code bis zu 60 Mal pro Sekunde ausgeführt wird. **Aktion:** Nutze Stattdessen Closures, um nur die spezifischen Boolean-Werte abzufragen, z.B. `ui.ctx().input(|i| (i.pointer.any_released(), i.pointer.any_click(), i.pointer.primary_down()))`.
+>>>>>>> origin/main

@@ -14,6 +14,26 @@ pub struct NodeFinder<NodeTemplate> {
     _phantom: PhantomData<NodeTemplate>,
 }
 
+// ⚡ Bolt: Inline function for zero-allocation case-insensitive string search.
+#[inline]
+fn case_insensitive_contains(haystack: &str, needle: &str) -> bool {
+    if needle.is_empty() {
+        return true;
+    }
+
+    let needle_len = needle.len();
+    if haystack.len() < needle_len {
+        return false;
+    }
+
+    haystack.char_indices().any(|(i, _)| {
+        let tail = &haystack[i..];
+        tail.len() >= needle_len
+            && tail.is_char_boundary(needle_len)
+            && tail[..needle_len].eq_ignore_ascii_case(needle)
+    })
+}
+
 impl<NodeTemplate, NodeData, UserState, CategoryType> NodeFinder<NodeTemplate>
 where
     NodeTemplate:

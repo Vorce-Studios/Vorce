@@ -498,3 +498,8 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
 
     Ok(())
 }
+<<<<<<< HEAD
+=======
+/// Scene specific sub-loops
+pub mod scenes;
+>>>>>>> origin/main
