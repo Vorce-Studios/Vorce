@@ -15,13 +15,24 @@ pub fn handle(app: &mut App, action: UIAction, _needs_sync: &mut bool) -> bool {
         }
         #[cfg(feature = "ndi")]
         UIAction::ConnectNdiSource { part_id, source } => {
-            let receiver = app.ndi_receivers.entry(part_id).or_insert_with(|| {
+            if !app.ndi_receivers.contains_key(&part_id) {
                 info!("Creating new NdiReceiver for part {}", part_id);
-                vorce_io::ndi::NdiReceiver::new().expect("Failed to create NDI receiver")
-            });
-            info!("Connecting part {} to NDI source '{}'", part_id, source.name);
-            if let Err(e) = receiver.connect(&source) {
-                error!("Failed to connect to NDI source: {}", e);
+                match vorce_io::ndi::NdiReceiver::new() {
+                    Ok(new_receiver) => {
+                        app.ndi_receivers.insert(part_id, new_receiver);
+                    }
+                    Err(e) => {
+                        error!("Failed to create NDI receiver: {}", e);
+                        return true;
+                    }
+                }
+            }
+
+            if let Some(receiver) = app.ndi_receivers.get_mut(&part_id) {
+                info!("Connecting part {} to NDI source '{}'", part_id, source.name);
+                if let Err(e) = receiver.connect(&source) {
+                    error!("Failed to connect to NDI source: {}", e);
+                }
             }
         }
 
