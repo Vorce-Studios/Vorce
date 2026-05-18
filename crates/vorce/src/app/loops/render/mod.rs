@@ -14,8 +14,6 @@ mod effects;
 mod logging;
 mod previews;
 mod texture_gen;
-/// Scene rendering submodules
-pub mod scene;
 
 use content::*;
 use previews::*;
@@ -500,3 +498,5 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
 
     Ok(())
 }
+/// Sub-loops and separated modules for rendering
+pub mod scene;

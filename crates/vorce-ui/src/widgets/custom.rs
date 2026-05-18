@@ -9,12 +9,14 @@ pub use controls::*;
 pub use labels::*;
 pub use layout::*;
 pub use safety::*;
-
 #[cfg(test)]
 mod tests {
+
+    use crate::widgets::icons::AppIcon;
+    use egui::Ui;
+
     use super::*;
     use egui::Context;
-    use egui::Ui;
 
     fn test_ui(func: impl FnMut(&mut Ui)) {
         let ctx = Context::default();
@@ -120,14 +122,14 @@ mod tests {
     #[test]
     fn test_icon_button_simple() {
         test_ui(|ui| {
-            icon_button_simple(ui, None, crate::widgets::icons::AppIcon::Add, 16.0, "Test Icon");
+            icon_button_simple(ui, None, AppIcon::Add, 16.0, "Test Icon");
         });
     }
 
     #[test]
     fn test_icon_button_compact() {
         test_ui(|ui| {
-            icon_button_compact(ui, None, crate::widgets::icons::AppIcon::Add, "Test Icon");
+            icon_button_compact(ui, None, AppIcon::Add, "Test Icon");
         });
     }
 

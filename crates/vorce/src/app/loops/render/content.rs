@@ -1,7 +1,6 @@
 use crate::app::core::app_struct::RuntimeRenderQueueItem;
 use anyhow::Result;
 
-use super::logging::{clear_video_issue, should_log_video_issue};
 use super::PREVIEW_FLAG;
 
 pub(crate) struct RenderContext<'a> {
@@ -39,60 +38,19 @@ pub(crate) fn render_content(
         Vec<egui::TextureId>,
     )>,
 ) -> Result<()> {
-    let egui_renderer = ctx.egui_renderer;
     let is_preview_output = (output_id & PREVIEW_FLAG) != 0;
     let real_output_id = output_id & !PREVIEW_FLAG;
 
-    // ⚡ BOLT OPTIMIZATION:
-    // Read pre-partitioned and sorted target_ops directly from the context.
     let empty_vec = Vec::new();
     let target_ops = ctx.render_queue.get(&real_output_id).unwrap_or(&empty_vec);
 
-    for item in target_ops {
-        for diag in &item.diagnostics {
-            let issue_key = format!("{}:{}:{}", diag.code, diag.module_id, diag.part_id);
-            if should_log_video_issue(ctx.video_diagnostic_log_times, issue_key) {
-                match diag.severity {
-                    crate::app::core::app_struct::DiagnosticSeverity::Warning => {
-                        tracing::warn!(
-                            "Fehler in Videoausgabe: Modul {} / Part {} - {}",
-                            diag.module_id,
-                            diag.part_id,
-                            diag.message
-                        );
-                    }
-                    crate::app::core::app_struct::DiagnosticSeverity::Error => {
-                        tracing::error!(
-                            "Fehler in Videoausgabe: Modul {} / Part {} - {}",
-                            diag.module_id,
-                            diag.part_id,
-                            diag.message
-                        );
-                    }
-                }
-            }
-        }
-    }
-
-    let empty_ops_issue_key = format!(
-        "video-output-empty-ops:{real_output_id}:{}",
-        if is_preview_output { "preview" } else { "output" }
+    crate::app::loops::render::scene::diagnostics::process_diagnostics(
+        ctx.video_diagnostic_log_times,
+        target_ops,
+        is_preview_output,
+        real_output_id,
+        output_id,
     );
-    if target_ops.is_empty() {
-        if output_id != 0 && should_log_video_issue(ctx.video_diagnostic_log_times, empty_ops_issue_key.clone()) {
-            tracing::warn!(
-                "Fehler in Videoausgabe: {} {} bleibt leer, weil keine RenderOps fuer diesen Output erzeugt wurden.",
-                if is_preview_output {
-                    "Output-Preview"
-                } else {
-                    "Output"
-                },
-                real_output_id
-            );
-        }
-    } else {
-        clear_video_issue(ctx.video_diagnostic_log_times, empty_ops_issue_key);
-    }
 
     if crate::app::loops::render::scene::clear::process_clear_pass(
         encoder,
@@ -160,13 +118,14 @@ pub(crate) fn render_content(
         );
     }
 
-    // EgUI Overlay
-    crate::app::loops::render::scene::egui_overlay::render_egui_overlay(
-        egui_renderer,
-        encoder,
-        view,
-        egui_data,
-    );
+    if output_id == 0 {
+        crate::app::loops::render::scene::egui_overlay::render_egui_overlay(
+            ctx.egui_renderer,
+            encoder,
+            view,
+            egui_data,
+        );
+    }
 
     Ok(())
 }
