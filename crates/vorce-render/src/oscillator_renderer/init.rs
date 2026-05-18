@@ -1,146 +1,14 @@
-//! Oscillator Distortion Renderer
-//!
-//! Implements Kuramoto-based coupled oscillator simulation for dynamic distortion effects
-
+use super::resources::OscillatorResources;
+use super::types::*;
+use super::OscillatorRenderer;
 use crate::Result;
-use bytemuck::{Pod, Zeroable};
 use std::sync::Arc;
 use tracing::{debug, info};
 use vorce_core::{OscillatorConfig, PhaseInitMode};
 use wgpu::util::DeviceExt;
 
-/// Simulation uniform parameters
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Pod, Zeroable)]
-struct SimulationParams {
-    sim_resolution: [f32; 2],
-    delta_time: f32,
-    kernel_radius: f32,
-
-    frequency_min: f32,
-    frequency_max: f32,
-    time: f32,
-    kernel_shrink: f32,
-
-    // Ring parameters (4 rings)
-    ring_distances: [f32; 4],
-    ring_widths: [f32; 4],
-    ring_couplings: [f32; 4],
-
-    noise_amount: f32,
-    use_log_polar: u32,
-    _padding: [f32; 2],
-}
-
-/// Distortion uniform parameters
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Pod, Zeroable)]
-struct DistortionParams {
-    resolution: [f32; 2],
-    sim_resolution: [f32; 2],
-
-    distortion_amount: f32,
-    distortion_scale: f32,
-    distortion_speed: f32,
-    overlay_opacity: f32,
-
-    time: f32,
-    color_mode: u32,
-    use_log_polar: u32,
-    _padding: f32,
-}
-
-/// Fullscreen quad vertex
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Pod, Zeroable)]
-struct Vertex {
-    position: [f32; 2],
-    texcoord: [f32; 2],
-}
-
-impl Vertex {
-    fn desc() -> wgpu::VertexBufferLayout<'static> {
-        wgpu::VertexBufferLayout {
-            array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    offset: 0,
-                    shader_location: 0,
-                    format: wgpu::VertexFormat::Float32x2,
-                },
-                wgpu::VertexAttribute {
-                    offset: std::mem::size_of::<[f32; 2]>() as wgpu::BufferAddress,
-                    shader_location: 1,
-                    format: wgpu::VertexFormat::Float32x2,
-                },
-            ],
-        }
-    }
-}
-
-// Fullscreen quad vertices
-const QUAD_VERTICES: &[Vertex] = &[
-    Vertex { position: [-1.0, -1.0], texcoord: [0.0, 1.0] },
-    Vertex { position: [1.0, -1.0], texcoord: [1.0, 1.0] },
-    Vertex { position: [1.0, 1.0], texcoord: [1.0, 0.0] },
-    Vertex { position: [-1.0, 1.0], texcoord: [0.0, 0.0] },
-];
-
-const QUAD_INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
-
-/// Oscillator distortion renderer
-pub struct OscillatorRenderer {
-    // Pipelines
-    simulation_pipeline: wgpu::RenderPipeline,
-    distortion_pipeline: wgpu::RenderPipeline,
-
-    // Bind group layouts
-    _sim_texture_layout: wgpu::BindGroupLayout,
-    _sim_uniform_layout: wgpu::BindGroupLayout,
-    dist_texture_layout: wgpu::BindGroupLayout,
-    _dist_uniform_layout: wgpu::BindGroupLayout,
-
-    // Phase textures (ping-pong)
-    phase_texture_a: wgpu::Texture,
-    phase_view_a: wgpu::TextureView,
-    phase_texture_b: wgpu::Texture,
-    phase_view_b: wgpu::TextureView,
-
-    // Framebuffers for simulation
-    sim_fbo_a: wgpu::TextureView,
-    sim_fbo_b: wgpu::TextureView,
-
-    // Buffers
-    vertex_buffer: wgpu::Buffer,
-    index_buffer: wgpu::Buffer,
-    sim_uniform_buffer: wgpu::Buffer,
-    dist_uniform_buffer: wgpu::Buffer,
-
-    // Bind groups
-    sim_bind_group_a: wgpu::BindGroup,
-    sim_bind_group_b: wgpu::BindGroup,
-    sim_uniform_bind_group: wgpu::BindGroup,
-    dist_uniform_bind_group: wgpu::BindGroup,
-
-    // Sampler
-    sampler: wgpu::Sampler,
-    non_filtering_sampler: wgpu::Sampler,
-
-    // State
-    sim_width: u32,
-    sim_height: u32,
-    current_phase: bool, // false = A, true = B
-    time_elapsed: f32,
-
-    // Device reference
-    device: Arc<wgpu::Device>,
-    queue: Arc<wgpu::Queue>,
-}
-
 impl OscillatorRenderer {
-    /// Create a new oscillator renderer
-    pub fn new(
+    pub(crate) fn init(
         device: Arc<wgpu::Device>,
         queue: Arc<wgpu::Queue>,
         target_format: wgpu::TextureFormat,
@@ -280,13 +148,13 @@ impl OscillatorRenderer {
             });
 
         // Load shaders
-        let sim_shader_source = include_str!("../../../shaders/oscillator_simulation.wgsl");
+        let sim_shader_source = include_str!("../../../../shaders/oscillator_simulation.wgsl");
         let sim_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Oscillator Simulation Shader"),
             source: wgpu::ShaderSource::Wgsl(sim_shader_source.into()),
         });
 
-        let dist_shader_source = include_str!("../../../shaders/oscillator_distortion.wgsl");
+        let dist_shader_source = include_str!("../../../../shaders/oscillator_distortion.wgsl");
         let dist_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Oscillator Distortion Shader"),
             source: wgpu::ShaderSource::Wgsl(dist_shader_source.into()),
@@ -460,38 +328,39 @@ impl OscillatorRenderer {
         });
 
         Ok(Self {
-            simulation_pipeline,
-            distortion_pipeline,
-            _sim_texture_layout: sim_texture_layout,
-            _sim_uniform_layout: sim_uniform_layout,
-            dist_texture_layout,
-            _dist_uniform_layout: dist_uniform_layout,
-            phase_texture_a,
-            phase_view_a,
-            phase_texture_b,
-            phase_view_b,
-            sim_fbo_a,
-            sim_fbo_b,
-            vertex_buffer,
-            index_buffer,
-            sim_uniform_buffer,
-            dist_uniform_buffer,
-            sim_bind_group_a,
-            sim_bind_group_b,
-            sim_uniform_bind_group,
-            dist_uniform_bind_group,
-            sampler,
-            non_filtering_sampler,
+            resources: OscillatorResources {
+                simulation_pipeline,
+                distortion_pipeline,
+                sim_texture_layout,
+                sim_uniform_layout,
+                dist_texture_layout,
+                dist_uniform_layout,
+                phase_texture_a,
+                phase_view_a,
+                phase_texture_b,
+                phase_view_b,
+                sim_fbo_a,
+                sim_fbo_b,
+                sim_uniform_buffer,
+                dist_uniform_buffer,
+                sim_bind_group_a,
+                sim_bind_group_b,
+                sim_uniform_bind_group,
+                dist_uniform_bind_group,
+                sampler,
+                non_filtering_sampler,
+                vertex_buffer,
+                index_buffer,
+                device,
+                queue,
+            },
             sim_width,
             sim_height,
             current_phase: false,
             time_elapsed: 0.0,
-            device,
-            queue,
         })
     }
 
-    /// Create a phase texture for simulation
     fn create_phase_texture(
         device: &wgpu::Device,
         width: u32,
@@ -512,7 +381,6 @@ impl OscillatorRenderer {
         })
     }
 
-    /// Initialize phase texture with a specific pattern
     pub fn initialize_phases(&mut self, mode: PhaseInitMode) {
         debug!("Initializing phases with mode: {:?}", mode);
 
@@ -561,9 +429,9 @@ impl OscillatorRenderer {
         }
 
         // Upload to both phase textures
-        self.queue.write_texture(
+        self.resources.queue.write_texture(
             wgpu::TexelCopyTextureInfo {
-                texture: &self.phase_texture_a,
+                texture: &self.resources.phase_texture_a,
                 mip_level: 0,
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
@@ -581,9 +449,9 @@ impl OscillatorRenderer {
             },
         );
 
-        self.queue.write_texture(
+        self.resources.queue.write_texture(
             wgpu::TexelCopyTextureInfo {
-                texture: &self.phase_texture_b,
+                texture: &self.resources.phase_texture_b,
                 mip_level: 0,
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
@@ -600,211 +468,5 @@ impl OscillatorRenderer {
                 depth_or_array_layers: 1,
             },
         );
-    }
-
-    /// Create simulation parameters
-    fn create_sim_params(
-        config: &OscillatorConfig,
-        sim_width: u32,
-        sim_height: u32,
-        time: f32,
-        delta_time: f32,
-    ) -> SimulationParams {
-        SimulationParams {
-            sim_resolution: [sim_width as f32, sim_height as f32],
-            delta_time,
-            kernel_radius: config.kernel_radius,
-            frequency_min: config.frequency_min,
-            frequency_max: config.frequency_max,
-            time,
-            kernel_shrink: 1.0,
-            ring_distances: [
-                config.rings[0].distance,
-                config.rings[1].distance,
-                config.rings[2].distance,
-                config.rings[3].distance,
-            ],
-            ring_widths: [
-                config.rings[0].width,
-                config.rings[1].width,
-                config.rings[2].width,
-                config.rings[3].width,
-            ],
-            ring_couplings: [
-                config.rings[0].coupling,
-                config.rings[1].coupling,
-                config.rings[2].coupling,
-                config.rings[3].coupling,
-            ],
-            noise_amount: config.noise_amount,
-            use_log_polar: match config.coordinate_mode {
-                vorce_core::CoordinateMode::LogPolar => 1,
-                _ => 0,
-            },
-            _padding: [0.0; 2],
-        }
-    }
-
-    /// Create distortion parameters
-    fn create_dist_params(
-        config: &OscillatorConfig,
-        width: u32,
-        height: u32,
-        sim_width: u32,
-        sim_height: u32,
-        time: f32,
-    ) -> DistortionParams {
-        DistortionParams {
-            resolution: [width as f32, height as f32],
-            sim_resolution: [sim_width as f32, sim_height as f32],
-            distortion_amount: config.distortion_amount,
-            distortion_scale: config.distortion_scale,
-            distortion_speed: config.distortion_speed,
-            overlay_opacity: config.overlay_opacity,
-            time,
-            color_mode: config.color_mode.to_u32(),
-            use_log_polar: match config.coordinate_mode {
-                vorce_core::CoordinateMode::LogPolar => 1,
-                _ => 0,
-            },
-            _padding: 0.0,
-        }
-    }
-
-    /// Update simulation for one timestep
-    pub fn update(&mut self, delta_time: f32, config: &OscillatorConfig) {
-        self.time_elapsed += delta_time;
-
-        // Update simulation uniforms
-        let sim_params = Self::create_sim_params(
-            config,
-            self.sim_width,
-            self.sim_height,
-            self.time_elapsed,
-            delta_time,
-        );
-        self.queue.write_buffer(&self.sim_uniform_buffer, 0, bytemuck::cast_slice(&[sim_params]));
-
-        // Create command encoder for simulation step
-        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("Oscillator Simulation Encoder"),
-        });
-
-        // Determine which phase texture to read from and write to
-        let (input_bind_group, output_view) = if self.current_phase {
-            (&self.sim_bind_group_b, &self.sim_fbo_a)
-        } else {
-            (&self.sim_bind_group_a, &self.sim_fbo_b)
-        };
-
-        // Run simulation pass
-        {
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Oscillator Simulation Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    depth_slice: None,
-                    view: output_view,
-                    resolve_target: None,
-
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                occlusion_query_set: None,
-                timestamp_writes: None,
-                multiview_mask: None,
-            });
-
-            render_pass.set_pipeline(&self.simulation_pipeline);
-            render_pass.set_bind_group(0, input_bind_group, &[]);
-            render_pass.set_bind_group(1, &self.sim_uniform_bind_group, &[]);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.draw_indexed(0..6, 0, 0..1);
-        }
-
-        self.queue.submit(std::iter::once(encoder.finish()));
-
-        // Swap phase textures
-        self.current_phase = !self.current_phase;
-    }
-
-    /// Render distortion effect to output
-    pub fn render(
-        &mut self,
-        encoder: &mut wgpu::CommandEncoder,
-        input_view: &wgpu::TextureView,
-        output_view: &wgpu::TextureView,
-        width: u32,
-        height: u32,
-        config: &OscillatorConfig,
-    ) {
-        // Update distortion uniforms
-        let dist_params = Self::create_dist_params(
-            config,
-            width,
-            height,
-            self.sim_width,
-            self.sim_height,
-            self.time_elapsed,
-        );
-        self.queue.write_buffer(&self.dist_uniform_buffer, 0, bytemuck::cast_slice(&[dist_params]));
-
-        // Get current phase texture
-        let phase_view = if self.current_phase { &self.phase_view_b } else { &self.phase_view_a };
-
-        // Create bind group for distortion (input texture + phase texture)
-        let dist_bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Dist Bind Group"),
-            layout: &self.dist_texture_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(input_view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&self.sampler),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: wgpu::BindingResource::TextureView(phase_view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 3,
-                    resource: wgpu::BindingResource::Sampler(&self.non_filtering_sampler),
-                },
-            ],
-        });
-
-        // Render distortion pass
-        {
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Oscillator Distortion Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    depth_slice: None,
-                    view: output_view,
-                    resolve_target: None,
-
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                occlusion_query_set: None,
-                timestamp_writes: None,
-                multiview_mask: None,
-            });
-
-            render_pass.set_pipeline(&self.distortion_pipeline);
-            render_pass.set_bind_group(0, &dist_bind_group, &[]);
-            render_pass.set_bind_group(1, &self.dist_uniform_bind_group, &[]);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.draw_indexed(0..6, 0, 0..1);
-        }
     }
 }
