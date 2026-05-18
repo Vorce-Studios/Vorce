@@ -48,3 +48,7 @@
 **Schwachstelle:** `load_project` in `crates/vorce-io/src/project.rs` hat Dateipfade nicht auf `..` Komponenten validiert, wodurch Path Traversal beim Laden von Projekten mÃ¶glich war.
 **Lektion:** Es fehlte eine Validierungsschicht zwischen externen Pfaden und dem Dateisystemzugriff.
 **PrÃ¤vention:** Bei jeglichem Einlesen von Dateien über externe oder dynamische Pfade muss vor dem Aufruf von `File::open` oder `fs::read` zwingend eine Validierung der Pfadkomponenten stattfinden, idealerweise durch den Ausschluss von `Component::ParentDir` oder eine strikte Sandboxing-Architektur.
+## 2025-05-24 - Path Traversal Mitigation in Media Decoders
+**Schwachstelle:** The media decoders in `vorce-media` (e.g., `StillImageDecoder`, `MpvDecoder`, `GifDecoder`, `ImageSequenceDecoder`, `RealFFmpegDecoder`) loaded files from disk without explicitly validating whether the given path contained parent directory traversal components (`..`).
+**Lektion:** While some path traversal protections existed at higher levels (like the project loading and MCP tools), the media decoding layer itself remained unprotected, allowing potential arbitrary file reads if external input bypassed higher-level checks.
+**Prävention:** Add a defense-in-depth validation check directly inside the `open()` methods of media decoders, rejecting any paths that contain `std::path::Component::ParentDir`.

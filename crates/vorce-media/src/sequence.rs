@@ -42,6 +42,10 @@ impl ImageSequenceDecoder {
     pub fn open<P: AsRef<Path>>(directory: P, fps: f64) -> Result<Self> {
         let directory = directory.as_ref();
 
+        if directory.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+            return Err(MediaError::FileOpen("Path traversal (..) is not allowed".to_string()));
+        }
+
         if !directory.exists() {
             return Err(MediaError::FileOpen(format!(
                 "Directory not found: {}",
