@@ -1,5 +1,5 @@
 use crate::theme::colors;
-use crate::widgets::custom::safety::hold_to_action_button;
+use crate::widgets::custom::hold_action::hold_to_action_button;
 use crate::widgets::icons::{AppIcon, IconManager};
 use egui::{
     Color32, CornerRadius, Pos2, Rect, Response, Sense, Stroke, Ui, Vec2, WidgetInfo, WidgetType,
@@ -280,7 +280,7 @@ mod tests {
     use super::*;
     use egui::Context;
 
-    fn test_ui(func: impl FnMut(&mut egui::Ui)) {
+    fn test_ui(func: impl FnMut(&mut Ui)) {
         let ctx = Context::default();
         let mut func = func;
         #[allow(deprecated)]
