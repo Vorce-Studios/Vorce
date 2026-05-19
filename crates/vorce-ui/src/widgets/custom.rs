@@ -100,7 +100,7 @@ mod tests {
     fn test_styled_drag_value() {
         test_ui(|ui| {
             let mut value = 0.5;
-            styled_drag_value(ui, &mut value, 0.01, 0.0..=1.0, 0.5, "", "");    
+            styled_drag_value(ui, &mut value, 0.01, 0.0..=1.0, 0.5, "", "");
         });
     }
 
@@ -127,7 +127,7 @@ mod tests {
     #[test]
     fn test_icon_button_simple() {
         test_ui(|ui| {
-            icon_button_simple(ui, None, AppIcon::Add, 16.0, "Test Icon");      
+            icon_button_simple(ui, None, AppIcon::Add, 16.0, "Test Icon");
         });
     }
 
@@ -142,7 +142,7 @@ mod tests {
     fn test_check_hold_state() {
         test_ui(|ui| {
             let id = ui.id().with("test_hold");
-            let (triggered, progress) = check_hold_state(ui, id, false);        
+            let (triggered, progress) = check_hold_state(ui, id, false);
             assert!(!triggered);
             assert_eq!(progress, 0.0);
 
