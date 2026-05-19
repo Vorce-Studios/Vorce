@@ -140,7 +140,8 @@ fn fit_size_within(source_size: egui::Vec2, max_size: egui::Vec2) -> egui::Vec2 
     source_size * scale
 }
 
-#[allow(missing_docs)]
+/// Renders the panel.
+#[allow(deprecated)]
 pub fn render_startup_animation_overlay(ctx: &egui::Context, app: &mut App) {
     if !app.ui_state.user_config.startup_animation_enabled
         || app.ui_state.user_config.reduce_motion_enabled

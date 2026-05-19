@@ -1,8 +1,10 @@
-use super::SettingsContext;
-use egui::{Context, RichText};
+use egui::{RichText, Ui};
 use vorce_ui::UIAction;
 
-pub fn show(_ctx: &Context, ui: &mut egui::Ui, context: &mut SettingsContext) {
+use crate::ui::dialogs::settings::SettingsContext;
+
+/// Rendert den Tab 'Performance'
+pub fn render_tab(ui: &mut Ui, context: &mut SettingsContext) {
     ui.heading(
         RichText::new(format!(
             "{} & {}",

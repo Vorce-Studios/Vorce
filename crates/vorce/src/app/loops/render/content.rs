@@ -1,6 +1,7 @@
 use crate::app::core::app_struct::RuntimeRenderQueueItem;
 use anyhow::Result;
 
+use super::logging::{clear_video_issue, should_log_video_issue};
 use super::PREVIEW_FLAG;
 
 pub(crate) struct RenderContext<'a> {
@@ -28,7 +29,7 @@ pub(crate) struct RenderContext<'a> {
 }
 
 pub(crate) fn render_content(
-    ctx: RenderContext<'_>,
+    mut ctx: RenderContext<'_>,
     output_id: u64,
     encoder: &mut wgpu::CommandEncoder,
     view: &wgpu::TextureView,
