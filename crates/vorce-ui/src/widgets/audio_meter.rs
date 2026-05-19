@@ -52,7 +52,8 @@ impl Widget for AudioMeter {
             let painter = ui.painter();
 
             // Draw rack frame
-            draw_rack_frame(ui, painter, rect);
+            // Draw rack frame
+            draw_rack_frame(ui.visuals(), painter, rect);
 
             // Inner content rect (inset for frame)
             let frame_width = 8.0;
@@ -108,10 +109,10 @@ impl Widget for AudioMeter {
 }
 
 /// Draws the mounting frame with 4 phillips screws
-fn draw_rack_frame(ui: &egui::Ui, painter: &egui::Painter, rect: Rect) {
-    let frame_color = crate::theme::colors::LIGHTER_GREY;
-    let frame_highlight = crate::theme::colors::STROKE_GREY;
-    let frame_shadow = crate::theme::colors::DARK_GREY;
+fn draw_rack_frame(visuals: &egui::Visuals, painter: &egui::Painter, rect: Rect) {
+    let frame_color = visuals.widgets.inactive.bg_fill;
+    let frame_highlight = visuals.widgets.inactive.fg_stroke.color.linear_multiply(0.5);
+    let frame_shadow = visuals.window_fill;
 
     // Main frame
     painter.rect_filled(rect, 0.0, frame_color);
@@ -146,27 +147,27 @@ fn draw_rack_frame(ui: &egui::Ui, painter: &egui::Painter, rect: Rect) {
         ];
 
         for pos in screw_positions {
-            draw_screw(ui, painter, pos, 4.0);
+            draw_screw(visuals, painter, pos, 4.0);
         }
     }
 }
 
 /// Draws a realistic phillips head screw
-fn draw_screw(ui: &egui::Ui, painter: &egui::Painter, center: Pos2, radius: f32) {
+fn draw_screw(visuals: &egui::Visuals, painter: &egui::Painter, center: Pos2, radius: f32) {
     // Screw head
-    painter.circle_filled(center, radius, ui.visuals().widgets.noninteractive.bg_stroke.color);
+    painter.circle_filled(center, radius, visuals.widgets.noninteractive.bg_stroke.color);
     painter.circle_stroke(
         center,
         radius,
-        Stroke::new(0.5, ui.visuals().widgets.noninteractive.bg_fill),
+        Stroke::new(0.5, visuals.widgets.noninteractive.bg_fill),
     );
 
     // Inner recess (darker)
-    painter.circle_filled(center, radius * 0.7, ui.visuals().widgets.noninteractive.weak_bg_fill);
+    painter.circle_filled(center, radius * 0.7, visuals.widgets.noninteractive.weak_bg_fill);
 
     // Phillips cross (+)
     let cross_len = radius * 0.6;
-    let cross_color = ui.visuals().widgets.noninteractive.bg_fill;
+    let cross_color = visuals.widgets.noninteractive.bg_fill;
 
     // Horizontal line
     painter.line_segment(
@@ -269,7 +270,7 @@ fn draw_single_retro_meter(
     for (_val, angle) in ticks {
         let p1 = angle_to_pos(angle, radius * 0.55);
         let p2 = angle_to_pos(angle, radius * 0.65);
-        painter.line_segment([p1, p2], Stroke::new(1.5, crate::theme::colors::STROKE_GREY));
+        painter.line_segment([p1, p2], Stroke::new(1.5, ui.visuals().widgets.noninteractive.bg_stroke.color.gamma_multiply(0.5)));
 
         // Labels could be added here if space permits
     }
@@ -300,7 +301,7 @@ fn draw_single_retro_meter(
     // Draw needle
     painter.line_segment(
         [visible_base, needle_tip],
-        Stroke::new(1.5, crate::theme::colors::ERROR_COLOR),
+        Stroke::new(1.5, ui.visuals().error_fg_color),
     );
 
     // Shadow
@@ -331,7 +332,7 @@ fn draw_digital_stereo(
     let painter = ui.painter();
 
     // Dark background
-    painter.rect_filled(rect, 0.0, crate::theme::colors::DARKER_GREY);
+    painter.rect_filled(rect, 0.0, ui.visuals().extreme_bg_color);
 
     // Layout:
     // Top: L
@@ -354,8 +355,8 @@ fn draw_digital_stereo(
     );
 
     // Draw Bars
-    draw_horizontal_led_bar(painter, l_rect, db_left, peak_l);
-    draw_horizontal_led_bar(painter, r_rect, db_right, peak_r);
+    draw_horizontal_led_bar(ui.visuals(), painter, l_rect, db_left, peak_l);
+    draw_horizontal_led_bar(ui.visuals(), painter, r_rect, db_right, peak_r);
 
     // Draw Scale
     draw_horizontal_scale(ui, painter, scale_rect);
@@ -377,7 +378,13 @@ fn draw_digital_stereo(
     );
 }
 
-fn draw_horizontal_led_bar(painter: &egui::Painter, rect: Rect, db: f32, peak: f32) {
+fn draw_horizontal_led_bar(
+    visuals: &egui::Visuals,
+    painter: &egui::Painter,
+    rect: Rect,
+    db: f32,
+    peak: f32,
+) {
     let segment_count = 40;
     let _padding = 1.0;
     let total_w = rect.width();
@@ -397,9 +404,9 @@ fn draw_horizontal_led_bar(painter: &egui::Painter, rect: Rect, db: f32, peak: f
             && peak < (threshold_db + (max_db - min_db) / segment_count as f32);
 
         let color = if threshold_db >= 0.0 {
-            crate::theme::colors::ERROR_COLOR
+            visuals.error_fg_color
         } else if threshold_db >= -10.0 {
-            crate::theme::colors::WARN_COLOR
+            visuals.warn_fg_color
         } else {
             crate::theme::colors::MINT_ACCENT
         };
@@ -435,7 +442,7 @@ fn draw_horizontal_scale(ui: &egui::Ui, painter: &egui::Painter, rect: Rect) {
         let x = db_to_x(val);
         painter.line_segment(
             [Pos2::new(x, rect.min.y), Pos2::new(x, rect.max.y)],
-            Stroke::new(1.0, crate::theme::colors::STROKE_GREY),
+            Stroke::new(1.0, ui.visuals().text_color().gamma_multiply(0.15)),
         );
 
         if rect.height() > 8.0 && (val == -40.0 || val == -20.0 || val == 0.0) {

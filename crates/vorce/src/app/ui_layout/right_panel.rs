@@ -1,14 +1,16 @@
 use crate::app::App;
 
-#[allow(deprecated, missing_docs)]
+/// Renders the panel.
+#[allow(deprecated)]
 pub fn show(
     ctx: &egui::Context,
     app: &mut App,
-    layout_locked: bool,
-    compact_height: bool,
     inspector_default: f32,
+    compact_height: bool,
     viewport_width: f32,
+    layout_locked: bool,
 ) {
+    // 4. Right Panel: Inspector (Docked & Resizable)
     if app.ui_state.show_inspector {
         egui::SidePanel::right("right_panel")
             .resizable(!layout_locked)

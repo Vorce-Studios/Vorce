@@ -1,11 +1,11 @@
 use super::state::*;
 use super::types::*;
 use crate::editors::mesh_editor::interaction::MeshEditorInteraction;
-use egui::{Pos2, Rect, Sense, Stroke, Ui};
+use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui};
 
 pub trait MeshEditorUi {
     fn ui(&mut self, ui: &mut Ui) -> Option<MeshEditorAction>;
-    fn draw_grid(&self, painter: &egui::Painter, rect: Rect);
+    fn draw_grid(&self, ui: &egui::Ui, painter: &egui::Painter, rect: Rect);
 }
 
 impl MeshEditorUi for MeshEditor {
@@ -53,7 +53,7 @@ impl MeshEditorUi for MeshEditor {
 
         // Draw grid if enabled
         if self.snap_to_grid {
-            self.draw_grid(&painter, response.rect);
+            self.draw_grid(ui, &painter, response.rect);
         }
 
         // Draw mesh faces
@@ -128,8 +128,8 @@ impl MeshEditorUi for MeshEditor {
     }
 
     /// Draw grid background
-    fn draw_grid(&self, painter: &egui::Painter, rect: Rect) {
-        let color = crate::theme::colors::STROKE_GREY;
+    fn draw_grid(&self, ui: &egui::Ui, painter: &egui::Painter, rect: Rect) {
+        let color = ui.visuals().widgets.noninteractive.bg_stroke.color;
 
         let mut x = 0.0;
         while x < rect.width() {
