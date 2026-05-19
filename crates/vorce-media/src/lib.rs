@@ -8,6 +8,7 @@
 
 #![allow(missing_docs)]
 
+pub mod test_pattern_decoder;
 use std::path::Path;
 use thiserror::Error;
 
