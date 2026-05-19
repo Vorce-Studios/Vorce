@@ -83,6 +83,7 @@ pub enum HwAccelType {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_pattern_decoder::TestPatternDecoder;
 
     #[test]
     fn test_test_pattern_decoder() {

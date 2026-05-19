@@ -1,4 +1,4 @@
-use crate::{HwAccelType, MediaError, Result, TestPatternDecoder, VideoDecoder};
+use crate::{HwAccelType, MediaError, Result, test_pattern_decoder::TestPatternDecoder, VideoDecoder};
 use std::path::Path;
 use std::time::Duration;
 use tracing::info;
