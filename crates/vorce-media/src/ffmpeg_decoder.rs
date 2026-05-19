@@ -1,4 +1,4 @@
-use crate::{HwAccelType, MediaError, Result, TestPatternDecoder, VideoDecoder};
+use crate::{HwAccelType, MediaError, Result, VideoDecoder};
 use std::path::Path;
 use std::time::Duration;
 use tracing::info;
@@ -434,7 +434,7 @@ mod ffmpeg_impl {
 pub enum FFmpegDecoder {
     #[cfg(feature = "ffmpeg")]
     Real(ffmpeg_impl::RealFFmpegDecoder),
-    TestPattern(TestPatternDecoder),
+
 }
 
 impl FFmpegDecoder {
@@ -450,36 +450,16 @@ impl FFmpegDecoder {
             match ffmpeg_impl::RealFFmpegDecoder::open(&_path, _hw_accel) {
                 Ok(decoder) => Ok(FFmpegDecoder::Real(decoder)),
                 Err(e) => {
-                    // IF IT'S A REAL FILE REQUEST, DON'T FALLBACK SILENTLY
-                    if _path.as_ref().exists() {
-                        return Err(e);
-                    }
-                    warn!("FFmpeg decoder failed: {}, using test pattern", e);
-                    Ok(FFmpegDecoder::TestPattern(TestPatternDecoder::new(
-                        1920,
-                        1080,
-                        Duration::from_secs(60),
-                        30.0,
-                    )))
+                    Err(e)
                 }
             }
         }
 
         #[cfg(not(feature = "ffmpeg"))]
         {
-            // IF IT'S A REAL FILE REQUEST AND NO FFMPEG, ERROR OUT
-            if _path.as_ref().exists() {
-                return Err(MediaError::DecoderError(
-                    "FFmpeg feature not enabled, cannot open video file".to_string(),
-                ));
-            }
-            info!("FFmpeg feature not enabled, using test pattern");
-            Ok(FFmpegDecoder::TestPattern(TestPatternDecoder::new(
-                1920,
-                1080,
-                Duration::from_secs(60),
-                30.0,
-            )))
+            Err(MediaError::DecoderError(
+                "FFmpeg feature not enabled, cannot open video file".to_string(),
+            ))
         }
     }
 
@@ -506,7 +486,7 @@ impl VideoDecoder for FFmpegDecoder {
         match self {
             #[cfg(feature = "ffmpeg")]
             FFmpegDecoder::Real(decoder) => decoder.next_frame(),
-            FFmpegDecoder::TestPattern(decoder) => decoder.next_frame(),
+
         }
     }
 
@@ -514,7 +494,7 @@ impl VideoDecoder for FFmpegDecoder {
         match self {
             #[cfg(feature = "ffmpeg")]
             FFmpegDecoder::Real(decoder) => decoder.seek(timestamp),
-            FFmpegDecoder::TestPattern(decoder) => decoder.seek(timestamp),
+
         }
     }
 
@@ -522,7 +502,7 @@ impl VideoDecoder for FFmpegDecoder {
         match self {
             #[cfg(feature = "ffmpeg")]
             FFmpegDecoder::Real(decoder) => decoder.duration(),
-            FFmpegDecoder::TestPattern(decoder) => decoder.duration(),
+
         }
     }
 
@@ -530,7 +510,7 @@ impl VideoDecoder for FFmpegDecoder {
         match self {
             #[cfg(feature = "ffmpeg")]
             FFmpegDecoder::Real(decoder) => decoder.resolution(),
-            FFmpegDecoder::TestPattern(decoder) => decoder.resolution(),
+
         }
     }
 
@@ -538,7 +518,7 @@ impl VideoDecoder for FFmpegDecoder {
         match self {
             #[cfg(feature = "ffmpeg")]
             FFmpegDecoder::Real(decoder) => decoder.fps(),
-            FFmpegDecoder::TestPattern(decoder) => decoder.fps(),
+
         }
     }
 
@@ -546,7 +526,7 @@ impl VideoDecoder for FFmpegDecoder {
         match self {
             #[cfg(feature = "ffmpeg")]
             FFmpegDecoder::Real(decoder) => decoder.clone_decoder(),
-            FFmpegDecoder::TestPattern(decoder) => decoder.clone_decoder(),
+
         }
     }
 }

@@ -332,7 +332,7 @@ impl VideoPlayer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::decoder::TestPatternDecoder;
+    use crate::test_pattern_decoder::TestPatternDecoder;
     use crate::MediaError;
 
     // A mock decoder that can be configured to fail.
@@ -389,7 +389,7 @@ mod tests {
 
     #[test]
     fn test_player_creation() {
-        let decoder = TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
+        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
         let player = VideoPlayer::new(decoder);
 
         assert_eq!(*player.state(), PlaybackState::Idle);
@@ -399,7 +399,7 @@ mod tests {
 
     #[test]
     fn test_player_playback_control() {
-        let decoder = TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
+        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
         let mut player = VideoPlayer::new(decoder);
 
         assert!(player.play().is_ok());
@@ -415,7 +415,7 @@ mod tests {
 
     #[test]
     fn test_player_speed_control() {
-        let decoder = TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
+        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
         let mut player = VideoPlayer::new(decoder);
 
         assert!(player.set_speed(2.0).is_ok());
@@ -428,7 +428,7 @@ mod tests {
 
     #[test]
     fn test_loop_mode() {
-        let decoder = TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
+        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
         let mut player = VideoPlayer::new(decoder);
 
         assert_eq!(player.loop_mode(), LoopMode::Loop);
@@ -439,7 +439,7 @@ mod tests {
 
     #[test]
     fn test_state_transitions() {
-        let decoder = TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
+        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
         let mut player = VideoPlayer::new(decoder);
 
         // Idle -> Playing
@@ -461,7 +461,7 @@ mod tests {
 
     #[test]
     fn test_invalid_state_transitions() {
-        let decoder = TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
+        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
         let mut player = VideoPlayer::new(decoder);
 
         // Idle -> Paused (Invalid)
@@ -470,7 +470,7 @@ mod tests {
 
     #[test]
     fn test_command_channel() {
-        let decoder = TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
+        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
         let mut player = VideoPlayer::new(decoder);
         let tx = player.command_sender();
 
@@ -485,7 +485,7 @@ mod tests {
 
     #[test]
     fn test_status_channel() {
-        let decoder = TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
+        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
         let mut player = VideoPlayer::new(decoder);
         let rx = player.status_receiver();
 
@@ -502,7 +502,7 @@ mod tests {
     #[test]
     fn test_playback_loop() {
         // Duration 1 sec, speed 1.0
-        let decoder = TestPatternDecoder::new(1920, 1080, Duration::from_secs(1), 30.0);
+        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(1920, 1080, Duration::from_secs(1), 30.0);
         let mut player = VideoPlayer::new(decoder);
         let rx = player.status_receiver();
 
@@ -531,7 +531,7 @@ mod tests {
 
     #[test]
     fn test_playback_play_once() {
-        let decoder = TestPatternDecoder::new(1920, 1080, Duration::from_secs(1), 30.0);
+        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(1920, 1080, Duration::from_secs(1), 30.0);
         let mut player = VideoPlayer::new(decoder);
 
         player.set_loop_mode(LoopMode::PlayOnce).unwrap();
