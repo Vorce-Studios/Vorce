@@ -1,5 +1,5 @@
 use crate::theme::colors;
-use crate::widgets::custom::hold_action::hold_to_action_button;
+use crate::widgets::custom::safety::hold_to_action_button;
 use crate::widgets::icons::{AppIcon, IconManager};
 use egui::{
     Color32, CornerRadius, Pos2, Rect, Response, Sense, Stroke, Ui, Vec2, WidgetInfo, WidgetType,

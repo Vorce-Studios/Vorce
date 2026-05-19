@@ -20,6 +20,7 @@ pub mod mpv_decoder;
 pub mod pipeline;
 pub mod player;
 pub mod sequence;
+pub mod test_pattern_decoder;
 
 pub use decoder::{FFmpegDecoder, HwAccelType, PixelFormat, TestPatternDecoder, VideoDecoder};
 #[cfg(feature = "hap")]
