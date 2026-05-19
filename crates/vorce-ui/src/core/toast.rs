@@ -69,10 +69,10 @@ impl ToastManager {
 
         for toast in self.toasts.iter().rev() {
             let color = match toast.toast_type {
-                ToastType::Info => ctx.style().visuals.text_color(),
-                ToastType::Success => crate::theme::colors::MINT_ACCENT,
-                ToastType::Warning => ctx.style().visuals.warn_fg_color,
-                ToastType::Error => ctx.style().visuals.error_fg_color,
+                ToastType::Info => Color32::from_rgb(100, 100, 255),
+                ToastType::Success => Color32::from_rgb(100, 255, 100),
+                ToastType::Warning => Color32::from_rgb(255, 200, 100),
+                ToastType::Error => Color32::from_rgb(255, 100, 100),
             };
 
             let remaining = toast.expires_at.duration_since(Instant::now()).as_secs_f32();
@@ -83,7 +83,7 @@ impl ToastManager {
                 .anchor(egui::Align2::RIGHT_BOTTOM, [-20.0, -(screen_rect.max.y - current_y)])
                 .show(ctx, |ui| {
                     egui::Frame::window(ui.style())
-                        .fill(ui.visuals().window_fill.linear_multiply(alpha))
+                        .fill(Color32::from_black_alpha((200.0 * alpha) as u8))
                         .stroke(egui::Stroke::new(1.0, color.linear_multiply(alpha)))
                         .inner_margin(egui::Margin::symmetric(16, 8))
                         .show(ui, |ui| {
@@ -95,7 +95,7 @@ impl ToastManager {
                                     ToastType::Error => "✖",
                                 };
                                 ui.label(egui::RichText::new(icon).color(color).strong());
-                                ui.label(egui::RichText::new(&toast.message).color(ui.visuals().text_color().linear_multiply(alpha)));
+                                ui.label(egui::RichText::new(&toast.message).color(Color32::WHITE.linear_multiply(alpha)));
                             });
                         });
                 });
