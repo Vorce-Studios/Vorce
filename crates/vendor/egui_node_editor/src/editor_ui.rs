@@ -462,6 +462,8 @@ where
         /* Mouse input handling */
 
         // This locks the context, so don't hold on to it for too long.
+        // ⚡ Bolt: Vermeidung von PointerState Cloning pro Frame durch direkte Extraktion der Properties.
+        // Verhindert unnötige Heap-Allokationen und reduziert den Speicherdruck im Render-Loop.
         let (any_released, any_click, primary_down, primary_released) = ui.ctx().input(|i| {
             (
                 i.pointer.any_released(),

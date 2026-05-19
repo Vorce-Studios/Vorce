@@ -1,16 +1,14 @@
 use crate::app::App;
 use vorce_ui as ui;
 
-/// Renders the panel.
-#[allow(deprecated)]
+#[allow(deprecated, missing_docs)]
 pub fn show(
     ctx: &egui::Context,
     app: &mut App,
-    timeline_default_height: f32,
-    compact_height: bool,
     layout_locked: bool,
+    compact_height: bool,
+    timeline_default_height: f32,
 ) {
-    // 5. Bottom Panel: Timeline (Resizable)
     if app.ui_state.show_timeline {
         egui::TopBottomPanel::bottom("bottom_panel")
             .resizable(!layout_locked)
