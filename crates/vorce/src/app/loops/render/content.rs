@@ -1,6 +1,7 @@
 use crate::app::core::app_struct::RuntimeRenderQueueItem;
 use anyhow::Result;
 
+use super::logging::{clear_video_issue, should_log_video_issue};
 use super::PREVIEW_FLAG;
 
 pub(crate) struct RenderContext<'a> {
@@ -28,7 +29,7 @@ pub(crate) struct RenderContext<'a> {
 }
 
 pub(crate) fn render_content(
-    ctx: RenderContext<'_>,
+    mut ctx: RenderContext<'_>,
     output_id: u64,
     encoder: &mut wgpu::CommandEncoder,
     view: &wgpu::TextureView,
@@ -41,16 +42,61 @@ pub(crate) fn render_content(
     let is_preview_output = (output_id & PREVIEW_FLAG) != 0;
     let real_output_id = output_id & !PREVIEW_FLAG;
 
+    // ⚡ BOLT OPTIMIZATION:
+    // Read pre-partitioned and sorted target_ops directly from the context.
     let empty_vec = Vec::new();
     let target_ops = ctx.render_queue.get(&real_output_id).unwrap_or(&empty_vec);
 
-    crate::app::loops::render::scene::diagnostics::process_diagnostics(
-        ctx.video_diagnostic_log_times,
-        target_ops,
-        is_preview_output,
-        real_output_id,
-        output_id,
+    for item in target_ops {
+        for diag in &item.diagnostics {
+            let issue_key = format!("{}:{}:{}", diag.code, diag.module_id, diag.part_id);
+            if should_log_video_issue(&mut *ctx.video_diagnostic_log_times, issue_key) {
+                match diag.severity {
+                    crate::app::core::app_struct::DiagnosticSeverity::Warning => {
+                        tracing::warn!(
+                            "Fehler in Videoausgabe: Modul {} / Part {} - {}",
+                            diag.module_id,
+                            diag.part_id,
+                            diag.message
+                        );
+                    }
+                    crate::app::core::app_struct::DiagnosticSeverity::Error => {
+                        tracing::error!(
+                            "Fehler in Videoausgabe: Modul {} / Part {} - {}",
+                            diag.module_id,
+                            diag.part_id,
+                            diag.message
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    let empty_ops_issue_key = format!(
+        "video-output-empty-ops:{real_output_id}:{}",
+        if is_preview_output { "preview" } else { "output" }
     );
+    if target_ops.is_empty() {
+        if output_id != 0
+            && should_log_video_issue(
+                &mut *ctx.video_diagnostic_log_times,
+                empty_ops_issue_key.clone(),
+            )
+        {
+            tracing::warn!(
+                "Fehler in Videoausgabe: {} {} bleibt leer, weil keine RenderOps fuer diesen Output erzeugt wurden.",
+                if is_preview_output {
+                    "Output-Preview"
+                } else {
+                    "Output"
+                },
+                real_output_id
+            );
+        }
+    } else {
+        clear_video_issue(&mut *ctx.video_diagnostic_log_times, empty_ops_issue_key);
+    }
 
     if target_ops.is_empty() && output_id != 0 {
         let _pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -59,6 +105,7 @@ pub(crate) fn render_content(
                 depth_slice: None,
                 view,
                 resolve_target: None,
+
                 ops: wgpu::Operations {
                     load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
                     store: wgpu::StoreOp::Store,
@@ -128,55 +175,32 @@ pub(crate) fn render_content(
     let (target_width, target_height) =
         output_config_opt.as_ref().map(|cfg| cfg.resolution).unwrap_or((1920, 1080));
 
-    crate::app::loops::render::scene::accumulation::render_accumulation(
-        ctx.layer_ping_pong,
-        ctx.texture_pool,
-        ctx.surface_format,
-        ctx.queue,
-        ctx.video_diagnostic_log_times,
-        ctx.preview_effect_chain_renderer,
-        ctx.effect_chain_renderer,
-        ctx.shader_graph_manager,
-        ctx.mesh_renderer,
-        ctx.mesh_buffer_cache,
-        ctx.device,
-        ctx.compositor,
-        target_ops,
+    super::scenes::scene_2d::render_scene_2d(
+        &mut ctx,
+        output_id,
         encoder,
         target_view,
-        is_preview_output,
-        output_id,
+        target_ops,
         real_output_id,
+        is_preview_output,
         target_width,
         target_height,
-    );
+    )?;
 
-    if needs_post_processing {
-        crate::app::loops::render::scene::post_processing::render_post_processing(
-            ctx.color_calibration_renderer,
-            ctx.edge_blend_renderer,
-            ctx.edge_blend_texture_cache,
-            ctx.edge_blend_cache,
-            ctx.queue,
-            encoder,
-            view,
-            mesh_target_view_ref.as_ref(),
-            color_target_view_ref.as_ref(),
-            output_id,
-            use_edge_blend,
-            use_color_calib,
-            output_config_opt.as_ref(),
-        );
-    }
+    super::scenes::post_processing::render_post_processing(
+        &mut ctx,
+        output_id,
+        encoder,
+        view,
+        needs_post_processing,
+        use_color_calib,
+        use_edge_blend,
+        mesh_target_view_ref.as_ref(),
+        color_target_view_ref.as_ref(),
+        output_config_opt.as_ref(),
+    )?;
 
-    if output_id == 0 {
-        crate::app::loops::render::scene::egui_overlay::render_egui_overlay(
-            ctx.egui_renderer,
-            encoder,
-            view,
-            egui_data,
-        );
-    }
+    super::scenes::overlay::render_overlay(&mut ctx, output_id, encoder, view, egui_data)?;
 
     Ok(())
 }
