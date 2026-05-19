@@ -5,7 +5,6 @@ use vorce_ui::responsive::ResponsiveLayout;
 pub struct MediaManagerUI {
     pub visible: bool, // Toggle visibility
     search_query: String,
-    search_query_lower: Option<std::sync::Arc<str>>,
     view_mode: ViewMode,
     selected_playlist: Option<String>,
     new_playlist_name: String,
@@ -23,7 +22,6 @@ impl Default for MediaManagerUI {
         Self {
             visible: false,
             search_query: String::new(),
-            search_query_lower: None,
             view_mode: ViewMode::Grid,
             selected_playlist: None,
             new_playlist_name: String::new(),
@@ -120,12 +118,7 @@ impl MediaManagerUI {
             // Toolbar
             ui.horizontal(|ui| {
                 ui.label("Search:");
-                let search_resp = ui.text_edit_singleline(&mut self.search_query);
-                if search_resp.changed() {
-                    // ⚡ Bolt: Vermeide per-frame String-Allokationen durch to_lowercase()
-                    self.search_query_lower = (!self.search_query.is_empty())
-                        .then(|| std::sync::Arc::from(self.search_query.to_lowercase().as_str()));
-                }
+                ui.text_edit_singleline(&mut self.search_query);
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if ui.selectable_label(self.view_mode == ViewMode::List, "List").clicked() {
@@ -151,7 +144,7 @@ impl MediaManagerUI {
 
             // Content Area
             egui::ScrollArea::vertical().show(ui, |ui| {
-                let query = self.search_query_lower.clone();
+                let query = self.search_query.to_lowercase();
 
                 let mut iter1;
                 let mut iter2;
@@ -174,13 +167,8 @@ impl MediaManagerUI {
                     &mut iter3
                 };
 
-                let mut filtered_items = items.filter(|item| {
-                    if let Some(q) = &query {
-                        item.name_lower.contains(q.as_ref())
-                    } else {
-                        true
-                    }
-                });
+                let mut filtered_items =
+                    items.filter(|item| query.is_empty() || item.name_lower.contains(&query));
 
                 match self.view_mode {
                     ViewMode::Grid => self.render_grid(ui, &mut filtered_items),

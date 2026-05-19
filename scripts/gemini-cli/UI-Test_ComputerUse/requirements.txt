@@ -1,3 +1,0 @@
-pyautogui
-Pillow
-pygetwindow

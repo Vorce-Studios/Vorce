@@ -1,10 +1,8 @@
-use egui::{RichText, Ui};
+use super::SettingsContext;
+use egui::{Context, RichText};
 use vorce_ui::UIAction;
 
-use crate::ui::dialogs::settings::SettingsContext;
-
-/// Rendert den Tab 'Audio'
-pub fn render_tab(ui: &mut Ui, context: &mut SettingsContext) {
+pub fn show(_ctx: &Context, ui: &mut egui::Ui, context: &mut SettingsContext) {
     ui.heading(
         RichText::new(context.ui_state.i18n.t("audio")).color(ui.visuals().strong_text_color()),
     );

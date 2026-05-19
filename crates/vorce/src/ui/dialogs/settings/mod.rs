@@ -2,19 +2,16 @@ use egui::{Context, RichText, Window};
 use vorce_control::hue::controller::HueController;
 use vorce_core::AppState;
 use vorce_render::WgpuBackend;
+
 use vorce_ui::AppUI;
 
 #[cfg(feature = "midi")]
 use vorce_control::midi::MidiInputHandler;
 
-/// Audio configuration sub-dialog.
-pub mod audio;
-/// General configuration sub-dialog.
-pub mod general;
-/// Layout configuration sub-dialog.
-pub mod layout;
-/// Performance configuration sub-dialog.
-pub mod performance;
+mod animation;
+mod audio;
+mod general;
+mod performance;
 
 /// Context required to render the settings window.
 pub struct SettingsContext<'a> {
@@ -77,19 +74,19 @@ pub fn show(ctx: &Context, mut context: SettingsContext) {
             ui.add_space(4.0);
 
             if active_tab == 0 {
-                general::render_tab(ui, &mut context);
+                general::show(ctx, ui, &mut context);
             }
 
             if active_tab == 1 {
-                layout::render_tab(ui, &mut context);
+                animation::show(ctx, ui, &mut context);
             }
 
             if active_tab == 2 {
-                performance::render_tab(ui, &mut context);
+                performance::show(ctx, ui, &mut context);
             }
 
             if active_tab == 3 {
-                audio::render_tab(ui, &mut context);
+                audio::show(ctx, ui, &mut context);
             }
         });
     });

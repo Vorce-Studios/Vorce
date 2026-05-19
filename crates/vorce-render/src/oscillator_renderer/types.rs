@@ -70,6 +70,7 @@ impl Vertex {
     }
 }
 
+// Fullscreen quad vertices
 pub(crate) const QUAD_VERTICES: &[Vertex] = &[
     Vertex { position: [-1.0, -1.0], texcoord: [0.0, 1.0] },
     Vertex { position: [1.0, -1.0], texcoord: [1.0, 1.0] },

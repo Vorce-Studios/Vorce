@@ -21,7 +21,6 @@ pub mod mpv_decoder;
 pub mod pipeline;
 pub mod player;
 pub mod sequence;
-pub mod test_pattern_decoder;
 
 pub use decoder::{HwAccelType, PixelFormat, TestPatternDecoder, VideoDecoder};
 pub use ffmpeg_decoder::FFmpegDecoder;
