@@ -18,10 +18,10 @@ pub mod hap_decoder;
 pub mod image_decoder;
 #[cfg(feature = "libmpv")]
 pub mod mpv_decoder;
-pub mod test_pattern_decoder;
 pub mod pipeline;
 pub mod player;
 pub mod sequence;
+pub mod test_pattern_decoder;
 
 pub use decoder::{HwAccelType, PixelFormat, VideoDecoder};
 pub use ffmpeg_decoder::FFmpegDecoder;
@@ -37,7 +37,6 @@ pub use player::{
 };
 pub use sequence::ImageSequenceDecoder;
 pub use test_pattern_decoder::TestPatternDecoder;
-
 
 /// Media errors
 #[derive(Error, Debug)]
