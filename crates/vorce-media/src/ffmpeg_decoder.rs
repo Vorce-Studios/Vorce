@@ -6,7 +6,6 @@ use tracing::info;
 use tracing::warn;
 use vorce_io::VideoFrame;
 
-
 #[cfg(feature = "ffmpeg")]
 mod ffmpeg_impl {
     use super::*;
@@ -430,7 +429,6 @@ mod ffmpeg_impl {
         }
     }
 }
-
 
 /// Unified decoder that automatically uses FFmpeg if available, test pattern otherwise
 pub enum FFmpegDecoder {

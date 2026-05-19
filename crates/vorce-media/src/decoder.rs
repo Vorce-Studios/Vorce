@@ -2,8 +2,6 @@
 
 use crate::Result;
 use std::time::Duration;
-#[cfg(feature = "ffmpeg")]
-use tracing::warn;
 
 /// Pixel format for decoded frames
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
