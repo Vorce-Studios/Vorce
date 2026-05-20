@@ -1,23 +1,17 @@
-## 2025-02-12 - Prevent Per-Frame String Allocation in UI Hot Paths
-**Erkenntnis:** Immediate-mode UIs wie egui rufen Render-Funktionen 60x pro Sekunde auf. Wenn man innerhalb einer Schleife in `draw_search_popup` und `draw_quick_create_popup` kontinuierlich `.to_lowercase()` auf dem Such-Filter ausführt, erzeugt dies massive, unnötige Heap-Allokationen (String-Instanziierungen). Dies belastet den Garbage Collector (bzw. führt in Rust zu unnötigem Speicherdruck) und verlangsamt den Render-Thread erheblich, vor allem bei langen Listen.
-**Aktion:** Zustände, die für Vergleiche transformiert werden müssen (wie lowercased Strings), sollten im State-Struct ge-cached und NUR aktualisiert werden, wenn sich das Original ändert (`response.changed()`). Die Eigenschaft muss gekapselt oder das `changed()`-Signal der UI-Komponente genutzt werden.
+# Bolt - Knowledge Base & Lessons Learned
 
-## 2025-02-12 - Prevent Per-Frame String Allocation in UI Hot Paths (EffectChainPanel)
-**Erkenntnis:** Immediate-mode UIs wie egui rufen Render-Funktionen 60x pro Sekunde auf. Das Ausführen von `.to_lowercase()` auf UI-State wie Suchfiltern *jeden Frame*, selbst wenn es außerhalb einer inneren Schleife passiert, erzeugt kontinuierlich unnötige Heap-Allokationen (String-Instanziierungen). Dies belastet den Memory Allocator und kann zu unerwarteten Stottern im Render-Thread führen.
-**Aktion:** Zustände, die für Vergleiche transformiert werden müssen (wie lowercased Strings), sollten im State-Struct ge-cached und NUR aktualisiert werden, wenn sich das Original ändert (z.B. durch `response.changed()`).
+## 2024-11-20 - Use f64 for time calculation in Media
+**Erkenntnis:** Using f32 for time calculation in media pipeline leads to precision issues and jitter over long durations.
+**Aktion:** Use f64 for all time-related fields and calculations in `vorce-media`.
 
-## 2024-05-19 - N+1 Disk IO with WalkDir in hot path
-**Erkenntnis:** The `MediaLibrary::refresh` loop was triggering N+1 disk I/O and excessive string allocations. Using `path.is_file()` issued an unnecessary `stat` syscall, while `path.to_string_lossy().to_string()` allocated multiple times in the hot loop even for pre-scanned files.
-**Aktion:** Replaced `path.is_file()` with `entry.file_type().is_file()` (which leverages WalkDir's internal directory traversal cache) and short-circuited `|| self.items.contains_key(path)` to prevent string allocations via `into_owned()` and metadata syscalls for existing paths.
-
-## 2025-05-07 - Zero-Allocation Case-Insensitive Search in Hot Paths
-**Erkenntnis:** Using `.to_lowercase().contains(...)` inside iterators or UI render loops for searches allocates memory continuously every frame. While `socket.name` and `type_name` seem innocuous, their constant allocation creates hidden latency and pressure on the memory allocator.
-**Aktion:** Replaced dynamic lowercase allocation with a custom `utils::case_insensitive_contains` function that does zero-allocation ASCII-aware comparisons using `.eq_ignore_ascii_case()` combined with a substring search window, significantly improving continuous render loop performance during active searches.
-
-## 2025-02-12 - Zero-Allocation Case-Insensitive Search in Hot Paths (Search Popup)
-**Erkenntnis:** Immediate-mode UIs wie egui rufen Render-Funktionen 60x pro Sekunde auf. Das Ausführen von `.to_lowercase()` innerhalb eines Iterators in der Such-Funktion `draw_search_popup` erzeugt jeden Frame unzählige überflüssige Heap-Allokationen (String-Instanziierungen).
-**Aktion:** Der Ansatz wurde durch die Verwendung der bestehenden Methode `utils::case_insensitive_contains` ersetzt, welche den Vergleich ASCII-basiert ohne Speicherallokationen (zero-allocation) ausführt. Zustände, die für Vergleiche transformiert werden müssen, sollten ge-cached werden. Wenn dies nicht möglich ist, ist eine allocation-freie String-Vergleichsfunktion entscheidend.
+## 2024-12-05 - Modularize UI Widgets
+**Erkenntnis:** A single large `custom.rs` for all UI widgets becomes unmaintainable.
+**Aktion:** Moved custom widgets to `crates/vorce-ui/src/widgets/custom/` with dedicated modules for `buttons`, `sliders`, `layout`, etc.
 
 ## 2025-05-10 - Avoid Caching UI State for Public Fields (ModuleCanvas Search)
 **Erkenntnis:** Caching lowercased search strings in `egui` state structs using `response.changed()` causes state desynchronization bugs when the source fields (like `search_filter` or `quick_create_filter`) are `pub` and can be modified programmatically elsewhere. This pattern attempts to avoid per-frame allocations but introduces subtle bugs.
 **Aktion:** Instead of caching derived string state for `pub` fields, remove the cached state entirely. Use the zero-allocation `utils::case_insensitive_contains` inside the filter loops directly with the original string. This achieves both zero per-frame allocations and guaranteed state synchronization.
+
+## 2025-05-18 - Avoid Per-Frame String Allocation in UI Hot Paths (MediaManagerUI)
+**Erkenntnis:** Immediate-mode UIs wie egui rufen Render-Funktionen 60x pro Sekunde auf. Das Ausführen von `.to_lowercase()` innerhalb eines Render-Loops (hier `render_main_content` in `MediaManagerUI`) erzeugt jeden Frame unnötige Heap-Allokationen, die den Garbage Collector/Allocator belasten.
+**Aktion:** Ersetzt durch das Caching des lowercased Such-Strings (`search_query_lower`), der nur bei Änderungen (`response.changed()`) aktualisiert wird. Im Render-Loop wird dann `str::contains()` auf den ebenso ge-cachten `item.name_lower` angewendet. Zusätzlich wird der ge-cachte String als `Arc<str>` gespeichert. Beim Iterieren über die MediaItems im Render-Loop wird nur das `Arc` geclont (cheap ref-bump), womit eine echte Zero-Allocation pro Frame (während einer aktiven Suche) erreicht wird, und es kann weiterhin die schnelle byte-level Suche von `str::contains` genutzt werden.

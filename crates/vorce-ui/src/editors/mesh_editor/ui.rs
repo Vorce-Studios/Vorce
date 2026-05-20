@@ -1,7 +1,7 @@
 use super::state::*;
 use super::types::*;
 use crate::editors::mesh_editor::interaction::MeshEditorInteraction;
-use egui::{Pos2, Rect, Sense, Stroke, Ui};
+use egui::{Color32, Pos2, Rect, Sense, Stroke, Ui};
 
 pub trait MeshEditorUi {
     fn ui(&mut self, ui: &mut Ui) -> Option<MeshEditorAction>;
