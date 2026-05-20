@@ -26,3 +26,41 @@
 **Schwachstelle:** Beim Iterieren über die von MPV gelieferten Node-Maps (`crates/vorce-media/src/mpv_decoder.rs`) wurden C-Pointer (`keys[i]`) ohne Prüfung auf Null an `CStr::from_ptr` übergeben.
 **Lektion:** FFI-Bibliotheken in C können bei internen Fehlern oder korruptem Input (wie hier manipulierten Video-Dateien) Null-Pointer zurückgeben. Die direkte Verwendung solcher Pointer in Rust's unsafe Blöcken führt zum sofortigen Absturz (Panic/DoS) und somit zu einem Stabilitäts- und Sicherheitsrisiko für das Gesamtsystem.
 **Prävention:** Alle von FFI empfangenen raw Pointer müssen mit `.is_null()` geprüft werden, bevor sie dereferenziert oder an sichere Wrapper-Funktionen wie `CStr::from_ptr` weitergegeben werden.
+
+**Zusätzliche Schwachstelle:** Zwei `unwrap()` Aufrufe befanden sich im Media-Decoder (`crates/vorce-media/src/mpv_decoder.rs` auf Zeilen 88 und 89) bei der Erstellung von `CString` aus String-Literalen.
+**Lektion:** Obwohl die verwendeten String-Literale keine Null-Bytes enthalten und die Aufrufe in der Praxis sicher sind, kann ein versehentliches Ändern oder dynamisches Erzeugen dieser Strings ohne Null-Prüfung zu Paniken und damit zum Absturz der gesamten Anwendung führen.
+**Prävention:** Verwende stattdessen sauberes Error Handling und fange Fehler elegant ab, z.B. durch `map_err`, das zu einem `MediaError::DecoderError` aufgelöst wird.
+
+## 2025-05-24 - DoS via Option::unwrap() in media_library.rs tests
+
+**Schwachstelle:** Ein `unwrap()` Aufruf befand sich im `test_media_library_limit` Test in `crates/vorce-core/src/media_library.rs` beim Erstellen von Verzeichnissen und Dateien.
+
+**Lektion:** Wenn Fehler beim Erstellen von Verzeichnissen oder Dateien durch unwrap() ignoriert werden, führt dies zu einem direkten Absturz durch Panic. Auch in Tests ist es besser, Fehler sauber mit `Result` zurückzugeben.
+
+**Prävention:** Verwende `Result` in Test-Signaturen und `?` zur Propagierung von Dateisystem-Fehlern anstelle von `unwrap()`.
+
+## 2025-02-27 - [Security] Defense-in-Depth against WGSL Codegen Panics
+**Schwachstelle:** The WGSL codegen implementation heavily relied on `.expect()` and `.unwrap()` which would cause the application to panic if shader graphs encountered unexpected types, parsing errors, or validation issues.
+**Lektion:** Robust error handling is crucial for operations dependent on user input and serialized project files to prevent denial-of-service vulnerabilities.
+**Prävention:** Use `.map_err()` to propagate errors up the call stack, explicitly defining error types like `CodegenError` where appropriate.
+
+## 2025-01-20 - [Denial of Service (DoS)]
+**Schwachstelle:** `expect()` calls exist in `vorce-media/src/pipeline.rs` and `vorce-render/src/mesh_buffer_cache.rs` and `vorce-render/src/texture.rs`.
+**Lektion:** Code relied on expect() which can panic and cause DoS.
+**Prävention:** Use safe error handling or fallback defaults.
+
+## 2025-05-24 - [HIGH] Path Traversal in Project Loader
+
+**Schwachstelle:** `load_project` in `crates/vorce-io/src/project.rs` hat Dateipfade nicht auf `..` Komponenten validiert, wodurch Path Traversal beim Laden von Projekten möglich war.
+**Lektion:** Es fehlte eine Validierungsschicht zwischen externen Pfaden und dem Dateisystemzugriff.
+**Prävention:** Bei jeglichem Einlesen von Dateien über externe oder dynamische Pfade muss vor dem Aufruf von `File::open` oder `fs::read` zwingend eine Validierung der Pfadkomponenten stattfinden, idealerweise durch den Ausschluss von `Component::ParentDir` oder eine strikte Sandboxing-Architektur.
+
+## 2024-05-18 - [Path Traversal Bypass]
+**Schwachstelle:** Path Traversal checks using `std::path::Component::ParentDir` were bypassed on non-Windows platforms when paths contained Windows-style separators (e.g. `..\..\evil.mapmap`).
+**Lektion:** `std::path::Path` parsing behavior depends on the target OS. On Linux, `\` is a valid filename character, so `..\` is parsed as a single component name, not a directory traversal.
+**Prävention:** Always normalize path separators (e.g., `.replace("\\", "/")`) before performing traversal checks across all OS targets.
+
+## 2025-05-24 - Path Traversal Mitigation in Media Decoders
+**Schwachstelle:** The media decoders in `vorce-media` (e.g., `StillImageDecoder`, `MpvDecoder`, `GifDecoder`, `ImageSequenceDecoder`, `RealFFmpegDecoder`) loaded files from disk without explicitly validating whether the given path contained parent directory traversal components (`..`).
+**Lektion:** While some path traversal protections existed at higher levels (like the project loading and MCP tools), the media decoding layer itself remained unprotected, allowing potential arbitrary file reads if external input bypassed higher-level checks.
+**Prävention:** Add a defense-in-depth validation check directly inside the `open()` methods of media decoders, rejecting any paths that contain `std::path::Component::ParentDir`.

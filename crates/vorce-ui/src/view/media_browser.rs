@@ -896,7 +896,7 @@ impl MediaBrowser {
             } else if response.hovered() {
                 ui.visuals().widgets.hovered.bg_fill
             } else {
-                ui.visuals().widgets.inactive.bg_fill
+                ui.visuals().widgets.noninteractive.bg_fill
             };
 
             ui.painter().rect_filled(rect, 2.0, bg_color);

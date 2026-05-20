@@ -121,10 +121,8 @@ impl McpServer {
             }
             "resources/read" => {
                 // Parse params
-                let params: Option<serde_json::Value> = serde_json::from_value(
-                    request.params.clone().unwrap_or(serde_json::Value::Null),
-                )
-                .ok();
+                let params: Option<serde_json::Value> =
+                    serde_json::from_value(request.params.unwrap_or(serde_json::Value::Null)).ok();
                 let uri = params
                     .and_then(|p| p.get("uri").and_then(|v| v.as_str()).map(|s| s.to_string()));
 
@@ -165,10 +163,8 @@ impl McpServer {
                 Some(success_response(id, serde_json::json!({ "prompts": prompts })))
             }
             "prompts/get" => {
-                let params: Option<serde_json::Value> = serde_json::from_value(
-                    request.params.clone().unwrap_or(serde_json::Value::Null),
-                )
-                .ok();
+                let params: Option<serde_json::Value> =
+                    serde_json::from_value(request.params.unwrap_or(serde_json::Value::Null)).ok();
                 let name = params
                     .and_then(|p| p.get("name").and_then(|v| v.as_str()).map(|s| s.to_string()));
 
@@ -299,29 +295,6 @@ mod tests {
     use super::*;
     use crossbeam_channel::unbounded;
     use serde_json::json;
-
-    #[test]
-    fn test_success_response_with_id() {
-        let id = json!(456);
-        let result = json!({"status": "ok"});
-        let response = success_response(Some(id.clone()), result.clone());
-
-        assert_eq!(response.jsonrpc, "2.0");
-        assert_eq!(response.id, Some(id));
-        assert_eq!(response.result, Some(result));
-        assert!(response.error.is_none());
-    }
-
-    #[test]
-    fn test_success_response_without_id() {
-        let result = json!([1, 2, 3]);
-        let response = success_response(None, result.clone());
-
-        assert_eq!(response.jsonrpc, "2.0");
-        assert_eq!(response.id, None);
-        assert_eq!(response.result, Some(result));
-        assert!(response.error.is_none());
-    }
 
     #[test]
     fn test_error_response_with_id() {

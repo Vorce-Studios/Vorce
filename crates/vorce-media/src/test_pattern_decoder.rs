@@ -9,7 +9,7 @@ pub struct TestPatternDecoder {
     height: u32,
     duration: Duration,
     fps: f64,
-    current_time: Duration,
+    pub current_time: Duration,
     frame_count: u64,
 }
 
