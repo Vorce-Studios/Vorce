@@ -52,7 +52,7 @@ impl Widget for AudioMeter {
             let painter = ui.painter();
 
             // Draw rack frame
-            draw_rack_frame(ui.visuals(), painter, rect);
+            draw_rack_frame(painter, rect);
 
             // Inner content rect (inset for frame)
             let frame_width = 8.0;
@@ -108,10 +108,10 @@ impl Widget for AudioMeter {
 }
 
 /// Draws the mounting frame with 4 phillips screws
-fn draw_rack_frame(visuals: &egui::Visuals, painter: &egui::Painter, rect: Rect) {
-    let frame_color = visuals.widgets.inactive.bg_fill;
-    let frame_highlight = visuals.widgets.inactive.fg_stroke.color.linear_multiply(0.5);
-    let frame_shadow = visuals.window_fill;
+fn draw_rack_frame(painter: &egui::Painter, rect: Rect) {
+    let frame_color = crate::theme::colors::LIGHTER_GREY;
+    let frame_highlight = crate::theme::colors::STROKE_GREY;
+    let frame_shadow = crate::theme::colors::DARK_GREY;
 
     // Main frame
     painter.rect_filled(rect, 0.0, frame_color);
@@ -295,7 +295,7 @@ fn draw_single_retro_meter(
 
     // Draw needle
     painter
-        .line_segment([visible_base, needle_tip], Stroke::new(1.5, _ui.visuals().error_fg_color));
+        .line_segment([visible_base, needle_tip], Stroke::new(1.5, Color32::from_rgb(180, 40, 40)));
 
     // Shadow
     painter.line_segment(
@@ -325,7 +325,7 @@ fn draw_digital_stereo(
     let painter = ui.painter();
 
     // Dark background
-    painter.rect_filled(rect, 0.0, ui.visuals().extreme_bg_color);
+    painter.rect_filled(rect, 0.0, crate::theme::colors::DARKER_GREY);
 
     // Layout:
     // Top: L
@@ -348,8 +348,8 @@ fn draw_digital_stereo(
     );
 
     // Draw Bars
-    draw_horizontal_led_bar(ui.visuals(), painter, l_rect, db_left, peak_l);
-    draw_horizontal_led_bar(ui.visuals(), painter, r_rect, db_right, peak_r);
+    draw_horizontal_led_bar(painter, l_rect, db_left, peak_l);
+    draw_horizontal_led_bar(painter, r_rect, db_right, peak_r);
 
     // Draw Scale
     draw_horizontal_scale(ui, painter, scale_rect);
@@ -371,13 +371,7 @@ fn draw_digital_stereo(
     );
 }
 
-fn draw_horizontal_led_bar(
-    visuals: &egui::Visuals,
-    painter: &egui::Painter,
-    rect: Rect,
-    db: f32,
-    peak: f32,
-) {
+fn draw_horizontal_led_bar(painter: &egui::Painter, rect: Rect, db: f32, peak: f32) {
     let segment_count = 40;
     let _padding = 1.0;
     let total_w = rect.width();
@@ -397,11 +391,11 @@ fn draw_horizontal_led_bar(
             && peak < (threshold_db + (max_db - min_db) / segment_count as f32);
 
         let color = if threshold_db >= 0.0 {
-            visuals.error_fg_color
+            Color32::from_rgb(255, 50, 50)
         } else if threshold_db >= -10.0 {
-            visuals.warn_fg_color
+            Color32::from_rgb(255, 200, 0)
         } else {
-            crate::theme::colors::MINT_ACCENT
+            Color32::from_rgb(0, 255, 0)
         };
 
         let final_color = if active {
@@ -435,7 +429,7 @@ fn draw_horizontal_scale(ui: &egui::Ui, painter: &egui::Painter, rect: Rect) {
         let x = db_to_x(val);
         painter.line_segment(
             [Pos2::new(x, rect.min.y), Pos2::new(x, rect.max.y)],
-            Stroke::new(1.0, ui.visuals().text_color().gamma_multiply(0.15)),
+            Stroke::new(1.0, Color32::from_gray(60)),
         );
 
         if rect.height() > 8.0 && (val == -40.0 || val == -20.0 || val == 0.0) {
