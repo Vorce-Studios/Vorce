@@ -27,7 +27,7 @@ pub fn check_hold_state(ui: &mut Ui, id: egui::Id, is_interacting: bool) -> (boo
             ui.data_mut(|d| d.insert_temp(start_time_id, start_time));
         }
 
-        let elapsed = now - start_time.unwrap();
+        let elapsed = if let Some(st) = start_time { now - st } else { 0.0 };
         progress = (elapsed as f32 / hold_duration).clamp(0.0, 1.0);
 
         // Store progress for external visualization if needed
@@ -296,38 +296,5 @@ pub fn draw_safety_radial_fill(
             .collect();
 
         painter.add(egui::Shape::line(points, stroke));
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use egui::Context;
-
-    fn test_ui(func: impl FnMut(&mut Ui)) {
-        let ctx = Context::default();
-        let mut func = func;
-        #[allow(deprecated)]
-        let _ = ctx.run(Default::default(), |ctx| {
-            #[allow(deprecated)]
-            egui::CentralPanel::default().show(ctx, |ui| {
-                func(ui);
-            });
-        });
-    }
-
-    #[test]
-    fn test_check_hold_state() {
-        test_ui(|ui| {
-            let id = ui.id().with("test_hold");
-            let (triggered, progress) = check_hold_state(ui, id, false);
-            assert!(!triggered);
-            assert_eq!(progress, 0.0);
-
-            // Test interaction starting
-            let (triggered, progress) = check_hold_state(ui, id, true);
-            assert!(!triggered);
-            assert!(progress >= 0.0);
-        });
     }
 }

@@ -1,199 +1,162 @@
 import os
-import sys
-import json
 import time
-import argparse
-from datetime import datetime
-from pathlib import Path
+import json
+import base64
+import logging
+from typing import Dict, Any, Optional
 
-MISSING_DEPS = []
 try:
+    import mss
     import pyautogui
+    import requests
 except ImportError:
-    MISSING_DEPS.append("pyautogui")
-try:
-    import PIL.ImageGrab
-except ImportError:
-    MISSING_DEPS.append("Pillow")
-try:
-    import google.generativeai as genai
-except ImportError:
-    MISSING_DEPS.append("google-generativeai")
+    logging.warning("mss, pyautogui, or requests not installed. Run: pip install mss pyautogui requests")
 
-ARTIFACT_DIR = Path("artifacts/visual-capture/ui-test-runs")
+class VorcePilot:
+    def __init__(self, api_key: str, out_dir: str = "pilot_output", max_steps: int = 10, max_runtime: int = 300, allow_destructive: bool = False):
+        self.api_key = api_key
+        self.out_dir = out_dir
+        self.max_steps = max_steps
+        self.max_runtime = max_runtime
+        self.allow_destructive = allow_destructive
+        self.logger = logging.getLogger("VorcePilot")
+        self.logger.setLevel(logging.INFO)
 
-ACTION_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "thought": {"type": "string"},
-        "action": {
-            "type": "string",
-            "enum": ["click", "type", "done", "fail", "inconclusive"]
-        },
-        "x": {"type": "integer"},
-        "y": {"type": "integer"},
-        "text": {"type": "string"}
-    },
-    "required": ["thought", "action"]
-}
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
 
-def log_report(status, message, run_dir, extra_data=None):
-    report = {
-        "status": status,
-        "message": message,
-        "timestamp": datetime.now().isoformat(),
-    }
-    if extra_data:
-        report.update(extra_data)
-
-    report_file = run_dir / "run_report.json"
-    with open(report_file, "w") as f:
-        json.dump(report, f, indent=2)
-    print(f"[{status}] {message}")
-    print(f"Report saved to {report_file}")
-
-def take_screenshot(run_dir, name="screenshot"):
-    if "Pillow" in MISSING_DEPS:
-        return None, None
-    try:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = run_dir / f"{name}_{timestamp}.png"
-        img = PIL.ImageGrab.grab()
-        img.save(filename)
-        return str(filename), img
-    except Exception as e:
-        print(f"Failed to take screenshot: {e}")
-        return None, None
-
-def perform_action(action_data, allow_destructive):
-    action = action_data.get("action")
-    if action == "click":
-        x, y = action_data.get("x"), action_data.get("y")
-        if x is not None and y is not None:
-             print(f"Executing: Click at ({x}, {y})")
-             try:
-                 pyautogui.click(x=x, y=y)
-             except Exception as e:
-                 print(f"Click failed: {e}")
-        else:
-             print("Missing x/y for click.")
-    elif action == "type":
-        text = action_data.get("text")
-        if text:
-             if not allow_destructive and any(keyword in text.lower() for keyword in ["delete", "remove", "rm", "format"]):
-                 print("Blocked potentially destructive typing action.")
-             else:
-                 print(f"Executing: Type '{text}'")
-                 try:
-                     pyautogui.write(text)
-                 except Exception as e:
-                     print(f"Type failed: {e}")
-        else:
-             print("Missing text for type.")
-    elif action in ["done", "fail", "inconclusive"]:
-        print(f"Agent finished with status: {action}")
-        return False, action
-    else:
-        print(f"Unknown action: {action}")
-    return True, None
-
-def run_pilot(args, run_dir):
-    if not os.environ.get("GEMINI_API_KEY"):
-         log_report("FAIL", "GEMINI_API_KEY not set.", run_dir)
-         return False
-
-    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-
-    # We will use gemini-1.5-flash since it handles images well
-    model = genai.GenerativeModel('gemini-1.5-flash')
-
-    system_prompt = f"Goal: {args.goal}. Respond using this strict JSON schema ONLY: {json.dumps(ACTION_SCHEMA)}"
-
-    chat = model.start_chat(history=[
-        {"role": "user", "parts": [system_prompt]}
-    ])
-
-    history = []
-
-    start_time = time.time()
-
-    for step in range(args.max_steps):
-        if time.time() - start_time > args.timeout:
-            log_report("INCONCLUSIVE", "Hard timeout reached.", run_dir, {"history": history})
-            return True
-
-        print(f"\\n--- Step {step+1}/{args.max_steps} ---")
-
-        path, img = take_screenshot(run_dir, f"step_{step}")
-        if not path or not img:
-            log_report("FAIL", "Could not capture screenshot.", run_dir)
-            return False
-
-        print(f"Captured screen: {path}")
-
-        prompt = "Current screen state. What is your next action based on the goal?"
+    def capture_screenshot(self, filepath: str) -> str:
         try:
-             response = chat.send_message([prompt, img])
+            with mss.mss() as sct:
+                sct.shot(output=filepath)
+            with open(filepath, "rb") as image_file:
+                return base64.b64encode(image_file.read()).decode('utf-8')
         except Exception as e:
-             log_report("FAIL", f"Gemini API error: {e}", run_dir)
-             return False
+            self.logger.error(f"Failed to capture screenshot: {e}")
+            return ""
 
-        try:
-            # simple extract json from markdown if present
-            raw_text = response.text
-            if "```json" in raw_text:
-                json_str = raw_text.split("```json")[1].split("```")[0].strip()
-            elif "```" in raw_text:
-                json_str = raw_text.split("```")[1].strip()
-            else:
-                json_str = raw_text.strip()
+    def validate_action_schema(self, action_json: Dict[str, Any]) -> bool:
+        required_keys = ["thought", "action", "status"]
+        for key in required_keys:
+            if key not in action_json:
+                return False
 
-            action_data = json.loads(json_str)
-        except json.JSONDecodeError:
-            log_report("FAIL", "Invalid JSON returned from model.", run_dir, {"raw_response": response.text})
+        valid_actions = ["click", "type", "wait", "finish"]
+        if action_json["action"] not in valid_actions:
             return False
 
-        print(f"Agent Thought: {action_data.get('thought')}")
+        if action_json["action"] == "click" and "coordinates" not in action_json:
+            return False
 
-        history.append({
-            "step": step,
-            "screenshot": path,
-            "decision": action_data
-        })
+        if action_json["action"] == "type" and "text" not in action_json:
+            return False
 
-        continue_loop, status = perform_action(action_data, args.allow_destructive)
+        if action_json["status"] not in ["continue", "passed", "failed", "inconclusive"]:
+            return False
 
-        if not continue_loop:
-             log_report("PASS" if status == "done" else ("FAIL" if status == "fail" else "INCONCLUSIVE"),
-                       f"Pilot finished: {status}", run_dir, {"history": history})
-             return True
+        return True
 
-        time.sleep(2) # brief pause after action
+    def execute_action(self, action_json: Dict[str, Any]):
+        action = action_json["action"]
+        if action == "click":
+            coords = action_json["coordinates"]
+            if len(coords) == 2:
+                try:
+                    pyautogui.click(coords[0], coords[1])
+                except NameError:
+                    pass
+        elif action == "type":
+            try:
+                pyautogui.write(action_json["text"])
+            except NameError:
+                pass
+        elif action == "wait":
+            time.sleep(2)
 
-    log_report("INCONCLUSIVE", "Max steps reached without completion.", run_dir, {"history": history})
-    return True
+    def ask_gemini(self, goal: str, base64_image: str, history: list) -> Dict[str, Any]:
+        prompt = f"""
+You are a UI testing agent. Your goal is: {goal}
+Analyze the screenshot and decide the next action to achieve the goal.
+Respond ONLY with a valid JSON object matching this schema:
+{{
+  "thought": "Your reasoning about the current screen and what to do next",
+  "action": "click|type|wait|finish",
+  "coordinates": [x, y], // optional, required for click
+  "text": "text to type", // optional, required for type
+  "status": "continue|passed|failed|inconclusive" // use passed/failed/inconclusive only when action is finish
+}}
+"""
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={self.api_key}"
+        payload = {
+            "contents": [{
+                "parts": [
+                    {"text": prompt},
+                    {"inlineData": {"mimeType": "image/png", "data": base64_image}}
+                ]
+            }],
+            "generationConfig": {"responseMimeType": "application/json"}
+        }
 
-def main():
-    parser = argparse.ArgumentParser(description="Exploratory Gemini Computer Use Test Runner")
-    parser.add_argument("--goal", type=str, required=True, help="Validation goal/prompt")
-    parser.add_argument("--max-steps", type=int, default=15, help="Maximum number of UI interactions")
-    parser.add_argument("--timeout", type=int, default=300, help="Hard timeout in seconds")
-    parser.add_argument("--allow-destructive", action="store_true", help="Allow file/project operations")
-    args = parser.parse_args()
+        try:
+            response = requests.post(url, json=payload)
+            response.raise_for_status()
+            data = response.json()
+            text_response = data['candidates'][0]['content']['parts'][0]['text']
+            return json.loads(text_response)
+        except Exception as e:
+            self.logger.error(f"Gemini API request failed: {e}")
+            return {"thought": "API error", "action": "finish", "status": "inconclusive"}
 
-    run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-    run_dir = ARTIFACT_DIR / run_id
-    run_dir.mkdir(parents=True, exist_ok=True)
+    def run(self, goal: str) -> Dict[str, Any]:
+        self.logger.info(f"Starting test for goal: {goal}")
+        start_time = time.time()
+        step = 0
+        history = []
+        result_status = "inconclusive"
 
-    if MISSING_DEPS:
-        log_report("FAIL", f"Missing Python dependencies: {', '.join(MISSING_DEPS)}", run_dir)
-        sys.exit(1)
+        while step < self.max_steps:
+            elapsed = time.time() - start_time
+            if elapsed > self.max_runtime:
+                self.logger.warning("Max runtime exceeded.")
+                break
 
-    print(f"Goal: {args.goal}")
-    print(f"Max Steps: {args.max_steps}")
-    print(f"Artifacts: {run_dir}")
+            step += 1
+            self.logger.info(f"Step {step}...")
 
-    run_pilot(args, run_dir)
+            screenshot_path = os.path.join(self.out_dir, f"step_{step}.png")
+            base64_img = self.capture_screenshot(screenshot_path)
+            if not base64_img:
+                break
 
-if __name__ == "__main__":
-    main()
+            decision = self.ask_gemini(goal, base64_img, history)
+            self.logger.info(f"Model decision: {json.dumps(decision)}")
+
+            with open(os.path.join(self.out_dir, f"step_{step}_decision.json"), "w") as f:
+                json.dump(decision, f, indent=2)
+
+            history.append(decision)
+
+            if not self.validate_action_schema(decision):
+                self.logger.error("Invalid action schema from model.")
+                result_status = "inconclusive"
+                break
+
+            if decision["status"] in ["passed", "failed", "inconclusive"]:
+                result_status = decision["status"]
+                break
+
+            self.execute_action(decision)
+            time.sleep(1) # Wait for UI to update
+
+        summary = {
+            "goal": goal,
+            "steps_taken": step,
+            "duration_seconds": time.time() - start_time,
+            "status": result_status,
+            "history": history
+        }
+
+        with open(os.path.join(self.out_dir, "summary.json"), "w") as f:
+            json.dump(summary, f, indent=2)
+
+        return summary

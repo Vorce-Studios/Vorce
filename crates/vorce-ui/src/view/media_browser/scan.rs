@@ -1,4 +1,4 @@
-use super::models::{MediaEntry, MediaType, ThumbnailHandle, SortMode};
+use super::models::{MediaEntry, MediaType, SortMode, ThumbnailHandle};
 use super::state::MediaBrowserState;
 use std::path::Path;
 
@@ -32,7 +32,11 @@ pub fn refresh_dir(state: &mut MediaBrowserState) {
 
                         if matches!(
                             file_type,
-                            MediaType::Video | MediaType::Image | MediaType::ImageSequence | MediaType::Audio | MediaType::Hap
+                            MediaType::Video
+                                | MediaType::Image
+                                | MediaType::ImageSequence
+                                | MediaType::Audio
+                                | MediaType::Hap
                         ) {
                             entries.push(MediaEntry {
                                 path: entry_path,
@@ -98,7 +102,10 @@ pub fn sort_entries(state: &mut MediaBrowserState) {
     }
 }
 
-pub fn get_or_generate_thumbnail(state: &MediaBrowserState, path: &Path) -> Option<ThumbnailHandle> {
+pub fn get_or_generate_thumbnail(
+    state: &MediaBrowserState,
+    path: &Path,
+) -> Option<ThumbnailHandle> {
     if let Some(thumb) = state.thumbnail_cache.read().get(path) {
         return Some(thumb.clone());
     }
@@ -106,7 +113,11 @@ pub fn get_or_generate_thumbnail(state: &MediaBrowserState, path: &Path) -> Opti
     if generating.contains(path) {
         return None;
     }
-    let file_type = path.extension().and_then(|e| e.to_str()).map(MediaType::from_extension).unwrap_or(MediaType::Unknown);
+    let file_type = path
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(MediaType::from_extension)
+        .unwrap_or(MediaType::Unknown);
     if matches!(file_type, MediaType::Image) {
         generating.insert(path.to_path_buf());
         let tx = state.thumbnail_tx.clone();
@@ -117,7 +128,10 @@ pub fn get_or_generate_thumbnail(state: &MediaBrowserState, path: &Path) -> Opti
                     let thumbnail = img.thumbnail(128, 128);
                     let size = [thumbnail.width() as _, thumbnail.height() as _];
                     let rgba = thumbnail.to_rgba8();
-                    Ok(egui::ColorImage::from_rgba_unmultiplied(size, rgba.as_flat_samples().as_slice()))
+                    Ok(egui::ColorImage::from_rgba_unmultiplied(
+                        size,
+                        rgba.as_flat_samples().as_slice(),
+                    ))
                 }
                 Err(e) => Err(e.to_string()),
             };

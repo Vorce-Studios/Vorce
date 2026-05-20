@@ -18,7 +18,12 @@ pub struct MediaEntry {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MediaType {
-    Video, Image, ImageSequence, Audio, Hap, Unknown,
+    Video,
+    Image,
+    ImageSequence,
+    Audio,
+    Hap,
+    Unknown,
 }
 
 impl MediaType {
@@ -69,10 +74,18 @@ impl std::fmt::Debug for ThumbnailHandle {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ViewMode { Grid, List }
+pub enum ViewMode {
+    Grid,
+    List,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SortMode { Name, Type, Size, DateModified }
+pub enum SortMode {
+    Name,
+    Type,
+    Size,
+    DateModified,
+}
 
 #[derive(Debug, Clone)]
 pub struct MediaFolders {

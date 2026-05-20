@@ -1,10 +1,10 @@
+use super::models::*;
+use super::state::MediaBrowserState;
 use crate::i18n::LocaleManager;
 use crate::icons::IconManager;
 use egui::{Color32, Response, Sense, Ui, Vec2};
-use std::time::Instant;
 use std::path::PathBuf;
-use super::models::*;
-use super::state::MediaBrowserState;
+use std::time::Instant;
 
 pub struct MediaBrowser {
     pub state: MediaBrowserState,
@@ -53,10 +53,7 @@ impl MediaBrowser {
                     },
                 );
 
-                let handle = ThumbnailHandle {
-                    texture_handle: texture,
-                    size,
-                };
+                let handle = ThumbnailHandle { texture_handle: texture, size };
 
                 self.state.thumbnail_cache.write().insert(path.clone(), handle.clone());
                 ctx.request_repaint();
@@ -140,7 +137,8 @@ impl MediaBrowser {
 
                 ui.horizontal(|ui| {
                     ui.label("🎬 Video:");
-                    let mut video_path = self.state.media_folders.video_folder.display().to_string();
+                    let mut video_path =
+                        self.state.media_folders.video_folder.display().to_string();
                     if ui.text_edit_singleline(&mut video_path).changed() {
                         self.state.media_folders.video_folder = PathBuf::from(video_path);
                     }
@@ -151,7 +149,8 @@ impl MediaBrowser {
 
                 ui.horizontal(|ui| {
                     ui.label("🖼 Image:");
-                    let mut image_path = self.state.media_folders.image_folder.display().to_string();
+                    let mut image_path =
+                        self.state.media_folders.image_folder.display().to_string();
                     if ui.text_edit_singleline(&mut image_path).changed() {
                         self.state.media_folders.image_folder = PathBuf::from(image_path);
                     }
@@ -162,7 +161,8 @@ impl MediaBrowser {
 
                 ui.horizontal(|ui| {
                     ui.label("🎵 Audio:");
-                    let mut audio_path = self.state.media_folders.audio_folder.display().to_string();
+                    let mut audio_path =
+                        self.state.media_folders.audio_folder.display().to_string();
                     if ui.text_edit_singleline(&mut audio_path).changed() {
                         self.state.media_folders.audio_folder = PathBuf::from(audio_path);
                     }
@@ -206,7 +206,11 @@ impl MediaBrowser {
                 ui.separator();
 
                 ui.label(locale.t("media-browser-filter"));
-                ui.selectable_value(&mut self.state.filter_type, None, locale.t("media-browser-all"));
+                ui.selectable_value(
+                    &mut self.state.filter_type,
+                    None,
+                    locale.t("media-browser-all"),
+                );
                 ui.selectable_value(
                     &mut self.state.filter_type,
                     Some(MediaType::Video),
@@ -519,7 +523,6 @@ impl MediaBrowser {
         response
     }
 }
-
 
 /// Format file size for display
 fn format_size(bytes: u64) -> String {
