@@ -8,12 +8,10 @@
 
 #![allow(missing_docs)]
 
-pub mod test_pattern_decoder;
 use std::path::Path;
 use thiserror::Error;
 
 pub mod decoder;
-pub mod ffmpeg_decoder;
 #[cfg(feature = "hap")]
 pub mod hap_decoder;
 pub mod image_decoder;
@@ -23,8 +21,7 @@ pub mod pipeline;
 pub mod player;
 pub mod sequence;
 
-pub use decoder::{HwAccelType, PixelFormat, VideoDecoder};
-pub use ffmpeg_decoder::FFmpegDecoder;
+pub use decoder::{FFmpegDecoder, HwAccelType, PixelFormat, TestPatternDecoder, VideoDecoder};
 #[cfg(feature = "hap")]
 pub use hap_decoder::{decode_hap_frame, HapError, HapFrame, HapTextureType};
 pub use image_decoder::{GifDecoder, StillImageDecoder};
@@ -36,7 +33,6 @@ pub use player::{
     LoopMode, PlaybackCommand, PlaybackState, PlaybackStatus, PlayerError, VideoPlayer,
 };
 pub use sequence::ImageSequenceDecoder;
-pub use test_pattern_decoder::TestPatternDecoder;
 
 /// Media errors
 #[derive(Error, Debug)]
