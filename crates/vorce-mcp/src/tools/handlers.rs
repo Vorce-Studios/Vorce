@@ -9,7 +9,8 @@ pub fn validate_path_with_extensions(
     path_str: &str,
     allowed_extensions: &[&str],
 ) -> Result<PathBuf, String> {
-    let path = PathBuf::from(path_str);
+    let normalized_str = path_str.replace("\\", "/");
+    let path = PathBuf::from(normalized_str);
 
     if path.is_absolute() {
         return Err("Absolute paths are not allowed".to_string());
@@ -356,6 +357,7 @@ mod tests {
         // Invalid cases - traversal
         assert!(validate_path_with_extensions("../evil.mapmap", allowed).is_err());
         assert!(validate_path_with_extensions("dir/../../evil.mapmap", allowed).is_err());
+        assert!(validate_path_with_extensions("dir\\..\\..\\evil.mapmap", allowed).is_err());
 
         // Invalid cases - extensions
         assert!(validate_path_with_extensions("script.sh", allowed).is_err());

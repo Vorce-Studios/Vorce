@@ -322,7 +322,7 @@ impl FrameScheduler {
 mod tests {
     use super::*;
     use crate::player::VideoPlayer;
-    use crate::test_pattern_decoder::TestPatternDecoder;
+    use crate::TestPatternDecoder;
 
     #[test]
     fn test_pipeline_config_default() {

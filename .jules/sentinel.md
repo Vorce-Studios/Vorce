@@ -48,3 +48,7 @@
 **Schwachstelle:** `load_project` in `crates/vorce-io/src/project.rs` hat Dateipfade nicht auf `..` Komponenten validiert, wodurch Path Traversal beim Laden von Projekten mÃ¶glich war.
 **Lektion:** Es fehlte eine Validierungsschicht zwischen externen Pfaden und dem Dateisystemzugriff.
 **PrÃ¤vention:** Bei jeglichem Einlesen von Dateien über externe oder dynamische Pfade muss vor dem Aufruf von `File::open` oder `fs::read` zwingend eine Validierung der Pfadkomponenten stattfinden, idealerweise durch den Ausschluss von `Component::ParentDir` oder eine strikte Sandboxing-Architektur.
+## 2024-05-18 - [Path Traversal Bypass]
+**Schwachstelle:** Path Traversal checks using `std::path::Component::ParentDir` were bypassed on non-Windows platforms when paths contained Windows-style separators (e.g. `..\..\evil.mapmap`).
+**Lektion:** `std::path::Path` parsing behavior depends on the target OS. On Linux, `\` is a valid filename character, so `..\` is parsed as a single component name, not a directory traversal.
+**Prävention:** Always normalize path separators (e.g., `.replace("\\", "/")`) before performing traversal checks across all OS targets.
