@@ -1,35 +1,31 @@
-# Vorce Exploratory UI Validation Runner
+# Vorce UI Test Computer Use
 
-This tool uses Gemini's vision capabilities and "Computer Use" style actions to explore and validate the Vorce UI interactively based on natural language goals.
+This directory contains test runners for validating the Vorce UI.
 
-## Prerequisites
+## Runners
 
-- Python 3.8+
-- Requirements: pip install mss pyautogui requests
-- Environment Variable: GEMINI_API_KEY must be set with your Gemini API key.
+### Deterministic Test (`vorce_master_test.py`)
 
-## Usage
+Runs a deterministic, fixed click path to smoke test the UI basic layout.
 
-Run the master test script with a specific validation goal:
+### Exploratory Test (`vorce_pilot.py`)
+
+An exploratory UI validation runner powered by Gemini Computer Use. It uses screenshots to interpret the UI state and drives the mouse/keyboard via a strict JSON action schema to fulfill a user-defined goal.
+
+#### Features
+
+- **Goal-Oriented:** Accepts prompts like "Verify the settings dialog opens and contains audio/device controls."
+- **Observation:** Relies purely on screenshots (`Pillow`, `pyautogui`).
+- **Structured:** Requires strict JSON format for model actions (`click`, `type`, `done`, `fail`, `inconclusive`).
+- **Guardrails:**
+  - Max step limits.
+  - Runtime limits.
+  - Blocks potentially destructive typing actions unless explicitly allowed.
+  - Fails safely on uncertainty.
+- **Traceability:** Saves step screenshots, decisions, and summaries to `artifacts/visual-capture/ui-test-runs/`.
+
+#### Usage
 
 ```bash
-export GEMINI_API_KEY="your_api_key_here"
-python scripts/gemini-cli/UI-Test_ComputerUse/vorce_master_test.py \
-  --goal "Verify the settings dialog opens and contains audio/device controls." \
-  --out-dir "test_results" \
-  --max-steps 10
+python vorce_pilot.py --goal "Validate the new media browser can be opened and visually shows an empty state." --max-steps 10
 ```
-
-## How It Works
-
-1. **Observation**: Takes a screenshot of the desktop.
-2. **Analysis**: Sends the screenshot and the goal to the Gemini model, requesting a strict JSON response.
-3. **Action**: The model decides on an action (`click`, `type`, `wait`, `finish`) and a status (`continue`, `passed`, `failed`, `inconclusive`).
-4. **Execution**: The runner validates the JSON schema and executes the interaction (using PyAutoGUI).
-5. **Reporting**: Screenshots, decisions, and a final summary are saved to the output directory. A machine-readable JSON result is printed to stdout.
-
-## Guardrails
-
-- **Max Steps/Runtime**: Prevents infinite loops.
-- **Strict Schema**: Model responses are validated against a required action schema before any input is simulated.
-- **Safety**: Destructive operations are disabled by default. If the model is uncertain, it should return an `inconclusive` status rather than guessing.
