@@ -322,6 +322,7 @@ impl FrameScheduler {
 mod tests {
     use super::*;
     use crate::player::VideoPlayer;
+    use crate::TestPatternDecoder;
 
     #[test]
     fn test_pipeline_config_default() {
@@ -389,7 +390,7 @@ mod tests {
     #[test]
     fn test_pipeline_with_test_pattern() {
         let mut pipeline = FramePipeline::new();
-        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(
+        let decoder = TestPatternDecoder::new(
             640,
             480,
             Duration::from_secs(1),

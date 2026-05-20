@@ -33,3 +33,4 @@
 ## 2026-05-21 - Theme Consistency in Panel Backgrounds
 **Erkenntnis:** The `widgets/panel.rs` component used hardcoded colors (`DARK_GREY` and `LIGHTER_GREY`) for `egui::Frame` backgrounds. This caused visual inconsistency when switching themes.
 **Aktion:** Use dynamic theme variables like `ui.visuals().panel_fill` and `ui.visuals().window_fill()` for frame backgrounds instead of hardcoded palette constants to ensure theme adaptability without requiring a larger layout refactor.
+

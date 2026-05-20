@@ -87,60 +87,96 @@ function Build-CliArgs {
 function Parse-CliStats {
     <#
     .SYNOPSIS
-    Parses real usage stats from CLI JSON output. Returns a hashtable with real cost/token data.
+    Parses real usage stats from CLI JSON output or Telemetry JSONL.
     #>
     param(
         [Parameter(Mandatory)][string]$ProviderName,
-        [string]$RawOutput
+        [string]$RawOutput,
+        [string]$TelemetryFile
     )
 
     $stats = [ordered]@{
         real_cost_usd    = $null
         input_tokens     = $null
         output_tokens    = $null
+        cached_tokens    = $null
+        reasoning_tokens = $null
+        tool_tokens      = $null
+        total_duration_ms= $null
         premium_requests = $null
         model_used       = $null
     }
 
-    if ([string]::IsNullOrWhiteSpace($RawOutput)) { return $stats }
+    if ([string]::IsNullOrWhiteSpace($RawOutput) -and (-not $TelemetryFile -or -not (Test-Path $TelemetryFile))) { return $stats }
+
+    $json = $null
+    try {
+        $firstBrace = $RawOutput.IndexOf('{')
+        $lastBrace = $RawOutput.LastIndexOf('}')
+        if ($firstBrace -ge 0 -and $lastBrace -gt $firstBrace) {
+            $jsonStr = $RawOutput.Substring($firstBrace, $lastBrace - $firstBrace + 1)
+            $json = $jsonStr | ConvertFrom-Json -ErrorAction SilentlyContinue
+        }
+    } catch { }
 
     try {
         switch ($ProviderName) {
             "gemini_cli" {
-                # Gemini outputs JSON with stats.models.{model}.tokens
-                $json = $RawOutput | ConvertFrom-Json -ErrorAction Stop
-                if ($json.stats -and $json.stats.models) {
-                    $totalInput = 0
-                    $totalOutput = 0
+                # First, parse standard stdout for model name and basic stats if no telemetry
+                if ($json -and $json.stats -and $json.stats.models) {
+                    $totalInput = 0; $totalOutput = 0;
                     foreach ($modelProp in $json.stats.models.PSObject.Properties) {
-                        $modelData = $modelProp.Value
                         $stats.model_used = $modelProp.Name
-                        if ($modelData.tokens) {
-                            $totalInput += [int]$modelData.tokens.input
-                            $totalOutput += [int]$modelData.tokens.candidates
+                        if ($modelProp.Value.tokens) {
+                            $totalInput += [int]$modelProp.Value.tokens.input
+                            $totalOutput += [int]$modelProp.Value.tokens.candidates
                         }
                     }
                     $stats.input_tokens = $totalInput
                     $stats.output_tokens = $totalOutput
                 }
+
+                # Overwrite with precise OpenTelemetry data if available
+                if ($TelemetryFile -and (Test-Path $TelemetryFile)) {
+                    $lines = Get-Content $TelemetryFile -ReadCount 0
+                    # Read backwards to find the latest api_response
+                    for ($i = $lines.Count - 1; $i -ge 0; $i--) {
+                        if ($lines[$i] -match "gemini_cli.api_response") {
+                            $otlp = $lines[$i] | ConvertFrom-Json -ErrorAction SilentlyContinue
+                            if ($otlp -and $otlp.attributes) {
+                                $attr = $otlp.attributes
+                                if ($attr.model) { $stats.model_used = $attr.model }
+                                if ($attr.input_token_count) { $stats.input_tokens = [int]$attr.input_token_count }
+                                if ($attr.output_token_count) { $stats.output_tokens = [int]$attr.output_token_count }
+                                if ($attr.cached_content_token_count) { $stats.cached_tokens = [int]$attr.cached_content_token_count }
+                                if ($attr.thoughts_token_count) { $stats.reasoning_tokens = [int]$attr.thoughts_token_count }
+                                if ($attr.tool_token_count) { $stats.tool_tokens = [int]$attr.tool_token_count }
+                                if ($attr.duration_ms) { $stats.total_duration_ms = [int]$attr.duration_ms }
+                            }
+                            break
+                        }
+                    }
+                    # Clean up telemetry file so it doesn't grow indefinitely
+                    Remove-Item $TelemetryFile -Force -ErrorAction SilentlyContinue
+                }
             }
             "claude_code" {
-                # Claude outputs JSON with total_cost_usd and modelUsage
-                $json = $RawOutput | ConvertFrom-Json -ErrorAction Stop
-                if ($json.total_cost_usd) {
-                    $stats.real_cost_usd = [double]$json.total_cost_usd
-                }
-                if ($json.modelUsage) {
-                    $totalInput = 0
-                    $totalOutput = 0
-                    foreach ($modelProp in $json.modelUsage.PSObject.Properties) {
-                        $modelData = $modelProp.Value
-                        $stats.model_used = $modelProp.Name
-                        if ($modelData.inputTokens) { $totalInput += [int]$modelData.inputTokens }
-                        if ($modelData.outputTokens) { $totalOutput += [int]$modelData.outputTokens }
+                if ($json) {
+                    if ($json.total_cost_usd) {
+                        $stats.real_cost_usd = [double]$json.total_cost_usd
                     }
-                    $stats.input_tokens = $totalInput
-                    $stats.output_tokens = $totalOutput
+                    if ($json.modelUsage) {
+                        $totalInput = 0
+                        $totalOutput = 0
+                        foreach ($modelProp in $json.modelUsage.PSObject.Properties) {
+                            $modelData = $modelProp.Value
+                            $stats.model_used = $modelProp.Name
+                            if ($modelData.inputTokens) { $totalInput += [int]$modelData.inputTokens }
+                            if ($modelData.outputTokens) { $totalOutput += [int]$modelData.outputTokens }
+                        }
+                        $stats.input_tokens = $totalInput
+                        $stats.output_tokens = $totalOutput
+                    }
                 }
             }
             "copilot_cli" {
@@ -148,9 +184,9 @@ function Parse-CliStats {
                 $lines = $RawOutput -split "`n"
                 foreach ($line in $lines) {
                     if ($line -match '"type"\s*:\s*"result"') {
-                        $json = $line | ConvertFrom-Json -ErrorAction Stop
-                        if ($json.usage) {
-                            $stats.premium_requests = [int]$json.usage.premiumRequests
+                        $cJson = $line | ConvertFrom-Json -ErrorAction SilentlyContinue
+                        if ($cJson.usage) {
+                            $stats.premium_requests = [int]$cJson.usage.premiumRequests
                         }
                         break
                     }
@@ -162,9 +198,9 @@ function Parse-CliStats {
                 foreach ($line in $lines) {
                     if ($line -match '"modelInfo"' -and $line -match '"modelId"') {
                         try {
-                            $json = $line | ConvertFrom-Json -ErrorAction Stop
-                            if ($json.modelInfo -and $json.modelInfo.modelId) {
-                                $stats.model_used = $json.modelInfo.modelId
+                            $cJson = $line | ConvertFrom-Json -ErrorAction SilentlyContinue
+                            if ($cJson.modelInfo -and $cJson.modelInfo.modelId) {
+                                $stats.model_used = $cJson.modelInfo.modelId
                             }
                         } catch { }
                         break
@@ -174,11 +210,11 @@ function Parse-CliStats {
         }
     } catch {
         # Stats parsing is best-effort, don't fail the task
+        Write-Host "[DEBUG] Exception during stats parsing: $($_.Exception.Message)" -ForegroundColor Red
     }
 
     return $stats
 }
-
 function Invoke-CliTask {
     <#
     .SYNOPSIS
@@ -240,7 +276,6 @@ function Invoke-CliTask {
     Write-Host "[ROUTER] Verwende $providerName ($modelTier) fuer '$TaskType'" -ForegroundColor Cyan
 
     if ($DryRun.IsPresent) {
-        Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
         return [ordered]@{
             success  = $true
             provider = $providerName
@@ -253,7 +288,7 @@ function Invoke-CliTask {
 
     # Get model name for this tier
     $modelName = $null
-    $hasModels = $providerConfig.PSObject.Properties.Name -contains "models"
+    $hasModels = Test-ObjectProperty -Object $providerConfig -Name "models"
     if ($hasModels -and $providerConfig.models -and $providerConfig.models.$modelTier) {
         $modelName = $providerConfig.models.$modelTier.name
     }
@@ -275,11 +310,22 @@ function Invoke-CliTask {
 
     $output = $null
     $exitCode = 0
+    $telemetryFile = $null
 
     try {
         $pushDir = $null
         if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory) -and (Test-Path $WorkingDirectory)) {
             $pushDir = $WorkingDirectory
+        }
+
+        if ($providerName -eq "gemini_cli") {
+            $env:GEMINI_TELEMETRY_ENABLED = "true"
+            $env:GEMINI_TELEMETRY_TARGET = "local"
+            $telemetryFile = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\tmp\gemini-telemetry.jsonl"))
+            $env:GEMINI_TELEMETRY_OUTFILE = $telemetryFile
+            if (-not (Test-Path (Split-Path $telemetryFile))) {
+                New-Item -ItemType Directory -Path (Split-Path $telemetryFile) -Force | Out-Null
+            }
         }
 
         if ($pushDir) { Push-Location $pushDir }
@@ -293,30 +339,48 @@ function Invoke-CliTask {
     } catch {
         $output = $_.Exception.Message
         $exitCode = 1
+    } finally {
+        if ($providerName -eq "gemini_cli") {
+            # Unset env vars
+            Remove-Item Env:\GEMINI_TELEMETRY_ENABLED -ErrorAction SilentlyContinue
+            Remove-Item Env:\GEMINI_TELEMETRY_TARGET -ErrorAction SilentlyContinue
+            Remove-Item Env:\GEMINI_TELEMETRY_OUTFILE -ErrorAction SilentlyContinue
+        }
     }
 
     # Parse real stats from output
-    $parsedStats = Parse-CliStats -ProviderName $providerName -RawOutput $output
+    $parsedStats = Parse-CliStats -ProviderName $providerName -RawOutput $output -TelemetryFile $telemetryFile
+
+    $provider = $QuotaRegistry.providers.$providerName
+    Ensure-ProviderUsageToday -Provider $provider
+    $estimatedCost = Get-EstimatedCost -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
 
     # Register the call with real cost if available, otherwise use estimate
-    if ($parsedStats.real_cost_usd) {
-        # Use real cost
-        $provider = $QuotaRegistry.providers.$providerName
+    if ($parsedStats.real_cost_usd -or $parsedStats.input_tokens) {
+        $modelUsedKey = "unknown"
+        if ($parsedStats.model_used) { $modelUsedKey = $parsedStats.model_used }
+        elseif ($modelName) { $modelUsedKey = $modelName }
+
+        $modUsage = Ensure-ModelUsageBucket -Provider $provider -ModelName $modelUsedKey
+        $modUsage.calls = [int]$modUsage.calls + 1
+
         $provider.usage_today.calls = [int]$provider.usage_today.calls + 1
-        $provider.usage_today.estimated_cost_usd = [Math]::Round([double]$provider.usage_today.estimated_cost_usd + [double]$parsedStats.real_cost_usd, 4)
 
-        # Update token counters if available
-        $hasInputTokens = $provider.usage_today.PSObject.Properties.Name -contains "total_input_tokens"
-        if ($hasInputTokens -and $parsedStats.input_tokens) {
-            $provider.usage_today.total_input_tokens = [int]$provider.usage_today.total_input_tokens + [int]$parsedStats.input_tokens
+        $costToAdd = $estimatedCost
+        if ($parsedStats.real_cost_usd) {
+            $costToAdd = [double]$parsedStats.real_cost_usd
         }
-        $hasOutputTokens = $provider.usage_today.PSObject.Properties.Name -contains "total_output_tokens"
-        if ($hasOutputTokens -and $parsedStats.output_tokens) {
-            $provider.usage_today.total_output_tokens = [int]$provider.usage_today.total_output_tokens + [int]$parsedStats.output_tokens
-        }
+        $modUsage.estimated_cost_usd = [Math]::Round([double]$modUsage.estimated_cost_usd + $costToAdd, 4)
+        $provider.usage_today.estimated_cost_usd = [Math]::Round([double]$provider.usage_today.estimated_cost_usd + $costToAdd, 4)
 
+        if ($parsedStats.input_tokens) { $modUsage.total_input_tokens = [int]$modUsage.total_input_tokens + [int]$parsedStats.input_tokens }
+        if ($parsedStats.output_tokens) { $modUsage.total_output_tokens = [int]$modUsage.total_output_tokens + [int]$parsedStats.output_tokens }
+        if ($parsedStats.cached_tokens) { $modUsage.cached_tokens = [int]$modUsage.cached_tokens + [int]$parsedStats.cached_tokens }
+        if ($parsedStats.reasoning_tokens) { $modUsage.reasoning_tokens = [int]$modUsage.reasoning_tokens + [int]$parsedStats.reasoning_tokens }
+        if ($parsedStats.tool_tokens) { $modUsage.tool_tokens = [int]$modUsage.tool_tokens + [int]$parsedStats.tool_tokens }
+        if ($parsedStats.total_duration_ms) { $modUsage.total_duration_ms = [int]$modUsage.total_duration_ms + [int]$parsedStats.total_duration_ms }
         Save-QuotaRegistry -Registry $QuotaRegistry
-        Write-Host ("[ROUTER] Echte Kosten: `${0}" -f [Math]::Round([double]$parsedStats.real_cost_usd, 4)) -ForegroundColor DarkGray
+        Write-Host ("[ROUTER] Stats verarbeitet fuer Modell: $modelUsedKey") -ForegroundColor DarkGray
     } else {
         Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
     }

@@ -1,5 +1,4 @@
 use crate::theme::colors;
-use crate::widgets::custom::hold_action::hold_to_action_button;
 use crate::widgets::icons::{AppIcon, IconManager};
 use egui::{
     Color32, CornerRadius, Pos2, Rect, Response, Sense, Stroke, Ui, Vec2, WidgetInfo, WidgetType,
@@ -258,6 +257,7 @@ pub fn duplicate_button(ui: &mut Ui) -> Response {
 }
 
 pub fn delete_button(ui: &mut Ui) -> bool {
+    use crate::widgets::custom::hold_to_action_button;
     hold_to_action_button(ui, "🗑", colors::ERROR_COLOR, "Delete")
 }
 
@@ -278,6 +278,7 @@ pub fn move_down_button(ui: &mut Ui) -> Response {
     icon_button(ui, "⏷", Color32::TRANSPARENT, Color32::TRANSPARENT, false)
         .on_hover_text("Move Down")
 }
+<<<<<<< HEAD
 
 #[cfg(test)]
 mod tests {
@@ -324,3 +325,5 @@ mod tests {
         });
     }
 }
+=======
+>>>>>>> 61328e54e (Fix cargo fmt errors in refactored media_browser modules)

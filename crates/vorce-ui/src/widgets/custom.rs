@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 use crate::theme::colors;
 use crate::widgets::icons::{AppIcon, IconManager};
 use egui::{
@@ -869,6 +870,25 @@ pub fn collapsing_header_with_reset(
 
 #[cfg(test)]
 mod tests {
+=======
+pub mod buttons;
+pub mod controls;
+pub mod labels;
+pub mod layout;
+pub mod safety;
+
+pub use buttons::*;
+pub use controls::*;
+pub use labels::*;
+pub use layout::*;
+pub use safety::*;
+#[cfg(test)]
+mod tests {
+
+    use crate::widgets::icons::AppIcon;
+    use egui::Ui;
+
+>>>>>>> 61328e54e (Fix cargo fmt errors in refactored media_browser modules)
     use super::*;
     use egui::Context;
 
@@ -969,6 +989,7 @@ mod tests {
     #[test]
     fn test_icon_button() {
         test_ui(|ui| {
+<<<<<<< HEAD
             icon_button(
                 ui,
                 "Test Icon",
@@ -976,6 +997,9 @@ mod tests {
                 ui.visuals().text_color(),
                 false,
             );
+=======
+            icon_button(ui, "Test Icon", egui::Color32::WHITE, egui::Color32::WHITE, false);
+>>>>>>> 61328e54e (Fix cargo fmt errors in refactored media_browser modules)
         });
     }
 

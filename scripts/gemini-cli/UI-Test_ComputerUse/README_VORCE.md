@@ -1,54 +1,35 @@
-# Vorce UI Automation Harness
+# Vorce Exploratory UI Validation Runner
 
-This folder contains the Windows-local harness used by Codex, Jules, and Gemini workflows to verify Vorce UI readiness without depending on random desktop state.
-
-## Quick Start
-
-Run the no-op environment check from the repository root:
-
-```powershell
-python scripts\gemini-cli\UI-Test_ComputerUse\vorce_ui_harness.py --mode env-check
-```
-
-Run a launch/window/screenshot check after building Vorce:
-
-```powershell
-cargo build -p vorce --release
-python scripts\gemini-cli\UI-Test_ComputerUse\vorce_ui_harness.py --mode launch-check --require-screenshot
-```
-
-Use a custom executable path:
-
-```powershell
-python scripts\gemini-cli\UI-Test_ComputerUse\vorce_ui_harness.py --mode launch-check --vorce-exe target\debug\vorce.exe
-```
-
-## Artifacts
-
-Every run writes a timestamped folder under:
-
-```text
-artifacts/visual-capture/ui-test-runs/
-```
-
-The folder includes `run_report.json` and, for launch checks, `vorce_process.log`, `window_titles.json`, and `initial_window.png` when screenshot capture succeeds.
-
-## Modes
-
-- `env-check`: validates Python, repository root, Vorce executable path, optional Pillow screenshot support, optional `pyautogui`, and optional Gemini API key. It does not launch Vorce and does not modify app data.
-- `launch-check`: starts Vorce, waits for a visible window from the launched process containing `Vorce`, captures process logs, samples visible window titles/PIDs, optionally captures a screenshot, and terminates the launched process.
+This tool uses Gemini's vision capabilities and "Computer Use" style actions to explore and validate the Vorce UI interactively based on natural language goals.
 
 ## Prerequisites
 
-- Python 3.10 or newer.
-- `Pillow` for screenshot capture.
-- `pyautogui` for future deterministic mouse/keyboard flows.
-- `GEMINI_API_KEY` or `GOOGLE_API_KEY` only when a Gemini-guided runner explicitly requires it.
+- Python 3.8+
+- Requirements: pip install mss pyautogui requests
+- Environment Variable: GEMINI_API_KEY must be set with your Gemini API key.
 
-Missing prerequisites are reported in `run_report.json` with `pass`, `warn`, or `fail` checks. Use `--require-screenshot` or `--require-gemini-key` when a workflow must fail hard on those prerequisites.
+## Usage
 
-By default the launch check only accepts a window owned by the launched `vorce.exe` process. Use `--allow-any-process-window` only for diagnostics, because it can match unrelated windows.
+Run the master test script with a specific validation goal:
 
-## Agent Contract
+```bash
+export GEMINI_API_KEY="your_api_key_here"
+python scripts/gemini-cli/UI-Test_ComputerUse/vorce_master_test.py \
+  --goal "Verify the settings dialog opens and contains audio/device controls." \
+  --out-dir "test_results" \
+  --max-steps 10
+```
 
-Codex/Jules/Gemini should treat `env-check` as the baseline no-op gate for issue #547. Deterministic smoke flows belong to #549 and exploratory Gemini Computer Use flows belong to #548; both should reuse this harness output folder and report schema.
+## How It Works
+
+1. **Observation**: Takes a screenshot of the desktop.
+2. **Analysis**: Sends the screenshot and the goal to the Gemini model, requesting a strict JSON response.
+3. **Action**: The model decides on an action (`click`, `type`, `wait`, `finish`) and a status (`continue`, `passed`, `failed`, `inconclusive`).
+4. **Execution**: The runner validates the JSON schema and executes the interaction (using PyAutoGUI).
+5. **Reporting**: Screenshots, decisions, and a final summary are saved to the output directory. A machine-readable JSON result is printed to stdout.
+
+## Guardrails
+
+- **Max Steps/Runtime**: Prevents infinite loops.
+- **Strict Schema**: Model responses are validated against a required action schema before any input is simulated.
+- **Safety**: Destructive operations are disabled by default. If the model is uncertain, it should return an `inconclusive` status rather than guessing.

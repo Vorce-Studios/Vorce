@@ -85,16 +85,24 @@ impl MediaBrowserState {
     }
 
     pub fn filtered_entries(&self) -> Vec<(usize, &MediaEntry)> {
-        self.entries.iter().enumerate().filter(|(_, entry)| {
-            if let Some(filter) = self.filter_type {
-                if entry.file_type != filter { return false; }
-            }
-            if let Some(q) = &self.search_query_lower {
-                if !entry.name_lower.contains(q) && !entry.tags_lower.iter().any(|t| t.contains(q)) {
-                    return false;
+        self.entries
+            .iter()
+            .enumerate()
+            .filter(|(_, entry)| {
+                if let Some(filter) = self.filter_type {
+                    if entry.file_type != filter {
+                        return false;
+                    }
                 }
-            }
-            true
-        }).collect()
+                if let Some(q) = &self.search_query_lower {
+                    if !entry.name_lower.contains(q)
+                        && !entry.tags_lower.iter().any(|t| t.contains(q))
+                    {
+                        return false;
+                    }
+                }
+                true
+            })
+            .collect()
     }
 }

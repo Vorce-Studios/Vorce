@@ -66,7 +66,7 @@ impl MeshEditorUi for MeshEditor {
 
             painter.add(egui::Shape::convex_polygon(
                 points.to_vec(),
-                ui.visuals().selection.bg_fill.linear_multiply(0.2),
+                ui.visuals().selection.bg_fill.gamma_multiply(0.2),
                 Stroke::new(1.0, ui.visuals().selection.stroke.color),
             ));
         }
@@ -83,7 +83,7 @@ impl MeshEditorUi for MeshEditor {
             painter.circle_stroke(
                 vertex.position,
                 6.0,
-                Stroke::new(2.0, ui.visuals().text_color()),
+                Stroke::new(2.0, ui.visuals().window_fill),
             );
 
             // Draw Bezier control points if in Bezier mode
@@ -129,7 +129,8 @@ impl MeshEditorUi for MeshEditor {
 
     /// Draw grid background
     fn draw_grid(&self, ui: &egui::Ui, painter: &egui::Painter, rect: Rect) {
-        let color = ui.visuals().text_color().linear_multiply(0.2);
+        let color = ui.visuals().text_color().gamma_multiply(0.2);
+
 
         let mut x = 0.0;
         while x < rect.width() {
