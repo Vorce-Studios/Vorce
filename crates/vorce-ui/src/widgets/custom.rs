@@ -84,7 +84,6 @@ pub fn cyber_list_item<R>(
     });
 
     // The closure is guaranteed to run, so ret will be Some
-    // The closure is guaranteed to run, so ret will be Some
     ret.expect("Closure should have been executed")
 }
 

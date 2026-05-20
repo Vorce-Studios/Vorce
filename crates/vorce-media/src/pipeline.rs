@@ -321,6 +321,7 @@ impl FrameScheduler {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::decoder::TestPatternDecoder;
     use crate::player::VideoPlayer;
 
     #[test]

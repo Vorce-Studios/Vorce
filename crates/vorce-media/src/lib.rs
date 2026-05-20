@@ -11,6 +11,17 @@
 use std::path::Path;
 use thiserror::Error;
 
+pub(crate) fn reject_path_traversal(path: &Path) -> Result<()> {
+    if path.components().any(|component| matches!(component, std::path::Component::ParentDir)) {
+        return Err(MediaError::FileOpen(format!(
+            "Path traversal is not allowed: {}",
+            path.display()
+        )));
+    }
+
+    Ok(())
+}
+
 pub mod decoder;
 #[cfg(feature = "hap")]
 pub mod hap_decoder;
