@@ -240,6 +240,8 @@ pub enum MidiAssignmentTarget {
     Vorce(String), // Control target ID
     /// Assigned to Streamer.bot function
     StreamerBot(String), // Function name
+    /// Assigned to Mixxx function
+    Mixxx(String), // Function name
 }
 
 impl fmt::Display for MidiAssignmentTarget {
@@ -247,6 +249,7 @@ impl fmt::Display for MidiAssignmentTarget {
         match self {
             Self::Vorce(id) => write!(f, "Vorce: {}", id),
             Self::StreamerBot(func) => write!(f, "Streamer.bot: {}", func),
+            Self::Mixxx(func) => write!(f, "Mixxx: {}", func),
         }
     }
 }
@@ -656,7 +659,9 @@ impl UserConfig {
     }
 
     /// Get all assignments for a specific target type
-    pub fn get_assignments_by_type(&self) -> (Vec<&MidiAssignment>, Vec<&MidiAssignment>) {
+    pub fn get_assignments_by_type(
+        &self,
+    ) -> (Vec<&MidiAssignment>, Vec<&MidiAssignment>, Vec<&MidiAssignment>) {
         let vorce: Vec<_> = self
             .midi_assignments
             .iter()
@@ -667,7 +672,12 @@ impl UserConfig {
             .iter()
             .filter(|a| matches!(a.target, MidiAssignmentTarget::StreamerBot(_)))
             .collect();
-        (vorce, streamerbot)
+        let mixxx: Vec<_> = self
+            .midi_assignments
+            .iter()
+            .filter(|a| matches!(a.target, MidiAssignmentTarget::Mixxx(_)))
+            .collect();
+        (vorce, streamerbot, mixxx)
     }
 
     /// Stellt sicher, dass mindestens ein valides Layoutprofil verfügbar ist.
