@@ -23,5 +23,10 @@ def playback_macro(macro_data):
             normalize_click(action['x'], action['y'])
             time.sleep(0.5)
 
-if __name__ == "__main__":
+def main():
     print("Vorce automation helpers loaded.")
+    print("Use vorce_master_test.py for deterministic smoke test.")
+    sys.exit(0)
+
+if __name__ == "__main__":
+    main()

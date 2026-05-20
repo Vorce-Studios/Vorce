@@ -113,3 +113,10 @@ def kill_process_tree(pid):
         pass
     except Exception as e:
         print(f"Error killing process tree: {e}")
+
+def main():
+    print("Wait logic integrated. Use vorce_master_test.py for full smoke test.")
+    sys.exit(0)
+
+if __name__ == "__main__":
+    main()

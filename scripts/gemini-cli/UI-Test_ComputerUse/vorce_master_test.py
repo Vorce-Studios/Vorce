@@ -6,12 +6,16 @@ import time
 import subprocess
 import threading
 from datetime import datetime
+from pathlib import Path
 
 # Ensure output directory exists and is ignored
-OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-with open(os.path.join(OUTPUT_DIR, ".gitignore"), "w") as f:
+OUTPUT_DIR = Path(os.path.dirname(__file__)) / "output"
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+with open(OUTPUT_DIR / ".gitignore", "w") as f:
     f.write("*\n")
+
+# Compatibility with main branch artifact path
+ARTIFACT_DIR = Path("artifacts/visual-capture/ui-test-runs")
 
 def check_environment():
     """Checks for required environment variables and dependencies."""
@@ -32,14 +36,17 @@ def check_environment():
         missing.append("pyautogui python package")
 
     try:
-        import PIL
+        from PIL import ImageGrab
     except ImportError:
         missing.append("pillow python package")
 
     try:
         import google.genai
     except ImportError:
-        missing.append("google-genai python package")
+        try:
+            import google.generativeai
+        except ImportError:
+            missing.append("google-genai or google-generativeai python package")
 
     try:
         import psutil
@@ -57,13 +64,13 @@ def check_environment():
 
 def save_artifact(filename, content, is_binary=False):
     """Saves an artifact to the output directory."""
-    filepath = os.path.join(OUTPUT_DIR, filename)
+    filepath = OUTPUT_DIR / filename
     mode = 'wb' if is_binary else 'w'
     with open(filepath, mode) as f:
         f.write(content)
     return filepath
 
-def run_test_logic(task, report, proc_container):
+def run_test_logic(task, report, proc_container, run_dir):
     """Internal test logic executed within a thread for timeout handling."""
     # Deferred imports to ensure check_environment can run without ModuleNotFoundErrors
     from wait_for_vorce import build_vorce, start_vorce, wait_for_window
@@ -79,10 +86,10 @@ def run_test_logic(task, report, proc_container):
 
     # 3. Launch
     print("\n[3] Launching Vorce...")
-    stdout_path = os.path.join(OUTPUT_DIR, "launch_log_stdout.txt")
-    stderr_path = os.path.join(OUTPUT_DIR, "launch_log_stderr.txt")
+    stdout_path = run_dir / "launch_log_stdout.txt"
+    stderr_path = run_dir / "launch_log_stderr.txt"
 
-    proc = start_vorce(log_stdout_path=stdout_path, log_stderr_path=stderr_path)
+    proc = start_vorce(log_stdout_path=str(stdout_path), log_stderr_path=str(stderr_path))
     proc_container["proc"] = proc
     if not proc:
         report["status"] = "failed"
@@ -99,7 +106,7 @@ def run_test_logic(task, report, proc_container):
         # Capture failure screenshot
         screenshot = get_screenshot()
         if screenshot:
-            screenshot_path = os.path.join(OUTPUT_DIR, "failure_screenshot.png")
+            screenshot_path = run_dir / "failure_screenshot.png"
             screenshot.save(screenshot_path)
             report["screenshot"] = "failure_screenshot.png"
         else:
@@ -111,7 +118,7 @@ def run_test_logic(task, report, proc_container):
 
     # 5. Execute Task (mocked for now)
     print(f"\n[5] Executing task: {task}")
-    success = run_vision_loop(task)
+    success = run_vision_loop(task, run_dir=run_dir)
 
     if success:
         print(f"Task '{task}' completed successfully.")
@@ -124,7 +131,7 @@ def run_test_logic(task, report, proc_container):
         # Capture failure screenshot
         screenshot = get_screenshot()
         if screenshot:
-            screenshot_path = os.path.join(OUTPUT_DIR, "failure_screenshot.png")
+            screenshot_path = run_dir / "failure_screenshot.png"
             screenshot.save(screenshot_path)
             report["screenshot"] = "failure_screenshot.png"
 
@@ -132,6 +139,10 @@ def run_test_logic(task, report, proc_container):
 
 def run_test(task="noop", timeout=120):
     """Runs the full test lifecycle with a hard timeout."""
+    run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_dir = ARTIFACT_DIR / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+
     report = {
         "timestamp": datetime.now().isoformat(),
         "task": task,
@@ -142,6 +153,7 @@ def run_test(task="noop", timeout=120):
     print(f"--- Starting Vorce UI Automation Harness ---")
     print(f"Task: {task}")
     print(f"Timeout: {timeout} seconds")
+    print(f"Artifacts: {run_dir}")
 
     # 1. Environment Check
     print("\n[1] Checking environment...")
@@ -160,7 +172,10 @@ def run_test(task="noop", timeout=120):
         if missing_reqs:
             report["status"] = "failed"
             report["errors"].append(f"Missing prerequisites: {', '.join(missing_reqs)}")
+            # Save to both locations for compatibility
             save_artifact("run_report.json", json.dumps(report, indent=2))
+            with open(run_dir / "run_report.json", "w") as f:
+                json.dump(report, f, indent=2)
             return False
 
     print("Environment OK.")
@@ -169,6 +184,8 @@ def run_test(task="noop", timeout=120):
         print("\nNo-op environment check completed successfully.")
         report["status"] = "passed"
         save_artifact("run_report.json", json.dumps(report, indent=2))
+        with open(run_dir / "run_report.json", "w") as f:
+            json.dump(report, f, indent=2)
         return True
 
     # Use a container to extract the process object from the worker thread
@@ -177,7 +194,7 @@ def run_test(task="noop", timeout=120):
 
     def worker():
         try:
-            worker_result[0] = run_test_logic(task, report, proc_container)
+            worker_result[0] = run_test_logic(task, report, proc_container, run_dir)
         except Exception as e:
             report["status"] = "failed"
             report["errors"].append(f"Unhandled exception in test logic: {e}")
@@ -218,7 +235,9 @@ def run_test(task="noop", timeout=120):
 
     # Finalize report
     save_artifact("run_report.json", json.dumps(report, indent=2))
-    print("Run artifacts saved to output/")
+    with open(run_dir / "run_report.json", "w") as f:
+        json.dump(report, f, indent=2)
+    print(f"Run artifacts saved to {run_dir}")
 
     return worker_result[0] and not thread.is_alive()
 
