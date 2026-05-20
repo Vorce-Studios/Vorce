@@ -36,6 +36,7 @@ pub use player::{
     LoopMode, PlaybackCommand, PlaybackState, PlaybackStatus, PlayerError, VideoPlayer,
 };
 pub use sequence::ImageSequenceDecoder;
+pub use test_pattern_decoder::TestPatternDecoder;
 
 /// Media errors
 #[derive(Error, Debug)]
