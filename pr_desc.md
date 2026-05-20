@@ -5,10 +5,12 @@
 **📊 Impact:** Eliminiert N String-Allokationen pro Frame während die Suchleiste im Module Canvas geöffnet ist (N = Anzahl der durchsuchten Elemente). Reduziert Micro-Stuttering.
 **🔬 Messung:** Code Review. Die Such-Schleife verwendet nun Referenzen und das Allokations-freie `case_insensitive_contains`.
 
-### Details:
+### Details
+
 - [x] Code wurde optimiert
 - [x] Lesbarkeit bleibt erhalten
 - [x] Tests laufen erfolgreich
 
 ## Verlinktes Issue
+
 Fixes #1235
