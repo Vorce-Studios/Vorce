@@ -1,15 +1,12 @@
 //! FFmpeg-based video decoder implementation
 
-use crate::{MediaError, Result};
+use crate::{HwAccelType, MediaError, Result, TestPatternDecoder, VideoDecoder};
 use std::path::Path;
 use std::time::Duration;
-#[cfg(not(feature = "ffmpeg"))]
 use tracing::info;
 #[cfg(feature = "ffmpeg")]
-use tracing::{info, warn};
+use tracing::warn;
 use vorce_io::VideoFrame;
-
-use super::decoder::{HwAccelType, TestPatternDecoder, VideoDecoder};
 
 /// Convert YUV420P to RGBA using BT.601 color space
 #[allow(dead_code)]
@@ -46,9 +43,6 @@ fn yuv420p_to_rgba(yuv_data: &[u8], width: u32, height: u32) -> Vec<u8> {
 
     rgba
 }
-// ============================================================================
-// FFmpeg Implementation (when feature is enabled)
-// ============================================================================
 
 #[cfg(feature = "ffmpeg")]
 mod ffmpeg_impl {
@@ -110,7 +104,6 @@ mod ffmpeg_impl {
         /// Open a video file with optional hardware acceleration
         pub fn open<P: AsRef<Path>>(path: P, hw_accel: HwAccelType) -> Result<Self> {
             let path = path.as_ref();
-            crate::reject_path_traversal(path)?;
 
             if !path.exists() {
                 return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
