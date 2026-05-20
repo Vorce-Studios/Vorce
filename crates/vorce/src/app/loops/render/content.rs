@@ -1,10 +1,7 @@
 use crate::app::core::app_struct::RuntimeRenderQueueItem;
 use anyhow::Result;
 
-<<<<<<< HEAD
 use super::effects::build_effect_chain;
-=======
->>>>>>> origin/main
 use super::logging::{clear_video_issue, should_log_video_issue};
 use super::PREVIEW_FLAG;
 
@@ -35,7 +32,7 @@ pub(crate) struct RenderContext<'a> {
 use super::texture_gen::{ensure_missing_texture_fallback, generate_grid_texture};
 
 pub(crate) fn render_content(
-    mut ctx: RenderContext<'_>,
+    ctx: RenderContext<'_>,
     output_id: u64,
     encoder: &mut wgpu::CommandEncoder,
     view: &wgpu::TextureView,
@@ -61,11 +58,7 @@ pub(crate) fn render_content(
     for item in target_ops {
         for diag in &item.diagnostics {
             let issue_key = format!("{}:{}:{}", diag.code, diag.module_id, diag.part_id);
-<<<<<<< HEAD
             if should_log_video_issue(video_log_times, issue_key) {
-=======
-            if should_log_video_issue(&mut *ctx.video_diagnostic_log_times, issue_key) {
->>>>>>> origin/main
                 match diag.severity {
                     crate::app::core::app_struct::DiagnosticSeverity::Warning => {
                         tracing::warn!(
@@ -93,16 +86,7 @@ pub(crate) fn render_content(
         if is_preview_output { "preview" } else { "output" }
     );
     if target_ops.is_empty() {
-<<<<<<< HEAD
         if output_id != 0 && should_log_video_issue(video_log_times, empty_ops_issue_key.clone()) {
-=======
-        if output_id != 0
-            && should_log_video_issue(
-                &mut *ctx.video_diagnostic_log_times,
-                empty_ops_issue_key.clone(),
-            )
-        {
->>>>>>> origin/main
             tracing::warn!(
                 "Fehler in Videoausgabe: {} {} bleibt leer, weil keine RenderOps fuer diesen Output erzeugt wurden.",
                 if is_preview_output {
@@ -114,11 +98,7 @@ pub(crate) fn render_content(
             );
         }
     } else {
-<<<<<<< HEAD
         clear_video_issue(video_log_times, empty_ops_issue_key);
-=======
-        clear_video_issue(&mut *ctx.video_diagnostic_log_times, empty_ops_issue_key);
->>>>>>> origin/main
     }
 
     if target_ops.is_empty() && output_id != 0 {
@@ -198,7 +178,6 @@ pub(crate) fn render_content(
     let (target_width, target_height) =
         output_config_opt.as_ref().map(|cfg| cfg.resolution).unwrap_or((1920, 1080));
 
-<<<<<<< HEAD
     let ping_pong_0 = format!("{}_{}", ctx.layer_ping_pong[0], output_id);
     let ping_pong_1 = format!("{}_{}", ctx.layer_ping_pong[1], output_id);
     let scratch_name = format!("layer_scratch_{}", output_id);
@@ -673,34 +652,6 @@ pub(crate) fn render_content(
             for id in free_textures {
                 egui_renderer.free_texture(id);
             }
-=======
-    super::scenes::scene_2d::render_scene_2d(
-        &mut ctx,
-        output_id,
-        encoder,
-        target_view,
-        target_ops,
-        real_output_id,
-        is_preview_output,
-        target_width,
-        target_height,
-    )?;
-
-    super::scenes::post_processing::render_post_processing(
-        &mut ctx,
-        output_id,
-        encoder,
-        view,
-        needs_post_processing,
-        use_color_calib,
-        use_edge_blend,
-        mesh_target_view_ref.as_ref(),
-        color_target_view_ref.as_ref(),
-        output_config_opt.as_ref(),
-    )?;
-
-    super::scenes::overlay::render_overlay(&mut ctx, output_id, encoder, view, egui_data)?;
->>>>>>> origin/main
 
             let render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Egui Pass"),

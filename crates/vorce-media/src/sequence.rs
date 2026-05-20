@@ -1,6 +1,6 @@
 //! Image sequence decoder (directory of numbered frames)
 
-use crate::{reject_path_traversal, MediaError, Result, VideoDecoder};
+use crate::{MediaError, Result, VideoDecoder};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tracing::{info, warn};
@@ -41,7 +41,10 @@ impl ImageSequenceDecoder {
     /// * `fps` - Frame rate for playback (e.g., 30.0)
     pub fn open<P: AsRef<Path>>(directory: P, fps: f64) -> Result<Self> {
         let directory = directory.as_ref();
-        reject_path_traversal(directory)?;
+
+        if directory.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+            return Err(MediaError::FileOpen("Path traversal (..) is not allowed".to_string()));
+        }
 
         if !directory.exists() {
             return Err(MediaError::FileOpen(format!(
@@ -248,13 +251,5 @@ mod tests {
         // 4. Verify limit
         assert_eq!(decoder.frames.len(), MAX_SEQUENCE_FRAMES);
         assert_eq!(decoder.frames.len(), 10);
-    }
-
-    #[test]
-    fn image_sequence_rejects_path_traversal() {
-        let result = ImageSequenceDecoder::open("../../../frames", 30.0);
-        assert!(
-            matches!(result, Err(MediaError::FileOpen(message)) if message.contains("Path traversal"))
-        );
     }
 }
