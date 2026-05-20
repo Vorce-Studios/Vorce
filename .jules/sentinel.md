@@ -39,7 +39,7 @@
 
 ## 2025-02-27 - [Security] Defense-in-Depth against WGSL Codegen Panics
 **Schwachstelle:** The WGSL codegen implementation heavily relied on `.expect()` and `.unwrap()` which would cause the application to panic if shader graphs encountered unexpected types, parsing errors, or validation issues.
-**Lektion:** Robust error handling is crucial for operations dependent on user input and serialized project files to prevent denial-of-service vulnerabilities. 
+**Lektion:** Robust error handling is crucial for operations dependent on user input and serialized project files to prevent denial-of-service vulnerabilities.
 **PrÃ¤vention:** Use `.map_err()` to propagate errors up the call stack, explicitly defining error types like `CodegenError` where appropriate.
 ## 2025-01-20 - [Denial of Service (DoS)] **Schwachstelle:** `expect()` calls exist in `vorce-media/src/pipeline.rs` and `vorce-render/src/mesh_buffer_cache.rs` and `vorce-render/src/texture.rs`. **Lektion:** Code relied on expect() which can panic and cause DoS. **Prävention:** Use safe error handling or fallback defaults.
 
