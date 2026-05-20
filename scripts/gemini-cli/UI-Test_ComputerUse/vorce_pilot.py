@@ -132,7 +132,7 @@ def run_vision_loop(goal, max_steps=5, run_dir=None):
 
     # Check which version of the API we are using
     use_new_genai = 'google.genai' in sys.modules
-    
+
     if use_new_genai:
         client = genai.Client(api_key=api_key)
         model_id = "gemini-1.5-flash"
