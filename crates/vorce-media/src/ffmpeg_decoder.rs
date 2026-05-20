@@ -1,17 +1,10 @@
-//! FFmpeg-based video decoder
-
-use crate::decoder::{HwAccelType, TestPatternDecoder, VideoDecoder};
-use crate::{MediaError, Result};
+use crate::{HwAccelType, MediaError, Result, TestPatternDecoder, VideoDecoder};
 use std::path::Path;
 use std::time::Duration;
 use tracing::info;
 #[cfg(feature = "ffmpeg")]
 use tracing::warn;
 use vorce_io::VideoFrame;
-
-// ============================================================================
-// FFmpeg Implementation (when feature is enabled)
-// ============================================================================
 
 #[cfg(feature = "ffmpeg")]
 mod ffmpeg_impl {

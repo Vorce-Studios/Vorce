@@ -1,14 +1,9 @@
 pub mod buttons;
-pub mod controls;
-pub mod labels;
+pub mod hold_action;
 pub mod layout;
-pub mod safety;
+pub mod sliders;
 
 pub use buttons::*;
-pub use controls::*;
-pub use labels::*;
+pub use hold_action::*;
 pub use layout::*;
-pub use safety::*;
-
-#[cfg(test)]
-mod tests;
+pub use sliders::*;
