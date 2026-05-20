@@ -14,6 +14,14 @@
 **Erkenntnis:** Using `.to_lowercase().contains(...)` inside iterators or UI render loops for searches allocates memory continuously every frame. While `socket.name` and `type_name` seem innocuous, their constant allocation creates hidden latency and pressure on the memory allocator.
 **Aktion:** Replaced dynamic lowercase allocation with a custom `utils::case_insensitive_contains` function that does zero-allocation ASCII-aware comparisons using `.eq_ignore_ascii_case()` combined with a substring search window, significantly improving continuous render loop performance during active searches.
 
+## 2025-02-12 - Zero-Allocation Case-Insensitive Search in Hot Paths (Search Popup)
+**Erkenntnis:** Immediate-mode UIs wie egui rufen Render-Funktionen 60x pro Sekunde auf. Das Ausführen von `.to_lowercase()` innerhalb eines Iterators in der Such-Funktion `draw_search_popup` erzeugt jeden Frame unzählige überflüssige Heap-Allokationen (String-Instanziierungen).
+**Aktion:** Der Ansatz wurde durch die Verwendung der bestehenden Methode `utils::case_insensitive_contains` ersetzt, welche den Vergleich ASCII-basiert ohne Speicherallokationen (zero-allocation) ausführt. Zustände, die für Vergleiche transformiert werden müssen, sollten ge-cached werden. Wenn dies nicht möglich ist, ist eine allocation-freie String-Vergleichsfunktion entscheidend.
+
+## 2025-05-10 - Avoid Caching UI State for Public Fields (ModuleCanvas Search)
+**Erkenntnis:** Caching lowercased search strings in `egui` state structs using `response.changed()` causes state desynchronization bugs when the source fields (like `search_filter` or `quick_create_filter`) are `pub` and can be modified programmatically elsewhere. This pattern attempts to avoid per-frame allocations but introduces subtle bugs.
+**Aktion:** Instead of caching derived string state for `pub` fields, remove the cached state entirely. Use the zero-allocation `utils::case_insensitive_contains` inside the filter loops directly with the original string. This achieves both zero per-frame allocations and guaranteed state synchronization.
+
 ## 2026-05-08 - Zero-Allocation Search and Cache Pessimization
 **Erkenntnis:** Das Ersetzen von `.to_lowercase()` durch eine eigene `case_insensitive_contains`-Funktion ist nur dann eine echte Performance-Verbesserung, wenn dies direkt im Render-Loop (Hot Path) geschieht. Das Entfernen von vorberechneten (ge-cachten) Lowercase-Strings in Datenmodellen und das Ersetzen durch dynamische "On-the-fly"-Vergleiche oder Generatoren (wie `to_shortcut_string()`) verschlechtert die Performance dramatisch, da die Arbeit von einer einmaligen Initialisierung in den Render-Frame verlagert wird.
 **Aktion:** Beim Optimieren von Suchen in Immediate-Mode-UIs immer prüfen, ob die Strings dynamisch im Frame generiert werden. Caching-Mechanismen beibehalten und nur solche Transformationen optimieren, die unvermeidlich bei jedem Render-Aufruf stattfinden (wie in `draw_search_popup`).

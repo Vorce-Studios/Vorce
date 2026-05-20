@@ -129,14 +129,31 @@ impl McpServer {
                 if let Some(uri) = uri {
                     match uri.as_str() {
                         "project://current" => {
-                            // TODO: Implement shared state reading
+                            let mut state_json =
+                                "{\"error\": \"Failed to request state\"}".to_string();
+                            if let Some(tx) = &self.action_sender {
+                                let (reply_tx, reply_rx) = crossbeam_channel::unbounded();
+                                if tx.send(crate::McpAction::GetProjectState(reply_tx)).is_ok() {
+                                    if let Ok(state) =
+                                        reply_rx.recv_timeout(std::time::Duration::from_secs(2))
+                                    {
+                                        state_json = state;
+                                    } else {
+                                        state_json = "{\"error\": \"Timeout waiting for state\"}"
+                                            .to_string();
+                                    }
+                                }
+                            } else {
+                                state_json =
+                                    "{\"error\": \"No action sender available\"}".to_string();
+                            }
                             Some(success_response(
                                 id,
                                 serde_json::json!({
                                     "contents": [{
                                         "uri": uri,
                                         "mimeType": "application/json",
-                                        "text": "{\"error\": \"Shared state access not yet implemented\"}"
+                                        "text": state_json
                                     }]
                                 }),
                             ))
