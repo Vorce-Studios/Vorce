@@ -3,6 +3,7 @@ import sys
 import json
 import time
 import argparse
+import base64
 from datetime import datetime
 from pathlib import Path
 
@@ -12,13 +13,17 @@ try:
 except ImportError:
     MISSING_DEPS.append("pyautogui")
 try:
-    import PIL.ImageGrab
+    from PIL import ImageGrab
 except ImportError:
     MISSING_DEPS.append("Pillow")
 try:
-    import google.generativeai as genai
+    from google import genai
+    from google.genai import types
 except ImportError:
-    MISSING_DEPS.append("google-generativeai")
+    try:
+        import google.generativeai as genai
+    except ImportError:
+        MISSING_DEPS.append("google-genai or google-generativeai")
 
 ARTIFACT_DIR = Path("artifacts/visual-capture/ui-test-runs")
 
@@ -52,15 +57,25 @@ def log_report(status, message, run_dir, extra_data=None):
     print(f"[{status}] {message}")
     print(f"Report saved to {report_file}")
 
+def get_screenshot():
+    """Captures the current screen."""
+    try:
+        return ImageGrab.grab()
+    except Exception as e:
+        print(f"Screenshot failed: {e}")
+        return None
+
 def take_screenshot(run_dir, name="screenshot"):
     if "Pillow" in MISSING_DEPS:
         return None, None
     try:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = run_dir / f"{name}_{timestamp}.png"
-        img = PIL.ImageGrab.grab()
-        img.save(filename)
-        return str(filename), img
+        img = get_screenshot()
+        if img:
+            img.save(filename)
+            return str(filename), img
+        return None, None
     except Exception as e:
         print(f"Failed to take screenshot: {e}")
         return None, None
@@ -97,50 +112,65 @@ def perform_action(action_data, allow_destructive):
         print(f"Unknown action: {action}")
     return True, None
 
-def run_pilot(args, run_dir):
-    if not os.environ.get("GEMINI_API_KEY"):
-         log_report("FAIL", "GEMINI_API_KEY not set.", run_dir)
-         return False
+def run_vision_loop(goal, max_steps=5, run_dir=None):
+    """Executes a Gemini Vision loop using screenshots and JSON actions."""
+    if run_dir is None:
+        run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        run_dir = ARTIFACT_DIR / run_id
+        run_dir.mkdir(parents=True, exist_ok=True)
 
-    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+    print(f"Starting vision loop for goal: {goal}")
 
-    # We will use gemini-1.5-flash since it handles images well
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        print("GEMINI_API_KEY not set. Cannot run vision loop.")
+        return False
 
-    system_prompt = f"Goal: {args.goal}. Respond using this strict JSON schema ONLY: {json.dumps(ACTION_SCHEMA)}"
+    if "google-genai or google-generativeai" in MISSING_DEPS:
+        print("Neither google-genai nor google-generativeai package installed.")
+        return False
 
-    chat = model.start_chat(history=[
-        {"role": "user", "parts": [system_prompt]}
-    ])
+    # Check which version of the API we are using
+    use_new_genai = 'google.genai' in sys.modules
 
+    if use_new_genai:
+        client = genai.Client(api_key=api_key)
+        model_id = "gemini-1.5-flash"
+    else:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+
+    system_prompt = f"Goal: {goal}. Respond using this strict JSON schema ONLY: {json.dumps(ACTION_SCHEMA)}"
     history = []
-
     start_time = time.time()
 
-    for step in range(args.max_steps):
-        if time.time() - start_time > args.timeout:
-            log_report("INCONCLUSIVE", "Hard timeout reached.", run_dir, {"history": history})
-            return True
-
-        print(f"\\n--- Step {step+1}/{args.max_steps} ---")
+    for step in range(max_steps):
+        print(f"\n--- Step {step+1}/{max_steps} ---")
 
         path, img = take_screenshot(run_dir, f"step_{step}")
         if not path or not img:
-            log_report("FAIL", "Could not capture screenshot.", run_dir)
+            print("Could not capture screenshot.")
             return False
 
         print(f"Captured screen: {path}")
 
         prompt = "Current screen state. What is your next action based on the goal?"
         try:
-             response = chat.send_message([prompt, img])
+            if use_new_genai:
+                response = client.models.generate_content(
+                    model=model_id,
+                    contents=[system_prompt, prompt, img]
+                )
+                raw_text = response.text
+            else:
+                response = model.generate_content([system_prompt, prompt, img])
+                raw_text = response.text
         except Exception as e:
-             log_report("FAIL", f"Gemini API error: {e}", run_dir)
-             return False
+            print(f"Gemini API error: {e}")
+            return False
 
         try:
             # simple extract json from markdown if present
-            raw_text = response.text
             if "```json" in raw_text:
                 json_str = raw_text.split("```json")[1].split("```")[0].strip()
             elif "```" in raw_text:
@@ -150,7 +180,7 @@ def run_pilot(args, run_dir):
 
             action_data = json.loads(json_str)
         except json.JSONDecodeError:
-            log_report("FAIL", "Invalid JSON returned from model.", run_dir, {"raw_response": response.text})
+            print(f"Invalid JSON returned from model: {raw_text}")
             return False
 
         print(f"Agent Thought: {action_data.get('thought')}")
@@ -161,17 +191,17 @@ def run_pilot(args, run_dir):
             "decision": action_data
         })
 
-        continue_loop, status = perform_action(action_data, args.allow_destructive)
+        continue_loop, status = perform_action(action_data, allow_destructive=False)
 
         if not continue_loop:
              log_report("PASS" if status == "done" else ("FAIL" if status == "fail" else "INCONCLUSIVE"),
                        f"Pilot finished: {status}", run_dir, {"history": history})
-             return True
+             return status == "done"
 
         time.sleep(2) # brief pause after action
 
     log_report("INCONCLUSIVE", "Max steps reached without completion.", run_dir, {"history": history})
-    return True
+    return False
 
 def main():
     parser = argparse.ArgumentParser(description="Exploratory Gemini Computer Use Test Runner")
@@ -193,7 +223,8 @@ def main():
     print(f"Max Steps: {args.max_steps}")
     print(f"Artifacts: {run_dir}")
 
-    run_pilot(args, run_dir)
+    success = run_vision_loop(args.goal, max_steps=args.max_steps, run_dir=run_dir)
+    sys.exit(0 if success else 1)
 
 if __name__ == "__main__":
     main()
