@@ -87,7 +87,12 @@ mod tests {
 
     #[test]
     fn test_test_pattern_decoder() {
-        let mut decoder = crate::test_pattern_decoder::TestPatternDecoder::new(640, 480, Duration::from_secs(10), 30.0);
+        let mut decoder = crate::test_pattern_decoder::TestPatternDecoder::new(
+            640,
+            480,
+            Duration::from_secs(10),
+            30.0,
+        );
 
         assert_eq!(decoder.resolution(), (640, 480));
         assert_eq!(decoder.fps(), 30.0);
@@ -101,7 +106,12 @@ mod tests {
 
     #[test]
     fn test_test_pattern_seek() {
-        let mut decoder = crate::test_pattern_decoder::TestPatternDecoder::new(640, 480, Duration::from_secs(10), 30.0);
+        let mut decoder = crate::test_pattern_decoder::TestPatternDecoder::new(
+            640,
+            480,
+            Duration::from_secs(10),
+            30.0,
+        );
 
         decoder.seek(Duration::from_secs(5)).unwrap();
         assert_eq!(decoder.current_time, Duration::from_secs(5));
