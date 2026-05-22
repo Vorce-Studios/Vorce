@@ -31,6 +31,10 @@ impl MpvDecoder {
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref().to_path_buf();
 
+        if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+            return Err(MediaError::FileOpen("Path traversal (..) is not allowed".to_string()));
+        }
+
         info!("Opening video with MPV: {:?}", path);
 
         // Initialize MPV
