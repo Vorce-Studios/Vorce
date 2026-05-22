@@ -52,6 +52,7 @@ impl ControllerOverlayPanel {
     }
     #[cfg(feature = "midi")]
     pub(crate) fn draw_asset(
+        _ui: &egui::Ui,
         painter: &egui::Painter,
         assets: &HashMap<String, TextureHandle>,
         scale: f32,
@@ -226,11 +227,11 @@ impl ControllerOverlayPanel {
                         // Draw Handles
                         painter.line_segment(
                             [Pos2::new(elem_rect.min.x, y_top), Pos2::new(elem_rect.max.x, y_top)],
-                            Stroke::new(1.0, Color32::RED),
+                            Stroke::new(1.0, ui.visuals().error_fg_color),
                         );
                         painter.line_segment(
                             [Pos2::new(elem_rect.min.x, y_bot), Pos2::new(elem_rect.max.x, y_bot)],
-                            Stroke::new(1.0, Color32::RED),
+                            Stroke::new(1.0, ui.visuals().error_fg_color),
                         );
 
                         painter.text(
@@ -238,14 +239,14 @@ impl ControllerOverlayPanel {
                             egui::Align2::LEFT_CENTER,
                             "Top",
                             egui::FontId::proportional(12.0),
-                            Color32::RED,
+                            ui.visuals().error_fg_color,
                         );
                         painter.text(
                             Pos2::new(elem_rect.max.x + 2.0, y_bot),
                             egui::Align2::LEFT_CENTER,
                             "Bot",
                             egui::FontId::proportional(12.0),
-                            Color32::RED,
+                            ui.visuals().error_fg_color,
                         );
                     }
 
@@ -310,6 +311,7 @@ impl ControllerOverlayPanel {
                         .map(|s| s.value as f32 / 127.0)
                         .unwrap_or(0.0);
                     Self::draw_asset(
+                        ui,
                         &painter,
                         &self.assets,
                         self.scale,
@@ -344,13 +346,14 @@ impl ControllerOverlayPanel {
             self.clipboard_size = next_clipboard;
         } else if let Some(elements) = self.elements.clone() {
             for element in &elements.elements {
-                self.draw_element_with_frame(&painter, rect, element, &response, assignments);
+                self.draw_element_with_frame(ui, &painter, rect, element, &response, assignments);
             }
         }
     }
     #[cfg(feature = "midi")]
     pub(crate) fn draw_element_with_frame(
         &mut self,
+        ui: &egui::Ui,
         painter: &egui::Painter,
         container: Rect,
         element: &ControllerElement,
@@ -374,7 +377,7 @@ impl ControllerOverlayPanel {
 
         // Draw Asset
         let val = state.map(|s| s.value as f32 / 127.0).unwrap_or(0.0);
-        Self::draw_asset(painter, &self.assets, self.scale, elem_rect, element, val);
+        Self::draw_asset(ui, painter, &self.assets, self.scale, elem_rect, element, val);
 
         let is_hovered = response.hover_pos().map(|pos| elem_rect.contains(pos)).unwrap_or(false);
         let is_selected = self.selected_element.as_ref() == Some(&element.id);
