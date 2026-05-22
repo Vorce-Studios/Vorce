@@ -13,6 +13,7 @@ use std::path::Path;
 use thiserror::Error;
 
 pub mod decoder;
+pub mod ffmpeg_decoder;
 #[cfg(feature = "hap")]
 pub mod hap_decoder;
 pub mod image_decoder;
