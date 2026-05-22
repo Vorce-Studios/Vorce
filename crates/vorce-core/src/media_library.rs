@@ -27,11 +27,14 @@ impl MediaType {
     /// Determine media type from file extension
     pub fn from_path(path: &Path) -> Self {
         if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-            match ext.to_lowercase().as_str() {
-                "mp4" | "mov" | "avi" | "mkv" | "webm" => MediaType::Video,
-                "png" | "jpg" | "jpeg" | "gif" | "bmp" => MediaType::Image,
-                "mp3" | "wav" | "ogg" | "flac" => MediaType::Audio,
-                _ => MediaType::Unknown,
+            if ["mp4", "mov", "avi", "mkv", "webm"].iter().any(|&s| ext.eq_ignore_ascii_case(s)) {
+                MediaType::Video
+            } else if ["png", "jpg", "jpeg", "gif", "bmp"].iter().any(|&s| ext.eq_ignore_ascii_case(s)) {
+                MediaType::Image
+            } else if ["mp3", "wav", "ogg", "flac"].iter().any(|&s| ext.eq_ignore_ascii_case(s)) {
+                MediaType::Audio
+            } else {
+                MediaType::Unknown
             }
         } else {
             MediaType::Unknown

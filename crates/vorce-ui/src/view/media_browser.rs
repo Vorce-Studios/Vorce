@@ -45,14 +45,16 @@ pub enum MediaType {
 
 impl MediaType {
     pub fn from_extension(ext: &str) -> Self {
-        match ext.to_lowercase().as_str() {
-            "mp4" | "avi" | "mpeg" | "mpg" | "mkv" | "webm" => Self::Video,
-            // MOV can be HAP or regular video - we'll detect at open time
-            "mov" => Self::Video, // Could be HAP, will be detected when opened
-            "png" | "jpg" | "jpeg" | "tiff" | "tif" | "bmp" | "dds" => Self::Image,
-            "gif" => Self::ImageSequence,
-            "wav" | "mp3" | "aac" | "flac" | "ogg" => Self::Audio,
-            _ => Self::Unknown,
+        if ["mp4", "avi", "mpeg", "mpg", "mkv", "webm", "mov"].iter().any(|&s| ext.eq_ignore_ascii_case(s)) {
+            Self::Video
+        } else if ["png", "jpg", "jpeg", "tiff", "tif", "bmp", "dds"].iter().any(|&s| ext.eq_ignore_ascii_case(s)) {
+            Self::Image
+        } else if ext.eq_ignore_ascii_case("gif") {
+            Self::ImageSequence
+        } else if ["wav", "mp3", "aac", "flac", "ogg"].iter().any(|&s| ext.eq_ignore_ascii_case(s)) {
+            Self::Audio
+        } else {
+            Self::Unknown
         }
     }
 
