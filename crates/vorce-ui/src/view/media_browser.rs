@@ -936,7 +936,7 @@ impl MediaBrowser {
                                     egui::pos2(0.0, 0.0),
                                     egui::pos2(1.0, 1.0),
                                 ),
-                                ui.visuals().text_color().gamma_multiply(0.8), // Tinted slightly
+                                ui.visuals().text_color().linear_multiply(0.8), // Tinted slightly
                             );
                             rendered_icon = true;
                         }
@@ -950,7 +950,7 @@ impl MediaBrowser {
                         egui::Align2::LEFT_TOP,
                         entry.file_type.icon(),
                         egui::FontId::proportional(40.0),
-                        ui.visuals().text_color().gamma_multiply(0.4),
+                        ui.visuals().text_color().linear_multiply(0.4),
                     );
                 }
             }

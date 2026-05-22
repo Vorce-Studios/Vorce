@@ -32,10 +32,6 @@ impl StillImageDecoder {
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
 
-        if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
-            return Err(MediaError::FileOpen("Path traversal (..) is not allowed".to_string()));
-        }
-
         if !path.exists() {
             return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
         }
@@ -137,10 +133,6 @@ impl GifDecoder {
     /// Load an animated GIF from a file
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
-
-        if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
-            return Err(MediaError::FileOpen("Path traversal (..) is not allowed".to_string()));
-        }
 
         if !path.exists() {
             return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));

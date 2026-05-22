@@ -8,7 +8,6 @@
 
 #![allow(missing_docs)]
 
-pub mod test_pattern_decoder;
 use std::path::Path;
 use thiserror::Error;
 
@@ -22,6 +21,7 @@ pub mod mpv_decoder;
 pub mod pipeline;
 pub mod player;
 pub mod sequence;
+pub mod test_pattern_decoder;
 
 pub use decoder::{HwAccelType, PixelFormat, VideoDecoder};
 pub use ffmpeg_decoder::FFmpegDecoder;

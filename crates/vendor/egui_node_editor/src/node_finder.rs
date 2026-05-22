@@ -59,11 +59,12 @@ where
         let text_color;
 
         if ui.visuals().dark_mode {
-            background_color = color_from_hex("#3f3f3f").unwrap();
-            text_color = color_from_hex("#fefefe").unwrap();
+            background_color = color_from_hex("#3f3f3f").unwrap_or(Color32::from_rgb(63, 63, 63));
+            text_color = color_from_hex("#fefefe").unwrap_or(Color32::from_rgb(254, 254, 254));
         } else {
-            background_color = color_from_hex("#fefefe").unwrap();
-            text_color = color_from_hex("#3f3f3f").unwrap();
+            background_color =
+                color_from_hex("#fefefe").unwrap_or(Color32::from_rgb(254, 254, 254));
+            text_color = color_from_hex("#3f3f3f").unwrap_or(Color32::from_rgb(63, 63, 63));
         }
 
         ui.visuals_mut().widgets.noninteractive.fg_stroke = Stroke::new(2.0, text_color);
