@@ -8,7 +8,6 @@
 
 #![allow(missing_docs)]
 
-pub mod test_pattern_decoder;
 use std::path::Path;
 use thiserror::Error;
 
@@ -22,7 +21,7 @@ pub mod mpv_decoder;
 pub mod pipeline;
 pub mod player;
 pub mod sequence;
-
+pub mod test_pattern_decoder;
 
 pub use decoder::{HwAccelType, PixelFormat, VideoDecoder};
 pub use ffmpeg_decoder::FFmpegDecoder;
@@ -78,17 +77,14 @@ pub fn open_path_with_hw_accel<P: AsRef<Path>>(
     }
 
     // Check file extension for still images and GIFs
-    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("");
+    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("").to_lowercase();
 
-    let decoder: Box<dyn VideoDecoder> = if ext.eq_ignore_ascii_case("gif") {
-        Box::new(GifDecoder::open(path)?)
-    } else if ["png", "jpg", "jpeg", "tif", "tiff", "bmp", "webp"]
-        .iter()
-        .any(|&e| ext.eq_ignore_ascii_case(e))
-    {
-        Box::new(StillImageDecoder::open(path)?)
-    } else {
-        open_video_file_with_hw_accel(path, hw_accel)?
+    let decoder: Box<dyn VideoDecoder> = match ext.as_str() {
+        "gif" => Box::new(GifDecoder::open(path)?),
+        "png" | "jpg" | "jpeg" | "tif" | "tiff" | "bmp" | "webp" => {
+            Box::new(StillImageDecoder::open(path)?)
+        }
+        _ => open_video_file_with_hw_accel(path, hw_accel)?,
     };
 
     Ok(VideoPlayer::new_with_box(decoder))
@@ -113,17 +109,14 @@ pub fn open_path<P: AsRef<Path>>(path: P) -> Result<VideoPlayer> {
     }
 
     // Check file extension for still images and GIFs
-    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("");
+    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("").to_lowercase();
 
-    let decoder: Box<dyn VideoDecoder> = if ext.eq_ignore_ascii_case("gif") {
-        Box::new(GifDecoder::open(path)?)
-    } else if ["png", "jpg", "jpeg", "tif", "tiff", "bmp", "webp"]
-        .iter()
-        .any(|&e| ext.eq_ignore_ascii_case(e))
-    {
-        Box::new(StillImageDecoder::open(path)?)
-    } else {
-        open_video_file(path)?
+    let decoder: Box<dyn VideoDecoder> = match ext.as_str() {
+        "gif" => Box::new(GifDecoder::open(path)?),
+        "png" | "jpg" | "jpeg" | "tif" | "tiff" | "bmp" | "webp" => {
+            Box::new(StillImageDecoder::open(path)?)
+        }
+        _ => open_video_file(path)?,
     };
 
     Ok(VideoPlayer::new_with_box(decoder))
