@@ -29,7 +29,10 @@ impl MediaType {
         if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
             if ["mp4", "mov", "avi", "mkv", "webm"].iter().any(|&s| ext.eq_ignore_ascii_case(s)) {
                 MediaType::Video
-            } else if ["png", "jpg", "jpeg", "gif", "bmp"].iter().any(|&s| ext.eq_ignore_ascii_case(s)) {
+            } else if ["png", "jpg", "jpeg", "gif", "bmp"]
+                .iter()
+                .any(|&s| ext.eq_ignore_ascii_case(s))
+            {
                 MediaType::Image
             } else if ["mp3", "wav", "ogg", "flac"].iter().any(|&s| ext.eq_ignore_ascii_case(s)) {
                 MediaType::Audio

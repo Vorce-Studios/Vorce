@@ -56,7 +56,9 @@ impl StillImageDecoder {
     pub fn supports_format<P: AsRef<Path>>(path: P) -> bool {
         if let Some(ext) = path.as_ref().extension() {
             let ext_str = ext.to_string_lossy();
-            ["png", "jpg", "jpeg", "tif", "tiff", "bmp", "webp"].iter().any(|&s| ext_str.eq_ignore_ascii_case(s))
+            ["png", "jpg", "jpeg", "tif", "tiff", "bmp", "webp"]
+                .iter()
+                .any(|&s| ext_str.eq_ignore_ascii_case(s))
         } else {
             false
         }
