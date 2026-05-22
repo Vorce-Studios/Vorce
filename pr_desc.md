@@ -1,7 +1,16 @@
-## 🛡️ Sicherheits-Update
+## ⚡ Performance Boost
 
-**🚨 Schweregrad:** HIGH
-**💡 Schwachstelle:** Denial of Service (DoS) durch `unwrap()` und `expect()` in diversen I/O- und UI-Rendering-Schichten.
-**🎯 Impact:** Bei unerwarteten Datei-Ladevorgängen oder fehlenden UI-Objekten konnte die gesamte Vorce-Applikation durch einen Panic abstürzen.
-**🔧 Fix:** Kritische `unwrap()`- und `expect()`-Aufrufe wurden in sichere `unwrap_or_else()`- oder Default-Werte übersetzt, um einen sauberen Fallback zu gewährleisten und Linter-Warnungen abzustellen.
-**✅ Verifikation:** `cargo clippy --workspace -- -D clippy::unwrap_used -D clippy::expect_used` und `cargo test` laufen erfolgreich durch. Das Journal in `.jules/sentinel.md` wurde aktualisiert.
+**💡 Was:** Vermeidung von dynamischen String-Allokationen in der Suchfunktion des Module Canvas (`draw_search_popup`). `.to_lowercase()` wurde durch eine Zero-Allocation-Methode ersetzt.
+**🎯 Warum:** Immediate-Mode-UIs rendern 60x pro Sekunde. Die Funktion `get_part_property_text` generiert dynamische Strings, auf denen jeden Frame `.to_lowercase()` aufgerufen wurde. Dies erzeugt eine kontinuierliche Belastung des Heaps und des Garbage Collectors / Memory Allocators.
+**📊 Impact:** Eliminiert N String-Allokationen pro Frame während die Suchleiste im Module Canvas geöffnet ist (N = Anzahl der durchsuchten Elemente). Reduziert Micro-Stuttering.
+**🔬 Messung:** Code Review. Die Such-Schleife verwendet nun Referenzen und das Allokations-freie `case_insensitive_contains`.
+
+### Details
+
+- [x] Code wurde optimiert
+- [x] Lesbarkeit bleibt erhalten
+- [x] Tests laufen erfolgreich
+
+## Verlinktes Issue
+
+Fixes #1235
