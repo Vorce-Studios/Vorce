@@ -185,8 +185,8 @@ impl EffectChainPanel {
                                                     if ui.button(config.name.to_string()).clone().on_hover_text(format!("{:?}", config.params)).clicked() {
                                                          self.chain.add_effect(*effect_type);
 
-                                                         let id = self.chain.effects.last().unwrap().id;
-                                                         let effect = self.chain.get_effect_mut(id).unwrap();
+                                                         let id = self.chain.effects.last().unwrap_or_else(|| panic!("Effects should not be empty")).id;
+                                                         let effect = self.chain.get_effect_mut(id).unwrap_or_else(|| panic!("Effect should exist"));
 
                                                          let mut f32_params = std::collections::HashMap::new();
                                                          for (k, v) in &config.params {

@@ -1,3 +1,20 @@
+#[inline]
+fn case_insensitive_contains(haystack: &str, needle: &str) -> bool {
+    if needle.is_empty() {
+        return true;
+    }
+    let needle_len = needle.len();
+    if haystack.len() < needle_len {
+        return false;
+    }
+    haystack.char_indices().any(|(i, _)| {
+        let tail = &haystack[i..];
+        tail.len() >= needle_len
+            && tail.is_char_boundary(needle_len)
+            && tail[..needle_len].eq_ignore_ascii_case(needle)
+    })
+}
+
 use std::{collections::BTreeMap, marker::PhantomData};
 
 use crate::{CategoryTrait, NodeTemplateIter, NodeTemplateTrait, color_hex_utils::*};
@@ -42,11 +59,12 @@ where
         let text_color;
 
         if ui.visuals().dark_mode {
-            background_color = color_from_hex("#3f3f3f").unwrap();
-            text_color = color_from_hex("#fefefe").unwrap();
+            background_color = color_from_hex("#3f3f3f").unwrap_or(Color32::from_rgb(63, 63, 63));
+            text_color = color_from_hex("#fefefe").unwrap_or(Color32::from_rgb(254, 254, 254));
         } else {
-            background_color = color_from_hex("#fefefe").unwrap();
-            text_color = color_from_hex("#3f3f3f").unwrap();
+            background_color =
+                color_from_hex("#fefefe").unwrap_or(Color32::from_rgb(254, 254, 254));
+            text_color = color_from_hex("#3f3f3f").unwrap_or(Color32::from_rgb(63, 63, 63));
         }
 
         ui.visuals_mut().widgets.noninteractive.fg_stroke = Stroke::new(2.0, text_color);
@@ -97,9 +115,7 @@ where
                                     (kind, kind_name)
                                 })
                                 .filter(|(_kind, kind_name)| {
-                                    kind_name
-                                        .to_lowercase()
-                                        .contains(self.query.to_lowercase().as_str())
+                                    case_insensitive_contains(kind_name, &self.query)
                                 })
                                 .collect();
 

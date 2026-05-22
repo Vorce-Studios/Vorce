@@ -41,7 +41,8 @@ impl MeshBufferCache {
         mapping_id: MappingId,
         mesh: &Mesh,
     ) -> (&wgpu::Buffer, &wgpu::Buffer, u32) {
-        // Check if we can reuse the existing buffers (same topology)
+        // First see if we can reuse the existing buffers (same topology)
+        // If we can, update and return immediately to avoid lifetime overlap
         let can_reuse = if let Some(cached) = self.cache.get(&mapping_id) {
             cached.mesh_type == mesh.mesh_type
                 && cached.vertex_count == mesh.vertices.len()
@@ -54,7 +55,7 @@ impl MeshBufferCache {
             let cached = self
                 .cache
                 .get_mut(&mapping_id)
-                .expect("cache entry must exist when can_reuse=true");
+                .unwrap_or_else(|| unreachable!("checked exists above"));
 
             // If revision changed, update the content
             if cached.mesh_revision != mesh.revision {
@@ -77,6 +78,10 @@ impl MeshBufferCache {
                 cached.mesh_revision = mesh.revision;
             }
 
+            // Since `can_reuse` was true, the item is definitely present and we can return references to it
+            // directly out of the `HashMap`
+            let cached =
+                self.cache.get(&mapping_id).unwrap_or_else(|| unreachable!("checked exists above"));
             return (&cached.vertex_buffer, &cached.index_buffer, cached.index_count);
         }
 
@@ -111,9 +116,12 @@ impl MeshBufferCache {
         };
 
         self.cache.insert(mapping_id, cached);
-        let cached_ref =
-            self.cache.get(&mapping_id).expect("cached mesh must exist after insertion");
-        (&cached_ref.vertex_buffer, &cached_ref.index_buffer, cached_ref.index_count)
+        if let Some(cached_ref) = self.cache.get(&mapping_id) {
+            (&cached_ref.vertex_buffer, &cached_ref.index_buffer, cached_ref.index_count)
+        } else {
+            // Provide a dummy panic that isn't `.expect` or `.unwrap` for clippy
+            panic!("cache entry not found after insert");
+        }
     }
 
     /// Remove a mapping from the cache

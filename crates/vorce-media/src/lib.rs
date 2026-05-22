@@ -12,20 +12,19 @@ use std::path::Path;
 use thiserror::Error;
 
 pub mod decoder;
+pub mod ffmpeg_decoder;
 #[cfg(feature = "hap")]
 pub mod hap_decoder;
 pub mod image_decoder;
 #[cfg(feature = "libmpv")]
 pub mod mpv_decoder;
+pub mod pipeline;
 pub mod player;
 pub mod sequence;
-// TODO: Enable pipeline with thread-local scaler approach
-// The pipeline module requires VideoDecoder to be Send, but FFmpeg's scaler (SwsContext) is not thread-safe.
-// Solution: Use thread-local scaler - create scaler once in decode thread, avoiding Send requirement.
-// This provides zero overhead and clean separation. See pipeline.rs for implementation details.
-pub mod pipeline;
+pub mod test_pattern_decoder;
 
-pub use decoder::{FFmpegDecoder, HwAccelType, PixelFormat, TestPatternDecoder, VideoDecoder};
+pub use decoder::{HwAccelType, PixelFormat, VideoDecoder};
+pub use ffmpeg_decoder::FFmpegDecoder;
 #[cfg(feature = "hap")]
 pub use hap_decoder::{decode_hap_frame, HapError, HapFrame, HapTextureType};
 pub use image_decoder::{GifDecoder, StillImageDecoder};
@@ -37,6 +36,7 @@ pub use player::{
     LoopMode, PlaybackCommand, PlaybackState, PlaybackStatus, PlayerError, VideoPlayer,
 };
 pub use sequence::ImageSequenceDecoder;
+pub use test_pattern_decoder::TestPatternDecoder;
 
 /// Media errors
 #[derive(Error, Debug)]
