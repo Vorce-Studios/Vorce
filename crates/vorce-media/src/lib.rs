@@ -8,10 +8,12 @@
 
 #![allow(missing_docs)]
 
+pub mod test_pattern_decoder;
 use std::path::Path;
 use thiserror::Error;
 
 pub mod decoder;
+pub mod ffmpeg_decoder;
 #[cfg(feature = "hap")]
 pub mod hap_decoder;
 pub mod image_decoder;
@@ -21,7 +23,8 @@ pub mod pipeline;
 pub mod player;
 pub mod sequence;
 
-pub use decoder::{FFmpegDecoder, HwAccelType, PixelFormat, TestPatternDecoder, VideoDecoder};
+pub use decoder::{HwAccelType, PixelFormat, VideoDecoder};
+pub use ffmpeg_decoder::FFmpegDecoder;
 #[cfg(feature = "hap")]
 pub use hap_decoder::{decode_hap_frame, HapError, HapFrame, HapTextureType};
 pub use image_decoder::{GifDecoder, StillImageDecoder};
@@ -33,6 +36,7 @@ pub use player::{
     LoopMode, PlaybackCommand, PlaybackState, PlaybackStatus, PlayerError, VideoPlayer,
 };
 pub use sequence::ImageSequenceDecoder;
+pub use test_pattern_decoder::TestPatternDecoder;
 
 /// Media errors
 #[derive(Error, Debug)]
@@ -59,17 +63,6 @@ pub enum MediaError {
 /// Result type for media operations
 pub type Result<T> = std::result::Result<T, MediaError>;
 
-pub(crate) fn reject_path_traversal(path: &Path) -> Result<()> {
-    if path.components().any(|component| matches!(component, std::path::Component::ParentDir)) {
-        return Err(MediaError::FileOpen(format!(
-            "Path traversal is not allowed: {}",
-            path.display()
-        )));
-    }
-
-    Ok(())
-}
-
 /// Open a media file or image sequence and create a video player with specific hardware acceleration
 pub fn open_path_with_hw_accel<P: AsRef<Path>>(
     path: P,
@@ -84,14 +77,17 @@ pub fn open_path_with_hw_accel<P: AsRef<Path>>(
     }
 
     // Check file extension for still images and GIFs
-    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("").to_lowercase();
+    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("");
 
-    let decoder: Box<dyn VideoDecoder> = match ext.as_str() {
-        "gif" => Box::new(GifDecoder::open(path)?),
-        "png" | "jpg" | "jpeg" | "tif" | "tiff" | "bmp" | "webp" => {
-            Box::new(StillImageDecoder::open(path)?)
-        }
-        _ => open_video_file_with_hw_accel(path, hw_accel)?,
+    let decoder: Box<dyn VideoDecoder> = if ext.eq_ignore_ascii_case("gif") {
+        Box::new(GifDecoder::open(path)?)
+    } else if ["png", "jpg", "jpeg", "tif", "tiff", "bmp", "webp"]
+        .iter()
+        .any(|&e| ext.eq_ignore_ascii_case(e))
+    {
+        Box::new(StillImageDecoder::open(path)?)
+    } else {
+        open_video_file_with_hw_accel(path, hw_accel)?
     };
 
     Ok(VideoPlayer::new_with_box(decoder))
@@ -116,14 +112,17 @@ pub fn open_path<P: AsRef<Path>>(path: P) -> Result<VideoPlayer> {
     }
 
     // Check file extension for still images and GIFs
-    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("").to_lowercase();
+    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("");
 
-    let decoder: Box<dyn VideoDecoder> = match ext.as_str() {
-        "gif" => Box::new(GifDecoder::open(path)?),
-        "png" | "jpg" | "jpeg" | "tif" | "tiff" | "bmp" | "webp" => {
-            Box::new(StillImageDecoder::open(path)?)
-        }
-        _ => open_video_file(path)?,
+    let decoder: Box<dyn VideoDecoder> = if ext.eq_ignore_ascii_case("gif") {
+        Box::new(GifDecoder::open(path)?)
+    } else if ["png", "jpg", "jpeg", "tif", "tiff", "bmp", "webp"]
+        .iter()
+        .any(|&e| ext.eq_ignore_ascii_case(e))
+    {
+        Box::new(StillImageDecoder::open(path)?)
+    } else {
+        open_video_file(path)?
     };
 
     Ok(VideoPlayer::new_with_box(decoder))
