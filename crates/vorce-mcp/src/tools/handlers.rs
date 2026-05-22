@@ -11,7 +11,7 @@ pub fn validate_path_with_extensions(
 ) -> Result<PathBuf, String> {
     let path = PathBuf::from(path_str);
 
-    if path.is_absolute() {
+    if path.is_absolute() || path_str.starts_with('/') || path_str.starts_with('\\') {
         return Err("Absolute paths are not allowed".to_string());
     }
 
