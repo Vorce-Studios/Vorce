@@ -17,7 +17,7 @@
 
 **Schwachstelle:** Die CORS-Konfiguration erlaubte explizit den Wildcard-Origin `*` (`tower_http::cors::Any`), wenn dieser in der Konfiguration vorhanden war. Dies ermÃ¶glichte es beliebigen Webseiten, Anfragen an die Control-API zu stellen.
 
-**Lektion:** CORS-Policies sollten niemals standardmÃ¤ÃŸig oder durch einfache Konfiguration Wildcards erlauben, insbesondere bei APIs, die sensitive Aktionen ausfÃ¼hren kÃ¶nnen.
+**Lektion:** CORS-Policies sollten niemals standardmÃ¤ÃŸig oder durch einfache Konfiguration Wildcards erlauben, insbesondere bei APIs, die sensitive Anfragen ausfÃ¼hren kÃ¶nnen.
 
 **PrÃ¤vention:** Wildcards in CORS-Einstellungen sollten im Code explizit abgefangen und ignoriert werden. Erlaubte Origins mÃ¼ssen als spezifische, vertrüge Domains konfiguriert werden.
 
@@ -48,7 +48,25 @@
 **PrÃ¤vention:** Use `.map_err()` to propagate errors up the call stack, explicitly defining error types like `CodegenError` where appropriate.
 ## 2025-01-20 - [Denial of Service (DoS)] **Schwachstelle:** `expect()` calls exist in `vorce-media/src/pipeline.rs` and `vorce-render/src/mesh_buffer_cache.rs` and `vorce-render/src/texture.rs`. **Lektion:** Code relied on expect() which can panic and cause DoS. **Prävention:** Use safe error handling or fallback defaults.
 
+
 ## 2025-05-24 - [Sicherheitsverbesserung] Fix UI Hold Button panic
 **Schwachstelle:** Ein `unwrap()` Aufruf befand sich in der `check_hold_state` Funktion (`crates/vorce-ui/src/widgets/custom/safety.rs`), um die vergangene Zeit zu berechnen.
 **Lektion:** Auch wenn die Variable kurz zuvor auf `None` geprüft wird, kann es in komplexen UI-Zuständen zu Race-Conditions oder unerwartetem Verhalten kommen, was durch `unwrap()` zum Absturz führt.
 **Prävention:** Optionen stets sicher mit `if let Some()` auflösen und einen Default-Wert verwenden, falls die Ausführung fehlschlägt, anstatt die gesamte Applikation durch Panic abstürzen zu lassen.
+
+## 2025-05-24 - [HIGH] Path Traversal in Project Loader
+
+**Schwachstelle:** `load_project` in `crates/vorce-io/src/project.rs` hat Dateipfade nicht auf `..` Komponenten validiert, wodurch Path Traversal beim Laden von Projekten mÃ¶glich war.
+**Lektion:** Es fehlte eine Validierungsschicht zwischen externen Pfaden und dem Dateisystemzugriff.
+**PrÃ¤vention:** Bei jeglichem Einlesen von Dateien über externe oder dynamische Pfade muss vor dem Aufruf von `File::open` oder `fs::read` zwingend eine Validierung der Pfadkomponenten stattfinden, idealerweise durch den Ausschluss von `Component::ParentDir` oder eine strikte Sandboxing-Architektur.
+
+## 2024-05-18 - [Path Traversal Bypass]
+**Schwachstelle:** Path Traversal checks using `std::path::Component::ParentDir` were bypassed on non-Windows platforms when paths contained Windows-style separators (e.g. `..\..\evil.mapmap`).
+**Lektion:** `std::path::Path` parsing behavior depends on the target OS. On Linux, `\` is a valid filename character, so `..\` is parsed as a single component name, not a directory traversal.
+**Prävention:** Always normalize path separators (e.g., `.replace("\\", "/")`) before performing traversal checks across all OS targets.
+
+## 2025-05-24 - Path Traversal Mitigation in Media Decoders
+**Schwachstelle:** The media decoders in `vorce-media` (e.g., `StillImageDecoder`, `MpvDecoder`, `GifDecoder`, `ImageSequenceDecoder`, `RealFFmpegDecoder`) loaded files from disk without explicitly validating whether the given path contained parent directory traversal components (`..`).
+**Lektion:** While some path traversal protections existed at higher levels (like the project loading and MCP tools), the media decoding layer itself remained unprotected, allowing potential arbitrary file reads if external input bypassed higher-level checks.
+**Prävention:** Add a defense-in-depth validation check directly inside the `open()` methods of media decoders, rejecting any paths that contain `std::path::Component::ParentDir`.
+

@@ -1,45 +1,34 @@
-# Vorce UI Automation Harness for Computer Use Tests
+# Vorce UI Automation Harness
 
-This directory contains the standard harness for deterministic UI checks and exploratory Gemini Computer Use tests for Vorce.
+This directory contains the Python-based UI test harness for Vorce, designed for Gemini Computer Use and deterministic smoke tests.
 
-## Usage
+## Invoking the Harness
 
-### Prerequisites
-
-- Windows environment
-- The `GEMINI_API_KEY` environment variable must be set.
-- Python dependencies installed:
-
-  ```bash
-  pip install -r requirements.txt
-  ```
-
-### Running
-
-To verify your environment without altering app data:
+To run the harness, execute `vorce_master_test.py` from the repository root:
 
 ```bash
-python scripts/gemini-cli/UI-Test_ComputerUse/harness.py --env-check
+python scripts/gemini-cli/UI-Test_ComputerUse/vorce_master_test.py
 ```
 
-To run the deterministic UI smoke test (exercises a fixed set of UI interactions quickly):
+Or you can use a specific task:
 
 ```bash
-python scripts/gemini-cli/UI-Test_ComputerUse/vorce_smoke_test.py
+python scripts/gemini-cli/UI-Test_ComputerUse/vorce_master_test.py --task "Verify main window launches"
 ```
 
-To run the harness:
+## Prerequisites
 
-```bash
-python scripts/gemini-cli/UI-Test_ComputerUse/harness.py
-```
+- Windows OS
+- Python 3.10+
+- `pip install -r requirements.txt` (see below for packages like `pyautogui`, `pillow`, `google-genai`, `psutil`)
+- `GEMINI_API_KEY` environment variable set (if using Gemini Vision loop)
+- Vorce must build successfully via `cargo run --release`
 
-You can configure the timeout or executable path:
+## Artifacts
 
-```bash
-python scripts/gemini-cli/UI-Test_ComputerUse/harness.py --timeout 120 --vorce-exe target/debug/vorce.exe
-```
+All run artifacts are saved under an ignored `output/` directory in this folder:
 
-### Artifacts
+- `run_report.json`: Structured pass/fail status and run metadata.
+- `launch_log.txt`: Captured stdout/stderr from the Vorce process.
+- `failure_screenshot.png`: Screenshot taken if a failure occurs.
 
-All run artifacts (logs, JSON reports, screenshots) are stored in the ignored folder `artifacts/visual-capture/ui-test-runs/`. Check the `run_report.json` inside the respective run timestamp folder for the pass/fail status.

@@ -43,6 +43,10 @@ impl ImageSequenceDecoder {
         let directory = directory.as_ref();
         reject_path_traversal(directory)?;
 
+        if directory.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+            return Err(MediaError::FileOpen("Path traversal (..) is not allowed".to_string()));
+        }
+
         if !directory.exists() {
             return Err(MediaError::FileOpen(format!(
                 "Directory not found: {}",
@@ -125,8 +129,10 @@ impl ImageSequenceDecoder {
     /// Check if a file is a supported image format
     pub fn is_supported_image(path: &Path) -> bool {
         if let Some(ext) = path.extension() {
-            let ext_str = ext.to_string_lossy().to_lowercase();
-            matches!(ext_str.as_str(), "png" | "jpg" | "jpeg" | "tif" | "tiff" | "bmp" | "webp")
+            let ext_str = ext.to_string_lossy();
+            ["png", "jpg", "jpeg", "tif", "tiff", "bmp", "webp"]
+                .iter()
+                .any(|&e| ext_str.eq_ignore_ascii_case(e))
         } else {
             false
         }
