@@ -24,7 +24,6 @@ impl Default for MediaManagerUI {
         Self {
             visible: false,
             search_query: String::new(),
-            search_query_lower: None,
             view_mode: ViewMode::Grid,
             selected_playlist: None,
             new_playlist_name: String::new(),
@@ -194,7 +193,7 @@ impl MediaManagerUI {
         });
     }
 
-    fn render_grid(&self, ui: &mut Ui, items: &mut dyn Iterator<Item = &MediaItem>) {
+    fn render_grid(&mut self, ui: &mut Ui, items: &mut dyn Iterator<Item = &MediaItem>) {
         let available_width = ui.available_width();
         let columns = (available_width / (self.thumbnail_size + 10.0)).floor() as usize;
         let columns = columns.max(1);
@@ -255,7 +254,7 @@ impl MediaManagerUI {
         });
     }
 
-    fn render_list(&self, ui: &mut Ui, items: &mut dyn Iterator<Item = &MediaItem>) {
+    fn render_list(&mut self, ui: &mut Ui, items: &mut dyn Iterator<Item = &MediaItem>) {
         for item in items {
             ui.horizontal(|ui| {
                 let icon = match item.media_type {

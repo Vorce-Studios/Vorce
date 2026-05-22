@@ -45,14 +45,6 @@ pub fn save_project(state: &AppState, path: &Path) -> Result<()> {
 /// A `Result` containing the loaded `AppState` on success, or an `IoError`
 /// on failure (e.g., file not found, deserialization error, version mismatch).
 pub fn load_project(path: &Path) -> Result<AppState> {
-    let path_str = path.to_string_lossy();
-    let normalized = path_str.replace("\\", "/");
-    let normalized_path = std::path::Path::new(&normalized);
-
-    if normalized_path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
-        return Err(IoError::Other("Path Traversal blocked".to_string()));
-    }
-
     let project_file = ProjectFile::load(path)?;
 
     // Basic version validation. A more sophisticated migration system could be

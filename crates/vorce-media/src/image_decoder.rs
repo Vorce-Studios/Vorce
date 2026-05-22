@@ -4,7 +4,7 @@
 //! - Still images: PNG, JPEG, TIFF via `image` crate
 //! - Animated GIF: Frame-by-frame playback with timing
 
-use crate::{MediaError, Result, VideoDecoder};
+use crate::{reject_path_traversal, MediaError, Result, VideoDecoder};
 use image::{AnimationDecoder, DynamicImage};
 use std::path::Path;
 use std::time::Duration;
@@ -31,6 +31,7 @@ impl StillImageDecoder {
     /// Load a still image from a file
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
+        reject_path_traversal(path)?;
 
         if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
             return Err(MediaError::FileOpen("Path traversal (..) is not allowed".to_string()));
@@ -139,6 +140,7 @@ impl GifDecoder {
     /// Load an animated GIF from a file
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
+        reject_path_traversal(path)?;
 
         if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
             return Err(MediaError::FileOpen("Path traversal (..) is not allowed".to_string()));
@@ -315,5 +317,21 @@ mod tests {
     fn test_gif_decoder_new_not_found() {
         let result = GifDecoder::open("a_file_that_does_not_exist.gif");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn still_image_decoder_rejects_path_traversal() {
+        let result = StillImageDecoder::open("../../../some_fake_file.png");
+        assert!(
+            matches!(result, Err(MediaError::FileOpen(message)) if message.contains("Path traversal"))
+        );
+    }
+
+    #[test]
+    fn gif_decoder_rejects_path_traversal() {
+        let result = GifDecoder::open("../../../some_fake_file.gif");
+        assert!(
+            matches!(result, Err(MediaError::FileOpen(message)) if message.contains("Path traversal"))
+        );
     }
 }

@@ -9,9 +9,6 @@ pub use io::*;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-
-
-
 /// Sichtbarkeitseinstellungen für das Hauptlayout.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub struct LayoutVisibility {
@@ -240,8 +237,6 @@ pub enum MidiAssignmentTarget {
     Vorce(String), // Control target ID
     /// Assigned to Streamer.bot function
     StreamerBot(String), // Function name
-    /// Assigned to Mixxx function
-    Mixxx(String), // Function name
 }
 
 impl fmt::Display for MidiAssignmentTarget {
@@ -249,7 +244,6 @@ impl fmt::Display for MidiAssignmentTarget {
         match self {
             Self::Vorce(id) => write!(f, "Vorce: {}", id),
             Self::StreamerBot(func) => write!(f, "Streamer.bot: {}", func),
-            Self::Mixxx(func) => write!(f, "Mixxx: {}", func),
         }
     }
 }
@@ -516,14 +510,6 @@ impl Default for UserConfig {
 }
 
 impl UserConfig {
-
-
-
-
-
-
-
-
     fn sync_legacy_visibility_fields_from_active_layout(&mut self) {
         let visibility = self.active_layout().map(|layout| layout.visibility);
         if let Some(visibility) = visibility {
@@ -614,12 +600,6 @@ impl UserConfig {
         repaired
     }
 
-
-
-
-
-
-
     /// Update language and save
     pub fn set_language(&mut self, lang: &str) {
         self.language = lang.to_string();
@@ -659,9 +639,7 @@ impl UserConfig {
     }
 
     /// Get all assignments for a specific target type
-    pub fn get_assignments_by_type(
-        &self,
-    ) -> (Vec<&MidiAssignment>, Vec<&MidiAssignment>, Vec<&MidiAssignment>) {
+    pub fn get_assignments_by_type(&self) -> (Vec<&MidiAssignment>, Vec<&MidiAssignment>) {
         let vorce: Vec<_> = self
             .midi_assignments
             .iter()
@@ -672,12 +650,7 @@ impl UserConfig {
             .iter()
             .filter(|a| matches!(a.target, MidiAssignmentTarget::StreamerBot(_)))
             .collect();
-        let mixxx: Vec<_> = self
-            .midi_assignments
-            .iter()
-            .filter(|a| matches!(a.target, MidiAssignmentTarget::Mixxx(_)))
-            .collect();
-        (vorce, streamerbot, mixxx)
+        (vorce, streamerbot)
     }
 
     /// Stellt sicher, dass mindestens ein valides Layoutprofil verfügbar ist.

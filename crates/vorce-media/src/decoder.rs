@@ -1,9 +1,11 @@
 //! Video decoder abstraction with FFmpeg implementation
 
-use crate::Result;
+use crate::{MediaError, Result};
 use std::path::Path;
 use std::time::Duration;
-use tracing::{info, warn};
+use tracing::info;
+#[cfg(feature = "ffmpeg")]
+use tracing::warn;
 
 /// Pixel format for decoded frames
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -49,7 +51,7 @@ pub enum HwAccelType {
 #[cfg(feature = "ffmpeg")]
 mod ffmpeg_impl {
     use super::*;
-    use crate::MediaError;
+
     use ffmpeg_next as ffmpeg;
     use ffmpeg_sys_next as ffi;
     use std::path::PathBuf;
@@ -107,10 +109,7 @@ mod ffmpeg_impl {
         /// Open a video file with optional hardware acceleration
         pub fn open<P: AsRef<Path>>(path: P, hw_accel: HwAccelType) -> Result<Self> {
             let path = path.as_ref();
-
-            if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
-                return Err(MediaError::FileOpen("Path traversal (..) is not allowed".to_string()));
-            }
+            crate::reject_path_traversal(path)?;
 
             if !path.exists() {
                 return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
@@ -530,7 +529,7 @@ impl TestPatternDecoder {
 impl VideoDecoder for TestPatternDecoder {
     fn next_frame(&mut self) -> Result<VideoFrame> {
         if self.current_time >= self.duration {
-            return Err(crate::MediaError::EndOfStream);
+            return Err(MediaError::EndOfStream);
         }
 
         let frame = self.generate_test_frame();
@@ -543,7 +542,7 @@ impl VideoDecoder for TestPatternDecoder {
 
     fn seek(&mut self, timestamp: Duration) -> Result<()> {
         if timestamp > self.duration {
-            return Err(crate::MediaError::SeekError("Timestamp beyond duration".to_string()));
+            return Err(MediaError::SeekError("Timestamp beyond duration".to_string()));
         }
 
         self.current_time = timestamp;
@@ -612,7 +611,7 @@ impl FFmpegDecoder {
         {
             // IF IT'S A REAL FILE REQUEST AND NO FFMPEG, ERROR OUT
             if _path.as_ref().exists() {
-                return Err(crate::MediaError::DecoderError(
+                return Err(MediaError::DecoderError(
                     "FFmpeg feature not enabled, cannot open video file".to_string(),
                 ));
             }
