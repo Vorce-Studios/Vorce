@@ -45,23 +45,14 @@ pub enum MediaType {
 
 impl MediaType {
     pub fn from_extension(ext: &str) -> Self {
-        if ["mp4", "avi", "mpeg", "mpg", "mkv", "webm", "mov"]
-            .iter()
-            .any(|&e| ext.eq_ignore_ascii_case(e))
-        {
-            Self::Video
-        } else if ["png", "jpg", "jpeg", "tiff", "tif", "bmp", "dds"]
-            .iter()
-            .any(|&e| ext.eq_ignore_ascii_case(e))
-        {
-            Self::Image
-        } else if ext.eq_ignore_ascii_case("gif") {
-            Self::ImageSequence
-        } else if ["wav", "mp3", "aac", "flac", "ogg"].iter().any(|&e| ext.eq_ignore_ascii_case(e))
-        {
-            Self::Audio
-        } else {
-            Self::Unknown
+        match ext.to_lowercase().as_str() {
+            "mp4" | "avi" | "mpeg" | "mpg" | "mkv" | "webm" => Self::Video,
+            // MOV can be HAP or regular video - we'll detect at open time
+            "mov" => Self::Video, // Could be HAP, will be detected when opened
+            "png" | "jpg" | "jpeg" | "tiff" | "tif" | "bmp" | "dds" => Self::Image,
+            "gif" => Self::ImageSequence,
+            "wav" | "mp3" | "aac" | "flac" | "ogg" => Self::Audio,
+            _ => Self::Unknown,
         }
     }
 
@@ -901,11 +892,11 @@ impl MediaBrowser {
 
             // Background
             let bg_color = if self.selected == Some(idx) {
-                ui.visuals().selection.bg_fill
+                Color32::from_rgb(60, 120, 200)
             } else if response.hovered() {
-                ui.visuals().widgets.hovered.bg_fill
+                Color32::from_rgb(50, 50, 50)
             } else {
-                ui.visuals().widgets.noninteractive.bg_fill
+                Color32::from_rgb(35, 35, 35)
             };
 
             ui.painter().rect_filled(rect, 2.0, bg_color);
@@ -926,7 +917,7 @@ impl MediaBrowser {
                 );
             } else {
                 // Placeholder
-                ui.painter().rect_filled(thumb_rect, 2.0, ui.visuals().extreme_bg_color);
+                ui.painter().rect_filled(thumb_rect, 2.0, Color32::from_rgb(45, 45, 45));
 
                 // Try to render icon, fallback to emoji
                 let mut rendered_icon = false;
@@ -945,7 +936,7 @@ impl MediaBrowser {
                                     egui::pos2(0.0, 0.0),
                                     egui::pos2(1.0, 1.0),
                                 ),
-                                ui.visuals().text_color().gamma_multiply(0.8), // Tinted slightly
+                                Color32::from_gray(200), // Tinted slightly
                             );
                             rendered_icon = true;
                         }
@@ -959,7 +950,7 @@ impl MediaBrowser {
                         egui::Align2::LEFT_TOP,
                         entry.file_type.icon(),
                         egui::FontId::proportional(40.0),
-                        ui.visuals().text_color().gamma_multiply(0.4),
+                        Color32::from_rgb(100, 100, 100),
                     );
                 }
             }
