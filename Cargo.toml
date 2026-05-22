@@ -115,8 +115,7 @@ winres = "0.1"
 
 [profile.dev]
 opt-level = 1 # Slightly optimize for better wgpu performance in debug
-debug = 0     # Disable debug info to save disk space and avoid out of space errors
+debug = 0     # Disable debug symbols to avoid huge PDB files and disk space issues
 
 [profile.test]
-opt-level = 1
-debug = 0
+debug = 0     # Disable debug symbols for tests to save disk space

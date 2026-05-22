@@ -1,6 +1,8 @@
 use crate::app::core::app_struct::RuntimeRenderQueueItem;
 use anyhow::Result;
 
+use super::effects::build_effect_chain;
+use super::logging::{clear_video_issue, should_log_video_issue};
 use super::PREVIEW_FLAG;
 
 pub(crate) struct RenderContext<'a> {
@@ -27,6 +29,8 @@ pub(crate) struct RenderContext<'a> {
     pub video_diagnostic_log_times: &'a mut std::collections::HashMap<String, std::time::Instant>,
 }
 
+use super::texture_gen::{ensure_missing_texture_fallback, generate_grid_texture};
+
 pub(crate) fn render_content(
     mut ctx: RenderContext<'_>,
     output_id: u64,
@@ -38,19 +42,64 @@ pub(crate) fn render_content(
         Vec<egui::TextureId>,
     )>,
 ) -> Result<()> {
+    let device = ctx.device;
+    let queue = ctx.queue;
+    let mesh_renderer = ctx.mesh_renderer;
+    let egui_renderer = ctx.egui_renderer;
+    let video_log_times = ctx.video_diagnostic_log_times;
     let is_preview_output = (output_id & PREVIEW_FLAG) != 0;
     let real_output_id = output_id & !PREVIEW_FLAG;
 
+    // ⚡ BOLT OPTIMIZATION:
+    // Read pre-partitioned and sorted target_ops directly from the context.
     let empty_vec = Vec::new();
     let target_ops = ctx.render_queue.get(&real_output_id).unwrap_or(&empty_vec);
 
-    crate::app::loops::render::scene::diagnostics::process_diagnostics(
-        ctx.video_diagnostic_log_times,
-        target_ops,
-        is_preview_output,
-        real_output_id,
-        output_id,
+    for item in target_ops {
+        for diag in &item.diagnostics {
+            let issue_key = format!("{}:{}:{}", diag.code, diag.module_id, diag.part_id);
+            if should_log_video_issue(video_log_times, issue_key) {
+                match diag.severity {
+                    crate::app::core::app_struct::DiagnosticSeverity::Warning => {
+                        tracing::warn!(
+                            "Fehler in Videoausgabe: Modul {} / Part {} - {}",
+                            diag.module_id,
+                            diag.part_id,
+                            diag.message
+                        );
+                    }
+                    crate::app::core::app_struct::DiagnosticSeverity::Error => {
+                        tracing::error!(
+                            "Fehler in Videoausgabe: Modul {} / Part {} - {}",
+                            diag.module_id,
+                            diag.part_id,
+                            diag.message
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    let empty_ops_issue_key = format!(
+        "video-output-empty-ops:{real_output_id}:{}",
+        if is_preview_output { "preview" } else { "output" }
     );
+    if target_ops.is_empty() {
+        if output_id != 0 && should_log_video_issue(video_log_times, empty_ops_issue_key.clone()) {
+            tracing::warn!(
+                "Fehler in Videoausgabe: {} {} bleibt leer, weil keine RenderOps fuer diesen Output erzeugt wurden.",
+                if is_preview_output {
+                    "Output-Preview"
+                } else {
+                    "Output"
+                },
+                real_output_id
+            );
+        }
+    } else {
+        clear_video_issue(video_log_times, empty_ops_issue_key);
+    }
 
     if target_ops.is_empty() && output_id != 0 {
         let _pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -59,6 +108,7 @@ pub(crate) fn render_content(
                 depth_slice: None,
                 view,
                 resolve_target: None,
+
                 ops: wgpu::Operations {
                     load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
                     store: wgpu::StoreOp::Store,
@@ -128,55 +178,499 @@ pub(crate) fn render_content(
     let (target_width, target_height) =
         output_config_opt.as_ref().map(|cfg| cfg.resolution).unwrap_or((1920, 1080));
 
-    crate::app::loops::render::scene::accumulation::render_accumulation(
-        ctx.layer_ping_pong,
-        ctx.texture_pool,
+    let ping_pong_0 = format!("{}_{}", ctx.layer_ping_pong[0], output_id);
+    let ping_pong_1 = format!("{}_{}", ctx.layer_ping_pong[1], output_id);
+    let scratch_name = format!("layer_scratch_{}", output_id);
+
+    ctx.texture_pool.ensure_texture(
+        &ping_pong_0,
+        target_width.max(1),
+        target_height.max(1),
         ctx.surface_format,
-        ctx.queue,
-        ctx.video_diagnostic_log_times,
-        ctx.preview_effect_chain_renderer,
-        ctx.effect_chain_renderer,
-        ctx.shader_graph_manager,
-        ctx.mesh_renderer,
-        ctx.mesh_buffer_cache,
-        ctx.device,
-        ctx.compositor,
-        target_ops,
-        encoder,
-        target_view,
-        is_preview_output,
-        output_id,
-        real_output_id,
-        target_width,
-        target_height,
+        wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+    );
+    ctx.texture_pool.ensure_texture(
+        &ping_pong_1,
+        target_width.max(1),
+        target_height.max(1),
+        ctx.surface_format,
+        wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+    );
+    ctx.texture_pool.ensure_texture(
+        &scratch_name,
+        target_width.max(1),
+        target_height.max(1),
+        ctx.surface_format,
+        wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
     );
 
+    let mut active_accum = 0;
+
+    // Clear initial accumulator
+    {
+        let accum_view = ctx.texture_pool.get_view(&ping_pong_0);
+        let _pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("Clear Accumulator Pass"),
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                depth_slice: None,
+                view: &accum_view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(if output_id == 0 {
+                        wgpu::Color { r: 0.05, g: 0.05, b: 0.05, a: 1.0 }
+                    } else {
+                        wgpu::Color::BLACK
+                    }),
+                    store: wgpu::StoreOp::Store,
+                },
+            })],
+            depth_stencil_attachment: None,
+            timestamp_writes: None,
+            occlusion_query_set: None,
+            multiview_mask: None,
+        });
+    }
+
+    // Accumulate Layers
+    for item in target_ops {
+        if item.diagnostics.iter().any(|diag| {
+            matches!(diag.severity, crate::app::core::app_struct::DiagnosticSeverity::Error)
+        }) {
+            continue;
+        }
+
+        let module_id = item.module_id;
+        let op = &item.render_op;
+        let tex_name = if let Some(src_id) = op.source_part_id {
+            format!("part_{}_{}", module_id, src_id)
+        } else {
+            "".to_string()
+        };
+
+        let source_view = if op.mapping_mode {
+            let grid_tex_name = format!("grid_layer_{}", op.layer_part_id);
+            if !ctx.texture_pool.has_texture(&grid_tex_name) {
+                let width = 512;
+                let height = 512;
+                let data = generate_grid_texture(width, height, op.layer_part_id);
+                ctx.texture_pool.ensure_texture(
+                    &grid_tex_name,
+                    width,
+                    height,
+                    wgpu::TextureFormat::Rgba8UnormSrgb,
+                    wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+                );
+                ctx.texture_pool.upload_data(queue, &grid_tex_name, &data, width, height);
+            }
+            Some(ctx.texture_pool.get_view(&grid_tex_name))
+        } else if ctx.texture_pool.has_texture(&tex_name) {
+            clear_video_issue(
+                video_log_times,
+                format!(
+                    "video-output-missing-texture:{real_output_id}:{module_id}:{}",
+                    op.source_part_id.unwrap_or_default()
+                ),
+            );
+            Some(ctx.texture_pool.get_view(&tex_name))
+        } else if ctx.texture_pool.has_texture("bevy_output") {
+            // Fallback for Bevy nodes
+            clear_video_issue(
+                video_log_times,
+                format!(
+                    "video-output-missing-texture:{real_output_id}:{module_id}:{}",
+                    op.source_part_id.unwrap_or_default()
+                ),
+            );
+            Some(ctx.texture_pool.get_view("bevy_output"))
+        } else {
+            if let Some(source_part_id) = op.source_part_id {
+                let issue_key = format!(
+                    "video-output-missing-texture:{real_output_id}:{module_id}:{source_part_id}"
+                );
+                if should_log_video_issue(video_log_times, issue_key) {
+                    tracing::warn!(
+                        "Fehler in Videoausgabe: {} {} kann Modul {} / Part {} nicht rendern, weil die erwartete Textur '{}' im TexturePool fehlt.",
+                        if is_preview_output { "Preview fuer Output" } else { "Output" },
+                        real_output_id,
+                        module_id,
+                        source_part_id,
+                        tex_name
+                    );
+                }
+            }
+            // BLACK FALLBACK for missing textures
+            ensure_missing_texture_fallback(ctx.texture_pool, queue);
+            Some(ctx.texture_pool.get_view("missing_texture_fallback"))
+        };
+
+        if let Some(src_ref) = source_view {
+            let mut final_source_view = src_ref.clone();
+
+            if !op.effects.is_empty() {
+                let effect_chain = build_effect_chain(&op.effects);
+                if !effect_chain.effects.is_empty() {
+                    let output_texture_name =
+                        format!("effect_tmp_output_{}_layer_{}", real_output_id, op.layer_part_id);
+                    let effect_width = 1024;
+                    let effect_height = 1024;
+                    ctx.texture_pool.ensure_texture(
+                        &output_texture_name,
+                        effect_width,
+                        effect_height,
+                        wgpu::TextureFormat::Bgra8UnormSrgb,
+                        wgpu::TextureUsages::TEXTURE_BINDING
+                            | wgpu::TextureUsages::RENDER_ATTACHMENT
+                            | wgpu::TextureUsages::COPY_DST,
+                    );
+
+                    let output_effect_view = ctx.texture_pool.get_view(&output_texture_name);
+                    if is_preview_output {
+                        ctx.preview_effect_chain_renderer.apply_chain(
+                            encoder,
+                            &src_ref,
+                            &output_effect_view,
+                            &effect_chain,
+                            ctx.shader_graph_manager,
+                            0.0,
+                            effect_width,
+                            effect_height,
+                        );
+                    } else {
+                        ctx.effect_chain_renderer.apply_chain(
+                            encoder,
+                            &src_ref,
+                            &output_effect_view,
+                            &effect_chain,
+                            ctx.shader_graph_manager,
+                            0.0,
+                            effect_width,
+                            effect_height,
+                        );
+                    }
+
+                    final_source_view = output_effect_view;
+                }
+            }
+
+            let transform = glam::Mat4::from_scale_rotation_translation(
+                glam::vec3(op.source_props.scale_x, op.source_props.scale_y, 1.0),
+                glam::Quat::from_rotation_z(op.source_props.rotation.to_radians()),
+                glam::vec3(op.source_props.offset_x, op.source_props.offset_y, 0.0),
+            );
+            let uniform_bind_group = mesh_renderer.get_uniform_bind_group_with_source_props(
+                queue,
+                transform,
+                op.opacity * op.source_props.opacity,
+                op.source_props.flip_horizontal,
+                op.source_props.flip_vertical,
+                op.source_props.brightness,
+                op.source_props.contrast,
+                op.source_props.saturation,
+                op.source_props.hue_shift,
+            );
+
+            let texture_bind_group = mesh_renderer.get_texture_bind_group(&final_source_view);
+            let (vb, ib, cnt) = ctx.mesh_buffer_cache.get_buffers(
+                device,
+                queue,
+                op.layer_part_id,
+                &op.mesh.to_mesh(),
+            );
+
+            let blend_mode = op.blend_mode.unwrap_or(vorce_core::module::BlendModeType::Normal);
+            let is_normal_blend = matches!(blend_mode, vorce_core::module::BlendModeType::Normal);
+
+            let current_accum_name = if active_accum == 0 { &ping_pong_0 } else { &ping_pong_1 };
+            let render_target_name =
+                if is_normal_blend { current_accum_name } else { &scratch_name };
+
+            let render_target_view = ctx.texture_pool.get_view(render_target_name);
+
+            {
+                let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("Mesh Layer Pass"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        depth_slice: None,
+                        view: &render_target_view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: if is_normal_blend {
+                                wgpu::LoadOp::Load
+                            } else {
+                                wgpu::LoadOp::Clear(wgpu::Color::TRANSPARENT)
+                            },
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })],
+                    depth_stencil_attachment: None,
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
+                    multiview_mask: None,
+                });
+
+                mesh_renderer.draw(
+                    &mut rpass,
+                    vb,
+                    ib,
+                    cnt,
+                    &uniform_bind_group,
+                    &texture_bind_group,
+                    true,
+                );
+            }
+
+            if !is_normal_blend {
+                let next_accum = (active_accum + 1) % 2;
+                let next_accum_name = if next_accum == 0 { &ping_pong_0 } else { &ping_pong_1 };
+
+                let base_view = ctx.texture_pool.get_view(current_accum_name);
+                let blend_view = ctx.texture_pool.get_view(&scratch_name);
+                let out_view = ctx.texture_pool.get_view(next_accum_name);
+
+                // Map ModuleBlendModeType to LayerBlendMode
+                // Note: The UI/core might use different enums, we need to convert to vorce_core::BlendMode
+                let core_blend_mode = match blend_mode {
+                    vorce_core::module::BlendModeType::Normal => {
+                        vorce_core::layer::BlendMode::Normal
+                    }
+                    vorce_core::module::BlendModeType::Add => vorce_core::layer::BlendMode::Add,
+                    vorce_core::module::BlendModeType::Multiply => {
+                        vorce_core::layer::BlendMode::Multiply
+                    }
+                    vorce_core::module::BlendModeType::Screen => {
+                        vorce_core::layer::BlendMode::Screen
+                    }
+                    vorce_core::module::BlendModeType::Overlay => {
+                        vorce_core::layer::BlendMode::Overlay
+                    }
+                    vorce_core::module::BlendModeType::Difference => {
+                        vorce_core::layer::BlendMode::Difference
+                    }
+                    vorce_core::module::BlendModeType::Exclusion => {
+                        vorce_core::layer::BlendMode::Exclusion
+                    }
+                };
+
+                let bind_group = ctx.compositor.create_bind_group(&base_view, &blend_view);
+                let uniform_bind_group =
+                    ctx.compositor.get_uniform_bind_group(queue, core_blend_mode, 1.0);
+
+                // We need a full screen quad to composite
+                // We can use the mesh_buffer_cache for a full screen quad or let the compositor do it internally?
+                // Compositor handles its own quad in `composite`
+                // Wait, `composite` needs vertex and index buffers.
+                // Looking at compositor.rs, it doesn't provide default buffers, we must pass them.
+                // We can get a quad from mesh_buffer_cache if we pass layer 0 and a full screen quad?
+                // Actually, let's look at `vorce_render::Compositor::composite` signature:
+                // composite(&mut render_pass, vertex_buffer, index_buffer, bind_group, uniform_bind_group)
+                // Let's use mesh_buffer_cache with a unit quad.
+                let quad_mesh = vorce_core::module::MeshType::default().to_mesh();
+                let (quad_vb, quad_ib, _quad_cnt) =
+                    ctx.mesh_buffer_cache.get_buffers(device, queue, 999999, &quad_mesh);
+
+                let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("Compositor Pass"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        depth_slice: None,
+                        view: &out_view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(wgpu::Color::TRANSPARENT),
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })],
+                    depth_stencil_attachment: None,
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
+                    multiview_mask: None,
+                });
+
+                ctx.compositor.composite(
+                    &mut rpass,
+                    quad_vb,
+                    quad_ib,
+                    &bind_group,
+                    &uniform_bind_group,
+                );
+
+                active_accum = next_accum;
+            }
+        }
+    }
+
+    // Copy final accumulator to target_view
+    {
+        let final_accum_name = if active_accum == 0 { &ping_pong_0 } else { &ping_pong_1 };
+        let final_accum_view = ctx.texture_pool.get_view(final_accum_name);
+
+        let quad_mesh = vorce_core::module::MeshType::default().to_mesh();
+        let (quad_vb, quad_ib, _quad_cnt) =
+            ctx.mesh_buffer_cache.get_buffers(device, queue, 999998, &quad_mesh);
+
+        let bind_group = ctx.compositor.create_bind_group(&final_accum_view, &final_accum_view); // second view ignored for Normal blend
+        let uniform_bind_group =
+            ctx.compositor.get_uniform_bind_group(queue, vorce_core::layer::BlendMode::Normal, 1.0);
+
+        let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("Copy to Target View Pass"),
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                depth_slice: None,
+                view: target_view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                    store: wgpu::StoreOp::Store,
+                },
+            })],
+            depth_stencil_attachment: None,
+            timestamp_writes: None,
+            occlusion_query_set: None,
+            multiview_mask: None,
+        });
+
+        ctx.compositor.composite(&mut rpass, quad_vb, quad_ib, &bind_group, &uniform_bind_group);
+    }
+
+    // --- POST PROCESSING PASSES ---
     if needs_post_processing {
-        crate::app::loops::render::scene::post_processing::render_post_processing(
-            ctx.color_calibration_renderer,
-            ctx.edge_blend_renderer,
-            ctx.edge_blend_texture_cache,
-            ctx.edge_blend_cache,
-            ctx.queue,
-            encoder,
-            view,
-            mesh_target_view_ref.as_ref(),
-            color_target_view_ref.as_ref(),
-            output_id,
-            use_edge_blend,
-            use_color_calib,
-            output_config_opt.as_ref(),
-        );
+        let mut current_view =
+            mesh_target_view_ref.as_ref().map(|view_ref| view_ref.as_ref()).unwrap_or(view);
+
+        if use_color_calib {
+            if let (Some(color_renderer), Some(output_config)) =
+                (ctx.color_calibration_renderer.as_ref(), output_config_opt.as_ref())
+            {
+                let color_target_view = color_target_view_ref
+                    .as_ref()
+                    .map(|view_ref| view_ref.as_ref())
+                    .unwrap_or(view);
+                let texture_bind_group = color_renderer.create_texture_bind_group(current_view);
+                let uniform_buffer =
+                    color_renderer.create_uniform_buffer(&output_config.color_calibration);
+                let uniform_bind_group = color_renderer.create_uniform_bind_group(&uniform_buffer);
+
+                let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("Color Calibration Pass"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        depth_slice: None,
+                        view: color_target_view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })],
+                    depth_stencil_attachment: None,
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
+                    multiview_mask: None,
+                });
+
+                color_renderer.render(&mut rpass, &texture_bind_group, &uniform_bind_group);
+                current_view = color_target_view;
+            }
+        }
+
+        if use_edge_blend {
+            if let Some(edge_blend_renderer) = ctx.edge_blend_renderer.as_ref() {
+                let texture_bind_group = ctx
+                    .edge_blend_texture_cache
+                    .entry(output_id)
+                    .or_insert_with(|| edge_blend_renderer.create_texture_bind_group(current_view));
+                *texture_bind_group = edge_blend_renderer.create_texture_bind_group(current_view);
+
+                let config_to_use = if use_edge_blend {
+                    output_config_opt
+                        .as_ref()
+                        .map(|config| config.edge_blend.clone())
+                        .unwrap_or_default()
+                } else {
+                    vorce_core::EdgeBlendConfig::default()
+                };
+
+                // Simple hash for config changes
+                use std::hash::Hasher;
+                let mut hasher = std::collections::hash_map::DefaultHasher::new();
+                hasher.write(&[config_to_use.left.enabled as u8]);
+                hasher.write(&[config_to_use.right.enabled as u8]);
+                hasher.write(&[config_to_use.top.enabled as u8]);
+                hasher.write(&[config_to_use.bottom.enabled as u8]);
+                hasher.write(&config_to_use.left.width.to_le_bytes());
+                hasher.write(&config_to_use.right.width.to_le_bytes());
+                hasher.write(&config_to_use.top.width.to_le_bytes());
+                hasher.write(&config_to_use.bottom.width.to_le_bytes());
+                hasher.write(&config_to_use.gamma.to_le_bytes());
+                let config_hash = hasher.finish();
+
+                let (uniform_buffer, uniform_bind_group, last_hash) =
+                    ctx.edge_blend_cache.entry(output_id).or_insert_with(|| {
+                        let buffer = edge_blend_renderer.create_uniform_buffer(&config_to_use);
+                        let bind_group = edge_blend_renderer.create_uniform_bind_group(&buffer);
+                        (buffer, bind_group, config_hash)
+                    });
+
+                if *last_hash != config_hash {
+                    edge_blend_renderer.update_uniform_buffer(
+                        queue,
+                        uniform_buffer,
+                        &config_to_use,
+                    );
+                    *last_hash = config_hash;
+                }
+
+                let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some(if use_edge_blend {
+                        "Edge Blending Pass"
+                    } else {
+                        "Passthrough Pass"
+                    }),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        depth_slice: None,
+                        view, // Draw to the final surface view
+                        resolve_target: None,
+
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(wgpu::Color::BLACK), // Clear previous if any
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })],
+                    depth_stencil_attachment: None,
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
+                    multiview_mask: None,
+                });
+
+                edge_blend_renderer.render(&mut rpass, texture_bind_group, uniform_bind_group);
+            }
+        }
     }
 
+    // EgUI Overlay
     if output_id == 0 {
-        crate::app::loops::render::scene::egui_overlay::render_egui_overlay(
-            ctx.egui_renderer,
-            encoder,
-            view,
-            egui_data,
-        );
-    }
+        if let Some((tris, screen_desc, free_textures)) = egui_data {
+            // Free textures from previous frames
+            for id in free_textures {
+                egui_renderer.free_texture(id);
+            }
 
+            let render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Egui Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    depth_slice: None,
+                    view,
+                    resolve_target: None,
+
+                    ops: wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store },
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+                multiview_mask: None,
+            });
+
+            // Render egui UI
+            egui_renderer.render(&mut render_pass.forget_lifetime(), tris, screen_desc);
+        }
+    }
     Ok(())
 }

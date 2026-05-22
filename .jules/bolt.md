@@ -31,4 +31,3 @@
 ## 2025-05-18 - Avoid Per-Frame String Allocation in UI Hot Paths (MediaManagerUI)
 **Erkenntnis:** Immediate-mode UIs wie egui rufen Render-Funktionen 60x pro Sekunde auf. Das Ausführen von `.to_lowercase()` innerhalb eines Render-Loops (hier `render_main_content` in `MediaManagerUI`) erzeugt jeden Frame unnötige Heap-Allokationen, die den Garbage Collector/Allocator belasten.
 **Aktion:** Ersetzt durch das Caching des lowercased Such-Strings (`search_query_lower`), der nur bei Änderungen (`response.changed()`) aktualisiert wird. Im Render-Loop wird dann `str::contains()` auf den ebenso ge-cachten `item.name_lower` angewendet. Zusätzlich wird der ge-cachte String als `Arc<str>` gespeichert. Beim Iterieren über die MediaItems im Render-Loop wird nur das `Arc` geclont (cheap ref-bump), womit eine echte Zero-Allocation pro Frame (während einer aktiven Suche) erreicht wird, und es kann weiterhin die schnelle byte-level Suche von `str::contains` genutzt werden.
-

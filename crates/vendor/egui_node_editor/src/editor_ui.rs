@@ -228,7 +228,10 @@ where
             self.selected_nodes.iter().copied().collect::<std::collections::HashSet<_>>();
         for node_id in self.node_order.iter().copied() {
             let responses = GraphNodeWidget {
-                position: self.node_positions.get_mut(node_id).unwrap(),
+                position: self
+                    .node_positions
+                    .get_mut(node_id)
+                    .unwrap_or_else(|| panic!("Node position missing")),
                 graph: &mut self.graph,
                 port_locations: &mut port_locations,
                 node_rects: &mut node_rects,
@@ -284,7 +287,8 @@ where
 
         /* Draw connections */
         if let Some((_, ref locator)) = self.connection_in_progress {
-            let port_type = self.graph.any_param_type(*locator).unwrap();
+            let port_type =
+                self.graph.any_param_type(*locator).unwrap_or_else(|e| panic!("Error: {:?}", e));
             let connection_color = port_type.data_type_color(user_state);
             let start_pos = port_locations[locator];
 
@@ -352,7 +356,10 @@ where
         }
 
         for (input, output) in self.graph.iter_connections() {
-            let port_type = self.graph.any_param_type(AnyParameterId::Output(output)).unwrap();
+            let port_type = self
+                .graph
+                .any_param_type(AnyParameterId::Output(output))
+                .unwrap_or_else(|e| panic!("Error: {:?}", e));
             let connection_color = port_type.data_type_color(user_state);
             let src_pos = port_locations[&AnyParameterId::Output(output)];
             let dst_pos = port_locations[&AnyParameterId::Input(input)];
@@ -403,11 +410,10 @@ where
                         Some((other_node, AnyParameterId::Output(*output)));
                 }
                 NodeResponse::RaiseNode(node_id) => {
-                    let old_pos = self
-                        .node_order
-                        .iter()
-                        .position(|id| *id == *node_id)
-                        .expect("Node to be raised should be in `node_order`");
+                    let old_pos =
+                        self.node_order.iter().position(|id| *id == *node_id).unwrap_or_else(
+                            || panic!("Node to be raised should be in `node_order`"),
+                        );
                     self.node_order.remove(old_pos);
                     self.node_order.push(*node_id);
                 }
@@ -578,11 +584,11 @@ where
         let background_color;
         let text_color;
         if ui.visuals().dark_mode {
-            background_color = color_from_hex("#3f3f3f").unwrap();
-            text_color = color_from_hex("#fefefe").unwrap();
+            background_color = color_from_hex("#3f3f3f").unwrap_or(Color32::from_rgb(63, 63, 63));
+            text_color = color_from_hex("#fefefe").unwrap_or(Color32::from_rgb(254, 254, 254));
         } else {
-            background_color = color_from_hex("#ffffff").unwrap();
-            text_color = color_from_hex("#505050").unwrap();
+            background_color = color_from_hex("#ffffff").unwrap_or(Color32::WHITE);
+            text_color = color_from_hex("#505050").unwrap_or(Color32::from_rgb(80, 80, 80));
         }
 
         ui.visuals_mut().widgets.noninteractive.fg_stroke =
@@ -759,7 +765,8 @@ where
             UserResponse: UserResponseTrait,
             NodeData: NodeDataTrait,
         {
-            let port_type = graph.any_param_type(param_id).unwrap();
+            let port_type =
+                graph.any_param_type(param_id).unwrap_or_else(|e| panic!("Error: {:?}", e));
 
             let port_rect =
                 Rect::from_center_size(port_pos, egui::vec2(10.0, 10.0) * pan_zoom.zoom);
@@ -783,8 +790,9 @@ where
             if resp.drag_started() {
                 if is_connected_input {
                     let input = param_id.assume_input();
-                    let corresp_output =
-                        graph.connection(input).expect("Connection data should be valid");
+                    let corresp_output = graph
+                        .connection(input)
+                        .unwrap_or_else(|| panic!("Connection data should be valid"));
                     responses.push(NodeResponse::DisconnectEvent {
                         input: param_id.assume_input(),
                         output: corresp_output,
@@ -798,7 +806,8 @@ where
                 && origin_node != node_id
             {
                 // Don't allow self-loops
-                if graph.any_param_type(origin_param).unwrap() == port_type
+                if graph.any_param_type(origin_param).unwrap_or_else(|e| panic!("Error: {:?}", e))
+                    == port_type
                     && close_enough
                     && ui.input(|i| i.pointer.any_released())
                 {
@@ -977,22 +986,22 @@ where
         let dark_mode = ui.visuals().dark_mode;
         let color = if resp.clicked() {
             if dark_mode {
-                color_from_hex("#ffffff").unwrap()
+                color_from_hex("#ffffff").unwrap_or(Color32::WHITE)
             } else {
-                color_from_hex("#000000").unwrap()
+                color_from_hex("#000000").unwrap_or(Color32::BLACK)
             }
         } else if resp.hovered() {
             if dark_mode {
-                color_from_hex("#dddddd").unwrap()
+                color_from_hex("#dddddd").unwrap_or(Color32::from_rgb(221, 221, 221))
             } else {
-                color_from_hex("#222222").unwrap()
+                color_from_hex("#222222").unwrap_or(Color32::from_rgb(34, 34, 34))
             }
         } else {
             #[allow(clippy::collapsible_else_if)]
             if dark_mode {
-                color_from_hex("#aaaaaa").unwrap()
+                color_from_hex("#aaaaaa").unwrap_or(Color32::from_rgb(170, 170, 170))
             } else {
-                color_from_hex("#555555").unwrap()
+                color_from_hex("#555555").unwrap_or(Color32::from_rgb(85, 85, 85))
             }
         };
         let stroke = Stroke { width: stroke_width, color };

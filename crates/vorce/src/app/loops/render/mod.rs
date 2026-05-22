@@ -87,7 +87,8 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
 
         // 3. Handle Output (Requires another short-lived borrow of window)
         {
-            let window_context = app.window_manager.get(0).unwrap();
+            let window_context =
+                app.window_manager.get(0).unwrap_or_else(|| panic!("Window context missing"));
             app.egui_state
                 .handle_platform_output(&window_context.window, full_output.platform_output);
         }
@@ -498,5 +499,3 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
 
     Ok(())
 }
-/// Sub-loops and separated modules for rendering
-pub mod scene;

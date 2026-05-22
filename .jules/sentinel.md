@@ -17,7 +17,7 @@
 
 **Schwachstelle:** Die CORS-Konfiguration erlaubte explizit den Wildcard-Origin `*` (`tower_http::cors::Any`), wenn dieser in der Konfiguration vorhanden war. Dies ermÃ¶glichte es beliebigen Webseiten, Anfragen an die Control-API zu stellen.
 
-**Lektion:** CORS-Policies sollten niemals standardmÃ¤ÃŸig oder durch einfache Konfiguration Wildcards erlauben, insbesondere bei APIs, die sensitive Anfragen ausfÃ¼hren kÃ¶nnen.
+**Lektion:** CORS-Policies sollten niemals standardmÃ¤ÃŸig oder durch einfache Konfiguration Wildcards erlauben, insbesondere bei APIs, die sensitive Aktionen ausfÃ¼hren kÃ¶nnen.
 
 **PrÃ¤vention:** Wildcards in CORS-Einstellungen sollten im Code explizit abgefangen und ignoriert werden. Erlaubte Origins mÃ¼ssen als spezifische, vertrüge Domains konfiguriert werden.
 
@@ -48,11 +48,17 @@
 **PrÃ¤vention:** Use `.map_err()` to propagate errors up the call stack, explicitly defining error types like `CodegenError` where appropriate.
 ## 2025-01-20 - [Denial of Service (DoS)] **Schwachstelle:** `expect()` calls exist in `vorce-media/src/pipeline.rs` and `vorce-render/src/mesh_buffer_cache.rs` and `vorce-render/src/texture.rs`. **Lektion:** Code relied on expect() which can panic and cause DoS. **Prävention:** Use safe error handling or fallback defaults.
 
-
 ## 2025-05-24 - [Sicherheitsverbesserung] Fix UI Hold Button panic
 **Schwachstelle:** Ein `unwrap()` Aufruf befand sich in der `check_hold_state` Funktion (`crates/vorce-ui/src/widgets/custom/safety.rs`), um die vergangene Zeit zu berechnen.
 **Lektion:** Auch wenn die Variable kurz zuvor auf `None` geprüft wird, kann es in komplexen UI-Zuständen zu Race-Conditions oder unerwartetem Verhalten kommen, was durch `unwrap()` zum Absturz führt.
 **Prävention:** Optionen stets sicher mit `if let Some()` auflösen und einen Default-Wert verwenden, falls die Ausführung fehlschlägt, anstatt die gesamte Applikation durch Panic abstürzen zu lassen.
+
+## 2025-05-24 - DoS via unwrap()/expect() panics
+
+**Schwachstelle:** Die Codebase enthielt diverse ungeschützte `unwrap()` und `expect()` Aufrufe in UI-Rendering-Logik (z.B. in `egui_node_editor`) sowie in Window-Management und I/O-Schichten (`vorce-ui`, `vorce-io`, `vorce`).
+**Lektion:** Wenn diese fehlgeschlagenen Result- oder Option-Typen in Panics münden, kommt es zum kompletten Anwendungsabsturz (Denial of Service), selbst wenn es nur ein harmloser UI-Fehler oder eine fehlende Fensterinstanz ist.
+**Prävention:** Verwenden von sicheren Alternativen wie `unwrap_or_else(|| panic!(...))` in Tests oder echtes Pattern-Matching im Produktivcode, um sicherzustellen, dass die Applikation robust bleibt und keine Linter-Warnungen im CI-Check auftreten.
+
 
 ## 2025-05-24 - [HIGH] Path Traversal in Project Loader
 
