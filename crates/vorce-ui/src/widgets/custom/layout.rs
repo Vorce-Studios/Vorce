@@ -81,7 +81,7 @@ pub fn cyber_list_item<R>(
     });
 
     // The closure is guaranteed to run, so ret will be Some
-    ret.expect("Closure should have been executed")
+    ret.unwrap_or_else(|| panic!("Closure should have been executed"))
 }
 
 pub fn collapsing_header_with_reset(

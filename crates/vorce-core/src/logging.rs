@@ -66,18 +66,13 @@ impl Default for LogConfig {
 impl LogConfig {
     /// Parse log level string to tracing Level
     pub fn parse_level(&self) -> Level {
-        if self.level.eq_ignore_ascii_case("trace") {
-            Level::TRACE
-        } else if self.level.eq_ignore_ascii_case("debug") {
-            Level::DEBUG
-        } else if self.level.eq_ignore_ascii_case("info") {
-            Level::INFO
-        } else if self.level.eq_ignore_ascii_case("warn") {
-            Level::WARN
-        } else if self.level.eq_ignore_ascii_case("error") {
-            Level::ERROR
-        } else {
-            Level::INFO
+        match self.level.to_lowercase().as_str() {
+            "trace" => Level::TRACE,
+            "debug" => Level::DEBUG,
+            "info" => Level::INFO,
+            "warn" => Level::WARN,
+            "error" => Level::ERROR,
+            _ => Level::INFO,
         }
     }
 

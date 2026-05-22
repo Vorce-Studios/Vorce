@@ -32,10 +32,6 @@ impl StillImageDecoder {
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
 
-        if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
-            return Err(MediaError::FileOpen("Path traversal (..) is not allowed".to_string()));
-        }
-
         if !path.exists() {
             return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
         }
@@ -59,10 +55,8 @@ impl StillImageDecoder {
     /// Check if the file format is supported
     pub fn supports_format<P: AsRef<Path>>(path: P) -> bool {
         if let Some(ext) = path.as_ref().extension() {
-            let ext_str = ext.to_string_lossy();
-            ["png", "jpg", "jpeg", "tif", "tiff", "bmp", "webp"]
-                .iter()
-                .any(|&e| ext_str.eq_ignore_ascii_case(e))
+            let ext_str = ext.to_string_lossy().to_lowercase();
+            matches!(ext_str.as_str(), "png" | "jpg" | "jpeg" | "tif" | "tiff" | "bmp" | "webp")
         } else {
             false
         }
@@ -140,10 +134,6 @@ impl GifDecoder {
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
 
-        if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
-            return Err(MediaError::FileOpen("Path traversal (..) is not allowed".to_string()));
-        }
-
         if !path.exists() {
             return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
         }
@@ -210,8 +200,8 @@ impl GifDecoder {
     /// Check if the file is a GIF
     pub fn supports_format<P: AsRef<Path>>(path: P) -> bool {
         if let Some(ext) = path.as_ref().extension() {
-            let ext_str = ext.to_string_lossy();
-            ext_str.eq_ignore_ascii_case("gif")
+            let ext_str = ext.to_string_lossy().to_lowercase();
+            ext_str == "gif"
         } else {
             false
         }
