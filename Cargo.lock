@@ -4485,6 +4485,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "glam"
+version = "0.33.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8fb167719045debebe9f532320accc7b5c993c5a3b813f5696a11d5ca7bdc57b"
+dependencies = [
+ "serde_core",
+]
+
+[[package]]
 name = "glob"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9795,7 +9804,7 @@ dependencies = [
  "egui_extras",
  "ffmpeg-next",
  "futures",
- "glam 0.32.1",
+ "glam 0.33.0",
  "hound",
  "hyper",
  "image 0.24.9",
@@ -9888,7 +9897,7 @@ dependencies = [
  "cpal 0.17.1",
  "crossbeam-channel",
  "dirs",
- "glam 0.32.1",
+ "glam 0.33.0",
  "hound",
  "image 0.24.9",
  "num-complex",
@@ -10000,7 +10009,7 @@ dependencies = [
  "criterion 0.8.2",
  "crossbeam-channel",
  "futures-channel",
- "glam 0.32.1",
+ "glam 0.33.0",
  "image 0.24.9",
  "notify",
  "parking_lot",
@@ -10035,7 +10044,7 @@ dependencies = [
  "egui_node_editor",
  "fluent",
  "fluent-langneg 0.14.2",
- "glam 0.32.1",
+ "glam 0.33.0",
  "image 0.24.9",
  "once_cell",
  "parking_lot",
