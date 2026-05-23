@@ -4583,12 +4583,13 @@ dependencies = [
 
 [[package]]
 name = "grafton-ndi"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83fc4d5740ce73851ed15845aba8e26088bfc70f51c62ad00b883c20c09cc773"
+checksum = "427191af610cfdb20d7df4edaa70bc94cbf68c16049ceedfed0e906e99079e68"
 dependencies = [
+ "base64",
  "bindgen",
- "lodepng",
+ "jpeg-encoder",
  "num_enum",
  "once_cell",
  "png 0.18.1",
@@ -5465,6 +5466,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "jpeg-encoder"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b0b36cbb4e6704f12f5b5d7b01dac593982c6550859ebd5a66fb15c9ea27fd5"
+
+[[package]]
 name = "js-sys"
 version = "0.3.97"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5718,18 +5725,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "224399e74b87b5f3557511d98dff8b14089b3dadafcab6bb93eab67d3aace965"
 dependencies = [
  "scopeguard",
-]
-
-[[package]]
-name = "lodepng"
-version = "3.12.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe7982db11054edc023a1b424dddcc65be18f71fa46ec6bde2efcfc1fb6b22da"
-dependencies = [
- "crc32fast",
- "flate2",
- "libc",
- "rgb",
 ]
 
 [[package]]
