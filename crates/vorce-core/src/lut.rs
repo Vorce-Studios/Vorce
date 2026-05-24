@@ -68,17 +68,16 @@ impl Lut3D {
         let extension = path
             .extension()
             .and_then(|ext| ext.to_str())
-            .map(|s| s.to_lowercase())
             .unwrap_or_default();
 
-        match extension.as_str() {
-            "cube" => {
-                let content =
-                    std::fs::read_to_string(path).map_err(|e| LutError::IoError(e.to_string()))?;
-                Self::parse_cube(&content, Some(path.to_path_buf()))
-            }
-            "png" => Self::from_png_file(path),
-            _ => Err(LutError::ParseError(format!("Unsupported file extension: {}", extension))),
+        if extension.eq_ignore_ascii_case("cube") {
+            let content =
+                std::fs::read_to_string(path).map_err(|e| LutError::IoError(e.to_string()))?;
+            Self::parse_cube(&content, Some(path.to_path_buf()))
+        } else if extension.eq_ignore_ascii_case("png") {
+            Self::from_png_file(path)
+        } else {
+            Err(LutError::ParseError(format!("Unsupported file extension: {}", extension)))
         }
     }
 
