@@ -65,10 +65,7 @@ impl Lut3D {
     /// Load a LUT from a file (.cube or .png)
     pub fn from_file(path: impl AsRef<Path>) -> Result<Self, LutError> {
         let path = path.as_ref();
-        let extension = path
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .unwrap_or_default();
+        let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or_default();
 
         if extension.eq_ignore_ascii_case("cube") {
             let content =
