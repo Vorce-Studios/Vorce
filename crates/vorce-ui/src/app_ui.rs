@@ -765,7 +765,7 @@ impl AppUI {
             // Visual indicator (Pulse yellow)
             let time = ui.input(|i| i.time);
             let alpha = (time * 5.0).sin().abs() * 0.5 + 0.5;
-            let color = egui::Color32::YELLOW.linear_multiply(alpha as f32);
+            let color = ui.visuals().warn_fg_color.linear_multiply(alpha as f32);
             ui.painter().rect_stroke(
                 rect.expand(2.0),
                 4.0,
@@ -788,7 +788,7 @@ impl AppUI {
                         ui.painter().rect_filled(
                             rect.expand(2.0),
                             4.0,
-                            egui::Color32::GREEN.linear_multiply(0.5),
+                            crate::core::theme::colors::MINT_ACCENT.linear_multiply(0.5),
                         );
 
                         // Log
