@@ -225,7 +225,7 @@ function Invoke-VisibleCeoPhase {
 
         Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
         return [ordered]@{
-            success = [bool](Test-ObjectProperty -Object $result -Name "Success" -and $result.Success)
+            success = [bool]((Test-ObjectProperty -Object $result -Name "Success") -and $result.Success)
             output  = if (Test-ObjectProperty -Object $result -Name "Output") { $result.Output } else { "" }
             stats   = $null
         }
