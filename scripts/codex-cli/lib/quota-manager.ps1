@@ -158,3 +158,38 @@ function Test-ObjectProperty {
     return $Object.PSObject.Properties.Name -contains $Name
 }
 
+function Set-ProviderUsageSnapshot {
+    param(
+        [Parameter(Mandatory)][object]$Registry,
+        [Parameter(Mandatory)][string]$ProviderName,
+        [Parameter(Mandatory)][object]$UsageToday
+    )
+
+    $provider = $Registry.providers.$ProviderName
+    if ($null -eq $provider) { return }
+
+    $provider.usage_today = $UsageToday
+    Save-QuotaRegistry -Registry $Registry
+}
+
+function Ensure-ProviderUsageToday {
+    param([Parameter(Mandatory)][object]$Provider)
+
+    if (-not (Test-ObjectProperty -Object $Provider -Name "usage_today") -or $null -eq $Provider.usage_today) {
+        $Provider | Add-Member -MemberType NoteProperty -Name "usage_today" -Value ([pscustomobject]@{
+            calls = 0
+            estimated_cost_usd = 0.0
+        }) -Force
+    } else {
+        $usage = $Provider.usage_today
+        if (-not (Test-ObjectProperty -Object $usage -Name "calls")) {
+            $usage | Add-Member -MemberType NoteProperty -Name "calls" -Value 0 -Force
+        }
+        if (-not (Test-ObjectProperty -Object $usage -Name "estimated_cost_usd")) {
+            $usage | Add-Member -MemberType NoteProperty -Name "estimated_cost_usd" -Value 0.0 -Force
+        }
+    }
+}
+
+
+

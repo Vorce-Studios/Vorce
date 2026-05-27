@@ -686,8 +686,8 @@ function Get-JulesTelemetryUsage {
             throw "Jules API helper not loaded."
         }
 
-        $pageSize = 100
-        $maxPages = 20
+        $pageSize = 50
+        $maxPages = 1
         if ($Config -and (Test-ObjectProperty -Object $Config -Name "jules")) {
             $configuredMaxPages = Get-TelemetryNumber (Get-TelemetryPropertyValue -Object $Config.jules -Name "session_poll_max_pages")
             if ($configuredMaxPages -gt 0) {
