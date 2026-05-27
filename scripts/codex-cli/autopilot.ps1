@@ -159,11 +159,10 @@ while ($true) {
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
     Write-Host $summary -ForegroundColor DarkGray
 
-    # --- Calculate next wake-up ---
-    $nextPlan = $lastPlanTime.AddMinutes($planMinutes)
-    $nextMon = $lastMonTime.AddMinutes($monMinutes)
+    $nextPlan = if ($lastPlanTime -eq [datetime]::MinValue) { (Get-Date).AddMinutes($planMinutes) } else { $lastPlanTime.AddMinutes($planMinutes) }
+    $nextMon = if ($lastMonTime -eq [datetime]::MinValue) { (Get-Date).AddMinutes($monMinutes) } else { $lastMonTime.AddMinutes($monMinutes) }
     $nextWake = @($nextPlan, $nextMon) | Sort-Object | Select-Object -First 1
-    $sleepSeconds = [Math]::Max(10, ($nextWake - (Get-Date)).TotalSeconds)
+    $sleepSeconds = [Math]::Max(10, [double]($nextWake - (Get-Date)).TotalSeconds)
 
     if ($nextWake -eq $nextPlan) { $nextType = "Planning" } else { $nextType = "Monitoring" }
     $sleepMin = [Math]::Round($sleepSeconds / 60, 1)
