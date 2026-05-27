@@ -110,7 +110,7 @@ function Invoke-MonitoringWakeUp {
 
     try {
         $prsRaw = gh pr list --repo $repo --state open --json number,title,headRefName,statusCheckRollup,mergeable --limit 20 2>&1
-        $prs = @($prsRaw | ConvertFrom-Json)
+        $prs = @($prsRaw | Out-String | ConvertFrom-Json | ForEach-Object { $_ })
 
         foreach ($pr in $prs) {
             $prNum = [int]$pr.number
@@ -146,7 +146,7 @@ function Invoke-MonitoringWakeUp {
         Write-Host "[MONITOR] $($pendingReviews.Count) PRs im Review-Queue." -ForegroundColor Cyan
 
         foreach ($review in $pendingReviews) {
-            $reviewResult = Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType "code_review" -DryRun:$DryRun -Prompt @"
+            $reviewResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "code_review" -DryRun:$DryRun -State $State -Prompt @"
 Review PR #$($review.pr_number) fuer Issue #$($review.issue_number) im Repository $repo.
 PR URL: $($review.pr_url)
 

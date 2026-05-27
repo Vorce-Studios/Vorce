@@ -1,5 +1,6 @@
 # scripts/codex-cli/lib/quota-manager.ps1
 # Manages call counting and budget estimation for AI providers
+# Uses atomic writes from state-manager.ps1
 
 Set-StrictMode -Version Latest
 
@@ -32,7 +33,12 @@ function Read-QuotaRegistry {
 function Save-QuotaRegistry {
     param([Parameter(Mandatory)][object]$Registry)
 
-    $Registry | ConvertTo-Json -Depth 10 | Set-Content $script:QuotaFilePath -Encoding UTF8
+    # Use atomic write if Write-SafeJson is available (loaded from state-manager.ps1)
+    if (Get-Command Write-SafeJson -ErrorAction SilentlyContinue) {
+        Write-SafeJson -FilePath $script:QuotaFilePath -Data $Registry
+    } else {
+        $Registry | ConvertTo-Json -Depth 10 | Set-Content $script:QuotaFilePath -Encoding UTF8
+    }
 }
 
 function Test-ProviderAvailable {
@@ -57,7 +63,8 @@ function Test-ProviderAvailable {
     }
 
     # Check auth env var if required
-    if (-not [string]::IsNullOrWhiteSpace($provider.auth_env_var)) {
+    $hasAuthVar = $provider.PSObject.Properties.Name -contains "auth_env_var"
+    if ($hasAuthVar -and -not [string]::IsNullOrWhiteSpace($provider.auth_env_var)) {
         $envVal = [System.Environment]::GetEnvironmentVariable($provider.auth_env_var)
         if ([string]::IsNullOrWhiteSpace($envVal)) {
             return $false

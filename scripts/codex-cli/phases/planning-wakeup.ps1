@@ -21,7 +21,11 @@ function Invoke-PlanningWakeUp {
 
     $issuesRaw = gh issue list --repo $repo --state open --json number,title,labels,assignees,body --limit 50 2>&1
     $issues = @()
-    try { $issues = @($issuesRaw | ConvertFrom-Json) } catch { Write-Warning "Issue-Fetch fehlgeschlagen: $_" }
+    try {
+        $issues = @($issuesRaw | Out-String | ConvertFrom-Json | ForEach-Object { $_ })
+    } catch {
+        Write-Warning "Issue-Fetch fehlgeschlagen: $_"
+    }
 
     # Filter by include labels
     $includeSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
@@ -39,7 +43,11 @@ function Invoke-PlanningWakeUp {
     # Exclude already delegated issues
     $delegatedNumbers = @($State.active_delegations | ForEach-Object { [int]$_.issue_number })
     if ($delegatedNumbers.Count -gt 0) {
-        $candidates = @($candidates | Where-Object { $delegatedNumbers -notcontains [int]$_.number })
+        $candidates = @($candidates | Where-Object {
+            $val = $_.number
+            if ($val -is [System.Collections.IList]) { $val = $val[0] }
+            if ($null -eq $val) { $true } else { $delegatedNumbers -notcontains [int]$val }
+        })
     }
 
     Write-Host "[PLANNING] $($candidates.Count) Issues bereit fuer Delegation." -ForegroundColor Green
@@ -62,7 +70,7 @@ Antworte NUR mit einer JSON-Liste im Format:
 
 Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 "@
-        $planResult = Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType "planning" -DryRun:$DryRun -Prompt $promptText
+        $planResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "planning" -DryRun:$DryRun -Prompt $promptText -State $State
 
         if ($planResult.success -and $planResult.output -match '\[') {
             try {

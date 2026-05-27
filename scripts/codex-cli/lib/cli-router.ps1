@@ -174,8 +174,14 @@ function Invoke-CliTask {
         [Parameter(Mandatory)][string]$TaskType,
         [Parameter(Mandatory)][string]$Prompt,
         [string]$WorkingDirectory,
+        [string]$MemoryBlock,
         [switch]$DryRun
     )
+
+    # Prepend memory block if provided
+    if (-not [string]::IsNullOrWhiteSpace($MemoryBlock)) {
+        $Prompt = $MemoryBlock + $Prompt
+    }
 
     $route = Resolve-CliProvider -QuotaRegistry $QuotaRegistry -TaskType $TaskType
     if ($null -eq $route) {

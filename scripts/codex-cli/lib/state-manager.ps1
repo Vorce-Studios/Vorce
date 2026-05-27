@@ -1,9 +1,102 @@
 # scripts/codex-cli/lib/state-manager.ps1
 # Manages autopilot-state.json for crash recovery
+# Includes atomic writes and orphan TMP cleanup
 
 Set-StrictMode -Version Latest
 
 $script:StateFilePath = Join-Path (Split-Path -Parent (Split-Path -Parent $PSCommandPath)) "autopilot-state.json"
+$script:ScriptRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
+
+function Write-SafeJson {
+    <#
+    .SYNOPSIS
+    Atomic JSON write: writes to a temp file first, then renames.
+    Cleans up any orphaned TMP files for the target path.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$FilePath,
+        [Parameter(Mandatory)][object]$Data,
+        [int]$Depth = 10
+    )
+
+    $dir = Split-Path -Parent $FilePath
+    $baseName = Split-Path -Leaf $FilePath
+    $tmpPath = Join-Path $dir "$baseName.$([guid]::NewGuid().ToString('N')).tmp"
+
+    try {
+        $Data | ConvertTo-Json -Depth $Depth | Set-Content $tmpPath -Encoding UTF8 -ErrorAction Stop
+        # Atomic rename
+        if (Test-Path $FilePath) {
+            [System.IO.File]::Delete($FilePath)
+        }
+        [System.IO.File]::Move($tmpPath, $FilePath)
+    }
+    catch {
+        # Cleanup failed temp file
+        if (Test-Path $tmpPath) {
+            Remove-Item $tmpPath -Force -ErrorAction SilentlyContinue
+        }
+        # Fallback: direct write
+        $Data | ConvertTo-Json -Depth $Depth | Set-Content $FilePath -Encoding UTF8
+    }
+}
+
+function Remove-OrphanedTmpFiles {
+    <#
+    .SYNOPSIS
+    Removes orphaned .tmp files matching the pattern: <filename>.<guid>.tmp
+    Only removes files older than the specified threshold (default 5 minutes).
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Directory,
+        [string]$FilePattern = "*.tmp",
+        [int]$OlderThanMinutes = 5
+    )
+
+    $cutoff = (Get-Date).AddMinutes(-$OlderThanMinutes)
+    $orphans = Get-ChildItem -Path $Directory -Filter $FilePattern -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.LastWriteTime -lt $cutoff }
+
+    $count = 0
+    foreach ($f in $orphans) {
+        try {
+            Remove-Item $f.FullName -Force -ErrorAction Stop
+            $count++
+        } catch {
+            # File may be locked, skip
+        }
+    }
+
+    if ($count -gt 0) {
+        Write-Host "[CLEANUP] $count verwaiste TMP-Dateien aus $(Split-Path -Leaf $Directory) entfernt." -ForegroundColor DarkGray
+    }
+
+    return $count
+}
+
+function Invoke-StartupCleanup {
+    <#
+    .SYNOPSIS
+    Runs cleanup on all known directories that accumulate TMP files.
+    Called once at autopilot startup.
+    #>
+
+    $dirsToClean = @(
+        $script:ScriptRoot,
+        (Join-Path $script:ScriptRoot "dashboard\public")
+    )
+
+    $totalCleaned = 0
+    foreach ($dir in $dirsToClean) {
+        if (Test-Path $dir) {
+            $totalCleaned += Remove-OrphanedTmpFiles -Directory $dir -OlderThanMinutes 2
+        }
+    }
+
+    if ($totalCleaned -gt 0) {
+        Write-Host "[CLEANUP] Startup-Bereinigung: $totalCleaned TMP-Dateien insgesamt entfernt." -ForegroundColor Green
+    }
+}
 
 function New-AutopilotState {
     return [ordered]@{
@@ -19,6 +112,7 @@ function New-AutopilotState {
         completed_this_session  = @()
         decisions_pending       = @()
         error_log               = @()
+        deliberation_log        = @()
     }
 }
 
@@ -40,18 +134,31 @@ function Save-AutopilotState {
     param([Parameter(Mandatory)][object]$State)
 
     $State.last_heartbeat = (Get-Date -Format 'o')
-    $State | ConvertTo-Json -Depth 10 | Set-Content $script:StateFilePath -Encoding UTF8
+    Write-SafeJson -FilePath $script:StateFilePath -Data $State
 }
 
 function Initialize-AutopilotState {
     [CmdletBinding()]
     param([switch]$Force)
 
+    # Run startup cleanup before anything else
+    Invoke-StartupCleanup
+
     $existing = Read-AutopilotState
     if ($null -ne $existing -and -not $Force.IsPresent) {
-        $lastBeat = if ($existing.last_heartbeat) {
-            [datetimeoffset]::Parse($existing.last_heartbeat)
-        } else { $null }
+        $lastBeat = $null
+        if ($existing.last_heartbeat) {
+            try {
+                $lastBeat = [datetimeoffset]::Parse($existing.last_heartbeat, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
+            } catch {
+                try {
+                    # Fallback: try current culture
+                    $lastBeat = [datetimeoffset]::Parse([string]$existing.last_heartbeat)
+                } catch {
+                    Write-Warning "[INIT] Konnte last_heartbeat nicht parsen: $($existing.last_heartbeat)"
+                }
+            }
+        }
 
         $ago = if ($lastBeat) {
             $diff = (Get-Date) - $lastBeat.LocalDateTime
@@ -179,6 +286,50 @@ function Add-ErrorLog {
     # Keep only last 50 errors
     if ($State.error_log.Count -gt 50) {
         $State.error_log = @($State.error_log | Select-Object -Last 50)
+    }
+
+    Save-AutopilotState -State $State
+}
+
+function Add-DeliberationLog {
+    <#
+    .SYNOPSIS
+    Adds a deliberation summary to the autopilot state for dashboard display.
+    Keeps only the last 20 entries.
+    #>
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][object]$Protocol
+    )
+
+    # Ensure deliberation_log exists
+    $hasField = $State.PSObject.Properties.Name -contains "deliberation_log"
+    if (-not $hasField) {
+        $State | Add-Member -NotePropertyName "deliberation_log" -NotePropertyValue @() -Force
+    }
+
+    $totalMs = 0
+    if ($Protocol.rounds) {
+        $totalMs = ($Protocol.rounds | ForEach-Object { $_.duration_ms } | Measure-Object -Sum).Sum
+    }
+
+    $entry = [ordered]@{
+        deliberation_id   = $Protocol.deliberation_id
+        task_type         = $Protocol.task_type
+        alpha_provider    = $Protocol.alpha.provider
+        beta_provider     = $Protocol.beta.provider
+        consensus_reached = $Protocol.consensus_reached
+        phases_completed  = $Protocol.rounds.Count
+        total_duration_ms = [int]$totalMs
+        completed_at      = $Protocol.completed_at
+        rounds            = $Protocol.rounds
+    }
+
+    $State.deliberation_log += @($entry)
+
+    # Keep only last 20
+    if ($State.deliberation_log.Count -gt 20) {
+        $State.deliberation_log = @($State.deliberation_log | Select-Object -Last 20)
     }
 
     Save-AutopilotState -State $State

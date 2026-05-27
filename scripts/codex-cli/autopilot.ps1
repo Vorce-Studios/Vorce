@@ -7,6 +7,7 @@ param(
     [switch]$DryRun,
     [switch]$PlanOnce,
     [switch]$MonitorOnce,
+    [switch]$ForcePlanningOnStart,
     [int]$PlanningIntervalOverride,
     [int]$MonitoringIntervalOverride
 )
@@ -22,6 +23,9 @@ $ScriptDir = Split-Path -Parent $PSCommandPath
 . (Join-Path $ScriptDir "lib\state-manager.ps1")
 . (Join-Path $ScriptDir "lib\quota-manager.ps1")
 . (Join-Path $ScriptDir "lib\cli-router.ps1")
+. (Join-Path $ScriptDir "lib\memory-store.ps1")
+. (Join-Path $ScriptDir "lib\deliberation-engine.ps1")
+. (Join-Path $ScriptDir "lib\autopilot-session-manager.ps1")
 . (Join-Path $ScriptDir "phases\planning-wakeup.ps1")
 . (Join-Path $ScriptDir "phases\monitoring-wakeup.ps1")
 
@@ -51,7 +55,7 @@ if ($DryRun.IsPresent) {
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# --- Initialize state ---
+# --- Initialize state (includes startup cleanup) ---
 $State = Initialize-AutopilotState
 $QuotaRegistry = Read-QuotaRegistry
 
@@ -71,17 +75,27 @@ if ($MonitorOnce.IsPresent) {
 }
 
 # --- Main loop ---
-$lastPlanTime = if ($State.last_planning_at) {
-    [datetimeoffset]::Parse($State.last_planning_at).LocalDateTime
-} else {
-    [datetime]::MinValue
+$lastPlanTime = [datetime]::MinValue
+if (-not $ForcePlanningOnStart.IsPresent -and $State.last_planning_at) {
+    try {
+        $lastPlanTime = [datetimeoffset]::Parse($State.last_planning_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
+    } catch {
+        Write-Warning "[INIT] Konnte last_planning_at nicht parsen: $_"
+    }
 }
 
-$lastMonTime = if ($State.last_monitoring_at) {
-    [datetimeoffset]::Parse($State.last_monitoring_at).LocalDateTime
-} else {
-    [datetime]::MinValue
+$lastMonTime = [datetime]::MinValue
+if ($State.last_monitoring_at) {
+    try {
+        $lastMonTime = [datetimeoffset]::Parse($State.last_monitoring_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
+    } catch {
+        Write-Warning "[INIT] Konnte last_monitoring_at nicht parsen: $_"
+    }
 }
+
+# Track cleanup cycles (clean every 10th loop iteration)
+$loopCount = 0
+$cleanupEveryN = 10
 
 Write-Host "[LOOP] Starte Hauptschleife. Ctrl+C zum Beenden." -ForegroundColor Green
 Write-Host ""
@@ -110,6 +124,16 @@ while ($true) {
         } catch {
             Write-Host "[LOOP] Monitoring-Fehler: $_" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "Monitoring wake-up failed" -Context $_.Exception.Message
+        }
+    }
+
+    # --- Periodic TMP cleanup ---
+    $loopCount++
+    if ($loopCount % $cleanupEveryN -eq 0) {
+        $dashboardPublic = Join-Path $ScriptDir "dashboard" "public"
+        Remove-OrphanedTmpFiles -Directory $ScriptDir -OlderThanMinutes 5
+        if (Test-Path $dashboardPublic) {
+            Remove-OrphanedTmpFiles -Directory $dashboardPublic -OlderThanMinutes 5
         }
     }
 
@@ -149,5 +173,9 @@ while ($true) {
     Write-Host ""
 
     Save-AutopilotState -State $State
-    Start-Sleep -Seconds $sleepSeconds
+    $remainingSleep = [Math]::Max(1, [int]$sleepSeconds)
+    while ($remainingSleep -gt 0) {
+        Start-Sleep -Seconds 1
+        $remainingSleep--
+    }
 }

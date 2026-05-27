@@ -66,5 +66,9 @@ $branches
     }
 
     Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Next check in $Interval seconds..." -ForegroundColor Yellow
-    Start-Sleep -Seconds $Interval
+    $remainingSleep = [Math]::Max(1, [int]$Interval)
+    while ($remainingSleep -gt 0) {
+        Start-Sleep -Seconds 1
+        $remainingSleep--
+    }
 }
