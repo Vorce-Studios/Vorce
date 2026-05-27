@@ -107,7 +107,7 @@ impl AppUI {
             });
     }
 
-    /// Render performance stats as top-right overlay (Phase 6 Migration)       
+    /// Render performance stats as top-right overlay (Phase 6 Migration)
     pub fn render_stats_overlay(&mut self, ctx: &egui::Context, fps: f32, frame_time_ms: f32) {
         if !self.show_stats {
             return;

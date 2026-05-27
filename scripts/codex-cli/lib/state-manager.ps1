@@ -92,7 +92,7 @@ function Update-JsonLocked {
             $fileStream = [System.IO.File]::Open($Path, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
             $reader = [System.IO.StreamReader]::new($fileStream, [System.Text.Encoding]::UTF8)
             $content = $reader.ReadToEnd()
-            
+
             $data = $null
             if (-not [string]::IsNullOrWhiteSpace($content)) {
                 $data = $content | ConvertFrom-Json
@@ -107,7 +107,7 @@ function Update-JsonLocked {
             $json = $updatedData | ConvertTo-Json -Depth 10
             $writer.Write($json)
             $writer.Flush()
-            
+
             $writer.Dispose()
             $reader.Dispose()
             $fileStream.Dispose()

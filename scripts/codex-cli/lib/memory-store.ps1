@@ -69,17 +69,17 @@ function Get-RelevantMemories {
 
     # Sort order: temporary first, then permanent
     $typeOrder = @{ "temporary" = 0; "permanent" = 1 }
-    
+
     # Sort order for priority: critical = 0, high = 1, medium = 2, low = 3
     $priorityOrder = @{ "critical" = 0; "high" = 1; "medium" = 2; "low" = 3 }
 
     $sorted = @($memories | Sort-Object {
         $t = [string]$_.type
         $p = [string]$_.priority
-        
+
         $typeWeight = if ($typeOrder.ContainsKey($t)) { $typeOrder[$t] } else { 99 }
         $priorityWeight = if ($priorityOrder.ContainsKey($p)) { $priorityOrder[$p] } else { 99 }
-        
+
         # Sort key logic: type weight first, then priority weight
         # Format as padded string to sort correctly
         "{0:D2}_{1:D2}" -f $typeWeight, $priorityWeight
