@@ -41,6 +41,86 @@ function Write-SafeJson {
     }
 }
 
+function Read-JsonLocked {
+    param([Parameter(Mandatory)][string]$Path)
+
+    if (-not (Test-Path $Path)) { return $null }
+
+    $attempts = 5
+    while ($attempts -gt 0) {
+        try {
+            $stream = [System.IO.File]::Open($Path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+            $reader = [System.IO.StreamReader]::new($stream, [System.Text.Encoding]::UTF8)
+            $content = $reader.ReadToEnd()
+            $reader.Dispose()
+            $stream.Dispose()
+            if ([string]::IsNullOrWhiteSpace($content)) { return $null }
+            return ($content | ConvertFrom-Json)
+        } catch {
+            $attempts--
+            Start-Sleep -Milliseconds 100
+        }
+    }
+    try {
+        $content = Get-Content $Path -Raw -Encoding UTF8 -ErrorAction Stop
+        return ($content | ConvertFrom-Json)
+    } catch {
+        return $null
+    }
+}
+
+function Write-JsonLocked {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][object]$Data,
+        [int]$Depth = 10
+    )
+
+    Write-SafeJson -FilePath $Path -Data $Data -Depth $Depth
+}
+
+function Update-JsonLocked {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][scriptblock]$Updater,
+        [object]$DefaultValue = $null
+    )
+
+    $attempts = 10
+    while ($attempts -gt 0) {
+        try {
+            $fileStream = [System.IO.File]::Open($Path, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+            $reader = [System.IO.StreamReader]::new($fileStream, [System.Text.Encoding]::UTF8)
+            $content = $reader.ReadToEnd()
+            
+            $data = $null
+            if (-not [string]::IsNullOrWhiteSpace($content)) {
+                $data = $content | ConvertFrom-Json
+            } else {
+                $data = $DefaultValue
+            }
+
+            $updatedData = & $Updater $data
+
+            $fileStream.SetLength(0)
+            $writer = [System.IO.StreamWriter]::new($fileStream, [System.Text.Encoding]::UTF8)
+            $json = $updatedData | ConvertTo-Json -Depth 10
+            $writer.Write($json)
+            $writer.Flush()
+            
+            $writer.Dispose()
+            $reader.Dispose()
+            $fileStream.Dispose()
+            return $updatedData
+        } catch {
+            $attempts--
+            Start-Sleep -Milliseconds 100
+        }
+    }
+    throw "Konnte JSON-Datei nach 10 Versuchen nicht exklusiv sperren und updaten: $Path"
+}
+
+
 function Remove-OrphanedTmpFiles {
     <#
     .SYNOPSIS
