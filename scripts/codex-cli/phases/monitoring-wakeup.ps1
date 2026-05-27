@@ -39,10 +39,10 @@ function Invoke-MonitoringWakeUp {
 
         try {
             $session = Get-JulesSession -SessionIdOrName $sessionId -ApiKey $env:JULES_API_KEY
-            $state = [string]$session.state
+            $julesState = [string]$session.state
 
-            Write-Host ("[MONITOR]   #{0} ({1}): {2}" -f $issueNum, $sessionId, $state) -ForegroundColor $(
-                switch ($state) {
+            Write-Host ("[MONITOR]   #{0} ({1}): {2}" -f $issueNum, $sessionId, $julesState) -ForegroundColor $(
+                switch ($julesState) {
                     "COMPLETED"  { "Green" }
                     "IN_PROGRESS" { "Cyan" }
                     "QUEUED"     { "DarkGray" }
@@ -51,15 +51,15 @@ function Invoke-MonitoringWakeUp {
                 }
             )
 
-            Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $state
+            Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $julesState
 
-            switch ($state) {
+            switch ($julesState) {
                 "COMPLETED" {
                     # Check for PR
                     $prUrl = Get-JulesSessionPullRequestUrl -Session $session
                     if (-not [string]::IsNullOrWhiteSpace($prUrl)) {
                         Write-Host "[MONITOR]   -> PR gefunden: $prUrl" -ForegroundColor Green
-                        Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $state -PrUrl $prUrl
+                        Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $julesState -PrUrl $prUrl
                         $prNumber = if ($prUrl -match '/pull/(\d+)') { [int]$Matches[1] } else { 0 }
                         Add-ReviewItem -State $State -IssueNumber $issueNum -PrUrl $prUrl -PrNumber $prNumber
                     }
