@@ -147,3 +147,14 @@ function Get-QuotaSummary {
 
     return ($lines -join "`n")
 }
+
+function Test-ObjectProperty {
+    param(
+        [Parameter(Mandatory)][object]$Object,
+        [Parameter(Mandatory)][string]$Name
+    )
+    if ($null -eq $Object) { return $false }
+    if ($null -eq $Object.PSObject) { return $false }
+    return $Object.PSObject.Properties.Name -contains $Name
+}
+
