@@ -137,7 +137,22 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                 -AutoCreatePr `
                 -ApiKey $env:JULES_API_KEY
 
-            $sessionId = if ($sessionResult -and $sessionResult.SessionId) { $sessionResult.SessionId } else { "unknown" }
+            $sessionId = "unknown"
+            if ($sessionResult) {
+                if ($sessionResult -is [System.Array]) {
+                    $targetObj = $sessionResult | Where-Object { $_ -and ($_.PSObject.Properties.Name -contains "SessionId") -and $_.SessionId } | Select-Object -First 1
+                    if ($targetObj) {
+                        $sessionId = [string]$targetObj.SessionId
+                    } else {
+                        $lastObj = $sessionResult[-1]
+                        if ($lastObj -and ($lastObj.PSObject.Properties.Name -contains "SessionId")) {
+                            $sessionId = [string]$lastObj.SessionId
+                        }
+                    }
+                } elseif (($sessionResult.PSObject.Properties.Name -contains "SessionId") -and $sessionResult.SessionId) {
+                    $sessionId = [string]$sessionResult.SessionId
+                }
+            }
             Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId $sessionId
             Register-ProviderCall -Registry $QuotaRegistry -ProviderName "jules"
         } catch {

@@ -1,6 +1,8 @@
 # scripts/codex-cli/lib/memory-store.ps1
-# Selective Memory Injection System
-# Stores permanent rules and temporary context, injecting them into prompts.
+# On-Demand Memory System
+# Stores permanent rules and temporary context.
+# Only CRITICAL memories are auto-injected into prompts.
+# All other memories are available via Search-Memories for on-demand retrieval.
 
 Set-StrictMode -Version Latest
 
@@ -76,10 +78,10 @@ function Get-RelevantMemories {
     $sorted = @($memories | Sort-Object {
         $t = [string]$_.type
         $p = [string]$_.priority
-        
+
         $typeWeight = if ($typeOrder.ContainsKey($t)) { $typeOrder[$t] } else { 99 }
         $priorityWeight = if ($priorityOrder.ContainsKey($p)) { $priorityOrder[$p] } else { 99 }
-        
+
         # Sort key logic: type weight first, then priority weight
         # Format as padded string to sort correctly
         "{0:D2}_{1:D2}" -f $typeWeight, $priorityWeight
@@ -91,32 +93,136 @@ function Get-RelevantMemories {
 function Format-MemoryBlock {
     <#
     .SYNOPSIS
-    Creates a compact memory injection block.
-    Returns an empty string if no memories exist.
-    This block is prepended to prompts to give the agent context.
+    Creates a MINIMAL memory injection block for prompts.
+    ON-DEMAND MODEL: Only CRITICAL-priority memories are auto-injected.
+    All other memories are available via Search-Memories for explicit retrieval.
+    Returns an empty string if no critical memories exist.
     #>
     param(
         [Parameter(Mandatory=$false)][string]$TaskType, # Kept for backward compatibility
         [object]$Store
     )
 
-    $memories = Get-RelevantMemories -Store $Store
-    if ($memories.Count -eq 0) { return "" }
+    $allMemories = Get-RelevantMemories -Store $Store
+    if ($allMemories.Count -eq 0) { return "" }
+
+    # Only inject CRITICAL priority memories automatically
+    $critical = @($allMemories | Where-Object { $_.priority -eq "critical" })
+    $otherCount = $allMemories.Count - $critical.Count
+
+    if ($critical.Count -eq 0 -and $otherCount -eq 0) { return "" }
 
     $lines = @("[KONTEXT-ERINNERUNGEN]")
-    foreach ($m in $memories) {
-        $typeLabel = if ($m.type -eq "temporary") { "[TEMPORAER]" } else { "[RICHTLINIE]" }
-        $lines += "- $typeLabel $($m.text)"
+
+    if ($critical.Count -gt 0) {
+        foreach ($m in $critical) {
+            $typeLabel = if ($m.type -eq "temporary") { "[TEMPORAER]" } else { "[RICHTLINIE]" }
+            $lines += "- $typeLabel $($m.text)"
+        }
     }
+
+    if ($otherCount -gt 0) {
+        $lines += "- [INFO] $otherCount weitere Erinnerungen gespeichert (on-demand via Search-Memories abrufbar)."
+    }
+
     $lines += "---"
     $lines += ""
 
     $block = $lines -join "`n"
 
     $tokenEstimate = [Math]::Ceiling($block.Length / 4)
-    Write-Host "[MEMORY] $($memories.Count) Erinnerungen (permanent & temporaer) injiziert (~${tokenEstimate} Tokens)" -ForegroundColor DarkGray
+    Write-Host "[MEMORY] $($critical.Count) kritische Erinnerungen injiziert, $otherCount on-demand verfuegbar (~${tokenEstimate} Tokens)" -ForegroundColor DarkGray
 
     return $block
+}
+
+function Search-Memories {
+    <#
+    .SYNOPSIS
+    Searches the memory store by keyword(s). Returns matching memories as a formatted block.
+    Agents call this explicitly when they need specific context.
+    .PARAMETER Query
+    One or more keywords to search for (space-separated, OR logic).
+    .PARAMETER Store
+    Optional pre-loaded memory store object.
+    .EXAMPLE
+    Search-Memories -Query "cargo fmt"
+    Search-Memories -Query "Issue PR merge"
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Query,
+        [object]$Store
+    )
+
+    if (-not $Store) {
+        $Store = Read-MemoryStore
+    }
+
+    $allMemories = @($Store.memories)
+    if ($allMemories.Count -eq 0) {
+        Write-Host "[MEMORY] Keine Erinnerungen im Store." -ForegroundColor DarkGray
+        return ""
+    }
+
+    # Split query into keywords
+    $keywords = @($Query -split '\s+' | Where-Object { $_.Length -ge 2 })
+    if ($keywords.Count -eq 0) {
+        Write-Warning "[MEMORY] Suchbegriff zu kurz oder leer."
+        return ""
+    }
+
+    # Search: match any keyword in text or id (case-insensitive)
+    $matches = @($allMemories | Where-Object {
+        $text = "$($_.text) $($_.id)"
+        $found = $false
+        foreach ($kw in $keywords) {
+            if ($text -match [regex]::Escape($kw)) {
+                $found = $true
+                break
+            }
+        }
+        $found
+    })
+
+    if ($matches.Count -eq 0) {
+        Write-Host "[MEMORY] Keine Treffer fuer '$Query'." -ForegroundColor DarkGray
+        return ""
+    }
+
+    $lines = @("[MEMORY-SUCHE: '$Query'] $($matches.Count) Treffer:")
+    foreach ($m in $matches) {
+        $typeLabel = if ($m.type -eq "temporary") { "TEMP" } else { "PERM" }
+        $prioLabel = $m.priority.ToUpper()
+        $lines += "- [$typeLabel|$prioLabel] $($m.text)"
+    }
+    $lines += "---"
+
+    $block = $lines -join "`n"
+    Write-Host "[MEMORY] $($matches.Count) Treffer fuer '$Query' gefunden." -ForegroundColor Green
+    return $block
+}
+
+function Get-MemorySummary {
+    <#
+    .SYNOPSIS
+    Returns a one-line summary of the memory store for lightweight prompt inclusion.
+    Use this instead of Format-MemoryBlock when you only need to inform the agent
+    that memories exist without injecting their content.
+    #>
+    param([object]$Store)
+
+    if (-not $Store) {
+        $Store = Read-MemoryStore
+    }
+
+    $all = @($Store.memories)
+    if ($all.Count -eq 0) { return "" }
+
+    $permCount = @($all | Where-Object { $_.type -eq "permanent" }).Count
+    $tempCount = @($all | Where-Object { $_.type -eq "temporary" }).Count
+    $critCount = @($all | Where-Object { $_.priority -eq "critical" }).Count
+
+    return "[MEMORY] $($all.Count) Erinnerungen gespeichert ($permCount permanent, $tempCount temporaer, $critCount kritisch). Nutze Search-Memories fuer Details."
 }
 
 function Add-Memory {

@@ -19,8 +19,8 @@
   "max_issues_per_planning_cycle": 5,
   "dual_ceo": {
     "enabled": true,
-    "ceo_alpha_chain": ["codex_orchestrator:planning", "claude_code:balanced"],
-    "ceo_beta_chain": ["gemini_cli:balanced", "kiro_cli:default"],
+    "ceo_alpha_chain": ["codex_orchestrator:planning", "gemini_cli:balanced"],
+    "ceo_beta_chain": ["gemini_cli:balanced"],
     "max_deliberation_rounds": 3,
     "deliberation_tasks": ["planning", "complex_review"],
     "fallback_to_single": true,

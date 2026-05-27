@@ -76,20 +76,27 @@ if ($MonitorOnce.IsPresent) {
 
 # --- Main loop ---
 $lastPlanTime = [datetime]::MinValue
-if (-not $ForcePlanningOnStart.IsPresent -and $State.last_planning_at) {
-    try {
-        $lastPlanTime = [datetimeoffset]::Parse($State.last_planning_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
-    } catch {
-        Write-Warning "[INIT] Konnte last_planning_at nicht parsen: $_"
-    }
-}
-
 $lastMonTime = [datetime]::MinValue
-if ($State.last_monitoring_at) {
-    try {
-        $lastMonTime = [datetimeoffset]::Parse($State.last_monitoring_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
-    } catch {
-        Write-Warning "[INIT] Konnte last_monitoring_at nicht parsen: $_"
+
+if ($ForcePlanningOnStart.IsPresent) {
+    # Force planning: lastPlanTime bleibt MinValue (sofort faellig)
+    # lastMonTime auf jetzt setzen, damit Monitoring NICHT sofort startet
+    $lastMonTime = Get-Date
+    Write-Host "[INIT] ForcePlanningOnStart aktiv: Planning sofort, Monitoring verzoegert." -ForegroundColor Yellow
+} else {
+    if ($State.last_planning_at) {
+        try {
+            $lastPlanTime = [datetimeoffset]::Parse($State.last_planning_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
+        } catch {
+            Write-Warning "[INIT] Konnte last_planning_at nicht parsen: $_"
+        }
+    }
+    if ($State.last_monitoring_at) {
+        try {
+            $lastMonTime = [datetimeoffset]::Parse($State.last_monitoring_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
+        } catch {
+            Write-Warning "[INIT] Konnte last_monitoring_at nicht parsen: $_"
+        }
     }
 }
 
@@ -114,6 +121,13 @@ while ($true) {
         } catch {
             Write-Host "[LOOP] Planning-Fehler: $_" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "Planning wake-up failed" -Context $_.Exception.Message
+        }
+
+        # Planning hat Prioritaet: Wenn beide gleichzeitig faellig waren,
+        # wird Monitoring auf den naechsten Zyklus verschoben.
+        if ($monDue) {
+            Write-Host "[LOOP] Monitoring verschoben - Planning hat Prioritaet." -ForegroundColor DarkGray
+            $monDue = $false
         }
     }
 

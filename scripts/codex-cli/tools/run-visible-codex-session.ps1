@@ -79,7 +79,9 @@ try {
         Write-Host ""
         Write-Host "[VORCE] Codex Planning Session failed with exit code $exitCode." -ForegroundColor Red
         Write-Host "[VORCE] Log: $LogPath" -ForegroundColor Yellow
-        Read-Host "Press Enter to close this Codex window"
+        if (-not $NonInteractiveExec.IsPresent) {
+            Read-Host "Press Enter to close this Codex window"
+        }
     }
     exit $exitCode
 } catch {
@@ -88,6 +90,8 @@ try {
     Write-Host "[VORCE] Codex Planning Session threw an exception:" -ForegroundColor Red
     Write-Host $_.Exception.Message -ForegroundColor Red
     Write-Host "[VORCE] Log: $LogPath" -ForegroundColor Yellow
-    Read-Host "Press Enter to close this Codex window"
+    if (-not $NonInteractiveExec.IsPresent) {
+        Read-Host "Press Enter to close this Codex window"
+    }
     exit 1
 }

@@ -11,28 +11,28 @@
       "daily_limit": 100,
       "estimated_cost_per_call_usd": 0.0,
       "usage_today": {
-        "calls": 9,
+        "calls": 16,
         "estimated_cost_usd": 0.0,
         "source": "jules-api",
-        "last_synced_at": "2026-05-27T10:44:50.7969359Z",
-        "active_sessions": 0,
-        "completed_sessions": 6,
+        "last_synced_at": "2026-05-27T14:28:41.6780432Z",
+        "active_sessions": 1,
+        "completed_sessions": 9,
         "failed_sessions": 0,
-        "pending_sessions": 5,
-        "live_capacity_sessions": 0,
-        "live_in_progress_sessions": 0,
+        "pending_sessions": 7,
+        "live_capacity_sessions": 1,
+        "live_in_progress_sessions": 1,
         "live_queued_sessions": 0,
         "live_waiting_sessions": 25,
-        "account_sessions_observed_today": 9,
-        "account_sessions_observed_rolling_24h": 14,
-        "scoped_live_capacity_sessions": 0,
-        "scoped_live_in_progress_sessions": 0,
+        "account_sessions_observed_today": 16,
+        "account_sessions_observed_rolling_24h": 16,
+        "scoped_live_capacity_sessions": 1,
+        "scoped_live_in_progress_sessions": 1,
         "scoped_live_queued_sessions": 0,
-        "scoped_live_waiting_sessions": 5,
+        "scoped_live_waiting_sessions": 7,
         "api_sessions_seen": 50,
-        "api_sessions_today": 9,
+        "api_sessions_today": 16,
         "sessions": {
-          "calls": 9,
+          "calls": 16,
           "estimated_cost_usd": 0.0,
           "total_input_tokens": 0,
           "total_output_tokens": 0,
@@ -65,33 +65,171 @@
       "models": {
         "cheap": {
           "name": "gemini-3.1-flash-lite",
-          "estimated_cost_per_call_usd": 0.01
+          "estimated_cost_per_call_usd": 0.0
         },
         "balanced": {
           "name": "gemini-3-flash-preview",
-          "estimated_cost_per_call_usd": 0.05
+          "estimated_cost_per_call_usd": 0.0
         },
         "premium": {
           "name": "gemini-3.1-pro-preview",
-          "estimated_cost_per_call_usd": 0.5
+          "estimated_cost_per_call_usd": 0.0
         }
       },
       "daily_limit": 1500,
-      "daily_budget_usd": 20,
+      "daily_budget_usd": null,
       "usage_today": {
-        "calls": 294,
-        "estimated_cost_usd": 14.7,
-        "source": "gemini-local-jsonl",
-        "last_synced_at": "2026-05-27T10:44:42.2761885Z",
+        "calls": 419,
+        "estimated_cost_usd": 20.95,
+        "source": "gemini-local-jsonl+cli-quota",
+        "last_synced_at": "2026-05-27T14:28:29.6100229Z",
         "quota_source": "gemini-cli-retrieveUserQuota",
-        "quota_synced_at": "2026-05-27T10:44:42.2784556Z",
-        "quota_error": "Gemini quota helper not found: C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tools\\gemini-quota.mjs",
+        "quota_synced_at": "2026-05-27T14:28:33.5650000Z",
+        "rate_limits": {
+          "limit_id": "gemini-cli",
+          "limit_name": "Gemini CLI quota",
+          "primary": {
+            "label": "Gemini quota",
+            "used_percent": 10.5,
+            "remaining": 179,
+            "limit": 200,
+            "resets_at": 1779955917,
+            "source": "gemini-cli"
+          },
+          "secondary": {
+            "label": "Max model bucket",
+            "used_percent": 20.0,
+            "remaining": 80,
+            "limit": 100,
+            "resets_at": 1779955917,
+            "model_id": "gemini-2.5-flash",
+            "source": "gemini-cli"
+          },
+          "buckets": [
+            {
+              "model_id": "gemini-2.5-flash",
+              "used_percent": 20.0,
+              "remaining": 80,
+              "limit": 100,
+              "resets_at": 1779955917
+            },
+            {
+              "model_id": "gemini-2.5-flash-lite",
+              "used_percent": 0.0,
+              "remaining": 100,
+              "limit": 100,
+              "resets_at": 1779971310
+            },
+            {
+              "model_id": "gemini-2.5-pro",
+              "used_percent": 1.0,
+              "remaining": 99,
+              "limit": 100,
+              "resets_at": 1779948586
+            },
+            {
+              "model_id": "gemini-3-flash-preview",
+              "used_percent": 20.0,
+              "remaining": 80,
+              "limit": 100,
+              "resets_at": 1779955917
+            },
+            {
+              "model_id": "gemini-3-pro-preview",
+              "used_percent": 1.0,
+              "remaining": 99,
+              "limit": 100,
+              "resets_at": 1779948586
+            },
+            {
+              "model_id": "gemini-3.1-flash-lite",
+              "used_percent": 0.0,
+              "remaining": 100,
+              "limit": 100,
+              "resets_at": 1779971310
+            },
+            {
+              "model_id": "gemini-3.1-flash-lite-preview",
+              "used_percent": 0.0,
+              "remaining": 100,
+              "limit": 100,
+              "resets_at": 1779971310
+            },
+            {
+              "model_id": "gemini-3.1-pro-preview",
+              "used_percent": 1.0,
+              "remaining": 99,
+              "limit": 100,
+              "resets_at": 1779948586
+            }
+          ],
+          "plan_type": null,
+          "rate_limit_reached_type": null
+        },
+        "quota_buckets": [
+          {
+            "model_id": "gemini-2.5-flash",
+            "used_percent": 20.0,
+            "remaining": 80,
+            "limit": 100,
+            "resets_at": 1779955917
+          },
+          {
+            "model_id": "gemini-2.5-flash-lite",
+            "used_percent": 0.0,
+            "remaining": 100,
+            "limit": 100,
+            "resets_at": 1779971310
+          },
+          {
+            "model_id": "gemini-2.5-pro",
+            "used_percent": 1.0,
+            "remaining": 99,
+            "limit": 100,
+            "resets_at": 1779948586
+          },
+          {
+            "model_id": "gemini-3-flash-preview",
+            "used_percent": 20.0,
+            "remaining": 80,
+            "limit": 100,
+            "resets_at": 1779955917
+          },
+          {
+            "model_id": "gemini-3-pro-preview",
+            "used_percent": 1.0,
+            "remaining": 99,
+            "limit": 100,
+            "resets_at": 1779948586
+          },
+          {
+            "model_id": "gemini-3.1-flash-lite",
+            "used_percent": 0.0,
+            "remaining": 100,
+            "limit": 100,
+            "resets_at": 1779971310
+          },
+          {
+            "model_id": "gemini-3.1-flash-lite-preview",
+            "used_percent": 0.0,
+            "remaining": 100,
+            "limit": 100,
+            "resets_at": 1779971310
+          },
+          {
+            "model_id": "gemini-3.1-pro-preview",
+            "used_percent": 1.0,
+            "remaining": 99,
+            "limit": 100,
+            "resets_at": 1779948586
+          }
+        ],
         "gemini-3-flash-preview": {
-          "calls": 294,
-          "estimated_cost_usd": 14.7,
-          "total_input_tokens": 20298228,
-          "total_output_tokens": 31379,
-          "cached_tokens": 18580428,
+          "calls": 419,
+          "estimated_cost_usd": 20.95,
+          "total_input_tokens": 28970263,
+          "total_output_tokens": 40669,
+          "cached_tokens": 26534801,
           "reasoning_tokens": 5594,
           "tool_tokens": 0,
           "total_duration_ms": 0
@@ -99,7 +237,7 @@
       }
     },
     "kiro_cli": {
-      "enabled": true,
+      "enabled": false,
       "purpose": [
         "review",
         "planning",
@@ -123,12 +261,12 @@
       "daily_limit": 100,
       "daily_budget_usd": 5.0,
       "usage_today": {
-        "calls": 0,
-        "estimated_cost_usd": 0.0
+        "calls": 5,
+        "estimated_cost_usd": 0.5
       }
     },
     "cline_cli": {
-      "enabled": true,
+      "enabled": false,
       "purpose": [
         "review",
         "debugging",
@@ -156,7 +294,7 @@
       }
     },
     "claude_code": {
-      "enabled": true,
+      "enabled": false,
       "purpose": [
         "complex_review",
         "architecture",
@@ -190,7 +328,7 @@
       }
     },
     "copilot_cli": {
-      "enabled": true,
+      "enabled": false,
       "purpose": [
         "review",
         "planning"
@@ -219,7 +357,7 @@
       }
     },
     "cursor_agent": {
-      "enabled": true,
+      "enabled": false,
       "purpose": [
         "review",
         "planning",
@@ -275,27 +413,27 @@
       "models": {
         "planning": {
           "name": "gpt-5.5",
-          "estimated_cost_per_call_usd": 0.2
+          "estimated_cost_per_call_usd": 0.0
         },
         "monitoring": {
           "name": "gpt-5.4-mini",
-          "estimated_cost_per_call_usd": 0.02
+          "estimated_cost_per_call_usd": 0.0
         }
       },
       "daily_limit": 1000,
-      "daily_budget_usd": 20,
+      "daily_budget_usd": null,
       "usage_today": {
-        "calls": 59,
+        "calls": 80,
         "estimated_cost_usd": 0.0,
         "source": "codex-local-jsonl",
-        "last_synced_at": "2026-05-27T10:44:41.3199437Z",
+        "last_synced_at": "2026-05-27T14:28:28.6370465Z",
         "codex": {
-          "calls": 59,
+          "calls": 80,
           "estimated_cost_usd": 0.0,
-          "total_input_tokens": 5964147,
-          "total_output_tokens": 34657,
-          "cached_tokens": 5166720,
-          "reasoning_tokens": 13265,
+          "total_input_tokens": 7699459,
+          "total_output_tokens": 43059,
+          "cached_tokens": 6756864,
+          "reasoning_tokens": 16479,
           "tool_tokens": 0,
           "total_duration_ms": 0
         },
@@ -303,12 +441,12 @@
           "limit_id": "codex",
           "limit_name": null,
           "primary": {
-            "used_percent": 5.0,
+            "used_percent": 13.0,
             "window_minutes": 300,
             "resets_at": 1779884003
           },
           "secondary": {
-            "used_percent": 4.0,
+            "used_percent": 5.0,
             "window_minutes": 10080,
             "resets_at": 1780448408
           },
@@ -322,60 +460,35 @@
   "routing_rules": {
     "monitoring": [
       "gemini_cli:cheap",
-      "cursor_agent:default",
-      "copilot_cli:default",
       "codex_orchestrator:monitoring"
     ],
     "simple_review": [
-      "gemini_cli:cheap",
-      "copilot_cli:default",
-      "cline_cli:default"
+      "gemini_cli:cheap"
     ],
     "code_review": [
-      "gemini_cli:balanced",
-      "kiro_cli:default",
-      "cursor_agent:default",
-      "claude_code:balanced"
+      "gemini_cli:balanced"
     ],
     "complex_review": [
-      "claude_code:balanced",
       "gemini_cli:premium"
     ],
     "planning": [
       "gemini_cli:balanced",
-      "kiro_cli:default",
-      "cursor_agent:default",
-      "copilot_cli:default",
       "codex_orchestrator:planning"
     ],
     "analysis": [
-      "gemini_cli:cheap",
-      "kiro_cli:default",
-      "cursor_agent:default",
-      "copilot_cli:default"
+      "gemini_cli:cheap"
     ],
     "qa_disposition": [
       "codex_orchestrator:monitoring",
-      "gemini_cli:cheap",
-      "cursor_agent:default",
-      "copilot_cli:default"
+      "gemini_cli:cheap"
     ],
     "documentation": [
-      "gemini_cli:cheap",
-      "kiro_cli:default",
-      "cursor_agent:default",
-      "copilot_cli:default"
+      "gemini_cli:cheap"
     ],
     "merge_conflict_resolution": [
-      "gemini_cli:balanced",
-      "kiro_cli:default",
-      "cursor_agent:default",
-      "cline_cli:default",
-      "claude_code:balanced"
+      "gemini_cli:balanced"
     ],
     "debugging": [
-      "claude_code:balanced",
-      "cline_cli:default",
       "gemini_cli:premium"
     ],
     "coding": [
