@@ -191,5 +191,14 @@ function Ensure-ProviderUsageToday {
     }
 }
 
+function Get-ProviderUsageTotals {
+    param([Parameter(Mandatory)][object]$Provider)
+    return [pscustomobject]@{
+        calls = if (Test-ObjectProperty -Object $Provider.usage_today -Name "calls") { $Provider.usage_today.calls } else { 0 }
+        estimated_cost_usd = if (Test-ObjectProperty -Object $Provider.usage_today -Name "estimated_cost_usd") { $Provider.usage_today.estimated_cost_usd } else { 0.0 }
+    }
+}
+
+
 
 

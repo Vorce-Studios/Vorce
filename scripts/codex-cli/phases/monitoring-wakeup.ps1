@@ -127,9 +127,14 @@ function Invoke-MonitoringWakeUp {
             }
 
             # Check failing checks
-            $failingChecks = @($pr.statusCheckRollup | Where-Object {
-                $_.conclusion -eq "FAILURE" -or $_.status -eq "FAILURE"
-            })
+            $failingChecks = @()
+            if ($pr.statusCheckRollup) {
+                $failingChecks = @($pr.statusCheckRollup | Where-Object {
+                    (Test-ObjectProperty -Object $_ -Name "conclusion" -and $_.conclusion -eq "FAILURE") -or
+                    (Test-ObjectProperty -Object $_ -Name "status" -and $_.status -eq "FAILURE")
+                })
+            }
+
 
             if ($failingChecks.Count -gt 0) {
                 $failNames = ($failingChecks | ForEach-Object { $_.name }) -join ", "
