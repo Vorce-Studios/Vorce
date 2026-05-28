@@ -3,6 +3,26 @@
 
 Set-StrictMode -Version Latest
 
+function Add-DecisionPending {
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][string]$Topic,
+        [Parameter(Mandatory)][string]$Context
+    )
+
+    $exists = $State.decisions_pending | Where-Object { $_.topic -eq $Topic }
+    if (-not $exists) {
+        $State.decisions_pending += @([ordered]@{
+            topic      = $Topic
+            context    = $Context
+            created_at = (Get-Date -Format 'o')
+        })
+        Write-Host "[MONITOR] Entscheidung hinzugefuegt: $Topic" -ForegroundColor Yellow
+    } else {
+        Write-Host "[MONITOR] Entscheidung existiert bereits: $Topic (uebersprungen)" -ForegroundColor DarkGray
+    }
+}
+
 function Invoke-MonitoringWakeUp {
     param(
         [Parameter(Mandatory)][object]$State,
@@ -86,11 +106,7 @@ function Invoke-MonitoringWakeUp {
                         $delegation.retry_count = $retryCount + 1
                     } else {
                         Write-Host "[MONITOR]   -> ESKALATION: Braucht manuellen Eingriff!" -ForegroundColor Red
-                        $State.decisions_pending += @([ordered]@{
-                            topic      = "Jules Session #$issueNum braucht Hilfe"
-                            context    = "Session $sessionId ist nach $maxRetries Retries immer noch AWAITING_USER_FEEDBACK."
-                            created_at = (Get-Date -Format 'o')
-                        })
+                        Add-DecisionPending -State $State -Topic "Jules Session #$issueNum braucht Hilfe" -Context "Session $sessionId ist nach $maxRetries Retries immer noch AWAITING_USER_FEEDBACK."
                     }
                 }
                 "FAILED" {
@@ -108,8 +124,9 @@ function Invoke-MonitoringWakeUp {
     # --- Step 2: Check open PRs for problems ---
     Write-Host "[MONITOR] Pruefe offene PRs auf Probleme..." -ForegroundColor Cyan
 
+    $prs = @()
     try {
-        $prsRaw = gh pr list --repo $repo --state open --json number,title,headRefName,statusCheckRollup,mergeable --limit 20 2>&1
+        $prsRaw = gh pr list --repo $repo --state open --json number,title,headRefName,statusCheckRollup,mergeable --limit 100 2>&1
         $prs = @($prsRaw | Out-String | ConvertFrom-Json | ForEach-Object { $_ })
 
         foreach ($pr in $prs) {
@@ -119,11 +136,7 @@ function Invoke-MonitoringWakeUp {
             # Check merge conflicts
             if ($mergeable -eq "CONFLICTING") {
                 Write-Host ("[MONITOR]   PR #{0} MERGE CONFLICT!" -f $prNum) -ForegroundColor Red
-                $State.decisions_pending += @([ordered]@{
-                    topic      = "PR #$prNum hat Merge-Konflikte"
-                    context    = "Branch: $($pr.headRefName) - Titel: $($pr.title)"
-                    created_at = (Get-Date -Format 'o')
-                })
+                Add-DecisionPending -State $State -Topic "PR #$prNum hat Merge-Konflikte" -Context "Branch: $($pr.headRefName) - Titel: $($pr.title)"
             }
 
             # Check failing checks
@@ -168,6 +181,59 @@ PR URL: $($review.pr_url)
             }
         }
     }
+
+    # --- Step 4: Cleanup decisions_pending ---
+    Write-Host "[MONITOR] Bereinige und dedupliziere offene Entscheidungen..." -ForegroundColor Cyan
+    $cleanedDecisions = @()
+    $seenTopics = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+
+    foreach ($decision in $State.decisions_pending) {
+        $topic = $decision.topic
+        
+        # 1. Duplikatprüfung
+        if ($seenTopics.Contains($topic)) {
+            Write-Host "[MONITOR] Duplikat von Entscheidung entfernt: $topic" -ForegroundColor DarkGray
+            continue
+        }
+
+        $keep = $true
+
+        # 2. PR-Konflikt-Meldungen analysieren
+        if ($topic -match 'PR #(\d+) hat Merge-Konflikte') {
+            $prNum = [int]$Matches[1]
+            $matchingPr = $prs | Where-Object { [int]$_.number -eq $prNum }
+            if ($null -eq $matchingPr) {
+                # PR ist nicht mehr offen
+                Write-Host "[MONITOR] PR #$prNum ist nicht mehr offen. Entferne Merge-Konflikt-Entscheidung." -ForegroundColor Green
+                $keep = $false
+            } elseif ($matchingPr.mergeable -ne "CONFLICTING") {
+                # PR hat keine Konflikte mehr
+                Write-Host "[MONITOR] PR #$prNum hat keine Konflikte mehr (Status: $($matchingPr.mergeable)). Entferne Entscheidung." -ForegroundColor Green
+                $keep = $false
+            }
+        }
+        # 3. Jules-Session-Hilferufe analysieren
+        elseif ($topic -match 'Jules Session #(\d+) braucht Hilfe') {
+            $issueNum = [int]$Matches[1]
+            $delegation = $State.active_delegations | Where-Object { [int]$_.issue_number -eq $issueNum }
+            if ($null -eq $delegation) {
+                # Delegation existiert nicht mehr
+                Write-Host "[MONITOR] Delegation fuer Issue #$issueNum existiert nicht mehr. Entferne Entscheidung." -ForegroundColor Green
+                $keep = $false
+            } elseif ($delegation.jules_state -ne "AWAITING_USER_FEEDBACK") {
+                # Session wartet nicht mehr auf Feedback
+                Write-Host "[MONITOR] Jules Session fuer Issue #$issueNum wartet nicht mehr auf Feedback (Status: $($delegation.jules_state)). Entferne Entscheidung." -ForegroundColor Green
+                $keep = $false
+            }
+        }
+
+        if ($keep) {
+            $seenTopics.Add($topic) | Out-Null
+            $cleanedDecisions += @($decision)
+        }
+    }
+
+    $State.decisions_pending = $cleanedDecisions
 
     $State.last_monitoring_at = (Get-Date -Format 'o')
     Save-AutopilotState -State $State

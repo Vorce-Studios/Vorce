@@ -82,6 +82,12 @@ if (-not $SkipPlanningOnStart.IsPresent) {
     # Default: Force planning on start.
     # lastPlanTime bleibt MinValue (sofort faellig), lastMonTime auf jetzt setzen (verzoegert).
     $lastMonTime = Get-Date
+    
+    # Synchronisiere State direkt beim Start
+    $State.last_monitoring_at = $lastMonTime.ToString('o')
+    $State.last_planning_at = (Get-Date).AddDays(-1).ToString('o')
+    Save-AutopilotState -State $State
+    
     Write-Host "[INIT] Starte mit erzwungener Planungs-Phase (SkipPlanningOnStart ist nicht aktiv)." -ForegroundColor Yellow
 } else {
     Write-Host "[INIT] SkipPlanningOnStart aktiv: Verwende Zeitstempel aus dem State-Speicher." -ForegroundColor Yellow

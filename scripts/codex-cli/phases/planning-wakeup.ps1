@@ -14,42 +14,47 @@ function Invoke-PlanningWakeUp {
     $repo = $Config.repository
     Write-Host "`n[PLANNING] ========== Planning Wake-Up ==========" -ForegroundColor Magenta
 
-    # --- Step 1: Fetch open issues ---
-    Write-Host "[PLANNING] Lade offene Issues..." -ForegroundColor Cyan
-    $includeLabels = ($Config.issue_filters.include_labels | ForEach-Object { "--label `"$_`"" }) -join " "
-    $excludeLabels = $Config.issue_filters.exclude_labels
+    # Define script block to fetch candidates to avoid duplication
+    $GetCandidates = {
+        Write-Host "[PLANNING] Lade offene Issues..." -ForegroundColor Cyan
+        $includeLabels = ($Config.issue_filters.include_labels | ForEach-Object { "--label `"$_`"" }) -join " "
+        $excludeLabels = $Config.issue_filters.exclude_labels
 
-    $issuesRaw = gh issue list --repo $repo --state open --json number,title,labels,assignees,body --limit 50 2>&1
-    $issues = @()
-    try {
-        $issues = @($issuesRaw | Out-String | ConvertFrom-Json | ForEach-Object { $_ })
-    } catch {
-        Write-Warning "Issue-Fetch fehlgeschlagen: $_"
-    }
+        $issuesRaw = gh issue list --repo $repo --state open --json number,title,labels,assignees,body --limit 50 2>&1
+        $issues = @()
+        try {
+            $issues = @($issuesRaw | Out-String | ConvertFrom-Json | ForEach-Object { $_ })
+        } catch {
+            Write-Warning "Issue-Fetch fehlgeschlagen: $_"
+        }
 
-    # Filter by include labels
-    $includeSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
-    foreach ($l in $Config.issue_filters.include_labels) { $includeSet.Add($l) | Out-Null }
-    $excludeSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
-    foreach ($l in $Config.issue_filters.exclude_labels) { $excludeSet.Add($l) | Out-Null }
+        # Filter by include labels
+        $includeSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+        foreach ($l in $Config.issue_filters.include_labels) { $includeSet.Add($l) | Out-Null }
+        $excludeSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+        foreach ($l in $Config.issue_filters.exclude_labels) { $excludeSet.Add($l) | Out-Null }
 
-    $candidates = @($issues | Where-Object {
-        $labelNames = @($_.labels | ForEach-Object { if ($_ -is [string]) { $_ } else { $_.name } })
-        $hasInclude = @($labelNames | Where-Object { $includeSet.Contains($_) }).Count -gt 0
-        $hasExclude = @($labelNames | Where-Object { $excludeSet.Contains($_) }).Count -gt 0
-        $hasInclude -and (-not $hasExclude)
-    })
-
-    # Exclude already delegated issues
-    $delegatedNumbers = @($State.active_delegations | ForEach-Object { [int]$_.issue_number })
-    if ($delegatedNumbers.Count -gt 0) {
-        $candidates = @($candidates | Where-Object {
-            $val = $_.number
-            if ($val -is [System.Collections.IList]) { $val = $val[0] }
-            if ($null -eq $val) { $true } else { $delegatedNumbers -notcontains [int]$val }
+        $c = @($issues | Where-Object {
+            $labelNames = @($_.labels | ForEach-Object { if ($_ -is [string]) { $_ } else { $_.name } })
+            $hasInclude = @($labelNames | Where-Object { $includeSet.Contains($_) }).Count -gt 0
+            $hasExclude = @($labelNames | Where-Object { $excludeSet.Contains($_) }).Count -gt 0
+            $hasInclude -and (-not $hasExclude)
         })
+
+        # Exclude already delegated issues
+        $delegatedNumbers = @($State.active_delegations | ForEach-Object { [int]$_.issue_number })
+        if ($delegatedNumbers.Count -gt 0) {
+            $c = @($c | Where-Object {
+                $val = $_.number
+                if ($val -is [System.Collections.IList]) { $val = $val[0] }
+                if ($null -eq $val) { $true } else { $delegatedNumbers -notcontains [int]$val }
+            })
+        }
+        return $c
     }
 
+    # --- Step 1: Fetch open issues ---
+    $candidates = & $GetCandidates
     Write-Host "[PLANNING] $($candidates.Count) Issues bereit fuer Delegation." -ForegroundColor Green
 
     # --- Step 2: Check if we should create new issues ---
@@ -77,6 +82,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                 $jsonMatch = [regex]::Match($planResult.output, '\[.*\]', [System.Text.RegularExpressions.RegexOptions]::Singleline)
                 if ($jsonMatch.Success) {
                     $newIssues = $jsonMatch.Value | ConvertFrom-Json
+                    $newIssuesCreated = $false
                     foreach ($newIssue in $newIssues) {
                         if ($DryRun.IsPresent) {
                             Write-Host "[PLANNING] [DRY RUN] Wuerde Issue erstellen: $($newIssue.title)" -ForegroundColor DarkYellow
@@ -87,7 +93,13 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                             $created = Invoke-Expression $createCmd 2>&1
                             Write-Host "[PLANNING] Issue erstellt: $created" -ForegroundColor Green
                             $State.autopilot_created_issues += @($newIssue.title)
+                            $newIssuesCreated = $true
                         }
+                    }
+                    if ($newIssuesCreated) {
+                        Write-Host "[PLANNING] Neue Issues wurden erstellt. Lade Kandidatenliste neu..." -ForegroundColor Cyan
+                        $candidates = & $GetCandidates
+                        Write-Host "[PLANNING] $($candidates.Count) Issues bereit fuer Delegation (nach Reload)." -ForegroundColor Green
                     }
                 }
             } catch {
