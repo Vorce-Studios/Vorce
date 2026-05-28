@@ -22,12 +22,14 @@ pub fn icon_button_simple(
 
     // Accessibility info
     let enabled = ui.is_enabled();
-    let label = if hover_text.is_empty() {
-        icon.file_name().replace("ultimate_", "").replace(".svg", "").replace("_", " ")
-    } else {
-        hover_text.to_string()
-    };
-    response.widget_info(move || WidgetInfo::labeled(WidgetType::Button, enabled, label.clone()));
+    response.widget_info(move || {
+        let label = if hover_text.is_empty() {
+            icon.file_name().replace("ultimate_", "").replace(".svg", "").replace("_", " ")
+        } else {
+            hover_text.to_string()
+        };
+        WidgetInfo::labeled(WidgetType::Button, enabled, label)
+    });
 
     let visuals = ui.style().interact(&response);
 
@@ -162,12 +164,14 @@ pub fn icon_button_compact(
 
     // Accessibility info
     let enabled = ui.is_enabled();
-    let label = if hover_text.is_empty() {
-        icon.file_name().replace("ultimate_", "").replace(".svg", "").replace("_", " ")
-    } else {
-        hover_text.to_string()
-    };
-    response.widget_info(move || WidgetInfo::labeled(WidgetType::Button, enabled, label.clone()));
+    response.widget_info(move || {
+        let label = if hover_text.is_empty() {
+            icon.file_name().replace("ultimate_", "").replace(".svg", "").replace("_", " ")
+        } else {
+            hover_text.to_string()
+        };
+        WidgetInfo::labeled(WidgetType::Button, enabled, label)
+    });
 
     let visuals = ui.style().interact(&response);
     let painter = ui.painter();
