@@ -224,9 +224,20 @@ function Invoke-VisibleCeoPhase {
             -DryRun:$DryRun
 
         Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
+        
+        $finalOutput = ""
+        $isSuccess = [bool]((Test-ObjectProperty -Object $result -Name "Success") -and $result.Success)
+        if ($isSuccess) {
+            if ($result.OutputPath -and (Test-Path -LiteralPath $result.OutputPath)) {
+                $finalOutput = Get-Content -LiteralPath $result.OutputPath -Raw -Encoding UTF8
+            } else {
+                $finalOutput = if (Test-ObjectProperty -Object $result -Name "Output") { $result.Output } else { "" }
+            }
+        }
+
         return [ordered]@{
-            success = [bool]((Test-ObjectProperty -Object $result -Name "Success") -and $result.Success)
-            output  = if (Test-ObjectProperty -Object $result -Name "Output") { $result.Output } else { "" }
+            success = $isSuccess
+            output  = $finalOutput
             stats   = $null
         }
     }

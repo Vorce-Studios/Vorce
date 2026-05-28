@@ -4,9 +4,9 @@ $ScriptDir = Split-Path -Parent $PSCommandPath
 
 $apiKey = Get-JulesApiKey
 
-Write-Host "Fetching latest 100 critical sessions (AWAITING_USER_FEEDBACK, FAILED)..." -ForegroundColor Cyan
-# Fetching exactly one page (100 sessions)
-$sessions = @(Get-AllJulesSessions -ApiKey $apiKey -PageSize 100 -MaxPages 1)
+Write-Host "Fetching latest critical sessions (AWAITING_USER_FEEDBACK, FAILED)..." -ForegroundColor Cyan
+# Fetching up to 5 pages of sessions (500 sessions) to cover all of them
+$sessions = @(Get-AllJulesSessions -ApiKey $apiKey -PageSize 100 -MaxPages 5)
 
 $criticalSessions = New-Object System.Collections.Generic.List[object]
 
@@ -19,14 +19,11 @@ foreach ($session in $sessions) {
     }
 
     $sourceContext = Get-JulesObjectPropertyValue -Object $session -Name "sourceContext"
-    $githubRepoContext = Get-JulesObjectPropertyValue -Object $sourceContext -Name "githubRepoContext"
-    $repo = [string](Get-JulesObjectPropertyValue -Object $githubRepoContext -Name "repository")
     $source = [string](Get-JulesObjectPropertyValue -Object $sourceContext -Name "source")
 
-    $isVorce = ($repo -like "*Vorce*" -or $source -like "*Vorce*" -or [string]::IsNullOrWhiteSpace($repo))
-    $isExcluded = ($repo -like "*MrLongNight*" -or $source -like "*MrLongNight*")
+    $isVorce = ($source -like "*Vorce*" -or $source -like "*MapFlow*")
 
-    if ($isVorce -and -not $isExcluded) {
+    if ($isVorce) {
         $criticalSessions.Add($session)
     }
 }
@@ -41,10 +38,9 @@ Write-Host ""
 
 foreach ($session in $criticalSessions) {
     $sourceContext = Get-JulesObjectPropertyValue -Object $session -Name "sourceContext"
-    $githubRepoContext = Get-JulesObjectPropertyValue -Object $sourceContext -Name "githubRepoContext"
-
-    $repo = [string](Get-JulesObjectPropertyValue -Object $githubRepoContext -Name "repository")
-    $issueNum = Get-JulesObjectPropertyValue -Object $githubRepoContext -Name "issueNumber"
+    $source = [string](Get-JulesObjectPropertyValue -Object $sourceContext -Name "source")
+    $repo = if ($source -match "sources/github/(?<name>.*)") { $Matches["name"] } else { $source }
+    $issueNum = Get-IssueNumberFromSession -Session $session
     $state = [string](Get-JulesObjectPropertyValue -Object $session -Name "state")
     $updatedAt = Get-JulesObjectPropertyValue -Object $session -Name "updateTime"
     $url = Get-JulesObjectPropertyValue -Object $session -Name "url"

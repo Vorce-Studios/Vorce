@@ -10,6 +10,19 @@ let prsCache: string | null = null;
 let prsCacheTime = 0;
 const CACHE_TTL = 20000; // 20 seconds cache TTL to avoid hitting GitHub API too frequently
 
+function getRepository(): string {
+  try {
+    const configPath = path.resolve(__dirname, '../autopilot-config.json');
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      if (config && config.repository) {
+        return config.repository;
+      }
+    }
+  } catch (e) {}
+  return 'Vorce-Studios/Vorce';
+}
+
 export default defineConfig({
   plugins: [
     react(),
@@ -19,14 +32,15 @@ export default defineConfig({
         server.middlewares.use((req: any, res: any, next: any) => {
           if (req.method === 'GET' && req.url === '/active-sessions.json') {
             try {
-              const statePath = path.resolve(__dirname, '../autopilot-state.json');
+              const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
+              const statePath = fs.existsSync(publicStatePath) ? publicStatePath : path.resolve(__dirname, '../autopilot-state.json');
               if (fs.existsSync(statePath)) {
                 const stateContent = fs.readFileSync(statePath, 'utf-8');
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(stateContent);
               } else {
                 res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'autopilot-state.json not found' }));
+                res.end(JSON.stringify({ error: 'active-sessions.json not found' }));
               }
             } catch (err) {
               res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -69,14 +83,29 @@ export default defineConfig({
               res.end(issuesCache);
             } else {
               try {
-                const issuesJson = execSync(
-                  'gh issue list --repo Vorce-Studios/Vorce --limit 100 --state all --json number,title,state,labels,assignees,body,createdAt,updatedAt,url',
-                  { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }
-                );
-                issuesCache = issuesJson;
+                const repos = [getRepository()];
+                if (repos[0] === 'Vorce-Studios/Vorce') {
+                  repos.push('MrLongNight/MapFlow');
+                }
+                let allIssues: any[] = [];
+                for (const r of repos) {
+                  try {
+                    const issuesJson = execSync(
+                      `gh issue list --repo ${r} --limit 1000 --state all --json number,title,state,labels,assignees,body,createdAt,updatedAt,url`,
+                      { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }
+                    );
+                    const parsed = JSON.parse(issuesJson);
+                    if (Array.isArray(parsed)) {
+                      parsed.forEach((issue: any) => issue.repo = r);
+                      allIssues = allIssues.concat(parsed);
+                    }
+                  } catch (e) {}
+                }
+                const responseJson = JSON.stringify(allIssues);
+                issuesCache = responseJson;
                 issuesCacheTime = now;
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(issuesJson);
+                res.end(responseJson);
               } catch (err) {
                 // Fallback to static public file if GH command fails
                 const fallbackPath = path.resolve(__dirname, './public/github-issues.json');
@@ -97,14 +126,29 @@ export default defineConfig({
               res.end(prsCache);
             } else {
               try {
-                const prsJson = execSync(
-                  'gh pr list --repo Vorce-Studios/Vorce --limit 100 --state all --json number,title,state,mergeable,statusCheckRollup,headRefName,baseRefName,updatedAt,url',
-                  { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }
-                );
-                prsCache = prsJson;
+                const repos = [getRepository()];
+                if (repos[0] === 'Vorce-Studios/Vorce') {
+                  repos.push('MrLongNight/MapFlow');
+                }
+                let allPRs: any[] = [];
+                for (const r of repos) {
+                  try {
+                    const prsJson = execSync(
+                      `gh pr list --repo ${r} --limit 1000 --state open --json number,title,state,mergeable,statusCheckRollup,headRefName,baseRefName,updatedAt,url`,
+                      { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }
+                    );
+                    const parsed = JSON.parse(prsJson);
+                    if (Array.isArray(parsed)) {
+                      parsed.forEach((pr: any) => pr.repo = r);
+                      allPRs = allPRs.concat(parsed);
+                    }
+                  } catch (e) {}
+                }
+                const responseJson = JSON.stringify(allPRs);
+                prsCache = responseJson;
                 prsCacheTime = now;
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(prsJson);
+                res.end(responseJson);
               } catch (err) {
                 // Fallback to static public file if GH command fails
                 const fallbackPath = path.resolve(__dirname, './public/pull-requests.json');

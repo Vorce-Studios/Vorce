@@ -3,9 +3,11 @@ import type { ActiveSessions } from '../types';
 
 interface Props {
   sessions: ActiveSessions;
+  julesSessions?: any[];
 }
 
 function timeAgo(dateStr: string): string {
+  if (!dateStr) return 'N/A';
   const now = new Date();
   const then = new Date(dateStr);
   const diffMs = now.getTime() - then.getTime();
@@ -22,6 +24,7 @@ function StateBadge({ state }: { state: string }) {
   const configs: Record<string, { bg: string; text: string; label: string }> = {
     'IN_PROGRESS': { bg: 'bg-blue-500/20 border-blue-500/30', text: 'text-blue-400', label: 'In Progress' },
     'AWAITING_USER_FEEDBACK': { bg: 'bg-amber-500/20 border-amber-500/30', text: 'text-amber-400', label: 'Awaiting Feedback' },
+    'AWAITING_PLAN_APPROVAL': { bg: 'bg-yellow-500/20 border-yellow-500/30', text: 'text-yellow-400', label: 'Awaiting Plan' },
     'COMPLETED': { bg: 'bg-emerald-500/20 border-emerald-500/30', text: 'text-emerald-400', label: 'Completed' },
     'FAILED': { bg: 'bg-red-500/20 border-red-500/30', text: 'text-red-400', label: 'Failed' },
   };
@@ -39,10 +42,11 @@ function ReviewBadge({ status }: { status: string }) {
   return <span className={`badge ${cfg.bg} ${cfg.text}`}>{status}</span>;
 }
 
-export default function SessionsPage({ sessions }: Props) {
+export default function SessionsPage({ sessions, julesSessions }: Props) {
   const delegations = sessions.active_delegations || [];
   const reviewQueue = sessions.review_queue || [];
   const completedItems = sessions.completed_this_session || [];
+  const julesList = julesSessions || [];
 
   return (
     <div className="space-y-6 animate-in">
@@ -159,6 +163,62 @@ export default function SessionsPage({ sessions }: Props) {
                     <td className="py-2.5 px-3 text-slate-400">{timeAgo(c.completed_at)}</td>
                   </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Jules API Sessions */}
+      <div className="glass-card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-slate-200">
+            Jules API Sessions (Vorce & MapFlow)
+            <span className="ml-2 badge bg-purple-500/20 text-purple-400">{julesList.length}</span>
+          </h3>
+        </div>
+        {julesList.length === 0 ? (
+          <p className="text-slate-500 text-sm">Keine Jules API Sessions gefunden. Bitte stelle sicher, dass der Autopilot-Hintergrunddienst läuft.</p>
+        ) : (
+          <div className="overflow-x-auto max-h-[500px] overflow-y-auto pr-1">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 bg-slate-900/90 backdrop-blur-sm">
+                <tr className="border-b border-slate-700/50">
+                  <th className="text-left py-3 px-3 text-slate-400 font-medium">Session ID</th>
+                  <th className="text-left py-3 px-3 text-slate-400 font-medium">Repository / Issue</th>
+                  <th className="text-left py-3 px-3 text-slate-400 font-medium">Titel</th>
+                  <th className="text-left py-3 px-3 text-slate-400 font-medium">Status</th>
+                  <th className="text-left py-3 px-3 text-slate-400 font-medium">Aktualisiert</th>
+                  <th className="text-left py-3 px-3 text-slate-400 font-medium">Link</th>
+                </tr>
+              </thead>
+              <tbody>
+                {julesList.map((s) => {
+                  const sessionId = s.name.split('/').pop() || s.name;
+                  const isVorce = s.repo.includes('Vorce');
+                  const repoColor = isVorce ? 'text-cyan-400' : 'text-amber-400';
+                  
+                  return (
+                    <tr key={s.name} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                      <td className="py-3 px-3 text-slate-400 font-mono text-xs">{sessionId}</td>
+                      <td className="py-3 px-3">
+                        <span className={`font-medium ${repoColor}`}>{s.repo.split('/').pop()}</span>
+                        {s.issueNumber && (
+                          <span className="ml-1.5 text-purple-400 font-mono">#{s.issueNumber}</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-slate-200 max-w-xs truncate">{s.title}</td>
+                      <td className="py-3 px-3"><StateBadge state={s.state} /></td>
+                      <td className="py-3 px-3 text-slate-400 text-xs">{timeAgo(s.updatedAt)}</td>
+                      <td className="py-3 px-3">
+                        <a href={s.url} target="_blank" rel="noreferrer"
+                          className="text-slate-400 hover:text-purple-400 transition-colors inline-flex items-center gap-1">
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

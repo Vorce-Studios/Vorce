@@ -77,7 +77,13 @@ Write-Host ""
 $exitCode = 0
 try {
     # Tee-Object writes to file AND passes through to console
-    & $cmdInfo.Source @cliArgs 2>&1 | Tee-Object -FilePath $OutputFile
+    if ($cmdInfo.Source -like "*.ps1") {
+        # Run PS1 scripts in a child powershell process to prevent 'exit' from killing the current host
+        $powerShellHost = if (Get-Command pwsh -ErrorAction SilentlyContinue) { "pwsh" } else { "powershell" }
+        & $powerShellHost -NoProfile -ExecutionPolicy Bypass -File $cmdInfo.Source @cliArgs 2>&1 | Tee-Object -FilePath $OutputFile
+    } else {
+        & $cmdInfo.Source @cliArgs 2>&1 | Tee-Object -FilePath $OutputFile
+    }
     $exitCode = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }
 } catch {
     $errMsg = $_.Exception.Message

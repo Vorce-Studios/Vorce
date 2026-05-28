@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "daily_reset_hour_utc": 0,
-  "last_reset_date": "2026-05-27",
+  "last_reset_date": "2026-05-28",
   "providers": {
     "jules": {
       "enabled": true,
@@ -11,28 +11,28 @@
       "daily_limit": 100,
       "estimated_cost_per_call_usd": 0.0,
       "usage_today": {
-        "calls": 16,
+        "calls": 1,
         "estimated_cost_usd": 0.0,
         "source": "jules-api",
-        "last_synced_at": "2026-05-27T14:28:41.6780432Z",
-        "active_sessions": 1,
-        "completed_sessions": 9,
+        "last_synced_at": "2026-05-28T01:22:08.7777207Z",
+        "active_sessions": 0,
+        "completed_sessions": 0,
         "failed_sessions": 0,
         "pending_sessions": 7,
-        "live_capacity_sessions": 1,
-        "live_in_progress_sessions": 1,
+        "live_capacity_sessions": 0,
+        "live_in_progress_sessions": 0,
         "live_queued_sessions": 0,
         "live_waiting_sessions": 25,
-        "account_sessions_observed_today": 16,
+        "account_sessions_observed_today": 1,
         "account_sessions_observed_rolling_24h": 16,
-        "scoped_live_capacity_sessions": 1,
-        "scoped_live_in_progress_sessions": 1,
+        "scoped_live_capacity_sessions": 0,
+        "scoped_live_in_progress_sessions": 0,
         "scoped_live_queued_sessions": 0,
         "scoped_live_waiting_sessions": 7,
         "api_sessions_seen": 50,
-        "api_sessions_today": 16,
+        "api_sessions_today": 1,
         "sessions": {
-          "calls": 16,
+          "calls": 1,
           "estimated_cost_usd": 0.0,
           "total_input_tokens": 0,
           "total_output_tokens": 0,
@@ -79,12 +79,12 @@
       "daily_limit": 1500,
       "daily_budget_usd": null,
       "usage_today": {
-        "calls": 419,
-        "estimated_cost_usd": 20.95,
+        "calls": 0,
+        "estimated_cost_usd": 0.0,
         "source": "gemini-local-jsonl+cli-quota",
-        "last_synced_at": "2026-05-27T14:28:29.6100229Z",
+        "last_synced_at": "2026-05-28T01:22:05.1316994Z",
         "quota_source": "gemini-cli-retrieveUserQuota",
-        "quota_synced_at": "2026-05-27T14:28:33.5650000Z",
+        "quota_synced_at": "2026-05-28T01:22:08.5080000Z",
         "rate_limits": {
           "limit_id": "gemini-cli",
           "limit_name": "Gemini CLI quota",
@@ -118,7 +118,7 @@
               "used_percent": 0.0,
               "remaining": 100,
               "limit": 100,
-              "resets_at": 1779971310
+              "resets_at": 1780010493
             },
             {
               "model_id": "gemini-2.5-pro",
@@ -146,14 +146,14 @@
               "used_percent": 0.0,
               "remaining": 100,
               "limit": 100,
-              "resets_at": 1779971310
+              "resets_at": 1780010493
             },
             {
               "model_id": "gemini-3.1-flash-lite-preview",
               "used_percent": 0.0,
               "remaining": 100,
               "limit": 100,
-              "resets_at": 1779971310
+              "resets_at": 1780010493
             },
             {
               "model_id": "gemini-3.1-pro-preview",
@@ -179,7 +179,7 @@
             "used_percent": 0.0,
             "remaining": 100,
             "limit": 100,
-            "resets_at": 1779971310
+            "resets_at": 1780010493
           },
           {
             "model_id": "gemini-2.5-pro",
@@ -207,14 +207,14 @@
             "used_percent": 0.0,
             "remaining": 100,
             "limit": 100,
-            "resets_at": 1779971310
+            "resets_at": 1780010493
           },
           {
             "model_id": "gemini-3.1-flash-lite-preview",
             "used_percent": 0.0,
             "remaining": 100,
             "limit": 100,
-            "resets_at": 1779971310
+            "resets_at": 1780010493
           },
           {
             "model_id": "gemini-3.1-pro-preview",
@@ -223,17 +223,7 @@
             "limit": 100,
             "resets_at": 1779948586
           }
-        ],
-        "gemini-3-flash-preview": {
-          "calls": 419,
-          "estimated_cost_usd": 20.95,
-          "total_input_tokens": 28970263,
-          "total_output_tokens": 40669,
-          "cached_tokens": 26534801,
-          "reasoning_tokens": 5594,
-          "tool_tokens": 0,
-          "total_duration_ms": 0
-        }
+        ]
       }
     },
     "kiro_cli": {
@@ -261,8 +251,8 @@
       "daily_limit": 100,
       "daily_budget_usd": 5.0,
       "usage_today": {
-        "calls": 5,
-        "estimated_cost_usd": 0.5
+        "calls": 0,
+        "estimated_cost_usd": 0.0
       }
     },
     "cline_cli": {
@@ -423,17 +413,17 @@
       "daily_limit": 1000,
       "daily_budget_usd": null,
       "usage_today": {
-        "calls": 80,
+        "calls": 10,
         "estimated_cost_usd": 0.0,
         "source": "codex-local-jsonl",
-        "last_synced_at": "2026-05-27T14:28:28.6370465Z",
+        "last_synced_at": "2026-05-28T01:22:04.2521541Z",
         "codex": {
-          "calls": 80,
+          "calls": 10,
           "estimated_cost_usd": 0.0,
-          "total_input_tokens": 7699459,
-          "total_output_tokens": 43059,
-          "cached_tokens": 6756864,
-          "reasoning_tokens": 16479,
+          "total_input_tokens": 776628,
+          "total_output_tokens": 6683,
+          "cached_tokens": 670976,
+          "reasoning_tokens": 2330,
           "tool_tokens": 0,
           "total_duration_ms": 0
         },
@@ -441,12 +431,12 @@
           "limit_id": "codex",
           "limit_name": null,
           "primary": {
-            "used_percent": 13.0,
+            "used_percent": 1.0,
             "window_minutes": 300,
-            "resets_at": 1779884003
+            "resets_at": 1779947121
           },
           "secondary": {
-            "used_percent": 5.0,
+            "used_percent": 6.0,
             "window_minutes": 10080,
             "resets_at": 1780448408
           },

@@ -71,6 +71,7 @@ export default function App() {
   const { data: sessions, loading: sessionsLoading, refetch: refetchSessions } = useData<ActiveSessions>('/active-sessions.json', defaultActiveSessions);
   const { data: issues, loading: issuesLoading, refetch: refetchIssues } = useData<GitHubIssue[]>('/github-issues.json', []);
   const { data: pullRequests, loading: prLoading, refetch: refetchPRs } = useData<PullRequest[]>('/pull-requests.json', []);
+  const { data: julesSessions, loading: julesSessionsLoading, refetch: refetchJulesSessions } = useData<any[]>('/jules-sessions.json', []);
   const { data: memoryStore, loading: memoryLoading, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
   const { data: history, loading: historyLoading, refetch: refetchHistory } = useData<any[]>('/data.json', []);
 
@@ -80,6 +81,7 @@ export default function App() {
     refetchSessions();
     refetchIssues();
     refetchPRs();
+    refetchJulesSessions();
     refetchMemory();
     refetchHistory();
   };
@@ -94,7 +96,7 @@ export default function App() {
       case 'dashboard':
         return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} />;
       case 'sessions':
-        return <SessionsPage sessions={sessions} />;
+        return <SessionsPage sessions={sessions} julesSessions={julesSessions} />;
       case 'issues':
         return <IssuesPage issues={issues} />;
       case 'pullrequests':
