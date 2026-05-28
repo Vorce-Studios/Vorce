@@ -7,7 +7,7 @@ param(
     [switch]$DryRun,
     [switch]$PlanOnce,
     [switch]$MonitorOnce,
-    [switch]$ForcePlanningOnStart,
+    [switch]$SkipPlanningOnStart,
     [int]$PlanningIntervalOverride,
     [int]$MonitoringIntervalOverride
 )
@@ -78,12 +78,13 @@ if ($MonitorOnce.IsPresent) {
 $lastPlanTime = [datetime]::MinValue
 $lastMonTime = [datetime]::MinValue
 
-if ($ForcePlanningOnStart.IsPresent) {
-    # Force planning: lastPlanTime bleibt MinValue (sofort faellig)
-    # lastMonTime auf jetzt setzen, damit Monitoring NICHT sofort startet
+if (-not $SkipPlanningOnStart.IsPresent) {
+    # Default: Force planning on start.
+    # lastPlanTime bleibt MinValue (sofort faellig), lastMonTime auf jetzt setzen (verzoegert).
     $lastMonTime = Get-Date
-    Write-Host "[INIT] ForcePlanningOnStart aktiv: Planning sofort, Monitoring verzoegert." -ForegroundColor Yellow
+    Write-Host "[INIT] Starte mit erzwungener Planungs-Phase (SkipPlanningOnStart ist nicht aktiv)." -ForegroundColor Yellow
 } else {
+    Write-Host "[INIT] SkipPlanningOnStart aktiv: Verwende Zeitstempel aus dem State-Speicher." -ForegroundColor Yellow
     if ($State.last_planning_at) {
         try {
             $lastPlanTime = [datetimeoffset]::Parse($State.last_planning_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime

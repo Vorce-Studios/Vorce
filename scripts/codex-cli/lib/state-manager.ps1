@@ -225,7 +225,25 @@ function Initialize-AutopilotState {
     Invoke-StartupCleanup
 
     $existing = Read-AutopilotState
-    if ($null -ne $existing -and -not $Force.IsPresent) {
+    $defaults = New-AutopilotState
+
+    if ($null -ne $existing -and -not $Force.IsPresent -and ($null -ne $existing.PSObject)) {
+        # Ensure all default properties exist on the existing state
+        foreach ($key in $defaults.Keys) {
+            if (-not ($existing.PSObject.Properties.Name -contains $key)) {
+                $existing | Add-Member -MemberType NoteProperty -Name $key -Value $defaults[$key] -Force
+            }
+        }
+
+        # Validate that arrays are indeed arrays (sometimes deserialized as single object or null)
+        foreach ($key in @("active_delegations", "review_queue", "autopilot_created_issues", "completed_this_session", "decisions_pending", "error_log", "deliberation_log")) {
+            if ($null -eq $existing.$key) {
+                $existing.$key = @()
+            } elseif ($existing.$key -isnot [System.Array] -and $existing.$key -isnot [System.Collections.IList]) {
+                $existing.$key = @($existing.$key)
+            }
+        }
+
         $lastBeat = $null
         if ($existing.last_heartbeat) {
             try {
