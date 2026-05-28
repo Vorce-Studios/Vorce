@@ -50,7 +50,7 @@ function Invoke-PlanningWakeUp {
                 if ($null -eq $val) { $true } else { $delegatedNumbers -notcontains [int]$val }
             })
         }
-        return ,$c
+        return $c
     }
 
     # --- Step 1: Fetch open issues ---
