@@ -122,7 +122,7 @@ while ($true) {
             if ($null -eq $db) { $db = @() }
             Write-JsonLocked -Path (Join-Path $DashboardPublicDir "data.json") -Data @($db) | Out-Null
         }
-        
+
         if (Test-Path $StatePath) {
             $state = Read-JsonLocked -Path $StatePath
             if ($null -ne $state) {
@@ -139,12 +139,12 @@ while ($true) {
                     }
                 }
                 $state | Add-Member -MemberType NoteProperty -Name "deliberation_log" -Value $delibLog -Force
-                
+
                 $state = Add-SchedulerSnapshot -State $state -Config $Config
                 Write-JsonLocked -Path (Join-Path $DashboardPublicDir "active-sessions.json") -Data $state | Out-Null
             }
         }
-        
+
         $RegistryPath = Join-Path $ScriptDir "quota-registry.json"
         if (Test-Path $RegistryPath) {
             Write-JsonLocked -Path (Join-Path $DashboardPublicDir "registry.json") -Data $registry | Out-Null
@@ -154,7 +154,7 @@ while ($true) {
         $now = Get-Date
         if (($now - $lastGhFetch).TotalSeconds -ge $ghFetchIntervalSec) {
             Write-Host "[STATS] Polling GitHub Issues..." -ForegroundColor Gray
-            
+
             $reposToPoll = @($Repository)
             if ($Repository -eq "Vorce-Studios/Vorce") {
                 $reposToPoll += "MrLongNight/MapFlow"
@@ -205,7 +205,7 @@ while ($true) {
                     $stateName = [string]$s.state
                     $source = [string]$s.sourceContext.source
                     $repo = if ($source -match "sources/github/(?<name>.*)") { $Matches["name"] } else { $source }
-                    
+
                     if ($source -notlike "*Vorce*" -and $source -notlike "*MapFlow*") {
                         continue
                     }

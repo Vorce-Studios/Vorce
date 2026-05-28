@@ -316,7 +316,7 @@ $currentBranch = git branch --show-current 2>$null
 if ($null -ne $currentBranch -and $currentBranch.Trim() -ne "main") {
     Write-Warning "[INIT] Das Repository befindet sich nicht auf dem Branch 'main', sondern auf '$($currentBranch.Trim())'!"
     Write-Warning "[INIT] Dies kann dazu fuehren, dass Autopilot-Skripte fehlen oder veraltet sind."
-    
+
     # Pruefen, ob uncommittete Aenderungen vorliegen
     $gitStatus = git status --porcelain 2>$null
     if ([string]::IsNullOrWhiteSpace($gitStatus)) {

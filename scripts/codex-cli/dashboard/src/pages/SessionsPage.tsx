@@ -197,7 +197,7 @@ export default function SessionsPage({ sessions, julesSessions }: Props) {
                   const sessionId = s.name.split('/').pop() || s.name;
                   const isVorce = s.repo.includes('Vorce');
                   const repoColor = isVorce ? 'text-cyan-400' : 'text-amber-400';
-                  
+
                   return (
                     <tr key={s.name} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
                       <td className="py-3 px-3 text-slate-400 font-mono text-xs">{sessionId}</td>

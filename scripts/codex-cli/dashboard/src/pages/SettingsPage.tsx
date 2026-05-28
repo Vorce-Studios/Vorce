@@ -200,8 +200,8 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
       {/* Status Alerts */}
       {status && (
         <div className={`p-4 rounded-xl border flex items-start gap-3 ${
-          status.type === 'success' 
-            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+          status.type === 'success'
+            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
             : 'bg-red-500/10 border-red-500/30 text-red-400'
         }`}>
           {status.type === 'success' ? (
@@ -565,7 +565,7 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
             </h3>
             <p className="text-xs text-slate-400 mb-5 leading-relaxed">
               Definiert die Ausweich-Reihenfolge (Fallback-Chain) der KI-Modelle für verschiedene System-Tasks.
-              Die Angabe erfolgt als kommagetrennte Liste von Providern (z. B. <code>gemini_cli, claude_code</code>). 
+              Die Angabe erfolgt als kommagetrennte Liste von Providern (z. B. <code>gemini_cli, claude_code</code>).
               Schlägt ein Provider fehl oder ist sein Tages-Budget erschöpft, wird automatisch der nächste in der Kette aufgerufen.
             </p>
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">

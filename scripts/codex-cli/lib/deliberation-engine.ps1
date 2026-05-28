@@ -224,7 +224,7 @@ function Invoke-VisibleCeoPhase {
             -DryRun:$DryRun
 
         Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
-        
+
         $finalOutput = ""
         $isSuccess = [bool]((Test-ObjectProperty -Object $result -Name "Success") -and $result.Success)
         if ($isSuccess) {
