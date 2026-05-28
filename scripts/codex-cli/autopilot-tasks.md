@@ -3,6 +3,7 @@
 This file is the shared handoff state for autonomous Codex planning and monitoring sessions.
 
 ## Current Tasks
+
 - Monitoring checkpoint `2026-05-19T02:52:59+02:00`; frische aktive Kontrollsession, Pflicht-Lagebild erneut gelesen aus `autopilot-tasks.md`, `autopilot-state.json`, `registry.json`, `github-issues.json`, `pull-requests.json`, `active-sessions.json` und `autopilot-session-lock.md`.
   - `autopilot-session-lock.md` bleibt fuer diese Session gueltig: `status=running`, `session_type=monitoring`, `owner=autopilot-monitoring`, `pid=11960`, `started_at=2026-05-19T02:52:19.4973831+02:00`, `expires_at=2026-05-19T04:22:19.4973831+02:00`.
   - `autopilot-state.json` zeigt weiter genau `1` aktive Jules-Delegation: `#512` (`Decompose-Source-Inspector [M510-S02]`) ist `AWAITING_USER_FEEDBACK`; die Review-Queue hat `19` Eintraege mit `13 pending` und `6 completed`, und `#619` steht dort weiter als `pending`, obwohl der Live-PR bereits aus dem aktiven Korridor raus ist. Das bleibt sichtbare State-/Dashboard-Drift.
@@ -452,6 +453,7 @@ This file is the shared handoff state for autonomous Codex planning and monitori
 - Keine neue Jules-Delegation in dieser Planning-Session: erst Controller-/Review-Queue-Drift bereinigen, sonst wuerden neue Arbeiten auf unsaubere Kapazitaetsdaten und ueberschneidende Refactor-Lanes treffen.
 
 ## Active Delegations
+
 - Controller-seitig aktiv:
   - `autopilot-state.json` zeigt `3` aktive Jules-Delegationen: `#513` Jules `6941439543841061688`, `#512` Jules `8479663080712366339`, `#511` Jules `661551269027153268`.
 - Snapshot-Lage:
@@ -465,6 +467,7 @@ This file is the shared handoff state for autonomous Codex planning and monitori
 - Kontrollpunkt: erst wenn Registry, Controller und Dashboard dieselbe freie Kapazitaet zeigen, duerfen weitere disjunkte Backlog-Aufgaben nachruecken.
 
 ## Monitoring Notes
+
 - PRs/Checks/Konflikte:
   - `#613`, `#601`, `#593`, `#586`, `#532`: gemeinsame Mergeability-/pre-commit-Lane, jeweils live `OPEN/DIRTY` mit externem `pre-commit.ci - pr` `ERROR`.
   - `#585`: separater roter Validierungsfall, `CONFLICTING`, `pre-commit.ci` selbst gruen, aber `Quality Gate (Format & Lint)` und `Validation Success` rot.
@@ -493,6 +496,7 @@ This file is the shared handoff state for autonomous Codex planning and monitori
   - Kein `find-skills` noetig, weil die vorhandenen Skills die Runde bereits passend abgedeckt haben.
 
 ## Decisions / Escalations
+
 - Entscheidungen:
   - Kein neuer Jules-Start in dieser Runde: `registry.json` meldet Jules `102/100` Calls und scoped `3/3` in progress; zusaetzlich widersprechen sich `autopilot-state.json` (`#513/#512/#511`) und `active-sessions.json` (nur `#513`).
   - Zuerst stale lokale Queue bereinigen, dann echte offene Arbeit priorisieren: `#619` ist live gemerged, aber lokal noch in der Review-/Issue-Sicht relevant; `#547/#548/#549` sind remote completed und duerfen nicht doppelt umgesetzt werden.
@@ -516,6 +520,7 @@ This file is the shared handoff state for autonomous Codex planning and monitori
   - Falls die Providerlage im naechsten Monitoring unveraendert bleibt, muessen echte frische Blocker (`#613/#601/#593/#586/#532`) explizit ueber eine funktionierende Ersatzroute oder Jules-Konflikt-Eskalation weitergegeben werden, statt weiter in einer defekten Gemini-Lane zu kreisen.
 
 ## Session Log
+
 - 2026-05-18T08:34:32.5679303+02:00 - **monitoring**: Fresh checkpoint read from `autopilot-tasks.md`, `autopilot-state.json`, `registry.json`, `github-issues.json`, `pull-requests.json`, `active-sessions.json`, and `autopilot-session-lock.md`.
   - Lock still `running` for `autopilot-monitoring` (`pid=11960`), so this remains a fresh control session without overlap.
   - Controller/active-sessions now show only one active Jules delegation (`#525`), while `registry.json` still reports a broader and stale scoped capacity picture.
