@@ -50,11 +50,11 @@ function Invoke-PlanningWakeUp {
                 if ($null -eq $val) { $true } else { $delegatedNumbers -notcontains [int]$val }
             })
         }
-        return $c
+        return ,$c
     }
 
     # --- Step 1: Fetch open issues ---
-    $candidates = & $GetCandidates
+    $candidates = @(& $GetCandidates)
     Write-Host "[PLANNING] $($candidates.Count) Issues bereit fuer Delegation." -ForegroundColor Green
 
     # --- Step 2: Check if we should create new issues ---
@@ -98,7 +98,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                     }
                     if ($newIssuesCreated) {
                         Write-Host "[PLANNING] Neue Issues wurden erstellt. Lade Kandidatenliste neu..." -ForegroundColor Cyan
-                        $candidates = & $GetCandidates
+                        $candidates = @(& $GetCandidates)
                         Write-Host "[PLANNING] $($candidates.Count) Issues bereit fuer Delegation (nach Reload)." -ForegroundColor Green
                     }
                 }
