@@ -105,14 +105,20 @@ function Invoke-MonitoringWakeUp {
                         }
                         $delegation.retry_count = $retryCount + 1
                     } else {
-                        Write-Host "[MONITOR]   -> ESKALATION: Braucht manuellen Eingriff!" -ForegroundColor Red
-                        Add-DecisionPending -State $State -Topic "Jules Session #$issueNum braucht Hilfe" -Context "Session $sessionId ist nach $maxRetries Retries immer noch AWAITING_USER_FEEDBACK."
+                        Write-Host "[MONITOR]   -> ESKALATION: Re-Planning erforderlich!" -ForegroundColor Red
+                        if (-not $DryRun.IsPresent) {
+                            Escalate-Delegation -State $State -IssueNumber $issueNum -Reason "FEEDBACK_TIMEOUT"
+                        }
                     }
                 }
                 "FAILED" {
-                    Write-Host "[MONITOR]   -> FAILED! Logge Fehler." -ForegroundColor Red
+                    Write-Host "[MONITOR]   -> FAILED! Logge Fehler und eskaliere." -ForegroundColor Red
                     Add-ErrorLog -State $State -Message "Jules session failed for #$issueNum" -Context "Session: $sessionId"
-                    Complete-Delegation -State $State -IssueNumber $issueNum -Result "failed"
+                    if (-not $DryRun.IsPresent) {
+                        Escalate-Delegation -State $State -IssueNumber $issueNum -Reason "FAILED"
+                    } else {
+                        Complete-Delegation -State $State -IssueNumber $issueNum -Result "failed"
+                    }
                 }
             }
         } catch {

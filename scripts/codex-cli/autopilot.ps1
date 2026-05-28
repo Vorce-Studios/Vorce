@@ -127,6 +127,7 @@ while ($true) {
             $lastPlanTime = Get-Date
         } catch {
             Write-Host "[LOOP] Planning-Fehler: $_" -ForegroundColor Red
+            Write-Host "[LOOP] StackTrace: $($_.ScriptStackTrace)" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "Planning wake-up failed" -Context $_.Exception.Message
         }
 

@@ -53,6 +53,54 @@ function Invoke-PlanningWakeUp {
         return $c
     }
 
+    # --- Step 0: Process escalated issues (CEO Re-Planning) ---
+    $escalated = @($State.escalated_issues | Where-Object { $_.status -eq "NEEDS_PLANNING" })
+    if ($escalated.Count -gt 0) {
+        Write-Host "[PLANNING] Gefunden: $($escalated.Count) eskalierte Issues zur Re-Planung." -ForegroundColor Yellow
+        foreach ($escIssue in $escalated) {
+            $issueNum = [int]$escIssue.issue_number
+            $issueTitle = [string]$escIssue.issue_title
+            $lastSessionId = [string]$escIssue.last_jules_session_id
+
+            Write-Host "[PLANNING] Re-Planning fuer eskaliertes Issue #$issueNum ($issueTitle) via Dual-CEO Deliberation..." -ForegroundColor Yellow
+
+            $promptText = @"
+Das Issue #$issueNum ("$issueTitle") wurde an Jules delegiert (letzte Session: $lastSessionId), ist aber im Monitoring-Modus fehlgeschlagen oder hängengeblieben (Timeout/Fehler).
+
+Deine Rolle: Analysiere diese Eskalation im Dual-CEO Team.
+Erstelle eine neue, präzisere Handlungsanweisung (Prompt-Ergänzung oder überarbeitete Issue-Beschreibung), um Jules beim nächsten Versuch erfolgreich zu leiten.
+Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
+"@
+
+            # Erzwinge Dual-CEO Deliberation
+            $planResult = Invoke-DualCeoTask `
+                -QuotaRegistry $QuotaRegistry `
+                -Config $Config `
+                -TaskType "planning" `
+                -Prompt $promptText `
+                -State $State `
+                -ForceDeliberation `
+                -DryRun:$DryRun
+
+            if ($planResult.success) {
+                $ceoPlan = $planResult.output
+                Write-Host "[PLANNING] Re-Planning erfolgreich für #$issueNum." -ForegroundColor Green
+
+                if (-not $DryRun.IsPresent) {
+                    $commentBody = "CEO Re-Planning Handlungsplan für den nächsten Versuch:`n`n$ceoPlan"
+                    gh issue comment $issueNum --repo $repo --body $commentBody | Out-Null
+                    Write-Host "[PLANNING] CEO-Plan auf GitHub-Issue #$issueNum gepostet." -ForegroundColor Green
+                    
+                    $escIssue.planning_resolutions = [int]$escIssue.planning_resolutions + 1
+                    $escIssue.status = "RESOLVED_BY_PLANNING"
+                    Save-AutopilotState -State $State
+                }
+            } else {
+                Write-Warning "[PLANNING] Re-Planning fuer #$issueNum fehlgeschlagen."
+            }
+        }
+    }
+
     # --- Step 1: Fetch open issues ---
     $candidates = @(& $GetCandidates)
     Write-Host "[PLANNING] $($candidates.Count) Issues bereit fuer Delegation." -ForegroundColor Green
@@ -77,9 +125,23 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 "@
         $planResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "planning" -DryRun:$DryRun -Prompt $promptText -State $State
 
-        if ($planResult.success -and $planResult.output -match '\[') {
+        if ($planResult.success) {
             try {
-                $jsonMatch = [regex]::Match($planResult.output, '\[.*\]', [System.Text.RegularExpressions.RegexOptions]::Singleline)
+                $rawText = $planResult.output
+                
+                # Suche nach dem JSON-Objekt-Teil im rohen Output, um eventuelle Stderr-Meldungen zu ignorieren
+                $jsonObjMatch = [regex]::Match($planResult.output, '\{.*\}', [System.Text.RegularExpressions.RegexOptions]::Singleline)
+                if ($jsonObjMatch.Success) {
+                    try {
+                        $parsedObj = $jsonObjMatch.Value | ConvertFrom-Json
+                        if ($parsedObj -and ($parsedObj.PSObject.Properties.Name -contains "response")) {
+                            $rawText = $parsedObj.response
+                        }
+                    } catch {}
+                }
+
+                # Jetzt suchen wir nach der JSON-Liste im extrahierten (oder rohen) Text
+                $jsonMatch = [regex]::Match($rawText, '\[.*\]', [System.Text.RegularExpressions.RegexOptions]::Singleline)
                 if ($jsonMatch.Success) {
                     $newIssues = $jsonMatch.Value | ConvertFrom-Json
                     $newIssuesCreated = $false

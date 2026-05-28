@@ -105,6 +105,10 @@ ANWEISUNGEN:
 - Erklaere deine Entscheidungslogik transparent.
 - Benenne moegliche Risiken oder Trade-offs.
 - Sei praezise und strukturiert.
+- HALTE DEINE TERMINAL-AUSGABEN UND DEINE BEFEHLSAUSFÜHRUNGEN EXTREM KOMPAKT:
+  - Wenn du nach Dateien suchst, verwende spezifische Filter. Führe NIEMALS Befehle aus, die Tausende Zeilen Text auf der Konsole ausgeben (wie unbegrenztes `rg --files` oder `Get-ChildItem -Recurse`).
+  - Wenn du Dateien liest, lies nur die relevanten Zeilenbereiche und gib niemals ganze große Dateien auf einmal aus.
+  - Schreibe vor der Ausführung eines Befehls immer eine kurze, verständliche Erklärung auf Deutsch (z.B. "Ich analysiere das vorce-media Crate auf fehlende Tests..."), damit der Benutzer sieht, woran du arbeitest.
 
 Antworte im JSON-Format:
 {
@@ -132,6 +136,10 @@ DEINE AUFGABEN:
 2. Identifiziere uebersehene Aspekte oder bessere Alternativen.
 3. Bewerte die genannten Risiken - sind sie vollstaendig?
 4. Gib eine klare Empfehlung: Annehmen, Modifizieren oder Ablehnen.
+- HALTE DEINE TERMINAL-AUSGABEN UND DEINE BEFEHLSAUSFÜHRUNGEN EXTREM KOMPAKT:
+  - Wenn du nach Dateien suchst, verwende spezifische Filter. Führe NIEMALS Befehle aus, die Tausende Zeilen Text auf der Konsole ausgeben (wie unbegrenztes `rg --files` oder `Get-ChildItem -Recurse`).
+  - Wenn du Dateien liest, lies nur die relevanten Zeilenbereiche und gib niemals ganze große Dateien auf einmal aus.
+  - Schreibe vor der Ausführung eines Befehls immer eine kurze, verständliche Erklärung auf Deutsch, damit der Benutzer sieht, woran du arbeitest.
 
 Antworte im JSON-Format:
 {
@@ -163,6 +171,10 @@ ANWEISUNGEN:
 - Begruende, welche Kritik du annimmst und welche du begruendet ablehnst.
 - Das Ergebnis soll besser sein als dein urspruenglicher Vorschlag allein.
 - Liefere eine klare, umsetzbare Entscheidung.
+- HALTE DEINE TERMINAL-AUSGABEN UND DEINE BEFEHLSAUSFÜHRUNGEN EXTREM KOMPAKT:
+  - Wenn du nach Dateien suchst, verwende spezifische Filter. Führe NIEMALS Befehle aus, die Tausende Zeilen Text auf der Konsole ausgeben (wie unbegrenztes `rg --files` oder `Get-ChildItem -Recurse`).
+  - Wenn du Dateien liest, lies nur die relevanten Zeilenbereiche und gib niemals ganze große Dateien auf einmal aus.
+  - Schreibe vor der Ausführung eines Befehls immer eine kurze, verständliche Erklärung auf Deutsch, damit der Benutzer sieht, woran du arbeitest.
 
 Antworte im selben Format wie die Original-Aufgabe es verlangt.
 Falls die Original-Aufgabe JSON verlangt, antworte in diesem JSON-Format.
@@ -421,6 +433,9 @@ function Invoke-Deliberation {
 
     $alphaProposal = $proposalResult.output
     Write-Host "[DELIB] Alpha-Proposal erhalten ($([int]$proposalDuration)ms)" -ForegroundColor Green
+    Write-Host "-------------------- PROPOSAL START --------------------" -ForegroundColor DarkGray
+    Write-Host $alphaProposal -ForegroundColor Gray
+    Write-Host "-------------------- PROPOSAL END ----------------------" -ForegroundColor DarkGray
 
     # ==========================================
     # PHASE 2: CRITIQUE (CEO Beta) - VISIBLE TERMINAL
@@ -472,6 +487,9 @@ function Invoke-Deliberation {
 
     $betaCritique = $critiqueResult.output
     Write-Host "[DELIB] Beta-Critique erhalten ($([int]$critiqueDuration)ms)" -ForegroundColor Green
+    Write-Host "-------------------- CRITIQUE START --------------------" -ForegroundColor DarkGray
+    Write-Host $betaCritique -ForegroundColor Gray
+    Write-Host "-------------------- CRITIQUE END ----------------------" -ForegroundColor DarkGray
 
     # ==========================================
     # PHASE 3: SYNTHESIS (CEO Alpha) - VISIBLE TERMINAL
@@ -511,6 +529,9 @@ function Invoke-Deliberation {
         $protocol.final_output = $synthesisResult.output
         $protocol.consensus_reached = $true
         Write-Host "[DELIB] Synthese abgeschlossen ($([int]$synthesisDuration)ms)" -ForegroundColor Green
+        Write-Host "-------------------- SYNTHESE START --------------------" -ForegroundColor DarkGray
+        Write-Host $synthesisResult.output -ForegroundColor Gray
+        Write-Host "-------------------- SYNTHESE END ----------------------" -ForegroundColor DarkGray
     }
 
     $protocol.completed_at = (Get-Date -Format 'o')
