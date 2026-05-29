@@ -127,25 +127,71 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 
         if ($planResult.success) {
             try {
-                $rawText = $planResult.output
-                
-                # Suche nach dem JSON-Objekt-Teil im rohen Output, um eventuelle Stderr-Meldungen zu ignorieren
-                $jsonObjMatch = [regex]::Match($planResult.output, '\{.*\}', [System.Text.RegularExpressions.RegexOptions]::Singleline)
-                if ($jsonObjMatch.Success) {
-                    try {
-                        $parsedObj = $jsonObjMatch.Value | ConvertFrom-Json
-                        if ($parsedObj -and ($parsedObj.PSObject.Properties.Name -contains "response")) {
-                            $rawText = $parsedObj.response
+                $newIssues = @()
+                $parsedObj = $null
+                try {
+                    # Try to parse the entire output first
+                    $parsedObj = $planResult.output | ConvertFrom-Json
+                } catch {
+                    # Best-effort extraction if there's header/footer noise
+                    $jsonObjMatch = [regex]::Match($planResult.output, '(?s)\{.*\}')
+                    if ($jsonObjMatch.Success) {
+                        try { $parsedObj = $jsonObjMatch.Value | ConvertFrom-Json } catch {}
+                    }
+                    if ($null -eq $parsedObj) {
+                        $jsonArrMatch = [regex]::Match($planResult.output, '(?s)\[.*\]')
+                        if ($jsonArrMatch.Success) {
+                            try { $parsedObj = $jsonArrMatch.Value | ConvertFrom-Json } catch {}
                         }
-                    } catch {}
+                    }
                 }
 
-                # Jetzt suchen wir nach der JSON-Liste im extrahierten (oder rohen) Text
-                $jsonMatch = [regex]::Match($rawText, '\[.*\]', [System.Text.RegularExpressions.RegexOptions]::Singleline)
-                if ($jsonMatch.Success) {
-                    $newIssues = $jsonMatch.Value | ConvertFrom-Json
+                if ($null -ne $parsedObj) {
+                    if ($parsedObj -is [System.Array] -or $parsedObj -is [System.Collections.IList]) {
+                        $newIssues = @($parsedObj)
+                    } elseif ($parsedObj.PSObject.Properties.Name -contains "proposal") {
+                        $propVal = $parsedObj.proposal
+                        if ($propVal -is [string]) {
+                            try { $newIssues = @($propVal | ConvertFrom-Json) } catch {}
+                        } else {
+                            $newIssues = @($propVal)
+                        }
+                    } elseif ($parsedObj.PSObject.Properties.Name -contains "response") {
+                        $respVal = $parsedObj.response
+                        if ($respVal -is [string]) {
+                            try {
+                                # If it's a JSON string inside response
+                                $nestedObj = $respVal | ConvertFrom-Json
+                                if ($nestedObj -is [System.Array] -or $nestedObj -is [System.Collections.IList]) {
+                                    $newIssues = @($nestedObj)
+                                } elseif ($nestedObj.PSObject.Properties.Name -contains "proposal") {
+                                    $newIssues = @($nestedObj.proposal)
+                                }
+                            } catch {
+                                # Try extracting list from response text
+                                $jsonMatch = [regex]::Match($respVal, '(?s)\[.*\]')
+                                if ($jsonMatch.Success) {
+                                    try { $newIssues = @($jsonMatch.Value | ConvertFrom-Json) } catch {}
+                                }
+                            }
+                        } else {
+                            $newIssues = @($respVal)
+                        }
+                    }
+                } else {
+                    # Final fallback: regex match on raw text
+                    $jsonMatch = [regex]::Match($planResult.output, '(?s)\[.*\]')
+                    if ($jsonMatch.Success) {
+                        try { $newIssues = @($jsonMatch.Value | ConvertFrom-Json) } catch {}
+                    }
+                }
+
+                if ($newIssues.Count -gt 0) {
                     $newIssuesCreated = $false
                     foreach ($newIssue in $newIssues) {
+                        # Validate that newIssue has a title
+                        if ($null -eq $newIssue -or -not ($newIssue.PSObject.Properties.Name -contains "title")) { continue }
+                        
                         if ($DryRun.IsPresent) {
                             Write-Host "[PLANNING] [DRY RUN] Wuerde Issue erstellen: $($newIssue.title)" -ForegroundColor DarkYellow
                         } else {

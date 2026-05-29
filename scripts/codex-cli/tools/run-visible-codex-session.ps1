@@ -8,6 +8,7 @@ param(
     [string]$SessionId,
     [string]$LogPath,
     [string]$StatusPath,
+    [string]$OutputPath,
     [switch]$NonInteractiveExec
 )
 
@@ -57,22 +58,121 @@ Write-Host ""
 
 Write-VisibleSessionLog "START model=$Model session_id=$SessionId"
 
-$args = @("--model", $Model, "--dangerously-bypass-approvals-and-sandbox", "--cd", $RepositoryRoot, "--no-alt-screen")
+$codexArgs = @("--model", $Model, "--dangerously-bypass-approvals-and-sandbox", "--cd", $RepositoryRoot, "--no-alt-screen")
 if ($NonInteractiveExec.IsPresent) {
-    $args = @("exec", "--model", $Model, "--dangerously-bypass-approvals-and-sandbox", "--cd", $RepositoryRoot, "-")
+    $codexArgs = @("exec", "--model", $Model, "--dangerously-bypass-approvals-and-sandbox", "--cd", $RepositoryRoot, "-")
     if (-not [string]::IsNullOrWhiteSpace($SessionId)) {
-        $args = @("exec", "resume", "--model", $Model, "--dangerously-bypass-approvals-and-sandbox", "--cd", $RepositoryRoot, $SessionId, "-")
+        $codexArgs = @("exec", "resume", "--model", $Model, "--dangerously-bypass-approvals-and-sandbox", "--cd", $RepositoryRoot, $SessionId, "-")
     }
 } elseif (-not [string]::IsNullOrWhiteSpace($SessionId)) {
-    $args = @("resume", "--model", $Model, "--dangerously-bypass-approvals-and-sandbox", "--cd", $RepositoryRoot, "--no-alt-screen", $SessionId)
+    $codexArgs = @("resume", "--model", $Model, "--dangerously-bypass-approvals-and-sandbox", "--cd", $RepositoryRoot, "--no-alt-screen", $SessionId)
+}
+
+if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
+    $codexArgs += @("--output-last-message", $OutputPath)
 }
 
 try {
-    if ($NonInteractiveExec.IsPresent) {
-        $prompt | & $codex.Source @args
+    $isInsideCodex = $false
+    
+    $runCmd = if ($NonInteractiveExec.IsPresent) {
+        { $prompt | & $codex.Source @codexArgs *>&1 }
     } else {
-        & $codex.Source @args $prompt
+        { & $codex.Source @codexArgs $prompt *>&1 }
     }
+
+    $isInsideCodex = $false
+    $expectCommandLine = $false
+    $isInsideCommandOutput = $false
+    $commandCount = 0
+    $thoughtCount = 0
+    $startTime = Get-Date
+
+    # Execute and pipe through line-by-line processing
+    & $runCmd | ForEach-Object {
+        $line = ""
+        if ($null -ne $_) {
+            $line = $_.ToString().Trim()
+        }
+        
+        # Always write raw line to log path if specified
+        if (-not [string]::IsNullOrWhiteSpace($LogPath) -and -not [string]::IsNullOrWhiteSpace($line)) {
+            Add-Content -Path $LogPath -Value $line -Encoding UTF8
+        }
+        
+        # Skip empty lines to keep terminal neat
+        if ([string]::IsNullOrWhiteSpace($line)) {
+            return
+        }
+        
+        # State machine for live terminal filtering
+        if ($line -eq "codex") {
+            $isInsideCodex = $true
+            $isInsideCommandOutput = $false
+            $expectCommandLine = $false
+            $thoughtCount++
+            return
+        }
+        
+        if ($line -eq "exec") {
+            $isInsideCodex = $false
+            $expectCommandLine = $true
+            $isInsideCommandOutput = $false
+            $commandCount++
+            return
+        }
+        
+        if ($expectCommandLine) {
+            $expectCommandLine = $false
+            $isInsideCommandOutput = $true
+            
+            # Clean up the command line to make it readable
+            $cleanCmd = $line
+            if ($line -match '-Command\s+''(.*)''\s+in\s+(.*)') {
+                $cleanCmd = $Matches[1]
+            } elseif ($line -match '-Command\s+"(.*)"\s+in\s+(.*)') {
+                $cleanCmd = $Matches[1]
+            }
+            $cleanCmd = $cleanCmd.Trim('"', "'")
+            Write-Host "[BEFEHL] Führe aus: $cleanCmd" -ForegroundColor Yellow
+            return
+        }
+        
+        if ($line -match '^\s*(succeeded|failed)\s+in\s+(\d+ms|seconds|minutes)' -or $line -match '^\s*exited\s+\d+') {
+            $isInsideCommandOutput = $false
+            if ($line -match 'failed' -or $line -match 'exited\s+[^0]') {
+                Write-Host "[ERGEBNIS] Fehlgeschlagen ($($line.Trim()))" -ForegroundColor Red
+            } else {
+                Write-Host "[ERGEBNIS] Erfolgreich ($($line.Trim()))" -ForegroundColor Gray
+            }
+            return
+        }
+        
+        if ($isInsideCommandOutput) {
+            # Suppress all command output (stdout/stderr) from cluttering the terminal
+            return
+        }
+        
+        if ($isInsideCodex -and -not [string]::IsNullOrWhiteSpace($line)) {
+            # Print the clean comment/thought in German
+            Write-Host "[CEO ALPHA] $line" -ForegroundColor Cyan
+        }
+    }
+
+    # Print a clean overview summary when the session ends
+    $elapsed = (Get-Date) - $startTime
+    Write-Host ""
+    Write-Host "=====================================" -ForegroundColor Green
+    Write-Host " ZUSAMMENFASSUNG DER LAUFENDEN SESSION" -ForegroundColor Green
+    Write-Host "=====================================" -ForegroundColor Green
+    Write-Host "Status:        Abgeschlossen" -ForegroundColor Green
+    Write-Host "Dauer:         $("{0:N1}s" -f $elapsed.TotalSeconds)" -ForegroundColor Cyan
+    Write-Host "Gedankengänge: $thoughtCount" -ForegroundColor Cyan
+    Write-Host "Befehle:       $commandCount ausgeführt" -ForegroundColor Cyan
+    Write-Host "Logdatei:      $LogPath" -ForegroundColor DarkGray
+    Write-Host "=====================================" -ForegroundColor Green
+    Write-Host ""
+
     $exitCode = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }
     Write-VisibleSessionLog "EXIT code=$exitCode"
     if ($exitCode -ne 0) {

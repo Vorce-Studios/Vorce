@@ -1,4 +1,4 @@
-﻿# scripts/codex-cli/lib/autopilot-session-manager.ps1
+# scripts/codex-cli/lib/autopilot-session-manager.ps1
 # Coordinates autonomous Codex planning/monitoring sessions.
 
 Set-StrictMode -Version Latest
@@ -329,6 +329,9 @@ function Invoke-AutopilotCodexSession {
                 "-LogPath", $logPath,
                 "-StatusPath", $statusPath
             )
+            if (-not [string]::IsNullOrWhiteSpace($outputPath)) {
+                $runnerArgs += @("-OutputPath", $outputPath)
+            }
 
             if ($ResumeMainSession.IsPresent -and ($State.PSObject.Properties.Name -contains "codex_main_session_id") -and -not [string]::IsNullOrWhiteSpace([string]$State.codex_main_session_id)) {
                 $runnerArgs += @("-SessionId", [string]$State.codex_main_session_id)

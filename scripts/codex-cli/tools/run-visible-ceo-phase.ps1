@@ -13,12 +13,83 @@ param(
     [Parameter(Mandatory)][string]$PhaseName,
     [string]$ProviderName = "unknown",
     [string]$ModelName = "",
+    [string]$PromptFile = "",
     [string]$WorkingDirectory
 )
 
 $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
+
+function Show-CeoPhaseSummary {
+    param(
+        [string]$Content,
+        [string]$Phase
+    )
+
+    # Try to parse content as JSON
+    $jsonMatch = [regex]::Match($Content, '(?s)\{.*\}')
+    $parsed = $null
+    if ($jsonMatch.Success) {
+        try { $parsed = $jsonMatch.Value | ConvertFrom-Json } catch {}
+    }
+
+    Write-Host ""
+    Write-Host ("-" * 60) -ForegroundColor Gray
+    Write-Host "  ZUSAMMENFASSUNG DER CEO-PHASE: $Phase" -ForegroundColor Cyan
+    Write-Host ("-" * 60) -ForegroundColor Gray
+
+    if ($null -ne $parsed) {
+        if ($parsed.PSObject.Properties.Name -contains "assessment") {
+            Write-Host "  Bewertung:    $($parsed.assessment)" -ForegroundColor Gray
+            Write-Host "  Empfehlung:   $($parsed.recommendation)" -ForegroundColor $(if ($parsed.recommendation -eq "approve") { "Green" } else { "Yellow" })
+            if ($parsed.PSObject.Properties.Name -contains "strengths") {
+                Write-Host "  Stärken:" -ForegroundColor Cyan
+                foreach ($s in $parsed.strengths) { Write-Host "    - $s" -ForegroundColor Gray }
+            }
+            if ($parsed.PSObject.Properties.Name -contains "weaknesses" -and $parsed.weaknesses.Count -gt 0) {
+                Write-Host "  Schwächen:" -ForegroundColor Yellow
+                foreach ($w in $parsed.weaknesses) { Write-Host "    - $w" -ForegroundColor Gray }
+            }
+        } elseif ($parsed.PSObject.Properties.Name -contains "proposal") {
+            Write-Host "  Vorschläge:" -ForegroundColor Cyan
+            foreach ($p in $parsed.proposal) {
+                if ($null -ne $p -and $p.PSObject -and $p.PSObject.Properties -and $p.PSObject.Properties.Name -contains "title") {
+                    Write-Host "    - $($p.title)" -ForegroundColor Gray
+                } else {
+                    Write-Host "    - $p" -ForegroundColor Gray
+                }
+            }
+        } else {
+            # Generic JSON formatting
+            $parsed.PSObject.Properties | ForEach-Object {
+                $name = $_.Name
+                $val = $_.Value
+                $displayName = @($name -split '_' | ForEach-Object { 
+                    if ($_.Length -gt 0) { $_.Substring(0,1).ToUpper() + $_.Substring(1) } else { "" }
+                }) -join " "
+                
+                if ($val -is [System.Array] -or $val -is [System.Collections.IList]) {
+                    Write-Host "  $displayName`:" -ForegroundColor Cyan
+                    foreach ($v in $val) { Write-Host "    - $v" -ForegroundColor Gray }
+                } else {
+                    Write-Host "  $displayName`: $val" -ForegroundColor Gray
+                }
+            }
+        }
+    } else {
+        # Clean plain text
+        $lines = $Content -split "`r?`n" | Where-Object {
+            $_ -notmatch '^Warning: 256-color' -and
+            $_ -notmatch '^YOLO mode is enabled' -and
+            $_ -notmatch '^Ripgrep is not available'
+        }
+        $lines | Select-Object -First 15 | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
+        if ($lines.Count -gt 15) { Write-Host "  ... (weitere $($lines.Count - 15) Zeilen)" -ForegroundColor DarkGray }
+    }
+    Write-Host ("-" * 60) -ForegroundColor Gray
+    Write-Host ""
+}
 
 # --- Window Title ---
 $host.UI.RawUI.WindowTitle = "Vorce CEO: $PhaseName"
@@ -76,14 +147,23 @@ Write-Host ""
 # --- Execute CLI command with live output + file capture ---
 $exitCode = 0
 try {
-    # Tee-Object writes to file AND passes through to console
-    if ($cmdInfo.Source -like "*.ps1") {
-        # Run PS1 scripts in a child powershell process to prevent 'exit' from killing the current host
-        $powerShellHost = if (Get-Command pwsh -ErrorAction SilentlyContinue) { "pwsh" } else { "powershell" }
-        & $powerShellHost -NoProfile -ExecutionPolicy Bypass -File $cmdInfo.Source @cliArgs 2>&1 | Tee-Object -FilePath $OutputFile
+    $powerShellHost = if (Get-Command pwsh -ErrorAction SilentlyContinue) { (Get-Command pwsh).Source } else { (Get-Command powershell).Source }
+    $hasPromptFile = -not [string]::IsNullOrWhiteSpace($PromptFile) -and (Test-Path $PromptFile)
+    
+    $escapedPromptFile = $PromptFile -replace "'", "''"
+    $escapedCliArgsFile = $CliArgsFile -replace "'", "''"
+    $escapedSource = $cmdInfo.Source -replace "'", "''"
+
+    if ($hasPromptFile) {
+        $cmdString = "Get-Content -LiteralPath '$escapedPromptFile' -Raw -Encoding UTF8 | & '$escapedSource' `@argsList 2>&1"
     } else {
-        & $cmdInfo.Source @cliArgs 2>&1 | Tee-Object -FilePath $OutputFile
+        $cmdString = "& '$escapedSource' `@argsList 2>&1"
     }
+    
+    $fullCmd = "`$argsList = Get-Content -LiteralPath '$escapedCliArgsFile' -Raw -Encoding UTF8 | ConvertFrom-Json; $cmdString"
+    
+    Write-Host "[CEO] Analysiere und verarbeite Phase..." -ForegroundColor Cyan
+    & $powerShellHost -NoProfile -ExecutionPolicy Bypass -Command $fullCmd > $OutputFile 2>&1
     $exitCode = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }
 } catch {
     $errMsg = $_.Exception.Message
@@ -98,16 +178,29 @@ Set-Content -Path $StatusFile -Value "$exitCode" -Encoding UTF8
 
 # --- Footer ---
 Write-Host ""
-Write-Host ("=" * 50) -ForegroundColor $(if ($exitCode -eq 0) { "Green" } else { "Red" })
+Write-Host ("=" * 60) -ForegroundColor $(if ($exitCode -eq 0) { "Green" } else { "Red" })
 if ($exitCode -eq 0) {
     Write-Host "[CEO] Phase '$PhaseName' erfolgreich abgeschlossen." -ForegroundColor Green
+    
+    # Read output and show clean summary
+    if (Test-Path -LiteralPath $OutputFile) {
+        $content = Get-Content -LiteralPath $OutputFile -Raw -Encoding UTF8
+        Show-CeoPhaseSummary -Content $content -Phase $PhaseName
+    }
 } else {
     Write-Host "[CEO] Phase '$PhaseName' fehlgeschlagen (Exit-Code: $exitCode)." -ForegroundColor Red
+    
+    # Print the raw error logs on failure so the user knows exactly what failed
+    Write-Host ""
+    Write-Host "--- FEHLERPROTOKOLL (RAW LOG) ---" -ForegroundColor Red
+    if (Test-Path -LiteralPath $OutputFile) {
+        Get-Content -LiteralPath $OutputFile -Raw -Encoding UTF8 | Write-Host -ForegroundColor DarkRed
+    }
+    Write-Host "---------------------------------" -ForegroundColor Red
 }
-Write-Host "[CEO] Output gespeichert: $OutputFile" -ForegroundColor DarkGray
-Write-Host ("=" * 50) -ForegroundColor $(if ($exitCode -eq 0) { "Green" } else { "Red" })
+Write-Host ("=" * 60) -ForegroundColor $(if ($exitCode -eq 0) { "Green" } else { "Red" })
 
-# Keep window open for 5 seconds (or until Enter) so user can see result
+# Keep window open for 5 seconds (or until Enter) on error so user can see diagnostics
 if ($exitCode -ne 0) {
     Read-Host "Druecke Enter zum Schliessen"
 } else {
