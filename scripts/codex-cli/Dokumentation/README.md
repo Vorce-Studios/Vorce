@@ -46,7 +46,7 @@ graph TD
 
 ## Verzeichnisstruktur
 
-```
+```text
 scripts/codex-cli/
 ├── Start-Autopilot.ps1          # Zentraler Suite-Starter (Prozess-Manager & Steuerkonsole)
 ├── autopilot.ps1                # Haupteinstiegspunkt (Wake-Up-Loop)
