@@ -794,11 +794,35 @@ function Invoke-DualCeoTask {
     }
 
     # Standard single-agent path
-    return Invoke-CliTask `
+    $result = Invoke-CliTask `
         -QuotaRegistry $QuotaRegistry `
         -TaskType $TaskType `
         -Prompt $Prompt `
         -WorkingDirectory $WorkingDirectory `
         -MemoryBlock $memoryBlock `
         -DryRun:$DryRun
+
+    # Fallback to Beta CEO if the single-agent call failed and Dual-CEO is enabled
+    if (-not $result.success -and $hasDualCeo -and $Config.dual_ceo.enabled) {
+        $betaRoute = $Config.dual_ceo.ceo_beta_chain[0]
+        if ($betaRoute) {
+            $parts = $betaRoute -split ":"
+            $betaProvider = $parts[0]
+            $betaTier = if ($parts.Count -gt 1) { $parts[1] } else { $null }
+
+            Write-Host "[DELIB] Standard-Agent fehlgeschlagen! Fallback auf Beta CEO ($betaRoute)." -ForegroundColor Red
+            
+            $result = Invoke-CliTask `
+                -QuotaRegistry $QuotaRegistry `
+                -TaskType $TaskType `
+                -Prompt $Prompt `
+                -WorkingDirectory $WorkingDirectory `
+                -MemoryBlock $memoryBlock `
+                -DryRun:$DryRun `
+                -ProviderOverride $betaProvider `
+                -ModelTierOverride $betaTier
+        }
+    }
+
+    return $result
 }
