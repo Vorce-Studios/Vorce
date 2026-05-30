@@ -290,13 +290,17 @@ function Add-Delegation {
         [Parameter(Mandatory)][object]$State,
         [Parameter(Mandatory)][int]$IssueNumber,
         [string]$IssueTitle,
-        [string]$JulesSessionId
+        [string]$JulesSessionId,
+        [string]$AgentType = "jules",
+        [string]$JobId = ""
     )
 
     $delegation = [ordered]@{
         issue_number     = $IssueNumber
         issue_title      = $IssueTitle
         jules_session_id = $JulesSessionId
+        agent_type       = $AgentType
+        job_id           = $JobId
         jules_state      = "QUEUED"
         pr_url           = $null
         delegated_at     = (Get-Date -Format 'o')

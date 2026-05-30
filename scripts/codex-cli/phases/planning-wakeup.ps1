@@ -38,8 +38,24 @@ function Invoke-PlanningWakeUp {
             $labelNames = @($_.labels | ForEach-Object { if ($_ -is [string]) { $_ } else { $_.name } })
             $hasInclude = @($labelNames | Where-Object { $includeSet.Contains($_) }).Count -gt 0
             $hasExclude = @($labelNames | Where-Object { $excludeSet.Contains($_) }).Count -gt 0
-            $hasInclude -and (-not $hasExclude)
+            $title = [string]$_.title
+            $body = [string]$_.body
+            $isMasterIssue = $title -match "_MAIs_"
+            $hasExistingJulesSession = ($body -match "<!--\s*jules-session-id:") -or ($body -match "<!--\s*jules-session-name:") -or ($body -match "<!--\s*vorce-queue-state:\s*dispatched")
+            $hasInclude -and (-not $hasExclude) -and (-not $isMasterIssue) -and (-not $hasExistingJulesSession)
         })
+
+        $releaseRank = @{
+            "662" = 10
+            "655" = 20
+            "107" = 30
+            "43"  = 40
+            "652" = 50
+            "653" = 60
+        }
+        $c = @($c | Sort-Object `
+            @{ Expression = { $key = [string]$_.number; if ($releaseRank.ContainsKey($key)) { $releaseRank[$key] } else { 999 } } }, `
+            @{ Expression = { [int]$_.number } })
 
         # Exclude already delegated issues
         $delegatedNumbers = @($State.active_delegations | ForEach-Object { [int]$_.issue_number })
@@ -105,6 +121,14 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
     $candidates = @(& $GetCandidates)
     Write-Host "[PLANNING] $($candidates.Count) Issues bereit fuer Delegation." -ForegroundColor Green
 
+    # Get available coding agents
+    $availableAgents = @("jules")
+    $QuotaRegistry.providers.Keys | ForEach-Object {
+        $cmd = $QuotaRegistry.providers.$_.command
+        if ($cmd -notmatch "gh|codex" -and $_ -ne "jules") { $availableAgents += $_ }
+    }
+    $agentsStr = $availableAgents -join ", "
+
     # --- Step 2: Check if we should create new issues ---
     if ($candidates.Count -lt 3) {
         Write-Host "[PLANNING] Wenige offene Issues - pruefe ob neue erstellt werden sollten." -ForegroundColor Yellow
@@ -115,11 +139,26 @@ Repository: $repo
 
 Aktuell gibt es nur $($candidates.Count) offene, delegierbare Issues.
 
-Analysiere das Repository und schlage bis zu $($Config.max_issues_per_planning_cycle) neue Issues vor.
-Fokus: fehlende Tests, Code-Qualitaet, offene TODOs, Performance.
+Plane strikt Richtung Release 1.0 Readiness. Massgeblicher Top-Level-Kompass ist:
+- #651 VOR-002_MAIs_Release-1.0-Readiness-Gate
+
+Priorisiere neue Aufgaben nur aus diesen Gate-Lanes:
+1. UI-Test-Automation: #650, #547, #549, #548
+2. Timeline/Show-Control Acceptance: #661, #662, #96, #98, #99, #101, #102, #103
+3. Cluster/Multi-Instance Scope-Freeze: #654, #655, #656, #657, #658, #659
+4. NDI/Asset-Verfuegbarkeit: #107
+5. macOS-CI/Smoke-Validation: #43
+6. Packaging/Install-Sanity und Scope-Freeze: #652, #653
+
+Schlage bis zu $($Config.max_issues_per_planning_cycle) konkrete, kleine Issues vor.
+Keine generischen TODO-, Refactoring- oder Performance-Issues erzeugen, wenn sie nicht direkt eines der Release-Gates beweisbar voranbringen.
+Keine Master-Issues als Jules-Coding-Task erzeugen. Coding-/QA-Aufgaben muessen Standard- oder Sub-Issues sein und die Namenskonvention einhalten.
+
+WICHTIG: Entscheide für jedes Issue, welcher Agent es bearbeiten soll. Nutze "jules" für komplexe UI-Aufgaben oder große Refactorings. Nutze lokale CLI-Agents für isolierte Logik-Fixes oder klar umrissene Algorithmen.
+Verfügbare Agents: $agentsStr
 
 Antworte NUR mit einer JSON-Liste im Format:
-[{"title": "MF-StIs_Issue-Title", "body": "Beschreibung", "labels": ["jules-task"]}]
+[{"title": "__VOR-000_SubI_Issue-Title", "body": "Beschreibung mit Parent-Issue und Acceptance-Evidence", "labels": ["jules-task", "priority: high", "testing"], "agent": "jules"}]
 
 Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 "@
@@ -188,19 +227,58 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 
                 if ($newIssues.Count -gt 0) {
                     $newIssuesCreated = $false
+                    $existingVorIssuesRaw = gh issue list --repo $repo --state all --json title --limit 300 2>&1
+                    $nextVorNumber = 1
+                    try {
+                        $existingVorIssues = @($existingVorIssuesRaw | Out-String | ConvertFrom-Json)
+                        $usedVorNumbers = @($existingVorIssues | ForEach-Object {
+                            $m = [regex]::Match([string]$_.title, 'VOR-(\d{3})')
+                            if ($m.Success) { [int]$m.Groups[1].Value }
+                        })
+                        if ($usedVorNumbers.Count -gt 0) {
+                            $nextVorNumber = ([int]($usedVorNumbers | Measure-Object -Maximum).Maximum) + 1
+                        }
+                    } catch {
+                        Write-Warning "[PLANNING] Konnte naechste VOR-Issue-Nummer nicht aus GitHub ermitteln; starte bei VOR-001."
+                    }
+
                     foreach ($newIssue in $newIssues) {
                         # Validate that newIssue has a title
                         if ($null -eq $newIssue -or -not ($newIssue.PSObject.Properties.Name -contains "title")) { continue }
+                        $issueTitle = [string]$newIssue.title
+                        $issueBody = [string]$newIssue.body
+
+                        if ($issueTitle -match "VOR-000") {
+                            $issueTitle = $issueTitle -replace "VOR-000", ("VOR-{0:D3}" -f $nextVorNumber)
+                            $nextVorNumber++
+                        } elseif ($issueTitle -notmatch "^(VOR-\d{3}_(MAIs|StIs|User)_|__VOR-\d{3}_SubI_)") {
+                            $issueSlug = ($issueTitle -replace "^[A-Za-z]+-[A-Za-z]+_", "") -replace "\s+", "-"
+                            $issueTitle = "__VOR-{0:D3}_SubI_{1}" -f $nextVorNumber, $issueSlug
+                            $nextVorNumber++
+                        }
                         
+                        $issueAgent = "jules"
+                        if ($newIssue.PSObject.Properties.Name -contains "agent" -and -not [string]::IsNullOrWhiteSpace($newIssue.agent)) {
+                            $issueAgent = [string]$newIssue.agent
+                        }
+
                         if ($DryRun.IsPresent) {
-                            Write-Host "[PLANNING] [DRY RUN] Wuerde Issue erstellen: $($newIssue.title)" -ForegroundColor DarkYellow
+                            Write-Host "[PLANNING] [DRY RUN] Wuerde Issue erstellen: $issueTitle ($issueAgent)" -ForegroundColor DarkYellow
                         } else {
                             $labels = @($newIssue.labels) + @($Config.issue_filters.autopilot_label)
+                            
+                            # Ensure jules-task label is removed if not jules
+                            if ($issueAgent -ne "jules") {
+                                $labels = @($labels | Where-Object { $_ -ne "jules-task" })
+                            }
+                            # Add agent label for tracking
+                            $labels += "agent:$issueAgent"
+
                             $labelArgs = ($labels | ForEach-Object { "--label `"$_`"" }) -join " "
-                            $createCmd = "gh issue create --repo $repo --title `"$($newIssue.title)`" --body `"$($newIssue.body)`" $labelArgs"
+                            $createCmd = "gh issue create --repo $repo --title `"$issueTitle`" --body `"$issueBody`" $labelArgs"
                             $created = Invoke-Expression $createCmd 2>&1
-                            Write-Host "[PLANNING] Issue erstellt: $created" -ForegroundColor Green
-                            $State.autopilot_created_issues += @($newIssue.title)
+                            Write-Host "[PLANNING] Issue erstellt: $created (Agent: $issueAgent)" -ForegroundColor Green
+                            $State.autopilot_created_issues += @($issueTitle)
                             $newIssuesCreated = $true
                         }
                     }
@@ -216,7 +294,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
         }
     }
 
-    # --- Step 3: Delegate to Jules ---
+    # --- Step 3: Delegate to Jules or local CLI Agents ---
     $julesProvider = $QuotaRegistry.providers.jules
     $currentSessions = [int]$julesProvider.usage_today.calls
     $maxDaily = [int]$Config.jules.max_daily_sessions
@@ -232,52 +310,81 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
     $toPick = [Math]::Min($availableSlots, $Config.max_issues_per_planning_cycle)
     $toPick = [Math]::Min($toPick, $candidates.Count)
 
-    Write-Host "[PLANNING] Jules Slots: $availableSlots verfuegbar, delegiere $toPick Issues." -ForegroundColor Cyan
+    Write-Host "[PLANNING] Agent Slots: $availableSlots verfuegbar, delegiere $toPick Issues." -ForegroundColor Cyan
 
     $ScriptDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
     $JulesScriptDir = Join-Path (Split-Path -Parent $ScriptDir) "jules"
+    $ToolsDir = Join-Path $ScriptDir "tools"
 
     for ($i = 0; $i -lt $toPick; $i++) {
         $issue = $candidates[$i]
         $issueNum = [int]$issue.number
         $issueTitle = [string]$issue.title
+        
+        $targetAgent = "jules"
+        foreach ($label in $issue.labels) {
+            $lname = if ($label -is [string]) { $label } else { $label.name }
+            if ($lname -match "^agent:(.+)") {
+                $targetAgent = $Matches[1]
+                break
+            }
+        }
 
-        Write-Host ("[PLANNING] Delegiere Issue #{0}: {1}" -f $issueNum, $issueTitle) -ForegroundColor Green
+        Write-Host ("[PLANNING] Delegiere Issue #{0}: {1} an Agent: {2}" -f $issueNum, $issueTitle, $targetAgent) -ForegroundColor Green
 
         if ($DryRun.IsPresent) {
-            Write-Host "[PLANNING] [DRY RUN] Wuerde Jules Session starten." -ForegroundColor DarkYellow
-            Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId "dry-run-$issueNum"
+            Write-Host "[PLANNING] [DRY RUN] Wuerde $targetAgent Session starten." -ForegroundColor DarkYellow
+            Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId "dry-run-$issueNum" -AgentType $targetAgent -JobId "dry-run-job"
             continue
         }
 
-        try {
-            $sessionResult = & "$JulesScriptDir\create-jules-session.ps1" `
-                -IssueNumber $issueNum `
-                -Repository $repo `
-                -AutoCreatePr `
-                -ApiKey $env:JULES_API_KEY
+        if ($targetAgent -eq "jules") {
+            try {
+                $sessionResult = & "$JulesScriptDir\create-jules-session.ps1" `
+                    -IssueNumber $issueNum `
+                    -Repository $repo `
+                    -AutoCreatePr `
+                    -ApiKey $env:JULES_API_KEY
 
-            $sessionId = "unknown"
-            if ($sessionResult) {
-                if ($sessionResult -is [System.Array]) {
-                    $targetObj = $sessionResult | Where-Object { $_ -and ($_.PSObject.Properties.Name -contains "SessionId") -and $_.SessionId } | Select-Object -First 1
-                    if ($targetObj) {
-                        $sessionId = [string]$targetObj.SessionId
-                    } else {
-                        $lastObj = $sessionResult[-1]
-                        if ($lastObj -and ($lastObj.PSObject.Properties.Name -contains "SessionId")) {
-                            $sessionId = [string]$lastObj.SessionId
+                $sessionId = "unknown"
+                if ($sessionResult) {
+                    if ($sessionResult -is [System.Array]) {
+                        $targetObj = $sessionResult | Where-Object { $_ -and ($_.PSObject.Properties.Name -contains "SessionId") -and $_.SessionId } | Select-Object -First 1
+                        if ($targetObj) {
+                            $sessionId = [string]$targetObj.SessionId
+                        } else {
+                            $lastObj = $sessionResult[-1]
+                            if ($lastObj -and ($lastObj.PSObject.Properties.Name -contains "SessionId")) {
+                                $sessionId = [string]$lastObj.SessionId
+                            }
                         }
+                    } elseif (($sessionResult.PSObject.Properties.Name -contains "SessionId") -and $sessionResult.SessionId) {
+                        $sessionId = [string]$sessionResult.SessionId
                     }
-                } elseif (($sessionResult.PSObject.Properties.Name -contains "SessionId") -and $sessionResult.SessionId) {
-                    $sessionId = [string]$sessionResult.SessionId
                 }
+                Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId $sessionId -AgentType "jules"
+                Register-ProviderCall -Registry $QuotaRegistry -ProviderName "jules"
+            } catch {
+                Write-Warning "[PLANNING] Jules Session fuer #$issueNum fehlgeschlagen: $_"
+                Add-ErrorLog -State $State -Message "Jules delegation failed for #$issueNum" -Context $_.Exception.Message
             }
-            Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId $sessionId
-            Register-ProviderCall -Registry $QuotaRegistry -ProviderName "jules"
-        } catch {
-            Write-Warning "[PLANNING] Jules Session fuer #$issueNum fehlgeschlagen: $_"
-            Add-ErrorLog -State $State -Message "Jules delegation failed for #$issueNum" -Context $_.Exception.Message
+        } else {
+            # Local CLI Agent
+            try {
+                $quotaRegistryPath = Join-Path $ScriptDir "quota-registry.json"
+                
+                # Start visible terminal process
+                $cmdArgs = "-NoExit", "-File", "`"$ToolsDir\run-visible-agent-task.ps1`"", "-IssueNumber", $issueNum, "-IssueTitle", "`"$issueTitle`"", "-AgentProvider", "`"$targetAgent`"", "-Repository", "`"$repo`"", "-QuotaRegistryPath", "`"$quotaRegistryPath`""
+                
+                $proc = Start-Process pwsh -ArgumentList $cmdArgs -PassThru -WindowStyle Normal
+                
+                Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId "local-agent-$($proc.Id)" -AgentType $targetAgent -JobId $($proc.Id.ToString())
+                
+                Write-Host "[PLANNING] Lokaler Agent $targetAgent gestartet (PID: $($proc.Id))." -ForegroundColor Cyan
+            } catch {
+                Write-Warning "[PLANNING] Lokaler Agent $targetAgent fuer #$issueNum fehlgeschlagen: $_"
+                Add-ErrorLog -State $State -Message "Local agent $targetAgent failed for #$issueNum" -Context $_.Exception.Message
+            }
         }
     }
 

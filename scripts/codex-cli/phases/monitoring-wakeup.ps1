@@ -118,78 +118,128 @@ function Invoke-MonitoringWakeUp {
             continue
         }
 
-        try {
-            $session = Get-JulesSession -SessionIdOrName $sessionId -ApiKey $env:JULES_API_KEY
-            $julesState = [string]$session.state
+        $agentType = if ($delegation.PSObject.Properties.Name -contains "agent_type" -and $delegation.agent_type) { $delegation.agent_type } else { "jules" }
 
-            Write-Host ("[MONITOR]   #{0} ({1}): {2}" -f $issueNum, $sessionId, $julesState) -ForegroundColor $(
+        if ($agentType -eq "jules") {
+            try {
+                $session = Get-JulesSession -SessionIdOrName $sessionId -ApiKey $env:JULES_API_KEY
+                $julesState = [string]$session.state
+
+                Write-Host ("[MONITOR]   #{0} ({1}): {2} (Agent: jules)" -f $issueNum, $sessionId, $julesState) -ForegroundColor $(
+                    switch ($julesState) {
+                        "COMPLETED"  { "Green" }
+                        "IN_PROGRESS" { "Cyan" }
+                        "QUEUED"     { "DarkGray" }
+                        "PLANNING"   { "Cyan" }
+                        default      { "Yellow" }
+                    }
+                )
+
+                Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $julesState
+
+                # Find matching PR for this session
+                $matchingPr = $prs | Where-Object { $_.title -match "#$issueNum" -or $_.headRefName -match "$issueNum" } | Select-Object -First 1
+
                 switch ($julesState) {
-                    "COMPLETED"  { "Green" }
-                    "IN_PROGRESS" { "Cyan" }
-                    "QUEUED"     { "DarkGray" }
-                    "PLANNING"   { "Cyan" }
-                    default      { "Yellow" }
-                }
-            )
-
-            Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $julesState
-
-            # Find matching PR for this session
-            $matchingPr = $prs | Where-Object { $_.title -match "#$issueNum" -or $_.headRefName -match "$issueNum" } | Select-Object -First 1
-
-            switch ($julesState) {
-                "COMPLETED" {
-                    $prUrl = Get-JulesSessionPullRequestUrl -Session $session
-                    if (-not [string]::IsNullOrWhiteSpace($prUrl)) {
-                        Write-Host "[MONITOR]   -> PR gefunden: $prUrl" -ForegroundColor Green
-                        Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $julesState -PrUrl $prUrl
-                        $prNumber = if ($prUrl -match '/pull/(\d+)') { [int]$Matches[1] } else { 0 }
-                        
-                        Add-ReviewItem -State $State -IssueNumber $issueNum -PrUrl $prUrl -PrNumber $prNumber
+                    "COMPLETED" {
+                        $prUrl = Get-JulesSessionPullRequestUrl -Session $session
+                        if (-not [string]::IsNullOrWhiteSpace($prUrl)) {
+                            Write-Host "[MONITOR]   -> PR gefunden: $prUrl" -ForegroundColor Green
+                            Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $julesState -PrUrl $prUrl
+                            $prNumber = if ($prUrl -match '/pull/(\d+)') { [int]$Matches[1] } else { 0 }
+                            
+                            Add-ReviewItem -State $State -IssueNumber $issueNum -PrUrl $prUrl -PrNumber $prNumber
+                        }
+                        Complete-Delegation -State $State -IssueNumber $issueNum -Result "completed"
                     }
-                    Complete-Delegation -State $State -IssueNumber $issueNum -Result "completed"
-                }
-                "AWAITING_PLAN_APPROVAL" {
-                    if ($Config.jules.auto_approve_plans) {
-                        Write-Host "[MONITOR]   -> Auto-Approve Plan" -ForegroundColor Yellow
+                    "AWAITING_PLAN_APPROVAL" {
+                        if ($Config.jules.auto_approve_plans) {
+                            Write-Host "[MONITOR]   -> Auto-Approve Plan" -ForegroundColor Yellow
+                            if (-not $DryRun.IsPresent) {
+                                Approve-JulesPlan -SessionIdOrName $sessionId -ApiKey $env:JULES_API_KEY
+                            }
+                        }
+                    }
+                    "AWAITING_USER_FEEDBACK" {
+                        $retryCount = [int]$delegation.retry_count
+                        $maxRetries = [int]$Config.jules.auto_retry_feedback_max
+
+                        if ($retryCount -lt $maxRetries) {
+                            $retryMsg = "[MONITOR]   -> Auto-Retry ({0}/{1})" -f ($retryCount + 1), $maxRetries
+                            Write-Host $retryMsg -ForegroundColor Yellow
+                            if (-not $DryRun.IsPresent) {
+                                Send-JulesMessage -SessionIdOrName $sessionId -Message "Continue with the task. If blocked, skip the problematic step and proceed." -ApiKey $env:JULES_API_KEY
+                            }
+                            $delegation.retry_count = $retryCount + 1
+                        } else {
+                            Write-Host "[MONITOR]   -> ESKALATION: Re-Planning / Fehlerbehebung erforderlich!" -ForegroundColor Red
+                            
+                            # In Ausnahmefällen, wenn Jules es nicht selbst schafft, eskalieren wir, damit das im Planning-Modus/CEO-Check analysiert wird.
+                            if (-not $DryRun.IsPresent) {
+                                Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FEEDBACK_TIMEOUT_CI_OR_BLOCKER"
+                            }
+                        }
+                    }
+                    "FAILED" {
+                        Write-Host "[MONITOR]   -> FAILED! Logge Fehler und eskaliere." -ForegroundColor Red
+                        Add-ErrorLog -State $State -Message "Jules session failed for #$issueNum" -Context "Session: $sessionId"
                         if (-not $DryRun.IsPresent) {
-                            Approve-JulesPlan -SessionIdOrName $sessionId -ApiKey $env:JULES_API_KEY
+                            Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FAILED"
+                        } else {
+                            Complete-Delegation -State $State -IssueNumber $issueNum -Result "failed"
                         }
                     }
                 }
-                "AWAITING_USER_FEEDBACK" {
-                    $retryCount = [int]$delegation.retry_count
-                    $maxRetries = [int]$Config.jules.auto_retry_feedback_max
-
-                    if ($retryCount -lt $maxRetries) {
-                        $retryMsg = "[MONITOR]   -> Auto-Retry ({0}/{1})" -f ($retryCount + 1), $maxRetries
-                        Write-Host $retryMsg -ForegroundColor Yellow
-                        if (-not $DryRun.IsPresent) {
-                            Send-JulesMessage -SessionIdOrName $sessionId -Message "Continue with the task. If blocked, skip the problematic step and proceed." -ApiKey $env:JULES_API_KEY
-                        }
-                        $delegation.retry_count = $retryCount + 1
-                    } else {
-                        Write-Host "[MONITOR]   -> ESKALATION: Re-Planning / Fehlerbehebung erforderlich!" -ForegroundColor Red
-                        
-                        # In Ausnahmefällen, wenn Jules es nicht selbst schafft, eskalieren wir, damit das im Planning-Modus/CEO-Check analysiert wird.
-                        if (-not $DryRun.IsPresent) {
-                            Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FEEDBACK_TIMEOUT_CI_OR_BLOCKER"
-                        }
-                    }
-                }
-                "FAILED" {
-                    Write-Host "[MONITOR]   -> FAILED! Logge Fehler und eskaliere." -ForegroundColor Red
-                    Add-ErrorLog -State $State -Message "Jules session failed for #$issueNum" -Context "Session: $sessionId"
-                    if (-not $DryRun.IsPresent) {
-                        Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FAILED"
-                    } else {
-                        Complete-Delegation -State $State -IssueNumber $issueNum -Result "failed"
-                    }
-                }
+            } catch {
+                Write-Warning ("[MONITOR]   #{0} API-Fehler: {1}" -f $issueNum, $_)
+                Add-ErrorLog -State $State -Message "API error for #$issueNum" -Context $_.Exception.Message
             }
-        } catch {
-            Write-Warning ("[MONITOR]   #{0} API-Fehler: {1}" -f $issueNum, $_)
-            Add-ErrorLog -State $State -Message "API error for #$issueNum" -Context $_.Exception.Message
+        } else {
+            # Check local CLI agent status file
+            $scriptDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
+            $statusFile = Join-Path $scriptDir "tmp\agent-tasks\$issueNum.json"
+            if (Test-Path $statusFile) {
+                try {
+                    $agentState = Get-Content $statusFile -Raw | ConvertFrom-Json
+                    $currentState = $agentState.status
+                    
+                    Write-Host ("[MONITOR]   #{0} (Local Agent: {1}): {2}" -f $issueNum, $agentType, $currentState) -ForegroundColor $(
+                        switch ($currentState) {
+                            "COMPLETED"   { "Green" }
+                            "IN_PROGRESS" { "Cyan" }
+                            "FAILED"      { "Red" }
+                            default       { "Yellow" }
+                        }
+                    )
+
+                    Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $currentState
+
+                    if ($currentState -eq "COMPLETED") {
+                        if ($agentState.pr_url -and -not [string]::IsNullOrWhiteSpace($agentState.pr_url)) {
+                            $prUrl = $agentState.pr_url
+                            Write-Host "[MONITOR]   -> Local PR gefunden: $prUrl" -ForegroundColor Green
+                            Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $currentState -PrUrl $prUrl
+                            $prNumber = if ($prUrl -match '/pull/(\d+)') { [int]$Matches[1] } else { 0 }
+                            Add-ReviewItem -State $State -IssueNumber $issueNum -PrUrl $prUrl -PrNumber $prNumber
+                        } else {
+                            Write-Host "[MONITOR]   -> Aufgabe abgeschlossen ohne PR (keine Codeaenderungen)." -ForegroundColor Yellow
+                        }
+                        Complete-Delegation -State $State -IssueNumber $issueNum -Result "completed"
+                    } elseif ($currentState -eq "FAILED") {
+                        Write-Host "[MONITOR]   -> FAILED! Local Agent fehlgeschlagen." -ForegroundColor Red
+                        Add-ErrorLog -State $State -Message "Local agent $agentType failed for #$issueNum" -Context "Check terminal logs"
+                        if (-not $DryRun.IsPresent) {
+                            Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FAILED"
+                        } else {
+                            Complete-Delegation -State $State -IssueNumber $issueNum -Result "failed"
+                        }
+                    }
+                } catch {
+                    Write-Warning "[MONITOR]   #{0} Lokaler Status-File Fehler: $_"
+                }
+            } else {
+                Write-Host ("[MONITOR]   #{0} (Local Agent: {1}): INITIALIZING..." -f $issueNum, $agentType) -ForegroundColor DarkGray
+            }
         }
     }
 
