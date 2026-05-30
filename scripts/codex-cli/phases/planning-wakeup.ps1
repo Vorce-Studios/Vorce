@@ -12,7 +12,15 @@ function Invoke-PlanningWakeUp {
     )
 
     $repo = $Config.repository
-    Write-Host "`n[PLANNING] ========== Planning Wake-Up ==========" -ForegroundColor Magenta
+    Write-Host "`n[PLANNING] ========== Planning Wake-Up ==========" -ForegroundColor Blue
+
+    # Ensure state arrays exist
+    if ($null -eq $State.autopilot_created_issues) {
+        $State | Add-Member -MemberType NoteProperty -Name "autopilot_created_issues" -Value @() -Force
+    }
+    if ($null -eq $State.active_delegations) {
+        $State | Add-Member -MemberType NoteProperty -Name "active_delegations" -Value @() -Force
+    }
 
     # Define script block to fetch candidates to avoid duplication
     $GetCandidates = {

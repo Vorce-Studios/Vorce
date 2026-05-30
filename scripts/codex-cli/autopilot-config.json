@@ -42,7 +42,6 @@
     ],
     "max_deliberation_rounds": 3,
     "deliberation_tasks": [
-      "planning",
       "complex_review"
     ],
     "fallback_to_single": true,
