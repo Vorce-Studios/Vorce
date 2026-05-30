@@ -5,9 +5,6 @@ import { useData, useAutoRefresh } from './hooks';
 // Pages
 import DashboardPage from './pages/DashboardPage';
 import WorkstreamsPage from './pages/WorkstreamsPage';
-import SessionsPage from './pages/SessionsPage';
-import IssuesPage from './pages/IssuesPage';
-import PullRequestsPage from './pages/PullRequestsPage';
 import SettingsPage from './pages/SettingsPage';
 import ManagerReportingPage from './pages/ManagerReportingPage';
 
@@ -98,14 +95,8 @@ export default function App() {
         case 'dashboard':
           return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} />;
         case 'workstreams':
-          return <WorkstreamsPage issues={issues} sessions={sessions} pullRequests={pullRequests} />;
-        case 'sessions':
-          return <SessionsPage sessions={sessions} julesSessions={julesSessions} />;
-      case 'issues':
-        return <IssuesPage issues={issues} />;
-      case 'pullrequests':
-        return <PullRequestsPage pullRequests={pullRequests} />;
-      case 'reporting':
+          return <WorkstreamsPage issues={issues} sessions={sessions} pullRequests={pullRequests} julesSessions={julesSessions} />;
+        case 'reporting':
         return (
           <ManagerReportingPage
             registry={registry}
@@ -176,45 +167,9 @@ export default function App() {
             >
               <Activity className="w-4 h-4 text-emerald-400" />
               <span>Smart Workstreams</span>
-              {issues.length > 0 && (
-                <span className="ml-auto badge bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 text-[10px]">
-                  NEW
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('sessions')}
-              className={activeTab === 'sessions' ? 'tab-btn-active w-full' : 'tab-btn-inactive w-full'}
-            >
-              <Activity className="w-4 h-4" />
-              <span>Jules Sessions</span>
-              {sessions.active_delegations?.length > 0 && (
-                <span className="ml-auto badge bg-purple-500 text-purple-100 px-1.5 py-0.5 text-[10px]">
-                  {sessions.active_delegations.length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('issues')}
-              className={activeTab === 'issues' ? 'tab-btn-active w-full' : 'tab-btn-inactive w-full'}
-            >
-              <AlertCircle className="w-4 h-4" />
-              <span>GitHub Issues</span>
-              {issues.length > 0 && (
-                <span className="ml-auto badge bg-slate-800 text-slate-400 px-1.5 py-0.5 text-[10px]">
-                  {issues.length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('pullrequests')}
-              className={activeTab === 'pullrequests' ? 'tab-btn-active w-full' : 'tab-btn-inactive w-full'}
-            >
-              <GitPullRequest className="w-4 h-4" />
-              <span>Pull Requests</span>
-              {pullRequests.filter(pr => pr.state === 'OPEN').length > 0 && (
-                <span className="ml-auto badge bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 text-[10px]">
-                  {pullRequests.filter(pr => pr.state === 'OPEN').length}
+              {(sessions.decisions_pending && sessions.decisions_pending.length > 0) && (
+                <span className="ml-auto badge bg-rose-500/20 text-rose-400 px-1.5 py-0.5 text-[10px]">
+                  {sessions.decisions_pending.length} ALERTS
                 </span>
               )}
             </button>

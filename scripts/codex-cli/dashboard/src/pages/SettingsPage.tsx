@@ -356,7 +356,7 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                   value={config.issue_filters.include_labels.join(', ')}
                   onChange={(e: any) => handleNestedConfigChange('issue_filters', 'include_labels', e.target.value.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0))}
                   className="input-field"
-                  placeholder="z.B. bug, jules-task, priority-high"
+                  placeholder="z.B. jules-task, bug, priority: critical"
                 />
               </div>
               <div>
