@@ -156,11 +156,14 @@ Schlage bis zu $($Config.max_issues_per_planning_cycle) konkrete, kleine Issues 
 Keine generischen TODO-, Refactoring- oder Performance-Issues erzeugen, wenn sie nicht direkt eines der Release-Gates beweisbar voranbringen.
 Keine Master-Issues als Jules-Coding-Task erzeugen. Coding-/QA-Aufgaben muessen Standard- oder Sub-Issues sein und die Namenskonvention einhalten.
 
-WICHTIG: Entscheide für jedes Issue, welcher Agent es bearbeiten soll. Nutze "jules" für komplexe UI-Aufgaben oder große Refactorings. Nutze lokale CLI-Agents für isolierte Logik-Fixes oder klar umrissene Algorithmen.
+WICHTIG ZUR AGENT-ZUWEISUNG: 
+Du MUSST für jedes Issue gezielt entscheiden, welcher Agent es bearbeitet.
+- "jules": NUR für riesige Refactorings, UI-Architektur oder Multi-File Features nutzen.
+- Lokale CLI-Agents (z.B. "gemini_cli", "claude_code"): ZWINGEND zu nutzen für kleine Bugfixes, isolierte Modul-Anpassungen, Scripts, CI/CD-Fixes oder klar umrissene Algorithmen! Du SOLLST regelmäßig Aufgaben an diese CLI-Agents delegieren, um Jules zu entlasten!
 Verfügbare Agents: $agentsStr
 
 Antworte NUR mit einer JSON-Liste im Format:
-[{"title": "__VOR-000_SubI_Issue-Title", "body": "Beschreibung mit Parent-Issue und Acceptance-Evidence", "labels": ["jules-task", "priority: high", "testing"], "agent": "jules"}]
+[{"title": "__VOR-000_SubI_Issue-Title", "body": "Beschreibung mit Parent-Issue und Acceptance-Evidence", "labels": ["jules-task", "priority: high", "testing"], "agent": "<agent_name_hier_eintragen>"}]
 
 Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 "@
