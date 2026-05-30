@@ -278,4 +278,3 @@ function KPICard({ title, value, subtitle, icon, color }: {
     </div>
   );
 }
-
