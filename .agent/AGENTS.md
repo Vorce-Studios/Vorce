@@ -84,7 +84,7 @@ model: gemini-2.0-flash
   - Nutze `scripts/jules/jules-github.ps1` zur Synchronisation mit GitHub Issues.
   - Stelle sicher, dass jede Remote-Session korrekt mit einem GitHub Issue verknüpft ist.
 
-### 5. Autopilot CEO (Codex Orchestrator / Gemini CLI)
+### CEO Team (Alpha: Codex / Beta: Gemini)
 - **Fokus:** Orchestrierung, Delegation und Überwachung aller Agents.
 - **Anweisungen:**
   - Nutzt `scripts/codex-cli/Start-Autopilot.ps1` als zentrales Steuerungs- und Monitoringsystem.
