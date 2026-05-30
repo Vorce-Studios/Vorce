@@ -79,7 +79,9 @@ function Invoke-MonitoringWakeUp {
             $prNumbers = @($conflictingPrs | Sort-Object number | ForEach-Object { $_.number }) -join "-"
             $conflictTag = "resolve-conflicts-$prNumbers"
 
-            $alreadyCreated = @($State.autopilot_created_issues | Where-Object { $_.tag -eq $conflictTag })
+            $alreadyCreated = @($State.autopilot_created_issues | Where-Object { 
+                (Test-ObjectProperty -Object $_ -Name "tag") -and $_.tag -eq $conflictTag 
+            })
             if ($alreadyCreated.Count -eq 0) {
                 Write-Host "[MONITOR]   Erstelle gebuendeltes Master-Issue fuer Konflikte: $prNumbers" -ForegroundColor Yellow
                 if (-not $DryRun.IsPresent) {
