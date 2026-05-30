@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue } from '../types';
+import DeliberationPanel from './DeliberationPanel';
 
 interface Props {
   registry: QuotaRegistry;
@@ -253,6 +254,9 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
           })}
         </div>
       </div>
+
+      {/* Dual-CEO Deliberation Panel */}
+      <DeliberationPanel deliberations={sessions.deliberation_log || []} />
 
     </div>
   );
