@@ -299,7 +299,9 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
     $currentSessions = [int]$julesProvider.usage_today.calls
     $maxDaily = [int]$Config.jules.max_daily_sessions
     $maxConcurrent = [int]$Config.jules.max_concurrent_sessions
-    $julesActiveDelegations = @($State.active_delegations | Where-Object { ($null -eq $_.agent_type) -or ($_.agent_type -eq "jules") }).Count
+    $julesActiveDelegations = @($State.active_delegations | Where-Object { 
+        -not ($_.PSObject.Properties.Name -contains "agent_type") -or ($_.agent_type -eq "jules")
+    }).Count
 
     $julesAvailableSlots = [Math]::Min(
         ($maxDaily - $currentSessions),
