@@ -6,9 +6,9 @@ Ship Vorce toward a production-ready 1.0 by improving render stability, media pi
 ## Active Phases
 
 ### Phase 7: Packaging & Distribution [In Progress]
-- [ ] **VOR-23:** Verify Windows Installer (WiX) DLL bundling and shortcuts
-- [ ] **VOR-24:** Set up cargo-deb for Linux (.deb) packaging
-- [ ] **VOR-25:** Evaluate AppImage vs Flatpak for Linux distribution
+- [ ] **VOR-23:** Verify Windows Installer (WiX) DLL bundling and shortcuts (Version updated to 0.2.0)
+- [ ] **VOR-24:** Set up cargo-deb for Linux (.deb) packaging [In Progress]
+- [x] **VOR-25:** Evaluate AppImage vs Flatpak for Linux distribution (Evaluation document created)
 
 ### Phase 8.1: NDI Video Streaming [Ready for Delivery]
 - [x] **VOR-26:** Scaffolding of Vorce-ndi crate and grafton-ndi integration
