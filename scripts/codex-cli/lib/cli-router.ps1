@@ -27,10 +27,25 @@ function Resolve-CliProvider {
         $modelTier = if ($parts.Count -gt 1) { $parts[1] } else { "default" }
 
         if (Test-ProviderAvailable -Registry $QuotaRegistry -ProviderName $providerName) {
+            $cmdName = $QuotaRegistry.providers.$providerName.command
+            $resolvedCmd = Get-Command $cmdName -ErrorAction SilentlyContinue
+            if ($resolvedCmd -and $resolvedCmd.CommandType -eq "ExternalScript" -and $resolvedCmd.Name -like "*.ps1") {
+                $cmdNameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($resolvedCmd.Name)
+                $cmdDir = Split-Path $resolvedCmd.Source
+                $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.cmd"
+                if (Test-Path $cmdFile) {
+                    $cmdName = $cmdFile
+                } else {
+                    $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.exe"
+                    if (Test-Path $cmdFile) {
+                        $cmdName = $cmdFile
+                    }
+                }
+            }
             return [ordered]@{
                 provider   = $providerName
                 model_tier = $modelTier
-                command    = $QuotaRegistry.providers.$providerName.command
+                command    = $cmdName
             }
         }
 

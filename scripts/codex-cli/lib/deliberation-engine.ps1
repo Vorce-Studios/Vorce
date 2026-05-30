@@ -28,10 +28,25 @@ function Resolve-DualCeos {
         $modelTier = if ($parts.Count -gt 1) { $parts[1] } else { "default" }
 
         if (Test-ProviderAvailable -Registry $QuotaRegistry -ProviderName $provName) {
+            $cmdName = $QuotaRegistry.providers.$provName.command
+            $resolvedCmd = Get-Command $cmdName -ErrorAction SilentlyContinue
+            if ($resolvedCmd -and $resolvedCmd.CommandType -eq "ExternalScript" -and $resolvedCmd.Name -like "*.ps1") {
+                $cmdNameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($resolvedCmd.Name)
+                $cmdDir = Split-Path $resolvedCmd.Source
+                $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.cmd"
+                if (Test-Path $cmdFile) {
+                    $cmdName = $cmdFile
+                } else {
+                    $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.exe"
+                    if (Test-Path $cmdFile) {
+                        $cmdName = $cmdFile
+                    }
+                }
+            }
             $alpha = [ordered]@{
                 provider   = $provName
                 model_tier = $modelTier
-                command    = $QuotaRegistry.providers.$provName.command
+                command    = $cmdName
                 label      = "CEO Alpha"
             }
             break
@@ -53,10 +68,25 @@ function Resolve-DualCeos {
         }
 
         if (Test-ProviderAvailable -Registry $QuotaRegistry -ProviderName $provName) {
+            $cmdName = $QuotaRegistry.providers.$provName.command
+            $resolvedCmd = Get-Command $cmdName -ErrorAction SilentlyContinue
+            if ($resolvedCmd -and $resolvedCmd.CommandType -eq "ExternalScript" -and $resolvedCmd.Name -like "*.ps1") {
+                $cmdNameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($resolvedCmd.Name)
+                $cmdDir = Split-Path $resolvedCmd.Source
+                $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.cmd"
+                if (Test-Path $cmdFile) {
+                    $cmdName = $cmdFile
+                } else {
+                    $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.exe"
+                    if (Test-Path $cmdFile) {
+                        $cmdName = $cmdFile
+                    }
+                }
+            }
             $beta = [ordered]@{
                 provider   = $provName
                 model_tier = $modelTier
-                command    = $QuotaRegistry.providers.$provName.command
+                command    = $cmdName
                 label      = "CEO Beta"
             }
             break
@@ -475,7 +505,6 @@ function Invoke-Deliberation {
         [object]$State
     )
 
-    $dualCfg = $Config.dual_ceo
     $deliberationId = "delib-$(Get-Date -Format 'yyyy-MM-dd-HHmmss')"
 
     Write-Host "" -ForegroundColor White
