@@ -145,20 +145,7 @@ function Invoke-MonitoringWakeUp {
                         Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $julesState -PrUrl $prUrl
                         $prNumber = if ($prUrl -match '/pull/(\d+)') { [int]$Matches[1] } else { 0 }
                         
-                        # Auto-Merge if PR is fully passing and configured
-                        if ($Config.jules.auto_merge_approved_prs -and $prNumber -gt 0 -and $null -ne $matchingPr) {
-                            $failingChecks = @($matchingPr.statusCheckRollup | Where-Object { $_.conclusion -eq "FAILURE" -or $_.status -eq "FAILURE" })
-                            if ($failingChecks.Count -eq 0 -and $matchingPr.mergeable -eq "MERGEABLE") {
-                                Write-Host "[MONITOR]   -> PR #$prNumber ist gruen und MERGEABLE. Fuehre Auto-Merge aus..." -ForegroundColor Magenta
-                                if (-not $DryRun.IsPresent) {
-                                    gh pr merge $prNumber --repo $repo --auto --squash 2>&1 | Out-Null
-                                }
-                            } else {
-                                Add-ReviewItem -State $State -IssueNumber $issueNum -PrUrl $prUrl -PrNumber $prNumber
-                            }
-                        } else {
-                            Add-ReviewItem -State $State -IssueNumber $issueNum -PrUrl $prUrl -PrNumber $prNumber
-                        }
+                        Add-ReviewItem -State $State -IssueNumber $issueNum -PrUrl $prUrl -PrNumber $prNumber
                     }
                     Complete-Delegation -State $State -IssueNumber $issueNum -Result "completed"
                 }
@@ -173,50 +160,20 @@ function Invoke-MonitoringWakeUp {
                 "AWAITING_USER_FEEDBACK" {
                     $retryCount = [int]$delegation.retry_count
                     $maxRetries = [int]$Config.jules.auto_retry_feedback_max
-                    $ciFeedbackSent = $false
 
-                    # 1. Check CI Failures
-                    if ($null -ne $matchingPr) {
-                        $failingChecks = @($matchingPr.statusCheckRollup | Where-Object { $_.conclusion -eq "FAILURE" -or $_.status -eq "FAILURE" })
-                        if ($failingChecks.Count -gt 0) {
-                            Write-Host "[MONITOR]   -> PR #$($matchingPr.number) hat fehlschlagende Checks. Hole CI-Logs..." -ForegroundColor Red
-                            if (-not $DryRun.IsPresent) {
-                                $runData = gh run list --branch $($matchingPr.headRefName) --status failure --json databaseId --limit 1 2>&1
-                                if ($LASTEXITCODE -eq 0) {
-                                    $runJson = $runData | Out-String | ConvertFrom-Json
-                                    if ($runJson -and $runJson.Count -gt 0) {
-                                        $runId = $runJson[0].databaseId
-                                        $logRaw = gh run view $runId --log-failed 2>&1
-                                        if ($LASTEXITCODE -eq 0) {
-                                            $logLines = $logRaw -split "`n"
-                                            # Keep last 100 lines to avoid token limit
-                                            $shortLog = if ($logLines.Length -gt 100) { ($logLines[-100..-1]) -join "`n" } else { $logLines -join "`n" }
-                                            
-                                            $feedbackMsg = "Die GitHub Actions CI-Checks sind fehlgeschlagen. Bitte behebe den Fehler und aktualisiere den PR.`n`nLog-Auszug:`n`n$shortLog"
-                                            Write-Host "[MONITOR]   -> Sende CI-Fehler Log an Jules Session." -ForegroundColor Magenta
-                                            Send-JulesMessage -SessionIdOrName $sessionId -Message $feedbackMsg -ApiKey $env:JULES_API_KEY
-                                            $ciFeedbackSent = $true
-                                        }
-                                    }
-                                }
-                            }
+                    if ($retryCount -lt $maxRetries) {
+                        $retryMsg = "[MONITOR]   -> Auto-Retry ({0}/{1})" -f ($retryCount + 1), $maxRetries
+                        Write-Host $retryMsg -ForegroundColor Yellow
+                        if (-not $DryRun.IsPresent) {
+                            Send-JulesMessage -SessionIdOrName $sessionId -Message "Continue with the task. If blocked, skip the problematic step and proceed." -ApiKey $env:JULES_API_KEY
                         }
-                    }
-
-                    # 2. Generic Retry (if no CI failure was sent)
-                    if (-not $ciFeedbackSent) {
-                        if ($retryCount -lt $maxRetries) {
-                            $retryMsg = "[MONITOR]   -> Auto-Retry ({0}/{1})" -f ($retryCount + 1), $maxRetries
-                            Write-Host $retryMsg -ForegroundColor Yellow
-                            if (-not $DryRun.IsPresent) {
-                                Send-JulesMessage -SessionIdOrName $sessionId -Message "Continue with the task. If blocked, skip the problematic step and proceed." -ApiKey $env:JULES_API_KEY
-                            }
-                            $delegation.retry_count = $retryCount + 1
-                        } else {
-                            Write-Host "[MONITOR]   -> ESKALATION: Re-Planning erforderlich!" -ForegroundColor Red
-                            if (-not $DryRun.IsPresent) {
-                                Escalate-Delegation -State $State -IssueNumber $issueNum -Reason "FEEDBACK_TIMEOUT"
-                            }
+                        $delegation.retry_count = $retryCount + 1
+                    } else {
+                        Write-Host "[MONITOR]   -> ESKALATION: Re-Planning / Fehlerbehebung erforderlich!" -ForegroundColor Red
+                        
+                        # In Ausnahmefällen, wenn Jules es nicht selbst schafft, eskalieren wir, damit das im Planning-Modus/CEO-Check analysiert wird.
+                        if (-not $DryRun.IsPresent) {
+                            Escalate-Delegation -State $State -IssueNumber $issueNum -Reason "FEEDBACK_TIMEOUT_CI_OR_BLOCKER"
                         }
                     }
                 }
