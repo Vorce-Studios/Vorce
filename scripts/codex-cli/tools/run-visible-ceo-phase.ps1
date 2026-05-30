@@ -153,29 +153,40 @@ try {
     $hasPromptFile = -not [string]::IsNullOrWhiteSpace($PromptFile) -and (Test-Path $PromptFile)
     
     $cliBaseName = [System.IO.Path]::GetFileNameWithoutExtension($CliCommand).ToLower()
-    $needsStdinPrompt = $cliBaseName -in @("gemini", "claude")
+    $needsPromptArg = $cliBaseName -in @("gemini", "claude")
 
-    # For gemini/claude: ALWAYS pipe prompt via stdin to avoid Windows
-    # command-line argument length limits (~8191 chars for .cmd files).
-    # Do NOT append -p as an argument — long prompts break .cmd execution.
-    if ($hasPromptFile -and $needsStdinPrompt) {
-        Write-Host "[CEO] Prompt wird via Stdin uebergeben ($(( Get-Item $PromptFile ).Length) Bytes)" -ForegroundColor DarkGray
-        # Add -p flag without value so gemini reads from stdin
-        $cliArgs += @("-p")
-    } elseif ($hasPromptFile -and -not $needsStdinPrompt) {
+    # Since we no longer rewrite to .cmd (see deliberation-engine fix),
+    # the command runs via PowerShell which has NO argument length limit.
+    # We can safely pass the prompt as -p argument.
+    # For extremely long prompts (>30KB), fall back to stdin pipe as safety net.
+    $useStdinPipe = $false
+    if ($hasPromptFile -and $needsPromptArg) {
+        $promptText = Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8
+        $promptBytes = [System.Text.Encoding]::UTF8.GetByteCount($promptText)
+        if ($promptBytes -gt 30000) {
+            # Extremely long prompt: use stdin pipe with -p "." as trigger
+            $useStdinPipe = $true
+            $cliArgs += @("-p", ".")
+            Write-Host "[CEO] Sehr langer Prompt ($promptBytes Bytes) - verwende Stdin-Pipe" -ForegroundColor DarkGray
+        } else {
+            # Normal prompt: pass directly as -p argument (safe with .ps1)
+            $cliArgs += @("-p", $promptText)
+            Write-Host "[CEO] Prompt wird als -p Argument uebergeben ($promptBytes Bytes)" -ForegroundColor DarkGray
+        }
+    } elseif ($hasPromptFile -and -not $needsPromptArg) {
         # For other providers: append prompt as argument
         $promptText = Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8
         $cliArgs += @($promptText)
     }
 
-    Write-Host "[CEO] Analysiere und verarbeite Phase...$(if ($needsStdinPrompt) { ' (Stdin-Pipe Modus)' } else { '' })" -ForegroundColor Cyan
+    Write-Host "[CEO] Analysiere und verarbeite Phase..." -ForegroundColor Cyan
     Write-Host "[CEO] Befehl: $CliCommand" -ForegroundColor DarkGray
     Write-Host "[CEO] Args: $($cliArgs.Count) Parameter" -ForegroundColor DarkGray
     
     # Use process execution with Tee-Object instead of Start-Transcript.
     # Start-Transcript can interfere with CLI tools that use terminal escape sequences.
-    if ($hasPromptFile -and $needsStdinPrompt) {
-        # Pipe prompt via stdin — this is the critical fix for Gemini CLI
+    if ($useStdinPipe) {
+        # Pipe prompt via stdin for extremely long prompts
         Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8 | & $CliCommand @cliArgs 2>&1 | Tee-Object -FilePath $OutputFile
     } else {
         & $CliCommand @cliArgs 2>&1 | Tee-Object -FilePath $OutputFile
