@@ -65,10 +65,10 @@ function Show-CeoPhaseSummary {
             $parsed.PSObject.Properties | ForEach-Object {
                 $name = $_.Name
                 $val = $_.Value
-                $displayName = @($name -split '_' | ForEach-Object { 
+                $displayName = @($name -split '_' | ForEach-Object {
                     if ($_.Length -gt 0) { $_.Substring(0,1).ToUpper() + $_.Substring(1) } else { "" }
                 }) -join " "
-                
+
                 if ($val -is [System.Array] -or $val -is [System.Collections.IList]) {
                     Write-Host "  $displayName`:" -ForegroundColor Cyan
                     foreach ($v in $val) { Write-Host "    - $v" -ForegroundColor Gray }
@@ -164,7 +164,7 @@ $exitCode = 0
 try {
     $powerShellHost = if (Get-Command pwsh -ErrorAction SilentlyContinue) { (Get-Command pwsh).Source } else { (Get-Command powershell).Source }
     $hasPromptFile = -not [string]::IsNullOrWhiteSpace($PromptFile) -and (Test-Path $PromptFile)
-    
+
     $escapedPromptFile = $PromptFile -replace "'", "''"
     $escapedCliArgsFile = $CliArgsFile -replace "'", "''"
     $escapedSource = $cmdSource -replace "'", "''"
@@ -183,9 +183,9 @@ try {
     } else {
         $cmdString = "& '$escapedSource' @argsList 2>&1"
     }
-    
+
     $fullCmd = "`$argsList = @(Get-Content -LiteralPath '$escapedCliArgsFile' -Raw -Encoding UTF8 | ConvertFrom-Json); $cmdString"
-    
+
     Write-Host "[CEO] Analysiere und verarbeite Phase...$(if ($needsPromptArg) { ' (Headless -p Modus)' } else { '' })" -ForegroundColor Cyan
     & $powerShellHost -NoProfile -ExecutionPolicy Bypass -Command $fullCmd > $OutputFile 2>&1
     $exitCode = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }
@@ -205,7 +205,7 @@ Write-Host ""
 Write-Host ("=" * 60) -ForegroundColor $(if ($exitCode -eq 0) { "Green" } else { "Red" })
 if ($exitCode -eq 0) {
     Write-Host "[CEO] Phase '$PhaseName' erfolgreich abgeschlossen." -ForegroundColor Green
-    
+
     # Read output and show clean summary
     if (Test-Path -LiteralPath $OutputFile) {
         $content = Get-Content -LiteralPath $OutputFile -Raw -Encoding UTF8
@@ -213,7 +213,7 @@ if ($exitCode -eq 0) {
     }
 } else {
     Write-Host "[CEO] Phase '$PhaseName' fehlgeschlagen (Exit-Code: $exitCode)." -ForegroundColor Red
-    
+
     # Print the raw error logs on failure so the user knows exactly what failed
     Write-Host ""
     Write-Host "--- FEHLERPROTOKOLL (RAW LOG) ---" -ForegroundColor Red

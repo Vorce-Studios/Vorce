@@ -182,7 +182,7 @@ function Invoke-MonitoringWakeUp {
                     if ($LASTEXITCODE -eq 0 -and $newIssueUrl -match "/issues/(\d+)") {
                         $newIssueNum = [int]$Matches[1]
                         Write-Host "[MONITOR]   -> Master-Issue #$newIssueNum erfolgreich erstellt!" -ForegroundColor Green
-                        
+
                         # Tracking
                         if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
                         $State.autopilot_created_issues += [ordered]@{
@@ -234,7 +234,7 @@ PR URL: $($review.pr_url)
 
     foreach ($decision in $State.decisions_pending) {
         $topic = $decision.topic
-        
+
         # 1. Duplikatprüfung
         if ($seenTopics.Contains($topic)) {
             Write-Host "[MONITOR] Duplikat von Entscheidung entfernt: $topic" -ForegroundColor DarkGray

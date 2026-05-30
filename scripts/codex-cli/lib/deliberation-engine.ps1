@@ -275,12 +275,12 @@ function Format-CeoChatOutput {
         foreach ($prop in $props) {
             $name = $prop.Name
             $val = $prop.Value
-            
+
             # Format property name cleanly (capitalize each word)
-            $displayName = @($name -split '_' | ForEach-Object { 
+            $displayName = @($name -split '_' | ForEach-Object {
                 if ($_.Length -gt 0) { $_.Substring(0,1).ToUpper() + $_.Substring(1) } else { "" }
             }) -join " "
-            
+
             if ($val -is [System.Array] -or $val -is [System.Collections.IList]) {
                 Write-Host "  $displayName`:" -ForegroundColor Cyan
                 foreach ($item in $val) {
@@ -366,7 +366,7 @@ function Invoke-VisibleCeoPhase {
             -DryRun:$DryRun
 
         Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
-        
+
         $finalOutput = ""
         $isSuccess = [bool]((Test-ObjectProperty -Object $result -Name "Success") -and $result.Success)
         if ($isSuccess) {

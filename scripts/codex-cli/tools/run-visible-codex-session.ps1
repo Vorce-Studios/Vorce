@@ -80,7 +80,7 @@ if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
 
 try {
     $isInsideCodex = $false
-    
+
     $runCmd = if ($NonInteractiveExec.IsPresent) {
         { $prompt | & $codex.Source @codexArgs *>&1 }
     } else {
@@ -100,17 +100,17 @@ try {
         if ($null -ne $_) {
             $line = $_.ToString().Trim()
         }
-        
+
         # Always write raw line to log path if specified
         if (-not [string]::IsNullOrWhiteSpace($LogPath) -and -not [string]::IsNullOrWhiteSpace($line)) {
             Add-Content -Path $LogPath -Value $line -Encoding UTF8
         }
-        
+
         # Skip empty lines to keep terminal neat
         if ([string]::IsNullOrWhiteSpace($line)) {
             return
         }
-        
+
         # State machine for live terminal filtering
         if ($line -eq "codex") {
             $isInsideCodex = $true
@@ -119,7 +119,7 @@ try {
             $thoughtCount++
             return
         }
-        
+
         if ($line -eq "exec") {
             $isInsideCodex = $false
             $expectCommandLine = $true
@@ -127,11 +127,11 @@ try {
             $commandCount++
             return
         }
-        
+
         if ($expectCommandLine) {
             $expectCommandLine = $false
             $isInsideCommandOutput = $true
-            
+
             # Clean up the command line to make it readable
             $cleanCmd = $line
             if ($line -match '-Command\s+''(.*)''\s+in\s+(.*)') {
@@ -143,7 +143,7 @@ try {
             Write-Host "[BEFEHL] Führe aus: $cleanCmd" -ForegroundColor Yellow
             return
         }
-        
+
         if ($line -match '^\s*(succeeded|failed)\s+in\s+(\d+ms|seconds|minutes)' -or $line -match '^\s*exited\s+\d+') {
             $isInsideCommandOutput = $false
             if ($line -match 'failed' -or $line -match 'exited\s+[^0]') {
@@ -153,12 +153,12 @@ try {
             }
             return
         }
-        
+
         if ($isInsideCommandOutput) {
             # Suppress all command output (stdout/stderr) from cluttering the terminal
             return
         }
-        
+
         if ($isInsideCodex -and -not [string]::IsNullOrWhiteSpace($line)) {
             # Print the clean comment/thought in German
             Write-Host "[CEO ALPHA] $line" -ForegroundColor Cyan

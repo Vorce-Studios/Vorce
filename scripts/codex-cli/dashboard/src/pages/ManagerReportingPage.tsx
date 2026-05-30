@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Clock, 
-  DollarSign, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Layers, 
-  MessageSquare, 
-  Calendar, 
-  ArrowUpRight, 
-  Users, 
+import {
+  BarChart3,
+  TrendingUp,
+  Clock,
+  DollarSign,
+  CheckCircle2,
+  AlertTriangle,
+  Layers,
+  MessageSquare,
+  Calendar,
+  ArrowUpRight,
+  Users,
   Zap,
   ChevronRight,
   TrendingDown
@@ -79,7 +79,7 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
   }
 
   // Dual-CEO Budget Limit (Default: $10/Tag)
-  const dailyBudget = 10.0; 
+  const dailyBudget = 10.0;
   const budgetPercentage = dailyBudget > 0 ? Math.min(100, Math.round((totalCostToday / dailyBudget) * 100)) : 0;
 
   // --- 3. Deliberation-Statistiken ---
@@ -106,8 +106,8 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
     new Set(issues.flatMap(i => i.labels.map(l => l.name)))
   ).sort();
 
-  const filteredIssues = selectedLabel === 'all' 
-    ? issues 
+  const filteredIssues = selectedLabel === 'all'
+    ? issues
     : issues.filter(i => i.labels.some(l => l.name === selectedLabel));
 
   return (
@@ -119,7 +119,7 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
           <p className="text-xs text-slate-400">Übersicht über Produktivität, CEO-Verhalten und Kostenmetriken.</p>
         </div>
         <div className="flex items-center gap-2">
-          <select 
+          <select
             value={selectedLabel}
             onChange={(e) => setSelectedLabel(e.target.value)}
             className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-purple-500"
@@ -135,8 +135,8 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                 key={range}
                 onClick={() => setTimeRange(range)}
                 className={`px-3 py-1 text-[10px] font-semibold rounded-md transition-all duration-150 ${
-                  timeRange === range 
-                    ? 'bg-purple-600 text-white shadow-md' 
+                  timeRange === range
+                    ? 'bg-purple-600 text-white shadow-md'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -230,7 +230,7 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                   <span className="text-xs text-slate-400">{bugIssues.length - openBugs}/{bugIssues.length} Gelöst</span>
                 </div>
                 <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                  <div 
+                  <div
                     className="bg-red-500 h-1.5 rounded-full transition-all duration-300"
                     style={{ width: `${bugIssues.length > 0 ? ((bugIssues.length - openBugs) / bugIssues.length) * 100 : 0}%` }}
                   />
@@ -248,7 +248,7 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                   <span className="text-xs text-slate-400">{featureIssues.length - openFeatures}/{featureIssues.length} Gelöst</span>
                 </div>
                 <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                  <div 
+                  <div
                     className="bg-cyan-500 h-1.5 rounded-full transition-all duration-300"
                     style={{ width: `${featureIssues.length > 0 ? ((featureIssues.length - openFeatures) / featureIssues.length) * 100 : 0}%` }}
                   />
@@ -266,7 +266,7 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                   <span className="text-xs text-slate-400">{julesTasks.length - openJules}/{julesTasks.length} Gelöst</span>
                 </div>
                 <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                  <div 
+                  <div
                     className="bg-purple-500 h-1.5 rounded-full transition-all duration-300"
                     style={{ width: `${julesTasks.length > 0 ? ((julesTasks.length - openJules) / julesTasks.length) * 100 : 0}%` }}
                   />
@@ -294,7 +294,7 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                 const isJules = stat.name === 'jules';
                 const limitStr = isJules ? `${stat.limit} Sessions` : `$${stat.budget?.toFixed(2)} Budget`;
                 const usageStr = isJules ? `${stat.calls} gestartet` : `$${stat.cost?.toFixed(3)} verbraucht`;
-                const progressPct = isJules 
+                const progressPct = isJules
                   ? (stat.limit > 0 ? Math.min(100, Math.round((stat.calls / stat.limit) * 100)) : 0)
                   : (stat.budget > 0 ? Math.min(100, Math.round((stat.cost / stat.budget) * 100)) : 0);
 
@@ -309,7 +309,7 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                     </div>
 
                     <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                      <div 
+                      <div
                         className={`h-1.5 rounded-full transition-all duration-300 ${
                           progressPct > 90 ? 'bg-red-500' : progressPct > 70 ? 'bg-yellow-500' : 'bg-purple-600'
                         }`}
@@ -434,8 +434,8 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                     </td>
                     <td className="py-2.5 px-3">
                       <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase ${
-                        issue.state.toLowerCase() === 'open' 
-                          ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' 
+                        issue.state.toLowerCase() === 'open'
+                          ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
                           : 'bg-green-500/20 text-green-400 border border-green-500/30'
                       }`}>
                         {issue.state}
@@ -446,8 +446,8 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                     </td>
                     <td className="py-2.5 px-3 flex flex-wrap gap-1.5 max-w-[300px]">
                       {issue.labels.map(l => (
-                        <span 
-                          key={l.id || l.name} 
+                        <span
+                          key={l.id || l.name}
                           className="px-1.5 py-0.5 rounded text-[8px] font-medium"
                           style={{ backgroundColor: `#${l.color}25`, color: `#${l.color}` }}
                         >

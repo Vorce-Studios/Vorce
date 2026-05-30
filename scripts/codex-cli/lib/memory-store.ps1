@@ -71,7 +71,7 @@ function Get-RelevantMemories {
 
     # Sort order: temporary first, then permanent
     $typeOrder = @{ "temporary" = 0; "permanent" = 1 }
-    
+
     # Sort order for priority: critical = 0, high = 1, medium = 2, low = 3
     $priorityOrder = @{ "critical" = 0; "high" = 1; "medium" = 2; "low" = 3 }
 

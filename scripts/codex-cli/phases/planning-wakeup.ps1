@@ -90,7 +90,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                     $commentBody = "CEO Re-Planning Handlungsplan für den nächsten Versuch:`n`n$ceoPlan"
                     gh issue comment $issueNum --repo $repo --body $commentBody | Out-Null
                     Write-Host "[PLANNING] CEO-Plan auf GitHub-Issue #$issueNum gepostet." -ForegroundColor Green
-                    
+
                     $escIssue.planning_resolutions = [int]$escIssue.planning_resolutions + 1
                     $escIssue.status = "RESOLVED_BY_PLANNING"
                     Save-AutopilotState -State $State
@@ -191,7 +191,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                     foreach ($newIssue in $newIssues) {
                         # Validate that newIssue has a title
                         if ($null -eq $newIssue -or -not ($newIssue.PSObject.Properties.Name -contains "title")) { continue }
-                        
+
                         if ($DryRun.IsPresent) {
                             Write-Host "[PLANNING] [DRY RUN] Wuerde Issue erstellen: $($newIssue.title)" -ForegroundColor DarkYellow
                         } else {
