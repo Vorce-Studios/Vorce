@@ -135,11 +135,44 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
     if ($candidates.Count -lt 3) {
         Write-Host "[PLANNING] Wenige offene Issues - pruefe ob neue erstellt werden sollten." -ForegroundColor Yellow
 
+        # Lade die Issues aus dem Cache fuer den Prompt-Kontext
+        $cachedIssuePath = Join-Path $ScriptDir "dashboard\public\github-issues.json"
+        $promptIssuesContext = ""
+        if (Test-Path $cachedIssuePath) {
+            try {
+                $issuesRaw = Get-Content -LiteralPath $cachedIssuePath -Raw -Encoding UTF8 | ConvertFrom-Json
+                $gateIssueNumbers = @(651, 650, 547, 549, 548, 661, 662, 96, 98, 99, 101, 102, 103, 654, 655, 656, 657, 658, 659, 107, 43, 652, 653)
+                $contextLines = @()
+                
+                if ($null -ne $issuesRaw -and ($issuesRaw -is [System.Array] -or $issuesRaw -is [System.Collections.IList])) {
+                    foreach ($issue in $issuesRaw) {
+                        if ($gateIssueNumbers -contains $issue.number) {
+                            $title = $issue.title
+                            $state = $issue.state
+                            $bodySnippet = if ($issue.body -and $issue.body.Length -gt 250) { $issue.body.Substring(0, 250) + "..." } else { $issue.body }
+                            $bodySnippet = $bodySnippet -replace "`n", " " -replace "`r", ""
+                            $contextLines += "- #$($issue.number) [$state]: $title (Auszug: $bodySnippet)"
+                        }
+                    }
+                }
+                
+                if ($contextLines.Count -gt 0) {
+                    $promptIssuesContext = "`n`nHier sind die verfuegbaren Details zu den genannten Gate-Issues (aus dem lokalen Cache):`n" + ($contextLines -join "`n")
+                }
+            } catch {
+                Write-Warning "[PLANNING] Fehler beim Laden des Issue-Contexts fuer den Prompt: $_"
+            }
+        }
+
         $promptText = @"
 Du bist der Autopilot fuer das Vorce-Projekt (Rust Projection-Mapping Software).
 Repository: $repo
 
 Aktuell gibt es nur $($candidates.Count) offene, delegierbare Issues.
+
+WICHTIGE ANWEISUNG ZU MCP-TOOLS:
+Du hast hier alle benoetigten Informationen direkt im Text. 
+VERWENDE KEINE GITHUB-MCP-TOOLS (wie github_fetch_issue oder github_search_issues)! Das kostet nur unnoetig Zeit und Token. Arbeite AUSSCHLIESSLICH mit den Daten aus diesem Prompt.
 
 Plane strikt Richtung Release 1.0 Readiness. Massgeblicher Top-Level-Kompass ist:
 - #651 VOR-002_MAIs_Release-1.0-Readiness-Gate
@@ -151,6 +184,7 @@ Priorisiere neue Aufgaben nur aus diesen Gate-Lanes:
 4. NDI/Asset-Verfuegbarkeit: #107
 5. macOS-CI/Smoke-Validation: #43
 6. Packaging/Install-Sanity und Scope-Freeze: #652, #653
+$promptIssuesContext
 
 Schlage bis zu $($Config.max_issues_per_planning_cycle) konkrete, kleine Issues vor.
 Keine generischen TODO-, Refactoring- oder Performance-Issues erzeugen, wenn sie nicht direkt eines der Release-Gates beweisbar voranbringen.
