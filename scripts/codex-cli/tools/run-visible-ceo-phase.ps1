@@ -162,38 +162,36 @@ Write-Host ""
 # --- Execute CLI command with live output + file capture ---
 $exitCode = 0
 try {
-    $powerShellHost = if (Get-Command pwsh -ErrorAction SilentlyContinue) { (Get-Command pwsh).Source } else { (Get-Command powershell).Source }
     $hasPromptFile = -not [string]::IsNullOrWhiteSpace($PromptFile) -and (Test-Path $PromptFile)
     
-    $escapedPromptFile = $PromptFile -replace "'", "''"
-    $escapedCliArgsFile = $CliArgsFile -replace "'", "''"
-    $escapedSource = $cmdSource -replace "'", "''"
-
-    # Gemini CLI requires -p for headless mode (stdin piping starts interactive TUI).
-    # Detect if this is a gemini/claude-style CLI and inject the prompt as -p argument.
     $cliBaseName = [System.IO.Path]::GetFileNameWithoutExtension($cmdSource).ToLower()
     $needsPromptArg = $cliBaseName -in @("gemini", "claude")
 
     if ($hasPromptFile -and $needsPromptArg) {
-        # Inject prompt as -p argument into the args list (headless mode)
-        $cmdString = "`$promptText = Get-Content -LiteralPath '$escapedPromptFile' -Raw -Encoding UTF8; `$argsList += @('-p', `$promptText); & '$escapedSource' @argsList 2>&1"
-    } elseif ($hasPromptFile) {
-        # Other CLIs (e.g. codex): pipe prompt via stdin
-        $cmdString = "Get-Content -LiteralPath '$escapedPromptFile' -Raw -Encoding UTF8 | & '$escapedSource' @argsList 2>&1"
+        $promptText = Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8
+        $cliArgs += @("-p", $promptText)
+    }
+
+    Write-Host "[CEO] Analysiere und verarbeite Phase...$(if ($needsPromptArg) { ' (Headless -p Modus)' } else { '' })" -ForegroundColor Cyan
+    
+    # Start transcript to capture output to file while still showing it in the visible terminal
+    Start-Transcript -Path $OutputFile -Append:$false -Force | Out-Null
+    
+    if ($hasPromptFile -and -not $needsPromptArg) {
+        Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8 | & $cmdSource @cliArgs
     } else {
-        $cmdString = "& '$escapedSource' @argsList 2>&1"
+        & $cmdSource @cliArgs
     }
     
-    $fullCmd = "`$argsList = @(Get-Content -LiteralPath '$escapedCliArgsFile' -Raw -Encoding UTF8 | ConvertFrom-Json); $cmdString"
-    
-    Write-Host "[CEO] Analysiere und verarbeite Phase...$(if ($needsPromptArg) { ' (Headless -p Modus)' } else { '' })" -ForegroundColor Cyan
-    & $powerShellHost -NoProfile -ExecutionPolicy Bypass -Command $fullCmd > $OutputFile 2>&1
     $exitCode = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }
+    
+    Stop-Transcript | Out-Null
 } catch {
+    Stop-Transcript -ErrorAction SilentlyContinue | Out-Null
     $errMsg = $_.Exception.Message
     Write-Host ""
     Write-Host "[CEO] FEHLER: $errMsg" -ForegroundColor Red
-    Set-Content -Path $OutputFile -Value $errMsg -Encoding UTF8
+    Add-Content -Path $OutputFile -Value "`nFEHLER: $errMsg" -Encoding UTF8
     $exitCode = 1
 }
 
