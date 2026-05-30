@@ -183,7 +183,7 @@ while ($true) {
                 param($repos)
                 $allPRs = @()
                 foreach ($r in $repos) {
-                    $prsRaw = gh pr list --repo $r --state open --limit 1000 --json number,title,state,url,updatedAt,headRefName,baseRefName,mergeable,statusCheckRollup 2>$null
+                    $prsRaw = gh pr list --repo $r --state open --limit 1000 --json number,title,state,url,updatedAt,headRefName,baseRefName,mergeable,statusCheckRollup,isDraft 2>$null
                     if ($LASTEXITCODE -eq 0) {
                         $prData = $prsRaw | Out-String | ConvertFrom-Json -ErrorAction SilentlyContinue
                         if ($prData) {

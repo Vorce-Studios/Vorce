@@ -8,6 +8,7 @@ interface Props {
   sessions: ActiveSessions;
   pullRequests: PullRequest[];
   issues: GitHubIssue[];
+  julesSessions?: any[];
 }
 
 const PROVIDER_COLORS: Record<string, string> = {
@@ -49,15 +50,18 @@ function timeAgo(dateStr: string): string {
   return `vor ${days}d`;
 }
 
-export default function DashboardPage({ registry, sessions, pullRequests, issues }: Props) {
+export default function DashboardPage({ registry, sessions, pullRequests, issues, julesSessions }: Props) {
   const providers = registry.providers || {};
   const providerEntries = Object.entries(providers);
 
   const totalCostToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.estimated_cost_usd || 0), 0);
   const totalCallsToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.calls || 0), 0);
   const activeDelegations = sessions.active_delegations?.length || 0;
-  const openPRs = pullRequests.filter(pr => pr.state === 'OPEN').length;
-  const conflictingPRs = pullRequests.filter(pr => pr.mergeable === 'CONFLICTING').length;
+  const activeJulesSessions = julesSessions ? julesSessions.filter(s => s.state !== 'COMPLETED' && s.state !== 'FAILED').length : 0;
+  
+  // Filter PRs that are OPEN and NOT a Draft
+  const openPRs = pullRequests.filter(pr => pr.state === 'OPEN' && pr.isDraft !== true).length;
+  const conflictingPRs = pullRequests.filter(pr => pr.state === 'OPEN' && pr.isDraft !== true && pr.mergeable === 'CONFLICTING').length;
 
   const chartData = providerEntries
     .filter(([, p]) => p.enabled)
@@ -107,8 +111,8 @@ export default function DashboardPage({ registry, sessions, pullRequests, issues
         />
         <KPICard
           title="Jules Sessions"
-          value={String(activeDelegations)}
-          subtitle="aktive Delegierungen"
+          value={String(activeJulesSessions)}
+          subtitle="offen (Vorce & MapFlow)"
           icon={<Activity className="w-5 h-5" />}
           color="from-purple-500 to-violet-500"
         />

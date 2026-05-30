@@ -92,11 +92,11 @@ export default function App() {
 
   const isGlobalLoading = configLoading && registryLoading && sessionsLoading && issuesLoading && prLoading && historyLoading;
 
-  const renderActivePage = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} />;
-      case 'sessions':
+    const renderActivePage = () => {
+      switch (activeTab) {
+        case 'dashboard':
+          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} />;
+        case 'sessions':
         return <SessionsPage sessions={sessions} julesSessions={julesSessions} />;
       case 'issues':
         return <IssuesPage issues={issues} />;
