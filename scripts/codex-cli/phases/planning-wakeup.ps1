@@ -299,18 +299,17 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
     $currentSessions = [int]$julesProvider.usage_today.calls
     $maxDaily = [int]$Config.jules.max_daily_sessions
     $maxConcurrent = [int]$Config.jules.max_concurrent_sessions
-    $activeDelegations = $State.active_delegations.Count
+    $julesActiveDelegations = @($State.active_delegations | Where-Object { ($null -eq $_.agent_type) -or ($_.agent_type -eq "jules") }).Count
 
-    $availableSlots = [Math]::Min(
+    $julesAvailableSlots = [Math]::Min(
         ($maxDaily - $currentSessions),
-        ($maxConcurrent - $activeDelegations)
+        ($maxConcurrent - $julesActiveDelegations)
     )
-    $availableSlots = [Math]::Max(0, $availableSlots)
+    $julesAvailableSlots = [Math]::Max(0, $julesAvailableSlots)
 
-    $toPick = [Math]::Min($availableSlots, $Config.max_issues_per_planning_cycle)
-    $toPick = [Math]::Min($toPick, $candidates.Count)
+    $toPick = [Math]::Min($Config.max_issues_per_planning_cycle, $candidates.Count)
 
-    Write-Host "[PLANNING] Agent Slots: $availableSlots verfuegbar, delegiere $toPick Issues." -ForegroundColor Cyan
+    Write-Host "[PLANNING] Untersuche bis zu $toPick Issues. (Jules Slots: $julesAvailableSlots)" -ForegroundColor Cyan
 
     $ScriptDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
     $JulesScriptDir = Join-Path (Split-Path -Parent $ScriptDir) "jules"
@@ -339,6 +338,12 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
         }
 
         if ($targetAgent -eq "jules") {
+            if ($julesAvailableSlots -le 0) {
+                Write-Host "[PLANNING] Jules-Kontingent erschoepft, ueberspringe Issue #$issueNum." -ForegroundColor Yellow
+                continue
+            }
+            $julesAvailableSlots--
+            
             try {
                 $sessionResult = & "$JulesScriptDir\create-jules-session.ps1" `
                     -IssueNumber $issueNum `
