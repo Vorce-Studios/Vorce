@@ -29,20 +29,9 @@ function Resolve-DualCeos {
 
         if (Test-ProviderAvailable -Registry $QuotaRegistry -ProviderName $provName) {
             $cmdName = $QuotaRegistry.providers.$provName.command
-            $resolvedCmd = Get-Command $cmdName -ErrorAction SilentlyContinue
-            if ($resolvedCmd -and $resolvedCmd.CommandType -eq "ExternalScript" -and $resolvedCmd.Name -like "*.ps1") {
-                $cmdNameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($resolvedCmd.Name)
-                $cmdDir = Split-Path $resolvedCmd.Source
-                $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.cmd"
-                if (Test-Path $cmdFile) {
-                    $cmdName = $cmdFile
-                } else {
-                    $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.exe"
-                    if (Test-Path $cmdFile) {
-                        $cmdName = $cmdFile
-                    }
-                }
-            }
+            # Use the original command name as-is. Do NOT rewrite to .cmd/.exe —
+            # Windows .cmd files have an ~8191 char argument limit and escaping
+            # issues that break long deliberation prompts.
             $alpha = [ordered]@{
                 provider   = $provName
                 model_tier = $modelTier
@@ -69,20 +58,7 @@ function Resolve-DualCeos {
 
         if (Test-ProviderAvailable -Registry $QuotaRegistry -ProviderName $provName) {
             $cmdName = $QuotaRegistry.providers.$provName.command
-            $resolvedCmd = Get-Command $cmdName -ErrorAction SilentlyContinue
-            if ($resolvedCmd -and $resolvedCmd.CommandType -eq "ExternalScript" -and $resolvedCmd.Name -like "*.ps1") {
-                $cmdNameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($resolvedCmd.Name)
-                $cmdDir = Split-Path $resolvedCmd.Source
-                $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.cmd"
-                if (Test-Path $cmdFile) {
-                    $cmdName = $cmdFile
-                } else {
-                    $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.exe"
-                    if (Test-Path $cmdFile) {
-                        $cmdName = $cmdFile
-                    }
-                }
-            }
+            # Use the original command name as-is (see Alpha comment above)
             $beta = [ordered]@{
                 provider   = $provName
                 model_tier = $modelTier

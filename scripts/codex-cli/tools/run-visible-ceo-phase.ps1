@@ -152,30 +152,37 @@ $exitCode = 0
 try {
     $hasPromptFile = -not [string]::IsNullOrWhiteSpace($PromptFile) -and (Test-Path $PromptFile)
     
-    $cliBaseName = [System.IO.Path]::GetFileNameWithoutExtension($cmdSource).ToLower()
-    $needsPromptArg = $cliBaseName -in @("gemini", "claude")
+    $cliBaseName = [System.IO.Path]::GetFileNameWithoutExtension($CliCommand).ToLower()
+    $needsStdinPrompt = $cliBaseName -in @("gemini", "claude")
 
-    if ($hasPromptFile -and $needsPromptArg) {
+    # For gemini/claude: ALWAYS pipe prompt via stdin to avoid Windows
+    # command-line argument length limits (~8191 chars for .cmd files).
+    # Do NOT append -p as an argument — long prompts break .cmd execution.
+    if ($hasPromptFile -and $needsStdinPrompt) {
+        Write-Host "[CEO] Prompt wird via Stdin uebergeben ($(( Get-Item $PromptFile ).Length) Bytes)" -ForegroundColor DarkGray
+        # Add -p flag without value so gemini reads from stdin
+        $cliArgs += @("-p")
+    } elseif ($hasPromptFile -and -not $needsStdinPrompt) {
+        # For other providers: append prompt as argument
         $promptText = Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8
-        $cliArgs += @("-p", $promptText)
+        $cliArgs += @($promptText)
     }
 
-    Write-Host "[CEO] Analysiere und verarbeite Phase...$(if ($needsPromptArg) { ' (Headless -p Modus)' } else { '' })" -ForegroundColor Cyan
+    Write-Host "[CEO] Analysiere und verarbeite Phase...$(if ($needsStdinPrompt) { ' (Stdin-Pipe Modus)' } else { '' })" -ForegroundColor Cyan
+    Write-Host "[CEO] Befehl: $CliCommand" -ForegroundColor DarkGray
+    Write-Host "[CEO] Args: $($cliArgs.Count) Parameter" -ForegroundColor DarkGray
     
-    # Start transcript to capture output to file while still showing it in the visible terminal
-    Start-Transcript -Path $OutputFile -Append:$false -Force | Out-Null
-    
-    if ($hasPromptFile -and -not $needsPromptArg) {
-        Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8 | & $cmdSource @cliArgs
+    # Use process execution with Tee-Object instead of Start-Transcript.
+    # Start-Transcript can interfere with CLI tools that use terminal escape sequences.
+    if ($hasPromptFile -and $needsStdinPrompt) {
+        # Pipe prompt via stdin — this is the critical fix for Gemini CLI
+        Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8 | & $CliCommand @cliArgs 2>&1 | Tee-Object -FilePath $OutputFile
     } else {
-        & $cmdSource @cliArgs
+        & $CliCommand @cliArgs 2>&1 | Tee-Object -FilePath $OutputFile
     }
     
     $exitCode = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }
-    
-    Stop-Transcript | Out-Null
 } catch {
-    Stop-Transcript -ErrorAction SilentlyContinue | Out-Null
     $errMsg = $_.Exception.Message
     Write-Host ""
     Write-Host "[CEO] FEHLER: $errMsg" -ForegroundColor Red
