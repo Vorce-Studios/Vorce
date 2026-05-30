@@ -4449,6 +4449,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "glam"
+version = "0.33.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8fb167719045debebe9f532320accc7b5c993c5a3b813f5696a11d5ca7bdc57b"
+dependencies = [
+ "serde_core",
+]
+
+[[package]]
 name = "glob"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4547,12 +4556,13 @@ dependencies = [
 
 [[package]]
 name = "grafton-ndi"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83fc4d5740ce73851ed15845aba8e26088bfc70f51c62ad00b883c20c09cc773"
+checksum = "427191af610cfdb20d7df4edaa70bc94cbf68c16049ceedfed0e906e99079e68"
 dependencies = [
+ "base64",
  "bindgen",
- "lodepng",
+ "jpeg-encoder",
  "num_enum",
  "once_cell",
  "png 0.18.1",
@@ -5418,6 +5428,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "jpeg-encoder"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b0b36cbb4e6704f12f5b5d7b01dac593982c6550859ebd5a66fb15c9ea27fd5"
+
+[[package]]
 name = "js-sys"
 version = "0.3.97"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5572,9 +5588,9 @@ checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
 name = "libmpv2"
-version = "5.0.3"
+version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88dc8432d3de09ed6e343488d6b208467db6801fb41971a1f726fa2248302fe5"
+checksum = "3f3d44c1c29b866d44453249d1d8b2822d891fdabd08359a5b85bb6944445e70"
 dependencies = [
  "libmpv2-sys",
 ]
@@ -5671,18 +5687,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "224399e74b87b5f3557511d98dff8b14089b3dadafcab6bb93eab67d3aace965"
 dependencies = [
  "scopeguard",
-]
-
-[[package]]
-name = "lodepng"
-version = "3.12.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe7982db11054edc023a1b424dddcc65be18f71fa46ec6bde2efcfc1fb6b22da"
-dependencies = [
- "crc32fast",
- "flate2",
- "libc",
- "rgb",
 ]
 
 [[package]]
@@ -8110,9 +8114,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.149"
+version = "1.0.150"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83fc039473c5595ace860d8c4fafa220ff474b3fc6bfdb4293327f1a37e94d86"
+checksum = "e8014e44b4736ed0538adeecded0fce2a272f22dc9578a7eb6b2d9993c74cfb9"
 dependencies = [
  "itoa",
  "memchr",
@@ -8820,9 +8824,9 @@ dependencies = [
 
 [[package]]
 name = "sysinfo"
-version = "0.39.0"
+version = "0.39.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd9f9fe3d2b7b75cf4f2805e5b9926e8ac47146667b16b86298c4a8bf08cc469"
+checksum = "14311e7e9a03114cd4b65eedd54e8fed2945e17f08586ae97ef53bc0669f9581"
 dependencies = [
  "libc",
  "memchr",
@@ -9240,9 +9244,9 @@ dependencies = [
 
 [[package]]
 name = "tower-http"
-version = "0.6.10"
+version = "0.6.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68d6fdd9f81c2819c9a8b0e0cd91660e7746a8e6ea2ba7c6b2b057985f6bcb51"
+checksum = "4cfcf7e2740e6fc6d4d688b4ef00650406bb94adf4731e43c096c3a19fe40840"
 dependencies = [
  "bitflags 2.11.1",
  "bytes",
@@ -9748,7 +9752,7 @@ dependencies = [
  "egui_extras",
  "ffmpeg-next",
  "futures",
- "glam 0.32.1",
+ "glam 0.33.0",
  "hound",
  "hyper",
  "image 0.24.9",
@@ -9764,7 +9768,7 @@ dependencies = [
  "rustfft",
  "serde",
  "serde_json",
- "sysinfo 0.39.0",
+ "sysinfo 0.39.2",
  "thiserror 2.0.18",
  "tokio",
  "toml 1.1.2+spec-1.1.0",
@@ -9841,7 +9845,7 @@ dependencies = [
  "cpal 0.17.1",
  "crossbeam-channel",
  "dirs",
- "glam 0.32.1",
+ "glam 0.33.0",
  "hound",
  "image 0.24.9",
  "num-complex",
@@ -9953,7 +9957,7 @@ dependencies = [
  "criterion",
  "crossbeam-channel",
  "futures-channel",
- "glam 0.32.1",
+ "glam 0.33.0",
  "image 0.24.9",
  "notify",
  "parking_lot",
@@ -9988,7 +9992,7 @@ dependencies = [
  "egui_node_editor",
  "fluent",
  "fluent-langneg 0.14.2",
- "glam 0.32.1",
+ "glam 0.33.0",
  "image 0.24.9",
  "once_cell",
  "parking_lot",
@@ -9999,7 +10003,7 @@ dependencies = [
  "rustc-hash 2.1.2",
  "serde",
  "serde_json",
- "sysinfo 0.39.0",
+ "sysinfo 0.39.2",
  "tempfile",
  "thiserror 2.0.18",
  "tiny-skia 0.12.0",

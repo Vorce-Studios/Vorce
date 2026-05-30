@@ -357,7 +357,11 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                     }
 
                     // Get the view back
-                    let view_arc = app.ndi_offscreen_textures.get(&pid).unwrap().1.clone();
+                    let view_arc = if let Some(tex) = app.ndi_offscreen_textures.get(&pid) {
+                        tex.1.clone()
+                    } else {
+                        continue;
+                    };
                     let view = view_arc.as_ref();
 
                     let mut encoder = app.backend.device.create_command_encoder(
@@ -418,9 +422,14 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                     }
 
                     if let Some((buffer, mapping_requested)) = app.ndi_readbacks.get_mut(&pid) {
+                        let texture = if let Some(tex) = app.ndi_offscreen_textures.get(&pid) {
+                            &tex.0
+                        } else {
+                            continue;
+                        };
                         encoder.copy_texture_to_buffer(
                             wgpu::TexelCopyTextureInfo {
-                                texture: &app.ndi_offscreen_textures.get(&pid).unwrap().0,
+                                texture,
                                 mip_level: 0,
                                 origin: wgpu::Origin3d::ZERO,
                                 aspect: wgpu::TextureAspect::All,

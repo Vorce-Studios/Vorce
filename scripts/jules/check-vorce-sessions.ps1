@@ -10,20 +10,27 @@ $headers = @{
     'Content-Type' = 'application/json'
 }
 
-$response = Invoke-RestMethod -Uri 'https://jules.googleapis.com/v1alpha/sessions?pageSize=50' -Headers $headers -Method Get
+$response = Invoke-RestMethod -Uri 'https://jules.googleapis.com/v1alpha/sessions?pageSize=100' -Headers $headers -Method Get
 
 $sessions = $response.sessions | Where-Object {
-    $repo = $_.sourceContext.githubRepoContext.repository
     $source = $_.sourceContext.source
-    ($repo -like '*Vorce*' -or $source -like '*Vorce*') -and ($repo -notlike '*MrLongNight*')
+    $source -like '*Vorce*' -or $source -like '*MapFlow*'
 }
 
-Write-Host "Found $($sessions.Count) Vorce-Studios/Vorce sessions:"
+Write-Host "Found $($sessions.Count) Vorce & MapFlow sessions:"
 Write-Host ""
 
 foreach ($session in $sessions) {
-    $repo = $session.sourceContext.githubRepoContext.repository
-    $issueNum = $session.sourceContext.githubRepoContext.issueNumber
+    $source = $session.sourceContext.source
+    $repo = if ($source -match "sources/github/(?<name>.*)") { $Matches["name"] } else { $source }
+    $issueNum = $null
+    foreach ($candidate in @([string]$session.title, [string]$session.prompt)) {
+        if ([string]::IsNullOrWhiteSpace($candidate)) { continue }
+        if ($candidate -match "Issue\s+#(?<id>\d+)") {
+            $issueNum = [int]$Matches["id"]
+            break
+        }
+    }
     $state = $session.state
     $updatedAt = $session.updateTime
     $url = $session.url

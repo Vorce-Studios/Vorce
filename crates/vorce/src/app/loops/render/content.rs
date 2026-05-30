@@ -32,7 +32,7 @@ pub(crate) struct RenderContext<'a> {
 use super::texture_gen::{ensure_missing_texture_fallback, generate_grid_texture};
 
 pub(crate) fn render_content(
-    mut ctx: RenderContext<'_>,
+    ctx: RenderContext<'_>,
     output_id: u64,
     encoder: &mut wgpu::CommandEncoder,
     view: &wgpu::TextureView,

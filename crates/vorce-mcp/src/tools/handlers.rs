@@ -23,7 +23,7 @@ pub fn validate_path_with_extensions(
 
     if let Some(ext) = path.extension() {
         if let Some(ext_str) = ext.to_str() {
-            if !allowed_extensions.contains(&ext_str.to_lowercase().as_str()) {
+            if !allowed_extensions.iter().any(|&allowed| ext_str.eq_ignore_ascii_case(allowed)) {
                 return Err(format!(
                     "Extension '{}' is not allowed. Allowed: {:?}",
                     ext_str, allowed_extensions

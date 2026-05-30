@@ -27,10 +27,25 @@ function Resolve-CliProvider {
         $modelTier = if ($parts.Count -gt 1) { $parts[1] } else { "default" }
 
         if (Test-ProviderAvailable -Registry $QuotaRegistry -ProviderName $providerName) {
+            $cmdName = $QuotaRegistry.providers.$providerName.command
+            $resolvedCmd = Get-Command $cmdName -ErrorAction SilentlyContinue
+            if ($resolvedCmd -and $resolvedCmd.CommandType -eq "ExternalScript" -and $resolvedCmd.Name -like "*.ps1") {
+                $cmdNameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($resolvedCmd.Name)
+                $cmdDir = Split-Path $resolvedCmd.Source
+                $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.cmd"
+                if (Test-Path $cmdFile) {
+                    $cmdName = $cmdFile
+                } else {
+                    $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.exe"
+                    if (Test-Path $cmdFile) {
+                        $cmdName = $cmdFile
+                    }
+                }
+            }
             return [ordered]@{
                 provider   = $providerName
                 model_tier = $modelTier
-                command    = $QuotaRegistry.providers.$providerName.command
+                command    = $cmdName
             }
         }
 
@@ -210,10 +225,39 @@ function Invoke-CliTask {
         [Parameter(Mandatory)][string]$TaskType,
         [Parameter(Mandatory)][string]$Prompt,
         [string]$WorkingDirectory,
-        [switch]$DryRun
+        [string]$MemoryBlock,
+        [switch]$DryRun,
+        [string]$ProviderOverride,
+        [string]$ModelTierOverride
     )
 
-    $route = Resolve-CliProvider -QuotaRegistry $QuotaRegistry -TaskType $TaskType
+    # Prepend memory block if provided
+    if (-not [string]::IsNullOrWhiteSpace($MemoryBlock)) {
+        $Prompt = $MemoryBlock + $Prompt
+    }
+
+    if ([string]::IsNullOrWhiteSpace($ProviderOverride)) {
+        $route = Resolve-CliProvider -QuotaRegistry $QuotaRegistry -TaskType $TaskType
+    } else {
+        $cmdName = $QuotaRegistry.providers.$ProviderOverride.command
+        $resolvedCmd = Get-Command $cmdName -ErrorAction SilentlyContinue
+        if ($resolvedCmd -and $resolvedCmd.CommandType -eq "ExternalScript" -and $resolvedCmd.Name -like "*.ps1") {
+            $cmdNameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($resolvedCmd.Name)
+            $cmdDir = Split-Path $resolvedCmd.Source
+            $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.cmd"
+            if (Test-Path $cmdFile) {
+                $cmdName = $cmdFile
+            } elseif (Test-Path (Join-Path $cmdDir "$cmdNameWithoutExt.exe")) {
+                $cmdName = Join-Path $cmdDir "$cmdNameWithoutExt.exe"
+            }
+        }
+        $route = [ordered]@{
+            provider   = $ProviderOverride
+            model_tier = if ([string]::IsNullOrWhiteSpace($ModelTierOverride)) { "default" } else { $ModelTierOverride }
+            command    = $cmdName
+        }
+    }
+
     if ($null -eq $route) {
         return [ordered]@{
             success  = $false

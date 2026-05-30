@@ -125,8 +125,10 @@ impl ImageSequenceDecoder {
     /// Check if a file is a supported image format
     pub fn is_supported_image(path: &Path) -> bool {
         if let Some(ext) = path.extension() {
-            let ext_str = ext.to_string_lossy().to_lowercase();
-            matches!(ext_str.as_str(), "png" | "jpg" | "jpeg" | "tif" | "tiff" | "bmp" | "webp")
+            let ext_str = ext.to_string_lossy();
+            ["png", "jpg", "jpeg", "tif", "tiff", "bmp", "webp"]
+                .iter()
+                .any(|&s| ext_str.eq_ignore_ascii_case(s))
         } else {
             false
         }

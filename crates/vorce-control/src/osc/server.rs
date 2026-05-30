@@ -17,6 +17,12 @@ use crate::{error::ControlError, Result};
 #[cfg(feature = "osc")]
 const MAX_PENDING_PACKETS: usize = 1024;
 
+/// Maximum size of an OSC UDP packet in bytes.
+/// Reject packets larger than this to prevent memory exhaustion
+/// during parsing of maliciously crafted large packets.
+#[cfg(feature = "osc")]
+const MAX_PACKET_SIZE: usize = 8192;
+
 /// OSC server for receiving control messages
 pub struct OscServer {
     #[cfg(feature = "osc")]
@@ -76,17 +82,27 @@ impl OscServer {
 
         loop {
             match socket.recv_from(&mut buf) {
-                Ok((size, addr)) => match decoder::decode_udp(&buf[..size]) {
-                    Ok((_, packet)) => {
-                        if sender.send(packet).is_err() {
-                            // Stop the thread if the receiver has disconnected
-                            break;
+                Ok((size, addr)) => {
+                    if size > MAX_PACKET_SIZE {
+                        tracing::warn!(
+                            "Dropped oversized OSC packet from {} ({} bytes)",
+                            addr,
+                            size
+                        );
+                        continue;
+                    }
+                    match decoder::decode_udp(&buf[..size]) {
+                        Ok((_, packet)) => {
+                            if sender.send(packet).is_err() {
+                                // Stop the thread if the receiver has disconnected
+                                break;
+                            }
+                        }
+                        Err(e) => {
+                            tracing::warn!("Failed to decode OSC packet from {}: {}", addr, e);
                         }
                     }
-                    Err(e) => {
-                        tracing::warn!("Failed to decode OSC packet from {}: {}", addr, e);
-                    }
-                },
+                }
                 Err(e) => {
                     tracing::error!("OSC socket error: {}", e);
                     break;

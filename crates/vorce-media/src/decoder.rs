@@ -83,7 +83,6 @@ pub enum HwAccelType {
 #[cfg(test)]
 mod tests {
     use super::*;
-
     #[test]
     fn test_yuv420p_conversion() {
         // Create a simple 2x2 YUV420P frame (white pixel)

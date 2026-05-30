@@ -125,3 +125,7 @@ ops/paperclip/
 scripts/paperclip/
 
 autopilot-state.json
+scripts/codex-cli/autopilot-session-lock.md
+scripts/codex-cli/autopilot-tasks.md
+scripts/codex-cli/quota-registry.json
+scripts/codex-cli/tmp/
