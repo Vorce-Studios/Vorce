@@ -200,13 +200,14 @@ export default function DashboardPage({ registry, sessions, pullRequests }: Prop
           <h3 className="text-lg font-semibold text-slate-200 mb-4">Aktive Workstreams</h3>
           <div className="space-y-4">
             {sessions.active_delegations.map((d) => {
-              const issue = issues?.find(i => i.number.toString() === d.issue_number);
+              const issueNumStr = String(d.issue_number || '');
+              const issue = issues?.find(i => String(i.number) === issueNumStr);
               let pr = null;
               if (d.pr_url) {
                 pr = pullRequests?.find(p => p.url === d.pr_url);
               }
               if (!pr) {
-                pr = pullRequests?.find(p => p.title.includes(`#${d.issue_number}`) || p.headRefName.includes(d.issue_number));
+                pr = pullRequests?.find(p => p.title?.includes(`#${issueNumStr}`) || p.headRefName?.includes(issueNumStr));
               }
               
               const hasFailingChecks = pr?.statusCheckRollup?.some((c: any) => c.conclusion === 'FAILURE' || c.status === 'FAILURE');
