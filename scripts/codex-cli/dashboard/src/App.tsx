@@ -59,7 +59,8 @@ const defaultActiveSessions: ActiveSessions = {
   active_delegations: [],
   review_queue: [],
   autopilot_created_issues: [],
-  completed_this_session: []
+  completed_this_session: [],
+  deliberation_log: []
 };
 
 export default function App() {
@@ -71,8 +72,8 @@ export default function App() {
   const { data: sessions, loading: sessionsLoading, refetch: refetchSessions } = useData<ActiveSessions>('/active-sessions.json', defaultActiveSessions);
   const { data: issues, loading: issuesLoading, refetch: refetchIssues } = useData<GitHubIssue[]>('/github-issues.json', []);
   const { data: pullRequests, loading: prLoading, refetch: refetchPRs } = useData<PullRequest[]>('/pull-requests.json', []);
-  const { data: julesSessions, loading: julesSessionsLoading, refetch: refetchJulesSessions } = useData<any[]>('/jules-sessions.json', []);
-  const { data: memoryStore, loading: memoryLoading, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
+  const { data: julesSessions, refetch: refetchJulesSessions } = useData<any[]>('/jules-sessions.json', []);
+  const { data: memoryStore, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
   const { data: history, loading: historyLoading, refetch: refetchHistory } = useData<any[]>('/data.json', []);
 
   const refetchAll = () => {

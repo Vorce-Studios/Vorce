@@ -90,11 +90,11 @@ function Invoke-MonitoringWakeUp {
                     }
                     $issueBody += "`nBitte alle Konflikte in einer einzigen Jules-Session aufloesen (Branches auschecken, main mergen, Konflikte beheben, pushen)."
 
-                    $newIssueUrl = gh issue create --repo $repo --title $issueTitle --body $issueBody --label "jules-task,priority-high,bug" 2>&1
+                    $newIssueUrl = gh issue create --repo $repo --title $issueTitle --body $issueBody --label "jules-task,priority: high,bug" 2>&1
                     if ($LASTEXITCODE -eq 0 -and $newIssueUrl -match "/issues/(\d+)") {
                         $newIssueNum = [int]$Matches[1]
                         Write-Host "[MONITOR]   -> Master-Issue #$newIssueNum erfolgreich erstellt!" -ForegroundColor Green
-                        
+
                         if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
                         $State.autopilot_created_issues += [ordered]@{ tag = $conflictTag; issue_number = $newIssueNum; created_at = (Get-Date -Format 'o') }
                         Save-AutopilotState -State $State
@@ -173,7 +173,7 @@ function Invoke-MonitoringWakeUp {
                         
                         # In Ausnahmefällen, wenn Jules es nicht selbst schafft, eskalieren wir, damit das im Planning-Modus/CEO-Check analysiert wird.
                         if (-not $DryRun.IsPresent) {
-                            Escalate-Delegation -State $State -IssueNumber $issueNum -Reason "FEEDBACK_TIMEOUT_CI_OR_BLOCKER"
+                            Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FEEDBACK_TIMEOUT_CI_OR_BLOCKER"
                         }
                     }
                 }
@@ -181,7 +181,7 @@ function Invoke-MonitoringWakeUp {
                     Write-Host "[MONITOR]   -> FAILED! Logge Fehler und eskaliere." -ForegroundColor Red
                     Add-ErrorLog -State $State -Message "Jules session failed for #$issueNum" -Context "Session: $sessionId"
                     if (-not $DryRun.IsPresent) {
-                        Escalate-Delegation -State $State -IssueNumber $issueNum -Reason "FAILED"
+                        Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FAILED"
                     } else {
                         Complete-Delegation -State $State -IssueNumber $issueNum -Result "failed"
                     }

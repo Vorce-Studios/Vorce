@@ -434,7 +434,7 @@ function Add-DeliberationLog {
     Save-AutopilotState -State $State
 }
 
-function Escalate-Delegation {
+function Set-DelegationEscalation {
     param(
         [Parameter(Mandatory)][object]$State,
         [Parameter(Mandatory)][int]$IssueNumber,
