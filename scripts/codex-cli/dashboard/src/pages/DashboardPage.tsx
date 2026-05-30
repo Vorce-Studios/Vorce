@@ -9,6 +9,7 @@ interface Props {
   pullRequests: PullRequest[];
   issues: GitHubIssue[];
   julesSessions?: any[];
+  onRefetch?: () => void;
 }
 
 const PROVIDER_COLORS: Record<string, string> = {
@@ -79,8 +80,6 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
 
   const totalCostToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.estimated_cost_usd || 0), 0);
   const totalCallsToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.calls || 0), 0);
-  const activeDelegations = sessions.active_delegations?.length || 0;
-
   // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
   const activeJulesSessions = julesSessions ? julesSessions.filter(s =>
       s.repo.includes('Vorce') &&
@@ -147,10 +146,10 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
                   <button
                     onClick={() => handleResolveAlert(alert.topic)}
                     disabled={resolving === alert.topic}
-                    className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-medium rounded-md bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 transition-colors border border-rose-500/30 disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 transition-colors border border-emerald-500/30 disabled:opacity-50"
                   >
-                    <CheckCircle className="w-3 h-3" />
-                    {resolving === alert.topic ? 'Wird gelöst...' : 'Bestätigen & Schließen'}
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    {resolving === alert.topic ? 'Wird geschlossen...' : 'Bestätigen & Schließen'}
                   </button>
                 </div>
                 <p className="text-sm text-rose-200/80 whitespace-pre-wrap">{alert.context}</p>
@@ -276,15 +275,3 @@ function KPICard({ title, value, subtitle, icon, color }: {
   );
 }
 
-function JulesStateBadge({ state }: { state: string }) {
-  const configs: Record<string, { bg: string; text: string; label: string }> = {
-    'IN_PROGRESS': { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'In Progress' },
-    'AWAITING_USER_FEEDBACK': { bg: 'bg-amber-500/20', text: 'text-amber-400', label: 'Feedback' },
-    'COMPLETED': { bg: 'bg-emerald-500/20', text: 'text-emerald-400', label: 'Fertig' },
-    'FAILED': { bg: 'bg-red-500/20', text: 'text-red-400', label: 'Fehlgeschlagen' },
-  };
-  const cfg = configs[state] || { bg: 'bg-slate-500/20', text: 'text-slate-400', label: state };
-  return (
-    <span className={`badge ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
-  );
-}

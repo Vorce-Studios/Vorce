@@ -57,8 +57,7 @@ const defaultActiveSessions: ActiveSessions = {
   active_delegations: [],
   review_queue: [],
   autopilot_created_issues: [],
-  completed_this_session: [],
-  deliberation_log: []
+  completed_this_session: []
 };
 
 export default function App() {
@@ -93,7 +92,7 @@ export default function App() {
     const renderActivePage = () => {
       switch (activeTab) {
         case 'dashboard':
-          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} />;
+          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} onRefetch={refetchAll} />;
         case 'workstreams':
           return <WorkstreamsPage issues={issues} sessions={sessions} pullRequests={pullRequests} julesSessions={julesSessions} />;
         case 'reporting':

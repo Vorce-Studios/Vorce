@@ -269,7 +269,6 @@ export default defineConfig({
                 if (payload.action === 'resolve' && payload.topic) {
                   const statePath = path.resolve(__dirname, '../autopilot-state.json');
                   const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
-
                   if (fs.existsSync(statePath)) {
                     const state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
                     if (state.decisions_pending && Array.isArray(state.decisions_pending)) {
@@ -282,7 +281,7 @@ export default defineConfig({
                   res.end(JSON.stringify({ status: 'ok', message: 'Alert resolved successfully' }));
                 } else {
                   res.writeHead(400, { 'Content-Type': 'application/json' });
-                  res.end(JSON.stringify({ status: 'error', message: 'Invalid payload' }));
+                  res.end(JSON.stringify({ status: 'error', message: 'Invalid payload: need action=resolve and topic' }));
                 }
               } catch (err) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
