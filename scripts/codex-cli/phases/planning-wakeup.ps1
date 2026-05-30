@@ -123,7 +123,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
 
     # Get available coding agents
     $availableAgents = @("jules")
-    $QuotaRegistry.providers.Keys | ForEach-Object {
+    $QuotaRegistry.providers.PSObject.Properties.Name | ForEach-Object {
         $cmd = $QuotaRegistry.providers.$_.command
         if ($cmd -notmatch "gh|codex" -and $_ -ne "jules") { $availableAgents += $_ }
     }
