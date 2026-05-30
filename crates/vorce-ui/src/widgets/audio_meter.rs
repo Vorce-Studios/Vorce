@@ -348,8 +348,8 @@ fn draw_digital_stereo(
     );
 
     // Draw Bars
-    draw_horizontal_led_bar(painter, l_rect, db_left, peak_l);
-    draw_horizontal_led_bar(painter, r_rect, db_right, peak_r);
+    draw_horizontal_led_bar(ui, painter, l_rect, db_left, peak_l);
+    draw_horizontal_led_bar(ui, painter, r_rect, db_right, peak_r);
 
     // Draw Scale
     draw_horizontal_scale(ui, painter, scale_rect);
@@ -371,7 +371,7 @@ fn draw_digital_stereo(
     );
 }
 
-fn draw_horizontal_led_bar(painter: &egui::Painter, rect: Rect, db: f32, peak: f32) {
+fn draw_horizontal_led_bar(ui: &egui::Ui, painter: &egui::Painter, rect: Rect, db: f32, peak: f32) {
     let segment_count = 40;
     let _padding = 1.0;
     let total_w = rect.width();
@@ -391,11 +391,11 @@ fn draw_horizontal_led_bar(painter: &egui::Painter, rect: Rect, db: f32, peak: f
             && peak < (threshold_db + (max_db - min_db) / segment_count as f32);
 
         let color = if threshold_db >= 0.0 {
-            Color32::from_rgb(255, 50, 50)
+            ui.visuals().error_fg_color
         } else if threshold_db >= -10.0 {
-            Color32::from_rgb(255, 200, 0)
+            ui.visuals().warn_fg_color
         } else {
-            Color32::from_rgb(0, 255, 0)
+            crate::theme::colors::MINT_ACCENT
         };
 
         let final_color = if active {
@@ -403,7 +403,7 @@ fn draw_horizontal_led_bar(painter: &egui::Painter, rect: Rect, db: f32, peak: f
         } else if is_peak {
             color.linear_multiply(0.8) // Peak indicator is slightly dimmed but clearly visible
         } else {
-            Color32::from_rgba_premultiplied(color.r() / 6, color.g() / 6, color.b() / 6, 255)
+            color.linear_multiply(0.15)
         };
 
         let x = rect.min.x + i as f32 * (seg_w + 1.0);

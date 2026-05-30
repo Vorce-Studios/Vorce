@@ -302,7 +302,7 @@ mod tests {
     #[test]
     fn test_icon_button() {
         test_ui(|ui| {
-            icon_button(ui, "Test Icon", Color32::WHITE, Color32::WHITE, false);
+            icon_button(ui, "Test Icon", Color32::TRANSPARENT, Color32::TRANSPARENT, false);
         });
     }
 
