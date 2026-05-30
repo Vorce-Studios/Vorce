@@ -17,8 +17,7 @@ function Invoke-PlanningWakeUp {
     # Define script block to fetch candidates to avoid duplication
     $GetCandidates = {
         Write-Host "[PLANNING] Lade offene Issues..." -ForegroundColor Cyan
-        $includeLabels = ($Config.issue_filters.include_labels | ForEach-Object { "--label `"$_`"" }) -join " "
-        $excludeLabels = $Config.issue_filters.exclude_labels
+
 
         $issuesRaw = gh issue list --repo $repo --state open --json number,title,labels,assignees,body --limit 50 2>&1
         $issues = @()
@@ -124,8 +123,11 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
     # Get available coding agents
     $availableAgents = @("jules")
     $QuotaRegistry.providers.PSObject.Properties.Name | ForEach-Object {
-        $cmd = $QuotaRegistry.providers.$_.command
-        if ($cmd -notmatch "gh|codex" -and $_ -ne "jules") { $availableAgents += $_ }
+        $providerObj = $QuotaRegistry.providers.$_
+        if ($providerObj.PSObject.Properties.Name -contains "command") {
+            $cmd = $providerObj.command
+            if ($cmd -notmatch "gh|codex" -and $_ -ne "jules") { $availableAgents += $_ }
+        }
     }
     $agentsStr = $availableAgents -join ", "
 
