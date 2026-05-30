@@ -67,11 +67,11 @@ impl AppUI {
                 // Speed control
                 let old_speed = self.playback_speed;
                 ui.add(
-                    egui::Slider::new(&mut self.playback_speed, 0.1..=2.0)      
+                    egui::Slider::new(&mut self.playback_speed, 0.1..=2.0)
                         .text(self.i18n.t("label-speed")),
                 );
                 if (self.playback_speed - old_speed).abs() > 0.001 {
-                    self.actions.push(UIAction::SetSpeed(self.playback_speed)); 
+                    self.actions.push(UIAction::SetSpeed(self.playback_speed));
                 }
 
                 // Loop control
@@ -127,14 +127,14 @@ impl AppUI {
                     .show(ui, |ui| {
                         ui.horizontal(|ui| {
                             ui.label(
-                                egui::RichText::new(format!("FPS: {:.0}", fps)) 
-                                    .color(crate::core::theme::colors::MINT_ACCENT)   
+                                egui::RichText::new(format!("FPS: {:.0}", fps))
+                                    .color(crate::core::theme::colors::MINT_ACCENT)
                                     .strong(),
                             );
                             ui.separator();
                             ui.label(
                                 egui::RichText::new(format!("{:.1}ms", frame_time_ms))
-                                    .color(crate::core::theme::colors::CYAN_ACCENT),  
+                                    .color(crate::core::theme::colors::CYAN_ACCENT),
                             );
                         });
                     });
@@ -161,12 +161,12 @@ impl AppUI {
         }
 
         // Determine context priority: Module > Layer > Output
-        let mut context = crate::panels::inspector::InspectorContext::None;     
+        let mut context = crate::panels::inspector::InspectorContext::None;
         let mut module_part_snapshot = None;
 
         // 1. Module Selection
         if self.show_module_canvas {
-            if let Some(module_id) = self.module_canvas.active_module_id {      
+            if let Some(module_id) = self.module_canvas.active_module_id {
                 // Collect shared media IDs before borrowing module mutably from manager
                 let shared_media_ids: Vec<String> =
                     module_manager.shared_media.items.keys().cloned().collect();
@@ -226,9 +226,9 @@ impl AppUI {
 
         let action = self.inspector_panel.show(ui, context, &self.i18n, &mut self.actions);
 
-        if let Some((module_id, part_id, before_part)) = module_part_snapshot { 
+        if let Some((module_id, part_id, before_part)) = module_part_snapshot {
             let mut inspector_changed = false;
-            if let Some(module) = module_manager.get_module_mut(module_id) {    
+            if let Some(module) = module_manager.get_module_mut(module_id) {
                 if let Some(after_part) =
                     module.parts.iter().find(|part| part.id == part_id).cloned()
                 {
@@ -254,7 +254,7 @@ impl AppUI {
                 crate::panels::inspector::InspectorAction::UpdateMappingMesh(id, mesh) => {
                     self.actions.push(crate::UIAction::UpdateMappingMesh(id, mesh));
                 }
-                crate::panels::inspector::InspectorAction::RequestClose => {    
+                crate::panels::inspector::InspectorAction::RequestClose => {
                     self.show_inspector = false;
                     self.user_config.show_inspector = false;
                     let _ = self.user_config.save();
@@ -275,7 +275,7 @@ impl AppUI {
         egui::Window::new(self.i18n.t("panel-master")).default_size([360.0, 300.0]).show(
             ctx,
             |ui: &mut egui::Ui| {
-                self.render_master_controls_embedded(ui, layer_manager);        
+                self.render_master_controls_embedded(ui, layer_manager);
             },
         );
     }
@@ -286,16 +286,17 @@ impl AppUI {
         ui: &mut egui::Ui,
         layer_manager: &mut vorce_core::LayerManager,
     ) {
-        // Determine learning state (capture values to avoid borrow conflict)   
+        // Determine learning state (capture values to avoid borrow conflict)
         let is_learning = self.is_midi_learn_mode;
-        let last_active_element = self.controller_overlay.last_active_element.clone();
-        let last_active_time = self.controller_overlay.last_active_time;        
+        // ⚡ Bolt: Vermeide .clone() (und damit Heap-Allokationen) pro Frame im UI-Render-Loop
+        let last_active_element = self.controller_overlay.last_active_element.as_ref();
+        let last_active_time = self.controller_overlay.last_active_time;
 
         let composition = &mut layer_manager.composition;
 
         let old_master_opacity = composition.master_opacity;
         let response = ui.add(
-            egui::Slider::new(&mut composition.master_opacity, 0.0..=1.0)       
+            egui::Slider::new(&mut composition.master_opacity, 0.0..=1.0)
                 .text(self.i18n.t("label-master-opacity")),
         );
         Self::midi_learn_helper(
@@ -303,18 +304,18 @@ impl AppUI {
             &response,
             vorce_control::target::ControlTarget::MasterOpacity,
             is_learning,
-            last_active_element.as_ref(),
+            last_active_element,
             last_active_time,
             &mut self.actions,
         );
-        if (composition.master_opacity - old_master_opacity).abs() > 0.001 {    
+        if (composition.master_opacity - old_master_opacity).abs() > 0.001 {
             self.actions.push(UIAction::SetMasterOpacity(composition.master_opacity));
         }
 
         // Master Speed
         let old_master_speed = composition.master_speed;
         let response = ui.add(
-            egui::Slider::new(&mut composition.master_speed, 0.1..=10.0)        
+            egui::Slider::new(&mut composition.master_speed, 0.1..=10.0)
                 .text(self.i18n.t("label-master-speed")),
         );
         Self::midi_learn_helper(
@@ -322,11 +323,11 @@ impl AppUI {
             &response,
             vorce_control::target::ControlTarget::PlaybackSpeed(None),
             is_learning,
-            last_active_element.as_ref(),
+            last_active_element,
             last_active_time,
             &mut self.actions,
         );
-        if (composition.master_speed - old_master_speed).abs() > 0.001 {        
+        if (composition.master_speed - old_master_speed).abs() > 0.001 {
             self.actions.push(UIAction::SetMasterSpeed(composition.master_speed));
         }
     }
