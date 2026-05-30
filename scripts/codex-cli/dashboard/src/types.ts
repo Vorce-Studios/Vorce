@@ -63,6 +63,12 @@ export interface CompletedItem {
   completed_at: string;
 }
 
+export interface DecisionPending {
+  topic: string;
+  context: string;
+  created_at: string;
+}
+
 export interface ActiveSessions {
   schema_version: number;
   session_id: string;
@@ -74,7 +80,7 @@ export interface ActiveSessions {
   review_queue: ReviewQueueItem[];
   autopilot_created_issues: unknown[];
   completed_this_session: CompletedItem[];
-  deliberation_log: DeliberationLogEntry[];
+  decisions_pending?: DecisionPending[];
 }
 
 // ── GitHub Issues Types ──
@@ -159,27 +165,6 @@ export interface DualCeoConfig {
   log_deliberations: boolean;
 }
 
-export interface DeliberationRound {
-  phase: string;
-  agent: string;
-  provider: string;
-  duration_ms: number;
-  success: boolean;
-  content?: string;
-}
-
-export interface DeliberationLogEntry {
-  deliberation_id: string;
-  task_type: string;
-  alpha_provider: string;
-  beta_provider: string;
-  consensus_reached: boolean;
-  phases_completed: number;
-  total_duration_ms: number;
-  completed_at: string;
-  rounds?: DeliberationRound[];
-}
-
 // ── Memory System Types ──
 export interface MemoryEntry {
   id: string;
@@ -195,5 +180,4 @@ export interface MemoryStore {
   memories: MemoryEntry[];
 }
 
-// ── Tab Types ──
-export type TabId = 'dashboard' | 'sessions' | 'issues' | 'pullrequests' | 'reporting' | 'settings';
+export type TabId = 'dashboard' | 'workstreams' | 'reporting' | 'settings';
