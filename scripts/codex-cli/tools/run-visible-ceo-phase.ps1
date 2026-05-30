@@ -134,19 +134,7 @@ if (-not $cmdInfo) {
 }
 
 $cmdSource = $cmdInfo.Source
-if ($cmdInfo.CommandType -eq "ExternalScript" -and $cmdInfo.Name -like "*.ps1") {
-    $cmdNameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($cmdInfo.Name)
-    $cmdDir = Split-Path $cmdInfo.Source
-    $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.cmd"
-    if (Test-Path $cmdFile) {
-        $cmdSource = $cmdFile
-    } else {
-        $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.exe"
-        if (Test-Path $cmdFile) {
-            $cmdSource = $cmdFile
-        }
-    }
-}
+# Keep original .ps1 or other command source. Forcing .cmd breaks multiline arguments due to Windows batch file limitations.
 
 # --- Change to working directory ---
 if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory) -and (Test-Path $WorkingDirectory)) {
