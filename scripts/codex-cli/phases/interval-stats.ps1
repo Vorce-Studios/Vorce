@@ -153,78 +153,105 @@ while ($true) {
         # --- GitHub / PR / Jules Polling (Throttled) ---
         $now = Get-Date
         if (($now - $lastGhFetch).TotalSeconds -ge $ghFetchIntervalSec) {
-            Write-Host "[STATS] Polling GitHub Issues..." -ForegroundColor Gray
+            Write-Host "[STATS] Starte parallelen Sync (Issues, PRs, Jules)..." -ForegroundColor Gray
             
             $reposToPoll = @($Repository)
             if ($Repository -eq "Vorce-Studios/Vorce") {
                 $reposToPoll += "MrLongNight/MapFlow"
             }
 
-            $allIssues = @()
-            foreach ($r in $reposToPoll) {
-                $issuesRaw = gh issue list --repo $r --state all --limit 1000 --json number,title,state,url,updatedAt,createdAt,labels,body,assignees,milestone 2>$null
-                if ($LASTEXITCODE -eq 0) {
-                    $issueData = $issuesRaw | Out-String | ConvertFrom-Json -ErrorAction SilentlyContinue
-                    if ($issueData) {
-                        foreach ($issue in $issueData) {
-                            $issue | Add-Member -MemberType NoteProperty -Name "repo" -Value $r -Force
-                            $allIssues += $issue
+            # 1. Start Jobs
+            $jobIssues = Start-ThreadJob -ScriptBlock {
+                param($repos)
+                $allIssues = @()
+                foreach ($r in $repos) {
+                    $issuesRaw = gh issue list --repo $r --state all --limit 1000 --json number,title,state,url,updatedAt,createdAt,labels,body,assignees,milestone 2>$null
+                    if ($LASTEXITCODE -eq 0) {
+                        $issueData = $issuesRaw | Out-String | ConvertFrom-Json -ErrorAction SilentlyContinue
+                        if ($issueData) {
+                            foreach ($issue in $issueData) {
+                                $issue | Add-Member -MemberType NoteProperty -Name "repo" -Value $r -Force
+                                $allIssues += $issue
+                            }
                         }
                     }
                 }
-            }
-            if ($allIssues.Count -gt 0) {
+                return $allIssues
+            } -ArgumentList (,$reposToPoll)
+
+            $jobPRs = Start-ThreadJob -ScriptBlock {
+                param($repos)
+                $allPRs = @()
+                foreach ($r in $repos) {
+                    $prsRaw = gh pr list --repo $r --state open --limit 1000 --json number,title,state,url,updatedAt,headRefName,baseRefName,mergeable,statusCheckRollup 2>$null
+                    if ($LASTEXITCODE -eq 0) {
+                        $prData = $prsRaw | Out-String | ConvertFrom-Json -ErrorAction SilentlyContinue
+                        if ($prData) {
+                            foreach ($pr in $prData) {
+                                $pr | Add-Member -MemberType NoteProperty -Name "repo" -Value $r -Force
+                                $allPRs += $pr
+                            }
+                        }
+                    }
+                }
+                return $allPRs
+            } -ArgumentList (,$reposToPoll)
+
+            $jApiKey = Get-JulesApiKey
+            $jobJules = Start-ThreadJob -ScriptBlock {
+                param($apiKey, $scriptDir)
+                . (Join-Path $scriptDir "jules-api.ps1")
+                try {
+                    $jSessions = @(Get-AllJulesSessions -ApiKey $apiKey -PageSize 100 -MaxPages 5)
+                    $jList = @()
+                    foreach ($s in $jSessions) {
+                        $stateName = [string]$s.state
+                        $source = [string]$s.sourceContext.source
+                        $repo = if ($source -match "sources/github/(?<name>.*)") { $Matches["name"] } else { $source }
+                        
+                        if ($source -notlike "*Vorce*" -and $source -notlike "*MapFlow*") { continue }
+
+                        $issueNum = Get-IssueNumberFromSession -Session $s
+                        $jList += [ordered]@{
+                            name        = [string]$s.name
+                            title       = [string]$s.title
+                            state       = $stateName
+                            repo        = $repo
+                            issueNumber = $issueNum
+                            updatedAt   = [string]$s.updateTime
+                            createdAt   = [string]$s.createTime
+                            url         = [string]$s.url
+                        }
+                    }
+                    return $jList
+                } catch {
+                    return "ERROR:" + $_.Exception.Message
+                }
+            } -ArgumentList $jApiKey, $JulesScriptDir
+
+            # 2. Wait and Receive
+            Wait-Job $jobIssues, $jobPRs, $jobJules -Timeout 60 | Out-Null
+            
+            $allIssues = Receive-Job $jobIssues
+            $allPRs = Receive-Job $jobPRs
+            $julesResult = Receive-Job $jobJules
+
+            Remove-Job $jobIssues, $jobPRs, $jobJules -Force
+
+            # 3. Write results
+            if ($null -ne $allIssues -and $allIssues.Count -gt 0) {
                 Write-JsonLocked -Path (Join-Path $DashboardPublicDir "github-issues.json") -Data @($allIssues) | Out-Null
                 Write-Host "[STATS] GitHub Issues updated ($($allIssues.Count) issues)." -ForegroundColor Gray
             }
-
-            $allPRs = @()
-            foreach ($r in $reposToPoll) {
-                $prsRaw = gh pr list --repo $r --state open --limit 1000 --json number,title,state,url,updatedAt,headRefName,baseRefName,mergeable,statusCheckRollup 2>$null
-                if ($LASTEXITCODE -eq 0) {
-                    $prData = $prsRaw | Out-String | ConvertFrom-Json -ErrorAction SilentlyContinue
-                    if ($prData) {
-                        foreach ($pr in $prData) {
-                            $pr | Add-Member -MemberType NoteProperty -Name "repo" -Value $r -Force
-                            $allPRs += $pr
-                        }
-                    }
-                }
+            if ($null -ne $allPRs) {
+                Write-JsonLocked -Path (Join-Path $DashboardPublicDir "pull-requests.json") -Data @($allPRs) | Out-Null
+                Write-Host "[STATS] Pull Requests updated ($($allPRs.Count) PRs)." -ForegroundColor Gray
             }
-            Write-JsonLocked -Path (Join-Path $DashboardPublicDir "pull-requests.json") -Data @($allPRs) | Out-Null
-            Write-Host "[STATS] Pull Requests updated ($($allPRs.Count) PRs)." -ForegroundColor Gray
-
-            Write-Host "[STATS] Polling Jules API Sessions..." -ForegroundColor Gray
-            try {
-                $jApiKey = Get-JulesApiKey
-                $jSessions = @(Get-AllJulesSessions -ApiKey $jApiKey -PageSize 100 -MaxPages 5)
-                $jList = @()
-                foreach ($s in $jSessions) {
-                    $stateName = [string]$s.state
-                    $source = [string]$s.sourceContext.source
-                    $repo = if ($source -match "sources/github/(?<name>.*)") { $Matches["name"] } else { $source }
-                    
-                    if ($source -notlike "*Vorce*" -and $source -notlike "*MapFlow*") {
-                        continue
-                    }
-
-                    $issueNum = Get-IssueNumberFromSession -Session $s
-
-                    $jList += [ordered]@{
-                        name        = [string]$s.name
-                        title       = [string]$s.title
-                        state       = $stateName
-                        repo        = $repo
-                        issueNumber = $issueNum
-                        updatedAt   = [string]$s.updateTime
-                        createdAt   = [string]$s.createTime
-                        url         = [string]$s.url
-                    }
-                }
-                Write-JsonLocked -Path (Join-Path $DashboardPublicDir "jules-sessions.json") -Data @($jList) | Out-Null
-                Write-Host "[STATS] Jules API Sessions updated ($($jList.Count) sessions)." -ForegroundColor Gray
-            } catch {
-                Write-Warning "[STATS] Jules API Sync Fehler: $($_.Exception.Message)"
+            if ($julesResult -is [string] -and $julesResult -match "^ERROR:") {
+                Write-Warning "[STATS] Jules API Sync Fehler: $($julesResult.Substring(6))"
+            } elseif ($null -ne $julesResult) {
+                Write-JsonLocked -Path (Join-Path $DashboardPublicDir "jules-sessions.json") -Data @($julesResult) | Out-Null
+                Write-Host "[STATS] Jules API Sessions updated ($($julesResult.Count) sessions)." -ForegroundColor Gray
             }
 
             $lastGhFetch = $now

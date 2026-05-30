@@ -131,6 +131,7 @@ function Invoke-MonitoringWakeUp {
     Write-Host "[MONITOR] Pruefe offene PRs auf Probleme..." -ForegroundColor Cyan
 
     $prs = @()
+    $conflictingPrs = @()
     try {
         $prsRaw = gh pr list --repo $repo --state open --json number,title,headRefName,statusCheckRollup,mergeable --limit 100 2>&1
         $prs = @($prsRaw | Out-String | ConvertFrom-Json | ForEach-Object { $_ })
@@ -142,7 +143,7 @@ function Invoke-MonitoringWakeUp {
             # Check merge conflicts
             if ($mergeable -eq "CONFLICTING") {
                 Write-Host ("[MONITOR]   PR #{0} MERGE CONFLICT!" -f $prNum) -ForegroundColor Red
-                Add-DecisionPending -State $State -Topic "PR #$prNum hat Merge-Konflikte" -Context "Branch: $($pr.headRefName) - Titel: $($pr.title)"
+                $conflictingPrs += $pr
             }
 
             # Check failing checks
@@ -158,6 +159,44 @@ function Invoke-MonitoringWakeUp {
             if ($failingChecks.Count -gt 0) {
                 $failNames = ($failingChecks | ForEach-Object { $_.name }) -join ", "
                 Write-Host ("[MONITOR]   PR #{0} {1} Checks fehlgeschlagen ({2})" -f $prNum, $failingChecks.Count, $failNames) -ForegroundColor Red
+            }
+        }
+
+        # Handle Merge Conflicts grouping (Master Issue creation)
+        if ($conflictingPrs.Count -gt 0) {
+            $prNumbers = @($conflictingPrs | Sort-Object number | ForEach-Object { $_.number }) -join "-"
+            $conflictTag = "resolve-conflicts-$prNumbers"
+
+            $alreadyCreated = @($State.autopilot_created_issues | Where-Object { $_.tag -eq $conflictTag })
+            if ($alreadyCreated.Count -eq 0) {
+                Write-Host "[MONITOR]   Erstelle gebuendeltes Master-Issue fuer Konflikte: $prNumbers" -ForegroundColor Yellow
+                if (-not $DryRun.IsPresent) {
+                    $issueTitle = "MF-StIs_Resolve-Merge-Conflicts: PRs $($prNumbers -replace '-', ', ')"
+                    $issueBody = "Die folgenden Pull Requests haben Merge-Konflikte:`n`n"
+                    foreach ($cpr in $conflictingPrs) {
+                        $issueBody += "- PR #$($cpr.number) ($($cpr.headRefName)): $($cpr.title)`n"
+                    }
+                    $issueBody += "`nBitte alle Konflikte in einer einzigen Jules-Session aufloesen (Branches auschecken, main mergen, Konflikte beheben, pushen)."
+
+                    $newIssueUrl = gh issue create --repo $repo --title $issueTitle --body $issueBody --label "jules-task,priority-high,bug" 2>&1
+                    if ($LASTEXITCODE -eq 0 -and $newIssueUrl -match "/issues/(\d+)") {
+                        $newIssueNum = [int]$Matches[1]
+                        Write-Host "[MONITOR]   -> Master-Issue #$newIssueNum erfolgreich erstellt!" -ForegroundColor Green
+                        
+                        # Tracking
+                        if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
+                        $State.autopilot_created_issues += [ordered]@{
+                            tag = $conflictTag
+                            issue_number = $newIssueNum
+                            created_at = (Get-Date -Format 'o')
+                        }
+                        Save-AutopilotState -State $State
+                    } else {
+                        Write-Warning "[MONITOR]   Fehler beim Erstellen des Master-Issues: $newIssueUrl"
+                    }
+                }
+            } else {
+                Write-Host "[MONITOR]   Master-Issue fuer Konflikte $prNumbers existiert bereits (Issue #$($alreadyCreated[0].issue_number))." -ForegroundColor DarkGray
             }
         }
     } catch {

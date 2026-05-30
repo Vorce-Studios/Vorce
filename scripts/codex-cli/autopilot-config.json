@@ -1,14 +1,15 @@
 {
   "repository": "Vorce-Studios/Vorce",
   "wake_intervals": {
-    "planning_minutes": 120,
-    "monitoring_minutes": 15
+    "planning_minutes": 60,
+    "monitoring_minutes": 5
   },
   "jules": {
     "max_daily_sessions": 100,
     "max_concurrent_sessions": 15,
     "auto_approve_plans": true,
-    "auto_retry_feedback_max": 2
+    "auto_retry_feedback_max": 2,
+    "auto_merge_approved_prs": true
   },
   "gemini_worktree_path": "../VjMapper-gemini",
   "issue_filters": {
