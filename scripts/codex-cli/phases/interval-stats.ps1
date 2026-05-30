@@ -191,10 +191,8 @@ while ($true) {
                     }
                 }
             }
-            if ($allPRs.Count -gt 0) {
-                Write-JsonLocked -Path (Join-Path $DashboardPublicDir "pull-requests.json") -Data @($allPRs) | Out-Null
-                Write-Host "[STATS] Pull Requests updated ($($allPRs.Count) PRs)." -ForegroundColor Gray
-            }
+            Write-JsonLocked -Path (Join-Path $DashboardPublicDir "pull-requests.json") -Data @($allPRs) | Out-Null
+            Write-Host "[STATS] Pull Requests updated ($($allPRs.Count) PRs)." -ForegroundColor Gray
 
             Write-Host "[STATS] Polling Jules API Sessions..." -ForegroundColor Gray
             try {

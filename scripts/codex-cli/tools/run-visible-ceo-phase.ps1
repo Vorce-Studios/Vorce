@@ -169,15 +169,24 @@ try {
     $escapedCliArgsFile = $CliArgsFile -replace "'", "''"
     $escapedSource = $cmdSource -replace "'", "''"
 
-    if ($hasPromptFile) {
-        $cmdString = "Get-Content -LiteralPath '$escapedPromptFile' -Raw -Encoding UTF8 | & '$escapedSource' `@argsList 2>&1"
+    # Gemini CLI requires -p for headless mode (stdin piping starts interactive TUI).
+    # Detect if this is a gemini/claude-style CLI and inject the prompt as -p argument.
+    $cliBaseName = [System.IO.Path]::GetFileNameWithoutExtension($cmdSource).ToLower()
+    $needsPromptArg = $cliBaseName -in @("gemini", "claude")
+
+    if ($hasPromptFile -and $needsPromptArg) {
+        # Inject prompt as -p argument into the args list (headless mode)
+        $cmdString = "`$promptText = Get-Content -LiteralPath '$escapedPromptFile' -Raw -Encoding UTF8; `$argsList += @('-p', `$promptText); & '$escapedSource' @argsList 2>&1"
+    } elseif ($hasPromptFile) {
+        # Other CLIs (e.g. codex): pipe prompt via stdin
+        $cmdString = "Get-Content -LiteralPath '$escapedPromptFile' -Raw -Encoding UTF8 | & '$escapedSource' @argsList 2>&1"
     } else {
-        $cmdString = "& '$escapedSource' `@argsList 2>&1"
+        $cmdString = "& '$escapedSource' @argsList 2>&1"
     }
     
-    $fullCmd = "`$argsList = Get-Content -LiteralPath '$escapedCliArgsFile' -Raw -Encoding UTF8 | ConvertFrom-Json; $cmdString"
+    $fullCmd = "`$argsList = @(Get-Content -LiteralPath '$escapedCliArgsFile' -Raw -Encoding UTF8 | ConvertFrom-Json); $cmdString"
     
-    Write-Host "[CEO] Analysiere und verarbeite Phase..." -ForegroundColor Cyan
+    Write-Host "[CEO] Analysiere und verarbeite Phase...$(if ($needsPromptArg) { ' (Headless -p Modus)' } else { '' })" -ForegroundColor Cyan
     & $powerShellHost -NoProfile -ExecutionPolicy Bypass -Command $fullCmd > $OutputFile 2>&1
     $exitCode = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }
 } catch {

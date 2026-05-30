@@ -339,6 +339,8 @@ function Invoke-AutopilotCodexSession {
             if ($VisibleExecTerminal.IsPresent) {
                 $runnerArgs += "-NonInteractiveExec"
             }
+            # Pass SessionType as label so the banner shows the correct context
+            $runnerArgs += @("-SessionLabel", $SessionType)
 
             Add-AutopilotJournalEvent -SessionType $SessionType -Message "Opened visible Codex terminal for $SessionType session. Log: $logPath"
             $process = Start-Process -FilePath $powerShellHost -ArgumentList $runnerArgs -WindowStyle Normal -PassThru

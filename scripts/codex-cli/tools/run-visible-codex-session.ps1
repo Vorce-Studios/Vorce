@@ -9,6 +9,7 @@ param(
     [string]$LogPath,
     [string]$StatusPath,
     [string]$OutputPath,
+    [string]$SessionLabel,
     [switch]$NonInteractiveExec
 )
 
@@ -31,13 +32,18 @@ $prompt = Get-Content -LiteralPath $PromptPath -Raw -Encoding UTF8
 $codex = Get-Command codex -ErrorAction Stop
 
 Set-Location -LiteralPath $RepositoryRoot
-$host.UI.RawUI.WindowTitle = if ($NonInteractiveExec.IsPresent) { "Vorce Autopilot Codex Monitoring" } else { "Vorce Autopilot Codex Planning" }
-Write-Host "=====================================" -ForegroundColor Green
-if ($NonInteractiveExec.IsPresent) {
-    Write-Host " VORCE AUTOPILOT MONITORING SESSION" -ForegroundColor Green
+
+# Determine banner based on SessionLabel or NonInteractiveExec fallback
+$bannerTitle = if (-not [string]::IsNullOrWhiteSpace($SessionLabel)) {
+    $SessionLabel.ToUpper()
+} elseif ($NonInteractiveExec.IsPresent) {
+    "MONITORING SESSION"
 } else {
-    Write-Host " VORCE AUTOPILOT PLANNING SESSION" -ForegroundColor Green
+    "PLANNING SESSION"
 }
+$host.UI.RawUI.WindowTitle = "Vorce Autopilot: $bannerTitle"
+Write-Host "=====================================" -ForegroundColor Green
+Write-Host " VORCE AUTOPILOT $bannerTitle" -ForegroundColor Green
 Write-Host "=====================================" -ForegroundColor Green
 Write-Host "Model: $Model" -ForegroundColor Cyan
 Write-Host "Repository: $RepositoryRoot" -ForegroundColor Cyan
