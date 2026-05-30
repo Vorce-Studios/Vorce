@@ -115,7 +115,7 @@ function Invoke-MonitoringWakeUp {
         $issueNum = [int]$delegation.issue_number
         $sessionId = [string]$delegation.jules_session_id
 
-        if ($sessionId -eq "dry-run-$issueNum") {
+        if ($sessionId -match "^dry-run") {
             Write-Host ("[MONITOR]   #{0} [DRY RUN] Ueberspringe." -f $issueNum) -ForegroundColor DarkGray
             continue
         }
