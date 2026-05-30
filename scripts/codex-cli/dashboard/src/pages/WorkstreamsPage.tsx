@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Activity, GitPullRequest, AlertCircle, ExternalLink, Filter, CheckCircle, RefreshCw, XCircle } from 'lucide-react';
+import { Activity, GitPullRequest, AlertCircle, ExternalLink, CheckCircle, XCircle } from 'lucide-react';
 import type { GitHubIssue, ActiveSessions, PullRequest, ActiveDelegation } from '../types';
 
 interface Props {
@@ -120,7 +120,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests }: Prop
             Keine Workstreams gefunden für diesen Filter.
           </div>
         ) : (
-          filteredWorkstreams.map((ws, i) => (
+          filteredWorkstreams.map((ws) => (
             <div key={ws.issue.number} className="glass-card overflow-hidden hover:border-slate-700 transition-colors">
               {/* Status Bar Top */}
               <div className={`h-1 w-full ${

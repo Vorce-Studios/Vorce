@@ -185,11 +185,12 @@ try {
     
     # Use process execution with Tee-Object instead of Start-Transcript.
     # Start-Transcript can interfere with CLI tools that use terminal escape sequences.
+    $errorLogFile = $OutputFile + ".err.log"
     if ($useStdinPipe) {
         # Pipe prompt via stdin for extremely long prompts
-        Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8 | & $CliCommand @cliArgs 2>&1 | Tee-Object -FilePath $OutputFile
+        Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8 | & $CliCommand @cliArgs 2> $errorLogFile | Tee-Object -FilePath $OutputFile
     } else {
-        & $CliCommand @cliArgs 2>&1 | Tee-Object -FilePath $OutputFile
+        & $CliCommand @cliArgs 2> $errorLogFile | Tee-Object -FilePath $OutputFile
     }
     
     $exitCode = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }

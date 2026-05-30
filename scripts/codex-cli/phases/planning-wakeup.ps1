@@ -232,10 +232,33 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 
                 if ($newIssues.Count -gt 0) {
                     $newIssuesCreated = $false
-                    $existingVorIssuesRaw = gh issue list --repo $repo --state all --json title --limit 300 2>&1
+                    
+                    # Use cached issue data from the dashboard instead of calling GitHub directly
+                    $cachedIssuePath = Join-Path $ScriptDir "dashboard\public\github-issues.json"
+                    $existingVorIssues = @()
+                    $issuesRaw = $null
+                    
+                    if (Test-Path $cachedIssuePath) {
+                        try {
+                            $issuesRaw = Get-Content -LiteralPath $cachedIssuePath -Raw -Encoding UTF8 | ConvertFrom-Json
+                        } catch {
+                            Write-Warning "[PLANNING] Fehler beim Lesen der gecachten Issues: $_"
+                        }
+                    }
+
+                    if ($null -ne $issuesRaw -and ($issuesRaw -is [System.Array] -or $issuesRaw -is [System.Collections.IList])) {
+                        $existingVorIssues = @($issuesRaw | Where-Object { $_.repo -eq $repo })
+                        Write-Host "[PLANNING] Gecachte Issue-Daten zur VOR-Nummernermittlung geladen." -ForegroundColor DarkGray
+                    } else {
+                        Write-Host "[PLANNING] Lade Issues direkt via gh-cli zur VOR-Nummernermittlung (Fallback)..." -ForegroundColor DarkGray
+                        $existingVorIssuesRaw = gh issue list --repo $repo --state all --json title --limit 300 2>&1
+                        if ($LASTEXITCODE -eq 0) {
+                            try { $existingVorIssues = @($existingVorIssuesRaw | Out-String | ConvertFrom-Json) } catch {}
+                        }
+                    }
+
                     $nextVorNumber = 1
                     try {
-                        $existingVorIssues = @($existingVorIssuesRaw | Out-String | ConvertFrom-Json)
                         $usedVorNumbers = @($existingVorIssues | ForEach-Object {
                             $m = [regex]::Match([string]$_.title, 'VOR-(\d{3})')
                             if ($m.Success) { [int]$m.Groups[1].Value }

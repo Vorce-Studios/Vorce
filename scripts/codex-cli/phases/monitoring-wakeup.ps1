@@ -47,9 +47,29 @@ function Invoke-MonitoringWakeUp {
     Write-Host "[MONITOR] Pruefe offene PRs..." -ForegroundColor Cyan
     $prs = @()
     $conflictingPrs = @()
+    
+    # Use cached PR data from the dashboard instead of calling GitHub directly
+    $cachedPrPath = Join-Path $ScriptDir "dashboard\public\pull-requests.json"
+    $prsRaw = $null
+    if (Test-Path $cachedPrPath) {
+        try {
+            $prsRaw = Get-Content -LiteralPath $cachedPrPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        } catch {
+            Write-Warning "[MONITOR] Fehler beim Lesen der gecachten PRs: $_"
+        }
+    }
+    
     try {
-        $prsRaw = gh pr list --repo $repo --state open --json number,title,headRefName,statusCheckRollup,mergeable,labels --limit 100 2>&1
-        $prs = @($prsRaw | Out-String | ConvertFrom-Json | ForEach-Object { $_ })
+        if ($null -ne $prsRaw -and ($prsRaw -is [System.Array] -or $prsRaw -is [System.Collections.IList])) {
+            $prs = @($prsRaw | Where-Object { $_.state -eq "OPEN" -and $_.repo -eq $repo })
+            Write-Host "[MONITOR] Gecachte PR-Daten erfolgreich geladen ($($prs.Count) offene PRs)." -ForegroundColor DarkGray
+        } else {
+            Write-Host "[MONITOR] Lade PRs direkt via gh-cli (Fallback)..." -ForegroundColor DarkGray
+            $prOutput = gh pr list --repo $repo --state open --json number,title,headRefName,statusCheckRollup,mergeable,labels --limit 100 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $prs = @($prOutput | Out-String | ConvertFrom-Json | ForEach-Object { $_ })
+            }
+        }
 
         foreach ($pr in $prs) {
             $prNum = [int]$pr.number
