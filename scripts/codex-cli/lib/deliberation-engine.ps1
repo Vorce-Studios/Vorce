@@ -581,7 +581,7 @@ function Invoke-Deliberation {
         Save-DeliberationProtocol -Protocol $protocol -Config $Config
 
         # Fallback: Let Beta handle it alone
-        return Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType $TaskType -Prompt $Prompt -WorkingDirectory $WorkingDirectory -MemoryBlock $MemoryBlock -DryRun:$DryRun
+        return Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType $TaskType -Prompt $Prompt -WorkingDirectory $WorkingDirectory -MemoryBlock $MemoryBlock -DryRun:$DryRun -ProviderOverride $ceos.beta.provider -ModelTierOverride $ceos.beta.model_tier
     }
 
     Write-Host "[DELIB] Alpha-Proposal erhalten ($([int]$proposalDuration)ms)" -ForegroundColor Green
