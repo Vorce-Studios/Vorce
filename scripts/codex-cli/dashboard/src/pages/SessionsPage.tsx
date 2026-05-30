@@ -46,7 +46,7 @@ export default function SessionsPage({ sessions, julesSessions }: Props) {
   const delegations = sessions.active_delegations || [];
   const reviewQueue = sessions.review_queue || [];
   const completedItems = sessions.completed_this_session || [];
-  const julesList = julesSessions || [];
+  const julesList = (julesSessions || []).filter(s => s.repo.includes('Vorce'));
 
   return (
     <div className="space-y-6 animate-in">
@@ -173,7 +173,7 @@ export default function SessionsPage({ sessions, julesSessions }: Props) {
       <div className="glass-card p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-slate-200">
-            Jules API Sessions (Vorce & MapFlow)
+            Jules API Sessions (Vorce)
             <span className="ml-2 badge bg-purple-500/20 text-purple-400">{julesList.length}</span>
           </h3>
         </div>

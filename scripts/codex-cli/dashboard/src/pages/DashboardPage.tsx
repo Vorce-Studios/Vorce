@@ -57,7 +57,13 @@ export default function DashboardPage({ registry, sessions, pullRequests, issues
   const totalCostToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.estimated_cost_usd || 0), 0);
   const totalCallsToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.calls || 0), 0);
   const activeDelegations = sessions.active_delegations?.length || 0;
-  const activeJulesSessions = julesSessions ? julesSessions.filter(s => s.state !== 'COMPLETED' && s.state !== 'FAILED').length : 0;
+  
+  // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
+  const activeJulesSessions = julesSessions ? julesSessions.filter(s => 
+      s.repo.includes('Vorce') && 
+      s.state !== 'COMPLETED' && 
+      s.state !== 'QUEUED'
+  ).length : 0;
   
   // Filter PRs that are OPEN and NOT a Draft
   const openPRs = pullRequests.filter(pr => pr.state === 'OPEN' && pr.isDraft !== true).length;
@@ -112,7 +118,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, issues
         <KPICard
           title="Jules Sessions"
           value={String(activeJulesSessions)}
-          subtitle="offen (Vorce & MapFlow)"
+          subtitle="in progress (Vorce)"
           icon={<Activity className="w-5 h-5" />}
           color="from-purple-500 to-violet-500"
         />
