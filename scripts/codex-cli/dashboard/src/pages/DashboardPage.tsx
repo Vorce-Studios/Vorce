@@ -1,12 +1,13 @@
-import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp } from 'lucide-react';
+import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import type { QuotaRegistry, ActiveSessions, PullRequest } from '../types';
-import DeliberationPanel from './DeliberationPanel';
+import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue } from '../types';
 
 interface Props {
   registry: QuotaRegistry;
   sessions: ActiveSessions;
   pullRequests: PullRequest[];
+  issues: GitHubIssue[];
+  julesSessions?: any[];
 }
 
 const PROVIDER_COLORS: Record<string, string> = {
@@ -48,15 +49,24 @@ function timeAgo(dateStr: string): string {
   return `vor ${days}d`;
 }
 
-export default function DashboardPage({ registry, sessions, pullRequests }: Props) {
+export default function DashboardPage({ registry, sessions, pullRequests, issues, julesSessions }: Props) {
   const providers = registry.providers || {};
   const providerEntries = Object.entries(providers);
 
   const totalCostToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.estimated_cost_usd || 0), 0);
   const totalCallsToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.calls || 0), 0);
   const activeDelegations = sessions.active_delegations?.length || 0;
-  const openPRs = pullRequests.filter(pr => pr.state === 'OPEN').length;
-  const conflictingPRs = pullRequests.filter(pr => pr.mergeable === 'CONFLICTING').length;
+
+  // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
+  const activeJulesSessions = julesSessions ? julesSessions.filter(s =>
+      s.repo.includes('Vorce') &&
+      s.state !== 'COMPLETED' &&
+      s.state !== 'QUEUED'
+  ).length : 0;
+
+  // Filter PRs that are OPEN and NOT a Draft
+  const openPRs = pullRequests.filter(pr => pr.state === 'OPEN' && pr.isDraft !== true).length;
+  const conflictingPRs = pullRequests.filter(pr => pr.state === 'OPEN' && pr.isDraft !== true && pr.mergeable === 'CONFLICTING').length;
 
   const chartData = providerEntries
     .filter(([, p]) => p.enabled)
@@ -95,6 +105,27 @@ export default function DashboardPage({ registry, sessions, pullRequests }: Prop
         </div>
       </div>
 
+      {/* Eskalationen (Beta CEO Alerts) */}
+      {sessions.decisions_pending && sessions.decisions_pending.length > 0 && (
+        <div className="glass-card p-6 border border-rose-500/30 shadow-lg shadow-rose-500/10">
+          <h3 className="text-lg font-bold text-rose-400 mb-4 flex items-center gap-2">
+            <AlertCircle className="w-5 h-5" />
+            Beta CEO Eskalationen ({sessions.decisions_pending.length})
+          </h3>
+          <div className="space-y-3">
+            {sessions.decisions_pending.map((alert, idx) => (
+              <div key={idx} className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-rose-300">{alert.topic}</span>
+                  <span className="text-xs text-rose-400/70">{timeAgo(alert.created_at)}</span>
+                </div>
+                <p className="text-sm text-rose-200/80 whitespace-pre-wrap">{alert.context}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
@@ -106,8 +137,8 @@ export default function DashboardPage({ registry, sessions, pullRequests }: Prop
         />
         <KPICard
           title="Jules Sessions"
-          value={String(activeDelegations)}
-          subtitle="aktive Delegierungen"
+          value={String(activeJulesSessions)}
+          subtitle="in progress (Vorce)"
           icon={<Activity className="w-5 h-5" />}
           color="from-purple-500 to-violet-500"
         />
@@ -145,7 +176,7 @@ export default function DashboardPage({ registry, sessions, pullRequests }: Prop
                     color: '#e2e8f0',
                     fontSize: '13px',
                   }}
-                  formatter={(value: number, _name: string, props: { payload: { limit: number } }) => [
+                  formatter={(value: number, _name: string, props: any) => [
                     `${value} / ${props.payload.limit}`,
                     'Aufrufe'
                   ]}
@@ -190,30 +221,6 @@ export default function DashboardPage({ registry, sessions, pullRequests }: Prop
         </div>
       </div>
 
-      {/* Dual-CEO Deliberation Panel */}
-      <DeliberationPanel deliberations={sessions.deliberation_log || []} />
-
-      {/* Active Delegations Preview */}
-      {activeDelegations > 0 && (
-        <div className="glass-card p-6">
-          <h3 className="text-lg font-semibold text-slate-200 mb-4">Aktive Delegierungen</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {sessions.active_delegations.slice(0, 6).map((d) => (
-              <div key={d.jules_session_id} className="bg-slate-900/40 border border-slate-700/30 rounded-xl p-3">
-                <div className="flex items-start justify-between mb-1">
-                  <span className="text-xs text-purple-400 font-mono">#{d.issue_number}</span>
-                  <JulesStateBadge state={d.jules_state} />
-                </div>
-                <p className="text-sm text-slate-300 line-clamp-2 mb-2">{d.issue_title}</p>
-                <div className="flex justify-between text-xs text-slate-500">
-                  <span>Retries: {d.retry_count}</span>
-                  <span>{timeAgo(d.last_checked_at)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
