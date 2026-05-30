@@ -191,6 +191,7 @@ function New-AutopilotState {
         autopilot_created_issues = @()
         completed_this_session  = @()
         decisions_pending       = @()
+        escalated_issues        = @()
         error_log               = @()
         deliberation_log        = @()
     }
@@ -225,7 +226,25 @@ function Initialize-AutopilotState {
     Invoke-StartupCleanup
 
     $existing = Read-AutopilotState
-    if ($null -ne $existing -and -not $Force.IsPresent) {
+    $defaults = New-AutopilotState
+
+    if ($null -ne $existing -and -not $Force.IsPresent -and ($null -ne $existing.PSObject)) {
+        # Ensure all default properties exist on the existing state
+        foreach ($key in $defaults.Keys) {
+            if (-not ($existing.PSObject.Properties.Name -contains $key)) {
+                $existing | Add-Member -MemberType NoteProperty -Name $key -Value $defaults[$key] -Force
+            }
+        }
+
+        # Validate that arrays are indeed arrays (sometimes deserialized as single object or null)
+        foreach ($key in @("active_delegations", "review_queue", "autopilot_created_issues", "completed_this_session", "decisions_pending", "escalated_issues", "error_log", "deliberation_log")) {
+            if ($null -eq $existing.$key) {
+                $existing.$key = @()
+            } elseif ($existing.$key -isnot [System.Array] -and $existing.$key -isnot [System.Collections.IList]) {
+                $existing.$key = @($existing.$key)
+            }
+        }
+
         $lastBeat = $null
         if ($existing.last_heartbeat) {
             try {
@@ -271,13 +290,17 @@ function Add-Delegation {
         [Parameter(Mandatory)][object]$State,
         [Parameter(Mandatory)][int]$IssueNumber,
         [string]$IssueTitle,
-        [string]$JulesSessionId
+        [string]$JulesSessionId,
+        [string]$AgentType = "jules",
+        [string]$JobId = ""
     )
 
     $delegation = [ordered]@{
         issue_number     = $IssueNumber
         issue_title      = $IssueTitle
         jules_session_id = $JulesSessionId
+        agent_type       = $AgentType
+        job_id           = $JobId
         jules_state      = "QUEUED"
         pr_url           = $null
         delegated_at     = (Get-Date -Format 'o')
@@ -410,6 +433,77 @@ function Add-DeliberationLog {
     # Keep only last 20
     if ($State.deliberation_log.Count -gt 20) {
         $State.deliberation_log = @($State.deliberation_log | Select-Object -Last 20)
+    }
+
+    Save-AutopilotState -State $State
+}
+
+function Set-DelegationEscalation {
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][int]$IssueNumber,
+        [string]$Reason
+    )
+
+    $delegation = $State.active_delegations | Where-Object { [int]$_.issue_number -eq $IssueNumber }
+    if (-not $delegation) { return }
+
+    # Sichern der Werte, da die Delegation gleich geloescht wird
+    $issueTitle = $delegation.issue_title
+    $sessionId = $delegation.jules_session_id
+
+    # Entferne aus active_delegations
+    $State.active_delegations = @($State.active_delegations | Where-Object { [int]$_.issue_number -ne $IssueNumber })
+
+    # Suche in escalated_issues
+    $esc = $State.escalated_issues | Where-Object { [int]$_.issue_number -eq $IssueNumber }
+    $maxPlanningResolutions = 2 # Konfigurierbar, standardmäßig 2 Re-Planning Versuche
+    if ($null -eq $esc) {
+        $newEsc = [ordered]@{
+            issue_number          = $IssueNumber
+            issue_title           = $issueTitle
+            last_jules_session_id = $sessionId
+            monitoring_failures   = 1
+            planning_resolutions  = 0
+            status                = "QUEUED_FOR_RETRY"
+            escalated_at          = (Get-Date -Format 'o')
+        }
+        $State.escalated_issues += @($newEsc)
+        Write-Host "[STATE] Issue #$IssueNumber fehlgeschlagen (1. Versuch). Wird für Retry eingereiht." -ForegroundColor Yellow
+    } else {
+        $esc.monitoring_failures = [int]$esc.monitoring_failures + 1
+        $esc.last_jules_session_id = $sessionId
+
+        if ([int]$esc.monitoring_failures -lt 3) {
+            $esc.status = "QUEUED_FOR_RETRY"
+            Write-Host "[STATE] Issue #$IssueNumber fehlgeschlagen ($($esc.monitoring_failures). Versuch). Wird für Retry eingereiht." -ForegroundColor Yellow
+        } else {
+            if ([int]$esc.planning_resolutions -ge $maxPlanningResolutions) {
+                # Letzte Eskalationsstufe: An User eskalieren!
+                $esc.status = "ESCALATED_TO_USER"
+
+                $topic = "Issue #$IssueNumber endgueltig eskaliert an User"
+                $exists = $State.decisions_pending | Where-Object { $_.topic -eq $topic }
+                if (-not $exists) {
+                    $State.decisions_pending += @([ordered]@{
+                        topic      = $topic
+                        context    = "Das Issue konnte auch nach CEO-Re-Planning nicht geloest werden. Letzte Jules Session: $sessionId."
+                        created_at = (Get-Date -Format 'o')
+                    })
+                }
+
+                # In Completed eintragen als final failed
+                $State.completed_this_session += @([ordered]@{
+                    issue_number = $IssueNumber
+                    result       = "failed_escalated"
+                    completed_at = (Get-Date -Format 'o')
+                })
+                Write-Host "[STATE] Issue #$IssueNumber endgueltig an User eskaliert." -ForegroundColor Red
+            } else {
+                $esc.status = "NEEDS_PLANNING"
+                Write-Host "[STATE] Issue #$IssueNumber hat $($esc.monitoring_failures) Fehlversuche erreicht. Eskaliert an CEO für Re-Planning!" -ForegroundColor Red
+            }
+        }
     }
 
     Save-AutopilotState -State $State

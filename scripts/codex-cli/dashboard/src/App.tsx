@@ -4,9 +4,7 @@ import { useData, useAutoRefresh } from './hooks';
 
 // Pages
 import DashboardPage from './pages/DashboardPage';
-import SessionsPage from './pages/SessionsPage';
-import IssuesPage from './pages/IssuesPage';
-import PullRequestsPage from './pages/PullRequestsPage';
+import WorkstreamsPage from './pages/WorkstreamsPage';
 import SettingsPage from './pages/SettingsPage';
 import ManagerReportingPage from './pages/ManagerReportingPage';
 
@@ -21,12 +19,12 @@ const defaultAutopilotConfig: AutopilotConfig = {
     max_daily_sessions: 100,
     max_concurrent_sessions: 15,
     auto_approve_plans: true,
-    auto_retry_feedback_max: 2
+    auto_retry_feedback_max: 3
   },
   gemini_worktree_path: '../VjMapper-gemini',
   issue_filters: {
-    include_labels: ['jules-task', 'priority-high', 'bug'],
-    exclude_labels: ['wontfix', 'duplicate', 'on-hold'],
+    include_labels: ['jules-task', 'bug', 'priority: critical'],
+    exclude_labels: ['wontfix', 'duplicate', 'on-hold', 'status: in-progress', 'status: needs-review', 'status: needs-testing', 'status: blocked', 'status: ready-to-merge'],
     autopilot_label: 'autopilot-created'
   },
   max_issues_per_planning_cycle: 5,
@@ -59,7 +57,8 @@ const defaultActiveSessions: ActiveSessions = {
   active_delegations: [],
   review_queue: [],
   autopilot_created_issues: [],
-  completed_this_session: []
+  completed_this_session: [],
+  deliberation_log: []
 };
 
 export default function App() {
@@ -71,7 +70,8 @@ export default function App() {
   const { data: sessions, loading: sessionsLoading, refetch: refetchSessions } = useData<ActiveSessions>('/active-sessions.json', defaultActiveSessions);
   const { data: issues, loading: issuesLoading, refetch: refetchIssues } = useData<GitHubIssue[]>('/github-issues.json', []);
   const { data: pullRequests, loading: prLoading, refetch: refetchPRs } = useData<PullRequest[]>('/pull-requests.json', []);
-  const { data: memoryStore, loading: memoryLoading, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
+  const { data: julesSessions, refetch: refetchJulesSessions } = useData<any[]>('/jules-sessions.json', []);
+  const { data: memoryStore, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
   const { data: history, loading: historyLoading, refetch: refetchHistory } = useData<any[]>('/data.json', []);
 
   const refetchAll = () => {
@@ -80,6 +80,7 @@ export default function App() {
     refetchSessions();
     refetchIssues();
     refetchPRs();
+    refetchJulesSessions();
     refetchMemory();
     refetchHistory();
   };
@@ -89,17 +90,13 @@ export default function App() {
 
   const isGlobalLoading = configLoading && registryLoading && sessionsLoading && issuesLoading && prLoading && historyLoading;
 
-  const renderActivePage = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} />;
-      case 'sessions':
-        return <SessionsPage sessions={sessions} />;
-      case 'issues':
-        return <IssuesPage issues={issues} />;
-      case 'pullrequests':
-        return <PullRequestsPage pullRequests={pullRequests} />;
-      case 'reporting':
+    const renderActivePage = () => {
+      switch (activeTab) {
+        case 'dashboard':
+          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} />;
+        case 'workstreams':
+          return <WorkstreamsPage issues={issues} sessions={sessions} pullRequests={pullRequests} julesSessions={julesSessions} />;
+        case 'reporting':
         return (
           <ManagerReportingPage
             registry={registry}
@@ -165,38 +162,14 @@ export default function App() {
               <span>Dashboard Overview</span>
             </button>
             <button
-              onClick={() => setActiveTab('sessions')}
-              className={activeTab === 'sessions' ? 'tab-btn-active w-full' : 'tab-btn-inactive w-full'}
+              onClick={() => setActiveTab('workstreams')}
+              className={activeTab === 'workstreams' ? 'tab-btn-active w-full' : 'tab-btn-inactive w-full'}
             >
-              <Activity className="w-4 h-4" />
-              <span>Jules Sessions</span>
-              {sessions.active_delegations?.length > 0 && (
-                <span className="ml-auto badge bg-purple-500 text-purple-100 px-1.5 py-0.5 text-[10px]">
-                  {sessions.active_delegations.length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('issues')}
-              className={activeTab === 'issues' ? 'tab-btn-active w-full' : 'tab-btn-inactive w-full'}
-            >
-              <AlertCircle className="w-4 h-4" />
-              <span>GitHub Issues</span>
-              {issues.length > 0 && (
-                <span className="ml-auto badge bg-slate-800 text-slate-400 px-1.5 py-0.5 text-[10px]">
-                  {issues.length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('pullrequests')}
-              className={activeTab === 'pullrequests' ? 'tab-btn-active w-full' : 'tab-btn-inactive w-full'}
-            >
-              <GitPullRequest className="w-4 h-4" />
-              <span>Pull Requests</span>
-              {pullRequests.filter(pr => pr.state === 'OPEN').length > 0 && (
-                <span className="ml-auto badge bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 text-[10px]">
-                  {pullRequests.filter(pr => pr.state === 'OPEN').length}
+              <Activity className="w-4 h-4 text-emerald-400" />
+              <span>Smart Workstreams</span>
+              {(sessions.decisions_pending && sessions.decisions_pending.length > 0) && (
+                <span className="ml-auto badge bg-rose-500/20 text-rose-400 px-1.5 py-0.5 text-[10px]">
+                  {sessions.decisions_pending.length} ALERTS
                 </span>
               )}
             </button>

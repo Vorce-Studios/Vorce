@@ -687,7 +687,7 @@ function Get-JulesTelemetryUsage {
         }
 
         $pageSize = 50
-        $maxPages = 1
+        $maxPages = 10
         if ($Config -and (Test-ObjectProperty -Object $Config -Name "jules")) {
             $configuredMaxPages = Get-TelemetryNumber (Get-TelemetryPropertyValue -Object $Config.jules -Name "session_poll_max_pages")
             if ($configuredMaxPages -gt 0) {
@@ -698,9 +698,14 @@ function Get-JulesTelemetryUsage {
         $sessions = @(Get-AllJulesSessions -PageSize $pageSize -MaxPages $maxPages)
         $usage | Add-Member -MemberType NoteProperty -Name "api_sessions_seen" -Value $sessions.Count -Force
         $usage | Add-Member -MemberType NoteProperty -Name "api_sessions_today" -Value 0 -Force
-        $scopedSource = $null
+
+        $scopedSources = @()
         if ($Config -and (Test-ObjectProperty -Object $Config -Name "repository") -and -not [string]::IsNullOrWhiteSpace([string]$Config.repository)) {
-            $scopedSource = "sources/github/$([string]$Config.repository)"
+            $primaryRepo = [string]$Config.repository
+            $scopedSources += "sources/github/$primaryRepo"
+            if ($primaryRepo -eq "Vorce-Studios/Vorce") {
+                $scopedSources += "sources/github/MrLongNight/MapFlow"
+            }
         }
         $now = [datetimeoffset]::Now
 
@@ -708,7 +713,7 @@ function Get-JulesTelemetryUsage {
             $stateName = [string](Get-TelemetryPropertyValue -Object $session -Name "state")
             if ([string]::IsNullOrWhiteSpace($stateName)) { $stateName = "UNKNOWN" }
             $sessionSource = Get-JulesSessionSourceName -Session $session
-            $isScoped = -not [string]::IsNullOrWhiteSpace($scopedSource) -and $sessionSource -eq $scopedSource
+            $isScoped = $scopedSources.Count -gt 0 -and $sessionSource -in $scopedSources
 
             switch -Regex ($stateName) {
                 "^IN_PROGRESS$" { $usage.live_in_progress_sessions = [int64]$usage.live_in_progress_sessions + 1; $usage.live_capacity_sessions = [int64]$usage.live_capacity_sessions + 1; break }

@@ -22,12 +22,14 @@ graph TD
     F --> H[CEO Alpha: Entwurf]
     H --> I[CEO Beta: Kritik/Alternativen]
     I --> J[CEO Alpha: Synthese & Entscheidung]
-    J --> K[Jules Session starten]
+
+    J --> K[Jules Session ODER CLI Agent starten]
     G --> K
 
-    C --> L[Überprüfe aktive Jules Sessions]
-    L --> M[Führe automatische PR-Reviews aus]
-    M --> N[Löse Merge-Konflikte & QA-Fortschritt]
+    C --> L[Überprüfe Jules Sessions & CLI Jobs]
+    L --> M{Erfolgreich?}
+    M -->|Ja| N[Löse Merge-Konflikte & QA-Fortschritt]
+    M -->|Fehler| Esc[Tiered Escalation: Retry -> CEO Re-Plan -> User]
 
     subgraph Memory-System
         O[(autopilot-memories.json)] <--> P[memory-store.ps1]
@@ -46,7 +48,7 @@ graph TD
 
 ## Verzeichnisstruktur
 
-```
+```text
 scripts/codex-cli/
 ├── Start-Autopilot.ps1          # Zentraler Suite-Starter (Prozess-Manager & Steuerkonsole)
 ├── autopilot.ps1                # Haupteinstiegspunkt (Wake-Up-Loop)
@@ -108,6 +110,24 @@ Vor jedem Aufruf eines KI-Modells lädt `memory-store.ps1` alle aktiven Erinneru
 
 Jeder API-Call wird erfasst. Wenn Provider JSON-Kostenrückmeldungen liefern (z.B. Claude Code oder Gemini CLI), werden die exakten Kosten verbucht. Andernfalls werden Schätzwerte verwendet.
 Erreicht ein Provider sein Tageslimit oder sein Budgetlimit in USD, weicht der Router (`cli-router.ps1`) automatisch auf den nächsten Provider in der konfigurierten Fallback-Kette aus.
+
+### 4. Ausfallsicherheit (Fallback) & Eskalationsmanagement
+
+Um Hänger und API-Timeouts zuverlässig zu überstehen, implementiert das System ein mehrstufiges Eskalationsmanagement:
+
+* **CEO Fallback:** Fällt der Alpha CEO (z.B. Codex) während der Proposal-Phase aus (Quota erreicht, API-Fehler), fängt das System den Fehler ab und beauftragt nahtlos den Beta CEO (z.B. Gemini) mit der Aufgabe. Auch der Fallback öffnet sich in einem sichtbaren Terminal.
+* **Tiered Escalation (3 Stufen):**
+  1. **Auto-Retry (Stufe 1):** Schlägt eine an Jules oder einen CLI-Agent delegierte Aufgabe fehl, wird sie zunächst stumm für einen erneuten Versuch in die Warteschlange gestellt (`QUEUED_FOR_RETRY`).
+  2. **CEO Re-Planning (Stufe 2):** Erreicht ein Issue den 3. Fehlversuch, wird es an das CEO-Team eskaliert (`NEEDS_PLANNING`). Der CEO analysiert beim nächsten Wake-Up den Fehler und entwickelt einen neuen Lösungsansatz.
+  3. **User Intervention (Stufe 3):** Schlägt auch das CEO-Re-Planning mehrfach fehl, wird das Issue als `ESCALATED_TO_USER` markiert und bedarf menschlichen Eingreifens.
+
+### 5. Lokale Background CLI-Agents
+
+Das System ist nicht mehr auf "Jules" als einzigen Entwickler beschränkt. Der CEO kann gezielt entscheiden, welche KI-Architektur am besten für eine Aufgabe geeignet ist:
+
+* **Jules** wird für großflächige Refactorings und UI-Architektur genutzt.
+* **Lokale CLI-Agents (Gemini, Claude, Kiro)** werden gezielt für kleine Bugfixes, isolierte Modulanpassungen oder Skript-Entwicklung eingesetzt.
+Diese lokalen Agents werden über den Wrapper `run-visible-agent-task.ps1` in separaten Terminal-Fenstern gestartet, generieren lokal ihren Code, erstellen eigenständig Git-Branches und eröffnen automatisch Pull Requests, die dann ins normale Monitoring übergehen.
 
 ---
 

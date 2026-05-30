@@ -7,7 +7,7 @@ param(
     [switch]$DryRun,
     [switch]$PlanOnce,
     [switch]$MonitorOnce,
-    [switch]$ForcePlanningOnStart,
+    [switch]$SkipPlanningOnStart,
     [int]$PlanningIntervalOverride,
     [int]$MonitoringIntervalOverride
 )
@@ -28,6 +28,7 @@ $ScriptDir = Split-Path -Parent $PSCommandPath
 . (Join-Path $ScriptDir "lib\autopilot-session-manager.ps1")
 . (Join-Path $ScriptDir "phases\planning-wakeup.ps1")
 . (Join-Path $ScriptDir "phases\monitoring-wakeup.ps1")
+. (Join-Path $ScriptDir "phases\audit-wakeup.ps1")
 
 # --- Load config ---
 $configPath = Join-Path $ScriptDir "autopilot-config.json"
@@ -76,20 +77,34 @@ if ($MonitorOnce.IsPresent) {
 
 # --- Main loop ---
 $lastPlanTime = [datetime]::MinValue
-if (-not $ForcePlanningOnStart.IsPresent -and $State.last_planning_at) {
-    try {
-        $lastPlanTime = [datetimeoffset]::Parse($State.last_planning_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
-    } catch {
-        Write-Warning "[INIT] Konnte last_planning_at nicht parsen: $_"
-    }
-}
-
 $lastMonTime = [datetime]::MinValue
-if ($State.last_monitoring_at) {
-    try {
-        $lastMonTime = [datetimeoffset]::Parse($State.last_monitoring_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
-    } catch {
-        Write-Warning "[INIT] Konnte last_monitoring_at nicht parsen: $_"
+
+if (-not $SkipPlanningOnStart.IsPresent) {
+    # Default: Force planning on start.
+    # lastPlanTime bleibt MinValue (sofort faellig), lastMonTime auf jetzt setzen (verzoegert).
+    $lastMonTime = Get-Date
+
+    # Synchronisiere State direkt beim Start
+    $State.last_monitoring_at = $lastMonTime.ToString('o')
+    $State.last_planning_at = (Get-Date).AddDays(-1).ToString('o')
+    Save-AutopilotState -State $State
+
+    Write-Host "[INIT] Starte mit erzwungener Planungs-Phase (SkipPlanningOnStart ist nicht aktiv)." -ForegroundColor Yellow
+} else {
+    Write-Host "[INIT] SkipPlanningOnStart aktiv: Verwende Zeitstempel aus dem State-Speicher." -ForegroundColor Yellow
+    if ($State.last_planning_at) {
+        try {
+            $lastPlanTime = [datetimeoffset]::Parse($State.last_planning_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
+        } catch {
+            Write-Warning "[INIT] Konnte last_planning_at nicht parsen: $_"
+        }
+    }
+    if ($State.last_monitoring_at) {
+        try {
+            $lastMonTime = [datetimeoffset]::Parse($State.last_monitoring_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
+        } catch {
+            Write-Warning "[INIT] Konnte last_monitoring_at nicht parsen: $_"
+        }
     }
 }
 
@@ -113,7 +128,22 @@ while ($true) {
             $lastPlanTime = Get-Date
         } catch {
             Write-Host "[LOOP] Planning-Fehler: $_" -ForegroundColor Red
+            Write-Host "[LOOP] StackTrace: $($_.ScriptStackTrace)" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "Planning wake-up failed" -Context $_.Exception.Message
+        }
+
+        # Planning hat Prioritaet: Wenn beide gleichzeitig faellig waren,
+        # wird Monitoring auf den naechsten Zyklus verschoben.
+        if ($monDue) {
+            Write-Host "[LOOP] Monitoring verschoben - Planning hat Prioritaet." -ForegroundColor DarkGray
+            $monDue = $false
+        }
+
+        # Asynchroner Audit-Lauf durch CEO Beta direkt nach dem Planning
+        try {
+            Invoke-AuditWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+        } catch {
+            Write-Host "[LOOP] Audit-Fehler: $_" -ForegroundColor Red
         }
     }
 
