@@ -351,7 +351,8 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
             $julesAvailableSlots--
             
             try {
-                $sessionResult = & "$JulesScriptDir\create-jules-session.ps1" `
+                $julesCreateCmd = Join-Path $JulesScriptDir "create-jules-session.ps1"
+                $sessionResult = & $julesCreateCmd `
                     -IssueNumber $issueNum `
                     -Repository $repo `
                     -AutoCreatePr `
