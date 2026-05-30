@@ -49,7 +49,7 @@ function timeAgo(dateStr: string): string {
   return `vor ${days}d`;
 }
 
-export default function DashboardPage({ registry, sessions, pullRequests }: Props) {
+export default function DashboardPage({ registry, sessions, pullRequests, issues }: Props) {
   const providers = registry.providers || {};
   const providerEntries = Object.entries(providers);
 
@@ -146,7 +146,7 @@ export default function DashboardPage({ registry, sessions, pullRequests }: Prop
                     color: '#e2e8f0',
                     fontSize: '13px',
                   }}
-                  formatter={(value: number, _name: string, props: { payload: { limit: number } }) => [
+                  formatter={(value: number, _name: string, props: any) => [
                     `${value} / ${props.payload.limit}`,
                     'Aufrufe'
                   ]}
