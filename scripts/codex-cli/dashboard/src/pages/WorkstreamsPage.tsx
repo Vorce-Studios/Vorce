@@ -66,12 +66,12 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
     julesSessions?.forEach(js => {
       if (!js.repo.includes('Vorce')) return;
       if (js.state === 'COMPLETED' || js.state === 'QUEUED') return;
-      
+
       // Versuche Issue-Number aus Title zu extrahieren "MF-StIs_IssueTitle #123"
       let issueNum = '';
       const match = js.issue_title?.match(/#(\d+)/);
       if (match) issueNum = match[1];
-      
+
       const targetId = issueNum || `session_${js.id}`;
       const ws = getOrAdd(targetId);
       ws.julesSessionRaw = js;
@@ -80,7 +80,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
     // 4. Open PRs
     pullRequests.forEach(pr => {
       if (pr.state === 'CLOSED') return; // Ignore closed without merge
-      
+
       // Finde verknüpftes Issue
       let targetId = '';
       const match = pr.headRefName.match(/(\d+)/); // z.B. feature/123-foo
@@ -118,7 +118,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
       }
 
       ws.status = status;
-      
+
       // Fallback-Score basierend auf Datum (neueste zuerst)
       const dateStr = ws.pr?.updatedAt || ws.session?.last_checked_at || ws.issue?.updatedAt || '';
       if (dateStr) {
@@ -150,7 +150,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
             Korrelierte Ansicht von Issues, Agent Sessions und Pull Requests
           </p>
         </div>
-        
+
         <div className="flex gap-2 bg-slate-900/60 p-1.5 rounded-lg border border-slate-800">
           {(['ALL', 'ACTIVE', 'ERROR'] as const).map(f => (
             <button
@@ -158,7 +158,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                 filter === f
-                  ? f === 'ERROR' 
+                  ? f === 'ERROR'
                     ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                     : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                   : 'text-slate-400 hover:text-slate-200'
@@ -181,7 +181,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
             <div key={ws.id} className="glass-card overflow-hidden hover:border-slate-700 transition-colors flex flex-col md:flex-row border-l-4" style={{
               borderLeftColor: ws.status === 'ERROR' ? '#f43f5e' : ws.status === 'COMPLETED' ? '#334155' : ws.status === 'NEEDS_REVIEW' ? '#3b82f6' : ws.status === 'IN_PROGRESS' ? '#10b981' : '#475569'
             }}>
-              
+
               {/* 1. Issue Box */}
               <div className="flex-1 p-4 md:border-r border-slate-800 flex flex-col min-w-0">
                 <div className="flex items-center gap-2 mb-2">
@@ -256,7 +256,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
                     <a href={ws.pr.url} target="_blank" rel="noreferrer" className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1.5 line-clamp-1" title={ws.pr.headRefName}>
                       #{ws.pr.number} {ws.pr.headRefName}
                     </a>
-                    
+
                     <div className="flex items-center gap-2">
                       {ws.pr.mergeable === 'CONFLICTING' ? (
                         <span className="badge bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] py-0"><XCircle className="w-3 h-3 mr-1 inline"/> Conflict</span>

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue } from '../types';
@@ -49,21 +50,44 @@ function timeAgo(dateStr: string): string {
   return `vor ${days}d`;
 }
 
-export default function DashboardPage({ registry, sessions, pullRequests, issues, julesSessions }: Props) {
+export default function DashboardPage({ registry, sessions, pullRequests, julesSessions, onRefetch }: Props) {
+  const [resolving, setResolving] = useState<string | null>(null);
+
+  const handleResolveAlert = async (topic: string) => {
+    setResolving(topic);
+    try {
+      const res = await fetch('/api/alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'resolve', topic })
+      });
+      if (res.ok) {
+        if (onRefetch) onRefetch();
+        else window.location.reload();
+      } else {
+        console.error('Failed to resolve alert');
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setResolving(null);
+    }
+  };
+
   const providers = registry.providers || {};
   const providerEntries = Object.entries(providers);
 
   const totalCostToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.estimated_cost_usd || 0), 0);
   const totalCallsToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.calls || 0), 0);
   const activeDelegations = sessions.active_delegations?.length || 0;
-  
+
   // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
-  const activeJulesSessions = julesSessions ? julesSessions.filter(s => 
-      s.repo.includes('Vorce') && 
-      s.state !== 'COMPLETED' && 
+  const activeJulesSessions = julesSessions ? julesSessions.filter(s =>
+      s.repo.includes('Vorce') &&
+      s.state !== 'COMPLETED' &&
       s.state !== 'QUEUED'
   ).length : 0;
-  
+
   // Filter PRs that are OPEN and NOT a Draft
   const openPRs = pullRequests.filter(pr => pr.state === 'OPEN' && pr.isDraft !== true).length;
   const conflictingPRs = pullRequests.filter(pr => pr.state === 'OPEN' && pr.isDraft !== true && pr.mergeable === 'CONFLICTING').length;
@@ -116,8 +140,18 @@ export default function DashboardPage({ registry, sessions, pullRequests, issues
             {sessions.decisions_pending.map((alert, idx) => (
               <div key={idx} className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-rose-300">{alert.topic}</span>
-                  <span className="text-xs text-rose-400/70">{timeAgo(alert.created_at)}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-rose-300">{alert.topic}</span>
+                    <span className="text-xs text-rose-400/70">{timeAgo(alert.created_at)}</span>
+                  </div>
+                  <button
+                    onClick={() => handleResolveAlert(alert.topic)}
+                    disabled={resolving === alert.topic}
+                    className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-medium rounded-md bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 transition-colors border border-rose-500/30 disabled:opacity-50"
+                  >
+                    <CheckCircle className="w-3 h-3" />
+                    {resolving === alert.topic ? 'Wird gelöst...' : 'Bestätigen & Schließen'}
+                  </button>
                 </div>
                 <p className="text-sm text-rose-200/80 whitespace-pre-wrap">{alert.context}</p>
               </div>

@@ -113,7 +113,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                     $commentBody = "CEO Re-Planning Handlungsplan für den nächsten Versuch:`n`n$ceoPlan"
                     gh issue comment $issueNum --repo $repo --body $commentBody | Out-Null
                     Write-Host "[PLANNING] CEO-Plan auf GitHub-Issue #$issueNum gepostet." -ForegroundColor Green
-                    
+
                     $escIssue.planning_resolutions = [int]$escIssue.planning_resolutions + 1
                     $escIssue.status = "RESOLVED_BY_PLANNING"
                     Save-AutopilotState -State $State
@@ -151,7 +151,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                 $issuesRaw = Get-Content -LiteralPath $cachedIssuePath -Raw -Encoding UTF8 | ConvertFrom-Json
                 $gateIssueNumbers = @(651, 650, 547, 549, 548, 661, 662, 96, 98, 99, 101, 102, 103, 654, 655, 656, 657, 658, 659, 107, 43, 652, 653)
                 $contextLines = @()
-                
+
                 if ($null -ne $issuesRaw -and ($issuesRaw -is [System.Array] -or $issuesRaw -is [System.Collections.IList])) {
                     foreach ($issue in $issuesRaw) {
                         if ($gateIssueNumbers -contains $issue.number) {
@@ -163,7 +163,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                         }
                     }
                 }
-                
+
                 if ($contextLines.Count -gt 0) {
                     $promptIssuesContext = "`n`nHier sind die verfuegbaren Details zu den genannten Gate-Issues (aus dem lokalen Cache):`n" + ($contextLines -join "`n")
                 }
@@ -179,7 +179,7 @@ Repository: $repo
 Aktuell gibt es nur $($candidates.Count) offene, delegierbare Issues.
 
 WICHTIGE ANWEISUNG ZU MCP-TOOLS:
-Du hast hier alle benoetigten Informationen direkt im Text. 
+Du hast hier alle benoetigten Informationen direkt im Text.
 VERWENDE KEINE GITHUB-MCP-TOOLS (wie github_fetch_issue oder github_search_issues)! Das kostet nur unnoetig Zeit und Token. Arbeite AUSSCHLIESSLICH mit den Daten aus diesem Prompt.
 
 Plane strikt Richtung Release 1.0 Readiness. Massgeblicher Top-Level-Kompass ist:
@@ -198,7 +198,7 @@ Schlage bis zu $($Config.max_issues_per_planning_cycle) konkrete, kleine Issues 
 Keine generischen TODO-, Refactoring- oder Performance-Issues erzeugen, wenn sie nicht direkt eines der Release-Gates beweisbar voranbringen.
 Keine Master-Issues als Jules-Coding-Task erzeugen. Coding-/QA-Aufgaben muessen Standard- oder Sub-Issues sein und die Namenskonvention einhalten.
 
-WICHTIG ZUR AGENT-ZUWEISUNG: 
+WICHTIG ZUR AGENT-ZUWEISUNG:
 Du MUSST für jedes Issue gezielt entscheiden, welcher Agent es bearbeitet.
 - "jules": NUR für riesige Refactorings, UI-Architektur oder Multi-File Features nutzen.
 - Lokale CLI-Agents (z.B. "gemini_cli", "claude_code"): ZWINGEND zu nutzen für kleine Bugfixes, isolierte Modul-Anpassungen, Scripts, CI/CD-Fixes oder klar umrissene Algorithmen! Du SOLLST regelmäßig Aufgaben an diese CLI-Agents delegieren, um Jules zu entlasten!
@@ -274,12 +274,12 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 
                 if ($newIssues.Count -gt 0) {
                     $newIssuesCreated = $false
-                    
+
                     # Use cached issue data from the dashboard instead of calling GitHub directly
                     $cachedIssuePath = Join-Path $ScriptDir "dashboard\public\github-issues.json"
                     $existingVorIssues = @()
                     $issuesRaw = $null
-                    
+
                     if (Test-Path $cachedIssuePath) {
                         try {
                             $issuesRaw = Get-Content -LiteralPath $cachedIssuePath -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -341,7 +341,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                             continue
                         }
                         $seenTitles.Add($issueTitle) | Out-Null
-                        
+
                         $issueAgent = "jules"
                         if ($newIssue.PSObject.Properties.Name -contains "agent" -and -not [string]::IsNullOrWhiteSpace($newIssue.agent)) {
                             $issueAgent = [string]$newIssue.agent
@@ -351,7 +351,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                             Write-Host "[PLANNING] [DRY RUN] Wuerde Issue erstellen: $issueTitle ($issueAgent)" -ForegroundColor DarkYellow
                         } else {
                             $labels = @($newIssue.labels) + @($Config.issue_filters.autopilot_label)
-                            
+
                             # Ensure jules-task label is removed if not jules
                             if ($issueAgent -ne "jules") {
                                 $labels = @($labels | Where-Object { $_ -ne "jules-task" })
@@ -384,7 +384,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
     $currentSessions = [int]$julesProvider.usage_today.calls
     $maxDaily = [int]$Config.jules.max_daily_sessions
     $maxConcurrent = [int]$Config.jules.max_concurrent_sessions
-    $julesActiveCount = @($State.active_delegations | Where-Object { 
+    $julesActiveCount = @($State.active_delegations | Where-Object {
         -not ($_.PSObject.Properties.Name -contains "agent_type") -or ($_.agent_type -eq "jules")
     }).Count
 
@@ -410,12 +410,12 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
         $issue = $candidates[$i]
         $issueNum = [int]$issue.number
         $issueTitle = [string]$issue.title
-        
+
         if ($delegatedInThisRun.Contains($issueNum)) {
             Write-Host "[PLANNING] Ueberspringe Issue #$issueNum - Wurde bereits in diesem Lauf delegiert!" -ForegroundColor Yellow
             continue
         }
-        
+
         $targetAgent = "jules"
         foreach ($label in $issue.labels) {
             $lname = if ($label -is [string]) { $label } else { $label.name }
@@ -439,7 +439,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                 continue
             }
             $julesAvailableSlots--
-            
+
             try {
                 $julesCreateCmd = Join-Path $JulesScriptDir "create-jules-session.ps1"
                 $sessionResult = & $julesCreateCmd `
@@ -474,15 +474,15 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
             # Local CLI Agent
             try {
                 $quotaRegistryPath = Join-Path $ScriptDir "quota-registry.json"
-                
+
                 # Start visible terminal process
                 $cmdArgs = "-NoExit", "-File", "`"$ToolsDir\run-visible-agent-task.ps1`"", "-IssueNumber", $issueNum, "-IssueTitle", "`"$issueTitle`"", "-AgentProvider", "`"$targetAgent`"", "-Repository", "`"$repo`"", "-QuotaRegistryPath", "`"$quotaRegistryPath`""
-                
+
                 $proc = Start-Process pwsh -ArgumentList $cmdArgs -PassThru -WindowStyle Normal
-                
+
                 Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId "local-agent-$($proc.Id)" -AgentType $targetAgent -JobId $($proc.Id.ToString())
                 $delegatedInThisRun.Add($issueNum) | Out-Null
-                
+
                 Write-Host "[PLANNING] Lokaler Agent $targetAgent gestartet (PID: $($proc.Id))." -ForegroundColor Cyan
             } catch {
                 Write-Warning "[PLANNING] Lokaler Agent $targetAgent fuer #$issueNum fehlgeschlagen: $_"

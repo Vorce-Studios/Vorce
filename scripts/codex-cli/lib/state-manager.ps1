@@ -92,7 +92,7 @@ function Update-JsonLocked {
             $fileStream = [System.IO.File]::Open($Path, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
             $reader = [System.IO.StreamReader]::new($fileStream, [System.Text.Encoding]::UTF8)
             $content = $reader.ReadToEnd()
-            
+
             $data = $null
             if (-not [string]::IsNullOrWhiteSpace($content)) {
                 $data = $content | ConvertFrom-Json
@@ -107,7 +107,7 @@ function Update-JsonLocked {
             $json = $updatedData | ConvertTo-Json -Depth 10
             $writer.Write($json)
             $writer.Flush()
-            
+
             $writer.Dispose()
             $reader.Dispose()
             $fileStream.Dispose()
@@ -473,7 +473,7 @@ function Set-DelegationEscalation {
     } else {
         $esc.monitoring_failures = [int]$esc.monitoring_failures + 1
         $esc.last_jules_session_id = $sessionId
-        
+
         if ([int]$esc.monitoring_failures -lt 3) {
             $esc.status = "QUEUED_FOR_RETRY"
             Write-Host "[STATE] Issue #$IssueNumber fehlgeschlagen ($($esc.monitoring_failures). Versuch). Wird für Retry eingereiht." -ForegroundColor Yellow
@@ -481,7 +481,7 @@ function Set-DelegationEscalation {
             if ([int]$esc.planning_resolutions -ge $maxPlanningResolutions) {
                 # Letzte Eskalationsstufe: An User eskalieren!
                 $esc.status = "ESCALATED_TO_USER"
-                
+
                 $topic = "Issue #$IssueNumber endgueltig eskaliert an User"
                 $exists = $State.decisions_pending | Where-Object { $_.topic -eq $topic }
                 if (-not $exists) {
@@ -491,7 +491,7 @@ function Set-DelegationEscalation {
                         created_at = (Get-Date -Format 'o')
                     })
                 }
-                
+
                 # In Completed eintragen als final failed
                 $State.completed_this_session += @([ordered]@{
                     issue_number = $IssueNumber

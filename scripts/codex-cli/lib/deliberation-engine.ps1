@@ -251,12 +251,12 @@ function Format-CeoChatOutput {
         foreach ($prop in $props) {
             $name = $prop.Name
             $val = $prop.Value
-            
+
             # Format property name cleanly (capitalize each word)
-            $displayName = @($name -split '_' | ForEach-Object { 
+            $displayName = @($name -split '_' | ForEach-Object {
                 if ($_.Length -gt 0) { $_.Substring(0,1).ToUpper() + $_.Substring(1) } else { "" }
             }) -join " "
-            
+
             if ($val -is [System.Array] -or $val -is [System.Collections.IList]) {
                 Write-Host "  $displayName`:" -ForegroundColor Cyan
                 foreach ($item in $val) {
@@ -342,7 +342,7 @@ function Invoke-VisibleCeoPhase {
             -DryRun:$DryRun
 
         Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
-        
+
         $finalOutput = ""
         $isSuccess = [bool]((Test-ObjectProperty -Object $result -Name "Success") -and $result.Success)
         if ($isSuccess) {
@@ -565,7 +565,7 @@ function Invoke-Deliberation {
     if (-not $proposalResult.success) {
         Write-Host "[DELIB] Alpha-Proposal fehlgeschlagen! Fallback auf Beta CEO (Visible)." -ForegroundColor Red
         $protocol.final_output = "Alpha failed, fell back to Beta visible agent"
-        
+
         $fallbackResult = Invoke-VisibleCeoPhase `
             -QuotaRegistry $QuotaRegistry `
             -CeoInfo $ceos.beta `
@@ -811,7 +811,7 @@ function Invoke-DualCeoTask {
             $betaTier = if ($parts.Count -gt 1) { $parts[1] } else { $null }
 
             Write-Host "[DELIB] Standard-Agent fehlgeschlagen! Fallback auf Beta CEO ($betaRoute)." -ForegroundColor Red
-            
+
             $result = Invoke-CliTask `
                 -QuotaRegistry $QuotaRegistry `
                 -TaskType $TaskType `

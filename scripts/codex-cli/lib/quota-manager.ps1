@@ -198,7 +198,3 @@ function Get-ProviderUsageTotals {
         estimated_cost_usd = if (Test-ObjectProperty -Object $Provider.usage_today -Name "estimated_cost_usd") { $Provider.usage_today.estimated_cost_usd } else { 0.0 }
     }
 }
-
-
-
-
