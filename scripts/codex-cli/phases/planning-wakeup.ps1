@@ -312,6 +312,15 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                         Write-Warning "[PLANNING] Konnte naechste VOR-Issue-Nummer nicht aus GitHub ermitteln; starte bei VOR-001."
                     }
 
+                    $seenTitles = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+                    if ($null -ne $existingVorIssues) {
+                        foreach ($ei in $existingVorIssues) {
+                            if (-not [string]::IsNullOrWhiteSpace($ei.title)) {
+                                $seenTitles.Add([string]$ei.title) | Out-Null
+                            }
+                        }
+                    }
+
                     foreach ($newIssue in $newIssues) {
                         # Validate that newIssue has a title
                         if ($null -eq $newIssue -or -not ($newIssue.PSObject.Properties.Name -contains "title")) { continue }
@@ -326,6 +335,12 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                             $issueTitle = "__VOR-{0:D3}_SubI_{1}" -f $nextVorNumber, $issueSlug
                             $nextVorNumber++
                         }
+
+                        if ($seenTitles.Contains($issueTitle)) {
+                            Write-Host "[PLANNING] Ueberspringe Erstellung: Issue mit Titel '$issueTitle' existiert bereits oder wurde gerade in dieser Iteration vorgeschlagen." -ForegroundColor Yellow
+                            continue
+                        }
+                        $seenTitles.Add($issueTitle) | Out-Null
                         
                         $issueAgent = "jules"
                         if ($newIssue.PSObject.Properties.Name -contains "agent" -and -not [string]::IsNullOrWhiteSpace($newIssue.agent)) {
@@ -389,10 +404,17 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
     $JulesScriptDir = Join-Path (Split-Path -Parent $ScriptDir) "jules"
     $ToolsDir = Join-Path $ScriptDir "tools"
 
+    $delegatedInThisRun = [System.Collections.Generic.HashSet[int]]::new()
+
     for ($i = 0; $i -lt $toPick; $i++) {
         $issue = $candidates[$i]
         $issueNum = [int]$issue.number
         $issueTitle = [string]$issue.title
+        
+        if ($delegatedInThisRun.Contains($issueNum)) {
+            Write-Host "[PLANNING] Ueberspringe Issue #$issueNum - Wurde bereits in diesem Lauf delegiert!" -ForegroundColor Yellow
+            continue
+        }
         
         $targetAgent = "jules"
         foreach ($label in $issue.labels) {
@@ -459,6 +481,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                 $proc = Start-Process pwsh -ArgumentList $cmdArgs -PassThru -WindowStyle Normal
                 
                 Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId "local-agent-$($proc.Id)" -AgentType $targetAgent -JobId $($proc.Id.ToString())
+                $delegatedInThisRun.Add($issueNum) | Out-Null
                 
                 Write-Host "[PLANNING] Lokaler Agent $targetAgent gestartet (PID: $($proc.Id))." -ForegroundColor Cyan
             } catch {
