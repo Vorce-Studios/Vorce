@@ -48,6 +48,8 @@ export interface ActiveDelegation {
   delegated_at: string;
   last_checked_at: string;
   retry_count: number;
+  agent_type?: string;
+  job_id?: string;
 }
 
 export interface ReviewQueueItem {
@@ -129,6 +131,7 @@ export interface PullRequest {
   title: string;
   updatedAt: string;
   url: string;
+  isDraft?: boolean;
 }
 
 // ── Autopilot Config Types ──

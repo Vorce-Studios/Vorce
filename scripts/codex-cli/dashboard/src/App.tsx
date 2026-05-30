@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, Activity, AlertCircle, GitPullRequest, Settings, RefreshCw, Zap, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Activity, Settings, RefreshCw, Zap, BarChart3 } from 'lucide-react';
 import { useData, useAutoRefresh } from './hooks';
 
 // Pages
@@ -101,8 +101,6 @@ export default function App() {
             registry={registry}
             sessions={sessions}
             issues={issues}
-            pullRequests={pullRequests}
-            history={history}
           />
         );
       case 'settings':

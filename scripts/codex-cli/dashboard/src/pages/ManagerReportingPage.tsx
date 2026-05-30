@@ -1,37 +1,25 @@
 import React, { useState } from 'react';
 import {
-  BarChart3,
-  TrendingUp,
   Clock,
   DollarSign,
   CheckCircle2,
-  AlertTriangle,
   Layers,
-  MessageSquare,
-  Calendar,
-  ArrowUpRight,
-  Users,
-  Zap,
-  ChevronRight,
-  TrendingDown
+  Zap
 } from 'lucide-react';
-import type { QuotaRegistry, ActiveSessions, GitHubIssue, PullRequest } from '../types';
+import type { QuotaRegistry, ActiveSessions, GitHubIssue } from '../types';
 
 interface ManagerReportingPageProps {
   registry: QuotaRegistry;
   sessions: ActiveSessions;
   issues: GitHubIssue[];
-  pullRequests: PullRequest[];
-  history: any[];
 }
 
-export default function ManagerReportingPage({ registry, sessions, issues, pullRequests, history }: ManagerReportingPageProps) {
+export default function ManagerReportingPage({ registry, sessions, issues }: ManagerReportingPageProps) {
   const [timeRange, setTimeRange] = useState<'today' | '7d' | '30d'>('7d');
   const [selectedLabel, setSelectedLabel] = useState<string>('all');
 
   // --- 1. Berechnungen für Issues & PRs ---
   const totalIssues = issues.length;
-  const openIssues = issues.filter(i => i.state.toLowerCase() === 'open').length;
   const closedIssues = issues.filter(i => i.state.toLowerCase() === 'closed').length;
   const resolutionRate = totalIssues > 0 ? Math.round((closedIssues / totalIssues) * 100) : 0;
 
