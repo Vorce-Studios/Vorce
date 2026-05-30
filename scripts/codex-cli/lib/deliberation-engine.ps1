@@ -29,20 +29,9 @@ function Resolve-DualCeos {
 
         if (Test-ProviderAvailable -Registry $QuotaRegistry -ProviderName $provName) {
             $cmdName = $QuotaRegistry.providers.$provName.command
-            $resolvedCmd = Get-Command $cmdName -ErrorAction SilentlyContinue
-            if ($resolvedCmd -and $resolvedCmd.CommandType -eq "ExternalScript" -and $resolvedCmd.Name -like "*.ps1") {
-                $cmdNameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($resolvedCmd.Name)
-                $cmdDir = Split-Path $resolvedCmd.Source
-                $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.cmd"
-                if (Test-Path $cmdFile) {
-                    $cmdName = $cmdFile
-                } else {
-                    $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.exe"
-                    if (Test-Path $cmdFile) {
-                        $cmdName = $cmdFile
-                    }
-                }
-            }
+            # Use the original command name as-is. Do NOT rewrite to .cmd/.exe —
+            # Windows .cmd files have an ~8191 char argument limit and escaping
+            # issues that break long deliberation prompts.
             $alpha = [ordered]@{
                 provider   = $provName
                 model_tier = $modelTier
@@ -69,20 +58,7 @@ function Resolve-DualCeos {
 
         if (Test-ProviderAvailable -Registry $QuotaRegistry -ProviderName $provName) {
             $cmdName = $QuotaRegistry.providers.$provName.command
-            $resolvedCmd = Get-Command $cmdName -ErrorAction SilentlyContinue
-            if ($resolvedCmd -and $resolvedCmd.CommandType -eq "ExternalScript" -and $resolvedCmd.Name -like "*.ps1") {
-                $cmdNameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($resolvedCmd.Name)
-                $cmdDir = Split-Path $resolvedCmd.Source
-                $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.cmd"
-                if (Test-Path $cmdFile) {
-                    $cmdName = $cmdFile
-                } else {
-                    $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.exe"
-                    if (Test-Path $cmdFile) {
-                        $cmdName = $cmdFile
-                    }
-                }
-            }
+            # Use the original command name as-is (see Alpha comment above)
             $beta = [ordered]@{
                 provider   = $provName
                 model_tier = $modelTier
@@ -523,9 +499,21 @@ function Invoke-Deliberation {
 
     if ($null -eq $ceos.alpha -or $null -eq $ceos.beta) {
         $available = if ($ceos.alpha) { $ceos.alpha } else { $ceos.beta }
-        Write-Host "[DELIB] Nur ein CEO verfuegbar ($($available.provider)). Single-Agent-Modus." -ForegroundColor Yellow
+        Write-Host "[DELIB] Nur ein CEO verfuegbar ($($available.provider)). Single-Agent-Modus (Visible)." -ForegroundColor Yellow
 
-        return Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType $TaskType -Prompt $Prompt -WorkingDirectory $WorkingDirectory -MemoryBlock $MemoryBlock -DryRun:$DryRun
+        $singleResult = Invoke-VisibleCeoPhase `
+            -QuotaRegistry $QuotaRegistry `
+            -CeoInfo $available `
+            -Prompt $Prompt `
+            -PhaseName "Single-Agent" `
+            -WorkingDirectory $WorkingDirectory `
+            -State $State `
+            -DryRun:$DryRun
+
+        return [pscustomobject]@{
+            success = $singleResult.success
+            output  = Get-CleanCeoOutput -RawOutput $singleResult.output -ProviderName $available.provider
+        }
     }
 
     Write-Host "[DELIB] Alpha: $($ceos.alpha.provider) ($($ceos.alpha.model_tier))" -ForegroundColor Cyan
@@ -575,13 +563,25 @@ function Invoke-Deliberation {
     })
 
     if (-not $proposalResult.success) {
-        Write-Host "[DELIB] Alpha-Proposal fehlgeschlagen! Fallback auf Beta Single-Agent." -ForegroundColor Red
-        $protocol.final_output = "Alpha failed, fell back to single agent"
+        Write-Host "[DELIB] Alpha-Proposal fehlgeschlagen! Fallback auf Beta CEO (Visible)." -ForegroundColor Red
+        $protocol.final_output = "Alpha failed, fell back to Beta visible agent"
+
+        $fallbackResult = Invoke-VisibleCeoPhase `
+            -QuotaRegistry $QuotaRegistry `
+            -CeoInfo $ceos.beta `
+            -Prompt $proposalPrompt `
+            -PhaseName "Fallback-Proposal" `
+            -WorkingDirectory $WorkingDirectory `
+            -State $State `
+            -DryRun:$DryRun
+
         $protocol.completed_at = (Get-Date -Format 'o')
         Save-DeliberationProtocol -Protocol $protocol -Config $Config
 
-        # Fallback: Let Beta handle it alone
-        return Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType $TaskType -Prompt $Prompt -WorkingDirectory $WorkingDirectory -MemoryBlock $MemoryBlock -DryRun:$DryRun
+        return [pscustomobject]@{
+            success = $fallbackResult.success
+            output  = Get-CleanCeoOutput -RawOutput $fallbackResult.output -ProviderName $ceos.beta.provider
+        }
     }
 
     Write-Host "[DELIB] Alpha-Proposal erhalten ($([int]$proposalDuration)ms)" -ForegroundColor Green
@@ -794,11 +794,35 @@ function Invoke-DualCeoTask {
     }
 
     # Standard single-agent path
-    return Invoke-CliTask `
+    $result = Invoke-CliTask `
         -QuotaRegistry $QuotaRegistry `
         -TaskType $TaskType `
         -Prompt $Prompt `
         -WorkingDirectory $WorkingDirectory `
         -MemoryBlock $memoryBlock `
         -DryRun:$DryRun
+
+    # Fallback to Beta CEO if the single-agent call failed and Dual-CEO is enabled
+    if (-not $result.success -and $hasDualCeo -and $Config.dual_ceo.enabled) {
+        $betaRoute = $Config.dual_ceo.ceo_beta_chain[0]
+        if ($betaRoute) {
+            $parts = $betaRoute -split ":"
+            $betaProvider = $parts[0]
+            $betaTier = if ($parts.Count -gt 1) { $parts[1] } else { $null }
+
+            Write-Host "[DELIB] Standard-Agent fehlgeschlagen! Fallback auf Beta CEO ($betaRoute)." -ForegroundColor Red
+
+            $result = Invoke-CliTask `
+                -QuotaRegistry $QuotaRegistry `
+                -TaskType $TaskType `
+                -Prompt $Prompt `
+                -WorkingDirectory $WorkingDirectory `
+                -MemoryBlock $memoryBlock `
+                -DryRun:$DryRun `
+                -ProviderOverride $betaProvider `
+                -ModelTierOverride $betaTier
+        }
+    }
+
+    return $result
 }

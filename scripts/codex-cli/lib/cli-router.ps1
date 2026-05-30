@@ -190,7 +190,9 @@ function Invoke-CliTask {
         [Parameter(Mandatory)][string]$Prompt,
         [string]$WorkingDirectory,
         [string]$MemoryBlock,
-        [switch]$DryRun
+        [switch]$DryRun,
+        [string]$ProviderOverride,
+        [string]$ModelTierOverride
     )
 
     # Prepend memory block if provided
@@ -198,7 +200,28 @@ function Invoke-CliTask {
         $Prompt = $MemoryBlock + $Prompt
     }
 
-    $route = Resolve-CliProvider -QuotaRegistry $QuotaRegistry -TaskType $TaskType
+    if ([string]::IsNullOrWhiteSpace($ProviderOverride)) {
+        $route = Resolve-CliProvider -QuotaRegistry $QuotaRegistry -TaskType $TaskType
+    } else {
+        $cmdName = $QuotaRegistry.providers.$ProviderOverride.command
+        $resolvedCmd = Get-Command $cmdName -ErrorAction SilentlyContinue
+        if ($resolvedCmd -and $resolvedCmd.CommandType -eq "ExternalScript" -and $resolvedCmd.Name -like "*.ps1") {
+            $cmdNameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($resolvedCmd.Name)
+            $cmdDir = Split-Path $resolvedCmd.Source
+            $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.cmd"
+            if (Test-Path $cmdFile) {
+                $cmdName = $cmdFile
+            } elseif (Test-Path (Join-Path $cmdDir "$cmdNameWithoutExt.exe")) {
+                $cmdName = Join-Path $cmdDir "$cmdNameWithoutExt.exe"
+            }
+        }
+        $route = [ordered]@{
+            provider   = $ProviderOverride
+            model_tier = if ([string]::IsNullOrWhiteSpace($ModelTierOverride)) { "default" } else { $ModelTierOverride }
+            command    = $cmdName
+        }
+    }
+
     if ($null -eq $route) {
         return [ordered]@{
             success  = $false

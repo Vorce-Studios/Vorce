@@ -134,19 +134,7 @@ if (-not $cmdInfo) {
 }
 
 $cmdSource = $cmdInfo.Source
-if ($cmdInfo.CommandType -eq "ExternalScript" -and $cmdInfo.Name -like "*.ps1") {
-    $cmdNameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($cmdInfo.Name)
-    $cmdDir = Split-Path $cmdInfo.Source
-    $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.cmd"
-    if (Test-Path $cmdFile) {
-        $cmdSource = $cmdFile
-    } else {
-        $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.exe"
-        if (Test-Path $cmdFile) {
-            $cmdSource = $cmdFile
-        }
-    }
-}
+# Keep original .ps1 or other command source. Forcing .cmd breaks multiline arguments due to Windows batch file limitations.
 
 # --- Change to working directory ---
 if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory) -and (Test-Path $WorkingDirectory)) {
@@ -162,38 +150,55 @@ Write-Host ""
 # --- Execute CLI command with live output + file capture ---
 $exitCode = 0
 try {
-    $powerShellHost = if (Get-Command pwsh -ErrorAction SilentlyContinue) { (Get-Command pwsh).Source } else { (Get-Command powershell).Source }
     $hasPromptFile = -not [string]::IsNullOrWhiteSpace($PromptFile) -and (Test-Path $PromptFile)
 
-    $escapedPromptFile = $PromptFile -replace "'", "''"
-    $escapedCliArgsFile = $CliArgsFile -replace "'", "''"
-    $escapedSource = $cmdSource -replace "'", "''"
-
-    # Gemini CLI requires -p for headless mode (stdin piping starts interactive TUI).
-    # Detect if this is a gemini/claude-style CLI and inject the prompt as -p argument.
-    $cliBaseName = [System.IO.Path]::GetFileNameWithoutExtension($cmdSource).ToLower()
+    $cliBaseName = [System.IO.Path]::GetFileNameWithoutExtension($CliCommand).ToLower()
     $needsPromptArg = $cliBaseName -in @("gemini", "claude")
 
+    # Since we no longer rewrite to .cmd (see deliberation-engine fix),
+    # the command runs via PowerShell which has NO argument length limit.
+    # We can safely pass the prompt as -p argument.
+    # For extremely long prompts (>30KB), fall back to stdin pipe as safety net.
+    $useStdinPipe = $false
     if ($hasPromptFile -and $needsPromptArg) {
-        # Inject prompt as -p argument into the args list (headless mode)
-        $cmdString = "`$promptText = Get-Content -LiteralPath '$escapedPromptFile' -Raw -Encoding UTF8; `$argsList += @('-p', `$promptText); & '$escapedSource' @argsList 2>&1"
-    } elseif ($hasPromptFile) {
-        # Other CLIs (e.g. codex): pipe prompt via stdin
-        $cmdString = "Get-Content -LiteralPath '$escapedPromptFile' -Raw -Encoding UTF8 | & '$escapedSource' @argsList 2>&1"
-    } else {
-        $cmdString = "& '$escapedSource' @argsList 2>&1"
+        $promptText = Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8
+        $promptBytes = [System.Text.Encoding]::UTF8.GetByteCount($promptText)
+        if ($promptBytes -gt 30000) {
+            # Extremely long prompt: use stdin pipe with -p "." as trigger
+            $useStdinPipe = $true
+            $cliArgs += @("-p", ".")
+            Write-Host "[CEO] Sehr langer Prompt ($promptBytes Bytes) - verwende Stdin-Pipe" -ForegroundColor DarkGray
+        } else {
+            # Normal prompt: pass directly as -p argument (safe with .ps1)
+            $cliArgs += @("-p", $promptText)
+            Write-Host "[CEO] Prompt wird als -p Argument uebergeben ($promptBytes Bytes)" -ForegroundColor DarkGray
+        }
+    } elseif ($hasPromptFile -and -not $needsPromptArg) {
+        # For other providers: append prompt as argument
+        $promptText = Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8
+        $cliArgs += @($promptText)
     }
 
-    $fullCmd = "`$argsList = @(Get-Content -LiteralPath '$escapedCliArgsFile' -Raw -Encoding UTF8 | ConvertFrom-Json); $cmdString"
+    Write-Host "[CEO] Analysiere und verarbeite Phase..." -ForegroundColor Cyan
+    Write-Host "[CEO] Befehl: $CliCommand" -ForegroundColor DarkGray
+    Write-Host "[CEO] Args: $($cliArgs.Count) Parameter" -ForegroundColor DarkGray
 
-    Write-Host "[CEO] Analysiere und verarbeite Phase...$(if ($needsPromptArg) { ' (Headless -p Modus)' } else { '' })" -ForegroundColor Cyan
-    & $powerShellHost -NoProfile -ExecutionPolicy Bypass -Command $fullCmd > $OutputFile 2>&1
+    # Use process execution with Tee-Object instead of Start-Transcript.
+    # Start-Transcript can interfere with CLI tools that use terminal escape sequences.
+    $errorLogFile = $OutputFile + ".err.log"
+    if ($useStdinPipe) {
+        # Pipe prompt via stdin for extremely long prompts
+        Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8 | & $CliCommand @cliArgs 2> $errorLogFile | Tee-Object -FilePath $OutputFile
+    } else {
+        & $CliCommand @cliArgs 2> $errorLogFile | Tee-Object -FilePath $OutputFile
+    }
+
     $exitCode = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }
 } catch {
     $errMsg = $_.Exception.Message
     Write-Host ""
     Write-Host "[CEO] FEHLER: $errMsg" -ForegroundColor Red
-    Set-Content -Path $OutputFile -Value $errMsg -Encoding UTF8
+    Add-Content -Path $OutputFile -Value "`nFEHLER: $errMsg" -Encoding UTF8
     $exitCode = 1
 }
 

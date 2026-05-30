@@ -84,3 +84,18 @@ winres = { workspace = true }
 
 [dev-dependencies]
 image = { workspace = true }
+
+[package.metadata.deb]
+maintainer = "Vorce Contributors <https://github.com/Vorce-Studios/Vorce>"
+copyright = "2026, Vorce Contributors"
+license-file = ["../../LICENSE", "4"]
+depends = "$auto, libavcodec61, libavformat61, libavutil59, libswscale8, libavdevice61, libavfilter10"
+section = "video"
+priority = "optional"
+assets = [
+    ["../../target/release/Vorce", "usr/bin/vorce", "755"],
+    ["../../resources/linux/vorce.desktop", "usr/share/applications/vorce.desktop", "644"],
+    ["../../resources/app_icons/vorce.png", "usr/share/icons/hicolor/1024x1024/apps/vorce.png", "644"],
+    ["../../assets/**/*", "usr/share/vorce/assets/", "644"],
+    ["../../resources/**/*", "usr/share/vorce/resources/", "644"],
+]

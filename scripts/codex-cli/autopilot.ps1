@@ -28,6 +28,7 @@ $ScriptDir = Split-Path -Parent $PSCommandPath
 . (Join-Path $ScriptDir "lib\autopilot-session-manager.ps1")
 . (Join-Path $ScriptDir "phases\planning-wakeup.ps1")
 . (Join-Path $ScriptDir "phases\monitoring-wakeup.ps1")
+. (Join-Path $ScriptDir "phases\audit-wakeup.ps1")
 
 # --- Load config ---
 $configPath = Join-Path $ScriptDir "autopilot-config.json"
@@ -136,6 +137,13 @@ while ($true) {
         if ($monDue) {
             Write-Host "[LOOP] Monitoring verschoben - Planning hat Prioritaet." -ForegroundColor DarkGray
             $monDue = $false
+        }
+
+        # Asynchroner Audit-Lauf durch CEO Beta direkt nach dem Planning
+        try {
+            Invoke-AuditWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+        } catch {
+            Write-Host "[LOOP] Audit-Fehler: $_" -ForegroundColor Red
         }
     }
 

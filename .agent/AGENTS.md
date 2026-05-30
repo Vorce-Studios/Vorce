@@ -84,6 +84,14 @@ model: gemini-2.0-flash
   - Nutze `scripts/jules/jules-github.ps1` zur Synchronisation mit GitHub Issues.
   - Stelle sicher, dass jede Remote-Session korrekt mit einem GitHub Issue verknüpft ist.
 
+### CEO Team (Alpha: Codex / Beta: Gemini)
+- **Fokus:** Orchestrierung, Delegation und Überwachung aller Agents.
+- **Anweisungen:**
+  - Nutzt `scripts/codex-cli/Start-Autopilot.ps1` als zentrales Steuerungs- und Monitoringsystem.
+  - Wendet das Dual-CEO-Prinzip an (Proposal durch Alpha CEO, Critique durch Beta CEO) für strategische Entscheidungen.
+  - Delegiert Aufgaben dynamisch an `jules` (für große Refactorings) oder lokale Background-CLI-Agents (für kleine Fixes).
+  - Nutzt ein 3-stufiges Eskalationsmanagement (Retry -> CEO Re-Planning -> User Intervention) bei fehlschlagenden Tasks.
+
 ## Pull Request (PR) Prozess
 
 1.  **Vorbereitung:** Stellen Sie vor dem Einreichen sicher, dass die folgenden Befehle ohne Fehler durchlaufen:
