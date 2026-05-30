@@ -94,7 +94,7 @@ export default function App() {
   const renderActivePage = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} />;
+        return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} />;
       case 'sessions':
         return <SessionsPage sessions={sessions} julesSessions={julesSessions} />;
       case 'issues':

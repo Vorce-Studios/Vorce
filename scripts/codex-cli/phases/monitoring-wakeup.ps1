@@ -43,10 +43,71 @@ function Invoke-MonitoringWakeUp {
         . $julesApiPath
     }
 
-    # --- Step 1: Check active Jules sessions ---
-    Write-Host "[MONITOR] Pruefe $($State.active_delegations.Count) aktive Delegierungen..." -ForegroundColor Cyan
+    # --- Step 1: Fetch Open PRs ---
+    Write-Host "[MONITOR] Pruefe offene PRs..." -ForegroundColor Cyan
+    $prs = @()
+    $conflictingPrs = @()
+    try {
+        $prsRaw = gh pr list --repo $repo --state open --json number,title,headRefName,statusCheckRollup,mergeable,labels --limit 100 2>&1
+        $prs = @($prsRaw | Out-String | ConvertFrom-Json | ForEach-Object { $_ })
 
-    $toRemove = @()
+        foreach ($pr in $prs) {
+            $prNum = [int]$pr.number
+            $mergeable = [string]$pr.mergeable
+
+            if ($mergeable -eq "CONFLICTING") {
+                Write-Host ("[MONITOR]   PR #{0} MERGE CONFLICT!" -f $prNum) -ForegroundColor Red
+                $conflictingPrs += $pr
+            }
+
+            $failingChecks = @()
+            if ($pr.statusCheckRollup) {
+                $failingChecks = @($pr.statusCheckRollup | Where-Object {
+                    (Test-ObjectProperty -Object $_ -Name "conclusion" -and $_.conclusion -eq "FAILURE") -or
+                    (Test-ObjectProperty -Object $_ -Name "status" -and $_.status -eq "FAILURE")
+                })
+            }
+
+            if ($failingChecks.Count -gt 0) {
+                $failNames = ($failingChecks | ForEach-Object { $_.name }) -join ", "
+                Write-Host ("[MONITOR]   PR #{0} {1} Checks fehlgeschlagen ({2})" -f $prNum, $failingChecks.Count, $failNames) -ForegroundColor Red
+            }
+        }
+
+        # Master Issue creation for conflicts
+        if ($conflictingPrs.Count -gt 0) {
+            $prNumbers = @($conflictingPrs | Sort-Object number | ForEach-Object { $_.number }) -join "-"
+            $conflictTag = "resolve-conflicts-$prNumbers"
+
+            $alreadyCreated = @($State.autopilot_created_issues | Where-Object { $_.tag -eq $conflictTag })
+            if ($alreadyCreated.Count -eq 0) {
+                Write-Host "[MONITOR]   Erstelle gebuendeltes Master-Issue fuer Konflikte: $prNumbers" -ForegroundColor Yellow
+                if (-not $DryRun.IsPresent) {
+                    $issueTitle = "MF-StIs_Resolve-Merge-Conflicts: PRs $($prNumbers -replace '-', ', ')"
+                    $issueBody = "Die folgenden Pull Requests haben Merge-Konflikte:`n`n"
+                    foreach ($cpr in $conflictingPrs) {
+                        $issueBody += "- PR #$($cpr.number) ($($cpr.headRefName)): $($cpr.title)`n"
+                    }
+                    $issueBody += "`nBitte alle Konflikte in einer einzigen Jules-Session aufloesen (Branches auschecken, main mergen, Konflikte beheben, pushen)."
+
+                    $newIssueUrl = gh issue create --repo $repo --title $issueTitle --body $issueBody --label "jules-task,priority-high,bug" 2>&1
+                    if ($LASTEXITCODE -eq 0 -and $newIssueUrl -match "/issues/(\d+)") {
+                        $newIssueNum = [int]$Matches[1]
+                        Write-Host "[MONITOR]   -> Master-Issue #$newIssueNum erfolgreich erstellt!" -ForegroundColor Green
+                        
+                        if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
+                        $State.autopilot_created_issues += [ordered]@{ tag = $conflictTag; issue_number = $newIssueNum; created_at = (Get-Date -Format 'o') }
+                        Save-AutopilotState -State $State
+                    }
+                }
+            }
+        }
+    } catch {
+        Write-Warning "[MONITOR] PR-Check fehlgeschlagen: $_"
+    }
+
+    # --- Step 2: Check active Jules sessions ---
+    Write-Host "[MONITOR] Pruefe $($State.active_delegations.Count) aktive Delegierungen..." -ForegroundColor Cyan
 
     foreach ($delegation in $State.active_delegations) {
         $issueNum = [int]$delegation.issue_number
@@ -73,15 +134,31 @@ function Invoke-MonitoringWakeUp {
 
             Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $julesState
 
+            # Find matching PR for this session
+            $matchingPr = $prs | Where-Object { $_.title -match "#$issueNum" -or $_.headRefName -match "$issueNum" } | Select-Object -First 1
+
             switch ($julesState) {
                 "COMPLETED" {
-                    # Check for PR
                     $prUrl = Get-JulesSessionPullRequestUrl -Session $session
                     if (-not [string]::IsNullOrWhiteSpace($prUrl)) {
                         Write-Host "[MONITOR]   -> PR gefunden: $prUrl" -ForegroundColor Green
                         Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $julesState -PrUrl $prUrl
                         $prNumber = if ($prUrl -match '/pull/(\d+)') { [int]$Matches[1] } else { 0 }
-                        Add-ReviewItem -State $State -IssueNumber $issueNum -PrUrl $prUrl -PrNumber $prNumber
+                        
+                        # Auto-Merge if PR is fully passing and configured
+                        if ($Config.jules.auto_merge_approved_prs -and $prNumber -gt 0 -and $null -ne $matchingPr) {
+                            $failingChecks = @($matchingPr.statusCheckRollup | Where-Object { $_.conclusion -eq "FAILURE" -or $_.status -eq "FAILURE" })
+                            if ($failingChecks.Count -eq 0 -and $matchingPr.mergeable -eq "MERGEABLE") {
+                                Write-Host "[MONITOR]   -> PR #$prNumber ist gruen und MERGEABLE. Fuehre Auto-Merge aus..." -ForegroundColor Magenta
+                                if (-not $DryRun.IsPresent) {
+                                    gh pr merge $prNumber --repo $repo --auto --squash 2>&1 | Out-Null
+                                }
+                            } else {
+                                Add-ReviewItem -State $State -IssueNumber $issueNum -PrUrl $prUrl -PrNumber $prNumber
+                            }
+                        } else {
+                            Add-ReviewItem -State $State -IssueNumber $issueNum -PrUrl $prUrl -PrNumber $prNumber
+                        }
                     }
                     Complete-Delegation -State $State -IssueNumber $issueNum -Result "completed"
                 }
@@ -96,18 +173,50 @@ function Invoke-MonitoringWakeUp {
                 "AWAITING_USER_FEEDBACK" {
                     $retryCount = [int]$delegation.retry_count
                     $maxRetries = [int]$Config.jules.auto_retry_feedback_max
+                    $ciFeedbackSent = $false
 
-                    if ($retryCount -lt $maxRetries) {
-                        $retryMsg = "[MONITOR]   -> Auto-Retry ({0}/{1})" -f ($retryCount + 1), $maxRetries
-                        Write-Host $retryMsg -ForegroundColor Yellow
-                        if (-not $DryRun.IsPresent) {
-                            Send-JulesMessage -SessionIdOrName $sessionId -Message "Continue with the task. If blocked, skip the problematic step and proceed." -ApiKey $env:JULES_API_KEY
+                    # 1. Check CI Failures
+                    if ($null -ne $matchingPr) {
+                        $failingChecks = @($matchingPr.statusCheckRollup | Where-Object { $_.conclusion -eq "FAILURE" -or $_.status -eq "FAILURE" })
+                        if ($failingChecks.Count -gt 0) {
+                            Write-Host "[MONITOR]   -> PR #$($matchingPr.number) hat fehlschlagende Checks. Hole CI-Logs..." -ForegroundColor Red
+                            if (-not $DryRun.IsPresent) {
+                                $runData = gh run list --branch $($matchingPr.headRefName) --status failure --json databaseId --limit 1 2>&1
+                                if ($LASTEXITCODE -eq 0) {
+                                    $runJson = $runData | Out-String | ConvertFrom-Json
+                                    if ($runJson -and $runJson.Count -gt 0) {
+                                        $runId = $runJson[0].databaseId
+                                        $logRaw = gh run view $runId --log-failed 2>&1
+                                        if ($LASTEXITCODE -eq 0) {
+                                            $logLines = $logRaw -split "`n"
+                                            # Keep last 100 lines to avoid token limit
+                                            $shortLog = if ($logLines.Length -gt 100) { ($logLines[-100..-1]) -join "`n" } else { $logLines -join "`n" }
+                                            
+                                            $feedbackMsg = "Die GitHub Actions CI-Checks sind fehlgeschlagen. Bitte behebe den Fehler und aktualisiere den PR.`n`nLog-Auszug:`n`n$shortLog"
+                                            Write-Host "[MONITOR]   -> Sende CI-Fehler Log an Jules Session." -ForegroundColor Magenta
+                                            Send-JulesMessage -SessionIdOrName $sessionId -Message $feedbackMsg -ApiKey $env:JULES_API_KEY
+                                            $ciFeedbackSent = $true
+                                        }
+                                    }
+                                }
+                            }
                         }
-                        $delegation.retry_count = $retryCount + 1
-                    } else {
-                        Write-Host "[MONITOR]   -> ESKALATION: Re-Planning erforderlich!" -ForegroundColor Red
-                        if (-not $DryRun.IsPresent) {
-                            Escalate-Delegation -State $State -IssueNumber $issueNum -Reason "FEEDBACK_TIMEOUT"
+                    }
+
+                    # 2. Generic Retry (if no CI failure was sent)
+                    if (-not $ciFeedbackSent) {
+                        if ($retryCount -lt $maxRetries) {
+                            $retryMsg = "[MONITOR]   -> Auto-Retry ({0}/{1})" -f ($retryCount + 1), $maxRetries
+                            Write-Host $retryMsg -ForegroundColor Yellow
+                            if (-not $DryRun.IsPresent) {
+                                Send-JulesMessage -SessionIdOrName $sessionId -Message "Continue with the task. If blocked, skip the problematic step and proceed." -ApiKey $env:JULES_API_KEY
+                            }
+                            $delegation.retry_count = $retryCount + 1
+                        } else {
+                            Write-Host "[MONITOR]   -> ESKALATION: Re-Planning erforderlich!" -ForegroundColor Red
+                            if (-not $DryRun.IsPresent) {
+                                Escalate-Delegation -State $State -IssueNumber $issueNum -Reason "FEEDBACK_TIMEOUT"
+                            }
                         }
                     }
                 }
@@ -125,82 +234,6 @@ function Invoke-MonitoringWakeUp {
             Write-Warning ("[MONITOR]   #{0} API-Fehler: {1}" -f $issueNum, $_)
             Add-ErrorLog -State $State -Message "API error for #$issueNum" -Context $_.Exception.Message
         }
-    }
-
-    # --- Step 2: Check open PRs for problems ---
-    Write-Host "[MONITOR] Pruefe offene PRs auf Probleme..." -ForegroundColor Cyan
-
-    $prs = @()
-    $conflictingPrs = @()
-    try {
-        $prsRaw = gh pr list --repo $repo --state open --json number,title,headRefName,statusCheckRollup,mergeable --limit 100 2>&1
-        $prs = @($prsRaw | Out-String | ConvertFrom-Json | ForEach-Object { $_ })
-
-        foreach ($pr in $prs) {
-            $prNum = [int]$pr.number
-            $mergeable = [string]$pr.mergeable
-
-            # Check merge conflicts
-            if ($mergeable -eq "CONFLICTING") {
-                Write-Host ("[MONITOR]   PR #{0} MERGE CONFLICT!" -f $prNum) -ForegroundColor Red
-                $conflictingPrs += $pr
-            }
-
-            # Check failing checks
-            $failingChecks = @()
-            if ($pr.statusCheckRollup) {
-                $failingChecks = @($pr.statusCheckRollup | Where-Object {
-                    (Test-ObjectProperty -Object $_ -Name "conclusion" -and $_.conclusion -eq "FAILURE") -or
-                    (Test-ObjectProperty -Object $_ -Name "status" -and $_.status -eq "FAILURE")
-                })
-            }
-
-
-            if ($failingChecks.Count -gt 0) {
-                $failNames = ($failingChecks | ForEach-Object { $_.name }) -join ", "
-                Write-Host ("[MONITOR]   PR #{0} {1} Checks fehlgeschlagen ({2})" -f $prNum, $failingChecks.Count, $failNames) -ForegroundColor Red
-            }
-        }
-
-        # Handle Merge Conflicts grouping (Master Issue creation)
-        if ($conflictingPrs.Count -gt 0) {
-            $prNumbers = @($conflictingPrs | Sort-Object number | ForEach-Object { $_.number }) -join "-"
-            $conflictTag = "resolve-conflicts-$prNumbers"
-
-            $alreadyCreated = @($State.autopilot_created_issues | Where-Object { $_.tag -eq $conflictTag })
-            if ($alreadyCreated.Count -eq 0) {
-                Write-Host "[MONITOR]   Erstelle gebuendeltes Master-Issue fuer Konflikte: $prNumbers" -ForegroundColor Yellow
-                if (-not $DryRun.IsPresent) {
-                    $issueTitle = "MF-StIs_Resolve-Merge-Conflicts: PRs $($prNumbers -replace '-', ', ')"
-                    $issueBody = "Die folgenden Pull Requests haben Merge-Konflikte:`n`n"
-                    foreach ($cpr in $conflictingPrs) {
-                        $issueBody += "- PR #$($cpr.number) ($($cpr.headRefName)): $($cpr.title)`n"
-                    }
-                    $issueBody += "`nBitte alle Konflikte in einer einzigen Jules-Session aufloesen (Branches auschecken, main mergen, Konflikte beheben, pushen)."
-
-                    $newIssueUrl = gh issue create --repo $repo --title $issueTitle --body $issueBody --label "jules-task,priority-high,bug" 2>&1
-                    if ($LASTEXITCODE -eq 0 -and $newIssueUrl -match "/issues/(\d+)") {
-                        $newIssueNum = [int]$Matches[1]
-                        Write-Host "[MONITOR]   -> Master-Issue #$newIssueNum erfolgreich erstellt!" -ForegroundColor Green
-                        
-                        # Tracking
-                        if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
-                        $State.autopilot_created_issues += [ordered]@{
-                            tag = $conflictTag
-                            issue_number = $newIssueNum
-                            created_at = (Get-Date -Format 'o')
-                        }
-                        Save-AutopilotState -State $State
-                    } else {
-                        Write-Warning "[MONITOR]   Fehler beim Erstellen des Master-Issues: $newIssueUrl"
-                    }
-                }
-            } else {
-                Write-Host "[MONITOR]   Master-Issue fuer Konflikte $prNumbers existiert bereits (Issue #$($alreadyCreated[0].issue_number))." -ForegroundColor DarkGray
-            }
-        }
-    } catch {
-        Write-Warning "[MONITOR] PR-Check fehlgeschlagen: $_"
     }
 
     # --- Step 3: Process review queue ---
@@ -234,7 +267,7 @@ PR URL: $($review.pr_url)
 
     foreach ($decision in $State.decisions_pending) {
         $topic = $decision.topic
-        
+
         # 1. Duplikatprüfung
         if ($seenTopics.Contains($topic)) {
             Write-Host "[MONITOR] Duplikat von Entscheidung entfernt: $topic" -ForegroundColor DarkGray

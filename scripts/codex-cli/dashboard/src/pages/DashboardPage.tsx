@@ -1,12 +1,13 @@
-import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp } from 'lucide-react';
+import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import type { QuotaRegistry, ActiveSessions, PullRequest } from '../types';
+import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue } from '../types';
 import DeliberationPanel from './DeliberationPanel';
 
 interface Props {
   registry: QuotaRegistry;
   sessions: ActiveSessions;
   pullRequests: PullRequest[];
+  issues: GitHubIssue[];
 }
 
 const PROVIDER_COLORS: Record<string, string> = {
@@ -193,24 +194,74 @@ export default function DashboardPage({ registry, sessions, pullRequests }: Prop
       {/* Dual-CEO Deliberation Panel */}
       <DeliberationPanel deliberations={sessions.deliberation_log || []} />
 
-      {/* Active Delegations Preview */}
+      {/* Active Workstreams */}
       {activeDelegations > 0 && (
         <div className="glass-card p-6">
-          <h3 className="text-lg font-semibold text-slate-200 mb-4">Aktive Delegierungen</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {sessions.active_delegations.slice(0, 6).map((d) => (
-              <div key={d.jules_session_id} className="bg-slate-900/40 border border-slate-700/30 rounded-xl p-3">
-                <div className="flex items-start justify-between mb-1">
-                  <span className="text-xs text-purple-400 font-mono">#{d.issue_number}</span>
-                  <JulesStateBadge state={d.jules_state} />
+          <h3 className="text-lg font-semibold text-slate-200 mb-4">Aktive Workstreams</h3>
+          <div className="space-y-4">
+            {sessions.active_delegations.map((d) => {
+              const issue = issues?.find(i => i.number.toString() === d.issue_number);
+              let pr = null;
+              if (d.pr_url) {
+                pr = pullRequests?.find(p => p.url === d.pr_url);
+              }
+              if (!pr) {
+                pr = pullRequests?.find(p => p.title.includes(`#${d.issue_number}`) || p.headRefName.includes(d.issue_number));
+              }
+              
+              const hasFailingChecks = pr?.statusCheckRollup?.some((c: any) => c.conclusion === 'FAILURE' || c.status === 'FAILURE');
+              
+              return (
+                <div key={d.jules_session_id} className="bg-slate-900/40 border border-slate-700/30 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  {/* Issue Info */}
+                  <div className="flex-1 border-b md:border-b-0 md:border-r border-slate-700/50 pb-4 md:pb-0 md:pr-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertCircle className="w-4 h-4 text-slate-400" />
+                      <span className="text-xs text-purple-400 font-mono">#{d.issue_number}</span>
+                    </div>
+                    <span className="text-sm font-medium text-slate-200 line-clamp-2" title={d.issue_title}>{d.issue_title}</span>
+                  </div>
+                  
+                  {/* Jules Session Info */}
+                  <div className="flex-1 flex flex-col items-start md:items-center border-b md:border-b-0 md:border-r border-slate-700/50 pb-4 md:pb-0 md:px-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Activity className="w-4 h-4 text-purple-400" />
+                      <span className="text-sm font-medium text-slate-300">Jules Session</span>
+                    </div>
+                    <div className="flex flex-col items-start md:items-center gap-1.5">
+                       <JulesStateBadge state={d.jules_state} />
+                       <span className="text-[10px] text-slate-500">Retries: {d.retry_count} • {timeAgo(d.last_checked_at)}</span>
+                    </div>
+                  </div>
+
+                  {/* PR Info */}
+                  <div className="flex-1 flex flex-col items-start md:items-end md:pl-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <GitPullRequest className="w-4 h-4 text-cyan-400" />
+                      <span className="text-sm font-medium text-slate-300">Pull Request</span>
+                    </div>
+                    {pr ? (
+                      <div className="flex flex-col items-start md:items-end gap-1.5">
+                        <a href={pr.url} target="_blank" rel="noopener noreferrer" className="text-xs text-cyan-400 hover:text-cyan-300 font-mono mb-1">
+                          #{pr.number} {pr.headRefName}
+                        </a>
+                        {hasFailingChecks ? (
+                          <span className="badge bg-red-500/20 text-red-400 flex items-center gap-1"><AlertCircle className="w-3 h-3"/> Checks Failed</span>
+                        ) : pr.mergeable === 'CONFLICTING' ? (
+                          <span className="badge bg-orange-500/20 text-orange-400">Merge Conflict</span>
+                        ) : pr.mergeable === 'MERGEABLE' ? (
+                          <span className="badge bg-emerald-500/20 text-emerald-400 flex items-center gap-1"><CheckCircle className="w-3 h-3"/> Mergeable</span>
+                        ) : (
+                          <span className="badge bg-slate-500/20 text-slate-400">{pr.state}</span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-500 italic mt-1">Noch kein PR</span>
+                    )}
+                  </div>
                 </div>
-                <p className="text-sm text-slate-300 line-clamp-2 mb-2">{d.issue_title}</p>
-                <div className="flex justify-between text-xs text-slate-500">
-                  <span>Retries: {d.retry_count}</span>
-                  <span>{timeAgo(d.last_checked_at)}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
