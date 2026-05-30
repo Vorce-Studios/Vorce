@@ -65,10 +65,10 @@ function Show-CeoPhaseSummary {
             $parsed.PSObject.Properties | ForEach-Object {
                 $name = $_.Name
                 $val = $_.Value
-                $displayName = @($name -split '_' | ForEach-Object { 
+                $displayName = @($name -split '_' | ForEach-Object {
                     if ($_.Length -gt 0) { $_.Substring(0,1).ToUpper() + $_.Substring(1) } else { "" }
                 }) -join " "
-                
+
                 if ($val -is [System.Array] -or $val -is [System.Collections.IList]) {
                     Write-Host "  $displayName`:" -ForegroundColor Cyan
                     foreach ($v in $val) { Write-Host "    - $v" -ForegroundColor Gray }
@@ -151,7 +151,7 @@ Write-Host ""
 $exitCode = 0
 try {
     $hasPromptFile = -not [string]::IsNullOrWhiteSpace($PromptFile) -and (Test-Path $PromptFile)
-    
+
     $cliBaseName = [System.IO.Path]::GetFileNameWithoutExtension($CliCommand).ToLower()
     $needsPromptArg = $cliBaseName -in @("gemini", "claude")
 
@@ -182,7 +182,7 @@ try {
     Write-Host "[CEO] Analysiere und verarbeite Phase..." -ForegroundColor Cyan
     Write-Host "[CEO] Befehl: $CliCommand" -ForegroundColor DarkGray
     Write-Host "[CEO] Args: $($cliArgs.Count) Parameter" -ForegroundColor DarkGray
-    
+
     # Use process execution with Tee-Object instead of Start-Transcript.
     # Start-Transcript can interfere with CLI tools that use terminal escape sequences.
     $errorLogFile = $OutputFile + ".err.log"
@@ -192,7 +192,7 @@ try {
     } else {
         & $CliCommand @cliArgs 2> $errorLogFile | Tee-Object -FilePath $OutputFile
     }
-    
+
     $exitCode = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }
 } catch {
     $errMsg = $_.Exception.Message
@@ -210,7 +210,7 @@ Write-Host ""
 Write-Host ("=" * 60) -ForegroundColor $(if ($exitCode -eq 0) { "Green" } else { "Red" })
 if ($exitCode -eq 0) {
     Write-Host "[CEO] Phase '$PhaseName' erfolgreich abgeschlossen." -ForegroundColor Green
-    
+
     # Read output and show clean summary
     if (Test-Path -LiteralPath $OutputFile) {
         $content = Get-Content -LiteralPath $OutputFile -Raw -Encoding UTF8
@@ -218,7 +218,7 @@ if ($exitCode -eq 0) {
     }
 } else {
     Write-Host "[CEO] Phase '$PhaseName' fehlgeschlagen (Exit-Code: $exitCode)." -ForegroundColor Red
-    
+
     # Print the raw error logs on failure so the user knows exactly what failed
     Write-Host ""
     Write-Host "--- FEHLERPROTOKOLL (RAW LOG) ---" -ForegroundColor Red

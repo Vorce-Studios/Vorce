@@ -698,7 +698,7 @@ function Get-JulesTelemetryUsage {
         $sessions = @(Get-AllJulesSessions -PageSize $pageSize -MaxPages $maxPages)
         $usage | Add-Member -MemberType NoteProperty -Name "api_sessions_seen" -Value $sessions.Count -Force
         $usage | Add-Member -MemberType NoteProperty -Name "api_sessions_today" -Value 0 -Force
-        
+
         $scopedSources = @()
         if ($Config -and (Test-ObjectProperty -Object $Config -Name "repository") -and -not [string]::IsNullOrWhiteSpace([string]$Config.repository)) {
             $primaryRepo = [string]$Config.repository

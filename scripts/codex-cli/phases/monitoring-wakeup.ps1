@@ -47,7 +47,7 @@ function Invoke-MonitoringWakeUp {
     Write-Host "[MONITOR] Pruefe offene PRs..." -ForegroundColor Cyan
     $prs = @()
     $conflictingPrs = @()
-    
+
     # Use cached PR data from the dashboard instead of calling GitHub directly
     $cachedPrPath = Join-Path $ScriptDir "dashboard\public\pull-requests.json"
     $prsRaw = $null
@@ -58,7 +58,7 @@ function Invoke-MonitoringWakeUp {
             Write-Warning "[MONITOR] Fehler beim Lesen der gecachten PRs: $_"
         }
     }
-    
+
     try {
         if ($null -ne $prsRaw -and ($prsRaw -is [System.Array] -or $prsRaw -is [System.Collections.IList])) {
             $prs = @($prsRaw | Where-Object { $_.state -eq "OPEN" -and $_.repo -eq $repo })
@@ -188,7 +188,7 @@ function Invoke-MonitoringWakeUp {
                             Write-Host "[MONITOR]   -> PR gefunden: $prUrl" -ForegroundColor Green
                             Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $julesState -PrUrl $prUrl
                             $prNumber = if ($prUrl -match '/pull/(\d+)') { [int]$Matches[1] } else { 0 }
-                            
+
                             Add-ReviewItem -State $State -IssueNumber $issueNum -PrUrl $prUrl -PrNumber $prNumber
                         }
                         Complete-Delegation -State $State -IssueNumber $issueNum -Result "completed"
@@ -214,7 +214,7 @@ function Invoke-MonitoringWakeUp {
                             $delegation.retry_count = $retryCount + 1
                         } else {
                             Write-Host "[MONITOR]   -> ESKALATION: Re-Planning / Fehlerbehebung erforderlich!" -ForegroundColor Red
-                            
+
                             # In Ausnahmefällen, wenn Jules es nicht selbst schafft, eskalieren wir, damit das im Planning-Modus/CEO-Check analysiert wird.
                             if (-not $DryRun.IsPresent) {
                                 Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FEEDBACK_TIMEOUT_CI_OR_BLOCKER"
@@ -243,7 +243,7 @@ function Invoke-MonitoringWakeUp {
                 try {
                     $agentState = Get-Content $statusFile -Raw | ConvertFrom-Json
                     $currentState = $agentState.status
-                    
+
                     Write-Host ("[MONITOR]   #{0} (Local Agent: {1}): {2}" -f $issueNum, $agentType, $currentState) -ForegroundColor $(
                         switch ($currentState) {
                             "COMPLETED"   { "Green" }

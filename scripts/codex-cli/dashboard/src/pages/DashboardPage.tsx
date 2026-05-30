@@ -56,14 +56,14 @@ export default function DashboardPage({ registry, sessions, pullRequests, issues
   const totalCostToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.estimated_cost_usd || 0), 0);
   const totalCallsToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.calls || 0), 0);
   const activeDelegations = sessions.active_delegations?.length || 0;
-  
+
   // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
-  const activeJulesSessions = julesSessions ? julesSessions.filter(s => 
-      s.repo.includes('Vorce') && 
-      s.state !== 'COMPLETED' && 
+  const activeJulesSessions = julesSessions ? julesSessions.filter(s =>
+      s.repo.includes('Vorce') &&
+      s.state !== 'COMPLETED' &&
       s.state !== 'QUEUED'
   ).length : 0;
-  
+
   // Filter PRs that are OPEN and NOT a Draft
   const openPRs = pullRequests.filter(pr => pr.state === 'OPEN' && pr.isDraft !== true).length;
   const conflictingPRs = pullRequests.filter(pr => pr.state === 'OPEN' && pr.isDraft !== true && pr.mergeable === 'CONFLICTING').length;

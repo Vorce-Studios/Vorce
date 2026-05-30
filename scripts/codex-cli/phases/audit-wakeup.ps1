@@ -20,7 +20,7 @@ function Invoke-AuditWakeUp {
     }
 
     $ScriptDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
-    
+
     # 1. Daten aus dem Cache sammeln
     $issuesData = ""
     $cachedIssuePath = Join-Path $ScriptDir "dashboard\public\github-issues.json"
@@ -79,7 +79,7 @@ Antworte strikt im JSON-Format:
 
     $ToolsDir = Join-Path $ScriptDir "tools"
     $runVisibleCmd = Join-Path $ToolsDir "run-visible-ceo-phase.ps1"
-    
+
     $promptFile = Join-Path $ScriptDir "tmp\beta-audit-prompt.txt"
     $promptText | Out-File -FilePath $promptFile -Encoding UTF8
 
@@ -98,7 +98,7 @@ Antworte strikt im JSON-Format:
         Write-Host "[AUDIT] [DRY RUN] Audit uebersprungen." -ForegroundColor DarkYellow
     } else {
         & $runVisibleCmd @cliArgs | Out-Null
-        
+
         if (Test-Path $outputFile) {
             try {
                 $resultJson = Get-Content $outputFile -Raw -Encoding UTF8
@@ -110,7 +110,7 @@ Antworte strikt im JSON-Format:
 
                 if ($null -ne $parsedObj -and $parsedObj.issues_found -eq $true -and -not [string]::IsNullOrWhiteSpace($parsedObj.dashboard_escalation)) {
                     Write-Host "[AUDIT] CEO Beta hat Probleme gefunden und eine Eskalation erstellt!" -ForegroundColor Red
-                    
+
                     # Add to decisions pending
                     $State.decisions_pending += @([ordered]@{
                         topic      = "Beta CEO Audit Alert"
