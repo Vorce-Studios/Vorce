@@ -138,6 +138,13 @@ while ($true) {
             Write-Host "[LOOP] Monitoring verschoben - Planning hat Prioritaet." -ForegroundColor DarkGray
             $monDue = $false
         }
+
+        # Asynchroner Audit-Lauf durch CEO Beta direkt nach dem Planning
+        try {
+            Invoke-AuditWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+        } catch {
+            Write-Host "[LOOP] Audit-Fehler: $_" -ForegroundColor Red
+        }
     }
 
     if ($monDue) {
@@ -147,13 +154,6 @@ while ($true) {
         } catch {
             Write-Host "[LOOP] Monitoring-Fehler: $_" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "Monitoring wake-up failed" -Context $_.Exception.Message
-        }
-
-        # Asynchroner Audit-Lauf durch CEO Beta direkt nach dem Monitoring
-        try {
-            Invoke-AuditWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
-        } catch {
-            Write-Host "[LOOP] Audit-Fehler: $_" -ForegroundColor Red
         }
     }
 
