@@ -54,3 +54,21 @@
 **Schwachstelle:** `load_project` in `crates/vorce-io/src/project.rs` hat Dateipfade nicht auf `..` Komponenten validiert, wodurch Path Traversal beim Laden von Projekten mÃ¶glich war.
 **Lektion:** Es fehlte eine Validierungsschicht zwischen externen Pfaden und dem Dateisystemzugriff.
 **PrÃ¤vention:** Bei jeglichem Einlesen von Dateien über externe oder dynamische Pfade muss vor dem Aufruf von `File::open` oder `fs::read` zwingend eine Validierung der Pfadkomponenten stattfinden, idealerweise durch den Ausschluss von `Component::ParentDir` oder eine strikte Sandboxing-Architektur.
+## 2025-01-20 - [Fix: Defense-in-depth on OSC and Config deserialization] **Schwachstelle:** Panic possible due to `unwrap`/`expect` during OSC network parsing and config loading. **Lektion:** Never unwrap network inputs or untrusted file configs since it can cause DoS. **Prävention:** Use `match` to properly handle `Result` types for robust error handling.
+
+## 2024-05-18 - [Path Traversal Bypass]
+**Schwachstelle:** Path Traversal checks using `std::path::Component::ParentDir` were bypassed on non-Windows platforms when paths contained Windows-style separators (e.g. `..\..\evil.mapmap`).
+**Lektion:** `std::path::Path` parsing behavior depends on the target OS. On Linux, `\` is a valid filename character, so `..\` is parsed as a single component name, not a directory traversal.
+**Prävention:** Always normalize path separators (e.g., `.replace("\\", "/")`) before performing traversal checks across all OS targets.
+
+## 2025-05-24 - Path Traversal Mitigation in Media Decoders
+**Schwachstelle:** The media decoders in `vorce-media` (e.g., `StillImageDecoder`, `MpvDecoder`, `GifDecoder`, `ImageSequenceDecoder`, `RealFFmpegDecoder`) loaded files from disk without explicitly validating whether the given path contained parent directory traversal components (`..`).
+**Lektion:** While some path traversal protections existed at higher levels (like the project loading and MCP tools), the media decoding layer itself remained unprotected, allowing potential arbitrary file reads if external input bypassed higher-level checks.
+**Prävention:** Add a defense-in-depth validation check directly inside the `open()` methods of media decoders, rejecting any paths that contain `std::path::Component::ParentDir`.
+## 2025-05-24 - DoS via unwrap() in NDI Render Loop
+
+**Schwachstelle:** Zwei ungeschützte `unwrap()` Aufrufe beim Zugriff auf die `ndi_offscreen_textures` Map in der Rendering-Schicht (in `crates/vorce/src/app/loops/render/mod.rs`).
+
+**Lektion:** Falls eine Textur im NDI-Renderpass nicht erfolgreich erzeugt oder eingefügt wurde (z.B. wegen Grafikspeichermangel), führt das direkte Auspacken mittels `unwrap()` zum Paniken des gesamten Render-Loops und damit zum App-Crash (Denial of Service).
+
+**Prävention:** Auf Resourcen-Maps innerhalb kritischer Loops (wie `app.ndi_offscreen_textures.get()`) muss immer mit einem sicheren Pattern wie `if let Some()` oder `match` zugegriffen werden. Fehlt die Resource, ist es sicherer, das Rendern für den aktuellen Frame zu überspringen (`continue`), anstatt die Anwendung abstürzen zu lassen.

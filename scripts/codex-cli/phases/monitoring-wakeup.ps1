@@ -3,626 +3,24 @@
 
 Set-StrictMode -Version Latest
 
-$PromptLibPath = Join-Path (Split-Path -Parent $PSScriptRoot) "lib\autopilot-prompts.ps1"
-if (Test-Path $PromptLibPath) {
-    . $PromptLibPath
-}
-
-function Get-VorceJulesFeedbackPrompt {
-    param(
-        [int]$IssueNumber,
-        [string]$IssueTitle,
-        [string]$LatestActivitySummary,
-        [string]$Repository
-    )
-
-    $issueLine = if ($IssueNumber -gt 0) { "Issue: #$IssueNumber $IssueTitle" } else { "Issue: unbekannt" }
-    return @"
-Vorce Autopilot Controller-Antwort.
-Repository: $Repository
-$issueLine
-
-Jules wartet auf User-Feedback. Fahre bitte mit der kleinstmoeglichen sicheren naechsten Aktion fort.
-
-Regeln:
-- Keine breite All-at-once-Loesung.
-- Wenn es um Merge-Konflikte geht, bearbeite genau einen PR/Branch und halte den Scope auf Konfliktloesung plus unmittelbare CI-Folgen begrenzt.
-- Wenn dir Kontext fehlt, dokumentiere den konkreten Blocker statt zu raten.
-- Wenn die letzte Frage mehrere Optionen nennt, waehle die risikoaermste Option, die den Issue-Scope erfuellt.
-
-Letzte bekannte Aktivitaet:
-$LatestActivitySummary
-"@.Trim()
-}
-
-function Get-JulesSessionRepository {
-    param([AllowNull()][object]$Session)
-
-    $sourceContext = Get-JulesObjectPropertyValue -Object $Session -Name "sourceContext"
-    $githubRepoContext = Get-JulesObjectPropertyValue -Object $sourceContext -Name "githubRepoContext"
-    return [string](Get-JulesObjectPropertyValue -Object $githubRepoContext -Name "repository")
-}
-
-function Get-JulesSessionIssueNumberSafe {
-    param([AllowNull()][object]$Session)
-
-    $sourceContext = Get-JulesObjectPropertyValue -Object $Session -Name "sourceContext"
-    $githubRepoContext = Get-JulesObjectPropertyValue -Object $sourceContext -Name "githubRepoContext"
-    $issueNumber = Get-JulesObjectPropertyValue -Object $githubRepoContext -Name "issueNumber"
-    if ($issueNumber) { return [int]$issueNumber }
-
-    try { return Get-IssueNumberFromSession -Session $Session } catch { return 0 }
-}
-
-function Get-JulesFeedbackTracker {
+function Add-DecisionPending {
     param(
         [Parameter(Mandatory)][object]$State,
-        [Parameter(Mandatory)][string]$SessionId
+        [Parameter(Mandatory)][string]$Topic,
+        [Parameter(Mandatory)][string]$Context
     )
 
-    if (-not ($State.PSObject.Properties.Name -contains "jules_feedback_responses") -or $null -eq $State.jules_feedback_responses) {
-        $State | Add-Member -MemberType NoteProperty -Name "jules_feedback_responses" -Value @() -Force
-    }
-
-    $existing = @($State.jules_feedback_responses | Where-Object { [string]$_.session_id -eq $SessionId } | Select-Object -First 1)
-    if ($existing.Count -gt 0) { return $existing[0] }
-
-    $tracker = [ordered]@{
-        session_id   = $SessionId
-        attempts     = 0
-        last_sent_at = $null
-        last_state   = $null
-    }
-    $State.jules_feedback_responses += @($tracker)
-    return $tracker
-}
-
-function Resolve-JulesAwaitingFeedback {
-    param(
-        [Parameter(Mandatory)][object]$State,
-        [Parameter(Mandatory)][object]$Config,
-        [Parameter(Mandatory)][object]$Session,
-        [Parameter(Mandatory)][string]$Repository,
-        [switch]$DryRun
-    )
-
-    $sessionName = [string](Get-JulesObjectPropertyValue -Object $Session -Name "name")
-    $sessionId = Resolve-JulesSessionId -SessionIdOrName $sessionName
-    $issueNum = Get-JulesSessionIssueNumberSafe -Session $Session
-    $issueTitle = [string](Get-JulesObjectPropertyValue -Object $Session -Name "title")
-    $maxRetries = [int]$Config.jules.auto_retry_feedback_max
-    $tracker = Get-JulesFeedbackTracker -State $State -SessionId $sessionId
-    $attempts = [int]$tracker.attempts
-
-    if ($attempts -ge $maxRetries) {
-        $topic = "Jules Session $sessionId braucht Hilfe"
-        Write-Host "[MONITOR]   Jules $sessionId wartet weiter auf User-Feedback; Retry-Limit erreicht." -ForegroundColor Red
-        if (-not $DryRun.IsPresent -and @($State.decisions_pending | Where-Object { $_.topic -eq $topic }).Count -eq 0) {
-            $State.decisions_pending += @([ordered]@{
-                topic        = $topic
-                issue_number = $issueNum
-                issue_title  = $issueTitle
-                context      = "Session $sessionId ist nach $maxRetries automatischen Antworten weiter AWAITING_USER_FEEDBACK."
-                created_at   = (Get-Date -Format 'o')
-            })
-            Save-AutopilotState -State $State
-        }
-        return
-    }
-
-    $latestSummary = ""
-    try {
-        $activities = @(Get-AllJulesActivities -SessionIdOrName $sessionName -PageSize 5 -MaxPages 1 -ApiKey $env:JULES_API_KEY)
-        $latest = Get-JulesLatestActivity -Activities $activities
-        $latestSummary = Get-JulesActivitySummary -Activity $latest
-    } catch {
-        $latestSummary = "Aktivitaeten konnten nicht geladen werden: $($_.Exception.Message)"
-    }
-
-    $message = Get-VorceJulesFeedbackPrompt -IssueNumber $issueNum -IssueTitle $issueTitle -LatestActivitySummary $latestSummary -Repository $Repository
-    Write-Host ("[MONITOR]   -> Klaere Jules Feedback: Session {0}, Versuch {1}/{2}" -f $sessionId, ($attempts + 1), $maxRetries) -ForegroundColor Yellow
-
-    if (-not $DryRun.IsPresent) {
-        Send-JulesMessage -SessionIdOrName $sessionName -Message $message -ApiKey $env:JULES_API_KEY
-        $tracker.attempts = $attempts + 1
-        $tracker.last_sent_at = (Get-Date -Format 'o')
-        $tracker.last_state = "AWAITING_USER_FEEDBACK"
-        Save-AutopilotState -State $State
-
-        if (Get-Command Add-AutopilotJournalEvent -ErrorAction SilentlyContinue) {
-            Add-AutopilotJournalEvent -SessionType "monitoring" -Message ("Sent scoped feedback response to Jules session {0} for issue #{1}." -f $sessionId, $issueNum)
-        }
-    }
-}
-
-function Test-JulesTerminalState {
-    param([string]$State)
-    return $State -match "COMPLETED|FAILED|CANCEL|DONE|MERGED"
-}
-
-function Get-JulesLiveSessionLoad {
-    param([object[]]$Sessions)
-
-    $count = 0
-    foreach ($session in @($Sessions)) {
-        $julesState = [string](Get-JulesObjectPropertyValue -Object $session -Name "state")
-        if ($julesState -match "^IN_PROGRESS$|^QUEUED$|^PLANNING$|^AWAITING_PLAN_APPROVAL$") {
-            $count++
-        }
-    }
-    return $count
-}
-
-function Test-PrActionExists {
-    param(
-        [Parameter(Mandatory)][object]$State,
-        [Parameter(Mandatory)][int]$PullRequestNumber,
-        [Parameter(Mandatory)][string]$ActionType
-    )
-
-    return @($State.active_pr_actions | Where-Object {
-        [int]$_.pr_number -eq $PullRequestNumber -and
-        [string]$_.action_type -eq $ActionType -and
-        [string]$_.status -notmatch "COMPLETED|FAILED|CANCELLED"
-    }).Count -gt 0
-}
-
-function Test-PostMergeDispositionExists {
-    param(
-        [Parameter(Mandatory)][object]$State,
-        [Parameter(Mandatory)][int]$PullRequestNumber
-    )
-
-    return @($State.post_merge_dispositions | Where-Object { [int]$_.pr_number -eq $PullRequestNumber }).Count -gt 0
-}
-
-function Get-VorceIssueStatusAgentName {
-    param([string]$ProviderName)
-
-    switch ($ProviderName) {
-        "codex_orchestrator" { return "Codex CLI" }
-        "gemini_cli" { return "Gemini CLI" }
-        default { return $ProviderName }
-    }
-}
-
-function Invoke-PostMergeIssueDisposition {
-    param(
-        [Parameter(Mandatory)][object]$State,
-        [Parameter(Mandatory)][object]$QuotaRegistry,
-        [Parameter(Mandatory)][string]$JulesScriptDir,
-        [Parameter(Mandatory)][string]$Repository,
-        [Parameter(Mandatory)][object]$ReviewItem,
-        [switch]$DryRun
-    )
-
-    $prNum = [int]$ReviewItem.pr_number
-    if ($prNum -le 0 -or (Test-PostMergeDispositionExists -State $State -PullRequestNumber $prNum)) {
-        return $false
-    }
-
-    $prJson = & gh pr view $prNum --repo $Repository --json number,title,body,url,state,mergedAt,headRefName,closingIssuesReferences,files 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning ("[MONITOR]   Post-Merge-Check fuer PR #{0} fehlgeschlagen: {1}" -f $prNum, ($prJson | Out-String))
-        return $false
-    }
-
-    $pr = ($prJson | Out-String) | ConvertFrom-Json -ErrorAction Stop
-    if ([string]$pr.state -ne "MERGED" -or [string]::IsNullOrWhiteSpace([string]$pr.mergedAt)) {
-        return $false
-    }
-
-    $issueNum = [int]$ReviewItem.issue_number
-    if ($issueNum -le 0) {
-        $closingIssues = @($pr.closingIssuesReferences)
-        if ($closingIssues.Count -gt 0) {
-            $issueNum = [int]$closingIssues[0].number
-        }
-    }
-    if ($issueNum -le 0) {
-        Write-Warning ("[MONITOR]   PR #{0} ist gemerged, aber ohne zuordenbares Issue." -f $prNum)
-        return $false
-    }
-
-    $issueJson = & gh issue view $issueNum --repo $Repository --json number,title,body,state 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning ("[MONITOR]   Issue #{0} fuer PR #{1} konnte nicht geladen werden." -f $issueNum, $prNum)
-        return $false
-    }
-    $issue = ($issueJson | Out-String) | ConvertFrom-Json -ErrorAction Stop
-    $changedFiles = @($pr.files | ForEach-Object { [string]$_.path }) -join "`n"
-    if ([string]::IsNullOrWhiteSpace($changedFiles)) {
-        $changedFiles = "(keine Dateiliste verfuegbar)"
-    }
-    $prompt = Get-VorcePostMergeQaDispositionPrompt `
-        -Repository $Repository `
-        -PullRequestNumber $prNum `
-        -IssueNumber $issueNum `
-        -PullRequestTitle ([string]$pr.title) `
-        -PullRequestBody ([string]$pr.body) `
-        -ChangedFiles $changedFiles `
-        -IssueTitle ([string]$issue.title) `
-        -IssueBody ([string]$issue.body)
-
-    Write-Host ("[MONITOR]   PR #{0} ist gemerged; lasse QA-Disposition bestimmen." -f $prNum) -ForegroundColor Cyan
-    $result = Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType "qa_disposition" -Prompt $prompt -DryRun:$DryRun
-    $output = [string]$result.output
-    $qaTestRequired = $output -match '(?im)^Disposition:\s*QA_TEST\s*$'
-    $reasonMatch = [regex]::Match($output, '(?im)^Reason:\s*(?<reason>.+)$')
-    $reason = if ($reasonMatch.Success) { $reasonMatch.Groups["reason"].Value.Trim() } else { "Disposition konnte nicht sicher geparst werden." }
-    if (-not $result.success -or ($output -notmatch '(?im)^Disposition:\s*(QA_TEST|DONE)\s*$')) {
-        $qaTestRequired = $true
-        $reason = "Fallback auf QA Test, weil die Orchestrator-Entscheidung nicht eindeutig war."
-    }
-
-    $status = if ($qaTestRequired) { "QA Test" } else { "Done" }
-    $queueState = if ($qaTestRequired) { "user-review" } else { "closed" }
-    $agent = Get-VorceIssueStatusAgentName -ProviderName ([string]$result.provider)
-
-    if (-not $DryRun.IsPresent) {
-        & "$JulesScriptDir\set-managed-issue-state.ps1" `
-            -Repository $Repository `
-            -IssueNumber $issueNum `
-            -Status $status `
-            -Agent $agent `
-            -RemoteState "merged" `
-            -QueueState $queueState `
-            -PullRequestUrl ([string]$pr.url) `
-            -LastUpdate ([string]$pr.mergedAt) `
-            -ReopenIfClosed:$qaTestRequired | Out-Null
-
-        if ($qaTestRequired) {
-            & gh issue comment $issueNum --repo $Repository --body ("PR #{0} wurde gemerged. Status auf `QA Test` gesetzt: {1}" -f $prNum, $reason) | Out-Null
-        } else {
-            $currentIssue = (& gh issue view $issueNum --repo $Repository --json state | Out-String) | ConvertFrom-Json
-            if ([string]$currentIssue.state -ne "CLOSED") {
-                & gh issue close $issueNum --repo $Repository --reason completed | Out-Null
-            }
-        }
-
-        $State.post_merge_dispositions += @([ordered]@{
-            pr_number    = $prNum
-            issue_number = $issueNum
-            disposition  = if ($qaTestRequired) { "QA_TEST" } else { "DONE" }
-            reason       = $reason
-            provider     = [string]$result.provider
-            decided_at   = (Get-Date -Format 'o')
+    $exists = $State.decisions_pending | Where-Object { $_.topic -eq $Topic }
+    if (-not $exists) {
+        $State.decisions_pending += @([ordered]@{
+            topic      = $Topic
+            context    = $Context
+            created_at = (Get-Date -Format 'o')
         })
-        Save-AutopilotState -State $State
-    }
-
-    Write-Host ("[MONITOR]   -> Issue #{0}: {1} ({2})" -f $issueNum, $status, $reason) -ForegroundColor $(if ($qaTestRequired) { "Yellow" } else { "Green" })
-    return $true
-}
-
-function Start-JulesPrAction {
-    param(
-        [Parameter(Mandatory)][object]$State,
-        [Parameter(Mandatory)][object]$QuotaRegistry,
-        [Parameter(Mandatory)][string]$JulesScriptDir,
-        [Parameter(Mandatory)][string]$Repository,
-        [Parameter(Mandatory)][object]$PullRequest,
-        [Parameter(Mandatory)][string]$ActionType,
-        [string[]]$FailingChecks = @(),
-        [switch]$DryRun
-    )
-
-    $prNum = [int]$PullRequest.number
-    $head = [string]$PullRequest.headRefName
-    $base = if ($PullRequest.PSObject.Properties.Name -contains "baseRefName" -and -not [string]::IsNullOrWhiteSpace([string]$PullRequest.baseRefName)) { [string]$PullRequest.baseRefName } else { "main" }
-    $title = [string]$PullRequest.title
-    if ([string]::IsNullOrWhiteSpace($head)) { return $false }
-    if (Test-PrActionExists -State $State -PullRequestNumber $prNum -ActionType $ActionType) { return $false }
-
-    $prompt = if ($ActionType -eq "merge_conflict") {
-        Get-VorceJulesPrConflictPrompt -Repository $Repository -PullRequestNumber $prNum -HeadRefName $head -BaseRefName $base -PullRequestTitle $title
+        Write-Host "[MONITOR] Entscheidung hinzugefuegt: $Topic" -ForegroundColor Yellow
     } else {
-        Get-VorceJulesPrCheckFixPrompt -Repository $Repository -PullRequestNumber $prNum -HeadRefName $head -BaseRefName $base -PullRequestTitle $title -FailingChecks $FailingChecks
+        Write-Host "[MONITOR] Entscheidung existiert bereits: $Topic (uebersprungen)" -ForegroundColor DarkGray
     }
-
-    Write-Host ("[MONITOR]   -> Starte Jules PR-Action {0} fuer PR #{1} auf Branch {2}" -f $ActionType, $prNum, $head) -ForegroundColor Yellow
-    if ($DryRun.IsPresent) { return $true }
-
-    $sessionResult = & "$JulesScriptDir\create-jules-session.ps1" `
-        -Repository $Repository `
-        -Title ("PR #{0}: {1}" -f $prNum, $ActionType) `
-        -StartingBranch $head `
-        -Prompt $prompt `
-        -AutoCreatePr:$false `
-        -UpdateIssueBody:$false `
-        -PostIssueComment:$false `
-        -ApiKey $env:JULES_API_KEY
-
-    $sessionObject = @($sessionResult | Where-Object {
-        $null -ne $_ -and $_ -isnot [string] -and ($_.PSObject.Properties.Name -contains "SessionId")
-    } | Select-Object -Last 1)
-    $sessionId = if ($sessionObject.Count -gt 0) { [string]$sessionObject[0].SessionId } else { "unknown" }
-
-    $State.active_pr_actions += @([ordered]@{
-        pr_number = $prNum
-        pr_title = $title
-        action_type = $ActionType
-        branch = $head
-        base = $base
-        jules_session_id = $sessionId
-        status = "QUEUED"
-        started_at = (Get-Date -Format 'o')
-        last_checked_at = (Get-Date -Format 'o')
-    })
-    Save-AutopilotState -State $State
-
-    if (Get-Command Add-AutopilotJournalEvent -ErrorAction SilentlyContinue) {
-        Add-AutopilotJournalEvent -SessionType "monitoring" -Message ("Started Jules PR action {0} session {1} for PR #{2}." -f $ActionType, $sessionId, $prNum)
-    }
-    Register-ProviderCall -Registry $QuotaRegistry -ProviderName "jules"
-    return $true
-}
-
-function Add-JulesCheckFixComment {
-    param(
-        [Parameter(Mandatory)][object]$State,
-        [Parameter(Mandatory)][string]$Repository,
-        [Parameter(Mandatory)][object]$PullRequest,
-        [string[]]$FailingChecks = @(),
-        [switch]$DryRun
-    )
-
-    $prNum = [int]$PullRequest.number
-    if (Test-PrActionExists -State $State -PullRequestNumber $prNum -ActionType "check_fix_comment") {
-        return $false
-    }
-
-    $body = Get-VorceJulesPrCheckFixComment `
-        -Repository $Repository `
-        -PullRequestNumber $prNum `
-        -HeadRefName ([string]$PullRequest.headRefName) `
-        -BaseRefName ([string]$PullRequest.baseRefName) `
-        -PullRequestTitle ([string]$PullRequest.title) `
-        -FailingChecks $FailingChecks
-
-    Write-Host ("[MONITOR]   -> Poste @Jules Check-Fix-Kommentar auf PR #{0}" -f $prNum) -ForegroundColor Yellow
-    if (-not $DryRun.IsPresent) {
-        $result = & gh pr comment $prNum --repo $Repository --body $body 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Write-Warning ("[MONITOR]   @Jules Kommentar fuer PR #{0} fehlgeschlagen: {1}" -f $prNum, ($result | Out-String))
-            return $false
-        }
-
-        $State.active_pr_actions += @([ordered]@{
-            pr_number = $prNum
-            pr_title = [string]$PullRequest.title
-            action_type = "check_fix_comment"
-            branch = [string]$PullRequest.headRefName
-            base = [string]$PullRequest.baseRefName
-            status = "COMMENTED"
-            started_at = (Get-Date -Format 'o')
-            last_checked_at = (Get-Date -Format 'o')
-        })
-        Save-AutopilotState -State $State
-    }
-    return $true
-}
-
-function Start-JulesConflictReplacementSession {
-    param(
-        [Parameter(Mandatory)][object]$State,
-        [Parameter(Mandatory)][object]$QuotaRegistry,
-        [Parameter(Mandatory)][string]$JulesScriptDir,
-        [Parameter(Mandatory)][string]$Repository,
-        [Parameter(Mandatory)][object]$PullRequest,
-        [switch]$DryRun
-    )
-
-    $prNum = [int]$PullRequest.number
-    $base = if (-not [string]::IsNullOrWhiteSpace([string]$PullRequest.baseRefName)) { [string]$PullRequest.baseRefName } else { "main" }
-    Write-Host ("[MONITOR]   -> Zu viele Konflikte in PR #{0}; schliesse Alt-PR und starte frische Jules-Neuimplementierung." -f $prNum) -ForegroundColor Yellow
-    if ($DryRun.IsPresent) { return $true }
-
-    $sessionResult = & "$JulesScriptDir\create-jules-session.ps1" `
-        -Repository $Repository `
-        -Title ("Replacement for conflicted PR #{0}" -f $prNum) `
-        -StartingBranch $base `
-        -Prompt (Get-VorceJulesPrConflictReplacementPrompt -Repository $Repository -PullRequestNumber $prNum -BaseRefName $base -PullRequestTitle ([string]$PullRequest.title)) `
-        -AutoCreatePr `
-        -UpdateIssueBody:$false `
-        -PostIssueComment:$false `
-        -ApiKey $env:JULES_API_KEY
-
-    $sessionObject = @($sessionResult | Where-Object {
-        $null -ne $_ -and $_ -isnot [string] -and ($_.PSObject.Properties.Name -contains "SessionId")
-    } | Select-Object -Last 1)
-    $sessionId = if ($sessionObject.Count -gt 0) { [string]$sessionObject[0].SessionId } else { "unknown" }
-
-    $closeResult = & gh pr close $prNum --repo $Repository --delete-branch 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning ("[MONITOR]   Alt-PR #{0} konnte nach Jules-Eskalation nicht sauber geschlossen werden: {1}" -f $prNum, ($closeResult | Out-String))
-    }
-
-    $State.active_pr_actions += @([ordered]@{
-        pr_number = $prNum
-        pr_title = [string]$PullRequest.title
-        action_type = "merge_conflict_replacement"
-        branch = [string]$PullRequest.headRefName
-        base = $base
-        jules_session_id = $sessionId
-        status = "QUEUED"
-        started_at = (Get-Date -Format 'o')
-        last_checked_at = (Get-Date -Format 'o')
-    })
-    Save-AutopilotState -State $State
-    Register-ProviderCall -Registry $QuotaRegistry -ProviderName "jules"
-    return $true
-}
-
-function Invoke-CliPrConflictResolution {
-    param(
-        [Parameter(Mandatory)][object]$State,
-        [Parameter(Mandatory)][object]$QuotaRegistry,
-        [Parameter(Mandatory)][string]$JulesScriptDir,
-        [Parameter(Mandatory)][string]$Repository,
-        [Parameter(Mandatory)][object]$PullRequest,
-        [switch]$DryRun
-    )
-
-    $prNum = [int]$PullRequest.number
-    if (Test-PrActionExists -State $State -PullRequestNumber $prNum -ActionType "merge_conflict_cli") {
-        return $false
-    }
-
-    $repoRoot = [System.IO.Path]::GetFullPath((Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) ".."))
-    $worktreeRoot = Join-Path $repoRoot "scripts\codex-cli\tmp\pr-worktrees"
-    $worktreePath = Join-Path $worktreeRoot ("pr-{0}-{1}" -f $prNum, [guid]::NewGuid().ToString("N"))
-    $prompt = Get-VorceCliPrConflictResolutionPrompt `
-        -Repository $Repository `
-        -PullRequestNumber $prNum `
-        -HeadRefName ([string]$PullRequest.headRefName) `
-        -BaseRefName ([string]$PullRequest.baseRefName) `
-        -PullRequestTitle ([string]$PullRequest.title)
-
-    Write-Host ("[MONITOR]   -> Loese Merge-Konflikt fuer PR #{0} primaer per CLI-Route." -f $prNum) -ForegroundColor Yellow
-
-    if (-not $DryRun.IsPresent) {
-        if (-not (Test-Path $worktreeRoot)) { New-Item -ItemType Directory -Path $worktreeRoot -Force | Out-Null }
-        $head = [string]$PullRequest.headRefName
-        $base = if (-not [string]::IsNullOrWhiteSpace([string]$PullRequest.baseRefName)) { [string]$PullRequest.baseRefName } else { "main" }
-
-        & git -C $repoRoot fetch origin $head $base 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            throw "git fetch fuer PR #$prNum fehlgeschlagen."
-        }
-
-        & git -C $repoRoot worktree add --detach $worktreePath ("origin/{0}" -f $head) 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            throw "git worktree add fuer PR #$prNum fehlgeschlagen."
-        }
-
-        & git -C $worktreePath checkout -B ("autopilot-pr-{0}-{1}" -f $prNum, [guid]::NewGuid().ToString("N").Substring(0, 8)) 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            throw "Temp-Branch fuer PR #$prNum konnte nicht erstellt werden."
-        }
-
-        & git -C $worktreePath merge --no-edit ("origin/{0}" -f $base) 2>&1 | Out-Null
-    }
-
-    $result = $null
-    try {
-        $result = Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType "merge_conflict_resolution" -Prompt $prompt -WorkingDirectory $(if ($DryRun.IsPresent) { $repoRoot } else { $worktreePath }) -DryRun:$DryRun
-    } finally {
-        if (-not $DryRun.IsPresent -and -not [string]::IsNullOrWhiteSpace($worktreePath)) {
-            Remove-AutopilotTempPrWorktree -RepoRoot $repoRoot -WorktreeRoot $worktreeRoot -WorktreePath $worktreePath
-        }
-    }
-
-    if ($DryRun.IsPresent) { return [bool]$result.success }
-
-    $legacyTopic = "PR #$prNum hat Merge-Konflikte"
-    $State.decisions_pending = @($State.decisions_pending | Where-Object { [string]$_.topic -ne $legacyTopic })
-
-    $status = if (-not $result.success) {
-        "FAILED"
-    } elseif ([string]$result.output -match "Result:\s*TOO_MANY_CONFLICTS") {
-        "ESCALATED_TO_JULES"
-    } elseif ([string]$result.output -match "Result:\s*BLOCKED") {
-        "BLOCKED"
-    } else {
-        "COMPLETED"
-    }
-
-    $State.active_pr_actions += @([ordered]@{
-        pr_number = $prNum
-        pr_title = [string]$PullRequest.title
-        action_type = "merge_conflict_cli"
-        branch = [string]$PullRequest.headRefName
-        base = [string]$PullRequest.baseRefName
-        provider = [string]$result.provider
-        status = $status
-        worktree = $worktreePath
-        last_output_excerpt = if ([string]::IsNullOrWhiteSpace([string]$result.output)) { $null } else { ([string]$result.output).Substring(0, [Math]::Min(1000, ([string]$result.output).Length)) }
-        started_at = (Get-Date -Format 'o')
-        last_checked_at = (Get-Date -Format 'o')
-    })
-    Save-AutopilotState -State $State
-
-    if ($status -eq "ESCALATED_TO_JULES") {
-        return Start-JulesConflictReplacementSession -State $State -QuotaRegistry $QuotaRegistry -JulesScriptDir $JulesScriptDir -Repository $Repository -PullRequest $PullRequest
-    }
-
-    if ($status -eq "COMPLETED") {
-        & git -C $worktreePath push origin ("HEAD:{0}" -f [string]$PullRequest.headRefName) 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            $status = "FAILED"
-            $State.active_pr_actions[-1].status = $status
-            Save-AutopilotState -State $State
-        }
-    }
-
-    if ($status -eq "BLOCKED" -or $status -eq "FAILED") {
-        $topic = "PR #$prNum Konfliktloesung blockiert"
-        if (@($State.decisions_pending | Where-Object { $_.topic -eq $topic }).Count -eq 0) {
-            $State.decisions_pending += @([ordered]@{
-                topic = $topic
-                context = "CLI-Route fuer Merge-Konflikt konnte PR #$prNum nicht sauber loesen."
-                created_at = (Get-Date -Format 'o')
-            })
-            Save-AutopilotState -State $State
-        }
-    }
-
-    return ($status -eq "COMPLETED")
-}
-
-function Remove-AutopilotTempPrWorktree {
-    param(
-        [Parameter(Mandatory)][string]$RepoRoot,
-        [Parameter(Mandatory)][string]$WorktreeRoot,
-        [Parameter(Mandatory)][string]$WorktreePath
-    )
-
-    $resolvedRoot = [System.IO.Path]::GetFullPath($WorktreeRoot)
-    $resolvedPath = [System.IO.Path]::GetFullPath($WorktreePath)
-    if (-not $resolvedPath.StartsWith($resolvedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
-        Write-Warning "[MONITOR] Temp-Worktree Cleanup verweigert ausserhalb von $resolvedRoot"
-        return
-    }
-
-    & git -C $RepoRoot worktree remove --force $resolvedPath 2>&1 | Out-Null
-    if (Test-Path -LiteralPath $resolvedPath) {
-        Remove-Item -LiteralPath $resolvedPath -Recurse -Force -ErrorAction SilentlyContinue
-    }
-    & git -C $RepoRoot worktree prune 2>&1 | Out-Null
-}
-
-function Start-JulesBacklogDelegation {
-    param(
-        [Parameter(Mandatory)][object]$State,
-        [Parameter(Mandatory)][object]$QuotaRegistry,
-        [Parameter(Mandatory)][string]$JulesScriptDir,
-        [Parameter(Mandatory)][string]$Repository,
-        [Parameter(Mandatory)][object]$BacklogItem,
-        [switch]$DryRun
-    )
-
-    $issueNum = [int]$BacklogItem.issue_number
-    if ($issueNum -le 0) { return $false }
-    if (@($State.active_delegations | Where-Object { [int]$_.issue_number -eq $issueNum }).Count -gt 0) { return $false }
-
-    Write-Host ("[MONITOR]   -> Starte Backlog-Jules-Session fuer Issue #{0}" -f $issueNum) -ForegroundColor Green
-    if ($DryRun.IsPresent) { return $true }
-
-    $sessionResult = & "$JulesScriptDir\create-jules-session.ps1" `
-        -IssueNumber $issueNum `
-        -Repository $Repository `
-        -Prompt (Get-VorceJulesImplementationPrompt -IssueNumber $issueNum -Repository $Repository) `
-        -AutoCreatePr `
-        -ApiKey $env:JULES_API_KEY
-
-    $sessionObject = @($sessionResult | Where-Object {
-        $null -ne $_ -and $_ -isnot [string] -and ($_.PSObject.Properties.Name -contains "SessionId")
-    } | Select-Object -Last 1)
-    $sessionId = if ($sessionObject.Count -gt 0) { [string]$sessionObject[0].SessionId } else { "unknown" }
-    Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle ([string]$BacklogItem.issue_title) -JulesSessionId $sessionId
-    Register-ProviderCall -Registry $QuotaRegistry -ProviderName "jules"
-    return $true
 }
 
 function Invoke-MonitoringWakeUp {
@@ -643,253 +41,104 @@ function Invoke-MonitoringWakeUp {
     $julesApiPath = Join-Path $JulesScriptDir "jules-api.ps1"
     if (Test-Path $julesApiPath) {
         . $julesApiPath
-    } elseif ($State.active_delegations.Count -gt 0 -and -not $DryRun.IsPresent) {
-        throw "Jules API Helper nicht gefunden: $julesApiPath"
     }
 
-    $allLiveJulesSessions = @()
-    if (Get-Command Get-AllJulesSessions -ErrorAction SilentlyContinue) {
+    # --- Step 1: Fetch Open PRs ---
+    Write-Host "[MONITOR] Pruefe offene PRs..." -ForegroundColor Cyan
+    $prs = @()
+    $conflictingPrs = @()
+
+    # Use cached PR data from the dashboard instead of calling GitHub directly
+    $cachedPrPath = Join-Path $ScriptDir "dashboard\public\pull-requests.json"
+    $prsRaw = $null
+    if (Test-Path $cachedPrPath) {
         try {
-            $sessionPollMaxPages = if ($Config.jules.PSObject.Properties.Name -contains "session_poll_max_pages") { [int]$Config.jules.session_poll_max_pages } else { 20 }
-            $allLiveJulesSessions = @(Get-AllJulesSessions -ApiKey $env:JULES_API_KEY -PageSize 100 -MaxPages $sessionPollMaxPages)
+            $prsRaw = Get-Content -LiteralPath $cachedPrPath -Raw -Encoding UTF8 | ConvertFrom-Json
         } catch {
-            Write-Warning "[MONITOR] Jules Live-Session-Liste konnte nicht geladen werden: $($_.Exception.Message)"
+            Write-Warning "[MONITOR] Fehler beim Lesen der gecachten PRs: $_"
         }
     }
-    $liveSessionLoad = Get-JulesLiveSessionLoad -Sessions $allLiveJulesSessions
-
-    # --- Step 1: Check active Jules sessions ---
-    Write-Host "[MONITOR] Pruefe $($State.active_delegations.Count) aktive Delegierungen..." -ForegroundColor Cyan
-
-    $toRemove = @()
-
-    foreach ($delegation in @($State.active_delegations)) {
-        $issueNum = [int]$delegation.issue_number
-        $sessionId = [string]$delegation.jules_session_id
-
-        if ($issueNum -le 0 -or [string]::IsNullOrWhiteSpace($sessionId) -or $sessionId -like "dry-run-*") {
-            Write-Host ("[MONITOR]   #{0} veraltete/ungueltige Test-Delegierung entfernt." -f $issueNum) -ForegroundColor DarkGray
-            if (-not $DryRun.IsPresent) {
-                Complete-Delegation -State $State -IssueNumber $issueNum -Result "stale-dry-run"
-            }
-            continue
-        }
-
-        try {
-            $session = Get-JulesSession -SessionIdOrName $sessionId -ApiKey $env:JULES_API_KEY
-            $julesState = [string]$session.state
-
-            Write-Host ("[MONITOR]   #{0} ({1}): {2}" -f $issueNum, $sessionId, $julesState) -ForegroundColor $(
-                switch ($julesState) {
-                    "COMPLETED"  { "Green" }
-                    "IN_PROGRESS" { "Cyan" }
-                    "QUEUED"     { "DarkGray" }
-                    "PLANNING"   { "Cyan" }
-                    default      { "Yellow" }
-                }
-            )
-
-            if (-not $DryRun.IsPresent) {
-                Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $julesState
-            }
-
-            switch ($julesState) {
-                "COMPLETED" {
-                    # Check for PR
-                    $prUrl = Get-JulesSessionPullRequestUrl -Session $session
-                    if (-not [string]::IsNullOrWhiteSpace($prUrl)) {
-                        Write-Host "[MONITOR]   -> PR gefunden: $prUrl" -ForegroundColor Green
-                        if (-not $DryRun.IsPresent) {
-                            Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $julesState -PrUrl $prUrl
-                            $prNumber = if ($prUrl -match '/pull/(\d+)') { [int]$Matches[1] } else { 0 }
-                            Add-ReviewItem -State $State -IssueNumber $issueNum -PrUrl $prUrl -PrNumber $prNumber
-                        }
-                    }
-                    if (-not $DryRun.IsPresent) {
-                        Complete-Delegation -State $State -IssueNumber $issueNum -Result "completed"
-                    }
-                }
-                "AWAITING_PLAN_APPROVAL" {
-                    if ($Config.jules.auto_approve_plans) {
-                        Write-Host "[MONITOR]   -> Auto-Approve Plan" -ForegroundColor Yellow
-                        if (-not $DryRun.IsPresent) {
-                            Approve-JulesPlan -SessionIdOrName $sessionId -ApiKey $env:JULES_API_KEY
-                        }
-                    }
-                }
-                "AWAITING_USER_FEEDBACK" {
-                    $retryCount = [int]$delegation.retry_count
-                    $maxRetries = [int]$Config.jules.auto_retry_feedback_max
-
-                    if ($retryCount -lt $maxRetries) {
-                        $retryMsg = "[MONITOR]   -> Auto-Retry ({0}/{1})" -f ($retryCount + 1), $maxRetries
-                        Write-Host $retryMsg -ForegroundColor Yellow
-                        Resolve-JulesAwaitingFeedback -State $State -Config $Config -Session $session -Repository $repo -DryRun:$DryRun
-                        if (-not $DryRun.IsPresent) {
-                            $delegation.retry_count = $retryCount + 1
-                            Save-AutopilotState -State $State
-                        }
-                    } else {
-                        Write-Host "[MONITOR]   -> ESKALATION: Braucht manuellen Eingriff!" -ForegroundColor Red
-                        $topic = "Jules Session #$issueNum braucht Hilfe"
-                        if (-not $DryRun.IsPresent -and @($State.decisions_pending | Where-Object { $_.topic -eq $topic }).Count -eq 0) {
-                            $State.decisions_pending += @([ordered]@{
-                                topic        = $topic
-                                issue_number = $issueNum
-                                issue_title  = [string]$delegation.issue_title
-                                context      = "Session $sessionId ist nach $maxRetries Retries immer noch AWAITING_USER_FEEDBACK."
-                                created_at   = (Get-Date -Format 'o')
-                            })
-                        }
-                    }
-                }
-                "FAILED" {
-                    Write-Host "[MONITOR]   -> FAILED! Logge Fehler." -ForegroundColor Red
-                    if (-not $DryRun.IsPresent) {
-                        Add-ErrorLog -State $State -Message "Jules session failed for #$issueNum" -Context "Session: $sessionId"
-                        Complete-Delegation -State $State -IssueNumber $issueNum -Result "failed"
-                    }
-                }
-            }
-        } catch {
-            Write-Warning ("[MONITOR]   #{0} API-Fehler: {1}" -f $issueNum, $_)
-            Add-ErrorLog -State $State -Message "API error for #$issueNum" -Context $_.Exception.Message
-        }
-    }
-
-    # --- Step 1a: Check active PR action sessions ---
-    if ($State.active_pr_actions.Count -gt 0) {
-        Write-Host "[MONITOR] Pruefe $($State.active_pr_actions.Count) aktive PR-Actions..." -ForegroundColor Cyan
-    }
-    foreach ($prAction in @($State.active_pr_actions)) {
-        $sessionId = if ($prAction.PSObject.Properties.Name -contains "jules_session_id") { [string]$prAction.jules_session_id } else { "" }
-        if ([string]::IsNullOrWhiteSpace($sessionId) -or $sessionId -eq "unknown") { continue }
-        try {
-            $session = Get-JulesSession -SessionIdOrName $sessionId -ApiKey $env:JULES_API_KEY
-            $julesState = [string](Get-JulesObjectPropertyValue -Object $session -Name "state")
-            Write-Host ("[MONITOR]   PR #{0} action {1}: {2}" -f ([int]$prAction.pr_number), ([string]$prAction.action_type), $julesState) -ForegroundColor Cyan
-            if (-not $DryRun.IsPresent) {
-                $prAction.status = $julesState
-                $prAction.last_checked_at = (Get-Date -Format 'o')
-                if ($julesState -eq "AWAITING_USER_FEEDBACK") {
-                    Resolve-JulesAwaitingFeedback -State $State -Config $Config -Session $session -Repository $repo -DryRun:$DryRun
-                }
-                if (Test-JulesTerminalState -State $julesState) {
-                    $prAction.completed_at = (Get-Date -Format 'o')
-                }
-                Save-AutopilotState -State $State
-            }
-        } catch {
-            Write-Warning "[MONITOR] PR-Action Session $sessionId konnte nicht geprueft werden: $($_.Exception.Message)"
-        }
-    }
-
-    # --- Step 1b: Check Jules sessions that are not present in active_delegations ---
-    $monitorUntracked = $Config.jules.PSObject.Properties.Name -contains "monitor_untracked_sessions" -and [bool]$Config.jules.monitor_untracked_sessions
-    if ($monitorUntracked -and (Get-Command Get-AllJulesSessions -ErrorAction SilentlyContinue)) {
-        $maxFeedbackPerCycle = if ($Config.jules.PSObject.Properties.Name -contains "max_feedback_sessions_per_cycle") { [int]$Config.jules.max_feedback_sessions_per_cycle } else { 5 }
-        $handled = 0
-        Write-Host "[MONITOR] Pruefe ungetrackte Jules Sessions mit User-Feedback-Status..." -ForegroundColor Cyan
-        try {
-            $trackedIds = @($State.active_delegations | ForEach-Object { [string]$_.jules_session_id }) + @($State.active_pr_actions | ForEach-Object {
-                if ($_.PSObject.Properties.Name -contains "jules_session_id") { [string]$_.jules_session_id }
-            })
-            $sessions = @($allLiveJulesSessions | Sort-Object {
-                $updatedAt = Get-JulesObjectPropertyValue -Object $_ -Name "updateTime"
-                if ([string]::IsNullOrWhiteSpace([string]$updatedAt)) {
-                    $updatedAt = Get-JulesObjectPropertyValue -Object $_ -Name "updatedAt"
-                }
-                try { [datetimeoffset]::Parse([string]$updatedAt).UtcDateTime } catch { [datetime]::MinValue }
-            } -Descending)
-            foreach ($session in $sessions) {
-                if ($handled -ge $maxFeedbackPerCycle) { break }
-
-                $julesState = [string](Get-JulesObjectPropertyValue -Object $session -Name "state")
-                if ($julesState -ne "AWAITING_USER_FEEDBACK") { continue }
-
-                $sessionName = [string](Get-JulesObjectPropertyValue -Object $session -Name "name")
-                $sessionId = Resolve-JulesSessionId -SessionIdOrName $sessionName
-                if ($trackedIds -contains $sessionId -or $trackedIds -contains $sessionName) { continue }
-
-                $sessionRepo = Get-JulesSessionRepository -Session $session
-                if (-not [string]::IsNullOrWhiteSpace($sessionRepo) -and $sessionRepo -ne $repo) { continue }
-
-                Resolve-JulesAwaitingFeedback -State $State -Config $Config -Session $session -Repository $repo -DryRun:$DryRun
-                $handled++
-            }
-            Write-Host "[MONITOR] Ungetrackte Jules Feedback-Sessions behandelt: $handled" -ForegroundColor DarkGray
-        } catch {
-            Write-Warning "[MONITOR] Ungetrackte Jules Sessions konnten nicht geprueft werden: $($_.Exception.Message)"
-            Add-ErrorLog -State $State -Message "Untracked Jules feedback scan failed" -Context $_.Exception.Message
-        }
-    }
-
-    # --- Step 2: Check open PRs for problems ---
-    Write-Host "[MONITOR] Pruefe offene PRs auf Probleme..." -ForegroundColor Cyan
 
     try {
-        $prsRaw = & gh pr list --repo $repo --state open --json number,title,headRefName,baseRefName,statusCheckRollup,mergeable --limit 100 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            throw "gh pr list fehlgeschlagen: $($prsRaw | Out-String)"
+        if ($null -ne $prsRaw -and ($prsRaw -is [System.Array] -or $prsRaw -is [System.Collections.IList])) {
+            $prs = @($prsRaw | Where-Object { $_.state -eq "OPEN" -and $_.repo -eq $repo })
+            Write-Host "[MONITOR] Gecachte PR-Daten erfolgreich geladen ($($prs.Count) offene PRs)." -ForegroundColor DarkGray
+        } else {
+            Write-Host "[MONITOR] Lade PRs direkt via gh-cli (Fallback)..." -ForegroundColor DarkGray
+            $prOutput = gh pr list --repo $repo --state open --json number,title,headRefName,statusCheckRollup,mergeable,labels --limit 100 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $prs = @($prOutput | Out-String | ConvertFrom-Json | ForEach-Object { $_ })
+            }
         }
-        $prs = @(($prsRaw | Out-String) | ConvertFrom-Json -ErrorAction Stop)
-
-        $prActionsStarted = 0
-        $maxPrActions = if ($Config.jules.PSObject.Properties.Name -contains "max_pr_actions_per_cycle") { [int]$Config.jules.max_pr_actions_per_cycle } elseif ($Config.jules.PSObject.Properties.Name -contains "max_pr_fix_sessions_per_cycle") { [int]$Config.jules.max_pr_fix_sessions_per_cycle } else { 2 }
 
         foreach ($pr in $prs) {
             $prNum = [int]$pr.number
             $mergeable = [string]$pr.mergeable
 
-            # Check merge conflicts
             if ($mergeable -eq "CONFLICTING") {
                 Write-Host ("[MONITOR]   PR #{0} MERGE CONFLICT!" -f $prNum) -ForegroundColor Red
-                if ($prActionsStarted -lt $maxPrActions) {
-                    if (Invoke-CliPrConflictResolution -State $State -QuotaRegistry $QuotaRegistry -JulesScriptDir $JulesScriptDir -Repository $repo -PullRequest $pr -DryRun:$DryRun) {
-                        $prActionsStarted++
+                $conflictingPrs += $pr
+            }
+
+            $failingChecks = @()
+            if ($pr.statusCheckRollup) {
+                $failingChecks = @($pr.statusCheckRollup | Where-Object {
+                    ((Test-ObjectProperty -Object $_ -Name "conclusion") -and $_.conclusion -eq "FAILURE") -or
+                    ((Test-ObjectProperty -Object $_ -Name "status") -and $_.status -eq "FAILURE")
+                })
+            }
+
+            if ($failingChecks.Count -gt 0) {
+                $failNames = ($failingChecks | ForEach-Object { $_.name }) -join ", "
+                Write-Host ("[MONITOR]   PR #{0} {1} Checks fehlgeschlagen ({2})" -f $prNum, $failingChecks.Count, $failNames) -ForegroundColor Red
+            }
+        }
+
+        # Master Issue creation for conflicts — with robust dedup
+        if ($conflictingPrs.Count -gt 0) {
+            # Check if a conflict-resolution issue was already created in the last 24 hours
+            $recentConflictIssue = $false
+            if ($null -ne $State.autopilot_created_issues) {
+                foreach ($entry in $State.autopilot_created_issues) {
+                    $isConflictTag = $false
+                    if ((Test-ObjectProperty -Object $entry -Name "tag") -and [string]$entry.tag -match "^resolve-conflicts-") {
+                        $isConflictTag = $true
+                    }
+                    if ($isConflictTag -and (Test-ObjectProperty -Object $entry -Name "created_at")) {
+                        try {
+                            $createdAt = [datetimeoffset]::Parse([string]$entry.created_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
+                            $ageHours = ((Get-Date) - $createdAt.LocalDateTime).TotalHours
+                            if ($ageHours -lt 24) {
+                                $recentConflictIssue = $true
+                                Write-Host "[MONITOR]   Merge-Konflikt-Issue wurde vor $([Math]::Round($ageHours,1))h erstellt (Issue #$($entry.issue_number)). Ueberspringe Neuerstellung." -ForegroundColor DarkGray
+                                break
+                            }
+                        } catch {}
                     }
                 }
             }
 
-            # Check failing checks
-            $statusCheckRollup = if ($pr.PSObject.Properties.Name -contains "statusCheckRollup") { @($pr.statusCheckRollup) } else { @() }
-            $failingChecks = @($statusCheckRollup | Where-Object {
-                $conclusion = if ($_.PSObject.Properties.Name -contains "conclusion") { [string]$_.conclusion } else { "" }
-                $status = if ($_.PSObject.Properties.Name -contains "status") { [string]$_.status } else { "" }
-                $checkState = if ($_.PSObject.Properties.Name -contains "state") { [string]$_.state } else { "" }
-                $conclusion -in @("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED") -or
-                $status -in @("FAILURE", "ERROR") -or
-                $checkState -in @("FAILURE", "ERROR")
-            })
-            $pendingChecks = @($statusCheckRollup | Where-Object {
-                $conclusion = if ($_.PSObject.Properties.Name -contains "conclusion") { [string]$_.conclusion } else { "" }
-                $status = if ($_.PSObject.Properties.Name -contains "status") { [string]$_.status } else { "" }
-                $checkState = if ($_.PSObject.Properties.Name -contains "state") { [string]$_.state } else { "" }
-                ([string]::IsNullOrWhiteSpace($conclusion) -and -not [string]::IsNullOrWhiteSpace($status) -and $status -notin @("COMPLETED", "SUCCESS")) -or
-                $checkState -eq "PENDING"
-            })
-
-            if ($failingChecks.Count -gt 0) {
-                $failNames = ($failingChecks | ForEach-Object {
-                    if ($_.PSObject.Properties.Name -contains "name" -and -not [string]::IsNullOrWhiteSpace([string]$_.name)) { [string]$_.name } else { "<unknown>" }
-                }) -join ", "
-                Write-Host ("[MONITOR]   PR #{0} {1} Checks fehlgeschlagen ({2})" -f $prNum, $failingChecks.Count, $failNames) -ForegroundColor Red
-                if ($prActionsStarted -lt $maxPrActions -and $mergeable -ne "CONFLICTING") {
-                    if (Add-JulesCheckFixComment -State $State -Repository $repo -PullRequest $pr -FailingChecks @($failingChecks | ForEach-Object {
-                        if ($_.PSObject.Properties.Name -contains "name") { [string]$_.name } else { "<unknown>" }
-                    }) -DryRun:$DryRun) {
-                        $prActionsStarted++
+            if (-not $recentConflictIssue) {
+                $prNumbers = @($conflictingPrs | Sort-Object number | ForEach-Object { $_.number }) -join "-"
+                $conflictTag = "resolve-conflicts-$prNumbers"
+                Write-Host "[MONITOR]   Erstelle gebuendeltes Master-Issue fuer $($conflictingPrs.Count) Konflikte" -ForegroundColor Yellow
+                if (-not $DryRun.IsPresent) {
+                    $issueTitle = "MF-StIs_Resolve-Merge-Conflicts: PRs $($prNumbers -replace '-', ', ')"
+                    $issueBody = "Die folgenden Pull Requests haben Merge-Konflikte:`n`n"
+                    foreach ($cpr in $conflictingPrs) {
+                        $issueBody += "- PR #$($cpr.number) ($($cpr.headRefName)): $($cpr.title)`n"
                     }
-                }
-            } elseif ($mergeable -eq "MERGEABLE" -and $pendingChecks.Count -eq 0) {
-                $autoMergeEnabled = $Config.jules.PSObject.Properties.Name -contains "enable_auto_merge_ready_prs" -and [bool]$Config.jules.enable_auto_merge_ready_prs
-                if ($autoMergeEnabled) {
-                    Write-Host ("[MONITOR]   PR #{0} ist sauber; aktiviere Auto-Merge." -f $prNum) -ForegroundColor Green
-                    if (-not $DryRun.IsPresent) {
-                        $mergeResult = & gh pr merge $prNum --repo $repo --auto --squash 2>&1
-                        if ($LASTEXITCODE -ne 0) {
-                            Write-Warning ("[MONITOR]   Auto-Merge fuer PR #{0} fehlgeschlagen: {1}" -f $prNum, ($mergeResult | Out-String))
-                        }
+                    $issueBody += "`nBitte alle Konflikte in einer einzigen Jules-Session aufloesen (Branches auschecken, main mergen, Konflikte beheben, pushen).`n"
+                    $issueBody += "`nPrioritaet: KRITISCH - blockiert Release-Pipeline."
+
+                    $newIssueUrl = gh issue create --repo $repo --title $issueTitle --body $issueBody --label "jules-task,priority: critical,bug" 2>&1
+                    if ($LASTEXITCODE -eq 0 -and $newIssueUrl -match "/issues/(\d+)") {
+                        $newIssueNum = [int]$Matches[1]
+                        Write-Host "[MONITOR]   -> Master-Issue #$newIssueNum erfolgreich erstellt (priority: critical)!" -ForegroundColor Green
+
+                        if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
+                        $State.autopilot_created_issues += [ordered]@{ tag = $conflictTag; issue_number = $newIssueNum; created_at = (Get-Date -Format 'o') }
+                        Save-AutopilotState -State $State
                     }
                 }
             }
@@ -898,12 +147,140 @@ function Invoke-MonitoringWakeUp {
         Write-Warning "[MONITOR] PR-Check fehlgeschlagen: $_"
     }
 
-    # --- Step 2b: Decide post-merge QA disposition for reviewed PRs ---
-    foreach ($review in @($State.review_queue)) {
-        try {
-            Invoke-PostMergeIssueDisposition -State $State -QuotaRegistry $QuotaRegistry -JulesScriptDir $JulesScriptDir -Repository $repo -ReviewItem $review -DryRun:$DryRun | Out-Null
-        } catch {
-            Write-Warning ("[MONITOR] Post-Merge-Disposition fuer PR #{0} fehlgeschlagen: {1}" -f ([int]$review.pr_number), $_.Exception.Message)
+    # --- Step 2: Check active Jules sessions ---
+    Write-Host "[MONITOR] Pruefe $($State.active_delegations.Count) aktive Delegierungen..." -ForegroundColor Cyan
+
+    foreach ($delegation in $State.active_delegations) {
+        $issueNum = [int]$delegation.issue_number
+        $sessionId = [string]$delegation.jules_session_id
+
+        if ($sessionId -match "^dry-run") {
+            Write-Host ("[MONITOR]   #{0} [DRY RUN] Ueberspringe." -f $issueNum) -ForegroundColor DarkGray
+            continue
+        }
+
+        $agentType = if ($delegation.PSObject.Properties.Name -contains "agent_type" -and $delegation.agent_type) { $delegation.agent_type } else { "jules" }
+
+        if ($agentType -eq "jules") {
+            try {
+                $session = Get-JulesSession -SessionIdOrName $sessionId -ApiKey $env:JULES_API_KEY
+                $julesState = [string]$session.state
+
+                Write-Host ("[MONITOR]   #{0} ({1}): {2} (Agent: jules)" -f $issueNum, $sessionId, $julesState) -ForegroundColor $(
+                    switch ($julesState) {
+                        "COMPLETED"  { "Green" }
+                        "IN_PROGRESS" { "Cyan" }
+                        "QUEUED"     { "DarkGray" }
+                        "PLANNING"   { "Cyan" }
+                        default      { "Yellow" }
+                    }
+                )
+
+                Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $julesState
+
+                # Find matching PR for this session
+                $matchingPr = $prs | Where-Object { $_.title -match "#$issueNum" -or $_.headRefName -match "$issueNum" } | Select-Object -First 1
+
+                switch ($julesState) {
+                    "COMPLETED" {
+                        $prUrl = Get-JulesSessionPullRequestUrl -Session $session
+                        if (-not [string]::IsNullOrWhiteSpace($prUrl)) {
+                            Write-Host "[MONITOR]   -> PR gefunden: $prUrl" -ForegroundColor Green
+                            Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $julesState -PrUrl $prUrl
+                            $prNumber = if ($prUrl -match '/pull/(\d+)') { [int]$Matches[1] } else { 0 }
+
+                            Add-ReviewItem -State $State -IssueNumber $issueNum -PrUrl $prUrl -PrNumber $prNumber
+                        }
+                        Complete-Delegation -State $State -IssueNumber $issueNum -Result "completed"
+                    }
+                    "AWAITING_PLAN_APPROVAL" {
+                        if ($Config.jules.auto_approve_plans) {
+                            Write-Host "[MONITOR]   -> Auto-Approve Plan" -ForegroundColor Yellow
+                            if (-not $DryRun.IsPresent) {
+                                Approve-JulesPlan -SessionIdOrName $sessionId -ApiKey $env:JULES_API_KEY
+                            }
+                        }
+                    }
+                    "AWAITING_USER_FEEDBACK" {
+                        $retryCount = [int]$delegation.retry_count
+                        $maxRetries = [int]$Config.jules.auto_retry_feedback_max
+
+                        if ($retryCount -lt $maxRetries) {
+                            $retryMsg = "[MONITOR]   -> Auto-Retry ({0}/{1})" -f ($retryCount + 1), $maxRetries
+                            Write-Host $retryMsg -ForegroundColor Yellow
+                            if (-not $DryRun.IsPresent) {
+                                Send-JulesMessage -SessionIdOrName $sessionId -Message "Continue with the task. If blocked, skip the problematic step and proceed." -ApiKey $env:JULES_API_KEY
+                            }
+                            $delegation.retry_count = $retryCount + 1
+                        } else {
+                            Write-Host "[MONITOR]   -> ESKALATION: Re-Planning / Fehlerbehebung erforderlich!" -ForegroundColor Red
+
+                            # In Ausnahmefällen, wenn Jules es nicht selbst schafft, eskalieren wir, damit das im Planning-Modus/CEO-Check analysiert wird.
+                            if (-not $DryRun.IsPresent) {
+                                Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FEEDBACK_TIMEOUT_CI_OR_BLOCKER"
+                            }
+                        }
+                    }
+                    "FAILED" {
+                        Write-Host "[MONITOR]   -> FAILED! Logge Fehler und eskaliere." -ForegroundColor Red
+                        Add-ErrorLog -State $State -Message "Jules session failed for #$issueNum" -Context "Session: $sessionId"
+                        if (-not $DryRun.IsPresent) {
+                            Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FAILED"
+                        } else {
+                            Complete-Delegation -State $State -IssueNumber $issueNum -Result "failed"
+                        }
+                    }
+                }
+            } catch {
+                Write-Warning ("[MONITOR]   #{0} API-Fehler: {1}" -f $issueNum, $_)
+                Add-ErrorLog -State $State -Message "API error for #$issueNum" -Context $_.Exception.Message
+            }
+        } else {
+            # Check local CLI agent status file
+            $scriptDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
+            $statusFile = Join-Path $scriptDir "tmp\agent-tasks\$issueNum.json"
+            if (Test-Path $statusFile) {
+                try {
+                    $agentState = Get-Content $statusFile -Raw | ConvertFrom-Json
+                    $currentState = $agentState.status
+
+                    Write-Host ("[MONITOR]   #{0} (Local Agent: {1}): {2}" -f $issueNum, $agentType, $currentState) -ForegroundColor $(
+                        switch ($currentState) {
+                            "COMPLETED"   { "Green" }
+                            "IN_PROGRESS" { "Cyan" }
+                            "FAILED"      { "Red" }
+                            default       { "Yellow" }
+                        }
+                    )
+
+                    Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $currentState
+
+                    if ($currentState -eq "COMPLETED") {
+                        if ($agentState.pr_url -and -not [string]::IsNullOrWhiteSpace($agentState.pr_url)) {
+                            $prUrl = $agentState.pr_url
+                            Write-Host "[MONITOR]   -> Local PR gefunden: $prUrl" -ForegroundColor Green
+                            Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $currentState -PrUrl $prUrl
+                            $prNumber = if ($prUrl -match '/pull/(\d+)') { [int]$Matches[1] } else { 0 }
+                            Add-ReviewItem -State $State -IssueNumber $issueNum -PrUrl $prUrl -PrNumber $prNumber
+                        } else {
+                            Write-Host "[MONITOR]   -> Aufgabe abgeschlossen ohne PR (keine Codeaenderungen)." -ForegroundColor Yellow
+                        }
+                        Complete-Delegation -State $State -IssueNumber $issueNum -Result "completed"
+                    } elseif ($currentState -eq "FAILED") {
+                        Write-Host "[MONITOR]   -> FAILED! Local Agent fehlgeschlagen." -ForegroundColor Red
+                        Add-ErrorLog -State $State -Message "Local agent $agentType failed for #$issueNum" -Context "Check terminal logs"
+                        if (-not $DryRun.IsPresent) {
+                            Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FAILED"
+                        } else {
+                            Complete-Delegation -State $State -IssueNumber $issueNum -Result "failed"
+                        }
+                    }
+                } catch {
+                    Write-Warning "[MONITOR]   #{0} Lokaler Status-File Fehler: $_"
+                }
+            } else {
+                Write-Host ("[MONITOR]   #{0} (Local Agent: {1}): INITIALIZING..." -f $issueNum, $agentType) -ForegroundColor DarkGray
+            }
         }
     }
 
@@ -913,76 +290,79 @@ function Invoke-MonitoringWakeUp {
         Write-Host "[MONITOR] $($pendingReviews.Count) PRs im Review-Queue." -ForegroundColor Cyan
 
         foreach ($review in $pendingReviews) {
-            if (-not $DryRun.IsPresent) {
-                $review.review_status = "running"
-                Save-AutopilotState -State $State
-            }
-            $reviewPrompt = Get-VorcePrReviewPrompt `
-                -Repository $repo `
-                -PullRequestNumber ([int]$review.pr_number) `
-                -IssueNumber ([int]$review.issue_number) `
-                -PullRequestUrl ([string]$review.pr_url)
+            $reviewResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "code_review" -DryRun:$DryRun -State $State -Prompt @"
+Review PR #$($review.pr_number) fuer Issue #$($review.issue_number) im Repository $repo.
+PR URL: $($review.pr_url)
 
-            $reviewResult = Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType "code_review" -DryRun:$DryRun -Prompt $reviewPrompt
+1. Pruefe den Code auf Qualitaet, Rust-Konventionen und moegliche Regressionen.
+2. Poste deine Ergebnisse als Kommentar auf dem PR.
+3. Antworte mit PASS oder REJECT und einer kurzen Begruendung.
+"@
 
             if ($reviewResult.success) {
-                if (-not $DryRun.IsPresent) {
-                    $review.review_status = "completed"
-                }
+                $review.review_status = "completed"
                 Write-Host "[MONITOR]   Review fuer PR #$($review.pr_number) abgeschlossen via $($reviewResult.provider)." -ForegroundColor Green
-
-                # Post review result as PR comment
-                if (-not $DryRun.IsPresent -and -not [string]::IsNullOrWhiteSpace($reviewResult.output)) {
-                    Write-Host "[MONITOR]   Poste Review-Kommentar auf PR #$($review.pr_number)..." -ForegroundColor Gray
-                    try {
-                        $commentArgs = @("pr", "comment", [string]$review.pr_number, "--repo", $repo, "--body", $reviewResult.output)
-                        $commentResult = & gh @commentArgs 2>&1
-                        if ($LASTEXITCODE -eq 0) {
-                            Write-Host "[MONITOR]   Kommentar erfolgreich gepostet." -ForegroundColor Green
-                        } else {
-                            Write-Warning "[MONITOR]   Konnte Kommentar auf PR #$($review.pr_number) nicht posten: $($commentResult | Out-String)"
-                        }
-                    } catch {
-                        Write-Warning "[MONITOR]   Konnte Kommentar auf PR #$($review.pr_number) nicht posten: $($_.Exception.Message)"
-                    }
-                }
             } else {
-                if (-not $DryRun.IsPresent) {
-                    $review.review_status = "pending"
-                    Save-AutopilotState -State $State
-                }
                 Write-Host "[MONITOR]   Review fuer PR #$($review.pr_number) fehlgeschlagen." -ForegroundColor Red
             }
         }
     }
 
-    # --- Step 4: Fill free Jules slots from planning backlog ---
-    $maxConcurrentJules = [int]$Config.jules.max_concurrent_sessions
-    $freeSlots = [Math]::Max(0, $maxConcurrentJules - $liveSessionLoad)
-    $maxBacklogStarts = if ($Config.jules.PSObject.Properties.Name -contains "max_backlog_starts_per_monitoring_cycle") { [int]$Config.jules.max_backlog_starts_per_monitoring_cycle } else { 3 }
-    $startedBacklog = 0
-    if ($freeSlots -gt 0 -and $State.delegation_backlog.Count -gt 0) {
-        Write-Host "[MONITOR] Jules freie Slots: $freeSlots; starte Backlog-Arbeit..." -ForegroundColor Cyan
-        $remainingBacklog = @()
-        foreach ($item in @($State.delegation_backlog)) {
-            if ($startedBacklog -lt $freeSlots -and $startedBacklog -lt $maxBacklogStarts) {
-                if (Start-JulesBacklogDelegation -State $State -QuotaRegistry $QuotaRegistry -JulesScriptDir $JulesScriptDir -Repository $repo -BacklogItem $item -DryRun:$DryRun) {
-                    $startedBacklog++
-                    continue
-                }
-            }
-            $remainingBacklog += $item
+    # --- Step 4: Cleanup decisions_pending ---
+    Write-Host "[MONITOR] Bereinige und dedupliziere offene Entscheidungen..." -ForegroundColor Cyan
+    $cleanedDecisions = @()
+    $seenTopics = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+
+    foreach ($decision in $State.decisions_pending) {
+        $topic = $decision.topic
+
+        # 1. Duplikatprüfung
+        if ($seenTopics.Contains($topic)) {
+            Write-Host "[MONITOR] Duplikat von Entscheidung entfernt: $topic" -ForegroundColor DarkGray
+            continue
         }
-        if (-not $DryRun.IsPresent) {
-            $State.delegation_backlog = @($remainingBacklog)
-            Save-AutopilotState -State $State
+
+        $keep = $true
+
+        # 2. PR-Konflikt-Meldungen analysieren
+        if ($topic -match 'PR #(\d+) hat Merge-Konflikte') {
+            $prNum = [int]$Matches[1]
+            $matchingPr = $prs | Where-Object { [int]$_.number -eq $prNum }
+            if ($null -eq $matchingPr) {
+                # PR ist nicht mehr offen
+                Write-Host "[MONITOR] PR #$prNum ist nicht mehr offen. Entferne Merge-Konflikt-Entscheidung." -ForegroundColor Green
+                $keep = $false
+            } elseif ($matchingPr.mergeable -ne "CONFLICTING") {
+                # PR hat keine Konflikte mehr
+                Write-Host "[MONITOR] PR #$prNum hat keine Konflikte mehr (Status: $($matchingPr.mergeable)). Entferne Entscheidung." -ForegroundColor Green
+                $keep = $false
+            }
+        }
+        # 3. Jules-Session-Hilferufe analysieren
+        elseif ($topic -match 'Jules Session #(\d+) braucht Hilfe') {
+            $issueNum = [int]$Matches[1]
+            $delegation = $State.active_delegations | Where-Object { [int]$_.issue_number -eq $issueNum }
+            if ($null -eq $delegation) {
+                # Delegation existiert nicht mehr
+                Write-Host "[MONITOR] Delegation fuer Issue #$issueNum existiert nicht mehr. Entferne Entscheidung." -ForegroundColor Green
+                $keep = $false
+            } elseif ($delegation.jules_state -ne "AWAITING_USER_FEEDBACK") {
+                # Session wartet nicht mehr auf Feedback
+                Write-Host "[MONITOR] Jules Session fuer Issue #$issueNum wartet nicht mehr auf Feedback (Status: $($delegation.jules_state)). Entferne Entscheidung." -ForegroundColor Green
+                $keep = $false
+            }
+        }
+
+        if ($keep) {
+            $seenTopics.Add($topic) | Out-Null
+            $cleanedDecisions += @($decision)
         }
     }
 
-    if (-not $DryRun.IsPresent) {
-        $State.last_monitoring_at = (Get-Date -Format 'o')
-        Save-AutopilotState -State $State
-    }
+    $State.decisions_pending = $cleanedDecisions
+
+    $State.last_monitoring_at = (Get-Date -Format 'o')
+    Save-AutopilotState -State $State
 
     Write-Host "[MONITOR] ========== Monitoring abgeschlossen ==========" -ForegroundColor Blue
 }

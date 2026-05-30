@@ -103,9 +103,11 @@ function Get-AutopilotSuiteProcess {
         'autopilot\.ps1',
         'interval-stats\.ps1',
         'run-visible-codex-session\.ps1',
+        'run-visible-ceo-phase\.ps1',
         'npm(\.cmd)?\s+run\s+dev',
         'vite[\\/]bin[\\/]vite\.js',
         'codex(\.cmd|\.ps1|\.exe)?\s',
+        'gemini(\.cmd|\.ps1|\.exe)?\s',
         'openai[\\/]codex'
     )
 
@@ -161,7 +163,15 @@ function Get-AutopilotControlStateSummary {
     try {
         $state = Get-Content -LiteralPath $statePath -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
         $lastBeat = [datetimeoffset]::MinValue
-        $hasLastBeat = [datetimeoffset]::TryParse([string]$state.last_heartbeat, [ref]$lastBeat)
+        $hasLastBeat = $false
+        if ($state.last_heartbeat) {
+            try {
+                $lastBeat = [datetimeoffset]::Parse([string]$state.last_heartbeat, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
+                $hasLastBeat = $true
+            } catch {
+                $hasLastBeat = [datetimeoffset]::TryParse([string]$state.last_heartbeat, [ref]$lastBeat)
+            }
+        }
         $beatAge = if ($hasLastBeat) {
             "{0:N0}m" -f ((Get-Date) - $lastBeat.LocalDateTime).TotalMinutes
         } else {
@@ -301,6 +311,28 @@ Write-Host " STARTE VORCE AUTOPILOT SUITE" -ForegroundColor Green
 Write-Host "=====================================" -ForegroundColor Green
 Write-StartLog -Message "Starting Vorce Autopilot Suite from $ScriptDir"
 
+# Git-Branch überprüfen
+$currentBranch = git branch --show-current 2>$null
+if ($null -ne $currentBranch -and $currentBranch.Trim() -ne "main") {
+    Write-Warning "[INIT] Das Repository befindet sich nicht auf dem Branch 'main', sondern auf '$($currentBranch.Trim())'!"
+    Write-Warning "[INIT] Dies kann dazu fuehren, dass Autopilot-Skripte fehlen oder veraltet sind."
+
+    # Pruefen, ob uncommittete Aenderungen vorliegen
+    $gitStatus = git status --porcelain 2>$null
+    if ([string]::IsNullOrWhiteSpace($gitStatus)) {
+        Write-InitStatus "[INIT] Keine uncommitteten Aenderungen. Wechsle automatisch auf 'main'..." -Color Yellow
+        git checkout main 2>&1 | Out-Null
+        $currentBranch = git branch --show-current 2>$null
+        if ($currentBranch.Trim() -eq "main") {
+            Write-InitStatus "[INIT] Erfolgreich auf 'main' gewechselt." -Color Green
+        } else {
+            Write-InitStatus "[INIT] Wechsel auf 'main' fehlgeschlagen. Bitte manuell 'git checkout main' ausfuehren!" -Color Red -Level "ERROR"
+        }
+    } else {
+        Write-InitStatus "[INIT] Uncommittete Aenderungen vorhanden. Wechsel auf 'main' uebersprungen. Bitte manuell bereinigen und 'git checkout main' ausfuehren!" -Color Yellow -Level "WARN"
+    }
+}
+
 if (-not $NoStopExisting.IsPresent) {
     Stop-AutopilotSuiteProcesses
     Wait-LocalPortFree -Port 5173 | Out-Null
@@ -356,7 +388,7 @@ $AutopilotArgs = @("-NoExit", "-NoProfile", "-File", $AutopilotFile)
 if ($DryRun.IsPresent) { $AutopilotArgs += "-DryRun" }
 if ($PlanOnce.IsPresent) { $AutopilotArgs += "-PlanOnce" }
 if ($MonitorOnce.IsPresent) { $AutopilotArgs += "-MonitorOnce" }
-if (-not $NoInitialPlanning.IsPresent -and -not $PlanOnce.IsPresent -and -not $MonitorOnce.IsPresent) { $AutopilotArgs += "-ForcePlanningOnStart" }
+if ($NoInitialPlanning.IsPresent) { $AutopilotArgs += "-SkipPlanningOnStart" }
 if ($PlanningIntervalOverride -gt 0) { $AutopilotArgs += @("-PlanningIntervalOverride", [string]$PlanningIntervalOverride) }
 if ($MonitoringIntervalOverride -gt 0) { $AutopilotArgs += @("-MonitoringIntervalOverride", [string]$MonitoringIntervalOverride) }
 $autopilotProcesses = @(Get-ManagedAutopilotProcess -Pattern 'autopilot\.ps1')

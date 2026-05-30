@@ -83,6 +83,13 @@ fn candidate_dirs(env_var: &str, legacy_env_var: &str, dir_name: &str) -> Vec<Pa
         push_unique_ancestors_with_child(&mut candidates, &current_dir, dir_name);
     }
 
+    // Linux system-wide installation path
+    #[cfg(target_os = "linux")]
+    {
+        push_unique(&mut candidates, Some(PathBuf::from("/usr/share/vorce").join(dir_name)));
+        push_unique(&mut candidates, Some(PathBuf::from("/usr/local/share/vorce").join(dir_name)));
+    }
+
     candidates
 }
 

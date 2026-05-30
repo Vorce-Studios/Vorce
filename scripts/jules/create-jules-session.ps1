@@ -97,7 +97,7 @@ if ($null -ne $session -and $session.PSObject.Properties.Name -contains "automat
 
 if ($IssueNumber -gt 0 -and $resolvedRepository) {
     if ($UpdateIssueBody) {
-        Sync-JulesIssueTracking -Repository $resolvedRepository -IssueNumber $IssueNumber -Session $session -LatestActivity $null -StartingBranch $StartingBranch -SourceName $resolvedSourceName
+        $null = Sync-JulesIssueTracking -Repository $resolvedRepository -IssueNumber $IssueNumber -Session $session -LatestActivity $null -StartingBranch $StartingBranch -SourceName $resolvedSourceName
     }
 
     if ($PostIssueComment) {
@@ -129,15 +129,7 @@ if ($IssueNumber -gt 0 -and $resolvedRepository) {
     }
 
     if ($RemoveTodoUserLabel) {
-        $labelNames = @()
-        if ($null -ne $issue -and $issue.PSObject.Properties.Name -contains "labels") {
-            $labelNames = @($issue.labels | ForEach-Object { if ($_ -is [string]) { $_ } else { $_.name } })
-        }
-        if ($labelNames -notcontains "Todo-UserISU") {
-            Write-JulesInfo "Label 'Todo-UserISU' ist nicht gesetzt; Entfernen wird uebersprungen."
-        } else {
         Remove-GitHubIssueLabel -Repository $resolvedRepository -IssueNumber $IssueNumber -LabelName "Todo-UserISU"
-        }
     }
 }
 
