@@ -21,12 +21,12 @@ const defaultAutopilotConfig: AutopilotConfig = {
     max_daily_sessions: 100,
     max_concurrent_sessions: 15,
     auto_approve_plans: true,
-    auto_retry_feedback_max: 2
+    auto_retry_feedback_max: 3
   },
   gemini_worktree_path: '../VjMapper-gemini',
   issue_filters: {
-    include_labels: ['jules-task', 'priority-high', 'bug'],
-    exclude_labels: ['wontfix', 'duplicate', 'on-hold'],
+    include_labels: ['jules-task', 'bug', 'priority: critical'],
+    exclude_labels: ['wontfix', 'duplicate', 'on-hold', 'status: in-progress', 'status: needs-review', 'status: needs-testing', 'status: blocked', 'status: ready-to-merge'],
     autopilot_label: 'autopilot-created'
   },
   max_issues_per_planning_cycle: 5,

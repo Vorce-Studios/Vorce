@@ -453,7 +453,7 @@ function Escalate-Delegation {
 
     # Suche in escalated_issues
     $esc = $State.escalated_issues | Where-Object { [int]$_.issue_number -eq $IssueNumber }
-    $maxPlanningResolutions = 1 # Konfigurierbar, standardmäßig 1 Re-Planning Versuch
+    $maxPlanningResolutions = 2 # Konfigurierbar, standardmäßig 2 Re-Planning Versuche
 
     if ($null -eq $esc) {
         $newEsc = [ordered]@{
