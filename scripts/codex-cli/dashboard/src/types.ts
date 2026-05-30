@@ -196,4 +196,4 @@ export interface MemoryStore {
 }
 
 // ── Tab Types ──
-export type TabId = 'dashboard' | 'sessions' | 'issues' | 'pullrequests' | 'reporting' | 'settings';
+export type TabId = 'dashboard' | 'workstreams' | 'sessions' | 'issues' | 'pullrequests' | 'reporting' | 'settings';

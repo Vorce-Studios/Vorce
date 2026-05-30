@@ -4,6 +4,7 @@ import { useData, useAutoRefresh } from './hooks';
 
 // Pages
 import DashboardPage from './pages/DashboardPage';
+import WorkstreamsPage from './pages/WorkstreamsPage';
 import SessionsPage from './pages/SessionsPage';
 import IssuesPage from './pages/IssuesPage';
 import PullRequestsPage from './pages/PullRequestsPage';
@@ -96,8 +97,10 @@ export default function App() {
       switch (activeTab) {
         case 'dashboard':
           return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} />;
+        case 'workstreams':
+          return <WorkstreamsPage issues={issues} sessions={sessions} pullRequests={pullRequests} />;
         case 'sessions':
-        return <SessionsPage sessions={sessions} julesSessions={julesSessions} />;
+          return <SessionsPage sessions={sessions} julesSessions={julesSessions} />;
       case 'issues':
         return <IssuesPage issues={issues} />;
       case 'pullrequests':
@@ -166,6 +169,18 @@ export default function App() {
             >
               <LayoutDashboard className="w-4 h-4" />
               <span>Dashboard Overview</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('workstreams')}
+              className={activeTab === 'workstreams' ? 'tab-btn-active w-full' : 'tab-btn-inactive w-full'}
+            >
+              <Activity className="w-4 h-4 text-emerald-400" />
+              <span>Smart Workstreams</span>
+              {issues.length > 0 && (
+                <span className="ml-auto badge bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 text-[10px]">
+                  NEW
+                </span>
+              )}
             </button>
             <button
               onClick={() => setActiveTab('sessions')}
