@@ -19,6 +19,33 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ScriptDir = Split-Path -Parent $PSCommandPath
 
+# Custom Write-Host to pipe logs to dashboard/public/autopilot-live.log in real time
+function Write-Host {
+    param(
+        [Parameter(ValueFromPipeline, Position=0)][object]$Object,
+        [ConsoleColor]$ForegroundColor,
+        [ConsoleColor]$BackgroundColor,
+        [switch]$NoNewLine
+    )
+
+    $params = @{}
+    if ($Object) { $params["Object"] = $Object }
+    if ($ForegroundColor) { $params["ForegroundColor"] = $ForegroundColor }
+    if ($BackgroundColor) { $params["BackgroundColor"] = $BackgroundColor }
+    if ($NoNewLine) { $params["NoNewLine"] = $true }
+
+    Microsoft.PowerShell.Utility\Write-Host @params
+
+    if ($Object) {
+        $liveLogPath = Join-Path $ScriptDir "dashboard\public\autopilot-live.log"
+        $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+        try {
+            $cleanMsg = $Object.ToString() -replace '\e\[[0-9;]*m', ''
+            Add-Content -Path $liveLogPath -Value "[$timestamp] $cleanMsg" -Encoding UTF8 -ErrorAction SilentlyContinue
+        } catch {}
+    }
+}
+
 # --- Load libraries ---
 . (Join-Path $ScriptDir "lib\state-manager.ps1")
 . (Join-Path $ScriptDir "lib\quota-manager.ps1")
@@ -164,6 +191,20 @@ while ($true) {
         Remove-OrphanedTmpFiles -Directory $ScriptDir -OlderThanMinutes 5
         if (Test-Path $dashboardPublic) {
             Remove-OrphanedTmpFiles -Directory $dashboardPublic -OlderThanMinutes 5
+            # Live log rotation
+            $liveLogPath = Join-Path $dashboardPublic "autopilot-live.log"
+            $fileInfo = Get-Item $liveLogPath -ErrorAction SilentlyContinue
+            if ($fileInfo -and $fileInfo.Length -gt 150KB) {
+                try {
+                    $lines = Get-Content $liveLogPath -Encoding UTF8 -ErrorAction Stop
+                    if ($lines.Count -gt 1500) {
+                        $lines | Select-Object -Last 1000 | Set-Content $liveLogPath -Encoding UTF8 -ErrorAction SilentlyContinue
+                    }
+                } catch {
+                    Write-Warning "[LOOP] Fehler bei der Live-Log-Rotation: $_"
+                }
+            }
+
         }
     }
 
