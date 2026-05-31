@@ -27,7 +27,7 @@ function Write-Host {
         [ConsoleColor]$BackgroundColor,
         [switch]$NoNewLine
     )
-    
+
     $params = @{}
     if ($Object) { $params["Object"] = $Object }
     if ($ForegroundColor) { $params["ForegroundColor"] = $ForegroundColor }
@@ -192,7 +192,7 @@ while ($true) {
         Remove-OrphanedTmpFiles -Directory $ScriptDir -OlderThanMinutes 5
         if (Test-Path $dashboardPublic) {
             Remove-OrphanedTmpFiles -Directory $dashboardPublic -OlderThanMinutes 5
-            
+
             # Live log rotation
             $liveLogPath = Join-Path $dashboardPublic "autopilot-live.log"
             $fileInfo = Get-Item $liveLogPath -ErrorAction SilentlyContinue
