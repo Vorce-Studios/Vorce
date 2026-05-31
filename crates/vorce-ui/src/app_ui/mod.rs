@@ -74,7 +74,7 @@ pub struct AppUI {
     /// Show level meters inside audio panel
     pub show_audio_panel_meters: bool,
     /// FFT visualization mode for audio panel
-    pub audio_fft_mode: crate::panels::audio_panel::FftVisualizationMode,       
+    pub audio_fft_mode: crate::panels::audio_panel::FftVisualizationMode,
     /// Show cue list panel
     pub show_cue_panel: bool,
     /// Assignment panel state
