@@ -1,13 +1,13 @@
 use crate::theme::colors;
 use crate::widgets::icons::{AppIcon, IconManager};
 use egui::{
-    lerp, Color32, CornerRadius, Pos2, Rect, Sense, Stroke, Ui, Vec2, WidgetInfo, WidgetType,
+    emath::lerp, Color32, CornerRadius, Pos2, Rect, Sense, Stroke, Ui, Vec2, WidgetInfo, WidgetType,
 };
 
-/// Helper function to handle hold-to-confirm logic.
-///
-/// Returns a tuple: `(triggered, progress)`
-/// - `triggered`: `true` if the hold action completed successfully.
+/// Helper to manage the state of a hold action
+/// Returns `(triggered, progress)` where:
+/// - `triggered`: True if the hold duration was reached and the action fired this frame.
+///   Note: This only returns true for the single frame where it completes successfully.
 /// - `progress`: Normalized progress (0.0 to 1.0) of the hold action.
 pub fn check_hold_state(ui: &mut Ui, id: egui::Id, is_interacting: bool) -> (bool, f32) {
     let hold_duration = 0.6; // seconds
@@ -158,14 +158,16 @@ pub fn hold_to_action_icon(
 
     // Accessibility info
     let enabled = ui.is_enabled();
-    let label = if hover_text.is_empty() {
-        let icon_name =
-            icon.file_name().replace("ultimate_", "").replace(".svg", "").replace("_", " ");
-        format!("Hold to confirm {}...", icon_name)
-    } else {
-        format!("{} (Hold to confirm)", hover_text)
-    };
-    response.widget_info(move || WidgetInfo::labeled(WidgetType::Button, enabled, label.clone()));
+    response.widget_info(move || {
+        let label = if hover_text.is_empty() {
+            let icon_name =
+                icon.file_name().replace("ultimate_", "").replace(".svg", "").replace("_", " ");
+            format!("Hold to confirm {}...", icon_name)
+        } else {
+            format!("{} (Hold to confirm)", hover_text)
+        };
+        WidgetInfo::labeled(WidgetType::Button, enabled, label)
+    });
 
     let state_id = response.id.with("hold_state");
 
