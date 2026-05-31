@@ -137,7 +137,8 @@ impl CuePanel {
         ScrollArea::vertical().max_height(200.0).show(ui, |ui| {
             let current_cue_id = cue_list.current_cue();
             let next_cue_id = cue_list.next_cue();
-            let cues_to_render: Vec<_> = cue_list.cues().to_vec();
+            // ⚡ Bolt: Use reference instead of .to_vec() to avoid per-frame heap allocation
+            let cues_to_render = cue_list.cues();
 
             if cues_to_render.is_empty() {
                 crate::widgets::custom::render_info_label(ui, &i18n.t("label-no-cues"));

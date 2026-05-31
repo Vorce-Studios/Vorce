@@ -15,11 +15,11 @@ function Resolve-CliProvider {
         [Parameter(Mandatory)][string]$TaskType
     )
 
-    $routes = $QuotaRegistry.routing_rules.$TaskType
-    if (-not $routes) {
+    if (-not ($QuotaRegistry.routing_rules.PSObject.Properties.Name -contains $TaskType)) {
         Write-Warning "[ROUTER] Kein Routing fuer Task-Typ '$TaskType' definiert."
         return $null
     }
+    $routes = $QuotaRegistry.routing_rules.$TaskType
 
     foreach ($route in $routes) {
         $parts = $route -split ":"
@@ -27,10 +27,25 @@ function Resolve-CliProvider {
         $modelTier = if ($parts.Count -gt 1) { $parts[1] } else { "default" }
 
         if (Test-ProviderAvailable -Registry $QuotaRegistry -ProviderName $providerName) {
+            $cmdName = $QuotaRegistry.providers.$providerName.command
+            $resolvedCmd = Get-Command $cmdName -ErrorAction SilentlyContinue
+            if ($resolvedCmd -and $resolvedCmd.CommandType -eq "ExternalScript" -and $resolvedCmd.Name -like "*.ps1") {
+                $cmdNameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($resolvedCmd.Name)
+                $cmdDir = Split-Path $resolvedCmd.Source
+                $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.cmd"
+                if (Test-Path $cmdFile) {
+                    $cmdName = $cmdFile
+                } else {
+                    $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.exe"
+                    if (Test-Path $cmdFile) {
+                        $cmdName = $cmdFile
+                    }
+                }
+            }
             return [ordered]@{
                 provider   = $providerName
                 model_tier = $modelTier
-                command    = $QuotaRegistry.providers.$providerName.command
+                command    = $cmdName
             }
         }
 
@@ -58,18 +73,18 @@ function Build-CliArgs {
         return @("-p", $Prompt)
     }
 
-    $args = @()
+    $cmdArgs = @()
     foreach ($arg in $ProviderConfig.cli_args) {
         $replaced = $arg -replace '\{PROMPT\}', $Prompt
         if ($ModelName) {
             $replaced = $replaced -replace '\{MODEL\}', $ModelName
         }
-        $args += $replaced
+        $cmdArgs += $replaced
     }
-    return $args
+    return $cmdArgs
 }
 
-function Parse-CliStats {
+function ConvertFrom-CliStats {
     <#
     .SYNOPSIS
     Parses real usage stats from CLI JSON output. Returns a hashtable with real cost/token data.
@@ -174,10 +189,39 @@ function Invoke-CliTask {
         [Parameter(Mandatory)][string]$TaskType,
         [Parameter(Mandatory)][string]$Prompt,
         [string]$WorkingDirectory,
-        [switch]$DryRun
+        [string]$MemoryBlock,
+        [switch]$DryRun,
+        [string]$ProviderOverride,
+        [string]$ModelTierOverride
     )
 
-    $route = Resolve-CliProvider -QuotaRegistry $QuotaRegistry -TaskType $TaskType
+    # Prepend memory block if provided
+    if (-not [string]::IsNullOrWhiteSpace($MemoryBlock)) {
+        $Prompt = $MemoryBlock + $Prompt
+    }
+
+    if ([string]::IsNullOrWhiteSpace($ProviderOverride)) {
+        $route = Resolve-CliProvider -QuotaRegistry $QuotaRegistry -TaskType $TaskType
+    } else {
+        $cmdName = $QuotaRegistry.providers.$ProviderOverride.command
+        $resolvedCmd = Get-Command $cmdName -ErrorAction SilentlyContinue
+        if ($resolvedCmd -and $resolvedCmd.CommandType -eq "ExternalScript" -and $resolvedCmd.Name -like "*.ps1") {
+            $cmdNameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($resolvedCmd.Name)
+            $cmdDir = Split-Path $resolvedCmd.Source
+            $cmdFile = Join-Path $cmdDir "$cmdNameWithoutExt.cmd"
+            if (Test-Path $cmdFile) {
+                $cmdName = $cmdFile
+            } elseif (Test-Path (Join-Path $cmdDir "$cmdNameWithoutExt.exe")) {
+                $cmdName = Join-Path $cmdDir "$cmdNameWithoutExt.exe"
+            }
+        }
+        $route = [ordered]@{
+            provider   = $ProviderOverride
+            model_tier = if ([string]::IsNullOrWhiteSpace($ModelTierOverride)) { "default" } else { $ModelTierOverride }
+            command    = $cmdName
+        }
+    }
+
     if ($null -eq $route) {
         return [ordered]@{
             success  = $false
@@ -240,7 +284,7 @@ function Invoke-CliTask {
 
         if ($pushDir) { Push-Location $pushDir }
         try {
-            $output = & $command @cliArgs 2>&1 | Out-String
+            $output = "" | & $command @cliArgs 2>&1 | Out-String
         }
         finally {
             if ($pushDir) { Pop-Location }
@@ -252,7 +296,7 @@ function Invoke-CliTask {
     }
 
     # Parse real stats from output
-    $parsedStats = Parse-CliStats -ProviderName $providerName -RawOutput $output
+    $parsedStats = ConvertFrom-CliStats -ProviderName $providerName -RawOutput $output
 
     # Register the call with real cost if available, otherwise use estimate
     if ($parsedStats.real_cost_usd) {

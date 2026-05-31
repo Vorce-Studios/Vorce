@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 
-use crate::color_hex_utils::*;
 use crate::utils::ColorUtils;
 
 use super::*;
@@ -574,15 +573,8 @@ where
         let margin = egui::vec2(15.0, 5.0) * pan_zoom.zoom;
         let mut responses = Vec::<NodeResponse<UserResponse, NodeData>>::new();
 
-        let background_color;
-        let text_color;
-        if ui.visuals().dark_mode {
-            background_color = color_from_hex("#3f3f3f").unwrap_or(Color32::from_rgb(63, 63, 63));
-            text_color = color_from_hex("#fefefe").unwrap_or(Color32::from_rgb(254, 254, 254));
-        } else {
-            background_color = color_from_hex("#ffffff").unwrap_or(Color32::WHITE);
-            text_color = color_from_hex("#505050").unwrap_or(Color32::from_rgb(80, 80, 80));
-        }
+        let background_color = ui.visuals().window_fill;
+        let text_color = ui.visuals().text_color();
 
         ui.visuals_mut().widgets.noninteractive.fg_stroke =
             Stroke::new(2.0 * pan_zoom.zoom, text_color);
@@ -976,26 +968,12 @@ where
         let rect = Rect::from_center_size(position, vec2(size, size));
         let resp = ui.allocate_rect(rect, Sense::click());
 
-        let dark_mode = ui.visuals().dark_mode;
         let color = if resp.clicked() {
-            if dark_mode {
-                color_from_hex("#ffffff").unwrap_or(Color32::WHITE)
-            } else {
-                color_from_hex("#000000").unwrap_or(Color32::BLACK)
-            }
+            ui.visuals().strong_text_color()
         } else if resp.hovered() {
-            if dark_mode {
-                color_from_hex("#dddddd").unwrap_or(Color32::from_rgb(221, 221, 221))
-            } else {
-                color_from_hex("#222222").unwrap_or(Color32::from_rgb(34, 34, 34))
-            }
+            ui.visuals().text_color()
         } else {
-            #[allow(clippy::collapsible_else_if)]
-            if dark_mode {
-                color_from_hex("#aaaaaa").unwrap_or(Color32::from_rgb(170, 170, 170))
-            } else {
-                color_from_hex("#555555").unwrap_or(Color32::from_rgb(85, 85, 85))
-            }
+            ui.visuals().text_color().linear_multiply(0.5)
         };
         let stroke = Stroke { width: stroke_width, color };
 

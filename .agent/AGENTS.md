@@ -63,7 +63,7 @@ VjMapper ist ein Rewrite einer C++/Qt-Anwendung in Rust. Ziel ist eine hochperfo
 - **Anweisungen:**
   - **GitHub Integration:** Nutze `scripts/jules/jules-github.ps1`, um Issue-Tracking-Blöcke zu verwalten (`Upsert-JulesIssueTrackingBlock`).
   - **Proaktives Branch-Management:** Scanne regelmäßig nach unmerged Branches ohne PR. Prüfe deren Status (`git diff main..branch`). Falls sinnvoll, erstelle automatisch einen PR mit einer kurzen Analyse der Änderungen.
-  - **CI/CD Fehler-Spezialist:** Wenn ein PR-Check fehlschlägt, analysiere sofort die Logs. Identifiziere die Ursache (z.B. fehlende Abhängigkeit, Shader-Validierung, Flaky Tests). Implementiere Fixes direkt im Branch.
+  - **CI/CD Fehler-Spezialist:** Fehlgeschlagene Tests sollen nur analysiert werden, wenn Jules bereits mehrfach (min. 3 Fehlversuche) vergeblich versucht hat, mit einer eingereichten Korrektur die Ursache zu fixen! Erst nach dem 3. Fehlschlag analysiere die Logs tiefergehend. Implementiere Fixes direkt im Branch.
   - **Reviews:** Achte auf Mapflow-spezifische Vorgaben (Keine GUI-Logik in Core-Crates, Shader-Validierung bestanden).
   - **Merging:** Merge erst, wenn alle Checks grün sind und der PR-Review-Status "Approved" ist.
   - **Aufräumen:** Lösche Branches nach dem Mergen automatisch (Hygiene).
@@ -83,6 +83,14 @@ model: gemini-2.0-flash
   - Nutze `scripts/jules/send-to-jules.ps1` für den Remote-Versand von Aufgaben.
   - Nutze `scripts/jules/jules-github.ps1` zur Synchronisation mit GitHub Issues.
   - Stelle sicher, dass jede Remote-Session korrekt mit einem GitHub Issue verknüpft ist.
+
+### CEO Team (Alpha: Codex / Beta: Gemini)
+- **Fokus:** Orchestrierung, Delegation und Überwachung aller Agents.
+- **Anweisungen:**
+  - Nutzt `scripts/codex-cli/Start-Autopilot.ps1` als zentrales Steuerungs- und Monitoringsystem.
+  - Wendet das Dual-CEO-Prinzip an (Proposal durch Alpha CEO, Critique durch Beta CEO) für strategische Entscheidungen.
+  - Delegiert Aufgaben dynamisch an `jules` (für große Refactorings) oder lokale Background-CLI-Agents (für kleine Fixes).
+  - Nutzt ein 3-stufiges Eskalationsmanagement (Retry -> CEO Re-Planning -> User Intervention) bei fehlschlagenden Tasks.
 
 ## Pull Request (PR) Prozess
 

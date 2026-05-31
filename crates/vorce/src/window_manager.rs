@@ -52,6 +52,10 @@ fn fallback_projector_resolution(
     (1920, 1080)
 }
 
+fn persisted_window_dimension(value: Option<u32>, fallback: u32) -> u32 {
+    value.filter(|dimension| *dimension > 0).unwrap_or(fallback)
+}
+
 /// Context for a single window, containing the `winit` window, `wgpu` surface,
 /// and other related configuration.
 pub struct WindowContext {
@@ -117,8 +121,8 @@ impl WindowManager {
         maximized: bool,
         vsync_mode: VSyncMode,
     ) -> Result<OutputId> {
-        let default_width = width.unwrap_or(1920);
-        let default_height = height.unwrap_or(1080);
+        let default_width = persisted_window_dimension(width, 1920);
+        let default_height = persisted_window_dimension(height, 1080);
 
         let mut window_attributes = WindowAttributes::default()
             .with_title("Vorce - Main Control")
@@ -424,4 +428,16 @@ fn load_app_icon() -> Option<winit::window::Icon> {
         }
     }
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::persisted_window_dimension;
+
+    #[test]
+    fn persisted_window_dimension_uses_fallback_for_missing_or_zero_values() {
+        assert_eq!(persisted_window_dimension(None, 1920), 1920);
+        assert_eq!(persisted_window_dimension(Some(0), 1920), 1920);
+        assert_eq!(persisted_window_dimension(Some(1280), 1920), 1280);
+    }
 }

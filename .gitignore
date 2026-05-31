@@ -26,6 +26,7 @@
 
 # Other files
 *.out
+__pycache__/
 
 # Logs (moved to logs/ directory)
 /logs/
@@ -125,3 +126,7 @@ ops/paperclip/
 scripts/paperclip/
 
 autopilot-state.json
+scripts/codex-cli/autopilot-session-lock.md
+scripts/codex-cli/autopilot-tasks.md
+scripts/codex-cli/quota-registry.json
+scripts/codex-cli/tmp/
