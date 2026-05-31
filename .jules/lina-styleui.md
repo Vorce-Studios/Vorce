@@ -25,3 +25,7 @@
 ## 2026-05-20 - Toast and AppUI Hardcoded Colors
 **Erkenntnis:** Found that `ToastManager` in `toast.rs` used hardcoded `Color32::from_rgb` for different toast types and alpha backgrounds. `AppUI` in `app_ui.rs` used `Color32::YELLOW` and `Color32::GREEN` for visual feedback elements. This breaks contrast and visual unity across custom themes. Because egui lacks a standard success visual variable, we fallback to our custom mint accent.
 **Aktion:** Replaced hardcoded info/warning/error colors with `ui.visuals().hyperlink_color`, `warn_fg_color`, and `error_fg_color`. Success colors replaced with `crate::core::theme::colors::MINT_ACCENT`. Alpha background fills replaced using `gamma_multiply` on `extreme_bg_color`. Always rely on `ui.visuals()` or `theme::colors` even for transient visual feedback or toasts.
+
+## 2026-05-21 - Theme Consistency in Panel Backgrounds
+**Erkenntnis:** The `widgets/panel.rs` component used hardcoded colors (`DARK_GREY` and `LIGHTER_GREY`) for `egui::Frame` backgrounds. This caused visual inconsistency when switching themes.
+**Aktion:** Use dynamic theme variables like `ui.visuals().panel_fill` and `ui.visuals().window_fill()` for frame backgrounds instead of hardcoded palette constants to ensure theme adaptability without requiring a larger layout refactor.
