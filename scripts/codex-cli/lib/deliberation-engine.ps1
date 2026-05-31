@@ -10,19 +10,38 @@ $script:DelibLogDir = Join-Path (Split-Path -Parent (Split-Path -Parent $PSComma
 function Resolve-DualCeos {
     <#
     .SYNOPSIS
-    Resolves two CEO providers from their respective fallback chains.
-    Returns hashtable with alpha/beta provider info, or $null for unavailable CEOs.
+    Resolves CEO and Auditor providers from their respective fallback chains.
+    Returns hashtable with ceo/auditor provider info.
     #>
     param(
         [Parameter(Mandatory)][object]$QuotaRegistry,
-        [Parameter(Mandatory)][object]$Config
+        [Parameter(Mandatory)][object]$Config,
+        [string]$TaskType
     )
 
     $dualCfg = $Config.dual_ceo
 
-    # --- Resolve CEO Alpha ---
-    $alpha = $null
-    foreach ($route in $dualCfg.ceo_alpha_chain) {
+    $ceoChain = @()
+    $auditorChain = @()
+
+    if ($TaskType -and $QuotaRegistry.routing_rules -and $QuotaRegistry.routing_rules.$TaskType) {
+        $rules = @($QuotaRegistry.routing_rules.$TaskType)
+        if ($rules.Count -gt 0) {
+            $ceoChain = $rules + @($dualCfg.ceo_alpha_chain)
+            $auditorChain = $rules + @($dualCfg.ceo_beta_chain)
+        }
+    }
+
+    if ($ceoChain.Count -eq 0) {
+        $ceoChain = @($dualCfg.ceo_alpha_chain)
+    }
+    if ($auditorChain.Count -eq 0) {
+        $auditorChain = @($dualCfg.ceo_beta_chain)
+    }
+
+    # --- Resolve CEO ---
+    $ceo = $null
+    foreach ($route in $ceoChain) {
         $parts = $route -split ":"
         $provName = $parts[0]
         $modelTier = if ($parts.Count -gt 1) { $parts[1] } else { "default" }
@@ -32,47 +51,47 @@ function Resolve-DualCeos {
             # Use the original command name as-is. Do NOT rewrite to .cmd/.exe —
             # Windows .cmd files have an ~8191 char argument limit and escaping
             # issues that break long deliberation prompts.
-            $alpha = [ordered]@{
+            $ceo = [ordered]@{
                 provider   = $provName
                 model_tier = $modelTier
                 command    = $cmdName
-                label      = "CEO Alpha"
+                label      = "CEO"
             }
             break
         }
-        Write-Host "[DELIB] Alpha-Kandidat '$provName' nicht verfuegbar, naechster..." -ForegroundColor DarkGray
+        Write-Host "[DELIB] CEO-Kandidat '$provName' nicht verfuegbar, naechster..." -ForegroundColor DarkGray
     }
 
-    # --- Resolve CEO Beta ---
-    $beta = $null
-    foreach ($route in $dualCfg.ceo_beta_chain) {
+    # --- Resolve Auditor ---
+    $auditor = $null
+    foreach ($route in $auditorChain) {
         $parts = $route -split ":"
         $provName = $parts[0]
         $modelTier = if ($parts.Count -gt 1) { $parts[1] } else { "default" }
 
-        # Beta must be different from Alpha
-        if ($alpha -and $provName -eq $alpha.provider) {
-            Write-Host "[DELIB] Beta-Kandidat '$provName' identisch mit Alpha, ueberspringe." -ForegroundColor DarkGray
+        # Auditor must be different from CEO
+        if ($ceo -and $provName -eq $ceo.provider) {
+            Write-Host "[DELIB] Auditor-Kandidat '$provName' identisch mit CEO, ueberspringe." -ForegroundColor DarkGray
             continue
         }
 
         if (Test-ProviderAvailable -Registry $QuotaRegistry -ProviderName $provName) {
             $cmdName = $QuotaRegistry.providers.$provName.command
             # Use the original command name as-is (see Alpha comment above)
-            $beta = [ordered]@{
+            $auditor = [ordered]@{
                 provider   = $provName
                 model_tier = $modelTier
                 command    = $cmdName
-                label      = "CEO Beta"
+                label      = "Auditor"
             }
             break
         }
-        Write-Host "[DELIB] Beta-Kandidat '$provName' nicht verfuegbar, naechster..." -ForegroundColor DarkGray
+        Write-Host "[DELIB] Auditor-Kandidat '$provName' nicht verfuegbar, naechster..." -ForegroundColor DarkGray
     }
 
     return [ordered]@{
-        alpha = $alpha
-        beta  = $beta
+        ceo     = $ceo
+        auditor = $auditor
     }
 }
 
@@ -80,41 +99,36 @@ function Format-DeliberationPrompt {
     <#
     .SYNOPSIS
     Builds phase-specific prompts for the deliberation dialogue.
-    Optionally prepends a memory block for context.
+    Optionally appends a memory block for context at the end.
     #>
     param(
         [Parameter(Mandatory)][string]$Phase,
         [Parameter(Mandatory)][string]$OriginalPrompt,
-        [string]$AlphaProposal,
-        [string]$BetaCritique,
+        [string]$CeoProposal,
+        [string]$AuditorCritique,
         [string]$MemoryBlock
     )
 
-    # Prepend memory block to original prompt if provided
-    $contextPrompt = if (-not [string]::IsNullOrWhiteSpace($MemoryBlock)) {
-        $MemoryBlock + $OriginalPrompt
+    $memSuffix = if (-not [string]::IsNullOrWhiteSpace($MemoryBlock)) {
+        "`n`n" + $MemoryBlock
     } else {
-        $OriginalPrompt
+        ""
     }
 
     switch ($Phase) {
         "proposal" {
-            return @"
-Du bist CEO ALPHA des Vorce-Autopiloten (Rust Projection-Mapping Software).
-Dein Vorschlag wird von einem zweiten unabhaengigen CEO-Agenten (BETA) kritisch geprueft.
+            $p = @"
+[DELIBERATION - PHASE: PROPOSAL]
 
 AUFGABE:
-$contextPrompt
+$OriginalPrompt
 
 ANWEISUNGEN:
 - Erstelle einen gruendlichen, gut begruendeten Vorschlag.
 - Erklaere deine Entscheidungslogik transparent.
-- Benenne moegliche Risiken oder Trade-offs.
+- Benenne moegliche Risiken or Trade-offs.
 - Sei praezise und strukturiert.
-- HALTE DEINE TERMINAL-AUSGABEN UND DEINE BEFEHLSAUSFÜHRUNGEN EXTREM KOMPAKT:
-  - Wenn du nach Dateien suchst, verwende spezifische Filter. Führe NIEMALS Befehle aus, die Tausende Zeilen Text auf der Konsole ausgeben (wie unbegrenztes `rg --files` oder `Get-ChildItem -Recurse`).
-  - Wenn du Dateien liest, lies nur die relevanten Zeilenbereiche und gib niemals ganze große Dateien auf einmal aus.
-  - Schreibe vor der Ausführung eines Befehls immer eine kurze, verständliche Erklärung auf Deutsch (z.B. "Ich analysiere das vorce-media Crate auf fehlende Tests..."), damit der Benutzer sieht, woran du arbeitest.
+- Wenn du nach Dateien oder bestimmten Code-Stellen sucht, verwende entweder spezifische Filter or lass die spezifische Suche von einem der CLI-Tools ausführen. Versuche allgemein den Tokenverbrauch möglichst gering zu halten bzw. nicht unnötig für einfache Tasks wie Code-Analysen oder einer Suche zu verbrauchen.
 
 Antworte im JSON-Format:
 {
@@ -122,30 +136,28 @@ Antworte im JSON-Format:
   "reasoning": "<Begruendung deiner Entscheidungen>",
   "risks": ["<Risiko 1>", "<Risiko 2>"],
   "confidence": "<high|medium|low>"
-}
+}$memSuffix
 "@
+            return $p
         }
         "critique" {
-            return @"
-Du bist CEO BETA des Vorce-Autopiloten.
-Ein anderer CEO-Agent (ALPHA) hat einen Vorschlag zu folgender Aufgabe gemacht.
-Deine Rolle ist kritischer Gegenpart: Hinterfrage, verbessere, zeige Alternativen auf.
+            $p = @"
+[DELIBERATION - PHASE: AUDIT-CRITIQUE]
+Der CEO hat einen Vorschlag zu folgender Aufgabe gemacht.
+Deine Rolle als Auditor is kritischer Gegenpart: Hinterfrage, verbessere, zeige Alternativen auf.
 
 ORIGINAL-AUFGABE:
-$contextPrompt
+$OriginalPrompt
 
-VORSCHLAG VON CEO ALPHA:
-$AlphaProposal
+VORSCHLAG VOM CEO:
+$CeoProposal
 
 DEINE AUFGABEN:
 1. Pruefe den Vorschlag kritisch auf Schwachstellen und Luecken.
-2. Identifiziere uebersehene Aspekte oder bessere Alternativen.
+2. Identifiziere uebersehene Aspekte or bessere Alternativen.
 3. Bewerte die genannten Risiken - sind sie vollstaendig?
-4. Gib eine klare Empfehlung: Annehmen, Modifizieren oder Ablehnen.
-- HALTE DEINE TERMINAL-AUSGABEN UND DEINE BEFEHLSAUSFÜHRUNGEN EXTREM KOMPAKT:
-  - Wenn du nach Dateien suchst, verwende spezifische Filter. Führe NIEMALS Befehle aus, die Tausende Zeilen Text auf der Konsole ausgeben (wie unbegrenztes `rg --files` oder `Get-ChildItem -Recurse`).
-  - Wenn du Dateien liest, lies nur die relevanten Zeilenbereiche und gib niemals ganze große Dateien auf einmal aus.
-  - Schreibe vor der Ausführung eines Befehls immer eine kurze, verständliche Erklärung auf Deutsch, damit der Benutzer sieht, woran du arbeitest.
+4. Gib eine klare Empfehlung: Annehmen, Modifizieren or Ablehnen.
+- Wenn du nach Dateien oder bestimmten Code-Stellen sucht, verwende entweder spezifische Filter or lass die spezifische Suche von einem der CLI-Tools ausführen. Versuche allgemein den Tokenverbrauch möglichst gering zu halten bzw. nicht unnötig für einfache Tasks wie Code-Analysen oder einer Suche zu verbrauchen.
 
 Antworte im JSON-Format:
 {
@@ -155,40 +167,42 @@ Antworte im JSON-Format:
   "alternatives": ["<Alternative 1>"],
   "recommendation": "approve|modify|reject",
   "suggested_changes": "<konkrete Aenderungsvorschlaege falls modify/reject>"
-}
+}$memSuffix
 "@
+            return $p
         }
         "synthesis" {
-            return @"
-Du bist CEO ALPHA. Du hast einen Vorschlag gemacht und CEO BETA hat kritisches Feedback gegeben.
+            $p = @"
+[DELIBERATION - PHASE: CEO-SYNTHESIS]
+Du bist der CEO. Du hast einen Vorschlag gemacht und der Auditor hat kritisches Feedback gegeben.
 Erstelle jetzt eine FINALE SYNTHESE, die das Beste beider Perspektiven vereint.
 
 ORIGINAL-AUFGABE:
-$contextPrompt
+$OriginalPrompt
 
 DEIN URSPRUENGLICHER VORSCHLAG:
-$AlphaProposal
+$CeoProposal
 
-KRITIK VON CEO BETA:
-$BetaCritique
+FEEDBACK VOM AUDITOR:
+$AuditorCritique
 
 ANWEISUNGEN:
 - Integriere berechtigte Kritikpunkte in deine finale Loesung.
 - Begruende, welche Kritik du annimmst und welche du begruendet ablehnst.
 - Das Ergebnis soll besser sein als dein urspruenglicher Vorschlag allein.
 - Liefere eine klare, umsetzbare Entscheidung.
-- HALTE DEINE TERMINAL-AUSGABEN UND DEINE BEFEHLSAUSFÜHRUNGEN EXTREM KOMPAKT:
-  - Wenn du nach Dateien suchst, verwende spezifische Filter. Führe NIEMALS Befehle aus, die Tausende Zeilen Text auf der Konsole ausgeben (wie unbegrenztes `rg --files` oder `Get-ChildItem -Recurse`).
-  - Wenn du Dateien liest, lies nur die relevanten Zeilenbereiche und gib niemals ganze große Dateien auf einmal aus.
-  - Schreibe vor der Ausführung eines Befehls immer eine kurze, verständliche Erklärung auf Deutsch, damit der Benutzer sieht, woran du arbeitest.
+- Wenn du nach Dateien oder bestimmten Code-Stellen sucht, verwende entweder spezifische Filter or lass die spezifische Suche von einem der CLI-Tools ausführen. Versuche allgemein den Tokenverbrauch möglichst gering zu halten bzw. nicht unnötig für einfache Tasks wie Code-Analysen oder einer Suche zu verbrauchen.
 
 Antworte im selben Format wie die Original-Aufgabe es verlangt.
 Falls die Original-Aufgabe JSON verlangt, antworte in diesem JSON-Format.
-Falls nicht, antworte in klarem, strukturiertem Text.
+Falls nicht, antworte in klarem, strukturiertem Text.$memSuffix
 "@
+            return $p
         }
     }
 }
+
+
 
 function Get-CleanCeoOutput {
     param(
@@ -338,7 +352,7 @@ function Invoke-VisibleCeoPhase {
             -Prompt $Prompt `
             -State $State `
             -Model $codexModel `
-            -VisibleExecTerminal `
+            -VisibleTerminal `
             -DryRun:$DryRun
 
         Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
@@ -443,7 +457,7 @@ function Invoke-VisibleCeoPhase {
     }
 
     # Parse stats
-    $parsedStats = Parse-CliStats -ProviderName $providerName -RawOutput $output
+    $parsedStats = ConvertFrom-CliStats -ProviderName $providerName -RawOutput $output
     Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
 
     # Cleanup temp files
@@ -484,22 +498,22 @@ function Invoke-Deliberation {
     $deliberationId = "delib-$(Get-Date -Format 'yyyy-MM-dd-HHmmss')"
 
     Write-Host "" -ForegroundColor White
-    Write-Host "[DELIB] ====== Dual-CEO Deliberation: $deliberationId ======" -ForegroundColor Magenta
+    Write-Host "[DELIB] ====== Deliberation: $deliberationId ======" -ForegroundColor Magenta
     Write-Host "[DELIB] Task-Typ: $TaskType" -ForegroundColor Magenta
     Write-Host "[DELIB] Jede Phase oeffnet ein sichtbares Terminal-Fenster." -ForegroundColor Magenta
 
     # --- Resolve both CEOs ---
-    $ceos = Resolve-DualCeos -QuotaRegistry $QuotaRegistry -Config $Config
+    $ceos = Resolve-DualCeos -QuotaRegistry $QuotaRegistry -Config $Config -TaskType $TaskType
 
     # --- Fallback to single agent if needed ---
-    if ($null -eq $ceos.alpha -and $null -eq $ceos.beta) {
+    if ($null -eq $ceos.ceo -and $null -eq $ceos.auditor) {
         Write-Host "[DELIB] Kein CEO verfuegbar! Fallback auf Standard-Router." -ForegroundColor Red
         return Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType $TaskType -Prompt $Prompt -WorkingDirectory $WorkingDirectory -MemoryBlock $MemoryBlock -DryRun:$DryRun
     }
 
-    if ($null -eq $ceos.alpha -or $null -eq $ceos.beta) {
-        $available = if ($ceos.alpha) { $ceos.alpha } else { $ceos.beta }
-        Write-Host "[DELIB] Nur ein CEO verfuegbar ($($available.provider)). Single-Agent-Modus (Visible)." -ForegroundColor Yellow
+    if ($null -eq $ceos.ceo -or $null -eq $ceos.auditor) {
+        $available = if ($ceos.ceo) { $ceos.ceo } else { $ceos.auditor }
+        Write-Host "[DELIB] Nur ein Agent verfuegbar ($($available.provider)). Single-Agent-Modus (Visible)." -ForegroundColor Yellow
 
         $singleResult = Invoke-VisibleCeoPhase `
             -QuotaRegistry $QuotaRegistry `
@@ -516,15 +530,15 @@ function Invoke-Deliberation {
         }
     }
 
-    Write-Host "[DELIB] Alpha: $($ceos.alpha.provider) ($($ceos.alpha.model_tier))" -ForegroundColor Cyan
-    Write-Host "[DELIB] Beta:  $($ceos.beta.provider) ($($ceos.beta.model_tier))" -ForegroundColor Cyan
+    Write-Host "[DELIB] CEO:     $($ceos.ceo.provider) ($($ceos.ceo.model_tier))" -ForegroundColor Cyan
+    Write-Host "[DELIB] Auditor: $($ceos.auditor.provider) ($($ceos.auditor.model_tier))" -ForegroundColor Cyan
 
     $protocol = [ordered]@{
         deliberation_id   = $deliberationId
         task_type         = $TaskType
         started_at        = (Get-Date -Format 'o')
-        alpha             = [ordered]@{ provider = $ceos.alpha.provider; model_tier = $ceos.alpha.model_tier }
-        beta              = [ordered]@{ provider = $ceos.beta.provider; model_tier = $ceos.beta.model_tier }
+        ceo               = [ordered]@{ provider = $ceos.ceo.provider; model_tier = $ceos.ceo.model_tier }
+        auditor           = [ordered]@{ provider = $ceos.auditor.provider; model_tier = $ceos.auditor.model_tier }
         rounds            = @()
         consensus_reached = $false
         final_output      = $null
@@ -532,18 +546,18 @@ function Invoke-Deliberation {
     }
 
     # ==========================================
-    # PHASE 1: PROPOSAL (CEO Alpha) - VISIBLE TERMINAL
+    # PHASE 1: PROPOSAL (CEO) - VISIBLE TERMINAL
     # ==========================================
     Write-Host "" -ForegroundColor White
-    Write-Host "[DELIB] --- Phase 1: Proposal (Alpha: $($ceos.alpha.provider)) ---" -ForegroundColor Yellow
-    Write-Host "[DELIB] Oeffne sichtbares CEO-Alpha Terminal..." -ForegroundColor Yellow
+    Write-Host "[DELIB] --- Phase 1: Proposal (CEO: $($ceos.ceo.provider)) ---" -ForegroundColor Yellow
+    Write-Host "[DELIB] Oeffne sichtbares CEO Terminal..." -ForegroundColor Yellow
 
     $proposalPrompt = Format-DeliberationPrompt -Phase "proposal" -OriginalPrompt $Prompt -MemoryBlock $MemoryBlock
     $proposalStart = Get-Date
 
     $proposalResult = Invoke-VisibleCeoPhase `
         -QuotaRegistry $QuotaRegistry `
-        -CeoInfo $ceos.alpha `
+        -CeoInfo $ceos.ceo `
         -Prompt $proposalPrompt `
         -PhaseName "Proposal" `
         -WorkingDirectory $WorkingDirectory `
@@ -551,24 +565,24 @@ function Invoke-Deliberation {
         -DryRun:$DryRun
 
     $proposalDuration = ((Get-Date) - $proposalStart).TotalMilliseconds
-    $alphaProposal = Get-CleanCeoOutput -RawOutput $proposalResult.output -ProviderName $ceos.alpha.provider
+    $ceoProposal = Get-CleanCeoOutput -RawOutput $proposalResult.output -ProviderName $ceos.ceo.provider
 
     $protocol.rounds += @([ordered]@{
         phase       = "proposal"
-        agent       = "alpha"
-        provider    = $ceos.alpha.provider
+        agent       = "ceo"
+        provider    = $ceos.ceo.provider
         duration_ms = [int]$proposalDuration
         success     = $proposalResult.success
-        content     = $alphaProposal
+        content     = $ceoProposal
     })
 
     if (-not $proposalResult.success) {
-        Write-Host "[DELIB] Alpha-Proposal fehlgeschlagen! Fallback auf Beta CEO (Visible)." -ForegroundColor Red
-        $protocol.final_output = "Alpha failed, fell back to Beta visible agent"
+        Write-Host "[DELIB] CEO-Proposal fehlgeschlagen! Fallback auf Auditor (Visible)." -ForegroundColor Red
+        $protocol.final_output = "CEO failed, fell back to Auditor visible agent"
 
         $fallbackResult = Invoke-VisibleCeoPhase `
             -QuotaRegistry $QuotaRegistry `
-            -CeoInfo $ceos.beta `
+            -CeoInfo $ceos.auditor `
             -Prompt $proposalPrompt `
             -PhaseName "Fallback-Proposal" `
             -WorkingDirectory $WorkingDirectory `
@@ -580,78 +594,78 @@ function Invoke-Deliberation {
 
         return [pscustomobject]@{
             success = $fallbackResult.success
-            output  = Get-CleanCeoOutput -RawOutput $fallbackResult.output -ProviderName $ceos.beta.provider
+            output  = Get-CleanCeoOutput -RawOutput $fallbackResult.output -ProviderName $ceos.auditor.provider
         }
     }
 
-    Write-Host "[DELIB] Alpha-Proposal erhalten ($([int]$proposalDuration)ms)" -ForegroundColor Green
-    Format-CeoChatOutput -Role "Proposal" -AgentName $ceos.alpha.provider -Content $alphaProposal
+    Write-Host "[DELIB] CEO-Proposal erhalten ($([int]$proposalDuration)ms)" -ForegroundColor Green
+    Format-CeoChatOutput -Role "Proposal" -AgentName $ceos.ceo.provider -Content $ceoProposal
 
     # ==========================================
-    # PHASE 2: CRITIQUE (CEO Beta) - VISIBLE TERMINAL
+    # PHASE 2: AUDIT (Auditor) - VISIBLE TERMINAL
     # ==========================================
     Write-Host "" -ForegroundColor White
-    Write-Host "[DELIB] --- Phase 2: Critique (Beta: $($ceos.beta.provider)) ---" -ForegroundColor Yellow
-    Write-Host "[DELIB] Oeffne sichtbares CEO-Beta Terminal..." -ForegroundColor Yellow
+    Write-Host "[DELIB] --- Phase 2: Audit (Auditor: $($ceos.auditor.provider)) ---" -ForegroundColor Yellow
+    Write-Host "[DELIB] Oeffne sichtbares Auditor Terminal..." -ForegroundColor Yellow
 
-    $critiquePrompt = Format-DeliberationPrompt -Phase "critique" -OriginalPrompt $Prompt -AlphaProposal $alphaProposal -MemoryBlock $MemoryBlock
+    $critiquePrompt = Format-DeliberationPrompt -Phase "critique" -OriginalPrompt $Prompt -CeoProposal $ceoProposal -MemoryBlock $MemoryBlock
     $critiqueStart = Get-Date
 
     $critiqueResult = Invoke-VisibleCeoPhase `
         -QuotaRegistry $QuotaRegistry `
-        -CeoInfo $ceos.beta `
+        -CeoInfo $ceos.auditor `
         -Prompt $critiquePrompt `
-        -PhaseName "Critique" `
+        -PhaseName "Audit" `
         -WorkingDirectory $WorkingDirectory `
         -State $State `
         -DryRun:$DryRun
 
     $critiqueDuration = ((Get-Date) - $critiqueStart).TotalMilliseconds
-    $betaCritique = Get-CleanCeoOutput -RawOutput $critiqueResult.output -ProviderName $ceos.beta.provider
+    $auditorCritique = Get-CleanCeoOutput -RawOutput $critiqueResult.output -ProviderName $ceos.auditor.provider
 
     $protocol.rounds += @([ordered]@{
         phase       = "critique"
-        agent       = "beta"
-        provider    = $ceos.beta.provider
+        agent       = "auditor"
+        provider    = $ceos.auditor.provider
         duration_ms = [int]$critiqueDuration
         success     = $critiqueResult.success
-        content     = $betaCritique
+        content     = $auditorCritique
     })
 
     if (-not $critiqueResult.success) {
-        Write-Host "[DELIB] Beta-Critique fehlgeschlagen! Verwende Alpha-Proposal als Endergebnis." -ForegroundColor Yellow
-        $protocol.final_output = $alphaProposal
+        Write-Host "[DELIB] Auditor-Audit fehlgeschlagen! Verwende CEO-Proposal als Endergebnis." -ForegroundColor Yellow
+        $protocol.final_output = $ceoProposal
         $protocol.consensus_reached = $false
         $protocol.completed_at = (Get-Date -Format 'o')
         Save-DeliberationProtocol -Protocol $protocol -Config $Config
 
         return [ordered]@{
             success        = $true
-            provider       = $ceos.alpha.provider
-            model          = $ceos.alpha.model_tier
-            output         = $alphaProposal
+            provider       = $ceos.ceo.provider
+            model          = $ceos.ceo.model_tier
+            output         = $ceoProposal
             error          = $null
             stats          = $proposalResult.stats
             deliberation   = $protocol
         }
     }
 
-    Write-Host "[DELIB] Beta-Critique erhalten ($([int]$critiqueDuration)ms)" -ForegroundColor Green
-    Format-CeoChatOutput -Role "Critique" -AgentName $ceos.beta.provider -Content $betaCritique
+    Write-Host "[DELIB] Auditor-Audit erhalten ($([int]$critiqueDuration)ms)" -ForegroundColor Green
+    Format-CeoChatOutput -Role "Audit" -AgentName $ceos.auditor.provider -Content $auditorCritique
 
     # ==========================================
-    # PHASE 3: SYNTHESIS (CEO Alpha) - VISIBLE TERMINAL
+    # PHASE 3: SYNTHESIS (CEO) - VISIBLE TERMINAL
     # ==========================================
     Write-Host "" -ForegroundColor White
-    Write-Host "[DELIB] --- Phase 3: Synthesis (Alpha: $($ceos.alpha.provider)) ---" -ForegroundColor Yellow
-    Write-Host "[DELIB] Oeffne sichtbares CEO-Alpha Terminal (Synthese)..." -ForegroundColor Yellow
+    Write-Host "[DELIB] --- Phase 3: Synthesis (CEO: $($ceos.ceo.provider)) ---" -ForegroundColor Yellow
+    Write-Host "[DELIB] Oeffne sichtbares CEO Terminal (Synthese)..." -ForegroundColor Yellow
 
-    $synthesisPrompt = Format-DeliberationPrompt -Phase "synthesis" -OriginalPrompt $Prompt -AlphaProposal $alphaProposal -BetaCritique $betaCritique -MemoryBlock $MemoryBlock
+    $synthesisPrompt = Format-DeliberationPrompt -Phase "synthesis" -OriginalPrompt $Prompt -CeoProposal $ceoProposal -AuditorCritique $auditorCritique -MemoryBlock $MemoryBlock
     $synthesisStart = Get-Date
 
     $synthesisResult = Invoke-VisibleCeoPhase `
         -QuotaRegistry $QuotaRegistry `
-        -CeoInfo $ceos.alpha `
+        -CeoInfo $ceos.ceo `
         -Prompt $synthesisPrompt `
         -PhaseName "Synthesis" `
         -WorkingDirectory $WorkingDirectory `
@@ -659,26 +673,26 @@ function Invoke-Deliberation {
         -DryRun:$DryRun
 
     $synthesisDuration = ((Get-Date) - $synthesisStart).TotalMilliseconds
-    $alphaSynthesis = Get-CleanCeoOutput -RawOutput $synthesisResult.output -ProviderName $ceos.alpha.provider
+    $ceoSynthesis = Get-CleanCeoOutput -RawOutput $synthesisResult.output -ProviderName $ceos.ceo.provider
 
     $protocol.rounds += @([ordered]@{
         phase       = "synthesis"
-        agent       = "alpha"
-        provider    = $ceos.alpha.provider
+        agent       = "ceo"
+        provider    = $ceos.ceo.provider
         duration_ms = [int]$synthesisDuration
         success     = $synthesisResult.success
-        content     = $alphaSynthesis
+        content     = $ceoSynthesis
     })
 
     if (-not $synthesisResult.success) {
-        Write-Host "[DELIB] Synthese fehlgeschlagen! Verwende Alpha-Proposal." -ForegroundColor Yellow
-        $protocol.final_output = $alphaProposal
+        Write-Host "[DELIB] Synthese fehlgeschlagen! Verwende CEO-Proposal." -ForegroundColor Yellow
+        $protocol.final_output = $ceoProposal
         $protocol.consensus_reached = $false
     } else {
-        $protocol.final_output = $alphaSynthesis
+        $protocol.final_output = $ceoSynthesis
         $protocol.consensus_reached = $true
         Write-Host "[DELIB] Synthese abgeschlossen ($([int]$synthesisDuration)ms)" -ForegroundColor Green
-        Format-CeoChatOutput -Role "Synthesis" -AgentName $ceos.alpha.provider -Content $alphaSynthesis
+        Format-CeoChatOutput -Role "Synthesis" -AgentName $ceos.ceo.provider -Content $ceoSynthesis
     }
 
     $protocol.completed_at = (Get-Date -Format 'o')
@@ -698,12 +712,12 @@ function Invoke-Deliberation {
         Add-DeliberationLog -State $State -Protocol $protocol
     }
 
-    $finalOutput = if ($protocol.consensus_reached) { $alphaSynthesis } else { $alphaProposal }
+    $finalOutput = if ($protocol.consensus_reached) { $ceoSynthesis } else { $ceoProposal }
 
     return [ordered]@{
         success        = $true
-        provider       = "$($ceos.alpha.provider)+$($ceos.beta.provider)"
-        model          = "dual-ceo"
+        provider       = "$($ceos.ceo.provider)+$($ceos.auditor.provider)"
+        model          = "ceo-auditor"
         output         = $finalOutput
         error          = $null
         stats          = $synthesisResult.stats

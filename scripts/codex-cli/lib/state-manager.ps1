@@ -214,7 +214,11 @@ function Read-AutopilotState {
 function Save-AutopilotState {
     param([Parameter(Mandatory)][object]$State)
 
-    $State.last_heartbeat = (Get-Date -Format 'o')
+    if ($State.PSObject.Properties.Name -contains "last_heartbeat") {
+        $State.last_heartbeat = (Get-Date -Format 'o')
+    } else {
+        $State | Add-Member -MemberType NoteProperty -Name "last_heartbeat" -Value (Get-Date -Format 'o') -Force
+    }
     Write-SafeJson -FilePath $script:StateFilePath -Data $State
 }
 
@@ -368,6 +372,7 @@ function Add-ReviewItem {
         pr_url        = $PrUrl
         pr_number     = $PrNumber
         review_status = "pending"
+        added_at      = (Get-Date -Format 'o')
     })
 
     Save-AutopilotState -State $State
