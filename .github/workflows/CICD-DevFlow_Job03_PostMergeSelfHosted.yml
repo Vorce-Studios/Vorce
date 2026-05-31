@@ -164,12 +164,12 @@ jobs:
                   repo: context.repo.repo,
                   ref: headSha,
                   per_page: 100,
-                }),
+                }).catch(() => ({ data: { check_runs: [] } })),
                 github.rest.repos.getCombinedStatusForRef({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   ref: headSha,
-                }),
+                }).catch(() => ({ data: { statuses: [] } })),
               ]);
 
               const latestCheckRunsByName = new Map();
