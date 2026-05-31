@@ -22,7 +22,7 @@ use vorce_control::ControlTarget;
 
 impl AppUI {
     /// Create UI state from a preloaded user configuration.
-    pub fn from_user_config(mut user_config: config::UserConfig) -> Self {      
+    pub fn from_user_config(mut user_config: config::UserConfig) -> Self {
         user_config.ensure_layout_profiles();
 
         let active_layout = user_config
@@ -30,7 +30,7 @@ impl AppUI {
             .cloned()
             .unwrap_or_else(config::LayoutProfile::default_profile);
 
-        let saved_audio_device = user_config.selected_audio_device.clone();     
+        let saved_audio_device = user_config.selected_audio_device.clone();
         let saved_recent_files = user_config.recent_files.clone();
         let saved_language = user_config.language.clone();
         let saved_target_fps = user_config.target_fps.unwrap_or(60.0);
@@ -40,17 +40,17 @@ impl AppUI {
             menu_bar: menu_bar::MenuBar::default(),
             dashboard: Dashboard::default(),
             paint_panel: PaintPanel::default(),
-            show_osc_panel: false, // Hide by default - advanced feature        
-            selected_control_target: ControlTarget::Custom("".to_string()),     
+            show_osc_panel: false, // Hide by default - advanced feature
+            selected_control_target: ControlTarget::Custom("".to_string()),
             osc_port_input: "8000".to_string(),
             osc_client_input: "127.0.0.1:9000".to_string(),
-            show_controls: false, // Hide by default - use Dashboard instead    
+            show_controls: false, // Hide by default - use Dashboard instead
             show_stats: true,     // Keep performance overlay
             show_layers: true,
             layer_panel: LayerPanel { visible: true },
-            show_mappings: false, // Hide by default - use Inspector when ready 
+            show_mappings: false, // Hide by default - use Inspector when ready
             mapping_panel: MappingPanel { visible: false },
-            show_transforms: false,     // Hide - will move to Inspector        
+            show_transforms: false,     // Hide - will move to Inspector
             show_master_controls: true, // Keep visible
             show_outputs: false,        // Hide by default
             output_panel: {
@@ -59,7 +59,7 @@ impl AppUI {
                 panel
             },
             edge_blend_panel: EdgeBlendPanel::default(),
-            oscillator_panel: OscillatorPanel::default(), // Hide by default    
+            oscillator_panel: OscillatorPanel::default(), // Hide by default
             show_audio: false,                            // Hide by default - use Dashboard toggle
             audio_panel: AudioPanel::default(),
             show_audio_panel_meters: true,
@@ -86,20 +86,20 @@ impl AppUI {
             transform_panel: TransformPanel::default(),
             shortcut_editor: ShortcutEditor::new(),
             show_toolbar: active_layout.visibility.show_toolbar,
-            icon_manager: None, // Will be initialized with egui context        
+            icon_manager: None, // Will be initialized with egui context
             icon_demo_panel: icon_demo_panel::IconDemoPanel::default(),
             user_config,
             show_settings: false,
             show_about: false,
-            show_media_browser: active_layout.visibility.show_media_browser,    
+            show_media_browser: active_layout.visibility.show_media_browser,
             media_browser: MediaBrowser::new(std::env::current_dir().unwrap_or_default()),
             inspector_panel: InspectorPanel::default(),
             show_inspector: active_layout.visibility.show_inspector,
             module_sidebar: ModuleSidebar::default(),
-            show_module_sidebar: true, // Show when Module Canvas is active     
+            show_module_sidebar: true, // Show when Module Canvas is active
             module_canvas: ModuleCanvas::default(),
-            show_module_canvas: active_layout.visibility.show_module_canvas,    
-            show_left_sidebar: active_layout.visibility.show_left_sidebar,      
+            show_module_canvas: active_layout.visibility.show_module_canvas,
+            show_left_sidebar: active_layout.visibility.show_left_sidebar,
             current_audio_level: 0.0,
             current_fps: 60.0,
             current_frame_time_ms: 16.67,
