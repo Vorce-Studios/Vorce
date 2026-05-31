@@ -260,34 +260,6 @@ export default defineConfig({
                 res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));
               }
             });
-          } else if (req.method === 'POST' && req.url === '/api/alerts') {
-            let body = '';
-            req.on('data', (chunk: any) => { body += chunk; });
-            req.on('end', () => {
-              try {
-                const payload = JSON.parse(body);
-                if (payload.action === 'resolve' && payload.topic) {
-                  const statePath = path.resolve(__dirname, '../autopilot-state.json');
-                  const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
-                  if (fs.existsSync(statePath)) {
-                    const state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
-                    if (state.decisions_pending && Array.isArray(state.decisions_pending)) {
-                      state.decisions_pending = state.decisions_pending.filter((a: any) => a.topic !== payload.topic);
-                      fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf-8');
-                      fs.writeFileSync(publicStatePath, JSON.stringify(state, null, 2), 'utf-8');
-                    }
-                  }
-                  res.writeHead(200, { 'Content-Type': 'application/json' });
-                  res.end(JSON.stringify({ status: 'ok', message: 'Alert resolved successfully' }));
-                } else {
-                  res.writeHead(400, { 'Content-Type': 'application/json' });
-                  res.end(JSON.stringify({ status: 'error', message: 'Invalid payload: need action=resolve and topic' }));
-                }
-              } catch (err) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));
-              }
-            });
           } else {
             next();
           }

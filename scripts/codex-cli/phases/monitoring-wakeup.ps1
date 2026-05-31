@@ -10,22 +10,13 @@ function Add-DecisionPending {
         [Parameter(Mandatory)][string]$Context
     )
 
-    if (-not ($State.PSObject.Properties.Name -contains "decisions_pending") -or $null -eq $State.decisions_pending) {
-        if (-not ($State.PSObject.Properties.Name -contains "decisions_pending")) {
-            $State | Add-Member -MemberType NoteProperty -Name "decisions_pending" -Value @() -Force
-        } else {
-            $State.decisions_pending = @()
-        }
-    }
-
     $exists = $State.decisions_pending | Where-Object { $_.topic -eq $Topic }
     if (-not $exists) {
-        $newDecision = [ordered]@{
+        $State.decisions_pending += @([ordered]@{
             topic      = $Topic
             context    = $Context
             created_at = (Get-Date -Format 'o')
-        }
-        $State.decisions_pending += $newDecision
+        })
         Write-Host "[MONITOR] Entscheidung hinzugefuegt: $Topic" -ForegroundColor Yellow
     } else {
         Write-Host "[MONITOR] Entscheidung existiert bereits: $Topic (uebersprungen)" -ForegroundColor DarkGray
@@ -137,55 +128,16 @@ function Invoke-MonitoringWakeUp {
                     foreach ($cpr in $conflictingPrs) {
                         $issueBody += "- PR #$($cpr.number) ($($cpr.headRefName)): $($cpr.title)`n"
                     }
-                    $issueBody += "`nBitte pruefe die Konflikte. Wenn es sich um einfache/triviale Konflikte handelt, behebe diese direkt als Quick-Fix mit einem lokalen CLI-Agenten (z.B. claude_code).`n"
-                    $issueBody += "Nur bei komplexen Konflikten direkt an Jules delegieren (Direct-Delegation).`n"
-                    $issueBody += "`nWICHTIG: Alle Konflikte in einer einzigen gemeinsamen Session aufloesen (Vermeidung von Redundanz und Token-Ersparnis).`n"
+                    $issueBody += "`nBitte alle Konflikte in einer einzigen Jules-Session aufloesen (Branches auschecken, main mergen, Konflikte beheben, pushen).`n"
                     $issueBody += "`nPrioritaet: KRITISCH - blockiert Release-Pipeline."
 
-                    $targetAgent = "claude_code"
-                    if ($conflictingPrs.Count -gt 3) {
-                        $targetAgent = "jules"
-                    } else {
-                        if ($QuotaRegistry.providers.claude_code.enabled -and (Get-Command claude -ErrorAction SilentlyContinue)) {
-                            $targetAgent = "claude_code"
-                        } elseif ($QuotaRegistry.providers.gemini_cli.enabled -and (Get-Command gemini -ErrorAction SilentlyContinue)) {
-                            $targetAgent = "gemini_cli"
-                        }
-                    }
-
-                    $labels = @("priority: critical", "bug")
-                    if ($targetAgent -eq "jules") {
-                        $labels += "jules-task"
-                    }
-                    $labels += "agent:$targetAgent"
-                    $labelArgs = ($labels | ForEach-Object { "--label `"$_`"" }) -join " "
-
-                    $newIssueUrl = gh issue create --repo $repo --title $issueTitle --body $issueBody $labelArgs 2>&1
+                    $newIssueUrl = gh issue create --repo $repo --title $issueTitle --body $issueBody --label "jules-task,priority: critical,bug" 2>&1
                     if ($LASTEXITCODE -eq 0 -and $newIssueUrl -match "/issues/(\d+)") {
                         $newIssueNum = [int]$Matches[1]
                         Write-Host "[MONITOR]   -> Master-Issue #$newIssueNum erfolgreich erstellt (priority: critical)!" -ForegroundColor Green
 
                         if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
                         $State.autopilot_created_issues += [ordered]@{ tag = $conflictTag; issue_number = $newIssueNum; created_at = (Get-Date -Format 'o') }
-                        
-                        if ($targetAgent -eq "jules") {
-                            Write-Host "[MONITOR]   -> Delegiere Master-Issue #$newIssueNum direkt an Jules (viele Konflikte)!" -ForegroundColor Cyan
-                            $newSessionId = "resolve-conflicts-$newIssueNum-$(Get-Date -Format 'yyyyMMddHHmmss')"
-                            Add-Delegation -State $State -IssueNumber $newIssueNum -IssueTitle $issueTitle -JulesSessionId $newSessionId -AgentType "jules" -JobId "direct-delegate"
-                        } else {
-                            Write-Host "[MONITOR]   -> Starten lokalen CLI-Agenten $targetAgent für Issue #$newIssueNum" -ForegroundColor Cyan
-                            try {
-                                $quotaRegistryPath = Join-Path $ScriptDir "quota-registry.json"
-                                $ToolsDir = Join-Path $ScriptDir "tools"
-                                $cmdArgs = "-NoExit", "-File", "`"$ToolsDir\run-visible-agent-task.ps1`"", "-IssueNumber", $newIssueNum, "-IssueTitle", "`"$issueTitle`"", "-AgentProvider", "`"$targetAgent`"", "-Repository", "`"$repo`"", "-QuotaRegistryPath", "`"$quotaRegistryPath`""
-                                $proc = Start-Process pwsh -ArgumentList $cmdArgs -PassThru -WindowStyle Normal
-                                Add-Delegation -State $State -IssueNumber $newIssueNum -IssueTitle $issueTitle -JulesSessionId "local-agent-$($proc.Id)" -AgentType $targetAgent -JobId $($proc.Id.ToString())
-                            } catch {
-                                Write-Warning "[MONITOR] Lokaler Agent $targetAgent fuer #$newIssueNum fehlgeschlagen: $_"
-                                Add-ErrorLog -State $State -Message "Local agent $targetAgent failed for #$newIssueNum" -Context $_.Exception.Message
-                            }
-                        }
-                        
                         Save-AutopilotState -State $State
                     }
                 }
@@ -208,28 +160,6 @@ function Invoke-MonitoringWakeUp {
         }
 
         $agentType = if ($delegation.PSObject.Properties.Name -contains "agent_type" -and $delegation.agent_type) { $delegation.agent_type } else { "jules" }
-
-        # --- Stalled-Session-Detection (45 min Timeout) ---
-        $delegatedAtStr = $delegation.delegated_at
-        if (-not [string]::IsNullOrWhiteSpace($delegatedAtStr)) {
-            try {
-                $delegatedAt = [datetimeoffset]::Parse($delegatedAtStr, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
-                $timeSinceDelegation = (Get-Date) - $delegatedAt.LocalDateTime
-                if ($timeSinceDelegation.TotalMinutes -ge 45) {
-                    Write-Host ("[MONITOR]   #{0} (Agent: {1}): Stalled-Session erkannt ({2:N0} min)! Eskaliere sofort." -f $issueNum, $agentType, $timeSinceDelegation.TotalMinutes) -ForegroundColor Red
-                    Add-ErrorLog -State $State -Message "Stalled session detected for #$issueNum (>45min)" -Context "Session: $sessionId, Agent: $agentType"
-                    
-                    if (-not $DryRun.IsPresent) {
-                        Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "STALLED_TIMEOUT"
-                    } else {
-                        Complete-Delegation -State $State -IssueNumber $issueNum -Result "failed_timeout"
-                    }
-                    continue
-                }
-            } catch {
-                Write-Warning "[MONITOR] Could not parse delegated_at: $delegatedAtStr"
-            }
-        }
 
         if ($agentType -eq "jules") {
             try {
@@ -355,30 +285,6 @@ function Invoke-MonitoringWakeUp {
     }
 
     # --- Step 3: Process review queue ---
-    $cleanedReviews = @()
-    foreach ($review in $State.review_queue) {
-        $keepReview = $true
-        $hasAddedAt = ($review.PSObject.Properties.Name -contains "added_at")
-        if ($hasAddedAt) {
-            try {
-                $addedAt = [datetimeoffset]::Parse($review.added_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
-                if ((Get-Date) - $addedAt.LocalDateTime -gt [timespan]::FromHours(48)) {
-                    Write-Host "[MONITOR] Review fuer PR #$($review.pr_number) ist aelter als 48h. Bitte manuell pruefen!" -ForegroundColor Red
-                    # $keepReview = $false <-- DO NOT DELETE
-                }
-            } catch {}
-        }
-        # Entferne auch Reviews, die abgeschlossen sind und aelter als 24h sind (bzw einfach als abgeschlossen markiert sind und im naechsten Cycle weg sollen)
-        if ($review.review_status -eq "completed" -and $keepReview) {
-             if (-not $hasAddedAt) { $keepReview = $false }
-        }
-
-        if ($keepReview) {
-            $cleanedReviews += $review
-        }
-    }
-    $State.review_queue = $cleanedReviews
-
     $pendingReviews = @($State.review_queue | Where-Object { $_.review_status -eq "pending" })
     if ($pendingReviews.Count -gt 0) {
         Write-Host "[MONITOR] $($pendingReviews.Count) PRs im Review-Queue." -ForegroundColor Cyan
@@ -409,26 +315,14 @@ PR URL: $($review.pr_url)
 
     foreach ($decision in $State.decisions_pending) {
         $topic = $decision.topic
-        $keep = $true
-
-        # 0. Age-based cleanup (48h+)
-        if ($decision.created_at) {
-            try {
-                $createdAt = [datetimeoffset]::Parse($decision.created_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
-                if ((Get-Date) - $createdAt.LocalDateTime -gt [timespan]::FromHours(48)) {
-                    Write-Host "[MONITOR] Entscheidung '$topic' ist aelter als 48h. Bitte manuell eingreifen!" -ForegroundColor Red
-                    # $keep = $false  <-- DO NOT DELETE. User wants them kept for manual resolution.
-                }
-            } catch {}
-        }
-
-        if (-not $keep) { continue }
 
         # 1. Duplikatprüfung
         if ($seenTopics.Contains($topic)) {
             Write-Host "[MONITOR] Duplikat von Entscheidung entfernt: $topic" -ForegroundColor DarkGray
             continue
         }
+
+        $keep = $true
 
         # 2. PR-Konflikt-Meldungen analysieren
         if ($topic -match 'PR #(\d+) hat Merge-Konflikte') {
@@ -466,44 +360,6 @@ PR URL: $($review.pr_url)
     }
 
     $State.decisions_pending = $cleanedDecisions
-
-    # --- Step 5: Quota Monitoring ---
-    Write-Host "[MONITOR] Pruefe Quota/Budget Limits..." -ForegroundColor Cyan
-    foreach ($name in ($QuotaRegistry.providers.PSObject.Properties.Name)) {
-        $p = $QuotaRegistry.providers.$name
-        if (-not $p.enabled) { continue }
-        
-        $hasLimit = $p.PSObject.Properties.Name -contains "daily_limit"
-        if ($hasLimit -and $p.daily_limit -and $p.daily_limit -gt 0) {
-            $calls = if ($p.usage_today.PSObject.Properties.Name -contains "calls") { [int]$p.usage_today.calls } else { 0 }
-            $usagePct = ($calls / $p.daily_limit) * 100
-            if ($usagePct -ge 85) {
-                $topic = "Quota Warnung: $name bei $([Math]::Round($usagePct))%"
-                Add-DecisionPending -State $State -Topic $topic -Context "Provider $name hat $calls von $($p.daily_limit) Calls verbraucht. Bitte pruefen ob Limiterhoehung noetig."
-            }
-        }
-    }
-
-    # --- Step 6: Intelligent Branch Cleanup ---
-    Write-Host "[MONITOR] Pruefe auf aufraeumbare Branches..." -ForegroundColor Cyan
-    try {
-        if (-not $DryRun.IsPresent) {
-            $null = git fetch --prune 2>&1
-            $goneBranches = git branch -vv | Select-String -Pattern "\[.*: gone\]"
-            if ($null -ne $goneBranches) {
-                foreach ($b in $goneBranches) {
-                    $bName = ($b.Line.Trim() -split '\s+')[0]
-                    if ($bName -eq "*") { $bName = ($b.Line.Trim() -split '\s+')[1] }
-                    if ($bName -ne "main" -and $bName -ne "master") {
-                        Write-Host "[MONITOR]   Loesche lokalen Branch: $bName (Upstream gone)" -ForegroundColor DarkGray
-                        git branch -D $bName 2>&1 | Out-Null
-                    }
-                }
-            }
-        }
-    } catch {
-        Write-Warning "[MONITOR] Fehler beim Branch-Cleanup: $_"
-    }
 
     $State.last_monitoring_at = (Get-Date -Format 'o')
     Save-AutopilotState -State $State
