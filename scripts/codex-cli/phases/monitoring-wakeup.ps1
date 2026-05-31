@@ -138,6 +138,24 @@ function Invoke-MonitoringWakeUp {
 
                         if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
                         $State.autopilot_created_issues += [ordered]@{ tag = $conflictTag; issue_number = $newIssueNum; created_at = (Get-Date -Format 'o') }
+                        if ($targetAgent -eq "jules") {
+                            Write-Host "[MONITOR]   -> Delegiere Master-Issue #$newIssueNum direkt an Jules (viele Konflikte)!" -ForegroundColor Cyan
+                            $newSessionId = "resolve-conflicts-$newIssueNum-$(Get-Date -Format 'yyyyMMddHHmmss')"
+                            Add-Delegation -State $State -IssueNumber $newIssueNum -IssueTitle $issueTitle -JulesSessionId $newSessionId -AgentType "jules" -JobId "direct-delegate"
+                        } else {
+                            Write-Host "[MONITOR]   -> Starten lokalen CLI-Agenten $targetAgent für Issue #$newIssueNum" -ForegroundColor Cyan
+                            try {
+                                $quotaRegistryPath = Join-Path $ScriptDir "quota-registry.json"
+                                $ToolsDir = Join-Path $ScriptDir "tools"
+                                $cmdArgs = "-NoExit", "-File", "`"$ToolsDir\run-visible-agent-task.ps1`"", "-IssueNumber", $newIssueNum, "-IssueTitle", "`"$issueTitle`"", "-AgentProvider", "`"$targetAgent`"", "-Repository", "`"$repo`"", "-QuotaRegistryPath", "`"$quotaRegistryPath`""
+                                $proc = Start-Process pwsh -ArgumentList $cmdArgs -PassThru -WindowStyle Normal
+                                Add-Delegation -State $State -IssueNumber $newIssueNum -IssueTitle $issueTitle -JulesSessionId "local-agent-$($proc.Id)" -AgentType $targetAgent -JobId $($proc.Id.ToString())
+                            } catch {
+                                Write-Warning "[MONITOR] Lokaler Agent $targetAgent fuer #$newIssueNum fehlgeschlagen: $_"
+                                Add-ErrorLog -State $State -Message "Local agent $targetAgent failed for #$newIssueNum" -Context $_.Exception.Message
+                            }
+                        }
+
                         Save-AutopilotState -State $State
                     }
                 }
@@ -160,6 +178,28 @@ function Invoke-MonitoringWakeUp {
         }
 
         $agentType = if ($delegation.PSObject.Properties.Name -contains "agent_type" -and $delegation.agent_type) { $delegation.agent_type } else { "jules" }
+
+        # --- Stalled-Session-Detection (45 min Timeout) ---
+        $delegatedAtStr = $delegation.delegated_at
+        if (-not [string]::IsNullOrWhiteSpace($delegatedAtStr)) {
+            try {
+                $delegatedAt = [datetimeoffset]::Parse($delegatedAtStr, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
+                $timeSinceDelegation = (Get-Date) - $delegatedAt.LocalDateTime
+                if ($timeSinceDelegation.TotalMinutes -ge 45) {
+                    Write-Host ("[MONITOR]   #{0} (Agent: {1}): Stalled-Session erkannt ({2:N0} min)! Eskaliere sofort." -f $issueNum, $agentType, $timeSinceDelegation.TotalMinutes) -ForegroundColor Red
+                    Add-ErrorLog -State $State -Message "Stalled session detected for #$issueNum (>45min)" -Context "Session: $sessionId, Agent: $agentType"
+
+                    if (-not $DryRun.IsPresent) {
+                        Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "STALLED_TIMEOUT"
+                    } else {
+                        Complete-Delegation -State $State -IssueNumber $issueNum -Result "failed_timeout"
+                    }
+                    continue
+                }
+            } catch {
+                Write-Warning "[MONITOR] Could not parse delegated_at: $delegatedAtStr"
+            }
+        }
 
         if ($agentType -eq "jules") {
             try {
@@ -360,6 +400,44 @@ PR URL: $($review.pr_url)
     }
 
     $State.decisions_pending = $cleanedDecisions
+
+    # --- Step 5: Quota Monitoring ---
+    Write-Host "[MONITOR] Pruefe Quota/Budget Limits..." -ForegroundColor Cyan
+    foreach ($name in ($QuotaRegistry.providers.PSObject.Properties.Name)) {
+        $p = $QuotaRegistry.providers.$name
+        if (-not $p.enabled) { continue }
+
+        $hasLimit = $p.PSObject.Properties.Name -contains "daily_limit"
+        if ($hasLimit -and $p.daily_limit -and $p.daily_limit -gt 0) {
+            $calls = if ($p.usage_today.PSObject.Properties.Name -contains "calls") { [int]$p.usage_today.calls } else { 0 }
+            $usagePct = ($calls / $p.daily_limit) * 100
+            if ($usagePct -ge 85) {
+                $topic = "Quota Warnung: $name bei $([Math]::Round($usagePct))%"
+                Add-DecisionPending -State $State -Topic $topic -Context "Provider $name hat $calls von $($p.daily_limit) Calls verbraucht. Bitte pruefen ob Limiterhoehung noetig."
+            }
+        }
+    }
+
+    # --- Step 6: Intelligent Branch Cleanup ---
+    Write-Host "[MONITOR] Pruefe auf aufraeumbare Branches..." -ForegroundColor Cyan
+    try {
+        if (-not $DryRun.IsPresent) {
+            $null = git fetch --prune 2>&1
+            $goneBranches = git branch -vv | Select-String -Pattern "\[.*: gone\]"
+            if ($null -ne $goneBranches) {
+                foreach ($b in $goneBranches) {
+                    $bName = ($b.Line.Trim() -split '\s+')[0]
+                    if ($bName -eq "*") { $bName = ($b.Line.Trim() -split '\s+')[1] }
+                    if ($bName -ne "main" -and $bName -ne "master") {
+                        Write-Host "[MONITOR]   Loesche lokalen Branch: $bName (Upstream gone)" -ForegroundColor DarkGray
+                        git branch -D $bName 2>&1 | Out-Null
+                    }
+                }
+            }
+        }
+    } catch {
+        Write-Warning "[MONITOR] Fehler beim Branch-Cleanup: $_"
+    }
 
     $State.last_monitoring_at = (Get-Date -Format 'o')
     Save-AutopilotState -State $State

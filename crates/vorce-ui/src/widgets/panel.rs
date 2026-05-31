@@ -15,7 +15,7 @@ impl StyledPanel {
 
     pub fn show<R>(self, ui: &mut Ui, add_contents: impl FnOnce(&mut Ui) -> R) -> R {
         let frame = egui::Frame {
-            fill: crate::theme::colors::DARK_GREY,
+            fill: ui.visuals().panel_fill,
             corner_radius: egui::CornerRadius::ZERO,
             inner_margin: egui::Margin::same(8),
             outer_margin: egui::Margin::same(0),
@@ -38,7 +38,7 @@ impl StyledPanel {
 /// Create a standard "Cyber Dark" panel frame
 pub fn cyber_panel_frame(_style: &Style) -> egui::Frame {
     egui::Frame {
-        fill: crate::theme::colors::DARK_GREY,
+        fill: _style.visuals.panel_fill,
         corner_radius: egui::CornerRadius::ZERO, // Sharp corners
         inner_margin: egui::Margin::same(0),     // Removed inner margin to let header touch edges
         stroke: Stroke::new(1.0, crate::theme::colors::STROKE_GREY),
@@ -53,7 +53,7 @@ pub fn render_panel_header<R>(
     add_contents: impl FnOnce(&mut Ui) -> R,
 ) -> R {
     egui::Frame::default()
-        .fill(crate::theme::colors::LIGHTER_GREY)
+        .fill(ui.visuals().window_fill)
         .inner_margin(egui::Margin::symmetric(8, 4))
         .corner_radius(egui::CornerRadius::ZERO)
         .stroke(egui::Stroke { width: 1.0, color: crate::theme::colors::STROKE_GREY })

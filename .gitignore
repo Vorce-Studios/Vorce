@@ -26,6 +26,7 @@
 
 # Other files
 *.out
+__pycache__/
 
 # Logs (moved to logs/ directory)
 /logs/
