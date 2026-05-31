@@ -167,7 +167,7 @@ function Invoke-MonitoringWakeUp {
 
                         if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
                         $State.autopilot_created_issues += [ordered]@{ tag = $conflictTag; issue_number = $newIssueNum; created_at = (Get-Date -Format 'o') }
-                        
+
                         if ($targetAgent -eq "jules") {
                             Write-Host "[MONITOR]   -> Delegiere Master-Issue #$newIssueNum direkt an Jules (viele Konflikte)!" -ForegroundColor Cyan
                             $newSessionId = "resolve-conflicts-$newIssueNum-$(Get-Date -Format 'yyyyMMddHHmmss')"
@@ -185,7 +185,7 @@ function Invoke-MonitoringWakeUp {
                                 Add-ErrorLog -State $State -Message "Local agent $targetAgent failed for #$newIssueNum" -Context $_.Exception.Message
                             }
                         }
-                        
+
                         Save-AutopilotState -State $State
                     }
                 }
@@ -218,7 +218,7 @@ function Invoke-MonitoringWakeUp {
                 if ($timeSinceDelegation.TotalMinutes -ge 45) {
                     Write-Host ("[MONITOR]   #{0} (Agent: {1}): Stalled-Session erkannt ({2:N0} min)! Eskaliere sofort." -f $issueNum, $agentType, $timeSinceDelegation.TotalMinutes) -ForegroundColor Red
                     Add-ErrorLog -State $State -Message "Stalled session detected for #$issueNum (>45min)" -Context "Session: $sessionId, Agent: $agentType"
-                    
+
                     if (-not $DryRun.IsPresent) {
                         Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "STALLED_TIMEOUT"
                     } else {
@@ -472,7 +472,7 @@ PR URL: $($review.pr_url)
     foreach ($name in ($QuotaRegistry.providers.PSObject.Properties.Name)) {
         $p = $QuotaRegistry.providers.$name
         if (-not $p.enabled) { continue }
-        
+
         $hasLimit = $p.PSObject.Properties.Name -contains "daily_limit"
         if ($hasLimit -and $p.daily_limit -and $p.daily_limit -gt 0) {
             $calls = if ($p.usage_today.PSObject.Properties.Name -contains "calls") { [int]$p.usage_today.calls } else { 0 }
