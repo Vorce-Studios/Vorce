@@ -45,14 +45,23 @@ pub enum MediaType {
 
 impl MediaType {
     pub fn from_extension(ext: &str) -> Self {
-        match ext.to_lowercase().as_str() {
-            "mp4" | "avi" | "mpeg" | "mpg" | "mkv" | "webm" => Self::Video,
-            // MOV can be HAP or regular video - we'll detect at open time
-            "mov" => Self::Video, // Could be HAP, will be detected when opened
-            "png" | "jpg" | "jpeg" | "tiff" | "tif" | "bmp" | "dds" => Self::Image,
-            "gif" => Self::ImageSequence,
-            "wav" | "mp3" | "aac" | "flac" | "ogg" => Self::Audio,
-            _ => Self::Unknown,
+        if ["mp4", "avi", "mpeg", "mpg", "mkv", "webm", "mov"]
+            .iter()
+            .any(|&s| ext.eq_ignore_ascii_case(s))
+        {
+            Self::Video
+        } else if ["png", "jpg", "jpeg", "tiff", "tif", "bmp", "dds"]
+            .iter()
+            .any(|&s| ext.eq_ignore_ascii_case(s))
+        {
+            Self::Image
+        } else if ext.eq_ignore_ascii_case("gif") {
+            Self::ImageSequence
+        } else if ["wav", "mp3", "aac", "flac", "ogg"].iter().any(|&s| ext.eq_ignore_ascii_case(s))
+        {
+            Self::Audio
+        } else {
+            Self::Unknown
         }
     }
 
@@ -936,7 +945,7 @@ impl MediaBrowser {
                                     egui::pos2(0.0, 0.0),
                                     egui::pos2(1.0, 1.0),
                                 ),
-                                ui.visuals().text_color().gamma_multiply(0.8), // Tinted slightly
+                                ui.visuals().text_color().linear_multiply(0.8), // Tinted slightly
                             );
                             rendered_icon = true;
                         }
@@ -950,7 +959,7 @@ impl MediaBrowser {
                         egui::Align2::LEFT_TOP,
                         entry.file_type.icon(),
                         egui::FontId::proportional(40.0),
-                        ui.visuals().text_color().gamma_multiply(0.4),
+                        ui.visuals().text_color().linear_multiply(0.4),
                     );
                 }
             }

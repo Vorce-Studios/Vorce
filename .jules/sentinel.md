@@ -17,7 +17,7 @@
 
 **Schwachstelle:** Die CORS-Konfiguration erlaubte explizit den Wildcard-Origin `*` (`tower_http::cors::Any`), wenn dieser in der Konfiguration vorhanden war. Dies ermÃ¶glichte es beliebigen Webseiten, Anfragen an die Control-API zu stellen.
 
-**Lektion:** CORS-Policies sollten niemals standardmÃ¤ÃŸig oder durch einfache Konfiguration Wildcards erlauben, insbesondere bei APIs, die sensitive Anfragen ausfÃ¼hren kÃ¶nnen.
+**Lektion:** CORS-Policies sollten niemals standardmÃ¤ÃŸig oder durch einfache Konfiguration Wildcards erlauben, insbesondere bei APIs, die sensitive Aktionen ausfÃ¼hren kÃ¶nnen.
 
 **PrÃ¤vention:** Wildcards in CORS-Einstellungen sollten im Code explizit abgefangen und ignoriert werden. Erlaubte Origins mÃ¼ssen als spezifische, vertrauenswÃ¼rdige Domains konfiguriert werden.
 
@@ -43,11 +43,18 @@
 **PrÃ¤vention:** Use `.map_err()` to propagate errors up the call stack, explicitly defining error types like `CodegenError` where appropriate.
 ## 2025-01-20 - [Denial of Service (DoS)] **Schwachstelle:** `expect()` calls exist in `vorce-media/src/pipeline.rs` and `vorce-render/src/mesh_buffer_cache.rs` and `vorce-render/src/texture.rs`. **Lektion:** Code relied on expect() which can panic and cause DoS. **Prävention:** Use safe error handling or fallback defaults.
 
+## 2025-05-24 - DoS via unwrap()/expect() panics
+
+**Schwachstelle:** Die Codebase enthielt diverse ungeschützte `unwrap()` und `expect()` Aufrufe in UI-Rendering-Logik (z.B. in `egui_node_editor`) sowie in Window-Management und I/O-Schichten (`vorce-ui`, `vorce-io`, `vorce`).
+**Lektion:** Wenn diese fehlgeschlagenen Result- oder Option-Typen in Panics münden, kommt es zum kompletten Anwendungsabsturz (Denial of Service), selbst wenn es nur ein harmloser UI-Fehler oder eine fehlende Fensterinstanz ist.
+**Prävention:** Verwenden von sicheren Alternativen wie `unwrap_or_else(|| panic!(...))` in Tests oder echtes Pattern-Matching im Produktivcode, um sicherzustellen, dass die Applikation robust bleibt und keine Linter-Warnungen im CI-Check auftreten.
+
 ## 2025-05-24 - [HIGH] Path Traversal in Project Loader
 
 **Schwachstelle:** `load_project` in `crates/vorce-io/src/project.rs` hat Dateipfade nicht auf `..` Komponenten validiert, wodurch Path Traversal beim Laden von Projekten mÃ¶glich war.
 **Lektion:** Es fehlte eine Validierungsschicht zwischen externen Pfaden und dem Dateisystemzugriff.
 **PrÃ¤vention:** Bei jeglichem Einlesen von Dateien über externe oder dynamische Pfade muss vor dem Aufruf von `File::open` oder `fs::read` zwingend eine Validierung der Pfadkomponenten stattfinden, idealerweise durch den Ausschluss von `Component::ParentDir` oder eine strikte Sandboxing-Architektur.
+## 2025-01-20 - [Fix: Defense-in-depth on OSC and Config deserialization] **Schwachstelle:** Panic possible due to `unwrap`/`expect` during OSC network parsing and config loading. **Lektion:** Never unwrap network inputs or untrusted file configs since it can cause DoS. **Prävention:** Use `match` to properly handle `Result` types for robust error handling.
 
 ## 2024-05-18 - [Path Traversal Bypass]
 **Schwachstelle:** Path Traversal checks using `std::path::Component::ParentDir` were bypassed on non-Windows platforms when paths contained Windows-style separators (e.g. `..\..\evil.mapmap`).
@@ -58,3 +65,10 @@
 **Schwachstelle:** The media decoders in `vorce-media` (e.g., `StillImageDecoder`, `MpvDecoder`, `GifDecoder`, `ImageSequenceDecoder`, `RealFFmpegDecoder`) loaded files from disk without explicitly validating whether the given path contained parent directory traversal components (`..`).
 **Lektion:** While some path traversal protections existed at higher levels (like the project loading and MCP tools), the media decoding layer itself remained unprotected, allowing potential arbitrary file reads if external input bypassed higher-level checks.
 **Prävention:** Add a defense-in-depth validation check directly inside the `open()` methods of media decoders, rejecting any paths that contain `std::path::Component::ParentDir`.
+## 2025-05-24 - DoS via unwrap() in NDI Render Loop
+
+**Schwachstelle:** Zwei ungeschützte `unwrap()` Aufrufe beim Zugriff auf die `ndi_offscreen_textures` Map in der Rendering-Schicht (in `crates/vorce/src/app/loops/render/mod.rs`).
+
+**Lektion:** Falls eine Textur im NDI-Renderpass nicht erfolgreich erzeugt oder eingefügt wurde (z.B. wegen Grafikspeichermangel), führt das direkte Auspacken mittels `unwrap()` zum Paniken des gesamten Render-Loops und damit zum App-Crash (Denial of Service).
+
+**Prävention:** Auf Resourcen-Maps innerhalb kritischer Loops (wie `app.ndi_offscreen_textures.get()`) muss immer mit einem sicheren Pattern wie `if let Some()` oder `match` zugegriffen werden. Fehlt die Resource, ist es sicherer, das Rendern für den aktuellen Frame zu überspringen (`continue`), anstatt die Anwendung abstürzen zu lassen.

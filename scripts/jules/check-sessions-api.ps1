@@ -5,19 +5,27 @@ $ScriptDir = Split-Path -Parent $PSCommandPath
 $apiKey = Get-JulesApiKey
 
 Write-Host "Fetching sessions..."
-$sessions = @(Get-AllJulesSessions -ApiKey $apiKey -PageSize 100 -MaxPages 2)
+$sessions = @(Get-AllJulesSessions -ApiKey $apiKey -PageSize 100 -MaxPages 5)
 
 $vorceSessions = $sessions | Where-Object {
-    $repo = $_.sourceContext.githubRepoContext.repository
-    ($repo -like '*Vorce*') -and ($repo -notlike '*MrLongNight*')
+    $source = $_.sourceContext.source
+    $source -like '*Vorce*' -or $source -like '*MapFlow*'
 }
 
-Write-Host "Found $($vorceSessions.Count) Vorce-Studios/Vorce sessions"
+Write-Host "Found $($vorceSessions.Count) Vorce & MapFlow sessions"
 Write-Host ""
 
 foreach ($session in $vorceSessions) {
-    $repo = $session.sourceContext.githubRepoContext.repository
-    $issueNum = $session.sourceContext.githubRepoContext.issueNumber
+    $source = $session.sourceContext.source
+    $repo = if ($source -match "sources/github/(?<name>.*)") { $Matches["name"] } else { $source }
+    $issueNum = $null
+    foreach ($candidate in @([string]$session.title, [string]$session.prompt)) {
+        if ([string]::IsNullOrWhiteSpace($candidate)) { continue }
+        if ($candidate -match "Issue\s+#(?<id>\d+)") {
+            $issueNum = [int]$Matches["id"]
+            break
+        }
+    }
     $state = $session.state
     $updatedAt = $session.updateTime
 

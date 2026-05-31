@@ -5,8 +5,7 @@ use vorce_ui::responsive::ResponsiveLayout;
 pub struct MediaManagerUI {
     pub visible: bool, // Toggle visibility
     search_query: String,
-    /// Cached lowercased search query to prevent per-frame case-conversion allocation
-    search_query_lower: Option<std::sync::Arc<str>>,
+    search_query_lower: std::sync::Arc<str>,
     view_mode: ViewMode,
     selected_playlist: Option<String>,
     new_playlist_name: String,
@@ -24,7 +23,7 @@ impl Default for MediaManagerUI {
         Self {
             visible: false,
             search_query: String::new(),
-            search_query_lower: None,
+            search_query_lower: std::sync::Arc::from(""),
             view_mode: ViewMode::Grid,
             selected_playlist: None,
             new_playlist_name: String::new(),
@@ -121,11 +120,12 @@ impl MediaManagerUI {
             // Toolbar
             ui.horizontal(|ui| {
                 ui.label("Search:");
-                let search_response = ui.text_edit_singleline(&mut self.search_query);
-                // ⚡ Bolt: Cache lowercased query to avoid per-frame allocations
-                if search_response.changed() {
-                    self.search_query_lower = (!self.search_query.is_empty())
-                        .then(|| self.search_query.to_lowercase().into());
+                let response = ui.text_edit_singleline(&mut self.search_query);
+                if response.changed() {
+                    // Perf: Vermeidung von unnötigen Heap-Allokationen (String) durch `.to_lowercase()`
+                    // bei jedem Render-Frame. Aktualisierung nur bei Änderungen des Such-Strings.
+                    self.search_query_lower =
+                        std::sync::Arc::from(self.search_query.to_lowercase().as_str());
                 }
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -152,9 +152,9 @@ impl MediaManagerUI {
 
             // Content Area
             egui::ScrollArea::vertical().show(ui, |ui| {
-                // ⚡ Bolt: Use existing cached lowercase values for performance.
-                // By caching `search_query_lower` in an Arc<str> on change and cloning the Arc (cheap ref-bump) once per frame
-                // (when it exists), we avoid `to_lowercase()` string allocations per frame and maintain the fast `str::contains` byte-level search.
+                // Perf: Arc<str> clone() verursacht nur einen atomaren Reference-Bump (cheap)
+                // anstatt teuren Heap-Allokationen während des Render-Loops.
+                let query_lower = self.search_query_lower.clone();
 
                 let mut iter1;
                 let mut iter2;
@@ -177,13 +177,8 @@ impl MediaManagerUI {
                     &mut iter3
                 };
 
-                let query_owned = self.search_query_lower.clone();
                 let mut filtered_items = items.filter(|item| {
-                    if let Some(query) = &query_owned {
-                        item.name_lower.contains(query.as_ref())
-                    } else {
-                        true
-                    }
+                    query_lower.is_empty() || item.name_lower.contains(&*query_lower)
                 });
 
                 match self.view_mode {
@@ -194,7 +189,7 @@ impl MediaManagerUI {
         });
     }
 
-    fn render_grid(&self, ui: &mut Ui, items: &mut dyn Iterator<Item = &MediaItem>) {
+    fn render_grid(&mut self, ui: &mut Ui, items: &mut dyn Iterator<Item = &MediaItem>) {
         let available_width = ui.available_width();
         let columns = (available_width / (self.thumbnail_size + 10.0)).floor() as usize;
         let columns = columns.max(1);
@@ -255,7 +250,7 @@ impl MediaManagerUI {
         });
     }
 
-    fn render_list(&self, ui: &mut Ui, items: &mut dyn Iterator<Item = &MediaItem>) {
+    fn render_list(&mut self, ui: &mut Ui, items: &mut dyn Iterator<Item = &MediaItem>) {
         for item in items {
             ui.horizontal(|ui| {
                 let icon = match item.media_type {

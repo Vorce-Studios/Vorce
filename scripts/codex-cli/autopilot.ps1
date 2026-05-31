@@ -7,6 +7,7 @@ param(
     [switch]$DryRun,
     [switch]$PlanOnce,
     [switch]$MonitorOnce,
+    [switch]$SkipPlanningOnStart,
     [int]$PlanningIntervalOverride,
     [int]$MonitoringIntervalOverride
 )
@@ -18,12 +19,44 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ScriptDir = Split-Path -Parent $PSCommandPath
 
+# Custom Write-Host to pipe logs to dashboard/public/autopilot-live.log in real time
+function Write-Host {
+    param(
+        [Parameter(ValueFromPipeline, Position=0)][object]$Object,
+        [ConsoleColor]$ForegroundColor,
+        [ConsoleColor]$BackgroundColor,
+        [switch]$NoNewLine
+    )
+    
+    $params = @{}
+    if ($Object) { $params["Object"] = $Object }
+    if ($ForegroundColor) { $params["ForegroundColor"] = $ForegroundColor }
+    if ($BackgroundColor) { $params["BackgroundColor"] = $BackgroundColor }
+    if ($NoNewLine) { $params["NoNewLine"] = $true }
+
+    Microsoft.PowerShell.Utility\Write-Host @params
+
+    if ($Object) {
+        $liveLogPath = Join-Path $ScriptDir "dashboard\public\autopilot-live.log"
+        $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+        try {
+            $cleanMsg = $Object.ToString() -replace '\e\[[0-9;]*m', ''
+            Add-Content -Path $liveLogPath -Value "[$timestamp] $cleanMsg" -Encoding UTF8 -ErrorAction SilentlyContinue
+        } catch {}
+    }
+}
+
+
 # --- Load libraries ---
 . (Join-Path $ScriptDir "lib\state-manager.ps1")
 . (Join-Path $ScriptDir "lib\quota-manager.ps1")
 . (Join-Path $ScriptDir "lib\cli-router.ps1")
+. (Join-Path $ScriptDir "lib\memory-store.ps1")
+. (Join-Path $ScriptDir "lib\deliberation-engine.ps1")
+. (Join-Path $ScriptDir "lib\autopilot-session-manager.ps1")
 . (Join-Path $ScriptDir "phases\planning-wakeup.ps1")
 . (Join-Path $ScriptDir "phases\monitoring-wakeup.ps1")
+. (Join-Path $ScriptDir "phases\audit-wakeup.ps1")
 
 # --- Load config ---
 $configPath = Join-Path $ScriptDir "autopilot-config.json"
@@ -51,7 +84,7 @@ if ($DryRun.IsPresent) {
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# --- Initialize state ---
+# --- Initialize state (includes startup cleanup) ---
 $State = Initialize-AutopilotState
 $QuotaRegistry = Read-QuotaRegistry
 
@@ -71,17 +104,41 @@ if ($MonitorOnce.IsPresent) {
 }
 
 # --- Main loop ---
-$lastPlanTime = if ($State.last_planning_at) {
-    [datetimeoffset]::Parse($State.last_planning_at).LocalDateTime
+$lastPlanTime = [datetime]::MinValue
+$lastMonTime = [datetime]::MinValue
+
+if (-not $SkipPlanningOnStart.IsPresent) {
+    # Default: Force planning on start.
+    # lastPlanTime bleibt MinValue (sofort faellig), lastMonTime so setzen, dass es sofort faellig ist (für den 2. Loop).
+    $lastMonTime = (Get-Date).AddMinutes(-$monMinutes)
+
+    # Synchronisiere State direkt beim Start
+    $State.last_monitoring_at = $lastMonTime.ToString('o')
+    $State.last_planning_at = (Get-Date).AddDays(-1).ToString('o')
+    Save-AutopilotState -State $State
+
+    Write-Host "[INIT] Starte mit erzwungener Planungs-Phase (SkipPlanningOnStart ist nicht aktiv)." -ForegroundColor Yellow
 } else {
-    [datetime]::MinValue
+    Write-Host "[INIT] SkipPlanningOnStart aktiv: Verwende Zeitstempel aus dem State-Speicher." -ForegroundColor Yellow
+    if ($State.last_planning_at) {
+        try {
+            $lastPlanTime = [datetimeoffset]::Parse($State.last_planning_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
+        } catch {
+            Write-Warning "[INIT] Konnte last_planning_at nicht parsen: $_"
+        }
+    }
+    if ($State.last_monitoring_at) {
+        try {
+            $lastMonTime = [datetimeoffset]::Parse($State.last_monitoring_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
+        } catch {
+            Write-Warning "[INIT] Konnte last_monitoring_at nicht parsen: $_"
+        }
+    }
 }
 
-$lastMonTime = if ($State.last_monitoring_at) {
-    [datetimeoffset]::Parse($State.last_monitoring_at).LocalDateTime
-} else {
-    [datetime]::MinValue
-}
+# Track cleanup cycles (clean every 10th loop iteration)
+$loopCount = 0
+$cleanupEveryN = 10
 
 Write-Host "[LOOP] Starte Hauptschleife. Ctrl+C zum Beenden." -ForegroundColor Green
 Write-Host ""
@@ -99,7 +156,22 @@ while ($true) {
             $lastPlanTime = Get-Date
         } catch {
             Write-Host "[LOOP] Planning-Fehler: $_" -ForegroundColor Red
+            Write-Host "[LOOP] StackTrace: $($_.ScriptStackTrace)" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "Planning wake-up failed" -Context $_.Exception.Message
+        }
+
+        # Planning hat Prioritaet: Wenn beide gleichzeitig faellig waren,
+        # wird Monitoring auf den naechsten Zyklus verschoben.
+        if ($monDue) {
+            Write-Host "[LOOP] Monitoring verschoben - Planning hat Prioritaet." -ForegroundColor DarkGray
+            $monDue = $false
+        }
+
+        # Asynchroner Audit-Lauf durch CEO Beta direkt nach dem Planning
+        try {
+            Invoke-AuditWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+        } catch {
+            Write-Host "[LOOP] Audit-Fehler: $_" -ForegroundColor Red
         }
     }
 
@@ -110,6 +182,30 @@ while ($true) {
         } catch {
             Write-Host "[LOOP] Monitoring-Fehler: $_" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "Monitoring wake-up failed" -Context $_.Exception.Message
+        }
+    }
+
+    # --- Periodic TMP & Log cleanup ---
+    $loopCount++
+    if ($loopCount % $cleanupEveryN -eq 0) {
+        $dashboardPublic = Join-Path $ScriptDir "dashboard" "public"
+        Remove-OrphanedTmpFiles -Directory $ScriptDir -OlderThanMinutes 5
+        if (Test-Path $dashboardPublic) {
+            Remove-OrphanedTmpFiles -Directory $dashboardPublic -OlderThanMinutes 5
+            
+            # Live log rotation
+            $liveLogPath = Join-Path $dashboardPublic "autopilot-live.log"
+            $fileInfo = Get-Item $liveLogPath -ErrorAction SilentlyContinue
+            if ($fileInfo -and $fileInfo.Length -gt 150KB) {
+                try {
+                    $lines = Get-Content $liveLogPath -Encoding UTF8 -ErrorAction Stop
+                    if ($lines.Count -gt 1500) {
+                        $lines | Select-Object -Last 1000 | Set-Content $liveLogPath -Encoding UTF8 -ErrorAction SilentlyContinue
+                    }
+                } catch {
+                    Write-Warning "[LOOP] Fehler bei der Live-Log-Rotation: $_"
+                }
+            }
         }
     }
 
@@ -135,11 +231,10 @@ while ($true) {
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
     Write-Host $summary -ForegroundColor DarkGray
 
-    # --- Calculate next wake-up ---
-    $nextPlan = $lastPlanTime.AddMinutes($planMinutes)
-    $nextMon = $lastMonTime.AddMinutes($monMinutes)
+    $nextPlan = if ($lastPlanTime -eq [datetime]::MinValue) { Get-Date } else { $lastPlanTime.AddMinutes($planMinutes) }
+    $nextMon = if ($lastMonTime -eq [datetime]::MinValue) { Get-Date } else { $lastMonTime.AddMinutes($monMinutes) }
     $nextWake = @($nextPlan, $nextMon) | Sort-Object | Select-Object -First 1
-    $sleepSeconds = [Math]::Max(10, ($nextWake - (Get-Date)).TotalSeconds)
+    $sleepSeconds = [Math]::Max(10, [double]($nextWake - (Get-Date)).TotalSeconds)
 
     if ($nextWake -eq $nextPlan) { $nextType = "Planning" } else { $nextType = "Monitoring" }
     $sleepMin = [Math]::Round($sleepSeconds / 60, 1)
@@ -149,5 +244,9 @@ while ($true) {
     Write-Host ""
 
     Save-AutopilotState -State $State
-    Start-Sleep -Seconds $sleepSeconds
+    $remainingSleep = [Math]::Max(1, [int]$sleepSeconds)
+    while ($remainingSleep -gt 0) {
+        Start-Sleep -Seconds 1
+        $remainingSleep--
+    }
 }

@@ -85,10 +85,11 @@ impl ShortcutsPanel {
         ui.separator();
         ui.add_space(4.0);
 
-        let shortcuts_clone = key_bindings.get_shortcuts().to_vec();
+        // ⚡ Bolt: Use reference instead of .to_vec() to avoid per-frame heap allocation
+        let shortcuts_ref = key_bindings.get_shortcuts();
 
         // --- Filter and Group Shortcuts ---
-        let filtered_indices: Vec<usize> = shortcuts_clone
+        let filtered_indices: Vec<usize> = shortcuts_ref
             .iter()
             .enumerate()
             .filter(|(_, s)| {
@@ -121,7 +122,7 @@ impl ShortcutsPanel {
                         ui.end_row();
 
                         for index in filtered_indices {
-                            let shortcut = &shortcuts_clone[index];
+                            let shortcut = &shortcuts_ref[index];
                             let is_conflict = *self.conflict_map.get(index).unwrap_or(&false);
 
                             // Description
@@ -164,7 +165,7 @@ impl ShortcutsPanel {
             let mut new_shortcut_key = None;
             let mut is_open = true;
 
-            let shortcut_desc = &shortcuts_clone[index].description;
+            let shortcut_desc = &shortcuts_ref[index].description;
 
             egui::Window::new(locale.t("shortcuts-edit-dialog-title"))
                 .open(&mut is_open)
@@ -231,11 +232,11 @@ impl ShortcutsPanel {
             }
 
             if let Some(Some((new_key, new_modifiers))) = new_shortcut_key {
-                let context = shortcuts_clone[index].context;
+                let context = shortcuts_ref[index].context;
                 // Check conflict
                 if key_bindings.is_key_bound(new_key, &new_modifiers, context) {
                     // If binding to same key as current, it's fine (no-op)
-                    let current = &shortcuts_clone[index];
+                    let current = &shortcuts_ref[index];
                     if current.key == new_key && current.modifiers == new_modifiers {
                         self.editing_shortcut_index = None;
                     } else {
@@ -243,7 +244,7 @@ impl ShortcutsPanel {
                     }
                 } else {
                     // Apply
-                    let mut shortcut = shortcuts_clone[index].clone();
+                    let mut shortcut = shortcuts_ref[index].clone();
                     shortcut.key = new_key;
                     shortcut.modifiers = new_modifiers;
                     key_bindings.update_shortcut(index, shortcut);

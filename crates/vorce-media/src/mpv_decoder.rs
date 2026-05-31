@@ -31,10 +31,6 @@ impl MpvDecoder {
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref().to_path_buf();
 
-        if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
-            return Err(MediaError::FileOpen("Path traversal (..) is not allowed".to_string()));
-        }
-
         info!("Opening video with MPV: {:?}", path);
 
         // Initialize MPV
@@ -109,6 +105,10 @@ impl MpvDecoder {
                 let vals = std::slice::from_raw_parts((*map).values, (*map).num as usize);
 
                 for i in 0..(*map).num as usize {
+                    if keys[i].is_null() {
+                        tracing::warn!("Null pointer in MPV keys array at index {}", i);
+                        continue;
+                    }
                     let key = std::ffi::CStr::from_ptr(keys[i]).to_str().unwrap_or("");
                     if key == "data" && vals[i].format == mpv_format_MPV_FORMAT_BYTE_ARRAY {
                         let ba = vals[i].u.ba;
