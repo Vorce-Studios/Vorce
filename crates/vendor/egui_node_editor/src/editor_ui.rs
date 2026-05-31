@@ -467,9 +467,16 @@ where
         /* Mouse input handling */
 
         // This locks the context, so don't hold on to it for too long.
-        let mouse = &ui.ctx().input(|i| i.pointer.clone());
+        let (any_released, any_click, primary_down, primary_released) = ui.ctx().input(|i| {
+            (
+                i.pointer.any_released(),
+                i.pointer.any_click(),
+                i.pointer.primary_down(),
+                i.pointer.primary_released(),
+            )
+        });
 
-        if mouse.any_released() && self.connection_in_progress.is_some() {
+        if any_released && self.connection_in_progress.is_some() {
             self.connection_in_progress = None;
         }
         if secondary_click_on_background && !cursor_in_finder {
@@ -485,15 +492,15 @@ where
 
         // Deselect and deactivate finder if the editor backround is clicked,
         // *or* if the the mouse clicks off the ui
-        if click_on_background || (mouse.any_click() && !cursor_in_editor) {
+        if click_on_background || (any_click && !cursor_in_editor) {
             self.selected_nodes = Vec::new();
             self.node_finder = None;
         }
 
-        if drag_started_on_background && mouse.primary_down() {
+        if drag_started_on_background && primary_down {
             self.ongoing_box_selection = Some(cursor_pos);
         }
-        if mouse.primary_released() || drag_released_on_background {
+        if primary_released || drag_released_on_background {
             self.ongoing_box_selection = None;
         }
 

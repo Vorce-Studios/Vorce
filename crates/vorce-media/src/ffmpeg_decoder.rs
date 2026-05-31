@@ -1,5 +1,6 @@
 use crate::{
-    test_pattern_decoder::TestPatternDecoder, HwAccelType, MediaError, Result, VideoDecoder,
+    reject_path_traversal, test_pattern_decoder::TestPatternDecoder, HwAccelType, MediaError,
+    Result, VideoDecoder,
 };
 use std::path::Path;
 use std::time::Duration;
@@ -68,6 +69,7 @@ mod ffmpeg_impl {
         /// Open a video file with optional hardware acceleration
         pub fn open<P: AsRef<Path>>(path: P, hw_accel: HwAccelType) -> Result<Self> {
             let path = path.as_ref();
+            reject_path_traversal(path)?;
 
             if !path.exists() {
                 return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
