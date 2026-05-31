@@ -140,7 +140,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
 
     // 5. Status & Parent-Child Verknüpfung
     const allWs = Array.from(wsMap.values());
-    
+
     allWs.forEach(ws => {
       let status: Workstream['status'] = 'OPEN';
       let sortScore = 0;
@@ -148,8 +148,8 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
       const isConflicting = ws.pr && ws.pr.mergeable === 'CONFLICTING';
       const hasFailedChecks = ws.pr && ws.pr.statusCheckRollup?.some(c => c.conclusion === 'FAILURE');
       const hasSessionError = ws.session?.jules_state === 'FAILED' || ws.julesSessionRaw?.state === 'FAILED';
-      
-      const isStalled = ws.session?.jules_state === 'AWAITING_USER_FEEDBACK' || 
+
+      const isStalled = ws.session?.jules_state === 'AWAITING_USER_FEEDBACK' ||
                         ws.session?.jules_state === 'ESCALATED_TO_USER' ||
                         ws.julesSessionRaw?.state === 'AWAITING_USER_FEEDBACK' ||
                         ws.julesSessionRaw?.state === 'AWAITING_USER_FEEDBACK_CI_OR_BLOCKER';
@@ -250,7 +250,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
 
   const filteredWorkstreams = useMemo(() => {
     let result = workstreams;
-    
+
     if (!isGrouped) {
       const flatten = (wsList: Workstream[]): Workstream[] => {
         let flat: Workstream[] = [];
@@ -271,8 +271,8 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
         const matchesIssue = ws.issue && (ws.issue.title.toLowerCase().includes(query) || ws.issue.number.toString().includes(query));
         const matchesPr = ws.pr && (ws.pr.title.toLowerCase().includes(query) || ws.pr.number.toString().includes(query));
         const matchesSession = ws.session && ws.session.jules_session_id.toLowerCase().includes(query);
-        const matchesChildren = ws.children.some(c => 
-          c.issue?.title.toLowerCase().includes(query) || 
+        const matchesChildren = ws.children.some(c =>
+          c.issue?.title.toLowerCase().includes(query) ||
           c.issue?.number.toString().includes(query)
         );
         if (!matchesIssue && !matchesPr && !matchesSession && !matchesChildren) {
@@ -282,16 +282,16 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
 
       // 2. Status-Filter
       if (filter === 'ACTIVE') {
-        return ws.status === 'IN_PROGRESS' || 
-               ws.status === 'NEEDS_REVIEW' || 
-               ws.status === 'ERROR' || 
-               ws.status === 'CONFLICTING' || 
-               ws.status === 'STALLED' || 
+        return ws.status === 'IN_PROGRESS' ||
+               ws.status === 'NEEDS_REVIEW' ||
+               ws.status === 'ERROR' ||
+               ws.status === 'CONFLICTING' ||
+               ws.status === 'STALLED' ||
                ws.children.some(c => c.status === 'IN_PROGRESS' || c.status === 'NEEDS_REVIEW' || c.status === 'CONFLICTING' || c.status === 'STALLED');
       }
       if (filter === 'ERROR') {
-        return ws.status === 'ERROR' || 
-               ws.status === 'CONFLICTING' || 
+        return ws.status === 'ERROR' ||
+               ws.status === 'CONFLICTING' ||
                ws.children.some(c => c.status === 'ERROR' || c.status === 'CONFLICTING');
       }
       return true;
@@ -341,8 +341,8 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
 
     return (
       <div key={ws.id} className="flex flex-col">
-        <div 
-          className={`glass-card overflow-hidden hover:border-slate-700 transition-colors flex flex-col border-l-4 ${isChild ? 'ml-8 my-1 opacity-90 scale-[0.98]' : 'mb-3'}`} 
+        <div
+          className={`glass-card overflow-hidden hover:border-slate-700 transition-colors flex flex-col border-l-4 ${isChild ? 'ml-8 my-1 opacity-90 scale-[0.98]' : 'mb-3'}`}
           style={{ borderLeftColor: colors.border }}
         >
           {/* COMPACT MINIMAL BAR */}
@@ -357,7 +357,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
               <span className={`badge ${colors.bg} ${colors.text} border ${colors.borderClass} text-[10px] flex-shrink-0`}>
                 {ws.status}
               </span>
-              
+
               {ws.issue ? (
                 <a href={issueUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-slate-200 hover:text-emerald-400 transition-colors truncate" title={ws.issue.title}>
                   <span className="text-slate-500 font-mono mr-1.5">#{ws.issue.number}</span>
@@ -367,7 +367,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
                 <span className="text-sm text-slate-400 italic truncate">Kein lokales Issue gefunden (ID: {ws.id})</span>
               )}
             </div>
-            
+
             <div className="flex items-center gap-2 flex-shrink-0">
               {/* Quick Session Indicator */}
               {ws.session ? (
@@ -395,8 +395,8 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
               </span>
 
               {/* Toggle Details Button */}
-              <button 
-                onClick={() => toggleDetails(ws.id)} 
+              <button
+                onClick={() => toggleDetails(ws.id)}
                 className="px-2 py-1 text-[11px] font-medium rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
               >
                 {isDetailExpanded ? 'Details zuklappen' : 'Details aufklappen'}
