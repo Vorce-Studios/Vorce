@@ -103,37 +103,7 @@ function Format-MemoryBlock {
         [object]$Store
     )
 
-    $allMemories = Get-RelevantMemories -Store $Store
-    if ($allMemories.Count -eq 0) { return "" }
-
-    # Only inject CRITICAL priority memories automatically
-    $critical = @($allMemories | Where-Object { $_.priority -eq "critical" })
-    $otherCount = $allMemories.Count - $critical.Count
-
-    if ($critical.Count -eq 0 -and $otherCount -eq 0) { return "" }
-
-    $lines = @("[KONTEXT-ERINNERUNGEN]")
-
-    if ($critical.Count -gt 0) {
-        foreach ($m in $critical) {
-            $typeLabel = if ($m.type -eq "temporary") { "[TEMPORAER]" } else { "[RICHTLINIE]" }
-            $lines += "- $typeLabel $($m.text)"
-        }
-    }
-
-    if ($otherCount -gt 0) {
-        $lines += "- [INFO] $otherCount weitere Erinnerungen gespeichert (on-demand via Search-Memories abrufbar)."
-    }
-
-    $lines += "---"
-    $lines += ""
-
-    $block = $lines -join "`n"
-
-    $tokenEstimate = [Math]::Ceiling($block.Length / 4)
-    Write-Host "[MEMORY] $($critical.Count) kritische Erinnerungen injiziert, $otherCount on-demand verfuegbar (~${tokenEstimate} Tokens)" -ForegroundColor DarkGray
-
-    return $block
+    return "[KONTEXT-ERINNERUNGEN] Es sind Richtlinien und Erinnerungen im System hinterlegt. Verwende das Tool Search-Memories mit passenden Suchbegriffen, um relevante Kontextinformationen abzurufen."
 }
 
 function Search-Memories {
@@ -172,7 +142,7 @@ function Search-Memories {
     }
 
     # Search: match any keyword in text or id (case-insensitive)
-    $matches = @($allMemories | Where-Object {
+    $matchedMemories = @($allMemories | Where-Object {
         $text = "$($_.text) $($_.id)"
         $found = $false
         foreach ($kw in $keywords) {
@@ -184,17 +154,18 @@ function Search-Memories {
         $found
     })
 
-    if ($matches.Count -eq 0) {
+    if ($matchedMemories.Count -eq 0) {
         Write-Host "[MEMORY] Keine Treffer fuer '$Query'." -ForegroundColor DarkGray
         return ""
     }
 
-    $lines = @("[MEMORY-SUCHE: '$Query'] $($matches.Count) Treffer:")
-    foreach ($m in $matches) {
+    $lines = @("[MEMORY-SUCHE: '$Query'] $($matchedMemories.Count) Treffer:")
+    foreach ($m in $matchedMemories) {
         $typeLabel = if ($m.type -eq "temporary") { "TEMP" } else { "PERM" }
         $prioLabel = $m.priority.ToUpper()
         $lines += "- [$typeLabel|$prioLabel] $($m.text)"
     }
+
     $lines += "---"
 
     $block = $lines -join "`n"

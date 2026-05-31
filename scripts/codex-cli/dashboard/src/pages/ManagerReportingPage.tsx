@@ -1,37 +1,25 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  BarChart3,
-  TrendingUp,
   Clock,
   DollarSign,
   CheckCircle2,
-  AlertTriangle,
   Layers,
-  MessageSquare,
-  Calendar,
-  ArrowUpRight,
-  Users,
-  Zap,
-  ChevronRight,
-  TrendingDown
+  Zap
 } from 'lucide-react';
-import type { QuotaRegistry, ActiveSessions, GitHubIssue, PullRequest } from '../types';
+import type { QuotaRegistry, ActiveSessions, GitHubIssue } from '../types';
 
 interface ManagerReportingPageProps {
   registry: QuotaRegistry;
   sessions: ActiveSessions;
   issues: GitHubIssue[];
-  pullRequests: PullRequest[];
-  history: any[];
 }
 
-export default function ManagerReportingPage({ registry, sessions, issues, pullRequests, history }: ManagerReportingPageProps) {
+export default function ManagerReportingPage({ registry, sessions, issues }: ManagerReportingPageProps) {
   const [timeRange, setTimeRange] = useState<'today' | '7d' | '30d'>('7d');
   const [selectedLabel, setSelectedLabel] = useState<string>('all');
 
   // --- 1. Berechnungen für Issues & PRs ---
   const totalIssues = issues.length;
-  const openIssues = issues.filter(i => i.state.toLowerCase() === 'open').length;
   const closedIssues = issues.filter(i => i.state.toLowerCase() === 'closed').length;
   const resolutionRate = totalIssues > 0 ? Math.round((closedIssues / totalIssues) * 100) : 0;
 
@@ -81,22 +69,6 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
   // Dual-CEO Budget Limit (Default: $10/Tag)
   const dailyBudget = 10.0;
   const budgetPercentage = dailyBudget > 0 ? Math.min(100, Math.round((totalCostToday / dailyBudget) * 100)) : 0;
-
-  // --- 3. Deliberation-Statistiken ---
-  const deliberations = sessions.deliberation_log || [];
-  const totalDeliberations = deliberations.length;
-  const consensusDeliberations = deliberations.filter(d => d.consensus_reached).length;
-  const consensusRate = totalDeliberations > 0 ? Math.round((consensusDeliberations / totalDeliberations) * 100) : 0;
-
-  let avgDurationMs = 0;
-  let avgRounds = 0;
-  if (totalDeliberations > 0) {
-    const totalDuration = deliberations.reduce((acc, d) => acc + (d.total_duration_ms || 0), 0);
-    avgDurationMs = Math.round(totalDuration / totalDeliberations);
-
-    const totalRounds = deliberations.reduce((acc, d) => acc + (d.rounds?.length || d.phases_completed || 0), 0);
-    avgRounds = Math.round((totalRounds / totalDeliberations) * 10) / 10;
-  }
 
   // Letzte erledigte Sessions
   const completedSessions = sessions.completed_this_session || [];
@@ -179,16 +151,18 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
           </div>
         </div>
 
-        {/* Card 3: CEO Consensus Rate */}
+        {/* Card 3: Aktive Delegierungen */}
         <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800 flex items-start gap-4">
           <div className="p-2.5 bg-purple-500/10 rounded-lg text-purple-400">
-            <Users className="w-5 h-5" />
+            <Zap className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xs text-slate-400 font-medium">CEO Consensus Rate</p>
-            <h3 className="text-2xl font-bold text-white mt-1">{consensusRate}%</h3>
+            <p className="text-xs text-slate-400 font-medium">Aktive Delegierungen</p>
+            <h3 className="text-2xl font-bold text-white mt-1">
+              {sessions.active_delegations?.length || 0}
+            </h3>
             <p className="text-[10px] text-slate-400 mt-1">
-              <span className="text-purple-400 font-semibold">{consensusDeliberations}</span> von {totalDeliberations} Einigungen
+              laufende Tasks im System
             </p>
           </div>
         </div>
@@ -328,37 +302,36 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
           </div>
         </div>
 
-        {/* Right Column: Deliberation Insights & CEO Chat (1/3 Breite) */}
+        {/* Right Column: Aktive Delegierungen & Letzte fertiggestellte Tasks (1/3 Breite) */}
         <div className="space-y-6">
-          {/* Section: CEO Deliberation Insights */}
+          {/* Section: Aktive Delegierungen */}
           <div className="bg-slate-900/40 rounded-xl border border-slate-800 p-5">
             <div className="flex items-center gap-2 mb-4">
               <Zap className="w-4 h-4 text-purple-400" />
-              <h3 className="text-sm font-bold text-white tracking-wide">CEO Deliberation Insights</h3>
+              <h3 className="text-sm font-bold text-white tracking-wide">Aktive Delegierungen</h3>
             </div>
 
-            <div className="space-y-3.5">
-              <div className="flex justify-between items-center py-2 border-b border-slate-800">
-                <span className="text-xs text-slate-400">Einigungsrate (Consensus)</span>
-                <span className="text-xs font-semibold text-white">{consensusRate}%</span>
+            {(!sessions.active_delegations || sessions.active_delegations.length === 0) ? (
+              <div className="text-center py-6 text-xs text-slate-500">
+                Keine aktiven Delegierungen vorhanden.
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-slate-800">
-                <span className="text-xs text-slate-400">Durchschnittliche Runden</span>
-                <span className="text-xs font-semibold text-white">{avgRounds}</span>
+            ) : (
+              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                {sessions.active_delegations.map((delegation, idx) => (
+                  <div key={idx} className="border-b border-slate-800 pb-2.5 last:border-b-0 last:pb-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[10px] font-semibold text-purple-400">Issue #{delegation.issue_number}</span>
+                        <h4 className="text-xs font-semibold text-slate-200 truncate mt-0.5">{delegation.issue_title}</h4>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          Agent: <span className="text-slate-300 font-mono">{delegation.agent_type || 'jules'}</span> | Status: <span className="text-slate-300">{delegation.jules_state}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-slate-800">
-                <span className="text-xs text-slate-400">Ø Abstimmungsdauer</span>
-                <span className="text-xs font-semibold text-white">
-                  {avgDurationMs > 0 ? `${(avgDurationMs / 1000).toFixed(1)}s` : 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-xs text-slate-400">Aktive Sitzungen</span>
-                <span className="text-xs font-semibold text-white">
-                  {sessions.active_delegations?.length || 0}
-                </span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Section: Letzte fertiggestellte Tasks */}
