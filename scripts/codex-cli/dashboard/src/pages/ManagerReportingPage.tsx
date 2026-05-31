@@ -1,37 +1,25 @@
-import React, { useState } from 'react';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Clock, 
-  DollarSign, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Layers, 
-  MessageSquare, 
-  Calendar, 
-  ArrowUpRight, 
-  Users, 
-  Zap,
-  ChevronRight,
-  TrendingDown
+import { useState } from 'react';
+import {
+  Clock,
+  DollarSign,
+  CheckCircle2,
+  Layers,
+  Zap
 } from 'lucide-react';
-import type { QuotaRegistry, ActiveSessions, GitHubIssue, PullRequest } from '../types';
+import type { QuotaRegistry, ActiveSessions, GitHubIssue } from '../types';
 
 interface ManagerReportingPageProps {
   registry: QuotaRegistry;
   sessions: ActiveSessions;
   issues: GitHubIssue[];
-  pullRequests: PullRequest[];
-  history: any[];
 }
 
-export default function ManagerReportingPage({ registry, sessions, issues, pullRequests, history }: ManagerReportingPageProps) {
+export default function ManagerReportingPage({ registry, sessions, issues }: ManagerReportingPageProps) {
   const [timeRange, setTimeRange] = useState<'today' | '7d' | '30d'>('7d');
   const [selectedLabel, setSelectedLabel] = useState<string>('all');
 
   // --- 1. Berechnungen für Issues & PRs ---
   const totalIssues = issues.length;
-  const openIssues = issues.filter(i => i.state.toLowerCase() === 'open').length;
   const closedIssues = issues.filter(i => i.state.toLowerCase() === 'closed').length;
   const resolutionRate = totalIssues > 0 ? Math.round((closedIssues / totalIssues) * 100) : 0;
 
@@ -79,24 +67,8 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
   }
 
   // Dual-CEO Budget Limit (Default: $10/Tag)
-  const dailyBudget = 10.0; 
+  const dailyBudget = 10.0;
   const budgetPercentage = dailyBudget > 0 ? Math.min(100, Math.round((totalCostToday / dailyBudget) * 100)) : 0;
-
-  // --- 3. Deliberation-Statistiken ---
-  const deliberations = sessions.deliberation_log || [];
-  const totalDeliberations = deliberations.length;
-  const consensusDeliberations = deliberations.filter(d => d.consensus_reached).length;
-  const consensusRate = totalDeliberations > 0 ? Math.round((consensusDeliberations / totalDeliberations) * 100) : 0;
-
-  let avgDurationMs = 0;
-  let avgRounds = 0;
-  if (totalDeliberations > 0) {
-    const totalDuration = deliberations.reduce((acc, d) => acc + (d.total_duration_ms || 0), 0);
-    avgDurationMs = Math.round(totalDuration / totalDeliberations);
-
-    const totalRounds = deliberations.reduce((acc, d) => acc + (d.rounds?.length || d.phases_completed || 0), 0);
-    avgRounds = Math.round((totalRounds / totalDeliberations) * 10) / 10;
-  }
 
   // Letzte erledigte Sessions
   const completedSessions = sessions.completed_this_session || [];
@@ -106,8 +78,8 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
     new Set(issues.flatMap(i => i.labels.map(l => l.name)))
   ).sort();
 
-  const filteredIssues = selectedLabel === 'all' 
-    ? issues 
+  const filteredIssues = selectedLabel === 'all'
+    ? issues
     : issues.filter(i => i.labels.some(l => l.name === selectedLabel));
 
   return (
@@ -119,7 +91,7 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
           <p className="text-xs text-slate-400">Übersicht über Produktivität, CEO-Verhalten und Kostenmetriken.</p>
         </div>
         <div className="flex items-center gap-2">
-          <select 
+          <select
             value={selectedLabel}
             onChange={(e) => setSelectedLabel(e.target.value)}
             className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-purple-500"
@@ -135,8 +107,8 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                 key={range}
                 onClick={() => setTimeRange(range)}
                 className={`px-3 py-1 text-[10px] font-semibold rounded-md transition-all duration-150 ${
-                  timeRange === range 
-                    ? 'bg-purple-600 text-white shadow-md' 
+                  timeRange === range
+                    ? 'bg-purple-600 text-white shadow-md'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -179,16 +151,18 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
           </div>
         </div>
 
-        {/* Card 3: CEO Consensus Rate */}
+        {/* Card 3: Aktive Delegierungen */}
         <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-800 flex items-start gap-4">
           <div className="p-2.5 bg-purple-500/10 rounded-lg text-purple-400">
-            <Users className="w-5 h-5" />
+            <Zap className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xs text-slate-400 font-medium">CEO Consensus Rate</p>
-            <h3 className="text-2xl font-bold text-white mt-1">{consensusRate}%</h3>
+            <p className="text-xs text-slate-400 font-medium">Aktive Delegierungen</p>
+            <h3 className="text-2xl font-bold text-white mt-1">
+              {sessions.active_delegations?.length || 0}
+            </h3>
             <p className="text-[10px] text-slate-400 mt-1">
-              <span className="text-purple-400 font-semibold">{consensusDeliberations}</span> von {totalDeliberations} Einigungen
+              laufende Tasks im System
             </p>
           </div>
         </div>
@@ -230,7 +204,7 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                   <span className="text-xs text-slate-400">{bugIssues.length - openBugs}/{bugIssues.length} Gelöst</span>
                 </div>
                 <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                  <div 
+                  <div
                     className="bg-red-500 h-1.5 rounded-full transition-all duration-300"
                     style={{ width: `${bugIssues.length > 0 ? ((bugIssues.length - openBugs) / bugIssues.length) * 100 : 0}%` }}
                   />
@@ -248,7 +222,7 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                   <span className="text-xs text-slate-400">{featureIssues.length - openFeatures}/{featureIssues.length} Gelöst</span>
                 </div>
                 <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                  <div 
+                  <div
                     className="bg-cyan-500 h-1.5 rounded-full transition-all duration-300"
                     style={{ width: `${featureIssues.length > 0 ? ((featureIssues.length - openFeatures) / featureIssues.length) * 100 : 0}%` }}
                   />
@@ -266,7 +240,7 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                   <span className="text-xs text-slate-400">{julesTasks.length - openJules}/{julesTasks.length} Gelöst</span>
                 </div>
                 <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                  <div 
+                  <div
                     className="bg-purple-500 h-1.5 rounded-full transition-all duration-300"
                     style={{ width: `${julesTasks.length > 0 ? ((julesTasks.length - openJules) / julesTasks.length) * 100 : 0}%` }}
                   />
@@ -294,7 +268,7 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                 const isJules = stat.name === 'jules';
                 const limitStr = isJules ? `${stat.limit} Sessions` : `$${stat.budget?.toFixed(2)} Budget`;
                 const usageStr = isJules ? `${stat.calls} gestartet` : `$${stat.cost?.toFixed(3)} verbraucht`;
-                const progressPct = isJules 
+                const progressPct = isJules
                   ? (stat.limit > 0 ? Math.min(100, Math.round((stat.calls / stat.limit) * 100)) : 0)
                   : (stat.budget > 0 ? Math.min(100, Math.round((stat.cost / stat.budget) * 100)) : 0);
 
@@ -309,7 +283,7 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                     </div>
 
                     <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                      <div 
+                      <div
                         className={`h-1.5 rounded-full transition-all duration-300 ${
                           progressPct > 90 ? 'bg-red-500' : progressPct > 70 ? 'bg-yellow-500' : 'bg-purple-600'
                         }`}
@@ -328,37 +302,36 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
           </div>
         </div>
 
-        {/* Right Column: Deliberation Insights & CEO Chat (1/3 Breite) */}
+        {/* Right Column: Aktive Delegierungen & Letzte fertiggestellte Tasks (1/3 Breite) */}
         <div className="space-y-6">
-          {/* Section: CEO Deliberation Insights */}
+          {/* Section: Aktive Delegierungen */}
           <div className="bg-slate-900/40 rounded-xl border border-slate-800 p-5">
             <div className="flex items-center gap-2 mb-4">
               <Zap className="w-4 h-4 text-purple-400" />
-              <h3 className="text-sm font-bold text-white tracking-wide">CEO Deliberation Insights</h3>
+              <h3 className="text-sm font-bold text-white tracking-wide">Aktive Delegierungen</h3>
             </div>
 
-            <div className="space-y-3.5">
-              <div className="flex justify-between items-center py-2 border-b border-slate-800">
-                <span className="text-xs text-slate-400">Einigungsrate (Consensus)</span>
-                <span className="text-xs font-semibold text-white">{consensusRate}%</span>
+            {(!sessions.active_delegations || sessions.active_delegations.length === 0) ? (
+              <div className="text-center py-6 text-xs text-slate-500">
+                Keine aktiven Delegierungen vorhanden.
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-slate-800">
-                <span className="text-xs text-slate-400">Durchschnittliche Runden</span>
-                <span className="text-xs font-semibold text-white">{avgRounds}</span>
+            ) : (
+              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                {sessions.active_delegations.map((delegation, idx) => (
+                  <div key={idx} className="border-b border-slate-800 pb-2.5 last:border-b-0 last:pb-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[10px] font-semibold text-purple-400">Issue #{delegation.issue_number}</span>
+                        <h4 className="text-xs font-semibold text-slate-200 truncate mt-0.5">{delegation.issue_title}</h4>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          Agent: <span className="text-slate-300 font-mono">{delegation.agent_type || 'jules'}</span> | Status: <span className="text-slate-300">{delegation.jules_state}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-slate-800">
-                <span className="text-xs text-slate-400">Ø Abstimmungsdauer</span>
-                <span className="text-xs font-semibold text-white">
-                  {avgDurationMs > 0 ? `${(avgDurationMs / 1000).toFixed(1)}s` : 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-xs text-slate-400">Aktive Sitzungen</span>
-                <span className="text-xs font-semibold text-white">
-                  {sessions.active_delegations?.length || 0}
-                </span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Section: Letzte fertiggestellte Tasks */}
@@ -434,8 +407,8 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                     </td>
                     <td className="py-2.5 px-3">
                       <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase ${
-                        issue.state.toLowerCase() === 'open' 
-                          ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' 
+                        issue.state.toLowerCase() === 'open'
+                          ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
                           : 'bg-green-500/20 text-green-400 border border-green-500/30'
                       }`}>
                         {issue.state}
@@ -446,8 +419,8 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                     </td>
                     <td className="py-2.5 px-3 flex flex-wrap gap-1.5 max-w-[300px]">
                       {issue.labels.map(l => (
-                        <span 
-                          key={l.id || l.name} 
+                        <span
+                          key={l.id || l.name}
                           className="px-1.5 py-0.5 rounded text-[8px] font-medium"
                           style={{ backgroundColor: `#${l.color}25`, color: `#${l.color}` }}
                         >

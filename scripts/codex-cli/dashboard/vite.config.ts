@@ -222,12 +222,12 @@ export default defineConfig({
                 const payload = JSON.parse(body);
                 const memoryPath = path.resolve(__dirname, '../autopilot-memories.json');
                 const publicMemoryPath = path.resolve(__dirname, './public/memories.json');
-                
+
                 let store = { schema_version: 1, memories: [] as any[] };
                 if (fs.existsSync(memoryPath)) {
                   store = JSON.parse(fs.readFileSync(memoryPath, 'utf-8'));
                 }
-                
+
                 if (payload.action === 'add') {
                   const newEntry = {
                     id: `mem-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
@@ -237,24 +237,52 @@ export default defineConfig({
                     created_at: new Date().toISOString(),
                     source: payload.entry.source || 'dashboard'
                   };
-                  
+
                   if (store.memories.length >= 30) {
                     throw new Error('Maximum von 30 Erinnerungen erreicht. Loeschen Sie alte Eintraege zuerst.');
                   }
-                  
+
                   store.memories.push(newEntry);
                 } else if (payload.action === 'remove') {
                   store.memories = store.memories.filter((m: any) => m.id !== payload.id);
                 } else {
                   throw new Error('Ungueltige Aktion.');
                 }
-                
+
                 const storeStr = JSON.stringify(store, null, 2);
                 fs.writeFileSync(memoryPath, storeStr, 'utf-8');
                 fs.writeFileSync(publicMemoryPath, storeStr, 'utf-8');
-                
+
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'ok', message: 'Memories updated successfully' }));
+              } catch (err) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));
+              }
+            });
+          } else if (req.method === 'POST' && req.url === '/api/alerts') {
+            let body = '';
+            req.on('data', (chunk: any) => { body += chunk; });
+            req.on('end', () => {
+              try {
+                const payload = JSON.parse(body);
+                if (payload.action === 'resolve' && payload.topic) {
+                  const statePath = path.resolve(__dirname, '../autopilot-state.json');
+                  const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
+                  if (fs.existsSync(statePath)) {
+                    const state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
+                    if (state.decisions_pending && Array.isArray(state.decisions_pending)) {
+                      state.decisions_pending = state.decisions_pending.filter((a: any) => a.topic !== payload.topic);
+                      fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf-8');
+                      fs.writeFileSync(publicStatePath, JSON.stringify(state, null, 2), 'utf-8');
+                    }
+                  }
+                  res.writeHead(200, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ status: 'ok', message: 'Alert resolved successfully' }));
+                } else {
+                  res.writeHead(400, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ status: 'error', message: 'Invalid payload: need action=resolve and topic' }));
+                }
               } catch (err) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));

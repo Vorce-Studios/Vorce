@@ -99,4 +99,3 @@ assets = [
     ["../../assets/**/*", "usr/share/vorce/assets/", "644"],
     ["../../resources/**/*", "usr/share/vorce/resources/", "644"],
 ]
-

@@ -136,7 +136,8 @@ pub fn icon_button(
 
     // Text color logic: Black if active or hovered with color
     let is_colored = is_active || (response.hovered() && hover_color != Color32::TRANSPARENT);
-    let text_color = if is_colored { Color32::BLACK } else { ui.visuals().text_color() };
+    let text_color =
+        if is_colored { ui.visuals().extreme_bg_color } else { ui.visuals().text_color() };
 
     ui.painter().text(
         text_pos,

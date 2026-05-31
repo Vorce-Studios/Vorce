@@ -59,15 +59,15 @@ try {
     $branchName = ($IssueTitle -replace "[^a-zA-Z0-9-]", "-") -replace "-+", "-"
     if ($branchName.Length -gt 50) { $branchName = $branchName.Substring(0, 50) }
     $branchName = "issue-$IssueNumber-$branchName"
-    
+
     git checkout -b $branchName
-    
+
     # 3. Running Agent
     Write-Host "[3/4] Running agent $AgentProvider..." -ForegroundColor Cyan
     $prompt = "Please solve the following issue (#$IssueNumber: $IssueTitle).`n`nIssue Body:`n$body`n`nMake the necessary code changes. Do not commit."
-    
+
     $result = Invoke-CliTask -QuotaRegistry $registry -TaskType "coding" -Prompt $prompt -WorkingDirectory (Get-Location) -ProviderOverride $AgentProvider
-    
+
     Save-QuotaRegistry -Registry $registry -FilePath $QuotaRegistryPath
 
     if (-not $result.success) {
@@ -80,7 +80,7 @@ try {
 
     # 4. Git Push & PR
     Write-Host "[4/4] Committing and creating PR..." -ForegroundColor Cyan
-    
+
     $statusOutput = git status --porcelain
     if ([string]::IsNullOrWhiteSpace($statusOutput)) {
         Write-Host "No changes detected by the agent. Task completed without PR." -ForegroundColor Yellow
@@ -89,13 +89,13 @@ try {
         git add .
         git commit -m "Auto-commit from $AgentProvider for issue #$IssueNumber`n`n$IssueTitle"
         git push -u origin $branchName
-        
+
         $prUrl = gh pr create --repo $Repository --title "$IssueTitle" --body "Automated PR by local agent $AgentProvider for issue #$IssueNumber.`nResolves #$IssueNumber"
         Write-Host "PR created: $prUrl" -ForegroundColor Green
-        
+
         Write-Status -Status "COMPLETED" -PrUrl $prUrl
     }
-    
+
     Write-Host "`nTask completed successfully!" -ForegroundColor Green
     Start-Sleep -Seconds 5
 } catch {
