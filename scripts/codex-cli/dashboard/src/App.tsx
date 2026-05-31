@@ -71,7 +71,6 @@ export default function App() {
   const { data: pullRequests, loading: prLoading, refetch: refetchPRs } = useData<PullRequest[]>('/pull-requests.json', []);
   const { data: julesSessions, refetch: refetchJulesSessions } = useData<any[]>('/jules-sessions.json', []);
   const { data: memoryStore, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
-  const { data: history, loading: historyLoading, refetch: refetchHistory } = useData<any[]>('/data.json', []);
 
   const refetchAll = () => {
     refetchConfig();
@@ -81,13 +80,12 @@ export default function App() {
     refetchPRs();
     refetchJulesSessions();
     refetchMemory();
-    refetchHistory();
   };
 
   // Auto-refresh every 30 seconds
   useAutoRefresh(refetchAll, 30000);
 
-  const isGlobalLoading = configLoading && registryLoading && sessionsLoading && issuesLoading && prLoading && historyLoading;
+  const isGlobalLoading = configLoading && registryLoading && sessionsLoading && issuesLoading && prLoading;
 
     const renderActivePage = () => {
       switch (activeTab) {
