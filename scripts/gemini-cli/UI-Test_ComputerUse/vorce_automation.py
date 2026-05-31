@@ -1,9 +1,12 @@
-# Stub for vorce_automation.py, wait_for_vorce.py to satisfy "existing prototype inputs" mentioned in issue, although we implemented vorce_master_test.py
 import sys
 
+from vorce_ui_harness import main as harness_main
+
 def main():
-    print("Use vorce_master_test.py for deterministic smoke test.")
-    sys.exit(0)
+    print("vorce_automation.py now delegates to vorce_ui_harness.py.")
+    if len(sys.argv) == 1:
+        sys.argv.extend(["--mode", "env-check"])
+    return harness_main()
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
