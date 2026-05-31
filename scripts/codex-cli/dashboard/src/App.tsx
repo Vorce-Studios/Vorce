@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, Activity, AlertCircle, GitPullRequest, Settings, RefreshCw, Zap, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Activity, Settings, RefreshCw, Zap, BarChart3 } from 'lucide-react';
 import { useData, useAutoRefresh } from './hooks';
 
 // Pages
@@ -57,8 +57,7 @@ const defaultActiveSessions: ActiveSessions = {
   active_delegations: [],
   review_queue: [],
   autopilot_created_issues: [],
-  completed_this_session: [],
-  deliberation_log: []
+  completed_this_session: []
 };
 
 export default function App() {
@@ -72,7 +71,6 @@ export default function App() {
   const { data: pullRequests, loading: prLoading, refetch: refetchPRs } = useData<PullRequest[]>('/pull-requests.json', []);
   const { data: julesSessions, refetch: refetchJulesSessions } = useData<any[]>('/jules-sessions.json', []);
   const { data: memoryStore, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
-  const { data: history, loading: historyLoading, refetch: refetchHistory } = useData<any[]>('/data.json', []);
 
   const refetchAll = () => {
     refetchConfig();
@@ -82,18 +80,17 @@ export default function App() {
     refetchPRs();
     refetchJulesSessions();
     refetchMemory();
-    refetchHistory();
   };
 
   // Auto-refresh every 30 seconds
   useAutoRefresh(refetchAll, 30000);
 
-  const isGlobalLoading = configLoading && registryLoading && sessionsLoading && issuesLoading && prLoading && historyLoading;
+  const isGlobalLoading = configLoading && registryLoading && sessionsLoading && issuesLoading && prLoading;
 
     const renderActivePage = () => {
       switch (activeTab) {
         case 'dashboard':
-          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} />;
+          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} onRefetch={refetchAll} />;
         case 'workstreams':
           return <WorkstreamsPage issues={issues} sessions={sessions} pullRequests={pullRequests} julesSessions={julesSessions} />;
         case 'reporting':
@@ -102,8 +99,6 @@ export default function App() {
             registry={registry}
             sessions={sessions}
             issues={issues}
-            pullRequests={pullRequests}
-            history={history}
           />
         );
       case 'settings':
