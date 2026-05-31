@@ -137,7 +137,8 @@ pub fn icon_button(
 
     // Text color logic: Black if active or hovered with color
     let is_colored = is_active || (response.hovered() && hover_color != Color32::TRANSPARENT);
-    let text_color = if is_colored { Color32::BLACK } else { ui.visuals().text_color() };
+    let text_color =
+        if is_colored { ui.visuals().extreme_bg_color } else { ui.visuals().text_color() };
 
     ui.painter().text(
         text_pos,
@@ -278,7 +279,6 @@ pub fn move_down_button(ui: &mut Ui) -> Response {
     icon_button(ui, "⏷", Color32::TRANSPARENT, Color32::TRANSPARENT, false)
         .on_hover_text("Move Down")
 }
-<<<<<<< HEAD
 
 #[cfg(test)]
 mod tests {
@@ -325,5 +325,3 @@ mod tests {
         });
     }
 }
-=======
->>>>>>> 61328e54e (Fix cargo fmt errors in refactored media_browser modules)
