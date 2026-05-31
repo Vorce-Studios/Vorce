@@ -15,11 +15,11 @@ function Resolve-CliProvider {
         [Parameter(Mandatory)][string]$TaskType
     )
 
-    if (-not ($QuotaRegistry.routing_rules.PSObject.Properties.Name -contains $TaskType)) {
+    $routes = $QuotaRegistry.routing_rules.$TaskType
+    if (-not $routes) {
         Write-Warning "[ROUTER] Kein Routing fuer Task-Typ '$TaskType' definiert."
         return $null
     }
-    $routes = $QuotaRegistry.routing_rules.$TaskType
 
     foreach ($route in $routes) {
         $parts = $route -split ":"
@@ -73,18 +73,18 @@ function Build-CliArgs {
         return @("-p", $Prompt)
     }
 
-    $cmdArgs = @()
+    $args = @()
     foreach ($arg in $ProviderConfig.cli_args) {
         $replaced = $arg -replace '\{PROMPT\}', $Prompt
         if ($ModelName) {
             $replaced = $replaced -replace '\{MODEL\}', $ModelName
         }
-        $cmdArgs += $replaced
+        $args += $replaced
     }
-    return $cmdArgs
+    return $args
 }
 
-function ConvertFrom-CliStats {
+function Parse-CliStats {
     <#
     .SYNOPSIS
     Parses real usage stats from CLI JSON output. Returns a hashtable with real cost/token data.
@@ -284,7 +284,7 @@ function Invoke-CliTask {
 
         if ($pushDir) { Push-Location $pushDir }
         try {
-            $output = "" | & $command @cliArgs 2>&1 | Out-String
+            $output = & $command @cliArgs 2>&1 | Out-String
         }
         finally {
             if ($pushDir) { Pop-Location }
@@ -296,7 +296,7 @@ function Invoke-CliTask {
     }
 
     # Parse real stats from output
-    $parsedStats = ConvertFrom-CliStats -ProviderName $providerName -RawOutput $output
+    $parsedStats = Parse-CliStats -ProviderName $providerName -RawOutput $output
 
     # Register the call with real cost if available, otherwise use estimate
     if ($parsedStats.real_cost_usd) {

@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, marker::PhantomData};
 
-use crate::{CategoryTrait, NodeTemplateIter, NodeTemplateTrait};
+use crate::{CategoryTrait, NodeTemplateIter, NodeTemplateTrait, color_hex_utils::*};
 
 use egui::*;
 
@@ -58,8 +58,17 @@ where
         all_kinds: impl NodeTemplateIter<Item = NodeTemplate>,
         user_state: &mut UserState,
     ) -> Option<NodeTemplate> {
-        let background_color = ui.visuals().window_fill;
-        let text_color = ui.visuals().text_color();
+        let background_color;
+        let text_color;
+
+        if ui.visuals().dark_mode {
+            background_color = color_from_hex("#3f3f3f").unwrap_or(Color32::from_rgb(63, 63, 63));
+            text_color = color_from_hex("#fefefe").unwrap_or(Color32::from_rgb(254, 254, 254));
+        } else {
+            background_color =
+                color_from_hex("#fefefe").unwrap_or(Color32::from_rgb(254, 254, 254));
+            text_color = color_from_hex("#3f3f3f").unwrap_or(Color32::from_rgb(63, 63, 63));
+        }
 
         ui.visuals_mut().widgets.noninteractive.fg_stroke = Stroke::new(2.0, text_color);
 

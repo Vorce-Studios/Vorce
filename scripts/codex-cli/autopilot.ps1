@@ -46,7 +46,6 @@ function Write-Host {
     }
 }
 
-
 # --- Load libraries ---
 . (Join-Path $ScriptDir "lib\state-manager.ps1")
 . (Join-Path $ScriptDir "lib\quota-manager.ps1")
@@ -109,8 +108,8 @@ $lastMonTime = [datetime]::MinValue
 
 if (-not $SkipPlanningOnStart.IsPresent) {
     # Default: Force planning on start.
-    # lastPlanTime bleibt MinValue (sofort faellig), lastMonTime so setzen, dass es sofort faellig ist (für den 2. Loop).
-    $lastMonTime = (Get-Date).AddMinutes(-$monMinutes)
+    # lastPlanTime bleibt MinValue (sofort faellig), lastMonTime auf jetzt setzen (verzoegert).
+    $lastMonTime = Get-Date
 
     # Synchronisiere State direkt beim Start
     $State.last_monitoring_at = $lastMonTime.ToString('o')
@@ -185,14 +184,13 @@ while ($true) {
         }
     }
 
-    # --- Periodic TMP & Log cleanup ---
+    # --- Periodic TMP cleanup ---
     $loopCount++
     if ($loopCount % $cleanupEveryN -eq 0) {
         $dashboardPublic = Join-Path $ScriptDir "dashboard" "public"
         Remove-OrphanedTmpFiles -Directory $ScriptDir -OlderThanMinutes 5
         if (Test-Path $dashboardPublic) {
             Remove-OrphanedTmpFiles -Directory $dashboardPublic -OlderThanMinutes 5
-
             # Live log rotation
             $liveLogPath = Join-Path $dashboardPublic "autopilot-live.log"
             $fileInfo = Get-Item $liveLogPath -ErrorAction SilentlyContinue
@@ -206,6 +204,7 @@ while ($true) {
                     Write-Warning "[LOOP] Fehler bei der Live-Log-Rotation: $_"
                 }
             }
+
         }
     }
 
@@ -231,8 +230,8 @@ while ($true) {
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
     Write-Host $summary -ForegroundColor DarkGray
 
-    $nextPlan = if ($lastPlanTime -eq [datetime]::MinValue) { Get-Date } else { $lastPlanTime.AddMinutes($planMinutes) }
-    $nextMon = if ($lastMonTime -eq [datetime]::MinValue) { Get-Date } else { $lastMonTime.AddMinutes($monMinutes) }
+    $nextPlan = if ($lastPlanTime -eq [datetime]::MinValue) { (Get-Date).AddMinutes($planMinutes) } else { $lastPlanTime.AddMinutes($planMinutes) }
+    $nextMon = if ($lastMonTime -eq [datetime]::MinValue) { (Get-Date).AddMinutes($monMinutes) } else { $lastMonTime.AddMinutes($monMinutes) }
     $nextWake = @($nextPlan, $nextMon) | Sort-Object | Select-Object -First 1
     $sleepSeconds = [Math]::Max(10, [double]($nextWake - (Get-Date)).TotalSeconds)
 
