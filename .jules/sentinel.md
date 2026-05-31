@@ -72,3 +72,4 @@
 **Lektion:** Falls eine Textur im NDI-Renderpass nicht erfolgreich erzeugt oder eingefügt wurde (z.B. wegen Grafikspeichermangel), führt das direkte Auspacken mittels `unwrap()` zum Paniken des gesamten Render-Loops und damit zum App-Crash (Denial of Service).
 
 **Prävention:** Auf Resourcen-Maps innerhalb kritischer Loops (wie `app.ndi_offscreen_textures.get()`) muss immer mit einem sicheren Pattern wie `if let Some()` oder `match` zugegriffen werden. Fehlt die Resource, ist es sicherer, das Rendern für den aktuellen Frame zu überspringen (`continue`), anstatt die Anwendung abstürzen zu lassen.
+## 2025-05-25 - [Spout FFI String Panic] **Schwachstelle:** Panic durch unwrap() bei CString::new() für Spout-Sendernamen. **Lektion:** FFI-Aufrufe mit Strings aus Benutzer/Projekt-Eingaben können Null-Bytes enthalten, was zu Abstürzen (DoS) führt. **Prävention:** Immer map_err() verwenden, wenn Strings in C-kompatible Formate umgewandelt werden.
