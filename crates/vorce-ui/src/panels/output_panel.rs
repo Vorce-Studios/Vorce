@@ -85,7 +85,8 @@ impl OutputPanel {
                             .auto_shrink([false; 2])
                             .max_height(150.0)
                             .show(ui, |ui| {
-                                let outputs = output_manager.outputs().to_vec();
+                                // ⚡ Bolt: Use reference instead of .to_vec() to avoid per-frame heap allocation
+                                let outputs = output_manager.outputs();
                                 for (i, output) in outputs.iter().enumerate() {
                                     let is_selected = self.selected_output_id == Some(output.id);
 
