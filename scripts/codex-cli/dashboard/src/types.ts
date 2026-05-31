@@ -48,8 +48,6 @@ export interface ActiveDelegation {
   delegated_at: string;
   last_checked_at: string;
   retry_count: number;
-  agent_type?: string;
-  job_id?: string;
 }
 
 export interface ReviewQueueItem {
@@ -83,7 +81,6 @@ export interface ActiveSessions {
   autopilot_created_issues: unknown[];
   completed_this_session: CompletedItem[];
   decisions_pending?: DecisionPending[];
-  deliberation_log?: DeliberationLogEntry[];
 }
 
 // ── GitHub Issues Types ──
@@ -132,7 +129,6 @@ export interface PullRequest {
   title: string;
   updatedAt: string;
   url: string;
-  isDraft?: boolean;
 }
 
 // ── Autopilot Config Types ──
@@ -167,27 +163,6 @@ export interface DualCeoConfig {
   deliberation_tasks: string[];
   fallback_to_single: boolean;
   log_deliberations: boolean;
-}
-
-export interface DeliberationRound {
-  phase: string;
-  agent: string;
-  provider: string;
-  duration_ms: number;
-  success: boolean;
-  content?: string;
-}
-
-export interface DeliberationLogEntry {
-  deliberation_id: string;
-  task_type: string;
-  alpha_provider: string;
-  beta_provider: string;
-  consensus_reached: boolean;
-  phases_completed: number;
-  total_duration_ms: number;
-  completed_at: string;
-  rounds?: DeliberationRound[];
 }
 
 // ── Memory System Types ──

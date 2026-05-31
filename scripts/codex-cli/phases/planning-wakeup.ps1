@@ -14,20 +14,12 @@ function Invoke-PlanningWakeUp {
     $repo = $Config.repository
     Write-Host "`n[PLANNING] ========== Planning Wake-Up ==========" -ForegroundColor Blue
 
-    # Ensure state arrays exist safely without strict mode exceptions
-    if (-not ($State.PSObject.Properties.Name -contains "autopilot_created_issues") -or $null -eq $State.autopilot_created_issues) {
-        if (-not ($State.PSObject.Properties.Name -contains "autopilot_created_issues")) {
-            $State | Add-Member -MemberType NoteProperty -Name "autopilot_created_issues" -Value @() -Force
-        } else {
-            $State.autopilot_created_issues = @()
-        }
+    # Ensure state arrays exist
+    if ($null -eq $State.autopilot_created_issues) {
+        $State | Add-Member -MemberType NoteProperty -Name "autopilot_created_issues" -Value @() -Force
     }
-    if (-not ($State.PSObject.Properties.Name -contains "active_delegations") -or $null -eq $State.active_delegations) {
-        if (-not ($State.PSObject.Properties.Name -contains "active_delegations")) {
-            $State | Add-Member -MemberType NoteProperty -Name "active_delegations" -Value @() -Force
-        } else {
-            $State.active_delegations = @()
-        }
+    if ($null -eq $State.active_delegations) {
+        $State | Add-Member -MemberType NoteProperty -Name "active_delegations" -Value @() -Force
     }
 
     # Define script block to fetch candidates to avoid duplication
@@ -181,44 +173,41 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
         }
 
         $promptText = @"
-Du bist das CEO-Planungs-Team für das Vorce-Projekt (eine hochperformante, speichersichere Projection-Mapping-Software in Rust).
+Du bist der Autopilot fuer das Vorce-Projekt (Rust Projection-Mapping Software).
 Repository: $repo
 
-Oberstes Ziel: Fertigstellung und Veröffentlichung von Release 1.0.
+Aktuell gibt es nur $($candidates.Count) offene, delegierbare Issues.
 
-Analysiere den aktuellen Stand des Projekts aktiv:
-- Du MUSST das Repository aktiv untersuchen! Führe Recherchen durch, lies wichtige Code-Dateien und Konfigurationen (z.B. Cargo.toml, README.md, Crate-Quellcode), und überprüfe den Build-Status sowie Unit-Tests mit cargo-Befehlen, um den tatsächlichen Entwicklungsfortschritt beweisbar zu verstehen. Du darfst dich NICHT nur auf den lokalen Cache verlassen!
-- Checke und supporte alle hängenden Jules Sessions. Falls nicht alle 15 Jules Slots in Benutzung sind -> Starte neue Sessions.
-- PRs mit Merge-Konflikten sollst du mit den verfügbaren CLI-Tools manuell beheben.
-- Gleiche deine Erkenntnisse von der IST-Code-Analyse mit den offenen Issues ab. Prüfe dabei, ob Issues fehlen, unzureichend beschrieben sind und was die Aufgabe jeweils ist -> ergänze ggf. Fehlendes.
-- Checke auch, ob aus deiner Sicht die Prioritäten richtig vergeben sind.
-- In Sessions, in denen du keine oder wenig produktive Tätigkeiten erledigt hast, sollst du alternativ mit den CLI-Tools selbst nötige Codeänderungen/Erweiterungen damit durchführen!
-- Prüfe die offenen Github Issues und laufenden PRs.
+WICHTIGE ANWEISUNG ZU MCP-TOOLS:
+Du hast hier alle benoetigten Informationen direkt im Text.
+VERWENDE KEINE GITHUB-MCP-TOOLS (wie github_fetch_issue oder github_search_issues)! Das kostet nur unnoetig Zeit und Token. Arbeite AUSSCHLIESSLICH mit den Daten aus diesem Prompt.
 
-Überlege und entscheide strategisch:
-- Welche konkreten technischen Aufgaben (Bugfixes, Tests, Features, Integrationen) fehlen noch für Release 1.0?
-- Welche Probleme blockieren aktuell den Fortschritt?
+Plane strikt Richtung Release 1.0 Readiness. Massgeblicher Top-Level-Kompass ist:
+- #651 VOR-002_MAIs_Release-1.0-Readiness-Gate
+
+Priorisiere neue Aufgaben nur aus diesen Gate-Lanes:
+1. UI-Test-Automation: #650, #547, #549, #548
+2. Timeline/Show-Control Acceptance: #661, #662, #96, #98, #99, #101, #102, #103
+3. Cluster/Multi-Instance Scope-Freeze: #654, #655, #656, #657, #658, #659
+4. NDI/Asset-Verfuegbarkeit: #107
+5. macOS-CI/Smoke-Validation: #43
+6. Packaging/Install-Sanity und Scope-Freeze: #652, #653
 $promptIssuesContext
 
-Schlage bis zu $($Config.max_issues_per_planning_cycle) konkrete, kleine, präzise und umsetzbare Issues vor, die das Release 1.0 beweisbar voranbringen.
-Keine vagen TODOs, sondern exakt definierte Issues mit klarer Akzeptanzkriterien-Beschreibung.
-Keine Master-Issues als Jules-Coding-Task erzeugen. Coding-/QA-Aufgaben müssen Standard- oder Sub-Issues sein.
+Schlage bis zu $($Config.max_issues_per_planning_cycle) konkrete, kleine Issues vor.
+Keine generischen TODO-, Refactoring- oder Performance-Issues erzeugen, wenn sie nicht direkt eines der Release-Gates beweisbar voranbringen.
+Keine Master-Issues als Jules-Coding-Task erzeugen. Coding-/QA-Aufgaben muessen Standard- oder Sub-Issues sein und die Namenskonvention einhalten.
 
-Wahl des richtigen Agents:
-- "jules": Nur für große Refactorings, UI-Architektur oder komplexe Multi-File-Features.
-- Lokale CLI-Agents (z.B. "claude_code", "gemini_cli"): Zwingend nutzen für kleine Bugfixes, isolierte Modulanpassungen, Skripte, CI/CD-Fixes oder klar umrissene Algorithmen (schont Jules-Token!).
+WICHTIG ZUR AGENT-ZUWEISUNG:
+Du MUSST für jedes Issue gezielt entscheiden, welcher Agent es bearbeitet.
+- "jules": NUR für riesige Refactorings, UI-Architektur oder Multi-File Features nutzen.
+- Lokale CLI-Agents (z.B. "gemini_cli", "claude_code"): ZWINGEND zu nutzen für kleine Bugfixes, isolierte Modul-Anpassungen, Scripts, CI/CD-Fixes oder klar umrissene Algorithmen! Du SOLLST regelmäßig Aufgaben an diese CLI-Agents delegieren, um Jules zu entlasten!
 Verfügbare Agents: $agentsStr
 
 Antworte NUR mit einer JSON-Liste im Format:
-[
-  {
-    "title": "__VOR-000_SubI_Issue-Titel",
-    "body": "Detaillierte Beschreibung der Aufgabe mit Akzeptanzkriterien",
-    "labels": ["priority: high", "bug"],
-    "agent": "claude_code"
-  }
-]
-Falls keine neuen Issues notwendig sind, gib ein leeres Array [] zurück.
+[{"title": "__VOR-000_SubI_Issue-Title", "body": "Beschreibung mit Parent-Issue und Acceptance-Evidence", "labels": ["jules-task", "priority: high", "testing"], "agent": "<agent_name_hier_eintragen>"}]
+
+Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 "@
         $planResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "planning" -DryRun:$DryRun -Prompt $promptText -State $State
 
@@ -395,12 +384,9 @@ Falls keine neuen Issues notwendig sind, gib ein leeres Array [] zurück.
     $currentSessions = [int]$julesProvider.usage_today.calls
     $maxDaily = [int]$Config.jules.max_daily_sessions
     $maxConcurrent = [int]$Config.jules.max_concurrent_sessions
-    $julesActiveCount = 0
-    if ($State.PSObject.Properties.Name -contains "active_delegations" -and $null -ne $State.active_delegations) {
-        $julesActiveCount = @($State.active_delegations | Where-Object {
-            -not ($_.PSObject.Properties.Name -contains "agent_type") -or ($_.agent_type -eq "jules")
-        }).Count
-    }
+    $julesActiveCount = @($State.active_delegations | Where-Object {
+        -not ($_.PSObject.Properties.Name -contains "agent_type") -or ($_.agent_type -eq "jules")
+    }).Count
 
     $julesAvailableSlots = $maxConcurrent - $julesActiveCount
     if (($maxDaily - $currentSessions) -lt $julesAvailableSlots) {
@@ -505,11 +491,7 @@ Falls keine neuen Issues notwendig sind, gib ein leeres Array [] zurück.
         }
     }
 
-    if ($State.PSObject.Properties.Name -contains "last_planning_at") {
-        $State.last_planning_at = (Get-Date -Format 'o')
-    } else {
-        $State | Add-Member -MemberType NoteProperty -Name "last_planning_at" -Value (Get-Date -Format 'o') -Force
-    }
+    $State.last_planning_at = (Get-Date -Format 'o')
     Save-AutopilotState -State $State
 
     Write-Host "[PLANNING] ========== Planning abgeschlossen ==========" -ForegroundColor Magenta

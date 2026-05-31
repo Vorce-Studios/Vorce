@@ -175,7 +175,7 @@ fn render_startup_animation_overlay(ctx: &egui::Context, app: &mut App) {
     let video_frame = update_startup_animation_texture(ctx, app);
 
     let backdrop = egui::Color32::from_black_alpha((190.0 * alpha) as u8);
-    let frame_fill = ctx.global_style().visuals.window_fill.gamma_multiply(alpha);
+    let frame_fill = egui::Color32::from_rgba_premultiplied(14, 18, 26, (230.0 * alpha) as u8);
 
     ctx.request_repaint();
 
@@ -195,7 +195,7 @@ fn render_startup_animation_overlay(ctx: &egui::Context, app: &mut App) {
                     *texture_id,
                     video_rect,
                     egui::Rect::from_min_max(egui::Pos2::ZERO, egui::pos2(1.0, 1.0)),
-                    ui.visuals().text_color().gamma_multiply(alpha),
+                    egui::Color32::WHITE.gamma_multiply(alpha),
                 );
             }
 

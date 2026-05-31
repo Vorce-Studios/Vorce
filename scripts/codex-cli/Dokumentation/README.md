@@ -48,7 +48,7 @@ graph TD
 
 ## Verzeichnisstruktur
 
-```text
+```
 scripts/codex-cli/
 ├── Start-Autopilot.ps1          # Zentraler Suite-Starter (Prozess-Manager & Steuerkonsole)
 ├── autopilot.ps1                # Haupteinstiegspunkt (Wake-Up-Loop)
@@ -81,16 +81,13 @@ scripts/codex-cli/
 ## Kernkomponenten
 
 ### 1. Dual-CEO Deliberation (Mit sichtbaren Terminals)
-
 Um die bestmöglichen Entscheidungen zu treffen und blinde Flecken zu vermeiden, kann der Autopilot wichtige Aufgaben im Dual-CEO-Verfahren lösen:
-
 * **CEO Alpha (z.B. Codex)** erstellt einen detaillierten Vorschlag inklusive Risikoanalyse.
 * **CEO Beta (z.B. Gemini CLI)** prüft diesen Entwurf kritisch, zeigt Schwachstellen auf und schlägt Alternativen vor.
 * **CEO Alpha** synthetisiert das Feedback zu einer finalen, optimierten Lösung.
 
 **Sichtbare Ausführung (Visible Terminals)**:
 Jede der drei Phasen wird in einem **separaten, sichtbaren Terminalfenster** gestartet, damit der Benutzer die Abstimmungen und Ausführungen der CEOs live mitverfolgen und bei Bedarf interagieren kann:
-
 * **Phase 1 (Proposal - CEO Alpha)**: Startet ein sichtbares Terminal-Fenster unter dem Namen `"Vorce CEO: CEO Alpha: Proposal"` über den `run-visible-codex-session.ps1`-Wrapper (falls Codex) oder über `run-visible-ceo-phase.ps1` (für andere Provider).
 * **Phase 2 (Critique - CEO Beta)**: Startet ein sichtbares Terminal-Fenster unter dem Namen `"Vorce CEO: CEO Beta: Critique"` über `run-visible-ceo-phase.ps1`.
 * **Phase 3 (Synthesis - CEO Alpha)**: Startet wieder ein sichtbares Terminal-Fenster unter dem Namen `"Vorce CEO: CEO Alpha: Synthesis"`.
@@ -98,23 +95,18 @@ Jede der drei Phasen wird in einem **separaten, sichtbaren Terminalfenster** ges
 Der Aufruf wartet jeweils auf das Beenden der Phase, liest die JSON-Ergebnisse der vorherigen Phase ein, stellt sie als Kontext zur Verfügung und speichert die finalen Ergebnisse ab. Bei Fehlern in einer Phase wird das Terminalfenster geöffnet gehalten (`Read-Host`), damit der Fehler abgelesen werden kann. Bei Erfolg schließt sich das Fenster nach 5 Sekunden automatisch. Dies minimiert Fehlentscheidungen und dient gleichzeitig als Fallback, falls die Quoten eines Anbieters erschöpft sind.
 
 ### 2. Selective Memory Injection (Das Gedächtnis)
-
 Um Prompt-Stuffing und hohe Tokenkosten zu vermeiden, speichert das System Erinnerungen in `autopilot-memories.json` mit zwei vordefinierten Typen:
-
 * **permanent**: Statische Richtlinien und fundamentale Entwicklungsregeln (z.B. cargo fmt, Formatvorgaben).
 * **temporary**: Dynamischer Projektkontext (aktueller Stand der Aufgaben, blockierte/hängende Tasks im Monitoring, zuletzt erledigte Arbeiten).
 
 Vor jedem Aufruf eines KI-Modells lädt `memory-store.ps1` alle aktiven Erinnerungen, sortiert sie intelligent (`temporary` vor `permanent`, gefolgt von der Priorität) und stellt sie als Markdown-Block dem Prompt voran. So wissen beide CEOs (auch bei Provider-Fallback) stets über den Status Bescheid. Das System erzwingt ein Hard-Limit von maximal 30 aktiven Erinnerungen.
 
 ### 3. Quota & Cost Management
-
 Jeder API-Call wird erfasst. Wenn Provider JSON-Kostenrückmeldungen liefern (z.B. Claude Code oder Gemini CLI), werden die exakten Kosten verbucht. Andernfalls werden Schätzwerte verwendet.
 Erreicht ein Provider sein Tageslimit oder sein Budgetlimit in USD, weicht der Router (`cli-router.ps1`) automatisch auf den nächsten Provider in der konfigurierten Fallback-Kette aus.
 
 ### 4. Ausfallsicherheit (Fallback) & Eskalationsmanagement
-
 Um Hänger und API-Timeouts zuverlässig zu überstehen, implementiert das System ein mehrstufiges Eskalationsmanagement:
-
 * **CEO Fallback:** Fällt der Alpha CEO (z.B. Codex) während der Proposal-Phase aus (Quota erreicht, API-Fehler), fängt das System den Fehler ab und beauftragt nahtlos den Beta CEO (z.B. Gemini) mit der Aufgabe. Auch der Fallback öffnet sich in einem sichtbaren Terminal.
 * **Tiered Escalation (3 Stufen):**
   1. **Auto-Retry (Stufe 1):** Schlägt eine an Jules oder einen CLI-Agent delegierte Aufgabe fehl, wird sie zunächst stumm für einen erneuten Versuch in die Warteschlange gestellt (`QUEUED_FOR_RETRY`).
@@ -122,21 +114,18 @@ Um Hänger und API-Timeouts zuverlässig zu überstehen, implementiert das Syste
   3. **User Intervention (Stufe 3):** Schlägt auch das CEO-Re-Planning mehrfach fehl, wird das Issue als `ESCALATED_TO_USER` markiert und bedarf menschlichen Eingreifens.
 
 ### 5. Lokale Background CLI-Agents
-
 Das System ist nicht mehr auf "Jules" als einzigen Entwickler beschränkt. Der CEO kann gezielt entscheiden, welche KI-Architektur am besten für eine Aufgabe geeignet ist:
-
 * **Jules** wird für großflächige Refactorings und UI-Architektur genutzt.
 * **Lokale CLI-Agents (Gemini, Claude, Kiro)** werden gezielt für kleine Bugfixes, isolierte Modulanpassungen oder Skript-Entwicklung eingesetzt.
 Diese lokalen Agents werden über den Wrapper `run-visible-agent-task.ps1` in separaten Terminal-Fenstern gestartet, generieren lokal ihren Code, erstellen eigenständig Git-Branches und eröffnen automatisch Pull Requests, die dann ins normale Monitoring übergehen.
 
 ---
 
+
 ## Konfiguration
 
 ### `autopilot-config.json`
-
 Steuert das Verhalten des Autopiloten, die Zyklen und die Dual-CEO-Einstellungen.
-
 ```json
 {
   "repository": "Vorce-Studios/Vorce",
@@ -161,9 +150,7 @@ Steuert das Verhalten des Autopiloten, die Zyklen und die Dual-CEO-Einstellungen
 ```
 
 ### `quota-registry.json`
-
 Enthält die Fallback-Ketten (Routing Rules) für jeden Task-Typ und die Limits der einzelnen Provider.
-
 ```json
 {
   "providers": {
@@ -186,22 +173,18 @@ Enthält die Fallback-Ketten (Routing Rules) für jeden Task-Typ und die Limits 
 ## Betrieb & Verwendung
 
 ### 1. Empfohlene Methode: Autopilot-Suite (Start-Autopilot.ps1)
-
 Das Ausführen von `Start-Autopilot.ps1` ist die empfohlene Methode im Produktivbetrieb. Es fungiert als Manager für alle Autopilot-Komponenten:
-
 * Startet den **Vite Dashboard Web-Server** im Hintergrund (versteckt).
 * Startet den **Dashboard Sync Service** (`interval-stats.ps1`) im Hintergrund zur regelmäßigen Datenaktualisierung.
 * Startet das **Autopilot Backend** (`autopilot.ps1`) in einem **separaten, sichtbaren PowerShell-Fenster**. Dieses Fenster dient als **Live-Logging (Livelog)**, in dem Sie Echtzeit-Ausgaben aller CEOs und Jules-Aktivitäten mitverfolgen können.
 * Hält das Hauptfenster als **Steuerkonsole (Control Console)** aktiv.
 
 Startbefehl:
-
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\Start-Autopilot.ps1
 ```
 
 Steuerbefehle in der Konsole:
-
 * **`Q` oder `Ctrl+C`**: Beendet die Steuerkonsole und stoppt automatisch alle gestarteten Hintergrundprozesse (Backend-Loop, Vite-Server, Sync-Service) sauber und proaktiv.
 * **`S`**: Zeigt den Status und die PIDs aller aktiven Suite-Prozesse an.
 * **`W`**: Schreibt ein Wake-Up Signal in `autopilot.wakeup`, was das Autopilot-Backend veranlasst, den aktuellen Sleep-Zyklus sofort abzubrechen und die Zyklen (Planning/Monitoring) direkt auszuführen.
@@ -209,33 +192,25 @@ Steuerbefehle in der Konsole:
 ---
 
 ### 2. Manuelle Ausführung des Backend-Loops (autopilot.ps1)
-
 Alternativ kann das Backend-Skript ohne Dashboard-Prozessmanagement direkt gestartet werden:
-
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\autopilot.ps1
 ```
 
 ### 3. Einmaliger Planungsdurchlauf (PlanOnce)
-
 Führt nur den Planungszyklus aus und beendet sich danach:
-
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\autopilot.ps1 -PlanOnce
 ```
 
 ### 4. Einmaliger Überwachungsdurchlauf (MonitorOnce)
-
 Führt nur den Überwachungszyklus aus und beendet sich danach:
-
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\autopilot.ps1 -MonitorOnce
 ```
 
 ### 5. Testmodus (DryRun)
-
 Simuliert den Ablauf, ohne echte API-Calls an die Provider zu senden:
-
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\autopilot.ps1 -PlanOnce -DryRun
 ```
@@ -247,26 +222,22 @@ powershell -ExecutionPolicy Bypass -File .\autopilot.ps1 -PlanOnce -DryRun
 Der Autopilot enthält ein modernes Web-Dashboard zur Überwachung und Konfiguration in Echtzeit.
 
 ### Starten des Dashboards (Manuell)
-
 Wenn Sie nicht die komplette Suite über `Start-Autopilot.ps1` starten, können Sie das Dashboard manuell starten:
-
 ```powershell
 cd dashboard
 npm install
 npm run dev
 ```
-
 Das Dashboard öffnet sich standardmäßig unter [http://localhost:5173](http://localhost:5173).
 
 ### Features des Dashboards
-
 1. **Overview**: Übersicht über aktive Jules-Sessions, offene GitHub Issues, Quota-Status und Token-Kosten.
 2. **Jules Sessions**: Liste aller aktiven Delegationen mit Live-Status und Fehlversuchen.
 3. **Manager Reporting Tool**: Eine hochentwendete Analyse-Seite für Manager:
-   * **Themenanalyse**: Verfolgung des Fortschritts von Bugs, Features und Jules-Delegationen basierend auf GitHub-Labels.
-   * **Produktivitäts-Metriken**: Durchschnittliche Lösungszeiten geschlossener Issues und Consensus-Raten des Dual-CEO-Systems.
-   * **Kosten & Quoten**: Echtzeit-Verbrauchsanalyse aller Provider im Vergleich zum Tageslimit/Tagesbudget.
-   * **CEO Chat & Deliberation Log**: Einsehen der genauen Abstimmungsprotokolle der kooperierenden CEOs.
+   - **Themenanalyse**: Verfolgung des Fortschritts von Bugs, Features und Jules-Delegationen basierend auf GitHub-Labels.
+   - **Produktivitäts-Metriken**: Durchschnittliche Lösungszeiten geschlossener Issues und Consensus-Raten des Dual-CEO-Systems.
+   - **Kosten & Quoten**: Echtzeit-Verbrauchsanalyse aller Provider im Vergleich zum Tageslimit/Tagesbudget.
+   - **CEO Chat & Deliberation Log**: Einsehen der genauen Abstimmungsprotokolle der kooperierenden CEOs.
 4. **System-Settings**: Komfortable Oberfläche zum Ändern aller Intervalle, Filter und API-Schwellenwerte.
 5. **Memory-System Panel**: CRUD-Interface zum Hinzufügen, Filtern und Löschen von permanenten und temporären System-Erinnerungen.
 6. **Dual-CEO Toggle**: Manueller Switch zur Aktivierung/Deaktivierung des Dual-CEO-Modus bei wichtigen Tasks.
