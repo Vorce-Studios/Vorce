@@ -1,13 +1,15 @@
-use crate::{
-    test_pattern_decoder::TestPatternDecoder, HwAccelType, MediaError,
-    Result, VideoDecoder,
-};
+use crate::decoder::test_pattern::TestPatternDecoder;
+use crate::{HwAccelType, MediaError, Result, VideoDecoder};
 use std::path::Path;
 use std::time::Duration;
 use tracing::info;
 #[cfg(feature = "ffmpeg")]
 use tracing::warn;
 use vorce_io::VideoFrame;
+
+// ============================================================================
+// FFmpeg Implementation (when feature is enabled)
+// ============================================================================
 
 #[cfg(feature = "ffmpeg")]
 mod ffmpeg_impl {
@@ -69,8 +71,6 @@ mod ffmpeg_impl {
         /// Open a video file with optional hardware acceleration
         pub fn open<P: AsRef<Path>>(path: P, hw_accel: HwAccelType) -> Result<Self> {
             let path = path.as_ref();
-
-
 
             if !path.exists() {
                 return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
@@ -434,7 +434,6 @@ mod ffmpeg_impl {
         }
     }
 }
-
 /// Unified decoder that automatically uses FFmpeg if available, test pattern otherwise
 pub enum FFmpegDecoder {
     #[cfg(feature = "ffmpeg")]
@@ -452,6 +451,7 @@ impl FFmpegDecoder {
     pub fn open_with_hw_accel<P: AsRef<Path>>(_path: P, _hw_accel: HwAccelType) -> Result<Self> {
         #[cfg(feature = "ffmpeg")]
         {
+            crate::reject_path_traversal(_path.as_ref())?;
             match ffmpeg_impl::RealFFmpegDecoder::open(&_path, _hw_accel) {
                 Ok(decoder) => Ok(FFmpegDecoder::Real(decoder)),
                 Err(e) => {
