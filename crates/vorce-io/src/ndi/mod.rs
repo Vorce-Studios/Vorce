@@ -86,6 +86,7 @@ pub struct NdiReceiver {
 #[cfg(feature = "ndi")]
 enum ReceiverCommand {
     Connect(NdiSource),
+    #[allow(dead_code)]
     Stop,
 }
 

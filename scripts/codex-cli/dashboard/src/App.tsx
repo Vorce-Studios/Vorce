@@ -9,7 +9,7 @@ import SettingsPage from './pages/SettingsPage';
 import ManagerReportingPage from './pages/ManagerReportingPage';
 
 // Types
-import type { TabId, AutopilotConfig, QuotaRegistry, ActiveSessions, GitHubIssue, PullRequest, MemoryStore } from './types';
+import type { TabId, AutopilotConfig, QuotaRegistry, ActiveSessions, GitHubIssue, PullRequest, MemoryStore, AuditResult } from './types';
 
 // Defaults
 const defaultAutopilotConfig: AutopilotConfig = {
@@ -61,6 +61,13 @@ const defaultActiveSessions: ActiveSessions = {
   deliberation_log: []
 };
 
+const defaultAuditResult: AuditResult = {
+  session_id: '',
+  response: '',
+  parsed: null,
+  updated_at: ''
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
 
@@ -74,6 +81,7 @@ export default function App() {
   const { data: julesSessions, refetch: refetchJulesSessions } = useData<any[]>('/jules-sessions.json', []);
   const { data: memoryStore, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
   const { data: history, loading: historyLoading, refetch: refetchHistory } = useData<any[]>('/data.json', []);
+  const { data: auditResult, refetch: refetchAuditResult } = useData<AuditResult>('/audit-result.json', defaultAuditResult);
 
   const refetchAll = () => {
     refetchConfig();
@@ -85,6 +93,7 @@ export default function App() {
     refetchJulesSessions();
     refetchMemory();
     refetchHistory();
+    refetchAuditResult();
   };
 
   // Auto-refresh every 30 seconds
@@ -95,7 +104,7 @@ export default function App() {
     const renderActivePage = () => {
       switch (activeTab) {
         case 'dashboard':
-          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} />;
+          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} auditResult={auditResult} />;
         case 'workstreams':
           return <WorkstreamsPage issues={issues} sessions={sessions} pullRequests={pullRequests} julesSessions={julesSessions} projectItems={projectItems?.items || []} />;
         case 'reporting':

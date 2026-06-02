@@ -307,7 +307,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                 .render_queue
                 .items
                 .keys()
-                .filter(|&&id| !app.window_manager.windows.contains_key(id))
+                .filter(|&&id| !app.window_manager.contains_key(id))
                 .cloned()
                 .collect();
 
@@ -341,19 +341,24 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                     let height = 1080;
 
                     if !app.ndi_offscreen_textures.contains_key(&pid) {
-                        let texture = app.texture_pool.create(
-                            &format!("ndi_offscreen_{vid}"),
+                        let name = format!("ndi_offscreen_{vid}");
+                        app.texture_pool.create(
+                            &name,
                             width,
                             height,
-                            wgpu::TextureFormat::Bgra8UnormSrgb,
+                            wgpu::TextureFormat::Bgra8Unorm,
                             wgpu::TextureUsages::RENDER_ATTACHMENT
                                 | wgpu::TextureUsages::TEXTURE_BINDING
                                 | wgpu::TextureUsages::COPY_SRC,
                         );
+                        let texture = app
+                            .texture_pool
+                            .get_texture(&name)
+                            .expect("Texture should have been created");
                         let view = std::sync::Arc::new(
                             texture.create_view(&wgpu::TextureViewDescriptor::default()),
                         );
-                        app.ndi_offscreen_textures.insert(pid, (texture, view));
+                        app.ndi_offscreen_textures.insert(pid, ((*texture).clone(), view));
                     }
 
                     // Get the view back

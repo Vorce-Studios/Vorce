@@ -478,7 +478,9 @@ function Invoke-Deliberation {
         [string]$WorkingDirectory,
         [string]$MemoryBlock,
         [switch]$DryRun,
-        [object]$State
+        [object]$State,
+        [string]$AlphaTierOverride = $null,
+        [string]$BetaTierOverride = $null
     )
 
     $deliberationId = "delib-$(Get-Date -Format 'yyyy-MM-dd-HHmmss')"
@@ -490,6 +492,14 @@ function Invoke-Deliberation {
 
     # --- Resolve both CEOs ---
     $ceos = Resolve-DualCeos -QuotaRegistry $QuotaRegistry -Config $Config
+
+    # Apply Overrides
+    if (-not [string]::IsNullOrWhiteSpace($AlphaTierOverride)) {
+        if ($ceos.alpha) { $ceos.alpha.model_tier = $AlphaTierOverride }
+    }
+    if (-not [string]::IsNullOrWhiteSpace($BetaTierOverride)) {
+        if ($ceos.beta) { $ceos.beta.model_tier = $BetaTierOverride }
+    }
 
     # --- Fallback to single agent if needed ---
     if ($null -eq $ceos.alpha -and $null -eq $ceos.beta) {
@@ -758,7 +768,9 @@ function Invoke-DualCeoTask {
         [string]$WorkingDirectory,
         [switch]$DryRun,
         [switch]$ForceDeliberation,
-        [object]$State
+        [object]$State,
+        [string]$AlphaTierOverride = $null,
+        [string]$BetaTierOverride = $null
     )
 
     # --- Fetch relevant memories for this task type ---
@@ -790,7 +802,9 @@ function Invoke-DualCeoTask {
             -WorkingDirectory $WorkingDirectory `
             -MemoryBlock $memoryBlock `
             -DryRun:$DryRun `
-            -State $State
+            -State $State `
+            -AlphaTierOverride $AlphaTierOverride `
+            -BetaTierOverride $BetaTierOverride
     }
 
     # Standard single-agent path
@@ -800,7 +814,8 @@ function Invoke-DualCeoTask {
         -Prompt $Prompt `
         -WorkingDirectory $WorkingDirectory `
         -MemoryBlock $memoryBlock `
-        -DryRun:$DryRun
+        -DryRun:$DryRun `
+        -ModelTierOverride $AlphaTierOverride
 
     # Fallback to Beta CEO if the single-agent call failed and Dual-CEO is enabled
     if (-not $result.success -and $hasDualCeo -and $Config.dual_ceo.enabled) {

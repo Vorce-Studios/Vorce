@@ -147,6 +147,15 @@ while ($true) {
             }
         }
 
+        $AuditResultPath = Join-Path $ScriptDir "tmp\beta-audit-result.json"
+        if (Test-Path $AuditResultPath) {
+            $auditResult = Read-JsonLocked -Path $AuditResultPath
+            if ($null -ne $auditResult) {
+                $auditResult | Add-Member -MemberType NoteProperty -Name "updated_at" -Value ((Get-Item $AuditResultPath).LastWriteTime.ToString("o")) -Force
+                Write-JsonLocked -Path (Join-Path $DashboardPublicDir "audit-result.json") -Data $auditResult | Out-Null
+            }
+        }
+
         $RegistryPath = Join-Path $ScriptDir "quota-registry.json"
         if (Test-Path $RegistryPath) {
             Write-JsonLocked -Path (Join-Path $DashboardPublicDir "registry.json") -Data $registry | Out-Null
@@ -276,5 +285,5 @@ while ($true) {
         Write-Warning "StackTrace: $($_.ScriptStackTrace)"
     }
 
-    break
+    Start-Sleep -Seconds $dashboardSyncIntervalSec
 }

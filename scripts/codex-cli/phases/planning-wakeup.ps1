@@ -3,6 +3,63 @@
 
 Set-StrictMode -Version Latest
 
+function Convert-PlanningProposalOutput {
+    param([string]$Output)
+
+    $newIssues = @()
+    if ([string]::IsNullOrWhiteSpace($Output)) { return @() }
+
+    $parsedObj = $null
+    try {
+        $parsedObj = $Output | ConvertFrom-Json
+    } catch {
+        $jsonArrMatch = [regex]::Match($Output, '(?s)\[.*\]')
+        if ($jsonArrMatch.Success) {
+            try { $parsedObj = $jsonArrMatch.Value | ConvertFrom-Json } catch {}
+        }
+        if ($null -eq $parsedObj) {
+            $jsonObjMatch = [regex]::Match($Output, '(?s)\{.*\}')
+            if ($jsonObjMatch.Success) {
+                try { $parsedObj = $jsonObjMatch.Value | ConvertFrom-Json } catch {}
+            }
+        }
+    }
+
+    if ($null -eq $parsedObj) { return @() }
+
+    if ($parsedObj -is [System.Array] -or $parsedObj -is [System.Collections.IList]) {
+        $newIssues = @($parsedObj)
+    } elseif ($parsedObj.PSObject.Properties.Name -contains "proposal") {
+        $propVal = $parsedObj.proposal
+        if ($propVal -is [string]) {
+            try { $newIssues = @($propVal | ConvertFrom-Json) } catch {}
+        } else {
+            $newIssues = @($propVal)
+        }
+    } elseif ($parsedObj.PSObject.Properties.Name -contains "response") {
+        $respVal = $parsedObj.response
+        if ($respVal -is [string]) {
+            try {
+                $nestedObj = $respVal | ConvertFrom-Json
+                if ($nestedObj -is [System.Array] -or $nestedObj -is [System.Collections.IList]) {
+                    $newIssues = @($nestedObj)
+                } elseif ($nestedObj.PSObject.Properties.Name -contains "proposal") {
+                    $newIssues = @($nestedObj.proposal)
+                }
+            } catch {
+                $jsonMatch = [regex]::Match($respVal, '(?s)\[.*\]')
+                if ($jsonMatch.Success) {
+                    try { $newIssues = @($jsonMatch.Value | ConvertFrom-Json) } catch {}
+                }
+            }
+        } else {
+            $newIssues = @($respVal)
+        }
+    }
+
+    return @($newIssues)
+}
+
 function Invoke-PlanningWakeUp {
     param(
         [Parameter(Mandatory)][object]$State,
@@ -23,6 +80,103 @@ function Invoke-PlanningWakeUp {
     }
     if (-not ($State.PSObject.Properties.Name -contains "escalated_issues")) {
         $State | Add-Member -MemberType NoteProperty -Name "escalated_issues" -Value @() -Force
+    }
+    if (-not ($State.PSObject.Properties.Name -contains "decisions_pending")) {
+        $State | Add-Member -MemberType NoteProperty -Name "decisions_pending" -Value @() -Force
+    }
+
+    # --- Step 0: Process Beta-Audit escalations via Alpha CEO first ---
+    $auditAlphaEscalations = @($State.decisions_pending | Where-Object {
+        $source = if ($_.PSObject.Properties.Name -contains "source") { [string]$_.source } else { "" }
+        $owner = if ($_.PSObject.Properties.Name -contains "owner") { [string]$_.owner } else { "alpha_ceo" }
+        $status = if ($_.PSObject.Properties.Name -contains "status") { [string]$_.status } else { "awaiting_alpha" }
+        ($source -eq "audit" -or [string]$_.topic -match "Beta CEO") -and
+        $owner -eq "alpha_ceo" -and
+        $status -eq "awaiting_alpha"
+    })
+
+    if ($auditAlphaEscalations.Count -gt 0) {
+        Write-Host "[PLANNING] Bearbeite $($auditAlphaEscalations.Count) Audit-Eskalation(en) zuerst via Alpha CEO." -ForegroundColor Yellow
+        foreach ($decision in $auditAlphaEscalations) {
+            $topic = [string]$decision.topic
+            $context = [string]$decision.context
+            $remediationCommand = if ($decision.PSObject.Properties.Name -contains "remediation_command") { [string]$decision.remediation_command } else { "" }
+            $remediationResult = if ($decision.PSObject.Properties.Name -contains "remediation_result") { [string]$decision.remediation_result } else { "" }
+
+            $alphaPrompt = @"
+Du bist CEO ALPHA des Vorce-Autopiloten.
+Eine Beta-CEO-Audit-Eskalation darf NICHT direkt an den User gehen. Du musst zuerst versuchen, einen zielfuehrenden Folgeplan zu erstellen.
+
+Audit-Topic:
+$topic
+
+Audit-Kontext:
+$context
+
+Vorheriger Remediation-Versuch:
+Command: $remediationCommand
+Result: $remediationResult
+
+Aufgabe:
+1. Entscheide, ob Alpha CEO das Problem mit einem konkreten Plan, einer kleinen Working Session oder einem lokalen CLI-Tool zielfuehrend weiter bearbeiten kann.
+2. Wenn ja, liefere einen knappen, konkreten Alpha-Plan.
+3. Nur wenn Alpha nicht zielfuehrend helfen kann oder Owner-Rechte/Produktentscheidung zwingend sind, setze action="escalate_user" und erklaere exakt, was der User entscheiden/tun muss.
+
+Antworte strikt als JSON:
+{
+  "action": "plan_fix|escalate_user",
+  "alpha_response": "<konkreter Alpha-Plan oder Grund der Nicht-Loesbarkeit>",
+  "next_step": "<naechster konkreter Schritt>",
+  "user_escalation_reason": "<nur falls action=escalate_user>"
+}
+"@
+
+            $alphaResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "planning" -Prompt $alphaPrompt -State $State -DryRun:$DryRun
+            if ($alphaResult.success) {
+                $parsedAlpha = $null
+                try {
+                    $parsedAlpha = $alphaResult.output | ConvertFrom-Json
+                } catch {
+                    $jsonMatch = [regex]::Match([string]$alphaResult.output, '(?s)\{.*\}')
+                    if ($jsonMatch.Success) {
+                        try { $parsedAlpha = $jsonMatch.Value | ConvertFrom-Json } catch {}
+                    }
+                }
+
+                $alphaResponse = if ($parsedAlpha -and ($parsedAlpha.PSObject.Properties.Name -contains "alpha_response")) { [string]$parsedAlpha.alpha_response } else { [string]$alphaResult.output }
+                $action = if ($parsedAlpha -and ($parsedAlpha.PSObject.Properties.Name -contains "action")) { [string]$parsedAlpha.action } else { "plan_fix" }
+                $attempts = 0
+                if ($decision.PSObject.Properties.Name -contains "alpha_attempts" -and $decision.alpha_attempts) {
+                    $attempts = [int]$decision.alpha_attempts
+                }
+
+                $decision | Add-Member -MemberType NoteProperty -Name "alpha_response" -Value $alphaResponse -Force
+                $decision | Add-Member -MemberType NoteProperty -Name "alpha_attempted_at" -Value (Get-Date -Format 'o') -Force
+                $decision | Add-Member -MemberType NoteProperty -Name "alpha_attempts" -Value ($attempts + 1) -Force
+
+                if ($action -eq "escalate_user") {
+                    $reason = if ($parsedAlpha -and ($parsedAlpha.PSObject.Properties.Name -contains "user_escalation_reason")) { [string]$parsedAlpha.user_escalation_reason } else { $alphaResponse }
+                    $decision | Add-Member -MemberType NoteProperty -Name "owner" -Value "user" -Force
+                    $decision | Add-Member -MemberType NoteProperty -Name "status" -Value "awaiting_user" -Force
+                    $decision | Add-Member -MemberType NoteProperty -Name "process_stage" -Value "user_decision" -Force
+                    $decision | Add-Member -MemberType NoteProperty -Name "escalation_level" -Value "user" -Force
+                    $decision | Add-Member -MemberType NoteProperty -Name "user_escalation_reason" -Value $reason -Force
+                    Write-Host "[PLANNING] Alpha CEO eskaliert '$topic' an User." -ForegroundColor Red
+                } else {
+                    $decision | Add-Member -MemberType NoteProperty -Name "owner" -Value "alpha_ceo" -Force
+                    $decision | Add-Member -MemberType NoteProperty -Name "status" -Value "alpha_action_proposed" -Force
+                    $decision | Add-Member -MemberType NoteProperty -Name "process_stage" -Value "alpha_remediation_planned" -Force
+                    $decision | Add-Member -MemberType NoteProperty -Name "escalation_level" -Value "alpha" -Force
+                    Write-Host "[PLANNING] Alpha CEO hat Folgeplan fuer '$topic' erstellt." -ForegroundColor Green
+                }
+            } else {
+                Write-Warning "[PLANNING] Alpha-Review fuer Audit-Eskalation '$topic' fehlgeschlagen."
+            }
+        }
+
+        if (-not $DryRun.IsPresent) {
+            Save-AutopilotState -State $State
+        }
     }
 
     # Define script block to fetch candidates to avoid duplication
@@ -217,141 +371,49 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
     }
     $agentsStr = $availableAgents -join ", "
 
-    # --- Step 2: Check if we should create new issues ---
-    if ($candidates.Count -lt 3) {
-        Write-Host "[PLANNING] Wenige offene Issues - pruefe ob neue erstellt werden sollten." -ForegroundColor Yellow
+    # --- Step 2: Sequential Planning Sequence (Session Splitting) ---
+    $planningContext = ""
+    $newIssues = @()
 
-        # Lade die Issues aus dem Cache fuer den Prompt-Kontext
-        $cachedIssuePath = Join-Path $ScriptDir "dashboard\public\github-issues.json"
-        $promptIssuesContext = ""
-        if (Test-Path $cachedIssuePath) {
-            try {
-                $issuesRaw = Get-Content -LiteralPath $cachedIssuePath -Raw -Encoding UTF8 | ConvertFrom-Json
-                $gateIssueNumbers = @(651, 650, 547, 549, 548, 661, 662, 96, 98, 99, 101, 102, 103, 654, 655, 656, 657, 658, 659, 107, 43, 652, 653)
-                $contextLines = @()
+    if ($Config.PSObject.Properties.Name -contains "planning_sequence") {
+        foreach ($step in $Config.planning_sequence) {
+            Write-Host "[PLANNING] Starte Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
 
-                if ($null -ne $issuesRaw -and ($issuesRaw -is [System.Array] -or $issuesRaw -is [System.Collections.IList])) {
-                    foreach ($issue in $issuesRaw) {
-                        if ($gateIssueNumbers -contains $issue.number) {
-                            $title = $issue.title
-                            $issueState = $issue.state
-                            $bodySnippet = if ($issue.body -and $issue.body.Length -gt 250) { $issue.body.Substring(0, 250) + "..." } else { $issue.body }
-                            $bodySnippet = $bodySnippet -replace "`n", " " -replace "`r", ""
-                            $contextLines += "- #$($issue.number) [$issueState]: $title (Auszug: $bodySnippet)"
-                        }
-                    }
+            $promptVars = @{
+                repo      = $repo
+                context   = $planningContext
+                maxIssues = $Config.max_issues_per_planning_cycle
+                slots     = $julesAvailableSlots
+            }
+
+            $stepPrompt = Get-VorceConfigPrompt -Config $Config -PromptKey $step.prompt_ref -Variables $promptVars
+            $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$stepPrompt"
+
+            $stepResult = Invoke-DualCeoTask `
+                -QuotaRegistry $QuotaRegistry `
+                -Config $Config `
+                -TaskType "planning" `
+                -DryRun:$DryRun `
+                -Prompt $fullPrompt `
+                -State $State `
+                -AlphaTierOverride $step.tier `
+                -BetaTierOverride $step.tier
+
+            if ($stepResult.success) {
+                $output = [string]$stepResult.output
+                $planningContext += "`n### Ergebnis von $($step.label):`n$output`n"
+
+                # Wenn es der Propose-Schritt ist, Issues extrahieren
+                if ($step.id -eq "propose_issues") {
+                    $stepIssues = @(Convert-PlanningProposalOutput -Output $output)
+                    $newIssues += $stepIssues
+                    Write-Host "[PLANNING] $($stepIssues.Count) Issues vorgeschlagen." -ForegroundColor DarkGray
                 }
-
-                if ($contextLines.Count -gt 0) {
-                    $promptIssuesContext = "`n`nHier sind die verfuegbaren Details zu den genannten Gate-Issues (aus dem lokalen Cache):`n" + ($contextLines -join "`n")
-                }
-            } catch {
-                Write-Warning "[PLANNING] Fehler beim Laden des Issue-Contexts fuer den Prompt: $_"
+            } else {
+                Write-Warning "[PLANNING] Schritt $($step.id) fehlgeschlagen: $($stepResult.error)"
             }
         }
-
-        $promptText = @"
-Du bist der Autopilot fuer das Vorce-Projekt (Rust Projection-Mapping Software).
-Repository: $repo
-
-Aktuell gibt es nur $($candidates.Count) offene, delegierbare Issues.
-
-WICHTIGE ANWEISUNG ZU MCP-TOOLS:
-Du hast hier alle benoetigten Informationen direkt im Text.
-VERWENDE KEINE GITHUB-MCP-TOOLS (wie github_fetch_issue oder github_search_issues)! Das kostet nur unnoetig Zeit und Token. Arbeite AUSSCHLIESSLICH mit den Daten aus diesem Prompt.
-
-Plane strikt Richtung Release 1.0 Readiness. Massgeblicher Top-Level-Kompass ist:
-- #651 VOR-002_MAIs_Release-1.0-Readiness-Gate
-
-Priorisiere neue Aufgaben nur aus diesen Gate-Lanes:
-1. UI-Test-Automation: #650, #547, #549, #548
-2. Timeline/Show-Control Acceptance: #661, #662, #96, #98, #99, #101, #102, #103
-3. Cluster/Multi-Instance Scope-Freeze: #654, #655, #656, #657, #658, #659
-4. NDI/Asset-Verfuegbarkeit: #107
-5. macOS-CI/Smoke-Validation: #43
-6. Packaging/Install-Sanity und Scope-Freeze: #652, #653
-$promptIssuesContext
-
-Schlage bis zu $($Config.max_issues_per_planning_cycle) konkrete, kleine Issues vor.
-Keine generischen TODO-, Refactoring- oder Performance-Issues erzeugen, wenn sie nicht direkt eines der Release-Gates beweisbar voranbringen.
-Keine Master-Issues als Jules-Coding-Task erzeugen. Coding-/QA-Aufgaben muessen Standard- oder Sub-Issues sein und die Namenskonvention einhalten.
-
-WICHTIG ZUR AGENT-ZUWEISUNG:
-Du MUSST für jedes Issue gezielt entscheiden, welcher Agent es bearbeitet.
-- "jules": NUR für riesige Refactorings, UI-Architektur oder Multi-File Features nutzen.
-- Lokale CLI-Agents (z.B. "gemini_cli", "claude_code"): ZWINGEND zu nutzen für kleine Bugfixes, isolierte Modul-Anpassungen, Scripts, CI/CD-Fixes oder klar umrissene Algorithmen! Du SOLLST regelmäßig Aufgaben an diese CLI-Agents delegieren, um Jules zu entlasten!
-- Plane Working Sessions bewusst klein: fasse nur Aufgaben zusammen, die denselben engen Codebereich betreffen; sonst getrennte Sessions.
-- Der short_prompt muss maximal 280 Zeichen haben und das konkrete Ergebnis benennen. Keine langen Kontext-Dumps.
-- Ziel ist bessere Qualitaet bei weniger Kontext und schnellerer Ausfuehrung, nicht blindes Tokensparen.
-Verfügbare Agents: $agentsStr
-
-Antworte NUR mit einer JSON-Liste im Format:
-[{"title": "__VOR-000_SubI_Issue-Title", "body": "Beschreibung mit Parent-Issue und Acceptance-Evidence", "labels": ["jules-task", "priority: high", "testing"], "agent": "<agent_name_hier_eintragen>", "short_prompt": "<sehr kurzer Working-Session-Prompt>"}]
-
-Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
-"@
-        $planResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "planning" -DryRun:$DryRun -Prompt $promptText -State $State
-
-        if ($planResult.success) {
-            try {
-                $newIssues = @()
-                $parsedObj = $null
-                try {
-                    # Try to parse the entire output first
-                    $parsedObj = $planResult.output | ConvertFrom-Json
-                } catch {
-                    # Best-effort extraction if there's header/footer noise
-                    $jsonObjMatch = [regex]::Match($planResult.output, '(?s)\{.*\}')
-                    if ($jsonObjMatch.Success) {
-                        try { $parsedObj = $jsonObjMatch.Value | ConvertFrom-Json } catch {}
-                    }
-                    if ($null -eq $parsedObj) {
-                        $jsonArrMatch = [regex]::Match($planResult.output, '(?s)\[.*\]')
-                        if ($jsonArrMatch.Success) {
-                            try { $parsedObj = $jsonArrMatch.Value | ConvertFrom-Json } catch {}
-                        }
-                    }
-                }
-
-                if ($null -ne $parsedObj) {
-                    if ($parsedObj -is [System.Array] -or $parsedObj -is [System.Collections.IList]) {
-                        $newIssues = @($parsedObj)
-                    } elseif ($parsedObj.PSObject.Properties.Name -contains "proposal") {
-                        $propVal = $parsedObj.proposal
-                        if ($propVal -is [string]) {
-                            try { $newIssues = @($propVal | ConvertFrom-Json) } catch {}
-                        } else {
-                            $newIssues = @($propVal)
-                        }
-                    } elseif ($parsedObj.PSObject.Properties.Name -contains "response") {
-                        $respVal = $parsedObj.response
-                        if ($respVal -is [string]) {
-                            try {
-                                # If it's a JSON string inside response
-                                $nestedObj = $respVal | ConvertFrom-Json
-                                if ($nestedObj -is [System.Array] -or $nestedObj -is [System.Collections.IList]) {
-                                    $newIssues = @($nestedObj)
-                                } elseif ($nestedObj.PSObject.Properties.Name -contains "proposal") {
-                                    $newIssues = @($nestedObj.proposal)
-                                }
-                            } catch {
-                                # Try extracting list from response text
-                                $jsonMatch = [regex]::Match($respVal, '(?s)\[.*\]')
-                                if ($jsonMatch.Success) {
-                                    try { $newIssues = @($jsonMatch.Value | ConvertFrom-Json) } catch {}
-                                }
-                            }
-                        } else {
-                            $newIssues = @($respVal)
-                        }
-                    }
-                } else {
-                    # Final fallback: regex match on raw text
-                    $jsonMatch = [regex]::Match($planResult.output, '(?s)\[.*\]')
-                    if ($jsonMatch.Success) {
-                        try { $newIssues = @($jsonMatch.Value | ConvertFrom-Json) } catch {}
-                    }
-                }
+    }
 
                 if ($newIssues.Count -gt 0) {
                     $newIssuesCreated = $false
@@ -454,10 +516,6 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                         Write-Host "[PLANNING] $($candidates.Count) Issues bereit fuer Delegation (nach Reload)." -ForegroundColor Green
                     }
                 }
-            } catch {
-                Write-Warning "[PLANNING] Konnte CLI-Antwort nicht parsen: $_"
-            }
-        }
     }
 
     # --- Step 3: Delegate to Jules or local CLI Agents ---

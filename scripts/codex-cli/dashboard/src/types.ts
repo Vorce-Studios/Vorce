@@ -70,9 +70,18 @@ export interface DecisionPending {
   context: string;
   created_at: string;
   status?: string;
-  owner?: 'alpha_ceo' | 'user' | 'system';
+  owner?: 'beta_ceo' | 'alpha_ceo' | 'user' | 'system';
+  source?: 'audit' | 'monitoring' | 'planning' | string;
+  process_stage?: 'beta_remediation' | 'alpha_review' | 'alpha_remediation_planned' | 'user_decision' | string;
+  escalation_level?: 'none' | 'alpha' | 'user' | string;
+  remediation_command?: string;
+  remediation_result?: string;
+  remediation_attempted_at?: string;
+  alpha_attempted_at?: string;
+  alpha_attempts?: number;
   alpha_response?: string;
   user_response?: string;
+  user_escalation_reason?: string;
   resolution_attempted_at?: string;
 }
 
@@ -112,6 +121,21 @@ export interface ActiveSessions {
   run_control?: RunControl;
   processing_queue?: number[];
   working_sessions?: any[];
+}
+
+export interface AuditResult {
+  session_id?: string;
+  response?: string;
+  parsed?: {
+    issues_found?: boolean;
+    action?: 'remediate' | 'escalate' | 'none' | string;
+    remediation_command?: string;
+    dashboard_escalation?: string;
+    [key: string]: unknown;
+  } | null;
+  stats?: any;
+  updated_at?: string;
+  error?: string;
 }
 
 // ── GitHub Project Types ──

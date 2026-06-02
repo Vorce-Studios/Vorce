@@ -29,8 +29,10 @@ const GITHUB_REPO = 'Vorce-Studios/Vorce';
 const ACTIVE_JULES_STATES = new Set(['IN_PROGRESS', 'PAUSED', 'AWAITING_USER_FEEDBACK', 'AWAITING_USER_FEEDBACK_CI_OR_BLOCKER']);
 const PROJECT_STATUS_COLORS: Record<string, { border: string; bg: string; text: string; borderClass: string }> = {
   Planed: { border: '#6e7681', bg: 'bg-slate-500/20', text: 'text-slate-300', borderClass: 'border-slate-500/40' },
+  Todo: { border: '#6e7681', bg: 'bg-slate-500/20', text: 'text-slate-300', borderClass: 'border-slate-500/40' },
+  Backlog: { border: '#6e7681', bg: 'bg-slate-500/20', text: 'text-slate-300', borderClass: 'border-slate-500/40' },
   Started: { border: '#fb8500', bg: 'bg-orange-500/20', text: 'text-orange-300', borderClass: 'border-orange-500/40' },
-  Done: { border: '#2da44e', bg: 'bg-green-500/20', text: 'text-green-300', borderClass: 'border-green-500/40' },
+  'In Progress': { border: '#fb8500', bg: 'bg-orange-500/20', text: 'text-orange-300', borderClass: 'border-orange-500/40' },
   'J-Session_open': { border: '#bf8700', bg: 'bg-yellow-500/20', text: 'text-yellow-300', borderClass: 'border-yellow-500/40' },
   'J-Session_failed': { border: '#bf8700', bg: 'bg-yellow-500/20', text: 'text-yellow-300', borderClass: 'border-yellow-500/40' },
   'J-Session_waiting': { border: '#bf8700', bg: 'bg-yellow-500/20', text: 'text-yellow-300', borderClass: 'border-yellow-500/40' },
@@ -41,6 +43,7 @@ const PROJECT_STATUS_COLORS: Record<string, { border: string; bg: string; text: 
   'Review-PR_inRework': { border: '#bf3989', bg: 'bg-pink-500/20', text: 'text-pink-300', borderClass: 'border-pink-500/40' },
   'QA-Test_needed': { border: '#8250df', bg: 'bg-purple-500/20', text: 'text-purple-300', borderClass: 'border-purple-500/40' },
   'QA-Test_running': { border: '#8250df', bg: 'bg-purple-500/20', text: 'text-purple-300', borderClass: 'border-purple-500/40' },
+  Done: { border: '#2da44e', bg: 'bg-green-500/20', text: 'text-green-300', borderClass: 'border-green-500/40' },
 };
 
 function timeAgo(dateStr: string): string {
@@ -102,13 +105,16 @@ function getDisplayStatus(ws: Workstream): string {
   if (julesState === 'FAILED') return 'J-Session_failed';
   if (julesState === 'AWAITING_USER_FEEDBACK' || julesState === 'AWAITING_USER_FEEDBACK_CI_OR_BLOCKER' || julesState === 'ESCALATED_TO_USER') return 'J-Session_waiting';
   if (julesState && ACTIVE_JULES_STATES.has(julesState)) return 'J-Session_open';
-  if (ws.issue?.labels?.some(l => l.name === 'status: in-progress')) return 'Started';
+  if (ws.issue?.labels?.some(l => l.name === 'status: in-progress') || (ws.issue?.assignees && ws.issue.assignees.length > 0)) return 'Started';
   return 'Planed';
 }
 
 function getMasterStatus(ws: Workstream): string {
   if (ws.issue?.state === 'CLOSED') return 'Done';
-  if (ws.projectItem?.status === 'Done' || ws.projectItem?.status === 'Started') return ws.projectItem.status;
+  if (ws.projectItem?.status === 'Done' || ws.projectItem?.status === 'Started' || ws.projectItem?.status === 'In Progress') {
+    if (ws.projectItem.status === 'In Progress') return 'Started';
+    return ws.projectItem.status;
+  }
   if (!ws.children.length) return 'Planed';
   const doneChildren = ws.children.filter(c => getDisplayStatus(c) === 'Done').length;
   if (doneChildren === ws.children.length) return 'Done';
@@ -459,7 +465,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
   const getSectionStatus = (ws: Workstream): 'Planed' | 'Started' | 'Done' => {
     const status = ws.isMaster ? getMasterStatus(ws) : getDisplayStatus(ws);
     if (status === 'Done') return 'Done';
-    if (status === 'Planed') return 'Planed';
+    if (status === 'Planed' || status === 'Todo' || status === 'Backlog') return 'Planed';
     return 'Started';
   };
 

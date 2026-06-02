@@ -17,7 +17,12 @@ function Add-AuditDecisionPending {
         [Parameter(Mandatory)][string]$Topic,
         [Parameter(Mandatory)][string]$Context,
         [string]$Status = "awaiting_alpha",
-        [string]$Owner = "alpha_ceo"
+        [string]$Owner = "alpha_ceo",
+        [string]$ProcessStage = "alpha_review",
+        [string]$EscalationLevel = "alpha",
+        [string]$RemediationCommand = "",
+        [string]$RemediationResult = "",
+        [string]$UserEscalationReason = ""
     )
 
     $id = Get-AuditAlertId -Topic $Topic -Context $Context
@@ -26,17 +31,37 @@ function Add-AuditDecisionPending {
         ($_.topic -eq $Topic -and $_.context -eq $Context)
     })
     if ($exists.Count -gt 0) {
+        $existing = $exists[0]
+        $hasAlphaAttempt = ($existing.PSObject.Properties.Name -contains "alpha_response" -and -not [string]::IsNullOrWhiteSpace([string]$existing.alpha_response)) -or
+                           ($existing.PSObject.Properties.Name -contains "status" -and [string]$existing.status -match "^alpha_")
+        if ($hasAlphaAttempt -and [string]$existing.owner -ne "user") {
+            $existing | Add-Member -MemberType NoteProperty -Name "owner" -Value "user" -Force
+            $existing | Add-Member -MemberType NoteProperty -Name "status" -Value "awaiting_user" -Force
+            $existing | Add-Member -MemberType NoteProperty -Name "process_stage" -Value "user_decision" -Force
+            $existing | Add-Member -MemberType NoteProperty -Name "escalation_level" -Value "user" -Force
+            $existing | Add-Member -MemberType NoteProperty -Name "user_escalation_reason" -Value "Beta CEO hat denselben Audit-Fund erneut gemeldet, nachdem Alpha CEO bereits eingebunden war. Alpha konnte die Ursache offenbar nicht zielfuehrend beheben." -Force
+            Write-Host "[AUDIT] Wiederholter Fund nach Alpha-Stufe: Eskalation an User hochgestuft." -ForegroundColor Yellow
+            return
+        }
         Write-Host "[AUDIT] Eskalation '$Topic' existiert bereits, keine Dublette." -ForegroundColor DarkGray
         return
     }
 
     $State.decisions_pending += @([ordered]@{
-        id         = $id
-        topic      = $Topic
-        context    = $Context
-        created_at = (Get-Date -Format 'o')
-        status     = $Status
-        owner      = $Owner
+        id                       = $id
+        topic                    = $Topic
+        context                  = $Context
+        created_at               = (Get-Date -Format 'o')
+        status                   = $Status
+        owner                    = $Owner
+        source                   = "audit"
+        process_stage            = $ProcessStage
+        escalation_level         = $EscalationLevel
+        remediation_command      = $RemediationCommand
+        remediation_result       = $RemediationResult
+        remediation_attempted_at = if ($RemediationResult) { (Get-Date -Format 'o') } else { $null }
+        alpha_attempts           = 0
+        user_escalation_reason   = $UserEscalationReason
     })
 }
 
@@ -93,16 +118,16 @@ Deine Aufgabe ist ein unabhaengiges AUDIT des aktuellen Projektstatus.
 
 MANDAT DES USERS (VERLETZUNG FUEHRT ZUM ABBRUCH):
 1. Du MUSST DEINE ANTWORT ZWINGEND AUF DEUTSCH VERFASSEN! Jede andere Sprache ist verboten.
-2. Wenn du Probleme findest (z.B. fehlschlagende CI), DARFST DU NIEMALS SOFORT ESKALIEREN! Du MUSST zuerst eine Aktion ('remediate') vorschlagen.
+2. Wenn du Probleme findest (z.B. fehlschlagende CI), DARFST DU NIEMALS SOFORT AN DEN USER ESKALIEREN! Du MUSST zuerst eine Aktion ('remediate') vorschlagen und damit selbst einen zielgerichteten Behebungsversuch starten.
 3. STRENGES VERBOT FÜR MERGE-KONFLIKTE: Du darfst NIEMALS eigenmächtig Jules-Sessions für PR-Merge-Konflikte starten! Das Starten von Jules-Sessions für Merge-Konflikte wird bereits automatisch und gebündelt in der Planning-Phase übernommen. Jede redundante Jules-Session kostet den User wertvolles Tageslimit (100 Sessions/Tag).
 4. STRENGES VERBOT FÜR JULES-CANCEL: Du darfst NIEMALS Befehle vorschlagen, die eine Jules-Session abbrechen, stoppen oder löschen! Das Limit von 100 Jules-Sessions pro Tag erfordert, dass fehlgeschlagene/hängende Sessions maximal pausiert (und vom User später re-purposed) werden, aber niemals gelöscht/gecancelt.
-5. Nur wenn absolut klar ist, dass eine KI das Problem nicht loesen kann (z.B. fehlende Zugriffsrechte oder User-Entscheidung zwingend erforderlich), darfst du 'escalate' waehlen.
+5. Nur wenn Remediation nicht zielfuehrend ist oder absolut klar ist, dass CEO Alpha planen/entscheiden muss, darfst du 'escalate' waehlen. Diese Eskalation geht IMMER zuerst an CEO Alpha, niemals direkt an den User.
 6. JEDE Eskalation muss hochdetailliert sein! Kein unspezifisches BlaBla wie 'Erfordert sofortige manuelle Intervention'.
 7. Eine korrekte Eskalation enthaelt:
    - Exakt WELCHER PR/Issue betroffen ist.
    - WARUM die KI es nicht selbst loesen konnte (welche Limits/Gruende?).
    - WAS genau der User tun soll (Schritt fuer Schritt).
-8. Eskalationen gehen zuerst an CEO Alpha. Nur wenn Alpha die Ursache nicht beheben konnte oder der Fall zwingend Owner-Rechte/Produktentscheidung braucht, wird an den User eskaliert.
+8. Eskalationsprozess ist strikt: Beta CEO versucht Remediation -> falls nicht zielfuehrend: Eskalation an CEO Alpha fuer die naechste Planning-Session -> nur wenn Alpha nicht helfen konnte oder Owner-Rechte/Produktentscheidung zwingend sind: Eskalation an den User.
 9. Nutze fuer einfache Analyse-/Fix-Aufgaben bevorzugt ein verfuegbares CLI Tool mit kurzem Prompt oder einen klar begrenzten lokalen Befehl. Keine langen Kontext-Dumps.
 
 Aktuelle offene Issues:
@@ -155,6 +180,15 @@ Antworte strikt im JSON-Format:
 
         if (Test-Path $outputFile) {
             try {
+                $dashboardAuditPath = Join-Path $ScriptDir "dashboard\public\audit-result.json"
+                $rawAuditObj = Get-Content $outputFile -Raw -Encoding UTF8 | ConvertFrom-Json
+                $rawAuditObj | Add-Member -MemberType NoteProperty -Name "updated_at" -Value ((Get-Item $outputFile).LastWriteTime.ToString("o")) -Force
+                if (Get-Command Write-SafeJson -ErrorAction SilentlyContinue) {
+                    Write-SafeJson -FilePath $dashboardAuditPath -Data $rawAuditObj
+                } else {
+                    $rawAuditObj | ConvertTo-Json -Depth 20 | Set-Content $dashboardAuditPath -Encoding UTF8
+                }
+
                 $resultJson = Get-Content $outputFile -Raw -Encoding UTF8
                 $parsedObj = $null
                 $jsonObjMatch = [regex]::Match($resultJson, '(?s)\{.*\}')
@@ -183,11 +217,21 @@ Antworte strikt im JSON-Format:
                             Write-Host "[AUDIT] Remediation erfolgreich gestartet." -ForegroundColor Green
                         } catch {
                             Write-Warning "[AUDIT] Remediation fehlgeschlagen: $_"
-                            Add-AuditDecisionPending -State $State -Topic "Beta CEO Remediation Failed" -Context "Der Versuch, das Problem automatisch zu beheben, schlug fehl. Befehl: $($parsedObj.remediation_command). Fehler: $_`n`nNaechster Schritt: CEO Alpha soll zuerst entscheiden, ob ein anderer lokaler Fix, ein CLI-Working-Task oder eine User-Eskalation noetig ist."
+                            Add-AuditDecisionPending `
+                                -State $State `
+                                -Topic "Beta CEO Remediation Failed" `
+                                -Context "Der Versuch, das Problem automatisch zu beheben, schlug fehl. Befehl: $($parsedObj.remediation_command). Fehler: $_`n`nNaechster Schritt: CEO Alpha muss in der naechsten Planning-Session zuerst einen konkreten Folgeplan erstellen. Erst wenn das nicht zielfuehrend ist, darf an den User eskaliert werden." `
+                                -RemediationCommand ([string]$parsedObj.remediation_command) `
+                                -RemediationResult "failed: $($_.Exception.Message)"
                         }
                     } elseif ($parsedObj.action -eq "escalate") {
-                        Write-Host "[AUDIT] CEO Beta eskaliert zum Dashboard." -ForegroundColor Red
-                        Add-AuditDecisionPending -State $State -Topic "Beta CEO Audit Alert" -Context ([string]$parsedObj.dashboard_escalation)
+                        Write-Host "[AUDIT] CEO Beta eskaliert an CEO Alpha fuer Planning." -ForegroundColor Red
+                        Add-AuditDecisionPending `
+                            -State $State `
+                            -Topic "Beta CEO Audit Alert" `
+                            -Context ([string]$parsedObj.dashboard_escalation) `
+                            -RemediationCommand ([string]$parsedObj.remediation_command) `
+                            -RemediationResult "beta_escalated_to_alpha"
                     }
                 } else {
                     Write-Host "[AUDIT] CEO Beta meldet: Keine gravierenden Probleme gefunden." -ForegroundColor Green
