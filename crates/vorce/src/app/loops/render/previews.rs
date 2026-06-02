@@ -73,7 +73,11 @@ pub(crate) fn prepare_texture_previews(app: &mut App, encoder: &mut wgpu::Comman
         use std::collections::hash_map::Entry;
         let current_view_arc = match app.output_preview_cache.entry(output_id) {
             Entry::Occupied(mut e) => {
-                let (id, old_view) = e.get_mut();
+                let (id, old_view) = {
+                    let (id, view) = e.get_mut();
+                    (*id, view.clone())
+                };
+
                 if needs_recreate {
                     let target_view =
                         target_tex.create_view(&wgpu::TextureViewDescriptor::default());
@@ -82,12 +86,14 @@ pub(crate) fn prepare_texture_previews(app: &mut App, encoder: &mut wgpu::Comman
                         &app.backend.device,
                         &target_view_arc,
                         wgpu::FilterMode::Linear,
-                        *id,
+                        id,
                     );
-                    *e.get_mut() = (*id, target_view_arc.clone());
+                    *e.get_mut() = (id, target_view_arc.clone());
+                    app.ui_state.module_canvas.output_previews.insert(output_id, id);
                     target_view_arc
                 } else {
-                    old_view.clone()
+                    app.ui_state.module_canvas.output_previews.insert(output_id, id);
+                    old_view
                 }
             }
             Entry::Vacant(e) => {
@@ -99,6 +105,7 @@ pub(crate) fn prepare_texture_previews(app: &mut App, encoder: &mut wgpu::Comman
                     wgpu::FilterMode::Linear,
                 );
                 e.insert((id, target_view_arc.clone()));
+                app.ui_state.module_canvas.output_previews.insert(output_id, id);
                 target_view_arc
             }
         };

@@ -229,6 +229,8 @@ export interface AutopilotConfig {
   max_issues_per_planning_cycle: number;
   dual_ceo: DualCeoConfig;
   planning_sequence?: PlanningStep[];
+  monitoring_sequence?: PlanningStep[];
+  audit_sequence?: PlanningStep[];
   prompts?: Record<string, string>;
 }
 

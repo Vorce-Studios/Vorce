@@ -4,6 +4,10 @@
 
 Set-StrictMode -Version Latest
 
+# Load required libraries for argument building
+$script:LibDir = Split-Path -Parent $PSCommandPath
+. (Join-Path $script:LibDir "cli-router.ps1")
+
 function Format-DeliberationPrompt {
     param(
         [Parameter(Mandatory)][string]$Phase,
@@ -56,7 +60,6 @@ function Invoke-VisibleCeoPhase {
         return [pscustomobject]@{ success = $true; output = "{`"dry_run`": true}"; stats = @{} }
     }
 
-    # FIX: Path to runner script is one level up from lib
     $libRoot = Split-Path -Parent $PSCommandPath
     $scriptRoot = Split-Path -Parent $libRoot
     $tempDir = Join-Path $scriptRoot "tmp"
@@ -68,8 +71,28 @@ function Invoke-VisibleCeoPhase {
     $statusFile = Join-Path $tempDir "status-$uniqueId.txt"
     $promptFile = Join-Path $tempDir "prompt-$uniqueId.txt"
 
-    # Important: Do not include prompt in args file, as run-visible-ceo-phase.ps1 adds it from prompt file
+    # Resolve actual model name from tier
+    $providerConfig = $QuotaRegistry.providers.$providerName
+    $modelName = if ($providerConfig.models.PSObject.Properties.Name -contains $modelTier) {
+        $providerConfig.models.$modelTier.name
+    } else {
+        $modelTier
+    }
+
+    # Build arguments with placeholder for prompt to avoid length limits in JSON
+    # run-visible-ceo-phase.ps1 will replace __V_PROMPT__ with actual prompt
     $cliArgs = @()
+    if ($providerConfig.PSObject.Properties.Name -contains "cli_args" -and $providerConfig.cli_args) {
+        foreach ($arg in $providerConfig.cli_args) {
+            $replaced = $arg -replace '\{PROMPT\}', '__V_PROMPT__'
+            $replaced = $replaced -replace '\{MODEL\}', $modelName
+            $cliArgs += $replaced
+        }
+    } else {
+        # Default fallback
+        $cliArgs = @("-p", "__V_PROMPT__")
+    }
+
     $cliArgs | ConvertTo-Json -Depth 5 | Set-Content -Path $argsFile -Encoding UTF8
     $Prompt | Set-Content -Path $promptFile -Encoding UTF8
 
@@ -79,16 +102,25 @@ function Invoke-VisibleCeoPhase {
     $powerShellHost = (Get-Command pwsh -ErrorAction SilentlyContinue)
     if ($powerShellHost) { $powerShellHost = $powerShellHost.Source } else { $powerShellHost = (Get-Command powershell -ErrorAction Stop).Source }
 
-    $runnerArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $runnerScript, "-CliCommand", $CeoInfo.command, "-CliArgsFile", $argsFile, "-OutputFile", $outputFile, "-StatusFile", $statusFile, "-PromptFile", $promptFile, "-PhaseName", "$($CeoInfo.label): $PhaseName", "-ProviderName", $providerName, "-ModelName", $modelTier, "-WorkingDirectory", $workDir)
+    $runnerArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $runnerScript, "-CliCommand", $CeoInfo.command, "-CliArgsFile", $argsFile, "-OutputFile", $outputFile, "-StatusFile", $statusFile, "-PromptFile", $promptFile, "-PhaseName", "$($CeoInfo.label): $PhaseName", "-ProviderName", $providerName, "-ModelName", "$modelTier ($modelName)", "-WorkingDirectory", $workDir)
 
     Write-Host "[CEO] Oeffne sichtbares Terminal: $($CeoInfo.label) - $PhaseName ($providerName)" -ForegroundColor Cyan
     $process = Start-Process -FilePath $powerShellHost -ArgumentList $runnerArgs -WindowStyle Normal -PassThru
     $process.WaitForExit()
     
     $output = if (Test-Path $outputFile) { Get-Content -LiteralPath $outputFile -Raw -Encoding UTF8 } else { "" }
+    
+    # Read status from status file if possible (more reliable than process exit code in some shells)
+    $finalSuccess = ($process.ExitCode -eq 0)
+    if (Test-Path $statusFile) {
+        $statusVal = Get-Content -Path $statusFile -Raw | Out-String
+        if ($statusVal.Trim() -eq "0") { $finalSuccess = $true }
+        elseif ($statusVal.Trim() -ne "") { $finalSuccess = $false }
+    }
+
     Remove-Item -Path $argsFile, $outputFile, $statusFile, $promptFile -Force -ErrorAction SilentlyContinue
 
-    return [pscustomobject]@{ success = ($process.ExitCode -eq 0); output = $output; stats = @{} }
+    return [pscustomobject]@{ success = $finalSuccess; output = $output; stats = @{} }
 }
 
 function Resolve-DualCeos {

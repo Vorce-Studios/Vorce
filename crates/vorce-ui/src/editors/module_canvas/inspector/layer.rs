@@ -58,7 +58,11 @@ fn render_standard_layer_controls(
     });
 
     ui.checkbox(mapping_mode, "Mapping Mode (Grid)");
-    render_mesh_ui(ui, mesh, mesh_id_salt, show_mesh_editor);
+
+    ui.add_space(8.0);
+    ui.group(|ui| {
+        render_mesh_ui(ui, mesh, mesh_id_salt, show_mesh_editor);
+    });
 }
 
 /// Renders the configuration UI for a `ModulePartType::Layer`.

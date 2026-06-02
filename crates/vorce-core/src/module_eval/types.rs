@@ -93,7 +93,7 @@ pub fn primary_render_connection_idx(
             ModulePartType::Layer(_) => "media_in",
             ModulePartType::Modulizer(_) => "media_in",
             ModulePartType::Mask(_) => "media_in",
-            ModulePartType::Mesh(_) => "vertex_in",
+            ModulePartType::Mesh(_) => "media_in",
             _ => "0", // Fallback for legacy / unknown
         }
     } else {

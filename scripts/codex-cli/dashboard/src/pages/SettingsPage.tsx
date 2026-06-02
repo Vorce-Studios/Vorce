@@ -385,7 +385,7 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
           </div>
 
           {/* Card: Dual-CEO Deliberation */}
-          {config.dual_ceo && (
+          {config.dual_ceo && config.dual_ceo.enabled && (
             <div className="glass-card p-6">
               <h3 className="text-base font-semibold text-slate-200 border-b border-slate-700/50 pb-3 mb-4 flex items-center gap-2">
                 <Users className="w-4 h-4 text-purple-400" />
@@ -502,6 +502,84 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
               </div>
             </div>
           )}
+
+          {/* Card: Planning Sequence */}
+          <div className="glass-card p-6">
+            <h3 className="text-base font-semibold text-slate-200 border-b border-slate-700/50 pb-3 mb-4 flex items-center gap-2">
+              <ListFilter className="w-4 h-4 text-blue-400" />
+              Planning Sequence (Working Sessions)
+            </h3>
+            <div className="space-y-3">
+              {config.planning_sequence?.map((step, idx) => (
+                <div key={step.id} className="flex items-center gap-2 bg-slate-900/40 p-2 rounded border border-slate-800">
+                  <span className="text-[10px] font-mono text-slate-500 w-4">{idx + 1}.</span>
+                  <input
+                    type="text"
+                    value={step.label}
+                    onChange={(e) => {
+                      const next = [...(config.planning_sequence || [])];
+                      next[idx] = { ...next[idx], label: e.target.value };
+                      handleConfigChange('planning_sequence', next);
+                    }}
+                    className="bg-transparent border-none text-xs text-slate-200 focus:ring-0 flex-1"
+                  />
+                  <select
+                    value={step.tier}
+                    onChange={(e) => {
+                      const next = [...(config.planning_sequence || [])];
+                      next[idx] = { ...next[idx], tier: e.target.value as any };
+                      handleConfigChange('planning_sequence', next);
+                    }}
+                    className="bg-slate-800 border-none text-[10px] text-slate-400 rounded px-1 py-0.5 focus:ring-0"
+                  >
+                    <option value="fast">Fast</option>
+                    <option value="balanced">Balanced</option>
+                    <option value="high">High</option>
+                    <option value="cheap">Cheap</option>
+                    <option value="premium">Premium</option>
+                  </select>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Card: Monitoring Sequence */}
+          <div className="glass-card p-6">
+            <h3 className="text-base font-semibold text-slate-200 border-b border-slate-700/50 pb-3 mb-4 flex items-center gap-2">
+              <Cpu className="w-4 h-4 text-amber-400" />
+              Monitoring Sequence
+            </h3>
+            <div className="space-y-3">
+              {config.monitoring_sequence?.map((step, idx) => (
+                <div key={step.id} className="flex items-center gap-2 bg-slate-900/40 p-2 rounded border border-slate-800">
+                  <span className="text-[10px] font-mono text-slate-500 w-4">{idx + 1}.</span>
+                  <input
+                    type="text"
+                    value={step.label}
+                    onChange={(e) => {
+                      const next = [...(config.monitoring_sequence || [])];
+                      next[idx] = { ...next[idx], label: e.target.value };
+                      handleConfigChange('monitoring_sequence', next);
+                    }}
+                    className="bg-transparent border-none text-xs text-slate-200 focus:ring-0 flex-1"
+                  />
+                  <select
+                    value={step.tier}
+                    onChange={(e) => {
+                      const next = [...(config.monitoring_sequence || [])];
+                      next[idx] = { ...next[idx], tier: e.target.value as any };
+                      handleConfigChange('monitoring_sequence', next);
+                    }}
+                    className="bg-slate-800 border-none text-[10px] text-slate-400 rounded px-1 py-0.5 focus:ring-0"
+                  >
+                    <option value="fast">Fast</option>
+                    <option value="balanced">Balanced</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* Card: System-Prompts */}
           <div className="glass-card p-6">
