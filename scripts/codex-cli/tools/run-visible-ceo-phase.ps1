@@ -193,7 +193,7 @@ try {
     }
 
     $exitCode = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }
-    
+
     if ($exitCode -ne 0) {
         $outContent = Get-Content -LiteralPath $OutputFile -Raw -ErrorAction SilentlyContinue
         if ($outContent -match '(?s)\{.*\}' -or $outContent -match '```json') {

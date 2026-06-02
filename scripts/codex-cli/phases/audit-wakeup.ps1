@@ -96,7 +96,7 @@ Antworte strikt im JSON-Format:
 
     $cliArgsFile = Join-Path $ScriptDir "tmp\beta-audit-args.json"
     @("-m", "gemini-2.5-flash", "--output-format", "json", "-y") | ConvertTo-Json -Depth 5 -Compress | Out-File $cliArgsFile -Encoding UTF8
-    
+
     $statusFile = Join-Path $ScriptDir "tmp\beta-audit-status.txt"
 
     $cliArgs = @{
@@ -121,7 +121,7 @@ Antworte strikt im JSON-Format:
                 $jsonObjMatch = [regex]::Match($resultJson, '(?s)\{.*\}')
                 if ($jsonObjMatch.Success) {
                     $parsedObj = $jsonObjMatch.Value | ConvertFrom-Json
-                    
+
                     # Handle wrapper JSON from CLI router if present
                     if ($null -ne $parsedObj -and $parsedObj.PSObject.Properties.Name -contains "response") {
                         # The response string might contain markdown json blocks like ```json ... ```
@@ -136,7 +136,7 @@ Antworte strikt im JSON-Format:
 
                 if ($null -ne $parsedObj -and $parsedObj.issues_found -eq $true) {
                     Write-Host "[AUDIT] CEO Beta hat Probleme gefunden!" -ForegroundColor Yellow
-                    
+
                     if ($parsedObj.action -eq "remediate" -and -not [string]::IsNullOrWhiteSpace($parsedObj.remediation_command)) {
                         Write-Host "[AUDIT] Fuehre Remediation-Befehl aus: $($parsedObj.remediation_command)" -ForegroundColor Cyan
                         try {
