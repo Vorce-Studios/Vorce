@@ -1,7 +1,7 @@
 # scripts/codex-cli/phases/interval-stats.ps1
 # Synchronisiert Datenbank, Registry und GitHub Issues für das Dashboard
 
-Set-StrictMode -Version Latest
+# Set-StrictMode -Version Latest (Removed to fix Start-Job internal property access bug)
 $ScriptDir = Join-Path $PSScriptRoot ".."
 . (Join-Path $ScriptDir "lib\quota-manager.ps1")
 . (Join-Path $ScriptDir "lib\database-manager.ps1")
@@ -161,7 +161,7 @@ while ($true) {
             }
 
             # 1. Start Jobs
-            $jobIssues = Start-ThreadJob -ScriptBlock {
+            $jobIssues = Start-Job -ScriptBlock {
                 param($repos)
                 $allIssues = @()
                 foreach ($r in $repos) {
@@ -179,7 +179,7 @@ while ($true) {
                 return $allIssues
             } -ArgumentList (,$reposToPoll)
 
-            $jobPRs = Start-ThreadJob -ScriptBlock {
+            $jobPRs = Start-Job -ScriptBlock {
                 param($repos)
                 $allPRs = @()
                 foreach ($r in $repos) {
@@ -198,18 +198,17 @@ while ($true) {
             } -ArgumentList (,$reposToPoll)
 
             $jApiKey = Get-JulesApiKey
-            $jobJules = Start-ThreadJob -ScriptBlock {
+            $JulesScriptDir = Join-Path $ScriptDir "..\jules"
+            $jobJules = Start-Job -ScriptBlock {
                 param($apiKey, $scriptDir)
                 . (Join-Path $scriptDir "jules-api.ps1")
                 try {
-                    $jSessions = @(Get-AllJulesSessions -ApiKey $apiKey -PageSize 100 -MaxPages 5)
+                    $jSessions = @(Get-AllJulesSessions -ApiKey $apiKey -PageSize 100 -MaxPages 15)
                     $jList = @()
                     foreach ($s in $jSessions) {
                         $stateName = [string]$s.state
                         $source = [string]$s.sourceContext.source
                         $repo = if ($source -match "sources/github/(?<name>.*)") { $Matches["name"] } else { $source }
-
-                        if ($source -notlike "*Vorce*" -and $source -notlike "*MapFlow*") { continue }
 
                         $issueNum = Get-IssueNumberFromSession -Session $s
                         $jList += [ordered]@{
@@ -229,14 +228,24 @@ while ($true) {
                 }
             } -ArgumentList $jApiKey, $JulesScriptDir
 
+            $jobProjectItems = Start-Job -ScriptBlock {
+                $itemsRaw = gh project item-list 1 --owner Vorce-Studios --format json 2>$null
+                if ($LASTEXITCODE -eq 0 -and $itemsRaw) {
+                    $itemsData = $itemsRaw | Out-String | ConvertFrom-Json -ErrorAction SilentlyContinue
+                    return $itemsData
+                }
+                return $null
+            }
+
             # 2. Wait and Receive
-            Wait-Job $jobIssues, $jobPRs, $jobJules -Timeout 60 | Out-Null
+            Wait-Job $jobIssues, $jobPRs, $jobJules, $jobProjectItems -Timeout 180 | Out-Null
 
             $allIssues = Receive-Job $jobIssues
             $allPRs = Receive-Job $jobPRs
             $julesResult = Receive-Job $jobJules
+            $projectItems = Receive-Job $jobProjectItems
 
-            Remove-Job $jobIssues, $jobPRs, $jobJules -Force
+            Remove-Job $jobIssues, $jobPRs, $jobJules, $jobProjectItems -Force
 
             # 3. Write results
             if ($null -ne $allIssues -and $allIssues.Count -gt 0) {
@@ -253,13 +262,18 @@ while ($true) {
                 Write-JsonLocked -Path (Join-Path $DashboardPublicDir "jules-sessions.json") -Data @($julesResult) | Out-Null
                 Write-Host "[STATS] Jules API Sessions updated ($($julesResult.Count) sessions)." -ForegroundColor Gray
             }
+            if ($null -ne $projectItems -and $projectItems.items.Count -gt 0) {
+                Write-JsonLocked -Path (Join-Path $DashboardPublicDir "project-items.json") -Data $projectItems | Out-Null
+                Write-Host "[STATS] Project Items updated ($($projectItems.items.Count) items)." -ForegroundColor Gray
+            }
 
             $lastGhFetch = $now
         }
 
     } catch {
         Write-Warning "[STATS] Sync Fehler: $($_.Exception.Message)"
+        Write-Warning "StackTrace: $($_.ScriptStackTrace)"
     }
 
-    Start-Sleep -Seconds $dashboardSyncIntervalSec
+    break
 }

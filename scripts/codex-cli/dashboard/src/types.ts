@@ -44,6 +44,7 @@ export interface ActiveDelegation {
   issue_title: string;
   jules_session_id: string;
   jules_state: string;
+  agent_type?: string;
   pr_url: string | null;
   delegated_at: string;
   last_checked_at: string;
@@ -81,6 +82,17 @@ export interface ActiveSessions {
   autopilot_created_issues: unknown[];
   completed_this_session: CompletedItem[];
   decisions_pending?: DecisionPending[];
+  deliberation_log?: any[];
+}
+
+// ── GitHub Project Types ──
+export interface ProjectItem {
+  id: string;
+  status: string;
+  jules_session_status?: string;
+  pr_checks_status?: string;
+  review_status?: string;
+  [key: string]: any;
 }
 
 // ── GitHub Issues Types ──
@@ -102,6 +114,7 @@ export interface GitHubIssue {
   title: string;
   updatedAt: string;
   url: string;
+  repo?: string;
 }
 
 // ── Pull Requests Types ──
@@ -129,6 +142,9 @@ export interface PullRequest {
   title: string;
   updatedAt: string;
   url: string;
+  isDraft?: boolean;
+  reviewDecision?: string;
+  repo?: string;
 }
 
 // ── Autopilot Config Types ──

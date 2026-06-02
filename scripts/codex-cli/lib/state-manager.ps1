@@ -179,7 +179,7 @@ function Invoke-StartupCleanup {
 }
 
 function New-AutopilotState {
-    return [ordered]@{
+    return [PSCustomObject]@{
         schema_version          = 1
         session_id              = "autopilot-$(Get-Date -Format 'yyyy-MM-dd-HHmm')"
         started_at              = (Get-Date -Format 'o')
@@ -228,9 +228,9 @@ function Initialize-AutopilotState {
     $existing = Read-AutopilotState
     $defaults = New-AutopilotState
 
-    if ($null -ne $existing -and -not $Force.IsPresent -and ($null -ne $existing.PSObject)) {
+    if ($null -ne $existing -and -not $Force.IsPresent -and ($existing -is [System.Management.Automation.PSCustomObject] -or $existing -is [System.Collections.IDictionary])) {
         # Ensure all default properties exist on the existing state
-        foreach ($key in $defaults.Keys) {
+        foreach ($key in $defaults.PSObject.Properties.Name) {
             if (-not ($existing.PSObject.Properties.Name -contains $key)) {
                 $existing | Add-Member -MemberType NoteProperty -Name $key -Value $defaults[$key] -Force
             }

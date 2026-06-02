@@ -94,73 +94,7 @@ function Invoke-MonitoringWakeUp {
             }
         }
 
-        # Master Issue creation for conflicts — with robust dedup
-        if ($conflictingPrs.Count -gt 0) {
-            # Check if a conflict-resolution issue was already created in the last 24 hours
-            $recentConflictIssue = $false
-            if ($null -ne $State.autopilot_created_issues) {
-                foreach ($entry in $State.autopilot_created_issues) {
-                    $isConflictTag = $false
-                    if ((Test-ObjectProperty -Object $entry -Name "tag") -and [string]$entry.tag -match "^resolve-conflicts-") {
-                        $isConflictTag = $true
-                    }
-                    if ($isConflictTag -and (Test-ObjectProperty -Object $entry -Name "created_at")) {
-                        try {
-                            $createdAt = [datetimeoffset]::Parse([string]$entry.created_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
-                            $ageHours = ((Get-Date) - $createdAt.LocalDateTime).TotalHours
-                            if ($ageHours -lt 24) {
-                                $recentConflictIssue = $true
-                                Write-Host "[MONITOR]   Merge-Konflikt-Issue wurde vor $([Math]::Round($ageHours,1))h erstellt (Issue #$($entry.issue_number)). Ueberspringe Neuerstellung." -ForegroundColor DarkGray
-                                break
-                            }
-                        } catch {}
-                    }
-                }
-            }
-
-            if (-not $recentConflictIssue) {
-                $prNumbers = @($conflictingPrs | Sort-Object number | ForEach-Object { $_.number }) -join "-"
-                $conflictTag = "resolve-conflicts-$prNumbers"
-                Write-Host "[MONITOR]   Erstelle gebuendeltes Master-Issue fuer $($conflictingPrs.Count) Konflikte" -ForegroundColor Yellow
-                if (-not $DryRun.IsPresent) {
-                    $issueTitle = "MF-StIs_Resolve-Merge-Conflicts: PRs $($prNumbers -replace '-', ', ')"
-                    $issueBody = "Die folgenden Pull Requests haben Merge-Konflikte:`n`n"
-                    foreach ($cpr in $conflictingPrs) {
-                        $issueBody += "- PR #$($cpr.number) ($($cpr.headRefName)): $($cpr.title)`n"
-                    }
-                    $issueBody += "`nBitte alle Konflikte in einer einzigen Jules-Session aufloesen (Branches auschecken, main mergen, Konflikte beheben, pushen).`n"
-                    $issueBody += "`nPrioritaet: KRITISCH - blockiert Release-Pipeline."
-
-                    $newIssueUrl = gh issue create --repo $repo --title $issueTitle --body $issueBody --label "jules-task,priority: critical,bug" 2>&1
-                    if ($LASTEXITCODE -eq 0 -and $newIssueUrl -match "/issues/(\d+)") {
-                        $newIssueNum = [int]$Matches[1]
-                        Write-Host "[MONITOR]   -> Master-Issue #$newIssueNum erfolgreich erstellt (priority: critical)!" -ForegroundColor Green
-
-                        if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
-                        $State.autopilot_created_issues += [ordered]@{ tag = $conflictTag; issue_number = $newIssueNum; created_at = (Get-Date -Format 'o') }
-                        if ($targetAgent -eq "jules") {
-                            Write-Host "[MONITOR]   -> Delegiere Master-Issue #$newIssueNum direkt an Jules (viele Konflikte)!" -ForegroundColor Cyan
-                            $newSessionId = "resolve-conflicts-$newIssueNum-$(Get-Date -Format 'yyyyMMddHHmmss')"
-                            Add-Delegation -State $State -IssueNumber $newIssueNum -IssueTitle $issueTitle -JulesSessionId $newSessionId -AgentType "jules" -JobId "direct-delegate"
-                        } else {
-                            Write-Host "[MONITOR]   -> Starten lokalen CLI-Agenten $targetAgent für Issue #$newIssueNum" -ForegroundColor Cyan
-                            try {
-                                $quotaRegistryPath = Join-Path $ScriptDir "quota-registry.json"
-                                $ToolsDir = Join-Path $ScriptDir "tools"
-                                $cmdArgs = "-NoExit", "-File", "`"$ToolsDir\run-visible-agent-task.ps1`"", "-IssueNumber", $newIssueNum, "-IssueTitle", "`"$issueTitle`"", "-AgentProvider", "`"$targetAgent`"", "-Repository", "`"$repo`"", "-QuotaRegistryPath", "`"$quotaRegistryPath`""
-                                $proc = Start-Process pwsh -ArgumentList $cmdArgs -PassThru -WindowStyle Normal
-                                Add-Delegation -State $State -IssueNumber $newIssueNum -IssueTitle $issueTitle -JulesSessionId "local-agent-$($proc.Id)" -AgentType $targetAgent -JobId $($proc.Id.ToString())
-                            } catch {
-                                Write-Warning "[MONITOR] Lokaler Agent $targetAgent fuer #$newIssueNum fehlgeschlagen: $_"
-                                Add-ErrorLog -State $State -Message "Local agent $targetAgent failed for #$newIssueNum" -Context $_.Exception.Message
-                            }
-                        }
-
-                        Save-AutopilotState -State $State
-                    }
-                }
-            }
-        }
+        # PR-Konflikte werden nun exklusiv vom Alpha CEO in der Planning-Phase (planning-wakeup.ps1) behandelt und an lokale CLI-Agenten delegiert.
     } catch {
         Write-Warning "[MONITOR] PR-Check fehlgeschlagen: $_"
     }

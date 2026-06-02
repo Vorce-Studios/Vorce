@@ -7,6 +7,7 @@ interface Props {
   sessions: ActiveSessions;
   pullRequests: PullRequest[];
   julesSessions?: any[];
+  projectItems?: any[];
 }
 
 interface Workstream {
@@ -15,7 +16,9 @@ interface Workstream {
   session?: ActiveDelegation;
   julesSessionRaw?: any; // Aus julesSessions array falls keine Delegation
   pr?: PullRequest;
-  status: 'COMPLETED' | 'IN_PROGRESS' | 'NEEDS_REVIEW' | 'BLOCKED' | 'ERROR' | 'OPEN' | 'CONFLICTING' | 'STALLED';
+  projectItem?: any;
+  status: string;
+  issueType: 'MASTER' | 'STANDARD' | 'OTHER';
   sortScore: number;
   isMaster: boolean;
   parentId?: string;
@@ -41,12 +44,38 @@ function getStatusColor(status: Workstream['status']) {
     case 'ERROR': return { border: '#f43f5e', bg: 'bg-rose-500/20', text: 'text-rose-400', borderClass: 'border-rose-500/30' };
     case 'CONFLICTING': return { border: '#e11d48', bg: 'bg-rose-600/35', text: 'text-rose-300 font-bold', borderClass: 'border-rose-500/50 animate-pulse' };
     case 'STALLED': return { border: '#d97706', bg: 'bg-amber-600/20', text: 'text-amber-300 font-semibold', borderClass: 'border-amber-500/40' };
-    case 'NEEDS_REVIEW': return { border: '#3b82f6', bg: 'bg-blue-500/20', text: 'text-blue-400', borderClass: 'border-blue-500/30' };
-    case 'IN_PROGRESS': return { border: '#10b981', bg: 'bg-emerald-500/20', text: 'text-emerald-400', borderClass: 'border-emerald-500/30' };
-    case 'COMPLETED': return { border: '#334155', bg: 'bg-slate-700/20', text: 'text-slate-400', borderClass: 'border-slate-700/30' };
+    case 'NEEDS_REVIEW':
+    case 'Review-PR_needed': return { border: '#3b82f6', bg: 'bg-blue-500/20', text: 'text-blue-400', borderClass: 'border-blue-500/30' };
+    case 'IN_PROGRESS':
+    case 'In_Progress': return { border: '#10b981', bg: 'bg-emerald-500/20', text: 'text-emerald-400', borderClass: 'border-emerald-500/30' };
+    case 'Done': return { border: '#8b5cf6', bg: 'bg-purple-500/20', text: 'text-purple-400', borderClass: 'border-purple-500/30' };
     case 'BLOCKED': return { border: '#f97316', bg: 'bg-orange-500/20', text: 'text-orange-400', borderClass: 'border-orange-500/30' };
+    case 'QA-Test_needed':
+    case 'QA-Test_running': return { border: '#a855f7', bg: 'bg-fuchsia-500/20', text: 'text-fuchsia-400', borderClass: 'border-fuchsia-500/30' };
+    case 'Planed': return { border: '#06b6d4', bg: 'bg-cyan-500/20', text: 'text-cyan-400', borderClass: 'border-cyan-500/30' };
     case 'OPEN': default: return { border: '#475569', bg: 'bg-slate-700/20', text: 'text-slate-300', borderClass: 'border-slate-700/30' };
   }
+}
+
+type Phase = 'Phase 1' | 'Phase 2' | 'Phase 3' | 'Phase 4' | 'Phase 5' | 'Phase 6';
+const PHASES = ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4', 'Phase 5', 'Phase 6'];
+
+function getPhase(ws: Workstream): { phase: Phase, label: string, index: number } {
+  const s = ws.status;
+  if (s === 'Done') return { phase: 'Phase 6', label: 'Phase 6', index: 5 };
+  if (s === 'QA-Test_needed' || s === 'QA-Test_running') return { phase: 'Phase 5', label: 'Phase 5', index: 4 };
+  if (s === 'Review-PR_needed' || s === 'Review-PR_inRework' || s === 'NEEDS_REVIEW' || ws.session?.jules_state === 'AWAITING_USER_FEEDBACK' || ws.julesSessionRaw?.state === 'AWAITING_USER_FEEDBACK') return { phase: 'Phase 4', label: 'Phase 4', index: 3 };
+  if (s === 'PR-Checks_Run' || s === 'PR-Checks_failed' || s === 'PR-Merge_Conflicts' || (ws.pr && ws.pr.state === 'OPEN' && !ws.session)) return { phase: 'Phase 3', label: 'Phase 3', index: 2 };
+  if (s === 'IN_PROGRESS' || s === 'In_Progress' || ws.session?.jules_state === 'IN_PROGRESS' || ws.julesSessionRaw?.state === 'IN_PROGRESS' || s === 'STALLED' || s === 'CONFLICTING') return { phase: 'Phase 2', label: 'Phase 2', index: 1 };
+  return { phase: 'Phase 1', label: 'Phase 1', index: 0 };
+}
+
+function getGHBadgeInfo(ws: Workstream) {
+  const ghStatus = ws.projectItem?.status;
+  if (ghStatus) {
+    return { label: ghStatus, ...getStatusColor(ghStatus) };
+  }
+  return { label: ws.status, ...getStatusColor(ws.status) };
 }
 
 function fixGithubUrl(url: string | undefined): string {
@@ -54,9 +83,10 @@ function fixGithubUrl(url: string | undefined): string {
   return url.replace(/github\.com\/[^\/]+\/MapFlow/gi, 'github.com/Vorce-Studios/Vorce');
 }
 
-export default function WorkstreamsPage({ issues, sessions, pullRequests, julesSessions }: Props) {
-  const [filter, setFilter] = useState<'ALL' | 'ACTIVE' | 'ERROR'>('ALL');
+export default function WorkstreamsPage({ issues, sessions, pullRequests, julesSessions, projectItems }: Props) {
+  const [filter, setFilter] = useState<'ALL' | 'ACTIVE' | 'ERROR'>('ACTIVE');
   const [isGrouped, setIsGrouped] = useState(true);
+  const [sections, setSections] = useState({ planed: true, master: true, standard: true, other: true });
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [expandedDetails, setExpandedDetails] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,7 +111,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
 
     const getOrAdd = (id: string): Workstream => {
       if (!wsMap.has(id)) {
-        wsMap.set(id, { id, status: 'OPEN', sortScore: 0, isMaster: false, children: [] });
+        wsMap.set(id, { id, status: 'OPEN', issueType: 'OTHER', sortScore: 0, isMaster: false, children: [] });
       }
       return wsMap.get(id)!;
     };
@@ -92,8 +122,12 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
       if (isRelevant || issue.state === 'OPEN') {
         const ws = getOrAdd(issue.number.toString());
         ws.issue = issue;
-        if (issue.title.includes('_MAIs_') || issue.title.includes('_StIs_') || issue.title.includes('Master-Issue') || issue.title.includes('[MASTER]')) {
+        if (issue.title.includes('_MAIs_') || issue.title.includes('Master-Issue') || issue.title.includes('[MASTER]')) {
           ws.isMaster = true;
+          ws.issueType = 'MASTER';
+        } else if (issue.title.includes('_StIs_')) {
+          ws.isMaster = false;
+          ws.issueType = 'STANDARD';
         }
       }
     });
@@ -107,7 +141,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
     // 3. Jules Sessions (Raw) Fallback mit repariertem Mapping
     julesSessions?.forEach(js => {
       if (!js.repo.includes('Vorce')) return;
-      if (js.state === 'COMPLETED' || js.state === 'QUEUED') return;
+      if (js.state === 'Done' || js.state === 'Planed' || js.state === 'QUEUED' || js.state === 'COMPLETED') return;
 
       let issueNum = '';
       if (js.issueNumber) {
@@ -136,6 +170,14 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
 
       const ws = getOrAdd(targetId);
       ws.pr = pr;
+    });
+
+    // 5. Project Items (GH Status)
+    projectItems?.forEach(pi => {
+      if (pi.content?.number) {
+        const ws = getOrAdd(pi.content.number.toString());
+        ws.projectItem = pi;
+      }
     });
 
     // 5. Status & Parent-Child Verknüpfung
@@ -170,7 +212,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
         status = 'BLOCKED';
         sortScore = 950;
       } else if (ws.issue?.state === 'CLOSED' || (ws.pr && ws.pr.state === 'MERGED')) {
-        status = 'COMPLETED';
+        status = 'Done';
         sortScore = -100;
       } else if (needsReview || (ws.pr && ws.pr.state === 'OPEN')) {
         status = 'NEEDS_REVIEW';
@@ -209,7 +251,11 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
       if (ws.parentId && wsMap.has(ws.parentId)) {
         wsMap.get(ws.parentId)!.children.push(ws);
       } else {
-        roots.push(ws);
+        // Nur Workstreams als Root zulassen, die auch wirklich ein lokales GitHub Issue haben!
+        // Ignoriere nackte Jules Sessions oder lose PRs als Haupt-Workstream (Mist mit Unlinked Tasks).
+        if (ws.issue) {
+          roots.push(ws);
+        }
       }
     });
 
@@ -238,8 +284,11 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
         } else if (childStatuses.includes('OPEN')) {
           ws.status = 'OPEN';
           ws.sortScore = Math.max(ws.sortScore, 0);
+        } else if (childStatuses.includes('Done')) {
+          ws.status = 'Done';
+          ws.sortScore = Math.max(ws.sortScore, -50);
         } else {
-          ws.status = 'COMPLETED';
+          ws.status = 'Done';
           ws.sortScore = Math.max(ws.sortScore, -100);
         }
       }
@@ -264,18 +313,21 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
     }
 
     // Filter und Suche anwenden
-    let filtered = result.filter(ws => {
-      // 1. Suche nach Titel / Nummer
+    const filtered = result.filter(ws => {
+      // 1. Suche-Filter
       if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchesIssue = ws.issue && (ws.issue.title.toLowerCase().includes(query) || ws.issue.number.toString().includes(query));
-        const matchesPr = ws.pr && (ws.pr.title.toLowerCase().includes(query) || ws.pr.number.toString().includes(query));
-        const matchesSession = ws.session && ws.session.jules_session_id.toLowerCase().includes(query);
-        const matchesChildren = ws.children.some(c =>
-          c.issue?.title.toLowerCase().includes(query) ||
-          c.issue?.number.toString().includes(query)
-        );
-        if (!matchesIssue && !matchesPr && !matchesSession && !matchesChildren) {
+        const q = searchQuery.toLowerCase();
+        const matchesQuery = ws.issue?.title?.toLowerCase().includes(q) ||
+                             ws.issue?.number?.toString().includes(q) ||
+                             ws.pr?.title?.toLowerCase().includes(q) ||
+                             ws.pr?.number?.toString().includes(q) ||
+                             ws.session?.jules_session_id?.toLowerCase().includes(q);
+        if (!matchesQuery) {
+          return false;
+        }
+      } else {
+        // In der Standard-Ansicht OHNE aktive Suche wollen wir KEINE abgeschlossenen Workstreams ('Done') sehen!
+        if (ws.status === 'Done') {
           return false;
         }
       }
@@ -334,15 +386,24 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
     const isDetailExpanded = expandedDetails.has(ws.id);
     const hasChildren = ws.children.length > 0;
     const colors = getStatusColor(ws.status);
+    const ghBadge = getGHBadgeInfo(ws);
 
     const issueUrl = ws.issue ? fixGithubUrl(ws.issue.url) : '';
     const sessionPrUrl = ws.session?.pr_url ? fixGithubUrl(ws.session.pr_url) : '';
     const prUrl = ws.pr ? fixGithubUrl(ws.pr.url) : '';
+    const phaseInfo = getPhase(ws);
 
     return (
-      <div key={ws.id} className="flex flex-col">
+      <div key={ws.id} className="flex flex-col relative mt-2">
+        {/* GH Status & Phase Badge (Half Outside) */}
+        {!isChild && (
+          <div className={`absolute -top-3 right-4 px-3 py-1 rounded-md text-[11px] font-bold border shadow-lg backdrop-blur-md z-10 flex items-center gap-2 ${ghBadge.bg} ${ghBadge.text} ${ghBadge.borderClass}`}>
+            {!ws.isMaster && <span className="opacity-80 border-r border-current pr-2">{PHASES[phaseInfo.index]}</span>}
+            <span>{ghBadge.label}</span>
+          </div>
+        )}
         <div
-          className={`glass-card overflow-hidden hover:border-slate-700 transition-colors flex flex-col border-l-4 ${isChild ? 'ml-8 my-1 opacity-90 scale-[0.98]' : 'mb-3'}`}
+          className={`glass-card overflow-hidden hover:border-slate-700 transition-colors flex flex-col border-l-4 ${isChild ? 'ml-8 my-1 opacity-90 scale-[0.98]' : 'mt-3 mb-3'}`}
           style={{ borderLeftColor: colors.border }}
         >
           {/* COMPACT MINIMAL BAR */}
@@ -354,9 +415,12 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
                 </button>
               )}
               {ws.isMaster ? <Layers className="w-4 h-4 text-purple-400 flex-shrink-0" /> : <AlertCircle className="w-4 h-4 text-slate-500 flex-shrink-0" />}
-              <span className={`badge ${colors.bg} ${colors.text} border ${colors.borderClass} text-[10px] flex-shrink-0`}>
-                {ws.status}
-              </span>
+              
+              {isChild && (
+                <span className={`badge ${colors.bg} ${colors.text} border ${colors.borderClass} text-[10px] flex-shrink-0`}>
+                  {ws.status}
+                </span>
+              )}
 
               {ws.issue ? (
                 <a href={issueUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-slate-200 hover:text-emerald-400 transition-colors truncate" title={ws.issue.title}>
@@ -402,6 +466,54 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
                 {isDetailExpanded ? 'Details zuklappen' : 'Details aufklappen'}
               </button>
             </div>
+          </div>
+
+          {/* PHASE PROGRESS BAR / SEGMENTED BAR */}
+          <div className="px-4 pb-4">
+            {ws.isMaster ? (
+              <div className="mt-2">
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-[10px] text-slate-400 font-medium">Sub-Issues Fortschritt</span>
+                  <span className="text-[10px] text-slate-300 font-bold">
+                    {ws.children.filter(c => c.projectItem?.status === 'Done' || c.status === 'Done').length} von {ws.children.length} 
+                    ({ws.children.length ? Math.round((ws.children.filter(c => c.projectItem?.status === 'Done' || c.status === 'Done').length / ws.children.length) * 100) : 0}%)
+                  </span>
+                </div>
+                <div className="flex gap-1 h-2 w-full">
+                  {ws.children.length === 0 ? (
+                    <div className="flex-1 rounded-full bg-slate-800/60" />
+                  ) : (
+                    ws.children.map((c, i) => {
+                      const isDone = c.projectItem?.status === 'Done' || c.status === 'Done';
+                      const cColor = getStatusColor(c.projectItem?.status || c.status);
+                      const bgClass = cColor.bg ? cColor.bg.replace(/\/20|\/35/g, '') : 'bg-slate-600';
+                      return <div key={i} className={`flex-1 rounded-full ${isDone ? bgClass : 'bg-slate-800/60'}`} title={c.issue?.title || c.id} />
+                    })
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="relative flex items-center justify-between w-full mt-4 pb-6 px-2">
+                {/* Background Line */}
+                <div className="absolute left-2 right-2 top-1.5 -translate-y-1/2 h-1 bg-slate-800/60 rounded-full" />
+                
+                {PHASES.map((p, idx) => {
+                  const isActive = idx === phaseInfo.index;
+                  const isPast = idx < phaseInfo.index;
+                  const bgClass = colors.bg ? colors.bg.replace(/\/20|\/35/g, '') : 'bg-slate-600';
+                  const activeBgClass = bgClass.includes('bg-') ? bgClass : 'bg-emerald-500';
+
+                  return (
+                    <div key={p} className="relative z-10 flex flex-col items-center">
+                      <div className={`w-3 h-3 rounded-full transition-all duration-300 ring-4 ring-slate-900 ${isActive ? activeBgClass + ' shadow-[0_0_10px_rgba(0,0,0,0.5)] scale-125' : isPast ? activeBgClass : 'bg-slate-700'}`} />
+                      <span className={`absolute top-5 text-[9px] font-bold tracking-wider uppercase whitespace-nowrap transition-colors ${isActive ? 'text-slate-100' : isPast ? 'text-slate-400' : 'text-slate-600'}`}>
+                        {p}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* DETAIL VIEW */}
@@ -626,13 +738,51 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
       </div>
 
       {/* Pipeline View */}
-      <div className="space-y-1">
+      <div className="space-y-6">
         {filteredWorkstreams.length === 0 ? (
           <div className="glass-card p-12 text-center text-slate-400 border-dashed border-slate-800">
             Keine Workstreams gefunden für diesen Filter.
           </div>
         ) : (
-          filteredWorkstreams.map(ws => renderWorkstream(ws))
+          <>
+            {/* Geplante Issues */}
+            {filteredWorkstreams.filter(ws => ws.projectItem?.status === 'Planed').length > 0 && (
+              <div className="space-y-2">
+                <button onClick={() => setSections(s => ({...s, planed: !s.planed}))} className="flex items-center gap-2 w-full text-left font-bold text-cyan-400 p-2 hover:bg-slate-800/50 rounded-lg transition-colors">
+                  {sections.planed ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                  Geplante Issues ({filteredWorkstreams.filter(ws => ws.projectItem?.status === 'Planed').length})
+                </button>
+                {sections.planed && (
+                  <div className="space-y-1 pl-2">
+                    {filteredWorkstreams.filter(ws => ws.projectItem?.status === 'Planed').map(ws => renderWorkstream(ws))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {[
+              { id: 'planed', label: 'Geplante Issues', color: 'text-cyan-400', filter: (ws: any) => ws.projectItem?.status === 'Planed' },
+              { id: 'master', label: 'Master-Issues', color: 'text-purple-400', filter: (ws: any) => ws.projectItem?.status !== 'Planed' && ws.issueType === 'MASTER' },
+              { id: 'standard', label: 'Standard-Issues', color: 'text-emerald-400', filter: (ws: any) => ws.projectItem?.status !== 'Planed' && ws.issueType === 'STANDARD' },
+              { id: 'other', label: 'Sonstige Workstreams', color: 'text-slate-400', filter: (ws: any) => ws.projectItem?.status !== 'Planed' && ws.issueType !== 'MASTER' && ws.issueType !== 'STANDARD' }
+            ].map(group => {
+              const items = filteredWorkstreams.filter(group.filter);
+              if (items.length === 0) return null;
+              return (
+                <div key={group.id} className="space-y-2">
+                  <button onClick={() => setSections(s => ({...s, [group.id]: !(s as any)[group.id]}))} className={`flex items-center gap-2 w-full text-left font-bold ${group.color} p-2 hover:bg-slate-800/50 rounded-lg transition-colors`}>
+                    {(sections as any)[group.id] ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                    {group.label} ({items.length})
+                  </button>
+                  {(sections as any)[group.id] && (
+                    <div className="space-y-1 pl-2">
+                      {items.map(ws => renderWorkstream(ws))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </>
         )}
       </div>
     </div>

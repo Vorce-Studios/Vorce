@@ -245,6 +245,16 @@ while ($true) {
     Save-AutopilotState -State $State
     $remainingSleep = [Math]::Max(1, [int]$sleepSeconds)
     while ($remainingSleep -gt 0) {
+        # Check clear flag responsively during sleep
+        $clearAlertsFlag = Join-Path $ScriptDir "clear-alerts.flag"
+        if (Test-Path $clearAlertsFlag) {
+            if ($State.PSObject.Properties.Name -contains "decisions_pending") {
+                $State.decisions_pending = @()
+            }
+            Remove-Item -Path $clearAlertsFlag -Force -ErrorAction SilentlyContinue
+            Save-AutopilotState -State $State
+            Write-Host "`n[LOOP] Beta CEO Eskalationen wurden manuell gelöscht (via Clear Command)." -ForegroundColor Green
+        }
         Start-Sleep -Seconds 1
         $remainingSleep--
     }

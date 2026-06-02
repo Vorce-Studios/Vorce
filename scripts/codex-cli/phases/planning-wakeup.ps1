@@ -15,11 +15,14 @@ function Invoke-PlanningWakeUp {
     Write-Host "`n[PLANNING] ========== Planning Wake-Up ==========" -ForegroundColor Blue
 
     # Ensure state arrays exist
-    if ($null -eq $State.autopilot_created_issues) {
+    if (-not ($State.PSObject.Properties.Name -contains "autopilot_created_issues")) {
         $State | Add-Member -MemberType NoteProperty -Name "autopilot_created_issues" -Value @() -Force
     }
-    if ($null -eq $State.active_delegations) {
+    if (-not ($State.PSObject.Properties.Name -contains "active_delegations")) {
         $State | Add-Member -MemberType NoteProperty -Name "active_delegations" -Value @() -Force
+    }
+    if (-not ($State.PSObject.Properties.Name -contains "escalated_issues")) {
+        $State | Add-Member -MemberType NoteProperty -Name "escalated_issues" -Value @() -Force
     }
 
     # Define script block to fetch candidates to avoid duplication
@@ -122,6 +125,81 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                 Write-Warning "[PLANNING] Re-Planning fuer #$issueNum fehlgeschlagen."
             }
         }
+    }
+    # --- Step 0.5: Check for PR Conflicts ---
+    Write-Host "[PLANNING] Pruefe auf ungeloeste PR Merge-Konflikte..." -ForegroundColor Cyan
+    try {
+        $prOutput = gh pr list --repo $repo --state open --json number,title,headRefName,statusCheckRollup,mergeable,labels --limit 100 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $prs = @($prOutput | Out-String | ConvertFrom-Json | ForEach-Object { $_ })
+            $conflictingPrs = @($prs | Where-Object { $_.mergeable -eq "CONFLICTING" })
+            
+            if ($conflictingPrs.Count -gt 0) {
+                # Check if a conflict-resolution issue was already created in the last 24 hours
+                $recentConflictIssue = $false
+                if ($null -ne $State.autopilot_created_issues) {
+                    foreach ($entry in $State.autopilot_created_issues) {
+                        $isConflictTag = $false
+                        if ((Test-ObjectProperty -Object $entry -Name "tag") -and [string]$entry.tag -match "^resolve-conflicts-") {
+                            $isConflictTag = $true
+                        }
+                        if ($isConflictTag -and (Test-ObjectProperty -Object $entry -Name "created_at")) {
+                            try {
+                                $createdAt = [datetimeoffset]::Parse([string]$entry.created_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
+                                $ageHours = ((Get-Date) - $createdAt.LocalDateTime).TotalHours
+                                if ($ageHours -lt 24) {
+                                    $recentConflictIssue = $true
+                                    Write-Host "[PLANNING]   Merge-Konflikt-Issue wurde vor $([Math]::Round($ageHours,1))h erstellt (Issue #$($entry.issue_number)). Ueberspringe Neuerstellung." -ForegroundColor DarkGray
+                                    break
+                                }
+                            } catch {}
+                        }
+                    }
+                }
+
+                if (-not $recentConflictIssue) {
+                    $prNumbers = @($conflictingPrs | Sort-Object number | ForEach-Object { $_.number }) -join "-"
+                    $conflictTag = "resolve-conflicts-$prNumbers"
+                    Write-Host "[PLANNING]   Erstelle gebuendeltes Konflikt-Issue fuer $($conflictingPrs.Count) Konflikte" -ForegroundColor Yellow
+                    
+                    if (-not $DryRun.IsPresent) {
+                        $issueTitle = "MF-StIs_Resolve-Merge-Conflicts: PRs $($prNumbers -replace '-', ', ')"
+                        $issueBody = "Die folgenden Pull Requests haben Merge-Konflikte:`n`n"
+                        foreach ($cpr in $conflictingPrs) {
+                            $issueBody += "- PR #$($cpr.number) ($($cpr.headRefName)): $($cpr.title)`n"
+                        }
+                        $issueBody += "`nBitte alle Konflikte manuell auflösen (Branches auschecken, main mergen, Konflikte beheben, pushen).`n"
+                        $issueBody += "`nPrioritaet: KRITISCH - blockiert Release-Pipeline."
+                        
+                        # EXKLUSIV fuer gemini_cli
+                        $targetAgent = "gemini_cli"
+                        $newIssueUrl = gh issue create --repo $repo --title $issueTitle --body $issueBody --label "priority: critical,bug,agent:$targetAgent" 2>&1
+                        if ($LASTEXITCODE -eq 0 -and $newIssueUrl -match "/issues/(\d+)") {
+                            $newIssueNum = [int]$Matches[1]
+                            Write-Host "[PLANNING]   -> Konflikt-Issue #$newIssueNum erfolgreich erstellt! Delegiere ZWINGEND an lokalen CLI-Agenten ($targetAgent)" -ForegroundColor Green
+
+                            if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
+                            $State.autopilot_created_issues += [ordered]@{ tag = $conflictTag; issue_number = $newIssueNum; created_at = (Get-Date -Format 'o') }
+                            
+                            try {
+                                $ScriptDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
+                                $quotaRegistryPath = Join-Path $ScriptDir "quota-registry.json"
+                                $ToolsDir = Join-Path $ScriptDir "tools"
+                                $cmdArgs = "-NoExit", "-File", "`"$ToolsDir\run-visible-agent-task.ps1`"", "-IssueNumber", $newIssueNum, "-IssueTitle", "`"$issueTitle`"", "-AgentProvider", "`"$targetAgent`"", "-Repository", "`"$repo`"", "-QuotaRegistryPath", "`"$quotaRegistryPath`""
+                                $proc = Start-Process pwsh -ArgumentList $cmdArgs -PassThru -WindowStyle Normal
+                                Add-Delegation -State $State -IssueNumber $newIssueNum -IssueTitle $issueTitle -JulesSessionId "local-agent-$($proc.Id)" -AgentType $targetAgent -JobId $($proc.Id.ToString())
+                            } catch {
+                                Write-Warning "[PLANNING] Lokaler Agent $targetAgent fuer #$newIssueNum fehlgeschlagen: $_"
+                            }
+
+                            Save-AutopilotState -State $State
+                        }
+                    }
+                }
+            }
+        }
+    } catch {
+        Write-Warning "[PLANNING] PR-Konflikt-Check fehlgeschlagen: $_"
     }
 
     # --- Step 1: Fetch open issues ---
@@ -384,7 +462,8 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
     $currentSessions = [int]$julesProvider.usage_today.calls
     $maxDaily = [int]$Config.jules.max_daily_sessions
     $maxConcurrent = [int]$Config.jules.max_concurrent_sessions
-    $julesActiveCount = @($State.active_delegations | Where-Object {
+    $activeDelegations = if ($null -ne $State -and $State.PSObject.Properties.Match("active_delegations").Count -gt 0 -and $null -ne $State.active_delegations) { @($State.active_delegations) } else { @() }
+    $julesActiveCount = @($activeDelegations | Where-Object {
         -not ($_.PSObject.Properties.Name -contains "agent_type") -or ($_.agent_type -eq "jules")
     }).Count
 
