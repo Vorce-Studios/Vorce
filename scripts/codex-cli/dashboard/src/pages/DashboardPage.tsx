@@ -56,19 +56,16 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   const totalCostToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.estimated_cost_usd || 0), 0);
   const totalCallsToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.calls || 0), 0);
 
-  // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
-  // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
+  const targetRepo = 'Vorce-Studios/Vorce';
   const activeJulesSessions = julesSessions ? julesSessions.filter(s =>
-      s.repo.includes('Vorce') &&
+      s.repo === targetRepo &&
       s.state !== 'COMPLETED' &&
-      s.state !== 'FAILED' &&
-      s.state !== 'CANCELLED' &&
       s.state !== 'QUEUED'
   ).length : 0;
 
-  // Filter PRs that are OPEN and NOT a Draft
-  const openPRs = pullRequests.filter(pr => pr.state === 'OPEN' && pr.isDraft !== true).length;
-  const conflictingPRs = pullRequests.filter(pr => pr.state === 'OPEN' && pr.isDraft !== true && pr.mergeable === 'CONFLICTING').length;
+  const vorceOpenPRs = pullRequests.filter(pr => (!pr.repo || pr.repo === targetRepo) && pr.state === 'OPEN');
+  const openPRs = vorceOpenPRs.length;
+  const conflictingPRs = vorceOpenPRs.filter(pr => pr.mergeable === 'CONFLICTING').length;
 
   const chartData = providerEntries
     .filter(([, p]) => p.enabled)
@@ -254,18 +251,5 @@ function KPICard({ title, value, subtitle, icon, color }: {
       <div className="text-2xl font-bold text-white">{value}</div>
       <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
     </div>
-  );
-}
-
-function JulesStateBadge({ state }: { state: string }) {
-  const configs: Record<string, { bg: string; text: string; label: string }> = {
-    'IN_PROGRESS': { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'In Progress' },
-    'AWAITING_USER_FEEDBACK': { bg: 'bg-amber-500/20', text: 'text-amber-400', label: 'Feedback' },
-    'COMPLETED': { bg: 'bg-emerald-500/20', text: 'text-emerald-400', label: 'Fertig' },
-    'FAILED': { bg: 'bg-red-500/20', text: 'text-red-400', label: 'Fehlgeschlagen' },
-  };
-  const cfg = configs[state] || { bg: 'bg-slate-500/20', text: 'text-slate-400', label: state };
-  return (
-    <span className={`badge ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
   );
 }

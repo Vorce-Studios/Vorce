@@ -20,23 +20,25 @@ interface ManagerReportingPageProps {
 export default function ManagerReportingPage({ registry, sessions, issues }: ManagerReportingPageProps) {
   const [timeRange, setTimeRange] = useState<'today' | '7d' | '30d'>('7d');
   const [selectedLabel, setSelectedLabel] = useState<string>('all');
+  const targetRepo = 'Vorce-Studios/Vorce';
+  const vorceIssues = issues.filter(i => !i.repo || i.repo === targetRepo);
 
   // --- 1. Berechnungen für Issues & PRs ---
-  const totalIssues = issues.length;
-  const closedIssues = issues.filter(i => i.state.toLowerCase() === 'closed').length;
+  const totalIssues = vorceIssues.length;
+  const closedIssues = vorceIssues.filter(i => i.state.toLowerCase() === 'closed').length;
   const resolutionRate = totalIssues > 0 ? Math.round((closedIssues / totalIssues) * 100) : 0;
 
   // Klassifizierung nach Label
-  const bugIssues = issues.filter(i => i.labels.some(l => l.name.toLowerCase().includes('bug')));
-  const featureIssues = issues.filter(i => i.labels.some(l => l.name.toLowerCase().includes('feature') || l.name.toLowerCase().includes('enhancement')));
-  const julesTasks = issues.filter(i => i.labels.some(l => l.name.toLowerCase().includes('jules')));
+  const bugIssues = vorceIssues.filter(i => i.labels.some(l => l.name.toLowerCase().includes('bug')));
+  const featureIssues = vorceIssues.filter(i => i.labels.some(l => l.name.toLowerCase().includes('feature') || l.name.toLowerCase().includes('enhancement')));
+  const julesTasks = vorceIssues.filter(i => i.labels.some(l => l.name.toLowerCase().includes('jules')));
 
   const openBugs = bugIssues.filter(i => i.state.toLowerCase() === 'open').length;
   const openFeatures = featureIssues.filter(i => i.state.toLowerCase() === 'open').length;
   const openJules = julesTasks.filter(i => i.state.toLowerCase() === 'open').length;
 
   // Lösungszeit berechnen (createdAt bis updatedAt bei geschlossenen Issues als Näherung)
-  const closedIssuesWithDuration = issues.filter(i => i.state.toLowerCase() === 'closed' && i.createdAt && i.updatedAt);
+  const closedIssuesWithDuration = vorceIssues.filter(i => i.state.toLowerCase() === 'closed' && i.createdAt && i.updatedAt);
   let avgResolutionTimeHours = 0;
   if (closedIssuesWithDuration.length > 0) {
     const totalHours = closedIssuesWithDuration.reduce((acc, issue) => {
@@ -92,12 +94,12 @@ export default function ManagerReportingPage({ registry, sessions, issues }: Man
 
   // Filterung aller Labels für Dropdown
   const allLabels = Array.from(
-    new Set(issues.flatMap(i => i.labels.map(l => l.name)))
+    new Set(vorceIssues.flatMap(i => i.labels.map(l => l.name)))
   ).sort();
 
   const filteredIssues = selectedLabel === 'all'
-    ? issues
-    : issues.filter(i => i.labels.some(l => l.name === selectedLabel));
+    ? vorceIssues
+    : vorceIssues.filter(i => i.labels.some(l => l.name === selectedLabel));
 
   return (
     <div className="space-y-6">

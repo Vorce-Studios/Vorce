@@ -19,7 +19,9 @@ function getRepository(): string {
         return config.repository;
       }
     }
-  } catch (e) {}
+  } catch {
+    return 'Vorce-Studios/Vorce';
+  }
   return 'Vorce-Studios/Vorce';
 }
 
@@ -84,9 +86,6 @@ export default defineConfig({
             } else {
               try {
                 const repos = [getRepository()];
-                if (repos[0] === 'Vorce-Studios/Vorce') {
-                  repos.push('MrLongNight/MapFlow');
-                }
                 let allIssues: any[] = [];
                 for (const r of repos) {
                   try {
@@ -99,14 +98,16 @@ export default defineConfig({
                       parsed.forEach((issue: any) => issue.repo = r);
                       allIssues = allIssues.concat(parsed);
                     }
-                  } catch (e) {}
+                  } catch {
+                    continue;
+                  }
                 }
                 const responseJson = JSON.stringify(allIssues);
                 issuesCache = responseJson;
                 issuesCacheTime = now;
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(responseJson);
-              } catch (err) {
+              } catch {
                 // Fallback to static public file if GH command fails
                 const fallbackPath = path.resolve(__dirname, './public/github-issues.json');
                 if (fs.existsSync(fallbackPath)) {
@@ -127,14 +128,11 @@ export default defineConfig({
             } else {
               try {
                 const repos = [getRepository()];
-                if (repos[0] === 'Vorce-Studios/Vorce') {
-                  repos.push('MrLongNight/MapFlow');
-                }
                 let allPRs: any[] = [];
                 for (const r of repos) {
                   try {
                     const prsJson = execSync(
-                      `gh pr list --repo ${r} --limit 1000 --state open --json number,title,state,mergeable,statusCheckRollup,headRefName,baseRefName,updatedAt,url`,
+                      `gh pr list --repo ${r} --limit 1000 --state open --json number,title,state,mergeable,isDraft,headRefName,baseRefName,updatedAt,url`,
                       { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }
                     );
                     const parsed = JSON.parse(prsJson);
@@ -142,14 +140,16 @@ export default defineConfig({
                       parsed.forEach((pr: any) => pr.repo = r);
                       allPRs = allPRs.concat(parsed);
                     }
-                  } catch (e) {}
+                  } catch {
+                    continue;
+                  }
                 }
                 const responseJson = JSON.stringify(allPRs);
                 prsCache = responseJson;
                 prsCacheTime = now;
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(responseJson);
-              } catch (err) {
+              } catch {
                 // Fallback to static public file if GH command fails
                 const fallbackPath = path.resolve(__dirname, './public/pull-requests.json');
                 if (fs.existsSync(fallbackPath)) {

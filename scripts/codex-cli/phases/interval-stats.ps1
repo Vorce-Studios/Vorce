@@ -156,9 +156,6 @@ while ($true) {
             Write-Host "[STATS] Starte parallelen Sync (Issues, PRs, Jules)..." -ForegroundColor Gray
 
             $reposToPoll = @($Repository)
-            if ($Repository -eq "Vorce-Studios/Vorce") {
-                $reposToPoll += "MrLongNight/MapFlow"
-            }
 
             # 1. Start Jobs
             $jobIssues = Start-Job -ScriptBlock {
@@ -183,7 +180,7 @@ while ($true) {
                 param($repos)
                 $allPRs = @()
                 foreach ($r in $repos) {
-                    $prsRaw = gh pr list --repo $r --state open --limit 1000 --json number,title,state,url,updatedAt,headRefName,baseRefName,mergeable,statusCheckRollup,isDraft 2>$null
+                    $prsRaw = gh pr list --repo $r --state open --limit 1000 --json number,title,state,url,updatedAt,headRefName,baseRefName,mergeable,isDraft 2>$null
                     if ($LASTEXITCODE -eq 0) {
                         $prData = $prsRaw | Out-String | ConvertFrom-Json -ErrorAction SilentlyContinue
                         if ($prData) {
@@ -200,15 +197,19 @@ while ($true) {
             $jApiKey = Get-JulesApiKey
             $JulesScriptDir = Join-Path $ScriptDir "..\jules"
             $jobJules = Start-Job -ScriptBlock {
-                param($apiKey, $scriptDir)
+                param($apiKey, $scriptDir, $repository)
                 . (Join-Path $scriptDir "jules-api.ps1")
                 try {
                     $jSessions = @(Get-AllJulesSessions -ApiKey $apiKey -PageSize 100 -MaxPages 15)
                     $jList = @()
                     foreach ($s in $jSessions) {
                         $stateName = [string]$s.state
-                        $source = [string]$s.sourceContext.source
+                        $sourceContext = Get-JulesObjectPropertyValue -Object $s -Name "sourceContext"
+                        $source = if ($null -ne $sourceContext) { [string](Get-JulesObjectPropertyValue -Object $sourceContext -Name "source") } else { "" }
                         $repo = if ($source -match "sources/github/(?<name>.*)") { $Matches["name"] } else { $source }
+                        if ($repo -ne $repository) {
+                            continue
+                        }
 
                         $issueNum = Get-IssueNumberFromSession -Session $s
                         $jList += [ordered]@{
@@ -226,7 +227,7 @@ while ($true) {
                 } catch {
                     return "ERROR:" + $_.Exception.Message
                 }
-            } -ArgumentList $jApiKey, $JulesScriptDir
+            } -ArgumentList $jApiKey, $JulesScriptDir, $Repository
 
             $jobProjectItems = Start-Job -ScriptBlock {
                 $itemsRaw = gh project item-list 1 --owner Vorce-Studios --format json 2>$null

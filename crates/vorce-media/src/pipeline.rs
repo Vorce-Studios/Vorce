@@ -390,12 +390,7 @@ mod tests {
     #[test]
     fn test_pipeline_with_test_pattern() {
         let mut pipeline = FramePipeline::new();
-        let decoder = TestPatternDecoder::new(
-            640,
-            480,
-            Duration::from_secs(1),
-            30.0,
-        );
+        let decoder = TestPatternDecoder::new(640, 480, Duration::from_secs(1), 30.0);
         let mut player = VideoPlayer::new(decoder);
         let _ = player.set_loop_mode(crate::player::LoopMode::Loop);
         let _ = player.play();

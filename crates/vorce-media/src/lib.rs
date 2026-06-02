@@ -21,7 +21,6 @@ pub mod mpv_decoder;
 pub mod pipeline;
 pub mod player;
 pub mod sequence;
-pub mod test_pattern_decoder;
 
 pub use decoder::ffmpeg::FFmpegDecoder;
 pub use decoder::test_pattern::TestPatternDecoder;
@@ -37,7 +36,6 @@ pub use player::{
     LoopMode, PlaybackCommand, PlaybackState, PlaybackStatus, PlayerError, VideoPlayer,
 };
 pub use sequence::ImageSequenceDecoder;
-pub use test_pattern_decoder::TestPatternDecoder;
 
 /// Media errors
 #[derive(Error, Debug)]

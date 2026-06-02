@@ -25,6 +25,9 @@ interface Workstream {
   children: Workstream[];
 }
 
+const GITHUB_REPO = 'Vorce-Studios/Vorce';
+const ACTIVE_JULES_STATES = new Set(['IN_PROGRESS', 'PAUSED', 'AWAITING_USER_FEEDBACK', 'AWAITING_USER_FEEDBACK_CI_OR_BLOCKER']);
+
 function timeAgo(dateStr: string): string {
   if (!dateStr) return 'N/A';
   const now = new Date();
@@ -39,54 +42,75 @@ function timeAgo(dateStr: string): string {
   return `vor ${days}d`;
 }
 
-function getStatusColor(status: Workstream['status']) {
-  switch (status) {
-    case 'ERROR': return { border: '#f43f5e', bg: 'bg-rose-500/20', text: 'text-rose-400', borderClass: 'border-rose-500/30' };
-    case 'CONFLICTING': return { border: '#e11d48', bg: 'bg-rose-600/35', text: 'text-rose-300 font-bold', borderClass: 'border-rose-500/50 animate-pulse' };
-    case 'STALLED': return { border: '#d97706', bg: 'bg-amber-600/20', text: 'text-amber-300 font-semibold', borderClass: 'border-amber-500/40' };
-    case 'NEEDS_REVIEW':
-    case 'Review-PR_needed': return { border: '#3b82f6', bg: 'bg-blue-500/20', text: 'text-blue-400', borderClass: 'border-blue-500/30' };
-    case 'IN_PROGRESS':
-    case 'In_Progress': return { border: '#10b981', bg: 'bg-emerald-500/20', text: 'text-emerald-400', borderClass: 'border-emerald-500/30' };
-    case 'Done': return { border: '#8b5cf6', bg: 'bg-purple-500/20', text: 'text-purple-400', borderClass: 'border-purple-500/30' };
-    case 'BLOCKED': return { border: '#f97316', bg: 'bg-orange-500/20', text: 'text-orange-400', borderClass: 'border-orange-500/30' };
-    case 'QA-Test_needed':
-    case 'QA-Test_running': return { border: '#a855f7', bg: 'bg-fuchsia-500/20', text: 'text-fuchsia-400', borderClass: 'border-fuchsia-500/30' };
-    case 'Planed': return { border: '#06b6d4', bg: 'bg-cyan-500/20', text: 'text-cyan-400', borderClass: 'border-cyan-500/30' };
-    case 'OPEN': default: return { border: '#475569', bg: 'bg-slate-700/20', text: 'text-slate-300', borderClass: 'border-slate-700/30' };
-  }
+const PROJECT_STATUS_COLORS: Record<string, { border: string; bg: string; text: string; borderClass: string }> = {
+  Planed: { border: '#6e7681', bg: 'bg-slate-500/20', text: 'text-slate-300', borderClass: 'border-slate-500/40' },
+  Started: { border: '#fb8500', bg: 'bg-orange-500/20', text: 'text-orange-300', borderClass: 'border-orange-500/40' },
+  Done: { border: '#2da44e', bg: 'bg-green-500/20', text: 'text-green-300', borderClass: 'border-green-500/40' },
+  'J-Session_open': { border: '#bf8700', bg: 'bg-yellow-500/20', text: 'text-yellow-300', borderClass: 'border-yellow-500/40' },
+  'J-Session_failed': { border: '#bf8700', bg: 'bg-yellow-500/20', text: 'text-yellow-300', borderClass: 'border-yellow-500/40' },
+  'J-Session_waiting': { border: '#bf8700', bg: 'bg-yellow-500/20', text: 'text-yellow-300', borderClass: 'border-yellow-500/40' },
+  'PR-Checks_Run': { border: '#0969da', bg: 'bg-blue-500/20', text: 'text-blue-300', borderClass: 'border-blue-500/40' },
+  'PR-Checks_failed': { border: '#0969da', bg: 'bg-blue-500/20', text: 'text-blue-300', borderClass: 'border-blue-500/40' },
+  'PR-Merge_Conflicts': { border: '#cf222e', bg: 'bg-red-500/20', text: 'text-red-300', borderClass: 'border-red-500/40' },
+  'Review-PR_needed': { border: '#bf3989', bg: 'bg-pink-500/20', text: 'text-pink-300', borderClass: 'border-pink-500/40' },
+  'Review-PR_inRework': { border: '#bf3989', bg: 'bg-pink-500/20', text: 'text-pink-300', borderClass: 'border-pink-500/40' },
+  'QA-Test_needed': { border: '#8250df', bg: 'bg-purple-500/20', text: 'text-purple-300', borderClass: 'border-purple-500/40' },
+  'QA-Test_running': { border: '#8250df', bg: 'bg-purple-500/20', text: 'text-purple-300', borderClass: 'border-purple-500/40' },
+};
+
+function getStatusColor(status: string) {
+  return PROJECT_STATUS_COLORS[status] || PROJECT_STATUS_COLORS.Planed;
 }
 
 type Phase = 'Phase 1' | 'Phase 2' | 'Phase 3' | 'Phase 4' | 'Phase 5' | 'Phase 6';
 const PHASES = ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4', 'Phase 5', 'Phase 6'];
 
 function getPhase(ws: Workstream): { phase: Phase, label: string, index: number } {
-  const s = ws.status;
+  const s = getDisplayStatus(ws);
   if (s === 'Done') return { phase: 'Phase 6', label: 'Phase 6', index: 5 };
   if (s === 'QA-Test_needed' || s === 'QA-Test_running') return { phase: 'Phase 5', label: 'Phase 5', index: 4 };
-  if (s === 'Review-PR_needed' || s === 'Review-PR_inRework' || s === 'NEEDS_REVIEW' || ws.session?.jules_state === 'AWAITING_USER_FEEDBACK' || ws.julesSessionRaw?.state === 'AWAITING_USER_FEEDBACK') return { phase: 'Phase 4', label: 'Phase 4', index: 3 };
-  if (s === 'PR-Checks_Run' || s === 'PR-Checks_failed' || s === 'PR-Merge_Conflicts' || (ws.pr && ws.pr.state === 'OPEN' && !ws.session)) return { phase: 'Phase 3', label: 'Phase 3', index: 2 };
-  if (s === 'IN_PROGRESS' || s === 'In_Progress' || ws.session?.jules_state === 'IN_PROGRESS' || ws.julesSessionRaw?.state === 'IN_PROGRESS' || s === 'STALLED' || s === 'CONFLICTING') return { phase: 'Phase 2', label: 'Phase 2', index: 1 };
+  if (s === 'Review-PR_needed' || s === 'Review-PR_inRework') return { phase: 'Phase 4', label: 'Phase 4', index: 3 };
+  if (s === 'PR-Checks_Run' || s === 'PR-Checks_failed' || s === 'PR-Merge_Conflicts') return { phase: 'Phase 3', label: 'Phase 3', index: 2 };
+  if (s === 'Started' || s === 'J-Session_open' || s === 'J-Session_failed' || s === 'J-Session_waiting') return { phase: 'Phase 2', label: 'Phase 2', index: 1 };
   return { phase: 'Phase 1', label: 'Phase 1', index: 0 };
 }
 
+function getDisplayStatus(ws: Workstream): string {
+  if (ws.projectItem?.status) return ws.projectItem.status;
+  if (ws.issue?.state === 'CLOSED') return 'Done';
+  if (ws.pr?.mergeable === 'CONFLICTING') return 'PR-Merge_Conflicts';
+  if (ws.pr?.statusCheckRollup?.some(c => c.conclusion === 'FAILURE')) return 'PR-Checks_failed';
+  if (ws.pr?.state === 'OPEN') return 'Review-PR_needed';
+  const julesState = ws.session?.jules_state || ws.julesSessionRaw?.state;
+  if (julesState === 'FAILED') return 'J-Session_failed';
+  if (julesState === 'AWAITING_USER_FEEDBACK' || julesState === 'AWAITING_USER_FEEDBACK_CI_OR_BLOCKER' || julesState === 'ESCALATED_TO_USER') return 'J-Session_waiting';
+  if (julesState && ACTIVE_JULES_STATES.has(julesState)) return 'J-Session_open';
+  if (ws.issue?.labels?.some(l => l.name === 'status: in-progress')) return 'Started';
+  return 'Planed';
+}
+
+function masterStatus(ws: Workstream): string {
+  if (!ws.children.length) return 'Planed';
+  const doneChildren = ws.children.filter(c => getDisplayStatus(c) === 'Done').length;
+  if (doneChildren === ws.children.length) return 'Done';
+  if (doneChildren > 0 || ws.children.some(c => getDisplayStatus(c) !== 'Planed')) return 'Started';
+  return 'Planed';
+}
+
 function getGHBadgeInfo(ws: Workstream) {
-  const ghStatus = ws.projectItem?.status;
-  if (ghStatus) {
-    return { label: ghStatus, ...getStatusColor(ghStatus) };
-  }
-  return { label: ws.status, ...getStatusColor(ws.status) };
+  const ghStatus = getDisplayStatus(ws);
+  return { label: ghStatus, ...getStatusColor(ghStatus) };
 }
 
 function fixGithubUrl(url: string | undefined): string {
   if (!url) return '';
-  return url.replace(/github\.com\/[^\/]+\/MapFlow/gi, 'github.com/Vorce-Studios/Vorce');
+  return url.replace(/github\.com\/[^/]+\/MapFlow/gi, 'github.com/Vorce-Studios/Vorce');
 }
 
 export default function WorkstreamsPage({ issues, sessions, pullRequests, julesSessions, projectItems }: Props) {
-  const [filter, setFilter] = useState<'ALL' | 'ACTIVE' | 'ERROR'>('ACTIVE');
+  const [filter, setFilter] = useState<'ALL' | 'ACTIVE' | 'ERROR'>('ALL');
   const [isGrouped, setIsGrouped] = useState(true);
-  const [sections, setSections] = useState({ planed: true, master: true, standard: true, other: true });
+  const [sections, setSections] = useState({ planed: true, master: true, standard: true });
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [expandedDetails, setExpandedDetails] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -111,24 +135,22 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
 
     const getOrAdd = (id: string): Workstream => {
       if (!wsMap.has(id)) {
-        wsMap.set(id, { id, status: 'OPEN', issueType: 'OTHER', sortScore: 0, isMaster: false, children: [] });
+        wsMap.set(id, { id, status: 'OPEN', issueType: 'STANDARD', sortScore: 0, isMaster: false, children: [] });
       }
       return wsMap.get(id)!;
     };
 
     // 1. Alle relevanten Issues einfügen
     issues.forEach(issue => {
-      const isRelevant = issue.state === 'OPEN' || issue.labels.some(l => l.name === 'jules-task' || l.name.startsWith('bug'));
-      if (isRelevant || issue.state === 'OPEN') {
-        const ws = getOrAdd(issue.number.toString());
-        ws.issue = issue;
-        if (issue.title.includes('_MAIs_') || issue.title.includes('Master-Issue') || issue.title.includes('[MASTER]')) {
-          ws.isMaster = true;
-          ws.issueType = 'MASTER';
-        } else if (issue.title.includes('_StIs_')) {
-          ws.isMaster = false;
-          ws.issueType = 'STANDARD';
-        }
+      if (issue.repo && issue.repo !== GITHUB_REPO) return;
+      const ws = getOrAdd(issue.number.toString());
+      ws.issue = issue;
+      if (issue.title.includes('_MAIs_') || issue.title.includes('Master-Issue') || issue.title.includes('[MASTER]')) {
+        ws.isMaster = true;
+        ws.issueType = 'MASTER';
+      } else {
+        ws.isMaster = false;
+        ws.issueType = 'STANDARD';
       }
     });
 
@@ -140,7 +162,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
 
     // 3. Jules Sessions (Raw) Fallback mit repariertem Mapping
     julesSessions?.forEach(js => {
-      if (!js.repo.includes('Vorce')) return;
+      if (js.repo !== GITHUB_REPO) return;
       if (js.state === 'Done' || js.state === 'Planed' || js.state === 'QUEUED' || js.state === 'COMPLETED') return;
 
       let issueNum = '';
@@ -158,7 +180,8 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
 
     // 4. Open PRs
     pullRequests.forEach(pr => {
-      if (pr.state === 'CLOSED') return;
+      if (pr.repo && pr.repo !== GITHUB_REPO) return;
+      if (pr.state !== 'OPEN') return;
 
       let targetId = '';
       const match = pr.headRefName.match(/(\d+)/);
@@ -174,6 +197,8 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
 
     // 5. Project Items (GH Status)
     projectItems?.forEach(pi => {
+      const repoName = pi.content?.repository || pi.repository?.replace(/^https:\/\/github\.com\//, '');
+      if (repoName && repoName !== GITHUB_REPO) return;
       if (pi.content?.number) {
         const ws = getOrAdd(pi.content.number.toString());
         ws.projectItem = pi;
@@ -295,7 +320,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
     });
 
     return roots.sort((a, b) => b.sortScore - a.sortScore);
-  }, [issues, sessions, pullRequests, julesSessions]);
+  }, [issues, sessions, pullRequests, julesSessions, projectItems]);
 
   const filteredWorkstreams = useMemo(() => {
     let result = workstreams;
@@ -325,7 +350,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
         if (!matchesQuery) {
           return false;
         }
-      } else {
+      } else if (filter !== 'ALL') {
         // In der Standard-Ansicht OHNE aktive Suche wollen wir KEINE abgeschlossenen Workstreams ('Done') sehen!
         if (ws.status === 'Done') {
           return false;
@@ -385,20 +410,23 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
     const isExpanded = expandedGroups.has(ws.id);
     const isDetailExpanded = expandedDetails.has(ws.id);
     const hasChildren = ws.children.length > 0;
-    const colors = getStatusColor(ws.status);
     const ghBadge = getGHBadgeInfo(ws);
+    const colors = ws.isMaster ? getStatusColor(masterStatus(ws)) : ghBadge;
 
     const issueUrl = ws.issue ? fixGithubUrl(ws.issue.url) : '';
     const sessionPrUrl = ws.session?.pr_url ? fixGithubUrl(ws.session.pr_url) : '';
     const prUrl = ws.pr ? fixGithubUrl(ws.pr.url) : '';
     const phaseInfo = getPhase(ws);
+    const phasePct = Math.max(3, Math.min(97, (phaseInfo.index / (PHASES.length - 1)) * 100));
 
     return (
       <div key={ws.id} className="flex flex-col relative mt-2">
         {/* GH Status & Phase Badge (Half Outside) */}
-        {!isChild && (
-          <div className={`absolute -top-3 right-4 px-3 py-1 rounded-md text-[11px] font-bold border shadow-lg backdrop-blur-md z-10 flex items-center gap-2 ${ghBadge.bg} ${ghBadge.text} ${ghBadge.borderClass}`}>
-            {!ws.isMaster && <span className="opacity-80 border-r border-current pr-2">{PHASES[phaseInfo.index]}</span>}
+        {!isChild && !ws.isMaster && (
+          <div
+            className={`absolute -top-3 px-3 py-1 rounded-md text-[11px] font-bold border shadow-lg backdrop-blur-md z-10 flex items-center gap-2 -translate-x-1/2 ${ghBadge.bg} ${ghBadge.text} ${ghBadge.borderClass}`}
+            style={{ left: `${phasePct}%` }}
+          >
             <span>{ghBadge.label}</span>
           </div>
         )}
@@ -418,7 +446,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
 
               {isChild && (
                 <span className={`badge ${colors.bg} ${colors.text} border ${colors.borderClass} text-[10px] flex-shrink-0`}>
-                  {ws.status}
+                  {getDisplayStatus(ws)}
                 </span>
               )}
 
@@ -472,6 +500,9 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
           <div className="px-4 pb-4">
             {ws.isMaster ? (
               <div className="mt-2">
+                <div className={`inline-flex items-center px-2 py-1 mb-2 rounded border text-[11px] font-bold ${getStatusColor(masterStatus(ws)).bg} ${getStatusColor(masterStatus(ws)).text} ${getStatusColor(masterStatus(ws)).borderClass}`}>
+                  {masterStatus(ws)}
+                </div>
                 <div className="flex justify-between items-center mb-1.5">
                   <span className="text-[10px] text-slate-400 font-medium">Sub-Issues Fortschritt</span>
                   <span className="text-[10px] text-slate-300 font-bold">
@@ -485,7 +516,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
                   ) : (
                     ws.children.map((c, i) => {
                       const isDone = c.projectItem?.status === 'Done' || c.status === 'Done';
-                      const cColor = getStatusColor(c.projectItem?.status || c.status);
+                      const cColor = getStatusColor(getDisplayStatus(c));
                       const bgClass = cColor.bg ? cColor.bg.replace(/\/20|\/35/g, '') : 'bg-slate-600';
                       return <div key={i} className={`flex-1 rounded-full ${isDone ? bgClass : 'bg-slate-800/60'}`} title={c.issue?.title || c.id} />
                     })
@@ -761,10 +792,8 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
             )}
 
             {[
-              { id: 'planed', label: 'Geplante Issues', color: 'text-cyan-400', filter: (ws: any) => ws.projectItem?.status === 'Planed' },
               { id: 'master', label: 'Master-Issues', color: 'text-purple-400', filter: (ws: any) => ws.projectItem?.status !== 'Planed' && ws.issueType === 'MASTER' },
-              { id: 'standard', label: 'Standard-Issues', color: 'text-emerald-400', filter: (ws: any) => ws.projectItem?.status !== 'Planed' && ws.issueType === 'STANDARD' },
-              { id: 'other', label: 'Sonstige Workstreams', color: 'text-slate-400', filter: (ws: any) => ws.projectItem?.status !== 'Planed' && ws.issueType !== 'MASTER' && ws.issueType !== 'STANDARD' }
+              { id: 'standard', label: 'Standard-Issues', color: 'text-emerald-400', filter: (ws: any) => ws.projectItem?.status !== 'Planed' && ws.issueType !== 'MASTER' }
             ].map(group => {
               const items = filteredWorkstreams.filter(group.filter);
               if (items.length === 0) return null;
