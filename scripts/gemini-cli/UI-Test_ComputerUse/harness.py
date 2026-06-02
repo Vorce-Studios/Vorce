@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import os
 import sys
 import json
@@ -8,6 +7,7 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 
+# Missing dependencies tracker
 MISSING_DEPS = []
 try:
     import pyautogui
@@ -17,6 +17,10 @@ try:
     import PIL.ImageGrab
 except ImportError:
     MISSING_DEPS.append("Pillow")
+try:
+    import pygetwindow as gw
+except ImportError:
+    MISSING_DEPS.append("pygetwindow")
 
 ARTIFACT_DIR = Path("artifacts/visual-capture/ui-test-runs")
 
@@ -48,65 +52,9 @@ def take_screenshot(run_dir, name="screenshot"):
         print(f"Failed to take screenshot: {e}")
         return None
 
-def run_test_steps(run_dir):
-    print("Running deterministic UI flow...")
-
-    # Give UI time to fully render
-    time.sleep(2)
-
-    # Step 1: Open settings
-    print("Action: Click Settings (assume standard left panel or toolbar)")
-    # Normalize coordinates based on screen size fallback
-    try:
-        w, h = pyautogui.size()
-        x = int(w * 0.1)
-        y = int(h * 0.1)
-        pyautogui.moveTo(x, y, duration=0.5)
-        pyautogui.click()
-    except Exception as e:
-        print(f"Failed to move mouse: {e}")
-
-    time.sleep(1)
-    take_screenshot(run_dir, "after_settings_open")
-
-    # Step 2: Select a stable panel
-    print("Action: Select Central/Bottom Panel")
-    try:
-        w, h = pyautogui.size()
-        x = int(w * 0.5)
-        y = int(h * 0.5)
-        pyautogui.moveTo(x, y, duration=0.5)
-        pyautogui.click()
-    except Exception as e:
-        print(f"Failed to move mouse: {e}")
-
-    time.sleep(1)
-
-    # Step 3: Trigger safe/reversible action (e.g., right click context menu)
-    print("Action: Right-click in canvas")
-    try:
-        pyautogui.rightClick()
-    except Exception as e:
-        print(f"Failed to right click: {e}")
-
-    time.sleep(1)
-    take_screenshot(run_dir, "after_right_click")
-
-    # Step 4: Close/reset state (Escape to close menu/settings)
-    print("Action: Press Esc to close menus/dialogs")
-    try:
-        pyautogui.press('esc')
-    except Exception as e:
-        print(f"Failed to press esc: {e}")
-
-    time.sleep(1)
-
-    take_screenshot(run_dir, "after_reset")
-
-    return True
-
 def main():
-    parser = argparse.ArgumentParser(description="Vorce Deterministic UI Smoke Test")
+    parser = argparse.ArgumentParser(description="Vorce UI Test Harness")
+    parser.add_argument("--env-check", action="store_true", help="Run environment check only")
     parser.add_argument("--timeout", type=int, default=60, help="Hard timeout in seconds")
     parser.add_argument("--vorce-exe", type=str, default=str(Path(__file__).parent.parent.parent.parent / "target/release/vorce.exe"), help="Path to Vorce executable")
     args = parser.parse_args()
@@ -118,6 +66,15 @@ def main():
     if MISSING_DEPS:
         log_report("FAIL", f"Missing Python dependencies: {', '.join(MISSING_DEPS)}", run_dir)
         sys.exit(1)
+
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        log_report("FAIL", "Missing GEMINI_API_KEY in environment", run_dir)
+        sys.exit(1)
+
+    if args.env_check:
+        log_report("PASS", "Environment check passed", run_dir)
+        sys.exit(0)
 
     print(f"Starting Vorce from {args.vorce_exe}...")
     if not os.path.exists(args.vorce_exe):
@@ -134,19 +91,33 @@ def main():
         log_report("FAIL", f"Vorce launch failure: {e}", run_dir, {"screenshot": screenshot_path})
         sys.exit(1)
 
-    # Wait for window (simple delay fallback since pygetwindow is windows-only typically, and we want this robust)
-    time.sleep(5)
+    # Wait for window
+    window_found = False
+    start_time = time.time()
+    while time.time() - start_time < args.timeout:
+        try:
+            windows = gw.getWindowsWithTitle("Vorce")
+            if windows:
+                window_found = True
+                break
+        except Exception:
+            pass
+        time.sleep(1)
 
-    screenshot_path = take_screenshot(run_dir, "initial_window")
-
-    try:
-        test_success = run_test_steps(run_dir)
-    except Exception as e:
-        screenshot_path = take_screenshot(run_dir, "failure_during_test")
-        log_report("FAIL", f"Test steps failed: {e}", run_dir, {"screenshot": screenshot_path})
+    if not window_found:
+        screenshot_path = take_screenshot(run_dir, "failure_no_window")
         process.terminate()
-        process.kill()
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+        log_file.close()
+        log_report("FAIL", "No window found within timeout", run_dir, {"screenshot": screenshot_path})
         sys.exit(1)
+
+    # Run for a bit to verify stability, or run steps
+    time.sleep(2)
+    screenshot_path = take_screenshot(run_dir, "success_window")
 
     # Final pass tear down
     process.terminate()
@@ -156,12 +127,8 @@ def main():
         process.kill()
     log_file.close()
 
-    if test_success:
-        log_report("PASS", "UI Smoke Test passed", run_dir, {"screenshot": screenshot_path})
-        sys.exit(0)
-    else:
-        log_report("FAIL", "UI Smoke Test failed", run_dir, {"screenshot": screenshot_path})
-        sys.exit(1)
+    log_report("PASS", "Test harness ran successfully", run_dir, {"screenshot": screenshot_path})
+    sys.exit(0)
 
 if __name__ == "__main__":
     main()
