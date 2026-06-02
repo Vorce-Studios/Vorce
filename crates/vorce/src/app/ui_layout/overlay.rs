@@ -2,7 +2,7 @@ use crate::app::App;
 
 /// Render floating overlays like shader graphs and dialogs
 pub fn render_overlays(ctx: &egui::Context, app: &mut App) {
-// 8. Overlays (Shader Graph, Audio, MIDI, Startup)
+    // 8. Overlays (Shader Graph, Audio, MIDI, Startup)
     super::startup_animation::render_startup_animation_overlay(ctx, app);
 
     crate::ui::panels::output::show(
@@ -94,5 +94,4 @@ pub fn render_overlays(ctx: &egui::Context, app: &mut App) {
 
     app.ui_state.assignment_panel.show(ctx, &app.state.assignment_manager);
     app.ui_state.shortcut_editor.show(ctx, &app.ui_state.i18n);
-
 }

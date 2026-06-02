@@ -458,6 +458,5 @@ pub fn show(ctx: &egui::Context, app: &mut App) {
             }
         });
 
-
     super::overlay::render_overlays(ctx, app);
 }
