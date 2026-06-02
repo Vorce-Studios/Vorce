@@ -260,6 +260,16 @@ export default defineConfig({
                 res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));
               }
             });
+          } else if (req.method === 'POST' && req.url === '/api/clear-alerts') {
+            try {
+              const flagPath = path.resolve(__dirname, '../clear-alerts.flag');
+              fs.writeFileSync(flagPath, '', 'utf-8');
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ status: 'ok', message: 'Clear command sent' }));
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+            }
           } else {
             next();
           }

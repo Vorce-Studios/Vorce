@@ -48,7 +48,6 @@ pub fn load_project(path: &Path) -> Result<AppState> {
     if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
         return Err(IoError::Other("Path Traversal blocked".to_string()));
     }
-
     let project_file = ProjectFile::load(path)?;
 
     // Basic version validation. A more sophisticated migration system could be

@@ -109,9 +109,9 @@ impl Widget for AudioMeter {
 
 /// Draws the mounting frame with 4 phillips screws
 fn draw_rack_frame(ui: &egui::Ui, painter: &egui::Painter, rect: Rect) {
-    let frame_color = crate::theme::colors::LIGHTER_GREY;
-    let frame_highlight = crate::theme::colors::STROKE_GREY;
-    let frame_shadow = crate::theme::colors::DARK_GREY;
+    let frame_color = ui.visuals().panel_fill;
+    let frame_highlight = ui.visuals().widgets.noninteractive.bg_stroke.color;
+    let frame_shadow = ui.visuals().extreme_bg_color;
 
     // Main frame
     painter.rect_filled(rect, 0.0, frame_color);

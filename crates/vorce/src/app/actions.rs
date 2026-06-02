@@ -377,6 +377,7 @@ pub fn handle_ui_actions(app: &mut App) -> Result<bool> {
                         &element_id,
                         MidiAssignmentTarget::Vorce(target_id.clone()),
                     );
+                    let _ = app.ui_state.user_config.save();
                     tracing::info!(
                         "MIDI Assignment set via Global Learn: {} -> {}",
                         element_id,
