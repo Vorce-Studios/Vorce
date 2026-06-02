@@ -1,8 +1,6 @@
-import { useState } from 'react';
-import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
+import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue } from '../types';
-import DeliberationPanel from './DeliberationPanel';
 
 interface Props {
   registry: QuotaRegistry;
@@ -10,7 +8,6 @@ interface Props {
   pullRequests: PullRequest[];
   issues: GitHubIssue[];
   julesSessions?: any[];
-  onRefetch?: () => void;
 }
 
 const PROVIDER_COLORS: Record<string, string> = {
@@ -52,39 +49,20 @@ function timeAgo(dateStr: string): string {
   return `vor ${days}d`;
 }
 
-export default function DashboardPage({ registry, sessions, pullRequests, julesSessions, onRefetch }: Props) {
-  const [resolving, setResolving] = useState<string | null>(null);
-
-  const handleResolveAlert = async (topic: string) => {
-    setResolving(topic);
-    try {
-      const res = await fetch('/api/alerts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'resolve', topic })
-      });
-      if (res.ok) {
-        if (onRefetch) onRefetch();
-        else window.location.reload();
-      } else {
-        console.error('Failed to resolve alert');
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setResolving(null);
-    }
-  };
-
+export default function DashboardPage({ registry, sessions, pullRequests, julesSessions }: Props) {
   const providers = registry.providers || {};
   const providerEntries = Object.entries(providers);
 
   const totalCostToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.estimated_cost_usd || 0), 0);
   const totalCallsToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.calls || 0), 0);
+
+  // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
   // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
   const activeJulesSessions = julesSessions ? julesSessions.filter(s =>
       s.repo.includes('Vorce') &&
       s.state !== 'COMPLETED' &&
+      s.state !== 'FAILED' &&
+      s.state !== 'CANCELLED' &&
       s.state !== 'QUEUED'
   ).length : 0;
 
@@ -132,26 +110,29 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
       {/* Eskalationen (Beta CEO Alerts) */}
       {sessions.decisions_pending && sessions.decisions_pending.length > 0 && (
         <div className="glass-card p-6 border border-rose-500/30 shadow-lg shadow-rose-500/10">
-          <h3 className="text-lg font-bold text-rose-400 mb-4 flex items-center gap-2">
-            <AlertCircle className="w-5 h-5" />
-            Beta CEO Eskalationen ({sessions.decisions_pending.length})
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-rose-400 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              Beta CEO Eskalationen ({sessions.decisions_pending.length})
+            </h3>
+            <button
+              onClick={async () => {
+                await fetch('/api/clear-alerts', { method: 'POST' });
+                // We'll let the next sync loop update the UI automatically
+              }}
+              className="text-xs px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 transition-colors flex items-center gap-2"
+              title="Alle Eskalationen löschen (Clear Command)"
+            >
+              <XCircle className="w-4 h-4" />
+              Clear
+            </button>
+          </div>
           <div className="space-y-3">
             {sessions.decisions_pending.map((alert, idx) => (
               <div key={idx} className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-rose-300">{alert.topic}</span>
-                    <span className="text-xs text-rose-400/70">{timeAgo(alert.created_at)}</span>
-                  </div>
-                  <button
-                    onClick={() => handleResolveAlert(alert.topic)}
-                    disabled={resolving === alert.topic}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 transition-colors border border-emerald-500/30 disabled:opacity-50"
-                  >
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    {resolving === alert.topic ? 'Wird geschlossen...' : 'Bestätigen & Schließen'}
-                  </button>
+                  <span className="font-semibold text-rose-300">{alert.topic}</span>
+                  <span className="text-xs text-rose-400/70">{timeAgo(alert.created_at)}</span>
                 </div>
                 <p className="text-sm text-rose-200/80 whitespace-pre-wrap">{alert.context}</p>
               </div>
@@ -255,9 +236,6 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
         </div>
       </div>
 
-      {/* Dual-CEO Deliberation Panel */}
-      <DeliberationPanel deliberations={sessions.deliberation_log || []} />
-
     </div>
   );
 }
@@ -276,5 +254,18 @@ function KPICard({ title, value, subtitle, icon, color }: {
       <div className="text-2xl font-bold text-white">{value}</div>
       <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
     </div>
+  );
+}
+
+function JulesStateBadge({ state }: { state: string }) {
+  const configs: Record<string, { bg: string; text: string; label: string }> = {
+    'IN_PROGRESS': { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'In Progress' },
+    'AWAITING_USER_FEEDBACK': { bg: 'bg-amber-500/20', text: 'text-amber-400', label: 'Feedback' },
+    'COMPLETED': { bg: 'bg-emerald-500/20', text: 'text-emerald-400', label: 'Fertig' },
+    'FAILED': { bg: 'bg-red-500/20', text: 'text-red-400', label: 'Fehlgeschlagen' },
+  };
+  const cfg = configs[state] || { bg: 'bg-slate-500/20', text: 'text-slate-400', label: state };
+  return (
+    <span className={`badge ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
   );
 }

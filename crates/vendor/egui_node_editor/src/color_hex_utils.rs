@@ -7,7 +7,6 @@ use egui::Color32;
 ///
 /// *Adapted from: https://docs.rs/raster/0.1.0/src/raster/lib.rs.html#425-725.
 /// Credit goes to original authors.*
-#[allow(dead_code)]
 pub fn color_from_hex(hex: &str) -> Result<Color32, String> {
     // Convert a hex string to decimal. Eg. "00" -> 0. "FF" -> 255.
     fn _hex_dec(hex_string: &str) -> Result<u8, String> {

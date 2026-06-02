@@ -26,6 +26,7 @@
 
 # Other files
 *.out
+__pycache__/
 
 # Logs (moved to logs/ directory)
 /logs/
@@ -129,3 +130,4 @@ scripts/codex-cli/autopilot-session-lock.md
 scripts/codex-cli/autopilot-tasks.md
 scripts/codex-cli/quota-registry.json
 scripts/codex-cli/tmp/
+.codex-worktrees/

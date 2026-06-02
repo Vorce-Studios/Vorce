@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use crate::color_hex_utils::*;
 use crate::utils::ColorUtils;
 
 use super::*;
@@ -467,9 +468,16 @@ where
         /* Mouse input handling */
 
         // This locks the context, so don't hold on to it for too long.
-        let mouse = &ui.ctx().input(|i| i.pointer.clone());
+        let (any_released, any_click, primary_down, primary_released) = ui.ctx().input(|i| {
+            (
+                i.pointer.any_released(),
+                i.pointer.any_click(),
+                i.pointer.primary_down(),
+                i.pointer.primary_released(),
+            )
+        });
 
-        if mouse.any_released() && self.connection_in_progress.is_some() {
+        if any_released && self.connection_in_progress.is_some() {
             self.connection_in_progress = None;
         }
         if secondary_click_on_background && !cursor_in_finder {
@@ -485,15 +493,15 @@ where
 
         // Deselect and deactivate finder if the editor backround is clicked,
         // *or* if the the mouse clicks off the ui
-        if click_on_background || (mouse.any_click() && !cursor_in_editor) {
+        if click_on_background || (any_click && !cursor_in_editor) {
             self.selected_nodes = Vec::new();
             self.node_finder = None;
         }
 
-        if drag_started_on_background && mouse.primary_down() {
+        if drag_started_on_background && primary_down {
             self.ongoing_box_selection = Some(cursor_pos);
         }
-        if mouse.primary_released() || drag_released_on_background {
+        if primary_released || drag_released_on_background {
             self.ongoing_box_selection = None;
         }
 
@@ -573,8 +581,15 @@ where
         let margin = egui::vec2(15.0, 5.0) * pan_zoom.zoom;
         let mut responses = Vec::<NodeResponse<UserResponse, NodeData>>::new();
 
-        let background_color = ui.visuals().window_fill;
-        let text_color = ui.visuals().text_color();
+        let background_color;
+        let text_color;
+        if ui.visuals().dark_mode {
+            background_color = color_from_hex("#3f3f3f").unwrap_or(Color32::from_rgb(63, 63, 63));
+            text_color = color_from_hex("#fefefe").unwrap_or(Color32::from_rgb(254, 254, 254));
+        } else {
+            background_color = color_from_hex("#ffffff").unwrap_or(Color32::WHITE);
+            text_color = color_from_hex("#505050").unwrap_or(Color32::from_rgb(80, 80, 80));
+        }
 
         ui.visuals_mut().widgets.noninteractive.fg_stroke =
             Stroke::new(2.0 * pan_zoom.zoom, text_color);
@@ -968,12 +983,26 @@ where
         let rect = Rect::from_center_size(position, vec2(size, size));
         let resp = ui.allocate_rect(rect, Sense::click());
 
+        let dark_mode = ui.visuals().dark_mode;
         let color = if resp.clicked() {
-            ui.visuals().strong_text_color()
+            if dark_mode {
+                color_from_hex("#ffffff").unwrap_or(Color32::WHITE)
+            } else {
+                color_from_hex("#000000").unwrap_or(Color32::BLACK)
+            }
         } else if resp.hovered() {
-            ui.visuals().text_color()
+            if dark_mode {
+                color_from_hex("#dddddd").unwrap_or(Color32::from_rgb(221, 221, 221))
+            } else {
+                color_from_hex("#222222").unwrap_or(Color32::from_rgb(34, 34, 34))
+            }
         } else {
-            ui.visuals().text_color().linear_multiply(0.5)
+            #[allow(clippy::collapsible_else_if)]
+            if dark_mode {
+                color_from_hex("#aaaaaa").unwrap_or(Color32::from_rgb(170, 170, 170))
+            } else {
+                color_from_hex("#555555").unwrap_or(Color32::from_rgb(85, 85, 85))
+            }
         };
         let stroke = Stroke { width: stroke_width, color };
 

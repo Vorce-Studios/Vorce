@@ -22,6 +22,14 @@
 ## 2026-05-19 - Vorce UI Theme Colors Compliance
 **Erkenntnis:** Several components (`icon_demo_panel.rs`, `cue_panel.rs`, `controller_overlay_panel`, `preview_panel.rs`) still used hardcoded `Color32` equivalents instead of dynamic `ui.visuals()` or `crate::theme::colors` references, which broke appearance across different active themes.
 **Aktion:** Replaced hardcoded constants like `Color32::YELLOW`, `Color32::GREEN`, `Color32::RED`, `Color32::GRAY` with `ui.visuals().warn_fg_color`, `crate::theme::colors::MINT_ACCENT`, `ui.visuals().error_fg_color`, and `ui.style().visuals.text_color().gamma_multiply(0.6)` respectively. Ensuring dynamic rendering fixes UI contrast problems instantly.
+## 2026-05-20 - Media Browser and Mesh Editor Theme Consistency
+**Erkenntnis:** Hardcoded `Color32` values in the `media_browser` and `mesh_editor` components were causing visual inconsistencies and contrast issues when switching between different theme variants (e.g., from dark to light mode or between custom dark themes).
+**Aktion:** Replaced hardcoded `Color32::from_rgb` and `Color32::WHITE` constants with dynamic `ui.visuals()` properties such as `selection.bg_fill`, `widgets.hovered.bg_fill`, `text_color`, `warn_fg_color`, and `error_fg_color`. This ensures that grid rendering, background fills, and text elements adapt naturally to any selected theme.
+
 ## 2026-05-20 - Toast and AppUI Hardcoded Colors
 **Erkenntnis:** Found that `ToastManager` in `toast.rs` used hardcoded `Color32::from_rgb` for different toast types and alpha backgrounds. `AppUI` in `app_ui.rs` used `Color32::YELLOW` and `Color32::GREEN` for visual feedback elements. This breaks contrast and visual unity across custom themes. Because egui lacks a standard success visual variable, we fallback to our custom mint accent.
 **Aktion:** Replaced hardcoded info/warning/error colors with `ui.visuals().hyperlink_color`, `warn_fg_color`, and `error_fg_color`. Success colors replaced with `crate::core::theme::colors::MINT_ACCENT`. Alpha background fills replaced using `gamma_multiply` on `extreme_bg_color`. Always rely on `ui.visuals()` or `theme::colors` even for transient visual feedback or toasts.
+
+## 2026-05-21 - Theme Consistency in Panel Backgrounds
+**Erkenntnis:** The `widgets/panel.rs` component used hardcoded colors (`DARK_GREY` and `LIGHTER_GREY`) for `egui::Frame` backgrounds. This caused visual inconsistency when switching themes.
+**Aktion:** Use dynamic theme variables like `ui.visuals().panel_fill` and `ui.visuals().window_fill()` for frame backgrounds instead of hardcoded palette constants to ensure theme adaptability without requiring a larger layout refactor.

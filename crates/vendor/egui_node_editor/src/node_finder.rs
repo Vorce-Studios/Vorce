@@ -1,23 +1,6 @@
-#[inline]
-fn case_insensitive_contains(haystack: &str, needle: &str) -> bool {
-    if needle.is_empty() {
-        return true;
-    }
-    let needle_len = needle.len();
-    if haystack.len() < needle_len {
-        return false;
-    }
-    haystack.char_indices().any(|(i, _)| {
-        let tail = &haystack[i..];
-        tail.len() >= needle_len
-            && tail.is_char_boundary(needle_len)
-            && tail[..needle_len].eq_ignore_ascii_case(needle)
-    })
-}
-
 use std::{collections::BTreeMap, marker::PhantomData};
 
-use crate::{CategoryTrait, NodeTemplateIter, NodeTemplateTrait};
+use crate::{CategoryTrait, NodeTemplateIter, NodeTemplateTrait, color_hex_utils::*};
 
 use egui::*;
 
@@ -29,6 +12,26 @@ pub struct NodeFinder<NodeTemplate> {
     pub position: Option<Pos2>,
     pub just_spawned: bool,
     _phantom: PhantomData<NodeTemplate>,
+}
+
+// ⚡ Bolt: Inline function for zero-allocation case-insensitive string search.
+#[inline]
+fn case_insensitive_contains(haystack: &str, needle: &str) -> bool {
+    if needle.is_empty() {
+        return true;
+    }
+
+    let needle_len = needle.len();
+    if haystack.len() < needle_len {
+        return false;
+    }
+
+    haystack.char_indices().any(|(i, _)| {
+        let tail = &haystack[i..];
+        tail.len() >= needle_len
+            && tail.is_char_boundary(needle_len)
+            && tail[..needle_len].eq_ignore_ascii_case(needle)
+    })
 }
 
 impl<NodeTemplate, NodeData, UserState, CategoryType> NodeFinder<NodeTemplate>
@@ -55,8 +58,17 @@ where
         all_kinds: impl NodeTemplateIter<Item = NodeTemplate>,
         user_state: &mut UserState,
     ) -> Option<NodeTemplate> {
-        let background_color = ui.visuals().window_fill;
-        let text_color = ui.visuals().text_color();
+        let background_color;
+        let text_color;
+
+        if ui.visuals().dark_mode {
+            background_color = color_from_hex("#3f3f3f").unwrap_or(Color32::from_rgb(63, 63, 63));
+            text_color = color_from_hex("#fefefe").unwrap_or(Color32::from_rgb(254, 254, 254));
+        } else {
+            background_color =
+                color_from_hex("#fefefe").unwrap_or(Color32::from_rgb(254, 254, 254));
+            text_color = color_from_hex("#3f3f3f").unwrap_or(Color32::from_rgb(63, 63, 63));
+        }
 
         ui.visuals_mut().widgets.noninteractive.fg_stroke = Stroke::new(2.0, text_color);
 

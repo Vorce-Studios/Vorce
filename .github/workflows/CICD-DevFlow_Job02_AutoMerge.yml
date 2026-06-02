@@ -434,12 +434,12 @@ jobs:
                 repo: context.repo.repo,
                 ref: pr.head.sha,
                 per_page: 100,
-              }),
+              }).catch(() => ({ data: { check_runs: [] } })),
               github.rest.repos.getCombinedStatusForRef({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 ref: pr.head.sha,
-              }),
+              }).catch(() => ({ data: { statuses: [] } })),
             ]);
 
             const ownRunId = process.env.GITHUB_RUN_ID;
