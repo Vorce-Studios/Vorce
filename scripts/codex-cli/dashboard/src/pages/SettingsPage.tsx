@@ -502,6 +502,29 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
               </div>
             </div>
           )}
+
+          {/* Card: System-Prompts */}
+          <div className="glass-card p-6">
+            <h3 className="text-base font-semibold text-slate-200 border-b border-slate-700/50 pb-3 mb-4 flex items-center gap-2">
+              <Shield className="w-4 h-4 text-emerald-400" />
+              System-Prompts (Autopilot)
+            </h3>
+            <div className="space-y-4">
+              {config.prompts && Object.entries(config.prompts).map(([key, val]) => (
+                <div key={key}>
+                  <label className="block text-[10px] font-medium text-slate-500 mb-1 capitalize">
+                    {key.replace(/_/g, ' ')}
+                  </label>
+                  <textarea
+                    value={val}
+                    onChange={(e: any) => handleNestedConfigChange('prompts', key, e.target.value)}
+                    className="input-field py-2 px-3 text-[11px] leading-relaxed font-sans min-h-[80px] bg-slate-900/40"
+                    placeholder={`Prompt fuer ${key}...`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Rechte Spalte: Provider & Routing */}

@@ -285,12 +285,10 @@ impl App {
                     }
                     self.last_update = now;
 
-                    if has_modules {
-                        if is_playing || has_projector_outputs {
-                            self.window_manager.request_redraw_all();
-                        } else if let Some(main_window) = self.window_manager.get(0) {
-                            main_window.window.request_redraw();
-                        }
+                    if is_playing || has_projector_outputs {
+                        self.window_manager.request_redraw_all();
+                    } else if let Some(main_window) = self.window_manager.get(0) {
+                        main_window.window.request_redraw();
                     }
 
                     elwt.set_control_flow(winit::event_loop::ControlFlow::WaitUntil(

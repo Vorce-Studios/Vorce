@@ -46,7 +46,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                     tex_name,
                     width,
                     height,
-                    wgpu::TextureFormat::Bgra8UnormSrgb,
+                    app.backend.surface_format(),
                     wgpu::TextureUsages::TEXTURE_BINDING
                         | wgpu::TextureUsages::COPY_DST
                         | wgpu::TextureUsages::RENDER_ATTACHMENT,

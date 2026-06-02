@@ -201,6 +201,13 @@ export interface PullRequest {
 }
 
 // ── Autopilot Config Types ──
+export interface PlanningStep {
+  id: string;
+  prompt_ref: string;
+  tier: 'cheap' | 'balanced' | 'premium' | 'fast' | 'high';
+  label: string;
+}
+
 export interface AutopilotConfig {
   repository: string;
   wake_intervals: {
@@ -221,6 +228,8 @@ export interface AutopilotConfig {
   };
   max_issues_per_planning_cycle: number;
   dual_ceo: DualCeoConfig;
+  planning_sequence?: PlanningStep[];
+  prompts?: Record<string, string>;
 }
 
 // ── Dual-CEO Types ──

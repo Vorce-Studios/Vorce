@@ -31,9 +31,21 @@
     "autopilot_label": "autopilot-created"
   },
   "max_issues_per_planning_cycle": 30,
-  "ceo_config": {
-    "alpha_provider": "codex_orchestrator:planning",
-    "beta_provider": "gemini_cli:balanced",
+  "dual_ceo": {
+    "enabled": true,
+    "ceo_alpha_chain": [
+      "codex_orchestrator:planning",
+      "gemini_cli:balanced"
+    ],
+    "ceo_beta_chain": [
+      "gemini_cli:balanced"
+    ],
+    "max_deliberation_rounds": 3,
+    "deliberation_tasks": [
+      "complex_review"
+    ],
+    "fallback_to_single": true,
+    "log_deliberations": true,
     "deliberation_enabled": false
   },
   "planning_sequence": [
@@ -57,10 +69,10 @@
     }
   ],
   "prompts": {
-    "planning_analysis": "Analysiere den aktuellen Status des Repositories $repo. Root-Kompass: #651 Release 1.0 Readiness. Identifiziere Blocker, offene PRs und kritische Lücken. Erstelle eine Liste der Top-3 Prioritäten für diesen Zyklus.",
-    "planning_proposal": "Basierend auf der Analyse (Kontext: $context), schlage maximal $maxIssues neue Issues vor. Fokus auf kleine Standard-Issues für CLI-Agents. Antworte als JSON-Liste.",
-    "planning_synthesis": "Fasse alle Erkenntnisse zusammen und erstelle den finalen Delegationsplan. Berücksichtige freie Slots ($slots).",
-    "audit_prompt": "Prüfe das System auf Inkonsistenzen. Versuche erst direkt zu beheben (remediate). Eskaliere nur bei Bedarf.",
-    "monitoring_prompt": "Überwache laufende Sessions und PRs. Greife aktiv bei Merge-Konflikten oder fehlgeschlagenen Checks ein."
+    "planning_analysis": "Rolle: Vorce Autopilot Analyst. Repository: $repo. Aufgabe: Analysiere den aktuellen Projektstatus (Issues, PRs, Sessions). Root-Kompass: #651 Release 1.0 Readiness. Identifiziere Blocker, rote CI-Checks und kritische Lücken. Erstelle eine priorisierte Liste der Top-Themen für diesen Zyklus.",
+    "planning_proposal": "Rolle: Vorce Autopilot Planner. Repository: $repo. Aufgabe: Basierend auf der Analyse (Kontext: $context), schlage maximal $maxIssues neue Issues vor. Fokus auf kleine Standard-Issues für CLI-Agents (gemini_cli, claude_code) und Sub-Issues für Jules. Antworte NUR als JSON-Liste: [{\"title\":\"__VOR-000_SubI_Titel\",\"body\":\"...\",\"labels\":[\"priority: high\"],\"agent\":\"gemini_cli\"}]",
+    "planning_synthesis": "Rolle: Vorce Autopilot Orchestrator. Repository: $repo. Aufgabe: Fasse alle Erkenntnisse zusammen ($context) und erstelle den finalen Delegationsplan. Berücksichtige freie Jules-Slots ($slots). Entscheide, welche Tasks sofort gestartet werden und welche im Backlog bleiben. Beende mit einem klaren Lagebild.",
+    "audit_prompt": "Rolle: Vorce Autopilot Auditor (BETA). Repository: $repo. Unabhängige Prüfung: Issues ($issues), PRs ($prs) und Sessions ($delegations). MANDAT: Antworte auf DEUTSCH. Versuche Probleme erst per 'remediate' (PowerShell-Befehl) selbst zu lösen. Eskaliere nur bei echten Blockern. Output: JSON { 'issues_found': bool, 'action': 'remediate|escalate|none', 'remediation_command': '...', 'dashboard_escalation': '...' }",
+    "monitoring_prompt": "Rolle: Vorce Autopilot Monitor (ALPHA). Repository: $repo. Status-Check: PRs ($prs) und Sessions ($sessions). Aufgabe: Greife aktiv bei hängenden Sessions, Merge-Konflikten oder fehlgeschlagenen CI-Checks ein. Nutze CLI-Tools für schnelle Fixes lokal im Worktree."
   }
 }
