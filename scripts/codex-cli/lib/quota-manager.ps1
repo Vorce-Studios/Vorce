@@ -8,7 +8,13 @@ $script:QuotaFilePath = Join-Path (Split-Path -Parent (Split-Path -Parent $PSCom
 
 function Read-QuotaRegistry {
     if (-not (Test-Path $script:QuotaFilePath)) {
-        throw "quota-registry.json nicht gefunden: $($script:QuotaFilePath)"
+        $fallbackPath = Join-Path (Split-Path -Parent (Split-Path -Parent $PSCommandPath)) "dashboard\public\registry.json"
+        if (Test-Path $fallbackPath) {
+            Copy-Item -LiteralPath $fallbackPath -Destination $script:QuotaFilePath -Force
+            Write-Host "[QUOTA] quota-registry.json aus dashboard/public/registry.json wiederhergestellt." -ForegroundColor DarkGray
+        } else {
+            throw "quota-registry.json nicht gefunden: $($script:QuotaFilePath)"
+        }
     }
 
     $content = Get-Content $script:QuotaFilePath -Raw -Encoding UTF8
@@ -91,8 +97,8 @@ function Get-EstimatedCost {
     }
 
     # Check model-specific cost
-    if ($provider.models -and $provider.models.$ModelTier) {
-        return [double]$provider.models.$ModelTier.estimated_cost_per_call_usd
+    if ($provider.models -and ($provider.models.PSObject.Properties.Name -contains $ModelTier)) {
+        return [double]$provider.models.PSObject.Properties[$ModelTier].Value.estimated_cost_per_call_usd
     }
 
     # Fallback: try first available model

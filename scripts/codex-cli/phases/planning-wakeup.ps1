@@ -234,10 +234,10 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                     foreach ($issue in $issuesRaw) {
                         if ($gateIssueNumbers -contains $issue.number) {
                             $title = $issue.title
-                            $state = $issue.state
+                            $issueState = $issue.state
                             $bodySnippet = if ($issue.body -and $issue.body.Length -gt 250) { $issue.body.Substring(0, 250) + "..." } else { $issue.body }
                             $bodySnippet = $bodySnippet -replace "`n", " " -replace "`r", ""
-                            $contextLines += "- #$($issue.number) [$state]: $title (Auszug: $bodySnippet)"
+                            $contextLines += "- #$($issue.number) [$issueState]: $title (Auszug: $bodySnippet)"
                         }
                     }
                 }
@@ -280,10 +280,13 @@ WICHTIG ZUR AGENT-ZUWEISUNG:
 Du MUSST für jedes Issue gezielt entscheiden, welcher Agent es bearbeitet.
 - "jules": NUR für riesige Refactorings, UI-Architektur oder Multi-File Features nutzen.
 - Lokale CLI-Agents (z.B. "gemini_cli", "claude_code"): ZWINGEND zu nutzen für kleine Bugfixes, isolierte Modul-Anpassungen, Scripts, CI/CD-Fixes oder klar umrissene Algorithmen! Du SOLLST regelmäßig Aufgaben an diese CLI-Agents delegieren, um Jules zu entlasten!
+- Plane Working Sessions bewusst klein: fasse nur Aufgaben zusammen, die denselben engen Codebereich betreffen; sonst getrennte Sessions.
+- Der short_prompt muss maximal 280 Zeichen haben und das konkrete Ergebnis benennen. Keine langen Kontext-Dumps.
+- Ziel ist bessere Qualitaet bei weniger Kontext und schnellerer Ausfuehrung, nicht blindes Tokensparen.
 Verfügbare Agents: $agentsStr
 
 Antworte NUR mit einer JSON-Liste im Format:
-[{"title": "__VOR-000_SubI_Issue-Title", "body": "Beschreibung mit Parent-Issue und Acceptance-Evidence", "labels": ["jules-task", "priority: high", "testing"], "agent": "<agent_name_hier_eintragen>"}]
+[{"title": "__VOR-000_SubI_Issue-Title", "body": "Beschreibung mit Parent-Issue und Acceptance-Evidence", "labels": ["jules-task", "priority: high", "testing"], "agent": "<agent_name_hier_eintragen>", "short_prompt": "<sehr kurzer Working-Session-Prompt>"}]
 
 Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 "@
@@ -553,13 +556,31 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
             # Local CLI Agent
             try {
                 $quotaRegistryPath = Join-Path $ScriptDir "quota-registry.json"
+                $promptHint = ""
+                if ($issue.PSObject.Properties.Name -contains "body" -and -not [string]::IsNullOrWhiteSpace([string]$issue.body)) {
+                    $promptHint = ([string]$issue.body).Trim()
+                    if ($promptHint.Length -gt 280) { $promptHint = $promptHint.Substring(0, 280) }
+                }
 
                 # Start visible terminal process
-                $cmdArgs = "-NoExit", "-File", "`"$ToolsDir\run-visible-agent-task.ps1`"", "-IssueNumber", $issueNum, "-IssueTitle", "`"$issueTitle`"", "-AgentProvider", "`"$targetAgent`"", "-Repository", "`"$repo`"", "-QuotaRegistryPath", "`"$quotaRegistryPath`""
+                $cmdArgs = "-NoExit", "-File", "`"$ToolsDir\run-visible-agent-task.ps1`"", "-IssueNumber", $issueNum, "-IssueTitle", "`"$issueTitle`"", "-AgentProvider", "`"$targetAgent`"", "-Repository", "`"$repo`"", "-QuotaRegistryPath", "`"$quotaRegistryPath`"", "-PromptHint", "`"$promptHint`""
 
                 $proc = Start-Process pwsh -ArgumentList $cmdArgs -PassThru -WindowStyle Normal
 
                 Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId "local-agent-$($proc.Id)" -AgentType $targetAgent -JobId $($proc.Id.ToString())
+                if (-not ($State.PSObject.Properties.Name -contains "working_sessions")) {
+                    $State | Add-Member -MemberType NoteProperty -Name "working_sessions" -Value @() -Force
+                }
+                $State.working_sessions += @([ordered]@{
+                    id          = "working-$($proc.Id)"
+                    issue_number = $issueNum
+                    issue_title  = $issueTitle
+                    provider     = $targetAgent
+                    prompt_hint  = $promptHint
+                    status       = "running"
+                    started_at   = (Get-Date -Format 'o')
+                    process_id   = $proc.Id
+                })
                 $delegatedInThisRun.Add($issueNum) | Out-Null
 
                 Write-Host "[PLANNING] Lokaler Agent $targetAgent gestartet (PID: $($proc.Id))." -ForegroundColor Cyan

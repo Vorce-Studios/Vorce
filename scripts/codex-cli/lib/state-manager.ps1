@@ -194,6 +194,15 @@ function New-AutopilotState {
         escalated_issues        = @()
         error_log               = @()
         deliberation_log        = @()
+        processing_queue        = @()
+        working_sessions        = @()
+        run_control             = [PSCustomObject]@{
+            cancel_next_planning   = $false
+            cancel_next_monitoring = $false
+            next_planning_note     = ""
+            next_monitoring_note   = ""
+            updated_at             = $null
+        }
     }
 }
 
@@ -227,21 +236,37 @@ function Initialize-AutopilotState {
 
     $existing = Read-AutopilotState
     $defaults = New-AutopilotState
+    $isRecoverableState = $false
+    if ($null -ne $existing -and ($existing -is [System.Management.Automation.PSCustomObject] -or $existing -is [System.Collections.IDictionary])) {
+        $isRecoverableState = $true
+    } elseif ($null -ne $existing -and -not $Force.IsPresent) {
+        Write-Warning "[INIT] State-Datei enthaelt keinen gueltigen State ($($existing.GetType().FullName)). Erstelle frischen State."
+    }
 
-    if ($null -ne $existing -and -not $Force.IsPresent -and ($existing -is [System.Management.Automation.PSCustomObject] -or $existing -is [System.Collections.IDictionary])) {
+    if ($isRecoverableState -and -not $Force.IsPresent) {
         # Ensure all default properties exist on the existing state
         foreach ($key in $defaults.PSObject.Properties.Name) {
             if (-not ($existing.PSObject.Properties.Name -contains $key)) {
-                $existing | Add-Member -MemberType NoteProperty -Name $key -Value $defaults[$key] -Force
+                $existing | Add-Member -MemberType NoteProperty -Name $key -Value $defaults.PSObject.Properties[$key].Value -Force
             }
         }
 
         # Validate that arrays are indeed arrays (sometimes deserialized as single object or null)
-        foreach ($key in @("active_delegations", "review_queue", "autopilot_created_issues", "completed_this_session", "decisions_pending", "escalated_issues", "error_log", "deliberation_log")) {
+        foreach ($key in @("active_delegations", "review_queue", "autopilot_created_issues", "completed_this_session", "decisions_pending", "escalated_issues", "error_log", "deliberation_log", "processing_queue", "working_sessions")) {
             if ($null -eq $existing.$key) {
                 $existing.$key = @()
             } elseif ($existing.$key -isnot [System.Array] -and $existing.$key -isnot [System.Collections.IList]) {
                 $existing.$key = @($existing.$key)
+            }
+        }
+
+        if (-not ($existing.PSObject.Properties.Name -contains "run_control") -or $null -eq $existing.run_control) {
+            $existing | Add-Member -MemberType NoteProperty -Name "run_control" -Value $defaults.run_control -Force
+        } else {
+            foreach ($key in $defaults.run_control.PSObject.Properties.Name) {
+                if (-not ($existing.run_control.PSObject.Properties.Name -contains $key)) {
+                    $existing.run_control | Add-Member -MemberType NoteProperty -Name $key -Value $defaults.run_control.PSObject.Properties[$key].Value -Force
+                }
             }
         }
 

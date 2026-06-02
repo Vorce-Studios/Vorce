@@ -6,7 +6,8 @@ param(
     [Parameter(Mandatory)][string]$IssueTitle,
     [Parameter(Mandatory)][string]$AgentProvider,
     [Parameter(Mandatory)][string]$Repository,
-    [Parameter(Mandatory)][string]$QuotaRegistryPath
+    [Parameter(Mandatory)][string]$QuotaRegistryPath,
+    [string]$PromptHint = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -51,6 +52,8 @@ try {
     Write-Host "[1/4] Fetching issue details..." -ForegroundColor Cyan
     $issueJson = gh issue view $IssueNumber --repo $Repository --json body | ConvertFrom-Json
     $body = $issueJson.body
+    if ([string]::IsNullOrWhiteSpace($body)) { $body = "" }
+    $bodyExcerpt = if ($body.Length -gt 2500) { $body.Substring(0, 2500) + "`n...[gekürzt]" } else { $body }
 
     # 2. Branch creation
     Write-Host "[2/4] Setting up git branch..." -ForegroundColor Cyan
@@ -64,7 +67,16 @@ try {
 
     # 3. Running Agent
     Write-Host "[3/4] Running agent $AgentProvider..." -ForegroundColor Cyan
-    $prompt = "Please solve the following issue (#$IssueNumber: $IssueTitle).`n`nIssue Body:`n$body`n`nMake the necessary code changes. Do not commit."
+    $prompt = @"
+Bearbeite diese kleine Vorce Working Session.
+Issue: #$IssueNumber - $IssueTitle
+Ziel/Hinweis: $PromptHint
+
+Issue-Auszug:
+$bodyExcerpt
+
+Arbeite minimal, repo-konform und ohne unrelated Aenderungen. Nutze lokale CLI-/Shell-Tools fuer Suche, Tests und Formatierung. Erstelle keine Commits.
+"@
 
     $result = Invoke-CliTask -QuotaRegistry $registry -TaskType "coding" -Prompt $prompt -WorkingDirectory (Get-Location) -ProviderOverride $AgentProvider
 

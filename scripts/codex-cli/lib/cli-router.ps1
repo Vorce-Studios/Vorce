@@ -215,9 +215,18 @@ function Invoke-CliTask {
                 $cmdName = Join-Path $cmdDir "$cmdNameWithoutExt.exe"
             }
         }
+        $overrideModelTier = if ([string]::IsNullOrWhiteSpace($ModelTierOverride)) { "default" } else { $ModelTierOverride }
+        $providerCfg = $QuotaRegistry.providers.$ProviderOverride
+        if ([string]::IsNullOrWhiteSpace($ModelTierOverride) -and
+            $providerCfg -and
+            ($providerCfg.PSObject.Properties.Name -contains "models") -and
+            $providerCfg.models -and
+            ($providerCfg.models.PSObject.Properties.Name -contains $TaskType)) {
+            $overrideModelTier = $TaskType
+        }
         $route = [ordered]@{
             provider   = $ProviderOverride
-            model_tier = if ([string]::IsNullOrWhiteSpace($ModelTierOverride)) { "default" } else { $ModelTierOverride }
+            model_tier = $overrideModelTier
             command    = $cmdName
         }
     }
@@ -254,8 +263,8 @@ function Invoke-CliTask {
     # Get model name for this tier
     $modelName = $null
     $hasModels = $providerConfig.PSObject.Properties.Name -contains "models"
-    if ($hasModels -and $providerConfig.models -and $providerConfig.models.$modelTier) {
-        $modelName = $providerConfig.models.$modelTier.name
+    if ($hasModels -and $providerConfig.models -and ($providerConfig.models.PSObject.Properties.Name -contains $modelTier)) {
+        $modelName = $providerConfig.models.PSObject.Properties[$modelTier].Value.name
     }
 
     # Build args

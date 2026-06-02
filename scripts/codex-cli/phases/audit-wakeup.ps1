@@ -3,6 +3,43 @@
 
 Set-StrictMode -Version Latest
 
+function Get-AuditAlertId {
+    param([Parameter(Mandatory)][string]$Topic, [Parameter(Mandatory)][string]$Context)
+    $raw = "$Topic|$Context"
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($raw)
+    $hash = [System.Security.Cryptography.SHA256]::Create().ComputeHash($bytes)
+    return "audit-" + ([System.BitConverter]::ToString($hash).Replace("-", "").Substring(0, 16).ToLowerInvariant())
+}
+
+function Add-AuditDecisionPending {
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][string]$Topic,
+        [Parameter(Mandatory)][string]$Context,
+        [string]$Status = "awaiting_alpha",
+        [string]$Owner = "alpha_ceo"
+    )
+
+    $id = Get-AuditAlertId -Topic $Topic -Context $Context
+    $exists = @($State.decisions_pending | Where-Object {
+        ($_.PSObject.Properties.Name -contains "id" -and $_.id -eq $id) -or
+        ($_.topic -eq $Topic -and $_.context -eq $Context)
+    })
+    if ($exists.Count -gt 0) {
+        Write-Host "[AUDIT] Eskalation '$Topic' existiert bereits, keine Dublette." -ForegroundColor DarkGray
+        return
+    }
+
+    $State.decisions_pending += @([ordered]@{
+        id         = $id
+        topic      = $Topic
+        context    = $Context
+        created_at = (Get-Date -Format 'o')
+        status     = $Status
+        owner      = $Owner
+    })
+}
+
 function Invoke-AuditWakeUp {
     param(
         [Parameter(Mandatory)][object]$State,
@@ -65,6 +102,8 @@ MANDAT DES USERS (VERLETZUNG FUEHRT ZUM ABBRUCH):
    - Exakt WELCHER PR/Issue betroffen ist.
    - WARUM die KI es nicht selbst loesen konnte (welche Limits/Gruende?).
    - WAS genau der User tun soll (Schritt fuer Schritt).
+8. Eskalationen gehen zuerst an CEO Alpha. Nur wenn Alpha die Ursache nicht beheben konnte oder der Fall zwingend Owner-Rechte/Produktentscheidung braucht, wird an den User eskaliert.
+9. Nutze fuer einfache Analyse-/Fix-Aufgaben bevorzugt ein verfuegbares CLI Tool mit kurzem Prompt oder einen klar begrenzten lokalen Befehl. Keine langen Kontext-Dumps.
 
 Aktuelle offene Issues:
 $issuesData
@@ -144,20 +183,11 @@ Antworte strikt im JSON-Format:
                             Write-Host "[AUDIT] Remediation erfolgreich gestartet." -ForegroundColor Green
                         } catch {
                             Write-Warning "[AUDIT] Remediation fehlgeschlagen: $_"
-                            # Fallback to escalation
-                            $State.decisions_pending += @([ordered]@{
-                                topic      = "Beta CEO Remediation Failed"
-                                context    = "Der Versuch, das Problem automatisch zu beheben, schlug fehl. Befehl: $($parsedObj.remediation_command). Fehler: $_"
-                                created_at = (Get-Date -Format 'o')
-                            })
+                            Add-AuditDecisionPending -State $State -Topic "Beta CEO Remediation Failed" -Context "Der Versuch, das Problem automatisch zu beheben, schlug fehl. Befehl: $($parsedObj.remediation_command). Fehler: $_`n`nNaechster Schritt: CEO Alpha soll zuerst entscheiden, ob ein anderer lokaler Fix, ein CLI-Working-Task oder eine User-Eskalation noetig ist."
                         }
                     } elseif ($parsedObj.action -eq "escalate") {
                         Write-Host "[AUDIT] CEO Beta eskaliert zum Dashboard." -ForegroundColor Red
-                        $State.decisions_pending += @([ordered]@{
-                            topic      = "Beta CEO Audit Alert"
-                            context    = $parsedObj.dashboard_escalation
-                            created_at = (Get-Date -Format 'o')
-                        })
+                        Add-AuditDecisionPending -State $State -Topic "Beta CEO Audit Alert" -Context ([string]$parsedObj.dashboard_escalation)
                     }
                 } else {
                     Write-Host "[AUDIT] CEO Beta meldet: Keine gravierenden Probleme gefunden." -ForegroundColor Green

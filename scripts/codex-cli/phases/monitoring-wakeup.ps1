@@ -81,7 +81,7 @@ function Invoke-MonitoringWakeUp {
             }
 
             $failingChecks = @()
-            if ($pr.statusCheckRollup) {
+            if ((Test-ObjectProperty -Object $pr -Name "statusCheckRollup") -and $pr.statusCheckRollup) {
                 $failingChecks = @($pr.statusCheckRollup | Where-Object {
                     ((Test-ObjectProperty -Object $_ -Name "conclusion") -and $_.conclusion -eq "FAILURE") -or
                     ((Test-ObjectProperty -Object $_ -Name "status") -and $_.status -eq "FAILURE")

@@ -103,7 +103,7 @@ function Format-MemoryBlock {
         [object]$Store
     )
 
-    $allMemories = Get-RelevantMemories -Store $Store
+    $allMemories = @(Get-RelevantMemories -TaskType $TaskType -Store $Store)
     if ($allMemories.Count -eq 0) { return "" }
 
     # Only inject CRITICAL priority memories automatically

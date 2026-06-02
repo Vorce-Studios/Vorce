@@ -65,9 +65,34 @@ export interface CompletedItem {
 }
 
 export interface DecisionPending {
+  id?: string;
   topic: string;
   context: string;
   created_at: string;
+  status?: string;
+  owner?: 'alpha_ceo' | 'user' | 'system';
+  alpha_response?: string;
+  user_response?: string;
+  resolution_attempted_at?: string;
+}
+
+export interface SchedulerSnapshot {
+  planning_interval_minutes: number;
+  monitoring_interval_minutes: number;
+  last_planning_at?: string;
+  last_monitoring_at?: string;
+  next_planning_at?: string;
+  next_monitoring_at?: string;
+  next_planning_in_seconds?: number;
+  next_monitoring_in_seconds?: number;
+}
+
+export interface RunControl {
+  cancel_next_planning?: boolean;
+  cancel_next_monitoring?: boolean;
+  next_planning_note?: string;
+  next_monitoring_note?: string;
+  updated_at?: string;
 }
 
 export interface ActiveSessions {
@@ -83,6 +108,10 @@ export interface ActiveSessions {
   completed_this_session: CompletedItem[];
   decisions_pending?: DecisionPending[];
   deliberation_log?: any[];
+  scheduler?: SchedulerSnapshot;
+  run_control?: RunControl;
+  processing_queue?: number[];
+  working_sessions?: any[];
 }
 
 // ── GitHub Project Types ──

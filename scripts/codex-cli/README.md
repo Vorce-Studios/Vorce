@@ -108,9 +108,29 @@ Planning und Monitoring sind aktive Arbeitslaeufe:
 
 - Wenn PRs an roten Checks, Reviews oder Merge-Konflikten haengen, reicht ein Statushinweis nicht aus. Der Lauf muss den naechsten konkreten Bearbeitungsschritt starten.
 - Kleine, klar begrenzte Aenderungen duerfen und sollen ueber CLI-Provider lokal ausgefuehrt werden, wenn das schneller ist als eine Jules-Session.
+- Solche lokalen CLI-Aufgaben werden als Working Sessions in `autopilot-state.json:working_sessions` getrackt. Der Prompt wird bewusst kurz gehalten: Issue, Ziel/Hinweis, gekuerzter Issue-Auszug und konkrete Erwartung.
+- Planning entscheidet pro Aufgabe, ob sie als einzelne Working Session, als kleine gebuendelte CLI-Aufgabe oder als Jules-Session sinnvoll ist. Stark ueberlappende Aenderungsbereiche duerfen nicht parallel geplant werden.
 - Tokenintensive Repo-Suche, Codeanalyse und Dokumentationsarbeit werden an CLI-Provider delegiert, bevor Codex selbst breite Detailanalyse betreibt.
 - Vor spezialisierten Strategie-, Planungs- oder Analyseaufgaben prueft die Planning-Session zuerst die bereits verfuegbaren Skills. Wenn darunter kein guter Treffer ist, soll sie per `find-skills` gezielt nach einem hilfreichen Skill suchen und den passendsten Treffer wirklich anwenden.
 - Der Jules-Backlog soll gross genug bleiben, damit freie Slots im Monitoring sofort nachbesetzt werden koennen, aber Aufgaben mit stark ueberlappenden Aenderungsbereichen sollen nicht gleichzeitig laufen.
+
+Run-Control im Dashboard:
+
+- `dashboard/public/active-sessions.json:scheduler` zeigt letzte und naechste Planning-/Monitoring-Runs inklusive Countdown.
+- `run_control.cancel_next_planning` und `run_control.cancel_next_monitoring` canceln genau den naechsten geplanten Run und werden danach automatisch zurueckgesetzt.
+- `run_control.next_planning_note` und `run_control.next_monitoring_note` sind kurze Hinweise fuer den jeweils kommenden Lauf und werden nach Nutzung geleert.
+
+Dashboard-Sync:
+
+- GitHub-Issues, Pull Requests und Jules-Sessions werden strikt auf `autopilot-config.json:repository` gefiltert.
+- `gh project item-list` wird mit hohem Limit ausgefuehrt, damit Project-Statuswerte nicht bei der Default-Menge abgeschnitten werden.
+- Jules-Sessions ohne `sourceContext` werden uebersprungen statt den kompletten Sync zu blockieren.
+
+Audit/Eskalationen:
+
+- CEO Beta versucht zuerst eine konkrete Remediation. Nur wenn das nicht sinnvoll oder nicht erfolgreich ist, wird eine deduplizierte Eskalation angelegt.
+- Neue Audit-Eskalationen erhalten eine stabile ID und gehen zunaechst an `alpha_ceo`. Wenn Alpha die Ursache nicht beheben kann, bleibt der Fall fuer eine User-Antwort offen.
+- Das Dashboard kann Eskalationen einzeln loeschen und getrennte Alpha-/User-Antworten speichern.
 
 ## Issue-Namen und Hierarchie
 

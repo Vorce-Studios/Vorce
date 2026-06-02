@@ -1,4 +1,5 @@
-import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, CalendarClock, Ban, MessageSquare, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue } from '../types';
 
@@ -56,19 +57,34 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   const totalCostToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.estimated_cost_usd || 0), 0);
   const totalCallsToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.calls || 0), 0);
 
-  // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
-  // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
+  const targetRepo = 'Vorce-Studios/Vorce';
   const activeJulesSessions = julesSessions ? julesSessions.filter(s =>
-      s.repo.includes('Vorce') &&
+      s.repo === targetRepo &&
       s.state !== 'COMPLETED' &&
-      s.state !== 'FAILED' &&
-      s.state !== 'CANCELLED' &&
       s.state !== 'QUEUED'
   ).length : 0;
 
-  // Filter PRs that are OPEN and NOT a Draft
-  const openPRs = pullRequests.filter(pr => pr.state === 'OPEN' && pr.isDraft !== true).length;
-  const conflictingPRs = pullRequests.filter(pr => pr.state === 'OPEN' && pr.isDraft !== true && pr.mergeable === 'CONFLICTING').length;
+  const vorceOpenPRs = pullRequests.filter(pr => (!pr.repo || pr.repo === targetRepo) && pr.state === 'OPEN');
+  const openPRs = vorceOpenPRs.length;
+  const conflictingPRs = vorceOpenPRs.filter(pr => pr.mergeable === 'CONFLICTING').length;
+  const scheduler = sessions.scheduler;
+  const runControl = sessions.run_control || {};
+
+  const sendRunControl = async (type: 'planning' | 'monitoring', action: string, note?: string) => {
+    await fetch('/api/run-control', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, action, note }),
+    });
+  };
+
+  const updateAlert = async (action: string, id: string, response?: string) => {
+    await fetch('/api/alerts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, id, response }),
+    });
+  };
 
   const chartData = providerEntries
     .filter(([, p]) => p.enabled)
@@ -107,6 +123,31 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
         </div>
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <RunCard
+          title="Planning Run"
+          lastAt={sessions.last_planning_at}
+          nextAt={scheduler?.next_planning_at}
+          nextInSeconds={scheduler?.next_planning_in_seconds}
+          interval={`${scheduler?.planning_interval_minutes ?? 'N/A'} min`}
+          cancelled={runControl.cancel_next_planning}
+          note={runControl.next_planning_note}
+          onCancel={() => sendRunControl('planning', runControl.cancel_next_planning ? 'uncancel-next' : 'cancel-next')}
+          onNote={(note) => sendRunControl('planning', 'note-next', note)}
+        />
+        <RunCard
+          title="Monitoring Run"
+          lastAt={sessions.last_monitoring_at}
+          nextAt={scheduler?.next_monitoring_at}
+          nextInSeconds={scheduler?.next_monitoring_in_seconds}
+          interval={`${scheduler?.monitoring_interval_minutes ?? 'N/A'} min`}
+          cancelled={runControl.cancel_next_monitoring}
+          note={runControl.next_monitoring_note}
+          onCancel={() => sendRunControl('monitoring', runControl.cancel_next_monitoring ? 'uncancel-next' : 'cancel-next')}
+          onNote={(note) => sendRunControl('monitoring', 'note-next', note)}
+        />
+      </div>
+
       {/* Eskalationen (Beta CEO Alerts) */}
       {sessions.decisions_pending && sessions.decisions_pending.length > 0 && (
         <div className="glass-card p-6 border border-rose-500/30 shadow-lg shadow-rose-500/10">
@@ -116,10 +157,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
               Beta CEO Eskalationen ({sessions.decisions_pending.length})
             </h3>
             <button
-              onClick={async () => {
-                await fetch('/api/clear-alerts', { method: 'POST' });
-                // We'll let the next sync loop update the UI automatically
-              }}
+              onClick={() => fetch('/api/alerts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'clear' }) })}
               className="text-xs px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 transition-colors flex items-center gap-2"
               title="Alle Eskalationen löschen (Clear Command)"
             >
@@ -128,15 +166,38 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
             </button>
           </div>
           <div className="space-y-3">
-            {sessions.decisions_pending.map((alert, idx) => (
+            {sessions.decisions_pending.map((alert, idx) => {
+              const id = alert.id || String(idx);
+              return (
               <div key={idx} className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-rose-300">{alert.topic}</span>
-                  <span className="text-xs text-rose-400/70">{timeAgo(alert.created_at)}</span>
+                  <div className="min-w-0">
+                    <span className="font-semibold text-rose-300">{alert.topic}</span>
+                    <div className="text-[11px] text-rose-300/60">Owner: {alert.owner || 'alpha_ceo'} · Status: {alert.status || 'open'} · {timeAgo(alert.created_at)}</div>
+                  </div>
+                  <button
+                    onClick={() => updateAlert('remove', id)}
+                    className="p-1.5 rounded text-rose-300 hover:bg-rose-500/20"
+                    title="Eskalation löschen"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
                 <p className="text-sm text-rose-200/80 whitespace-pre-wrap">{alert.context}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
+                  <AlertResponseBox
+                    label="Alpha CEO Antwort"
+                    value={alert.alpha_response || ''}
+                    onSubmit={(text) => updateAlert('alpha-response', id, text)}
+                  />
+                  <AlertResponseBox
+                    label="User Antwort"
+                    value={alert.user_response || ''}
+                    onSubmit={(text) => updateAlert('user-response', id, text)}
+                  />
+                </div>
               </div>
-            ))}
+            )})}
           </div>
         </div>
       )}
@@ -240,6 +301,85 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   );
 }
 
+function formatNextRun(seconds?: number): string {
+  if (seconds === undefined || seconds === null) return 'N/A';
+  if (seconds <= 0) return 'jetzt faellig';
+  const mins = Math.round(seconds / 60);
+  if (mins < 60) return `in ${mins} min`;
+  return `in ${Math.round((mins / 60) * 10) / 10} h`;
+}
+
+function RunCard({ title, lastAt, nextAt, nextInSeconds, interval, cancelled, note, onCancel, onNote }: {
+  title: string;
+  lastAt?: string;
+  nextAt?: string;
+  nextInSeconds?: number;
+  interval: string;
+  cancelled?: boolean;
+  note?: string;
+  onCancel: () => void;
+  onNote: (note: string) => void;
+}) {
+  const [draft, setDraft] = useState(note || '');
+  return (
+    <div className="glass-card p-5">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+          <CalendarClock className="w-4 h-4 text-cyan-400" />
+          {title}
+        </h3>
+        <span className={`text-[11px] px-2 py-1 rounded border ${cancelled ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'}`}>
+          {cancelled ? 'cancelled' : formatNextRun(nextInSeconds)}
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-3 mt-4 text-xs text-slate-400">
+        <div>
+          <div className="text-slate-500">Letzter Run</div>
+          <div className="text-slate-200">{lastAt ? timeAgo(lastAt) : 'N/A'}</div>
+        </div>
+        <div>
+          <div className="text-slate-500">Naechster Run</div>
+          <div className="text-slate-200">{nextAt ? new Date(nextAt).toLocaleTimeString() : 'N/A'} · {interval}</div>
+        </div>
+      </div>
+      <div className="mt-4 flex gap-2">
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="Info fuer kommenden Run"
+          className="flex-1 min-w-0 px-3 py-2 text-xs bg-slate-950/80 border border-slate-700 rounded text-slate-200 placeholder-slate-500"
+        />
+        <button onClick={() => onNote(draft)} className="px-3 py-2 text-xs rounded border border-cyan-500/30 bg-cyan-500/15 text-cyan-300 flex items-center gap-1">
+          <MessageSquare className="w-3.5 h-3.5" />
+          Info
+        </button>
+        <button onClick={onCancel} className="px-3 py-2 text-xs rounded border border-rose-500/30 bg-rose-500/15 text-rose-300 flex items-center gap-1">
+          <Ban className="w-3.5 h-3.5" />
+          {cancelled ? 'Aktivieren' : 'Cancel'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AlertResponseBox({ label, value, onSubmit }: { label: string; value: string; onSubmit: (text: string) => void }) {
+  const [text, setText] = useState(value);
+  return (
+    <div>
+      <label className="block text-[11px] text-rose-300/70 mb-1">{label}</label>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        rows={3}
+        className="w-full px-2 py-1.5 text-xs bg-slate-950/70 border border-rose-500/20 rounded text-slate-200"
+      />
+      <button onClick={() => onSubmit(text)} className="mt-1 px-2 py-1 text-[11px] rounded bg-rose-500/15 text-rose-200 border border-rose-500/25">
+        Speichern
+      </button>
+    </div>
+  );
+}
+
 function KPICard({ title, value, subtitle, icon, color }: {
   title: string; value: string; subtitle: string; icon: React.ReactNode; color: string;
 }) {
@@ -254,18 +394,5 @@ function KPICard({ title, value, subtitle, icon, color }: {
       <div className="text-2xl font-bold text-white">{value}</div>
       <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
     </div>
-  );
-}
-
-function JulesStateBadge({ state }: { state: string }) {
-  const configs: Record<string, { bg: string; text: string; label: string }> = {
-    'IN_PROGRESS': { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'In Progress' },
-    'AWAITING_USER_FEEDBACK': { bg: 'bg-amber-500/20', text: 'text-amber-400', label: 'Feedback' },
-    'COMPLETED': { bg: 'bg-emerald-500/20', text: 'text-emerald-400', label: 'Fertig' },
-    'FAILED': { bg: 'bg-red-500/20', text: 'text-red-400', label: 'Fehlgeschlagen' },
-  };
-  const cfg = configs[state] || { bg: 'bg-slate-500/20', text: 'text-slate-400', label: state };
-  return (
-    <span className={`badge ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
   );
 }
