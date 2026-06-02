@@ -133,7 +133,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
         if ($LASTEXITCODE -eq 0) {
             $prs = @($prOutput | Out-String | ConvertFrom-Json | ForEach-Object { $_ })
             $conflictingPrs = @($prs | Where-Object { $_.mergeable -eq "CONFLICTING" })
-            
+
             if ($conflictingPrs.Count -gt 0) {
                 # Check if a conflict-resolution issue was already created in the last 24 hours
                 $recentConflictIssue = $false
@@ -161,7 +161,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                     $prNumbers = @($conflictingPrs | Sort-Object number | ForEach-Object { $_.number }) -join "-"
                     $conflictTag = "resolve-conflicts-$prNumbers"
                     Write-Host "[PLANNING]   Erstelle gebuendeltes Konflikt-Issue fuer $($conflictingPrs.Count) Konflikte" -ForegroundColor Yellow
-                    
+
                     if (-not $DryRun.IsPresent) {
                         $issueTitle = "MF-StIs_Resolve-Merge-Conflicts: PRs $($prNumbers -replace '-', ', ')"
                         $issueBody = "Die folgenden Pull Requests haben Merge-Konflikte:`n`n"
@@ -170,7 +170,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                         }
                         $issueBody += "`nBitte alle Konflikte manuell auflösen (Branches auschecken, main mergen, Konflikte beheben, pushen).`n"
                         $issueBody += "`nPrioritaet: KRITISCH - blockiert Release-Pipeline."
-                        
+
                         # EXKLUSIV fuer gemini_cli
                         $targetAgent = "gemini_cli"
                         $newIssueUrl = gh issue create --repo $repo --title $issueTitle --body $issueBody --label "priority: critical,bug,agent:$targetAgent" 2>&1
@@ -180,7 +180,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
 
                             if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
                             $State.autopilot_created_issues += [ordered]@{ tag = $conflictTag; issue_number = $newIssueNum; created_at = (Get-Date -Format 'o') }
-                            
+
                             try {
                                 $ScriptDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
                                 $quotaRegistryPath = Join-Path $ScriptDir "quota-registry.json"
