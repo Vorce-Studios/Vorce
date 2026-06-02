@@ -415,7 +415,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
                 </button>
               )}
               {ws.isMaster ? <Layers className="w-4 h-4 text-purple-400 flex-shrink-0" /> : <AlertCircle className="w-4 h-4 text-slate-500 flex-shrink-0" />}
-              
+
               {isChild && (
                 <span className={`badge ${colors.bg} ${colors.text} border ${colors.borderClass} text-[10px] flex-shrink-0`}>
                   {ws.status}
@@ -475,7 +475,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
                 <div className="flex justify-between items-center mb-1.5">
                   <span className="text-[10px] text-slate-400 font-medium">Sub-Issues Fortschritt</span>
                   <span className="text-[10px] text-slate-300 font-bold">
-                    {ws.children.filter(c => c.projectItem?.status === 'Done' || c.status === 'Done').length} von {ws.children.length} 
+                    {ws.children.filter(c => c.projectItem?.status === 'Done' || c.status === 'Done').length} von {ws.children.length}
                     ({ws.children.length ? Math.round((ws.children.filter(c => c.projectItem?.status === 'Done' || c.status === 'Done').length / ws.children.length) * 100) : 0}%)
                   </span>
                 </div>
@@ -496,7 +496,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
               <div className="relative flex items-center justify-between w-full mt-4 pb-6 px-2">
                 {/* Background Line */}
                 <div className="absolute left-2 right-2 top-1.5 -translate-y-1/2 h-1 bg-slate-800/60 rounded-full" />
-                
+
                 {PHASES.map((p, idx) => {
                   const isActive = idx === phaseInfo.index;
                   const isPast = idx < phaseInfo.index;
