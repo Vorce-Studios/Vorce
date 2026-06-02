@@ -60,7 +60,7 @@ Ship Vorce toward a production-ready 1.0 by improving render stability, media pi
 
 - [x] **VOR-43:** Rebased and resolved conflicts for Timeline Persistence (#532) and Media Decoder Decomposition (#691)
 
-- [/] **VOR-44:** Fixing CI/CD linting blockers for App UI Layout Decomposition (#705) [In Progress]
+- [x] **VOR-44:** Resolved CI/CD linting blockers and enabled auto-merge for App UI Layout Decomposition (#705), Media Decoder Decomposition (#691), and Timeline Persistence (#532)
 
 
 
