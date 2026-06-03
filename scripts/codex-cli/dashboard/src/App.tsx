@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { LayoutDashboard, Activity, Settings, RefreshCw, Zap, BarChart3 } from 'lucide-react';
-import { useData, useAutoRefresh, useTextData } from './hooks';
+import { useData, useAutoRefresh } from './hooks';
 
 // Pages
 import DashboardPage from './pages/DashboardPage';
@@ -9,7 +9,7 @@ import SettingsPage from './pages/SettingsPage';
 import ManagerReportingPage from './pages/ManagerReportingPage';
 
 // Types
-import type { TabId, AutopilotConfig, QuotaRegistry, ActiveSessions, GitHubIssue, PullRequest, MemoryStore, AuditResult } from './types';
+import type { TabId, AutopilotConfig, QuotaRegistry, ActiveSessions, GitHubIssue, PullRequest, MemoryStore } from './types';
 
 // Defaults
 const defaultAutopilotConfig: AutopilotConfig = {
@@ -61,13 +61,6 @@ const defaultActiveSessions: ActiveSessions = {
   deliberation_log: []
 };
 
-const defaultAuditResult: AuditResult = {
-  session_id: '',
-  response: '',
-  parsed: null,
-  updated_at: ''
-};
-
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
 
@@ -81,8 +74,6 @@ export default function App() {
   const { data: julesSessions, refetch: refetchJulesSessions } = useData<any[]>('/jules-sessions.json', []);
   const { data: memoryStore, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
   const { data: history, loading: historyLoading, refetch: refetchHistory } = useData<any[]>('/data.json', []);
-  const { data: auditResult, refetch: refetchAuditResult } = useData<AuditResult>('/audit-result.json', defaultAuditResult);
-  const { data: liveLog, refetch: refetchLiveLog } = useTextData('/autopilot-live.log', '');
 
   const refetchAll = () => {
     refetchConfig();
@@ -94,8 +85,6 @@ export default function App() {
     refetchJulesSessions();
     refetchMemory();
     refetchHistory();
-    refetchAuditResult();
-    refetchLiveLog();
   };
 
   // Auto-refresh every 30 seconds
@@ -106,7 +95,7 @@ export default function App() {
     const renderActivePage = () => {
       switch (activeTab) {
         case 'dashboard':
-          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} auditResult={auditResult} liveLog={liveLog} />;
+          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} />;
         case 'workstreams':
           return <WorkstreamsPage issues={issues} sessions={sessions} pullRequests={pullRequests} julesSessions={julesSessions} projectItems={projectItems?.items || []} />;
         case 'reporting':

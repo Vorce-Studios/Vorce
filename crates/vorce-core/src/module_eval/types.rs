@@ -93,7 +93,7 @@ pub fn primary_render_connection_idx(
             ModulePartType::Layer(_) => "media_in",
             ModulePartType::Modulizer(_) => "media_in",
             ModulePartType::Mask(_) => "media_in",
-            ModulePartType::Mesh(_) => "media_in",
+            ModulePartType::Mesh(_) => "vertex_in",
             _ => "0", // Fallback for legacy / unknown
         }
     } else {
@@ -101,27 +101,10 @@ pub fn primary_render_connection_idx(
     };
 
     // 2. Find connection targeting that socket
-    if let Some(conn_indices) = indices.conn_index_cache.get(&part_id) {
-        // Try named socket first
-        if let Some(&conn_idx) =
-            conn_indices.iter().find(|&&idx| module.connections[idx].to_socket == target_id)
-        {
-            return Some(conn_idx);
-        }
-
-        // Fallback: Use the connection targeting the first primary input socket
-        if let Some(&part_idx) = indices.part_index_cache.get(&part_id) {
-            let part = &module.parts[part_idx];
-            if let Some(primary_input) = part.inputs.iter().find(|s| s.is_primary) {
-                if let Some(&conn_idx) = conn_indices
-                    .iter()
-                    .find(|&&idx| module.connections[idx].to_socket == primary_input.id)
-                {
-                    return Some(conn_idx);
-                }
-            }
-        }
-    }
-
-    None
+    indices
+        .conn_index_cache
+        .get(&part_id)?
+        .iter()
+        .copied()
+        .find(|&conn_idx| module.connections[conn_idx].to_socket == target_id)
 }

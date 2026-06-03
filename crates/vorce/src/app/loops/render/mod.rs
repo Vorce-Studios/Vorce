@@ -46,7 +46,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                     tex_name,
                     width,
                     height,
-                    app.backend.surface_format(),
+                    wgpu::TextureFormat::Bgra8UnormSrgb,
                     wgpu::TextureUsages::TEXTURE_BINDING
                         | wgpu::TextureUsages::COPY_DST
                         | wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -307,7 +307,7 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                 .render_queue
                 .items
                 .keys()
-                .filter(|&&id| !app.window_manager.contains_key(id))
+                .filter(|&&id| !app.window_manager.windows.contains_key(id))
                 .cloned()
                 .collect();
 
@@ -341,24 +341,19 @@ pub fn render(app: &mut App, output_id: OutputId) -> Result<()> {
                     let height = 1080;
 
                     if !app.ndi_offscreen_textures.contains_key(&pid) {
-                        let name = format!("ndi_offscreen_{vid}");
-                        app.texture_pool.create(
-                            &name,
+                        let texture = app.texture_pool.create(
+                            &format!("ndi_offscreen_{vid}"),
                             width,
                             height,
-                            wgpu::TextureFormat::Bgra8Unorm,
+                            wgpu::TextureFormat::Bgra8UnormSrgb,
                             wgpu::TextureUsages::RENDER_ATTACHMENT
                                 | wgpu::TextureUsages::TEXTURE_BINDING
                                 | wgpu::TextureUsages::COPY_SRC,
                         );
-                        let texture = app
-                            .texture_pool
-                            .get_texture(&name)
-                            .expect("Texture should have been created");
                         let view = std::sync::Arc::new(
                             texture.create_view(&wgpu::TextureViewDescriptor::default()),
                         );
-                        app.ndi_offscreen_textures.insert(pid, ((*texture).clone(), view));
+                        app.ndi_offscreen_textures.insert(pid, (texture, view));
                     }
 
                     // Get the view back
