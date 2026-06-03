@@ -164,33 +164,26 @@ pub fn render_mesh_editor_ui(
             ui.separator();
             ui.label("Visual Editor:");
 
-            ui.allocate_ui_with_layout(
-                egui::Vec2::new(ui.available_width(), 300.0),
-                egui::Layout::top_down(egui::Align::Center),
-                |ui| {
-                    if let Some(_action) = mesh_editor.ui(ui) {
-                        // Sync back
-                        let scale = 200.0;
-                        match mesh {
-                            MeshType::Quad { tl, tr, br, bl } => {
-                                if let Some((p_tl, p_tr, p_br, p_bl)) = mesh_editor.get_quad_corners()
-                                {
-                                    *tl = (p_tl.x / scale, p_tl.y / scale);
-                                    *tr = (p_tr.x / scale, p_tr.y / scale);
-                                    *br = (p_br.x / scale, p_br.y / scale);
-                                    *bl = (p_bl.x / scale, p_bl.y / scale);
-                                }
-                            }
-                            MeshType::BezierSurface { control_points } => {
-                                let points = mesh_editor.get_bezier_points();
-                                *control_points =
-                                    points.iter().map(|(x, y)| (x / scale, y / scale)).collect();
-                            }
-                            _ => {}
+            if let Some(_action) = mesh_editor.ui(ui) {
+                // Sync back
+                let scale = 200.0;
+                match mesh {
+                    MeshType::Quad { tl, tr, br, bl } => {
+                        if let Some((p_tl, p_tr, p_br, p_bl)) = mesh_editor.get_quad_corners() {
+                            *tl = (p_tl.x / scale, p_tl.y / scale);
+                            *tr = (p_tr.x / scale, p_tr.y / scale);
+                            *br = (p_br.x / scale, p_br.y / scale);
+                            *bl = (p_bl.x / scale, p_bl.y / scale);
                         }
                     }
-                },
-            );
+                    MeshType::BezierSurface { control_points } => {
+                        let points = mesh_editor.get_bezier_points();
+                        *control_points =
+                            points.iter().map(|(x, y)| (x / scale, y / scale)).collect();
+                    }
+                    _ => {}
+                }
+            }
         }
     });
 }

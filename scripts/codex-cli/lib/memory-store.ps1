@@ -100,59 +100,25 @@ function Format-MemoryBlock {
     #>
     param(
         [Parameter(Mandatory=$false)][string]$TaskType, # Kept for backward compatibility
-        [string]$Prompt = "",
         [object]$Store
     )
 
-    $allMemories = @(Get-RelevantMemories -TaskType $TaskType -Store $Store)
+    $allMemories = Get-RelevantMemories -Store $Store
     if ($allMemories.Count -eq 0) { return "" }
 
-    $taskKeywords = @{
-        planning   = @("working", "token")
-        monitoring = @("pr", "merge", "conflict", "session", "jules", "ci", "working")
-        audit      = @("audit", "remediation", "escalation", "problem")
-        coding     = @("bugfix", "script", "ci", "local", "cli", "test", "format")
-    }
-    $stopWords = @("github", "issue", "issues", "status", "context", "repo", "repository", "vorce", "autopilot", "scripte", "scripts", "daten", "entscheidung", "analysiere", "user", "alpha", "beta")
-    $keywords = @()
-    $keywords += @($Prompt -split '[^a-zA-Z0-9_-]+' | Where-Object { $_.Length -ge 4 -and $stopWords -notcontains $_.ToLowerInvariant() } | Select-Object -First 20)
-    if ($taskKeywords.ContainsKey($TaskType)) { $keywords += $taskKeywords[$TaskType] }
-    if ($Prompt -match '(?i)jules') { $keywords += @("jules") }
-    if ($Prompt -match '(?i)(\bpr\b|pull|merge|konflikt|conflict|ci)') { $keywords += @("pr", "merge", "conflict", "ci") }
-    if ($Prompt -match '(?i)(working|local|cli|tool)') { $keywords += @("working", "local", "cli") }
-    $keywords = @($keywords | ForEach-Object { [string]$_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
+    # Only inject CRITICAL priority memories automatically
+    $critical = @($allMemories | Where-Object { $_.priority -eq "critical" })
+    $otherCount = $allMemories.Count - $critical.Count
 
-    $scoredMemories = @($allMemories | ForEach-Object {
-        $memory = $_
-        $text = [string]$_.text
-        if ([string]::IsNullOrWhiteSpace($text)) { return }
-        $score = 0
-        foreach ($kw in $keywords) {
-            if ($text -match [regex]::Escape($kw)) { $score++ }
-        }
-        if ($score -gt 0) {
-            [pscustomobject]@{ memory = $memory; score = $score }
-        }
-    } | Sort-Object -Property @{Expression="score";Descending=$true})
-
-    $relevant = @($scoredMemories | ForEach-Object { $_.memory })
-
-    $critical = @($relevant | Where-Object { $_.priority -eq "critical" } | Select-Object -First 1)
-    $high = @($relevant | Where-Object { $_.priority -eq "high" } | Select-Object -First 1)
-    $selected = @($critical + $high)
-    $otherCount = [Math]::Max(0, $allMemories.Count - $selected.Count)
-
-    if ($selected.Count -eq 0) {
-        Write-Host "[MEMORY] Keine session-spezifischen Erinnerungen injiziert, $($allMemories.Count) on-demand verfuegbar" -ForegroundColor DarkGray
-        return ""
-    }
+    if ($critical.Count -eq 0 -and $otherCount -eq 0) { return "" }
 
     $lines = @("[KONTEXT-ERINNERUNGEN]")
 
-    foreach ($m in $selected) {
-        $typeLabel = if ($m.type -eq "temporary") { "[TEMPORAER]" } else { "[RICHTLINIE]" }
-        $priorityLabel = [string]$m.priority
-        $lines += "- $typeLabel [$priorityLabel] $($m.text)"
+    if ($critical.Count -gt 0) {
+        foreach ($m in $critical) {
+            $typeLabel = if ($m.type -eq "temporary") { "[TEMPORAER]" } else { "[RICHTLINIE]" }
+            $lines += "- $typeLabel $($m.text)"
+        }
     }
 
     if ($otherCount -gt 0) {
@@ -165,7 +131,7 @@ function Format-MemoryBlock {
     $block = $lines -join "`n"
 
     $tokenEstimate = [Math]::Ceiling($block.Length / 4)
-    Write-Host "[MEMORY] $($selected.Count) session-spezifische Erinnerungen injiziert, $otherCount on-demand verfuegbar (~${tokenEstimate} Tokens)" -ForegroundColor DarkGray
+    Write-Host "[MEMORY] $($critical.Count) kritische Erinnerungen injiziert, $otherCount on-demand verfuegbar (~${tokenEstimate} Tokens)" -ForegroundColor DarkGray
 
     return $block
 }

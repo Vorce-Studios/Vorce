@@ -205,13 +205,6 @@ pub fn render_layer_preview_panel(
         return;
     }
 
-    ui.horizontal(|ui| {
-        ui.label("Current View: Preview");
-        if ui.button("⚙️ Edit Mesh").clicked() {
-            canvas.layer_inspector_view_mode = LayerInspectorViewMode::MeshEditor;
-        }
-    });
-
     if !canvas.show_inspector_previews {
         ui.label("Inspector preview is disabled.");
         return;

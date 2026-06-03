@@ -23,7 +23,7 @@ use std::sync::{Arc, Mutex};
 #[cfg(feature = "ndi")]
 use std::time::Duration;
 #[cfg(feature = "ndi")]
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 /// Re-export Source type for external use
 #[cfg(feature = "ndi")]
@@ -42,13 +42,7 @@ pub struct NdiSource {
 #[cfg(feature = "ndi")]
 impl From<grafton_ndi::Source> for NdiSource {
     fn from(source: grafton_ndi::Source) -> Self {
-        use grafton_ndi::SourceAddress;
-        let address_str = match &source.address {
-            SourceAddress::Ip(ip) => Some(ip.clone()),
-            SourceAddress::Url(url) => Some(url.clone()),
-            SourceAddress::None => None,
-        };
-        Self { name: source.name.clone(), address: address_str }
+        Self { name: source.name.clone(), address: Some(source.address.to_string()) }
     }
 }
 
@@ -86,7 +80,6 @@ pub struct NdiReceiver {
 #[cfg(feature = "ndi")]
 enum ReceiverCommand {
     Connect(NdiSource),
-    #[allow(dead_code)]
     Stop,
 }
 
@@ -344,15 +337,13 @@ impl NdiSender {
             }
         };
 
-        let mut ndi_frame = VideoFrameBuilder::new()
-            .resolution(frame.format.width as i32, frame.format.height as i32)
+        let ndi_frame = VideoFrameBuilder::new()
+            .width(frame.format.width as i32)
+            .height(frame.format.height as i32)
             .pixel_format(NdiPixelFormat::BGRA)
             .frame_rate(frame.format.frame_rate as i32, 1)
-            .build()
+            .build(data.as_slice())
             .map_err(|e| IoError::NdiSenderFailed(format!("Failed to build NDI frame: {}", e)))?;
-        ndi_frame
-            .replace_data(data.as_ref().to_vec())
-            .map_err(|e| IoError::NdiSenderFailed(format!("Failed to set NDI frame data: {}", e)))?;
 
         self.sender.send_video(&ndi_frame);
 

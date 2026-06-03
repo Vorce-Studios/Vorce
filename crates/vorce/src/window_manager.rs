@@ -130,14 +130,10 @@ impl WindowManager {
             .with_inner_size(winit::dpi::PhysicalSize::new(default_width, default_height))
             .with_maximized(maximized);
 
-        // Set position if provided and valid (prevent off-screen or invisible startup)
+        // Set position if provided
         if let (Some(pos_x), Some(pos_y)) = (x, y) {
-            // Basic sanity check: avoid extreme negative or likely invalid positions
-            // Modern winit handles multi-monitor, but extreme values often mean "invisible"
-            if pos_x > -32000 && pos_x < 32000 && pos_y > -32000 && pos_y < 32000 {
-                window_attributes =
-                    window_attributes.with_position(winit::dpi::PhysicalPosition::new(pos_x, pos_y));
-            }
+            window_attributes =
+                window_attributes.with_position(winit::dpi::PhysicalPosition::new(pos_x, pos_y));
         }
 
         let window = Arc::new(event_loop.create_window(window_attributes)?);
@@ -360,11 +356,6 @@ impl WindowManager {
     /// Returns a reference to a `WindowContext` by its `OutputId`.
     pub fn get(&self, output_id: OutputId) -> Option<&WindowContext> {
         self.windows.get(&output_id)
-    }
-
-    /// Checks if a window with the given `OutputId` exists.
-    pub fn contains_key(&self, output_id: OutputId) -> bool {
-        self.windows.contains_key(&output_id)
     }
 
     /// Returns a mutable reference to a `WindowContext` by its `OutputId`.

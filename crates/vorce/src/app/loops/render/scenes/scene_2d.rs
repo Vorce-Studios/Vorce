@@ -158,7 +158,7 @@ pub(crate) fn render_scene_2d(
                         &output_texture_name,
                         effect_width,
                         effect_height,
-                        ctx.surface_format,
+                        wgpu::TextureFormat::Bgra8UnormSrgb,
                         wgpu::TextureUsages::TEXTURE_BINDING
                             | wgpu::TextureUsages::RENDER_ATTACHMENT
                             | wgpu::TextureUsages::COPY_DST,

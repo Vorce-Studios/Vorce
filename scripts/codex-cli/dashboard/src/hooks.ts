@@ -27,33 +27,6 @@ export function useData<T>(url: string, defaultValue: T): { data: T; loading: bo
   return { data, loading, error, refetch: fetchData };
 }
 
-export function useTextData(url: string, defaultValue: string = ''): { data: string; loading: boolean; error: string | null; refetch: () => void } {
-  const [data, setData] = useState<string>(defaultValue);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`${url}?t=${Date.now()}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const text = await res.text();
-      setData(text);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Fehler beim Laden');
-    } finally {
-      setLoading(false);
-    }
-  }, [url]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return { data, loading, error, refetch: fetchData };
-}
-
 export function useAutoRefresh(callback: () => void, intervalMs: number = 30000) {
   useEffect(() => {
     const id = setInterval(callback, intervalMs);
