@@ -227,6 +227,8 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
 
       <LiveLogPanel items={liveLogItems} />
 
+      <WorkingSessionsPanel sessions={sessions.working_sessions || []} />
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
@@ -617,6 +619,63 @@ function LiveLogPanel({ items }: { items: Array<{ time: string; message: string;
           })
         )}
       </div>
+    </div>
+  );
+}
+
+function WorkingSessionsPanel({ sessions }: { sessions: any[] }) {
+  const counts = sessions.reduce((acc, item) => {
+    const status = String(item.status || 'UNKNOWN').toUpperCase();
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  const recent = [...sessions].slice(-8).reverse();
+
+  return (
+    <div className="glass-card p-5 border border-slate-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
+        <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+          <Activity className="w-4 h-4 text-cyan-400" />
+          Working Sessions
+        </h3>
+        <div className="flex flex-wrap gap-2 text-[11px]">
+          {['QUEUED', 'RUNNING', 'COMPLETED', 'FAILED'].map(status => (
+            <span key={status} className={`px-2 py-1 rounded border ${
+              status === 'FAILED' ? 'bg-rose-500/15 text-rose-300 border-rose-500/25' :
+              status === 'RUNNING' ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/25' :
+              status === 'COMPLETED' ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25' :
+              'bg-slate-900 text-slate-300 border-slate-700'
+            }`}>
+              {status}: {counts[status] || 0}
+            </span>
+          ))}
+        </div>
+      </div>
+      {recent.length === 0 ? (
+        <div className="text-xs text-slate-500 rounded border border-slate-800 bg-slate-950/40 px-3 py-2">
+          Noch keine Working Sessions geplant.
+        </div>
+      ) : (
+        <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+          {recent.map((item, idx) => {
+            const status = String(item.status || 'UNKNOWN').toUpperCase();
+            return (
+              <div key={item.id || idx} className="grid grid-cols-[5rem_1fr_8rem] gap-2 rounded border border-slate-800 bg-slate-950/45 px-3 py-2 text-xs text-slate-300">
+                <span className="font-mono text-slate-500">#{item.issue_number || '-'}</span>
+                <span className="truncate" title={item.issue_title || item.prompt_hint || ''}>{item.issue_title || item.prompt_hint || 'Working Session'}</span>
+                <span className={`text-right font-semibold ${
+                  status === 'FAILED' ? 'text-rose-300' :
+                  status === 'RUNNING' ? 'text-cyan-300' :
+                  status === 'COMPLETED' ? 'text-emerald-300' :
+                  'text-slate-400'
+                }`}>
+                  {status}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

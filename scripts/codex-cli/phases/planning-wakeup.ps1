@@ -47,6 +47,48 @@ function Convert-PlanningProposalOutput {
     return @($newIssues)
 }
 
+function Ensure-WorkingSessionsState {
+    param([Parameter(Mandatory)][object]$State)
+    if (-not ($State.PSObject.Properties.Name -contains "working_sessions") -or $null -eq $State.working_sessions) {
+        $State | Add-Member -MemberType NoteProperty -Name "working_sessions" -Value @() -Force
+    } elseif ($State.working_sessions -isnot [System.Array] -and $State.working_sessions -isnot [System.Collections.IList]) {
+        $State.working_sessions = @($State.working_sessions)
+    }
+}
+
+function Add-WorkingSessionPlan {
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][int]$IssueNumber,
+        [Parameter(Mandatory)][string]$IssueTitle,
+        [Parameter(Mandatory)][string]$AgentProvider,
+        [string]$PromptHint = ""
+    )
+
+    Ensure-WorkingSessionsState -State $State
+    $existing = @($State.working_sessions | Where-Object {
+        ($_.PSObject.Properties.Name -contains "issue_number") -and
+        [int]$_.issue_number -eq $IssueNumber -and
+        (-not ($_.PSObject.Properties.Name -contains "status") -or [string]$_.status -in @("QUEUED", "RUNNING"))
+    })
+    if ($existing.Count -gt 0) { return }
+
+    $State.working_sessions += [ordered]@{
+        id             = "work-$IssueNumber-$(Get-Date -Format 'yyyyMMddHHmmss')"
+        issue_number   = $IssueNumber
+        issue_title    = $IssueTitle
+        agent_provider = $AgentProvider
+        prompt_hint    = $PromptHint
+        status         = "QUEUED"
+        created_at     = (Get-Date -Format 'o')
+        updated_at     = (Get-Date -Format 'o')
+        process_id     = $null
+        status_file    = $null
+        pr_url         = $null
+    }
+    Write-Host "[PLANNING] Working Session geplant: #$IssueNumber -> $AgentProvider" -ForegroundColor Cyan
+}
+
 function Invoke-PlanningWakeUp {
     param(
         [Parameter(Mandatory)][object]$State,
@@ -59,7 +101,7 @@ function Invoke-PlanningWakeUp {
     Write-Host "`n[PLANNING] ========== Planning Wake-Up ==========" -ForegroundColor Blue
 
     # Ensure state arrays exist
-    foreach ($prop in @("autopilot_created_issues", "active_delegations", "escalated_issues", "decisions_pending")) {
+    foreach ($prop in @("autopilot_created_issues", "active_delegations", "escalated_issues", "decisions_pending", "working_sessions")) {
         if (-not ($State.PSObject.Properties.Name -contains $prop)) {
             $State | Add-Member -MemberType NoteProperty -Name $prop -Value @() -Force
         }
@@ -103,9 +145,19 @@ function Invoke-PlanningWakeUp {
                 $modelName = Get-ProviderModelNameForTier -QuotaRegistry $QuotaRegistry -ProviderName "codex_orchestrator" -Tier $resolvedTier
                 Write-Host "[PLANNING] Starte Planning Synthesis als interaktiven Codex-Chat ($resolvedTier / $modelName)." -ForegroundColor Cyan
                 $sessionResult = Invoke-AutopilotCodexSession -SessionType "planning-synthesis" -Prompt $fullPrompt -State $State -Model $modelName -VisibleTerminal -ResumeMainSession -DryRun:$DryRun
+                $isSessionDryRun = ($sessionResult.PSObject.Properties.Name -contains "DryRun") -and [bool]$sessionResult.DryRun
+                $sessionOutput = if ($isSessionDryRun) {
+                    "{`"dry_run`":true,`"interactive_planning_synthesis`":true}"
+                } elseif ($sessionResult.PSObject.Properties.Name -contains "Output" -and -not [string]::IsNullOrWhiteSpace([string]$sessionResult.Output)) {
+                    [string]$sessionResult.Output
+                } elseif ($sessionResult.PSObject.Properties.Name -contains "Reason" -and -not [string]::IsNullOrWhiteSpace([string]$sessionResult.Reason)) {
+                    "Interactive Codex planning synthesis failed: $($sessionResult.Reason)"
+                } else {
+                    "Interactive Codex planning synthesis completed."
+                }
                 $stepResult = [pscustomobject]@{
                     success = [bool]$sessionResult.Success
-                    output  = if ($sessionResult.DryRun) { "{`"dry_run`":true,`"interactive_planning_synthesis`":true}" } else { "Interactive Codex planning synthesis completed." }
+                    output  = $sessionOutput
                 }
             } else {
                 $stepResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "planning" -DryRun:$DryRun -Prompt $fullPrompt -State $State -AlphaTierOverride $step.tier
@@ -191,8 +243,8 @@ function Invoke-PlanningWakeUp {
                 Add-Delegation -State $State -IssueNumber $issue.number -IssueTitle $issue.title -JulesSessionId "jules-task-$($issue.number)" -AgentType "jules"
                 $julesAvailableSlots--
             } else {
-                # Start CLI agent logic would go here
-                Add-Delegation -State $State -IssueNumber $issue.number -IssueTitle $issue.title -JulesSessionId "cli-task-$($issue.number)" -AgentType $targetAgent
+                Add-WorkingSessionPlan -State $State -IssueNumber ([int]$issue.number) -IssueTitle ([string]$issue.title) -AgentProvider $targetAgent -PromptHint "Kurze lokale Working Session fuer Issue #$($issue.number). Arbeite fokussiert, nutze lokale CLI-Tools und halte Kontext klein."
+                Add-Delegation -State $State -IssueNumber $issue.number -IssueTitle $issue.title -JulesSessionId "work-task-$($issue.number)" -AgentType $targetAgent
             }
         }
     }

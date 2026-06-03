@@ -127,6 +127,79 @@ function Invoke-VisibleCeoPhase {
     return [pscustomobject]@{ success = $finalSuccess; output = $output; stats = @{} }
 }
 
+function Invoke-HeadlessCeoPhase {
+    param(
+        [Parameter(Mandatory)][object]$QuotaRegistry,
+        [Parameter(Mandatory)][object]$CeoInfo,
+        [Parameter(Mandatory)][string]$Prompt,
+        [string]$WorkingDirectory,
+        [switch]$DryRun
+    )
+
+    $providerName = $CeoInfo.provider
+    $modelTier = $CeoInfo.model_tier
+    $providerConfig = $QuotaRegistry.providers.$providerName
+    $command = $CeoInfo.command
+
+    if ($DryRun.IsPresent) {
+        Write-Host "[DRY-RUN] Headless Phase: $providerName ($modelTier)" -ForegroundColor Yellow
+        return [pscustomobject]@{ success = $true; output = "{`"dry_run`": true}"; stats = @{} }
+    }
+
+    if (-not (Get-Command $command -ErrorAction SilentlyContinue)) {
+        return [pscustomobject]@{ success = $false; output = "CLI-Befehl '$command' nicht gefunden."; stats = @{} }
+    }
+
+    $modelName = $null
+    if ($providerConfig.PSObject.Properties.Name -contains "models" -and $providerConfig.models -and ($providerConfig.models.PSObject.Properties.Name -contains $modelTier)) {
+        $modelName = $providerConfig.models.$modelTier.name
+    }
+
+    $usePromptStdin = $providerName -eq "codex_orchestrator"
+    $cliArgs = Build-CliArgs -ProviderConfig $providerConfig -Prompt $Prompt -ModelName $modelName -UsePromptStdin:($usePromptStdin)
+    if ($modelName -and $modelName -ne "default") {
+        switch ($providerName) {
+            "gemini_cli" { $cliArgs += @("--model", $modelName) }
+            "claude_code" { $cliArgs += @("--model", $modelName) }
+        }
+    }
+
+    $output = ""
+    $exitCode = 0
+    try {
+        $pushDir = $null
+        if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory) -and (Test-Path $WorkingDirectory)) {
+            $pushDir = $WorkingDirectory
+        }
+        if ($pushDir) { Push-Location $pushDir }
+        try {
+            if ($usePromptStdin) {
+                $output = $Prompt | & $command @cliArgs 2>&1 | Out-String
+            } else {
+                $output = & $command @cliArgs 2>&1 | Out-String
+            }
+            $exitCode = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }
+        } finally {
+            if ($pushDir) { Pop-Location }
+        }
+    } catch {
+        $output = $_.Exception.Message
+        $exitCode = 1
+    }
+
+    if ($exitCode -ne 0) {
+        $snippet = ([string]$output).Trim()
+        if ($snippet.Length -gt 1200) { $snippet = $snippet.Substring(0, 1200) + "..." }
+        Write-Warning "[CEO] Headless $providerName ($modelTier) fehlgeschlagen: EXIT_CODE_$exitCode. Ausgabe: $snippet"
+    }
+
+    return [pscustomobject]@{
+        success = ($exitCode -eq 0)
+        output  = $output
+        stats   = @{}
+    }
+}
+
 function Resolve-DualCeos {
     param(
         [Parameter(Mandatory)][object]$QuotaRegistry,
@@ -236,7 +309,8 @@ function Invoke-Deliberation {
     }
 
     $fullPrompt = Format-DeliberationPrompt -Phase "proposal" -OriginalPrompt $Prompt -MemoryBlock $MemoryBlock
-    $result = Invoke-VisibleCeoPhase -QuotaRegistry $QuotaRegistry -CeoInfo $ceoInfo -Prompt $fullPrompt -PhaseName "Execution" -WorkingDirectory $WorkingDirectory -State $State -DryRun:$DryRun
+    Write-Host "[CEO] Starte headless $($ceoInfo.provider) CLI fuer kurzen $TaskType-Schritt." -ForegroundColor Cyan
+    $result = Invoke-HeadlessCeoPhase -QuotaRegistry $QuotaRegistry -CeoInfo $ceoInfo -Prompt $fullPrompt -WorkingDirectory $WorkingDirectory -DryRun:$DryRun
 
     return [pscustomobject]@{
         success = $result.success
@@ -260,7 +334,7 @@ function Invoke-DualCeoTask {
         [string]$BetaTierOverride = $null
     )
 
-    $memoryBlock = Format-MemoryBlock -TaskType $TaskType -Store (Read-MemoryStore)
+    $memoryBlock = Format-MemoryBlock -TaskType $TaskType -Prompt $Prompt -Store (Read-MemoryStore)
 
     return Invoke-Deliberation `
         -QuotaRegistry $QuotaRegistry `
