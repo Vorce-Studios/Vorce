@@ -34,23 +34,13 @@ function Show-CeoPhaseSummary {
         try { $parsed = $jsonMatch.Value | ConvertFrom-Json } catch {}
     }
 
-    Write-Host ""
-    Write-Host ("-" * 60) -ForegroundColor Gray
-    Write-Host "  ZUSAMMENFASSUNG DER CEO-PHASE: $Phase" -ForegroundColor Cyan
-    Write-Host ("-" * 60) -ForegroundColor Gray
+    Write-Host "  CEO-ZUSAMMENFASSUNG: $Phase" -ForegroundColor Cyan
+    Write-Host ("." * 40) -ForegroundColor Gray
 
     if ($null -ne $parsed) {
         if ($parsed.PSObject.Properties.Name -contains "assessment") {
             Write-Host "  Bewertung:    $($parsed.assessment)" -ForegroundColor Gray
             Write-Host "  Empfehlung:   $($parsed.recommendation)" -ForegroundColor $(if ($parsed.recommendation -eq "approve") { "Green" } else { "Yellow" })
-            if ($parsed.PSObject.Properties.Name -contains "strengths") {
-                Write-Host "  Stärken:" -ForegroundColor Cyan
-                foreach ($s in $parsed.strengths) { Write-Host "    - $s" -ForegroundColor Gray }
-            }
-            if ($parsed.PSObject.Properties.Name -contains "weaknesses" -and $parsed.weaknesses.Count -gt 0) {
-                Write-Host "  Schwächen:" -ForegroundColor Yellow
-                foreach ($w in $parsed.weaknesses) { Write-Host "    - $w" -ForegroundColor Gray }
-            }
         } elseif ($parsed.PSObject.Properties.Name -contains "proposal") {
             Write-Host "  Vorschläge:" -ForegroundColor Cyan
             foreach ($p in $parsed.proposal) {
@@ -61,31 +51,19 @@ function Show-CeoPhaseSummary {
                 }
             }
         } else {
-            # Generic JSON formatting
+            # Generic JSON formatting for other responses
+            $propCount = 0
             $parsed.PSObject.Properties | ForEach-Object {
-                $name = $_.Name
-                $val = $_.Value
-                $displayName = @($name -split '_' | ForEach-Object {
-                    if ($_.Length -gt 0) { $_.Substring(0,1).ToUpper() + $_.Substring(1) } else { "" }
-                }) -join " "
-
-                if ($val -is [System.Array] -or $val -is [System.Collections.IList]) {
-                    Write-Host "  $displayName`:" -ForegroundColor Cyan
-                    foreach ($v in $val) { Write-Host "    - $v" -ForegroundColor Gray }
-                } else {
-                    Write-Host "  $displayName`: $val" -ForegroundColor Gray
+                if ($propCount -lt 10) {
+                    $val = if ($_.Value -is [System.Array]) { "$($_.Value.Count) items" } else { $_.Value }
+                    Write-Host "  $($_.Name): $val" -ForegroundColor Gray
                 }
+                $propCount++
             }
         }
     } else {
-        # Clean plain text
-        $lines = $Content -split "`r?`n" | Where-Object {
-            $_ -notmatch '^Warning: 256-color' -and
-            $_ -notmatch '^YOLO mode is enabled' -and
-            $_ -notmatch '^Ripgrep is not available'
-        }
-        $lines | Select-Object -First 15 | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
-        if ($lines.Count -gt 15) { Write-Host "  ... (weitere $($lines.Count - 15) Zeilen)" -ForegroundColor DarkGray }
+        $lines = $Content -split "`r?`n" | Where-Object { $_.Trim().Length -gt 0 }
+        $lines | Select-Object -First 10 | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
     }
     Write-Host ("-" * 60) -ForegroundColor Gray
     Write-Host ""
@@ -95,20 +73,9 @@ function Show-CeoPhaseSummary {
 $host.UI.RawUI.WindowTitle = "Vorce CEO: $PhaseName"
 
 # --- Banner ---
-Write-Host "" -ForegroundColor White
-Write-Host "======================================================" -ForegroundColor Magenta
-Write-Host "  VORCE AUTOPILOT - CEO SESSION" -ForegroundColor Magenta
-Write-Host "======================================================" -ForegroundColor Magenta
-Write-Host "  Phase:    $PhaseName" -ForegroundColor Cyan
-Write-Host "  Provider: $ProviderName" -ForegroundColor Cyan
-if (-not [string]::IsNullOrWhiteSpace($ModelName)) {
-    Write-Host "  Model:    $ModelName" -ForegroundColor Cyan
-}
-Write-Host "  Command:  $CliCommand" -ForegroundColor DarkGray
-Write-Host "  Output:   $OutputFile" -ForegroundColor DarkGray
-Write-Host "  Zeit:     $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor DarkGray
-Write-Host "======================================================" -ForegroundColor Magenta
-Write-Host ""
+Write-Host " [VORCE CEO] Phase: $PhaseName | Provider: $ProviderName" -ForegroundColor Magenta
+Write-Host " $(Get-Date -Format 'HH:mm:ss') | Mode: $(if (-not [string]::IsNullOrWhiteSpace($ModelName)) { $ModelName } else { 'default' })" -ForegroundColor DarkGray
+Write-Host ("-" * 60) -ForegroundColor DarkGray
 
 # --- Read CLI args from file ---
 if (-not (Test-Path -LiteralPath $CliArgsFile)) {
@@ -120,12 +87,23 @@ if (-not (Test-Path -LiteralPath $CliArgsFile)) {
     exit 1
 }
 
-$cliArgs = @(Get-Content -LiteralPath $CliArgsFile -Raw -Encoding UTF8 | ConvertFrom-Json)
+$rawCliArgs = @(Get-Content -LiteralPath $CliArgsFile -Raw -Encoding UTF8 | ConvertFrom-Json)
+$promptText = if (Test-Path $PromptFile) { Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8 } else { "" }
+
+# Replace placeholder with actual prompt
+$finalArgs = @()
+foreach ($arg in $rawCliArgs) {
+    if ($arg -eq "__V_PROMPT__") {
+        $finalArgs += $promptText
+    } else {
+        $finalArgs += $arg
+    }
+}
 
 # --- Resolve CLI command ---
 $cmdInfo = Get-Command $CliCommand -ErrorAction SilentlyContinue
 if (-not $cmdInfo) {
-    $errMsg = "CLI-Befehl '$CliCommand' nicht gefunden. Ist er installiert und im PATH?"
+    $errMsg = "CLI-Befehl '$CliCommand' nicht gefunden."
     Write-Host "[FEHLER] $errMsg" -ForegroundColor Red
     Set-Content -Path $OutputFile -Value $errMsg -Encoding UTF8
     Set-Content -Path $StatusFile -Value "1" -Encoding UTF8
@@ -133,77 +111,38 @@ if (-not $cmdInfo) {
     exit 1
 }
 
-# Keep original .ps1 or other command source. Forcing .cmd breaks multiline arguments due to Windows batch file limitations.
-
 # --- Change to working directory ---
 if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory) -and (Test-Path $WorkingDirectory)) {
     Set-Location -LiteralPath $WorkingDirectory
-    Write-Host "[CEO] Arbeitsverzeichnis: $WorkingDirectory" -ForegroundColor DarkGray
 }
 
-Write-Host "[CEO] Starte $ProviderName Session..." -ForegroundColor Green
-Write-Host "[CEO] Argumente: $($cliArgs.Count) Parameter" -ForegroundColor DarkGray
-Write-Host ("=" * 50) -ForegroundColor DarkGray
+Write-Host "[CEO] Starte $ProviderName..." -ForegroundColor Green
 Write-Host ""
 
 # --- Execute CLI command with live output + file capture ---
 $exitCode = 0
 try {
-    $hasPromptFile = -not [string]::IsNullOrWhiteSpace($PromptFile) -and (Test-Path $PromptFile)
-
-    $cliBaseName = [System.IO.Path]::GetFileNameWithoutExtension($CliCommand).ToLower()
-    $needsPromptArg = $cliBaseName -in @("gemini", "claude")
-
-    # Since we no longer rewrite to .cmd (see deliberation-engine fix),
-    # the command runs via PowerShell which has NO argument length limit.
-    # We can safely pass the prompt as -p argument.
-    # For extremely long prompts (>30KB), fall back to stdin pipe as safety net.
-    $useStdinPipe = $false
-    if ($hasPromptFile -and $needsPromptArg) {
-        $promptText = Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8
-        $promptBytes = [System.Text.Encoding]::UTF8.GetByteCount($promptText)
-        if ($promptBytes -gt 30000) {
-            # Extremely long prompt: use stdin pipe with -p "." as trigger
-            $useStdinPipe = $true
-            $cliArgs += @("-p", ".")
-            Write-Host "[CEO] Sehr langer Prompt ($promptBytes Bytes) - verwende Stdin-Pipe" -ForegroundColor DarkGray
-        } else {
-            # Normal prompt: pass directly as -p argument (safe with .ps1)
-            $cliArgs += @("-p", $promptText)
-            Write-Host "[CEO] Prompt wird als -p Argument uebergeben ($promptBytes Bytes)" -ForegroundColor DarkGray
-        }
-    } elseif ($hasPromptFile -and -not $needsPromptArg) {
-        # For other providers: append prompt as argument
-        $promptText = Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8
-        $cliArgs += @($promptText)
-    }
-
-    Write-Host "[CEO] Analysiere und verarbeite Phase..." -ForegroundColor Cyan
-    Write-Host "[CEO] Befehl: $CliCommand" -ForegroundColor DarkGray
-    Write-Host "[CEO] Args: $($cliArgs.Count) Parameter" -ForegroundColor DarkGray
-
-    # Use process execution with Tee-Object instead of Start-Transcript.
-    # Start-Transcript can interfere with CLI tools that use terminal escape sequences.
     $errorLogFile = $OutputFile + ".err.log"
-    if ($useStdinPipe) {
-        # Pipe prompt via stdin for extremely long prompts
-        Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8 | & $CliCommand @cliArgs 2> $errorLogFile | Tee-Object -FilePath $OutputFile
+    
+    # Execute and stream output. Codex receives the prompt via stdin to avoid
+    # Windows command-line length limits in visible CEO phases.
+    if ($ProviderName -eq "codex_orchestrator" -and ($finalArgs -contains "-")) {
+        $promptText | & $CliCommand @finalArgs 2> $errorLogFile | Tee-Object -FilePath $OutputFile
     } else {
-        & $CliCommand @cliArgs 2> $errorLogFile | Tee-Object -FilePath $OutputFile
+        & $CliCommand @finalArgs 2> $errorLogFile | Tee-Object -FilePath $OutputFile
     }
 
     $exitCode = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }
 
+    # Robustness check: if output contains JSON but exit code is non-zero (common in some CLI tools)
     if ($exitCode -ne 0) {
         $outContent = Get-Content -LiteralPath $OutputFile -Raw -ErrorAction SilentlyContinue
         if ($outContent -match '(?s)\{.*\}' -or $outContent -match '```json') {
             $exitCode = 0
-            Write-Host "[CEO] Workaround: Valid JSON detected despite Exit-Code 1, forcing Success." -ForegroundColor Yellow
         }
     }
 } catch {
     $errMsg = $_.Exception.Message
-    Write-Host ""
     Write-Host "[CEO] FEHLER: $errMsg" -ForegroundColor Red
     Add-Content -Path $OutputFile -Value "`nFEHLER: $errMsg" -Encoding UTF8
     $exitCode = 1
@@ -213,35 +152,20 @@ try {
 Set-Content -Path $StatusFile -Value "$exitCode" -Encoding UTF8
 
 # --- Footer ---
-Write-Host ""
-Write-Host ("=" * 60) -ForegroundColor $(if ($exitCode -eq 0) { "Green" } else { "Red" })
 if ($exitCode -eq 0) {
-    Write-Host "[CEO] Phase '$PhaseName' erfolgreich abgeschlossen." -ForegroundColor Green
-
-    # Read output and show clean summary
     if (Test-Path -LiteralPath $OutputFile) {
         $content = Get-Content -LiteralPath $OutputFile -Raw -Encoding UTF8
         Show-CeoPhaseSummary -Content $content -Phase $PhaseName
     }
+    Write-Host "[OK] Phase abgeschlossen." -ForegroundColor Green
+    Start-Sleep -Seconds 3
 } else {
-    Write-Host "[CEO] Phase '$PhaseName' fehlgeschlagen (Exit-Code: $exitCode)." -ForegroundColor Red
-
-    # Print the raw error logs on failure so the user knows exactly what failed
-    Write-Host ""
-    Write-Host "--- FEHLERPROTOKOLL (RAW LOG) ---" -ForegroundColor Red
+    Write-Host "[FEHLER] Phase fehlgeschlagen (Exit: $exitCode)." -ForegroundColor Red
     if (Test-Path -LiteralPath $OutputFile) {
-        Get-Content -LiteralPath $OutputFile -Raw -Encoding UTF8 | Write-Host -ForegroundColor DarkRed
+        Write-Host "--- LOG ---" -ForegroundColor DarkRed
+        Get-Content -LiteralPath $OutputFile -Tail 20 | Write-Host -ForegroundColor DarkRed
     }
-    Write-Host "---------------------------------" -ForegroundColor Red
-}
-Write-Host ("=" * 60) -ForegroundColor $(if ($exitCode -eq 0) { "Green" } else { "Red" })
-
-# Keep window open for 5 seconds (or until Enter) on error so user can see diagnostics
-if ($exitCode -ne 0) {
     Read-Host "Druecke Enter zum Schliessen"
-} else {
-    Write-Host "[CEO] Fenster schliesst in 5 Sekunden..." -ForegroundColor DarkGray
-    Start-Sleep -Seconds 5
 }
 
 exit $exitCode

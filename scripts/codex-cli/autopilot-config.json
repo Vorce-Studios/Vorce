@@ -32,7 +32,7 @@
   },
   "max_issues_per_planning_cycle": 30,
   "dual_ceo": {
-    "enabled": true,
+    "enabled": false,
     "ceo_alpha_chain": [
       "codex_orchestrator:planning",
       "gemini_cli:balanced"
@@ -40,11 +40,89 @@
     "ceo_beta_chain": [
       "gemini_cli:balanced"
     ],
-    "max_deliberation_rounds": 3,
-    "deliberation_tasks": [
-      "complex_review"
-    ],
+    "max_deliberation_rounds": 1,
+    "deliberation_tasks": [],
     "fallback_to_single": true,
     "log_deliberations": true
+  },
+  "planning_sequence": [
+    {
+      "id": "jules_sync",
+      "prompt_ref": "planning_jules_sync",
+      "tier": "fast",
+      "label": "Jules-Status Sync"
+    },
+    {
+      "id": "pr_sync",
+      "prompt_ref": "planning_pr_sync",
+      "tier": "fast",
+      "label": "PR-Status Sync"
+    },
+    {
+      "id": "backlog_analysis",
+      "prompt_ref": "planning_analysis",
+      "tier": "balanced",
+      "label": "Backlog-Analyse"
+    },
+    {
+      "id": "task_generation",
+      "prompt_ref": "planning_proposal",
+      "tier": "balanced",
+      "label": "Task-Generierung"
+    },
+    {
+      "id": "final_synthesis",
+      "prompt_ref": "planning_synthesis",
+      "tier": "high",
+      "label": "Master-Plan Synthese"
+    }
+  ],
+  "monitoring_sequence": [
+    {
+      "id": "session_health",
+      "prompt_ref": "monitor_sessions",
+      "tier": "fast",
+      "label": "Session Health Check"
+    },
+    {
+      "id": "pr_ci_validation",
+      "prompt_ref": "monitor_prs",
+      "tier": "fast",
+      "label": "PR CI-Validierung"
+    },
+    {
+      "id": "conflict_remediation",
+      "prompt_ref": "monitor_conflicts",
+      "tier": "balanced",
+      "label": "Merge-Konflikt Remediation"
+    }
+  ],
+  "audit_sequence": [
+    {
+      "id": "consistency_audit",
+      "prompt_ref": "audit_consistency",
+      "tier": "balanced",
+      "label": "Daten-Konsistenz Audit"
+    },
+    {
+      "id": "performance_audit",
+      "prompt_ref": "audit_performance",
+      "tier": "balanced",
+      "label": "Autopilot Performance Audit"
+    }
+  ],
+  "prompts": {
+    "planning_jules_sync": "Analysiere laufende Jules-Sessions ($slots). Identifiziere hängende Tasks.",
+    "planning_pr_sync": "Prüfe offene PRs auf Merge-Konflikte und CI-Status.",
+    "planning_analysis": "Analysiere Projektstatus. Fokus: #651 Readiness.",
+    "planning_proposal": "Schlage $maxIssues neue Issues vor. NUR JSON-Liste: [{\"title\":\"...\",\"body\":\"...\",\"labels\":[],\"agent\":\"...\"}]",
+    "planning_synthesis": "Erstelle finalen Delegationsplan basierend auf $context.",
+    "monitor_sessions": "Prüfe aktive Delegationen ($sessions). Melde Timeouts oder Fehler.",
+    "monitor_prs": "Validiere CI-Status offener PRs ($prs). Plane Fixes bei 'failure'.",
+    "monitor_conflicts": "Löse Merge-Konflikte in PRs ($prs) aktiv auf.",
+    "audit_consistency": "Vergleiche Issues ($issues), PRs ($prs) und State. Melde Inkonsistenzen.",
+    "audit_performance": "Evaluiere Effizienz der letzten Aktionen. Optimiere Strategie.",
+    "audit_prompt": "DEUTSCH. Prüfung: Issues ($issues), PRs ($prs), Sessions ($delegations). Output: JSON { 'issues_found': bool, 'action': 'remediate|escalate|none', 'remediation_command': '...', 'dashboard_escalation': '...' }",
+    "monitoring_prompt": "Status-Check: PRs ($prs) und Sessions ($sessions). Greife bei Fehlern ein."
   }
 }

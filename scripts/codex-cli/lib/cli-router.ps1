@@ -64,7 +64,8 @@ function Build-CliArgs {
     param(
         [Parameter(Mandatory)][object]$ProviderConfig,
         [Parameter(Mandatory)][string]$Prompt,
-        [string]$ModelName
+        [string]$ModelName,
+        [switch]$UsePromptStdin
     )
 
     $hasCliArgs = $ProviderConfig.PSObject.Properties.Name -contains "cli_args"
@@ -75,7 +76,11 @@ function Build-CliArgs {
 
     $args = @()
     foreach ($arg in $ProviderConfig.cli_args) {
-        $replaced = $arg -replace '\{PROMPT\}', $Prompt
+        $replaced = if ($UsePromptStdin.IsPresent -and $arg -match '\{PROMPT\}') {
+            $arg -replace '\{PROMPT\}', '-'
+        } else {
+            $arg -replace '\{PROMPT\}', $Prompt
+        }
         if ($ModelName) {
             $replaced = $replaced -replace '\{MODEL\}', $ModelName
         }
@@ -215,9 +220,18 @@ function Invoke-CliTask {
                 $cmdName = Join-Path $cmdDir "$cmdNameWithoutExt.exe"
             }
         }
+        $overrideModelTier = if ([string]::IsNullOrWhiteSpace($ModelTierOverride)) { "default" } else { $ModelTierOverride }
+        $providerCfg = $QuotaRegistry.providers.$ProviderOverride
+        if ([string]::IsNullOrWhiteSpace($ModelTierOverride) -and
+            $providerCfg -and
+            ($providerCfg.PSObject.Properties.Name -contains "models") -and
+            $providerCfg.models -and
+            ($providerCfg.models.PSObject.Properties.Name -contains $TaskType)) {
+            $overrideModelTier = $TaskType
+        }
         $route = [ordered]@{
             provider   = $ProviderOverride
-            model_tier = if ([string]::IsNullOrWhiteSpace($ModelTierOverride)) { "default" } else { $ModelTierOverride }
+            model_tier = $overrideModelTier
             command    = $cmdName
         }
     }
@@ -254,12 +268,13 @@ function Invoke-CliTask {
     # Get model name for this tier
     $modelName = $null
     $hasModels = $providerConfig.PSObject.Properties.Name -contains "models"
-    if ($hasModels -and $providerConfig.models -and $providerConfig.models.$modelTier) {
-        $modelName = $providerConfig.models.$modelTier.name
+    if ($hasModels -and $providerConfig.models -and ($providerConfig.models.PSObject.Properties.Name -contains $modelTier)) {
+        $modelName = $providerConfig.models.PSObject.Properties[$modelTier].Value.name
     }
 
     # Build args
-    $cliArgs = Build-CliArgs -ProviderConfig $providerConfig -Prompt $Prompt -ModelName $modelName
+    $usePromptStdin = $providerName -eq "codex_orchestrator"
+    $cliArgs = Build-CliArgs -ProviderConfig $providerConfig -Prompt $Prompt -ModelName $modelName -UsePromptStdin:($usePromptStdin)
 
     # Add model arg for providers that support it
     if ($modelName -and $modelName -ne "default") {
@@ -284,7 +299,11 @@ function Invoke-CliTask {
 
         if ($pushDir) { Push-Location $pushDir }
         try {
-            $output = & $command @cliArgs 2>&1 | Out-String
+            if ($usePromptStdin) {
+                $output = $Prompt | & $command @cliArgs 2>&1 | Out-String
+            } else {
+                $output = & $command @cliArgs 2>&1 | Out-String
+            }
         }
         finally {
             if ($pushDir) { Pop-Location }
@@ -293,6 +312,12 @@ function Invoke-CliTask {
     } catch {
         $output = $_.Exception.Message
         $exitCode = 1
+    }
+
+    if ($exitCode -ne 0) {
+        $snippet = ([string]$output).Trim()
+        if ($snippet.Length -gt 1200) { $snippet = $snippet.Substring(0, 1200) + "..." }
+        Write-Warning "[ROUTER] $providerName ($modelTier) fehlgeschlagen: EXIT_CODE_$exitCode. Ausgabe: $snippet"
     }
 
     # Parse real stats from output

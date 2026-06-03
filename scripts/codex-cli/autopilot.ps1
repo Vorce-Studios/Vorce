@@ -87,6 +87,29 @@ Write-Host ""
 $State = Initialize-AutopilotState
 $QuotaRegistry = Read-QuotaRegistry
 
+function Ensure-RunControl {
+    param([Parameter(Mandatory)][object]$State)
+    if (-not ($State.PSObject.Properties.Name -contains "run_control") -or $null -eq $State.run_control) {
+        $State | Add-Member -MemberType NoteProperty -Name "run_control" -Value ([PSCustomObject]@{
+            cancel_next_planning   = $false
+            cancel_next_monitoring = $false
+            next_planning_note     = ""
+            next_monitoring_note   = ""
+            updated_at             = $null
+        }) -Force
+    }
+}
+
+function Get-RunControlNote {
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][ValidateSet("planning", "monitoring")][string]$RunType
+    )
+    Ensure-RunControl -State $State
+    if ($RunType -eq "planning") { return [string]$State.run_control.next_planning_note }
+    return [string]$State.run_control.next_monitoring_note
+}
+
 # --- Single-shot modes ---
 if ($PlanOnce.IsPresent) {
     Invoke-PlanningWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
@@ -150,13 +173,31 @@ while ($true) {
     $monDue = ($now - $lastMonTime).TotalMinutes -ge $monMinutes
 
     if ($planDue) {
+        Ensure-RunControl -State $State
+        if ($State.run_control.cancel_next_planning -eq $true) {
+            Write-Host "[LOOP] Naechster Planning-Run wurde via Dashboard gecancelt." -ForegroundColor Yellow
+            $State.run_control.cancel_next_planning = $false
+            $State.run_control.updated_at = (Get-Date -Format 'o')
+            $lastPlanTime = Get-Date
+            $State.last_planning_at = $lastPlanTime.ToString('o')
+            Save-AutopilotState -State $State
+        } else {
+            $planningNote = Get-RunControlNote -State $State -RunType "planning"
+            if (-not [string]::IsNullOrWhiteSpace($planningNote)) {
+                Write-Host "[LOOP] Info fuer kommenden Planning-Run: $planningNote" -ForegroundColor Cyan
+            }
         try {
             Invoke-PlanningWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
             $lastPlanTime = Get-Date
+            if (-not [string]::IsNullOrWhiteSpace($planningNote)) {
+                $State.run_control.next_planning_note = ""
+                $State.run_control.updated_at = (Get-Date -Format 'o')
+            }
         } catch {
             Write-Host "[LOOP] Planning-Fehler: $_" -ForegroundColor Red
             Write-Host "[LOOP] StackTrace: $($_.ScriptStackTrace)" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "Planning wake-up failed" -Context $_.Exception.Message
+        }
         }
 
         # Planning hat Prioritaet: Wenn beide gleichzeitig faellig waren,
@@ -175,12 +216,30 @@ while ($true) {
     }
 
     if ($monDue) {
+        Ensure-RunControl -State $State
+        if ($State.run_control.cancel_next_monitoring -eq $true) {
+            Write-Host "[LOOP] Naechster Monitoring-Run wurde via Dashboard gecancelt." -ForegroundColor Yellow
+            $State.run_control.cancel_next_monitoring = $false
+            $State.run_control.updated_at = (Get-Date -Format 'o')
+            $lastMonTime = Get-Date
+            $State.last_monitoring_at = $lastMonTime.ToString('o')
+            Save-AutopilotState -State $State
+        } else {
+            $monitoringNote = Get-RunControlNote -State $State -RunType "monitoring"
+            if (-not [string]::IsNullOrWhiteSpace($monitoringNote)) {
+                Write-Host "[LOOP] Info fuer kommenden Monitoring-Run: $monitoringNote" -ForegroundColor Cyan
+            }
         try {
             Invoke-MonitoringWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
             $lastMonTime = Get-Date
+            if (-not [string]::IsNullOrWhiteSpace($monitoringNote)) {
+                $State.run_control.next_monitoring_note = ""
+                $State.run_control.updated_at = (Get-Date -Format 'o')
+            }
         } catch {
             Write-Host "[LOOP] Monitoring-Fehler: $_" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "Monitoring wake-up failed" -Context $_.Exception.Message
+        }
         }
     }
 

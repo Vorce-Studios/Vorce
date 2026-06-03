@@ -143,7 +143,7 @@ impl WgpuBackend {
 
     /// Set surface format
     pub fn surface_format(&self) -> wgpu::TextureFormat {
-        wgpu::TextureFormat::Bgra8UnormSrgb
+        wgpu::TextureFormat::Bgra8Unorm
     }
 }
 
