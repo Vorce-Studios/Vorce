@@ -11,7 +11,7 @@ function Add-WorkingQueueItem {
         [Parameter(Mandatory)][string]$AgentProvider
     )
 
-    Ensure-WorkingSessionsState -State $State
+    Confirm-WorkingSessionsState -State $State
     $alreadyQueued = @($State.working_queue | Where-Object { [int]$_.issue_number -eq $IssueNumber }).Count -gt 0
     $alreadyRunning = @($State.working_sessions | Where-Object {
         [int]$_.issue_number -eq $IssueNumber -and [string]$_.status -in @("QUEUED", "IN_PROGRESS")
@@ -42,7 +42,7 @@ function Invoke-PlanningWakeUp {
     )
 
     $State = Normalize-AutopilotStateObject -State $State
-    Ensure-WorkingSessionsState -State $State
+    Confirm-WorkingSessionsState -State $State
     $repo = $Config.repository
     Write-Host "`n[PLANNING] ========== Planning Wake-Up ==========" -ForegroundColor Blue
 

@@ -16,7 +16,7 @@ function Start-QueuedWorkingSessions {
         [switch]$DryRun
     )
 
-    Ensure-WorkingSessionsState -State $State
+    Confirm-WorkingSessionsState -State $State
     $workingCfg = if (Test-ObjectProperty -Object $Config -Name "working_sessions") { $Config.working_sessions } else { $null }
     if ($workingCfg -and (Test-ObjectProperty -Object $workingCfg -Name "enabled") -and -not $workingCfg.enabled) {
         return
@@ -100,7 +100,7 @@ function Invoke-MonitoringWakeUp {
     $repo = $Config.repository
     Write-Host "`n[MONITOR] ========== Monitoring Wake-Up ==========" -ForegroundColor Blue
     $State = Normalize-AutopilotStateObject -State $State
-    Ensure-WorkingSessionsState -State $State
+    Confirm-WorkingSessionsState -State $State
 
     $ScriptDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
     $JulesScriptDir = Join-Path (Split-Path -Parent $ScriptDir) "jules"

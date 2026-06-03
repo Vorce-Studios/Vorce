@@ -31,6 +31,17 @@
     "autopilot_label": "autopilot-created"
   },
   "max_issues_per_planning_cycle": 30,
+  "working_sessions": {
+    "enabled": true,
+    "max_concurrent": 3,
+    "preferred_agents": [
+      "codex_orchestrator",
+      "gemini_cli",
+      "copilot_cli",
+      "cline_cli"
+    ],
+    "queue_non_jules_agent_issues": true
+  },
   "dual_ceo": {
     "enabled": true,
     "ceo_alpha_chain": [
@@ -46,5 +57,12 @@
     ],
     "fallback_to_single": true,
     "log_deliberations": true
+  },
+  "prompts": {
+    "planning_analysis": "Analysiere den aktuellen Status des Repositories $repo. Root-Kompass: #651 Release 1.0 Readiness. Identifiziere Blocker, offene PRs und kritische Lücken. Erstelle eine Liste der Top-3 Prioritäten für diesen Zyklus.",
+    "planning_proposal": "Basierend auf der Analyse (Kontext: $context), schlage maximal $maxIssues neue Issues vor. Fokus auf kleine Standard-Issues für CLI-Agents. Antworte als JSON-Liste.",
+    "planning_synthesis": "Fasse alle Erkenntnisse zusammen und erstelle den finalen Delegationsplan. Berücksichtige freie Slots ($slots).",
+    "audit_prompt": "Prüfe das System auf Inkonsistenzen. Versuche erst direkt zu beheben (remediate). Eskaliere nur bei Bedarf.",
+    "monitoring_prompt": "Überwache laufende Sessions und PRs. Greife aktiv bei Merge-Konflikten oder fehlgeschlagenen Checks ein."
   }
 }

@@ -287,7 +287,7 @@ function Initialize-AutopilotState {
     return $state
 }
 
-function Ensure-WorkingSessionsState {
+function Confirm-WorkingSessionsState {
     param([Parameter(Mandatory)][object]$State)
 
     foreach ($prop in @("working_queue", "working_sessions")) {
