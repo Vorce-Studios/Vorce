@@ -10,6 +10,62 @@ let prsCache: string | null = null;
 let prsCacheTime = 0;
 const CACHE_TTL = 20000; // 20 seconds cache TTL to avoid hitting GitHub API too frequently
 
+function readJsonFile(filePath: string, fallback: any) {
+  if (!fs.existsSync(filePath)) return fallback;
+  return JSON.parse(fs.readFileSync(filePath, 'utf-8').replace(/^\uFEFF/, ''));
+}
+
+function parseAuditResponse(response: string | undefined) {
+  if (!response) return null;
+  const cleaned = response
+    .replace(/^```json\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    try {
+      return JSON.parse(match[0]);
+    } catch {
+      return null;
+    }
+  }
+}
+
+function readAuditResult() {
+  const publicAuditPath = path.resolve(__dirname, './public/audit-result.json');
+  const tmpAuditPath = path.resolve(__dirname, '../tmp/beta-audit-result.json');
+  const auditPath = fs.existsSync(tmpAuditPath) ? tmpAuditPath : publicAuditPath;
+  const fallback = { session_id: '', response: '', parsed: null, updated_at: '' };
+  if (!fs.existsSync(auditPath)) return fallback;
+  const raw = readJsonFile(auditPath, fallback);
+  const parsed = raw.parsed || parseAuditResponse(raw.response);
+  const stat = fs.statSync(auditPath);
+  return {
+    ...raw,
+    parsed,
+    updated_at: raw.updated_at || stat.mtime.toISOString(),
+  };
+}
+
+function writeState(state: any) {
+  const statePath = path.resolve(__dirname, '../autopilot-state.json');
+  const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
+  if (!state.scheduler && fs.existsSync(publicStatePath)) {
+    try {
+      const publicState = readJsonFile(publicStatePath, {});
+      if (publicState.scheduler) state.scheduler = publicState.scheduler;
+    } catch {
+      // Scheduler is a display-only snapshot; keep writing state even if preserving it fails.
+    }
+  }
+  const content = JSON.stringify(state, null, 2);
+  fs.writeFileSync(statePath, content, 'utf-8');
+  fs.writeFileSync(publicStatePath, content, 'utf-8');
+}
+
 function getRepository(): string {
   try {
     const configPath = path.resolve(__dirname, '../autopilot-config.json');
@@ -19,7 +75,9 @@ function getRepository(): string {
         return config.repository;
       }
     }
-  } catch (e) {}
+  } catch {
+    return 'Vorce-Studios/Vorce';
+  }
   return 'Vorce-Studios/Vorce';
 }
 
@@ -84,9 +142,6 @@ export default defineConfig({
             } else {
               try {
                 const repos = [getRepository()];
-                if (repos[0] === 'Vorce-Studios/Vorce') {
-                  repos.push('MrLongNight/MapFlow');
-                }
                 let allIssues: any[] = [];
                 for (const r of repos) {
                   try {
@@ -99,14 +154,16 @@ export default defineConfig({
                       parsed.forEach((issue: any) => issue.repo = r);
                       allIssues = allIssues.concat(parsed);
                     }
-                  } catch (e) {}
+                  } catch {
+                    continue;
+                  }
                 }
                 const responseJson = JSON.stringify(allIssues);
                 issuesCache = responseJson;
                 issuesCacheTime = now;
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(responseJson);
-              } catch (err) {
+              } catch {
                 // Fallback to static public file if GH command fails
                 const fallbackPath = path.resolve(__dirname, './public/github-issues.json');
                 if (fs.existsSync(fallbackPath)) {
@@ -127,14 +184,11 @@ export default defineConfig({
             } else {
               try {
                 const repos = [getRepository()];
-                if (repos[0] === 'Vorce-Studios/Vorce') {
-                  repos.push('MrLongNight/MapFlow');
-                }
                 let allPRs: any[] = [];
                 for (const r of repos) {
                   try {
                     const prsJson = execSync(
-                      `gh pr list --repo ${r} --limit 1000 --state open --json number,title,state,mergeable,statusCheckRollup,headRefName,baseRefName,updatedAt,url`,
+                      `gh pr list --repo ${r} --limit 1000 --state open --json number,title,state,mergeable,isDraft,headRefName,baseRefName,updatedAt,url`,
                       { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }
                     );
                     const parsed = JSON.parse(prsJson);
@@ -142,14 +196,16 @@ export default defineConfig({
                       parsed.forEach((pr: any) => pr.repo = r);
                       allPRs = allPRs.concat(parsed);
                     }
-                  } catch (e) {}
+                  } catch {
+                    continue;
+                  }
                 }
                 const responseJson = JSON.stringify(allPRs);
                 prsCache = responseJson;
                 prsCacheTime = now;
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(responseJson);
-              } catch (err) {
+              } catch {
                 // Fallback to static public file if GH command fails
                 const fallbackPath = path.resolve(__dirname, './public/pull-requests.json');
                 if (fs.existsSync(fallbackPath)) {
@@ -214,6 +270,14 @@ export default defineConfig({
               res.writeHead(500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
             }
+          } else if (req.method === 'GET' && req.url === '/audit-result.json') {
+            try {
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify(readAuditResult()));
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+            }
           } else if (req.method === 'POST' && req.url === '/api/memories') {
             let body = '';
             req.on('data', (chunk: any) => { body += chunk; });
@@ -260,10 +324,91 @@ export default defineConfig({
                 res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));
               }
             });
+          } else if (req.method === 'POST' && req.url === '/api/run-control') {
+            let body = '';
+            req.on('data', (chunk: any) => { body += chunk; });
+            req.on('end', () => {
+              try {
+                const payload = JSON.parse(body || '{}');
+                const statePath = path.resolve(__dirname, '../autopilot-state.json');
+                const state = readJsonFile(statePath, { decisions_pending: [] });
+                state.run_control = state.run_control || {};
+                if (payload.type === 'planning') {
+                  if (payload.action === 'cancel-next') state.run_control.cancel_next_planning = true;
+                  if (payload.action === 'uncancel-next') state.run_control.cancel_next_planning = false;
+                  if (payload.action === 'note-next') state.run_control.next_planning_note = String(payload.note || '');
+                } else if (payload.type === 'monitoring') {
+                  if (payload.action === 'cancel-next') state.run_control.cancel_next_monitoring = true;
+                  if (payload.action === 'uncancel-next') state.run_control.cancel_next_monitoring = false;
+                  if (payload.action === 'note-next') state.run_control.next_monitoring_note = String(payload.note || '');
+                } else {
+                  throw new Error('Unknown run type');
+                }
+                state.run_control.updated_at = new Date().toISOString();
+                writeState(state);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ status: 'ok', run_control: state.run_control }));
+              } catch (err) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));
+              }
+            });
+          } else if (req.method === 'POST' && req.url === '/api/alerts') {
+            let body = '';
+            req.on('data', (chunk: any) => { body += chunk; });
+            req.on('end', () => {
+              try {
+                const payload = JSON.parse(body || '{}');
+                const statePath = path.resolve(__dirname, '../autopilot-state.json');
+                const state = readJsonFile(statePath, { decisions_pending: [] });
+                state.decisions_pending = Array.isArray(state.decisions_pending) ? state.decisions_pending : [];
+                if (payload.action === 'remove') {
+                  state.decisions_pending = state.decisions_pending.filter((a: any, idx: number) => (a.id || String(idx)) !== String(payload.id));
+                } else if (payload.action === 'alpha-response') {
+                  const alert = state.decisions_pending.find((a: any, idx: number) => (a.id || String(idx)) === String(payload.id));
+                  if (!alert) throw new Error('Alert not found');
+                  alert.alpha_response = String(payload.response || '');
+                  alert.owner = 'alpha_ceo';
+                  alert.status = 'alpha_action_proposed';
+                  alert.process_stage = 'alpha_remediation_planned';
+                  alert.escalation_level = 'alpha';
+                  alert.alpha_attempted_at = new Date().toISOString();
+                  alert.alpha_attempts = (Number(alert.alpha_attempts) || 0) + 1;
+                } else if (payload.action === 'escalate-user') {
+                  const alert = state.decisions_pending.find((a: any, idx: number) => (a.id || String(idx)) === String(payload.id));
+                  if (!alert) throw new Error('Alert not found');
+                  alert.owner = 'user';
+                  alert.status = 'awaiting_user';
+                  alert.process_stage = 'user_decision';
+                  alert.escalation_level = 'user';
+                  alert.user_escalation_reason = String(payload.response || 'Alpha CEO Antwort war nicht zielfuehrend; User-Entscheidung erforderlich.');
+                } else if (payload.action === 'user-response') {
+                  const alert = state.decisions_pending.find((a: any, idx: number) => (a.id || String(idx)) === String(payload.id));
+                  if (!alert) throw new Error('Alert not found');
+                  alert.user_response = String(payload.response || '');
+                  alert.owner = 'user';
+                  alert.status = 'user_answered';
+                  alert.process_stage = 'user_decision';
+                  alert.escalation_level = 'user';
+                } else if (payload.action === 'clear') {
+                  state.decisions_pending = [];
+                } else {
+                  throw new Error('Unknown alert action');
+                }
+                writeState(state);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ status: 'ok' }));
+              } catch (err) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));
+              }
+            });
           } else if (req.method === 'POST' && req.url === '/api/clear-alerts') {
             try {
-              const flagPath = path.resolve(__dirname, '../clear-alerts.flag');
-              fs.writeFileSync(flagPath, '', 'utf-8');
+              const statePath = path.resolve(__dirname, '../autopilot-state.json');
+              const state = readJsonFile(statePath, { decisions_pending: [] });
+              state.decisions_pending = [];
+              writeState(state);
               res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ status: 'ok', message: 'Clear command sent' }));
             } catch (err) {

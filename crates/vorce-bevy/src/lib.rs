@@ -82,7 +82,7 @@ impl BevyRunner {
         );
 
         // Add essential rendering extensions
-        app.add_plugins(bevy::pbr::AtmospherePlugin);
+        // app.add_plugins(bevy::pbr::AtmospherePlugin); // Included in DefaultPlugins -> PbrPlugin in recent Bevy
         // app.add_plugins(bevy_mod_outline::OutlinePlugin);
 
         app.add_plugins(ExtractResourcePlugin::<crate::resources::BevyRenderOutput>::default());
