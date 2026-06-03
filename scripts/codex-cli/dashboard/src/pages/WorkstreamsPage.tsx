@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Activity, GitPullRequest, AlertCircle, CheckCircle, XCircle, ChevronRight, ChevronDown, Layers, Filter, Search } from 'lucide-react';
 import type { GitHubIssue, ActiveSessions, PullRequest, ActiveDelegation } from '../types';
 
@@ -18,7 +18,7 @@ interface Workstream {
   pr?: PullRequest;
   projectItem?: any;
   status: string;
-  issueType: 'MASTER' | 'STANDARD' | 'OTHER';
+  issueType: 'MASTER' | 'STANDARD' | 'SUB';
   sortScore: number;
   isMaster: boolean;
   parentId?: string;
@@ -27,25 +27,12 @@ interface Workstream {
 
 const GITHUB_REPO = 'Vorce-Studios/Vorce';
 const ACTIVE_JULES_STATES = new Set(['IN_PROGRESS', 'PAUSED', 'AWAITING_USER_FEEDBACK', 'AWAITING_USER_FEEDBACK_CI_OR_BLOCKER']);
-
-function timeAgo(dateStr: string): string {
-  if (!dateStr) return 'N/A';
-  const now = new Date();
-  const then = new Date(dateStr);
-  const diffMs = now.getTime() - then.getTime();
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return 'gerade eben';
-  if (mins < 60) return `vor ${mins}m`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `vor ${hours}h`;
-  const days = Math.floor(hours / 24);
-  return `vor ${days}d`;
-}
-
 const PROJECT_STATUS_COLORS: Record<string, { border: string; bg: string; text: string; borderClass: string }> = {
   Planed: { border: '#6e7681', bg: 'bg-slate-500/20', text: 'text-slate-300', borderClass: 'border-slate-500/40' },
+  Todo: { border: '#6e7681', bg: 'bg-slate-500/20', text: 'text-slate-300', borderClass: 'border-slate-500/40' },
+  Backlog: { border: '#6e7681', bg: 'bg-slate-500/20', text: 'text-slate-300', borderClass: 'border-slate-500/40' },
   Started: { border: '#fb8500', bg: 'bg-orange-500/20', text: 'text-orange-300', borderClass: 'border-orange-500/40' },
-  Done: { border: '#2da44e', bg: 'bg-green-500/20', text: 'text-green-300', borderClass: 'border-green-500/40' },
+  'In Progress': { border: '#fb8500', bg: 'bg-orange-500/20', text: 'text-orange-300', borderClass: 'border-orange-500/40' },
   'J-Session_open': { border: '#bf8700', bg: 'bg-yellow-500/20', text: 'text-yellow-300', borderClass: 'border-yellow-500/40' },
   'J-Session_failed': { border: '#bf8700', bg: 'bg-yellow-500/20', text: 'text-yellow-300', borderClass: 'border-yellow-500/40' },
   'J-Session_waiting': { border: '#bf8700', bg: 'bg-yellow-500/20', text: 'text-yellow-300', borderClass: 'border-yellow-500/40' },
@@ -56,14 +43,32 @@ const PROJECT_STATUS_COLORS: Record<string, { border: string; bg: string; text: 
   'Review-PR_inRework': { border: '#bf3989', bg: 'bg-pink-500/20', text: 'text-pink-300', borderClass: 'border-pink-500/40' },
   'QA-Test_needed': { border: '#8250df', bg: 'bg-purple-500/20', text: 'text-purple-300', borderClass: 'border-purple-500/40' },
   'QA-Test_running': { border: '#8250df', bg: 'bg-purple-500/20', text: 'text-purple-300', borderClass: 'border-purple-500/40' },
+  Done: { border: '#2da44e', bg: 'bg-green-500/20', text: 'text-green-300', borderClass: 'border-green-500/40' },
 };
-
 function getStatusColor(status: string) {
   return PROJECT_STATUS_COLORS[status] || PROJECT_STATUS_COLORS.Planed;
 }
 
 type Phase = 'Phase 1' | 'Phase 2' | 'Phase 3' | 'Phase 4' | 'Phase 5' | 'Phase 6';
 const PHASES = ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4', 'Phase 5', 'Phase 6'];
+
+function isMasterTitle(title: string): boolean {
+  return /(_MAIs_|Master-Issue|\[MASTER\]|(^|[_-])MAI-\d{3}(?=_|-|$)|_StMa_|MF-StMa)/i.test(title);
+}
+
+function isSubIssueTitle(title: string): boolean {
+  return /(_SubI_|__MF-SubI_|__SI-\d+_MAI-\d{3}|\[M\d+-S\d+\])/i.test(title);
+}
+
+function getMaiKey(title: string): string | null {
+  const match = title.match(/MAI-(\d{3})/i);
+  return match ? `MAI-${match[1]}` : null;
+}
+
+function getMatrixParentId(title: string): string | null {
+  const match = title.match(/\[M(\d+)-S\d+\]/i);
+  return match ? match[1] : null;
+}
 
 function getPhase(ws: Workstream): { phase: Phase, label: string, index: number } {
   const s = getDisplayStatus(ws);
@@ -85,11 +90,16 @@ function getDisplayStatus(ws: Workstream): string {
   if (julesState === 'FAILED') return 'J-Session_failed';
   if (julesState === 'AWAITING_USER_FEEDBACK' || julesState === 'AWAITING_USER_FEEDBACK_CI_OR_BLOCKER' || julesState === 'ESCALATED_TO_USER') return 'J-Session_waiting';
   if (julesState && ACTIVE_JULES_STATES.has(julesState)) return 'J-Session_open';
-  if (ws.issue?.labels?.some(l => l.name === 'status: in-progress')) return 'Started';
+  if (ws.issue?.labels?.some(l => l.name === 'status: in-progress') || (ws.issue?.assignees && ws.issue.assignees.length > 0)) return 'Started';
   return 'Planed';
 }
 
-function masterStatus(ws: Workstream): string {
+function getMasterStatus(ws: Workstream): string {
+  if (ws.issue?.state === 'CLOSED') return 'Done';
+  if (ws.projectItem?.status === 'Done' || ws.projectItem?.status === 'Started' || ws.projectItem?.status === 'In Progress') {
+    if (ws.projectItem.status === 'In Progress') return 'Started';
+    return ws.projectItem.status;
+  }
   if (!ws.children.length) return 'Planed';
   const doneChildren = ws.children.filter(c => getDisplayStatus(c) === 'Done').length;
   if (doneChildren === ws.children.length) return 'Done';
@@ -110,7 +120,11 @@ function fixGithubUrl(url: string | undefined): string {
 export default function WorkstreamsPage({ issues, sessions, pullRequests, julesSessions, projectItems }: Props) {
   const [filter, setFilter] = useState<'ALL' | 'ACTIVE' | 'ERROR'>('ALL');
   const [isGrouped, setIsGrouped] = useState(true);
-  const [sections, setSections] = useState({ planed: true, master: true, standard: true });
+  const [sections, setSections] = useState({ master: true, standard: true });
+  const [sectionStatus, setSectionStatus] = useState({
+    master: { Planed: true, Started: true, Done: true },
+    standard: { Planed: true, Started: true, Done: true },
+  });
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [expandedDetails, setExpandedDetails] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -130,6 +144,24 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
     setExpandedDetails(newSet);
   };
 
+  const compareWorkstreams = useCallback((a: Workstream, b: Workstream) => {
+    if (sortBy === 'RECENT') {
+      const dateA = new Date(a.pr?.updatedAt || a.session?.last_checked_at || a.issue?.updatedAt || 0).getTime();
+      const dateB = new Date(b.pr?.updatedAt || b.session?.last_checked_at || b.issue?.updatedAt || 0).getTime();
+      return dateB - dateA;
+    }
+    if (sortBy === 'NUMBER') {
+      const numA = a.issue?.number || 0;
+      const numB = b.issue?.number || 0;
+      return numA - numB;
+    }
+    if (a.issueType !== b.issueType) {
+      const rank = { MASTER: 0, STANDARD: 1, SUB: 2 };
+      return rank[a.issueType] - rank[b.issueType];
+    }
+    return b.sortScore - a.sortScore;
+  }, [sortBy]);
+
   const workstreams = useMemo(() => {
     const wsMap = new Map<string, Workstream>();
 
@@ -140,18 +172,28 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
       return wsMap.get(id)!;
     };
 
-    // 1. Alle relevanten Issues einfügen
+    // 1. Alle Issues einfügen, damit keine offenen oder geschlossenen Items durchs Raster fallen.
     issues.forEach(issue => {
       if (issue.repo && issue.repo !== GITHUB_REPO) return;
       const ws = getOrAdd(issue.number.toString());
       ws.issue = issue;
-      if (issue.title.includes('_MAIs_') || issue.title.includes('Master-Issue') || issue.title.includes('[MASTER]')) {
+      if (isSubIssueTitle(issue.title)) {
+        ws.isMaster = false;
+        ws.issueType = 'SUB';
+      } else if (isMasterTitle(issue.title)) {
         ws.isMaster = true;
         ws.issueType = 'MASTER';
       } else {
         ws.isMaster = false;
         ws.issueType = 'STANDARD';
       }
+    });
+
+    const masterByMai = new Map<string, string>();
+    wsMap.forEach(ws => {
+      if (!ws.isMaster || !ws.issue) return;
+      const key = getMaiKey(ws.issue.title);
+      if (key) masterByMai.set(key, ws.id);
     });
 
     // 2. Aktive Delegations
@@ -256,10 +298,22 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
       ws.sortScore = sortScore;
 
       // Finde Parent für Sub-Issues
-      if (!ws.isMaster && ws.issue?.body) {
-        const regex = /#(\d+)/g;
+      if (!ws.isMaster && ws.issue) {
+        const titleParentId = getMatrixParentId(ws.issue.title);
+        if (titleParentId && wsMap.get(titleParentId)?.isMaster) {
+          ws.parentId = titleParentId;
+        }
+
+        const maiKey = getMaiKey(ws.issue.title);
+        if (!ws.parentId && maiKey && masterByMai.has(maiKey)) {
+          const parentId = masterByMai.get(maiKey)!;
+          if (parentId !== ws.id) ws.parentId = parentId;
+        }
+
+        const regex = /(?:Part of|Parent|Teil von|Belongs to)?\s*#(\d+)/gi;
         let match;
-        while ((match = regex.exec(ws.issue.body)) !== null) {
+        const body = ws.issue.body || '';
+        while (!ws.parentId && (match = regex.exec(body)) !== null) {
           const possibleParentId = match[1];
           const potentialParent = wsMap.get(possibleParentId);
           if (potentialParent && potentialParent.isMaster && possibleParentId !== ws.id) {
@@ -275,6 +329,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
     allWs.forEach(ws => {
       if (ws.parentId && wsMap.has(ws.parentId)) {
         wsMap.get(ws.parentId)!.children.push(ws);
+        ws.issueType = 'SUB';
       } else {
         // Nur Workstreams als Root zulassen, die auch wirklich ein lokales GitHub Issue haben!
         // Ignoriere nackte Jules Sessions oder lose PRs als Haupt-Workstream (Mist mit Unlinked Tasks).
@@ -359,36 +414,22 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
 
       // 2. Status-Filter
       if (filter === 'ACTIVE') {
-        return ws.status === 'IN_PROGRESS' ||
-               ws.status === 'NEEDS_REVIEW' ||
-               ws.status === 'ERROR' ||
-               ws.status === 'CONFLICTING' ||
-               ws.status === 'STALLED' ||
-               ws.children.some(c => c.status === 'IN_PROGRESS' || c.status === 'NEEDS_REVIEW' || c.status === 'CONFLICTING' || c.status === 'STALLED');
+        const isActiveStatus = (item: Workstream) => {
+          const status = item.isMaster ? getMasterStatus(item) : getDisplayStatus(item);
+          return status !== 'Planed' && status !== 'Done';
+        };
+        return isActiveStatus(ws) || ws.children.some(isActiveStatus);
       }
       if (filter === 'ERROR') {
-        return ws.status === 'ERROR' ||
-               ws.status === 'CONFLICTING' ||
-               ws.children.some(c => c.status === 'ERROR' || c.status === 'CONFLICTING');
+        const isErrorStatus = (item: Workstream) => ['J-Session_failed', 'PR-Checks_failed', 'PR-Merge_Conflicts'].includes(getDisplayStatus(item));
+        return isErrorStatus(ws) || ws.children.some(isErrorStatus);
       }
       return true;
     });
 
     // Sortierung anwenden
-    return [...filtered].sort((a, b) => {
-      if (sortBy === 'RECENT') {
-        const dateA = new Date(a.pr?.updatedAt || a.session?.last_checked_at || a.issue?.updatedAt || 0).getTime();
-        const dateB = new Date(b.pr?.updatedAt || b.session?.last_checked_at || b.issue?.updatedAt || 0).getTime();
-        return dateB - dateA;
-      }
-      if (sortBy === 'NUMBER') {
-        const numA = a.issue?.number || 0;
-        const numB = b.issue?.number || 0;
-        return numA - numB;
-      }
-      return b.sortScore - a.sortScore;
-    });
-  }, [workstreams, filter, isGrouped, searchQuery, sortBy]);
+    return [...filtered].sort(compareWorkstreams);
+  }, [workstreams, filter, isGrouped, searchQuery, compareWorkstreams]);
 
   const expandAllDetails = () => {
     const allIds = new Set<string>();
@@ -406,18 +447,69 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
     setExpandedDetails(new Set());
   };
 
+  const getSectionStatus = (ws: Workstream): 'Planed' | 'Started' | 'Done' => {
+    const status = ws.isMaster ? getMasterStatus(ws) : getDisplayStatus(ws);
+    if (status === 'Done') return 'Done';
+    if (status === 'Planed' || status === 'Todo' || status === 'Backlog') return 'Planed';
+    return 'Started';
+  };
+
+  const sectionAllows = (sectionId: keyof typeof sectionStatus, ws: Workstream) => {
+    return sectionStatus[sectionId][getSectionStatus(ws)];
+  };
+
+  const toggleSectionStatus = (sectionId: keyof typeof sectionStatus, status: 'Planed' | 'Started' | 'Done') => {
+    setSectionStatus(prev => ({
+      ...prev,
+      [sectionId]: {
+        ...prev[sectionId],
+        [status]: !prev[sectionId][status],
+      },
+    }));
+  };
+
+  const renderSectionHeader = (
+    id: keyof typeof sections & keyof typeof sectionStatus,
+    label: string,
+    color: string,
+    count: number,
+    totalCount: number,
+  ) => (
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 hover:bg-slate-800/50 rounded-lg transition-colors">
+      <button onClick={() => setSections(s => ({...s, [id]: !s[id]}))} className={`flex items-center gap-2 text-left font-bold ${color}`}>
+        {sections[id] ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+        {label} ({count}{count !== totalCount ? `/${totalCount}` : ''})
+      </button>
+      <div className="flex items-center gap-1">
+        {(['Planed', 'Started', 'Done'] as const).map(status => (
+          <button
+            key={status}
+            onClick={() => toggleSectionStatus(id, status)}
+            className={`px-2 py-1 rounded border text-[10px] font-bold transition-colors ${
+              sectionStatus[id][status]
+                ? `${getStatusColor(status).bg} ${getStatusColor(status).text} ${getStatusColor(status).borderClass}`
+                : 'bg-slate-900/60 text-slate-600 border-slate-800'
+            }`}
+          >
+            {status}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   const renderWorkstream = (ws: Workstream, isChild = false) => {
     const isExpanded = expandedGroups.has(ws.id);
     const isDetailExpanded = expandedDetails.has(ws.id);
     const hasChildren = ws.children.length > 0;
     const ghBadge = getGHBadgeInfo(ws);
-    const colors = ws.isMaster ? getStatusColor(masterStatus(ws)) : ghBadge;
+    const colors = ws.isMaster ? getStatusColor(getMasterStatus(ws)) : ghBadge;
 
     const issueUrl = ws.issue ? fixGithubUrl(ws.issue.url) : '';
     const sessionPrUrl = ws.session?.pr_url ? fixGithubUrl(ws.session.pr_url) : '';
     const prUrl = ws.pr ? fixGithubUrl(ws.pr.url) : '';
     const phaseInfo = getPhase(ws);
-    const phasePct = Math.max(3, Math.min(97, (phaseInfo.index / (PHASES.length - 1)) * 100));
+    const phasePct = Math.max(8, Math.min(92, ((phaseInfo.index + 0.5) / PHASES.length) * 100));
 
     return (
       <div key={ws.id} className="flex flex-col relative mt-2">
@@ -431,7 +523,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
           </div>
         )}
         <div
-          className={`glass-card overflow-hidden hover:border-slate-700 transition-colors flex flex-col border-l-4 ${isChild ? 'ml-8 my-1 opacity-90 scale-[0.98]' : 'mt-3 mb-3'}`}
+          className={`glass-card overflow-hidden hover:border-slate-700 transition-colors flex flex-col border-l-4 ${isChild ? 'ml-10 my-1 opacity-90 w-[calc(100%-2.5rem)] scale-[0.96] origin-top-left' : 'mt-3 mb-3 w-full'}`}
           style={{ borderLeftColor: colors.border }}
         >
           {/* COMPACT MINIMAL BAR */}
@@ -500,8 +592,8 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
           <div className="px-4 pb-4">
             {ws.isMaster ? (
               <div className="mt-2">
-                <div className={`inline-flex items-center px-2 py-1 mb-2 rounded border text-[11px] font-bold ${getStatusColor(masterStatus(ws)).bg} ${getStatusColor(masterStatus(ws)).text} ${getStatusColor(masterStatus(ws)).borderClass}`}>
-                  {masterStatus(ws)}
+                <div className={`inline-flex items-center px-2 py-1 mb-2 rounded border text-[11px] font-bold ${getStatusColor(getMasterStatus(ws)).bg} ${getStatusColor(getMasterStatus(ws)).text} ${getStatusColor(getMasterStatus(ws)).borderClass}`}>
+                  {getMasterStatus(ws)}
                 </div>
                 <div className="flex justify-between items-center mb-1.5">
                   <span className="text-[10px] text-slate-400 font-medium">Sub-Issues Fortschritt</span>
@@ -524,25 +616,33 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
                 </div>
               </div>
             ) : (
-              <div className="relative flex items-center justify-between w-full mt-4 pb-6 px-2">
-                {/* Background Line */}
-                <div className="absolute left-2 right-2 top-1.5 -translate-y-1/2 h-1 bg-slate-800/60 rounded-full" />
+              <div className="mt-4 overflow-hidden rounded-lg border border-slate-800 bg-slate-950/40">
+                <div className="grid grid-cols-6">
+                  {PHASES.map((p, idx) => {
+                    const isActive = idx === phaseInfo.index;
+                    const isPast = idx < phaseInfo.index;
 
-                {PHASES.map((p, idx) => {
-                  const isActive = idx === phaseInfo.index;
-                  const isPast = idx < phaseInfo.index;
-                  const bgClass = colors.bg ? colors.bg.replace(/\/20|\/35/g, '') : 'bg-slate-600';
-                  const activeBgClass = bgClass.includes('bg-') ? bgClass : 'bg-emerald-500';
-
-                  return (
-                    <div key={p} className="relative z-10 flex flex-col items-center">
-                      <div className={`w-3 h-3 rounded-full transition-all duration-300 ring-4 ring-slate-900 ${isActive ? activeBgClass + ' shadow-[0_0_10px_rgba(0,0,0,0.5)] scale-125' : isPast ? activeBgClass : 'bg-slate-700'}`} />
-                      <span className={`absolute top-5 text-[9px] font-bold tracking-wider uppercase whitespace-nowrap transition-colors ${isActive ? 'text-slate-100' : isPast ? 'text-slate-400' : 'text-slate-600'}`}>
-                        {p}
-                      </span>
-                    </div>
-                  );
-                })}
+                    return (
+                      <div
+                        key={p}
+                        className={`relative min-w-0 border-l border-slate-800/90 first:border-l-0 px-2 py-2 text-center transition-colors ${
+                          isActive ? `${colors.bg}` : isPast ? 'bg-slate-800/45' : 'bg-slate-900/25'
+                        }`}
+                        style={isActive ? { boxShadow: `inset 0 3px 0 ${colors.border}` } : undefined}
+                      >
+                        <div className={`text-[10px] font-bold ${isActive ? colors.text : isPast ? 'text-slate-300' : 'text-slate-600'}`}>
+                          P{idx + 1}
+                        </div>
+                        <div className={`mt-1 h-1.5 rounded-full ${isPast || isActive ? colors.bg : 'bg-slate-800'}`} />
+                        {isActive && (
+                          <div className={`mt-1 truncate text-[9px] font-bold ${colors.text}`} title={ghBadge.label}>
+                            {ghBadge.label}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
@@ -660,7 +760,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
         {/* Children Rendering */}
         {hasChildren && isGrouped && isExpanded && (
           <div className="flex flex-col border-l-2 border-slate-800 ml-6 pl-4 border-dashed">
-            {ws.children.map(child => renderWorkstream(child, true))}
+            {[...ws.children].sort(compareWorkstreams).map(child => renderWorkstream(child, true))}
           </div>
         )}
       </div>
@@ -776,36 +876,21 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
           </div>
         ) : (
           <>
-            {/* Geplante Issues */}
-            {filteredWorkstreams.filter(ws => ws.projectItem?.status === 'Planed').length > 0 && (
-              <div className="space-y-2">
-                <button onClick={() => setSections(s => ({...s, planed: !s.planed}))} className="flex items-center gap-2 w-full text-left font-bold text-cyan-400 p-2 hover:bg-slate-800/50 rounded-lg transition-colors">
-                  {sections.planed ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                  Geplante Issues ({filteredWorkstreams.filter(ws => ws.projectItem?.status === 'Planed').length})
-                </button>
-                {sections.planed && (
-                  <div className="space-y-1 pl-2">
-                    {filteredWorkstreams.filter(ws => ws.projectItem?.status === 'Planed').map(ws => renderWorkstream(ws))}
-                  </div>
-                )}
-              </div>
-            )}
-
             {[
-              { id: 'master', label: 'Master-Issues', color: 'text-purple-400', filter: (ws: any) => ws.projectItem?.status !== 'Planed' && ws.issueType === 'MASTER' },
-              { id: 'standard', label: 'Standard-Issues', color: 'text-emerald-400', filter: (ws: any) => ws.projectItem?.status !== 'Planed' && ws.issueType !== 'MASTER' }
+              { id: 'master' as const, label: 'Master-Issues', color: 'text-purple-400', filter: (ws: Workstream) => ws.issueType === 'MASTER' },
+              { id: 'standard' as const, label: 'Standard-Issues', color: 'text-emerald-400', filter: (ws: Workstream) => ws.issueType === 'STANDARD' || (ws.issueType === 'SUB' && !ws.parentId) }
             ].map(group => {
-              const items = filteredWorkstreams.filter(group.filter);
-              if (items.length === 0) return null;
+              const allItems = filteredWorkstreams.filter(group.filter);
+              const items = allItems.filter(ws => sectionAllows(group.id, ws));
+              if (allItems.length === 0) return null;
               return (
                 <div key={group.id} className="space-y-2">
-                  <button onClick={() => setSections(s => ({...s, [group.id]: !(s as any)[group.id]}))} className={`flex items-center gap-2 w-full text-left font-bold ${group.color} p-2 hover:bg-slate-800/50 rounded-lg transition-colors`}>
-                    {(sections as any)[group.id] ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                    {group.label} ({items.length})
-                  </button>
-                  {(sections as any)[group.id] && (
+                  {renderSectionHeader(group.id, group.label, group.color, items.length, allItems.length)}
+                  {sections[group.id] && (
                     <div className="space-y-1 pl-2">
-                      {items.map(ws => renderWorkstream(ws))}
+                      {items.length > 0 ? items.map(ws => renderWorkstream(ws)) : (
+                        <div className="text-xs text-slate-500 px-3 py-2">Keine Issues fuer die aktive Status-Auswahl.</div>
+                      )}
                     </div>
                   )}
                 </div>

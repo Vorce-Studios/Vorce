@@ -18,6 +18,9 @@ pub enum InstanceRole {
     #[default]
     Master,
 
+    /// A standalone instance. Equivalent to Master in single-instance setups.
+    Standalone,
+
     /// A secondary control instance. Can interact with the session but defers
     /// timeline/state authority to the Master. (Future multi-master mode)
     SecondaryMaster,
@@ -78,21 +81,29 @@ pub struct OutputAssignment {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ClusterConfig {
     /// Unique ID for the current session
+    #[serde(default = "Uuid::new_v4")]
     pub session_id: Uuid,
 
     /// Name of the session
+    #[serde(default = "default_session_name")]
     pub session_name: String,
 
     /// All registered instances in the cluster topology
+    #[serde(default)]
     pub instances: Vec<InstanceConfig>,
 
     /// Mapping of outputs to instances
+    #[serde(default)]
     pub output_assignments: Vec<OutputAssignment>,
 
     /// Local instance ID (which instance is currently running this application)
     /// Not persisted in project files directly, resolved at runtime or startup.
     #[serde(skip)]
     pub local_instance_id: Option<InstanceId>,
+}
+
+fn default_session_name() -> String {
+    "Default Session".to_string()
 }
 
 impl Default for ClusterConfig {
