@@ -173,7 +173,8 @@ pub fn render_mesh_editor_ui(
                         let scale = 200.0;
                         match mesh {
                             MeshType::Quad { tl, tr, br, bl } => {
-                                if let Some((p_tl, p_tr, p_br, p_bl)) = mesh_editor.get_quad_corners()
+                                if let Some((p_tl, p_tr, p_br, p_bl)) =
+                                    mesh_editor.get_quad_corners()
                                 {
                                     *tl = (p_tl.x / scale, p_tl.y / scale);
                                     *tr = (p_tr.x / scale, p_tr.y / scale);
