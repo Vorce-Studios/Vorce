@@ -1,10 +1,16 @@
 # Vorce Project Roadmap
 
+
+
 ## Current Mission
 
 Ship Vorce toward a production-ready 1.0 by improving render stability, media pipeline reliability, node-graph usability, projection-mapping precision, and contributor velocity across the Rust workspace.
 
+
+
 ## Active Phases
+
+
 
 ### Phase 7: Packaging & Distribution [In Progress]
 
@@ -13,6 +19,8 @@ Ship Vorce toward a production-ready 1.0 by improving render stability, media pi
 - [ ] **VOR-24:** Set up cargo-deb for Linux (.deb) packaging [In Progress]
 
 - [x] **VOR-25:** Evaluate AppImage vs Flatpak for Linux distribution (Evaluation document created)
+
+
 
 ### Phase 8.1: NDI Video Streaming [Ready for Delivery]
 
@@ -27,6 +35,8 @@ Ship Vorce toward a production-ready 1.0 by improving render stability, media pi
 - [x] **VOR-30:** Benchmarking and latency optimization for NDI [<100ms] (PR #336, #339)
 
 - [x] **VOR-32:** Ben: Drive Phase 8.1 NDI Delivery (code on main; PR #307 closed unmerged)
+
+
 
 ### Phase 9: Repository Health & CI Stabilization [In Progress]
 
@@ -52,6 +62,8 @@ Ship Vorce toward a production-ready 1.0 by improving render stability, media pi
 
 - [/] **VOR-44:** Fixing CI/CD linting blockers for App UI Layout Decomposition (#705) [In Progress]
 
+
+
 ## Recently Completed
 
 - **VOR-39:** Merged 9 Dependabot PRs (#374-#382) and resolved CI validation blockers (Antigravity)
@@ -64,6 +76,8 @@ Ship Vorce toward a production-ready 1.0 by improving render stability, media pi
 
 - **VOR-5:** Permanent GitHub Issues Sync activation (Ben)
 
+
+
 ## Project Management
 
 - **CEO:** John
@@ -73,6 +87,8 @@ Ship Vorce toward a production-ready 1.0 by improving render stability, media pi
 - **Review Engineer:** Lisa
 
 - **Senior Developer (Exceptions):** Julia
+
+
 
 ---
 
