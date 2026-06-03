@@ -124,8 +124,13 @@ $exitCode = 0
 try {
     $errorLogFile = $OutputFile + ".err.log"
     
-    # Execute and stream output
-    & $CliCommand @finalArgs 2> $errorLogFile | Tee-Object -FilePath $OutputFile
+    # Execute and stream output. Codex receives the prompt via stdin to avoid
+    # Windows command-line length limits in visible CEO phases.
+    if ($ProviderName -eq "codex_orchestrator" -and ($finalArgs -contains "-")) {
+        $promptText | & $CliCommand @finalArgs 2> $errorLogFile | Tee-Object -FilePath $OutputFile
+    } else {
+        & $CliCommand @finalArgs 2> $errorLogFile | Tee-Object -FilePath $OutputFile
+    }
 
     $exitCode = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }
 

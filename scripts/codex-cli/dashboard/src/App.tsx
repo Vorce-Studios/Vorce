@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { LayoutDashboard, Activity, Settings, RefreshCw, Zap, BarChart3 } from 'lucide-react';
-import { useData, useAutoRefresh } from './hooks';
+import { useData, useAutoRefresh, useTextData } from './hooks';
 
 // Pages
 import DashboardPage from './pages/DashboardPage';
@@ -82,6 +82,7 @@ export default function App() {
   const { data: memoryStore, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
   const { data: history, loading: historyLoading, refetch: refetchHistory } = useData<any[]>('/data.json', []);
   const { data: auditResult, refetch: refetchAuditResult } = useData<AuditResult>('/audit-result.json', defaultAuditResult);
+  const { data: liveLog, refetch: refetchLiveLog } = useTextData('/autopilot-live.log', '');
 
   const refetchAll = () => {
     refetchConfig();
@@ -94,6 +95,7 @@ export default function App() {
     refetchMemory();
     refetchHistory();
     refetchAuditResult();
+    refetchLiveLog();
   };
 
   // Auto-refresh every 30 seconds
@@ -104,7 +106,7 @@ export default function App() {
     const renderActivePage = () => {
       switch (activeTab) {
         case 'dashboard':
-          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} auditResult={auditResult} />;
+          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} auditResult={auditResult} liveLog={liveLog} />;
         case 'workstreams':
           return <WorkstreamsPage issues={issues} sessions={sessions} pullRequests={pullRequests} julesSessions={julesSessions} projectItems={projectItems?.items || []} />;
         case 'reporting':

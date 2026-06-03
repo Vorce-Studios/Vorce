@@ -22,6 +22,8 @@ const PROVIDER_LABELS: Record<string, string> = {
   codex_orchestrator: 'Codex Orchestrator',
 };
 
+const MODEL_MANAGED_PROVIDER_KEYS = new Set(['codex_orchestrator', 'gemini_cli']);
+
 const ROUTING_DESCRIPTIONS: Record<string, string> = {
   monitoring: 'Überwachung laufender Jules-Sessions, CI-Status und Merge-Konflikten in offenen PRs.',
   simple_review: 'Schneller Check von einfachen Code-Änderungen auf grundlegende Syntax oder Syntaxfehler.',
@@ -99,6 +101,107 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
           [providerKey]: {
             ...provider,
             [key]: value
+          }
+        }
+      };
+    });
+  };
+
+  const handleProviderModelChange = (
+    providerKey: string,
+    modelKey: string,
+    field: 'name' | 'estimated_cost_per_call_usd',
+    value: unknown
+  ) => {
+    setRegistry(prev => {
+      if (!prev) return null;
+      const provider = prev.providers[providerKey];
+      if (!provider) return prev;
+      const models = provider.models || {};
+      const model = models[modelKey] || { name: '', estimated_cost_per_call_usd: 0 };
+      return {
+        ...prev,
+        providers: {
+          ...prev.providers,
+          [providerKey]: {
+            ...provider,
+            models: {
+              ...models,
+              [modelKey]: {
+                ...model,
+                [field]: value
+              }
+            }
+          }
+        }
+      };
+    });
+  };
+
+  const handleProviderModelKeyChange = (providerKey: string, oldKey: string, newKeyRaw: string) => {
+    const newKey = newKeyRaw.trim();
+    if (!newKey || newKey === oldKey) return;
+    setRegistry(prev => {
+      if (!prev) return null;
+      const provider = prev.providers[providerKey];
+      if (!provider) return prev;
+      const models = { ...(provider.models || {}) };
+      if (models[newKey]) return prev;
+      models[newKey] = models[oldKey];
+      delete models[oldKey];
+      return {
+        ...prev,
+        providers: {
+          ...prev.providers,
+          [providerKey]: {
+            ...provider,
+            models
+          }
+        }
+      };
+    });
+  };
+
+  const handleAddProviderModel = (providerKey: string) => {
+    setRegistry(prev => {
+      if (!prev) return null;
+      const provider = prev.providers[providerKey];
+      if (!provider) return prev;
+      const models = { ...(provider.models || {}) };
+      let idx = Object.keys(models).length + 1;
+      let key = `custom_${idx}`;
+      while (models[key]) {
+        idx += 1;
+        key = `custom_${idx}`;
+      }
+      models[key] = { name: '', estimated_cost_per_call_usd: 0 };
+      return {
+        ...prev,
+        providers: {
+          ...prev.providers,
+          [providerKey]: {
+            ...provider,
+            models
+          }
+        }
+      };
+    });
+  };
+
+  const handleRemoveProviderModel = (providerKey: string, modelKey: string) => {
+    setRegistry(prev => {
+      if (!prev) return null;
+      const provider = prev.providers[providerKey];
+      if (!provider) return prev;
+      const models = { ...(provider.models || {}) };
+      delete models[modelKey];
+      return {
+        ...prev,
+        providers: {
+          ...prev.providers,
+          [providerKey]: {
+            ...provider,
+            models
           }
         }
       };
@@ -653,6 +756,60 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                       />
                     </div>
                   </div>
+                  {MODEL_MANAGED_PROVIDER_KEYS.has(pKey) && (
+                    <div className="pt-3 border-t border-slate-800/70 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] uppercase tracking-wide text-slate-500 font-semibold">Modelle</span>
+                        <button
+                          type="button"
+                          onClick={() => handleAddProviderModel(pKey)}
+                          className="px-2 py-1 text-[10px] rounded border border-slate-700 bg-slate-800/70 text-slate-300 hover:bg-slate-700"
+                        >
+                          Modell hinzufügen
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        {Object.entries(pVal.models || {}).map(([modelKey, modelVal]: [string, any]) => (
+                          <div key={modelKey} className="grid grid-cols-[0.85fr_1.35fr_0.7fr_auto] gap-2 items-center">
+                            <input
+                              type="text"
+                              value={modelKey}
+                              onChange={(e: any) => handleProviderModelKeyChange(pKey, modelKey, e.target.value)}
+                              className="input-field py-1 px-2 text-[11px] font-mono"
+                              disabled={!pVal.enabled}
+                              title="Tier-Key"
+                            />
+                            <input
+                              type="text"
+                              value={modelVal.name || ''}
+                              onChange={(e: any) => handleProviderModelChange(pKey, modelKey, 'name', e.target.value)}
+                              className="input-field py-1 px-2 text-[11px] font-mono"
+                              disabled={!pVal.enabled}
+                              title="CLI model id"
+                            />
+                            <input
+                              type="number"
+                              value={modelVal.estimated_cost_per_call_usd ?? 0}
+                              onChange={(e: any) => handleProviderModelChange(pKey, modelKey, 'estimated_cost_per_call_usd', parseFloat(e.target.value) || 0)}
+                              className="input-field py-1 px-2 text-[11px]"
+                              min="0"
+                              step="0.001"
+                              disabled={!pVal.enabled}
+                              title="Kosten pro Call"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveProviderModel(pKey, modelKey)}
+                              className="px-2 py-1 text-[10px] rounded border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20"
+                              disabled={!pVal.enabled}
+                            >
+                              Entfernen
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

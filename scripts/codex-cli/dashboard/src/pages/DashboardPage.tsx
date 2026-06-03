@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, CalendarClock, Ban, MessageSquare, Trash2 } from 'lucide-react';
+import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, CalendarClock, Ban, MessageSquare, Trash2, Terminal } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue, AuditResult } from '../types';
 
@@ -10,6 +10,7 @@ interface Props {
   issues: GitHubIssue[];
   julesSessions?: any[];
   auditResult?: AuditResult;
+  liveLog?: string;
 }
 
 const PROVIDER_COLORS: Record<string, string> = {
@@ -75,7 +76,47 @@ function parseAuditResult(auditResult?: AuditResult) {
   }
 }
 
-export default function DashboardPage({ registry, sessions, pullRequests, julesSessions, auditResult }: Props) {
+function simplifyLiveLogLine(rawLine: string) {
+  const match = rawLine.match(/^\[(.*?)\]\s*(.*)$/);
+  const time = match ? match[1].split(' ')[1] || match[1] : '';
+  let message = (match ? match[2] : rawLine).trim();
+  if (!message) return null;
+
+  const level =
+    /(fehler|error|failed|fehlgeschlagen|exception|stacktrace)/i.test(message) ? 'error' :
+    /(warning|warnung|konflikt|blocked|escalat)/i.test(message) ? 'warn' :
+    /(ok|abgeschlossen|completed|erfolgreich)/i.test(message) ? 'ok' :
+    'info';
+
+  message = message
+    .replace(/^\[(PLANNING|MONITOR|AUDIT|LOOP|CEO|MEMORY|CODEX|DRY-RUN|INIT|STATE)\]\s*/i, '')
+    .replace(/^==========\s*/, '')
+    .replace(/\s*==========$/, '')
+    .replace(/^Starte Schritt:\s*/i, '')
+    .replace(/^Schritt:\s*/i, '')
+    .replace(/^Provider:\s*/i, 'Provider ')
+    .replace(/^Visible Phase:\s*/i, 'Dry-Run ')
+    .replace(/^Naechster Wake-Up/i, 'Nächster Run')
+    .replace(/^Oeffne sichtbares Terminal:/i, 'Öffne Terminal:');
+
+  if (message.length > 150) {
+    message = `${message.slice(0, 147)}...`;
+  }
+
+  return { time, message, level };
+}
+
+function getLiveLogItems(liveLog?: string) {
+  if (!liveLog) return [];
+  return liveLog
+    .split(/\r?\n/)
+    .map(line => simplifyLiveLogLine(line))
+    .filter((item): item is { time: string; message: string; level: string } => Boolean(item))
+    .slice(-14)
+    .reverse();
+}
+
+export default function DashboardPage({ registry, sessions, pullRequests, julesSessions, auditResult, liveLog }: Props) {
   const providers = registry.providers || {};
   const providerEntries = Object.entries(providers);
 
@@ -96,6 +137,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   const runControl = sessions.run_control || {};
   const audit = parseAuditResult(auditResult);
   const pendingAlerts = sessions.decisions_pending || [];
+  const liveLogItems = getLiveLogItems(liveLog);
 
   const sendRunControl = async (type: 'planning' | 'monitoring', action: string, note?: string) => {
     await fetch('/api/run-control', {
@@ -182,6 +224,8 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
         onClear={() => fetch('/api/alerts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'clear' }) })}
         onUpdateAlert={updateAlert}
       />
+
+      <LiveLogPanel items={liveLogItems} />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -533,6 +577,46 @@ function AlertResponseBox({ label, value, onSubmit }: { label: string; value: st
       <button onClick={() => onSubmit(text)} className="mt-1 px-2 py-1 text-[11px] rounded bg-rose-500/15 text-rose-200 border border-rose-500/25">
         Speichern
       </button>
+    </div>
+  );
+}
+
+function LiveLogPanel({ items }: { items: Array<{ time: string; message: string; level: string }> }) {
+  const hasProblems = items.some(item => item.level === 'error' || item.level === 'warn');
+  return (
+    <div className={`glass-card p-5 border ${hasProblems ? 'border-amber-500/25' : 'border-slate-800'}`}>
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+          <Terminal className="w-4 h-4 text-emerald-400" />
+          Live-Log
+        </h3>
+        <span className={`text-[11px] px-2 py-1 rounded border ${
+          hasProblems ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+        }`}>
+          {hasProblems ? 'Hinweise' : 'OK'}
+        </span>
+      </div>
+      <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+        {items.length === 0 ? (
+          <div className="text-xs text-slate-500 rounded border border-slate-800 bg-slate-950/40 px-3 py-2">
+            Noch keine Live-Logs vorhanden.
+          </div>
+        ) : (
+          items.map((item, idx) => {
+            const levelClass =
+              item.level === 'error' ? 'bg-rose-500/10 text-rose-200 border-rose-500/25' :
+              item.level === 'warn' ? 'bg-amber-500/10 text-amber-200 border-amber-500/25' :
+              item.level === 'ok' ? 'bg-emerald-500/10 text-emerald-200 border-emerald-500/20' :
+              'bg-slate-950/45 text-slate-300 border-slate-800';
+            return (
+              <div key={`${item.time}-${idx}`} className={`grid grid-cols-[4.5rem_1fr] gap-2 rounded border px-3 py-2 text-xs ${levelClass}`}>
+                <span className="font-mono text-[11px] opacity-70">{item.time || '--:--:--'}</span>
+                <span className="truncate" title={item.message}>{item.message}</span>
+              </div>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }

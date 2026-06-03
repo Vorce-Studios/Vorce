@@ -31,9 +31,11 @@ function Invoke-AuditWakeUp {
             $stepPrompt = Get-VorceConfigPrompt -Config $Config -PromptKey $step.prompt_ref -Variables $promptVars
             $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$stepPrompt"
 
-            $stepResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "audit" -DryRun:$DryRun -Prompt $fullPrompt -State $State -AlphaTierOverride $step.tier
+            $stepResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "audit" -DryRun:$DryRun -Prompt $fullPrompt -State $State -BetaTierOverride $step.tier
             if ($stepResult.success) {
                 $auditContext += "`n### Ergebnis $($step.label):`n$($stepResult.output)`n"
+            } else {
+                Write-Warning "[AUDIT] Schritt $($step.label) fehlgeschlagen."
             }
         }
     }

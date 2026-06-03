@@ -84,7 +84,11 @@ function Invoke-VisibleCeoPhase {
     $cliArgs = @()
     if ($providerConfig.PSObject.Properties.Name -contains "cli_args" -and $providerConfig.cli_args) {
         foreach ($arg in $providerConfig.cli_args) {
-            $replaced = $arg -replace '\{PROMPT\}', '__V_PROMPT__'
+            $replaced = if ($providerName -eq "codex_orchestrator" -and $arg -match '\{PROMPT\}') {
+                $arg -replace '\{PROMPT\}', '-'
+            } else {
+                $arg -replace '\{PROMPT\}', '__V_PROMPT__'
+            }
             $replaced = $replaced -replace '\{MODEL\}', $modelName
             $cliArgs += $replaced
         }
@@ -153,6 +157,51 @@ function Resolve-DualCeos {
     }
 }
 
+function Resolve-CeoModelTier {
+    param(
+        [Parameter(Mandatory)][object]$QuotaRegistry,
+        [Parameter(Mandatory)][string]$ProviderName,
+        [Parameter(Mandatory)][string]$RequestedTier,
+        [Parameter(Mandatory)][string]$TaskType
+    )
+
+    $providerConfig = $QuotaRegistry.providers.$ProviderName
+    if (-not $providerConfig -or -not ($providerConfig.PSObject.Properties.Name -contains "models") -or -not $providerConfig.models) {
+        return $RequestedTier
+    }
+
+    $modelKeys = @($providerConfig.models.PSObject.Properties.Name)
+    if ($modelKeys -contains $RequestedTier) { return $RequestedTier }
+
+    if ($ProviderName -eq "codex_orchestrator") {
+        if ($RequestedTier -in @("fast", "cheap", "monitoring") -and $modelKeys -contains "monitoring") { return "monitoring" }
+        if ($modelKeys -contains "planning") { return "planning" }
+    }
+
+    if ($modelKeys -contains $TaskType) { return $TaskType }
+
+    switch ($RequestedTier) {
+        { $_ -in @("fast", "cheap") } {
+            if ($modelKeys -contains "cheap") { return "cheap" }
+            if ($modelKeys -contains "monitoring") { return "monitoring" }
+            break
+        }
+        "balanced" {
+            if ($modelKeys -contains "balanced") { return "balanced" }
+            if ($modelKeys -contains "planning") { return "planning" }
+            break
+        }
+        { $_ -in @("high", "premium") } {
+            if ($modelKeys -contains "premium") { return "premium" }
+            if ($modelKeys -contains "planning") { return "planning" }
+            break
+        }
+    }
+
+    if ($modelKeys.Count -gt 0) { return $modelKeys[0] }
+    return $RequestedTier
+}
+
 function Invoke-Deliberation {
     param(
         [Parameter(Mandatory)][object]$QuotaRegistry,
@@ -168,10 +217,23 @@ function Invoke-Deliberation {
     )
 
     $ceos = Resolve-DualCeos -QuotaRegistry $QuotaRegistry -Config $Config
-    $ceoInfo = $ceos.alpha
-    if (-not [string]::IsNullOrWhiteSpace($AlphaTierOverride)) { $ceoInfo.model_tier = $AlphaTierOverride }
+    $useBeta = $TaskType -eq "audit"
+    $ceoInfo = if ($useBeta) { $ceos.beta } else { $ceos.alpha }
+    $requestedTier = if ($useBeta) {
+        if (-not [string]::IsNullOrWhiteSpace($BetaTierOverride)) { $BetaTierOverride }
+        elseif (-not [string]::IsNullOrWhiteSpace($AlphaTierOverride)) { $AlphaTierOverride }
+        else { [string]$ceoInfo.model_tier }
+    } else {
+        if (-not [string]::IsNullOrWhiteSpace($AlphaTierOverride)) { $AlphaTierOverride }
+        else { [string]$ceoInfo.model_tier }
+    }
+    $ceoInfo.model_tier = Resolve-CeoModelTier -QuotaRegistry $QuotaRegistry -ProviderName $ceoInfo.provider -RequestedTier $requestedTier -TaskType $TaskType
 
-    Write-Host "[CEO] Provider: $($ceoInfo.provider) ($($ceoInfo.model_tier))" -ForegroundColor Cyan
+    if ($requestedTier -ne $ceoInfo.model_tier) {
+        Write-Host "[CEO] Provider: $($ceoInfo.provider) ($($ceoInfo.model_tier), gemappt von $requestedTier)" -ForegroundColor Cyan
+    } else {
+        Write-Host "[CEO] Provider: $($ceoInfo.provider) ($($ceoInfo.model_tier))" -ForegroundColor Cyan
+    }
 
     $fullPrompt = Format-DeliberationPrompt -Phase "proposal" -OriginalPrompt $Prompt -MemoryBlock $MemoryBlock
     $result = Invoke-VisibleCeoPhase -QuotaRegistry $QuotaRegistry -CeoInfo $ceoInfo -Prompt $fullPrompt -PhaseName "Execution" -WorkingDirectory $WorkingDirectory -State $State -DryRun:$DryRun

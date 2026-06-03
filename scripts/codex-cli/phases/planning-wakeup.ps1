@@ -7,6 +7,22 @@ Set-StrictMode -Version Latest
 $script:PhaseDir = Split-Path -Parent $PSCommandPath
 $script:LibDir = Join-Path (Split-Path -Parent $script:PhaseDir) "lib"
 . (Join-Path $script:LibDir "autopilot-prompts.ps1")
+. (Join-Path $script:LibDir "autopilot-session-manager.ps1")
+
+function Get-ProviderModelNameForTier {
+    param(
+        [Parameter(Mandatory)][object]$QuotaRegistry,
+        [Parameter(Mandatory)][string]$ProviderName,
+        [Parameter(Mandatory)][string]$Tier
+    )
+
+    $provider = $QuotaRegistry.providers.$ProviderName
+    if ($provider -and ($provider.PSObject.Properties.Name -contains "models") -and $provider.models -and ($provider.models.PSObject.Properties.Name -contains $Tier)) {
+        return [string]$provider.models.$Tier.name
+    }
+
+    return $Tier
+}
 
 function Convert-PlanningProposalOutput {
     param([string]$Output)
@@ -82,11 +98,22 @@ function Invoke-PlanningWakeUp {
             $stepPrompt = Get-VorceConfigPrompt -Config $Config -PromptKey $step.prompt_ref -Variables $promptVars
             $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$stepPrompt"
 
-            $stepResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "planning" -DryRun:$DryRun -Prompt $fullPrompt -State $State -AlphaTierOverride $step.tier
+            if ($step.id -eq "final_synthesis") {
+                $resolvedTier = Resolve-CeoModelTier -QuotaRegistry $QuotaRegistry -ProviderName "codex_orchestrator" -RequestedTier ([string]$step.tier) -TaskType "planning"
+                $modelName = Get-ProviderModelNameForTier -QuotaRegistry $QuotaRegistry -ProviderName "codex_orchestrator" -Tier $resolvedTier
+                Write-Host "[PLANNING] Starte Planning Synthesis als interaktiven Codex-Chat ($resolvedTier / $modelName)." -ForegroundColor Cyan
+                $sessionResult = Invoke-AutopilotCodexSession -SessionType "planning-synthesis" -Prompt $fullPrompt -State $State -Model $modelName -VisibleTerminal -ResumeMainSession -DryRun:$DryRun
+                $stepResult = [pscustomobject]@{
+                    success = [bool]$sessionResult.Success
+                    output  = if ($sessionResult.DryRun) { "{`"dry_run`":true,`"interactive_planning_synthesis`":true}" } else { "Interactive Codex planning synthesis completed." }
+                }
+            } else {
+                $stepResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "planning" -DryRun:$DryRun -Prompt $fullPrompt -State $State -AlphaTierOverride $step.tier
+            }
             if ($stepResult.success) {
                 $output = [string]$stepResult.output
                 $planningContext += "`n### Ergebnis von $($step.label):`n$output`n"
-                if ($step.id -eq "propose_issues") { 
+                if ($step.id -in @("propose_issues", "task_generation") -or $step.prompt_ref -eq "planning_proposal") {
                     $issues = @(Convert-PlanningProposalOutput -Output $output)
                     $newIssues += $issues
                     Write-Host "[PLANNING] $($issues.Count) neue Issues vorgeschlagen." -ForegroundColor DarkGray
