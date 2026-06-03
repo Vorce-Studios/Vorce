@@ -506,7 +506,6 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 
     $ScriptDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
     $JulesScriptDir = Join-Path (Split-Path -Parent $ScriptDir) "jules"
-    $ToolsDir = Join-Path $ScriptDir "tools"
 
     $delegatedInThisRun = [System.Collections.Generic.HashSet[int]]::new()
 
