@@ -32,16 +32,14 @@ function Add-SchedulerSnapshot {
 
     $lastPlanning = $null
     $lastMonitoring = $null
-    $culture = [System.Globalization.CultureInfo]::InvariantCulture
-    $styles = [System.Globalization.DateTimeStyles]::RoundtripKind
     try {
         if (-not [string]::IsNullOrWhiteSpace([string]$State.last_planning_at)) {
-            $lastPlanning = [datetimeoffset]::Parse([string]$State.last_planning_at, $culture, $styles).LocalDateTime
+            $lastPlanning = [datetimeoffset]::Parse([string]$State.last_planning_at).LocalDateTime
         }
     } catch { }
     try {
         if (-not [string]::IsNullOrWhiteSpace([string]$State.last_monitoring_at)) {
-            $lastMonitoring = [datetimeoffset]::Parse([string]$State.last_monitoring_at, $culture, $styles).LocalDateTime
+            $lastMonitoring = [datetimeoffset]::Parse([string]$State.last_monitoring_at).LocalDateTime
         }
     } catch { }
 
@@ -147,15 +145,6 @@ while ($true) {
             }
         }
 
-        $AuditResultPath = Join-Path $ScriptDir "tmp\beta-audit-result.json"
-        if (Test-Path $AuditResultPath) {
-            $auditResult = Read-JsonLocked -Path $AuditResultPath
-            if ($null -ne $auditResult) {
-                $auditResult | Add-Member -MemberType NoteProperty -Name "updated_at" -Value ((Get-Item $AuditResultPath).LastWriteTime.ToString("o")) -Force
-                Write-JsonLocked -Path (Join-Path $DashboardPublicDir "audit-result.json") -Data $auditResult | Out-Null
-            }
-        }
-
         $RegistryPath = Join-Path $ScriptDir "quota-registry.json"
         if (Test-Path $RegistryPath) {
             Write-JsonLocked -Path (Join-Path $DashboardPublicDir "registry.json") -Data $registry | Out-Null
@@ -167,6 +156,9 @@ while ($true) {
             Write-Host "[STATS] Starte parallelen Sync (Issues, PRs, Jules)..." -ForegroundColor Gray
 
             $reposToPoll = @($Repository)
+            if ($Repository -eq "Vorce-Studios/Vorce") {
+                $reposToPoll += "MrLongNight/MapFlow"
+            }
 
             # 1. Start Jobs
             $jobIssues = Start-Job -ScriptBlock {
@@ -191,7 +183,7 @@ while ($true) {
                 param($repos)
                 $allPRs = @()
                 foreach ($r in $repos) {
-                    $prsRaw = gh pr list --repo $r --state open --limit 1000 --json number,title,state,url,updatedAt,headRefName,baseRefName,mergeable,isDraft 2>$null
+                    $prsRaw = gh pr list --repo $r --state open --limit 1000 --json number,title,state,url,updatedAt,headRefName,baseRefName,mergeable,statusCheckRollup,isDraft 2>$null
                     if ($LASTEXITCODE -eq 0) {
                         $prData = $prsRaw | Out-String | ConvertFrom-Json -ErrorAction SilentlyContinue
                         if ($prData) {
@@ -208,17 +200,15 @@ while ($true) {
             $jApiKey = Get-JulesApiKey
             $JulesScriptDir = Join-Path $ScriptDir "..\jules"
             $jobJules = Start-Job -ScriptBlock {
-                param($apiKey, $scriptDir, $repository)
+                param($apiKey, $scriptDir)
                 . (Join-Path $scriptDir "jules-api.ps1")
                 try {
                     $jSessions = @(Get-AllJulesSessions -ApiKey $apiKey -PageSize 100 -MaxPages 15)
                     $jList = @()
                     foreach ($s in $jSessions) {
                         $stateName = [string]$s.state
-                        $sourceContext = Get-JulesObjectPropertyValue -Object $s -Name "sourceContext"
-                        $source = if ($null -ne $sourceContext) { [string](Get-JulesObjectPropertyValue -Object $sourceContext -Name "source") } else { "" }
+                        $source = [string]$s.sourceContext.source
                         $repo = if ($source -match "sources/github/(?<name>.*)") { $Matches["name"] } else { $source }
-                        if ($repo -ne $repository) { continue }
 
                         $issueNum = Get-IssueNumberFromSession -Session $s
                         $jList += [ordered]@{
@@ -236,10 +226,10 @@ while ($true) {
                 } catch {
                     return "ERROR:" + $_.Exception.Message
                 }
-            } -ArgumentList $jApiKey, $JulesScriptDir, $Repository
+            } -ArgumentList $jApiKey, $JulesScriptDir
 
             $jobProjectItems = Start-Job -ScriptBlock {
-                $itemsRaw = gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json 2>$null
+                $itemsRaw = gh project item-list 1 --owner Vorce-Studios --format json 2>$null
                 if ($LASTEXITCODE -eq 0 -and $itemsRaw) {
                     $itemsData = $itemsRaw | Out-String | ConvertFrom-Json -ErrorAction SilentlyContinue
                     return $itemsData
@@ -285,5 +275,5 @@ while ($true) {
         Write-Warning "StackTrace: $($_.ScriptStackTrace)"
     }
 
-    Start-Sleep -Seconds $dashboardSyncIntervalSec
+    break
 }

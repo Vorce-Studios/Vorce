@@ -81,6 +81,12 @@ if ($NonInteractiveExec.IsPresent) {
 try {
     $isInsideCodex = $false
 
+    $runCmd = if ($NonInteractiveExec.IsPresent) {
+        { $prompt | & $codex.Source @codexArgs *>&1 }
+    } else {
+        { & $codex.Source @codexArgs $prompt *>&1 }
+    }
+
     $isInsideCodex = $false
     $expectCommandLine = $false
     $isInsideCommandOutput = $false
@@ -88,66 +94,75 @@ try {
     $thoughtCount = 0
     $startTime = Get-Date
 
-    if ($NonInteractiveExec.IsPresent) {
-        $prompt | & $codex.Source @codexArgs *>&1 | ForEach-Object {
-            $line = if ($null -ne $_) { $_.ToString().Trim() } else { "" }
-
-            if (-not [string]::IsNullOrWhiteSpace($LogPath) -and -not [string]::IsNullOrWhiteSpace($line)) {
-                Add-Content -Path $LogPath -Value $line -Encoding UTF8
-            }
-
-            if ([string]::IsNullOrWhiteSpace($line)) { return }
-
-            if ($line -eq "codex") {
-                $isInsideCodex = $true
-                $isInsideCommandOutput = $false
-                $expectCommandLine = $false
-                $thoughtCount++
-                return
-            }
-
-            if ($line -eq "exec") {
-                $isInsideCodex = $false
-                $expectCommandLine = $true
-                $isInsideCommandOutput = $false
-                $commandCount++
-                return
-            }
-
-            if ($expectCommandLine) {
-                $expectCommandLine = $false
-                $isInsideCommandOutput = $true
-                $cleanCmd = $line
-                if ($line -match '-Command\s+''(.*)''\s+in\s+(.*)') {
-                    $cleanCmd = $Matches[1]
-                } elseif ($line -match '-Command\s+"(.*)"\s+in\s+(.*)') {
-                    $cleanCmd = $Matches[1]
-                }
-                $cleanCmd = $cleanCmd.Trim('"', "'")
-                Write-Host "[BEFEHL] Führe aus: $cleanCmd" -ForegroundColor Yellow
-                return
-            }
-
-            if ($line -match '^\s*(succeeded|failed)\s+in\s+(\d+ms|seconds|minutes)' -or $line -match '^\s*exited\s+\d+') {
-                $isInsideCommandOutput = $false
-                if ($line -match 'failed' -or $line -match 'exited\s+[^0]') {
-                    Write-Host "[ERGEBNIS] Fehlgeschlagen ($($line.Trim()))" -ForegroundColor Red
-                } else {
-                    Write-Host "[ERGEBNIS] Erfolgreich ($($line.Trim()))" -ForegroundColor Gray
-                }
-                return
-            }
-
-            if ($isInsideCommandOutput) { return }
-
-            if ($isInsideCodex -and -not [string]::IsNullOrWhiteSpace($line)) {
-                Write-Host "[CEO ALPHA] $line" -ForegroundColor Cyan
-            }
+    # Execute and pipe through line-by-line processing
+    & $runCmd | ForEach-Object {
+        $line = ""
+        if ($null -ne $_) {
+            $line = $_.ToString().Trim()
         }
-    } else {
-        Write-VisibleSessionLog "INTERACTIVE_TUI_STARTED"
-        Write-Host "[VORCE] Interaktive Codex-TUI gestartet. Beende die Session im Codex-Fenster, wenn die Planning Synthesis fertig ist." -ForegroundColor Cyan
-        & $codex.Source @codexArgs $prompt
+
+        # Always write raw line to log path if specified
+        if (-not [string]::IsNullOrWhiteSpace($LogPath) -and -not [string]::IsNullOrWhiteSpace($line)) {
+            Add-Content -Path $LogPath -Value $line -Encoding UTF8
+        }
+
+        # Skip empty lines to keep terminal neat
+        if ([string]::IsNullOrWhiteSpace($line)) {
+            return
+        }
+
+        # State machine for live terminal filtering
+        if ($line -eq "codex") {
+            $isInsideCodex = $true
+            $isInsideCommandOutput = $false
+            $expectCommandLine = $false
+            $thoughtCount++
+            return
+        }
+
+        if ($line -eq "exec") {
+            $isInsideCodex = $false
+            $expectCommandLine = $true
+            $isInsideCommandOutput = $false
+            $commandCount++
+            return
+        }
+
+        if ($expectCommandLine) {
+            $expectCommandLine = $false
+            $isInsideCommandOutput = $true
+
+            # Clean up the command line to make it readable
+            $cleanCmd = $line
+            if ($line -match '-Command\s+''(.*)''\s+in\s+(.*)') {
+                $cleanCmd = $Matches[1]
+            } elseif ($line -match '-Command\s+"(.*)"\s+in\s+(.*)') {
+                $cleanCmd = $Matches[1]
+            }
+            $cleanCmd = $cleanCmd.Trim('"', "'")
+            Write-Host "[BEFEHL] Führe aus: $cleanCmd" -ForegroundColor Yellow
+            return
+        }
+
+        if ($line -match '^\s*(succeeded|failed)\s+in\s+(\d+ms|seconds|minutes)' -or $line -match '^\s*exited\s+\d+') {
+            $isInsideCommandOutput = $false
+            if ($line -match 'failed' -or $line -match 'exited\s+[^0]') {
+                Write-Host "[ERGEBNIS] Fehlgeschlagen ($($line.Trim()))" -ForegroundColor Red
+            } else {
+                Write-Host "[ERGEBNIS] Erfolgreich ($($line.Trim()))" -ForegroundColor Gray
+            }
+            return
+        }
+
+        if ($isInsideCommandOutput) {
+            # Suppress all command output (stdout/stderr) from cluttering the terminal
+            return
+        }
+
+        if ($isInsideCodex -and -not [string]::IsNullOrWhiteSpace($line)) {
+            # Print the clean comment/thought in German
+            Write-Host "[CEO ALPHA] $line" -ForegroundColor Cyan
+        }
     }
 
     # Print a clean overview summary when the session ends

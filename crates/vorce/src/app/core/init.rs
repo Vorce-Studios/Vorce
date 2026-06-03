@@ -244,10 +244,6 @@ impl App {
             start_time: std::time::Instant::now(),
             startup_animation: crate::app::core::app_struct::StartupAnimationState::default(),
             last_texture_gc: std::time::Instant::now(),
-            #[cfg(feature = "ndi")]
-            ndi_offscreen_textures: std::collections::HashMap::new(),
-            #[cfg(feature = "ndi")]
-            ndi_readbacks: std::collections::HashMap::new(),
             mcp_receiver,
             action_sender,
             control_manager,
@@ -280,6 +276,8 @@ impl App {
             ndi_receivers: std::collections::HashMap::new(),
             #[cfg(feature = "ndi")]
             ndi_senders: std::collections::HashMap::new(),
+            #[cfg(feature = "ndi")]
+            ndi_readbacks: std::collections::HashMap::new(),
 
             output_assignments: std::collections::HashMap::new(),
             shader_graph_manager: vorce_render::ShaderGraphManager::new(),
