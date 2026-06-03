@@ -76,13 +76,10 @@ pub enum HwAccelType {
     D3D11VA,
 }
 
-// ============================================================================
-// FFmpeg Implementation (when feature is enabled)
-// ============================================================================
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn test_yuv420p_conversion() {
         // Create a simple 2x2 YUV420P frame (white pixel)
@@ -102,3 +99,6 @@ mod tests {
         }
     }
 }
+
+pub mod ffmpeg;
+pub mod test_pattern;
