@@ -123,7 +123,7 @@ Write-Host ""
 $exitCode = 0
 try {
     $errorLogFile = $OutputFile + ".err.log"
-    
+
     # Execute and stream output. Codex receives the prompt via stdin to avoid
     # Windows command-line length limits in visible CEO phases.
     if ($ProviderName -eq "codex_orchestrator" -and ($finalArgs -contains "-")) {
