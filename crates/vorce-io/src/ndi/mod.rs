@@ -350,9 +350,9 @@ impl NdiSender {
             .frame_rate(frame.format.frame_rate as i32, 1)
             .build()
             .map_err(|e| IoError::NdiSenderFailed(format!("Failed to build NDI frame: {}", e)))?;
-        ndi_frame
-            .replace_data(data.as_ref().to_vec())
-            .map_err(|e| IoError::NdiSenderFailed(format!("Failed to set NDI frame data: {}", e)))?;
+        ndi_frame.replace_data(data.as_ref().to_vec()).map_err(|e| {
+            IoError::NdiSenderFailed(format!("Failed to set NDI frame data: {}", e))
+        })?;
 
         self.sender.send_video(&ndi_frame);
 

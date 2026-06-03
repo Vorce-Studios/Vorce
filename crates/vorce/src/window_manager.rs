@@ -135,8 +135,8 @@ impl WindowManager {
             // Basic sanity check: avoid extreme negative or likely invalid positions
             // Modern winit handles multi-monitor, but extreme values often mean "invisible"
             if pos_x > -32000 && pos_x < 32000 && pos_y > -32000 && pos_y < 32000 {
-                window_attributes =
-                    window_attributes.with_position(winit::dpi::PhysicalPosition::new(pos_x, pos_y));
+                window_attributes = window_attributes
+                    .with_position(winit::dpi::PhysicalPosition::new(pos_x, pos_y));
             }
         }
 
