@@ -208,13 +208,13 @@ impl App {
                         if let Some(window_context) = self.window_manager.get(0) {
                             let is_maximized = window_context.window.is_maximized();
                             self.ui_state.user_config.window_maximized = is_maximized;
-                            
+
                             if !is_maximized {
                                 let inner_size = window_context.window.inner_size().to_logical::<f32>(window_context.window.scale_factor());
                                 let size: winit::dpi::LogicalSize<u32> = inner_size.cast::<u32>();
                                 self.ui_state.user_config.window_width = Some(size.width);
                                 self.ui_state.user_config.window_height = Some(size.height);
-                                
+
                                 if let Ok(position) = window_context.window.outer_position() {
                                     let logical_pos = position.to_logical::<i32>(window_context.window.scale_factor());
                                     self.ui_state.user_config.window_x = Some(logical_pos.x);
