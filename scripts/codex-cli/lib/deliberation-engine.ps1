@@ -102,7 +102,7 @@ function Invoke-VisibleCeoPhase {
 
     $workDir = if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory) -and (Test-Path $WorkingDirectory)) { $WorkingDirectory } else { $scriptRoot }
     $runnerScript = Join-Path $scriptRoot "tools\run-visible-ceo-phase.ps1"
-    
+
     $powerShellHost = (Get-Command pwsh -ErrorAction SilentlyContinue)
     if ($powerShellHost) { $powerShellHost = $powerShellHost.Source } else { $powerShellHost = (Get-Command powershell -ErrorAction Stop).Source }
 
@@ -111,9 +111,9 @@ function Invoke-VisibleCeoPhase {
     Write-Host "[CEO] Oeffne sichtbares Terminal: $($CeoInfo.label) - $PhaseName ($providerName)" -ForegroundColor Cyan
     $process = Start-Process -FilePath $powerShellHost -ArgumentList $runnerArgs -WindowStyle Normal -PassThru
     $process.WaitForExit()
-    
+
     $output = if (Test-Path $outputFile) { Get-Content -LiteralPath $outputFile -Raw -Encoding UTF8 } else { "" }
-    
+
     # Read status from status file if possible (more reliable than process exit code in some shells)
     $finalSuccess = ($process.ExitCode -eq 0)
     if (Test-Path $statusFile) {

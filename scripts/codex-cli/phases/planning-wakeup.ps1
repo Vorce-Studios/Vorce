@@ -34,8 +34,8 @@ function Convert-PlanningProposalOutput {
     } catch {
         # Try to extract JSON array if wrapped in text
         $jsonArrMatch = [regex]::Match($Output, '(?s)\[.*\]')
-        if ($jsonArrMatch.Success) { 
-            try { $parsedObj = $jsonArrMatch.Value | ConvertFrom-Json } catch {} 
+        if ($jsonArrMatch.Success) {
+            try { $parsedObj = $jsonArrMatch.Value | ConvertFrom-Json } catch {}
         }
     }
     if ($null -eq $parsedObj) { return @() }
@@ -197,7 +197,7 @@ function Invoke-PlanningWakeUp {
             $agent = if ($issue.PSObject.Properties.Name -contains "agent") { $issue.agent } else { "jules" }
             $labels = @($issue.labels) + @($Config.issue_filters.autopilot_label) + @("agent:$agent")
             $labelArgs = ($labels | ForEach-Object { "--label `"$_`"" }) -join " "
-            
+
             gh issue create --repo $repo --title $issueTitle --body $issue.body $labelArgs | Out-Null
             Write-Host "[PLANNING] Issue erstellt: $issueTitle" -ForegroundColor Green
         }
@@ -207,13 +207,13 @@ function Invoke-PlanningWakeUp {
     $GetCandidates = {
         $issuesRaw = gh issue list --repo $repo --state open --json number,title,labels,body --limit 100 | ConvertFrom-Json
         if (-not $issuesRaw) { return @() }
-        
+
         $includeLabels = @($Config.issue_filters.include_labels)
         $excludeLabels = @($Config.issue_filters.exclude_labels)
-        
+
         $delegatedNumbers = @($State.active_delegations | ForEach-Object { [int]$_.issue_number })
 
-        return @($issuesRaw | Where-Object { 
+        return @($issuesRaw | Where-Object {
             $labels = @($_.labels.name)
             $hasInclude = (@($includeLabels | Where-Object { $labels -contains $_ }).Count -gt 0)
             $hasExclude = (@($excludeLabels | Where-Object { $labels -contains $_ }).Count -gt 0)
