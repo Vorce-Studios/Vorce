@@ -18,7 +18,7 @@ interface Workstream {
   pr?: PullRequest;
   projectItem?: any;
   status: string;
-  issueType: 'MASTER' | 'STANDARD' | 'OTHER';
+  issueType: 'MASTER' | 'STANDARD';
   sortScore: number;
   isMaster: boolean;
   parentId?: string;
@@ -78,6 +78,14 @@ function getGHBadgeInfo(ws: Workstream) {
   return { label: ws.status, ...getStatusColor(ws.status) };
 }
 
+function getMasterStatus(ws: Workstream): 'Planed' | 'Started' | 'Done' {
+  if (!ws.children.length) return 'Planed';
+  const doneCount = ws.children.filter(c => c.projectItem?.status === 'Done' || c.status === 'Done').length;
+  if (doneCount === ws.children.length) return 'Done';
+  if (doneCount > 0 || ws.children.some(c => c.status !== 'OPEN' && c.projectItem?.status !== 'Planed')) return 'Started';
+  return 'Planed';
+}
+
 function fixGithubUrl(url: string | undefined): string {
   if (!url) return '';
   return url.replace(/github\.com\/[^\/]+\/MapFlow/gi, 'github.com/Vorce-Studios/Vorce');
@@ -86,7 +94,8 @@ function fixGithubUrl(url: string | undefined): string {
 export default function WorkstreamsPage({ issues, sessions, pullRequests, julesSessions, projectItems }: Props) {
   const [filter, setFilter] = useState<'ALL' | 'ACTIVE' | 'ERROR'>('ACTIVE');
   const [isGrouped, setIsGrouped] = useState(true);
-  const [sections, setSections] = useState({ planed: true, master: true, standard: true, other: true });
+  const [sections, setSections] = useState({ master: true, standard: true });
+  const [statusSections, setStatusSections] = useState({ planed: true, started: true, done: false });
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [expandedDetails, setExpandedDetails] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -111,7 +120,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
 
     const getOrAdd = (id: string): Workstream => {
       if (!wsMap.has(id)) {
-        wsMap.set(id, { id, status: 'OPEN', issueType: 'OTHER', sortScore: 0, isMaster: false, children: [] });
+        wsMap.set(id, { id, status: 'OPEN', issueType: 'STANDARD', sortScore: 0, isMaster: false, children: [] });
       }
       return wsMap.get(id)!;
     };
@@ -125,7 +134,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
         if (issue.title.includes('_MAIs_') || issue.title.includes('Master-Issue') || issue.title.includes('[MASTER]')) {
           ws.isMaster = true;
           ws.issueType = 'MASTER';
-        } else if (issue.title.includes('_StIs_')) {
+        } else {
           ws.isMaster = false;
           ws.issueType = 'STANDARD';
         }
@@ -230,11 +239,12 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
       }
       ws.sortScore = sortScore;
 
-      // Finde Parent für Sub-Issues
-      if (!ws.isMaster && ws.issue?.body) {
+      // Finde Parent für Sub-Issues. Nicht zuordenbare Sub-Issues bleiben Standard-Issues.
+      if (!ws.isMaster && ws.issue) {
+        const parentSearchText = `${ws.issue.title || ''}\n${ws.issue.body || ''}`;
         const regex = /#(\d+)/g;
         let match;
-        while ((match = regex.exec(ws.issue.body)) !== null) {
+        while ((match = regex.exec(parentSearchText)) !== null) {
           const possibleParentId = match[1];
           const potentialParent = wsMap.get(possibleParentId);
           if (potentialParent && potentialParent.isMaster && possibleParentId !== ws.id) {
@@ -392,18 +402,21 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
     const sessionPrUrl = ws.session?.pr_url ? fixGithubUrl(ws.session.pr_url) : '';
     const prUrl = ws.pr ? fixGithubUrl(ws.pr.url) : '';
     const phaseInfo = getPhase(ws);
+    const masterStatus = ws.isMaster ? getMasterStatus(ws) : null;
 
     return (
       <div key={ws.id} className="flex flex-col relative mt-2">
-        {/* GH Status & Phase Badge (Half Outside) */}
-        {!isChild && (
-          <div className={`absolute -top-3 right-4 px-3 py-1 rounded-md text-[11px] font-bold border shadow-lg backdrop-blur-md z-10 flex items-center gap-2 ${ghBadge.bg} ${ghBadge.text} ${ghBadge.borderClass}`}>
-            {!ws.isMaster && <span className="opacity-80 border-r border-current pr-2">{PHASES[phaseInfo.index]}</span>}
+        {/* GH Status Badge slides across the six phase slots. Master issues render status inside the box. */}
+        {!isChild && !ws.isMaster && (
+          <div
+            className={`absolute -top-3 px-3 py-1 rounded-md text-[11px] font-bold border shadow-lg backdrop-blur-md z-10 ${ghBadge.bg} ${ghBadge.text} ${ghBadge.borderClass}`}
+            style={{ left: `calc(${(phaseInfo.index / 5) * 100}% - 34px)` }}
+          >
             <span>{ghBadge.label}</span>
           </div>
         )}
         <div
-          className={`glass-card overflow-hidden hover:border-slate-700 transition-colors flex flex-col border-l-4 ${isChild ? 'ml-8 my-1 opacity-90 scale-[0.98]' : 'mt-3 mb-3'}`}
+          className={`glass-card overflow-hidden hover:border-slate-700 transition-colors flex flex-col border-l-4 ${isChild ? 'ml-10 my-1 opacity-90 scale-[0.96] max-w-[calc(100%-2.5rem)]' : 'mt-3 mb-3'}`}
           style={{ borderLeftColor: colors.border }}
         >
           {/* COMPACT MINIMAL BAR */}
@@ -418,7 +431,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
 
               {isChild && (
                 <span className={`badge ${colors.bg} ${colors.text} border ${colors.borderClass} text-[10px] flex-shrink-0`}>
-                  {ws.status}
+                  {ghBadge.label}
                 </span>
               )}
 
@@ -434,6 +447,11 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
 
             <div className="flex items-center gap-2 flex-shrink-0">
               {/* Quick Session Indicator */}
+              {ws.isMaster && masterStatus && (
+                <span className="text-xs bg-purple-500/10 text-purple-300 px-2 py-1 rounded border border-purple-500/20 font-semibold">
+                  Master: {masterStatus}
+                </span>
+              )}
               {ws.session ? (
                 <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20 font-medium">
                   {ws.session.agent_type || 'Jules'} ({ws.session.jules_state})
@@ -496,7 +514,7 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
               <div className="relative flex items-center justify-between w-full mt-4 pb-6 px-2">
                 {/* Background Line */}
                 <div className="absolute left-2 right-2 top-1.5 -translate-y-1/2 h-1 bg-slate-800/60 rounded-full" />
-
+                
                 {PHASES.map((p, idx) => {
                   const isActive = idx === phaseInfo.index;
                   const isPast = idx < phaseInfo.index;
@@ -745,35 +763,40 @@ export default function WorkstreamsPage({ issues, sessions, pullRequests, julesS
           </div>
         ) : (
           <>
-            {/* Geplante Issues */}
-            {filteredWorkstreams.filter(ws => ws.projectItem?.status === 'Planed').length > 0 && (
-              <div className="space-y-2">
-                <button onClick={() => setSections(s => ({...s, planed: !s.planed}))} className="flex items-center gap-2 w-full text-left font-bold text-cyan-400 p-2 hover:bg-slate-800/50 rounded-lg transition-colors">
-                  {sections.planed ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                  Geplante Issues ({filteredWorkstreams.filter(ws => ws.projectItem?.status === 'Planed').length})
-                </button>
-                {sections.planed && (
-                  <div className="space-y-1 pl-2">
-                    {filteredWorkstreams.filter(ws => ws.projectItem?.status === 'Planed').map(ws => renderWorkstream(ws))}
-                  </div>
-                )}
-              </div>
-            )}
-
             {[
-              { id: 'planed', label: 'Geplante Issues', color: 'text-cyan-400', filter: (ws: any) => ws.projectItem?.status === 'Planed' },
-              { id: 'master', label: 'Master-Issues', color: 'text-purple-400', filter: (ws: any) => ws.projectItem?.status !== 'Planed' && ws.issueType === 'MASTER' },
-              { id: 'standard', label: 'Standard-Issues', color: 'text-emerald-400', filter: (ws: any) => ws.projectItem?.status !== 'Planed' && ws.issueType === 'STANDARD' },
-              { id: 'other', label: 'Sonstige Workstreams', color: 'text-slate-400', filter: (ws: any) => ws.projectItem?.status !== 'Planed' && ws.issueType !== 'MASTER' && ws.issueType !== 'STANDARD' }
+              { id: 'master', label: 'Master-Issues', color: 'text-purple-400', filter: (ws: Workstream) => ws.issueType === 'MASTER' },
+              { id: 'standard', label: 'Standard-Issues', color: 'text-emerald-400', filter: (ws: Workstream) => ws.issueType === 'STANDARD' }
             ].map(group => {
-              const items = filteredWorkstreams.filter(group.filter);
+              const items = filteredWorkstreams.filter(group.filter).filter(ws => {
+                const state = ws.isMaster ? getMasterStatus(ws) : (ws.projectItem?.status === 'Done' || ws.status === 'Done') ? 'Done' : (ws.projectItem?.status === 'Planed' || ws.status === 'OPEN') ? 'Planed' : 'Started';
+                if (state === 'Planed') return statusSections.planed;
+                if (state === 'Done') return statusSections.done;
+                return statusSections.started;
+              });
               if (items.length === 0) return null;
               return (
                 <div key={group.id} className="space-y-2">
-                  <button onClick={() => setSections(s => ({...s, [group.id]: !(s as any)[group.id]}))} className={`flex items-center gap-2 w-full text-left font-bold ${group.color} p-2 hover:bg-slate-800/50 rounded-lg transition-colors`}>
-                    {(sections as any)[group.id] ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                    {group.label} ({items.length})
-                  </button>
+                  <div className="flex flex-wrap items-center justify-between gap-3 p-2 hover:bg-slate-800/50 rounded-lg transition-colors">
+                    <button onClick={() => setSections(s => ({...s, [group.id]: !(s as any)[group.id]}))} className={`flex items-center gap-2 text-left font-bold ${group.color}`}>
+                      {(sections as any)[group.id] ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                      {group.label} ({items.length})
+                    </button>
+                    <div className="flex gap-1 bg-slate-950/70 p-1 rounded border border-slate-800">
+                      {[
+                        ['planed', 'Planed'],
+                        ['started', 'Started'],
+                        ['done', 'Done']
+                      ].map(([key, label]) => (
+                        <button
+                          key={key}
+                          onClick={() => setStatusSections(s => ({ ...s, [key]: !(s as any)[key] }))}
+                          className={`px-2 py-1 text-[10px] rounded ${(statusSections as any)[key] ? 'bg-slate-700 text-slate-100' : 'text-slate-500 hover:text-slate-300'}`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   {(sections as any)[group.id] && (
                     <div className="space-y-1 pl-2">
                       {items.map(ws => renderWorkstream(ws))}

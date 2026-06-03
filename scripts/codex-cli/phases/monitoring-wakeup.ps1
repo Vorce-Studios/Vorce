@@ -3,6 +3,72 @@
 
 Set-StrictMode -Version Latest
 
+function Test-ObjectProperty {
+    param([object]$Object, [string]$Name)
+    return $null -ne $Object -and ($Object.PSObject.Properties.Name -contains $Name)
+}
+
+function Start-QueuedWorkingSessions {
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][object]$Config,
+        [Parameter(Mandatory)][string]$Repository,
+        [switch]$DryRun
+    )
+
+    Ensure-WorkingSessionsState -State $State
+    $workingCfg = if (Test-ObjectProperty -Object $Config -Name "working_sessions") { $Config.working_sessions } else { $null }
+    if ($workingCfg -and (Test-ObjectProperty -Object $workingCfg -Name "enabled") -and -not $workingCfg.enabled) {
+        return
+    }
+
+    $maxConcurrent = if ($workingCfg -and (Test-ObjectProperty -Object $workingCfg -Name "max_concurrent")) { [int]$workingCfg.max_concurrent } else { 3 }
+    if ($maxConcurrent -le 0) { return }
+
+    $running = @($State.working_sessions | Where-Object { [string]$_.status -eq "IN_PROGRESS" }).Count
+    $slots = $maxConcurrent - $running
+    if ($slots -le 0 -or @($State.working_queue).Count -eq 0) { return }
+
+    $scriptDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
+    $toolsDir = Join-Path $scriptDir "tools"
+    $quotaRegistryPath = Join-Path $scriptDir "quota-registry.json"
+
+    $toStart = @($State.working_queue | Select-Object -First $slots)
+    foreach ($item in $toStart) {
+        $issueNum = [int]$item.issue_number
+        $issueTitle = [string]$item.issue_title
+        $agentProvider = [string]$item.agent_provider
+
+        if ($DryRun.IsPresent) {
+            Write-Host "[MONITOR] [DRY RUN] Wuerde Working Session starten: #$issueNum -> $agentProvider" -ForegroundColor DarkYellow
+            continue
+        }
+
+        try {
+            $cmdArgs = "-NoExit", "-File", "`"$toolsDir\run-visible-agent-task.ps1`"", "-IssueNumber", $issueNum, "-IssueTitle", "`"$issueTitle`"", "-AgentProvider", "`"$agentProvider`"", "-Repository", "`"$Repository`"", "-QuotaRegistryPath", "`"$quotaRegistryPath`""
+            $proc = Start-Process pwsh -ArgumentList $cmdArgs -PassThru -WindowStyle Normal
+
+            $State.working_sessions += @([ordered]@{
+                id             = if (Test-ObjectProperty -Object $item -Name "id") { $item.id } else { "work-$issueNum-$($proc.Id)" }
+                issue_number   = $issueNum
+                issue_title    = $issueTitle
+                agent_provider = $agentProvider
+                process_id     = $proc.Id
+                status         = "IN_PROGRESS"
+                started_at     = (Get-Date -Format 'o')
+            })
+            $State.working_queue = @($State.working_queue | Where-Object { [int]$_.issue_number -ne $issueNum })
+            Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId "local-agent-$($proc.Id)" -AgentType $agentProvider -JobId $($proc.Id.ToString())
+            Write-Host "[MONITOR] Working Session gestartet: #$issueNum -> $agentProvider (PID: $($proc.Id))" -ForegroundColor Cyan
+        } catch {
+            Write-Warning "[MONITOR] Working Session fuer #$issueNum fehlgeschlagen: $_"
+            Add-ErrorLog -State $State -Message "Working session failed for #$issueNum" -Context $_.Exception.Message
+        }
+    }
+
+    Save-AutopilotState -State $State
+}
+
 function Add-DecisionPending {
     param(
         [Parameter(Mandatory)][object]$State,
@@ -33,6 +99,8 @@ function Invoke-MonitoringWakeUp {
 
     $repo = $Config.repository
     Write-Host "`n[MONITOR] ========== Monitoring Wake-Up ==========" -ForegroundColor Blue
+    $State = Normalize-AutopilotStateObject -State $State
+    Ensure-WorkingSessionsState -State $State
 
     $ScriptDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
     $JulesScriptDir = Join-Path (Split-Path -Parent $ScriptDir) "jules"
@@ -81,8 +149,9 @@ function Invoke-MonitoringWakeUp {
             }
 
             $failingChecks = @()
-            if ($pr.statusCheckRollup) {
-                $failingChecks = @($pr.statusCheckRollup | Where-Object {
+            $checks = if (Test-ObjectProperty -Object $pr -Name "statusCheckRollup") { $pr.statusCheckRollup } else { @() }
+            if ($checks) {
+                $failingChecks = @($checks | Where-Object {
                     ((Test-ObjectProperty -Object $_ -Name "conclusion") -and $_.conclusion -eq "FAILURE") -or
                     ((Test-ObjectProperty -Object $_ -Name "status") -and $_.status -eq "FAILURE")
                 })
@@ -94,10 +163,13 @@ function Invoke-MonitoringWakeUp {
             }
         }
 
-        # PR-Konflikte werden nun exklusiv vom Alpha CEO in der Planning-Phase (planning-wakeup.ps1) behandelt und an lokale CLI-Agenten delegiert.
+        # PR-Konflikte werden in der Planning-Phase gebuendelt und an Working Sessions delegiert.
     } catch {
         Write-Warning "[MONITOR] PR-Check fehlgeschlagen: $_"
     }
+
+    # --- Step 1b: Spawn queued Working Sessions ---
+    Start-QueuedWorkingSessions -State $State -Config $Config -Repository $repo -DryRun:$DryRun
 
     # --- Step 2: Check active Jules sessions ---
     Write-Host "[MONITOR] Pruefe $($State.active_delegations.Count) aktive Delegierungen..." -ForegroundColor Cyan
@@ -228,6 +300,13 @@ function Invoke-MonitoringWakeUp {
                     )
 
                     Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $currentState
+                    foreach ($workSession in $State.working_sessions) {
+                        if ([int]$workSession.issue_number -eq $issueNum) {
+                            $workSession.status = $currentState
+                            $workSession.last_checked_at = (Get-Date -Format 'o')
+                            break
+                        }
+                    }
 
                     if ($currentState -eq "COMPLETED") {
                         if ($agentState.pr_url -and -not [string]::IsNullOrWhiteSpace($agentState.pr_url)) {

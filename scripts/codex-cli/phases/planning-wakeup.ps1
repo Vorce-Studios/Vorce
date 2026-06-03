@@ -3,6 +3,36 @@
 
 Set-StrictMode -Version Latest
 
+function Add-WorkingQueueItem {
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][int]$IssueNumber,
+        [Parameter(Mandatory)][string]$IssueTitle,
+        [Parameter(Mandatory)][string]$AgentProvider
+    )
+
+    Ensure-WorkingSessionsState -State $State
+    $alreadyQueued = @($State.working_queue | Where-Object { [int]$_.issue_number -eq $IssueNumber }).Count -gt 0
+    $alreadyRunning = @($State.working_sessions | Where-Object {
+        [int]$_.issue_number -eq $IssueNumber -and [string]$_.status -in @("QUEUED", "IN_PROGRESS")
+    }).Count -gt 0
+
+    if ($alreadyQueued -or $alreadyRunning) {
+        Write-Host "[PLANNING] Working Session fuer Issue #$IssueNumber ist bereits geplant." -ForegroundColor DarkGray
+        return
+    }
+
+    $State.working_queue += @([ordered]@{
+        id             = "work-$IssueNumber-$(Get-Date -Format 'yyyyMMddHHmmss')"
+        issue_number   = $IssueNumber
+        issue_title    = $IssueTitle
+        agent_provider = $AgentProvider
+        status         = "QUEUED"
+        queued_at      = (Get-Date -Format 'o')
+    })
+    Write-Host "[PLANNING] Working Session geplant: Issue #$IssueNumber -> $AgentProvider" -ForegroundColor Cyan
+}
+
 function Invoke-PlanningWakeUp {
     param(
         [Parameter(Mandatory)][object]$State,
@@ -11,6 +41,8 @@ function Invoke-PlanningWakeUp {
         [switch]$DryRun
     )
 
+    $State = Normalize-AutopilotStateObject -State $State
+    Ensure-WorkingSessionsState -State $State
     $repo = $Config.repository
     Write-Host "`n[PLANNING] ========== Planning Wake-Up ==========" -ForegroundColor Blue
 
@@ -23,6 +55,9 @@ function Invoke-PlanningWakeUp {
     }
     if (-not ($State.PSObject.Properties.Name -contains "escalated_issues")) {
         $State | Add-Member -MemberType NoteProperty -Name "escalated_issues" -Value @() -Force
+    }
+    if (-not ($State.PSObject.Properties.Name -contains "decisions_pending")) {
+        $State | Add-Member -MemberType NoteProperty -Name "decisions_pending" -Value @() -Force
     }
 
     # Define script block to fetch candidates to avoid duplication
@@ -88,17 +123,17 @@ function Invoke-PlanningWakeUp {
             $issueTitle = [string]$escIssue.issue_title
             $lastSessionId = [string]$escIssue.last_jules_session_id
 
-            Write-Host "[PLANNING] Re-Planning fuer eskaliertes Issue #$issueNum ($issueTitle) via Dual-CEO Deliberation..." -ForegroundColor Yellow
+            Write-Host "[PLANNING] Re-Planning fuer eskaliertes Issue #$issueNum ($issueTitle) via CEO + QA-Auditor Deliberation..." -ForegroundColor Yellow
 
             $promptText = @"
 Das Issue #$issueNum ("$issueTitle") wurde an Jules delegiert (letzte Session: $lastSessionId), ist aber im Monitoring-Modus fehlgeschlagen oder hängengeblieben (Timeout/Fehler).
 
-Deine Rolle: Analysiere diese Eskalation im Dual-CEO Team.
+Deine Rolle: Analysiere diese Eskalation im CEO + QA-Auditor Team.
 Erstelle eine neue, präzisere Handlungsanweisung (Prompt-Ergänzung oder überarbeitete Issue-Beschreibung), um Jules beim nächsten Versuch erfolgreich zu leiten.
 Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
 "@
 
-            # Erzwinge Dual-CEO Deliberation
+            # Erzwinge CEO + QA-Auditor Deliberation
             $planResult = Invoke-DualCeoTask `
                 -QuotaRegistry $QuotaRegistry `
                 -Config $Config `
@@ -181,17 +216,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                             if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
                             $State.autopilot_created_issues += [ordered]@{ tag = $conflictTag; issue_number = $newIssueNum; created_at = (Get-Date -Format 'o') }
 
-                            try {
-                                $ScriptDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
-                                $quotaRegistryPath = Join-Path $ScriptDir "quota-registry.json"
-                                $ToolsDir = Join-Path $ScriptDir "tools"
-                                $cmdArgs = "-NoExit", "-File", "`"$ToolsDir\run-visible-agent-task.ps1`"", "-IssueNumber", $newIssueNum, "-IssueTitle", "`"$issueTitle`"", "-AgentProvider", "`"$targetAgent`"", "-Repository", "`"$repo`"", "-QuotaRegistryPath", "`"$quotaRegistryPath`""
-                                $proc = Start-Process pwsh -ArgumentList $cmdArgs -PassThru -WindowStyle Normal
-                                Add-Delegation -State $State -IssueNumber $newIssueNum -IssueTitle $issueTitle -JulesSessionId "local-agent-$($proc.Id)" -AgentType $targetAgent -JobId $($proc.Id.ToString())
-                            } catch {
-                                Write-Warning "[PLANNING] Lokaler Agent $targetAgent fuer #$newIssueNum fehlgeschlagen: $_"
-                            }
-
+                            Add-WorkingQueueItem -State $State -IssueNumber $newIssueNum -IssueTitle $issueTitle -AgentProvider $targetAgent
                             Save-AutopilotState -State $State
                         }
                     }
@@ -234,10 +259,10 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                     foreach ($issue in $issuesRaw) {
                         if ($gateIssueNumbers -contains $issue.number) {
                             $title = $issue.title
-                            $state = $issue.state
+                            $issueState = $issue.state
                             $bodySnippet = if ($issue.body -and $issue.body.Length -gt 250) { $issue.body.Substring(0, 250) + "..." } else { $issue.body }
                             $bodySnippet = $bodySnippet -replace "`n", " " -replace "`r", ""
-                            $contextLines += "- #$($issue.number) [$state]: $title (Auszug: $bodySnippet)"
+                            $contextLines += "- #$($issue.number) [$issueState]: $title (Auszug: $bodySnippet)"
                         }
                     }
                 }
@@ -508,7 +533,12 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 
         if ($DryRun.IsPresent) {
             Write-Host "[PLANNING] [DRY RUN] Wuerde $targetAgent Session starten." -ForegroundColor DarkYellow
-            Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId "dry-run-$issueNum" -AgentType $targetAgent -JobId "dry-run-job"
+            if ($targetAgent -eq "jules") {
+                Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId "dry-run-$issueNum" -AgentType $targetAgent -JobId "dry-run-job"
+            } else {
+                Add-WorkingQueueItem -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -AgentProvider $targetAgent
+                Save-AutopilotState -State $State
+            }
             continue
         }
 
@@ -550,23 +580,9 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                 Add-ErrorLog -State $State -Message "Jules delegation failed for #$issueNum" -Context $_.Exception.Message
             }
         } else {
-            # Local CLI Agent
-            try {
-                $quotaRegistryPath = Join-Path $ScriptDir "quota-registry.json"
-
-                # Start visible terminal process
-                $cmdArgs = "-NoExit", "-File", "`"$ToolsDir\run-visible-agent-task.ps1`"", "-IssueNumber", $issueNum, "-IssueTitle", "`"$issueTitle`"", "-AgentProvider", "`"$targetAgent`"", "-Repository", "`"$repo`"", "-QuotaRegistryPath", "`"$quotaRegistryPath`""
-
-                $proc = Start-Process pwsh -ArgumentList $cmdArgs -PassThru -WindowStyle Normal
-
-                Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId "local-agent-$($proc.Id)" -AgentType $targetAgent -JobId $($proc.Id.ToString())
-                $delegatedInThisRun.Add($issueNum) | Out-Null
-
-                Write-Host "[PLANNING] Lokaler Agent $targetAgent gestartet (PID: $($proc.Id))." -ForegroundColor Cyan
-            } catch {
-                Write-Warning "[PLANNING] Lokaler Agent $targetAgent fuer #$issueNum fehlgeschlagen: $_"
-                Add-ErrorLog -State $State -Message "Local agent $targetAgent failed for #$issueNum" -Context $_.Exception.Message
-            }
+            Add-WorkingQueueItem -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -AgentProvider $targetAgent
+            $delegatedInThisRun.Add($issueNum) | Out-Null
+            Save-AutopilotState -State $State
         }
     }
 
