@@ -392,6 +392,11 @@ export default defineConfig({
                     
                     try {
                       const repo = getRepository();
+                      // Ensure labels exist before creating issue to prevent failures
+                      try { execSync(`gh label create "priority: high" --repo "${repo}" --color "CCCCCC" --description "High priority"`, { stdio: 'ignore' }); } catch (e) {}
+                      try { execSync(`gh label create "bug" --repo "${repo}" --color "CCCCCC" --description "Bug"`, { stdio: 'ignore' }); } catch (e) {}
+                      try { execSync(`gh label create "agent:gemini_cli" --repo "${repo}" --color "CCCCCC" --description "Gemini CLI agent"`, { stdio: 'ignore' }); } catch (e) {}
+
                       const command = `gh issue create --repo "${repo}" --title "${title.replace(/"/g, '\\"')}" --body "${issueBody.replace(/"/g, '\\"')}" --label "priority: high" --label "bug" --label "agent:gemini_cli"`;
                       const issueUrl = execSync(command, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
                       

@@ -28,6 +28,17 @@ function New-GitHubIssue {
         [string[]]$Labels = @()
     )
 
+    # Ensure all target labels exist on the repository before creating the issue
+    foreach ($lbl in $Labels) {
+        if (-not [string]::IsNullOrWhiteSpace($lbl)) {
+            try {
+                gh label create $lbl --repo $Repository --color "CCCCCC" --description "Auto-created by Autopilot" 2>&1 | Out-Null
+            } catch {
+                # Ignore errors (e.g., if label already exists)
+            }
+        }
+    }
+
     $labelStr = $Labels -join ","
     $issueUrl = gh issue create --repo $Repository --title $Title --body $Body --label $labelStr 2>&1
     if ($LASTEXITCODE -ne 0) {

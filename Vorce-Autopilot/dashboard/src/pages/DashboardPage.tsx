@@ -483,9 +483,98 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
         </div>
       </div>
 
+      {/* Optimizer-Sessions Queue Widget */}
+      <OptimizerQueuePanel queue={sessions.optimizer_queue} />
+
       {/* Dual-CEO Deliberation Panel */}
       <DeliberationPanel deliberations={sessions.deliberation_log || []} />
 
+    </div>
+  );
+}
+
+function OptimizerQueuePanel({ queue }: { queue?: any[] }) {
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const handleAction = async (id: string, action: 'approve' | 'reject') => {
+    setLoading(id);
+    try {
+      await fetch('/api/optimizer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, id }),
+      });
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const activeProposals = queue ? queue.filter(item => item.status !== 'APPROVED' && item.status !== 'REJECTED') : [];
+
+  return (
+    <div className="glass-card p-5 border border-slate-800">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+          <Zap className="text-amber-400 w-4 h-4" />
+          Optimizer-Sessions Queue ({activeProposals.length})
+        </h3>
+        {queue && queue.length > activeProposals.length && (
+          <span className="text-xs text-slate-500">
+            {queue.length - activeProposals.length} verarbeitet
+          </span>
+        )}
+      </div>
+
+      {activeProposals.length === 0 ? (
+        <div className="text-xs text-slate-500 rounded border border-slate-800 bg-slate-950/40 px-3 py-2">
+          Keine Optimierungsvorschläge in der Warteschlange.
+        </div>
+      ) : (
+        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
+          {activeProposals.map((item) => (
+            <div key={item.id} className="bg-slate-950/50 border border-slate-800 rounded-lg p-4 text-xs text-slate-300">
+              <div className="flex justify-between items-start gap-3 mb-2">
+                <div className="font-semibold text-slate-200 text-sm">{item.title}</div>
+                <span className="text-[10px] text-slate-500">{timeAgo(item.created_at)}</span>
+              </div>
+              <div className="space-y-2 mb-3">
+                <div>
+                  <span className="text-slate-500 font-medium">Problem:</span> {item.description}
+                </div>
+                {item.impact && (
+                  <div>
+                    <span className="text-emerald-400 font-medium">Erwartete Auswirkung:</span> {item.impact}
+                  </div>
+                )}
+                {item.proposed_action && (
+                  <div>
+                    <span className="text-cyan-400 font-medium">Vorgeschlagene Aktion:</span> {item.proposed_action}
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  disabled={loading !== null}
+                  onClick={() => handleAction(item.id, 'reject')}
+                  className="px-3 py-1.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/30 hover:bg-rose-500/20 disabled:opacity-50 transition-colors"
+                >
+                  Ablehnen
+                </button>
+                <button
+                  disabled={loading !== null}
+                  onClick={() => handleAction(item.id, 'approve')}
+                  className="px-3 py-1.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
+                >
+                  Freigeben
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

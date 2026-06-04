@@ -278,6 +278,14 @@ function Invoke-AutopilotCodexSession {
         [switch]$DryRun
     )
 
+    # Prepend dynamic memories depending on SessionType to reduce token usage
+    if (Get-Command Format-MemoryBlock -ErrorAction SilentlyContinue) {
+        $memoryBlock = Format-MemoryBlock -TaskType $SessionType
+        if (-not [string]::IsNullOrWhiteSpace($memoryBlock)) {
+            $Prompt = "$memoryBlock`n$Prompt"
+        }
+    }
+
     Initialize-AutopilotTaskJournal
     if (-not (Test-AutopilotSessionLockAvailable)) {
         Add-AutopilotJournalEvent -SessionType $SessionType -Message "Skipped Codex session because another session is still running."
