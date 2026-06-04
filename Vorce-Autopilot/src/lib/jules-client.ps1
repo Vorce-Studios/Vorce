@@ -69,7 +69,7 @@ function Get-JulesSessionStatus {
     )
 
     $resolvedApiKey = if ($ApiKey) { $ApiKey } else { $env:JULES_API_KEY }
-    
+
     # We can use Invoke-JulesApiRequest if jules-api.ps1 is dot-sourced
     if (Get-Command "Get-JulesSession" -ErrorAction SilentlyContinue) {
         try {
@@ -86,7 +86,7 @@ function Get-JulesSessionStatus {
         'x-goog-api-key' = $resolvedApiKey
         'Content-Type' = 'application/json'
     }
-    
+
     $uri = "https://jules.googleapis.com/v1alpha/sessions/$SessionId"
     try {
         $session = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get -ErrorAction Stop

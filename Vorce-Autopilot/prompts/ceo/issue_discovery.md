@@ -6,6 +6,7 @@ Ziel:
 Erzeuge nur dann neue GitHub-Issue-Vorschlaege, wenn sie echten Autopilot-Durchsatz verbessern.
 
 Bewertung:
+
 - fehlende Tests, Regression-Risiken, kaputte Workflows
 - kleine, klar delegierbare Jules-Arbeitspakete
 - Performance- oder Stabilitaetsprobleme mit konkretem Repo-Bezug

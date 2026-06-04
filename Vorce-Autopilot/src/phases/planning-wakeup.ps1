@@ -249,10 +249,10 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
     if ($Config.PSObject.Properties.Name -contains "planning_sequence") {
         Write-Host "[PLANNING] Starte sequentielle Planungs-Sequenz (Session Splitting)..." -ForegroundColor Yellow
         $planningContext = ""
-        
+
         foreach ($step in $Config.planning_sequence) {
             Write-Host "[PLANNING] Starte Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
-            
+
             $julesActiveCount = @($State.active_delegations | Where-Object {
                 -not ($_.PSObject.Properties.Name -contains "agent_type") -or ($_.agent_type -eq "jules")
             }).Count
@@ -603,7 +603,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
             try {
                 # Safe wrapping using jules-client
                 $sessionId = New-JulesSession -IssueNumber $issueNum -Repository $repo -ApiKey $env:JULES_API_KEY -AutoCreatePr
-                
+
                 Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId $sessionId -AgentType "jules"
                 Register-ProviderCall -Registry $QuotaRegistry -ProviderName "jules"
             } catch {

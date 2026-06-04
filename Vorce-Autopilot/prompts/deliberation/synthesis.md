@@ -11,6 +11,7 @@ KRITIK VON CEO BETA:
 $BetaCritique
 
 ANWEISUNGEN:
+
 - Integriere berechtigte Kritikpunkte in deine finale Loesung.
 - Begruende, welche Kritik du annimmst und welche du begruendet ablehnst.
 - Das Ergebnis soll besser sein als dein urspruenglicher Vorschlag allein.
