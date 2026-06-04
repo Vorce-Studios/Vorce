@@ -170,54 +170,52 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
             $conflictingPrs = @($prs | Where-Object { $_.mergeable -eq "CONFLICTING" })
 
             if ($conflictingPrs.Count -gt 0) {
-                # Check if a conflict-resolution issue was already created in the last 24 hours
-                $recentConflictIssue = $false
-                if ($null -ne $State.autopilot_created_issues) {
-                    foreach ($entry in $State.autopilot_created_issues) {
-                        $isConflictTag = $false
-                        if ((Test-ObjectProperty -Object $entry -Name "tag") -and [string]$entry.tag -match "^resolve-conflicts-") {
-                            $isConflictTag = $true
-                        }
-                        if ($isConflictTag -and (Test-ObjectProperty -Object $entry -Name "created_at")) {
-                            try {
-                                $createdAt = [datetimeoffset]::Parse([string]$entry.created_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
-                                $ageHours = ((Get-Date) - $createdAt.LocalDateTime).TotalHours
-                                if ($ageHours -lt 24) {
-                                    $recentConflictIssue = $true
-                                    Write-Host "[PLANNING]   Merge-Konflikt-Issue wurde vor $([Math]::Round($ageHours,1))h erstellt (Issue #$($entry.issue_number)). Ueberspringe Neuerstellung." -ForegroundColor DarkGray
-                                    break
-                                }
-                            } catch {}
+                foreach ($cpr in $conflictingPrs) {
+                    $prNum = [int]$cpr.number
+                    $conflictTag = "resolve-conflict-pr-$prNum"
+                    
+                    # Check if a conflict-resolution issue was already created for this PR in the last 24 hours
+                    $recentConflictIssue = $false
+                    if ($null -ne $State.autopilot_created_issues) {
+                        foreach ($entry in $State.autopilot_created_issues) {
+                            $isConflictTag = $false
+                            if ((Test-ObjectProperty -Object $entry -Name "tag") -and [string]$entry.tag -eq $conflictTag) {
+                                $isConflictTag = $true
+                            }
+                            if ($isConflictTag -and (Test-ObjectProperty -Object $entry -Name "created_at")) {
+                                try {
+                                    $createdAt = [datetimeoffset]::Parse([string]$entry.created_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
+                                    $ageHours = ((Get-Date) - $createdAt.LocalDateTime).TotalHours
+                                    if ($ageHours -lt 24) {
+                                        $recentConflictIssue = $true
+                                        Write-Host "[PLANNING]   Merge-Konflikt-Issue fuer PR #$prNum wurde vor $([Math]::Round($ageHours,1))h erstellt (Issue #$($entry.issue_number)). Ueberspringe." -ForegroundColor DarkGray
+                                        break
+                                    }
+                                } catch {}
+                            }
                         }
                     }
-                }
 
-                if (-not $recentConflictIssue) {
-                    $prNumbers = @($conflictingPrs | Sort-Object number | ForEach-Object { $_.number }) -join "-"
-                    $conflictTag = "resolve-conflicts-$prNumbers"
-                    Write-Host "[PLANNING]   Erstelle gebuendeltes Konflikt-Issue fuer $($conflictingPrs.Count) Konflikte" -ForegroundColor Yellow
+                    if (-not $recentConflictIssue) {
+                        Write-Host "[PLANNING]   Erstelle Konflikt-Issue fuer PR #$prNum" -ForegroundColor Yellow
 
-                    if (-not $DryRun.IsPresent) {
-                        $issueTitle = "MF-StIs_Resolve-Merge-Conflicts: PRs $($prNumbers -replace '-', ', ')"
-                        $issueBody = "Die folgenden Pull Requests haben Merge-Konflikte:`n`n"
-                        foreach ($cpr in $conflictingPrs) {
-                            $issueBody += "- PR #$($cpr.number) ($($cpr.headRefName)): $($cpr.title)`n"
-                        }
-                        $issueBody += "`nBitte alle Konflikte manuell auflösen (Branches auschecken, main mergen, Konflikte beheben, pushen).`n"
-                        $issueBody += "`nPrioritaet: KRITISCH - blockiert Release-Pipeline."
+                        if (-not $DryRun.IsPresent) {
+                            $issueTitle = "MF-StIs_Resolve-Merge-Conflict-PR-$prNum: $($cpr.title)"
+                            $issueBody = "Der Pull Request #$prNum ($($cpr.headRefName)) hat einen Merge-Konflikt.`n`nBitte den Konflikt auf dem Branch '$($cpr.headRefName)' beheben und die Änderungen pushen.`n"
+                            $issueBody += "`nPrioritaet: KRITISCH - blockiert Release-Pipeline."
 
-                        # EXKLUSIV fuer gemini_cli
-                        $targetAgent = "gemini_cli"
-                        $newIssueUrl = gh issue create --repo $repo --title $issueTitle --body $issueBody --label "priority: critical,bug,agent:$targetAgent" 2>&1
-                        if ($LASTEXITCODE -eq 0 -and $newIssueUrl -match "/issues/(\d+)") {
-                            $newIssueNum = [int]$Matches[1]
-                            Write-Host "[PLANNING]   -> Konflikt-Issue #$newIssueNum erfolgreich erstellt! Delegiere ZWINGEND an lokalen CLI-Agenten ($targetAgent)" -ForegroundColor Green
+                            $targetAgent = "gemini_cli"
+                            $newIssueUrl = gh issue create --repo $repo --title $issueTitle --body $issueBody --label "priority: critical,bug,agent:$targetAgent" 2>&1
+                            if ($LASTEXITCODE -eq 0 -and $newIssueUrl -match "/issues/(\d+)") {
+                                $newIssueNum = [int]$Matches[1]
+                                Write-Host "[PLANNING]   -> Konflikt-Issue #$newIssueNum fuer PR #$prNum erfolgreich erstellt! Delegiere an $targetAgent" -ForegroundColor Green
 
-                            if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
-                            $State.autopilot_created_issues += [ordered]@{ tag = $conflictTag; issue_number = $newIssueNum; created_at = (Get-Date -Format 'o') }
+                                if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
+                                $State.autopilot_created_issues += [ordered]@{ tag = $conflictTag; issue_number = $newIssueNum; created_at = (Get-Date -Format 'o') }
 
-                            Add-WorkingQueueItem -State $State -IssueNumber $newIssueNum -IssueTitle $issueTitle -AgentProvider $targetAgent
-                            Save-AutopilotState -State $State
+                                Add-WorkingQueueItem -State $State -IssueNumber $newIssueNum -IssueTitle $issueTitle -AgentProvider $targetAgent
+                                Save-AutopilotState -State $State
+                            }
                         }
                     }
                 }
@@ -250,6 +248,13 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
         Write-Host "[PLANNING] Starte sequentielle Planungs-Sequenz (Session Splitting)..." -ForegroundColor Yellow
         $planningContext = ""
         
+        $LagebildText = ""
+        try {
+            $LagebildText = Get-VorceLagebildSummary -State $State -Config $Config -QuotaRegistry $QuotaRegistry
+        } catch {
+            Write-Warning "Konnte Lagebild-Zusammenfassung nicht generieren: $_"
+        }
+
         foreach ($step in $Config.planning_sequence) {
             Write-Host "[PLANNING] Starte Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
             
@@ -266,7 +271,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                 slots     = $julesAvailableSlots
             }
             $stepPrompt = Get-VorceConfigPrompt -Config $Config -PromptKey $step.prompt_ref -Variables $promptVars
-            $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$stepPrompt"
+            $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$LagebildText`n`n$stepPrompt"
 
             $stepResult = $null
             if ($step.id -eq "final_synthesis" -or $step.prompt_ref -eq "planning_synthesis") {

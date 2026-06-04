@@ -10,6 +10,20 @@ let prsCache: string | null = null;
 let prsCacheTime = 0;
 const CACHE_TTL = 20000; // 20 seconds cache TTL to avoid hitting GitHub API too frequently
 
+function ensureParentDir(filePath: string): void {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+}
+
+function writeJsonFile(filePath: string, data: unknown): void {
+  ensureParentDir(filePath);
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+}
+
+function readJsonFile(filePath: string, fallback: any = null): any {
+  if (!fs.existsSync(filePath)) return fallback;
+  return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+}
+
 function getRepository(): string {
   try {
     const configPath = path.resolve(__dirname, '../autopilot-config.json');
@@ -134,7 +148,7 @@ export default defineConfig({
                 for (const r of repos) {
                   try {
                     const prsJson = execSync(
-                      `gh pr list --repo ${r} --limit 1000 --state open --json number,title,state,mergeable,statusCheckRollup,headRefName,baseRefName,updatedAt,url`,
+                      `gh pr list --repo ${r} --limit 1000 --state open --json number,title,state,mergeable,statusCheckRollup,headRefName,baseRefName,updatedAt,url,isDraft`,
                       { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }
                     );
                     const parsed = JSON.parse(prsJson);
@@ -170,8 +184,8 @@ export default defineConfig({
                 const config = JSON.parse(body);
                 const configPath = path.resolve(__dirname, '../autopilot-config.json');
                 const publicConfigPath = path.resolve(__dirname, './public/autopilot-config.json');
-                fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
-                fs.writeFileSync(publicConfigPath, JSON.stringify(config, null, 2), 'utf-8');
+                writeJsonFile(configPath, config);
+                writeJsonFile(publicConfigPath, config);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'ok', message: 'Autopilot config saved' }));
               } catch (err) {
@@ -188,9 +202,9 @@ export default defineConfig({
                 const quotaPath = path.resolve(__dirname, '../quota-registry.json');
                 const publicRegistryPath = path.resolve(__dirname, './public/registry.json');
                 const publicDataPath = path.resolve(__dirname, './public/data.json');
-                fs.writeFileSync(quotaPath, JSON.stringify(quota, null, 2), 'utf-8');
-                fs.writeFileSync(publicRegistryPath, JSON.stringify(quota, null, 2), 'utf-8');
-                fs.writeFileSync(publicDataPath, JSON.stringify(quota, null, 2), 'utf-8');
+                writeJsonFile(quotaPath, quota);
+                writeJsonFile(publicRegistryPath, quota);
+                writeJsonFile(publicDataPath, quota);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'ok', message: 'Quota registry saved' }));
               } catch (err) {
@@ -252,6 +266,8 @@ export default defineConfig({
                 }
 
                 const storeStr = JSON.stringify(store, null, 2);
+                ensureParentDir(memoryPath);
+                ensureParentDir(publicMemoryPath);
                 fs.writeFileSync(memoryPath, storeStr, 'utf-8');
                 fs.writeFileSync(publicMemoryPath, storeStr, 'utf-8');
 
@@ -271,13 +287,13 @@ export default defineConfig({
                 const statePath = path.resolve(__dirname, '../autopilot-state.json');
                 const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
                 const readableStatePath = fs.existsSync(statePath) ? statePath : publicStatePath;
-                const state = fs.existsSync(readableStatePath)
-                  ? JSON.parse(fs.readFileSync(readableStatePath, 'utf-8'))
-                  : { decisions_pending: [] };
+                const state = readJsonFile(readableStatePath, { decisions_pending: [] });
 
                 if (!Array.isArray(state.decisions_pending)) state.decisions_pending = [];
 
-                if (payload.action === 'remove') {
+                if (payload.action === 'clear') {
+                  state.decisions_pending = [];
+                } else if (payload.action === 'remove') {
                   state.decisions_pending = state.decisions_pending.filter((alert: any, idx: number) => String(alert.id || idx) !== String(payload.id));
                 } else if (payload.action === 'escalate-user') {
                   const alert = state.decisions_pending.find((item: any, idx: number) => String(item.id || idx) === String(payload.id));
@@ -291,8 +307,8 @@ export default defineConfig({
                   }
                 }
 
-                fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf-8');
-                fs.writeFileSync(publicStatePath, JSON.stringify(state, null, 2), 'utf-8');
+                writeJsonFile(statePath, state);
+                writeJsonFile(publicStatePath, state);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'ok' }));
               } catch (err) {
@@ -309,9 +325,7 @@ export default defineConfig({
                 const statePath = path.resolve(__dirname, '../autopilot-state.json');
                 const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
                 const readableStatePath = fs.existsSync(statePath) ? statePath : publicStatePath;
-                const state = fs.existsSync(readableStatePath)
-                  ? JSON.parse(fs.readFileSync(readableStatePath, 'utf-8'))
-                  : {};
+                const state = readJsonFile(readableStatePath, {});
 
                 state.run_control = state.run_control || {};
                 if (payload.type === 'planning') {
@@ -327,8 +341,8 @@ export default defineConfig({
                 }
                 state.run_control.updated_at = new Date().toISOString();
 
-                fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf-8');
-                fs.writeFileSync(publicStatePath, JSON.stringify(state, null, 2), 'utf-8');
+                writeJsonFile(statePath, state);
+                writeJsonFile(publicStatePath, state);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'ok' }));
               } catch (err) {
@@ -339,12 +353,30 @@ export default defineConfig({
           } else if (req.method === 'POST' && req.url === '/api/clear-alerts') {
             try {
               const flagPath = path.resolve(__dirname, '../clear-alerts.flag');
+              const statePath = path.resolve(__dirname, '../autopilot-state.json');
+              const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
+              const readableStatePath = fs.existsSync(statePath) ? statePath : publicStatePath;
+              const state = readJsonFile(readableStatePath, {});
+              state.decisions_pending = [];
+              writeJsonFile(statePath, state);
+              writeJsonFile(publicStatePath, state);
+              ensureParentDir(flagPath);
               fs.writeFileSync(flagPath, '', 'utf-8');
               res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ status: 'ok', message: 'Clear command sent' }));
+              res.end(JSON.stringify({ status: 'ok', message: 'Alerts cleared' }));
             } catch (err) {
               res.writeHead(500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+            }
+          } else if (req.method === 'GET' && req.url === '/api/live-log') {
+            try {
+              const liveLogPath = path.resolve(__dirname, './public/autopilot-live.log');
+              const content = fs.existsSync(liveLogPath) ? fs.readFileSync(liveLogPath, 'utf-8') : '';
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ content }));
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err), content: '' }));
             }
           } else {
             next();

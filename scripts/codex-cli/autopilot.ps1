@@ -209,6 +209,7 @@ while ($true) {
     if ($loopCount % $cleanupEveryN -eq 0) {
         $dashboardPublic = Join-Path $ScriptDir "dashboard" "public"
         Remove-OrphanedTmpFiles -Directory $ScriptDir -OlderThanMinutes 5
+        Invoke-RuntimeFileRetention | Out-Null
         if (Test-Path $dashboardPublic) {
             Remove-OrphanedTmpFiles -Directory $dashboardPublic -OlderThanMinutes 5
             # Live log rotation

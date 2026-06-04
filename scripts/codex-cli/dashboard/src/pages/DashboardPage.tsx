@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, Trash2, CalendarClock, Ban, MessageSquare, Terminal } from 'lucide-react';
+import { Activity, Zap, Clock, AlertCircle, XCircle, Trash2, CalendarClock, Ban, MessageSquare, Terminal } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue, AuditResult } from '../types';
-import DeliberationPanel from './DeliberationPanel';
 
 interface Props {
   registry: QuotaRegistry;
@@ -12,6 +11,7 @@ interface Props {
   julesSessions?: any[];
   auditResult?: AuditResult;
   liveLog?: string;
+  onRefresh?: () => void;
 }
 
 const PROVIDER_COLORS: Record<string, string> = {
@@ -165,7 +165,7 @@ function formatNextRun(seconds?: number): string {
   return `in ${mins}m ${secs}s`;
 }
 
-export default function DashboardPage({ registry, sessions, pullRequests, julesSessions, auditResult, liveLog }: Props) {
+export default function DashboardPage({ registry, sessions, auditResult, liveLog, onRefresh }: Props) {
   const providers = registry.providers || {};
   const providerEntries = Object.entries(providers);
 
@@ -181,23 +181,6 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
       body: JSON.stringify({ type, action, note }),
     });
   };
-
-  const totalCostToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.estimated_cost_usd || 0), 0);
-  const totalCallsToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.calls || 0), 0);
-
-  // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
-  // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
-  const activeJulesSessions = julesSessions ? julesSessions.filter(s =>
-      s.repo.includes('Vorce') &&
-      s.state !== 'COMPLETED' &&
-      s.state !== 'FAILED' &&
-      s.state !== 'CANCELLED' &&
-      s.state !== 'QUEUED'
-  ).length : 0;
-
-  // Filter PRs that are OPEN and NOT a Draft
-  const openPRs = pullRequests.filter(pr => pr.state === 'OPEN' && pr.isDraft !== true).length;
-  const conflictingPRs = pullRequests.filter(pr => pr.state === 'OPEN' && pr.isDraft !== true && pr.mergeable === 'CONFLICTING').length;
 
   const chartData = providerEntries
     .filter(([, p]) => p.enabled)
@@ -276,7 +259,8 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
             </h3>
             <button
               onClick={async () => {
-                await fetch('/api/clear-alerts', { method: 'POST' });
+                await updateAuditAlert('clear', 'all');
+                onRefresh?.();
               }}
               className="text-xs px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 transition-colors flex items-center gap-2"
               title="Alle Audit Alerts löschen"
@@ -302,7 +286,10 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
                     </div>
                   </div>
                   <button
-                    onClick={() => updateAuditAlert('remove', id)}
+                    onClick={async () => {
+                      await updateAuditAlert('remove', id);
+                      onRefresh?.();
+                    }}
                     className="p-1.5 rounded-md bg-slate-900 text-slate-400 hover:text-rose-300 border border-slate-700"
                     title="Audit Alert löschen"
                   >
@@ -344,7 +331,10 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
                 {!userStage && ceoStage && (
                   <div className="mt-3 flex justify-end">
                     <button
-                      onClick={() => updateAuditAlert('escalate-user', id, 'CEO Sondersession konnte die Ursache nicht beheben. Deine Entscheidung ist erforderlich.')}
+                      onClick={async () => {
+                        await updateAuditAlert('escalate-user', id, 'CEO Sondersession konnte die Ursache nicht beheben. Deine Entscheidung ist erforderlich.');
+                        onRefresh?.();
+                      }}
                       className="text-xs px-3 py-1.5 rounded-lg bg-orange-500/20 text-orange-200 hover:bg-orange-500/30 border border-orange-500/30"
                     >
                       An mich eskalieren
@@ -386,38 +376,6 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <LiveLogPanel items={liveLogItems} />
         <WorkingSessionsPanel sessions={sessions.working_sessions || []} />
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          title="Tageskosten"
-          value={formatCost(totalCostToday)}
-          subtitle={`${totalCallsToday} API-Aufrufe`}
-          icon={<DollarSign className="w-5 h-5" />}
-          color="from-emerald-500 to-teal-500"
-        />
-        <KPICard
-          title="Jules Sessions"
-          value={String(activeJulesSessions)}
-          subtitle="in progress (Vorce)"
-          icon={<Activity className="w-5 h-5" />}
-          color="from-purple-500 to-violet-500"
-        />
-        <KPICard
-          title="Open PRs"
-          value={String(openPRs)}
-          subtitle={`${conflictingPRs} mit Konflikten`}
-          icon={<GitPullRequest className="w-5 h-5" />}
-          color="from-blue-500 to-cyan-500"
-        />
-        <KPICard
-          title="Abgeschlossen"
-          value={String(sessions.completed_this_session?.length || 0)}
-          subtitle="diese Session"
-          icon={<TrendingUp className="w-5 h-5" />}
-          color="from-amber-500 to-orange-500"
-        />
       </div>
 
       {/* Provider Quota Overview + Chart */}
@@ -483,26 +441,6 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
         </div>
       </div>
 
-      {/* Dual-CEO Deliberation Panel */}
-      <DeliberationPanel deliberations={sessions.deliberation_log || []} />
-
-    </div>
-  );
-}
-
-function KPICard({ title, value, subtitle, icon, color }: {
-  title: string; value: string; subtitle: string; icon: React.ReactNode; color: string;
-}) {
-  return (
-    <div className="glass-card-hover p-5">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-slate-400">{title}</span>
-        <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${color} flex items-center justify-center opacity-80`}>
-          {icon}
-        </div>
-      </div>
-      <div className="text-2xl font-bold text-white">{value}</div>
-      <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
     </div>
   );
 }

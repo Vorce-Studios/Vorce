@@ -414,7 +414,7 @@ export default function ManagerReportingPage({ registry, sessions, issues }: Man
                 </tr>
               ) : (
                 filteredIssues.map(issue => (
-                  <tr key={issue.number} className="border-b border-slate-850 hover:bg-slate-900/20 transition-colors">
+                  <tr key={`${issue.repo}-${issue.number}`} className="border-b border-slate-850 hover:bg-slate-900/20 transition-colors">
                     <td className="py-2.5 px-3 font-semibold text-slate-300">#{issue.number}</td>
                     <td className="py-2.5 px-3 text-slate-200 font-medium">
                       <a href={issue.url} target="_blank" rel="noreferrer" className="hover:text-purple-400 transition-colors">

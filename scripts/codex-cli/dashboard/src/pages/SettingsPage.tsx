@@ -602,74 +602,193 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
               System-Prompts
             </h3>
             <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-              Passe die System-Prompts an, die der Autopilot für die verschiedenen Sessions verwendet.
+              Passe die System-Prompts an, die der Autopilot für die verschiedenen Phasen (Planung, Monitoring, Audit) verwendet.
             </p>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
-                  <span>Planning Analysis Prompt</span>
-                  <span className="text-[10px] text-slate-500 font-mono">planning_analysis</span>
-                </label>
-                <textarea
-                  value={config.prompts?.planning_analysis || ''}
-                  onChange={(e) => handlePromptChange('planning_analysis', e.target.value)}
-                  className="input-field min-h-[80px] font-mono text-xs leading-normal"
-                  rows={3}
-                  placeholder="Analysiere den aktuellen Status..."
-                />
+            <div className="space-y-6">
+              
+              {/* Gruppe: Planung */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 bg-cyan-950/20 px-2.5 py-1 rounded border border-cyan-900/30">Planungs-Phase (Planning)</h4>
+                
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
+                    <span>Jules Session Sync</span>
+                    <span className="text-[10px] text-slate-500 font-mono">planning_jules_sync</span>
+                  </label>
+                  <textarea
+                    value={config.prompts?.planning_jules_sync || ''}
+                    onChange={(e) => handlePromptChange('planning_jules_sync', e.target.value)}
+                    className="input-field min-h-[60px] font-mono text-xs leading-normal"
+                    rows={2}
+                    placeholder="Laufende Jules-Sessions synchronisieren..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
+                    <span>PR-Status Sync</span>
+                    <span className="text-[10px] text-slate-500 font-mono">planning_pr_sync</span>
+                  </label>
+                  <textarea
+                    value={config.prompts?.planning_pr_sync || ''}
+                    onChange={(e) => handlePromptChange('planning_pr_sync', e.target.value)}
+                    className="input-field min-h-[60px] font-mono text-xs leading-normal"
+                    rows={2}
+                    placeholder="PR-Konflikte und CI-Status auswerten..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
+                    <span>Backlog-Analyse</span>
+                    <span className="text-[10px] text-slate-500 font-mono">planning_analysis</span>
+                  </label>
+                  <textarea
+                    value={config.prompts?.planning_analysis || ''}
+                    onChange={(e) => handlePromptChange('planning_analysis', e.target.value)}
+                    className="input-field min-h-[80px] font-mono text-xs leading-normal"
+                    rows={3}
+                    placeholder="Analysiere den aktuellen Status..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
+                    <span>Task-Generierung</span>
+                    <span className="text-[10px] text-slate-500 font-mono">planning_proposal</span>
+                  </label>
+                  <textarea
+                    value={config.prompts?.planning_proposal || ''}
+                    onChange={(e) => handlePromptChange('planning_proposal', e.target.value)}
+                    className="input-field min-h-[80px] font-mono text-xs leading-normal"
+                    rows={3}
+                    placeholder="Erzeuge neue Issues..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
+                    <span>Master-Plan Synthese</span>
+                    <span className="text-[10px] text-slate-500 font-mono">planning_synthesis</span>
+                  </label>
+                  <textarea
+                    value={config.prompts?.planning_synthesis || ''}
+                    onChange={(e) => handlePromptChange('planning_synthesis', e.target.value)}
+                    className="input-field min-h-[80px] font-mono text-xs leading-normal"
+                    rows={3}
+                    placeholder="Fasse alle Erkenntnisse zusammen..."
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
-                  <span>Planning Proposal Prompt</span>
-                  <span className="text-[10px] text-slate-500 font-mono">planning_proposal</span>
-                </label>
-                <textarea
-                  value={config.prompts?.planning_proposal || ''}
-                  onChange={(e) => handlePromptChange('planning_proposal', e.target.value)}
-                  className="input-field min-h-[80px] font-mono text-xs leading-normal"
-                  rows={3}
-                  placeholder="Basierend auf der Analyse..."
-                />
+
+              {/* Gruppe: Monitoring */}
+              <div className="space-y-4 pt-4 border-t border-slate-800/60">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-purple-400 bg-purple-950/20 px-2.5 py-1 rounded border border-purple-900/30">Überwachungs-Phase (Monitoring)</h4>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
+                    <span>Session Health Check</span>
+                    <span className="text-[10px] text-slate-500 font-mono">monitor_sessions</span>
+                  </label>
+                  <textarea
+                    value={config.prompts?.monitor_sessions || ''}
+                    onChange={(e) => handlePromptChange('monitor_sessions', e.target.value)}
+                    className="input-field min-h-[60px] font-mono text-xs leading-normal"
+                    rows={2}
+                    placeholder="Aktive Sessions überwachen..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
+                    <span>PR CI-Validierung</span>
+                    <span className="text-[10px] text-slate-500 font-mono">monitor_prs</span>
+                  </label>
+                  <textarea
+                    value={config.prompts?.monitor_prs || ''}
+                    onChange={(e) => handlePromptChange('monitor_prs', e.target.value)}
+                    className="input-field min-h-[60px] font-mono text-xs leading-normal"
+                    rows={2}
+                    placeholder="CI-Status offener PRs validieren..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
+                    <span>Konflikt-Remediation</span>
+                    <span className="text-[10px] text-slate-500 font-mono">monitor_conflicts</span>
+                  </label>
+                  <textarea
+                    value={config.prompts?.monitor_conflicts || ''}
+                    onChange={(e) => handlePromptChange('monitor_conflicts', e.target.value)}
+                    className="input-field min-h-[60px] font-mono text-xs leading-normal"
+                    rows={2}
+                    placeholder="Merge-Konflikte detektieren..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
+                    <span>Monitoring Synthese</span>
+                    <span className="text-[10px] text-slate-500 font-mono">monitoring_synthesis</span>
+                  </label>
+                  <textarea
+                    value={config.prompts?.monitoring_synthesis || ''}
+                    onChange={(e) => handlePromptChange('monitoring_synthesis', e.target.value)}
+                    className="input-field min-h-[60px] font-mono text-xs leading-normal"
+                    rows={2}
+                    placeholder="Gesamtbewertung der Monitoring-Ergebnisse..."
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
-                  <span>Planning Synthesis Prompt</span>
-                  <span className="text-[10px] text-slate-500 font-mono">planning_synthesis</span>
-                </label>
-                <textarea
-                  value={config.prompts?.planning_synthesis || ''}
-                  onChange={(e) => handlePromptChange('planning_synthesis', e.target.value)}
-                  className="input-field min-h-[80px] font-mono text-xs leading-normal"
-                  rows={3}
-                  placeholder="Fasse alle Erkenntnisse zusammen..."
-                />
+
+              {/* Gruppe: Audit */}
+              <div className="space-y-4 pt-4 border-t border-slate-800/60">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/20 px-2.5 py-1 rounded border border-emerald-900/30">Prüfungs-Phase (Audit)</h4>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
+                    <span>Daten-Konsistenz Audit</span>
+                    <span className="text-[10px] text-slate-500 font-mono">audit_consistency</span>
+                  </label>
+                  <textarea
+                    value={config.prompts?.audit_consistency || ''}
+                    onChange={(e) => handlePromptChange('audit_consistency', e.target.value)}
+                    className="input-field min-h-[60px] font-mono text-xs leading-normal"
+                    rows={2}
+                    placeholder="Vergleiche Issues, PRs und State..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
+                    <span>Performance Audit</span>
+                    <span className="text-[10px] text-slate-500 font-mono">audit_performance</span>
+                  </label>
+                  <textarea
+                    value={config.prompts?.audit_performance || ''}
+                    onChange={(e) => handlePromptChange('audit_performance', e.target.value)}
+                    className="input-field min-h-[60px] font-mono text-xs leading-normal"
+                    rows={2}
+                    placeholder="Evaluiere Effizienz der letzten Aktionen..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
+                    <span>Audit Synthese (Entscheidung)</span>
+                    <span className="text-[10px] text-slate-500 font-mono">audit_synthesis</span>
+                  </label>
+                  <textarea
+                    value={config.prompts?.audit_synthesis || ''}
+                    onChange={(e) => handlePromptChange('audit_synthesis', e.target.value)}
+                    className="input-field min-h-[80px] font-mono text-xs leading-normal"
+                    rows={3}
+                    placeholder="Zusammenführende finale Audit-Entscheidung..."
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
-                  <span>Audit Prompt</span>
-                  <span className="text-[10px] text-slate-500 font-mono">audit_prompt</span>
-                </label>
-                <textarea
-                  value={config.prompts?.audit_prompt || ''}
-                  onChange={(e) => handlePromptChange('audit_prompt', e.target.value)}
-                  className="input-field min-h-[80px] font-mono text-xs leading-normal"
-                  rows={3}
-                  placeholder="Prüfe das System auf Inkonsistenzen..."
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
-                  <span>Monitoring Prompt</span>
-                  <span className="text-[10px] text-slate-500 font-mono">monitoring_prompt</span>
-                </label>
-                <textarea
-                  value={config.prompts?.monitoring_prompt || ''}
-                  onChange={(e) => handlePromptChange('monitoring_prompt', e.target.value)}
-                  className="input-field min-h-[80px] font-mono text-xs leading-normal"
-                  rows={3}
-                  placeholder="Überwache laufende Sessions..."
-                />
-              </div>
+
             </div>
           </div>
         </div>

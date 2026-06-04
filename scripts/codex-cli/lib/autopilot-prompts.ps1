@@ -41,16 +41,142 @@ Wenn PRs blockiert sind oder Jules haengt, reicht Beobachten nicht: sorge aktiv 
 "@.Trim()
 }
 
+function Get-VorceLagebildSummary {
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][object]$Config,
+        [Parameter(Mandatory)][object]$QuotaRegistry
+    )
+
+    $ScriptDir = Split-Path -Parent $PSScriptRoot
+
+    # 1. Quotas
+    $quotaLines = @()
+    if ($QuotaRegistry -and $QuotaRegistry.providers) {
+        foreach ($prop in $QuotaRegistry.providers.PSObject.Properties) {
+            $name = $prop.Name
+            $p = $prop.Value
+            $calls = if ($p.usage_today.PSObject.Properties.Name -contains "calls") { [int]$p.usage_today.calls } else { 0 }
+            $limit = if ($p.PSObject.Properties.Name -contains "daily_limit") { [int]$p.daily_limit } else { 0 }
+            $cost = if ($p.usage_today.PSObject.Properties.Name -contains "estimated_cost_usd") { [double]$p.usage_today.estimated_cost_usd } else { 0.0 }
+            $quotaLines += "- $($name): $calls/$limit Calls (Cost: $cost USD)"
+        }
+    }
+    $quotasSummary = $quotaLines -join "`n"
+
+    # 2. Issues (gefiltert auf offene planning-relevante oder prioritäre)
+    $issuesSummary = "Keine relevanten offenen Issues gefunden."
+    $cachedIssuePath = Join-Path $ScriptDir "dashboard\public\github-issues.json"
+    if (Test-Path $cachedIssuePath) {
+        try {
+            $issuesRaw = Get-Content -LiteralPath $cachedIssuePath -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($null -ne $issuesRaw -and ($issuesRaw -is [System.Array] -or $issuesRaw -is [System.Collections.IList])) {
+                $filtered = @($issuesRaw | Where-Object { 
+                    $_.state -eq "OPEN" -and 
+                    ($_.labels.name -contains "jules-task" -or $_.labels.name -contains "priority: critical" -or $_.labels.name -contains "priority: high")
+                } | Select-Object -First 25)
+                
+                if ($filtered.Count -gt 0) {
+                    $issueLines = foreach ($i in $filtered) {
+                        $labels = ($i.labels.name) -join ", "
+                        "- Issue #$($i.number): $($i.title) (Labels: $labels)"
+                    }
+                    $issuesSummary = $issueLines -join "`n"
+                }
+            }
+        } catch { }
+    }
+
+    # 3. Pull Requests
+    $prsSummary = "Keine offenen Pull Requests."
+    $cachedPrPath = Join-Path $ScriptDir "dashboard\public\pull-requests.json"
+    if (Test-Path $cachedPrPath) {
+        try {
+            $prsRaw = Get-Content -LiteralPath $cachedPrPath -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($null -ne $prsRaw -and ($prsRaw -is [System.Array] -or $prsRaw -is [System.Collections.IList])) {
+                $openPrs = @($prsRaw | Where-Object { $_.state -eq "OPEN" })
+                if ($openPrs.Count -gt 0) {
+                    $prLines = foreach ($pr in $openPrs) {
+                        "- PR #$($pr.number) ($($pr.headRefName) -> $($pr.baseRefName)): $($pr.title) [Mergeable: $($pr.mergeable)]"
+                    }
+                    $prsSummary = $prLines -join "`n"
+                }
+            }
+        } catch { }
+    }
+
+    # 4. Active Delegations / Working Queue
+    $delegationsSummary = "Keine aktiven Jules/CLI Delegationen."
+    if ($State.active_delegations -and $State.active_delegations.Count -gt 0) {
+        $delLines = foreach ($d in $State.active_delegations) {
+            "- #$($d.issue_number): $($d.issue_title) via $($d.agent_type) (State: $($d.jules_state), Retry: $($d.retry_count))"
+        }
+        $delegationsSummary = $delLines -join "`n"
+    }
+
+    $queueSummary = "Working Queue leer."
+    if ($State.working_queue -and $State.working_queue.Count -gt 0) {
+        $qLines = foreach ($q in $State.working_queue) {
+            "- #$($q.issue_number): $($q.issue_title) queued for $($q.agent_provider)"
+        }
+        $queueSummary = $qLines -join "`n"
+    }
+
+    # 5. Decisions Pending
+    $decisionsSummary = "Keine ausstehenden Entscheidungen."
+    if ($State.decisions_pending -and $State.decisions_pending.Count -gt 0) {
+        $decLines = foreach ($dec in $State.decisions_pending) {
+            "- Topic: $($dec.topic)`n  Context: $($dec.context)"
+        }
+        $decisionsSummary = $decLines -join "`n"
+    }
+
+    # Journal / Tasks
+    $tasksSummary = "Kein Task Journal vorhanden."
+    $tasksPath = Join-Path $ScriptDir "autopilot-tasks.md"
+    if (Test-Path $tasksPath) {
+        try {
+            $tasksContent = Get-Content -Path $tasksPath -Raw -Encoding UTF8
+            if ($tasksContent.Length -gt 1500) {
+                $tasksSummary = $tasksContent.Substring(0, 1500) + "`n... (trunkiert)"
+            } else {
+                $tasksSummary = $tasksContent
+            }
+        } catch { }
+    }
+
+    return @"
+=================== AKTULLES LAGEBILD ===================
+[1] API & PROVIDER QUOTAS / BUDGETS
+$quotasSummary
+
+[2] AKTUELLE DELEGIERUNGEN & QUEUES
+Aktive Delegationen:
+$delegationsSummary
+Working Queue Status:
+$queueSummary
+
+[3] OFFENE RELEVANTE ISSUES (MÄNGEL/TESTS/PRIO)
+$issuesSummary
+
+[4] OFFENE PULL REQUESTS
+$prsSummary
+
+[5] AUSSTEHENDE SYSTEM-ENTSCHEIDUNGEN & ALERTS
+$decisionsSummary
+
+[6] DAS ZULETZT AKTUALISIERTE TASK JOURNAL
+$tasksSummary
+=========================================================
+"@
+}
+
 function Get-VorceDashboardDataInstructions {
     return @"
-Pflicht-Lagebild vor jeder Entscheidung:
-1. Lies scripts/codex-cli/autopilot-tasks.md.
-2. Lies scripts/codex-cli/autopilot-state.json.
-3. Lies scripts/codex-cli/dashboard/public/registry.json.
-4. Lies scripts/codex-cli/dashboard/public/github-issues.json.
-5. Lies scripts/codex-cli/dashboard/public/pull-requests.json.
-6. Lies scripts/codex-cli/dashboard/public/active-sessions.json.
-7. Nutze diese Daten sichtbar in deiner Entscheidung.
+Pflicht-Lagebild fuer diese Entscheidung:
+Das Lagebild wurde vorab kompakt aggregiert und ist im System-Prompt eingebettet.
+Nutze AUSSCHLIESSLICH dieses Lagebild zur Analyse.
+Führe KEINE PowerShell Get-Content Befehle auf JSON-Dateien im Ordner scripts/codex-cli aus! Das würde die Sitzung überlasten und blockieren.
 "@.Trim()
 }
 
@@ -77,7 +203,7 @@ Ziel:
 - Pruefe vor spezialisierten Strategie-, Planungs- oder Analyseaufgaben zuerst die bereits in der Session verfuegbaren Skills; nutze passende Skills tatsaechlich, statt alles ad hoc selbst zu loesen.
 - Wenn unter den bereits verfuegbaren Skills kein guter Treffer dabei ist, verwende gezielt `find-skills`, suche einen hilfreichen Skill und nutze den passendsten Treffer. Beispiele koennen je nach Verfuegbarkeit `ceo-advisor`, `writing-plans` oder ein anderer fachlich passender Skill sein.
 - Lasse PR-Blocker nicht nur liegen: plane konkrete Follow-ups fuer rote Checks, Merge-Konflikte, fehlende Reviews und haengende Jules-Sessions.
-- Halte genug Arbeitsvorrat bereit, damit freie Jules-Slots im Monitoring sofort nachbesetzt werden koennen, aber vermeide bewusst ueberschneidende Aenderungsbereiche.
+- Halte einen Jules-Arbeitsvorrat von moeglichst 30 Issues bereit: trage im GitHub-Project-/Issue-Feld `next_jules-tasks` eindeutige Reihenfolge-Nummern ein, damit Monitoring freie Jules-Slots automatisch nachstarten kann. Vermeide dabei ueberschneidende Aenderungsbereiche.
 - Codex selbst synthetisiert und entscheidet; eigene Detailanalyse oder breite Dateisuche nur, wenn kein CLI-Provider sinnvoll verfuegbar ist.
 - Beende die Session nicht nach einer reinen Statuszusammenfassung, solange noch offensichtliche umsetzbare Aktionen offen sind.
 

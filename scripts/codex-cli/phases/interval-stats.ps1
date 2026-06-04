@@ -130,7 +130,7 @@ while ($true) {
                 $delibLogDir = Join-Path $ScriptDir "logs\deliberations"
                 $delibLog = @()
                 if (Test-Path $delibLogDir) {
-                    $delibFiles = @(Get-ChildItem -Path $delibLogDir -Filter "*.json" -File | Sort-Object LastWriteTime)
+                    $delibFiles = @(Get-ChildItem -Path $delibLogDir -Filter "*.json" -File | Sort-Object LastWriteTime -Descending | Select-Object -First 20 | Sort-Object LastWriteTime)
                     foreach ($file in $delibFiles) {
                         $delibObj = Read-JsonLocked -Path $file.FullName
                         if ($null -ne $delibObj) {

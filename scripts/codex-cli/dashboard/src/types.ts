@@ -163,6 +163,9 @@ export interface AutopilotConfig {
     max_concurrent_sessions: number;
     auto_approve_plans: boolean;
     auto_retry_feedback_max: number;
+    auto_merge_approved_prs?: boolean;
+    monitoring_refill_enabled?: boolean;
+    monitoring_refill_buffer_size?: number;
   };
   gemini_worktree_path: string;
   issue_filters: {
@@ -174,9 +177,18 @@ export interface AutopilotConfig {
   working_sessions?: WorkingSessionsConfig;
   dual_ceo: DualCeoConfig;
   prompts?: {
+    planning_jules_sync?: string;
+    planning_pr_sync?: string;
     planning_analysis?: string;
     planning_proposal?: string;
     planning_synthesis?: string;
+    monitor_sessions?: string;
+    monitor_prs?: string;
+    monitor_conflicts?: string;
+    monitoring_synthesis?: string;
+    audit_consistency?: string;
+    audit_performance?: string;
+    audit_synthesis?: string;
     audit_prompt?: string;
     monitoring_prompt?: string;
   };

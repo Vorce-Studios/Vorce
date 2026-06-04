@@ -154,6 +154,76 @@ function Remove-OrphanedTmpFiles {
     return $count
 }
 
+function Remove-OldRuntimeFiles {
+    <#
+    .SYNOPSIS
+    Keeps only a bounded number of runtime log/temp files per pattern.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Directory,
+        [Parameter(Mandatory)][string]$Pattern,
+        [int]$KeepNewest = 20,
+        [int]$OlderThanDays = 7
+    )
+
+    if (-not (Test-Path $Directory)) { return 0 }
+
+    $cutoff = (Get-Date).AddDays(-$OlderThanDays)
+    $files = @(Get-ChildItem -Path $Directory -Filter $Pattern -File -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending)
+
+    $toRemove = @()
+    if ($files.Count -gt $KeepNewest) {
+        $toRemove += @($files | Select-Object -Skip $KeepNewest)
+    }
+    $toRemove += @($files | Where-Object { $_.LastWriteTime -lt $cutoff })
+    $toRemove = @($toRemove | Sort-Object FullName -Unique)
+
+    $count = 0
+    foreach ($file in $toRemove) {
+        try {
+            Remove-Item -LiteralPath $file.FullName -Force -ErrorAction Stop
+            $count++
+        } catch {
+            # File may be locked by a visible session.
+        }
+    }
+
+    if ($count -gt 0) {
+        Write-Host "[CLEANUP] $count alte Dateien entfernt: $(Split-Path -Leaf $Directory)\$Pattern" -ForegroundColor DarkGray
+    }
+
+    return $count
+}
+
+function Invoke-RuntimeFileRetention {
+    <#
+    .SYNOPSIS
+    Applies bounded retention to Autopilot runtime logs. Deliberation JSON files
+    are UI protocol snapshots; the dashboard only needs the latest entries.
+    #>
+    param(
+        [int]$KeepStartLogs = 15,
+        [int]$KeepDeliberations = 20,
+        [int]$KeepTmpPerPattern = 12
+    )
+
+    $total = 0
+    $logsDir = Join-Path $script:ScriptRoot "logs"
+    $delibDir = Join-Path $logsDir "deliberations"
+    $tmpDir = Join-Path $script:ScriptRoot "tmp"
+
+    $total += Remove-OldRuntimeFiles -Directory $logsDir -Pattern "start-autopilot-*.log" -KeepNewest $KeepStartLogs -OlderThanDays 14
+    $total += Remove-OldRuntimeFiles -Directory $delibDir -Pattern "*.json" -KeepNewest $KeepDeliberations -OlderThanDays 10
+    $total += Remove-OldRuntimeFiles -Directory $tmpDir -Pattern "codex-*-prompt.md" -KeepNewest $KeepTmpPerPattern -OlderThanDays 3
+    $total += Remove-OldRuntimeFiles -Directory $tmpDir -Pattern "codex-*-last-message.md" -KeepNewest $KeepTmpPerPattern -OlderThanDays 3
+    $total += Remove-OldRuntimeFiles -Directory $tmpDir -Pattern "codex-*-visible.log" -KeepNewest $KeepTmpPerPattern -OlderThanDays 3
+    $total += Remove-OldRuntimeFiles -Directory $tmpDir -Pattern "ceo-*.txt" -KeepNewest $KeepTmpPerPattern -OlderThanDays 2
+    $total += Remove-OldRuntimeFiles -Directory $tmpDir -Pattern "ceo-*.json" -KeepNewest $KeepTmpPerPattern -OlderThanDays 2
+
+    return $total
+}
+
 function Test-ObjectProperty {
     <#
     .SYNOPSIS
@@ -217,6 +287,8 @@ function Invoke-StartupCleanup {
             $totalCleaned += Remove-OrphanedTmpFiles -Directory $dir -OlderThanMinutes 2
         }
     }
+
+    $totalCleaned += Invoke-RuntimeFileRetention
 
     if ($totalCleaned -gt 0) {
         Write-Host "[CLEANUP] Startup-Bereinigung: $totalCleaned TMP-Dateien insgesamt entfernt." -ForegroundColor Green

@@ -9,7 +9,9 @@
     "max_concurrent_sessions": 15,
     "auto_approve_plans": true,
     "auto_retry_feedback_max": 3,
-    "auto_merge_approved_prs": true
+    "auto_merge_approved_prs": true,
+    "monitoring_refill_enabled": true,
+    "monitoring_refill_buffer_size": 30
   },
   "gemini_worktree_path": "../VjMapper-gemini",
   "issue_filters": {
@@ -108,6 +110,12 @@
       "prompt_ref": "monitor_conflicts",
       "tier": "balanced",
       "label": "Merge-Konflikt Remediation"
+    },
+    {
+      "id": "monitoring_synthesis",
+      "prompt_ref": "monitoring_synthesis",
+      "tier": "high",
+      "label": "Monitoring Synthese & Entscheidung"
     }
   ],
   "audit_sequence": [
@@ -122,6 +130,12 @@
       "prompt_ref": "audit_performance",
       "tier": "balanced",
       "label": "Autopilot Performance Audit"
+    },
+    {
+      "id": "audit_synthesis",
+      "prompt_ref": "audit_synthesis",
+      "tier": "high",
+      "label": "Audit Synthese & Konsolidierung"
     }
   ],
   "prompts": {
@@ -129,13 +143,13 @@
     "planning_pr_sync": "Prüfe offene PRs auf Merge-Konflikte und CI-Status.",
     "planning_analysis": "Analysiere den aktuellen Status des Repositories $repo. Root-Kompass: #651 Release 1.0 Readiness. Identifiziere Blocker, offene PRs und kritische Lücken. Erstelle eine Liste der Top-3 Prioritäten für diesen Zyklus.",
     "planning_proposal": "Basierend auf der Analyse (Kontext: $context), schlage maximal $maxIssues neue Issues vor. Fokus auf kleine Standard-Issues für CLI-Agents. Antworte als JSON-Liste.",
-    "planning_synthesis": "Fasse alle Erkenntnisse zusammen und erstelle den finalen Delegationsplan. Berücksichtige freie Slots ($slots).",
+    "planning_synthesis": "Fasse alle Erkenntnisse zusammen und erstelle den finalen Delegationsplan. Berücksichtige freie Slots ($slots). Definiere immer einen Jules-Arbeitsvorrat von möglichst 30 Issues: trage im GitHub Project/Issue-Feld `next_jules-tasks` eine eindeutige Start-/Reihenfolge-Nummer ein. Nummeriere kollisionsarm nach Priorität, damit die Monitoring-Phase freie Jules-Slots automatisch aus diesem Vorrat nachstarten kann.",
     "monitor_sessions": "Prüfe aktive Delegationen ($sessions). Melde Timeouts oder Fehler.",
     "monitor_prs": "Validiere CI-Status offener PRs ($prs). Plane Fixes bei 'failure'.",
     "monitor_conflicts": "Löse Merge-Konflikte in PRs ($prs) aktiv auf.",
+    "monitoring_synthesis": "Fasse die Monitoring-Teilergebnisse zusammen ($context). Bewerte den Gesamtstatus und leite notwendige Aktionen ein.",
     "audit_consistency": "Vergleiche Issues ($issues), PRs ($prs) und State. Melde Inkonsistenzen.",
-    "audit_performance": "Evaluiere Effizienz der letzten Aktionen. Optimiere Strategie.",
-    "audit_prompt": "DEUTSCH. Prüfung: Issues ($issues), PRs ($prs), Sessions ($delegations). Output: JSON { 'issues_found': bool, 'action': 'remediate|escalate|none', 'remediation_command': '...', 'dashboard_escalation': '...' }",
-    "monitoring_prompt": "Status-Check: PRs ($prs) und Sessions ($sessions). Greife bei Fehlern ein."
+    "audit_performance": "Evaluiere Effizienz der letzten Aktionen. Optimiere die Arbeitssteuerung.",
+    "audit_synthesis": "Du bist CEO BETA (Gemini) des Vorce-Autopiloten. Triff die finale Entscheidung basierend auf den Teilergebnissen des Audits:\n$context\n\nRegeln:\n1. Antwort zwingend auf DEUTSCH.\n2. Bei Problemen zuerst eine Aktion ('remediate') vorschlagen (z.B. Re-Trigger CI, Posten von Kommentaren).\n3. Keine Jules-Sessions für Merge-Konflikte starten (erfolgt im Planning).\n4. Niemals Jules-Sessions abbrechen/löschen.\n5. 'escalate' nur bei unlösbaren Problemen mit detaillierter deutscher Handlungsanweisung.\n\nAntworte strikt im JSON-Format:\n{\n  \"issues_found\": true/false,\n  \"action\": \"remediate|escalate|none\",\n  \"remediation_command\": \"<Powershell-Befehl falls action=remediate>\",\n  \"dashboard_escalation\": \"<Deutsche, hochdetaillierte Fehler-Analyse und Handlungsanweisung falls action=escalate>\"\n}"
   }
 }

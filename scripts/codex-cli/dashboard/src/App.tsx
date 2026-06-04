@@ -19,7 +19,10 @@ const defaultAutopilotConfig: AutopilotConfig = {
     max_daily_sessions: 100,
     max_concurrent_sessions: 15,
     auto_approve_plans: true,
-    auto_retry_feedback_max: 3
+    auto_retry_feedback_max: 3,
+    auto_merge_approved_prs: true,
+    monitoring_refill_enabled: true,
+    monitoring_refill_buffer_size: 30
   },
   gemini_worktree_path: '../VjMapper-gemini',
   issue_filters: {
@@ -74,6 +77,7 @@ export default function App() {
   const { data: julesSessions, refetch: refetchJulesSessions } = useData<any[]>('/jules-sessions.json', []);
   const { data: memoryStore, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
   const { data: history, loading: historyLoading, refetch: refetchHistory } = useData<any[]>('/data.json', []);
+  const { data: liveLog, refetch: refetchLiveLog } = useData<{ content: string }>('/api/live-log', { content: '' });
 
   const refetchAll = () => {
     refetchConfig();
@@ -85,6 +89,7 @@ export default function App() {
     refetchJulesSessions();
     refetchMemory();
     refetchHistory();
+    refetchLiveLog();
   };
 
   // Auto-refresh every 30 seconds
@@ -95,7 +100,17 @@ export default function App() {
     const renderActivePage = () => {
       switch (activeTab) {
         case 'dashboard':
-          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} />;
+          return (
+            <DashboardPage
+              registry={registry}
+              sessions={sessions}
+              pullRequests={pullRequests}
+              issues={issues}
+              julesSessions={julesSessions}
+              liveLog={liveLog.content}
+              onRefresh={refetchAll}
+            />
+          );
         case 'workstreams':
           return <WorkstreamsPage issues={issues} sessions={sessions} pullRequests={pullRequests} julesSessions={julesSessions} projectItems={projectItems?.items || []} />;
         case 'reporting':
