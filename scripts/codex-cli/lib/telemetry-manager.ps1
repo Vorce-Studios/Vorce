@@ -370,9 +370,7 @@ function Get-GeminiCliQuotaSnapshot {
 
     $psi = [System.Diagnostics.ProcessStartInfo]::new()
     $psi.FileName = [string]$node.Source
-    [void]$psi.ArgumentList.Add($script:GeminiQuotaHelperPath)
-    [void]$psi.ArgumentList.Add("--cwd")
-    [void]$psi.ArgumentList.Add($repoRoot)
+    $psi.Arguments = "`"$script:GeminiQuotaHelperPath`" --cwd `"$repoRoot`""
     $psi.WorkingDirectory = $repoRoot
     $psi.UseShellExecute = $false
     $psi.RedirectStandardOutput = $true

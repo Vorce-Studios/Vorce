@@ -3,6 +3,27 @@
 
 Set-StrictMode -Version Latest
 
+function Get-VorceConfigPrompt {
+    param(
+        [Parameter(Mandatory)][object]$Config,
+        [Parameter(Mandatory)][string]$PromptKey,
+        [hashtable]$Variables = @{}
+    )
+
+    $promptTemplate = if ($Config.prompts.PSObject.Properties.Match($PromptKey).Count -gt 0) {
+        $Config.prompts.$PromptKey
+    } else {
+        "Missing prompt template for key: $PromptKey"
+    }
+
+    $finalPrompt = $promptTemplate
+    foreach ($key in $Variables.Keys) {
+        $finalPrompt = $finalPrompt.Replace("`$$key", [string]$Variables[$key])
+    }
+
+    return $finalPrompt
+}
+
 function Get-VorceCodexCeoPrompt {
     return @"
 Agiere als Vorce Autopilot CEO und Orchestrator.

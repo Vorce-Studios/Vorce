@@ -53,6 +53,7 @@ function Write-Host {
 . (Join-Path $ScriptDir "lib\memory-store.ps1")
 . (Join-Path $ScriptDir "lib\deliberation-engine.ps1")
 . (Join-Path $ScriptDir "lib\autopilot-session-manager.ps1")
+. (Join-Path $ScriptDir "lib\autopilot-prompts.ps1")
 . (Join-Path $ScriptDir "phases\planning-wakeup.ps1")
 . (Join-Path $ScriptDir "phases\monitoring-wakeup.ps1")
 . (Join-Path $ScriptDir "phases\audit-wakeup.ps1")
@@ -139,6 +140,11 @@ if (-not $SkipPlanningOnStart.IsPresent) {
 $loopCount = 0
 $cleanupEveryN = 10
 
+# Planning failure backoff tracking
+$planningFailureCount = 0
+$lastAuditTime = [datetime]::MinValue
+$auditCooldownMinutes = 5
+
 Write-Host "[LOOP] Starte Hauptschleife. Ctrl+C zum Beenden." -ForegroundColor Green
 Write-Host ""
 
@@ -150,14 +156,22 @@ while ($true) {
     $monDue = ($now - $lastMonTime).TotalMinutes -ge $monMinutes
 
     if ($planDue) {
+        $planningSucceeded = $false
         try {
             Invoke-PlanningWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
-            $lastPlanTime = Get-Date
+            $planningSucceeded = $true
+            $planningFailureCount = 0
         } catch {
             Write-Host "[LOOP] Planning-Fehler: $_" -ForegroundColor Red
             Write-Host "[LOOP] StackTrace: $($_.ScriptStackTrace)" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "Planning wake-up failed" -Context $_.Exception.Message
+            $planningFailureCount++
+            if ($planningFailureCount -ge 3) {
+                Write-Host "[LOOP] Planning $planningFailureCount x hintereinander fehlgeschlagen. Backoff auf naechstes regulaeres Intervall." -ForegroundColor Yellow
+            }
         }
+        # IMMER $lastPlanTime aktualisieren, damit Planning nicht endlos re-triggert
+        $lastPlanTime = Get-Date
 
         # Planning hat Prioritaet: Wenn beide gleichzeitig faellig waren,
         # wird Monitoring auf den naechsten Zyklus verschoben.
@@ -166,11 +180,17 @@ while ($true) {
             $monDue = $false
         }
 
-        # Asynchroner Audit-Lauf durch CEO Beta direkt nach dem Planning
-        try {
-            Invoke-AuditWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
-        } catch {
-            Write-Host "[LOOP] Audit-Fehler: $_" -ForegroundColor Red
+        # Audit nur nach erfolgreichem Planning UND mit Cooldown ausfuehren
+        $auditDue = $planningSucceeded -and ((Get-Date) - $lastAuditTime).TotalMinutes -ge $auditCooldownMinutes
+        if ($auditDue) {
+            try {
+                Invoke-AuditWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+                $lastAuditTime = Get-Date
+            } catch {
+                Write-Host "[LOOP] Audit-Fehler: $_" -ForegroundColor Red
+            }
+        } elseif (-not $planningSucceeded) {
+            Write-Host "[LOOP] Audit uebersprungen (Planning fehlgeschlagen)." -ForegroundColor DarkGray
         }
     }
 
@@ -245,6 +265,16 @@ while ($true) {
     Save-AutopilotState -State $State
     $remainingSleep = [Math]::Max(1, [int]$sleepSeconds)
     while ($remainingSleep -gt 0) {
+        # Check clear flag responsively during sleep
+        $clearAlertsFlag = Join-Path $ScriptDir "clear-alerts.flag"
+        if (Test-Path $clearAlertsFlag) {
+            if ($State.PSObject.Properties.Name -contains "decisions_pending") {
+                $State.decisions_pending = @()
+            }
+            Remove-Item -Path $clearAlertsFlag -Force -ErrorAction SilentlyContinue
+            Save-AutopilotState -State $State
+            Write-Host "`n[LOOP] Beta CEO Eskalationen wurden manuell gelöscht (via Clear Command)." -ForegroundColor Green
+        }
         Start-Sleep -Seconds 1
         $remainingSleep--
     }

@@ -130,10 +130,13 @@ impl WindowManager {
             .with_inner_size(winit::dpi::PhysicalSize::new(default_width, default_height))
             .with_maximized(maximized);
 
-        // Set position if provided
         if let (Some(pos_x), Some(pos_y)) = (x, y) {
-            window_attributes =
-                window_attributes.with_position(winit::dpi::PhysicalPosition::new(pos_x, pos_y));
+            // Basic sanity check: avoid extreme negative or likely invalid positions
+            // Modern winit handles multi-monitor, but extreme values often mean "invisible"
+            if pos_x > -32000 && pos_x < 32000 && pos_y > -32000 && pos_y < 32000 {
+                window_attributes = window_attributes
+                    .with_position(winit::dpi::PhysicalPosition::new(pos_x, pos_y));
+            }
         }
 
         let window = Arc::new(event_loop.create_window(window_attributes)?);

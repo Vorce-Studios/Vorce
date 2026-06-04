@@ -44,6 +44,7 @@ export interface ActiveDelegation {
   issue_title: string;
   jules_session_id: string;
   jules_state: string;
+  agent_type?: string;
   pr_url: string | null;
   delegated_at: string;
   last_checked_at: string;
@@ -77,10 +78,25 @@ export interface ActiveSessions {
   last_planning_at: string;
   last_monitoring_at: string;
   active_delegations: ActiveDelegation[];
+  working_queue?: unknown[];
+  working_sessions?: unknown[];
   review_queue: ReviewQueueItem[];
   autopilot_created_issues: unknown[];
   completed_this_session: CompletedItem[];
   decisions_pending?: DecisionPending[];
+  deliberation_log?: DeliberationLogEntry[];
+  scheduler?: any;
+  run_control?: any;
+}
+
+// ── GitHub Project Types ──
+export interface ProjectItem {
+  id: string;
+  status: string;
+  jules_session_status?: string;
+  pr_checks_status?: string;
+  review_status?: string;
+  [key: string]: any;
 }
 
 // ── GitHub Issues Types ──
@@ -102,6 +118,7 @@ export interface GitHubIssue {
   title: string;
   updatedAt: string;
   url: string;
+  repo?: string;
 }
 
 // ── Pull Requests Types ──
@@ -129,6 +146,9 @@ export interface PullRequest {
   title: string;
   updatedAt: string;
   url: string;
+  isDraft?: boolean;
+  reviewDecision?: string;
+  repo?: string;
 }
 
 // ── Autopilot Config Types ──
@@ -151,10 +171,25 @@ export interface AutopilotConfig {
     autopilot_label: string;
   };
   max_issues_per_planning_cycle: number;
+  working_sessions?: WorkingSessionsConfig;
   dual_ceo: DualCeoConfig;
+  prompts?: {
+    planning_analysis?: string;
+    planning_proposal?: string;
+    planning_synthesis?: string;
+    audit_prompt?: string;
+    monitoring_prompt?: string;
+  };
 }
 
-// ── Dual-CEO Types ──
+export interface WorkingSessionsConfig {
+  enabled: boolean;
+  max_concurrent: number;
+  preferred_agents: string[];
+  queue_non_jules_agent_issues: boolean;
+}
+
+// ── CEO + QA-Auditor Types ──
 export interface DualCeoConfig {
   enabled: boolean;
   ceo_alpha_chain: string[];
@@ -165,13 +200,44 @@ export interface DualCeoConfig {
   log_deliberations: boolean;
 }
 
+// ── Deliberation & Audit Types ──
+export interface DeliberationRound {
+  phase: string;
+  agent: string;
+  provider: string;
+  duration_ms: number;
+  success: boolean;
+  content?: string;
+}
+
+export interface DeliberationLogEntry {
+  deliberation_id: string;
+  task_type: string;
+  alpha_provider: string;
+  beta_provider: string;
+  consensus_reached: boolean;
+  phases_completed: number;
+  total_duration_ms: number;
+  completed_at: string;
+  rounds?: DeliberationRound[];
+}
+
+export interface AuditResult {
+  session_id: string;
+  response: string;
+  parsed: any;
+  updated_at: string;
+}
+
 // ── Memory System Types ──
 export interface MemoryEntry {
   id: string;
   text: string;
   type: 'permanent' | 'temporary';
   priority: 'critical' | 'high' | 'medium' | 'low';
+  scopes?: string[];
   created_at: string;
+  last_accessed_at?: string;
   source: string;
 }
 

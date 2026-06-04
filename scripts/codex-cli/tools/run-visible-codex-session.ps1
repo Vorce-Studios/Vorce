@@ -74,9 +74,9 @@ if ($NonInteractiveExec.IsPresent) {
     $codexArgs = @("resume", "--model", $Model, "--dangerously-bypass-approvals-and-sandbox", "--cd", $RepositoryRoot, "--no-alt-screen", $SessionId)
 }
 
-if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
-    $codexArgs += @("--output-last-message", $OutputPath)
-}
+# if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
+#     $codexArgs += @("--output-last-message", $OutputPath)
+# }
 
 try {
     $isInsideCodex = $false

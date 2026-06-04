@@ -3,6 +3,69 @@
 
 Set-StrictMode -Version Latest
 
+# Test-ObjectProperty is now centrally defined in lib/state-manager.ps1
+
+function Start-QueuedWorkingSessions {
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][object]$Config,
+        [Parameter(Mandatory)][string]$Repository,
+        [switch]$DryRun
+    )
+
+    Confirm-WorkingSessionsState -State $State
+    $workingCfg = if (Test-ObjectProperty -Object $Config -Name "working_sessions") { $Config.working_sessions } else { $null }
+    if ($workingCfg -and (Test-ObjectProperty -Object $workingCfg -Name "enabled") -and -not $workingCfg.enabled) {
+        return
+    }
+
+    $maxConcurrent = if ($workingCfg -and (Test-ObjectProperty -Object $workingCfg -Name "max_concurrent")) { [int]$workingCfg.max_concurrent } else { 3 }
+    if ($maxConcurrent -le 0) { return }
+
+    $running = @($State.working_sessions | Where-Object { [string]$_.status -eq "IN_PROGRESS" }).Count
+    $slots = $maxConcurrent - $running
+    if ($slots -le 0 -or @($State.working_queue).Count -eq 0) { return }
+
+    $scriptDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
+    $toolsDir = Join-Path $scriptDir "tools"
+    $quotaRegistryPath = Join-Path $scriptDir "quota-registry.json"
+
+    $toStart = @($State.working_queue | Select-Object -First $slots)
+    foreach ($item in $toStart) {
+        $issueNum = [int]$item.issue_number
+        $issueTitle = [string]$item.issue_title
+        $agentProvider = [string]$item.agent_provider
+
+        if ($DryRun.IsPresent) {
+            Write-Host "[MONITOR] [DRY RUN] Wuerde Working Session starten: #$issueNum -> $agentProvider" -ForegroundColor DarkYellow
+            continue
+        }
+
+        try {
+            $cmdArgs = "-NoExit", "-File", "`"$toolsDir\run-visible-agent-task.ps1`"", "-IssueNumber", $issueNum, "-IssueTitle", "`"$issueTitle`"", "-AgentProvider", "`"$agentProvider`"", "-Repository", "`"$Repository`"", "-QuotaRegistryPath", "`"$quotaRegistryPath`""
+            $proc = Start-Process pwsh -ArgumentList $cmdArgs -PassThru -WindowStyle Normal
+
+            $State.working_sessions += @([ordered]@{
+                id             = if (Test-ObjectProperty -Object $item -Name "id") { $item.id } else { "work-$issueNum-$($proc.Id)" }
+                issue_number   = $issueNum
+                issue_title    = $issueTitle
+                agent_provider = $agentProvider
+                process_id     = $proc.Id
+                status         = "IN_PROGRESS"
+                started_at     = (Get-Date -Format 'o')
+            })
+            $State.working_queue = @($State.working_queue | Where-Object { [int]$_.issue_number -ne $issueNum })
+            Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId "local-agent-$($proc.Id)" -AgentType $agentProvider -JobId $($proc.Id.ToString())
+            Write-Host "[MONITOR] Working Session gestartet: #$issueNum -> $agentProvider (PID: $($proc.Id))" -ForegroundColor Cyan
+        } catch {
+            Write-Warning "[MONITOR] Working Session fuer #$issueNum fehlgeschlagen: $_"
+            Add-ErrorLog -State $State -Message "Working session failed for #$issueNum" -Context $_.Exception.Message
+        }
+    }
+
+    Save-AutopilotState -State $State
+}
+
 function Add-DecisionPending {
     param(
         [Parameter(Mandatory)][object]$State,
@@ -33,6 +96,8 @@ function Invoke-MonitoringWakeUp {
 
     $repo = $Config.repository
     Write-Host "`n[MONITOR] ========== Monitoring Wake-Up ==========" -ForegroundColor Blue
+    $State = Normalize-AutopilotStateObject -State $State
+    Confirm-WorkingSessionsState -State $State
 
     $ScriptDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
     $JulesScriptDir = Join-Path (Split-Path -Parent $ScriptDir) "jules"
@@ -71,6 +136,35 @@ function Invoke-MonitoringWakeUp {
             }
         }
 
+        # --- Step 1.2: Run Monitoring Sequence (Session Splitting) ---
+        if ($Config.PSObject.Properties.Name -contains "monitoring_sequence") {
+            Write-Host "[MONITOR] Starte sequentielle Monitoring-Sequenz..." -ForegroundColor Yellow
+            $monitoringContext = ""
+            $prsData = $prs | ConvertTo-Json -Depth 3
+            $sessionsData = $State.active_delegations | ConvertTo-Json -Depth 3
+            
+            foreach ($step in $Config.monitoring_sequence) {
+                Write-Host "[MONITOR] Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
+                $promptVars = @{ repo = $repo; prs = $prsData; sessions = $sessionsData; context = $monitoringContext }
+                $stepPrompt = Get-VorceConfigPrompt -Config $Config -PromptKey $step.prompt_ref -Variables $promptVars
+                $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$stepPrompt"
+
+                $stepResult = Invoke-DualCeoTask `
+                    -QuotaRegistry $QuotaRegistry `
+                    -Config $Config `
+                    -TaskType "monitoring" `
+                    -DryRun:$DryRun `
+                    -Prompt $fullPrompt `
+                    -State $State
+                    
+                if ($stepResult.success) {
+                    $monitoringContext += "`n### Ergebnis $($step.label):`n$($stepResult.output)`n"
+                } else {
+                    Write-Warning "[MONITOR] Schritt $($step.label) fehlgeschlagen: $($stepResult.output)"
+                }
+            }
+        }
+
         foreach ($pr in $prs) {
             $prNum = [int]$pr.number
             $mergeable = [string]$pr.mergeable
@@ -81,8 +175,9 @@ function Invoke-MonitoringWakeUp {
             }
 
             $failingChecks = @()
-            if ($pr.statusCheckRollup) {
-                $failingChecks = @($pr.statusCheckRollup | Where-Object {
+            $checks = if (Test-ObjectProperty -Object $pr -Name "statusCheckRollup") { $pr.statusCheckRollup } else { @() }
+            if ($checks) {
+                $failingChecks = @($checks | Where-Object {
                     ((Test-ObjectProperty -Object $_ -Name "conclusion") -and $_.conclusion -eq "FAILURE") -or
                     ((Test-ObjectProperty -Object $_ -Name "status") -and $_.status -eq "FAILURE")
                 })
@@ -94,76 +189,13 @@ function Invoke-MonitoringWakeUp {
             }
         }
 
-        # Master Issue creation for conflicts — with robust dedup
-        if ($conflictingPrs.Count -gt 0) {
-            # Check if a conflict-resolution issue was already created in the last 24 hours
-            $recentConflictIssue = $false
-            if ($null -ne $State.autopilot_created_issues) {
-                foreach ($entry in $State.autopilot_created_issues) {
-                    $isConflictTag = $false
-                    if ((Test-ObjectProperty -Object $entry -Name "tag") -and [string]$entry.tag -match "^resolve-conflicts-") {
-                        $isConflictTag = $true
-                    }
-                    if ($isConflictTag -and (Test-ObjectProperty -Object $entry -Name "created_at")) {
-                        try {
-                            $createdAt = [datetimeoffset]::Parse([string]$entry.created_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
-                            $ageHours = ((Get-Date) - $createdAt.LocalDateTime).TotalHours
-                            if ($ageHours -lt 24) {
-                                $recentConflictIssue = $true
-                                Write-Host "[MONITOR]   Merge-Konflikt-Issue wurde vor $([Math]::Round($ageHours,1))h erstellt (Issue #$($entry.issue_number)). Ueberspringe Neuerstellung." -ForegroundColor DarkGray
-                                break
-                            }
-                        } catch {}
-                    }
-                }
-            }
-
-            if (-not $recentConflictIssue) {
-                $prNumbers = @($conflictingPrs | Sort-Object number | ForEach-Object { $_.number }) -join "-"
-                $conflictTag = "resolve-conflicts-$prNumbers"
-                Write-Host "[MONITOR]   Erstelle gebuendeltes Master-Issue fuer $($conflictingPrs.Count) Konflikte" -ForegroundColor Yellow
-                if (-not $DryRun.IsPresent) {
-                    $issueTitle = "MF-StIs_Resolve-Merge-Conflicts: PRs $($prNumbers -replace '-', ', ')"
-                    $issueBody = "Die folgenden Pull Requests haben Merge-Konflikte:`n`n"
-                    foreach ($cpr in $conflictingPrs) {
-                        $issueBody += "- PR #$($cpr.number) ($($cpr.headRefName)): $($cpr.title)`n"
-                    }
-                    $issueBody += "`nBitte alle Konflikte in einer einzigen Jules-Session aufloesen (Branches auschecken, main mergen, Konflikte beheben, pushen).`n"
-                    $issueBody += "`nPrioritaet: KRITISCH - blockiert Release-Pipeline."
-
-                    $newIssueUrl = gh issue create --repo $repo --title $issueTitle --body $issueBody --label "jules-task,priority: critical,bug" 2>&1
-                    if ($LASTEXITCODE -eq 0 -and $newIssueUrl -match "/issues/(\d+)") {
-                        $newIssueNum = [int]$Matches[1]
-                        Write-Host "[MONITOR]   -> Master-Issue #$newIssueNum erfolgreich erstellt (priority: critical)!" -ForegroundColor Green
-
-                        if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
-                        $State.autopilot_created_issues += [ordered]@{ tag = $conflictTag; issue_number = $newIssueNum; created_at = (Get-Date -Format 'o') }
-                        if ($targetAgent -eq "jules") {
-                            Write-Host "[MONITOR]   -> Delegiere Master-Issue #$newIssueNum direkt an Jules (viele Konflikte)!" -ForegroundColor Cyan
-                            $newSessionId = "resolve-conflicts-$newIssueNum-$(Get-Date -Format 'yyyyMMddHHmmss')"
-                            Add-Delegation -State $State -IssueNumber $newIssueNum -IssueTitle $issueTitle -JulesSessionId $newSessionId -AgentType "jules" -JobId "direct-delegate"
-                        } else {
-                            Write-Host "[MONITOR]   -> Starten lokalen CLI-Agenten $targetAgent für Issue #$newIssueNum" -ForegroundColor Cyan
-                            try {
-                                $quotaRegistryPath = Join-Path $ScriptDir "quota-registry.json"
-                                $ToolsDir = Join-Path $ScriptDir "tools"
-                                $cmdArgs = "-NoExit", "-File", "`"$ToolsDir\run-visible-agent-task.ps1`"", "-IssueNumber", $newIssueNum, "-IssueTitle", "`"$issueTitle`"", "-AgentProvider", "`"$targetAgent`"", "-Repository", "`"$repo`"", "-QuotaRegistryPath", "`"$quotaRegistryPath`""
-                                $proc = Start-Process pwsh -ArgumentList $cmdArgs -PassThru -WindowStyle Normal
-                                Add-Delegation -State $State -IssueNumber $newIssueNum -IssueTitle $issueTitle -JulesSessionId "local-agent-$($proc.Id)" -AgentType $targetAgent -JobId $($proc.Id.ToString())
-                            } catch {
-                                Write-Warning "[MONITOR] Lokaler Agent $targetAgent fuer #$newIssueNum fehlgeschlagen: $_"
-                                Add-ErrorLog -State $State -Message "Local agent $targetAgent failed for #$newIssueNum" -Context $_.Exception.Message
-                            }
-                        }
-
-                        Save-AutopilotState -State $State
-                    }
-                }
-            }
-        }
+        # PR-Konflikte werden in der Planning-Phase gebuendelt und an Working Sessions delegiert.
     } catch {
         Write-Warning "[MONITOR] PR-Check fehlgeschlagen: $_"
     }
+
+    # --- Step 1b: Spawn queued Working Sessions ---
+    Start-QueuedWorkingSessions -State $State -Config $Config -Repository $repo -DryRun:$DryRun
 
     # --- Step 2: Check active Jules sessions ---
     Write-Host "[MONITOR] Pruefe $($State.active_delegations.Count) aktive Delegierungen..." -ForegroundColor Cyan
@@ -294,6 +326,13 @@ function Invoke-MonitoringWakeUp {
                     )
 
                     Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $currentState
+                    foreach ($workSession in $State.working_sessions) {
+                        if ([int]$workSession.issue_number -eq $issueNum) {
+                            $workSession.status = $currentState
+                            $workSession.last_checked_at = (Get-Date -Format 'o')
+                            break
+                        }
+                    }
 
                     if ($currentState -eq "COMPLETED") {
                         if ($agentState.pr_url -and -not [string]::IsNullOrWhiteSpace($agentState.pr_url)) {
