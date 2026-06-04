@@ -234,7 +234,9 @@ export default defineConfig({
                     text: payload.entry.text,
                     type: payload.entry.type || 'temporary',
                     priority: payload.entry.priority || 'medium',
+                    scopes: payload.entry.scopes || ['all'],
                     created_at: new Date().toISOString(),
+                    last_accessed_at: new Date().toISOString(),
                     source: payload.entry.source || 'dashboard'
                   };
 

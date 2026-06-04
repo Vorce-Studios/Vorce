@@ -203,4 +203,7 @@ Antworte strikt im JSON-Format:
             }
         }
     }
+
+    # 4. Smart Memory Optimization
+    Optimize-AutopilotMemories -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
 }

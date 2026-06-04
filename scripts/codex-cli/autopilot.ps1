@@ -53,6 +53,7 @@ function Write-Host {
 . (Join-Path $ScriptDir "lib\memory-store.ps1")
 . (Join-Path $ScriptDir "lib\deliberation-engine.ps1")
 . (Join-Path $ScriptDir "lib\autopilot-session-manager.ps1")
+. (Join-Path $ScriptDir "lib\autopilot-prompts.ps1")
 . (Join-Path $ScriptDir "phases\planning-wakeup.ps1")
 . (Join-Path $ScriptDir "phases\monitoring-wakeup.ps1")
 . (Join-Path $ScriptDir "phases\audit-wakeup.ps1")

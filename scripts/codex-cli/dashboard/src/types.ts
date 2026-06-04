@@ -235,7 +235,9 @@ export interface MemoryEntry {
   text: string;
   type: 'permanent' | 'temporary';
   priority: 'critical' | 'high' | 'medium' | 'low';
+  scopes?: string[];
   created_at: string;
+  last_accessed_at?: string;
   source: string;
 }
 
