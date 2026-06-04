@@ -320,9 +320,16 @@ if ($null -ne $currentBranch -and $currentBranch.Trim() -ne "main") {
     # Pruefen, ob uncommittete Aenderungen vorliegen
     $gitStatus = git status --porcelain 2>$null
     if ([string]::IsNullOrWhiteSpace($gitStatus)) {
-        Write-InitStatus "[INIT] Keine uncommitteten Aenderungen. (Automatischer Wechsel auf 'main' ist deaktiviert)." -Color Yellow
+        Write-InitStatus "[INIT] Keine uncommitteten Aenderungen. Wechsle automatisch auf 'main'..." -Color Yellow
+        git checkout main 2>&1 | Out-Null
+        $currentBranch = git branch --show-current 2>$null
+        if ($currentBranch.Trim() -eq "main") {
+            Write-InitStatus "[INIT] Erfolgreich auf 'main' gewechselt." -Color Green
+        } else {
+            Write-InitStatus "[INIT] Wechsel auf 'main' fehlgeschlagen. Bitte manuell 'git checkout main' ausfuehren!" -Color Red -Level "ERROR"
+        }
     } else {
-        Write-InitStatus "[INIT] Uncommittete Aenderungen vorhanden. Bitte manuell bereinigen und 'git checkout main' ausfuehren!" -Color Yellow -Level "WARN"
+        Write-InitStatus "[INIT] Uncommittete Aenderungen vorhanden. Wechsel auf 'main' uebersprungen. Bitte manuell bereinigen und 'git checkout main' ausfuehren!" -Color Yellow -Level "WARN"
     }
 }
 

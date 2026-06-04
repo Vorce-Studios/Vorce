@@ -26,6 +26,8 @@ visual artists, stage designers, and live performers. It combines the
 efficiency of Rust with a powerful, real-time node-based workflow and a
 highly reactive modulation system.
 
+## ✨ Key Features
+
 ### ⚡ Professional Rendering Engine
 
 Powered by **WGPU** and the **Bevy Engine**, Vorce delivers low-latency,
@@ -72,8 +74,13 @@ Seamlessly integrate with your performance setup via **OSC**, **MIDI**, and
 
 ### 1. Requirements
 
-* **Rust**: [Install latest stable version](https://rustup.rs/)
+* **Rust**: [Install latest stable version](https://rustup.rs/) (1.94+)
 * **FFmpeg**: System-wide installation required for video decoding.
+  * **Windows**: Download [FFmpeg builds](https://ffmpeg.org/download.html#build-windows)
+    and add to PATH.
+  * **macOS**: `brew install ffmpeg`
+  * **Linux (Ubuntu/Debian)**: `sudo apt install ffmpeg libavcodec-dev \
+    libavformat-dev libavutil-dev libswscale-dev libavdevice-dev libavfilter-dev`
 * **NDI (Optional)**: For network video I/O.
 
 ### 2. Run from Source
@@ -108,6 +115,14 @@ Explore our comprehensive guides in the [`docs/`](docs/README.md) directory:
   tracked via GitHub Project Issues.
 
 ---
+
+## 🤝 Community & Support
+
+* **Issues**: Report bugs or request features via
+  [GitHub Issues](https://github.com/Vorce-Studios/Vorce/issues).
+* **Discussions**: Ask questions and share ideas in
+  [GitHub Discussions](https://github.com/Vorce-Studios/Vorce/discussions)
+  (if enabled).
 
 ## 🤝 Contributing
 

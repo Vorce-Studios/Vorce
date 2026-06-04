@@ -33,17 +33,6 @@
     "autopilot_label": "autopilot-created"
   },
   "max_issues_per_planning_cycle": 30,
-  "working_sessions": {
-    "enabled": true,
-    "max_concurrent": 3,
-    "preferred_agents": [
-      "codex_orchestrator",
-      "gemini_cli",
-      "copilot_cli",
-      "cline_cli"
-    ],
-    "queue_non_jules_agent_issues": true
-  },
   "dual_ceo": {
     "enabled": true,
     "ceo_alpha_chain": [

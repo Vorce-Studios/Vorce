@@ -25,7 +25,6 @@ export default function MemoryPanel({ store, onRefresh }: Props) {
   const [newText, setNewText] = useState('');
   const [newType, setNewType] = useState<'permanent' | 'temporary'>('temporary');
   const [newPriority, setNewPriority] = useState<string>('medium');
-  const [newScopes, setNewScopes] = useState<string[]>(['all']);
   const [filterType, setFilterType] = useState<'permanent' | 'temporary' | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -42,7 +41,6 @@ export default function MemoryPanel({ store, onRefresh }: Props) {
         text: newText.trim(),
         type: newType,
         priority: newPriority as MemoryEntry['priority'],
-        scopes: newScopes,
         source: 'dashboard',
       };
       const res = await fetch('/api/memories', {
@@ -54,7 +52,6 @@ export default function MemoryPanel({ store, onRefresh }: Props) {
         setNewText('');
         setNewType('temporary');
         setNewPriority('medium');
-        setNewScopes(['all']);
         setShowAdd(false);
         onRefresh();
       }
@@ -185,44 +182,6 @@ export default function MemoryPanel({ store, onRefresh }: Props) {
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">Scopes (Geltungsbereiche)</label>
-            <div className="flex flex-wrap gap-2">
-              {['all', 'planning', 'monitoring', 'audit', 'coding'].map(scope => {
-                const isSelected = newScopes.includes(scope);
-                return (
-                  <button
-                    key={scope}
-                    type="button"
-                    onClick={() => {
-                      if (scope === 'all') {
-                        setNewScopes(['all']);
-                      } else {
-                        let updated = newScopes.filter(s => s !== 'all');
-                        if (updated.includes(scope)) {
-                          updated = updated.filter(s => s !== scope);
-                        } else {
-                          updated.push(scope);
-                        }
-                        if (updated.length === 0) {
-                          updated = ['all'];
-                        }
-                        setNewScopes(updated);
-                      }
-                    }}
-                    className={`text-xs py-1 px-2 rounded-lg border transition-all ${
-                      isSelected
-                        ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 font-semibold'
-                        : 'bg-slate-900/40 text-slate-400 border-slate-700 hover:border-slate-650'
-                    }`}
-                  >
-                    {scope === 'all' ? 'Alle' : scope}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           <div className="flex justify-end">
             <button
               onClick={handleAdd}
@@ -256,7 +215,7 @@ export default function MemoryPanel({ store, onRefresh }: Props) {
                   }`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-slate-200 leading-relaxed">{mem.text}</p>
-                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2 mt-2">
                       <span className={`text-[9px] px-1.5 py-0.5 rounded border ${PRIORITY_COLORS[mem.priority]}`}>
                         {mem.priority}
                       </span>
@@ -268,16 +227,6 @@ export default function MemoryPanel({ store, onRefresh }: Props) {
                         <Tag className="w-2.5 h-2.5" />
                         {mem.type === 'temporary' ? 'Temporär' : 'Permanent'}
                       </span>
-                      {mem.scopes && mem.scopes.map(s => (
-                        <span key={s} className="text-[9px] px-1.5 py-0.5 rounded border bg-purple-950/40 text-purple-300 border-purple-800/40">
-                          {s}
-                        </span>
-                      ))}
-                      {mem.last_accessed_at && (
-                        <span className="text-[9px] text-slate-500" title={`Letzter Zugriff: ${mem.last_accessed_at}`}>
-                          Zugriff: {new Date(mem.last_accessed_at).toLocaleDateString('de-DE')}
-                        </span>
-                      )}
                       <span className="text-[9px] text-slate-600 ml-auto">{mem.source}</span>
                     </div>
                   </div>

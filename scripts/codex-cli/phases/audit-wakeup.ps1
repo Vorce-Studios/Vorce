@@ -15,7 +15,7 @@ function Invoke-AuditWakeUp {
     Write-Host "`n[AUDIT] ========== Beta CEO Audit Wake-Up ==========" -ForegroundColor Blue
 
     # Ensure state array exists
-    if (-not ($State.PSObject.Properties.Name -contains "decisions_pending")) {
+    if ($null -eq $State.decisions_pending) {
         $State | Add-Member -MemberType NoteProperty -Name "decisions_pending" -Value @() -Force
     }
 
@@ -45,7 +45,7 @@ function Invoke-AuditWakeUp {
     }
 
     $delegationsData = ""
-    if ($State.PSObject.Properties.Name -contains "active_delegations" -and $null -ne $State.active_delegations) {
+    if ($null -ne $State.active_delegations) {
         $delegationsData = ($State.active_delegations | ForEach-Object { "- Issue #$($_.issue_number) an $($_.agent_type) (Session: $($_.jules_session_id)) - Status: $($_.jules_state)" }) -join "`n"
     }
 

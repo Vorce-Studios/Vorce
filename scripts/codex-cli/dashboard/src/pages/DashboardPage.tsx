@@ -211,45 +211,15 @@ export default function DashboardPage({ registry, sessions, auditResult, liveLog
             </div>
           </div>
           <div className="text-right text-sm text-slate-400">
-            <div className="flex items-center gap-1.5 justify-end">
+            <div className="flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5" />
               Letzter Heartbeat: {timeAgo(sessions.last_heartbeat || '')}
             </div>
-            {auditResult && (
-              <div className="flex items-center gap-1.5 mt-1 justify-end">
-                <AlertCircle className={`w-3.5 h-3.5 ${audit?.issues_found ? 'text-amber-400' : 'text-emerald-400'}`} />
-                System-Audit: <span className={audit?.issues_found ? 'text-amber-300 font-semibold' : 'text-emerald-300 font-semibold'}>
-                  {audit?.issues_found ? 'Auffälligkeiten' : 'Fehlerfrei'}
-                </span>
-                {auditResult.updated_at && <span className="text-[10px] text-slate-500">({timeAgo(auditResult.updated_at)})</span>}
-              </div>
-            )}
           </div>
         </div>
       </div>
 
-      {/* Audit Alert Box if issues found but no active decisions_pending */}
-      {audit?.issues_found && (!sessions.decisions_pending || sessions.decisions_pending.length === 0) && (
-        <div className="glass-card p-5 border border-amber-500/25 bg-amber-500/5">
-          <div className="flex items-center gap-2 mb-2 text-amber-400 font-semibold text-sm">
-            <AlertCircle className="w-4.5 h-4.5" />
-            Letztes System-Audit meldete Handlungsbedarf
-          </div>
-          <p className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed">
-            {normalizeAuditText(audit.dashboard_escalation || 'Es wurden Probleme beim letzten Systemlauf festgestellt.')}
-          </p>
-          {audit.remediation_command && (
-            <div className="mt-3">
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">Empfohlener Reparatur-Befehl:</span>
-              <pre className="text-xs text-amber-200 bg-slate-950/60 border border-slate-800 rounded p-2.5 mt-1.5 font-mono overflow-x-auto select-all">
-                {audit.remediation_command}
-              </pre>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Audit Alerts */}
+      {/* Eskalationen (Beta CEO Alerts) */}
       {sessions.decisions_pending && sessions.decisions_pending.length > 0 && (
         <div className="glass-card p-6 border border-rose-500/30 shadow-lg shadow-rose-500/10">
           <div className="flex items-center justify-between mb-4">
@@ -346,37 +316,6 @@ export default function DashboardPage({ registry, sessions, auditResult, liveLog
           </div>
         </div>
       )}
-      {/* Run control cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RunCard
-          title="Planning Run"
-          lastAt={sessions.last_planning_at}
-          nextAt={scheduler?.next_planning_at}
-          nextInSeconds={scheduler?.next_planning_in_seconds}
-          interval={`${scheduler?.planning_interval_minutes ?? 'N/A'} min`}
-          cancelled={runControl.cancel_next_planning}
-          note={runControl.next_planning_note}
-          onCancel={() => sendRunControl('planning', runControl.cancel_next_planning ? 'uncancel-next' : 'cancel-next')}
-          onNote={(note) => sendRunControl('planning', 'note-next', note)}
-        />
-        <RunCard
-          title="Monitoring Run"
-          lastAt={sessions.last_monitoring_at}
-          nextAt={scheduler?.next_monitoring_at}
-          nextInSeconds={scheduler?.next_monitoring_in_seconds}
-          interval={`${scheduler?.monitoring_interval_minutes ?? 'N/A'} min`}
-          cancelled={runControl.cancel_next_monitoring}
-          note={runControl.next_monitoring_note}
-          onCancel={() => sendRunControl('monitoring', runControl.cancel_next_monitoring ? 'uncancel-next' : 'cancel-next')}
-          onNote={(note) => sendRunControl('monitoring', 'note-next', note)}
-        />
-      </div>
-
-      {/* Live Logs & Working Sessions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <LiveLogPanel items={liveLogItems} />
-        <WorkingSessionsPanel sessions={sessions.working_sessions || []} />
-      </div>
 
       {/* Provider Quota Overview + Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -441,151 +380,6 @@ export default function DashboardPage({ registry, sessions, auditResult, liveLog
         </div>
       </div>
 
-    </div>
-  );
-}
-
-function RunCard({ title, lastAt, nextAt, nextInSeconds, interval, cancelled, note, onCancel, onNote }: {
-  title: string;
-  lastAt?: string;
-  nextAt?: string;
-  nextInSeconds?: number;
-  interval: string;
-  cancelled?: boolean;
-  note?: string;
-  onCancel: () => void;
-  onNote: (note: string) => void;
-}) {
-  const [draft, setDraft] = useState(note || '');
-  return (
-    <div className="glass-card p-5">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-          <CalendarClock className="w-4 h-4 text-cyan-400" />
-          {title}
-        </h3>
-        <span className={`text-[11px] px-2 py-1 rounded border ${cancelled ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'}`}>
-          {cancelled ? 'cancelled' : formatNextRun(nextInSeconds)}
-        </span>
-      </div>
-      <div className="grid grid-cols-2 gap-3 mt-4 text-xs text-slate-400">
-        <div>
-          <div className="text-slate-500">Letzter Run</div>
-          <div className="text-slate-200">{lastAt ? timeAgo(lastAt) : 'N/A'}</div>
-        </div>
-        <div>
-          <div className="text-slate-500">Naechster Run</div>
-          <div className="text-slate-200">{nextAt ? new Date(nextAt).toLocaleTimeString() : 'N/A'} · {interval}</div>
-        </div>
-      </div>
-      <div className="mt-4 flex gap-2">
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Info fuer kommenden Run"
-          className="flex-1 min-w-0 px-3 py-2 text-xs bg-slate-950/80 border border-slate-700 rounded text-slate-200 placeholder-slate-500"
-        />
-        <button onClick={() => onNote(draft)} className="px-3 py-2 text-xs rounded border border-cyan-500/30 bg-cyan-500/15 text-cyan-300 flex items-center gap-1">
-          <MessageSquare className="w-3.5 h-3.5" />
-          Info
-        </button>
-        <button onClick={onCancel} className="px-3 py-2 text-xs rounded border border-rose-500/30 bg-rose-500/15 text-rose-300 flex items-center gap-1">
-          <Ban className="w-3.5 h-3.5" />
-          {cancelled ? 'Aktivieren' : 'Cancel'}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function LiveLogPanel({ items }: { items: Array<{ time: string; message: string; level: string }> }) {
-  const hasProblems = items.some(item => item.level === 'error' || item.level === 'warn');
-  return (
-    <div className={`glass-card p-5 border ${hasProblems ? 'border-amber-500/25' : 'border-slate-800'}`}>
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-          <Terminal className="w-4 h-4 text-emerald-400" />
-          Live-Log
-        </h3>
-        <span className={`text-[11px] px-2 py-1 rounded border ${
-          hasProblems ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-        }`}>
-          {hasProblems ? 'Hinweise' : 'OK'}
-        </span>
-      </div>
-      <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
-        {items.length === 0 ? (
-          <div className="text-xs text-slate-500 rounded border border-slate-800 bg-slate-950/40 px-3 py-2">
-            Noch keine Live-Logs vorhanden.
-          </div>
-        ) : (
-          items.map((item, idx) => {
-            const levelClass =
-              item.level === 'error' ? 'bg-rose-500/10 text-rose-200 border-rose-500/25' :
-              item.level === 'warn' ? 'bg-amber-500/10 text-amber-200 border-amber-500/25' :
-              item.level === 'ok' ? 'bg-emerald-500/10 text-emerald-200 border-emerald-500/20' :
-              'bg-slate-950/45 text-slate-300 border-slate-800';
-            return (
-              <div key={`${item.time}-${idx}`} className={`grid grid-cols-[4.5rem_1fr] gap-2 rounded border px-3 py-2 text-xs ${levelClass}`}>
-                <span className="font-mono text-[11px] opacity-70">{item.time || '--:--:--'}</span>
-                <span className="truncate" title={item.message}>{item.message}</span>
-              </div>
-            );
-          })
-        )}
-      </div>
-    </div>
-  );
-}
-
-function WorkingSessionsPanel({ sessions }: { sessions: any[] }) {
-  const counts = sessions.reduce((acc, item) => {
-    const status = String(item.status || 'UNKNOWN').toUpperCase();
-    acc[status] = (acc[status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  const recent = [...sessions].slice(-8).reverse();
-
-  return (
-    <div className="glass-card p-5 border border-slate-800">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
-        <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-          <Activity className="w-4 h-4 text-cyan-400" />
-          Working Sessions
-        </h3>
-        <div className="flex flex-wrap gap-2 text-[11px]">
-          {['QUEUED', 'RUNNING', 'COMPLETED', 'FAILED'].map(status => (
-            <span key={status} className={`px-2 py-1 rounded border ${
-              status === 'FAILED' ? 'bg-rose-500/15 text-rose-300 border-rose-500/25' :
-              status === 'RUNNING' ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/25' :
-              status === 'COMPLETED' ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25' :
-              'bg-slate-900 text-slate-300 border-slate-700'
-            }`}>
-              {status}: {counts[status] || 0}
-            </span>
-          ))}
-        </div>
-      </div>
-      {recent.length === 0 ? (
-        <div className="text-xs text-slate-500 rounded border border-slate-800 bg-slate-950/40 px-3 py-2">
-          Noch keine Working Sessions geplant.
-        </div>
-      ) : (
-        <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
-          {recent.map((item, idx) => {
-            const status = String(item.status || 'UNKNOWN').toUpperCase();
-            return (
-              <div key={item.id || idx} className="grid grid-cols-[5rem_1fr_8rem] gap-2 rounded border border-slate-800 bg-slate-950/45 px-3 py-2 text-xs text-slate-300 items-center">
-                <span className="font-mono text-slate-500">#{item.issue_number || '-'}</span>
-                <span className="truncate" title={item.issue_title || item.prompt_hint || ''}>{item.issue_title || item.prompt_hint || 'Working Session'}</span>
-                <div className="text-right">
-                  <JulesStateBadge state={status} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

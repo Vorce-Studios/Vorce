@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, Activity, Settings, RefreshCw, Zap, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Activity, AlertCircle, GitPullRequest, Settings, RefreshCw, Zap, BarChart3 } from 'lucide-react';
 import { useData, useAutoRefresh } from './hooks';
 
 // Pages
@@ -73,7 +73,6 @@ export default function App() {
   const { data: sessions, loading: sessionsLoading, refetch: refetchSessions } = useData<ActiveSessions>('/active-sessions.json', defaultActiveSessions);
   const { data: issues, loading: issuesLoading, refetch: refetchIssues } = useData<GitHubIssue[]>('/github-issues.json', []);
   const { data: pullRequests, loading: prLoading, refetch: refetchPRs } = useData<PullRequest[]>('/pull-requests.json', []);
-  const { data: projectItems, refetch: refetchProjectItems } = useData<any>('/project-items.json', { items: [] });
   const { data: julesSessions, refetch: refetchJulesSessions } = useData<any[]>('/jules-sessions.json', []);
   const { data: memoryStore, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
   const { data: history, loading: historyLoading, refetch: refetchHistory } = useData<any[]>('/data.json', []);
@@ -85,7 +84,6 @@ export default function App() {
     refetchSessions();
     refetchIssues();
     refetchPRs();
-    refetchProjectItems();
     refetchJulesSessions();
     refetchMemory();
     refetchHistory();
@@ -112,7 +110,7 @@ export default function App() {
             />
           );
         case 'workstreams':
-          return <WorkstreamsPage issues={issues} sessions={sessions} pullRequests={pullRequests} julesSessions={julesSessions} projectItems={projectItems?.items || []} />;
+          return <WorkstreamsPage issues={issues} sessions={sessions} pullRequests={pullRequests} julesSessions={julesSessions} />;
         case 'reporting':
         return (
           <ManagerReportingPage
