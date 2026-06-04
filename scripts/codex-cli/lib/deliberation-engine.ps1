@@ -877,7 +877,7 @@ function Invoke-DualCeoTask {
             if ($betaProvider -eq "codex_orchestrator") {
                 $codexModel = if ($betaTier) { $betaTier } else { "gpt-5.4-mini" }
                 Write-Host "[DELIB] Starte sichtbare Codex-Session (Beta CEO Fallback): $TaskType (Model: $codexModel)" -ForegroundColor Cyan
-                
+
                 $betaResult = Invoke-AutopilotCodexSession `
                     -SessionType $TaskType `
                     -Prompt $Prompt `

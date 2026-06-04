@@ -6,6 +6,7 @@ Issue: #$IssueNumber $IssueTitle
 Entscheide anhand des fachlichen Inhalts, ob nach dem erfolgreichen Merge ein manueller Funktionstest durch den User noetig ist.
 
 Setze `QA_TEST`, wenn mindestens eines zutrifft:
+
 - sichtbare UI-/UX-Aenderung, Interaktion, Layout, Input-Verhalten oder Workflow
 - Hardware-, Media-, Audio-, Video-, Output-, Netzwerk- oder OS-spezifischer Laufzeitpfad
 - Persistenz, Save/Load, Project-Switching, Installation oder etwas, das automatisierte Tests nicht realistisch abdecken

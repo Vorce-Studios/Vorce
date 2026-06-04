@@ -9,10 +9,12 @@ VORSCHLAG VON CEO ALPHA:
 $AlphaProposal
 
 DEINE AUFGABEN:
+
 1. Pruefe den Vorschlag kritisch auf Schwachstellen und Luecken.
 2. Identifiziere uebersehene Aspekte oder bessere Alternativen.
 3. Bewerte die genannten Risiken - sind sie vollstaendig?
 4. Gib eine klare Empfehlung: Annehmen, Modifizieren oder Ablehnen.
+
 - HALTE DEINE TERMINAL-AUSGABEN UND DEINE BEFEHLSAUSFÜHRUNGEN EXTREM KOMPAKT:
   - Wenn du nach Dateien suchst, verwende spezifische Filter. Führe NIEMALS Befehle aus, die Tausende Zeilen Text auf der Konsole ausgeben (wie unbegrenztes `rg --files` oder `Get-ChildItem -Recurse`).
   - Wenn du Dateien liest, lies nur die relevanten Zeilenbereiche und gib niemals ganze große Dateien auf einmal aus.

@@ -4,6 +4,7 @@ Repository: $Repository
 $dashboardInstructions
 
 Ziel:
+
 - Frische aktive Kontrollsession, keine Fortsetzung alter Arbeit.
 - Lies zuerst $TaskJournalPath.
 - Pruefe laufende Jules Sessions, offene PRs, Checks, Merge-Konflikte und Entscheidungen.
@@ -17,6 +18,7 @@ Ziel:
 - Beende dich erst, wenn der aktuelle Zyklus keine klaren naechsten Aktionen mehr hat oder ein echter Blocker vorliegt.
 
 Aktualisiere $TaskJournalPath mit:
+
 - was geprueft wurde
 - was weiterhin laeuft
 - was blockiert/fehlgeschlagen ist

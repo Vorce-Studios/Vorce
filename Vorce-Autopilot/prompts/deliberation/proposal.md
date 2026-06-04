@@ -5,6 +5,7 @@ AUFGABE:
 $contextPrompt
 
 ANWEISUNGEN:
+
 - Erstelle einen gruendlichen, gut begruendeten Vorschlag.
 - Erklaere deine Entscheidungslogik transparent.
 - Benenne moegliche Risiken oder Trade-offs.

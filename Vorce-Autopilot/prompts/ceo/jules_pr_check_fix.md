@@ -7,6 +7,7 @@ Titel: $PullRequestTitle
 Fehlgeschlagene Checks: $checks
 
 Scope:
+
 - Nur die Ursache der roten Checks beheben.
 - Keinen neuen PR erstellen.
 - Keine unrelated Aenderungen anfassen.

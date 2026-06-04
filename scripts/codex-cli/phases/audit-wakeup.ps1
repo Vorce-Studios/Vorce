@@ -53,7 +53,7 @@ function Invoke-AuditWakeUp {
     $auditContext = ""
     if ($Config.PSObject.Properties.Name -contains "audit_sequence") {
         Write-Host "[AUDIT] Starte sequentielle Audit-Sequenz (Session Splitting)..." -ForegroundColor Yellow
-        
+
         foreach ($step in $Config.audit_sequence) {
             Write-Host "[AUDIT] Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
             $promptVars = @{
@@ -73,7 +73,7 @@ function Invoke-AuditWakeUp {
                 -DryRun:$DryRun `
                 -Prompt $fullPrompt `
                 -State $State
-                
+
             if ($stepResult.success) {
                 $auditContext += "`n### Ergebnis $($step.label):`n$($stepResult.output)`n"
             } else {

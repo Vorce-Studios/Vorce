@@ -10,6 +10,7 @@ Loese primaer lokal die Merge-Konflikte dieses bestehenden PR-Branches gegen `$B
 Du arbeitest bereits in einem isolierten Temp-Worktree des PR-Branches; der Merge gegen `origin/$BaseRefName` wurde vorbereitet.
 
 Regeln:
+
 - Arbeite ausschliesslich auf dem bestehenden Branch `$HeadRefName`.
 - Keine neue Feature-Umsetzung, kein breiter Refactor.
 - Keine unrelated Dateien anfassen.
