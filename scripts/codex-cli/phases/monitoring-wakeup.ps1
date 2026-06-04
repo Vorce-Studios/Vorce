@@ -367,17 +367,17 @@ function Invoke-MonitoringWakeUp {
             $monitoringContext = ""
             $prsData = $prs | ConvertTo-Json -Depth 3
             $sessionsData = $State.active_delegations | ConvertTo-Json -Depth 3
-            
+
             $LagebildText = ""
             try {
                 $LagebildText = Get-VorceLagebildSummary -State $State -Config $Config -QuotaRegistry $QuotaRegistry
             } catch {
                 Write-Warning "[MONITOR] Konnte Lagebild-Zusammenfassung nicht generieren: $_"
             }
-            
+
             foreach ($step in $Config.monitoring_sequence) {
                 Write-Host "[MONITOR] Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
-                
+
                 $promptVars = @{ repo = $repo }
                 if ($step.id -eq "session_health" -or $step.prompt_ref -eq "monitor_sessions") {
                     $promptVars.sessions = $sessionsData
@@ -390,9 +390,9 @@ function Invoke-MonitoringWakeUp {
                     $promptVars.sessions = $sessionsData
                     $promptVars.context = $monitoringContext
                 }
-                
+
                 $stepPrompt = Get-VorceConfigPrompt -Config $Config -PromptKey $step.prompt_ref -Variables $promptVars
-                
+
                 $fullPrompt = ""
                 if ($step.id -eq "monitoring_synthesis" -or $step.prompt_ref -eq "monitoring_synthesis") {
                     $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$LagebildText`n`n$stepPrompt"
@@ -407,7 +407,7 @@ function Invoke-MonitoringWakeUp {
                     -DryRun:$DryRun `
                     -Prompt $fullPrompt `
                     -State $State
-                    
+
                 if ($stepResult.success) {
                     $monitoringContext += "`n### Ergebnis $($step.label):`n$($stepResult.output)`n"
                     if ($step.id -eq "monitoring_synthesis" -or $step.prompt_ref -eq "monitoring_synthesis") {
