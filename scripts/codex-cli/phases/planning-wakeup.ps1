@@ -135,7 +135,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                 foreach ($cpr in $conflictingPrs) {
                     $prNum = [int]$cpr.number
                     $conflictTag = "resolve-conflict-pr-$prNum"
-                    
+
                     # Check if a conflict-resolution issue was already created for this PR in the last 24 hours
                     $recentConflictIssue = $false
                     if ($null -ne $State.autopilot_created_issues) {

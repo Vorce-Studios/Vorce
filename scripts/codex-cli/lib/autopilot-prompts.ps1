@@ -75,11 +75,11 @@ function Get-VorceLagebildSummary {
         try {
             $issuesRaw = Get-Content -LiteralPath $cachedIssuePath -Raw -Encoding UTF8 | ConvertFrom-Json
             if ($null -ne $issuesRaw -and ($issuesRaw -is [System.Array] -or $issuesRaw -is [System.Collections.IList])) {
-                $filtered = @($issuesRaw | Where-Object { 
-                    $_.state -eq "OPEN" -and 
+                $filtered = @($issuesRaw | Where-Object {
+                    $_.state -eq "OPEN" -and
                     ($_.labels.name -contains "jules-task" -or $_.labels.name -contains "priority: critical" -or $_.labels.name -contains "priority: high")
                 } | Select-Object -First 25)
-                
+
                 if ($filtered.Count -gt 0) {
                     $issueLines = foreach ($i in $filtered) {
                         $labels = ($i.labels.name) -join ", "
