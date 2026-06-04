@@ -85,9 +85,7 @@ impl OutputPanel {
                             .auto_shrink([false; 2])
                             .max_height(150.0)
                             .show(ui, |ui| {
-                                // ⚡ Bolt: Iterate over the outputs slice directly instead of collecting to a Vec.
-                                // This avoids heap allocation per frame in the immediate-mode GUI.
-                                let outputs = output_manager.outputs();
+                                let outputs = output_manager.outputs().to_vec();
                                 for (i, output) in outputs.iter().enumerate() {
                                     let is_selected = self.selected_output_id == Some(output.id);
 

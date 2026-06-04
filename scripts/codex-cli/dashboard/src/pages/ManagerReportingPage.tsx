@@ -1,11 +1,19 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
+  BarChart3,
+  TrendingUp,
   Clock,
   DollarSign,
   CheckCircle2,
+  AlertTriangle,
   Layers,
+  MessageSquare,
+  Calendar,
+  ArrowUpRight,
   Users,
-  Zap
+  Zap,
+  ChevronRight,
+  TrendingDown
 } from 'lucide-react';
 import type { QuotaRegistry, ActiveSessions, GitHubIssue, PullRequest } from '../types';
 
@@ -17,12 +25,13 @@ interface ManagerReportingPageProps {
   history: any[];
 }
 
-export default function ManagerReportingPage({ registry, sessions, issues }: ManagerReportingPageProps) {
+export default function ManagerReportingPage({ registry, sessions, issues, pullRequests, history }: ManagerReportingPageProps) {
   const [timeRange, setTimeRange] = useState<'today' | '7d' | '30d'>('7d');
   const [selectedLabel, setSelectedLabel] = useState<string>('all');
 
   // --- 1. Berechnungen für Issues & PRs ---
   const totalIssues = issues.length;
+  const openIssues = issues.filter(i => i.state.toLowerCase() === 'open').length;
   const closedIssues = issues.filter(i => i.state.toLowerCase() === 'closed').length;
   const resolutionRate = totalIssues > 0 ? Math.round((closedIssues / totalIssues) * 100) : 0;
 
@@ -49,6 +58,7 @@ export default function ManagerReportingPage({ registry, sessions, issues }: Man
 
   // --- 2. Kosten & Quoten ---
   let totalCostToday = 0;
+  let totalCallsToday = 0;
   const providerStats: { name: string; calls: number; cost: number; limit: number; budget: number }[] = [];
 
   if (registry.providers) {
@@ -56,6 +66,7 @@ export default function ManagerReportingPage({ registry, sessions, issues }: Man
       const calls = provider.usage_today?.calls || 0;
       const cost = provider.usage_today?.estimated_cost_usd || 0;
       totalCostToday += cost;
+      totalCallsToday += calls;
 
       providerStats.push({
         name,

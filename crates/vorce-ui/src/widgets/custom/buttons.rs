@@ -1,4 +1,5 @@
 use crate::theme::colors;
+use crate::widgets::custom::hold_action::hold_to_action_button;
 use crate::widgets::icons::{AppIcon, IconManager};
 use egui::{
     Color32, CornerRadius, Pos2, Rect, Response, Sense, Stroke, Ui, Vec2, WidgetInfo, WidgetType,
@@ -257,7 +258,6 @@ pub fn duplicate_button(ui: &mut Ui) -> Response {
 }
 
 pub fn delete_button(ui: &mut Ui) -> bool {
-    use crate::widgets::custom::hold_to_action_button;
     hold_to_action_button(ui, "🗑", colors::ERROR_COLOR, "Delete")
 }
 

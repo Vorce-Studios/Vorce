@@ -204,56 +204,9 @@ impl App {
 
                 match event {
                     WindowEvent::CloseRequested if output_id == 0 => {
-                        // Save window geometry before exiting
-                        if let Some(window_context) = self.window_manager.get(0) {
-                            let is_maximized = window_context.window.is_maximized();
-                            self.ui_state.user_config.window_maximized = is_maximized;
-
-                            if !is_maximized {
-                                let inner_size = window_context
-                                    .window
-                                    .inner_size()
-                                    .to_logical::<f32>(window_context.window.scale_factor());
-                                let size: winit::dpi::LogicalSize<u32> = inner_size.cast::<u32>();
-                                self.ui_state.user_config.window_width = Some(size.width);
-                                self.ui_state.user_config.window_height = Some(size.height);
-
-                                if let Ok(position) = window_context.window.outer_position() {
-                                    let logical_pos = position
-                                        .to_logical::<i32>(window_context.window.scale_factor());
-                                    self.ui_state.user_config.window_x = Some(logical_pos.x);
-                                    self.ui_state.user_config.window_y = Some(logical_pos.y);
-                                }
-                            }
-                        }
-                        let _ = self.ui_state.user_config.save();
                         elwt.exit();
                     }
-                    WindowEvent::Moved(position) if output_id == 0 => {
-                        if let Some(window_context) = self.window_manager.get(0) {
-                            if !window_context.window.is_maximized() {
-                                let logical_pos = position
-                                    .to_logical::<i32>(window_context.window.scale_factor());
-                                self.ui_state.user_config.window_x = Some(logical_pos.x);
-                                self.ui_state.user_config.window_y = Some(logical_pos.y);
-                            }
-                        }
-                    }
                     WindowEvent::Resized(size) => {
-                        if output_id == 0 {
-                            if let Some(window_context) = self.window_manager.get(0) {
-                                let is_maximized = window_context.window.is_maximized();
-                                self.ui_state.user_config.window_maximized = is_maximized;
-                                if !is_maximized && size.width > 0 && size.height > 0 {
-                                    let logical_size = size
-                                        .to_logical::<u32>(window_context.window.scale_factor());
-                                    self.ui_state.user_config.window_width =
-                                        Some(logical_size.width);
-                                    self.ui_state.user_config.window_height =
-                                        Some(logical_size.height);
-                                }
-                            }
-                        }
                         let new_size =
                             if let Some(window_context) = self.window_manager.get_mut(output_id) {
                                 if size.width > 0 && size.height > 0 {

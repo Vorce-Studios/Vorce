@@ -99,57 +99,30 @@ function Format-MemoryBlock {
     Returns an empty string if no critical memories exist.
     #>
     param(
-        [Parameter(Mandatory=$false)][string]$TaskType,
-        [object]$Store,
-        [switch]$DryRun
+        [Parameter(Mandatory=$false)][string]$TaskType, # Kept for backward compatibility
+        [object]$Store
     )
-
-    if (-not $Store) {
-        $Store = Read-MemoryStore
-    }
 
     $allMemories = Get-RelevantMemories -Store $Store
     if ($allMemories.Count -eq 0) { return "" }
 
-    # Context-aware filtering: filter memories by current TaskType scope or "all"
-    $resolvedTaskType = if ([string]::IsNullOrWhiteSpace($TaskType)) { "all" } else { $TaskType.ToLower() }
-    $scopedMemories = @($allMemories | Where-Object {
-        $mScopes = if ($_.PSObject.Properties.Name -contains "scopes") { @($_.scopes) } else { @("all") }
-        $mScopes -contains "all" -or $mScopes -contains $resolvedTaskType
-    })
-
-    if ($scopedMemories.Count -eq 0) { return "" }
-
     # Only inject CRITICAL priority memories automatically
-    $critical = @($scopedMemories | Where-Object { $_.priority -eq "critical" })
-    $otherCount = $scopedMemories.Count - $critical.Count
+    $critical = @($allMemories | Where-Object { $_.priority -eq "critical" })
+    $otherCount = $allMemories.Count - $critical.Count
 
     if ($critical.Count -eq 0 -and $otherCount -eq 0) { return "" }
 
     $lines = @("[KONTEXT-ERINNERUNGEN]")
-    $needSave = $false
-    $nowStr = (Get-Date -Format 'o')
 
     if ($critical.Count -gt 0) {
         foreach ($m in $critical) {
             $typeLabel = if ($m.type -eq "temporary") { "[TEMPORAER]" } else { "[RICHTLINIE]" }
             $lines += "- $typeLabel $($m.text)"
-
-            # Update access timestamp in the original store object
-            $storeMem = @($Store.memories | Where-Object { $_.id -eq $m.id })[0]
-            if ($storeMem) {
-                if ($storeMem.PSObject.Properties.Name -contains "last_accessed_at") {
-                    $storeMem.last_accessed_at = $nowStr
-                } else {
-                    $storeMem | Add-Member -MemberType NoteProperty -Name "last_accessed_at" -Value $nowStr -Force
-                }
-                $needSave = $true
-            }
         }
     }
 
     if ($otherCount -gt 0) {
-        $lines += "- [INFO] $otherCount weitere Erinnerungen fuer '$resolvedTaskType' gespeichert (on-demand via Search-Memories abrufbar)."
+        $lines += "- [INFO] $otherCount weitere Erinnerungen gespeichert (on-demand via Search-Memories abrufbar)."
     }
 
     $lines += "---"
@@ -157,13 +130,8 @@ function Format-MemoryBlock {
 
     $block = $lines -join "`n"
 
-    # Atomically save updated access timestamps
-    if ($needSave -and -not $DryRun.IsPresent) {
-        Save-MemoryStore -Store $Store
-    }
-
     $tokenEstimate = [Math]::Ceiling($block.Length / 4)
-    Write-Host "[MEMORY] $($critical.Count) kritische Erinnerungen injiziert fuer '$resolvedTaskType', $otherCount on-demand verfuegbar (~${tokenEstimate} Tokens)" -ForegroundColor DarkGray
+    Write-Host "[MEMORY] $($critical.Count) kritische Erinnerungen injiziert, $otherCount on-demand verfuegbar (~${tokenEstimate} Tokens)" -ForegroundColor DarkGray
 
     return $block
 }
@@ -266,7 +234,6 @@ function Add-Memory {
         [Parameter(Mandatory)][string]$Text,
         [Parameter(Mandatory)][string]$Type, # "permanent" or "temporary"
         [string]$Priority = "medium",
-        [string[]]$Scopes = @("all"),
         [string]$Source = "autopilot"
     )
 
@@ -284,38 +251,21 @@ function Add-Memory {
         $Type = "temporary"
     }
 
-    # Validate scopes
-    $allowedScopes = @("planning", "monitoring", "audit", "coding", "all")
-    $validatedScopes = @()
-    foreach ($s in $Scopes) {
-        $sLower = $s.ToLower().Trim()
-        if ($allowedScopes -contains $sLower) {
-            $validatedScopes += $sLower
-        } else {
-            Write-Warning "[MEMORY] Ungueltiger Scope '$s' ignoriert."
-        }
-    }
-    if ($validatedScopes.Count -eq 0) {
-        $validatedScopes = @("all")
-    }
-
     $id = "mem-$(Get-Date -Format 'yyyyMMddHHmmss')-$([guid]::NewGuid().ToString('N').Substring(0, 4))"
 
     $entry = [ordered]@{
-        id               = $id
-        text             = $Text
-        type             = $Type
-        priority         = $Priority
-        scopes           = $validatedScopes
-        created_at       = (Get-Date -Format 'o')
-        last_accessed_at = (Get-Date -Format 'o')
-        source           = $Source
+        id         = $id
+        text       = $Text
+        type       = $Type
+        priority   = $Priority
+        created_at = (Get-Date -Format 'o')
+        source     = $Source
     }
 
     $store.memories += @($entry)
     Save-MemoryStore -Store $store
 
-    Write-Host "[MEMORY] Erinnerung '$id' hinzugefuegt ($Type) mit Scopes ($($validatedScopes -join ', '))." -ForegroundColor Green
+    Write-Host "[MEMORY] Erinnerung '$id' hinzugefuegt ($Type)." -ForegroundColor Green
     return $true
 }
 
@@ -339,243 +289,4 @@ function Remove-Memory {
     Save-MemoryStore -Store $store
     Write-Host "[MEMORY] Erinnerung '$Id' entfernt." -ForegroundColor Green
     return $true
-}
-
-function Optimize-AutopilotMemories {
-    <#
-    .SYNOPSIS
-    Runs an LLM-based audit to consolidate, prioritize, or prune autopilot memories.
-    #>
-    param(
-        [Parameter(Mandatory)][object]$State,
-        [Parameter(Mandatory)][object]$Config,
-        [Parameter(Mandatory)][object]$QuotaRegistry,
-        [switch]$DryRun
-    )
-
-    $store = Read-MemoryStore
-    if (-not $store.memories -or $store.memories.Count -eq 0) {
-        Write-Host "[MEMORY-OPTIMIZE] Keine Erinnerungen zum Optimieren vorhanden." -ForegroundColor Gray
-        return
-    }
-
-    Write-Host "`n[MEMORY-OPTIMIZE] Starte autonome Memory-Optimierung..." -ForegroundColor Blue
-
-    $memoriesData = @()
-    foreach ($m in $store.memories) {
-        $scopesStr = if ($m.PSObject.Properties.Name -contains "scopes") { $m.scopes -join ", " } else { "all" }
-        $lastAccessed = if ($m.PSObject.Properties.Name -contains "last_accessed_at") { $m.last_accessed_at } else { "never" }
-        $memoriesData += [ordered]@{
-            id = $m.id
-            text = $m.text
-            type = $m.type
-            priority = $m.priority
-            scopes = $scopesStr
-            created_at = $m.created_at
-            last_accessed_at = $lastAccessed
-        }
-    }
-    $memoriesJson = $memoriesData | ConvertTo-Json -Depth 5
-
-    $promptText = @"
-Du bist das autonome Memory-Optimierungs-Modul des Vorce-Autopiloten.
-Deine Aufgabe ist es, den Speicher (autopilot-memories.json) sauber, hochrelevant und token-effizient zu halten.
-
-Hier ist die Liste der aktuellen Erinnerungen:
-$memoriesJson
-
-Analysiere diese Erinnerungen und bestimme:
-1. Redundanzen & Ähnlichkeiten: Gibt es Erinnerungen, die sich überschneiden oder das Gleiche aussagen? Wenn ja, schlage eine Zusammenführung ("merge") vor.
-2. Veraltetes/Inaktivität (Decay): Erinnerungen vom Typ 'temporary', die seit längerer Zeit nicht mehr per 'last_accessed_at' aufgerufen wurden, sind wahrscheinlich veraltet oder gelöst. Wenn sie nicht mehr nützlich sind, schlage das Löschen ("delete") vor.
-3. Falsche Scopes oder Prioritäten: Überprüfe, ob die Priorität (critical, high, medium, low) oder der Scope (planning, monitoring, audit, coding, all) angepasst werden sollte, um Token in unrelevanten Phasen zu sparen (z.B. eine reine Programmier-Richtlinie braucht keinen 'planning' oder 'audit' Scope).
-
-Gib ein JSON-Objekt zurück, das strikt die folgende Struktur hat:
-{
-  "actions": [
-    {
-      "action": "delete",
-      "id": "mem-id-hier"
-    },
-    {
-      "action": "merge",
-      "ids": ["mem-id-1", "mem-id-2"],
-      "merged_memory": {
-        "text": "Der konsolidierte, präzise Text, der beide Erinnerungen zusammenfasst (auf Deutsch)",
-        "type": "temporary|permanent",
-        "priority": "critical|high|medium|low",
-        "scopes": ["all", "planning", "coding"]
-      }
-    },
-    {
-      "action": "modify",
-      "id": "mem-id-hier",
-      "priority": "new-priority-hier",
-      "scopes": ["new-scope-1", "new-scope-2"]
-    }
-  ]
-}
-
-WICHTIGE REGELN:
-1. Deine Antwort MUSS ausschließlich valides JSON sein. Kein Markdown-Codeblock, kein Begleittext!
-2. Jede Konsolidierung oder Textänderung MUSS auf DEUTSCH sein.
-3. Sei vorsichtig bei permanenten Richtlinien (type=permanent). Diese sollten selten gelöscht werden, es sei denn, sie widersprechen sich oder sind redundant.
-4. Wenn keine Optimierungen nötig sind, gib ein leeres Array zurück: { "actions": [] }
-"@
-
-    $libDir = Split-Path $PSCommandPath
-    $ScriptDir = Split-Path $libDir
-
-    $promptFile = Join-Path $ScriptDir "tmp\memory-opt-prompt.txt"
-    $promptText | Out-File -FilePath $promptFile -Encoding UTF8
-
-    $outputFile = Join-Path $ScriptDir "tmp\memory-opt-result.json"
-    $cliArgsFile = Join-Path $ScriptDir "tmp\memory-opt-args.json"
-    @("-m", "gemini-2.5-flash", "--output-format", "json", "-y") | ConvertTo-Json -Depth 5 -Compress | Out-File $cliArgsFile -Encoding UTF8
-
-    $statusFile = Join-Path $ScriptDir "tmp\memory-opt-status.txt"
-    $runVisibleCmd = Join-Path $ScriptDir "tools\run-visible-ceo-phase.ps1"
-
-    $cliArgs = @{
-        CliCommand   = "gemini"
-        CliArgsFile  = $cliArgsFile
-        OutputFile   = $outputFile
-        StatusFile   = $statusFile
-        PhaseName    = "Memory-Optimierung"
-        ProviderName = "Gemini"
-        PromptFile   = $promptFile
-    }
-
-    if ($DryRun.IsPresent) {
-        Write-Host "[MEMORY-OPTIMIZE] [DRY RUN] Memory-Optimierung uebersprungen." -ForegroundColor DarkYellow
-    } else {
-        Write-Host "[MEMORY-OPTIMIZE] Starte visible Terminal zur Memory-Optimierung..." -ForegroundColor Cyan
-        & $runVisibleCmd @cliArgs | Out-Null
-
-        if (Test-Path $outputFile) {
-            try {
-                $resultJson = Get-Content $outputFile -Raw -Encoding UTF8
-                $parsedObj = $null
-                $jsonObjMatch = [regex]::Match($resultJson, '(?s)\{.*\}')
-                if ($jsonObjMatch.Success) {
-                    $parsedObj = $jsonObjMatch.Value | ConvertFrom-Json
-                    
-                    # Handle wrapper JSON from CLI router if present
-                    if ($null -ne $parsedObj -and $parsedObj.PSObject.Properties.Name -contains "response") {
-                        $cleanJson = $parsedObj.response -replace '(?s)```json\s*', '' -replace '(?s)```\s*$', ''
-                        try {
-                            $parsedObj = $cleanJson | ConvertFrom-Json
-                        } catch {
-                            Write-Warning "[MEMORY-OPTIMIZE] Konnte eingebettetes JSON im Response nicht parsen."
-                        }
-                    }
-                }
-
-                $actions = @()
-                if ($parsedObj -and $parsedObj.actions) {
-                    $actions = @($parsedObj.actions)
-                }
-
-                if ($actions.Count -eq 0) {
-                    Write-Host "[MEMORY-OPTIMIZE] Keine Optimierungsmassnahmen vorgeschlagen." -ForegroundColor Green
-                } else {
-                    $newMemories = [System.Collections.ArrayList]@($store.memories)
-                    $modifiedAny = $false
-
-                    foreach ($act in $actions) {
-                        switch ($act.action) {
-                            "delete" {
-                                $targetId = $act.id
-                                $found = $null
-                                for ($i = 0; $i -lt $newMemories.Count; $i++) {
-                                    if ($newMemories[$i].id -eq $targetId) {
-                                        $found = $newMemories[$i]
-                                        break
-                                    }
-                                }
-                                if ($found) {
-                                    $newMemories.Remove($found)
-                                    Write-Host "[MEMORY-OPTIMIZE] Geloescht: $($found.id) - '$($found.text)'" -ForegroundColor Yellow
-                                    $modifiedAny = $true
-                                }
-                            }
-
-                            "merge" {
-                                $mergedIds = @($act.ids)
-                                $toRemove = @()
-                                foreach ($mem in $newMemories) {
-                                    if ($mergedIds -contains $mem.id) {
-                                        $toRemove += $mem
-                                    }
-                                }
-                                foreach ($tr in $toRemove) {
-                                    $newMemories.Remove($tr)
-                                    Write-Host "[MEMORY-OPTIMIZE] Entfernt fuer Merge: $($tr.id)" -ForegroundColor DarkGray
-                                }
-
-                                $mMem = $act.merged_memory
-                                $newId = "mem-$(Get-Date -Format 'yyyyMMddHHmmss')-$([guid]::NewGuid().ToString('N').Substring(0, 4))"
-                                $nowStr = (Get-Date -Format 'o')
-                                $mScopes = if ($mMem.scopes) { @($mMem.scopes) } else { @("all") }
-
-                                $newEntry = [ordered]@{
-                                    id               = $newId
-                                    text             = $mMem.text
-                                    type             = $mMem.type
-                                    priority         = $mMem.priority
-                                    scopes           = $mScopes
-                                    created_at       = $nowStr
-                                    last_accessed_at = $nowStr
-                                    source           = "optimization"
-                                }
-                                $newMemories.Add($newEntry)
-                                Write-Host "[MEMORY-OPTIMIZE] Zusammengefuehrt: $newId - '$($mMem.text)'" -ForegroundColor Green
-                                $modifiedAny = $true
-                            }
-
-                            "modify" {
-                                $targetId = $act.id
-                                $found = $null
-                                for ($i = 0; $i -lt $newMemories.Count; $i++) {
-                                    if ($newMemories[$i].id -eq $targetId) {
-                                        $found = $newMemories[$i]
-                                        break
-                                    }
-                                }
-                                if ($found) {
-                                    if ($act.priority) {
-                                        if ($found.PSObject.Properties.Name -contains "priority") {
-                                            $found.priority = $act.priority
-                                        } else {
-                                            $found | Add-Member -MemberType NoteProperty -Name "priority" -Value $act.priority -Force
-                                        }
-                                    }
-                                    if ($act.scopes) {
-                                        $newScopesList = @($act.scopes)
-                                        if ($found.PSObject.Properties.Name -contains "scopes") {
-                                            $found.scopes = $newScopesList
-                                        } else {
-                                            $found | Add-Member -MemberType NoteProperty -Name "scopes" -Value $newScopesList -Force
-                                        }
-                                    }
-                                    Write-Host "[MEMORY-OPTIMIZE] Modifiziert: $targetId (Prio: $($act.priority), Scopes: $($act.scopes -join ', '))" -ForegroundColor Cyan
-                                    $modifiedAny = $true
-                                }
-                            }
-                        }
-                    }
-
-                    if ($modifiedAny) {
-                        $store.memories = @($newMemories)
-                        Save-MemoryStore -Store $store
-                        Write-Host "[MEMORY-OPTIMIZE] Optimierungen wurden erfolgreich gespeichert." -ForegroundColor Green
-                    }
-                }
-            } catch {
-                Write-Warning "[MEMORY-OPTIMIZE] Fehler beim Parsen des Optimierungs-Ergebnisses: $_"
-            }
-        }
-
-        # Cleanup temp files
-        Remove-Item -Path $promptFile, $outputFile, $cliArgsFile, $statusFile -Force -ErrorAction SilentlyContinue
-    }
 }
