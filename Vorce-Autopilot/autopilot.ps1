@@ -64,6 +64,8 @@ function Write-Host {
 . (Join-Path $ScriptDir "src/lib/deliberation-engine.ps1")
 . (Join-Path $ScriptDir "src/lib/autopilot-session-manager.ps1")
 . (Join-Path $ScriptDir "src/lib/autopilot-prompts.ps1")
+. (Join-Path $ScriptDir "src/lib/github-client.ps1")
+. (Join-Path $ScriptDir "src/lib/jules-client.ps1")
 . (Join-Path $ScriptDir "src/phases/planning-wakeup.ps1")
 . (Join-Path $ScriptDir "src/phases/monitoring-wakeup.ps1")
 . (Join-Path $ScriptDir "src/phases/audit-wakeup.ps1")

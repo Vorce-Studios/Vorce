@@ -23,7 +23,7 @@ function Read-MemoryStore {
     #>
 
     if (-not (Test-Path $script:MemoryFilePath)) {
-        return [ordered]@{
+        return [PSCustomObject]@{
             schema_version = 1
             memories       = @()
         }
@@ -34,7 +34,7 @@ function Read-MemoryStore {
         return ($content | ConvertFrom-Json)
     } catch {
         Write-Warning "[MEMORY] Konnte Memory-Store nicht lesen: $_"
-        return [ordered]@{
+        return [PSCustomObject]@{
             schema_version = 1
             memories       = @()
         }
@@ -73,7 +73,14 @@ function Get-RelevantMemories {
         $Store = Read-MemoryStore
     }
 
-    $memories = @($Store.memories)
+    $memories = @()
+    if ($Store) {
+        if ($Store -is [System.Collections.IDictionary]) {
+            $memories = @($Store["memories"])
+        } else {
+            try { $memories = @($Store.memories) } catch { }
+        }
+    }
     if ($memories.Count -eq 0) { return @() }
 
     # Sort order: temporary first, then permanent
@@ -110,7 +117,7 @@ function Format-MemoryBlock {
         [object]$Store
     )
 
-    $allMemories = Get-RelevantMemories -Store $Store
+    $allMemories = @(Get-RelevantMemories -Store $Store)
     if ($allMemories.Count -eq 0) { return "" }
 
     # Only inject CRITICAL priority memories automatically
@@ -162,7 +169,14 @@ function Search-Memories {
         $Store = Read-MemoryStore
     }
 
-    $allMemories = @($Store.memories)
+    $allMemories = @()
+    if ($Store) {
+        if ($Store -is [System.Collections.IDictionary]) {
+            $allMemories = @($Store["memories"])
+        } else {
+            try { $allMemories = @($Store.memories) } catch { }
+        }
+    }
     if ($allMemories.Count -eq 0) {
         Write-Host "[MEMORY] Keine Erinnerungen im Store." -ForegroundColor DarkGray
         return ""
@@ -219,7 +233,14 @@ function Get-MemorySummary {
         $Store = Read-MemoryStore
     }
 
-    $all = @($Store.memories)
+    $all = @()
+    if ($Store) {
+        if ($Store -is [System.Collections.IDictionary]) {
+            $all = @($Store["memories"])
+        } else {
+            try { $all = @($Store.memories) } catch { }
+        }
+    }
     if ($all.Count -eq 0) { return "" }
 
     $permCount = @($all | Where-Object { $_.type -eq "permanent" }).Count
@@ -242,9 +263,15 @@ function Add-Memory {
     )
 
     $store = Read-MemoryStore
+    $memories = @()
+    if ($store -is [System.Collections.IDictionary]) {
+        $memories = @($store["memories"])
+    } else {
+        try { $memories = @($store.memories) } catch { }
+    }
 
     # Enforce max 30 memories
-    if ($store.memories.Count -ge 30) {
+    if ($memories.Count -ge 30) {
         Write-Warning "[MEMORY] Maximum von 30 Erinnerungen erreicht. Loeschen Sie alte Eintraege zuerst."
         return $false
     }
@@ -266,7 +293,11 @@ function Add-Memory {
         source     = $Source
     }
 
-    $store.memories += @($entry)
+    if ($store -is [System.Collections.IDictionary]) {
+        $store["memories"] = @($memories + $entry)
+    } else {
+        $store.memories = @($memories + $entry)
+    }
     Save-MemoryStore -Store $store
 
     Write-Host "[MEMORY] Erinnerung '$id' hinzugefuegt ($Type)." -ForegroundColor Green
@@ -281,15 +312,26 @@ function Remove-Memory {
     param([Parameter(Mandatory)][string]$Id)
 
     $store = Read-MemoryStore
-    $before = $store.memories.Count
-    $store.memories = @($store.memories | Where-Object { $_.id -ne $Id })
-    $after = $store.memories.Count
+    $memories = @()
+    if ($store -is [System.Collections.IDictionary]) {
+        $memories = @($store["memories"])
+    } else {
+        try { $memories = @($store.memories) } catch { }
+    }
+    $before = $memories.Count
+    $kept = @($memories | Where-Object { $_.id -ne $Id })
+    $after = $kept.Count
 
     if ($before -eq $after) {
         Write-Warning "[MEMORY] Erinnerung '$Id' nicht gefunden."
         return $false
     }
 
+    if ($store -is [System.Collections.IDictionary]) {
+        $store["memories"] = @($kept)
+    } else {
+        $store.memories = @($kept)
+    }
     Save-MemoryStore -Store $store
     Write-Host "[MEMORY] Erinnerung '$Id' entfernt." -ForegroundColor Green
     return $true
@@ -309,7 +351,12 @@ function Optimize-AutopilotMemories {
     )
 
     $store = Read-MemoryStore
-    $memories = @($store.memories)
+    $memories = @()
+    if ($store -is [System.Collections.IDictionary]) {
+        $memories = @($store["memories"])
+    } else {
+        try { $memories = @($store.memories) } catch { }
+    }
     if ($memories.Count -le 30) {
         Write-Host "[MEMORY] Optimierung nicht noetig ($($memories.Count)/30)." -ForegroundColor DarkGray
         return
@@ -338,7 +385,11 @@ function Optimize-AutopilotMemories {
         return
     }
 
-    $store.memories = @($kept)
+    if ($store -is [System.Collections.IDictionary]) {
+        $store["memories"] = @($kept)
+    } else {
+        $store.memories = @($kept)
+    }
     Save-MemoryStore -Store $store
     Write-Host "[MEMORY] $removed alte Erinnerungen entfernt; 30 bleiben aktiv." -ForegroundColor Green
 }
