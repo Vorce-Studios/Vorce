@@ -234,9 +234,7 @@ export default defineConfig({
                     text: payload.entry.text,
                     type: payload.entry.type || 'temporary',
                     priority: payload.entry.priority || 'medium',
-                    scopes: payload.entry.scopes || ['all'],
                     created_at: new Date().toISOString(),
-                    last_accessed_at: new Date().toISOString(),
                     source: payload.entry.source || 'dashboard'
                   };
 
@@ -262,90 +260,6 @@ export default defineConfig({
                 res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));
               }
             });
-          } else if (req.method === 'POST' && req.url === '/api/alerts') {
-            let body = '';
-            req.on('data', (chunk: any) => { body += chunk; });
-            req.on('end', () => {
-              try {
-                const payload = JSON.parse(body || '{}');
-                const statePath = path.resolve(__dirname, '../autopilot-state.json');
-                const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
-                const readableStatePath = fs.existsSync(statePath) ? statePath : publicStatePath;
-                const state = fs.existsSync(readableStatePath)
-                  ? JSON.parse(fs.readFileSync(readableStatePath, 'utf-8'))
-                  : { decisions_pending: [] };
-
-                if (!Array.isArray(state.decisions_pending)) state.decisions_pending = [];
-
-                if (payload.action === 'remove') {
-                  state.decisions_pending = state.decisions_pending.filter((alert: any, idx: number) => String(alert.id || idx) !== String(payload.id));
-                } else if (payload.action === 'escalate-user') {
-                  const alert = state.decisions_pending.find((item: any, idx: number) => String(item.id || idx) === String(payload.id));
-                  if (alert) {
-                    alert.owner = 'user';
-                    alert.status = 'awaiting_user';
-                    alert.process_stage = 'user_decision';
-                    alert.escalation_level = 'user';
-                    alert.user_escalation_reason = payload.response || 'CEO Sondersession konnte die Ursache nicht beheben. Deine Entscheidung ist erforderlich.';
-                    alert.user_escalated_at = new Date().toISOString();
-                  }
-                }
-
-                fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf-8');
-                fs.writeFileSync(publicStatePath, JSON.stringify(state, null, 2), 'utf-8');
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ status: 'ok' }));
-              } catch (err) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));
-              }
-            });
-          } else if (req.method === 'POST' && req.url === '/api/run-control') {
-            let body = '';
-            req.on('data', (chunk: any) => { body += chunk; });
-            req.on('end', () => {
-              try {
-                const payload = JSON.parse(body || '{}');
-                const statePath = path.resolve(__dirname, '../autopilot-state.json');
-                const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
-                const readableStatePath = fs.existsSync(statePath) ? statePath : publicStatePath;
-                const state = fs.existsSync(readableStatePath)
-                  ? JSON.parse(fs.readFileSync(readableStatePath, 'utf-8'))
-                  : {};
-
-                state.run_control = state.run_control || {};
-                if (payload.type === 'planning') {
-                  if (payload.action === 'cancel-next') state.run_control.cancel_next_planning = true;
-                  if (payload.action === 'uncancel-next') state.run_control.cancel_next_planning = false;
-                  if (payload.action === 'note-next') state.run_control.next_planning_note = String(payload.note || '');
-                } else if (payload.type === 'monitoring') {
-                  if (payload.action === 'cancel-next') state.run_control.cancel_next_monitoring = true;
-                  if (payload.action === 'uncancel-next') state.run_control.cancel_next_monitoring = false;
-                  if (payload.action === 'note-next') state.run_control.next_monitoring_note = String(payload.note || '');
-                } else {
-                  throw new Error('Unknown run type');
-                }
-                state.run_control.updated_at = new Date().toISOString();
-
-                fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf-8');
-                fs.writeFileSync(publicStatePath, JSON.stringify(state, null, 2), 'utf-8');
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ status: 'ok' }));
-              } catch (err) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));
-              }
-            });
-          } else if (req.method === 'POST' && req.url === '/api/clear-alerts') {
-            try {
-              const flagPath = path.resolve(__dirname, '../clear-alerts.flag');
-              fs.writeFileSync(flagPath, '', 'utf-8');
-              res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ status: 'ok', message: 'Clear command sent' }));
-            } catch (err) {
-              res.writeHead(500, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
-            }
           } else {
             next();
           }

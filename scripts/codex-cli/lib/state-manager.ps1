@@ -154,51 +154,6 @@ function Remove-OrphanedTmpFiles {
     return $count
 }
 
-function Test-ObjectProperty {
-    <#
-    .SYNOPSIS
-    Safely tests if a PSObject has a given property.
-    Centralized here so all modules can use it.
-    #>
-    param([object]$Object, [string]$Name)
-    return $null -ne $Object -and ($Object.PSObject.Properties.Name -contains $Name)
-}
-
-function Normalize-AutopilotStateObject {
-    <#
-    .SYNOPSIS
-    Ensures all expected properties exist on the state object and that
-    array fields are actual arrays. Call this at the start of any phase
-    that mutates state to avoid "property not found" errors.
-    #>
-    param([Parameter(Mandatory)][object]$State)
-
-    $defaults = New-AutopilotState
-
-    # Ensure every default property exists
-    foreach ($key in $defaults.PSObject.Properties.Name) {
-        if (-not ($State.PSObject.Properties.Name -contains $key)) {
-            $State | Add-Member -MemberType NoteProperty -Name $key -Value $defaults.$key -Force
-        }
-    }
-
-    # Validate that array fields are actual arrays (deserialization can turn them into single objects or $null)
-    $arrayFields = @(
-        "active_delegations", "working_queue", "working_sessions",
-        "review_queue", "autopilot_created_issues", "completed_this_session",
-        "decisions_pending", "escalated_issues", "error_log", "deliberation_log"
-    )
-    foreach ($key in $arrayFields) {
-        if ($null -eq $State.$key) {
-            $State.$key = @()
-        } elseif ($State.$key -isnot [System.Array] -and $State.$key -isnot [System.Collections.IList]) {
-            $State.$key = @($State.$key)
-        }
-    }
-
-    return $State
-}
-
 function Invoke-StartupCleanup {
     <#
     .SYNOPSIS
@@ -224,7 +179,7 @@ function Invoke-StartupCleanup {
 }
 
 function New-AutopilotState {
-    return [PSCustomObject]@{
+    return [ordered]@{
         schema_version          = 1
         session_id              = "autopilot-$(Get-Date -Format 'yyyy-MM-dd-HHmm')"
         started_at              = (Get-Date -Format 'o')
@@ -232,8 +187,6 @@ function New-AutopilotState {
         last_planning_at        = $null
         last_monitoring_at      = $null
         active_delegations      = @()
-        working_queue           = @()
-        working_sessions        = @()
         review_queue            = @()
         autopilot_created_issues = @()
         completed_this_session  = @()
@@ -275,16 +228,16 @@ function Initialize-AutopilotState {
     $existing = Read-AutopilotState
     $defaults = New-AutopilotState
 
-    if ($null -ne $existing -and -not $Force.IsPresent -and ($existing -is [System.Management.Automation.PSCustomObject] -or $existing -is [System.Collections.IDictionary])) {
+    if ($null -ne $existing -and -not $Force.IsPresent -and ($null -ne $existing.PSObject)) {
         # Ensure all default properties exist on the existing state
-        foreach ($key in $defaults.PSObject.Properties.Name) {
+        foreach ($key in $defaults.Keys) {
             if (-not ($existing.PSObject.Properties.Name -contains $key)) {
-                $existing | Add-Member -MemberType NoteProperty -Name $key -Value $defaults.$key -Force
+                $existing | Add-Member -MemberType NoteProperty -Name $key -Value $defaults[$key] -Force
             }
         }
 
         # Validate that arrays are indeed arrays (sometimes deserialized as single object or null)
-        foreach ($key in @("active_delegations", "working_queue", "working_sessions", "review_queue", "autopilot_created_issues", "completed_this_session", "decisions_pending", "escalated_issues", "error_log", "deliberation_log")) {
+        foreach ($key in @("active_delegations", "review_queue", "autopilot_created_issues", "completed_this_session", "decisions_pending", "escalated_issues", "error_log", "deliberation_log")) {
             if ($null -eq $existing.$key) {
                 $existing.$key = @()
             } elseif ($existing.$key -isnot [System.Array] -and $existing.$key -isnot [System.Collections.IList]) {
@@ -330,20 +283,6 @@ function Initialize-AutopilotState {
     Save-AutopilotState -State $state
     Write-Host "[AUTOPILOT] Neuer State erstellt: $($state.session_id)" -ForegroundColor Green
     return $state
-}
-
-function Confirm-WorkingSessionsState {
-    param([Parameter(Mandatory)][object]$State)
-
-    foreach ($prop in @("working_queue", "working_sessions")) {
-        if (-not ($State.PSObject.Properties.Name -contains $prop)) {
-            $State | Add-Member -MemberType NoteProperty -Name $prop -Value @() -Force
-        } elseif ($null -eq $State.$prop) {
-            $State.$prop = @()
-        } elseif ($State.$prop -isnot [System.Array] -and $State.$prop -isnot [System.Collections.IList]) {
-            $State.$prop = @($State.$prop)
-        }
-    }
 }
 
 function Add-Delegation {

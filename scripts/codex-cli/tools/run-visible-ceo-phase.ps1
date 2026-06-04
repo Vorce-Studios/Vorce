@@ -133,6 +133,7 @@ if (-not $cmdInfo) {
     exit 1
 }
 
+$cmdSource = $cmdInfo.Source
 # Keep original .ps1 or other command source. Forcing .cmd breaks multiline arguments due to Windows batch file limitations.
 
 # --- Change to working directory ---
@@ -193,14 +194,6 @@ try {
     }
 
     $exitCode = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }
-
-    if ($exitCode -ne 0) {
-        $outContent = Get-Content -LiteralPath $OutputFile -Raw -ErrorAction SilentlyContinue
-        if ($outContent -match '(?s)\{.*\}' -or $outContent -match '```json') {
-            $exitCode = 0
-            Write-Host "[CEO] Workaround: Valid JSON detected despite Exit-Code 1, forcing Success." -ForegroundColor Yellow
-        }
-    }
 } catch {
     $errMsg = $_.Exception.Message
     Write-Host ""

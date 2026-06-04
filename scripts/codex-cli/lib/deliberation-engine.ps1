@@ -346,7 +346,7 @@ function Invoke-VisibleCeoPhase {
         $finalOutput = ""
         $isSuccess = [bool]((Test-ObjectProperty -Object $result -Name "Success") -and $result.Success)
         if ($isSuccess) {
-            if ((Test-ObjectProperty -Object $result -Name "OutputPath") -and $result.OutputPath -and (Test-Path -LiteralPath $result.OutputPath)) {
+            if ($result.OutputPath -and (Test-Path -LiteralPath $result.OutputPath)) {
                 $finalOutput = Get-Content -LiteralPath $result.OutputPath -Raw -Encoding UTF8
             } else {
                 $finalOutput = if (Test-ObjectProperty -Object $result -Name "Output") { $result.Output } else { "" }
@@ -793,75 +793,14 @@ function Invoke-DualCeoTask {
             -State $State
     }
 
-    # Resolve the preferred provider for the task first
-    $route = Resolve-CliProvider -QuotaRegistry $QuotaRegistry -TaskType $TaskType
-    if ($null -eq $route) {
-        return [ordered]@{
-            success  = $false
-            provider = $null
-            output   = "Kein Provider verfuegbar fuer '$TaskType'."
-            error    = "ALL_PROVIDERS_EXHAUSTED"
-            stats    = $null
-        }
-    }
-
-    $providerName = $route.provider
-    $modelTier = $route.model_tier
-    $command = $route.command
-
-    # --- Codex provider: Use the original visible session manager ---
-    if ($providerName -eq "codex_orchestrator") {
-        # Resolve model name
-        $modelName = $null
-        $providerConfig = $QuotaRegistry.providers.$providerName
-        $hasModels = $providerConfig.PSObject.Properties.Name -contains "models"
-        if ($hasModels -and $providerConfig.models -and $providerConfig.models.$modelTier) {
-            $modelName = $providerConfig.models.$modelTier.name
-        }
-        $codexModel = if ($modelName) { $modelName } else { "gpt-5.4-mini" }
-
-        Write-Host "[DELIB] Starte sichtbare Codex-Session (Single-Agent): $TaskType (Model: $codexModel)" -ForegroundColor Cyan
-
-        $result = Invoke-AutopilotCodexSession `
-            -SessionType $TaskType `
-            -Prompt $Prompt `
-            -State $State `
-            -Model $codexModel `
-            -VisibleExecTerminal `
-            -DryRun:$DryRun
-
-        Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
-
-        $finalOutput = ""
-        $isSuccess = [bool]((Test-ObjectProperty -Object $result -Name "Success") -and $result.Success)
-        if ($isSuccess) {
-            if ((Test-ObjectProperty -Object $result -Name "OutputPath") -and $result.OutputPath -and (Test-Path -LiteralPath $result.OutputPath)) {
-                $finalOutput = Get-Content -LiteralPath $result.OutputPath -Raw -Encoding UTF8
-            } else {
-                $finalOutput = if (Test-ObjectProperty -Object $result -Name "Output") { $result.Output } else { "" }
-            }
-        }
-
-        return [ordered]@{
-            success  = $isSuccess
-            provider = $providerName
-            model    = $modelTier
-            output   = $finalOutput
-            error    = if (-not $isSuccess) { "CODEX_SESSION_FAILED" } else { $null }
-            stats    = $null
-        }
-    }
-
-    # Standard single-agent path for other providers
+    # Standard single-agent path
     $result = Invoke-CliTask `
         -QuotaRegistry $QuotaRegistry `
         -TaskType $TaskType `
         -Prompt $Prompt `
         -WorkingDirectory $WorkingDirectory `
         -MemoryBlock $memoryBlock `
-        -DryRun:$DryRun `
-        -ProviderOverride $providerName `
-        -ModelTierOverride $modelTier
+        -DryRun:$DryRun
 
     # Fallback to Beta CEO if the single-agent call failed and Dual-CEO is enabled
     if (-not $result.success -and $hasDualCeo -and $Config.dual_ceo.enabled) {
@@ -873,50 +812,15 @@ function Invoke-DualCeoTask {
 
             Write-Host "[DELIB] Standard-Agent fehlgeschlagen! Fallback auf Beta CEO ($betaRoute)." -ForegroundColor Red
 
-            # If Beta CEO is Codex, we need to handle it using Invoke-AutopilotCodexSession
-            if ($betaProvider -eq "codex_orchestrator") {
-                $codexModel = if ($betaTier) { $betaTier } else { "gpt-5.4-mini" }
-                Write-Host "[DELIB] Starte sichtbare Codex-Session (Beta CEO Fallback): $TaskType (Model: $codexModel)" -ForegroundColor Cyan
-
-                $betaResult = Invoke-AutopilotCodexSession `
-                    -SessionType $TaskType `
-                    -Prompt $Prompt `
-                    -State $State `
-                    -Model $codexModel `
-                    -VisibleExecTerminal `
-                    -DryRun:$DryRun
-
-                Register-ProviderCall -Registry $QuotaRegistry -ProviderName $betaProvider -ModelTier $betaTier
-
-                $finalOutput = ""
-                $isSuccess = [bool]((Test-ObjectProperty -Object $betaResult -Name "Success") -and $betaResult.Success)
-                if ($isSuccess) {
-                    if ((Test-ObjectProperty -Object $betaResult -Name "OutputPath") -and $betaResult.OutputPath -and (Test-Path -LiteralPath $betaResult.OutputPath)) {
-                        $finalOutput = Get-Content -LiteralPath $betaResult.OutputPath -Raw -Encoding UTF8
-                    } else {
-                        $finalOutput = if (Test-ObjectProperty -Object $betaResult -Name "Output") { $betaResult.Output } else { "" }
-                    }
-                }
-
-                return [ordered]@{
-                    success  = $isSuccess
-                    provider = $betaProvider
-                    model    = $betaTier
-                    output   = $finalOutput
-                    error    = if (-not $isSuccess) { "CODEX_SESSION_FAILED" } else { $null }
-                    stats    = $null
-                }
-            } else {
-                $result = Invoke-CliTask `
-                    -QuotaRegistry $QuotaRegistry `
-                    -TaskType $TaskType `
-                    -Prompt $Prompt `
-                    -WorkingDirectory $WorkingDirectory `
-                    -MemoryBlock $memoryBlock `
-                    -DryRun:$DryRun `
-                    -ProviderOverride $betaProvider `
-                    -ModelTierOverride $betaTier
-            }
+            $result = Invoke-CliTask `
+                -QuotaRegistry $QuotaRegistry `
+                -TaskType $TaskType `
+                -Prompt $Prompt `
+                -WorkingDirectory $WorkingDirectory `
+                -MemoryBlock $memoryBlock `
+                -DryRun:$DryRun `
+                -ProviderOverride $betaProvider `
+                -ModelTierOverride $betaTier
         }
     }
 

@@ -15,7 +15,7 @@ function Invoke-AuditWakeUp {
     Write-Host "`n[AUDIT] ========== Beta CEO Audit Wake-Up ==========" -ForegroundColor Blue
 
     # Ensure state array exists
-    if (-not ($State.PSObject.Properties.Name -contains "decisions_pending")) {
+    if ($null -eq $State.decisions_pending) {
         $State | Add-Member -MemberType NoteProperty -Name "decisions_pending" -Value @() -Force
     }
 
@@ -45,59 +45,14 @@ function Invoke-AuditWakeUp {
     }
 
     $delegationsData = ""
-    if ($State.PSObject.Properties.Name -contains "active_delegations" -and $null -ne $State.active_delegations) {
+    if ($null -ne $State.active_delegations) {
         $delegationsData = ($State.active_delegations | ForEach-Object { "- Issue #$($_.issue_number) an $($_.agent_type) (Session: $($_.jules_session_id)) - Status: $($_.jules_state)" }) -join "`n"
     }
 
-    # 2. Run Audit Sequence if configured
-    $auditContext = ""
-    if ($Config.PSObject.Properties.Name -contains "audit_sequence") {
-        Write-Host "[AUDIT] Starte sequentielle Audit-Sequenz (Session Splitting)..." -ForegroundColor Yellow
-
-        foreach ($step in $Config.audit_sequence) {
-            Write-Host "[AUDIT] Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
-            $promptVars = @{
-                repo        = $repo
-                issues      = $issuesData
-                prs         = $prsData
-                delegations = $delegationsData
-                context     = $auditContext
-            }
-            $stepPrompt = Get-VorceConfigPrompt -Config $Config -PromptKey $step.prompt_ref -Variables $promptVars
-            $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$stepPrompt"
-
-            $stepResult = Invoke-DualCeoTask `
-                -QuotaRegistry $QuotaRegistry `
-                -Config $Config `
-                -TaskType "audit" `
-                -DryRun:$DryRun `
-                -Prompt $fullPrompt `
-                -State $State
-
-            if ($stepResult.success) {
-                $auditContext += "`n### Ergebnis $($step.label):`n$($stepResult.output)`n"
-            } else {
-                Write-Warning "[AUDIT] Schritt $($step.label) fehlgeschlagen."
-            }
-        }
-    }
-
-    # 3. Prompt fuer finalen Audit-Entscheidungsschritt bauen
+    # 2. Prompt bauen
     $promptText = @"
-Du bist CEO BETA (Gemini) des Vorce-Autopiloten.
+Du bist CEO BETA (Gemini CLI) des Vorce-Autopiloten.
 Deine Aufgabe ist ein unabhaengiges AUDIT des aktuellen Projektstatus.
-
-MANDAT DES USERS (VERLETZUNG FUEHRT ZUM ABBRUCH):
-1. Du MUSST DEINE ANTWORT ZWINGEND AUF DEUTSCH VERFASSEN! Jede andere Sprache ist verboten.
-2. Wenn du Probleme findest (z.B. fehlschlagende CI), DARFST DU NIEMALS SOFORT ESKALIEREN! Du MUSST zuerst eine Aktion ('remediate') vorschlagen.
-3. STRENGES VERBOT FÜR MERGE-KONFLIKTE: Du darfst NIEMALS eigenmächtig Jules-Sessions für PR-Merge-Konflikte starten! Das Starten von Jules-Sessions für Merge-Konflikte wird bereits automatisch und gebündelt in der Planning-Phase übernommen. Jede redundante Jules-Session kostet den User wertvolles Tageslimit (100 Sessions/Tag).
-4. STRENGES VERBOT FÜR JULES-CANCEL: Du darfst NIEMALS Befehle vorschlagen, die eine Jules-Session abbrechen, stoppen oder löschen! Das Limit von 100 Jules-Sessions pro Tag erfordert, dass fehlgeschlagene/hängende Sessions maximal pausiert (und vom User später re-purposed) werden, aber niemals gelöscht/gecancelt.
-5. Nur wenn absolut klar ist, dass eine KI das Problem nicht loesen kann (z.B. fehlende Zugriffsrechte oder User-Entscheidung zwingend erforderlich), darfst du 'escalate' waehlen.
-6. JEDE Eskalation muss hochdetailliert sein! Kein unspezifisches BlaBla wie 'Erfordert sofortige manuelle Intervention'.
-7. Eine korrekte Eskalation enthaelt:
-   - Exakt WELCHER PR/Issue betroffen ist.
-   - WARUM die KI es nicht selbst loesen konnte (welche Limits/Gruende?).
-   - WAS genau der User tun soll (Schritt fuer Schritt).
 
 Aktuelle offene Issues:
 $issuesData
@@ -108,15 +63,15 @@ $prsData
 Aktive Agent-Delegationen (Tasks in Arbeit):
 $delegationsData
 
-Hier sind die Detail-Audit-Ergebnisse aus den vorherigen Schritten:
-$auditContext
+AUFGABE:
+Untersuche diese Daten auf logische Fehler, haengende Tasks (z.B. PRs im Konflikt ohne Fortschritt), blinde Flecken in der Planung oder architektonische Probleme.
+Gibt es Aspekte, bei denen der User eingreifen muss, oder PRs, die einen Kommentar benoetigen?
 
 Antworte strikt im JSON-Format:
 {
   "issues_found": true/false,
-  "action": "remediate|escalate|none",
-  "remediation_command": "<Dein powershell Befehl zum autonomen Beheben, falls action=remediate>",
-  "dashboard_escalation": "<DEUTSCHE, hochdetaillierte Fehler-Analyse und Handlungsanweisung, NUR falls action=escalate>"
+  "dashboard_escalation": "<Wenn issues_found=true, beschreibe hier kurz das gefundene Problem als Eskalation fuer das Dashboard, sonst leer lassen>",
+  "reasoning": "<Kurze Begruendung>"
 }
 "@
 
@@ -130,20 +85,14 @@ Antworte strikt im JSON-Format:
 
     $outputFile = Join-Path $ScriptDir "tmp\beta-audit-result.json"
 
-    $cliArgsFile = Join-Path $ScriptDir "tmp\beta-audit-args.json"
-    @("-m", "gemini-2.5-flash", "--output-format", "json", "-y") | ConvertTo-Json -Depth 5 -Compress | Out-File $cliArgsFile -Encoding UTF8
-
-    $statusFile = Join-Path $ScriptDir "tmp\beta-audit-status.txt"
-
-    $cliArgs = @{
-        CliCommand   = "gemini"
-        CliArgsFile  = $cliArgsFile
-        OutputFile   = $outputFile
-        StatusFile   = $statusFile
-        PhaseName    = "Audit"
-        ProviderName = "Gemini"
-        PromptFile   = $promptFile
-    }
+    $cliArgs = @(
+        "-CliCommand", "gemini",
+        "-ProviderArgs", @("-m", "gemini-2.5-flash", "--output-format", "json", "-y"),
+        "-PromptFile", $promptFile,
+        "-OutputFile", $outputFile,
+        "-TaskType", "audit",
+        "-UseStdinPipe"
+    )
 
     if ($DryRun.IsPresent) {
         Write-Host "[AUDIT] [DRY RUN] Audit uebersprungen." -ForegroundColor DarkYellow
@@ -157,44 +106,18 @@ Antworte strikt im JSON-Format:
                 $jsonObjMatch = [regex]::Match($resultJson, '(?s)\{.*\}')
                 if ($jsonObjMatch.Success) {
                     $parsedObj = $jsonObjMatch.Value | ConvertFrom-Json
-
-                    # Handle wrapper JSON from CLI router if present
-                    if ($null -ne $parsedObj -and $parsedObj.PSObject.Properties.Name -contains "response") {
-                        # The response string might contain markdown json blocks like ```json ... ```
-                        $cleanJson = $parsedObj.response -replace '(?s)```json\s*', '' -replace '(?s)```\s*$', ''
-                        try {
-                            $parsedObj = $cleanJson | ConvertFrom-Json
-                        } catch {
-                            Write-Warning "[AUDIT] Konnte eingebettetes JSON im Response nicht parsen."
-                        }
-                    }
                 }
 
-                if ($null -ne $parsedObj -and $parsedObj.issues_found -eq $true) {
-                    Write-Host "[AUDIT] CEO Beta hat Probleme gefunden!" -ForegroundColor Yellow
+                if ($null -ne $parsedObj -and $parsedObj.issues_found -eq $true -and -not [string]::IsNullOrWhiteSpace($parsedObj.dashboard_escalation)) {
+                    Write-Host "[AUDIT] CEO Beta hat Probleme gefunden und eine Eskalation erstellt!" -ForegroundColor Red
 
-                    if ($parsedObj.action -eq "remediate" -and -not [string]::IsNullOrWhiteSpace($parsedObj.remediation_command)) {
-                        Write-Host "[AUDIT] Fuehre Remediation-Befehl aus: $($parsedObj.remediation_command)" -ForegroundColor Cyan
-                        try {
-                            Invoke-Expression $parsedObj.remediation_command | Out-Null
-                            Write-Host "[AUDIT] Remediation erfolgreich gestartet." -ForegroundColor Green
-                        } catch {
-                            Write-Warning "[AUDIT] Remediation fehlgeschlagen: $_"
-                            # Fallback to escalation
-                            $State.decisions_pending += @([ordered]@{
-                                topic      = "Beta CEO Remediation Failed"
-                                context    = "Der Versuch, das Problem automatisch zu beheben, schlug fehl. Befehl: $($parsedObj.remediation_command). Fehler: $_"
-                                created_at = (Get-Date -Format 'o')
-                            })
-                        }
-                    } elseif ($parsedObj.action -eq "escalate") {
-                        Write-Host "[AUDIT] CEO Beta eskaliert zum Dashboard." -ForegroundColor Red
-                        $State.decisions_pending += @([ordered]@{
-                            topic      = "Beta CEO Audit Alert"
-                            context    = $parsedObj.dashboard_escalation
-                            created_at = (Get-Date -Format 'o')
-                        })
-                    }
+                    # Add to decisions pending
+                    $State.decisions_pending += @([ordered]@{
+                        topic      = "Beta CEO Audit Alert"
+                        context    = $parsedObj.dashboard_escalation
+                        created_at = (Get-Date -Format 'o')
+                    })
+                    Write-Host "[AUDIT] Eskalation zum Dashboard gesendet." -ForegroundColor Yellow
                 } else {
                     Write-Host "[AUDIT] CEO Beta meldet: Keine gravierenden Probleme gefunden." -ForegroundColor Green
                 }
@@ -203,7 +126,4 @@ Antworte strikt im JSON-Format:
             }
         }
     }
-
-    # 4. Smart Memory Optimization
-    Optimize-AutopilotMemories -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
 }

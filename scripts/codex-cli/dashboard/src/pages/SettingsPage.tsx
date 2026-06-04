@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Loader2, Shield, ListFilter, Cpu, Layers, Settings, Check, AlertCircle, Users, Zap } from 'lucide-react';
+import { Save, Loader2, Shield, ListFilter, Cpu, Layers, Settings, Check, AlertCircle, Users } from 'lucide-react';
 import type { AutopilotConfig, QuotaRegistry, MemoryStore } from '../types';
 import MemoryPanel from './MemoryPanel';
 
@@ -123,49 +123,6 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
   const handleDualCeoArrayChange = (key: 'ceo_alpha_chain' | 'ceo_beta_chain' | 'deliberation_tasks', value: string) => {
     const list = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
     handleNestedConfigChange('dual_ceo', key, list);
-  };
-
-  const handleWorkingSessionsArrayChange = (key: 'preferred_agents', value: string) => {
-    const list = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
-    handleNestedConfigChange('working_sessions', key, list);
-  };
-
-  const handlePromptChange = (key: string, value: string) => {
-    setConfig(prev => {
-      if (!prev) return null;
-      const prompts = prev.prompts || {};
-      return {
-        ...prev,
-        prompts: {
-          ...prompts,
-          [key]: value
-        }
-      };
-    });
-  };
-
-  const handleProviderModelChange = (providerKey: string, modelKey: string, key: 'name' | 'estimated_cost_per_call_usd', value: unknown) => {
-    setRegistry(prev => {
-      if (!prev) return null;
-      const provider = prev.providers[providerKey];
-      if (!provider) return prev;
-      return {
-        ...prev,
-        providers: {
-          ...prev.providers,
-          [providerKey]: {
-            ...provider,
-            models: {
-              ...(provider.models || {}),
-              [modelKey]: {
-                ...(provider.models?.[modelKey] || { name: '', estimated_cost_per_call_usd: 0 }),
-                [key]: value
-              }
-            }
-          }
-        }
-      };
-    });
   };
 
   const handleSave = async () => {
@@ -383,56 +340,6 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
             </div>
           </div>
 
-          {/* Card: Working Sessions */}
-          <div className="glass-card p-6">
-            <h3 className="text-base font-semibold text-slate-200 border-b border-slate-700/50 pb-3 mb-4 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-amber-400" />
-              Working Sessions
-            </h3>
-            <div className="space-y-4">
-              <label className="relative flex items-center gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={config.working_sessions?.enabled ?? true}
-                  onChange={(e: any) => handleNestedConfigChange('working_sessions', 'enabled', e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-amber-500 focus:ring-amber-500/50"
-                />
-                <span className="text-xs font-semibold text-slate-300">Zusätzliche Working Sessions aktivieren</span>
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Max. gleichzeitige Working Sessions</label>
-                  <input
-                    type="number"
-                    value={config.working_sessions?.max_concurrent ?? 3}
-                    onChange={(e: any) => handleNestedConfigChange('working_sessions', 'max_concurrent', parseInt(e.target.value) || 0)}
-                    className="input-field"
-                    min="0"
-                  />
-                </div>
-                <label className="relative flex items-center gap-2.5 cursor-pointer select-none pt-6">
-                  <input
-                    type="checkbox"
-                    checked={config.working_sessions?.queue_non_jules_agent_issues ?? true}
-                    onChange={(e: any) => handleNestedConfigChange('working_sessions', 'queue_non_jules_agent_issues', e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-amber-500 focus:ring-amber-500/50"
-                  />
-                  <span className="text-xs font-medium text-slate-300">Lokale Agent-Issues erst in Working Queue legen</span>
-                </label>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Bevorzugte Working-Session Agents</label>
-                <input
-                  type="text"
-                  value={config.working_sessions?.preferred_agents?.join(', ') || ''}
-                  onChange={(e: any) => handleWorkingSessionsArrayChange('preferred_agents', e.target.value)}
-                  className="input-field font-mono text-xs"
-                  placeholder="codex_orchestrator, gemini_cli, copilot_cli, cline_cli"
-                />
-              </div>
-            </div>
-          </div>
-
           {/* Card: Issue Filter */}
           <div className="glass-card p-6">
             <h3 className="text-base font-semibold text-slate-200 border-b border-slate-700/50 pb-3 mb-4 flex items-center gap-2">
@@ -477,15 +384,15 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
             </div>
           </div>
 
-          {/* Card: CEO + QA-Auditor Deliberation */}
+          {/* Card: Dual-CEO Deliberation */}
           {config.dual_ceo && (
             <div className="glass-card p-6">
               <h3 className="text-base font-semibold text-slate-200 border-b border-slate-700/50 pb-3 mb-4 flex items-center gap-2">
                 <Users className="w-4 h-4 text-purple-400" />
-                CEO + QA-Auditor Deliberation
+                Dual-CEO Deliberation (Konsens-Entscheidungen)
               </h3>
               <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-                Strukturierte Abstimmung zwischen CEO und QA-Auditor bei wichtigen Aufgaben wie Planung, Audit und komplexen Code-Reviews.
+                Strukturierte Abstimmung und gegenseitige Kritik zwischen zwei unabhängigen KI-Agenten bei wichtigen Aufgaben wie der Issue-Planung oder komplexen Code-Reviews.
               </p>
               <div className="space-y-4">
                 <div className="flex items-center mb-2">
@@ -496,14 +403,14 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                       onChange={(e: any) => handleNestedConfigChange('dual_ceo', 'enabled', e.target.checked)}
                       className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-purple-600 focus:ring-purple-500/50"
                     />
-                    <span className="text-xs font-semibold text-slate-300">CEO + QA-Auditor Modus aktivieren</span>
+                    <span className="text-xs font-semibold text-slate-300">Dual-CEO Modus aktivieren</span>
                   </label>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                      CEO Fallback-Kette (Kommagetrennt)
+                      CEO Alpha Fallback-Kette (Kommagetrennt)
                     </label>
                     <input
                       type="text"
@@ -516,7 +423,7 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                      QA-Auditor Fallback-Kette (Kommagetrennt)
+                      CEO Beta Fallback-Kette (Kommagetrennt)
                     </label>
                     <input
                       type="text"
@@ -595,83 +502,6 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
               </div>
             </div>
           )}
-          {/* Card: System-Prompts */}
-          <div className="glass-card p-6">
-            <h3 className="text-base font-semibold text-slate-200 border-b border-slate-700/50 pb-3 mb-4 flex items-center gap-2">
-              <Settings className="w-4 h-4 text-purple-400" />
-              System-Prompts
-            </h3>
-            <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-              Passe die System-Prompts an, die der Autopilot für die verschiedenen Sessions verwendet.
-            </p>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
-                  <span>Planning Analysis Prompt</span>
-                  <span className="text-[10px] text-slate-500 font-mono">planning_analysis</span>
-                </label>
-                <textarea
-                  value={config.prompts?.planning_analysis || ''}
-                  onChange={(e) => handlePromptChange('planning_analysis', e.target.value)}
-                  className="input-field min-h-[80px] font-mono text-xs leading-normal"
-                  rows={3}
-                  placeholder="Analysiere den aktuellen Status..."
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
-                  <span>Planning Proposal Prompt</span>
-                  <span className="text-[10px] text-slate-500 font-mono">planning_proposal</span>
-                </label>
-                <textarea
-                  value={config.prompts?.planning_proposal || ''}
-                  onChange={(e) => handlePromptChange('planning_proposal', e.target.value)}
-                  className="input-field min-h-[80px] font-mono text-xs leading-normal"
-                  rows={3}
-                  placeholder="Basierend auf der Analyse..."
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
-                  <span>Planning Synthesis Prompt</span>
-                  <span className="text-[10px] text-slate-500 font-mono">planning_synthesis</span>
-                </label>
-                <textarea
-                  value={config.prompts?.planning_synthesis || ''}
-                  onChange={(e) => handlePromptChange('planning_synthesis', e.target.value)}
-                  className="input-field min-h-[80px] font-mono text-xs leading-normal"
-                  rows={3}
-                  placeholder="Fasse alle Erkenntnisse zusammen..."
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
-                  <span>Audit Prompt</span>
-                  <span className="text-[10px] text-slate-500 font-mono">audit_prompt</span>
-                </label>
-                <textarea
-                  value={config.prompts?.audit_prompt || ''}
-                  onChange={(e) => handlePromptChange('audit_prompt', e.target.value)}
-                  className="input-field min-h-[80px] font-mono text-xs leading-normal"
-                  rows={3}
-                  placeholder="Prüfe das System auf Inkonsistenzen..."
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
-                  <span>Monitoring Prompt</span>
-                  <span className="text-[10px] text-slate-500 font-mono">monitoring_prompt</span>
-                </label>
-                <textarea
-                  value={config.prompts?.monitoring_prompt || ''}
-                  onChange={(e) => handlePromptChange('monitoring_prompt', e.target.value)}
-                  className="input-field min-h-[80px] font-mono text-xs leading-normal"
-                  rows={3}
-                  placeholder="Überwache laufende Sessions..."
-                />
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Rechte Spalte: Provider & Routing */}
@@ -722,32 +552,6 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                       />
                     </div>
                   </div>
-                  {pVal.models && Object.keys(pVal.models).length > 0 && (
-                    <div className="space-y-2 pt-2 border-t border-slate-800/70">
-                      <div className="text-[10px] uppercase tracking-wide text-slate-500 font-semibold">Modelle</div>
-                      {Object.entries(pVal.models).map(([modelKey, modelVal]: [string, any]) => (
-                        <div key={modelKey} className="grid grid-cols-[88px_1fr_90px] gap-2 items-center">
-                          <span className="text-[10px] text-slate-400 font-mono">{modelKey}</span>
-                          <input
-                            type="text"
-                            value={modelVal.name || ''}
-                            onChange={(e: any) => handleProviderModelChange(pKey, modelKey, 'name', e.target.value)}
-                            className="input-field py-1 px-2.5 text-xs font-mono"
-                            disabled={!pVal.enabled}
-                          />
-                          <input
-                            type="number"
-                            value={modelVal.estimated_cost_per_call_usd ?? 0}
-                            onChange={(e: any) => handleProviderModelChange(pKey, modelKey, 'estimated_cost_per_call_usd', parseFloat(e.target.value) || 0)}
-                            className="input-field py-1 px-2.5 text-xs"
-                            min="0"
-                            step="0.01"
-                            disabled={!pVal.enabled}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
