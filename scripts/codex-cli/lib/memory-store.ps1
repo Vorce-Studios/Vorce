@@ -458,7 +458,7 @@ WICHTIGE REGELN:
                 $jsonObjMatch = [regex]::Match($resultJson, '(?s)\{.*\}')
                 if ($jsonObjMatch.Success) {
                     $parsedObj = $jsonObjMatch.Value | ConvertFrom-Json
-                    
+
                     # Handle wrapper JSON from CLI router if present
                     if ($null -ne $parsedObj -and $parsedObj.PSObject.Properties.Name -contains "response") {
                         $cleanJson = $parsedObj.response -replace '(?s)```json\s*', '' -replace '(?s)```\s*$', ''
