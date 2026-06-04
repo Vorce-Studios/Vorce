@@ -23,9 +23,14 @@ function Read-MemoryStore {
     #>
 
     if (-not (Test-Path $script:MemoryFilePath)) {
-        return [PSCustomObject]@{
-            schema_version = 1
-            memories       = @()
+        $defaultPath = Join-Path $script:ScriptRoot "dashboard/memories.json"
+        if (Test-Path $defaultPath) {
+            Copy-Item $defaultPath $script:MemoryFilePath -Force | Out-Null
+        } else {
+            return [PSCustomObject]@{
+                schema_version = 1
+                memories       = @()
+            }
         }
     }
 
@@ -108,9 +113,8 @@ function Format-MemoryBlock {
     <#
     .SYNOPSIS
     Creates a MINIMAL memory injection block for prompts.
-    ON-DEMAND MODEL: Only CRITICAL-priority memories are auto-injected.
-    All other memories are available via Search-Memories for explicit retrieval.
-    Returns an empty string if no critical memories exist.
+    ON-DEMAND MODEL: Loads only relevant memories dynamically depending on TaskType to reduce token usage.
+    Returns an empty string if no relevant memories exist.
     #>
     param(
         [Parameter(Mandatory=$false)][string]$TaskType, # Kept for backward compatibility
@@ -120,16 +124,84 @@ function Format-MemoryBlock {
     $allMemories = @(Get-RelevantMemories -Store $Store)
     if ($allMemories.Count -eq 0) { return "" }
 
-    # Only inject CRITICAL priority memories automatically
-    $critical = @($allMemories | Where-Object { $_.priority -eq "critical" })
-    $otherCount = $allMemories.Count - $critical.Count
+    $relevantMemories = @()
+    $otherCount = 0
 
-    if ($critical.Count -eq 0 -and $otherCount -eq 0) { return "" }
+    if ([string]::IsNullOrWhiteSpace($TaskType)) {
+        # Fallback if no TaskType is provided: only inject CRITICAL priority memories automatically
+        $relevantMemories = @($allMemories | Where-Object { $_.priority -eq "critical" })
+        $otherCount = $allMemories.Count - $relevantMemories.Count
+    } else {
+        $keywordMap = @{
+            "planning" = @("issue", "backlog", "roadmap", "naming", "convention", "plan", "generation", "proposal")
+            "monitoring" = @("monitor", "health", "ci", "build", "stalled", "conflict", "fail", "alert")
+            "merge_conflict_resolution" = @("conflict", "merge", "git", "branch", "pr", "resolution")
+            "coding" = @("code", "implement", "feature", "bug", "fix", "jules", "detailed", "description", "cli")
+            "debugging" = @("bug", "fix", "fail", "log", "ci", "error", "debugging")
+            "code_review" = @("review", "pr", "quality", "convention", "qa")
+            "complex_review" = @("review", "pr", "architecture", "security", "design")
+            "simple_review" = @("review", "pr", "syntax", "quick")
+            "qa_disposition" = @("qa", "disposition", "approve", "release", "merge")
+            "audit" = @("audit", "quota", "budget", "limit", "cost", "telemetry", "efficiency", "token")
+            "analysis" = @("analysis", "optim", "refactor", "crate", "module")
+        }
+
+        $taskParts = @($TaskType -split '[_-]')
+        $taskKeywords = if ($keywordMap.ContainsKey($TaskType)) { @($keywordMap[$TaskType]) } else { @() }
+        
+        foreach ($m in $allMemories) {
+            # Skip low priority memories to save tokens
+            if ($m.priority -eq "low") {
+                $otherCount++
+                continue
+            }
+
+            $text = "$($m.text) $($m.id)".ToLower()
+            $isRelevant = $false
+
+            # Check if matches any task-specific keywords
+            foreach ($kw in $taskKeywords) {
+                if ($text -like "*$kw*") {
+                    $isRelevant = $true
+                    break
+                }
+            }
+
+            # Check if matches any parts of the TaskType name
+            if (-not $isRelevant) {
+                foreach ($part in $taskParts) {
+                    if ($part.Length -ge 3 -and $text -like "*$part*") {
+                        $isRelevant = $true
+                        break
+                    }
+                }
+            }
+
+            # Check if matches universal rules/guidelines
+            if (-not $isRelevant) {
+                $universalKeywords = @("global", "always", "convention", "rule", "guideline", "naming")
+                foreach ($ukw in $universalKeywords) {
+                    if ($text -like "*$ukw*") {
+                        $isRelevant = $true
+                        break
+                    }
+                }
+            }
+
+            if ($isRelevant) {
+                $relevantMemories += $m
+            } else {
+                $otherCount++
+            }
+        }
+    }
+
+    if ($relevantMemories.Count -eq 0 -and $otherCount -eq 0) { return "" }
 
     $lines = @("[KONTEXT-ERINNERUNGEN]")
 
-    if ($critical.Count -gt 0) {
-        foreach ($m in $critical) {
+    if ($relevantMemories.Count -gt 0) {
+        foreach ($m in $relevantMemories) {
             $typeLabel = if ($m.type -eq "temporary") { "[TEMPORAER]" } else { "[RICHTLINIE]" }
             $lines += "- $typeLabel $($m.text)"
         }
@@ -145,7 +217,7 @@ function Format-MemoryBlock {
     $block = $lines -join "`n"
 
     $tokenEstimate = [Math]::Ceiling($block.Length / 4)
-    Write-Host "[MEMORY] $($critical.Count) kritische Erinnerungen injiziert, $otherCount on-demand verfuegbar (~${tokenEstimate} Tokens)" -ForegroundColor DarkGray
+    Write-Host "[MEMORY] $($relevantMemories.Count) relevante Erinnerungen fuer '$TaskType' injiziert, $otherCount verfuegbar (~${tokenEstimate} Tokens)" -ForegroundColor DarkGray
 
     return $block
 }
@@ -190,7 +262,7 @@ function Search-Memories {
     }
 
     # Search: match any keyword in text or id (case-insensitive)
-    $matches = @($allMemories | Where-Object {
+    $matchingMemories = @($allMemories | Where-Object {
         $text = "$($_.text) $($_.id)"
         $found = $false
         foreach ($kw in $keywords) {
@@ -202,13 +274,13 @@ function Search-Memories {
         $found
     })
 
-    if ($matches.Count -eq 0) {
+    if ($matchingMemories.Count -eq 0) {
         Write-Host "[MEMORY] Keine Treffer fuer '$Query'." -ForegroundColor DarkGray
         return ""
     }
 
-    $lines = @("[MEMORY-SUCHE: '$Query'] $($matches.Count) Treffer:")
-    foreach ($m in $matches) {
+    $lines = @("[MEMORY-SUCHE: '$Query'] $($matchingMemories.Count) Treffer:")
+    foreach ($m in $matchingMemories) {
         $typeLabel = if ($m.type -eq "temporary") { "TEMP" } else { "PERM" }
         $prioLabel = $m.priority.ToUpper()
         $lines += "- [$typeLabel|$prioLabel] $($m.text)"
@@ -216,7 +288,7 @@ function Search-Memories {
     $lines += "---"
 
     $block = $lines -join "`n"
-    Write-Host "[MEMORY] $($matches.Count) Treffer fuer '$Query' gefunden." -ForegroundColor Green
+    Write-Host "[MEMORY] $($matchingMemories.Count) Treffer fuer '$Query' gefunden." -ForegroundColor Green
     return $block
 }
 

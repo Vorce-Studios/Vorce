@@ -178,7 +178,7 @@ function Test-ObjectProperty {
     return $null -ne $Object -and ($Object.PSObject.Properties.Name -contains $Name)
 }
 
-function Normalize-AutopilotStateObject {
+function Update-AutopilotStateObject {
     <#
     .SYNOPSIS
     Ensures all expected properties exist on the state object and that
@@ -200,7 +200,8 @@ function Normalize-AutopilotStateObject {
     $arrayFields = @(
         "active_delegations", "working_queue", "working_sessions",
         "review_queue", "autopilot_created_issues", "completed_this_session",
-        "decisions_pending", "escalated_issues", "error_log", "deliberation_log"
+        "decisions_pending", "escalated_issues", "error_log", "deliberation_log",
+        "optimizer_queue"
     )
     foreach ($key in $arrayFields) {
         if ($null -eq $State.$key) {
@@ -255,6 +256,8 @@ function New-AutopilotState {
         escalated_issues        = @()
         error_log               = @()
         deliberation_log        = @()
+        optimizer_queue         = @()
+        last_optimizer_analysis_at = $null
     }
 }
 
@@ -298,7 +301,7 @@ function Initialize-AutopilotState {
         }
 
         # Validate that arrays are indeed arrays (sometimes deserialized as single object or null)
-        foreach ($key in @("active_delegations", "working_queue", "working_sessions", "review_queue", "autopilot_created_issues", "completed_this_session", "decisions_pending", "escalated_issues", "error_log", "deliberation_log")) {
+        foreach ($key in @("active_delegations", "working_queue", "working_sessions", "review_queue", "autopilot_created_issues", "completed_this_session", "decisions_pending", "escalated_issues", "error_log", "deliberation_log", "optimizer_queue")) {
             if ($null -eq $existing.$key) {
                 $existing.$key = @()
             } elseif ($existing.$key -isnot [System.Array] -and $existing.$key -isnot [System.Collections.IList]) {

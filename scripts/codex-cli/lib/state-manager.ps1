@@ -164,7 +164,7 @@ function Test-ObjectProperty {
     return $null -ne $Object -and ($Object.PSObject.Properties.Name -contains $Name)
 }
 
-function Normalize-AutopilotStateObject {
+function Update-AutopilotStateObject {
     <#
     .SYNOPSIS
     Ensures all expected properties exist on the state object and that

@@ -87,6 +87,8 @@ export interface ActiveSessions {
   deliberation_log?: DeliberationLogEntry[];
   scheduler?: any;
   run_control?: any;
+  optimizer_queue?: any[];
+  last_optimizer_analysis_at?: string;
 }
 
 // ── GitHub Project Types ──

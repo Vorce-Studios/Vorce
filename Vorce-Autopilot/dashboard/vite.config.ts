@@ -65,8 +65,28 @@ export default defineConfig({
               const configPath = path.resolve(__dirname, '../config/autopilot-config.json');
               if (fs.existsSync(configPath)) {
                 const configContent = fs.readFileSync(configPath, 'utf-8');
+                const config = JSON.parse(configContent);
+                
+                // Dynamically load prompts from files
+                config.prompts = config.prompts || {};
+                const promptsDir = path.resolve(__dirname, '../prompts');
+                const groups = ['planning', 'monitoring', 'audit', 'ceo', 'deliberation'];
+                for (const group of groups) {
+                  const groupDir = path.join(promptsDir, group);
+                  if (fs.existsSync(groupDir)) {
+                    const files = fs.readdirSync(groupDir);
+                    for (const file of files) {
+                      if (file.endsWith('.md')) {
+                        const key = path.basename(file, '.md');
+                        const content = fs.readFileSync(path.join(groupDir, file), 'utf-8');
+                        config.prompts[key] = content;
+                      }
+                    }
+                  }
+                }
+                
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(configContent);
+                res.end(JSON.stringify(config, null, 2));
               } else {
                 res.writeHead(404, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: 'autopilot-config.json not found' }));
@@ -182,6 +202,31 @@ export default defineConfig({
             req.on('end', () => {
               try {
                 const config = JSON.parse(body);
+                
+                // Write modified prompts back to their respective markdown files
+                if (config.prompts) {
+                  const promptsDir = path.resolve(__dirname, '../prompts');
+                  const findPromptFile = (key: string) => {
+                    const groups = ['planning', 'monitoring', 'audit', 'ceo', 'deliberation'];
+                    for (const g of groups) {
+                      const p = path.join(promptsDir, g, `${key}.md`);
+                      if (fs.existsSync(p)) return p;
+                    }
+                    return null;
+                  };
+                  
+                  for (const key of Object.keys(config.prompts)) {
+                    const promptFile = findPromptFile(key);
+                    if (promptFile) {
+                      fs.writeFileSync(promptFile, config.prompts[key], 'utf-8');
+                      delete config.prompts[key]; // Do not store dynamically resolved prompts in JSON
+                    }
+                  }
+                  if (Object.keys(config.prompts).length === 0) {
+                    delete config.prompts;
+                  }
+                }
+                
                 const configPath = path.resolve(__dirname, '../config/autopilot-config.json');
                 const publicConfigPath = path.resolve(__dirname, './public/autopilot-config.json');
                 writeJsonFile(configPath, config);
@@ -215,6 +260,14 @@ export default defineConfig({
           } else if (req.method === 'GET' && req.url === '/memories.json') {
             try {
               const memoryPath = path.resolve(__dirname, '../var/db/autopilot-memories.json');
+              // Initialize from template memories.json if not present
+              if (!fs.existsSync(memoryPath)) {
+                const defaultMemoriesPath = path.resolve(__dirname, './memories.json');
+                if (fs.existsSync(defaultMemoriesPath)) {
+                  ensureParentDir(memoryPath);
+                  fs.copyFileSync(defaultMemoriesPath, memoryPath);
+                }
+              }
               if (fs.existsSync(memoryPath)) {
                 const memoryContent = fs.readFileSync(memoryPath, 'utf-8');
                 res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -302,6 +355,66 @@ export default defineConfig({
                     alert.escalation_level = 'user';
                     alert.user_escalation_reason = payload.response || 'CEO Sondersession konnte die Ursache nicht beheben. Deine Entscheidung ist erforderlich.';
                     alert.user_escalated_at = new Date().toISOString();
+                  }
+                }
+
+                writeJsonFile(statePath, state);
+                writeJsonFile(publicStatePath, state);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ status: 'ok' }));
+              } catch (err) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));
+              }
+            });
+          } else if (req.method === 'POST' && req.url === '/api/optimizer') {
+            let body = '';
+            req.on('data', (chunk: any) => { body += chunk; });
+            req.on('end', () => {
+              try {
+                const payload = JSON.parse(body || '{}');
+                const statePath = path.resolve(__dirname, '../var/db/autopilot-state.json');
+                const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
+                const readableStatePath = fs.existsSync(statePath) ? statePath : publicStatePath;
+                const state = readJsonFile(readableStatePath, {});
+
+                state.optimizer_queue = state.optimizer_queue || [];
+
+                if (payload.action === 'reject') {
+                  state.optimizer_queue = state.optimizer_queue.filter((item: any) => item.id !== payload.id);
+                } else if (payload.action === 'approve') {
+                  const item = state.optimizer_queue.find((i: any) => i.id === payload.id);
+                  if (item) {
+                    // Create GitHub issue using gh CLI following naming conventions: __MF-SubI_Optimizer-[Title]
+                    const cleanTitle = item.title.replace(/[^a-zA-Z0-9\s_-]/g, '').trim().replace(/\s+/g, '-');
+                    const title = `__MF-SubI_Optimizer-${cleanTitle}`;
+                    const issueBody = `Vorgeschlagene Optimierung aus der Optimizer-Session:\n\n**Beschreibung:**\n${item.description}\n\n**Auswirkung:**\n${item.impact}\n\n**Vorgeschlagene Aktion:**\n${item.proposed_action}`;
+                    
+                    try {
+                      const repo = getRepository();
+                      const command = `gh issue create --repo "${repo}" --title "${title.replace(/"/g, '\\"')}" --body "${issueBody.replace(/"/g, '\\"')}" --label "priority: high" --label "bug" --label "agent:gemini_cli"`;
+                      const issueUrl = execSync(command, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+                      
+                      const match = issueUrl.match(/\/issues\/(\d+)/);
+                      if (match) {
+                        const issueNum = parseInt(match[1]);
+                        // Add to working queue
+                        state.working_queue = state.working_queue || [];
+                        state.working_queue.push({
+                          id: `work-${issueNum}-${Date.now()}`,
+                          issue_number: issueNum,
+                          issue_title: title,
+                          agent_provider: "gemini_cli",
+                          status: "QUEUED",
+                          queued_at: new Date().toISOString()
+                        });
+                      }
+                    } catch (e) {
+                      throw new Error(`Fehler beim Erstellen des GitHub Issues: ${(e as any).message}`);
+                    }
+                    
+                    // Remove from optimizer queue
+                    state.optimizer_queue = state.optimizer_queue.filter((i: any) => i.id !== payload.id);
                   }
                 }
 

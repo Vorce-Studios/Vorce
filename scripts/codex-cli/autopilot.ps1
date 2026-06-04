@@ -164,6 +164,26 @@ while ($true) {
     $now = Get-Date
     $QuotaRegistry = Read-QuotaRegistry
 
+    if (-not (Test-PrimaryProvidersAvailable -Registry $QuotaRegistry)) {
+        Write-Host ""
+        Write-Host "==========================================================================" -ForegroundColor Red
+        Write-Host "  [QUOTA LIMIT] Beide Primaer-Anbieter (Codex & Gemini) sind nicht verfuegbar!" -ForegroundColor Red
+        Write-Host "  Automatische Pause von 60 Minuten vor dem naechsten Versuch..." -ForegroundColor Yellow
+        Write-Host "==========================================================================" -ForegroundColor Red
+        Write-Host ""
+        
+        $pauseSeconds = 3600
+        $pauseUntil = (Get-Date).AddSeconds($pauseSeconds)
+        Write-Host "[LOOP] Pause bis $($pauseUntil.ToString('HH:mm:ss')) (in 60.0 min)..." -ForegroundColor Yellow
+        
+        $remainingPause = $pauseSeconds
+        while ($remainingPause -gt 0) {
+            Start-Sleep -Seconds 10
+            $remainingPause -= 10
+        }
+        continue
+    }
+
     $planDue = ($now - $lastPlanTime).TotalMinutes -ge $planMinutes
     $monDue = ($now - $lastMonTime).TotalMinutes -ge $monMinutes
 

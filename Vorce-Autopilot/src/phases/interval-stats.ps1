@@ -83,7 +83,7 @@ while ($true) {
         foreach ($prop in $registry.providers.PSObject.Properties) {
             $providerName = $prop.Name
             $provider = $prop.Value
-            Ensure-ProviderUsageToday -Provider $provider
+            Initialize-ProviderUsageToday -Provider $provider
             Clear-DailyUsageForProvider -Date $reportDate -ProviderName $providerName
 
             $modelBuckets = @($provider.usage_today.PSObject.Properties | Where-Object {

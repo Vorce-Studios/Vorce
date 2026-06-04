@@ -41,7 +41,7 @@ function Invoke-PlanningWakeUp {
         [switch]$DryRun
     )
 
-    $State = Normalize-AutopilotStateObject -State $State
+    $State = Update-AutopilotStateObject -State $State
     Confirm-WorkingSessionsState -State $State
     $repo = $Config.repository
     Write-Host "`n[PLANNING] ========== Planning Wake-Up ==========" -ForegroundColor Blue
@@ -86,8 +86,18 @@ function Invoke-PlanningWakeUp {
             $title = [string]$_.title
             $body = [string]$_.body
             $isMasterIssue = $title -match "_MAIs_"
+            
+            $issueNum = [int]$_.number
+            $isEscalatedRetry = $false
+            if ($null -ne $State.escalated_issues) {
+                $esc = $State.escalated_issues | Where-Object { [int]$_.issue_number -eq $issueNum }
+                if ($esc -and ($esc.status -eq "QUEUED_FOR_RETRY" -or $esc.status -eq "RESOLVED_BY_PLANNING")) {
+                    $isEscalatedRetry = $true
+                }
+            }
+
             $hasExistingJulesSession = ($body -match "<!--\s*jules-session-id:") -or ($body -match "<!--\s*jules-session-name:") -or ($body -match "<!--\s*vorce-queue-state:\s*dispatched")
-            $hasInclude -and (-not $hasExclude) -and (-not $isMasterIssue) -and (-not $hasExistingJulesSession)
+            $hasInclude -and (-not $hasExclude) -and (-not $isMasterIssue) -and (-not $hasExistingJulesSession -or $isEscalatedRetry)
         })
 
         $releaseRank = @{
@@ -634,6 +644,14 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                 }
                 Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId $sessionId -AgentType "jules"
                 Register-ProviderCall -Registry $QuotaRegistry -ProviderName "jules"
+
+                if ($null -ne $State.escalated_issues) {
+                    $esc = $State.escalated_issues | Where-Object { [int]$_.issue_number -eq $issueNum }
+                    if ($esc) {
+                        $esc.status = "RETRY_DISPATCHED"
+                        Save-AutopilotState -State $State
+                    }
+                }
             } catch {
                 Write-Warning "[PLANNING] Jules Session fuer #$issueNum fehlgeschlagen: $_"
                 Add-ErrorLog -State $State -Message "Jules delegation failed for #$issueNum" -Context $_.Exception.Message
@@ -641,6 +659,12 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
         } else {
             Add-WorkingQueueItem -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -AgentProvider $targetAgent
             $delegatedInThisRun.Add($issueNum) | Out-Null
+            if ($null -ne $State.escalated_issues) {
+                $esc = $State.escalated_issues | Where-Object { [int]$_.issue_number -eq $issueNum }
+                if ($esc) {
+                    $esc.status = "RETRY_DISPATCHED"
+                }
+            }
             Save-AutopilotState -State $State
         }
     }

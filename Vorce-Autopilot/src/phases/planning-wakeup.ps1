@@ -41,7 +41,7 @@ function Invoke-PlanningWakeUp {
         [switch]$DryRun
     )
 
-    $State = Normalize-AutopilotStateObject -State $State
+    $State = Update-AutopilotStateObject -State $State
     Confirm-WorkingSessionsState -State $State
     $repo = $Config.repository
     Write-Host "`n[PLANNING] ========== Planning Wake-Up ==========" -ForegroundColor Blue
@@ -59,6 +59,13 @@ function Invoke-PlanningWakeUp {
     if (-not ($State.PSObject.Properties.Name -contains "decisions_pending")) {
         $State | Add-Member -MemberType NoteProperty -Name "decisions_pending" -Value @() -Force
     }
+
+    # Increment planning run count
+    if (-not ($State.PSObject.Properties.Name -contains "planning_run_count")) {
+        $State | Add-Member -MemberType NoteProperty -Name "planning_run_count" -Value 0 -Force
+    }
+    $State.planning_run_count = [int]$State.planning_run_count + 1
+    Save-AutopilotState -State $State
 
     $ScriptDir = Resolve-Path (Join-Path $PSScriptRoot "../..")
     $VarDbDir = Join-Path $ScriptDir "var/db"
@@ -88,8 +95,18 @@ function Invoke-PlanningWakeUp {
             $title = [string]$_.title
             $body = [string]$_.body
             $isMasterIssue = $title -match "_MAIs_"
+            
+            $issueNum = [int]$_.number
+            $isEscalatedRetry = $false
+            if ($null -ne $State.escalated_issues) {
+                $esc = $State.escalated_issues | Where-Object { [int]$_.issue_number -eq $issueNum }
+                if ($esc -and ($esc.status -eq "QUEUED_FOR_RETRY" -or $esc.status -eq "RESOLVED_BY_PLANNING")) {
+                    $isEscalatedRetry = $true
+                }
+            }
+
             $hasExistingJulesSession = ($body -match "<!--\s*jules-session-id:") -or ($body -match "<!--\s*jules-session-name:") -or ($body -match "<!--\s*vorce-queue-state:\s*dispatched")
-            $hasInclude -and (-not $hasExclude) -and (-not $isMasterIssue) -and (-not $hasExistingJulesSession)
+            $hasInclude -and (-not $hasExclude) -and (-not $isMasterIssue) -and (-not $hasExistingJulesSession -or $isEscalatedRetry)
         })
 
         $releaseRank = @{
@@ -606,6 +623,14 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                 
                 Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId $sessionId -AgentType "jules"
                 Register-ProviderCall -Registry $QuotaRegistry -ProviderName "jules"
+
+                if ($null -ne $State.escalated_issues) {
+                    $esc = $State.escalated_issues | Where-Object { [int]$_.issue_number -eq $issueNum }
+                    if ($esc) {
+                        $esc.status = "RETRY_DISPATCHED"
+                        Save-AutopilotState -State $State
+                    }
+                }
             } catch {
                 Write-Warning "[PLANNING] Jules Session fuer #$issueNum fehlgeschlagen: $_"
                 Add-ErrorLog -State $State -Message "Jules delegation failed for #$issueNum" -Context $_.Exception.Message
@@ -613,7 +638,201 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
         } else {
             Add-WorkingQueueItem -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -AgentProvider $targetAgent
             $delegatedInThisRun.Add($issueNum) | Out-Null
+            if ($null -ne $State.escalated_issues) {
+                $esc = $State.escalated_issues | Where-Object { [int]$_.issue_number -eq $issueNum }
+                if ($esc) {
+                    $esc.status = "RETRY_DISPATCHED"
+                }
+            }
             Save-AutopilotState -State $State
+        }
+    }
+
+    # --- Smart Memory Optimization (Triggered every 3rd planning run) ---
+    if ($State.planning_run_count % 3 -eq 0 -and -not $DryRun.IsPresent) {
+        Write-Host "[PLANNING] Jeder 3. Planungs-Lauf ($($State.planning_run_count)): Starte smarte Memory-Optimierung..." -ForegroundColor Yellow
+        try {
+            $memStore = Read-MemoryStore
+            $memoriesJson = $memStore | ConvertTo-Json -Depth 5
+            
+            $journalPath = Get-AutopilotTaskJournalPath
+            $journalContent = if (Test-Path $journalPath) { Get-Content $journalPath -Raw -Encoding UTF8 } else { "" }
+
+            $promptText = @"
+Du bist der CEO-Orchestrator für das Vorce-Autopilot Projekt.
+Deine Aufgabe ist es, das Memory-System des Autopiloten zu pflegen, um die Effizienz zu steigern, Redundanzen abzubauen und den Tokenverbrauch zu senken.
+
+Hier ist der aktuelle Inhalt des Memory-Systems (Erinnerungen):
+$memoriesJson
+
+Hier ist das aktuelle Task-Journal des Autopiloten:
+$journalContent
+
+Bitte analysiere diese Daten gründlich. 
+Entscheide:
+1. Welche bestehenden Erinnerungen sind veraltet, redundant oder nicht mehr hilfreich und sollten entfernt werden? (Aktion: "remove")
+2. Welche wichtigen neuen Erkenntnisse, Richtlinien oder kritischen System-Zustände aus dem Task-Journal oder den letzten Entwicklungen sollten als neue Erinnerung hinzugefügt werden? (Aktion: "add")
+   - Neue Erinnerungen müssen sehr präzise, kompakt und von hoher Wichtigkeit sein.
+   - Maximal 30 Erinnerungen sind insgesamt erlaubt.
+
+Gib deine Entscheidung AUSSCHLIESSLICH als JSON-Liste von Aktionen im folgenden Format zurück (ohne Markdown-Formatierung, ohne zusätzlichen Text):
+[
+  { "action": "remove", "id": "mem-id-here" },
+  { "action": "add", "text": "Erinnerungstext hier", "type": "permanent|temporary", "priority": "critical|high|medium" }
+]
+
+Wenn keine Änderungen notwendig sind, antworte mit einem leeren Array: []
+"@
+
+            $memResult = Invoke-DualCeoTask `
+                -QuotaRegistry $QuotaRegistry `
+                -Config $Config `
+                -TaskType "analysis" `
+                -Prompt $promptText `
+                -State $State `
+                -DryRun:$DryRun
+
+            if ($memResult.success -and -not $DryRun.IsPresent) {
+                $rawOutput = $memResult.output
+                $actions = $null
+                try {
+                    $actions = $rawOutput | ConvertFrom-Json
+                } catch {
+                    $jsonArrMatch = [regex]::Match($rawOutput, '(?s)\[.*\]')
+                    if ($jsonArrMatch.Success) {
+                        try { $actions = $jsonArrMatch.Value | ConvertFrom-Json } catch {}
+                    }
+                }
+
+                if ($null -ne $actions -and ($actions -is [System.Array] -or $actions -is [System.Collections.IList])) {
+                    foreach ($act in $actions) {
+                        if ($act.action -eq "remove" -and $act.id) {
+                            Write-Host "[PLANNING] Smart Memory: Entferne Erinnerung $($act.id)" -ForegroundColor Yellow
+                            Remove-Memory -Id $act.id
+                        } elseif ($act.action -eq "add" -and $act.text) {
+                            Write-Host "[PLANNING] Smart Memory: Fuege Erinnerung hinzu: $($act.text)" -ForegroundColor Green
+                            $priority = if ($act.priority) { $act.priority } else { "medium" }
+                            $type = if ($act.type) { $act.type } else { "temporary" }
+                            Add-Memory -Text $act.text -Type $type -Priority $priority -Source "autopilot_smart_memory"
+                        }
+                    }
+                } else {
+                    Write-Warning "[PLANNING] Konnte Smart Memory Aktionen nicht parsen oder keine Aktionen vorgeschlagen."
+                }
+            }
+        } catch {
+            Write-Warning "Fehler bei smarter Memory-Optimierung: $_"
+        }
+    }
+
+    # --- Optimizer Session (2x daily, every 12 hours) ---
+    $runAnalysis = $false
+    if (-not ($State.PSObject.Properties.Name -contains "last_optimizer_analysis_at") -or [string]::IsNullOrWhiteSpace([string]$State.last_optimizer_analysis_at)) {
+        $runAnalysis = $true
+    } else {
+        try {
+            $lastAt = [datetimeoffset]::Parse([string]$State.last_optimizer_analysis_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
+            $ageHours = ((Get-Date) - $lastAt.LocalDateTime).TotalHours
+            if ($ageHours -ge 12) {
+                $runAnalysis = $true
+            }
+        } catch {
+            $runAnalysis = $true
+        }
+    }
+
+    if ($runAnalysis -and -not $DryRun.IsPresent) {
+        Write-Host "[OPTIMIZER] Starte halbtägliche Optimizer-Analyse..." -ForegroundColor Yellow
+        try {
+            $logFilePath = Join-Path $ScriptDir "var/log/autopilot-live.log"
+            $latestLogLines = ""
+            if (Test-Path $logFilePath) {
+                try {
+                    $latestLogLines = Get-Content $logFilePath -Tail 150 -ErrorAction SilentlyContinue | Out-String
+                } catch {}
+            }
+            
+            $stateJson = $State | ConvertTo-Json -Depth 5
+            $quotaJson = $QuotaRegistry | ConvertTo-Json -Depth 5
+
+            $promptText = @"
+Du bist der Vorce-Autopilot Optimizer-Agent.
+Deine Aufgabe ist es, die internen Abläufe, System-Prompts, Tokenverbrauch, Workflows, Session-Splitting und Auslastung des Autopiloten zu analysieren und konkrete Optimierungsvorschläge zu erarbeiten.
+
+Hier ist der aktuelle Status des Autopiloten (State):
+$stateJson
+
+Hier ist die Quota-Registry (Kosten und Aufrufe):
+$quotaJson
+
+Hier sind die letzten 150 Zeilen der Logdatei (autopilot-live.log):
+$latestLogLines
+
+Bitte analysiere diese Statistiken und Logeinträge auf Ineffizienzen, Fehlerraten, hohe Tokenkosten oder Engpässe.
+Schlage bis zu 3 konkrete Optimierungen vor. Jede Optimierung sollte einen klaren Titel, eine detaillierte Beschreibung des Problems, die erwartete Auswirkung (Impact) und die vorgeschlagene Aktion enthalten.
+
+Gib deine Vorschläge AUSSCHLIESSLICH als JSON-Liste im folgenden Format zurück (ohne Markdown-Formatierung, ohne zusätzlichen Text):
+[
+  {
+    "title": "Optimierung der System-Prompts für planning_synthesis",
+    "description": "Die Analyse zeigt einen überdurchschnittlichen Tokenverbrauch...",
+    "impact": "Senkung des Tokenverbrauchs um ca. 20%.",
+    "proposed_action": "Erstelle ein Issue zur Überarbeitung des Prompts planning_synthesis.md"
+  }
+]
+
+Wenn keine Optimierungen nötig oder sinnvoll sind, antworte mit einem leeren Array: []
+"@
+
+            $optResult = Invoke-DualCeoTask `
+                -QuotaRegistry $QuotaRegistry `
+                -Config $Config `
+                -TaskType "analysis" `
+                -Prompt $promptText `
+                -State $State `
+                -DryRun:$DryRun
+
+            if ($optResult.success -and -not $DryRun.IsPresent) {
+                $rawOutput = $optResult.output
+                $proposals = $null
+                try {
+                    $proposals = $rawOutput | ConvertFrom-Json
+                } catch {
+                    $jsonArrMatch = [regex]::Match($rawOutput, '(?s)\[.*\]')
+                    if ($jsonArrMatch.Success) {
+                        try { $proposals = $jsonArrMatch.Value | ConvertFrom-Json } catch {}
+                    }
+                }
+
+                if ($null -ne $proposals -and ($proposals -is [System.Array] -or $proposals -is [System.Collections.IList])) {
+                    if (-not ($State.PSObject.Properties.Name -contains "optimizer_queue") -or $null -eq $State.optimizer_queue) {
+                        $State | Add-Member -MemberType NoteProperty -Name "optimizer_queue" -Value @() -Force
+                    }
+                    
+                    foreach ($p in $proposals) {
+                        if ($p.title -and $p.description) {
+                            $id = "opt-$(Get-Date -Format 'yyyyMMddHHmmss')-$([guid]::NewGuid().ToString('N').Substring(0, 4))"
+                            $State.optimizer_queue += @([ordered]@{
+                                id              = $id
+                                title           = [string]$p.title
+                                description     = [string]$p.description
+                                impact          = [string]$p.impact
+                                proposed_action = [string]$p.proposed_action
+                                status          = "QUEUED"
+                                created_at      = (Get-Date -Format 'o')
+                            })
+                            Write-Host "[OPTIMIZER] Neuer Optimierungsvorschlag hinzugefügt: $($p.title)" -ForegroundColor Green
+                        }
+                    }
+                    
+                    $State.last_optimizer_analysis_at = (Get-Date -Format 'o')
+                    Save-AutopilotState -State $State
+                } else {
+                    Write-Warning "[OPTIMIZER] Konnte Optimizer-Vorschläge nicht parsen oder keine Vorschläge generiert."
+                }
+            }
+        } catch {
+            Write-Warning "Fehler bei Optimizer-Analyse: $_"
         }
     }
 

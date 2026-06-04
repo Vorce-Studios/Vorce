@@ -74,6 +74,15 @@ function Test-ProviderAvailable {
     return $true
 }
 
+function Test-PrimaryProvidersAvailable {
+    param([Parameter(Mandatory)][object]$Registry)
+
+    $codexAvailable = Test-ProviderAvailable -Registry $Registry -ProviderName "codex_orchestrator"
+    $geminiAvailable = Test-ProviderAvailable -Registry $Registry -ProviderName "gemini_cli"
+
+    return $codexAvailable -or $geminiAvailable
+}
+
 function Get-EstimatedCost {
     param(
         [Parameter(Mandatory)][object]$Registry,
@@ -172,7 +181,7 @@ function Set-ProviderUsageSnapshot {
     Save-QuotaRegistry -Registry $Registry
 }
 
-function Ensure-ProviderUsageToday {
+function Initialize-ProviderUsageToday {
     param([Parameter(Mandatory)][object]$Provider)
 
     if (-not (Test-ObjectProperty -Object $Provider -Name "usage_today") -or $null -eq $Provider.usage_today) {

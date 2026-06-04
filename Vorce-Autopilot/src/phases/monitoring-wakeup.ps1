@@ -94,7 +94,7 @@ function Invoke-MonitoringWakeUp {
 
     $repo = $Config.repository
     Write-Host "`n[MONITOR] ========== Monitoring Wake-Up ==========" -ForegroundColor Blue
-    $State = Normalize-AutopilotStateObject -State $State
+    $State = Update-AutopilotStateObject -State $State
     Confirm-WorkingSessionsState -State $State
 
     $ScriptDir = Resolve-Path (Join-Path $PSScriptRoot "../..")

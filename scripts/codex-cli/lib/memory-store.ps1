@@ -172,7 +172,7 @@ function Search-Memories {
     }
 
     # Search: match any keyword in text or id (case-insensitive)
-    $matches = @($allMemories | Where-Object {
+    $matchingMemories = @($allMemories | Where-Object {
         $text = "$($_.text) $($_.id)"
         $found = $false
         foreach ($kw in $keywords) {
@@ -184,13 +184,13 @@ function Search-Memories {
         $found
     })
 
-    if ($matches.Count -eq 0) {
+    if ($matchingMemories.Count -eq 0) {
         Write-Host "[MEMORY] Keine Treffer fuer '$Query'." -ForegroundColor DarkGray
         return ""
     }
 
-    $lines = @("[MEMORY-SUCHE: '$Query'] $($matches.Count) Treffer:")
-    foreach ($m in $matches) {
+    $lines = @("[MEMORY-SUCHE: '$Query'] $($matchingMemories.Count) Treffer:")
+    foreach ($m in $matchingMemories) {
         $typeLabel = if ($m.type -eq "temporary") { "TEMP" } else { "PERM" }
         $prioLabel = $m.priority.ToUpper()
         $lines += "- [$typeLabel|$prioLabel] $($m.text)"
@@ -198,7 +198,7 @@ function Search-Memories {
     $lines += "---"
 
     $block = $lines -join "`n"
-    Write-Host "[MEMORY] $($matches.Count) Treffer fuer '$Query' gefunden." -ForegroundColor Green
+    Write-Host "[MEMORY] $($matchingMemories.Count) Treffer fuer '$Query' gefunden." -ForegroundColor Green
     return $block
 }
 
