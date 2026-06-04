@@ -3,6 +3,31 @@
 
 Set-StrictMode -Version Latest
 
+function Get-VorceConfigPrompt {
+    param(
+        [Parameter(Mandatory)][object]$Config,
+        [Parameter(Mandatory)][string]$PromptKey,
+        [hashtable]$Variables = @{}
+    )
+
+    $promptTemplate = $null
+    if ($Config -and (Test-ObjectProperty -Object $Config -Name "prompts") -and
+        $Config.prompts -and (Test-ObjectProperty -Object $Config.prompts -Name $PromptKey)) {
+        $promptTemplate = [string]$Config.prompts.$PromptKey
+    }
+
+    if ([string]::IsNullOrWhiteSpace($promptTemplate)) {
+        $promptTemplate = "Missing prompt template for key: $PromptKey"
+    }
+
+    $finalPrompt = $promptTemplate
+    foreach ($key in $Variables.Keys) {
+        $finalPrompt = $finalPrompt.Replace("`$$key", [string]$Variables[$key])
+    }
+
+    return $finalPrompt
+}
+
 function Get-VorceCodexCeoPrompt {
     return @"
 Agiere als Vorce Autopilot CEO und Orchestrator.
