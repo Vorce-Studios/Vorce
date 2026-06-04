@@ -11,8 +11,8 @@ function Get-VorceConfigPrompt {
     )
 
     $promptTemplate = $null
-    if ($Config -and (Test-ObjectProperty -Object $Config -Name "prompts") -and
-        $Config.prompts -and (Test-ObjectProperty -Object $Config.prompts -Name $PromptKey)) {
+    if ($Config -and ($Config.PSObject.Properties.Name -contains "prompts") -and
+        $Config.prompts -and ($Config.prompts.PSObject.Properties.Name -contains $PromptKey)) {
         $promptTemplate = [string]$Config.prompts.$PromptKey
     }
 
