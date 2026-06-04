@@ -3,10 +3,7 @@
 
 Set-StrictMode -Version Latest
 
-function Test-ObjectProperty {
-    param([object]$Object, [string]$Name)
-    return $null -ne $Object -and ($Object.PSObject.Properties.Name -contains $Name)
-}
+# Test-ObjectProperty is now centrally defined in lib/state-manager.ps1
 
 function Start-QueuedWorkingSessions {
     param(
@@ -136,6 +133,35 @@ function Invoke-MonitoringWakeUp {
             $prOutput = gh pr list --repo $repo --state open --json number,title,headRefName,statusCheckRollup,mergeable,labels --limit 100 2>&1
             if ($LASTEXITCODE -eq 0) {
                 $prs = @($prOutput | Out-String | ConvertFrom-Json | ForEach-Object { $_ })
+            }
+        }
+
+        # --- Step 1.2: Run Monitoring Sequence (Session Splitting) ---
+        if ($Config.PSObject.Properties.Name -contains "monitoring_sequence") {
+            Write-Host "[MONITOR] Starte sequentielle Monitoring-Sequenz..." -ForegroundColor Yellow
+            $monitoringContext = ""
+            $prsData = $prs | ConvertTo-Json -Depth 3
+            $sessionsData = $State.active_delegations | ConvertTo-Json -Depth 3
+            
+            foreach ($step in $Config.monitoring_sequence) {
+                Write-Host "[MONITOR] Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
+                $promptVars = @{ repo = $repo; prs = $prsData; sessions = $sessionsData; context = $monitoringContext }
+                $stepPrompt = Get-VorceConfigPrompt -Config $Config -PromptKey $step.prompt_ref -Variables $promptVars
+                $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$stepPrompt"
+
+                $stepResult = Invoke-DualCeoTask `
+                    -QuotaRegistry $QuotaRegistry `
+                    -Config $Config `
+                    -TaskType "monitoring" `
+                    -DryRun:$DryRun `
+                    -Prompt $fullPrompt `
+                    -State $State
+                    
+                if ($stepResult.success) {
+                    $monitoringContext += "`n### Ergebnis $($step.label):`n$($stepResult.output)`n"
+                } else {
+                    Write-Warning "[MONITOR] Schritt $($step.label) fehlgeschlagen: $($stepResult.output)"
+                }
             }
         }
 

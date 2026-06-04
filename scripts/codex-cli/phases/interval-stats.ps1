@@ -275,5 +275,5 @@ while ($true) {
         Write-Warning "StackTrace: $($_.ScriptStackTrace)"
     }
 
-    break
+    Start-Sleep -Seconds $dashboardSyncIntervalSec
 }

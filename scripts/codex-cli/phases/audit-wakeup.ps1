@@ -49,7 +49,40 @@ function Invoke-AuditWakeUp {
         $delegationsData = ($State.active_delegations | ForEach-Object { "- Issue #$($_.issue_number) an $($_.agent_type) (Session: $($_.jules_session_id)) - Status: $($_.jules_state)" }) -join "`n"
     }
 
-    # 2. Prompt bauen
+    # 2. Run Audit Sequence if configured
+    $auditContext = ""
+    if ($Config.PSObject.Properties.Name -contains "audit_sequence") {
+        Write-Host "[AUDIT] Starte sequentielle Audit-Sequenz (Session Splitting)..." -ForegroundColor Yellow
+        
+        foreach ($step in $Config.audit_sequence) {
+            Write-Host "[AUDIT] Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
+            $promptVars = @{
+                repo        = $repo
+                issues      = $issuesData
+                prs         = $prsData
+                delegations = $delegationsData
+                context     = $auditContext
+            }
+            $stepPrompt = Get-VorceConfigPrompt -Config $Config -PromptKey $step.prompt_ref -Variables $promptVars
+            $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$stepPrompt"
+
+            $stepResult = Invoke-DualCeoTask `
+                -QuotaRegistry $QuotaRegistry `
+                -Config $Config `
+                -TaskType "audit" `
+                -DryRun:$DryRun `
+                -Prompt $fullPrompt `
+                -State $State
+                
+            if ($stepResult.success) {
+                $auditContext += "`n### Ergebnis $($step.label):`n$($stepResult.output)`n"
+            } else {
+                Write-Warning "[AUDIT] Schritt $($step.label) fehlgeschlagen."
+            }
+        }
+    }
+
+    # 3. Prompt fuer finalen Audit-Entscheidungsschritt bauen
     $promptText = @"
 Du bist CEO BETA (Gemini) des Vorce-Autopiloten.
 Deine Aufgabe ist ein unabhaengiges AUDIT des aktuellen Projektstatus.
@@ -74,6 +107,9 @@ $prsData
 
 Aktive Agent-Delegationen (Tasks in Arbeit):
 $delegationsData
+
+Hier sind die Detail-Audit-Ergebnisse aus den vorherigen Schritten:
+$auditContext
 
 Antworte strikt im JSON-Format:
 {

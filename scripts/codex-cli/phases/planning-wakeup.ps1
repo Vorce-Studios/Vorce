@@ -243,39 +243,131 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
     $agentsStr = $availableAgents -join ", "
 
     # --- Step 2: Check if we should create new issues ---
-    if ($candidates.Count -lt 3) {
-        Write-Host "[PLANNING] Wenige offene Issues - pruefe ob neue erstellt werden sollten." -ForegroundColor Yellow
+    $newIssues = @()
+    $runIssueCreation = $false
 
-        # Lade die Issues aus dem Cache fuer den Prompt-Kontext
-        $cachedIssuePath = Join-Path $ScriptDir "dashboard\public\github-issues.json"
-        $promptIssuesContext = ""
-        if (Test-Path $cachedIssuePath) {
-            try {
-                $issuesRaw = Get-Content -LiteralPath $cachedIssuePath -Raw -Encoding UTF8 | ConvertFrom-Json
-                $gateIssueNumbers = @(651, 650, 547, 549, 548, 661, 662, 96, 98, 99, 101, 102, 103, 654, 655, 656, 657, 658, 659, 107, 43, 652, 653)
-                $contextLines = @()
+    if ($Config.PSObject.Properties.Name -contains "planning_sequence") {
+        Write-Host "[PLANNING] Starte sequentielle Planungs-Sequenz (Session Splitting)..." -ForegroundColor Yellow
+        $planningContext = ""
+        
+        foreach ($step in $Config.planning_sequence) {
+            Write-Host "[PLANNING] Starte Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
+            
+            $julesActiveCount = @($State.active_delegations | Where-Object {
+                -not ($_.PSObject.Properties.Name -contains "agent_type") -or ($_.agent_type -eq "jules")
+            }).Count
+            $julesAvailableSlots = [int]$Config.jules.max_concurrent_sessions - $julesActiveCount
+            if ($julesAvailableSlots -lt 0) { $julesAvailableSlots = 0 }
 
-                if ($null -ne $issuesRaw -and ($issuesRaw -is [System.Array] -or $issuesRaw -is [System.Collections.IList])) {
-                    foreach ($issue in $issuesRaw) {
-                        if ($gateIssueNumbers -contains $issue.number) {
-                            $title = $issue.title
-                            $issueState = $issue.state
-                            $bodySnippet = if ($issue.body -and $issue.body.Length -gt 250) { $issue.body.Substring(0, 250) + "..." } else { $issue.body }
-                            $bodySnippet = $bodySnippet -replace "`n", " " -replace "`r", ""
-                            $contextLines += "- #$($issue.number) [$issueState]: $title (Auszug: $bodySnippet)"
+            $promptVars = @{
+                repo      = $repo
+                context   = $planningContext
+                maxIssues = $Config.max_issues_per_planning_cycle
+                slots     = $julesAvailableSlots
+            }
+            $stepPrompt = Get-VorceConfigPrompt -Config $Config -PromptKey $step.prompt_ref -Variables $promptVars
+            $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$stepPrompt"
+
+            $stepResult = $null
+            if ($step.id -eq "final_synthesis" -or $step.prompt_ref -eq "planning_synthesis") {
+                Write-Host "[PLANNING] Starte Planning Synthesis als interaktiven Codex-Chat." -ForegroundColor Cyan
+                $sessionResult = Invoke-AutopilotCodexSession `
+                    -SessionType "planning-synthesis" `
+                    -Prompt $fullPrompt `
+                    -State $State `
+                    -Model "gpt-5.5" `
+                    -VisibleTerminal `
+                    -ResumeMainSession `
+                    -DryRun:$DryRun
+
+                $isSessionDryRun = ($sessionResult.PSObject.Properties.Name -contains "DryRun") -and [bool]$sessionResult.DryRun
+                $sessionOutput = if ($isSessionDryRun) {
+                    "{`"dry_run`":true}"
+                } elseif ($sessionResult.PSObject.Properties.Name -contains "Output" -and -not [string]::IsNullOrWhiteSpace([string]$sessionResult.Output)) {
+                    [string]$sessionResult.Output
+                } else {
+                    "Interactive planning synthesis completed."
+                }
+                $stepResult = [pscustomobject]@{
+                    success = [bool]$sessionResult.Success
+                    output  = $sessionOutput
+                }
+            } else {
+                $stepResult = Invoke-DualCeoTask `
+                    -QuotaRegistry $QuotaRegistry `
+                    -Config $Config `
+                    -TaskType "planning" `
+                    -Prompt $fullPrompt `
+                    -State $State `
+                    -DryRun:$DryRun
+            }
+
+            if ($stepResult.success) {
+                $output = [string]$stepResult.output
+                $planningContext += "`n### Ergebnis von $($step.label):`n$output`n"
+
+                if ($step.id -eq "task_generation" -or $step.prompt_ref -eq "planning_proposal") {
+                    try {
+                        $parsedObj = $null
+                        try {
+                            $parsedObj = $output | ConvertFrom-Json
+                        } catch {
+                            $jsonArrMatch = [regex]::Match($output, '(?s)\[.*\]')
+                            if ($jsonArrMatch.Success) {
+                                try { $parsedObj = $jsonArrMatch.Value | ConvertFrom-Json } catch {}
+                            }
                         }
+                        if ($null -ne $parsedObj) {
+                            $runIssueCreation = $true
+                            if ($parsedObj -is [System.Array] -or $parsedObj -is [System.Collections.IList]) {
+                                $newIssues += @($parsedObj)
+                            } elseif ($parsedObj.PSObject.Properties.Name -contains "proposal") {
+                                $newIssues += @($parsedObj.proposal)
+                            }
+                        }
+                    } catch {
+                        Write-Warning "[PLANNING] Fehler beim Parsen der vorgeschlagenen Issues in $($step.label): $_"
                     }
                 }
-
-                if ($contextLines.Count -gt 0) {
-                    $promptIssuesContext = "`n`nHier sind die verfuegbaren Details zu den genannten Gate-Issues (aus dem lokalen Cache):`n" + ($contextLines -join "`n")
-                }
-            } catch {
-                Write-Warning "[PLANNING] Fehler beim Laden des Issue-Contexts fuer den Prompt: $_"
+            } else {
+                Write-Warning "[PLANNING] Schritt $($step.label) fehlgeschlagen."
             }
         }
+    } else {
+        # Fallback to single-phase planning
+        if ($candidates.Count -lt 3) {
+            Write-Host "[PLANNING] Wenige offene Issues - pruefe ob neue erstellt werden sollten." -ForegroundColor Yellow
 
-        $promptText = @"
+            # Lade die Issues aus dem Cache fuer den Prompt-Kontext
+            $cachedIssuePath = Join-Path $ScriptDir "dashboard\public\github-issues.json"
+            $promptIssuesContext = ""
+            if (Test-Path $cachedIssuePath) {
+                try {
+                    $issuesRaw = Get-Content -LiteralPath $cachedIssuePath -Raw -Encoding UTF8 | ConvertFrom-Json
+                    $gateIssueNumbers = @(651, 650, 547, 549, 548, 661, 662, 96, 98, 99, 101, 102, 103, 654, 655, 656, 657, 658, 659, 107, 43, 652, 653)
+                    $contextLines = @()
+
+                    if ($null -ne $issuesRaw -and ($issuesRaw -is [System.Array] -or $issuesRaw -is [System.Collections.IList])) {
+                        foreach ($issue in $issuesRaw) {
+                            if ($gateIssueNumbers -contains $issue.number) {
+                                $title = $issue.title
+                                $issueState = $issue.state
+                                $bodySnippet = if ($issue.body -and $issue.body.Length -gt 250) { $issue.body.Substring(0, 250) + "..." } else { $issue.body }
+                                $bodySnippet = $bodySnippet -replace "`n", " " -replace "`r", ""
+                                $contextLines += "- #$($issue.number) [$issueState]: $title (Auszug: $bodySnippet)"
+                            }
+                        }
+                    }
+
+                    if ($contextLines.Count -gt 0) {
+                        $promptIssuesContext = "`n`nHier sind die verfuegbaren Details zu den genannten Gate-Issues (aus dem lokalen Cache):`n" + ($contextLines -join "`n")
+                    }
+                } catch {
+                    Write-Warning "[PLANNING] Fehler beim Laden des Issue-Contexts fuer den Prompt: $_"
+                }
+            }
+
+            $promptText = @"
 Du bist der Autopilot fuer das Vorce-Projekt (Rust Projection-Mapping Software).
 Repository: $repo
 
@@ -312,173 +404,141 @@ Antworte NUR mit einer JSON-Liste im Format:
 
 Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 "@
-        $planResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "planning" -DryRun:$DryRun -Prompt $promptText -State $State
+            $planResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "planning" -DryRun:$DryRun -Prompt $promptText -State $State
 
-        if ($planResult.success) {
-            try {
-                $newIssues = @()
-                $parsedObj = $null
+            if ($planResult.success) {
                 try {
-                    # Try to parse the entire output first
-                    $parsedObj = $planResult.output | ConvertFrom-Json
-                } catch {
-                    # Best-effort extraction if there's header/footer noise
-                    $jsonObjMatch = [regex]::Match($planResult.output, '(?s)\{.*\}')
-                    if ($jsonObjMatch.Success) {
-                        try { $parsedObj = $jsonObjMatch.Value | ConvertFrom-Json } catch {}
-                    }
-                    if ($null -eq $parsedObj) {
-                        $jsonArrMatch = [regex]::Match($planResult.output, '(?s)\[.*\]')
-                        if ($jsonArrMatch.Success) {
-                            try { $parsedObj = $jsonArrMatch.Value | ConvertFrom-Json } catch {}
-                        }
-                    }
-                }
-
-                if ($null -ne $parsedObj) {
-                    if ($parsedObj -is [System.Array] -or $parsedObj -is [System.Collections.IList]) {
-                        $newIssues = @($parsedObj)
-                    } elseif ($parsedObj.PSObject.Properties.Name -contains "proposal") {
-                        $propVal = $parsedObj.proposal
-                        if ($propVal -is [string]) {
-                            try { $newIssues = @($propVal | ConvertFrom-Json) } catch {}
-                        } else {
-                            $newIssues = @($propVal)
-                        }
-                    } elseif ($parsedObj.PSObject.Properties.Name -contains "response") {
-                        $respVal = $parsedObj.response
-                        if ($respVal -is [string]) {
-                            try {
-                                # If it's a JSON string inside response
-                                $nestedObj = $respVal | ConvertFrom-Json
-                                if ($nestedObj -is [System.Array] -or $nestedObj -is [System.Collections.IList]) {
-                                    $newIssues = @($nestedObj)
-                                } elseif ($nestedObj.PSObject.Properties.Name -contains "proposal") {
-                                    $newIssues = @($nestedObj.proposal)
-                                }
-                            } catch {
-                                # Try extracting list from response text
-                                $jsonMatch = [regex]::Match($respVal, '(?s)\[.*\]')
-                                if ($jsonMatch.Success) {
-                                    try { $newIssues = @($jsonMatch.Value | ConvertFrom-Json) } catch {}
-                                }
-                            }
-                        } else {
-                            $newIssues = @($respVal)
-                        }
-                    }
-                } else {
-                    # Final fallback: regex match on raw text
-                    $jsonMatch = [regex]::Match($planResult.output, '(?s)\[.*\]')
-                    if ($jsonMatch.Success) {
-                        try { $newIssues = @($jsonMatch.Value | ConvertFrom-Json) } catch {}
-                    }
-                }
-
-                if ($newIssues.Count -gt 0) {
-                    $newIssuesCreated = $false
-
-                    # Use cached issue data from the dashboard instead of calling GitHub directly
-                    $cachedIssuePath = Join-Path $ScriptDir "dashboard\public\github-issues.json"
-                    $existingVorIssues = @()
-                    $issuesRaw = $null
-
-                    if (Test-Path $cachedIssuePath) {
-                        try {
-                            $issuesRaw = Get-Content -LiteralPath $cachedIssuePath -Raw -Encoding UTF8 | ConvertFrom-Json
-                        } catch {
-                            Write-Warning "[PLANNING] Fehler beim Lesen der gecachten Issues: $_"
-                        }
-                    }
-
-                    if ($null -ne $issuesRaw -and ($issuesRaw -is [System.Array] -or $issuesRaw -is [System.Collections.IList])) {
-                        $existingVorIssues = @($issuesRaw | Where-Object { $_.repo -eq $repo })
-                        Write-Host "[PLANNING] Gecachte Issue-Daten zur VOR-Nummernermittlung geladen." -ForegroundColor DarkGray
-                    } else {
-                        Write-Host "[PLANNING] Lade Issues direkt via gh-cli zur VOR-Nummernermittlung (Fallback)..." -ForegroundColor DarkGray
-                        $existingVorIssuesRaw = gh issue list --repo $repo --state all --json title --limit 300 2>&1
-                        if ($LASTEXITCODE -eq 0) {
-                            try { $existingVorIssues = @($existingVorIssuesRaw | Out-String | ConvertFrom-Json) } catch {}
-                        }
-                    }
-
-                    $nextVorNumber = 1
+                    $parsedObj = $null
                     try {
-                        $usedVorNumbers = @($existingVorIssues | ForEach-Object {
-                            $m = [regex]::Match([string]$_.title, 'VOR-(\d{3})')
-                            if ($m.Success) { [int]$m.Groups[1].Value }
-                        })
-                        if ($usedVorNumbers.Count -gt 0) {
-                            $nextVorNumber = ([int]($usedVorNumbers | Measure-Object -Maximum).Maximum) + 1
-                        }
+                        $parsedObj = $planResult.output | ConvertFrom-Json
                     } catch {
-                        Write-Warning "[PLANNING] Konnte naechste VOR-Issue-Nummer nicht aus GitHub ermitteln; starte bei VOR-001."
-                    }
-
-                    $seenTitles = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
-                    if ($null -ne $existingVorIssues) {
-                        foreach ($ei in $existingVorIssues) {
-                            if (-not [string]::IsNullOrWhiteSpace($ei.title)) {
-                                $seenTitles.Add([string]$ei.title) | Out-Null
+                        $jsonObjMatch = [regex]::Match($planResult.output, '(?s)\{.*\}')
+                        if ($jsonObjMatch.Success) {
+                            try { $parsedObj = $jsonObjMatch.Value | ConvertFrom-Json } catch {}
+                        }
+                        if ($null -eq $parsedObj) {
+                            $jsonArrMatch = [regex]::Match($planResult.output, '(?s)\[.*\]')
+                            if ($jsonArrMatch.Success) {
+                                try { $parsedObj = $jsonArrMatch.Value | ConvertFrom-Json } catch {}
                             }
                         }
                     }
 
-                    foreach ($newIssue in $newIssues) {
-                        # Validate that newIssue has a title
-                        if ($null -eq $newIssue -or -not ($newIssue.PSObject.Properties.Name -contains "title")) { continue }
-                        $issueTitle = [string]$newIssue.title
-                        $issueBody = [string]$newIssue.body
-
-                        if ($issueTitle -match "VOR-000") {
-                            $issueTitle = $issueTitle -replace "VOR-000", ("VOR-{0:D3}" -f $nextVorNumber)
-                            $nextVorNumber++
-                        } elseif ($issueTitle -notmatch "^(VOR-\d{3}_(MAIs|StIs|User)_|__VOR-\d{3}_SubI_)") {
-                            $issueSlug = ($issueTitle -replace "^[A-Za-z]+-[A-Za-z]+_", "") -replace "\s+", "-"
-                            $issueTitle = "__VOR-{0:D3}_SubI_{1}" -f $nextVorNumber, $issueSlug
-                            $nextVorNumber++
-                        }
-
-                        if ($seenTitles.Contains($issueTitle)) {
-                            Write-Host "[PLANNING] Ueberspringe Erstellung: Issue mit Titel '$issueTitle' existiert bereits oder wurde gerade in dieser Iteration vorgeschlagen." -ForegroundColor Yellow
-                            continue
-                        }
-                        $seenTitles.Add($issueTitle) | Out-Null
-
-                        $issueAgent = "jules"
-                        if ($newIssue.PSObject.Properties.Name -contains "agent" -and -not [string]::IsNullOrWhiteSpace($newIssue.agent)) {
-                            $issueAgent = [string]$newIssue.agent
-                        }
-
-                        if ($DryRun.IsPresent) {
-                            Write-Host "[PLANNING] [DRY RUN] Wuerde Issue erstellen: $issueTitle ($issueAgent)" -ForegroundColor DarkYellow
-                        } else {
-                            $labels = @($newIssue.labels) + @($Config.issue_filters.autopilot_label)
-
-                            # Ensure jules-task label is removed if not jules
-                            if ($issueAgent -ne "jules") {
-                                $labels = @($labels | Where-Object { $_ -ne "jules-task" })
-                            }
-                            # Add agent label for tracking
-                            $labels += "agent:$issueAgent"
-
-                            $labelArgs = ($labels | ForEach-Object { "--label `"$_`"" }) -join " "
-                            $createCmd = "gh issue create --repo $repo --title `"$issueTitle`" --body `"$issueBody`" $labelArgs"
-                            $created = Invoke-Expression $createCmd 2>&1
-                            Write-Host "[PLANNING] Issue erstellt: $created (Agent: $issueAgent)" -ForegroundColor Green
-                            $State.autopilot_created_issues += @($issueTitle)
-                            $newIssuesCreated = $true
+                    if ($null -ne $parsedObj) {
+                        $runIssueCreation = $true
+                        if ($parsedObj -is [System.Array] -or $parsedObj -is [System.Collections.IList]) {
+                            $newIssues = @($parsedObj)
+                        } elseif ($parsedObj.PSObject.Properties.Name -contains "proposal") {
+                            $newIssues = @($parsedObj.proposal)
                         }
                     }
-                    if ($newIssuesCreated) {
-                        Write-Host "[PLANNING] Neue Issues wurden erstellt. Lade Kandidatenliste neu..." -ForegroundColor Cyan
-                        $candidates = @(& $GetCandidates)
-                        Write-Host "[PLANNING] $($candidates.Count) Issues bereit fuer Delegation (nach Reload)." -ForegroundColor Green
-                    }
+                } catch {
+                    Write-Warning "[PLANNING] Konnte CLI-Antwort nicht parsen: $_"
+                }
+            }
+        }
+    }
+
+    # Execute issue creation logic if issues were proposed
+    if ($runIssueCreation -and $newIssues.Count -gt 0) {
+        try {
+            $newIssuesCreated = $false
+
+            # Use cached issue data from the dashboard instead of calling GitHub directly
+            $cachedIssuePath = Join-Path $ScriptDir "dashboard\public\github-issues.json"
+            $existingVorIssues = @()
+            $issuesRaw = $null
+
+            if (Test-Path $cachedIssuePath) {
+                try {
+                    $issuesRaw = Get-Content -LiteralPath $cachedIssuePath -Raw -Encoding UTF8 | ConvertFrom-Json
+                } catch {
+                    Write-Warning "[PLANNING] Fehler beim Lesen der gecachten Issues: $_"
+                }
+            }
+
+            if ($null -ne $issuesRaw -and ($issuesRaw -is [System.Array] -or $issuesRaw -is [System.Collections.IList])) {
+                $existingVorIssues = @($issuesRaw | Where-Object { $_.repo -eq $repo })
+                Write-Host "[PLANNING] Gecachte Issue-Daten zur VOR-Nummernermittlung geladen." -ForegroundColor DarkGray
+            } else {
+                Write-Host "[PLANNING] Lade Issues direkt via gh-cli zur VOR-Nummernermittlung (Fallback)..." -ForegroundColor DarkGray
+                $existingVorIssuesRaw = gh issue list --repo $repo --state all --json title --limit 300 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    try { $existingVorIssues = @($existingVorIssuesRaw | Out-String | ConvertFrom-Json) } catch {}
+                }
+            }
+
+            $nextVorNumber = 1
+            try {
+                $usedVorNumbers = @($existingVorIssues | ForEach-Object {
+                    $m = [regex]::Match([string]$_.title, 'VOR-(\d{3})')
+                    if ($m.Success) { [int]$m.Groups[1].Value }
+                })
+                if ($usedVorNumbers.Count -gt 0) {
+                    $nextVorNumber = ([int]($usedVorNumbers | Measure-Object -Maximum).Maximum) + 1
                 }
             } catch {
-                Write-Warning "[PLANNING] Konnte CLI-Antwort nicht parsen: $_"
+                Write-Warning "[PLANNING] Konnte naechste VOR-Issue-Nummer nicht aus GitHub ermitteln; starte bei VOR-001."
             }
+
+            $seenTitles = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+            if ($null -ne $existingVorIssues) {
+                foreach ($ei in $existingVorIssues) {
+                    if (-not [string]::IsNullOrWhiteSpace($ei.title)) {
+                        $seenTitles.Add([string]$ei.title) | Out-Null
+                    }
+                }
+            }
+
+            foreach ($newIssue in $newIssues) {
+                if ($null -eq $newIssue -or -not ($newIssue.PSObject.Properties.Name -contains "title")) { continue }
+                $issueTitle = [string]$newIssue.title
+                $issueBody = [string]$newIssue.body
+
+                if ($issueTitle -match "VOR-000") {
+                    $issueTitle = $issueTitle -replace "VOR-000", ("VOR-{0:D3}" -f $nextVorNumber)
+                    $nextVorNumber++
+                } elseif ($issueTitle -notmatch "^(VOR-\d{3}_(MAIs|StIs|User)_|__VOR-\d{3}_SubI_)") {
+                    $issueSlug = ($issueTitle -replace "^[A-Za-z]+-[A-Za-z]+_", "") -replace "\s+", "-"
+                    $issueTitle = "__VOR-{0:D3}_SubI_{1}" -f $nextVorNumber, $issueSlug
+                    $nextVorNumber++
+                }
+
+                if ($seenTitles.Contains($issueTitle)) {
+                    Write-Host "[PLANNING] Ueberspringe Erstellung: Issue mit Titel '$issueTitle' existiert bereits oder wurde gerade in dieser Iteration vorgeschlagen." -ForegroundColor Yellow
+                    continue
+                }
+                $seenTitles.Add($issueTitle) | Out-Null
+
+                $issueAgent = "jules"
+                if ($newIssue.PSObject.Properties.Name -contains "agent" -and -not [string]::IsNullOrWhiteSpace($newIssue.agent)) {
+                    $issueAgent = [string]$newIssue.agent
+                }
+
+                if ($DryRun.IsPresent) {
+                    Write-Host "[PLANNING] [DRY RUN] Wuerde Issue erstellen: $issueTitle ($issueAgent)" -ForegroundColor DarkYellow
+                } else {
+                    $labels = @($newIssue.labels) + @($Config.issue_filters.autopilot_label)
+                    if ($issueAgent -ne "jules") {
+                        $labels = @($labels | Where-Object { $_ -ne "jules-task" })
+                    }
+                    $labels += "agent:$issueAgent"
+
+                    $labelArgs = ($labels | ForEach-Object { "--label `"$_`"" }) -join " "
+                    $createCmd = "gh issue create --repo $repo --title `"$issueTitle`" --body `"$issueBody`" $labelArgs"
+                    $created = Invoke-Expression $createCmd 2>&1
+                    Write-Host "[PLANNING] Issue erstellt: $created (Agent: $issueAgent)" -ForegroundColor Green
+                    $State.autopilot_created_issues += @($issueTitle)
+                    $newIssuesCreated = $true
+                }
+            }
+            if ($newIssuesCreated) {
+                Write-Host "[PLANNING] Neue Issues wurden erstellt. Lade Kandidatenliste neu..." -ForegroundColor Cyan
+                $candidates = @(& $GetCandidates)
+                Write-Host "[PLANNING] $($candidates.Count) Issues bereit fuer Delegation (nach Reload)." -ForegroundColor Green
+            }
+        } catch {
+            Write-Warning "[PLANNING] Fehler bei der Issue-Erstellung: $_"
         }
     }
 
