@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, Activity, AlertCircle, GitPullRequest, Settings, RefreshCw, Zap, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Activity, Settings, RefreshCw, Zap, BarChart3 } from 'lucide-react';
 import { useData, useAutoRefresh } from './hooks';
 
 // Pages
@@ -19,10 +19,7 @@ const defaultAutopilotConfig: AutopilotConfig = {
     max_daily_sessions: 100,
     max_concurrent_sessions: 15,
     auto_approve_plans: true,
-    auto_retry_feedback_max: 3,
-    auto_merge_approved_prs: true,
-    monitoring_refill_enabled: true,
-    monitoring_refill_buffer_size: 30
+    auto_retry_feedback_max: 3
   },
   gemini_worktree_path: '../VjMapper-gemini',
   issue_filters: {
@@ -73,10 +70,10 @@ export default function App() {
   const { data: sessions, loading: sessionsLoading, refetch: refetchSessions } = useData<ActiveSessions>('/active-sessions.json', defaultActiveSessions);
   const { data: issues, loading: issuesLoading, refetch: refetchIssues } = useData<GitHubIssue[]>('/github-issues.json', []);
   const { data: pullRequests, loading: prLoading, refetch: refetchPRs } = useData<PullRequest[]>('/pull-requests.json', []);
+  const { data: projectItems, refetch: refetchProjectItems } = useData<any>('/project-items.json', { items: [] });
   const { data: julesSessions, refetch: refetchJulesSessions } = useData<any[]>('/jules-sessions.json', []);
   const { data: memoryStore, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
   const { data: history, loading: historyLoading, refetch: refetchHistory } = useData<any[]>('/data.json', []);
-  const { data: liveLog, refetch: refetchLiveLog } = useData<{ content: string }>('/api/live-log', { content: '' });
 
   const refetchAll = () => {
     refetchConfig();
@@ -84,10 +81,10 @@ export default function App() {
     refetchSessions();
     refetchIssues();
     refetchPRs();
+    refetchProjectItems();
     refetchJulesSessions();
     refetchMemory();
     refetchHistory();
-    refetchLiveLog();
   };
 
   // Auto-refresh every 30 seconds
@@ -98,19 +95,9 @@ export default function App() {
     const renderActivePage = () => {
       switch (activeTab) {
         case 'dashboard':
-          return (
-            <DashboardPage
-              registry={registry}
-              sessions={sessions}
-              pullRequests={pullRequests}
-              issues={issues}
-              julesSessions={julesSessions}
-              liveLog={liveLog.content}
-              onRefresh={refetchAll}
-            />
-          );
+          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} />;
         case 'workstreams':
-          return <WorkstreamsPage issues={issues} sessions={sessions} pullRequests={pullRequests} julesSessions={julesSessions} />;
+          return <WorkstreamsPage issues={issues} sessions={sessions} pullRequests={pullRequests} julesSessions={julesSessions} projectItems={projectItems?.items || []} />;
         case 'reporting':
         return (
           <ManagerReportingPage

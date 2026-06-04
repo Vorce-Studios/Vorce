@@ -87,18 +87,18 @@ function Get-ManagedAutopilotProcess {
         [Parameter(Mandatory)][string]$Pattern
     )
 
-    $rootPattern = [regex]::Escape($ScriptDir)
+    $rootPattern = [regex]::Escape(($ScriptDir -replace '\\', '/'))
     @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
         $_.ProcessId -ne $PID -and
         $_.CommandLine -and
-        $_.CommandLine -match $rootPattern -and
-        $_.CommandLine -match $Pattern
+        (([string]$_.CommandLine -replace '\\', '/') -match $rootPattern) -and
+        ($_.CommandLine -match $Pattern)
     })
 }
 
 function Get-AutopilotSuiteProcess {
-    $rootPattern = [regex]::Escape($ScriptDir)
-    $dashboardPattern = [regex]::Escape($DashboardDir)
+    $rootPattern = [regex]::Escape(($ScriptDir -replace '\\', '/'))
+    $dashboardPattern = [regex]::Escape(($DashboardDir -replace '\\', '/'))
     $patterns = @(
         'autopilot\.ps1',
         'interval-stats\.ps1',
@@ -113,7 +113,7 @@ function Get-AutopilotSuiteProcess {
 
     @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
         if ($_.ProcessId -eq $PID -or -not $_.CommandLine) { return $false }
-        $commandLine = [string]$_.CommandLine
+        $commandLine = [string]$_.CommandLine -replace '\\', '/'
         $belongsToSuite = ($commandLine -match $rootPattern) -or ($commandLine -match $dashboardPattern)
         if (-not $belongsToSuite) { return $false }
 
@@ -127,11 +127,11 @@ function Get-AutopilotSuiteProcess {
 function Stop-AutopilotSuiteProcesses {
     $processes = @(Get-AutopilotSuiteProcess | Sort-Object ProcessId -Unique)
     if ($processes.Count -eq 0) {
-        Write-Host "[INIT] Keine alten Autopilot-Prozesse gefunden." -ForegroundColor DarkGray
+        Write-InitStatus "[INIT] Keine alten Autopilot-Prozesse gefunden." -Color DarkGray
         return
     }
 
-    Write-Host "[INIT] Beende alte Autopilot-Prozesse: $($processes.ProcessId -join ', ')" -ForegroundColor Yellow
+    Write-InitStatus "[INIT] Beende alte Autopilot-Prozesse: $($processes.ProcessId -join ', ')" -Color Yellow
     foreach ($process in $processes) {
         try {
             Stop-Process -Id $process.ProcessId -Force -ErrorAction Stop

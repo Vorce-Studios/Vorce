@@ -306,8 +306,9 @@ function Invoke-AutopilotCodexSession {
     try {
         if ($VisibleTerminal.IsPresent -or $VisibleExecTerminal.IsPresent) {
             $isInteractiveVisible = $VisibleTerminal.IsPresent -and -not $VisibleExecTerminal.IsPresent
+            Remove-Item -LiteralPath $logPath -Force -ErrorAction SilentlyContinue
+            Write-AutopilotCodexStatus -Path $statusPath -Status "starting" -SessionType $SessionType -Model $Model -Message "Preparing visible Codex session."
             if ($isInteractiveVisible) {
-                Write-AutopilotCodexStatus -Path $statusPath -Status "starting" -SessionType $SessionType -Model $Model -Message "Preparing visible Codex session."
                 $visiblePrompt = Add-AutopilotStatusInstructions -Prompt $Prompt -StatusPath $statusPath -SessionType $SessionType
             } else {
                 $visiblePrompt = $Prompt
@@ -368,6 +369,10 @@ function Invoke-AutopilotCodexSession {
             try { $process.WaitForExit(5000) | Out-Null } catch { }
             $exitCode = if ($statusCompleted) { 0 } else { $process.ExitCode }
             Write-Host "[CODEX] Sichtbare $SessionType-Session beendet. ExitCode=$exitCode" -ForegroundColor $(if ($exitCode -eq 0) { "Green" } else { "Red" })
+            if (-not $isInteractiveVisible) {
+                $statusValue = if ($exitCode -eq 0) { "completed" } else { "failed" }
+                Write-AutopilotCodexStatus -Path $statusPath -Status $statusValue -SessionType $SessionType -Model $Model -ProcessId $process.Id -Message "Visible Codex exec session exited with code $exitCode."
+            }
             $output = if (Test-Path -LiteralPath $logPath) { Get-Content -LiteralPath $logPath -Raw -Encoding UTF8 } else { "" }
         } else {
             Write-Host "[CODEX] Headless $SessionType-Session gestartet. Model=$Model" -ForegroundColor Green

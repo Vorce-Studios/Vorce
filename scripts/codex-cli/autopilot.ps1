@@ -53,9 +53,27 @@ function Write-Host {
 . (Join-Path $ScriptDir "lib\memory-store.ps1")
 . (Join-Path $ScriptDir "lib\deliberation-engine.ps1")
 . (Join-Path $ScriptDir "lib\autopilot-session-manager.ps1")
+. (Join-Path $ScriptDir "lib\autopilot-prompts.ps1")
 . (Join-Path $ScriptDir "phases\planning-wakeup.ps1")
 . (Join-Path $ScriptDir "phases\monitoring-wakeup.ps1")
 . (Join-Path $ScriptDir "phases\audit-wakeup.ps1")
+
+$requiredAutopilotCommands = @(
+    "Get-VorceConfigPrompt",
+    "Get-VorceLagebildSummary",
+    "Confirm-WorkingSessionsState",
+    "Optimize-AutopilotMemories",
+    "Invoke-PlanningWakeUp",
+    "Invoke-MonitoringWakeUp",
+    "Invoke-AuditWakeUp"
+)
+
+$missingAutopilotCommands = @($requiredAutopilotCommands | Where-Object {
+    -not (Get-Command $_ -ErrorAction SilentlyContinue)
+})
+if ($missingAutopilotCommands.Count -gt 0) {
+    throw "Autopilot startup guard failed. Missing commands: $($missingAutopilotCommands -join ', ')"
+}
 
 # --- Load config ---
 $configPath = Join-Path $ScriptDir "autopilot-config.json"

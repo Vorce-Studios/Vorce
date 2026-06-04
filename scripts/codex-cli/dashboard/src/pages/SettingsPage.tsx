@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Loader2, Shield, ListFilter, Cpu, Layers, Settings, Check, AlertCircle, Users } from 'lucide-react';
+import { Save, Loader2, Shield, ListFilter, Cpu, Layers, Settings, Check, AlertCircle, Users, Zap } from 'lucide-react';
 import type { AutopilotConfig, QuotaRegistry, MemoryStore } from '../types';
 import MemoryPanel from './MemoryPanel';
 
@@ -35,6 +35,21 @@ const ROUTING_DESCRIPTIONS: Record<string, string> = {
   debugging: 'Kontextbezogene Fehleranalyse und direkter Reparatur-Versuch bei fehlgeschlagenen CI-Builds.',
   coding: 'Der eigentliche Entwicklungs-Prozess von Code-Änderungen und Features (standardmäßig Jules).',
 };
+
+const PROMPT_METADATA = [
+  { key: 'planning_jules_sync', label: 'Planning: Jules Session Status Sync', group: 'planning', placeholder: 'Jules active/stalled check...' },
+  { key: 'planning_pr_sync', label: 'Planning: PR Status Sync', group: 'planning', placeholder: 'PR conflict/CI check...' },
+  { key: 'planning_analysis', label: 'Planning: Repository compass analysis', group: 'planning', placeholder: 'Repository analysis & blockers...' },
+  { key: 'planning_proposal', label: 'Planning: Issue Proposal Logic', group: 'planning', placeholder: 'Formulating issue proposals...' },
+  { key: 'planning_synthesis', label: 'Planning: Master Plan Synthesis & Priority Queue', group: 'planning', placeholder: 'Consolidating delegation order...' },
+  { key: 'monitor_sessions', label: 'Monitoring: Session Health Check', group: 'monitoring', placeholder: 'Active delegation health checks...' },
+  { key: 'monitor_prs', label: 'Monitoring: PR Validation', group: 'monitoring', placeholder: 'PR validation and automatic fixing...' },
+  { key: 'monitor_conflicts', label: 'Monitoring: Conflict Resolution', group: 'monitoring', placeholder: 'Automatic merge conflict resolving...' },
+  { key: 'monitoring_synthesis', label: 'Monitoring: Status Evaluation', group: 'monitoring', placeholder: 'Consolidating monitoring results...' },
+  { key: 'audit_consistency', label: 'Audit: Data Consistency Check', group: 'audit', placeholder: 'Comparing state registry vs GitHub...' },
+  { key: 'audit_performance', label: 'Audit: Performance Assessment', group: 'audit', placeholder: 'Assessing action history efficiency...' },
+  { key: 'audit_synthesis', label: 'Audit: CEO Beta Decision Matrix', group: 'audit', placeholder: 'Consolidating audit reports and remediation JSON...' },
+];
 
 export default function SettingsPage({ config: propConfig, registry: propRegistry, memoryStore, onSave, onMemoryRefresh }: Props) {
   // Lokale States für Formulare
@@ -123,6 +138,49 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
   const handleDualCeoArrayChange = (key: 'ceo_alpha_chain' | 'ceo_beta_chain' | 'deliberation_tasks', value: string) => {
     const list = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
     handleNestedConfigChange('dual_ceo', key, list);
+  };
+
+  const handleWorkingSessionsArrayChange = (key: 'preferred_agents', value: string) => {
+    const list = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    handleNestedConfigChange('working_sessions', key, list);
+  };
+
+  const handlePromptChange = (key: string, value: string) => {
+    setConfig(prev => {
+      if (!prev) return null;
+      const prompts = prev.prompts || {};
+      return {
+        ...prev,
+        prompts: {
+          ...prompts,
+          [key]: value
+        }
+      };
+    });
+  };
+
+  const handleProviderModelChange = (providerKey: string, modelKey: string, key: 'name' | 'estimated_cost_per_call_usd', value: unknown) => {
+    setRegistry(prev => {
+      if (!prev) return null;
+      const provider = prev.providers[providerKey];
+      if (!provider) return prev;
+      return {
+        ...prev,
+        providers: {
+          ...prev.providers,
+          [providerKey]: {
+            ...provider,
+            models: {
+              ...(provider.models || {}),
+              [modelKey]: {
+                ...(provider.models?.[modelKey] || { name: '', estimated_cost_per_call_usd: 0 }),
+                [key]: value
+              }
+            }
+          }
+        }
+      };
+    });
   };
 
   const handleSave = async () => {
@@ -340,6 +398,56 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
             </div>
           </div>
 
+          {/* Card: Working Sessions */}
+          <div className="glass-card p-6">
+            <h3 className="text-base font-semibold text-slate-200 border-b border-slate-700/50 pb-3 mb-4 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-400" />
+              Working Sessions
+            </h3>
+            <div className="space-y-4">
+              <label className="relative flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={config.working_sessions?.enabled ?? true}
+                  onChange={(e: any) => handleNestedConfigChange('working_sessions', 'enabled', e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-amber-500 focus:ring-amber-500/50"
+                />
+                <span className="text-xs font-semibold text-slate-300">Zusätzliche Working Sessions aktivieren</span>
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Max. gleichzeitige Working Sessions</label>
+                  <input
+                    type="number"
+                    value={config.working_sessions?.max_concurrent ?? 3}
+                    onChange={(e: any) => handleNestedConfigChange('working_sessions', 'max_concurrent', parseInt(e.target.value) || 0)}
+                    className="input-field"
+                    min="0"
+                  />
+                </div>
+                <label className="relative flex items-center gap-2.5 cursor-pointer select-none pt-6">
+                  <input
+                    type="checkbox"
+                    checked={config.working_sessions?.queue_non_jules_agent_issues ?? true}
+                    onChange={(e: any) => handleNestedConfigChange('working_sessions', 'queue_non_jules_agent_issues', e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-amber-500 focus:ring-amber-500/50"
+                  />
+                  <span className="text-xs font-medium text-slate-300">Lokale Agent-Issues erst in Working Queue legen</span>
+                </label>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">Bevorzugte Working-Session Agents</label>
+                <input
+                  type="text"
+                  value={config.working_sessions?.preferred_agents?.join(', ') || ''}
+                  onChange={(e: any) => handleWorkingSessionsArrayChange('preferred_agents', e.target.value)}
+                  className="input-field font-mono text-xs"
+                  placeholder="codex_orchestrator, gemini_cli, copilot_cli, cline_cli"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Card: Issue Filter */}
           <div className="glass-card p-6">
             <h3 className="text-base font-semibold text-slate-200 border-b border-slate-700/50 pb-3 mb-4 flex items-center gap-2">
@@ -384,15 +492,15 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
             </div>
           </div>
 
-          {/* Card: Dual-CEO Deliberation */}
+          {/* Card: CEO + QA-Auditor Deliberation */}
           {config.dual_ceo && (
             <div className="glass-card p-6">
               <h3 className="text-base font-semibold text-slate-200 border-b border-slate-700/50 pb-3 mb-4 flex items-center gap-2">
                 <Users className="w-4 h-4 text-purple-400" />
-                Dual-CEO Deliberation (Konsens-Entscheidungen)
+                CEO + QA-Auditor Deliberation
               </h3>
               <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-                Strukturierte Abstimmung und gegenseitige Kritik zwischen zwei unabhängigen KI-Agenten bei wichtigen Aufgaben wie der Issue-Planung oder komplexen Code-Reviews.
+                Strukturierte Abstimmung zwischen CEO und QA-Auditor bei wichtigen Aufgaben wie Planung, Audit und komplexen Code-Reviews.
               </p>
               <div className="space-y-4">
                 <div className="flex items-center mb-2">
@@ -403,14 +511,14 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                       onChange={(e: any) => handleNestedConfigChange('dual_ceo', 'enabled', e.target.checked)}
                       className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-purple-600 focus:ring-purple-500/50"
                     />
-                    <span className="text-xs font-semibold text-slate-300">Dual-CEO Modus aktivieren</span>
+                    <span className="text-xs font-semibold text-slate-300">CEO + QA-Auditor Modus aktivieren</span>
                   </label>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                      CEO Alpha Fallback-Kette (Kommagetrennt)
+                      CEO Fallback-Kette (Kommagetrennt)
                     </label>
                     <input
                       type="text"
@@ -423,7 +531,7 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                      CEO Beta Fallback-Kette (Kommagetrennt)
+                      QA-Auditor Fallback-Kette (Kommagetrennt)
                     </label>
                     <input
                       type="text"
@@ -509,193 +617,68 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
               System-Prompts
             </h3>
             <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-              Passe die System-Prompts an, die der Autopilot für die verschiedenen Phasen (Planung, Monitoring, Audit) verwendet.
+              Passe die System-Prompts an, die der Autopilot für die verschiedenen Sessions verwendet.
             </p>
             <div className="space-y-6">
-
-              {/* Gruppe: Planung */}
+              {/* Planning Group */}
               <div className="space-y-4">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 bg-cyan-950/20 px-2.5 py-1 rounded border border-cyan-900/30">Planungs-Phase (Planning)</h4>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
-                    <span>Jules Session Sync</span>
-                    <span className="text-[10px] text-slate-500 font-mono">planning_jules_sync</span>
-                  </label>
-                  <textarea
-                    value={config.prompts?.planning_jules_sync || ''}
-                    onChange={(e) => handlePromptChange('planning_jules_sync', e.target.value)}
-                    className="input-field min-h-[60px] font-mono text-xs leading-normal"
-                    rows={2}
-                    placeholder="Laufende Jules-Sessions synchronisieren..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
-                    <span>PR-Status Sync</span>
-                    <span className="text-[10px] text-slate-500 font-mono">planning_pr_sync</span>
-                  </label>
-                  <textarea
-                    value={config.prompts?.planning_pr_sync || ''}
-                    onChange={(e) => handlePromptChange('planning_pr_sync', e.target.value)}
-                    className="input-field min-h-[60px] font-mono text-xs leading-normal"
-                    rows={2}
-                    placeholder="PR-Konflikte und CI-Status auswerten..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
-                    <span>Backlog-Analyse</span>
-                    <span className="text-[10px] text-slate-500 font-mono">planning_analysis</span>
-                  </label>
-                  <textarea
-                    value={config.prompts?.planning_analysis || ''}
-                    onChange={(e) => handlePromptChange('planning_analysis', e.target.value)}
-                    className="input-field min-h-[80px] font-mono text-xs leading-normal"
-                    rows={3}
-                    placeholder="Analysiere den aktuellen Status..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
-                    <span>Task-Generierung</span>
-                    <span className="text-[10px] text-slate-500 font-mono">planning_proposal</span>
-                  </label>
-                  <textarea
-                    value={config.prompts?.planning_proposal || ''}
-                    onChange={(e) => handlePromptChange('planning_proposal', e.target.value)}
-                    className="input-field min-h-[80px] font-mono text-xs leading-normal"
-                    rows={3}
-                    placeholder="Erzeuge neue Issues..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
-                    <span>Master-Plan Synthese</span>
-                    <span className="text-[10px] text-slate-500 font-mono">planning_synthesis</span>
-                  </label>
-                  <textarea
-                    value={config.prompts?.planning_synthesis || ''}
-                    onChange={(e) => handlePromptChange('planning_synthesis', e.target.value)}
-                    className="input-field min-h-[80px] font-mono text-xs leading-normal"
-                    rows={3}
-                    placeholder="Fasse alle Erkenntnisse zusammen..."
-                  />
-                </div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400">Planning-Phase (Planung)</h4>
+                {PROMPT_METADATA.filter(p => p.group === 'planning').map(p => (
+                  <div key={p.key}>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
+                      <span>{p.label}</span>
+                      <span className="text-[10px] text-slate-500 font-mono">{p.key}</span>
+                    </label>
+                    <textarea
+                      value={config.prompts?.[p.key] || ''}
+                      onChange={(e) => handlePromptChange(p.key, e.target.value)}
+                      className="input-field min-h-[80px] font-mono text-xs leading-normal"
+                      rows={3}
+                      placeholder={p.placeholder}
+                    />
+                  </div>
+                ))}
               </div>
 
-              {/* Gruppe: Monitoring */}
-              <div className="space-y-4 pt-4 border-t border-slate-800/60">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-purple-400 bg-purple-950/20 px-2.5 py-1 rounded border border-purple-900/30">Überwachungs-Phase (Monitoring)</h4>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
-                    <span>Session Health Check</span>
-                    <span className="text-[10px] text-slate-500 font-mono">monitor_sessions</span>
-                  </label>
-                  <textarea
-                    value={config.prompts?.monitor_sessions || ''}
-                    onChange={(e) => handlePromptChange('monitor_sessions', e.target.value)}
-                    className="input-field min-h-[60px] font-mono text-xs leading-normal"
-                    rows={2}
-                    placeholder="Aktive Sessions überwachen..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
-                    <span>PR CI-Validierung</span>
-                    <span className="text-[10px] text-slate-500 font-mono">monitor_prs</span>
-                  </label>
-                  <textarea
-                    value={config.prompts?.monitor_prs || ''}
-                    onChange={(e) => handlePromptChange('monitor_prs', e.target.value)}
-                    className="input-field min-h-[60px] font-mono text-xs leading-normal"
-                    rows={2}
-                    placeholder="CI-Status offener PRs validieren..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
-                    <span>Konflikt-Remediation</span>
-                    <span className="text-[10px] text-slate-500 font-mono">monitor_conflicts</span>
-                  </label>
-                  <textarea
-                    value={config.prompts?.monitor_conflicts || ''}
-                    onChange={(e) => handlePromptChange('monitor_conflicts', e.target.value)}
-                    className="input-field min-h-[60px] font-mono text-xs leading-normal"
-                    rows={2}
-                    placeholder="Merge-Konflikte detektieren..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
-                    <span>Monitoring Synthese</span>
-                    <span className="text-[10px] text-slate-500 font-mono">monitoring_synthesis</span>
-                  </label>
-                  <textarea
-                    value={config.prompts?.monitoring_synthesis || ''}
-                    onChange={(e) => handlePromptChange('monitoring_synthesis', e.target.value)}
-                    className="input-field min-h-[60px] font-mono text-xs leading-normal"
-                    rows={2}
-                    placeholder="Gesamtbewertung der Monitoring-Ergebnisse..."
-                  />
-                </div>
+              {/* Monitoring Group */}
+              <div className="space-y-4 pt-4 border-t border-slate-800/70">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-purple-400">Monitoring-Phase (Überwachung)</h4>
+                {PROMPT_METADATA.filter(p => p.group === 'monitoring').map(p => (
+                  <div key={p.key}>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
+                      <span>{p.label}</span>
+                      <span className="text-[10px] text-slate-500 font-mono">{p.key}</span>
+                    </label>
+                    <textarea
+                      value={config.prompts?.[p.key] || ''}
+                      onChange={(e) => handlePromptChange(p.key, e.target.value)}
+                      className="input-field min-h-[80px] font-mono text-xs leading-normal"
+                      rows={3}
+                      placeholder={p.placeholder}
+                    />
+                  </div>
+                ))}
               </div>
 
-              {/* Gruppe: Audit */}
-              <div className="space-y-4 pt-4 border-t border-slate-800/60">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/20 px-2.5 py-1 rounded border border-emerald-900/30">Prüfungs-Phase (Audit)</h4>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
-                    <span>Daten-Konsistenz Audit</span>
-                    <span className="text-[10px] text-slate-500 font-mono">audit_consistency</span>
-                  </label>
-                  <textarea
-                    value={config.prompts?.audit_consistency || ''}
-                    onChange={(e) => handlePromptChange('audit_consistency', e.target.value)}
-                    className="input-field min-h-[60px] font-mono text-xs leading-normal"
-                    rows={2}
-                    placeholder="Vergleiche Issues, PRs und State..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
-                    <span>Performance Audit</span>
-                    <span className="text-[10px] text-slate-500 font-mono">audit_performance</span>
-                  </label>
-                  <textarea
-                    value={config.prompts?.audit_performance || ''}
-                    onChange={(e) => handlePromptChange('audit_performance', e.target.value)}
-                    className="input-field min-h-[60px] font-mono text-xs leading-normal"
-                    rows={2}
-                    placeholder="Evaluiere Effizienz der letzten Aktionen..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
-                    <span>Audit Synthese (Entscheidung)</span>
-                    <span className="text-[10px] text-slate-500 font-mono">audit_synthesis</span>
-                  </label>
-                  <textarea
-                    value={config.prompts?.audit_synthesis || ''}
-                    onChange={(e) => handlePromptChange('audit_synthesis', e.target.value)}
-                    className="input-field min-h-[80px] font-mono text-xs leading-normal"
-                    rows={3}
-                    placeholder="Zusammenführende finale Audit-Entscheidung..."
-                  />
-                </div>
+              {/* Audit Group */}
+              <div className="space-y-4 pt-4 border-t border-slate-800/70">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400">Audit-Phase (Prüfung)</h4>
+                {PROMPT_METADATA.filter(p => p.group === 'audit').map(p => (
+                  <div key={p.key}>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
+                      <span>{p.label}</span>
+                      <span className="text-[10px] text-slate-500 font-mono">{p.key}</span>
+                    </label>
+                    <textarea
+                      value={config.prompts?.[p.key] || ''}
+                      onChange={(e) => handlePromptChange(p.key, e.target.value)}
+                      className="input-field min-h-[80px] font-mono text-xs leading-normal"
+                      rows={3}
+                      placeholder={p.placeholder}
+                    />
+                  </div>
+                ))}
               </div>
-
             </div>
           </div>
         </div>
@@ -748,6 +731,32 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                       />
                     </div>
                   </div>
+                  {pVal.models && Object.keys(pVal.models).length > 0 && (
+                    <div className="space-y-2 pt-2 border-t border-slate-800/70">
+                      <div className="text-[10px] uppercase tracking-wide text-slate-500 font-semibold">Modelle (Model Auswahl)</div>
+                      {Object.entries(pVal.models).map(([modelKey, modelVal]: [string, any]) => (
+                        <div key={modelKey} className="grid grid-cols-[88px_1fr_90px] gap-2 items-center">
+                          <span className="text-[10px] text-slate-400 font-mono">{modelKey}</span>
+                          <input
+                            type="text"
+                            value={modelVal.name || ''}
+                            onChange={(e: any) => handleProviderModelChange(pKey, modelKey, 'name', e.target.value)}
+                            className="input-field py-1 px-2.5 text-xs font-mono"
+                            disabled={!pVal.enabled}
+                          />
+                          <input
+                            type="number"
+                            value={modelVal.estimated_cost_per_call_usd ?? 0}
+                            onChange={(e: any) => handleProviderModelChange(pKey, modelKey, 'estimated_cost_per_call_usd', parseFloat(e.target.value) || 0)}
+                            className="input-field py-1 px-2.5 text-xs"
+                            min="0"
+                            step="0.01"
+                            disabled={!pVal.enabled}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -63,7 +63,7 @@ function Build-CliArgs {
     #>
     param(
         [Parameter(Mandatory)][object]$ProviderConfig,
-        [Parameter(Mandatory)][string]$Prompt,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Prompt,
         [string]$ModelName
     )
 
@@ -258,8 +258,11 @@ function Invoke-CliTask {
         $modelName = $providerConfig.models.$modelTier.name
     }
 
-    # Build args
-    $cliArgs = Build-CliArgs -ProviderConfig $providerConfig -Prompt $Prompt -ModelName $modelName
+    # Avoid Windows command-line length limits by piping large Gemini prompts via stdin.
+    # Gemini appends stdin to the value passed via -p/--prompt, so an empty -p is safe here.
+    $usePromptStdin = $providerName -eq "gemini_cli"
+    $promptForArgs = if ($usePromptStdin) { "" } else { $Prompt }
+    $cliArgs = Build-CliArgs -ProviderConfig $providerConfig -Prompt $promptForArgs -ModelName $modelName
 
     # Add model arg for providers that support it
     if ($modelName -and $modelName -ne "default") {
@@ -284,7 +287,11 @@ function Invoke-CliTask {
 
         if ($pushDir) { Push-Location $pushDir }
         try {
-            $output = & $command @cliArgs 2>&1 | Out-String
+            if ($usePromptStdin) {
+                $output = $Prompt | & $command @cliArgs 2>&1 | Out-String
+            } else {
+                $output = & $command @cliArgs 2>&1 | Out-String
+            }
         }
         finally {
             if ($pushDir) { Pop-Location }

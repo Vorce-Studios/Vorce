@@ -154,76 +154,6 @@ function Remove-OrphanedTmpFiles {
     return $count
 }
 
-function Remove-OldRuntimeFiles {
-    <#
-    .SYNOPSIS
-    Keeps only a bounded number of runtime log/temp files per pattern.
-    #>
-    param(
-        [Parameter(Mandatory)][string]$Directory,
-        [Parameter(Mandatory)][string]$Pattern,
-        [int]$KeepNewest = 20,
-        [int]$OlderThanDays = 7
-    )
-
-    if (-not (Test-Path $Directory)) { return 0 }
-
-    $cutoff = (Get-Date).AddDays(-$OlderThanDays)
-    $files = @(Get-ChildItem -Path $Directory -Filter $Pattern -File -ErrorAction SilentlyContinue |
-        Sort-Object LastWriteTime -Descending)
-
-    $toRemove = @()
-    if ($files.Count -gt $KeepNewest) {
-        $toRemove += @($files | Select-Object -Skip $KeepNewest)
-    }
-    $toRemove += @($files | Where-Object { $_.LastWriteTime -lt $cutoff })
-    $toRemove = @($toRemove | Sort-Object FullName -Unique)
-
-    $count = 0
-    foreach ($file in $toRemove) {
-        try {
-            Remove-Item -LiteralPath $file.FullName -Force -ErrorAction Stop
-            $count++
-        } catch {
-            # File may be locked by a visible session.
-        }
-    }
-
-    if ($count -gt 0) {
-        Write-Host "[CLEANUP] $count alte Dateien entfernt: $(Split-Path -Leaf $Directory)\$Pattern" -ForegroundColor DarkGray
-    }
-
-    return $count
-}
-
-function Invoke-RuntimeFileRetention {
-    <#
-    .SYNOPSIS
-    Applies bounded retention to Autopilot runtime logs. Deliberation JSON files
-    are UI protocol snapshots; the dashboard only needs the latest entries.
-    #>
-    param(
-        [int]$KeepStartLogs = 15,
-        [int]$KeepDeliberations = 20,
-        [int]$KeepTmpPerPattern = 12
-    )
-
-    $total = 0
-    $logsDir = Join-Path $script:ScriptRoot "logs"
-    $delibDir = Join-Path $logsDir "deliberations"
-    $tmpDir = Join-Path $script:ScriptRoot "tmp"
-
-    $total += Remove-OldRuntimeFiles -Directory $logsDir -Pattern "start-autopilot-*.log" -KeepNewest $KeepStartLogs -OlderThanDays 14
-    $total += Remove-OldRuntimeFiles -Directory $delibDir -Pattern "*.json" -KeepNewest $KeepDeliberations -OlderThanDays 10
-    $total += Remove-OldRuntimeFiles -Directory $tmpDir -Pattern "codex-*-prompt.md" -KeepNewest $KeepTmpPerPattern -OlderThanDays 3
-    $total += Remove-OldRuntimeFiles -Directory $tmpDir -Pattern "codex-*-last-message.md" -KeepNewest $KeepTmpPerPattern -OlderThanDays 3
-    $total += Remove-OldRuntimeFiles -Directory $tmpDir -Pattern "codex-*-visible.log" -KeepNewest $KeepTmpPerPattern -OlderThanDays 3
-    $total += Remove-OldRuntimeFiles -Directory $tmpDir -Pattern "ceo-*.txt" -KeepNewest $KeepTmpPerPattern -OlderThanDays 2
-    $total += Remove-OldRuntimeFiles -Directory $tmpDir -Pattern "ceo-*.json" -KeepNewest $KeepTmpPerPattern -OlderThanDays 2
-
-    return $total
-}
-
 function Test-ObjectProperty {
     <#
     .SYNOPSIS
@@ -288,15 +218,13 @@ function Invoke-StartupCleanup {
         }
     }
 
-    $totalCleaned += Invoke-RuntimeFileRetention
-
     if ($totalCleaned -gt 0) {
         Write-Host "[CLEANUP] Startup-Bereinigung: $totalCleaned TMP-Dateien insgesamt entfernt." -ForegroundColor Green
     }
 }
 
 function New-AutopilotState {
-    return [ordered]@{
+    return [PSCustomObject]@{
         schema_version          = 1
         session_id              = "autopilot-$(Get-Date -Format 'yyyy-MM-dd-HHmm')"
         started_at              = (Get-Date -Format 'o')
@@ -304,6 +232,8 @@ function New-AutopilotState {
         last_planning_at        = $null
         last_monitoring_at      = $null
         active_delegations      = @()
+        working_queue           = @()
+        working_sessions        = @()
         review_queue            = @()
         autopilot_created_issues = @()
         completed_this_session  = @()
@@ -345,16 +275,16 @@ function Initialize-AutopilotState {
     $existing = Read-AutopilotState
     $defaults = New-AutopilotState
 
-    if ($null -ne $existing -and -not $Force.IsPresent -and ($null -ne $existing.PSObject)) {
+    if ($null -ne $existing -and -not $Force.IsPresent -and ($existing -is [System.Management.Automation.PSCustomObject] -or $existing -is [System.Collections.IDictionary])) {
         # Ensure all default properties exist on the existing state
-        foreach ($key in $defaults.Keys) {
+        foreach ($key in $defaults.PSObject.Properties.Name) {
             if (-not ($existing.PSObject.Properties.Name -contains $key)) {
-                $existing | Add-Member -MemberType NoteProperty -Name $key -Value $defaults[$key] -Force
+                $existing | Add-Member -MemberType NoteProperty -Name $key -Value $defaults.$key -Force
             }
         }
 
         # Validate that arrays are indeed arrays (sometimes deserialized as single object or null)
-        foreach ($key in @("active_delegations", "review_queue", "autopilot_created_issues", "completed_this_session", "decisions_pending", "escalated_issues", "error_log", "deliberation_log")) {
+        foreach ($key in @("active_delegations", "working_queue", "working_sessions", "review_queue", "autopilot_created_issues", "completed_this_session", "decisions_pending", "escalated_issues", "error_log", "deliberation_log")) {
             if ($null -eq $existing.$key) {
                 $existing.$key = @()
             } elseif ($existing.$key -isnot [System.Array] -and $existing.$key -isnot [System.Collections.IList]) {
@@ -400,6 +330,20 @@ function Initialize-AutopilotState {
     Save-AutopilotState -State $state
     Write-Host "[AUTOPILOT] Neuer State erstellt: $($state.session_id)" -ForegroundColor Green
     return $state
+}
+
+function Confirm-WorkingSessionsState {
+    param([Parameter(Mandatory)][object]$State)
+
+    foreach ($prop in @("working_queue", "working_sessions")) {
+        if (-not ($State.PSObject.Properties.Name -contains $prop)) {
+            $State | Add-Member -MemberType NoteProperty -Name $prop -Value @() -Force
+        } elseif ($null -eq $State.$prop) {
+            $State.$prop = @()
+        } elseif ($State.$prop -isnot [System.Array] -and $State.$prop -isnot [System.Collections.IList]) {
+            $State.$prop = @($State.$prop)
+        }
+    }
 }
 
 function Add-Delegation {

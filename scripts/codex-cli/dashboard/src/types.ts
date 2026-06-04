@@ -44,6 +44,7 @@ export interface ActiveDelegation {
   issue_title: string;
   jules_session_id: string;
   jules_state: string;
+  agent_type?: string;
   pr_url: string | null;
   delegated_at: string;
   last_checked_at: string;
@@ -77,10 +78,25 @@ export interface ActiveSessions {
   last_planning_at: string;
   last_monitoring_at: string;
   active_delegations: ActiveDelegation[];
+  working_queue?: unknown[];
+  working_sessions?: unknown[];
   review_queue: ReviewQueueItem[];
   autopilot_created_issues: unknown[];
   completed_this_session: CompletedItem[];
   decisions_pending?: DecisionPending[];
+  deliberation_log?: DeliberationLogEntry[];
+  scheduler?: any;
+  run_control?: any;
+}
+
+// ── GitHub Project Types ──
+export interface ProjectItem {
+  id: string;
+  status: string;
+  jules_session_status?: string;
+  pr_checks_status?: string;
+  review_status?: string;
+  [key: string]: any;
 }
 
 // ── GitHub Issues Types ──
@@ -102,6 +118,7 @@ export interface GitHubIssue {
   title: string;
   updatedAt: string;
   url: string;
+  repo?: string;
 }
 
 // ── Pull Requests Types ──
@@ -129,6 +146,9 @@ export interface PullRequest {
   title: string;
   updatedAt: string;
   url: string;
+  isDraft?: boolean;
+  reviewDecision?: string;
+  repo?: string;
 }
 
 // ── Autopilot Config Types ──
@@ -143,9 +163,6 @@ export interface AutopilotConfig {
     max_concurrent_sessions: number;
     auto_approve_plans: boolean;
     auto_retry_feedback_max: number;
-    auto_merge_approved_prs?: boolean;
-    monitoring_refill_enabled?: boolean;
-    monitoring_refill_buffer_size?: number;
   };
   gemini_worktree_path: string;
   issue_filters: {
@@ -154,26 +171,26 @@ export interface AutopilotConfig {
     autopilot_label: string;
   };
   max_issues_per_planning_cycle: number;
+  working_sessions?: WorkingSessionsConfig;
   dual_ceo: DualCeoConfig;
   prompts?: {
-    planning_jules_sync?: string;
-    planning_pr_sync?: string;
     planning_analysis?: string;
     planning_proposal?: string;
     planning_synthesis?: string;
-    monitor_sessions?: string;
-    monitor_prs?: string;
-    monitor_conflicts?: string;
-    monitoring_synthesis?: string;
-    audit_consistency?: string;
-    audit_performance?: string;
-    audit_synthesis?: string;
     audit_prompt?: string;
     monitoring_prompt?: string;
+    [key: string]: string | undefined;
   };
 }
 
-// ── Dual-CEO Types ──
+export interface WorkingSessionsConfig {
+  enabled: boolean;
+  max_concurrent: number;
+  preferred_agents: string[];
+  queue_non_jules_agent_issues: boolean;
+}
+
+// ── CEO + QA-Auditor Types ──
 export interface DualCeoConfig {
   enabled: boolean;
   ceo_alpha_chain: string[];
@@ -182,6 +199,35 @@ export interface DualCeoConfig {
   deliberation_tasks: string[];
   fallback_to_single: boolean;
   log_deliberations: boolean;
+}
+
+// ── Deliberation & Audit Types ──
+export interface DeliberationRound {
+  phase: string;
+  agent: string;
+  provider: string;
+  duration_ms: number;
+  success: boolean;
+  content?: string;
+}
+
+export interface DeliberationLogEntry {
+  deliberation_id: string;
+  task_type: string;
+  alpha_provider: string;
+  beta_provider: string;
+  consensus_reached: boolean;
+  phases_completed: number;
+  total_duration_ms: number;
+  completed_at: string;
+  rounds?: DeliberationRound[];
+}
+
+export interface AuditResult {
+  session_id: string;
+  response: string;
+  parsed: any;
+  updated_at: string;
 }
 
 // ── Memory System Types ──

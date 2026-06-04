@@ -1,19 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  BarChart3,
-  TrendingUp,
   Clock,
   DollarSign,
   CheckCircle2,
-  AlertTriangle,
   Layers,
-  MessageSquare,
-  Calendar,
-  ArrowUpRight,
   Users,
-  Zap,
-  ChevronRight,
-  TrendingDown
+  Zap
 } from 'lucide-react';
 import type { QuotaRegistry, ActiveSessions, GitHubIssue, PullRequest } from '../types';
 
@@ -25,13 +17,12 @@ interface ManagerReportingPageProps {
   history: any[];
 }
 
-export default function ManagerReportingPage({ registry, sessions, issues, pullRequests, history }: ManagerReportingPageProps) {
+export default function ManagerReportingPage({ registry, sessions, issues }: ManagerReportingPageProps) {
   const [timeRange, setTimeRange] = useState<'today' | '7d' | '30d'>('7d');
   const [selectedLabel, setSelectedLabel] = useState<string>('all');
 
   // --- 1. Berechnungen für Issues & PRs ---
   const totalIssues = issues.length;
-  const openIssues = issues.filter(i => i.state.toLowerCase() === 'open').length;
   const closedIssues = issues.filter(i => i.state.toLowerCase() === 'closed').length;
   const resolutionRate = totalIssues > 0 ? Math.round((closedIssues / totalIssues) * 100) : 0;
 
@@ -58,7 +49,6 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
 
   // --- 2. Kosten & Quoten ---
   let totalCostToday = 0;
-  let totalCallsToday = 0;
   const providerStats: { name: string; calls: number; cost: number; limit: number; budget: number }[] = [];
 
   if (registry.providers) {
@@ -66,7 +56,6 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
       const calls = provider.usage_today?.calls || 0;
       const cost = provider.usage_today?.estimated_cost_usd || 0;
       totalCostToday += cost;
-      totalCallsToday += calls;
 
       providerStats.push({
         name,
@@ -425,7 +414,7 @@ export default function ManagerReportingPage({ registry, sessions, issues, pullR
                 </tr>
               ) : (
                 filteredIssues.map(issue => (
-                  <tr key={`${issue.repo}-${issue.number}`} className="border-b border-slate-850 hover:bg-slate-900/20 transition-colors">
+                  <tr key={issue.number} className="border-b border-slate-850 hover:bg-slate-900/20 transition-colors">
                     <td className="py-2.5 px-3 font-semibold text-slate-300">#{issue.number}</td>
                     <td className="py-2.5 px-3 text-slate-200 font-medium">
                       <a href={issue.url} target="_blank" rel="noreferrer" className="hover:text-purple-400 transition-colors">

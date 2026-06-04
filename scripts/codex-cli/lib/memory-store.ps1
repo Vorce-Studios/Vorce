@@ -290,3 +290,51 @@ function Remove-Memory {
     Write-Host "[MEMORY] Erinnerung '$Id' entfernt." -ForegroundColor Green
     return $true
 }
+
+function Optimize-AutopilotMemories {
+    <#
+    .SYNOPSIS
+    Keeps the memory store within the hard 30-entry limit without invoking an
+    external model. Critical memories are kept first, then newer entries.
+    #>
+    param(
+        [object]$State,
+        [object]$Config,
+        [object]$QuotaRegistry,
+        [switch]$DryRun
+    )
+
+    $store = Read-MemoryStore
+    $memories = @($store.memories)
+    if ($memories.Count -le 30) {
+        Write-Host "[MEMORY] Optimierung nicht noetig ($($memories.Count)/30)." -ForegroundColor DarkGray
+        return
+    }
+
+    $priorityWeight = @{
+        critical = 0
+        high     = 1
+        medium   = 2
+        low      = 3
+    }
+
+    $kept = @($memories | Sort-Object `
+        @{ Expression = {
+            $priority = [string]$_.priority
+            if ($priorityWeight.ContainsKey($priority)) { $priorityWeight[$priority] } else { 9 }
+        }; Ascending = $true },
+        @{ Expression = {
+            try { [datetimeoffset]::Parse([string]$_.created_at).UtcDateTime } catch { [datetime]::MinValue }
+        }; Ascending = $false } |
+        Select-Object -First 30)
+
+    $removed = $memories.Count - $kept.Count
+    if ($DryRun.IsPresent) {
+        Write-Host "[MEMORY] [DRY RUN] Wuerde $removed alte Erinnerungen entfernen." -ForegroundColor DarkYellow
+        return
+    }
+
+    $store.memories = @($kept)
+    Save-MemoryStore -Store $store
+    Write-Host "[MEMORY] $removed alte Erinnerungen entfernt; 30 bleiben aktiv." -ForegroundColor Green
+}

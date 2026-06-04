@@ -66,233 +66,6 @@ function Start-QueuedWorkingSessions {
     Save-AutopilotState -State $State
 }
 
-function Get-ObjectPropertyValue {
-    param(
-        [AllowNull()][object]$Object,
-        [Parameter(Mandatory)][string[]]$Names
-    )
-
-    if ($null -eq $Object) { return $null }
-    foreach ($name in $Names) {
-        $prop = $Object.PSObject.Properties[$name]
-        if ($null -ne $prop -and $null -ne $prop.Value) {
-            return $prop.Value
-        }
-    }
-    return $null
-}
-
-function Convert-ToJulesTaskOrder {
-    param([AllowNull()][object]$Value)
-
-    if ($null -eq $Value) { return $null }
-    $text = ([string]$Value).Trim()
-    if ([string]::IsNullOrWhiteSpace($text)) { return $null }
-    if ($text -match '^\d+$') { return [int]$text }
-    if ($text -match '(\d+)') { return [int]$Matches[1] }
-    return $null
-}
-
-function Test-JulesIssueAlreadyScheduled {
-    param(
-        [Parameter(Mandatory)][object]$State,
-        [Parameter(Mandatory)][int]$IssueNumber,
-        [AllowNull()][string]$IssueBody
-    )
-
-    $active = @($State.active_delegations | Where-Object { [int]$_.issue_number -eq $IssueNumber }).Count -gt 0
-    if ($active) { return $true }
-
-    $queuedWork = @($State.working_queue | Where-Object { [int]$_.issue_number -eq $IssueNumber }).Count -gt 0
-    if ($queuedWork) { return $true }
-
-    $runningWork = @($State.working_sessions | Where-Object {
-        [int]$_.issue_number -eq $IssueNumber -and [string]$_.status -in @("QUEUED", "IN_PROGRESS")
-    }).Count -gt 0
-    if ($runningWork) { return $true }
-
-    if (-not [string]::IsNullOrWhiteSpace($IssueBody)) {
-        if ($IssueBody -match "<!--\s*jules-session-id:\s*\S+" -or
-            $IssueBody -match "<!--\s*jules-session-name:\s*\S+" -or
-            $IssueBody -match "<!--\s*vorce-queue-state:\s*dispatched") {
-            return $true
-        }
-    }
-
-    return $false
-}
-
-function Get-NextJulesTaskCandidates {
-    param(
-        [Parameter(Mandatory)][object]$State,
-        [Parameter(Mandatory)][object]$Config,
-        [Parameter(Mandatory)][string]$ScriptDir,
-        [int]$BufferSize = 30
-    )
-
-    $repo = [string]$Config.repository
-    $dashboardProjectItemsPath = Join-Path $ScriptDir "dashboard\public\project-items.json"
-    $candidates = @()
-
-    if (Test-Path $dashboardProjectItemsPath) {
-        try {
-            $projectData = Get-Content -LiteralPath $dashboardProjectItemsPath -Raw -Encoding UTF8 | ConvertFrom-Json
-            $items = if ($projectData.PSObject.Properties.Name -contains "items") { @($projectData.items) } else { @($projectData) }
-            foreach ($item in $items) {
-                $content = Get-ObjectPropertyValue -Object $item -Names @("content")
-                $issueNumber = Get-ObjectPropertyValue -Object $content -Names @("number")
-                if ($null -eq $issueNumber) { continue }
-
-                $itemRepo = Get-ObjectPropertyValue -Object $content -Names @("repository")
-                if ([string]::IsNullOrWhiteSpace([string]$itemRepo)) {
-                    $repoField = Get-ObjectPropertyValue -Object $item -Names @("repository")
-                    $itemRepo = ([string]$repoField) -replace '^https://github\.com/', ''
-                }
-                if (-not [string]::IsNullOrWhiteSpace([string]$itemRepo) -and [string]$itemRepo -ne $repo) { continue }
-
-                $orderValue = Get-ObjectPropertyValue -Object $item -Names @("next_jules-tasks", "next_jules_tasks", "next_jules_tasks_start", "next_jules_tasks_order")
-                $order = Convert-ToJulesTaskOrder -Value $orderValue
-                if ($null -eq $order -or $order -le 0) { continue }
-
-                $status = [string](Get-ObjectPropertyValue -Object $item -Names @("status", "Status"))
-                if ($status -match '^(Done|Closed|Merged)$') { continue }
-
-                $agent = [string](Get-ObjectPropertyValue -Object $item -Names @("agent", "Agent"))
-                if (-not [string]::IsNullOrWhiteSpace($agent) -and $agent -notmatch 'jules') { continue }
-
-                $body = [string](Get-ObjectPropertyValue -Object $content -Names @("body"))
-                $num = [int]$issueNumber
-                if (Test-JulesIssueAlreadyScheduled -State $State -IssueNumber $num -IssueBody $body) { continue }
-
-                $title = [string](Get-ObjectPropertyValue -Object $content -Names @("title"))
-                if ([string]::IsNullOrWhiteSpace($title)) {
-                    $title = [string](Get-ObjectPropertyValue -Object $item -Names @("title"))
-                }
-
-                $candidates += [pscustomobject]@{
-                    number = $num
-                    title  = $title
-                    order  = $order
-                    source = "next_jules-tasks"
-                }
-            }
-        } catch {
-            Write-Warning "[MONITOR] next_jules-tasks Project-Cache konnte nicht gelesen werden: $_"
-        }
-    }
-
-    $orderedCandidates = @($candidates | Sort-Object order, number | Select-Object -First $BufferSize)
-    if ($orderedCandidates.Count -gt 0) {
-        return $orderedCandidates
-    }
-
-    Write-Host "[MONITOR] Kein next_jules-tasks Vorrat gefunden. Nutze Issue-Label-Fallback." -ForegroundColor DarkGray
-    try {
-        $issuesRaw = gh issue list --repo $repo --state open --json number,title,labels,body --limit $BufferSize 2>&1
-        if ($LASTEXITCODE -ne 0) { return @() }
-        $issues = @($issuesRaw | Out-String | ConvertFrom-Json)
-
-        $includeSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
-        foreach ($l in $Config.issue_filters.include_labels) { $includeSet.Add($l) | Out-Null }
-        $excludeSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
-        foreach ($l in $Config.issue_filters.exclude_labels) { $excludeSet.Add($l) | Out-Null }
-
-        return @($issues | Where-Object {
-            $labelNames = @($_.labels | ForEach-Object { if ($_ -is [string]) { $_ } else { $_.name } })
-            $hasInclude = @($labelNames | Where-Object { $includeSet.Contains($_) }).Count -gt 0
-            $hasExclude = @($labelNames | Where-Object { $excludeSet.Contains($_) }).Count -gt 0
-            $isScheduled = Test-JulesIssueAlreadyScheduled -State $State -IssueNumber ([int]$_.number) -IssueBody ([string]$_.body)
-            $hasInclude -and (-not $hasExclude) -and (-not $isScheduled)
-        } | Select-Object -First $BufferSize | ForEach-Object {
-            [pscustomobject]@{ number = [int]$_.number; title = [string]$_.title; order = 9999; source = "label-fallback" }
-        })
-    } catch {
-        Write-Warning "[MONITOR] Issue-Fallback fuer Jules-Vorrat fehlgeschlagen: $_"
-        return @()
-    }
-}
-
-function Start-JulesSessionsForAvailableSlots {
-    param(
-        [Parameter(Mandatory)][object]$State,
-        [Parameter(Mandatory)][object]$Config,
-        [Parameter(Mandatory)][object]$QuotaRegistry,
-        [Parameter(Mandatory)][string]$ScriptDir,
-        [switch]$DryRun
-    )
-
-    if ((Test-ObjectProperty -Object $Config.jules -Name "monitoring_refill_enabled") -and -not [bool]$Config.jules.monitoring_refill_enabled) {
-        Write-Host "[MONITOR] Jules-Nachfuellung im Monitoring ist deaktiviert." -ForegroundColor DarkGray
-        return
-    }
-
-    $julesProvider = if (Test-ObjectProperty -Object $QuotaRegistry.providers -Name "jules") { $QuotaRegistry.providers.jules } else { $null }
-    if ($null -eq $julesProvider) { return }
-
-    $currentSessions = if ($julesProvider.usage_today -and (Test-ObjectProperty -Object $julesProvider.usage_today -Name "calls")) { [int]$julesProvider.usage_today.calls } else { 0 }
-    $maxDaily = [int]$Config.jules.max_daily_sessions
-    $maxConcurrent = [int]$Config.jules.max_concurrent_sessions
-    $julesActiveCount = @($State.active_delegations | Where-Object {
-        -not (Test-ObjectProperty -Object $_ -Name "agent_type") -or $_.agent_type -eq "jules"
-    }).Count
-
-    $availableSlots = $maxConcurrent - $julesActiveCount
-    $dailyRemaining = $maxDaily - $currentSessions
-    if ($dailyRemaining -lt $availableSlots) { $availableSlots = $dailyRemaining }
-    if ($availableSlots -le 0) {
-        Write-Host "[MONITOR] Keine freien Jules-Slots fuer Nachfuellung." -ForegroundColor DarkGray
-        return
-    }
-
-    $bufferSize = if (Test-ObjectProperty -Object $Config.jules -Name "monitoring_refill_buffer_size") { [int]$Config.jules.monitoring_refill_buffer_size } else { 30 }
-    if ($bufferSize -le 0) { $bufferSize = 30 }
-
-    $candidates = @(Get-NextJulesTaskCandidates -State $State -Config $Config -ScriptDir $ScriptDir -BufferSize $bufferSize)
-    if ($candidates.Count -eq 0) {
-        Write-Host "[MONITOR] Kein Jules-Arbeitsvorrat zum Nachstarten gefunden." -ForegroundColor DarkGray
-        return
-    }
-
-    $JulesScriptDir = Join-Path (Split-Path -Parent $ScriptDir) "jules"
-    $julesCreateCmd = Join-Path $JulesScriptDir "create-jules-session.ps1"
-    $toStart = @($candidates | Select-Object -First $availableSlots)
-
-    foreach ($candidate in $toStart) {
-        $issueNum = [int]$candidate.number
-        $issueTitle = [string]$candidate.title
-        Write-Host "[MONITOR] Starte Jules-Nachfuellung: #$issueNum ($($candidate.source), Reihenfolge $($candidate.order))" -ForegroundColor Cyan
-
-        if ($DryRun.IsPresent) {
-            Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId "dry-run-monitoring-$issueNum" -AgentType "jules" -JobId "dry-run-job"
-            continue
-        }
-
-        try {
-            $sessionResult = & $julesCreateCmd `
-                -IssueNumber $issueNum `
-                -Repository $Config.repository `
-                -AutoCreatePr `
-                -ApiKey $env:JULES_API_KEY
-
-            $sessionId = "unknown"
-            if ($sessionResult) {
-                if ($sessionResult -is [System.Array]) {
-                    $targetObj = $sessionResult | Where-Object { $_ -and (Test-ObjectProperty -Object $_ -Name "SessionId") -and $_.SessionId } | Select-Object -First 1
-                    if ($targetObj) { $sessionId = [string]$targetObj.SessionId }
-                } elseif ((Test-ObjectProperty -Object $sessionResult -Name "SessionId") -and $sessionResult.SessionId) {
-                    $sessionId = [string]$sessionResult.SessionId
-                }
-            }
-
-            Add-Delegation -State $State -IssueNumber $issueNum -IssueTitle $issueTitle -JulesSessionId $sessionId -AgentType "jules"
-            Register-ProviderCall -Registry $QuotaRegistry -ProviderName "jules"
-        } catch {
-            Write-Warning "[MONITOR] Jules-Nachfuellung fuer #$issueNum fehlgeschlagen: $_"
-            Add-ErrorLog -State $State -Message "Monitoring Jules refill failed for #$issueNum" -Context $_.Exception.Message
-        }
-    }
-}
-
 function Add-DecisionPending {
     param(
         [Parameter(Mandatory)][object]$State,
@@ -323,6 +96,8 @@ function Invoke-MonitoringWakeUp {
 
     $repo = $Config.repository
     Write-Host "`n[MONITOR] ========== Monitoring Wake-Up ==========" -ForegroundColor Blue
+    $State = Normalize-AutopilotStateObject -State $State
+    Confirm-WorkingSessionsState -State $State
 
     $ScriptDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
     $JulesScriptDir = Join-Path (Split-Path -Parent $ScriptDir) "jules"
@@ -367,38 +142,12 @@ function Invoke-MonitoringWakeUp {
             $monitoringContext = ""
             $prsData = $prs | ConvertTo-Json -Depth 3
             $sessionsData = $State.active_delegations | ConvertTo-Json -Depth 3
-
-            $LagebildText = ""
-            try {
-                $LagebildText = Get-VorceLagebildSummary -State $State -Config $Config -QuotaRegistry $QuotaRegistry
-            } catch {
-                Write-Warning "[MONITOR] Konnte Lagebild-Zusammenfassung nicht generieren: $_"
-            }
-
+            
             foreach ($step in $Config.monitoring_sequence) {
                 Write-Host "[MONITOR] Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
-
-                $promptVars = @{ repo = $repo }
-                if ($step.id -eq "session_health" -or $step.prompt_ref -eq "monitor_sessions") {
-                    $promptVars.sessions = $sessionsData
-                } elseif ($step.id -eq "pr_ci_validation" -or $step.prompt_ref -eq "monitor_prs" -or $step.id -eq "conflict_remediation" -or $step.prompt_ref -eq "monitor_conflicts") {
-                    $promptVars.prs = $prsData
-                } elseif ($step.id -eq "monitoring_synthesis" -or $step.prompt_ref -eq "monitoring_synthesis") {
-                    $promptVars.context = $monitoringContext
-                } else {
-                    $promptVars.prs = $prsData
-                    $promptVars.sessions = $sessionsData
-                    $promptVars.context = $monitoringContext
-                }
-
+                $promptVars = @{ repo = $repo; prs = $prsData; sessions = $sessionsData; context = $monitoringContext }
                 $stepPrompt = Get-VorceConfigPrompt -Config $Config -PromptKey $step.prompt_ref -Variables $promptVars
-
-                $fullPrompt = ""
-                if ($step.id -eq "monitoring_synthesis" -or $step.prompt_ref -eq "monitoring_synthesis") {
-                    $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$LagebildText`n`n$stepPrompt"
-                } else {
-                    $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$stepPrompt"
-                }
+                $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$stepPrompt"
 
                 $stepResult = Invoke-DualCeoTask `
                     -QuotaRegistry $QuotaRegistry `
@@ -407,14 +156,9 @@ function Invoke-MonitoringWakeUp {
                     -DryRun:$DryRun `
                     -Prompt $fullPrompt `
                     -State $State
-
+                    
                 if ($stepResult.success) {
                     $monitoringContext += "`n### Ergebnis $($step.label):`n$($stepResult.output)`n"
-                    if ($step.id -eq "monitoring_synthesis" -or $step.prompt_ref -eq "monitoring_synthesis") {
-                        Write-Host "[MONITOR] Synthese-Ergebnis:`n$($stepResult.output)" -ForegroundColor Green
-                        $State | Add-Member -MemberType NoteProperty -Name "last_monitoring_synthesis" -Value $stepResult.output -Force -ErrorAction SilentlyContinue
-                        $State.last_monitoring_synthesis = $stepResult.output
-                    }
                 } else {
                     Write-Warning "[MONITOR] Schritt $($step.label) fehlgeschlagen: $($stepResult.output)"
                 }
@@ -431,8 +175,9 @@ function Invoke-MonitoringWakeUp {
             }
 
             $failingChecks = @()
-            if ($pr.statusCheckRollup) {
-                $failingChecks = @($pr.statusCheckRollup | Where-Object {
+            $checks = if (Test-ObjectProperty -Object $pr -Name "statusCheckRollup") { $pr.statusCheckRollup } else { @() }
+            if ($checks) {
+                $failingChecks = @($checks | Where-Object {
                     ((Test-ObjectProperty -Object $_ -Name "conclusion") -and $_.conclusion -eq "FAILURE") -or
                     ((Test-ObjectProperty -Object $_ -Name "status") -and $_.status -eq "FAILURE")
                 })
@@ -444,82 +189,13 @@ function Invoke-MonitoringWakeUp {
             }
         }
 
-        # Master Issue creation for conflicts — with robust dedup
-        if ($conflictingPrs.Count -gt 0) {
-            # Check if a conflict-resolution issue was already created in the last 24 hours
-            $recentConflictIssue = $false
-            if ($null -ne $State.autopilot_created_issues) {
-                foreach ($entry in $State.autopilot_created_issues) {
-                    $isConflictTag = $false
-                    if ((Test-ObjectProperty -Object $entry -Name "tag") -and [string]$entry.tag -match "^resolve-conflicts-") {
-                        $isConflictTag = $true
-                    }
-                    if ($isConflictTag -and (Test-ObjectProperty -Object $entry -Name "created_at")) {
-                        try {
-                            $createdAt = [datetimeoffset]::Parse([string]$entry.created_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
-                            $ageHours = ((Get-Date) - $createdAt.LocalDateTime).TotalHours
-                            if ($ageHours -lt 24) {
-                                $recentConflictIssue = $true
-                                Write-Host "[MONITOR]   Merge-Konflikt-Issue wurde vor $([Math]::Round($ageHours,1))h erstellt (Issue #$($entry.issue_number)). Ueberspringe Neuerstellung." -ForegroundColor DarkGray
-                                break
-                            }
-                        } catch {}
-                    }
-                }
-            }
-
-            if (-not $recentConflictIssue) {
-                $prNumbers = @($conflictingPrs | Sort-Object number | ForEach-Object { $_.number }) -join "-"
-                $conflictTag = "resolve-conflicts-$prNumbers"
-                Write-Host "[MONITOR]   Erstelle gebuendeltes Master-Issue fuer $($conflictingPrs.Count) Konflikte" -ForegroundColor Yellow
-                if (-not $DryRun.IsPresent) {
-                    $issueTitle = "MF-StIs_Resolve-Merge-Conflicts: PRs $($prNumbers -replace '-', ', ')"
-                    $issueBody = "Die folgenden Pull Requests haben Merge-Konflikte:`n`n"
-                    foreach ($cpr in $conflictingPrs) {
-                        $issueBody += "- PR #$($cpr.number) ($($cpr.headRefName)): $($cpr.title)`n"
-                    }
-                    $issueBody += "`nBitte alle Konflikte in einer einzigen Jules-Session aufloesen (Branches auschecken, main mergen, Konflikte beheben, pushen).`n"
-                    $issueBody += "`nPrioritaet: KRITISCH - blockiert Release-Pipeline."
-
-                    $newIssueUrl = gh issue create --repo $repo --title $issueTitle --body $issueBody --label "jules-task,priority: critical,bug" 2>&1
-                    if ($LASTEXITCODE -eq 0 -and $newIssueUrl -match "/issues/(\d+)") {
-                        $newIssueNum = [int]$Matches[1]
-                        Write-Host "[MONITOR]   -> Master-Issue #$newIssueNum erfolgreich erstellt (priority: critical)!" -ForegroundColor Green
-
-                        if ($null -eq $State.autopilot_created_issues) { $State.autopilot_created_issues = @() }
-                        $State.autopilot_created_issues += [ordered]@{ tag = $conflictTag; issue_number = $newIssueNum; created_at = (Get-Date -Format 'o') }
-                        if ($targetAgent -eq "jules") {
-                            Write-Host "[MONITOR]   -> Delegiere Master-Issue #$newIssueNum direkt an Jules (viele Konflikte)!" -ForegroundColor Cyan
-                            $newSessionId = "resolve-conflicts-$newIssueNum-$(Get-Date -Format 'yyyyMMddHHmmss')"
-                            Add-Delegation -State $State -IssueNumber $newIssueNum -IssueTitle $issueTitle -JulesSessionId $newSessionId -AgentType "jules" -JobId "direct-delegate"
-                        } else {
-                            Write-Host "[MONITOR]   -> Starten lokalen CLI-Agenten $targetAgent für Issue #$newIssueNum" -ForegroundColor Cyan
-                            try {
-                                $quotaRegistryPath = Join-Path $ScriptDir "quota-registry.json"
-                                $ToolsDir = Join-Path $ScriptDir "tools"
-                                $cmdArgs = "-NoExit", "-File", "`"$ToolsDir\run-visible-agent-task.ps1`"", "-IssueNumber", $newIssueNum, "-IssueTitle", "`"$issueTitle`"", "-AgentProvider", "`"$targetAgent`"", "-Repository", "`"$repo`"", "-QuotaRegistryPath", "`"$quotaRegistryPath`""
-                                $proc = Start-Process pwsh -ArgumentList $cmdArgs -PassThru -WindowStyle Normal
-                                Add-Delegation -State $State -IssueNumber $newIssueNum -IssueTitle $issueTitle -JulesSessionId "local-agent-$($proc.Id)" -AgentType $targetAgent -JobId $($proc.Id.ToString())
-                            } catch {
-                                Write-Warning "[MONITOR] Lokaler Agent $targetAgent fuer #$newIssueNum fehlgeschlagen: $_"
-                                Add-ErrorLog -State $State -Message "Local agent $targetAgent failed for #$newIssueNum" -Context $_.Exception.Message
-                            }
-                        }
-
-                        Save-AutopilotState -State $State
-                    }
-                }
-            }
-        }
+        # PR-Konflikte werden in der Planning-Phase gebuendelt und an Working Sessions delegiert.
     } catch {
         Write-Warning "[MONITOR] PR-Check fehlgeschlagen: $_"
     }
 
     # --- Step 1b: Spawn queued Working Sessions ---
     Start-QueuedWorkingSessions -State $State -Config $Config -Repository $repo -DryRun:$DryRun
-
-    # --- Step 1c: Refill free Jules capacity from CEO-defined next_jules-tasks buffer ---
-    Start-JulesSessionsForAvailableSlots -State $State -Config $Config -QuotaRegistry $QuotaRegistry -ScriptDir $ScriptDir -DryRun:$DryRun
 
     # --- Step 2: Check active Jules sessions ---
     Write-Host "[MONITOR] Pruefe $($State.active_delegations.Count) aktive Delegierungen..." -ForegroundColor Cyan
@@ -650,6 +326,13 @@ function Invoke-MonitoringWakeUp {
                     )
 
                     Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $currentState
+                    foreach ($workSession in $State.working_sessions) {
+                        if ([int]$workSession.issue_number -eq $issueNum) {
+                            $workSession.status = $currentState
+                            $workSession.last_checked_at = (Get-Date -Format 'o')
+                            break
+                        }
+                    }
 
                     if ($currentState -eq "COMPLETED") {
                         if ($agentState.pr_url -and -not [string]::IsNullOrWhiteSpace($agentState.pr_url)) {
