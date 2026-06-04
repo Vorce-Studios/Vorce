@@ -8,6 +8,7 @@ Ziel:
 Erstelle die kleinste saubere Neuimplementierung des fachlichen PR-Ziels auf aktuellem `$BaseRefName`, weil der alte Branch zu viele Merge-Konflikte hatte.
 
 Regeln:
+
 - Kein Versuch, den alten Konflikt-Branch weiter zu retten.
 - Halte den Scope eng am alten PR-Ziel.
 - Erstelle einen neuen PR auf frischer Basis.

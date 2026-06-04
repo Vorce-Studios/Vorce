@@ -160,7 +160,7 @@ export default function DeliberationPanel({ deliberations }: Props) {
                       const phaseLabel = round.phase === 'proposal' ? 'Vorschlag (Proposal)' :
                                          round.phase === 'critique' ? 'Kritik & Alternativen (Critique)' :
                                          'Synthese & Entscheidung (Synthesis)';
-                      
+
                       return (
                         <div key={rIdx} className="space-y-1">
                           <div className="flex items-center justify-between text-[9px] px-1">

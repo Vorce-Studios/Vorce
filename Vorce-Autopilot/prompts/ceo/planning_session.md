@@ -5,6 +5,7 @@ Session-Marker: VORCE_AUTOPILOT_MAIN_PLANNING_SESSION
 $dashboardInstructions
 
 Ziel:
+
 - Plane, priorisiere und halte den Gesamtdurchsatz hoch.
 - Verwende Jules fuer groessere Coding-Tasks.
 - Verwende CLI-Provider verpflichtend fuer tokenintensive Repo-Suche, Codeanalyse, Diff-/Log-Auswertung, Dokumentationsanalyse, kleine lokale Aenderungen, Reviews und Konfliktloesungen.
@@ -20,6 +21,7 @@ Schreibe/aktualisiere diese Datei als verbindliches Task-Journal:
 $TaskJournalPath
 
 Das Journal muss enthalten:
+
 - aktive/neu gestartete Tasks
 - delegierte Jules Sessions, soweit bekannt
 - PRs/Checks/Konflikte, die beobachtet werden muessen

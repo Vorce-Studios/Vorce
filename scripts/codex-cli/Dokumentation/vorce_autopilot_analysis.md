@@ -53,26 +53,26 @@ graph TD
     Start[Start-Autopilot.ps1] -->|Startet im Hintergrund| Vite[Vite Dev Server - Port 5173]
     Start -->|Startet im Hintergrund| Sync[interval-stats.ps1]
     Start -->|Startet im Vordergrund| Loop[autopilot.ps1]
-    
+
     Sync -->|Sammelt| GH[GitHub API via gh-cli]
     Sync -->|Sammelt| JAPI[Jules API]
     Sync -->|Schreibt Caches| Public[dashboard/public/*.json]
-    
+
     Loop -->|Trigger nach Intervall| Plan[planning-wakeup.ps1]
     Loop -->|Trigger nach Intervall| Mon[monitoring-wakeup.ps1]
     Loop -->|Trigger nach Plan| Audit[audit-wakeup.ps1]
-    
+
     Plan -->|Liest Caches| Public
     Plan -->|Delegiert| Jules[create-jules-session.ps1]
     Plan -->|Delegiert| Local[run-visible-agent-task.ps1]
-    
+
     Mon -->|Liest Caches| Public
     Mon -->|Nutzt| Router[cli-router.ps1]
     Mon -->|Steuert| Jules
-    
+
     Audit -->|Liest Caches| Public
     Audit -->|Deliberation| Delib[deliberation-engine.ps1]
-    
+
     Vite -.->|Liest Live-Daten| Public
     Vite -.->|Liest State| autopilot-state.json
 ```
@@ -84,28 +84,34 @@ graph TD
 Bei genauerer Betrachtung des Codes und der Struktur lassen sich folgende architektonische Verbesserungspotenziale identifizieren:
 
 ### 2.1. Redundante API- und CLI-Aufrufe (Code-Duplikation)
+
 - **Problem:** Die Phasen-Skripte (`planning-wakeup.ps1`, `monitoring-wakeup.ps1` und `audit-wakeup.ps1`) rufen an verschiedenen Stellen direkt das `gh`-CLI oder Jules-API-Skripte auf. Beispielsweise enthält `planning-wakeup.ps1` ein Inline-Skript-Block `$GetCandidates`, um Issues zu filtern und zu sortieren, während `monitoring-wakeup.ps1` an anderen Stellen direkte CLI-Aufrufe absetzt.
 - **Folge:** Fehler in der Befehlssyntax, API-Änderungen oder Authentifizierungsfehler müssen an mehreren Stellen repariert werden. Testbarkeit (Mocking) wird erschwert.
 
 ### 2.2. Prompts-im-Code-Antimuster
+
 - **Problem:** Die Prompt-Vorlagen für LLM-Aktionen sind über zwei Stellen verteilt:
   1. Direkt in `autopilot-config.json` unter dem Schlüssel `"prompts"` als JSON-Escaped-Strings (z. B. mit mühsamen `\n`- und `\"`-Escapes).
   2. Fest kodiert in PowerShell-Here-Strings innerhalb von `lib/autopilot-prompts.ps1`.
 - **Folge:** Prompt-Engineering ist fehleranfällig, da JSON-Syntax-Fehler leicht die gesamte Konfiguration zerstören. Es gibt kein Markdown-Highlighting für die Prompts im Code-Editor, was die Lesbarkeit komplexer Anweisungen drastisch verschlechtert.
 
 ### 2.3. Unkontrollierte Zustandstransaktionen (State Mutation Separation)
+
 - **Problem:** Jede Phase (`planning`, `monitoring`, `audit`) erhält das globale `$State`-Objekt per Referenz, manipuliert dessen Eigenschaften direkt (z. B. `$State.active_delegations += ...`) und ruft nach Belieben `Save-AutopilotState` auf.
 - **Folge:** Es gibt keinen "Single Source of Truth"-Controller für Zustandsänderungen. Tritt in einer Phase ein ungefangener Fehler auf, kann ein teil-mutierter Zustand gespeichert werden, was die Recovery erschwert.
 
 ### 2.4. Prozess-Management und verwaiste Sessions
+
 - **Problem:** `Start-Autopilot.ps1` nutzt Text-Pattern-Matching (`Get-CimInstance Win32_Process`), um laufende Prozesse zu finden und zu beenden. Dies ist unpräzise und birgt das Risiko, andere PowerShell-Sitzungen oder parallele Arbeitsumgebungen zu beeinträchtigen, wenn Pfadstrukturen übereinstimmen. Zudem werden temporäre Dateien (`ceo-args-*.json`, etc.) oft erst in periodischen Cleanup-Zyklen der Hauptschleife bereinigt.
 - **Folge:** Wenn die Suite abstürzt oder unsauber beendet wird, bleiben Node-Prozesse (`Vite`) oder verwaiste CLI-Agent-Fenster offen.
 
 ### 2.5. Synchronisations-Hänger (Start-ThreadJob)
-- **Problem:** `interval-stats.ps1` verwendet `Start-ThreadJob` zur parallelen Abfrage von GitHub-Issues, PRs und Jules-Sitzungen. Es gibt jedoch keine harten Timeouts innerhalb der Skriptblöcke selbst (z. B. bei langsamen GitHub-Verbindungen). 
+
+- **Problem:** `interval-stats.ps1` verwendet `Start-ThreadJob` zur parallelen Abfrage von GitHub-Issues, PRs und Jules-Sitzungen. Es gibt jedoch keine harten Timeouts innerhalb der Skriptblöcke selbst (z. B. bei langsamen GitHub-Verbindungen).
 - **Folge:** Bleibt ein Job hängen, schlägt zwar der `Wait-Job`-Timeout nach 60 Sekunden an, aber der Thread läuft im Hintergrund weiter und blockiert Ressourcen.
 
 ### 2.6. Sicherheitsrisiko durch `Invoke-Expression`
+
 - **Problem:** In `audit-wakeup.ps1` wird das von der KI generierte `remediation_command` per `Invoke-Expression` ausgeführt.
 - **Folge:** Dies stellt ein potenzielles Sicherheitsrisiko dar (Code-Injection), falls ein LLM fehlerhafte oder schädliche Befehle generiert. Zudem ist es fehleranfällig bei Leerzeichen in Pfaden.
 
@@ -206,7 +212,7 @@ function Get-PromptTemplate {
     }
 
     $template = Get-Content -LiteralPath $promptPath -Raw -Encoding UTF8
-    
+
     # Variablen-Ersetzung ($repo -> Wert, etc.)
     foreach ($varName in $Variables.Keys) {
         $template = $template.Replace("`$$varName", [string]$Variables[$varName])
@@ -228,7 +234,7 @@ Die Phasen-Skripte manipulieren den Zustand nicht mehr direkt. Sie geben stattde
 try {
     # Phase ausführen (gibt nur Ergebnisse zurück, speichert nicht selbst)
     $planOutput = Invoke-PlanningWakeUp -Config $Config -Repository $Repository
-    
+
     # Zustand zentral modifizieren
     if ($planOutput.NewDelegations) {
         foreach ($del in $planOutput.NewDelegations) {
@@ -285,7 +291,7 @@ Um das System risikofrei zu optimieren, sollte die Migration in 3 Phasen aufgete
 
 > [!IMPORTANT]
 > Bevor wir mit der Implementierung beginnen, bitte ich um kurzes Feedback zu folgenden Fragen:
-> 
+>
 > 1. **Priorisierung:** Möchtest du, dass wir diese Optimierungen direkt schrittweise umsetzen, oder dient dies zunächst als strategischer Entwurf für spätere Refactoring-Sessions?
 > 2. **Prompt-Management:** Sollen wir die Prompts in separate Markdown-Dateien auslagern? Das würde das `autopilot-config.json` deutlich schlanker machen.
 > 3. **PID-Tracking:** Ist es in Ordnung, wenn wir eine kleine temporäre Datei `var/run/autopilot-pids.json` anlegen, um die Suite-Prozesse absolut zuverlässig und plattformkonform zu stoppen?

@@ -142,7 +142,7 @@ function Invoke-MonitoringWakeUp {
             $monitoringContext = ""
             $prsData = $prs | ConvertTo-Json -Depth 3
             $sessionsData = $State.active_delegations | ConvertTo-Json -Depth 3
-            
+
             foreach ($step in $Config.monitoring_sequence) {
                 Write-Host "[MONITOR] Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
                 $promptVars = @{ repo = $repo; prs = $prsData; sessions = $sessionsData; context = $monitoringContext }
@@ -156,7 +156,7 @@ function Invoke-MonitoringWakeUp {
                     -DryRun:$DryRun `
                     -Prompt $fullPrompt `
                     -State $State
-                    
+
                 if ($stepResult.success) {
                     $monitoringContext += "`n### Ergebnis $($step.label):`n$($stepResult.output)`n"
                 } else {
