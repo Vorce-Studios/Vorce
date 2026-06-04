@@ -512,11 +512,11 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
               Passe die System-Prompts an, die der Autopilot für die verschiedenen Phasen (Planung, Monitoring, Audit) verwendet.
             </p>
             <div className="space-y-6">
-              
+
               {/* Gruppe: Planung */}
               <div className="space-y-4">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 bg-cyan-950/20 px-2.5 py-1 rounded border border-cyan-900/30">Planungs-Phase (Planning)</h4>
-                
+
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
                     <span>Jules Session Sync</span>
