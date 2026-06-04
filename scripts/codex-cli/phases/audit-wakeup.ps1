@@ -53,7 +53,7 @@ function Invoke-AuditWakeUp {
     $auditContext = ""
     if ($Config.PSObject.Properties.Name -contains "audit_sequence") {
         Write-Host "[AUDIT] Starte sequentielle Audit-Sequenz (Session Splitting)..." -ForegroundColor Yellow
-        
+
         $LagebildText = ""
         try {
             $LagebildText = Get-VorceLagebildSummary -State $State -Config $Config -QuotaRegistry $QuotaRegistry
@@ -63,7 +63,7 @@ function Invoke-AuditWakeUp {
 
         foreach ($step in $Config.audit_sequence) {
             Write-Host "[AUDIT] Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
-            
+
             $promptVars = @{ repo = $repo }
             if ($step.id -eq "consistency_audit" -or $step.prompt_ref -eq "audit_consistency") {
                 $promptVars.issues = $issuesData
@@ -81,7 +81,7 @@ function Invoke-AuditWakeUp {
             }
 
             $stepPrompt = Get-VorceConfigPrompt -Config $Config -PromptKey $step.prompt_ref -Variables $promptVars
-            
+
             $fullPrompt = ""
             if ($step.id -eq "audit_synthesis" -or $step.prompt_ref -eq "audit_synthesis") {
                 $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$LagebildText`n`n$stepPrompt"
@@ -96,10 +96,10 @@ function Invoke-AuditWakeUp {
                 -DryRun:$DryRun `
                 -Prompt $fullPrompt `
                 -State $State
-                
+
             if ($stepResult.success) {
                 $auditContext += "`n### Ergebnis $($step.label):`n$($stepResult.output)`n"
-                
+
                 # Parse final synthesis results for remediation/escalation
                 if ($step.id -eq "audit_synthesis" -or $step.prompt_ref -eq "audit_synthesis") {
                     Write-Host "[AUDIT] Analysiere Audit-Synthese Ergebnis..." -ForegroundColor Cyan
@@ -145,12 +145,12 @@ function Invoke-AuditWakeUp {
                                     if ($issueTitle.Length -gt 100) { $issueTitle = $issueTitle.Substring(0, 100) + "..." }
                                     $issueBody = "Ein automatischer Audit-Alert wurde registriert:`n`n$($parsedObj.dashboard_escalation)`n`nBitte untersuche das Problem und beheben es."
                                     $targetAgent = "gemini_cli"
-                                    
+
                                     $newIssueUrl = gh issue create --repo $repo --title $issueTitle --body $issueBody --label "priority: high,bug,agent:$targetAgent" 2>&1
                                     if ($LASTEXITCODE -eq 0 -and $newIssueUrl -match "/issues/(\d+)") {
                                         $newIssueNum = [int]$Matches[1]
                                         Write-Host "[AUDIT] -> Audit-Alert Issue #$newIssueNum erfolgreich erstellt! Zuweisung an $targetAgent." -ForegroundColor Green
-                                        
+
                                         Confirm-WorkingSessionsState -State $State
                                         $State.working_queue += @([ordered]@{
                                             id             = "work-$newIssueNum-$(Get-Date -Format 'yyyyMMddHHmmss')"
