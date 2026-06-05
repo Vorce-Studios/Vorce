@@ -507,7 +507,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
             foreach ($newIssue in $newIssues) {
                 if ($null -eq $newIssue -or -not ($newIssue.PSObject.Properties.Name -contains "title")) { continue }
                 $issueTitle = [string]$newIssue.title
-                $issueBody = [string]$newIssue.body
+                $issueBody = if ($newIssue.PSObject.Properties.Name -contains "body") { [string]$newIssue.body } else { "" }
 
                 if ($issueTitle -match "VOR-000") {
                     $issueTitle = $issueTitle -replace "VOR-000", ("VOR-{0:D3}" -f $nextVorNumber)
@@ -532,7 +532,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                 if ($DryRun.IsPresent) {
                     Write-Host "[PLANNING] [DRY RUN] Wuerde Issue erstellen: $issueTitle ($issueAgent)" -ForegroundColor DarkYellow
                 } else {
-                    $labels = @($newIssue.labels) + @($Config.issue_filters.autopilot_label)
+                    $labels = @(if ($newIssue.PSObject.Properties.Name -contains "labels") { $newIssue.labels } else { @() }) + @($Config.issue_filters.autopilot_label)
                     if ($issueAgent -ne "jules") {
                         $labels = @($labels | Where-Object { $_ -ne "jules-task" })
                     }
@@ -653,7 +653,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
         Write-Host "[PLANNING] Jeder 3. Planungs-Lauf ($($State.planning_run_count)): Starte smarte Memory-Optimierung..." -ForegroundColor Yellow
         try {
             $memStore = Read-MemoryStore
-            $memoriesJson = $memStore | ConvertTo-Json -Depth 5
+            $memoriesJson = $memStore | ConvertTo-Json -Depth 15
             
             $journalPath = Get-AutopilotTaskJournalPath
             $journalContent = if (Test-Path $journalPath) { Get-Content $journalPath -Raw -Encoding UTF8 } else { "" }
@@ -752,8 +752,8 @@ Wenn keine Änderungen notwendig sind, antworte mit einem leeren Array: []
                 } catch {}
             }
             
-            $stateJson = $State | ConvertTo-Json -Depth 5
-            $quotaJson = $QuotaRegistry | ConvertTo-Json -Depth 5
+            $stateJson = $State | ConvertTo-Json -Depth 15
+            $quotaJson = $QuotaRegistry | ConvertTo-Json -Depth 15
 
             $promptText = @"
 Du bist der Vorce-Autopilot Optimizer-Agent.

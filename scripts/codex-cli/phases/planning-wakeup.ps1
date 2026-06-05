@@ -503,7 +503,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
             foreach ($newIssue in $newIssues) {
                 if ($null -eq $newIssue -or -not ($newIssue.PSObject.Properties.Name -contains "title")) { continue }
                 $issueTitle = [string]$newIssue.title
-                $issueBody = [string]$newIssue.body
+                $issueBody = if ($newIssue.PSObject.Properties.Name -contains "body") { [string]$newIssue.body } else { "" }
 
                 if ($issueTitle -match "VOR-000") {
                     $issueTitle = $issueTitle -replace "VOR-000", ("VOR-{0:D3}" -f $nextVorNumber)
@@ -528,7 +528,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                 if ($DryRun.IsPresent) {
                     Write-Host "[PLANNING] [DRY RUN] Wuerde Issue erstellen: $issueTitle ($issueAgent)" -ForegroundColor DarkYellow
                 } else {
-                    $labels = @($newIssue.labels) + @($Config.issue_filters.autopilot_label)
+                    $labels = @(if ($newIssue.PSObject.Properties.Name -contains "labels") { $newIssue.labels } else { @() }) + @($Config.issue_filters.autopilot_label)
                     if ($issueAgent -ne "jules") {
                         $labels = @($labels | Where-Object { $_ -ne "jules-task" })
                     }
