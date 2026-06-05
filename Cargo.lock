@@ -9878,6 +9878,7 @@ dependencies = [
  "bindgen",
  "cbindgen",
  "thiserror 2.0.18",
+ "vorce-media",
 ]
 
 [[package]]
@@ -9944,6 +9945,7 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.18",
  "tracing",
+ "vorce-ffi",
  "vorce-io",
  "walkdir",
 ]

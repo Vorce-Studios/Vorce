@@ -34,6 +34,7 @@ walkdir = "2.4"
 [dev-dependencies]
 criterion = { workspace = true }
 tempfile = "3.27"
+vorce-ffi = { path = "../vorce-ffi" }
 
 [[bench]]
 name = "video_decode"
