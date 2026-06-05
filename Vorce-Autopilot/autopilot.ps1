@@ -189,11 +189,11 @@ while ($true) {
         Write-Host "  Automatische Pause von 60 Minuten vor dem naechsten Versuch..." -ForegroundColor Yellow
         Write-Host "==========================================================================" -ForegroundColor Red
         Write-Host ""
-        
+
         $pauseSeconds = 3600
         $pauseUntil = (Get-Date).AddSeconds($pauseSeconds)
         Write-Host "[LOOP] Pause bis $($pauseUntil.ToString('HH:mm:ss')) (in 60.0 min)..." -ForegroundColor Yellow
-        
+
         $remainingPause = $pauseSeconds
         while ($remainingPause -gt 0) {
             Start-Sleep -Seconds 10

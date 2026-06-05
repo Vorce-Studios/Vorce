@@ -86,7 +86,7 @@ function Invoke-PlanningWakeUp {
             $title = [string]$_.title
             $body = [string]$_.body
             $isMasterIssue = $title -match "_MAIs_"
-            
+
             $issueNum = [int]$_.number
             $isEscalatedRetry = $false
             if ($null -ne $State.escalated_issues) {
