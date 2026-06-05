@@ -258,6 +258,12 @@ function New-AutopilotState {
         deliberation_log        = @()
         optimizer_queue         = @()
         last_optimizer_analysis_at = $null
+        optimizer_last_run      = $null
+        run_summaries           = [pscustomobject]@{
+            planning = $null
+            monitoring = $null
+        }
+        run_control             = [pscustomobject]@{}
     }
 }
 

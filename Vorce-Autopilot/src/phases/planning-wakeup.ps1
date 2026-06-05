@@ -33,6 +33,49 @@ function Add-WorkingQueueItem {
     Write-Host "[PLANNING] Working Session geplant: Issue #$IssueNumber -> $AgentProvider" -ForegroundColor Cyan
 }
 
+function Test-AutopilotJulesIssueSafe {
+    param(
+        [AllowNull()][string]$Title,
+        [AllowNull()][string]$Body
+    )
+
+    $titleText = if ($null -eq $Title) { "" } else { [string]$Title }
+    $bodyText = if ($null -eq $Body) { "" } else { [string]$Body }
+
+    if (
+        $titleText -match "_MAIs_" -or
+        $titleText -match "(?i)Resolve-Merge-Conflicts?|Merge-Konflikt|Merge-Conflict|Konflikt" -or
+        $titleText -match "(?i)Release-Readiness|Merge-Reihenfolge|Blocker-Matrix|PRs?[-_\s]*\d|PR-\d"
+    ) {
+        return $false
+    }
+
+    $isTrackerLike = $bodyText -match "(?i)\bMaster-Issue\b|Tracking-PR|Tracker|buendelt|bündelt|Bündelung|Nachverfolgung|Scope-Freeze"
+    $isExplicitSubTask = $titleText -match "(_SubI_|_StIs_|_User_)"
+    if ($isTrackerLike -and -not $isExplicitSubTask) {
+        return $false
+    }
+
+    if ($bodyText.Length -lt 250) {
+        return $false
+    }
+
+    $hasScope = $bodyText -match "(?i)\b(Ziel|Goal|Scope|Beschreibung|Current problem|Acceptance|Acceptance-Evidence|Acceptance criteria|Definition of Done|Akzeptanz)\b"
+    $hasCodeWork = $bodyText -match "(?i)(crates/|scripts/|docs/|resources/|\.rs\b|\.ps1\b|\.ts\b|\.tsx\b|test|fixture|script|command|implement|fix|refactor|module|UI|CI)"
+    if (-not ($hasScope -and $hasCodeWork)) {
+        return $false
+    }
+
+    return $true
+}
+
+function Test-PlanningJulesCapacityState {
+    param([AllowNull()][string]$State)
+
+    $normalized = if ([string]::IsNullOrWhiteSpace($State)) { "QUEUED" } else { [string]$State }
+    return $normalized -in @("QUEUED", "PLANNING", "IN_PROGRESS", "AWAITING_PLAN_APPROVAL")
+}
+
 function Invoke-PlanningWakeUp {
     param(
         [Parameter(Mandatory)][object]$State,
@@ -43,6 +86,10 @@ function Invoke-PlanningWakeUp {
 
     $State = Update-AutopilotStateObject -State $State
     Confirm-WorkingSessionsState -State $State
+    $planningStartedAt = Get-Date
+    $planningQueueBefore = @($State.working_queue).Count
+    $planningDelegationsBefore = @($State.active_delegations).Count
+    $planningIssuesBefore = @($State.autopilot_created_issues).Count
     $repo = $Config.repository
     Write-Host "`n[PLANNING] ========== Planning Wake-Up ==========" -ForegroundColor Blue
 
@@ -217,12 +264,30 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
 
                 if (-not $DryRun.IsPresent) {
                     $issueTitle = "MF-StIs_Resolve-Merge-Conflicts: PRs $($prNumbers -replace '-', ', ')"
-                    $issueBody = "Die folgenden Pull Requests haben Merge-Konflikte:`n`n"
+                    $issueBody = "## Ziel`n"
+                    $issueBody += "Loese die Merge-Konflikte der unten gelisteten bestehenden PR-Branches gegen ihre jeweilige Base-Branch. Dieses Issue ist ein lokaler CLI-Agent-Auftrag und darf niemals an Jules delegiert werden.`n`n"
+                    $issueBody += "## Betroffene PRs`n"
                     foreach ($cpr in $conflictingPrs) {
-                        $issueBody += "- PR #$($cpr.number) ($($cpr.headRefName)): $($cpr.title)`n"
+                        $baseRef = if (Test-ObjectProperty -Object $cpr -Name "baseRefName") { [string]$cpr.baseRefName } else { "main" }
+                        $headRef = if (Test-ObjectProperty -Object $cpr -Name "headRefName") { [string]$cpr.headRefName } else { "" }
+                        $issueBody += "- PR #$($cpr.number): `$headRef` -> `$baseRef` - $($cpr.title)`n"
                     }
-                    $issueBody += "`nBitte alle Konflikte manuell auflösen (Branches auschecken, main mergen, Konflikte beheben, pushen).`n"
-                    $issueBody += "`nPrioritaet: KRITISCH - blockiert Release-Pipeline."
+                    $issueBody += @"
+
+## Arbeitsanweisung fuer den lokalen Agenten
+- Jeden PR einzeln pruefen: `gh pr view <nr> --json state,mergeable,headRefName,baseRefName,title,files`.
+- Geschlossene oder nicht mehr konfliktierende PRs ueberspringen und im Abschlussbericht nennen.
+- Fuer konfliktierende PRs: Head-Branch auschecken, Base-Branch mergen, Konfliktdateien mit `git diff --name-only --diff-filter=U` ermitteln, Konflikte minimal und fachlich passend aufloesen, Tests/Checks soweit sinnvoll ausfuehren, Commit auf denselben Head-Branch pushen.
+- Keinen neuen PR erstellen und keinen leeren Commit erzeugen.
+- Wenn ein PR inhaltlich nicht mehr rettbar ist, keine Jules-Session starten. Stattdessen im Abschlussbericht exakt PR, Branches, Konfliktdateien und Grund nennen.
+
+## Akzeptanz
+- Jeder noch offene konfliktierende PR aus der Liste ist entweder konfliktfrei gepusht oder konkret als nicht rettbar dokumentiert.
+- Der Bericht nennt fuer jeden PR: Status, Branch, geaenderte Dateien, ausgefuehrte Checks.
+- Es wurden keine Jules-Sessions und keine Tracking-PRs erzeugt.
+
+Prioritaet: KRITISCH - blockiert Release-Pipeline.
+"@
 
                     # EXKLUSIV fuer gemini_cli
                     $targetAgent = "gemini_cli"
@@ -271,7 +336,8 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
             Write-Host "[PLANNING] Starte Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
 
             $julesActiveCount = @($State.active_delegations | Where-Object {
-                -not ($_.PSObject.Properties.Name -contains "agent_type") -or ($_.agent_type -eq "jules")
+                (-not ($_.PSObject.Properties.Name -contains "agent_type") -or ($_.agent_type -eq "jules")) -and
+                (Test-PlanningJulesCapacityState -State $(if ($_.PSObject.Properties.Name -contains "jules_state") { [string]$_.jules_state } else { "QUEUED" }))
             }).Count
             $julesAvailableSlots = [int]$Config.jules.max_concurrent_sessions - $julesActiveCount
             if ($julesAvailableSlots -lt 0) { $julesAvailableSlots = 0 }
@@ -529,6 +595,11 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                     $issueAgent = [string]$newIssue.agent
                 }
 
+                if ($issueAgent -eq "jules" -and -not (Test-AutopilotJulesIssueSafe -Title $issueTitle -Body $issueBody)) {
+                    Write-Host "[PLANNING] Jules fuer unsicheren/unklaren Issue-Vorschlag blockiert: '$issueTitle'. Route zu gemini_cli." -ForegroundColor Yellow
+                    $issueAgent = "gemini_cli"
+                }
+
                 if ($DryRun.IsPresent) {
                     Write-Host "[PLANNING] [DRY RUN] Wuerde Issue erstellen: $issueTitle ($issueAgent)" -ForegroundColor DarkYellow
                 } else {
@@ -561,7 +632,8 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
     $maxConcurrent = [int]$Config.jules.max_concurrent_sessions
     $activeDelegations = if ($null -ne $State -and $State.PSObject.Properties.Match("active_delegations").Count -gt 0 -and $null -ne $State.active_delegations) { @($State.active_delegations) } else { @() }
     $julesActiveCount = @($activeDelegations | Where-Object {
-        -not ($_.PSObject.Properties.Name -contains "agent_type") -or ($_.agent_type -eq "jules")
+        (-not ($_.PSObject.Properties.Name -contains "agent_type") -or ($_.agent_type -eq "jules")) -and
+        (Test-PlanningJulesCapacityState -State $(if ($_.PSObject.Properties.Name -contains "jules_state") { [string]$_.jules_state } else { "QUEUED" }))
     }).Count
 
     $julesAvailableSlots = $maxConcurrent - $julesActiveCount
@@ -595,6 +667,12 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                 $targetAgent = $Matches[1]
                 break
             }
+        }
+
+        $issueBody = if (($issue.PSObject.Properties.Name -contains "body") -and $null -ne $issue.body) { [string]$issue.body } else { "" }
+        if ($targetAgent -eq "jules" -and -not (Test-AutopilotJulesIssueSafe -Title $issueTitle -Body $issueBody)) {
+            Write-Host "[PLANNING] Jules blockiert fuer Issue #${issueNum}: kein sicherer konkreter Codeauftrag. Route zu gemini_cli." -ForegroundColor Yellow
+            $targetAgent = "gemini_cli"
         }
 
         Write-Host ("[PLANNING] Delegiere Issue #{0}: {1} an Agent: {2}" -f $issueNum, $issueTitle, $targetAgent) -ForegroundColor Green
@@ -727,9 +805,14 @@ Wenn keine Änderungen notwendig sind, antworte mit einem leeren Array: []
 
     # --- Optimizer Session (2x daily, every 12 hours) ---
     $runAnalysis = $false
+    $forceOptimizer = $false
+    if ((Test-ObjectProperty -Object $State -Name "run_control") -and (Test-ObjectProperty -Object $State.run_control -Name "force_optimizer") -and [bool]$State.run_control.force_optimizer) {
+        $forceOptimizer = $true
+        $runAnalysis = $true
+    }
     if (-not ($State.PSObject.Properties.Name -contains "last_optimizer_analysis_at") -or [string]::IsNullOrWhiteSpace([string]$State.last_optimizer_analysis_at)) {
         $runAnalysis = $true
-    } else {
+    } elseif (-not $forceOptimizer) {
         try {
             $lastAt = [datetimeoffset]::Parse([string]$State.last_optimizer_analysis_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
             $ageHours = ((Get-Date) - $lastAt.LocalDateTime).TotalHours
@@ -742,7 +825,7 @@ Wenn keine Änderungen notwendig sind, antworte mit einem leeren Array: []
     }
 
     if ($runAnalysis -and -not $DryRun.IsPresent) {
-        Write-Host "[OPTIMIZER] Starte halbtägliche Optimizer-Analyse..." -ForegroundColor Yellow
+        Write-Host "[OPTIMIZER] Starte Optimizer-Analyse..." -ForegroundColor Yellow
         try {
             $logFilePath = Join-Path $ScriptDir "var/log/autopilot-live.log"
             $latestLogLines = ""
@@ -809,10 +892,11 @@ Wenn keine Optimierungen nötig oder sinnvoll sind, antworte mit einem leeren Ar
                         $State | Add-Member -MemberType NoteProperty -Name "optimizer_queue" -Value @() -Force
                     }
                     
+                    $proposalList = @()
                     foreach ($p in $proposals) {
                         if ($p.title -and $p.description) {
                             $id = "opt-$(Get-Date -Format 'yyyyMMddHHmmss')-$([guid]::NewGuid().ToString('N').Substring(0, 4))"
-                            $State.optimizer_queue += @([ordered]@{
+                            $entry = [ordered]@{
                                 id              = $id
                                 title           = [string]$p.title
                                 description     = [string]$p.description
@@ -820,21 +904,66 @@ Wenn keine Optimierungen nötig oder sinnvoll sind, antworte mit einem leeren Ar
                                 proposed_action = [string]$p.proposed_action
                                 status          = "QUEUED"
                                 created_at      = (Get-Date -Format 'o')
-                            })
+                            }
+                            $State.optimizer_queue += @($entry)
+                            $proposalList += @($entry)
                             Write-Host "[OPTIMIZER] Neuer Optimierungsvorschlag hinzugefügt: $($p.title)" -ForegroundColor Green
                         }
                     }
                     
                     $State.last_optimizer_analysis_at = (Get-Date -Format 'o')
+                    $nextOptimizerAt = (Get-Date).AddHours(12).ToString("o")
+                    $previousApproved = @()
+                    if (Test-ObjectProperty -Object $State -Name "optimizer_last_run" -and $null -ne $State.optimizer_last_run -and (Test-ObjectProperty -Object $State.optimizer_last_run -Name "approved_changes")) {
+                        $previousApproved = @($State.optimizer_last_run.approved_changes)
+                    }
+                    $State | Add-Member -MemberType NoteProperty -Name "optimizer_last_run" -Value ([pscustomobject]@{
+                        ran_at = $State.last_optimizer_analysis_at
+                        next_run_at = $nextOptimizerAt
+                        forced = $forceOptimizer
+                        proposals = @($proposalList)
+                        approved_changes = @($previousApproved | Select-Object -Last 10)
+                        summary = if ($proposalList.Count -gt 0) { "$($proposalList.Count) Optimierungsvorschlaege erzeugt." } else { "Keine neuen Optimierungsvorschlaege." }
+                    }) -Force
+                    if (Test-ObjectProperty -Object $State -Name "run_control" -and $forceOptimizer) {
+                        $State.run_control | Add-Member -MemberType NoteProperty -Name "force_optimizer" -Value $false -Force
+                        $State.run_control | Add-Member -MemberType NoteProperty -Name "force_optimizer_requested_at" -Value $null -Force
+                    }
                     Save-AutopilotState -State $State
                 } else {
                     Write-Warning "[OPTIMIZER] Konnte Optimizer-Vorschläge nicht parsen oder keine Vorschläge generiert."
+                    if (Test-ObjectProperty -Object $State -Name "run_control" -and $forceOptimizer) {
+                        $State.run_control | Add-Member -MemberType NoteProperty -Name "force_optimizer" -Value $false -Force
+                    }
                 }
             }
         } catch {
             Write-Warning "Fehler bei Optimizer-Analyse: $_"
+            if (Test-ObjectProperty -Object $State -Name "run_control" -and $forceOptimizer) {
+                $State.run_control | Add-Member -MemberType NoteProperty -Name "force_optimizer" -Value $false -Force
+            }
         }
     }
+
+    $planningEndedAt = Get-Date
+    $candidateCount = 0
+    $candidateVar = Get-Variable -Name "candidates" -ErrorAction SilentlyContinue
+    if ($null -ne $candidateVar -and $null -ne $candidateVar.Value) {
+        $candidateCount = @($candidateVar.Value).Count
+    }
+    $queuedNow = @($State.working_queue).Count
+    $delegationsNow = @($State.active_delegations).Count
+    $createdIssuesNow = @($State.autopilot_created_issues).Count
+    $planningSummary = "Issues geprueft: $candidateCount; Working-Queue: $planningQueueBefore -> $queuedNow; Delegierungen: $planningDelegationsBefore -> $delegationsNow; erstellte Issues gesamt: $createdIssuesNow."
+    if (-not (Test-ObjectProperty -Object $State -Name "run_summaries") -or $null -eq $State.run_summaries) {
+        $State | Add-Member -MemberType NoteProperty -Name "run_summaries" -Value ([pscustomobject]@{}) -Force
+    }
+    $State.run_summaries | Add-Member -MemberType NoteProperty -Name "planning" -Value ([pscustomobject]@{
+        started_at = $planningStartedAt.ToString("o")
+        completed_at = $planningEndedAt.ToString("o")
+        duration_seconds = [int][Math]::Round(($planningEndedAt - $planningStartedAt).TotalSeconds)
+        summary = $planningSummary
+    }) -Force
 
     $State.last_planning_at = (Get-Date -Format 'o')
     Save-AutopilotState -State $State

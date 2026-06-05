@@ -110,6 +110,23 @@ export default defineConfig({
               res.writeHead(500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
             }
+          } else if (req.method === 'GET' && req.url === '/jules-sessions.json') {
+            try {
+              const livePath = path.resolve(__dirname, '../var/db/jules-sessions.json');
+              const fallbackPath = path.resolve(__dirname, './jules-sessions.json');
+              const sessionPath = fs.existsSync(livePath) ? livePath : fallbackPath;
+              if (fs.existsSync(sessionPath)) {
+                const sessionContent = fs.readFileSync(sessionPath, 'utf-8');
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(sessionContent);
+              } else {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify([]));
+              }
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+            }
           } else if (req.method === 'GET' && req.url === '/github-issues.json') {
             const now = Date.now();
             if (issuesCache && (now - issuesCacheTime < CACHE_TTL)) {
@@ -382,6 +399,10 @@ export default defineConfig({
 
                 if (payload.action === 'reject') {
                   state.optimizer_queue = state.optimizer_queue.filter((item: any) => item.id !== payload.id);
+                } else if (payload.action === 'run-now') {
+                  state.run_control = state.run_control || {};
+                  state.run_control.force_optimizer = true;
+                  state.run_control.force_optimizer_requested_at = new Date().toISOString();
                 } else if (payload.action === 'approve') {
                   const item = state.optimizer_queue.find((i: any) => i.id === payload.id);
                   if (item) {
@@ -417,6 +438,18 @@ export default defineConfig({
                     } catch (e) {
                       throw new Error(`Fehler beim Erstellen des GitHub Issues: ${(e as any).message}`);
                     }
+
+                    state.optimizer_last_run = state.optimizer_last_run || {};
+                    state.optimizer_last_run.approved_changes = Array.isArray(state.optimizer_last_run.approved_changes) ? state.optimizer_last_run.approved_changes : [];
+                    state.optimizer_last_run.approved_changes.push({
+                      id: item.id,
+                      title: item.title,
+                      description: item.description,
+                      impact: item.impact,
+                      proposed_action: item.proposed_action,
+                      approved_at: new Date().toISOString()
+                    });
+                    state.optimizer_last_run.approved_changes = state.optimizer_last_run.approved_changes.slice(-10);
                     
                     // Remove from optimizer queue
                     state.optimizer_queue = state.optimizer_queue.filter((i: any) => i.id !== payload.id);
