@@ -89,6 +89,11 @@ export interface ActiveSessions {
   run_control?: any;
   optimizer_queue?: any[];
   last_optimizer_analysis_at?: string;
+  optimizer_last_run?: any;
+  run_summaries?: {
+    planning?: { summary?: string; started_at?: string; completed_at?: string; duration_seconds?: number } | null;
+    monitoring?: { summary?: string; started_at?: string; completed_at?: string; duration_seconds?: number } | null;
+  };
 }
 
 // ── GitHub Project Types ──

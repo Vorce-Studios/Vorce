@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import fs from 'fs'
 import path from 'path'
-import { execSync } from 'child_process'
+import { execSync, spawn } from 'child_process'
 
 let issuesCache: string | null = null;
 let issuesCacheTime = 0;
@@ -394,6 +394,7 @@ export default defineConfig({
                 const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
                 const readableStatePath = fs.existsSync(statePath) ? statePath : publicStatePath;
                 const state = readJsonFile(readableStatePath, {});
+                let startOptimizerProcess = false;
 
                 state.optimizer_queue = state.optimizer_queue || [];
 
@@ -403,6 +404,7 @@ export default defineConfig({
                   state.run_control = state.run_control || {};
                   state.run_control.force_optimizer = true;
                   state.run_control.force_optimizer_requested_at = new Date().toISOString();
+                  startOptimizerProcess = true;
                 } else if (payload.action === 'approve') {
                   const item = state.optimizer_queue.find((i: any) => i.id === payload.id);
                   if (item) {
@@ -457,6 +459,16 @@ export default defineConfig({
 
                 writeJsonFile(statePath, state);
                 writeJsonFile(publicStatePath, state);
+                if (startOptimizerProcess) {
+                  const autopilotPath = path.resolve(__dirname, '../autopilot.ps1');
+                  const child = spawn('pwsh', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', autopilotPath, '-PlanOnce'], {
+                    cwd: path.resolve(__dirname, '..'),
+                    detached: true,
+                    stdio: 'ignore',
+                    windowsHide: true
+                  });
+                  child.unref();
+                }
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'ok' }));
               } catch (err) {

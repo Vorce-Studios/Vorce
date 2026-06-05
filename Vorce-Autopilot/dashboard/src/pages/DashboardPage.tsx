@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, Trash2, CalendarClock, Ban, MessageSquare, Terminal } from 'lucide-react';
+import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, Trash2, CalendarClock, Ban, MessageSquare, Terminal, Play } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue, AuditResult } from '../types';
 import DeliberationPanel from './DeliberationPanel';
@@ -373,6 +373,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
           interval={`${scheduler?.planning_interval_minutes ?? 'N/A'} min`}
           cancelled={runControl.cancel_next_planning}
           note={runControl.next_planning_note}
+          summary={sessions.run_summaries?.planning?.summary}
           onCancel={() => sendRunControl('planning', runControl.cancel_next_planning ? 'uncancel-next' : 'cancel-next')}
           onNote={(note) => sendRunControl('planning', 'note-next', note)}
         />
@@ -384,6 +385,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
           interval={`${scheduler?.monitoring_interval_minutes ?? 'N/A'} min`}
           cancelled={runControl.cancel_next_monitoring}
           note={runControl.next_monitoring_note}
+          summary={sessions.run_summaries?.monitoring?.summary}
           onCancel={() => sendRunControl('monitoring', runControl.cancel_next_monitoring ? 'uncancel-next' : 'cancel-next')}
           onNote={(note) => sendRunControl('monitoring', 'note-next', note)}
         />
@@ -491,7 +493,12 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
       </div>
 
       {/* Optimizer-Sessions Queue Widget */}
-      <OptimizerQueuePanel queue={sessions.optimizer_queue} />
+      <OptimizerQueuePanel
+        queue={sessions.optimizer_queue}
+        lastRun={sessions.optimizer_last_run}
+        lastOptimizerAt={sessions.last_optimizer_analysis_at}
+        forceRequestedAt={runControl.force_optimizer_requested_at}
+      />
 
       {/* Dual-CEO Deliberation Panel */}
       <DeliberationPanel deliberations={sessions.deliberation_log || []} />
@@ -500,11 +507,25 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   );
 }
 
-function OptimizerQueuePanel({ queue }: { queue?: any[] }) {
+function getNextOptimizerRun(lastRun?: any, lastOptimizerAt?: string): string {
+  if (lastRun?.next_run_at) return lastRun.next_run_at;
+  if (!lastOptimizerAt) return '';
+  const next = new Date(lastOptimizerAt);
+  if (Number.isNaN(next.getTime())) return '';
+  next.setHours(next.getHours() + 12);
+  return next.toISOString();
+}
+
+function OptimizerQueuePanel({ queue, lastRun, lastOptimizerAt, forceRequestedAt }: {
+  queue?: any[];
+  lastRun?: any;
+  lastOptimizerAt?: string;
+  forceRequestedAt?: string;
+}) {
   const [loading, setLoading] = useState<string | null>(null);
 
-  const handleAction = async (id: string, action: 'approve' | 'reject') => {
-    setLoading(id);
+  const handleAction = async (id: string, action: 'approve' | 'reject' | 'run-now') => {
+    setLoading(id || action);
     try {
       await fetch('/api/optimizer', {
         method: 'POST',
@@ -520,49 +541,45 @@ function OptimizerQueuePanel({ queue }: { queue?: any[] }) {
   };
 
   const activeProposals = queue ? queue.filter(item => item.status !== 'APPROVED' && item.status !== 'REJECTED') : [];
+  const lastProposals = Array.isArray(lastRun?.proposals) ? lastRun.proposals : [];
+  const approvedChanges = Array.isArray(lastRun?.approved_changes) ? lastRun.approved_changes : [];
+  const nextRunAt = getNextOptimizerRun(lastRun, lastOptimizerAt);
 
   return (
     <div className="glass-card p-5 border border-slate-800">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-          <Zap className="text-amber-400 w-4 h-4" />
-          Optimizer-Sessions Queue ({activeProposals.length})
-        </h3>
-        {queue && queue.length > activeProposals.length && (
-          <span className="text-xs text-slate-500">
-            {queue.length - activeProposals.length} verarbeitet
-          </span>
-        )}
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 mb-4">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+            <Zap className="text-amber-400 w-4 h-4" />
+            Optimizer-Sessions
+          </h3>
+          <div className="mt-1 text-xs text-slate-500">
+            Letzter Run: {lastRun?.ran_at ? timeAgo(lastRun.ran_at) : 'N/A'} · Nächster Run: {nextRunAt ? new Date(nextRunAt).toLocaleTimeString() : 'N/A'}
+          </div>
+          {forceRequestedAt && (
+            <div className="mt-1 text-[11px] text-amber-300">
+              Manueller Optimizer-Run angefordert: {timeAgo(forceRequestedAt)}
+            </div>
+          )}
+        </div>
+        <button
+          disabled={loading !== null}
+          onClick={() => handleAction('', 'run-now')}
+          className="px-3 py-2 text-xs rounded border border-amber-500/30 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+          title="Optimizer beim nächsten Planning-Lauf erzwingen"
+        >
+          <Play className="w-3.5 h-3.5" />
+          Jetzt ausführen
+        </button>
       </div>
 
-      {activeProposals.length === 0 ? (
-        <div className="text-xs text-slate-500 rounded border border-slate-800 bg-slate-950/40 px-3 py-2">
-          Keine Optimierungsvorschläge in der Warteschlange.
-        </div>
-      ) : (
-        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
-          {activeProposals.map((item) => (
-            <div key={item.id} className="bg-slate-950/50 border border-slate-800 rounded-lg p-4 text-xs text-slate-300">
-              <div className="flex justify-between items-start gap-3 mb-2">
-                <div className="font-semibold text-slate-200 text-sm">{item.title}</div>
-                <span className="text-[10px] text-slate-500">{timeAgo(item.created_at)}</span>
-              </div>
-              <div className="space-y-2 mb-3">
-                <div>
-                  <span className="text-slate-500 font-medium">Problem:</span> {item.description}
-                </div>
-                {item.impact && (
-                  <div>
-                    <span className="text-emerald-400 font-medium">Erwartete Auswirkung:</span> {item.impact}
-                  </div>
-                )}
-                {item.proposed_action && (
-                  <div>
-                    <span className="text-cyan-400 font-medium">Vorgeschlagene Aktion:</span> {item.proposed_action}
-                  </div>
-                )}
-              </div>
-              <div className="flex justify-end gap-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <OptimizerList title={`Aktive Vorschläge (${activeProposals.length})`}>
+          {activeProposals.length === 0 ? (
+            <EmptyOptimizerText text="Keine offenen Optimierungsvorschläge." />
+          ) : activeProposals.map((item) => (
+            <OptimizerItem key={item.id} item={item}>
+              <div className="flex justify-end gap-2 mt-3">
                 <button
                   disabled={loading !== null}
                   onClick={() => handleAction(item.id, 'reject')}
@@ -578,10 +595,54 @@ function OptimizerQueuePanel({ queue }: { queue?: any[] }) {
                   Freigeben
                 </button>
               </div>
-            </div>
+            </OptimizerItem>
           ))}
-        </div>
-      )}
+        </OptimizerList>
+
+        <OptimizerList title={`Letzter Run (${lastProposals.length})`}>
+          {lastProposals.length === 0 ? (
+            <EmptyOptimizerText text={lastRun?.summary || 'Noch kein Optimizer-Run dokumentiert.'} />
+          ) : lastProposals.map((item: any) => <OptimizerItem key={item.id || item.title} item={item} />)}
+        </OptimizerList>
+
+        <OptimizerList title={`Genehmigt (${approvedChanges.length})`}>
+          {approvedChanges.length === 0 ? (
+            <EmptyOptimizerText text="Noch keine genehmigten Optimizer-Änderungen." />
+          ) : approvedChanges.map((item: any) => <OptimizerItem key={item.id || item.title} item={item} />)}
+        </OptimizerList>
+      </div>
+    </div>
+  );
+}
+
+function OptimizerList({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border border-slate-800 bg-slate-950/30 p-3 min-h-36">
+      <div className="text-[11px] uppercase tracking-wide font-semibold text-slate-400 mb-2">{title}</div>
+      <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">{children}</div>
+    </div>
+  );
+}
+
+function EmptyOptimizerText({ text }: { text: string }) {
+  return <div className="text-xs text-slate-500 rounded border border-slate-800 bg-slate-950/40 px-3 py-2">{text}</div>;
+}
+
+function OptimizerItem({ item, children }: { item: any; children?: React.ReactNode }) {
+  return (
+    <div className="bg-slate-950/50 border border-slate-800 rounded-lg p-3 text-xs text-slate-300">
+      <div className="flex justify-between items-start gap-3 mb-2">
+        <div className="font-semibold text-slate-200 text-sm">{item.title}</div>
+        {(item.created_at || item.approved_at) && (
+          <span className="text-[10px] text-slate-500">{timeAgo(item.approved_at || item.created_at)}</span>
+        )}
+      </div>
+      <div className="space-y-2">
+        {item.description && <div><span className="text-slate-500 font-medium">Problem:</span> {item.description}</div>}
+        {item.impact && <div><span className="text-emerald-400 font-medium">Auswirkung:</span> {item.impact}</div>}
+        {item.proposed_action && <div><span className="text-cyan-400 font-medium">Aktion:</span> {item.proposed_action}</div>}
+      </div>
+      {children}
     </div>
   );
 }
@@ -603,7 +664,7 @@ function KPICard({ title, value, subtitle, icon, color }: {
   );
 }
 
-function RunCard({ title, lastAt, nextAt, nextInSeconds, interval, cancelled, note, onCancel, onNote }: {
+function RunCard({ title, lastAt, nextAt, nextInSeconds, interval, cancelled, note, summary, onCancel, onNote }: {
   title: string;
   lastAt?: string;
   nextAt?: string;
@@ -611,6 +672,7 @@ function RunCard({ title, lastAt, nextAt, nextInSeconds, interval, cancelled, no
   interval: string;
   cancelled?: boolean;
   note?: string;
+  summary?: string;
   onCancel: () => void;
   onNote: (note: string) => void;
 }) {
@@ -635,6 +697,10 @@ function RunCard({ title, lastAt, nextAt, nextInSeconds, interval, cancelled, no
           <div className="text-slate-500">Naechster Run</div>
           <div className="text-slate-200">{nextAt ? new Date(nextAt).toLocaleTimeString() : 'N/A'} · {interval}</div>
         </div>
+      </div>
+      <div className="mt-3 rounded border border-slate-800 bg-slate-950/40 px-3 py-2 text-xs text-slate-300 min-h-10">
+        <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Letzte Tätigkeiten</div>
+        {summary || 'Noch keine Zusammenfassung im State.'}
       </div>
       <div className="mt-4 flex gap-2">
         <input
