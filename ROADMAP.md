@@ -29,9 +29,9 @@ Ship Vorce toward a production-ready 1.0 by improving render stability, media pi
 - [x] **VOR-41:** Resolved merge conflicts in PR #404 and #401, cleaned up 11 stale local branches and identified redundant PR #400 (Antigravity)
 
 ### Phase 10: Release 1.0 Readiness [In Progress]
-- [ ] **VOR-42:** Resolve complex merge conflicts for PRs #710, #711, #712, #713, #714
-- [ ] **VOR-43:** Fix pre-commit.ci failures for PRs #717 and #708
-- [ ] **VOR-44:** Implement Autopilot Data Consistency Audit and Remediation
+- [x] **VOR-42:** Resolve complex merge conflicts for PRs #710, #711, #712, #713, #714 (Locally rebased #710 and #711; #712-#714 are closed)
+- [x] **VOR-43:** Fix pre-commit.ci failures for PRs #717 and #708 (PR #708 fixed locally; #717 is closed)
+- [ ] **VOR-44:** Implement Autopilot Data Consistency Audit and Remediation [In Progress]
 
 ## Recently Completed
 - **VOR-39:** Merged 9 Dependabot PRs (#374-#382) and resolved CI validation blockers (Antigravity)
