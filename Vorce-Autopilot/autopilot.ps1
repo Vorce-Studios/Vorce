@@ -20,6 +20,8 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 $ScriptDir = $PSScriptRoot
 $script:VarLogDir = Join-Path $ScriptDir "var/log"
 $script:VarDbDir = Join-Path $ScriptDir "var/db"
+$script:AutopilotLiveLogPath = Join-Path $script:VarLogDir "autopilot-live.log"
+$global:VorceAutopilotLiveLogPath = $script:AutopilotLiveLogPath
 
 # Ensure directories exist
 if (-not (Test-Path -Path $script:VarLogDir)) {
@@ -47,7 +49,20 @@ function Write-Host {
     Microsoft.PowerShell.Utility\Write-Host @params
 
     if ($Object) {
-        $liveLogPath = Join-Path $script:VarLogDir "autopilot-live.log"
+        $liveLogPath = $null
+        $globalLiveLogPath = Get-Variable -Name "VorceAutopilotLiveLogPath" -Scope Global -ErrorAction SilentlyContinue
+        if ($null -ne $globalLiveLogPath -and -not [string]::IsNullOrWhiteSpace([string]$globalLiveLogPath.Value)) {
+            $liveLogPath = [string]$globalLiveLogPath.Value
+        } elseif ($null -ne (Get-Variable -Name "AutopilotLiveLogPath" -Scope Script -ErrorAction SilentlyContinue)) {
+            $liveLogPath = [string]$script:AutopilotLiveLogPath
+        } elseif ($null -ne (Get-Variable -Name "VarLogDir" -Scope Script -ErrorAction SilentlyContinue)) {
+            $liveLogPath = Join-Path $script:VarLogDir "autopilot-live.log"
+        }
+
+        if ([string]::IsNullOrWhiteSpace($liveLogPath)) {
+            return
+        }
+
         $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
         try {
             $cleanMsg = $Object.ToString() -replace '\e\[[0-9;]*m', ''

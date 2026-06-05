@@ -27,9 +27,41 @@ $issue = $null
 $expectedPrTitle = $null
 $expectedWorkBranch = $null
 
+function Test-VorceIssueAllowedForJules {
+    param(
+        [Parameter(Mandatory)][object]$Issue
+    )
+
+    $title = if ($null -eq $Issue.title) { "" } else { [string]$Issue.title }
+    $body = if ($null -eq $Issue.body) { "" } else { [string]$Issue.body }
+
+    if (
+        $title -match "_MAIs_" -or
+        $title -match "(?i)Resolve-Merge-Conflicts?|Merge-Konflikt|Merge-Conflict|Konflikt" -or
+        $title -match "(?i)Release-Readiness|Merge-Reihenfolge|Blocker-Matrix|PRs?[-_\s]*\d|PR-\d"
+    ) {
+        return $false
+    }
+
+    if ($body -match "(?i)\bMaster-Issue\b|Tracking-PR|Tracker|buendelt|bündelt|Bündelung|Nachverfolgung|Scope-Freeze") {
+        return $false
+    }
+
+    if ($body.Length -lt 250) {
+        return $false
+    }
+
+    $hasScope = $body -match "(?i)\b(Ziel|Goal|Scope|Beschreibung|Current problem|Acceptance|Acceptance-Evidence|Acceptance criteria|Definition of Done|Akzeptanz)\b"
+    $hasConcreteWork = $body -match "(?i)(crates/|scripts/|docs/|resources/|\.rs\b|\.ps1\b|\.ts\b|\.tsx\b|test|fixture|script|command|implement|fix|refactor|module|UI|CI)"
+    return ($hasScope -and $hasConcreteWork)
+}
+
 if ($IssueNumber -gt 0) {
     $resolvedRepository = Resolve-GitHubRepository -Repository $Repository
     $issue = Get-GitHubIssue -Repository $resolvedRepository -IssueNumber $IssueNumber
+    if (-not (Test-VorceIssueAllowedForJules -Issue $issue)) {
+        throw "Jules-Session blockiert: Issue #$IssueNumber ist ein Master-/Tracker-/Merge-Konflikt-Issue oder kein konkreter Codeauftrag. Konflikte muessen mit lokalen CLI-Tools geloest werden; fuer Tracker zuerst ein konkretes Sub-Issue erstellen."
+    }
     $expectedPrTitle = Get-JulesPreferredPrTitle -IssueTitle ([string]$issue.title)
     $expectedWorkBranch = Get-JulesPreferredWorkBranch -IssueTitle ([string]$issue.title)
     $Prompt = Convert-IssueToJulesPrompt -Issue $issue -Repository $resolvedRepository -AdditionalPrompt $Prompt -AutoCreatePr:$AutoCreatePr.IsPresent

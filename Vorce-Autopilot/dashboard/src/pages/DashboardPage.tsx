@@ -185,15 +185,22 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   const totalCostToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.estimated_cost_usd || 0), 0);
   const totalCallsToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.calls || 0), 0);
 
-  // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
-  // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
-  const activeJulesSessions = julesSessions ? julesSessions.filter(s =>
-      s.repo.includes('Vorce') &&
-      s.state !== 'COMPLETED' &&
-      s.state !== 'QUEUED' &&
-      s.state !== 'Done' &&
-      s.state !== 'Planed'
+  const julesUsage = providers.jules?.usage_today || {};
+  const runningJulesSessions = julesSessions ? julesSessions.filter(s =>
+      String(s.repo || '') === 'Vorce-Studios/Vorce' &&
+      ['IN_PROGRESS', 'PLANNING', 'QUEUED', 'AWAITING_PLAN_APPROVAL'].includes(String(s.state || ''))
   ).length : 0;
+  const waitingJulesSessions = julesSessions ? julesSessions.filter(s =>
+      String(s.repo || '') === 'Vorce-Studios/Vorce' &&
+      ['AWAITING_USER_FEEDBACK', 'PAUSED'].includes(String(s.state || ''))
+    ).length : Number(julesUsage.scoped_live_waiting_sessions ?? julesUsage.pending_sessions ?? 0);
+  const activeJulesSessions = waitingJulesSessions || Number(
+    julesUsage.scoped_live_waiting_sessions ??
+    julesUsage.pending_sessions ??
+    julesUsage.scoped_live_capacity_sessions ??
+    julesUsage.active_sessions ??
+    runningJulesSessions
+  );
 
   // Filter PRs that are OPEN and NOT a Draft and belong to Vorce repo
   const openPRs = pullRequests.filter(pr => pr.repo?.includes('Vorce') && pr.state === 'OPEN' && pr.isDraft !== true).length;
@@ -400,7 +407,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
         <KPICard
           title="Jules Sessions"
           value={String(activeJulesSessions)}
-          subtitle="in progress (Vorce)"
+          subtitle={`${runningJulesSessions} laufen, ${waitingJulesSessions} warten`}
           icon={<Activity className="w-5 h-5" />}
           color="from-purple-500 to-violet-500"
         />
@@ -725,13 +732,21 @@ function WorkingSessionsPanel({ sessions }: { sessions: any[] }) {
         <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
           {recent.map((item, idx) => {
             const status = String(item.status || 'UNKNOWN').toUpperCase();
+            const detail = String(item.error || item.failure_reason || item.details || '').trim();
             return (
-              <div key={item.id || idx} className="grid grid-cols-[5rem_1fr_8rem] gap-2 rounded border border-slate-800 bg-slate-950/45 px-3 py-2 text-xs text-slate-300 items-center">
-                <span className="font-mono text-slate-500">#{item.issue_number || '-'}</span>
-                <span className="truncate" title={item.issue_title || item.prompt_hint || ''}>{item.issue_title || item.prompt_hint || 'Working Session'}</span>
-                <div className="text-right">
-                  <JulesStateBadge state={status} />
+              <div key={item.id || idx} className="rounded border border-slate-800 bg-slate-950/45 px-3 py-2 text-xs text-slate-300">
+                <div className="grid grid-cols-[5rem_1fr_8rem] gap-2 items-center">
+                  <span className="font-mono text-slate-500">#{item.issue_number || '-'}</span>
+                  <span className="truncate" title={item.issue_title || item.prompt_hint || ''}>{item.issue_title || item.prompt_hint || 'Working Session'}</span>
+                  <div className="text-right">
+                    <JulesStateBadge state={status} />
+                  </div>
                 </div>
+                {detail && (
+                  <div className="mt-1 pl-[5rem] text-[11px] text-rose-300/90 truncate" title={detail}>
+                    {detail}
+                  </div>
+                )}
               </div>
             );
           })}
