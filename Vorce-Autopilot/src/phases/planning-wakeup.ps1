@@ -95,7 +95,7 @@ function Invoke-PlanningWakeUp {
             $title = [string]$_.title
             $body = [string]$_.body
             $isMasterIssue = $title -match "_MAIs_"
-            
+
             $issueNum = [int]$_.number
             $isEscalatedRetry = $false
             if ($null -ne $State.escalated_issues) {
@@ -654,7 +654,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
         try {
             $memStore = Read-MemoryStore
             $memoriesJson = $memStore | ConvertTo-Json -Depth 5
-            
+
             $journalPath = Get-AutopilotTaskJournalPath
             $journalContent = if (Test-Path $journalPath) { Get-Content $journalPath -Raw -Encoding UTF8 } else { "" }
 
@@ -668,7 +668,7 @@ $memoriesJson
 Hier ist das aktuelle Task-Journal des Autopiloten:
 $journalContent
 
-Bitte analysiere diese Daten gründlich. 
+Bitte analysiere diese Daten gründlich.
 Entscheide:
 1. Welche bestehenden Erinnerungen sind veraltet, redundant oder nicht mehr hilfreich und sollten entfernt werden? (Aktion: "remove")
 2. Welche wichtigen neuen Erkenntnisse, Richtlinien oder kritischen System-Zustände aus dem Task-Journal oder den letzten Entwicklungen sollten als neue Erinnerung hinzugefügt werden? (Aktion: "add")
@@ -751,7 +751,7 @@ Wenn keine Änderungen notwendig sind, antworte mit einem leeren Array: []
                     $latestLogLines = Get-Content $logFilePath -Tail 150 -ErrorAction SilentlyContinue | Out-String
                 } catch {}
             }
-            
+
             $stateJson = $State | ConvertTo-Json -Depth 5
             $quotaJson = $QuotaRegistry | ConvertTo-Json -Depth 5
 
@@ -808,7 +808,7 @@ Wenn keine Optimierungen nötig oder sinnvoll sind, antworte mit einem leeren Ar
                     if (-not ($State.PSObject.Properties.Name -contains "optimizer_queue") -or $null -eq $State.optimizer_queue) {
                         $State | Add-Member -MemberType NoteProperty -Name "optimizer_queue" -Value @() -Force
                     }
-                    
+
                     foreach ($p in $proposals) {
                         if ($p.title -and $p.description) {
                             $id = "opt-$(Get-Date -Format 'yyyyMMddHHmmss')-$([guid]::NewGuid().ToString('N').Substring(0, 4))"
@@ -824,7 +824,7 @@ Wenn keine Optimierungen nötig oder sinnvoll sind, antworte mit einem leeren Ar
                             Write-Host "[OPTIMIZER] Neuer Optimierungsvorschlag hinzugefügt: $($p.title)" -ForegroundColor Green
                         }
                     }
-                    
+
                     $State.last_optimizer_analysis_at = (Get-Date -Format 'o')
                     Save-AutopilotState -State $State
                 } else {

@@ -148,7 +148,7 @@ function Format-MemoryBlock {
 
         $taskParts = @($TaskType -split '[_-]')
         $taskKeywords = if ($keywordMap.ContainsKey($TaskType)) { @($keywordMap[$TaskType]) } else { @() }
-        
+
         foreach ($m in $allMemories) {
             # Skip low priority memories to save tokens
             if ($m.priority -eq "low") {

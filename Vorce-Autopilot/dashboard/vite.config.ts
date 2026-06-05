@@ -66,7 +66,7 @@ export default defineConfig({
               if (fs.existsSync(configPath)) {
                 const configContent = fs.readFileSync(configPath, 'utf-8');
                 const config = JSON.parse(configContent);
-                
+
                 // Dynamically load prompts from files
                 config.prompts = config.prompts || {};
                 const promptsDir = path.resolve(__dirname, '../prompts');
@@ -84,7 +84,7 @@ export default defineConfig({
                     }
                   }
                 }
-                
+
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify(config, null, 2));
               } else {
@@ -202,7 +202,7 @@ export default defineConfig({
             req.on('end', () => {
               try {
                 const config = JSON.parse(body);
-                
+
                 // Write modified prompts back to their respective markdown files
                 if (config.prompts) {
                   const promptsDir = path.resolve(__dirname, '../prompts');
@@ -214,7 +214,7 @@ export default defineConfig({
                     }
                     return null;
                   };
-                  
+
                   for (const key of Object.keys(config.prompts)) {
                     const promptFile = findPromptFile(key);
                     if (promptFile) {
@@ -226,7 +226,7 @@ export default defineConfig({
                     delete config.prompts;
                   }
                 }
-                
+
                 const configPath = path.resolve(__dirname, '../config/autopilot-config.json');
                 const publicConfigPath = path.resolve(__dirname, './public/autopilot-config.json');
                 writeJsonFile(configPath, config);
@@ -389,7 +389,7 @@ export default defineConfig({
                     const cleanTitle = item.title.replace(/[^a-zA-Z0-9\s_-]/g, '').trim().replace(/\s+/g, '-');
                     const title = `__MF-SubI_Optimizer-${cleanTitle}`;
                     const issueBody = `Vorgeschlagene Optimierung aus der Optimizer-Session:\n\n**Beschreibung:**\n${item.description}\n\n**Auswirkung:**\n${item.impact}\n\n**Vorgeschlagene Aktion:**\n${item.proposed_action}`;
-                    
+
                     try {
                       const repo = getRepository();
                       // Ensure labels exist before creating issue to prevent failures
@@ -399,7 +399,7 @@ export default defineConfig({
 
                       const command = `gh issue create --repo "${repo}" --title "${title.replace(/"/g, '\\"')}" --body "${issueBody.replace(/"/g, '\\"')}" --label "priority: high" --label "bug" --label "agent:gemini_cli"`;
                       const issueUrl = execSync(command, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-                      
+
                       const match = issueUrl.match(/\/issues\/(\d+)/);
                       if (match) {
                         const issueNum = parseInt(match[1]);
@@ -417,7 +417,7 @@ export default defineConfig({
                     } catch (e) {
                       throw new Error(`Fehler beim Erstellen des GitHub Issues: ${(e as any).message}`);
                     }
-                    
+
                     // Remove from optimizer queue
                     state.optimizer_queue = state.optimizer_queue.filter((i: any) => i.id !== payload.id);
                   }
