@@ -139,8 +139,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_status_failed() {
-        let mut live = super::super::handlers::LiveStatus::default();
-        live.cluster_health = "Failed".to_string();
+        let live = super::super::handlers::LiveStatus {
+            cluster_health: "Failed".to_string(),
+            ..Default::default()
+        };
         let state = AppState {
             auth: Arc::new(RwLock::new(super::super::auth::AuthConfig::new())),
             live_status: Arc::new(parking_lot::RwLock::new(live)),
