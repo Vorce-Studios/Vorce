@@ -189,12 +189,12 @@ function Invoke-PlanningWakeUp {
             $issueTitle = [string]$escIssue.issue_title
             $lastSessionId = [string]$escIssue.last_jules_session_id
 
-            Write-Host "[PLANNING] Re-Planning fuer eskaliertes Issue #$issueNum ($issueTitle) via CEO + QA-Auditor Deliberation..." -ForegroundColor Yellow
+            Write-Host "[PLANNING] Re-Planning fuer eskaliertes Issue #$issueNum ($issueTitle) via CEO + QA Manager Deliberation..." -ForegroundColor Yellow
 
             $promptText = @"
 Das Issue #$issueNum ("$issueTitle") wurde an Jules delegiert (letzte Session: $lastSessionId), ist aber im Monitoring-Modus fehlgeschlagen oder hängengeblieben (Timeout/Fehler).
 
-Deine Rolle: Analysiere diese Eskalation im CEO + QA-Auditor Team.
+Deine Rolle: Analysiere diese Eskalation im CEO + QA Manager Team.
 Erstelle eine neue, präzisere Handlungsanweisung (Prompt-Ergänzung oder überarbeitete Issue-Beschreibung), um Jules beim nächsten Versuch erfolgreich zu leiten.
 Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
 "@
@@ -737,6 +737,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 
             $promptText = @"
 Du bist der CEO-Orchestrator für das Vorce-Autopilot Projekt.
+Beschraenke dich auf Fakten, betroffene IDs, konkrete Entscheidungen und notwendige Aktionen.
 Deine Aufgabe ist es, das Memory-System des Autopiloten zu pflegen, um die Effizienz zu steigern, Redundanzen abzubauen und den Tokenverbrauch zu senken.
 
 Hier ist der aktuelle Inhalt des Memory-Systems (Erinnerungen):
@@ -838,6 +839,7 @@ Wenn keine Änderungen notwendig sind, antworte mit einem leeren Array: []
 
             $promptText = @"
 Du bist der Vorce-Autopilot Optimizer-Agent.
+Beschraenke dich auf Fakten, betroffene IDs, konkrete Risiken und notwendige Aktionen.
 Deine Aufgabe ist es, die internen Abläufe, System-Prompts, Tokenverbrauch, Workflows, Session-Splitting und Auslastung des Autopiloten zu analysieren und konkrete Optimierungsvorschläge zu erarbeiten.
 
 Hier ist der aktuelle Status des Autopiloten (State):

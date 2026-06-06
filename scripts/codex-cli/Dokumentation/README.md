@@ -2,7 +2,7 @@
 
 Der Vorce Autopilot ist eine intelligente Orchestrierungsschicht zur Automatisierung von Entwicklungs- und Wartungsaufgaben im Vorce-Projekt (einem Rewrite einer C++/Qt-Projection-Mapping-Software in Rust).
 
-Das System nutzt zwei kooperierende KI-Agenten (Dual-CEO: Codex Orchestrator und Gemini CLI), führt regelmäßige Planungs- und Überwachungszyklen durch, verwaltet API-Budgets und verfügt über ein selektives Gedächtnis (Memory-System).
+Das System nutzt zwei kooperierende KI-Agenten (CEO + QA Manager: Codex Orchestrator und Gemini CLI), führt regelmäßige Planungs- und Überwachungszyklen durch, verwaltet API-Budgets und verfügt über ein selektives Gedächtnis (Memory-System).
 
 ---
 
@@ -14,14 +14,14 @@ graph TD
     A -->|Alle M Min.| C(Monitoring Wakeup)
 
     B --> D[Hole offene GitHub Issues]
-    D --> E{Entscheidung: Dual-CEO?}
+    D --> E{Entscheidung: CEO + QA Manager?}
 
-    E -->|Ja| F[Dual-CEO Deliberation]
+    E -->|Ja| F[CEO + QA Manager Deliberation]
     E -->|Nein| G[Single-Agent CLI Task]
 
-    F --> H[CEO Alpha: Entwurf]
-    H --> I[CEO Beta: Kritik/Alternativen]
-    I --> J[CEO Alpha: Synthese & Entscheidung]
+    F --> H[CEO: Entwurf]
+    H --> I[QA Manager: Kritik/Alternativen]
+    I --> J[CEO: Synthese & Entscheidung]
 
     J --> K[Jules Session ODER CLI Agent starten]
     G --> K
@@ -62,7 +62,7 @@ scripts/codex-cli/
 │   ├── autopilot-session-manager.ps1 # Steuert das Starten sichtbarer Codex-Terminals
 │   ├── cli-router.ps1            # Routet Tasks zu LLMs (Fallback-Ketten)
 │   ├── database-manager.ps1      # Verwaltet Quota-Datenbankschreibvorgänge
-│   ├── deliberation-engine.ps1   # Dual-CEO Abstimmungsprozess mit sichtbaren Terminals
+│   ├── deliberation-engine.ps1   # CEO + QA Manager Abstimmungsprozess mit sichtbaren Terminals
 │   ├── memory-store.ps1          # Filtert & verwaltet System-Erinnerungen
 │   ├── quota-manager.ps1         # Budget- & Limit-Überwachung
 │   ├── state-manager.ps1         # Zustand-Serialisierung & Session-Bereinigung
@@ -80,20 +80,20 @@ scripts/codex-cli/
 
 ## Kernkomponenten
 
-### 1. Dual-CEO Deliberation (Mit sichtbaren Terminals)
+### 1. CEO + QA Manager Deliberation (Mit sichtbaren Terminals)
 
-Um die bestmöglichen Entscheidungen zu treffen und blinde Flecken zu vermeiden, kann der Autopilot wichtige Aufgaben im Dual-CEO-Verfahren lösen:
+Um die bestmöglichen Entscheidungen zu treffen und blinde Flecken zu vermeiden, kann der Autopilot wichtige Aufgaben im CEO + QA Manager-Verfahren lösen:
 
-* **CEO Alpha (z.B. Codex)** erstellt einen detaillierten Vorschlag inklusive Risikoanalyse.
-* **CEO Beta (z.B. Gemini CLI)** prüft diesen Entwurf kritisch, zeigt Schwachstellen auf und schlägt Alternativen vor.
-* **CEO Alpha** synthetisiert das Feedback zu einer finalen, optimierten Lösung.
+* **CEO (z.B. Codex)** erstellt einen detaillierten Vorschlag inklusive Risikoanalyse.
+* **QA Manager (z.B. Gemini CLI)** prüft diesen Entwurf kritisch, zeigt Schwachstellen auf und schlägt Alternativen vor.
+* **CEO** synthetisiert das Feedback zu einer finalen, optimierten Lösung.
 
 **Sichtbare Ausführung (Visible Terminals)**:
 Jede der drei Phasen wird in einem **separaten, sichtbaren Terminalfenster** gestartet, damit der Benutzer die Abstimmungen und Ausführungen der CEOs live mitverfolgen und bei Bedarf interagieren kann:
 
-* **Phase 1 (Proposal - CEO Alpha)**: Startet ein sichtbares Terminal-Fenster unter dem Namen `"Vorce CEO: CEO Alpha: Proposal"` über den `run-visible-codex-session.ps1`-Wrapper (falls Codex) oder über `run-visible-ceo-phase.ps1` (für andere Provider).
-* **Phase 2 (Critique - CEO Beta)**: Startet ein sichtbares Terminal-Fenster unter dem Namen `"Vorce CEO: CEO Beta: Critique"` über `run-visible-ceo-phase.ps1`.
-* **Phase 3 (Synthesis - CEO Alpha)**: Startet wieder ein sichtbares Terminal-Fenster unter dem Namen `"Vorce CEO: CEO Alpha: Synthesis"`.
+* **Phase 1 (Proposal - CEO)**: Startet ein sichtbares Terminal-Fenster unter dem Namen `"Vorce CEO: CEO: Proposal"` über den `run-visible-codex-session.ps1`-Wrapper (falls Codex) oder über `run-visible-ceo-phase.ps1` (für andere Provider).
+* **Phase 2 (Critique - QA Manager)**: Startet ein sichtbares Terminal-Fenster unter dem Namen `"Vorce CEO: QA Manager: Critique"` über `run-visible-ceo-phase.ps1`.
+* **Phase 3 (Synthesis - CEO)**: Startet wieder ein sichtbares Terminal-Fenster unter dem Namen `"Vorce CEO: CEO: Synthesis"`.
 
 Der Aufruf wartet jeweils auf das Beenden der Phase, liest die JSON-Ergebnisse der vorherigen Phase ein, stellt sie als Kontext zur Verfügung und speichert die finalen Ergebnisse ab. Bei Fehlern in einer Phase wird das Terminalfenster geöffnet gehalten (`Read-Host`), damit der Fehler abgelesen werden kann. Bei Erfolg schließt sich das Fenster nach 5 Sekunden automatisch. Dies minimiert Fehlentscheidungen und dient gleichzeitig als Fallback, falls die Quoten eines Anbieters erschöpft sind.
 
@@ -115,7 +115,7 @@ Erreicht ein Provider sein Tageslimit oder sein Budgetlimit in USD, weicht der R
 
 Um Hänger und API-Timeouts zuverlässig zu überstehen, implementiert das System ein mehrstufiges Eskalationsmanagement:
 
-* **CEO Fallback:** Fällt der Alpha CEO (z.B. Codex) während der Proposal-Phase aus (Quota erreicht, API-Fehler), fängt das System den Fehler ab und beauftragt nahtlos den Beta CEO (z.B. Gemini) mit der Aufgabe. Auch der Fallback öffnet sich in einem sichtbaren Terminal.
+* **CEO Fallback:** Fällt der CEO (z.B. Codex) während der Proposal-Phase aus (Quota erreicht, API-Fehler), fängt das System den Fehler ab und beauftragt nahtlos den QA Manager (z.B. Gemini) mit der Aufgabe. Auch der Fallback öffnet sich in einem sichtbaren Terminal.
 * **Tiered Escalation (3 Stufen):**
   1. **Auto-Retry (Stufe 1):** Schlägt eine an Jules oder einen CLI-Agent delegierte Aufgabe fehl, wird sie zunächst stumm für einen erneuten Versuch in die Warteschlange gestellt (`QUEUED_FOR_RETRY`).
   2. **CEO Re-Planning (Stufe 2):** Erreicht ein Issue den 3. Fehlversuch, wird es an das CEO-Team eskaliert (`NEEDS_PLANNING`). Der CEO analysiert beim nächsten Wake-Up den Fehler und entwickelt einen neuen Lösungsansatz.
@@ -135,7 +135,7 @@ Diese lokalen Agents werden über den Wrapper `run-visible-agent-task.ps1` in se
 
 ### `autopilot-config.json`
 
-Steuert das Verhalten des Autopiloten, die Zyklen und die Dual-CEO-Einstellungen.
+Steuert das Verhalten des Autopiloten, die Zyklen und die CEO + QA Manager-Einstellungen.
 
 ```json
 {
@@ -264,9 +264,9 @@ Das Dashboard öffnet sich standardmäßig unter [http://localhost:5173](http://
 2. **Jules Sessions**: Liste aller aktiven Delegationen mit Live-Status und Fehlversuchen.
 3. **Manager Reporting Tool**: Eine hochentwendete Analyse-Seite für Manager:
    * **Themenanalyse**: Verfolgung des Fortschritts von Bugs, Features und Jules-Delegationen basierend auf GitHub-Labels.
-   * **Produktivitäts-Metriken**: Durchschnittliche Lösungszeiten geschlossener Issues und Consensus-Raten des Dual-CEO-Systems.
+   * **Produktivitäts-Metriken**: Durchschnittliche Lösungszeiten geschlossener Issues und Consensus-Raten des CEO + QA Manager-Systems.
    * **Kosten & Quoten**: Echtzeit-Verbrauchsanalyse aller Provider im Vergleich zum Tageslimit/Tagesbudget.
    * **CEO Chat & Deliberation Log**: Einsehen der genauen Abstimmungsprotokolle der kooperierenden CEOs.
 4. **System-Settings**: Komfortable Oberfläche zum Ändern aller Intervalle, Filter und API-Schwellenwerte.
 5. **Memory-System Panel**: CRUD-Interface zum Hinzufügen, Filtern und Löschen von permanenten und temporären System-Erinnerungen.
-6. **Dual-CEO Toggle**: Manueller Switch zur Aktivierung/Deaktivierung des Dual-CEO-Modus bei wichtigen Tasks.
+6. **CEO + QA Manager Toggle**: Manueller Switch zur Aktivierung/Deaktivierung des CEO + QA Manager-Modus bei wichtigen Tasks.

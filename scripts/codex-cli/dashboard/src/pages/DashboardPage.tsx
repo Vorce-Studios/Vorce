@@ -60,8 +60,8 @@ function normalizeAuditText(value?: string): string {
   const oldCeoLabel = ['Alpha', 'CEO'].join(' ');
   const oldCeoLabelAlt = ['CEO', 'Alpha'].join(' ');
   return value
-    .replace(new RegExp(oldQaLabel, 'gi'), 'QA-Auditor')
-    .replace(new RegExp(oldQaLabelAlt, 'gi'), 'QA-Auditor')
+    .replace(new RegExp(oldQaLabel, 'gi'), 'QA Manager')
+    .replace(new RegExp(oldQaLabelAlt, 'gi'), 'QA Manager')
     .replace(new RegExp(oldCeoLabel, 'gi'), 'CEO')
     .replace(new RegExp(oldCeoLabelAlt, 'gi'), 'CEO')
     .replace(/beta_/gi, 'qa_');
@@ -77,14 +77,14 @@ function auditOwnerLabel(owner?: string): string {
   const value = (owner || '').toLowerCase();
   if (value === 'user') return 'Du';
   if (value.includes('alpha') || value === 'ceo') return 'CEO';
-  return 'QA-Auditor';
+  return 'QA Manager';
 }
 
 function auditStageLabel(alert: any): string {
   const owner = auditOwnerLabel(alert.owner);
   if (owner === 'Du' || alert.escalation_level === 'user') return 'Wartet auf deine Entscheidung';
   if (owner === 'CEO') return 'CEO-Sondersession';
-  return 'QA-Auditor repariert';
+  return 'QA Manager repariert';
 }
 
 async function updateAuditAlert(action: string, id: string, response?: string) {
@@ -296,7 +296,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
               <div key={id} className="bg-slate-950/50 border border-rose-500/20 rounded-lg p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                   <div>
-                    <div className="font-semibold text-rose-200">{normalizeAuditText(alert.topic || 'QA-Auditor Alert')}</div>
+                    <div className="font-semibold text-rose-200">{normalizeAuditText(alert.topic || 'QA Manager Alert')}</div>
                     <div className="text-xs text-rose-300/70 mt-0.5">
                       Zuständig: {owner} · {auditStageLabel(alert)} · {timeAgo(alert.created_at)}
                     </div>
@@ -311,7 +311,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 mb-3">
-                  {['QA-Auditor', 'CEO', 'Du'].map((label, stepIdx) => (
+                  {['QA Manager', 'CEO', 'Du'].map((label, stepIdx) => (
                     <div key={label} className={`h-1.5 rounded-full ${stepIdx <= activeStep ? 'bg-rose-400' : 'bg-slate-800'}`} title={label} />
                   ))}
                 </div>
@@ -322,7 +322,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
                     <div className="text-slate-200 whitespace-pre-wrap">{shortText(alert.context)}</div>
                   </div>
                   <div className="rounded-md bg-slate-900/70 border border-slate-800 p-3">
-                    <div className="uppercase text-amber-300/70 text-[10px] mb-1">QA-Auditor Versuch</div>
+                    <div className="uppercase text-amber-300/70 text-[10px] mb-1">QA Manager Versuch</div>
                     <div className="text-slate-300 whitespace-pre-wrap">
                       {shortText(alert.remediation_command || alert.remediation_result || 'Noch kein dokumentierter Reparaturversuch.')}
                     </div>
@@ -483,7 +483,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
         </div>
       </div>
 
-      {/* Dual-CEO Deliberation Panel */}
+      {/* CEO + QA Manager Deliberation Panel */}
       <DeliberationPanel deliberations={sessions.deliberation_log || []} />
 
     </div>

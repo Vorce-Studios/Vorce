@@ -190,7 +190,7 @@ export interface WorkingSessionsConfig {
   queue_non_jules_agent_issues: boolean;
 }
 
-// ── CEO + QA-Auditor Types ──
+// ── CEO + QA Manager Types ──
 export interface DualCeoConfig {
   enabled: boolean;
   ceo_alpha_chain: string[];

@@ -147,6 +147,169 @@ function Add-DecisionPending {
     }
 }
 
+function Get-ReviewOutputText {
+    param([AllowNull()][string]$RawOutput)
+
+    if ([string]::IsNullOrWhiteSpace($RawOutput)) { return "" }
+    try {
+        $json = $RawOutput | ConvertFrom-Json -ErrorAction Stop
+        foreach ($field in @("result", "response", "output", "message", "text")) {
+            if ((Test-ObjectProperty -Object $json -Name $field) -and -not [string]::IsNullOrWhiteSpace([string]$json.$field)) {
+                return [string]$json.$field
+            }
+        }
+    } catch {}
+    return [string]$RawOutput
+}
+
+function ConvertTo-PrReviewDecision {
+    param([AllowNull()][string]$RawOutput)
+
+    $text = Get-ReviewOutputText -RawOutput $RawOutput
+    $decision = "REQUEST_CHANGES"
+    $summary = $text.Trim()
+    $findings = @()
+
+    try {
+        $jsonText = $text
+        $match = [regex]::Match($text, '(?s)\{.*\}')
+        if ($match.Success) { $jsonText = $match.Value }
+        $parsed = $jsonText | ConvertFrom-Json -ErrorAction Stop
+        if ((Test-ObjectProperty -Object $parsed -Name "decision") -and [string]$parsed.decision -match "APPROVE|PASS") {
+            $decision = "APPROVE"
+        }
+        if ((Test-ObjectProperty -Object $parsed -Name "summary") -and -not [string]::IsNullOrWhiteSpace([string]$parsed.summary)) {
+            $summary = [string]$parsed.summary
+        }
+        if (Test-ObjectProperty -Object $parsed -Name "findings") {
+            $findings = @($parsed.findings)
+        }
+    } catch {
+        if ($text -match "(?i)\b(APPROVE|PASS|LGTM)\b" -and $text -notmatch "(?i)\b(REQUEST_CHANGES|REJECT|BLOCK|FAIL)\b") {
+            $decision = "APPROVE"
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($summary)) {
+        $summary = if ($decision -eq "APPROVE") { "Claude Code Review: keine blockierenden Probleme gefunden." } else { "Claude Code Review: keine auswertbare Freigabe erhalten." }
+    }
+    if ($summary.Length -gt 1800) { $summary = $summary.Substring(0, 1800) + "..." }
+
+    return [pscustomobject]@{
+        decision = $decision
+        summary  = $summary
+        findings = $findings
+    }
+}
+
+function Get-CeoPrReviewType {
+    param(
+        [Parameter(Mandatory)][object]$QuotaRegistry,
+        [Parameter(Mandatory)][object]$Config,
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][object]$PullRequest,
+        [switch]$DryRun
+    )
+
+    if ($DryRun.IsPresent) { return "simple_review" }
+    $prNum = [int]$PullRequest.number
+    $checkCount = @($PullRequest.statusCheckRollup).Count
+    $prompt = @"
+Entscheide fuer PR #$prNum, ob Claude Code ein einfaches Review oder ein ausfuehrliches Review machen soll.
+Antworte nur als JSON: {"review_type":"simple_review|complex_review","reason":"kurzer Fakt"}
+
+Kriterien:
+- complex_review: Merge-Konflikte, CI-Fehler, Architektur-/Rust-Core-Aenderungen, viele Dateien, Sicherheits-/Build-Risiko.
+- simple_review: kleine isolierte Docs/Scripts/UI-Korrektur ohne CI-Risiko.
+
+PR: $($PullRequest.title)
+Mergeable: $($PullRequest.mergeable)
+Checks: $checkCount
+"@
+
+    try {
+        $result = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "qa_disposition" -Prompt $prompt -State $State -DryRun:$DryRun
+        if ($result.success) {
+            $text = Get-ReviewOutputText -RawOutput ([string]$result.output)
+            $match = [regex]::Match($text, '(?s)\{.*\}')
+            $jsonText = if ($match.Success) { $match.Value } else { $text }
+            $parsed = $jsonText | ConvertFrom-Json -ErrorAction Stop
+            if ((Test-ObjectProperty -Object $parsed -Name "review_type") -and [string]$parsed.review_type -in @("simple_review", "complex_review")) {
+                return [string]$parsed.review_type
+            }
+        }
+    } catch {
+        Write-Warning "[MONITOR] CEO Review-Typ fuer PR #$prNum nicht auswertbar: $_"
+    }
+
+    if ([string]$PullRequest.mergeable -eq "CONFLICTING" -or $checkCount -gt 4) { return "complex_review" }
+    return "simple_review"
+}
+
+function Invoke-ClaudePrReviewSession {
+    param(
+        [Parameter(Mandatory)][object]$QuotaRegistry,
+        [Parameter(Mandatory)][string]$Repository,
+        [Parameter(Mandatory)][object]$ReviewItem,
+        [Parameter(Mandatory)][string]$ReviewType,
+        [switch]$DryRun
+    )
+
+    $depthText = if ($ReviewType -eq "complex_review") { "ausfuehrliches Review mit Fokus auf Regressionen, Architektur, Rust-Sicherheit, Tests und CI" } else { "einfaches Review mit Fokus auf offensichtliche Fehler, Build-Risiko und Akzeptanzkriterien" }
+    $prompt = @"
+Du bist Claude Code und fuehrst ein PR-Review fuer Vorce aus.
+Beschraenke dich auf Fakten, betroffene Dateien/Zeilen, konkrete Risiken und klare Entscheidung. Kein Smalltalk.
+
+Repository: $Repository
+PR: #$($ReviewItem.pr_number)
+Issue: #$($ReviewItem.issue_number)
+Review-Typ: $ReviewType ($depthText)
+
+Arbeite selbststaendig mit gh/git, aber veraendere keine Dateien.
+Pruefe Diff, CI-Status, offensichtliche Tests und Akzeptanzrisiken.
+
+Antworte ausschliesslich als JSON:
+{
+  "decision": "APPROVE|REQUEST_CHANGES",
+  "summary": "kurze deutsche Zusammenfassung",
+  "findings": [
+    {"severity":"blocker|major|minor", "file":"pfad oder leer", "line":0, "message":"konkreter Befund"}
+  ]
+}
+"@
+
+    return Invoke-CliTask `
+        -QuotaRegistry $QuotaRegistry `
+        -TaskType $ReviewType `
+        -Prompt $prompt `
+        -WorkingDirectory (Resolve-Path (Join-Path $PSScriptRoot "../../..")) `
+        -ProviderOverride "claude_code" `
+        -ModelTierOverride "balanced" `
+        -DryRun:$DryRun
+}
+
+function Set-GitHubPrReviewDecision {
+    param(
+        [Parameter(Mandatory)][string]$Repository,
+        [Parameter(Mandatory)][int]$PullRequestNumber,
+        [Parameter(Mandatory)][string]$Decision,
+        [Parameter(Mandatory)][string]$Body,
+        [switch]$DryRun
+    )
+
+    if ($DryRun.IsPresent) { return }
+    $safeBody = if ([string]::IsNullOrWhiteSpace($Body)) { "Claude Code Review abgeschlossen." } else { $Body }
+    if ($Decision -eq "APPROVE") {
+        gh pr review $PullRequestNumber --repo $Repository --approve --body $safeBody 2>&1 | Out-Null
+        try { gh label create "status: ready-to-merge" --repo $Repository --color "2EA043" --description "Claude Code Review approved by Autopilot" 2>&1 | Out-Null } catch {}
+        gh pr edit $PullRequestNumber --repo $Repository --add-label "status: ready-to-merge" 2>&1 | Out-Null
+    } else {
+        gh pr review $PullRequestNumber --repo $Repository --request-changes --body $safeBody 2>&1 | Out-Null
+        try { gh label create "status: needs-review" --repo $Repository --color "D29922" --description "Claude Code Review requested changes" 2>&1 | Out-Null } catch {}
+        gh pr edit $PullRequestNumber --repo $Repository --add-label "status: needs-review" 2>&1 | Out-Null
+    }
+}
+
 function Get-MonitoringLabelNames {
     param([AllowNull()][object]$Issue)
 

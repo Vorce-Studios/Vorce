@@ -23,7 +23,7 @@ Erstellung eines neuen Verzeichnisses `scripts/codex-cli/prompts/` mit folgenden
 - `prompts/monitoring_synthesis.md` (Status evaluation)
 - `prompts/audit_consistency.md` (Data audit)
 - `prompts/audit_performance.md` (Performance checklist)
-- `prompts/audit_synthesis.md` (CEO Beta decision JSON format)
+- `prompts/audit_synthesis.md` (QA Manager decision JSON format)
 
 ### Implementierung im Code
 

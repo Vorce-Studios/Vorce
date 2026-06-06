@@ -1,5 +1,5 @@
 # scripts/codex-cli/lib/deliberation-engine.ps1
-# Dual-CEO Deliberation Engine
+# CEO + QA Manager Deliberation Engine
 # Orchestrates structured dialogue between two AI agents (Alpha + Beta)
 # for higher-quality decisions on critical tasks.
 
@@ -20,7 +20,7 @@ function Resolve-DualCeos {
 
     $dualCfg = $Config.dual_ceo
 
-    # --- Resolve CEO Alpha ---
+    # --- Resolve CEO ---
     $alpha = $null
     foreach ($route in $dualCfg.ceo_alpha_chain) {
         $parts = $route -split ":"
@@ -36,14 +36,14 @@ function Resolve-DualCeos {
                 provider   = $provName
                 model_tier = $modelTier
                 command    = $cmdName
-                label      = "CEO Alpha"
+                label      = "CEO"
             }
             break
         }
         Write-Host "[DELIB] Alpha-Kandidat '$provName' nicht verfuegbar, naechster..." -ForegroundColor DarkGray
     }
 
-    # --- Resolve CEO Beta ---
+    # --- Resolve QA Manager ---
     $beta = $null
     foreach ($route in $dualCfg.ceo_beta_chain) {
         $parts = $route -split ":"
@@ -63,7 +63,7 @@ function Resolve-DualCeos {
                 provider   = $provName
                 model_tier = $modelTier
                 command    = $cmdName
-                label      = "CEO Beta"
+                label      = "QA Manager"
             }
             break
         }
@@ -100,7 +100,7 @@ function Format-DeliberationPrompt {
     switch ($Phase) {
         "proposal" {
             return @"
-Du bist CEO ALPHA des Vorce-Autopiloten (Rust Projection-Mapping Software).
+Du bist CEO des Vorce-Autopiloten (Rust Projection-Mapping Software).
 Dein Vorschlag wird von einem zweiten unabhaengigen CEO-Agenten (BETA) kritisch geprueft.
 
 AUFGABE:
@@ -127,14 +127,14 @@ Antworte im JSON-Format:
         }
         "critique" {
             return @"
-Du bist CEO BETA des Vorce-Autopiloten.
+Du bist QA Manager des Vorce-Autopiloten.
 Ein anderer CEO-Agent (ALPHA) hat einen Vorschlag zu folgender Aufgabe gemacht.
 Deine Rolle ist kritischer Gegenpart: Hinterfrage, verbessere, zeige Alternativen auf.
 
 ORIGINAL-AUFGABE:
 $contextPrompt
 
-VORSCHLAG VON CEO ALPHA:
+VORSCHLAG VON CEO:
 $AlphaProposal
 
 DEINE AUFGABEN:
@@ -160,7 +160,7 @@ Antworte im JSON-Format:
         }
         "synthesis" {
             return @"
-Du bist CEO ALPHA. Du hast einen Vorschlag gemacht und CEO BETA hat kritisches Feedback gegeben.
+Du bist CEO. Du hast einen Vorschlag gemacht und QA Manager hat kritisches Feedback gegeben.
 Erstelle jetzt eine FINALE SYNTHESE, die das Beste beider Perspektiven vereint.
 
 ORIGINAL-AUFGABE:
@@ -169,7 +169,7 @@ $contextPrompt
 DEIN URSPRUENGLICHER VORSCHLAG:
 $AlphaProposal
 
-KRITIK VON CEO BETA:
+KRITIK VON QA Manager:
 $BetaCritique
 
 ANWEISUNGEN:
@@ -484,7 +484,7 @@ function Invoke-Deliberation {
     $deliberationId = "delib-$(Get-Date -Format 'yyyy-MM-dd-HHmmss')"
 
     Write-Host "" -ForegroundColor White
-    Write-Host "[DELIB] ====== Dual-CEO Deliberation: $deliberationId ======" -ForegroundColor Magenta
+    Write-Host "[DELIB] ====== CEO + QA Manager Deliberation: $deliberationId ======" -ForegroundColor Magenta
     Write-Host "[DELIB] Task-Typ: $TaskType" -ForegroundColor Magenta
     Write-Host "[DELIB] Jede Phase oeffnet ein sichtbares Terminal-Fenster." -ForegroundColor Magenta
 
@@ -532,7 +532,7 @@ function Invoke-Deliberation {
     }
 
     # ==========================================
-    # PHASE 1: PROPOSAL (CEO Alpha) - VISIBLE TERMINAL
+    # PHASE 1: PROPOSAL (CEO) - VISIBLE TERMINAL
     # ==========================================
     Write-Host "" -ForegroundColor White
     Write-Host "[DELIB] --- Phase 1: Proposal (Alpha: $($ceos.alpha.provider)) ---" -ForegroundColor Yellow
@@ -563,7 +563,7 @@ function Invoke-Deliberation {
     })
 
     if (-not $proposalResult.success) {
-        Write-Host "[DELIB] Alpha-Proposal fehlgeschlagen! Fallback auf Beta CEO (Visible)." -ForegroundColor Red
+        Write-Host "[DELIB] Alpha-Proposal fehlgeschlagen! Fallback auf QA Manager (Visible)." -ForegroundColor Red
         $protocol.final_output = "Alpha failed, fell back to Beta visible agent"
 
         $fallbackResult = Invoke-VisibleCeoPhase `
@@ -588,7 +588,7 @@ function Invoke-Deliberation {
     Format-CeoChatOutput -Role "Proposal" -AgentName $ceos.alpha.provider -Content $alphaProposal
 
     # ==========================================
-    # PHASE 2: CRITIQUE (CEO Beta) - VISIBLE TERMINAL
+    # PHASE 2: CRITIQUE (QA Manager) - VISIBLE TERMINAL
     # ==========================================
     Write-Host "" -ForegroundColor White
     Write-Host "[DELIB] --- Phase 2: Critique (Beta: $($ceos.beta.provider)) ---" -ForegroundColor Yellow
@@ -640,7 +640,7 @@ function Invoke-Deliberation {
     Format-CeoChatOutput -Role "Critique" -AgentName $ceos.beta.provider -Content $betaCritique
 
     # ==========================================
-    # PHASE 3: SYNTHESIS (CEO Alpha) - VISIBLE TERMINAL
+    # PHASE 3: SYNTHESIS (CEO) - VISIBLE TERMINAL
     # ==========================================
     Write-Host "" -ForegroundColor White
     Write-Host "[DELIB] --- Phase 3: Synthesis (Alpha: $($ceos.alpha.provider)) ---" -ForegroundColor Yellow
@@ -703,7 +703,7 @@ function Invoke-Deliberation {
     return [ordered]@{
         success        = $true
         provider       = "$($ceos.alpha.provider)+$($ceos.beta.provider)"
-        model          = "dual-ceo"
+        model          = "CEO + QA Manager"
         output         = $finalOutput
         error          = $null
         stats          = $synthesisResult.stats
@@ -747,7 +747,7 @@ function Save-DeliberationProtocol {
 function Invoke-DualCeoTask {
     <#
     .SYNOPSIS
-    Smart wrapper that decides whether to use Dual-CEO deliberation or single-agent mode.
+    Smart wrapper that decides whether to use CEO + QA Manager deliberation or single-agent mode.
     Drop-in replacement for Invoke-CliTask at call sites that should support deliberation.
     #>
     param(
@@ -863,7 +863,7 @@ function Invoke-DualCeoTask {
         -ProviderOverride $providerName `
         -ModelTierOverride $modelTier
 
-    # Fallback to Beta CEO if the single-agent call failed and Dual-CEO is enabled
+    # Fallback to QA Manager if the single-agent call failed and CEO + QA Manager is enabled
     if (-not $result.success -and $hasDualCeo -and $Config.dual_ceo.enabled) {
         $betaRoute = $Config.dual_ceo.ceo_beta_chain[0]
         if ($betaRoute) {
@@ -871,12 +871,12 @@ function Invoke-DualCeoTask {
             $betaProvider = $parts[0]
             $betaTier = if ($parts.Count -gt 1) { $parts[1] } else { $null }
 
-            Write-Host "[DELIB] Standard-Agent fehlgeschlagen! Fallback auf Beta CEO ($betaRoute)." -ForegroundColor Red
+            Write-Host "[DELIB] Standard-Agent fehlgeschlagen! Fallback auf QA Manager ($betaRoute)." -ForegroundColor Red
 
-            # If Beta CEO is Codex, we need to handle it using Invoke-AutopilotCodexSession
+            # If QA Manager is Codex, we need to handle it using Invoke-AutopilotCodexSession
             if ($betaProvider -eq "codex_orchestrator") {
                 $codexModel = if ($betaTier) { $betaTier } else { "gpt-5.4-mini" }
-                Write-Host "[DELIB] Starte sichtbare Codex-Session (Beta CEO Fallback): $TaskType (Model: $codexModel)" -ForegroundColor Cyan
+                Write-Host "[DELIB] Starte sichtbare Codex-Session (QA Manager Fallback): $TaskType (Model: $codexModel)" -ForegroundColor Cyan
 
                 $betaResult = Invoke-AutopilotCodexSession `
                     -SessionType $TaskType `

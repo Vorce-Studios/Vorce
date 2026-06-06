@@ -136,7 +136,7 @@ try {
 
         # 3. Running Agent
         Write-Host "[3/4] Running agent $AgentProvider..." -ForegroundColor Cyan
-        $prompt = "Please solve the following issue (#$IssueNumber: $IssueTitle).`n`nIssue Body:`n$body`n`nMake the necessary code changes. Do not commit."
+        $prompt = "Please solve the following issue (#${IssueNumber}: $IssueTitle).`n`nIssue Body:`n$body`n`nMake the necessary code changes. Do not commit."
 
         $result = Invoke-CliTask -QuotaRegistry $registry -TaskType "coding" -Prompt $prompt -WorkingDirectory (Get-Location) -ProviderOverride $AgentProvider
 

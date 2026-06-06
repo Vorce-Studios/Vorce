@@ -48,7 +48,7 @@ const PROMPT_METADATA = [
   { key: 'monitoring_synthesis', label: 'Monitoring: Status Evaluation', group: 'monitoring', placeholder: 'Consolidating monitoring results...' },
   { key: 'audit_consistency', label: 'Audit: Data Consistency Check', group: 'audit', placeholder: 'Comparing state registry vs GitHub...' },
   { key: 'audit_performance', label: 'Audit: Performance Assessment', group: 'audit', placeholder: 'Assessing action history efficiency...' },
-  { key: 'audit_synthesis', label: 'Audit: CEO Beta Decision Matrix', group: 'audit', placeholder: 'Consolidating audit reports and remediation JSON...' },
+  { key: 'audit_synthesis', label: 'Audit: QA Manager Decision Matrix', group: 'audit', placeholder: 'Consolidating audit reports and remediation JSON...' },
 ];
 
 export default function SettingsPage({ config: propConfig, registry: propRegistry, memoryStore, onSave, onMemoryRefresh }: Props) {
@@ -492,15 +492,15 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
             </div>
           </div>
 
-          {/* Card: CEO + QA-Auditor Deliberation */}
+          {/* Card: CEO + QA Manager Deliberation */}
           {config.dual_ceo && (
             <div className="glass-card p-6">
               <h3 className="text-base font-semibold text-slate-200 border-b border-slate-700/50 pb-3 mb-4 flex items-center gap-2">
                 <Users className="w-4 h-4 text-purple-400" />
-                CEO + QA-Auditor Deliberation
+                CEO + QA Manager Deliberation
               </h3>
               <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-                Strukturierte Abstimmung zwischen CEO und QA-Auditor bei wichtigen Aufgaben wie Planung, Audit und komplexen Code-Reviews.
+                Strukturierte Abstimmung zwischen CEO und QA Manager bei wichtigen Aufgaben wie Planung, Audit und komplexen Code-Reviews.
               </p>
               <div className="space-y-4">
                 <div className="flex items-center mb-2">
@@ -511,7 +511,7 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                       onChange={(e: any) => handleNestedConfigChange('dual_ceo', 'enabled', e.target.checked)}
                       className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-purple-600 focus:ring-purple-500/50"
                     />
-                    <span className="text-xs font-semibold text-slate-300">CEO + QA-Auditor Modus aktivieren</span>
+                    <span className="text-xs font-semibold text-slate-300">CEO + QA Manager Modus aktivieren</span>
                   </label>
                 </div>
 
@@ -531,7 +531,7 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                      QA-Auditor Fallback-Kette (Kommagetrennt)
+                      QA Manager Fallback-Kette (Kommagetrennt)
                     </label>
                     <input
                       type="text"

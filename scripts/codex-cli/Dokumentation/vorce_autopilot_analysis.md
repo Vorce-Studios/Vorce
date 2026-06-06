@@ -24,14 +24,14 @@ scripts/codex-cli/
 ├── phases/                      # Die Phasen-Skripte des Loops
 │   ├── planning-wakeup.ps1      # Issue-Scan, Re-Planning, Jules-Delegation
 │   ├── monitoring-wakeup.ps1    # PR-Überwachung, Konfliktlösung, Auto-Approval
-│   ├── audit-wakeup.ps1         # Unabhängiges Daten- & Performance-Audit (CEO Beta)
+│   ├── audit-wakeup.ps1         # Unabhängiges Daten- & Performance-Audit (QA Manager)
 │   └── interval-stats.ps1       # Hintergrund-Synchronisierung für das Dashboard
 ├── lib/                         # Hilfsbibliotheken (Zustand, Quota, Router, etc.)
 │   ├── autopilot-prompts.ps1    # Prompt-Deklarationen und Platzhalter-Ersetzung
 │   ├── autopilot-session-manager.ps1 # Verwaltung von Codex/Jules-Sitzungen
 │   ├── cli-router.ps1           # Dynamisches Routing der API-Aufrufe mit Fallbacks
 │   ├── database-manager.ps1     # Schreib-/Lesezugriffe auf historical-quota-db.json
-│   ├── deliberation-engine.ps1  # Dual-CEO Deliberation (Alpha + Beta Dialoge)
+│   ├── deliberation-engine.ps1  # CEO + QA Manager Deliberation (Alpha + Beta Dialoge)
 │   ├── memory-store.ps1         # Verwaltung von persistenten KI-Erinnerungen
 │   ├── quota-manager.ps1        # Budgetüberwachung der LLM-Provider
 │   ├── state-manager.ps1        # Atomares Speichern, Validierung und Bereinigung
