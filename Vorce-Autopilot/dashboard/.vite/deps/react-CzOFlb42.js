@@ -69,7 +69,7 @@ var require_react_development = /* @__PURE__ */ __commonJSMin(((exports, module)
 		/**
 		* Keeps track of the current dispatcher.
 		*/
-		var ReactCurrentDispatcher = { 
+		var ReactCurrentDispatcher = {
 		/**
 		* @internal
 		* @type {ReactComponent}
@@ -91,7 +91,7 @@ current: null };
 		* The current owner is the component who should own any components that are
 		* currently being constructed.
 		*/
-		var ReactCurrentOwner = { 
+		var ReactCurrentOwner = {
 		/**
 		* @internal
 		* @type {ReactComponent}
