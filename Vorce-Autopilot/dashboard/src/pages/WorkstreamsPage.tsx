@@ -68,16 +68,16 @@ type Phase = 'Phase 1' | 'Phase 2' | 'Phase 3' | 'Phase 4' | 'Phase 5' | 'Phase 
 const PHASES = ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4', 'Phase 5', 'Phase 6'];
 
 function isMasterTitle(title: string): boolean {
-  return /(_MAIs_|Master-Issue|\[MASTER\]|(^|[_-])MAI-\d{3}(?=_|-|$)|_StMa_|MF-StMa)/i.test(title);
+  return /(MAIs-\d{3}_|_MAIs_|Master-Issue|\[MASTER\]|(^|[_-])MAI-\d{3}(?=_|-|$)|_StMa_|MF-StMa)/i.test(title);
 }
 
 function isSubIssueTitle(title: string): boolean {
-  return /(_SubI_|__MF-SubI_|__SI-\d+_MAI-\d{3}|\[M\d+-S\d+\])/i.test(title);
+  return /(__MAIs-\d{3}_s\d{2}_|_SubI_|__MF-SubI_|__SI-\d+_MAI-\d{3}|\[M\d+-S\d+\])/i.test(title);
 }
 
 function getMaiKey(title: string): string | null {
-  const match = title.match(/MAI-(\d{3})/i);
-  return match ? `MAI-${match[1]}` : null;
+  const match = title.match(/MAIs?-(\d{3})/i);
+  return match ? `MAIs-${match[1]}` : null;
 }
 
 function getMatrixParentId(title: string): string | null {
