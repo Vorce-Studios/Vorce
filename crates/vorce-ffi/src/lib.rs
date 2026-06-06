@@ -112,7 +112,7 @@ impl PluginApi {
 
 /// Retrieves the plugin version. Returns an error if the handle is null.
 #[no_mangle]
-pub extern "C" fn vorce_plugin_get_version(
+pub unsafe extern "C" fn vorce_plugin_get_version(
     api: *const PluginApi,
     out_version: *mut u32,
 ) -> FfiResultCode {
@@ -129,7 +129,7 @@ pub extern "C" fn vorce_plugin_get_version(
 
 /// Validates a buffer passed from C to Rust.
 #[no_mangle]
-pub extern "C" fn vorce_plugin_read_buffer(
+pub unsafe extern "C" fn vorce_plugin_read_buffer(
     api: *const PluginApi,
     buffer: *const u8,
     len: usize,
