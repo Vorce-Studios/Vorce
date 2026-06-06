@@ -97,8 +97,6 @@ jobs:
         shell: bash
         run: |
           cp base-config/.pre-commit-config.yaml pr/.pre-commit-config.yaml
-          cd pr
-          git add .pre-commit-config.yaml
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -129,14 +127,12 @@ jobs:
           status=0
 
           pre-commit run fmt \
-            --hook-stage manual \
             --show-diff-on-failure \
             --color always \
             --from-ref "${{ steps.resolve.outputs.base_sha }}" \
             --to-ref "${{ steps.resolve.outputs.head_sha }}" || status=$?
 
           pre-commit run cargo-sort \
-            --hook-stage manual \
             --show-diff-on-failure \
             --color always \
             --from-ref "${{ steps.resolve.outputs.base_sha }}" \

@@ -1,4 +1,4 @@
-Du bist QA Manager (Gemini) des Vorce-Autopiloten. Triff die finale Entscheidung basierend auf den Teilergebnissen des Audits:
+Du bist CEO BETA (Gemini) des Vorce-Autopiloten. Triff die finale Entscheidung basierend auf den Teilergebnissen des Audits:
 $context
 
 Regeln:

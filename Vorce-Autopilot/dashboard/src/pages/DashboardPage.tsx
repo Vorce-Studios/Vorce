@@ -60,10 +60,8 @@ function normalizeAuditText(value?: string): string {
   const oldCeoLabel = ['Alpha', 'CEO'].join(' ');
   const oldCeoLabelAlt = ['CEO', 'Alpha'].join(' ');
   return value
-    .replace(new RegExp(oldQaLabel, 'gi'), 'QA Manager')
-    .replace(new RegExp(oldQaLabelAlt, 'gi'), 'QA Manager')
-    .replace(/QA[-\s]?Auditor/gi, 'QA Manager')
-    .replace(/\bauditor\b/gi, 'QA Manager')
+    .replace(new RegExp(oldQaLabel, 'gi'), 'QA-Auditor')
+    .replace(new RegExp(oldQaLabelAlt, 'gi'), 'QA-Auditor')
     .replace(new RegExp(oldCeoLabel, 'gi'), 'CEO')
     .replace(new RegExp(oldCeoLabelAlt, 'gi'), 'CEO')
     .replace(/beta_/gi, 'qa_');
@@ -79,14 +77,14 @@ function auditOwnerLabel(owner?: string): string {
   const value = (owner || '').toLowerCase();
   if (value === 'user') return 'Du';
   if (value.includes('alpha') || value === 'ceo') return 'CEO';
-  return 'QA Manager';
+  return 'QA-Auditor';
 }
 
 function auditStageLabel(alert: any): string {
   const owner = auditOwnerLabel(alert.owner);
   if (owner === 'Du' || alert.escalation_level === 'user') return 'Wartet auf deine Entscheidung';
   if (owner === 'CEO') return 'CEO-Sondersession';
-  return 'QA Manager repariert';
+  return 'QA-Auditor repariert';
 }
 
 async function updateAuditAlert(action: string, id: string, response?: string) {
@@ -305,7 +303,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
               <div key={id} className="bg-slate-950/50 border border-rose-500/20 rounded-lg p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                   <div>
-                    <div className="font-semibold text-rose-200">{normalizeAuditText(alert.topic || 'QA Manager Alert')}</div>
+                    <div className="font-semibold text-rose-200">{normalizeAuditText(alert.topic || 'QA-Auditor Alert')}</div>
                     <div className="text-xs text-rose-300/70 mt-0.5">
                       Zuständig: {owner} · {auditStageLabel(alert)} · {timeAgo(alert.created_at)}
                     </div>
@@ -320,7 +318,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 mb-3">
-                  {['QA Manager', 'CEO', 'Du'].map((label, stepIdx) => (
+                  {['QA-Auditor', 'CEO', 'Du'].map((label, stepIdx) => (
                     <div key={label} className={`h-1.5 rounded-full ${stepIdx <= activeStep ? 'bg-rose-400' : 'bg-slate-800'}`} title={label} />
                   ))}
                 </div>
@@ -331,7 +329,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
                     <div className="text-slate-200 whitespace-pre-wrap">{shortText(alert.context)}</div>
                   </div>
                   <div className="rounded-md bg-slate-900/70 border border-slate-800 p-3">
-                    <div className="uppercase text-amber-300/70 text-[10px] mb-1">QA Manager Versuch</div>
+                    <div className="uppercase text-amber-300/70 text-[10px] mb-1">QA-Auditor Versuch</div>
                     <div className="text-slate-300 whitespace-pre-wrap">
                       {shortText(alert.remediation_command || alert.remediation_result || 'Noch kein dokumentierter Reparaturversuch.')}
                     </div>
@@ -502,92 +500,9 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
         forceRequestedAt={runControl.force_optimizer_requested_at}
       />
 
-      <ReviewQueuePanel queue={sessions.review_queue || []} sessions={sessions.review_sessions || []} />
-
-      {/* CEO + QA Manager Deliberation Panel */}
+      {/* Dual-CEO Deliberation Panel */}
       <DeliberationPanel deliberations={sessions.deliberation_log || []} />
 
-    </div>
-  );
-}
-
-function reviewStatusClass(status?: string): string {
-  const normalized = String(status || '').toLowerCase();
-  if (normalized === 'approved') return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300';
-  if (normalized === 'changes_requested' || normalized === 'failed') return 'border-rose-500/30 bg-rose-500/10 text-rose-300';
-  if (normalized === 'in_progress') return 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300';
-  return 'border-amber-500/30 bg-amber-500/10 text-amber-300';
-}
-
-function ReviewQueuePanel({ queue, sessions }: { queue: any[]; sessions: any[] }) {
-  const pending = queue.filter(item => ['pending', 'in_progress'].includes(String(item.review_status || '').toLowerCase()));
-  const approved = queue.filter(item => String(item.review_status || '').toLowerCase() === 'approved');
-  const blocked = queue.filter(item => ['changes_requested', 'failed'].includes(String(item.review_status || '').toLowerCase()));
-  const recentSessions = (sessions || []).slice().reverse().slice(0, 6);
-
-  return (
-    <div className="glass-card p-5 border border-slate-800">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-            <GitPullRequest className="text-emerald-400 w-4 h-4" />
-            Claude-Code PR Reviews
-          </h3>
-          <div className="mt-1 text-xs text-slate-500">
-            Offen: {pending.length} · Freigegeben: {approved.length} · Blockiert: {blocked.length}
-          </div>
-        </div>
-        <div className="text-[11px] text-slate-400">
-          Merge-Freigabe erfolgt erst nach Claude-Code Review.
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <div className="rounded-lg border border-slate-800 bg-slate-950/30 p-3">
-          <div className="text-[11px] uppercase tracking-wide font-semibold text-slate-400 mb-2">Review Queue</div>
-          <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
-            {queue.length === 0 ? (
-              <div className="text-xs text-slate-500">Keine PRs in der Review Queue.</div>
-            ) : queue.slice().reverse().slice(0, 10).map((item) => (
-              <div key={item.id || item.pr_number} className="rounded-md border border-slate-800 bg-slate-900/50 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-sm font-semibold text-slate-200">PR #{item.pr_number}</div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded border ${reviewStatusClass(item.review_status)}`}>
-                    {item.review_status || 'pending'}
-                  </span>
-                </div>
-                <div className="text-[11px] text-slate-500 mt-1">
-                  {item.review_type || 'unclassified'} · {item.reviewer || 'claude_code'} · Issue #{item.issue_number || 'n/a'}
-                </div>
-                {item.summary && <div className="text-xs text-slate-300 mt-2 line-clamp-3">{item.summary}</div>}
-                {item.error && <div className="text-xs text-rose-300 mt-2 line-clamp-2">{item.error}</div>}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-slate-800 bg-slate-950/30 p-3">
-          <div className="text-[11px] uppercase tracking-wide font-semibold text-slate-400 mb-2">Letzte Review Sessions</div>
-          <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
-            {recentSessions.length === 0 ? (
-              <div className="text-xs text-slate-500">Noch keine Review Sessions dokumentiert.</div>
-            ) : recentSessions.map((session) => (
-              <div key={`${session.id}-${session.updated_at}`} className="rounded-md border border-slate-800 bg-slate-900/50 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-sm font-semibold text-slate-200">PR #{session.pr_number}</div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded border ${reviewStatusClass(session.status)}`}>
-                    {session.status}
-                  </span>
-                </div>
-                <div className="text-[11px] text-slate-500 mt-1">
-                  {session.review_type || 'review'} · {session.updated_at ? timeAgo(session.updated_at) : 'N/A'}
-                </div>
-                {session.summary && <div className="text-xs text-slate-300 mt-2 line-clamp-3">{session.summary}</div>}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

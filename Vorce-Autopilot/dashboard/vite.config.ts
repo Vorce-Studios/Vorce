@@ -185,7 +185,7 @@ export default defineConfig({
                 for (const r of repos) {
                   try {
                     const prsJson = execSync(
-                      `gh pr list --repo ${r} --limit 1000 --state open --json number,title,state,mergeable,statusCheckRollup,headRefName,baseRefName,updatedAt,url,isDraft,reviewDecision`,
+                      `gh pr list --repo ${r} --limit 1000 --state open --json number,title,state,mergeable,statusCheckRollup,headRefName,baseRefName,updatedAt,url,isDraft`,
                       { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }
                     );
                     const parsed = JSON.parse(prsJson);

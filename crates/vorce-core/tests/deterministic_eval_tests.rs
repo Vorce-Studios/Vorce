@@ -1,9 +1,9 @@
-use vorce_core::module::{
-    LayerType, ModuleConnection, ModulePartType, OutputType, VorceModule, ModulePlaybackMode
-};
 use vorce_core::module::part::ModulePart;
-use vorce_core::module_eval::ModuleEvaluator;
 use vorce_core::module::SharedMediaState;
+use vorce_core::module::{
+    LayerType, ModuleConnection, ModulePartType, ModulePlaybackMode, OutputType, VorceModule,
+};
+use vorce_core::module_eval::ModuleEvaluator;
 
 #[test]
 fn test_render_ops_deterministic_order() {
@@ -85,7 +85,12 @@ fn test_render_ops_deterministic_order() {
                 first = false;
                 prev_id = op.layer_part_id;
             } else {
-                assert!(prev_id < op.layer_part_id, "Render ops are not in deterministic order! {} vs {}", prev_id, op.layer_part_id);
+                assert!(
+                    prev_id < op.layer_part_id,
+                    "Render ops are not in deterministic order! {} vs {}",
+                    prev_id,
+                    op.layer_part_id
+                );
                 prev_id = op.layer_part_id;
             }
         }
