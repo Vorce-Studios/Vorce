@@ -70,40 +70,10 @@ class RunReport:
         self.data["status"] = status
         self.data["message"] = message
         self.data["ended_at"] = now_iso()
-
         report_path = self.run_dir / "run_report.json"
         report_path.write_text(json.dumps(self.data, indent=2), encoding="utf-8")
-
-        md_path = self.run_dir / "run_report.md"
-        md_lines = [
-            "# Vorce UI Automation Report",
-            "",
-            f"**Mode:** {self.mode}",
-            f"**Status:** {status.upper()}",
-            f"**Message:** {message}",
-            f"**Started At:** {self.data['started_at']}",
-            f"**Ended At:** {self.data['ended_at']}",
-            ""
-        ]
-
-        failed_checks = [c for c in self.data["checks"] if c["status"] == "fail"]
-        if failed_checks:
-            md_lines.extend(["## Failure Summary", ""])
-            for c in failed_checks:
-                md_lines.append(f"- **{c['name']}**: {c['message']}")
-            md_lines.append("")
-
-        if self.data["artifacts"]:
-            md_lines.extend(["## Artifacts", ""])
-            for k, v in self.data["artifacts"].items():
-                md_lines.append(f"- **{k}**: `{v}`")
-            md_lines.append("")
-
-        md_path.write_text("\n".join(md_lines), encoding="utf-8")
-
         print(f"[{status.upper()}] {message}")
         print(f"Report: {report_path}")
-        print(f"Report Markdown: {md_path}")
         return 0 if status == "passed" else 1
 
 
@@ -116,45 +86,69 @@ def import_optional(module_name):
 
 
 def capture_screenshot(path):
-    try:
-        from PIL import ImageGrab
+    if os.name == "nt":
+        try:
+            from PIL import ImageGrab
 
-        image = ImageGrab.grab()
-        image.save(path)
-        return True, None
-    except Exception as exc:
-        return False, str(exc)
+            image = ImageGrab.grab()
+            image.save(path)
+            return True, None
+        except Exception as exc:
+            return False, str(exc)
+    else:
+        try:
+            subprocess.run(["scrot", str(path)], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True, None
+        except Exception:
+            try:
+                subprocess.run(["import", "-window", "root", str(path)], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                return True, None
+            except Exception as exc:
+                return False, str(exc)
 
 
 def list_windows():
-    if os.name != "nt":
-        return []
-
     windows = []
+    if os.name == "nt":
+        EnumWindows = ctypes.windll.user32.EnumWindows
+        IsWindowVisible = ctypes.windll.user32.IsWindowVisible
+        GetWindowTextLengthW = ctypes.windll.user32.GetWindowTextLengthW
+        GetWindowTextW = ctypes.windll.user32.GetWindowTextW
+        GetWindowThreadProcessId = ctypes.windll.user32.GetWindowThreadProcessId
 
-    EnumWindows = ctypes.windll.user32.EnumWindows
-    IsWindowVisible = ctypes.windll.user32.IsWindowVisible
-    GetWindowTextLengthW = ctypes.windll.user32.GetWindowTextLengthW
-    GetWindowTextW = ctypes.windll.user32.GetWindowTextW
-    GetWindowThreadProcessId = ctypes.windll.user32.GetWindowThreadProcessId
-
-    @ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
-    def callback(hwnd, _):
-        if not IsWindowVisible(hwnd):
+        @ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+        def callback(hwnd, _):
+            if not IsWindowVisible(hwnd):
+                return True
+            length = GetWindowTextLengthW(hwnd)
+            if length <= 0:
+                return True
+            buffer = ctypes.create_unicode_buffer(length + 1)
+            GetWindowTextW(hwnd, buffer, length + 1)
+            title = buffer.value.strip()
+            if title:
+                process_id = ctypes.c_ulong()
+                GetWindowThreadProcessId(hwnd, ctypes.byref(process_id))
+                windows.append({"hwnd": int(hwnd), "pid": process_id.value, "title": title})
             return True
-        length = GetWindowTextLengthW(hwnd)
-        if length <= 0:
-            return True
-        buffer = ctypes.create_unicode_buffer(length + 1)
-        GetWindowTextW(hwnd, buffer, length + 1)
-        title = buffer.value.strip()
-        if title:
-            process_id = ctypes.c_ulong()
-            GetWindowThreadProcessId(hwnd, ctypes.byref(process_id))
-            windows.append({"hwnd": int(hwnd), "pid": process_id.value, "title": title})
-        return True
 
-    EnumWindows(callback, None)
+        EnumWindows(callback, None)
+    else:
+        try:
+            output = subprocess.check_output(['wmctrl', '-lp'], text=True)
+            for line in output.splitlines():
+                parts = line.split(maxsplit=4)
+                if len(parts) >= 5:
+                    try:
+                        hwnd = int(parts[0], 16)
+                        pid = int(parts[2])
+                        title = parts[4]
+                        windows.append({"hwnd": hwnd, "pid": pid, "title": title})
+                    except ValueError:
+                        pass
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            pass
+
     return windows
 
 
@@ -167,7 +161,37 @@ def wait_for_window(title_contains, timeout_seconds, process=None, match_process
         last_windows = list_windows()
         for window in last_windows:
             title_matches = title_contains.lower() in window["title"].lower()
-            process_matches = process is None or window["pid"] == process.pid or not match_process
+
+            process_matches = False
+            if process is None or not match_process:
+                process_matches = True
+            elif window["pid"] == process.pid:
+                process_matches = True
+            elif os.name != "nt":
+                # Check if window PID is a child of process.pid (e.g. xvfb-run or cargo run wrappers)
+                try:
+                    def is_child_process(parent_pid, child_pid):
+                        if child_pid <= 0: return False
+                        try:
+                            output = subprocess.check_output(['ps', '-o', 'ppid=', '-p', str(child_pid)], text=True, stderr=subprocess.DEVNULL)
+                            ppid = int(output.strip())
+                            if ppid == parent_pid:
+                                return True
+                            elif ppid == 0 or ppid == 1:
+                                return False
+                            else:
+                                return is_child_process(parent_pid, ppid)
+                        except (subprocess.CalledProcessError, ValueError):
+                            return False
+
+                    if is_child_process(process.pid, window["pid"]):
+                        process_matches = True
+                    # Many X11 window managers don't report the PID (leaving it as 0)
+                    elif window["pid"] == 0:
+                        process_matches = True
+                except Exception:
+                    pass
+
             if title_matches and process_matches:
                 return True, last_windows, window["title"]
         time.sleep(0.5)
@@ -217,6 +241,19 @@ def check_environment(report, args):
             "gemini_api_key",
             "pass" if key_present else "warn",
             "Gemini API key present" if key_present else "not required for this mode",
+        )
+
+    if os.name != "nt":
+        wmctrl_ok = False
+        try:
+            subprocess.run(["wmctrl", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            wmctrl_ok = True
+        except FileNotFoundError:
+            pass
+        report.check(
+            "wmctrl",
+            "pass" if wmctrl_ok else "warn",
+            "wmctrl available for window detection" if wmctrl_ok else "wmctrl missing (window detection will fail)",
         )
 
     if args.require_screenshot:
