@@ -1,4 +1,4 @@
-# scripts/codex-cli/tools/run-visible-ceo-phase.ps1
+# Vorce-Autopilot/tools/run-visible-ceo-phase.ps1
 # Runs a single CEO deliberation phase in a VISIBLE terminal window.
 # The output is displayed live AND written to an output file for the caller.
 #
