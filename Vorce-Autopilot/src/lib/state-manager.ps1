@@ -174,13 +174,8 @@ function Test-ObjectProperty {
     Safely tests if a PSObject has a given property.
     Centralized here so all modules can use it.
     #>
-    param([AllowNull()][object]$Object, [string]$Name)
-    if ($null -eq $Object -or [string]::IsNullOrWhiteSpace($Name)) { return $false }
-    try {
-        return @($Object.PSObject.Properties | ForEach-Object { $_.Name }) -contains $Name
-    } catch {
-        return $false
-    }
+    param([object]$Object, [string]$Name)
+    return $null -ne $Object -and ($Object.PSObject.Properties.Name -contains $Name)
 }
 
 function Update-AutopilotStateObject {
@@ -206,7 +201,7 @@ function Update-AutopilotStateObject {
         "active_delegations", "working_queue", "working_sessions",
         "review_queue", "autopilot_created_issues", "completed_this_session",
         "decisions_pending", "escalated_issues", "error_log", "deliberation_log",
-        "optimizer_queue", "review_sessions"
+        "optimizer_queue"
     )
     foreach ($key in $arrayFields) {
         if ($null -eq $State.$key) {
@@ -262,7 +257,6 @@ function New-AutopilotState {
         error_log               = @()
         deliberation_log        = @()
         optimizer_queue         = @()
-        review_sessions         = @()
         last_optimizer_analysis_at = $null
         optimizer_last_run      = $null
         run_summaries           = [pscustomobject]@{
@@ -313,7 +307,7 @@ function Initialize-AutopilotState {
         }
 
         # Validate that arrays are indeed arrays (sometimes deserialized as single object or null)
-        foreach ($key in @("active_delegations", "working_queue", "working_sessions", "review_queue", "review_sessions", "autopilot_created_issues", "completed_this_session", "decisions_pending", "escalated_issues", "error_log", "deliberation_log", "optimizer_queue")) {
+        foreach ($key in @("active_delegations", "working_queue", "working_sessions", "review_queue", "autopilot_created_issues", "completed_this_session", "decisions_pending", "escalated_issues", "error_log", "deliberation_log", "optimizer_queue")) {
             if ($null -eq $existing.$key) {
                 $existing.$key = @()
             } elseif ($existing.$key -isnot [System.Array] -and $existing.$key -isnot [System.Collections.IList]) {
@@ -453,63 +447,13 @@ function Add-ReviewItem {
         [int]$PrNumber
     )
 
-    $State = Update-AutopilotStateObject -State $State
-    $existing = @($State.review_queue | Where-Object {
-        (Test-ObjectProperty -Object $_ -Name "pr_number") -and
-        ([int]$_.pr_number -eq $PrNumber) -and
-        (Test-ObjectProperty -Object $_ -Name "review_status") -and
-        ([string]$_.review_status -in @("pending", "in_progress", "approved"))
-    })
-    if ($existing.Count -gt 0) {
-        return
-    }
-
     $State.review_queue += @([ordered]@{
-        id             = "review-pr-$PrNumber-$(Get-Date -Format 'yyyyMMddHHmmss')"
-        issue_number   = $IssueNumber
-        pr_url         = $PrUrl
-        pr_number      = $PrNumber
-        reviewer       = "claude_code"
-        review_type    = "unclassified"
-        review_status  = "pending"
-        queued_at      = (Get-Date -Format 'o')
-        started_at     = $null
-        completed_at   = $null
-        decision       = $null
-        summary        = $null
-        error          = $null
+        issue_number  = $IssueNumber
+        pr_url        = $PrUrl
+        pr_number     = $PrNumber
+        review_status = "pending"
     })
 
-    Save-AutopilotState -State $State
-}
-
-function Add-ReviewSessionRecord {
-    param(
-        [Parameter(Mandatory)][object]$State,
-        [Parameter(Mandatory)][object]$ReviewItem,
-        [Parameter(Mandatory)][string]$Status,
-        [string]$ReviewType = "",
-        [string]$Decision = "",
-        [string]$Summary = "",
-        [string]$Error = ""
-    )
-
-    $State = Update-AutopilotStateObject -State $State
-    $State.review_sessions += @([ordered]@{
-        id           = if (Test-ObjectProperty -Object $ReviewItem -Name "id") { [string]$ReviewItem.id } else { "review-pr-$($ReviewItem.pr_number)-$(Get-Date -Format 'yyyyMMddHHmmss')" }
-        pr_number    = [int]$ReviewItem.pr_number
-        issue_number = [int]$ReviewItem.issue_number
-        reviewer     = "claude_code"
-        review_type  = $ReviewType
-        status       = $Status
-        decision     = $Decision
-        summary      = $Summary
-        error        = $Error
-        updated_at   = (Get-Date -Format 'o')
-    })
-    if ($State.review_sessions.Count -gt 100) {
-        $State.review_sessions = @($State.review_sessions | Select-Object -Last 100)
-    }
     Save-AutopilotState -State $State
 }
 

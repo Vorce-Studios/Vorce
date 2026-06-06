@@ -89,16 +89,14 @@ fn test_timeline_boundary_timestamps() {
 fn test_timeline_invalid_edits_zero_or_negative_duration() {
     let mut timeline = TimelineV2 {
         show_mode: ShowMode::FullyAutomated,
-        module_arrangement: vec![
-            ModuleArrangementItem {
-                id: 1,
-                module_id: 101,
-                start_time: 0.0,
-                duration: -5.0, // Invalid edit
-                enabled: true,
-                start_trigger: None,
-            },
-        ],
+        module_arrangement: vec![ModuleArrangementItem {
+            id: 1,
+            module_id: 101,
+            start_time: 0.0,
+            duration: -5.0, // Invalid edit
+            enabled: true,
+            start_trigger: None,
+        }],
         ..TimelineV2::default()
     };
 
@@ -108,5 +106,6 @@ fn test_timeline_invalid_edits_zero_or_negative_duration() {
     assert_eq!(timeline.module_arrangement[0].end_time(), 0.1);
 
     assert_eq!(timeline.runtime_show_module(0.05, true, &available_ids), Some(101));
-    assert_eq!(timeline.runtime_show_module(0.2, true, &available_ids), Some(101)); // Falls back to nearest/last block
+    assert_eq!(timeline.runtime_show_module(0.2, true, &available_ids), Some(101));
+    // Falls back to nearest/last block
 }
