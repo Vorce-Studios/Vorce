@@ -423,6 +423,6 @@ mod tests {
         }
 
         // Just checking compilation/imports work
-        assert!(true, "NDI mod smoke test passed");
+        let _ = 1;
     }
 }
