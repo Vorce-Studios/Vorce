@@ -101,11 +101,16 @@ function Update-JsonLocked {
     }
 
     $attempts = 10
+    $lastError = $null
     while ($attempts -gt 0) {
+        $fileStream = $null
+        $reader = $null
+        $writer = $null
         try {
             $fileStream = [System.IO.File]::Open($Path, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
-            $reader = [System.IO.StreamReader]::new($fileStream, [System.Text.Encoding]::UTF8)
+            $reader = [System.IO.StreamReader]::new($fileStream, [System.Text.Encoding]::UTF8, $true, 1024, $true)
             $content = $reader.ReadToEnd()
+            $reader.Dispose()
 
             $data = $null
             if (-not [string]::IsNullOrWhiteSpace($content)) {
@@ -117,21 +122,28 @@ function Update-JsonLocked {
             $updatedData = & $Updater $data
 
             $fileStream.SetLength(0)
-            $writer = [System.IO.StreamWriter]::new($fileStream, [System.Text.Encoding]::UTF8)
+            $fileStream.Position = 0
+            $writer = [System.IO.StreamWriter]::new($fileStream, [System.Text.Encoding]::UTF8, 1024, $true)
             $json = $updatedData | ConvertTo-Json -Depth 10
             $writer.Write($json)
             $writer.Flush()
 
             $writer.Dispose()
-            $reader.Dispose()
             $fileStream.Dispose()
             return $updatedData
         } catch {
+            $lastError = $_.Exception
+            if ($null -ne $writer) { $writer.Dispose() }
+            if ($null -ne $reader) { $reader.Dispose() }
+            if ($null -ne $fileStream) { $fileStream.Dispose() }
+            if ($lastError -isnot [System.IO.IOException]) {
+                throw "JSON-Update fuer '$Path' fehlgeschlagen: $($lastError.Message)"
+            }
             $attempts--
             Start-Sleep -Milliseconds 100
         }
     }
-    throw "Konnte JSON-Datei nach 10 Versuchen nicht exklusiv sperren und updaten: $Path"
+    throw "Konnte JSON-Datei nach 10 Versuchen nicht exklusiv sperren und updaten: $Path. Letzter Fehler: $($lastError.Message)"
 }
 
 
@@ -174,8 +186,16 @@ function Test-ObjectProperty {
     Safely tests if a PSObject has a given property.
     Centralized here so all modules can use it.
     #>
-    param([object]$Object, [string]$Name)
-    return $null -ne $Object -and ($Object.PSObject.Properties.Name -contains $Name)
+    param([AllowNull()][object]$Object, [string]$Name)
+    if ($null -eq $Object -or [string]::IsNullOrWhiteSpace($Name)) { return $false }
+    try {
+        if ($Object -is [System.Collections.IDictionary]) {
+            return $Object.Contains($Name)
+        }
+        return @($Object.PSObject.Properties | ForEach-Object { $_.Name }) -contains $Name
+    } catch {
+        return $false
+    }
 }
 
 function Update-AutopilotStateObject {
@@ -452,6 +472,7 @@ function Add-ReviewItem {
         pr_url        = $PrUrl
         pr_number     = $PrNumber
         review_status = "pending"
+        review_provider = $null
     })
 
     Save-AutopilotState -State $State

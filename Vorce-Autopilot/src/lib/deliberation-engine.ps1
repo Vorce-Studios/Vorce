@@ -46,7 +46,7 @@ function Resolve-DualCeos {
         Write-Host "[DELIB] Alpha-Kandidat '$provName' nicht verfuegbar, naechster..." -ForegroundColor DarkGray
     }
 
-    # --- Resolve CEO Beta ---
+    # --- Resolve QA Manager ---
     $beta = $null
     foreach ($route in $dualCfg.ceo_beta_chain) {
         $parts = $route -split ":"
@@ -65,7 +65,7 @@ function Resolve-DualCeos {
                 provider   = $provName
                 model_tier = $modelTier
                 command    = $cmdName
-                label      = "CEO Beta"
+                label      = "QA Manager"
             }
             break
         }
@@ -232,7 +232,6 @@ function Invoke-VisibleCeoPhase {
     $providerConfig = $QuotaRegistry.providers.$providerName
 
     if ($DryRun.IsPresent) {
-        Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
         return [ordered]@{
             success = $true
             output  = "[DRY RUN] Wuerde $PhaseName ausfuehren mit $providerName ($modelTier)"
@@ -260,7 +259,9 @@ function Invoke-VisibleCeoPhase {
             -VisibleExecTerminal `
             -DryRun:$DryRun
 
-        Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
+        if (-not $DryRun.IsPresent) {
+            Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
+        }
 
         $finalOutput = ""
         $isSuccess = [bool]((Test-ObjectProperty -Object $result -Name "Success") -and $result.Success)
@@ -362,7 +363,9 @@ function Invoke-VisibleCeoPhase {
 
         # Parse stats
         $parsedStats = Parse-CliStats -ProviderName $providerName -RawOutput $output
-        Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
+        if (-not $DryRun.IsPresent) {
+            Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
+        }
 
         Write-Host "[DELIB] $PhaseName abgeschlossen. Exit=$exitCode" -ForegroundColor $(if ($exitCode -eq 0) { "Green" } else { "Red" })
         if ($exitCode -ne 0) {
@@ -479,7 +482,7 @@ function Invoke-Deliberation {
     })
 
     if (-not $proposalResult.success) {
-        Write-Host "[DELIB] Alpha-Proposal fehlgeschlagen! Fallback auf Beta CEO (Visible)." -ForegroundColor Red
+        Write-Host "[DELIB] CEO-Proposal fehlgeschlagen! Fallback auf QA Manager (Visible)." -ForegroundColor Red
         $protocol.final_output = "Alpha failed, fell back to Beta visible agent"
 
         $fallbackResult = Invoke-VisibleCeoPhase `
@@ -504,7 +507,7 @@ function Invoke-Deliberation {
     Format-CeoChatOutput -Role "Proposal" -AgentName $ceos.alpha.provider -Content $alphaProposal
 
     # ==========================================
-    # PHASE 2: CRITIQUE (CEO Beta) - VISIBLE TERMINAL
+    # PHASE 2: CRITIQUE (QA Manager) - VISIBLE TERMINAL
     # ==========================================
     Write-Host "" -ForegroundColor White
     Write-Host "[DELIB] --- Phase 2: Critique (Beta: $($ceos.beta.provider)) ---" -ForegroundColor Yellow
@@ -658,6 +661,57 @@ function Save-DeliberationProtocol {
     }
 }
 
+function Get-AutopilotFallbackRoute {
+    param(
+        [Parameter(Mandatory)][object]$QuotaRegistry,
+        [Parameter(Mandatory)][object]$Config,
+        [Parameter(Mandatory)][string]$TaskType,
+        [string[]]$ExcludeProviders = @()
+    )
+
+    $candidates = @()
+    if ($QuotaRegistry.routing_rules -and $QuotaRegistry.routing_rules.$TaskType) {
+        $candidates += @($QuotaRegistry.routing_rules.$TaskType)
+    }
+    if ($Config.PSObject.Properties.Name -contains "dual_ceo" -and $Config.dual_ceo.ceo_beta_chain) {
+        $candidates += @($Config.dual_ceo.ceo_beta_chain)
+    }
+
+    foreach ($candidate in $candidates) {
+        $parts = [string]$candidate -split ":"
+        $providerName = $parts[0]
+        if ([string]::IsNullOrWhiteSpace($providerName) -or $ExcludeProviders -contains $providerName) { continue }
+        if (-not (Test-ProviderAvailable -Registry $QuotaRegistry -ProviderName $providerName)) { continue }
+
+        $providerConfig = $QuotaRegistry.providers.$providerName
+        if ($null -eq $providerConfig -or -not (Test-ObjectProperty -Object $providerConfig -Name "command") -or -not $providerConfig.command) { continue }
+        if (-not (Get-Command $providerConfig.command -ErrorAction SilentlyContinue)) { continue }
+
+        return [ordered]@{
+            provider   = $providerName
+            model_tier = if ($parts.Count -gt 1) { $parts[1] } else { "default" }
+        }
+    }
+
+    return $null
+}
+
+function Format-AutopilotTaskFailure {
+    param([AllowNull()][object]$Result)
+
+    if ($null -eq $Result) { return "Kein Ergebnisobjekt erhalten." }
+    $provider = if (Test-ObjectProperty -Object $Result -Name "provider") { [string]$Result.provider } else { "unbekannt" }
+    $errorCode = if (Test-ObjectProperty -Object $Result -Name "error") { [string]$Result.error } else { "UNKNOWN_ERROR" }
+    $output = if (Test-ObjectProperty -Object $Result -Name "output") { [string]$Result.output } else { "" }
+    $lines = @($output -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    $relevant = @($lines | Where-Object { $_ -match '(?i)\b(error|failed|failure|limit|quota|exceeded|exception|denied)\b' })
+    $details = if ($relevant.Count -gt 0) { ($relevant | Select-Object -Last 4) -join " | " } else { ($lines | Select-Object -Last 6) -join " | " }
+    $details = ($details -replace '\s+', ' ').Trim()
+    if ($details.Length -gt 800) { $details = "..." + $details.Substring($details.Length - 800) }
+    if ([string]::IsNullOrWhiteSpace($details)) { $details = "Keine Fehlerdetails vom Provider erhalten." }
+    return "Provider=$provider; Fehler=$errorCode; Details=$details"
+}
+
 function Invoke-DualCeoTask {
     <#
     .SYNOPSIS
@@ -743,9 +797,11 @@ function Invoke-DualCeoTask {
             -VisibleExecTerminal `
             -DryRun:$DryRun
 
-        Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
+        if (-not $DryRun.IsPresent) {
+            Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
+        }
 
-        $finalOutput = ""
+        $finalOutput = if (Test-ObjectProperty -Object $result -Name "Output") { [string]$result.Output } else { "" }
         $isSuccess = [bool]((Test-ObjectProperty -Object $result -Name "Success") -and $result.Success)
         if ($isSuccess) {
             if ((Test-ObjectProperty -Object $result -Name "OutputPath") -and $result.OutputPath -and (Test-Path -LiteralPath $result.OutputPath)) {
@@ -755,7 +811,7 @@ function Invoke-DualCeoTask {
             }
         }
 
-        return [ordered]@{
+        $codexTaskResult = [ordered]@{
             success  = $isSuccess
             provider = $providerName
             model    = $modelTier
@@ -763,6 +819,21 @@ function Invoke-DualCeoTask {
             error    = if (-not $isSuccess) { "CODEX_SESSION_FAILED" } else { $null }
             stats    = $null
         }
+        if ($isSuccess) { return $codexTaskResult }
+
+        $fallbackRoute = Get-AutopilotFallbackRoute -QuotaRegistry $QuotaRegistry -Config $Config -TaskType $TaskType -ExcludeProviders @($providerName)
+        if ($null -eq $fallbackRoute) { return $codexTaskResult }
+
+        Write-Host "[DELIB] Codex-Session fehlgeschlagen. Fallback auf $($fallbackRoute.provider):$($fallbackRoute.model_tier)." -ForegroundColor Yellow
+        return Invoke-CliTask `
+            -QuotaRegistry $QuotaRegistry `
+            -TaskType $TaskType `
+            -Prompt $Prompt `
+            -WorkingDirectory $WorkingDirectory `
+            -MemoryBlock $memoryBlock `
+            -DryRun:$DryRun `
+            -ProviderOverride $fallbackRoute.provider `
+            -ModelTierOverride $fallbackRoute.model_tier
     }
 
     # Standard single-agent path for other providers
@@ -776,20 +847,29 @@ function Invoke-DualCeoTask {
         -ProviderOverride $providerName `
         -ModelTierOverride $modelTier
 
-    # Fallback to Beta CEO if the single-agent call failed and Dual-CEO is enabled
-    if (-not $result.success -and $hasDualCeo -and $Config.dual_ceo.enabled) {
-        $betaRoute = $Config.dual_ceo.ceo_beta_chain[0]
-        if ($betaRoute) {
-            $parts = $betaRoute -split ":"
-            $betaProvider = $parts[0]
-            $betaTier = if ($parts.Count -gt 1) { $parts[1] } else { $null }
+    # Fallback to QA Manager if the single-agent call failed and deliberation mode is enabled
+    if (-not $result.success) {
+        $fallbackRoute = Get-AutopilotFallbackRoute -QuotaRegistry $QuotaRegistry -Config $Config -TaskType $TaskType -ExcludeProviders @($providerName)
+        if ($fallbackRoute) {
+            $betaProvider = $fallbackRoute.provider
+            $betaTier = $fallbackRoute.model_tier
+            $betaRoute = "$betaProvider`:$betaTier"
 
-            Write-Host "[DELIB] Standard-Agent fehlgeschlagen! Fallback auf Beta CEO ($betaRoute)." -ForegroundColor Red
+            Write-Host "[DELIB] Standard-Agent fehlgeschlagen. Fallback auf anderen Provider ($betaRoute)." -ForegroundColor Yellow
 
-            # If Beta CEO is Codex, handle using Invoke-AutopilotCodexSession
+            # If QA Manager is Codex, handle using Invoke-AutopilotCodexSession
             if ($betaProvider -eq "codex_orchestrator") {
-                $codexModel = if ($betaTier) { $betaTier } else { "gpt-5.4-mini" }
-                Write-Host "[DELIB] Starte sichtbare Codex-Session (Beta CEO Fallback): $TaskType (Model: $codexModel)" -ForegroundColor Cyan
+                $codexModel = "gpt-5.4-mini"
+                $betaProviderConfig = $QuotaRegistry.providers.$betaProvider
+                if (
+                    $betaTier -and
+                    (Test-ObjectProperty -Object $betaProviderConfig -Name "models") -and
+                    $betaProviderConfig.models -and
+                    $betaProviderConfig.models.$betaTier
+                ) {
+                    $codexModel = [string]$betaProviderConfig.models.$betaTier.name
+                }
+                Write-Host "[DELIB] Starte sichtbare Codex-Session (QA Manager Fallback): $TaskType (Model: $codexModel)" -ForegroundColor Cyan
 
                 $betaResult = Invoke-AutopilotCodexSession `
                     -SessionType $TaskType `
@@ -799,9 +879,11 @@ function Invoke-DualCeoTask {
                     -VisibleExecTerminal `
                     -DryRun:$DryRun
 
-                Register-ProviderCall -Registry $QuotaRegistry -ProviderName $betaProvider -ModelTier $betaTier
+                if (-not $DryRun.IsPresent) {
+                    Register-ProviderCall -Registry $QuotaRegistry -ProviderName $betaProvider -ModelTier $betaTier
+                }
 
-                $finalOutput = ""
+                $finalOutput = if (Test-ObjectProperty -Object $betaResult -Name "Output") { [string]$betaResult.Output } else { "" }
                 $isSuccess = [bool]((Test-ObjectProperty -Object $betaResult -Name "Success") -and $betaResult.Success)
                 if ($isSuccess) {
                     if ((Test-ObjectProperty -Object $betaResult -Name "OutputPath") -and $betaResult.OutputPath -and (Test-Path -LiteralPath $betaResult.OutputPath)) {

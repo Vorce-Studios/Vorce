@@ -41,8 +41,10 @@ function formatCost(usd: number): string {
 }
 
 function timeAgo(dateStr: string): string {
+  if (!dateStr) return 'N/A';
   const now = new Date();
   const then = new Date(dateStr);
+  if (Number.isNaN(then.getTime())) return 'N/A';
   const diffMs = now.getTime() - then.getTime();
   const mins = Math.floor(diffMs / 60000);
   if (mins < 1) return 'gerade eben';
@@ -60,8 +62,9 @@ function normalizeAuditText(value?: string): string {
   const oldCeoLabel = ['Alpha', 'CEO'].join(' ');
   const oldCeoLabelAlt = ['CEO', 'Alpha'].join(' ');
   return value
-    .replace(new RegExp(oldQaLabel, 'gi'), 'QA-Auditor')
-    .replace(new RegExp(oldQaLabelAlt, 'gi'), 'QA-Auditor')
+    .replace(new RegExp(oldQaLabel, 'gi'), 'QA Manager')
+    .replace(new RegExp(oldQaLabelAlt, 'gi'), 'QA Manager')
+    .replace(/QA-Auditor/gi, 'QA Manager')
     .replace(new RegExp(oldCeoLabel, 'gi'), 'CEO')
     .replace(new RegExp(oldCeoLabelAlt, 'gi'), 'CEO')
     .replace(/beta_/gi, 'qa_');
@@ -77,14 +80,14 @@ function auditOwnerLabel(owner?: string): string {
   const value = (owner || '').toLowerCase();
   if (value === 'user') return 'Du';
   if (value.includes('alpha') || value === 'ceo') return 'CEO';
-  return 'QA-Auditor';
+  return 'QA Manager';
 }
 
 function auditStageLabel(alert: any): string {
   const owner = auditOwnerLabel(alert.owner);
   if (owner === 'Du' || alert.escalation_level === 'user') return 'Wartet auf deine Entscheidung';
   if (owner === 'CEO') return 'CEO-Sondersession';
-  return 'QA-Auditor repariert';
+  return 'QA Manager repariert';
 }
 
 async function updateAuditAlert(action: string, id: string, response?: string) {
@@ -192,15 +195,11 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   ).length : 0;
   const waitingJulesSessions = julesSessions ? julesSessions.filter(s =>
       String(s.repo || '') === 'Vorce-Studios/Vorce' &&
-      ['AWAITING_USER_FEEDBACK', 'PAUSED'].includes(String(s.state || ''))
+      ['AWAITING_USER_FEEDBACK', 'AWAITING_USER_FEEDBACK_CI_OR_BLOCKER', 'PAUSED'].includes(String(s.state || ''))
     ).length : Number(julesUsage.scoped_live_waiting_sessions ?? julesUsage.pending_sessions ?? 0);
-  const activeJulesSessions = waitingJulesSessions || Number(
-    julesUsage.scoped_live_waiting_sessions ??
-    julesUsage.pending_sessions ??
-    julesUsage.scoped_live_capacity_sessions ??
-    julesUsage.active_sessions ??
-    runningJulesSessions
-  );
+  const activeJulesSessions = julesSessions
+    ? runningJulesSessions + waitingJulesSessions
+    : Number(julesUsage.scoped_live_capacity_sessions ?? julesUsage.active_sessions ?? 0);
 
   // Filter PRs that are OPEN and NOT a Draft and belong to Vorce repo
   const openPRs = pullRequests.filter(pr => pr.repo?.includes('Vorce') && pr.state === 'OPEN' && pr.isDraft !== true).length;
@@ -303,7 +302,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
               <div key={id} className="bg-slate-950/50 border border-rose-500/20 rounded-lg p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                   <div>
-                    <div className="font-semibold text-rose-200">{normalizeAuditText(alert.topic || 'QA-Auditor Alert')}</div>
+                    <div className="font-semibold text-rose-200">{normalizeAuditText(alert.topic || 'QA Manager Alert')}</div>
                     <div className="text-xs text-rose-300/70 mt-0.5">
                       Zuständig: {owner} · {auditStageLabel(alert)} · {timeAgo(alert.created_at)}
                     </div>
@@ -318,7 +317,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 mb-3">
-                  {['QA-Auditor', 'CEO', 'Du'].map((label, stepIdx) => (
+                  {['QA Manager', 'CEO', 'Du'].map((label, stepIdx) => (
                     <div key={label} className={`h-1.5 rounded-full ${stepIdx <= activeStep ? 'bg-rose-400' : 'bg-slate-800'}`} title={label} />
                   ))}
                 </div>
@@ -329,7 +328,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
                     <div className="text-slate-200 whitespace-pre-wrap">{shortText(alert.context)}</div>
                   </div>
                   <div className="rounded-md bg-slate-900/70 border border-slate-800 p-3">
-                    <div className="uppercase text-amber-300/70 text-[10px] mb-1">QA-Auditor Versuch</div>
+                    <div className="uppercase text-amber-300/70 text-[10px] mb-1">QA Manager Versuch</div>
                     <div className="text-slate-300 whitespace-pre-wrap">
                       {shortText(alert.remediation_command || alert.remediation_result || 'Noch kein dokumentierter Reparaturversuch.')}
                     </div>
@@ -396,6 +395,8 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
         <LiveLogPanel items={liveLogItems} />
         <WorkingSessionsPanel sessions={sessions.working_sessions || []} />
       </div>
+
+      <ReviewQueuePanel queue={sessions.review_queue || []} />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -514,6 +515,37 @@ function getNextOptimizerRun(lastRun?: any, lastOptimizerAt?: string): string {
   if (Number.isNaN(next.getTime())) return '';
   next.setHours(next.getHours() + 12);
   return next.toISOString();
+}
+
+function ReviewQueuePanel({ queue }: { queue: ActiveSessions['review_queue'] }) {
+  const pending = queue.filter(item => item.review_status === 'pending');
+  return (
+    <div className="glass-card p-5 border border-slate-800">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+          <GitPullRequest className="text-emerald-400 w-4 h-4" />
+          Claude Code Review Queue
+        </h3>
+        <span className="text-xs text-slate-400">{pending.length} ausstehend</span>
+      </div>
+      {pending.length === 0 ? (
+        <div className="text-xs text-slate-500">Keine PRs warten auf Review.</div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {pending.map(item => (
+            <a key={`${item.issue_number}-${item.pr_number}`} href={item.pr_url} target="_blank" rel="noreferrer"
+              className="border border-slate-800 bg-slate-950/45 rounded p-3 hover:border-emerald-500/40 transition-colors">
+              <div className="flex justify-between gap-3">
+                <span className="text-sm font-medium text-slate-200">PR #{item.pr_number}</span>
+                <span className="text-[11px] text-amber-300">pending</span>
+              </div>
+              <div className="text-xs text-slate-500 mt-1">Issue #{item.issue_number} · Review durch Claude Code</div>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function OptimizerQueuePanel({ queue, lastRun, lastOptimizerAt, forceRequestedAt }: {

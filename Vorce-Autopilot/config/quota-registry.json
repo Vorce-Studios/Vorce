@@ -458,18 +458,16 @@
   "routing_rules": {
     "monitoring": [
       "gemini_cli:cheap",
+      "claude_code:balanced",
       "codex_orchestrator:monitoring"
     ],
     "simple_review": [
-      "gemini_cli:cheap"
+      "claude_code:balanced"
     ],
     "code_review": [
-      "gemini_cli:balanced",
-      "claude_code:balanced",
-      "cline_cli:default"
+      "claude_code:balanced"
     ],
     "complex_review": [
-      "gemini_cli:premium",
       "claude_code:balanced"
     ],
     "planning": [

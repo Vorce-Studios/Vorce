@@ -9,7 +9,8 @@ function Get-GitHubIssues {
 
     $issuesRaw = gh issue list --repo $Repository --state open --json number,title,labels,assignees,body --limit $Limit 2>&1
     if ($LASTEXITCODE -ne 0) {
-        throw "GitHub Issue-List fehlgeschlagen: $issuesRaw"
+        Write-Warning "GitHub Issue-List fehlgeschlagen: $issuesRaw"
+        return @()
     }
 
     if ([string]::IsNullOrWhiteSpace($issuesRaw)) {
@@ -20,13 +21,32 @@ function Get-GitHubIssues {
     return @($issues)
 }
 
+function Get-AllGitHubIssues {
+    param(
+        [Parameter(Mandatory)][string]$Repository,
+        [int]$Limit = 1000
+    )
+
+    $issuesRaw = gh issue list --repo $Repository --state all --json number,title,labels,assignees,body,state --limit $Limit 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "GitHub Issue-Gesamtliste fehlgeschlagen: $issuesRaw"
+        return @()
+    }
+    if ([string]::IsNullOrWhiteSpace($issuesRaw)) { return @() }
+    return @($issuesRaw | Out-String | ConvertFrom-Json)
+}
+
 function New-GitHubIssue {
     param(
         [Parameter(Mandatory)][string]$Repository,
         [Parameter(Mandatory)][string]$Title,
-        [Parameter(Mandatory)][string]$Body,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Body,
         [string[]]$Labels = @()
     )
+
+    if (-not (Test-VorceIssueTitle -Title $Title)) {
+        throw "GitHub Issue-Erstellung blockiert: Titel entspricht nicht der Vorce-Namenskonvention: $Title"
+    }
 
     # Ensure all target labels exist on the repository before creating the issue
     foreach ($lbl in $Labels) {
@@ -39,8 +59,13 @@ function New-GitHubIssue {
         }
     }
 
+    $safeBody = if ([string]::IsNullOrWhiteSpace($Body)) { "Autopilot-created issue. Details were not provided by the planning agent; inspect the linked planning run before delegation." } else { $Body }
     $labelStr = $Labels -join ","
-    $issueUrl = gh issue create --repo $Repository --title $Title --body $Body --label $labelStr 2>&1
+    if ([string]::IsNullOrWhiteSpace($labelStr)) {
+        $issueUrl = gh issue create --repo $Repository --title $Title --body $safeBody 2>&1
+    } else {
+        $issueUrl = gh issue create --repo $Repository --title $Title --body $safeBody --label $labelStr 2>&1
+    }
     if ($LASTEXITCODE -ne 0) {
         throw "GitHub Issue-Erstellung fehlgeschlagen: $issueUrl"
     }
@@ -56,7 +81,8 @@ function Get-GitHubPullRequests {
 
     $prsRaw = gh pr list --repo $Repository --state open --json number,title,headRefName,baseRefName,mergeable,statusCheckRollup,isDraft,url,updatedAt --limit $Limit 2>&1
     if ($LASTEXITCODE -ne 0) {
-        throw "GitHub PR-List fehlgeschlagen: $prsRaw"
+        Write-Warning "GitHub PR-List fehlgeschlagen: $prsRaw"
+        return @()
     }
 
     if ([string]::IsNullOrWhiteSpace($prsRaw)) {

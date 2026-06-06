@@ -186,12 +186,18 @@ function Get-QuotaSummary {
 
 function Test-ObjectProperty {
     param(
-        [Parameter(Mandatory)][object]$Object,
+        [AllowNull()][object]$Object,
         [Parameter(Mandatory)][string]$Name
     )
-    if ($null -eq $Object) { return $false }
-    if ($null -eq $Object.PSObject) { return $false }
-    return $Object.PSObject.Properties.Name -contains $Name
+    if ($null -eq $Object -or [string]::IsNullOrWhiteSpace($Name)) { return $false }
+    try {
+        if ($Object -is [System.Collections.IDictionary]) {
+            return $Object.Contains($Name)
+        }
+        return @($Object.PSObject.Properties | ForEach-Object { $_.Name }) -contains $Name
+    } catch {
+        return $false
+    }
 }
 
 function Set-ProviderUsageSnapshot {

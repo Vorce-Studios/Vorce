@@ -74,6 +74,8 @@ export default function App() {
   const { data: julesSessions, refetch: refetchJulesSessions } = useData<any[]>('/jules-sessions.json', []);
   const { data: memoryStore, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
   const { data: history, loading: historyLoading, refetch: refetchHistory } = useData<any[]>('/data.json', []);
+  const { data: auditResult, refetch: refetchAuditResult } = useData<any>('/audit-result.json', null);
+  const { data: liveLog, refetch: refetchLiveLog } = useData<{ content?: string }>('/live-log.json', {});
 
   const refetchAll = () => {
     refetchConfig();
@@ -85,6 +87,8 @@ export default function App() {
     refetchJulesSessions();
     refetchMemory();
     refetchHistory();
+    refetchAuditResult();
+    refetchLiveLog();
   };
 
   // Auto-refresh every 30 seconds
@@ -95,7 +99,7 @@ export default function App() {
     const renderActivePage = () => {
       switch (activeTab) {
         case 'dashboard':
-          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} />;
+          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} auditResult={auditResult} liveLog={liveLog?.content || ''} />;
         case 'workstreams':
           return <WorkstreamsPage issues={issues} sessions={sessions} pullRequests={pullRequests} julesSessions={julesSessions} projectItems={projectItems?.items || []} />;
         case 'reporting':

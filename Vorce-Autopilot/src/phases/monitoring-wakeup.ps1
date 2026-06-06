@@ -730,11 +730,25 @@ function Invoke-MonitoringWakeUp {
     Start-JulesRefill -State $State -Config $Config -QuotaRegistry $QuotaRegistry -Repository $repo -VarDbDir $VarDbDir -DryRun:$DryRun
 
     # --- Step 3: Process review queue ---
+    foreach ($review in @($State.review_queue)) {
+        $reviewProvider = if (Test-ObjectProperty -Object $review -Name "review_provider") { [string]$review.review_provider } else { "" }
+        if ($review.review_status -eq "completed" -and $reviewProvider -ne "claude_code") {
+            $review.review_status = "pending"
+            $review | Add-Member -MemberType NoteProperty -Name "review_provider" -Value $null -Force
+            Write-Host "[MONITOR]   PR #$($review.pr_number) wird fuer verpflichtendes Claude-Code-Review erneut eingereiht." -ForegroundColor Yellow
+        }
+    }
+
     $pendingReviews = @($State.review_queue | Where-Object { $_.review_status -eq "pending" })
     if ($pendingReviews.Count -gt 0) {
         Write-Host "[MONITOR] $($pendingReviews.Count) PRs im Review-Queue." -ForegroundColor Cyan
 
         foreach ($review in $pendingReviews) {
+            if ($DryRun.IsPresent) {
+                Write-Host "[MONITOR] [DRY RUN] Wuerde Claude-Code-Review fuer PR #$($review.pr_number) starten." -ForegroundColor Yellow
+                continue
+            }
+
             $reviewResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "code_review" -DryRun:$DryRun -State $State -Prompt @"
 Review PR #$($review.pr_number) fuer Issue #$($review.issue_number) im Repository $repo.
 PR URL: $($review.pr_url)
@@ -744,11 +758,15 @@ PR URL: $($review.pr_url)
 3. Antworte mit PASS oder REJECT und einer kurzen Begruendung.
 "@
 
-            if ($reviewResult.success) {
+            if ($reviewResult.success -and [string]$reviewResult.provider -eq "claude_code") {
                 $review.review_status = "completed"
+                $review | Add-Member -MemberType NoteProperty -Name "review_provider" -Value "claude_code" -Force
                 Write-Host "[MONITOR]   Review fuer PR #$($review.pr_number) abgeschlossen via $($reviewResult.provider)." -ForegroundColor Green
+            } elseif ($reviewResult.success) {
+                $review.review_status = "pending"
+                Write-Warning "[MONITOR]   Review fuer PR #$($review.pr_number) via $($reviewResult.provider) wird nicht als Merge-Freigabe akzeptiert; Claude Code ist verpflichtend."
             } else {
-                Write-Host "[MONITOR]   Review fuer PR #$($review.pr_number) fehlgeschlagen." -ForegroundColor Red
+                Write-Warning "[MONITOR]   Review fuer PR #$($review.pr_number) fehlgeschlagen: $(Format-AutopilotTaskFailure -Result $reviewResult)"
             }
         }
     }
