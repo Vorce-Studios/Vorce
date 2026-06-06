@@ -454,7 +454,7 @@ impl TimelineV2 {
                     if ui.button("Jump").clicked() {
                         jump_to_block = Some((block.start_time, block.id));
                     }
-                    if ui.button("X").clicked() {
+                    if ui.button("✕").on_hover_text("Remove Block").clicked() {
                         remove_block_id = Some(block.id);
                     }
                 });
