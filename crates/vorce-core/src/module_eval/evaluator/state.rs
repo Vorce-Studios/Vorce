@@ -7,8 +7,8 @@ use crate::audio::analyzer_v2::AudioAnalysisV2;
 use crate::audio_reactive::AudioTriggerData;
 use crate::module::ModulePartId;
 
-use crate::module_eval::types::*;
 use super::ModuleEvalResult;
+use crate::module_eval::types::*;
 
 /// The evaluator traverses the module graph and computes output values.
 pub struct ModuleEvaluator {
@@ -50,13 +50,11 @@ pub struct ModuleEvaluator {
     pub(crate) current_dt: f32,
 }
 
-
 impl Default for ModuleEvaluator {
     fn default() -> Self {
         Self::new()
     }
 }
-
 
 impl ModuleEvaluator {
     /// Create a new module evaluator

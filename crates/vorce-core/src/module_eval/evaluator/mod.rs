@@ -1,6 +1,6 @@
 mod smoothing;
-mod traversal;
 mod state;
+mod traversal;
 mod triggers;
 
 pub use state::ModuleEvaluator;
@@ -315,7 +315,7 @@ impl ModuleEvaluator {
                             op.output_part_id = part.id;
                             op.output_type = output_type.clone();
                             op.layer_part_id = layer_part.id;
-                            op.opacity = opacity * link_opacity;
+                            op.opacity = *opacity * link_opacity;
                             op.blend_mode = *blend_mode;
                             op.mapping_mode = *mapping_mode;
                             self.trace_chain_into(layer_part.id, module, &mut op, mesh, &indices);
@@ -542,8 +542,8 @@ pub enum SourceCommand {
 
 #[cfg(test)]
 mod evaluator_tests {
-    use crate::audio::analyzer_v2::AudioAnalysisV2;
     use super::*;
+    use crate::audio::analyzer_v2::AudioAnalysisV2;
     use crate::module::{
         AudioTriggerOutputConfig, ModulePartType, SourceType, TriggerType, VorceModule,
     };
