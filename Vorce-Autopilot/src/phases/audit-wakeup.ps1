@@ -78,7 +78,7 @@ function Invoke-AuditWakeUp {
             if ($stepResult.success) {
                 $auditContext += "`n### Ergebnis $($step.label):`n$($stepResult.output)`n"
             } else {
-                Write-Warning "[AUDIT] Schritt $($step.label) fehlgeschlagen."
+                Write-Warning "[AUDIT] Schritt $($step.label) fehlgeschlagen: $(Format-AutopilotTaskFailure -Result $stepResult)"
             }
         }
     }
@@ -121,7 +121,7 @@ Antworte strikt im JSON-Format:
 }
 "@
 
-    Write-Host "[AUDIT] Sende Audit-Anfrage an CEO Beta (Gemini)..." -ForegroundColor Cyan
+    Write-Host "[AUDIT] Sende Audit-Anfrage an QA Manager (Gemini)..." -ForegroundColor Cyan
 
     $ToolsDir = Join-Path $ScriptDir "tools"
     $runVisibleCmd = Join-Path $ToolsDir "run-visible-ceo-phase.ps1"
@@ -170,7 +170,7 @@ Antworte strikt im JSON-Format:
                     }
 
                     if ($null -ne $parsedObj -and $parsedObj.issues_found -eq $true) {
-                        Write-Host "[AUDIT] CEO Beta hat Probleme gefunden!" -ForegroundColor Yellow
+                        Write-Host "[AUDIT] QA Manager hat Probleme gefunden!" -ForegroundColor Yellow
 
                         if ($parsedObj.action -eq "remediate" -and -not [string]::IsNullOrWhiteSpace($parsedObj.remediation_command)) {
                             Write-Host "[AUDIT] Fuehre Remediation-Befehl aus: $($parsedObj.remediation_command)" -ForegroundColor Cyan
@@ -187,7 +187,7 @@ Antworte strikt im JSON-Format:
                                 })
                             }
                         } elseif ($parsedObj.action -eq "escalate") {
-                            Write-Host "[AUDIT] CEO Beta eskaliert zum Dashboard." -ForegroundColor Red
+                            Write-Host "[AUDIT] QA Manager eskaliert zum Dashboard." -ForegroundColor Red
                             $State.decisions_pending += @([ordered]@{
                                 topic      = "QA Manager Audit Alert"
                                 context    = $parsedObj.dashboard_escalation
@@ -195,7 +195,7 @@ Antworte strikt im JSON-Format:
                             })
                         }
                     } else {
-                        Write-Host "[AUDIT] CEO Beta meldet: Keine gravierenden Probleme gefunden." -ForegroundColor Green
+                        Write-Host "[AUDIT] QA Manager meldet: Keine gravierenden Probleme gefunden." -ForegroundColor Green
                     }
                 } catch {
                     Write-Warning "[AUDIT] Konnte Audit-Ergebnis nicht parsen: $_"

@@ -9,7 +9,8 @@ function Get-GitHubIssues {
 
     $issuesRaw = gh issue list --repo $Repository --state open --json number,title,labels,assignees,body --limit $Limit 2>&1
     if ($LASTEXITCODE -ne 0) {
-        throw "GitHub Issue-List fehlgeschlagen: $issuesRaw"
+        Write-Warning "GitHub Issue-List fehlgeschlagen: $issuesRaw"
+        return @()
     }
 
     if ([string]::IsNullOrWhiteSpace($issuesRaw)) {
@@ -28,7 +29,8 @@ function Get-AllGitHubIssues {
 
     $issuesRaw = gh issue list --repo $Repository --state all --json number,title,labels,assignees,body,state --limit $Limit 2>&1
     if ($LASTEXITCODE -ne 0) {
-        throw "GitHub Issue-Gesamtliste fehlgeschlagen: $issuesRaw"
+        Write-Warning "GitHub Issue-Gesamtliste fehlgeschlagen: $issuesRaw"
+        return @()
     }
     if ([string]::IsNullOrWhiteSpace($issuesRaw)) { return @() }
     return @($issuesRaw | Out-String | ConvertFrom-Json)
@@ -79,7 +81,8 @@ function Get-GitHubPullRequests {
 
     $prsRaw = gh pr list --repo $Repository --state open --json number,title,headRefName,baseRefName,mergeable,statusCheckRollup,isDraft,url,updatedAt --limit $Limit 2>&1
     if ($LASTEXITCODE -ne 0) {
-        throw "GitHub PR-List fehlgeschlagen: $prsRaw"
+        Write-Warning "GitHub PR-List fehlgeschlagen: $prsRaw"
+        return @()
     }
 
     if ([string]::IsNullOrWhiteSpace($prsRaw)) {

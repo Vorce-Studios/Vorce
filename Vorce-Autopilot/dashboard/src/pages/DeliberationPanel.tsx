@@ -71,7 +71,7 @@ export default function DeliberationPanel({ deliberations }: Props) {
             <Users className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-200">Dual-CEO Deliberation (CEO & QA-Auditor Chat)</h3>
+            <h3 className="text-sm font-semibold text-slate-200">CEO & QA Manager Deliberation</h3>
             <p className="text-[10px] text-slate-500">Letzte {recent.length} von {totalCount} gesamt &bull; Klicke zum Ausklappen des Chats</p>
           </div>
         </div>
@@ -166,7 +166,7 @@ export default function DeliberationPanel({ deliberations }: Props) {
                           <div className="flex items-center justify-between text-[9px] px-1">
                             <span className={`font-semibold flex items-center gap-1.5 ${isAlpha ? 'text-cyan-400' : 'text-purple-400'}`}>
                               <span className={`w-1.5 h-1.5 rounded-full ${isAlpha ? 'bg-cyan-400' : 'bg-purple-400'}`}></span>
-                              {isAlpha ? `CEO (${providerName})` : `QA-Auditor (${providerName})`}
+                              {isAlpha ? `CEO (${providerName})` : `QA Manager (${providerName})`}
                             </span>
                             <span className="text-slate-500 font-mono">
                               {phaseLabel} &bull; {round.duration_ms}ms

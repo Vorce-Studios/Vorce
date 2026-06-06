@@ -24,6 +24,13 @@ function readJsonFile(filePath: string, fallback: any = null): any {
   return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 }
 
+function serveFirstJson(res: any, candidates: string[], fallback: unknown): void {
+  const filePath = candidates.find(candidate => fs.existsSync(candidate));
+  const data = filePath ? readJsonFile(filePath, fallback) : fallback;
+  res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+  res.end(JSON.stringify(data, null, 2));
+}
+
 function getRepository(): string {
   try {
     const configPath = path.resolve(__dirname, '../config/autopilot-config.json');
@@ -44,18 +51,15 @@ export default defineConfig({
       name: 'api-middleware',
       configureServer(server) {
         server.middlewares.use((req: any, res: any, next: any) => {
-          if (req.method === 'GET' && req.url === '/active-sessions.json') {
+          if (req.method === 'GET' && req.url === '/api/health') {
+            res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+            res.end(JSON.stringify({ service: 'vorce-autopilot-dashboard', root: path.resolve(__dirname, '..'), schema: 2 }));
+          } else if (req.method === 'GET' && req.url === '/active-sessions.json') {
             try {
-              const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
-              const statePath = fs.existsSync(publicStatePath) ? publicStatePath : path.resolve(__dirname, '../var/db/autopilot-state.json');
-              if (fs.existsSync(statePath)) {
-                const stateContent = fs.readFileSync(statePath, 'utf-8');
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(stateContent);
-              } else {
-                res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'active-sessions.json not found' }));
-              }
+              serveFirstJson(res, [
+                path.resolve(__dirname, '../var/db/active-sessions.json'),
+                path.resolve(__dirname, '../var/db/autopilot-state.json'),
+              ], {});
             } catch (err) {
               res.writeHead(500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
@@ -95,34 +99,63 @@ export default defineConfig({
               res.writeHead(500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
             }
-          } else if (req.method === 'GET' && req.url === '/registry.json') {
+          } else if (req.method === 'GET' && (req.url === '/registry.json' || req.url === '/quota-registry.json')) {
             try {
-              const registryPath = path.resolve(__dirname, '../var/db/quota-registry.json');
-              if (fs.existsSync(registryPath)) {
-                const registryContent = fs.readFileSync(registryPath, 'utf-8');
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(registryContent);
-              } else {
-                res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'quota-registry.json not found' }));
-              }
+              serveFirstJson(res, [
+                path.resolve(__dirname, '../var/db/registry.json'),
+                path.resolve(__dirname, '../var/db/quota-registry.json'),
+                path.resolve(__dirname, '../config/quota-registry.json'),
+              ], {});
             } catch (err) {
               res.writeHead(500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
             }
           } else if (req.method === 'GET' && req.url === '/jules-sessions.json') {
             try {
-              const livePath = path.resolve(__dirname, '../var/db/jules-sessions.json');
-              const fallbackPath = path.resolve(__dirname, './jules-sessions.json');
-              const sessionPath = fs.existsSync(livePath) ? livePath : fallbackPath;
-              if (fs.existsSync(sessionPath)) {
-                const sessionContent = fs.readFileSync(sessionPath, 'utf-8');
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(sessionContent);
-              } else {
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify([]));
-              }
+              serveFirstJson(res, [
+                path.resolve(__dirname, '../var/db/jules-sessions.json'),
+                path.resolve(__dirname, './jules-sessions.json'),
+              ], []);
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+            }
+          } else if (req.method === 'GET' && req.url === '/project-items.json') {
+            try {
+              serveFirstJson(res, [
+                path.resolve(__dirname, '../var/db/project-items.json'),
+                path.resolve(__dirname, './project-items.json'),
+              ], { items: [] });
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+            }
+          } else if (req.method === 'GET' && req.url === '/data.json') {
+            try {
+              serveFirstJson(res, [
+                path.resolve(__dirname, '../var/db/data.json'),
+                path.resolve(__dirname, './data.json'),
+              ], []);
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+            }
+          } else if (req.method === 'GET' && req.url === '/audit-result.json') {
+            try {
+              serveFirstJson(res, [
+                path.resolve(__dirname, '../var/db/beta-audit-result.json'),
+                path.resolve(__dirname, './audit-result.json'),
+              ], null);
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+            }
+          } else if (req.method === 'GET' && req.url === '/live-log.json') {
+            try {
+              const logPath = path.resolve(__dirname, '../var/log/autopilot-live.log');
+              const content = fs.existsSync(logPath) ? fs.readFileSync(logPath, 'utf-8') : '';
+              res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+              res.end(JSON.stringify({ content }));
             } catch (err) {
               res.writeHead(500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
@@ -139,6 +172,7 @@ export default defineConfig({
                   repos.push('MrLongNight/MapFlow');
                 }
                 let allIssues: any[] = [];
+                let successfulRepos = 0;
                 for (const r of repos) {
                   try {
                     const issuesJson = execSync(
@@ -147,11 +181,13 @@ export default defineConfig({
                     );
                     const parsed = JSON.parse(issuesJson);
                     if (Array.isArray(parsed)) {
+                      successfulRepos++;
                       parsed.forEach((issue: any) => issue.repo = r);
                       allIssues = allIssues.concat(parsed);
                     }
                   } catch (e) {}
                 }
+                if (successfulRepos === 0) throw new Error('No GitHub issue source was available');
                 const responseJson = JSON.stringify(allIssues);
                 issuesCache = responseJson;
                 issuesCacheTime = now;
@@ -159,8 +195,12 @@ export default defineConfig({
                 res.end(responseJson);
               } catch (err) {
                 // Fallback to static public file if GH command fails
-                const fallbackPath = path.resolve(__dirname, './public/github-issues.json');
-                if (fs.existsSync(fallbackPath)) {
+                const fallbackPath = [
+                  path.resolve(__dirname, '../var/db/github-issues.json'),
+                  path.resolve(__dirname, './github-issues.json'),
+                  path.resolve(__dirname, './public/github-issues.json'),
+                ].find(candidate => fs.existsSync(candidate));
+                if (fallbackPath) {
                   const fallbackContent = fs.readFileSync(fallbackPath, 'utf-8');
                   res.writeHead(200, { 'Content-Type': 'application/json' });
                   res.end(fallbackContent);
@@ -182,6 +222,7 @@ export default defineConfig({
                   repos.push('MrLongNight/MapFlow');
                 }
                 let allPRs: any[] = [];
+                let successfulRepos = 0;
                 for (const r of repos) {
                   try {
                     const prsJson = execSync(
@@ -190,11 +231,13 @@ export default defineConfig({
                     );
                     const parsed = JSON.parse(prsJson);
                     if (Array.isArray(parsed)) {
+                      successfulRepos++;
                       parsed.forEach((pr: any) => pr.repo = r);
                       allPRs = allPRs.concat(parsed);
                     }
                   } catch (e) {}
                 }
+                if (successfulRepos === 0) throw new Error('No GitHub PR source was available');
                 const responseJson = JSON.stringify(allPRs);
                 prsCache = responseJson;
                 prsCacheTime = now;
@@ -202,8 +245,12 @@ export default defineConfig({
                 res.end(responseJson);
               } catch (err) {
                 // Fallback to static public file if GH command fails
-                const fallbackPath = path.resolve(__dirname, './public/pull-requests.json');
-                if (fs.existsSync(fallbackPath)) {
+                const fallbackPath = [
+                  path.resolve(__dirname, '../var/db/pull-requests.json'),
+                  path.resolve(__dirname, './pull-requests.json'),
+                  path.resolve(__dirname, './public/pull-requests.json'),
+                ].find(candidate => fs.existsSync(candidate));
+                if (fallbackPath) {
                   const fallbackContent = fs.readFileSync(fallbackPath, 'utf-8');
                   res.writeHead(200, { 'Content-Type': 'application/json' });
                   res.end(fallbackContent);

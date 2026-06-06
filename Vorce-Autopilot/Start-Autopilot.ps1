@@ -351,8 +351,10 @@ function Test-DashboardHealth {
     while ((Get-Date) -lt $deadline) {
         try {
             $index = Invoke-WebRequest -Uri "http://127.0.0.1:5173" -UseBasicParsing -TimeoutSec 3
-            $localhost = Invoke-WebRequest -Uri "http://localhost:5173" -UseBasicParsing -TimeoutSec 3
-            if ($index.StatusCode -eq 200 -and $localhost.StatusCode -eq 200) {
+            $health = Invoke-RestMethod -Uri "http://127.0.0.1:5173/api/health" -TimeoutSec 3
+            $expectedRoot = [System.IO.Path]::GetFullPath($ScriptDir).TrimEnd('\')
+            $actualRoot = [System.IO.Path]::GetFullPath([string]$health.root).TrimEnd('\')
+            if ($index.StatusCode -eq 200 -and [string]$health.service -eq "vorce-autopilot-dashboard" -and [int]$health.schema -ge 2 -and $actualRoot -eq $expectedRoot) {
                 return $true
             }
         } catch {
@@ -361,6 +363,18 @@ function Test-DashboardHealth {
     }
 
     return $false
+}
+
+function Stop-LocalPortOwner {
+    param([Parameter(Mandatory)][int]$Port)
+
+    $owners = @(Get-NetTCPConnection -State Listen -LocalPort $Port -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique)
+    foreach ($ownerPid in $owners) {
+        if ([int]$ownerPid -gt 0 -and [int]$ownerPid -ne $PID) {
+            Write-InitStatus "[INIT] Beende veralteten Prozess auf Port $Port (PID $ownerPid)." -Color Yellow
+            Stop-Process -Id ([int]$ownerPid) -Force -ErrorAction SilentlyContinue
+        }
+    }
 }
 
 $PowerShellHost = Resolve-PowerShellHost
@@ -401,7 +415,14 @@ if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
     if (Test-DashboardHealth -TimeoutSeconds 5) {
         Write-InitStatus "[INIT] Dashboard Web-Server laeuft bereits und antwortet auf http://127.0.0.1:5173." -Color DarkGray
     } else {
-        Write-InitStatus "[INIT] Port 5173 ist belegt, aber Dashboard antwortet nicht sauber." -Color Yellow -Level "WARN"
+        Write-InitStatus "[INIT] Port 5173 wird von einem veralteten oder falschen Dashboard belegt." -Color Yellow -Level "WARN"
+        Stop-LocalPortOwner -Port 5173
+        Wait-LocalPortFree -Port 5173 | Out-Null
+        $dashboardProcess = Start-Process $PowerShellHost -ArgumentList @("-NoExit", "-NoProfile", "-Command", "Set-Location -LiteralPath '$DashboardDir'; npm run dev -- --host 0.0.0.0") -WindowStyle Hidden -PassThru
+        Register-StartedAutopilotProcess -Process $dashboardProcess -Role "dashboard"
+        if (-not (Test-DashboardHealth -TimeoutSeconds 20)) {
+            throw "Aktuelles Dashboard konnte nach dem Austausch des veralteten Prozesses nicht gestartet werden."
+        }
     }
 } else {
     try {

@@ -189,12 +189,12 @@ function Invoke-PlanningWakeUp {
             $issueTitle = [string]$escIssue.issue_title
             $lastSessionId = [string]$escIssue.last_jules_session_id
 
-            Write-Host "[PLANNING] Re-Planning fuer eskaliertes Issue #$issueNum ($issueTitle) via CEO + QA-Auditor Deliberation..." -ForegroundColor Yellow
+            Write-Host "[PLANNING] Re-Planning fuer eskaliertes Issue #$issueNum ($issueTitle) via CEO + QA Manager Deliberation..." -ForegroundColor Yellow
 
             $promptText = @"
 Das Issue #$issueNum ("$issueTitle") wurde an Jules delegiert (letzte Session: $lastSessionId), ist aber im Monitoring-Modus fehlgeschlagen oder hängengeblieben (Timeout/Fehler).
 
-Deine Rolle: Analysiere diese Eskalation im CEO + QA-Auditor Team.
+Deine Rolle: Analysiere diese Eskalation im CEO + QA Manager Team.
 Erstelle eine neue, präzisere Handlungsanweisung (Prompt-Ergänzung oder überarbeitete Issue-Beschreibung), um Jules beim nächsten Versuch erfolgreich zu leiten.
 Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
 "@
@@ -415,7 +415,7 @@ Prioritaet: KRITISCH - blockiert Release-Pipeline.
                     }
                 }
             } else {
-                Write-Warning "[PLANNING] Schritt $($step.label) fehlgeschlagen."
+                Write-Warning "[PLANNING] Schritt $($step.label) fehlgeschlagen: $(Format-AutopilotTaskFailure -Result $stepResult)"
             }
         }
     } else {

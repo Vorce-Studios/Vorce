@@ -36,12 +36,12 @@ function Add-SchedulerSnapshot {
     $lastMonitoring = $null
     try {
         if (-not [string]::IsNullOrWhiteSpace([string]$State.last_planning_at)) {
-            $lastPlanning = [datetimeoffset]::Parse([string]$State.last_planning_at).LocalDateTime
+            $lastPlanning = [datetimeoffset]::Parse([string]$State.last_planning_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
         }
     } catch { }
     try {
         if (-not [string]::IsNullOrWhiteSpace([string]$State.last_monitoring_at)) {
-            $lastMonitoring = [datetimeoffset]::Parse([string]$State.last_monitoring_at).LocalDateTime
+            $lastMonitoring = [datetimeoffset]::Parse([string]$State.last_monitoring_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
         }
     } catch { }
 
@@ -67,6 +67,37 @@ function Add-SchedulerSnapshot {
     return $State
 }
 
+function Invoke-BoundedTelemetrySync {
+    param(
+        [Parameter(Mandatory)][object]$Registry,
+        [AllowNull()][object]$Config,
+        [Parameter(Mandatory)][string]$StatePath,
+        [int]$TimeoutSeconds = 30
+    )
+
+    $managerPath = Join-Path $ScriptDir "src/lib/telemetry-manager.ps1"
+    $job = Start-Job -ScriptBlock {
+        param($TelemetryManagerPath, $InputRegistry, $InputConfig, $InputStatePath)
+        . $TelemetryManagerPath
+        Sync-AutopilotTelemetry -Registry $InputRegistry -Config $InputConfig -StatePath $InputStatePath
+    } -ArgumentList $managerPath, $Registry, $Config, $StatePath
+
+    try {
+        $null = Wait-Job -Job $job -Timeout $TimeoutSeconds
+        if ($job.State -eq "Completed") {
+            $result = Receive-Job -Job $job
+            if ($null -ne $result) { return $result }
+        } else {
+            Write-Warning "[STATS] Telemetrie-Sync nach $TimeoutSeconds Sekunden abgebrochen; verwende letzten Registry-Stand."
+        }
+    } finally {
+        Stop-Job -Job $job -ErrorAction SilentlyContinue
+        Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+    }
+
+    return $Registry
+}
+
 Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host " VORCE AUTOPILOT - Persistent Dashboard Sync (Optimized)" -ForegroundColor Cyan
 Write-Host "=====================================" -ForegroundColor Cyan
@@ -75,12 +106,25 @@ Write-Host "[STATS] Sync Loop gestartet (Ctrl+C zum Beenden)..."
 while ($true) {
     try {
         $registry = Read-QuotaRegistry
-        $registry = Sync-AutopilotTelemetry -Registry $registry -Config $Config -StatePath $StatePath
+
+        # Export operational state before slower telemetry and API collection.
+        if (Test-Path $StatePath) {
+            $quickState = Read-JsonLocked -Path $StatePath
+            if ($null -ne $quickState) {
+                $quickState = Add-SchedulerSnapshot -State $quickState -Config $Config
+                Write-JsonLocked -Path (Join-Path $VarDbDir "active-sessions.json") -Data $quickState | Out-Null
+            }
+        }
+        Write-JsonLocked -Path (Join-Path $VarDbDir "registry.json") -Data $registry | Out-Null
+
+        $registry = Invoke-BoundedTelemetrySync -Registry $registry -Config $Config -StatePath $StatePath
         $currentDate = Get-Date -Format "yyyy-MM-dd"
         $reportDate = if (-not [string]::IsNullOrWhiteSpace($registry.last_reset_date)) { $registry.last_reset_date } else { $currentDate }
 
-        # --- DB Sync ---
-        foreach ($prop in $registry.providers.PSObject.Properties) {
+        # Historical reporting must not block operational dashboard snapshots.
+        try {
+          # --- DB Sync ---
+          foreach ($prop in $registry.providers.PSObject.Properties) {
             $providerName = $prop.Name
             $provider = $prop.Value
             Initialize-ProviderUsageToday -Provider $provider
@@ -115,14 +159,17 @@ while ($true) {
                     Save-DailyUsage -Date $reportDate -ProviderName $providerName -ModelName $modelName -Calls $calls -CostUsd $cost -InputTokens $inputTokens -OutputTokens $outputTokens -CachedTokens $cachedTokens -ReasoningTokens $reasoningTokens -ToolTokens $toolTokens -DurationMs $durationMs
                 }
             }
-        }
+          }
 
-        # --- File Export (write directly to var/db for dashboard proxy) ---
-        $DbPath = Join-Path $VarDbDir "historical-quota-db.json"
-        if (Test-Path $DbPath) {
-            $db = Read-JsonLocked -Path $DbPath
-            if ($null -eq $db) { $db = @() }
-            Write-JsonLocked -Path (Join-Path $VarDbDir "data.json") -Data @($db) | Out-Null
+          # --- File Export (write directly to var/db for dashboard proxy) ---
+          $DbPath = Join-Path $VarDbDir "historical-quota-db.json"
+          if (Test-Path $DbPath) {
+              $db = Read-JsonLocked -Path $DbPath
+              if ($null -eq $db) { $db = @() }
+              Write-JsonLocked -Path (Join-Path $VarDbDir "data.json") -Data @($db) | Out-Null
+          }
+        } catch {
+          Write-Warning "[STATS] Historischer Quota-Sync fehlgeschlagen; operative Dashboard-Daten werden trotzdem aktualisiert: $($_.Exception.Message)"
         }
 
         if (Test-Path $StatePath) {
@@ -205,7 +252,18 @@ while ($true) {
                     $jList = @()
                     foreach ($s in $jSessions) {
                         $stateName = [string]$s.state
-                        $source = [string]$s.sourceContext.source
+                        $sourceContext = $null
+                        if ($s -is [System.Collections.IDictionary]) {
+                            if ($s.Contains("sourceContext")) { $sourceContext = $s["sourceContext"] }
+                        } elseif ($s.PSObject.Properties["sourceContext"]) {
+                            $sourceContext = $s.sourceContext
+                        }
+                        $source = ""
+                        if ($sourceContext -is [System.Collections.IDictionary]) {
+                            if ($sourceContext.Contains("source")) { $source = [string]$sourceContext["source"] }
+                        } elseif ($null -ne $sourceContext -and $sourceContext.PSObject.Properties["source"]) {
+                            $source = [string]$sourceContext.source
+                        }
                         $repo = if ($source -match "sources/github/(?<name>.*)") { $Matches["name"] } else { $source }
 
                         $issueNum = Get-IssueNumberFromSession -Session $s
@@ -227,7 +285,7 @@ while ($true) {
             } -ArgumentList $jApiKey, $JulesScriptDir
 
             $jobProjectItems = Start-Job -ScriptBlock {
-                $itemsRaw = gh project item-list 1 --owner Vorce-Studios --format json 2>$null
+                $itemsRaw = gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json 2>$null
                 if ($LASTEXITCODE -eq 0 -and $itemsRaw) {
                     $itemsData = $itemsRaw | Out-String | ConvertFrom-Json -ErrorAction SilentlyContinue
                     return $itemsData

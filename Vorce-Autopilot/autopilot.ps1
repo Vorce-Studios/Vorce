@@ -237,7 +237,7 @@ while ($true) {
             $monDue = $false
         }
 
-        # Asynchroner Audit-Lauf durch CEO Beta direkt nach dem Planning
+        # Asynchroner Audit-Lauf durch den QA Manager direkt nach dem Planning
         try {
             Invoke-AuditWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
         } catch {

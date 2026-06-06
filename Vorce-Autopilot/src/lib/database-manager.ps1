@@ -75,12 +75,19 @@ function Save-DailyUsage {
     Update-JsonLocked -Path $DbPath -DefaultValue @() -Updater {
         param($currentData)
 
-        [array]$db = if ($null -eq $currentData) { @() } elseif ($currentData -is [array]) { $currentData } else { @($currentData) }
+        [array]$db = @($currentData | Where-Object { $null -ne $_ })
 
         # Check if entry already exists for this date, provider, and model
         $existingEntry = $null
         for ($i = 0; $i -lt $db.Count; $i++) {
-            if ($db[$i].date -eq $Date -and $db[$i].provider_name -eq $ProviderName -and $db[$i].model_name -eq $ModelName) {
+            if (
+                (Test-ObjectProperty -Object $db[$i] -Name "date") -and
+                (Test-ObjectProperty -Object $db[$i] -Name "provider_name") -and
+                (Test-ObjectProperty -Object $db[$i] -Name "model_name") -and
+                $db[$i].date -eq $Date -and
+                $db[$i].provider_name -eq $ProviderName -and
+                $db[$i].model_name -eq $ModelName
+            ) {
                 $existingEntry = $db[$i]
                 break
             }
@@ -133,8 +140,15 @@ function Clear-DailyUsageForProvider {
     Update-JsonLocked -Path $DbPath -DefaultValue @() -Updater {
         param($currentData)
 
-        [array]$db = if ($null -eq $currentData) { @() } elseif ($currentData -is [array]) { $currentData } else { @($currentData) }
-        $filtered = @($db | Where-Object { -not ($_.date -eq $Date -and $_.provider_name -eq $ProviderName) })
+        [array]$db = @($currentData | Where-Object { $null -ne $_ })
+        $filtered = @($db | Where-Object {
+            -not (
+                (Test-ObjectProperty -Object $_ -Name "date") -and
+                (Test-ObjectProperty -Object $_ -Name "provider_name") -and
+                $_.date -eq $Date -and
+                $_.provider_name -eq $ProviderName
+            )
+        })
         return @($filtered)
     } | Out-Null
 }

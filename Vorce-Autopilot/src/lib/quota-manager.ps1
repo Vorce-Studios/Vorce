@@ -191,6 +191,9 @@ function Test-ObjectProperty {
     )
     if ($null -eq $Object -or [string]::IsNullOrWhiteSpace($Name)) { return $false }
     try {
+        if ($Object -is [System.Collections.IDictionary]) {
+            return $Object.Contains($Name)
+        }
         return @($Object.PSObject.Properties | ForEach-Object { $_.Name }) -contains $Name
     } catch {
         return $false

@@ -413,8 +413,11 @@ function Invoke-AutopilotCodexSession {
             Write-Host "[CODEX] $SessionType-Session erfolgreich beendet. LastMessage=$outputPath" -ForegroundColor Green
             Add-AutopilotJournalEvent -SessionType $SessionType -Message "Codex session completed. Last message: $outputPath"
         } else {
-            $trimmedOutput = ($output.Trim() -replace '\s+', ' ')
-            if ($trimmedOutput.Length -gt 1000) { $trimmedOutput = $trimmedOutput.Substring(0, 1000) + "..." }
+            $outputLines = @($output -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+            $relevantLines = @($outputLines | Where-Object { $_ -match '(?i)\b(error|failed|failure|limit|quota|exceeded|exception|denied)\b' })
+            $displayLines = if ($relevantLines.Count -gt 0) { @($relevantLines | Select-Object -Last 6) } else { @($outputLines | Select-Object -Last 12) }
+            $trimmedOutput = (($displayLines -join " | ") -replace '\s+', ' ').Trim()
+            if ($trimmedOutput.Length -gt 1500) { $trimmedOutput = "..." + $trimmedOutput.Substring($trimmedOutput.Length - 1500) }
             Write-Host "[CODEX] $SessionType-Session FEHLER. ExitCode=$exitCode" -ForegroundColor Red
             if (-not [string]::IsNullOrWhiteSpace($trimmedOutput)) {
                 Write-Host "[CODEX] Fehlerausgabe: $trimmedOutput" -ForegroundColor Red

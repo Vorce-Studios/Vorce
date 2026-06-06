@@ -104,7 +104,28 @@ Assert-True -Condition ($prTitle -eq "PR____M-002_s15_Packaging-Artifact") -Mess
 Assert-True -Condition (-not (Test-VorceIssueTitle -Title "MF-StIs_Old-Title")) -Message "Legacy issue title was incorrectly accepted."
 Assert-True -Condition (-not (Test-VorcePullRequestTitle -Title $subTitle)) -Message "PR title without PR_ was incorrectly accepted."
 
-# 5. Verify Dashboard pages content to ensure merge conflict regressions aren't present
+# 5. Verify runtime helpers and routing fallbacks
+$orderedResult = [ordered]@{ provider = "codex_orchestrator"; error = "CODEX_SESSION_FAILED"; output = "ERROR: usage limit exceeded" }
+Assert-True -Condition (Test-ObjectProperty -Object $orderedResult -Name "provider") -Message "Ordered dictionary properties are not detected."
+$formattedFailure = Format-AutopilotTaskFailure -Result $orderedResult
+Assert-True -Condition ($formattedFailure -match "codex_orchestrator" -and $formattedFailure -match "usage limit") -Message "Task failure details are incomplete."
+
+$quotaConfig = Get-Content (Join-Path $ScriptDir "config\quota-registry.json") -Raw -Encoding UTF8 | ConvertFrom-Json
+Assert-True -Condition (@($quotaConfig.routing_rules.code_review).Count -eq 1 -and $quotaConfig.routing_rules.code_review[0] -eq "claude_code:balanced") -Message "PR reviews are not exclusively routed to Claude Code."
+Assert-True -Condition (@($quotaConfig.routing_rules.monitoring) -contains "claude_code:balanced") -Message "Monitoring has no Claude Code fallback."
+
+$originalDbPath = $DbPath
+$DbPath = Join-Path $env:TEMP "vorce-autopilot-regression-historical-db.json"
+try {
+    "[]" | Set-Content -LiteralPath $DbPath -Encoding UTF8
+    Save-DailyUsage -Date "2026-06-06" -ProviderName "regression" -ModelName "test" -Calls 1 -CostUsd 0 -InputTokens 0 -OutputTokens 0 -CachedTokens 0 -ReasoningTokens 0 -ToolTokens 0 -DurationMs 0
+    Clear-DailyUsageForProvider -Date "2026-06-06" -ProviderName "regression"
+} finally {
+    $DbPath = $originalDbPath
+    Remove-Item -LiteralPath (Join-Path $env:TEMP "vorce-autopilot-regression-historical-db.json") -Force -ErrorAction SilentlyContinue
+}
+
+# 6. Verify Dashboard pages content to ensure merge conflict regressions aren't present
 Assert-FileContains -Path (Join-Path $DashboardDir "src\pages\DashboardPage.tsx") -Patterns @(
     "Tageskosten",
     "Jules Sessions",
@@ -132,7 +153,20 @@ Assert-FileContains -Path $settingsPath -Patterns @(
     "Routing-Regeln"
 )
 
-# 6. Build Dashboard to verify TS/Vite compilation
+$intervalStatsPath = Join-Path $ScriptDir "src\phases\interval-stats.ps1"
+Assert-FileContains -Path $intervalStatsPath -Patterns @(
+    'Write-JsonLocked -Path (Join-Path $VarDbDir "active-sessions.json")',
+    'gh project item-list 1 --owner Vorce-Studios --limit 1000'
+)
+
+$viteConfigPath = Join-Path $DashboardDir "vite.config.ts"
+Assert-FileContains -Path $viteConfigPath -Patterns @(
+    "/api/health",
+    "../var/db/autopilot-state.json",
+    "../var/db/project-items.json"
+)
+
+# 7. Build Dashboard to verify TS/Vite compilation
 if (-not $SkipDashboardBuild.IsPresent) {
     Push-Location $DashboardDir
     try {
