@@ -46,18 +46,7 @@ function Get-VorceConfigPrompt {
         $finalPrompt = $finalPrompt.Replace("`$$key", [string]$Variables[$key])
     }
 
-    $globalRules = @"
-Globale Antwortregel: Beschraenke dich auf wichtige Inhalte, Fakten, betroffene IDs, konkrete Risiken und notwendige Aktionen. Kein Smalltalk, keine Wiederholungen, kein allgemeines Blabla.
-
-Verbindliche Vorce-Namenskonvention:
-- Standard-Issue: `*D**-{dreistellige eindeutige ID}_{Task-Title}`
-- Master-Issue: `M...-{dreistellige eindeutige ID}_{Task-Title}`
-- Sub-Issue: `___M-{dreistellige Parent-Master-ID}_s{fortlaufender nicht aufgefuellter SubIndex}_{Task-Title}`
-- Pull Request: `PR_{vollstaendiger Issue-Titel}`
-- Erzeuge niemals neue Titel mit alten `VOR-`, `__VOR-`, `MF-StIs_`, `_MAIs_` oder `_SubI_` Formaten.
-"@
-
-    return "$globalRules`n`n$finalPrompt"
+    return $finalPrompt
 }
 
 function Get-VorceDashboardDataInstructions {

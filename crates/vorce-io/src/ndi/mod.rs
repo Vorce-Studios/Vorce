@@ -6,7 +6,7 @@
 //! This module provides NDI input (receiving) and output (sending) capabilities
 //! using the grafton-ndi crate which wraps the official NDI SDK.
 
-#[allow(unused_imports)]
+#[cfg(feature = "ndi")]
 use crate::error::{IoError, Result};
 #[cfg(feature = "ndi")]
 use crate::format::{FrameData, PixelFormat as VorcePixelFormat, VideoFormat, VideoFrame};
@@ -62,16 +62,6 @@ impl NdiHandle {
         })?;
         info!("NDI library initialized successfully");
         Ok(Self { ndi: Arc::new(ndi) })
-    }
-
-    /// Probes if the NDI runtime/assets are available without returning an error.
-    /// This attempts to initialize the NDI library and returns a clean boolean.
-    pub fn is_runtime_available() -> bool {
-        let result = NDI::new();
-        if let Err(e) = &result {
-            warn!("NDI runtime availability probe failed: {}", e);
-        }
-        result.is_ok()
     }
 }
 
@@ -142,7 +132,7 @@ impl NdiReceiver {
                 }
 
                 // Poll for frames if connected
-                if let Some(ref mut r) = receiver {
+                if let Some(ref r) = receiver {
                     match r.capture_video(Duration::from_millis(16)) {
                         Ok(v) => {
                             let width = v.width() as u32;
@@ -228,7 +218,6 @@ impl NdiReceiver {
         let sources = finder
             .find_sources(Duration::from_millis(timeout_ms as u64))
             .map_err(|e| IoError::NdiError(e.to_string()))?;
-
         Ok(sources.into_iter().map(|s| s.into()).collect())
     }
 
@@ -284,13 +273,6 @@ impl VideoSource for NdiReceiver {
 
     fn frame_count(&self) -> u64 {
         self.frame_count.load(std::sync::atomic::Ordering::SeqCst)
-    }
-}
-
-#[cfg(feature = "ndi")]
-impl Drop for NdiReceiver {
-    fn drop(&mut self) {
-        let _ = self.receiver_tx.send(ReceiverCommand::Stop);
     }
 }
 
@@ -393,19 +375,6 @@ impl NdiReceiver {
     }
 }
 
-/// Dummy handle when NDI is disabled
-#[cfg(not(feature = "ndi"))]
-pub struct NdiHandle;
-
-/// Probes if the NDI runtime is available
-#[cfg(not(feature = "ndi"))]
-impl NdiHandle {
-    /// Probes if the NDI runtime/assets are available without returning an error.
-    pub fn is_runtime_available() -> bool {
-        false
-    }
-}
-
 #[cfg(not(feature = "ndi"))]
 /// Stub NDI sender implementation when the NDI feature is disabled.
 pub struct NdiSender;
@@ -429,23 +398,4 @@ pub struct NdiSource {
     pub name: String,
     /// Optional address of the NDI source.
     pub address: Option<String>,
-}
-
-#[cfg(test)]
-mod tests {
-    #[allow(unused_imports)]
-    use super::*;
-
-    #[test]
-    fn test_ndi_stub_fallback() {
-        // Smoke test to ensure NdiReceiver stub/real impl can be instantiated (or fails gracefully)
-        #[cfg(not(feature = "ndi"))]
-        {
-            assert!(NdiReceiver::new().is_err());
-            assert!(NdiSender::new("test", crate::format::VideoFormat::hd_1080p60_rgba()).is_err());
-        }
-
-        // Just checking compilation/imports work
-        let _ = 1;
-    }
 }

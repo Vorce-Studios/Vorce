@@ -47,7 +47,6 @@ walkdir = "2.5.0"
 winit = { workspace = true, optional = true }
 
 [dev-dependencies]
-vorce-control = { path = "../vorce-control" }
 proptest = { workspace = true }
 ron = { workspace = true }
 tempfile = "3.27"

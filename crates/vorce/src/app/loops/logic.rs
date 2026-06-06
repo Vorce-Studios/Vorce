@@ -78,16 +78,15 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
 
     // Determine which modules to evaluate based on timeline
     // Update hybrid active triggers from events before running show_module
-    app.ui_state.timeline_panel.state.hybrid_active_triggers.clear();
+    app.ui_state.timeline_panel.hybrid_active_triggers.clear();
     for key in &active_keys {
-        app.ui_state.timeline_panel.state.hybrid_active_triggers.insert(key.clone());
+        app.ui_state.timeline_panel.hybrid_active_triggers.insert(key.clone());
     }
     for msg in &midi_events {
         if let vorce_control::midi::MidiMessage::NoteOn { channel, note, velocity } = msg {
             if *velocity > 0 {
                 app.ui_state
                     .timeline_panel
-                    .state
                     .hybrid_active_triggers
                     .insert(format!("MIDI_{}_{}", channel, note));
             }
@@ -95,13 +94,11 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
     }
     for packet in &osc_packets {
         if let rosc::OscPacket::Message(msg) = packet {
-            app.ui_state.timeline_panel.state.hybrid_active_triggers.insert(msg.addr.clone());
+            app.ui_state.timeline_panel.hybrid_active_triggers.insert(msg.addr.clone());
         }
     }
 
-    let show_module_id = app.ui_state.timeline_panel.state.runtime_show_module(
-        app.ui_state.timeline_panel.show_control_enabled,
-        app.ui_state.timeline_panel.show_mode,
+    let show_module_id = app.ui_state.timeline_panel.runtime_show_module(
         app.state.effect_animator.get_current_time() as f32,
         app.state.effect_animator.is_playing(),
         &all_module_ids,

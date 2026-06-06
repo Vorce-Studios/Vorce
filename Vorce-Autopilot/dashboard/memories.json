@@ -3,7 +3,7 @@
   "memories": [
     {
       "id": "mem-initial-001",
-      "text": "Issue naming convention: Default Issues: DeIs-XXX_Titel, Master Issues: MAIs-XXX_Titel, Sub-Issues: __MAIs-XXX_sYY_Titel.",
+      "text": "Issue naming convention: Master Issues: MF-StMa_IssueTitle, Standard Issues: MF-StIs_IssueTitle, User-created Issues: MF-User_IssueTitle, Sub-Issues: __MF-SubI_IssueTitle.",
       "type": "permanent",
       "priority": "critical",
       "created_at": "2026-06-03T00:10:00Z",

@@ -174,13 +174,8 @@ function Test-ObjectProperty {
     Safely tests if a PSObject has a given property.
     Centralized here so all modules can use it.
     #>
-    param([AllowNull()][object]$Object, [string]$Name)
-    if ($null -eq $Object -or [string]::IsNullOrWhiteSpace($Name)) { return $false }
-    try {
-        return @($Object.PSObject.Properties | ForEach-Object { $_.Name }) -contains $Name
-    } catch {
-        return $false
-    }
+    param([object]$Object, [string]$Name)
+    return $null -ne $Object -and ($Object.PSObject.Properties.Name -contains $Name)
 }
 
 function Update-AutopilotStateObject {

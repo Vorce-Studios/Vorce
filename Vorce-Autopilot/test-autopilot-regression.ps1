@@ -51,7 +51,6 @@ $modules = @(
     "src/lib/telemetry-manager.ps1",
     "src/lib/database-manager.ps1",
     "src/lib/state-manager.ps1",
-    "src/lib/naming-convention.ps1",
     "src/lib/quota-manager.ps1",
     "src/lib/cli-router.ps1",
     "src/lib/memory-store.ps1",
@@ -80,10 +79,7 @@ $requiredCommands = @(
     "Invoke-MonitoringWakeUp",
     "Invoke-AuditWakeUp",
     "Get-GitHubIssues",
-    "Get-AllGitHubIssues",
     "Get-GitHubPullRequests",
-    "Format-VorceIssueTitle",
-    "Format-VorcePullRequestTitle",
     "New-JulesSession",
     "Get-JulesSessionStatus"
 )
@@ -91,20 +87,7 @@ foreach ($commandName in $requiredCommands) {
     Assert-True -Condition ([bool](Get-Command $commandName -ErrorAction SilentlyContinue)) -Message "Required command not loaded: $commandName"
 }
 
-# 4. Verify Vorce naming convention
-$defaultTitle = Format-VorceIssueTitle -Type "default" -Id 1 -Title "Analog Meter Option"
-$masterTitle = Format-VorceIssueTitle -Type "master" -Id 2 -Title "Release 1.0 Readiness Gate"
-$subTitle = Format-VorceIssueTitle -Type "sub_issue" -ParentMasterId 2 -SubIndex 15 -Title "Packaging Artifact"
-$prTitle = Format-VorcePullRequestTitle -IssueTitle $subTitle
-
-Assert-True -Condition ($defaultTitle -eq "*D**-001_Analog-Meter-Option") -Message "Default issue naming convention failed: $defaultTitle"
-Assert-True -Condition ($masterTitle -eq "M...-002_Release-1-0-Readiness-Gate") -Message "Master issue naming convention failed: $masterTitle"
-Assert-True -Condition ($subTitle -eq "___M-002_s15_Packaging-Artifact") -Message "Sub-issue naming convention failed: $subTitle"
-Assert-True -Condition ($prTitle -eq "PR____M-002_s15_Packaging-Artifact") -Message "PR naming convention failed: $prTitle"
-Assert-True -Condition (-not (Test-VorceIssueTitle -Title "MF-StIs_Old-Title")) -Message "Legacy issue title was incorrectly accepted."
-Assert-True -Condition (-not (Test-VorcePullRequestTitle -Title $subTitle)) -Message "PR title without PR_ was incorrectly accepted."
-
-# 5. Verify Dashboard pages content to ensure merge conflict regressions aren't present
+# 4. Verify Dashboard pages content to ensure merge conflict regressions aren't present
 Assert-FileContains -Path (Join-Path $DashboardDir "src\pages\DashboardPage.tsx") -Patterns @(
     "Tageskosten",
     "Jules Sessions",
@@ -132,7 +115,7 @@ Assert-FileContains -Path $settingsPath -Patterns @(
     "Routing-Regeln"
 )
 
-# 6. Build Dashboard to verify TS/Vite compilation
+# 5. Build Dashboard to verify TS/Vite compilation
 if (-not $SkipDashboardBuild.IsPresent) {
     Push-Location $DashboardDir
     try {

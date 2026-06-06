@@ -43,7 +43,7 @@ function Test-AutopilotJulesIssueSafe {
     $bodyText = if ($null -eq $Body) { "" } else { [string]$Body }
 
     if (
-        (Test-VorceMasterIssueTitle -Title $titleText) -or
+        $titleText -match "_MAIs_" -or
         $titleText -match "(?i)Resolve-Merge-Conflicts?|Merge-Konflikt|Merge-Conflict|Konflikt" -or
         $titleText -match "(?i)Release-Readiness|Merge-Reihenfolge|Blocker-Matrix|PRs?[-_\s]*\d|PR-\d"
     ) {
@@ -51,7 +51,7 @@ function Test-AutopilotJulesIssueSafe {
     }
 
     $isTrackerLike = $bodyText -match "(?i)\bMaster-Issue\b|Tracking-PR|Tracker|buendelt|bündelt|Bündelung|Nachverfolgung|Scope-Freeze"
-    $isExplicitSubTask = (Test-VorceSubIssueTitle -Title $titleText) -or (Test-VorceDefaultIssueTitle -Title $titleText)
+    $isExplicitSubTask = $titleText -match "(_SubI_|_StIs_|_User_)"
     if ($isTrackerLike -and -not $isExplicitSubTask) {
         return $false
     }
@@ -141,7 +141,7 @@ function Invoke-PlanningWakeUp {
             $hasExclude = @($labelNames | Where-Object { $excludeSet.Contains($_) }).Count -gt 0
             $title = [string]$_.title
             $body = [string]$_.body
-            $isMasterIssue = Test-VorceMasterIssueTitle -Title $title
+            $isMasterIssue = $title -match "_MAIs_"
 
             $issueNum = [int]$_.number
             $isEscalatedRetry = $false
@@ -263,9 +263,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                 Write-Host "[PLANNING]   Erstelle gebuendeltes Konflikt-Issue fuer $($conflictingPrs.Count) Konflikte" -ForegroundColor Yellow
 
                 if (-not $DryRun.IsPresent) {
-                    $allIssuesForNaming = Get-AllGitHubIssues -Repository $repo -Limit 1000
-                    $nextIssueId = Get-NextVorceIssueId -Issues $allIssuesForNaming
-                    $issueTitle = Format-VorceIssueTitle -Type "default" -Id $nextIssueId -Title "Resolve-Merge-Conflicts-PRs-$prNumbers"
+                    $issueTitle = "MF-StIs_Resolve-Merge-Conflicts: PRs $($prNumbers -replace '-', ', ')"
                     $issueBody = "## Ziel`n"
                     $issueBody += "Loese die Merge-Konflikte der unten gelisteten bestehenden PR-Branches gegen ihre jeweilige Base-Branch. Dieses Issue ist ein lokaler CLI-Agent-Auftrag und darf niemals an Jules delegiert werden.`n`n"
                     $issueBody += "## Betroffene PRs`n"
@@ -461,7 +459,8 @@ Aktuell gibt es nur $($candidates.Count) offene, delegierbare Issues.
 WICHTIGE ANWEISUNG ZU MCP-TOOLS:
 VERWENDE KEINE GITHUB-MCP-TOOLS! Arbeite AUSSCHLIESSLICH mit den Daten aus diesem Prompt.
 
-Plane strikt Richtung Release 1.0 Readiness. Verwende die bereits auf GitHub gepflegten Issue-Titel als verbindliche Referenz.
+Plane strikt Richtung Release 1.0 Readiness. Massgeblicher Top-Level-Kompass ist:
+- #651 VOR-002_MAIs_Release-1.0-Readiness-Gate
 
 Priorisiere neue Aufgaben nur aus diesen Gate-Lanes:
 1. UI-Test-Automation: #650, #547, #549, #548
@@ -482,14 +481,8 @@ Du MUSST für jedes Issue gezielt entscheiden, welcher Agent es bearbeitet.
 - Lokale CLI-Agents (z.B. "gemini_cli", "claude_code"): ZWINGEND zu nutzen für kleine Bugfixes, isolierte Modul-Anpassungen, Scripts, CI/CD-Fixes.
 Verfügbare Agents: $agentsStr
 
-Vorce-Namenskonvention fuer neue Vorschlaege:
-- Standard-Issue: `*D**-000_Task-Title` (`000` wird vom Autopilot durch die naechste freie ID ersetzt).
-- Master-Issue: `M...-000_Task-Title`; nur vorschlagen, wenn ausdruecklich ein neuer grosser Tracker erforderlich ist.
-- Sub-Issue: `___M-{ParentMasterID}_s{SubIndex}_Task-Title`; `parent_master_id` und `sub_index` muessen gesetzt sein.
-- Keine alten `VOR-`, `__VOR-` oder `MF-StIs_` Titel erzeugen.
-
 Antworte NUR mit einer JSON-Liste im Format:
-[{"title": "*D**-000_Issue-Title", "issue_type": "default", "body": "Beschreibung", "labels": ["jules-task", "priority: high"], "agent": "<agent_name_hier_eintragen>"}]
+[{"title": "__VOR-000_SubI_Issue-Title", "body": "Beschreibung", "labels": ["jules-task", "priority: high"], "agent": "<agent_name_hier_eintragen>"}]
 
 Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 "@
@@ -535,7 +528,7 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 
             # Use cached issue data from the dashboard instead of calling GitHub directly
             $cachedIssuePath = Join-Path $VarDbDir "github-issues.json"
-            $existingVorceIssues = @()
+            $existingVorIssues = @()
             $issuesRaw = $null
 
             if (Test-Path $cachedIssuePath) {
@@ -547,24 +540,30 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
             }
 
             if ($null -ne $issuesRaw -and ($issuesRaw -is [System.Array] -or $issuesRaw -is [System.Collections.IList])) {
-                $existingVorceIssues = @($issuesRaw | Where-Object { $_.repo -eq $repo })
-                Write-Host "[PLANNING] Gecachte Issue-Daten zur Vorce-ID-Ermittlung geladen." -ForegroundColor DarkGray
+                $existingVorIssues = @($issuesRaw | Where-Object { $_.repo -eq $repo })
+                Write-Host "[PLANNING] Gecachte Issue-Daten zur VOR-Nummernermittlung geladen." -ForegroundColor DarkGray
             } else {
-                Write-Host "[PLANNING] Lade Issues direkt via gh-cli zur Vorce-ID-Ermittlung (Fallback)..." -ForegroundColor DarkGray
+                Write-Host "[PLANNING] Lade Issues direkt via gh-cli zur VOR-Nummernermittlung (Fallback)..." -ForegroundColor DarkGray
                 # Direct call fallback
-                $existingVorceIssues = Get-AllGitHubIssues -Repository $repo -Limit 1000
+                $existingVorIssues = Get-GitHubIssues -Repository $repo -Limit 300
             }
 
-            $nextIssueId = 1
+            $nextVorNumber = 1
             try {
-                $nextIssueId = Get-NextVorceIssueId -Issues $existingVorceIssues
+                $usedVorNumbers = @($existingVorIssues | ForEach-Object {
+                    $m = [regex]::Match([string]$_.title, 'VOR-(\d{3})')
+                    if ($m.Success) { [int]$m.Groups[1].Value }
+                })
+                if ($usedVorNumbers.Count -gt 0) {
+                    $nextVorNumber = ([int]($usedVorNumbers | Measure-Object -Maximum).Maximum) + 1
+                }
             } catch {
-                Write-Warning "[PLANNING] Konnte naechste Vorce-Issue-ID nicht aus GitHub ermitteln; starte bei 001."
+                Write-Warning "[PLANNING] Konnte naechste VOR-Issue-Nummer nicht aus GitHub ermitteln; starte bei VOR-001."
             }
 
             $seenTitles = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
-            if ($null -ne $existingVorceIssues) {
-                foreach ($ei in $existingVorceIssues) {
+            if ($null -ne $existingVorIssues) {
+                foreach ($ei in $existingVorIssues) {
                     if (-not [string]::IsNullOrWhiteSpace($ei.title)) {
                         $seenTitles.Add([string]$ei.title) | Out-Null
                     }
@@ -576,24 +575,13 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
                 $issueTitle = [string]$newIssue.title
                 $issueBody = if ($newIssue.PSObject.Properties.Name -contains "body") { [string]$newIssue.body } else { "" }
 
-                $issueType = if ($newIssue.PSObject.Properties.Name -contains "issue_type") { [string]$newIssue.issue_type } else { "default" }
-                if (Test-VorceMasterIssueTitle -Title $issueTitle) { $issueType = "master" }
-                if (Test-VorceSubIssueTitle -Title $issueTitle) { $issueType = "sub_issue" }
-                if ($issueType -notin @("default", "master", "sub_issue")) { $issueType = "default" }
-
-                if ($issueType -eq "sub_issue") {
-                    $parentMasterId = if ($newIssue.PSObject.Properties.Name -contains "parent_master_id") { [int]$newIssue.parent_master_id } else { Get-VorceIssueId -Title $issueTitle }
-                    $subIndex = if ($newIssue.PSObject.Properties.Name -contains "sub_index") { [int]$newIssue.sub_index } elseif ($issueTitle -match '^___M-\d{3}_s(\d+)_') { [int]$Matches[1] } else { 0 }
-                    try {
-                        $issueTitle = Format-VorceIssueTitle -Type "sub_issue" -Title (ConvertTo-VorceTitleSlug -Title $issueTitle) -ParentMasterId $parentMasterId -SubIndex $subIndex
-                    } catch {
-                        Write-Warning "[PLANNING] Ueberspringe ungueltigen Sub-Issue-Vorschlag '$issueTitle': $($_.Exception.Message)"
-                        continue
-                    }
-                } else {
-                    # Default- and Master-IDs are assigned centrally to guarantee uniqueness.
-                    $issueTitle = Format-VorceIssueTitle -Type $issueType -Title (ConvertTo-VorceTitleSlug -Title $issueTitle) -Id $nextIssueId
-                    $nextIssueId++
+                if ($issueTitle -match "VOR-000") {
+                    $issueTitle = $issueTitle -replace "VOR-000", ("VOR-{0:D3}" -f $nextVorNumber)
+                    $nextVorNumber++
+                } elseif ($issueTitle -notmatch "^(VOR-\d{3}_(MAIs|StIs|User)_|__VOR-\d{3}_SubI_)") {
+                    $issueSlug = ($issueTitle -replace "^[A-Za-z]+-[A-Za-z]+_", "") -replace "\s+", "-"
+                    $issueTitle = "__VOR-{0:D3}_SubI_{1}" -f $nextVorNumber, $issueSlug
+                    $nextVorNumber++
                 }
 
                 if ($seenTitles.Contains($issueTitle)) {

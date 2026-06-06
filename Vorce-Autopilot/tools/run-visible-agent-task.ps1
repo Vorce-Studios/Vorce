@@ -1,4 +1,4 @@
-# Vorce-Autopilot/tools/run-visible-agent-task.ps1
+# scripts/codex-cli/tools/run-visible-agent-task.ps1
 # Starts a visible local agent task for a specific GitHub issue.
 
 param(
@@ -183,7 +183,6 @@ try {
 
     # Load lib
     . (Join-Path $libDir "state-manager.ps1")
-    . (Join-Path $libDir "naming-convention.ps1")
     . (Join-Path $libDir "quota-manager.ps1")
     . (Join-Path $libDir "cli-router.ps1")
 
@@ -250,8 +249,7 @@ try {
             git commit -m "Auto-commit from $AgentProvider for issue #$IssueNumber`n`n$IssueTitle"
             git push -u origin $branchName
 
-            $prTitle = Format-VorcePullRequestTitle -IssueTitle $IssueTitle
-            $prUrl = gh pr create --repo $Repository --title "$prTitle" --body "Automated PR by local agent $AgentProvider for issue #$IssueNumber.`nResolves #$IssueNumber"
+            $prUrl = gh pr create --repo $Repository --title "$IssueTitle" --body "Automated PR by local agent $AgentProvider for issue #$IssueNumber.`nResolves #$IssueNumber"
             Write-Host "PR created: $prUrl" -ForegroundColor Green
 
             Write-Status -Status "COMPLETED" -PrUrl $prUrl

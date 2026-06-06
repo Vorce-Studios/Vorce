@@ -28,7 +28,7 @@ pub fn show(ctx: &Context, mut context: TimelineContext) {
             ui.horizontal(|ui| {
                 ui.heading("Timeline");
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.button("✕").on_hover_text("Close Timeline").clicked() {
+                    if ui.button("✕").clicked() {
                         context.ui_state.show_timeline = false;
                     }
                 });

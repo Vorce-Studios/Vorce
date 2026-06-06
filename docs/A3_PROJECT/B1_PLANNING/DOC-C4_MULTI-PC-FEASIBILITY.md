@@ -868,19 +868,3 @@ Für Low-Budget oder ältere Hardware.
 ## Netzwerk-Anforderungen
 - **LAN**: Gigabit Ethernet ist Minimum. 10GbE empfohlen für 4K NDI Streams.
 - **Latenz**: Optimierung auf <1 Frame (16ms) ist das Ziel.
-
-## Release 1.0 Guardrails & Post-1.0 Boundary
-
-### Scope & Supported Features
-- **Single-Master / Control-Only**: Release 1.0 strictly supports a Single-Master / Control-Only architecture.
-- **Multimaster Excluded**: Multimaster functionality is classified as **post-1.0**. Half-finished Multimaster features are explicitly excluded and must not be advertised as supported in 1.0.
-
-### Post-1.0 Guardrails
-Before Multimaster can be supported post-1.0, the following guardrails must be defined and implemented:
-- **Ownership & Priority**: Clear rules for node ownership and event priority across multiple masters.
-- **Conflict Resolution**: Mechanisms to handle state conflicts between concurrent masters.
-- **QA Scenarios**: Comprehensive QA scenarios and testing evidence covering multi-master topologies.
-
-### References
-- See issues #104, #654 for background on boundary work.
-- Issue #653 should list Multimaster as a known limitation for the 1.0 release.

@@ -73,7 +73,6 @@ function Write-Host {
 
 # --- Load libraries ---
 . (Join-Path $ScriptDir "src/lib/state-manager.ps1")
-. (Join-Path $ScriptDir "src/lib/naming-convention.ps1")
 . (Join-Path $ScriptDir "src/lib/quota-manager.ps1")
 . (Join-Path $ScriptDir "src/lib/cli-router.ps1")
 . (Join-Path $ScriptDir "src/lib/memory-store.ps1")

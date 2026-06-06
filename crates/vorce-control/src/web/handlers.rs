@@ -32,8 +32,6 @@ pub struct StatusResponse {
     pub uptime_seconds: u64,
     pub active_layers: usize,
     pub fps: f32,
-    /// Status of the cluster control plane.
-    pub cluster_health: String,
 }
 
 /// Shared live status state
@@ -43,18 +41,11 @@ pub struct LiveStatus {
     pub active_layers: usize,
     pub fps: f32,
     pub layer_info: Vec<LayerInfo>,
-    pub cluster_health: String,
 }
 
 impl Default for LiveStatus {
     fn default() -> Self {
-        Self {
-            uptime_seconds: 0,
-            active_layers: 0,
-            fps: 0.0,
-            layer_info: Vec::new(),
-            cluster_health: "Healthy".to_string(),
-        }
+        Self { uptime_seconds: 0, active_layers: 0, fps: 0.0, layer_info: Vec::new() }
     }
 }
 
@@ -227,7 +218,6 @@ mod tests {
             uptime_seconds: 3600,
             active_layers: 5,
             fps: 60.0,
-            cluster_health: "Healthy".to_string(),
         });
 
         let json = serde_json::to_string(&response).unwrap();
