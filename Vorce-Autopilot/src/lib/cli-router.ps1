@@ -240,7 +240,6 @@ function Invoke-CliTask {
     Write-Host "[ROUTER] Verwende $providerName ($modelTier) fuer '$TaskType'" -ForegroundColor Cyan
 
     if ($DryRun.IsPresent) {
-        Register-ProviderCall -Registry $QuotaRegistry -ProviderName $providerName -ModelTier $modelTier
         return [ordered]@{
             success  = $true
             provider = $providerName

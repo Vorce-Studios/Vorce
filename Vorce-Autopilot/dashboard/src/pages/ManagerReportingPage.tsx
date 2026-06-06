@@ -67,7 +67,7 @@ export default function ManagerReportingPage({ registry, sessions, issues }: Man
     });
   }
 
-  // Dual-CEO Budget Limit (Default: $10/Tag)
+  // CEO + QA Manager Budget Limit (Default: $10/Tag)
   const dailyBudget = 10.0;
   const budgetPercentage = dailyBudget > 0 ? Math.min(100, Math.round((totalCostToday / dailyBudget) * 100)) : 0;
 

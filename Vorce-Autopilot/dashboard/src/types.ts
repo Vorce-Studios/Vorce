@@ -52,10 +52,19 @@ export interface ActiveDelegation {
 }
 
 export interface ReviewQueueItem {
+  id?: string;
   issue_number: number;
   pr_url: string;
   pr_number: number;
+  reviewer?: string;
+  review_type?: string;
   review_status: string;
+  queued_at?: string;
+  started_at?: string | null;
+  completed_at?: string | null;
+  decision?: string | null;
+  summary?: string | null;
+  error?: string | null;
 }
 
 export interface CompletedItem {
@@ -81,6 +90,7 @@ export interface ActiveSessions {
   working_queue?: unknown[];
   working_sessions?: unknown[];
   review_queue: ReviewQueueItem[];
+  review_sessions?: any[];
   autopilot_created_issues: unknown[];
   completed_this_session: CompletedItem[];
   decisions_pending?: DecisionPending[];
@@ -170,6 +180,14 @@ export interface AutopilotConfig {
     max_concurrent_sessions: number;
     auto_approve_plans: boolean;
     auto_retry_feedback_max: number;
+    [key: string]: unknown;
+  };
+  reviews?: {
+    enabled: boolean;
+    reviewer_provider: string;
+    require_review_before_merge: boolean;
+    default_review_type: string;
+    complex_review_model_tier: string;
   };
   gemini_worktree_path: string;
   issue_filters: {
@@ -197,7 +215,7 @@ export interface WorkingSessionsConfig {
   queue_non_jules_agent_issues: boolean;
 }
 
-// ── CEO + QA-Auditor Types ──
+// ── CEO + QA Manager Types ──
 export interface DualCeoConfig {
   enabled: boolean;
   ceo_alpha_chain: string[];
