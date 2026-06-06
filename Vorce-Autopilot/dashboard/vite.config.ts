@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import fs from 'fs'
 import path from 'path'
-import { execSync } from 'child_process'
+import { execSync, spawn } from 'child_process'
 
 let issuesCache: string | null = null;
 let issuesCacheTime = 0;
@@ -66,7 +66,7 @@ export default defineConfig({
               if (fs.existsSync(configPath)) {
                 const configContent = fs.readFileSync(configPath, 'utf-8');
                 const config = JSON.parse(configContent);
-                
+
                 // Dynamically load prompts from files
                 config.prompts = config.prompts || {};
                 const promptsDir = path.resolve(__dirname, '../prompts');
@@ -84,7 +84,7 @@ export default defineConfig({
                     }
                   }
                 }
-                
+
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify(config, null, 2));
               } else {
@@ -105,6 +105,23 @@ export default defineConfig({
               } else {
                 res.writeHead(404, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: 'quota-registry.json not found' }));
+              }
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+            }
+          } else if (req.method === 'GET' && req.url === '/jules-sessions.json') {
+            try {
+              const livePath = path.resolve(__dirname, '../var/db/jules-sessions.json');
+              const fallbackPath = path.resolve(__dirname, './jules-sessions.json');
+              const sessionPath = fs.existsSync(livePath) ? livePath : fallbackPath;
+              if (fs.existsSync(sessionPath)) {
+                const sessionContent = fs.readFileSync(sessionPath, 'utf-8');
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(sessionContent);
+              } else {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify([]));
               }
             } catch (err) {
               res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -168,7 +185,7 @@ export default defineConfig({
                 for (const r of repos) {
                   try {
                     const prsJson = execSync(
-                      `gh pr list --repo ${r} --limit 1000 --state open --json number,title,state,mergeable,statusCheckRollup,headRefName,baseRefName,updatedAt,url,isDraft`,
+                      `gh pr list --repo ${r} --limit 1000 --state open --json number,title,state,mergeable,statusCheckRollup,headRefName,baseRefName,updatedAt,url,isDraft,reviewDecision`,
                       { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }
                     );
                     const parsed = JSON.parse(prsJson);
@@ -202,7 +219,7 @@ export default defineConfig({
             req.on('end', () => {
               try {
                 const config = JSON.parse(body);
-                
+
                 // Write modified prompts back to their respective markdown files
                 if (config.prompts) {
                   const promptsDir = path.resolve(__dirname, '../prompts');
@@ -214,7 +231,7 @@ export default defineConfig({
                     }
                     return null;
                   };
-                  
+
                   for (const key of Object.keys(config.prompts)) {
                     const promptFile = findPromptFile(key);
                     if (promptFile) {
@@ -226,7 +243,7 @@ export default defineConfig({
                     delete config.prompts;
                   }
                 }
-                
+
                 const configPath = path.resolve(__dirname, '../config/autopilot-config.json');
                 const publicConfigPath = path.resolve(__dirname, './public/autopilot-config.json');
                 writeJsonFile(configPath, config);
@@ -377,11 +394,17 @@ export default defineConfig({
                 const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
                 const readableStatePath = fs.existsSync(statePath) ? statePath : publicStatePath;
                 const state = readJsonFile(readableStatePath, {});
+                let startOptimizerProcess = false;
 
                 state.optimizer_queue = state.optimizer_queue || [];
 
                 if (payload.action === 'reject') {
                   state.optimizer_queue = state.optimizer_queue.filter((item: any) => item.id !== payload.id);
+                } else if (payload.action === 'run-now') {
+                  state.run_control = state.run_control || {};
+                  state.run_control.force_optimizer = true;
+                  state.run_control.force_optimizer_requested_at = new Date().toISOString();
+                  startOptimizerProcess = true;
                 } else if (payload.action === 'approve') {
                   const item = state.optimizer_queue.find((i: any) => i.id === payload.id);
                   if (item) {
@@ -389,7 +412,7 @@ export default defineConfig({
                     const cleanTitle = item.title.replace(/[^a-zA-Z0-9\s_-]/g, '').trim().replace(/\s+/g, '-');
                     const title = `__MF-SubI_Optimizer-${cleanTitle}`;
                     const issueBody = `Vorgeschlagene Optimierung aus der Optimizer-Session:\n\n**Beschreibung:**\n${item.description}\n\n**Auswirkung:**\n${item.impact}\n\n**Vorgeschlagene Aktion:**\n${item.proposed_action}`;
-                    
+
                     try {
                       const repo = getRepository();
                       // Ensure labels exist before creating issue to prevent failures
@@ -399,7 +422,7 @@ export default defineConfig({
 
                       const command = `gh issue create --repo "${repo}" --title "${title.replace(/"/g, '\\"')}" --body "${issueBody.replace(/"/g, '\\"')}" --label "priority: high" --label "bug" --label "agent:gemini_cli"`;
                       const issueUrl = execSync(command, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-                      
+
                       const match = issueUrl.match(/\/issues\/(\d+)/);
                       if (match) {
                         const issueNum = parseInt(match[1]);
@@ -417,7 +440,18 @@ export default defineConfig({
                     } catch (e) {
                       throw new Error(`Fehler beim Erstellen des GitHub Issues: ${(e as any).message}`);
                     }
-                    
+
+                    state.optimizer_last_run = state.optimizer_last_run || {};
+                    state.optimizer_last_run.approved_changes = Array.isArray(state.optimizer_last_run.approved_changes) ? state.optimizer_last_run.approved_changes : [];
+                    state.optimizer_last_run.approved_changes.push({
+                      id: item.id,
+                      title: item.title,
+                      description: item.description,
+                      impact: item.impact,
+                      proposed_action: item.proposed_action,
+                      approved_at: new Date().toISOString()
+                    });
+                    state.optimizer_last_run.approved_changes = state.optimizer_last_run.approved_changes.slice(-10);
                     // Remove from optimizer queue
                     state.optimizer_queue = state.optimizer_queue.filter((i: any) => i.id !== payload.id);
                   }
@@ -425,6 +459,16 @@ export default defineConfig({
 
                 writeJsonFile(statePath, state);
                 writeJsonFile(publicStatePath, state);
+                if (startOptimizerProcess) {
+                  const autopilotPath = path.resolve(__dirname, '../autopilot.ps1');
+                  const child = spawn('pwsh', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', autopilotPath, '-PlanOnce'], {
+                    cwd: path.resolve(__dirname, '..'),
+                    detached: true,
+                    stdio: 'ignore',
+                    windowsHide: true
+                  });
+                  child.unref();
+                }
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'ok' }));
               } catch (err) {

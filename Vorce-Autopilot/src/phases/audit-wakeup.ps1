@@ -1,5 +1,5 @@
 # Vorce-Autopilot/src/phases/audit-wakeup.ps1
-# Beta CEO Audit Mode: Unabhaengige Pruefung von PRs, Issues und Jules Sessions
+# QA Manager Audit Mode: Unabhaengige Pruefung von PRs, Issues und Jules Sessions
 
 Set-StrictMode -Version Latest
 
@@ -12,7 +12,7 @@ function Invoke-AuditWakeUp {
     )
 
     $repo = $Config.repository
-    Write-Host "`n[AUDIT] ========== Beta CEO Audit Wake-Up ==========" -ForegroundColor Blue
+    Write-Host "`n[AUDIT] ========== QA Manager Audit Wake-Up ==========" -ForegroundColor Blue
 
     # Ensure state array exists
     if (-not ($State.PSObject.Properties.Name -contains "decisions_pending")) {
@@ -85,8 +85,9 @@ function Invoke-AuditWakeUp {
 
     # 3. Prompt fuer finalen Audit-Entscheidungsschritt bauen
     $promptText = @"
-Du bist CEO BETA (Gemini) des Vorce-Autopiloten.
+Du bist QA Manager (Gemini) des Vorce-Autopiloten.
 Deine Aufgabe ist ein unabhaengiges AUDIT des aktuellen Projektstatus.
+Beschraenke dich auf Fakten, betroffene IDs, konkrete Ursachen und naechste Aktionen.
 
 MANDAT DES USERS (VERLETZUNG FUEHRT ZUM ABBRUCH):
 1. Du MUSST DEINE ANTWORT ZWINGEND AUF DEUTSCH VERFASSEN! Jede andere Sprache ist verboten.
@@ -121,7 +122,7 @@ Antworte strikt im JSON-Format:
 }
 "@
 
-    Write-Host "[AUDIT] Sende Audit-Anfrage an CEO Beta (Gemini)..." -ForegroundColor Cyan
+    Write-Host "[AUDIT] Sende Audit-Anfrage an QA Manager (Gemini)..." -ForegroundColor Cyan
 
     $ToolsDir = Join-Path $ScriptDir "tools"
     $runVisibleCmd = Join-Path $ToolsDir "run-visible-ceo-phase.ps1"
@@ -170,7 +171,7 @@ Antworte strikt im JSON-Format:
                     }
 
                     if ($null -ne $parsedObj -and $parsedObj.issues_found -eq $true) {
-                        Write-Host "[AUDIT] CEO Beta hat Probleme gefunden!" -ForegroundColor Yellow
+                        Write-Host "[AUDIT] QA Manager hat Probleme gefunden!" -ForegroundColor Yellow
 
                         if ($parsedObj.action -eq "remediate" -and -not [string]::IsNullOrWhiteSpace($parsedObj.remediation_command)) {
                             Write-Host "[AUDIT] Fuehre Remediation-Befehl aus: $($parsedObj.remediation_command)" -ForegroundColor Cyan
@@ -181,21 +182,21 @@ Antworte strikt im JSON-Format:
                                 Write-Warning "[AUDIT] Remediation fehlgeschlagen: $_"
                                 # Fallback to escalation
                                 $State.decisions_pending += @([ordered]@{
-                                    topic      = "Beta CEO Remediation Failed"
+                                    topic      = "QA Manager Remediation Failed"
                                     context    = "Der Versuch, das Problem automatisch zu beheben, schlug fehl. Befehl: $($parsedObj.remediation_command). Fehler: $_"
                                     created_at = (Get-Date -Format 'o')
                                 })
                             }
                         } elseif ($parsedObj.action -eq "escalate") {
-                            Write-Host "[AUDIT] CEO Beta eskaliert zum Dashboard." -ForegroundColor Red
+                            Write-Host "[AUDIT] QA Manager eskaliert zum Dashboard." -ForegroundColor Red
                             $State.decisions_pending += @([ordered]@{
-                                topic      = "Beta CEO Audit Alert"
+                                topic      = "QA Manager Audit Alert"
                                 context    = $parsedObj.dashboard_escalation
                                 created_at = (Get-Date -Format 'o')
                             })
                         }
                     } else {
-                        Write-Host "[AUDIT] CEO Beta meldet: Keine gravierenden Probleme gefunden." -ForegroundColor Green
+                        Write-Host "[AUDIT] QA Manager meldet: Keine gravierenden Probleme gefunden." -ForegroundColor Green
                     }
                 } catch {
                     Write-Warning "[AUDIT] Konnte Audit-Ergebnis nicht parsen: $_"

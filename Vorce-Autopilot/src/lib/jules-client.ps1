@@ -2,7 +2,7 @@
 Set-StrictMode -Version Latest
 
 # Setup paths relative to script root
-$script:JulesScriptDir = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) "scripts/jules"
+$script:JulesScriptDir = Join-Path (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))) "scripts/jules"
 
 # Dot-source the underlying jules api functions
 if (Test-Path -Path (Join-Path $script:JulesScriptDir "jules-api.ps1")) {

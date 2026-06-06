@@ -137,3 +137,5 @@ Vorce-Autopilot/var/
 Vorce-Autopilot/dashboard/node_modules/
 Vorce-Autopilot/dashboard/dist/
 !Vorce-Autopilot/**/*.json
+
+.worktrees/

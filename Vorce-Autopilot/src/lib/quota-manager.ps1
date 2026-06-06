@@ -15,6 +15,13 @@ if (-not (Test-Path -Path $script:VarDbDir)) {
 }
 
 function Read-QuotaRegistry {
+    param([string]$FilePath)
+
+    if (-not [string]::IsNullOrWhiteSpace($FilePath)) {
+        $script:QuotaFilePath = [System.IO.Path]::GetFullPath($FilePath)
+        $script:VarDbDir = Split-Path -Parent $script:QuotaFilePath
+    }
+
     if (-not (Test-Path $script:QuotaFilePath)) {
         if (Test-Path $script:DefaultQuotaPath) {
             Copy-Item $script:DefaultQuotaPath $script:QuotaFilePath -Force | Out-Null
@@ -43,7 +50,15 @@ function Read-QuotaRegistry {
 }
 
 function Save-QuotaRegistry {
-    param([Parameter(Mandatory)][object]$Registry)
+    param(
+        [Parameter(Mandatory)][object]$Registry,
+        [string]$FilePath
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($FilePath)) {
+        $script:QuotaFilePath = [System.IO.Path]::GetFullPath($FilePath)
+        $script:VarDbDir = Split-Path -Parent $script:QuotaFilePath
+    }
 
     # Use atomic write if Write-SafeJson is available (loaded from state-manager.ps1)
     if (Get-Command Write-SafeJson -ErrorAction SilentlyContinue) {
@@ -171,12 +186,15 @@ function Get-QuotaSummary {
 
 function Test-ObjectProperty {
     param(
-        [Parameter(Mandatory)][object]$Object,
+        [AllowNull()][object]$Object,
         [Parameter(Mandatory)][string]$Name
     )
     if ($null -eq $Object) { return $false }
-    if ($null -eq $Object.PSObject) { return $false }
-    return $Object.PSObject.Properties.Name -contains $Name
+    try {
+        return @($Object.PSObject.Properties | ForEach-Object { $_.Name }) -contains $Name
+    } catch {
+        return $false
+    }
 }
 
 function Set-ProviderUsageSnapshot {

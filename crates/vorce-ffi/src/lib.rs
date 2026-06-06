@@ -11,6 +11,8 @@
 
 use thiserror::Error;
 
+use vorce_media::MediaError;
+
 /// FFI errors
 #[derive(Error, Debug)]
 pub enum FfiError {
@@ -37,6 +39,21 @@ pub enum FfiError {
     /// Error: Syphon error.
     /// Error: Syphon error.
     SyphonError(String),
+
+    #[error("Media decoder error: {0}")]
+    /// Error: Media decoder error.
+    /// Error: Media decoder error.
+    /// Error: Media decoder error.
+    MediaDecoderError(String),
+}
+
+impl From<MediaError> for FfiError {
+    fn from(err: MediaError) -> Self {
+        match err {
+            MediaError::DecoderError(msg) => FfiError::MediaDecoderError(msg),
+            _ => FfiError::MediaDecoderError(err.to_string()),
+        }
+    }
 }
 
 /// Result type for FFI operations

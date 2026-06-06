@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, Trash2, CalendarClock, Ban, MessageSquare, Terminal } from 'lucide-react';
+import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, Trash2, CalendarClock, Ban, MessageSquare, Terminal, Play } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue, AuditResult } from '../types';
 import DeliberationPanel from './DeliberationPanel';
@@ -60,8 +60,10 @@ function normalizeAuditText(value?: string): string {
   const oldCeoLabel = ['Alpha', 'CEO'].join(' ');
   const oldCeoLabelAlt = ['CEO', 'Alpha'].join(' ');
   return value
-    .replace(new RegExp(oldQaLabel, 'gi'), 'QA-Auditor')
-    .replace(new RegExp(oldQaLabelAlt, 'gi'), 'QA-Auditor')
+    .replace(new RegExp(oldQaLabel, 'gi'), 'QA Manager')
+    .replace(new RegExp(oldQaLabelAlt, 'gi'), 'QA Manager')
+    .replace(/QA[-\s]?Auditor/gi, 'QA Manager')
+    .replace(/\bauditor\b/gi, 'QA Manager')
     .replace(new RegExp(oldCeoLabel, 'gi'), 'CEO')
     .replace(new RegExp(oldCeoLabelAlt, 'gi'), 'CEO')
     .replace(/beta_/gi, 'qa_');
@@ -77,14 +79,14 @@ function auditOwnerLabel(owner?: string): string {
   const value = (owner || '').toLowerCase();
   if (value === 'user') return 'Du';
   if (value.includes('alpha') || value === 'ceo') return 'CEO';
-  return 'QA-Auditor';
+  return 'QA Manager';
 }
 
 function auditStageLabel(alert: any): string {
   const owner = auditOwnerLabel(alert.owner);
   if (owner === 'Du' || alert.escalation_level === 'user') return 'Wartet auf deine Entscheidung';
   if (owner === 'CEO') return 'CEO-Sondersession';
-  return 'QA-Auditor repariert';
+  return 'QA Manager repariert';
 }
 
 async function updateAuditAlert(action: string, id: string, response?: string) {
@@ -185,15 +187,22 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   const totalCostToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.estimated_cost_usd || 0), 0);
   const totalCallsToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.calls || 0), 0);
 
-  // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
-  // "Jules API Sessions nur vom Repo Vorce & nicht die vom Repo MapFlow anzeigen!! Alle ausser die im Status completed und Queued sind Jules Sessions in progress!!"
-  const activeJulesSessions = julesSessions ? julesSessions.filter(s =>
-      s.repo.includes('Vorce') &&
-      s.state !== 'COMPLETED' &&
-      s.state !== 'QUEUED' &&
-      s.state !== 'Done' &&
-      s.state !== 'Planed'
+  const julesUsage = providers.jules?.usage_today || {};
+  const runningJulesSessions = julesSessions ? julesSessions.filter(s =>
+      String(s.repo || '') === 'Vorce-Studios/Vorce' &&
+      ['IN_PROGRESS', 'PLANNING', 'QUEUED', 'AWAITING_PLAN_APPROVAL'].includes(String(s.state || ''))
   ).length : 0;
+  const waitingJulesSessions = julesSessions ? julesSessions.filter(s =>
+      String(s.repo || '') === 'Vorce-Studios/Vorce' &&
+      ['AWAITING_USER_FEEDBACK', 'PAUSED'].includes(String(s.state || ''))
+    ).length : Number(julesUsage.scoped_live_waiting_sessions ?? julesUsage.pending_sessions ?? 0);
+  const activeJulesSessions = waitingJulesSessions || Number(
+    julesUsage.scoped_live_waiting_sessions ??
+    julesUsage.pending_sessions ??
+    julesUsage.scoped_live_capacity_sessions ??
+    julesUsage.active_sessions ??
+    runningJulesSessions
+  );
 
   // Filter PRs that are OPEN and NOT a Draft and belong to Vorce repo
   const openPRs = pullRequests.filter(pr => pr.repo?.includes('Vorce') && pr.state === 'OPEN' && pr.isDraft !== true).length;
@@ -296,7 +305,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
               <div key={id} className="bg-slate-950/50 border border-rose-500/20 rounded-lg p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                   <div>
-                    <div className="font-semibold text-rose-200">{normalizeAuditText(alert.topic || 'QA-Auditor Alert')}</div>
+                    <div className="font-semibold text-rose-200">{normalizeAuditText(alert.topic || 'QA Manager Alert')}</div>
                     <div className="text-xs text-rose-300/70 mt-0.5">
                       Zuständig: {owner} · {auditStageLabel(alert)} · {timeAgo(alert.created_at)}
                     </div>
@@ -311,7 +320,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 mb-3">
-                  {['QA-Auditor', 'CEO', 'Du'].map((label, stepIdx) => (
+                  {['QA Manager', 'CEO', 'Du'].map((label, stepIdx) => (
                     <div key={label} className={`h-1.5 rounded-full ${stepIdx <= activeStep ? 'bg-rose-400' : 'bg-slate-800'}`} title={label} />
                   ))}
                 </div>
@@ -322,7 +331,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
                     <div className="text-slate-200 whitespace-pre-wrap">{shortText(alert.context)}</div>
                   </div>
                   <div className="rounded-md bg-slate-900/70 border border-slate-800 p-3">
-                    <div className="uppercase text-amber-300/70 text-[10px] mb-1">QA-Auditor Versuch</div>
+                    <div className="uppercase text-amber-300/70 text-[10px] mb-1">QA Manager Versuch</div>
                     <div className="text-slate-300 whitespace-pre-wrap">
                       {shortText(alert.remediation_command || alert.remediation_result || 'Noch kein dokumentierter Reparaturversuch.')}
                     </div>
@@ -366,6 +375,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
           interval={`${scheduler?.planning_interval_minutes ?? 'N/A'} min`}
           cancelled={runControl.cancel_next_planning}
           note={runControl.next_planning_note}
+          summary={sessions.run_summaries?.planning?.summary}
           onCancel={() => sendRunControl('planning', runControl.cancel_next_planning ? 'uncancel-next' : 'cancel-next')}
           onNote={(note) => sendRunControl('planning', 'note-next', note)}
         />
@@ -377,6 +387,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
           interval={`${scheduler?.monitoring_interval_minutes ?? 'N/A'} min`}
           cancelled={runControl.cancel_next_monitoring}
           note={runControl.next_monitoring_note}
+          summary={sessions.run_summaries?.monitoring?.summary}
           onCancel={() => sendRunControl('monitoring', runControl.cancel_next_monitoring ? 'uncancel-next' : 'cancel-next')}
           onNote={(note) => sendRunControl('monitoring', 'note-next', note)}
         />
@@ -400,7 +411,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
         <KPICard
           title="Jules Sessions"
           value={String(activeJulesSessions)}
-          subtitle="in progress (Vorce)"
+          subtitle={`${runningJulesSessions} laufen, ${waitingJulesSessions} warten`}
           icon={<Activity className="w-5 h-5" />}
           color="from-purple-500 to-violet-500"
         />
@@ -484,20 +495,122 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
       </div>
 
       {/* Optimizer-Sessions Queue Widget */}
-      <OptimizerQueuePanel queue={sessions.optimizer_queue} />
+      <OptimizerQueuePanel
+        queue={sessions.optimizer_queue}
+        lastRun={sessions.optimizer_last_run}
+        lastOptimizerAt={sessions.last_optimizer_analysis_at}
+        forceRequestedAt={runControl.force_optimizer_requested_at}
+      />
 
-      {/* Dual-CEO Deliberation Panel */}
+      <ReviewQueuePanel queue={sessions.review_queue || []} sessions={sessions.review_sessions || []} />
+
+      {/* CEO + QA Manager Deliberation Panel */}
       <DeliberationPanel deliberations={sessions.deliberation_log || []} />
 
     </div>
   );
 }
 
-function OptimizerQueuePanel({ queue }: { queue?: any[] }) {
+function reviewStatusClass(status?: string): string {
+  const normalized = String(status || '').toLowerCase();
+  if (normalized === 'approved') return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300';
+  if (normalized === 'changes_requested' || normalized === 'failed') return 'border-rose-500/30 bg-rose-500/10 text-rose-300';
+  if (normalized === 'in_progress') return 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300';
+  return 'border-amber-500/30 bg-amber-500/10 text-amber-300';
+}
+
+function ReviewQueuePanel({ queue, sessions }: { queue: any[]; sessions: any[] }) {
+  const pending = queue.filter(item => ['pending', 'in_progress'].includes(String(item.review_status || '').toLowerCase()));
+  const approved = queue.filter(item => String(item.review_status || '').toLowerCase() === 'approved');
+  const blocked = queue.filter(item => ['changes_requested', 'failed'].includes(String(item.review_status || '').toLowerCase()));
+  const recentSessions = (sessions || []).slice().reverse().slice(0, 6);
+
+  return (
+    <div className="glass-card p-5 border border-slate-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+            <GitPullRequest className="text-emerald-400 w-4 h-4" />
+            Claude-Code PR Reviews
+          </h3>
+          <div className="mt-1 text-xs text-slate-500">
+            Offen: {pending.length} · Freigegeben: {approved.length} · Blockiert: {blocked.length}
+          </div>
+        </div>
+        <div className="text-[11px] text-slate-400">
+          Merge-Freigabe erfolgt erst nach Claude-Code Review.
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="rounded-lg border border-slate-800 bg-slate-950/30 p-3">
+          <div className="text-[11px] uppercase tracking-wide font-semibold text-slate-400 mb-2">Review Queue</div>
+          <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+            {queue.length === 0 ? (
+              <div className="text-xs text-slate-500">Keine PRs in der Review Queue.</div>
+            ) : queue.slice().reverse().slice(0, 10).map((item) => (
+              <div key={item.id || item.pr_number} className="rounded-md border border-slate-800 bg-slate-900/50 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-sm font-semibold text-slate-200">PR #{item.pr_number}</div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded border ${reviewStatusClass(item.review_status)}`}>
+                    {item.review_status || 'pending'}
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-500 mt-1">
+                  {item.review_type || 'unclassified'} · {item.reviewer || 'claude_code'} · Issue #{item.issue_number || 'n/a'}
+                </div>
+                {item.summary && <div className="text-xs text-slate-300 mt-2 line-clamp-3">{item.summary}</div>}
+                {item.error && <div className="text-xs text-rose-300 mt-2 line-clamp-2">{item.error}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-slate-800 bg-slate-950/30 p-3">
+          <div className="text-[11px] uppercase tracking-wide font-semibold text-slate-400 mb-2">Letzte Review Sessions</div>
+          <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+            {recentSessions.length === 0 ? (
+              <div className="text-xs text-slate-500">Noch keine Review Sessions dokumentiert.</div>
+            ) : recentSessions.map((session) => (
+              <div key={`${session.id}-${session.updated_at}`} className="rounded-md border border-slate-800 bg-slate-900/50 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-sm font-semibold text-slate-200">PR #{session.pr_number}</div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded border ${reviewStatusClass(session.status)}`}>
+                    {session.status}
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-500 mt-1">
+                  {session.review_type || 'review'} · {session.updated_at ? timeAgo(session.updated_at) : 'N/A'}
+                </div>
+                {session.summary && <div className="text-xs text-slate-300 mt-2 line-clamp-3">{session.summary}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function getNextOptimizerRun(lastRun?: any, lastOptimizerAt?: string): string {
+  if (lastRun?.next_run_at) return lastRun.next_run_at;
+  if (!lastOptimizerAt) return '';
+  const next = new Date(lastOptimizerAt);
+  if (Number.isNaN(next.getTime())) return '';
+  next.setHours(next.getHours() + 12);
+  return next.toISOString();
+}
+
+function OptimizerQueuePanel({ queue, lastRun, lastOptimizerAt, forceRequestedAt }: {
+  queue?: any[];
+  lastRun?: any;
+  lastOptimizerAt?: string;
+  forceRequestedAt?: string;
+}) {
   const [loading, setLoading] = useState<string | null>(null);
 
-  const handleAction = async (id: string, action: 'approve' | 'reject') => {
-    setLoading(id);
+  const handleAction = async (id: string, action: 'approve' | 'reject' | 'run-now') => {
+    setLoading(id || action);
     try {
       await fetch('/api/optimizer', {
         method: 'POST',
@@ -513,49 +626,45 @@ function OptimizerQueuePanel({ queue }: { queue?: any[] }) {
   };
 
   const activeProposals = queue ? queue.filter(item => item.status !== 'APPROVED' && item.status !== 'REJECTED') : [];
+  const lastProposals = Array.isArray(lastRun?.proposals) ? lastRun.proposals : [];
+  const approvedChanges = Array.isArray(lastRun?.approved_changes) ? lastRun.approved_changes : [];
+  const nextRunAt = getNextOptimizerRun(lastRun, lastOptimizerAt);
 
   return (
     <div className="glass-card p-5 border border-slate-800">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-          <Zap className="text-amber-400 w-4 h-4" />
-          Optimizer-Sessions Queue ({activeProposals.length})
-        </h3>
-        {queue && queue.length > activeProposals.length && (
-          <span className="text-xs text-slate-500">
-            {queue.length - activeProposals.length} verarbeitet
-          </span>
-        )}
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 mb-4">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+            <Zap className="text-amber-400 w-4 h-4" />
+            Optimizer-Sessions
+          </h3>
+          <div className="mt-1 text-xs text-slate-500">
+            Letzter Run: {lastRun?.ran_at ? timeAgo(lastRun.ran_at) : 'N/A'} · Nächster Run: {nextRunAt ? new Date(nextRunAt).toLocaleTimeString() : 'N/A'}
+          </div>
+          {forceRequestedAt && (
+            <div className="mt-1 text-[11px] text-amber-300">
+              Manueller Optimizer-Run angefordert: {timeAgo(forceRequestedAt)}
+            </div>
+          )}
+        </div>
+        <button
+          disabled={loading !== null}
+          onClick={() => handleAction('', 'run-now')}
+          className="px-3 py-2 text-xs rounded border border-amber-500/30 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+          title="Optimizer beim nächsten Planning-Lauf erzwingen"
+        >
+          <Play className="w-3.5 h-3.5" />
+          Jetzt ausführen
+        </button>
       </div>
 
-      {activeProposals.length === 0 ? (
-        <div className="text-xs text-slate-500 rounded border border-slate-800 bg-slate-950/40 px-3 py-2">
-          Keine Optimierungsvorschläge in der Warteschlange.
-        </div>
-      ) : (
-        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
-          {activeProposals.map((item) => (
-            <div key={item.id} className="bg-slate-950/50 border border-slate-800 rounded-lg p-4 text-xs text-slate-300">
-              <div className="flex justify-between items-start gap-3 mb-2">
-                <div className="font-semibold text-slate-200 text-sm">{item.title}</div>
-                <span className="text-[10px] text-slate-500">{timeAgo(item.created_at)}</span>
-              </div>
-              <div className="space-y-2 mb-3">
-                <div>
-                  <span className="text-slate-500 font-medium">Problem:</span> {item.description}
-                </div>
-                {item.impact && (
-                  <div>
-                    <span className="text-emerald-400 font-medium">Erwartete Auswirkung:</span> {item.impact}
-                  </div>
-                )}
-                {item.proposed_action && (
-                  <div>
-                    <span className="text-cyan-400 font-medium">Vorgeschlagene Aktion:</span> {item.proposed_action}
-                  </div>
-                )}
-              </div>
-              <div className="flex justify-end gap-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <OptimizerList title={`Aktive Vorschläge (${activeProposals.length})`}>
+          {activeProposals.length === 0 ? (
+            <EmptyOptimizerText text="Keine offenen Optimierungsvorschläge." />
+          ) : activeProposals.map((item) => (
+            <OptimizerItem key={item.id} item={item}>
+              <div className="flex justify-end gap-2 mt-3">
                 <button
                   disabled={loading !== null}
                   onClick={() => handleAction(item.id, 'reject')}
@@ -571,10 +680,54 @@ function OptimizerQueuePanel({ queue }: { queue?: any[] }) {
                   Freigeben
                 </button>
               </div>
-            </div>
+            </OptimizerItem>
           ))}
-        </div>
-      )}
+        </OptimizerList>
+
+        <OptimizerList title={`Letzter Run (${lastProposals.length})`}>
+          {lastProposals.length === 0 ? (
+            <EmptyOptimizerText text={lastRun?.summary || 'Noch kein Optimizer-Run dokumentiert.'} />
+          ) : lastProposals.map((item: any) => <OptimizerItem key={item.id || item.title} item={item} />)}
+        </OptimizerList>
+
+        <OptimizerList title={`Genehmigt (${approvedChanges.length})`}>
+          {approvedChanges.length === 0 ? (
+            <EmptyOptimizerText text="Noch keine genehmigten Optimizer-Änderungen." />
+          ) : approvedChanges.map((item: any) => <OptimizerItem key={item.id || item.title} item={item} />)}
+        </OptimizerList>
+      </div>
+    </div>
+  );
+}
+
+function OptimizerList({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border border-slate-800 bg-slate-950/30 p-3 min-h-36">
+      <div className="text-[11px] uppercase tracking-wide font-semibold text-slate-400 mb-2">{title}</div>
+      <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">{children}</div>
+    </div>
+  );
+}
+
+function EmptyOptimizerText({ text }: { text: string }) {
+  return <div className="text-xs text-slate-500 rounded border border-slate-800 bg-slate-950/40 px-3 py-2">{text}</div>;
+}
+
+function OptimizerItem({ item, children }: { item: any; children?: React.ReactNode }) {
+  return (
+    <div className="bg-slate-950/50 border border-slate-800 rounded-lg p-3 text-xs text-slate-300">
+      <div className="flex justify-between items-start gap-3 mb-2">
+        <div className="font-semibold text-slate-200 text-sm">{item.title}</div>
+        {(item.created_at || item.approved_at) && (
+          <span className="text-[10px] text-slate-500">{timeAgo(item.approved_at || item.created_at)}</span>
+        )}
+      </div>
+      <div className="space-y-2">
+        {item.description && <div><span className="text-slate-500 font-medium">Problem:</span> {item.description}</div>}
+        {item.impact && <div><span className="text-emerald-400 font-medium">Auswirkung:</span> {item.impact}</div>}
+        {item.proposed_action && <div><span className="text-cyan-400 font-medium">Aktion:</span> {item.proposed_action}</div>}
+      </div>
+      {children}
     </div>
   );
 }
@@ -596,7 +749,7 @@ function KPICard({ title, value, subtitle, icon, color }: {
   );
 }
 
-function RunCard({ title, lastAt, nextAt, nextInSeconds, interval, cancelled, note, onCancel, onNote }: {
+function RunCard({ title, lastAt, nextAt, nextInSeconds, interval, cancelled, note, summary, onCancel, onNote }: {
   title: string;
   lastAt?: string;
   nextAt?: string;
@@ -604,6 +757,7 @@ function RunCard({ title, lastAt, nextAt, nextInSeconds, interval, cancelled, no
   interval: string;
   cancelled?: boolean;
   note?: string;
+  summary?: string;
   onCancel: () => void;
   onNote: (note: string) => void;
 }) {
@@ -628,6 +782,10 @@ function RunCard({ title, lastAt, nextAt, nextInSeconds, interval, cancelled, no
           <div className="text-slate-500">Naechster Run</div>
           <div className="text-slate-200">{nextAt ? new Date(nextAt).toLocaleTimeString() : 'N/A'} · {interval}</div>
         </div>
+      </div>
+      <div className="mt-3 rounded border border-slate-800 bg-slate-950/40 px-3 py-2 text-xs text-slate-300 min-h-10">
+        <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Letzte Tätigkeiten</div>
+        {summary || 'Noch keine Zusammenfassung im State.'}
       </div>
       <div className="mt-4 flex gap-2">
         <input
@@ -725,13 +883,21 @@ function WorkingSessionsPanel({ sessions }: { sessions: any[] }) {
         <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
           {recent.map((item, idx) => {
             const status = String(item.status || 'UNKNOWN').toUpperCase();
+            const detail = String(item.error || item.failure_reason || item.details || '').trim();
             return (
-              <div key={item.id || idx} className="grid grid-cols-[5rem_1fr_8rem] gap-2 rounded border border-slate-800 bg-slate-950/45 px-3 py-2 text-xs text-slate-300 items-center">
-                <span className="font-mono text-slate-500">#{item.issue_number || '-'}</span>
-                <span className="truncate" title={item.issue_title || item.prompt_hint || ''}>{item.issue_title || item.prompt_hint || 'Working Session'}</span>
-                <div className="text-right">
-                  <JulesStateBadge state={status} />
+              <div key={item.id || idx} className="rounded border border-slate-800 bg-slate-950/45 px-3 py-2 text-xs text-slate-300">
+                <div className="grid grid-cols-[5rem_1fr_8rem] gap-2 items-center">
+                  <span className="font-mono text-slate-500">#{item.issue_number || '-'}</span>
+                  <span className="truncate" title={item.issue_title || item.prompt_hint || ''}>{item.issue_title || item.prompt_hint || 'Working Session'}</span>
+                  <div className="text-right">
+                    <JulesStateBadge state={status} />
+                  </div>
                 </div>
+                {detail && (
+                  <div className="mt-1 pl-[5rem] text-[11px] text-rose-300/90 truncate" title={detail}>
+                    {detail}
+                  </div>
+                )}
               </div>
             );
           })}
