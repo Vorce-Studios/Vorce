@@ -67,7 +67,7 @@ impl Default for TimelineV2 {
 
 impl TimelineV2 {
     /// Snap time to grid
-    fn snap_time(&self, time: f32) -> f32 {
+    pub fn snap_time(&self, time: f32) -> f32 {
         if self.snap_enabled && self.snap_interval > 0.0 {
             (time / self.snap_interval).round() * self.snap_interval
         } else {
