@@ -70,10 +70,40 @@ class RunReport:
         self.data["status"] = status
         self.data["message"] = message
         self.data["ended_at"] = now_iso()
+
         report_path = self.run_dir / "run_report.json"
         report_path.write_text(json.dumps(self.data, indent=2), encoding="utf-8")
+
+        md_path = self.run_dir / "run_report.md"
+        md_lines = [
+            "# Vorce UI Automation Report",
+            "",
+            f"**Mode:** {self.mode}",
+            f"**Status:** {status.upper()}",
+            f"**Message:** {message}",
+            f"**Started At:** {self.data['started_at']}",
+            f"**Ended At:** {self.data['ended_at']}",
+            ""
+        ]
+
+        failed_checks = [c for c in self.data["checks"] if c["status"] == "fail"]
+        if failed_checks:
+            md_lines.extend(["## Failure Summary", ""])
+            for c in failed_checks:
+                md_lines.append(f"- **{c['name']}**: {c['message']}")
+            md_lines.append("")
+
+        if self.data["artifacts"]:
+            md_lines.extend(["## Artifacts", ""])
+            for k, v in self.data["artifacts"].items():
+                md_lines.append(f"- **{k}**: `{v}`")
+            md_lines.append("")
+
+        md_path.write_text("\n".join(md_lines), encoding="utf-8")
+
         print(f"[{status.upper()}] {message}")
         print(f"Report: {report_path}")
+        print(f"Report Markdown: {md_path}")
         return 0 if status == "passed" else 1
 
 
