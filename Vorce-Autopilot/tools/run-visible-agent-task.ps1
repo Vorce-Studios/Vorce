@@ -1,4 +1,4 @@
-# scripts/codex-cli/tools/run-visible-agent-task.ps1
+# Vorce-Autopilot/tools/run-visible-agent-task.ps1
 # Starts a visible local agent task for a specific GitHub issue.
 
 param(
