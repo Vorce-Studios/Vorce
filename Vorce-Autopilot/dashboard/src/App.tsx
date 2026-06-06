@@ -56,6 +56,7 @@ const defaultActiveSessions: ActiveSessions = {
   last_monitoring_at: '',
   active_delegations: [],
   review_queue: [],
+  review_sessions: [],
   autopilot_created_issues: [],
   completed_this_session: [],
   deliberation_log: []

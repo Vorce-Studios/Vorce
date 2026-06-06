@@ -127,5 +127,12 @@
       "tier": "high",
       "label": "Audit Synthese & Konsolidierung"
     }
-  ]
+  ],
+  "reviews": {
+    "enabled": true,
+    "reviewer_provider": "claude_code",
+    "require_review_before_merge": true,
+    "default_review_type": "simple_review",
+    "complex_review_model_tier": "balanced"
+  }
 }
