@@ -4,8 +4,10 @@ use vorce_ui::editors::timeline_v2::TimelineV2;
 
 #[test]
 fn test_timeline_drag_snapping() {
-    let mut timeline = TimelineV2::default();
-    timeline.snap_enabled = true;
+    let mut timeline = TimelineV2 {
+        snap_enabled: true,
+        ..Default::default()
+    };
 
     // Test basic drag snapping intervals
     timeline.snap_interval = 0.1;
@@ -27,8 +29,10 @@ fn test_timeline_drag_snapping() {
 fn test_timeline_step_manual() {
     use vorce_ui::editors::timeline_v2::models::ShowMode;
 
-    let mut timeline = TimelineV2::default();
-    timeline.show_mode = ShowMode::Manual;
+    let mut timeline = TimelineV2 {
+        show_mode: ShowMode::Manual,
+        ..Default::default()
+    };
 
     // Simulate adding modules and selecting them
     // Let's add some blocks directly to module_arrangement, normally done via `add_module_block` but for setup we'll just mock the items.
@@ -69,8 +73,10 @@ fn test_timeline_step_manual() {
 fn test_timeline_step_semi_auto() {
     use vorce_ui::editors::timeline_v2::models::ShowMode;
 
-    let mut timeline = TimelineV2::default();
-    timeline.show_mode = ShowMode::SemiAutomated;
+    let mut timeline = TimelineV2 {
+        show_mode: ShowMode::SemiAutomated,
+        ..Default::default()
+    };
 
     timeline.state.module_arrangement.push(
         vorce_ui::editors::timeline_v2::models::ModuleArrangementItem {
