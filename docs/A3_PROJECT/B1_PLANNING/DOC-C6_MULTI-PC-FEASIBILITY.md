@@ -1,6 +1,6 @@
 ## Roadmap Referenz
 
-* **MF-046-MULTI-PC-MASTER-SLAVE:** Dieses Dokument dient als technische Grundlage für die Umsetzung der Master/Slave Architektur.
+* **MF-046-MULTI-PC-MASTER-SLAVE:** Dieses Dokument dient als technische Grundlage für die Umsetzung der Master/Slave Architektur. Die Details zur minimalen testbaren Control Plane für 1.0 (Single-Master MVP) finden sich im Dokument `docs/A1_SYSTEM/B1_ARCHITECTURE/DOC-C6_CLUSTER_CONTROL_PLANE_MVP.md`, welches die Anforderungen aus Issue #46 und Issue #656 synchronisiert.
 
 # Machbarkeitsstudie: Multi-PC Architektur
 

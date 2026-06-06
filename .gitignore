@@ -131,3 +131,11 @@ scripts/codex-cli/autopilot-tasks.md
 scripts/codex-cli/quota-registry.json
 scripts/codex-cli/tmp/
 .codex-worktrees/
+
+# Vorce-Autopilot Parallel-Rework Runtime
+Vorce-Autopilot/var/
+Vorce-Autopilot/dashboard/node_modules/
+Vorce-Autopilot/dashboard/dist/
+!Vorce-Autopilot/**/*.json
+
+.worktrees/
