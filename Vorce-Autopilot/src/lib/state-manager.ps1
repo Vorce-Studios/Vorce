@@ -455,7 +455,10 @@ function Add-ReviewItem {
 
     $State = Update-AutopilotStateObject -State $State
     $existing = @($State.review_queue | Where-Object {
-        ([int]$_.pr_number -eq $PrNumber) -and ([string]$_.review_status -in @("pending", "in_progress", "approved"))
+        (Test-ObjectProperty -Object $_ -Name "pr_number") -and
+        ([int]$_.pr_number -eq $PrNumber) -and
+        (Test-ObjectProperty -Object $_ -Name "review_status") -and
+        ([string]$_.review_status -in @("pending", "in_progress", "approved"))
     })
     if ($existing.Count -gt 0) {
         return

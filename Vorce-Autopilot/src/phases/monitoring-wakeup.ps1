@@ -213,7 +213,7 @@ function Get-CeoPrReviewType {
 
     if ($DryRun.IsPresent) { return "simple_review" }
     $prNum = [int]$PullRequest.number
-    $checkCount = @($PullRequest.statusCheckRollup).Count
+    $checkCount = if (Test-ObjectProperty -Object $PullRequest -Name "statusCheckRollup") { @($PullRequest.statusCheckRollup).Count } else { 0 }
     $prompt = @"
 Entscheide fuer PR #$prNum, ob Claude Code ein einfaches Review oder ein ausfuehrliches Review machen soll.
 Antworte nur als JSON: {"review_type":"simple_review|complex_review","reason":"kurzer Fakt"}
@@ -300,12 +300,16 @@ function Set-GitHubPrReviewDecision {
     if ($DryRun.IsPresent) { return }
     $safeBody = if ([string]::IsNullOrWhiteSpace($Body)) { "Claude Code Review abgeschlossen." } else { $Body }
     if ($Decision -eq "APPROVE") {
-        gh pr review $PullRequestNumber --repo $Repository --approve --body $safeBody 2>&1 | Out-Null
+        $reviewOut = gh pr review $PullRequestNumber --repo $Repository --approve --body $safeBody 2>&1
+        if ($LASTEXITCODE -ne 0) { throw "GitHub APPROVE Review fuer PR #$PullRequestNumber fehlgeschlagen: $reviewOut" }
         try { gh label create "status: ready-to-merge" --repo $Repository --color "2EA043" --description "Claude Code Review approved by Autopilot" 2>&1 | Out-Null } catch {}
+        gh pr edit $PullRequestNumber --repo $Repository --remove-label "status: needs-review" 2>&1 | Out-Null
         gh pr edit $PullRequestNumber --repo $Repository --add-label "status: ready-to-merge" 2>&1 | Out-Null
     } else {
-        gh pr review $PullRequestNumber --repo $Repository --request-changes --body $safeBody 2>&1 | Out-Null
+        $reviewOut = gh pr review $PullRequestNumber --repo $Repository --request-changes --body $safeBody 2>&1
+        if ($LASTEXITCODE -ne 0) { throw "GitHub REQUEST_CHANGES Review fuer PR #$PullRequestNumber fehlgeschlagen: $reviewOut" }
         try { gh label create "status: needs-review" --repo $Repository --color "D29922" --description "Claude Code Review requested changes" 2>&1 | Out-Null } catch {}
+        gh pr edit $PullRequestNumber --repo $Repository --remove-label "status: ready-to-merge" 2>&1 | Out-Null
         gh pr edit $PullRequestNumber --repo $Repository --add-label "status: needs-review" 2>&1 | Out-Null
     }
 }
@@ -702,6 +706,23 @@ function Invoke-MonitoringWakeUp {
                 $failNames = ($failingChecks | ForEach-Object { $_.name }) -join ", "
                 Write-Host ("[MONITOR]   PR #{0} {1} Checks fehlgeschlagen ({2})" -f $prNum, $failingChecks.Count, $failNames) -ForegroundColor Red
             }
+
+            $prUrl = if (Test-ObjectProperty -Object $pr -Name "url") { [string]$pr.url } else { "https://github.com/$repo/pull/$prNum" }
+            $alreadyReviewed = @($State.review_queue | Where-Object {
+                (Test-ObjectProperty -Object $_ -Name "pr_number") -and
+                [int]$_.pr_number -eq $prNum -and
+                (Test-ObjectProperty -Object $_ -Name "review_status") -and
+                [string]$_.review_status -in @("pending", "in_progress", "approved")
+            }).Count -gt 0
+            $isDraft = if (Test-ObjectProperty -Object $pr -Name "isDraft") { [bool]$pr.isDraft } else { $false }
+            if (-not $alreadyReviewed -and -not $isDraft) {
+                if ($DryRun.IsPresent) {
+                    Write-Host "[MONITOR] [DRY RUN] Wuerde PR #$prNum in Claude-Code Review-Queue aufnehmen." -ForegroundColor DarkYellow
+                } else {
+                    Add-ReviewItem -State $State -IssueNumber 0 -PrUrl $prUrl -PrNumber $prNum
+                    Write-Host "[MONITOR]   PR #$prNum in Claude-Code Review-Queue aufgenommen." -ForegroundColor Cyan
+                }
+            }
         }
     } catch {
         Write-Warning "[MONITOR] PR-Check fehlgeschlagen: $_"
@@ -893,25 +914,62 @@ function Invoke-MonitoringWakeUp {
     Start-JulesRefill -State $State -Config $Config -QuotaRegistry $QuotaRegistry -Repository $repo -VarDbDir $VarDbDir -DryRun:$DryRun
 
     # --- Step 3: Process review queue ---
-    $pendingReviews = @($State.review_queue | Where-Object { $_.review_status -eq "pending" })
+    $pendingReviews = @($State.review_queue | Where-Object {
+        (Test-ObjectProperty -Object $_ -Name "review_status") -and [string]$_.review_status -eq "pending"
+    })
     if ($pendingReviews.Count -gt 0) {
-        Write-Host "[MONITOR] $($pendingReviews.Count) PRs im Review-Queue." -ForegroundColor Cyan
+        Write-Host "[MONITOR] $($pendingReviews.Count) PRs in der Claude-Code Review-Queue." -ForegroundColor Cyan
 
         foreach ($review in $pendingReviews) {
-            $reviewResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "code_review" -DryRun:$DryRun -State $State -Prompt @"
-Review PR #$($review.pr_number) fuer Issue #$($review.issue_number) im Repository $repo.
-PR URL: $($review.pr_url)
+            try {
+                $prNum = [int]$review.pr_number
+                $prObj = $prs | Where-Object { [int]$_.number -eq $prNum } | Select-Object -First 1
+                if ($null -eq $prObj) {
+                    $review | Add-Member -MemberType NoteProperty -Name "review_status" -Value "skipped" -Force
+                    $review | Add-Member -MemberType NoteProperty -Name "summary" -Value "PR ist nicht mehr offen." -Force
+                    continue
+                }
 
-1. Pruefe den Code auf Qualitaet, Rust-Konventionen und moegliche Regressionen.
-2. Poste deine Ergebnisse als Kommentar auf dem PR.
-3. Antworte mit PASS oder REJECT und einer kurzen Begruendung.
-"@
+                $reviewType = Get-CeoPrReviewType -QuotaRegistry $QuotaRegistry -Config $Config -State $State -PullRequest $prObj -DryRun:$DryRun
+                $review | Add-Member -MemberType NoteProperty -Name "review_type" -Value $reviewType -Force
+                $review | Add-Member -MemberType NoteProperty -Name "review_status" -Value "in_progress" -Force
+                $review | Add-Member -MemberType NoteProperty -Name "started_at" -Value (Get-Date -Format 'o') -Force
+                Save-AutopilotState -State $State
+                Add-ReviewSessionRecord -State $State -ReviewItem $review -Status "in_progress" -ReviewType $reviewType
 
-            if ($reviewResult.success) {
-                $review.review_status = "completed"
-                Write-Host "[MONITOR]   Review fuer PR #$($review.pr_number) abgeschlossen via $($reviewResult.provider)." -ForegroundColor Green
-            } else {
-                Write-Host "[MONITOR]   Review fuer PR #$($review.pr_number) fehlgeschlagen." -ForegroundColor Red
+                $reviewResult = Invoke-ClaudePrReviewSession -QuotaRegistry $QuotaRegistry -Repository $repo -ReviewItem $review -ReviewType $reviewType -DryRun:$DryRun
+                if (-not $reviewResult.success) {
+                    $review | Add-Member -MemberType NoteProperty -Name "review_status" -Value "failed" -Force
+                    $review | Add-Member -MemberType NoteProperty -Name "error" -Value $reviewResult.error -Force
+                    $review | Add-Member -MemberType NoteProperty -Name "summary" -Value "Claude Code Review fehlgeschlagen: $($reviewResult.error)" -Force
+                    Add-ReviewSessionRecord -State $State -ReviewItem $review -Status "failed" -ReviewType $reviewType -Error $review.summary
+                    Add-ErrorLog -State $State -Message "Claude Code review failed for PR #$prNum" -Context ([string]$reviewResult.output)
+                    Write-Host "[MONITOR]   Claude-Code Review fuer PR #$prNum fehlgeschlagen." -ForegroundColor Red
+                    continue
+                }
+
+                $decision = ConvertTo-PrReviewDecision -RawOutput ([string]$reviewResult.output)
+                $review | Add-Member -MemberType NoteProperty -Name "decision" -Value $decision.decision -Force
+                $review | Add-Member -MemberType NoteProperty -Name "summary" -Value $decision.summary -Force
+                $review | Add-Member -MemberType NoteProperty -Name "completed_at" -Value (Get-Date -Format 'o') -Force
+                if ($decision.decision -eq "APPROVE") {
+                    Set-GitHubPrReviewDecision -Repository $repo -PullRequestNumber $prNum -Decision "APPROVE" -Body $decision.summary -DryRun:$DryRun
+                    $review | Add-Member -MemberType NoteProperty -Name "review_status" -Value "approved" -Force
+                    Write-Host "[MONITOR]   PR #$prNum durch Claude Code freigegeben ($reviewType)." -ForegroundColor Green
+                } else {
+                    Set-GitHubPrReviewDecision -Repository $repo -PullRequestNumber $prNum -Decision "REQUEST_CHANGES" -Body $decision.summary -DryRun:$DryRun
+                    $review | Add-Member -MemberType NoteProperty -Name "review_status" -Value "changes_requested" -Force
+                    Write-Host "[MONITOR]   PR #$prNum braucht Aenderungen laut Claude Code ($reviewType)." -ForegroundColor Yellow
+                }
+                Add-ReviewSessionRecord -State $State -ReviewItem $review -Status $review.review_status -ReviewType $reviewType -Decision $decision.decision -Summary $decision.summary
+                Save-AutopilotState -State $State
+            } catch {
+                $review | Add-Member -MemberType NoteProperty -Name "review_status" -Value "failed" -Force
+                $review | Add-Member -MemberType NoteProperty -Name "error" -Value $_.Exception.Message -Force
+                $catchReviewType = if (Test-ObjectProperty -Object $review -Name "review_type") { [string]$review.review_type } else { "" }
+                Add-ReviewSessionRecord -State $State -ReviewItem $review -Status "failed" -ReviewType $catchReviewType -Error $_.Exception.Message
+                Add-ErrorLog -State $State -Message "Review processing failed for PR #$($review.pr_number)" -Context $_.Exception.Message
+                Write-Warning "[MONITOR] Review-Verarbeitung fuer PR #$($review.pr_number) fehlgeschlagen: $_"
             }
         }
     }

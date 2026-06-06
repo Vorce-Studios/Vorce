@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Loader2, Shield, ListFilter, Cpu, Layers, Settings, Check, AlertCircle, Users, Zap } from 'lucide-react';
+import { Save, Loader2, Shield, ListFilter, Cpu, Layers, Settings, Check, AlertCircle, Users, Zap, GitPullRequest } from 'lucide-react';
 import type { AutopilotConfig, QuotaRegistry, MemoryStore } from '../types';
 import MemoryPanel from './MemoryPanel';
 
@@ -55,6 +55,7 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
   // Lokale States für Formulare
   const [config, setConfig] = useState<AutopilotConfig | null>(null);
   const [registry, setRegistry] = useState<QuotaRegistry | null>(null);
+  const [settingsView, setSettingsView] = useState<'operations' | 'providers'>('operations');
 
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -276,8 +277,31 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
         </div>
       )}
 
+      <div className="flex flex-wrap gap-2 rounded-xl border border-slate-800 bg-slate-950/40 p-1">
+        <button
+          type="button"
+          onClick={() => setSettingsView('operations')}
+          className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
+            settingsView === 'operations' ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-500/30' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Autopilot & Queues
+        </button>
+        <button
+          type="button"
+          onClick={() => setSettingsView('providers')}
+          className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
+            settingsView === 'providers' ? 'bg-purple-500/20 text-purple-200 border border-purple-500/30' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Provider & Prompts
+        </button>
+      </div>
+
       {/* Forms Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
+        {settingsView === 'operations' && (
+          <>
         {/* Linke Spalte: Autopilot & Jules */}
         <div className="space-y-6">
           {/* Card: Autopilot Core */}
@@ -444,6 +468,57 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                   className="input-field font-mono text-xs"
                   placeholder="codex_orchestrator, gemini_cli, copilot_cli, cline_cli"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Card: PR Review Gate */}
+          <div className="glass-card p-6">
+            <h3 className="text-base font-semibold text-slate-200 border-b border-slate-700/50 pb-3 mb-4 flex items-center gap-2">
+              <GitPullRequest className="w-4 h-4 text-emerald-400" />
+              Claude-Code PR Review Gate
+            </h3>
+            <div className="space-y-4">
+              <label className="relative flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={config.reviews?.enabled ?? true}
+                  onChange={(e: any) => handleNestedConfigChange('reviews', 'enabled', e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-500/50"
+                />
+                <span className="text-xs font-semibold text-slate-300">Separate Review Sessions aktivieren</span>
+              </label>
+              <label className="relative flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={config.reviews?.require_review_before_merge ?? true}
+                  onChange={(e: any) => handleNestedConfigChange('reviews', 'require_review_before_merge', e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-500/50"
+                />
+                <span className="text-xs font-medium text-slate-300">Merge-Freigabe erst nach Claude-Code Review</span>
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Reviewer Provider</label>
+                  <input
+                    type="text"
+                    value={config.reviews?.reviewer_provider || 'claude_code'}
+                    onChange={(e: any) => handleNestedConfigChange('reviews', 'reviewer_provider', e.target.value)}
+                    className="input-field font-mono text-xs"
+                    placeholder="claude_code"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Default Review-Typ</label>
+                  <select
+                    value={config.reviews?.default_review_type || 'simple_review'}
+                    onChange={(e: any) => handleNestedConfigChange('reviews', 'default_review_type', e.target.value)}
+                    className="input-field text-xs"
+                  >
+                    <option value="simple_review">simple_review</option>
+                    <option value="complex_review">complex_review</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -682,7 +757,11 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
             </div>
           </div>
         </div>
+          </>
+        )}
 
+        {settingsView === 'providers' && (
+          <>
         {/* Rechte Spalte: Provider & Routing */}
         <div className="space-y-6">
           {/* Card: API Provider Quotas */}
@@ -799,10 +878,12 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
             </div>
           </div>
         </div>
+          </>
+        )}
       </div>
 
       {/* Memory System */}
-      <MemoryPanel store={memoryStore} onRefresh={onMemoryRefresh} />
+      {settingsView === 'providers' && <MemoryPanel store={memoryStore} onRefresh={onMemoryRefresh} />}
     </div>
   );
 }

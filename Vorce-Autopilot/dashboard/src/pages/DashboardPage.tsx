@@ -502,9 +502,92 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
         forceRequestedAt={runControl.force_optimizer_requested_at}
       />
 
+      <ReviewQueuePanel queue={sessions.review_queue || []} sessions={sessions.review_sessions || []} />
+
       {/* CEO + QA Manager Deliberation Panel */}
       <DeliberationPanel deliberations={sessions.deliberation_log || []} />
 
+    </div>
+  );
+}
+
+function reviewStatusClass(status?: string): string {
+  const normalized = String(status || '').toLowerCase();
+  if (normalized === 'approved') return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300';
+  if (normalized === 'changes_requested' || normalized === 'failed') return 'border-rose-500/30 bg-rose-500/10 text-rose-300';
+  if (normalized === 'in_progress') return 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300';
+  return 'border-amber-500/30 bg-amber-500/10 text-amber-300';
+}
+
+function ReviewQueuePanel({ queue, sessions }: { queue: any[]; sessions: any[] }) {
+  const pending = queue.filter(item => ['pending', 'in_progress'].includes(String(item.review_status || '').toLowerCase()));
+  const approved = queue.filter(item => String(item.review_status || '').toLowerCase() === 'approved');
+  const blocked = queue.filter(item => ['changes_requested', 'failed'].includes(String(item.review_status || '').toLowerCase()));
+  const recentSessions = (sessions || []).slice().reverse().slice(0, 6);
+
+  return (
+    <div className="glass-card p-5 border border-slate-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+            <GitPullRequest className="text-emerald-400 w-4 h-4" />
+            Claude-Code PR Reviews
+          </h3>
+          <div className="mt-1 text-xs text-slate-500">
+            Offen: {pending.length} · Freigegeben: {approved.length} · Blockiert: {blocked.length}
+          </div>
+        </div>
+        <div className="text-[11px] text-slate-400">
+          Merge-Freigabe erfolgt erst nach Claude-Code Review.
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="rounded-lg border border-slate-800 bg-slate-950/30 p-3">
+          <div className="text-[11px] uppercase tracking-wide font-semibold text-slate-400 mb-2">Review Queue</div>
+          <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+            {queue.length === 0 ? (
+              <div className="text-xs text-slate-500">Keine PRs in der Review Queue.</div>
+            ) : queue.slice().reverse().slice(0, 10).map((item) => (
+              <div key={item.id || item.pr_number} className="rounded-md border border-slate-800 bg-slate-900/50 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-sm font-semibold text-slate-200">PR #{item.pr_number}</div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded border ${reviewStatusClass(item.review_status)}`}>
+                    {item.review_status || 'pending'}
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-500 mt-1">
+                  {item.review_type || 'unclassified'} · {item.reviewer || 'claude_code'} · Issue #{item.issue_number || 'n/a'}
+                </div>
+                {item.summary && <div className="text-xs text-slate-300 mt-2 line-clamp-3">{item.summary}</div>}
+                {item.error && <div className="text-xs text-rose-300 mt-2 line-clamp-2">{item.error}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-slate-800 bg-slate-950/30 p-3">
+          <div className="text-[11px] uppercase tracking-wide font-semibold text-slate-400 mb-2">Letzte Review Sessions</div>
+          <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+            {recentSessions.length === 0 ? (
+              <div className="text-xs text-slate-500">Noch keine Review Sessions dokumentiert.</div>
+            ) : recentSessions.map((session) => (
+              <div key={`${session.id}-${session.updated_at}`} className="rounded-md border border-slate-800 bg-slate-900/50 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-sm font-semibold text-slate-200">PR #{session.pr_number}</div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded border ${reviewStatusClass(session.status)}`}>
+                    {session.status}
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-500 mt-1">
+                  {session.review_type || 'review'} · {session.updated_at ? timeAgo(session.updated_at) : 'N/A'}
+                </div>
+                {session.summary && <div className="text-xs text-slate-300 mt-2 line-clamp-3">{session.summary}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
