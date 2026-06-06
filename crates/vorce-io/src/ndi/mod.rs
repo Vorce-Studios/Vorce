@@ -6,7 +6,7 @@
 //! This module provides NDI input (receiving) and output (sending) capabilities
 //! using the grafton-ndi crate which wraps the official NDI SDK.
 
-#[cfg(feature = "ndi")]
+#[allow(unused_imports)]
 use crate::error::{IoError, Result};
 #[cfg(feature = "ndi")]
 use crate::format::{FrameData, PixelFormat as VorcePixelFormat, VideoFormat, VideoFrame};
@@ -142,7 +142,7 @@ impl NdiReceiver {
                 }
 
                 // Poll for frames if connected
-                if let Some(ref r) = receiver {
+                if let Some(ref mut r) = receiver {
                     match r.capture_video(Duration::from_millis(16)) {
                         Ok(v) => {
                             let width = v.width() as u32;
@@ -228,6 +228,7 @@ impl NdiReceiver {
         let sources = finder
             .find_sources(Duration::from_millis(timeout_ms as u64))
             .map_err(|e| IoError::NdiError(e.to_string()))?;
+
         Ok(sources.into_iter().map(|s| s.into()).collect())
     }
 
@@ -283,6 +284,13 @@ impl VideoSource for NdiReceiver {
 
     fn frame_count(&self) -> u64 {
         self.frame_count.load(std::sync::atomic::Ordering::SeqCst)
+    }
+}
+
+#[cfg(feature = "ndi")]
+impl Drop for NdiReceiver {
+    fn drop(&mut self) {
+        let _ = self.receiver_tx.send(ReceiverCommand::Stop);
     }
 }
 
@@ -421,4 +429,23 @@ pub struct NdiSource {
     pub name: String,
     /// Optional address of the NDI source.
     pub address: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn test_ndi_stub_fallback() {
+        // Smoke test to ensure NdiReceiver stub/real impl can be instantiated (or fails gracefully)
+        #[cfg(not(feature = "ndi"))]
+        {
+            assert!(NdiReceiver::new().is_err());
+            assert!(NdiSender::new("test", crate::format::VideoFormat::hd_1080p60_rgba()).is_err());
+        }
+
+        // Just checking compilation/imports work
+        let _ = 1;
+    }
 }
