@@ -143,3 +143,23 @@ fn test_autosave_backward_compatibility_master_blackout() {
     // Verify it defaulted correctly
     assert!(!loaded_state.layer_manager.composition.master_blackout);
 }
+
+#[test]
+fn test_timeline_persistence_dirty_state() {
+    let dir = tempfile::tempdir().unwrap();
+    let file_path = dir.path().join("timeline_dirty.vorce");
+
+    let mut state = vorce_core::AppState::new("Timeline Test");
+    assert!(!state.dirty);
+
+    // Editing timeline triggers dirty state
+    state.effect_animator_mut().set_duration(10.0);
+    assert!(state.dirty);
+
+    // Save project
+    vorce_io::project::save_project(&state, &file_path).unwrap();
+
+    // After successful load, the dirty state should be clear
+    let loaded_state = vorce_io::project::load_project(&file_path).unwrap();
+    assert!(!loaded_state.dirty);
+}
