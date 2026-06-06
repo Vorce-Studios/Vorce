@@ -31,8 +31,41 @@ def log_report(status, message, run_dir, extra_data=None):
     report_file = run_dir / "run_report.json"
     with open(report_file, "w") as f:
         json.dump(report, f, indent=2)
+
+    md_file = run_dir / "run_report.md"
+    md_lines = [
+        "# Vorce UI Automation Report",
+        "",
+        f"**Status:** {status}",
+        f"**Message:** {message}",
+        f"**Timestamp:** {report['timestamp']}",
+        ""
+    ]
+
+    if extra_data:
+        if "screenshot" in extra_data and extra_data["screenshot"]:
+            md_lines.extend(["## Artifacts", ""])
+            md_lines.append(f"- **Screenshot**: `{extra_data['screenshot']}`")
+            md_lines.append("")
+
+        other_data = {k: v for k, v in extra_data.items() if k != "screenshot"}
+        if other_data:
+            md_lines.extend(["## Additional Data", ""])
+            for k, v in other_data.items():
+                md_lines.append(f"- **{k}**: {v}")
+            md_lines.append("")
+
+    if status == "FAIL":
+        md_lines.extend(["## Failure Summary", ""])
+        md_lines.append(f"- {message}")
+        md_lines.append("")
+
+    with open(md_file, "w") as f:
+        f.write("\n".join(md_lines))
+
     print(f"[{status}] {message}")
     print(f"Report saved to {report_file}")
+    print(f"Report Markdown saved to {md_file}")
 
 def take_screenshot(run_dir, name="screenshot"):
     if "Pillow" in MISSING_DEPS:
