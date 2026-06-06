@@ -63,6 +63,16 @@ impl NdiHandle {
         info!("NDI library initialized successfully");
         Ok(Self { ndi: Arc::new(ndi) })
     }
+
+    /// Probes if the NDI runtime/assets are available without returning an error.
+    /// This attempts to initialize the NDI library and returns a clean boolean.
+    pub fn is_runtime_available() -> bool {
+        let result = NDI::new();
+        if let Err(e) = &result {
+            warn!("NDI runtime availability probe failed: {}", e);
+        }
+        result.is_ok()
+    }
 }
 
 /// NDI receiver host for capturing video from NDI sources in a thread-safe way.
@@ -372,6 +382,19 @@ impl NdiReceiver {
     /// Creates a new NDI receiver stub that returns an error since NDI is not enabled.
     pub fn new() -> std::result::Result<Self, String> {
         Err("NDI feature not enabled".to_string())
+    }
+}
+
+/// Dummy handle when NDI is disabled
+#[cfg(not(feature = "ndi"))]
+pub struct NdiHandle;
+
+/// Probes if the NDI runtime is available
+#[cfg(not(feature = "ndi"))]
+impl NdiHandle {
+    /// Probes if the NDI runtime/assets are available without returning an error.
+    pub fn is_runtime_available() -> bool {
+        false
     }
 }
 
