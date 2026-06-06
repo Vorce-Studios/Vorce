@@ -48,7 +48,13 @@ pub struct LiveStatus {
 
 impl Default for LiveStatus {
     fn default() -> Self {
-        Self { uptime_seconds: 0, active_layers: 0, fps: 0.0, layer_info: Vec::new(), cluster_health: "Healthy".to_string() }
+        Self {
+            uptime_seconds: 0,
+            active_layers: 0,
+            fps: 0.0,
+            layer_info: Vec::new(),
+            cluster_health: "Healthy".to_string(),
+        }
     }
 }
 
