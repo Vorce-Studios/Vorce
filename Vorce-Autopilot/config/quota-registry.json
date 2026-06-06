@@ -461,12 +461,15 @@
       "codex_orchestrator:monitoring"
     ],
     "simple_review": [
-      "claude_code:balanced"
+      "gemini_cli:cheap"
     ],
     "code_review": [
-      "claude_code:balanced"
+      "gemini_cli:balanced",
+      "claude_code:balanced",
+      "cline_cli:default"
     ],
     "complex_review": [
+      "gemini_cli:premium",
       "claude_code:balanced"
     ],
     "planning": [

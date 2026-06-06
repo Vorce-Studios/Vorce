@@ -24,7 +24,7 @@ function New-GitHubIssue {
     param(
         [Parameter(Mandatory)][string]$Repository,
         [Parameter(Mandatory)][string]$Title,
-        [AllowEmptyString()][string]$Body,
+        [Parameter(Mandatory)][string]$Body,
         [string[]]$Labels = @()
     )
 
@@ -39,13 +39,8 @@ function New-GitHubIssue {
         }
     }
 
-    $safeBody = if ([string]::IsNullOrWhiteSpace($Body)) { "Autopilot-created issue. Details were not provided by the planning agent; please inspect the linked planning run before delegation." } else { $Body }
-    $labelStr = @($Labels | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) } | Select-Object -Unique) -join ","
-    if ([string]::IsNullOrWhiteSpace($labelStr)) {
-        $issueUrl = gh issue create --repo $Repository --title $Title --body $safeBody 2>&1
-    } else {
-        $issueUrl = gh issue create --repo $Repository --title $Title --body $safeBody --label $labelStr 2>&1
-    }
+    $labelStr = $Labels -join ","
+    $issueUrl = gh issue create --repo $Repository --title $Title --body $Body --label $labelStr 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "GitHub Issue-Erstellung fehlgeschlagen: $issueUrl"
     }
