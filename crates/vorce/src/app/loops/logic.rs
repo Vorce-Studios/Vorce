@@ -87,7 +87,8 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
             if *velocity > 0 {
                 app.ui_state
                     .timeline_panel
-                    .state.hybrid_active_triggers
+                    .state
+                    .hybrid_active_triggers
                     .insert(format!("MIDI_{}_{}", channel, note));
             }
         }

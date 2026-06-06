@@ -83,7 +83,8 @@ impl TimelineV2 {
         modules: &[TimelineModule<'_>],
     ) -> Option<TimelineAction> {
         let mut action = None;
-        let module_names = crate::editors::timeline_v2::state::TimelineState::module_name_map(modules);
+        let module_names =
+            crate::editors::timeline_v2::state::TimelineState::module_name_map(modules);
         let available_module_ids: Vec<ModuleId> = modules.iter().map(|m| m.id).collect();
 
         // Ensure pause_at_markers reflects the current ShowMode
@@ -354,7 +355,11 @@ impl TimelineV2 {
                     crate::widgets::custom::render_info_label(ui, "No modules available");
                 } else {
                     let selected = self.selected_module_id.unwrap_or(modules[0].id);
-                    let selected_label = crate::editors::timeline_v2::state::TimelineState::module_name(&module_names, selected);
+                    let selected_label =
+                        crate::editors::timeline_v2::state::TimelineState::module_name(
+                            &module_names,
+                            selected,
+                        );
                     egui::ComboBox::from_id_salt("timeline_module_select")
                         .selected_text(selected_label)
                         .show_ui(ui, |ui| {
@@ -397,7 +402,11 @@ impl TimelineV2 {
                 ui.horizontal(|ui| {
                     ui.checkbox(&mut block.enabled, "");
 
-                    let selected_label = crate::editors::timeline_v2::state::TimelineState::module_name(&module_names, block.module_id);
+                    let selected_label =
+                        crate::editors::timeline_v2::state::TimelineState::module_name(
+                            &module_names,
+                            block.module_id,
+                        );
                     egui::ComboBox::from_id_salt(format!("timeline_block_module_{}", block.id))
                         .selected_text(selected_label)
                         .show_ui(ui, |ui| {
@@ -492,7 +501,8 @@ impl TimelineV2 {
                 }
             }
 
-            let module_track_height = if self.state.module_arrangement.is_empty() { 0.0 } else { 64.0 };
+            let module_track_height =
+                if self.state.module_arrangement.is_empty() { 0.0 } else { 64.0 };
 
             let available_height = 50.0 + (visible_lanes_count as f32 * 60.0) + module_track_height;
             let available_width = (duration * self.zoom).max(ui.available_width());
@@ -629,7 +639,9 @@ impl TimelineV2 {
                     ui.visuals().text_color().gamma_multiply(0.9),
                 );
 
-                let active_module = self.state.runtime_show_module(self.show_control_enabled, self.show_mode,
+                let active_module = self.state.runtime_show_module(
+                    self.show_control_enabled,
+                    self.show_mode,
                     self.playhead,
                     animator.is_playing(),
                     &available_module_ids,
@@ -685,7 +697,10 @@ impl TimelineV2 {
                         egui::StrokeKind::Middle,
                     );
 
-                    let label = crate::editors::timeline_v2::state::TimelineState::module_name(&module_names, block.module_id);
+                    let label = crate::editors::timeline_v2::state::TimelineState::module_name(
+                        &module_names,
+                        block.module_id,
+                    );
                     painter.text(
                         Pos2::new(block_rect.min.x + 4.0, block_rect.min.y + 6.0),
                         egui::Align2::LEFT_TOP,
