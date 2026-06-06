@@ -170,8 +170,9 @@ impl ClusterConfig {
             let current_instance = self.instances.iter().find(|i| i.id == current.instance_id);
             let new_instance = self.instances.iter().find(|i| i.id == new_update.instance_id);
 
-            let current_is_master = current_instance.map_or(false, |i| i.role == InstanceRole::Master);
-            let new_is_master = new_instance.map_or(false, |i| i.role == InstanceRole::Master);
+            let current_is_master =
+                current_instance.is_some_and(|i| i.role == InstanceRole::Master);
+            let new_is_master = new_instance.is_some_and(|i| i.role == InstanceRole::Master);
 
             if current_is_master && !new_is_master {
                 return ConflictResolution::RejectedWinner(current.instance_id);
@@ -229,13 +230,20 @@ mod tests {
         let new_update = UpdateMetadata { instance_id: sec_id, timestamp_ms: 100, sequence: 2 };
 
         // Master wins over secondary even if secondary has higher sequence
-        assert_eq!(cluster.resolve_conflict(Some(&current), &new_update), ConflictResolution::RejectedWinner(master_id));
+        assert_eq!(
+            cluster.resolve_conflict(Some(&current), &new_update),
+            ConflictResolution::RejectedWinner(master_id)
+        );
 
-        let new_master_update = UpdateMetadata { instance_id: master_id, timestamp_ms: 100, sequence: 2 };
+        let new_master_update =
+            UpdateMetadata { instance_id: master_id, timestamp_ms: 100, sequence: 2 };
         let sec_current = UpdateMetadata { instance_id: sec_id, timestamp_ms: 100, sequence: 1 };
 
         // Master wins over secondary
-        assert_eq!(cluster.resolve_conflict(Some(&sec_current), &new_master_update), ConflictResolution::Accepted);
+        assert_eq!(
+            cluster.resolve_conflict(Some(&sec_current), &new_master_update),
+            ConflictResolution::Accepted
+        );
     }
 
     #[test]
@@ -245,13 +253,22 @@ mod tests {
         let current = UpdateMetadata { instance_id: instance, timestamp_ms: 200, sequence: 5 };
 
         let older_time = UpdateMetadata { instance_id: instance, timestamp_ms: 100, sequence: 10 };
-        assert_eq!(cluster.resolve_conflict(Some(&current), &older_time), ConflictResolution::RejectedStale);
+        assert_eq!(
+            cluster.resolve_conflict(Some(&current), &older_time),
+            ConflictResolution::RejectedStale
+        );
 
         let older_seq = UpdateMetadata { instance_id: instance, timestamp_ms: 200, sequence: 4 };
-        assert_eq!(cluster.resolve_conflict(Some(&current), &older_seq), ConflictResolution::RejectedStale);
+        assert_eq!(
+            cluster.resolve_conflict(Some(&current), &older_seq),
+            ConflictResolution::RejectedStale
+        );
 
         let same_seq = UpdateMetadata { instance_id: instance, timestamp_ms: 200, sequence: 5 };
-        assert_eq!(cluster.resolve_conflict(Some(&current), &same_seq), ConflictResolution::RejectedStale);
+        assert_eq!(
+            cluster.resolve_conflict(Some(&current), &same_seq),
+            ConflictResolution::RejectedStale
+        );
     }
 
     #[test]
@@ -265,12 +282,18 @@ mod tests {
         let new_update = UpdateMetadata { instance_id: id2, timestamp_ms: 100, sequence: 2 };
 
         // When both have same role (None here) and timestamp, smaller UUID wins
-        assert_eq!(cluster.resolve_conflict(Some(&current), &new_update), ConflictResolution::RejectedWinner(id1));
+        assert_eq!(
+            cluster.resolve_conflict(Some(&current), &new_update),
+            ConflictResolution::RejectedWinner(id1)
+        );
 
         let current2 = UpdateMetadata { instance_id: id2, timestamp_ms: 100, sequence: 1 };
         let new_update2 = UpdateMetadata { instance_id: id1, timestamp_ms: 100, sequence: 2 };
 
         // Smaller UUID wins
-        assert_eq!(cluster.resolve_conflict(Some(&current2), &new_update2), ConflictResolution::Accepted);
+        assert_eq!(
+            cluster.resolve_conflict(Some(&current2), &new_update2),
+            ConflictResolution::Accepted
+        );
     }
 }
