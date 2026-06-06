@@ -672,7 +672,7 @@
         }
       ],
       "consensus_reached": false,
-      "final_output": "Alpha failed, fell back to Beta visible agent",
+      "final_output": "CEO failed, fell back to QA Manager visible agent",
       "completed_at": "2026-05-31T08:58:57.1255023+02:00"
     },
     {
@@ -683,7 +683,7 @@
         "provider": "codex_orchestrator",
         "model_tier": "planning"
       },
-      "auditor": {
+      "QA Manager": {
         "provider": "claude_code",
         "model_tier": "balanced"
       },
@@ -698,7 +698,7 @@
         },
         {
           "phase": "critique",
-          "agent": "auditor",
+          "agent": "QA Manager",
           "provider": "claude_code",
           "duration_ms": 1213,
           "success": false,
@@ -717,7 +717,7 @@
         "provider": "gemini_cli",
         "model_tier": "balanced"
       },
-      "auditor": {
+      "QA Manager": {
         "provider": "claude_code",
         "model_tier": "balanced"
       },
@@ -732,7 +732,7 @@
         }
       ],
       "consensus_reached": false,
-      "final_output": "CEO failed, fell back to Auditor visible agent",
+      "final_output": "CEO failed, fell back to QA Manager visible agent",
       "completed_at": "2026-05-31T16:51:40.3010745+02:00"
     },
     {
@@ -743,7 +743,7 @@
         "provider": "codex_orchestrator",
         "model_tier": "planning"
       },
-      "auditor": {
+      "QA Manager": {
         "provider": "claude_code",
         "model_tier": "balanced"
       },
@@ -758,7 +758,7 @@
         },
         {
           "phase": "critique",
-          "agent": "auditor",
+          "agent": "QA Manager",
           "provider": "claude_code",
           "duration_ms": 2085,
           "success": false,
@@ -777,7 +777,7 @@
         "provider": "gemini_cli",
         "model_tier": "balanced"
       },
-      "auditor": {
+      "QA Manager": {
         "provider": "claude_code",
         "model_tier": "balanced"
       },
@@ -792,7 +792,7 @@
         }
       ],
       "consensus_reached": false,
-      "final_output": "CEO failed, fell back to Auditor visible agent",
+      "final_output": "CEO failed, fell back to QA Manager visible agent",
       "completed_at": "2026-05-31T18:37:20.0948908+02:00"
     },
     {
@@ -803,7 +803,7 @@
         "provider": "codex_orchestrator",
         "model_tier": "planning"
       },
-      "auditor": {
+      "QA Manager": {
         "provider": "claude_code",
         "model_tier": "balanced"
       },
@@ -818,7 +818,7 @@
         },
         {
           "phase": "critique",
-          "agent": "auditor",
+          "agent": "QA Manager",
           "provider": "claude_code",
           "duration_ms": 1026,
           "success": false,
@@ -837,7 +837,7 @@
         "provider": "gemini_cli",
         "model_tier": "balanced"
       },
-      "auditor": {
+      "QA Manager": {
         "provider": "claude_code",
         "model_tier": "balanced"
       },
@@ -852,7 +852,7 @@
         }
       ],
       "consensus_reached": false,
-      "final_output": "CEO failed, fell back to Auditor visible agent",
+      "final_output": "CEO failed, fell back to QA Manager visible agent",
       "completed_at": "2026-05-31T19:22:03.0904665+02:00"
     },
     {
@@ -863,7 +863,7 @@
         "provider": "codex_orchestrator",
         "model_tier": "planning"
       },
-      "auditor": {
+      "QA Manager": {
         "provider": "claude_code",
         "model_tier": "balanced"
       },
@@ -878,7 +878,7 @@
         },
         {
           "phase": "critique",
-          "agent": "auditor",
+          "agent": "QA Manager",
           "provider": "claude_code",
           "duration_ms": 1181,
           "success": false,
@@ -897,7 +897,7 @@
         "provider": "gemini_cli",
         "model_tier": "balanced"
       },
-      "auditor": {
+      "QA Manager": {
         "provider": "claude_code",
         "model_tier": "balanced"
       },
@@ -912,7 +912,7 @@
         }
       ],
       "consensus_reached": false,
-      "final_output": "CEO failed, fell back to Auditor visible agent",
+      "final_output": "CEO failed, fell back to QA Manager visible agent",
       "completed_at": "2026-05-31T20:51:36.8022552+02:00"
     },
     {
@@ -923,7 +923,7 @@
         "provider": "codex_orchestrator",
         "model_tier": "planning"
       },
-      "auditor": {
+      "QA Manager": {
         "provider": "claude_code",
         "model_tier": "balanced"
       },
@@ -938,7 +938,7 @@
         },
         {
           "phase": "critique",
-          "agent": "auditor",
+          "agent": "QA Manager",
           "provider": "claude_code",
           "duration_ms": 1036,
           "success": false,
@@ -957,7 +957,7 @@
         "provider": "gemini_cli",
         "model_tier": "balanced"
       },
-      "auditor": {
+      "QA Manager": {
         "provider": "claude_code",
         "model_tier": "balanced"
       },
@@ -972,7 +972,7 @@
         }
       ],
       "consensus_reached": false,
-      "final_output": "CEO failed, fell back to Auditor visible agent",
+      "final_output": "CEO failed, fell back to QA Manager visible agent",
       "completed_at": "2026-05-31T22:13:40.9255375+02:00"
     },
     {
@@ -983,7 +983,7 @@
         "provider": "codex_orchestrator",
         "model_tier": "planning"
       },
-      "auditor": {
+      "QA Manager": {
         "provider": "claude_code",
         "model_tier": "balanced"
       },
@@ -998,7 +998,7 @@
         },
         {
           "phase": "critique",
-          "agent": "auditor",
+          "agent": "QA Manager",
           "provider": "claude_code",
           "duration_ms": 1314,
           "success": false,
@@ -1017,7 +1017,7 @@
         "provider": "gemini_cli",
         "model_tier": "balanced"
       },
-      "auditor": {
+      "QA Manager": {
         "provider": "claude_code",
         "model_tier": "balanced"
       },
@@ -1032,7 +1032,7 @@
         }
       ],
       "consensus_reached": false,
-      "final_output": "CEO failed, fell back to Auditor visible agent",
+      "final_output": "CEO failed, fell back to QA Manager visible agent",
       "completed_at": "2026-05-31T23:58:45.8154696+02:00"
     }
   ],

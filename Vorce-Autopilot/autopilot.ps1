@@ -21,6 +21,7 @@ $ScriptDir = $PSScriptRoot
 $script:VarLogDir = Join-Path $ScriptDir "var/log"
 $script:VarDbDir = Join-Path $ScriptDir "var/db"
 $script:AutopilotLiveLogPath = Join-Path $script:VarLogDir "autopilot-live.log"
+$script:AutopilotMainLockPath = Join-Path $script:VarDbDir "autopilot-main-lock.json"
 $global:VorceAutopilotLiveLogPath = $script:AutopilotLiveLogPath
 
 # Ensure directories exist
@@ -70,6 +71,112 @@ function Write-Host {
         } catch {}
     }
 }
+
+function Get-AutopilotRunMode {
+    if ($PlanOnce.IsPresent) { return "plan-once" }
+    if ($MonitorOnce.IsPresent) { return "monitor-once" }
+    return "loop"
+}
+
+function Read-AutopilotMainRunLock {
+    if (-not (Test-Path -LiteralPath $script:AutopilotMainLockPath)) { return $null }
+    try {
+        return Get-Content -LiteralPath $script:AutopilotMainLockPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    } catch {
+        return $null
+    }
+}
+
+function Test-AutopilotMainRunLockActive {
+    param([object]$Lock)
+
+    if ($null -eq $Lock) { return $false }
+    if (-not ($Lock.PSObject.Properties.Name -contains "pid")) { return $false }
+
+    $lockPid = 0
+    if (-not [int]::TryParse([string]$Lock.pid, [ref]$lockPid) -or $lockPid -le 0) { return $false }
+
+    $process = Get-Process -Id $lockPid -ErrorAction SilentlyContinue
+    if ($null -eq $process) { return $false }
+
+    if ($Lock.PSObject.Properties.Name -contains "started_at") {
+        try {
+            $lockStarted = [datetimeoffset]::Parse([string]$Lock.started_at).LocalDateTime
+            if ($process.StartTime -gt $lockStarted.AddMinutes(1)) { return $false }
+        } catch {}
+    }
+
+    return $true
+}
+
+function Register-AutopilotMainRunLock {
+    param([Parameter(Mandatory)][string]$Mode)
+
+    for ($attempt = 0; $attempt -lt 2; $attempt++) {
+        $existingLock = Read-AutopilotMainRunLock
+        if (Test-AutopilotMainRunLockActive -Lock $existingLock) {
+            $existingMode = if ($existingLock.PSObject.Properties.Name -contains "mode") { [string]$existingLock.mode } else { "unknown" }
+            $existingPid = [string]$existingLock.pid
+            throw "Autopilot laeuft bereits (PID=$existingPid, Mode=$existingMode). Zweite Instanz blockiert, damit Planning/Monitoring nicht parallel laufen."
+        }
+
+        if (Test-Path -LiteralPath $script:AutopilotMainLockPath) {
+            Remove-Item -LiteralPath $script:AutopilotMainLockPath -Force -ErrorAction SilentlyContinue
+        }
+
+        $now = Get-Date
+        $lockJson = [pscustomobject]@{
+            pid               = $PID
+            mode              = $Mode
+            phase             = "starting"
+            started_at        = $now.ToString("o")
+            last_heartbeat_at = $now.ToString("o")
+            script_path       = $PSCommandPath
+        } | ConvertTo-Json -Depth 4
+
+        try {
+            $bytes = [System.Text.Encoding]::UTF8.GetBytes($lockJson)
+            $stream = [System.IO.File]::Open($script:AutopilotMainLockPath, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+            try {
+                $stream.Write($bytes, 0, $bytes.Length)
+            } finally {
+                $stream.Dispose()
+            }
+            return
+        } catch [System.IO.IOException] {
+            Start-Sleep -Milliseconds 150
+            continue
+        }
+    }
+
+    $existingLock = Read-AutopilotMainRunLock
+    $existingMode = if ($null -ne $existingLock -and $existingLock.PSObject.Properties.Name -contains "mode") { [string]$existingLock.mode } else { "unknown" }
+    $existingPid = if ($null -ne $existingLock -and $existingLock.PSObject.Properties.Name -contains "pid") { [string]$existingLock.pid } else { "unknown" }
+    throw "Autopilot-Run-Lock konnte nicht exklusiv erstellt werden (aktueller Lock: PID=$existingPid, Mode=$existingMode)."
+}
+
+function Update-AutopilotMainRunLock {
+    param([Parameter(Mandatory)][string]$Phase)
+
+    $lock = Read-AutopilotMainRunLock
+    if ($null -eq $lock) { return }
+    if (-not ($lock.PSObject.Properties.Name -contains "pid") -or [string]$lock.pid -ne [string]$PID) { return }
+
+    $lock.phase = $Phase
+    $lock.last_heartbeat_at = (Get-Date).ToString("o")
+    $lock | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $script:AutopilotMainLockPath -Encoding UTF8
+}
+
+function Clear-AutopilotMainRunLock {
+    $lock = Read-AutopilotMainRunLock
+    if ($null -eq $lock) { return }
+    if (($lock.PSObject.Properties.Name -contains "pid") -and [string]$lock.pid -eq [string]$PID) {
+        Remove-Item -LiteralPath $script:AutopilotMainLockPath -Force -ErrorAction SilentlyContinue
+    }
+}
+
+$script:AutopilotRunMode = Get-AutopilotRunMode
+Register-AutopilotMainRunLock -Mode $script:AutopilotRunMode
 
 # --- Load libraries ---
 . (Join-Path $ScriptDir "src/lib/state-manager.ps1")
@@ -141,16 +248,26 @@ $QuotaRegistry = Read-QuotaRegistry
 
 # --- Single-shot modes ---
 if ($PlanOnce.IsPresent) {
-    Invoke-PlanningWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
-    $summary = Get-QuotaSummary -Registry $QuotaRegistry
-    Write-Host $summary -ForegroundColor DarkGray
+    try {
+        Update-AutopilotMainRunLock -Phase "planning"
+        Invoke-PlanningWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+        $summary = Get-QuotaSummary -Registry $QuotaRegistry
+        Write-Host $summary -ForegroundColor DarkGray
+    } finally {
+        Clear-AutopilotMainRunLock
+    }
     return
 }
 
 if ($MonitorOnce.IsPresent) {
-    Invoke-MonitoringWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
-    $summary = Get-QuotaSummary -Registry $QuotaRegistry
-    Write-Host $summary -ForegroundColor DarkGray
+    try {
+        Update-AutopilotMainRunLock -Phase "monitoring"
+        Invoke-MonitoringWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+        $summary = Get-QuotaSummary -Registry $QuotaRegistry
+        Write-Host $summary -ForegroundColor DarkGray
+    } finally {
+        Clear-AutopilotMainRunLock
+    }
     return
 }
 
@@ -222,12 +339,17 @@ while ($true) {
 
     if ($planDue) {
         try {
+            Update-AutopilotMainRunLock -Phase "planning"
             Invoke-PlanningWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
             $lastPlanTime = Get-Date
         } catch {
             Write-Host "[LOOP] Planning-Fehler: $_" -ForegroundColor Red
             Write-Host "[LOOP] StackTrace: $($_.ScriptStackTrace)" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "Planning wake-up failed" -Context $_.Exception.Message
+            $lastPlanTime = Get-Date
+            $State.last_planning_at = $lastPlanTime.ToString('o')
+            Save-AutopilotState -State $State
+            Write-Host "[LOOP] Planning fehlgeschlagen; naechster Planning-Versuch erst nach $planMinutes min." -ForegroundColor Yellow
         }
 
         # Planning hat Prioritaet
@@ -236,8 +358,9 @@ while ($true) {
             $monDue = $false
         }
 
-        # Asynchroner Audit-Lauf durch CEO Beta direkt nach dem Planning
+        # Asynchroner Audit-Lauf durch den QA Manager direkt nach dem Planning
         try {
+            Update-AutopilotMainRunLock -Phase "audit"
             Invoke-AuditWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
         } catch {
             Write-Host "[LOOP] Audit-Fehler: $_" -ForegroundColor Red
@@ -246,11 +369,16 @@ while ($true) {
 
     if ($monDue) {
         try {
+            Update-AutopilotMainRunLock -Phase "monitoring"
             Invoke-MonitoringWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
             $lastMonTime = Get-Date
         } catch {
             Write-Host "[LOOP] Monitoring-Fehler: $_" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "Monitoring wake-up failed" -Context $_.Exception.Message
+            $lastMonTime = Get-Date
+            $State.last_monitoring_at = $lastMonTime.ToString('o')
+            Save-AutopilotState -State $State
+            Write-Host "[LOOP] Monitoring fehlgeschlagen; naechster Monitoring-Versuch erst nach $monMinutes min." -ForegroundColor Yellow
         }
     }
 
@@ -293,11 +421,13 @@ while ($true) {
     if ($nextWake -eq $nextPlan) { $nextType = "Planning" } else { $nextType = "Monitoring" }
     $sleepMin = [Math]::Round($sleepSeconds / 60, 1)
     $nextTimeStr = $nextWake.ToString("HH:mm:ss")
+    Write-Host ("[LOOP] Naechste Termine: Planning={0} | Monitoring={1}" -f $nextPlan.ToString("HH:mm:ss"), $nextMon.ToString("HH:mm:ss")) -ForegroundColor DarkGray
     $loopMsg = "[LOOP] Naechster Wake-Up ({0}): {1} (in {2} min)" -f $nextType, $nextTimeStr, $sleepMin
     Write-Host $loopMsg -ForegroundColor DarkGray
     Write-Host ""
 
     Save-AutopilotState -State $State
+    Update-AutopilotMainRunLock -Phase "sleeping"
     $remainingSleep = [Math]::Max(1, [int]$sleepSeconds)
     while ($remainingSleep -gt 0) {
         Start-Sleep -Seconds 1

@@ -37,6 +37,33 @@ const TASK_LABELS: Record<string, string> = {
   qa_disposition: 'QA-Freigabe',
 };
 
+function normalizeRoleText(value?: string): string {
+  if (!value) return '';
+  return value
+    .replace(/Beta CEO/gi, 'QA Manager')
+    .replace(/CEO Beta/gi, 'QA Manager')
+    .replace(/CEO BETA/gi, 'QA Manager')
+    .replace(/QA[-\s]?Auditor/gi, 'QA Manager')
+    .replace(/\bAuditor\b/gi, 'QA Manager')
+    .replace(/Alpha CEO/gi, 'CEO')
+    .replace(/CEO Alpha/gi, 'CEO')
+    .replace(/CEO ALPHA/gi, 'CEO');
+}
+
+function getCeoProvider(entry: DeliberationLogEntry): string {
+  const legacy = entry as any;
+  return entry.alpha_provider || legacy.alpha?.provider || legacy.ceo?.provider || 'CEO';
+}
+
+function getQaManagerProvider(entry: DeliberationLogEntry): string {
+  const legacy = entry as any;
+  return entry.beta_provider || legacy.beta?.provider || legacy.qa_manager?.provider || legacy.auditor?.provider || 'QA Manager';
+}
+
+function isCeoRound(agent?: string): boolean {
+  return ['alpha', 'ceo'].includes(String(agent || '').toLowerCase());
+}
+
 export default function DeliberationPanel({ deliberations }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -51,7 +78,7 @@ export default function DeliberationPanel({ deliberations }: Props) {
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center">
             <Users className="w-4 h-4 text-white" />
           </div>
-          <h3 className="text-sm font-semibold text-slate-200">Dual-CEO Deliberation</h3>
+          <h3 className="text-sm font-semibold text-slate-200">CEO + QA Manager Deliberation</h3>
         </div>
         <p className="text-xs text-slate-500">Noch keine Deliberationen durchgeführt.</p>
       </div>
@@ -71,7 +98,7 @@ export default function DeliberationPanel({ deliberations }: Props) {
             <Users className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-200">Dual-CEO Deliberation (CEO & QA-Auditor Chat)</h3>
+            <h3 className="text-sm font-semibold text-slate-200">CEO + QA Manager Deliberation</h3>
             <p className="text-[10px] text-slate-500">Letzte {recent.length} von {totalCount} gesamt &bull; Klicke zum Ausklappen des Chats</p>
           </div>
         </div>
@@ -91,6 +118,8 @@ export default function DeliberationPanel({ deliberations }: Props) {
       <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
         {recent.map((d) => {
           const isExpanded = expandedId === d.deliberation_id;
+          const ceoProvider = getCeoProvider(d);
+          const qaManagerProvider = getQaManagerProvider(d);
           return (
             <div
               key={d.deliberation_id}
@@ -123,12 +152,12 @@ export default function DeliberationPanel({ deliberations }: Props) {
                   <div className="flex items-center gap-2 text-[10px]">
                     <span className="flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-                      <span className="text-slate-400">{PROVIDER_SHORT[d.alpha_provider] || d.alpha_provider}</span>
+                      <span className="text-slate-400">{PROVIDER_SHORT[ceoProvider] || ceoProvider}</span>
                     </span>
                     <Zap className="w-2.5 h-2.5 text-slate-600" />
                     <span className="flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-                      <span className="text-slate-400">{PROVIDER_SHORT[d.beta_provider] || d.beta_provider}</span>
+                      <span className="text-slate-400">{PROVIDER_SHORT[qaManagerProvider] || qaManagerProvider}</span>
                     </span>
                   </div>
                 </div>
@@ -155,7 +184,7 @@ export default function DeliberationPanel({ deliberations }: Props) {
                 <div className="mt-3 pt-3 border-t border-slate-800/80 space-y-3 animate-in fade-in duration-200">
                   {d.rounds && d.rounds.length > 0 ? (
                     d.rounds.map((round, rIdx) => {
-                      const isAlpha = round.agent === 'alpha';
+                      const isAlpha = isCeoRound(round.agent);
                       const providerName = PROVIDER_SHORT[round.provider] || round.provider;
                       const phaseLabel = round.phase === 'proposal' ? 'Vorschlag (Proposal)' :
                                          round.phase === 'critique' ? 'Kritik & Alternativen (Critique)' :
@@ -166,7 +195,7 @@ export default function DeliberationPanel({ deliberations }: Props) {
                           <div className="flex items-center justify-between text-[9px] px-1">
                             <span className={`font-semibold flex items-center gap-1.5 ${isAlpha ? 'text-cyan-400' : 'text-purple-400'}`}>
                               <span className={`w-1.5 h-1.5 rounded-full ${isAlpha ? 'bg-cyan-400' : 'bg-purple-400'}`}></span>
-                              {isAlpha ? `CEO (${providerName})` : `QA-Auditor (${providerName})`}
+                              {isAlpha ? `CEO (${providerName})` : `QA Manager (${providerName})`}
                             </span>
                             <span className="text-slate-500 font-mono">
                               {phaseLabel} &bull; {round.duration_ms}ms
@@ -174,7 +203,7 @@ export default function DeliberationPanel({ deliberations }: Props) {
                           </div>
                           {round.content ? (
                             <div className="bg-slate-950/90 border border-slate-800/80 rounded-lg p-3 max-h-[300px] overflow-y-auto font-mono text-[10px] text-slate-300 whitespace-pre-wrap leading-relaxed select-text">
-                              {round.content}
+                              {normalizeRoleText(round.content)}
                             </div>
                           ) : (
                             <div className="text-slate-600 italic text-[10px] pl-1">Kein Inhalt aufgezeichnet.</div>
