@@ -116,7 +116,6 @@ impl TimeTrigger {
     }
 }
 
-
 /// Timeline trigger configuration
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TimelineTrigger {
@@ -224,7 +223,6 @@ mod tests {
         assert!(trigger.matches_address("/vorce/cue/1"));
         assert!(!trigger.matches_address("/vorce/cue/2"));
     }
-
 
     #[test]
     fn test_osc_trigger_with_value() {
