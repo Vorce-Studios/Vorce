@@ -41,7 +41,12 @@ async fn get_status(State(state): State<AppState>) -> Json<ApiResponse<StatusRes
         uptime_seconds: live.uptime_seconds,
         active_layers: live.active_layers,
         fps: live.fps,
+        cluster_health: live.cluster_health.clone(),
     };
+
+    if status.cluster_health == "Failed" {
+        return Json(ApiResponse::error("Cluster is in a failed state".to_string()));
+    }
 
     Json(ApiResponse::success(status))
 }
@@ -130,6 +135,22 @@ mod tests {
 
         let response = get_status(State(state)).await;
         assert!(response.0.success);
+    }
+
+    #[tokio::test]
+    async fn test_get_status_failed() {
+        let live = super::super::handlers::LiveStatus {
+            cluster_health: "Failed".to_string(),
+            ..Default::default()
+        };
+        let state = AppState {
+            auth: Arc::new(RwLock::new(super::super::auth::AuthConfig::new())),
+            live_status: Arc::new(parking_lot::RwLock::new(live)),
+        };
+
+        let response = get_status(State(state)).await;
+        assert!(!response.0.success);
+        assert_eq!(response.0.error.unwrap(), "Cluster is in a failed state");
     }
 
     #[tokio::test]
