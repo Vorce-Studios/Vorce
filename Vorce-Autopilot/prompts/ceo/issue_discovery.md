@@ -14,6 +14,9 @@ Bewertung:
 
 Output:
 Antworte ausschliesslich mit einer JSON-Liste mit maximal $MaxIssues Eintraegen:
-[{"title":"...", "body":"...", "labels":["jules-task"]}]
+[{"title":"*D**-000_Task-Title", "issue_type":"default", "body":"...", "labels":["jules-task"]}]
+
+Nutze `000` nur als Platzhalter fuer neue Default-/Master-Issues; der Autopilot vergibt die naechste eindeutige ID.
+Fuer ein Sub-Issue nutze `___M-{ParentMasterID}_s{SubIndex}_Task-Title` und liefere zusaetzlich `issue_type:"sub_issue"`, `parent_master_id` und `sub_index`.
 
 Wenn nichts sinnvoll delegierbar ist, antworte exakt mit [].

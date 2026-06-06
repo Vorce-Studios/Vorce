@@ -1,5 +1,5 @@
 # Vorce-Autopilot/src/phases/audit-wakeup.ps1
-# Beta CEO Audit Mode: Unabhaengige Pruefung von PRs, Issues und Jules Sessions
+# QA Manager Audit Mode: Unabhaengige Pruefung von PRs, Issues und Jules Sessions
 
 Set-StrictMode -Version Latest
 
@@ -12,7 +12,7 @@ function Invoke-AuditWakeUp {
     )
 
     $repo = $Config.repository
-    Write-Host "`n[AUDIT] ========== Beta CEO Audit Wake-Up ==========" -ForegroundColor Blue
+    Write-Host "`n[AUDIT] ========== QA Manager Audit Wake-Up ==========" -ForegroundColor Blue
 
     # Ensure state array exists
     if (-not ($State.PSObject.Properties.Name -contains "decisions_pending")) {
@@ -85,7 +85,7 @@ function Invoke-AuditWakeUp {
 
     # 3. Prompt fuer finalen Audit-Entscheidungsschritt bauen
     $promptText = @"
-Du bist CEO BETA (Gemini) des Vorce-Autopiloten.
+Du bist QA Manager (Gemini) des Vorce-Autopiloten.
 Deine Aufgabe ist ein unabhaengiges AUDIT des aktuellen Projektstatus.
 
 MANDAT DES USERS (VERLETZUNG FUEHRT ZUM ABBRUCH):
@@ -181,7 +181,7 @@ Antworte strikt im JSON-Format:
                                 Write-Warning "[AUDIT] Remediation fehlgeschlagen: $_"
                                 # Fallback to escalation
                                 $State.decisions_pending += @([ordered]@{
-                                    topic      = "Beta CEO Remediation Failed"
+                                    topic      = "QA Manager Remediation Failed"
                                     context    = "Der Versuch, das Problem automatisch zu beheben, schlug fehl. Befehl: $($parsedObj.remediation_command). Fehler: $_"
                                     created_at = (Get-Date -Format 'o')
                                 })
@@ -189,7 +189,7 @@ Antworte strikt im JSON-Format:
                         } elseif ($parsedObj.action -eq "escalate") {
                             Write-Host "[AUDIT] CEO Beta eskaliert zum Dashboard." -ForegroundColor Red
                             $State.decisions_pending += @([ordered]@{
-                                topic      = "Beta CEO Audit Alert"
+                                topic      = "QA Manager Audit Alert"
                                 context    = $parsedObj.dashboard_escalation
                                 created_at = (Get-Date -Format 'o')
                             })

@@ -198,7 +198,7 @@ function Get-MonitoringJulesSafetyReason {
     $titleText = if ($null -eq $Title) { "" } else { [string]$Title }
     $bodyText = if ($null -eq $Body) { "" } else { [string]$Body }
 
-    if ($titleText -match "_MAIs_") { return "Master-Issue ist kein Jules-Codeauftrag" }
+    if (Test-VorceMasterIssueTitle -Title $titleText) { return "Master-Issue ist kein Jules-Codeauftrag" }
     if ($titleText -match "(?i)Resolve-Merge-Conflicts?|Merge-Konflikt|Merge-Conflict|Konflikt") { return "Merge-Konflikte muessen lokal mit CLI geloest werden" }
     if ($titleText -match "(?i)Release-Readiness|Merge-Reihenfolge|Blocker-Matrix|PRs?[-_\s]*\d|PR-\d") { return "PR-/Release-Koordination ist lokale CLI-Arbeit, kein Jules-Codeauftrag" }
     if ($bodyText -match "(?i)\bMaster-Issue\b|Tracking-PR|Tracker|buendelt|bündelt|Bündelung|Nachverfolgung|Scope-Freeze") { return "Tracker-/Koordinationsauftrag ist kein Jules-Codeauftrag" }
@@ -232,7 +232,7 @@ function Test-MonitoringLocalCliIssue {
     $localTitle = $titleText -match "(?i)Merge-Konflikt|Merge-Conflict|Resolve-Merge-Conflicts?|Konflikt|PRs?[-_\s]*#?\d|PR-\d|CI|Recheck|pre-commit|Merge-Reihenfolge|Blocker-Matrix|Release-Readiness"
 
     if ($localTitle) { return $true }
-    if ($titleText -match "(?i)^_*MAI|_MAIs_|Master") { return $false }
+    if (Test-VorceMasterIssueTitle -Title $titleText) { return $false }
 
     return ($bodyText -match "(?i)status check|Check(s)? fehlgeschlagen|pre-commit|gh pr view|git merge|git diff --name-only --diff-filter=U")
 }
@@ -302,7 +302,7 @@ function Import-StalledJulesSessions {
         if ($activeIssueNumbers -contains $issueNum) { continue }
 
         $sessionTitle = if (Test-ObjectProperty -Object $session -Name "title") { [string]$session.title } else { "Issue #$issueNum" }
-        if ($sessionTitle -match "_MAIs_" -or $sessionTitle -match "Resolve-Merge-Conflicts?") {
+        if ((Test-VorceMasterIssueTitle -Title $sessionTitle) -or $sessionTitle -match "Resolve-Merge-Conflicts?") {
             if ($DryRun.IsPresent) {
                 Write-Host "[MONITOR] [DRY RUN] Haengende Jules Session #$issueNum wegen unsicherem Scope blockiert." -ForegroundColor DarkYellow
             } else {
@@ -520,6 +520,26 @@ function Invoke-MonitoringWakeUp {
         foreach ($pr in $prs) {
             $prNum = [int]$pr.number
             $mergeable = [string]$pr.mergeable
+            $prTitle = [string]$pr.title
+
+            if (-not (Test-VorcePullRequestTitle -Title $prTitle)) {
+                if (Test-VorceIssueTitle -Title $prTitle) {
+                    $correctedPrTitle = Format-VorcePullRequestTitle -IssueTitle $prTitle
+                    if ($DryRun.IsPresent) {
+                        Write-Host "[MONITOR] [DRY RUN] Wuerde PR #$prNum auf '$correctedPrTitle' umbenennen." -ForegroundColor DarkYellow
+                    } else {
+                        $renameOutput = gh pr edit $prNum --repo $repo --title $correctedPrTitle 2>&1
+                        if ($LASTEXITCODE -ne 0) {
+                            Add-DecisionPending -State $State -Topic "PR #$prNum verletzt Vorce-Namenskonvention" -Context "Automatische Umbenennung fehlgeschlagen: $renameOutput"
+                        } else {
+                            Write-Host "[MONITOR]   PR #$prNum auf Vorce-Namenskonvention korrigiert: $correctedPrTitle" -ForegroundColor Green
+                            $pr.title = $correctedPrTitle
+                        }
+                    }
+                } else {
+                    Add-DecisionPending -State $State -Topic "PR #$prNum verletzt Vorce-Namenskonvention" -Context "Titel '$prTitle' kann keinem gueltigen Vorce-Issue-Titel zugeordnet werden. Erwartet: PR_{IssueTitle}."
+                }
+            }
 
             if ($mergeable -eq "CONFLICTING") {
                 Write-Host ("[MONITOR]   PR #{0} MERGE CONFLICT!" -f $prNum) -ForegroundColor Red
@@ -607,8 +627,13 @@ function Invoke-MonitoringWakeUp {
 
                 Update-DelegationState -State $State -IssueNumber $issueNum -JulesState $julesState
 
-                # Find matching PR for this session
-                $matchingPr = $prs | Where-Object { $_.title -match "#$issueNum" -or $_.headRefName -match "$issueNum" } | Select-Object -First 1
+                # Find matching PR using the Vorce PR title first, then the issue number in the branch.
+                $delegationIssueTitle = if (Test-ObjectProperty -Object $delegation -Name "issue_title") { [string]$delegation.issue_title } else { "" }
+                $expectedPrTitle = if (Test-VorceIssueTitle -Title $delegationIssueTitle) { Format-VorcePullRequestTitle -IssueTitle $delegationIssueTitle } else { "" }
+                $matchingPr = $prs | Where-Object {
+                    (-not [string]::IsNullOrWhiteSpace($expectedPrTitle) -and [string]$_.title -eq $expectedPrTitle) -or
+                    $_.headRefName -match "$issueNum"
+                } | Select-Object -First 1
 
                 switch ($julesState) {
                     "COMPLETED" {

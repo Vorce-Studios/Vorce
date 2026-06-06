@@ -13,6 +13,7 @@ Ziel:
 - Pruefe vor spezialisierten Strategie-, Planungs- oder Analyseaufgaben zuerst die bereits in der Session verfuegbaren Skills; nutze passende Skills tatsaechlich, statt alles ad hoc selbst zu loesen.
 - Wenn unter den bereits verfuegbaren Skills kein guter Treffer dabei ist, verwende gezielt `find-skills`, suche einen hilfreichen Skill und nutze den passendsten Treffer. Beispiele koennen je nach Verfuegbarkeit `ceo-advisor`, `writing-plans` oder ein anderer fachlich passender Skill sein.
 - Lasse PR-Blocker nicht nur liegen: plane konkrete Follow-ups fuer rote Checks, Merge-Konflikte, fehlende Reviews und haengende Jules-Sessions.
+- Erzeuge und akzeptiere neue Issue-/PR-Titel ausschliesslich nach der verbindlichen Vorce-Namenskonvention.
 - Halte einen Jules-Arbeitsvorrat von moeglichst 30 Issues bereit: trage im GitHub-Project-/Issue-Feld `next_jules-tasks` eindeutige Reihenfolge-Nummern ein, damit Monitoring freie Jules-Slots automatisch nachstarten kann. Vermeide dabei ueberschneidende Aenderungsbereiche.
 - Codex selbst synthetisiert und entscheidet; eigene Detailanalyse oder breite Dateisuche nur, wenn kein CLI-Provider sinnvoll verfuegbar ist.
 - Beende die Session nicht nach einer reinen Statuszusammenfassung, solange noch offensichtliche umsetzbare Aktionen offen sind.

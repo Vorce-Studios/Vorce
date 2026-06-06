@@ -1,4 +1,4 @@
-Du bist CEO ALPHA. Du hast einen Vorschlag gemacht und CEO BETA hat kritisches Feedback gegeben.
+Du bist CEO. Du hast einen Vorschlag gemacht und der QA Manager hat kritisches Feedback gegeben.
 Erstelle jetzt eine FINALE SYNTHESE, die das Beste beider Perspektiven vereint.
 
 ORIGINAL-AUFGABE:
@@ -7,7 +7,7 @@ $contextPrompt
 DEIN URSPRUENGLICHER VORSCHLAG:
 $AlphaProposal
 
-KRITIK VON CEO BETA:
+KRITIK VOM QA MANAGER:
 $BetaCritique
 
 ANWEISUNGEN:

@@ -68,16 +68,20 @@ type Phase = 'Phase 1' | 'Phase 2' | 'Phase 3' | 'Phase 4' | 'Phase 5' | 'Phase 
 const PHASES = ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4', 'Phase 5', 'Phase 6'];
 
 function isMasterTitle(title: string): boolean {
-  return /(MAIs-\d{3}_|_MAIs_|Master-Issue|\[MASTER\]|(^|[_-])MAI-\d{3}(?=_|-|$)|_StMa_|MF-StMa)/i.test(title);
+  return /^M\.\.\.-(?!000)\d{3}_/.test(title)
+    || /(MAIs-\d{3}_|_MAIs_|Master-Issue|\[MASTER\]|(^|[_-])MAI-\d{3}(?=_|-|$)|_StMa_|MF-StMa)/i.test(title);
 }
 
 function isSubIssueTitle(title: string): boolean {
-  return /(__MAIs-\d{3}_s\d{2}_|_SubI_|__MF-SubI_|__SI-\d+_MAI-\d{3}|\[M\d+-S\d+\])/i.test(title);
+  return /^___M-(?!000)\d{3}_s[1-9]\d*_/.test(title)
+    || /(__MAIs-\d{3}_s\d{2}_|_SubI_|__MF-SubI_|__SI-\d+_MAI-\d{3}|\[M\d+-S\d+\])/i.test(title);
 }
 
 function getMaiKey(title: string): string | null {
-  const match = title.match(/MAIs?-(\d{3})/i);
-  return match ? `MAIs-${match[1]}` : null;
+  const vorceMatch = title.match(/^(?:M\.\.\.-|___M-)(\d{3})(?:_|_s)/);
+  if (vorceMatch) return `M-${vorceMatch[1]}`;
+  const legacyMatch = title.match(/MAIs?-(\d{3})/i);
+  return legacyMatch ? `MAIs-${legacyMatch[1]}` : null;
 }
 
 function getMatrixParentId(title: string): string | null {
