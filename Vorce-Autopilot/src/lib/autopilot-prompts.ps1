@@ -46,8 +46,7 @@ function Get-VorceConfigPrompt {
         $finalPrompt = $finalPrompt.Replace("`$$key", [string]$Variables[$key])
     }
 
-    $conciseInstruction = "Globale Antwortregel: Beschraenke dich auf wichtige Inhalte, Fakten, betroffene IDs, konkrete Risiken und notwendige Aktionen. Kein Smalltalk, keine Wiederholungen, kein allgemeines Blabla."
-    return "$conciseInstruction`n`n$finalPrompt"
+    return $finalPrompt
 }
 
 function Get-VorceDashboardDataInstructions {

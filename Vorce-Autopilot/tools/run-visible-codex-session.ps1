@@ -1,4 +1,4 @@
-# Vorce-Autopilot/tools/run-visible-codex-session.ps1
+# scripts/codex-cli/tools/run-visible-codex-session.ps1
 # Runs a visible interactive Codex TUI session for scheduled Autopilot planning.
 [CmdletBinding()]
 param(
@@ -86,8 +86,6 @@ try {
     $isInsideCommandOutput = $false
     $commandCount = 0
     $thoughtCount = 0
-    $currentCommand = ""
-    $commandOutputTail = [System.Collections.Generic.List[string]]::new()
     $startTime = Get-Date
 
     if ($NonInteractiveExec.IsPresent) {
@@ -139,8 +137,6 @@ try {
                     $cleanCmd = $Matches[1]
                 }
                 $cleanCmd = $cleanCmd.Trim('"', "'")
-                $currentCommand = $cleanCmd
-                $commandOutputTail.Clear()
                 Write-Host "[BEFEHL] Führe aus: $cleanCmd" -ForegroundColor Yellow
                 return
             }
@@ -149,38 +145,20 @@ try {
                 $isInsideCommandOutput = $false
                 if ($line -match 'failed' -or $line -match 'exited\s+[^0]') {
                     Write-Host "[ERGEBNIS] Fehlgeschlagen ($($line.Trim()))" -ForegroundColor Red
-                    if ($commandOutputTail.Count -gt 0) {
-                        Write-Host "[DETAILS] Letzte Ausgabe von: $currentCommand" -ForegroundColor DarkYellow
-                        foreach ($detailLine in $commandOutputTail) {
-                            Write-Host "  $detailLine" -ForegroundColor DarkYellow
-                        }
-                    } else {
-                        Write-Host "[DETAILS] Keine stdout/stderr-Zeilen vom fehlgeschlagenen Befehl erhalten. Vollstaendiges Log: $LogPath" -ForegroundColor DarkYellow
-                    }
                 } else {
                     Write-Host "[ERGEBNIS] Erfolgreich ($($line.Trim()))" -ForegroundColor Gray
                 }
-                $commandOutputTail.Clear()
-                $currentCommand = ""
                 return
             }
 
             if ($isInsideCommandOutput) {
-                # Keep command output compact in the terminal, but retain a failure tail for diagnostics.
-                $compactLine = $line
-                if ($compactLine.Length -gt 320) {
-                    $compactLine = $compactLine.Substring(0, 320) + "..."
-                }
-                $commandOutputTail.Add($compactLine) | Out-Null
-                while ($commandOutputTail.Count -gt 12) {
-                    $commandOutputTail.RemoveAt(0)
-                }
+                # Suppress all command output (stdout/stderr) from cluttering the terminal
                 return
             }
 
             if ($isInsideCodex -and -not [string]::IsNullOrWhiteSpace($line)) {
                 # Print the clean comment/thought in German
-                Write-Host "[CEO] $line" -ForegroundColor Cyan
+                Write-Host "[CEO ALPHA] $line" -ForegroundColor Cyan
             }
         }
     } else {

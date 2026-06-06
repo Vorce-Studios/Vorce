@@ -163,7 +163,10 @@ mod tests {
             let receiver_result = vorce_io::ndi::NdiReceiver::new();
             assert!(receiver_result.is_err(), "Stub receiver should fail to initialize");
 
-            let sender_result = vorce_io::ndi::NdiSender::new("test", vorce_io::format::VideoFormat::hd_1080p60_rgba());
+            let sender_result = vorce_io::ndi::NdiSender::new(
+                "test",
+                vorce_io::format::VideoFormat::hd_1080p60_rgba(),
+            );
             assert!(sender_result.is_err(), "Stub sender should fail to initialize");
         }
 

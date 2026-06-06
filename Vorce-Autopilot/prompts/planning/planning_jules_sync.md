@@ -1,1 +1,1 @@
-Analysiere laufende Jules-Sessions & löse hängende Tasks ($slots).
+Analysiere laufende Jules-Sessions ($slots). Identifiziere hängende Tasks.
