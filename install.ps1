@@ -423,7 +423,7 @@ function Resolve-UvCmd {
 
 function Test-Python {
     Write-Info "Checking Python $PythonVersion..."
-    
+
     # Let uv find or install Python
     try {
         $pythonPath = & $UvCmd python find $PythonVersion 2>$null
@@ -433,7 +433,7 @@ function Test-Python {
             return $true
         }
     } catch { }
-    
+
     # Python not found -- use uv to install it (no admin needed!)
     Write-Info "Python $PythonVersion not found, installing via uv..."
     # Capture EAP outside the try block so the catch's restore call always
@@ -1350,16 +1350,16 @@ function Install-Venv {
         Write-Info "Skipping virtual environment (-NoVenv)"
         return
     }
-    
+
     Write-Info "Creating virtual environment with Python $PythonVersion..."
-    
+
     Push-Location $InstallDir
-    
+
     if (Test-Path "venv") {
         Write-Info "Virtual environment already exists, recreating..."
         Remove-Item -Recurse -Force "venv"
     }
-    
+
     # uv creates the venv and pins the Python version in one step
     & $UvCmd venv venv --python $PythonVersion
 
@@ -1376,15 +1376,15 @@ function Install-Venv {
     }
 
     Pop-Location
-    
+
     Write-Success "Virtual environment ready (Python $PythonVersion)"
 }
 
 function Install-Dependencies {
     Write-Info "Installing dependencies..."
-    
+
     Push-Location $InstallDir
-    
+
     if (-not $NoVenv) {
         # Tell uv to install into our venv (no activation needed)
         $env:VIRTUAL_ENV = "$InstallDir\venv"
@@ -1585,25 +1585,25 @@ except Exception:
             }
         }
     }
-    
+
     Pop-Location
-    
+
     Write-Success "All dependencies installed"
 }
 
 function Set-PathVariable {
     Write-Info "Setting up hermes command..."
-    
+
     if ($NoVenv) {
         $hermesBin = "$InstallDir"
     } else {
         $hermesBin = "$InstallDir\venv\Scripts"
     }
-    
+
     # Add the venv Scripts dir to user PATH so hermes is globally available
     # On Windows, the hermes.exe in venv\Scripts\ has the venv Python baked in
     $currentPath = [Environment]::GetEnvironmentVariable("Path", "User")
-    
+
     if ($currentPath -notlike "*$hermesBin*") {
         [Environment]::SetEnvironmentVariable(
             "Path",
@@ -1614,7 +1614,7 @@ function Set-PathVariable {
     } else {
         Write-Info "PATH already configured"
     }
-    
+
     # Set HERMES_HOME so the Python code finds config/data in the right place.
     # Only needed on Windows where we install to %LOCALAPPDATA%\hermes instead
     # of the Unix default ~/.hermes
@@ -1624,10 +1624,10 @@ function Set-PathVariable {
         Write-Success "Set HERMES_HOME=$HermesHome"
     }
     $env:HERMES_HOME = $HermesHome
-    
+
     # Update current session
     $env:Path = "$hermesBin;$env:Path"
-    
+
     Write-Success "hermes command ready"
 }
 
@@ -1710,7 +1710,7 @@ function Write-BootstrapMarker {
 
 function Copy-ConfigTemplates {
     Write-Info "Setting up configuration files..."
-    
+
     # Create ~/.hermes directory structure
     New-Item -ItemType Directory -Force -Path "$HermesHome\cron" | Out-Null
     New-Item -ItemType Directory -Force -Path "$HermesHome\sessions" | Out-Null
@@ -1722,7 +1722,7 @@ function Copy-ConfigTemplates {
     New-Item -ItemType Directory -Force -Path "$HermesHome\memories" | Out-Null
     New-Item -ItemType Directory -Force -Path "$HermesHome\skills" | Out-Null
 
-    
+
     # Create .env
     $envPath = "$HermesHome\.env"
     if (-not (Test-Path $envPath)) {
@@ -1737,7 +1737,7 @@ function Copy-ConfigTemplates {
     } else {
         Write-Info "~/.hermes/.env already exists, keeping it"
     }
-    
+
     # Create config.yaml
     $configPath = "$HermesHome\config.yaml"
     if (-not (Test-Path $configPath)) {
@@ -1749,7 +1749,7 @@ function Copy-ConfigTemplates {
     } else {
         Write-Info "~/.hermes/config.yaml already exists, keeping it"
     }
-    
+
     # Create SOUL.md if it doesn't exist (global persona file).
     # IMPORTANT: write without a BOM.  Windows PowerShell 5.1's
     # ``Set-Content -Encoding UTF8`` writes UTF-8 WITH a byte-order-mark
@@ -1782,9 +1782,9 @@ Delete the contents (or this file) to use the default personality.
         [System.IO.File]::WriteAllText($soulPath, $soulContent, $utf8NoBom)
         Write-Success "Created ~/.hermes/SOUL.md (edit to customize personality)"
     }
-    
+
     Write-Success "Configuration directory ready: ~/.hermes/"
-    
+
     # Seed bundled skills into ~/.hermes/skills/ (manifest-based, one-time per skill)
     Write-Info "Syncing bundled skills to ~/.hermes/skills/ ..."
     $pythonExe = "$InstallDir\venv\Scripts\python.exe"
@@ -2582,7 +2582,7 @@ function Write-Completion {
     Write-Host "|              [OK] Installation Complete!                |" -ForegroundColor Green
     Write-Host "+---------------------------------------------------------+" -ForegroundColor Green
     Write-Host ""
-    
+
     # Show file locations
     Write-Host "* Your files:" -ForegroundColor Cyan
     Write-Host ""
@@ -2595,7 +2595,7 @@ function Write-Completion {
     Write-Host "   Code:      " -NoNewline -ForegroundColor Yellow
     Write-Host "$HermesHome\hermes-agent\"
     Write-Host ""
-    
+
     Write-Host "---------------------------------------------------------" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "* Commands:" -ForegroundColor Cyan
@@ -2613,19 +2613,19 @@ function Write-Completion {
     Write-Host "   hermes update       " -NoNewline -ForegroundColor Green
     Write-Host "Update to latest version"
     Write-Host ""
-    
+
     Write-Host "---------------------------------------------------------" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "[*] Restart your terminal for PATH changes to take effect" -ForegroundColor Yellow
     Write-Host ""
-    
+
     if (-not $HasNode) {
         Write-Host "Note: Node.js could not be installed automatically." -ForegroundColor Yellow
         Write-Host "Browser tools need Node.js. Install manually:" -ForegroundColor Yellow
         Write-Host "  https://nodejs.org/en/download/" -ForegroundColor Yellow
         Write-Host ""
     }
-    
+
     if (-not $HasRipgrep) {
         Write-Host "Note: ripgrep (rg) was not installed. For faster file search:" -ForegroundColor Yellow
         Write-Host "  winget install BurntSushi.ripgrep.MSVC" -ForegroundColor Yellow

@@ -141,7 +141,6 @@ impl AppState {
 
     /// Get mutable reference to EffectParameterAnimator (CoW)
     pub fn effect_animator_mut(&mut self) -> &mut crate::EffectParameterAnimator {
-        self.dirty = true;
         Arc::make_mut(&mut self.effect_animator)
     }
 

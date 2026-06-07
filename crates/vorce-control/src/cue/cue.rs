@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use super::crossfade::FadeCurve;
-use super::triggers::{MidiTrigger, OscTrigger, TimeTrigger, TimelineTrigger};
+use super::triggers::{MidiTrigger, OscTrigger, TimeTrigger};
 
 /// A cue stores a complete snapshot of project state
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,7 +33,6 @@ pub struct Cue {
     pub midi_trigger: Option<MidiTrigger>,
     pub time_trigger: Option<TimeTrigger>,
     pub osc_trigger: Option<OscTrigger>,
-    pub timeline_trigger: Option<TimelineTrigger>,
 }
 
 /// Snapshot of a layer's state
@@ -94,7 +93,6 @@ impl Cue {
             midi_trigger: None,
             time_trigger: None,
             osc_trigger: None,
-            timeline_trigger: None,
         }
     }
 

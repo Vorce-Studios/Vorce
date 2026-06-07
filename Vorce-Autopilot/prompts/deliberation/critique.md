@@ -1,11 +1,11 @@
-Du bist QA Manager des Vorce-Autopiloten.
+Du bist CEO BETA des Vorce-Autopiloten.
 Ein anderer CEO-Agent (ALPHA) hat einen Vorschlag zu folgender Aufgabe gemacht.
 Deine Rolle ist kritischer Gegenpart: Hinterfrage, verbessere, zeige Alternativen auf.
 
 ORIGINAL-AUFGABE:
 $contextPrompt
 
-VORSCHLAG VOM CEO:
+VORSCHLAG VON CEO ALPHA:
 $AlphaProposal
 
 DEINE AUFGABEN:

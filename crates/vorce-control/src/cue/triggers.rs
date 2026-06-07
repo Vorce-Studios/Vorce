@@ -116,27 +116,6 @@ impl TimeTrigger {
     }
 }
 
-/// Timeline trigger configuration
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct TimelineTrigger {
-    /// Target module ID
-    pub module_id: u32,
-    /// Time position to trigger at (in milliseconds)
-    pub time_ms: u32,
-}
-
-impl TimelineTrigger {
-    /// Create a new timeline trigger
-    pub fn new(module_id: u32, time_ms: u32) -> Self {
-        Self { module_id, time_ms }
-    }
-
-    /// Check if the timeline position matches this trigger
-    pub fn matches_time(&self, current_module_id: u32, current_time_ms: u32) -> bool {
-        self.module_id == current_module_id && self.time_ms == current_time_ms
-    }
-}
-
 /// OSC trigger pattern
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct OscTrigger {
@@ -228,21 +207,5 @@ mod tests {
     fn test_osc_trigger_with_value() {
         let trigger = OscTrigger::with_value("/vorce/cue/1".to_string(), "1.0".to_string());
         assert_eq!(trigger.value, Some("1.0".to_string()));
-    }
-
-    #[test]
-    fn test_timeline_trigger() {
-        let trigger = TimelineTrigger::new(42, 1000);
-        assert_eq!(trigger.module_id, 42);
-        assert_eq!(trigger.time_ms, 1000);
-
-        // Exact match
-        assert!(trigger.matches_time(42, 1000));
-
-        // Wrong module
-        assert!(!trigger.matches_time(43, 1000));
-
-        // Wrong time
-        assert!(!trigger.matches_time(42, 1001));
     }
 }

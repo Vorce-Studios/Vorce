@@ -149,32 +149,3 @@ pub fn update_ndi_sources(app: &mut App) {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    #[allow(unused_imports)]
-    use super::*;
-
-    #[test]
-    fn test_ndi_orchestration_stub() {
-        #[cfg(not(feature = "ndi"))]
-        {
-            // Verify our NdiReceiver and NdiSender stubs work as expected when disabled
-            let receiver_result = vorce_io::ndi::NdiReceiver::new();
-            assert!(receiver_result.is_err(), "Stub receiver should fail to initialize");
-
-            let sender_result = vorce_io::ndi::NdiSender::new(
-                "test",
-                vorce_io::format::VideoFormat::hd_1080p60_rgba(),
-            );
-            assert!(sender_result.is_err(), "Stub sender should fail to initialize");
-        }
-
-        #[cfg(feature = "ndi")]
-        {
-            // Just verifying that compiling and calling basic NDI stubs without crash is possible
-            // Mocking a full App struct here is too complex for a unit test without heavy setup,
-            // so we rely on testing the underlying ndi stubs.
-        }
-    }
-}

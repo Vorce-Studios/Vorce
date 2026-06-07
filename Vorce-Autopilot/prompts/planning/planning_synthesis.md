@@ -2,7 +2,6 @@ Fasse alle Erkenntnisse zusammen und erstelle den finalen Delegationsplan. Berü
 
 Harte Jules-Grenzen:
 
-- Alle neu erzeugten Issue- und PR-Titel muessen der Vorce-Namenskonvention entsprechen.
 - Keine Master-/Tracker-Issues als Jules-Arbeit einplanen.
 - Keine Jules-Sessions fuer Merge-Konflikte. Konflikte werden lokal per CLI auf den bestehenden PR-Branches geloest.
 - Jules nur fuer konkrete, fachliche Code-/Testauftraege mit Scope, betroffenen Dateien/Modulen und Acceptance Criteria nutzen.

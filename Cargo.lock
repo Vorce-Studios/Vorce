@@ -9867,7 +9867,6 @@ dependencies = [
  "tracing",
  "usvg 0.47.0",
  "uuid",
- "vorce-control",
  "walkdir",
  "winit",
 ]

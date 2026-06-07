@@ -158,7 +158,7 @@ try {
 
             if ($isInsideCodex -and -not [string]::IsNullOrWhiteSpace($line)) {
                 # Print the clean comment/thought in German
-                Write-Host "[CEO] $line" -ForegroundColor Cyan
+                Write-Host "[CEO ALPHA] $line" -ForegroundColor Cyan
             }
         }
     } else {
