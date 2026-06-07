@@ -45,6 +45,34 @@ pub enum FfiError {
     /// Error: Media decoder error.
     /// Error: Media decoder error.
     MediaDecoderError(String),
+
+    #[error("Null pointer provided")]
+    /// Error: Null pointer provided.
+    NullPointer,
+
+    #[error("Invalid buffer size or out of bounds")]
+    /// Error: Invalid buffer size or out of bounds.
+    InvalidBuffer,
+}
+
+/// FFI Error codes returned to C clients
+#[repr(i32)]
+#[derive(Debug, PartialEq, Eq)]
+pub enum FfiResultCode {
+    Ok = 0,
+    NullPointer = -1,
+    InvalidBuffer = -2,
+    UnknownError = -99,
+}
+
+impl From<FfiError> for FfiResultCode {
+    fn from(err: FfiError) -> Self {
+        match err {
+            FfiError::NullPointer => FfiResultCode::NullPointer,
+            FfiError::InvalidBuffer => FfiResultCode::InvalidBuffer,
+            _ => FfiResultCode::UnknownError,
+        }
+    }
 }
 
 impl From<MediaError> for FfiError {
@@ -82,6 +110,45 @@ impl PluginApi {
     }
 }
 
+/// Retrieves the plugin version. Returns an error if the handle is null.
+#[no_mangle]
+pub unsafe extern "C" fn vorce_plugin_get_version(
+    api: *const PluginApi,
+    out_version: *mut u32,
+) -> FfiResultCode {
+    if api.is_null() || out_version.is_null() {
+        return FfiResultCode::NullPointer;
+    }
+
+    unsafe {
+        *out_version = (*api).version;
+    }
+
+    FfiResultCode::Ok
+}
+
+/// Validates a buffer passed from C to Rust.
+#[no_mangle]
+pub unsafe extern "C" fn vorce_plugin_read_buffer(
+    api: *const PluginApi,
+    buffer: *const u8,
+    len: usize,
+) -> FfiResultCode {
+    if api.is_null() || buffer.is_null() {
+        return FfiResultCode::NullPointer;
+    }
+
+    // Example safety check: reject unrealistically huge buffers or 0 length
+    if len == 0 || len > 1024 * 1024 * 100 {
+        return FfiResultCode::InvalidBuffer;
+    }
+
+    // Safely construct a slice (without panicking, since bounds/null checked)
+    let _slice = unsafe { std::slice::from_raw_parts(buffer, len) };
+
+    FfiResultCode::Ok
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -90,5 +157,50 @@ mod tests {
     fn test_plugin_api() {
         let api = PluginApi::new();
         assert_eq!(api.version, PluginApi::VERSION);
+    }
+
+    #[test]
+    fn test_ffi_null_handles() {
+        let mut version: u32 = 0;
+        let api = PluginApi::new();
+
+        assert_eq!(
+            vorce_plugin_get_version(std::ptr::null(), &mut version),
+            FfiResultCode::NullPointer
+        );
+
+        assert_eq!(
+            vorce_plugin_get_version(&api, std::ptr::null_mut()),
+            FfiResultCode::NullPointer
+        );
+
+        let valid_buffer: [u8; 4] = [1, 2, 3, 4];
+        assert_eq!(
+            vorce_plugin_read_buffer(std::ptr::null(), valid_buffer.as_ptr(), valid_buffer.len()),
+            FfiResultCode::NullPointer
+        );
+
+        assert_eq!(
+            vorce_plugin_read_buffer(&api, std::ptr::null(), valid_buffer.len()),
+            FfiResultCode::NullPointer
+        );
+    }
+
+    #[test]
+    fn test_ffi_invalid_buffer() {
+        let api = PluginApi::new();
+        let valid_buffer: [u8; 4] = [1, 2, 3, 4];
+
+        // 0 length buffer
+        assert_eq!(
+            vorce_plugin_read_buffer(&api, valid_buffer.as_ptr(), 0),
+            FfiResultCode::InvalidBuffer
+        );
+
+        // Out of bounds huge length buffer
+        assert_eq!(
+            vorce_plugin_read_buffer(&api, valid_buffer.as_ptr(), 1024 * 1024 * 200),
+            FfiResultCode::InvalidBuffer
+        );
     }
 }
