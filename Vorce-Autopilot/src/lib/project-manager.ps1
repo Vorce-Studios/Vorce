@@ -36,14 +36,19 @@ function Get-VorceProjectItems {
     $data = Invoke-VorceGhJson -Arguments @("project", "item-list", [string]$settings.Number, "--owner", $settings.Owner, "--limit", "1000", "--format", "json")
     if ($null -eq $data -or $null -eq $data.items) {
         if (Test-Path -LiteralPath $script:VorceProjectItemsCachePath) {
-            try {
-                $cachedData = Get-Content -LiteralPath $script:VorceProjectItemsCachePath -Raw -Encoding UTF8 | ConvertFrom-Json
-                if ($null -ne $cachedData -and $null -ne $cachedData.items) {
-                    Write-Warning "[PROJECT] Live-Abfrage fehlgeschlagen. Verwende Project-Item-Cache."
-                    return @($cachedData.items)
+            $fileInfo = Get-Item -LiteralPath $script:VorceProjectItemsCachePath
+            if ($fileInfo.LastWriteTime -ge (Get-Date).AddMinutes(-5)) {
+                try {
+                    $cachedData = Get-Content -LiteralPath $script:VorceProjectItemsCachePath -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
+                    if ($null -ne $cachedData -and $null -ne $cachedData.items) {
+                        Write-Warning "[PROJECT] Live-Abfrage fehlgeschlagen. Verwende Project-Item-Cache (Alter: $([Math]::Round(((Get-Date) - $fileInfo.LastWriteTime).TotalMinutes, 1)) Min)."
+                        return @($cachedData.items)
+                    }
+                } catch {
+                    Write-Warning "[PROJECT] Project-Item-Cache konnte nicht gelesen werden: $($_.Exception.Message)"
                 }
-            } catch {
-                Write-Warning "[PROJECT] Project-Item-Cache konnte nicht gelesen werden: $($_.Exception.Message)"
+            } else {
+                Write-Warning "[PROJECT] Project-Item-Cache ist aelter als 5 Minuten und wird ignoriert."
             }
         }
         return @()
@@ -162,6 +167,9 @@ function Set-VorceProjectItemFields {
         }
         $null = Invoke-VorceGhJson -Arguments $commandArguments
     }
+
+    # Invalidate cache
+    Remove-Item -LiteralPath $script:VorceProjectItemsCachePath -Force -ErrorAction SilentlyContinue
 }
 
 function Sync-VorceProjectFieldsSafe {

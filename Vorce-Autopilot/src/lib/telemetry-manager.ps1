@@ -11,7 +11,7 @@ $script:VarDbDir = Join-Path $script:ScriptRoot "var/db"
 
 $script:TelemetryStatePath = Join-Path $script:VarDbDir "telemetry-state.json"
 $script:JulesApiPath = Join-Path $script:RepoRoot "scripts/jules/jules-api.ps1"
-$script:GeminiQuotaHelperPath = Join-Path $script:ScriptRoot "tools/gemini-quota.mjs"
+$script:GeminiQuotaHelperPath = Join-Path $script:ScriptRoot "tools\gemini-quota.mjs"
 
 # Ensure var/db exists
 if (-not (Test-Path -Path $script:VarDbDir)) {

@@ -26,7 +26,7 @@ function Resolve-DualCeos {
 
     $dualCfg = $Config.dual_ceo
 
-    # --- Resolve CEO Alpha ---
+    # --- Resolve CEO ---
     $alpha = $null
     foreach ($route in $dualCfg.ceo_alpha_chain) {
         $parts = $route -split ":"
@@ -39,7 +39,7 @@ function Resolve-DualCeos {
                 provider   = $provName
                 model_tier = $modelTier
                 command    = $cmdName
-                label      = "CEO Alpha"
+                label      = "CEO"
             }
             break
         }
@@ -123,7 +123,7 @@ function Get-CleanCeoOutput {
     $jsonMatch = [regex]::Match($RawOutput, '(?s)\{.*\}')
     if ($jsonMatch.Success) {
         try {
-            $parsed = $jsonMatch.Value | ConvertFrom-Json
+            $parsed = $jsonMatch.Value | ConvertFrom-Json -ErrorAction Stop
             if ($null -ne $parsed) {
                 # If it's a wrapper JSON from the CLI router/provider
                 if ($parsed.PSObject.Properties.Name -contains "response") {
@@ -164,7 +164,7 @@ function Format-CeoChatOutput {
     $jsonMatch = [regex]::Match($Content, '(?s)\{.*\}')
     $parsed = $null
     if ($jsonMatch.Success) {
-        try { $parsed = $jsonMatch.Value | ConvertFrom-Json } catch {}
+        try { $parsed = $jsonMatch.Value | ConvertFrom-Json -ErrorAction Stop } catch {}
     }
 
     if ($null -ne $parsed) {
@@ -328,7 +328,7 @@ function Invoke-VisibleCeoPhase {
             Split-Path -Parent $script:ScriptRoot
         }
 
-        $runnerScript = Join-Path $script:ScriptRoot "tools/run-visible-ceo-phase.ps1"
+        $runnerScript = Join-Path $script:ScriptRoot "tools\run-visible-ceo-phase.ps1"
         $powerShellHost = (Get-Command pwsh -ErrorAction SilentlyContinue)
         if ($powerShellHost) { $powerShellHost = $powerShellHost.Source } else { $powerShellHost = (Get-Command powershell -ErrorAction Stop).Source }
 
@@ -452,7 +452,7 @@ function Invoke-Deliberation {
     }
 
     # ==========================================
-    # PHASE 1: PROPOSAL (CEO Alpha) - VISIBLE TERMINAL
+    # PHASE 1: PROPOSAL (CEO) - VISIBLE TERMINAL
     # ==========================================
     Write-Host "" -ForegroundColor White
     Write-Host "[DELIB] --- Phase 1: Proposal (Alpha: $($ceos.alpha.provider)) ---" -ForegroundColor Yellow
@@ -482,28 +482,25 @@ function Invoke-Deliberation {
     })
 
     if (-not $proposalResult.success) {
-        Write-Host "[DELIB] CEO-Proposal fehlgeschlagen! Fallback auf QA Manager (Visible)." -ForegroundColor Red
-        $protocol.final_output = "Alpha failed, fell back to Beta visible agent"
-
-        $fallbackResult = Invoke-VisibleCeoPhase `
-            -QuotaRegistry $QuotaRegistry `
-            -CeoInfo $ceos.beta `
-            -Prompt $proposalPrompt `
-            -PhaseName "Fallback-Proposal" `
-            -WorkingDirectory $WorkingDirectory `
-            -State $State `
-            -DryRun:$DryRun
+        Write-Host "[DELIB] CEO-Proposal fehlgeschlagen! Breche Deliberation ab (Kein Fallback-Proposal durch QA-Manager)." -ForegroundColor Red
+        $protocol.final_output = "Alpha failed. Deliberation aborted."
+        $protocol.consensus_reached = $false
 
         $protocol.completed_at = (Get-Date -Format 'o')
         Save-DeliberationProtocol -Protocol $protocol -Config $Config
 
-        return [pscustomobject]@{
-            success = $fallbackResult.success
-            output  = Get-CleanCeoOutput -RawOutput $fallbackResult.output -ProviderName $ceos.beta.provider
+        return [ordered]@{
+            success        = $false
+            provider       = $ceos.alpha.provider
+            model          = $ceos.alpha.model_tier
+            output         = $alphaProposal
+            error          = "PROPOSAL_FAILED"
+            stats          = $proposalResult.stats
+            deliberation   = $protocol
         }
     }
 
-    Write-Host "[DELIB] Alpha-Proposal erhalten ($([int]$proposalDuration)ms)" -ForegroundColor Green
+    Write-Host "[DELIB] CEO-Proposal erhalten ($([int]$proposalDuration)ms)" -ForegroundColor Green
     Format-CeoChatOutput -Role "Proposal" -AgentName $ceos.alpha.provider -Content $alphaProposal
 
     # ==========================================
@@ -537,7 +534,7 @@ function Invoke-Deliberation {
     })
 
     if (-not $critiqueResult.success) {
-        Write-Host "[DELIB] Beta-Critique fehlgeschlagen! Verwende Alpha-Proposal als Endergebnis." -ForegroundColor Yellow
+        Write-Host "[DELIB] QA-Critique fehlgeschlagen! Verwende CEO-Proposal als Endergebnis." -ForegroundColor Yellow
         $protocol.final_output = $alphaProposal
         $protocol.consensus_reached = $false
         $protocol.completed_at = (Get-Date -Format 'o')
@@ -554,11 +551,11 @@ function Invoke-Deliberation {
         }
     }
 
-    Write-Host "[DELIB] Beta-Critique erhalten ($([int]$critiqueDuration)ms)" -ForegroundColor Green
+    Write-Host "[DELIB] QA-Critique erhalten ($([int]$critiqueDuration)ms)" -ForegroundColor Green
     Format-CeoChatOutput -Role "Critique" -AgentName $ceos.beta.provider -Content $betaCritique
 
     # ==========================================
-    # PHASE 3: SYNTHESIS (CEO Alpha) - VISIBLE TERMINAL
+    # PHASE 3: SYNTHESIS (CEO) - VISIBLE TERMINAL
     # ==========================================
     Write-Host "" -ForegroundColor White
     Write-Host "[DELIB] --- Phase 3: Synthesis (Alpha: $($ceos.alpha.provider)) ---" -ForegroundColor Yellow
@@ -588,7 +585,7 @@ function Invoke-Deliberation {
     })
 
     if (-not $synthesisResult.success) {
-        Write-Host "[DELIB] Synthese fehlgeschlagen! Verwende Alpha-Proposal." -ForegroundColor Yellow
+        Write-Host "[DELIB] Synthese fehlgeschlagen! Verwende CEO-Proposal." -ForegroundColor Yellow
         $protocol.final_output = $alphaProposal
         $protocol.consensus_reached = $false
     } else {
@@ -774,7 +771,6 @@ function Invoke-DualCeoTask {
 
     $providerName = $route.provider
     $modelTier = $route.model_tier
-    $command = $route.command
 
     # --- Codex provider: Use the original visible session manager ---
     if ($providerName -eq "codex_orchestrator") {

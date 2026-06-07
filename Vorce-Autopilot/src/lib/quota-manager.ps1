@@ -127,7 +127,7 @@ function Get-EstimatedCost {
     }
 
     # Check model-specific cost
-    if ($provider.models -and $provider.models.$ModelTier) {
+    if ($provider.models -and $null -ne $provider.models -and $provider.models.PSObject.Properties.Name -contains $ModelTier) {
         return [double]$provider.models.$ModelTier.estimated_cost_per_call_usd
     }
 

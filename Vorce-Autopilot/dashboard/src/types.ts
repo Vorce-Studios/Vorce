@@ -56,6 +56,10 @@ export interface ReviewQueueItem {
   pr_url: string;
   pr_number: number;
   review_status: string;
+  review_provider?: string;
+  pr_updated_at?: string;
+  reviewed_pr_updated_at?: string;
+  reviewed_at?: string;
 }
 
 export interface CompletedItem {
@@ -65,9 +69,15 @@ export interface CompletedItem {
 }
 
 export interface DecisionPending {
+  id?: string;
   topic: string;
   context: string;
   created_at: string;
+  status?: 'pending' | 'closed' | 'ignored';
+  closed_by?: string;
+  closed_at?: string;
+  user_comment?: string;
+  memory_id?: string;
 }
 
 export interface ActiveSessions {

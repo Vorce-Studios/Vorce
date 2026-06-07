@@ -299,69 +299,71 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
               const ceoStage = owner === 'CEO' || alert.status === 'alpha_action_proposed' || alert.alpha_response;
               const activeStep = userStage ? 2 : ceoStage ? 1 : 0;
               return (
-              <div key={id} className="bg-slate-950/50 border border-rose-500/20 rounded-lg p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
-                  <div>
-                    <div className="font-semibold text-rose-200">{normalizeAuditText(alert.topic || 'QA Manager Alert')}</div>
-                    <div className="text-xs text-rose-300/70 mt-0.5">
-                      Zuständig: {owner} · {auditStageLabel(alert)} · {timeAgo(alert.created_at)}
+                <div key={id} className="bg-slate-950/50 border border-rose-500/20 rounded-lg p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                    <div>
+                      <div className="font-semibold text-rose-200">{normalizeAuditText(alert.topic || 'QA Manager Alert')}</div>
+                      <div className="text-xs text-rose-300/70 mt-0.5">
+                        Zuständig: {owner} · {auditStageLabel(alert)} · {timeAgo(alert.created_at)}
+                      </div>
                     </div>
-                  </div>
-                  <button
-                    onClick={() => updateAuditAlert('remove', id)}
-                    className="p-1.5 rounded-md bg-slate-900 text-slate-400 hover:text-rose-300 border border-slate-700"
-                    title="Audit Alert löschen"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  {['QA Manager', 'CEO', 'Du'].map((label, stepIdx) => (
-                    <div key={label} className={`h-1.5 rounded-full ${stepIdx <= activeStep ? 'bg-rose-400' : 'bg-slate-800'}`} title={label} />
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 text-sm">
-                  <div className="rounded-md bg-slate-900/70 border border-slate-800 p-3">
-                    <div className="uppercase text-rose-300/70 text-[10px] mb-1">Problem</div>
-                    <div className="text-slate-200 whitespace-pre-wrap">{shortText(alert.context)}</div>
-                  </div>
-                  <div className="rounded-md bg-slate-900/70 border border-slate-800 p-3">
-                    <div className="uppercase text-amber-300/70 text-[10px] mb-1">QA Manager Versuch</div>
-                    <div className="text-slate-300 whitespace-pre-wrap">
-                      {shortText(alert.remediation_command || alert.remediation_result || 'Noch kein dokumentierter Reparaturversuch.')}
-                    </div>
-                  </div>
-                  <div className="rounded-md bg-slate-900/70 border border-slate-800 p-3">
-                    <div className="uppercase text-cyan-300/70 text-[10px] mb-1">CEO Sondersession</div>
-                    <div className="text-slate-300 whitespace-pre-wrap">
-                      {shortText(alert.alpha_response || (ceoStage ? 'CEO-Sondersession geplant.' : 'Noch nicht erreicht.'))}
-                    </div>
-                  </div>
-                </div>
-
-                {alert.user_escalation_reason && (
-                  <div className="mt-3 rounded-md border border-orange-500/30 bg-orange-500/10 p-3 text-sm text-orange-200">
-                    {shortText(alert.user_escalation_reason)}
-                  </div>
-                )}
-
-                {!userStage && ceoStage && (
-                  <div className="mt-3 flex justify-end">
                     <button
-                      onClick={() => updateAuditAlert('escalate-user', id, 'CEO Sondersession konnte die Ursache nicht beheben. Deine Entscheidung ist erforderlich.')}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-orange-500/20 text-orange-200 hover:bg-orange-500/30 border border-orange-500/30"
+                      onClick={() => updateAuditAlert('remove', id)}
+                      className="p-1.5 rounded-md bg-slate-900 text-slate-400 hover:text-rose-300 border border-slate-700"
+                      title="Audit Alert löschen"
                     >
-                      An mich eskalieren
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                )}
-              </div>
-            )})}
+
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {['QA Manager', 'CEO', 'Du'].map((label, stepIdx) => (
+                      <div key={label} className={`h-1.5 rounded-full ${stepIdx <= activeStep ? 'bg-rose-400' : 'bg-slate-800'}`} title={label} />
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 text-sm">
+                    <div className="rounded-md bg-slate-900/70 border border-slate-800 p-3">
+                      <div className="uppercase text-rose-300/70 text-[10px] mb-1">Problem</div>
+                      <div className="text-slate-200 whitespace-pre-wrap">{shortText(alert.context)}</div>
+                    </div>
+                    <div className="rounded-md bg-slate-900/70 border border-slate-800 p-3">
+                      <div className="uppercase text-amber-300/70 text-[10px] mb-1">QA Manager Versuch</div>
+                      <div className="text-slate-300 whitespace-pre-wrap">
+                        {shortText(alert.remediation_command || alert.remediation_result || 'Noch kein dokumentierter Reparaturversuch.')}
+                      </div>
+                    </div>
+                    <div className="rounded-md bg-slate-900/70 border border-slate-800 p-3">
+                      <div className="uppercase text-cyan-300/70 text-[10px] mb-1">CEO Sondersession</div>
+                      <div className="text-slate-300 whitespace-pre-wrap">
+                        {shortText(alert.alpha_response || (ceoStage ? 'CEO-Sondersession geplant.' : 'Noch nicht erreicht.'))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {alert.user_escalation_reason && (
+                    <div className="mt-3 rounded-md border border-orange-500/30 bg-orange-500/10 p-3 text-sm text-orange-200">
+                      {shortText(alert.user_escalation_reason)}
+                    </div>
+                  )}
+
+                  {!userStage && ceoStage && (
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        onClick={() => updateAuditAlert('escalate-user', id, 'CEO Sondersession konnte die Ursache nicht beheben. Deine Entscheidung ist erforderlich.')}
+                        className="text-xs px-3 py-1.5 rounded-lg bg-orange-500/20 text-orange-200 hover:bg-orange-500/30 border border-orange-500/30"
+                      >
+                        An mich eskalieren
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
+
       {/* Run control cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RunCard
@@ -503,7 +505,6 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
 
       {/* Dual-CEO Deliberation Panel */}
       <DeliberationPanel deliberations={sessions.deliberation_log || []} />
-
     </div>
   );
 }

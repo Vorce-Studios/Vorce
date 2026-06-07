@@ -131,19 +131,66 @@ function Add-DecisionPending {
     param(
         [Parameter(Mandatory)][object]$State,
         [Parameter(Mandatory)][string]$Topic,
-        [Parameter(Mandatory)][string]$Context
+        [Parameter(Mandatory)][string]$Context,
+        [string]$AlertId = ""
     )
 
-    $exists = $State.decisions_pending | Where-Object { $_.topic -eq $Topic }
+    # New: Generate persistent alert ID if not provided
+    if ([string]::IsNullOrWhiteSpace($AlertId)) {
+        $AlertId = "alert-$(Get-Date -Format 'yyyyMMddHHmmss')-$([guid]::NewGuid().ToString('N').Substring(0,4))"
+    }
+
+    # Check only for pending alerts with same topic (ignore closed/ignored)
+    $exists = $State.decisions_pending | Where-Object { 
+        $_.topic -eq $Topic -and ($null -eq $_.status -or $_.status -eq 'pending')
+    }
     if (-not $exists) {
-        $State.decisions_pending += @([ordered]@{
+        $newAlert = [ordered]@{
+            id         = $AlertId
             topic      = $Topic
             context    = $Context
             created_at = (Get-Date -Format 'o')
-        })
-        Write-Host "[MONITOR] Entscheidung hinzugefuegt: $Topic" -ForegroundColor Yellow
+            status     = 'pending'  # NEW: Default status
+        }
+        
+        # Only add if no closed/ignored alert with same topic exists
+        $hasClosed = $State.decisions_pending | Where-Object { $_.topic -eq $Topic -and ($_.status -eq 'closed' -or $_.status -eq 'ignored') }
+        if (-not $hasClosed) {
+            $State.decisions_pending += @($newAlert)
+            Write-Host "[MONITOR] Entscheidung hinzugefuegt: $Topic (ID: $AlertId)" -ForegroundColor Yellow
+        } else {
+            Write-Host "[MONITOR] Alert fuer '$Topic' bereits geschlossen/ignoriert (uebersprungen)" -ForegroundColor DarkGray
+        }
     } else {
-        Write-Host "[MONITOR] Entscheidung existiert bereits: $Topic (uebersprungen)" -ForegroundColor DarkGray
+        Write-Host "[MONITOR] Entscheidung existiert bereits (pending): $Topic" -ForegroundColor DarkGray
+    }
+}
+
+function Get-NextMonitoringRetryAt {
+    param([Parameter(Mandatory)][object]$Config)
+
+    $minutes = if (
+        (Test-ObjectProperty -Object $Config -Name "wake_intervals") -and
+        (Test-ObjectProperty -Object $Config.wake_intervals -Name "planning_minutes")
+    ) { [int]$Config.wake_intervals.planning_minutes } else { 60 }
+    return (Get-Date).AddMinutes($minutes).ToString('o')
+}
+
+function Sync-OpenPullRequestsToReviewQueue {
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][object[]]$PullRequests
+    )
+
+    foreach ($pr in $PullRequests) {
+        $prNumber = [int]$pr.number
+        $prUrl = if (Test-ObjectProperty -Object $pr -Name "url") { [string]$pr.url } else { "" }
+        $prUpdatedAt = if (Test-ObjectProperty -Object $pr -Name "updatedAt") { [string]$pr.updatedAt } else { "" }
+        $issueNumber = 0
+        $matchingDelegation = $State.active_delegations | Where-Object { [string]$_.pr_url -eq $prUrl } | Select-Object -First 1
+        if ($matchingDelegation) { $issueNumber = [int]$matchingDelegation.issue_number }
+
+        Add-ReviewItem -State $State -IssueNumber $issueNumber -PrUrl $prUrl -PrNumber $prNumber -PrUpdatedAt $prUpdatedAt
     }
 }
 
@@ -560,6 +607,7 @@ function Invoke-MonitoringWakeUp {
                 Write-Host ("[MONITOR]   PR #{0} {1} Checks fehlgeschlagen ({2})" -f $prNum, $failingChecks.Count, $failNames) -ForegroundColor Red
             }
         }
+        Sync-OpenPullRequestsToReviewQueue -State $State -PullRequests $prs
     } catch {
         Write-Warning "[MONITOR] PR-Check fehlgeschlagen: $_"
     }
@@ -595,7 +643,7 @@ function Invoke-MonitoringWakeUp {
                     Add-ErrorLog -State $State -Message "Stalled session detected for #$issueNum (>45min)" -Context "Session: $sessionId, Agent: $agentType"
 
                     if (-not $DryRun.IsPresent) {
-                        Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "STALLED_TIMEOUT"
+                        Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "STALLED_TIMEOUT" -FailureDetails "Session $sessionId reagiert seit mindestens 45 Minuten nicht." -NextRetryAt (Get-NextMonitoringRetryAt -Config $Config)
                     } else {
                         Complete-Delegation -State $State -IssueNumber $issueNum -Result "failed_timeout"
                     }
@@ -669,7 +717,7 @@ function Invoke-MonitoringWakeUp {
                         } else {
                             Write-Host "[MONITOR]   -> ESKALATION: Re-Planning / Fehlerbehebung erforderlich!" -ForegroundColor Red
                             if (-not $DryRun.IsPresent) {
-                                Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FEEDBACK_TIMEOUT_CI_OR_BLOCKER"
+                                Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FEEDBACK_TIMEOUT_CI_OR_BLOCKER" -FailureDetails "Jules wartet nach $retryCount automatischen Fortsetzungsversuchen weiterhin auf Feedback." -NextRetryAt (Get-NextMonitoringRetryAt -Config $Config)
                             }
                         }
                     }
@@ -677,7 +725,7 @@ function Invoke-MonitoringWakeUp {
                         Write-Host "[MONITOR]   -> FAILED! Logge Fehler und eskaliere." -ForegroundColor Red
                         Add-ErrorLog -State $State -Message "Jules session failed for #$issueNum" -Context "Session: $sessionId"
                         if (-not $DryRun.IsPresent) {
-                            Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FAILED"
+                            Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FAILED" -FailureDetails "Jules meldete den Session-Status FAILED fuer Session $sessionId." -NextRetryAt (Get-NextMonitoringRetryAt -Config $Config)
                         } else {
                             Complete-Delegation -State $State -IssueNumber $issueNum -Result "failed"
                         }
@@ -734,10 +782,26 @@ function Invoke-MonitoringWakeUp {
                         }
                         Complete-Delegation -State $State -IssueNumber $issueNum -Result "completed"
                     } elseif ($currentState -eq "FAILED") {
+                        $failureDetails = if ((Test-ObjectProperty -Object $agentState -Name "error") -and -not [string]::IsNullOrWhiteSpace([string]$agentState.error)) {
+                            [string]$agentState.error
+                        } else {
+                            "Provider meldete FAILED, hat aber keine Fehlerdetails geschrieben."
+                        }
+                        $nextRetryAt = Get-NextMonitoringRetryAt -Config $Config
+                        foreach ($workSession in $State.working_sessions) {
+                            if ([int]$workSession.issue_number -eq $issueNum) {
+                                $workSession | Add-Member -MemberType NoteProperty -Name "failure_reason" -Value $failureDetails -Force
+                                $workSession | Add-Member -MemberType NoteProperty -Name "retry_status" -Value "QUEUED_FOR_RETRY" -Force
+                                $workSession | Add-Member -MemberType NoteProperty -Name "next_retry_at" -Value $nextRetryAt -Force
+                                break
+                            }
+                        }
                         Write-Host "[MONITOR]   -> FAILED! Local Agent fehlgeschlagen." -ForegroundColor Red
-                        Add-ErrorLog -State $State -Message "Local agent $agentType failed for #$issueNum" -Context "Check terminal logs"
+                        Write-Host "[MONITOR]      Ursache: $failureDetails" -ForegroundColor Red
+                        Write-Host "[MONITOR]      Naechster Retry via Planning: $nextRetryAt" -ForegroundColor Yellow
+                        Add-ErrorLog -State $State -Message "Local agent $agentType failed for #$issueNum" -Context $failureDetails
                         if (-not $DryRun.IsPresent) {
-                            Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FAILED"
+                            Set-DelegationEscalation -State $State -IssueNumber $issueNum -Reason "FAILED" -FailureDetails $failureDetails -NextRetryAt $nextRetryAt
                         } else {
                             Complete-Delegation -State $State -IssueNumber $issueNum -Result "failed"
                         }
@@ -774,7 +838,7 @@ function Invoke-MonitoringWakeUp {
                 continue
             }
 
-            $reviewResult = Invoke-DualCeoTask -QuotaRegistry $QuotaRegistry -Config $Config -TaskType "code_review" -DryRun:$DryRun -State $State -Prompt @"
+            $reviewResult = Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType "code_review" -DryRun:$DryRun -Prompt @"
 Review PR #$($review.pr_number) fuer Issue #$($review.issue_number) im Repository $repo.
 PR URL: $($review.pr_url)
 
@@ -786,6 +850,9 @@ PR URL: $($review.pr_url)
             if ($reviewResult.success -and [string]$reviewResult.provider -eq "claude_code") {
                 $review.review_status = "completed"
                 $review | Add-Member -MemberType NoteProperty -Name "review_provider" -Value "claude_code" -Force
+                $review | Add-Member -MemberType NoteProperty -Name "reviewed_at" -Value (Get-Date -Format 'o') -Force
+                $reviewedRevision = if (Test-ObjectProperty -Object $review -Name "pr_updated_at") { [string]$review.pr_updated_at } else { "" }
+                $review | Add-Member -MemberType NoteProperty -Name "reviewed_pr_updated_at" -Value $reviewedRevision -Force
                 Write-Host "[MONITOR]   Review fuer PR #$($review.pr_number) abgeschlossen via $($reviewResult.provider)." -ForegroundColor Green
             } elseif ($reviewResult.success) {
                 $review.review_status = "pending"
@@ -796,15 +863,75 @@ PR URL: $($review.pr_url)
         }
     }
 
-    # --- Step 4: Cleanup decisions_pending ---
+# --- Helper: Convert Alert to Memory ---
+function Convert-AlertToMemory {
+    param(
+        [Parameter(Mandatory)][object]$DecisionPending,
+        [string]$UserComment = ""
+    )
+    
+    try {
+        $memoryText = "IGNORE_ALERT: $($DecisionPending.topic)`nDetails: $($DecisionPending.context)"
+        if (-not [string]::IsNullOrWhiteSpace($UserComment)) {
+            $memoryText += "`nUser-Kommentar: $UserComment"
+        }
+        
+        $result = Add-Memory `
+            -Text $memoryText `
+            -Type "temporary" `
+            -Priority "medium" `
+            -Source "audit_alert_close"
+        
+        if ($result) {
+            Write-Host "[MONITOR] Memory erstellt fuer geschlossenen Alert: $($DecisionPending.topic)" -ForegroundColor Cyan
+            return $true
+        }
+        return $false
+    } catch {
+        Write-Warning "[MONITOR] Konnte Memory fuer Alert nicht erstellen: $_"
+        return $false
+    }
+}
+
+    # --- Step 4: Cleanup decisions_pending (mit Memory-Integration) ---
     Write-Host "[MONITOR] Bereinige und dedupliziere offene Entscheidungen..." -ForegroundColor Cyan
     $cleanedDecisions = @()
     $seenTopics = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 
     foreach ($decision in $State.decisions_pending) {
         $topic = $decision.topic
+        $id = if ($decision.PSObject.Properties.Name -contains "id") { $decision.id } else { "" }
 
-        # 1. Duplikatprüfung
+        # NEW: Skip closed/ignored alerts (no longer active)
+        if ($decision.PSObject.Properties.Name -contains "status") {
+            if ($decision.status -eq 'closed' -or $decision.status -eq 'ignored') {
+                # NEW: Convert to memory if usercomment exists and memory NOT yet created
+                if (-not $decision.PSObject.Properties.Name -contains "memory_id" -and 
+                    $decision.PSObject.Properties.Name -contains "user_comment" -and 
+                    -not [string]::IsNullOrWhiteSpace($decision.user_comment)) {
+                    
+                    try {
+                        $memResult = Add-Memory `
+                            -Text "IGNORE_ALERT: $topic`nDetails: $($decision.context)`nUser-Kommentar: $($decision.user_comment)" `
+                            -Type "temporary" `
+                            -Priority "medium" `
+                            -Source "audit_alert_close"
+                        
+                        if ($memResult) {
+                            $decision | Add-Member -MemberType NoteProperty -Name "memory_id" -Value "mem-auto-$id" -Force
+                            Write-Host "[MONITOR] Memory erstellt fuer geschlossenen Alert: $topic" -ForegroundColor Cyan
+                        }
+                    } catch {
+                        Write-Warning "[MONITOR] Konnte Memory fuer Alert nicht erstellen: $_"
+                    }
+                }
+                
+                Write-Host "[MONITOR] Entscheidung geschlossen/ignoriert, entferne aus decisions_pending: $topic" -ForegroundColor DarkGray
+                continue
+            }
+        }
+
+        # 1. Duplikatprüfung (nur fuer pending alerts)
         if ($seenTopics.Contains($topic)) {
             Write-Host "[MONITOR] Duplikat von Entscheidung entfernt: $topic" -ForegroundColor DarkGray
             continue
@@ -813,7 +940,7 @@ PR URL: $($review.pr_url)
         $keep = $true
 
         # 2. PR-Konflikt-Meldungen analysieren
-        if ($topic -match 'PR #(\d+) hat Merge-Konflikte') {
+        if ($topic -match 'PR #(\\d+) hat Merge-Konflikte') {
             $prNum = [int]$Matches[1]
             $matchingPr = $prs | Where-Object { [int]$_.number -eq $prNum }
             if ($null -eq $matchingPr) {
@@ -825,7 +952,7 @@ PR URL: $($review.pr_url)
             }
         }
         # 3. Jules-Session-Hilferufe analysieren
-        elseif ($topic -match 'Jules Session #(\d+) braucht Hilfe') {
+        elseif ($topic -match 'Jules Session #(\\d+) braucht Hilfe') {
             $issueNum = [int]$Matches[1]
             $delegation = $State.active_delegations | Where-Object { [int]$_.issue_number -eq $issueNum }
             if ($null -eq $delegation) {

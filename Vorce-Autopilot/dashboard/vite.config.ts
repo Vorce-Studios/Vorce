@@ -401,10 +401,83 @@ export default defineConfig({
                 const payload = JSON.parse(body || '{}');
                 const statePath = path.resolve(__dirname, '../var/db/autopilot-state.json');
                 const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
+                const memoryPath = path.resolve(__dirname, '../var/db/autopilot-memories.json');
+                const publicMemoryPath = path.resolve(__dirname, './public/memories.json');
                 const readableStatePath = fs.existsSync(statePath) ? statePath : publicStatePath;
                 const state = readJsonFile(readableStatePath, { decisions_pending: [] });
 
                 if (!Array.isArray(state.decisions_pending)) state.decisions_pending = [];
+
+                // NEW: Handle "close-alert" action - mark alert as closed with optional comment
+                if (payload.action === 'close-alert') {
+                  const alert = state.decisions_pending.find((item: any, idx: number) => String(item.id || idx) === String(payload.id));
+                  if (alert) {
+                    alert.status = 'closed';
+                    alert.closed_by = 'user';
+                    alert.closed_at = new Date().toISOString();
+                    alert.user_comment = payload.comment || 'Manuell geschlossen';
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ status: 'ok', message: 'Alert geschlossen', alert }));
+                    return;
+                  }
+                }
+
+                // NEW: Handle "ignore-alert" action - mark alert as ignored and create memory
+                if (payload.action === 'ignore-alert') {
+                  const alert = state.decisions_pending.find((item: any, idx: number) => String(item.id || idx) === String(payload.id));
+                  if (alert) {
+                    alert.status = 'ignored';
+                    alert.closed_by = 'user';
+                    alert.closed_at = new Date().toISOString();
+                    alert.user_comment = payload.comment || 'Ignoriert (repeat-accept)';
+
+                    // Create memory for this alert so it won't reappear
+                    let memoryCreated = false;
+                    try {
+                      let store = { schema_version: 1, memories: [] as any[] };
+                      if (fs.existsSync(memoryPath)) {
+                        store = JSON.parse(fs.readFileSync(memoryPath, 'utf-8'));
+                      }
+
+                      const memoryEntry = {
+                        id: `mem-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+                        text: `IGNORE_ALERT: ${alert.topic}\nDetails: ${alert.context}\nUser-Kommentar: ${alert.user_comment}`,
+                        type: 'temporary',
+                        priority: 'medium',
+                        created_at: new Date().toISOString(),
+                        source: 'dashboard_alert_ignore'
+                      };
+
+                      if (store.memories.length >= 30) {
+                        // Remove oldest non-critical memory
+                        const nonCritical = store.memories.filter((m: any) => m.priority !== 'critical');
+                        if (nonCritical.length > 0) {
+                          const oldest = nonCritical.sort((a: any, b: any) => 
+                            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                          )[0];
+                          store.memories = store.memories.filter((m: any) => m.id !== oldest.id);
+                        }
+                      }
+
+                      store.memories.push(memoryEntry);
+                      fs.writeFileSync(memoryPath, JSON.stringify(store, null, 2), 'utf-8');
+                      fs.writeFileSync(publicMemoryPath, JSON.stringify(store, null, 2), 'utf-8');
+                      memoryCreated = true;
+                      console.log(`[API] Memory created for ignored alert: ${alert.topic}`);
+                    } catch (memErr) {
+                      console.error(`[API] Failed to create memory:`, memErr);
+                    }
+
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ 
+                      status: 'ok', 
+                      message: 'Alert ignoriert und Memory erstellt',
+                      alert,
+                      memory_created: memoryCreated
+                    }));
+                    return;
+                  }
+                }
 
                 if (payload.action === 'clear') {
                   state.decisions_pending = [];
@@ -552,6 +625,55 @@ export default defineConfig({
                 writeJsonFile(publicStatePath, state);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'ok' }));
+              } catch (err) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));
+              }
+            });
+          } else if (req.method === 'POST' && req.url === '/api/trigger-phase') {
+            let body = '';
+            req.on('data', (chunk: any) => { body += chunk; });
+            req.on('end', () => {
+              try {
+                const payload = JSON.parse(body || '{}');
+                const validPhases = ['planning', 'monitoring', 'audit'];
+                if (!validPhases.includes(payload.phase)) throw new Error('Invalid phase');
+                
+                const scriptPath = path.resolve(__dirname, `../src/phases/${payload.phase}-wakeup.ps1`);
+                if (fs.existsSync(scriptPath)) {
+                  const child = spawn('pwsh', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath], {
+                    cwd: path.resolve(__dirname, '..'),
+                    detached: true,
+                    stdio: 'ignore',
+                    windowsHide: true
+                  });
+                  child.unref();
+                }
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ status: 'ok', message: `${payload.phase} triggered` }));
+              } catch (err) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));
+              }
+            });
+          } else if (req.method === 'POST' && req.url === '/api/replan-issue') {
+            let body = '';
+            req.on('data', (chunk: any) => { body += chunk; });
+            req.on('end', () => {
+              try {
+                const payload = JSON.parse(body || '{}');
+                if (!payload.issue_number) throw new Error('issue_number is required');
+                
+                const statePath = path.resolve(__dirname, '../var/db/autopilot-state.json');
+                const state = readJsonFile(statePath, {});
+                state.manual_plan_queue = state.manual_plan_queue || [];
+                if (!state.manual_plan_queue.includes(payload.issue_number)) {
+                  state.manual_plan_queue.push(payload.issue_number);
+                }
+                writeJsonFile(statePath, state);
+                
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ status: 'ok', message: `Issue ${payload.issue_number} queued for replan` }));
               } catch (err) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));

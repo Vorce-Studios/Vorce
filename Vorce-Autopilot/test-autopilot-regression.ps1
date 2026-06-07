@@ -109,6 +109,24 @@ $orderedResult = [ordered]@{ provider = "codex_orchestrator"; error = "CODEX_SES
 Assert-True -Condition (Test-ObjectProperty -Object $orderedResult -Name "provider") -Message "Ordered dictionary properties are not detected."
 $formattedFailure = Format-AutopilotTaskFailure -Result $orderedResult
 Assert-True -Condition ($formattedFailure -match "codex_orchestrator" -and $formattedFailure -match "usage limit") -Message "Task failure details are incomplete."
+$nullConfigPrompt = Get-VorceConfigPrompt -Config $null -PromptKey "proposal" -Variables @{ contextPrompt = "test" }
+Assert-True -Condition (-not [string]::IsNullOrWhiteSpace($nullConfigPrompt)) -Message "Prompt loading with null config failed."
+
+$originalStateFilePath = $StateFilePath
+$StateFilePath = Join-Path $env:TEMP "vorce-autopilot-regression-state.json"
+try {
+    $reviewState = New-AutopilotState
+    Add-ReviewItem -State $reviewState -IssueNumber 0 -PrUrl "https://github.com/Vorce-Studios/Vorce/pull/1" -PrNumber 1 -PrUpdatedAt "2026-06-07T10:00:00Z"
+    Add-ReviewItem -State $reviewState -IssueNumber 123 -PrUrl "https://github.com/Vorce-Studios/Vorce/pull/1" -PrNumber 1 -PrUpdatedAt "2026-06-07T10:00:00Z"
+    Assert-True -Condition (@($reviewState.review_queue).Count -eq 1 -and [int]$reviewState.review_queue[0].issue_number -eq 123) -Message "Review queue does not deduplicate open PRs."
+    $reviewState.review_queue[0].review_status = "completed"
+    $reviewState.review_queue[0].reviewed_pr_updated_at = "2026-06-07T10:00:00Z"
+    Add-ReviewItem -State $reviewState -IssueNumber 123 -PrUrl "https://github.com/Vorce-Studios/Vorce/pull/1" -PrNumber 1 -PrUpdatedAt "2026-06-07T11:00:00Z"
+    Assert-True -Condition ($reviewState.review_queue[0].review_status -eq "pending") -Message "Updated PR was not re-queued for Claude review."
+} finally {
+    $StateFilePath = $originalStateFilePath
+    Remove-Item -LiteralPath (Join-Path $env:TEMP "vorce-autopilot-regression-state.json") -Force -ErrorAction SilentlyContinue
+}
 
 $quotaConfig = Get-Content (Join-Path $ScriptDir "config\quota-registry.json") -Raw -Encoding UTF8 | ConvertFrom-Json
 Assert-True -Condition (@($quotaConfig.routing_rules.code_review).Count -eq 1 -and $quotaConfig.routing_rules.code_review[0] -eq "claude_code:balanced") -Message "PR reviews are not exclusively routed to Claude Code."
@@ -181,3 +199,9 @@ if (-not $SkipDashboardBuild.IsPresent) {
 }
 
 Write-Host "[REGRESSION] Autopilot parallel structure checks passed." -ForegroundColor Green
+
+Write-Host "Running Quota Manager Unit Tests..." -ForegroundColor Cyan
+& pwsh -NoProfile -ExecutionPolicy Bypass -File (Join-Path $ScriptDir "test\ut-quota-manager.ps1")
+
+Write-Host "Running Planning Cycle Integration Tests..." -ForegroundColor Cyan
+& pwsh -NoProfile -ExecutionPolicy Bypass -File (Join-Path $ScriptDir "test\it-planning-cycle.ps1")

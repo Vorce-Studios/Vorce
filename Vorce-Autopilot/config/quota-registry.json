@@ -55,6 +55,8 @@
       "cli_args": [
         "-p",
         "{PROMPT}",
+        "-m",
+        "{MODEL}",
         "-y",
         "--output-format",
         "json",

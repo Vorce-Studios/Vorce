@@ -3,7 +3,7 @@ Set-StrictMode -Version Latest
 
 function Get-VorceConfigPrompt {
     param(
-        [Parameter(Mandatory)][object]$Config,
+        [AllowNull()][object]$Config,
         [Parameter(Mandatory)][string]$PromptKey,
         [hashtable]$Variables = @{}
     )

@@ -2,96 +2,48 @@
   "schema_version": 1,
   "session_id": "autopilot-2026-06-04-1309",
   "started_at": "2026-06-04T13:09:32.4807992+02:00",
-  "last_heartbeat": "2026-06-07T01:07:52.3086361+02:00",
-  "last_planning_at": "2026-06-06T23:48:54.1382479+02:00",
-  "last_monitoring_at": "2026-06-07T01:07:42.0672029+02:00",
+  "last_heartbeat": "2026-06-07T13:46:42.0293146+02:00",
+  "last_planning_at": "2026-06-06T13:46:41.8321253+02:00",
+  "last_monitoring_at": "2026-06-07T13:46:41.8303376+02:00",
   "active_delegations": [
     {
-      "issue_number": 735,
-      "issue_title": "__MF-SubI_TimelineV2-Panel-State-Extraction",
-      "jules_session_id": "local-agent-12880",
+      "issue_number": 742,
+      "issue_title": "__MF-SubI_NDI-Orchestration-Smoke-Test",
+      "jules_session_id": "local-agent-19872",
       "agent_type": "gemini_cli",
-      "job_id": "12880",
-      "jules_state": "QUEUED",
+      "job_id": "19872",
+      "jules_state": "IN_PROGRESS",
       "pr_url": null,
-      "delegated_at": "2026-06-07T01:07:39.7083175+02:00",
-      "last_checked_at": "2026-06-07T01:07:39.7083328+02:00",
+      "delegated_at": "2026-06-07T03:35:18.6559463+02:00",
+      "last_checked_at": "2026-06-07T03:35:21.8829289+02:00",
       "retry_count": 0
     },
     {
-      "issue_number": 736,
-      "issue_title": "__MF-SubI_TimelineV2-Interaction-Tests-For-Drag-And-Selection",
-      "jules_session_id": "local-agent-16780",
+      "issue_number": 743,
+      "issue_title": "__MF-SubI_Cue-Timeline-Trigger-Roundtrip-Test",
+      "jules_session_id": "local-agent-22056",
       "agent_type": "gemini_cli",
-      "job_id": "16780",
-      "jules_state": "QUEUED",
+      "job_id": "22056",
+      "jules_state": "IN_PROGRESS",
       "pr_url": null,
-      "delegated_at": "2026-06-07T01:07:39.7397860+02:00",
-      "last_checked_at": "2026-06-07T01:07:39.7398003+02:00",
+      "delegated_at": "2026-06-07T03:35:18.6937329+02:00",
+      "last_checked_at": "2026-06-07T03:35:21.908325+02:00",
       "retry_count": 0
     },
     {
-      "issue_number": 737,
-      "issue_title": "__MF-SubI_Timeline-Persistence-Dirty-State-Test",
-      "jules_session_id": "local-agent-17864",
+      "issue_number": 744,
+      "issue_title": "__MF-SubI_Module-Scheduling-Deterministic-Order-Tests",
+      "jules_session_id": "local-agent-10968",
       "agent_type": "gemini_cli",
-      "job_id": "17864",
-      "jules_state": "QUEUED",
+      "job_id": "10968",
+      "jules_state": "IN_PROGRESS",
       "pr_url": null,
-      "delegated_at": "2026-06-07T01:07:39.7739149+02:00",
-      "last_checked_at": "2026-06-07T01:07:39.7739307+02:00",
+      "delegated_at": "2026-06-07T03:35:18.7518445+02:00",
+      "last_checked_at": "2026-06-07T03:35:21.9289212+02:00",
       "retry_count": 0
     }
   ],
   "working_queue": [
-    {
-      "id": "work-738-20260605051215",
-      "issue_number": 738,
-      "issue_title": "__MF-SubI_Timeline-Edge-Case-Regression-Cases",
-      "agent_provider": "gemini_cli",
-      "status": "QUEUED",
-      "queued_at": "2026-06-05T05:12:15.130327+02:00"
-    },
-    {
-      "id": "work-739-20260605051215",
-      "issue_number": 739,
-      "issue_title": "__MF-SubI_Media-Decoder-FFI-Null-And-Bounds-Checks",
-      "agent_provider": "gemini_cli",
-      "status": "QUEUED",
-      "queued_at": "2026-06-05T05:12:15.1719185+02:00"
-    },
-    {
-      "id": "work-741-20260605051215",
-      "issue_number": 741,
-      "issue_title": "__MF-SubI_NDI-Asset-Availability-Probe",
-      "agent_provider": "gemini_cli",
-      "status": "QUEUED",
-      "queued_at": "2026-06-05T05:12:15.212011+02:00"
-    },
-    {
-      "id": "work-742-20260605051215",
-      "issue_number": 742,
-      "issue_title": "__MF-SubI_NDI-Orchestration-Smoke-Test",
-      "agent_provider": "gemini_cli",
-      "status": "QUEUED",
-      "queued_at": "2026-06-05T05:12:15.2531705+02:00"
-    },
-    {
-      "id": "work-743-20260605051215",
-      "issue_number": 743,
-      "issue_title": "__MF-SubI_Cue-Timeline-Trigger-Roundtrip-Test",
-      "agent_provider": "gemini_cli",
-      "status": "QUEUED",
-      "queued_at": "2026-06-05T05:12:15.297568+02:00"
-    },
-    {
-      "id": "work-744-20260605051215",
-      "issue_number": 744,
-      "issue_title": "__MF-SubI_Module-Scheduling-Deterministic-Order-Tests",
-      "agent_provider": "gemini_cli",
-      "status": "QUEUED",
-      "queued_at": "2026-06-05T05:12:15.3377395+02:00"
-    },
     {
       "id": "work-745-20260605051215",
       "issue_number": 745,
@@ -243,8 +195,12 @@
       "issue_title": "__MF-SubI_TimelineV2-Panel-State-Extraction",
       "agent_provider": "gemini_cli",
       "process_id": 12880,
-      "status": "IN_PROGRESS",
-      "started_at": "2026-06-07T01:07:39.7080177+02:00"
+      "status": "FAILED",
+      "started_at": "2026-06-07T01:07:39.7080177+02:00",
+      "last_checked_at": "2026-06-07T01:37:40.9110031+02:00",
+      "error": "The property 'default' cannot be found on this object. Verify that the property exists.",
+      "status_updated_at": "06/07/2026 01:07:42",
+      "pr_url": ""
     },
     {
       "id": "work-736-20260605051215",
@@ -252,8 +208,12 @@
       "issue_title": "__MF-SubI_TimelineV2-Interaction-Tests-For-Drag-And-Selection",
       "agent_provider": "gemini_cli",
       "process_id": 16780,
-      "status": "IN_PROGRESS",
-      "started_at": "2026-06-07T01:07:39.7395257+02:00"
+      "status": "FAILED",
+      "started_at": "2026-06-07T01:07:39.7395257+02:00",
+      "last_checked_at": "2026-06-07T01:37:41.0118435+02:00",
+      "error": "The property 'default' cannot be found on this object. Verify that the property exists.",
+      "status_updated_at": "06/07/2026 01:07:42",
+      "pr_url": ""
     },
     {
       "id": "work-737-20260605051215",
@@ -261,8 +221,66 @@
       "issue_title": "__MF-SubI_Timeline-Persistence-Dirty-State-Test",
       "agent_provider": "gemini_cli",
       "process_id": 17864,
+      "status": "FAILED",
+      "started_at": "2026-06-07T01:07:39.7736386+02:00",
+      "last_checked_at": "2026-06-07T01:37:41.1060804+02:00",
+      "error": "The property 'default' cannot be found on this object. Verify that the property exists.",
+      "status_updated_at": "06/07/2026 01:07:42",
+      "pr_url": ""
+    },
+    {
+      "id": "work-738-20260605051215",
+      "issue_number": 738,
+      "issue_title": "__MF-SubI_Timeline-Edge-Case-Regression-Cases",
+      "agent_provider": "gemini_cli",
+      "process_id": 15380,
+      "status": "FAILED",
+      "started_at": "2026-06-07T01:37:40.7031761+02:00"
+    },
+    {
+      "id": "work-739-20260605051215",
+      "issue_number": 739,
+      "issue_title": "__MF-SubI_Media-Decoder-FFI-Null-And-Bounds-Checks",
+      "agent_provider": "gemini_cli",
+      "process_id": 12316,
+      "status": "FAILED",
+      "started_at": "2026-06-07T01:37:40.7585147+02:00"
+    },
+    {
+      "id": "work-741-20260605051215",
+      "issue_number": 741,
+      "issue_title": "__MF-SubI_NDI-Asset-Availability-Probe",
+      "agent_provider": "gemini_cli",
+      "process_id": 5204,
+      "status": "FAILED",
+      "started_at": "2026-06-07T01:37:40.7935313+02:00"
+    },
+    {
+      "id": "work-742-20260605051215",
+      "issue_number": 742,
+      "issue_title": "__MF-SubI_NDI-Orchestration-Smoke-Test",
+      "agent_provider": "gemini_cli",
+      "process_id": 19872,
       "status": "IN_PROGRESS",
-      "started_at": "2026-06-07T01:07:39.7736386+02:00"
+      "started_at": "2026-06-07T03:35:18.6373923+02:00"
+    },
+    {
+      "id": "work-743-20260605051215",
+      "issue_number": 743,
+      "issue_title": "__MF-SubI_Cue-Timeline-Trigger-Roundtrip-Test",
+      "agent_provider": "gemini_cli",
+      "process_id": 22056,
+      "status": "IN_PROGRESS",
+      "started_at": "2026-06-07T03:35:18.6934776+02:00"
+    },
+    {
+      "id": "work-744-20260605051215",
+      "issue_number": 744,
+      "issue_title": "__MF-SubI_Module-Scheduling-Deterministic-Order-Tests",
+      "agent_provider": "gemini_cli",
+      "process_id": 10968,
+      "status": "IN_PROGRESS",
+      "started_at": "2026-06-07T03:35:18.7516164+02:00"
     }
   ],
   "review_queue": [
@@ -307,7 +325,32 @@
     "*D**-063_Remove-Generated-Vite-Files-From-PR-754",
     "*D**-064_Remove-Generated-Vite-Files-From-PR-760",
     "*D**-065_Remove-Unrelated-Workflow-Documentation-From-PR-754",
-    "*D**-066_Remove-Unrelated-Workflow-Documentation-From-PR-760"
+    "*D**-066_Remove-Unrelated-Workflow-Documentation-From-PR-760",
+    "*D**-068_PR-754-Scope-Bereinigung",
+    "*D**-069_PR-760-FFI-Safety-Fixes",
+    "*D**-070_PR-760-Scope-Bereinigung",
+    "*D**-071_PR-783-Rustfmt-Fixes",
+    "*D**-072_PR-Titel-Namenskonvention-Korrigieren",
+    "*D**-073_PR-754-CI-Abschluss-Pruefen",
+    "*D**-074_Release-Scope-Klassifikation-Dokumentieren",
+    "*D**-075_Release-Gate-Evidenzindex-Erstellen",
+    "*D**-076_UI-Smoke-Evidenz-Automatisieren",
+    "*D**-077_Packaging-Install-Sanity-Evidenz-Erzeugen",
+    "*D**-078_macOS-QA-Evidenz-Erzeugen",
+    "*D**-079_NDI-E2E-Gate-Fuer-PR-776-Pruefen",
+    "*D**-080_Jules-Session-Statusdaten-Vervollstaendigen",
+    "*D**-081_Fix-PR-760-Rust-Unsafe-CI-Failures",
+    "*D**-082_Diagnose-And-Fix-PR-783-Precommit-Failure",
+    "*D**-083_Classify-Open-PRs-For-Release-1-0",
+    "*D**-084_Assess-PR-776-NDI-Dependency-Release-Risk",
+    "*D**-085_Reconcile-Stale-Conflict-Issue-726",
+    "*D**-086_Audit-Open-PR-Source-Issue-Mappings",
+    "*D**-087_Rename-Open-PRs-To-Confirmed-Source-Issue-Titles",
+    "*D**-088_Collect-Jules-Session-Status-Evidence",
+    "*D**-089_Add-Artifact-Link-Validation-For-Timeline-Matrix",
+    "*D**-090_Create-Release-Evidence-Checklist-Validator",
+    "*D**-091_Implement-Deterministic-UI-Smoke-Test",
+    "*D**-092_Verify-TimelineV2-Interaction-Test-Coverage"
   ],
   "completed_this_session": [
     {
@@ -351,6 +394,31 @@
       "topic": "PR #774 verletzt Vorce-Namenskonvention",
       "context": "Titel 'chore(deps): Bump glam from 0.33.0 to 0.33.1' kann keinem gueltigen Vorce-Issue-Titel zugeordnet werden. Erwartet: PR_{IssueTitle}.",
       "created_at": "2026-06-07T01:07:39.6528942+02:00"
+    },
+    {
+      "topic": "QA Manager Audit Alert",
+      "context": "Es wurden mehrere kritische Punkte im Audit festgestellt, die eine sofortige Aufmerksamkeit erfordern:\n\n1.  **Offene Merge-Konflikte**: Es gibt mehrere offene Issues, die das Beheben von Merge-Konflikten betreffen: #753, #751, #750, #726. Diese blockieren die Integration von Code und können zu erheblichen Verzögerungen in der Entwicklung führen. Gemäß Mandat darf ich hierfür keine automatische Jules-Session starten.\n    **Was der User tun soll**: Der User muss die Priorität dieser Merge-Konflikt-Issues bewerten und manuell die entsprechenden Jules-Sessions starten oder die Konflikte beheben lassen.\n\n2.  **Abhängigkeit von Bevy 'main'-Branch**: Die Crate `vorce-bevy` verwendet eine Abhängigkeit von `bevy`, die direkt auf den `main`-Branch des Bevy-Repositories verweist (https://github.com/bevyengine/bevy, branch = \"main\"). Obwohl dies eine bewusste Entwicklungsentscheidung sein könnte, birgt es das Risiko unerwarteter Kompatibilitätsprobleme oder Build-Fehler, wenn sich der `main`-Branch von Bevy ändert. Dies kann zu Instabilität und unvorhersehbarem Verhalten führen.\n    **Was der User tun soll**: Der User sollte prüfen, ob eine spezifische, stabile Version oder ein Commit-Hash von Bevy verwendet werden kann, um die Reproduzierbarkeit und Stabilität zu erhöhen. Eine Überwachung von Änderungen im Bevy `main`-Branch ist ebenfalls ratsam.\n\n3.  **Warteschlange von Agenten-Delegationen**: Es gibt mehrere Agenten-Delegationen (Issues #735, #736, #737), die sich alle im Status 'QUEUED' befinden. Dies deutet auf einen Engpass in der Ausführungsumgebung der Agenten hin, entweder aufgrund einer hohen Arbeitslast oder möglicher Probleme mit der Agenten-Infrastruktur. Dies beeinträchtigt die Geschwindigkeit der Problemlösung und der Feature-Implementierung.\n    **Was der User tun soll**: Der User sollte die Auslastung der Agenten-Infrastruktur überprüfen, um festzustellen, warum diese Aufgaben in der Warteschlange hängen. Gegebenenfalls muss die Kapazität erhöht oder die Agenten-Konfiguration optimiert werden.",
+      "created_at": "2026-06-07T01:36:54.6160633+02:00"
+    },
+    {
+      "topic": "PR #783 verletzt Vorce-Namenskonvention",
+      "context": "Titel 'PRDecompose-Module-Evaluator [M510-S04]' kann keinem gueltigen Vorce-Issue-Titel zugeordnet werden. Erwartet: PR_{IssueTitle}.",
+      "created_at": "2026-06-07T01:37:40.4317872+02:00"
+    },
+    {
+      "topic": "PR #782 verletzt Vorce-Namenskonvention",
+      "context": "Titel 'chore(deps): Bump hyper from 1.9.0 to 1.10.1' kann keinem gueltigen Vorce-Issue-Titel zugeordnet werden. Erwartet: PR_{IssueTitle}.",
+      "created_at": "2026-06-07T01:37:40.464758+02:00"
+    },
+    {
+      "topic": "PR #781 verletzt Vorce-Namenskonvention",
+      "context": "Titel 'chore(deps): Bump http from 1.4.0 to 1.4.1' kann keinem gueltigen Vorce-Issue-Titel zugeordnet werden. Erwartet: PR_{IssueTitle}.",
+      "created_at": "2026-06-07T01:37:40.4822816+02:00"
+    },
+    {
+      "topic": "PR #780 verletzt Vorce-Namenskonvention",
+      "context": "Titel 'chore(deps): Bump uuid from 1.23.1 to 1.23.2' kann keinem gueltigen Vorce-Issue-Titel zugeordnet werden. Erwartet: PR_{IssueTitle}.",
+      "created_at": "2026-06-07T01:37:40.4975056+02:00"
     }
   ],
   "escalated_issues": [
@@ -415,7 +483,7 @@
       "monitoring_failures": 1,
       "planning_resolutions": 0,
       "status": "QUEUED_FOR_RETRY",
-      "escalated_at": "2026-06-07T00:22:29.4097800+02:00"
+      "escalated_at": "2026-06-07T00:22:29.40978+02:00"
     },
     {
       "issue_number": 733,
@@ -424,7 +492,7 @@
       "monitoring_failures": 1,
       "planning_resolutions": 0,
       "status": "QUEUED_FOR_RETRY",
-      "escalated_at": "2026-06-07T00:22:29.4631600+02:00"
+      "escalated_at": "2026-06-07T00:22:29.46316+02:00"
     },
     {
       "issue_number": 734,
@@ -439,7 +507,7 @@
       "issue_number": 745,
       "issue_title": "Issue #745: __MF-SubI_Module-Evaluator-Cycle-Guard-Test",
       "last_jules_session_id": "8734646661322790063",
-      "monitoring_failures": 1,
+      "monitoring_failures": 2,
       "planning_resolutions": 0,
       "status": "QUEUED_FOR_RETRY",
       "escalated_at": "2026-06-07T01:07:39.8260526+02:00"
@@ -457,88 +525,67 @@
       "issue_number": 525,
       "issue_title": "Issue #525: Decompose-Media-Decoder [M510-S15]",
       "last_jules_session_id": "207401302840951243",
+      "monitoring_failures": 3,
+      "planning_resolutions": 0,
+      "status": "NEEDS_PLANNING",
+      "escalated_at": "2026-06-07T01:07:39.9297263+02:00"
+    },
+    {
+      "issue_number": 735,
+      "issue_title": "__MF-SubI_TimelineV2-Panel-State-Extraction",
+      "last_jules_session_id": "local-agent-12880",
       "monitoring_failures": 1,
       "planning_resolutions": 0,
       "status": "QUEUED_FOR_RETRY",
-      "escalated_at": "2026-06-07T01:07:39.9297263+02:00"
+      "escalated_at": "2026-06-07T01:37:40.9650274+02:00"
+    },
+    {
+      "issue_number": 736,
+      "issue_title": "__MF-SubI_TimelineV2-Interaction-Tests-For-Drag-And-Selection",
+      "last_jules_session_id": "local-agent-16780",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T01:37:41.0427986+02:00"
+    },
+    {
+      "issue_number": 737,
+      "issue_title": "__MF-SubI_Timeline-Persistence-Dirty-State-Test",
+      "last_jules_session_id": "local-agent-17864",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T01:37:41.1310878+02:00"
+    },
+    {
+      "issue_number": 738,
+      "issue_title": "__MF-SubI_Timeline-Edge-Case-Regression-Cases",
+      "last_jules_session_id": "local-agent-15380",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T01:37:51.9503474+02:00"
+    },
+    {
+      "issue_number": 739,
+      "issue_title": "__MF-SubI_Media-Decoder-FFI-Null-And-Bounds-Checks",
+      "last_jules_session_id": "local-agent-12316",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T01:37:52.0059553+02:00"
+    },
+    {
+      "issue_number": 741,
+      "issue_title": "__MF-SubI_NDI-Asset-Availability-Probe",
+      "last_jules_session_id": "local-agent-5204",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T01:37:52.0679498+02:00"
     }
   ],
   "error_log": [
-    {
-      "timestamp": "2026-06-05T04:08:04.0467151+02:00",
-      "message": "API error for #721",
-      "context": "Session local-agent-12132 konnte nicht geladen werden."
-    },
-    {
-      "timestamp": "2026-06-05T04:08:05.0729404+02:00",
-      "message": "API error for #722",
-      "context": "Session local-agent-2924 konnte nicht geladen werden."
-    },
-    {
-      "timestamp": "2026-06-05T04:18:32.997199+02:00",
-      "message": "API error for #726",
-      "context": "Session local-agent-11844 konnte nicht geladen werden."
-    },
-    {
-      "timestamp": "2026-06-05T04:18:34.0781007+02:00",
-      "message": "API error for #721",
-      "context": "Session local-agent-12132 konnte nicht geladen werden."
-    },
-    {
-      "timestamp": "2026-06-05T04:18:35.1286887+02:00",
-      "message": "API error for #722",
-      "context": "Session local-agent-2924 konnte nicht geladen werden."
-    },
-    {
-      "timestamp": "2026-06-05T04:29:01.365901+02:00",
-      "message": "API error for #726",
-      "context": "Session local-agent-11844 konnte nicht geladen werden."
-    },
-    {
-      "timestamp": "2026-06-05T04:29:02.4036531+02:00",
-      "message": "API error for #721",
-      "context": "Session local-agent-12132 konnte nicht geladen werden."
-    },
-    {
-      "timestamp": "2026-06-05T04:29:03.368821+02:00",
-      "message": "API error for #722",
-      "context": "Session local-agent-2924 konnte nicht geladen werden."
-    },
-    {
-      "timestamp": "2026-06-05T04:39:29.4961597+02:00",
-      "message": "API error for #726",
-      "context": "Session local-agent-11844 konnte nicht geladen werden."
-    },
-    {
-      "timestamp": "2026-06-05T04:39:30.5108669+02:00",
-      "message": "API error for #721",
-      "context": "Session local-agent-12132 konnte nicht geladen werden."
-    },
-    {
-      "timestamp": "2026-06-05T04:39:31.5320338+02:00",
-      "message": "API error for #722",
-      "context": "Session local-agent-2924 konnte nicht geladen werden."
-    },
-    {
-      "timestamp": "2026-06-05T04:49:57.8252198+02:00",
-      "message": "API error for #726",
-      "context": "Session local-agent-11844 konnte nicht geladen werden."
-    },
-    {
-      "timestamp": "2026-06-05T04:49:58.9657264+02:00",
-      "message": "API error for #721",
-      "context": "Session local-agent-12132 konnte nicht geladen werden."
-    },
-    {
-      "timestamp": "2026-06-05T04:49:59.9577613+02:00",
-      "message": "API error for #722",
-      "context": "Session local-agent-2924 konnte nicht geladen werden."
-    },
-    {
-      "timestamp": "2026-06-05T05:00:26.4627535+02:00",
-      "message": "Stalled session detected for #726 (>45min)",
-      "context": "Session: local-agent-11844, Agent: jules"
-    },
     {
       "timestamp": "2026-06-05T05:00:26.5282348+02:00",
       "message": "Stalled session detected for #721 (>45min)",
@@ -695,7 +742,7 @@
       "context": "Check terminal logs"
     },
     {
-      "timestamp": "2026-06-07T00:22:29.5162680+02:00",
+      "timestamp": "2026-06-07T00:22:29.516268+02:00",
       "message": "Local agent local_agent failed for #734",
       "context": "Check terminal logs"
     },
@@ -713,28 +760,106 @@
       "timestamp": "2026-06-07T01:07:39.9233642+02:00",
       "message": "Stalled session detected for #525 (>45min)",
       "context": "Session: 207401302840951243, Agent: jules"
+    },
+    {
+      "timestamp": "2026-06-07T01:32:56.3357595+02:00",
+      "message": "Jules delegation failed for #730",
+      "context": "Jules-Session blockiert: Issue #730 ist ein Master-/Tracker-/Merge-Konflikt-Issue oder kein konkreter Codeauftrag. Konflikte muessen mit lokalen CLI-Tools geloest werden; fuer Tracker zuerst ein konkretes Sub-Issue erstellen."
+    },
+    {
+      "timestamp": "2026-06-07T01:32:56.8460677+02:00",
+      "message": "Jules delegation failed for #731",
+      "context": "Jules-Session blockiert: Issue #731 ist ein Master-/Tracker-/Merge-Konflikt-Issue oder kein konkreter Codeauftrag. Konflikte muessen mit lokalen CLI-Tools geloest werden; fuer Tracker zuerst ein konkretes Sub-Issue erstellen."
+    },
+    {
+      "timestamp": "2026-06-07T01:32:57.3930015+02:00",
+      "message": "Jules delegation failed for #732",
+      "context": "Jules-Session blockiert: Issue #732 ist ein Master-/Tracker-/Merge-Konflikt-Issue oder kein konkreter Codeauftrag. Konflikte muessen mit lokalen CLI-Tools geloest werden; fuer Tracker zuerst ein konkretes Sub-Issue erstellen."
+    },
+    {
+      "timestamp": "2026-06-07T01:32:57.9400678+02:00",
+      "message": "Jules delegation failed for #733",
+      "context": "Jules-Session blockiert: Issue #733 ist ein Master-/Tracker-/Merge-Konflikt-Issue oder kein konkreter Codeauftrag. Konflikte muessen mit lokalen CLI-Tools geloest werden; fuer Tracker zuerst ein konkretes Sub-Issue erstellen."
+    },
+    {
+      "timestamp": "2026-06-07T01:37:40.9323284+02:00",
+      "message": "Local agent gemini_cli failed for #735",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T01:37:41.0359195+02:00",
+      "message": "Local agent gemini_cli failed for #736",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T01:37:41.1234935+02:00",
+      "message": "Local agent gemini_cli failed for #737",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T01:37:51.8774903+02:00",
+      "message": "Jules session failed for #525",
+      "context": "Session: 207401302840951243"
+    },
+    {
+      "timestamp": "2026-06-07T01:37:51.9413411+02:00",
+      "message": "Local agent local_agent failed for #738",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T01:37:51.999322+02:00",
+      "message": "Local agent local_agent failed for #739",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T01:37:52.060395+02:00",
+      "message": "Local agent local_agent failed for #741",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T03:29:08.8510005+02:00",
+      "message": "Jules delegation failed for #733",
+      "context": "Jules-Session blockiert: Issue #733 ist ein Master-/Tracker-/Merge-Konflikt-Issue oder kein konkreter Codeauftrag. Konflikte muessen mit lokalen CLI-Tools geloest werden; fuer Tracker zuerst ein konkretes Sub-Issue erstellen."
+    },
+    {
+      "timestamp": "2026-06-07T03:35:18.8115379+02:00",
+      "message": "Stalled session detected for #745 (>45min)",
+      "context": "Session: 8734646661322790063, Agent: jules"
+    },
+    {
+      "timestamp": "2026-06-07T03:35:21.8023953+02:00",
+      "message": "Jules session failed for #525",
+      "context": "Session: 207401302840951243"
+    },
+    {
+      "timestamp": "2026-06-07T12:50:33.8278265+02:00",
+      "message": "Planning wake-up failed",
+      "context": "Cannot bind argument to parameter 'Config' because it is null."
     }
   ],
   "deliberation_log": [],
   "codex_main_session_id": "019e92af-c9a3-79d1-8da6-3202596fa2c8",
   "optimizer_queue": [],
   "last_optimizer_analysis_at": null,
-  "planning_run_count": 52,
+  "planning_run_count": 56,
   "run_summaries": {
     "planning": {
-      "started_at": "2026-06-06T23:48:50.7978715+02:00",
-      "completed_at": "2026-06-06T23:48:54.1244702+02:00",
-      "duration_seconds": 3,
-      "summary": "Issues geprueft: 4; Working-Queue: 22 -> 22; Delegierungen: 0 -> 0; erstellte Issues gesamt: 10."
+      "started_at": "2026-06-07T03:20:55.2724864+02:00",
+      "completed_at": "2026-06-07T03:29:15.1037311+02:00",
+      "duration_seconds": 500,
+      "summary": "Issues geprueft: 4; Working-Queue: 10 -> 10; Delegierungen: 1 -> 1; erstellte Issues gesamt: 35."
     },
     "monitoring": {
-      "started_at": "2026-06-07T00:35:18.5391093+02:00",
-      "completed_at": "2026-06-07T01:07:42.0664587+02:00",
-      "duration_seconds": 1944,
-      "summary": "Offene PRs: 8; Konflikte: 1; Working-Queue: 16 -> 13; Delegierungen: 3 -> 3; Alerts: 2 -> 8; fehlgeschlagene Working Sessions: 9."
+      "started_at": "2026-06-07T03:34:32.4022472+02:00",
+      "completed_at": "2026-06-07T03:35:23.6437403+02:00",
+      "duration_seconds": 51,
+      "summary": "Offene PRs: 12; Konflikte: 0; Working-Queue: 10 -> 7; Delegierungen: 1 -> 3; Alerts: 13 -> 12; fehlgeschlagene Working Sessions: 15."
     }
   },
-  "run_control": {},
+  "run_control": {
+    "force_optimizer": true,
+    "force_optimizer_requested_at": "2026-06-07T11:49:16.068Z"
+  },
   "optimizer_last_run": {
     "ran_at": null,
     "next_run_at": null,

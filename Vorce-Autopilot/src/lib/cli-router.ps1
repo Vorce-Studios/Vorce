@@ -69,19 +69,19 @@ function Build-CliArgs {
 
     $hasCliArgs = $ProviderConfig.PSObject.Properties.Name -contains "cli_args"
     if (-not $hasCliArgs -or -not $ProviderConfig.cli_args) {
-        # Fallback: generic -p invocation
-        return @("-p", $Prompt)
+        # Fallback: generic invocation
+        return @($Prompt)
     }
 
-    $args = @()
+    $cliArgs = @()
     foreach ($arg in $ProviderConfig.cli_args) {
-        $replaced = $arg -replace '\{PROMPT\}', $Prompt
+        $replaced = $arg -replace '\\{PROMPT\\}', $Prompt
         if ($ModelName) {
-            $replaced = $replaced -replace '\{MODEL\}', $ModelName
+            $replaced = $replaced -replace '\\{MODEL\\}', $ModelName
         }
-        $args += $replaced
+        $cliArgs += $replaced
     }
-    return $args
+    return $cliArgs
 }
 
 function Parse-CliStats {
@@ -253,26 +253,14 @@ function Invoke-CliTask {
     # Get model name for this tier
     $modelName = $null
     $hasModels = $providerConfig.PSObject.Properties.Name -contains "models"
-    if ($hasModels -and $providerConfig.models -and $providerConfig.models.$modelTier) {
+    if ($hasModels -and $null -ne $providerConfig.models -and $providerConfig.models.PSObject.Properties.Name -contains $modelTier) {
         $modelName = $providerConfig.models.$modelTier.name
     }
 
-    # Avoid Windows command-line length limits by piping large Gemini prompts via stdin.
-    $usePromptStdin = $providerName -eq "gemini_cli"
+    # Avoid Windows command-line length limits for providers that accept prompts via stdin.
+    $usePromptStdin = $providerName -in @("gemini_cli", "claude_code")
     $promptForArgs = if ($usePromptStdin) { "" } else { $Prompt }
     $cliArgs = Build-CliArgs -ProviderConfig $providerConfig -Prompt $promptForArgs -ModelName $modelName
-
-    # Add model arg for providers that support it
-    if ($modelName -and $modelName -ne "default") {
-        switch ($providerName) {
-            "gemini_cli" {
-                $cliArgs += @("--model", $modelName)
-            }
-            "claude_code" {
-                $cliArgs += @("--model", $modelName)
-            }
-        }
-    }
 
     $output = $null
     $exitCode = 0

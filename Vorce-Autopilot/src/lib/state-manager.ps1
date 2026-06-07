@@ -55,7 +55,7 @@ function Read-JsonLocked {
 
     if (-not (Test-Path $Path)) { return $null }
 
-    $attempts = 5
+    $attempts = 3
     while ($attempts -gt 0) {
         try {
             $stream = [System.IO.File]::Open($Path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
@@ -64,15 +64,16 @@ function Read-JsonLocked {
             $reader.Dispose()
             $stream.Dispose()
             if ([string]::IsNullOrWhiteSpace($content)) { return $null }
-            return ($content | ConvertFrom-Json)
+            return ($content | ConvertFrom-Json -ErrorAction Stop)
         } catch {
             $attempts--
             Start-Sleep -Milliseconds 100
         }
     }
     try {
-        $content = Get-Content $Path -Raw -Encoding UTF8 -ErrorAction Stop
-        return ($content | ConvertFrom-Json)
+        $content = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 -ErrorAction Stop
+        if ([string]::IsNullOrWhiteSpace($content)) { return $null }
+        return ($content | ConvertFrom-Json -ErrorAction Stop)
     } catch {
         return $null
     }
@@ -100,7 +101,7 @@ function Update-JsonLocked {
         New-Item -ItemType Directory -Path $dir -Force | Out-Null
     }
 
-    $attempts = 10
+    $attempts = 3
     $lastError = $null
     while ($attempts -gt 0) {
         $fileStream = $null
@@ -114,7 +115,7 @@ function Update-JsonLocked {
 
             $data = $null
             if (-not [string]::IsNullOrWhiteSpace($content)) {
-                $data = $content | ConvertFrom-Json
+                $data = $content | ConvertFrom-Json -ErrorAction Stop
             } else {
                 $data = $DefaultValue
             }
@@ -464,8 +465,29 @@ function Add-ReviewItem {
         [Parameter(Mandatory)][object]$State,
         [Parameter(Mandatory)][int]$IssueNumber,
         [string]$PrUrl,
-        [int]$PrNumber
+        [int]$PrNumber,
+        [string]$PrUpdatedAt
     )
+
+    $existing = $State.review_queue | Where-Object { [int]$_.pr_number -eq $PrNumber } | Select-Object -First 1
+    if ($existing) {
+        if (-not [string]::IsNullOrWhiteSpace($PrUrl)) {
+            $existing.pr_url = $PrUrl
+        }
+        if ($IssueNumber -gt 0) {
+            $existing.issue_number = $IssueNumber
+        }
+        if (-not [string]::IsNullOrWhiteSpace($PrUpdatedAt)) {
+            $reviewedRevision = if (Test-ObjectProperty -Object $existing -Name "reviewed_pr_updated_at") { [string]$existing.reviewed_pr_updated_at } else { "" }
+            $existing | Add-Member -MemberType NoteProperty -Name "pr_updated_at" -Value $PrUpdatedAt -Force
+            if ($existing.review_status -eq "completed" -and $reviewedRevision -ne $PrUpdatedAt) {
+                $existing.review_status = "pending"
+                $existing | Add-Member -MemberType NoteProperty -Name "review_provider" -Value $null -Force
+            }
+        }
+        Save-AutopilotState -State $State
+        return
+    }
 
     $State.review_queue += @([ordered]@{
         issue_number  = $IssueNumber
@@ -473,6 +495,9 @@ function Add-ReviewItem {
         pr_number     = $PrNumber
         review_status = "pending"
         review_provider = $null
+        pr_updated_at = $PrUpdatedAt
+        reviewed_pr_updated_at = $null
+        reviewed_at = $null
     })
 
     Save-AutopilotState -State $State
@@ -547,7 +572,9 @@ function Set-DelegationEscalation {
     param(
         [Parameter(Mandatory)][object]$State,
         [Parameter(Mandatory)][int]$IssueNumber,
-        [string]$Reason
+        [string]$Reason,
+        [string]$FailureDetails,
+        [string]$NextRetryAt
     )
 
     $delegation = $State.active_delegations | Where-Object { [int]$_.issue_number -eq $IssueNumber }
@@ -572,12 +599,20 @@ function Set-DelegationEscalation {
             planning_resolutions  = 0
             status                = "QUEUED_FOR_RETRY"
             escalated_at          = (Get-Date -Format 'o')
+            failure_reason        = $Reason
+            failure_details       = $FailureDetails
+            next_retry_phase      = "planning"
+            next_retry_at         = $NextRetryAt
         }
         $State.escalated_issues += @($newEsc)
         Write-Host "[STATE] Issue #$IssueNumber fehlgeschlagen (1. Versuch). Wird für Retry eingereiht." -ForegroundColor Yellow
     } else {
         $esc.monitoring_failures = [int]$esc.monitoring_failures + 1
         $esc.last_jules_session_id = $sessionId
+        $esc | Add-Member -MemberType NoteProperty -Name "failure_reason" -Value $Reason -Force
+        $esc | Add-Member -MemberType NoteProperty -Name "failure_details" -Value $FailureDetails -Force
+        $esc | Add-Member -MemberType NoteProperty -Name "next_retry_phase" -Value "planning" -Force
+        $esc | Add-Member -MemberType NoteProperty -Name "next_retry_at" -Value $NextRetryAt -Force
 
         if ([int]$esc.monitoring_failures -lt 3) {
             $esc.status = "QUEUED_FOR_RETRY"
