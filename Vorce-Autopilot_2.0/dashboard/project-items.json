@@ -1,0 +1,825 @@
+{
+  "items": [
+    {
+      "content": {
+        "body": "## Roadmap Task\n- MF-ID: MF-055-ABOUT-DIALOG-EXPORT\n- Bereich: UI\n- Typ: Feature\n- Prioritaet: B\n- Dev-Status (Roadmap): ­ƒöÁ  Umsetzung\n- QA-Status (Roadmap): ­ƒö┤ Offen\n- Letztes Roadmap-Update: 2026-03-12\n- Roadmap PR: [MrLongNight/MapFlow#1017](https://github.com/MrLongNight/MapFlow/pull/1017)\n\n## Beschreibung\nAbout-Dialog und Projekt-Export fuer Release-Build finalisieren.\n\n## Note\nThis roadmap task is now tracked in GitHub Projects.\n\n---\nMigrated from legacy issue MrLongNight/MapFlow#1012: https://github.com/MrLongNight/MapFlow/issues/1012",
+        "number": 18,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "MF-StIs_About-Dialog-Export",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/18"
+      },
+      "description": "About-Dialog und Projekt-Export fuer Release-Build finalisieren.",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokPDk",
+      "labels": [
+        "enhancement",
+        "priority: medium"
+      ],
+      "priority": "B",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "MF-055-ABOUT-DIALOG-EXPORT",
+      "task_type": "Feature",
+      "title": "MF-StIs_About-Dialog-Export"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "## Roadmap Task\n- MF-ID: MF-014-AUTOSAVE-COMPAT\n- Bereich: Core/IO\n- Typ: Bug\n- Prioritaet: B\n- Dev-Status (Roadmap): Ô£à Done\n- QA-Status (Roadmap): ÔÜ¬  QA & Test\n- Letztes Roadmap-Update: 2026-03-09\n- Branch: `MF-014-autosave-compat`\n\n## Beschreibung\nAutosave-Backward-Kompatibilitaet (`master_blackout`) absichern.\n\n## Referenzen\n- `master_blackout`\n\n## Note\nThis roadmap task is now tracked in GitHub Projects.---\nMigrated from legacy issue MrLongNight/MapFlow#1038: https://github.com/MrLongNight/MapFlow/issues/1038`n`n`n`n\r\n\r\n<!-- jules-session:begin -->\n<!-- jules-session-id:  -->\n<!-- jules-session-name:  -->\n<!-- vorce-queue-state: closed -->\n<!-- vorce-remote-state: merged -->\n<!-- vorce-work-branch: dependabot/cargo/image-0.25.9 -->\n<!-- vorce-last-update: 2026-04-04T08:15:59Z -->\n<!-- vorce-paperclip-issue-id: d959bb46-e2d0-4999-a084-250a243ed69a -->\n<!-- vorce-paperclip-issue-key: VOR-45 -->\n<!-- vorce-orchestration-status: queued -->\n<!-- vorce-review-status: n_a -->\n<!-- vorce-human-gate: none -->\n<!-- vorce-approval-id:  -->\n<!-- vorce-approval-status: n_a -->\n<!-- vorce-executor: jules -->\n<!-- vorce-planner-score:  -->\n<!-- vorce-planner-bucket:  -->\n<!-- vorce-planner-updated: 2026-04-04T10:20:19Z -->\n## Vorce Project Manager\n- Queue State: `closed`\n- Remote State: `merged`\n- Orchestration Status: `queued`\n- Work Branch: `dependabot/cargo/image-0.25.9`\n- Linked PR: https://github.com/Vorce-Studios/Vorce/pull/9\n- Current Executor: `jules`\n- Review Status: `n_a`\n- Human Gate: `none`\n- Approval: _n/a_\n- Planning: _n/a_\n- Last Update: `2026-04-04T08:15:59Z`\n<!-- jules-session:end -->",
+        "number": 24,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "MF-StIs_Autosave-Compat",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/24"
+      },
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokPAU",
+      "jules_session-nr": "15715197306872576",
+      "labels": [
+        "bug",
+        "jules-task",
+        "priority: medium",
+        "status: in-progress"
+      ],
+      "linked PR": "https://github.com/Vorce-Studios/Vorce/pull/9",
+      "pr_checks_status": "passed",
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "review_status": "needed",
+      "status": "Done",
+      "task_id": "VOR-45",
+      "task_type": "Feature",
+      "title": "MF-StIs_Autosave-Compat"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "Analoges Level-Meter als waehlbare Option reaktivieren.\\n\\n**Update May 2026:** Es gibt noch Darstellungsprobleme in der UI, die gefixt werden muessen (Nadel-Positionierung/Glas-Effekt-Skalierung).",
+        "number": 26,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "VOR-029_StIs_Analog-Meter-Option",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/26"
+      },
+      "description": "Analoges Level-Meter als waehlbare Option reaktivieren.",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO_s",
+      "jules_session-nr": "15700767196326333414",
+      "labels": [
+        "enhancement",
+        "priority: medium"
+      ],
+      "pr_checks_status": "merge-conflict",
+      "priority": "B",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "review_status": "needed",
+      "status": "Planed",
+      "task_id": "MF-012-ANALOG-METER-OPTION",
+      "task_type": "Feature",
+      "title": "VOR-029_StIs_Analog-Meter-Option"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "## Roadmap Task\n- MF-ID: MF-058-MEDIA-THUMBNAILS\n- Bereich: UI/Media\n- Typ: Feature\n- Prioritaet: B\n- Dev-Status (Roadmap): ­ƒö┤ Offen\n- QA-Status (Roadmap): ­ƒö┤ Offen\n- Letztes Roadmap-Update: 2026-03-08\n\n## Beschreibung\nHintergrund-Generierung von Thumbnails fuer den Media Browser.\n\n## Note\nThis roadmap task is now tracked in GitHub Projects.---\nMigrated from legacy issue MrLongNight/MapFlow#1077: https://github.com/MrLongNight/MapFlow/issues/1077\n\n<!-- jules-session:begin -->\n<!-- jules-session-id:  -->\n<!-- jules-session-name:  -->\n<!-- vorce-queue-state: issue-only -->\n<!-- vorce-remote-state: merged -->\n<!-- vorce-work-branch: jules-10279293889034612804-5722a5e6 -->\n<!-- vorce-last-update: 2026-04-27T20:47:40Z -->\n## Vorce Project Manager\n- Queue State: `issue-only`\n- Remote State: `merged`\n- Work Branch: `jules-10279293889034612804-5722a5e6`\n- Linked PR: https://github.com/Vorce-Studios/Vorce/pull/387\n- Last Update: `2026-04-27T20:47:40Z`\n<!-- jules-session:end -->",
+        "number": 38,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "MF-StIs_Media-Thumbnails",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/38"
+      },
+      "description": "Hintergrund-Generierung von Thumbnails fuer den Media Browser.",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO8E",
+      "jules_session-nr": "13887546529547890787",
+      "labels": [
+        "enhancement",
+        "priority: medium"
+      ],
+      "linked PR": "https://github.com/Vorce-Studios/Vorce/pull/387",
+      "pr_checks_status": "merge-conflict",
+      "priority": "B",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "MF-058-MEDIA-THUMBNAILS",
+      "task_type": "Feature",
+      "title": "MF-StIs_Media-Thumbnails"
+    },
+    {
+      "content": {
+        "body": "Part of Vorce-Studios/Vorce#55.\n\n## Goal\nTrack every rebranding and cutover action for the final move from `MrLongNight/MapFlow` to the canonical home `Vorce-Studios/Vorce`.\n\n## Status\nRepo-, issue- and ref-migration are complete. The only remaining cutover work before archiving `MrLongNight/MapFlow` is the final legacy-repo freeze/archive step plus a short redirect smoke test.\n\n## Completed by Codex\n- [x] Canonical production repo decided and announced: `Vorce-Studios/Vorce`.\n- [x] Sync `main` to `Vorce-Studios/Vorce`.\n- [x] Mirror active origin branches needed for current work into `Vorce-Studios/Vorce`.\n- [x] Mirror release tags and GitHub releases with assets into `Vorce-Studios/Vorce`.\n- [x] Rebrand mirrored release titles, release-note repo links, and asset names in `Vorce-Studios/Vorce` to `Vorce`.\n- [x] Recreate branch protections/rulesets in `Vorce-Studios/Vorce`.\n- [x] Recreate required status checks / merge rules in `Vorce-Studios/Vorce`.\n- [x] Recreate GitHub Actions variables in `Vorce-Studios/Vorce` using the current `VORCE_*` naming expected by workflows/scripts.\n- [x] Remove obsolete `MAPFLOW_*` self-hosted repo variables from `Vorce-Studios/Vorce`.\n- [x] Recreate GitHub Actions secrets in `Vorce-Studios/Vorce`.\n- [x] Recreate GitHub environments in `Vorce-Studios/Vorce`.\n- [x] Verify environment protections for `copilot` match the old repo.\n- [x] Clone labels into `Vorce-Studios/Vorce`.\n- [x] Verify the new repo has the correct default branch, rulesets, labels, issue templates, workflow files, and CODEOWNERS behavior.\n- [x] Rename the GitHub Project from `@MapFlow Project Manager` to `@Vorce Project Manager` and update its description/readme.\n- [x] Verify repo webhooks on both repos: none configured, so no webhook migration was required.\n- [x] Reassign the self-hosted runner so `Vorce-Studios/Vorce` now has `Win11-SelRun` with the label `vorce-post-merge`.\n- [x] Keep the new self-hosted workflow intentionally disabled by leaving `VORCE_ENABLE_SELF_HOSTED_POST_MERGE=false`.\n- [x] Update the old `MrLongNight/MapFlow` repo description and homepage to point to `Vorce-Studios/Vorce` as the canonical home.\n- [x] Migrate all still-open legacy repo PRs into `Vorce-Studios/Vorce` and close the old repo PRs with forward links.\n- [x] Migrate all 63 open legacy issues into `Vorce-Studios/Vorce`, preserve labels/body/comments, and close the old legacy issues.\n- [x] Clean up the overbroad branch sync in `Vorce-Studios/Vorce` down to the intended canonical surface while preserving active open work.\n- [x] Clean up the overbroad tag sync in `Vorce-Studios/Vorce` back to the canonical origin tag set.\n- [x] Disable the old repo-side Jules issue-flow workflows in `MrLongNight/MapFlow` so no further automated Jules issue sessions are started there.\n\n## Remaining owner/admin steps\n- [ ] Freeze, archive, rename, or otherwise convert the old `MrLongNight/MapFlow` repo into the final compatibility/redirect surface.\n- [ ] Verify redirects and final external entry points after the old repo strategy is applied.\n\n## Acceptance criteria\n- [x] `Vorce-Studios/Vorce` is the canonical repo for active contributor, issue, PR, and release surfaces.\n- [x] Active issue handling is migrated to `Vorce-Studios/Vorce`.\n- [x] Canonical refs in `Vorce-Studios/Vorce` are reduced to the intentionally chosen branch/tag surface.\n- [ ] The old repo slug is either redirected safely or retained only as an intentional compatibility shim.\n\n## Verification snapshot\n- `Vorce-Studios/Vorce` default branch: `main`\n- Environment mirrored: `copilot`\n- Variables currently present in `Vorce-Studios/Vorce`: `COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS`, `COPILOT_AGENT_FIREWALL_ENABLED`, `VORCE_ENABLE_SELF_HOSTED_POST_MERGE=false`, `VORCE_SELF_HOSTED_RUN_IGNORED_GPU_TESTS=true`, `VORCE_SELF_HOSTED_RUN_VISUAL_AUTOMATION=true`, `VORCE_SELF_HOSTED_RUN_PERFORMANCE_CHECK=false`\n- Secrets present in `Vorce-Studios/Vorce`: `JULES_API_KEY`, `JULES_API_URL`\n- Runner present in `Vorce-Studios/Vorce`: `Win11-SelRun` with custom label `vorce-post-merge`\n- Old repo open PR count: `0`\n- Old repo open issue count: `0`\n- New repo open issue count: `63`\n- Heads: old repo `36`, new repo `48`\n- Tags: old repo `13`, new repo `13`\n- Remaining extra heads in `Vorce-Studios/Vorce` beyond `origin`: active Dependabot PR branches plus preserved open-work branches:\n  - `feat/mf-073-timeline-trackline-mode-1502382511625782806`\n  - `fix-1077-media-thumbnails-13887546529547890787`\n  - `jules-issue-1079-ui-optimizations-7407227689089002052`\n  - `MF-071-TIMELINE-UI-MULTI-LANE-915165096564679419`\n  - `MF-075-TIMELINE-HYBRID-ORCHESTRATOR-14995919134778487189`\n\n## Notes\n- Current canonical repo: https://github.com/Vorce-Studios/Vorce\n- Old repo now points to the canonical home via repo description/homepage.\n- Old repo Jules issue-flow workflows are disabled.\n- Jules scheduled tasks still need dashboard-side delete/recreate if they should stop targeting `MrLongNight/MapFlow`; the public Jules REST API does not expose scheduled-task management.\n- This issue should stay owner/admin-focused and must not be dispatched to Jules.",
+        "number": 79,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "MFuser_#1435-__SI-17_MAI-001_MANUAL_OWNER_CUTOVER_REPO_ORG_AND_INFRA_V2",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/79"
+      },
+      "description": "Track every rebranding and cutover action for the final move from `MrLongNight/MapFlow` to the canonical home `Vorce-Studios/Vorce`.",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokOwY",
+      "labels": [
+        "enhancement",
+        "Todo-UserISU"
+      ],
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "__SI-17_MAI-001_MANUAL_OWNER_CUTOVER_REPO_ORG_AND_INFRA_V2",
+      "task_type": "Feature",
+      "title": "MFuser_#1435-__SI-17_MAI-001_MANUAL_OWNER_CUTOVER_REPO_ORG_AND_INFRA_V2"
+    },
+    {
+      "agent": "Codex CLI",
+      "content": {
+        "body": "Part of Vorce-Studios/Vorce#122.\n\n## Project Phase\nPhase 3 - Effects Pipeline\n\n## Priority\nHigh\n\n## Current repo status (2026-03-29)\n- `crates/vorce-render/src/effect_chain_renderer/`, `crates/vorce-render/src/compositor.rs`, and `crates/vorce-render/src/mesh_renderer.rs` already contain partial caching; this issue is no longer a blanket renderer rewrite.\n- The active render path in `crates/vorce/src/app/loops/render/content.rs` still recreates the edge-blend texture bind group every frame even though other edge-blend resources are cached.\n- `crates/vorce-render/src/oscillator_renderer.rs` still creates a distribution bind group inside the render path.\n- The last Jules attempt failed, so the remaining scope must stay narrowly focused on real hot-path GPU resource churn in the current `vorce` path.\n\n## Goal\nReduce GPU resource churn in the active render hot path without changing visible behavior.\n\n## Scope\n- Inventory the remaining per-frame bind-group and uniform-resource creation on the current render path.\n- Reuse or cache the highest-impact hot-path resources where the current code still recreates them unnecessarily.\n- Keep the change set narrow and explainable instead of reopening a full renderer refactor.\n- Leave already-cached paths alone unless they still leak obvious per-frame churn.\n\n## Explicitly not in scope\n- Generic clone/allocation cleanup in the RenderQueue orchestration path: `Vorce-Studios/Vorce#70`.\n- Render-feature parity or inspector gating work: `Vorce-Studios/Vorce#57`, `Vorce-Studios/Vorce#56`.\n- A broad rewrite of renderer APIs that are not on the active hot path.\n\n## Acceptance Criteria\n- [ ] Remaining per-frame GPU resource creation on the active render path is inventoried and prioritized.\n- [ ] The worst remaining bind-group/uniform churn is removed, cached, or explicitly justified.\n- [ ] The active render path keeps equivalent output behavior.\n- [ ] `cargo check -p vorce-render -p vorce` remains green.\n\n## Technical Details\n- Relevant files: `crates/vorce/src/app/loops/render/content.rs`, `crates/vorce-render/src/effect_chain_renderer/apply.rs`, `crates/vorce-render/src/compositor.rs`, `crates/vorce-render/src/mesh_renderer.rs`, `crates/vorce-render/src/oscillator_renderer.rs`.\n- Current high-signal hotspot: edge-blend texture bind-group recreation in `content.rs`.\n- Keep the issue tied to current `vorce` code paths only.\n\n## Related Documentation\n- `docs/A1_SYSTEM/B1_ARCHITECTURE/DOC-C4_RENDER-QUEUE.md`\n- `docs/A3_PROJECT/B2_QUALITY/CURRENT_CODE_AUDIT_2026-03-23.md`\n- `docs/A3_PROJECT/B2_QUALITY/AUDITS-ARCHIVE/DOC-C11_AUDIT_OPEN_POINTS_MAIN_2026-03-21.md`\n\n## Requirements\n- [x] Tests required\n- [x] Documentation update required\n- [ ] Breaking change\n- [ ] Security implications\n\n## Estimated Effort\n0.5-1 day---\nMigrated from legacy issue MrLongNight/MapFlow#1337: https://github.com/MrLongNight/MapFlow/issues/1337`n`n\r\n\r\n<!-- jules-session:begin -->\n<!-- jules-session-id:  -->\n<!-- jules-session-name:  -->\n<!-- vorce-queue-state: closed -->\n<!-- vorce-remote-state: merged -->\n<!-- vorce-work-branch: dependabot/cargo/image-0.25.9 -->\n<!-- vorce-last-update: 2026-04-04T08:37:48Z -->\n<!-- vorce-paperclip-issue-id: beb50a0d-e55f-4cca-8b0d-274670861564 -->\n<!-- vorce-paperclip-issue-key: VOR-35 -->\n<!-- vorce-orchestration-status: awaiting_approval -->\n<!-- vorce-review-status: n_a -->\n<!-- vorce-human-gate: manual_ui_gate -->\n<!-- vorce-approval-id: 3a98834c-8cfd-4e99-80c6-758eeb7988a2 -->\n<!-- vorce-approval-status: pending -->\n<!-- vorce-executor: codex -->\n<!-- vorce-planner-score:  -->\n<!-- vorce-planner-bucket:  -->\n<!-- vorce-planner-updated: 2026-04-04T10:47:17Z -->\n## Vorce Project Manager\n- Queue State: `closed`\n- Remote State: `merged`\n- Orchestration Status: `awaiting_approval`\n- Work Branch: `dependabot/cargo/image-0.25.9`\n- Linked PR: https://github.com/Vorce-Studios/Vorce/pull/9\n- Current Executor: `codex`\n- Review Status: `n_a`\n- Human Gate: `manual_ui_gate`\n- Approval: `pending`\n- Planning: _n/a_\n- Last Update: `2026-04-04T08:37:48Z`\n<!-- jules-session:end -->",
+        "number": 78,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-02_MAI-007_Render-Hot-Path-GPU-Resource-Reuse",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/78"
+      },
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokOw4",
+      "jules_session-nr": "14092850614393385757",
+      "labels": [
+        "enhancement",
+        "jules-task",
+        "priority: high",
+        "performance",
+        "status: needs-testing",
+        "gate: ui-test"
+      ],
+      "linked PR": "https://github.com/Vorce-Studios/Vorce/pull/9",
+      "pr_checks_status": "passed",
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "review_status": "needed",
+      "status": "Done",
+      "task_id": "VOR-35",
+      "task_type": "Refactor",
+      "title": "__SI-02_MAI-007_Render-Hot-Path-GPU-Resource-Reuse"
+    },
+    {
+      "agent": "Gemini CLI",
+      "content": {
+        "body": "Part of Vorce-Studios/Vorce#122.\n\n## Project Phase\nPhase 3 - Effects Pipeline\n\n## Priority\nHigh\n\n## Current repo status (2026-03-29)\n- `crates/vorce/src/orchestration/evaluation.rs` already reclaims `RenderOp` objects from the previous frame, so this issue is no longer greenfield.\n- Remaining churn is concentrated in temporary drain/collect handoff, repeated diagnostic/string-key construction, and preview-side descriptor rebuilding in `content.rs` and `previews.rs`.\n- The old issue text still referred to removed `mapmap` paths and pre-merge assumptions.\n\n## Goal\nRemove the remaining avoidable clone/allocation churn in the active RenderQueue evaluation/render path without changing visible behavior.\n\n## Scope\n- Trim temporary allocations in the evaluation handoff and render-loop helpers.\n- Reduce repeated hot-path string/vector construction where it is still meaningful.\n- Keep preview/output path helpers efficient without broad architectural rewrites.\n- Leave GPU-resource caching work to `Vorce-Studios/Vorce#78`.\n\n## Explicitly not in scope\n- GPU bind-group or uniform-buffer reuse inside renderer internals: `Vorce-Studios/Vorce#78`.\n- Visible feature parity/gating work: `Vorce-Studios/Vorce#57`, `Vorce-Studios/Vorce#56`.\n- Broad refactors of unrelated render or media systems.\n\n## Acceptance Criteria\n- [ ] Obvious avoidable temporary Vec/String clone/alloc churn on the active RenderQueue path is removed or centralized.\n- [ ] The current render and preview behavior stays functionally equivalent.\n- [ ] Automation smoke scenarios continue to behave the same.\n- [ ] `cargo check -p vorce` remains green.\n\n## Technical Details\n- Relevant files: `crates/vorce/src/orchestration/evaluation.rs`, `crates/vorce/src/app/core/app_struct.rs`, `crates/vorce/src/app/loops/render/content.rs`, `crates/vorce/src/app/loops/render/previews.rs`.\n- High-signal current examples: temporary `drain(..).collect()` handoff in `evaluation.rs`, repeated `format!`-driven diagnostic keys in `content.rs`, and repeated preview descriptor rebuilding in `previews.rs`.\n- Keep diffs focused and explain which hot-path allocations were removed.\n\n## Related Documentation\n- `docs/A1_SYSTEM/B1_ARCHITECTURE/DOC-C4_RENDER-QUEUE.md`\n- `docs/A3_PROJECT/B2_QUALITY/CURRENT_CODE_AUDIT_2026-03-23.md`\n- Related: `Vorce-Studios/Vorce#57`, `Vorce-Studios/Vorce#71`, `Vorce-Studios/Vorce#78`\n\n## Requirements\n- [x] Tests required\n- [x] Documentation update required\n- [ ] Breaking change\n- [ ] Security implications\n\n## Estimated Effort\n0.5-1 day---\nMigrated from legacy issue MrLongNight/MapFlow#1265: https://github.com/MrLongNight/MapFlow/issues/1265`n`n`n`n`n`n\n\n<!-- jules-session:begin -->\n<!-- jules-session-id:  -->\n<!-- jules-session-name:  -->\n<!-- vorce-queue-state: approved-awaiting-dispatch -->\n<!-- vorce-remote-state: merged -->\n<!-- vorce-work-branch: B-Jules/MAI-007_Render-Queue-Readiness-Parity-and-Optimization-8124578348224840925 -->\n<!-- vorce-last-update: 2026-04-16T23:31:04Z -->\n## Vorce Project Manager\n- Queue State: `approved-awaiting-dispatch`\n- Remote State: `merged`\n- Work Branch: `B-Jules/MAI-007_Render-Queue-Readiness-Parity-and-Optimization-8124578348224840925`\n- Linked PR: https://github.com/Vorce-Studios/Vorce/pull/239\n- Last Update: `2026-04-16T23:31:04Z`\n<!-- jules-session:end -->",
+        "number": 70,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-03_MAI-007_Render-Queue-Clone-and-Allocation-Optimization",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/70"
+      },
+      "description": "critical / score 167 / in review",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokOy0",
+      "jules_session-nr": "2141681108371141100",
+      "labels": [
+        "enhancement",
+        "jules-task",
+        "priority: high",
+        "performance"
+      ],
+      "linked PR": "https://github.com/Vorce-Studios/Vorce/pull/239",
+      "pr_checks_status": "passed",
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "review_status": "needed",
+      "status": "Done",
+      "task_id": "VOR-15",
+      "task_type": "Test",
+      "title": "__SI-03_MAI-007_Render-Queue-Clone-and-Allocation-Optimization"
+    },
+    {
+      "agent": "Gemini CLI",
+      "content": {
+        "body": "Part of Vorce-Studios/Vorce#122.\n\n## Project Phase\nPhase 3 - Effects Pipeline\n\n## Priority\nMedium\n\n## Current repo status (2026-03-29)\n- `crates/vorce/src/app/loops/render/content.rs` is already the shared render path for both full outputs and output previews.\n- The remaining drift sits in `crates/vorce/src/app/loops/render/previews.rs`: preview texture lifecycle, node-preview fallback paths, and duplicated missing-texture/diagnostic handling around the shared renderer.\n- The old issue text overstated the amount of core render-path duplication and still referenced removed `mapmap` paths.\n\n## Goal\nTighten the contract between preview rendering and full-output rendering so fallback handling and diagnostics stay consistent without reopening the renderer architecture.\n\n## Scope\n- Reduce the remaining duplicated wrapper logic around preview rendering.\n- Keep missing-texture, degraded-item, and empty-output diagnostics consistent with the full-output path.\n- Make preview-only behavior explicit where it intentionally differs.\n- Reuse shared helpers where that clarifies the contract.\n\n## Explicitly not in scope\n- Generic preview UX or inspector redesign.\n- Runtime feature-parity work for masks/blend modes: `Vorce-Studios/Vorce#57`.\n- Large renderer or texture-pool rewrites.\n\n## Acceptance Criteria\n- [ ] Preview and full-output rendering share consistent handling for missing textures and degraded items.\n- [ ] Duplicated preview wrapper logic is reduced through targeted shared helpers or clearer contracts.\n- [ ] Preview-specific behavior remains explicit where it must differ.\n- [ ] `cargo check -p vorce` remains green.\n\n## Technical Details\n- Relevant files: `crates/vorce/src/app/loops/render/content.rs`, `crates/vorce/src/app/loops/render/previews.rs`, `crates/vorce/src/app/loops/render/mod.rs`.\n- Current high-signal area: node-preview and output-preview fallback/diagnostic flow in `previews.rs`.\n- Do not turn this into a broad renderer rewrite.\n\n## Related Documentation\n- `docs/A1_SYSTEM/B1_ARCHITECTURE/DOC-C4_RENDER-QUEUE.md`\n- `docs/A3_PROJECT/B2_QUALITY/AUDITS-ARCHIVE/DOC-C11_AUDIT_OPEN_POINTS_MAIN_2026-03-21.md`\n- Related: `Vorce-Studios/Vorce#57`, `Vorce-Studios/Vorce#70`\n\n## Requirements\n- [x] Tests required\n- [x] Documentation update required\n- [ ] Breaking change\n- [ ] Security implications\n\n## Estimated Effort\n0.5-1 day---\nMigrated from legacy issue MrLongNight/MapFlow#1267: https://github.com/MrLongNight/MapFlow/issues/1267`n`n`n`n\n\n<!-- jules-session:begin -->\n<!-- jules-session-id:  -->\n<!-- jules-session-name:  -->\n<!-- vorce-queue-state: approved-awaiting-dispatch -->\n<!-- vorce-remote-state: merged -->\n<!-- vorce-work-branch: B-Jules/MAI-007_Render-Queue-Readiness-Parity-and-Optimization-8124578348224840925 -->\n<!-- vorce-last-update: 2026-04-16T23:31:08Z -->\n## Vorce Project Manager\n- Queue State: `approved-awaiting-dispatch`\n- Remote State: `merged`\n- Work Branch: `B-Jules/MAI-007_Render-Queue-Readiness-Parity-and-Optimization-8124578348224840925`\n- Linked PR: https://github.com/Vorce-Studios/Vorce/pull/239\n- Last Update: `2026-04-16T23:31:08Z`\n<!-- jules-session:end -->",
+        "number": 71,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-04_MAI-007_Render-Queue-Preview-Path-Unification",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/71"
+      },
+      "description": "high / score 117 / in review",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokOyo",
+      "jules_session-nr": "6000275985823107036",
+      "labels": [
+        "enhancement",
+        "jules-task",
+        "priority: medium",
+        "refactoring"
+      ],
+      "linked PR": "https://github.com/Vorce-Studios/Vorce/pull/239",
+      "pr_checks_status": "passed",
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "review_status": "needed",
+      "status": "Done",
+      "task_id": "VOR-28",
+      "task_type": "Test",
+      "title": "__SI-04_MAI-007_Render-Queue-Preview-Path-Unification"
+    },
+    {
+      "agent": "Gemini CLI",
+      "content": {
+        "body": "Part of Vorce-Studios/Vorce#122.\n\n## Project Phase\nPhase 3 - Effects Pipeline\n\n## Priority\nHigh\n\n## Current repo status (2026-03-29)\n- `RuntimeRenderQueue` and structured per-item diagnostics already exist in `crates/vorce/src/app/core/app_struct.rs` and `crates/vorce/src/orchestration/evaluation.rs`.\n- `evaluation.rs` still emits explicit `blend_mode_unsupported` and `masks_unsupported` diagnostics.\n- `crates/vorce/src/app/loops/render/content.rs` applies source transforms, opacity, and effect chains, but color calibration is still intentionally skipped in the active post-processing path and only edge blend is treated as safe post-processing.\n- The remaining scope is therefore the visible render feature gap, not the introduction of the RenderQueue itself.\n\n## Goal\nEnsure that render-visible node and output features are either truly effective in the runtime render path or intentionally gated with clear diagnostics.\n\n## Scope\n- Close end-to-end runtime gaps for still-visible render features that drift from actual support.\n- Preserve per-item diagnostics and local failure isolation when items degrade.\n- Coordinate with inspector gating where runtime support is intentionally deferred.\n- Keep the issue tied to the current output/render loop, not to generic editor rewrites.\n\n## Explicitly not in scope\n- Broad inspector cleanup beyond the minimal gating handshake with `Vorce-Studios/Vorce#56`.\n- Generic performance tuning work: `Vorce-Studios/Vorce#70`, `Vorce-Studios/Vorce#78`.\n- Unrelated node-family migrations outside render-visible parity.\n\n## Acceptance Criteria\n- [ ] Render-visible parameters are either effective end-to-end or clearly gated in the UI/runtime contract.\n- [ ] Faulty `RuntimeRenderQueueItem`s can still be diagnosed and skipped without destabilizing the whole output path.\n- [ ] Automation smoke scenarios remain green.\n- [ ] `cargo check -p vorce` remains green.\n\n## Technical Details\n- Relevant files: `crates/vorce/src/app/core/app_struct.rs`, `crates/vorce/src/orchestration/evaluation.rs`, `crates/vorce/src/app/loops/render/mod.rs`, `crates/vorce/src/app/loops/render/content.rs`, `crates/vorce/src/app/loops/render/previews.rs`.\n- Current high-signal gaps: blend-mode/mask diagnostics in `evaluation.rs` and skipped color-calibration handling in `content.rs`.\n- Downstream dependents include `Vorce-Studios/Vorce#64`, `Vorce-Studios/Vorce#65`, and render-adjacent gating in `Vorce-Studios/Vorce#67`.\n\n## Related Documentation\n- `docs/A1_SYSTEM/B1_ARCHITECTURE/DOC-C4_RENDER-QUEUE.md`\n- `docs/A3_PROJECT/B2_QUALITY/CURRENT_CODE_AUDIT_2026-03-23.md`\n- `docs/A3_PROJECT/B2_QUALITY/AUDIT_COMPARISON_AND_GAPS_2026-03-23.md`\n\n## Requirements\n- [x] Tests required\n- [x] Documentation update required\n- [ ] Breaking change\n- [ ] Security implications\n\n## Estimated Effort\n1-2 days\n\n---\nMigrated from legacy issue MrLongNight/MapFlow#1238: https://github.com/MrLongNight/MapFlow/issues/1238`n`n`n`n`n`n`n`n<!-- vorce-studios-sync:begin -->\nvorce-executor=gemini\nvorce-human-gate=manual_ui_gate\nvorce-orchestration-status=queued\nvorce-paperclip-issue-id=e1981b99-3bba-4f78-a83c-0d1c958a110e\nvorce-paperclip-issue-key=VOR-107\nvorce-planner-bucket=critical\nvorce-planner-score=160\nvorce-planner-updated=2026-04-06T11:23:28Z\n<!-- vorce-studios-sync:end -->\n\n<!-- jules-session:begin -->\n<!-- jules-session-id: 6973446406459921326 -->\n<!-- jules-session-name: sessions/6973446406459921326 -->\n<!-- vorce-queue-state: dispatched -->\n<!-- vorce-remote-state: completed -->\n<!-- vorce-work-branch: B-Jules/__SI-05_MAI-007_Runtime-Render-Queue-Feature-Parity-6973446406459921326 -->\n<!-- vorce-last-update: 2026-04-22T14:29:13Z -->\n## Vorce Project Manager\n- Queue State: `dispatched`\n- Remote State: `completed`\n- Work Branch: `B-Jules/__SI-05_MAI-007_Runtime-Render-Queue-Feature-Parity-6973446406459921326`\n- Linked PR: https://github.com/Vorce-Studios/Vorce/pull/321\n- Last Update: `2026-04-22T14:29:13Z`\n<!-- jules-session:end -->",
+        "number": 57,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-05_MAI-007_Runtime-Render-Queue-Feature-Parity",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/57"
+      },
+      "description": "critical / score 197 / in review",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO2s",
+      "jules_session-nr": "8387310396268826334",
+      "labels": [
+        "bug",
+        "jules-task",
+        "priority: high",
+        "status: in-progress"
+      ],
+      "linked PR": "https://github.com/Vorce-Studios/Vorce/pull/321",
+      "linked pull requests": [
+        "https://github.com/Vorce-Studios/Vorce/pull/92",
+        "https://github.com/Vorce-Studios/Vorce/pull/321"
+      ],
+      "pr_checks_status": "merge-conflict",
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "review_status": "passed",
+      "status": "Done",
+      "task_id": "VOR-5",
+      "task_type": "Test",
+      "title": "__SI-05_MAI-007_Runtime-Render-Queue-Feature-Parity"
+    },
+    {
+      "agent": "Gemini CLI",
+      "content": {
+        "body": "Part of Vorce-Studios/Vorce#122.\n\n## Project Phase\nPhase 6 - Advanced UI\n\n## Priority\nHigh\n\n## Current repo status (2026-03-29)\n- `part.schema()` and schema-derived trigger mapping are already used productively in `crates/vorce-ui/src/editors/module_canvas/inspector/trigger.rs`.\n- `crates/vorce-ui/src/editors/module_canvas/inspector/output.rs` now exposes `output_width`, `output_height`, and `output_fps`, but support decisions and unsupported-state messaging are still mostly hand-coded per panel.\n- Output/source inspectors still carry direct experimental messaging for NDI/Spout/Hue-related cases instead of following one consistent schema/capability contract.\n- The old issue text still targeted removed `mapmap` paths and preview-foundation work that is no longer the remaining problem.\n\n## Goal\nFinish the remaining render-relevant schema/capability-driven inspector consolidation so visible controls match the actual runtime contract.\n\n## Scope\n- Align output, source, and adjacent effect inspectors with the current schema/capability model.\n- Ensure output size/FPS and transport-related controls match actual runtime support.\n- Centralize unsupported or gated messaging where the current UI still drifts.\n- Keep trigger mapping behavior as the reference implementation instead of reopening generic preview work.\n\n## Explicitly not in scope\n- A brand-new inspector framework.\n- Generic preview-contract work that is already landed elsewhere.\n- Node-family migrations whose main problem is runtime parity rather than inspector/schema drift.\n\n## Acceptance Criteria\n- [ ] Render-relevant inspector panels follow a consistent schema/capability contract.\n- [ ] Visible output/source controls either have a real runtime effect or are intentionally gated.\n- [ ] Trigger mapping remains limited to truly mappable inputs.\n- [ ] `cargo check -p vorce-ui -p vorce` remains green.\n\n## Technical Details\n- Relevant files: `crates/vorce-ui/src/editors/module_canvas/inspector/mod.rs`, `output.rs`, `source.rs`, `effect.rs`, `trigger.rs`, `crates/vorce-core/src/module/types/schema.rs`, `crates/vorce-ui/src/app_ui.rs`.\n- Current high-signal examples: trigger schema usage in `trigger.rs`, duplicated output size/FPS editing in `output.rs`, and hand-coded experimental transport messaging in `output.rs`/`source.rs`.\n- Keep the scope tied to inspector/schema parity, not to runtime implementation work that belongs in `Vorce-Studios/Vorce#57`.\n\n## Related Documentation\n- `docs/A1_SYSTEM/B1_ARCHITECTURE/DOC-C4_RENDER-QUEUE.md`\n- `docs/A3_PROJECT/B2_QUALITY/CURRENT_CODE_AUDIT_2026-03-23.md`\n- `docs/A3_PROJECT/B2_QUALITY/AUDIT_COMPARISON_AND_GAPS_2026-03-23.md`\n\n## Requirements\n- [x] Tests required\n- [x] Documentation update required\n- [ ] Breaking change\n- [ ] Security implications\n\n## Estimated Effort\n1 day\n\n---\nMigrated from legacy issue MrLongNight/MapFlow#1237: https://github.com/MrLongNight/MapFlow/issues/1237`n`n`n`n`n`n\r\n\r\n<!-- jules-session:begin -->\n<!-- jules-session-id:  -->\n<!-- jules-session-name:  -->\n<!-- vorce-queue-state: closed -->\n<!-- vorce-remote-state: merged -->\n<!-- vorce-work-branch: B-Jules/__MF-SubI_Schema-Driven-Inspector-Completion-15490046037672337391 -->\n<!-- vorce-last-update: 2026-04-04T08:32:09Z -->\n<!-- vorce-paperclip-issue-id: 5b417690-8ff2-49db-9d12-3a58658032ad -->\n<!-- vorce-paperclip-issue-key: VOR-47 -->\n<!-- vorce-orchestration-status: awaiting_approval -->\n<!-- vorce-review-status: n_a -->\n<!-- vorce-human-gate: manual_ui_gate -->\n<!-- vorce-approval-id: 72cf7a88-afaf-47dd-af11-4453e02e9354 -->\n<!-- vorce-approval-status: pending -->\n<!-- vorce-executor: gemini -->\n<!-- vorce-planner-score:  -->\n<!-- vorce-planner-bucket:  -->\n<!-- vorce-planner-updated: 2026-04-04T10:47:17Z -->\n## Vorce Project Manager\n- Queue State: `closed`\n- Remote State: `merged`\n- Orchestration Status: `awaiting_approval`\n- Work Branch: `B-Jules/__MF-SubI_Schema-Driven-Inspector-Completion-15490046037672337391`\n- Linked PR: https://github.com/Vorce-Studios/Vorce/pull/85\n- Current Executor: `gemini`\n- Review Status: `n_a`\n- Human Gate: `manual_ui_gate`\n- Approval: `pending`\n- Planning: _n/a_\n- Last Update: `2026-04-04T08:32:09Z`\n<!-- jules-session:end -->",
+        "number": 56,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-06_MAI-007_Schema-Driven-Inspector-Completion",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/56"
+      },
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO3A",
+      "jules_session-nr": "3460570580826392720",
+      "labels": [
+        "enhancement",
+        "jules-task",
+        "priority: high",
+        "status: needs-testing",
+        "gate: ui-test"
+      ],
+      "linked PR": "https://github.com/Vorce-Studios/Vorce/pull/85",
+      "linked pull requests": [
+        "https://github.com/Vorce-Studios/Vorce/pull/85"
+      ],
+      "pr_checks_status": "passed",
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "review_status": "needed",
+      "status": "Done",
+      "task_id": "VOR-47",
+      "task_type": "Test",
+      "title": "__SI-06_MAI-007_Schema-Driven-Inspector-Completion"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "Part of Vorce-Studios/Vorce#122.\n\n## Project Phase\nPhase 7 - Release Readiness\n\n## Priority\nHigh\n\n## Current repo status (2026-03-29)\n- `crates/vorce/src/bin/vorce_visual_harness/main.rs` exists and provides the current harness-based capture path.\n- `crates/vorce/tests/visual_capture_tests.rs` exists, but is still ignored and requires a local interactive Windows GPU/desktop session.\n- `crates/vorce/tests/app_automation_tests.rs` covers the screenshot automation path, but is likewise ignored and depends on a built binary plus a valid GPU/display environment.\n- The old issue text referenced a missing doc file and assumed a generic baseline that is not yet formalized on the current repo.\n\n## Goal\nTurn the existing automation screenshot path and visual harness into a realistic release-smoke baseline for today's `vorce` repo.\n\n## Scope\n- Define the preferred minimal smoke path for the current automation screenshot flow.\n- Document the harness-based capture/reference path and its environment requirements.\n- Separate baseline smoke coverage from broader projector/output QA.\n- If a fully non-interactive baseline is still unavailable, document that gap explicitly instead of hand-waving it.\n\n## Explicitly not in scope\n- A full multi-output or projector-QA matrix: `Vorce-Studios/Vorce#49`.\n- Reinventing the capture stack from scratch.\n- Generic render-feature parity work that belongs in `Vorce-Studios/Vorce#57`.\n\n## Acceptance Criteria\n- [ ] A minimal release-smoke path for the current automation screenshot flow is documented and reproducible when the stated prerequisites are met.\n- [ ] The harness-based visual capture path and reference-image workflow are documented against the current repo layout.\n- [ ] Runner/session/environment prerequisites are explicit.\n- [ ] The relationship to broader output QA is described without scope duplication.\n\n## Technical Details\n- Relevant files: `crates/vorce/src/bin/vorce_visual_harness/main.rs`, `crates/vorce/tests/visual_capture_tests.rs`, `crates/vorce/tests/app_automation_tests.rs`, `crates/vorce/tests/reference_images/README.md`, `crates/vorce/src/main.rs`.\n- Keep the issue grounded in the current Windows/GPU reality instead of assuming headless CI coverage that is not yet true.\n- Documentation should name the actual current commands and artifact paths.\n\n## Related Documentation\n- `docs/A3_PROJECT/B1_PLANNING/DOC-C9_GRAFISCHE-UNIT-TESTS-LOKAL.md`\n- `docs/A3_PROJECT/B2_QUALITY/CURRENT_CODE_AUDIT_2026-03-23.md`\n- `docs/A3_PROJECT/B2_QUALITY/AUDITS-ARCHIVE/DOC-C11_AUDIT_OPEN_POINTS_MAIN_2026-03-21.md`\n\n## Requirements\n- [x] Tests required\n- [x] Documentation update required\n- [ ] Breaking change\n- [ ] Security implications\n\n## Estimated Effort\n0.5-1 day---\nMigrated from legacy issue MrLongNight/MapFlow#1336: https://github.com/MrLongNight/MapFlow/issues/1336`n`n`n`n`n`n\n\n<!-- jules-session:begin -->\n<!-- jules-session-id: 10871692242820325737 -->\n<!-- jules-session-name: sessions/10871692242820325737 -->\n<!-- vorce-queue-state: blocked -->\n<!-- vorce-remote-state: stale-session-reference -->\n<!-- vorce-work-branch: main -->\n<!-- vorce-last-update: 2026-04-04T11:35:47Z -->\n## Vorce Project Manager\n- Queue State: `blocked`\n- Remote State: `stale-session-reference`\n- Work Branch: `main`\n- Linked PR: _n/a_\n- Last Update: `2026-04-04T11:35:47Z`\n<!-- jules-session:end -->",
+        "number": 77,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-07_MAI-007_Visual-Capture-Release-Smoke-Baseline",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/77"
+      },
+      "description": "critical / score 180 / active",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokOxM",
+      "jules_session-nr": "5843377200403689259",
+      "labels": [
+        "enhancement",
+        "jules-task",
+        "priority: high",
+        "status: blocked",
+        "testing"
+      ],
+      "linked pull requests": [
+        "https://github.com/MrLongNight/MapFlow/pull/1339",
+        "https://github.com/Vorce-Studios/Vorce/pull/160",
+        "https://github.com/Vorce-Studios/Vorce/pull/161",
+        "https://github.com/Vorce-Studios/Vorce/pull/162",
+        "https://github.com/Vorce-Studios/Vorce/pull/163",
+        "https://github.com/Vorce-Studios/Vorce/pull/164",
+        "https://github.com/Vorce-Studios/Vorce/pull/165",
+        "https://github.com/Vorce-Studios/Vorce/pull/166",
+        "https://github.com/Vorce-Studios/Vorce/pull/167",
+        "https://github.com/Vorce-Studios/Vorce/pull/168"
+      ],
+      "pr_checks_status": "merge-conflict",
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "review_status": "needed",
+      "status": "Done",
+      "task_id": "VOR-36",
+      "task_type": "Fix",
+      "title": "__SI-07_MAI-007_Visual-Capture-Release-Smoke-Baseline"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "´╗┐## Project Phase\nPhase 7 - Release Readiness\n\n## Priority\nHigh\n\n## Problem\nDie groebste User-/Tech-Doku-Drift wurde bereits korrigiert, aber die uebergeordnete Planungs- und Source-of-Truth-Lage ist weiter inkonsistent:\n- Mehrere Planungsdokumente verweisen auf eine Root-`ROADMAP.md`, die im Repository aktuell nicht existiert.\n- Feature-Reifegrad-Aussagen koennen zwischen Planung, QA-Dokumenten und Runtime erneut auseinanderlaufen.\n- Ohne klaren kanonischen Planungspfad kommt derselbe Drift nach jedem Merge schnell zurueck.\n\n## Goal\nEine belastbare Source-of-Truth fuer Planung und Feature-Status festziehen und alle veralteten ROADMAP-Verweise bereinigen.\n\n## Acceptance Criteria\n- [ ] Es ist eindeutig dokumentiert, welche Datei oder Dokumentfamilie die kanonische Source of Truth fuer Feature-Status und Planung ist.\n- [ ] Tote oder falsche Verweise auf eine nicht existente Root-`ROADMAP.md` sind entfernt oder die Datei ist bewusst wiederhergestellt.\n- [ ] User-, QA- und Planungsdokumente benutzen konsistente Reifegrad-Begriffe.\n- [ ] Der Audit-Snapshot kann nach Abschluss diesen Punkt als geschlossen markieren.\n\n## Technical Details\n- Besonders betroffen: `docs/A3_PROJECT/B1_PLANNING/*`, `docs/A3_PROJECT/B2_QUALITY/*`, sowie Querverweise aus User-/Tech-Dokumenten.\n- Dieses Issue ist Dokumentations-/Governance-Scope und soll keine Runtime-Implementierung mit hineinziehen.\n\n## Related Documentation\n- `docs/A3_PROJECT/B2_QUALITY/DOC-C11_AUDIT_OPEN_POINTS_MAIN_2026-03-21.md`\n- `docs/A3_PROJECT/B2_QUALITY/DOC-C7_PROJECT_PLANNING_AUDIT.md`\n- `docs/A3_PROJECT/B2_QUALITY/DOC-C1_TEST_MATRIX.md`\n\n## Requirements\n- [x] Tests required\n- [x] Documentation update required\n- [ ] Breaking change\n- [ ] Security implications\n\n## Estimated Effort\n0.5-1 day\n\n<!-- jules-session:begin -->\n<!-- jules-session-id: 17106081441980305779 -->\n<!-- jules-session-name: sessions/17106081441980305779 -->\n<!-- mapflow-queue-state: dispatched -->\n<!-- mapflow-remote-state: merged -->\n<!-- mapflow-work-branch: MF-1335-docs-roadmap-reconciliation-17106081441980305779 -->\n<!-- mapflow-last-update: 2026-03-22T17:01:45Z -->\n## MapFlow Project Manager\n- Queue State: `dispatched`\n- Remote State: `merged`\n- Work Branch: `MF-1335-docs-roadmap-reconciliation-17106081441980305779`\n- Linked PR: https://github.com/MrLongNight/MapFlow/pull/1340\n- Last Update: `2026-03-22T17:01:45Z`\n<!-- jules-session:end -->\n\n---\nMigrated from legacy issue MrLongNight/MapFlow#1335: https://github.com/MrLongNight/MapFlow/issues/1335",
+        "number": 76,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__MF-SubI_Docs-Roadmap-Source-of-Truth-Reconciliation",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/76"
+      },
+      "description": "Eine belastbare Source-of-Truth fuer Planung und Feature-Status festziehen und alle veralteten ROADMAP-Verweise bereinigen.",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokOxc",
+      "jules_session-nr": "17106081441980305779",
+      "labels": [
+        "documentation",
+        "jules-task",
+        "priority: high",
+        "status: in-progress"
+      ],
+      "linked PR": "https://github.com/MrLongNight/MapFlow/pull/1340",
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "__MF-SubI_Docs-Roadmap-Source-of-Truth-Reconciliation",
+      "task_type": "Polish",
+      "title": "__MF-SubI_Docs-Roadmap-Source-of-Truth-Reconciliation"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "´╗┐## Project Phase\nPhase 6 - Advanced UI\n\n## Priority\nMedium\n\n## Status Update (2026-03-19)\n- Tracker-Issue: nicht separat an Jules dispatchen, solange die Spezial-Sub-Issues offen sind.\n- Der generische Preview-Contract aus `MrLongNight/MapFlow#1041` ist bereits erledigt; verbleibend sind Runtime-Gating, Inspector-Abdeckung und Architekturentscheidungen fuer Spezial-/Device-Nodes.\n- Aktuelle Schwerpunkt-Unterthemen sind `Vorce-Studios/Vorce#66`, `Vorce-Studios/Vorce#67` und `Vorce-Studios/Vorce#68`.\n\n## Task Description\nDieses Pack-Issue koordiniert die Spezial-/Device-Node-Migration (Bevy, External IO, Hue und verwandte Sonderfaelle). Ziel ist kein pauschales ÔÇ×sichtbar lassenÔÇ£, sondern klare Entscheidungen pro Node-Familie: implementieren, sauber gaten oder bewusst ausblenden.\n\n## Acceptance Criteria\n- [ ] Die Spezial-Sub-Issues haben aktuellen, nicht ueberlappenden Scope.\n- [ ] Nicht stabile Spezial-Nodes werden nicht mehr ohne klaren Status sichtbar gehalten.\n- [ ] Das Pack kann erst schliessen, wenn die Unter-Issues fachlich einsortiert und technisch verifiziert sind.\n\n## Technical Details\n- Primare Unter-Issues: `Vorce-Studios/Vorce#66`, `Vorce-Studios/Vorce#67`, `Vorce-Studios/Vorce#68`.\n- Enge Abhaengigkeiten: `Vorce-Studios/Vorce#56`, `Vorce-Studios/Vorce#60`, `MrLongNight/MapFlow#1239`.\n- Generische Preview-/Inspector-Grundlagen sind bewusst aus diesem Tracker herausgezogen.\n\n## Related Documentation\n- `docs/A3_PROJECT/B2_QUALITY/DOC-C10_MODULE_NODE_SYSTEM_AUDIT_2026-03-18.md`\n\n## Requirements\n- [ ] Tests required\n- [x] Documentation update required\n- [ ] Breaking change\n- [ ] Security implications\n\n## Estimated Effort\nTracker / rollierende Koordination\n\n---\nMigrated from legacy issue MrLongNight/MapFlow#1241: https://github.com/MrLongNight/MapFlow/issues/1241",
+        "number": 59,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-02_MAI-004_Special-Node-Migration-Pack-B",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/59"
+      },
+      "description": "Dieses Pack-Issue koordiniert die Spezial-/Device-Node-Migration (Bevy, External IO, Hue und verwandte Sonderfaelle). Ziel ist kein pauschales ÔÇ×sichtbar lassenÔÇ£, sondern klare Entscheidungen pro Node-Familie: implemen...",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO10",
+      "labels": [
+        "enhancement",
+        "jules-task",
+        "priority: medium"
+      ],
+      "priority": "B",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "__MF-SubI_Special-Node-Migration-Pack-B",
+      "task_type": "Feature",
+      "title": "__SI-02_MAI-004_Special-Node-Migration-Pack-B"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "´╗┐## Project Phase\nPhase 6 - Advanced UI\n\n## Priority\nHigh\n\n## Status Update (2026-03-19)\n- Tracker-Issue: nicht separat an Jules dispatchen, solange die Unter-Issues offen sind.\n- Der Preview-Contract aus `MrLongNight/MapFlow#1041` ist bereits erledigt; der Pack fokussiert nur noch die inhaltliche Migration der Kern-Node-Familien.\n- Aktive Unterarbeit laeuft derzeit vor allem ueber `Vorce-Studios/Vorce#57`, `Vorce-Studios/Vorce#62`, `Vorce-Studios/Vorce#63`, `Vorce-Studios/Vorce#64`, `Vorce-Studios/Vorce#65` und `MrLongNight/MapFlow#1248`.\n\n## Task Description\nDieses Pack-Issue trackt die kontrollierte Migration der sichtbaren Kern-Node-Familien auf die neue Node-/Inspector-/Runtime-Basis. Es ist ein Koordinations- und Scope-Issue fuer die eigentlichen Sub-Issues, kein eigenstaendiger Coding-Dispatch.\n\n## Acceptance Criteria\n- [ ] Die Unter-Issues fuer Kern-Nodes haben aktuellen, nicht ueberlappenden Scope.\n- [ ] Kein Teil dieses Packs haengt noch an generischer Preview-Grundlagenarbeit aus `MrLongNight/MapFlow#1041`.\n- [ ] Das Pack kann erst schliessen, wenn die relevanten Kern-Sub-Issues technisch und fachlich verifiziert sind.\n\n## Technical Details\n- Primare Unter-Issues: `Vorce-Studios/Vorce#62`, `Vorce-Studios/Vorce#63`, `Vorce-Studios/Vorce#64`, `Vorce-Studios/Vorce#65`, `MrLongNight/MapFlow#1248`.\n- Harte Abhaengigkeiten: `MrLongNight/MapFlow#1236`, `Vorce-Studios/Vorce#56`, `Vorce-Studios/Vorce#57`, `Vorce-Studios/Vorce#60`.\n- Halbverdrahtete sichtbare Features werden nicht in dieses Tracker-Issue ÔÇ×mitgeschlepptÔÇ£, sondern in den passenden Familien-Issues behandelt.\n\n## Related Documentation\n- `docs/A3_PROJECT/B2_QUALITY/DOC-C10_MODULE_NODE_SYSTEM_AUDIT_2026-03-18.md`\n\n## Requirements\n- [ ] Tests required\n- [x] Documentation update required\n- [ ] Breaking change\n- [ ] Security implications\n\n## Estimated Effort\nTracker / rollierende Koordination\n\n---\nMigrated from legacy issue MrLongNight/MapFlow#1240: https://github.com/MrLongNight/MapFlow/issues/1240",
+        "number": 58,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-01_MAI-004_Core-Node-Migration-Pack-A",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/58"
+      },
+      "description": "Dieses Pack-Issue trackt die kontrollierte Migration der sichtbaren Kern-Node-Familien auf die neue Node-/Inspector-/Runtime-Basis. Es ist ein Koordinations- und Scope-Issue fuer die eigentlichen Sub-Issues, kein eige...",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO2U",
+      "labels": [
+        "enhancement",
+        "jules-task",
+        "priority: high"
+      ],
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "__MF-SubI_Core-Node-Migration-Pack-A",
+      "task_type": "Feature",
+      "title": "__SI-01_MAI-004_Core-Node-Migration-Pack-A"
+    },
+    {
+      "content": {
+        "body": "Master issue for the global rebranding of the project from current `MapFlow` and legacy `MapMap` surfaces to the finalized target identity `Vorce`. This supersedes the StageGraph-specific attempt in MrLongNight/MapFlow#1179.\r\n\r\n## Status\nExecution phase. Repository-owned rebranding work and 4-eyes verification are complete in MrLongNight/MapFlow#1214 and MrLongNight/MapFlow#1403. The remaining open work is the owner/admin/manual cutover in Vorce-Studios/Vorce#79 for the move to Vorce-Studios/Vorce.\n\n## Final target- Canonical product name: `Vorce`\r\n- Canonical organization/repository target: `Vorce-Studios/Vorce`\r\n- Canonical bundle identifier: `org.vorce.app`\r\n- Canonical file extension: `.vorce`\r\n- Canonical OSC namespace: `/vorce/`\r\n- Legacy compatibility surfaces may remain only where they are intentional, documented, and explicitly temporary\r\n\r\n## Why this issue exists\r\nThe codebase and surrounding delivery surfaces historically mixed several identity layers:\r\n- current user-facing brand: `MapFlow`\r\n- legacy/workspace slug: `mapmap`\r\n- legacy UI strings: `MapMap`\r\n- external compatibility surfaces: `/mapmap/`, `/mapflow/`, `.mapmap`, `.mflow`, `MAPFLOW_*`, `MAPFLOW_PROJECT_*`, `info.mapmapteam.*`\r\n\r\nA safe rebranding must treat those surfaces separately instead of performing a blind search/replace.\r\n\r\n## Implementation subissues\r\n1. [x] MrLongNight/MapFlow#1229 `__SI-01_MAI-001_CANONICAL_RENAME_MATRIX_AND_COMPAT_POLICY_V2`\r\n2. [x] MrLongNight/MapFlow#1204 `__SI-02_MAI-001_CRATES_WORKSPACE_AND_PACKAGE_RENAME_V2`\r\n3. [x] MrLongNight/MapFlow#1205 `__SI-03_MAI-001_SCRIPTS_ENV_AND_RUNTIME_PATHS_V2`\r\n4. [x] MrLongNight/MapFlow#1206 `__SI-04_MAI-001_PROTOCOLS_API_AND_EXTERNAL_IDS_V2`\r\n5. [x] MrLongNight/MapFlow#1207 `__SI-05_MAI-001_PROJECT_FORMAT_LOGGING_AND_COMPAT_V2`\r\n6. [x] MrLongNight/MapFlow#1215 `__SI-06_MAI-001_UI_BRANDING_ASSETS_AND_WINDOW_TITLES_V2`\r\n7. [x] MrLongNight/MapFlow#1230 `__SI-07_MAI-001_REPO_RELEASE_AND_PACKAGE_METADATA_V2`\r\n8. [x] MrLongNight/MapFlow#1214 `__SI-08_MAI-001_WORKFLOWS_DOCS_AND_MIGRATION_NOTES_V2`\r\n\r\n## Verification subissues\r\n1. [x] MrLongNight/MapFlow#1396 `__SI-09_MAI-001_VERIFY_CANONICAL_RENAME_MATRIX_AND_COMPAT_POLICY_V2`\r\n2. [x] MrLongNight/MapFlow#1397 `__SI-10_MAI-001_VERIFY_CRATES_WORKSPACE_AND_PACKAGE_RENAME_V2`\r\n3. [x] MrLongNight/MapFlow#1398 `__SI-11_MAI-001_VERIFY_SCRIPTS_ENV_AND_RUNTIME_PATHS_V2`\r\n4. [x] MrLongNight/MapFlow#1399 `__SI-12_MAI-001_VERIFY_PROTOCOLS_API_AND_EXTERNAL_IDS_V2`\r\n5. [x] MrLongNight/MapFlow#1400 `__SI-13_MAI-001_VERIFY_PROJECT_FORMAT_LOGGING_AND_COMPAT_V2`\r\n6. [x] MrLongNight/MapFlow#1401 `__SI-14_MAI-001_VERIFY_UI_BRANDING_ASSETS_AND_WINDOW_TITLES_V2`\r\n7. [x] MrLongNight/MapFlow#1402 `__SI-15_MAI-001_VERIFY_REPO_RELEASE_AND_PACKAGE_METADATA_V2`\r\n8. [x] MrLongNight/MapFlow#1403 `__SI-16_MAI-001_VERIFY_WORKFLOWS_DOCS_AND_MIGRATION_NOTES_V2`\r\n\r\n## Manual owner/admin subissue\r\n- [ ] Vorce-Studios/Vorce#79 `MFuser_#1435-__SI-17_MAI-001_MANUAL_OWNER_CUTOVER_REPO_ORG_AND_INFRA_V2`\r\n\r\n## Step-by-step cutover checklist\r\n\r\n### Phase 1: finish repository-owned work in the current source repo\r\n- [x] Finish MrLongNight/MapFlow#1214 so all repository-owned workflows, templates, README, maintained docs, migration notes, labels, and local packaging references teach `Vorce` as canonical.\r\n- [x] Run final repository-side branding sweep to ensure no active non-legacy user-facing surface still teaches `MapFlow` or `MapMap` as canonical.\r\n- [x] Keep only intentional compatibility aliases for legacy config names, legacy file extensions, and legacy OSC namespaces, and ensure each remaining alias is documented as legacy.\r\n- [x] Confirm the repository compiles and the directly affected checks still pass after the final branding sweep.\r\n\r\n### Phase 2: verify repository-owned work before any external cutover\r\n- [x] Complete MrLongNight/MapFlow#1403 with 4-eyes review against the final repository state.\r\n- [x] Do not start the external/org/repo cutover until MrLongNight/MapFlow#1403 is final and the repo-owned rename work is accepted.\r\n\r\n### Phase 3: prepare the new canonical repository\r\n- [x] Confirm `Vorce-Studios/Vorce` is the final canonical production repository.\r\n- [ ] Sync the desired final branch state into `Vorce-Studios/Vorce`.\r\n- [x] Ensure `main` is the correct default branch in `Vorce-Studios/Vorce`.\r\n- [ ] Verify labels, issue templates, workflows, branch layout, CODEOWNERS behavior, and repository settings exist in `Vorce-Studios/Vorce`.\r\n\r\n### Phase 4: owner/admin migration tasks in the new repository\r\n- [ ] Complete Vorce-Studios/Vorce#79.\r\n- [x] Recreate or migrate branch protections/rulesets to `Vorce-Studios/Vorce`.\r\n- [x] Recreate or migrate required status checks and merge rules to `Vorce-Studios/Vorce`.\r\n- [ ] Recreate GitHub Actions secrets, variables, environments, and environment protections in `Vorce-Studios/Vorce`.\r\n- [ ] Reconnect all external integrations, webhooks, GitHub Apps, package/release hooks, and any other automation bound to the old repo slug.\r\n- [ ] Rename or recreate the GitHub Project currently referenced as `@MapFlow Project Manager` so automation can target the final Vorce naming.\r\n- [ ] Update self-hosted runner labels / runner groups if they still depend on `mapflow-*` names.\r\n\r\n### Phase 5: switch canonical references to the new repo\r\n- [x] Repoint contributor-facing links, badges, release links, website links, package references, and documentation links to `https://github.com/Vorce-Studios/Vorce`.\r\n- [x] Update repository automation and docs so new issue, PR, release, and badge references no longer treat `MrLongNight/MapFlow` as canonical.\r\n- [x] Keep old-slug references only where they are still technically required during transition or where GitHub redirect behavior is the intended compatibility layer.\r\n\r\n### Phase 6: validate the cutover end-to-end\r\n- [ ] Verify required CI workflows run successfully in `Vorce-Studios/Vorce`.\r\n- [ ] Verify releases, Actions badges, issue links, PR links, redirects, and project automation resolve correctly from external entry points.\r\n- [ ] Verify contributors can clone, build, open issues, and follow the docs from the new canonical repo without landing on stale canonical `MapFlow` instructions.\r\n- [ ] Verify shipping artifacts, bundle metadata, docs, and repo-facing automation all agree on the `Vorce` identity.\r\n\r\n### Phase 7: retire or freeze the old repository cleanly\r\n- [ ] Freeze `MrLongNight/MapFlow` against new primary development once the new canonical repo is validated.\r\n- [ ] Either rely on GitHub redirect behavior, archive the old repo, or keep it only as an intentional compatibility mirror with clear messaging.\r\n- [ ] Ensure there is no ambiguity about which repository is canonical for issues, PRs, releases, contributors, and automation.\r\n\r\n## Acceptance criteria\r\n- [x] the canonical rename matrix is approved in MrLongNight/MapFlow#1229\r\n- [x] every breaking surface has an explicit policy: alias, deprecation window, or hard cut\r\n- [x] workspace/package names, scripts, UI, protocols, file formats, release artifacts, issue tracking, and docs are migrated consistently\r\n- [x] supported compatibility surfaces are tested or intentionally retired with migration guidance\r\n- [x] release workflows emit correctly branded artifacts on Windows, macOS, and Linux\r\n- [ ] GitHub repo cutover to `Vorce-Studios/Vorce` is executed with redirect, badge, and integration checks\r\n- [x] no supported user-facing or shipping surface still shows mixed `MapFlow` / `MapMap` branding except documented legacy compatibility notices\r\n- [x] rollout notes cover repo cutover, badge/link updates, issue/project automation, and migration guidance for contributors and integrators\r\n- [x] no unresolved placeholder such as `[NEW_NAME]`, `[NEW_SLUG]`, or `[NEW_EXT]` remains in the active rebranding plan\r\n\r\n## Non-goals\r\n- unrelated refactors or behavior changes outside branding and migration scope\r\n- removing legacy compatibility aliases before the documented lifecycle says they may be retired\r\n- repeating the abandoned StageGraph-specific rename strategy from MrLongNight/MapFlow#1179\r\n\r\n## Notes\r\n- Current target repository already exists for cutover preparation: https://github.com/Vorce-Studios/Vorce\r\n- This work touches code, packaging, CI/CD, release artifacts, GitHub repository metadata, issue automation, and documentation.\r\n- The historical StageGraph attempt remains closed in MrLongNight/MapFlow#1179 and is not the source of truth for the final rename.\n\n---\nMigrated from legacy issue MrLongNight/MapFlow#1203: https://github.com/MrLongNight/MapFlow/issues/1203",
+        "number": 55,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "MAI-001_VORCE_REBRANDING",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/55"
+      },
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO3Y",
+      "labels": [
+        "enhancement"
+      ],
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "MAI-001_VORCE_REBRANDING",
+      "task_type": "Feature",
+      "title": "MAI-001_VORCE_REBRANDING"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "Part of Vorce-Studios/Vorce#84.\n\n## Goal\nDie Hybrid-Orchestrierung ueber die aktuelle Basislogik hinaus zu einem live-tauglichen Modus ausbauen.\n\n## Current gap\n- Es gibt bereits eine erste Kombination aus Zeit- und Triggerlogik.\n- Die alte Fassung dieses Issues vermischt aber Basis-Semantik, Scheduling-Randfaelle und spaetere Advanced-Hybrid-Funktionen.\n- Fuer Production-Readiness muessen diese Verantwortlichkeiten sauber getrennt werden.\n\n## This issue covers\n- Erweiterte Regeln fuer Zeit-plus-Trigger-Orchestrierung.\n- Prioritaeten zwischen mehreren Triggern.\n- Trigger-Latching, Hold/Release, Reset und aehnliche Operator-Konzepte.\n- Sichtbarkeit und Debugbarkeit der aktuellen Hybrid-Entscheidung.\n- Erweiterbare Regeln fuer Keyboard-, MIDI- und OSC-Trigger oberhalb der Basissemantik.\n\n## Explicitly not in scope\n- Grundlegende Scheduling-Semantik fuer Vorlauf, Luecken, Ueberlappungen und Timeline-Ende: Vorce-Studios/Vorce#101.\n- Low-Level-Marker-/Trackline-Haertung: Vorce-Studios/Vorce#100.\n- Cue-/Timeline-Gesamtintegration: Vorce-Studios/Vorce#102.\n- Basis-Persistenz und Runtime-Schliessung: Vorce-Studios/Vorce#96, Vorce-Studios/Vorce#97 und Vorce-Studios/Vorce#98.\n\n## Overlap cleanup\nDieses Issue ist ab jetzt der Advanced-Hybrid-Task. Die minimal notwendige und production-relevante Basissemantik liegt in Vorce-Studios/Vorce#101.\n\n## Dependencies / sequencing\n- Sollte auf Vorce-Studios/Vorce#101 aufbauen.\n- Sinnvoll erst nach stabilen Persistenz- und Runtime-Pfaden aus Vorce-Studios/Vorce#96 bis Vorce-Studios/Vorce#98.\n\n## Acceptance criteria\n- Hybrid-Regeln sind fuer Operatoren nachvollziehbar und reproduzierbar.\n- Konflikte zwischen Zeitfenstern und mehreren Triggern sind fachlich definiert.\n- Der Modus ist gegenueber dem heutigen Minimalverhalten klar erweitert und dokumentiert.\n- Die wichtigsten Hybrid-Randfaelle sind abgesichert.\n\n## Legacy note\nDie fruehere Referenz auf `DOC-C15_TIMELINE_REVOLUTION.md` wurde entfernt, weil dieses Dokument im aktuellen Repository nicht vorhanden ist.\n\n## Jules Instruction\nBitte verwende fuer die **Jules Session**, den **Branch** und den **PR-Namen** exakt diesen Titel:\nMF-075-TIMELINE-HYBRID-ORCHESTRATOR: Orchestration: Hybrid Mode Logik (Zeit + Trigger Kombination)\n\n<!-- jules-session:begin -->\n<!-- jules-session-id: 14995919134778487189 -->\n<!-- jules-session-name: sessions/14995919134778487189 -->\n<!-- mapflow-queue-state: dispatched -->\n<!-- mapflow-remote-state: queued -->\n<!-- mapflow-work-branch: main -->\n<!-- mapflow-last-update: 2026-03-23T01:17:18Z -->\n## MapFlow Project Manager\n- Queue State: `dispatched`\n- Remote State: `queued`\n- Work Branch: `main`\n- Linked PR: _n/a_\n- Last Update: `2026-03-23T01:17:18Z`\n<!-- jules-session:end -->\n\n---\nMigrated from legacy issue MrLongNight/MapFlow#1133: https://github.com/MrLongNight/MapFlow/issues/1133",
+        "number": 53,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-05_MAI-002_Timeline-Hybrid-Orchestrator",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/53"
+      },
+      "description": "Hybrid-Logik aus Zeit- und Triggersteuerung fuer reproduzierbare Show-Uebergaenge ausbauen.",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO38",
+      "jules_session-nr": "14995919134778487189",
+      "labels": [
+        "enhancement",
+        "priority: medium",
+        "status: in-progress"
+      ],
+      "priority": "B",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "MF-075-TIMELINE-HYBRID-ORCHESTRATOR",
+      "task_type": "Feature",
+      "title": "__SI-05_MAI-002_Timeline-Hybrid-Orchestrator"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "Part of Vorce-Studios/Vorce#84.\n\n## Goal\nHierarchische Szenen-/Gruppenstruktur fuer die Timeline als spaetere Show-Struktur-Erweiterung aufbauen.\n\n## Current gap\n- Im aktuellen Code existiert keine belastbare Szenen- oder Nesting-Struktur fuer die Timeline.\n- Gleichzeitig ueberlappt die alte Fassung dieses Issues mit Basisbausteinen, die fuer die Production-Readiness zuerst stabilisiert werden muessen.\n\n## This issue covers\n- Hierarchische Gruppierung / Nesting von Timeline-Elementen.\n- Parent-/Child-Strukturen fuer spaetere Sequence- und Show-Organisation.\n- Collapse-/Expand-Logik auf Szenenebene.\n- Datenseitige Grundlage fuer spaetere Show-Overview- und Sequence-Funktionen.\n\n## Explicitly not in scope\n- Production-Ready-Baseline der heutigen Timeline.\n- Persistenz-/Dirty-State-Basis: Vorce-Studios/Vorce#96.\n- Scheduling-Grundsemantik fuer das bestehende Arrangement: Vorce-Studios/Vorce#101.\n- Keyframe-Editor-Grundlagen: Vorce-Studios/Vorce#25 und Vorce-Studios/Vorce#99.\n- Minimaler Cue-/Timeline-Integrationspfad: Vorce-Studios/Vorce#102.\n\n## Overlap cleanup\nDieses Issue ist bewusst ein spaeterer Ausbau-Task. Es ist kein kurzfristiger Blocker fuer die Production-Readiness des bestehenden Timeline-Kerns.\n\n## Dependencies / sequencing\n- Sollte erst nach den Basisarbeiten unter Vorce-Studios/Vorce#96, Vorce-Studios/Vorce#97, Vorce-Studios/Vorce#98, Vorce-Studios/Vorce#100 und Vorce-Studios/Vorce#101 bearbeitet werden.\n- Kann auch nach Schliessung von Vorce-Studios/Vorce#84 als Folgeausbau bestehen bleiben.\n\n## Acceptance criteria\n- Es gibt ein klares Datenmodell fuer Szenen-/Gruppen-Nesting.\n- Parent-/Child-Beziehungen sind im UI sichtbar und nachvollziehbar.\n- Die Erweiterung kollidiert nicht mit dem bestehenden einfachen Arrangement-Modell.\n- Scope und Nutzen gegenueber dem Basis-Multi-Lane-Editor sind klar abgegrenzt.\n\n## Legacy note\nDie fruehere Referenz auf `DOC-C15_TIMELINE_REVOLUTION.md` wurde entfernt, weil dieses Dokument im aktuellen Repository nicht vorhanden ist.\n\n## Jules Instruction\nBitte verwende fuer die **Jules Session**, den **Branch** und den **PR-Namen** exakt diesen Titel:\nMF-074-TIMELINE-SCENE-NESTING: Core/UI: Szenen-Gruppierung und Nesting-Logik fuer Module\n\n<!-- jules-session:begin -->\n<!-- jules-session-id: 4592170924183928962 -->\n<!-- jules-session-name: sessions/4592170924183928962 -->\n<!-- mapflow-queue-state: dispatched -->\n<!-- mapflow-remote-state: queued -->\n<!-- mapflow-work-branch: main -->\n<!-- mapflow-last-update: 2026-03-23T01:17:30Z -->\n## MapFlow Project Manager\n- Queue State: `dispatched`\n- Remote State: `queued`\n- Work Branch: `main`\n- Linked PR: _n/a_\n- Last Update: `2026-03-23T01:17:30Z`\n<!-- jules-session:end -->\n\n---\nMigrated from legacy issue MrLongNight/MapFlow#1132: https://github.com/MrLongNight/MapFlow/issues/1132",
+        "number": 52,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-04_MAI-002_Timeline-Scene-Nesting",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/52"
+      },
+      "description": "Szenen-Gruppierung und Nesting fuer spaetere Show-Struktur und Sequence-Aufbauten einfuehren.",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO4U",
+      "jules_session-nr": "4592170924183928962",
+      "labels": [
+        "enhancement",
+        "priority: low",
+        "status: in-progress"
+      ],
+      "priority": "C",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "MF-074-TIMELINE-SCENE-NESTING",
+      "task_type": "Feature",
+      "title": "__SI-04_MAI-002_Timeline-Scene-Nesting"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "Part of Vorce-Studios/Vorce#84.\n\n## Goal\nDen user-facing Trackline-Workflow fuer Marker-zu-Marker-Playback im Timeline-Editor vervollstaendigen.\n\n## Current gap\n- Der aktuelle Code hat Basisfunktionen fuer Marker-Pausen und Marker-Spruenge.\n- Low-Level-Probleme bei Marker-Modell und Scheduling-Semantik sind aber noch offen.\n- Dadurch ist unklar, welche Teile dieses Issues fachliche Funktionsergaenzung sind und welche Teile eigentlich Haertung / Bugfixing sind.\n\n## This issue covers\n- Bedienlogik fuer `Play to Next Marker`, `Jump Prev Marker`, `Jump Next Marker` und `Resume`.\n- Sichtbares Operator-Feedback fuer den aktuellen Trackline-Zustand.\n- User-facing UI- und Workflow-Schluss fuer den Trackline-Modus.\n- Integration des Trackline-Modus in Toolbar und Timeline-Bedienung.\n\n## Explicitly not in scope\n- Marker-ID-/Zeit-Konsistenz und Low-Level-Haertung: Vorce-Studios/Vorce#100.\n- Grundlegende Scheduling-Semantik fuer Blockwechsel und Edge Cases: Vorce-Studios/Vorce#101.\n- Cue-/Timeline-Gesamtintegration: Vorce-Studios/Vorce#102.\n\n## Overlap cleanup\nDieses Issue beschreibt ab jetzt den funktionalen Trackline-Modus oberhalb der technischen Haertung. Marker-Bugs und Scheduling-Randfaelle sind ausgelagert.\n\n## Dependencies / sequencing\n- Ist fachlich von Vorce-Studios/Vorce#100 und Vorce-Studios/Vorce#101 abhaengig.\n- Sollte erst danach als User-Workflow-Finish umgesetzt oder abgenommen werden.\n\n## Acceptance criteria\n- Ein Operator kann Marker-zu-Marker-Playback reproduzierbar steuern.\n- Die UI zeigt klar an, ob gerade gespielt, pausiert oder auf den naechsten Marker gewartet wird.\n- Vor- und Rueckspruenge zwischen Markern verhalten sich aus Anwendersicht konsistent.\n- Die Bedienung ist fuer den Live-Betrieb dokumentiert oder testbar abgesichert.\n\n## Legacy note\nDie fruehere Referenz auf `DOC-C15_TIMELINE_REVOLUTION.md` wurde entfernt, weil dieses Dokument im aktuellen Repository nicht vorhanden ist.\n\n## Jules Instruction\nBitte verwende fuer die **Jules Session**, den **Branch** und den **PR-Namen** exakt diesen Titel:\nMF-073-TIMELINE-TRACKLINE-MODE: Implementation: Trackline Mode (Marker-to-Marker Playback & Jump)\n\n<!-- jules-session:begin -->\n<!-- jules-session-id: 1502382511625782806 -->\n<!-- jules-session-name: sessions/1502382511625782806 -->\n<!-- mapflow-queue-state: dispatched -->\n<!-- mapflow-remote-state: queued -->\n<!-- mapflow-work-branch: main -->\n<!-- mapflow-last-update: 2026-03-23T01:17:42Z -->\n## MapFlow Project Manager\n- Queue State: `dispatched`\n- Remote State: `queued`\n- Work Branch: `main`\n- Linked PR: _n/a_\n- Last Update: `2026-03-23T01:17:42Z`\n<!-- jules-session:end -->\n\n---\nMigrated from legacy issue MrLongNight/MapFlow#1131: https://github.com/MrLongNight/MapFlow/issues/1131",
+        "number": 51,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-03_MAI-002_Timeline-Trackline-Mode",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/51"
+      },
+      "description": "Trackline-Playback und Marker-zu-Marker-Navigation fuer den Live-Betrieb belastbar machen.",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO4g",
+      "jules_session-nr": "1502382511625782806",
+      "labels": [
+        "enhancement",
+        "priority: medium",
+        "status: in-progress"
+      ],
+      "priority": "B",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "MF-073-TIMELINE-TRACKLINE-MODE",
+      "task_type": "Feature",
+      "title": "__SI-03_MAI-002_Timeline-Trackline-Mode"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "Part of Vorce-Studios/Vorce#84.\n\n## Goal\nDie Timeline als mehrspurigen Editor mit klarer Lane-Struktur, Gruppierung und Navigation benutzbar machen.\n\n## Current gap\n- Die aktuelle Multi-Lane-Ansicht ist eher ein Viewer als ein belastbarer Editor.\n- Aufklappbare Gruppen existieren in Ans├ñtzen, aber Verantwortlichkeiten zwischen Lane-Struktur, Keyframe-Interaktion und Kurveneditor sind vermischt.\n- Die alte Beschreibung ueberlappt stark mit Keyframe-Interaktion und Curve-Editor-Themen.\n\n## This issue covers\n- Struktur und UX des Multi-Lane-Editors.\n- Lane-Headers, Gruppierung und Foldout-Verhalten.\n- Sichtbarkeit und Orientierung zwischen Modul-Arrangement-Lane und Automations-Lanes.\n- Editor-Ergonomie fuer Scrollen, Zoom, Fokus und Lane-Navigation, soweit sie die Lane-Struktur betrifft.\n- Klarheit ueber aktive / expandierte / selektierte Track-Gruppen.\n\n## Explicitly not in scope\n- Keyframe-CRUD und direkte Keyframe-Interaktion: Vorce-Studios/Vorce#25.\n- Curve-Editor und Multi-Value-Darstellung: Vorce-Studios/Vorce#99.\n- Produktive Parameter-Bindings: Vorce-Studios/Vorce#97.\n- Marker-/Trackline-Haertung und Scheduling-Semantik: Vorce-Studios/Vorce#100 und Vorce-Studios/Vorce#101.\n- Scene-Nesting / hierarchische Show-Struktur: Vorce-Studios/Vorce#52.\n\n## Overlap cleanup\nDieses Issue ist ab jetzt der dedizierte Struktur- und Layout-Task fuer den Multi-Lane-Editor. Fachliche Automationssemantik und Keyframe-Bearbeitung sind ausgelagert.\n\n## Dependencies / sequencing\n- Sollte mit Vorce-Studios/Vorce#25 und Vorce-Studios/Vorce#99 abgestimmt umgesetzt werden.\n- Baut sinnvoll auf produktiven Track-/Binding-Pfaden aus Vorce-Studios/Vorce#97 auf.\n- Ist nicht durch Vorce-Studios/Vorce#52 blockiert; Scene-Nesting bleibt ein spaeterer Ausbau.\n\n## Acceptance criteria\n- Die Timeline stellt mehrere Spuren / Gruppen uebersichtlich und stabil dar.\n- Gruppen koennen konsistent ein- und ausgeklappt werden.\n- Modul-Arrangement und Automationsspuren sind im Editor klar unterscheidbar und ergonomisch nutzbar.\n- Die Lane-Struktur ist fuer nachfolgende Keyframe- und Curve-Editor-Arbeit tragfaehig.\n\n## Legacy note\nDie fruehere Referenz auf `DOC-C15_TIMELINE_REVOLUTION.md` wurde entfernt, weil dieses Dokument im aktuellen Repository nicht vorhanden ist.\n\n## Jules Instruction\nBitte verwende fuer die **Jules Session**, den **Branch** und den **PR-Namen** exakt diesen Titel:\nMF-071-TIMELINE-UI-MULTI-LANE: UI: Multi-Lane Timeline Editor mit aufklappbaren Automations-Spuren\n\n<!-- jules-session:begin -->\n<!-- jules-session-id: 915165096564679419 -->\n<!-- jules-session-name: sessions/915165096564679419 -->\n<!-- mapflow-queue-state: dispatched -->\n<!-- mapflow-remote-state: queued -->\n<!-- mapflow-work-branch: main -->\n<!-- mapflow-last-update: 2026-03-23T01:17:55Z -->\n## MapFlow Project Manager\n- Queue State: `dispatched`\n- Remote State: `queued`\n- Work Branch: `main`\n- Linked PR: _n/a_\n- Last Update: `2026-03-23T01:17:55Z`\n<!-- jules-session:end -->\n\n---\nMigrated from legacy issue MrLongNight/MapFlow#1129: https://github.com/MrLongNight/MapFlow/issues/1129",
+        "number": 50,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-02_MAI-002_Timeline-UI-Multi-Lane",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/50"
+      },
+      "description": "Multi-Lane-Timeline mit aufklappbaren Automationsspuren als belastbare Editor-Oberflaeche fertigstellen.",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO4s",
+      "jules_session-nr": "915165096564679419",
+      "labels": [
+        "enhancement",
+        "priority: medium",
+        "status: in-progress"
+      ],
+      "priority": "B",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "MF-071-TIMELINE-UI-MULTI-LANE",
+      "task_type": "Feature",
+      "title": "__SI-02_MAI-002_Timeline-UI-Multi-Lane"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "## Scope\nUmbrella issue for the macOS compatibility roadmap track.\n\n## Roadmap Source\n- MF-ID: MF-061-MACOS-COMPATIBILITY\n- Technical brief: `docs/A3_PROJECT/B1_PLANNING/DOC-C13_MACOS_COMPATIBILITY_PLAN.md`\n\n## macOS Sub-Issues\n- Vorce-Studios/Vorce#40 MFsub_#1080-macOS-Build-Bootstrap\n- MrLongNight/MapFlow#1081 MFsub_#1081-macOS-Runtime-Stabilization\n- Vorce-Studios/Vorce#41 MFsub_#1082-macOS-Media-FFmpeg-Path\n- Vorce-Studios/Vorce#42 MFsub_#1083-macOS-Audio-Validation\n- Vorce-Studios/Vorce#43 MFsub_#1084-macOS-CI-Validation\n- Vorce-Studios/Vorce#20 MFsub_#1027-macOS-Packaging-Notarization\n- Vorce-Studios/Vorce#21 MFsub_#1028-macOS-Native-Interop\n\n## Beschreibung\nMapFlow als macOS-Beta und spaeter als Release-Plattform absichern. (Siehe: `DOC-C13_MACOS_COMPATIBILITY_PLAN.md`)\n\n## Note\nThis roadmap track is now managed in GitHub Projects.---\nMigrated from legacy issue MrLongNight/MapFlow#1026: https://github.com/MrLongNight/MapFlow/issues/1026\n\n<!-- jules-session:begin -->\n<!-- jules-session-id:  -->\n<!-- jules-session-name:  -->\n<!-- vorce-queue-state: issue-only -->\n<!-- vorce-remote-state: merged -->\n<!-- vorce-work-branch: B-Jules-I_Complete-Bevy-migration-to-resolve-wgpu-24-vs-29-conflict-13075988342939375336 -->\n<!-- vorce-last-update: 2026-04-12T12:33:04Z -->\n## Vorce Project Manager\n- Queue State: `issue-only`\n- Remote State: `merged`\n- Work Branch: `B-Jules-I_Complete-Bevy-migration-to-resolve-wgpu-24-vs-29-conflict-13075988342939375336`\n- Linked PR: https://github.com/Vorce-Studios/Vorce/pull/211\n- Last Update: `2026-04-12T12:33:04Z`\n<!-- jules-session:end -->",
+        "number": 19,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "MAI-003_macOS-Implementierung",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/19"
+      },
+      "description": "MapFlow als macOS-Beta und spaeter als Release-Plattform absichern. (Siehe: `DOC-C13_MACOS_COMPATIBILITY_PLAN.md`)",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokPDU",
+      "jules_session-nr": "14310844382129001460",
+      "labels": [
+        "enhancement",
+        "priority: medium"
+      ],
+      "linked PR": "https://github.com/Vorce-Studios/Vorce/pull/211",
+      "priority": "B",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "MF-061-MACOS-COMPATIBILITY",
+      "task_type": "Feature",
+      "title": "MAI-003_macOS-Implementierung"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "## Roadmap Task\n- MF-ID: MF-062-MACOS-BUILD-BOOTSTRAP\n- Bereich: Platform/macOS\n- Typ: Fix\n- Prioritaet: A\n- Dev-Status (Roadmap): Ô£à Done\n- QA-Status (Roadmap): ­ƒö┤ Offen\n- Letztes Roadmap-Update: 2026-03-10\n\n## Beschreibung\nWorkspace auf macOS kompilierbar machen (Cargo-Features, winit/bevy Flags, Feature-Gates). (Siehe: `DOC-C13_MACOS_COMPATIBILITY_PLAN.md`)\n\n## Referenzen\n- `DOC-C13_MACOS_COMPATIBILITY_PLAN.md`\n\n## Note\nThis roadmap task is now tracked in GitHub Projects.---\nMigrated from legacy issue MrLongNight/MapFlow#1080: https://github.com/MrLongNight/MapFlow/issues/1080`n`n`n`n`n`n<!-- vorce-studios-sync:begin -->\nvorce-executor=gemini\nvorce-human-gate=manual_ui_gate\nvorce-orchestration-status=queued\nvorce-paperclip-issue-id=05405f6a-6f83-424e-ad64-5ef0da6975a5\nvorce-paperclip-issue-key=VOR-103\nvorce-planner-bucket=critical\nvorce-planner-score=215\nvorce-planner-updated=2026-04-06T11:23:28Z\n<!-- vorce-studios-sync:end -->\n\n<!-- jules-session:begin -->\n<!-- jules-session-id: 18235718128476890029 -->\n<!-- jules-session-name: sessions/18235718128476890029 -->\n<!-- vorce-queue-state: closed -->\n<!-- vorce-remote-state: in-progress -->\n<!-- vorce-work-branch: B-Jules/__SI-01_MAI-003_macOS-Build-Bootstrap-18235718128476890029 -->\n<!-- vorce-last-update: 2026-04-25T11:40:45Z -->\n## Vorce Project Manager\n- Queue State: `closed`\n- Remote State: `in-progress`\n- Work Branch: `B-Jules/__SI-01_MAI-003_macOS-Build-Bootstrap-18235718128476890029`\n- Linked PR: https://github.com/Vorce-Studios/Vorce/pull/188\n- Last Update: `2026-04-25T11:40:45Z`\n<!-- jules-session:end -->",
+        "number": 40,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-01_MAI-003_macOS-Build-Bootstrap",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/40"
+      },
+      "description": "critical / score 240 / in review",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO7U",
+      "jules_session-nr": "16412016206499694140",
+      "labels": [
+        "bug",
+        "jules-task",
+        "priority: critical"
+      ],
+      "linked PR": "https://github.com/Vorce-Studios/Vorce/pull/188",
+      "linked pull requests": [
+        "https://github.com/Vorce-Studios/Vorce/pull/188",
+        "https://github.com/Vorce-Studios/Vorce/pull/225"
+      ],
+      "pr_checks_status": "merge-conflict",
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "review_status": "pending",
+      "status": "Done",
+      "task_id": "VOR-2",
+      "task_type": "Test",
+      "title": "__SI-01_MAI-003_macOS-Build-Bootstrap"
+    },
+    {
+      "agent": "Gemini CLI",
+      "content": {
+        "body": "## Roadmap Task\n- MF-ID: MF-064-MACOS-MEDIA-FFMPEG-PATH\n- Bereich: Media/macOS\n- Typ: Bug\n- Prioritaet: A\n- Dev-Status (Roadmap): Ô£à Done\n- QA-Status (Roadmap): ­ƒö┤ Offen\n- Letztes Roadmap-Update: 2026-03-10\n\n## Beschreibung\nFFmpeg Discovery, Linking und stabilen Software-Decode-Pfad fuer macOS absichern. (Siehe: `DOC-C13_MACOS_COMPATIBILITY_PLAN.md`)\n\n## Referenzen\n- `DOC-C13_MACOS_COMPATIBILITY_PLAN.md`\n\n## Note\nThis roadmap task is now tracked in GitHub Projects.---\nMigrated from legacy issue MrLongNight/MapFlow#1082: https://github.com/MrLongNight/MapFlow/issues/1082`n`n`n`n`n`n<!-- vorce-studios-sync:begin -->\nvorce-executor=gemini\nvorce-human-gate=none\nvorce-orchestration-status=queued\nvorce-paperclip-issue-id=8492e7af-0834-493f-a624-b53122f6d6de\nvorce-paperclip-issue-key=VOR-110\nvorce-planner-bucket=critical\nvorce-planner-score=150\nvorce-planner-updated=2026-04-06T11:23:28Z\n<!-- vorce-studios-sync:end -->\n\n<!-- jules-session:begin -->\n<!-- jules-session-id:  -->\n<!-- jules-session-name:  -->\n<!-- vorce-queue-state: approved-awaiting-dispatch -->\n<!-- vorce-remote-state: merged -->\n<!-- vorce-work-branch: feat/windows-packaging-smoke-test -->\n<!-- vorce-last-update: 2026-04-27T20:47:45Z -->\n## Vorce Project Manager\n- Queue State: `approved-awaiting-dispatch`\n- Remote State: `merged`\n- Work Branch: `feat/windows-packaging-smoke-test`\n- Linked PR: https://github.com/Vorce-Studios/Vorce/pull/356\n- Last Update: `2026-04-27T20:47:45Z`\n<!-- jules-session:end -->",
+        "number": 41,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-03_MAI-003_macOS-Media-FFmpeg-Path",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/41"
+      },
+      "description": "critical / score 155 / blocked",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO68",
+      "jules_session-nr": "3324892848446490267",
+      "labels": [
+        "bug",
+        "jules-task",
+        "priority: critical"
+      ],
+      "pr_checks_status": "merge-conflict",
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "review_status": "needed",
+      "status": "Done",
+      "task_id": "VOR-3",
+      "task_type": "Test",
+      "title": "__SI-03_MAI-003_macOS-Media-FFmpeg-Path"
+    },
+    {
+      "agent": "Gemini CLI",
+      "content": {
+        "body": "## Roadmap Task\n- MF-ID: MF-065-MACOS-AUDIO-VALIDATION\n- Bereich: Audio/macOS\n- Typ: Bug\n- Prioritaet: A\n- Dev-Status (Roadmap): Ô£à Done\n- QA-Status (Roadmap): ­ƒö┤ Offen\n- Letztes Roadmap-Update: 2026-03-10\n\n## Beschreibung\nAudio-Input via cpal auf macOS validieren fallbacken oder sauber feature-gaten. (Siehe: `DOC-C13_MACOS_COMPATIBILITY_PLAN.md`)\n\n## Referenzen\n- `DOC-C13_MACOS_COMPATIBILITY_PLAN.md`\n\n## Note\nThis roadmap task is now tracked in GitHub Projects.---\nMigrated from legacy issue MrLongNight/MapFlow#1083: https://github.com/MrLongNight/MapFlow/issues/1083`n`n`n`n`n`n<!-- vorce-studios-sync:begin -->\nvorce-executor=gemini\nvorce-human-gate=none\nvorce-orchestration-status=queued\nvorce-paperclip-issue-id=90603fdb-0b2e-46f9-8f5a-d4e34586e519\nvorce-paperclip-issue-key=VOR-109\nvorce-planner-bucket=critical\nvorce-planner-score=150\nvorce-planner-updated=2026-04-06T11:23:28Z\n<!-- vorce-studios-sync:end -->\n\n<!-- jules-session:begin -->\n<!-- jules-session-id:  -->\n<!-- jules-session-name:  -->\n<!-- vorce-queue-state: approved-awaiting-dispatch -->\n<!-- vorce-remote-state: merged -->\n<!-- vorce-work-branch: feat/windows-packaging-smoke-test -->\n<!-- vorce-last-update: 2026-04-27T21:43:33Z -->\n## Vorce Project Manager\n- Queue State: `approved-awaiting-dispatch`\n- Remote State: `merged`\n- Work Branch: `feat/windows-packaging-smoke-test`\n- Linked PR: https://github.com/Vorce-Studios/Vorce/pull/356\n- Last Update: `2026-04-27T21:43:33Z`\n<!-- jules-session:end -->",
+        "number": 42,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-04_MAI-003_macOS-Audio-Validation",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/42"
+      },
+      "description": "critical / score 155 / blocked",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO6o",
+      "jules_session-nr": "6475118797459110159",
+      "labels": [
+        "bug",
+        "jules-task",
+        "priority: critical"
+      ],
+      "linked PR": "https://github.com/Vorce-Studios/Vorce/pull/356",
+      "pr_checks_status": "merge-conflict",
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "review_status": "needed",
+      "status": "Done",
+      "task_id": "VOR-4",
+      "task_type": "Test",
+      "title": "__SI-04_MAI-003_macOS-Audio-Validation"
+    },
+    {
+      "agent": "Gemini CLI",
+      "content": {
+        "body": "## Roadmap Task\n- MF-ID: MF-066-MACOS-CI-VALIDATION\n- Bereich: CI/macOS\n- Typ: Feature\n- Prioritaet: A\n- Dev-Status (Roadmap): Done\n- QA-Status (Roadmap): Offen\n- Letztes Roadmap-Update: 2026-03-10\n\n## Beschreibung\nmacOS Build- und Smoke-Validation in GitHub Actions absichern. (Siehe: `DOC-C13_MACOS_COMPATIBILITY_PLAN.md`)\n\n## Referenzen\n- `DOC-C13_MACOS_COMPATIBILITY_PLAN.md`\n\n## Note\nThis roadmap task is now tracked in GitHub Projects.---\nMigrated from legacy issue MrLongNight/MapFlow#1084: https://github.com/MrLongNight/MapFlow/issues/1084`n`n`n`n`n`n<!-- vorce-studios-sync:begin -->\nvorce-executor=gemini\nvorce-human-gate=manual_ui_gate\nvorce-orchestration-status=queued\nvorce-paperclip-issue-id=b063f091-64cc-4254-95ee-7560f6a09a60\nvorce-paperclip-issue-key=VOR-108\nvorce-planner-bucket=critical\nvorce-planner-score=155\nvorce-planner-updated=2026-04-06T11:23:28Z\n<!-- vorce-studios-sync:end -->\n\n<!-- jules-session:begin -->\n<!-- jules-session-id:  -->\n<!-- jules-session-name:  -->\n<!-- vorce-queue-state: issue-only -->\n<!-- vorce-remote-state: issue-only -->\n<!-- vorce-work-branch: dependabot/cargo/criterion-0.8.2 -->\n<!-- vorce-last-update: 2026-06-04T00:24:07Z -->\n## Vorce Project Manager\n- Queue State: `issue-only`\n- Remote State: `issue-only`\n- Work Branch: `dependabot/cargo/criterion-0.8.2`\n- Linked PR: https://github.com/Vorce-Studios/Vorce/pull/571\n- Last Update: `2026-06-04T00:24:07Z`\n<!-- jules-session:end -->",
+        "number": 43,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "VOR-018_StIs_macOS-CI-Validation",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/43"
+      },
+      "description": "critical / score 155 / in review",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO6Y",
+      "jules_session-nr": "18167939036101274310",
+      "labels": [
+        "enhancement",
+        "priority: critical",
+        "status: needs-testing"
+      ],
+      "linked PR": "https://github.com/Vorce-Studios/Vorce/pull/174",
+      "pr_checks_status": "merge-conflict",
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "review_status": "needed",
+      "status": "QA-Test_needed",
+      "task_id": "VOR-10",
+      "task_type": "Test",
+      "title": "VOR-018_StIs_macOS-CI-Validation"
+    },
+    {
+      "content": {
+        "body": "## Project Phase\nPhase 1 - Core Engine\n\n## Priority\nHigh\n\n## Status Update (2026-03-31)\n- `#61` bleibt offen und wird wieder als echter Statustracker fuer die MAI-004-Subissues gefuehrt.\n- Die Closeout-Aussage vom 2026-03-30 war nach erneuter Gegenpruefung des aktiven `main`-Codes nicht haltbar.\n- Alle bereits bearbeiteten Foundation-Subissues `#56`, `#57`, `#60`, `#62`, `#63`, `#64`, `#65`, `#66`, `#67` und `#68` stehen auf GitHub weiterhin auf `OPEN`.\n- Der detaillierte Audit-Stand ist in `docs/A3_PROJECT/B2_QUALITY/MAI-004_FOUNDATION_CLOSEOUT_2026-03-30.md` dokumentiert.\n\n## Task Description\nDieses Master-Issue bleibt der fachliche Tracker fuer die MAI-004-Subissues. Es darf nur dann geschlossen werden, wenn der reale Code- und Delivery-Stand der Downstream-Issues den dokumentierten Scope auch wirklich traegt.\n\n## Current Subissue Status\n- `Vorce-Studios/Vorce#56`: teilweise umgesetzt auf `main`; `PR #85` wurde am 2026-03-30 gemerged, aber Inspector-Drift und Unsupported-/Placeholder-Pfade sind noch sichtbar.\n- `Vorce-Studios/Vorce#57`: teilweise umgesetzt; die `RuntimeRenderQueue` ist da, aber Blend-/Mask-/Color-Calibration-Luecken bleiben offen. `PR #92` wurde am 2026-03-30 geschlossen und nicht gemerged. Jules-Session `17334415686066246325` ist `COMPLETED`, aber ohne PR.\n- `Vorce-Studios/Vorce#60`: teilweise umgesetzt; `PR #88` wurde am 2026-03-29 gemerged, aber Output-/Window-Fault-Isolation ist noch nicht vollstaendig lokalisiert.\n- `Vorce-Studios/Vorce#62`: fachlich weitgehend im Code gelandet; `PR #87` wurde am 2026-03-30 gemerged. Trigger-Event-Inspector und Mapping-Pfade sind sichtbar, formaler Closeout fehlt noch.\n- `Vorce-Studios/Vorce#63`: fachlich weitgehend im Code gelandet; `PR #86` wurde am 2026-03-30 gemerged. AudioFFT-/Midi-Signalpfade wirken im aktiven Code weitgehend vorhanden, Abschlussverifikation fehlt noch.\n- `Vorce-Studios/Vorce#64`: fachlich weitgehend im Code gelandet; `PR #89` wurde am 2026-03-30 gemerged. Die Jules-Session `14540972759070123130` steht trotzdem noch auf `IN_PROGRESS`, daher bleibt der Trackerzustand inkonsistent.\n- `Vorce-Studios/Vorce#65`: teilweise umgesetzt und aktiv in Folgearbeit; Jules-Session `10541395446807407408` ist `COMPLETED`, `PR #125` ist aber noch `OPEN`. Group-/All-Layer und Projector-Sync sind fachlich noch nicht durch.\n- `Vorce-Studios/Vorce#66`: teilweise umgesetzt; `PR #95` wurde am 2026-03-29 gemerged, aber `Bevy3DModel` zeigt im aktiven Inspector weiter `Model controls not yet implemented.`\n- `Vorce-Studios/Vorce#67`: fuer den Gating-Anteil fachlich weitgehend im Code gelandet; `PR #90` wurde am 2026-03-30 gemerged. Capability-Gating und Runtime-Warnungen sind sichtbar, formaler Closeout fehlt noch.\n- `Vorce-Studios/Vorce#68`: teilweise umgesetzt und aktiv in Folgearbeit; Jules-Session `8797109164578060998` ist `COMPLETED`, `PR #124` ist aber noch `OPEN`. Hue ist auf `main` noch nicht end-to-end sauber abgeschlossen.\n\n## Acceptance Criteria\n- [ ] Die Foundation-Sub-Issues sind fachlich sauber verifiziert und nur dann geschlossen, wenn der aktive Codezustand ihren Scope traegt.\n- [ ] Render-Queue-, Inspector-, Runtime- und Gating-Annahmen im Tracker stimmen mit dem aktiven `main`-Branch ueberein.\n- [ ] `#61` beschreibt den realen Reststand statt einen vorgezogenen Closeout.\n\n## Technical Details\n- Detail-Audit: `docs/A3_PROJECT/B2_QUALITY/MAI-004_FOUNDATION_CLOSEOUT_2026-03-30.md`\n- Hauptbelege im Code: `crates/vorce-core/src/module/types/schema.rs`, `crates/vorce-core/src/module_eval/evaluator/mod.rs`, `crates/vorce-core/src/module_eval/evaluator/triggers.rs`, `crates/vorce-core/src/module_eval/evaluator/traversal.rs`, `crates/vorce/src/orchestration/evaluation.rs`, `crates/vorce/src/orchestration/media.rs`, `crates/vorce/src/orchestration/outputs.rs`, `crates/vorce/src/app/loops/render/content.rs`, `crates/vorce-ui/src/editors/module_canvas/inspector/mod.rs`, `crates/vorce-ui/src/editors/module_canvas/inspector/common.rs`, `crates/vorce-ui/src/editors/module_canvas/inspector/layer.rs`, `crates/vorce-ui/src/editors/module_canvas/inspector/output.rs`, `crates/vorce-ui/src/editors/module_canvas/inspector/source.rs`, `crates/vorce-ui/src/editors/module_canvas/inspector/trigger.rs`, `crates/vorce-ui/src/editors/module_canvas/inspector/capabilities.rs`, `crates/vorce-ui/src/editors/module_canvas/utils/catalog.rs`.\n- Dieser Tracker ist aktuell ein manueller Status- und Koordinationspunkt, kein separater Jules-Coding-Dispatch.\n\n## Related Documentation\n- `docs/A3_PROJECT/B2_QUALITY/MAI-004_FOUNDATION_CLOSEOUT_2026-03-30.md`\n- `docs/A1_SYSTEM/B1_ARCHITECTURE/DOC-C4_RENDER-QUEUE.md`\n- `docs/A3_PROJECT/B2_QUALITY/AUDITS-ARCHIVE/DOC-C11_AUDIT_OPEN_POINTS_MAIN_2026-03-21.md`\n\n## Requirements\n- [x] Tests required\n- [x] Documentation update required\n- [ ] Breaking change\n- [ ] Security implications\n\n## Estimated Effort\nIn Progress\n\n<!-- jules-session:begin -->\n<!-- jules-session-id: n/a -->\n<!-- jules-session-name: n/a -->\n<!-- vorce-queue-state: tracking -->\n<!-- vorce-remote-state: manual -->\n<!-- vorce-work-branch: main -->\n<!-- vorce-last-update: 2026-03-31T01:01:49Z -->\n## Vorce Project Manager\n- Queue State: `tracking`\n- Remote State: `manual`\n- Work Branch: `main`\n- Linked PR: _n/a_\n- Last Update: `2026-03-31T01:01:49Z`\n<!-- jules-session:end -->",
+        "number": 61,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "MAI-004_Node-System-Foundation-Migration",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/61"
+      },
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO1E",
+      "labels": [
+        "enhancement",
+        "priority: high"
+      ],
+      "priority": "B",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_type": "Feature",
+      "title": "MAI-004_Node-System-Foundation-Migration"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "´╗┐## Project Phase\nPhase 1 - Core Engine\n\n## Priority\nHigh\n\n## Status Update (2026-03-19)\n- Jules-Session: `sessions/11598943082103670927` (`IN_PROGRESS`).\n- Unsafe `unwrap()`-/Panic-Pfade und strukturierte `[Fault Isolation]`-Diagnostics werden bereits gehaertet; offen sind noch robuste Smoke-Tests und die Absicherung von Output-/Window-/Bevy-Randfaellen.\n- Dieses Issue bleibt ein Querschnitts-Blocker fuer die Node-Migrationsarbeit, nicht nur ein Render-Detailticket.\n\n## Task Description\nDas Node-System soll auch bei Teilfehlern stabil bleiben. Dieses Issue isoliert Fehler auf Modul-/Node-/RenderOp-Ebene, loggt sie strukturiert und fuehrt den betroffenen Teilpfad wenn moeglich in einen degradierten, aber stabilen Zustand statt die ganze App hart scheitern zu lassen.\n\n## Acceptance Criteria\n- [ ] Ein fehlerhaftes Modul oder RenderOp kann die App nicht mehr leicht komplett abbrechen.\n- [ ] Diagnostics sind in Logs gezielt pro Modul/Part nachvollziehbar.\n- [ ] Output-/Window- oder Bevy-Teilfehler bleiben lokal begrenzt.\n- [ ] Der Debug-Smoke-Test fuer Automation bleibt gruen.\n\n## Technical Details\n- Relevante Dateien: `crates/mapmap-core/src/module/manager.rs`, `crates/mapmap-core/src/module/types/module.rs`, `crates/mapmap/src/app/loops/logic.rs`, `crates/mapmap/src/app/loops/render/**`, `crates/mapmap/src/main.rs`, `crates/mapmap/src/window_manager.rs`, `crates/mapmap-bevy/src/systems.rs`.\n- Fuer Tests soll bevorzugt ein gueltiges Modul ueber vorhandene Fabriken wie `ModuleManager::new().create_module(...)` erzeugt werden, statt ad-hoc `Default` fuer komplexe Produktionsstrukturen einzufuehren.\n\n## Related Documentation\n- `docs/A1_SYSTEM/B1_ARCHITECTURE/DOC-C4_RENDER-QUEUE.md`\n- `docs/A3_PROJECT/B2_QUALITY/DOC-C10_MODULE_NODE_SYSTEM_AUDIT_2026-03-18.md`\n\n## Requirements\n- [x] Tests required\n- [x] Documentation update required\n- [ ] Breaking change\n- [ ] Security implications\n\n## Estimated Effort\n1-2 Tage---\nMigrated from legacy issue MrLongNight/MapFlow#1242: https://github.com/MrLongNight/MapFlow/issues/1242\n\r\n\r\n",
+        "number": 60,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-03_MAI-004_Node-Fault-Isolation-and-Diagnostics",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/60"
+      },
+      "description": "Das Node-System soll auch bei Teilfehlern stabil bleiben. Dieses Issue isoliert Fehler auf Modul-/Node-/RenderOp-Ebene, loggt sie strukturiert und fuehrt den betroffenen Teilpfad wenn moeglich in einen degradierten, a...",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO1g",
+      "jules_session-nr": "11598943082103670927",
+      "labels": [
+        "bug",
+        "jules-task",
+        "priority: high",
+        "status: in-progress",
+        "testing"
+      ],
+      "linked pull requests": [
+        "https://github.com/Vorce-Studios/Vorce/pull/88"
+      ],
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "__MF-SubI_Node-Fault-Isolation-and-Diagnostics",
+      "task_type": "Bug",
+      "title": "__SI-03_MAI-004_Node-Fault-Isolation-and-Diagnostics"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "´╗┐## Project Phase\nPhase 4 - Control Systems\n\n## Priority\nHigh\n\n## Status Update (2026-03-19)\n- Jules-Session: `sessions/15073054199651470036` (`COMPLETED`). Ein erster Arbeitsstand existiert fuer generische Trigger-Previews und die Shortcut-Modifier-Korrektur.\n- Das Issue bleibt offen, weil Logging fuer ungueltige Trigger-Konfigurationen, die finale Ausrichtung des `Fixed`-Previews, Doku und die gemergte Verifikation noch fehlen.\n- Die Abhaengigkeit zu `MrLongNight/MapFlow#1041` ist nicht mehr blockierend; der Preview-Baseline-Teil ist bereits umgesetzt.\n\n## Task Description\nDie Event-basierten Trigger-Nodes (`Beat`, `Fixed`, `Random`, `Osc`, `Shortcut`) sollen konsistent zwischen Schema, Inspector und Runtime funktionieren. Dieses Issue schliesst die verbleibenden Familien-spezifischen Luecken fuer Event-/Gate-/Pulse-Verhalten, Preview-Status und defensives Logging.\n\n## Acceptance Criteria\n- [ ] Jede sichtbare Event-Trigger-Node zeigt im Inspector nur die zu ihr passenden Funktionen.\n- [ ] Jede sichtbare Event-Trigger-Node hat eine passende Preview oder einen bewussten Statuszustand.\n- [ ] Logging fuer ungueltige oder nicht aufloesbare Trigger-Konfigurationen ist verbessert.\n- [ ] `cargo check -p mapmap-core -p mapmap-ui -p mapmap` bleibt gruen.\n\n## Technical Details\n- Relevante Dateien: `crates/mapmap-ui/src/editors/module_canvas/inspector/trigger.rs`, `crates/mapmap-core/src/module_eval/evaluator/triggers.rs`, ggf. `crates/mapmap-core/src/trigger_system.rs` fuer Logging und Dokumentation.\n- `Fixed` soll seinen spezifischen Fortschritts-/Zykluskontext behalten; die generische Statuslogik ist nur konsistent einzubetten, nicht blind zu ersetzen.\n\n## Related Documentation\n- `docs/A3_PROJECT/B2_QUALITY/DOC-C10_MODULE_NODE_SYSTEM_AUDIT_2026-03-18.md`\n- Bezug: `MrLongNight/MapFlow#1239`, `MrLongNight/MapFlow#1041`\n\n## Requirements\n- [x] Tests required\n- [x] Documentation update required\n- [ ] Breaking change\n- [ ] Security implications\n\n## Estimated Effort\n0.5-1 Tag---\nMigrated from legacy issue MrLongNight/MapFlow#1244: https://github.com/MrLongNight/MapFlow/issues/1244\n\r\n\r\n",
+        "number": 62,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-04_MAI-004_Trigger-Event-Nodes-Migration",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/62"
+      },
+      "description": "Die Event-basierten Trigger-Nodes (`Beat`, `Fixed`, `Random`, `Osc`, `Shortcut`) sollen konsistent zwischen Schema, Inspector und Runtime funktionieren. Dieses Issue schliesst die verbleibenden Familien-spezifischen L...",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO04",
+      "jules_session-nr": "15073054199651470036",
+      "labels": [
+        "enhancement",
+        "jules-task",
+        "priority: high",
+        "status: in-progress"
+      ],
+      "linked pull requests": [
+        "https://github.com/Vorce-Studios/Vorce/pull/87"
+      ],
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "__MF-SubI_Trigger-Event-Nodes-Migration",
+      "task_type": "Feature",
+      "title": "__SI-04_MAI-004_Trigger-Event-Nodes-Migration"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "´╗┐## Project Phase\nPhase 4 - Control Systems\n\n## Priority\nHigh\n\n## Status Update (2026-03-19)\n- Jules-Session: `sessions/172233438171995501` (`IN_PROGRESS`). MIDI-Device-Bindung, Live-Status-Previews und Inspector-Anpassungen sind bereits in Arbeit.\n- Dieses Issue ist nachgeschaerft: Die breitere Socket-ID-/Evaluator-Basis gehoert in `MrLongNight/MapFlow#1236`; hier bleibt nur die Node-spezifische Stabilisierung fuer `AudioFFT` und `Midi`.\n- Offen sind vor allem dynamische Output-Stabilitaet, Device-/Learn-Fehlerpfade, Doku und die finale Verifikation.\n\n## Task Description\n`AudioFFT` und `Midi` sind Trigger-/Control-Sonderfaelle mit dynamischen Outputs, Learn-Logik und Device-Status. Dieses Issue schliesst die familien-spezifischen Luecken auf Basis der neuen Socket-/Inspector-/Fault-Isolation-Grundlagen.\n\n## Acceptance Criteria\n- [ ] Dynamische Outputs bleiben nach Inspector-Aenderungen und Preset-Laden stabil.\n- [ ] `Midi` und `AudioFFT` zeigen im Inspector nur passende Funktionen.\n- [ ] Jede sichtbare Node der Familie hat eine passende Preview oder einen klaren Statuszustand.\n- [ ] Fehlerhafte Devices oder Learn-Zustaende crashen die App nicht.\n\n## Technical Details\n- Relevante Dateien: `crates/mapmap-ui/src/editors/module_canvas/inspector/trigger.rs`, `crates/mapmap-core/src/module/types/trigger.rs`, `crates/mapmap-core/src/module_eval/evaluator/triggers.rs`, relevante MIDI-/AudioFFT-Helfer.\n- `generate_outputs()` und die dynamische Output-Neuberechnung sollen hier nur node-spezifisch abgesichert werden; generelle Graph-/Socket-Migration liegt in `MrLongNight/MapFlow#1236`.\n\n## Related Documentation\n- `docs/A3_PROJECT/B2_QUALITY/DOC-C10_MODULE_NODE_SYSTEM_AUDIT_2026-03-18.md`\n- Bezug: `MrLongNight/MapFlow#1236`, `Vorce-Studios/Vorce#60`\n\n## Requirements\n- [x] Tests required\n- [x] Documentation update required\n- [ ] Breaking change\n- [ ] Security implications\n\n## Estimated Effort\n1 Tag---\nMigrated from legacy issue MrLongNight/MapFlow#1245: https://github.com/MrLongNight/MapFlow/issues/1245\n\r\n\r\n",
+        "number": 63,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-05_MAI-004_Trigger-Signal-Nodes-Migration",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/63"
+      },
+      "description": "`AudioFFT` und `Midi` sind Trigger-/Control-Sonderfaelle mit dynamischen Outputs, Learn-Logik und Device-Status. Dieses Issue schliesst die familien-spezifischen Luecken auf Basis der neuen Socket-/Inspector-/Fault-Is...",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO0w",
+      "jules_session-nr": "172233438171995501",
+      "labels": [
+        "enhancement",
+        "priority: high",
+        "status: in-progress"
+      ],
+      "linked pull requests": [
+        "https://github.com/Vorce-Studios/Vorce/pull/86"
+      ],
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "__MF-SubI_Trigger-Signal-Nodes-Migration",
+      "task_type": "Feature",
+      "title": "__SI-05_MAI-004_Trigger-Signal-Nodes-Migration"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "´╗┐## Project Phase\nPhase 3 - Effects Pipeline\n\n## Priority\nHigh\n\n## Status Update (2026-03-19)\n- Der Preview-Contract aus `MrLongNight/MapFlow#1041` ist bereits gemerged; dieses Issue besitzt keinen generischen Preview-Auftrag mehr.\n- Verbleibender Scope: Source-Schema/Inspector/Runtime fuer klassische Media-/File-Sources, Transport-/Reverse-/Seek-Wirkung, Zielgroessen/FPS-Sichtbarkeit, Source-Transforms und robuste Medien-Fehlerpfade.\n- Dieses Ticket soll keine allgemeine Inspector-Infrastruktur neu aufmachen.\n\n## Task Description\nDie klassischen Media-/File-Source-Nodes sind die wichtigste stabile Source-Familie. Dieses Issue bringt Inspector, Preview-Nutzung und echten Runtime-/Renderpfad fuer `MediaFile`, `VideoUni`, `ImageUni`, `VideoMulti` und `ImageMulti` wieder deckungsgleich zusammen.\n\n## Acceptance Criteria\n- [ ] Jede sichtbare Media-/File-Source-Node zeigt im Inspector die zu ihr passenden Funktionen.\n- [ ] Jede sichtbare Media-/File-Source-Node nutzt die bereits vorhandene Preview-Basis sinnvoll.\n- [ ] Renderpfad und Inspector driften fuer diese Familie nicht mehr auseinander.\n- [ ] Fehlerhafte Medienquellen crashen die App nicht.\n\n## Technical Details\n- Relevante Dateien: Source-Inspector/UI, Source-Properties/Transform-Pfade, Media-Transport- und Decoder-Anbindung.\n- Enge Abhaengigkeiten: `Vorce-Studios/Vorce#56`, `Vorce-Studios/Vorce#57`, `Vorce-Studios/Vorce#60`.\n\n## Related Documentation\n- `docs/A3_PROJECT/B2_QUALITY/DOC-C10_MODULE_NODE_SYSTEM_AUDIT_2026-03-18.md`\n- `docs/A1_SYSTEM/B1_ARCHITECTURE/DOC-C4_RENDER-QUEUE.md`\n\n## Requirements\n- [x] Tests required\n- [x] Documentation update required\n- [ ] Breaking change\n- [ ] Security implications\n\n## Estimated Effort\n1-2 Tage---\nMigrated from legacy issue MrLongNight/MapFlow#1246: https://github.com/MrLongNight/MapFlow/issues/1246\n\r\n\r\n",
+        "number": 64,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-06_MAI-004_Media-File-Source-Nodes-Migration",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/64"
+      },
+      "description": "Die klassischen Media-/File-Source-Nodes sind die wichtigste stabile Source-Familie. Dieses Issue bringt Inspector, Preview-Nutzung und echten Runtime-/Renderpfad fuer `MediaFile`, `VideoUni`, `ImageUni`, `VideoMulti`...",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO0s",
+      "jules_session-nr": "16761688761540473356",
+      "labels": [
+        "enhancement",
+        "jules-task",
+        "priority: high",
+        "status: in-progress"
+      ],
+      "linked pull requests": [
+        "https://github.com/Vorce-Studios/Vorce/pull/89"
+      ],
+      "priority": "A",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "__MF-SubI_Media-File-Source-Nodes-Migration",
+      "task_type": "Feature",
+      "title": "__SI-06_MAI-004_Media-File-Source-Nodes-Migration"
+    },
+    {
+      "agent": "AgentJules",
+      "content": {
+        "body": "## Project Phase\nPhase 2 - Multi-Projector System\n\n## Priority\nHigh\n\n## Goal\nLayer- und Projector-Nodes zwischen Canvas, Inspector, Preview und Runtime konsistent machen, damit das lokale Output-System aus `Vorce-Studios/Vorce#33` und die clusterfaehige Nutzung mehrerer Instanzen nicht an Node-/Routing-Drift scheitern.\n\n## Current gap\nLayer- und Projector-Nodes sind der Kern des sichtbaren Renderpfads, aber ihre Verantwortung ist noch nicht ueberall konsistent:\n- Drift zwischen Canvas, Inspector, Preview und Runtime\n- moegliche Abweichungen zwischen Graph-Routing und tatsaechlicher Projector-/Output-Nutzung\n- kein sauberer Vertrag, welche Node-Daten lokal bleiben und welche spaeter fuer Multi-Instance-Routing relevant sind\n\n## This issue covers\n- Konsistenz fuer `LayerType::*` und `OutputType::Projector`\n- Paritaet zwischen Canvas, Inspector, Preview und Runtime\n- Routing-/Node-Verhalten, das auf dem lokalen Output-System aus `Vorce-Studios/Vorce#33` aufsetzt\n- klare Trennung zu Window-Lifecycle und Cluster-Control\n\n## Explicitly not in scope\n- Output-/Window-Reconciliation selbst\n- per-Projector-Ownership-/Persistenzmodell\n- Cluster-Control, Headless-Transport oder Multimaster-Regeln\n\n## Overlap cleanup\n- Output-/Window-Lifecycle gehoert in `Vorce-Studios/Vorce#69`.\n- per-Projector-Ownership gehoert in `Vorce-Studios/Vorce#47`.\n- verteilte Cluster-Logik gehoert in `Vorce-Studios/Vorce#17`.\n\n## Dependencies / sequencing\n- Eng verknuepft mit `Vorce-Studios/Vorce#33`, `Vorce-Studios/Vorce#47` und `Vorce-Studios/Vorce#69`.\n- Sollte vor finaler QA in `Vorce-Studios/Vorce#49` stabilisiert sein.\n\n## Acceptance criteria\n- Layer- und Projector-Nodes sind konsistent zwischen Canvas, Inspector, Preview und Runtime.\n- `LayerType::Group` und `LayerType::All` sind korrekt migriert oder sichtbar sauber deaktiviert.\n- Graph-Routing und Projector-Nutzung driften nicht mehr fachlich auseinander.\n- Fehler in einzelnen Layer-/Output-Konfigurationen crashen die App nicht.\n\n## Related documentation\n- `docs/A1_SYSTEM/B1_ARCHITECTURE/DOC-C4_RENDER-QUEUE.md`\n- `docs/A1_SYSTEM/B1_ARCHITECTURE/DOC-C5_OUTPUT_WINDOW_LIFECYCLE.md`\n- `docs/A3_PROJECT/B2_QUALITY/DOC-C10_MODULE_NODE_SYSTEM_AUDIT_2026-03-18.md`\n\n## Requirements\n- [x] Tests required\n- [x] Documentation update required\n- [ ] Breaking change\n- [ ] Security implications\n\n## Estimated effort\n1-2 days\n\n---\nMigrated from legacy issue MrLongNight/MapFlow#1247: https://github.com/MrLongNight/MapFlow/issues/1247\n\n<!-- jules-session:begin -->\n<!-- jules-session-id: 10541395446807407408 -->\n<!-- jules-session-name: sessions/10541395446807407408 -->\n<!-- vorce-queue-state: dispatched -->\n<!-- vorce-remote-state: queued -->\n<!-- vorce-work-branch: main -->\n<!-- vorce-last-update: 2026-03-30T20:05:15Z -->\n## Vorce Project Manager\n- Queue State: `dispatched`\n- Remote State: `queued`\n- Work Branch: `main`\n- Linked PR: _n/a_\n- Last Update: `2026-03-30T20:05:15Z`\n<!-- jules-session:end -->",
+        "number": 65,
+        "repository": "Vorce-Studios/Vorce",
+        "title": "__SI-07_MAI-004_Layer-and-Projector-Nodes-Migration",
+        "type": "Issue",
+        "url": "https://github.com/Vorce-Studios/Vorce/issues/65"
+      },
+      "description": "Layer-/Projector-Node-Paritaet fuer lokales und clusterfaehiges Routing.",
+      "id": "PVTI_lADOEBuQ0s4BTBsszgokO0Q",
+      "jules_session-nr": "5426501880747047135",
+      "labels": [
+        "enhancement",
+        "jules-task",
+        "priority: high",
+        "priority: medium",
+        "status: in-progress"
+      ],
+      "linked pull requests": [
+        "https://github.com/Vorce-Studios/Vorce/pull/125"
+      ],
+      "priority": "B",
+      "repository": "https://github.com/Vorce-Studios/Vorce",
+      "status": "Done",
+      "task_id": "MF-045-LAYER-PROJECTOR-RUNTIME-PARITY",
+      "task_type": "Refactor",
+      "title": "__SI-07_MAI-004_Layer-and-Projector-Nodes-Migration"
+    }
+  ],
+  "totalCount": 158,
+  "PSComputerName": "localhost",
+  "RunspaceId": "12c0fb38-7bf0-4d04-8118-367d6b805adc",
+  "PSShowComputerName": false
+}

@@ -136,6 +136,10 @@ scripts/codex-cli/tmp/
 Vorce-Autopilot/var/
 Vorce-Autopilot/dashboard/node_modules/
 Vorce-Autopilot/dashboard/dist/
+Vorce-Autopilot_2.0/var/
+Vorce-Autopilot_2.0/dashboard/node_modules/
+Vorce-Autopilot_2.0/dashboard/dist/
 !Vorce-Autopilot/**/*.json
+!Vorce-Autopilot_2.0/**/*.json
 
 .worktrees/
