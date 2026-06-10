@@ -10,7 +10,7 @@ use uuid::Uuid;
 pub type InstanceId = Uuid;
 
 /// Defines the operational role of a Vorce instance within a cluster/session
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Default)]
 pub enum InstanceRole {
     /// The primary controller of the session. Coordinates timeline, media selection,
     /// and dispatches state updates to Slaves and Headless Nodes.
@@ -146,5 +146,64 @@ impl ClusterConfig {
             .filter(|a| a.assigned_instance == instance_id)
             .map(|a| a.output_id)
             .collect()
+    }
+
+    /// Updates the state of a specific instance. Useful for reconnects and direct peer updates.
+    pub fn update_instance_state(&mut self, instance: InstanceConfig) {
+        if let Some(existing) = self.instances.iter_mut().find(|i| i.id == instance.id) {
+            *existing = instance;
+        } else {
+            self.instances.push(instance);
+            self.instances.sort_by_key(|i| i.id);
+        }
+    }
+
+    /// Reconciles this cluster configuration with another, deterministically merging state.
+    /// Handles stale peer state by prioritizing online status, and resolves conflicts deterministically.
+    pub fn reconcile(&mut self, other: &Self) {
+        for other_instance in &other.instances {
+            if let Some(existing) = self.instances.iter_mut().find(|i| i.id == other_instance.id) {
+                // Resolve stale peer state: prioritize 'is_online == true'
+                if other_instance.is_online && !existing.is_online {
+                    *existing = other_instance.clone();
+                } else if !other_instance.is_online && existing.is_online {
+                    // We have the more up-to-date online state, ignore the stale offline state from other
+                } else {
+                    // Both have same online status. Resolve properties deterministically to avoid drift.
+                    if other_instance.address > existing.address {
+                        existing.address = other_instance.address.clone();
+                    }
+                    if other_instance.name > existing.name {
+                        existing.name = other_instance.name.clone();
+                    }
+                    if other_instance.role > existing.role {
+                        existing.role = other_instance.role;
+                    }
+                }
+            } else {
+                self.instances.push(other_instance.clone());
+            }
+        }
+
+        // Ensure instances are sorted deterministically
+        self.instances.sort_by_key(|i| i.id);
+
+        for other_assignment in &other.output_assignments {
+            if let Some(existing) = self
+                .output_assignments
+                .iter_mut()
+                .find(|a| a.output_id == other_assignment.output_id)
+            {
+                // Deterministic conflict resolution for output assignments: pick the smaller InstanceId
+                if other_assignment.assigned_instance < existing.assigned_instance {
+                    existing.assigned_instance = other_assignment.assigned_instance;
+                }
+            } else {
+                self.output_assignments.push(other_assignment.clone());
+            }
+        }
+
+        // Ensure output assignments are sorted deterministically
+        self.output_assignments.sort_by_key(|a| a.output_id);
     }
 }
