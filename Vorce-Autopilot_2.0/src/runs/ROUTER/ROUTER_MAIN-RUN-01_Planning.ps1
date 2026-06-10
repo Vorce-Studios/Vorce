@@ -1,4 +1,7 @@
 # src/runs/ROUTER/ROUTER_MAIN-RUN-01_Planning.ps1
+# Router fuer die Planning-Phase
+# Entscheidet basierend auf Config und Systemzustand welche Sub-Runs laufen
+
 param(
     [Parameter(Mandatory)][object]$GlobalState,
     [Parameter(Mandatory)][object]$Config,
@@ -8,24 +11,37 @@ param(
 Write-Host "[ROUTER] Evaluierung der SUB-RUNS fuer Planning..." -ForegroundColor DarkGray
 
 $subRuns = @()
+$idx = 1
 
-# Kriterium 1: Immer Context Gathering zu Beginn
-$subRuns += @{
-    id     = "01"
-    name   = "ContextGathering"
-    script = "src/runs/SUB-RUN/SUB-RUN-01_MR-01_Planning__ContextGathering.ps1"
+# Lade Sub-Run-Definitionen aus der Config
+$routerCfg = $null
+if ($Config.PSObject.Properties.Name -contains "router_rules" -and 
+    $Config.router_rules.PSObject.Properties.Name -contains "Planning") {
+    $routerCfg = $Config.router_rules.Planning
 }
 
-# Kriterium 2: Check ob neue Issues oder re-planning erforderlich ist
-# (Hier koennte komplexe Logik stehen, vorerst nutzen wir die Config-Enabled-Flags als Basis)
-$routerCfg = $Config.router_rules.Planning
-$legacyEnabled = $true
 if ($null -ne $routerCfg) {
-    $legacyDef = $routerCfg | Where-Object { $_.name -match "Legacy" }
-    if ($null -ne $legacyDef) { $legacyEnabled = $legacyDef.enabled }
-}
-
-if ($legacyEnabled) {
+    foreach ($rule in $routerCfg) {
+        if ($rule.enabled) {
+            $subRuns += @{
+                id     = if ($rule.PSObject.Properties.Name -contains "id") { $rule.id } else { "{0:D2}" -f $idx }
+                name   = $rule.name
+                script = $rule.script
+            }
+            Write-Host "[ROUTER]   -> $($rule.name) aktiviert." -ForegroundColor Green
+        } else {
+            Write-Host "[ROUTER]   -> $($rule.name) deaktiviert (Config)." -ForegroundColor DarkGray
+        }
+        $idx++
+    }
+} else {
+    # Hardcoded Fallback falls keine Config vorhanden
+    Write-Warning "[ROUTER] Keine Config-Regeln fuer 'Planning' gefunden. Nutze Defaults."
+    $subRuns += @{
+        id     = "01"
+        name   = "ContextGathering"
+        script = "src/runs/SUB-RUN/SUB-RUN-01_MR-01_Planning__ContextGathering.ps1"
+    }
     $subRuns += @{
         id     = "02"
         name   = "LegacyFallback"
@@ -33,4 +49,5 @@ if ($legacyEnabled) {
     }
 }
 
+Write-Host "[ROUTER] Planning: $($subRuns.Count) Sub-Run(s) identifiziert." -ForegroundColor DarkGray
 return $subRuns

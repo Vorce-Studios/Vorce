@@ -33,7 +33,7 @@
   "dual_ceo": {
     "enabled": true,
     "ceo_alpha_chain": [
-      "codex_orchestrator:planninggemini_cli:premium",
+      "codex_orchestrator:planning",
       "claude_code:balanced"
     ],
     "ceo_beta_chain": [

@@ -57,16 +57,16 @@
   },
   "router_rules": {
     "Planning": [
-      { "name": "SR-01_ContextGathering", "script": "src/runs/sub/SR-01_ContextGathering.ps1", "enabled": true },
-      { "name": "SR-00_LegacyPlanningFallback", "script": "src/runs/sub/SR-00_LegacyPlanningFallback.ps1", "enabled": true }
+      { "id": "01", "name": "ContextGathering", "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-01_Planning__ContextGathering.ps1", "enabled": true },
+      { "id": "02", "name": "LegacyFallback", "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-01_Planning__LegacyFallback.ps1", "enabled": true }
     ],
     "Monitoring": [
-      { "name": "SR-01_SystemHealthCheck", "script": "src/runs/sub/SR-01_SystemHealthCheck.ps1", "enabled": true },
-      { "name": "SR-00_LegacyMonitoringFallback", "script": "src/runs/sub/SR-00_LegacyMonitoringFallback.ps1", "enabled": true }
+      { "id": "01", "name": "SystemHealthCheck", "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-02_Monitoring__SystemHealthCheck.ps1", "enabled": true },
+      { "id": "02", "name": "LegacyMonitoring", "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-02_Monitoring__LegacyFallback.ps1", "enabled": true }
     ],
     "Audit": [
-      { "name": "SR-01_ConsistencyAudit", "script": "src/runs/sub/SR-01_ConsistencyAudit.ps1", "enabled": true },
-      { "name": "SR-00_LegacyAuditFallback", "script": "src/runs/sub/SR-00_LegacyAuditFallback.ps1", "enabled": true }
+      { "id": "01", "name": "ConsistencyAudit", "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-03_Audit__ConsistencyAudit.ps1", "enabled": true },
+      { "id": "02", "name": "LegacyAudit", "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-03_Audit__LegacyFallback.ps1", "enabled": true }
     ]
   }
-  }
+}

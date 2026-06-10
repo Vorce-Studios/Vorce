@@ -93,13 +93,13 @@ function Invoke-RuntimeFileRetention {
     return $true
 }
 
+# Guard-Check: Nur die Kern-Bibliotheken pruefen.
+# Die alten Wakeup-Funktionen werden jetzt lazy in den Legacy-Fallback-SUB-RUNs geladen.
 $requiredAutopilotCommands = @(
     "Get-VorceConfigPrompt",
     "Confirm-WorkingSessionsState",
     "Optimize-AutopilotMemories",
-    "Invoke-PlanningWakeUp",
-    "Invoke-MonitoringWakeUp",
-    "Invoke-AuditWakeUp"
+    "Invoke-MainRun"
 )
 
 $missingAutopilotCommands = @($requiredAutopilotCommands | Where-Object {
@@ -139,16 +139,18 @@ Write-Host ""
 $State = Initialize-AutopilotState
 $QuotaRegistry = Read-QuotaRegistry
 
-# --- Single-shot modes ---
+# --- Single-shot modes (V2.0: Nutzen die neue MAIN-RUN Architektur) ---
 if ($PlanOnce.IsPresent) {
-    Invoke-PlanningWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-01_Planning.ps1"
+    & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
     Write-Host $summary -ForegroundColor DarkGray
     return
 }
 
 if ($MonitorOnce.IsPresent) {
-    Invoke-MonitoringWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-02_Monitoring.ps1"
+    & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
     Write-Host $summary -ForegroundColor DarkGray
     return

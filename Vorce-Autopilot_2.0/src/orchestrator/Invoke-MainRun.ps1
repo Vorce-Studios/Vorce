@@ -1,6 +1,6 @@
 # Invoke-MainRun.ps1
 # Zentraler Orchestrator fuer hierarchische Ausfuehrungen (V2.0)
-# Unterstützt MAIN-RUN -> ROUTER -> SUB-RUN -> PART-RUN
+# Unterstuetzt MAIN-RUN -> ROUTER -> SUB-RUN -> PART-RUN
 
 function Invoke-MainRun {
     param(
@@ -8,13 +8,14 @@ function Invoke-MainRun {
         [object]$GlobalState,
         [object]$Config,
         [object]$QuotaRegistry,
-        [switch]$DryRun
+        [switch]$DryRun,
+        [switch]$ForceAllSubRuns  # Erzwingt alle Sub-Runs, ignoriert Router-Entscheidungen
     )
 
     $Script:OrchestratorRoot = Join-Path $PSScriptRoot "../../"
     . (Join-Path $Script:OrchestratorRoot "src/lib/run-state-manager.ps1")
 
-    Write-Host "`n[ORCHESTRATOR] >>> Starte $MainRunName <<<" -ForegroundColor Cyan -Font Weight Bold
+    Write-Host "`n[ORCHESTRATOR] >>> Starte $MainRunName <<<" -ForegroundColor Cyan
 
     # 1. Initialisiere MAIN-RUN-STATE & Verzeichnis
     $mainRunPath = Initialize-RunDirectory -RunType "Main" -RunName $MainRunName
@@ -22,25 +23,39 @@ function Invoke-MainRun {
     
     try {
         $mainRunState.status = "running"
+        if ($ForceAllSubRuns.IsPresent) {
+            $mainRunState.metadata["force_mode"] = $true
+        }
         Save-RunState -State $mainRunState -RunPath $mainRunPath
 
-        # 2. Rufe den spezifischen ROUTER auf
-        $routerName = "ROUTER_$MainRunName"
-        $routerScript = Join-Path $Script:OrchestratorRoot "src/runs/ROUTER/$routerName.ps1"
-        
-        if (-not (Test-Path $routerScript)) {
-            throw "Router-Skript nicht gefunden: $routerScript"
+        # 2. Rufe den spezifischen ROUTER auf (oder Config-Fallback)
+        $subRunDefinitions = Resolve-SubRunDefinitions `
+            -MainRunName $MainRunName `
+            -GlobalState $GlobalState `
+            -Config $Config `
+            -MainState $mainRunState `
+            -ForceAll:$ForceAllSubRuns
+
+        if ($subRunDefinitions.Count -eq 0) {
+            Write-Host "[ORCHESTRATOR] Keine Sub-Runs fuer $MainRunName definiert. Ueberspringe." -ForegroundColor Yellow
+            $mainRunState.status = "skipped"
+            $mainRunState.metadata["skip_reason"] = "Keine Sub-Runs vom Router zurueckgegeben"
+            return [pscustomobject]@{
+                status   = "skipped"
+                sub_runs = @()
+                state    = $mainRunState
+            }
         }
 
-        Write-Host "[ORCHESTRATOR] Rufe $routerName auf..." -ForegroundColor Magenta
-        $subRunDefinitions = & $routerScript -GlobalState $GlobalState -Config $Config -MainState $mainRunState
+        Write-Host "[ORCHESTRATOR] $($subRunDefinitions.Count) Sub-Run(s) geplant." -ForegroundColor DarkGray
 
-        # 3. Iteriere über SUB-RUNS
+        # 3. Iteriere ueber SUB-RUNS
         $completedSubs = @()
+        $failedCount = 0
         foreach ($subDef in $subRunDefinitions) {
-            $subRunId = $subDef.id # z.B. 01
+            $subRunId = $subDef.id
             $mrShort = $MainRunName -replace 'MAIN-RUN-', 'MR-'
-            $subRunName = "SUB-RUN-$subRunId`_$mrShort`__$($subDef.name)"
+            $subRunName = "SUB-RUN-${subRunId}_${mrShort}__$($subDef.name)"
             $subScript = $subDef.script
             
             Write-Host "[ORCHESTRATOR]   -> Starte $subRunName" -ForegroundColor Yellow
@@ -54,8 +69,6 @@ function Invoke-MainRun {
                 
                 $fullSubScriptPath = Join-Path $Script:OrchestratorRoot $subScript
                 if (Test-Path $fullSubScriptPath) {
-                    # Hier könnten PART-RUNS innerhalb des SUB-RUNS gestartet werden
-                    # Wir übergeben die States hierarchisch weiter
                     & $fullSubScriptPath `
                         -MainState $mainRunState `
                         -SubState $subRunState `
@@ -64,6 +77,7 @@ function Invoke-MainRun {
                         -QuotaRegistry $QuotaRegistry `
                         -DryRun:$DryRun
                     
+                    # Nur auf "completed" setzen wenn der Sub-Run seinen Status nicht selbst geaendert hat
                     if ($subRunState.status -eq "running") {
                         $subRunState.status = "completed"
                     }
@@ -71,23 +85,37 @@ function Invoke-MainRun {
                     Add-RunError -State $subRunState -Message "SUB-RUN Skript nicht gefunden: $subScript"
                 }
             } catch {
-                Add-RunError -State $subRunState -Message "Fehler in $subRunName : $_" -Context $_.ScriptStackTrace
+                $failedCount++
+                Add-RunError -State $subRunState -Message "Fehler in ${subRunName}: $_" -Context $_.ScriptStackTrace
             } finally {
                 $subRunState.completed_at = (Get-Date).ToString('o')
                 Save-RunState -State $subRunState -RunPath $subRunPath
-                $mainRunState.metadata["$subRunName"] = $subRunState.status
+                # State-Aggregation: Alle Sub-Run Ergebnisse im Main-Run tracken
+                $mainRunState.metadata["sub_run_$subRunId"] = @{
+                    name   = $subDef.name
+                    status = $subRunState.status
+                    errors = $subRunState.errors.Count
+                }
                 $completedSubs += $subRunState
             }
         }
 
-        $mainRunState.status = "completed"
+        # Gesamt-Status basierend auf Sub-Run Ergebnissen
+        if ($failedCount -eq $subRunDefinitions.Count) {
+            $mainRunState.status = "failed"
+        } elseif ($failedCount -gt 0) {
+            $mainRunState.status = "partial"
+        } else {
+            $mainRunState.status = "completed"
+        }
+
         return [pscustomobject]@{
-            status   = "completed"
+            status   = $mainRunState.status
             sub_runs = $completedSubs
             state    = $mainRunState
         }
     } catch {
-        Add-RunError -State $mainRunState -Message "Kritischer Fehler in $MainRunName : $_" -Context $_.ScriptStackTrace
+        Add-RunError -State $mainRunState -Message "Kritischer Fehler in ${MainRunName}: $_" -Context $_.ScriptStackTrace
         return [pscustomobject]@{
             status   = "failed"
             error    = $_.Exception.Message
@@ -98,6 +126,70 @@ function Invoke-MainRun {
         Save-RunState -State $mainRunState -RunPath $mainRunPath
         Write-Host "[ORCHESTRATOR] $MainRunName beendet ($($mainRunState.status))." -ForegroundColor Cyan
     }
+}
+
+function Resolve-SubRunDefinitions {
+    <#
+    .SYNOPSIS
+    Bestimmt die auszufuehrenden Sub-Runs fuer einen Main-Run.
+    Prioritaet: 1) ROUTER-Skript  2) Config router_rules  3) Leer
+    #>
+    param(
+        [string]$MainRunName,
+        [object]$GlobalState,
+        [object]$Config,
+        [object]$MainState,
+        [switch]$ForceAll
+    )
+
+    # Versuch 1: Dediziertes Router-Skript
+    $routerName = "ROUTER_$MainRunName"
+    $routerScript = Join-Path $Script:OrchestratorRoot "src/runs/ROUTER/$routerName.ps1"
+    
+    if (Test-Path $routerScript) {
+        Write-Host "[ORCHESTRATOR] Rufe Router-Skript auf: $routerName" -ForegroundColor Magenta
+        $definitions = & $routerScript -GlobalState $GlobalState -Config $Config -MainState $MainState
+        
+        if ($ForceAll.IsPresent) {
+            Write-Host "[ORCHESTRATOR] Force-Modus aktiv: Alle Sub-Runs werden ausgefuehrt." -ForegroundColor Yellow
+        }
+        
+        return @($definitions)
+    }
+
+    # Versuch 2: Config-basierte Regeln (Fallback)
+    # Extrahiere den kurzen Run-Typ-Namen (z.B. "Planning" aus "MAIN-RUN-01_Planning")
+    $runType = $MainRunName -replace '^MAIN-RUN-\d+_', ''
+    
+    if ($Config.PSObject.Properties.Name -contains "router_rules" -and 
+        $Config.router_rules.PSObject.Properties.Name -contains $runType) {
+        
+        Write-Host "[ORCHESTRATOR] Kein Router-Skript gefunden. Nutze Config-Regeln fuer '$runType'." -ForegroundColor DarkYellow
+        $rules = $Config.router_rules.$runType
+        $subRuns = @()
+        $idx = 1
+        foreach ($rule in $rules) {
+            if ($rule.enabled -or $ForceAll.IsPresent) {
+                $subRuns += @{
+                    id     = "{0:D2}" -f $idx
+                    name   = $rule.name
+                    script = $rule.script
+                }
+                $idx++
+            } else {
+                Write-Host "[ORCHESTRATOR]   -> Sub-Run $($rule.name) deaktiviert (Config)." -ForegroundColor DarkGray
+                # State-Aggregation: Uebersprungene Sub-Runs dokumentieren
+                $MainState.metadata["skipped_$($rule.name)"] = @{
+                    reason    = "disabled_in_config"
+                    timestamp = (Get-Date).ToString('o')
+                }
+            }
+        }
+        return $subRuns
+    }
+
+    Write-Warning "[ORCHESTRATOR] Weder Router-Skript noch Config-Regeln fuer '$MainRunName' gefunden!"
+    return @()
 }
 
 function Invoke-PartRun {
@@ -146,16 +238,10 @@ function Invoke-PartRun {
 
         return $result
     } catch {
-        Add-RunError -State $partRunState -Message "Fehler im PART-RUN $PartRunName : $_"
+        Add-RunError -State $partRunState -Message "Fehler im PART-RUN ${PartRunName}: $_"
         return @{ success = $false; error = $_.Exception.Message }
     } finally {
         $partRunState.completed_at = (Get-Date).ToString('o')
         Save-RunState -State $partRunState -RunPath $partRunPath
     }
 }
-
-# if ($null -ne (Get-Command Export-ModuleMember -ErrorAction SilentlyContinue)) {
-#     try {
-#         Export-ModuleMember -Function Invoke-MainRun, Invoke-PartRun
-#     } catch {}
-# }
