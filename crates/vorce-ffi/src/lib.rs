@@ -176,7 +176,13 @@ mod tests {
 
         let valid_buffer: [u8; 4] = [1, 2, 3, 4];
         assert_eq!(
-            unsafe { vorce_plugin_read_buffer(std::ptr::null(), valid_buffer.as_ptr(), valid_buffer.len()) },
+            unsafe {
+                vorce_plugin_read_buffer(
+                    std::ptr::null(),
+                    valid_buffer.as_ptr(),
+                    valid_buffer.len(),
+                )
+            },
             FfiResultCode::NullPointer
         );
 
