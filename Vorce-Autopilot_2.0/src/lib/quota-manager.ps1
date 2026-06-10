@@ -125,9 +125,6 @@ function Test-PrimaryProvidersAvailable {
     return $codexAvailable -or $geminiAvailable
 }
 
-if ($null -ne (Get-Command # Export-ModuleMember -ErrorAction SilentlyContinue)) {
-    try {
-        # Export-ModuleMember -Function Read-QuotaRegistry, Save-QuotaRegistry, Get-ProviderConfig, Test-ProviderAvailable, Update-ProviderUsage, Get-QuotaSummary, Test-PrimaryProvidersAvailable
-    } catch {}
-}
+# Export-ModuleMember ist nur fuer .psm1 Module relevant.
+# Export-ModuleMember -Function Read-QuotaRegistry, Save-QuotaRegistry, Get-ProviderConfig, Test-ProviderAvailable, Update-ProviderUsage, Get-QuotaSummary, Test-PrimaryProvidersAvailable
 

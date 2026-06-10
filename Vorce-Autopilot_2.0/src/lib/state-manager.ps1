@@ -212,10 +212,8 @@ function Add-ErrorLog {
     Save-AutopilotState -State $State
 }
 
-if ($null -ne (Get-Command # Export-ModuleMember -ErrorAction SilentlyContinue)) {
-    try {
-        # Export-ModuleMember -Function Read-AutopilotState, Save-AutopilotState, Initialize-AutopilotState, Add-DeliberationLog, Update-AutopilotStateObject, Confirm-WorkingSessionsState, Add-ErrorLog
-    } catch {}
-}
+# Export-ModuleMember ist nur fuer .psm1 Module relevant.
+# Bei dot-sourcing (. file.ps1) sind alle Funktionen automatisch sichtbar.
+# Export-ModuleMember -Function Read-AutopilotState, Save-AutopilotState, Initialize-AutopilotState, Add-DeliberationLog, Update-AutopilotStateObject, Confirm-WorkingSessionsState, Add-ErrorLog
 
 

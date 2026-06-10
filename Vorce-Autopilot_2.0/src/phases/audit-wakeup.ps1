@@ -215,6 +215,7 @@ Antworte strikt im JSON-Format:
     }
 }
 
-if ($null -ne (Get-Command # Export-ModuleMember -ErrorAction SilentlyContinue)) { try { # Export-ModuleMember } catch {} } # -Function Invoke-AuditWakeUp
+# Export-ModuleMember ist nur fuer .psm1 Module relevant.
+# Export-ModuleMember -Function Invoke-AuditWakeUp
 
 

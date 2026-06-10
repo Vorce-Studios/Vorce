@@ -196,10 +196,4 @@ export default function DeliberationPanel({ deliberations }: Props) {
     </div>
   );
 }
-          </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+

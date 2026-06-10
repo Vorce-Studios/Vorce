@@ -118,9 +118,6 @@ function Optimize-AutopilotMemories {
     Save-MemoryStore -Store $Store
 }
 
-if ($null -ne (Get-Command # Export-ModuleMember -ErrorAction SilentlyContinue)) {
-    try {
-        # Export-ModuleMember -Function Read-MemoryStore, Save-MemoryStore, Add-AutopilotMemory, Get-RelevantMemories, Format-MemoryBlock, Optimize-AutopilotMemories
-    } catch {}
-}
+# Export-ModuleMember ist nur fuer .psm1 Module relevant.
+# Export-ModuleMember -Function Read-MemoryStore, Save-MemoryStore, Add-AutopilotMemory, Get-RelevantMemories, Format-MemoryBlock, Optimize-AutopilotMemories
 

@@ -4,7 +4,6 @@
 $ScriptDir = $PSScriptRoot
 $LibDir = Join-Path $ScriptDir "src/lib"
 $OrchDir = Join-Path $ScriptDir "src/orchestrator"
-$RouterDir = Join-Path $ScriptDir "src/router"
 
 # Importiere Module (wie in autopilot.ps1)
 . (Join-Path $LibDir "state-manager.ps1")
@@ -22,9 +21,8 @@ $RouterDir = Join-Path $ScriptDir "src/router"
 . (Join-Path $ScriptDir "src/phases/monitoring-wakeup.ps1")
 . (Join-Path $ScriptDir "src/phases/audit-wakeup.ps1")
 
-# Neu: Orchestrator & Router
+# Orchestrator (enthaelt Invoke-MainRun und Resolve-SubRunDefinitions)
 . (Join-Path $OrchDir "Invoke-MainRun.ps1")
-. (Join-Path $RouterDir "Invoke-MainRunRouter.ps1")
 
 # Lade Config
 $configPath = Join-Path $ScriptDir "config/autopilot-config.json"
@@ -34,15 +32,39 @@ $GlobalState = Initialize-AutopilotState
 
 Write-Host "--- Starte Hierarchischen Orchestrator Test ---" -ForegroundColor Magenta
 
-# Führe Planning Run aus (Dry-Run)
-$planningResult = Invoke-MainRun -MainRunName "Planning" -GlobalState $GlobalState -Config $Config -QuotaRegistry $Registry -DryRun
+# Test 1: Planning Run (Dry-Run) via MAIN-RUN Skript
+Write-Host "`n=== Test 1: Planning MAIN-RUN ===" -ForegroundColor Cyan
+$planningResult = Invoke-MainRun -MainRunName "MAIN-RUN-01_Planning" -GlobalState $GlobalState -Config $Config -QuotaRegistry $Registry -DryRun
 
-Write-Host "`n--- Testergebnis ---" -ForegroundColor Magenta
+Write-Host "`n--- Planning Testergebnis ---" -ForegroundColor Magenta
 if ($null -ne $planningResult) {
-    Write-Host "Status: $($planningResult.status)"
+    Write-Host "Status: $($planningResult.status)" -ForegroundColor $(if ($planningResult.status -eq "completed") { "Green" } else { "Red" })
     Write-Host "Sub-Runs: $($planningResult.sub_runs.Count)"
 } else {
     Write-Host "Status: FAILED (Result is NULL)" -ForegroundColor Red
 }
 
-$planningResult | ConvertTo-Json -Depth 5
+# Test 2: Monitoring Run (Dry-Run)
+Write-Host "`n=== Test 2: Monitoring MAIN-RUN ===" -ForegroundColor Cyan
+$monResult = Invoke-MainRun -MainRunName "MAIN-RUN-02_Monitoring" -GlobalState $GlobalState -Config $Config -QuotaRegistry $Registry -DryRun
+
+Write-Host "`n--- Monitoring Testergebnis ---" -ForegroundColor Magenta
+if ($null -ne $monResult) {
+    Write-Host "Status: $($monResult.status)" -ForegroundColor $(if ($monResult.status -eq "completed") { "Green" } else { "Red" })
+    Write-Host "Sub-Runs: $($monResult.sub_runs.Count)"
+} else {
+    Write-Host "Status: FAILED (Result is NULL)" -ForegroundColor Red
+}
+
+# Test 3: Config-Fallback (kein Router-Skript)
+Write-Host "`n=== Test 3: Config-Fallback Test (RunName ohne Router-Skript) ===" -ForegroundColor Cyan
+$fallbackResult = Invoke-MainRun -MainRunName "Planning" -GlobalState $GlobalState -Config $Config -QuotaRegistry $Registry -DryRun
+
+Write-Host "`n--- Fallback Testergebnis ---" -ForegroundColor Magenta
+if ($null -ne $fallbackResult) {
+    Write-Host "Status: $($fallbackResult.status) (erwartet: completed oder partial)" -ForegroundColor $(if ($fallbackResult.status -ne "failed") { "Green" } else { "Red" })
+} else {
+    Write-Host "Status: FAILED (Result is NULL)" -ForegroundColor Red
+}
+
+Write-Host "`n=== Alle Tests abgeschlossen ===" -ForegroundColor Magenta
