@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, Trash2, CalendarClock, Ban, MessageSquare, Terminal, Play } from 'lucide-react';
+import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, Trash2, CalendarClock, Ban, MessageSquare, Terminal, Play, CheckCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue, AuditResult } from '../types';
 import DeliberationPanel from './DeliberationPanel';
@@ -176,6 +176,8 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   const runControl = sessions.run_control || {};
   const liveLogItems = getLiveLogItems(liveLog);
   const audit = parseAuditResult(auditResult);
+  const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
+  const [commentDraft, setCommentDraft] = useState<string>('');
 
   const sendRunControl = async (type: 'planning' | 'monitoring', action: string, note?: string) => {
     await fetch('/api/run-control', {
@@ -300,20 +302,47 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
               const activeStep = userStage ? 2 : ceoStage ? 1 : 0;
               return (
                 <div key={id} className="bg-slate-950/50 border border-rose-500/20 rounded-lg p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
-                    <div>
-                      <div className="font-semibold text-rose-200">{normalizeAuditText(alert.topic || 'QA Manager Alert')}</div>
-                      <div className="text-xs text-rose-300/70 mt-0.5">
-                        Zuständig: {owner} · {auditStageLabel(alert)} · {timeAgo(alert.created_at)}
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="font-semibold text-rose-200">{normalizeAuditText(alert.topic || 'QA Manager Alert')}</div>
+                        <div className="text-xs text-rose-300/70 mt-0.5">
+                          Zuständig: {owner} · {auditStageLabel(alert)} · {timeAgo(alert.created_at)}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {alert.status === 'closed' && (
+                          <span className="text-[10px] px-2 py-1 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">
+                            Geschlossen: {timeAgo(alert.closed_at || '')}
+                          </span>
+                        )}
+                        {alert.status === 'ignored' && (
+                          <span className="text-[10px] px-2 py-1 bg-amber-500/20 text-amber-300 rounded border border-amber-500/30">
+                            Ignoriert: {timeAgo(alert.closed_at || '')}
+                          </span>
+                        )}
+                        {!alert.status && (
+                          <button
+                            onClick={() => setShowCommentModal(id)}
+                            className="p-1.5 rounded-md bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30"
+                            title="Alert schließen"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
-                    <button
-                      onClick={() => updateAuditAlert('remove', id)}
-                      className="p-1.5 rounded-md bg-slate-900 text-slate-400 hover:text-rose-300 border border-slate-700"
-                      title="Audit Alert löschen"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    
+                    {alert.status === 'closed' && alert.user_comment && (
+                      <div className="text-xs text-slate-500 bg-slate-900/40 rounded p-2">
+                        <span className="text-slate-400 font-medium">Kommentar:</span> {alert.user_comment}
+                      </div>
+                    )}
+                    {alert.status === 'ignored' && alert.user_comment && (
+                      <div className="text-xs text-slate-500 bg-slate-900/40 rounded p-2">
+                        <span className="text-slate-400 font-medium">Begründung:</span> {alert.user_comment}
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 mb-3">
@@ -360,6 +389,55 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Comment Modal */}
+      {showCommentModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-slate-100 mb-2">Alert schließen / Ignorieren</h3>
+            <p className="text-sm text-slate-400 mb-4">Warum wird dieser Alert geschlossen oder ignoriert?</p>
+            
+            <textarea
+              className="w-full h-24 px-3 py-2 text-sm bg-slate-950 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 resize-none"
+              placeholder="z.B. PR #779 passt später wieder in die Namenskonvention, aktueller Workaround..."
+              value={commentDraft}
+              onChange={(e) => setCommentDraft(e.target.value)}
+            />
+            
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => {
+                  setShowCommentModal(null);
+                  setCommentDraft('');
+                }}
+                className="px-4 py-2 text-sm rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-600 transition-colors"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={async () => {
+                  setShowCommentModal(null);
+                  await updateAuditAlert('close-alert', showCommentModal, commentDraft || 'Manuell geschlossen');
+                  window.location.reload();
+                }}
+                className="px-4 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 transition-colors"
+              >
+                Schließen
+              </button>
+              <button
+                onClick={async () => {
+                  setShowCommentModal(null);
+                  await updateAuditAlert('ignore-alert', showCommentModal, commentDraft || 'Ignoriert (repeat-accept)');
+                  window.location.reload();
+                }}
+                className="px-4 py-2 text-sm rounded-lg bg-amber-600 text-white hover:bg-amber-500 transition-colors"
+              >
+                Ignorieren & Memory
+              </button>
+            </div>
           </div>
         </div>
       )}

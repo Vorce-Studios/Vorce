@@ -81,6 +81,8 @@ function Write-Host {
 . (Join-Path $ScriptDir "src/lib/autopilot-prompts.ps1")
 . (Join-Path $ScriptDir "src/lib/github-client.ps1")
 . (Join-Path $ScriptDir "src/lib/jules-client.ps1")
+. (Join-Path $ScriptDir "src/lib/naming-convention.ps1")
+. (Join-Path $ScriptDir "src/lib/project-manager.ps1")
 . (Join-Path $ScriptDir "src/phases/planning-wakeup.ps1")
 . (Join-Path $ScriptDir "src/phases/monitoring-wakeup.ps1")
 . (Join-Path $ScriptDir "src/phases/audit-wakeup.ps1")

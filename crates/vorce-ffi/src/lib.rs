@@ -165,23 +165,23 @@ mod tests {
         let api = PluginApi::new();
 
         assert_eq!(
-            vorce_plugin_get_version(std::ptr::null(), &mut version),
+            unsafe { vorce_plugin_get_version(std::ptr::null(), &mut version) },
             FfiResultCode::NullPointer
         );
 
         assert_eq!(
-            vorce_plugin_get_version(&api, std::ptr::null_mut()),
+            unsafe { vorce_plugin_get_version(&api, std::ptr::null_mut()) },
             FfiResultCode::NullPointer
         );
 
         let valid_buffer: [u8; 4] = [1, 2, 3, 4];
         assert_eq!(
-            vorce_plugin_read_buffer(std::ptr::null(), valid_buffer.as_ptr(), valid_buffer.len()),
+            unsafe { vorce_plugin_read_buffer(std::ptr::null(), valid_buffer.as_ptr(), valid_buffer.len()) },
             FfiResultCode::NullPointer
         );
 
         assert_eq!(
-            vorce_plugin_read_buffer(&api, std::ptr::null(), valid_buffer.len()),
+            unsafe { vorce_plugin_read_buffer(&api, std::ptr::null(), valid_buffer.len()) },
             FfiResultCode::NullPointer
         );
     }
@@ -193,13 +193,13 @@ mod tests {
 
         // 0 length buffer
         assert_eq!(
-            vorce_plugin_read_buffer(&api, valid_buffer.as_ptr(), 0),
+            unsafe { vorce_plugin_read_buffer(&api, valid_buffer.as_ptr(), 0) },
             FfiResultCode::InvalidBuffer
         );
 
         // Out of bounds huge length buffer
         assert_eq!(
-            vorce_plugin_read_buffer(&api, valid_buffer.as_ptr(), 1024 * 1024 * 200),
+            unsafe { vorce_plugin_read_buffer(&api, valid_buffer.as_ptr(), 1024 * 1024 * 200) },
             FfiResultCode::InvalidBuffer
         );
     }

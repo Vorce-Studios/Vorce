@@ -102,7 +102,6 @@ MANDAT DES USERS (VERLETZUNG FUEHRT ZUM ABBRUCH):
 
 WICHTIG FÜR ALERTS:
 Bevor du einen neuen Alert erstellst, prüfe ob eine ähnliche Situation bereits bearbeitet wurde (z.B. PR #779 Namenskonflikt). Wenn ja, gib keine Eskalation sondern sei vorsichtig mit der Erstellung neuer decision_pending-Einträge.
-"@
 
 Aktuelle offene Issues:
 $issuesData

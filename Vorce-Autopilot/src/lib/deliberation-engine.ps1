@@ -482,20 +482,63 @@ function Invoke-Deliberation {
     })
 
     if (-not $proposalResult.success) {
-        Write-Host "[DELIB] CEO-Proposal fehlgeschlagen! Breche Deliberation ab (Kein Fallback-Proposal durch QA-Manager)." -ForegroundColor Red
-        $protocol.final_output = "Alpha failed. Deliberation aborted."
-        $protocol.consensus_reached = $false
+        Write-Host "[DELIB] CEO-Proposal (Alpha) fehlgeschlagen! Versuche Fallback-Proposal durch QA-Manager (Beta)..." -ForegroundColor Yellow
+        $fallbackStart = Get-Date
+        $fallbackResult = Invoke-VisibleCeoPhase `
+            -QuotaRegistry $QuotaRegistry `
+            -CeoInfo $ceos.beta `
+            -Prompt $proposalPrompt `
+            -PhaseName "Proposal (Fallback)" `
+            -WorkingDirectory $WorkingDirectory `
+            -State $State `
+            -DryRun:$DryRun
 
+        $fallbackDuration = ((Get-Date) - $fallbackStart).TotalMilliseconds
+        $betaProposal = Get-CleanCeoOutput -RawOutput $fallbackResult.output -ProviderName $ceos.beta.provider
+
+        $protocol.rounds += @([ordered]@{
+            phase       = "proposal_fallback"
+            agent       = "beta"
+            provider    = $ceos.beta.provider
+            duration_ms = [int]$fallbackDuration
+            success     = $fallbackResult.success
+            content     = $betaProposal
+        })
+
+        if (-not $fallbackResult.success) {
+            Write-Host "[DELIB] CEO-Proposal Fallback fehlgeschlagen! Breche Deliberation ab." -ForegroundColor Red
+            $protocol.final_output = "Alpha and Beta failed. Deliberation aborted."
+            $protocol.consensus_reached = $false
+
+            $protocol.completed_at = (Get-Date -Format 'o')
+            Save-DeliberationProtocol -Protocol $protocol -Config $Config
+
+            return [ordered]@{
+                success        = $false
+                provider       = $ceos.alpha.provider
+                model          = $ceos.alpha.model_tier
+                output         = $alphaProposal
+                error          = "PROPOSAL_FAILED"
+                stats          = $proposalResult.stats
+                deliberation   = $protocol
+            }
+        }
+
+        Write-Host "[DELIB] CEO-Proposal Fallback (Beta) erfolgreich." -ForegroundColor Green
+        Format-CeoChatOutput -Role "Proposal (Fallback)" -AgentName $ceos.beta.provider -Content $betaProposal
+        
+        $protocol.final_output = $betaProposal
+        $protocol.consensus_reached = $false
         $protocol.completed_at = (Get-Date -Format 'o')
         Save-DeliberationProtocol -Protocol $protocol -Config $Config
 
         return [ordered]@{
-            success        = $false
-            provider       = $ceos.alpha.provider
-            model          = $ceos.alpha.model_tier
-            output         = $alphaProposal
-            error          = "PROPOSAL_FAILED"
-            stats          = $proposalResult.stats
+            success        = $true
+            provider       = $ceos.beta.provider
+            model          = $ceos.beta.model_tier
+            output         = $betaProposal
+            error          = $null
+            stats          = $fallbackResult.stats
             deliberation   = $protocol
         }
     }

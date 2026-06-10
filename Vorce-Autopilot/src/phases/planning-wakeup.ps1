@@ -272,7 +272,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                     foreach ($cpr in $conflictingPrs) {
                         $baseRef = if (Test-ObjectProperty -Object $cpr -Name "baseRefName") { [string]$cpr.baseRefName } else { "main" }
                         $headRef = if (Test-ObjectProperty -Object $cpr -Name "headRefName") { [string]$cpr.headRefName } else { "" }
-                        $issueBody += "- PR #$($cpr.number): `$headRef` -> `$baseRef` - $($cpr.title)`n"
+                        $issueBody += ('- PR #{0}: ``{1}`` -> ``{2}`` - {3}' -f $cpr.number, $headRef, $baseRef, $cpr.title) + "`n"
                     }
                     $issueBody += @"
 
@@ -333,6 +333,7 @@ Prioritaet: KRITISCH - blockiert Release-Pipeline.
     if ($Config.PSObject.Properties.Name -contains "planning_sequence") {
         Write-Host "[PLANNING] Starte sequentielle Planungs-Sequenz (Session Splitting)..." -ForegroundColor Yellow
         $planningContext = ""
+        $codexExhausted = $false
 
         foreach ($step in $Config.planning_sequence) {
             Write-Host "[PLANNING] Starte Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
@@ -354,7 +355,9 @@ Prioritaet: KRITISCH - blockiert Release-Pipeline.
             $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$stepPrompt"
 
             $stepResult = $null
-            if ($step.id -eq "final_synthesis" -or $step.prompt_ref -eq "planning_synthesis") {
+            $useCodex = ($step.id -eq "final_synthesis" -or $step.prompt_ref -eq "planning_synthesis") -and (-not $codexExhausted)
+
+            if ($useCodex) {
                 Write-Host "[PLANNING] Starte Planning Synthesis als interaktiven Codex-Chat." -ForegroundColor Cyan
                 $sessionResult = Invoke-AutopilotCodexSession `
                     -SessionType "planning-synthesis" `
@@ -377,7 +380,15 @@ Prioritaet: KRITISCH - blockiert Release-Pipeline.
                     success = [bool]$sessionResult.Success
                     output  = $sessionOutput
                 }
-            } else {
+                
+                if (-not $stepResult.success) {
+                    Write-Host "[PLANNING] Codex-Session fehlgeschlagen (evtl. Limit erreicht). Wechsle fuer restliche Session auf Fallback (DualCeoTask)." -ForegroundColor Yellow
+                    $codexExhausted = $true
+                    $useCodex = $false
+                }
+            }
+
+            if (-not $useCodex) {
                 $stepResult = Invoke-DualCeoTask `
                     -QuotaRegistry $QuotaRegistry `
                     -Config $Config `
@@ -964,7 +975,7 @@ Wenn keine Optimierungen nötig oder sinnvoll sind, antworte mit einem leeren Ar
     $queuedNow = @($State.working_queue).Count
     $delegationsNow = @($State.active_delegations).Count
     $createdIssuesNow = @($State.autopilot_created_issues).Count
-    $planningSummary = "Issues geprueft: $candidateCount; Working-Queue: $planningQueueBefore -> $queuedNow; Delegierungen: $planningDelegationsBefore -> $delegationsNow; erstellte Issues gesamt: $createdIssuesNow."
+    $planningSummary = ('Issues geprueft: {0}; Working-Queue: {1} -> {2}; Delegierungen: {3} -> {4}; erstellte Issues: {5} -> {6}.' -f $candidateCount, $planningQueueBefore, $queuedNow, $planningDelegationsBefore, $delegationsNow, $planningIssuesBefore, $createdIssuesNow)
     if (-not (Test-ObjectProperty -Object $State -Name "run_summaries") -or $null -eq $State.run_summaries) {
         $State | Add-Member -MemberType NoteProperty -Name "run_summaries" -Value ([pscustomobject]@{}) -Force
     }
