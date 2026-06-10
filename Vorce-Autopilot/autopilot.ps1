@@ -219,17 +219,33 @@ while ($true) {
         continue
     }
 
+    $Config = Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $planMinutes = if ($PlanningIntervalOverride -gt 0) { $PlanningIntervalOverride } else { $Config.wake_intervals.planning_minutes }
+    $monMinutes = if ($MonitoringIntervalOverride -gt 0) { $MonitoringIntervalOverride } else { $Config.wake_intervals.monitoring_minutes }
+
+    # Sync timestamps from State in case they were modified (e.g. Session Split)
+    if ($State.last_planning_at) {
+        try { $lastPlanTime = [datetimeoffset]::Parse($State.last_planning_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime } catch {}
+    }
+
     $planDue = ($now - $lastPlanTime).TotalMinutes -ge $planMinutes
     $monDue = ($now - $lastMonTime).TotalMinutes -ge $monMinutes
 
     if ($planDue) {
         try {
             Invoke-PlanningWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
-            $lastPlanTime = Get-Date
+            if ($State.last_planning_at) {
+                try { $lastPlanTime = [datetimeoffset]::Parse($State.last_planning_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime } catch { $lastPlanTime = Get-Date }
+            } else {
+                $lastPlanTime = Get-Date
+            }
         } catch {
             Write-Host "[LOOP] Planning-Fehler: $_" -ForegroundColor Red
             Write-Host "[LOOP] StackTrace: $($_.ScriptStackTrace)" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "Planning wake-up failed" -Context $_.Exception.Message
+            # Backoff for 5 minutes on error
+            $lastPlanTime = (Get-Date).AddMinutes(-($planMinutes - 5))
+            $State.last_planning_at = $lastPlanTime.ToString('o')
         }
 
         # Planning hat Prioritaet
@@ -250,9 +266,13 @@ while ($true) {
         try {
             Invoke-MonitoringWakeUp -State $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
             $lastMonTime = Get-Date
+            $State.last_monitoring_at = $lastMonTime.ToString('o')
         } catch {
             Write-Host "[LOOP] Monitoring-Fehler: $_" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "Monitoring wake-up failed" -Context $_.Exception.Message
+            # Backoff for 5 minutes on error
+            $lastMonTime = (Get-Date).AddMinutes(-($monMinutes - 5))
+            $State.last_monitoring_at = $lastMonTime.ToString('o')
         }
     }
 
@@ -300,8 +320,17 @@ while ($true) {
     Write-Host ""
 
     Save-AutopilotState -State $State
+    $wakeupFile = Join-Path $ScriptDir "autopilot.wakeup"
     $remainingSleep = [Math]::Max(1, [int]$sleepSeconds)
     while ($remainingSleep -gt 0) {
+        if (Test-Path $wakeupFile) {
+            Remove-Item $wakeupFile -Force -ErrorAction SilentlyContinue
+            Write-Host "[LOOP] Wake-Up Trigger erkannt! Ueberspringe Sleep." -ForegroundColor Yellow
+            # Force run next iteration
+            $lastPlanTime = [datetime]::MinValue
+            $lastMonTime = [datetime]::MinValue
+            break
+        }
         Start-Sleep -Seconds 1
         $remainingSleep--
     }

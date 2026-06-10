@@ -749,9 +749,10 @@ Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
         }
     }
 
-    # --- Smart Memory Optimization (Triggered every 3rd planning run) ---
-    if ($State.planning_run_count % 3 -eq 0 -and -not $DryRun.IsPresent) {
-        Write-Host "[PLANNING] Jeder 3. Planungs-Lauf ($($State.planning_run_count)): Starte smarte Memory-Optimierung..." -ForegroundColor Yellow
+    # --- Smart Memory Optimization ---
+    $optRuns = if ($Config.wake_intervals.PSObject.Properties.Name -contains "memory_optimization_runs" -and $Config.wake_intervals.memory_optimization_runs) { [int]$Config.wake_intervals.memory_optimization_runs } else { 3 }
+    if ($optRuns -gt 0 -and $State.planning_run_count % $optRuns -eq 0 -and -not $DryRun.IsPresent) {
+        Write-Host "[PLANNING] Planungs-Lauf ($($State.planning_run_count)): Starte smarte Memory-Optimierung..." -ForegroundColor Yellow
         try {
             $memStore = Read-MemoryStore
             $memoriesJson = $memStore | ConvertTo-Json -Depth 15
@@ -825,7 +826,8 @@ Wenn keine Änderungen notwendig sind, antworte mit einem leeren Array: []
         }
     }
 
-    # --- Optimizer Session (2x daily, every 12 hours) ---
+    # --- Optimizer Session ---
+    $optHours = if ($Config.wake_intervals.PSObject.Properties.Name -contains "optimizer_hours" -and $Config.wake_intervals.optimizer_hours) { [int]$Config.wake_intervals.optimizer_hours } else { 12 }
     $runAnalysis = $false
     $forceOptimizer = $false
     if ((Test-ObjectProperty -Object $State -Name "run_control") -and (Test-ObjectProperty -Object $State.run_control -Name "force_optimizer") -and [bool]$State.run_control.force_optimizer) {
@@ -838,7 +840,7 @@ Wenn keine Änderungen notwendig sind, antworte mit einem leeren Array: []
         try {
             $lastAt = [datetimeoffset]::Parse([string]$State.last_optimizer_analysis_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
             $ageHours = ((Get-Date) - $lastAt.LocalDateTime).TotalHours
-            if ($ageHours -ge 12) {
+            if ($ageHours -ge $optHours) {
                 $runAnalysis = $true
             }
         } catch {
@@ -935,7 +937,7 @@ Wenn keine Optimierungen nötig oder sinnvoll sind, antworte mit einem leeren Ar
                     $State.last_optimizer_analysis_at = (Get-Date -Format 'o')
                     $nextOptimizerAt = (Get-Date).AddHours(12).ToString("o")
                     $previousApproved = @()
-                    if (Test-ObjectProperty -Object $State -Name "optimizer_last_run" -and $null -ne $State.optimizer_last_run -and (Test-ObjectProperty -Object $State.optimizer_last_run -Name "approved_changes")) {
+                    if ((Test-ObjectProperty -Object $State -Name "optimizer_last_run") -and $null -ne $State.optimizer_last_run -and (Test-ObjectProperty -Object $State.optimizer_last_run -Name "approved_changes")) {
                         $previousApproved = @($State.optimizer_last_run.approved_changes)
                     }
                     $State | Add-Member -MemberType NoteProperty -Name "optimizer_last_run" -Value ([pscustomobject]@{
@@ -946,21 +948,21 @@ Wenn keine Optimierungen nötig oder sinnvoll sind, antworte mit einem leeren Ar
                         approved_changes = @($previousApproved | Select-Object -Last 10)
                         summary = if ($proposalList.Count -gt 0) { "$($proposalList.Count) Optimierungsvorschlaege erzeugt." } else { "Keine neuen Optimierungsvorschlaege." }
                     }) -Force
-                    if (Test-ObjectProperty -Object $State -Name "run_control" -and $forceOptimizer) {
+                    if ($forceOptimizer -and $null -ne $State.run_control) {
                         $State.run_control | Add-Member -MemberType NoteProperty -Name "force_optimizer" -Value $false -Force
                         $State.run_control | Add-Member -MemberType NoteProperty -Name "force_optimizer_requested_at" -Value $null -Force
                     }
                     Save-AutopilotState -State $State
                 } else {
                     Write-Warning "[OPTIMIZER] Konnte Optimizer-Vorschläge nicht parsen oder keine Vorschläge generiert."
-                    if (Test-ObjectProperty -Object $State -Name "run_control" -and $forceOptimizer) {
+                    if ($forceOptimizer -and $null -ne $State.run_control) {
                         $State.run_control | Add-Member -MemberType NoteProperty -Name "force_optimizer" -Value $false -Force
                     }
                 }
             }
         } catch {
             Write-Warning "Fehler bei Optimizer-Analyse: $_"
-            if (Test-ObjectProperty -Object $State -Name "run_control" -and $forceOptimizer) {
+            if ($forceOptimizer -and $null -ne $State.run_control) {
                 $State.run_control | Add-Member -MemberType NoteProperty -Name "force_optimizer" -Value $false -Force
             }
         }

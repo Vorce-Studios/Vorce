@@ -174,6 +174,8 @@ export interface AutopilotConfig {
   wake_intervals: {
     planning_minutes: number;
     monitoring_minutes: number;
+    optimizer_hours?: number;
+    memory_optimization_runs?: number;
   };
   jules: {
     max_daily_sessions: number;

@@ -45,7 +45,7 @@ function Sync-WorkingSessionsFromStatusFiles {
             }
         }
 
-        if (Test-ObjectProperty -Object $workSession -Name "process_id" -and $workSession.process_id) {
+        if ((Test-ObjectProperty -Object $workSession -Name "process_id") -and $workSession.process_id) {
             $proc = Get-Process -Id ([int]$workSession.process_id) -ErrorAction SilentlyContinue
             if ($null -eq $proc) {
                 $workSession.status = "FAILED"
@@ -813,14 +813,18 @@ function Invoke-MonitoringWakeUp {
                 continue
             }
 
-            $reviewResult = Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType "code_review" -DryRun:$DryRun -Prompt @"
-Review PR #$($review.pr_number) fuer Issue #$($review.issue_number) im Repository $repo.
-PR URL: $($review.pr_url)
+            $promptVars = @{
+                repo = $repo
+                pr_number = $review.pr_number
+                issue_number = $review.issue_number
+                pr_url = $review.pr_url
+            }
+            $reviewPrompt = Get-VorceConfigPrompt -Config $Config -PromptKey "pr_review" -Variables $promptVars
+            if ($reviewPrompt -match "^Missing prompt template") {
+                $reviewPrompt = "Starte Skill /vorce-pr-review $($review.pr_number)"
+            }
 
-1. Pruefe den Code auf Qualitaet, Rust-Konventionen und moegliche Regressionen.
-2. Poste deine Ergebnisse als Kommentar auf dem PR.
-3. Antworte mit PASS oder REJECT und einer kurzen Begruendung.
-"@
+            $reviewResult = Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType "code_review" -DryRun:$DryRun -Prompt $reviewPrompt
 
             if ($reviewResult.success -and [string]$reviewResult.provider -eq "claude_code") {
                 $review.review_status = "completed"
@@ -833,7 +837,9 @@ PR URL: $($review.pr_url)
                 $review.review_status = "pending"
                 Write-Warning "[MONITOR]   Review fuer PR #$($review.pr_number) via $($reviewResult.provider) wird nicht als Merge-Freigabe akzeptiert; Claude Code ist verpflichtend."
             } else {
-                Write-Warning "[MONITOR]   Review fuer PR #$($review.pr_number) fehlgeschlagen: $(Format-AutopilotTaskFailure -Result $reviewResult)"
+                $errMsg = "Review fuer PR #$($review.pr_number) fehlgeschlagen: $(Format-AutopilotTaskFailure -Result $reviewResult)"
+                Write-Warning "[MONITOR]   $errMsg"
+                Add-ErrorLog -State $State -Message "PR Review Failed for PR #$($review.pr_number)" -Context $errMsg
             }
         }
     }

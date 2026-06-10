@@ -14,6 +14,16 @@ if (-not (Test-Path -Path $script:VarDbDir)) {
     New-Item -ItemType Directory -Path $script:VarDbDir -Force | Out-Null
 }
 
+$script:ExhaustedProviders = @()
+
+function Set-ProviderExhausted {
+    param([string]$ProviderName)
+    if ($script:ExhaustedProviders -notcontains $ProviderName) {
+        $script:ExhaustedProviders += @($ProviderName)
+    }
+}
+
+
 function Read-QuotaRegistry {
     param([string]$FilePath)
 
@@ -73,6 +83,8 @@ function Test-ProviderAvailable {
         [Parameter(Mandatory)][object]$Registry,
         [Parameter(Mandatory)][string]$ProviderName
     )
+
+    if ($script:ExhaustedProviders -contains $ProviderName) { return $false }
 
     $provider = $Registry.providers.$ProviderName
     if ($null -eq $provider) { return $false }

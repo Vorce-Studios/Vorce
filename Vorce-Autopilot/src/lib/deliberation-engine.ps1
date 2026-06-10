@@ -271,6 +271,13 @@ function Invoke-VisibleCeoPhase {
             } else {
                 $finalOutput = if (Test-ObjectProperty -Object $result -Name "Output") { $result.Output } else { "" }
             }
+        } else {
+            $finalOutput = if (Test-ObjectProperty -Object $result -Name "Output") { [string]$result.Output } else { "" }
+            if ($finalOutput -match "(?i)(usage limit|quota|limit reached)") {
+                if (Get-Command Set-ProviderExhausted -ErrorAction SilentlyContinue) {
+                    Set-ProviderExhausted -ProviderName $providerName
+                }
+            }
         }
 
         return [ordered]@{
@@ -848,6 +855,12 @@ function Invoke-DualCeoTask {
             } else {
                 $finalOutput = if (Test-ObjectProperty -Object $result -Name "Output") { $result.Output } else { "" }
             }
+        } else {
+            if ($finalOutput -match "(?i)(usage limit|quota|limit reached)") {
+                if (Get-Command Set-ProviderExhausted -ErrorAction SilentlyContinue) {
+                    Set-ProviderExhausted -ProviderName $providerName
+                }
+            }
         }
 
         $codexTaskResult = [ordered]@{
@@ -929,6 +942,12 @@ function Invoke-DualCeoTask {
                         $finalOutput = Get-Content -LiteralPath $betaResult.OutputPath -Raw -Encoding UTF8
                     } else {
                         $finalOutput = if (Test-ObjectProperty -Object $betaResult -Name "Output") { $betaResult.Output } else { "" }
+                    }
+                } else {
+                    if ($finalOutput -match "(?i)(usage limit|quota|limit reached)") {
+                        if (Get-Command Set-ProviderExhausted -ErrorAction SilentlyContinue) {
+                            Set-ProviderExhausted -ProviderName $betaProvider
+                        }
                     }
                 }
 

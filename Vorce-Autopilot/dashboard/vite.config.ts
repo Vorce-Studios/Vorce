@@ -74,7 +74,7 @@ export default defineConfig({
                 // Dynamically load prompts from files
                 config.prompts = config.prompts || {};
                 const promptsDir = path.resolve(__dirname, '../prompts');
-                const groups = ['planning', 'monitoring', 'audit', 'ceo', 'deliberation'];
+                const groups = ['planning', 'monitoring', 'audit', 'ceo', 'deliberation', 'tasks', 'jules'];
                 for (const group of groups) {
                   const groupDir = path.join(promptsDir, group);
                   if (fs.existsSync(groupDir)) {
@@ -271,7 +271,7 @@ export default defineConfig({
                 if (config.prompts) {
                   const promptsDir = path.resolve(__dirname, '../prompts');
                   const findPromptFile = (key: string) => {
-                    const groups = ['planning', 'monitoring', 'audit', 'ceo', 'deliberation'];
+                    const groups = ['planning', 'monitoring', 'audit', 'ceo', 'deliberation', 'tasks', 'jules'];
                     for (const g of groups) {
                       const p = path.join(promptsDir, g, `${key}.md`);
                       if (fs.existsSync(p)) return p;

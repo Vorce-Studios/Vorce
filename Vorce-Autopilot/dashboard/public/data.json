@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "daily_reset_hour_utc": 0,
-  "last_reset_date": "2026-06-07",
+  "last_reset_date": "2026-06-10",
   "providers": {
     "jules": {
       "enabled": true,
@@ -80,7 +80,7 @@
       "daily_limit": 1500,
       "daily_budget_usd": null,
       "usage_today": {
-        "calls": 28,
+        "calls": 6,
         "estimated_cost_usd": 0,
         "source": "gemini-local-jsonl+cli-quota",
         "last_synced_at": "2026-06-06T00:42:27.5533201Z",
@@ -317,8 +317,8 @@
       "daily_limit": 50,
       "daily_budget_usd": 10,
       "usage_today": {
-        "calls": 29,
-        "estimated_cost_usd": 3.6024
+        "calls": 8,
+        "estimated_cost_usd": 13.8658
       }
     },
     "copilot_cli": {
@@ -382,8 +382,8 @@
       "daily_limit": 100,
       "daily_budget_usd": 5,
       "usage_today": {
-        "calls": 0,
-        "estimated_cost_usd": 0
+        "calls": 1,
+        "estimated_cost_usd": 0.05
       }
     },
     "codex_orchestrator": {
@@ -416,34 +416,10 @@
       "daily_limit": 1000,
       "daily_budget_usd": null,
       "usage_today": {
-        "calls": 40,
+        "calls": 11,
         "estimated_cost_usd": 0,
         "source": "codex-local-jsonl",
-        "last_synced_at": "2026-06-07T22:02:24.5601131Z",
-        "codex": {
-          "calls": 32,
-          "estimated_cost_usd": 0,
-          "total_input_tokens": 2109023,
-          "total_output_tokens": 21452,
-          "cached_tokens": 1814016,
-          "reasoning_tokens": 4600,
-          "tool_tokens": 0,
-          "total_duration_ms": 0
-        },
-        "rate_limits": {
-          "limit_id": "premium",
-          "limit_name": null,
-          "primary": null,
-          "secondary": null,
-          "credits": {
-            "has_credits": false,
-            "unlimited": false,
-            "balance": "0"
-          },
-          "individual_limit": null,
-          "plan_type": null,
-          "rate_limit_reached_type": null
-        }
+        "last_synced_at": "2026-06-10T01:44:25.2566663Z"
       }
     }
   },

@@ -37,15 +37,37 @@ const ROUTING_DESCRIPTIONS: Record<string, string> = {
 };
 
 const PROMPT_METADATA = [
+  // CEO & Orchestrator
+  { key: 'ceo_system', label: 'CEO: System Prompt', group: 'ceo', placeholder: 'You are the CEO...' },
+  { key: 'planning_session', label: 'CEO: Planning Session Prompt', group: 'ceo', placeholder: 'Planning session orchestration...' },
+  { key: 'monitoring_session', label: 'CEO: Monitoring Session Prompt', group: 'ceo', placeholder: 'Monitoring session orchestration...' },
+
+  // Tasks & Review
+  { key: 'issue_discovery', label: 'Tasks: Issue Discovery', group: 'tasks', placeholder: 'Discover repository issues...' },
+  { key: 'pr_review', label: 'Tasks: PR Review', group: 'tasks', placeholder: 'Review Pull Request...' },
+  { key: 'post_merge_qa', label: 'Tasks: Post-Merge QA', group: 'tasks', placeholder: 'Post merge QA analysis...' },
+  { key: 'pr_conflict_resolution', label: 'Tasks: PR Conflict Resolution', group: 'tasks', placeholder: 'Resolve merge conflicts...' },
+  
+  // Jules Tasks
+  { key: 'jules_implementation', label: 'Jules: Implementation', group: 'jules', placeholder: 'Jules implementation task...' },
+  { key: 'jules_retry', label: 'Jules: Retry / Feedback', group: 'jules', placeholder: 'Jules retry feedback...' },
+  { key: 'jules_pr_check_fix', label: 'Jules: PR Check Fix', group: 'jules', placeholder: 'Fix failing PR checks...' },
+  { key: 'jules_pr_conflict_replacement', label: 'Jules: PR Conflict Replacement', group: 'jules', placeholder: 'Conflict replacement...' },
+
+  // Planning Phase
   { key: 'planning_jules_sync', label: 'Planning: Jules Session Status Sync', group: 'planning', placeholder: 'Jules active/stalled check...' },
   { key: 'planning_pr_sync', label: 'Planning: PR Status Sync', group: 'planning', placeholder: 'PR conflict/CI check...' },
   { key: 'planning_analysis', label: 'Planning: Repository compass analysis', group: 'planning', placeholder: 'Repository analysis & blockers...' },
   { key: 'planning_proposal', label: 'Planning: Issue Proposal Logic', group: 'planning', placeholder: 'Formulating issue proposals...' },
   { key: 'planning_synthesis', label: 'Planning: Master Plan Synthesis & Priority Queue', group: 'planning', placeholder: 'Consolidating delegation order...' },
+  
+  // Monitoring Phase
   { key: 'monitor_sessions', label: 'Monitoring: Session Health Check', group: 'monitoring', placeholder: 'Active delegation health checks...' },
   { key: 'monitor_prs', label: 'Monitoring: PR Validation', group: 'monitoring', placeholder: 'PR validation and automatic fixing...' },
   { key: 'monitor_conflicts', label: 'Monitoring: Conflict Resolution', group: 'monitoring', placeholder: 'Automatic merge conflict resolving...' },
   { key: 'monitoring_synthesis', label: 'Monitoring: Status Evaluation', group: 'monitoring', placeholder: 'Consolidating monitoring results...' },
+  
+  // Audit Phase
   { key: 'audit_consistency', label: 'Audit: Data Consistency Check', group: 'audit', placeholder: 'Comparing state registry vs GitHub...' },
   { key: 'audit_performance', label: 'Audit: Performance Assessment', group: 'audit', placeholder: 'Assessing action history efficiency...' },
   { key: 'audit_synthesis', label: 'Audit: QA Manager Decision Matrix', group: 'audit', placeholder: 'Consolidating audit reports and remediation JSON...' },
@@ -314,6 +336,28 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                     type="number"
                     value={config.wake_intervals.monitoring_minutes}
                     onChange={(e: any) => handleNestedConfigChange('wake_intervals', 'monitoring_minutes', parseInt(e.target.value) || 0)}
+                    className="input-field"
+                    min="1"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Optimizer-Intervall (Stunden)</label>
+                  <input
+                    type="number"
+                    value={config.wake_intervals.optimizer_hours ?? 12}
+                    onChange={(e: any) => handleNestedConfigChange('wake_intervals', 'optimizer_hours', parseInt(e.target.value) || 0)}
+                    className="input-field"
+                    min="1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Memory-Optimierung (jeden x. Lauf)</label>
+                  <input
+                    type="number"
+                    value={config.wake_intervals.memory_optimization_runs ?? 3}
+                    onChange={(e: any) => handleNestedConfigChange('wake_intervals', 'memory_optimization_runs', parseInt(e.target.value) || 0)}
                     className="input-field"
                     min="1"
                   />
@@ -620,8 +664,28 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
               Passe die System-Prompts an, die der Autopilot für die verschiedenen Sessions verwendet.
             </p>
             <div className="space-y-6">
-              {/* Planning Group */}
+              {/* CEO Group */}
               <div className="space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-rose-400">CEO & Orchestration</h4>
+                {PROMPT_METADATA.filter(p => p.group === 'ceo').map(p => (
+                  <div key={p.key}>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
+                      <span>{p.label}</span>
+                      <span className="text-[10px] text-slate-500 font-mono">{p.key}</span>
+                    </label>
+                    <textarea
+                      value={config.prompts?.[p.key] || ''}
+                      onChange={(e) => handlePromptChange(p.key, e.target.value)}
+                      className="input-field min-h-[80px] font-mono text-xs leading-normal"
+                      rows={3}
+                      placeholder={p.placeholder}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Planning Group */}
+              <div className="space-y-4 pt-4 border-t border-slate-800/70">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400">Planning-Phase (Planung)</h4>
                 {PROMPT_METADATA.filter(p => p.group === 'planning').map(p => (
                   <div key={p.key}>
@@ -664,6 +728,46 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
               <div className="space-y-4 pt-4 border-t border-slate-800/70">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400">Audit-Phase (Prüfung)</h4>
                 {PROMPT_METADATA.filter(p => p.group === 'audit').map(p => (
+                  <div key={p.key}>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
+                      <span>{p.label}</span>
+                      <span className="text-[10px] text-slate-500 font-mono">{p.key}</span>
+                    </label>
+                    <textarea
+                      value={config.prompts?.[p.key] || ''}
+                      onChange={(e) => handlePromptChange(p.key, e.target.value)}
+                      className="input-field min-h-[80px] font-mono text-xs leading-normal"
+                      rows={3}
+                      placeholder={p.placeholder}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Tasks Group */}
+              <div className="space-y-4 pt-4 border-t border-slate-800/70">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-green-400">Tasks & Code Review</h4>
+                {PROMPT_METADATA.filter(p => p.group === 'tasks').map(p => (
+                  <div key={p.key}>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
+                      <span>{p.label}</span>
+                      <span className="text-[10px] text-slate-500 font-mono">{p.key}</span>
+                    </label>
+                    <textarea
+                      value={config.prompts?.[p.key] || ''}
+                      onChange={(e) => handlePromptChange(p.key, e.target.value)}
+                      className="input-field min-h-[80px] font-mono text-xs leading-normal"
+                      rows={3}
+                      placeholder={p.placeholder}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Jules Group */}
+              <div className="space-y-4 pt-4 border-t border-slate-800/70">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-blue-400">Jules Sessions</h4>
+                {PROMPT_METADATA.filter(p => p.group === 'jules').map(p => (
                   <div key={p.key}>
                     <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
                       <span>{p.label}</span>
