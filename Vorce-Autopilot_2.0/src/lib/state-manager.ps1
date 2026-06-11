@@ -217,3 +217,12 @@ function Add-ErrorLog {
 # Export-ModuleMember -Function Read-AutopilotState, Save-AutopilotState, Initialize-AutopilotState, Add-DeliberationLog, Update-AutopilotStateObject, Confirm-WorkingSessionsState, Add-ErrorLog
 
 
+
+function Test-ObjectProperty {
+    param(
+        [Parameter(Mandatory)][object]$Object,
+        [Parameter(Mandatory)][string]$Name
+    )
+    if ($null -eq $Object) { return $false }
+    return [bool]($Object.PSObject.Properties.Match($Name).Count -gt 0)
+}

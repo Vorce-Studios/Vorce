@@ -83,6 +83,7 @@ function Write-Host {
 . (Join-Path $ScriptDir "src/lib/jules-client.ps1")
 . (Join-Path $ScriptDir "src/lib/naming-convention.ps1")
 . (Join-Path $ScriptDir "src/lib/project-manager.ps1")
+. (Join-Path $ScriptDir "src/lib/planning-utils.ps1")
 . (Join-Path $ScriptDir "src/orchestrator/Invoke-MainRun.ps1")
 
 # Dummy command/placeholder for backward compatibility check

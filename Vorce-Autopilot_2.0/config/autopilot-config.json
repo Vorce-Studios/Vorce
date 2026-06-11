@@ -57,8 +57,11 @@
   },
   "router_rules": {
     "Planning": [
-      { "id": "01", "name": "ContextGathering", "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-01_Planning__ContextGathering.ps1", "enabled": true },
-      { "id": "02", "name": "LegacyFallback", "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-01_Planning__LegacyFallback.ps1", "enabled": true }
+      { "id": "01", "name": "DataSync", "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-01_Planning__DataSync.ps1", "enabled": true },
+      { "id": "02", "name": "Triage", "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-01_Planning__Triage.ps1", "enabled": true },
+      { "id": "03", "name": "Strategy", "script": "src/runs/SUB-RUN/SUB-RUN-03_MR-01_Planning__Strategy.ps1", "enabled": true },
+      { "id": "04", "name": "Delegation", "script": "src/runs/SUB-RUN/SUB-RUN-04_MR-01_Planning__Delegation.ps1", "enabled": true },
+      { "id": "05", "name": "Optimization", "script": "src/runs/SUB-RUN/SUB-RUN-05_MR-01_Planning__Optimization.ps1", "enabled": true }
     ],
     "Monitoring": [
       { "id": "01", "name": "SystemHealthCheck", "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-02_Monitoring__SystemHealthCheck.ps1", "enabled": true },

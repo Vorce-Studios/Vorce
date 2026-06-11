@@ -1,53 +1,88 @@
 # src/runs/ROUTER/ROUTER_MAIN-RUN-01_Planning.ps1
-# Router fuer die Planning-Phase
-# Entscheidet basierend auf Config und Systemzustand welche Sub-Runs laufen
-
 param(
-    [Parameter(Mandatory)][object]$GlobalState,
-    [Parameter(Mandatory)][object]$Config,
+    [object]$GlobalState,
+    [object]$Config,
     [object]$MainState
 )
 
-Write-Host "[ROUTER] Evaluierung der SUB-RUNS fuer Planning..." -ForegroundColor DarkGray
+Write-Host "`n[ROUTER] Validiere dynamische Routing-Regeln fuer Planning..." -ForegroundColor Magenta
 
-$subRuns = @()
+$definitions = @()
 $idx = 1
 
-# Lade Sub-Run-Definitionen aus der Config
-$routerCfg = $null
-if ($Config.PSObject.Properties.Name -contains "router_rules" -and 
-    $Config.router_rules.PSObject.Properties.Name -contains "Planning") {
-    $routerCfg = $Config.router_rules.Planning
+function Add-Def {
+    param([string]$Name, [string]$Script)
+    $Script:definitions += @{
+        id     = "{0:D2}" -f $Script:idx
+        name   = $Name
+        script = $Script
+    }
+    $Script:idx++
 }
 
-if ($null -ne $routerCfg) {
-    foreach ($rule in $routerCfg) {
-        if ($rule.enabled) {
-            $subRuns += @{
-                id     = if ($rule.PSObject.Properties.Name -contains "id") { $rule.id } else { "{0:D2}" -f $idx }
-                name   = $rule.name
-                script = $rule.script
-            }
-            Write-Host "[ROUTER]   -> $($rule.name) aktiviert." -ForegroundColor Green
-        } else {
-            Write-Host "[ROUTER]   -> $($rule.name) deaktiviert (Config)." -ForegroundColor DarkGray
-        }
-        $idx++
-    }
+# 1. DataSync läuft immer
+Add-Def -Name "DataSync" -Script "src/runs/SUB-RUN/SUB-RUN-01_MR-01_Planning__DataSync.ps1"
+Write-Host "[ROUTER]   -> DataSync: ENABLED (Laeuft immer)" -ForegroundColor Green
+
+# 2. Triage läuft immer (prüft Eskalationen und Konflikte intern)
+Add-Def -Name "Triage" -Script "src/runs/SUB-RUN/SUB-RUN-02_MR-01_Planning__Triage.ps1"
+Write-Host "[ROUTER]   -> Triage: ENABLED (Laeuft immer)" -ForegroundColor Green
+
+# 3. Strategy läuft nur, wenn weniger als 3 Issues in der Pipeline sind
+# Da DataSync erst später läuft, müssen wir auf den Stand vor DataSync schauen
+$issuesCount = 0
+$cachedIssuePath = Join-Path $PSScriptRoot "../../../var/db/github-issues.json"
+if (Test-Path $cachedIssuePath) {
+    try {
+        $issuesRaw = Get-Content -LiteralPath $cachedIssuePath -Raw -Encoding UTF8 | ConvertFrom-Json
+        $repo = $Config.repository
+        $openIssues = @($issuesRaw | Where-Object { $_.state -eq "OPEN" -and $_.repo -eq $repo })
+        # Grobe Schätzung reicht für den Router. Genauere Prüfung passiert in SR-03
+        $issuesCount = $openIssues.Count
+    } catch {}
+}
+
+if ($issuesCount -lt 3) {
+    Add-Def -Name "Strategy" -Script "src/runs/SUB-RUN/SUB-RUN-03_MR-01_Planning__Strategy.ps1"
+    Write-Host "[ROUTER]   -> Strategy: ENABLED ($issuesCount < 3 Issues)" -ForegroundColor Green
 } else {
-    # Hardcoded Fallback falls keine Config vorhanden
-    Write-Warning "[ROUTER] Keine Config-Regeln fuer 'Planning' gefunden. Nutze Defaults."
-    $subRuns += @{
-        id     = "01"
-        name   = "ContextGathering"
-        script = "src/runs/SUB-RUN/SUB-RUN-01_MR-01_Planning__ContextGathering.ps1"
-    }
-    $subRuns += @{
-        id     = "02"
-        name   = "LegacyFallback"
-        script = "src/runs/SUB-RUN/SUB-RUN-02_MR-01_Planning__LegacyFallback.ps1"
+    Write-Host "[ROUTER]   -> Strategy: DISABLED ($issuesCount >= 3 Issues vorhanden)" -ForegroundColor DarkGray
+    $MainState.metadata["skipped_Strategy"] = @{ reason = "enough_issues"; timestamp = (Get-Date).ToString('o') }
+}
+
+# 4. Delegation läuft immer
+Add-Def -Name "Delegation" -Script "src/runs/SUB-RUN/SUB-RUN-04_MR-01_Planning__Delegation.ps1"
+Write-Host "[ROUTER]   -> Delegation: ENABLED (Laeuft immer)" -ForegroundColor Green
+
+# 5. Optimization läuft dynamisch basierend auf Timestamps
+$optHours = if ($Config.wake_intervals.PSObject.Properties.Name -contains "optimizer_hours" -and $Config.wake_intervals.optimizer_hours) { [int]$Config.wake_intervals.optimizer_hours } else { 12 }
+$runAnalysis = $false
+$forceOptimizer = $false
+if ((Test-ObjectProperty -Object $GlobalState -Name "run_control") -and (Test-ObjectProperty -Object $GlobalState.run_control -Name "force_optimizer") -and [bool]$GlobalState.run_control.force_optimizer) {
+    $forceOptimizer = $true
+    $runAnalysis = $true
+}
+
+if (-not ($GlobalState.PSObject.Properties.Name -contains "last_optimizer_analysis_at") -or [string]::IsNullOrWhiteSpace([string]$GlobalState.last_optimizer_analysis_at)) {
+    $runAnalysis = $true
+} elseif (-not $forceOptimizer) {
+    try {
+        $lastAt = [datetimeoffset]::Parse([string]$GlobalState.last_optimizer_analysis_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
+        $ageHours = ((Get-Date) - $lastAt.LocalDateTime).TotalHours
+        if ($ageHours -ge $optHours) {
+            $runAnalysis = $true
+        }
+    } catch {
+        $runAnalysis = $true
     }
 }
 
-Write-Host "[ROUTER] Planning: $($subRuns.Count) Sub-Run(s) identifiziert." -ForegroundColor DarkGray
-return $subRuns
+if ($runAnalysis) {
+    Add-Def -Name "Optimization" -Script "src/runs/SUB-RUN/SUB-RUN-05_MR-01_Planning__Optimization.ps1"
+    Write-Host "[ROUTER]   -> Optimization: ENABLED (Timeout/Force aktiv)" -ForegroundColor Green
+} else {
+    Write-Host "[ROUTER]   -> Optimization: DISABLED (Letzter Run vor < $optHours Std)" -ForegroundColor DarkGray
+    $MainState.metadata["skipped_Optimization"] = @{ reason = "timeout_not_reached"; timestamp = (Get-Date).ToString('o') }
+}
+
+return $definitions
