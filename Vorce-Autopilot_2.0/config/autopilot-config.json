@@ -2,7 +2,8 @@
   "repository": "Vorce-Studios/Vorce",
   "wake_intervals": {
     "planning_minutes": 120,
-    "check_and_doing_minutes": 15
+    "check_and_doing_minutes": 15,
+    "memory_optimization_minutes": 60
   },
   "jules": {
     "max_daily_sessions": 100,

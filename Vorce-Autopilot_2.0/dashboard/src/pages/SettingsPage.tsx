@@ -353,11 +353,11 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Memory-Optimierung (jeden x. Lauf)</label>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Memory-Intervall (Minuten)</label>
                   <input
                     type="number"
-                    value={config.wake_intervals.memory_optimization_runs ?? 3}
-                    onChange={(e: any) => handleNestedConfigChange('wake_intervals', 'memory_optimization_runs', parseInt(e.target.value) || 0)}
+                    value={config.wake_intervals.memory_optimization_minutes ?? 60}
+                    onChange={(e: any) => handleNestedConfigChange('wake_intervals', 'memory_optimization_minutes', parseInt(e.target.value) || 0)}
                     className="input-field"
                     min="1"
                   />

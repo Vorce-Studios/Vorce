@@ -26,11 +26,7 @@ function Add-Def {
 $runMemoryOpt = $false
 $runSystemOpt = $false
 
-# 1. Memory Maintenance
-$optRuns = if ($Config.wake_intervals.PSObject.Properties.Name -contains "memory_optimization_runs" -and $Config.wake_intervals.memory_optimization_runs) { [int]$Config.wake_intervals.memory_optimization_runs } else { 3 }
-if ($optRuns -gt 0 -and $GlobalState.planning_run_count -gt 0 -and ($GlobalState.planning_run_count % $optRuns) -eq 0) {
-    $runMemoryOpt = $true
-}
+
 
 # 2. System Analysis
 $optHours = if ($Config.wake_intervals.PSObject.Properties.Name -contains "optimizer_hours" -and $Config.wake_intervals.optimizer_hours) { [int]$Config.wake_intervals.optimizer_hours } else { 12 }
@@ -67,13 +63,6 @@ if (-not $runMemoryOpt -and -not $runSystemOpt) {
 # DataSync laeuft, wenn mindestens eine Optimierung aktiv ist
 Add-Def -Name "DataSync" -Script "src/runs/SUB-RUN/SUB-RUN-01_MR-04_Optimizer__DataSync.ps1"
 Write-Host "[ROUTER]   -> DataSync: ENABLED" -ForegroundColor Green
-
-if ($runMemoryOpt) {
-    Add-Def -Name "MemoryMaintenance" -Script "src/runs/SUB-RUN/SUB-RUN-02_MR-04_Optimizer__MemoryMaintenance.ps1"
-    Write-Host "[ROUTER]   -> MemoryMaintenance: ENABLED (Planning Run: $($GlobalState.planning_run_count))" -ForegroundColor Green
-} else {
-    Write-Host "[ROUTER]   -> MemoryMaintenance: DISABLED (Nicht faellig)" -ForegroundColor DarkGray
-}
 
 if ($runSystemOpt) {
     Add-Def -Name "SystemAnalysis" -Script "src/runs/SUB-RUN/SUB-RUN-03_MR-04_Optimizer__SystemAnalysis.ps1"

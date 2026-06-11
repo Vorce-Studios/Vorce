@@ -179,6 +179,7 @@ if ($OptimizeOnce.IsPresent) {
 # --- Main loop ---
 $lastPlanTime = [datetime]::MinValue
 $lastMonTime = [datetime]::MinValue
+$lastMemoryOptTime = [datetime]::MinValue
 
 if (-not $SkipPlanningOnStart.IsPresent) {
     # Default: Force planning on start.
@@ -250,6 +251,9 @@ while ($true) {
 
     $planDue = ($now - $lastPlanTime).TotalMinutes -ge $planMinutes
     $checkDue = ($now - $lastMonTime).TotalMinutes -ge $checkMinutes
+    
+    $memOptMinutes = if ($Config.wake_intervals.PSObject.Properties.Name -contains "memory_optimization_minutes") { [int]$Config.wake_intervals.memory_optimization_minutes } else { 60 }
+    $memOptDue = ($now - $lastMemoryOptTime).TotalMinutes -ge $memOptMinutes
 
     if ($planDue) {
         try {
@@ -290,6 +294,16 @@ while ($true) {
             & $optScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
         } catch {
             Write-Host "[LOOP] Optimizer-Fehler: $_" -ForegroundColor Red
+        }
+    }
+
+    if ($memOptDue) {
+        $lastMemoryOptTime = Get-Date
+        try {
+            $memOptScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-05_MemoryOptimization.ps1"
+            & $memOptScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+        } catch {
+            Write-Host "[LOOP] MemoryOptimization-Fehler: $_" -ForegroundColor Red
         }
     }
 

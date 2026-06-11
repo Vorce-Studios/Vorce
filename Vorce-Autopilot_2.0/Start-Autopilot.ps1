@@ -225,9 +225,9 @@ function Show-AutopilotSuiteStatus {
 }
 
 function Get-AutopilotControlStateSummary {
-    $statePath = Join-Path $VarDbDir "autopilot-state.json"
+    $statePath = Join-Path $VarDbDir "active-sessions.json"
     if (-not (Test-Path -LiteralPath $statePath)) {
-        return "[STATE] Noch kein autopilot-state.json gefunden."
+        return "[STATE] Noch kein active-sessions.json gefunden."
     }
 
     try {
@@ -254,7 +254,7 @@ function Get-AutopilotControlStateSummary {
         $time = Get-Date -Format "HH:mm:ss"
         return "[STATE $time] Session=$sessionId Beat=$beatAge Delegierungen=$delegCount Review=$reviewCount Entscheidungen=$decisionCount"
     } catch {
-        return "[STATE] Fehler beim Lesen von autopilot-state.json: $($_.Exception.Message)"
+        return "[STATE] Fehler beim Lesen von active-sessions.json: $($_.Exception.Message)"
     }
 }
 
@@ -274,6 +274,43 @@ function Wait-AutopilotControlConsole {
     Write-Host ""
     Write-StartLog -Message "Control console active."
     Write-Host (Get-AutopilotControlStateSummary) -ForegroundColor DarkGray
+
+    $statePath = Join-Path $VarDbDir "active-sessions.json"
+    $watcher = New-Object System.IO.FileSystemWatcher
+    $watcher.Path = $VarDbDir
+    $watcher.Filter = "active-sessions.json"
+    $watcher.IncludeSubdirectories = $false
+    $watcher.EnableRaisingEvents = $true
+
+    $action = {
+        $summary = Get-AutopilotControlStateSummary
+        Write-Host "`n$summary" -ForegroundColor DarkGray
+        
+        # Prometheus Metrics (OPT-03)
+        try {
+            $state = Get-Content -LiteralPath $Event.SourceEventArgs.FullPath -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction SilentlyContinue
+            if ($state) {
+                $metricsPath = Join-Path $Event.SourceEventArgs.FullPath "..\metrics.txt"
+                $metricsContent = @"
+# HELP autopilot_active_delegations Number of active delegations
+# TYPE autopilot_active_delegations gauge
+autopilot_active_delegations $(@($state.active_delegations).Count)
+# HELP autopilot_review_queue Number of pending reviews
+# TYPE autopilot_review_queue gauge
+autopilot_review_queue $(@($state.review_queue).Count)
+# HELP autopilot_decisions_pending Number of pending decisions
+# TYPE autopilot_decisions_pending gauge
+autopilot_decisions_pending $(@($state.decisions_pending).Count)
+# HELP autopilot_working_sessions Number of active working sessions
+# TYPE autopilot_working_sessions gauge
+autopilot_working_sessions $(@($state.working_sessions).Count)
+"@
+                Set-Content -Path $metricsPath -Value $metricsContent -Encoding UTF8 -Force
+            }
+        } catch {}
+    }
+    
+    $eventJob = Register-ObjectEvent $watcher "Changed" -Action $action
 
     try {
         while ($true) {
@@ -313,6 +350,8 @@ function Wait-AutopilotControlConsole {
             }
         }
     } finally {
+        Unregister-Event -SourceIdentifier $eventJob.Name -ErrorAction SilentlyContinue
+        $watcher.Dispose()
         [Console]::TreatControlCAsInput = $previousTreatControlCAsInput
     }
 }
