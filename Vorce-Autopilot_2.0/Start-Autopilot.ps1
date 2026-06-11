@@ -4,14 +4,14 @@
 param(
     [switch]$DryRun,
     [switch]$PlanOnce,
-    [switch]$MonitorOnce,
+    [switch]$CheckAndDoingOnce,
     [switch]$NoStopExisting,
     [switch]$NoInitialPlanning,
     [switch]$NoControlConsole,
     [switch]$ShowAutopilotWindow,
     [switch]$HideAutopilotWindow,
     [int]$PlanningIntervalOverride,
-    [int]$MonitoringIntervalOverride
+    [int]$CheckAndDoingIntervalOverride
 )
 
 $OutputEncoding = [System.Text.Encoding]::UTF8
@@ -462,10 +462,10 @@ $AutopilotFile = Join-Path $ScriptDir "autopilot.ps1"
 $AutopilotArgs = @("-NoExit", "-NoProfile", "-File", $AutopilotFile)
 if ($DryRun.IsPresent) { $AutopilotArgs += "-DryRun" }
 if ($PlanOnce.IsPresent) { $AutopilotArgs += "-PlanOnce" }
-if ($MonitorOnce.IsPresent) { $AutopilotArgs += "-MonitorOnce" }
+if ($CheckAndDoingOnce.IsPresent) { $AutopilotArgs += "-CheckAndDoingOnce" }
 if ($NoInitialPlanning.IsPresent) { $AutopilotArgs += "-SkipPlanningOnStart" }
 if ($PlanningIntervalOverride -gt 0) { $AutopilotArgs += @("-PlanningIntervalOverride", [string]$PlanningIntervalOverride) }
-if ($MonitoringIntervalOverride -gt 0) { $AutopilotArgs += @("-MonitoringIntervalOverride", [string]$MonitoringIntervalOverride) }
+if ($CheckAndDoingIntervalOverride -gt 0) { $AutopilotArgs += @("-CheckAndDoingIntervalOverride", [string]$CheckAndDoingIntervalOverride) }
 
 $autopilotProcesses = @(Get-ManagedAutopilotProcess -Pattern 'autopilot\.ps1')
 if ($autopilotProcesses.Count -gt 0) {

@@ -60,27 +60,16 @@ if ($Config.PSObject.Properties.Name -contains "planning_sequence") {
 
         if ($useCodex) {
             Write-Host "[PLANNING] Starte Planning Synthesis als interaktiven Codex-Chat." -ForegroundColor Cyan
-            $sessionResult = Invoke-AutopilotCodexSession `
-                -SessionType "planning-synthesis" `
+            $partIdx = "{0:D2}" -f ($idx)
+            $partName = "PART-RUN-$partIdx_SR-03_MR-01_Planning__$($step.label -replace '[^A-Za-z0-9]', '-')"
+            $stepResult = Invoke-PartRun `
+                -PartRunName $partName `
+                -AgentType "codex_orchestrator" `
                 -Prompt $fullPrompt `
-                -State $GlobalState `
-                -Model "gpt-5.5" `
-                -VisibleTerminal `
-                -ResumeMainSession `
+                -SubState $SubState `
+                -Config $Config `
+                -QuotaRegistry $QuotaRegistry `
                 -DryRun:$DryRun
-
-            $isSessionDryRun = ($sessionResult.PSObject.Properties.Name -contains "DryRun") -and [bool]$sessionResult.DryRun
-            $sessionOutput = if ($isSessionDryRun) {
-                "{`"dry_run`":true}"
-            } elseif ($sessionResult.PSObject.Properties.Name -contains "Output" -and -not [string]::IsNullOrWhiteSpace([string]$sessionResult.Output)) {
-                [string]$sessionResult.Output
-            } else {
-                "Interactive planning synthesis completed."
-            }
-            $stepResult = [pscustomobject]@{
-                success = [bool]$sessionResult.Success
-                output  = $sessionOutput
-            }
             
             if (-not $stepResult.success) {
                 Write-Host "[PLANNING] Codex-Session fehlgeschlagen (evtl. Limit erreicht). Wechsle fuer restliche Session auf Fallback (DualCeoTask)." -ForegroundColor Yellow
@@ -208,7 +197,7 @@ Antworte NUR mit einer JSON-Liste im Format:
 
 Wenn keine neuen Issues noetig sind, antworte mit einem leeren Array.
 "@
-    $partName = "PART-RUN-01_SR-03_MR-01_Planning__IssueProposal"
+    $partName = "PART-RUN-04_SR-03_MR-01_Planning__IssueProposalFallback"
     $planResult = Invoke-PartRun `
         -PartRunName $partName `
         -AgentType "CEO" `

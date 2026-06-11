@@ -54,35 +54,4 @@ if ($issuesCount -lt 3) {
 Add-Def -Name "Delegation" -Script "src/runs/SUB-RUN/SUB-RUN-04_MR-01_Planning__Delegation.ps1"
 Write-Host "[ROUTER]   -> Delegation: ENABLED (Laeuft immer)" -ForegroundColor Green
 
-# 5. Optimization läuft dynamisch basierend auf Timestamps
-$optHours = if ($Config.wake_intervals.PSObject.Properties.Name -contains "optimizer_hours" -and $Config.wake_intervals.optimizer_hours) { [int]$Config.wake_intervals.optimizer_hours } else { 12 }
-$runAnalysis = $false
-$forceOptimizer = $false
-if ((Test-ObjectProperty -Object $GlobalState -Name "run_control") -and (Test-ObjectProperty -Object $GlobalState.run_control -Name "force_optimizer") -and [bool]$GlobalState.run_control.force_optimizer) {
-    $forceOptimizer = $true
-    $runAnalysis = $true
-}
-
-if (-not ($GlobalState.PSObject.Properties.Name -contains "last_optimizer_analysis_at") -or [string]::IsNullOrWhiteSpace([string]$GlobalState.last_optimizer_analysis_at)) {
-    $runAnalysis = $true
-} elseif (-not $forceOptimizer) {
-    try {
-        $lastAt = [datetimeoffset]::Parse([string]$GlobalState.last_optimizer_analysis_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
-        $ageHours = ((Get-Date) - $lastAt.LocalDateTime).TotalHours
-        if ($ageHours -ge $optHours) {
-            $runAnalysis = $true
-        }
-    } catch {
-        $runAnalysis = $true
-    }
-}
-
-if ($runAnalysis) {
-    Add-Def -Name "Optimization" -Script "src/runs/SUB-RUN/SUB-RUN-05_MR-01_Planning__Optimization.ps1"
-    Write-Host "[ROUTER]   -> Optimization: ENABLED (Timeout/Force aktiv)" -ForegroundColor Green
-} else {
-    Write-Host "[ROUTER]   -> Optimization: DISABLED (Letzter Run vor < $optHours Std)" -ForegroundColor DarkGray
-    $MainState.metadata["skipped_Optimization"] = @{ reason = "timeout_not_reached"; timestamp = (Get-Date).ToString('o') }
-}
-
 return $definitions

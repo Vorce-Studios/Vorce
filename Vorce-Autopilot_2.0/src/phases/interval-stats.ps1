@@ -30,36 +30,36 @@ function Add-SchedulerSnapshot {
 
     $now = Get-Date
     $planMinutes = [int]$Config.wake_intervals.planning_minutes
-    $monitoringMinutes = [int]$Config.wake_intervals.monitoring_minutes
+    $checkAndDoingMinutes = [int]$Config.wake_intervals.check_and_doing_minutes
 
     $lastPlanning = $null
-    $lastMonitoring = $null
+    $lastCheckAndDoing = $null
     try {
         if (-not [string]::IsNullOrWhiteSpace([string]$State.last_planning_at)) {
             $lastPlanning = [datetimeoffset]::Parse([string]$State.last_planning_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
         }
     } catch { }
     try {
-        if (-not [string]::IsNullOrWhiteSpace([string]$State.last_monitoring_at)) {
-            $lastMonitoring = [datetimeoffset]::Parse([string]$State.last_monitoring_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
+        if (-not [string]::IsNullOrWhiteSpace([string]$State.last_check_and_doing_at)) {
+            $lastCheckAndDoing = [datetimeoffset]::Parse([string]$State.last_check_and_doing_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime
         }
     } catch { }
 
     if ($null -eq $lastPlanning) { $lastPlanning = $now }
-    if ($null -eq $lastMonitoring) { $lastMonitoring = $now }
+    if ($null -eq $lastCheckAndDoing) { $lastCheckAndDoing = $now }
 
     $nextPlanning = $lastPlanning.AddMinutes($planMinutes)
-    $nextMonitoring = $lastMonitoring.AddMinutes($monitoringMinutes)
+    $nextCheckAndDoing = $lastCheckAndDoing.AddMinutes($checkAndDoingMinutes)
 
     $scheduler = [pscustomobject]@{
         planning_interval_minutes = $planMinutes
-        monitoring_interval_minutes = $monitoringMinutes
+        check_and_doing_interval_minutes = $checkAndDoingMinutes
         last_planning_at = $State.last_planning_at
-        last_monitoring_at = $State.last_monitoring_at
+        last_check_and_doing_at = $State.last_check_and_doing_at
         next_planning_at = $nextPlanning.ToString("o")
-        next_monitoring_at = $nextMonitoring.ToString("o")
+        next_check_and_doing_at = $nextCheckAndDoing.ToString("o")
         next_planning_in_seconds = [Math]::Max(0, [int][Math]::Round(($nextPlanning - $now).TotalSeconds))
-        next_monitoring_in_seconds = [Math]::Max(0, [int][Math]::Round(($nextMonitoring - $now).TotalSeconds))
+        next_check_and_doing_in_seconds = [Math]::Max(0, [int][Math]::Round(($nextCheckAndDoing - $now).TotalSeconds))
         generated_at = $now.ToString("o")
     }
 

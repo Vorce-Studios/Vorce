@@ -352,7 +352,7 @@ $sessionReference = if (-not [string]::IsNullOrWhiteSpace($JulesSessionId) -or -
 } else {
     Get-JulesSessionReferenceFromIssue -Repository $resolvedRepository -IssueNumber $IssueNumber
 }
-Upsert-JulesIssueTrackingBlock -Repository $resolvedRepository -IssueNumber $IssueNumber -Fields @{
+    Update-JulesIssueTrackingBlock -Repository $resolvedRepository -IssueNumber $IssueNumber -Fields @{
     SessionId      = if ($sessionReference) { [string]$sessionReference.SessionId } else { "" }
     SessionName    = if ($sessionReference) { [string]$sessionReference.SessionName } else { "" }
     QueueState     = $resolvedQueueState
@@ -369,10 +369,9 @@ $projectContext = Get-VorceProjectContext -Repository $resolvedRepository
 if ($null -ne $projectContext) {
     $issueContentId = Get-GitHubIssueContentId -Repository $resolvedRepository -IssueNumber $IssueNumber
     if (-not [string]::IsNullOrWhiteSpace($issueContentId)) {
-        $itemId = Ensure-VorceProjectItem -Context $projectContext -IssueContentId $issueContentId
+        $itemId = Add-VorceProjectItem -Context $projectContext -IssueContentId $issueContentId
         $projectTaskType = Resolve-ProjectTaskTypeValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "task_type")
         $projectAgent = Resolve-ProjectAgentValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "agent")
-        $projectRemoteState = Resolve-ProjectRemoteStateValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "remote_state") -FallbackStatus (Get-IssueFormFieldValue -Body $updatedBody -FieldName "Status")
         $projectJulesSessionStatus = Resolve-ProjectJulesSessionStatusValue -RemoteState (Get-IssueFormFieldValue -Body $updatedBody -FieldName "remote_state") -AgentValue $projectAgent -SessionId (Get-IssueFormFieldValue -Body $updatedBody -FieldName "jules_session")
         $projectPrChecksStatus = Resolve-ProjectPrChecksStatusValue -Repository $resolvedRepository -PullRequestUrl $resolvedPullRequestUrl -AgentValue $projectAgent
         $projectSubAgent = Resolve-ProjectSubAgentValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "sub_agent") -TaskTypeValue $projectTaskType -AgentValue $projectAgent

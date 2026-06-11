@@ -35,7 +35,7 @@ function New-AutopilotState {
         started_at              = (Get-Date -Format 'o')
         last_heartbeat          = (Get-Date -Format 'o')
         last_planning_at        = ""
-        last_monitoring_at      = ""
+        last_check_and_doing_at = ""
         active_delegations      = @()
         working_queue           = @()
         working_sessions        = @()

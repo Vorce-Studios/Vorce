@@ -4,7 +4,6 @@ param($MainState, $SubState, $GlobalState, $Config, $QuotaRegistry, $DryRun)
 Write-Host "`n[SUB-RUN] SR-02 Triage: Pruefe Eskalationen und Konflikte..." -ForegroundColor Cyan
 
 $repo = $Config.repository
-$ScriptDir = Resolve-Path (Join-Path $PSScriptRoot "../../..")
 
 # --- Step 1: Process escalated issues (CEO Re-Planning) ---
 $escalated = @($GlobalState.escalated_issues | Where-Object { $_.status -eq "NEEDS_PLANNING" })
@@ -18,7 +17,7 @@ if ($escalated.Count -gt 0) {
         Write-Host "[PLANNING] Re-Planning fuer eskaliertes Issue #$issueNum ($issueTitle) via CEO + QA Manager Deliberation..." -ForegroundColor Yellow
 
         $promptText = @"
-Das Issue #$issueNum ("$issueTitle") wurde an Jules delegiert (letzte Session: $lastSessionId), ist aber im Monitoring-Modus fehlgeschlagen oder hängengeblieben (Timeout/Fehler).
+Das Issue #$issueNum ("$issueTitle") wurde an Jules delegiert (letzte Session: $lastSessionId), ist aber im Check&Doing-Modus fehlgeschlagen oder hängengeblieben (Timeout/Fehler).
 
 Deine Rolle: Analysiere diese Eskalation im CEO + QA Manager Team.
 Erstelle eine neue, präzisere Handlungsanweisung (Prompt-Ergänzung oder überarbeitete Issue-Beschreibung), um Jules beim nächsten Versuch erfolgreich zu leiten.
@@ -29,7 +28,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
         Write-Host "[PLANNING] Starte hierarchische Deliberation..." -ForegroundColor Gray
         
         # 1. Proposal (CEO)
-        $proposalPartName = "PART-RUN-01_SR-02_MR-01_Planning__CEOProposal-Issue-$issueNum"
+        $proposalPartName = "PART-RUN-01_SR-02_MR-01_Planning__ReplanProposal"
         $proposalResult = Invoke-PartRun `
             -PartRunName $proposalPartName `
             -AgentType "CEO" `
@@ -44,7 +43,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
             
             # 2. Critique (QA-Manager)
             $critiquePrompt = "Analysiere den folgenden Vorschlag des CEO für Issue #$issueNum und gib konstruktive Kritik:`n`n$ceoProposal"
-            $critiquePartName = "PART-RUN-02_SR-02_MR-01_Planning__QACritique-Issue-$issueNum"
+            $critiquePartName = "PART-RUN-02_SR-02_MR-01_Planning__ReplanCritique"
             $critiqueResult = Invoke-PartRun `
                 -PartRunName $critiquePartName `
                 -AgentType "QA-Manager" `
@@ -58,8 +57,8 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
             if ($critiqueResult.success) {
                 $qaCritique = $critiqueResult.output
                 # 3. Synthesis (CEO)
-                $synthesisPrompt = "Berücksichtige die Kritik des QA-Managers und finalisiere den Plan für Issue #$issueNum:`n`nKRITIK:`n$qaCritique`n`nVORSCHLAG:`n$ceoProposal"
-                $synthesisPartName = "PART-RUN-03_SR-02_MR-01_Planning__CEOSynthesis-Issue-$issueNum"
+                $synthesisPrompt = "Berücksichtige die Kritik des QA-Managers und finalisiere den Plan für Issue #$($issueNum):`n`nKRITIK:`n$qaCritique`n`nVORSCHLAG:`n$ceoProposal"
+                $synthesisPartName = "PART-RUN-03_SR-02_MR-01_Planning__ReplanSynthesis"
                 $synthesisResult = Invoke-PartRun `
                     -PartRunName $synthesisPartName `
                     -AgentType "CEO" `

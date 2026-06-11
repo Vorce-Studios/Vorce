@@ -6,12 +6,12 @@
 param(
     [switch]$DryRun,
     [switch]$PlanOnce,
-    [switch]$MonitorOnce,
+    [switch]$CheckAndDoingOnce,
     [switch]$AuditOnce,
     [switch]$OptimizeOnce,
     [switch]$SkipPlanningOnStart,
     [int]$PlanningIntervalOverride,
-    [int]$MonitoringIntervalOverride
+    [int]$CheckAndDoingIntervalOverride
 )
 
 Set-StrictMode -Version Latest
@@ -122,7 +122,7 @@ $Config = Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
 
 # --- Intervals ---
 $planMinutes = if ($PlanningIntervalOverride -gt 0) { $PlanningIntervalOverride } else { $Config.wake_intervals.planning_minutes }
-$checkMinutes = if ($MonitoringIntervalOverride -gt 0) { $MonitoringIntervalOverride } else { $Config.wake_intervals.check_and_doing_minutes }
+$checkMinutes = if ($CheckAndDoingIntervalOverride -gt 0) { $CheckAndDoingIntervalOverride } else { $Config.wake_intervals.check_and_doing_minutes }
 
 # --- Banner ---
 Write-Host ""
@@ -152,7 +152,7 @@ if ($PlanOnce.IsPresent) {
     return
 }
 
-if ($MonitorOnce.IsPresent) {
+if ($CheckAndDoingOnce.IsPresent) {
     $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-02_CheckAndDoing.ps1"
     & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
@@ -241,7 +241,7 @@ while ($true) {
 
     $Config = Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
     $planMinutes = if ($PlanningIntervalOverride -gt 0) { $PlanningIntervalOverride } else { $Config.wake_intervals.planning_minutes }
-    $checkMinutes = if ($MonitoringIntervalOverride -gt 0) { $MonitoringIntervalOverride } else { $Config.wake_intervals.check_and_doing_minutes }
+    $checkMinutes = if ($CheckAndDoingIntervalOverride -gt 0) { $CheckAndDoingIntervalOverride } else { $Config.wake_intervals.check_and_doing_minutes }
 
     # Sync timestamps from State in case they were modified (e.g. Session Split)
     if ($State.last_planning_at) {
@@ -299,13 +299,13 @@ while ($true) {
             & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
             
             $lastMonTime = Get-Date
-            $State.last_monitoring_at = $lastMonTime.ToString('o')
+            $State.last_check_and_doing_at = $lastMonTime.ToString('o')
         } catch {
             Write-Host "[LOOP] Check&Doing-Fehler: $_" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "CheckAndDoing MAIN-RUN failed" -Context $_.Exception.Message
             # Backoff for 5 minutes on error
             $lastMonTime = (Get-Date).AddMinutes(-($checkMinutes - 5))
-            $State.last_monitoring_at = $lastMonTime.ToString('o')
+            $State.last_check_and_doing_at = $lastMonTime.ToString('o')
         }
     }
 
@@ -355,6 +355,10 @@ while ($true) {
     Save-AutopilotState -State $State
     $wakeupFile = Join-Path $ScriptDir "autopilot.wakeup"
     $remainingSleep = [Math]::Max(1, [int]$sleepSeconds)
+    
+    $julesPulseInterval = 120 # Lightweight Jules API Poll every 2 minutes
+    $lastJulesPulse = Get-Date
+
     while ($remainingSleep -gt 0) {
         if (Test-Path $wakeupFile) {
             Remove-Item $wakeupFile -Force -ErrorAction SilentlyContinue
@@ -364,6 +368,30 @@ while ($true) {
             $lastMonTime = [datetime]::MinValue
             break
         }
+        
+        $nowPulse = Get-Date
+        if (($nowPulse - $lastJulesPulse).TotalSeconds -ge $julesPulseInterval) {
+            $lastJulesPulse = $nowPulse
+            try {
+                if (Get-Command Get-JulesSession -ErrorAction SilentlyContinue) {
+                    $activeSessions = Get-AllJulesSessions -PageSize 20 -MaxPages 1 -ApiKey $env:JULES_API_KEY
+                    $changed = $false
+                    foreach ($sess in $activeSessions) {
+                        if (@("COMPLETED", "FAILED", "AWAITING_USER_FEEDBACK") -contains [string]$sess.state) {
+                            $changed = $true
+                            break
+                        }
+                    }
+                    if ($changed) {
+                        Write-Host "[LOOP] Jules-Pulse hat Status-Updates erkannt! Setze Wake-Up Trigger." -ForegroundColor Yellow
+                        New-Item -Path $wakeupFile -ItemType File -Force | Out-Null
+                    }
+                }
+            } catch {
+                # Ignore pulse errors
+            }
+        }
+
         Start-Sleep -Seconds 1
         $remainingSleep--
     }
