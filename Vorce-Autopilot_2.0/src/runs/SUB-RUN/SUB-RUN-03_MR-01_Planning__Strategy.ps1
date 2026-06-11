@@ -34,6 +34,7 @@ if ($Config.PSObject.Properties.Name -contains "planning_sequence") {
     Write-Host "[PLANNING] Starte sequentielle Planungs-Sequenz (Session Splitting)..." -ForegroundColor Yellow
     $planningContext = ""
     $codexExhausted = $false
+    $idx = 1
 
     foreach ($step in $Config.planning_sequence) {
         Write-Host "[PLANNING] Starte Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
@@ -89,7 +90,8 @@ if ($Config.PSObject.Properties.Name -contains "planning_sequence") {
         }
 
         if (-not $useCodex) {
-            $partName = "PART-RUN-01_SR-03_MR-01_Planning__$($step.label -replace '[^A-Za-z0-9]', '-')"
+            $partIdx = "{0:D2}" -f ($idx)
+            $partName = "PART-RUN-$partIdx_SR-03_MR-01_Planning__$($step.label -replace '[^A-Za-z0-9]', '-')"
             $stepResult = Invoke-PartRun `
                 -PartRunName $partName `
                 -AgentType "CEO" `
@@ -101,6 +103,7 @@ if ($Config.PSObject.Properties.Name -contains "planning_sequence") {
         }
 
         if ($stepResult.success) {
+            $idx++
             $output = [string]$stepResult.output
             $planningContext += "`n### Ergebnis von $($step.label):`n$output`n"
 
