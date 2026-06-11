@@ -7,6 +7,8 @@ param(
     [switch]$DryRun,
     [switch]$PlanOnce,
     [switch]$MonitorOnce,
+    [switch]$AuditOnce,
+    [switch]$OptimizeOnce,
     [switch]$SkipPlanningOnStart,
     [int]$PlanningIntervalOverride,
     [int]$MonitoringIntervalOverride
@@ -120,7 +122,7 @@ $Config = Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
 
 # --- Intervals ---
 $planMinutes = if ($PlanningIntervalOverride -gt 0) { $PlanningIntervalOverride } else { $Config.wake_intervals.planning_minutes }
-$monMinutes = if ($MonitoringIntervalOverride -gt 0) { $MonitoringIntervalOverride } else { $Config.wake_intervals.monitoring_minutes }
+$checkMinutes = if ($MonitoringIntervalOverride -gt 0) { $MonitoringIntervalOverride } else { $Config.wake_intervals.check_and_doing_minutes }
 
 # --- Banner ---
 Write-Host ""
@@ -128,9 +130,9 @@ Write-Host "======================================================" -ForegroundC
 Write-Host "  VORCE AUTOPILOT - AI CEO Orchestrator (Optimized)" -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
 $planStr = $planMinutes.ToString().PadLeft(4)
-$monStr = $monMinutes.ToString().PadLeft(4)
+$checkStr = $checkMinutes.ToString().PadLeft(4)
 Write-Host "  Planning Interval:   $planStr min" -ForegroundColor Cyan
-Write-Host "  Monitoring Interval: $monStr min" -ForegroundColor Cyan
+Write-Host "  Check&Doing Interval:$checkStr min" -ForegroundColor Cyan
 if ($DryRun.IsPresent) {
     Write-Host "  Mode: DRY RUN (keine echten API-Calls)" -ForegroundColor Yellow
 }
@@ -151,7 +153,23 @@ if ($PlanOnce.IsPresent) {
 }
 
 if ($MonitorOnce.IsPresent) {
-    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-02_Monitoring.ps1"
+    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-02_CheckAndDoing.ps1"
+    & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+    $summary = Get-QuotaSummary -Registry $QuotaRegistry
+    Write-Host $summary -ForegroundColor DarkGray
+    return
+}
+
+if ($AuditOnce.IsPresent) {
+    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-03_Audit.ps1"
+    & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+    $summary = Get-QuotaSummary -Registry $QuotaRegistry
+    Write-Host $summary -ForegroundColor DarkGray
+    return
+}
+
+if ($OptimizeOnce.IsPresent) {
+    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-04_Optimizer.ps1"
     & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
     Write-Host $summary -ForegroundColor DarkGray
@@ -264,6 +282,14 @@ while ($true) {
             & $auditScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
         } catch {
             Write-Host "[LOOP] Audit-Fehler: $_" -ForegroundColor Red
+        }
+
+        # Asynchroner Optimizer-Lauf (MAIN-RUN-04)
+        try {
+            $optScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-04_Optimizer.ps1"
+            & $optScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+        } catch {
+            Write-Host "[LOOP] Optimizer-Fehler: $_" -ForegroundColor Red
         }
     }
 

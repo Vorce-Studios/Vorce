@@ -1,50 +1,49 @@
 # src/runs/ROUTER/ROUTER_MAIN-RUN-03_Audit.ps1
-# Router fuer die Audit-Phase
-
+# Smart Router fuer den Audit-Modus (QA-Manager)
 param(
-    [Parameter(Mandatory)][object]$GlobalState,
-    [Parameter(Mandatory)][object]$Config,
+    [object]$GlobalState,
+    [object]$Config,
     [object]$MainState
 )
 
-Write-Host "[ROUTER] Evaluierung der SUB-RUNS fuer Audit..." -ForegroundColor DarkGray
+Write-Host "`n[ROUTER] Validiere dynamische Routing-Regeln fuer Audit..." -ForegroundColor Magenta
 
-$subRuns = @()
+$definitions = @()
 $idx = 1
 
-$routerCfg = $null
-if ($Config.PSObject.Properties.Name -contains "router_rules" -and 
-    $Config.router_rules.PSObject.Properties.Name -contains "Audit") {
-    $routerCfg = $Config.router_rules.Audit
+function Add-Def {
+    param([string]$Name, [string]$Script)
+    $Script:definitions += @{
+        id     = "{0:D2}" -f $Script:idx
+        name   = $Name
+        script = $Script
+    }
+    $Script:idx++
 }
 
-if ($null -ne $routerCfg) {
-    foreach ($rule in $routerCfg) {
-        if ($rule.enabled) {
-            $subRuns += @{
-                id     = if ($rule.PSObject.Properties.Name -contains "id") { $rule.id } else { "{0:D2}" -f $idx }
-                name   = $rule.name
-                script = $rule.script
-            }
-            Write-Host "[ROUTER]   -> $($rule.name) aktiviert." -ForegroundColor Green
-        } else {
-            Write-Host "[ROUTER]   -> $($rule.name) deaktiviert (Config)." -ForegroundColor DarkGray
-        }
-        $idx++
-    }
+# 1. DataSync laeuft IMMER
+Add-Def -Name "DataSync" -Script "src/runs/SUB-RUN/SUB-RUN-01_MR-03_Audit__DataSync.ps1"
+Write-Host "[ROUTER]   -> DataSync: ENABLED (Laeuft immer)" -ForegroundColor Green
+
+# 2. ComplianceCheck
+Add-Def -Name "ComplianceCheck" -Script "src/runs/SUB-RUN/SUB-RUN-02_MR-03_Audit__ComplianceCheck.ps1"
+Write-Host "[ROUTER]   -> ComplianceCheck: ENABLED" -ForegroundColor Green
+
+# 3. JulesSupervision: Nur wenn es aktive Jules-Sessions gibt (geprueft via GlobalState)
+$julesDelegations = @($GlobalState.active_delegations | Where-Object {
+    $at = if ($_.PSObject.Properties.Name -contains "agent_type" -and $_.agent_type) { [string]$_.agent_type } else { "jules" }
+    $at -eq "jules"
+})
+if ($julesDelegations.Count -gt 0) {
+    Add-Def -Name "JulesSupervision" -Script "src/runs/SUB-RUN/SUB-RUN-03_MR-03_Audit__JulesSupervision.ps1"
+    Write-Host "[ROUTER]   -> JulesSupervision: ENABLED ($($julesDelegations.Count) aktive Jules-Sessions)" -ForegroundColor Green
 } else {
-    Write-Warning "[ROUTER] Keine Config-Regeln fuer 'Audit' gefunden. Nutze Defaults."
-    $subRuns += @{
-        id     = "01"
-        name   = "ConsistencyAudit"
-        script = "src/runs/SUB-RUN/SUB-RUN-01_MR-03_Audit__ConsistencyAudit.ps1"
-    }
-    $subRuns += @{
-        id     = "02"
-        name   = "LegacyAudit"
-        script = "src/runs/SUB-RUN/SUB-RUN-02_MR-03_Audit__LegacyFallback.ps1"
-    }
+    Write-Host "[ROUTER]   -> JulesSupervision: DISABLED (Keine aktiven Jules-Sessions)" -ForegroundColor DarkGray
+    $MainState.metadata["skipped_JulesSupervision"] = @{ reason = "no_jules_delegations"; timestamp = (Get-Date).ToString('o') }
 }
 
-Write-Host "[ROUTER] Audit: $($subRuns.Count) Sub-Run(s) identifiziert." -ForegroundColor DarkGray
-return $subRuns
+# 4. AlertDisposition laeuft IMMER (generiert finales Output)
+Add-Def -Name "AlertDisposition" -Script "src/runs/SUB-RUN/SUB-RUN-04_MR-03_Audit__AlertDisposition.ps1"
+Write-Host "[ROUTER]   -> AlertDisposition: ENABLED (Laeuft immer)" -ForegroundColor Green
+
+return $definitions

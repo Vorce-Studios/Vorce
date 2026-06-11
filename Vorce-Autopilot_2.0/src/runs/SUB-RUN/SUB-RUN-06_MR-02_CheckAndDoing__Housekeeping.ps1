@@ -4,7 +4,6 @@ param($MainState, $SubState, $GlobalState, $Config, $QuotaRegistry, $DryRun)
 
 Write-Host "`n[SUB-RUN] SR-06 Housekeeping: Aufraeum- und Statusarbeiten..." -ForegroundColor Cyan
 
-$ScriptDir = Resolve-Path (Join-Path $PSScriptRoot "../../..")
 
 # Lade PRs aus MainState (falls bereits verfuegbar)
 $prs = @()
