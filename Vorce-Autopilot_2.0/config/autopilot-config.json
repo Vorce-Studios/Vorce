@@ -2,7 +2,7 @@
   "repository": "Vorce-Studios/Vorce",
   "wake_intervals": {
     "planning_minutes": 120,
-    "monitoring_minutes": 15
+    "check_and_doing_minutes": 15
   },
   "jules": {
     "max_daily_sessions": 100,
@@ -63,9 +63,13 @@
       { "id": "04", "name": "Delegation", "script": "src/runs/SUB-RUN/SUB-RUN-04_MR-01_Planning__Delegation.ps1", "enabled": true },
       { "id": "05", "name": "Optimization", "script": "src/runs/SUB-RUN/SUB-RUN-05_MR-01_Planning__Optimization.ps1", "enabled": true }
     ],
-    "Monitoring": [
-      { "id": "01", "name": "SystemHealthCheck", "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-02_Monitoring__SystemHealthCheck.ps1", "enabled": true },
-      { "id": "02", "name": "LegacyMonitoring", "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-02_Monitoring__LegacyFallback.ps1", "enabled": true }
+    "CheckAndDoing": [
+      { "id": "01", "name": "SessionSync", "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-02_CheckAndDoing__SessionSync.ps1", "enabled": true },
+      { "id": "02", "name": "JulesCheck", "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck.ps1", "enabled": true },
+      { "id": "03", "name": "LocalAgentCheck", "script": "src/runs/SUB-RUN/SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck.ps1", "enabled": true },
+      { "id": "04", "name": "ReviewDispatch", "script": "src/runs/SUB-RUN/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch.ps1", "enabled": true },
+      { "id": "05", "name": "JulesRefill", "script": "src/runs/SUB-RUN/SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill.ps1", "enabled": true },
+      { "id": "06", "name": "Housekeeping", "script": "src/runs/SUB-RUN/SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping.ps1", "enabled": true }
     ],
     "Audit": [
       { "id": "01", "name": "ConsistencyAudit", "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-03_Audit__ConsistencyAudit.ps1", "enabled": true },

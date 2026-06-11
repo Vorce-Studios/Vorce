@@ -81,7 +81,6 @@ foreach ($delegation in $julesDelegations) {
         )
 
         Update-DelegationState -State $GlobalState -IssueNumber $issueNum -JulesState $julesState
-        $matchingPr = $prs | Where-Object { $_.title -match "#$issueNum" -or $_.headRefName -match "$issueNum" } | Select-Object -First 1
 
         switch ($julesState) {
             "COMPLETED" {

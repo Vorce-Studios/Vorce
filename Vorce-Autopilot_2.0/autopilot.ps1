@@ -84,6 +84,7 @@ function Write-Host {
 . (Join-Path $ScriptDir "src/lib/naming-convention.ps1")
 . (Join-Path $ScriptDir "src/lib/project-manager.ps1")
 . (Join-Path $ScriptDir "src/lib/planning-utils.ps1")
+. (Join-Path $ScriptDir "src/lib/checkdoing-utils.ps1")
 . (Join-Path $ScriptDir "src/orchestrator/Invoke-MainRun.ps1")
 
 # Dummy command/placeholder for backward compatibility check
@@ -222,7 +223,7 @@ while ($true) {
 
     $Config = Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
     $planMinutes = if ($PlanningIntervalOverride -gt 0) { $PlanningIntervalOverride } else { $Config.wake_intervals.planning_minutes }
-    $monMinutes = if ($MonitoringIntervalOverride -gt 0) { $MonitoringIntervalOverride } else { $Config.wake_intervals.monitoring_minutes }
+    $checkMinutes = if ($MonitoringIntervalOverride -gt 0) { $MonitoringIntervalOverride } else { $Config.wake_intervals.check_and_doing_minutes }
 
     # Sync timestamps from State in case they were modified (e.g. Session Split)
     if ($State.last_planning_at) {
@@ -230,7 +231,7 @@ while ($true) {
     }
 
     $planDue = ($now - $lastPlanTime).TotalMinutes -ge $planMinutes
-    $monDue = ($now - $lastMonTime).TotalMinutes -ge $monMinutes
+    $checkDue = ($now - $lastMonTime).TotalMinutes -ge $checkMinutes
 
     if ($planDue) {
         try {
@@ -252,9 +253,9 @@ while ($true) {
         }
 
         # Planning hat Prioritaet
-        if ($monDue) {
-            Write-Host "[LOOP] Monitoring verschoben - Planning hat Prioritaet." -ForegroundColor DarkGray
-            $monDue = $false
+        if ($checkDue) {
+            Write-Host "[LOOP] Check&Doing verschoben - Planning hat Prioritaet." -ForegroundColor DarkGray
+            $checkDue = $false
         }
 
         # Asynchroner Audit-Lauf (MAIN-RUN-03)
@@ -266,18 +267,18 @@ while ($true) {
         }
     }
 
-    if ($monDue) {
+    if ($checkDue) {
         try {
-            $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-02_Monitoring.ps1"
+            $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-02_CheckAndDoing.ps1"
             & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
             
             $lastMonTime = Get-Date
             $State.last_monitoring_at = $lastMonTime.ToString('o')
         } catch {
-            Write-Host "[LOOP] Monitoring-Fehler: $_" -ForegroundColor Red
-            Add-ErrorLog -State $State -Message "Monitoring MAIN-RUN failed" -Context $_.Exception.Message
+            Write-Host "[LOOP] Check&Doing-Fehler: $_" -ForegroundColor Red
+            Add-ErrorLog -State $State -Message "CheckAndDoing MAIN-RUN failed" -Context $_.Exception.Message
             # Backoff for 5 minutes on error
-            $lastMonTime = (Get-Date).AddMinutes(-($monMinutes - 5))
+            $lastMonTime = (Get-Date).AddMinutes(-($checkMinutes - 5))
             $State.last_monitoring_at = $lastMonTime.ToString('o')
         }
     }
@@ -314,11 +315,11 @@ while ($true) {
     Write-Host $summary -ForegroundColor DarkGray
 
     $nextPlan = if ($lastPlanTime -eq [datetime]::MinValue) { (Get-Date).AddMinutes($planMinutes) } else { $lastPlanTime.AddMinutes($planMinutes) }
-    $nextMon = if ($lastMonTime -eq [datetime]::MinValue) { (Get-Date).AddMinutes($monMinutes) } else { $lastMonTime.AddMinutes($monMinutes) }
+    $nextMon = if ($lastMonTime -eq [datetime]::MinValue) { (Get-Date).AddMinutes($checkMinutes) } else { $lastMonTime.AddMinutes($checkMinutes) }
     $nextWake = @($nextPlan, $nextMon) | Sort-Object | Select-Object -First 1
     $sleepSeconds = [Math]::Max(10, [double]($nextWake - (Get-Date)).TotalSeconds)
 
-    if ($nextWake -eq $nextPlan) { $nextType = "Planning" } else { $nextType = "Monitoring" }
+    if ($nextWake -eq $nextPlan) { $nextType = "Planning" } else { $nextType = "Check&Doing" }
     $sleepMin = [Math]::Round($sleepSeconds / 60, 1)
     $nextTimeStr = $nextWake.ToString("HH:mm:ss")
     $loopMsg = "[LOOP] Naechster Wake-Up ({0}): {1} (in {2} min)" -f $nextType, $nextTimeStr, $sleepMin

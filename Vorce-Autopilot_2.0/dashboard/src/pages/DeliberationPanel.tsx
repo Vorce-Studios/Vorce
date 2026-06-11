@@ -123,12 +123,12 @@ export default function DeliberationPanel({ deliberations }: Props) {
                   <div className="flex items-center gap-2 text-[10px]">
                     <span className="flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-                      <span className="text-slate-400">{PROVIDER_SHORT[d.alpha_provider] || d.alpha_provider}</span>
+                      <span className="text-slate-400">{(d.alpha_provider && PROVIDER_SHORT[d.alpha_provider]) || d.alpha_provider || '–'}</span>
                     </span>
                     <Zap className="w-2.5 h-2.5 text-slate-600" />
                     <span className="flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-                      <span className="text-slate-400">{PROVIDER_SHORT[d.beta_provider] || d.beta_provider}</span>
+                      <span className="text-slate-400">{(d.beta_provider && PROVIDER_SHORT[d.beta_provider]) || d.beta_provider || '–'}</span>
                     </span>
                   </div>
                 </div>
