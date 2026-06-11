@@ -31,37 +31,6 @@ if ($MainState.PSObject.Properties.Name -contains "OpenPRs" -and $null -ne $Main
 
 Write-Host "[CHECK&DOING] $($prs.Count) offene PRs gefunden." -ForegroundColor DarkGray
 
-# --- Monitoring Sequence (Session Splitting) ---
-if ($Config.PSObject.Properties.Name -contains "monitoring_sequence") {
-    Write-Host "[CHECK&DOING] Starte sequentielle Check&Doing-Sequenz..." -ForegroundColor Yellow
-    $monitoringContext = ""
-    $prsData = $prs | ConvertTo-Json -Depth 3
-    $sessionsData = $GlobalState.active_delegations | ConvertTo-Json -Depth 3
-
-    foreach ($step in $Config.monitoring_sequence) {
-        Write-Host "[CHECK&DOING] Schritt: $($step.label) (Thinking: $($step.tier))" -ForegroundColor Cyan
-        $promptVars = @{ repo = $repo; prs = $prsData; sessions = $sessionsData; context = $monitoringContext }
-        $stepPrompt = Get-VorceConfigPrompt -Config $Config -PromptKey $step.prompt_ref -Variables $promptVars
-        $fullPrompt = "$(Get-VorceDashboardDataInstructions)`n`n$stepPrompt"
-
-        $partName = "PART-RUN-01_SR-04_MR-02_CheckAndDoing__$($step.label -replace '[^A-Za-z0-9]', '-')"
-        $stepResult = Invoke-PartRun `
-            -PartRunName $partName `
-            -AgentType "CEO" `
-            -Prompt $fullPrompt `
-            -SubState $SubState `
-            -Config $Config `
-            -QuotaRegistry $QuotaRegistry `
-            -DryRun:$DryRun
-
-        if ($stepResult.success) {
-            $monitoringContext += "`n### Ergebnis $($step.label):`n$($stepResult.output)`n"
-        } else {
-            Write-Warning "[CHECK&DOING] Schritt $($step.label) fehlgeschlagen: $($stepResult.output)"
-        }
-    }
-}
-
 # --- PR Status-Check ---
 $conflictingPrs = @()
 foreach ($pr in $prs) {
@@ -126,7 +95,16 @@ if ($pendingReviews.Count -gt 0) {
             $reviewPrompt = "Starte Skill /vorce-pr-review $($review.pr_number)"
         }
 
-        $reviewResult = Invoke-CliTask -QuotaRegistry $QuotaRegistry -TaskType "code_review" -DryRun:$DryRun -Prompt $reviewPrompt
+        # Refactored to Part-Run
+        $partRunName = "PART-RUN-01_SR-04_MR-02_CheckAndDoing__PRReview-PR-$($review.pr_number)"
+        $reviewResult = Invoke-PartRun `
+            -PartRunName $partRunName `
+            -AgentType "QA-Manager" `
+            -Prompt $reviewPrompt `
+            -SubState $SubState `
+            -Config $Config `
+            -QuotaRegistry $QuotaRegistry `
+            -DryRun:$DryRun
 
         if ($reviewResult.success -and [string]$reviewResult.provider -eq "claude_code") {
             $review.review_status = "completed"
