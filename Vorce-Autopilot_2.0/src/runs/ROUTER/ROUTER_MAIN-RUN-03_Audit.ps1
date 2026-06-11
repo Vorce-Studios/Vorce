@@ -6,6 +6,9 @@ param(
     [object]$MainState
 )
 
+$ScriptDir = Resolve-Path (Join-Path $PSScriptRoot "../../..")
+. (Join-Path $ScriptDir "src/lib/planning-utils.ps1")
+
 Write-Host "`n[ROUTER] Validiere dynamische Routing-Regeln fuer Audit..." -ForegroundColor Magenta
 
 $definitions = @()

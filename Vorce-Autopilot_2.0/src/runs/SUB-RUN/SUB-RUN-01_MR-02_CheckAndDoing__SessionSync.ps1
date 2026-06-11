@@ -7,6 +7,7 @@ Write-Host "`n[SUB-RUN] SR-01 SessionSync: Synchronisiere Session-Status..." -Fo
 $repo = $Config.repository
 $ScriptDir = Resolve-Path (Join-Path $PSScriptRoot "../../..")
 $VarDbDir = Join-Path $ScriptDir "var/db"
+$global:VorceAutopilotStateFilePath = Join-Path $VarDbDir "active-sessions.json"
 
 Confirm-WorkingSessionsState -State $GlobalState
 

@@ -948,31 +948,51 @@ function Resolve-ProjectSingleSelectOption {
 function Get-VorceProjectStatusCandidateNames {
     param([Parameter(Mandatory)][hashtable]$Fields)
 
-    if (@("closed", "done", "completed", "merged") -contains (([string]$Fields.QueueState).Trim()).ToLowerInvariant()) {
-        return @("Done", "Completed", "Closed", "Merged")
+    # 1. Geschlossen / Erledigt
+    if (@("closed", "done", "completed", "merged") -contains (([string]$Fields.QueueState).Trim()).ToLowerInvariant() -or 
+        @("merged", "completed", "closed") -contains [string]$Fields.RemoteState -or
+        (([string]$Fields.IssueState).Trim().ToUpperInvariant() -eq "CLOSED")) {
+        return @("Done")
     }
 
-    if (([string]$Fields.IssueState).Trim().ToUpperInvariant() -eq "CLOSED") {
-        return @("Done", "Completed", "Closed", "Merged")
+    # 2. PR Checks Status
+    if ([string]$Fields.PrChecksStatus -eq "failed") {
+        return @("PR-Checks_failed")
+    }
+    if ([string]$Fields.PrChecksStatus -eq "merge-conflict") {
+        return @("PR-Merge_Conflicts")
+    }
+    if ([string]$Fields.PrChecksStatus -in @("pending", "running", "draft")) {
+        return @("PR-Checks_Run")
     }
 
-    if (@("merged", "completed", "closed") -contains [string]$Fields.RemoteState) {
-        return @("Done", "Completed", "Closed", "Merged")
-    }
-
+    # 3. Needs Attention / Blocked
     if ([string]$Fields.NeedsAttention -eq "yes") {
-        return @("Blocked", "On Hold", "Needs Input", "In Progress")
+        return @("Review-PR_inRework")
     }
 
-    if ([string]$Fields.PullRequestUrl) {
-        return @("In Review", "Review", "Needs Review", "In Progress")
+    # 4. Review Status (PR Checks passed, needs human review)
+    if ([string]$Fields.QueueState -eq "user-review" -or ([string]$Fields.PullRequestUrl -and [string]$Fields.PrChecksStatus -eq "passed")) {
+        return @("Review-PR_needed", "QA-Test_needed")
     }
 
-    if ([string]$Fields.QueueState -in @("user-review", "approved-awaiting-dispatch", "issue-only")) {
-        return @("Todo", "Backlog", "Ready", "Inbox")
+    # 5. Jules Session Status
+    if ([string]$Fields.JulesSessionStatus -eq "failed") {
+        return @("J-Session_failed")
+    }
+    if ([string]$Fields.JulesSessionStatus -eq "waiting") {
+        return @("J-Session_waiting")
+    }
+    if ([string]$Fields.JulesSessionStatus -in @("running", "in_progress", "queued")) {
+        return @("J-Session_open")
     }
 
-    return @("In Progress", "Doing", "Active")
+    # 6. Default Fallbacks
+    if ([string]$Fields.QueueState -in @("issue-only", "approved-awaiting-dispatch") -or [string]$Fields.RemoteState -in @("none", "jules_created")) {
+        return @("Planed")
+    }
+
+    return @("Started")
 }
 
 function Get-VorceJulesSessionStatusValue {

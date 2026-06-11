@@ -17,14 +17,18 @@ function Write-SafeJson {
 
     $json = $Data | ConvertTo-Json -Depth 20 -Compress
     $tempFile = "$FilePath.tmp"
-    
+    $mutex = New-Object System.Threading.Mutex($false, "Global\VorceAutopilotStateMutex")
     try {
+        $mutex.WaitOne() | Out-Null
         $json | Out-File -FilePath $tempFile -Encoding UTF8 -Force
         if (Test-Path $tempFile) {
             Move-Item -Path $tempFile -Destination $FilePath -Force
         }
     } catch {
         Write-Warning ("Fehler beim Schreiben von {0}: {1}" -f $FilePath, $_.Exception.Message)
+    } finally {
+        $mutex.ReleaseMutex()
+        $mutex.Dispose()
     }
 }
 
@@ -60,12 +64,17 @@ function Read-AutopilotState {
         return $null
     }
 
+    $mutex = New-Object System.Threading.Mutex($false, "Global\VorceAutopilotStateMutex")
     try {
-        $content = Get-Content $global:VorceAutopilotStateFilePath -Raw -Encoding UTF8
-        return ($content | ConvertFrom-Json)
+        $mutex.WaitOne() | Out-Null
+        $content = Get-Content -LiteralPath $global:VorceAutopilotStateFilePath -Raw -Encoding UTF8
+        return $content | ConvertFrom-Json
     } catch {
-        Write-Warning "State-Datei beschaedigt: $_"
+        Write-Warning "Fehler beim Lesen der Autopilot-State-Datei: $_"
         return $null
+    } finally {
+        $mutex.ReleaseMutex()
+        $mutex.Dispose()
     }
 }
 

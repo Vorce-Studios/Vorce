@@ -78,16 +78,7 @@ function Set-IssueFormFields {
     Set-GitHubIssueBody -Repository $Repository -IssueNumber $IssueNumber -Body $body
 }
 
-function Resolve-ProjectStatusValue {
-    param([AllowNull()][string]$Value)
 
-    switch -Regex ([string]$Value) {
-        '^(Done|Completed|Closed|Merged)$' { return "Done" }
-        '^Blocked$' { return "PR CodeRework" }
-        '^Todo$' { return "Todo" }
-        default { return "In Progress" }
-    }
-}
 
 function Resolve-ProjectTaskTypeValue {
     param([AllowNull()][string]$Value)
@@ -376,7 +367,6 @@ if ($null -ne $projectContext) {
         $projectPrChecksStatus = Resolve-ProjectPrChecksStatusValue -Repository $resolvedRepository -PullRequestUrl $resolvedPullRequestUrl -AgentValue $projectAgent
         $projectSubAgent = Resolve-ProjectSubAgentValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "sub_agent") -TaskTypeValue $projectTaskType -AgentValue $projectAgent
 
-        Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "Status" -Value (Resolve-ProjectStatusValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "Status"))
         Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "task_id" -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "task_id")
         Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "area" -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "area")
         Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "task_type" -Value $projectTaskType
@@ -402,6 +392,7 @@ Sync-VorceProjectFields -Repository $resolvedRepository -IssueNumber $IssueNumbe
     PullRequestUrl = $resolvedPullRequestUrl
     LastUpdate     = $resolvedLastUpdate
     NeedsAttention = if ($resolvedStatus -eq "Blocked") { "yes" } else { "no" }
+    IssueState     = [string]$updatedIssue.state
 }
 
 $desiredLabels = if (Test-IsFinalStatus -Value $resolvedStatus) {

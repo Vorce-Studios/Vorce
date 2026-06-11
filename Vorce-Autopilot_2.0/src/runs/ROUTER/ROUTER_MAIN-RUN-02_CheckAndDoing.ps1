@@ -3,7 +3,8 @@
 param(
     [object]$GlobalState,
     [object]$Config,
-    [object]$MainState
+    [object]$MainState,
+    [object]$QuotaRegistry
 )
 
 Write-Host "`n[ROUTER] Validiere dynamische Routing-Regeln fuer Check&Doing..." -ForegroundColor Magenta

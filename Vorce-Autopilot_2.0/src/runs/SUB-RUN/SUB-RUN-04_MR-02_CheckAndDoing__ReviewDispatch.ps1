@@ -58,6 +58,43 @@ foreach ($pr in $prs) {
 }
 Sync-OpenPullRequestsToReviewQueue -State $GlobalState -PullRequests $prs
 
+# --- Review Result Polling ---
+$reviewResultsDir = Join-Path $VarDbDir "reviews"
+if (-not (Test-Path $reviewResultsDir)) {
+    New-Item -ItemType Directory -Path $reviewResultsDir -Force | Out-Null
+}
+
+$resultFiles = Get-ChildItem -Path $reviewResultsDir -Filter "*-result.json"
+foreach ($file in $resultFiles) {
+    try {
+        $resultData = Get-Content -LiteralPath $file.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
+        $prNum = [int]$resultData.pr_number
+        $review = $GlobalState.review_queue | Where-Object { [int]$_.pr_number -eq $prNum } | Select-Object -First 1
+        
+        if ($null -ne $review) {
+            if ($resultData.success -and [string]$resultData.provider -eq "claude_code") {
+                $review.review_status = "completed"
+                $review | Add-Member -MemberType NoteProperty -Name "review_provider" -Value "claude_code" -Force
+                $review | Add-Member -MemberType NoteProperty -Name "reviewed_at" -Value ([string]$resultData.completed_at) -Force
+                $reviewedRevision = if (Test-ObjectProperty -Object $review -Name "pr_updated_at") { [string]$review.pr_updated_at } else { "" }
+                $review | Add-Member -MemberType NoteProperty -Name "reviewed_pr_updated_at" -Value $reviewedRevision -Force
+                Write-Host "[CHECK&DOING]   Async Review fuer PR #$($review.pr_number) erfolgreich abgeschlossen via $($resultData.provider)." -ForegroundColor Green
+            } elseif ($resultData.success) {
+                $review.review_status = "pending"
+                Write-Warning "[CHECK&DOING]   Async Review fuer PR #$($review.pr_number) via $($resultData.provider) wird nicht als Merge-Freigabe akzeptiert; Claude Code ist verpflichtend."
+            } else {
+                $errMsg = "Async Review fuer PR #$($review.pr_number) fehlgeschlagen: $($resultData.output)"
+                Write-Warning "[CHECK&DOING]   $errMsg"
+                Add-ErrorLog -State $GlobalState -Message "PR Review Failed for PR #$($review.pr_number)" -Context $errMsg
+            }
+        }
+        Remove-Item -LiteralPath $file.FullName -Force
+    } catch {
+        Write-Warning "[CHECK&DOING] Fehler beim Verarbeiten von Review-Resultat $($file.Name): $_"
+    }
+}
+
+
 # Speichere Conflict-Info im MainState
 if (-not ($MainState.PSObject.Properties.Name -contains "ConflictingPRs")) {
     $MainState | Add-Member -MemberType NoteProperty -Name "ConflictingPRs" -Value @() -Force
@@ -95,31 +132,47 @@ if ($pendingReviews.Count -gt 0) {
             $reviewPrompt = "Starte Skill /vorce-pr-review $($review.pr_number)"
         }
 
-        # Refactored to Part-Run
-        $partRunName = "PART-RUN-01_SR-04_MR-02_CheckAndDoing__PRReview-PR-$($review.pr_number)"
-        $reviewResult = Invoke-PartRun `
-            -PartRunName $partRunName `
-            -AgentType "QA-Manager" `
-            -Prompt $reviewPrompt `
-            -SubState $SubState `
-            -Config $Config `
-            -QuotaRegistry $QuotaRegistry `
-            -DryRun:$DryRun
+        # Check if review result file exists or if it's already dispatched
+        $expectedResultPath = Join-Path $reviewResultsDir "pr-$($review.pr_number)-result.json"
+        if (Test-Path $expectedResultPath) {
+            Write-Host "[CHECK&DOING]   Review fuer PR #$($review.pr_number) laeuft bereits im Hintergrund..." -ForegroundColor DarkGray
+            continue
+        }
+        
+        # Check if a pwsh process with this PR number is already running
+        $isRunning = $false
+        $processes = Get-WmiObject Win32_Process -Filter "Name='pwsh.exe'" -ErrorAction SilentlyContinue
+        if ($null -ne $processes) {
+            foreach ($p in $processes) {
+                if ($p.CommandLine -match "run-background-review.ps1.*-PullRequestNumber $($review.pr_number)\b") {
+                    $isRunning = $true
+                    break
+                }
+            }
+        }
+        
+        if ($isRunning) {
+            Write-Host "[CHECK&DOING]   Review-Prozess fuer PR #$($review.pr_number) laeuft noch..." -ForegroundColor DarkGray
+            continue
+        }
 
-        if ($reviewResult.success -and [string]$reviewResult.provider -eq "claude_code") {
-            $review.review_status = "completed"
-            $review | Add-Member -MemberType NoteProperty -Name "review_provider" -Value "claude_code" -Force
-            $review | Add-Member -MemberType NoteProperty -Name "reviewed_at" -Value (Get-Date -Format 'o') -Force
-            $reviewedRevision = if (Test-ObjectProperty -Object $review -Name "pr_updated_at") { [string]$review.pr_updated_at } else { "" }
-            $review | Add-Member -MemberType NoteProperty -Name "reviewed_pr_updated_at" -Value $reviewedRevision -Force
-            Write-Host "[CHECK&DOING]   Review fuer PR #$($review.pr_number) abgeschlossen via $($reviewResult.provider)." -ForegroundColor Green
-        } elseif ($reviewResult.success) {
-            $review.review_status = "pending"
-            Write-Warning "[CHECK&DOING]   Review fuer PR #$($review.pr_number) via $($reviewResult.provider) wird nicht als Merge-Freigabe akzeptiert; Claude Code ist verpflichtend."
-        } else {
-            $errMsg = "Review fuer PR #$($review.pr_number) fehlgeschlagen: $(Format-AutopilotTaskFailure -Result $reviewResult)"
-            Write-Warning "[CHECK&DOING]   $errMsg"
-            Add-ErrorLog -State $GlobalState -Message "PR Review Failed for PR #$($review.pr_number)" -Context $errMsg
+        # Dispatch as background process
+        $toolsDir = Join-Path $ScriptDir "tools"
+        $scriptPath = Join-Path $toolsDir "run-background-review.ps1"
+        $configPath = Join-Path $ScriptDir "config/autopilot-config.json"
+        $quotaPath = Join-Path $VarDbDir "quota-registry.json"
+        
+        # Save substate temporarily for the script to read
+        $subStateTempPath = Join-Path $reviewResultsDir "pr-$($review.pr_number)-substate.json"
+        $SubState | ConvertTo-Json -Depth 5 -Compress | Out-File -FilePath $subStateTempPath -Encoding UTF8 -Force
+
+        $cmdArgs = "-NoProfile", "-WindowStyle", "Hidden", "-File", "`"$scriptPath`"", "-PullRequestNumber", $($review.pr_number), "-Repository", "`"$repo`"", "-ReviewPrompt", "`"$reviewPrompt`"", "-ConfigPath", "`"$configPath`"", "-QuotaRegistryPath", "`"$quotaPath`"", "-SubStatePath", "`"$subStateTempPath`"", "-OutputFilePath", "`"$expectedResultPath`""
+        
+        try {
+            Start-Process pwsh -ArgumentList $cmdArgs
+            Write-Host "[CHECK&DOING]   Background Review fuer PR #$($review.pr_number) wurde erfolgreich dispatched." -ForegroundColor Green
+        } catch {
+            Write-Warning "[CHECK&DOING]   Fehler beim Dispatchen des Reviews fuer PR #$($review.pr_number): $_"
         }
     }
 }
