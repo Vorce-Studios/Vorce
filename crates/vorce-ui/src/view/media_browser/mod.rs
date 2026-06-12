@@ -2,13 +2,13 @@ mod state;
 mod types;
 mod ui;
 
-pub use types::*;
+use egui;
+use parking_lot::RwLock;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
-use parking_lot::RwLock;
-use egui;
+pub use types::*;
 
 pub struct MediaBrowser {
     /// Current directory

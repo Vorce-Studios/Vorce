@@ -351,5 +351,4 @@ impl MediaBrowser {
             self.generating_thumbnails.write().remove(&path);
         }
     }
-
 }
