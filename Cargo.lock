@@ -2612,9 +2612,9 @@ dependencies = [
 
 [[package]]
 name = "chrono"
-version = "0.4.44"
+version = "0.4.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c673075a2e0e5f4a1dde27ce9dee1ea4558c7ffe648f576438a20ca1d2acc4b0"
+checksum = "1aa79e62e7697b8e29b513a68abacf485adcd1fe8284a4316c5ae868e6633327"
 dependencies = [
  "iana-time-zone",
  "js-sys",
@@ -4450,9 +4450,9 @@ dependencies = [
 
 [[package]]
 name = "glam"
-version = "0.33.0"
+version = "0.33.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fb167719045debebe9f532320accc7b5c993c5a3b813f5696a11d5ca7bdc57b"
+checksum = "898f5a568a84989b6c0f8caa50a93074b97dbdc58fc6d9543157bb4562758933"
 dependencies = [
  "serde_core",
 ]
@@ -9752,7 +9752,7 @@ dependencies = [
  "egui_extras",
  "ffmpeg-next",
  "futures",
- "glam 0.33.0",
+ "glam 0.33.1",
  "hound",
  "hyper",
  "image 0.24.9",
@@ -9845,7 +9845,7 @@ dependencies = [
  "cpal 0.17.1",
  "crossbeam-channel",
  "dirs",
- "glam 0.33.0",
+ "glam 0.33.1",
  "hound",
  "image 0.24.9",
  "num-complex",
@@ -9959,7 +9959,7 @@ dependencies = [
  "criterion",
  "crossbeam-channel",
  "futures-channel",
- "glam 0.33.0",
+ "glam 0.33.1",
  "image 0.24.9",
  "notify",
  "parking_lot",
@@ -9994,7 +9994,7 @@ dependencies = [
  "egui_node_editor",
  "fluent",
  "fluent-langneg 0.14.2",
- "glam 0.33.0",
+ "glam 0.33.1",
  "image 0.24.9",
  "once_cell",
  "parking_lot",
