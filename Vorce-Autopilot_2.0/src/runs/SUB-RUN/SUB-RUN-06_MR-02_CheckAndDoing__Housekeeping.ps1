@@ -133,7 +133,12 @@ try {
 }
 
 # --- Step 4: Run-Summary ---
-$conflictingPrs = if ($MainState.PSObject.Properties.Name -contains "ConflictingPRs") { @($MainState.ConflictingPRs) } else { @() }
+$conflictingPrs = @()
+if ($MainState -is [hashtable] -and $MainState.ContainsKey("ConflictingPRs")) {
+    $conflictingPrs = @($MainState["ConflictingPRs"])
+} elseif ($MainState.PSObject.Properties.Name -contains "ConflictingPRs") {
+    $conflictingPrs = @($MainState.ConflictingPRs)
+}
 $openPrCount = @($prs).Count
 $conflictCount = @($conflictingPrs).Count
 $queueNow = @($GlobalState.working_queue).Count
