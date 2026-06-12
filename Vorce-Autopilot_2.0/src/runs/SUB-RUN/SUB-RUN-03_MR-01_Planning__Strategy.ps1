@@ -3,7 +3,12 @@ param($MainState, $SubState, $GlobalState, $Config, $QuotaRegistry, $DryRun)
 
 Write-Host "`n[SUB-RUN] SR-03 Strategy: Generiere neue Issues..." -ForegroundColor Cyan
 
-$candidates = if ($MainState.PSObject.Properties.Name -contains "PlanningCandidates") { $MainState.PlanningCandidates } else { @() }
+$candidates = @()
+if ($MainState -is [hashtable] -and $MainState.ContainsKey("PlanningCandidates")) {
+    $candidates = @($MainState["PlanningCandidates"])
+} elseif ($MainState.PSObject.Properties.Name -contains "PlanningCandidates") {
+    $candidates = @($MainState.PlanningCandidates)
+}
 $repo = $Config.repository
 
 # Sanity Check
@@ -61,7 +66,7 @@ if ($Config.PSObject.Properties.Name -contains "planning_sequence") {
         if ($useCodex) {
             Write-Host "[PLANNING] Starte Planning Synthesis als interaktiven Codex-Chat." -ForegroundColor Cyan
             $partIdx = "{0:D2}" -f ($idx)
-            $partName = "PART-RUN-$partIdx_SR-03_MR-01_Planning__$($step.label -replace '[^A-Za-z0-9]', '-')"
+            $partName = "PART-RUN-$($partIdx)_SR-03_MR-01_Planning__$($step.label -replace '[^A-Za-z0-9]', '-')"
             $stepResult = Invoke-PartRun `
                 -PartRunName $partName `
                 -AgentType "codex_orchestrator" `
@@ -80,7 +85,7 @@ if ($Config.PSObject.Properties.Name -contains "planning_sequence") {
 
         if (-not $useCodex) {
             $partIdx = "{0:D2}" -f ($idx)
-            $partName = "PART-RUN-$partIdx_SR-03_MR-01_Planning__$($step.label -replace '[^A-Za-z0-9]', '-')"
+            $partName = "PART-RUN-$($partIdx)_SR-03_MR-01_Planning__$($step.label -replace '[^A-Za-z0-9]', '-')"
             $stepResult = Invoke-PartRun `
                 -PartRunName $partName `
                 -AgentType "CEO" `
