@@ -111,4 +111,3 @@ function Format-VorcePullRequestTitle {
     }
     return "PR_$IssueTitle"
 }
-

@@ -328,7 +328,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
                         )}
                       </div>
                     </div>
-                    
+
                     {alert.status === 'closed' && alert.user_comment && (
                       <div className="text-xs text-slate-500 bg-slate-900/40 rounded p-2">
                         <span className="text-slate-400 font-medium">Kommentar:</span> {alert.user_comment}
@@ -414,14 +414,14 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl">
             <h3 className="text-lg font-semibold text-slate-100 mb-2">Alert schließen / Ignorieren</h3>
             <p className="text-sm text-slate-400 mb-4">Warum wird dieser Alert geschlossen oder ignoriert?</p>
-            
+
             <textarea
               className="w-full h-24 px-3 py-2 text-sm bg-slate-950 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 resize-none"
               placeholder="z.B. PR #779 passt später wieder in die Namenskonvention, aktueller Workaround..."
               value={commentDraft}
               onChange={(e) => setCommentDraft(e.target.value)}
             />
-            
+
             <div className="flex justify-end gap-2 mt-4">
               <button
                 onClick={() => {

@@ -6,4 +6,3 @@ Harte Regeln:
 - Keine Jules-Sessions fuer Merge-Konflikte vorschlagen; Konflikte gehen immer an lokale CLI-Agents.
 - `agent: "jules"` nur setzen, wenn das Issue einen konkreten Code-/Test-Scope mit Dateien/Modulen und Acceptance Criteria beschreibt.
 - Fuer kleine Bugfixes, Skripte, CI, Tests, Konflikte und unklare Koordinationsarbeit lokale CLI-Agents waehlen.
-

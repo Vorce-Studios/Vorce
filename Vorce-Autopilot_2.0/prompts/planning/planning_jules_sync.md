@@ -1,1 +1,1 @@
-Analysiere laufende Jules-Sessions & behebe alle Probleme ($slots). 
+Analysiere laufende Jules-Sessions & behebe alle Probleme ($slots).
