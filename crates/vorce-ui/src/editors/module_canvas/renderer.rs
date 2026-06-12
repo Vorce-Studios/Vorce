@@ -537,7 +537,13 @@ pub fn render_canvas(
                     Stroke::new(3.0, color)
                 };
 
-                draw::draw_connection_preview(&painter, start_pos, pointer_pos, color, preview_stroke);
+                draw::draw_connection_preview(
+                    &painter,
+                    start_pos,
+                    pointer_pos,
+                    color,
+                    preview_stroke,
+                );
             }
         }
 
@@ -617,7 +623,12 @@ pub fn render_canvas(
                     canvas.context_menu_pos = None;
                 } else {
                     let painter = ui.painter();
-                    draw::draw_context_menu_bg(&painter, ui, menu_rect, ui.visuals().window_stroke.color);
+                    draw::draw_context_menu_bg(
+                        &painter,
+                        ui,
+                        menu_rect,
+                        ui.visuals().window_stroke.color,
+                    );
 
                     let inner = menu_rect.shrink(8.0);
                     open_add_menu = Some((inner, from_screen(pos)));

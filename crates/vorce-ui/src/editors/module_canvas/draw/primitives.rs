@@ -10,12 +10,7 @@ pub fn draw_selection_highlight(painter: &egui::Painter, part_rect: Rect, zoom: 
     );
 }
 
-pub fn draw_resize_handle(
-    painter: &egui::Painter,
-    ui: &Ui,
-    part_rect: Rect,
-    zoom: f32,
-) -> Rect {
+pub fn draw_resize_handle(painter: &egui::Painter, ui: &Ui, part_rect: Rect, zoom: f32) -> Rect {
     let handle_size = 12.0 * zoom;
     let handle_rect = Rect::from_min_size(
         Pos2::new(part_rect.max.x - handle_size, part_rect.max.y - handle_size),
@@ -49,15 +44,6 @@ pub fn draw_context_menu_bg(
     menu_rect: Rect,
     stroke_color: Color32,
 ) {
-    painter.rect_filled(
-        menu_rect,
-        4.0,
-        ui.visuals().window_fill.gamma_multiply(0.96),
-    );
-    painter.rect_stroke(
-        menu_rect,
-        4.0,
-        Stroke::new(1.0, stroke_color),
-        egui::StrokeKind::Middle,
-    );
+    painter.rect_filled(menu_rect, 4.0, ui.visuals().window_fill.gamma_multiply(0.96));
+    painter.rect_stroke(menu_rect, 4.0, Stroke::new(1.0, stroke_color), egui::StrokeKind::Middle);
 }
