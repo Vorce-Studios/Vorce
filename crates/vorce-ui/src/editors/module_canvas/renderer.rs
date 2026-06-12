@@ -586,7 +586,7 @@ pub fn render_canvas(
                 } else {
                     let painter = ui.painter();
                     draw::draw_context_menu_bg(
-                        &painter,
+                        painter,
                         ui,
                         menu_rect,
                         ui.visuals().error_fg_color.linear_multiply(0.8),
@@ -624,7 +624,7 @@ pub fn render_canvas(
                 } else {
                     let painter = ui.painter();
                     draw::draw_context_menu_bg(
-                        &painter,
+                        painter,
                         ui,
                         menu_rect,
                         ui.visuals().window_stroke.color,
