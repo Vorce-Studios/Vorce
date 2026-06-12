@@ -67,8 +67,8 @@ if ($hasPendingReviews -or $hasOpenDelegations) {
 }
 
 # 5. JulesRefill: Nur wenn monitoring_refill_enabled UND freie Slots
-$refillEnabled = (Test-ObjectProperty -Object $Config -Name "jules") -and 
-                 (Test-ObjectProperty -Object $Config.jules -Name "monitoring_refill_enabled") -and 
+$refillEnabled = (Test-ObjectProperty -Object $Config -Name "jules") -and
+                 (Test-ObjectProperty -Object $Config.jules -Name "monitoring_refill_enabled") -and
                  [bool]$Config.jules.monitoring_refill_enabled
 if ($refillEnabled) {
     $julesProvider = $QuotaRegistry.providers.jules
@@ -82,7 +82,7 @@ if ($refillEnabled) {
     }).Count
     $liveCount = $trackedLive
     $slots = [Math]::Min($maxConcurrent - $liveCount, $maxDaily - $callsToday)
-    
+
     if ($slots -gt 0) {
         Add-Def -Name "JulesRefill" -Script "src/runs/SUB-RUN/SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill.ps1"
         Write-Host "[ROUTER]   -> JulesRefill: ENABLED ($slots freie Slots)" -ForegroundColor Green

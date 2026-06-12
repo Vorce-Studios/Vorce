@@ -141,7 +141,7 @@ function Add-DecisionPending {
     }
 
     # Check only for pending alerts with same topic (ignore closed/ignored)
-    $exists = $State.decisions_pending | Where-Object { 
+    $exists = $State.decisions_pending | Where-Object {
         $_.topic -eq $Topic -and ($null -eq $_.status -or $_.status -eq 'pending')
     }
     if (-not $exists) {
@@ -152,7 +152,7 @@ function Add-DecisionPending {
             created_at = (Get-Date -Format 'o')
             status     = 'pending'  # NEW: Default status
         }
-        
+
         # Only add if no closed/ignored alert with same topic exists
         $hasClosed = $State.decisions_pending | Where-Object { $_.topic -eq $Topic -and ($_.status -eq 'closed' -or $_.status -eq 'ignored') }
         if (-not $hasClosed) {
@@ -850,19 +850,19 @@ function Convert-AlertToMemory {
         [Parameter(Mandatory)][object]$DecisionPending,
         [string]$UserComment = ""
     )
-    
+
     try {
         $memoryText = "IGNORE_ALERT: $($DecisionPending.topic)`nDetails: $($DecisionPending.context)"
         if (-not [string]::IsNullOrWhiteSpace($UserComment)) {
             $memoryText += "`nUser-Kommentar: $UserComment"
         }
-        
+
         $result = Add-Memory `
             -Text $memoryText `
             -Type "temporary" `
             -Priority "medium" `
             -Source "audit_alert_close"
-        
+
         if ($result) {
             Write-Host "[MONITOR] Memory erstellt fuer geschlossenen Alert: $($DecisionPending.topic)" -ForegroundColor Cyan
             return $true
@@ -887,17 +887,17 @@ function Convert-AlertToMemory {
         if ($decision.PSObject.Properties.Name -contains "status") {
             if ($decision.status -eq 'closed' -or $decision.status -eq 'ignored') {
                 # NEW: Convert to memory if usercomment exists and memory NOT yet created
-                if (-not $decision.PSObject.Properties.Name -contains "memory_id" -and 
-                    $decision.PSObject.Properties.Name -contains "user_comment" -and 
+                if (-not $decision.PSObject.Properties.Name -contains "memory_id" -and
+                    $decision.PSObject.Properties.Name -contains "user_comment" -and
                     -not [string]::IsNullOrWhiteSpace($decision.user_comment)) {
-                    
+
                     try {
                         $memResult = Add-Memory `
                             -Text "IGNORE_ALERT: $topic`nDetails: $($decision.context)`nUser-Kommentar: $($decision.user_comment)" `
                             -Type "temporary" `
                             -Priority "medium" `
                             -Source "audit_alert_close"
-                        
+
                         if ($memResult) {
                             $decision | Add-Member -MemberType NoteProperty -Name "memory_id" -Value "mem-auto-$id" -Force
                             Write-Host "[MONITOR] Memory erstellt fuer geschlossenen Alert: $topic" -ForegroundColor Cyan
@@ -906,7 +906,7 @@ function Convert-AlertToMemory {
                         Write-Warning "[MONITOR] Konnte Memory fuer Alert nicht erstellen: $_"
                     }
                 }
-                
+
                 Write-Host "[MONITOR] Entscheidung geschlossen/ignoriert, entferne aus decisions_pending: $topic" -ForegroundColor DarkGray
                 continue
             }

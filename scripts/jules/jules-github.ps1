@@ -949,7 +949,7 @@ function Get-VorceProjectStatusCandidateNames {
     param([Parameter(Mandatory)][hashtable]$Fields)
 
     # 1. Geschlossen / Erledigt
-    if (@("closed", "done", "completed", "merged") -contains (([string]$Fields.QueueState).Trim()).ToLowerInvariant() -or 
+    if (@("closed", "done", "completed", "merged") -contains (([string]$Fields.QueueState).Trim()).ToLowerInvariant() -or
         @("merged", "completed", "closed") -contains [string]$Fields.RemoteState -or
         (([string]$Fields.IssueState).Trim().ToUpperInvariant() -eq "CLOSED")) {
         return @("Done")
@@ -1231,13 +1231,13 @@ function Sync-VorceProjectFields {
         $statusOption = Resolve-ProjectSingleSelectOption -Options $statusField.Options -Candidates (Get-VorceProjectStatusCandidateNames -Fields $Fields)
         if ($null -ne $statusOption) {
             $isDoneStatus = @("Done", "Completed", "Closed", "Merged") -contains [string]$statusOption.name
-            
+
             # Hole Issue-Titel aus API (da er nicht sicher in $Fields steht, nutzen wir Get-GitHubIssue)
             # Da wir in Sync-VorceIssueTracking bereits get-githubissue machen, könnten wir es cachen,
             # aber für Sicherheit holen wir es hier noch mal oder verlassen uns auf den API Cache
             $issue = Get-GitHubIssue -Repository $Repository -IssueNumber $IssueNumber
             $isSubIssue = [string]$issue.title -match '(__SI-\d+_MAI-\d+_|MFsub_)'
-            
+
             if ($isDoneStatus -and -not $isSubIssue) {
                 Write-Host "GitHub-Project-Sync: Status 'Done' wird fuer regulaeres Issue #$IssueNumber uebersprungen (nur Sub-Issues duerfen automatisch geschlossen werden)." -ForegroundColor Yellow
             } else {

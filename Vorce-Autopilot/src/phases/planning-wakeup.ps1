@@ -380,7 +380,7 @@ Prioritaet: KRITISCH - blockiert Release-Pipeline.
                     success = [bool]$sessionResult.Success
                     output  = $sessionOutput
                 }
-                
+
                 if (-not $stepResult.success) {
                     Write-Host "[PLANNING] Codex-Session fehlgeschlagen (evtl. Limit erreicht). Wechsle fuer restliche Session auf Fallback (DualCeoTask)." -ForegroundColor Yellow
                     $codexExhausted = $true

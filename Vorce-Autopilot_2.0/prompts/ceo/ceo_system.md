@@ -11,4 +11,3 @@ Lies zuerst das lokale Lagebild:
 - Vorce-Autopilot/var/db/autopilot-state.json
 - Vorce-Autopilot/var/db/autopilot-tasks.md
 Wenn PRs blockiert sind oder Jules haengt musst du dich darum kümmern.
-

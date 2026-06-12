@@ -70,7 +70,7 @@ foreach ($file in $resultFiles) {
         $resultData = Get-Content -LiteralPath $file.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
         $prNum = [int]$resultData.pr_number
         $review = $GlobalState.review_queue | Where-Object { [int]$_.pr_number -eq $prNum } | Select-Object -First 1
-        
+
         if ($null -ne $review) {
             if ($resultData.success -and [string]$resultData.provider -eq "claude_code") {
                 $review.review_status = "completed"
@@ -138,7 +138,7 @@ if ($pendingReviews.Count -gt 0) {
             Write-Host "[CHECK&DOING]   Review fuer PR #$($review.pr_number) laeuft bereits im Hintergrund..." -ForegroundColor DarkGray
             continue
         }
-        
+
         # Check if a pwsh process with this PR number is already running
         $isRunning = $false
         $processes = Get-WmiObject Win32_Process -Filter "Name='pwsh.exe'" -ErrorAction SilentlyContinue
@@ -150,7 +150,7 @@ if ($pendingReviews.Count -gt 0) {
                 }
             }
         }
-        
+
         if ($isRunning) {
             Write-Host "[CHECK&DOING]   Review-Prozess fuer PR #$($review.pr_number) laeuft noch..." -ForegroundColor DarkGray
             continue
@@ -161,13 +161,13 @@ if ($pendingReviews.Count -gt 0) {
         $scriptPath = Join-Path $toolsDir "run-background-review.ps1"
         $configPath = Join-Path $ScriptDir "config/autopilot-config.json"
         $quotaPath = Join-Path $VarDbDir "quota-registry.json"
-        
+
         # Save substate temporarily for the script to read
         $subStateTempPath = Join-Path $reviewResultsDir "pr-$($review.pr_number)-substate.json"
         $SubState | ConvertTo-Json -Depth 5 -Compress | Out-File -FilePath $subStateTempPath -Encoding UTF8 -Force
 
         $cmdArgs = "-NoProfile", "-WindowStyle", "Hidden", "-File", "`"$scriptPath`"", "-PullRequestNumber", $($review.pr_number), "-Repository", "`"$repo`"", "-ReviewPrompt", "`"$reviewPrompt`"", "-ConfigPath", "`"$configPath`"", "-QuotaRegistryPath", "`"$quotaPath`"", "-SubStatePath", "`"$subStateTempPath`"", "-OutputFilePath", "`"$expectedResultPath`""
-        
+
         try {
             Start-Process pwsh -ArgumentList $cmdArgs
             Write-Host "[CHECK&DOING]   Background Review fuer PR #$($review.pr_number) wurde erfolgreich dispatched." -ForegroundColor Green
