@@ -28,7 +28,7 @@ function Read-QuotaRegistry {
 function Save-QuotaRegistry {
     param([Parameter(Mandatory)][object]$Registry)
     $path = Get-QuotaRegistryPath
-    
+
     # Reset exhausted providers on save
     $global:VorceAutopilotExhaustedProviders = @{}
 
@@ -127,4 +127,3 @@ function Test-PrimaryProvidersAvailable {
 
 # Export-ModuleMember ist nur fuer .psm1 Module relevant.
 # Export-ModuleMember -Function Read-QuotaRegistry, Save-QuotaRegistry, Get-ProviderConfig, Test-ProviderAvailable, Update-ProviderUsage, Get-QuotaSummary, Test-PrimaryProvidersAvailable
-

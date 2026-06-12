@@ -807,4 +807,3 @@ function Sync-AutopilotTelemetry {
 
     return (Read-QuotaRegistry)
 }
-

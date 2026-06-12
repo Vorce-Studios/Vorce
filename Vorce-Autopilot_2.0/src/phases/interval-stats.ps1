@@ -333,5 +333,3 @@ while ($true) {
 
     Start-Sleep -Seconds $dashboardSyncIntervalSec
 }
-
-
