@@ -26,4 +26,3 @@ oder
 Result: TOO_MANY_CONFLICTS
 oder
 Result: BLOCKED
-
