@@ -111,6 +111,9 @@ impl PluginApi {
 }
 
 /// Retrieves the plugin version. Returns an error if the handle is null.
+///
+/// # Safety
+/// Both `api` and `out_version` must be valid, non-null pointers.
 #[no_mangle]
 pub unsafe extern "C" fn vorce_plugin_get_version(
     api: *const PluginApi,
@@ -128,6 +131,9 @@ pub unsafe extern "C" fn vorce_plugin_get_version(
 }
 
 /// Validates a buffer passed from C to Rust.
+///
+/// # Safety
+/// Both `api` and `buffer` must be valid, non-null pointers. `buffer` must point to `len` consecutive bytes.
 #[no_mangle]
 pub unsafe extern "C" fn vorce_plugin_read_buffer(
     api: *const PluginApi,
