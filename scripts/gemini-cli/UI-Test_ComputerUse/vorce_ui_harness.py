@@ -66,10 +66,17 @@ class RunReport:
         if path:
             self.data["artifacts"][name] = str(path)
 
-    def finish(self, status, message):
+    def finish(self, status, message, failure_reason=None):
         self.data["status"] = status
         self.data["message"] = message
         self.data["ended_at"] = now_iso()
+
+        if status == "failed":
+            self.data["failure_reason"] = failure_reason or "unknown_error"
+            self.data["scenario_name"] = self.mode
+            self.data["log_path"] = self.data["artifacts"].get("process_log")
+            self.data["screenshot"] = self.data["artifacts"].get("initial_screenshot")
+
         report_path = self.run_dir / "run_report.json"
         report_path.write_text(json.dumps(self.data, indent=2), encoding="utf-8")
         print(f"[{status.upper()}] {message}")
@@ -201,13 +208,13 @@ def check_environment(report, args):
 
 def run_env_check(report, args):
     ok = check_environment(report, args)
-    return report.finish("passed" if ok else "failed", "environment check completed")
+    return report.finish("passed" if ok else "failed", "environment check completed", failure_reason="env_check_failed" if not ok else None)
 
 
 def run_launch_check(report, args):
     ok = check_environment(report, args)
     if not ok:
-        return report.finish("failed", "launch check blocked by missing prerequisites")
+        return report.finish("failed", "launch check blocked by missing prerequisites", failure_reason="missing_prerequisites")
 
     exe_path = Path(args.vorce_exe)
     log_path = report.run_dir / "vorce_process.log"
@@ -255,7 +262,8 @@ def run_launch_check(report, args):
 
         if found and screenshot_ok:
             return report.finish("passed", "launch check completed")
-        return report.finish("failed", "launch check failed")
+        failure_reason = "window_not_found" if not found else "screenshot_failed"
+        return report.finish("failed", "launch check failed", failure_reason=failure_reason)
     finally:
         if process is not None and process.poll() is None:
             process.terminate()
