@@ -78,16 +78,7 @@ function Set-IssueFormFields {
     Set-GitHubIssueBody -Repository $Repository -IssueNumber $IssueNumber -Body $body
 }
 
-function Resolve-ProjectStatusValue {
-    param([AllowNull()][string]$Value)
 
-    switch -Regex ([string]$Value) {
-        '^(Done|Completed|Closed|Merged)$' { return "Done" }
-        '^Blocked$' { return "PR CodeRework" }
-        '^Todo$' { return "Todo" }
-        default { return "In Progress" }
-    }
-}
 
 function Resolve-ProjectTaskTypeValue {
     param([AllowNull()][string]$Value)
@@ -352,7 +343,7 @@ $sessionReference = if (-not [string]::IsNullOrWhiteSpace($JulesSessionId) -or -
 } else {
     Get-JulesSessionReferenceFromIssue -Repository $resolvedRepository -IssueNumber $IssueNumber
 }
-Upsert-JulesIssueTrackingBlock -Repository $resolvedRepository -IssueNumber $IssueNumber -Fields @{
+    Update-JulesIssueTrackingBlock -Repository $resolvedRepository -IssueNumber $IssueNumber -Fields @{
     SessionId      = if ($sessionReference) { [string]$sessionReference.SessionId } else { "" }
     SessionName    = if ($sessionReference) { [string]$sessionReference.SessionName } else { "" }
     QueueState     = $resolvedQueueState
@@ -369,15 +360,13 @@ $projectContext = Get-VorceProjectContext -Repository $resolvedRepository
 if ($null -ne $projectContext) {
     $issueContentId = Get-GitHubIssueContentId -Repository $resolvedRepository -IssueNumber $IssueNumber
     if (-not [string]::IsNullOrWhiteSpace($issueContentId)) {
-        $itemId = Ensure-VorceProjectItem -Context $projectContext -IssueContentId $issueContentId
+        $itemId = Add-VorceProjectItem -Context $projectContext -IssueContentId $issueContentId
         $projectTaskType = Resolve-ProjectTaskTypeValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "task_type")
         $projectAgent = Resolve-ProjectAgentValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "agent")
-        $projectRemoteState = Resolve-ProjectRemoteStateValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "remote_state") -FallbackStatus (Get-IssueFormFieldValue -Body $updatedBody -FieldName "Status")
         $projectJulesSessionStatus = Resolve-ProjectJulesSessionStatusValue -RemoteState (Get-IssueFormFieldValue -Body $updatedBody -FieldName "remote_state") -AgentValue $projectAgent -SessionId (Get-IssueFormFieldValue -Body $updatedBody -FieldName "jules_session")
         $projectPrChecksStatus = Resolve-ProjectPrChecksStatusValue -Repository $resolvedRepository -PullRequestUrl $resolvedPullRequestUrl -AgentValue $projectAgent
         $projectSubAgent = Resolve-ProjectSubAgentValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "sub_agent") -TaskTypeValue $projectTaskType -AgentValue $projectAgent
 
-        Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "Status" -Value (Resolve-ProjectStatusValue -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "Status"))
         Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "task_id" -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "task_id")
         Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "area" -Value (Get-IssueFormFieldValue -Body $updatedBody -FieldName "area")
         Set-ProjectFieldByName -Context $projectContext -ItemId $itemId -FieldName "task_type" -Value $projectTaskType
@@ -403,6 +392,7 @@ Sync-VorceProjectFields -Repository $resolvedRepository -IssueNumber $IssueNumbe
     PullRequestUrl = $resolvedPullRequestUrl
     LastUpdate     = $resolvedLastUpdate
     NeedsAttention = if ($resolvedStatus -eq "Blocked") { "yes" } else { "no" }
+    IssueState     = [string]$updatedIssue.state
 }
 
 $desiredLabels = if (Test-IsFinalStatus -Value $resolvedStatus) {

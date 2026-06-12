@@ -1,0 +1,16 @@
+﻿query {
+  organization(login: "Vorce-Studios") {
+    projectV2(number: 1) {
+      fields(first: 20) {
+        nodes {
+          ... on ProjectV2SingleSelectField {
+            name
+            options {
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+}
