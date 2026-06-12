@@ -57,10 +57,8 @@ def run_test_steps(run_dir):
     print("Action: Click Settings (assume standard left panel or toolbar)")
     # Normalize coordinates based on screen size fallback
     try:
-        w, h = pyautogui.size()
-        x = int(w * 0.1)
-        y = int(h * 0.1)
-        pyautogui.moveTo(x, y, duration=0.5)
+        # Assuming a 1280x720 window
+        pyautogui.moveTo(100, 100, duration=0.5)
         pyautogui.click()
     except Exception as e:
         print(f"Failed to move mouse: {e}")
@@ -71,10 +69,7 @@ def run_test_steps(run_dir):
     # Step 2: Select a stable panel
     print("Action: Select Central/Bottom Panel")
     try:
-        w, h = pyautogui.size()
-        x = int(w * 0.5)
-        y = int(h * 0.5)
-        pyautogui.moveTo(x, y, duration=0.5)
+        pyautogui.moveTo(640, 360, duration=0.5)
         pyautogui.click()
     except Exception as e:
         print(f"Failed to move mouse: {e}")
