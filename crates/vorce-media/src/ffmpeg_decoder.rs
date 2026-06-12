@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use crate::{
     reject_path_traversal, test_pattern_decoder::TestPatternDecoder, HwAccelType, MediaError,
     Result, VideoDecoder,
