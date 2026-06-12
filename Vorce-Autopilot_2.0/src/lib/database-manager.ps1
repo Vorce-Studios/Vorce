@@ -152,4 +152,3 @@ function Clear-DailyUsageForProvider {
         return @($filtered)
     } | Out-Null
 }
-

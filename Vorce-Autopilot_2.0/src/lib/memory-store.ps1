@@ -51,7 +51,7 @@ function Add-AutopilotMemory {
 
     $Store = Read-MemoryStore
     $id = "mem-$(Get-Date -Format 'yyyyMMdd')-$([guid]::NewGuid().ToString().Substring(0,8))"
-    
+
     $entry = [ordered]@{
         id         = $id
         text       = $Text
@@ -72,10 +72,10 @@ function Get-RelevantMemories {
     $Store = Read-MemoryStore
     # Zukuenftig: Hier koennte semantische Suche (Embedding) implementiert werden
     # Vorerst: Einfach die letzten 10 temporaeren und alle permanenten/critical Memories
-    
+
     $relevant = $Store.memories | Where-Object { $_.priority -eq "critical" -or $_.type -eq "permanent" }
     $recentTemp = $Store.memories | Where-Object { $_.type -eq "temporary" -and $_.priority -ne "critical" } | Select-Object -Last 10
-    
+
     return ($relevant + $recentTemp) | Sort-Object created_at
 }
 
@@ -95,14 +95,14 @@ function Format-MemoryBlock {
 function Optimize-AutopilotMemories {
     Write-Host "[MEMORY] Optimiere Memory-Store..." -ForegroundColor DarkGray
     $Store = Read-MemoryStore
-    
+
     # 1. Entferne sehr alte temporaere Memories (älter als 30 Tage)
     $threshold = (Get-Date).AddDays(-30)
     $oldCount = $Store.memories.Count
     $Store.memories = $Store.memories | Where-Object {
         $_.type -eq "permanent" -or $_.priority -eq "critical" -or (Get-Date $_.created_at) -gt $threshold
     }
-    
+
     $removed = $oldCount - $Store.memories.Count
     if ($removed -gt 0) {
         Write-Host "[MEMORY] $removed veraltete temporaere Erinnerungen entfernt." -ForegroundColor Gray
@@ -120,4 +120,3 @@ function Optimize-AutopilotMemories {
 
 # Export-ModuleMember ist nur fuer .psm1 Module relevant.
 # Export-ModuleMember -Function Read-MemoryStore, Save-MemoryStore, Add-AutopilotMemory, Get-RelevantMemories, Format-MemoryBlock, Optimize-AutopilotMemories
-

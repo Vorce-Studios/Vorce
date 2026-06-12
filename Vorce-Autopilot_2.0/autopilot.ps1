@@ -251,7 +251,7 @@ while ($true) {
 
     $planDue = ($now - $lastPlanTime).TotalMinutes -ge $planMinutes
     $checkDue = ($now - $lastMonTime).TotalMinutes -ge $checkMinutes
-    
+
     $memOptMinutes = if ($Config.wake_intervals.PSObject.Properties.Name -contains "memory_optimization_minutes") { [int]$Config.wake_intervals.memory_optimization_minutes } else { 60 }
     $memOptDue = ($now - $lastMemoryOptTime).TotalMinutes -ge $memOptMinutes
 
@@ -259,7 +259,7 @@ while ($true) {
         try {
             $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-01_Planning.ps1"
             & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
-            
+
             if ($State.last_planning_at) {
                 try { $lastPlanTime = [datetimeoffset]::Parse($State.last_planning_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime } catch { $lastPlanTime = Get-Date }
             } else {
@@ -311,7 +311,7 @@ while ($true) {
         try {
             $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-02_CheckAndDoing.ps1"
             & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
-            
+
             $lastMonTime = Get-Date
             $State.last_check_and_doing_at = $lastMonTime.ToString('o')
         } catch {
@@ -369,7 +369,7 @@ while ($true) {
     Save-AutopilotState -State $State
     $wakeupFile = Join-Path $ScriptDir "autopilot.wakeup"
     $remainingSleep = [Math]::Max(1, [int]$sleepSeconds)
-    
+
     $julesPulseInterval = 120 # Lightweight Jules API Poll every 2 minutes
     $lastJulesPulse = Get-Date
 
@@ -382,7 +382,7 @@ while ($true) {
             $lastMonTime = [datetime]::MinValue
             break
         }
-        
+
         $nowPulse = Get-Date
         if (($nowPulse - $lastJulesPulse).TotalSeconds -ge $julesPulseInterval) {
             $lastJulesPulse = $nowPulse

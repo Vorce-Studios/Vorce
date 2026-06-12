@@ -230,4 +230,3 @@ function Get-VorceJulesPrConflictReplacementPrompt {
         PullRequestTitle = $PullRequestTitle
     }
 }
-
