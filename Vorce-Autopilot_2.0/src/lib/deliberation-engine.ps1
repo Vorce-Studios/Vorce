@@ -534,7 +534,7 @@ function Invoke-Deliberation {
 
         Write-Host "[DELIB] CEO-Proposal Fallback (qa_manager) erfolgreich." -ForegroundColor Green
         Format-CeoChatOutput -Role "Proposal (Fallback)" -AgentName $ceos.qa_manager.provider -Content $qaProposal
-        
+
         $protocol.final_output = $qaProposal
         $protocol.consensus_reached = $false
         $protocol.completed_at = (Get-Date -Format 'o')
@@ -759,5 +759,3 @@ function Format-AutopilotTaskFailure {
     if ([string]::IsNullOrWhiteSpace($details)) { $details = "Keine Fehlerdetails vom Provider erhalten." }
     return "Provider=$provider; Fehler=$errorCode; Details=$details"
 }
-
-

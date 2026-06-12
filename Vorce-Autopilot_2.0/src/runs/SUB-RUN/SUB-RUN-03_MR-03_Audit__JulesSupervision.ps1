@@ -18,7 +18,7 @@ $delegationsData
 
 WICHTIGE REGELN FUER JULES-SESSIONS:
 1. Wenn eine Session den Status 'AWAITING_USER_FEEDBACK' oder 'FAILED' hat, benoetigt sie Aufmerksamkeit.
-2. STRENGES VERBOT FÜR JULES-CANCEL: Du darfst NIEMALS Aktionen vorschlagen, die eine Jules-Session abbrechen, stoppen oder löschen! 
+2. STRENGES VERBOT FÜR JULES-CANCEL: Du darfst NIEMALS Aktionen vorschlagen, die eine Jules-Session abbrechen, stoppen oder löschen!
 3. Wenn ein PR-Konflikt vorliegt, wird das im Planning geloest. Hier im Audit dokumentierst du es nur als Alert fuer das Dashboard.
 
 Antworte zwingend als JSON in folgendem Format (Wenn keine Probleme gefunden wurden, leeres Array):

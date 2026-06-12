@@ -285,7 +285,7 @@ function Wait-AutopilotControlConsole {
     $action = {
         $summary = Get-AutopilotControlStateSummary
         Write-Host "`n$summary" -ForegroundColor DarkGray
-        
+
         # Prometheus Metrics (OPT-03)
         try {
             $state = Get-Content -LiteralPath $Event.SourceEventArgs.FullPath -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction SilentlyContinue
@@ -309,7 +309,7 @@ autopilot_working_sessions $(@($state.working_sessions).Count)
             }
         } catch {}
     }
-    
+
     $eventJob = Register-ObjectEvent $watcher "Changed" -Action $action
 
     try {
