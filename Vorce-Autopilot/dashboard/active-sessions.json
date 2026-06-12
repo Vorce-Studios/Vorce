@@ -1,0 +1,1050 @@
+{
+  "schema_version": 1,
+  "session_id": "autopilot-2026-06-03-1723",
+  "started_at": "2026-06-03T17:23:08.0914569+02:00",
+  "last_heartbeat": "2026-06-04T07:37:24.3623362+02:00",
+  "last_planning_at": "2026-06-03T07:37:24.358863+02:00",
+  "last_monitoring_at": "2026-06-04T07:37:24.3574269+02:00",
+  "active_delegations": [
+    {
+      "issue_number": 662,
+      "issue_title": "__VOR-016_SubI_Timeline-Show-Control-End-to-End-Acceptance-Matrix",
+      "jules_session_id": "14315314348162670340",
+      "agent_type": "jules",
+      "job_id": "",
+      "jules_state": "IN_PROGRESS",
+      "pr_url": null,
+      "delegated_at": "2026-06-04T07:11:01.2279401+02:00",
+      "last_checked_at": "2026-06-04T07:17:12.6065137+02:00",
+      "retry_count": 0
+    },
+    {
+      "issue_number": 661,
+      "issue_title": "VOR-015_MAIs_Timeline-Show-Control-Release-1.0-Scope",
+      "jules_session_id": "3411821484474705513",
+      "agent_type": "jules",
+      "job_id": "",
+      "jules_state": "IN_PROGRESS",
+      "pr_url": null,
+      "delegated_at": "2026-06-04T07:11:21.9339447+02:00",
+      "last_checked_at": "2026-06-04T07:17:14.8123055+02:00",
+      "retry_count": 0
+    },
+    {
+      "issue_number": 659,
+      "issue_title": "__VOR-011_SubI_Multimaster-Post-1.0-Guardrails",
+      "jules_session_id": "572526051518110932",
+      "agent_type": "jules",
+      "job_id": "",
+      "jules_state": "IN_PROGRESS",
+      "pr_url": null,
+      "delegated_at": "2026-06-04T07:11:43.0057416+02:00",
+      "last_checked_at": "2026-06-04T07:17:16.9513282+02:00",
+      "retry_count": 0
+    },
+    {
+      "issue_number": 658,
+      "issue_title": "__VOR-010_SubI_Cluster-QA-Recovery-Drift-Matrix",
+      "jules_session_id": "7551839359556258490",
+      "agent_type": "jules",
+      "job_id": "",
+      "jules_state": "IN_PROGRESS",
+      "pr_url": null,
+      "delegated_at": "2026-06-04T07:12:04.2294996+02:00",
+      "last_checked_at": "2026-06-04T07:17:19.1731669+02:00",
+      "retry_count": 0
+    },
+    {
+      "issue_number": 657,
+      "issue_title": "__VOR-009_SubI_Mode-1-Control-Only-End-to-End-Acceptance",
+      "jules_session_id": "6299454009791846303",
+      "agent_type": "jules",
+      "job_id": "",
+      "jules_state": "IN_PROGRESS",
+      "pr_url": null,
+      "delegated_at": "2026-06-04T07:12:25.5670075+02:00",
+      "last_checked_at": "2026-06-04T07:17:21.0675125+02:00",
+      "retry_count": 0
+    },
+    {
+      "issue_number": 656,
+      "issue_title": "__VOR-008_SubI_Cluster-Control-Plane-MVP",
+      "jules_session_id": "15203913899549688716",
+      "agent_type": "jules",
+      "job_id": "",
+      "jules_state": "IN_PROGRESS",
+      "pr_url": null,
+      "delegated_at": "2026-06-04T07:12:43.213473+02:00",
+      "last_checked_at": "2026-06-04T07:17:23.0003222+02:00",
+      "retry_count": 0
+    },
+    {
+      "issue_number": 655,
+      "issue_title": "__VOR-007_SubI_Cluster-Multi-Instance-Scope-Freeze-For-Release-1.0",
+      "jules_session_id": "6038046224674968218",
+      "agent_type": "jules",
+      "job_id": "",
+      "jules_state": "IN_PROGRESS",
+      "pr_url": null,
+      "delegated_at": "2026-06-04T07:13:21.1200865+02:00",
+      "last_checked_at": "2026-06-04T07:17:24.9484248+02:00",
+      "retry_count": 0
+    }
+  ],
+  "review_queue": [],
+  "autopilot_created_issues": [],
+  "completed_this_session": [],
+  "decisions_pending": [],
+  "escalated_issues": [],
+  "error_log": [
+    {
+      "timestamp": "2026-06-04T06:32:10.3705395+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:32:22.1468234+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:32:33.6726532+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:32:45.2866724+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:32:56.8272121+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:33:08.3708995+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:33:19.9041928+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:33:31.4622189+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:33:43.6146628+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:33:56.1666547+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:34:08.0603445+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:34:20.791579+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:34:33.3508266+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:34:44.9944572+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:34:57.7696366+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:35:10.2857184+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:35:22.0977851+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:35:33.7299231+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:35:45.3182043+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:35:58.0005084+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:36:09.6953771+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:36:21.212749+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:36:33.0364367+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:36:44.5430231+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:36:56.3750223+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:37:07.9622416+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:37:20.4787856+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:37:31.9909099+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:37:43.5668377+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:37:56.1121408+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:38:07.6850073+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:38:19.5108909+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T06:38:31.1310237+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The term 'Get-VorceConfigPrompt' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "timestamp": "2026-06-04T07:00:48.6798792+02:00",
+      "message": "Planning wake-up failed",
+      "context": "Cannot bind argument to parameter 'Prompt' because it is an empty string."
+    },
+    {
+      "timestamp": "2026-06-04T07:04:38.7692778+02:00",
+      "message": "Planning wake-up failed",
+      "context": "Cannot bind argument to parameter 'Prompt' because it is an empty string."
+    },
+    {
+      "timestamp": "2026-06-04T07:04:59.6464663+02:00",
+      "message": "Planning wake-up failed",
+      "context": "Cannot bind argument to parameter 'Prompt' because it is an empty string."
+    },
+    {
+      "timestamp": "2026-06-04T07:11:01.2400482+02:00",
+      "message": "Monitoring Jules refill failed for #662",
+      "context": "The property 'models' cannot be found on this object. Verify that the property exists."
+    },
+    {
+      "timestamp": "2026-06-04T07:11:21.9385741+02:00",
+      "message": "Monitoring Jules refill failed for #661",
+      "context": "The property 'models' cannot be found on this object. Verify that the property exists."
+    },
+    {
+      "timestamp": "2026-06-04T07:11:43.0103765+02:00",
+      "message": "Monitoring Jules refill failed for #659",
+      "context": "The property 'models' cannot be found on this object. Verify that the property exists."
+    },
+    {
+      "timestamp": "2026-06-04T07:12:04.2359692+02:00",
+      "message": "Monitoring Jules refill failed for #658",
+      "context": "The property 'models' cannot be found on this object. Verify that the property exists."
+    },
+    {
+      "timestamp": "2026-06-04T07:12:25.5717686+02:00",
+      "message": "Monitoring Jules refill failed for #657",
+      "context": "The property 'models' cannot be found on this object. Verify that the property exists."
+    },
+    {
+      "timestamp": "2026-06-04T07:12:43.2176039+02:00",
+      "message": "Monitoring Jules refill failed for #656",
+      "context": "The property 'models' cannot be found on this object. Verify that the property exists."
+    },
+    {
+      "timestamp": "2026-06-04T07:13:21.1244905+02:00",
+      "message": "Monitoring Jules refill failed for #655",
+      "context": "The property 'models' cannot be found on this object. Verify that the property exists."
+    },
+    {
+      "timestamp": "2026-06-04T07:13:28.9643334+02:00",
+      "message": "Monitoring Jules refill failed for #654",
+      "context": "[JULES-CLIENT] Fehler beim Starten der Jules-Session fuer Issue #654: Jules API Fehler bei POST https://jules.googleapis.com/v1alpha/sessions: \r\n{\r\n  \"error\": {\r\n    \"code\": 400,\r\n    \"message\": \"Precondition check failed.\",\r\n    \"status\": \"FAILED_PRECONDITION\"\r\n  }\r\n}"
+    },
+    {
+      "timestamp": "2026-06-04T07:13:35.8212462+02:00",
+      "message": "Monitoring Jules refill failed for #653",
+      "context": "[JULES-CLIENT] Fehler beim Starten der Jules-Session fuer Issue #653: Jules API Fehler bei POST https://jules.googleapis.com/v1alpha/sessions: \r\n{\r\n  \"error\": {\r\n    \"code\": 400,\r\n    \"message\": \"Precondition check failed.\",\r\n    \"status\": \"FAILED_PRECONDITION\"\r\n  }\r\n}"
+    },
+    {
+      "timestamp": "2026-06-04T07:13:45.3762708+02:00",
+      "message": "Monitoring Jules refill failed for #652",
+      "context": "[JULES-CLIENT] Fehler beim Starten der Jules-Session fuer Issue #652: Jules API Fehler bei POST https://jules.googleapis.com/v1alpha/sessions: \r\n{\r\n  \"error\": {\r\n    \"code\": 400,\r\n    \"message\": \"Precondition check failed.\",\r\n    \"status\": \"FAILED_PRECONDITION\"\r\n  }\r\n}"
+    },
+    {
+      "timestamp": "2026-06-04T07:13:53.1659128+02:00",
+      "message": "Monitoring Jules refill failed for #651",
+      "context": "[JULES-CLIENT] Fehler beim Starten der Jules-Session fuer Issue #651: Jules API Fehler bei POST https://jules.googleapis.com/v1alpha/sessions: \r\n{\r\n  \"error\": {\r\n    \"code\": 400,\r\n    \"message\": \"Precondition check failed.\",\r\n    \"status\": \"FAILED_PRECONDITION\"\r\n  }\r\n}"
+    },
+    {
+      "timestamp": "2026-06-04T07:14:01.673294+02:00",
+      "message": "Monitoring Jules refill failed for #650",
+      "context": "[JULES-CLIENT] Fehler beim Starten der Jules-Session fuer Issue #650: Jules API Fehler bei POST https://jules.googleapis.com/v1alpha/sessions: \r\n{\r\n  \"error\": {\r\n    \"code\": 400,\r\n    \"message\": \"Precondition check failed.\",\r\n    \"status\": \"FAILED_PRECONDITION\"\r\n  }\r\n}"
+    },
+    {
+      "timestamp": "2026-06-04T07:14:08.7291049+02:00",
+      "message": "Monitoring Jules refill failed for #549",
+      "context": "[JULES-CLIENT] Fehler beim Starten der Jules-Session fuer Issue #549: Jules API Fehler bei POST https://jules.googleapis.com/v1alpha/sessions: \r\n{\r\n  \"error\": {\r\n    \"code\": 400,\r\n    \"message\": \"Precondition check failed.\",\r\n    \"status\": \"FAILED_PRECONDITION\"\r\n  }\r\n}"
+    },
+    {
+      "timestamp": "2026-06-04T07:14:15.7663431+02:00",
+      "message": "Monitoring Jules refill failed for #547",
+      "context": "[JULES-CLIENT] Fehler beim Starten der Jules-Session fuer Issue #547: Jules API Fehler bei POST https://jules.googleapis.com/v1alpha/sessions: \r\n{\r\n  \"error\": {\r\n    \"code\": 400,\r\n    \"message\": \"Precondition check failed.\",\r\n    \"status\": \"FAILED_PRECONDITION\"\r\n  }\r\n}"
+    }
+  ],
+  "working_queue": [],
+  "working_sessions": [],
+  "Count": 16,
+  "IsReadOnly": false,
+  "Keys": [
+    "schema_version",
+    "session_id",
+    "started_at",
+    "last_heartbeat",
+    "last_planning_at",
+    "last_monitoring_at",
+    "active_delegations",
+    "working_queue",
+    "working_sessions",
+    "review_queue",
+    "autopilot_created_issues",
+    "completed_this_session",
+    "decisions_pending",
+    "escalated_issues",
+    "error_log",
+    "deliberation_log"
+  ],
+  "Values": [
+    1,
+    "autopilot-2026-06-04-0641",
+    "2026-06-04T06:41:36.7487748+02:00",
+    "2026-06-04T06:41:36.7488547+02:00",
+    null,
+    null,
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+  ],
+  "IsFixedSize": false,
+  "SyncRoot": {
+    "schema_version": 1,
+    "session_id": "autopilot-2026-06-04-0641",
+    "started_at": "2026-06-04T06:41:36.7487748+02:00",
+    "last_heartbeat": "2026-06-04T06:41:36.7488547+02:00",
+    "last_planning_at": null,
+    "last_monitoring_at": null,
+    "active_delegations": [],
+    "working_queue": [],
+    "working_sessions": [],
+    "review_queue": [],
+    "autopilot_created_issues": [],
+    "completed_this_session": [],
+    "decisions_pending": [],
+    "escalated_issues": [],
+    "error_log": [],
+    "deliberation_log": []
+  },
+  "IsSynchronized": false,
+  "codex_main_session_id": "019e908d-0190-7920-a368-4b8a25d22439",
+  "last_monitoring_synthesis": "[DRY RUN] Wuerde ausfuehren: C:\\Users\\Vinyl\\AppData\\Roaming\\npm\\gemini.cmd mit Prompt (7916 chars)",
+  "deliberation_log": [
+    {
+      "deliberation_id": "delib-2026-05-30-090620",
+      "task_type": "planning",
+      "started_at": "2026-05-30T09:06:20.8801453+02:00",
+      "alpha": {
+        "provider": "codex_orchestrator",
+        "model_tier": "planning"
+      },
+      "beta": {
+        "provider": "gemini_cli",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "alpha",
+          "provider": "codex_orchestrator",
+          "duration_ms": 175586,
+          "success": true,
+          "content": "{\n  \"proposal\": [\n    {\n      \"title\": \"__VOR-000_SubI_NDI-End-to-End-Asset-Availability-Smoke-Evidence\",\n      \"body\": \"Parent-Issue: #107; Release-Gate: #651. Ziel: Aus #107 einen kleinen, delegierbaren QA-/Harness-Task machen: einen reproduzierbaren NDI-End-to-End-Smoke definieren und ausfuehren, der mindestens NDI-Dependency-Erkennung, Test-Asset-Verfuegbarkeit, Sender/Receiver-Basisfluss und klares Fehlverhalten bei fehlenden Assets dokumentiert. Acceptance-Evidence: dokumentierter Befehl oder Runbook, Log/JSON/Text-Report mit Commit-SHA, erkannte NDI-Runtime, verwendete Testassets, Ergebnis passed/failed/post-1.0, sowie Link/Kommentar fuer #107 und #651. Keine ROADMAP-QA-Status-Aenderung durch Agenten.\",\n      \"labels\": [\n        \"priority: high\",\n        \"testing\"\n      ],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-000_SubI_macOS-CI-Smoke-Validation-Evidence-Pack\",\n      \"body\": \"Parent-Issue: #43; Release-Gate: #651. Ziel: Den offenen macOS-CI/Smoke-Validation-Gate auf belastbare Evidenz reduzieren, ohne die ROADMAP.md-QA-Flags zu veraendern. Scope: relevante GitHub-Actions/macOS-Workflow-Konfiguration identifizieren, letzten relevanten Run oder lokal reproduzierbaren Smoke dokumentieren, Build-/Start-Sanity-Ergebnis sammeln und fehlende Voraussetzungen klar markieren. Acceptance-Evidence: kurzer Bericht mit Workflow/Run-ID oder lokalem Kommando, Commit-SHA, Buildstatus, Start-/Smoke-Ergebnis, Artefakt-/Log-Verweis und konkreter Empfehlung `passed`, `failed` oder `post-1.0/manual-required` fuer #43/#651.\",\n      \"labels\": [\n        \"priority: high\",\n        \"testing\"\n      ],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-000_SubI_Release-Packaging-Install-Sanity-Command-And-Evidence\",\n      \"body\": \"Parent-Issue: #652; Release-Gate: #651. Ziel: #652 in einen kleinen ausfuehrbaren Vorbereitungs-Task schneiden: den minimalen Release-Artefakt-Build- und Install-/Entpack-/Start-Sanity-Pfad als ein reproduzierbares Kommando oder enges Runbook festhalten. Scope: Ziel-Artefaktformat fuer 1.0 benennen, erwarteten Output-Pfad pruefen, Version/Commit im Artefakt oder Report festhalten, frischen Start-Sanity dokumentieren. Acceptance-Evidence: Report mit Build-Kommando, Artefaktpfad, Commit/Version, Start-Sanity-Ergebnis, bekannte Runtime-Voraussetzungen und Verweis fuer #652/#651. Keine Release-Notes-Finalisierung und keine ROADMAP-QA-Status-Aenderung.\",\n      \"labels\": [\n        \"priority: high\",\n        \"testing\"\n      ],\n      \"agent\": \"kiro_cli\"\n    }\n  ],\n  \"reasoning\": \"Ich schlage keine neuen UI- oder Timeline-Coding-Issues vor, weil #547, #548, #549 sowie #96, #98, #99, #101, #102, #103 und #662 bereits konkrete offene Sub-Issues abdecken. Die drei Vorschlaege zielen auf Gate-Lanes, in denen die vorhandenen Parent-Issues zwar den Release-Blocker beschreiben, aber noch keine kleine delegierbare Evidence-Aufgabe mit klarer Agent-Ausfuehrung vorliegt: NDI #107, macOS-CI #43 und Packaging #652. Agent-Zuordnung: gemini_cli fuer QA-/Evidenz- und CI-Analyse, kiro_cli fuer den isolierten Packaging-/Command-Sanity-Schnitt. Jules wird bewusst nicht verwendet, da keine komplexe UI-Arbeit oder grosser Refactor vorgeschlagen wird.\",\n  \"risks\": [\n    \"NDI-E2E kann von lokaler Runtime, installierter NDI-SDK/Tools oder Netzwerk-/Loopback-Verfuegbarkeit abhaengen; das Issue muss deshalb `failed` und `post-1.0/manual-required` als legitime Evidenzzustaende erlauben.\",\n    \"macOS-CI-Smoke kann ohne Zugriff auf aktuelle Actions-Logs oder macOS-Runner nur teilweise verifiziert werden; dann ist ein sauberer Evidence-Gap-Bericht wertvoller als ein erzwungener Fix.\",\n    \"Packaging-Sanity kann plattformabhaengige Release-Entscheidungen beruehren; der Task darf nur den reproduzierbaren Pfad vorbereiten und nicht eigenmaechtig Scope-Freeze oder QA-Status setzen.\"\n  ],\n  \"confidence\": \"high\"\n}"
+        },
+        {
+          "phase": "critique",
+          "agent": "beta",
+          "provider": "gemini_cli",
+          "duration_ms": 2728,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "{\n  \"proposal\": [\n    {\n      \"title\": \"__VOR-000_SubI_NDI-End-to-End-Asset-Availability-Smoke-Evidence\",\n      \"body\": \"Parent-Issue: #107; Release-Gate: #651. Ziel: Aus #107 einen kleinen, delegierbaren QA-/Harness-Task machen: einen reproduzierbaren NDI-End-to-End-Smoke definieren und ausfuehren, der mindestens NDI-Dependency-Erkennung, Test-Asset-Verfuegbarkeit, Sender/Receiver-Basisfluss und klares Fehlverhalten bei fehlenden Assets dokumentiert. Acceptance-Evidence: dokumentierter Befehl oder Runbook, Log/JSON/Text-Report mit Commit-SHA, erkannte NDI-Runtime, verwendete Testassets, Ergebnis passed/failed/post-1.0, sowie Link/Kommentar fuer #107 und #651. Keine ROADMAP-QA-Status-Aenderung durch Agenten.\",\n      \"labels\": [\n        \"priority: high\",\n        \"testing\"\n      ],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-000_SubI_macOS-CI-Smoke-Validation-Evidence-Pack\",\n      \"body\": \"Parent-Issue: #43; Release-Gate: #651. Ziel: Den offenen macOS-CI/Smoke-Validation-Gate auf belastbare Evidenz reduzieren, ohne die ROADMAP.md-QA-Flags zu veraendern. Scope: relevante GitHub-Actions/macOS-Workflow-Konfiguration identifizieren, letzten relevanten Run oder lokal reproduzierbaren Smoke dokumentieren, Build-/Start-Sanity-Ergebnis sammeln und fehlende Voraussetzungen klar markieren. Acceptance-Evidence: kurzer Bericht mit Workflow/Run-ID oder lokalem Kommando, Commit-SHA, Buildstatus, Start-/Smoke-Ergebnis, Artefakt-/Log-Verweis und konkreter Empfehlung `passed`, `failed` oder `post-1.0/manual-required` fuer #43/#651.\",\n      \"labels\": [\n        \"priority: high\",\n        \"testing\"\n      ],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-000_SubI_Release-Packaging-Install-Sanity-Command-And-Evidence\",\n      \"body\": \"Parent-Issue: #652; Release-Gate: #651. Ziel: #652 in einen kleinen ausfuehrbaren Vorbereitungs-Task schneiden: den minimalen Release-Artefakt-Build- und Install-/Entpack-/Start-Sanity-Pfad als ein reproduzierbares Kommando oder enges Runbook festhalten. Scope: Ziel-Artefaktformat fuer 1.0 benennen, erwarteten Output-Pfad pruefen, Version/Commit im Artefakt oder Report festhalten, frischen Start-Sanity dokumentieren. Acceptance-Evidence: Report mit Build-Kommando, Artefaktpfad, Commit/Version, Start-Sanity-Ergebnis, bekannte Runtime-Voraussetzungen und Verweis fuer #652/#651. Keine Release-Notes-Finalisierung und keine ROADMAP-QA-Status-Aenderung.\",\n      \"labels\": [\n        \"priority: high\",\n        \"testing\"\n      ],\n      \"agent\": \"kiro_cli\"\n    }\n  ],\n  \"reasoning\": \"Ich schlage keine neuen UI- oder Timeline-Coding-Issues vor, weil #547, #548, #549 sowie #96, #98, #99, #101, #102, #103 und #662 bereits konkrete offene Sub-Issues abdecken. Die drei Vorschlaege zielen auf Gate-Lanes, in denen die vorhandenen Parent-Issues zwar den Release-Blocker beschreiben, aber noch keine kleine delegierbare Evidence-Aufgabe mit klarer Agent-Ausfuehrung vorliegt: NDI #107, macOS-CI #43 und Packaging #652. Agent-Zuordnung: gemini_cli fuer QA-/Evidenz- und CI-Analyse, kiro_cli fuer den isolierten Packaging-/Command-Sanity-Schnitt. Jules wird bewusst nicht verwendet, da keine komplexe UI-Arbeit oder grosser Refactor vorgeschlagen wird.\",\n  \"risks\": [\n    \"NDI-E2E kann von lokaler Runtime, installierter NDI-SDK/Tools oder Netzwerk-/Loopback-Verfuegbarkeit abhaengen; das Issue muss deshalb `failed` und `post-1.0/manual-required` als legitime Evidenzzustaende erlauben.\",\n    \"macOS-CI-Smoke kann ohne Zugriff auf aktuelle Actions-Logs oder macOS-Runner nur teilweise verifiziert werden; dann ist ein sauberer Evidence-Gap-Bericht wertvoller als ein erzwungener Fix.\",\n    \"Packaging-Sanity kann plattformabhaengige Release-Entscheidungen beruehren; der Task darf nur den reproduzierbaren Pfad vorbereiten und nicht eigenmaechtig Scope-Freeze oder QA-Status setzen.\"\n  ],\n  \"confidence\": \"high\"\n}",
+      "completed_at": "2026-05-30T09:09:27.8918211+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-30-091723",
+      "task_type": "planning",
+      "started_at": "2026-05-30T09:17:23.5307286+02:00",
+      "alpha": {
+        "provider": "codex_orchestrator",
+        "model_tier": "planning"
+      },
+      "beta": {
+        "provider": "gemini_cli",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "alpha",
+          "provider": "codex_orchestrator",
+          "duration_ms": 134634,
+          "success": true,
+          "content": "{\n  \"proposal\": [\n    {\n      \"title\": \"__VOR-019_SubI_NDI-Asset-Preflight-And-Missing-Asset-Evidence\",\n      \"body\": \"Parent-Issue: #107; feeds into #651 and #653.\\n\\nBeschreibung: Add a small, reproducible preflight/check command for the NDI/asset-availability gate before the full manual NDI end-to-end test. The task should verify NDI runtime/library availability where detectable, required media/test assets, and missing-asset behavior without requiring a live production show setup.\\n\\nAcceptance-Evidence:\\n- A documented command runs the NDI/asset preflight locally.\\n- The command writes a machine-readable JSON report with passed/failed/skipped checks.\\n- Missing NDI runtime, missing sample media, or unavailable optional dependencies produce explicit actionable failures, not ambiguous panics.\\n- At least one automated test or fixture covers missing-asset handling.\\n- #107 can link the report as pre-E2E evidence; ROADMAP QA status is not changed by the agent.\",\n      \"labels\": [\n        \"priority: high\",\n        \"testing\",\n        \"automation\"\n      ],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-020_SubI_Release-Artifact-Manifest-And-Start-Sanity-Command\",\n      \"body\": \"Parent-Issue: #652; feeds into #651 and #653.\\n\\nBeschreibung: Add a narrow packaging sanity command that proves a release artifact can be located or built, records its commit/version/path, and performs a bounded start sanity check. This should not try to solve all installer/signing work; it creates repeatable evidence for the packaging gate.\\n\\nAcceptance-Evidence:\\n- One documented command produces a release-artifact manifest JSON containing commit SHA, target platform, build/profile, artifact path, and timestamp.\\n- The command fails clearly if the artifact is missing or version metadata cannot be determined.\\n- A bounded start sanity check confirms the binary starts far enough to avoid an immediate panic/crash loop, then exits or is killed cleanly.\\n- Logs are written to a predictable ignored artifact folder.\\n- #652 can link the manifest/logs as install/start-sanity evidence; ROADMAP QA status is not changed by the agent.\",\n      \"labels\": [\n        \"priority: high\",\n        \"testing\",\n        \"automation\"\n      ],\n      \"agent\": \"kiro_cli\"\n    },\n    {\n      \"title\": \"__VOR-021_SubI_Timeline-Persist-Reload-Dirty-State-Acceptance-Fixture\",\n      \"body\": \"Parent-Issue: #662; relates to #661, #96, #103, and #651.\\n\\nBeschreibung: Add one focused deterministic acceptance fixture for the Timeline/Show-Control matrix: create or load a minimal timeline/cue state, save it, reload it, and verify persisted fields plus dirty-state transitions. This is intentionally smaller than the full Timeline MVP and should produce concrete evidence for the acceptance matrix.\\n\\nAcceptance-Evidence:\\n- A documented test or command creates a minimal timeline/cue/project state without manual UI input.\\n- Save/reload preserves the relevant timeline/cue data checked by the fixture.\\n- Dirty-state changes are asserted before save, after save, and after reload/project switch where supported.\\n- The test produces logs or a test artifact that can be linked from #662.\\n- Any unsupported behavior is reported as failed or explicitly inconclusive, not silently skipped; ROADMAP QA status is not changed by the agent.\",\n      \"labels\": [\n        \"priority: high\",\n        \"testing\"\n      ],\n      \"agent\": \"claude_code\"\n    }\n  ],\n  \"reasoning\": \"Ich habe keine Master-Issues als Coding-Tasks vorgeschlagen. #650/#547/#548/#549 sind bereits offen und enthalten den UI-Harness/Smoke-Umfang, daher waere ein weiterer UI-Smoke-Task wahrscheinlich redundant. Cluster/Multi-Instance (#654-#659) ist derzeit vor allem eine Scope- und Produktentscheidung; ohne klare 1.0-Entscheidung waeren neue Coding-Issues dort riskant. Die drei Vorschlaege sind klein, delegierbar und liefern konkrete Release-1.0-Evidenz fuer #107, #652 und #662/#661. Agent-Zuordnung: jules wurde bewusst nicht gewaehlt, weil diese Vorschlaege keine grossen UI-Refactorings sind; lokale CLI-Agents passen besser fuer isolierte Preflight-, Packaging- und Rust-Testarbeiten.\",\n  \"risks\": [\n    \"NDI-Verfuegbarkeit kann plattform- oder runtime-abhaengig sein; der Preflight darf den echten End-to-End-Test aus #107 nicht ersetzen.\",\n    \"Packaging-Start-Sanity kann in headless oder GPU-losen Umgebungen instabil sein; der Task muss klare skip/fail-Regeln definieren.\",\n    \"Timeline-Persistenz kann bestehende Architekturgrenzen beruehren; der Fixture sollte klein bleiben und keine grosse Timeline-Refaktorierung ausloesen.\"\n  ],\n  \"confidence\": \"medium\"\n}"
+        },
+        {
+          "phase": "critique",
+          "agent": "beta",
+          "provider": "gemini_cli",
+          "duration_ms": 914,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "{\n  \"proposal\": [\n    {\n      \"title\": \"__VOR-019_SubI_NDI-Asset-Preflight-And-Missing-Asset-Evidence\",\n      \"body\": \"Parent-Issue: #107; feeds into #651 and #653.\\n\\nBeschreibung: Add a small, reproducible preflight/check command for the NDI/asset-availability gate before the full manual NDI end-to-end test. The task should verify NDI runtime/library availability where detectable, required media/test assets, and missing-asset behavior without requiring a live production show setup.\\n\\nAcceptance-Evidence:\\n- A documented command runs the NDI/asset preflight locally.\\n- The command writes a machine-readable JSON report with passed/failed/skipped checks.\\n- Missing NDI runtime, missing sample media, or unavailable optional dependencies produce explicit actionable failures, not ambiguous panics.\\n- At least one automated test or fixture covers missing-asset handling.\\n- #107 can link the report as pre-E2E evidence; ROADMAP QA status is not changed by the agent.\",\n      \"labels\": [\n        \"priority: high\",\n        \"testing\",\n        \"automation\"\n      ],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-020_SubI_Release-Artifact-Manifest-And-Start-Sanity-Command\",\n      \"body\": \"Parent-Issue: #652; feeds into #651 and #653.\\n\\nBeschreibung: Add a narrow packaging sanity command that proves a release artifact can be located or built, records its commit/version/path, and performs a bounded start sanity check. This should not try to solve all installer/signing work; it creates repeatable evidence for the packaging gate.\\n\\nAcceptance-Evidence:\\n- One documented command produces a release-artifact manifest JSON containing commit SHA, target platform, build/profile, artifact path, and timestamp.\\n- The command fails clearly if the artifact is missing or version metadata cannot be determined.\\n- A bounded start sanity check confirms the binary starts far enough to avoid an immediate panic/crash loop, then exits or is killed cleanly.\\n- Logs are written to a predictable ignored artifact folder.\\n- #652 can link the manifest/logs as install/start-sanity evidence; ROADMAP QA status is not changed by the agent.\",\n      \"labels\": [\n        \"priority: high\",\n        \"testing\",\n        \"automation\"\n      ],\n      \"agent\": \"kiro_cli\"\n    },\n    {\n      \"title\": \"__VOR-021_SubI_Timeline-Persist-Reload-Dirty-State-Acceptance-Fixture\",\n      \"body\": \"Parent-Issue: #662; relates to #661, #96, #103, and #651.\\n\\nBeschreibung: Add one focused deterministic acceptance fixture for the Timeline/Show-Control matrix: create or load a minimal timeline/cue state, save it, reload it, and verify persisted fields plus dirty-state transitions. This is intentionally smaller than the full Timeline MVP and should produce concrete evidence for the acceptance matrix.\\n\\nAcceptance-Evidence:\\n- A documented test or command creates a minimal timeline/cue/project state without manual UI input.\\n- Save/reload preserves the relevant timeline/cue data checked by the fixture.\\n- Dirty-state changes are asserted before save, after save, and after reload/project switch where supported.\\n- The test produces logs or a test artifact that can be linked from #662.\\n- Any unsupported behavior is reported as failed or explicitly inconclusive, not silently skipped; ROADMAP QA status is not changed by the agent.\",\n      \"labels\": [\n        \"priority: high\",\n        \"testing\"\n      ],\n      \"agent\": \"claude_code\"\n    }\n  ],\n  \"reasoning\": \"Ich habe keine Master-Issues als Coding-Tasks vorgeschlagen. #650/#547/#548/#549 sind bereits offen und enthalten den UI-Harness/Smoke-Umfang, daher waere ein weiterer UI-Smoke-Task wahrscheinlich redundant. Cluster/Multi-Instance (#654-#659) ist derzeit vor allem eine Scope- und Produktentscheidung; ohne klare 1.0-Entscheidung waeren neue Coding-Issues dort riskant. Die drei Vorschlaege sind klein, delegierbar und liefern konkrete Release-1.0-Evidenz fuer #107, #652 und #662/#661. Agent-Zuordnung: jules wurde bewusst nicht gewaehlt, weil diese Vorschlaege keine grossen UI-Refactorings sind; lokale CLI-Agents passen besser fuer isolierte Preflight-, Packaging- und Rust-Testarbeiten.\",\n  \"risks\": [\n    \"NDI-Verfuegbarkeit kann plattform- oder runtime-abhaengig sein; der Preflight darf den echten End-to-End-Test aus #107 nicht ersetzen.\",\n    \"Packaging-Start-Sanity kann in headless oder GPU-losen Umgebungen instabil sein; der Task muss klare skip/fail-Regeln definieren.\",\n    \"Timeline-Persistenz kann bestehende Architekturgrenzen beruehren; der Fixture sollte klein bleiben und keine grosse Timeline-Refaktorierung ausloesen.\"\n  ],\n  \"confidence\": \"medium\"\n}",
+      "completed_at": "2026-05-30T09:19:39.1485396+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-30-105935",
+      "task_type": "planning",
+      "started_at": "2026-05-30T10:59:35.3928782+02:00",
+      "alpha": {
+        "provider": "codex_orchestrator",
+        "model_tier": "planning"
+      },
+      "beta": {
+        "provider": "gemini_cli",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "alpha",
+          "provider": "codex_orchestrator",
+          "duration_ms": 126834,
+          "success": true,
+          "content": "{\n  \"proposal\": [\n    {\n      \"title\": \"__VOR-019_SubI_NDI-Asset-Availability-Preflight-And-E2E-Runbook\",\n      \"body\": \"Parent-Issues: #107, #651. Ziel: eine kleine, reproduzierbare NDI/Asset-Verfuegbarkeits-Pruefung definieren, bevor #107 als Release-1.0-Evidence gelten kann. Scope: vorhandene NDI-Integration nicht refactoren, sondern Preflight/Runbook fuer Runtime-Verfuegbarkeit, Sender/Receiver-Erkennung, Beispiel-Asset-Pfad und erwartete Fehlerfaelle erstellen. Acceptance-Evidence: dokumentierter Einzelbefehl oder kurzer Runbook-Ablauf; JSON-/Text-Report mit Commit-SHA, Plattform, NDI-Runtime-Status, Asset-Status, pass/fail/inconclusive; Ergebnis kann direkt in #107 und #651 verlinkt werden.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-020_SubI_macOS-CI-Smoke-Artifact-Triage-Runbook\",\n      \"body\": \"Parent-Issues: #43, #651. Ziel: #43 von abstraktem QA-offen zu konkreter Smoke-Evidence fuehren, ohne ROADMAP.md-QA-Status zu aendern. Scope: vorhandene GitHub-Actions/macOS-Workflow-Dateien und Build-Kommandos pruefen; minimale Smoke-Validation dokumentieren oder kleine CI-Script-Anpassung vorschlagen, falls Artefakte/Logs fehlen. Acceptance-Evidence: Runbook oder Script-Ausgabe nennt Workflow, Commit-SHA, macOS-Runner, Build-/Smoke-Kommando, relevante Artefakte/Logs und eindeutiges pass/fail/inconclusive; keine Roadmap-Tasks werden entfernt oder auf Done gesetzt.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-021_SubI_Release-Packaging-Manifest-And-Start-Sanity-Script\",\n      \"body\": \"Parent-Issues: #652, #653, #651. Ziel: Packaging/Install-Sanity in einen kleinen, pruefbaren Schritt schneiden. Scope: kein Installer-Grossprojekt; nur Manifest/Script fuer Release-Artefakt-Pfad, Version/Commit/Tag, erwartete Runtime-Voraussetzungen und Start-Sanity. Acceptance-Evidence: ein dokumentierter Befehl erzeugt oder validiert ein Manifest mit Artefaktpfad, Commit-SHA und Plattform; Start-Sanity prueft mindestens Prozessstart, Hauptfenster- oder Startup-Signal und keine unmittelbare Panic/Crash-Schleife; Ergebnis ist als Link/Artefakt fuer #652 und Release Notes #653 verwendbar.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"kiro_cli\"\n    }\n  ],\n  \"reasoning\": \"Ich habe #651 als Top-Level-Kompass geprueft und die genannten Gate-Lanes gegen offene Issues abgeglichen. Es gibt keine offenen `label:delegable`-Treffer. Die UI-Test-Lane (#650/#547/#548/#549) ist bereits mit offenen `needs-testing`/Jules-Issues belegt; neue Coding-Issues dort waeren Duplikate. Timeline (#661/#662) und Cluster (#654-#659) haben bereits konkrete Scope-/Acceptance-Sub-Issues, daher waere ein weiteres Issue dort aktuell eher Koordination als delegierbare Umsetzung. Die drei vorgeschlagenen Issues schliessen dagegen reale Evidence-Luecken in #107, #43 und #652, sind klein genug fuer lokale CLI-Agents und bringen Release-1.0-Readiness direkt voran.\",\n  \"risks\": [\n    \"NDI-E2E kann an lokaler Runtime-/Hardware-Verfuegbarkeit scheitern; deshalb ist `inconclusive` als valides Evidence-Ergebnis vorgesehen.\",\n    \"macOS-CI-Smoke kann ohne Zugriff auf Runner-Artefakte nur als Runbook/Workflow-Triage abgeschlossen werden, nicht als echte QA-Freigabe.\",\n    \"Packaging-Start-Sanity haengt von der finalen Zielplattform-Entscheidung ab; der Schnitt vermeidet bewusst einen grossen Installer-Scope.\"\n  ],\n  \"confidence\": \"high\"\n}"
+        },
+        {
+          "phase": "critique",
+          "agent": "beta",
+          "provider": "gemini_cli",
+          "duration_ms": 1173,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "{\n  \"proposal\": [\n    {\n      \"title\": \"__VOR-019_SubI_NDI-Asset-Availability-Preflight-And-E2E-Runbook\",\n      \"body\": \"Parent-Issues: #107, #651. Ziel: eine kleine, reproduzierbare NDI/Asset-Verfuegbarkeits-Pruefung definieren, bevor #107 als Release-1.0-Evidence gelten kann. Scope: vorhandene NDI-Integration nicht refactoren, sondern Preflight/Runbook fuer Runtime-Verfuegbarkeit, Sender/Receiver-Erkennung, Beispiel-Asset-Pfad und erwartete Fehlerfaelle erstellen. Acceptance-Evidence: dokumentierter Einzelbefehl oder kurzer Runbook-Ablauf; JSON-/Text-Report mit Commit-SHA, Plattform, NDI-Runtime-Status, Asset-Status, pass/fail/inconclusive; Ergebnis kann direkt in #107 und #651 verlinkt werden.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-020_SubI_macOS-CI-Smoke-Artifact-Triage-Runbook\",\n      \"body\": \"Parent-Issues: #43, #651. Ziel: #43 von abstraktem QA-offen zu konkreter Smoke-Evidence fuehren, ohne ROADMAP.md-QA-Status zu aendern. Scope: vorhandene GitHub-Actions/macOS-Workflow-Dateien und Build-Kommandos pruefen; minimale Smoke-Validation dokumentieren oder kleine CI-Script-Anpassung vorschlagen, falls Artefakte/Logs fehlen. Acceptance-Evidence: Runbook oder Script-Ausgabe nennt Workflow, Commit-SHA, macOS-Runner, Build-/Smoke-Kommando, relevante Artefakte/Logs und eindeutiges pass/fail/inconclusive; keine Roadmap-Tasks werden entfernt oder auf Done gesetzt.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-021_SubI_Release-Packaging-Manifest-And-Start-Sanity-Script\",\n      \"body\": \"Parent-Issues: #652, #653, #651. Ziel: Packaging/Install-Sanity in einen kleinen, pruefbaren Schritt schneiden. Scope: kein Installer-Grossprojekt; nur Manifest/Script fuer Release-Artefakt-Pfad, Version/Commit/Tag, erwartete Runtime-Voraussetzungen und Start-Sanity. Acceptance-Evidence: ein dokumentierter Befehl erzeugt oder validiert ein Manifest mit Artefaktpfad, Commit-SHA und Plattform; Start-Sanity prueft mindestens Prozessstart, Hauptfenster- oder Startup-Signal und keine unmittelbare Panic/Crash-Schleife; Ergebnis ist als Link/Artefakt fuer #652 und Release Notes #653 verwendbar.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"kiro_cli\"\n    }\n  ],\n  \"reasoning\": \"Ich habe #651 als Top-Level-Kompass geprueft und die genannten Gate-Lanes gegen offene Issues abgeglichen. Es gibt keine offenen `label:delegable`-Treffer. Die UI-Test-Lane (#650/#547/#548/#549) ist bereits mit offenen `needs-testing`/Jules-Issues belegt; neue Coding-Issues dort waeren Duplikate. Timeline (#661/#662) und Cluster (#654-#659) haben bereits konkrete Scope-/Acceptance-Sub-Issues, daher waere ein weiteres Issue dort aktuell eher Koordination als delegierbare Umsetzung. Die drei vorgeschlagenen Issues schliessen dagegen reale Evidence-Luecken in #107, #43 und #652, sind klein genug fuer lokale CLI-Agents und bringen Release-1.0-Readiness direkt voran.\",\n  \"risks\": [\n    \"NDI-E2E kann an lokaler Runtime-/Hardware-Verfuegbarkeit scheitern; deshalb ist `inconclusive` als valides Evidence-Ergebnis vorgesehen.\",\n    \"macOS-CI-Smoke kann ohne Zugriff auf Runner-Artefakte nur als Runbook/Workflow-Triage abgeschlossen werden, nicht als echte QA-Freigabe.\",\n    \"Packaging-Start-Sanity haengt von der finalen Zielplattform-Entscheidung ab; der Schnitt vermeidet bewusst einen grossen Installer-Scope.\"\n  ],\n  \"confidence\": \"high\"\n}",
+      "completed_at": "2026-05-30T11:01:43.4993302+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-30-112956",
+      "task_type": "planning",
+      "started_at": "2026-05-30T11:29:56.73236+02:00",
+      "alpha": {
+        "provider": "codex_orchestrator",
+        "model_tier": "planning"
+      },
+      "beta": {
+        "provider": "gemini_cli",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "alpha",
+          "provider": "codex_orchestrator",
+          "duration_ms": 186643,
+          "success": true,
+          "content": "{\"proposal\":[{\"title\":\"__VOR-025_SubI_UI-Harness-Acceptance-Evidence-Run\",\"body\":\"Parent-Issue: #650, #547, #651. Fuehre den bestehenden Windows-UI-Harness aus, erfasse Kommando, Exit-Code, Artifact-Pfad, JSON-Report und mindestens einen Screenshot. Acceptance-Evidence: Kommentar/Report mit passed/failed/inconclusive, konkretem lokalen Befehl und Link/Path zu Artefakten; keine ROADMAP-QA-Statusaenderung.\",\"labels\":[\"priority: high\",\"testing\",\"automation\",\"component: ui\",\"status: needs-testing\"],\"agent\":\"gemini_cli\"},{\"title\":\"__VOR-026_SubI_UI-Harness-Artifact-Schema-Validator\",\"body\":\"Parent-Issue: #650, #547, #549. Ergaenze einen kleinen Validator fuer UI-Test-Run-Reports, der Pflichtfelder wie status, started_at, command, screenshots, logs und failure_reason prueft. Acceptance-Evidence: Validator-Befehl, ein positives Fixture, ein negatives Fixture und Testausgabe.\",\"labels\":[\"priority: high\",\"testing\",\"automation\",\"component: ui\"],\"agent\":\"claude_code\"},{\"title\":\"__VOR-027_SubI_Deterministic-UI-Smoke-Calibration-Report\",\"body\":\"Parent-Issue: #650, #549, #651. Kalibriere den deterministischen UI-Smoke fuer feste Fenster-/Screenshot-Bounds und dokumentiere die stabilen Annahmen fuer mindestens eine Windows-Aufloesung. Acceptance-Evidence: reproduzierbarer Smoke-Befehl, before/after screenshots, JSON pass/fail und klare Liste nicht-destruktiver UI-Aktionen.\",\"labels\":[\"priority: high\",\"testing\",\"automation\",\"component: ui\",\"status: needs-testing\"],\"agent\":\"gemini_cli\"},{\"title\":\"__VOR-028_SubI_Exploratory-Runner-JSON-Schema-Negative-Tests\",\"body\":\"Parent-Issue: #650, #548. Fuege Tests hinzu, die ungueltige Gemini-Action-JSON-Antworten blockieren: unbekannte Action, fehlende Koordinaten, destruktive Aktion ohne Flag, Textinput ohne Ziel. Acceptance-Evidence: Testname, Testausgabe und Beispiel-Fehlermeldungen.\",\"labels\":[\"priority: high\",\"testing\",\"automation\",\"component: ui\"],\"agent\":\"claude_code\"},{\"title\":\"__VOR-029_SubI_Timeline-Acceptance-Matrix-Fixtures\",\"body\":\"Parent-Issue: #661, #662, #651. Lege minimale Test-/QA-Fixtures fuer die Matrixpunkte neues Projekt, Cue/Timeline anlegen, Save/Reload und Dirty-State an. Acceptance-Evidence: Fixture-Pfade, ausfuehrbarer Test- oder QA-Befehl und Mapping jedes Fixtures auf einen #662-Matrixpunkt.\",\"labels\":[\"priority: high\",\"testing\",\"component: ui\"],\"agent\":\"gemini_cli\"},{\"title\":\"__VOR-030_SubI_Timeline-Scheduling-Edge-Case-Unit-Tests\",\"body\":\"Parent-Issue: #661, #101, #103. Ergaenze fokussierte Unit-Tests fuer pre-roll, gap, overlap und end-of-show in den relevanten Show-Modi, ohne neue Scheduling-Features zu erfinden. Acceptance-Evidence: Testnamen, erwartete Semantik je Case und cargo-test-Ausgabe.\",\"labels\":[\"priority: high\",\"testing\",\"component: ui\"],\"agent\":\"claude_code\"},{\"title\":\"__VOR-031_SubI_Cue-Action-Dispatch-Smoke-Tests\",\"body\":\"Parent-Issue: #661, #102. Pruefe, ob AddCue, GoCue, NextCue, PrevCue und StopCue vom Cue-Panel bis zum zentralen Action-Handler reproduzierbar ankommen. Acceptance-Evidence: automatisierter Test oder enges manuelles Harness mit Lognachweis pro Action und dokumentierten offenen Verdrahtungsluecken.\",\"labels\":[\"priority: high\",\"testing\",\"component: ui\"],\"agent\":\"kiro_cli\"},{\"title\":\"__VOR-032_SubI_Effect-Parameter-Update-Missing-Target-Tests\",\"body\":\"Parent-Issue: #661, #98. Ergaenze Tests fuer EffectParameterUpdate bei fehlendem Target, falschem Typ und gueltigem Float-Parameter, damit Runtime-Updates nicht stillschweigend verschwinden. Acceptance-Evidence: Testausgabe und klare Fehler-/Warnsemantik fuer ungueltige Bindings.\",\"labels\":[\"priority: high\",\"testing\",\"component: ui\"],\"agent\":\"claude_code\"},{\"title\":\"__VOR-033_SubI_Timeline-Matrix-Evidence-Collector\",\"body\":\"Parent-Issue: #661, #662, #653. Erstelle eine kleine Markdown/JSON-Vorlage, mit der jeder #662-Matrixpunkt als passed, failed oder post-1.0 plus Artefakt-Link dokumentiert wird. Acceptance-Evidence: Vorlage im Repo, Beispielausfuellung mit Dummy-Artefakten und Verweis, dass #653/#661 manuell aktualisiert werden muessen.\",\"labels\":[\"priority: high\",\"testing\",\"documentation\"],\"agent\":\"gemini_cli\"},{\"title\":\"__VOR-034_SubI_NDI-Feature-Build-And-Capability-Smoke\",\"body\":\"Parent-Issue: #107, #651. Fuehre einen isolierten Build-/Smoke-Pfad fuer NDI-bezogene Feature-Gates aus und pruefe, ob NDI Input/Output in UI-Capability-Tests sichtbar bleibt. Acceptance-Evidence: exakter cargo-Befehl, Feature-Flags, Testergebnis und bekannte externe NDI-Runtime-Voraussetzungen.\",\"labels\":[\"priority: high\",\"testing\"],\"agent\":\"claude_code\"},{\"title\":\"__VOR-035_SubI_NDI-Missing-Asset-Error-Path-Test\",\"body\":\"Parent-Issue: #107, #657. Ergaenze oder dokumentiere einen Testpfad, bei dem ein NDI-/Asset-Mismatch nicht crasht und eine klare Fehlermeldung erzeugt. Acceptance-Evidence: Test oder manuelles Harness, erwartete Fehlermeldung und Ergebnis im #107-Kontext.\",\"labels\":[\"priority: high\",\"testing\"],\"agent\":\"cline_cli\"},{\"title\":\"__VOR-036_SubI_macOS-CI-Workflow-Presence-Audit\",\"body\":\"Parent-Issue: #43, #651. Auditiere die vorhandenen GitHub-Actions-Workflows auf macOS-Build-/Smoke-Abdeckung und erstelle eine minimale Lueckenliste ohne ROADMAP-QA-Status zu aendern. Acceptance-Evidence: betroffene Workflow-Dateien, fehlende Jobs, vorgeschlagener minimaler Smoke-Befehl.\",\"labels\":[\"priority: high\",\"testing\",\"ci\"],\"agent\":\"gemini_cli\"},{\"title\":\"__VOR-037_SubI_macOS-Smoke-Job-Minimal-Workflow-Patch\",\"body\":\"Parent-Issue: #43, #651. Falls #36 eine klare Luecke zeigt: fuege einen minimalen macOS-CI-Job fuer cargo check/build oder dokumentierten Smoke hinzu, ohne Packaging zu vermischen. Acceptance-Evidence: Workflow-Diff, erwarteter Trigger und erfolgreicher oder nachvollziehbar fehlender Actions-Lauf.\",\"labels\":[\"priority: high\",\"testing\",\"ci\"],\"agent\":\"copilot_cli\"},{\"title\":\"__VOR-038_SubI_Release-Artifact-Path-And-Version-Sanity\",\"body\":\"Parent-Issue: #652, #651. Definiere und pruefe einen kleinen Release-Artefakt-Sanity-Check: erwarteter Output-Pfad, Commit/Version im Artefakt oder Begleitmanifest, reproduzierbarer Build-Befehl. Acceptance-Evidence: Script/Befehl, Beispielmanifest und Ergebnis fuer lokalen Build.\",\"labels\":[\"priority: high\",\"testing\",\"automation\"],\"agent\":\"gemini_cli\"},{\"title\":\"__VOR-039_SubI_Fresh-Unpack-Launch-Sanity-Runbook\",\"body\":\"Parent-Issue: #652, #549, #651. Schreibe ein knappes Runbook fuer frisches Entpacken/Installieren und ersten Start inklusive optionalem Aufruf des UI-Smoke-Tests. Acceptance-Evidence: Runbook-Pfad, konkrete Schritte, erwartete Artefakte und bekannte Voraussetzungen.\",\"labels\":[\"priority: high\",\"testing\",\"documentation\"],\"agent\":\"cursor_agent\"},{\"title\":\"__VOR-040_SubI_Release-1.0-Known-Issues-Scope-Freeze-Skeleton\",\"body\":\"Parent-Issue: #653, #651. Erstelle eine Release-Notes/Known-Issues-Struktur fuer UI-Testabdeckung, Timeline, NDI, macOS/Packaging und Cluster-Scope, ohne finale User-Entscheidungen vorwegzunehmen. Acceptance-Evidence: Datei/Abschnitt mit Platzhaltern fuer passed/failed/post-1.0 und Verweisen auf #650, #661, #654, #107, #43, #652.\",\"labels\":[\"priority: high\",\"testing\",\"documentation\"],\"agent\":\"gemini_cli\"}],\"reasoning\":\"Ich schlage 16 kleine Sub-Issues vor, weil die Gate-Master (#651, #650, #661, #654, #652, #653) bereits existieren und mehrere grosse Arbeiten schon offen oder in Jules-Sessions sind. Neue Aufgaben fokussieren daher auf Release-1.0-Evidenz, Tests, Runbooks, CI-/Packaging-Sanity und enge Verdrahtungspruefungen. Jules wird bewusst nicht neu belastet: die vorgeschlagenen Tasks sind isolierte CLI-/QA-/Script-/Testarbeiten und passen besser zu gemini_cli, claude_code, kiro_cli, cline_cli, copilot_cli oder cursor_agent. Ich habe keine Master-Issues vorgeschlagen, keine Roadmap-Tasks entfernt und keine QA-Statusaenderung nach Done vorgesehen.\",\"risks\":[\"Mehrere offene/duplizierte Merge-Konflikt-Issues und bestehende PRs koennen einzelne Testvorschlaege kurzfristig stale machen.\",\"Einige Tasks haengen von noch nicht gemergten UI-Harness- oder Timeline-Aenderungen ab; sie sollten erst nach Rebase/Merge-Konflikt-Klaerung gestartet werden.\",\"macOS- und NDI-Evidenz kann externe Runner, SDKs oder Runtime-Abhaengigkeiten benoetigen; daher sind passed/failed/inconclusive-Ergebnisse explizit erlaubt.\"],\"confidence\":\"medium\"}"
+        },
+        {
+          "phase": "critique",
+          "agent": "beta",
+          "provider": "gemini_cli",
+          "duration_ms": 958,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "{\"proposal\":[{\"title\":\"__VOR-025_SubI_UI-Harness-Acceptance-Evidence-Run\",\"body\":\"Parent-Issue: #650, #547, #651. Fuehre den bestehenden Windows-UI-Harness aus, erfasse Kommando, Exit-Code, Artifact-Pfad, JSON-Report und mindestens einen Screenshot. Acceptance-Evidence: Kommentar/Report mit passed/failed/inconclusive, konkretem lokalen Befehl und Link/Path zu Artefakten; keine ROADMAP-QA-Statusaenderung.\",\"labels\":[\"priority: high\",\"testing\",\"automation\",\"component: ui\",\"status: needs-testing\"],\"agent\":\"gemini_cli\"},{\"title\":\"__VOR-026_SubI_UI-Harness-Artifact-Schema-Validator\",\"body\":\"Parent-Issue: #650, #547, #549. Ergaenze einen kleinen Validator fuer UI-Test-Run-Reports, der Pflichtfelder wie status, started_at, command, screenshots, logs und failure_reason prueft. Acceptance-Evidence: Validator-Befehl, ein positives Fixture, ein negatives Fixture und Testausgabe.\",\"labels\":[\"priority: high\",\"testing\",\"automation\",\"component: ui\"],\"agent\":\"claude_code\"},{\"title\":\"__VOR-027_SubI_Deterministic-UI-Smoke-Calibration-Report\",\"body\":\"Parent-Issue: #650, #549, #651. Kalibriere den deterministischen UI-Smoke fuer feste Fenster-/Screenshot-Bounds und dokumentiere die stabilen Annahmen fuer mindestens eine Windows-Aufloesung. Acceptance-Evidence: reproduzierbarer Smoke-Befehl, before/after screenshots, JSON pass/fail und klare Liste nicht-destruktiver UI-Aktionen.\",\"labels\":[\"priority: high\",\"testing\",\"automation\",\"component: ui\",\"status: needs-testing\"],\"agent\":\"gemini_cli\"},{\"title\":\"__VOR-028_SubI_Exploratory-Runner-JSON-Schema-Negative-Tests\",\"body\":\"Parent-Issue: #650, #548. Fuege Tests hinzu, die ungueltige Gemini-Action-JSON-Antworten blockieren: unbekannte Action, fehlende Koordinaten, destruktive Aktion ohne Flag, Textinput ohne Ziel. Acceptance-Evidence: Testname, Testausgabe und Beispiel-Fehlermeldungen.\",\"labels\":[\"priority: high\",\"testing\",\"automation\",\"component: ui\"],\"agent\":\"claude_code\"},{\"title\":\"__VOR-029_SubI_Timeline-Acceptance-Matrix-Fixtures\",\"body\":\"Parent-Issue: #661, #662, #651. Lege minimale Test-/QA-Fixtures fuer die Matrixpunkte neues Projekt, Cue/Timeline anlegen, Save/Reload und Dirty-State an. Acceptance-Evidence: Fixture-Pfade, ausfuehrbarer Test- oder QA-Befehl und Mapping jedes Fixtures auf einen #662-Matrixpunkt.\",\"labels\":[\"priority: high\",\"testing\",\"component: ui\"],\"agent\":\"gemini_cli\"},{\"title\":\"__VOR-030_SubI_Timeline-Scheduling-Edge-Case-Unit-Tests\",\"body\":\"Parent-Issue: #661, #101, #103. Ergaenze fokussierte Unit-Tests fuer pre-roll, gap, overlap und end-of-show in den relevanten Show-Modi, ohne neue Scheduling-Features zu erfinden. Acceptance-Evidence: Testnamen, erwartete Semantik je Case und cargo-test-Ausgabe.\",\"labels\":[\"priority: high\",\"testing\",\"component: ui\"],\"agent\":\"claude_code\"},{\"title\":\"__VOR-031_SubI_Cue-Action-Dispatch-Smoke-Tests\",\"body\":\"Parent-Issue: #661, #102. Pruefe, ob AddCue, GoCue, NextCue, PrevCue und StopCue vom Cue-Panel bis zum zentralen Action-Handler reproduzierbar ankommen. Acceptance-Evidence: automatisierter Test oder enges manuelles Harness mit Lognachweis pro Action und dokumentierten offenen Verdrahtungsluecken.\",\"labels\":[\"priority: high\",\"testing\",\"component: ui\"],\"agent\":\"kiro_cli\"},{\"title\":\"__VOR-032_SubI_Effect-Parameter-Update-Missing-Target-Tests\",\"body\":\"Parent-Issue: #661, #98. Ergaenze Tests fuer EffectParameterUpdate bei fehlendem Target, falschem Typ und gueltigem Float-Parameter, damit Runtime-Updates nicht stillschweigend verschwinden. Acceptance-Evidence: Testausgabe und klare Fehler-/Warnsemantik fuer ungueltige Bindings.\",\"labels\":[\"priority: high\",\"testing\",\"component: ui\"],\"agent\":\"claude_code\"},{\"title\":\"__VOR-033_SubI_Timeline-Matrix-Evidence-Collector\",\"body\":\"Parent-Issue: #661, #662, #653. Erstelle eine kleine Markdown/JSON-Vorlage, mit der jeder #662-Matrixpunkt als passed, failed oder post-1.0 plus Artefakt-Link dokumentiert wird. Acceptance-Evidence: Vorlage im Repo, Beispielausfuellung mit Dummy-Artefakten und Verweis, dass #653/#661 manuell aktualisiert werden muessen.\",\"labels\":[\"priority: high\",\"testing\",\"documentation\"],\"agent\":\"gemini_cli\"},{\"title\":\"__VOR-034_SubI_NDI-Feature-Build-And-Capability-Smoke\",\"body\":\"Parent-Issue: #107, #651. Fuehre einen isolierten Build-/Smoke-Pfad fuer NDI-bezogene Feature-Gates aus und pruefe, ob NDI Input/Output in UI-Capability-Tests sichtbar bleibt. Acceptance-Evidence: exakter cargo-Befehl, Feature-Flags, Testergebnis und bekannte externe NDI-Runtime-Voraussetzungen.\",\"labels\":[\"priority: high\",\"testing\"],\"agent\":\"claude_code\"},{\"title\":\"__VOR-035_SubI_NDI-Missing-Asset-Error-Path-Test\",\"body\":\"Parent-Issue: #107, #657. Ergaenze oder dokumentiere einen Testpfad, bei dem ein NDI-/Asset-Mismatch nicht crasht und eine klare Fehlermeldung erzeugt. Acceptance-Evidence: Test oder manuelles Harness, erwartete Fehlermeldung und Ergebnis im #107-Kontext.\",\"labels\":[\"priority: high\",\"testing\"],\"agent\":\"cline_cli\"},{\"title\":\"__VOR-036_SubI_macOS-CI-Workflow-Presence-Audit\",\"body\":\"Parent-Issue: #43, #651. Auditiere die vorhandenen GitHub-Actions-Workflows auf macOS-Build-/Smoke-Abdeckung und erstelle eine minimale Lueckenliste ohne ROADMAP-QA-Status zu aendern. Acceptance-Evidence: betroffene Workflow-Dateien, fehlende Jobs, vorgeschlagener minimaler Smoke-Befehl.\",\"labels\":[\"priority: high\",\"testing\",\"ci\"],\"agent\":\"gemini_cli\"},{\"title\":\"__VOR-037_SubI_macOS-Smoke-Job-Minimal-Workflow-Patch\",\"body\":\"Parent-Issue: #43, #651. Falls #36 eine klare Luecke zeigt: fuege einen minimalen macOS-CI-Job fuer cargo check/build oder dokumentierten Smoke hinzu, ohne Packaging zu vermischen. Acceptance-Evidence: Workflow-Diff, erwarteter Trigger und erfolgreicher oder nachvollziehbar fehlender Actions-Lauf.\",\"labels\":[\"priority: high\",\"testing\",\"ci\"],\"agent\":\"copilot_cli\"},{\"title\":\"__VOR-038_SubI_Release-Artifact-Path-And-Version-Sanity\",\"body\":\"Parent-Issue: #652, #651. Definiere und pruefe einen kleinen Release-Artefakt-Sanity-Check: erwarteter Output-Pfad, Commit/Version im Artefakt oder Begleitmanifest, reproduzierbarer Build-Befehl. Acceptance-Evidence: Script/Befehl, Beispielmanifest und Ergebnis fuer lokalen Build.\",\"labels\":[\"priority: high\",\"testing\",\"automation\"],\"agent\":\"gemini_cli\"},{\"title\":\"__VOR-039_SubI_Fresh-Unpack-Launch-Sanity-Runbook\",\"body\":\"Parent-Issue: #652, #549, #651. Schreibe ein knappes Runbook fuer frisches Entpacken/Installieren und ersten Start inklusive optionalem Aufruf des UI-Smoke-Tests. Acceptance-Evidence: Runbook-Pfad, konkrete Schritte, erwartete Artefakte und bekannte Voraussetzungen.\",\"labels\":[\"priority: high\",\"testing\",\"documentation\"],\"agent\":\"cursor_agent\"},{\"title\":\"__VOR-040_SubI_Release-1.0-Known-Issues-Scope-Freeze-Skeleton\",\"body\":\"Parent-Issue: #653, #651. Erstelle eine Release-Notes/Known-Issues-Struktur fuer UI-Testabdeckung, Timeline, NDI, macOS/Packaging und Cluster-Scope, ohne finale User-Entscheidungen vorwegzunehmen. Acceptance-Evidence: Datei/Abschnitt mit Platzhaltern fuer passed/failed/post-1.0 und Verweisen auf #650, #661, #654, #107, #43, #652.\",\"labels\":[\"priority: high\",\"testing\",\"documentation\"],\"agent\":\"gemini_cli\"}],\"reasoning\":\"Ich schlage 16 kleine Sub-Issues vor, weil die Gate-Master (#651, #650, #661, #654, #652, #653) bereits existieren und mehrere grosse Arbeiten schon offen oder in Jules-Sessions sind. Neue Aufgaben fokussieren daher auf Release-1.0-Evidenz, Tests, Runbooks, CI-/Packaging-Sanity und enge Verdrahtungspruefungen. Jules wird bewusst nicht neu belastet: die vorgeschlagenen Tasks sind isolierte CLI-/QA-/Script-/Testarbeiten und passen besser zu gemini_cli, claude_code, kiro_cli, cline_cli, copilot_cli oder cursor_agent. Ich habe keine Master-Issues vorgeschlagen, keine Roadmap-Tasks entfernt und keine QA-Statusaenderung nach Done vorgesehen.\",\"risks\":[\"Mehrere offene/duplizierte Merge-Konflikt-Issues und bestehende PRs koennen einzelne Testvorschlaege kurzfristig stale machen.\",\"Einige Tasks haengen von noch nicht gemergten UI-Harness- oder Timeline-Aenderungen ab; sie sollten erst nach Rebase/Merge-Konflikt-Klaerung gestartet werden.\",\"macOS- und NDI-Evidenz kann externe Runner, SDKs oder Runtime-Abhaengigkeiten benoetigen; daher sind passed/failed/inconclusive-Ergebnisse explizit erlaubt.\"],\"confidence\":\"medium\"}",
+      "completed_at": "2026-05-30T11:33:04.4123012+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-30-114920",
+      "task_type": "planning",
+      "started_at": "2026-05-30T11:49:20.1948047+02:00",
+      "alpha": {
+        "provider": "codex_orchestrator",
+        "model_tier": "planning"
+      },
+      "beta": {
+        "provider": "gemini_cli",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "alpha",
+          "provider": "codex_orchestrator",
+          "duration_ms": 254662,
+          "success": true,
+          "content": "{\n  \"proposal\": [\n    {\n      \"title\": \"__VOR-025_SubI_UI-Harness-Artifact-Contract-Check\",\n      \"body\": \"Parent-Issue: #547, #650. Ziel: Einen kleinen Contract-Check fuer den UI-Harness ergaenzen, der ohne echte UI-Aktionen prueft, ob JSON-Report, Screenshot-Ordner, Launch-Log und finaler Status immer an den dokumentierten Pfaden entstehen. Acceptance-Evidence: Ein dokumentierter Befehl erzeugt ein Beispiel-Artefaktbundle; ein Test faellt gezielt fehl, wenn ein Pflichtartefakt fehlt; Output-Ordner ist ignoriert.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-026_SubI_UI-Harness-Noop-Runbook-And-Exit-Codes\",\n      \"body\": \"Parent-Issue: #547, #650. Ziel: Den Windows-no-op/environment Harness-Check so dokumentieren und testen, dass Agenten ihn eindeutig ausfuehren koennen. Acceptance-Evidence: README/Runbook nennt exakt einen Befehl; Exit-Codes fuer passed, failed und prereq-missing sind dokumentiert; fehlender API-Key, fehlende Python-Abhaengigkeit und App-Startfehler werden klar gemeldet.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-027_SubI_Deterministic-UI-Smoke-Artifact-Assertions\",\n      \"body\": \"Parent-Issue: #549, #650. Ziel: Den deterministischen Smoke-Test nicht nur klicken lassen, sondern harte Assertions fuer Fensterbounds, Vorher/Nachher-Screenshots und JSON-Pass-Fail schreiben. Acceptance-Evidence: Smoke-Lauf erzeugt mindestens zwei Screenshots, ein maschinenlesbares Ergebnis und eine Fehlerursache; bei fehlendem Fenster bricht der Test mit verwertbarem Artefaktbundle ab.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\", \"component: ui\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-028_SubI_Exploratory-Runner-JSON-Action-Schema-Validator\",\n      \"body\": \"Parent-Issue: #548, #650. Ziel: Einen isolierten Validator fuer das Gemini-Action-Schema bauen, bevor Clicks/Typing ausgefuehrt werden. Acceptance-Evidence: Unit-Tests decken erlaubte Actions, verbotene Actions, fehlende Koordinaten, zu lange Texte und destructive-operation Guardrails ab; der Runner stoppt bei invalidem JSON mit status inconclusive oder failed.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-029_SubI_UI-Test-Output-Gitignore-And-Packaging-Evidence-Link\",\n      \"body\": \"Parent-Issue: #650, #652. Ziel: UI-Test-Artefakte so strukturieren, dass Packaging/Install-Sanity spaeter auf dieselben Evidenzpfade verlinken kann. Acceptance-Evidence: Output-Verzeichnis ist in Git ignoriert; README nennt Pfadkonvention; #652 kann Screenshots/JSON-Report des Smoke-Tests als Install-Sanity-Evidence referenzieren.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"copilot_cli\"\n    },\n    {\n      \"title\": \"__VOR-030_SubI_Timeline-Acceptance-Matrix-Replay-Project\",\n      \"body\": \"Parent-Issue: #662, #96. Ziel: Ein kleines reproduzierbares Projekt oder Fixture fuer die Acceptance-Matrix anlegen: Timeline/Cue anlegen, speichern, laden, Dirty-State beobachten. Acceptance-Evidence: Ein lokaler Befehl oder Test laedt das Fixture, prueft Roundtrip und Project-Switching, und schreibt passed/failed pro Matrixpunkt.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-031_SubI_Animator-Real-Parameter-End-to-End-Test\",\n      \"body\": \"Parent-Issue: #98, #662. Ziel: Einen minimalen E2E-Test fuer genau einen echten Effekt- oder Modulparameter ergaenzen, damit Animator-Updates nicht nur Demo-State veraendern. Acceptance-Evidence: Test startet mit bekanntem Parameterwert, spielt eine Timeline-Update-Sequenz ab und beweist den geaenderten Runtime-Wert; ungueltiges Binding erzeugt einen expliziten Fehler statt Silent-Fail.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-032_SubI_Scheduling-Edge-Case-Test-Table\",\n      \"body\": \"Parent-Issue: #101, #103. Ziel: Pre-roll, Gap, Overlap und End-of-Show als tabellengetriebene Tests fuer die relevanten Show-Modi abbilden. Acceptance-Evidence: Tests nennen erwarteten aktiven Block oder Fallback pro Zeitpunkt; alle Faelle laufen deterministisch; die dokumentierte Semantik entspricht den Testerwartungen.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-033_SubI_Cue-Action-Handler-Regression-Test\",\n      \"body\": \"Parent-Issue: #102, #662. Ziel: Fehlende oder fragile Cue-UI-Actions im zentralen Handler durch Regressionstests sichtbar machen. Acceptance-Evidence: Tests oder ein reproduzierbarer Harness decken AddCue, GoCue, NextCue, PrevCue und StopCue ab; jede Action veraendert erwarteten Runtime-State oder liefert einen dokumentierten Fehler.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-034_SubI_Timeline-Dirty-State-Project-Switch-Regression-Pack\",\n      \"body\": \"Parent-Issue: #96, #103. Ziel: Dirty-State, Autosave-Signal und Reset transienter Timeline-UI-State beim Projektwechsel gezielt absichern. Acceptance-Evidence: Tests beweisen, dass Timeline-Mutationen dirty setzen, Projekt A keine Arrangement-Daten in Projekt B leakt und Runtime-only Selection nach Load korrekt zurueckgesetzt wird.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-035_SubI_Curve-Multivalue-Release-1-0-Scope-Evidence-Pack\",\n      \"body\": \"Parent-Issue: #99, #662, #653. Ziel: Fuer Curve-Editor/Multi-Value-Lanes entscheiden und belegen, ob 1.0-ready oder Post-1.0. Acceptance-Evidence: Kurzer Evidenzbericht mit aktuellem Verhalten fuer Float, Vec3/Vec4 und Color; falls Post-1.0, konkreter Known-Issue-Text fuer #653; keine ROADMAP-QA-Statusaenderung durch Agenten.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"kiro_cli\"\n    },\n    {\n      \"title\": \"__VOR-036_SubI_Timeline-Acceptance-Report-Exporter\",\n      \"body\": \"Parent-Issue: #662, #653. Ziel: Die Timeline-Acceptance-Matrix als kompakten JSON- oder Markdown-Report exportierbar machen, damit Release Notes Evidenz statt Freitext erhalten. Acceptance-Evidence: Report enthaelt pro Matrixpunkt status passed, failed oder post-1.0, Link/Pfad zu Artefakten und Commit-Information.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"copilot_cli\"\n    },\n    {\n      \"title\": \"__VOR-037_SubI_Cluster-Scope-Freeze-Decision-Pack\",\n      \"body\": \"Parent-Issue: #655, #654, #653. Ziel: Eine knappe Entscheidungsunterlage erstellen: release-blocking, minimal-1.0 oder post-1.0, inklusive eingeschlossener und ausgeschlossener Betriebsmodi. Acceptance-Evidence: Vorschlagstext fuer #653 und #654 liegt vor; Multimaster, Control-Only und Drift-Risiken sind explizit klassifiziert; Agent aendert keinen ROADMAP-QA-Status.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"kiro_cli\"\n    },\n    {\n      \"title\": \"__VOR-038_SubI_Cluster-Control-Plane-Command-Contract-Tests\",\n      \"body\": \"Parent-Issue: #656, #654. Ziel: Play, Pause, Stop, Seek und State-Sync als kleines Command-Contract-Testset absichern. Acceptance-Evidence: Tests pruefen Serialisierung, Zielzustand und Fehler bei unbekanntem Command; dokumentierte Semantik passt zu #656; nicht enthaltene Commands sind klar Post-1.0 markierbar.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-039_SubI_Mode1-Control-Only-Loopback-Smoke-Harness\",\n      \"body\": \"Parent-Issue: #657, #656. Ziel: Einen lokalen Loopback-Smoke fuer Master plus eine Slave/Peer-Instanz definieren, ohne echtes Netzwerk-Lab vorauszusetzen. Acceptance-Evidence: Ein dokumentierter Befehl startet oder simuliert beide Seiten, sendet mindestens Play/Stop/Seek und erzeugt einen JSON-Report; Fehler bei fehlender zweiter Instanz sind eindeutig.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-040_SubI_Cluster-Missing-Asset-Behavior-Test\",\n      \"body\": \"Parent-Issue: #657, #107, #653. Ziel: Asset-Mismatch und Missing-Asset-Verhalten fuer Control-Only/Cluster-Abnahme beweisbar machen. Acceptance-Evidence: Test oder manueller Harness erzeugt fehlendes Asset auf Slave-Seite; Ergebnis ist klarer Fehlerstatus statt undefiniertem Runtime-Verhalten; Known-Issue-Text fuer #653 ist vorbereitet, falls nicht 1.0-fertig.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"cline_cli\"\n    },\n    {\n      \"title\": \"__VOR-041_SubI_Cluster-Recovery-Drift-QA-Matrix-Cases\",\n      \"body\": \"Parent-Issue: #658, #654. Ziel: Recovery, Timeout, Reconnect und Drift als kleine QA-Matrix mit reproduzierbaren Schritten ausformulieren. Acceptance-Evidence: Matrix nennt Setup, Aktion, erwartetes Ergebnis und Evidenzartefakt pro Fall; jeder Fall ist als automated, manual oder post-1.0 klassifiziert.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"cursor_agent\"\n    },\n    {\n      \"title\": \"__VOR-042_SubI_Multimaster-Unsupported-Guardrail-Check\",\n      \"body\": \"Parent-Issue: #659, #653. Ziel: Sicherstellen, dass 1.0 keine halbfertige Multimaster-Funktion als supported bewirbt. Acceptance-Evidence: UI/Docs/Config werden auf Multimaster-Signale geprueft; falls vorhanden, gibt es Warnung, Feature-Flag oder Known-Issue-Text; #653 kann eindeutige Post-1.0-Abgrenzung uebernehmen.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-043_SubI_NDI-Environment-Probe-And-Report\",\n      \"body\": \"Parent-Issue: #107, #651. Ziel: Einen kleinen NDI-Prereq-Probe schreiben, der SDK/Runtime-Verfuegbarkeit, Plugin-Pfade und Basis-Device/Source-Sichtbarkeit maschinenlesbar meldet. Acceptance-Evidence: Befehl erzeugt JSON-Report mit available, missing oder unsupported; fehlende NDI-Runtime wird klar von App-Bug unterschieden.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-044_SubI_NDI-Sender-Receiver-Loopback-Smoke\",\n      \"body\": \"Parent-Issue: #107, #651. Ziel: Einen minimalen End-to-End-Funktionstest fuer NDI vorbereiten: bekannte Quelle erzeugen oder erkennen, Frame empfangen, Ergebnis dokumentieren. Acceptance-Evidence: Testlauf schreibt pass/fail/inconclusive, NDI-Source-Name, Zeitstempel und Fehlergrund; wenn lokale NDI-Abhaengigkeit fehlt, wird prereq-missing statt failed gemeldet.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-045_SubI_NDI-Missing-Source-Error-Path-Test\",\n      \"body\": \"Parent-Issue: #107, #653. Ziel: Den Fehlerpfad fuer nicht vorhandene oder spaet verschwindende NDI-Quellen absichern. Acceptance-Evidence: Test oder Harness waehlt eine nicht existierende Quelle; UI/Runtime meldet klaren Fehler und bleibt stabil; Known-Issue-Text fuer verbleibende Einschraenkungen ist vorbereitet.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-046_SubI_macOS-CI-Smoke-Artifact-Collection\",\n      \"body\": \"Parent-Issue: #43, #651. Ziel: macOS-CI so ergaenzen, dass Build-/Smoke-Ergebnisse als Artefakte verfuegbar sind. Acceptance-Evidence: GitHub Actions speichert Logs, Testreport und ggf. App-Bundle/Startlog; fehlgeschlagener Smoke zeigt klar Buildfehler, Startfehler oder Testfehler.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-047_SubI_macOS-Headless-Startup-Command-Validation\",\n      \"body\": \"Parent-Issue: #43, #652. Ziel: Einen macOS-tauglichen Start-Sanity-Befehl definieren, der CI-kompatibel ist und keine manuelle Desktop-Interaktion voraussetzt. Acceptance-Evidence: Befehl prueft, dass Vorce startet oder kontrolliert mit dokumentiertem Headless-Limit abbricht; Ergebnis ist in CI-Logs und #652 als Packaging-Sanity nutzbar.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"copilot_cli\"\n    },\n    {\n      \"title\": \"__VOR-048_SubI_Release-Artifact-Manifest-With-Commit-Version\",\n      \"body\": \"Parent-Issue: #652. Ziel: Release-Artefakte mit Commit, Version, Build-Zeit und Zielplattform nachvollziehbar machen. Acceptance-Evidence: Build erzeugt Manifest neben Binary/Bundle; Manifestwerte stimmen mit Git-Commit und Cargo-Version ueberein; Output-Pfad ist dokumentiert.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-049_SubI_Fresh-Unpack-Start-Sanity-Script\",\n      \"body\": \"Parent-Issue: #652, #549. Ziel: Ein Skript fuer frisches Entpacken/Installieren und einmaligen Start-Sanity vorbereiten. Acceptance-Evidence: Skript nutzt einen sauberen temp-Ordner, startet Vorce, prueft Hauptfenster oder kontrollierten Headless-Start und speichert Logs; optional kann #549 danach als UI-Smoke aufgerufen werden.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-050_SubI_Release-Known-Issues-Evidence-Index\",\n      \"body\": \"Parent-Issue: #653, #651. Ziel: Einen kompakten Evidence-Index fuer Release Notes anlegen, der UI, Timeline, NDI, macOS, Cluster und Packaging auf konkrete Reports/Issues verlinkt. Acceptance-Evidence: Markdown- oder JSON-Index existiert; jeder Gate-Bereich hat Status, Link und offene Einschraenkung; keine Agent-Aenderung am ROADMAP-QA-Status.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"kiro_cli\"\n    },\n    {\n      \"title\": \"__VOR-051_SubI_Release-Scope-Issue-Classifier-Report\",\n      \"body\": \"Parent-Issue: #653, #651. Ziel: Einen nicht-mutierenden Report erzeugen, der offene release-bezogene Issues als release-blocking, minimal-1.0, needs-user-decision oder post-1.0 vorschlaegt. Acceptance-Evidence: Skript oder Checkliste liest Issue-Titel/Labels, schreibt Report ohne GitHub- oder ROADMAP-Status zu aendern, und markiert unklare Entscheidungen fuer den User.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"cursor_agent\"\n    }\n  ],\n  \"reasoning\": \"Ich habe die Gate-Issues #651, #650, #547, #548, #549, #661, #662, #96, #98, #99, #101, #102, #103, #654-#659, #107, #43, #652 und #653 gezielt geprueft. Neue Master-Issues waeren kontraproduktiv, weil die Gate-Struktur bereits existiert. Der Vorschlag zerlegt stattdessen offene Release-1.0-Gates in kleine Standard-/Sub-Issues mit konkreter Acceptance-Evidence. Jules habe ich bewusst nicht verwendet, weil die vorgeschlagenen Arbeiten ueberwiegend isolierte Tests, Skripte, CI-Anpassungen, Reports oder Scope-Evidence sind; gemaess Vorgabe gehoeren diese an lokale CLI-Agents. Keine Aufgabe entfernt Roadmap-Tasks oder setzt QA-Status in ROADMAP.md auf Done.\",\n  \"risks\": [\n    \"Einzelne Evidenz- oder Testaufgaben koennen durch bereits laufende PRs teilweise erledigt sein; vor Issue-Erstellung sollte kurz gegen aktuelle Branches/PRs dedupliziert werden.\",\n    \"NDI-, macOS- und UI-Smoke-Evidence haengt von lokaler Runtime, Display/Windowing und Plattformverfuegbarkeit ab; daher enthalten die Vorschlaege prereq-missing/inconclusive statt falscher Failures.\",\n    \"Cluster- und Curve-Editor-Scope-Freeze enthaelt Produktentscheidungen; Agents koennen Entscheidungsvorlagen liefern, aber der User muss finale QA-/Scope-Freigaben bestaetigen.\"\n  ],\n  \"confidence\": \"medium\"\n}"
+        },
+        {
+          "phase": "critique",
+          "agent": "beta",
+          "provider": "gemini_cli",
+          "duration_ms": 955,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "{\n  \"proposal\": [\n    {\n      \"title\": \"__VOR-025_SubI_UI-Harness-Artifact-Contract-Check\",\n      \"body\": \"Parent-Issue: #547, #650. Ziel: Einen kleinen Contract-Check fuer den UI-Harness ergaenzen, der ohne echte UI-Aktionen prueft, ob JSON-Report, Screenshot-Ordner, Launch-Log und finaler Status immer an den dokumentierten Pfaden entstehen. Acceptance-Evidence: Ein dokumentierter Befehl erzeugt ein Beispiel-Artefaktbundle; ein Test faellt gezielt fehl, wenn ein Pflichtartefakt fehlt; Output-Ordner ist ignoriert.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-026_SubI_UI-Harness-Noop-Runbook-And-Exit-Codes\",\n      \"body\": \"Parent-Issue: #547, #650. Ziel: Den Windows-no-op/environment Harness-Check so dokumentieren und testen, dass Agenten ihn eindeutig ausfuehren koennen. Acceptance-Evidence: README/Runbook nennt exakt einen Befehl; Exit-Codes fuer passed, failed und prereq-missing sind dokumentiert; fehlender API-Key, fehlende Python-Abhaengigkeit und App-Startfehler werden klar gemeldet.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-027_SubI_Deterministic-UI-Smoke-Artifact-Assertions\",\n      \"body\": \"Parent-Issue: #549, #650. Ziel: Den deterministischen Smoke-Test nicht nur klicken lassen, sondern harte Assertions fuer Fensterbounds, Vorher/Nachher-Screenshots und JSON-Pass-Fail schreiben. Acceptance-Evidence: Smoke-Lauf erzeugt mindestens zwei Screenshots, ein maschinenlesbares Ergebnis und eine Fehlerursache; bei fehlendem Fenster bricht der Test mit verwertbarem Artefaktbundle ab.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\", \"component: ui\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-028_SubI_Exploratory-Runner-JSON-Action-Schema-Validator\",\n      \"body\": \"Parent-Issue: #548, #650. Ziel: Einen isolierten Validator fuer das Gemini-Action-Schema bauen, bevor Clicks/Typing ausgefuehrt werden. Acceptance-Evidence: Unit-Tests decken erlaubte Actions, verbotene Actions, fehlende Koordinaten, zu lange Texte und destructive-operation Guardrails ab; der Runner stoppt bei invalidem JSON mit status inconclusive oder failed.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-029_SubI_UI-Test-Output-Gitignore-And-Packaging-Evidence-Link\",\n      \"body\": \"Parent-Issue: #650, #652. Ziel: UI-Test-Artefakte so strukturieren, dass Packaging/Install-Sanity spaeter auf dieselben Evidenzpfade verlinken kann. Acceptance-Evidence: Output-Verzeichnis ist in Git ignoriert; README nennt Pfadkonvention; #652 kann Screenshots/JSON-Report des Smoke-Tests als Install-Sanity-Evidence referenzieren.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"copilot_cli\"\n    },\n    {\n      \"title\": \"__VOR-030_SubI_Timeline-Acceptance-Matrix-Replay-Project\",\n      \"body\": \"Parent-Issue: #662, #96. Ziel: Ein kleines reproduzierbares Projekt oder Fixture fuer die Acceptance-Matrix anlegen: Timeline/Cue anlegen, speichern, laden, Dirty-State beobachten. Acceptance-Evidence: Ein lokaler Befehl oder Test laedt das Fixture, prueft Roundtrip und Project-Switching, und schreibt passed/failed pro Matrixpunkt.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-031_SubI_Animator-Real-Parameter-End-to-End-Test\",\n      \"body\": \"Parent-Issue: #98, #662. Ziel: Einen minimalen E2E-Test fuer genau einen echten Effekt- oder Modulparameter ergaenzen, damit Animator-Updates nicht nur Demo-State veraendern. Acceptance-Evidence: Test startet mit bekanntem Parameterwert, spielt eine Timeline-Update-Sequenz ab und beweist den geaenderten Runtime-Wert; ungueltiges Binding erzeugt einen expliziten Fehler statt Silent-Fail.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-032_SubI_Scheduling-Edge-Case-Test-Table\",\n      \"body\": \"Parent-Issue: #101, #103. Ziel: Pre-roll, Gap, Overlap und End-of-Show als tabellengetriebene Tests fuer die relevanten Show-Modi abbilden. Acceptance-Evidence: Tests nennen erwarteten aktiven Block oder Fallback pro Zeitpunkt; alle Faelle laufen deterministisch; die dokumentierte Semantik entspricht den Testerwartungen.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-033_SubI_Cue-Action-Handler-Regression-Test\",\n      \"body\": \"Parent-Issue: #102, #662. Ziel: Fehlende oder fragile Cue-UI-Actions im zentralen Handler durch Regressionstests sichtbar machen. Acceptance-Evidence: Tests oder ein reproduzierbarer Harness decken AddCue, GoCue, NextCue, PrevCue und StopCue ab; jede Action veraendert erwarteten Runtime-State oder liefert einen dokumentierten Fehler.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-034_SubI_Timeline-Dirty-State-Project-Switch-Regression-Pack\",\n      \"body\": \"Parent-Issue: #96, #103. Ziel: Dirty-State, Autosave-Signal und Reset transienter Timeline-UI-State beim Projektwechsel gezielt absichern. Acceptance-Evidence: Tests beweisen, dass Timeline-Mutationen dirty setzen, Projekt A keine Arrangement-Daten in Projekt B leakt und Runtime-only Selection nach Load korrekt zurueckgesetzt wird.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-035_SubI_Curve-Multivalue-Release-1-0-Scope-Evidence-Pack\",\n      \"body\": \"Parent-Issue: #99, #662, #653. Ziel: Fuer Curve-Editor/Multi-Value-Lanes entscheiden und belegen, ob 1.0-ready oder Post-1.0. Acceptance-Evidence: Kurzer Evidenzbericht mit aktuellem Verhalten fuer Float, Vec3/Vec4 und Color; falls Post-1.0, konkreter Known-Issue-Text fuer #653; keine ROADMAP-QA-Statusaenderung durch Agenten.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"kiro_cli\"\n    },\n    {\n      \"title\": \"__VOR-036_SubI_Timeline-Acceptance-Report-Exporter\",\n      \"body\": \"Parent-Issue: #662, #653. Ziel: Die Timeline-Acceptance-Matrix als kompakten JSON- oder Markdown-Report exportierbar machen, damit Release Notes Evidenz statt Freitext erhalten. Acceptance-Evidence: Report enthaelt pro Matrixpunkt status passed, failed oder post-1.0, Link/Pfad zu Artefakten und Commit-Information.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"copilot_cli\"\n    },\n    {\n      \"title\": \"__VOR-037_SubI_Cluster-Scope-Freeze-Decision-Pack\",\n      \"body\": \"Parent-Issue: #655, #654, #653. Ziel: Eine knappe Entscheidungsunterlage erstellen: release-blocking, minimal-1.0 oder post-1.0, inklusive eingeschlossener und ausgeschlossener Betriebsmodi. Acceptance-Evidence: Vorschlagstext fuer #653 und #654 liegt vor; Multimaster, Control-Only und Drift-Risiken sind explizit klassifiziert; Agent aendert keinen ROADMAP-QA-Status.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"kiro_cli\"\n    },\n    {\n      \"title\": \"__VOR-038_SubI_Cluster-Control-Plane-Command-Contract-Tests\",\n      \"body\": \"Parent-Issue: #656, #654. Ziel: Play, Pause, Stop, Seek und State-Sync als kleines Command-Contract-Testset absichern. Acceptance-Evidence: Tests pruefen Serialisierung, Zielzustand und Fehler bei unbekanntem Command; dokumentierte Semantik passt zu #656; nicht enthaltene Commands sind klar Post-1.0 markierbar.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-039_SubI_Mode1-Control-Only-Loopback-Smoke-Harness\",\n      \"body\": \"Parent-Issue: #657, #656. Ziel: Einen lokalen Loopback-Smoke fuer Master plus eine Slave/Peer-Instanz definieren, ohne echtes Netzwerk-Lab vorauszusetzen. Acceptance-Evidence: Ein dokumentierter Befehl startet oder simuliert beide Seiten, sendet mindestens Play/Stop/Seek und erzeugt einen JSON-Report; Fehler bei fehlender zweiter Instanz sind eindeutig.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-040_SubI_Cluster-Missing-Asset-Behavior-Test\",\n      \"body\": \"Parent-Issue: #657, #107, #653. Ziel: Asset-Mismatch und Missing-Asset-Verhalten fuer Control-Only/Cluster-Abnahme beweisbar machen. Acceptance-Evidence: Test oder manueller Harness erzeugt fehlendes Asset auf Slave-Seite; Ergebnis ist klarer Fehlerstatus statt undefiniertem Runtime-Verhalten; Known-Issue-Text fuer #653 ist vorbereitet, falls nicht 1.0-fertig.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"cline_cli\"\n    },\n    {\n      \"title\": \"__VOR-041_SubI_Cluster-Recovery-Drift-QA-Matrix-Cases\",\n      \"body\": \"Parent-Issue: #658, #654. Ziel: Recovery, Timeout, Reconnect und Drift als kleine QA-Matrix mit reproduzierbaren Schritten ausformulieren. Acceptance-Evidence: Matrix nennt Setup, Aktion, erwartetes Ergebnis und Evidenzartefakt pro Fall; jeder Fall ist als automated, manual oder post-1.0 klassifiziert.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"cursor_agent\"\n    },\n    {\n      \"title\": \"__VOR-042_SubI_Multimaster-Unsupported-Guardrail-Check\",\n      \"body\": \"Parent-Issue: #659, #653. Ziel: Sicherstellen, dass 1.0 keine halbfertige Multimaster-Funktion als supported bewirbt. Acceptance-Evidence: UI/Docs/Config werden auf Multimaster-Signale geprueft; falls vorhanden, gibt es Warnung, Feature-Flag oder Known-Issue-Text; #653 kann eindeutige Post-1.0-Abgrenzung uebernehmen.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-043_SubI_NDI-Environment-Probe-And-Report\",\n      \"body\": \"Parent-Issue: #107, #651. Ziel: Einen kleinen NDI-Prereq-Probe schreiben, der SDK/Runtime-Verfuegbarkeit, Plugin-Pfade und Basis-Device/Source-Sichtbarkeit maschinenlesbar meldet. Acceptance-Evidence: Befehl erzeugt JSON-Report mit available, missing oder unsupported; fehlende NDI-Runtime wird klar von App-Bug unterschieden.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-044_SubI_NDI-Sender-Receiver-Loopback-Smoke\",\n      \"body\": \"Parent-Issue: #107, #651. Ziel: Einen minimalen End-to-End-Funktionstest fuer NDI vorbereiten: bekannte Quelle erzeugen oder erkennen, Frame empfangen, Ergebnis dokumentieren. Acceptance-Evidence: Testlauf schreibt pass/fail/inconclusive, NDI-Source-Name, Zeitstempel und Fehlergrund; wenn lokale NDI-Abhaengigkeit fehlt, wird prereq-missing statt failed gemeldet.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-045_SubI_NDI-Missing-Source-Error-Path-Test\",\n      \"body\": \"Parent-Issue: #107, #653. Ziel: Den Fehlerpfad fuer nicht vorhandene oder spaet verschwindende NDI-Quellen absichern. Acceptance-Evidence: Test oder Harness waehlt eine nicht existierende Quelle; UI/Runtime meldet klaren Fehler und bleibt stabil; Known-Issue-Text fuer verbleibende Einschraenkungen ist vorbereitet.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-046_SubI_macOS-CI-Smoke-Artifact-Collection\",\n      \"body\": \"Parent-Issue: #43, #651. Ziel: macOS-CI so ergaenzen, dass Build-/Smoke-Ergebnisse als Artefakte verfuegbar sind. Acceptance-Evidence: GitHub Actions speichert Logs, Testreport und ggf. App-Bundle/Startlog; fehlgeschlagener Smoke zeigt klar Buildfehler, Startfehler oder Testfehler.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-047_SubI_macOS-Headless-Startup-Command-Validation\",\n      \"body\": \"Parent-Issue: #43, #652. Ziel: Einen macOS-tauglichen Start-Sanity-Befehl definieren, der CI-kompatibel ist und keine manuelle Desktop-Interaktion voraussetzt. Acceptance-Evidence: Befehl prueft, dass Vorce startet oder kontrolliert mit dokumentiertem Headless-Limit abbricht; Ergebnis ist in CI-Logs und #652 als Packaging-Sanity nutzbar.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"copilot_cli\"\n    },\n    {\n      \"title\": \"__VOR-048_SubI_Release-Artifact-Manifest-With-Commit-Version\",\n      \"body\": \"Parent-Issue: #652. Ziel: Release-Artefakte mit Commit, Version, Build-Zeit und Zielplattform nachvollziehbar machen. Acceptance-Evidence: Build erzeugt Manifest neben Binary/Bundle; Manifestwerte stimmen mit Git-Commit und Cargo-Version ueberein; Output-Pfad ist dokumentiert.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-049_SubI_Fresh-Unpack-Start-Sanity-Script\",\n      \"body\": \"Parent-Issue: #652, #549. Ziel: Ein Skript fuer frisches Entpacken/Installieren und einmaligen Start-Sanity vorbereiten. Acceptance-Evidence: Skript nutzt einen sauberen temp-Ordner, startet Vorce, prueft Hauptfenster oder kontrollierten Headless-Start und speichert Logs; optional kann #549 danach als UI-Smoke aufgerufen werden.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-050_SubI_Release-Known-Issues-Evidence-Index\",\n      \"body\": \"Parent-Issue: #653, #651. Ziel: Einen kompakten Evidence-Index fuer Release Notes anlegen, der UI, Timeline, NDI, macOS, Cluster und Packaging auf konkrete Reports/Issues verlinkt. Acceptance-Evidence: Markdown- oder JSON-Index existiert; jeder Gate-Bereich hat Status, Link und offene Einschraenkung; keine Agent-Aenderung am ROADMAP-QA-Status.\",\n      \"labels\": [\"priority: high\", \"testing\"],\n      \"agent\": \"kiro_cli\"\n    },\n    {\n      \"title\": \"__VOR-051_SubI_Release-Scope-Issue-Classifier-Report\",\n      \"body\": \"Parent-Issue: #653, #651. Ziel: Einen nicht-mutierenden Report erzeugen, der offene release-bezogene Issues als release-blocking, minimal-1.0, needs-user-decision oder post-1.0 vorschlaegt. Acceptance-Evidence: Skript oder Checkliste liest Issue-Titel/Labels, schreibt Report ohne GitHub- oder ROADMAP-Status zu aendern, und markiert unklare Entscheidungen fuer den User.\",\n      \"labels\": [\"priority: high\", \"testing\", \"automation\"],\n      \"agent\": \"cursor_agent\"\n    }\n  ],\n  \"reasoning\": \"Ich habe die Gate-Issues #651, #650, #547, #548, #549, #661, #662, #96, #98, #99, #101, #102, #103, #654-#659, #107, #43, #652 und #653 gezielt geprueft. Neue Master-Issues waeren kontraproduktiv, weil die Gate-Struktur bereits existiert. Der Vorschlag zerlegt stattdessen offene Release-1.0-Gates in kleine Standard-/Sub-Issues mit konkreter Acceptance-Evidence. Jules habe ich bewusst nicht verwendet, weil die vorgeschlagenen Arbeiten ueberwiegend isolierte Tests, Skripte, CI-Anpassungen, Reports oder Scope-Evidence sind; gemaess Vorgabe gehoeren diese an lokale CLI-Agents. Keine Aufgabe entfernt Roadmap-Tasks oder setzt QA-Status in ROADMAP.md auf Done.\",\n  \"risks\": [\n    \"Einzelne Evidenz- oder Testaufgaben koennen durch bereits laufende PRs teilweise erledigt sein; vor Issue-Erstellung sollte kurz gegen aktuelle Branches/PRs dedupliziert werden.\",\n    \"NDI-, macOS- und UI-Smoke-Evidence haengt von lokaler Runtime, Display/Windowing und Plattformverfuegbarkeit ab; daher enthalten die Vorschlaege prereq-missing/inconclusive statt falscher Failures.\",\n    \"Cluster- und Curve-Editor-Scope-Freeze enthaelt Produktentscheidungen; Agents koennen Entscheidungsvorlagen liefern, aber der User muss finale QA-/Scope-Freigaben bestaetigen.\"\n  ],\n  \"confidence\": \"medium\"\n}",
+      "completed_at": "2026-05-30T11:53:35.9232054+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-30-120418",
+      "task_type": "planning",
+      "started_at": "2026-05-30T12:04:18.5563997+02:00",
+      "alpha": {
+        "provider": "codex_orchestrator",
+        "model_tier": "planning"
+      },
+      "beta": {
+        "provider": "gemini_cli",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "alpha",
+          "provider": "codex_orchestrator",
+          "duration_ms": 136473,
+          "success": true,
+          "content": "{\n  \"proposal\": [\n    {\n      \"title\": \"__VOR-549_SubI_Deterministic-UI-Smoke-Boot-To-Main-Canvas\",\n      \"body\": \"Parent-Issue: #549. Implement one fixed-path UI smoke test that launches Vorce, waits for the main window, verifies the central canvas/viewport is visible, and exits cleanly. Acceptance-Evidence: checked-in script/test, deterministic wait strategy, CI/local command documented, passing run log attached to issue.\",\n      \"labels\": [\"priority: high\", \"testing\", \"ui-automation\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-549_SubI_Deterministic-UI-Smoke-Open-Project-Dialog\",\n      \"body\": \"Parent-Issue: #549. Extend the fixed UI smoke flow to open the project/file dialog path used by normal operators without relying on image recognition. Acceptance-Evidence: reproducible mouse/keyboard sequence, screenshots before/after action, failure artifact on timeout.\",\n      \"labels\": [\"priority: high\", \"testing\", \"ui-automation\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-547_SubI_Normalized-Click-Helpers-For-Vorce-Window\",\n      \"body\": \"Parent-Issue: #547. Extract stable normalized coordinate helpers from the existing prototype scripts into a shared automation harness module. Acceptance-Evidence: unit tests for coordinate conversion, sample usage in one smoke test, no dependency on absolute monitor resolution.\",\n      \"labels\": [\"priority: high\", \"testing\", \"ui-automation\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-547_SubI_UI-Automation-Failure-Artifacts\",\n      \"body\": \"Parent-Issue: #547. Add standardized screenshot, window-size, pointer-position, and step-log artifacts for failed UI automation runs. Acceptance-Evidence: intentional-failure sample produces artifacts in a predictable directory and README documents artifact names.\",\n      \"labels\": [\"priority: high\", \"testing\", \"ui-automation\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-548_SubI_Gemini-Computer-Use-Structured-Result-Schema\",\n      \"body\": \"Parent-Issue: #548. Define and validate a minimal JSON result schema for exploratory Gemini Computer Use UI validation runs. Acceptance-Evidence: schema file, parser/validator test, example pass/fail result committed.\",\n      \"labels\": [\"priority: medium\", \"testing\", \"ui-automation\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-548_SubI_Exploratory-UI-Runner-Targeted-Prompt-Template\",\n      \"body\": \"Parent-Issue: #548. Add a reusable prompt/template for targeted UI validation that includes feature under test, expected evidence, and forbidden nondeterministic actions. Acceptance-Evidence: template committed, sample invocation documented, runner emits structured result.\",\n      \"labels\": [\"priority: medium\", \"testing\", \"ui-automation\", \"cli-task\"],\n      \"agent\": \"kiro_cli\"\n    },\n    {\n      \"title\": \"__VOR-650_SubI_UI-Test-Readme-Local-Runbook\",\n      \"body\": \"Parent-Issue: #650. Create a concise runbook for local UI automation prerequisites, commands, artifacts, and known limitations. Acceptance-Evidence: README section added, commands verified locally, links to #547/#548/#549 subflows.\",\n      \"labels\": [\"priority: medium\", \"documentation\", \"testing\", \"cli-task\"],\n      \"agent\": \"copilot_cli\"\n    },\n    {\n      \"title\": \"__VOR-96_SubI_Persist-Timeline-Show-Mode-In-Project-State\",\n      \"body\": \"Parent-Issue: #96. Persist TimelineV2 show_mode in project save/load instead of keeping it only in transient UI state. Acceptance-Evidence: save/load test proves show_mode survives restart; project-switch test proves it does not leak to another project.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-96_SubI_Persist-Timeline-Module-Arrangement\",\n      \"body\": \"Parent-Issue: #96. Persist module_arrangement data through project save/load. Acceptance-Evidence: regression test creates arrangement, saves, reloads, and asserts exact ordering/timing.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-96_SubI_Timeline-Dirty-State-On-Show-Control-Edits\",\n      \"body\": \"Parent-Issue: #96. Mark project dirty when timeline show-control data changes and clear dirty state after successful save. Acceptance-Evidence: tests cover edit, save, no-op reload, and project switch.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-98_SubI_Apply-Animator-Updates-To-Effect-Parameters\",\n      \"body\": \"Parent-Issue: #98. Wire EffectParameterUpdate events from effect_animator.update() into real effect/module parameter state in the runtime loop. Acceptance-Evidence: integration test animates one parameter and asserts runtime state changes at expected timestamps.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"runtime\", \"jules-task\"],\n      \"agent\": \"jules\"\n    },\n    {\n      \"title\": \"__VOR-98_SubI_Animator-Update-Missing-Target-Diagnostics\",\n      \"body\": \"Parent-Issue: #98. Add deterministic handling and diagnostics when an animator update references a missing effect/module parameter. Acceptance-Evidence: test proves missing target does not panic and emits inspectable warning/result.\",\n      \"labels\": [\"priority: medium\", \"timeline\", \"runtime\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-99_SubI_Float-Lane-Curve-Editor-Smoke-Test\",\n      \"body\": \"Parent-Issue: #99. Add a focused test for displaying and editing a Float parameter curve lane. Acceptance-Evidence: test creates Float lane, edits keyframe/curve value, and asserts model/UI state.\",\n      \"labels\": [\"priority: medium\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-99_SubI_Vector-Lane-Display-Test\",\n      \"body\": \"Parent-Issue: #99. Add coverage that Vector parameters render as multi-value lanes with stable component ordering. Acceptance-Evidence: test fixture with Vector parameter asserts visible lane/component mapping.\",\n      \"labels\": [\"priority: medium\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"kiro_cli\"\n    },\n    {\n      \"title\": \"__VOR-99_SubI_Color-Lane-Display-Test\",\n      \"body\": \"Parent-Issue: #99. Add coverage that Color parameters render/edit through the timeline lane model without component loss. Acceptance-Evidence: test fixture with Color parameter round-trips edited values.\",\n      \"labels\": [\"priority: medium\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"copilot_cli\"\n    },\n    {\n      \"title\": \"__VOR-101_SubI_Module-Arrangement-Gap-Scheduling-Test\",\n      \"body\": \"Parent-Issue: #101. Define and test deterministic behavior for gaps between arranged modules. Acceptance-Evidence: unit/integration test documents expected active module state before, during, and after a gap.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-101_SubI_Module-Arrangement-Overlap-Scheduling-Test\",\n      \"body\": \"Parent-Issue: #101. Define and test deterministic behavior when arranged modules overlap. Acceptance-Evidence: test documents precedence/order rule and asserts runtime scheduling output.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-101_SubI_Timeline-End-Scheduling-Semantics\",\n      \"body\": \"Parent-Issue: #101. Define and test runtime behavior after the last arranged module ends. Acceptance-Evidence: test covers final frame, post-end state, and replay from start.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-102_SubI_Cue-Actions-Drive-Timeline-State\",\n      \"body\": \"Parent-Issue: #102. Connect AddCue, GoCue, NextCue, PrevCue, and StopCue actions to the timeline state model instead of leaving cue/timeline flows parallel. Acceptance-Evidence: integration test dispatches cue actions and asserts timeline state transitions.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"show-control\", \"jules-task\"],\n      \"agent\": \"jules\"\n    },\n    {\n      \"title\": \"__VOR-102_SubI_Cue-Timeline-Stop-Behavior-Test\",\n      \"body\": \"Parent-Issue: #102. Add a focused regression test for StopCue behavior against timeline playback/runtime state. Acceptance-Evidence: test proves StopCue stops playback and leaves selection/current cue in documented state.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-103_SubI_Timeline-Semi-Auto-Regression-Matrix\",\n      \"body\": \"Parent-Issue: #103. Add a compact regression matrix for semi-auto timeline operation. Acceptance-Evidence: tests cover enter semi-auto, advance cue, stop, and resume behavior with deterministic assertions.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-103_SubI_Timeline-Project-Switch-Leak-Test\",\n      \"body\": \"Parent-Issue: #103. Add regression coverage that timeline runtime selection/show-control state does not leak across project switches. Acceptance-Evidence: test opens two project fixtures and asserts independent timeline state.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-107_SubI_NDI-Test-Asset-Availability-Check\",\n      \"body\": \"Parent-Issue: #107. Add a local validation script that checks required NDI test assets/tools are present before running an E2E NDI function test. Acceptance-Evidence: script exits with clear pass/fail codes and prints exact missing asset/tool names.\",\n      \"labels\": [\"priority: high\", \"ndi\", \"testing\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-107_SubI_NDI-End-To-End-Smoke-Runbook\",\n      \"body\": \"Parent-Issue: #107. Create a precise NDI E2E function-test runbook covering sender, receiver, expected visible result, and evidence to attach. Acceptance-Evidence: runbook committed with checklist and artifact locations.\",\n      \"labels\": [\"priority: high\", \"ndi\", \"documentation\", \"cli-task\"],\n      \"agent\": \"copilot_cli\"\n    },\n    {\n      \"title\": \"__VOR-43_SubI_macOS-CI-Smoke-Command-Produces-Artifacts\",\n      \"body\": \"Parent-Issue: #43. Ensure macOS CI smoke validation produces build logs and smoke artifacts suitable for QA review. Acceptance-Evidence: CI workflow update or script change, artifact names documented, successful run evidence attached.\",\n      \"labels\": [\"priority: high\", \"ci\", \"macos\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-43_SubI_macOS-CI-Fail-Fast-On-App-Launch-Failure\",\n      \"body\": \"Parent-Issue: #43. Add a deterministic fail-fast launch validation for the macOS app in CI. Acceptance-Evidence: CI step launches app/smoke target, fails on launch error, and preserves logs.\",\n      \"labels\": [\"priority: high\", \"ci\", \"macos\", \"testing\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-652_SubI_Packaging-Install-Sanity-Checklist-Script\",\n      \"body\": \"Parent-Issue: #652. Add a small packaging/install sanity script or checklist command that verifies expected app/package outputs exist after build. Acceptance-Evidence: command exits nonzero on missing artifacts and documents expected paths.\",\n      \"labels\": [\"priority: high\", \"packaging\", \"release-readiness\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-653_SubI_Release-Scope-Freeze-Manifest-Check\",\n      \"body\": \"Parent-Issue: #653. Add a release-scope freeze manifest/check that lists explicitly in-scope release artifacts and flags unexpected package outputs. Acceptance-Evidence: manifest committed, validation command documented, sample pass output attached.\",\n      \"labels\": [\"priority: medium\", \"packaging\", \"release-readiness\", \"cli-task\"],\n      \"agent\": \"kiro_cli\"\n    }\n  ],\n  \"reasoning\": \"Ich priorisiere direkt entlang des Release-1.0-Gates #651 und vermeide Master-Issues als Coding-Arbeit. Die meisten Vorschlaege sind kleine, beweisbare Sub-Issues mit klarer Acceptance-Evidence: Tests, Skripte, Runbooks oder CI-Artefakte. Lokale CLI-Agents werden bewusst stark genutzt, weil viele Aufgaben isolierte Tests, Skripte, CI-Schritte oder kleine Runtime-Anpassungen sind. Jules wird nur fuer die zwei groesseren Multi-File-Integrationen eingesetzt: Animator-Updates in echte Runtime-Parameter und Cue/Timeline-Zusammenfuehrung. QA-Status in ROADMAP.md wird nicht beruehrt; keine Roadmap-Tasks werden entfernt.\",\n  \"risks\": [\n    \"Einige Timeline-Issues koennen beim Implementieren groesser werden, falls Persistenz- oder Runtime-State-Grenzen unscharf sind.\",\n    \"UI-Automation bleibt empfindlich gegen Fensterlayout- und Plattformunterschiede; deshalb sind Failure-Artefakte und normalisierte Koordinaten frueh priorisiert.\",\n    \"NDI-End-to-End-Tests haengen von lokaler Tool-/Asset-Verfuegbarkeit ab; zuerst wird deshalb Verfuegbarkeit pruefbar gemacht.\",\n    \"Packaging-Issue-Nummern #652/#653 wurden nur als Gate-Lane genannt, aber ohne Detailauszug; die Vorschlaege bleiben deshalb bewusst eng und sanity-orientiert.\"\n  ],\n  \"confidence\": \"high\"\n}"
+        },
+        {
+          "phase": "critique",
+          "agent": "beta",
+          "provider": "gemini_cli",
+          "duration_ms": 906,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "{\n  \"proposal\": [\n    {\n      \"title\": \"__VOR-549_SubI_Deterministic-UI-Smoke-Boot-To-Main-Canvas\",\n      \"body\": \"Parent-Issue: #549. Implement one fixed-path UI smoke test that launches Vorce, waits for the main window, verifies the central canvas/viewport is visible, and exits cleanly. Acceptance-Evidence: checked-in script/test, deterministic wait strategy, CI/local command documented, passing run log attached to issue.\",\n      \"labels\": [\"priority: high\", \"testing\", \"ui-automation\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-549_SubI_Deterministic-UI-Smoke-Open-Project-Dialog\",\n      \"body\": \"Parent-Issue: #549. Extend the fixed UI smoke flow to open the project/file dialog path used by normal operators without relying on image recognition. Acceptance-Evidence: reproducible mouse/keyboard sequence, screenshots before/after action, failure artifact on timeout.\",\n      \"labels\": [\"priority: high\", \"testing\", \"ui-automation\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-547_SubI_Normalized-Click-Helpers-For-Vorce-Window\",\n      \"body\": \"Parent-Issue: #547. Extract stable normalized coordinate helpers from the existing prototype scripts into a shared automation harness module. Acceptance-Evidence: unit tests for coordinate conversion, sample usage in one smoke test, no dependency on absolute monitor resolution.\",\n      \"labels\": [\"priority: high\", \"testing\", \"ui-automation\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-547_SubI_UI-Automation-Failure-Artifacts\",\n      \"body\": \"Parent-Issue: #547. Add standardized screenshot, window-size, pointer-position, and step-log artifacts for failed UI automation runs. Acceptance-Evidence: intentional-failure sample produces artifacts in a predictable directory and README documents artifact names.\",\n      \"labels\": [\"priority: high\", \"testing\", \"ui-automation\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-548_SubI_Gemini-Computer-Use-Structured-Result-Schema\",\n      \"body\": \"Parent-Issue: #548. Define and validate a minimal JSON result schema for exploratory Gemini Computer Use UI validation runs. Acceptance-Evidence: schema file, parser/validator test, example pass/fail result committed.\",\n      \"labels\": [\"priority: medium\", \"testing\", \"ui-automation\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-548_SubI_Exploratory-UI-Runner-Targeted-Prompt-Template\",\n      \"body\": \"Parent-Issue: #548. Add a reusable prompt/template for targeted UI validation that includes feature under test, expected evidence, and forbidden nondeterministic actions. Acceptance-Evidence: template committed, sample invocation documented, runner emits structured result.\",\n      \"labels\": [\"priority: medium\", \"testing\", \"ui-automation\", \"cli-task\"],\n      \"agent\": \"kiro_cli\"\n    },\n    {\n      \"title\": \"__VOR-650_SubI_UI-Test-Readme-Local-Runbook\",\n      \"body\": \"Parent-Issue: #650. Create a concise runbook for local UI automation prerequisites, commands, artifacts, and known limitations. Acceptance-Evidence: README section added, commands verified locally, links to #547/#548/#549 subflows.\",\n      \"labels\": [\"priority: medium\", \"documentation\", \"testing\", \"cli-task\"],\n      \"agent\": \"copilot_cli\"\n    },\n    {\n      \"title\": \"__VOR-96_SubI_Persist-Timeline-Show-Mode-In-Project-State\",\n      \"body\": \"Parent-Issue: #96. Persist TimelineV2 show_mode in project save/load instead of keeping it only in transient UI state. Acceptance-Evidence: save/load test proves show_mode survives restart; project-switch test proves it does not leak to another project.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-96_SubI_Persist-Timeline-Module-Arrangement\",\n      \"body\": \"Parent-Issue: #96. Persist module_arrangement data through project save/load. Acceptance-Evidence: regression test creates arrangement, saves, reloads, and asserts exact ordering/timing.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-96_SubI_Timeline-Dirty-State-On-Show-Control-Edits\",\n      \"body\": \"Parent-Issue: #96. Mark project dirty when timeline show-control data changes and clear dirty state after successful save. Acceptance-Evidence: tests cover edit, save, no-op reload, and project switch.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-98_SubI_Apply-Animator-Updates-To-Effect-Parameters\",\n      \"body\": \"Parent-Issue: #98. Wire EffectParameterUpdate events from effect_animator.update() into real effect/module parameter state in the runtime loop. Acceptance-Evidence: integration test animates one parameter and asserts runtime state changes at expected timestamps.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"runtime\", \"jules-task\"],\n      \"agent\": \"jules\"\n    },\n    {\n      \"title\": \"__VOR-98_SubI_Animator-Update-Missing-Target-Diagnostics\",\n      \"body\": \"Parent-Issue: #98. Add deterministic handling and diagnostics when an animator update references a missing effect/module parameter. Acceptance-Evidence: test proves missing target does not panic and emits inspectable warning/result.\",\n      \"labels\": [\"priority: medium\", \"timeline\", \"runtime\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-99_SubI_Float-Lane-Curve-Editor-Smoke-Test\",\n      \"body\": \"Parent-Issue: #99. Add a focused test for displaying and editing a Float parameter curve lane. Acceptance-Evidence: test creates Float lane, edits keyframe/curve value, and asserts model/UI state.\",\n      \"labels\": [\"priority: medium\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-99_SubI_Vector-Lane-Display-Test\",\n      \"body\": \"Parent-Issue: #99. Add coverage that Vector parameters render as multi-value lanes with stable component ordering. Acceptance-Evidence: test fixture with Vector parameter asserts visible lane/component mapping.\",\n      \"labels\": [\"priority: medium\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"kiro_cli\"\n    },\n    {\n      \"title\": \"__VOR-99_SubI_Color-Lane-Display-Test\",\n      \"body\": \"Parent-Issue: #99. Add coverage that Color parameters render/edit through the timeline lane model without component loss. Acceptance-Evidence: test fixture with Color parameter round-trips edited values.\",\n      \"labels\": [\"priority: medium\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"copilot_cli\"\n    },\n    {\n      \"title\": \"__VOR-101_SubI_Module-Arrangement-Gap-Scheduling-Test\",\n      \"body\": \"Parent-Issue: #101. Define and test deterministic behavior for gaps between arranged modules. Acceptance-Evidence: unit/integration test documents expected active module state before, during, and after a gap.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-101_SubI_Module-Arrangement-Overlap-Scheduling-Test\",\n      \"body\": \"Parent-Issue: #101. Define and test deterministic behavior when arranged modules overlap. Acceptance-Evidence: test documents precedence/order rule and asserts runtime scheduling output.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-101_SubI_Timeline-End-Scheduling-Semantics\",\n      \"body\": \"Parent-Issue: #101. Define and test runtime behavior after the last arranged module ends. Acceptance-Evidence: test covers final frame, post-end state, and replay from start.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-102_SubI_Cue-Actions-Drive-Timeline-State\",\n      \"body\": \"Parent-Issue: #102. Connect AddCue, GoCue, NextCue, PrevCue, and StopCue actions to the timeline state model instead of leaving cue/timeline flows parallel. Acceptance-Evidence: integration test dispatches cue actions and asserts timeline state transitions.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"show-control\", \"jules-task\"],\n      \"agent\": \"jules\"\n    },\n    {\n      \"title\": \"__VOR-102_SubI_Cue-Timeline-Stop-Behavior-Test\",\n      \"body\": \"Parent-Issue: #102. Add a focused regression test for StopCue behavior against timeline playback/runtime state. Acceptance-Evidence: test proves StopCue stops playback and leaves selection/current cue in documented state.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-103_SubI_Timeline-Semi-Auto-Regression-Matrix\",\n      \"body\": \"Parent-Issue: #103. Add a compact regression matrix for semi-auto timeline operation. Acceptance-Evidence: tests cover enter semi-auto, advance cue, stop, and resume behavior with deterministic assertions.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-103_SubI_Timeline-Project-Switch-Leak-Test\",\n      \"body\": \"Parent-Issue: #103. Add regression coverage that timeline runtime selection/show-control state does not leak across project switches. Acceptance-Evidence: test opens two project fixtures and asserts independent timeline state.\",\n      \"labels\": [\"priority: high\", \"timeline\", \"testing\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-107_SubI_NDI-Test-Asset-Availability-Check\",\n      \"body\": \"Parent-Issue: #107. Add a local validation script that checks required NDI test assets/tools are present before running an E2E NDI function test. Acceptance-Evidence: script exits with clear pass/fail codes and prints exact missing asset/tool names.\",\n      \"labels\": [\"priority: high\", \"ndi\", \"testing\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-107_SubI_NDI-End-To-End-Smoke-Runbook\",\n      \"body\": \"Parent-Issue: #107. Create a precise NDI E2E function-test runbook covering sender, receiver, expected visible result, and evidence to attach. Acceptance-Evidence: runbook committed with checklist and artifact locations.\",\n      \"labels\": [\"priority: high\", \"ndi\", \"documentation\", \"cli-task\"],\n      \"agent\": \"copilot_cli\"\n    },\n    {\n      \"title\": \"__VOR-43_SubI_macOS-CI-Smoke-Command-Produces-Artifacts\",\n      \"body\": \"Parent-Issue: #43. Ensure macOS CI smoke validation produces build logs and smoke artifacts suitable for QA review. Acceptance-Evidence: CI workflow update or script change, artifact names documented, successful run evidence attached.\",\n      \"labels\": [\"priority: high\", \"ci\", \"macos\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-43_SubI_macOS-CI-Fail-Fast-On-App-Launch-Failure\",\n      \"body\": \"Parent-Issue: #43. Add a deterministic fail-fast launch validation for the macOS app in CI. Acceptance-Evidence: CI step launches app/smoke target, fails on launch error, and preserves logs.\",\n      \"labels\": [\"priority: high\", \"ci\", \"macos\", \"testing\", \"cli-task\"],\n      \"agent\": \"gemini_cli\"\n    },\n    {\n      \"title\": \"__VOR-652_SubI_Packaging-Install-Sanity-Checklist-Script\",\n      \"body\": \"Parent-Issue: #652. Add a small packaging/install sanity script or checklist command that verifies expected app/package outputs exist after build. Acceptance-Evidence: command exits nonzero on missing artifacts and documents expected paths.\",\n      \"labels\": [\"priority: high\", \"packaging\", \"release-readiness\", \"cli-task\"],\n      \"agent\": \"claude_code\"\n    },\n    {\n      \"title\": \"__VOR-653_SubI_Release-Scope-Freeze-Manifest-Check\",\n      \"body\": \"Parent-Issue: #653. Add a release-scope freeze manifest/check that lists explicitly in-scope release artifacts and flags unexpected package outputs. Acceptance-Evidence: manifest committed, validation command documented, sample pass output attached.\",\n      \"labels\": [\"priority: medium\", \"packaging\", \"release-readiness\", \"cli-task\"],\n      \"agent\": \"kiro_cli\"\n    }\n  ],\n  \"reasoning\": \"Ich priorisiere direkt entlang des Release-1.0-Gates #651 und vermeide Master-Issues als Coding-Arbeit. Die meisten Vorschlaege sind kleine, beweisbare Sub-Issues mit klarer Acceptance-Evidence: Tests, Skripte, Runbooks oder CI-Artefakte. Lokale CLI-Agents werden bewusst stark genutzt, weil viele Aufgaben isolierte Tests, Skripte, CI-Schritte oder kleine Runtime-Anpassungen sind. Jules wird nur fuer die zwei groesseren Multi-File-Integrationen eingesetzt: Animator-Updates in echte Runtime-Parameter und Cue/Timeline-Zusammenfuehrung. QA-Status in ROADMAP.md wird nicht beruehrt; keine Roadmap-Tasks werden entfernt.\",\n  \"risks\": [\n    \"Einige Timeline-Issues koennen beim Implementieren groesser werden, falls Persistenz- oder Runtime-State-Grenzen unscharf sind.\",\n    \"UI-Automation bleibt empfindlich gegen Fensterlayout- und Plattformunterschiede; deshalb sind Failure-Artefakte und normalisierte Koordinaten frueh priorisiert.\",\n    \"NDI-End-to-End-Tests haengen von lokaler Tool-/Asset-Verfuegbarkeit ab; zuerst wird deshalb Verfuegbarkeit pruefbar gemacht.\",\n    \"Packaging-Issue-Nummern #652/#653 wurden nur als Gate-Lane genannt, aber ohne Detailauszug; die Vorschlaege bleiben deshalb bewusst eng und sanity-orientiert.\"\n  ],\n  \"confidence\": \"high\"\n}",
+      "completed_at": "2026-05-30T12:06:36.0268185+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-31-085221",
+      "task_type": "planning",
+      "started_at": "2026-05-31T08:52:21.9249918+02:00",
+      "alpha": {
+        "provider": "codex_orchestrator",
+        "model_tier": "planning"
+      },
+      "beta": {
+        "provider": "claude_code",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "alpha",
+          "provider": "codex_orchestrator",
+          "duration_ms": 391102,
+          "success": true,
+          "content": "**********************\nPowerShell transcript start\nStart time: 20260531085223\nUsername: MAIN-PC_01\\Vinyl\nRunAs User: MAIN-PC_01\\Vinyl\nConfiguration Name: \nMachine: MAIN-PC_01 (Microsoft Windows NT 10.0.26200.0)\nHost Application: C:\\Program Files\\PowerShell\\7\\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tools\\run-visible-codex-session.ps1 -PromptPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-prompt.md -Model gpt-5.5 -RepositoryRoot C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper -LogPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-visible.log -StatusPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-status.json -OutputPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-last-message.md -SessionLabel deliberation-Proposal\nProcess ID: 12436\nPSVersion: 7.6.0\nPSEdition: Core\nGitCommitId: 7.6.0\nOS: Microsoft Windows 10.0.26200\nPlatform: Win32NT\nPSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0\nPSRemotingProtocolVersion: 2.4\nSerializationVersion: 1.1.0.1\nWSManStackVersion: 3.0\n**********************"
+        },
+        {
+          "phase": "critique",
+          "agent": "beta",
+          "provider": "claude_code",
+          "duration_ms": 1094,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "**********************\nPowerShell transcript start\nStart time: 20260531085223\nUsername: MAIN-PC_01\\Vinyl\nRunAs User: MAIN-PC_01\\Vinyl\nConfiguration Name: \nMachine: MAIN-PC_01 (Microsoft Windows NT 10.0.26200.0)\nHost Application: C:\\Program Files\\PowerShell\\7\\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tools\\run-visible-codex-session.ps1 -PromptPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-prompt.md -Model gpt-5.5 -RepositoryRoot C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper -LogPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-visible.log -StatusPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-status.json -OutputPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-last-message.md -SessionLabel deliberation-Proposal\nProcess ID: 12436\nPSVersion: 7.6.0\nPSEdition: Core\nGitCommitId: 7.6.0\nOS: Microsoft Windows 10.0.26200\nPlatform: Win32NT\nPSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0\nPSRemotingProtocolVersion: 2.4\nSerializationVersion: 1.1.0.1\nWSManStackVersion: 3.0\n**********************",
+      "completed_at": "2026-05-31T08:58:54.5976694+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-31-085854",
+      "task_type": "audit",
+      "started_at": "2026-05-31T08:58:54.8962847+02:00",
+      "alpha": {
+        "provider": "gemini_cli",
+        "model_tier": "balanced"
+      },
+      "beta": {
+        "provider": "claude_code",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "alpha",
+          "provider": "gemini_cli",
+          "duration_ms": 1001,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "Alpha failed, fell back to Beta visible agent",
+      "completed_at": "2026-05-31T08:58:57.1255023+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-31-162404",
+      "task_type": "planning",
+      "started_at": "2026-05-31T16:24:04.1891882+02:00",
+      "ceo": {
+        "provider": "codex_orchestrator",
+        "model_tier": "planning"
+      },
+      "auditor": {
+        "provider": "claude_code",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "ceo",
+          "provider": "codex_orchestrator",
+          "duration_ms": 1651600,
+          "success": true,
+          "content": "**********************\nPowerShell transcript start\nStart time: 20260531162405\nUsername: MAIN-PC_01\\Vinyl\nRunAs User: MAIN-PC_01\\Vinyl\nConfiguration Name: \nMachine: MAIN-PC_01 (Microsoft Windows NT 10.0.26200.0)\nHost Application: C:\\Program Files\\PowerShell\\7\\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tools\\run-visible-codex-session.ps1 -PromptPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-prompt.md -Model gpt-5.5 -RepositoryRoot C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper -LogPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-visible.log -StatusPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-status.json -OutputPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-last-message.md -SessionLabel deliberation-Proposal\nProcess ID: 19412\nPSVersion: 7.6.0\nPSEdition: Core\nGitCommitId: 7.6.0\nOS: Microsoft Windows 10.0.26200\nPlatform: Win32NT\nPSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0\nPSRemotingProtocolVersion: 2.4\nSerializationVersion: 1.1.0.1\nWSManStackVersion: 3.0\n**********************"
+        },
+        {
+          "phase": "critique",
+          "agent": "auditor",
+          "provider": "claude_code",
+          "duration_ms": 1213,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "**********************\nPowerShell transcript start\nStart time: 20260531162405\nUsername: MAIN-PC_01\\Vinyl\nRunAs User: MAIN-PC_01\\Vinyl\nConfiguration Name: \nMachine: MAIN-PC_01 (Microsoft Windows NT 10.0.26200.0)\nHost Application: C:\\Program Files\\PowerShell\\7\\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tools\\run-visible-codex-session.ps1 -PromptPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-prompt.md -Model gpt-5.5 -RepositoryRoot C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper -LogPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-visible.log -StatusPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-status.json -OutputPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-last-message.md -SessionLabel deliberation-Proposal\nProcess ID: 19412\nPSVersion: 7.6.0\nPSEdition: Core\nGitCommitId: 7.6.0\nOS: Microsoft Windows 10.0.26200\nPlatform: Win32NT\nPSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0\nPSRemotingProtocolVersion: 2.4\nSerializationVersion: 1.1.0.1\nWSManStackVersion: 3.0\n**********************",
+      "completed_at": "2026-05-31T16:51:37.5679456+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-31-165137",
+      "task_type": "audit",
+      "started_at": "2026-05-31T16:51:38.0338263+02:00",
+      "ceo": {
+        "provider": "gemini_cli",
+        "model_tier": "balanced"
+      },
+      "auditor": {
+        "provider": "claude_code",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "ceo",
+          "provider": "gemini_cli",
+          "duration_ms": 1186,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "CEO failed, fell back to Auditor visible agent",
+      "completed_at": "2026-05-31T16:51:40.3010745+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-31-175139",
+      "task_type": "planning",
+      "started_at": "2026-05-31T17:51:39.2151402+02:00",
+      "ceo": {
+        "provider": "codex_orchestrator",
+        "model_tier": "planning"
+      },
+      "auditor": {
+        "provider": "claude_code",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "ceo",
+          "provider": "codex_orchestrator",
+          "duration_ms": 2733080,
+          "success": true,
+          "content": "**********************\nPowerShell transcript start\nStart time: 20260531175140\nUsername: MAIN-PC_01\\Vinyl\nRunAs User: MAIN-PC_01\\Vinyl\nConfiguration Name: \nMachine: MAIN-PC_01 (Microsoft Windows NT 10.0.26200.0)\nHost Application: C:\\Program Files\\PowerShell\\7\\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tools\\run-visible-codex-session.ps1 -PromptPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-prompt.md -Model gpt-5.5 -RepositoryRoot C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper -LogPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-visible.log -StatusPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-status.json -OutputPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-last-message.md -SessionLabel deliberation-Proposal\nProcess ID: 14004\nPSVersion: 7.6.0\nPSEdition: Core\nGitCommitId: 7.6.0\nOS: Microsoft Windows 10.0.26200\nPlatform: Win32NT\nPSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0\nPSRemotingProtocolVersion: 2.4\nSerializationVersion: 1.1.0.1\nWSManStackVersion: 3.0\n**********************"
+        },
+        {
+          "phase": "critique",
+          "agent": "auditor",
+          "provider": "claude_code",
+          "duration_ms": 2085,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "**********************\nPowerShell transcript start\nStart time: 20260531175140\nUsername: MAIN-PC_01\\Vinyl\nRunAs User: MAIN-PC_01\\Vinyl\nConfiguration Name: \nMachine: MAIN-PC_01 (Microsoft Windows NT 10.0.26200.0)\nHost Application: C:\\Program Files\\PowerShell\\7\\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tools\\run-visible-codex-session.ps1 -PromptPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-prompt.md -Model gpt-5.5 -RepositoryRoot C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper -LogPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-visible.log -StatusPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-status.json -OutputPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-last-message.md -SessionLabel deliberation-Proposal\nProcess ID: 14004\nPSVersion: 7.6.0\nPSEdition: Core\nGitCommitId: 7.6.0\nOS: Microsoft Windows 10.0.26200\nPlatform: Win32NT\nPSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0\nPSRemotingProtocolVersion: 2.4\nSerializationVersion: 1.1.0.1\nWSManStackVersion: 3.0\n**********************",
+      "completed_at": "2026-05-31T18:37:15.6784395+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-31-183715",
+      "task_type": "audit",
+      "started_at": "2026-05-31T18:37:16.0297301+02:00",
+      "ceo": {
+        "provider": "gemini_cli",
+        "model_tier": "balanced"
+      },
+      "auditor": {
+        "provider": "claude_code",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "ceo",
+          "provider": "gemini_cli",
+          "duration_ms": 2157,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "CEO failed, fell back to Auditor visible agent",
+      "completed_at": "2026-05-31T18:37:20.0948908+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-31-190427",
+      "task_type": "planning",
+      "started_at": "2026-05-31T19:04:27.6040863+02:00",
+      "ceo": {
+        "provider": "codex_orchestrator",
+        "model_tier": "planning"
+      },
+      "auditor": {
+        "provider": "claude_code",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "ceo",
+          "provider": "codex_orchestrator",
+          "duration_ms": 1051448,
+          "success": true,
+          "content": "**********************\nPowerShell transcript start\nStart time: 20260531190429\nUsername: MAIN-PC_01\\Vinyl\nRunAs User: MAIN-PC_01\\Vinyl\nConfiguration Name: \nMachine: MAIN-PC_01 (Microsoft Windows NT 10.0.26200.0)\nHost Application: C:\\Program Files\\PowerShell\\7\\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tools\\run-visible-codex-session.ps1 -PromptPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-prompt.md -Model gpt-5.5 -RepositoryRoot C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper -LogPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-visible.log -StatusPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-status.json -OutputPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-last-message.md -SessionLabel deliberation-Proposal\nProcess ID: 17880\nPSVersion: 7.6.0\nPSEdition: Core\nGitCommitId: 7.6.0\nOS: Microsoft Windows 10.0.26200\nPlatform: Win32NT\nPSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0\nPSRemotingProtocolVersion: 2.4\nSerializationVersion: 1.1.0.1\nWSManStackVersion: 3.0\n**********************"
+        },
+        {
+          "phase": "critique",
+          "agent": "auditor",
+          "provider": "claude_code",
+          "duration_ms": 1026,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "**********************\nPowerShell transcript start\nStart time: 20260531190429\nUsername: MAIN-PC_01\\Vinyl\nRunAs User: MAIN-PC_01\\Vinyl\nConfiguration Name: \nMachine: MAIN-PC_01 (Microsoft Windows NT 10.0.26200.0)\nHost Application: C:\\Program Files\\PowerShell\\7\\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tools\\run-visible-codex-session.ps1 -PromptPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-prompt.md -Model gpt-5.5 -RepositoryRoot C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper -LogPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-visible.log -StatusPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-status.json -OutputPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-last-message.md -SessionLabel deliberation-Proposal\nProcess ID: 17880\nPSVersion: 7.6.0\nPSEdition: Core\nGitCommitId: 7.6.0\nOS: Microsoft Windows 10.0.26200\nPlatform: Win32NT\nPSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0\nPSRemotingProtocolVersion: 2.4\nSerializationVersion: 1.1.0.1\nWSManStackVersion: 3.0\n**********************",
+      "completed_at": "2026-05-31T19:22:00.5887633+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-31-192200",
+      "task_type": "audit",
+      "started_at": "2026-05-31T19:22:00.9161981+02:00",
+      "ceo": {
+        "provider": "gemini_cli",
+        "model_tier": "balanced"
+      },
+      "auditor": {
+        "provider": "claude_code",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "ceo",
+          "provider": "gemini_cli",
+          "duration_ms": 1196,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "CEO failed, fell back to Auditor visible agent",
+      "completed_at": "2026-05-31T19:22:03.0904665+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-31-202201",
+      "task_type": "planning",
+      "started_at": "2026-05-31T20:22:01.672908+02:00",
+      "ceo": {
+        "provider": "codex_orchestrator",
+        "model_tier": "planning"
+      },
+      "auditor": {
+        "provider": "claude_code",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "ceo",
+          "provider": "codex_orchestrator",
+          "duration_ms": 1771429,
+          "success": true,
+          "content": "**********************\nPowerShell transcript start\nStart time: 20260531202202\nUsername: MAIN-PC_01\\Vinyl\nRunAs User: MAIN-PC_01\\Vinyl\nConfiguration Name: \nMachine: MAIN-PC_01 (Microsoft Windows NT 10.0.26200.0)\nHost Application: C:\\Program Files\\PowerShell\\7\\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tools\\run-visible-codex-session.ps1 -PromptPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-prompt.md -Model gpt-5.5 -RepositoryRoot C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper -LogPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-visible.log -StatusPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-status.json -OutputPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-last-message.md -SessionLabel deliberation-Proposal\nProcess ID: 19572\nPSVersion: 7.6.0\nPSEdition: Core\nGitCommitId: 7.6.0\nOS: Microsoft Windows 10.0.26200\nPlatform: Win32NT\nPSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0\nPSRemotingProtocolVersion: 2.4\nSerializationVersion: 1.1.0.1\nWSManStackVersion: 3.0\n**********************"
+        },
+        {
+          "phase": "critique",
+          "agent": "auditor",
+          "provider": "claude_code",
+          "duration_ms": 1181,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "**********************\nPowerShell transcript start\nStart time: 20260531202202\nUsername: MAIN-PC_01\\Vinyl\nRunAs User: MAIN-PC_01\\Vinyl\nConfiguration Name: \nMachine: MAIN-PC_01 (Microsoft Windows NT 10.0.26200.0)\nHost Application: C:\\Program Files\\PowerShell\\7\\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tools\\run-visible-codex-session.ps1 -PromptPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-prompt.md -Model gpt-5.5 -RepositoryRoot C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper -LogPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-visible.log -StatusPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-status.json -OutputPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-last-message.md -SessionLabel deliberation-Proposal\nProcess ID: 19572\nPSVersion: 7.6.0\nPSEdition: Core\nGitCommitId: 7.6.0\nOS: Microsoft Windows 10.0.26200\nPlatform: Win32NT\nPSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0\nPSRemotingProtocolVersion: 2.4\nSerializationVersion: 1.1.0.1\nWSManStackVersion: 3.0\n**********************",
+      "completed_at": "2026-05-31T20:51:34.6986828+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-31-205134",
+      "task_type": "audit",
+      "started_at": "2026-05-31T20:51:34.9080203+02:00",
+      "ceo": {
+        "provider": "gemini_cli",
+        "model_tier": "balanced"
+      },
+      "auditor": {
+        "provider": "claude_code",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "ceo",
+          "provider": "gemini_cli",
+          "duration_ms": 945,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "CEO failed, fell back to Auditor visible agent",
+      "completed_at": "2026-05-31T20:51:36.8022552+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-31-215136",
+      "task_type": "planning",
+      "started_at": "2026-05-31T21:51:36.2767325+02:00",
+      "ceo": {
+        "provider": "codex_orchestrator",
+        "model_tier": "planning"
+      },
+      "auditor": {
+        "provider": "claude_code",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "ceo",
+          "provider": "codex_orchestrator",
+          "duration_ms": 1321008,
+          "success": true,
+          "content": "**********************\nPowerShell transcript start\nStart time: 20260531215137\nUsername: MAIN-PC_01\\Vinyl\nRunAs User: MAIN-PC_01\\Vinyl\nConfiguration Name: \nMachine: MAIN-PC_01 (Microsoft Windows NT 10.0.26200.0)\nHost Application: C:\\Program Files\\PowerShell\\7\\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tools\\run-visible-codex-session.ps1 -PromptPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-prompt.md -Model gpt-5.5 -RepositoryRoot C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper -LogPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-visible.log -StatusPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-status.json -OutputPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-last-message.md -SessionLabel deliberation-Proposal\nProcess ID: 20208\nPSVersion: 7.6.0\nPSEdition: Core\nGitCommitId: 7.6.0\nOS: Microsoft Windows 10.0.26200\nPlatform: Win32NT\nPSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0\nPSRemotingProtocolVersion: 2.4\nSerializationVersion: 1.1.0.1\nWSManStackVersion: 3.0\n**********************"
+        },
+        {
+          "phase": "critique",
+          "agent": "auditor",
+          "provider": "claude_code",
+          "duration_ms": 1036,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "**********************\nPowerShell transcript start\nStart time: 20260531215137\nUsername: MAIN-PC_01\\Vinyl\nRunAs User: MAIN-PC_01\\Vinyl\nConfiguration Name: \nMachine: MAIN-PC_01 (Microsoft Windows NT 10.0.26200.0)\nHost Application: C:\\Program Files\\PowerShell\\7\\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tools\\run-visible-codex-session.ps1 -PromptPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-prompt.md -Model gpt-5.5 -RepositoryRoot C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper -LogPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-visible.log -StatusPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-status.json -OutputPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-last-message.md -SessionLabel deliberation-Proposal\nProcess ID: 20208\nPSVersion: 7.6.0\nPSEdition: Core\nGitCommitId: 7.6.0\nOS: Microsoft Windows 10.0.26200\nPlatform: Win32NT\nPSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0\nPSRemotingProtocolVersion: 2.4\nSerializationVersion: 1.1.0.1\nWSManStackVersion: 3.0\n**********************",
+      "completed_at": "2026-05-31T22:13:38.7715145+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-31-221338",
+      "task_type": "audit",
+      "started_at": "2026-05-31T22:13:38.9682812+02:00",
+      "ceo": {
+        "provider": "gemini_cli",
+        "model_tier": "balanced"
+      },
+      "auditor": {
+        "provider": "claude_code",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "ceo",
+          "provider": "gemini_cli",
+          "duration_ms": 904,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "CEO failed, fell back to Auditor visible agent",
+      "completed_at": "2026-05-31T22:13:40.9255375+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-31-231339",
+      "task_type": "planning",
+      "started_at": "2026-05-31T23:13:39.7033346+02:00",
+      "ceo": {
+        "provider": "codex_orchestrator",
+        "model_tier": "planning"
+      },
+      "auditor": {
+        "provider": "claude_code",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "ceo",
+          "provider": "codex_orchestrator",
+          "duration_ms": 2701356,
+          "success": true,
+          "content": "**********************\nPowerShell transcript start\nStart time: 20260531231340\nUsername: MAIN-PC_01\\Vinyl\nRunAs User: MAIN-PC_01\\Vinyl\nConfiguration Name: \nMachine: MAIN-PC_01 (Microsoft Windows NT 10.0.26200.0)\nHost Application: C:\\Program Files\\PowerShell\\7\\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tools\\run-visible-codex-session.ps1 -PromptPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-prompt.md -Model gpt-5.5 -RepositoryRoot C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper -LogPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-visible.log -StatusPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-status.json -OutputPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-last-message.md -SessionLabel deliberation-Proposal\nProcess ID: 19848\nPSVersion: 7.6.0\nPSEdition: Core\nGitCommitId: 7.6.0\nOS: Microsoft Windows 10.0.26200\nPlatform: Win32NT\nPSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0\nPSRemotingProtocolVersion: 2.4\nSerializationVersion: 1.1.0.1\nWSManStackVersion: 3.0\n**********************"
+        },
+        {
+          "phase": "critique",
+          "agent": "auditor",
+          "provider": "claude_code",
+          "duration_ms": 1314,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "**********************\nPowerShell transcript start\nStart time: 20260531231340\nUsername: MAIN-PC_01\\Vinyl\nRunAs User: MAIN-PC_01\\Vinyl\nConfiguration Name: \nMachine: MAIN-PC_01 (Microsoft Windows NT 10.0.26200.0)\nHost Application: C:\\Program Files\\PowerShell\\7\\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tools\\run-visible-codex-session.ps1 -PromptPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-prompt.md -Model gpt-5.5 -RepositoryRoot C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper -LogPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-visible.log -StatusPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-status.json -OutputPath C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\scripts\\codex-cli\\tmp\\codex-deliberation-Proposal-last-message.md -SessionLabel deliberation-Proposal\nProcess ID: 19848\nPSVersion: 7.6.0\nPSEdition: Core\nGitCommitId: 7.6.0\nOS: Microsoft Windows 10.0.26200\nPlatform: Win32NT\nPSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0\nPSRemotingProtocolVersion: 2.4\nSerializationVersion: 1.1.0.1\nWSManStackVersion: 3.0\n**********************",
+      "completed_at": "2026-05-31T23:58:42.9008588+02:00"
+    },
+    {
+      "deliberation_id": "delib-2026-05-31-235843",
+      "task_type": "audit",
+      "started_at": "2026-05-31T23:58:43.206448+02:00",
+      "ceo": {
+        "provider": "gemini_cli",
+        "model_tier": "balanced"
+      },
+      "auditor": {
+        "provider": "claude_code",
+        "model_tier": "balanced"
+      },
+      "rounds": [
+        {
+          "phase": "proposal",
+          "agent": "ceo",
+          "provider": "gemini_cli",
+          "duration_ms": 1170,
+          "success": false,
+          "content": ""
+        }
+      ],
+      "consensus_reached": false,
+      "final_output": "CEO failed, fell back to Auditor visible agent",
+      "completed_at": "2026-05-31T23:58:45.8154696+02:00"
+    }
+  ],
+  "scheduler": {
+    "planning_interval_minutes": 60,
+    "monitoring_interval_minutes": 10,
+    "last_planning_at": "2026-06-03T07:37:24.358863+02:00",
+    "last_monitoring_at": "2026-06-04T07:37:24.3574269+02:00",
+    "next_planning_at": "2026-03-06T08:37:24.0000000+01:00",
+    "next_monitoring_at": "2026-04-06T07:47:24.0000000+02:00",
+    "next_planning_in_seconds": 0,
+    "next_monitoring_in_seconds": 0,
+    "generated_at": "2026-06-04T07:45:23.8125931+02:00"
+  }
+}

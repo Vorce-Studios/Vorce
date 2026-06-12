@@ -4,7 +4,7 @@
 //! - Still images: PNG, JPEG, TIFF via `image` crate
 //! - Animated GIF: Frame-by-frame playback with timing
 
-use crate::{MediaError, Result, VideoDecoder};
+use crate::{reject_path_traversal, MediaError, Result, VideoDecoder};
 use image::{AnimationDecoder, DynamicImage};
 use std::path::Path;
 use std::time::Duration;
@@ -31,6 +31,7 @@ impl StillImageDecoder {
     /// Load a still image from a file
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
+        reject_path_traversal(path)?;
 
         if !path.exists() {
             return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
@@ -55,8 +56,10 @@ impl StillImageDecoder {
     /// Check if the file format is supported
     pub fn supports_format<P: AsRef<Path>>(path: P) -> bool {
         if let Some(ext) = path.as_ref().extension() {
-            let ext_str = ext.to_string_lossy().to_lowercase();
-            matches!(ext_str.as_str(), "png" | "jpg" | "jpeg" | "tif" | "tiff" | "bmp" | "webp")
+            let ext_str = ext.to_string_lossy();
+            ["png", "jpg", "jpeg", "tif", "tiff", "bmp", "webp"]
+                .iter()
+                .any(|&s| ext_str.eq_ignore_ascii_case(s))
         } else {
             false
         }
@@ -133,6 +136,7 @@ impl GifDecoder {
     /// Load an animated GIF from a file
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
+        reject_path_traversal(path)?;
 
         if !path.exists() {
             return Err(MediaError::FileOpen(format!("File not found: {}", path.display())));
@@ -200,8 +204,8 @@ impl GifDecoder {
     /// Check if the file is a GIF
     pub fn supports_format<P: AsRef<Path>>(path: P) -> bool {
         if let Some(ext) = path.as_ref().extension() {
-            let ext_str = ext.to_string_lossy().to_lowercase();
-            ext_str == "gif"
+            let ext_str = ext.to_string_lossy();
+            ext_str.eq_ignore_ascii_case("gif")
         } else {
             false
         }
@@ -305,5 +309,21 @@ mod tests {
     fn test_gif_decoder_new_not_found() {
         let result = GifDecoder::open("a_file_that_does_not_exist.gif");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn still_image_decoder_rejects_path_traversal() {
+        let result = StillImageDecoder::open("../../../some_fake_file.png");
+        assert!(
+            matches!(result, Err(MediaError::FileOpen(message)) if message.contains("Path traversal"))
+        );
+    }
+
+    #[test]
+    fn gif_decoder_rejects_path_traversal() {
+        let result = GifDecoder::open("../../../some_fake_file.gif");
+        assert!(
+            matches!(result, Err(MediaError::FileOpen(message)) if message.contains("Path traversal"))
+        );
     }
 }

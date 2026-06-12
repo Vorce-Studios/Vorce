@@ -1,0 +1,58 @@
+{
+  "repository": "Vorce-Studios/Vorce",
+  "wake_intervals": {
+    "planning_minutes": 120,
+    "monitoring_minutes": 15
+  },
+  "jules": {
+    "max_daily_sessions": 100,
+    "max_concurrent_sessions": 15,
+    "auto_approve_plans": true,
+    "auto_retry_feedback_max": 3
+  },
+  "gemini_worktree_path": "../VjMapper-gemini",
+  "issue_filters": {
+    "include_labels": [
+      "jules-task",
+      "bug",
+      "priority: critical"
+    ],
+    "exclude_labels": [
+      "wontfix",
+      "duplicate",
+      "on-hold",
+      "status: in-progress",
+      "status: needs-review",
+      "status: needs-testing",
+      "status: blocked",
+      "status: ready-to-merge"
+    ],
+    "autopilot_label": "autopilot-created"
+  },
+  "max_issues_per_planning_cycle": 10,
+  "dual_ceo": {
+    "enabled": true,
+    "ceo_alpha_chain": [
+      "codex_orchestrator:planning",
+      "claude_code:balanced"
+    ],
+    "ceo_beta_chain": [
+      "gemini_cli:premium",
+      "kiro_cli:default"
+    ],
+    "max_deliberation_rounds": 3,
+    "deliberation_tasks": [
+      "planning",
+      "complex_review"
+    ],
+    "fallback_to_single": true,
+    "log_deliberations": true
+  },
+  "working_sessions": {
+    "preferred_agents": [
+      "claude_code",
+      "gemini_cli",
+      "cline_cli"
+    ]
+  }
+}

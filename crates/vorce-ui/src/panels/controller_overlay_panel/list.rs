@@ -27,9 +27,6 @@ impl ControllerOverlayPanel {
             {
                 self.element_filter = ElementFilter::StreamerBot;
             }
-            if ui.selectable_label(self.element_filter == ElementFilter::Mixxx, "Mixxx").clicked() {
-                self.element_filter = ElementFilter::Mixxx;
-            }
             if ui
                 .selectable_label(self.element_filter == ElementFilter::Unassigned, "Frei")
                 .clicked()
@@ -68,7 +65,6 @@ impl ControllerOverlayPanel {
                                 ElementFilter::All => true,
                                 ElementFilter::Vorce => matches!(assignment, Some(a) if matches!(a.target, MidiAssignmentTarget::Vorce(_))),
                                 ElementFilter::StreamerBot => matches!(assignment, Some(a) if matches!(a.target, MidiAssignmentTarget::StreamerBot(_))),
-                                ElementFilter::Mixxx => matches!(assignment, Some(a) if matches!(a.target, MidiAssignmentTarget::Mixxx(_))),
                                 ElementFilter::Unassigned => assignment.is_none(),
                             };
 
@@ -105,6 +101,7 @@ impl ControllerOverlayPanel {
         // Handle deletion request outside of borrow loop
         if let Some(id) = element_to_remove {
             user_config.remove_midi_assignment(&id);
+            let _ = user_config.save();
         }
     }
 }

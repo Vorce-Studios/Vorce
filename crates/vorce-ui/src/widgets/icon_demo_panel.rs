@@ -80,7 +80,7 @@ impl IconDemoPanel {
 
                                     // Icon background
                                     egui::Frame::default()
-                                        .fill(ui.visuals().widgets.noninteractive.bg_fill)
+                                        .fill(ui.visuals().extreme_bg_color)
                                         .corner_radius(egui::CornerRadius::ZERO)
                                         .inner_margin(12.0)
                                         .show(ui, |ui| {

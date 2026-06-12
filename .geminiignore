@@ -28,6 +28,10 @@ check_*.txt
 *.bak
 *.rs.bk
 
+# Assets and resources (usually too big for context)
+/assets/
+/resources/
+
 # EXCEPTIONS: Allow branding and icon visibility for Gemini CLI
 !/resources/images/**
 !/resources/app_icons/**
@@ -42,13 +46,9 @@ check_*.txt
 !/resources/macOS/vorce.icns
 !/assets/icons/*.svg
 !/resources/windows_resource.rc
-!/resources/linux/mapflow.desktop
+!/resources/linux/vorce.desktop
 !/resources/texts/mapflow.desktop
 !/resources/texts/mapflow.xml
-
-# Assets and resources (usually too big for context)
-/assets/
-/resources/
 
 # Binary Assets
 *.png

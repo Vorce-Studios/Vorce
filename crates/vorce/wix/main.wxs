@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='windows-1252'?>
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
-    <Product Id='*' Name='Vorce' UpgradeCode='0392650E-1608-4122-8232-024564879201' Manufacturer='Vorce Contributors' Language='1033' Codepage='1252' Version='0.1.0'>
+    <Product Id='*' Name='Vorce' UpgradeCode='0392650E-1608-4122-8232-024564879201' Manufacturer='Vorce Contributors' Language='1033' Codepage='1252' Version='0.2.0'>
         <Package Id='*' Keywords='Installer' Description='Vorce - Open Source VJ Projection Mapping Software' Manufacturer='Vorce Contributors' InstallerVersion='450' Languages='1033' Compressed='yes' InstallScope='perMachine' SummaryCodepage='1252' Platform='x64'/>
         <MajorUpgrade Schedule='afterInstallInitialize' DowngradeErrorMessage='A newer version of [ProductName] is already installed. Setup will now exit.' />
         <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' DiskPrompt='CD-ROM #1' />

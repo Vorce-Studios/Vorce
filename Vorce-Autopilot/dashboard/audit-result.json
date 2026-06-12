@@ -1,0 +1,71 @@
+{
+  "session_id": "8306a602-82a1-4f04-91fa-d6e31dfdf0f9",
+  "response": "```json\n{\n  \"issues_found\": true,\n  \"action\": \"escalate\",\n  \"remediation_command\": \"\",\n  \"dashboard_escalation\": \"Es wurde ein Merge-Konflikt im Pull Request #691 (PRDecompose-Media-Decoder [M510-S15]) festgestellt. Gemäß Benutzer-Mandat ist es mir strengstens untersagt, selbstständig Jules-Sessions für Merge-Konflikte zu starten, da dies bereits in der Planungsphase automatisch und gebündelt erfolgt, um redundante Sessions und Kosten zu vermeiden. CEO Alpha wird gebeten, den Konflikt im Rahmen der nächsten Planungs-Session zu überprüfen und die notwendigen Schritte zur Konfliktlösung einzuleiten, möglicherweise durch die Initiierung einer konsolidierten Konfliktlösungs-Session.\"\n}\n```",
+  "stats": {
+    "models": {
+      "gemini-2.5-flash": {
+        "api": {
+          "totalRequests": 2,
+          "totalErrors": 0,
+          "totalLatencyMs": 8392
+        },
+        "tokens": {
+          "input": 28158,
+          "prompt": 53432,
+          "candidates": 306,
+          "total": 54193,
+          "cached": 25274,
+          "thoughts": 455,
+          "tool": 0
+        },
+        "roles": {
+          "main": {
+            "totalRequests": 2,
+            "totalErrors": 0,
+            "totalLatencyMs": 8392,
+            "tokens": {
+              "input": 28158,
+              "prompt": 53432,
+              "candidates": 306,
+              "total": 54193,
+              "cached": 25274,
+              "thoughts": 455,
+              "tool": 0
+            }
+          }
+        }
+      }
+    },
+    "tools": {
+      "totalCalls": 2,
+      "totalSuccess": 2,
+      "totalFail": 0,
+      "totalDurationMs": 32,
+      "totalDecisions": {
+        "accept": 2,
+        "reject": 0,
+        "modify": 0,
+        "auto_accept": 0
+      },
+      "byName": {
+        "update_topic": {
+          "count": 2,
+          "success": 2,
+          "fail": 0,
+          "durationMs": 32,
+          "decisions": {
+            "accept": 2,
+            "reject": 0,
+            "modify": 0,
+            "auto_accept": 0
+          }
+        }
+      }
+    },
+    "files": {
+      "totalLinesAdded": 0,
+      "totalLinesRemoved": 0
+    }
+  },
+  "updated_at": "2026-06-02T20:55:14.0115161+02:00"
+}

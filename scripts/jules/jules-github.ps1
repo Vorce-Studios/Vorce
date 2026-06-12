@@ -210,13 +210,13 @@ function Find-GitHubPullRequestForIssue {
             continue
         }
 
-        $matches = @($items)
-        if ($matches.Count -eq 0) {
+        $matchingItems = @($items)
+        if ($matchingItems.Count -eq 0) {
             continue
         }
 
         $ordered = @(
-            $matches |
+            $matchingItems |
                 Sort-Object {
                     try {
                         [datetimeoffset]([string]$_.updatedAt)
@@ -291,7 +291,7 @@ function Get-GitHubIssueLabelNames {
     )
 }
 
-function Normalize-TrackingText {
+function Format-TrackingText {
     param([AllowNull()][object]$Value, [int]$MaxLength = 180)
 
     if ($null -eq $Value) {
@@ -417,7 +417,7 @@ function Get-VorceRemoteState {
         "PAUSED" { return "paused" }
         "FAILED" { return "failed" }
         "COMPLETED" { return "completed" }
-        default { return (Normalize-TrackingText -Value ([string]$Session.state) -MaxLength 60) }
+        default { return (Format-TrackingText -Value ([string]$Session.state) -MaxLength 60) }
     }
 }
 
@@ -462,7 +462,7 @@ function Get-VorceWorkBranch {
 function Get-VorceLastActivitySummary {
     param([AllowNull()][object]$Issue, [AllowNull()][object]$Session, [AllowNull()][object]$LatestActivity)
 
-    $summary = Normalize-TrackingText -Value (Get-JulesActivitySummary -Activity $LatestActivity) -MaxLength 180
+    $summary = Format-TrackingText -Value (Get-JulesActivitySummary -Activity $LatestActivity) -MaxLength 180
     if (-not [string]::IsNullOrWhiteSpace($summary)) {
         return $summary
     }
@@ -550,7 +550,7 @@ function Invoke-GitHubGraphQl {
 
     $response = Invoke-GitHubApiJson -Arguments @("api", "graphql", "--method", "POST") -Body $body
     if ($null -ne $response -and $response.PSObject.Properties.Name -contains "errors" -and $null -ne $response.errors) {
-        $messages = @($response.errors | ForEach-Object { Normalize-TrackingText -Value $_.message -MaxLength 200 })
+        $messages = @($response.errors | ForEach-Object { Format-TrackingText -Value $_.message -MaxLength 200 })
         throw ("GitHub GraphQL Fehler: {0}" -f ($messages -join " | "))
     }
 
@@ -862,7 +862,7 @@ query($projectId: ID!, $cursor: String) {
     $Context.ItemMapLoaded = $true
 }
 
-function Ensure-VorceProjectItem {
+function Add-VorceProjectItem {
     param([Parameter(Mandatory)][object]$Context, [Parameter(Mandatory)][string]$IssueContentId)
 
     Initialize-VorceProjectItemMap -Context $Context
@@ -948,31 +948,51 @@ function Resolve-ProjectSingleSelectOption {
 function Get-VorceProjectStatusCandidateNames {
     param([Parameter(Mandatory)][hashtable]$Fields)
 
-    if (@("closed", "done", "completed", "merged") -contains (([string]$Fields.QueueState).Trim()).ToLowerInvariant()) {
-        return @("Done", "Completed", "Closed", "Merged")
+    # 1. Geschlossen / Erledigt
+    if (@("closed", "done", "completed", "merged") -contains (([string]$Fields.QueueState).Trim()).ToLowerInvariant() -or 
+        @("merged", "completed", "closed") -contains [string]$Fields.RemoteState -or
+        (([string]$Fields.IssueState).Trim().ToUpperInvariant() -eq "CLOSED")) {
+        return @("Done")
     }
 
-    if (([string]$Fields.IssueState).Trim().ToUpperInvariant() -eq "CLOSED") {
-        return @("Done", "Completed", "Closed", "Merged")
+    # 2. PR Checks Status
+    if ([string]$Fields.PrChecksStatus -eq "failed") {
+        return @("PR-Checks_failed")
+    }
+    if ([string]$Fields.PrChecksStatus -eq "merge-conflict") {
+        return @("PR-Merge_Conflicts")
+    }
+    if ([string]$Fields.PrChecksStatus -in @("pending", "running", "draft")) {
+        return @("PR-Checks_Run")
     }
 
-    if (@("merged", "completed", "closed") -contains [string]$Fields.RemoteState) {
-        return @("Done", "Completed", "Closed", "Merged")
-    }
-
+    # 3. Needs Attention / Blocked
     if ([string]$Fields.NeedsAttention -eq "yes") {
-        return @("Blocked", "On Hold", "Needs Input", "In Progress")
+        return @("Review-PR_inRework")
     }
 
-    if ([string]$Fields.PullRequestUrl) {
-        return @("In Review", "Review", "Needs Review", "In Progress")
+    # 4. Review Status (PR Checks passed, needs human review)
+    if ([string]$Fields.QueueState -eq "user-review" -or ([string]$Fields.PullRequestUrl -and [string]$Fields.PrChecksStatus -eq "passed")) {
+        return @("Review-PR_needed", "QA-Test_needed")
     }
 
-    if ([string]$Fields.QueueState -in @("user-review", "approved-awaiting-dispatch", "issue-only")) {
-        return @("Todo", "Backlog", "Ready", "Inbox")
+    # 5. Jules Session Status
+    if ([string]$Fields.JulesSessionStatus -eq "failed") {
+        return @("J-Session_failed")
+    }
+    if ([string]$Fields.JulesSessionStatus -eq "waiting") {
+        return @("J-Session_waiting")
+    }
+    if ([string]$Fields.JulesSessionStatus -in @("running", "in_progress", "queued")) {
+        return @("J-Session_open")
     }
 
-    return @("In Progress", "Doing", "Active")
+    # 6. Default Fallbacks
+    if ([string]$Fields.QueueState -in @("issue-only", "approved-awaiting-dispatch") -or [string]$Fields.RemoteState -in @("none", "jules_created")) {
+        return @("Planed")
+    }
+
+    return @("Started")
 }
 
 function Get-VorceJulesSessionStatusValue {
@@ -1205,12 +1225,24 @@ function Sync-VorceProjectFields {
         return
     }
 
-    $itemId = Ensure-VorceProjectItem -Context $context -IssueContentId $issueContentId
+    $itemId = Add-VorceProjectItem -Context $context -IssueContentId $issueContentId
     $statusField = Get-VorceProjectField -Context $context -FieldName $context.StatusFieldName
     if ($null -ne $statusField) {
         $statusOption = Resolve-ProjectSingleSelectOption -Options $statusField.Options -Candidates (Get-VorceProjectStatusCandidateNames -Fields $Fields)
         if ($null -ne $statusOption) {
-            Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field $statusField -Value ([string]$statusOption.name)
+            $isDoneStatus = @("Done", "Completed", "Closed", "Merged") -contains [string]$statusOption.name
+            
+            # Hole Issue-Titel aus API (da er nicht sicher in $Fields steht, nutzen wir Get-GitHubIssue)
+            # Da wir in Sync-VorceIssueTracking bereits get-githubissue machen, könnten wir es cachen,
+            # aber für Sicherheit holen wir es hier noch mal oder verlassen uns auf den API Cache
+            $issue = Get-GitHubIssue -Repository $Repository -IssueNumber $IssueNumber
+            $isSubIssue = [string]$issue.title -match '(__SI-\d+_MAI-\d+_|MFsub_)'
+            
+            if ($isDoneStatus -and -not $isSubIssue) {
+                Write-Host "GitHub-Project-Sync: Status 'Done' wird fuer regulaeres Issue #$IssueNumber uebersprungen (nur Sub-Issues duerfen automatisch geschlossen werden)." -ForegroundColor Yellow
+            } else {
+                Set-VorceProjectFieldValue -Context $context -ItemId $itemId -Field $statusField -Value ([string]$statusOption.name)
+            }
         }
     }
 
@@ -1295,7 +1327,7 @@ function Format-JulesIssueTrackingBlock {
     return ($lines -join "`n")
 }
 
-function Upsert-JulesIssueTrackingBlock {
+function Update-JulesIssueTrackingBlock {
     param([Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][int]$IssueNumber, [Parameter(Mandatory)][hashtable]$Fields)
 
     $issue = Get-GitHubIssue -Repository $Repository -IssueNumber $IssueNumber
@@ -1413,6 +1445,10 @@ function Convert-IssueToJulesPrompt {
         $parts += "**IMPORTANT:** Arbeite exakt auf diesem Branch-Namen: `$(Get-JulesPreferredWorkBranch -IssueTitle ([string]$Issue.title))`."
         $parts += "Verwende keine abweichenden, gekuerzten oder automatisch generierten Namen fuer Branch oder Pull Request."
         $parts += ""
+        $parts += "**HARD STOP:** Erzeuge niemals einen leeren Tracking-PR oder Initialisierungs-PR. Wenn das Issue nur Koordination, Tracking, Master-Issue-Pflege, Scope-Entscheidung oder Dokumentation ohne konkrete Code-/Testdateien verlangt, stoppe ohne PR und erklaere den Blocker."
+        $parts += "**HARD STOP:** Wenn du keine fachlich passenden Dateien zum Issue aendern kannst, erstelle keinen Commit und keinen PR. Antworte stattdessen mit konkretem Grund und benoetigtem Sub-Issue."
+        $parts += "**HARD STOP:** Merge-Konflikte duerfen nicht per Jules-Ersatzauftrag geloest werden. Bestehende PR-Konflikte werden lokal mit CLI-Tools auf dem Original-Branch behoben."
+        $parts += ""
         $parts += "**IMPORTANT:** Wenn du die Pull-Request-Beschreibung fuer dieses Issue erstellst, musst du exakt diesen Block mit der echten GitHub-Issue-Nummer aufnehmen:"
         $parts += "## Verlinktes Issue"
         $parts += "Fixes #$($Issue.number)"
@@ -1478,15 +1514,15 @@ function Sync-VorceIssueTracking {
         )
     }
 
-    $fields["LastActivitySummary"] = Normalize-TrackingText -Value $fields["LastActivitySummary"] -MaxLength 180
-    $fields["WorkBranch"] = Normalize-TrackingText -Value $fields["WorkBranch"] -MaxLength 120
-    $fields["SourceName"] = Normalize-TrackingText -Value $fields["SourceName"] -MaxLength 140
-    $fields["QueueState"] = Normalize-TrackingText -Value $fields["QueueState"] -MaxLength 60
-    $fields["RemoteState"] = Normalize-TrackingText -Value $fields["RemoteState"] -MaxLength 60
-    $fields["NeedsAttention"] = Normalize-TrackingText -Value $fields["NeedsAttention"] -MaxLength 10
+    $fields["LastActivitySummary"] = Format-TrackingText -Value $fields["LastActivitySummary"] -MaxLength 180
+    $fields["WorkBranch"] = Format-TrackingText -Value $fields["WorkBranch"] -MaxLength 120
+    $fields["SourceName"] = Format-TrackingText -Value $fields["SourceName"] -MaxLength 140
+    $fields["QueueState"] = Format-TrackingText -Value $fields["QueueState"] -MaxLength 60
+    $fields["RemoteState"] = Format-TrackingText -Value $fields["RemoteState"] -MaxLength 60
+    $fields["NeedsAttention"] = Format-TrackingText -Value $fields["NeedsAttention"] -MaxLength 10
     $fields["LastUpdate"] = Format-TrackingTimestamp -Timestamp $fields["LastUpdate"]
 
-    Upsert-JulesIssueTrackingBlock -Repository $Repository -IssueNumber $IssueNumber -Fields $fields
+    Update-JulesIssueTrackingBlock -Repository $Repository -IssueNumber $IssueNumber -Fields $fields
     Sync-GitHubIssueStatusLabels -Repository $Repository -IssueNumber $IssueNumber -Issue $issue -DesiredLabels (Get-DesiredIssueStatusLabels -Issue $issue -Session $Session -PullRequest $pullRequest)
     try {
         Sync-VorceProjectFields -Repository $Repository -IssueNumber $IssueNumber -Fields $fields

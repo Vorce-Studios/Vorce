@@ -27,9 +27,14 @@ foreach ($session in $sessions) {
     $updatedAtStr = [string](Get-JulesObjectPropertyValue -Object $session -Name "updateTime")
 
     $sourceContext = Get-JulesObjectPropertyValue -Object $session -Name "sourceContext"
-    $githubRepoContext = Get-JulesObjectPropertyValue -Object $sourceContext -Name "githubRepoContext"
-    $sessionIssueNum = Get-JulesObjectPropertyValue -Object $githubRepoContext -Name "issueNumber"
-    $repo = [string](Get-JulesObjectPropertyValue -Object $githubRepoContext -Name "repository")
+    $source = [string](Get-JulesObjectPropertyValue -Object $sourceContext -Name "source")
+    $repo = if ($source -match "sources/github/(?<name>.*)") { $Matches["name"] } else { $source }
+    $sessionIssueNum = Get-IssueNumberFromSession -Session $session
+
+    # Only monitor Vorce and MapFlow sessions
+    if ($source -notlike "*Vorce*" -and $source -notlike "*MapFlow*") {
+        continue
+    }
 
     if ($IssueNumber -and $sessionIssueNum -ne $IssueNumber) {
         continue

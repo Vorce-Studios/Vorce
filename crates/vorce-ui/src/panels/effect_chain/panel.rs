@@ -182,7 +182,7 @@ impl EffectChainPanel {
                                                 crate::widgets::custom::render_info_label(ui, "No recent configs");
                                             } else {
                                                 for config in configs {
-                                                    if ui.button(config.name.to_string()).clone().on_hover_text(format!("{:?}", config.params)).clicked() {
+                                                    if ui.button(&config.name).on_hover_text(format!("{:?}", config.params)).clicked() {
                                                          self.chain.add_effect(*effect_type);
 
                                                          let id = self.chain.effects.last().unwrap_or_else(|| panic!("Effects should not be empty")).id;
