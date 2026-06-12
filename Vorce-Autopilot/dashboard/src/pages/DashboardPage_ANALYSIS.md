@@ -50,9 +50,11 @@
 ## Dependencies
 
 #### Internal
+
 - `./DeliberationPanel` - Deliberation Log Panel
 
 #### External
+
 - `react` (useState)
 - `lucide-react` (Icons)
 - `recharts` (BarChart)
@@ -198,23 +200,27 @@ return (
 
 ## Analysis Notes
 
-### JSX-Syntax:
+### JSX-Syntax
+
 - ✅ Map-Closing korrekt: `);` + `})` + `)`
 - ✅ RunCard außerhalb von `&& (` Block
 - ✅ Comments vor `)` auf eigener Zeile
 - ✅ closing `)}` mit Leerzeile vor Kommentar
 
-### Performance:
+### Performance
+
 - ChartData und liveLogItems sollten mit `useMemo` gecacht werden
 - Jules Session counts können memoisiert werden
 - Provider mapping ist einfach und schnell
 
-### Type Safety:
+### Type Safety
+
 - `any` Types in `sessions.decisions_pending.map` (Zeile 295)
 - `any` Types in Optimizer Panel Funktionen
 - `audit: any` in `parseAuditResult`
 
-### Fehlerursache Parse-Fehler:
+### Fehlerursache Parse-Fehler
+
 1. Ursprünglich: `) })}` (falsch verschachtelt)
 2. RunCard innerhalb von `&& (` (falsch)
 3. Inline Kommentar nach `)` (nicht erlaubt)
@@ -237,7 +243,8 @@ return (
 
 ## Reparatur-History
 
-### 2026-06-07:
+### 2026-06-07
+
 1. **Problem**: Map-Closing `) })}` falsch platziert
    - **Lösung**: `{` + `)` + `})` + `)` korrekt verschachtelt
    - **Zeilen**: 361-363

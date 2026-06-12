@@ -20,12 +20,16 @@ param(
 ## 2. State-Verantwortlichkeiten
 
 ### MainState
+
 Dient zum Datenaustausch zwischen Sub-Runs innerhalb derselben Phase.
+
 - **Lesen:** Daten von vorherigen Sub-Runs abrufen.
 - **Schreiben:** Ergebnisse für nachfolgende Sub-Runs bereitstellen (z.B. `$MainState.PlanningCandidates`).
 
 ### SubState
+
 Protokolliert die Ausführung des spezifischen Sub-Runs.
+
 - **status:** Muss am Ende auf `"completed"` gesetzt werden.
 - **artifacts:** Hier sollten wichtige Zwischenergebnisse (Hashtables/JSON) abgelegt werden.
 - **errors:** Fehler mit `Add-RunError` hinzufügen (setzt den Status automatisch auf `"failed"`).
