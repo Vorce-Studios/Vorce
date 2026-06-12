@@ -82,9 +82,14 @@ function Invoke-MainRun {
                         -Config $Config `
                         -QuotaRegistry $QuotaRegistry `
                         -DryRun:$DryRun
-                    
+
+                    # Verwende den echten Status aus dem SubState, nicht 'running'
+                    # Nur wenn status immer noch 'running' ist, setze ihn auf 'completed'
                     if ($subRunState.status -eq "running") {
                         $subRunState.status = "completed"
+                    } elseif ($subRunState.status -eq "failed") {
+                        # Wenn der Sub-Run explizit als 'failed' markiert wurde, behalte diesen Status
+                        $subRunState.status = "failed"
                     }
                 } else {
                     Add-RunError -State $subRunState -Message "SUB-RUN Skript nicht gefunden: $subScript"
@@ -283,6 +288,7 @@ function Invoke-PartRun {
             }
             $cacheData | ConvertTo-Json -Depth 5 -Compress | Out-File -FilePath $cacheFile -Encoding UTF8 -Force
         } else {
+            $partRunState.status = "failed"
             Add-RunError -State $partRunState -Message "Agent Call fehlgeschlagen: $($result.error)"
         }
 
