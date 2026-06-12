@@ -44,8 +44,16 @@ foreach ($decision in $GlobalState.decisions_pending) {
                 }
             }
 
-            Write-Host "[CHECK&DOING] Entscheidung geschlossen/ignoriert, entferne aus decisions_pending: $topic" -ForegroundColor DarkGray
-            continue
+            $closedAtStr = if ($decision.PSObject.Properties.Name -contains "closed_at") { $decision.closed_at } else { "" }
+            if (-not [string]::IsNullOrWhiteSpace($closedAtStr)) {
+                try {
+                    $closedAt = [datetime]$closedAtStr
+                    if ((Get-Date) - $closedAt -gt [timespan]::FromDays(3)) {
+                        Write-Host "[CHECK&DOING] Entscheidung geschlossen/ignoriert (>3 Tage alt), entferne aus decisions_pending: $topic" -ForegroundColor DarkGray
+                        continue
+                    }
+                } catch {}
+            }
         }
     }
 
