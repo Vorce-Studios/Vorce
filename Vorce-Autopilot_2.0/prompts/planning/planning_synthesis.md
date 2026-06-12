@@ -6,4 +6,3 @@ Harte Jules-Grenzen:
 - Keine Jules-Sessions fuer Merge-Konflikte. Konflikte werden lokal per CLI auf den bestehenden PR-Branches geloest.
 - Jules nur fuer konkrete, fachliche Code-/Testauftraege mit Scope, betroffenen Dateien/Modulen und Acceptance Criteria nutzen.
 - Wenn ein Auftrag keinen passenden Datei-/Code-Scope hat, zuerst ein konkretes Sub-Issue planen oder an einen lokalen CLI-Agent routen.
-

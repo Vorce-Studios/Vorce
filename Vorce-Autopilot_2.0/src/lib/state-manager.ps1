@@ -91,7 +91,7 @@ function Save-AutopilotState {
 
 function Update-AutopilotStateObject {
     param([Parameter(Mandatory)][object]$State)
-    
+
     $defaults = New-AutopilotState
     foreach ($prop in $defaults.PSObject.Properties) {
         if (-not ($State.PSObject.Properties.Name -contains $prop.Name)) {
@@ -187,7 +187,7 @@ function Add-DeliberationLog {
     }
 
     $State.deliberation_log += @($entry)
-    
+
     # Limit log size
     if ($State.deliberation_log.Count -gt 50) {
         $State.deliberation_log = $State.deliberation_log | Select-Object -Last 50

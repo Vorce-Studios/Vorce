@@ -20,12 +20,16 @@ param(
 ## 2. State-Verantwortlichkeiten
 
 ### MainState
+
 Dient zum Datenaustausch zwischen Sub-Runs innerhalb derselben Phase.
+
 - **Lesen:** Daten von vorherigen Sub-Runs abrufen.
 - **Schreiben:** Ergebnisse für nachfolgende Sub-Runs bereitstellen (z.B. `$MainState.PlanningCandidates`).
 
 ### SubState
+
 Protokolliert die Ausführung des spezifischen Sub-Runs.
+
 - **status:** Muss am Ende auf `"completed"` gesetzt werden.
 - **artifacts:** Hier sollten wichtige Zwischenergebnisse (Hashtables/JSON) abgelegt werden.
 - **errors:** Fehler mit `Add-RunError` hinzufügen (setzt den Status automatisch auf `"failed"`).
@@ -48,10 +52,10 @@ Write-Host "[SUB-RUN] Starte Beispiel-Task..." -ForegroundColor Cyan
 try {
     # 1. Logik ausführen
     $data = Get-Something -Repo $Config.repository
-    
+
     # 2. Ergebnisse für Main-Run speichern
     $MainState.ResultData = $data
-    
+
     # 3. Abschluss dokumentieren
     $SubState.status = "completed"
     $SubState.artifacts += @{ type = "Report"; count = $data.Count }

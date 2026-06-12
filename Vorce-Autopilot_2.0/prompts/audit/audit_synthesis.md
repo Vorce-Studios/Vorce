@@ -16,4 +16,3 @@ Antworte strikt im JSON-Format:
   "remediation_command": "<Powershell-Befehl falls action=remediate>",
   "dashboard_escalation": "<Deutsche, hochdetaillierte Fehler-Analyse und Handlungsanweisung falls action=escalate>"
 }
-

@@ -19,7 +19,7 @@ function Add-DecisionPending {
         $AlertId = "alert-$(Get-Date -Format 'yyyyMMddHHmmss')-$([guid]::NewGuid().ToString('N').Substring(0,4))"
     }
 
-    $exists = $State.decisions_pending | Where-Object { 
+    $exists = $State.decisions_pending | Where-Object {
         $_.topic -eq $Topic -and ($null -eq $_.status -or $_.status -eq 'pending')
     }
     if (-not $exists) {
@@ -188,19 +188,19 @@ function Convert-AlertToMemory {
         [Parameter(Mandatory)][object]$DecisionPending,
         [string]$UserComment = ""
     )
-    
+
     try {
         $memoryText = "IGNORE_ALERT: $($DecisionPending.topic)`nDetails: $($DecisionPending.context)"
         if (-not [string]::IsNullOrWhiteSpace($UserComment)) {
             $memoryText += "`nUser-Kommentar: $UserComment"
         }
-        
+
         $result = Add-Memory `
             -Text $memoryText `
             -Type "temporary" `
             -Priority "medium" `
             -Source "audit_alert_close"
-        
+
         if ($result) {
             Write-Host "[CHECK&DOING] Memory erstellt fuer geschlossenen Alert: $($DecisionPending.topic)" -ForegroundColor Cyan
             return $true
