@@ -31,7 +31,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
 
         # Hierarchische Deliberation via PART-RUNS
         Write-Host "[PLANNING] Starte hierarchische Deliberation..." -ForegroundColor Gray
-        
+
         # 1. Proposal (CEO)
         $proposalPartName = "PART-RUN-01_SR-02_MR-01_Planning__ReplanProposal"
         $proposalResult = Invoke-PartRun `
@@ -45,7 +45,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
 
         if ($proposalResult.success) {
             $ceoProposal = $proposalResult.output
-            
+
             # 2. Critique (QA-Manager)
             $critiquePrompt = "Analysiere den folgenden Vorschlag des CEO für Issue #$issueNum und gib konstruktive Kritik:`n`n$ceoProposal"
             $critiquePartName = "PART-RUN-02_SR-02_MR-01_Planning__ReplanCritique"
@@ -57,7 +57,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                 -Config $Config `
                 -QuotaRegistry $QuotaRegistry `
                 -DryRun:$DryRun
-            
+
             $finalPlan = $ceoProposal
             if ($critiqueResult.success) {
                 $qaCritique = $critiqueResult.output
@@ -72,7 +72,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                     -Config $Config `
                     -QuotaRegistry $QuotaRegistry `
                     -DryRun:$DryRun
-                
+
                 if ($synthesisResult.success) {
                     $finalPlan = $synthesisResult.output
                 }

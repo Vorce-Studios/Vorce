@@ -96,4 +96,3 @@ function Get-JulesSessionStatus {
         return $null
     }
 }
-

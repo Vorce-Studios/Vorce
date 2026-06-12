@@ -70,7 +70,7 @@ if ($Config.PSObject.Properties.Name -contains "planning_sequence") {
                 -Config $Config `
                 -QuotaRegistry $QuotaRegistry `
                 -DryRun:$DryRun
-            
+
             if (-not $stepResult.success) {
                 Write-Host "[PLANNING] Codex-Session fehlgeschlagen (evtl. Limit erreicht). Wechsle fuer restliche Session auf Fallback (DualCeoTask)." -ForegroundColor Yellow
                 $codexExhausted = $true
