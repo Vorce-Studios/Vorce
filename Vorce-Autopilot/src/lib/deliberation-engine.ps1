@@ -533,7 +533,7 @@ function Invoke-Deliberation {
 
         Write-Host "[DELIB] CEO-Proposal Fallback (Beta) erfolgreich." -ForegroundColor Green
         Format-CeoChatOutput -Role "Proposal (Fallback)" -AgentName $ceos.beta.provider -Content $betaProposal
-        
+
         $protocol.final_output = $betaProposal
         $protocol.consensus_reached = $false
         $protocol.completed_at = (Get-Date -Format 'o')

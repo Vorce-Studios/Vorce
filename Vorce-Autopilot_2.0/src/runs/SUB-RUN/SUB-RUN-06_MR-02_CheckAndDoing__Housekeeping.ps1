@@ -24,17 +24,17 @@ foreach ($decision in $GlobalState.decisions_pending) {
     if ($decision.PSObject.Properties.Name -contains "status") {
         if ($decision.status -eq 'closed' -or $decision.status -eq 'ignored') {
             # Convert to memory if usercomment exists and memory NOT yet created
-            if (-not $decision.PSObject.Properties.Name -contains "memory_id" -and 
-                $decision.PSObject.Properties.Name -contains "user_comment" -and 
+            if (-not $decision.PSObject.Properties.Name -contains "memory_id" -and
+                $decision.PSObject.Properties.Name -contains "user_comment" -and
                 -not [string]::IsNullOrWhiteSpace($decision.user_comment)) {
-                
+
                 try {
                     $memResult = Add-Memory `
                         -Text "IGNORE_ALERT: $topic`nDetails: $($decision.context)`nUser-Kommentar: $($decision.user_comment)" `
                         -Type "temporary" `
                         -Priority "medium" `
                         -Source "audit_alert_close"
-                    
+
                     if ($memResult) {
                         $decision | Add-Member -MemberType NoteProperty -Name "memory_id" -Value "mem-auto-$id" -Force
                         Write-Host "[CHECK&DOING] Memory erstellt fuer geschlossenen Alert: $topic" -ForegroundColor Cyan
@@ -43,7 +43,7 @@ foreach ($decision in $GlobalState.decisions_pending) {
                     Write-Warning "[CHECK&DOING] Konnte Memory fuer Alert nicht erstellen: $_"
                 }
             }
-            
+
             Write-Host "[CHECK&DOING] Entscheidung geschlossen/ignoriert, entferne aus decisions_pending: $topic" -ForegroundColor DarkGray
             continue
         }
