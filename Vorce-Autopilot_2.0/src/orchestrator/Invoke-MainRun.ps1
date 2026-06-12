@@ -63,7 +63,7 @@ function Invoke-MainRun {
 
             $subRunPath = Initialize-RunDirectory -RunType "Sub" -RunName $subRunName -ParentPath (Join-Path $mainRunPath "SUB-RUNS")
             $subRunState = New-RunState -RunType "Sub" -RunName $subRunName -RunPath $subRunPath
-            
+
             try {
                 $subRunState.status = "running"
                 Save-RunState -State $subRunState -RunPath $subRunPath
