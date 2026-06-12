@@ -208,7 +208,7 @@ function Resolve-SubRunDefinitions {
 function Invoke-PartRun {
     param(
         [Parameter(Mandatory)][string]$PartRunName,
-        [Parameter(Mandatory)][string]$AgentType, # CEO, QA-Manager, Partner
+        [Parameter(Mandatory)][string]$AgentType,
         [Parameter(Mandatory)][string]$Prompt,
         [object]$SubState,
         [object]$Config,
@@ -216,11 +216,13 @@ function Invoke-PartRun {
         [switch]$DryRun
     )
 
+    Write-Host "[DELIB] Invoke-PartRun gestartet fuer $PartRunName (Agent: $AgentType)" -ForegroundColor DarkBlue
     Write-Host "[ORCHESTRATOR]   >> PART-RUN: $PartRunName (Agent: $AgentType)" -ForegroundColor DarkCyan
 
     $partRunPath = Initialize-RunDirectory -RunType "Part" -RunName $PartRunName -ParentPath (Join-Path $SubState.metadata["run_path"] "PART-RUNS")
-    $partRunState = New-RunState -RunType "Part" -RunName $PartRunName -RunPath $partRunPath
+    Write-Host "[DELIB] partRunPath=$partRunPath" -ForegroundColor DarkBlue
 
+    $partRunState = New-RunState -RunType "Part" -RunName $PartRunName -RunPath $partRunPath
     $cacheDir = Join-Path $global:OrchestratorRoot "var/db/cache"
     if (-not (Test-Path $cacheDir)) { New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null }
 
@@ -247,18 +249,22 @@ function Invoke-PartRun {
     }
 
     try {
+        Write-Host "[DELIB] try block start - calling Initialize-RunDirectory" -ForegroundColor DarkMagenta
         $partRunState.status = "running"
         Save-RunState -State $partRunState -RunPath $partRunPath
 
         # Resolve Provider for Agent
         $taskType = if ($AgentType -eq "CEO") { "planning" } else { "complex_review" }
+        Write-Host "[DELIB] before Resolve-CliProvider: TaskType=$taskType" -ForegroundColor DarkMagenta
         $route = Resolve-CliProvider -QuotaRegistry $QuotaRegistry -TaskType $taskType
+        Write-Host "[DELIB] after Resolve-CliProvider: provider=$($route.provider)" -ForegroundColor DarkMagenta
 
         $maxAttempts = if ($Config.PSObject.Properties.Name -contains "part_run_retry") { $Config.part_run_retry.max_attempts } else { 2 }
         $delayBase = if ($Config.PSObject.Properties.Name -contains "part_run_retry") { $Config.part_run_retry.delay_seconds } else { 5 }
         $result = $null
 
         for ($i = 1; $i -le $maxAttempts; $i++) {
+            Write-Host "[DELIB] Invoke-CliTask Attempt $i/$maxAttempts..." -ForegroundColor Yellow
             $result = Invoke-CliTask `
                 -QuotaRegistry $QuotaRegistry `
                 -TaskType $taskType `
@@ -267,7 +273,7 @@ function Invoke-PartRun {
                 -DryRun:$DryRun `
                 -ProviderOverride $route.provider `
                 -ModelTierOverride $route.model_tier
-
+            Write-Host "[DELIB] Invoke-CliTask Result: success=$($result.success), provider=$($result.provider)" -ForegroundColor Yellow
             if ($result.success -or $i -eq $maxAttempts) { break }
             Write-Warning "[ORCHESTRATOR] PART-RUN fehlgeschlagen. Versuch $i/$maxAttempts. Warte $($delayBase * $i) Sekunden..."
             Start-Sleep -Seconds ($delayBase * $i)
@@ -294,6 +300,7 @@ function Invoke-PartRun {
 
         return $result
     } catch {
+        Write-Host "[DELIB] Exception in Invoke-PartRun: $_" -ForegroundColor Red
         Add-RunError -State $partRunState -Message "Fehler im PART-RUN ${PartRunName}: $_"
         return @{ success = $false; error = $_.Exception.Message }
     } finally {

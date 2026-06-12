@@ -4,14 +4,13 @@
 Set-StrictMode -Version Latest
 
 function Get-QuotaRegistryPath {
-    if ($null -eq (Get-Variable -Name "VorceAutopilotQuotaRegistryPath" -Scope Global -ErrorAction SilentlyContinue)) {
-        $global:VorceAutopilotQuotaRegistryPath = Join-Path $PSScriptRoot "../../config/quota-registry.json"
-    }
-    return $global:VorceAutopilotQuotaRegistryPath
+    # Fester absoluter Pfad fuer V2
+    return "C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\Vorce-Autopilot_2.0\\config\\quota-registry.json"
 }
 
 function Read-QuotaRegistry {
     $path = Get-QuotaRegistryPath
+    Write-Host "[DEBUG] Read-QuotaRegistry lädt: $path" -ForegroundColor Yellow
     if (-not (Test-Path $path)) {
         throw "Quota-Registry nicht gefunden: $path"
     }
@@ -133,5 +132,20 @@ function Test-PrimaryProvidersAvailable {
     return $codexAvailable -or $geminiAvailable
 }
 
+function Register-ProviderCall {
+    param(
+        [Parameter(Mandatory)][object]$Registry,
+        [Parameter(Mandatory)][string]$ProviderName,
+        [string]$ModelTier = "default"
+    )
+
+    $provider = Get-ProviderConfig -Registry $Registry -ProviderName $ProviderName
+    if ($null -ne $provider) {
+        $provider.usage_today.calls++
+        $provider.usage_today.last_synced_at = (Get-Date -Format 'o')
+        Save-QuotaRegistry -Registry $Registry
+    }
+}
+
 # Export-ModuleMember ist nur fuer .psm1 Module relevant.
-# Export-ModuleMember -Function Read-QuotaRegistry, Save-QuotaRegistry, Get-ProviderConfig, Test-ProviderAvailable, Update-ProviderUsage, Get-QuotaSummary, Test-PrimaryProvidersAvailable
+# Export-ModuleMember -Function Read-QuotaRegistry, Save-QuotaRegistry, Get-ProviderConfig, Test-ProviderAvailable, Update-ProviderUsage, Get-QuotaSummary, Test-PrimaryProvidersAvailable, Register-ProviderCall

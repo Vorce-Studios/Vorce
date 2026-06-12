@@ -336,7 +336,7 @@ function Invoke-VisibleCeoPhase {
             Split-Path -Parent $script:ScriptRoot
         }
 
-        $runnerScript = Join-Path $script:ScriptRoot "tools\run-visible-ceo-phase.ps1"
+        $runnerScript = Join-Path $script:ScriptRoot "tools\run-hidden-ceo-phase.ps1"
         $powerShellHost = (Get-Command pwsh -ErrorAction SilentlyContinue)
         if ($powerShellHost) { $powerShellHost = $powerShellHost.Source } else { $powerShellHost = (Get-Command powershell -ErrorAction Stop).Source }
 

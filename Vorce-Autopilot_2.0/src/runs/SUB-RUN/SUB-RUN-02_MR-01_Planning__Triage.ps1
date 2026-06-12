@@ -19,12 +19,6 @@ if ($escalated.Count -gt 0) {
         $promptText = @"
 Das Issue #$issueNum ("$issueTitle") wurde an Jules delegiert (letzte Session: $lastSessionId), ist aber im Check&Doing-Modus fehlgeschlagen oder hängengeblieben (Timeout/Fehler).
 
-Deine Rolle: Du bist der CEO und initiierst den Eskalations-Prozess im CEO + QA Manager Team.
-Dies ist Schritt 1 eines 3-stufigen Prozesses:
-1. Du (CEO) erstellst einen ersten Vorschlag.
-2. Der QA-Manager kritisiert diesen Vorschlag.
-3. Du (CEO) erstellst eine Synthese.
-
 Erstelle jetzt eine neue, präzisere Handlungsanweisung (Prompt-Ergänzung oder überarbeitete Issue-Beschreibung), um Jules beim nächsten Versuch erfolgreich zu leiten.
 Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
 "@
@@ -91,7 +85,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                 Save-AutopilotState -State $GlobalState
             }
         } else {
-            Write-Warning "[PLANNING] Re-Planning fuer #$issueNum fehlgeschlagen."
+            Write-Host "[PLANNING] Re-Planning fuer #$issueNum fehlgeschlagen: Success=$($proposalResult.success), Provider=$($proposalResult.provider), Error=$($proposalResult.error)" -ForegroundColor Red
         }
     }
 }
