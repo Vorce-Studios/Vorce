@@ -174,7 +174,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   const audit = parseAuditResult(auditResult);
   const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
   const [commentDraft, setCommentDraft] = useState<string>('');
-  
+
   const activeAlerts = sessions.decisions_pending?.filter(a => a.status !== 'closed' && a.status !== 'ignored') || [];
 
   const sendRunControl = async (type: 'planning' | 'monitoring', action: string, note?: string) => {
