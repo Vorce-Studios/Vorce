@@ -74,20 +74,20 @@ function Write-Host {
 }
 
 # --- Load libraries ---
-. (Join-Path $ScriptDir "src/lib/state-manager.ps1")
-. (Join-Path $ScriptDir "src/lib/quota-manager.ps1")
-. (Join-Path $ScriptDir "src/lib/cli-router.ps1")
-. (Join-Path $ScriptDir "src/lib/memory-store.ps1")
-. (Join-Path $ScriptDir "src/lib/deliberation-engine.ps1")
-. (Join-Path $ScriptDir "src/lib/autopilot-session-manager.ps1")
-. (Join-Path $ScriptDir "src/lib/autopilot-prompts.ps1")
-. (Join-Path $ScriptDir "src/lib/github-client.ps1")
-. (Join-Path $ScriptDir "src/lib/jules-client.ps1")
-. (Join-Path $ScriptDir "src/lib/naming-convention.ps1")
-. (Join-Path $ScriptDir "src/lib/project-manager.ps1")
-. (Join-Path $ScriptDir "src/lib/planning-utils.ps1")
-. (Join-Path $ScriptDir "src/lib/checkdoing-utils.ps1")
-. (Join-Path $ScriptDir "src/orchestrator/Invoke-MainRun.ps1")
+. (Join-Path $ScriptDir "src/lib/state/state-manager.ps1")
+. (Join-Path $ScriptDir "src/lib/engines/quota-manager.ps1")
+. (Join-Path $ScriptDir "src/core/cli-router.ps1")
+. (Join-Path $ScriptDir "src/lib/state/memory-store.ps1")
+. (Join-Path $ScriptDir "src/lib/engines/deliberation-engine.ps1")
+. (Join-Path $ScriptDir "src/lib/state/autopilot-session-manager.ps1")
+. (Join-Path $ScriptDir "src/core/autopilot-prompts.ps1")
+. (Join-Path $ScriptDir "src/lib/integrations/github-client.ps1")
+. (Join-Path $ScriptDir "src/lib/integrations/jules-client.ps1")
+. (Join-Path $ScriptDir "src/lib/utils/naming-convention.ps1")
+. (Join-Path $ScriptDir "src/lib/utils/project-manager.ps1")
+. (Join-Path $ScriptDir "src/lib/utils/planning-utils.ps1")
+. (Join-Path $ScriptDir "src/lib/utils/checkdoing-utils.ps1")
+. (Join-Path $ScriptDir "src/core/Invoke-MainRun.ps1")
 
 # Dummy command/placeholder for backward compatibility check
 function Get-VorceLagebildSummary {
@@ -145,7 +145,7 @@ $QuotaRegistry = Read-QuotaRegistry
 
 # --- Single-shot modes (V2.0: Nutzen die neue MAIN-RUN Architektur) ---
 if ($PlanOnce.IsPresent) {
-    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-01_Planning.ps1"
+    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-01_Planning/MAIN-RUN-01_Planning.ps1"
     & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
     Write-Host $summary -ForegroundColor DarkGray
@@ -153,7 +153,7 @@ if ($PlanOnce.IsPresent) {
 }
 
 if ($CheckAndDoingOnce.IsPresent) {
-    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-02_CheckAndDoing.ps1"
+    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-02_CheckAndDoing/MAIN-RUN-02_CheckAndDoing.ps1"
     & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
     Write-Host $summary -ForegroundColor DarkGray
@@ -161,7 +161,7 @@ if ($CheckAndDoingOnce.IsPresent) {
 }
 
 if ($AuditOnce.IsPresent) {
-    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-03_Audit.ps1"
+    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-03_Audit/MAIN-RUN-03_Audit.ps1"
     & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
     Write-Host $summary -ForegroundColor DarkGray
@@ -169,7 +169,7 @@ if ($AuditOnce.IsPresent) {
 }
 
 if ($OptimizeOnce.IsPresent) {
-    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-04_Optimizer.ps1"
+    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-04_Optimizer/MAIN-RUN-04_Optimizer.ps1"
     & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
     Write-Host $summary -ForegroundColor DarkGray
@@ -187,8 +187,9 @@ if (-not $SkipPlanningOnStart.IsPresent) {
 
     # Synchronisiere State direkt beim Start
     $State.last_monitoring_at = $lastMonTime.ToString('o')
-    # Setze last_planning_at auf "vor wenigen Sekunden" (nicht AddDays(-1)!), damit plan_due=false ist
-    $State.last_planning_at = (Get-Date).AddSeconds(-5).ToString('o')
+    # Setze last_planning_at in die Vergangenheit, damit Planungs-Phase sofort triggert
+    $lastPlanTime = (Get-Date).AddDays(-1)
+    $State.last_planning_at = $lastPlanTime.ToString('o')
     Save-AutopilotState -State $State
 
     Write-Host "[INIT] Starte mit erzwungener Planungs-Phase (SkipPlanningOnStart ist nicht aktiv)." -ForegroundColor Yellow
@@ -258,17 +259,19 @@ while ($true) {
 
     if ($planDue) {
         try {
-            $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-01_Planning.ps1"
+            $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-01_Planning/MAIN-RUN-01_Planning.ps1"
             $mainRunResult = & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+            $actualMainRunResult = if ($mainRunResult -is [System.Array]) { $mainRunResult[-1] } else { $mainRunResult }
 
             # Warte bis alle SUB-RUNs completed sind (Invoke-MainRun already waits via Wait-Job)
-            if ($mainRunResult.status -eq "completed") {
+            if ($null -ne $actualMainRunResult -and $actualMainRunResult.status -eq "completed") {
                 # Nur setzen, wenn alle SUB-RUNs erfolgreich waren
                 $State.last_planning_at = (Get-Date).ToString('o')
             } else {
                 # Fallback: Zeitstempel auf vor 5 Minuten setzen für Backoff
                 $State.last_planning_at = (Get-Date).AddSeconds(-5).ToString('o')
-                Write-Host "[LOOP] Planning MAIN-RUN nicht komplett erfolgreich (status=$($mainRunResult.status)), Backoff aktiviert." -ForegroundColor Yellow
+                $statusStr = if ($null -ne $actualMainRunResult) { $actualMainRunResult.status } else { "unknown" }
+                Write-Host "[LOOP] Planning MAIN-RUN nicht komplett erfolgreich (status=$statusStr), Backoff aktiviert." -ForegroundColor Yellow
             }
         } catch {
             Write-Host "[LOOP] Planning-Fehler: $_" -ForegroundColor Red
@@ -287,7 +290,7 @@ while ($true) {
 
         # Asynchroner Audit-Lauf (MAIN-RUN-03)
         try {
-            $auditScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-03_Audit.ps1"
+            $auditScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-03_Audit/MAIN-RUN-03_Audit.ps1"
             & $auditScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
         } catch {
             Write-Host "[LOOP] Audit-Fehler: $_" -ForegroundColor Red
@@ -295,7 +298,7 @@ while ($true) {
 
         # Asynchroner Optimizer-Lauf (MAIN-RUN-04)
         try {
-            $optScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-04_Optimizer.ps1"
+            $optScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-04_Optimizer/MAIN-RUN-04_Optimizer.ps1"
             & $optScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
         } catch {
             Write-Host "[LOOP] Optimizer-Fehler: $_" -ForegroundColor Red
@@ -305,7 +308,7 @@ while ($true) {
     if ($memOptDue) {
         $lastMemoryOptTime = Get-Date
         try {
-            $memOptScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-05_MemoryOptimization.ps1"
+            $memOptScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-05_MemoryOptimization/MAIN-RUN-05_MemoryOptimization.ps1"
             & $memOptScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
         } catch {
             Write-Host "[LOOP] MemoryOptimization-Fehler: $_" -ForegroundColor Red
@@ -314,18 +317,20 @@ while ($true) {
 
     if ($checkDue) {
         try {
-            $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-02_CheckAndDoing.ps1"
+            $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-02_CheckAndDoing/MAIN-RUN-02_CheckAndDoing.ps1"
             $checkRunResult = & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+            $actualCheckRunResult = if ($checkRunResult -is [System.Array]) { $checkRunResult[-1] } else { $checkRunResult }
 
             # Warte bis alle SUB-RUNs completed sind (Invoke-MainRun already waits via Wait-Job)
-            if ($checkRunResult.status -eq "completed") {
+            if ($null -ne $actualCheckRunResult -and $actualCheckRunResult.status -eq "completed") {
                 $lastMonTime = Get-Date
                 $State.last_check_and_doing_at = $lastMonTime.ToString('o')
             } else {
                 # Fallback: Zeitstempel auf vor 5 Minuten setzen für Backoff
                 $lastMonTime = (Get-Date).AddSeconds(-5)
                 $State.last_check_and_doing_at = $lastMonTime.ToString('o')
-                Write-Host "[LOOP] Check&Doing MAIN-RUN nicht komplett erfolgreich (status=$($checkRunResult.status)), Backoff aktiviert." -ForegroundColor Yellow
+                $statusStr = if ($null -ne $actualCheckRunResult) { $actualCheckRunResult.status } else { "unknown" }
+                Write-Host "[LOOP] Check&Doing MAIN-RUN nicht komplett erfolgreich (status=$statusStr), Backoff aktiviert." -ForegroundColor Yellow
             }
         } catch {
             Write-Host "[LOOP] Check&Doing-Fehler: $_" -ForegroundColor Red
