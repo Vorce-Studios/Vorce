@@ -5,9 +5,6 @@ import time
 import subprocess
 import argparse
 from datetime import datetime
-import threading
-import shutil
-
 from pathlib import Path
 
 MISSING_DEPS = []
@@ -51,50 +48,54 @@ def take_screenshot(run_dir, name="screenshot"):
         return None
 
 def run_test_steps(run_dir):
-    print("Running deterministic UI timeline project flow...")
+    print("Running deterministic UI flow...")
 
     # Give UI time to fully render
     time.sleep(2)
 
-    # Note: In a headless environment, UI testing with PyAutoGUI is limited to what xvfb provides.
-    # The actual functionality requested is opening a timeline/project fixture, saving it, and verifying stable state.
-    # Because full determinism in a sandbox requires mock windows or hotkeys:
-
-    print("Action: Simulating Timeline Project File Open (Ctrl+O)")
+    # Step 1: Open settings
+    print("Action: Click Settings (assume standard left panel or toolbar)")
+    # Normalize coordinates based on screen size fallback
     try:
-        pyautogui.hotkey('ctrl', 'o')
+        # Assuming a 1280x720 window
+        pyautogui.moveTo(100, 100, duration=0.5)
+        pyautogui.click()
     except Exception as e:
-        print(f"Failed to press keys: {e}")
+        print(f"Failed to move mouse: {e}")
 
     time.sleep(1)
-    take_screenshot(run_dir, "after_project_open_dialog")
+    take_screenshot(run_dir, "after_settings_open")
 
-    print("Action: Press Esc to close open dialogs")
+    # Step 2: Select a stable panel
+    print("Action: Select Central/Bottom Panel")
+    try:
+        pyautogui.moveTo(640, 360, duration=0.5)
+        pyautogui.click()
+    except Exception as e:
+        print(f"Failed to move mouse: {e}")
+
+    time.sleep(1)
+
+    # Step 3: Trigger safe/reversible action (e.g., right click context menu)
+    print("Action: Right-click in canvas")
+    try:
+        pyautogui.rightClick()
+    except Exception as e:
+        print(f"Failed to right click: {e}")
+
+    time.sleep(1)
+    take_screenshot(run_dir, "after_right_click")
+
+    # Step 4: Close/reset state (Escape to close menu/settings)
+    print("Action: Press Esc to close menus/dialogs")
     try:
         pyautogui.press('esc')
     except Exception as e:
         print(f"Failed to press esc: {e}")
 
     time.sleep(1)
-    take_screenshot(run_dir, "after_escape")
 
-    # Simulating Timeline Project File Save (Ctrl+S)
-    print("Action: Simulating Timeline Project Save (Ctrl+S)")
-    try:
-        pyautogui.hotkey('ctrl', 's')
-    except Exception as e:
-        print(f"Failed to press keys: {e}")
-
-    time.sleep(1)
-    take_screenshot(run_dir, "after_project_save_dialog")
-
-    print("Action: Press Esc to close save dialogs")
-    try:
-        pyautogui.press('esc')
-    except Exception as e:
-        print(f"Failed to press esc: {e}")
-
-    time.sleep(1)
+    take_screenshot(run_dir, "after_reset")
 
     return True
 
