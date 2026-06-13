@@ -18,25 +18,18 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
 
-$ScriptDir = $PSScriptRoot
+# Robust ScriptDir detection
+$ScriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+if (-not $ScriptDir) { $ScriptDir = Get-Location }
+
 $DashboardDir = Join-Path $ScriptDir "dashboard"
 $VarDir = Join-Path $ScriptDir "var"
 $VarDbDir = Join-Path $VarDir "db"
 $VarRunDir = Join-Path $VarDir "run"
 $LogDir = Join-Path $VarDir "log"
 
-# Ensure all directory structures exist
-foreach ($dir in @($VarDir, $VarDbDir, $VarRunDir, $LogDir)) {
-    if (-not (Test-Path -Path $dir)) {
-        New-Item -ItemType Directory -Path $dir -Force | Out-Null
-    }
-}
-
-. (Join-Path $ScriptDir "src/lib/autopilot-prompts.ps1")
-
+# Define logging functions EARLY to avoid "CommandNotFound" in trap blocks
 $StartLogPath = Join-Path $LogDir ("start-autopilot-{0}.log" -f (Get-Date -Format "yyyyMMdd-HHmmss"))
-$script:StartedProcessIds = @()
-$PidFilePath = Join-Path $VarRunDir "autopilot-pids.json"
 
 function Write-StartLog {
     param(
@@ -44,8 +37,20 @@ function Write-StartLog {
         [ValidateSet("INFO", "WARN", "ERROR")][string]$Level = "INFO"
     )
 
-    $line = "{0} [{1}] {2}" -f (Get-Date -Format o), $Level, $Message
-    Add-Content -Path $StartLogPath -Value $line -Encoding UTF8
+    try {
+        $line = "{0} [{1}] {2}" -f (Get-Date -Format o), $Level, $Message
+        if ($StartLogPath) {
+            # Ensure LogDir exists
+            $currentLogDir = Split-Path $StartLogPath
+            if (-not (Test-Path -Path $currentLogDir)) {
+                New-Item -ItemType Directory -Path $currentLogDir -Force | Out-Null
+            }
+            Add-Content -Path $StartLogPath -Value $line -Encoding UTF8 -ErrorAction SilentlyContinue
+        }
+    } catch {
+        # Fallback to Write-Host if logging fails (prevents trap recursion)
+        Write-Host "[LOG-FAIL] $Message" -ForegroundColor Gray
+    }
 }
 
 function Write-InitStatus {
@@ -58,6 +63,18 @@ function Write-InitStatus {
     Write-Host $Message -ForegroundColor $Color
     Write-StartLog -Message $Message -Level $Level
 }
+
+# Ensure all directory structures exist
+foreach ($dir in @($VarDir, $VarDbDir, $VarRunDir, $LogDir)) {
+    if (-not (Test-Path -Path $dir)) {
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+    }
+}
+
+. (Join-Path $ScriptDir "src/lib/autopilot-prompts.ps1")
+
+$script:StartedProcessIds = @()
+$PidFilePath = Join-Path $VarRunDir "autopilot-pids.json"
 
 trap {
     $message = "Unhandled start error at line $($_.InvocationInfo.ScriptLineNumber): $($_.Exception.Message)"

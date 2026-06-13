@@ -18,28 +18,18 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
 
-$ScriptDir = $PSScriptRoot
+# Robust ScriptDir detection
+$ScriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+if (-not $ScriptDir) { $ScriptDir = Get-Location }
+
 $DashboardDir = Join-Path $ScriptDir "dashboard"
 $VarDir = Join-Path $ScriptDir "var"
 $VarDbDir = Join-Path $VarDir "db"
 $VarRunDir = Join-Path $VarDir "runtime"
 $LogDir = Join-Path $VarDir "log"
 
-# Ensure all directory structures exist
-foreach ($dir in @($VarDir, $VarDbDir, $VarRunDir, $LogDir)) {
-    if (-not (Test-Path -Path $dir)) {
-        New-Item -ItemType Directory -Path $dir -Force | Out-Null
-    }
-}
-
-# Lade Kernfunktionen (aus src/core, da wir es nach core verschoben haben)
-if (Test-Path (Join-Path $ScriptDir "src/core/autopilot-prompts.ps1")) {
-    . (Join-Path $ScriptDir "src/core/autopilot-prompts.ps1")
-}
-
+# Define logging functions EARLY to avoid "CommandNotFound" in trap blocks
 $StartLogPath = Join-Path $LogDir ("start-autopilot-{0}.log" -f (Get-Date -Format "yyyyMMdd-HHmmss"))
-$script:StartedProcessIds = @()
-$PidFilePath = Join-Path $VarRunDir "autopilot-pids.json"
 
 function Write-StartLog {
     param(
@@ -47,8 +37,20 @@ function Write-StartLog {
         [ValidateSet("INFO", "WARN", "ERROR")][string]$Level = "INFO"
     )
 
-    $line = "{0} [{1}] {2}" -f (Get-Date -Format o), $Level, $Message
-    Add-Content -Path $StartLogPath -Value $line -Encoding UTF8
+    try {
+        $line = "{0} [{1}] {2}" -f (Get-Date -Format o), $Level, $Message
+        if ($StartLogPath) {
+            # Ensure LogDir exists
+            $currentLogDir = Split-Path $StartLogPath
+            if (-not (Test-Path -Path $currentLogDir)) {
+                New-Item -ItemType Directory -Path $currentLogDir -Force | Out-Null
+            }
+            Add-Content -Path $StartLogPath -Value $line -Encoding UTF8 -ErrorAction SilentlyContinue
+        }
+    } catch {
+        # Fallback to Write-Host if logging fails (prevents trap recursion)
+        Write-Host "[LOG-FAIL] $Message" -ForegroundColor Gray
+    }
 }
 
 function Write-InitStatus {
@@ -60,15 +62,6 @@ function Write-InitStatus {
 
     Write-Host $Message -ForegroundColor $Color
     Write-StartLog -Message $Message -Level $Level
-}
-
-trap {
-    $message = "Unhandled start error at line $($_.InvocationInfo.ScriptLineNumber): $($_.Exception.Message)"
-    Write-StartLog -Message $message -Level "ERROR"
-    Write-Host "[ERROR] $message" -ForegroundColor Red
-    Write-Host "[ERROR] Start-Log: $StartLogPath" -ForegroundColor Yellow
-    Stop-StartedAutopilotProcesses
-    break
 }
 
 function Import-Pids {
@@ -215,6 +208,256 @@ function Stop-AutopilotSuiteProcesses {
     }
 
     Start-Sleep -Seconds 2
+}
+
+function Show-AutopilotSuiteStatus {
+    $processes = @(Get-AutopilotSuiteProcess | Sort-Object ProcessId -Unique)
+    if ($processes.Count -eq 0) {
+        Write-Host "[CONTROL] Keine Autopilot-Prozesse aktiv." -ForegroundColor Yellow
+        return
+    }
+
+    Write-Host "[CONTROL] Aktive Suite-Prozesse: $($processes.ProcessId -join ', ')" -ForegroundColor Cyan
+    Write-StartLog -Message "Control status active PIDs: $($processes.ProcessId -join ', ')"
+}
+
+function Get-AutopilotControlStateSummary {
+    $statePath = Join-Path $VarDbDir "active-sessions.json"
+    if (-not (Test-Path -LiteralPath $statePath)) {
+        return "[STATE] Noch kein active-sessions.json gefunden."
+    }
+
+    try {
+        $state = Get-Content -LiteralPath $statePath -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
+        $lastBeat = [datetimeoffset]::MinValue
+        $hasLastBeat = $false
+        if ($state.last_heartbeat) {
+            try {
+                $lastBeat = [datetimeoffset]::Parse([string]$state.last_heartbeat, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind)
+                $hasLastBeat = $true
+            } catch {
+                $hasLastBeat = [datetimeoffset]::TryParse([string]$state.last_heartbeat, [ref]$lastBeat)
+            }
+        }
+        $beatAge = if ($hasLastBeat) {
+            "{0:N0}m" -f ((Get-Date) - $lastBeat.LocalDateTime).TotalMinutes
+        } else {
+            "n/a"
+        }
+        $delegCount = @($state.active_delegations).Count
+        $reviewCount = @($state.review_queue).Count
+        $decisionCount = @($state.decisions_pending).Count
+        $sessionId = [string]$state.session_id
+        $time = Get-Date -Format "HH:mm:ss"
+        return "[STATE $time] Session=$sessionId Beat=$beatAge Delegierungen=$delegCount Review=$reviewCount Entscheidungen=$decisionCount"
+    } catch {
+        return "[STATE] Fehler beim Lesen von active-sessions.json: $($_.Exception.Message)"
+    }
+}
+
+function Wait-AutopilotControlConsole {
+    $previousTreatControlCAsInput = $false
+    try {
+        $previousTreatControlCAsInput = [Console]::TreatControlCAsInput
+        [Console]::TreatControlCAsInput = $true
+    } catch {}
+
+    Write-Host ""
+    Write-Host "=====================================" -ForegroundColor Green
+    Write-Host " VORCE AUTOPILOT CONTROL (Optimized)" -ForegroundColor Green
+    Write-Host "=====================================" -ForegroundColor Green
+    Write-Host " Q = komplette Suite beenden" -ForegroundColor Cyan
+    Write-Host " Ctrl+C = komplette Suite beenden" -ForegroundColor Cyan
+    Write-Host " S = aktive Prozesse anzeigen" -ForegroundColor Cyan
+    Write-Host " W = sofortigen Autopilot Wake-Up triggern" -ForegroundColor Cyan
+    Write-Host "=====================================" -ForegroundColor Green
+    Write-Host ""
+    Write-StartLog -Message "Control console active."
+    Write-Host (Get-AutopilotControlStateSummary) -ForegroundColor DarkGray
+
+    $watcher = New-Object System.IO.FileSystemWatcher
+    $watcher.Path = $VarDbDir
+    $watcher.Filter = "active-sessions.json"
+    $watcher.IncludeSubdirectories = $false
+    $watcher.EnableRaisingEvents = $true
+
+    $action = {
+        $summary = Get-AutopilotControlStateSummary
+        Write-Host "`n$summary" -ForegroundColor DarkGray
+
+        # Prometheus Metrics (OPT-03)
+        try {
+            $state = Get-Content -LiteralPath $Event.SourceEventArgs.FullPath -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction SilentlyContinue
+            if ($state) {
+                $metricsPath = Join-Path $Event.SourceEventArgs.FullPath "..\metrics.txt"
+                $metricsContent = @"
+# HELP autopilot_active_delegations Number of active delegations
+# TYPE autopilot_active_delegations gauge
+autopilot_active_delegations $(@($state.active_delegations).Count)
+# HELP autopilot_review_queue Number of pending reviews
+# TYPE autopilot_review_queue gauge
+autopilot_review_queue $(@($state.review_queue).Count)
+# HELP autopilot_decisions_pending Number of pending decisions
+# TYPE autopilot_decisions_pending gauge
+autopilot_decisions_pending $(@($state.decisions_pending).Count)
+# HELP autopilot_working_sessions Number of active working sessions
+# TYPE autopilot_working_sessions gauge
+autopilot_working_sessions $(@($state.working_sessions).Count)
+"@
+                Set-Content -Path $metricsPath -Value $metricsContent -Encoding UTF8 -Force
+            }
+        } catch {}
+    }
+
+    $eventJob = Register-ObjectEvent $watcher "Changed" -Action $action
+
+    try {
+        while ($true) {
+            $keyAvailable = $false
+            try { $keyAvailable = [Console]::KeyAvailable } catch {}
+            if (-not $keyAvailable) {
+                Start-Sleep -Milliseconds 500
+                continue
+            }
+
+            $key = [Console]::ReadKey($true)
+            if ($key.Key -eq "C" -and ($key.Modifiers -band [ConsoleModifiers]::Control)) {
+                Write-Host "[CONTROL] Ctrl+C erkannt. Beende Vorce Autopilot Suite..." -ForegroundColor Yellow
+                Write-StartLog -Message "Control requested suite stop via Ctrl+C."
+                Stop-AutopilotSuiteProcesses
+                Write-Host "[CONTROL] Suite beendet." -ForegroundColor Green
+                Write-StartLog -Message "Suite stopped by control console."
+                return
+            }
+
+            switch ($key.Key) {
+                "Q" {
+                    Write-Host "[CONTROL] Beende Vorce Autopilot Suite..." -ForegroundColor Yellow
+                    Write-StartLog -Message "Control requested suite stop."
+                    Stop-AutopilotSuiteProcesses
+                    Write-Host "[CONTROL] Suite beendet." -ForegroundColor Green
+                    Write-StartLog -Message "Suite stopped by control console."
+                    return
+                }
+                "S" {
+                    Show-AutopilotSuiteStatus
+                }
+                "W" {
+                    $wakeupFile = Join-Path $ScriptDir "autopilot.wakeup"
+                    Set-Content -Path $wakeupFile -Value (Get-Date -Format o) -Encoding UTF8
+                    Write-Host "[CONTROL] Wake-Up Trigger geschrieben: $wakeupFile" -ForegroundColor Green
+                    Write-StartLog -Message "Control wrote wakeup trigger: $wakeupFile"
+                }
+            }
+        }
+    } finally {
+        Unregister-Event -SourceIdentifier $eventJob.Name -ErrorAction SilentlyContinue
+        $watcher.Dispose()
+        try {
+            [Console]::TreatControlCAsInput = $previousTreatControlCAsInput
+        } catch {}
+    }
+}
+
+function Test-LocalPortListening {
+    param([Parameter(Mandatory)][int]$Port)
+    try {
+        # Fallback für ältere Systeme: Test-Connection auf Port (PowerShell Core)
+        return $null -ne (Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1)
+    } catch {
+        # Fallback: Test-NetConnection (PowerShell 3+)
+        try {
+            return (Test-NetConnection -ComputerName 127.0.0.1 -Port $Port -ErrorAction SilentlyContinue).TcpTestSucceeded
+        } catch {
+            return $false
+        }
+    }
+}
+
+function Wait-LocalPortFree {
+    param(
+        [Parameter(Mandatory)][int]$Port,
+        [int]$TimeoutSeconds = 10
+    )
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        if (-not (Test-LocalPortListening -Port $Port)) { return $true }
+        Start-Sleep -Milliseconds 500
+    }
+
+    return -not (Test-LocalPortListening -Port $Port)
+}
+
+function Test-DashboardHealth {
+    param(
+        [int]$TimeoutSeconds = 20
+    )
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        try {
+            $index = Invoke-WebRequest -Uri "http://127.0.0.1:5173" -UseBasicParsing -TimeoutSec 3
+            $health = Invoke-RestMethod -Uri "http://127.0.0.1:5173/api/health" -TimeoutSec 3
+            $expectedRoot = [System.IO.Path]::GetFullPath($ScriptDir).TrimEnd('\')
+            $actualRoot = [System.IO.Path]::GetFullPath([string]$health.root).TrimEnd('\')
+            if ($index.StatusCode -eq 200 -and [string]$health.service -eq "vorce-autopilot-dashboard" -and [int]$health.schema -ge 2 -and $actualRoot -eq $expectedRoot) {
+                return $true
+            }
+        } catch {
+            Start-Sleep -Milliseconds 750
+        }
+    }
+
+    return $false
+}
+
+function Stop-LocalPortOwner {
+    param([Parameter(Mandatory)][int]$Port)
+
+    $owners = @(Get-NetTCPConnection -State Listen -LocalPort $Port -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique)
+    foreach ($ownerPid in $owners) {
+        if ([int]$ownerPid -gt 0 -and [int]$ownerPid -ne $PID) {
+            Write-InitStatus "[INIT] Beende veralteten Prozess auf Port $Port (PID $ownerPid)." -Color Yellow
+            Stop-Process -Id ([int]$ownerPid) -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+$script:StartedProcessIds = @()
+$PidFilePath = Join-Path $VarRunDir "autopilot-pids.json"
+
+trap {
+    $message = "Unhandled start error at line $($_.InvocationInfo.ScriptLineNumber): $($_.Exception.Message)"
+    Write-StartLog -Message $message -Level "ERROR"
+    Write-Host "[ERROR] $message" -ForegroundColor Red
+    Write-Host "[ERROR] Start-Log: $StartLogPath" -ForegroundColor Yellow
+    Stop-StartedAutopilotProcesses
+    break
+}
+
+# --- Executable Logic Starts Here ---
+
+# Ensure all directory structures exist
+foreach ($dir in @($VarDir, $VarDbDir, $VarRunDir, $LogDir)) {
+    if (-not (Test-Path -Path $dir)) {
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+    }
+}
+
+# Lade Kernfunktionen (aus src/core, da wir es nach core verschoben haben)
+$promptsScript = Join-Path $ScriptDir "src/core/autopilot-prompts.ps1"
+if (Test-Path $promptsScript) {
+    # Preventive Unblock-File to help with Execution Policy on Windows
+    if (Get-Command Unblock-File -ErrorAction SilentlyContinue) {
+        Unblock-File -Path $promptsScript -ErrorAction SilentlyContinue
+    }
+    try {
+        . $promptsScript
+    } catch {
+        Write-Warning "[INIT] Prompt-Bibliothek konnte nicht geladen werden: $($_.Exception.Message)"
+        Write-Warning "[INIT] Moegliche Ursache: ExecutionPolicy. Versuche: 'Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass'"
+    }
 }
 
 function Show-AutopilotSuiteStatus {

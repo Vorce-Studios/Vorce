@@ -19,7 +19,10 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
 
-$ScriptDir = $PSScriptRoot
+# Robust ScriptDir detection
+$ScriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+if (-not $ScriptDir) { $ScriptDir = Get-Location }
+
 $script:VarLogDir = Join-Path $ScriptDir "var/log"
 $script:VarDbDir = Join-Path $ScriptDir "var/db"
 $script:AutopilotLiveLogPath = Join-Path $script:VarLogDir "autopilot-live.log"
