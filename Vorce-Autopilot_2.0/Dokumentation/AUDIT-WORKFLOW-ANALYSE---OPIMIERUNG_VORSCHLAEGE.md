@@ -9,13 +9,11 @@
 ## Aktueller Audit Alert Workflow
 
 ### 1. Alert-Entstehung
-
 - Audit-System erkennt Probleme (z.B. PR #779 verletzt Vorce-Namenskonvention)
 - Alert wird in `state.decisions_pending` gespeichert
 - Alert enthält: `topic`, `context`, `remediation_command`, `remediation_result`, `owner`
 
 ### 2. Alert-Anzeige im Dashboard
-
 ```tsx
 {sessions.decisions_pending && sessions.decisions_pending.length > 0 && (
   <div className="audit-alerts">
@@ -26,14 +24,12 @@
 )}
 ```
 
-### 3. Aktuelle Aktionen für jeden Alert
-
+### 3. Aktuelle Aktionen für jeden Alert:
 1. **"Alle löschen"** - `/api/clear-alerts` → `state.decisions_pending = []`
 2. **Einzelner Alert "Trashing"** - `updateAuditAlert('remove', id)` → Alert aus Liste entfernt
 3. **"An mich eskalieren"** - `updateAuditAlert('escalate-user', id, reason)` → Alert wird User-zuständig
 
 ### 4. API-Endpunkt `/api/alerts` (vite.config.ts:396-502)
-
 ```typescript
 // NEW: Handle "close-alert" action - mark alert as closed with optional comment
 if (payload.action === 'close-alert') {
@@ -66,29 +62,24 @@ if (payload.action === 'ignore-alert') {
 ## Analyse der Probleme
 
 ### Problem 1: alerts wiederholen sich bei gleichen PRs
-
 **Beschreibung**: Alert für "PR #779 verletzt Vorce-Namenskonvention" erscheint jedes Mal wieder, auch wenn der User ihn bereits "gelöscht"/"geschlossen" hat.
 
 **Ursache**:
-
 1. Alert ist **temporär** - speichert sich nicht dauerhaft im State
 2. PR #779 existiert weiterhin im GitHub
 3. Audit-System prüft jedes Mal alle offenen PRs neu
 4. Keine Memory-Basierung - die Alerts werden nicht als "verarbeitet" markiert
 
 **Betroffenen Bereiche**:
-
 - `/api/clear-alerts` löscht nur die Anzeige, nicht die zugrundeliegende PR-Prüfung
 - `remove` Aktion entfernt nur den Alert aus `decisions_pending`, nicht als "verarbeitet" markiert
 
 ---
 
 ### Problem 2: Keine Möglichkeit für "Permanente Ignorierung" mit Kommentar
-
 **Beschreibung**: User kann Alert nur "remove" (temporär) oder "clear" (alle löschen), aber **nicht dauerhaft ignorieren mit Begründung**.
 
 **Aktuelle Limitationen**:
-
 1. `remove` Aktion löscht Alert nur aus `decisions_pending` →下次 wieder erscheinen
 2. Kein `ignore-permanent` Action mit Memory-Erstellung
 3. Kein Kommentar-Feld in der UI für User-Feedback
@@ -96,11 +87,9 @@ if (payload.action === 'ignore-alert') {
 ---
 
 ### Problem 3: UI ist unklar - was passiert beim "Löschen"?
-
 **Beschreibung**: User klickt auf "Löschen"-Button und denkt, das Problem ist gelöst, aber es erscheint beim nächsten Scan neu.
 
 **UI-Probleme**:
-
 1. Button-Title sagt nur "Audit Alert löschen" → unklar ob temporär oder permanent
 2. Keine Status-Anzeige (`closed`, `ignored`, `solved`)
 3. Keine Feedback-Nachricht nach Aktion
@@ -114,7 +103,6 @@ if (payload.action === 'ignore-alert') {
 **Konzept**: Ersetze "Trash"-Button durch "Close"-Button mit Kommentar-Feld.
 
 **Implementierung**:
-
 ```tsx
 // Neue Aktion: Close mit Kommentar
 <div className="flex gap-2 mt-3">
@@ -143,7 +131,6 @@ if (payload.action === 'ignore-alert') {
 ```
 
 **API-Changes**:
-
 ```typescript
 // In vite.config.ts: close-alert
 if (payload.action === 'close-alert') {
@@ -160,14 +147,12 @@ if (payload.action === 'close-alert') {
 ```
 
 **Vorteile**:
-
 - ✅ User-Feedback wird dokumentiert
 - ✅ Memory wird erstellt für zukünftige PR-Prüfungen
 - ✅/alert wird als "closed" markiert (kein erneutes Erscheinen)
 - ✅ Begründung ist für andere Agenten sichtbar
 
 **Nachteile**:
-
 - ⚠️ Required UI-Änderung (Modal für Kommentar)
 
 ---
@@ -177,7 +162,6 @@ if (payload.action === 'close-alert') {
 **Konzept**: Füge Status-Chip und History-Log zu jedem Alert hinzu.
 
 **Implementierung**:
-
 ```tsx
 <div className="flex items-center gap-2 mb-2">
   {alert.status === 'closed' && (
@@ -197,7 +181,6 @@ if (payload.action === 'close-alert') {
 ```
 
 **Vorteile**:
-
 - ✅ User sieht sofort Status
 - ✅ Comment wird sichtbar
 - ✅ Verlauf wird dokumentiert
@@ -209,7 +192,6 @@ if (payload.action === 'close-alert') {
 **Konzept**: Automatische Memory-Erstellung bei "Ignore" mit smarter Pattern-Matching.
 
 **Implementierung**:
-
 ```typescript
 // Memory-Entry für ignored Alert
 const memoryEntry = {
@@ -227,13 +209,11 @@ const memoryEntry = {
 ```
 
 **Vorteile**:
-
 - ✅ Memory ist strukturiert für spätere Nutzung
 - ✅ Agent kann "Never Again" Regeln abrufen
 - ✅ Reduktion von wiederholten Alerts
 
 **Nachteile**:
-
 - ⚠️ Required Backend-Änderung (Agent prüft Memory before Alert)
 
 ---
@@ -243,7 +223,6 @@ const memoryEntry = {
 **Konzept**: Wenn mehrere Alerts gleicher Art (z.B. alle "PR #XXX verletzt Namenskonvention"), bieten "Alle ignorieren" an.
 
 **Implementierung**:
-
 ```tsx
 {sessions.decisions_pending.filter(a => a.topic.includes('Namenskonvention')).length > 1 && (
   <button
@@ -256,7 +235,6 @@ const memoryEntry = {
 ```
 
 **Vorteile**:
-
 - ✅ schneller für wiederkehrende Probleme
 - ✅ weniger Clicks für User
 
@@ -267,13 +245,11 @@ const memoryEntry = {
 ### Phase 1: UI-Update (Sofort)
 
 **Änderungen**:
-
 1. "Trash"-Button durch "Close"-Button ersetzen
 2. Modal für Kommentar-Feld hinzufügen
 3. Status-Chip für `closed`, `ignored` hinzufügen
 
 **Code-Änderungen**:
-
 ```tsx
 // DashboardPage.tsx: Close-Button statt Trash
 <div className="flex justify-end gap-2 mt-3">
@@ -334,13 +310,11 @@ const memoryEntry = {
 ### Phase 2: Backend-Check (Nächster Sprint)
 
 **Änderungen**:
-
 1. Agent prüft Memory vor Alert-Erstellung
 2. Wenn Memory entry exists für `IGNORE_ALERT: ${topic}` → Alert nicht erzeugen
 3. Memory entries werden periodic cleaned up nach 90 Tagen
 
 **Code-Änderungen** (Backend):
-
 ```typescript
 // In audit-phase.ts
 function shouldGenerateAlert(alert: Alert): boolean {
@@ -364,7 +338,6 @@ function shouldGenerateAlert(alert: Alert): boolean {
 ## Fazit
 
 ### Aktueller Status
-
 - ✅ API-Endpunkte existieren bereits (`close-alert`, `ignore-alert`)
 - ✅ Memory-Erstellung ist implementiert
 - ❌ UI fehlt (Trash-Button statt Close-Button)
@@ -372,14 +345,12 @@ function shouldGenerateAlert(alert: Alert): boolean {
 - ❌ Kein Kommentar-Feld in UI
 
 ### Empfohlene Nächste Schritte
-
 1. **Sofort**: UI Update - Close-Button mit Modal & Kommentar
 2. **Sprint 1**: Status-Chips & Verlauf anzeigen
 3. **Sprint 2**: Agent prüft Memory before Alert-Erstellung
 4. **Optional**: Bulk-Processing für wiederkehrende Alerts
 
 ### Warum das wichtig ist
-
 - **User Experience**: User wissen nicht, warum Alerts neu erscheinen
 - **Wiederholte Arbeit**: User müssen jedes Mal denselben Alert "löschen"
 - **Memory-Nutzung**: Die Memory-Speicherung ist bereits implementiert, wird aber nicht genutzt

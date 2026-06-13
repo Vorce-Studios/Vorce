@@ -10,7 +10,7 @@ ci:
 
   # Skip Rust hooks in CI (no toolchain available)
   # Skip markdownlint (too many false positives with tables)
-  skip: [fmt, clippy, cargo-sort, markdownlint-fix]
+  skip: []
 
   submodules: false
 
