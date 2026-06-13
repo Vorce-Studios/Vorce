@@ -74,20 +74,20 @@ function Write-Host {
 }
 
 # --- Load libraries ---
-. (Join-Path $ScriptDir "src/lib/state-manager.ps1")
-. (Join-Path $ScriptDir "src/lib/quota-manager.ps1")
-. (Join-Path $ScriptDir "src/lib/cli-router.ps1")
-. (Join-Path $ScriptDir "src/lib/memory-store.ps1")
-. (Join-Path $ScriptDir "src/lib/deliberation-engine.ps1")
-. (Join-Path $ScriptDir "src/lib/autopilot-session-manager.ps1")
-. (Join-Path $ScriptDir "src/lib/autopilot-prompts.ps1")
-. (Join-Path $ScriptDir "src/lib/github-client.ps1")
-. (Join-Path $ScriptDir "src/lib/jules-client.ps1")
-. (Join-Path $ScriptDir "src/lib/naming-convention.ps1")
-. (Join-Path $ScriptDir "src/lib/project-manager.ps1")
-. (Join-Path $ScriptDir "src/lib/planning-utils.ps1")
-. (Join-Path $ScriptDir "src/lib/checkdoing-utils.ps1")
-. (Join-Path $ScriptDir "src/orchestrator/Invoke-MainRun.ps1")
+. (Join-Path $ScriptDir "src/lib/state/state-manager.ps1")
+. (Join-Path $ScriptDir "src/lib/engines/quota-manager.ps1")
+. (Join-Path $ScriptDir "src/core/cli-router.ps1")
+. (Join-Path $ScriptDir "src/lib/state/memory-store.ps1")
+. (Join-Path $ScriptDir "src/lib/engines/deliberation-engine.ps1")
+. (Join-Path $ScriptDir "src/lib/state/autopilot-session-manager.ps1")
+. (Join-Path $ScriptDir "src/core/autopilot-prompts.ps1")
+. (Join-Path $ScriptDir "src/lib/integrations/github-client.ps1")
+. (Join-Path $ScriptDir "src/lib/integrations/jules-client.ps1")
+. (Join-Path $ScriptDir "src/lib/utils/naming-convention.ps1")
+. (Join-Path $ScriptDir "src/lib/utils/project-manager.ps1")
+. (Join-Path $ScriptDir "src/lib/utils/planning-utils.ps1")
+. (Join-Path $ScriptDir "src/lib/utils/checkdoing-utils.ps1")
+. (Join-Path $ScriptDir "src/core/Invoke-MainRun.ps1")
 
 # Dummy command/placeholder for backward compatibility check
 function Get-VorceLagebildSummary {
@@ -145,7 +145,7 @@ $QuotaRegistry = Read-QuotaRegistry
 
 # --- Single-shot modes (V2.0: Nutzen die neue MAIN-RUN Architektur) ---
 if ($PlanOnce.IsPresent) {
-    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-01_Planning.ps1"
+    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-01_Planning/MAIN-RUN-01_Planning.ps1"
     & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
     Write-Host $summary -ForegroundColor DarkGray
@@ -153,7 +153,7 @@ if ($PlanOnce.IsPresent) {
 }
 
 if ($CheckAndDoingOnce.IsPresent) {
-    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-02_CheckAndDoing.ps1"
+    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-02_CheckAndDoing/MAIN-RUN-02_CheckAndDoing.ps1"
     & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
     Write-Host $summary -ForegroundColor DarkGray
@@ -161,7 +161,7 @@ if ($CheckAndDoingOnce.IsPresent) {
 }
 
 if ($AuditOnce.IsPresent) {
-    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-03_Audit.ps1"
+    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-03_Audit/MAIN-RUN-03_Audit.ps1"
     & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
     Write-Host $summary -ForegroundColor DarkGray
@@ -169,7 +169,7 @@ if ($AuditOnce.IsPresent) {
 }
 
 if ($OptimizeOnce.IsPresent) {
-    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-04_Optimizer.ps1"
+    $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-04_Optimizer/MAIN-RUN-04_Optimizer.ps1"
     & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
     Write-Host $summary -ForegroundColor DarkGray
@@ -282,7 +282,7 @@ while ($true) {
 
         # Asynchroner Audit-Lauf (MAIN-RUN-03)
         try {
-            $auditScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-03_Audit.ps1"
+            $auditScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-03_Audit/MAIN-RUN-03_Audit.ps1"
             & $auditScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
         } catch {
             Write-Host "[LOOP] Audit-Fehler: $_" -ForegroundColor Red
@@ -290,7 +290,7 @@ while ($true) {
 
         # Asynchroner Optimizer-Lauf (MAIN-RUN-04)
         try {
-            $optScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-04_Optimizer.ps1"
+            $optScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-04_Optimizer/MAIN-RUN-04_Optimizer.ps1"
             & $optScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
         } catch {
             Write-Host "[LOOP] Optimizer-Fehler: $_" -ForegroundColor Red
@@ -300,7 +300,7 @@ while ($true) {
     if ($memOptDue) {
         $lastMemoryOptTime = Get-Date
         try {
-            $memOptScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-05_MemoryOptimization.ps1"
+            $memOptScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-05_MemoryOptimization/MAIN-RUN-05_MemoryOptimization.ps1"
             & $memOptScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
         } catch {
             Write-Host "[LOOP] MemoryOptimization-Fehler: $_" -ForegroundColor Red
