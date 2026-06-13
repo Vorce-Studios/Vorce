@@ -24,7 +24,7 @@ pub mod sequence;
 pub mod test_pattern_decoder;
 
 pub use decoder::{HwAccelType, PixelFormat, VideoDecoder};
-pub use ffmpeg_decoder::FFmpegDecoder;
+pub use ffmpeg_decoder::FfmpegDecoder;
 #[cfg(feature = "hap")]
 pub use hap_decoder::{decode_hap_frame, HapError, HapFrame, HapTextureType};
 pub use image_decoder::{GifDecoder, StillImageDecoder};
@@ -112,7 +112,7 @@ pub fn open_path_with_hw_accel<P: AsRef<Path>>(
 /// - If path has a still image extension, `StillImageDecoder` is used.
 /// - If HAP feature is enabled and file might be HAP, try HAP decoder first.
 /// - If libmpv feature is enabled, use MPV decoder (supports all formats).
-/// - Otherwise, use FFmpegDecoder.
+/// - Otherwise, use FfmpegDecoder.
 pub fn open_path<P: AsRef<Path>>(path: P) -> Result<VideoPlayer> {
     let path = path.as_ref();
 
@@ -147,7 +147,7 @@ fn open_video_file_with_hw_accel<P: AsRef<Path>>(
     let path = path.as_ref();
 
     // Try FFmpeg first (stable, full frame support)
-    match FFmpegDecoder::open_with_hw_accel(path, hw_accel) {
+    match FfmpegDecoder::open_with_hw_accel(path, hw_accel) {
         Ok(decoder) => {
             tracing::info!("Opened with FFmpeg decoder (hw_accel={:?}): {:?}", hw_accel, path);
             return Ok(Box::new(decoder));
@@ -190,7 +190,7 @@ fn open_video_file<P: AsRef<Path>>(path: P) -> Result<Box<dyn VideoDecoder>> {
     #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
     let hw_accel = HwAccelType::None;
 
-    match FFmpegDecoder::open_with_hw_accel(path, hw_accel) {
+    match FfmpegDecoder::open_with_hw_accel(path, hw_accel) {
         Ok(decoder) => {
             tracing::info!("Opened with FFmpeg decoder (hw_accel={:?}): {:?}", hw_accel, path);
             return Ok(Box::new(decoder));
@@ -201,7 +201,7 @@ fn open_video_file<P: AsRef<Path>>(path: P) -> Result<Box<dyn VideoDecoder>> {
     }
 
     // 2. Try FFmpeg with NO hardware acceleration (best compatibility)
-    match FFmpegDecoder::open_with_hw_accel(path, HwAccelType::None) {
+    match FfmpegDecoder::open_with_hw_accel(path, HwAccelType::None) {
         Ok(decoder) => {
             tracing::info!("Opened with FFmpeg software decoder: {:?}", path);
             return Ok(Box::new(decoder));

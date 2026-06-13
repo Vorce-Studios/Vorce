@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, Activity, Settings, RefreshCw, Zap, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Activity, Settings, RefreshCw, Zap, BarChart3, Menu, X } from 'lucide-react';
 import { useData, useAutoRefresh } from './hooks';
 
 // Pages
@@ -63,6 +63,7 @@ const defaultActiveSessions: ActiveSessions = {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Fetch data hooks
   const { data: config, loading: configLoading, refetch: refetchConfig } = useData<AutopilotConfig>('/autopilot-config.json', defaultAutopilotConfig);
@@ -130,15 +131,26 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Top Header Navigation */}
-      <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-30">
+        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
-              <Zap className="w-5 h-5 text-white" />
+            <button 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              title="Menü umschalten"
+            >
+              {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <Zap className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="text-md font-bold text-white tracking-wide">Vorce Autopilot</h1>
-              <p className="text-[10px] text-slate-400 font-medium">System Dashboard</p>
+              <h1 className="text-lg font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                Vorce Autopilot
+              </h1>
+              <div className="text-[10px] uppercase tracking-wider text-indigo-400 font-semibold">
+                AI CEO Orchestrator
+              </div>
             </div>
           </div>
 
@@ -156,10 +168,10 @@ export default function App() {
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row gap-6">
+      <main className="flex-1 w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row gap-6">
         {/* Navigation Sidebar */}
-        <aside className="md:w-64 flex-shrink-0">
-          <nav className="space-y-1.5 sticky top-22">
+        <aside className={`flex-shrink-0 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'md:w-64 opacity-100' : 'md:w-0 opacity-0 overflow-hidden'}`}>
+          <nav className="space-y-1.5 sticky top-22 w-64">
             <button
               onClick={() => setActiveTab('dashboard')}
               className={activeTab === 'dashboard' ? 'tab-btn-active w-full' : 'tab-btn-inactive w-full'}
@@ -205,7 +217,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 py-4 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 text-center text-xs text-slate-600">
+        <div className="w-full mx-auto px-4 text-center text-xs text-slate-600">
           Vorce-Autopilot Dashboard &bull; Build with Vite & React &bull; 2026
         </div>
       </footer>

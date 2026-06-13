@@ -1,7 +1,10 @@
+//! Layer and composition management action handlers.
+
 #![allow(unused_variables)]
 use crate::app::core::app_struct::App;
 use vorce_ui::UIAction;
 
+/// Handles setting layer opacity.
 pub fn handle_set_layer_opacity(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::SetLayerOpacity(id, opacity) = action {
         if let Some(layer) = app.state.layer_manager_mut().get_layer_mut(id) {
@@ -11,6 +14,7 @@ pub fn handle_set_layer_opacity(app: &mut App, action: UIAction, _needs_sync: &m
     }
 }
 
+/// Handles setting layer blend mode.
 pub fn handle_set_layer_blend_mode(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::SetLayerBlendMode(id, mode) = action {
         if let Some(layer) = app.state.layer_manager_mut().get_layer_mut(id) {
@@ -20,6 +24,7 @@ pub fn handle_set_layer_blend_mode(app: &mut App, action: UIAction, _needs_sync:
     }
 }
 
+/// Handles setting layer visibility.
 pub fn handle_set_layer_visibility(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::SetLayerVisibility(id, visible) = action {
         if let Some(layer) = app.state.layer_manager_mut().get_layer_mut(id) {
@@ -29,6 +34,7 @@ pub fn handle_set_layer_visibility(app: &mut App, action: UIAction, _needs_sync:
     }
 }
 
+/// Handles adding a new layer.
 pub fn handle_add_layer(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::AddLayer = action {
         let count = app.state.layer_manager.len();
@@ -37,6 +43,7 @@ pub fn handle_add_layer(app: &mut App, action: UIAction, _needs_sync: &mut bool)
     }
 }
 
+/// Handles creating a new layer group.
 pub fn handle_create_group(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::CreateGroup = action {
         let count = app.state.layer_manager.len();
@@ -45,6 +52,7 @@ pub fn handle_create_group(app: &mut App, action: UIAction, _needs_sync: &mut bo
     }
 }
 
+/// Handles reparenting a layer.
 pub fn handle_reparent_layer(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::ReparentLayer(id, parent_id) = action {
         app.state.layer_manager_mut().reparent_layer(id, parent_id);
@@ -52,6 +60,7 @@ pub fn handle_reparent_layer(app: &mut App, action: UIAction, _needs_sync: &mut 
     }
 }
 
+/// Handles swapping two layers.
 pub fn handle_swap_layers(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::SwapLayers(id1, id2) = action {
         app.state.layer_manager_mut().swap_layers(id1, id2);
@@ -59,6 +68,7 @@ pub fn handle_swap_layers(app: &mut App, action: UIAction, _needs_sync: &mut boo
     }
 }
 
+/// Handles toggling group collapsed state.
 pub fn handle_toggle_group_collapsed(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::ToggleGroupCollapsed(id) = action {
         if let Some(layer) = app.state.layer_manager_mut().get_layer_mut(id) {
@@ -68,6 +78,7 @@ pub fn handle_toggle_group_collapsed(app: &mut App, action: UIAction, _needs_syn
     }
 }
 
+/// Handles removing a layer.
 pub fn handle_remove_layer(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::RemoveLayer(id) = action {
         app.state.layer_manager_mut().remove_layer(id);
@@ -78,6 +89,7 @@ pub fn handle_remove_layer(app: &mut App, action: UIAction, _needs_sync: &mut bo
     }
 }
 
+/// Handles duplicating a layer.
 pub fn handle_duplicate_layer(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::DuplicateLayer(id) = action {
         if let Some(new_id) = app.state.layer_manager_mut().duplicate_layer(id) {
@@ -87,6 +99,7 @@ pub fn handle_duplicate_layer(app: &mut App, action: UIAction, _needs_sync: &mut
     }
 }
 
+/// Handles toggling layer solo state.
 pub fn handle_toggle_layer_solo(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::ToggleLayerSolo(id) = action {
         if let Some(layer) = app.state.layer_manager_mut().get_layer_mut(id) {
@@ -96,6 +109,7 @@ pub fn handle_toggle_layer_solo(app: &mut App, action: UIAction, _needs_sync: &m
     }
 }
 
+/// Handles toggling layer bypass state.
 pub fn handle_toggle_layer_bypass(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::ToggleLayerBypass(id) = action {
         if let Some(layer) = app.state.layer_manager_mut().get_layer_mut(id) {
@@ -105,6 +119,7 @@ pub fn handle_toggle_layer_bypass(app: &mut App, action: UIAction, _needs_sync: 
     }
 }
 
+/// Handles ejecting all layers.
 pub fn handle_eject_all_layers(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::EjectAllLayers = action {
         app.state.layer_manager_mut().eject_all();
@@ -112,6 +127,7 @@ pub fn handle_eject_all_layers(app: &mut App, action: UIAction, _needs_sync: &mu
     }
 }
 
+/// Handles setting layer transform.
 pub fn handle_set_layer_transform(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::SetLayerTransform(id, transform) = action {
         if let Some(layer) = app.state.layer_manager_mut().get_layer_mut(id) {
@@ -121,6 +137,7 @@ pub fn handle_set_layer_transform(app: &mut App, action: UIAction, _needs_sync: 
     }
 }
 
+/// Handles applying layer resize mode.
 pub fn handle_apply_resize_mode(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::ApplyResizeMode(id, mode) = action {
         let target_size = vorce_core::Vec2::new(
@@ -144,6 +161,7 @@ pub fn handle_apply_resize_mode(app: &mut App, action: UIAction, _needs_sync: &m
     }
 }
 
+/// Handles renaming a layer.
 pub fn handle_rename_layer(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::RenameLayer(id, name) = action {
         app.state.layer_manager_mut().rename_layer(id, name);

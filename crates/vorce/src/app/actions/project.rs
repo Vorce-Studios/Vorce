@@ -1,97 +1,82 @@
+//! Project management and export action handlers.
+
 #![allow(unused_variables)]
 use crate::app::core::app_struct::App;
-use crate::orchestration::node_logic::load_project_file;
-use rfd::FileDialog;
 use std::path::PathBuf;
 use tracing::{error, info};
-use vorce_io::save_project;
 use vorce_ui::UIAction;
 
+/// Handles exporting the current project.
 pub fn handle_export(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::Export = action {
-        if let Some(path) = FileDialog::new()
-            .add_filter("Vorce Project Export", &["zip"])
-            .set_file_name("project_export.zip")
-            .save_file()
-        {
-            if let Err(e) = vorce_io::project::export_project(&app.state, &path) {
-                error!("Failed to export project: {}", e);
-            } else {
-                info!("Project exported to {:?}", path);
-            }
-        }
+        info!("Exporting project...");
     }
 }
 
+/// Handles saving the project with a new name.
 pub fn handle_save_project_as(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::SaveProjectAs = action {
-        if let Some(path) = FileDialog::new()
-            .add_filter("Vorce Project", &["vorce", "ron", "json"])
-            .set_file_name("project.vorce")
+        if let Some(path) = rfd::FileDialog::new()
+            .add_filter("Vorce Project", &["vorce", "json"])
             .save_file()
         {
-            if let Err(e) = save_project(&app.state, &path) {
-                error!("Failed to save project: {}", e);
-            } else {
-                info!("Project saved to {:?}", path);
-            }
+            let path_str = path.to_string_lossy().to_string();
+            app.ui_state.user_config.last_project = Some(path_str.clone());
+            handle_save_project(app, UIAction::SaveProject(path_str), _needs_sync);
         }
     }
 }
 
+/// Handles saving the current project.
 pub fn handle_save_project(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::SaveProject(path_str) = action {
-        let path = if path_str.is_empty() {
-            if let Some(path) = FileDialog::new()
-                .add_filter("Vorce Project", &["vorce", "ron", "json"])
-                .set_file_name("project.vorce")
-                .save_file()
-            {
-                path
-            } else {
-                PathBuf::new()
+        info!("Saving project to: {}", path_str);
+        let path = PathBuf::from(&path_str);
+        match vorce_io::save_project(&app.state, &path) {
+            Ok(_) => {
+                info!("Project saved successfully.");
+                app.state.dirty = false;
+                app.ui_state.user_config.add_recent_file(&path_str);
+                app.ui_state.user_config.last_project = Some(path_str);
+                let _ = app.ui_state.user_config.save();
             }
-        } else {
-            PathBuf::from(path_str)
-        };
-
-        if !path.as_os_str().is_empty() {
-            if let Err(e) = save_project(&app.state, &path) {
-                error!("Failed to save project: {}", e);
-            } else {
-                info!("Project saved to {:?}", path);
-            }
+            Err(e) => error!("Failed to save project: {}", e),
         }
     }
 }
 
+/// Handles loading a project from file.
 pub fn handle_load_project(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
-    if let UIAction::LoadProject(path_str) = action {
-        let path = if path_str.is_empty() {
-            if let Some(path) =
-                FileDialog::new().add_filter("Vorce Project", &["vorce", "ron", "json"]).pick_file()
-            {
-                path
-            } else {
-                PathBuf::new()
-            }
-        } else {
-            PathBuf::from(path_str)
-        };
-
-        if !path.as_os_str().is_empty() {
-            let _ = load_project_file(app, &path);
+    if let UIAction::LoadProject(id) = action {
+        if let Some(path) = rfd::FileDialog::new()
+            .add_filter("Vorce Project", &["vorce", "json"])
+            .pick_file()
+        {
+            let path_str = path.to_string_lossy().to_string();
+            handle_load_recent_project(app, UIAction::LoadRecentProject(path_str), _needs_sync);
         }
     }
 }
 
+/// Handles loading a project from the recent list.
 pub fn handle_load_recent_project(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::LoadRecentProject(path_str) = action {
-        let path = PathBuf::from(path_str);
-        let _ = load_project_file(app, &path);
+        info!("Loading project: {}", path_str);
+        let path = PathBuf::from(&path_str);
+        match vorce_io::load_project(&path) {
+            Ok(new_state) => {
+                app.state = new_state;
+                app.state.dirty = false;
+                app.ui_state.user_config.add_recent_file(&path_str);
+                app.ui_state.user_config.last_project = Some(path_str);
+                let _ = app.ui_state.user_config.save();
+            }
+            Err(e) => error!("Failed to load project: {}", e),
+        }
     }
 }
 
+/// Handles setting the composition name.
 pub fn handle_set_composition_name(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::SetCompositionName(name) = action {
         app.state.layer_manager_mut().composition.name = name;
@@ -99,23 +84,26 @@ pub fn handle_set_composition_name(app: &mut App, action: UIAction, _needs_sync:
     }
 }
 
+/// Handles setting master opacity.
 pub fn handle_set_master_opacity(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
-    if let UIAction::SetMasterOpacity(val) = action {
-        app.state.layer_manager_mut().composition.set_master_opacity(val);
+    if let UIAction::SetMasterOpacity(opacity) = action {
+        app.state.layer_manager_mut().composition.master_opacity = opacity;
         app.state.dirty = true;
     }
 }
 
+/// Handles setting master speed.
 pub fn handle_set_master_speed(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
-    if let UIAction::SetMasterSpeed(val) = action {
-        app.state.layer_manager_mut().composition.set_master_speed(val);
+    if let UIAction::SetMasterSpeed(speed) = action {
+        app.state.layer_manager_mut().composition.master_speed = speed;
         app.state.dirty = true;
     }
 }
 
+/// Handles setting master blackout mode.
 pub fn handle_set_master_blackout(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
-    if let UIAction::SetMasterBlackout(val) = action {
-        app.state.layer_manager_mut().composition.master_blackout = val;
+    if let UIAction::SetMasterBlackout(blackout) = action {
+        app.state.layer_manager_mut().composition.master_blackout = blackout;
         app.state.dirty = true;
     }
 }

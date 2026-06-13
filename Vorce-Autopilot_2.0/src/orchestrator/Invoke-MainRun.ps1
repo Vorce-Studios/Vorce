@@ -74,7 +74,19 @@ function Invoke-MainRun {
                 $job = Start-Job -Name $subRunName -ScriptBlock {
                     param($ScriptPath, $MainState, $SubState, $GlobalState, $Config, $QuotaRegistry, $DryRun, $OrchRoot)
                     $Script:OrchestratorRoot = $OrchRoot
+                    . (Join-Path $OrchRoot "src/lib/state-manager.ps1")
                     . (Join-Path $OrchRoot "src/lib/run-state-manager.ps1")
+                    . (Join-Path $OrchRoot "src/lib/quota-manager.ps1")
+                    . (Join-Path $OrchRoot "src/lib/cli-router.ps1")
+                    . (Join-Path $OrchRoot "src/lib/memory-store.ps1")
+                    . (Join-Path $OrchRoot "src/lib/deliberation-engine.ps1")
+                    . (Join-Path $OrchRoot "src/lib/autopilot-session-manager.ps1")
+                    . (Join-Path $OrchRoot "src/lib/autopilot-prompts.ps1")
+                    . (Join-Path $OrchRoot "src/lib/github-client.ps1")
+                    . (Join-Path $OrchRoot "src/lib/jules-client.ps1")
+                    . (Join-Path $OrchRoot "src/lib/naming-convention.ps1")
+                    . (Join-Path $OrchRoot "src/lib/planning-utils.ps1")
+                    . (Join-Path $OrchRoot "src/lib/checkdoing-utils.ps1")
 
                     try {
                         # Frischen State laden, um Lese-Race-Conditions zu minimieren
@@ -110,8 +122,15 @@ function Invoke-MainRun {
                     if ($output -is [string]) { Write-Host "[JOB $($j.Def.name)] $output" }
                 }
 
-                # Den zurueckgegebenen SubState extrahieren (das letzte Objekt im Output-Stream)
-                $returnedState = $jobResult | Where-Object { $_ -is [pscustomobject] -and $_.PSObject.Properties.Name -contains "status" } | Select-Object -Last 1
+                # Den zurueckgegebenen SubState extrahieren
+                $returnedState = $null
+                $items = if ($jobResult -is [array]) { $jobResult } else { @($jobResult) }
+                foreach ($item in $items) {
+                    if ($null -ne $item -and $null -ne $item.status) {
+                        $returnedState = $item
+                    }
+                }
+                
                 if ($null -ne $returnedState) {
                     $j.SubRunState = $returnedState
                 }
