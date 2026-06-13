@@ -18,31 +18,21 @@ use vorce_media::MediaError;
 pub enum FfiError {
     #[error("NDI error: {0}")]
     /// Error: NDI error.
-    /// Error: NDI error.
-    /// Error: NDI error.
     NdiError(String),
 
     #[error("DeckLink error: {0}")]
-    /// Error: DeckLink error.
-    /// Error: DeckLink error.
     /// Error: DeckLink error.
     DeckLinkError(String),
 
     #[error("Spout error: {0}")]
     /// Error: Spout error.
-    /// Error: Spout error.
-    /// Error: Spout error.
     SpoutError(String),
 
     #[error("Syphon error: {0}")]
     /// Error: Syphon error.
-    /// Error: Syphon error.
-    /// Error: Syphon error.
     SyphonError(String),
 
     #[error("Media decoder error: {0}")]
-    /// Error: Media decoder error.
-    /// Error: Media decoder error.
     /// Error: Media decoder error.
     MediaDecoderError(String),
 
@@ -113,7 +103,7 @@ impl PluginApi {
 /// Retrieves the plugin version. Returns an error if the handle is null.
 ///
 /// # Safety
-/// `api` must be a valid pointer to a `PluginApi`. `out_version` must be a valid pointer to a `u32` where the version will be written.
+/// `api` and `out_version` must be valid, non-null pointers. `api` must point to a valid `PluginApi`.
 #[no_mangle]
 pub unsafe extern "C" fn vorce_plugin_get_version(
     api: *const PluginApi,
