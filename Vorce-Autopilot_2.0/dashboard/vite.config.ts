@@ -686,7 +686,16 @@ export default defineConfig({
               const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
               const readableStatePath = fs.existsSync(statePath) ? statePath : publicStatePath;
               const state = readJsonFile(readableStatePath, {});
-              state.decisions_pending = [];
+              if (Array.isArray(state.decisions_pending)) {
+                state.decisions_pending.forEach((alert: any) => {
+                  if (alert.status !== 'closed' && alert.status !== 'ignored') {
+                    alert.status = 'closed';
+                    alert.closed_by = 'user';
+                    alert.closed_at = new Date().toISOString();
+                    alert.user_comment = 'Alle gelöscht';
+                  }
+                });
+              }
               writeJsonFile(statePath, state);
               writeJsonFile(publicStatePath, state);
               ensureParentDir(flagPath);

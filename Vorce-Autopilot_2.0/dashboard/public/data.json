@@ -80,7 +80,7 @@
       "daily_limit": 1500,
       "daily_budget_usd": null,
       "usage_today": {
-        "calls": 6,
+        "calls": 12,
         "estimated_cost_usd": 0,
         "source": "gemini-local-jsonl+cli-quota",
         "last_synced_at": "2026-06-06T00:42:27.5533201Z",
@@ -382,8 +382,8 @@
       "daily_limit": 100,
       "daily_budget_usd": 5,
       "usage_today": {
-        "calls": 1,
-        "estimated_cost_usd": 0.05
+        "calls": 2,
+        "estimated_cost_usd": 0.1
       }
     },
     "codex_orchestrator": {
@@ -416,10 +416,10 @@
       "daily_limit": 1000,
       "daily_budget_usd": null,
       "usage_today": {
-        "calls": 11,
+        "calls": 0,
         "estimated_cost_usd": 0,
         "source": "codex-local-jsonl",
-        "last_synced_at": "2026-06-10T01:44:25.2566663Z"
+        "last_synced_at": "2026-06-10T07:51:16.9783482Z"
       }
     }
   },
@@ -440,9 +440,9 @@
     ],
     "planning": [
       "codex_orchestrator:planning",
+      "gemini_cli:premium",
       "claude_code:balanced",
-      "cursor_agent:default",
-      "gemini_cli:balanced"
+      "cursor_agent:default"
     ],
     "analysis": [
       "gemini_cli:cheap"
