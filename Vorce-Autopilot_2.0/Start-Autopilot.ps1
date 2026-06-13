@@ -1,5 +1,5 @@
-# Vorce-Autopilot/Start-Autopilot.ps1
-# Zentrales Start-Skript für den Vorce Autopilot mit robustem PID-Tracking in var/run/
+﻿# Vorce-Autopilot/Start-Autopilot.ps1
+# Zentrales Start-Skript fÃ¼r den Vorce Autopilot mit robustem PID-Tracking in var/runtime/
 [CmdletBinding()]
 param(
     [switch]$DryRun,
@@ -22,7 +22,7 @@ $ScriptDir = $PSScriptRoot
 $DashboardDir = Join-Path $ScriptDir "dashboard"
 $VarDir = Join-Path $ScriptDir "var"
 $VarDbDir = Join-Path $VarDir "db"
-$VarRunDir = Join-Path $VarDir "run"
+$VarRunDir = Join-Path $VarDir "runtime"
 $LogDir = Join-Path $VarDir "log"
 
 # Ensure all directory structures exist
@@ -32,7 +32,10 @@ foreach ($dir in @($VarDir, $VarDbDir, $VarRunDir, $LogDir)) {
     }
 }
 
-. (Join-Path $ScriptDir "src/lib/autopilot-prompts.ps1")
+# Lade Kernfunktionen (aus src/core, da wir es nach core verschoben haben)
+if (Test-Path (Join-Path $ScriptDir "src/core/autopilot-prompts.ps1")) {
+    . (Join-Path $ScriptDir "src/core/autopilot-prompts.ps1")
+}
 
 $StartLogPath = Join-Path $LogDir ("start-autopilot-{0}.log" -f (Get-Date -Format "yyyyMMdd-HHmmss"))
 $script:StartedProcessIds = @()
@@ -68,7 +71,7 @@ trap {
     break
 }
 
-function Load-Pids {
+function Import-Pids {
     if (Test-Path $PidFilePath) {
         try {
             return Get-Content $PidFilePath -Raw | ConvertFrom-Json
@@ -94,7 +97,7 @@ function Register-StartedAutopilotProcess {
     $script:StartedProcessIds = @($script:StartedProcessIds + [int]$Process.Id | Select-Object -Unique)
 
     # Save to autopilot-pids.json
-    $pids = Load-Pids
+    $pids = Import-Pids
     if ($null -eq $pids) {
         $pids = [pscustomobject]@{
             dashboard = 0
@@ -114,7 +117,7 @@ function Stop-StartedAutopilotProcesses {
     Write-StartLog -Message "Cleaning up started PIDs: $($script:StartedProcessIds -join ', ')"
     foreach ($processId in @($script:StartedProcessIds)) {
         try {
-            Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+            taskkill /F /T /PID $processId 2>&1 | Out-Null
         } catch { }
     }
 }
@@ -145,8 +148,9 @@ function Get-AutopilotSuiteProcess {
     $patterns = @(
         'autopilot\.ps1',
         'interval-stats\.ps1',
-        'run-visible-codex-session\.ps1',
-        'run-visible-ceo-phase\.ps1',
+        'run-codex-session\.ps1',
+        'run-ceo-phase\.ps1',
+        'run-local-agent-task\.ps1',
         'npm(\.cmd)?\s+run\s+dev',
         'vite[\\/]bin[\\/]vite\.js',
         'codex(\.cmd|\.ps1|\.exe)?\s',
@@ -168,8 +172,8 @@ function Get-AutopilotSuiteProcess {
 }
 
 function Stop-AutopilotSuiteProcesses {
-    # 1. Beende via PID-Tracking aus autopilot-pids.json (primär)
-    $pids = Load-Pids
+    # 1. Beende via PID-Tracking aus autopilot-pids.json (primÃ¤r)
+    $pids = Import-Pids
     if ($null -ne $pids) {
         $pidsToKill = @()
         if ($pids.dashboard -gt 0) { $pidsToKill += $pids.dashboard }
@@ -180,7 +184,7 @@ function Stop-AutopilotSuiteProcesses {
             Write-InitStatus "[INIT] Beende Suite-Prozesse laut PIDs: $($pidsToKill -join ', ')" -Color Yellow
             foreach ($pidValue in $pidsToKill) {
                 try {
-                    Stop-Process -Id $pidValue -Force -ErrorAction Stop
+                    taskkill /F /T /PID $pidValue 2>&1 | Out-Null
                 } catch {
                     # Schon beendet oder keine Rechte
                 }
@@ -194,7 +198,7 @@ function Stop-AutopilotSuiteProcesses {
         Save-Pids -PidsObj $pids
     }
 
-    # 2. Robustes Fallback via CommandLine Muster (sekundär)
+    # 2. Robustes Fallback via CommandLine Muster (sekundÃ¤r)
     $processes = @(Get-AutopilotSuiteProcess | Sort-Object ProcessId -Unique)
     if ($processes.Count -eq 0) {
         Write-InitStatus "[INIT] Keine weiteren Autopilot-Prozesse gefunden." -Color DarkGray
@@ -204,7 +208,7 @@ function Stop-AutopilotSuiteProcesses {
     Write-InitStatus "[INIT] Beende verbleibende Autopilot-Prozesse via Fallback: $($processes.ProcessId -join ', ')" -Color Yellow
     foreach ($process in $processes) {
         try {
-            Stop-Process -Id $process.ProcessId -Force -ErrorAction Stop
+            taskkill /F /T /PID $($process.ProcessId) 2>&1 | Out-Null
         } catch {
             Write-Warning "[INIT] Prozess $($process.ProcessId) konnte nicht beendet werden: $($_.Exception.Message)"
         }
@@ -259,8 +263,11 @@ function Get-AutopilotControlStateSummary {
 }
 
 function Wait-AutopilotControlConsole {
-    $previousTreatControlCAsInput = [Console]::TreatControlCAsInput
-    [Console]::TreatControlCAsInput = $true
+    $previousTreatControlCAsInput = $false
+    try {
+        $previousTreatControlCAsInput = [Console]::TreatControlCAsInput
+        [Console]::TreatControlCAsInput = $true
+    } catch {}
 
     Write-Host ""
     Write-Host "=====================================" -ForegroundColor Green
@@ -275,7 +282,6 @@ function Wait-AutopilotControlConsole {
     Write-StartLog -Message "Control console active."
     Write-Host (Get-AutopilotControlStateSummary) -ForegroundColor DarkGray
 
-    $statePath = Join-Path $VarDbDir "active-sessions.json"
     $watcher = New-Object System.IO.FileSystemWatcher
     $watcher.Path = $VarDbDir
     $watcher.Filter = "active-sessions.json"
@@ -314,7 +320,9 @@ autopilot_working_sessions $(@($state.working_sessions).Count)
 
     try {
         while ($true) {
-            if (-not [Console]::KeyAvailable) {
+            $keyAvailable = $false
+            try { $keyAvailable = [Console]::KeyAvailable } catch {}
+            if (-not $keyAvailable) {
                 Start-Sleep -Milliseconds 500
                 continue
             }
@@ -352,7 +360,9 @@ autopilot_working_sessions $(@($state.working_sessions).Count)
     } finally {
         Unregister-Event -SourceIdentifier $eventJob.Name -ErrorAction SilentlyContinue
         $watcher.Dispose()
-        [Console]::TreatControlCAsInput = $previousTreatControlCAsInput
+        try {
+            [Console]::TreatControlCAsInput = $previousTreatControlCAsInput
+        } catch {}
     }
 }
 
@@ -433,7 +443,7 @@ Write-Host " STARTE VORCE AUTOPILOT SUITE (Optimized)" -ForegroundColor Green
 Write-Host "=====================================" -ForegroundColor Green
 Write-StartLog -Message "Starting Vorce Autopilot Suite from $ScriptDir"
 
-# Git-Branch überprüfen
+# Git-Branch Ã¼berprÃ¼fen
 $currentBranch = git branch --show-current 2>$null
 if ($null -ne $currentBranch -and $currentBranch.Trim() -ne "main") {
     Write-Warning "[INIT] Das Repository befindet sich nicht auf dem Branch 'main', sondern auf '$($currentBranch.Trim())'!"
@@ -457,7 +467,7 @@ if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
         Write-InitStatus "[INIT] Port 5173 wird von einem veralteten oder falschen Dashboard belegt." -Color Yellow -Level "WARN"
         Stop-LocalPortOwner -Port 5173
         Wait-LocalPortFree -Port 5173 | Out-Null
-        $dashboardProcess = Start-Process $PowerShellHost -ArgumentList @("-NoExit", "-NoProfile", "-Command", "Set-Location -LiteralPath '$DashboardDir'; npm run dev -- --host 0.0.0.0") -WindowStyle Hidden -PassThru
+        $dashboardProcess = Start-Process $PowerShellHost -ArgumentList @("-NoProfile", "-Command", "Set-Location -LiteralPath '$DashboardDir'; npm run dev -- --host 0.0.0.0") -WindowStyle Hidden -PassThru
         Register-StartedAutopilotProcess -Process $dashboardProcess -Role "dashboard"
         if (-not (Test-DashboardHealth -TimeoutSeconds 20)) {
             throw "Aktuelles Dashboard konnte nach dem Austausch des veralteten Prozesses nicht gestartet werden."
@@ -465,7 +475,7 @@ if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
     }
 } else {
     try {
-        $dashboardProcess = Start-Process $PowerShellHost -ArgumentList @("-NoExit", "-NoProfile", "-Command", "Set-Location -LiteralPath '$DashboardDir'; npm run dev -- --host 0.0.0.0") -WindowStyle Hidden -PassThru
+        $dashboardProcess = Start-Process $PowerShellHost -ArgumentList @("-NoProfile", "-Command", "Set-Location -LiteralPath '$DashboardDir'; npm run dev -- --host 0.0.0.0") -WindowStyle Hidden -PassThru
         Register-StartedAutopilotProcess -Process $dashboardProcess -Role "dashboard"
         Write-StartLog -Message "Dashboard started. PID=$($dashboardProcess.Id)"
         if (Test-DashboardHealth -TimeoutSeconds 20) {
@@ -486,7 +496,7 @@ if ($syncProcesses.Count -gt 0) {
     Write-InitStatus "[INIT] Dashboard-Sync Service laeuft bereits (PID $($syncProcesses[0].ProcessId))." -Color DarkGray
 } else {
     try {
-        $syncProcess = Start-Process $PowerShellHost -ArgumentList @("-NoExit", "-NoProfile", "-File", (Join-Path $ScriptDir "src/phases/interval-stats.ps1")) -WindowStyle Hidden -PassThru
+        $syncProcess = Start-Process $PowerShellHost -ArgumentList @("-NoProfile", "-File", (Join-Path $ScriptDir "tools/services/run-sync-service.ps1")) -WindowStyle Hidden -PassThru
         Register-StartedAutopilotProcess -Process $syncProcess -Role "sync"
         Write-StartLog -Message "Dashboard sync started. PID=$($syncProcess.Id)"
     } catch {
@@ -498,7 +508,7 @@ if ($syncProcesses.Count -gt 0) {
 # 3. Autopilot-Backend autonom starten
 Write-InitStatus "[INIT] Starte Autopilot Backend Loop..."
 $AutopilotFile = Join-Path $ScriptDir "autopilot.ps1"
-$AutopilotArgs = @("-NoExit", "-NoProfile", "-File", $AutopilotFile)
+$AutopilotArgs = @("-NoProfile", "-File", $AutopilotFile)
 if ($DryRun.IsPresent) { $AutopilotArgs += "-DryRun" }
 if ($PlanOnce.IsPresent) { $AutopilotArgs += "-PlanOnce" }
 if ($CheckAndDoingOnce.IsPresent) { $AutopilotArgs += "-CheckAndDoingOnce" }
