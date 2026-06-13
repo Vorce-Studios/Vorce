@@ -440,9 +440,9 @@
     ],
     "planning": [
       "codex_orchestrator:planning",
+      "gemini_cli:premium",
       "claude_code:balanced",
-      "cursor_agent:default",
-      "gemini_cli:balanced"
+      "cursor_agent:default"
     ],
     "analysis": [
       "gemini_cli:cheap"
