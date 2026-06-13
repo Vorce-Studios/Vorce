@@ -176,6 +176,7 @@ export interface AutopilotConfig {
     monitoring_minutes: number;
     optimizer_hours?: number;
     memory_optimization_runs?: number;
+    memory_optimization_minutes?: number;
   };
   jules: {
     max_daily_sessions: number;
@@ -268,4 +269,3 @@ export interface MemoryStore {
 }
 
 export type TabId = 'dashboard' | 'workstreams' | 'reporting' | 'settings';
-

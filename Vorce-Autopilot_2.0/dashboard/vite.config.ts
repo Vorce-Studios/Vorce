@@ -452,7 +452,7 @@ export default defineConfig({
                         // Remove oldest non-critical memory
                         const nonCritical = store.memories.filter((m: any) => m.priority !== 'critical');
                         if (nonCritical.length > 0) {
-                          const oldest = nonCritical.sort((a: any, b: any) => 
+                          const oldest = nonCritical.sort((a: any, b: any) =>
                             new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
                           )[0];
                           store.memories = store.memories.filter((m: any) => m.id !== oldest.id);
@@ -469,8 +469,8 @@ export default defineConfig({
                     }
 
                     res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ 
-                      status: 'ok', 
+                    res.end(JSON.stringify({
+                      status: 'ok',
                       message: 'Alert ignoriert und Memory erstellt',
                       alert,
                       memory_created: memoryCreated
@@ -638,7 +638,7 @@ export default defineConfig({
                 const payload = JSON.parse(body || '{}');
                 const validPhases = ['planning', 'monitoring', 'audit'];
                 if (!validPhases.includes(payload.phase)) throw new Error('Invalid phase');
-                
+
                 const scriptPath = path.resolve(__dirname, `../src/phases/${payload.phase}-wakeup.ps1`);
                 if (fs.existsSync(scriptPath)) {
                   const child = spawn('pwsh', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath], {
@@ -663,7 +663,7 @@ export default defineConfig({
               try {
                 const payload = JSON.parse(body || '{}');
                 if (!payload.issue_number) throw new Error('issue_number is required');
-                
+
                 const statePath = path.resolve(__dirname, '../var/db/autopilot-state.json');
                 const state = readJsonFile(statePath, {});
                 state.manual_plan_queue = state.manual_plan_queue || [];
@@ -671,7 +671,7 @@ export default defineConfig({
                   state.manual_plan_queue.push(payload.issue_number);
                 }
                 writeJsonFile(statePath, state);
-                
+
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'ok', message: `Issue ${payload.issue_number} queued for replan` }));
               } catch (err) {
@@ -686,7 +686,16 @@ export default defineConfig({
               const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
               const readableStatePath = fs.existsSync(statePath) ? statePath : publicStatePath;
               const state = readJsonFile(readableStatePath, {});
-              state.decisions_pending = [];
+              if (Array.isArray(state.decisions_pending)) {
+                state.decisions_pending.forEach((alert: any) => {
+                  if (alert.status !== 'closed' && alert.status !== 'ignored') {
+                    alert.status = 'closed';
+                    alert.closed_by = 'user';
+                    alert.closed_at = new Date().toISOString();
+                    alert.user_comment = 'Alle gelöscht';
+                  }
+                });
+              }
               writeJsonFile(statePath, state);
               writeJsonFile(publicStatePath, state);
               ensureParentDir(flagPath);
