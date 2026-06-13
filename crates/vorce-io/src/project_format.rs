@@ -98,7 +98,7 @@ impl ProjectFile {
                 let file: ProjectFile = serde_json::from_str(&content)?;
                 Ok(file)
             }
-            "ron" | "vorce" => {
+            "ron" | "vorce" | "mapmap" | "mflow" => {
                 let file: ProjectFile = ron::from_str(&content)?;
                 Ok(file)
             }
