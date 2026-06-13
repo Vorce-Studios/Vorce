@@ -13,13 +13,16 @@ function Invoke-MainRun {
     )
 
     $global:OrchestratorRoot = (Resolve-Path (Join-Path $PSScriptRoot "../../")).Path
-    . (Join-Path $global:OrchestratorRoot "src/lib/state/run-state-manager.ps1")
-
+    # Ensure required scripts are loaded
+    if (-not (Get-Command Get-RunState -ErrorAction SilentlyContinue)) {
+        . (Join-Path $global:OrchestratorRoot "src/lib/state/run-state-manager.ps1")
+    }
+    
     Write-Host ""
-Write-Host "==========================================================================" -ForegroundColor Magenta
-Write-Host " >>> STARTE MAIN-RUN: $MainRunName" -ForegroundColor Magenta
-Write-Host "==========================================================================" -ForegroundColor Magenta
-Write-Host ""
+    Write-Host "==========================================================================" -ForegroundColor Magenta
+    Write-Host " >>> STARTE MAIN-RUN: $MainRunName" -ForegroundColor Magenta
+    Write-Host "==========================================================================" -ForegroundColor Magenta
+    Write-Host ""
 
     # 1. Initialisiere MAIN-RUN-STATE & Verzeichnis
     $mainRunPath = Initialize-RunDirectory -RunType "Main" -RunName $MainRunName
@@ -53,7 +56,7 @@ Write-Host ""
 
         Write-Host "[ORCHESTRATOR] $($subRunDefinitions.Count) Sub-Run(s) geplant." -ForegroundColor DarkGray
 
-        # 3. Iteriere ueber SUB-RUNS (Sequenzielle Ausfuehrung fuer korrekten State-Austausch)
+        # 3. Iteriere ueber SUB-RUNS (Sequentielle Ausfuehrung fuer logische Abhaengigkeiten)
         $completedSubs = @()
         $failedCount = 0
 
@@ -67,41 +70,52 @@ Write-Host ""
 
             $subRunPath = Initialize-RunDirectory -RunType "Sub" -RunName $subRunName -ParentPath (Join-Path $mainRunPath "SUB-RUNS")
             $subRunState = New-RunState -RunType "Sub" -RunName $subRunName -RunPath $subRunPath
-            $subRunState.status = "running"
-            Save-RunState -State $subRunState -RunPath $subRunPath
 
-            $fullSubScriptPath = Join-Path $global:OrchestratorRoot $subScript
+            try {
+                $subRunState.status = "running"
+                Save-RunState -State $subRunState -RunPath $subRunPath
 
-            if (Test-Path $fullSubScriptPath) {
-                try {
+                $fullSubScriptPath = Join-Path $global:OrchestratorRoot $subScript
+                if (Test-Path $fullSubScriptPath) {
                     # Frischen State laden, um Lese-Race-Conditions zu minimieren
                     $freshState = Read-AutopilotState
                     if ($null -ne $freshState) { $GlobalState = $freshState }
 
-                    # Direkt im aktuellen Prozess ausfuehren, damit $mainRunState ($MainState) geteilt wird
-                    & $fullSubScriptPath -MainState $mainRunState -SubState $subRunState -GlobalState $GlobalState -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+                    # Fuehre das SUB-RUN Skript direkt im Hauptprozess aus
+                    & $fullSubScriptPath `
+                        -MainState $mainRunState `
+                        -SubState $subRunState `
+                        -GlobalState $GlobalState `
+                        -Config $Config `
+                        -QuotaRegistry $QuotaRegistry `
+                        -DryRun:$DryRun
 
-                    if ($subRunState.status -eq "running") { $subRunState.status = "completed" }
-                } catch {
-                    Add-RunError -State $subRunState -Message "Fehler im Sub-Run: $_" -Context $_.ScriptStackTrace
+                    # Verwende den echten Status aus dem SubState, nicht 'running'
+                    # Nur wenn status immer noch 'running' ist, setze ihn auf 'completed'
+                    if ($subRunState.status -eq "running") {
+                        $subRunState.status = "completed"
+                    } elseif ($subRunState.status -eq "failed") {
+                        # Wenn der Sub-Run explizit als 'failed' markiert wurde, behalte diesen Status
+                        $subRunState.status = "failed"
+                    }
+                } else {
+                    Add-RunError -State $subRunState -Message "SUB-RUN Skript nicht gefunden: $subScript"
                 }
-
-                if ($subRunState.status -ne "completed") { $failedCount++ }
-
+            } catch {
+                Add-RunError -State $subRunState -Message "Fehler in $subRunName : $_" -Context $_.ScriptStackTrace
+            } finally {
                 $subRunState.completed_at = (Get-Date).ToString('o')
                 Save-RunState -State $subRunState -RunPath $subRunPath
+
+                if ($subRunState.status -ne "completed") {
+                    $failedCount++
+                }
 
                 $mainRunState.metadata["sub_run_$($subDef.id)"] = @{
                     name   = $subDef.name
                     status = $subRunState.status
                     errors = $subRunState.errors.Count
                 }
-                $completedSubs += $subRunState
-            } else {
-                Add-RunError -State $subRunState -Message "SUB-RUN Skript nicht gefunden: $subScript"
-                $failedCount++
-                $subRunState.completed_at = (Get-Date).ToString('o')
-                Save-RunState -State $subRunState -RunPath $subRunPath
                 $completedSubs += $subRunState
             }
         }
@@ -131,10 +145,10 @@ Write-Host ""
         $mainRunState.completed_at = (Get-Date).ToString('o')
         Save-RunState -State $mainRunState -RunPath $mainRunPath
         Write-Host ""
-Write-Host "==========================================================================" -ForegroundColor Magenta
-Write-Host " <<< MAIN-RUN BEENDET: $MainRunName ($($mainRunState.status))" -ForegroundColor Magenta
-Write-Host "==========================================================================" -ForegroundColor Magenta
-Write-Host ""
+        Write-Host "==========================================================================" -ForegroundColor Magenta
+        Write-Host " <<< MAIN-RUN BEENDET: $MainRunName ($($mainRunState.status))" -ForegroundColor Magenta
+        Write-Host "==========================================================================" -ForegroundColor Magenta
+        Write-Host ""
     }
 }
 
@@ -220,7 +234,6 @@ function Invoke-PartRun {
     Write-Host "[DELIB] partRunPath=$partRunPath" -ForegroundColor DarkBlue
 
     $partRunState = New-RunState -RunType "Part" -RunName $PartRunName -RunPath $partRunPath
-
     $cacheDir = Join-Path $global:OrchestratorRoot "var/db/cache"
     if (-not (Test-Path $cacheDir)) { New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null }
 
@@ -292,6 +305,7 @@ function Invoke-PartRun {
             }
             $cacheData | ConvertTo-Json -Depth 5 -Compress | Out-File -FilePath $cacheFile -Encoding UTF8 -Force
         } else {
+            $partRunState.status = "failed"
             Add-RunError -State $partRunState -Message "Agent Call fehlgeschlagen: $($result.error)"
         }
 
