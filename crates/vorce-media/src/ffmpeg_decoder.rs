@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use crate::{
     test_pattern_decoder::TestPatternDecoder, HwAccelType, MediaError,
     Result, VideoDecoder,

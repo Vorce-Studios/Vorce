@@ -114,8 +114,8 @@ impl PluginApi {
 ///
 /// # Safety
 ///
-/// The caller must ensure that `out_version` is a valid pointer to a `u32` where the version will be written.
-/// The `api` pointer must be a valid pointer to a `PluginApi` instance.
+/// This function is unsafe because it dereferences raw pointers.
+/// The caller must ensure that `api` and `out_version` are valid, non-null pointers.
 #[no_mangle]
 pub unsafe extern "C" fn vorce_plugin_get_version(
     api: *const PluginApi,
@@ -136,8 +136,9 @@ pub unsafe extern "C" fn vorce_plugin_get_version(
 ///
 /// # Safety
 ///
-/// The caller must ensure that `buffer` points to a valid memory region of at least `len` bytes.
-/// The `api` pointer must be a valid pointer to a `PluginApi` instance.
+/// This function is unsafe because it dereferences raw pointers and constructs a slice from them.
+/// The caller must ensure that `api` and `buffer` are valid, non-null pointers, and that `len`
+/// matches the actual size of the buffer.
 #[no_mangle]
 pub unsafe extern "C" fn vorce_plugin_read_buffer(
     api: *const PluginApi,
