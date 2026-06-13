@@ -50,4 +50,3 @@ Add-Def -Name "AlertDisposition" -Script "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SU
 Write-Host "[ROUTER]   -> AlertDisposition: ENABLED (Laeuft immer)" -ForegroundColor Green
 
 return $definitions
-

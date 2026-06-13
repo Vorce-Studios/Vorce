@@ -281,4 +281,3 @@ function Test-ObjectProperty {
     if ($null -eq $Object) { return $false }
     return [bool]($Object.PSObject.Properties.Match($Name).Count -gt 0)
 }
-
