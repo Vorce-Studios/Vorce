@@ -42,12 +42,7 @@ pub struct NdiSource {
 #[cfg(feature = "ndi")]
 impl From<grafton_ndi::Source> for NdiSource {
     fn from(source: grafton_ndi::Source) -> Self {
-        let address = match &source.address {
-            grafton_ndi::SourceAddress::Ip(ip) => ip.clone(),
-            grafton_ndi::SourceAddress::Url(url) => url.clone(),
-            grafton_ndi::SourceAddress::None => "None".to_string(),
-        };
-        Self { name: source.name.clone(), address: Some(address) }
+        Self { name: source.name.clone(), address: Some(source.address.to_string()) }
     }
 }
 
@@ -342,16 +337,13 @@ impl NdiSender {
             }
         };
 
-        let mut ndi_frame = VideoFrameBuilder::new()
-            .resolution(frame.format.width as i32, frame.format.height as i32)
+        let ndi_frame = VideoFrameBuilder::new()
+            .width(frame.format.width as i32)
+            .height(frame.format.height as i32)
             .pixel_format(NdiPixelFormat::BGRA)
             .frame_rate(frame.format.frame_rate as i32, 1)
-            .build()
+            .build(data.as_slice())
             .map_err(|e| IoError::NdiSenderFailed(format!("Failed to build NDI frame: {}", e)))?;
-
-        ndi_frame.replace_data(data.to_vec()).map_err(|e| {
-            IoError::NdiSenderFailed(format!("Failed to set NDI frame data: {}", e))
-        })?;
 
         self.sender.send_video(&ndi_frame);
 

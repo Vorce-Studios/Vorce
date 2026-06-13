@@ -176,7 +176,6 @@ export interface AutopilotConfig {
     monitoring_minutes: number;
     optimizer_hours?: number;
     memory_optimization_runs?: number;
-    memory_optimization_minutes?: number;
   };
   jules: {
     max_daily_sessions: number;
