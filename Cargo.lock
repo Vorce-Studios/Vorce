@@ -9831,6 +9831,7 @@ dependencies = [
  "tower-http",
  "tracing",
  "uuid",
+ "vorce-core",
  "webrtc-dtls",
  "webrtc-util 0.17.1",
 ]
