@@ -1,214 +1,32 @@
+use super::RenderContext;
 use crate::app::core::app_struct::RuntimeRenderQueueItem;
-use anyhow::Result;
+use crate::app::loops::render::effects::build_effect_chain;
+use crate::app::loops::render::logging::{clear_video_issue, should_log_video_issue};
+use crate::app::loops::render::texture_gen::{
+    ensure_missing_texture_fallback, generate_grid_texture,
+};
 
-use super::effects::build_effect_chain;
-use super::logging::{clear_video_issue, should_log_video_issue};
-use super::PREVIEW_FLAG;
-
-pub(crate) struct RenderContext<'a> {
-    pub device: &'a wgpu::Device,
-    pub queue: &'a wgpu::Queue,
-    pub surface_format: wgpu::TextureFormat,
-    pub render_queue: &'a std::collections::HashMap<u64, Vec<RuntimeRenderQueueItem>>,
-    pub output_manager: &'a vorce_core::output::OutputManager,
-    pub edge_blend_renderer: &'a Option<vorce_render::EdgeBlendRenderer>,
-    pub color_calibration_renderer: &'a Option<vorce_render::ColorCalibrationRenderer>,
-    pub edge_blend_cache:
-        &'a mut std::collections::HashMap<u64, (wgpu::Buffer, wgpu::BindGroup, u64)>,
-    pub edge_blend_texture_cache: &'a mut std::collections::HashMap<u64, wgpu::BindGroup>,
-    pub mesh_renderer: &'a mut vorce_render::MeshRenderer,
-    pub effect_chain_renderer: &'a mut vorce_render::EffectChainRenderer,
-    pub preview_effect_chain_renderer: &'a mut vorce_render::EffectChainRenderer,
-    pub shader_graph_manager: &'a vorce_render::ShaderGraphManager,
-    pub texture_pool: &'a vorce_render::TexturePool,
-    pub compositor: &'a mut vorce_render::Compositor,
-    pub layer_ping_pong: &'a mut [String; 2],
-    pub _dummy_view: &'a Option<std::sync::Arc<wgpu::TextureView>>,
-    pub mesh_buffer_cache: &'a mut vorce_render::MeshBufferCache,
-    pub egui_renderer: &'a mut egui_wgpu::Renderer,
-    pub video_diagnostic_log_times: &'a mut std::collections::HashMap<String, std::time::Instant>,
-}
-
-use super::texture_gen::{ensure_missing_texture_fallback, generate_grid_texture};
-
-pub(crate) fn render_content(
-    ctx: RenderContext<'_>,
-    output_id: u64,
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn accumulate_layers(
+    ctx: &mut RenderContext,
     encoder: &mut wgpu::CommandEncoder,
-    view: &wgpu::TextureView,
-    egui_data: Option<&(
-        Vec<egui::ClippedPrimitive>,
-        egui_wgpu::ScreenDescriptor,
-        Vec<egui::TextureId>,
-    )>,
-) -> Result<()> {
+    target_ops: &[RuntimeRenderQueueItem],
+    real_output_id: u64,
+    output_id: u64,
+    is_preview_output: bool,
+    ping_pong_0: &str,
+    ping_pong_1: &str,
+    scratch_name: &str,
+    target_view: &wgpu::TextureView,
+) {
     let device = ctx.device;
     let queue = ctx.queue;
-    let mesh_renderer = ctx.mesh_renderer;
-    let egui_renderer = ctx.egui_renderer;
-    let video_log_times = ctx.video_diagnostic_log_times;
-    let is_preview_output = (output_id & PREVIEW_FLAG) != 0;
-    let real_output_id = output_id & !PREVIEW_FLAG;
-
-    // ⚡ BOLT OPTIMIZATION:
-    // Read pre-partitioned and sorted target_ops directly from the context.
-    let empty_vec = Vec::new();
-    let target_ops = ctx.render_queue.get(&real_output_id).unwrap_or(&empty_vec);
-
-    for item in target_ops {
-        for diag in &item.diagnostics {
-            let issue_key = format!("{}:{}:{}", diag.code, diag.module_id, diag.part_id);
-            if should_log_video_issue(video_log_times, issue_key) {
-                match diag.severity {
-                    crate::app::core::app_struct::DiagnosticSeverity::Warning => {
-                        tracing::warn!(
-                            "Fehler in Videoausgabe: Modul {} / Part {} - {}",
-                            diag.module_id,
-                            diag.part_id,
-                            diag.message
-                        );
-                    }
-                    crate::app::core::app_struct::DiagnosticSeverity::Error => {
-                        tracing::error!(
-                            "Fehler in Videoausgabe: Modul {} / Part {} - {}",
-                            diag.module_id,
-                            diag.part_id,
-                            diag.message
-                        );
-                    }
-                }
-            }
-        }
-    }
-
-    let empty_ops_issue_key = format!(
-        "video-output-empty-ops:{real_output_id}:{}",
-        if is_preview_output { "preview" } else { "output" }
-    );
-    if target_ops.is_empty() {
-        if output_id != 0 && should_log_video_issue(video_log_times, empty_ops_issue_key.clone()) {
-            tracing::warn!(
-                "Fehler in Videoausgabe: {} {} bleibt leer, weil keine RenderOps fuer diesen Output erzeugt wurden.",
-                if is_preview_output {
-                    "Output-Preview"
-                } else {
-                    "Output"
-                },
-                real_output_id
-            );
-        }
-    } else {
-        clear_video_issue(video_log_times, empty_ops_issue_key);
-    }
-
-    if target_ops.is_empty() && output_id != 0 {
-        let _pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: Some("Clear Pass"),
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                depth_slice: None,
-                view,
-                resolve_target: None,
-
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                    store: wgpu::StoreOp::Store,
-                },
-            })],
-            depth_stencil_attachment: None,
-            timestamp_writes: None,
-            occlusion_query_set: None,
-            multiview_mask: None,
-        });
-        return Ok(());
-    }
-
-    let output_config_opt = ctx.output_manager.get_output(real_output_id).cloned();
-    let use_edge_blend = output_config_opt
-        .as_ref()
-        .map(|cfg| {
-            cfg.edge_blend.left.enabled
-                || cfg.edge_blend.right.enabled
-                || cfg.edge_blend.top.enabled
-                || cfg.edge_blend.bottom.enabled
-        })
-        .unwrap_or(false)
-        && ctx.edge_blend_renderer.is_some();
-    let use_color_calib = output_config_opt
-        .as_ref()
-        .map(|cfg| cfg.color_calibration != vorce_core::ColorCalibration::default())
-        .unwrap_or(false)
-        && ctx.color_calibration_renderer.is_some();
-
-    let needs_post_processing = use_edge_blend || use_color_calib;
-
-    let post_a_tex_name = format!("output_{}_post_a", output_id);
-    let post_b_tex_name = format!("output_{}_post_b", output_id);
-    let mesh_target_view_ref = if needs_post_processing {
-        if let Some(config) = &output_config_opt {
-            ctx.texture_pool.ensure_texture(
-                &post_a_tex_name,
-                config.resolution.0.max(1),
-                config.resolution.1.max(1),
-                ctx.surface_format,
-                wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
-            );
-        }
-        Some(ctx.texture_pool.get_view(&post_a_tex_name))
-    } else {
-        None
-    };
-    let color_target_view_ref = if use_color_calib && use_edge_blend {
-        if let Some(config) = &output_config_opt {
-            ctx.texture_pool.ensure_texture(
-                &post_b_tex_name,
-                config.resolution.0.max(1),
-                config.resolution.1.max(1),
-                ctx.surface_format,
-                wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
-            );
-        }
-        Some(ctx.texture_pool.get_view(&post_b_tex_name))
-    } else {
-        None
-    };
-
-    let target_view =
-        if needs_post_processing { mesh_target_view_ref.as_deref().unwrap_or(view) } else { view };
-
-    let (target_width, target_height) =
-        output_config_opt.as_ref().map(|cfg| cfg.resolution).unwrap_or((1920, 1080));
-
-    let ping_pong_0 = format!("{}_{}", ctx.layer_ping_pong[0], output_id);
-    let ping_pong_1 = format!("{}_{}", ctx.layer_ping_pong[1], output_id);
-    let scratch_name = format!("layer_scratch_{}", output_id);
-
-    ctx.texture_pool.ensure_texture(
-        &ping_pong_0,
-        target_width.max(1),
-        target_height.max(1),
-        ctx.surface_format,
-        wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
-    );
-    ctx.texture_pool.ensure_texture(
-        &ping_pong_1,
-        target_width.max(1),
-        target_height.max(1),
-        ctx.surface_format,
-        wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
-    );
-    ctx.texture_pool.ensure_texture(
-        &scratch_name,
-        target_width.max(1),
-        target_height.max(1),
-        ctx.surface_format,
-        wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
-    );
-
+    let mesh_renderer = &mut ctx.mesh_renderer;
+    let video_log_times = &mut ctx.video_diagnostic_log_times;
     let mut active_accum = 0;
-
     // Clear initial accumulator
     {
-        let accum_view = ctx.texture_pool.get_view(&ping_pong_0);
+        let accum_view = ctx.texture_pool.get_view(ping_pong_0);
         let _pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Clear Accumulator Pass"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -424,7 +242,7 @@ pub(crate) fn render_content(
                 let next_accum_name = if next_accum == 0 { &ping_pong_0 } else { &ping_pong_1 };
 
                 let base_view = ctx.texture_pool.get_view(current_accum_name);
-                let blend_view = ctx.texture_pool.get_view(&scratch_name);
+                let blend_view = ctx.texture_pool.get_view(scratch_name);
                 let out_view = ctx.texture_pool.get_view(next_accum_name);
 
                 // Map ModuleBlendModeType to LayerBlendMode
@@ -530,147 +348,4 @@ pub(crate) fn render_content(
 
         ctx.compositor.composite(&mut rpass, quad_vb, quad_ib, &bind_group, &uniform_bind_group);
     }
-
-    // --- POST PROCESSING PASSES ---
-    if needs_post_processing {
-        let mut current_view =
-            mesh_target_view_ref.as_ref().map(|view_ref| view_ref.as_ref()).unwrap_or(view);
-
-        if use_color_calib {
-            if let (Some(color_renderer), Some(output_config)) =
-                (ctx.color_calibration_renderer.as_ref(), output_config_opt.as_ref())
-            {
-                let color_target_view = color_target_view_ref
-                    .as_ref()
-                    .map(|view_ref| view_ref.as_ref())
-                    .unwrap_or(view);
-                let texture_bind_group = color_renderer.create_texture_bind_group(current_view);
-                let uniform_buffer =
-                    color_renderer.create_uniform_buffer(&output_config.color_calibration);
-                let uniform_bind_group = color_renderer.create_uniform_bind_group(&uniform_buffer);
-
-                let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                    label: Some("Color Calibration Pass"),
-                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                        depth_slice: None,
-                        view: color_target_view,
-                        resolve_target: None,
-                        ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                            store: wgpu::StoreOp::Store,
-                        },
-                    })],
-                    depth_stencil_attachment: None,
-                    timestamp_writes: None,
-                    occlusion_query_set: None,
-                    multiview_mask: None,
-                });
-
-                color_renderer.render(&mut rpass, &texture_bind_group, &uniform_bind_group);
-                current_view = color_target_view;
-            }
-        }
-
-        if use_edge_blend {
-            if let Some(edge_blend_renderer) = ctx.edge_blend_renderer.as_ref() {
-                let texture_bind_group = ctx
-                    .edge_blend_texture_cache
-                    .entry(output_id)
-                    .or_insert_with(|| edge_blend_renderer.create_texture_bind_group(current_view));
-                *texture_bind_group = edge_blend_renderer.create_texture_bind_group(current_view);
-
-                let config_to_use = if use_edge_blend {
-                    output_config_opt
-                        .as_ref()
-                        .map(|config| config.edge_blend.clone())
-                        .unwrap_or_default()
-                } else {
-                    vorce_core::EdgeBlendConfig::default()
-                };
-
-                // Simple hash for config changes
-                use std::hash::Hasher;
-                let mut hasher = std::collections::hash_map::DefaultHasher::new();
-                hasher.write(&[config_to_use.left.enabled as u8]);
-                hasher.write(&[config_to_use.right.enabled as u8]);
-                hasher.write(&[config_to_use.top.enabled as u8]);
-                hasher.write(&[config_to_use.bottom.enabled as u8]);
-                hasher.write(&config_to_use.left.width.to_le_bytes());
-                hasher.write(&config_to_use.right.width.to_le_bytes());
-                hasher.write(&config_to_use.top.width.to_le_bytes());
-                hasher.write(&config_to_use.bottom.width.to_le_bytes());
-                hasher.write(&config_to_use.gamma.to_le_bytes());
-                let config_hash = hasher.finish();
-
-                let (uniform_buffer, uniform_bind_group, last_hash) =
-                    ctx.edge_blend_cache.entry(output_id).or_insert_with(|| {
-                        let buffer = edge_blend_renderer.create_uniform_buffer(&config_to_use);
-                        let bind_group = edge_blend_renderer.create_uniform_bind_group(&buffer);
-                        (buffer, bind_group, config_hash)
-                    });
-
-                if *last_hash != config_hash {
-                    edge_blend_renderer.update_uniform_buffer(
-                        queue,
-                        uniform_buffer,
-                        &config_to_use,
-                    );
-                    *last_hash = config_hash;
-                }
-
-                let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                    label: Some(if use_edge_blend {
-                        "Edge Blending Pass"
-                    } else {
-                        "Passthrough Pass"
-                    }),
-                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                        depth_slice: None,
-                        view, // Draw to the final surface view
-                        resolve_target: None,
-
-                        ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(wgpu::Color::BLACK), // Clear previous if any
-                            store: wgpu::StoreOp::Store,
-                        },
-                    })],
-                    depth_stencil_attachment: None,
-                    timestamp_writes: None,
-                    occlusion_query_set: None,
-                    multiview_mask: None,
-                });
-
-                edge_blend_renderer.render(&mut rpass, texture_bind_group, uniform_bind_group);
-            }
-        }
-    }
-
-    // EgUI Overlay
-    if output_id == 0 {
-        if let Some((tris, screen_desc, free_textures)) = egui_data {
-            // Free textures from previous frames
-            for id in free_textures {
-                egui_renderer.free_texture(id);
-            }
-
-            let render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Egui Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    depth_slice: None,
-                    view,
-                    resolve_target: None,
-
-                    ops: wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store },
-                })],
-                depth_stencil_attachment: None,
-                timestamp_writes: None,
-                occlusion_query_set: None,
-                multiview_mask: None,
-            });
-
-            // Render egui UI
-            egui_renderer.render(&mut render_pass.forget_lifetime(), tris, screen_desc);
-        }
-    }
-    Ok(())
 }
