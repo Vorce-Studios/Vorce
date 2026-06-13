@@ -286,27 +286,8 @@ pub fn render_canvas(
             let part_rect = Rect::from_min_size(part_pos, Vec2::new(w, h) * canvas.zoom);
 
             if canvas.selected_parts.contains(&part.id) {
-                let highlight_rect = part_rect.expand(4.0 * canvas.zoom);
-                painter.rect_stroke(
-                    highlight_rect,
-                    0.0,
-                    Stroke::new(2.0 * canvas.zoom, crate::theme::colors::CYAN_ACCENT),
-                    egui::StrokeKind::Middle,
-                );
-
-                let handle_size = 12.0 * canvas.zoom;
-                let handle_rect = Rect::from_min_size(
-                    Pos2::new(part_rect.max.x - handle_size, part_rect.max.y - handle_size),
-                    Vec2::splat(handle_size),
-                );
-                painter.rect_filled(handle_rect, 0.0, crate::theme::colors::CYAN_ACCENT);
-                painter.line_segment(
-                    [
-                        handle_rect.min + Vec2::new(3.0, handle_size - 3.0),
-                        handle_rect.min + Vec2::new(handle_size - 3.0, 3.0),
-                    ],
-                    Stroke::new(1.5, ui.visuals().window_fill),
-                );
+                draw::draw_selection_highlight(&painter, part_rect, canvas.zoom);
+                let handle_rect = draw::draw_resize_handle(&painter, ui, part_rect, canvas.zoom);
 
                 let resize_response =
                     ui.interact(handle_rect, egui::Id::new((part.id, "resize")), Sense::drag());
@@ -556,8 +537,13 @@ pub fn render_canvas(
                     Stroke::new(3.0, color)
                 };
 
-                painter.line_segment([start_pos, pointer_pos], preview_stroke);
-                painter.circle_filled(pointer_pos, 5.0, color);
+                draw::draw_connection_preview(
+                    &painter,
+                    start_pos,
+                    pointer_pos,
+                    color,
+                    preview_stroke,
+                );
             }
         }
 
@@ -599,16 +585,11 @@ pub fn render_canvas(
                     canvas.context_menu_connection = None;
                 } else {
                     let painter = ui.painter();
-                    painter.rect_filled(
+                    draw::draw_context_menu_bg(
+                        painter,
+                        ui,
                         menu_rect,
-                        4.0,
-                        ui.visuals().window_fill.gamma_multiply(0.96),
-                    );
-                    painter.rect_stroke(
-                        menu_rect,
-                        4.0,
-                        Stroke::new(1.0, ui.visuals().error_fg_color.linear_multiply(0.8)),
-                        egui::StrokeKind::Middle,
+                        ui.visuals().error_fg_color.linear_multiply(0.8),
                     );
 
                     let inner = menu_rect.shrink(8.0);
@@ -642,16 +623,11 @@ pub fn render_canvas(
                     canvas.context_menu_pos = None;
                 } else {
                     let painter = ui.painter();
-                    painter.rect_filled(
+                    draw::draw_context_menu_bg(
+                        painter,
+                        ui,
                         menu_rect,
-                        4.0,
-                        ui.visuals().window_fill.gamma_multiply(0.96),
-                    );
-                    painter.rect_stroke(
-                        menu_rect,
-                        4.0,
-                        Stroke::new(1.0, ui.visuals().window_stroke.color),
-                        egui::StrokeKind::Middle,
+                        ui.visuals().window_stroke.color,
                     );
 
                     let inner = menu_rect.shrink(8.0);
