@@ -78,4 +78,3 @@ if ($runSystemOpt) {
 }
 
 return $definitions
-

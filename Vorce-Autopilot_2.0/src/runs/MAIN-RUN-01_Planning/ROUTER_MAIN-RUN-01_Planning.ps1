@@ -55,4 +55,3 @@ Add-Def -Name "Delegation" -Script "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-R
 Write-Host "[ROUTER]   -> Delegation: ENABLED (Laeuft immer)" -ForegroundColor Green
 
 return $definitions
-

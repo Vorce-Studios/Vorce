@@ -1,4 +1,4 @@
-# Invoke-MainRun.ps1
+﻿# Invoke-MainRun.ps1
 # Zentraler Orchestrator fuer hierarchische Ausfuehrungen (V2.0)
 # Unterstuetzt MAIN-RUN -> ROUTER -> SUB-RUN -> PART-RUN
 
@@ -17,8 +17,12 @@ function Invoke-MainRun {
     if (-not (Get-Command Get-RunState -ErrorAction SilentlyContinue)) {
         . (Join-Path $global:OrchestratorRoot "src/lib/state/run-state-manager.ps1")
     }
-    
-    Write-Host "`n[ORCHESTRATOR] >>> Starte $MainRunName <<<" -ForegroundColor Cyan
+
+    Write-Host ""
+Write-Host "==========================================================================" -ForegroundColor Magenta
+Write-Host " >>> STARTE MAIN-RUN: $MainRunName" -ForegroundColor Magenta
+Write-Host "==========================================================================" -ForegroundColor Magenta
+Write-Host ""
 
     # 1. Initialisiere MAIN-RUN-STATE & Verzeichnis
     $mainRunPath = Initialize-RunDirectory -RunType "Main" -RunName $MainRunName
@@ -140,7 +144,11 @@ function Invoke-MainRun {
     } finally {
         $mainRunState.completed_at = (Get-Date).ToString('o')
         Save-RunState -State $mainRunState -RunPath $mainRunPath
-        Write-Host "[ORCHESTRATOR] $MainRunName beendet ($($mainRunState.status))." -ForegroundColor Cyan
+        Write-Host ""
+Write-Host "==========================================================================" -ForegroundColor Magenta
+Write-Host " <<< MAIN-RUN BEENDET: $MainRunName ($($mainRunState.status))" -ForegroundColor Magenta
+Write-Host "==========================================================================" -ForegroundColor Magenta
+Write-Host ""
     }
 }
 
