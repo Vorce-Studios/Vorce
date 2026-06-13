@@ -324,4 +324,3 @@ function Invoke-CliTask {
         stats    = $parsedStats
     }
 }
-

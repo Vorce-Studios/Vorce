@@ -128,4 +128,3 @@ function Delete-GitBranch {
     $flag = if ($Force) { "-D" } else { "-d" }
     git branch $flag $BranchName
 }
-

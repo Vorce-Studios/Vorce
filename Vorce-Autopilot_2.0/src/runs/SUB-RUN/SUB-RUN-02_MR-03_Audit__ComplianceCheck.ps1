@@ -24,7 +24,7 @@ Konventionen:
 Hier sind die aktuellen offenen Issues:
 $issuesData
 
-Pruefe, ob es Issues gibt, die gegen diese Namenskonventionen verstossen. 
+Pruefe, ob es Issues gibt, die gegen diese Namenskonventionen verstossen.
 Falls ja, gib fuer jedes Problem eine Warnung zurueck.
 Antworte zwingend als JSON in folgendem Format (Wenn keine Probleme gefunden wurden, leeres Array):
 [
@@ -69,7 +69,7 @@ Pruefe Folgendes:
 Hier sind die offenen PRs:
 $prsData
 
-WICHTIGE REGEL: 
+WICHTIGE REGEL:
 Erstelle NIEMALS 'remediate_command' oder Loesungsvorschlaege zum automatischen Beheben von Merge-Konflikten via Jules! Das Loesen von Konflikten ist Planning-Sache. Du meldest nur die Fakten fuer das Dashboard.
 
 Antworte zwingend als JSON in folgendem Format (Wenn keine Probleme gefunden wurden, leeres Array):

@@ -216,4 +216,3 @@ function New-VorceManagedIssue {
 
     return [pscustomobject]@{ Url = $issueUrl; Number = $issueNumber; Title = $Title }
 }
-

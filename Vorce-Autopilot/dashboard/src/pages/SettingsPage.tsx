@@ -47,7 +47,7 @@ const PROMPT_METADATA = [
   { key: 'pr_review', label: 'Tasks: PR Review', group: 'tasks', placeholder: 'Review Pull Request...' },
   { key: 'post_merge_qa', label: 'Tasks: Post-Merge QA', group: 'tasks', placeholder: 'Post merge QA analysis...' },
   { key: 'pr_conflict_resolution', label: 'Tasks: PR Conflict Resolution', group: 'tasks', placeholder: 'Resolve merge conflicts...' },
-  
+
   // Jules Tasks
   { key: 'jules_implementation', label: 'Jules: Implementation', group: 'jules', placeholder: 'Jules implementation task...' },
   { key: 'jules_retry', label: 'Jules: Retry / Feedback', group: 'jules', placeholder: 'Jules retry feedback...' },
@@ -60,13 +60,13 @@ const PROMPT_METADATA = [
   { key: 'planning_analysis', label: 'Planning: Repository compass analysis', group: 'planning', placeholder: 'Repository analysis & blockers...' },
   { key: 'planning_proposal', label: 'Planning: Issue Proposal Logic', group: 'planning', placeholder: 'Formulating issue proposals...' },
   { key: 'planning_synthesis', label: 'Planning: Master Plan Synthesis & Priority Queue', group: 'planning', placeholder: 'Consolidating delegation order...' },
-  
+
   // Monitoring Phase
   { key: 'monitor_sessions', label: 'Monitoring: Session Health Check', group: 'monitoring', placeholder: 'Active delegation health checks...' },
   { key: 'monitor_prs', label: 'Monitoring: PR Validation', group: 'monitoring', placeholder: 'PR validation and automatic fixing...' },
   { key: 'monitor_conflicts', label: 'Monitoring: Conflict Resolution', group: 'monitoring', placeholder: 'Automatic merge conflict resolving...' },
   { key: 'monitoring_synthesis', label: 'Monitoring: Status Evaluation', group: 'monitoring', placeholder: 'Consolidating monitoring results...' },
-  
+
   // Audit Phase
   { key: 'audit_consistency', label: 'Audit: Data Consistency Check', group: 'audit', placeholder: 'Comparing state registry vs GitHub...' },
   { key: 'audit_performance', label: 'Audit: Performance Assessment', group: 'audit', placeholder: 'Assessing action history efficiency...' },

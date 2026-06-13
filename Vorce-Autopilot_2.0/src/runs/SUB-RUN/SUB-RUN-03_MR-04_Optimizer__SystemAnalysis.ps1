@@ -97,7 +97,7 @@ if ($partRun.success) {
                 if ((Test-ObjectProperty -Object $GlobalState -Name "optimizer_last_run") -and $null -ne $GlobalState.optimizer_last_run -and (Test-ObjectProperty -Object $GlobalState.optimizer_last_run -Name "approved_changes")) {
                     $previousApproved = @($GlobalState.optimizer_last_run.approved_changes)
                 }
-                
+
                 $GlobalState | Add-Member -MemberType NoteProperty -Name "optimizer_last_run" -Value ([pscustomobject]@{
                     ran_at = $GlobalState.last_optimizer_analysis_at
                     next_run_at = $nextOptimizerAt
