@@ -1,5 +1,5 @@
-# Vorce-Autopilot/Start-Autopilot.ps1
-# Zentrales Start-Skript für den Vorce Autopilot mit robustem PID-Tracking in var/runtime/
+﻿# Vorce-Autopilot/Start-Autopilot.ps1
+# Zentrales Start-Skript fÃ¼r den Vorce Autopilot mit robustem PID-Tracking in var/runtime/
 [CmdletBinding()]
 param(
     [switch]$DryRun,
@@ -172,7 +172,7 @@ function Get-AutopilotSuiteProcess {
 }
 
 function Stop-AutopilotSuiteProcesses {
-    # 1. Beende via PID-Tracking aus autopilot-pids.json (primär)
+    # 1. Beende via PID-Tracking aus autopilot-pids.json (primÃ¤r)
     $pids = Import-Pids
     if ($null -ne $pids) {
         $pidsToKill = @()
@@ -198,7 +198,7 @@ function Stop-AutopilotSuiteProcesses {
         Save-Pids -PidsObj $pids
     }
 
-    # 2. Robustes Fallback via CommandLine Muster (sekundär)
+    # 2. Robustes Fallback via CommandLine Muster (sekundÃ¤r)
     $processes = @(Get-AutopilotSuiteProcess | Sort-Object ProcessId -Unique)
     if ($processes.Count -eq 0) {
         Write-InitStatus "[INIT] Keine weiteren Autopilot-Prozesse gefunden." -Color DarkGray
@@ -263,8 +263,11 @@ function Get-AutopilotControlStateSummary {
 }
 
 function Wait-AutopilotControlConsole {
-    $previousTreatControlCAsInput = [Console]::TreatControlCAsInput
-    [Console]::TreatControlCAsInput = $true
+    $previousTreatControlCAsInput = $false
+    try {
+        $previousTreatControlCAsInput = [Console]::TreatControlCAsInput
+        [Console]::TreatControlCAsInput = $true
+    } catch {}
 
     Write-Host ""
     Write-Host "=====================================" -ForegroundColor Green
@@ -317,7 +320,9 @@ autopilot_working_sessions $(@($state.working_sessions).Count)
 
     try {
         while ($true) {
-            if (-not [Console]::KeyAvailable) {
+            $keyAvailable = $false
+            try { $keyAvailable = [Console]::KeyAvailable } catch {}
+            if (-not $keyAvailable) {
                 Start-Sleep -Milliseconds 500
                 continue
             }
@@ -355,7 +360,9 @@ autopilot_working_sessions $(@($state.working_sessions).Count)
     } finally {
         Unregister-Event -SourceIdentifier $eventJob.Name -ErrorAction SilentlyContinue
         $watcher.Dispose()
-        [Console]::TreatControlCAsInput = $previousTreatControlCAsInput
+        try {
+            [Console]::TreatControlCAsInput = $previousTreatControlCAsInput
+        } catch {}
     }
 }
 
@@ -436,7 +443,7 @@ Write-Host " STARTE VORCE AUTOPILOT SUITE (Optimized)" -ForegroundColor Green
 Write-Host "=====================================" -ForegroundColor Green
 Write-StartLog -Message "Starting Vorce Autopilot Suite from $ScriptDir"
 
-# Git-Branch überprüfen
+# Git-Branch Ã¼berprÃ¼fen
 $currentBranch = git branch --show-current 2>$null
 if ($null -ne $currentBranch -and $currentBranch.Trim() -ne "main") {
     Write-Warning "[INIT] Das Repository befindet sich nicht auf dem Branch 'main', sondern auf '$($currentBranch.Trim())'!"
@@ -537,5 +544,3 @@ Write-StartLog -Message "Start sequence completed."
 if (-not $NoControlConsole.IsPresent) {
     Wait-AutopilotControlConsole
 }
-
-

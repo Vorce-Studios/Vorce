@@ -87,7 +87,7 @@ function Test-ProviderAvailable {
     if (-not ($provider.PSObject.Properties.Name -contains "command")) {
         return $false
     }
-    
+
     $cmdName = $provider.command
     $resolvedCmd = Get-Command $cmdName -ErrorAction SilentlyContinue
     if ($null -eq $resolvedCmd) {

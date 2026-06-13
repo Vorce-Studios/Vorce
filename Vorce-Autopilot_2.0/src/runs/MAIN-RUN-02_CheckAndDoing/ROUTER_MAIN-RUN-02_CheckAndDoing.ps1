@@ -100,4 +100,3 @@ Add-Def -Name "Housekeeping" -Script "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUN
 Write-Host "[ROUTER]   -> Housekeeping: ENABLED (Laeuft immer)" -ForegroundColor Green
 
 return $definitions
-

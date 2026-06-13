@@ -158,7 +158,7 @@ if ($pendingReviews.Count -gt 0) {
 
         # Dispatch as background process
         $toolsDir = Join-Path $ScriptDir "tools"
-        $scriptPath = Join-Path $toolsDir "run-background-review.ps1"
+        $scriptPath = Join-Path $toolsDir "agents/run-background-review.ps1"
         $configPath = Join-Path $ScriptDir "config/autopilot-config.json"
         $quotaPath = Join-Path $VarDbDir "quota-registry.json"
 

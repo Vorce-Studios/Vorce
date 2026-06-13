@@ -1,4 +1,4 @@
-﻿# Vorce-Autopilot/src/lib/state-manager.ps1
+# Vorce-Autopilot/src/lib/state-manager.ps1
 # Zentrales State Management fuer den Vorce Autopilot
 # Verwendet JSON Dateien in var/db/ zur Persistenz
 
@@ -39,6 +39,7 @@ function New-AutopilotState {
         started_at              = (Get-Date -Format 'o')
         last_heartbeat          = (Get-Date -Format 'o')
         last_planning_at        = ""
+        last_monitoring_at      = ""
         last_check_and_doing_at = ""
         active_delegations      = @()
         working_queue           = @()
@@ -141,10 +142,12 @@ function Initialize-AutopilotState {
         return $defaults
     }
 
+    # Ensure all defaults are present in the existing state
+    $existing = Update-AutopilotStateObject -State $existing
+
     # Schema Migration Check (1.0 -> 2.0)
     if (-not ($existing.PSObject.Properties.Name -contains "schema_version") -or $existing.schema_version -lt 2) {
         Write-Host "[STATE] Migriere State auf Schema V2..." -ForegroundColor Yellow
-        $existing = Update-AutopilotStateObject -State $existing
         $existing.schema_version = 2
         Save-AutopilotState -State $existing
     }
@@ -281,4 +284,3 @@ function Test-ObjectProperty {
     if ($null -eq $Object) { return $false }
     return [bool]($Object.PSObject.Properties.Match($Name).Count -gt 0)
 }
-

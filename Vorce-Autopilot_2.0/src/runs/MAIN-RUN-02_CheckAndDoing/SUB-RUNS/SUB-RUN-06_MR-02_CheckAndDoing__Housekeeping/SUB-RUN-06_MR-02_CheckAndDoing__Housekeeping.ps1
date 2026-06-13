@@ -1,4 +1,4 @@
-# src/runs/SUB-RUN/SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping.ps1
+﻿# src/runs/SUB-RUN/SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping.ps1
 # Alert-Cleanup, Quota-Monitoring, Branch-Prune, Run-Summary
 param($MainState, $SubState, $GlobalState, $Config, $QuotaRegistry, $DryRun)
 
@@ -156,7 +156,7 @@ $GlobalState.run_summaries | Add-Member -MemberType NoteProperty -Name "check_an
     summary = $checkDoingSummary
 }) -Force
 
-$GlobalState.last_monitoring_at = (Get-Date -Format 'o')
+$GlobalState.last_check_and_doing_at = (Get-Date -Format 'o')
 Save-AutopilotState -State $GlobalState
 
 Write-Host "[CHECK&DOING] ========== Check&Doing abgeschlossen ==========" -ForegroundColor Blue

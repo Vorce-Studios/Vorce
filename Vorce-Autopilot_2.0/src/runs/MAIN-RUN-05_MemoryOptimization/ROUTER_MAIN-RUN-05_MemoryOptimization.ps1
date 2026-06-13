@@ -25,4 +25,3 @@ Add-Def -Name "MemoryMaintenance" -Script "src/runs/MAIN-RUN-05_MemoryOptimizati
 Write-Host "[ROUTER]   -> MemoryMaintenance: ENABLED" -ForegroundColor Green
 
 return $definitions
-

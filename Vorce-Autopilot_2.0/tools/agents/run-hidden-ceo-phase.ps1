@@ -87,11 +87,11 @@ $exitCode = 0
 try {
     $hasPromptFile = -not [string]::IsNullOrWhiteSpace($PromptFile) -and (Test-Path $PromptFile)
     Write-Debug "HasPromptFile: $hasPromptFile"
-    
+
     $cliBaseName = [System.IO.Path]::GetFileNameWithoutExtension($CliCommand).ToLower()
     $needsPromptArg = $cliBaseName -in @("gemini", "claude")
     Write-Debug "cliBaseName: $cliBaseName, needsPromptArg: $needsPromptArg"
-    
+
     $useStdinPipe = $false
     if ($hasPromptFile -and $needsPromptArg) {
         $promptText = Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8
@@ -115,7 +115,7 @@ try {
 
     $errorLogFile = $OutputFile + ".err.log"
     Write-Debug "Running: $CliCommand with args: $($cliArgs -join ' ')"
-    
+
     if ($useStdinPipe) {
         Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8 | & $CliCommand @cliArgs 2> $errorLogFile | Set-Content -Path $OutputFile -Encoding UTF8
     } else {
@@ -124,17 +124,17 @@ try {
 
     $exitCode = $LASTEXITCODE
     Write-Debug "Exit code: $exitCode"
-    
+
     if (Test-Path $errorLogFile) {
         $errContent = Get-Content -LiteralPath $errorLogFile -Raw -Encoding UTF8
         Write-Debug "Error log content: $errContent"
     }
-    
+
     if (Test-Path $OutputFile) {
         $outContent = Get-Content -LiteralPath $OutputFile -Raw -Encoding UTF8
         Write-Debug "Output file content (first 500 chars): $($outContent.Substring(0, [Math]::Min(500, $outContent.Length)))"
     }
-    
+
 } catch {
     $errMsg = $_.Exception.Message
     Write-Debug "[ERROR] $_"
