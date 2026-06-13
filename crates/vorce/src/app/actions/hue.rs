@@ -3,6 +3,7 @@ use crate::app::core::app_struct::App;
 use tracing::{error, info};
 use vorce_ui::UIAction;
 
+/// Registers/links the application with the Philips Hue Bridge to generate credentials.
 pub fn handle_register_hue(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::RegisterHue = action {
         info!("Linking with Philips Hue Bridge...");
@@ -25,6 +26,7 @@ pub fn handle_register_hue(app: &mut App, action: UIAction, _needs_sync: &mut bo
     }
 }
 
+/// Fetches the entertainment groups available on the configured Hue Bridge.
 pub fn handle_fetch_hue_groups(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::FetchHueGroups = action {
         info!("Fetching Hue Entertainment Groups...");
@@ -63,6 +65,7 @@ pub fn handle_fetch_hue_groups(app: &mut App, action: UIAction, _needs_sync: &mu
     }
 }
 
+/// Connects to the Philips Hue Bridge using stored configuration credentials.
 pub fn handle_connect_hue(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::ConnectHue = action {
         info!("Connecting to Philips Hue Bridge...");
@@ -84,6 +87,7 @@ pub fn handle_connect_hue(app: &mut App, action: UIAction, _needs_sync: &mut boo
     }
 }
 
+/// Disconnects from the current Philips Hue Bridge session.
 pub fn handle_disconnect_hue(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::DisconnectHue = action {
         info!("Disconnecting from Philips Hue Bridge...");
@@ -91,6 +95,7 @@ pub fn handle_disconnect_hue(app: &mut App, action: UIAction, _needs_sync: &mut 
     }
 }
 
+/// Automatically discovers Philips Hue Bridges present on the local network.
 pub fn handle_discover_hue_bridges(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::DiscoverHueBridges = action {
         info!("Discovering Philips Hue Bridges...");

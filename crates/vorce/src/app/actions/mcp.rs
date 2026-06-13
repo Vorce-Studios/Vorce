@@ -1,6 +1,7 @@
 use crate::app::core::app_struct::App;
 use tracing::info;
 
+/// Handles asynchronous action messages received from the Model Context Protocol (MCP) channel.
 pub fn handle_mcp_actions(app: &mut App) {
     while let Ok(action) = app.mcp_receiver.try_recv() {
         if let vorce_mcp::McpAction::GetProjectState(tx) = &action {

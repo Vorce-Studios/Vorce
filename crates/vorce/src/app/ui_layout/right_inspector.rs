@@ -1,5 +1,6 @@
 use crate::app::App;
 
+#[allow(deprecated)]
 pub fn render(
     ctx: &egui::Context,
     app: &mut App,

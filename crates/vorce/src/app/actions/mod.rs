@@ -1,15 +1,28 @@
+/// Global action handlers.
 pub mod global;
+/// Philips Hue integration action handlers.
 pub mod hue;
+/// Layer and group management action handlers.
 pub mod layer;
+/// Projection mapping and paint action handlers.
 pub mod mapping;
+/// Model Context Protocol (MCP) action handlers.
 pub mod mcp;
+/// Media playback and pick action handlers.
 pub mod media;
+/// MIDI mapping and assignment action handlers.
 pub mod midi;
+/// Network Device Interface (NDI) input/output action handlers.
 pub mod ndi;
+/// Node graph editor action handlers.
 pub mod node;
+/// Physical output routing and configuration action handlers.
 pub mod output;
+/// Playback controls (play, pause, speed, loop) action handlers.
 pub mod playback;
+/// Project export, save, load, and composition state action handlers.
 pub mod project;
+/// Settings (audio configuration, FPS, language) action handlers.
 pub mod settings;
 pub use mcp::*;
 

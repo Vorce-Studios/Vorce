@@ -1,5 +1,6 @@
 //! App logic and orchestration.
 
+/// Action handling and routing.
 pub mod actions;
 pub mod core;
 pub use core::app_struct::App;

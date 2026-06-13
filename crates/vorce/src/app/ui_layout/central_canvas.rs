@@ -1,6 +1,7 @@
 use crate::app::App;
 use vorce_ui as ui;
 
+#[allow(deprecated)]
 pub fn render(ctx: &egui::Context, app: &mut App) {
     // 7. Central Panel: Module Canvas
     egui::CentralPanel::default()

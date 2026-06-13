@@ -3,6 +3,7 @@ use crate::app::core::app_struct::App;
 use tracing::info;
 use vorce_ui::UIAction;
 
+/// Adds a new projection output target.
 pub fn handle_add_output(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::AddOutput(name, region, size) = action {
         app.history.push(app.state.clone());
@@ -11,6 +12,7 @@ pub fn handle_add_output(app: &mut App, action: UIAction, _needs_sync: &mut bool
     }
 }
 
+/// Removes a projection output target by its ID.
 pub fn handle_remove_output(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::RemoveOutput(id) = action {
         app.history.push(app.state.clone());
@@ -19,6 +21,7 @@ pub fn handle_remove_output(app: &mut App, action: UIAction, _needs_sync: &mut b
     }
 }
 
+/// Configures properties (fullscreen, display, resolution) of a projection output target.
 pub fn handle_configure_output(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::ConfigureOutput(id, config) = action {
         let fs = config.fullscreen;

@@ -3,6 +3,7 @@ use crate::app::core::app_struct::App;
 use vorce_mcp::McpAction;
 use vorce_ui::UIAction;
 
+/// Retrieves NDI sender status information via MCP action.
 pub fn handle_get_ndi_sender_status(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::GetNdiSenderStatus(part_id, tx) = action {
         let _ = app.action_sender.send(McpAction::GetNdiSenderStatus(part_id, tx));
@@ -10,6 +11,7 @@ pub fn handle_get_ndi_sender_status(app: &mut App, action: UIAction, _needs_sync
 }
 
 #[cfg(feature = "ndi")]
+/// Connects to a specific local network NDI video source.
 pub fn handle_connect_ndi_source(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::ConnectNdiSource { part_id, source } = action {
         if !app.ndi_receivers.contains_key(&part_id) {
@@ -34,6 +36,7 @@ pub fn handle_connect_ndi_source(app: &mut App, action: UIAction, _needs_sync: &
 }
 
 #[cfg(feature = "ndi")]
+/// Disconnects from the current NDI video source.
 pub fn handle_disconnect_ndi_source(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::DisconnectNdiSource { part_id } = action {
         info!("Disconnecting NDI source from part {}", part_id);

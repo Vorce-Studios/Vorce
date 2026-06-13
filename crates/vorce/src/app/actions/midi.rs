@@ -2,6 +2,7 @@
 use crate::app::core::app_struct::App;
 use vorce_ui::UIAction;
 
+/// Sets a MIDI binding/assignment mapping a physical MIDI control element to a software target.
 pub fn handle_set_midi_assignment(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::SetMidiAssignment(element_id, target_id) = action {
         #[cfg(feature = "midi")]

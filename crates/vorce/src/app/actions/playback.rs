@@ -2,6 +2,7 @@
 use crate::app::core::app_struct::App;
 use vorce_ui::UIAction;
 
+/// Initiates playback for timeline animations and all active media players.
 pub fn handle_play(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::Play = action {
         app.state.effect_animator_mut().play();
@@ -11,6 +12,7 @@ pub fn handle_play(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     }
 }
 
+/// Pauses playback of timeline animations and all active media players.
 pub fn handle_pause(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::Pause = action {
         app.state.effect_animator_mut().pause();
@@ -20,6 +22,7 @@ pub fn handle_pause(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     }
 }
 
+/// Stops playback of timeline animations and resets active media players to the beginning.
 pub fn handle_stop(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::Stop = action {
         app.state.effect_animator_mut().stop();
@@ -29,6 +32,7 @@ pub fn handle_stop(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     }
 }
 
+/// Sets the playback speed factor for timeline animations and active media players.
 pub fn handle_set_speed(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::SetSpeed(s) = action {
         app.state.effect_animator_mut().set_speed(s);
@@ -38,6 +42,7 @@ pub fn handle_set_speed(app: &mut App, action: UIAction, _needs_sync: &mut bool)
     }
 }
 
+/// Configures the loop mode for active media players.
 pub fn handle_set_loop_mode(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::SetLoopMode(m) = action {
         for handle in app.media_players.values_mut() {
@@ -46,6 +51,7 @@ pub fn handle_set_loop_mode(app: &mut App, action: UIAction, _needs_sync: &mut b
     }
 }
 
+/// Handles timeline-specific actions (e.g. seek, markers, playback commands).
 pub fn handle_timeline_action(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::TimelineAction(timeline_action) = action {
         use vorce_ui::TimelineAction;

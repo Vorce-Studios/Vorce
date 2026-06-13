@@ -1,6 +1,7 @@
 use crate::app::App;
 use vorce_ui as ui;
 
+#[allow(deprecated)]
 pub fn render(ctx: &egui::Context, app: &mut App, compact_height: bool, layout_locked: bool) {
     if app.ui_state.show_toolbar {
         egui::Panel::top("toolbar_panel")

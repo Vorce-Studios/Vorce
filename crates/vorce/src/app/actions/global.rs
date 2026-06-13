@@ -3,6 +3,7 @@ use crate::app::core::app_struct::App;
 use tracing::info;
 use vorce_ui::UIAction;
 
+/// Sets whether the global application layout should be displayed in fullscreen mode.
 pub fn handle_set_global_fullscreen(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::SetGlobalFullscreen(is_fullscreen) = action {
         *_needs_sync = true;
@@ -13,6 +14,7 @@ pub fn handle_set_global_fullscreen(app: &mut App, action: UIAction, _needs_sync
     }
 }
 
+/// Opens the shader graph panel and loads the graph with the given ID.
 pub fn handle_open_shader_graph(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::OpenShaderGraph(graph_id) = action {
         app.ui_state.show_shader_graph = true;
@@ -32,12 +34,14 @@ pub fn handle_open_shader_graph(app: &mut App, action: UIAction, _needs_sync: &m
     }
 }
 
+/// Toggles visibility of the module editor canvas.
 pub fn handle_toggle_module_canvas(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::ToggleModuleCanvas = action {
         app.ui_state.show_module_canvas = !app.ui_state.show_module_canvas;
     }
 }
 
+/// Toggles whether the main window layout is maximized.
 pub fn handle_toggle_fullscreen(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::ToggleFullscreen = action {
         app.ui_state.user_config.window_maximized = !app.ui_state.user_config.window_maximized;
@@ -45,12 +49,14 @@ pub fn handle_toggle_fullscreen(app: &mut App, action: UIAction, _needs_sync: &m
     }
 }
 
+/// Toggles visibility of the external controller overlay.
 pub fn handle_toggle_controller_overlay(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::ToggleControllerOverlay = action {
         app.ui_state.show_controller_overlay = !app.ui_state.show_controller_overlay;
     }
 }
 
+/// Resets the application's workspace layout to default configuration.
 pub fn handle_reset_layout(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::ResetLayout = action {
         let active_layout_id = app.ui_state.user_config.active_layout_id.clone();
@@ -64,12 +70,14 @@ pub fn handle_reset_layout(app: &mut App, action: UIAction, _needs_sync: &mut bo
     }
 }
 
+/// Toggles visibility of the main media manager dialog.
 pub fn handle_toggle_media_manager(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::ToggleMediaManager = action {
         app.media_manager_ui.visible = !app.media_manager_ui.visible;
     }
 }
 
+/// Requests the application to safely exit.
 pub fn handle_exit(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::Exit = action {
         info!("Exit requested via menu");
@@ -77,6 +85,7 @@ pub fn handle_exit(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     }
 }
 
+/// Opens the application preferences/settings panel.
 pub fn handle_open_settings(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::OpenSettings = action {
         info!("Settings requested");
@@ -84,6 +93,7 @@ pub fn handle_open_settings(app: &mut App, action: UIAction, _needs_sync: &mut b
     }
 }
 
+/// Opens the software's "About" informational dialog.
 pub fn handle_open_about(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::OpenAbout = action {
         info!("About dialog requested");
@@ -91,6 +101,7 @@ pub fn handle_open_about(app: &mut App, action: UIAction, _needs_sync: &mut bool
     }
 }
 
+/// Opens the URL to the software's open-source license page.
 pub fn handle_open_license(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::OpenLicense = action {
         app.egui_context.open_url(egui::OpenUrl::new_tab(
@@ -99,6 +110,7 @@ pub fn handle_open_license(app: &mut App, action: UIAction, _needs_sync: &mut bo
     }
 }
 
+/// Toggles whether MIDI input learning mode is active.
 pub fn handle_toggle_midi_learn(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::ToggleMidiLearn = action {
         app.ui_state.is_midi_learn_mode = !app.ui_state.is_midi_learn_mode;
@@ -106,6 +118,7 @@ pub fn handle_toggle_midi_learn(app: &mut App, action: UIAction, _needs_sync: &m
     }
 }
 
+/// Toggles visibility of the audio settings/analysis panel.
 pub fn handle_toggle_audio_panel(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::ToggleAudioPanel = action {
         app.ui_state.show_audio = !app.ui_state.show_audio;
