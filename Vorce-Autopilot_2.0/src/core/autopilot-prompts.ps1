@@ -17,7 +17,7 @@ function Get-VorceConfigPrompt {
         "$PromptKey.md",
         "PROMPT_$PromptKey.md"
     )
-    
+
     foreach ($file in $testFiles) {
         $testPath = Join-Path $script:PromptsDir $file
         if (Test-Path -LiteralPath $testPath) {
@@ -235,4 +235,3 @@ function Get-VorceJulesPrConflictReplacementPrompt {
         PullRequestTitle = $PullRequestTitle
     }
 }
-

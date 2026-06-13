@@ -11,4 +11,3 @@ $OrchDir = Join-Path $ScriptDir "../../core"
 . (Join-Path $OrchDir "Invoke-MainRun.ps1")
 
 return Invoke-MainRun -MainRunName "MAIN-RUN-05_MemoryOptimization" -GlobalState $GlobalState -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
-

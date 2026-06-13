@@ -14,4 +14,3 @@ $OrchDir = Join-Path $ScriptDir "../../core"
 
 # Fuehre den Main Run aus
 return Invoke-MainRun -MainRunName "MAIN-RUN-01_Planning" -GlobalState $GlobalState -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
-
