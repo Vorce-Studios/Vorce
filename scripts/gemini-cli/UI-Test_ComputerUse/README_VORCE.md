@@ -52,3 +52,12 @@ By default the launch check only accepts a window owned by the launched `vorce.e
 ## Agent Contract
 
 Codex/Jules/Gemini should treat `env-check` as the baseline no-op gate for issue #547. Deterministic smoke flows belong to #549 and exploratory Gemini Computer Use flows belong to #548; both should reuse this harness output folder and report schema.
+
+## Gemini Runner Verification
+
+To verify the Gemini Runner with a dummy scenario manifest:
+
+```powershell
+echo "{}" > dummy_manifest.json
+python scripts\gemini-cli\UI-Test_ComputerUse\gemini_runner.py --scenario-manifest dummy_manifest.json --step-timeout 45 --retry-policy retry-once
+```
