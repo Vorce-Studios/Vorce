@@ -21,8 +21,8 @@ sudo apt-get install -y \
 # 2. Rust Toolchain konfigurieren
 echo "🦀 Konfiguriere Rust Toolchain..."
 if command -v rustup &> /dev/null; then
-    rustup toolchain install 1.94.0
-    rustup default 1.94.0
+    rustup toolchain install 1.95.0
+    rustup default 1.95.0
     rustup component add rustfmt clippy
 else
     echo "⚠️ rustup nicht gefunden. Überspringe Rust-Konfiguration."
