@@ -16,9 +16,8 @@ pub fn handle_export(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
 /// Handles saving the project with a new name.
 pub fn handle_save_project_as(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::SaveProjectAs = action {
-        if let Some(path) = rfd::FileDialog::new()
-            .add_filter("Vorce Project", &["vorce", "json"])
-            .save_file()
+        if let Some(path) =
+            rfd::FileDialog::new().add_filter("Vorce Project", &["vorce", "json"]).save_file()
         {
             let path_str = path.to_string_lossy().to_string();
             app.ui_state.user_config.last_project = Some(path_str.clone());
@@ -48,9 +47,8 @@ pub fn handle_save_project(app: &mut App, action: UIAction, _needs_sync: &mut bo
 /// Handles loading a project from file.
 pub fn handle_load_project(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::LoadProject(id) = action {
-        if let Some(path) = rfd::FileDialog::new()
-            .add_filter("Vorce Project", &["vorce", "json"])
-            .pick_file()
+        if let Some(path) =
+            rfd::FileDialog::new().add_filter("Vorce Project", &["vorce", "json"]).pick_file()
         {
             let path_str = path.to_string_lossy().to_string();
             handle_load_recent_project(app, UIAction::LoadRecentProject(path_str), _needs_sync);

@@ -1,10 +1,9 @@
-use crate::{
-    reject_path_traversal, HwAccelType, MediaError, Result, VideoDecoder,
-};
+use crate::{reject_path_traversal, HwAccelType, MediaError, Result, VideoDecoder};
 use std::path::Path;
 use std::time::Duration;
 use vorce_io::VideoFrame;
 
+#[allow(dead_code)]
 /// FFmpeg-based video decoder implementation.
 pub struct FfmpegDecoder {
     #[cfg(feature = "ffmpeg")]
@@ -31,7 +30,7 @@ pub struct FfmpegDecoder {
     fps: f64,
 }
 
-// Safety: SwsContext is handled via ffmpeg-next which provides safe wrappers, 
+// Safety: SwsContext is handled via ffmpeg-next which provides safe wrappers,
 // but we need to be careful with Send/Sync.
 unsafe impl Send for FfmpegDecoder {}
 

@@ -81,9 +81,7 @@ pub fn dispatch_action(app: &mut App, action: UIAction, needs_sync: &mut bool) {
             let _ = node::handle_node_action(app, action, needs_sync);
         }
 
-        UIAction::AddOutput(..)
-        | UIAction::RemoveOutput(..)
-        | UIAction::ConfigureOutput(..) => {
+        UIAction::AddOutput(..) | UIAction::RemoveOutput(..) | UIAction::ConfigureOutput(..) => {
             output::handle_add_output(app, action, needs_sync);
         }
 

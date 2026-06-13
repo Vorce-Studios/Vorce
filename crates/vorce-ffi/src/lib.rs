@@ -131,6 +131,11 @@ pub unsafe extern "C" fn vorce_plugin_get_version(
 }
 
 /// Validates a buffer passed from C to Rust.
+///
+/// # Safety
+///
+/// The caller must ensure that `api` and `buffer` are valid pointers
+/// and that `len` matches the buffer size.
 #[no_mangle]
 pub unsafe extern "C" fn vorce_plugin_read_buffer(
     api: *const PluginApi,

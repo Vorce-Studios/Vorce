@@ -9,7 +9,9 @@ use vorce_ui::UIAction;
 pub fn handle_add_paint(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::AddPaint = action {
         let count = app.state.paint_manager.paints().len();
-        app.state.paint_manager_mut().add_paint(Paint::test_pattern(0, format!("Paint {}", count + 1)));
+        app.state
+            .paint_manager_mut()
+            .add_paint(Paint::test_pattern(0, format!("Paint {}", count + 1)));
         app.state.dirty = true;
     }
 }
@@ -26,7 +28,11 @@ pub fn handle_remove_paint(app: &mut App, action: UIAction, _needs_sync: &mut bo
 pub fn handle_add_mapping(app: &mut App, action: UIAction, _needs_sync: &mut bool) {
     if let UIAction::AddMapping = action {
         let count = app.state.mapping_manager.mappings().len();
-        app.state.mapping_manager_mut().add_mapping(Mapping::quad(0, format!("Mapping {}", count + 1), 0));
+        app.state.mapping_manager_mut().add_mapping(Mapping::quad(
+            0,
+            format!("Mapping {}", count + 1),
+            0,
+        ));
         app.state.dirty = true;
     }
 }
