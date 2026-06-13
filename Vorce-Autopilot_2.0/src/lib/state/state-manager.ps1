@@ -53,12 +53,13 @@ function New-AutopilotState {
         last_optimizer_analysis_at = ""
         optimizer_last_run      = $null
         run_control             = [pscustomobject]@{}
+        escalated_issues        = @()
     }
 }
 
 function Read-AutopilotState {
     if ($null -eq (Get-Variable -Name "VorceAutopilotStateFilePath" -Scope Global -ErrorAction SilentlyContinue)) {
-        $global:VorceAutopilotStateFilePath = Join-Path $PSScriptRoot "../../var/db/active-sessions.json"
+        $global:VorceAutopilotStateFilePath = Join-Path $PSScriptRoot "../../../var/db/active-sessions.json"
     }
 
     if (-not (Test-Path $global:VorceAutopilotStateFilePath)) {
@@ -69,7 +70,11 @@ function Read-AutopilotState {
     try {
         $mutex.WaitOne() | Out-Null
         $content = Get-Content -LiteralPath $global:VorceAutopilotStateFilePath -Raw -Encoding UTF8
-        return $content | ConvertFrom-Json
+        $state = $content | ConvertFrom-Json
+        if ($null -ne $state) {
+            $state = Update-AutopilotStateObject -State $state
+        }
+        return $state
     } catch {
         Write-Warning "Fehler beim Lesen der Autopilot-State-Datei: $_"
         return $null
@@ -83,7 +88,7 @@ function Save-AutopilotState {
     param([Parameter(Mandatory)][object]$State)
 
     if ($null -eq (Get-Variable -Name "VorceAutopilotStateFilePath" -Scope Global -ErrorAction SilentlyContinue)) {
-        $global:VorceAutopilotStateFilePath = Join-Path $PSScriptRoot "../../var/db/active-sessions.json"
+        $global:VorceAutopilotStateFilePath = Join-Path $PSScriptRoot "../../../var/db/active-sessions.json"
     }
 
     $State.last_heartbeat = (Get-Date -Format 'o')
@@ -101,7 +106,7 @@ function Update-AutopilotStateObject {
     }
 
     # Validate that arrays are indeed arrays (sometimes deserialized as single object or null)
-    foreach ($key in @("active_delegations", "working_queue", "working_sessions", "review_queue", "autopilot_created_issues", "completed_this_session", "decisions_pending", "deliberation_log", "optimizer_queue")) {
+    foreach ($key in @("active_delegations", "working_queue", "working_sessions", "review_queue", "autopilot_created_issues", "completed_this_session", "decisions_pending", "deliberation_log", "optimizer_queue", "escalated_issues")) {
         if ($null -eq $State.$key) {
             $State.$key = @()
         } elseif ($State.$key -isnot [System.Array] -and $State.$key -isnot [System.Collections.IList]) {
@@ -158,7 +163,7 @@ function Initialize-AutopilotState {
 function Invoke-StartupCleanup {
     Write-Host "[INIT] Startup Cleanup wird ausgefuehrt..." -ForegroundColor DarkGray
     # Hier koennen temporaere Dateien oder Locks entfernt werden
-    $ScriptDir = Resolve-Path (Join-Path $PSScriptRoot "../..")
+    $ScriptDir = Resolve-Path (Join-Path $PSScriptRoot "../../..")
     $lockFile = Join-Path $ScriptDir "var/runtime/autopilot.lock"
     if (Test-Path $lockFile) {
         Remove-Item $lockFile -Force

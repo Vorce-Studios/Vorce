@@ -1,4 +1,4 @@
-﻿# Invoke-MainRun.ps1
+# Invoke-MainRun.ps1
 # Zentraler Orchestrator fuer hierarchische Ausfuehrungen (V2.0)
 # Unterstuetzt MAIN-RUN -> ROUTER -> SUB-RUN -> PART-RUN
 
@@ -12,8 +12,8 @@ function Invoke-MainRun {
         [switch]$ForceAllSubRuns  # Erzwingt alle Sub-Runs, ignoriert Router-Entscheidungen
     )
 
-    $Script:OrchestratorRoot = (Resolve-Path (Join-Path $PSScriptRoot "../../")).Path
-    . (Join-Path $Script:OrchestratorRoot "src/lib/run-state-manager.ps1")
+    $global:OrchestratorRoot = (Resolve-Path (Join-Path $PSScriptRoot "../../")).Path
+    . (Join-Path $global:OrchestratorRoot "src/lib/state/run-state-manager.ps1")
 
     Write-Host ""
 Write-Host "==========================================================================" -ForegroundColor Magenta
@@ -53,85 +53,56 @@ Write-Host ""
 
         Write-Host "[ORCHESTRATOR] $($subRunDefinitions.Count) Sub-Run(s) geplant." -ForegroundColor DarkGray
 
-        # 3. Iteriere ueber SUB-RUNS (Parallele Ausfuehrung)
+        # 3. Iteriere ueber SUB-RUNS (Sequenzielle Ausfuehrung fuer korrekten State-Austausch)
         $completedSubs = @()
         $failedCount = 0
-        $jobs = @()
 
-        # Starte alle SUB-RUNs parallel
         foreach ($subDef in $subRunDefinitions) {
             $subRunId = $subDef.id
             $mrShort = $MainRunName -replace 'MAIN-RUN-', 'MR-'
             $subRunName = "SUB-RUN-${subRunId}_${mrShort}__$($subDef.name)"
             $subScript = $subDef.script
 
-            Write-Host "[ORCHESTRATOR]   -> Starte $subRunName (Hintergrund-Job)" -ForegroundColor Yellow
+            Write-Host "[ORCHESTRATOR]   -> Starte $subRunName" -ForegroundColor Yellow
 
             $subRunPath = Initialize-RunDirectory -RunType "Sub" -RunName $subRunName -ParentPath (Join-Path $mainRunPath "SUB-RUNS")
             $subRunState = New-RunState -RunType "Sub" -RunName $subRunName -RunPath $subRunPath
             $subRunState.status = "running"
             Save-RunState -State $subRunState -RunPath $subRunPath
 
-            $fullSubScriptPath = Join-Path $Script:OrchestratorRoot $subScript
+            $fullSubScriptPath = Join-Path $global:OrchestratorRoot $subScript
 
             if (Test-Path $fullSubScriptPath) {
-                $job = Start-Job -Name $subRunName -ScriptBlock {
-                    param($ScriptPath, $MainState, $SubState, $GlobalState, $Config, $QuotaRegistry, $DryRun, $OrchRoot)
-                    $Script:OrchestratorRoot = $OrchRoot
-                    . (Join-Path $OrchRoot "src/lib/run-state-manager.ps1")
+                try {
+                    # Frischen State laden, um Lese-Race-Conditions zu minimieren
+                    $freshState = Read-AutopilotState
+                    if ($null -ne $freshState) { $GlobalState = $freshState }
 
-                    try {
-                        # Frischen State laden, um Lese-Race-Conditions zu minimieren
-                        $freshState = Read-AutopilotState
-                        if ($null -ne $freshState) { $GlobalState = $freshState }
+                    # Direkt im aktuellen Prozess ausfuehren, damit $mainRunState ($MainState) geteilt wird
+                    & $fullSubScriptPath -MainState $mainRunState -SubState $subRunState -GlobalState $GlobalState -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
 
-                        & $ScriptPath -MainState $MainState -SubState $SubState -GlobalState $GlobalState -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
+                    if ($subRunState.status -eq "running") { $subRunState.status = "completed" }
+                } catch {
+                    Add-RunError -State $subRunState -Message "Fehler im Sub-Run: $_" -Context $_.ScriptStackTrace
+                }
 
-                        if ($SubState.status -eq "running") { $SubState.status = "completed" }
-                    } catch {
-                        Add-RunError -State $SubState -Message "Fehler im Job: $_" -Context $_.ScriptStackTrace
-                    }
-                    return $SubState
-                } -ArgumentList $fullSubScriptPath, $mainRunState, $subRunState, $GlobalState, $Config, $QuotaRegistry, $DryRun, $Script:OrchestratorRoot
+                if ($subRunState.status -ne "completed") { $failedCount++ }
 
-                $jobs += [pscustomobject]@{ Job = $job; SubRunState = $subRunState; Path = $subRunPath; Def = $subDef }
+                $subRunState.completed_at = (Get-Date).ToString('o')
+                Save-RunState -State $subRunState -RunPath $subRunPath
+
+                $mainRunState.metadata["sub_run_$($subDef.id)"] = @{
+                    name   = $subDef.name
+                    status = $subRunState.status
+                    errors = $subRunState.errors.Count
+                }
+                $completedSubs += $subRunState
             } else {
                 Add-RunError -State $subRunState -Message "SUB-RUN Skript nicht gefunden: $subScript"
                 $failedCount++
-            }
-        }
-
-        # Warten auf alle Jobs und Ergebnisse einsammeln
-        if ($jobs.Count -gt 0) {
-            Write-Host "[ORCHESTRATOR] Warte auf $($jobs.Count) parallele SUB-RUNs..." -ForegroundColor Cyan
-            Wait-Job -Job $jobs.Job | Out-Null
-
-            foreach ($j in $jobs) {
-                $jobResult = Receive-Job -Job $j.Job -ErrorAction SilentlyContinue
-
-                # Konsolenausgaben des Jobs anzeigen
-                foreach ($output in $jobResult) {
-                    if ($output -is [string]) { Write-Host "[JOB $($j.Def.name)] $output" }
-                }
-
-                # Den zurueckgegebenen SubState extrahieren (das letzte Objekt im Output-Stream)
-                $returnedState = $jobResult | Where-Object { $_ -is [pscustomobject] -and $_.PSObject.Properties.Name -contains "status" } | Select-Object -Last 1
-                if ($null -ne $returnedState) {
-                    $j.SubRunState = $returnedState
-                }
-
-                if ($j.SubRunState.status -ne "completed") { $failedCount++ }
-
-                $j.SubRunState.completed_at = (Get-Date).ToString('o')
-                Save-RunState -State $j.SubRunState -RunPath $j.Path
-
-                $mainRunState.metadata["sub_run_$($j.Def.id)"] = @{
-                    name   = $j.Def.name
-                    status = $j.SubRunState.status
-                    errors = $j.SubRunState.errors.Count
-                }
-                $completedSubs += $j.SubRunState
-                Remove-Job -Job $j.Job -Force
+                $subRunState.completed_at = (Get-Date).ToString('o')
+                Save-RunState -State $subRunState -RunPath $subRunPath
+                $completedSubs += $subRunState
             }
         }
 
@@ -183,7 +154,7 @@ function Resolve-SubRunDefinitions {
 
     # Versuch 1: Dediziertes Router-Skript
     $routerName = "ROUTER_$MainRunName"
-    $routerScript = Join-Path $Script:OrchestratorRoot "src/runs/ROUTER/$routerName.ps1"
+    $routerScript = Join-Path $global:OrchestratorRoot "src/runs/$MainRunName/$routerName.ps1"
 
     if (Test-Path $routerScript) {
         Write-Host "[ORCHESTRATOR] Rufe Router-Skript auf: $routerName" -ForegroundColor Magenta
@@ -248,7 +219,9 @@ function Invoke-PartRun {
     $partRunPath = Initialize-RunDirectory -RunType "Part" -RunName $PartRunName -ParentPath (Join-Path $SubState.metadata["run_path"] "PART-RUNS")
     Write-Host "[DELIB] partRunPath=$partRunPath" -ForegroundColor DarkBlue
 
-    $cacheDir = Join-Path $Script:OrchestratorRoot "var/db/cache"
+    $partRunState = New-RunState -RunType "Part" -RunName $PartRunName -RunPath $partRunPath
+
+    $cacheDir = Join-Path $global:OrchestratorRoot "var/db/cache"
     if (-not (Test-Path $cacheDir)) { New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null }
 
     $hashInput = "$AgentType|$Prompt"

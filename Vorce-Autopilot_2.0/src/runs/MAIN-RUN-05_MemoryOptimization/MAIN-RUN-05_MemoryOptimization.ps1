@@ -1,4 +1,4 @@
-﻿# src/runs/MAIN-RUN/MAIN-RUN-05_MemoryOptimization.ps1
+# src/runs/MAIN-RUN/MAIN-RUN-05_MemoryOptimization.ps1
 param(
     [Parameter(Mandatory)][object]$GlobalState,
     [Parameter(Mandatory)][object]$Config,
@@ -9,14 +9,18 @@ param(
 $MainRunName = "MAIN-RUN-05_MemoryOptimization"
 Write-Host "`n=== Starte $MainRunName ===" -ForegroundColor Cyan
 
-# Hole zugehoerige SUB-RUNS ueber den Router
-$routerScript = Join-Path $Script:OrchestratorRoot "src/runs/ROUTER/ROUTER_MAIN-RUN-05_MemoryOptimization.ps1"
+$ScriptDir = $PSScriptRoot
+$global:OrchestratorRoot = (Resolve-Path (Join-Path $ScriptDir "../../..")).Path
+$OrchDir = Join-Path $global:OrchestratorRoot "src/core"
+. (Join-Path $OrchDir "Invoke-MainRun.ps1")
+
+$routerScript = Join-Path $global:OrchestratorRoot "src/runs/$MainRunName/ROUTER_$MainRunName.ps1"
 $subRunDefinitions = @()
 
 if (Test-Path $routerScript) {
     $subRunDefinitions = & $routerScript -GlobalState $GlobalState -Config $Config -MainState $null
 } else {
-    Write-Warning "[MAIN-RUN-05] Router nicht gefunden: ROUTER_MAIN-RUN-05_MemoryOptimization.ps1"
+    Write-Warning "[MAIN-RUN-05] Router nicht gefunden: $routerScript"
     return
 }
 

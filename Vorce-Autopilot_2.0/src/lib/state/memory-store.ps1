@@ -5,7 +5,7 @@ Set-StrictMode -Version Latest
 
 function Get-MemoryFilePath {
     if ($null -eq (Get-Variable -Name "VorceAutopilotMemoryFilePath" -Scope Global -ErrorAction SilentlyContinue)) {
-        $global:VorceAutopilotMemoryFilePath = Join-Path $PSScriptRoot "../../var/db/memory-store.json"
+        $global:VorceAutopilotMemoryFilePath = Join-Path $PSScriptRoot "../../../var/db/memory-store.json"
     }
     return $global:VorceAutopilotMemoryFilePath
 }

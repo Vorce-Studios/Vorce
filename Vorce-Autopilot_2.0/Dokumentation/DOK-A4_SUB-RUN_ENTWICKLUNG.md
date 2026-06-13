@@ -57,7 +57,7 @@ try {
     $SubState.artifacts += @{ type = "Report"; count = $data.Count }
 } catch {
     # Fehler protokollieren
-    . (Join-Path $PSScriptRoot "../../lib/run-state-manager.ps1")
+    . (Join-Path $PSScriptRoot "../../lib/state/run-state-manager.ps1")
     Add-RunError -State $SubState -Message "Task fehlgeschlagen: $_"
 }
 ```

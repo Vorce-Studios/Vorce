@@ -1,4 +1,4 @@
-﻿# run-state-manager.ps1
+# run-state-manager.ps1
 # Manager für hierarchische Zustände (Main, Sub, Part Runs)
 
 function Initialize-RunDirectory {
@@ -8,7 +8,7 @@ function Initialize-RunDirectory {
         [string]$ParentPath = ""
     )
 
-    $basePath = if ($ParentPath) { $ParentPath } else { Join-Path $PSScriptRoot "../../var/runtime" }
+    $basePath = if ($ParentPath) { $ParentPath } else { Join-Path $PSScriptRoot "../../../var/runtime" }
     $runPath = Join-Path $basePath $RunName
 
     if (-not (Test-Path $runPath)) {

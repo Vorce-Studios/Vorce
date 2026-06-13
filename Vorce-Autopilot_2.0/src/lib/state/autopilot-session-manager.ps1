@@ -3,28 +3,28 @@
 
 Set-StrictMode -Version Latest
 
-$script:ScriptRoot = Resolve-Path (Join-Path $PSScriptRoot "../..")
-$script:VarDbDir = Join-Path $script:ScriptRoot "var/db"
-$script:VarLogDir = Join-Path $script:ScriptRoot "var/log"
-$script:VarRunDir = Join-Path $script:ScriptRoot "var/runtime"
+$global:ScriptRoot = Resolve-Path (Join-Path $PSScriptRoot "../..")
+$global:VarDbDir = Join-Path $global:ScriptRoot "var/db"
+$global:VarLogDir = Join-Path $global:ScriptRoot "var/log"
+$global:VarRunDir = Join-Path $global:ScriptRoot "var/runtime"
 
-$script:AutopilotTaskJournalPath = Join-Path $script:VarDbDir "autopilot-tasks.md"
-$script:AutopilotSessionLockPath = Join-Path $script:VarDbDir "autopilot-session-lock.md"
-$script:AutopilotTmpDir = Join-Path $script:VarDbDir "tmp"
-$script:AutopilotToolsDir = Join-Path $script:ScriptRoot "tools"
+$global:AutopilotTaskJournalPath = Join-Path $global:VarDbDir "autopilot-tasks.md"
+$global:AutopilotSessionLockPath = Join-Path $global:VarDbDir "autopilot-session-lock.md"
+$global:AutopilotTmpDir = Join-Path $global:VarDbDir "tmp"
+$global:AutopilotToolsDir = Join-Path $global:ScriptRoot "tools"
 
 # Ensure all var folders exist
-foreach ($dir in @($script:VarDbDir, $script:VarLogDir, $script:VarRunDir, $script:AutopilotTmpDir)) {
+foreach ($dir in @($global:VarDbDir, $global:VarLogDir, $global:VarRunDir, $global:AutopilotTmpDir)) {
     if (-not (Test-Path -Path $dir)) {
         New-Item -ItemType Directory -Path $dir -Force | Out-Null
     }
 }
 
-function Get-AutopilotTaskJournalPath { return $script:AutopilotTaskJournalPath }
-function Get-AutopilotSessionLockPath { return $script:AutopilotSessionLockPath }
+function Get-AutopilotTaskJournalPath { return $global:AutopilotTaskJournalPath }
+function Get-AutopilotSessionLockPath { return $global:AutopilotSessionLockPath }
 
 function Initialize-AutopilotTaskJournal {
-    if (Test-Path $script:AutopilotTaskJournalPath) { return }
+    if (Test-Path $global:AutopilotTaskJournalPath) { return }
 
     $content = @"
 # Vorce Autopilot Task Journal
@@ -46,7 +46,7 @@ This file is the shared handoff state for autonomous Codex planning and monitori
 ## Session Log
 - $(Get-Date -Format o) - Journal initialized.
 "@
-    Set-Content -Path $script:AutopilotTaskJournalPath -Value $content -Encoding UTF8
+    Set-Content -Path $global:AutopilotTaskJournalPath -Value $content -Encoding UTF8
 }
 
 function Add-AutopilotJournalEvent {
@@ -57,7 +57,7 @@ function Add-AutopilotJournalEvent {
 
     Initialize-AutopilotTaskJournal
     $entry = "- {0} - **{1}**: {2}" -f (Get-Date -Format o), $SessionType, $Message
-    Add-Content -Path $script:AutopilotTaskJournalPath -Value $entry -Encoding UTF8
+    Add-Content -Path $global:AutopilotTaskJournalPath -Value $entry -Encoding UTF8
 }
 
 function Write-AutopilotSessionLock {
@@ -81,14 +81,14 @@ expires_at: $($now.AddMinutes($TtlMinutes).ToString("o"))
 
 This file prevents overlapping autonomous Codex sessions.
 "@
-    Set-Content -Path $script:AutopilotSessionLockPath -Value $content -Encoding UTF8
+    Set-Content -Path $global:AutopilotSessionLockPath -Value $content -Encoding UTF8
 }
 
 function Read-AutopilotSessionLock {
-    if (-not (Test-Path $script:AutopilotSessionLockPath)) { return $null }
+    if (-not (Test-Path $global:AutopilotSessionLockPath)) { return $null }
 
     $data = [ordered]@{}
-    foreach ($line in (Get-Content -Path $script:AutopilotSessionLockPath -ErrorAction SilentlyContinue)) {
+    foreach ($line in (Get-Content -Path $global:AutopilotSessionLockPath -ErrorAction SilentlyContinue)) {
         if ($line -match '^\s*([a-z_]+):\s*(.*)\s*$') {
             $data[$Matches[1]] = $Matches[2]
         }
@@ -306,10 +306,10 @@ function Invoke-AutopilotCodexSession {
     Write-AutopilotSessionLock -Status "running" -SessionType $SessionType -Owner $owner -TtlMinutes 90
     Add-AutopilotJournalEvent -SessionType $SessionType -Message "Starting Codex $SessionType session with model $Model."
 
-    $outputPath = Join-Path $script:AutopilotTmpDir ("codex-{0}-last-message.md" -f $SessionType)
-    $promptPath = Join-Path $script:AutopilotTmpDir ("codex-{0}-prompt.md" -f $SessionType)
-    $logPath = Join-Path $script:AutopilotTmpDir ("codex-{0}-visible.log" -f $SessionType)
-    $statusPath = Join-Path $script:AutopilotTmpDir ("codex-{0}-status.json" -f $SessionType)
+    $outputPath = Join-Path $global:AutopilotTmpDir ("codex-{0}-last-message.md" -f $SessionType)
+    $promptPath = Join-Path $global:AutopilotTmpDir ("codex-{0}-prompt.md" -f $SessionType)
+    $logPath = Join-Path $global:AutopilotTmpDir ("codex-{0}-visible.log" -f $SessionType)
+    $statusPath = Join-Path $global:AutopilotTmpDir ("codex-{0}-status.json" -f $SessionType)
     $latestBefore = Get-LatestCodexSessionFile
     $startedAt = Get-Date
     $args = @("exec", "--model", $Model, "--dangerously-bypass-approvals-and-sandbox", "--output-last-message", $outputPath, "-")
@@ -329,7 +329,7 @@ function Invoke-AutopilotCodexSession {
                 $visiblePrompt = $Prompt
             }
             Set-Content -Path $promptPath -Value $visiblePrompt -Encoding UTF8
-            $runnerPath = Join-Path $script:AutopilotToolsDir "run-visible-codex-session.ps1"
+            $runnerPath = Join-Path $global:AutopilotToolsDir "run-visible-codex-session.ps1"
             if (-not (Test-Path -LiteralPath $runnerPath)) {
                 throw "Visible Codex runner not found: $runnerPath"
             }
@@ -341,7 +341,7 @@ function Invoke-AutopilotCodexSession {
                 "-File", $runnerPath,
                 "-PromptPath", $promptPath,
                 "-Model", $Model,
-                "-RepositoryRoot", (Resolve-Path (Join-Path $script:ScriptRoot "..")),
+                "-RepositoryRoot", (Resolve-Path (Join-Path $global:ScriptRoot "..")),
                 "-LogPath", $logPath,
                 "-StatusPath", $statusPath
             )
@@ -439,3 +439,4 @@ function Invoke-AutopilotCodexSession {
         Clear-AutopilotSessionLock
     }
 }
+

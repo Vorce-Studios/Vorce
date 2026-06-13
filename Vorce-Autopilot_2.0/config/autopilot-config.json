@@ -35,7 +35,7 @@
     "enabled": true,
     "ceo_chain": [
       "codex_orchestrator:planning",
-      "claude_code:balanced"
+      "gemini_cli:premium""claude_code:balanced"
     ],
     "qa_manager_chain": [
       "gemini_cli:premium",
@@ -58,29 +58,114 @@
   },
   "router_rules": {
     "Planning": [
-      { "id": "01", "name": "DataSync", "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-01_Planning__DataSync.ps1", "enabled": true },
-      { "id": "02", "name": "Triage", "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-01_Planning__Triage.ps1", "enabled": true },
-      { "id": "03", "name": "Strategy", "script": "src/runs/SUB-RUN/SUB-RUN-03_MR-01_Planning__Strategy.ps1", "enabled": true },
-      { "id": "04", "name": "Delegation", "script": "src/runs/SUB-RUN/SUB-RUN-04_MR-01_Planning__Delegation.ps1", "enabled": true }
+      {
+        "id": "01",
+        "name": "DataSync",
+        "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-01_Planning__DataSync.ps1",
+        "enabled": true
+      },
+      {
+        "id": "02",
+        "name": "Triage",
+        "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-01_Planning__Triage.ps1",
+        "enabled": true
+      },
+      {
+        "id": "03",
+        "name": "Strategy",
+        "script": "src/runs/SUB-RUN/SUB-RUN-03_MR-01_Planning__Strategy.ps1",
+        "enabled": true
+      },
+      {
+        "id": "04",
+        "name": "Delegation",
+        "script": "src/runs/SUB-RUN/SUB-RUN-04_MR-01_Planning__Delegation.ps1",
+        "enabled": true
+      }
     ],
     "CheckAndDoing": [
-      { "id": "01", "name": "SessionSync", "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-02_CheckAndDoing__SessionSync.ps1", "enabled": true },
-      { "id": "02", "name": "JulesCheck", "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck.ps1", "enabled": true },
-      { "id": "03", "name": "LocalAgentCheck", "script": "src/runs/SUB-RUN/SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck.ps1", "enabled": true },
-      { "id": "04", "name": "ReviewDispatch", "script": "src/runs/SUB-RUN/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch.ps1", "enabled": true },
-      { "id": "05", "name": "JulesRefill", "script": "src/runs/SUB-RUN/SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill.ps1", "enabled": true },
-      { "id": "06", "name": "Housekeeping", "script": "src/runs/SUB-RUN/SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping.ps1", "enabled": true }
+      {
+        "id": "01",
+        "name": "SessionSync",
+        "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-02_CheckAndDoing__SessionSync.ps1",
+        "enabled": true
+      },
+      {
+        "id": "02",
+        "name": "JulesCheck",
+        "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck.ps1",
+        "enabled": true
+      },
+      {
+        "id": "03",
+        "name": "LocalAgentCheck",
+        "script": "src/runs/SUB-RUN/SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck.ps1",
+        "enabled": true
+      },
+      {
+        "id": "04",
+        "name": "ReviewDispatch",
+        "script": "src/runs/SUB-RUN/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch.ps1",
+        "enabled": true
+      },
+      {
+        "id": "05",
+        "name": "JulesRefill",
+        "script": "src/runs/SUB-RUN/SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill.ps1",
+        "enabled": true
+      },
+      {
+        "id": "06",
+        "name": "Housekeeping",
+        "script": "src/runs/SUB-RUN/SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping.ps1",
+        "enabled": true
+      }
     ],
     "Audit": [
-      { "id": "01", "name": "DataSync", "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-03_Audit__DataSync.ps1", "enabled": true },
-      { "id": "02", "name": "ComplianceCheck", "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-03_Audit__ComplianceCheck.ps1", "enabled": true },
-      { "id": "03", "name": "JulesSupervision", "script": "src/runs/SUB-RUN/SUB-RUN-03_MR-03_Audit__JulesSupervision.ps1", "enabled": true },
-      { "id": "04", "name": "AlertDisposition", "script": "src/runs/SUB-RUN/SUB-RUN-04_MR-03_Audit__AlertDisposition.ps1", "enabled": true }
+      {
+        "id": "01",
+        "name": "DataSync",
+        "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-03_Audit__DataSync.ps1",
+        "enabled": true
+      },
+      {
+        "id": "02",
+        "name": "ComplianceCheck",
+        "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-03_Audit__ComplianceCheck.ps1",
+        "enabled": true
+      },
+      {
+        "id": "03",
+        "name": "JulesSupervision",
+        "script": "src/runs/SUB-RUN/SUB-RUN-03_MR-03_Audit__JulesSupervision.ps1",
+        "enabled": true
+      },
+      {
+        "id": "04",
+        "name": "AlertDisposition",
+        "script": "src/runs/SUB-RUN/SUB-RUN-04_MR-03_Audit__AlertDisposition.ps1",
+        "enabled": true
+      }
     ],
     "Optimizer": [
-      { "id": "01", "name": "DataSync", "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-04_Optimizer__DataSync.ps1", "enabled": true },
-      { "id": "02", "name": "MemoryMaintenance", "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-04_Optimizer__MemoryMaintenance.ps1", "enabled": true },
-      { "id": "03", "name": "SystemAnalysis", "script": "src/runs/SUB-RUN/SUB-RUN-03_MR-04_Optimizer__SystemAnalysis.ps1", "enabled": true }
+      {
+        "id": "01",
+        "name": "DataSync",
+        "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-04_Optimizer__DataSync.ps1",
+        "enabled": true
+      },
+      {
+        "id": "02",
+        "name": "MemoryMaintenance",
+        "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-04_Optimizer__MemoryMaintenance.ps1",
+        "enabled": true
+      },
+      {
+        "id": "03",
+        "name": "SystemAnalysis",
+        "script": "src/runs/SUB-RUN/SUB-RUN-03_MR-04_Optimizer__SystemAnalysis.ps1",
+        "enabled": true
+      }
     ]
   }
 }

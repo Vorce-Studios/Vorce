@@ -257,7 +257,7 @@ while ($true) {
 
     if ($planDue) {
         try {
-            $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-01_Planning.ps1"
+            $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-01_Planning/MAIN-RUN-01_Planning.ps1"
             & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
 
             if ($State.last_planning_at) {
@@ -309,7 +309,7 @@ while ($true) {
 
     if ($checkDue) {
         try {
-            $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-02_CheckAndDoing.ps1"
+            $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-02_CheckAndDoing/MAIN-RUN-02_CheckAndDoing.ps1"
             & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
 
             $lastMonTime = Get-Date
