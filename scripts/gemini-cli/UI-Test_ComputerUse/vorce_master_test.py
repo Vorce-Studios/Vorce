@@ -19,12 +19,18 @@ except ImportError:
 
 ARTIFACT_DIR = Path("artifacts/visual-capture/ui-test-runs")
 
-def log_report(status, message, run_dir, extra_data=None):
+def log_report(status, message, run_dir, extra_data=None, failure_reason=None, scenario_name="deterministic_ui_smoke_test"):
     report = {
         "status": status,
         "message": message,
         "timestamp": datetime.now().isoformat(),
     }
+    if status == "FAIL":
+        report["failure_reason"] = failure_reason or "unknown_error"
+        report["scenario_name"] = scenario_name
+        report["log_path"] = str(run_dir / "vorce_output.log")
+        report["screenshot"] = None # Updated later if available
+
     if extra_data:
         report.update(extra_data)
 
@@ -110,13 +116,13 @@ def main():
     run_dir.mkdir(parents=True, exist_ok=True)
 
     if MISSING_DEPS:
-        log_report("FAIL", f"Missing Python dependencies: {', '.join(MISSING_DEPS)}", run_dir)
+        log_report("FAIL", f"Missing Python dependencies: {', '.join(MISSING_DEPS)}", run_dir, failure_reason="missing_dependencies")
         sys.exit(1)
 
     print(f"Starting Vorce from {args.vorce_exe}...")
     if not os.path.exists(args.vorce_exe):
         screenshot_path = take_screenshot(run_dir, "failure_launch")
-        log_report("FAIL", f"Vorce launch failure: executable not found at {args.vorce_exe}", run_dir, {"screenshot": screenshot_path})
+        log_report("FAIL", f"Vorce launch failure: executable not found at {args.vorce_exe}", run_dir, {"screenshot": screenshot_path}, failure_reason="executable_not_found")
         sys.exit(1)
 
     log_file_path = run_dir / "vorce_output.log"
@@ -125,7 +131,7 @@ def main():
         process = subprocess.Popen([args.vorce_exe], stdout=log_file, stderr=subprocess.STDOUT)
     except Exception as e:
         screenshot_path = take_screenshot(run_dir, "failure_launch")
-        log_report("FAIL", f"Vorce launch failure: {e}", run_dir, {"screenshot": screenshot_path})
+        log_report("FAIL", f"Vorce launch failure: {e}", run_dir, {"screenshot": screenshot_path}, failure_reason="launch_failed")
         sys.exit(1)
 
     # Wait for window (simple delay fallback since pygetwindow is windows-only typically, and we want this robust)
@@ -137,7 +143,7 @@ def main():
         test_success = run_test_steps(run_dir)
     except Exception as e:
         screenshot_path = take_screenshot(run_dir, "failure_during_test")
-        log_report("FAIL", f"Test steps failed: {e}", run_dir, {"screenshot": screenshot_path})
+        log_report("FAIL", f"Test steps failed: {e}", run_dir, {"screenshot": screenshot_path}, failure_reason="test_steps_failed")
         process.terminate()
         process.kill()
         sys.exit(1)
@@ -154,7 +160,7 @@ def main():
         log_report("PASS", "UI Smoke Test passed", run_dir, {"screenshot": screenshot_path})
         sys.exit(0)
     else:
-        log_report("FAIL", "UI Smoke Test failed", run_dir, {"screenshot": screenshot_path})
+        log_report("FAIL", "UI Smoke Test failed", run_dir, {"screenshot": screenshot_path}, failure_reason="smoke_test_failed")
         sys.exit(1)
 
 if __name__ == "__main__":
