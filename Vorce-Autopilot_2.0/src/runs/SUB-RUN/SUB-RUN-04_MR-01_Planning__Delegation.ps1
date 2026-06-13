@@ -7,26 +7,9 @@ $ScriptDir = Resolve-Path (Join-Path $PSScriptRoot "../../..")
 $VarDbDir = Join-Path $ScriptDir "var/db"
 $repo = $Config.repository
 
-$candidates = @()
-if ($MainState -is [hashtable] -and $MainState.ContainsKey("PlanningCandidates")) {
-    $candidates = @($MainState["PlanningCandidates"])
-} elseif ($MainState.PSObject.Properties.Name -contains "PlanningCandidates") {
-    $candidates = @($MainState.PlanningCandidates)
-}
-
-$runIssueCreation = $false
-if ($MainState -is [hashtable] -and $MainState.ContainsKey("RunIssueCreation")) {
-    $runIssueCreation = [bool]$MainState["RunIssueCreation"]
-} elseif ($MainState.PSObject.Properties.Name -contains "RunIssueCreation") {
-    $runIssueCreation = [bool]$MainState.RunIssueCreation
-}
-
-$newIssues = @()
-if ($MainState -is [hashtable] -and $MainState.ContainsKey("ProposedIssues")) {
-    $newIssues = @($MainState["ProposedIssues"])
-} elseif ($MainState.PSObject.Properties.Name -contains "ProposedIssues") {
-    $newIssues = @($MainState.ProposedIssues)
-}
+$candidates = if ($MainState.PSObject.Properties.Name -contains "PlanningCandidates") { $MainState.PlanningCandidates } else { @() }
+$runIssueCreation = if ($MainState.PSObject.Properties.Name -contains "RunIssueCreation") { $MainState.RunIssueCreation } else { $false }
+$newIssues = if ($MainState.PSObject.Properties.Name -contains "ProposedIssues") { $MainState.ProposedIssues } else { @() }
 
 # --- Execute issue creation logic if issues were proposed ---
 if ($runIssueCreation -and $newIssues.Count -gt 0) {
