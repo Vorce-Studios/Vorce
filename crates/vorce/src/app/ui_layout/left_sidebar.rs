@@ -10,16 +10,16 @@ pub fn render(
     viewport_width: f32,
 ) {
     if app.ui_state.show_left_sidebar {
-        egui::SidePanel::left("left_sidebar_panel")
+        egui::Panel::left("left_sidebar_panel")
             .resizable(!layout_locked)
-            .default_width(sidebar_default)
-            .min_width(if compact_height { 180.0 } else { 220.0 })
-            .max_width((viewport_width * 0.45).max(340.0))
+            .default_size(sidebar_default)
+            .min_size(if compact_height { 180.0 } else { 220.0 })
+            .max_size((viewport_width * 0.45).max(340.0))
             .show(ctx, |ui_obj| {
-                egui::TopBottomPanel::bottom("left_sidebar_preview")
+                egui::Panel::bottom("left_sidebar_preview")
                     .resizable(true)
-                    .default_height(if compact_height { 120.0 } else { 180.0 })
-                    .min_height(110.0)
+                    .default_size(if compact_height { 120.0 } else { 180.0 })
+                    .min_size(110.0)
                     .show_inside(ui_obj, |ui_obj| {
                         ui_obj.horizontal(|ui| {
                             ui.heading(app.ui_state.i18n.t("preview"));
@@ -67,10 +67,10 @@ pub fn render(
                         }
                     });
 
-                egui::TopBottomPanel::bottom("left_sidebar_media")
+                egui::Panel::bottom("left_sidebar_media")
                     .resizable(true)
-                    .default_height(if compact_height { 160.0 } else { 240.0 })
-                    .min_height(120.0)
+                    .default_size(if compact_height { 160.0 } else { 240.0 })
+                    .min_size(120.0)
                     .show_inside(ui_obj, |ui_obj| {
                         egui::CollapsingHeader::new(app.ui_state.i18n.t("media"))
                             .default_open(true)

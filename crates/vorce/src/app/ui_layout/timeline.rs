@@ -9,10 +9,10 @@ pub fn render(
     timeline_default_height: f32,
 ) {
     if app.ui_state.show_timeline {
-        egui::TopBottomPanel::bottom("bottom_panel")
+        egui::Panel::bottom("bottom_panel")
             .resizable(!layout_locked)
-            .default_height(timeline_default_height)
-            .min_height(if compact_height { 80.0 } else { 100.0 })
+            .default_size(timeline_default_height)
+            .min_size(if compact_height { 80.0 } else { 100.0 })
             .show(ctx, |ui_obj| {
                 ui_obj.horizontal(|ui| {
                     ui.heading(app.ui_state.i18n.t("timeline"));

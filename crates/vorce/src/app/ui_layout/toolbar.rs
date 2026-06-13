@@ -3,9 +3,9 @@ use vorce_ui as ui;
 
 pub fn render(ctx: &egui::Context, app: &mut App, compact_height: bool, layout_locked: bool) {
     if app.ui_state.show_toolbar {
-        egui::TopBottomPanel::top("toolbar_panel")
+        egui::Panel::top("toolbar_panel")
             .resizable(!layout_locked)
-            .min_height(if compact_height { 36.0 } else { 44.0 })
+            .min_size(if compact_height { 36.0 } else { 44.0 })
             .frame(
                 egui::Frame::default()
                     .fill(ctx.global_style().visuals.window_fill())
