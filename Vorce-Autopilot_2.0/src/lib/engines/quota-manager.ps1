@@ -83,18 +83,6 @@ function Test-ProviderAvailable {
         }
     }
 
-    # Check if the command actually exists and is executable
-    if (-not ($provider.PSObject.Properties.Name -contains "command")) {
-        return $false
-    }
-
-    $cmdName = $provider.command
-    $resolvedCmd = Get-Command $cmdName -ErrorAction SilentlyContinue
-    if ($null -eq $resolvedCmd) {
-        Write-Host "[QUOTA] Provider $ProviderName Command '$cmdName' nicht gefunden." -ForegroundColor Yellow
-        return $false
-    }
-
     return $true
 }
 

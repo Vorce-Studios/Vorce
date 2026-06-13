@@ -1,19 +1,8 @@
 # Vorce-Autopilot/src/lib/jules-client.ps1
 Set-StrictMode -Version Latest
 
-# Setup paths relative to script root (using a robust directory traversal to find Vorce-Autopilot_2.0 root)
-$rootPath = $PSScriptRoot
-if ($null -ne $MyInvocation -and $null -ne $MyInvocation.MyCommand -and $MyInvocation.MyCommand.Path) {
-    $rootPath = Split-Path -Parent $MyInvocation.MyCommand.Path
-}
-while ($rootPath -and (Split-Path -Leaf $rootPath) -ne "Vorce-Autopilot_2.0" -and (Split-Path -Parent $rootPath)) {
-    $rootPath = Split-Path -Parent $rootPath
-}
-if ($rootPath -and (Split-Path -Leaf $rootPath) -eq "Vorce-Autopilot_2.0") {
-    $script:JulesScriptDir = Join-Path (Split-Path -Parent $rootPath) "scripts/jules"
-} else {
-    $script:JulesScriptDir = Join-Path (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))) "scripts/jules"
-}
+# Setup paths relative to script root
+$script:JulesScriptDir = Join-Path (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))) "scripts/jules"
 
 # Dot-source the underlying jules api functions
 $script:JulesApiBaseUri = "https://jules.googleapis.com"

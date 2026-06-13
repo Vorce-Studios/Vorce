@@ -4,19 +4,8 @@ param($MainState, $SubState, $GlobalState, $Config, $QuotaRegistry, $DryRun)
 
 Write-Host "`n[SUB-RUN] SR-04 AlertDisposition: Generiere finale Dashboard-Alerts..." -ForegroundColor Cyan
 
-$complianceAlerts = @()
-if ($MainState -is [hashtable] -and $MainState.ContainsKey("ComplianceAlerts")) {
-    $complianceAlerts = @($MainState["ComplianceAlerts"])
-} elseif ($MainState.PSObject.Properties.Name -contains "ComplianceAlerts") {
-    $complianceAlerts = @($MainState.ComplianceAlerts)
-}
-
-$julesAlerts = @()
-if ($MainState -is [hashtable] -and $MainState.ContainsKey("JulesAlerts")) {
-    $julesAlerts = @($MainState["JulesAlerts"])
-} elseif ($MainState.PSObject.Properties.Name -contains "JulesAlerts") {
-    $julesAlerts = @($MainState.JulesAlerts)
-}
+$complianceAlerts = if ($MainState.PSObject.Properties.Name -contains "ComplianceAlerts") { @($MainState.ComplianceAlerts) } else { @() }
+$julesAlerts = if ($MainState.PSObject.Properties.Name -contains "JulesAlerts") { @($MainState.JulesAlerts) } else { @() }
 
 $allRawAlerts = @()
 $allRawAlerts += $complianceAlerts

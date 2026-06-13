@@ -2,9 +2,7 @@
   "repository": "Vorce-Studios/Vorce",
   "wake_intervals": {
     "planning_minutes": 120,
-    "check_and_doing_minutes": 15,
-    "memory_optimization_minutes": 60,
-    "monitoring_minutes": 10
+    "monitoring_minutes": 15
   },
   "jules": {
     "max_daily_sessions": 100,
@@ -59,114 +57,16 @@
   },
   "router_rules": {
     "Planning": [
-      {
-        "id": "01",
-        "name": "DataSync",
-        "script": "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync/SUB-RUN-01_MR-01_Planning__DataSync.ps1",
-        "enabled": true
-      },
-      {
-        "id": "02",
-        "name": "Triage",
-        "script": "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-02_MR-01_Planning__Triage/SUB-RUN-02_MR-01_Planning__Triage.ps1",
-        "enabled": true
-      },
-      {
-        "id": "03",
-        "name": "Strategy",
-        "script": "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-03_MR-01_Planning__Strategy/SUB-RUN-03_MR-01_Planning__Strategy.ps1",
-        "enabled": true
-      },
-      {
-        "id": "04",
-        "name": "Delegation",
-        "script": "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-04_MR-01_Planning__Delegation/SUB-RUN-04_MR-01_Planning__Delegation.ps1",
-        "enabled": true
-      }
+      { "id": "01", "name": "ContextGathering", "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-01_Planning__ContextGathering.ps1", "enabled": true },
+      { "id": "02", "name": "LegacyFallback", "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-01_Planning__LegacyFallback.ps1", "enabled": true }
     ],
-    "CheckAndDoing": [
-      {
-        "id": "01",
-        "name": "SessionSync",
-        "script": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-01_MR-02_CheckAndDoing__SessionSync/SUB-RUN-01_MR-02_CheckAndDoing__SessionSync.ps1",
-        "enabled": true
-      },
-      {
-        "id": "02",
-        "name": "JulesCheck",
-        "script": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck/SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck.ps1",
-        "enabled": true
-      },
-      {
-        "id": "03",
-        "name": "LocalAgentCheck",
-        "script": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck/SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck.ps1",
-        "enabled": true
-      },
-      {
-        "id": "04",
-        "name": "ReviewDispatch",
-        "script": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch.ps1",
-        "enabled": true
-      },
-      {
-        "id": "05",
-        "name": "JulesRefill",
-        "script": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill/SUB-RUN-02_MR-02_CheckAndDoing__JulesRefill.ps1",
-        "enabled": true
-      },
-      {
-        "id": "06",
-        "name": "Housekeeping",
-        "script": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping/SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping.ps1",
-        "enabled": true
-      }
+    "Monitoring": [
+      { "id": "01", "name": "SystemHealthCheck", "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-02_Monitoring__SystemHealthCheck.ps1", "enabled": true },
+      { "id": "02", "name": "LegacyMonitoring", "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-02_Monitoring__LegacyFallback.ps1", "enabled": true }
     ],
     "Audit": [
-      {
-        "id": "01",
-        "name": "DataSync",
-        "script": "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SUB-RUN-01_MR-03_Audit__DataSync/SUB-RUN-01_MR-03_Audit__DataSync.ps1",
-        "enabled": true
-      },
-      {
-        "id": "02",
-        "name": "ComplianceCheck",
-        "script": "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SUB-RUN-02_MR-03_Audit__ComplianceCheck/SUB-RUN-02_MR-03_Audit__ComplianceCheck.ps1",
-        "enabled": true
-      },
-      {
-        "id": "03",
-        "name": "JulesSupervision",
-        "script": "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SUB-RUN-03_MR-03_Audit__JulesSupervision/SUB-RUN-03_MR-03_Audit__JulesSupervision.ps1",
-        "enabled": true
-      },
-      {
-        "id": "04",
-        "name": "AlertDisposition",
-        "script": "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SUB-RUN-04_MR-03_Audit__AlertDisposition/SUB-RUN-04_MR-03_Audit__AlertDisposition.ps1",
-        "enabled": true
-      }
-    ],
-    "Optimizer": [
-      {
-        "id": "01",
-        "name": "DataSync",
-        "script": "src/runs/MAIN-RUN-04_Optimizer/SUB-RUNS/SUB-RUN-01_MR-04_Optimizer__DataSync/SUB-RUN-01_MR-04_Optimizer__DataSync.ps1",
-        "enabled": true
-      },
-      {
-        "id": "02",
-        "name": "MemoryMaintenance",
-        "script": "src/runs/MAIN-RUN-04_Optimizer/SUB-RUNS/SUB-RUN-02_MR-04_Optimizer__MemoryMaintenance/SUB-RUN-02_MR-04_Optimizer__MemoryMaintenance.ps1",
-        "enabled": true
-      },
-      {
-        "id": "03",
-        "name": "SystemAnalysis",
-        "script": "src/runs/MAIN-RUN-04_Optimizer/SUB-RUNS/SUB-RUN-03_MR-04_Optimizer__SystemAnalysis/SUB-RUN-03_MR-04_Optimizer__SystemAnalysis.ps1",
-        "enabled": true
-      }
+      { "id": "01", "name": "ConsistencyAudit", "script": "src/runs/SUB-RUN/SUB-RUN-01_MR-03_Audit__ConsistencyAudit.ps1", "enabled": true },
+      { "id": "02", "name": "LegacyAudit", "script": "src/runs/SUB-RUN/SUB-RUN-02_MR-03_Audit__LegacyFallback.ps1", "enabled": true }
     ]
   }
 }

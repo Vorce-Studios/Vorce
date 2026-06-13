@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, CalendarClock, Ban, MessageSquare, Terminal, Play, CheckCircle, Trash2 } from 'lucide-react';
+import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, Trash2, CalendarClock, Ban, MessageSquare, Terminal, Play, CheckCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue, AuditResult } from '../types';
 import DeliberationPanel from './DeliberationPanel';
@@ -175,8 +175,6 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
   const [commentDraft, setCommentDraft] = useState<string>('');
 
-  const activeAlerts = sessions.decisions_pending?.filter(a => a.status !== 'closed' && a.status !== 'ignored') || [];
-
   const sendRunControl = async (type: 'planning' | 'monitoring', action: string, note?: string) => {
     await fetch('/api/run-control', {
       method: 'POST',
@@ -273,12 +271,12 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
       )}
 
       {/* Audit Alerts */}
-      {activeAlerts.length > 0 && (
+      {sessions.decisions_pending && sessions.decisions_pending.length > 0 && (
         <div className="glass-card p-6 border border-rose-500/30 shadow-lg shadow-rose-500/10">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-rose-400 flex items-center gap-2">
               <AlertCircle className="w-5 h-5" />
-              Audit Alerts ({activeAlerts.length})
+              Audit Alerts ({sessions.decisions_pending.length})
             </h3>
             <button
               onClick={async () => {
@@ -292,7 +290,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
             </button>
           </div>
           <div className="space-y-3">
-            {activeAlerts.map((alert: any, idx) => {
+            {sessions.decisions_pending.map((alert: any, idx) => {
               const id = alert.id || String(idx);
               const owner = auditOwnerLabel(alert.owner);
               const userStage = owner === 'Du' || alert.escalation_level === 'user';

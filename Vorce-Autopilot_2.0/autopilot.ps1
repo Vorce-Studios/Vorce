@@ -187,9 +187,7 @@ if (-not $SkipPlanningOnStart.IsPresent) {
 
     # Synchronisiere State direkt beim Start
     $State.last_monitoring_at = $lastMonTime.ToString('o')
-    # Setze last_planning_at in die Vergangenheit, damit Planungs-Phase sofort triggert
-    $lastPlanTime = (Get-Date).AddDays(-1)
-    $State.last_planning_at = $lastPlanTime.ToString('o')
+    $State.last_planning_at = (Get-Date).AddDays(-1).ToString('o')
     Save-AutopilotState -State $State
 
     Write-Host "[INIT] Starte mit erzwungener Planungs-Phase (SkipPlanningOnStart ist nicht aktiv)." -ForegroundColor Yellow
@@ -259,19 +257,13 @@ while ($true) {
 
     if ($planDue) {
         try {
-            $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-01_Planning/MAIN-RUN-01_Planning.ps1"
-            $mainRunResult = & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
-            $actualMainRunResult = if ($mainRunResult -is [System.Array]) { $mainRunResult[-1] } else { $mainRunResult }
+            $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-01_Planning.ps1"
+            & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
 
-            # Warte bis alle SUB-RUNs completed sind (Invoke-MainRun already waits via Wait-Job)
-            if ($null -ne $actualMainRunResult -and $actualMainRunResult.status -eq "completed") {
-                # Nur setzen, wenn alle SUB-RUNs erfolgreich waren
-                $State.last_planning_at = (Get-Date).ToString('o')
+            if ($State.last_planning_at) {
+                try { $lastPlanTime = [datetimeoffset]::Parse($State.last_planning_at, [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::RoundtripKind).LocalDateTime } catch { $lastPlanTime = Get-Date }
             } else {
-                # Fallback: Zeitstempel auf vor 5 Minuten setzen für Backoff
-                $State.last_planning_at = (Get-Date).AddSeconds(-5).ToString('o')
-                $statusStr = if ($null -ne $actualMainRunResult) { $actualMainRunResult.status } else { "unknown" }
-                Write-Host "[LOOP] Planning MAIN-RUN nicht komplett erfolgreich (status=$statusStr), Backoff aktiviert." -ForegroundColor Yellow
+                $lastPlanTime = Get-Date
             }
         } catch {
             Write-Host "[LOOP] Planning-Fehler: $_" -ForegroundColor Red
@@ -317,21 +309,11 @@ while ($true) {
 
     if ($checkDue) {
         try {
-            $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN-02_CheckAndDoing/MAIN-RUN-02_CheckAndDoing.ps1"
-            $checkRunResult = & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
-            $actualCheckRunResult = if ($checkRunResult -is [System.Array]) { $checkRunResult[-1] } else { $checkRunResult }
+            $mainRunScript = Join-Path $ScriptDir "src/runs/MAIN-RUN/MAIN-RUN-02_CheckAndDoing.ps1"
+            & $mainRunScript -GlobalState $State -Config $Config -QuotaRegistry $QuotaRegistry -DryRun:$DryRun
 
-            # Warte bis alle SUB-RUNs completed sind (Invoke-MainRun already waits via Wait-Job)
-            if ($null -ne $actualCheckRunResult -and $actualCheckRunResult.status -eq "completed") {
-                $lastMonTime = Get-Date
-                $State.last_check_and_doing_at = $lastMonTime.ToString('o')
-            } else {
-                # Fallback: Zeitstempel auf vor 5 Minuten setzen für Backoff
-                $lastMonTime = (Get-Date).AddSeconds(-5)
-                $State.last_check_and_doing_at = $lastMonTime.ToString('o')
-                $statusStr = if ($null -ne $actualCheckRunResult) { $actualCheckRunResult.status } else { "unknown" }
-                Write-Host "[LOOP] Check&Doing MAIN-RUN nicht komplett erfolgreich (status=$statusStr), Backoff aktiviert." -ForegroundColor Yellow
-            }
+            $lastMonTime = Get-Date
+            $State.last_check_and_doing_at = $lastMonTime.ToString('o')
         } catch {
             Write-Host "[LOOP] Check&Doing-Fehler: $_" -ForegroundColor Red
             Add-ErrorLog -State $State -Message "CheckAndDoing MAIN-RUN failed" -Context $_.Exception.Message

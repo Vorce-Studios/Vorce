@@ -71,9 +71,6 @@ if ($partRun.success) {
     } catch {
         Write-Warning "[OPTIMIZER] Konnte JSON von MemoryEvaluation nicht parsen."
     }
-} else {
-    Write-Warning "[OPTIMIZER] MemoryEvaluation fehlgeschlagen: $($partRun.error)"
-    $SubState.status = "failed"
 }
 
-$SubState.completed_at = (Get-Date).ToString('o')
+$SubState.status = "completed"

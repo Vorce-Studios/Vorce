@@ -44,16 +44,8 @@ foreach ($decision in $GlobalState.decisions_pending) {
                 }
             }
 
-            $closedAtStr = if ($decision.PSObject.Properties.Name -contains "closed_at") { $decision.closed_at } else { "" }
-            if (-not [string]::IsNullOrWhiteSpace($closedAtStr)) {
-                try {
-                    $closedAt = [datetime]$closedAtStr
-                    if ((Get-Date) - $closedAt -gt [timespan]::FromDays(3)) {
-                        Write-Host "[CHECK&DOING] Entscheidung geschlossen/ignoriert (>3 Tage alt), entferne aus decisions_pending: $topic" -ForegroundColor DarkGray
-                        continue
-                    }
-                } catch {}
-            }
+            Write-Host "[CHECK&DOING] Entscheidung geschlossen/ignoriert, entferne aus decisions_pending: $topic" -ForegroundColor DarkGray
+            continue
         }
     }
 
@@ -133,12 +125,7 @@ try {
 }
 
 # --- Step 4: Run-Summary ---
-$conflictingPrs = @()
-if ($MainState -is [hashtable] -and $MainState.ContainsKey("ConflictingPRs")) {
-    $conflictingPrs = @($MainState["ConflictingPRs"])
-} elseif ($MainState.PSObject.Properties.Name -contains "ConflictingPRs") {
-    $conflictingPrs = @($MainState.ConflictingPRs)
-}
+$conflictingPrs = if ($MainState.PSObject.Properties.Name -contains "ConflictingPRs") { @($MainState.ConflictingPRs) } else { @() }
 $openPrCount = @($prs).Count
 $conflictCount = @($conflictingPrs).Count
 $queueNow = @($GlobalState.working_queue).Count
