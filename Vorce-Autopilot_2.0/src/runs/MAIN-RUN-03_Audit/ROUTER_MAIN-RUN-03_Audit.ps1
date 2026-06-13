@@ -1,4 +1,4 @@
-﻿# src/runs/ROUTER/ROUTER_MAIN-RUN-03_Audit.ps1
+# src/runs/ROUTER/ROUTER_MAIN-RUN-03_Audit.ps1
 # Smart Router fuer den Audit-Modus (QA-Manager)
 param(
     [object]$GlobalState,
@@ -7,7 +7,7 @@ param(
 )
 
 $ScriptDir = Resolve-Path (Join-Path $PSScriptRoot "../../..")
-. (Join-Path $ScriptDir "src/lib/planning-utils.ps1")
+. (Join-Path $ScriptDir "src/lib/utils/planning-utils.ps1")
 
 Write-Host "`n[ROUTER] Validiere dynamische Routing-Regeln fuer Audit..." -ForegroundColor Magenta
 

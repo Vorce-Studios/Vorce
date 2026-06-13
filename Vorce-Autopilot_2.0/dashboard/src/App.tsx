@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { LayoutDashboard, Activity, Settings, RefreshCw, Zap, BarChart3, Menu } from 'lucide-react';
 import { useData, useAutoRefresh } from './hooks';
 
@@ -166,7 +166,7 @@ export default function App() {
       {/* Main Container */}
       <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row gap-6">
         {/* Navigation Sidebar */}
-        <aside className={"md:w-64 flex-shrink-0 transition-all duration-300 ${isSidebarOpen ? 'block' : 'hidden'}"}>
+        <aside className={`md:w-64 flex-shrink-0 transition-all duration-300 ${isSidebarOpen ? 'block' : 'hidden'}`}>
           <nav className="space-y-1.5 sticky top-22">
             <button
               onClick={() => setActiveTab('dashboard')}

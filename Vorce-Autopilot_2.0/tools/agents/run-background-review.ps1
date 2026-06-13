@@ -8,14 +8,12 @@ param(
     [Parameter(Mandatory)][string]$OutputFilePath
 )
 
-$ScriptDir = Resolve-Path (Join-Path $PSScriptRoot "..")
-$LibDir = Join-Path $ScriptDir "src/lib"
-$OrchestratorDir = Join-Path $ScriptDir "src/orchestrator"
+$ScriptDir = Resolve-Path (Join-Path $PSScriptRoot "../..")
 
 # Load essential modules
-. (Join-Path $LibDir "planning-utils.ps1")
-. (Join-Path $LibDir "state-manager.ps1")
-. (Join-Path $OrchestratorDir "Invoke-MainRun.ps1") # Contains Invoke-PartRun
+. (Join-Path $ScriptDir "src/lib/utils/planning-utils.ps1")
+. (Join-Path $ScriptDir "src/lib/state/state-manager.ps1")
+. (Join-Path $ScriptDir "src/core/Invoke-MainRun.ps1") # Contains Invoke-PartRun
 
 $Config = Get-Content -LiteralPath $ConfigPath -Raw -Encoding UTF8 | ConvertFrom-Json
 $QuotaRegistry = Get-Content -LiteralPath $QuotaRegistryPath -Raw -Encoding UTF8 | ConvertFrom-Json
