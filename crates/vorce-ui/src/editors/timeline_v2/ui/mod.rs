@@ -374,8 +374,6 @@ impl TimelineV2 {
         self.semi_auto_current_block_id = Some(block_ids[next_index]);
         self.module_for_block_id(self.semi_auto_current_block_id)
     }
-
-
 }
 
 mod view;

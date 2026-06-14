@@ -6,9 +6,9 @@ use vorce_core::module::ModuleId;
 use crate::theme::colors;
 use crate::widgets::hold_to_action_button;
 
+use super::TimelineV2;
 use crate::editors::timeline_v2::models::ShowMode;
 use crate::editors::timeline_v2::types::{TimelineAction, TimelineModule};
-use super::TimelineV2;
 
 impl TimelineV2 {
     pub fn ui(
