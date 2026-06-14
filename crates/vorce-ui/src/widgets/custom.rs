@@ -14,8 +14,8 @@ pub use sliders::*;
 mod tests {
     use super::*;
     use crate::widgets::icons::AppIcon;
-    use egui::Ui;
     use egui::Context;
+    use egui::Ui;
 
     fn test_ui(func: impl FnMut(&mut Ui)) {
         let ctx = Context::default();

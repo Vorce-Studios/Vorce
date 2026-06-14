@@ -1,8 +1,6 @@
 use super::hold_action::hold_to_action_button;
 use crate::theme::colors;
-use egui::{
-    CornerRadius, Pos2, Rect, Sense, Ui, Vec2,
-};
+use egui::{CornerRadius, Pos2, Rect, Sense, Ui, Vec2};
 
 pub fn render_header(ui: &mut Ui, title: &str) {
     let desired_size = Vec2::new(ui.available_width(), 24.0);

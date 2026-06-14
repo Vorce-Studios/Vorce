@@ -13,7 +13,6 @@
 ### Task 1: Authentication Module Implementation
 
 **Files:**
-
 - Create: `scripts/youtube_playlist_creator/auth.py`
 - Test: `scripts/youtube_playlist_creator/test_auth_stub.py`
 

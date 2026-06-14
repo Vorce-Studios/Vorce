@@ -1,8 +1,7 @@
 use crate::theme::colors;
 use crate::widgets::icons::{AppIcon, IconManager};
 use egui::{
-    lerp, Color32, CornerRadius, Pos2, Rect, Sense, Stroke, Ui, Vec2, WidgetInfo,
-    WidgetType,
+    lerp, Color32, CornerRadius, Pos2, Rect, Sense, Stroke, Ui, Vec2, WidgetInfo, WidgetType,
 };
 
 /// Helper function to handle hold-to-confirm logic.

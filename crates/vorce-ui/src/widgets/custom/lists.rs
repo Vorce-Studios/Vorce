@@ -1,7 +1,5 @@
 use crate::theme::colors;
-use egui::{
-    Color32, Stroke, Ui,
-};
+use egui::{Color32, Stroke, Ui};
 
 /// A standard list item container for the Cyber Dark theme.
 /// Handles selection, zebra striping, and layout consistency.
