@@ -333,7 +333,7 @@ autopilot_working_sessions $(@($state.working_sessions).Count)
             if (($now - $lastHealthCheck).TotalSeconds -ge 30) {
                 $lastHealthCheck = $now
                 $pids = Import-Pids
-                
+
                 # 1. Check Dashboard (Port-based is most reliable)
                 $dashboardAlive = $false
                 if (Test-LocalPortListening -Port 5173) {
@@ -342,7 +342,7 @@ autopilot_working_sessions $(@($state.working_sessions).Count)
                     # Process exists but maybe not yet listening or on different port
                     $dashboardAlive = $true
                 }
-                
+
                 if (-not $dashboardAlive) {
                     Write-InitStatus "[HEAL] Dashboard-Server nicht erreichbar. Starte neu..." -Color Yellow
                     $dashboardProcess = Start-Process $PowerShellHost -ArgumentList @("-NoProfile", "-Command", "Set-Location -LiteralPath '$DashboardDir'; npm run dev -- --host 0.0.0.0") -WindowStyle Hidden -PassThru
