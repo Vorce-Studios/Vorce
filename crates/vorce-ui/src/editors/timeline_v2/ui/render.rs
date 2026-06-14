@@ -1,16 +1,16 @@
+use crate::theme::colors;
+use crate::widgets::hold_to_action_button;
 use egui::{Pos2, Rect, Sense, Stroke, Ui, Vec2};
 use vorce_core::animation::AnimValue;
 use vorce_core::effect_animation::EffectParameterAnimator;
 use vorce_core::module::ModuleId;
 
-use crate::theme::colors;
-use crate::widgets::hold_to_action_button;
-
+use super::super::models::ShowMode;
+use super::super::types::{TimelineAction, TimelineModule};
 use super::TimelineV2;
-use crate::editors::timeline_v2::models::ShowMode;
-use crate::editors::timeline_v2::types::{TimelineAction, TimelineModule};
 
 impl TimelineV2 {
+    /// Render the timeline UI interacting with the EffectParameterAnimator
     pub fn ui(
         &mut self,
         ui: &mut Ui,
