@@ -47,7 +47,7 @@ function Write-StartLog {
             }
             Add-Content -Path $StartLogPath -Value $line -Encoding UTF8 -ErrorAction SilentlyContinue
         }
-        
+
         # Also append to autopilot-live.log for unified visibility
         $liveLogPath = Join-Path $LogDir "autopilot-live.log"
         $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
