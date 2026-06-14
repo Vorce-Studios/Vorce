@@ -29,9 +29,7 @@ $julesProvider = $QuotaRegistry.providers.jules
 **Betroffene SUB-RUN:** `SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill.ps1` (wird nie ausgeführt)
 
 **Fix:**
-
 - Entweder `$QuotaRegistry` als Parameter hinzufügen:
-
   ```powershell
   param(
       [object]$GlobalState,
@@ -40,7 +38,6 @@ $julesProvider = $QuotaRegistry.providers.jules
       [object]$QuotaRegistry  # <- Hinzufügen
   )
   ```
-
 - Oder `$QuotaRegistry` im Hauptskript (`autopilot.ps1`) laden und übengeben (wie bei MAIN-RUNs).
 
 ---
@@ -53,7 +50,6 @@ $julesProvider = $QuotaRegistry.providers.jules
 **Problem:** Der hierationale Deliberations-Prompt für Re-Planning wird **nach 25 Zeilen abgeschnitten**, obwohl der hieratische Block (CEO + QA-Manager + CEO Synthesis) weit über 177 Zeilen lang ist. Der Teil nach Zeile 150 wird **nicht** im Prompt enthalten sein, wodurch QA-Manager und CEO-Synthese **nie** ausgeführt werden.
 
 **Evidenz:**
-
 ```powershell
 # LINIE 25 ENDE:
 $promptText = @"
@@ -74,7 +70,6 @@ Der Prompt endet nach `Antworte mit...` und enthält **keine** der nachfolgenden
 **Problem:** Die Funktion `Read-AutopilotState` wird aufgerufen, aber das globale `$global:VorceAutopilotStateFilePath` wird nicht korrekt gesetzt, wenn die Variable nicht existiert.
 
 **Evidenz aus `state-manager.ps1`:**
-
 ```powershell
 if ($null -eq (Get-Variable -Name "VorceAutopilotStateFilePath" -Scope Global -ErrorAction SilentlyContinue)) {
     $global:VorceAutopilotStateFilePath = Join-Path $PSScriptRoot "../../var/db/active-sessions.json"
@@ -84,7 +79,6 @@ if ($null -eq (Get-Variable -Name "VorceAutopilotStateFilePath" -Scope Global -E
 Wenn `$PSScriptRoot` im SUB-RUN-Kontext ist, zeigt der Pfad auf `.../SUB-RUN/` statt `.../` und die Datei wird **nicht** gefunden.
 
 **Fix:** Im `session-sync.ps1`-Skript vor dem Aufruf sicherstellen:
-
 ```powershell
 $global:VorceAutopilotStateFilePath = Join-Path $ScriptDir "var/db/active-sessions.json"
 $state = Read-AutopilotState
@@ -113,7 +107,6 @@ function Test-LocalPortListening {
 **Hinweis:** Da der User auf **Windows 10** arbeitet, ist dies aktuell kein Problem, aber eine **Zukunfts-Blocking-Issue** bei Migration.
 
 **Fix:**
-
 ```powershell
 function Test-LocalPortListening {
     param([Parameter(Mandatory)][int]$Port)
@@ -143,31 +136,25 @@ SUB-RUN-02_MR-04_Optimizer__MemoryMaintenance.ps1   <- Doppelter Unterstrich (__
 ```
 
 Der Router-Code in `Invoke-MainRun.ps1` (ZEILE 70) erwartet:
-
 ```powershell
 $fullSubScriptPath = Join-Path $Script:OrchestratorRoot $subScript
 ```
 
 Der `$subScript`-Pfad aus dem Router kommt von:
-
 ```powershell
 script = "src/runs/SUB-RUN/SUB-RUN-02_MR-04_Optimizer__MemoryMaintenance.ps1"
 ```
 
-Das ist **korrekt**, aber die `$Script:OrchestratorRoot` ist `../../`, was zu:
-
+Das ist ** korrekt**, aber die `$Script:OrchestratorRoot` ist `../../`, was zu:
 ```
 ../../src/runs/SUB-RUN/SUB-RUN-02_MR-04_Optimizer__MemoryMaintenance.ps1
 ```
-
 führt, was **falsch** ist, da `src/orchestrator/Invoke-MainRun.ps1` den Pfad relativ von `src/orchestrator/` aus interpretiert.
 
 **Fix:** In `Invoke-MainRun.ps1` ZEILE 15:
-
 ```powershell
 $Script:OrchestratorRoot = $PSScriptRoot  # <- statt "../"
 ```
-
 ODER in den Router-Pfaden `../src/runs/...` statt `src/runs/...` verwenden.
 
 ---
@@ -177,12 +164,11 @@ ODER in den Router-Pfaden `../src/runs/...` statt `src/runs/...` verwenden.
 ### 2.1 [MEDIUM] `ROUTER_MAIN-RUN-03_Audit.ps1` - `Test-ObjectProperty` nicht definiert
 
 **Datei:** `src/runs/ROUTER/ROUTER_MAIN-RUN-03_Audit.ps1`  
-**Problem:** Die Funktion `Test-ObjectProperty` wird in Zeile 33 (`$_.PSObject.Properties.Name -contains "agent_type"`) verwendet, aber sie ist **nicht** in `autpilot-prompts.ps1` oder einem geladenen Modul definiert.
+**Problem:** Die Funktion `Test-ObjectProperty` wird in Zeile 33 (` $_.PSObject.Properties.Name -contains "agent_type"`) verwendet, aber sie ist **nicht** in `autpilot-prompts.ps1` oder einem geladenen Modul definiert.
 
 **Hinweis:** `Test-ObjectProperty` ist in `planning-utils.ps1` definiert (ZEILE 1-15), das in `autopilot.ps1` geladen wird, aber **nicht** in den ROUTER-Skripten.
 
 **Fix:** Füge in die ROUTER-Skripte am Anfang hinzu:
-
 ```powershell
 . (Join-Path $PSScriptRoot "../lib/planning-utils.ps1")
 ```
@@ -197,7 +183,6 @@ ODER in den Router-Pfaden `../src/runs/...` statt `src/runs/...` verwenden.
 **Problem:** Die benutzerdefinierte `Write-Host`-Funktion (ZEILE 37) schreibt **synchron** in die Log-Datei. Bei hohem Durchsatz (z.B. 100+ SUB-RUNs pro Stunde) kann dies zu Latenz führen.
 
 **Evidenz:**
-
 ```powershell
 Add-Content -Path $liveLogPath -Value "[$timestamp] $cleanMsg" -Encoding UTF8 -ErrorAction SilentlyContinue
 ```
@@ -212,7 +197,6 @@ Add-Content -Path $liveLogPath -Value "[$timestamp] $cleanMsg" -Encoding UTF8 -E
 **Problem:** Die Funktion `Get-GitHubIssues` wird in `SUB-RUN-01_MR-01_Planning__DataSync.ps1`aufgerufen und dann in `SUB-RUN-04_MR-01_Planning__Delegation.ps1` **erneut**.
 
 **Evidenz:**
-
 ```powershell
 # IN DATA-SYNC:
 $issues = Get-GitHubIssues -Repository $repo -Limit 50
@@ -240,7 +224,6 @@ $issuesCount = $openIssues.Count
 Die echte Issue-Zahl für Strategy-Entscheidung sollte die **gefilterte** Liste sein.
 
 **Fix:**
-
 ```powershell
 $candidates = @($openIssues | Where-Object { ... (include/exclude logic) })
 $issuesCount = $candidates.Count
@@ -255,12 +238,10 @@ $issuesCount = $candidates.Count
 **Aktuell:** `Invoke-MainRun.ps1` führt SUB-RUNs **sequenziell** aus (ZEILE 55: `foreach ($subDef in $subRunDefinitions)`).
 
 **Vorteil Parallele Ausführung:**
-
 - Check&Doing-ROUTER hat 6 SUB-RUNs (SessionSync, JulesCheck, LocalAgentCheck, ReviewDispatch, JulesRefill, Housekeeping)
 - Diese könnten **parallel** laufen, da sie keine gemeinsamen Ressourcen nutzen.
 
 **Implementierung:**
-
 ```powershell
 # Ersetze foreach-Block durch:
 $jobs = @()
@@ -282,7 +263,6 @@ $jobs | Wait-Job | Receive-Job
 **Aktuell:** PART-RUNs失败后直接记录错误，without retry.
 
 **Vorschlag:** Config-Parameter `part_run_retry` hinzufügen:
-
 ```json
 {
   "part_run_retry": {
@@ -302,7 +282,6 @@ $jobs | Wait-Job | Receive-Job
 **Aktuell:** `autopilot.ps1` schreibt Status in `Write-Host` (Terminal).
 
 **Vorschlag:** Jeder MAIN-SUB-RUN-PART-RUN-Start/Ende sendet ein Metric:
-
 ```
 vorce_autopilot_run{run_type="MAIN",run_name="MAIN-RUN-01_Planning",status="completed"} 1
 ```
@@ -370,7 +349,6 @@ vorce_autopilot_run{run_type="MAIN",run_name="MAIN-RUN-01_Planning",status="comp
 ## 6. ANHANG
 
 ### 6.1 Verzeichnisstruktur (Vorce-Autopilot_2.0)
-
 ```
 Vorce-Autopilot_2.0/
 ├── autopilot.ps1              # Haupt-Loop (MAIN-RUN Trigger)
@@ -395,7 +373,6 @@ Vorce-Autopilot_2.0/
 ```
 
 ### 6.2 Workflow-Graph (MAIN-RUN-01_Planning)
-
 ```
 MAIN-RUN-01_Planning
 ├── ROUTER (ROUTER_MAIN-RUN-01_Planning.ps1)

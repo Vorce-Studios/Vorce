@@ -53,14 +53,12 @@ graph TD
 ## 3. Kern-Workflows
 
 ### 3.1 Planning Workflow (V2.0)
-
 1. **DataSync:** Synchronisiert GitHub Issues und Jules-Sessions in den State.
 2. **Router-Entscheidung:** Der Router prüft, ob neue Issues eine Triage oder eine Strategie-Anpassung erfordern.
 3. **Strategy (Deliberation):** Der CEO erstellt einen Plan, der QA-Manager prüft diesen auf Compliance und Risiken.
 4. **Delegation:** Finale Aufgaben werden an Jules oder lokale Agenten verteilt.
 
 ### 3.2 Audit & "Remediate before Escalate"
-
 1. **Compliance Check:** Der QA-Manager scannt das System nach Fehlern oder Abweichungen.
 2. **Autonomous Remediation:** Der QA-Manager generiert bei bekannten Problemen direkt Reparatur-Befehle.
 3. **Execution:** Der Autopilot führt diese Befehle aus, bevor der User benachrichtigt wird.
@@ -69,7 +67,6 @@ graph TD
 ## 4. State Management
 
 Der Prozess nutzt drei Ebenen von States, um Isolation und Nachvollziehbarkeit zu gewährleisten:
-
 - **GlobalState:** Das Langzeitgedächtnis und die Sitzungsverwaltung.
 - **MainState:** Zwischenspeicher für Daten innerhalb eines Main-Runs (z.B. gefundene Issue-Kandidaten).
 - **SubState:** Detailliertes Protokoll und Artefakte eines einzelnen Arbeitsschritts.

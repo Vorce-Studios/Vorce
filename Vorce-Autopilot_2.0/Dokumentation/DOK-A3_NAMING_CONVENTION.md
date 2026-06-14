@@ -16,52 +16,42 @@
 ## 2. Skript-Dateinamen
 
 ### Main-Run Skripte
-
 ```
 MAIN-RUN-{NR}_{Phase}.ps1
 ```
-
 - `{NR}`: Zweistellige Nummer (01, 02, 03)
 - `{Phase}`: PascalCase Phasenname
 
 Beispiele:
-
 - `MAIN-RUN-01_Planning.ps1`
 - `MAIN-RUN-02_Monitoring.ps1`
 - `MAIN-RUN-03_Audit.ps1`
 
 ### Router-Skripte
-
 ```
 ROUTER_MAIN-RUN-{NR}_{Phase}.ps1
 ```
-
 Der Name spiegelt exakt den zugehörigen Main-Run wider.
 
 Beispiele:
-
 - `ROUTER_MAIN-RUN-01_Planning.ps1`
 - `ROUTER_MAIN-RUN-02_Monitoring.ps1`
 
 ### Sub-Run Skripte
-
 ```
 SUB-RUN-{NR}_MR-{MR-NR}_{Phase}__{Funktion}.ps1
 ```
-
 - `{NR}`: Zweistellige Sub-Run Nummer innerhalb des Main-Runs
 - `MR-{MR-NR}`: Kurzform des zugehörigen Main-Runs
 - `{Phase}`: Phasenname
 - `__{Funktion}`: Doppelter Unterstrich als Separator, dann die funktionale Beschreibung
 
 Beispiele:
-
 - `SUB-RUN-01_MR-01_Planning__ContextGathering.ps1`
 - `SUB-RUN-02_MR-01_Planning__LegacyFallback.ps1`
 - `SUB-RUN-01_MR-02_Monitoring__SystemHealthCheck.ps1`
 
 ### Part-Run Skripte *(Zukünftig)*
-
 ```
 PART-RUN-{NR}_SR-{SR-NR}_MR-{MR-NR}_{Phase}__{Funktion}.ps1
 ```
@@ -116,13 +106,11 @@ In `autopilot-config.json` werden Sub-Runs referenziert mit:
 ## 6. Hinweise zu Windows-Pfadlängen
 
 Die vollständigen Pfade können lang werden:
-
 ```
 var/run/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__ContextGathering/SUB-RUN-STATE.json
 ```
 
 **Empfehlungen:**
-
 - Stelle sicher, dass Windows Long Paths aktiviert sind (`HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled = 1`)
 - Halte den Projektpfad so kurz wie möglich (z.B. `C:\Vorce\Autopilot\`)
 - Bei Problemen: Run-Verzeichnisse können intern gekürzte UUIDs verwenden
