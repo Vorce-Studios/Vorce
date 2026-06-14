@@ -25,9 +25,10 @@ Dieses Master-Issue trackt die offenen Large-File-Dekompositionsarbeiten.
 <!-- vorce-work-branch: B-Jules/__SI-13_MAI-006_Ecler-NUO4-Profile-Decomposition-16175398934306266182 -->
 <!-- vorce-last-update: 2026-06-13T19:03:36Z -->
 ## Vorce Project Manager
+
 - Queue State: `approved-awaiting-dispatch`
 - Remote State: `awaiting-session`
 - Work Branch: `B-Jules/__SI-13_MAI-006_Ecler-NUO4-Profile-Decomposition-16175398934306266182`
-- Linked PR: https://github.com/Vorce-Studios/Vorce/pull/238
+- Linked PR: <https://github.com/Vorce-Studios/Vorce/pull/238>
 - Last Update: `2026-06-13T19:03:36Z`
 <!-- jules-session:end -->

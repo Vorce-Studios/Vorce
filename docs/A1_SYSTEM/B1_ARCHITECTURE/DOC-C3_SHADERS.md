@@ -15,6 +15,7 @@ Vorce nutzt ausschließlich **WGSL** (WebGPU Shading Language). Dies garantiert 
 ## 3. Shader Graph
 
 Der Shader-Graph in der UI erlaubt es, visuelle Knoten zu Effekten zu kombinieren.
+
 * **Kompilierung**: Der Graph wird zur Laufzeit in einen monolithischen WGSL-Shader übersetzt.
 * **Uniforms**: Parameter wie `Speed`, `Intensity` oder `Color` werden als Uniform-Buffer an den Shader übergeben.
 
