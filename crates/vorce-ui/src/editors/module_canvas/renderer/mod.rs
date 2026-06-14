@@ -1,6 +1,6 @@
+pub mod interaction;
 pub mod pipeline;
 pub mod side_effects;
-pub mod interaction;
 
 use crate::i18n::LocaleManager;
 use crate::UIAction;

@@ -1,7 +1,7 @@
 use super::super::state::ModuleCanvas;
 use super::super::types::MediaPlaybackCommand;
-use vorce_core::module::{ModuleManager, TriggerType};
 use egui::Ui;
+use vorce_core::module::{ModuleManager, TriggerType};
 
 pub fn handle_playback_and_learn(
     canvas: &mut ModuleCanvas,
@@ -68,5 +68,4 @@ pub fn handle_playback_and_learn(
             manager.mark_dirty();
         }
     }
-
 }
