@@ -20,7 +20,7 @@
 | Component | Type | Description |
 |-----------|------|-------------|
 | `DashboardPage` | Main Component | App Dashboard mit JSX-Übersicht |
-| `RunCard` | Component | Planning/Monitoring Run-Karte |
+| `RunCard` | Component | Generische MAIN-RUN-Karte |
 | `LiveLogPanel` | Component | Echtzeit-Log-Anzeige |
 | `WorkingSessionsPanel` | Component | Jules Session-Übersicht |
 | `ReviewQueuePanel` | Component | Claude Code PR-Review |
@@ -107,8 +107,7 @@ return (
 
     {/* Run Cards */}
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <RunCard title="Planning Run" />
-      <RunCard title="Monitoring Run" />
+      {sessions.main_runs.map(run => <RunCard title={run.label} />)}
     </div>
 
     {/* Live Logs & Working Sessions */}

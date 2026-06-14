@@ -3,7 +3,16 @@
 [CmdletBinding()]
 param(
     [switch]$DryRun,
-    [int]$IntervalMinutes = 15
+    [switch]$RunOnce,
+    [int]$IntervalMinutes = 15,
+    [ValidateSet(
+        "MAIN-RUN-01_Planning",
+        "MAIN-RUN-02_CheckAndDoing",
+        "MAIN-RUN-03_Audit",
+        "MAIN-RUN-04_Optimizer",
+        "MAIN-RUN-05_MemoryOptimization"
+    )]
+    [string]$ForceMainRun
 )
 
 $OutputEncoding = [System.Text.Encoding]::UTF8
@@ -116,7 +125,7 @@ while ($true) {
         # --- Orchestrator Aufruf ---
         $orchestratorPath = Join-Path $global:VorceRoot "src/orchestrator/Vorce-Orchestrator.ps1"
         if (Test-Path $orchestratorPath) {
-            & $orchestratorPath -GlobalState $GlobalState -DryRun:$DryRun
+            & $orchestratorPath -GlobalState $GlobalState -DryRun:$DryRun -ForceMainRun $ForceMainRun
         } else {
             Write-VorceLog "Orchestrator nicht gefunden: $orchestratorPath" -Status "ERROR"
         }
@@ -125,8 +134,8 @@ while ($true) {
         Write-VorceLog "[CRITICAL] Fehler im Loop: $($_.Exception.Message)" -Status "ERROR"
     }
 
-    if ($DryRun) {
-        Write-VorceLog "DryRun abgeschlossen." -Status "OK"
+    if ($DryRun -or $RunOnce) {
+        Write-VorceLog "Einzellauf abgeschlossen." -Status "OK"
         break
     }
 

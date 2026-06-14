@@ -15,7 +15,13 @@ import type { TabId, AutopilotConfig, QuotaRegistry, ActiveSessions, GitHubIssue
 // Defaults
 const defaultAutopilotConfig: AutopilotConfig = {
   repository: 'Vorce-Studios/Vorce',
-  wake_intervals: { planning_minutes: 120, monitoring_minutes: 15 },
+  wake_intervals: {
+    planning_minutes: 120,
+    check_and_doing_minutes: 15,
+    audit_minutes: 60,
+    optimizer_minutes: 720,
+    memory_optimization_minutes: 60,
+  },
   jules: {
     max_daily_sessions: 100,
     max_concurrent_sessions: 15,
@@ -53,8 +59,6 @@ const defaultActiveSessions: ActiveSessions = {
   session_id: 'N/A',
   started_at: '',
   last_heartbeat: '',
-  last_planning_at: '',
-  last_monitoring_at: '',
   active_delegations: [],
   review_queue: [],
   autopilot_created_issues: [],

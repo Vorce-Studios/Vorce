@@ -3,7 +3,15 @@
 [CmdletBinding()]
 param(
     [object]$GlobalState,
-    [switch]$DryRun
+    [switch]$DryRun,
+    [ValidateSet(
+        "MAIN-RUN-01_Planning",
+        "MAIN-RUN-02_CheckAndDoing",
+        "MAIN-RUN-03_Audit",
+        "MAIN-RUN-04_Optimizer",
+        "MAIN-RUN-05_MemoryOptimization"
+    )]
+    [string]$ForceMainRun
 )
 
 $global:VorceRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
@@ -27,6 +35,12 @@ Write-VorceHeader -Title "ORCHESTRATOR ACTIVE" -Icon "🧠"
 # B) Config und Quota laden
 $Config = Get-Content (Join-Path $global:VarDir "config/autopilot-config.json") -Raw | ConvertFrom-Json
 $QuotaRegistry = Get-Content (Join-Path $global:VarDir "config/quota-registry.json") -Raw | ConvertFrom-Json
+$DashboardStatePath = Join-Path $global:VarDir "db/dashboard-state.json"
+$DashboardState = if (Test-Path $DashboardStatePath) {
+    Get-Content $DashboardStatePath -Raw | ConvertFrom-Json
+} else {
+    [pscustomobject]@{ run_control = [pscustomobject]@{ main_runs = [pscustomobject]@{} } }
+}
 
 # C) ConfigBag bauen (W1)
 $ConfigBag = @{
@@ -45,7 +59,7 @@ Write-VorceStep -Message "Config geladen: $($Config.repository), $configuredSubR
 
 # D) Scheduling-Logik implementieren (C4)
 function Select-NextMainRun {
-    param([object]$GlobalState, [object]$Config)
+    param([object]$GlobalState, [object]$DashboardState, [object]$Config, [string]$ForceMainRun)
     $runs = @(
         @{ Name="MAIN-RUN-01_Planning"; IntervalKey="planning_minutes" },
         @{ Name="MAIN-RUN-02_CheckAndDoing"; IntervalKey="check_and_doing_minutes" },
@@ -53,9 +67,19 @@ function Select-NextMainRun {
         @{ Name="MAIN-RUN-04_Optimizer"; IntervalKey="optimizer_minutes" },
         @{ Name="MAIN-RUN-05_MemoryOptimization"; IntervalKey="memory_optimization_minutes" }
     )
+    if ($ForceMainRun) {
+        return @{ Name=$ForceMainRun; OverdueMinutes=0; Forced=$true }
+    }
+
     $now = Get-Date
     $best = $null; $bestOverdue = -1
     foreach ($run in $runs) {
+        $control = $DashboardState.run_control.main_runs.($run.Name)
+        if ($control -and $control.cancel_next) {
+            $control.cancel_next = $false
+            $control.skipped_at = $now.ToString("o")
+            continue
+        }
         $interval = [int]$Config.wake_intervals.($run.IntervalKey)
         $lastRun = $null
         if ($GlobalState.last_runs -and $GlobalState.last_runs.PSObject.Properties.Name -contains $run.Name) {
@@ -74,15 +98,17 @@ function Select-NextMainRun {
 
 # Wähle dynamisch den nächsten Main-RUN
 $RunsDir = Join-Path $global:SrcDir "runs"
-$result = Select-NextMainRun -GlobalState $GlobalState -Config $Config
+$result = Select-NextMainRun -GlobalState $GlobalState -DashboardState $DashboardState -Config $Config -ForceMainRun $ForceMainRun
 if ($null -eq $result) {
+    if (-not $DryRun) { Save-VorceGlobalState -State $GlobalState }
+    if (-not $DryRun) { $DashboardState | ConvertTo-Json -Depth 10 | Set-Content $DashboardStatePath -Encoding UTF8 }
     Write-VorceStep -Message "Kein Run überfällig." -Status "INFO"
     return
 }
 $mainRunName = $result.Name
 $bestOverdue = $result.OverdueMinutes
 
-$scheduleReason = if ($bestOverdue -eq [int]::MaxValue) { "noch nie ausgeführt" } else { "überfällig um $([math]::Round($bestOverdue, 1)) Minuten" }
+$scheduleReason = if ($result.Forced) { "manuell ausgelöst" } elseif ($bestOverdue -eq [int]::MaxValue) { "noch nie ausgeführt" } else { "überfällig um $([math]::Round($bestOverdue, 1)) Minuten" }
 Write-VorceStep -Message "Wähle $mainRunName ($scheduleReason)" -Status "RUN"
 
 # E) Dynamischen Router-Aufruf (C8)
@@ -131,13 +157,16 @@ if ($null -eq $GlobalState.last_runs) {
 }
 $GlobalState.last_runs | Add-Member -MemberType NoteProperty -Name $mainRunName -Value (Get-Date).ToString("o") -Force
 if (-not $DryRun) { Save-VorceGlobalState -State $GlobalState }
+if (-not $DryRun) { $DashboardState | ConvertTo-Json -Depth 10 | Set-Content $DashboardStatePath -Encoding UTF8 }
 
 # 6. Finale Aggregation und Abschluss
 Write-VorceDivider
 Write-VorceStep -Message "Führe alle Sub-Run Ergebnisse zusammen (Main-Aggregation)..." -Status "RUN"
 
-$MainState.status = "completed"
+$failedResults = @($MainState.results | Where-Object { $_.status -eq "failed" })
+$MainState.status = if ($failedResults.Count -gt 0) { "failed" } else { "completed" }
 $MainState.completed_at = (Get-Date).ToString("o")
+if (-not $DryRun) { Save-VorceRunState -State $MainState }
 
 # Falls ein Aggregations-Skript existiert (z.B. MAIN-RUN-01_Planning_Aggregate.ps1)
 # & ...
@@ -148,4 +177,5 @@ Write-VorceStep -Message "Main-Aggregation für $mainRunName abgeschlossen." -St
 Write-VorceStep -Message "Sichere Global State..." -Status "RUN"
 if (-not $DryRun) { Save-VorceGlobalState -State $GlobalState }
 
-Write-VorceFooter -Message "$mainRunName erfolgreich beendet."
+$footerStatus = if ($MainState.status -eq "completed") { "erfolgreich beendet" } else { "mit Fehlern beendet" }
+Write-VorceFooter -Message "$mainRunName $footerStatus."

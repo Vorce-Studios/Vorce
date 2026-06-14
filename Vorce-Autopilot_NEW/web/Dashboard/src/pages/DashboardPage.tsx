@@ -168,7 +168,6 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   const providers = registry.providers || {};
   const providerEntries = Object.entries(providers);
 
-  const scheduler = sessions.scheduler;
   const runControl = sessions.run_control || {};
   const liveLogItems = getLiveLogItems(liveLog);
   const audit = parseAuditResult(auditResult);
@@ -177,11 +176,19 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
 
   const activeAlerts = sessions.decisions_pending?.filter(a => a.status !== 'closed' && a.status !== 'ignored') || [];
 
-  const sendRunControl = async (type: 'planning' | 'monitoring', action: string, note?: string) => {
+  const sendRunControl = async (mainRun: string, action: string, note?: string) => {
     await fetch('/api/run-control', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, action, note }),
+      body: JSON.stringify({ main_run: mainRun, action, note }),
+    });
+  };
+
+  const triggerMainRun = async (mainRun: string) => {
+    await fetch('/api/trigger-main-run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ main_run: mainRun }),
     });
   };
 
@@ -473,30 +480,23 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
 
       {/* Run control cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RunCard
-          title="Planning Run"
-          lastAt={sessions.last_planning_at}
-          nextAt={scheduler?.next_planning_at}
-          nextInSeconds={scheduler?.next_planning_in_seconds}
-          interval={`${scheduler?.planning_interval_minutes ?? 'N/A'} min`}
-          cancelled={runControl.cancel_next_planning}
-          note={runControl.next_planning_note}
-          summary={sessions.run_summaries?.planning?.summary}
-          onCancel={() => sendRunControl('planning', runControl.cancel_next_planning ? 'uncancel-next' : 'cancel-next')}
-          onNote={(note) => sendRunControl('planning', 'note-next', note)}
-        />
-        <RunCard
-          title="Monitoring Run"
-          lastAt={sessions.last_monitoring_at}
-          nextAt={scheduler?.next_monitoring_at}
-          nextInSeconds={scheduler?.next_monitoring_in_seconds}
-          interval={`${scheduler?.monitoring_interval_minutes ?? 'N/A'} min`}
-          cancelled={runControl.cancel_next_monitoring}
-          note={runControl.next_monitoring_note}
-          summary={sessions.run_summaries?.monitoring?.summary}
-          onCancel={() => sendRunControl('monitoring', runControl.cancel_next_monitoring ? 'uncancel-next' : 'cancel-next')}
-          onNote={(note) => sendRunControl('monitoring', 'note-next', note)}
-        />
+        {(sessions.main_runs || []).map(run => (
+          <RunCard
+            key={run.name}
+            title={run.label}
+            status={run.status}
+            lastAt={run.last_run_at || undefined}
+            nextAt={run.next_run_at}
+            nextInSeconds={run.next_run_in_seconds}
+            interval={`${run.interval_minutes} min`}
+            cancelled={run.control?.cancel_next}
+            note={run.control?.note}
+            summary={`${run.summary || ''} · ${run.sub_runs.length} konfigurierte Sub-Runs`}
+            onRunNow={() => triggerMainRun(run.name)}
+            onCancel={() => sendRunControl(run.name, run.control?.cancel_next ? 'uncancel-next' : 'cancel-next')}
+            onNote={(note) => sendRunControl(run.name, 'note-next', note)}
+          />
+        ))}
       </div>
 
       {/* Live Logs & Working Sessions */}
@@ -804,8 +804,9 @@ function KPICard({ title, value, subtitle, icon, color }: {
   );
 }
 
-function RunCard({ title, lastAt, nextAt, nextInSeconds, interval, cancelled, note, summary, onCancel, onNote }: {
+function RunCard({ title, status, lastAt, nextAt, nextInSeconds, interval, cancelled, note, summary, onRunNow, onCancel, onNote }: {
   title: string;
+  status: string;
   lastAt?: string;
   nextAt?: string;
   nextInSeconds?: number;
@@ -813,6 +814,7 @@ function RunCard({ title, lastAt, nextAt, nextInSeconds, interval, cancelled, no
   cancelled?: boolean;
   note?: string;
   summary?: string;
+  onRunNow: () => void;
   onCancel: () => void;
   onNote: (note: string) => void;
 }) {
@@ -823,6 +825,7 @@ function RunCard({ title, lastAt, nextAt, nextInSeconds, interval, cancelled, no
         <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
           <CalendarClock className="w-4 h-4 text-cyan-400" />
           {title}
+          <span className="text-[10px] uppercase tracking-wide text-slate-500">{status}</span>
         </h3>
         <span className={`text-[11px] px-2 py-1 rounded border ${cancelled ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'}`}>
           {cancelled ? 'cancelled' : formatNextRun(nextInSeconds)}
@@ -843,6 +846,10 @@ function RunCard({ title, lastAt, nextAt, nextInSeconds, interval, cancelled, no
         {summary || 'Noch keine Zusammenfassung im State.'}
       </div>
       <div className="mt-4 flex gap-2">
+        <button onClick={onRunNow} className="px-3 py-2 text-xs rounded border border-emerald-500/30 bg-emerald-500/15 text-emerald-300 flex items-center gap-1">
+          <Play className="w-3.5 h-3.5" />
+          Start
+        </button>
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}

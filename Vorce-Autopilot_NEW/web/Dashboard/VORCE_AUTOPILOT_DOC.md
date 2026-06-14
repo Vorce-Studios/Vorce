@@ -54,7 +54,7 @@ Vorce Autopilot/
 - **Status-Banner**: Systemstatus, Session-ID, Heartbeat
 - **Audit-Alert-Box**: Anzeige letztgefundener Probleme
 - **Audit Alerts**: `sessions.decisions_pending` - Tabelle mit pending Alerts
-- **Run Cards**: Planning & Monitoring Run-Karten
+- **Run Cards**: Status und Steuerung aller fünf MAIN-RUNs
 - **Live Log**: Echtzeit-Log-Anzeige
 - **Working Sessions**: Jules Session-Übersicht
 - **Review Queue**: Claude Code PR-Reviews
@@ -64,7 +64,7 @@ Vorce Autopilot/
 
 #### RunCard
 
-- Tägliche Planning/Monitoring Runs
+- Dynamisch geplante Planning-, Check-and-Doing-, Audit-, Optimizer- und Memory-Optimization-Runs
 - Cancel/Note-Funktionen
 - Status-Anzeige (cancelled, next run)
 
@@ -169,8 +169,8 @@ Vorce Autopilot/
   session_id: string,
   started_at: string,
   last_heartbeat: string,
-  last_planning_at: string,
-  last_monitoring_at: string,
+  main_runs: MainRunRuntime[],
+  run_states: RunState[],
   active_delegations: [],
   decisions_pending: [],  // Audit alerts
   review_queue: [],
@@ -189,7 +189,10 @@ Vorce Autopilot/
   repository: string,
   wake_intervals: {
     planning_minutes: number,
-    monitoring_minutes: number
+    check_and_doing_minutes: number,
+    audit_minutes: number,
+    optimizer_minutes: number,
+    memory_optimization_minutes: number
   },
   jules: {
     max_daily_sessions: number,

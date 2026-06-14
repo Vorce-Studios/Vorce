@@ -69,4 +69,15 @@ function Initialize-RunState {
     return $state
 }
 
+function Save-VorceRunState {
+    param(
+        [Parameter(Mandatory)][object]$State
+    )
+
+    $statePath = Join-Path $global:VarDir "run-states/$($State.type)_$($State.name).json"
+    $stateDir = Split-Path -Parent $statePath
+    if (-not (Test-Path $stateDir)) { New-Item -ItemType Directory -Path $stateDir -Force | Out-Null }
+    $State | ConvertTo-Json -Depth 10 | Set-Content $statePath -Encoding UTF8
+}
+
 # Ende StateManager

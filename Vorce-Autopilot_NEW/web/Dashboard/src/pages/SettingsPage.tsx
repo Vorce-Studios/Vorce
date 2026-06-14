@@ -40,7 +40,7 @@ const PROMPT_METADATA = [
   // CEO & Orchestrator
   { key: 'ceo_system', label: 'CEO: System Prompt', group: 'ceo', placeholder: 'You are the CEO...' },
   { key: 'planning_session', label: 'CEO: Planning Session Prompt', group: 'ceo', placeholder: 'Planning session orchestration...' },
-  { key: 'monitoring_session', label: 'CEO: Monitoring Session Prompt', group: 'ceo', placeholder: 'Monitoring session orchestration...' },
+  { key: 'monitoring_session', label: 'CEO: Check & Doing Session Prompt', group: 'ceo', placeholder: 'Check & Doing session orchestration...' },
 
   // Tasks & Review
   { key: 'issue_discovery', label: 'Tasks: Issue Discovery', group: 'tasks', placeholder: 'Discover repository issues...' },
@@ -54,20 +54,20 @@ const PROMPT_METADATA = [
   { key: 'jules_pr_check_fix', label: 'Jules: PR Check Fix', group: 'jules', placeholder: 'Fix failing PR checks...' },
   { key: 'jules_pr_conflict_replacement', label: 'Jules: PR Conflict Replacement', group: 'jules', placeholder: 'Conflict replacement...' },
 
-  // Planning Phase
+  // Planning MAIN-RUN
   { key: 'planning_jules_sync', label: 'Planning: Jules Session Status Sync', group: 'planning', placeholder: 'Jules active/stalled check...' },
   { key: 'planning_pr_sync', label: 'Planning: PR Status Sync', group: 'planning', placeholder: 'PR conflict/CI check...' },
   { key: 'planning_analysis', label: 'Planning: Repository compass analysis', group: 'planning', placeholder: 'Repository analysis & blockers...' },
   { key: 'planning_proposal', label: 'Planning: Issue Proposal Logic', group: 'planning', placeholder: 'Formulating issue proposals...' },
   { key: 'planning_synthesis', label: 'Planning: Master Plan Synthesis & Priority Queue', group: 'planning', placeholder: 'Consolidating delegation order...' },
 
-  // Monitoring Phase
-  { key: 'monitor_sessions', label: 'Monitoring: Session Health Check', group: 'monitoring', placeholder: 'Active delegation health checks...' },
-  { key: 'monitor_prs', label: 'Monitoring: PR Validation', group: 'monitoring', placeholder: 'PR validation and automatic fixing...' },
-  { key: 'monitor_conflicts', label: 'Monitoring: Conflict Resolution', group: 'monitoring', placeholder: 'Automatic merge conflict resolving...' },
-  { key: 'monitoring_synthesis', label: 'Monitoring: Status Evaluation', group: 'monitoring', placeholder: 'Consolidating monitoring results...' },
+  // Check & Doing MAIN-RUN
+  { key: 'monitor_sessions', label: 'Check & Doing: Session Health Check', group: 'monitoring', placeholder: 'Active delegation health checks...' },
+  { key: 'monitor_prs', label: 'Check & Doing: PR Validation', group: 'monitoring', placeholder: 'PR validation and automatic fixing...' },
+  { key: 'monitor_conflicts', label: 'Check & Doing: Conflict Resolution', group: 'monitoring', placeholder: 'Automatic merge conflict resolving...' },
+  { key: 'monitoring_synthesis', label: 'Check & Doing: Status Evaluation', group: 'monitoring', placeholder: 'Consolidating monitoring results...' },
 
-  // Audit Phase
+  // Audit MAIN-RUN
   { key: 'audit_consistency', label: 'Audit: Data Consistency Check', group: 'audit', placeholder: 'Comparing state registry vs GitHub...' },
   { key: 'audit_performance', label: 'Audit: Performance Assessment', group: 'audit', placeholder: 'Assessing action history efficiency...' },
   { key: 'audit_synthesis', label: 'Audit: QA Manager Decision Matrix', group: 'audit', placeholder: 'Consolidating audit reports and remediation JSON...' },
@@ -319,49 +319,25 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                   placeholder="Owner/Repo"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Planungs-Intervall (Minuten)</label>
-                  <input
-                    type="number"
-                    value={config.wake_intervals.planning_minutes}
-                    onChange={(e: any) => handleNestedConfigChange('wake_intervals', 'planning_minutes', parseInt(e.target.value) || 0)}
-                    className="input-field"
-                    min="1"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Monitoring-Intervall (Minuten)</label>
-                  <input
-                    type="number"
-                    value={config.wake_intervals.monitoring_minutes}
-                    onChange={(e: any) => handleNestedConfigChange('wake_intervals', 'monitoring_minutes', parseInt(e.target.value) || 0)}
-                    className="input-field"
-                    min="1"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Optimizer-Intervall (Stunden)</label>
-                  <input
-                    type="number"
-                    value={config.wake_intervals.optimizer_hours ?? 12}
-                    onChange={(e: any) => handleNestedConfigChange('wake_intervals', 'optimizer_hours', parseInt(e.target.value) || 0)}
-                    className="input-field"
-                    min="1"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Memory-Intervall (Minuten)</label>
-                  <input
-                    type="number"
-                    value={config.wake_intervals.memory_optimization_minutes ?? 60}
-                    onChange={(e: any) => handleNestedConfigChange('wake_intervals', 'memory_optimization_minutes', parseInt(e.target.value) || 0)}
-                    className="input-field"
-                    min="1"
-                  />
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  ['Planning', 'planning_minutes'],
+                  ['Check & Doing', 'check_and_doing_minutes'],
+                  ['Audit', 'audit_minutes'],
+                  ['Optimizer', 'optimizer_minutes'],
+                  ['Memory Optimization', 'memory_optimization_minutes'],
+                ].map(([label, key]) => (
+                  <div key={key}>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5">{label}-Intervall (Minuten)</label>
+                    <input
+                      type="number"
+                      value={(config.wake_intervals as any)[key]}
+                      onChange={(e: any) => handleNestedConfigChange('wake_intervals', key, parseInt(e.target.value) || 0)}
+                      className="input-field"
+                      min="1"
+                    />
+                  </div>
+                ))}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -543,14 +519,14 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
               Router Sub-Runs
             </h3>
             <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-              Hier kannst du steuern, welche Teil-Prozesse (Sub-Runs) in den jeweiligen Phasen aktiv sind. Deaktivierte Sub-Runs sparen Token und Zeit.
+              Hier kannst du steuern, welche Sub-Runs in den jeweiligen MAIN-RUNs aktiv sind. Deaktivierte Sub-Runs sparen Token und Zeit.
             </p>
             <div className="space-y-6">
               {config.router_rules && Object.entries(config.router_rules).map(([phase, rules]: [string, any]) => (
                 <div key={phase} className="space-y-3">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                     <Zap className="w-3 h-3" />
-                    {phase}-Phase
+                    {phase} MAIN-RUN
                   </h4>
                   <div className="grid grid-cols-1 gap-2 bg-slate-900/40 p-3 rounded-lg border border-slate-800">
                     {rules.map((rule: any, idx: number) => (
@@ -745,9 +721,9 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                 ))}
               </div>
 
-              {/* Monitoring Group */}
+              {/* Check & Doing Group */}
               <div className="space-y-4 pt-4 border-t border-slate-800/70">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-purple-400">Monitoring-Phase (Überwachung)</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-purple-400">Check & Doing MAIN-RUN</h4>
                 {PROMPT_METADATA.filter(p => p.group === 'monitoring').map(p => (
                   <div key={p.key}>
                     <label className="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">

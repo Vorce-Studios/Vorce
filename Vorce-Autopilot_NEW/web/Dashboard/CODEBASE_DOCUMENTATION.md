@@ -93,7 +93,7 @@ Vorce-Autopilot/dashboard/
 - Status Banner (System status, session ID)
 - Audit Alert Box (Last audit issues)
 - Audit Alerts (Pending alerts table)
-- Run Cards (Planning/Monitoring)
+- Run Cards für alle fünf MAIN-RUNs
 - Live Log Panel (Real-time logs)
 - Working Sessions Panel (Jules sessions)
 - Review Queue (PR reviews)
@@ -239,8 +239,8 @@ Vorce-Autopilot/dashboard/
   session_id: string,
   started_at: string,
   last_heartbeat: string,
-  last_planning_at: string,
-  last_monitoring_at: string,
+  main_runs: MainRunRuntime[],
+  run_states: RunState[],
   active_delegations: [],
   decisions_pending: [],  // Audit alerts
   review_queue: [],
@@ -257,7 +257,13 @@ Vorce-Autopilot/dashboard/
 ```typescript
 {
   repository: string,
-  wake_intervals: { planning_minutes: number, monitoring_minutes: number },
+  wake_intervals: {
+    planning_minutes: number,
+    check_and_doing_minutes: number,
+    audit_minutes: number,
+    optimizer_minutes: number,
+    memory_optimization_minutes: number
+  },
   jules: { max_daily_sessions: number, max_concurrent_sessions: number, auto_approve_plans: boolean, auto_retry_feedback_max: number },
   gemini_worktree_path: string,
   issue_filters: { include_labels: string[], exclude_labels: string[], autopilot_label: string },

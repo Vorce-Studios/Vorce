@@ -9,6 +9,19 @@ let issuesCacheTime = 0;
 let prsCache: string | null = null;
 let prsCacheTime = 0;
 const CACHE_TTL = 20000; // 20 seconds cache TTL to avoid hitting GitHub API too frequently
+const VORCE_ROOT = path.resolve(__dirname, '../..');
+const GLOBAL_STATE_PATH = path.join(VORCE_ROOT, 'var/db/global-state.json');
+const DASHBOARD_STATE_PATH = path.join(VORCE_ROOT, 'var/db/dashboard-state.json');
+const CONFIG_PATH = path.join(VORCE_ROOT, 'var/config/autopilot-config.json');
+const RUN_STATES_DIR = path.join(VORCE_ROOT, 'var/run-states');
+const MAIN_RUNS = [
+  { name: 'MAIN-RUN-01_Planning', label: 'Planning', routerKey: 'Planning', intervalKey: 'planning_minutes' },
+  { name: 'MAIN-RUN-02_CheckAndDoing', label: 'Check & Doing', routerKey: 'CheckAndDoing', intervalKey: 'check_and_doing_minutes' },
+  { name: 'MAIN-RUN-03_Audit', label: 'Audit', routerKey: 'Audit', intervalKey: 'audit_minutes' },
+  { name: 'MAIN-RUN-04_Optimizer', label: 'Optimizer', routerKey: 'Optimizer', intervalKey: 'optimizer_minutes' },
+  { name: 'MAIN-RUN-05_MemoryOptimization', label: 'Memory Optimization', routerKey: 'MemoryOptimization', intervalKey: 'memory_optimization_minutes' },
+] as const;
+const MAIN_RUN_NAMES = new Set(MAIN_RUNS.map(run => run.name));
 
 function ensureParentDir(filePath: string): void {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -22,6 +35,101 @@ function writeJsonFile(filePath: string, data: unknown): void {
 function readJsonFile(filePath: string, fallback: any = null): any {
   if (!fs.existsSync(filePath)) return fallback;
   return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+}
+
+function readRuntimeState(): any {
+  const globalState = readJsonFile(GLOBAL_STATE_PATH, {});
+  const dashboardState = readJsonFile(DASHBOARD_STATE_PATH, {});
+  const config = readJsonFile(CONFIG_PATH, {});
+  const runStates = fs.existsSync(RUN_STATES_DIR)
+    ? fs.readdirSync(RUN_STATES_DIR)
+      .filter(file => file.endsWith('.json') && !file.includes('_VALIDATE-'))
+      .map(file => {
+        try {
+          return readJsonFile(path.join(RUN_STATES_DIR, file), null);
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean)
+    : [];
+  const now = Date.now();
+  const mainRuns = MAIN_RUNS.map(definition => {
+    const intervalMinutes = Number(config.wake_intervals?.[definition.intervalKey] ?? 0);
+    const lastRunAt = globalState.last_runs?.[definition.name] || null;
+    const nextRunTimestamp = lastRunAt
+      ? new Date(lastRunAt).getTime() + intervalMinutes * 60_000
+      : now;
+    const latestState = runStates.find(state => state.type === 'MAIN' && state.name === definition.name) || null;
+    const subRunNames = (config.router_rules?.[definition.routerKey] || []).map((rule: any) => rule.name);
+    const subRuns = subRunNames.map((name: string) =>
+      runStates.find(state =>
+        (state.type === 'SUB' && (state.name === name || state.name?.endsWith(`__${name}`)))
+        || state.sub_run?.endsWith(`__${name}`)
+      )
+      || { name, type: 'SUB', status: 'not_started' }
+    );
+    const control = dashboardState.run_control?.main_runs?.[definition.name] || {};
+
+    return {
+      ...definition,
+      interval_minutes: intervalMinutes,
+      last_run_at: lastRunAt,
+      next_run_at: new Date(nextRunTimestamp).toISOString(),
+      next_run_in_seconds: Math.max(0, Math.round((nextRunTimestamp - now) / 1000)),
+      status: latestState?.status || 'not_started',
+      summary: latestState
+        ? `${latestState.results?.length || 0} Sub-Runs, Status: ${latestState.status}`
+        : 'Noch kein Lauf dokumentiert.',
+      latest_state: latestState,
+      sub_runs: subRuns,
+      control,
+    };
+  });
+
+  return {
+    schema_version: 3,
+    session_id: 'vorce-autopilot-3',
+    started_at: globalState.started_at || globalState.last_run || '',
+    last_heartbeat: globalState.last_run || '',
+    ...globalState,
+    ...dashboardState,
+    decisions_pending: dashboardState.decisions_pending || globalState.escalated_issues || [],
+    active_delegations: globalState.active_delegations || [],
+    review_queue: globalState.review_queue || [],
+    autopilot_created_issues: dashboardState.autopilot_created_issues || globalState.autopilot_created_issues || [],
+    completed_this_session: dashboardState.completed_this_session || globalState.completed_this_session || [],
+    run_control: dashboardState.run_control || { main_runs: {} },
+    main_runs: mainRuns,
+    run_states: runStates,
+  };
+}
+
+function readDashboardState(): any {
+  return readJsonFile(DASHBOARD_STATE_PATH, {});
+}
+
+function writeDashboardState(state: any): void {
+  writeJsonFile(DASHBOARD_STATE_PATH, state);
+}
+
+function startMainRun(mainRun: string): void {
+  if (!MAIN_RUN_NAMES.has(mainRun as any)) throw new Error('Invalid MAIN-RUN');
+  const autopilotPath = path.join(VORCE_ROOT, 'autopilot.ps1');
+  const child = spawn('pwsh', [
+    '-NoProfile',
+    '-ExecutionPolicy', 'Bypass',
+    '-File', autopilotPath,
+    '-RunOnce',
+    '-ForceMainRun', mainRun,
+  ], {
+    cwd: VORCE_ROOT,
+    stdio: 'ignore',
+    windowsHide: true,
+  });
+  child.on('error', error => {
+    console.error(`[API] Failed to start ${mainRun}:`, error);
+  });
 }
 
 function serveFirstJson(res: any, candidates: string[], fallback: unknown): void {
@@ -62,6 +170,7 @@ function loadRegisteredPrompts(promptsDir: string): Record<string, string> {
 }
 
 export default defineConfig({
+  root: __dirname,
   plugins: [
     react(),
     {
@@ -73,10 +182,9 @@ export default defineConfig({
             res.end(JSON.stringify({ service: 'vorce-autopilot-dashboard', root: path.resolve(__dirname, '../..'), schema: 2 }));
           } else if (req.method === 'GET' && req.url === '/active-sessions.json') {
             try {
-              serveFirstJson(res, [
-                path.resolve(__dirname, '../../var/db/autopilot-state.json'),
-                path.resolve(__dirname, '../../var/db/active-sessions.json'),
-              ], {});
+              const state = readRuntimeState();
+              res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+              res.end(JSON.stringify(state, null, 2));
             } catch (err) {
               res.writeHead(500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
@@ -400,12 +508,9 @@ export default defineConfig({
             req.on('end', () => {
               try {
                 const payload = JSON.parse(body || '{}');
-                const statePath = path.resolve(__dirname, '../../var/db/autopilot-state.json');
-                const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
                 const memoryPath = path.resolve(__dirname, '../../var/db/autopilot-memories.json');
                 const publicMemoryPath = path.resolve(__dirname, './public/memories.json');
-                const readableStatePath = fs.existsSync(statePath) ? statePath : publicStatePath;
-                const state = readJsonFile(readableStatePath, { decisions_pending: [] });
+                const state = readDashboardState();
 
                 if (!Array.isArray(state.decisions_pending)) state.decisions_pending = [];
 
@@ -417,6 +522,7 @@ export default defineConfig({
                     alert.closed_by = 'user';
                     alert.closed_at = new Date().toISOString();
                     alert.user_comment = payload.comment || 'Manuell geschlossen';
+                    writeDashboardState(state);
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ status: 'ok', message: 'Alert geschlossen', alert }));
                     return;
@@ -469,6 +575,7 @@ export default defineConfig({
                       console.error(`[API] Failed to create memory:`, memErr);
                     }
 
+                    writeDashboardState(state);
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({
                       status: 'ok',
@@ -496,8 +603,7 @@ export default defineConfig({
                   }
                 }
 
-                writeJsonFile(statePath, state);
-                writeJsonFile(publicStatePath, state);
+                writeDashboardState(state);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'ok' }));
               } catch (err) {
@@ -511,10 +617,7 @@ export default defineConfig({
             req.on('end', () => {
               try {
                 const payload = JSON.parse(body || '{}');
-                const statePath = path.resolve(__dirname, '../../var/db/autopilot-state.json');
-                const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
-                const readableStatePath = fs.existsSync(statePath) ? statePath : publicStatePath;
-                const state = readJsonFile(readableStatePath, {});
+                const state = readDashboardState();
                 let startOptimizerProcess = false;
 
                 state.optimizer_queue = state.optimizer_queue || [];
@@ -522,8 +625,7 @@ export default defineConfig({
                 if (payload.action === 'reject') {
                   state.optimizer_queue = state.optimizer_queue.filter((item: any) => item.id !== payload.id);
                 } else if (payload.action === 'run-now') {
-                  state.run_control = state.run_control || {};
-                  state.run_control.force_optimizer = true;
+                  state.run_control = state.run_control || { main_runs: {} };
                   state.run_control.force_optimizer_requested_at = new Date().toISOString();
                   startOptimizerProcess = true;
                 } else if (payload.action === 'approve') {
@@ -578,17 +680,9 @@ export default defineConfig({
                   }
                 }
 
-                writeJsonFile(statePath, state);
-                writeJsonFile(publicStatePath, state);
+                writeDashboardState(state);
                 if (startOptimizerProcess) {
-                  const autopilotPath = path.resolve(__dirname, '../../autopilot.ps1');
-                  const child = spawn('pwsh', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', autopilotPath, '-PlanOnce'], {
-                    cwd: path.resolve(__dirname, '../..'),
-                    detached: true,
-                    stdio: 'ignore',
-                    windowsHide: true
-                  });
-                  child.unref();
+                  startMainRun('MAIN-RUN-04_Optimizer');
                 }
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'ok' }));
@@ -603,27 +697,22 @@ export default defineConfig({
             req.on('end', () => {
               try {
                 const payload = JSON.parse(body || '{}');
-                const statePath = path.resolve(__dirname, '../../var/db/autopilot-state.json');
-                const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
-                const readableStatePath = fs.existsSync(statePath) ? statePath : publicStatePath;
-                const state = readJsonFile(readableStatePath, {});
+                const state = readDashboardState();
+                const mainRun = String(payload.main_run || payload.type || '');
+                if (!MAIN_RUN_NAMES.has(mainRun as any)) throw new Error('Unknown MAIN-RUN');
 
                 state.run_control = state.run_control || {};
-                if (payload.type === 'planning') {
-                  if (payload.action === 'cancel-next') state.run_control.cancel_next_planning = true;
-                  if (payload.action === 'uncancel-next') state.run_control.cancel_next_planning = false;
-                  if (payload.action === 'note-next') state.run_control.next_planning_note = String(payload.note || '');
-                } else if (payload.type === 'monitoring') {
-                  if (payload.action === 'cancel-next') state.run_control.cancel_next_monitoring = true;
-                  if (payload.action === 'uncancel-next') state.run_control.cancel_next_monitoring = false;
-                  if (payload.action === 'note-next') state.run_control.next_monitoring_note = String(payload.note || '');
-                } else {
-                  throw new Error('Unknown run type');
-                }
-                state.run_control.updated_at = new Date().toISOString();
+                state.run_control.main_runs = state.run_control.main_runs || {};
+                const control = state.run_control.main_runs[mainRun] || {};
+                if (payload.action === 'cancel-next') control.cancel_next = true;
+                else if (payload.action === 'uncancel-next') control.cancel_next = false;
+                else if (payload.action === 'note-next') control.note = String(payload.note || '');
+                else throw new Error('Unknown run-control action');
+                control.updated_at = new Date().toISOString();
+                state.run_control.main_runs[mainRun] = control;
+                state.run_control.updated_at = control.updated_at;
 
-                writeJsonFile(statePath, state);
-                writeJsonFile(publicStatePath, state);
+                writeDashboardState(state);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'ok' }));
               } catch (err) {
@@ -631,27 +720,23 @@ export default defineConfig({
                 res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));
               }
             });
-          } else if (req.method === 'POST' && req.url === '/api/trigger-phase') {
+          } else if (req.method === 'POST' && (req.url === '/api/trigger-main-run' || req.url === '/api/trigger-phase')) {
             let body = '';
             req.on('data', (chunk: any) => { body += chunk; });
             req.on('end', () => {
               try {
                 const payload = JSON.parse(body || '{}');
-                const validPhases = ['planning', 'monitoring', 'audit'];
-                if (!validPhases.includes(payload.phase)) throw new Error('Invalid phase');
-
-                const scriptPath = path.resolve(__dirname, `../../src/phases/${payload.phase}-wakeup.ps1`);
-                if (fs.existsSync(scriptPath)) {
-                  const child = spawn('pwsh', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath], {
-                    cwd: path.resolve(__dirname, '../..'),
-                    detached: true,
-                    stdio: 'ignore',
-                    windowsHide: true
-                  });
-                  child.unref();
-                }
+                const legacyPhases: Record<string, string> = {
+                  planning: 'MAIN-RUN-01_Planning',
+                  monitoring: 'MAIN-RUN-02_CheckAndDoing',
+                  audit: 'MAIN-RUN-03_Audit',
+                  optimizer: 'MAIN-RUN-04_Optimizer',
+                  memory: 'MAIN-RUN-05_MemoryOptimization',
+                };
+                const mainRun = String(payload.main_run || legacyPhases[payload.phase] || '');
+                startMainRun(mainRun);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ status: 'ok', message: `${payload.phase} triggered` }));
+                res.end(JSON.stringify({ status: 'ok', message: `${mainRun} triggered` }));
               } catch (err) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));
@@ -665,13 +750,12 @@ export default defineConfig({
                 const payload = JSON.parse(body || '{}');
                 if (!payload.issue_number) throw new Error('issue_number is required');
 
-                const statePath = path.resolve(__dirname, '../../var/db/autopilot-state.json');
-                const state = readJsonFile(statePath, {});
+                const state = readDashboardState();
                 state.manual_plan_queue = state.manual_plan_queue || [];
                 if (!state.manual_plan_queue.includes(payload.issue_number)) {
                   state.manual_plan_queue.push(payload.issue_number);
                 }
-                writeJsonFile(statePath, state);
+                writeDashboardState(state);
 
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'ok', message: `Issue ${payload.issue_number} queued for replan` }));
@@ -683,10 +767,7 @@ export default defineConfig({
           } else if (req.method === 'POST' && req.url === '/api/clear-alerts') {
             try {
               const flagPath = path.resolve(__dirname, '../../var/db/clear-alerts.flag');
-              const statePath = path.resolve(__dirname, '../../var/db/autopilot-state.json');
-              const publicStatePath = path.resolve(__dirname, './public/active-sessions.json');
-              const readableStatePath = fs.existsSync(statePath) ? statePath : publicStatePath;
-              const state = readJsonFile(readableStatePath, {});
+              const state = readDashboardState();
               if (Array.isArray(state.decisions_pending)) {
                 state.decisions_pending.forEach((alert: any) => {
                   if (alert.status !== 'closed' && alert.status !== 'ignored') {
@@ -697,8 +778,7 @@ export default defineConfig({
                   }
                 });
               }
-              writeJsonFile(statePath, state);
-              writeJsonFile(publicStatePath, state);
+              writeDashboardState(state);
               ensureParentDir(flagPath);
               fs.writeFileSync(flagPath, '', 'utf-8');
               res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -737,7 +817,10 @@ export default defineConfig({
     },
     // Statische Dateien aus var/ Verzeichnis serven
     fs: {
-      allow: ['../../var']
+      allow: [
+        path.resolve(__dirname),
+        path.resolve(__dirname, '../../var'),
+      ]
     }
   },
 })

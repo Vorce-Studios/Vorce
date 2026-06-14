@@ -80,13 +80,32 @@ export interface DecisionPending {
   memory_id?: string;
 }
 
+export interface MainRunRuntime {
+  name: string;
+  label: string;
+  routerKey: string;
+  intervalKey: string;
+  interval_minutes: number;
+  last_run_at?: string | null;
+  next_run_at?: string;
+  next_run_in_seconds?: number;
+  status: string;
+  summary?: string;
+  latest_state?: any;
+  sub_runs: any[];
+  control?: {
+    cancel_next?: boolean;
+    note?: string;
+    updated_at?: string;
+    skipped_at?: string;
+  };
+}
+
 export interface ActiveSessions {
   schema_version: number;
   session_id: string;
   started_at: string;
   last_heartbeat: string;
-  last_planning_at: string;
-  last_monitoring_at: string;
   active_delegations: ActiveDelegation[];
   working_queue?: unknown[];
   working_sessions?: unknown[];
@@ -95,15 +114,12 @@ export interface ActiveSessions {
   completed_this_session: CompletedItem[];
   decisions_pending?: DecisionPending[];
   deliberation_log?: DeliberationLogEntry[];
-  scheduler?: any;
   run_control?: any;
   optimizer_queue?: any[];
   last_optimizer_analysis_at?: string;
   optimizer_last_run?: any;
-  run_summaries?: {
-    planning?: { summary?: string; started_at?: string; completed_at?: string; duration_seconds?: number } | null;
-    monitoring?: { summary?: string; started_at?: string; completed_at?: string; duration_seconds?: number } | null;
-  };
+  main_runs?: MainRunRuntime[];
+  run_states?: any[];
 }
 
 // ── GitHub Project Types ──
@@ -173,10 +189,10 @@ export interface AutopilotConfig {
   repository: string;
   wake_intervals: {
     planning_minutes: number;
-    monitoring_minutes: number;
-    optimizer_hours?: number;
-    memory_optimization_runs?: number;
-    memory_optimization_minutes?: number;
+    check_and_doing_minutes: number;
+    audit_minutes: number;
+    optimizer_minutes: number;
+    memory_optimization_minutes: number;
   };
   jules: {
     max_daily_sessions: number;
