@@ -80,6 +80,7 @@ fn main() {
 ```
 
 **Vorteile:**
+
 * Eine Codebasis = einfachere Wartung
 * Einheitlicher Installer
 * Automatische Feature-Discovery
@@ -493,11 +494,13 @@ dicaffeine --source "Vorce-MASTER" --fullscreen
 ```
 
 **Performance (Raspberry Pi 4):**
+
 * 720p60: ✅ Stabil
 * 1080p30: ✅ Stabil
 * 1080p60: ⚠️ Möglich mit Drops
 
 **Performance (Raspberry Pi 5):**
+
 * 720p60: ✅ Stabil
 * 1080p30: ✅ Stabil
 * 1080p60: ✅ Stabil (erwartet)
@@ -831,6 +834,7 @@ Die Multi-PC-Architektur für Vorce ist **technisch machbar** und wirtschaftlich
 5. **Distributed Rendering für High-End** (langfristige Perspektive)
 
 Mit diesem Ansatz positioniert sich Vorce als **ernstzunehmende Alternative** zu kommerziellen Lösungen wie:
+
 * Resolume Arena (~€799)
 * MadMapper (~€449)
 * TouchDesigner (~$2000/Jahr)
