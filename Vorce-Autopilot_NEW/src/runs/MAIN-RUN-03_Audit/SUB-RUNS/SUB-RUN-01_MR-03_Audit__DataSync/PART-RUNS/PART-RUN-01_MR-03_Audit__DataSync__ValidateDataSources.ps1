@@ -22,14 +22,19 @@ Write-VorceStep -Message "Starte Audit-DataSync..." -Status "RUN"
 $syncResults = @()
 
 # Prüfe GitHub API Erreichbarkeit
-try {
-    $repo = $ConfigBag.Config.repository
-    $pingResult = Invoke-VorceApiRequest -Uri "https://api.github.com/repos/$repo" -Method GET -Headers @{ "Accept" = "application/vnd.github.v3+json" }
-    $syncResults += @{ type = "github_api"; status = "ok"; response_time = "fast" }
-    Write-VorceStep -Message "GitHub API erreichbar" -Status "OK"
-} catch {
-    $syncResults += @{ type = "github_api"; status = "error"; message = $_.Exception.Message }
-    Write-VorceStep -Message "GitHub API Fehler: $($_.Exception.Message)" -Status "ERROR"
+if ($ConfigBag.DryRun) {
+    $syncResults += @{ type = "github_api"; status = "skipped_dry_run" }
+    Write-VorceStep -Message "DryRun: GitHub API Check wird nicht ausgeführt." -Status "INFO"
+} else {
+    try {
+        $repo = $ConfigBag.Config.repository
+        $pingResult = Invoke-VorceApiRequest -Uri "https://api.github.com/repos/$repo" -Method GET -Headers @{ "Accept" = "application/vnd.github.v3+json" }
+        $syncResults += @{ type = "github_api"; status = "ok"; response_time = "fast" }
+        Write-VorceStep -Message "GitHub API erreichbar" -Status "OK"
+    } catch {
+        $syncResults += @{ type = "github_api"; status = "error"; message = $_.Exception.Message }
+        Write-VorceStep -Message "GitHub API Fehler: $($_.Exception.Message)" -Status "ERROR"
+    }
 }
 
 # Prüfe ob grundlegende Ordner existieren

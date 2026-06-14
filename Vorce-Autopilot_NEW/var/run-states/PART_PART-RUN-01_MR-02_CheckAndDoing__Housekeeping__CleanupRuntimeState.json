@@ -1,0 +1,20 @@
+{
+  "id": "run_20260615_002925",
+  "name": "PART-RUN-01_MR-02_CheckAndDoing__Housekeeping__CleanupRuntimeState",
+  "type": "PART",
+  "status": "completed",
+  "started_at": "2026-06-15T00:29:25.1301477+02:00",
+  "completed_at": "2026-06-15T00:29:25.4110075+02:00",
+  "metadata": {},
+  "results": [
+    {
+      "cleaned_delegations": 0,
+      "next_housekeeping": "2026-06-16T00:29:25.4061888+02:00",
+      "session_locks_cleaned": 0,
+      "timestamp": "2026-06-15T00:29:25.4064243+02:00",
+      "tmp_files_cleaned": 0,
+      "stats_updated": true,
+      "status": "completed"
+    }
+  ]
+}

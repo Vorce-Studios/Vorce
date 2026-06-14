@@ -14,6 +14,7 @@ $global:LibDir = $ConfigBag.LibDir
 # Lade benötigte Module
 . (Join-Path $global:LibDir "utils/StatusPrinter.ps1")
 . (Join-Path $global:LibDir "state/StateManager.ps1")
+. (Join-Path $global:LibDir "engines/QuotaManager.ps1")
 
 Write-VorceStep -Message "Starte Compliance-Check..." -Status "RUN"
 
@@ -57,17 +58,22 @@ if ($missingVars.Count -eq 0) {
 }
 
 # 3. Prüfe Modul-Verfügbarkeit
-$requiredModules = @("StatusPrinter", "StateManager", "RunEngine", "QuotaManager")
+$requiredModules = @{
+    StatusPrinter = "utils/StatusPrinter.ps1"
+    StateManager = "state/StateManager.ps1"
+    RunEngine = "engines/RunEngine.ps1"
+    QuotaManager = "engines/QuotaManager.ps1"
+}
 $missingModules = @()
-foreach ($module in $requiredModules) {
-    $modulePath = Join-Path $global:LibDir "engines/$module.ps1"
+foreach ($module in $requiredModules.GetEnumerator()) {
+    $modulePath = Join-Path $global:LibDir $module.Value
     if (-not (Test-Path $modulePath)) {
-        $missingModules += $module
+        $missingModules += $module.Key
     }
 }
 
 if ($missingModules.Count -eq 0) {
-    $complianceResults += @{ category = "module_availability"; status = "ok"; modules = $requiredModules }
+    $complianceResults += @{ category = "module_availability"; status = "ok"; modules = @($requiredModules.Keys) }
     Write-VorceStep -Message "Module Verfügbarkeit OK" -Status "OK"
 } else {
     $complianceResults += @{ category = "module_availability"; status = "error"; missing_modules = $missingModules }
@@ -94,7 +100,7 @@ try {
 
 # Compliance Ergebnis
 $complianceResult = @{
-    status = "completed"
+    status = if (($complianceResults | Where-Object { $_.status -eq "error" }).Count -gt 0) { "failed" } else { "completed" }
     compliance_checks = $complianceResults
     passed_checks = ($complianceResults | Where-Object { $_.status -eq "ok" }).Count
     warning_checks = ($complianceResults | Where-Object { $_.status -eq "warning" }).Count

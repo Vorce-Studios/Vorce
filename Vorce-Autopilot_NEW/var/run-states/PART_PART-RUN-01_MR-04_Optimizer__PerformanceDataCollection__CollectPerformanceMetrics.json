@@ -1,0 +1,19 @@
+{
+  "id": "run_20260615_002925",
+  "name": "PART-RUN-01_MR-04_Optimizer__PerformanceDataCollection__CollectPerformanceMetrics",
+  "type": "PART",
+  "status": "completed",
+  "started_at": "2026-06-15T00:29:25.9084719+02:00",
+  "completed_at": "2026-06-15T00:29:26.3459991+02:00",
+  "metadata": {},
+  "results": [
+    {
+      "recommendations_count": 0,
+      "critical_issues": 0,
+      "data_points_collected": 27,
+      "performance_file": "C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\Vorce-Autopilot_NEW\\var\\performance\\performance_20260615_002926.json",
+      "timestamp": "2026-06-15T00:29:26.3417341+02:00",
+      "status": "completed"
+    }
+  ]
+}

@@ -40,7 +40,8 @@ $ConfigBag = @{
     Timestamp = (Get-Date).ToString("o")
 }
 
-Write-VorceStep -Message "Config geladen: $($Config.enabledFeatures -join ', ')" -Status "INFO"
+$configuredSubRuns = @($Config.router_rules.PSObject.Properties | ForEach-Object { @($_.Value).Count } | Measure-Object -Sum).Sum
+Write-VorceStep -Message "Config geladen: $($Config.repository), $configuredSubRuns konfigurierte Sub-Runs" -Status "INFO"
 
 # D) Scheduling-Logik implementieren (C4)
 function Select-NextMainRun {
@@ -81,7 +82,8 @@ if ($null -eq $result) {
 $mainRunName = $result.Name
 $bestOverdue = $result.OverdueMinutes
 
-Write-VorceStep -Message "Wähle $mainRunName (überfällig um $bestOverdue Minuten)" -Status "RUN"
+$scheduleReason = if ($bestOverdue -eq [int]::MaxValue) { "noch nie ausgeführt" } else { "überfällig um $([math]::Round($bestOverdue, 1)) Minuten" }
+Write-VorceStep -Message "Wähle $mainRunName ($scheduleReason)" -Status "RUN"
 
 # E) Dynamischen Router-Aufruf (C8)
 $MainRunPath = Join-Path $RunsDir $mainRunName
@@ -95,12 +97,7 @@ $SubRuns = @()
 if ($routerFile) {
     $SubRuns = @(& $routerFile.FullName -ConfigBag $ConfigBag -MainState $MainState)
 } else {
-    Write-VorceStep -Message "Kein Router gefunden in $mainRunName. Nutze Standard-Sub-Runs." -Status "WARN"
-    $SubRuns = @(
-        @{ name="DataSync"; script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync/SUB-RUN-01_MR-01_Planning__DataSync.ps1" },
-        @{ name="Triage"; script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-02_MR-01_Planning__Triage/SUB-RUN-02_MR-01_Planning__Triage.ps1" },
-        @{ name="Strategy"; script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-03_MR-01_Planning__Strategy/SUB-RUN-03_MR-01_Planning__Strategy.ps1" }
-    )
+    throw "Kein Router für $mainRunName gefunden: $MainRunPath"
 }
 
 # F) Try/Catch um jeden Sub-Run (C9)
@@ -115,6 +112,9 @@ foreach ($sub in $SubRuns) {
         if (Test-Path $subScript) {
             $subResult = & $subScript -ConfigBag $ConfigBag -ParentState $MainState
             $MainState.results += $subResult
+            if ($subResult.status -eq "failed") {
+                throw "Mindestens ein PART-RUN in $($sub.name) ist fehlgeschlagen."
+            }
             Write-VorceStep -Message "Sub-Run $($sub.name) abgeschlossen." -Status "OK"
         } else {
             throw "Sub-Run Skript nicht gefunden: $subScript"

@@ -23,9 +23,10 @@ if (-not $ConfigBag.GlobalState.PSObject.Properties.Name -contains "alerts") {
     return @{ status="no_alerts"; alerts_processed=0; alert_resolution="none"; timestamp=(Get-Date).ToString("o") }
 }
 
-$alerts = $ConfigBag.GlobalState.alerts
-if (-not ($alerts -is [array])) {
-    $alerts = @($alerts)
+$alerts = @($ConfigBag.GlobalState.alerts | Where-Object { $null -ne $_ })
+if ($alerts.Count -eq 0) {
+    Write-VorceStep -Message "Keine aktiven Alerts zum Handhaben." -Status "INFO"
+    return @{ status="no_alerts"; alerts_processed=0; alert_resolution="none"; timestamp=(Get-Date).ToString("o") }
 }
 
 $alertsProcessed = 0

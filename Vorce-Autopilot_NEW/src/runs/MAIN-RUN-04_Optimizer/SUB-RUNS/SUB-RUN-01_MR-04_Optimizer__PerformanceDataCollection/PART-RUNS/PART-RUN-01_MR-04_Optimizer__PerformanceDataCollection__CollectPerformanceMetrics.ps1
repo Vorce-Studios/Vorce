@@ -60,13 +60,13 @@ if (Test-Path $runStateDir) {
 
 # 2. Sammle Quota-Verbrauchsdaten
 $quotaRegistry = Read-VorceQuotaRegistry
-if ($quotaRegistry) {
-    foreach ($providerName in $quotaRegistry.PSObject.Properties.Name) {
-        $provider = $quotaRegistry.$providerName
+if ($quotaRegistry.providers) {
+    foreach ($providerName in $quotaRegistry.providers.PSObject.Properties.Name) {
+        $provider = $quotaRegistry.providers.$providerName
         $performanceData.quota_usage += @{
             provider = $providerName
             daily_calls = $provider.usage_today.calls ?? 0
-            daily_cost_usd = $provider.estimated_cost_usd ?? 0
+            daily_cost_usd = $provider.usage_today.estimated_cost_usd ?? 0
             daily_limit = $provider.daily_limit ?? 0
             daily_budget_usd = $provider.daily_budget_usd ?? 0
             quota_available = Test-VorceQuota -AgentName $providerName
@@ -119,7 +119,7 @@ foreach ($quota in $performanceData.quota_usage) {
         $recommendations += @{
             type = "quota"
             priority = "high"
-            message = "Quota für $($quota.provider) zu 99% genutzt"
+            message = "Quota für $($quota.provider) zu $([math]::Round($usageRatio * 100, 1))% genutzt"
             suggestion = "Erhöhe tägliche Limits oder optimiere Effizienz"
         }
     }

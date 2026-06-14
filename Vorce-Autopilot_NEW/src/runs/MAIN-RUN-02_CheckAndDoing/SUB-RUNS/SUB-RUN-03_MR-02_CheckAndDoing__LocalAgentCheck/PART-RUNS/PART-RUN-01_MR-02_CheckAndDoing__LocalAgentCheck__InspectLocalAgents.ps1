@@ -70,12 +70,12 @@ foreach ($pattern in $agentPatterns) {
 }
 
 # 2. Aktualisiere GlobalState mit Agent-Informationen
-if (-not $ConfigBag.GlobalState.PSObject.Properties.Name -contains "agent_health") {
-    $ConfigBag.GlobalState | Add-Member -MemberType NoteProperty -Name "agent_health" -Value @{} -Force
+$agentHealth = [pscustomobject]@{
+    timestamp = (Get-Date).ToString("o")
+    processes = $agentProcesses
+    issues = $processIssues
 }
-$ConfigBag.GlobalState.agent_health.timestamp = (Get-Date).ToString("o")
-$ConfigBag.GlobalState.agent_health.processes = $agentProcesses
-$ConfigBag.GlobalState.agent_health.issues = $processIssues
+$ConfigBag.GlobalState | Add-Member -MemberType NoteProperty -Name "agent_health" -Value $agentHealth -Force
 
 # 3. Prüfe ob lokale Agent-Sessions laufen
 $localSessions = $agentProcesses.Count

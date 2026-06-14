@@ -17,6 +17,18 @@ function Invoke-VorcePartRun {
         
         # In V3 nutzen wir isolierte Jobs oder ScriptBlocks für Parallelität
         $result = & $ScriptPath @Arguments
+        if ($null -ne $result) {
+            $hasErrorProperty = if ($result -is [System.Collections.IDictionary]) {
+                $result.Contains("error")
+            } else {
+                $result.PSObject.Properties.Name -contains "error"
+            }
+            $hasError = $hasErrorProperty -and -not [string]::IsNullOrWhiteSpace([string]$result.error)
+            if ($result.status -eq "failed" -or $hasError) {
+                $reason = if ($hasError) { [string]$result.error } else { "PART-RUN meldete Status 'failed'." }
+                throw $reason
+            }
+        }
         
         $PartState.status = "completed"
         $PartState.results += $result
@@ -91,9 +103,11 @@ function Invoke-VorceSubRunParallel {
     
     # 3. Aggregations-Logik (Sub-Run Ebene)
     Write-VorceStep -Message "Starte Aggregations-Phase für $SubRunName..." -Status "RUN"
-    
+    $failedParts = @($completedResults | Where-Object { $_.status -eq "failed" })
+
     $aggregatedData = @{
         sub_run = $SubRunName
+        status = if ($failedParts.Count -gt 0) { "failed" } else { "completed" }
         timestamp = (Get-Date).ToString("o")
         parts = $completedResults
     }
@@ -105,7 +119,11 @@ function Invoke-VorceSubRunParallel {
     # OPTIONAL: Falls ein dediziertes Aggregations-Skript existiert, führe es aus
     # (z.B. SUB-RUN-01_DataSync_Aggregate.ps1)
     
-    Write-VorceStep -Message "Sub-Run $SubRunName erfolgreich aggregiert." -Status "OK"
+    if ($failedParts.Count -gt 0) {
+        Write-VorceStep -Message "Sub-Run $SubRunName mit $($failedParts.Count) fehlgeschlagenen PART-RUNs aggregiert." -Status "ERROR"
+    } else {
+        Write-VorceStep -Message "Sub-Run $SubRunName erfolgreich aggregiert." -Status "OK"
+    }
     return $aggregatedData
 }
 

@@ -44,6 +44,15 @@ if ($null -eq $triaged -or $triaged.Count -eq 0) {
 $targetIssue = $triaged[0]
 Write-VorceStep -Message "Plane Strategie für Issue #$($targetIssue.number): $($targetIssue.title)" -Status "RUN"
 
+if ($ConfigBag.DryRun) {
+    Write-VorceStep -Message "DryRun: Deliberation für Issue #$($targetIssue.number) wird nicht ausgeführt." -Status "INFO"
+    return @{
+        issue_number = $targetIssue.number
+        status = "dry_run"
+        timestamp = (Get-Date).ToString("o")
+    }
+}
+
 # 1. Vorbereiten der Variablen für den Basis-Prompt
 $BaseVariables = @{
     Repository = $repo

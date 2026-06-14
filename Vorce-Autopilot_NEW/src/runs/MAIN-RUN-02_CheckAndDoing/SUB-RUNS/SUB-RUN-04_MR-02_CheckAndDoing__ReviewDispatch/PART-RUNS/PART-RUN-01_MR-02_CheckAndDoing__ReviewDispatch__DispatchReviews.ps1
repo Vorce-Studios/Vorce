@@ -27,6 +27,11 @@ if (-not (Test-Path $reviewDir)) {
     New-Item -ItemType Directory -Path $reviewDir -Force | Out-Null
 }
 
+if ($ConfigBag.DryRun) {
+    Write-VorceStep -Message "DryRun: GitHub-Abfrage und Review-Dispatch werden nicht ausgeführt." -Status "INFO"
+    return @{ status="dry_run"; prs_found=0; reviews_dispatched=0; timestamp=(Get-Date).ToString("o") }
+}
+
 try {
     # GitHub API Aufruf für PRs mit Status "ready_for_review"
     $prResponse = Invoke-VorceApiRequest -Uri "https://api.github.com/repos/$repo/pulls?state=open&sort=created&direction=asc" -Method GET
