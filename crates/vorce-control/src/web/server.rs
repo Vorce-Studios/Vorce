@@ -23,6 +23,7 @@ use crate::{error::ControlError, Result};
 
 use super::auth::AuthConfig;
 use super::handlers::LiveStatus;
+use vorce_core::cluster::ClusterConfig;
 #[cfg(feature = "http-api")]
 use super::routes::build_router;
 #[cfg(feature = "http-api")]
@@ -34,6 +35,7 @@ use super::websocket::ws_handler;
 pub struct AppState {
     pub auth: Arc<TokioRwLock<AuthConfig>>,
     pub live_status: Arc<parking_lot::RwLock<LiveStatus>>,
+    pub cluster_config: Arc<parking_lot::RwLock<Option<ClusterConfig>>>,
 }
 
 /// Web server configuration
@@ -100,13 +102,26 @@ pub struct WebServer {
     config: WebServerConfig,
     #[cfg(feature = "http-api")]
     pub live_status: Arc<parking_lot::RwLock<LiveStatus>>,
+    #[cfg(feature = "http-api")]
+    pub cluster_config: Arc<parking_lot::RwLock<Option<ClusterConfig>>>,
 }
 
 impl WebServer {
     /// Create a new web server
     #[cfg(feature = "http-api")]
     pub fn new(config: WebServerConfig) -> Self {
-        Self { config, live_status: Arc::new(parking_lot::RwLock::new(LiveStatus::default())) }
+        Self {
+            config,
+            live_status: Arc::new(parking_lot::RwLock::new(LiveStatus::default())),
+            cluster_config: Arc::new(parking_lot::RwLock::new(None)),
+        }
+    }
+
+    /// Sets the cluster configuration for the web server
+    #[cfg(feature = "http-api")]
+    pub fn with_cluster_config(mut self, cluster_config: Arc<parking_lot::RwLock<Option<ClusterConfig>>>) -> Self {
+        self.cluster_config = cluster_config;
+        self
     }
 
     #[cfg(not(feature = "http-api"))]
@@ -124,6 +139,7 @@ impl WebServer {
         let state = AppState {
             auth: Arc::new(TokioRwLock::new(self.config.auth.clone())),
             live_status: self.live_status.clone(),
+            cluster_config: self.cluster_config.clone(),
         };
 
         // Build router with state
@@ -372,6 +388,7 @@ mod tests {
         let state = AppState {
             auth: Arc::new(TokioRwLock::new(auth_config)),
             live_status: Arc::new(parking_lot::RwLock::new(LiveStatus::default())),
+            cluster_config: Arc::new(parking_lot::RwLock::new(None)),
         };
 
         // Dummy handler to simulate WebSocket endpoint

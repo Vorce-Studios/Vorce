@@ -10,7 +10,7 @@ use axum::{
 };
 
 #[cfg(feature = "http-api")]
-use super::handlers::{ApiResponse, LayerInfo, StatusResponse, UpdateLayerRequest};
+use super::handlers::{ApiResponse, LayerInfo, StatusResponse, UpdateLayerRequest, ClusterHealthResponse};
 #[cfg(feature = "http-api")]
 use super::server::AppState;
 
@@ -19,6 +19,7 @@ use super::server::AppState;
 pub fn build_router() -> Router<AppState> {
     Router::new()
         .route("/api/status", get(get_status))
+        .route("/api/cluster/health", get(get_cluster_health))
         .route("/api/layers", get(get_layers))
         .route("/api/layers/:id", get(get_layer))
         .route("/api/layers/:id", patch(update_layer))
@@ -95,6 +96,30 @@ async fn update_layer(
     Ok(Json(ApiResponse::success(layer)))
 }
 
+
+/// GET /api/cluster/health - Get cluster control-plane health status
+#[cfg(feature = "http-api")]
+async fn get_cluster_health(State(state): State<AppState>) -> Result<Json<ApiResponse<ClusterHealthResponse>>, StatusCode> {
+    let config_guard = state.cluster_config.read();
+
+    let config = match &*config_guard {
+        Some(c) => c,
+        None => return Err(StatusCode::SERVICE_UNAVAILABLE),
+    };
+
+    if !config.is_control_plane() {
+        return Err(StatusCode::SERVICE_UNAVAILABLE);
+    }
+
+    let response = ClusterHealthResponse {
+        is_control_plane: true,
+        session_id: config.session_id.to_string(),
+        active_instances: config.instances.iter().filter(|i| i.is_online).count(),
+    };
+
+    Ok(Json(ApiResponse::success(response)))
+}
+
 /// GET /api/paints - List all paints
 #[cfg(feature = "http-api")]
 async fn get_paints(State(_state): State<AppState>) -> Json<ApiResponse<Vec<String>>> {
@@ -126,6 +151,7 @@ mod tests {
             live_status: Arc::new(parking_lot::RwLock::new(
                 super::super::handlers::LiveStatus::default(),
             )),
+            cluster_config: Arc::new(parking_lot::RwLock::new(None)),
         };
 
         let response = get_status(State(state)).await;
@@ -139,10 +165,63 @@ mod tests {
             live_status: Arc::new(parking_lot::RwLock::new(
                 super::super::handlers::LiveStatus::default(),
             )),
+            cluster_config: Arc::new(parking_lot::RwLock::new(None)),
         };
 
         let response = get_layers(State(state)).await;
         assert!(response.0.success);
         assert!(response.0.data.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_get_cluster_health_uninitialized() {
+        let state = AppState {
+            auth: Arc::new(RwLock::new(super::super::auth::AuthConfig::new())),
+            live_status: Arc::new(parking_lot::RwLock::new(super::super::handlers::LiveStatus::default())),
+            cluster_config: Arc::new(parking_lot::RwLock::new(None)),
+        };
+
+        let response = get_cluster_health(State(state)).await;
+        assert_eq!(response.unwrap_err(), StatusCode::SERVICE_UNAVAILABLE);
+    }
+
+    #[tokio::test]
+    async fn test_get_cluster_health_not_control_plane() {
+        use vorce_core::cluster::{ClusterConfig, InstanceConfig, InstanceRole};
+        let mut config = ClusterConfig::new("Test");
+        let slave = InstanceConfig::new("Slave", InstanceRole::Slave, "127.0.0.1");
+        config.local_instance_id = Some(slave.id);
+        config.add_instance(slave);
+
+        let state = AppState {
+            auth: Arc::new(RwLock::new(super::super::auth::AuthConfig::new())),
+            live_status: Arc::new(parking_lot::RwLock::new(super::super::handlers::LiveStatus::default())),
+            cluster_config: Arc::new(parking_lot::RwLock::new(Some(config))),
+        };
+
+        let response = get_cluster_health(State(state)).await;
+        assert_eq!(response.unwrap_err(), StatusCode::SERVICE_UNAVAILABLE);
+    }
+
+    #[tokio::test]
+    async fn test_get_cluster_health_control_plane_success() {
+        use vorce_core::cluster::{ClusterConfig, InstanceConfig, InstanceRole};
+        let mut config = ClusterConfig::new("Test");
+        let mut master = InstanceConfig::new("Master", InstanceRole::Master, "127.0.0.1");
+        master.is_online = true;
+        config.local_instance_id = Some(master.id);
+        config.add_instance(master);
+
+        let state = AppState {
+            auth: Arc::new(RwLock::new(super::super::auth::AuthConfig::new())),
+            live_status: Arc::new(parking_lot::RwLock::new(super::super::handlers::LiveStatus::default())),
+            cluster_config: Arc::new(parking_lot::RwLock::new(Some(config))),
+        };
+
+        let response = get_cluster_health(State(state)).await.unwrap();
+        assert!(response.0.success);
+        let data = response.0.data.unwrap();
+        assert!(data.is_control_plane);
+        assert_eq!(data.active_instances, 1);
     }
 }

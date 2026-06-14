@@ -24,6 +24,14 @@ impl<T> ApiResponse<T> {
     }
 }
 
+/// Cluster health status response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ClusterHealthResponse {
+    pub is_control_plane: bool,
+    pub session_id: String,
+    pub active_instances: usize,
+}
+
 /// System status response
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StatusResponse {

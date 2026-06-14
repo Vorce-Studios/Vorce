@@ -16,6 +16,7 @@ link = ["ableton-link-rs"]
 full = ["midi", "osc", "http-api", "link"]
 
 [dependencies]
+vorce-core = { path = "../vorce-core" }
 ableton-link-rs = { workspace = true, optional = true }
 anyhow = "1.0"
 

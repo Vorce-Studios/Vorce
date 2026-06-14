@@ -160,6 +160,24 @@ impl ClusterConfig {
 
     /// Reconciles this cluster configuration with another, deterministically merging state.
     /// Handles stale peer state by prioritizing online status, and resolves conflicts deterministically.
+    /// Retrieves the instance configuration for the local node
+    pub fn get_local_instance(&self) -> Option<&InstanceConfig> {
+        if let Some(id) = self.local_instance_id {
+            self.instances.iter().find(|i| i.id == id)
+        } else {
+            None
+        }
+    }
+
+    /// Checks if this node is acting as a control plane element
+    pub fn is_control_plane(&self) -> bool {
+        if let Some(local) = self.get_local_instance() {
+            matches!(local.role, InstanceRole::Master | InstanceRole::SecondaryMaster)
+        } else {
+            false
+        }
+    }
+
     pub fn reconcile(&mut self, other: &Self) {
         for other_instance in &other.instances {
             if let Some(existing) = self.instances.iter_mut().find(|i| i.id == other_instance.id) {
@@ -205,5 +223,42 @@ impl ClusterConfig {
 
         // Ensure output assignments are sorted deterministically
         self.output_assignments.sort_by_key(|a| a.output_id);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_control_plane() {
+        let mut cluster = ClusterConfig::new("Test Session");
+
+        // No local instance set
+        assert!(!cluster.is_control_plane());
+
+        // Master role
+        let master = InstanceConfig::new("Master", InstanceRole::Master, "127.0.0.1");
+        cluster.local_instance_id = Some(master.id);
+        cluster.add_instance(master);
+        assert!(cluster.is_control_plane());
+
+        // SecondaryMaster role
+        let sec_master = InstanceConfig::new("SecMaster", InstanceRole::SecondaryMaster, "127.0.0.1");
+        cluster.local_instance_id = Some(sec_master.id);
+        cluster.add_instance(sec_master);
+        assert!(cluster.is_control_plane());
+
+        // Slave role
+        let slave = InstanceConfig::new("Slave", InstanceRole::Slave, "127.0.0.1");
+        cluster.local_instance_id = Some(slave.id);
+        cluster.add_instance(slave);
+        assert!(!cluster.is_control_plane());
+
+        // HeadlessNode role
+        let headless = InstanceConfig::new("Headless", InstanceRole::HeadlessNode, "127.0.0.1");
+        cluster.local_instance_id = Some(headless.id);
+        cluster.add_instance(headless);
+        assert!(!cluster.is_control_plane());
     }
 }
