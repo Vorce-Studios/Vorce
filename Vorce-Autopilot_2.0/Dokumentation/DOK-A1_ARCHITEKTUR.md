@@ -64,7 +64,6 @@ Der zentrale Einstiegspunkt für jede Phase. Verantwortlich für:
 5. **State-Aggregation**: Dokumentiert den Status jedes Sub-Runs (inkl. übersprungener) im `MAIN-RUN-STATE`.
 
 **Neue Features:**
-
 - **`-ForceAllSubRuns`**: Erzwingt die Ausführung aller Sub-Runs, auch wenn der Router sie überspringen würde.
 - **Config-Fallback**: Wenn kein ROUTER-Skript existiert, werden die `router_rules` aus `autopilot-config.json` gelesen.
 - **Partial-Status**: Wenn nur einige Sub-Runs fehlschlagen, erhält der Main-Run den Status `partial` statt `failed`.
