@@ -47,8 +47,25 @@ function Write-StartLog {
         [ValidateSet("INFO", "WARN", "ERROR")][string]$Level = "INFO"
     )
 
-    $line = "{0} [{1}] {2}" -f (Get-Date -Format o), $Level, $Message
-    Add-Content -Path $StartLogPath -Value $line -Encoding UTF8
+    try {
+        $line = "{0} [{1}] {2}" -f (Get-Date -Format o), $Level, $Message
+        if ($StartLogPath) {
+            # Ensure LogDir exists
+            $currentLogDir = Split-Path $StartLogPath
+            if (-not (Test-Path -Path $currentLogDir)) {
+                New-Item -ItemType Directory -Path $currentLogDir -Force | Out-Null
+            }
+            Add-Content -Path $StartLogPath -Value $line -Encoding UTF8 -ErrorAction SilentlyContinue
+        }
+
+        # Also append to autopilot-live.log for unified visibility
+        $liveLogPath = Join-Path $LogDir "autopilot-live.log"
+        $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+        Add-Content -Path $liveLogPath -Value "[$timestamp] [STARTUP] $Message" -Encoding UTF8 -ErrorAction SilentlyContinue
+    } catch {
+        # Fallback to Write-Host if logging fails (prevents trap recursion)
+        Write-Host "[LOG-FAIL] $Message" -ForegroundColor Gray
+    }
 }
 
 function Write-InitStatus {
@@ -133,13 +150,19 @@ function Get-ManagedAutopilotProcess {
         [Parameter(Mandatory)][string]$Pattern
     )
 
-    $rootPattern = [regex]::Escape(($ScriptDir -replace '\\', '/'))
-    @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
-        $_.ProcessId -ne $PID -and
-        $_.CommandLine -and
-        (([string]$_.CommandLine -replace '\\', '/') -match $rootPattern) -and
-        ($_.CommandLine -match $Pattern)
+    # Robust matching: Try full path first, then fall back to pattern + project name
+    $root = ($ScriptDir -replace '\\', '/')
+    $escapedRoot = [regex]::Escape($root)
+
+    $procs = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+        if ($_.ProcessId -eq $PID -or -not $_.CommandLine) { return $false }
+        $cl = [string]$_.CommandLine -replace '\\', '/'
+
+        # Match pattern AND (full path OR project unique string)
+        ($cl -match $Pattern) -and (($cl -match $escapedRoot) -or ($cl -match "Vorce-Autopilot_3.0"))
     })
+
+    return $procs
 }
 
 function Get-AutopilotSuiteProcess {
@@ -319,7 +342,45 @@ autopilot_working_sessions $(@($state.working_sessions).Count)
     $eventJob = Register-ObjectEvent $watcher "Changed" -Action $action
 
     try {
+        $lastHealthCheck = (Get-Date).AddSeconds(30) # Initial 60s grace period (30s here + 30s in loop)
         while ($true) {
+            $now = Get-Date
+            # --- Health Check & Self-Healing (Every 30s) ---
+            if (($now - $lastHealthCheck).TotalSeconds -ge 30) {
+                $lastHealthCheck = $now
+                $pids = Import-Pids
+
+                # 1. Check Dashboard (Port-based is most reliable)
+                $dashboardAlive = $false
+                if (Test-LocalPortListening -Port 5173) {
+                    $dashboardAlive = $true
+                } elseif ($pids -and $pids.dashboard -gt 0 -and (Get-Process -Id $pids.dashboard -ErrorAction SilentlyContinue)) {
+                    $dashboardAlive = $true
+                }
+
+                if (-not $dashboardAlive) {
+                    Write-InitStatus "[HEAL] Dashboard-Server (Port 5173) nicht erreichbar. Starte neu..." -Color Yellow
+                    $dashboardProcess = Start-Process $PowerShellHost -ArgumentList @("-NoProfile", "-Command", "Set-Location -LiteralPath '$DashboardDir'; npm run dev -- --host 0.0.0.0") -WindowStyle Hidden -PassThru
+                    if ($null -ne $pids) { $pids.dashboard = $dashboardProcess.Id; Save-Pids -PidsObj $pids }
+                }
+
+                # 2. Check Sync Service (Pattern-based)
+                $syncProcs = Get-ManagedAutopilotProcess -Pattern 'interval-stats\.ps1'
+                if ($syncProcs.Count -eq 0) {
+                    Write-InitStatus "[HEAL] Sync-Service ('interval-stats.ps1') nicht gefunden. Starte neu..." -Color Yellow
+                    $syncProcess = Start-Process $PowerShellHost -ArgumentList @("-NoProfile", "-File", (Join-Path $ScriptDir "tools/services/run-sync-service.ps1")) -WindowStyle Hidden -PassThru
+                    if ($null -ne $pids) { $pids.sync = $syncProcess.Id; Save-Pids -PidsObj $pids }
+                }
+
+                # 3. Check Backend (Pattern-based)
+                $backendProcs = Get-ManagedAutopilotProcess -Pattern 'autopilot\.ps1'
+                if ($backendProcs.Count -eq 0) {
+                    Write-InitStatus "[HEAL] Autopilot-Backend Loop ('autopilot.ps1') nicht gefunden. Starte neu..." -Color Yellow
+                    $autopilotProcess = Start-Process $PowerShellHost -ArgumentList $AutopilotArgs -WindowStyle Normal -PassThru
+                    if ($null -ne $pids) { $pids.backend = $autopilotProcess.Id; Save-Pids -PidsObj $pids }
+                }
+            }
+
             $keyAvailable = $false
             try { $keyAvailable = [Console]::KeyAvailable } catch {}
             if (-not $keyAvailable) {
@@ -460,32 +521,47 @@ Write-InitStatus "[INIT] Starte Dashboard Web-Server (Vite)..."
 if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
     Write-StartLog -Message "npm command not available; dashboard not started." -Level "WARN"
     Write-Warning "[INIT] npm ist nicht verfuegbar. Dashboard-Server wird nicht gestartet."
-} elseif (Test-LocalPortListening -Port 5173) {
-    if (Test-DashboardHealth -TimeoutSeconds 5) {
-        Write-InitStatus "[INIT] Dashboard Web-Server laeuft bereits und antwortet auf http://127.0.0.1:5173." -Color DarkGray
-    } else {
-        Write-InitStatus "[INIT] Port 5173 wird von einem veralteten oder falschen Dashboard belegt." -Color Yellow -Level "WARN"
-        Stop-LocalPortOwner -Port 5173
-        Wait-LocalPortFree -Port 5173 | Out-Null
-        $dashboardProcess = Start-Process $PowerShellHost -ArgumentList @("-NoProfile", "-Command", "Set-Location -LiteralPath '$DashboardDir'; npm run dev -- --host 0.0.0.0") -WindowStyle Hidden -PassThru
-        Register-StartedAutopilotProcess -Process $dashboardProcess -Role "dashboard"
-        if (-not (Test-DashboardHealth -TimeoutSeconds 20)) {
-            throw "Aktuelles Dashboard konnte nach dem Austausch des veralteten Prozesses nicht gestartet werden."
+} else {
+    # Check dependencies
+    if (-not (Test-Path (Join-Path $DashboardDir "node_modules"))) {
+        Write-InitStatus "[INIT] Dashboard-Abhaengigkeiten fehlen. Starte 'npm install'..." -Color Yellow
+        try {
+            $installProcess = Start-Process npm -ArgumentList "install", "--no-audit", "--no-fund", "--silent" -WorkingDirectory $DashboardDir -Wait -NoNewWindow -PassThru
+            if ($installProcess.ExitCode -ne 0) {
+                Write-Warning "[INIT] 'npm install' fehlgeschlagen. Dashboard wird moeglicherweise nicht starten."
+            }
+        } catch {
+            Write-Warning "[INIT] Konnte 'npm install' nicht starten: $($_.Exception.Message)"
         }
     }
-} else {
-    try {
-        $dashboardProcess = Start-Process $PowerShellHost -ArgumentList @("-NoProfile", "-Command", "Set-Location -LiteralPath '$DashboardDir'; npm run dev -- --host 0.0.0.0") -WindowStyle Hidden -PassThru
-        Register-StartedAutopilotProcess -Process $dashboardProcess -Role "dashboard"
-        Write-StartLog -Message "Dashboard started. PID=$($dashboardProcess.Id)"
-        if (Test-DashboardHealth -TimeoutSeconds 20) {
-            Write-InitStatus "[INIT] Dashboard Health OK: http://localhost:5173" -Color Green
+
+    if (Test-LocalPortListening -Port 5173) {
+        if (Test-DashboardHealth -TimeoutSeconds 5) {
+            Write-InitStatus "[INIT] Dashboard Web-Server laeuft bereits und antwortet auf http://127.0.0.1:5173." -Color DarkGray
         } else {
-            Write-InitStatus "[INIT] Dashboard wurde gestartet, antwortet aber noch nicht auf http://127.0.0.1:5173." -Color Yellow -Level "WARN"
+            Write-InitStatus "[INIT] Port 5173 wird von einem veralteten oder falschen Dashboard belegt." -Color Yellow -Level "WARN"
+            Stop-LocalPortOwner -Port 5173
+            Wait-LocalPortFree -Port 5173 | Out-Null
+            $dashboardProcess = Start-Process $PowerShellHost -ArgumentList @("-NoProfile", "-Command", "Set-Location -LiteralPath '$DashboardDir'; npm run dev -- --host 0.0.0.0") -WindowStyle Hidden -PassThru
+            Register-StartedAutopilotProcess -Process $dashboardProcess -Role "dashboard"
+            if (-not (Test-DashboardHealth -TimeoutSeconds 30)) {
+                Write-Warning "Dashboard konnte nach dem Austausch des veralteten Prozesses nicht innerhalb von 30s gestartet werden."
+            }
         }
-    } catch {
-        Write-StartLog -Message "Dashboard start failed: $($_.Exception.Message)" -Level "ERROR"
-        throw
+    } else {
+        try {
+            $dashboardProcess = Start-Process $PowerShellHost -ArgumentList @("-NoProfile", "-Command", "Set-Location -LiteralPath '$DashboardDir'; npm run dev -- --host 0.0.0.0") -WindowStyle Hidden -PassThru
+            Register-StartedAutopilotProcess -Process $dashboardProcess -Role "dashboard"
+            Write-StartLog -Message "Dashboard started. PID=$($dashboardProcess.Id)"
+            if (Test-DashboardHealth -TimeoutSeconds 30) {
+                Write-InitStatus "[INIT] Dashboard Health OK: http://localhost:5173" -Color Green
+            } else {
+                Write-InitStatus "[INIT] Dashboard wurde gestartet, antwortet aber noch nicht auf http://127.0.0.1:5173." -Color Yellow -Level "WARN"
+            }
+        } catch {
+            Write-StartLog -Message "Dashboard start failed: $($_.Exception.Message)" -Level "ERROR"
+            throw
+        }
     }
 }
 
