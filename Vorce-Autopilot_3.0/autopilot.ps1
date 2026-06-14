@@ -78,20 +78,8 @@ function Write-Host {
     }
 }
 
-function Write-VorceStatus {
-    param(
-        [Parameter(Mandatory)][string]$Phase,
-        [Parameter(Mandatory)][string]$Message,
-        [ConsoleColor]$Color = [ConsoleColor]::Cyan,
-        [string]$SubPhase = ""
-    )
-    $timestamp = (Get-Date).ToString("HH:mm:ss")
-    $phaseStr = if ($SubPhase) { "$Phase/$SubPhase" } else { $Phase }
-    $prefix = "[$timestamp] [$($phaseStr.PadRight(20))] "
-    Write-Host "$prefix$Message" -ForegroundColor $Color
-}
-
 # --- Load libraries ---
+. (Join-Path $ScriptDir "src/lib/utils/logging-utils.ps1")
 . (Join-Path $ScriptDir "src/lib/state/state-manager.ps1")
 . (Join-Path $ScriptDir "src/lib/engines/quota-manager.ps1")
 . (Join-Path $ScriptDir "src/core/cli-router.ps1")
