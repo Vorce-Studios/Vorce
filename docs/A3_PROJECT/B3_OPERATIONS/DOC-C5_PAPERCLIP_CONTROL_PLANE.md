@@ -489,19 +489,19 @@ Keine langen Zusammenfassungen, kein Spam.
   -EnableAfkMode
 ```
 
-2. AFK explizit aktivieren:
+1. AFK explizit aktivieren:
 
 ```powershell
 .\scripts\paperclip\Enable-Vorce-StudiosAfkMode.ps1
 ```
 
-3. Status pruefen:
+1. Status pruefen:
 
 ```powershell
 .\scripts\paperclip\Get-Vorce-StudiosAfkMode.ps1
 ```
 
-4. AFK wieder deaktivieren:
+1. AFK wieder deaktivieren:
 
 ```powershell
 .\scripts\paperclip\Disable-Vorce-StudiosAfkMode.ps1
