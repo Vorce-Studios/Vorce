@@ -9,14 +9,25 @@ param(
 $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-$ScriptDir = $PSScriptRoot
-$VarDir = Join-Path $ScriptDir "var"
-$LogDir = Join-Path $VarDir "log"
-$DbDir = Join-Path $VarDir "db"
+$global:VorceRoot = $PSScriptRoot
+$global:VarDir    = Join-Path $global:VorceRoot "var"
+$global:SrcDir    = Join-Path $global:VorceRoot "src"
+$global:LibDir    = Join-Path $global:SrcDir "lib"
+$LogDir = Join-Path $global:VarDir "log"
+$DbDir  = Join-Path $global:VarDir "db"
+
+# --- Health-Check ---
+$requiredDirs = @($global:VarDir, $LogDir, $DbDir,
+    (Join-Path $global:VarDir "run-states"),
+    (Join-Path $global:VarDir "tmp"),
+    (Join-Path $DbDir "proposals"))
+foreach ($dir in $requiredDirs) {
+    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+}
 
 # --- 1. Core Modules laden ---
-. (Join-Path $ScriptDir "src/lib/StatusPrinter.ps1")
-. (Join-Path $ScriptDir "src/lib/StateManager.ps1")
+. (Join-Path $global:VorceRoot "src/lib/utils/StatusPrinter.ps1")
+. (Join-Path $global:VorceRoot "src/lib/state/StateManager.ps1")
 
 # --- 2. Rolling Log System ---
 function Rotate-Logs {
@@ -42,7 +53,7 @@ Write-VorceHeader -Title "VORCE AUTOPILOT 3.0" -Icon "🤖"
 
 # --- 3. Initialisierung ---
 Write-VorceLog "Lade Konfiguration..." -Status "INFO"
-$configPath = Join-Path $VarDir "config/autopilot-config.json"
+$configPath = Join-Path $global:VarDir "config/autopilot-config.json"
 if (-not (Test-Path $configPath)) {
     Write-VorceLog "Konfiguration nicht gefunden: $configPath" -Status "ERROR"
     return
@@ -57,7 +68,7 @@ Write-VorceLog "Starte Orchestrierung (Intervall: $IntervalMinutes min)..." -Sta
 while ($true) {
     try {
         # --- Orchestrator Aufruf ---
-        $orchestratorPath = Join-Path $ScriptDir "src/orchestrator/Vorce-Orchestrator.ps1"
+        $orchestratorPath = Join-Path $global:VorceRoot "src/orchestrator/Vorce-Orchestrator.ps1"
         if (Test-Path $orchestratorPath) {
             & $orchestratorPath -GlobalState $GlobalState
         } else {
@@ -65,7 +76,7 @@ while ($true) {
         }
 
     } catch {
-        Write-VorceLog "[CRITICAL] Fehler im Loop: $($_.Exception.Message)" "Red"
+        Write-VorceLog "[CRITICAL] Fehler im Loop: $($_.Exception.Message)" -Status "ERROR"
     }
 
     $wakeupFile = Join-Path $ScriptDir "autopilot.wakeup"

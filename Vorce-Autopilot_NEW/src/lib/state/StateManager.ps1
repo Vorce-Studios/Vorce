@@ -2,18 +2,35 @@
 # Saubere Zustandsverwaltung für globale und Run-lokale Daten
 
 function Get-VorceGlobalStatePath {
-    return Join-Path $PSScriptRoot "../../var/db/global-state.json"
+    return Join-Path $global:VarDir "db/global-state.json"
 }
 
 function Read-VorceGlobalState {
     $path = Get-VorceGlobalStatePath
     if (Test-Path $path) {
-        return Get-Content $path -Raw | ConvertFrom-Json
+        $raw = Get-Content $path -Raw
+        if ([string]::IsNullOrWhiteSpace($raw) -or $raw -eq "null") {
+            # Datei existiert aber enthält ungültige Daten (W5)
+            return [pscustomobject]@{
+                version = "3.0.0"
+                last_run = (Get-Date).ToString("o")
+                last_runs = @{}
+                active_delegations = @()
+                review_queue = @()
+                escalated_issues = @()
+                stats = @{ runs_completed = 0; errors = 0 }
+            }
+        }
+        return $raw | ConvertFrom-Json
     }
     # Initialer Standard-State
     return [pscustomobject]@{
         version = "3.0.0"
         last_run = (Get-Date).ToString("o")
+        last_runs = @{}
+        active_delegations = @{}
+        review_queue = @{}
+        escalated_issues = @{}
         stats = @{ runs_completed = 0; errors = 0 }
     }
 }
@@ -31,7 +48,7 @@ function Initialize-RunState {
     )
     
     $runId = "run_$((Get-Date).ToString('yyyyMMdd_HHmmss'))"
-    $statePath = Join-Path $PSScriptRoot "../../var/run-states/$($RunType)_$($RunName).json"
+    $statePath = Join-Path $global:VarDir "run-states/$($RunType)_$($RunName).json"
     
     $state = [pscustomobject]@{
         id = $runId

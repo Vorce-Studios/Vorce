@@ -27,5 +27,4 @@ function Invoke-VorceApiRequest {
     }
 }
 
-# Exportiere Basisfunktion
-Export-ModuleMember -Function Invoke-VorceApiRequest
+# Keine Export-ModuleMember nötig — diese Datei wird per Dot-Sourcing (.) geladen.

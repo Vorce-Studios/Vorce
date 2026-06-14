@@ -28,7 +28,7 @@ function Invoke-VorcePartRun {
     } finally {
         $PartState.completed_at = (Get-Date).ToString("o")
         # Speichern des Part-States
-        $statePath = Join-Path $PSScriptRoot "../../var/run-states/PART_$($PartName).json"
+        $statePath = Join-Path $global:VarDir "run-states/PART_$($PartName).json"
         $PartState | ConvertTo-Json -Depth 10 | Set-Content $statePath -Encoding UTF8
     }
     
@@ -56,14 +56,15 @@ function Invoke-VorceSubRunParallel {
             
             # Starte den Part-Run in einem Hintergrund-Job
             $job = Start-Job -ScriptBlock {
-                param($pName, $pScript, $pLibDir)
+                param($pName, $pScript, $pLibDir, $pVarDir)
+                # Globale Variablen im Job-Kontext setzen
+                $global:VarDir = $pVarDir
                 # Libs im Job-Kontext laden
-                . (Join-Path $pLibDir "StatusPrinter.ps1")
-                . (Join-Path $pLibDir "StateManager.ps1")
-                . (Join-Path $pLibDir "RunEngine.ps1")
-                
+                . (Join-Path $pLibDir "utils/StatusPrinter.ps1")
+                . (Join-Path $pLibDir "state/StateManager.ps1")
+                . (Join-Path $pLibDir "engines/RunEngine.ps1")
                 Invoke-VorcePartRun -PartName $pName -ScriptPath $pScript
-            } -ArgumentList $part.name, $part.script, $PSScriptRoot
+            } -ArgumentList $part.name, $part.script, $global:LibDir, $global:VarDir
             
             $activeJobs += $job
         }
@@ -95,7 +96,7 @@ function Invoke-VorceSubRunParallel {
     }
     
     # Speichere Sub-Run State vorab
-    $statePath = Join-Path $PSScriptRoot "../../var/run-states/SUB_$($SubRunName).json"
+    $statePath = Join-Path $global:VarDir "run-states/SUB_$($SubRunName).json"
     $aggregatedData | ConvertTo-Json -Depth 10 | Set-Content $statePath -Encoding UTF8
     
     # OPTIONAL: Falls ein dediziertes Aggregations-Skript existiert, führe es aus
