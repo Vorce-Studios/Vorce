@@ -1,16 +1,16 @@
+use vorce_core::module::{PartType, VorceModule};
 use vorce_core::module_eval::ModuleEvaluator;
-use vorce_core::module::{VorceModule, PartType};
 
 fn create_test_module() -> VorceModule {
-    VorceModule {
-        id: 1,
-        name: "Test Module".to_string(),
-        color: [1.0; 4],
-        parts: vec![],
-        connections: vec![],
-        playback_mode: vorce_core::module::ModulePlaybackMode::LoopUntilManualSwitch,
-        next_part_id: 1,
-    }
+    let raw = r#"{
+      "id": 123,
+      "name": "Test Module",
+      "color": [1.0, 1.0, 1.0, 1.0],
+      "parts": [],
+      "connections": [],
+      "playback_mode": "LoopUntilManualSwitch"
+    }"#;
+    serde_json::from_str(raw).unwrap()
 }
 
 #[test]
@@ -28,14 +28,19 @@ fn test_render_ops_determinism() {
     let mut evaluator = ModuleEvaluator::new();
     evaluator.evaluate(&module, &vorce_core::module::SharedMediaState::default(), 0);
 
-    let op_ids: Vec<_> = evaluator.cached_result.render_ops.iter().map(|op| op.output_part_id).collect();
+    let op_ids: Vec<_> =
+        evaluator.cached_result.render_ops.iter().map(|op| op.output_part_id).collect();
 
     let mut module_reversed = module.clone();
     module_reversed.parts.reverse();
 
     let mut evaluator_rev = ModuleEvaluator::new();
     evaluator_rev.evaluate(&module_reversed, &vorce_core::module::SharedMediaState::default(), 0);
-    let op_ids_rev: Vec<_> = evaluator_rev.cached_result.render_ops.iter().map(|op| op.output_part_id).collect();
+    let op_ids_rev: Vec<_> =
+        evaluator_rev.cached_result.render_ops.iter().map(|op| op.output_part_id).collect();
 
-    assert_eq!(op_ids, op_ids_rev, "Render order should be deterministic and independent of parts order in Vec");
+    assert_eq!(
+        op_ids, op_ids_rev,
+        "Render order should be deterministic and independent of parts order in Vec"
+    );
 }
