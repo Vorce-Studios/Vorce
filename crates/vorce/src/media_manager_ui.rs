@@ -76,7 +76,9 @@ impl MediaManagerUI {
 
             ui.horizontal(|ui| {
                 ui.text_edit_singleline(&mut self.new_playlist_name);
-                if ui.button("+").clicked() && !self.new_playlist_name.is_empty() {
+                if ui.button("+").on_hover_text("Create new playlist").clicked()
+                    && !self.new_playlist_name.is_empty()
+                {
                     library.create_playlist(self.new_playlist_name.clone());
                     self.new_playlist_name.clear();
                 }

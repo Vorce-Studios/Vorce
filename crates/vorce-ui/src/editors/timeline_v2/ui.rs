@@ -435,10 +435,10 @@ impl TimelineV2 {
 
             // Zoom controls
             ui.label(format!("Zoom: {:.0}px/s", self.zoom));
-            if ui.button("+").clicked() {
+            if ui.button("+").on_hover_text("Zoom in").clicked() {
                 self.zoom *= 1.2;
             }
-            if ui.button("-").clicked() {
+            if ui.button("-").on_hover_text("Zoom out").clicked() {
                 self.zoom /= 1.2;
             }
 
@@ -750,7 +750,7 @@ impl TimelineV2 {
                     if ui.button("Jump").clicked() {
                         jump_to_block = Some((block.start_time, block.id));
                     }
-                    if ui.button("X").clicked() {
+                    if ui.button("X").on_hover_text("Remove block").clicked() {
                         remove_block_id = Some(block.id);
                     }
                 });
