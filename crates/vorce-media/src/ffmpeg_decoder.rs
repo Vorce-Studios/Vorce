@@ -1,5 +1,5 @@
 use crate::{
-    test_pattern_decoder::TestPatternDecoder, HwAccelType, MediaError, Result, VideoDecoder, reject_path_traversal,
+    test_pattern_decoder::TestPatternDecoder, HwAccelType, MediaError, Result, VideoDecoder,
 };
 use std::path::Path;
 use std::time::Duration;
@@ -11,6 +11,7 @@ use vorce_io::VideoFrame;
 #[cfg(feature = "ffmpeg")]
 mod ffmpeg_impl {
     use super::*;
+    use crate::reject_path_traversal;
     use ffmpeg_next as ffmpeg;
     use ffmpeg_sys_next as ffi;
     use std::path::PathBuf;

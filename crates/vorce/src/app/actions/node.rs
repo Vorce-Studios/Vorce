@@ -54,6 +54,7 @@ fn handle_node_action(app: &mut App, action: NodeEditorAction) -> Result<()> {
 }
 
 /// Process pending MCP actions
+
 pub fn handle(app: &mut App, action: NodeEditorAction) -> Result<()> {
     handle_node_action(app, action)
 }
