@@ -1,6 +1,6 @@
+use super::super::common::render_info_label;
 use egui::Ui;
 use vorce_core::module::{BevyCameraMode, SourceType};
-use super::super::common::{render_info_label};
 
 pub fn render_bevy_ui(ui: &mut Ui, source: &mut SourceType) {
     match source {

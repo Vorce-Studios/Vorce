@@ -1,13 +1,13 @@
-use crate::UIAction;
-use egui::{Ui, Vec2};
-use vorce_core::module::{ModuleId, ModulePartId, SourceType};
 use super::super::super::state::ModuleCanvas;
 use super::super::super::types::MediaPlaybackCommand;
-use crate::theme::colors;
-use crate::widgets::styled_slider;
 use super::super::common::{
     render_common_controls, render_info_label, render_timeline, render_transport_controls,
 };
+use crate::theme::colors;
+use crate::widgets::styled_slider;
+use crate::UIAction;
+use egui::{Ui, Vec2};
+use vorce_core::module::{ModuleId, ModulePartId, SourceType};
 
 pub fn render_file_media_ui(
     canvas: &mut ModuleCanvas,

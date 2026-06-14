@@ -1,8 +1,8 @@
-pub mod file_media;
-pub mod shared_media;
-pub mod shader;
 pub mod bevy;
 pub mod external_io;
+pub mod file_media;
+pub mod shader;
+pub mod shared_media;
 
 use super::super::state::ModuleCanvas;
 use crate::UIAction;
@@ -195,7 +195,9 @@ pub fn render_source_ui(
     ui.separator();
 
     match source {
-        SourceType::MediaFile { .. } | SourceType::VideoUni { .. } | SourceType::ImageUni { .. } => {
+        SourceType::MediaFile { .. }
+        | SourceType::VideoUni { .. }
+        | SourceType::ImageUni { .. } => {
             file_media::render_file_media_ui(canvas, ui, source, part_id, module_id, actions);
         }
         SourceType::VideoMulti { .. } | SourceType::ImageMulti { .. } => {
@@ -204,7 +206,14 @@ pub fn render_source_ui(
         SourceType::Shader { .. } => {
             shader::render_shader_ui(ui, source);
         }
-        SourceType::Bevy3DText { .. } | SourceType::BevyCamera { .. } | SourceType::BevyAtmosphere { .. } | SourceType::BevyHexGrid { .. } | SourceType::BevyParticles { .. } | SourceType::Bevy3DShape { .. } | SourceType::Bevy3DModel { .. } | SourceType::Bevy => {
+        SourceType::Bevy3DText { .. }
+        | SourceType::BevyCamera { .. }
+        | SourceType::BevyAtmosphere { .. }
+        | SourceType::BevyHexGrid { .. }
+        | SourceType::BevyParticles { .. }
+        | SourceType::Bevy3DShape { .. }
+        | SourceType::Bevy3DModel { .. }
+        | SourceType::Bevy => {
             bevy::render_bevy_ui(ui, source);
         }
         SourceType::LiveInput { .. } | SourceType::NdiInput { .. } => {

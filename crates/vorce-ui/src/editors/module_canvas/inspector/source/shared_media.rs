@@ -1,12 +1,8 @@
+use super::super::common::render_common_controls;
 use egui::Ui;
 use vorce_core::module::SourceType;
-use super::super::common::{render_common_controls};
 
-pub fn render_shared_media_ui(
-    ui: &mut Ui,
-    source: &mut SourceType,
-    shared_media_ids: &[String],
-) {
+pub fn render_shared_media_ui(ui: &mut Ui, source: &mut SourceType, shared_media_ids: &[String]) {
     match source {
         SourceType::VideoMulti {
             shared_id,

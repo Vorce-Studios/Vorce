@@ -3,7 +3,6 @@
 Dieses Dokument erfasst die End-to-End-Evidenz für den Timeline/Show-Control-MVP von Release 1.0.
 
 ## Parent
-
 - #661 VOR-015_MAIs_Timeline-Show-Control-Release-1.0-Scope
 - #651 VOR-002_MAIs_Release-1.0-Readiness-Gate
 
