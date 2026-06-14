@@ -81,7 +81,6 @@ Der fachliche Datenfluss folgt dem Prinzip:
 ## 4. Render-Pipeline & Threading
 
 Aktuell nutzt Vorce ein asynchrones Modell für Medien-Frames:
-
 * **Decode-Thread**: Erzeugt Frames aus Video-Quellen.
 * **Upload-Thread**: Lädt Daten via Staging-Buffer in GPU-Texturen (WGPU).
 * **Render-Thread**: Nutzt die Texturen für die Komposition.
@@ -93,7 +92,6 @@ Synchronisation erfolgt über bounded `crossbeam_channels`, um Backpressure zu k
 ## 5. UI-Architektur
 
 Das UI basiert auf `egui` (Retained Mode Style).
-
 * **Unified Inspector**: Kontextsensitive Steuerung, die sich automatisch an das selektierte Element (Module, Layer, Output) anpasst.
 * **Module Canvas**: Custom-Knoteneditor für die visuelle Programmierung (keine externen Node-Libs).
 

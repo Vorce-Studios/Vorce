@@ -18,17 +18,13 @@ For Vorce, a high-performance VJ tool, the choice of Linux distribution format i
 ## Recommendation for Vorce
 
 ### Short-term: AppImage
-
 AppImage is recommended for the initial beta releases because:
-
 1. It is the easiest "zero-install" path for users.
 2. It allows us to bundle specific FFmpeg versions without relying on system or Flatpak runtimes.
 3. Performance is prioritized.
 
 ### Long-term: Flatpak (Flathub)
-
 Flatpak is recommended for official stable distribution because:
-
 1. It provides a more integrated "store" experience.
 2. Sandboxing offers security benefits.
 3. The Freedesktop runtime provides high-quality media libraries.
