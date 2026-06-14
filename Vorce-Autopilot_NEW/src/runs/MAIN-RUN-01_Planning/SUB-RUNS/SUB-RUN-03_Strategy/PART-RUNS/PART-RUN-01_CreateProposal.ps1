@@ -2,13 +2,14 @@
 [CmdletBinding()]
 param()
 
+$global:VorceRoot = Join-Path $PSScriptRoot "../../../.."
 $ScriptDir = $PSScriptRoot
-$VarDir = Join-Path $ScriptDir "../../../../var"
+$VarDir = Join-Path $global:VorceRoot "var"
 
-. (Join-Path $ScriptDir "../../../lib/StatusPrinter.ps1")
-. (Join-Path $ScriptDir "../../../lib/PromptManager.ps1")
-. (Join-Path $ScriptDir "../../../lib/AgentRunner.ps1")
-. (Join-Path $ScriptDir "../../../lib/DeliberationEngine.ps1")
+. (Join-Path $global:VorceRoot "src/lib/utils/StatusPrinter.ps1")
+. (Join-Path $global:VorceRoot "src/lib/utils/PromptManager.ps1")
+. (Join-Path $global:VorceRoot "src/lib/integrations/AgentRunner.ps1")
+. (Join-Path $global:VorceRoot "src/lib/engines/DeliberationEngine.ps1")
 
 # Lade triagierte Issues
 $triagedPath = Join-Path $VarDir "db/triaged-issues.json"

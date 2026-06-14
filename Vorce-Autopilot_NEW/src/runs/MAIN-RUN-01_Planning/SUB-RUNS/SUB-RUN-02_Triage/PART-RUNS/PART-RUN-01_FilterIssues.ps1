@@ -2,11 +2,12 @@
 [CmdletBinding()]
 param()
 
+$global:VorceRoot = Join-Path $PSScriptRoot "../../../.."
 $ScriptDir = $PSScriptRoot
-$VarDir = Join-Path $ScriptDir "../../../../var"
+$VarDir = Join-Path $global:VorceRoot "var"
 
-. (Join-Path $ScriptDir "../../../lib/StatusPrinter.ps1")
-. (Join-Path $ScriptDir "../../../lib/TriageUtils.ps1")
+. (Join-Path $global:VorceRoot "src/lib/utils/StatusPrinter.ps1")
+. (Join-Path $global:VorceRoot "src/lib/utils/TriageUtils.ps1")
 
 # Lade Daten
 $issuesPath = Join-Path $VarDir "db/github-issues.json"

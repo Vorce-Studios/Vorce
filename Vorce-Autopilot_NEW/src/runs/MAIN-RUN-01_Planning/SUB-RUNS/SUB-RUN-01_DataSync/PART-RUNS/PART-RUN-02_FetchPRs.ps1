@@ -2,9 +2,10 @@
 [CmdletBinding()]
 param()
 
+$global:VorceRoot = Join-Path $PSScriptRoot "../../../.."
 $ScriptDir = $PSScriptRoot
-. (Join-Path $ScriptDir "../../../lib/StatusPrinter.ps1")
-. (Join-Path $ScriptDir "../../../lib/GitHubClient.ps1")
+. (Join-Path $global:VorceRoot "src/lib/utils/StatusPrinter.ps1")
+. (Join-Path $global:VorceRoot "src/lib/integrations/GitHubClient.ps1")
 
 # Repository aus Config laden (Mock für Part-Run Test)
 $Repo = "Vorce-Studios/Vorce"
