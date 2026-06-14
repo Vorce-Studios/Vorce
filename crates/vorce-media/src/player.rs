@@ -332,7 +332,7 @@ impl VideoPlayer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_pattern_decoder::TestPatternDecoder;
+    use crate::TestPatternDecoder;
     use crate::MediaError;
 
     // A mock decoder that can be configured to fail.
@@ -389,7 +389,7 @@ mod tests {
 
     #[test]
     fn test_player_creation() {
-        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(
+        let decoder = TestPatternDecoder::new(
             1920,
             1080,
             Duration::from_secs(60),
@@ -404,7 +404,7 @@ mod tests {
 
     #[test]
     fn test_player_playback_control() {
-        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(
+        let decoder = TestPatternDecoder::new(
             1920,
             1080,
             Duration::from_secs(60),
@@ -425,7 +425,7 @@ mod tests {
 
     #[test]
     fn test_player_speed_control() {
-        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(
+        let decoder = TestPatternDecoder::new(
             1920,
             1080,
             Duration::from_secs(60),
@@ -443,7 +443,7 @@ mod tests {
 
     #[test]
     fn test_loop_mode() {
-        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(
+        let decoder = TestPatternDecoder::new(
             1920,
             1080,
             Duration::from_secs(60),
@@ -459,7 +459,7 @@ mod tests {
 
     #[test]
     fn test_state_transitions() {
-        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(
+        let decoder = TestPatternDecoder::new(
             1920,
             1080,
             Duration::from_secs(60),
@@ -486,7 +486,7 @@ mod tests {
 
     #[test]
     fn test_invalid_state_transitions() {
-        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(
+        let decoder = TestPatternDecoder::new(
             1920,
             1080,
             Duration::from_secs(60),
@@ -500,7 +500,7 @@ mod tests {
 
     #[test]
     fn test_command_channel() {
-        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(
+        let decoder = TestPatternDecoder::new(
             1920,
             1080,
             Duration::from_secs(60),
@@ -520,7 +520,7 @@ mod tests {
 
     #[test]
     fn test_status_channel() {
-        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(
+        let decoder = TestPatternDecoder::new(
             1920,
             1080,
             Duration::from_secs(60),
@@ -542,7 +542,7 @@ mod tests {
     #[test]
     fn test_playback_loop() {
         // Duration 1 sec, speed 1.0
-        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(
+        let decoder = TestPatternDecoder::new(
             1920,
             1080,
             Duration::from_secs(1),
@@ -576,7 +576,7 @@ mod tests {
 
     #[test]
     fn test_playback_play_once() {
-        let decoder = crate::test_pattern_decoder::TestPatternDecoder::new(
+        let decoder = TestPatternDecoder::new(
             1920,
             1080,
             Duration::from_secs(1),

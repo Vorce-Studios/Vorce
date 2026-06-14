@@ -120,35 +120,21 @@ impl AppUI {
             .interactable(false)
             .show(ctx, |ui| {
                 egui::Frame::default()
-<<<<<<< HEAD
                     .fill(crate::core::theme::colors::DARKER_GREY.linear_multiply(0.9))
                     .corner_radius(egui::CornerRadius::ZERO)
                     .stroke(egui::Stroke::new(1.0, crate::core::theme::colors::STROKE_GREY))
-=======
-                    .fill(crate::theme::colors::DARKER_GREY.linear_multiply(0.9))
-                    .corner_radius(egui::CornerRadius::ZERO)
-                    .stroke(egui::Stroke::new(1.0, crate::theme::colors::STROKE_GREY))
->>>>>>> 61328e54e (Fix cargo fmt errors in refactored media_browser modules)
                     .inner_margin(egui::Margin::symmetric(16, 8))
                     .show(ui, |ui| {
                         ui.horizontal(|ui| {
                             ui.label(
                                 egui::RichText::new(format!("FPS: {:.0}", fps))
-<<<<<<< HEAD
                                     .color(crate::core::theme::colors::MINT_ACCENT)
-=======
-                                    .color(crate::theme::colors::MINT_ACCENT)
->>>>>>> 61328e54e (Fix cargo fmt errors in refactored media_browser modules)
                                     .strong(),
                             );
                             ui.separator();
                             ui.label(
                                 egui::RichText::new(format!("{:.1}ms", frame_time_ms))
-<<<<<<< HEAD
                                     .color(crate::core::theme::colors::CYAN_ACCENT),
-=======
-                                    .color(crate::theme::colors::CYAN_ACCENT),
->>>>>>> 61328e54e (Fix cargo fmt errors in refactored media_browser modules)
                             );
                         });
                     });
