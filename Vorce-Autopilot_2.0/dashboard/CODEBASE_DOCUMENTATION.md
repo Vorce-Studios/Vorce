@@ -36,11 +36,13 @@ Vorce-Autopilot/dashboard/
 **Purpose**: React entry point with StrictMode.
 
 **Imports**:
+
 - React, ReactDOM
 - App component
 - index.css
 
 **Features**:
+
 - `createRoot` with StrictMode
 - Single entry point
 
@@ -51,12 +53,14 @@ Vorce-Autopilot/dashboard/
 **Purpose**: Main application with navigation and data fetching.
 
 **Tabs**:
+
 - `dashboard` → DashboardPage
 - `workstreams` → WorkstreamsPage
 - `reporting` → ManagerReportingPage
 - `settings` → SettingsPage
 
 **Data Hooks**:
+
 - config (AutopilotConfig)
 - registry (QuotaRegistry)
 - sessions (ActiveSessions)
@@ -72,6 +76,7 @@ Vorce-Autopilot/dashboard/
 **Auto-Refresh**: Every 30 seconds
 
 **Features**:
+
 - Navigation sidebar
 - Header with refresh button
 - Dynamic page rendering
@@ -84,6 +89,7 @@ Vorce-Autopilot/dashboard/
 **Purpose**: Central dashboard with system overview.
 
 **Key Components**:
+
 - Status Banner (System status, session ID)
 - Audit Alert Box (Last audit issues)
 - Audit Alerts (Pending alerts table)
@@ -97,6 +103,7 @@ Vorce-Autopilot/dashboard/
 - Deliberation Panel (CEO chat)
 
 **Helper Functions**:
+
 - `formatCost()` - Format USD
 - `timeAgo()` - Relative time
 - `normalizeAuditText()` - Label normalization
@@ -118,12 +125,14 @@ Vorce-Autopilot/dashboard/
 **Purpose**: Dual-CEO deliberation view.
 
 **Features**:
+
 - Expandable chat history
 - Consensus indicators
 - Round-based display
 - Provider identification
 
 **Functions**:
+
 - `timeAgo()` - Relative timestamps
 
 **Status**: ✅ Komplett
@@ -135,6 +144,7 @@ Vorce-Autopilot/dashboard/
 **Purpose**: Full system configuration via UI.
 
 **Sections**:
+
 1. **Autopilot Core**: Repository, Wake Intervals, Gemini Path
 2. **Jules Orchestration**: Sessions, Retries, Auto-Approve
 3. **Working Sessions**: Enabled, Max Concurrent, Preferred Agents
@@ -146,6 +156,7 @@ Vorce-Autopilot/dashboard/
 9. **Memory Store**: CRUD operations
 
 **Functions**:
+
 - `handleConfigChange()` - Top-level config
 - `handleNestedConfigChange()` - Nested config
 - `handleProviderChange()` - Provider settings
@@ -165,6 +176,7 @@ Vorce-Autopilot/dashboard/
 **Purpose**: Workstream management (To be analyzed).
 
 **Features** (Expected):
+
 - Issue lists
 - Workstream status
 - Filter options
@@ -176,6 +188,7 @@ Vorce-Autopilot/dashboard/
 **Purpose**: Manager reporting dashboard (To be analyzed).
 
 **Features** (Expected):
+
 - Performance metrics
 - Summary charts
 - Export options
@@ -187,6 +200,7 @@ Vorce-Autopilot/dashboard/
 **Purpose**: Memory store UI (To be analyzed).
 
 **Features** (Expected):
+
 - Memory CRUD
 - Search
 - Categories
@@ -196,6 +210,7 @@ Vorce-Autopilot/dashboard/
 ## TypeScript Types
 
 ### QuotaRegistry
+
 ```typescript
 {
   schema_version: number,
@@ -217,6 +232,7 @@ Vorce-Autopilot/dashboard/
 ```
 
 ### ActiveSessions
+
 ```typescript
 {
   schema_version: number,
@@ -237,6 +253,7 @@ Vorce-Autopilot/dashboard/
 ```
 
 ### AutopilotConfig
+
 ```typescript
 {
   repository: string,
@@ -339,26 +356,31 @@ Vorce-Autopilot/dashboard/
 ## Known Issues & Fixes
 
 ### Issue 1: JSX Parse-Fehler (REPARIERT)
+
 - **Problem**: Map-Closing `) })}` falsch verschachtelt
 - **Lösung**: `{` + `)` + `})` + `)` korrekt platziert
 - **Status**: ✅ Repariert
 
 ### Issue 2: RunCard in Audit Block (REPARIERT)
+
 - **Problem**: RunCard innerhalb von `&& (` Block
 - **Lösung**: RunCard außerhalb `&& (` platziert
 - **Status**: ✅ Repariert
 
 ### Issue 3: Inline Comment nach `)` (REPARIERT)
+
 - **Problem**: Kommentar direkt nach `)` (nicht erlaubt)
 - **Lösung**: `{/* Comment */}` + newline + `)`
 - **Status**: ✅ Repariert
 
 ### Issue 4: Repo-Defekt (WORKAROUND)
+
 - **Problem**: Git-Repo enthält corrupte JSX
 - **Lösung**: `write_file()` statt `git checkout` verwenden
 - **Status**: ✅ Workaround implementiert
 
 ### Issue 5: Oxc/Vite Caching (RESOLVED)
+
 - **Problem**: File changes nicht sichtbar durch Caching
 - **Lösung**: Port erhöhen + Cache löschen
 - **Status**: ✅ Verstanden
@@ -368,19 +390,23 @@ Vorce-Autopilot/dashboard/
 ## Optimization Opportunities
 
 ### Performance
+
 1. **Memoization**: chartData, liveLogItems, julesSession counts
 2. **React.Fragment**: Überflüssige divs vermeiden
 3. **Lazy Loading**: Components mit `lazy()` laden
 
 ### Type Safety
+
 1. **Replace `any`**: Spezifische Types verwenden
 2. **Interfaces**: Für komplexe Objekte definieren
 
 ### Reliability
+
 1. **Error Boundaries**: Fallback-UI für React-Fehler
 2. **Suspense**: Loading States zentralisieren
 
 ### UX
+
 1. **Toast Notifications**: Erfolgs/Fehler-Meldungen
 2. **Keyboard Navigation**: Shortcut support
 3. **Progress Indicators**: Loading für längere操作
@@ -389,19 +415,22 @@ Vorce-Autopilot/dashboard/
 
 ## Dev Server
 
-### Start:
+### Start
+
 ```bash
 cd dashboard
 npx vite --port 5234
 ```
 
-### Cache-Löschen:
+### Cache-Löschen
+
 ```bash
 rm -rf node_modules/.vite
 rm -rf .vite
 ```
 
-### Port-Verwaltung:
+### Port-Verwaltung
+
 - Aktuell: Port 5234 (stable >616s)
 - Bei Restart: Port erhöhen (5235, 5236, etc.)
 - Cache immer nach Änderungen löschen
@@ -416,17 +445,20 @@ rm -rf .vite
 
 ## Build & Deployment
 
-### Development:
+### Development
+
 ```bash
 npm run dev -- --port 5234
 ```
 
-### Build:
+### Build
+
 ```bash
 npm run build
 ```
 
-### Preview:
+### Preview
+
 ```bash
 npm run preview
 ```
@@ -435,13 +467,15 @@ npm run preview
 
 ## Support & Wartung
 
-### Reparatur-Command:
+### Reparatur-Command
+
 ```bash
 # Datei komplett neu schreiben (nicht git checkout!)
 # Python execute_code verwenden für echte \n Newlines
 ```
 
-### Cache-Lösch-Pattern:
+### Cache-Lösch-Pattern
+
 ```bash
 rm -rf node_modules/.vite && rm -rf .vite
 ```
