@@ -142,7 +142,6 @@ impl OscTrigger {
     }
 }
 
-
 /// A simpler TimelineAction enum specific to control triggers
 /// to avoid dependency cycles with vorce-ui
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]

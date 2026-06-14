@@ -1,4 +1,7 @@
-use vorce_control::cue::{Cue, triggers::{TimelineTrigger, TimelineTriggerAction}};
+use vorce_control::cue::{
+    triggers::{TimelineTrigger, TimelineTriggerAction},
+    Cue,
+};
 
 #[test]
 fn test_cue_timeline_trigger_roundtrip() {
