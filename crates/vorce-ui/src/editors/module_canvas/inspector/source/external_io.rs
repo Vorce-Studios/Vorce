@@ -6,6 +6,7 @@ use crate::UIAction;
 use egui::Ui;
 use vorce_core::module::{ModulePartId, SourceType};
 
+#[allow(clippy::ptr_arg)]
 pub fn render_external_io_ui(
     #[allow(unused_variables)] canvas: &mut ModuleCanvas,
     ui: &mut Ui,
