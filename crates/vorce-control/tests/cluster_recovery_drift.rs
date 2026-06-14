@@ -15,14 +15,14 @@ fn test_cluster_recovery_reconnect() {
     offline_instance1.is_online = false;
     cluster.update_instance_state(offline_instance1);
 
-    assert!(!cluster.instances[0].is_online);
+    assert_eq!(cluster.instances[0].is_online, false);
 
     // Simulate instance1 reconnecting
     let mut reconnect_instance1 = instance1.clone();
     reconnect_instance1.is_online = true;
     cluster.update_instance_state(reconnect_instance1);
 
-    assert!(cluster.instances[0].is_online);
+    assert_eq!(cluster.instances[0].is_online, true);
 }
 
 #[test]
@@ -45,7 +45,7 @@ fn test_cluster_reconciliation_stale_peer_state() {
     local_cluster.reconcile(&remote_cluster);
 
     // Local should now see Node A as online (prioritizing online state)
-    assert!(local_cluster.instances[0].is_online);
+    assert_eq!(local_cluster.instances[0].is_online, true);
 
     // If remote has a stale offline state, it shouldn't downgrade local's online state
     let mut remote_cluster_stale = ClusterConfig::new("Test Session");
@@ -54,7 +54,7 @@ fn test_cluster_reconciliation_stale_peer_state() {
     remote_cluster_stale.add_instance(stale_instance);
 
     local_cluster.reconcile(&remote_cluster_stale);
-    assert!(local_cluster.instances[0].is_online); // Still online
+    assert_eq!(local_cluster.instances[0].is_online, true); // Still online
 }
 
 #[test]
