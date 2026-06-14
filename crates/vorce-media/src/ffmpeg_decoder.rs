@@ -1,5 +1,5 @@
 use crate::{
-    test_pattern_decoder::TestPatternDecoder, HwAccelType, MediaError, Result, VideoDecoder,
+    test_pattern_decoder::TestPatternDecoder, HwAccelType, MediaError, Result, VideoDecoder, reject_path_traversal,
 };
 use std::path::Path;
 use std::time::Duration;
