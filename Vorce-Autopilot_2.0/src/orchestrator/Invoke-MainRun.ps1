@@ -130,7 +130,7 @@ function Invoke-MainRun {
                         $returnedState = $item
                     }
                 }
-                
+
                 if ($null -ne $returnedState) {
                     $j.SubRunState = $returnedState
                 }
