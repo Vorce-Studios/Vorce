@@ -5,7 +5,6 @@ fn handle_node_action(app: &mut App, action: NodeEditorAction) -> Result<()> {
     if let Some(graph_id) = app.ui_state.node_editor_panel.graph_id {
         if let Some(graph) = app.state.shader_graphs_mut().get_mut(&graph_id) {
             let mut needs_update = false;
-
             match action {
                 NodeEditorAction::AddNode(node_type, pos) => {
                     let _id = graph.add_node(node_type);
@@ -33,11 +32,9 @@ fn handle_node_action(app: &mut App, action: NodeEditorAction) -> Result<()> {
                 }
                 _ => {}
             }
-
             if needs_update {
                 app.ui_state.node_editor_panel.load_graph(graph);
                 app.state.dirty = true;
-
                 // Compile Graph
                 if let Err(e) = app
                     .effect_chain_renderer
@@ -52,9 +49,7 @@ fn handle_node_action(app: &mut App, action: NodeEditorAction) -> Result<()> {
     }
     Ok(())
 }
-
 /// Process pending MCP actions
-
 pub fn handle(app: &mut App, action: NodeEditorAction) -> Result<()> {
     handle_node_action(app, action)
 }
