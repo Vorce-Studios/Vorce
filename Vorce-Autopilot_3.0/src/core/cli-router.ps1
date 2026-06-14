@@ -12,7 +12,8 @@ function Resolve-CliProvider {
     #>
     param(
         [Parameter(Mandatory)][object]$QuotaRegistry,
-        [Parameter(Mandatory)][string]$TaskType
+        [Parameter(Mandatory)][string]$TaskType,
+        [string[]]$ExcludeProviders = @()
     )
 
     $routes = $QuotaRegistry.routing_rules.$TaskType
@@ -25,6 +26,11 @@ function Resolve-CliProvider {
         $parts = $route -split ":"
         $providerName = $parts[0]
         $modelTier = if ($parts.Count -gt 1) { $parts[1] } else { "default" }
+
+        if ($ExcludeProviders -contains $providerName) {
+            Write-Host "[ROUTER] $providerName steht auf der Ausschlussliste, ueberspringe..." -ForegroundColor DarkGray
+            continue
+        }
 
         if (Test-ProviderAvailable -Registry $QuotaRegistry -ProviderName $providerName) {
             $cmdName = $QuotaRegistry.providers.$providerName.command

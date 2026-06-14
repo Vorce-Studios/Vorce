@@ -1,18 +1,21 @@
 # Vorce-Autopilot/src/lib/jules-client.ps1
 Set-StrictMode -Version Latest
 
-# Setup paths relative to script root (using a robust directory traversal to find Vorce-Autopilot_2.0 root)
+# Setup paths relative to script root (using a robust directory traversal to find project root)
 $rootPath = $PSScriptRoot
 if ($null -ne $MyInvocation -and $null -ne $MyInvocation.MyCommand -and $MyInvocation.MyCommand.Path) {
     $rootPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 }
-while ($rootPath -and (Split-Path -Leaf $rootPath) -ne "Vorce-Autopilot_2.0" -and (Split-Path -Parent $rootPath)) {
-    $rootPath = Split-Path -Parent $rootPath
+# Traverse up until we find 'src' and 'config' to identify the root
+$current = $rootPath
+while ($current -and -not (Test-Path (Join-Path $current "src")) -and (Split-Path -Parent $current)) {
+    $current = Split-Path -Parent $current
 }
-if ($rootPath -and (Split-Path -Leaf $rootPath) -eq "Vorce-Autopilot_2.0") {
-    $script:JulesScriptDir = Join-Path (Split-Path -Parent $rootPath) "scripts/jules"
+if ($current -and (Test-Path (Join-Path $current "src"))) {
+    $script:JulesScriptDir = Join-Path (Split-Path -Parent $current) "scripts/jules"
 } else {
-    $script:JulesScriptDir = Join-Path (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))) "scripts/jules"
+    # Fallback to standard relative structure
+    $script:JulesScriptDir = Join-Path (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $rootPath))) "scripts/jules"
 }
 
 # Dot-source the underlying jules api functions

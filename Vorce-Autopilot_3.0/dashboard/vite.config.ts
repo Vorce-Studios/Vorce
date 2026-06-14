@@ -308,15 +308,19 @@ export default defineConfig({
             req.on('end', () => {
               try {
                 const quota = JSON.parse(body);
-                const quotaPath = path.resolve(__dirname, '../var/db/quota-registry.json');
+                const configQuotaPath = path.resolve(__dirname, '../config/quota-registry.json');
+                const dbQuotaPath = path.resolve(__dirname, '../var/db/quota-registry.json');
                 const publicRegistryPath = path.resolve(__dirname, './public/registry.json');
                 const publicDataPath = path.resolve(__dirname, './public/data.json');
-                writeJsonFile(quotaPath, quota);
+
+                writeJsonFile(configQuotaPath, quota);
+                writeJsonFile(dbQuotaPath, quota);
                 writeJsonFile(publicRegistryPath, quota);
                 writeJsonFile(publicDataPath, quota);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'ok', message: 'Quota registry saved' }));
               } catch (err) {
+
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'error', message: err instanceof Error ? err.message : String(err) }));
               }

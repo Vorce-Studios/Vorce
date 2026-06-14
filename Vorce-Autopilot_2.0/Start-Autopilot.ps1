@@ -544,5 +544,3 @@ Write-StartLog -Message "Start sequence completed."
 if (-not $NoControlConsole.IsPresent) {
     Wait-AutopilotControlConsole
 }
-
-

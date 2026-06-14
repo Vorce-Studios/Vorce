@@ -78,6 +78,19 @@ function Write-Host {
     }
 }
 
+function Write-VorceStatus {
+    param(
+        [Parameter(Mandatory)][string]$Phase,
+        [Parameter(Mandatory)][string]$Message,
+        [ConsoleColor]$Color = [ConsoleColor]::Cyan,
+        [string]$SubPhase = ""
+    )
+    $timestamp = (Get-Date).ToString("HH:mm:ss")
+    $phaseStr = if ($SubPhase) { "$Phase/$SubPhase" } else { $Phase }
+    $prefix = "[$timestamp] [$($phaseStr.PadRight(20))] "
+    Write-Host "$prefix$Message" -ForegroundColor $Color
+}
+
 # --- Load libraries ---
 . (Join-Path $ScriptDir "src/lib/state/state-manager.ps1")
 . (Join-Path $ScriptDir "src/lib/engines/quota-manager.ps1")
@@ -363,19 +376,16 @@ while ($true) {
     $decCount = $State.decisions_pending.Count
 
     Write-Host ""
-    Write-Host "[$timeStr] Status: Delegiert=$delegCount Review=$reviewCount Fertig=$doneCount Entscheidungen=$decCount" -ForegroundColor DarkGray
+    Write-VorceStatus -Phase "ORCHESTRATOR" -Message "Status: Delegiert=$delegCount | Review=$reviewCount | Fertig=$doneCount | Offen=$decCount" -Color White
 
     if ($decCount -gt 0) {
-        Write-Host ""
-        Write-Host "  [!] ENTSCHEIDUNGEN OFFEN:" -ForegroundColor Yellow
         foreach ($d in $State.decisions_pending) {
-            $topic = $d.topic
-            Write-Host "    -> $topic" -ForegroundColor Yellow
+            Write-VorceStatus -Phase "DECISION" -Message "Aktion erforderlich: $($d.topic)" -Color Yellow
         }
     }
 
     $summary = Get-QuotaSummary -Registry $QuotaRegistry
-    Write-Host $summary -ForegroundColor DarkGray
+    Write-VorceStatus -Phase "QUOTA" -Message $summary -Color DarkGray
 
     $nextPlan = if ($lastPlanTime -eq [datetime]::MinValue) { (Get-Date).AddMinutes($planMinutes) } else { $lastPlanTime.AddMinutes($planMinutes) }
     $nextMon = if ($lastMonTime -eq [datetime]::MinValue) { (Get-Date).AddMinutes($checkMinutes) } else { $lastMonTime.AddMinutes($checkMinutes) }
@@ -385,8 +395,7 @@ while ($true) {
     if ($nextWake -eq $nextPlan) { $nextType = "Planning" } else { $nextType = "Check&Doing" }
     $sleepMin = [Math]::Round($sleepSeconds / 60, 1)
     $nextTimeStr = $nextWake.ToString("HH:mm:ss")
-    $loopMsg = "[LOOP] Naechster Wake-Up ({0}): {1} (in {2} min)" -f $nextType, $nextTimeStr, $sleepMin
-    Write-Host $loopMsg -ForegroundColor DarkGray
+    Write-VorceStatus -Phase "SLEEP" -Message "Naechster Wake-Up ($nextType): $nextTimeStr (in $sleepMin min)" -Color DarkGray
     Write-Host ""
 
     Save-AutopilotState -State $State

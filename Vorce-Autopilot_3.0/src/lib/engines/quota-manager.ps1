@@ -4,8 +4,9 @@
 Set-StrictMode -Version Latest
 
 function Get-QuotaRegistryPath {
-    # Fester absoluter Pfad fuer V2
-    return "C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\Vorce-Autopilot_2.0\\config\\quota-registry.json"
+    # Dynamische Ermittlung des Konfigurationspfads relativ zum Skript
+    $root = Resolve-Path (Join-Path $PSScriptRoot "../../..")
+    return Join-Path $root "config/quota-registry.json"
 }
 
 function Read-QuotaRegistry {

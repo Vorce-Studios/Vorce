@@ -2,6 +2,19 @@
 # Zentraler Orchestrator fuer hierarchische Ausfuehrungen (V2.0)
 # Unterstuetzt MAIN-RUN -> ROUTER -> SUB-RUN -> PART-RUN
 
+function Write-VorceStatus {
+    param(
+        [Parameter(Mandatory)][string]$Phase,
+        [Parameter(Mandatory)][string]$Message,
+        [ConsoleColor]$Color = [ConsoleColor]::Cyan,
+        [string]$SubPhase = ""
+    )
+    $timestamp = (Get-Date).ToString("HH:mm:ss")
+    $phaseStr = if ($SubPhase) { "$Phase/$SubPhase" } else { $Phase }
+    $prefix = "[$timestamp] [$($phaseStr.PadRight(20))] "
+    Write-Host "$prefix$Message" -ForegroundColor $Color
+}
+
 function Invoke-MainRun {
     param(
         [Parameter(Mandatory)][string]$MainRunName, # z.B. MAIN-RUN-01_Planning
@@ -18,11 +31,12 @@ function Invoke-MainRun {
         . (Join-Path $global:OrchestratorRoot "src/lib/state/run-state-manager.ps1")
     }
 
+    $shortName = $MainRunName -replace 'MAIN-RUN-\d+_', ''
     Write-Host ""
-Write-Host "==========================================================================" -ForegroundColor Magenta
-Write-Host " >>> STARTE MAIN-RUN: $MainRunName" -ForegroundColor Magenta
-Write-Host "==========================================================================" -ForegroundColor Magenta
-Write-Host ""
+    Write-Host "==========================================================================" -ForegroundColor Magenta
+    Write-Host " >>> STARTE MAIN-PHASE: $shortName ($MainRunName)" -ForegroundColor Magenta
+    Write-Host "==========================================================================" -ForegroundColor Magenta
+    Write-Host ""
 
     # 1. Initialisiere MAIN-RUN-STATE & Verzeichnis
     $mainRunPath = Initialize-RunDirectory -RunType "Main" -RunName $MainRunName
@@ -44,7 +58,7 @@ Write-Host ""
             -ForceAll:$ForceAllSubRuns
 
         if ($subRunDefinitions.Count -eq 0) {
-            Write-Host "[ORCHESTRATOR] Keine Sub-Runs fuer $MainRunName definiert. Ueberspringe." -ForegroundColor Yellow
+            Write-VorceStatus -Phase $shortName -Message "Keine Aufgaben fuer diese Phase gefunden. Ueberspringe." -Color Yellow
             $mainRunState.status = "skipped"
             $mainRunState.metadata["skip_reason"] = "Keine Sub-Runs vom Router zurueckgegeben"
             return [pscustomobject]@{
@@ -54,7 +68,7 @@ Write-Host ""
             }
         }
 
-        Write-Host "[ORCHESTRATOR] $($subRunDefinitions.Count) Sub-Run(s) geplant." -ForegroundColor DarkGray
+        Write-VorceStatus -Phase $shortName -Message "$($subRunDefinitions.Count) Sub-Aufgaben geplant." -Color DarkGray
 
         # 3. Iteriere ueber SUB-RUNS (Sequentielle Ausfuehrung fuer logische Abhaengigkeiten)
         $completedSubs = @()
@@ -66,7 +80,7 @@ Write-Host ""
             $subRunName = "SUB-RUN-${subRunId}_${mrShort}__$($subDef.name)"
             $subScript = $subDef.script
 
-            Write-Host "[ORCHESTRATOR]   -> Starte $subRunName" -ForegroundColor Yellow
+            Write-VorceStatus -Phase $shortName -SubPhase $subDef.name -Message "Starte Ausfuehrung..." -Color Yellow
 
             $subRunPath = Initialize-RunDirectory -RunType "Sub" -RunName $subRunName -ParentPath (Join-Path $mainRunPath "SUB-RUNS")
             $subRunState = New-RunState -RunType "Sub" -RunName $subRunName -RunPath $subRunPath
@@ -91,12 +105,8 @@ Write-Host ""
                         -DryRun:$DryRun
 
                     # Verwende den echten Status aus dem SubState, nicht 'running'
-                    # Nur wenn status immer noch 'running' ist, setze ihn auf 'completed'
                     if ($subRunState.status -eq "running") {
                         $subRunState.status = "completed"
-                    } elseif ($subRunState.status -eq "failed") {
-                        # Wenn der Sub-Run explizit als 'failed' markiert wurde, behalte diesen Status
-                        $subRunState.status = "failed"
                     }
                 } else {
                     Add-RunError -State $subRunState -Message "SUB-RUN Skript nicht gefunden: $subScript"
@@ -109,6 +119,9 @@ Write-Host ""
 
                 if ($subRunState.status -ne "completed") {
                     $failedCount++
+                    Write-VorceStatus -Phase $shortName -SubPhase $subDef.name -Message "FEHLGESCHLAGEN ($($subRunState.status))" -Color Red
+                } else {
+                    Write-VorceStatus -Phase $shortName -SubPhase $subDef.name -Message "ERFOLGREICH beendet." -Color Green
                 }
 
                 $mainRunState.metadata["sub_run_$($subDef.id)"] = @{
@@ -145,10 +158,10 @@ Write-Host ""
         $mainRunState.completed_at = (Get-Date).ToString('o')
         Save-RunState -State $mainRunState -RunPath $mainRunPath
         Write-Host ""
-Write-Host "==========================================================================" -ForegroundColor Magenta
-Write-Host " <<< MAIN-RUN BEENDET: $MainRunName ($($mainRunState.status))" -ForegroundColor Magenta
-Write-Host "==========================================================================" -ForegroundColor Magenta
-Write-Host ""
+        Write-Host "==========================================================================" -ForegroundColor Magenta
+        Write-Host " <<< MAIN-PHASE BEENDET: $shortName ($($mainRunState.status))" -ForegroundColor Magenta
+        Write-Host "==========================================================================" -ForegroundColor Magenta
+        Write-Host ""
     }
 }
 
@@ -227,13 +240,12 @@ function Invoke-PartRun {
         [switch]$DryRun
     )
 
-    Write-Host "[DELIB] Invoke-PartRun gestartet fuer $PartRunName (Agent: $AgentType)" -ForegroundColor DarkBlue
-    Write-Host "[ORCHESTRATOR]   >> PART-RUN: $PartRunName (Agent: $AgentType)" -ForegroundColor DarkCyan
+    $shortPhase = if ($SubState.PSObject.Properties.Name -contains "name") { $SubState.name -replace 'SUB-RUN-\d+_MR-\d+_', '' } else { "Task" }
+    Write-VorceStatus -Phase $shortPhase -SubPhase "Agent" -Message "Bereite PART-RUN vor: $PartRunName (Rolle: $AgentType)" -Color DarkCyan
 
     $partRunPath = Initialize-RunDirectory -RunType "Part" -RunName $PartRunName -ParentPath (Join-Path $SubState.metadata["run_path"] "PART-RUNS")
-    Write-Host "[DELIB] partRunPath=$partRunPath" -ForegroundColor DarkBlue
-
     $partRunState = New-RunState -RunType "Part" -RunName $PartRunName -RunPath $partRunPath
+
     $cacheDir = Join-Path $global:OrchestratorRoot "var/db/cache"
     if (-not (Test-Path $cacheDir)) { New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null }
 
@@ -248,7 +260,7 @@ function Invoke-PartRun {
             $cacheData = Get-Content -LiteralPath $cacheFile -Raw -Encoding UTF8 | ConvertFrom-Json
             $cacheAge = ((Get-Date) - [datetime]$cacheData.timestamp).TotalHours
             if ($cacheAge -lt 24) {
-                Write-Host "[ORCHESTRATOR]   >> PART-RUN: $PartRunName (CACHE HIT)" -ForegroundColor Green
+                Write-VorceStatus -Phase $shortPhase -SubPhase "Cache" -Message "Nutze Cache für $PartRunName" -Color Green
                 $partRunState.status = "completed"
                 $partRunState.metadata["output"] = $cacheData.output
                 $partRunState.metadata["provider"] = "cache"
@@ -260,34 +272,82 @@ function Invoke-PartRun {
     }
 
     try {
-        Write-Host "[DELIB] try block start - calling Initialize-RunDirectory" -ForegroundColor DarkMagenta
         $partRunState.status = "running"
         Save-RunState -State $partRunState -RunPath $partRunPath
 
         # Resolve Provider for Agent
-        $taskType = if ($AgentType -eq "CEO") { "planning" } else { "complex_review" }
-        Write-Host "[DELIB] before Resolve-CliProvider: TaskType=$taskType" -ForegroundColor DarkMagenta
-        $route = Resolve-CliProvider -QuotaRegistry $QuotaRegistry -TaskType $taskType
-        Write-Host "[DELIB] after Resolve-CliProvider: provider=$($route.provider)" -ForegroundColor DarkMagenta
+        $taskType = if ($AgentType -eq "CEO" -or $AgentType -eq "codex_orchestrator") { "planning" } else { "complex_review" }
 
-        $maxAttempts = if ($Config.PSObject.Properties.Name -contains "part_run_retry") { $Config.part_run_retry.max_attempts } else { 2 }
+        $maxAttemptsPerProvider = if ($Config.PSObject.Properties.Name -contains "part_run_retry") { $Config.part_run_retry.max_attempts } else { 2 }
         $delayBase = if ($Config.PSObject.Properties.Name -contains "part_run_retry") { $Config.part_run_retry.delay_seconds } else { 5 }
         $result = $null
+        $excludeProviders = @()
 
-        for ($i = 1; $i -le $maxAttempts; $i++) {
-            Write-Host "[DELIB] Invoke-CliTask Attempt $i/$maxAttempts..." -ForegroundColor Yellow
-            $result = Invoke-CliTask `
-                -QuotaRegistry $QuotaRegistry `
-                -TaskType $taskType `
-                -Prompt $Prompt `
-                -WorkingDirectory $Config.gemini_worktree_path `
-                -DryRun:$DryRun `
-                -ProviderOverride $route.provider `
-                -ModelTierOverride $route.model_tier
-            Write-Host "[DELIB] Invoke-CliTask Result: success=$($result.success), provider=$($result.provider)" -ForegroundColor Yellow
-            if ($result.success -or $i -eq $maxAttempts) { break }
-            Write-Warning "[ORCHESTRATOR] PART-RUN fehlgeschlagen. Versuch $i/$maxAttempts. Warte $($delayBase * $i) Sekunden..."
-            Start-Sleep -Seconds ($delayBase * $i)
+        # Check if AgentType is a specific provider name
+        $preferredProvider = $null
+        if ($QuotaRegistry.providers.PSObject.Properties.Name -contains $AgentType) {
+            $preferredProvider = $AgentType
+        }
+
+        # PROVIDER CYCLING LOOP
+        while ($true) {
+            $route = $null
+
+            if ($preferredProvider -and ($excludeProviders -notcontains $preferredProvider)) {
+                # Use the specifically requested provider if it's available
+                if (Test-ProviderAvailable -Registry $QuotaRegistry -ProviderName $preferredProvider) {
+                    $cmdName = $QuotaRegistry.providers.$preferredProvider.command
+                    $route = [ordered]@{
+                        provider   = $preferredProvider
+                        model_tier = "default" # Fallback to default for direct requests
+                        command    = $cmdName
+                    }
+                    Write-VorceStatus -Phase $shortPhase -SubPhase "Agent" -Message "Nutze explizit angeforderten Provider: $preferredProvider" -Color Cyan
+                } else {
+                    Write-VorceStatus -Phase $shortPhase -SubPhase "Agent" -Message "Angeforderter Provider $preferredProvider nicht verfuegbar. Wechsle auf Routing-Chain." -Color DarkYellow
+                    $preferredProvider = $null # Clear it so we don't try again
+                }
+            }
+
+            if ($null -eq $route) {
+                $route = Resolve-CliProvider -QuotaRegistry $QuotaRegistry -TaskType $taskType -ExcludeProviders $excludeProviders
+            }
+
+            if ($null -eq $route) {
+                Write-Error "[ORCHESTRATOR] Alle verfügbaren Provider fuer '$taskType' sind erschoepft oder fehlgeschlagen."
+                break
+            }
+
+            for ($i = 1; $i -le $maxAttemptsPerProvider; $i++) {
+                $attemptStr = if ($maxAttemptsPerProvider -gt 1) { " (Versuch $i/$maxAttemptsPerProvider)" } else { "" }
+                Write-VorceStatus -Phase $shortPhase -SubPhase "LLM" -Message "Rufe $($route.provider)$attemptStr auf..." -Color Cyan
+
+                $result = Invoke-CliTask `
+                    -QuotaRegistry $QuotaRegistry `
+                    -TaskType $taskType `
+                    -Prompt $Prompt `
+                    -WorkingDirectory $Config.gemini_worktree_path `
+                    -DryRun:$DryRun `
+                    -ProviderOverride $route.provider `
+                    -ModelTierOverride $route.model_tier
+
+                if ($result.success) {
+                    Write-VorceStatus -Phase $shortPhase -SubPhase "LLM" -Message "Antwort von $($result.provider) erhalten." -Color Green
+                    break
+                }
+
+                if ($i -lt $maxAttemptsPerProvider) {
+                    Write-VorceStatus -Phase $shortPhase -SubPhase "Retry" -Message "Fehler bei $($route.provider). Warte $($delayBase * $i)s..." -Color DarkYellow
+                    Start-Sleep -Seconds ($delayBase * $i)
+                }
+            }
+
+            if ($result.success) { break }
+
+            # If all attempts for this provider failed, exclude it and try next provider in chain
+            Write-VorceStatus -Phase $shortPhase -SubPhase "Cycle" -Message "Provider $($route.provider) erschoepft. Versuche Fallback..." -Color Red
+            $excludeProviders += $route.provider
+            if ($route.provider -eq $preferredProvider) { $preferredProvider = $null }
         }
 
         $partRunState.metadata["output"] = $result.output
@@ -311,7 +371,6 @@ function Invoke-PartRun {
 
         return $result
     } catch {
-        Write-Host "[DELIB] Exception in Invoke-PartRun: $_" -ForegroundColor Red
         Add-RunError -State $partRunState -Message "Fehler im PART-RUN ${PartRunName}: $_"
         return @{ success = $false; error = $_.Exception.Message }
     } finally {
@@ -319,3 +378,4 @@ function Invoke-PartRun {
         Save-RunState -State $partRunState -RunPath $partRunPath
     }
 }
+

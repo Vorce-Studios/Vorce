@@ -66,6 +66,18 @@ if (-not [string]::IsNullOrWhiteSpace($profilePath) -and (Test-Path -LiteralPath
 }
 
 # --- Resolve CLI command again after loading profile ---
+Write-Host ""
+Write-Host "======================================================" -ForegroundColor Cyan
+Write-Host "  VORCE AUTOPILOT - CEO DELIBERATION PHASE" -ForegroundColor Cyan
+Write-Host "======================================================" -ForegroundColor Cyan
+Write-Host "  Phase:    $PhaseName" -ForegroundColor White
+Write-Host "  Provider: $ProviderName" -ForegroundColor Cyan
+Write-Host "  Model:    $ModelName" -ForegroundColor Cyan
+Write-Host "  Dir:      $WorkingDirectory" -ForegroundColor Gray
+Write-Host "======================================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "[SYSTEM] Rufe CLI auf... bitte warten." -ForegroundColor DarkGray
+
 $cmdInfo = Get-Command $CliCommand -ErrorAction SilentlyContinue
 if (-not $cmdInfo) {
     $errMsg = "CLI-Befehl '$CliCommand' nicht gefunden nach Laden des Profile. Ist er installiert und im PATH?"

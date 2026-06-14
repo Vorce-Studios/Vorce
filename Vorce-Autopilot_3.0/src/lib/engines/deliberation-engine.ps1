@@ -611,7 +611,7 @@ function Invoke-Deliberation {
     Write-Host "" -ForegroundColor White
     Write-Host "[DELIB] --- Phase 3: Synthesis (CEO: $($ceos.ceo.provider)) ---" -ForegroundColor Yellow
 
-    $synthesisPrompt = Format-DeliberationPrompt -Phase "synthesis" -OriginalPrompt $Prompt -CeoProposal $CeoProposal -qa_managerCritique $QaCritique -MemoryBlock $MemoryBlock
+    $synthesisPrompt = Format-DeliberationPrompt -Phase "synthesis" -OriginalPrompt $Prompt -CeoProposal $CeoProposal -QaCritique $QaCritique -MemoryBlock $MemoryBlock
     $synthesisStart = Get-Date
 
     $synthesisResult = Invoke-VisibleCeoPhase `

@@ -17,7 +17,7 @@ function Invoke-MainRun {
     if (-not (Get-Command Get-RunState -ErrorAction SilentlyContinue)) {
         . (Join-Path $global:OrchestratorRoot "src/lib/state/run-state-manager.ps1")
     }
-    
+
     Write-Host ""
     Write-Host "==========================================================================" -ForegroundColor Magenta
     Write-Host " >>> STARTE MAIN-RUN: $MainRunName" -ForegroundColor Magenta
