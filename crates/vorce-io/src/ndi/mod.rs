@@ -46,6 +46,15 @@ impl From<grafton_ndi::Source> for NdiSource {
     }
 }
 
+/// Result of an NDI availability probe
+#[derive(Debug, Clone, PartialEq)]
+pub struct NdiProbeResult {
+    /// Whether the NDI runtime is available
+    pub is_available: bool,
+    /// Details about the setup or missing components
+    pub details: String,
+}
+
 /// NDI library handle - ensures NDI is initialized
 #[cfg(feature = "ndi")]
 pub struct NdiHandle {
@@ -62,6 +71,35 @@ impl NdiHandle {
         })?;
         info!("NDI library initialized successfully");
         Ok(Self { ndi: Arc::new(ndi) })
+    }
+
+    /// Probes if the NDI runtime is available and can be loaded
+    pub fn probe() -> NdiProbeResult {
+        match NDI::new() {
+            Ok(_) => NdiProbeResult {
+                is_available: true,
+                details: "NDI runtime successfully loaded".to_string(),
+            },
+            Err(e) => NdiProbeResult {
+                is_available: false,
+                details: format!("NDI runtime not found or failed to load: {}", e),
+            },
+        }
+    }
+}
+
+#[cfg(not(feature = "ndi"))]
+/// NDI library handle - stub when NDI feature is not enabled
+pub struct NdiHandle;
+
+#[cfg(not(feature = "ndi"))]
+impl NdiHandle {
+    /// Probes if the NDI runtime is available and can be loaded
+    pub fn probe() -> NdiProbeResult {
+        NdiProbeResult {
+            is_available: false,
+            details: "NDI feature is not enabled in this build".to_string(),
+        }
     }
 }
 
@@ -398,4 +436,18 @@ pub struct NdiSource {
     pub name: String,
     /// Optional address of the NDI source.
     pub address: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[cfg(not(feature = "ndi"))]
+    fn test_ndi_probe_not_available_when_disabled() {
+        let probe = NdiHandle::probe();
+        assert_eq!(probe.is_available, false);
+        // Either it's not enabled, or it's enabled but no runtime
+        assert!(probe.details.contains("NDI feature is not enabled") || probe.details.contains("NDI runtime not found") || probe.details.contains("NDI runtime successfully loaded"));
+    }
 }
