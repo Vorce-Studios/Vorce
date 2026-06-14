@@ -1,98 +1,15 @@
-use super::controller;
-use super::diagnostics;
-use super::draw;
-use super::state::ModuleCanvas;
-use super::types::*;
-use super::utils;
-use super::ModuleCanvasRenderOptions;
+use super::super::diagnostics;
+use super::super::draw;
+use super::super::state::ModuleCanvas;
+use super::super::types::*;
+use super::super::utils;
+use super::super::ModuleCanvasRenderOptions;
 use crate::i18n::LocaleManager;
 use crate::UIAction;
 use egui::{Pos2, Rect, Sense, Stroke, Ui, Vec2};
-use vorce_core::module::{ModuleId, ModuleManager, TriggerType};
+use vorce_core::module::{ModuleId, ModuleManager};
 
-pub fn show(
-    canvas: &mut ModuleCanvas,
-    ui: &mut Ui,
-    manager: &mut ModuleManager,
-    locale: &LocaleManager,
-    actions: &mut Vec<UIAction>,
-    options: ModuleCanvasRenderOptions,
-) {
-    if !canvas.selected_parts.is_empty()
-        && !ui.memory(|m| m.focused().is_some())
-        && ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Space))
-    {
-        if let Some(module_id) = canvas.active_module_id {
-            if let Some(module) = manager.get_module_mut(module_id) {
-                for part_id in &canvas.selected_parts {
-                    if let Some(part) = module.parts.iter().find(|p| p.id == *part_id) {
-                        if let vorce_core::module::ModulePartType::Source(
-                            vorce_core::module::SourceType::MediaFile { .. }
-                            | vorce_core::module::SourceType::VideoUni { .. },
-                        ) = &part.part_type
-                        {
-                            let is_playing = canvas
-                                .player_info
-                                .get(part_id)
-                                .map(|info| info.is_playing)
-                                .unwrap_or(false);
-
-                            let command = if is_playing {
-                                MediaPlaybackCommand::Pause
-                            } else {
-                                MediaPlaybackCommand::Play
-                            };
-                            canvas.pending_playback_commands.push((*part_id, command));
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if let Some((part_id, channel, cc_or_note, is_note)) = canvas.learned_midi.take() {
-        let mut applied = false;
-        if let Some(module_id) = canvas.active_module_id {
-            if let Some(module) = manager.get_module_mut(module_id) {
-                if let Some(part) = module.parts.iter_mut().find(|p| p.id == part_id) {
-                    if let vorce_core::module::ModulePartType::Trigger(TriggerType::Midi {
-                        channel: ref mut ch,
-                        note: ref mut n,
-                        ..
-                    }) = part.part_type
-                    {
-                        *ch = channel;
-                        *n = cc_or_note;
-                        applied = true;
-                        tracing::info!(
-                            "Applied MIDI Learn: Channel={}, {}={}",
-                            channel,
-                            if is_note { "Note" } else { "CC" },
-                            cc_or_note
-                        );
-                    }
-                }
-            }
-        }
-        if applied {
-            manager.mark_dirty();
-        }
-    }
-
-    if let Some(module_id) = canvas.active_module_id {
-        render_canvas(canvas, ui, manager, module_id, locale, actions, options);
-    } else {
-        ui.centered_and_justified(|ui| {
-            ui.vertical_centered(|ui| {
-                ui.add_space(50.0);
-                ui.heading("\u{1F527} Module Canvas");
-                ui.add_space(10.0);
-                ui.label("Click '\u{2795} New Module' to create a module.");
-                ui.label("Please select an existing module from the toolbar above.");
-            });
-        });
-    }
-}
+use super::interaction;
 
 pub fn render_canvas(
     canvas: &mut ModuleCanvas,
@@ -128,65 +45,14 @@ pub fn render_canvas(
             canvas.pan_offset += response.drag_delta();
         }
 
-        let ctrl_held = ui.input(|i| i.modifiers.ctrl);
-
-        if response.secondary_clicked()
-            && canvas.dragging_part.is_none()
-            && canvas.creating_connection.is_none()
-        {
-            if let Some(pointer_pos) = response.interact_pointer_pos() {
-                canvas.context_menu_pos = Some(pointer_pos);
-                canvas.context_menu_part = None;
-                canvas.context_menu_connection = None;
-            }
-        }
-
-        if ctrl_held && ui.input(|i| i.key_pressed(egui::Key::A)) {
-            canvas.selected_parts = module.parts.iter().map(|p| p.id).collect();
-        }
-
-        if !ui.memory(|m| m.focused().is_some())
-            && (ui.input(|i| i.key_pressed(egui::Key::Delete))
-                || ui.input(|i| i.key_pressed(egui::Key::Backspace)))
-            && !canvas.selected_parts.is_empty()
-        {
-            controller::safe_delete_selection(canvas, module);
-            module_changed = true;
-            needs_repair = true;
-        }
-
-        if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
-            if canvas.show_search {
-                canvas.show_search = false;
-            } else {
-                canvas.selected_parts.clear();
-            }
-        }
-
-        if ctrl_held && ui.input(|i| i.key_pressed(egui::Key::F)) {
-            canvas.show_search = !canvas.show_search;
-            if canvas.show_search {
-                canvas.search_filter.clear();
-            }
-        }
-
-        if ctrl_held && ui.input(|i| i.key_pressed(egui::Key::Z)) && !canvas.undo_stack.is_empty() {
-            if let Some(action) = canvas.undo_stack.pop() {
-                controller::apply_undo_action(module, &action);
-                canvas.redo_stack.push(action);
-                module_changed = true;
-                needs_repair = true;
-            }
-        }
-
-        if ctrl_held && ui.input(|i| i.key_pressed(egui::Key::Y)) && !canvas.redo_stack.is_empty() {
-            if let Some(action) = canvas.redo_stack.pop() {
-                controller::apply_redo_action(module, &action);
-                canvas.undo_stack.push(action);
-                module_changed = true;
-                needs_repair = true;
-            }
-        }
+        interaction::handle_keyboard_shortcuts(
+            canvas,
+            ui,
+            module,
+            &mut module_changed,
+            &mut needs_repair,
+            &response,
+        );
 
         draw::draw_grid(canvas, ui, &painter, canvas_rect);
 
@@ -214,7 +80,7 @@ pub fn render_canvas(
             }
         };
 
-        if let Some(idx) = super::draw::draw_connections(
+        if let Some(idx) = super::super::draw::draw_connections(
             canvas,
             ui,
             &painter,
