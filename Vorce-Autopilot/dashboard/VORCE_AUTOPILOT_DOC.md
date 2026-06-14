@@ -49,6 +49,7 @@ Vorce Autopilot/
 **Key-Komponenten**:
 
 #### DashboardPage (Main Component)
+
 - **Props**: `registry`, `sessions`, `pullRequests`, `issues`, `julesSessions`, `auditResult`, `liveLog`
 - **Status-Banner**: Systemstatus, Session-ID, Heartbeat
 - **Audit-Alert-Box**: Anzeige letztgefundener Probleme
@@ -62,19 +63,23 @@ Vorce Autopilot/
 - **Optimizer Panel**: Optimierungsvorschläge
 
 #### RunCard
+
 - Tägliche Planning/Monitoring Runs
 - Cancel/Note-Funktionen
 - Status-Anzeige (cancelled, next run)
 
 #### LiveLogPanel
+
 - Live-Log-Zeilen mit Level (error/warn/ok/info)
 - Farbige Hervorhebung bei Problemen
 
 #### WorkingSessionsPanel
+
 - Jules Session Status
 - QUEUE/RUNNING/COMPLETED/FAILED Status
 
 #### OptimizerQueuePanel
+
 - Vorschläge, Approved, Last Run
 - Approve/Reject/Run-Now-Buttons
 
@@ -85,6 +90,7 @@ Vorce Autopilot/
 **Zweck**: Dual-CEO Deliberation View - Chat-Log von CEO & QA Manager.
 
 **Key-Komponenten**:
+
 - Consensus-Indikator (grüne/halbe Checkmarks)
 - Expandable Chat-History
 - Round-basierte Darstellung (Proposal/Critique/Synthesis)
@@ -97,6 +103,7 @@ Vorce Autopilot/
 **Zweck**: Volle Systemkonfiguration über UI.
 
 **Einstellungs-Kategorien**:
+
 1. **Autopilot Core**: Repository, Wake-Intervalle, Gemini Path, Max-Issues
 2. **Jules Orchestrierung**: Max-Daily/Concurrent-Sessions, Auto-Retries, Plan-Auto-Approve
 3. **Working Sessions**: Enabled, Max-Concurrent, Preferred-Agents
@@ -114,6 +121,7 @@ Vorce Autopilot/
 **Zweck**: Haupt-App mit Navigation und Data-Fetching.
 
 **Features**:
+
 - 4 Tabs: Dashboard, Workstreams, Reporting, Settings
 - Auto-Refresh every 30 seconds
 - Data hooks für alle JSON-Endpunkte
@@ -125,6 +133,7 @@ Vorce Autopilot/
 ## Datenstruktur
 
 ### QuotaRegistry
+
 ```typescript
 {
   schema_version: number,
@@ -153,6 +162,7 @@ Vorce Autopilot/
 ```
 
 ### ActiveSessions
+
 ```typescript
 {
   schema_version: number,
@@ -173,6 +183,7 @@ Vorce Autopilot/
 ```
 
 ### AutopilotConfig
+
 ```typescript
 {
   repository: string,
@@ -218,9 +229,10 @@ Vorce Autopilot/
 
 ## JSX-Syntax-Regeln (für Vorce-Autopilot)
 
-### Gültige Strukturen:
+### Gültige Strukturen
 
-#### Map-Closing (Audit Alerts):
+#### Map-Closing (Audit Alerts)
+
 ```tsx
 {sessions.decisions_pending && sessions.decisions_pending.length > 0 && (
   <div>
@@ -231,7 +243,8 @@ Vorce Autopilot/
 )}
 ```
 
-#### RunCard (außerhalb des Conditional):
+#### RunCard (außerhalb des Conditional)
+
 ```tsx
 {sessions.decisions_pending && sessions.decisions_pending.length > 0 && (
   <AuditAlertsBlock />
@@ -239,7 +252,8 @@ Vorce Autopilot/
 <RunCard />
 ```
 
-#### Comments in JSX:
+#### Comments in JSX
+
 ```tsx
 {/* Comment */}
 )}
@@ -255,19 +269,22 @@ Vorce Autopilot/
 
 ## Dev-Server-Konfiguration
 
-### Starten:
+### Starten
+
 ```bash
 cd dashboard
 npx vite --port 5234
 ```
 
-### Cache-Löschen:
+### Cache-Löschen
+
 ```bash
 rm -rf node_modules/.vite
 rm -rf .vite
 ```
 
-### Port-Verwaltung:
+### Port-Verwaltung
+
 - Dev Server läuft auf Port 5234
 - Bei Restart Port erhöhen (5235, 5236, etc.)
 - Cache immer nach Dateiänderungen löschen
@@ -276,18 +293,21 @@ rm -rf .vite
 
 ## Debugging-Patterns
 
-### JSX Parse-Fehler:
+### JSX Parse-Fehler
+
 1. Map-Closing prüfen: `);` + `})` + `)`
 2. Comments positionieren: `{/* ... */}` auf eigener Zeile *vor* `)`
 3. RunCard außerhalb von `&& (` Block platzieren
 4. Cache löschen nach Änderungen
 
-### Oxc-Linting:
+### Oxc-Linting
+
 ```bash
 npx oxc lint src/pages/DashboardPage.tsx
 ```
 
-### TypeScript-Check:
+### TypeScript-Check
+
 ```bash
 npx tsc --noEmit
 ```
@@ -297,16 +317,19 @@ npx tsc --noEmit
 ## Known Issues
 
 ### 1. JSX Parse-Fehler (REPARIERT)
+
 - **Problem**: Map-Closing `) })}` falsch platziert
 - **Lösung**: `{` + `)` + `})` + `)` korrekt verschachteln
 - **Status**: ✅ Repariert
 
 ### 2. Oxc/Vite Caching
+
 - **Problem**: File fixes nicht persistent durch Caching
 - **Lösung**: Cache nach jedem Edit löschen + Port erhöhen
 - **Status**: ✅ Verstanden
 
 ### 3. Repo-Defekt
+
 - **Problem**: Git-Repo enthält corrupte JSX
 - **Lösung**: write_file() verwenden statt git checkout
 - **Status**: ✅ Workaround implementiert
@@ -315,17 +338,20 @@ npx tsc --noEmit
 
 ## Optimierungsmöglichkeiten
 
-### Performance:
+### Performance
+
 1. **Memoization**: Teure Berechnungen mit `useMemo` cachen
 2. **React.Fragment**: Überflüssige divs vermeiden
 3. **Lazy Loading**: Components mit `lazy()` laden
 
-### Code-Qualität:
+### Code-Qualität
+
 1. **Type Safety**: `any` durch spezifische Types ersetzen
 2. **Error Boundaries**: Fallback-UI für React-Fehler
 3. **Suspense**: Loading States zentralisieren
 
-### UX:
+### UX
+
 1. **Toast Notifications**: Erfolgs/Fehler-Meldungen
 2. **Progress Indicators**: Loading für längere操作
 3. **Keyboard Navigation**: Shortcut support
@@ -354,7 +380,8 @@ npx tsc --noEmit
 
 ## Wichtige Funktionen
 
-### Helper Functions:
+### Helper Functions
+
 - `formatCost(usd: number)` - Formatierung als `$X.XX`
 - `timeAgo(dateStr: string)` - "vor Xm/h/d"
 - `normalizeAuditText(value: string)` - Label-Normalisierung
@@ -372,18 +399,21 @@ npx tsc --noEmit
 
 ## Konfigurationswerte
 
-### Wake Intervals:
+### Wake Intervals
+
 - **Planning**: 120 Minuten (2 Stunden)
 - **Monitoring**: 15 Minuten
 - **Optimizer**: 12 Stunden nach letztem Run
 
-### Jules Limits:
+### Jules Limits
+
 - **Max Daily Sessions**: 100
 - **Max Concurrent Sessions**: 15
 - **Max Auto-Retries**: 3
 - **Auto-Approve Plans**: true
 
-### Dual CEO:
+### Dual CEO
+
 - **Max Rounds**: 3
 - **Tasks**: planning, complex_review
 - **Fallback**: enabled
@@ -393,18 +423,21 @@ npx tsc --noEmit
 
 ## Build & Deployment
 
-### Development:
+### Development
+
 ```bash
 cd dashboard
 npm run dev -- --port 5234
 ```
 
-### Build:
+### Build
+
 ```bash
 npm run build
 ```
 
-### Preview:
+### Preview
+
 ```bash
 npm run preview
 ```
@@ -413,19 +446,22 @@ npm run preview
 
 ## Support & Wartung
 
-### Reparatur-Command (bei Repo-Defekt):
+### Reparatur-Command (bei Repo-Defekt)
+
 ```bash
 # Datei komplett neu schreiben (nicht git checkout!)
 # Python execute_code verwenden für echte \n Newlines
 ```
 
-### Cache-Lösch-Pattern:
+### Cache-Lösch-Pattern
+
 ```bash
 # Nach jeder Dateiänderung:
 rm -rf node_modules/.vite && rm -rf .vite
 ```
 
-### Dev Server:
+### Dev Server
+
 - Port 5234 (aktuell)
 - Dev-Start stabil >200s
 - No parse errors after >5 Minuten
@@ -434,7 +470,8 @@ rm -rf node_modules/.vite && rm -rf .vite
 
 ## Changelog
 
-### 2026-06-07:
+### 2026-06-07
+
 - ✅ JSX Syntax korrigiert (Map-Closing)
 - ✅ RunCard außerhalb Audit Block
 - ✅ Comments vor `)` platziert
