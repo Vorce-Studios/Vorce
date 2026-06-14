@@ -124,7 +124,7 @@ if (Test-Path -LiteralPath $sessionCachePath) {
 
 # --- 3. Start Queued Working Sessions ---
 $toolsDir = Join-Path $ScriptDir "tools"
-$quotaRegistryPath = Join-Path $VarDbDir "quota-registry.json"
+$quotaRegistryPath = Join-Path $ScriptDir "config/quota-registry.json"
 
 $workingCfg = if (Test-ObjectProperty -Object $Config -Name "working_sessions") { $Config.working_sessions } else { $null }
 $wsEnabled = $true

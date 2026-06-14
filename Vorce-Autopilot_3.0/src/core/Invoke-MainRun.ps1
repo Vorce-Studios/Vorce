@@ -2,19 +2,6 @@
 # Zentraler Orchestrator fuer hierarchische Ausfuehrungen (V2.0)
 # Unterstuetzt MAIN-RUN -> ROUTER -> SUB-RUN -> PART-RUN
 
-function Write-VorceStatus {
-    param(
-        [Parameter(Mandatory)][string]$Phase,
-        [Parameter(Mandatory)][string]$Message,
-        [ConsoleColor]$Color = [ConsoleColor]::Cyan,
-        [string]$SubPhase = ""
-    )
-    $timestamp = (Get-Date).ToString("HH:mm:ss")
-    $phaseStr = if ($SubPhase) { "$Phase/$SubPhase" } else { $Phase }
-    $prefix = "[$timestamp] [$($phaseStr.PadRight(20))] "
-    Write-Host "$prefix$Message" -ForegroundColor $Color
-}
-
 function Invoke-MainRun {
     param(
         [Parameter(Mandatory)][string]$MainRunName, # z.B. MAIN-RUN-01_Planning
@@ -32,11 +19,7 @@ function Invoke-MainRun {
     }
 
     $shortName = $MainRunName -replace 'MAIN-RUN-\d+_', ''
-    Write-Host ""
-    Write-Host "==========================================================================" -ForegroundColor Magenta
-    Write-Host " >>> STARTE MAIN-PHASE: $shortName ($MainRunName)" -ForegroundColor Magenta
-    Write-Host "==========================================================================" -ForegroundColor Magenta
-    Write-Host ""
+    Write-VorceBanner -Title "STARTE MAIN-PHASE: $shortName ($MainRunName)" -Color Magenta
 
     # 1. Initialisiere MAIN-RUN-STATE & Verzeichnis
     $mainRunPath = Initialize-RunDirectory -RunType "Main" -RunName $MainRunName
@@ -157,11 +140,7 @@ function Invoke-MainRun {
     } finally {
         $mainRunState.completed_at = (Get-Date).ToString('o')
         Save-RunState -State $mainRunState -RunPath $mainRunPath
-        Write-Host ""
-        Write-Host "==========================================================================" -ForegroundColor Magenta
-        Write-Host " <<< MAIN-PHASE BEENDET: $shortName ($($mainRunState.status))" -ForegroundColor Magenta
-        Write-Host "==========================================================================" -ForegroundColor Magenta
-        Write-Host ""
+        Write-VorceBanner -Title "MAIN-PHASE BEENDET: $shortName ($($mainRunState.status))" -Color Magenta
     }
 }
 

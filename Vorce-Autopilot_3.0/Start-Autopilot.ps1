@@ -47,6 +47,11 @@ function Write-StartLog {
             }
             Add-Content -Path $StartLogPath -Value $line -Encoding UTF8 -ErrorAction SilentlyContinue
         }
+        
+        # Also append to autopilot-live.log for unified visibility
+        $liveLogPath = Join-Path $LogDir "autopilot-live.log"
+        $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+        Add-Content -Path $liveLogPath -Value "[$timestamp] [STARTUP] $Message" -Encoding UTF8 -ErrorAction SilentlyContinue
     } catch {
         # Fallback to Write-Host if logging fails (prevents trap recursion)
         Write-Host "[LOG-FAIL] $Message" -ForegroundColor Gray
@@ -60,7 +65,11 @@ function Write-InitStatus {
         [ValidateSet("INFO", "WARN", "ERROR")][string]$Level = "INFO"
     )
 
-    Write-Host $Message -ForegroundColor $Color
+    if (Get-Command Write-VorceStatus -ErrorAction SilentlyContinue) {
+        Write-VorceStatus -Phase "INIT" -Message $Message -Color $Color
+    } else {
+        Write-Host $Message -ForegroundColor $Color
+    }
     Write-StartLog -Message $Message -Level $Level
 }
 
@@ -281,7 +290,12 @@ function Wait-AutopilotControlConsole {
     $watcher.IncludeSubdirectories = $false
     $watcher.EnableRaisingEvents = $true
 
+    $lastUpdate = [datetime]::MinValue
     $action = {
+        $now = Get-Date
+        if (($now - $script:lastUpdate).TotalSeconds -lt 2) { return }
+        $script:lastUpdate = $now
+
         $summary = Get-AutopilotControlStateSummary
         Write-Host "`n$summary" -ForegroundColor DarkGray
 
@@ -312,7 +326,38 @@ autopilot_working_sessions $(@($state.working_sessions).Count)
     $eventJob = Register-ObjectEvent $watcher "Changed" -Action $action
 
     try {
+        $lastHealthCheck = [datetime]::MinValue
         while ($true) {
+            $now = Get-Date
+            # --- Health Check & Self-Healing (Every 30s) ---
+            if (($now - $lastHealthCheck).TotalSeconds -ge 30) {
+                $lastHealthCheck = $now
+                $pids = Import-Pids
+                if ($null -ne $pids) {
+                    # Check Dashboard
+                    if ($pids.dashboard -gt 0 -and $null -eq (Get-Process -Id $pids.dashboard -ErrorAction SilentlyContinue)) {
+                        Write-InitStatus "[HEAL] Dashboard-Prozess (PID $($pids.dashboard)) wurde beendet. Starte neu..." -Color Yellow
+                        $dashboardProcess = Start-Process $PowerShellHost -ArgumentList @("-NoProfile", "-Command", "Set-Location -LiteralPath '$DashboardDir'; npm run dev -- --host 0.0.0.0") -WindowStyle Hidden -PassThru
+                        $pids.dashboard = $dashboardProcess.Id
+                        Save-Pids -PidsObj $pids
+                    }
+                    # Check Sync Service
+                    if ($pids.sync -gt 0 -and $null -eq (Get-Process -Id $pids.sync -ErrorAction SilentlyContinue)) {
+                        Write-InitStatus "[HEAL] Sync-Service (PID $($pids.sync)) wurde beendet. Starte neu..." -Color Yellow
+                        $syncProcess = Start-Process $PowerShellHost -ArgumentList @("-NoProfile", "-File", (Join-Path $ScriptDir "tools/services/run-sync-service.ps1")) -WindowStyle Hidden -PassThru
+                        $pids.sync = $syncProcess.Id
+                        Save-Pids -PidsObj $pids
+                    }
+                    # Check Backend
+                    if ($pids.backend -gt 0 -and $null -eq (Get-Process -Id $pids.backend -ErrorAction SilentlyContinue)) {
+                        Write-InitStatus "[HEAL] Autopilot-Backend (PID $($pids.backend)) wurde beendet. Starte neu..." -Color Yellow
+                        $autopilotProcess = Start-Process $PowerShellHost -ArgumentList $AutopilotArgs -WindowStyle Normal -PassThru
+                        $pids.backend = $autopilotProcess.Id
+                        Save-Pids -PidsObj $pids
+                    }
+                }
+            }
+
             $keyAvailable = $false
             try { $keyAvailable = [Console]::KeyAvailable } catch {}
             if (-not $keyAvailable) {
@@ -446,6 +491,9 @@ foreach ($dir in @($VarDir, $VarDbDir, $VarRunDir, $LogDir)) {
 }
 
 # Lade Kernfunktionen (aus src/core, da wir es nach core verschoben haben)
+$utilsDir = Join-Path $ScriptDir "src/lib/utils"
+if (Test-Path (Join-Path $utilsDir "logging-utils.ps1")) { . (Join-Path $utilsDir "logging-utils.ps1") }
+
 $promptsScript = Join-Path $ScriptDir "src/core/autopilot-prompts.ps1"
 if (Test-Path $promptsScript) {
     # Preventive Unblock-File to help with Execution Policy on Windows

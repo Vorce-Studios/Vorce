@@ -260,7 +260,8 @@ function Update-DelegationState {
     param(
         [Parameter(Mandatory)][object]$State,
         [Parameter(Mandatory)][int]$IssueNumber,
-        [Parameter(Mandatory)][string]$JulesState
+        [Parameter(Mandatory)][string]$JulesState,
+        [string]$PrUrl
     )
 
     if (-not ($State.PSObject.Properties.Name -contains "active_delegations")) { return }
@@ -268,6 +269,113 @@ function Update-DelegationState {
     $delegation = $State.active_delegations | Where-Object { [int]$_.issue_number -eq $IssueNumber } | Select-Object -First 1
     if ($delegation) {
         $delegation | Add-Member -MemberType NoteProperty -Name "jules_state" -Value $JulesState -Force
+        if (-not [string]::IsNullOrWhiteSpace($PrUrl)) {
+            $delegation | Add-Member -MemberType NoteProperty -Name "pr_url" -Value $PrUrl -Force
+        }
+        Save-AutopilotState -State $State
+    }
+}
+
+function Complete-Delegation {
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][int]$IssueNumber,
+        [Parameter(Mandatory)][string]$Result
+    )
+
+    if (-not ($State.PSObject.Properties.Name -contains "active_delegations")) { return }
+    if (-not ($State.PSObject.Properties.Name -contains "completed_this_session")) {
+        $State | Add-Member -MemberType NoteProperty -Name "completed_this_session" -Value @() -Force
+    }
+
+    $completed = $State.active_delegations | Where-Object { [int]$_.issue_number -eq $IssueNumber } | Select-Object -First 1
+    $State.active_delegations = @($State.active_delegations | Where-Object { [int]$_.issue_number -ne $IssueNumber })
+
+    if ($completed) {
+        $State.completed_this_session += @([ordered]@{
+            issue_number = $IssueNumber
+            issue_title  = $completed.issue_title
+            result       = $Result
+            completed_at = (Get-Date -Format 'o')
+            agent_type   = $completed.agent_type
+            pr_url       = if ($completed.PSObject.Properties.Name -contains "pr_url") { $completed.pr_url } else { "" }
+        })
+    }
+
+    Save-AutopilotState -State $State
+}
+
+function Add-ReviewItem {
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][int]$IssueNumber,
+        [string]$PrUrl,
+        [int]$PrNumber,
+        [string]$PrUpdatedAt
+    )
+
+    if (-not ($State.PSObject.Properties.Name -contains "review_queue")) {
+        $State | Add-Member -MemberType NoteProperty -Name "review_queue" -Value @() -Force
+    }
+
+    $existing = $State.review_queue | Where-Object { [int]$_.pr_number -eq $PrNumber } | Select-Object -First 1
+    if ($existing) {
+        if (-not [string]::IsNullOrWhiteSpace($PrUrl)) { $existing.pr_url = $PrUrl }
+        if ($IssueNumber -gt 0) { $existing.issue_number = $IssueNumber }
+        if (-not [string]::IsNullOrWhiteSpace($PrUpdatedAt)) {
+            $existing | Add-Member -MemberType NoteProperty -Name "pr_updated_at" -Value $PrUpdatedAt -Force
+        }
+    } else {
+        $State.review_queue += @([ordered]@{
+            issue_number  = $IssueNumber
+            pr_url        = $PrUrl
+            pr_number     = $PrNumber
+            pr_updated_at = $PrUpdatedAt
+            review_status = "pending"
+            queued_at     = (Get-Date -Format 'o')
+        })
+    }
+
+    Save-AutopilotState -State $State
+}
+
+function Set-DelegationEscalation {
+    param(
+        [Parameter(Mandatory)][object]$State,
+        [Parameter(Mandatory)][int]$IssueNumber,
+        [Parameter(Mandatory)][string]$Reason,
+        [string]$FailureDetails,
+        [string]$NextRetryAt
+    )
+
+    if (-not ($State.PSObject.Properties.Name -contains "active_delegations")) { return }
+    if (-not ($State.PSObject.Properties.Name -contains "decisions_pending")) {
+        $State | Add-Member -MemberType NoteProperty -Name "decisions_pending" -Value @() -Force
+    }
+
+    $delegation = $State.active_delegations | Where-Object { [int]$_.issue_number -eq $IssueNumber } | Select-Object -First 1
+    if ($delegation) {
+        $delegation | Add-Member -MemberType NoteProperty -Name "escalated" -Value $true -Force
+        $delegation | Add-Member -MemberType NoteProperty -Name "escalation_reason" -Value $Reason -Force
+        $delegation | Add-Member -MemberType NoteProperty -Name "failure_details" -Value $FailureDetails -Force
+        
+        $decisionTopic = "Escalation #$IssueNumber: $Reason"
+        $decisionContext = "Die automatische Bearbeitung von Issue #$IssueNumber ist fehlgeschlagen.`nDetails: $FailureDetails"
+        
+        # Check if already pending
+        $exists = $State.decisions_pending | Where-Object { $_.topic -eq $decisionTopic -and $_.status -eq 'pending' }
+        if (-not $exists) {
+            $State.decisions_pending += @([ordered]@{
+                id         = "escalation-$IssueNumber-$(Get-Date -Format 'yyyyMMddHHmmss')"
+                topic      = $decisionTopic
+                context    = $decisionContext
+                issue_number = $IssueNumber
+                reason     = $Reason
+                created_at = (Get-Date -Format 'o')
+                status     = 'pending'
+            })
+        }
+        
         Save-AutopilotState -State $State
     }
 }
@@ -275,6 +383,33 @@ function Update-DelegationState {
 # Export-ModuleMember ist nur fuer .psm1 Module relevant.
 # Bei dot-sourcing (. file.ps1) sind alle Funktionen automatisch sichtbar.
 # Export-ModuleMember -Function Read-AutopilotState, Save-AutopilotState, Initialize-AutopilotState, Add-DeliberationLog, Update-AutopilotStateObject, Confirm-WorkingSessionsState, Add-ErrorLog, Add-Delegation, Update-DelegationState
+
+function Remove-OrphanedTmpFiles {
+    <#
+    .SYNOPSIS
+    Removes orphaned .tmp files matching the pattern: *.tmp
+    Only removes files older than the specified threshold (default 5 minutes).
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Directory,
+        [string]$FilePattern = "*.tmp",
+        [int]$OlderThanMinutes = 5
+    )
+
+    if (-not (Test-Path $Directory)) { return }
+
+    $cutoff = (Get-Date).AddMinutes(-$OlderThanMinutes)
+    $orphans = Get-ChildItem -Path $Directory -Filter $FilePattern -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.LastWriteTime -lt $cutoff }
+
+    if ($null -ne $orphans) {
+        foreach ($file in $orphans) {
+            try {
+                Remove-Item -LiteralPath $file.FullName -Force -ErrorAction SilentlyContinue
+            } catch { }
+        }
+    }
+}
 
 function Test-ObjectProperty {
     param(

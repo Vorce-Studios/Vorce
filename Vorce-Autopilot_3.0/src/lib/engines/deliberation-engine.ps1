@@ -410,11 +410,8 @@ function Invoke-Deliberation {
     )
 
     $deliberationId = "delib-$(Get-Date -Format 'yyyy-MM-dd-HHmmss')"
-
-    Write-Host "" -ForegroundColor White
-    Write-Host "[DELIB] ====== Dual-CEO Deliberation: $deliberationId ======" -ForegroundColor Magenta
-    Write-Host "[DELIB] Task-Typ: $TaskType" -ForegroundColor Magenta
-    Write-Host "[DELIB] Jede Phase oeffnet ein sichtbares Terminal-Fenster." -ForegroundColor Magenta
+    Write-VorceBanner -Title "DUAL-CEO DELIBERATION: $deliberationId" -Color Magenta
+    Write-VorceStatus -Phase "DELIB" -Message "Task-Typ: $TaskType" -Color Magenta
 
     # --- Resolve both CEOs ---
     $ceos = Resolve-DualCeos -QuotaRegistry $QuotaRegistry -Config $Config
@@ -650,10 +647,11 @@ function Invoke-Deliberation {
 
     # --- Calculate total duration ---
     $totalMs = ($protocol.rounds | ForEach-Object { $_.duration_ms } | Measure-Object -Sum).Sum
-    Write-Host "" -ForegroundColor White
-    Write-Host "[DELIB] ====== Deliberation abgeschlossen ======" -ForegroundColor Magenta
-    Write-Host "[DELIB] Konsens: $(if ($protocol.consensus_reached) { 'JA' } else { 'NEIN (Fallback)' })" -ForegroundColor $(if ($protocol.consensus_reached) { "Green" } else { "Yellow" })
-    Write-Host "[DELIB] Gesamtdauer: $([Math]::Round($totalMs / 1000, 1))s ($($protocol.rounds.Count) Phasen)" -ForegroundColor DarkGray
+    $consensusStr = if ($protocol.consensus_reached) { "JA" } else { "NEIN (Fallback)" }
+    $durSec = [Math]::Round($totalMs / 1000, 1)
+
+    Write-VorceStatus -Phase "DELIB" -Message "Konsens: $consensusStr | Dauer: ${durSec}s" -Color $(if ($protocol.consensus_reached) { "Green" } else { "Yellow" })
+    Write-VorceBanner -Title "DELIBERATION ABGESCHLOSSEN" -Color Magenta
 
     # --- Save protocol ---
     Save-DeliberationProtocol -Protocol $protocol -Config $Config

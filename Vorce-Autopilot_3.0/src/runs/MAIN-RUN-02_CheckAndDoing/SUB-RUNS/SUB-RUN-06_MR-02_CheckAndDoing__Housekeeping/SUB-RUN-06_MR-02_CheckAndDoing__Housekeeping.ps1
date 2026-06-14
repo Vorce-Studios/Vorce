@@ -132,7 +132,40 @@ try {
     Write-Warning "[CHECK&DOING] Fehler beim Branch-Cleanup: $_"
 }
 
-# --- Step 4: Run-Summary ---
+# --- Step 4: Automated Artifact Cleanup ---
+Write-Host "[CHECK&DOING] Bereinige alte Logs und Run-Artefakte..." -ForegroundColor Cyan
+try {
+    $LogDir = Join-Path $ScriptDir "var/log"
+    $RunDir = Join-Path $ScriptDir "var/runtime"
+
+    # Cleanup old start logs (> 7 Tage)
+    if (Test-Path $LogDir) {
+        Get-ChildItem -Path $LogDir -Filter "start-autopilot-*.log" | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-7) } | Remove-Item -Force
+        Write-Host "[CHECK&DOING]   Alte Start-Logs bereinigt." -ForegroundColor DarkGray
+    }
+
+    # Cleanup old run directories (> 14 Tage)
+    if (Test-Path $RunDir) {
+        Get-ChildItem -Path $RunDir -Directory | Where-Object { $_.Name -match "MAIN-RUN|SUB-RUN|PART-RUN" -and $_.LastWriteTime -lt (Get-Date).AddDays(-14) } | Remove-Item -Recurse -Force
+        Write-Host "[CHECK&DOING]   Alte Run-Verzeichnisse bereinigt." -ForegroundColor DarkGray
+    }
+
+    # Log Rotation für autopilot-live.log (max 10MB)
+    $liveLog = Join-Path $LogDir "autopilot-live.log"
+    if (Test-Path $liveLog) {
+        $file = Get-Item $liveLog
+        if ($file.Length -gt 10MB) {
+            $archiveLog = Join-Path $LogDir "autopilot-live-$(Get-Date -Format 'yyyyMMdd').log"
+            Move-Item -Path $liveLog -Destination $archiveLog -Force
+            New-Item -ItemType File -Path $liveLog -Force | Out-Null
+            Write-Host "[CHECK&DOING]   Live-Log rotiert (Size > 10MB)." -ForegroundColor DarkGray
+        }
+    }
+} catch {
+    Write-Warning "[CHECK&DOING] Fehler beim Artifact-Cleanup: $_"
+}
+
+# --- Step 5: Run-Summary ---
 $conflictingPrs = @()
 if ($MainState -is [hashtable] -and $MainState.ContainsKey("ConflictingPRs")) {
     $conflictingPrs = @($MainState["ConflictingPRs"])

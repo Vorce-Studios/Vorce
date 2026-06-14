@@ -125,7 +125,10 @@ function Resolve-ConflictPr {
     $mergeOutput = git merge origin/$baseBranch --no-commit --no-ff 2>&1 | Out-String
     Write-Host $mergeOutput -ForegroundColor DarkGray
 
-    . (Join-Path $libDir "autopilot-prompts.ps1")
+    $promptsLib = Join-Path $autopilotRoot "src/core/autopilot-prompts.ps1"
+    if (-not (Test-Path $promptsLib)) { $promptsLib = Join-Path $libDir "autopilot-prompts.ps1" }
+    . $promptsLib
+
     $conflictFiles = @(git diff --name-only --diff-filter=U 2>$null)
     $fileList = if ($conflictFiles.Count -gt 0) { $conflictFiles -join "`n- " } else { "No unmerged files reported after merge command." }
     $prompt = (Get-VorceCliPrConflictResolutionPrompt -Repository $Repository -PullRequestNumber $PullRequestNumber -HeadRefName $headBranch -BaseRefName $baseBranch -PullRequestTitle $prTitle) + @"
@@ -194,10 +197,27 @@ try {
     Write-Host "Repo:     $Repository"
     Write-Host "========================================`n"
 
+    # --- Git Pre-Flight Check ---
+    $status = git status --porcelain 2>$null
+    if (-not [string]::IsNullOrWhiteSpace($status)) {
+        $msg = "Repository ist nicht sauber (uncommitted changes vorhanden). Abort."
+        Write-Host "[GIT] $msg" -ForegroundColor Red
+        Write-Status -Status "FAILED" -ErrorMessage $msg
+        throw $msg
+    }
+
     # Load lib
-    . (Join-Path $libDir "state-manager.ps1")
-    . (Join-Path $libDir "quota-manager.ps1")
-    . (Join-Path $libDir "cli-router.ps1")
+    $stateLib = Join-Path $libDir "state/state-manager.ps1"
+    if (-not (Test-Path $stateLib)) { $stateLib = Join-Path $libDir "state-manager.ps1" }
+    . $stateLib
+
+    $quotaLib = Join-Path $libDir "engines/quota-manager.ps1"
+    if (-not (Test-Path $quotaLib)) { $quotaLib = Join-Path $libDir "quota-manager.ps1" }
+    . $quotaLib
+
+    $routerLib = Join-Path $autopilotRoot "src/core/cli-router.ps1"
+    if (-not (Test-Path $routerLib)) { $routerLib = Join-Path $libDir "cli-router.ps1" }
+    . $routerLib
 
     $registry = Read-QuotaRegistry -FilePath $QuotaRegistryPath
 

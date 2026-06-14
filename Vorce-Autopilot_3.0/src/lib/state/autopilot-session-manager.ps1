@@ -329,7 +329,7 @@ function Invoke-AutopilotCodexSession {
                 $visiblePrompt = $Prompt
             }
             Set-Content -Path $promptPath -Value $visiblePrompt -Encoding UTF8
-            $runnerPath = Join-Path $script:AutopilotToolsDir "run-visible-codex-session.ps1"
+            $runnerPath = Join-Path $script:AutopilotToolsDir "agents/run-codex-session.ps1"
             if (-not (Test-Path -LiteralPath $runnerPath)) {
                 throw "Visible Codex runner not found: $runnerPath"
             }

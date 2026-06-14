@@ -160,7 +160,7 @@ if ($pendingReviews.Count -gt 0) {
         $toolsDir = Join-Path $ScriptDir "tools"
         $scriptPath = Join-Path $toolsDir "agents/run-background-review.ps1"
         $configPath = Join-Path $ScriptDir "config/autopilot-config.json"
-        $quotaPath = Join-Path $VarDbDir "quota-registry.json"
+        $quotaPath = Join-Path $ScriptDir "config/quota-registry.json"
 
         # Save substate temporarily for the script to read
         $subStateTempPath = Join-Path $reviewResultsDir "pr-$($review.pr_number)-substate.json"
