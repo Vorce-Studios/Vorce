@@ -35,7 +35,7 @@ pub fn render_transport_controls(
             ));
         }
 
-        if ui.button("⏮").clicked() {
+        if ui.button("⏮").on_hover_text("Reset to beginning").clicked() {
             canvas.pending_playback_commands.push((part_id, MediaPlaybackCommand::Seek(0.0)));
         }
 
