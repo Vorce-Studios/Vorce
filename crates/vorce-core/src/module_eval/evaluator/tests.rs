@@ -2,11 +2,12 @@
 mod evaluator_tests {
 
     use crate::audio::analyzer_v2::AudioAnalysisV2;
-    use crate::module::{HueNodeType, LinkMode,
-        AudioTriggerOutputConfig, ModulePartType, SourceType, TriggerType, VorceModule,
+    use crate::module::{
+        AudioTriggerOutputConfig, HueNodeType, LinkMode, ModulePartType, SourceType, TriggerType,
+        VorceModule,
     };
-    use crate::module_eval::ModuleEvaluator;
     use crate::module_eval::evaluator::SourceCommand;
+    use crate::module_eval::ModuleEvaluator;
     use std::time::Duration;
 
     fn create_test_module() -> VorceModule {

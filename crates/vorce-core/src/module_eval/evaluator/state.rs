@@ -1,13 +1,13 @@
 use crate::audio::analyzer_v2::AudioAnalysisV2;
 use crate::audio_reactive::AudioTriggerData;
-use crate::module::{ModulePartId, OutputType, MeshType};
+use crate::module::{MeshType, ModulePartId, OutputType};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 
-use crate::module_eval::types::{ModuleGraphIndices, SourceProperties, TriggerState};
 use super::result::{ModuleEvalResult, RenderOp};
+use crate::module_eval::types::{ModuleGraphIndices, SourceProperties, TriggerState};
 
 /// The evaluator traverses the module graph and computes output values.
 pub struct ModuleEvaluator {
@@ -54,7 +54,6 @@ impl Default for ModuleEvaluator {
         Self::new()
     }
 }
-
 
 impl ModuleEvaluator {
     /// Create a new module evaluator

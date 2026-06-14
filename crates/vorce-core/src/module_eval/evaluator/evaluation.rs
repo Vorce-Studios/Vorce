@@ -1,14 +1,14 @@
 use crate::module::{
-    HueNodeType, LayerType, LinkBehavior, LinkMode, ModulePartType, OutputType, SharedMediaState, SourceType,
-    VorceModule,
+    HueNodeType, LayerType, LinkBehavior, LinkMode, ModulePartType, OutputType, SharedMediaState,
+    SourceType, VorceModule,
 };
 use crate::module_eval::types::ModuleGraphIndices;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 
-use super::state::ModuleEvaluator;
 use super::result::{ModuleEvalResult, SourceCommand};
+use super::state::ModuleEvaluator;
 use crate::module_eval::types::primary_render_connection_idx;
 
 impl ModuleEvaluator {
