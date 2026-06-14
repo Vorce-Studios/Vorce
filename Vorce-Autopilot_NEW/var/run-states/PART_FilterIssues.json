@@ -1,0 +1,15 @@
+{
+  "id": "run_20260614_122221",
+  "name": "FilterIssues",
+  "type": "PART",
+  "status": "completed",
+  "started_at": "2026-06-14T12:22:21.0157874+02:00",
+  "completed_at": "2026-06-14T12:22:21.1940495+02:00",
+  "metadata": {},
+  "results": [
+    {
+      "triaged_count": 11,
+      "timestamp": "2026-06-14T12:22:21.1882984+02:00"
+    }
+  ]
+}

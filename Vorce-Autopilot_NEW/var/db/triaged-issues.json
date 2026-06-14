@@ -1,0 +1,310 @@
+[
+  {
+    "assignees": [],
+    "body": "## Ziel\nLoese die Merge-Konflikte der unten gelisteten bestehenden PR-Branches gegen ihre jeweilige Base-Branch. Dieses Issue ist ein lokaler CLI-Agent-Auftrag und darf niemals an Jules delegiert werden.\n\n## Betroffene PRs\n- PR #819: ``B-Jules/___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip-12344597583250619601`` -> ``main`` - ___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip\n- PR #818: ``jules-758624821416836942-84260d61`` -> ``main`` - Decompose Render Loop Content\n- PR #817: ``B-Jules/___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization-18218066131449067322`` -> ``main`` - PR___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization\n- PR #816: ``B-Jules/___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts-12591622069066575352`` -> ``main`` - PR___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts\n- PR #815: ``B-Jules/___M-650_s4_Gemini-Runner-Scenario-Manifest-8942699224866719217`` -> ``main`` - PR___M-650_s4_Gemini-Runner-Scenario-Manifest\n- PR #814: ``M-510_s11_Decompose-Module-Canvas-Renderer-6828407962749377730`` -> ``main`` - Refactor module canvas renderer to decouple drawing primitives\n- PR #813: ``main-4634145121338046659`` -> ``main`` - refactor(ui): decompose ui_layout.rs into functional panel modules\n- PR #812: ``main-18038951190430815680`` -> ``main`` - Refactor actions into submodules\n- PR #811: ``jules-4979153505392602681-6bab7629`` -> ``main`` - Refactor: Decompose media browser into state, ui, and types\n\n## Arbeitsanweisung fuer den lokalen Agenten\n- Jeden PR einzeln pruefen: gh pr view <nr> --json state,mergeable,headRefName,baseRefName,title,files.\n- Geschlossene oder nicht mehr konfliktierende PRs ueberspringen und im Abschlussbericht nennen.\n- Fuer konfliktierende PRs: Head-Branch auschecken, Base-Branch mergen, Konfliktdateien mit git diff --name-only --diff-filter=U ermitteln, Konflikte minimal und fachlich passend aufloesen, Tests/Checks soweit sinnvoll ausfuehren, Commit auf denselben Head-Branch pushen.\n- Keinen neuen PR erstellen und keinen leeren Commit erzeugen.\n- Wenn ein PR inhaltlich nicht mehr rettbar ist, keine Jules-Session starten. Stattdessen im Abschlussbericht exakt PR, Branches, Konfliktdateien und Grund nennen.\n\n## Akzeptanz\n- Jeder noch offene konfliktierende PR aus der Liste ist entweder konfliktfrei gepusht oder konkret als nicht rettbar dokumentiert.\n- Der Bericht nennt fuer jeden PR: Status, Branch, geaenderte Dateien, ausgefuehrte Checks.\n- Es wurden keine Jules-Sessions und keine Tracking-PRs erzeugt.\n\nPrioritaet: KRITISCH - blockiert Release-Pipeline.",
+    "labels": [
+      {
+        "id": "LA_kwDORuEBQc8AAAACdFTmVQ",
+        "name": "priority: critical",
+        "description": "Critical priority - needs immediate attention",
+        "color": "d73a4a"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmDCaxg",
+        "name": "agent:gemini_cli",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmbw8CQ",
+        "name": "bug",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      }
+    ],
+    "number": 830,
+    "state": "OPEN",
+    "title": "*D**-814_Resolve-Merge-Conflicts-PRs-811-812-813-814-815-816-817-818-819",
+    "updatedAt": "2026-06-12T04:23:36Z"
+  },
+  {
+    "assignees": [],
+    "body": "## Ziel\nLoese die Merge-Konflikte der unten gelisteten bestehenden PR-Branches gegen ihre jeweilige Base-Branch. Dieses Issue ist ein lokaler CLI-Agent-Auftrag und darf niemals an Jules delegiert werden.\n\n## Betroffene PRs\n- PR #819: ``B-Jules/___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip-12344597583250619601`` -> ``main`` - ___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip\n- PR #818: ``jules-758624821416836942-84260d61`` -> ``main`` - Decompose Render Loop Content\n- PR #817: ``B-Jules/___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization-18218066131449067322`` -> ``main`` - PR___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization\n- PR #816: ``B-Jules/___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts-12591622069066575352`` -> ``main`` - PR___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts\n- PR #815: ``B-Jules/___M-650_s4_Gemini-Runner-Scenario-Manifest-8942699224866719217`` -> ``main`` - PR___M-650_s4_Gemini-Runner-Scenario-Manifest\n- PR #814: ``M-510_s11_Decompose-Module-Canvas-Renderer-6828407962749377730`` -> ``main`` - Refactor module canvas renderer to decouple drawing primitives\n- PR #813: ``main-4634145121338046659`` -> ``main`` - refactor(ui): decompose ui_layout.rs into functional panel modules\n- PR #812: ``main-18038951190430815680`` -> ``main`` - Refactor actions into submodules\n- PR #811: ``jules-4979153505392602681-6bab7629`` -> ``main`` - Refactor: Decompose media browser into state, ui, and types\n\n## Arbeitsanweisung fuer den lokalen Agenten\n- Jeden PR einzeln pruefen: gh pr view <nr> --json state,mergeable,headRefName,baseRefName,title,files.\n- Geschlossene oder nicht mehr konfliktierende PRs ueberspringen und im Abschlussbericht nennen.\n- Fuer konfliktierende PRs: Head-Branch auschecken, Base-Branch mergen, Konfliktdateien mit git diff --name-only --diff-filter=U ermitteln, Konflikte minimal und fachlich passend aufloesen, Tests/Checks soweit sinnvoll ausfuehren, Commit auf denselben Head-Branch pushen.\n- Keinen neuen PR erstellen und keinen leeren Commit erzeugen.\n- Wenn ein PR inhaltlich nicht mehr rettbar ist, keine Jules-Session starten. Stattdessen im Abschlussbericht exakt PR, Branches, Konfliktdateien und Grund nennen.\n\n## Akzeptanz\n- Jeder noch offene konfliktierende PR aus der Liste ist entweder konfliktfrei gepusht oder konkret als nicht rettbar dokumentiert.\n- Der Bericht nennt fuer jeden PR: Status, Branch, geaenderte Dateien, ausgefuehrte Checks.\n- Es wurden keine Jules-Sessions und keine Tracking-PRs erzeugt.\n\nPrioritaet: KRITISCH - blockiert Release-Pipeline.",
+    "labels": [
+      {
+        "id": "LA_kwDORuEBQc8AAAACdFTmVQ",
+        "name": "priority: critical",
+        "description": "Critical priority - needs immediate attention",
+        "color": "d73a4a"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmDCaxg",
+        "name": "agent:gemini_cli",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmbw8CQ",
+        "name": "bug",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      }
+    ],
+    "number": 829,
+    "state": "OPEN",
+    "title": "*D**-813_Resolve-Merge-Conflicts-PRs-811-812-813-814-815-816-817-818-819",
+    "updatedAt": "2026-06-12T04:22:13Z"
+  },
+  {
+    "assignees": [],
+    "body": "## Ziel\nLoese die Merge-Konflikte der unten gelisteten bestehenden PR-Branches gegen ihre jeweilige Base-Branch. Dieses Issue ist ein lokaler CLI-Agent-Auftrag und darf niemals an Jules delegiert werden.\n\n## Betroffene PRs\n- PR #819: ``B-Jules/___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip-12344597583250619601`` -> ``main`` - ___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip\n- PR #818: ``jules-758624821416836942-84260d61`` -> ``main`` - Decompose Render Loop Content\n- PR #817: ``B-Jules/___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization-18218066131449067322`` -> ``main`` - PR___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization\n- PR #816: ``B-Jules/___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts-12591622069066575352`` -> ``main`` - PR___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts\n- PR #815: ``B-Jules/___M-650_s4_Gemini-Runner-Scenario-Manifest-8942699224866719217`` -> ``main`` - PR___M-650_s4_Gemini-Runner-Scenario-Manifest\n- PR #814: ``M-510_s11_Decompose-Module-Canvas-Renderer-6828407962749377730`` -> ``main`` - Refactor module canvas renderer to decouple drawing primitives\n- PR #813: ``main-4634145121338046659`` -> ``main`` - refactor(ui): decompose ui_layout.rs into functional panel modules\n- PR #812: ``main-18038951190430815680`` -> ``main`` - Refactor actions into submodules\n- PR #811: ``jules-4979153505392602681-6bab7629`` -> ``main`` - Refactor: Decompose media browser into state, ui, and types\n\n## Arbeitsanweisung fuer den lokalen Agenten\n- Jeden PR einzeln pruefen: gh pr view <nr> --json state,mergeable,headRefName,baseRefName,title,files.\n- Geschlossene oder nicht mehr konfliktierende PRs ueberspringen und im Abschlussbericht nennen.\n- Fuer konfliktierende PRs: Head-Branch auschecken, Base-Branch mergen, Konfliktdateien mit git diff --name-only --diff-filter=U ermitteln, Konflikte minimal und fachlich passend aufloesen, Tests/Checks soweit sinnvoll ausfuehren, Commit auf denselben Head-Branch pushen.\n- Keinen neuen PR erstellen und keinen leeren Commit erzeugen.\n- Wenn ein PR inhaltlich nicht mehr rettbar ist, keine Jules-Session starten. Stattdessen im Abschlussbericht exakt PR, Branches, Konfliktdateien und Grund nennen.\n\n## Akzeptanz\n- Jeder noch offene konfliktierende PR aus der Liste ist entweder konfliktfrei gepusht oder konkret als nicht rettbar dokumentiert.\n- Der Bericht nennt fuer jeden PR: Status, Branch, geaenderte Dateien, ausgefuehrte Checks.\n- Es wurden keine Jules-Sessions und keine Tracking-PRs erzeugt.\n\nPrioritaet: KRITISCH - blockiert Release-Pipeline.",
+    "labels": [
+      {
+        "id": "LA_kwDORuEBQc8AAAACdFTmVQ",
+        "name": "priority: critical",
+        "description": "Critical priority - needs immediate attention",
+        "color": "d73a4a"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmDCaxg",
+        "name": "agent:gemini_cli",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmbw8CQ",
+        "name": "bug",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      }
+    ],
+    "number": 828,
+    "state": "OPEN",
+    "title": "*D**-812_Resolve-Merge-Conflicts-PRs-811-812-813-814-815-816-817-818-819",
+    "updatedAt": "2026-06-12T04:20:55Z"
+  },
+  {
+    "assignees": [],
+    "body": "## Ziel\nLoese die Merge-Konflikte der unten gelisteten bestehenden PR-Branches gegen ihre jeweilige Base-Branch. Dieses Issue ist ein lokaler CLI-Agent-Auftrag und darf niemals an Jules delegiert werden.\n\n## Betroffene PRs\n- PR #819: ``B-Jules/___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip-12344597583250619601`` -> ``main`` - ___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip\n- PR #818: ``jules-758624821416836942-84260d61`` -> ``main`` - Decompose Render Loop Content\n- PR #817: ``B-Jules/___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization-18218066131449067322`` -> ``main`` - PR___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization\n- PR #816: ``B-Jules/___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts-12591622069066575352`` -> ``main`` - PR___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts\n- PR #815: ``B-Jules/___M-650_s4_Gemini-Runner-Scenario-Manifest-8942699224866719217`` -> ``main`` - PR___M-650_s4_Gemini-Runner-Scenario-Manifest\n- PR #814: ``M-510_s11_Decompose-Module-Canvas-Renderer-6828407962749377730`` -> ``main`` - Refactor module canvas renderer to decouple drawing primitives\n- PR #813: ``main-4634145121338046659`` -> ``main`` - refactor(ui): decompose ui_layout.rs into functional panel modules\n- PR #812: ``main-18038951190430815680`` -> ``main`` - Refactor actions into submodules\n- PR #811: ``jules-4979153505392602681-6bab7629`` -> ``main`` - Refactor: Decompose media browser into state, ui, and types\n\n## Arbeitsanweisung fuer den lokalen Agenten\n- Jeden PR einzeln pruefen: gh pr view <nr> --json state,mergeable,headRefName,baseRefName,title,files.\n- Geschlossene oder nicht mehr konfliktierende PRs ueberspringen und im Abschlussbericht nennen.\n- Fuer konfliktierende PRs: Head-Branch auschecken, Base-Branch mergen, Konfliktdateien mit git diff --name-only --diff-filter=U ermitteln, Konflikte minimal und fachlich passend aufloesen, Tests/Checks soweit sinnvoll ausfuehren, Commit auf denselben Head-Branch pushen.\n- Keinen neuen PR erstellen und keinen leeren Commit erzeugen.\n- Wenn ein PR inhaltlich nicht mehr rettbar ist, keine Jules-Session starten. Stattdessen im Abschlussbericht exakt PR, Branches, Konfliktdateien und Grund nennen.\n\n## Akzeptanz\n- Jeder noch offene konfliktierende PR aus der Liste ist entweder konfliktfrei gepusht oder konkret als nicht rettbar dokumentiert.\n- Der Bericht nennt fuer jeden PR: Status, Branch, geaenderte Dateien, ausgefuehrte Checks.\n- Es wurden keine Jules-Sessions und keine Tracking-PRs erzeugt.\n\nPrioritaet: KRITISCH - blockiert Release-Pipeline.",
+    "labels": [
+      {
+        "id": "LA_kwDORuEBQc8AAAACdFTmVQ",
+        "name": "priority: critical",
+        "description": "Critical priority - needs immediate attention",
+        "color": "d73a4a"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmDCaxg",
+        "name": "agent:gemini_cli",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmbw8CQ",
+        "name": "bug",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      }
+    ],
+    "number": 827,
+    "state": "OPEN",
+    "title": "*D**-811_Resolve-Merge-Conflicts-PRs-811-812-813-814-815-816-817-818-819",
+    "updatedAt": "2026-06-12T04:19:37Z"
+  },
+  {
+    "assignees": [],
+    "body": "## Ziel\nLoese die Merge-Konflikte der unten gelisteten bestehenden PR-Branches gegen ihre jeweilige Base-Branch. Dieses Issue ist ein lokaler CLI-Agent-Auftrag und darf niemals an Jules delegiert werden.\n\n## Betroffene PRs\n- PR #819: ``B-Jules/___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip-12344597583250619601`` -> ``main`` - ___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip\n- PR #818: ``jules-758624821416836942-84260d61`` -> ``main`` - Decompose Render Loop Content\n- PR #817: ``B-Jules/___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization-18218066131449067322`` -> ``main`` - PR___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization\n- PR #816: ``B-Jules/___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts-12591622069066575352`` -> ``main`` - PR___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts\n- PR #815: ``B-Jules/___M-650_s4_Gemini-Runner-Scenario-Manifest-8942699224866719217`` -> ``main`` - PR___M-650_s4_Gemini-Runner-Scenario-Manifest\n- PR #814: ``M-510_s11_Decompose-Module-Canvas-Renderer-6828407962749377730`` -> ``main`` - Refactor module canvas renderer to decouple drawing primitives\n- PR #813: ``main-4634145121338046659`` -> ``main`` - refactor(ui): decompose ui_layout.rs into functional panel modules\n- PR #812: ``main-18038951190430815680`` -> ``main`` - Refactor actions into submodules\n- PR #811: ``jules-4979153505392602681-6bab7629`` -> ``main`` - Refactor: Decompose media browser into state, ui, and types\n\n## Arbeitsanweisung fuer den lokalen Agenten\n- Jeden PR einzeln pruefen: gh pr view <nr> --json state,mergeable,headRefName,baseRefName,title,files.\n- Geschlossene oder nicht mehr konfliktierende PRs ueberspringen und im Abschlussbericht nennen.\n- Fuer konfliktierende PRs: Head-Branch auschecken, Base-Branch mergen, Konfliktdateien mit git diff --name-only --diff-filter=U ermitteln, Konflikte minimal und fachlich passend aufloesen, Tests/Checks soweit sinnvoll ausfuehren, Commit auf denselben Head-Branch pushen.\n- Keinen neuen PR erstellen und keinen leeren Commit erzeugen.\n- Wenn ein PR inhaltlich nicht mehr rettbar ist, keine Jules-Session starten. Stattdessen im Abschlussbericht exakt PR, Branches, Konfliktdateien und Grund nennen.\n\n## Akzeptanz\n- Jeder noch offene konfliktierende PR aus der Liste ist entweder konfliktfrei gepusht oder konkret als nicht rettbar dokumentiert.\n- Der Bericht nennt fuer jeden PR: Status, Branch, geaenderte Dateien, ausgefuehrte Checks.\n- Es wurden keine Jules-Sessions und keine Tracking-PRs erzeugt.\n\nPrioritaet: KRITISCH - blockiert Release-Pipeline.",
+    "labels": [
+      {
+        "id": "LA_kwDORuEBQc8AAAACdFTmVQ",
+        "name": "priority: critical",
+        "description": "Critical priority - needs immediate attention",
+        "color": "d73a4a"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmDCaxg",
+        "name": "agent:gemini_cli",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmbw8CQ",
+        "name": "bug",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      }
+    ],
+    "number": 826,
+    "state": "OPEN",
+    "title": "*D**-810_Resolve-Merge-Conflicts-PRs-811-812-813-814-815-816-817-818-819",
+    "updatedAt": "2026-06-12T04:18:20Z"
+  },
+  {
+    "assignees": [],
+    "body": "## Ziel\nLoese die Merge-Konflikte der unten gelisteten bestehenden PR-Branches gegen ihre jeweilige Base-Branch. Dieses Issue ist ein lokaler CLI-Agent-Auftrag und darf niemals an Jules delegiert werden.\n\n## Betroffene PRs\n- PR #819: ``B-Jules/___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip-12344597583250619601`` -> ``main`` - ___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip\n- PR #818: ``jules-758624821416836942-84260d61`` -> ``main`` - Decompose Render Loop Content\n- PR #817: ``B-Jules/___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization-18218066131449067322`` -> ``main`` - PR___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization\n- PR #816: ``B-Jules/___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts-12591622069066575352`` -> ``main`` - PR___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts\n- PR #815: ``B-Jules/___M-650_s4_Gemini-Runner-Scenario-Manifest-8942699224866719217`` -> ``main`` - PR___M-650_s4_Gemini-Runner-Scenario-Manifest\n- PR #814: ``M-510_s11_Decompose-Module-Canvas-Renderer-6828407962749377730`` -> ``main`` - Refactor module canvas renderer to decouple drawing primitives\n- PR #813: ``main-4634145121338046659`` -> ``main`` - refactor(ui): decompose ui_layout.rs into functional panel modules\n- PR #812: ``main-18038951190430815680`` -> ``main`` - Refactor actions into submodules\n- PR #811: ``jules-4979153505392602681-6bab7629`` -> ``main`` - Refactor: Decompose media browser into state, ui, and types\n\n## Arbeitsanweisung fuer den lokalen Agenten\n- Jeden PR einzeln pruefen: gh pr view <nr> --json state,mergeable,headRefName,baseRefName,title,files.\n- Geschlossene oder nicht mehr konfliktierende PRs ueberspringen und im Abschlussbericht nennen.\n- Fuer konfliktierende PRs: Head-Branch auschecken, Base-Branch mergen, Konfliktdateien mit git diff --name-only --diff-filter=U ermitteln, Konflikte minimal und fachlich passend aufloesen, Tests/Checks soweit sinnvoll ausfuehren, Commit auf denselben Head-Branch pushen.\n- Keinen neuen PR erstellen und keinen leeren Commit erzeugen.\n- Wenn ein PR inhaltlich nicht mehr rettbar ist, keine Jules-Session starten. Stattdessen im Abschlussbericht exakt PR, Branches, Konfliktdateien und Grund nennen.\n\n## Akzeptanz\n- Jeder noch offene konfliktierende PR aus der Liste ist entweder konfliktfrei gepusht oder konkret als nicht rettbar dokumentiert.\n- Der Bericht nennt fuer jeden PR: Status, Branch, geaenderte Dateien, ausgefuehrte Checks.\n- Es wurden keine Jules-Sessions und keine Tracking-PRs erzeugt.\n\nPrioritaet: KRITISCH - blockiert Release-Pipeline.",
+    "labels": [
+      {
+        "id": "LA_kwDORuEBQc8AAAACdFTmVQ",
+        "name": "priority: critical",
+        "description": "Critical priority - needs immediate attention",
+        "color": "d73a4a"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmDCaxg",
+        "name": "agent:gemini_cli",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmbw8CQ",
+        "name": "bug",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      }
+    ],
+    "number": 825,
+    "state": "OPEN",
+    "title": "*D**-809_Resolve-Merge-Conflicts-PRs-811-812-813-814-815-816-817-818-819",
+    "updatedAt": "2026-06-12T04:17:03Z"
+  },
+  {
+    "assignees": [],
+    "body": "## Ziel\nLoese die Merge-Konflikte der unten gelisteten bestehenden PR-Branches gegen ihre jeweilige Base-Branch. Dieses Issue ist ein lokaler CLI-Agent-Auftrag und darf niemals an Jules delegiert werden.\n\n## Betroffene PRs\n- PR #819: ``B-Jules/___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip-12344597583250619601`` -> ``main`` - ___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip\n- PR #818: ``jules-758624821416836942-84260d61`` -> ``main`` - Decompose Render Loop Content\n- PR #817: ``B-Jules/___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization-18218066131449067322`` -> ``main`` - PR___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization\n- PR #816: ``B-Jules/___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts-12591622069066575352`` -> ``main`` - PR___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts\n- PR #815: ``B-Jules/___M-650_s4_Gemini-Runner-Scenario-Manifest-8942699224866719217`` -> ``main`` - PR___M-650_s4_Gemini-Runner-Scenario-Manifest\n- PR #814: ``M-510_s11_Decompose-Module-Canvas-Renderer-6828407962749377730`` -> ``main`` - Refactor module canvas renderer to decouple drawing primitives\n- PR #813: ``main-4634145121338046659`` -> ``main`` - refactor(ui): decompose ui_layout.rs into functional panel modules\n- PR #812: ``main-18038951190430815680`` -> ``main`` - Refactor actions into submodules\n- PR #811: ``jules-4979153505392602681-6bab7629`` -> ``main`` - Refactor: Decompose media browser into state, ui, and types\n\n## Arbeitsanweisung fuer den lokalen Agenten\n- Jeden PR einzeln pruefen: gh pr view <nr> --json state,mergeable,headRefName,baseRefName,title,files.\n- Geschlossene oder nicht mehr konfliktierende PRs ueberspringen und im Abschlussbericht nennen.\n- Fuer konfliktierende PRs: Head-Branch auschecken, Base-Branch mergen, Konfliktdateien mit git diff --name-only --diff-filter=U ermitteln, Konflikte minimal und fachlich passend aufloesen, Tests/Checks soweit sinnvoll ausfuehren, Commit auf denselben Head-Branch pushen.\n- Keinen neuen PR erstellen und keinen leeren Commit erzeugen.\n- Wenn ein PR inhaltlich nicht mehr rettbar ist, keine Jules-Session starten. Stattdessen im Abschlussbericht exakt PR, Branches, Konfliktdateien und Grund nennen.\n\n## Akzeptanz\n- Jeder noch offene konfliktierende PR aus der Liste ist entweder konfliktfrei gepusht oder konkret als nicht rettbar dokumentiert.\n- Der Bericht nennt fuer jeden PR: Status, Branch, geaenderte Dateien, ausgefuehrte Checks.\n- Es wurden keine Jules-Sessions und keine Tracking-PRs erzeugt.\n\nPrioritaet: KRITISCH - blockiert Release-Pipeline.",
+    "labels": [
+      {
+        "id": "LA_kwDORuEBQc8AAAACdFTmVQ",
+        "name": "priority: critical",
+        "description": "Critical priority - needs immediate attention",
+        "color": "d73a4a"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmDCaxg",
+        "name": "agent:gemini_cli",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmbw8CQ",
+        "name": "bug",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      }
+    ],
+    "number": 824,
+    "state": "OPEN",
+    "title": "*D**-808_Resolve-Merge-Conflicts-PRs-811-812-813-814-815-816-817-818-819",
+    "updatedAt": "2026-06-12T04:15:45Z"
+  },
+  {
+    "assignees": [],
+    "body": "## Ziel\nLoese die Merge-Konflikte der unten gelisteten bestehenden PR-Branches gegen ihre jeweilige Base-Branch. Dieses Issue ist ein lokaler CLI-Agent-Auftrag und darf niemals an Jules delegiert werden.\n\n## Betroffene PRs\n- PR #819: ``B-Jules/___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip-12344597583250619601`` -> ``main`` - ___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip\n- PR #818: ``jules-758624821416836942-84260d61`` -> ``main`` - Decompose Render Loop Content\n- PR #817: ``B-Jules/___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization-18218066131449067322`` -> ``main`` - PR___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization\n- PR #816: ``B-Jules/___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts-12591622069066575352`` -> ``main`` - PR___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts\n- PR #815: ``B-Jules/___M-650_s4_Gemini-Runner-Scenario-Manifest-8942699224866719217`` -> ``main`` - PR___M-650_s4_Gemini-Runner-Scenario-Manifest\n- PR #814: ``M-510_s11_Decompose-Module-Canvas-Renderer-6828407962749377730`` -> ``main`` - Refactor module canvas renderer to decouple drawing primitives\n- PR #813: ``main-4634145121338046659`` -> ``main`` - refactor(ui): decompose ui_layout.rs into functional panel modules\n- PR #812: ``main-18038951190430815680`` -> ``main`` - Refactor actions into submodules\n- PR #811: ``jules-4979153505392602681-6bab7629`` -> ``main`` - Refactor: Decompose media browser into state, ui, and types\n\n## Arbeitsanweisung fuer den lokalen Agenten\n- Jeden PR einzeln pruefen: gh pr view <nr> --json state,mergeable,headRefName,baseRefName,title,files.\n- Geschlossene oder nicht mehr konfliktierende PRs ueberspringen und im Abschlussbericht nennen.\n- Fuer konfliktierende PRs: Head-Branch auschecken, Base-Branch mergen, Konfliktdateien mit git diff --name-only --diff-filter=U ermitteln, Konflikte minimal und fachlich passend aufloesen, Tests/Checks soweit sinnvoll ausfuehren, Commit auf denselben Head-Branch pushen.\n- Keinen neuen PR erstellen und keinen leeren Commit erzeugen.\n- Wenn ein PR inhaltlich nicht mehr rettbar ist, keine Jules-Session starten. Stattdessen im Abschlussbericht exakt PR, Branches, Konfliktdateien und Grund nennen.\n\n## Akzeptanz\n- Jeder noch offene konfliktierende PR aus der Liste ist entweder konfliktfrei gepusht oder konkret als nicht rettbar dokumentiert.\n- Der Bericht nennt fuer jeden PR: Status, Branch, geaenderte Dateien, ausgefuehrte Checks.\n- Es wurden keine Jules-Sessions und keine Tracking-PRs erzeugt.\n\nPrioritaet: KRITISCH - blockiert Release-Pipeline.",
+    "labels": [
+      {
+        "id": "LA_kwDORuEBQc8AAAACdFTmVQ",
+        "name": "priority: critical",
+        "description": "Critical priority - needs immediate attention",
+        "color": "d73a4a"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmDCaxg",
+        "name": "agent:gemini_cli",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmbw8CQ",
+        "name": "bug",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      }
+    ],
+    "number": 823,
+    "state": "OPEN",
+    "title": "*D**-807_Resolve-Merge-Conflicts-PRs-811-812-813-814-815-816-817-818-819",
+    "updatedAt": "2026-06-12T04:14:25Z"
+  },
+  {
+    "assignees": [],
+    "body": "## Ziel\nLoese die Merge-Konflikte der unten gelisteten bestehenden PR-Branches gegen ihre jeweilige Base-Branch. Dieses Issue ist ein lokaler CLI-Agent-Auftrag und darf niemals an Jules delegiert werden.\n\n## Betroffene PRs\n- PR #819: ``B-Jules/___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip-12344597583250619601`` -> ``main`` - ___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip\n- PR #818: ``jules-758624821416836942-84260d61`` -> ``main`` - Decompose Render Loop Content\n- PR #817: ``B-Jules/___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization-18218066131449067322`` -> ``main`` - PR___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization\n- PR #816: ``B-Jules/___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts-12591622069066575352`` -> ``main`` - PR___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts\n- PR #815: ``B-Jules/___M-650_s4_Gemini-Runner-Scenario-Manifest-8942699224866719217`` -> ``main`` - PR___M-650_s4_Gemini-Runner-Scenario-Manifest\n- PR #814: ``M-510_s11_Decompose-Module-Canvas-Renderer-6828407962749377730`` -> ``main`` - Refactor module canvas renderer to decouple drawing primitives\n- PR #813: ``main-4634145121338046659`` -> ``main`` - refactor(ui): decompose ui_layout.rs into functional panel modules\n- PR #812: ``main-18038951190430815680`` -> ``main`` - Refactor actions into submodules\n- PR #811: ``jules-4979153505392602681-6bab7629`` -> ``main`` - Refactor: Decompose media browser into state, ui, and types\n\n## Arbeitsanweisung fuer den lokalen Agenten\n- Jeden PR einzeln pruefen: gh pr view <nr> --json state,mergeable,headRefName,baseRefName,title,files.\n- Geschlossene oder nicht mehr konfliktierende PRs ueberspringen und im Abschlussbericht nennen.\n- Fuer konfliktierende PRs: Head-Branch auschecken, Base-Branch mergen, Konfliktdateien mit git diff --name-only --diff-filter=U ermitteln, Konflikte minimal und fachlich passend aufloesen, Tests/Checks soweit sinnvoll ausfuehren, Commit auf denselben Head-Branch pushen.\n- Keinen neuen PR erstellen und keinen leeren Commit erzeugen.\n- Wenn ein PR inhaltlich nicht mehr rettbar ist, keine Jules-Session starten. Stattdessen im Abschlussbericht exakt PR, Branches, Konfliktdateien und Grund nennen.\n\n## Akzeptanz\n- Jeder noch offene konfliktierende PR aus der Liste ist entweder konfliktfrei gepusht oder konkret als nicht rettbar dokumentiert.\n- Der Bericht nennt fuer jeden PR: Status, Branch, geaenderte Dateien, ausgefuehrte Checks.\n- Es wurden keine Jules-Sessions und keine Tracking-PRs erzeugt.\n\nPrioritaet: KRITISCH - blockiert Release-Pipeline.",
+    "labels": [
+      {
+        "id": "LA_kwDORuEBQc8AAAACdFTmVQ",
+        "name": "priority: critical",
+        "description": "Critical priority - needs immediate attention",
+        "color": "d73a4a"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmDCaxg",
+        "name": "agent:gemini_cli",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmbw8CQ",
+        "name": "bug",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      }
+    ],
+    "number": 822,
+    "state": "OPEN",
+    "title": "*D**-806_Resolve-Merge-Conflicts-PRs-811-812-813-814-815-816-817-818-819",
+    "updatedAt": "2026-06-12T04:13:09Z"
+  },
+  {
+    "assignees": [],
+    "body": "## Ziel\nLoese die Merge-Konflikte der unten gelisteten bestehenden PR-Branches gegen ihre jeweilige Base-Branch. Dieses Issue ist ein lokaler CLI-Agent-Auftrag und darf niemals an Jules delegiert werden.\n\n## Betroffene PRs\n- PR #819: ``B-Jules/___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip-12344597583250619601`` -> ``main`` - ___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip\n- PR #818: ``jules-758624821416836942-84260d61`` -> ``main`` - Decompose Render Loop Content\n- PR #817: ``B-Jules/___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization-18218066131449067322`` -> ``main`` - PR___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization\n- PR #816: ``B-Jules/___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts-12591622069066575352`` -> ``main`` - PR___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts\n- PR #815: ``B-Jules/___M-650_s4_Gemini-Runner-Scenario-Manifest-8942699224866719217`` -> ``main`` - PR___M-650_s4_Gemini-Runner-Scenario-Manifest\n- PR #814: ``M-510_s11_Decompose-Module-Canvas-Renderer-6828407962749377730`` -> ``main`` - Refactor module canvas renderer to decouple drawing primitives\n- PR #813: ``main-4634145121338046659`` -> ``main`` - refactor(ui): decompose ui_layout.rs into functional panel modules\n- PR #812: ``main-18038951190430815680`` -> ``main`` - Refactor actions into submodules\n- PR #811: ``jules-4979153505392602681-6bab7629`` -> ``main`` - Refactor: Decompose media browser into state, ui, and types\n\n## Arbeitsanweisung fuer den lokalen Agenten\n- Jeden PR einzeln pruefen: gh pr view <nr> --json state,mergeable,headRefName,baseRefName,title,files.\n- Geschlossene oder nicht mehr konfliktierende PRs ueberspringen und im Abschlussbericht nennen.\n- Fuer konfliktierende PRs: Head-Branch auschecken, Base-Branch mergen, Konfliktdateien mit git diff --name-only --diff-filter=U ermitteln, Konflikte minimal und fachlich passend aufloesen, Tests/Checks soweit sinnvoll ausfuehren, Commit auf denselben Head-Branch pushen.\n- Keinen neuen PR erstellen und keinen leeren Commit erzeugen.\n- Wenn ein PR inhaltlich nicht mehr rettbar ist, keine Jules-Session starten. Stattdessen im Abschlussbericht exakt PR, Branches, Konfliktdateien und Grund nennen.\n\n## Akzeptanz\n- Jeder noch offene konfliktierende PR aus der Liste ist entweder konfliktfrei gepusht oder konkret als nicht rettbar dokumentiert.\n- Der Bericht nennt fuer jeden PR: Status, Branch, geaenderte Dateien, ausgefuehrte Checks.\n- Es wurden keine Jules-Sessions und keine Tracking-PRs erzeugt.\n\nPrioritaet: KRITISCH - blockiert Release-Pipeline.",
+    "labels": [
+      {
+        "id": "LA_kwDORuEBQc8AAAACdFTmVQ",
+        "name": "priority: critical",
+        "description": "Critical priority - needs immediate attention",
+        "color": "d73a4a"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmDCaxg",
+        "name": "agent:gemini_cli",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmbw8CQ",
+        "name": "bug",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      }
+    ],
+    "number": 821,
+    "state": "OPEN",
+    "title": "*D**-805_Resolve-Merge-Conflicts-PRs-811-812-813-814-815-816-817-818-819",
+    "updatedAt": "2026-06-12T04:11:52Z"
+  },
+  {
+    "assignees": [],
+    "body": "## Ziel\nLoese die Merge-Konflikte der unten gelisteten bestehenden PR-Branches gegen ihre jeweilige Base-Branch. Dieses Issue ist ein lokaler CLI-Agent-Auftrag und darf niemals an Jules delegiert werden.\n\n## Betroffene PRs\n- PR #819: ``B-Jules/___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip-12344597583250619601`` -> ``main`` - ___M-650_s6_UI-Smoke-Timeline-Open-Save-Roundtrip\n- PR #818: ``jules-758624821416836942-84260d61`` -> ``main`` - Decompose Render Loop Content\n- PR #817: ``B-Jules/___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization-18218066131449067322`` -> ``main`` - PR___M-650_s5_UI-Smoke-Fixed-Mouse-Flow-Stabilization\n- PR #816: ``B-Jules/___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts-12591622069066575352`` -> ``main`` - PR___M-650_s7_UI-Harness-Screenshot-And-Failure-Artifacts\n- PR #815: ``B-Jules/___M-650_s4_Gemini-Runner-Scenario-Manifest-8942699224866719217`` -> ``main`` - PR___M-650_s4_Gemini-Runner-Scenario-Manifest\n- PR #814: ``M-510_s11_Decompose-Module-Canvas-Renderer-6828407962749377730`` -> ``main`` - Refactor module canvas renderer to decouple drawing primitives\n- PR #813: ``main-4634145121338046659`` -> ``main`` - refactor(ui): decompose ui_layout.rs into functional panel modules\n- PR #812: ``main-18038951190430815680`` -> ``main`` - Refactor actions into submodules\n- PR #811: ``jules-4979153505392602681-6bab7629`` -> ``main`` - Refactor: Decompose media browser into state, ui, and types\n\n## Arbeitsanweisung fuer den lokalen Agenten\n- Jeden PR einzeln pruefen: gh pr view <nr> --json state,mergeable,headRefName,baseRefName,title,files.\n- Geschlossene oder nicht mehr konfliktierende PRs ueberspringen und im Abschlussbericht nennen.\n- Fuer konfliktierende PRs: Head-Branch auschecken, Base-Branch mergen, Konfliktdateien mit git diff --name-only --diff-filter=U ermitteln, Konflikte minimal und fachlich passend aufloesen, Tests/Checks soweit sinnvoll ausfuehren, Commit auf denselben Head-Branch pushen.\n- Keinen neuen PR erstellen und keinen leeren Commit erzeugen.\n- Wenn ein PR inhaltlich nicht mehr rettbar ist, keine Jules-Session starten. Stattdessen im Abschlussbericht exakt PR, Branches, Konfliktdateien und Grund nennen.\n\n## Akzeptanz\n- Jeder noch offene konfliktierende PR aus der Liste ist entweder konfliktfrei gepusht oder konkret als nicht rettbar dokumentiert.\n- Der Bericht nennt fuer jeden PR: Status, Branch, geaenderte Dateien, ausgefuehrte Checks.\n- Es wurden keine Jules-Sessions und keine Tracking-PRs erzeugt.\n\nPrioritaet: KRITISCH - blockiert Release-Pipeline.",
+    "labels": [
+      {
+        "id": "LA_kwDORuEBQc8AAAACdFTmVQ",
+        "name": "priority: critical",
+        "description": "Critical priority - needs immediate attention",
+        "color": "d73a4a"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmDCaxg",
+        "name": "agent:gemini_cli",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      },
+      {
+        "id": "LA_kwDORuEBQc8AAAACmbw8CQ",
+        "name": "bug",
+        "description": "Auto-created by Autopilot",
+        "color": "CCCCCC"
+      }
+    ],
+    "number": 820,
+    "state": "OPEN",
+    "title": "*D**-804_Resolve-Merge-Conflicts-PRs-811-812-813-814-815-816-817-818-819",
+    "updatedAt": "2026-06-12T04:01:46Z"
+  }
+]
