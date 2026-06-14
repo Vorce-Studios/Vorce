@@ -1,12 +1,13 @@
 #[cfg(test)]
 mod evaluator_tests {
+    use super::*;
     use crate::audio::analyzer_v2::AudioAnalysisV2;
     use crate::module::{
         AudioTriggerOutputConfig, HueNodeType, LinkMode, ModulePartType, SourceType, TriggerType,
         VorceModule,
     };
     use crate::module_eval::ModuleEvaluator;
-    use crate::module_eval::SourceCommand;
+    use crate::module_eval::{ModuleEvalResult, RenderOp, SourceCommand};
     use std::time::Duration;
 
     fn create_test_module() -> VorceModule {

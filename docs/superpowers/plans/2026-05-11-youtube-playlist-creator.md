@@ -13,7 +13,6 @@
 ### Task 1: Project Setup & Environment
 
 **Files:**
-
 - Create: `scripts/youtube_playlist_creator/requirements.txt`
 - Create: `scripts/youtube_playlist_creator/.env.example`
 
@@ -44,7 +43,6 @@ git commit -m "chore: setup project structure and dependencies for youtube creat
 ### Task 2: Authentication Module
 
 **Files:**
-
 - Create: `scripts/youtube_playlist_creator/auth.py`
 
 - [ ] **Step 1: Implement OAuth2 flow**
@@ -77,7 +75,6 @@ git commit -m "feat: add oauth2 authentication module"
 ### Task 3: YouTube Client Logic
 
 **Files:**
-
 - Create: `scripts/youtube_playlist_creator/youtube_client.py`
 
 - [ ] **Step 1: Implement similarity search and playlist management**
@@ -143,7 +140,6 @@ git commit -m "feat: implement similarity search and playlist management"
 ### Task 4: Main CLI Entry Point
 
 **Files:**
-
 - Create: `scripts/youtube_playlist_creator/main.py`
 
 - [ ] **Step 1: Implement CLI wrapper**

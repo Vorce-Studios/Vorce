@@ -1,0 +1,872 @@
+{
+  "schema_version": 1,
+  "session_id": "autopilot-2026-06-04-1309",
+  "started_at": "2026-06-04T13:09:32.4807992+02:00",
+  "last_heartbeat": "2026-06-07T13:46:42.0293146+02:00",
+  "last_planning_at": "2026-06-06T13:46:41.8321253+02:00",
+  "last_monitoring_at": "2026-06-07T13:46:41.8303376+02:00",
+  "active_delegations": [
+    {
+      "issue_number": 742,
+      "issue_title": "__MF-SubI_NDI-Orchestration-Smoke-Test",
+      "jules_session_id": "local-agent-19872",
+      "agent_type": "gemini_cli",
+      "job_id": "19872",
+      "jules_state": "IN_PROGRESS",
+      "pr_url": null,
+      "delegated_at": "2026-06-07T03:35:18.6559463+02:00",
+      "last_checked_at": "2026-06-07T03:35:21.8829289+02:00",
+      "retry_count": 0
+    },
+    {
+      "issue_number": 743,
+      "issue_title": "__MF-SubI_Cue-Timeline-Trigger-Roundtrip-Test",
+      "jules_session_id": "local-agent-22056",
+      "agent_type": "gemini_cli",
+      "job_id": "22056",
+      "jules_state": "IN_PROGRESS",
+      "pr_url": null,
+      "delegated_at": "2026-06-07T03:35:18.6937329+02:00",
+      "last_checked_at": "2026-06-07T03:35:21.908325+02:00",
+      "retry_count": 0
+    },
+    {
+      "issue_number": 744,
+      "issue_title": "__MF-SubI_Module-Scheduling-Deterministic-Order-Tests",
+      "jules_session_id": "local-agent-10968",
+      "agent_type": "gemini_cli",
+      "job_id": "10968",
+      "jules_state": "IN_PROGRESS",
+      "pr_url": null,
+      "delegated_at": "2026-06-07T03:35:18.7518445+02:00",
+      "last_checked_at": "2026-06-07T03:35:21.9289212+02:00",
+      "retry_count": 0
+    }
+  ],
+  "working_queue": [
+    {
+      "id": "work-745-20260605051215",
+      "issue_number": 745,
+      "issue_title": "__MF-SubI_Module-Evaluator-Cycle-Guard-Test",
+      "agent_provider": "gemini_cli",
+      "status": "QUEUED",
+      "queued_at": "2026-06-05T05:12:15.3882966+02:00"
+    },
+    {
+      "id": "work-746-20260605051215",
+      "issue_number": 746,
+      "issue_title": "__MF-SubI_Cluster-Control-Plane-Health-Endpoint-Test",
+      "agent_provider": "gemini_cli",
+      "status": "QUEUED",
+      "queued_at": "2026-06-05T05:12:15.4314276+02:00"
+    },
+    {
+      "id": "work-747-20260605051215",
+      "issue_number": 747,
+      "issue_title": "__MF-SubI_Cluster-Recovery-Drift-Fixture-Tests",
+      "agent_provider": "gemini_cli",
+      "status": "QUEUED",
+      "queued_at": "2026-06-05T05:12:15.4767922+02:00"
+    },
+    {
+      "id": "work-750-20260606014341",
+      "issue_number": 750,
+      "issue_title": "MF-StIs_Resolve-Merge-Conflicts: PRs 710",
+      "agent_provider": "gemini_cli",
+      "status": "QUEUED",
+      "queued_at": "2026-06-06T01:43:41.423741+02:00"
+    },
+    {
+      "id": "work-726-20260606015301",
+      "issue_number": 726,
+      "issue_title": "MF-StIs_Resolve-Merge-Conflicts: PRs 710, 711, 712, 713, 714",
+      "agent_provider": "gemini_cli",
+      "status": "QUEUED",
+      "queued_at": "2026-06-06T01:53:01.439703+02:00"
+    },
+    {
+      "id": "work-751-20260606015410",
+      "issue_number": 751,
+      "issue_title": "MF-StIs_Resolve-Merge-Conflicts: PRs 710",
+      "agent_provider": "gemini_cli",
+      "status": "QUEUED",
+      "queued_at": "2026-06-06T01:54:10.0601681+02:00"
+    },
+    {
+      "id": "work-753-20260606021919",
+      "issue_number": 753,
+      "issue_title": "MF-StIs_Resolve-Merge-Conflicts: PRs 710",
+      "agent_provider": "gemini_cli",
+      "status": "QUEUED",
+      "queued_at": "2026-06-06T02:19:19.3547847+02:00"
+    }
+  ],
+  "working_sessions": [
+    {
+      "id": "work-726-20260605020716",
+      "issue_number": 726,
+      "issue_title": "MF-StIs_Resolve-Merge-Conflicts: PRs 710, 711, 712, 713, 714",
+      "agent_provider": "gemini_cli",
+      "process_id": 11844,
+      "status": "FAILED",
+      "started_at": "2026-06-05T04:08:01.7482953+02:00",
+      "error": "Runner failed before agent start: Vorce-Autopilot\\tools\\run-visible-agent-task.ps1 loaded Vorce-Autopilot\\lib\\quota-manager.ps1, but quota-manager.ps1 lives in Vorce-Autopilot\\src\\lib. This loader path is fixed now.",
+      "last_checked_at": "2026-06-05T20:56:43.8435889+02:00"
+    },
+    {
+      "id": "work-721-20260605030029",
+      "issue_number": 721,
+      "issue_title": "MF-StIs_PR-710-714-Merge-Konflikte-gebuendelt-aufloesen",
+      "agent_provider": "gemini_cli",
+      "process_id": 12132,
+      "status": "FAILED",
+      "started_at": "2026-06-05T04:08:01.7982093+02:00",
+      "error": "Runner failed before agent start: Vorce-Autopilot\\tools\\run-visible-agent-task.ps1 loaded Vorce-Autopilot\\lib\\quota-manager.ps1, but quota-manager.ps1 lives in Vorce-Autopilot\\src\\lib. This loader path is fixed now.",
+      "last_checked_at": "2026-06-05T20:56:43.844035+02:00"
+    },
+    {
+      "id": "work-722-20260605030029",
+      "issue_number": 722,
+      "issue_title": "MF-StIs_Release-Readiness-offene-PR-Blocker-Matrix-aktualisieren",
+      "agent_provider": "gemini_cli",
+      "process_id": 2924,
+      "status": "FAILED",
+      "started_at": "2026-06-05T04:08:01.833407+02:00",
+      "error": "Runner failed before agent start: Vorce-Autopilot\\tools\\run-visible-agent-task.ps1 loaded Vorce-Autopilot\\lib\\quota-manager.ps1, but quota-manager.ps1 lives in Vorce-Autopilot\\src\\lib. This loader path is fixed now.",
+      "last_checked_at": "2026-06-05T20:56:43.8443574+02:00"
+    },
+    {
+      "id": "work-723-20260605030029",
+      "issue_number": 723,
+      "issue_title": "MF-StIs_Release-Readiness-Merge-Reihenfolge-fuer-PRs-710-714-festlegen",
+      "agent_provider": "gemini_cli",
+      "process_id": 17084,
+      "status": "FAILED",
+      "started_at": "2026-06-07T00:00:14.9965412+02:00"
+    },
+    {
+      "id": "work-730-20260605051214",
+      "issue_number": 730,
+      "issue_title": "__MF-SubI_UI-Harness-Screenshot-And-Failure-Artifacts",
+      "agent_provider": "gemini_cli",
+      "process_id": 7864,
+      "status": "FAILED",
+      "started_at": "2026-06-07T00:00:15.0482003+02:00"
+    },
+    {
+      "id": "work-731-20260605051214",
+      "issue_number": 731,
+      "issue_title": "__MF-SubI_UI-Smoke-Timeline-Open-Save-Roundtrip",
+      "agent_provider": "gemini_cli",
+      "process_id": 19788,
+      "status": "FAILED",
+      "started_at": "2026-06-07T00:00:15.0829421+02:00"
+    },
+    {
+      "id": "work-732-20260605051214",
+      "issue_number": 732,
+      "issue_title": "__MF-SubI_UI-Smoke-Fixed-Mouse-Flow-Stabilization",
+      "agent_provider": "gemini_cli",
+      "process_id": 1952,
+      "status": "FAILED",
+      "started_at": "2026-06-07T00:22:21.4184409+02:00"
+    },
+    {
+      "id": "work-733-20260605051214",
+      "issue_number": 733,
+      "issue_title": "__MF-SubI_Gemini-Runner-Scenario-Manifest-And-Timeouts",
+      "agent_provider": "gemini_cli",
+      "process_id": 12488,
+      "status": "FAILED",
+      "started_at": "2026-06-07T00:22:21.4602261+02:00"
+    },
+    {
+      "id": "work-734-20260605051214",
+      "issue_number": 734,
+      "issue_title": "__MF-SubI_Gemini-Runner-Result-Normalization",
+      "agent_provider": "gemini_cli",
+      "process_id": 15640,
+      "status": "FAILED",
+      "started_at": "2026-06-07T00:22:21.4933123+02:00"
+    },
+    {
+      "id": "work-735-20260605051215",
+      "issue_number": 735,
+      "issue_title": "__MF-SubI_TimelineV2-Panel-State-Extraction",
+      "agent_provider": "gemini_cli",
+      "process_id": 12880,
+      "status": "FAILED",
+      "started_at": "2026-06-07T01:07:39.7080177+02:00",
+      "last_checked_at": "2026-06-07T01:37:40.9110031+02:00",
+      "error": "The property 'default' cannot be found on this object. Verify that the property exists.",
+      "status_updated_at": "06/07/2026 01:07:42",
+      "pr_url": ""
+    },
+    {
+      "id": "work-736-20260605051215",
+      "issue_number": 736,
+      "issue_title": "__MF-SubI_TimelineV2-Interaction-Tests-For-Drag-And-Selection",
+      "agent_provider": "gemini_cli",
+      "process_id": 16780,
+      "status": "FAILED",
+      "started_at": "2026-06-07T01:07:39.7395257+02:00",
+      "last_checked_at": "2026-06-07T01:37:41.0118435+02:00",
+      "error": "The property 'default' cannot be found on this object. Verify that the property exists.",
+      "status_updated_at": "06/07/2026 01:07:42",
+      "pr_url": ""
+    },
+    {
+      "id": "work-737-20260605051215",
+      "issue_number": 737,
+      "issue_title": "__MF-SubI_Timeline-Persistence-Dirty-State-Test",
+      "agent_provider": "gemini_cli",
+      "process_id": 17864,
+      "status": "FAILED",
+      "started_at": "2026-06-07T01:07:39.7736386+02:00",
+      "last_checked_at": "2026-06-07T01:37:41.1060804+02:00",
+      "error": "The property 'default' cannot be found on this object. Verify that the property exists.",
+      "status_updated_at": "06/07/2026 01:07:42",
+      "pr_url": ""
+    },
+    {
+      "id": "work-738-20260605051215",
+      "issue_number": 738,
+      "issue_title": "__MF-SubI_Timeline-Edge-Case-Regression-Cases",
+      "agent_provider": "gemini_cli",
+      "process_id": 15380,
+      "status": "FAILED",
+      "started_at": "2026-06-07T01:37:40.7031761+02:00"
+    },
+    {
+      "id": "work-739-20260605051215",
+      "issue_number": 739,
+      "issue_title": "__MF-SubI_Media-Decoder-FFI-Null-And-Bounds-Checks",
+      "agent_provider": "gemini_cli",
+      "process_id": 12316,
+      "status": "FAILED",
+      "started_at": "2026-06-07T01:37:40.7585147+02:00"
+    },
+    {
+      "id": "work-741-20260605051215",
+      "issue_number": 741,
+      "issue_title": "__MF-SubI_NDI-Asset-Availability-Probe",
+      "agent_provider": "gemini_cli",
+      "process_id": 5204,
+      "status": "FAILED",
+      "started_at": "2026-06-07T01:37:40.7935313+02:00"
+    },
+    {
+      "id": "work-742-20260605051215",
+      "issue_number": 742,
+      "issue_title": "__MF-SubI_NDI-Orchestration-Smoke-Test",
+      "agent_provider": "gemini_cli",
+      "process_id": 19872,
+      "status": "IN_PROGRESS",
+      "started_at": "2026-06-07T03:35:18.6373923+02:00"
+    },
+    {
+      "id": "work-743-20260605051215",
+      "issue_number": 743,
+      "issue_title": "__MF-SubI_Cue-Timeline-Trigger-Roundtrip-Test",
+      "agent_provider": "gemini_cli",
+      "process_id": 22056,
+      "status": "IN_PROGRESS",
+      "started_at": "2026-06-07T03:35:18.6934776+02:00"
+    },
+    {
+      "id": "work-744-20260605051215",
+      "issue_number": 744,
+      "issue_title": "__MF-SubI_Module-Scheduling-Deterministic-Order-Tests",
+      "agent_provider": "gemini_cli",
+      "process_id": 10968,
+      "status": "IN_PROGRESS",
+      "started_at": "2026-06-07T03:35:18.7516164+02:00"
+    }
+  ],
+  "review_queue": [
+    {
+      "issue_number": 739,
+      "pr_url": "https://github.com/Vorce-Studios/Vorce/pull/760",
+      "pr_number": 760,
+      "review_status": "completed",
+      "review_provider": "claude_code"
+    },
+    {
+      "issue_number": 736,
+      "pr_url": "https://github.com/Vorce-Studios/Vorce/pull/754",
+      "pr_number": 754,
+      "review_status": "completed",
+      "review_provider": "claude_code"
+    }
+  ],
+  "autopilot_created_issues": [
+    {
+      "tag": "resolve-conflicts-710-711-712-713-714",
+      "issue_number": 726,
+      "created_at": "2026-06-04T17:45:25.6158587+02:00"
+    },
+    {
+      "tag": "resolve-conflicts-710",
+      "issue_number": 750,
+      "created_at": "2026-06-06T01:43:41.3819644+02:00"
+    },
+    {
+      "tag": "resolve-conflicts-710",
+      "issue_number": 751,
+      "created_at": "2026-06-06T01:54:10.0596099+02:00"
+    },
+    {
+      "tag": "resolve-conflicts-710",
+      "issue_number": 753,
+      "created_at": "2026-06-06T02:19:19.3543029+02:00"
+    },
+    "*D**-061_PR-754-Clippy-Struct-Initialization-Fix",
+    "*D**-062_PR-760-FFI-Safety-Contract-Fix",
+    "*D**-063_Remove-Generated-Vite-Files-From-PR-754",
+    "*D**-064_Remove-Generated-Vite-Files-From-PR-760",
+    "*D**-065_Remove-Unrelated-Workflow-Documentation-From-PR-754",
+    "*D**-066_Remove-Unrelated-Workflow-Documentation-From-PR-760",
+    "*D**-068_PR-754-Scope-Bereinigung",
+    "*D**-069_PR-760-FFI-Safety-Fixes",
+    "*D**-070_PR-760-Scope-Bereinigung",
+    "*D**-071_PR-783-Rustfmt-Fixes",
+    "*D**-072_PR-Titel-Namenskonvention-Korrigieren",
+    "*D**-073_PR-754-CI-Abschluss-Pruefen",
+    "*D**-074_Release-Scope-Klassifikation-Dokumentieren",
+    "*D**-075_Release-Gate-Evidenzindex-Erstellen",
+    "*D**-076_UI-Smoke-Evidenz-Automatisieren",
+    "*D**-077_Packaging-Install-Sanity-Evidenz-Erzeugen",
+    "*D**-078_macOS-QA-Evidenz-Erzeugen",
+    "*D**-079_NDI-E2E-Gate-Fuer-PR-776-Pruefen",
+    "*D**-080_Jules-Session-Statusdaten-Vervollstaendigen",
+    "*D**-081_Fix-PR-760-Rust-Unsafe-CI-Failures",
+    "*D**-082_Diagnose-And-Fix-PR-783-Precommit-Failure",
+    "*D**-083_Classify-Open-PRs-For-Release-1-0",
+    "*D**-084_Assess-PR-776-NDI-Dependency-Release-Risk",
+    "*D**-085_Reconcile-Stale-Conflict-Issue-726",
+    "*D**-086_Audit-Open-PR-Source-Issue-Mappings",
+    "*D**-087_Rename-Open-PRs-To-Confirmed-Source-Issue-Titles",
+    "*D**-088_Collect-Jules-Session-Status-Evidence",
+    "*D**-089_Add-Artifact-Link-Validation-For-Timeline-Matrix",
+    "*D**-090_Create-Release-Evidence-Checklist-Validator",
+    "*D**-091_Implement-Deterministic-UI-Smoke-Test",
+    "*D**-092_Verify-TimelineV2-Interaction-Test-Coverage"
+  ],
+  "completed_this_session": [
+    {
+      "issue_number": 522,
+      "result": "completed",
+      "completed_at": "2026-06-07T00:22:25.4698771+02:00"
+    }
+  ],
+  "decisions_pending": [
+    {
+      "topic": "Unzugeordnete Jules Session braucht Klärung",
+      "context": "Session 'Sentinel: Security-Focused Codebase Guardian' (AWAITING_USER_FEEDBACK) hat keine Issue-Nummer und kann nicht automatisch sauber weitergefuehrt werden. URL: https://jules.google.com/session/2166513662847475705",
+      "created_at": "2026-06-06T23:59:19.1597685+02:00"
+    },
+    {
+      "topic": "PR #779 verletzt Vorce-Namenskonvention",
+      "context": "Titel 'chore(deps): Bump sysinfo from 0.39.2 to 0.39.3' kann keinem gueltigen Vorce-Issue-Titel zugeordnet werden. Erwartet: PR_{IssueTitle}.",
+      "created_at": "2026-06-07T01:07:39.5782534+02:00"
+    },
+    {
+      "topic": "PR #778 verletzt Vorce-Namenskonvention",
+      "context": "Titel 'chore(deps): Bump cc from 1.2.62 to 1.2.63' kann keinem gueltigen Vorce-Issue-Titel zugeordnet werden. Erwartet: PR_{IssueTitle}.",
+      "created_at": "2026-06-07T01:07:39.5959692+02:00"
+    },
+    {
+      "topic": "PR #777 verletzt Vorce-Namenskonvention",
+      "context": "Titel 'chore(deps): Bump cbindgen from 0.29.2 to 0.29.3' kann keinem gueltigen Vorce-Issue-Titel zugeordnet werden. Erwartet: PR_{IssueTitle}.",
+      "created_at": "2026-06-07T01:07:39.6097782+02:00"
+    },
+    {
+      "topic": "PR #776 verletzt Vorce-Namenskonvention",
+      "context": "Titel 'chore(deps): Bump grafton-ndi from 0.12.0 to 0.13.0' kann keinem gueltigen Vorce-Issue-Titel zugeordnet werden. Erwartet: PR_{IssueTitle}.",
+      "created_at": "2026-06-07T01:07:39.6236249+02:00"
+    },
+    {
+      "topic": "PR #775 verletzt Vorce-Namenskonvention",
+      "context": "Titel 'chore(deps): Bump chrono from 0.4.44 to 0.4.45' kann keinem gueltigen Vorce-Issue-Titel zugeordnet werden. Erwartet: PR_{IssueTitle}.",
+      "created_at": "2026-06-07T01:07:39.6375188+02:00"
+    },
+    {
+      "topic": "PR #774 verletzt Vorce-Namenskonvention",
+      "context": "Titel 'chore(deps): Bump glam from 0.33.0 to 0.33.1' kann keinem gueltigen Vorce-Issue-Titel zugeordnet werden. Erwartet: PR_{IssueTitle}.",
+      "created_at": "2026-06-07T01:07:39.6528942+02:00"
+    },
+    {
+      "topic": "QA Manager Audit Alert",
+      "context": "Es wurden mehrere kritische Punkte im Audit festgestellt, die eine sofortige Aufmerksamkeit erfordern:\n\n1.  **Offene Merge-Konflikte**: Es gibt mehrere offene Issues, die das Beheben von Merge-Konflikten betreffen: #753, #751, #750, #726. Diese blockieren die Integration von Code und können zu erheblichen Verzögerungen in der Entwicklung führen. Gemäß Mandat darf ich hierfür keine automatische Jules-Session starten.\n    **Was der User tun soll**: Der User muss die Priorität dieser Merge-Konflikt-Issues bewerten und manuell die entsprechenden Jules-Sessions starten oder die Konflikte beheben lassen.\n\n2.  **Abhängigkeit von Bevy 'main'-Branch**: Die Crate `vorce-bevy` verwendet eine Abhängigkeit von `bevy`, die direkt auf den `main`-Branch des Bevy-Repositories verweist (https://github.com/bevyengine/bevy, branch = \"main\"). Obwohl dies eine bewusste Entwicklungsentscheidung sein könnte, birgt es das Risiko unerwarteter Kompatibilitätsprobleme oder Build-Fehler, wenn sich der `main`-Branch von Bevy ändert. Dies kann zu Instabilität und unvorhersehbarem Verhalten führen.\n    **Was der User tun soll**: Der User sollte prüfen, ob eine spezifische, stabile Version oder ein Commit-Hash von Bevy verwendet werden kann, um die Reproduzierbarkeit und Stabilität zu erhöhen. Eine Überwachung von Änderungen im Bevy `main`-Branch ist ebenfalls ratsam.\n\n3.  **Warteschlange von Agenten-Delegationen**: Es gibt mehrere Agenten-Delegationen (Issues #735, #736, #737), die sich alle im Status 'QUEUED' befinden. Dies deutet auf einen Engpass in der Ausführungsumgebung der Agenten hin, entweder aufgrund einer hohen Arbeitslast oder möglicher Probleme mit der Agenten-Infrastruktur. Dies beeinträchtigt die Geschwindigkeit der Problemlösung und der Feature-Implementierung.\n    **Was der User tun soll**: Der User sollte die Auslastung der Agenten-Infrastruktur überprüfen, um festzustellen, warum diese Aufgaben in der Warteschlange hängen. Gegebenenfalls muss die Kapazität erhöht oder die Agenten-Konfiguration optimiert werden.",
+      "created_at": "2026-06-07T01:36:54.6160633+02:00"
+    },
+    {
+      "topic": "PR #783 verletzt Vorce-Namenskonvention",
+      "context": "Titel 'PRDecompose-Module-Evaluator [M510-S04]' kann keinem gueltigen Vorce-Issue-Titel zugeordnet werden. Erwartet: PR_{IssueTitle}.",
+      "created_at": "2026-06-07T01:37:40.4317872+02:00"
+    },
+    {
+      "topic": "PR #782 verletzt Vorce-Namenskonvention",
+      "context": "Titel 'chore(deps): Bump hyper from 1.9.0 to 1.10.1' kann keinem gueltigen Vorce-Issue-Titel zugeordnet werden. Erwartet: PR_{IssueTitle}.",
+      "created_at": "2026-06-07T01:37:40.464758+02:00"
+    },
+    {
+      "topic": "PR #781 verletzt Vorce-Namenskonvention",
+      "context": "Titel 'chore(deps): Bump http from 1.4.0 to 1.4.1' kann keinem gueltigen Vorce-Issue-Titel zugeordnet werden. Erwartet: PR_{IssueTitle}.",
+      "created_at": "2026-06-07T01:37:40.4822816+02:00"
+    },
+    {
+      "topic": "PR #780 verletzt Vorce-Namenskonvention",
+      "context": "Titel 'chore(deps): Bump uuid from 1.23.1 to 1.23.2' kann keinem gueltigen Vorce-Issue-Titel zugeordnet werden. Erwartet: PR_{IssueTitle}.",
+      "created_at": "2026-06-07T01:37:40.4975056+02:00"
+    }
+  ],
+  "escalated_issues": [
+    {
+      "issue_number": 726,
+      "issue_title": "MF-StIs_Resolve-Merge-Conflicts: PRs 710, 711, 712, 713, 714",
+      "last_jules_session_id": "local-agent-11844",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "RETRY_DISPATCHED",
+      "escalated_at": "2026-06-05T05:00:26.4933717+02:00"
+    },
+    {
+      "issue_number": 721,
+      "issue_title": "MF-StIs_PR-710-714-Merge-Konflikte-gebuendelt-aufloesen",
+      "last_jules_session_id": "local-agent-12132",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "RETRY_DISPATCHED",
+      "escalated_at": "2026-06-05T05:00:26.5337423+02:00"
+    },
+    {
+      "issue_number": 722,
+      "issue_title": "MF-StIs_Release-Readiness-offene-PR-Blocker-Matrix-aktualisieren",
+      "last_jules_session_id": "local-agent-2924",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "RETRY_DISPATCHED",
+      "escalated_at": "2026-06-05T05:00:26.5695289+02:00"
+    },
+    {
+      "issue_number": 723,
+      "issue_title": "MF-StIs_Release-Readiness-Merge-Reihenfolge-fuer-PRs-710-714-festlegen",
+      "last_jules_session_id": "local-agent-17084",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T00:00:45.2636463+02:00"
+    },
+    {
+      "issue_number": 730,
+      "issue_title": "__MF-SubI_UI-Harness-Screenshot-And-Failure-Artifacts",
+      "last_jules_session_id": "local-agent-7864",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T00:00:45.3203909+02:00"
+    },
+    {
+      "issue_number": 731,
+      "issue_title": "__MF-SubI_UI-Smoke-Timeline-Open-Save-Roundtrip",
+      "last_jules_session_id": "local-agent-19788",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T00:00:45.3785582+02:00"
+    },
+    {
+      "issue_number": 732,
+      "issue_title": "__MF-SubI_UI-Smoke-Fixed-Mouse-Flow-Stabilization",
+      "last_jules_session_id": "local-agent-1952",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T00:22:29.40978+02:00"
+    },
+    {
+      "issue_number": 733,
+      "issue_title": "__MF-SubI_Gemini-Runner-Scenario-Manifest-And-Timeouts",
+      "last_jules_session_id": "local-agent-12488",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T00:22:29.46316+02:00"
+    },
+    {
+      "issue_number": 734,
+      "issue_title": "__MF-SubI_Gemini-Runner-Result-Normalization",
+      "last_jules_session_id": "local-agent-15640",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T00:22:29.5215047+02:00"
+    },
+    {
+      "issue_number": 745,
+      "issue_title": "Issue #745: __MF-SubI_Module-Evaluator-Cycle-Guard-Test",
+      "last_jules_session_id": "8734646661322790063",
+      "monitoring_failures": 2,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T01:07:39.8260526+02:00"
+    },
+    {
+      "issue_number": 514,
+      "issue_title": "Issue #514: Decompose-Module-Evaluator [M510-S04]",
+      "last_jules_session_id": "17812287306951879046",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T01:07:39.8675404+02:00"
+    },
+    {
+      "issue_number": 525,
+      "issue_title": "Issue #525: Decompose-Media-Decoder [M510-S15]",
+      "last_jules_session_id": "207401302840951243",
+      "monitoring_failures": 3,
+      "planning_resolutions": 0,
+      "status": "NEEDS_PLANNING",
+      "escalated_at": "2026-06-07T01:07:39.9297263+02:00"
+    },
+    {
+      "issue_number": 735,
+      "issue_title": "__MF-SubI_TimelineV2-Panel-State-Extraction",
+      "last_jules_session_id": "local-agent-12880",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T01:37:40.9650274+02:00"
+    },
+    {
+      "issue_number": 736,
+      "issue_title": "__MF-SubI_TimelineV2-Interaction-Tests-For-Drag-And-Selection",
+      "last_jules_session_id": "local-agent-16780",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T01:37:41.0427986+02:00"
+    },
+    {
+      "issue_number": 737,
+      "issue_title": "__MF-SubI_Timeline-Persistence-Dirty-State-Test",
+      "last_jules_session_id": "local-agent-17864",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T01:37:41.1310878+02:00"
+    },
+    {
+      "issue_number": 738,
+      "issue_title": "__MF-SubI_Timeline-Edge-Case-Regression-Cases",
+      "last_jules_session_id": "local-agent-15380",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T01:37:51.9503474+02:00"
+    },
+    {
+      "issue_number": 739,
+      "issue_title": "__MF-SubI_Media-Decoder-FFI-Null-And-Bounds-Checks",
+      "last_jules_session_id": "local-agent-12316",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T01:37:52.0059553+02:00"
+    },
+    {
+      "issue_number": 741,
+      "issue_title": "__MF-SubI_NDI-Asset-Availability-Probe",
+      "last_jules_session_id": "local-agent-5204",
+      "monitoring_failures": 1,
+      "planning_resolutions": 0,
+      "status": "QUEUED_FOR_RETRY",
+      "escalated_at": "2026-06-07T01:37:52.0679498+02:00"
+    }
+  ],
+  "error_log": [
+    {
+      "timestamp": "2026-06-05T05:00:26.5282348+02:00",
+      "message": "Stalled session detected for #721 (>45min)",
+      "context": "Session: local-agent-12132, Agent: jules"
+    },
+    {
+      "timestamp": "2026-06-05T05:00:26.5644724+02:00",
+      "message": "Stalled session detected for #722 (>45min)",
+      "context": "Session: local-agent-2924, Agent: jules"
+    },
+    {
+      "timestamp": "2026-06-06T01:53:07.558992+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The property 'Name' cannot be found on this object. Verify that the property exists."
+    },
+    {
+      "timestamp": "2026-06-06T02:18:19.9594369+02:00",
+      "message": "Planning wake-up failed",
+      "context": "The property 'Name' cannot be found on this object. Verify that the property exists."
+    },
+    {
+      "timestamp": "2026-06-06T18:37:56.3339403+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: GraphQL: API rate limit exceeded for user ID 195831171.\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:39:37.0521235+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: GraphQL: API rate limit exceeded for user ID 195831171.\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:40:39.2946967+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:41:39.4166039+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:42:39.7087177+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:43:38.4619356+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:44:41.9408125+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:45:40.5167617+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:47:49.7562635+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:48:55.0685161+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:49:58.7114272+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:50:55.2494448+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:51:51.7272265+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:52:59.5704167+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:53:56.1405852+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:54:54.8165843+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:55:55.9335518+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:56:52.1988821+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:57:53.0662755+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:58:49.9031644+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T18:59:44.9875893+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-06T19:00:40.7538516+02:00",
+      "message": "Planning wake-up failed",
+      "context": "gh project item-list 1 --owner Vorce-Studios --limit 1000 --format json fehlgeschlagen: unknown owner type\r\n"
+    },
+    {
+      "timestamp": "2026-06-07T00:00:45.229719+02:00",
+      "message": "Local agent local_agent failed for #723",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T00:00:45.3155273+02:00",
+      "message": "Local agent local_agent failed for #730",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T00:00:45.3729722+02:00",
+      "message": "Local agent local_agent failed for #731",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T00:22:29.3960565+02:00",
+      "message": "Local agent local_agent failed for #732",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T00:22:29.4582047+02:00",
+      "message": "Local agent local_agent failed for #733",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T00:22:29.516268+02:00",
+      "message": "Local agent local_agent failed for #734",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T01:07:39.8204266+02:00",
+      "message": "Stalled session detected for #745 (>45min)",
+      "context": "Session: 8734646661322790063, Agent: jules"
+    },
+    {
+      "timestamp": "2026-06-07T01:07:39.8577752+02:00",
+      "message": "Stalled session detected for #514 (>45min)",
+      "context": "Session: 17812287306951879046, Agent: jules"
+    },
+    {
+      "timestamp": "2026-06-07T01:07:39.9233642+02:00",
+      "message": "Stalled session detected for #525 (>45min)",
+      "context": "Session: 207401302840951243, Agent: jules"
+    },
+    {
+      "timestamp": "2026-06-07T01:32:56.3357595+02:00",
+      "message": "Jules delegation failed for #730",
+      "context": "Jules-Session blockiert: Issue #730 ist ein Master-/Tracker-/Merge-Konflikt-Issue oder kein konkreter Codeauftrag. Konflikte muessen mit lokalen CLI-Tools geloest werden; fuer Tracker zuerst ein konkretes Sub-Issue erstellen."
+    },
+    {
+      "timestamp": "2026-06-07T01:32:56.8460677+02:00",
+      "message": "Jules delegation failed for #731",
+      "context": "Jules-Session blockiert: Issue #731 ist ein Master-/Tracker-/Merge-Konflikt-Issue oder kein konkreter Codeauftrag. Konflikte muessen mit lokalen CLI-Tools geloest werden; fuer Tracker zuerst ein konkretes Sub-Issue erstellen."
+    },
+    {
+      "timestamp": "2026-06-07T01:32:57.3930015+02:00",
+      "message": "Jules delegation failed for #732",
+      "context": "Jules-Session blockiert: Issue #732 ist ein Master-/Tracker-/Merge-Konflikt-Issue oder kein konkreter Codeauftrag. Konflikte muessen mit lokalen CLI-Tools geloest werden; fuer Tracker zuerst ein konkretes Sub-Issue erstellen."
+    },
+    {
+      "timestamp": "2026-06-07T01:32:57.9400678+02:00",
+      "message": "Jules delegation failed for #733",
+      "context": "Jules-Session blockiert: Issue #733 ist ein Master-/Tracker-/Merge-Konflikt-Issue oder kein konkreter Codeauftrag. Konflikte muessen mit lokalen CLI-Tools geloest werden; fuer Tracker zuerst ein konkretes Sub-Issue erstellen."
+    },
+    {
+      "timestamp": "2026-06-07T01:37:40.9323284+02:00",
+      "message": "Local agent gemini_cli failed for #735",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T01:37:41.0359195+02:00",
+      "message": "Local agent gemini_cli failed for #736",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T01:37:41.1234935+02:00",
+      "message": "Local agent gemini_cli failed for #737",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T01:37:51.8774903+02:00",
+      "message": "Jules session failed for #525",
+      "context": "Session: 207401302840951243"
+    },
+    {
+      "timestamp": "2026-06-07T01:37:51.9413411+02:00",
+      "message": "Local agent local_agent failed for #738",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T01:37:51.999322+02:00",
+      "message": "Local agent local_agent failed for #739",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T01:37:52.060395+02:00",
+      "message": "Local agent local_agent failed for #741",
+      "context": "Check terminal logs"
+    },
+    {
+      "timestamp": "2026-06-07T03:29:08.8510005+02:00",
+      "message": "Jules delegation failed for #733",
+      "context": "Jules-Session blockiert: Issue #733 ist ein Master-/Tracker-/Merge-Konflikt-Issue oder kein konkreter Codeauftrag. Konflikte muessen mit lokalen CLI-Tools geloest werden; fuer Tracker zuerst ein konkretes Sub-Issue erstellen."
+    },
+    {
+      "timestamp": "2026-06-07T03:35:18.8115379+02:00",
+      "message": "Stalled session detected for #745 (>45min)",
+      "context": "Session: 8734646661322790063, Agent: jules"
+    },
+    {
+      "timestamp": "2026-06-07T03:35:21.8023953+02:00",
+      "message": "Jules session failed for #525",
+      "context": "Session: 207401302840951243"
+    },
+    {
+      "timestamp": "2026-06-07T12:50:33.8278265+02:00",
+      "message": "Planning wake-up failed",
+      "context": "Cannot bind argument to parameter 'Config' because it is null."
+    }
+  ],
+  "deliberation_log": [],
+  "codex_main_session_id": "019e92af-c9a3-79d1-8da6-3202596fa2c8",
+  "optimizer_queue": [],
+  "last_optimizer_analysis_at": null,
+  "planning_run_count": 56,
+  "run_summaries": {
+    "planning": {
+      "started_at": "2026-06-07T03:20:55.2724864+02:00",
+      "completed_at": "2026-06-07T03:29:15.1037311+02:00",
+      "duration_seconds": 500,
+      "summary": "Issues geprueft: 4; Working-Queue: 10 -> 10; Delegierungen: 1 -> 1; erstellte Issues gesamt: 35."
+    },
+    "monitoring": {
+      "started_at": "2026-06-07T03:34:32.4022472+02:00",
+      "completed_at": "2026-06-07T03:35:23.6437403+02:00",
+      "duration_seconds": 51,
+      "summary": "Offene PRs: 12; Konflikte: 0; Working-Queue: 10 -> 7; Delegierungen: 1 -> 3; Alerts: 13 -> 12; fehlgeschlagene Working Sessions: 15."
+    }
+  },
+  "run_control": {
+    "force_optimizer": true,
+    "force_optimizer_requested_at": "2026-06-07T11:49:16.068Z"
+  },
+  "optimizer_last_run": {
+    "ran_at": null,
+    "next_run_at": null,
+    "forced": false,
+    "proposals": [],
+    "approved_changes": [],
+    "summary": "Noch kein dokumentierter Optimizer-Run."
+  },
+  "review_sessions": []
+}
