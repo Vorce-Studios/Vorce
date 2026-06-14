@@ -1,12 +1,11 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use std::hint::black_box;
 use std::time::Duration;
-use vorce_media::{FFmpegDecoder, TestPatternDecoder, VideoDecoder};
+use vorce_media::{TestPatternDecoder, VideoDecoder};
 
 fn bench_video_decode(c: &mut Criterion) {
     c.benchmark_group("video_decode").bench_function("decode_frame_1080p", |b| {
-        let pattern = TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
-        let mut decoder = FFmpegDecoder::TestPattern(pattern);
+        let mut decoder = TestPatternDecoder::new(1920, 1080, Duration::from_secs(60), 30.0);
 
         b.iter(|| {
             let frame = decoder.next_frame().unwrap();
