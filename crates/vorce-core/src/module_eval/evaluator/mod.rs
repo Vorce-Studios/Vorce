@@ -434,6 +434,7 @@ impl ModuleEvaluator {
         self.midi_triggers.clear();
         self.osc_triggers.clear();
 
+        self.cached_result.render_ops.sort_by_key(|op| op.output_part_id);
         &mut self.cached_result
     }
 
