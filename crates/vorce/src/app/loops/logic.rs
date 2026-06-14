@@ -140,7 +140,7 @@ pub fn update(app: &mut App, elwt: &winit::event_loop::ActiveEventLoop, dt: f32)
         update_ndi_sources(app);
     }
 
-    let _param_updates = app.state.effect_animator_mut().update(dt as f64);
+    app.state.apply_animator_updates(dt as f64);
 
     // 7. Graph Evaluation & Bevy Sync (MODULARIZED)
     let mut graph_dirty = app.state.module_manager.graph_revision != app.last_graph_revision;

@@ -165,6 +165,41 @@ impl AppState {
     pub fn settings_mut(&mut self) -> &mut AppSettings {
         Arc::make_mut(&mut self.settings)
     }
+
+    /// Process effect animator updates and apply them to target parameters
+    pub fn apply_animator_updates(&mut self, dt: f64) {
+        let param_updates = self.effect_animator_mut().update(dt);
+
+        for update in param_updates {
+            if let Some(effect) = self.effect_chain_mut().get_effect_mut(update.effect_instance) {
+                if effect.effect_type == update.effect_type {
+                    if let Some(val) = update.as_f32() {
+                        effect.parameters.insert(update.parameter_name.clone(), val);
+                    } else if let Some(vals) = update.as_vec4() {
+                        effect.parameters.insert(format!("{}_r", update.parameter_name), vals[0]);
+                        effect.parameters.insert(format!("{}_g", update.parameter_name), vals[1]);
+                        effect.parameters.insert(format!("{}_b", update.parameter_name), vals[2]);
+                        effect.parameters.insert(format!("{}_a", update.parameter_name), vals[3]);
+                    } else {
+                        tracing::warn!(
+                            "Animator update failed: type unsupported for {} on Effect ID {}",
+                            update.parameter_name, update.effect_instance
+                        );
+                    }
+                } else {
+                    tracing::warn!(
+                        "Animator update type mismatch: expected {:?}, found {:?} for ID {}",
+                        update.effect_type, effect.effect_type, update.effect_instance
+                    );
+                }
+            } else {
+                tracing::warn!(
+                    "Animator update missing target: Effect {} (ID {}) not found",
+                    update.effect_type.display_name(), update.effect_instance
+                );
+            }
+        }
+    }
 }
 
 /// Global application settings (not strictly project, but persisted with it or separately in user config)
@@ -207,6 +242,31 @@ impl Default for AppSettings {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::effects::EffectType;
+    use crate::animation::AnimValue;
+
+    #[test]
+    fn test_apply_animator_updates_success() {
+        let mut state = AppState::default();
+        let effect_id = state.effect_chain_mut().add_effect(EffectType::Blur);
+
+        let bind_id = state.effect_animator_mut().bind_parameter(
+            EffectType::Blur,
+            effect_id,
+            "radius",
+            AnimValue::Float(0.0),
+        );
+        state.effect_animator_mut().add_keyframe(bind_id, 0.0, AnimValue::Float(0.0));
+        state.effect_animator_mut().add_keyframe(bind_id, 1.0, AnimValue::Float(10.0));
+        state.effect_animator_mut().set_duration(1.0);
+        state.effect_animator_mut().play();
+
+        state.apply_animator_updates(0.5);
+
+        let effect = state.effect_chain_mut().get_effect_mut(effect_id).unwrap();
+        let val = effect.parameters.get("radius").unwrap();
+        assert!(*val > 0.0 && *val < 10.0, "Value should be interpolated");
+    }
 
     #[test]
     fn test_app_state_defaults() {
