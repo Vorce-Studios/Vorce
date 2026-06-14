@@ -326,35 +326,43 @@ autopilot_working_sessions $(@($state.working_sessions).Count)
     $eventJob = Register-ObjectEvent $watcher "Changed" -Action $action
 
     try {
-        $lastHealthCheck = [datetime]::MinValue
+        $lastHealthCheck = Get-Date # Wait 30s after startup
         while ($true) {
             $now = Get-Date
             # --- Health Check & Self-Healing (Every 30s) ---
             if (($now - $lastHealthCheck).TotalSeconds -ge 30) {
                 $lastHealthCheck = $now
                 $pids = Import-Pids
-                if ($null -ne $pids) {
-                    # Check Dashboard
-                    if ($pids.dashboard -gt 0 -and $null -eq (Get-Process -Id $pids.dashboard -ErrorAction SilentlyContinue)) {
-                        Write-InitStatus "[HEAL] Dashboard-Prozess (PID $($pids.dashboard)) wurde beendet. Starte neu..." -Color Yellow
-                        $dashboardProcess = Start-Process $PowerShellHost -ArgumentList @("-NoProfile", "-Command", "Set-Location -LiteralPath '$DashboardDir'; npm run dev -- --host 0.0.0.0") -WindowStyle Hidden -PassThru
-                        $pids.dashboard = $dashboardProcess.Id
-                        Save-Pids -PidsObj $pids
-                    }
-                    # Check Sync Service
-                    if ($pids.sync -gt 0 -and $null -eq (Get-Process -Id $pids.sync -ErrorAction SilentlyContinue)) {
-                        Write-InitStatus "[HEAL] Sync-Service (PID $($pids.sync)) wurde beendet. Starte neu..." -Color Yellow
-                        $syncProcess = Start-Process $PowerShellHost -ArgumentList @("-NoProfile", "-File", (Join-Path $ScriptDir "tools/services/run-sync-service.ps1")) -WindowStyle Hidden -PassThru
-                        $pids.sync = $syncProcess.Id
-                        Save-Pids -PidsObj $pids
-                    }
-                    # Check Backend
-                    if ($pids.backend -gt 0 -and $null -eq (Get-Process -Id $pids.backend -ErrorAction SilentlyContinue)) {
-                        Write-InitStatus "[HEAL] Autopilot-Backend (PID $($pids.backend)) wurde beendet. Starte neu..." -Color Yellow
-                        $autopilotProcess = Start-Process $PowerShellHost -ArgumentList $AutopilotArgs -WindowStyle Normal -PassThru
-                        $pids.backend = $autopilotProcess.Id
-                        Save-Pids -PidsObj $pids
-                    }
+                
+                # 1. Check Dashboard (Port-based is most reliable)
+                $dashboardAlive = $false
+                if (Test-LocalPortListening -Port 5173) {
+                    $dashboardAlive = $true
+                } elseif ($pids -and $pids.dashboard -gt 0 -and (Get-Process -Id $pids.dashboard -ErrorAction SilentlyContinue)) {
+                    # Process exists but maybe not yet listening or on different port
+                    $dashboardAlive = $true
+                }
+                
+                if (-not $dashboardAlive) {
+                    Write-InitStatus "[HEAL] Dashboard-Server nicht erreichbar. Starte neu..." -Color Yellow
+                    $dashboardProcess = Start-Process $PowerShellHost -ArgumentList @("-NoProfile", "-Command", "Set-Location -LiteralPath '$DashboardDir'; npm run dev -- --host 0.0.0.0") -WindowStyle Hidden -PassThru
+                    if ($null -ne $pids) { $pids.dashboard = $dashboardProcess.Id; Save-Pids -PidsObj $pids }
+                }
+
+                # 2. Check Sync Service (Pattern-based)
+                $syncAlive = @(Get-ManagedAutopilotProcess -Pattern 'interval-stats\.ps1').Count -gt 0
+                if (-not $syncAlive) {
+                    Write-InitStatus "[HEAL] Sync-Service nicht gefunden. Starte neu..." -Color Yellow
+                    $syncProcess = Start-Process $PowerShellHost -ArgumentList @("-NoProfile", "-File", (Join-Path $ScriptDir "tools/services/run-sync-service.ps1")) -WindowStyle Hidden -PassThru
+                    if ($null -ne $pids) { $pids.sync = $syncProcess.Id; Save-Pids -PidsObj $pids }
+                }
+
+                # 3. Check Backend (Pattern-based)
+                $backendAlive = @(Get-ManagedAutopilotProcess -Pattern 'autopilot\.ps1').Count -gt 0
+                if (-not $backendAlive) {
+                    Write-InitStatus "[HEAL] Autopilot-Backend Loop wurde beendet. Starte neu..." -Color Yellow
+                    $autopilotProcess = Start-Process $PowerShellHost -ArgumentList $AutopilotArgs -WindowStyle Normal -PassThru
+                    if ($null -ne $pids) { $pids.backend = $autopilotProcess.Id; Save-Pids -PidsObj $pids }
                 }
             }
 

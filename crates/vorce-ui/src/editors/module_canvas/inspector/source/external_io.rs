@@ -6,6 +6,7 @@ use super::super::capabilities;
 #[cfg(feature = "ndi")]
 use super::super::common::render_info_label;
 
+#[allow(clippy::ptr_arg)]
 pub fn render_external_io_ui(
     #[allow(unused_variables)] canvas: &mut ModuleCanvas,
     ui: &mut Ui,

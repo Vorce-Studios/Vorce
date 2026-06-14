@@ -359,8 +359,8 @@ function Set-DelegationEscalation {
         $delegation | Add-Member -MemberType NoteProperty -Name "escalation_reason" -Value $Reason -Force
         $delegation | Add-Member -MemberType NoteProperty -Name "failure_details" -Value $FailureDetails -Force
 
-        $decisionTopic = "Escalation #$IssueNumber: $Reason"
-        $decisionContext = "Die automatische Bearbeitung von Issue #$IssueNumber ist fehlgeschlagen.`nDetails: $FailureDetails"
+        $decisionTopic = "Escalation #${IssueNumber}: $Reason"
+        $decisionContext = "Die automatische Bearbeitung von Issue #${IssueNumber} ist fehlgeschlagen.`nDetails: $FailureDetails"
 
         # Check if already pending
         $exists = $State.decisions_pending | Where-Object { $_.topic -eq $decisionTopic -and $_.status -eq 'pending' }
