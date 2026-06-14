@@ -889,7 +889,7 @@ Wenn keine Optimierungen nötig oder sinnvoll sind, antworte mit einem leeren Ar
                     if (-not ($State.PSObject.Properties.Name -contains "optimizer_queue") -or $null -eq $State.optimizer_queue) {
                         $State | Add-Member -MemberType NoteProperty -Name "optimizer_queue" -Value @() -Force
                     }
-                    
+
                     $proposalList = @()
                     foreach ($p in $proposals) {
                         if ($p.title -and $p.description) {
