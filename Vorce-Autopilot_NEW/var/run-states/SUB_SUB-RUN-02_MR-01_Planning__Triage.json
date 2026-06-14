@@ -1,0 +1,22 @@
+{
+  "status": "completed",
+  "parts": [
+    {
+      "id": "run_20260615_001557",
+      "name": "PART-RUN-01_MR-01_Planning__Triage__FilterIssues",
+      "type": "PART",
+      "status": "completed",
+      "started_at": "2026-06-15T00:15:57.2282765+02:00",
+      "completed_at": "2026-06-15T00:15:57.3131622+02:00",
+      "metadata": {},
+      "results": [
+        {
+          "triaged_count": 11,
+          "timestamp": "2026-06-15T00:15:57.3109337+02:00"
+        }
+      ]
+    }
+  ],
+  "sub_run": "SUB-RUN-02_MR-01_Planning__Triage",
+  "timestamp": "2026-06-15T00:15:57.3313416+02:00"
+}

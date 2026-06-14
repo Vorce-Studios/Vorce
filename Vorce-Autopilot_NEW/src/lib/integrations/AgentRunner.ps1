@@ -8,11 +8,14 @@ function Invoke-VorceAgent {
         [string]$ModelTier = "default",
         [string]$WorkingDirectory = $null
     )
-    
+
     Write-VorceStep -Message "Rufe KI-Agent auf: $AgentName ($ModelTier)..." -Status "RUN"
+
+    # Prüfe ob Debug-Modus aktiv ist
+    $debugMode = if ($global:debugMode -ne $null) { $global:debugMode } else { $false }
     
     # In V3.0 nutzen wir temporäre Dateien für den Austausch
-    $tmpDir = Join-Path $PSScriptRoot "../../var/tmp"
+    $tmpDir = Join-Path $global:VarDir "tmp"
     if (-not (Test-Path $tmpDir)) { New-Item -ItemType Directory -Path $tmpDir -Force | Out-Null }
     
     $timestamp = Get-Date -Format "HHmmss"
@@ -42,8 +45,10 @@ function Invoke-VorceAgent {
             Set-Content -Path $promptInputFile -Value $Prompt -Encoding UTF8
             
             Write-VorceStep -Message "Agent gestartet. Warte auf Antwort von '$shellCommand' mit Argumenten '$($agentArgs -join ' ')' (Output in '$outputFile', Error in '$errorFile', Input from '$promptInputFile')..." -Status "INFO"
-            Write-VorceStep -Message "DEBUG: Start-Process FilePath: '$shellCommand'" -Status "INFO"
-            Write-VorceStep -Message "DEBUG: Start-Process ArgumentList: '$($agentArgs -join ' ')'" -Status "INFO"
+            if ($debugMode) {
+                Write-VorceStep -Message "DEBUG: Start-Process FilePath: '$shellCommand'" -Status "INFO"
+                Write-VorceStep -Message "DEBUG: Start-Process ArgumentList: '$($agentArgs -join ' ')'" -Status "INFO"
+            }
 
             $process = Start-Process -FilePath $shellCommand -ArgumentList $agentArgs -RedirectStandardOutput $outputFile -RedirectStandardError $errorFile -RedirectStandardInput $promptInputFile -NoNewWindow -Wait -PassThru
         } elseif ($AgentName -eq "claude_code") {
@@ -76,9 +81,13 @@ function Invoke-VorceAgent {
         }
 
         if (-not [string]::IsNullOrWhiteSpace($output)) {
-            Write-VorceStep -Message "DEBUG: Raw Agent Output Start >>>" -Status "INFO"
-            Write-Host $output
-            Write-VorceStep -Message "DEBUG: Raw Agent Output End <<<" -Status "INFO"
+            if ($debugMode) {
+                Write-VorceStep -Message "DEBUG: Raw Agent Output Start >>>" -Status "INFO"
+                Write-Host $output
+                Write-VorceStep -Message "DEBUG: Raw Agent Output End <<<" -Status "INFO"
+            } else {
+                Write-Host $output
+            }
         }
 
         if ([string]::IsNullOrWhiteSpace($output)) {
@@ -91,7 +100,7 @@ function Invoke-VorceAgent {
 
         return $output
     } catch {
-        Write-VorceStep -Message "Fehler beim Aufruf des Agents: $($_.Exception.Exception.Message)" -Status "ERROR"
+        Write-VorceStep -Message "Fehler beim Aufruf des Agents: $($_.Exception.Message)" -Status "ERROR"
         return $null
     } finally {
         Write-VorceStep -Message "Bereinige temporäre Dateien: '$outputFile'" -Status "INFO"

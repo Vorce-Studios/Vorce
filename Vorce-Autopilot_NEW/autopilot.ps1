@@ -16,6 +16,9 @@ $global:LibDir    = Join-Path $global:SrcDir "lib"
 $LogDir = Join-Path $global:VarDir "log"
 $DbDir  = Join-Path $global:VarDir "db"
 
+. (Join-Path $global:LibDir "utils/StatusPrinter.ps1")
+. (Join-Path $global:LibDir "state/StateManager.ps1")
+
 # --- Health-Check ---
 $requiredDirs = @($global:VarDir, $LogDir, $DbDir,
     (Join-Path $global:VarDir "run-states"),
@@ -25,11 +28,50 @@ foreach ($dir in $requiredDirs) {
     if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
 }
 
-# --- 1. Core Modules laden ---
-. (Join-Path $global:VorceRoot "src/lib/utils/StatusPrinter.ps1")
-. (Join-Path $global:VorceRoot "src/lib/state/StateManager.ps1")
+function Clean-TmpFiles {
+    param([int]$MaxAgeHours = 24)
 
-# --- 2. Rolling Log System ---
+    $tmpDir = Join-Path $global:VarDir "tmp"
+    if (-not (Test-Path $tmpDir)) { return }
+
+    $cutoffTime = (Get-Date).AddHours(-$MaxAgeHours)
+    $oldFiles = Get-ChildItem -Path $tmpDir -File | Where-Object { $_.CreationTime -lt $cutoffTime }
+
+    if ($oldFiles.Count -gt 0) {
+        Write-VorceStep -Message "Bereinige alte tmp-Dateien (>$MaxAgeHours Stunden)..." -Status "INFO"
+        foreach ($file in $oldFiles) {
+            try {
+                Remove-Item $file.FullName -Force
+                Write-VorceStep -Message "Gelöscht: $($file.Name)" -Status "INFO"
+            } catch {
+                Write-VorceStep -Message "Konnte $($file.Name) nicht löschen: $($_.Exception.Message)" -Status "WARN"
+            }
+        }
+    }
+}
+
+function Enable-DebugMode {
+    param([bool]$Enabled)
+    $script:debugMode = $Enabled
+
+    # Lade Config für Debug-Einstellungen
+    $configPath = Join-Path $global:VarDir "config/autopilot-config.json"
+    if (Test-Path $configPath) {
+        try {
+            $config = Get-Content $configPath -Raw | ConvertFrom-Json
+            if ($config.debug_mode) {
+                $script:debugMode = [bool]$config.debug_mode
+            }
+        } catch {
+            # Fehler beim Lesen der Config ignoriert, nutze Parameter
+        }
+    }
+}
+
+# Globale Debug-Flag initialisieren
+$script:debugMode = $false
+
+# --- Rolling Log System ---
 function Rotate-Logs {
     if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir -Force | Out-Null }
     $logs = Get-ChildItem -Path $LogDir -Filter "autopilot_*.log" | Sort-Object LastWriteTime -Descending
@@ -48,6 +90,10 @@ function Write-VorceLog {
     $Line = "[$((Get-Date).ToString('HH:mm:ss'))] [$Status] $Message"
     Add-Content -Path $LogPath -Value $Line -Encoding UTF8
 }
+
+Enable-DebugMode -Enabled $false
+Write-VorceLog "Führe Startup Cleanup aus..." -Status "RUN"
+Clean-TmpFiles -MaxAgeHours 24
 
 Write-VorceHeader -Title "VORCE AUTOPILOT 3.0" -Icon "🤖"
 
@@ -70,7 +116,7 @@ while ($true) {
         # --- Orchestrator Aufruf ---
         $orchestratorPath = Join-Path $global:VorceRoot "src/orchestrator/Vorce-Orchestrator.ps1"
         if (Test-Path $orchestratorPath) {
-            & $orchestratorPath -GlobalState $GlobalState
+            & $orchestratorPath -GlobalState $GlobalState -DryRun:$DryRun
         } else {
             Write-VorceLog "Orchestrator nicht gefunden: $orchestratorPath" -Status "ERROR"
         }
@@ -79,15 +125,20 @@ while ($true) {
         Write-VorceLog "[CRITICAL] Fehler im Loop: $($_.Exception.Message)" -Status "ERROR"
     }
 
-    $wakeupFile = Join-Path $ScriptDir "autopilot.wakeup"
+    if ($DryRun) {
+        Write-VorceLog "DryRun abgeschlossen." -Status "OK"
+        break
+    }
+
+    $wakeupFile = Join-Path $global:VorceRoot "autopilot.wakeup"
     $remainingSeconds = $IntervalMinutes * 60
     
-    Write-VorceLog "[IDLE] Naechster Lauf in $IntervalMinutes Minuten..." "Gray"
+    Write-VorceLog "[IDLE] Naechster Lauf in $IntervalMinutes Minuten..." -Status "INFO"
     
     while ($remainingSeconds -gt 0) {
         if (Test-Path $wakeupFile) {
             Remove-Item $wakeupFile -Force
-            Write-VorceLog "[WAKEUP] Wakeup-Signal erkannt!" "Yellow"
+            Write-VorceLog "[WAKEUP] Wakeup-Signal erkannt!" -Status "RUN"
             break
         }
         Start-Sleep -Seconds 1

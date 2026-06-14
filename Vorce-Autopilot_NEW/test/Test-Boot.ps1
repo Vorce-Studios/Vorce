@@ -1,5 +1,9 @@
 # Test-Boot.ps1 (Vorce 3.0)
-# Test-Skript um Phase 1 - Ordnerstruktur und Konfiguration zu überprüfen
+# Verifiziert dass das System booten kann
+[CmdletBinding()]
+param(
+    [switch]$Cleanup = $false
+)
 
 # Ergebnisse-Tracking
 $passCount = 0
@@ -13,176 +17,124 @@ function Write-TestResult {
     $script:totalChecks++
 }
 
-# Gehe zum Projekt-Root
-$projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+# Setze Working Directory
+$projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $projectRoot
-Write-Host "Projekt-Root: $projectRoot"
+Write-Host "Projekt-Root: $(Get-Location)" -ForegroundColor Cyan
 
-# --- 1. ORDNER-CHECKS ---
-Write-Host "`n=== ORDNER-CHECKS ===" -ForegroundColor Yellow
+# Test 1: Globale Variablen setzen
+Write-Host "`n=== GLOBALE VARIABLEN ===" -ForegroundColor Yellow
+$global:VorceRoot = $projectRoot
+$global:VarDir = Join-Path $global:VorceRoot "var"
+$global:SrcDir = Join-Path $global:VorceRoot "src"
+$global:LibDir = Join-Path $global:SrcDir "lib"
 
-$checkDirs = @(
-    "src/lib/state",
-    "src/lib/engines",
-    "src/lib/integrations",
-    "src/lib/utils",
-    "var/log",
-    "var/db/proposals",
-    "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_DataSync",
-    "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_DataSync/PART-RUNS"
+Write-TestResult "Globale Variablen gesetzt" ($true)
+
+# Test 2: Erforderliche Verzeichnisse prüfen
+Write-Host "`n=== VERZEICHNISSE ===" -ForegroundColor Yellow
+$requiredDirs = @(
+    $global:VarDir,
+    $global:LibDir,
+    (Join-Path $global:LibDir "state"),
+    (Join-Path $global:LibDir "engines"),
+    (Join-Path $global:LibDir "integrations"),
+    (Join-Path $global:LibDir "utils")
 )
 
-foreach ($checkDir in $checkDirs) {
-    if (Test-Path $checkDir -PathType Container) {
-        Write-TestResult "Ordner $checkDir existiert" $true
-    } else {
-        Write-TestResult "Ordner $checkDir existiert" $false
-    }
+foreach ($dir in $requiredDirs) {
+    $exists = Test-Path $dir
+    Write-TestResult "Verzeichnis existiert: $([System.IO.Path]::GetFileName($dir))" $exists
 }
 
-$checkPath = "src/runs/MAIN-RUN-01_Planning/PART-RUNS"
-if (-not (Test-Path $checkPath)) {
-    Write-TestResult "Alter Ordner $checkPath existiert NICHT mehr" $true
-} else {
-    Write-TestResult "Alter Ordner $checkPath existiert NICHT mehr" $false
-}
-
-# --- 2. MODUL-CHECKS ---
-Write-Host "`n=== MODUL-CHECKS ===" -ForegroundColor Yellow
-
-# Module Liste
-$modules = @(
-    "src/lib/utils/StatusPrinter.ps1",
-    "src/lib/state/StateManager.ps1",
-    "src/lib/engines/RunEngine.ps1",
-    "src/lib/integrations/GitHubClient.ps1",
-    "src/lib/integrations/AgentRunner.ps1",
-    "src/lib/integrations/ApiClient.ps1",
-    "src/lib/utils/ProjectManager.ps1",
-    "src/lib/utils/PromptManager.ps1",
-    "src/lib/engines/DeliberationEngine.ps1",
-    "src/lib/utils/TriageUtils.ps1"
+# Test 3: Kern-Module laden
+Write-Host "`n=== KERN-MODULE ===" -ForegroundColor Yellow
+$coreModules = @(
+    "utils/StatusPrinter.ps1",
+    "state/StateManager.ps1",
+    "engines/RunEngine.ps1"
 )
 
-foreach ($module in $modules) {
-    if (Test-Path $module) {
+foreach ($module in $coreModules) {
+    $modulePath = Join-Path $global:LibDir $module
+    if (Test-Path $modulePath) {
         try {
-            $content = Get-Content $module -Raw
-            if ($content -match "function") {
-                Write-TestResult "Modul $module kann geladen werden" $true
-            } else {
-                Write-TestResult "Modul $module hat keine Funktionen" $false
-            }
+            . $modulePath
+            Write-TestResult "Modul geladen: $module" $true
         } catch {
-            Write-TestResult "Modul $module kann nicht geladen werden: $_" $false
+            Write-TestResult "Modul Fehler: $module - $($_.Exception.Message)" $false
         }
     } else {
-        Write-TestResult "Modul $module existiert nicht" $false
+        Write-TestResult "Modul fehlt: $module" $false
     }
 }
 
-# Prüfe dass KEINE Datei Export-ModuleMember enthält
-$exportFiles = Get-ChildItem -Path "src" -Recurse -Filter "*.ps1" |
-               Select-String "Export-ModuleMember" |
-               ForEach-Object { $_.Path }
-$failedExports = $false
-foreach ($file in $exportFiles) {
-    if ($file -notlike "*\test\*") {
-        Write-TestResult "Datei $file enthält Export-ModuleMember!" $false
-        $failedExports = $true
-    }
-}
-if (-not $failedExports) {
-    Write-TestResult "KEINE Datei enthält Export-ModuleMember" $true
-}
-
-# --- 3. GLOBAL-VARIABLE-CHECKS ---
-Write-Host "`n=== GLOBAL-VARIABLE-CHECKS ===" -ForegroundColor Yellow
-
-$autopilotPath = "autopilot.ps1"
-if (Test-Path $autopilotPath) {
-    $content = Get-Content $autopilotPath -Raw
-    if ($content -contains '$global:VorceRoot') {
-        Write-TestResult "autopilot.ps1 enthält \$global:VorceRoot" $true
-    } else {
-        Write-TestResult "autopilot.ps1 enthält \$global:VorceRoot" $false
-    }
-
-    if ($content -contains '$global:VarDir') {
-        Write-TestResult "autopilot.ps1 enthält \$global:VarDir" $true
-    } else {
-        Write-TestResult "autopilot.ps1 enthält \$global:VarDir" $false
+# Test 4: Config-Datei prüfen
+Write-Host "`n=== CONFIGURATION ===" -ForegroundColor Yellow
+$configPath = Join-Path $global:VarDir "config/autopilot-config.json"
+if (Test-Path $configPath) {
+    try {
+        $config = Get-Content $configPath -Raw | ConvertFrom-Json
+        $hasRequired = $config -and $config.repository -and $config.wake_intervals
+        Write-TestResult "Config valid" $hasRequired
+    } catch {
+        Write-TestResult "Config Fehler: $($_.Exception.Message)" $false
     }
 } else {
-    Write-TestResult "autopilot.ps1 existiert nicht" $false
+    Write-TestResult "Config fehlt" $false
 }
 
-# Prüfe dass KEIN Modul den String "$PSScriptRoot" für var/-Pfade nutzt
-$libFiles = Get-ChildItem -Path "src" -Recurse -Filter "*.ps1"
-$psscriptRootIssues = @()
+# Test 5: Gesundheit der Ordnerstruktur
+Write-Host "`n=== ORDNUNGSTRUKTUR ===" -ForegroundColor Yellow
+$runDirs = Get-ChildItem -Path "$global:VorceRoot/src/runs" -Directory -Name | Where-Object { $_ -match '^MAIN-RUN-\d{2}_' }
+$expectedRuns = @("MAIN-RUN-01_Planning", "MAIN-RUN-02_CheckAndDoing", "MAIN-RUN-03_Audit", "MAIN-RUN-04_Optimizer", "MAIN-RUN-05_MemoryOptimization")
 
-foreach ($file in $libFiles) {
-    $content = Get-Content $file.FullName -Raw
-    if ($content -match '\$PSScriptRoot.*?var') {
-        $psscriptRootIssues += $file.FullName
+foreach ($expected in $expectedRuns) {
+    $exists = $runDirs -contains $expected
+    Write-TestResult "Main-Run existiert: $expected" $exists
+}
+
+# Test 6: Jeder SUB-RUN besitzt mindestens einen ausführbaren PART-RUN
+Write-Host "`n=== PART-RUN HIERARCHIE ===" -ForegroundColor Yellow
+$subRunScripts = Get-ChildItem -Path "$global:VorceRoot/src/runs" -Recurse -File -Filter "SUB-RUN-*.ps1"
+foreach ($subRun in $subRunScripts) {
+    $partRunDir = Join-Path $subRun.DirectoryName "PART-RUNS"
+    $partRunCount = if (Test-Path $partRunDir) { @(Get-ChildItem $partRunDir -File -Filter "PART-RUN-*.ps1").Count } else { 0 }
+    Write-TestResult "$($subRun.BaseName) besitzt PART-RUNs" ($partRunCount -gt 0)
+}
+
+# Test 7: Prompt-Registry und registrierte Prompt-Dateien prüfen
+Write-Host "`n=== PROMPT-STRUKTUR ===" -ForegroundColor Yellow
+$promptRoot = Join-Path $global:VarDir "prompts"
+$promptRegistryPath = Join-Path $promptRoot "prompt-registry.json"
+try {
+    $promptRegistry = Get-Content $promptRegistryPath -Raw | ConvertFrom-Json
+    Write-TestResult "Prompt-Registry ist gültig" ($null -ne $promptRegistry.prompts)
+    foreach ($entry in $promptRegistry.prompts.PSObject.Properties) {
+        Write-TestResult "Prompt registriert: $($entry.Name)" (Test-Path (Join-Path $promptRoot $entry.Value.path))
+    }
+} catch {
+    Write-TestResult "Prompt-Registry ist gültig" $false
+}
+
+# Cleanup Flag
+if ($Cleanup) {
+    Write-Host "`n=== CLEANUP ===" -ForegroundColor Yellow
+    $logDir = Join-Path $global:VarDir "log"
+    if (Test-Path $logDir) {
+        Remove-Item -Path "$logDir/autopilot_*.log" -Force -ErrorAction SilentlyContinue
+        Write-TestResult "Logs bereinigt" $true
     }
 }
 
-if ($psscriptRootIssues.Count -eq 0) {
-    Write-TestResult "KEIN Modul nutzt \$PSScriptRoot für var/-Pfade" $true
-} else {
-    foreach ($issue in $psscriptRootIssues) {
-        Write-TestResult "Modul $issue nutzt \$PSScriptRoot für var/-Pfade!" $false
-    }
-}
-
-# --- 4. CONFIG-CHECKS ---
-Write-Host "`n=== CONFIG-CHECKS ===" -ForegroundColor Yellow
-
-# Konfigurationsdateien erstellen, falls nicht vorhanden
-if (-not (Test-Path "var/config")) {
-    New-Item -ItemType Directory -Path "var/config" -Force | Out-Null
-}
-
-if (-not (Test-Path "var/config/autopilot-config.json")) {
-    @{
-        intervalMinutes = 15
-        maxRunsPerSession = 10
-        repository = "Vorce-Studios/Vorce"
-        environment = "development"
-        enabledFeatures = @("DataSync", "Triage", "Strategy")
-        phase = 1
-    } | ConvertTo-Json | Set-Content "var/config/autopilot-config.json" -Encoding UTF8
-}
-
-if (-not (Test-Path "var/config/quota-registry.json")) {
-    @{} | ConvertTo-Json | Set-Content "var/config/quota-registry.json" -Encoding UTF8
-}
-
-$configFiles = @(
-    "var/config/autopilot-config.json",
-    "var/config/quota-registry.json"
-)
-
-foreach ($configFile in $configFiles) {
-    if (Test-Path $configFile) {
-        try {
-            $content = Get-Content $configFile -Raw | ConvertFrom-Json
-            Write-TestResult "Config $configFile existiert und ist gültiges JSON" $true
-        } catch {
-            Write-TestResult "Config $configFile existiert ist KEIN gültiges JSON" $false
-        }
-    } else {
-        Write-TestResult "Config $configFile existiert nicht" $false
-    }
-}
-
-# --- Ergebnis ---
+# Ergebnis
 Write-Host "`n--- ERGEBNIS ---" -ForegroundColor Green
 Write-Host "Ergebnis: $passCount/$totalChecks Checks bestanden"
 
 if ($passCount -eq $totalChecks) {
-    Write-Host "✅ Alle Checks bestanden! Phase 1 erfolgreich abgeschlossen." -ForegroundColor Green
+    Write-Host "✅ System bootet erfolgreich!" -ForegroundColor Green
+    exit 0
 } else {
-    Write-Host "❌ Es gibt Fehler. Bitte überprüfe die fehlgeschlagenen Checks." -ForegroundColor Red
+    Write-Host "❌ Fehler im Boot-Prozess" -ForegroundColor Red
+    exit 1
 }

@@ -1,0 +1,23 @@
+{
+  "status": "completed",
+  "parts": [
+    {
+      "id": "run_20260615_001557",
+      "name": "PART-RUN-01_MR-01_Planning__Delegation__CreateDelegations",
+      "type": "PART",
+      "status": "completed",
+      "started_at": "2026-06-15T00:15:57.3869110+02:00",
+      "completed_at": "2026-06-15T00:15:57.4874075+02:00",
+      "metadata": {},
+      "results": [
+        {
+          "count": 0,
+          "status": "no_proposals",
+          "delegations": []
+        }
+      ]
+    }
+  ],
+  "sub_run": "SUB-RUN-04_MR-01_Planning__Delegation",
+  "timestamp": "2026-06-15T00:15:57.4898996+02:00"
+}

@@ -16,21 +16,22 @@ autopilot.ps1           ← Wächter-Loop mit Rolling-Log und Wakeup-Signal
     └─► Vorce-Orchestrator.ps1   ← Wählt den aktiven Main-Run per Scheduling
             │
             ├─► MAIN-RUN-01_Planning/Planning-Router.ps1
-            │       ├─► SUB-RUN-01_DataSync   → PART-RUN-01_FetchIssues
-            │       │                          → PART-RUN-02_FetchPRs
-            │       ├─► SUB-RUN-02_Triage      → PART-RUN-03_FilterIssues
-            │       ├─► SUB-RUN-03_Strategy    → PART-RUN-04_CreateProposal (Deliberation)
-            │       └─► SUB-RUN-04_Delegation  → Jules-Task-Erstellung
+            │       ├─► SUB-RUN-01_MR-01_Planning__DataSync   → PART-RUN-01/02 FetchIssues/FetchPRs
+            │       ├─► SUB-RUN-02_MR-01_Planning__Triage     → PART-RUN-01 FilterIssues
+            │       ├─► SUB-RUN-03_MR-01_Planning__Strategy   → PART-RUN-01 CreateProposal (Deliberation)
+            │       └─► SUB-RUN-04_MR-01_Planning__Delegation → PART-RUN-01 CreateDelegations
             │
             ├─► MAIN-RUN-02_CheckAndDoing/CheckAndDoing-Router.ps1
-            │       ├─► SUB-RUN-01_SessionSync
-            │       ├─► SUB-RUN-02_JulesCheck
-            │       ├─► SUB-RUN-03_LocalAgentCheck
-            │       └─► SUB-RUN-04_ReviewDispatch
+            │       ├─► SUB-RUN-01_MR-02_CheckAndDoing__SessionSync
+            │       ├─► SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck
+            │       ├─► SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck
+            │       └─► SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch
             │
             └─► MAIN-RUN-03_Audit/Audit-Router.ps1
-                    └─► SUB-RUN-01_ComplianceCheck
+                    └─► SUB-RUN-01..04_MR-03_Audit__*
 ```
+
+Jeder SUB-RUN ist ein koordinierender Ordner und besitzt verpflichtend mindestens einen ausführenden `PART-RUN` unter `PART-RUNS/`.
 
 ### Ausführungsebenen
 
@@ -67,8 +68,9 @@ autopilot.ps1           ← Wächter-Loop mit Rolling-Log und Wakeup-Signal
 PowerShell-Funktionen:  [Verb]-Vorce[Kontext]
   Beispiel:  Invoke-VorceAgent, Save-VorceGlobalState, Test-VorceQuota
 
-Run-Skripte:  [TYP]-RUN-[NN]_[Beschreibung].ps1
-  Beispiel:  MAIN-RUN-01_Planning, SUB-RUN-02_Triage, PART-RUN-03_FilterIssues
+Run-Skripte:  Long-Name mit vollständigem MAIN-/SUB-RUN-Kontext
+  Beispiel:  SUB-RUN-02_MR-01_Planning__Triage
+             PART-RUN-01_MR-01_Planning__Triage__FilterIssues
 
 Run-State JSONs:  [TYP]_[Beschreibung].json  (in var/run-states/)
   Beispiel:  MAIN_Planning.json, SUB_DataSync.json, PART_FetchIssues.json
@@ -76,8 +78,10 @@ Run-State JSONs:  [TYP]_[Beschreibung].json  (in var/run-states/)
 Datenbank-Dateien:  [kontext]-[typ].json  (in var/db/)
   Beispiel:  github-issues.json, global-state.json, triaged-issues.json
 
-Prompt-Dateien:  [aufgabe].md  (in var/prompts/[kategorie]/)
-  Beispiel:  planning_session.md, jules_implementation.md
+Prompt-Dateien:  Long-Name nach Scope; Auflösung ausschließlich über stabile Registry-ID
+  Registry:   var/prompts/prompt-registry.json
+  Beispiele:  SYSTEM-PROMPT-01_Autopilot__CEO-Orchestrator.md
+              PART-RUN-PROMPT-01_MR-01_Planning__DataSync__Jules-Session-Sync.md
 ```
 
 ---
@@ -198,11 +202,13 @@ Das Dual-Agent Deliberationsmodell ermöglicht hochwertige Entscheidungen durch 
 
 | Phase | Prompt-Datei | Beschreibung |
 |-------|-------------|-------------|
-| **1. Proposal** | `var/prompts/deliberation/proposal.md` | Agent A erstellt einen Vorschlag |
-| **2. Critique** | `var/prompts/deliberation/critique.md` | Agent B (oder A) prüft und kritisiert |
-| **3. Synthesis** | `var/prompts/deliberation/synthesis.md` | Agent A synthetisiert das finale Ergebnis |
+| **1. Proposal** | Registry-ID `deliberation_proposal` | Agent A erstellt einen Vorschlag |
+| **2. Critique** | Registry-ID `deliberation_critique` | Agent B (oder A) prüft und kritisiert |
+| **3. Synthesis** | Registry-ID `deliberation_synthesis` | Agent A synthetisiert das finale Ergebnis |
 
 Template-Variablen im Prompt: `{{IssueNumber}}`, `{{IssueTitle}}`, `{{IssueBody}}`, `{{CeoProposal}}`, `{{QaCritique}}`
+
+Die physischen Deliberation-Prompts liegen unter `var/prompts/shared/deliberation/`. System-, Agent- und RUN-Prompts sind analog unter `system/`, `agents/` und `runs/<MAIN-RUN>/<SUB-RUN>/` getrennt.
 
 ---
 
@@ -216,7 +222,7 @@ Alle Ausgaben laufen über `StatusPrinter.ps1`:
 ============================================================
 [14:30:01] [ ⏩ ] Starte MAIN-RUN-01_Planning (1/3)
 [14:30:02] [ ℹ️  ] Analysiere Bedarf via Router...
-[14:30:03] [ ⏩ ] Starte Sub-Run: SUB-RUN-01_DataSync
+[14:30:03] [ ⏩ ] Starte Sub-Run: SUB-RUN-01_MR-01_Planning__DataSync
 ------------------------------------------------------------
 [14:30:05] [ ✅ ] 42 Issues erfolgreich geladen.
 [14:30:06] [ ✅ ] Sub-Run DataSync abgeschlossen.

@@ -1,31 +1,69 @@
-# Vorce-Autopilot NEW — Überarbeiteter Refactoring-Plan v2
+# Vorce-Autopilot NEW — Überarbeiteter Refactoring-Plan v3
 
 > **Stand:** 2026-06-14  
 > **Autor:** Antigravity (Review & Neustrukturierung des bestehenden Plans)  
-> **Ziel:** Vollständig funktionsfähiges, modulares Autopilot-Framework mit 5 MAIN-RUNs, konsequenter PART-RUN-Verschachtelung und CLI-delegierbaren Arbeitseinheiten.
+> **Ziel:** Vollständig funktionsfähiges, modulares Autopilot-Framework mit 5 MAIN-RUNs, konsequenter PART-RUN-Verschachtelung, CLI-delegierbaren Arbeitseinheiten und Echtzeit-Dashboard-Sync via WebSocket.
+
+## Review-Korrekturen vom 2026-06-14
+
+- Der kanonische Ordnername ist `MAIN-RUN-04_Optimizer`; die frühere Bezeichnung `MAIN-RUN-04_Autopilot-Optimizer` war nicht mit Code, Router und Scheduling vereinbar.
+- Die Long-Naming-Konvention gilt auch für PART-RUN-Dateien, damit Dateinamen außerhalb ihres Elternordners eindeutig bleiben.
+- Jeder ausführbare SUB-RUN besitzt mindestens einen `PART-RUNS/`-Unterordner mit mindestens einem fachlich benannten PART-RUN. SUB-RUNs koordinieren und aggregieren; fachliche Arbeit findet in PART-RUNs statt.
+- Prompts werden über `var/prompts/prompt-registry.json` mit stabilen IDs aufgelöst. Physische Dateien folgen der Hierarchie `system/`, `shared/`, `agents/` und `runs/<MAIN-RUN>/<SUB-RUN>/`.
+- Jeder der fünf MAIN-RUNs besitzt ein eigenes Scheduling-Intervall: Planning, CheckAndDoing, Audit, Optimizer und MemoryOptimization.
+- Router erhalten `-ConfigBag` und `-MainState`; SUB-RUNs erhalten `-ConfigBag` und `-ParentState`.
+- `-DryRun` führt genau einen netzwerkfreien Orchestrator-Zyklus aus und beendet danach den Autopilot.
+- `global-state.json` mit leerem Inhalt oder `null` wird als fehlender State behandelt und durch einen gültigen Default-State ersetzt.
 
 ---
 
-## User Review Required
+## 🟢 Entscheidungen zu Open Questions (Final)
 
 > [!IMPORTANT]
-> **Strukturbruch behoben:** Der alte Plan hatte PART-RUNS als flachen Ordner NEBEN den SUB-RUNS (geschwisterlich). Der Draft zeigt korrekt: Jeder SUB-RUN ist ein **Ordner** der sein `.ps1` Skript UND einen optionalen `PART-RUNS/` Unterordner enthält. Diese Struktur ist jetzt kanonisch.
+> **Strukturbruch behoben:** Der alte Plan hatte PART-RUNS als flachen Ordner NEBEN den SUB-RUNS (geschwisterlich). Jeder SUB-RUN ist ein **Ordner**, dessen `.ps1`-Skript ausschließlich koordiniert und aggregiert. Jeder SUB-RUN besitzt einen `PART-RUNS/`-Unterordner; dort liegen die ausführbaren fachlichen Arbeitseinheiten.
+>
+> **MAIN-RUN-04 & 05 INTEGRIERT (CORE):** MAIN-RUN-04_Optimizer und MAIN-RUN-05_MemoryOptimization sind **keine** optionalen Phasen mehr — sie wurden als CORE-RUNS in Phase 6 fest integriert. Der Optimizer optimiert anhand von Statistiken Workflows, Text-Prompts und RUNs. MemoryOptimization prüft und bereinigt Memory-Einträge.
+>
+> **Naming-Konvention (Long-Version — verbindlich):** Es gilt ausschließlich die Long-Version mit MAIN-RUN-Prefix im SUB-RUN-Namen:
+> - Statt `SUB-RUN-01_DataSync` → `SUB-RUN-01_MR-01_Planning__DataSync`
+> - Statt `SUB-RUN-02_Triage` → `SUB-RUN-02_MR-01_Planning__Triage`
+> - Das logische System ("MR-XX_Name__SubName") macht Verknüpfungen über alle Hierarchieebenen hinweg eindeutig klar.
+>
+> **CLI-Fallback-Chain (Alle RUNs):** Alle 7 CLIs final in Fallback-Chain integriert: `gemini` (Primary), `claude` (Secondary), `codex`, `kiro`, `copilot`, `cursor-agent`, `hermes` (Fallback 1-5).
+>
+> **`src/tools/` Ordner:** Wird mit Background-Services (GitHub Sync, Jules Monitoring, Dashboard WebSocket-Server) aufgenommen.
+>
+> **Dashboard-Sync:** Setzt auf **WebSocket** für Echtzeit-Synchronisation. WebSocket-Server in `src/tools/services/sync-service.ps1` pusht Status-Änderungen.
+>
+> **Text-Prompts:** Alle Prompts besitzen stabile IDs in `var/prompts/prompt-registry.json`. System-, Shared-, Agent- und RUN-Prompts liegen getrennt und verwenden optimierte Long-Namen.
 
-> [!IMPORTANT]
-> **5 statt 3 MAIN-RUNs:** Der Draft enthält MAIN-RUN-04_Optimizer und MAIN-RUN-05_MemoryOptimization. Diese sind im alten Plan nicht erwähnt. Sollen sie aufgenommen werden? (Im Plan unten als **optional** markiert, Phase 6.)
+### Kanonische Prompt-Struktur
+
+```text
+var/prompts/
+├── prompt-registry.json
+├── system/
+│   ├── SYSTEM-PROMPT-01_Autopilot__CEO-Orchestrator.md
+│   └── SYSTEM-PROMPT-02_Autopilot__Dashboard-Context-Policy.md
+├── shared/
+│   └── deliberation/
+│       ├── SHARED-PROMPT-01_Deliberation__Proposal.md
+│       ├── SHARED-PROMPT-02_Deliberation__Critique.md
+│       └── SHARED-PROMPT-03_Deliberation__Synthesis.md
+├── agents/
+│   └── jules/
+│       └── AGENT-PROMPT-[NN]_Jules__[Task].md
+└── runs/
+    └── MAIN-RUN-[NN]_[Name]/
+        ├── MAIN-RUN-PROMPT-[NN]_MR-[NN]_[Name]__[Task].md
+        └── SUB-RUN-[NN]_MR-[NN]_[Name]__[SubName]/
+            └── PART-RUN-PROMPT-[NN]_MR-[NN]_[Name]__[SubName]__[Task].md
+```
+
+Prompt-Dateien werden nicht über ihren Dateinamen als API-Vertrag angesprochen, sondern über stabile Registry-IDs wie `planning_session`, `pr_review` oder `deliberation_proposal`.
 
 > [!WARNING]
 > **Restore-Dateien als Referenz:** In `Vorce-Autopilot_Restore/Vorce-Autopilot_3.0_draft/` existieren substantiell implementierte Dateien (quota-manager.ps1 mit 156 Zeilen, Router mit echter Logik, DataSync mit 78 Zeilen). Diese können als **Referenz** dienen, sollen aber gemäß Zero-Legacy-Regel nicht direkt kopiert werden. Die CLI-Prompts referenzieren die Draft-Dateien explizit als "Logik-Referenz".
-
----
-
-## Open Questions
-
-> [!IMPORTANT]
-> 1. **`kiro_cli` Agent:** In `autopilot-config.json` referenziert, aber nirgends implementiert. Soll `kiro_cli` in Phase 5 als dritter Agent in `AgentRunner.ps1` ergänzt werden, oder soll die Referenz entfernt werden?
-> 2. **`tools/` Verzeichnis:** Im Draft unter `src/tools/` vorhanden (Hintergrund-Skripte wie Jules Monitoring, GitHub Sync). Im aktuellen Plan fehlt das. Soll ein `src/tools/` Ordner mit Background-Services aufgenommen werden?
-> 3. **Dashboard-Technologie:** Aktuell Vite/React. Soll der Dashboard-Sync via WebSocket (aufwändiger, aber echtzeitfähig) oder Polling (einfacher) implementiert werden?
-> 4. **Naming-Redundanz der SUB-RUNs:** Der Draft nutzt `SUB-RUN-01_MR-01_Planning__DataSync` (mit MAIN-RUN Prefix im Namen). Der aktuelle Plan nutzt `SUB-RUN-01_DataSync`. Welche Konvention soll gelten? (Empfehlung: Kurz-Variante `SUB-RUN-01_DataSync`, weil die MAIN-RUN Zugehörigkeit durch den Ordnerpfad klar ist.)
 
 ---
 
@@ -36,7 +74,7 @@
 | # | Problem | Detail | Auswirkung |
 |---|---------|--------|------------|
 | **S1** | PART-RUNS sind Geschwister-Ordner statt Kinder | Im IST: `MAIN-RUN-01_Planning/PART-RUNS/` und `MAIN-RUN-01_Planning/SUB-RUNS/` nebeneinander. Richtig wäre: PART-RUNS **innerhalb** jedes SUB-RUN-Ordners. | PART-RUNs sind keinem SUB-RUN zugeordnet → unklar welcher PART-RUN zu welchem SUB-RUN gehört |
-| **S2** | SUB-RUNs sind Dateien statt Ordner | Im IST: `SUB-RUNS/SUB-RUN-01_DataSync.ps1` (Datei). Richtig: `SUB-RUNS/SUB-RUN-01_DataSync/` (Ordner) mit `.ps1` + optionalem `PART-RUNS/` Unterordner. | Kein Platz für PART-RUNs, keine Isolation |
+| **S2** | SUB-RUNs sind Dateien statt Ordner | Im IST: `SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync.ps1` (Datei). Richtig: `SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync/` (Ordner) mit koordinierendem `.ps1` und verpflichtendem `PART-RUNS/` Unterordner. | Kein Platz für PART-RUNs, keine Isolation |
 | **S3** | Fehlende MAIN-RUNs 02-05 | Nur `MAIN-RUN-01_Planning/` existiert als Ordner. Die im Plan beschriebenen MAIN-RUN-02 und 03 existieren nicht. Draft hat 5. | Kein Monitoring, kein Audit, kein Optimizer |
 | **S4** | `var/log/` fehlt im Dateisystem | Plan sagt es existiert nicht, `autopilot.ps1` erstellt es zur Laufzeit → aber **keine** Garantie beim ersten Start | `Rotate-Logs` wirft keinen Fehler, aber `Write-VorceLog` schreibt ins Nichts |
 | **S5** | `var/db/proposals/` fehlt | Weder als Ordner noch als Datei vorhanden | `CreateProposal` PART-RUN würde crashen |
@@ -50,7 +88,7 @@
 | **C2** | [RunEngine.ps1](file:///c:/Users/Vinyl/Desktop/VJMapper/VjMapper/Vorce-Autopilot_NEW/src/lib/RunEngine.ps1#L58-L66) | Background-Job hat keinen Zugriff auf `$VarDir`; `$PSScriptRoot` in Zeile 66 zeigt auf Job-Kontext, nicht auf `lib/` | 🔴 BLOCKER |
 | **C3** | [ApiClient.ps1](file:///c:/Users/Vinyl/Desktop/VJMapper/VjMapper/Vorce-Autopilot_NEW/src/lib/ApiClient.ps1#L31) | `Export-ModuleMember` in Dot-Source-Datei → wirft Fehler | 🔴 BLOCKER |
 | **C4** | [Vorce-Orchestrator.ps1](file:///c:/Users/Vinyl/Desktop/VJMapper/VjMapper/Vorce-Autopilot_NEW/src/orchestrator/Vorce-Orchestrator.ps1#L20) | Hardkodiert auf `MAIN-RUN-01_Planning`, keine Scheduling-Logik | 🔴 BLOCKER |
-| **C5** | [SUB-RUN-01_DataSync.ps1](file:///c:/Users/Vinyl/Desktop/VJMapper/VjMapper/Vorce-Autopilot_NEW/src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_DataSync.ps1#L6-L7) | Lädt `RunEngine` aber **nicht** `StateManager` und `GitHubClient` die intern gebraucht werden | 🔴 BLOCKER |
+| **C5** | [SUB-RUN-01_MR-01_Planning__DataSync.ps1](file:///c:/Users/Vinyl/Desktop/VJMapper/VjMapper/Vorce-Autopilot_NEW/src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync.ps1#L6-L7) | Lädt `RunEngine` aber **nicht** `StateManager` und `GitHubClient` die intern gebraucht werden | 🔴 BLOCKER |
 | **C6** | PART-RUN-04_CreateProposal.ps1 | Hardkodierte Strings (Repo-Name, Dashboard-Pfade) | 🟡 MEDIUM |
 | **C7** | [autopilot.ps1](file:///c:/Users/Vinyl/Desktop/VJMapper/VjMapper/Vorce-Autopilot_NEW/autopilot.ps1#L12-L13) | Setzt `$ScriptDir`/`$VarDir` als lokale Variablen statt `$global:VorceRoot` → Module können nicht darauf zugreifen | 🔴 BLOCKER (NEU) |
 | **C8** | [Vorce-Orchestrator.ps1](file:///c:/Users/Vinyl/Desktop/VJMapper/VjMapper/Vorce-Autopilot_NEW/src/orchestrator/Vorce-Orchestrator.ps1#L8-L9) | Nutzt `$PSScriptRoot` für `$RunsDir` statt `$global:VorceRoot` → bricht wenn per `&` aufgerufen | 🟡 MEDIUM (NEU) |
@@ -91,7 +129,7 @@ Vorce-Autopilot_NEW/
 │   │   │
 │   │   ├── integrations/                  # Externe Dienst-Anbindungen
 │   │   │   ├── GitHubClient.ps1           # GitHub Issues/PRs via gh CLI
-│   │   │   ├── AgentRunner.ps1            # KI-Agent CLI Ausführung
+│   │   │   ├── AgentRunner.ps1            # KI-Agent CLI Ausführung (Fallback-Chain)
 │   │   │   └── ApiClient.ps1              # Basis REST-Client
 │   │   │
 │   │   └── utils/                         # Hilfsfunktionen
@@ -100,6 +138,16 @@ Vorce-Autopilot_NEW/
 │   │       ├── ProjectManager.ps1         # GitHub Project V2 Board Sync
 │   │       └── TriageUtils.ps1            # Issue-Filterung
 │   │
+│   ├── tools/                             # [NEU] Background-Services & Agent-Tools
+│   │   ├── agents/                        # Agent-Ausführungsskripte
+│   │   │   ├── run-local-agent-task.ps1
+│   │   │   ├── run-background-review.ps1
+│   │   │   └── run-ceo-phase.ps1
+│   │   │
+│   │   └── services/                      # Hintergrund-Dienste
+│   │       ├── sync-service.ps1           # GitHub-Dashboard Sync (WebSocket)
+│   │       └── jules-monitor.ps1          # Jules Session Monitoring
+│   │
 │   ├── orchestrator/
 │   │   └── Vorce-Orchestrator.ps1         # Haupt-Dispatcher (Scheduling, ConfigBag)
 │   │
@@ -107,71 +155,86 @@ Vorce-Autopilot_NEW/
 │       ├── MAIN-RUN-01_Planning/
 │       │   ├── Planning-Router.ps1        # Dynamische SUB-RUN-Auswahl
 │       │   └── SUB-RUNS/
-│       │       ├── SUB-RUN-01_DataSync/
-│       │       │   ├── SUB-RUN-01_DataSync.ps1
+│       │       ├── SUB-RUN-01_MR-01_Planning__DataSync/
+│       │       │   ├── SUB-RUN-01_MR-01_Planning__DataSync.ps1
 │       │       │   └── PART-RUNS/
-│       │       │       ├── PART-RUN-01_FetchIssues.ps1
-│       │       │       └── PART-RUN-02_FetchPRs.ps1
+│       │       │       ├── PART-RUN-01_MR-01_Planning__DataSync__FetchIssues.ps1
+│       │       │       └── PART-RUN-02_MR-01_Planning__DataSync__FetchPRs.ps1
 │       │       │
-│       │       ├── SUB-RUN-02_Triage/
-│       │       │   ├── SUB-RUN-02_Triage.ps1
+│       │       ├── SUB-RUN-02_MR-01_Planning__Triage/
+│       │       │   ├── SUB-RUN-02_MR-01_Planning__Triage.ps1
 │       │       │   └── PART-RUNS/
-│       │       │       └── PART-RUN-01_FilterIssues.ps1
+│       │       │       └── PART-RUN-01_MR-01_Planning__Triage__FilterIssues.ps1
 │       │       │
-│       │       ├── SUB-RUN-03_Strategy/
-│       │       │   ├── SUB-RUN-03_Strategy.ps1
+│       │       ├── SUB-RUN-03_MR-01_Planning__Strategy/
+│       │       │   ├── SUB-RUN-03_MR-01_Planning__Strategy.ps1
 │       │       │   └── PART-RUNS/
-│       │       │       └── PART-RUN-01_CreateProposal.ps1
+│       │       │       └── PART-RUN-01_MR-01_Planning__Strategy__CreateProposal.ps1
 │       │       │
-│       │       └── SUB-RUN-04_Delegation/
-│       │           └── SUB-RUN-04_Delegation.ps1    # [NEU] Kein PART-RUN nötig
+│       │       └── SUB-RUN-04_MR-01_Planning__Delegation/
+│       │           ├── SUB-RUN-04_MR-01_Planning__Delegation.ps1
+│       │           └── PART-RUNS/
+│       │               └── PART-RUN-01_MR-01_Planning__Delegation__CreateDelegations.ps1
 │       │
 │       ├── MAIN-RUN-02_CheckAndDoing/
 │       │   ├── CheckAndDoing-Router.ps1
 │       │   └── SUB-RUNS/
-│       │       ├── SUB-RUN-01_SessionSync/
-│       │       │   └── SUB-RUN-01_SessionSync.ps1
+│       │       ├── SUB-RUN-01_MR-02_CheckAndDoing__SessionSync/
+│       │       │   ├── SUB-RUN-01_MR-02_CheckAndDoing__SessionSync.ps1
+│       │       │   └── PART-RUNS/PART-RUN-01_MR-02_CheckAndDoing__SessionSync__SyncActiveSessions.ps1
 │       │       │
-│       │       ├── SUB-RUN-02_JulesCheck/
-│       │       │   └── SUB-RUN-02_JulesCheck.ps1
+│       │       ├── SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck/
+│       │       │   ├── SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck.ps1
+│       │       │   └── PART-RUNS/PART-RUN-01_MR-02_CheckAndDoing__JulesCheck__InspectJulesSessions.ps1
 │       │       │
-│       │       ├── SUB-RUN-03_LocalAgentCheck/
-│       │       │   └── SUB-RUN-03_LocalAgentCheck.ps1
+│       │       ├── SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck/
+│       │       │   ├── SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck.ps1
+│       │       │   └── PART-RUNS/PART-RUN-01_MR-02_CheckAndDoing__LocalAgentCheck__InspectLocalAgents.ps1
 │       │       │
-│       │       ├── SUB-RUN-04_ReviewDispatch/
-│       │       │   └── SUB-RUN-04_ReviewDispatch.ps1
+│       │       ├── SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch/
+│       │       │   ├── SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch.ps1
+│       │       │   └── PART-RUNS/PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews.ps1
 │       │       │
-│       │       ├── SUB-RUN-05_JulesRefill/          # [NEU aus Draft]
-│       │       │   └── SUB-RUN-05_JulesRefill.ps1
+│       │       ├── SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill/
+│       │       │   ├── SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill.ps1
+│       │       │   └── PART-RUNS/PART-RUN-01_MR-02_CheckAndDoing__JulesRefill__RefillJulesQueue.ps1
 │       │       │
-│       │       └── SUB-RUN-06_Housekeeping/         # [NEU aus Draft]
-│       │           └── SUB-RUN-06_Housekeeping.ps1
+│       │       └── SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping/
+│       │           ├── SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping.ps1
+│       │           └── PART-RUNS/PART-RUN-01_MR-02_CheckAndDoing__Housekeeping__CleanupRuntimeState.ps1
 │       │
 │       ├── MAIN-RUN-03_Audit/
 │       │   ├── Audit-Router.ps1
 │       │   └── SUB-RUNS/
-│       │       ├── SUB-RUN-01_DataSync/
-│       │       │   └── SUB-RUN-01_DataSync.ps1
-│       │       ├── SUB-RUN-02_ComplianceCheck/
-│       │       │   └── SUB-RUN-02_ComplianceCheck.ps1
-│       │       ├── SUB-RUN-03_JulesSupervision/     # [NEU aus Draft]
-│       │       │   └── SUB-RUN-03_JulesSupervision.ps1
-│       │       └── SUB-RUN-04_AlertDisposition/     # [NEU aus Draft]
-│       │           └── SUB-RUN-04_AlertDisposition.ps1
+│       │       ├── SUB-RUN-01_MR-03_Audit__DataSync/
+│       │       │   ├── SUB-RUN-01_MR-03_Audit__DataSync.ps1
+│       │       │   └── PART-RUNS/PART-RUN-01_MR-03_Audit__DataSync__ValidateDataSources.ps1
+│       │       ├── SUB-RUN-02_MR-03_Audit__ComplianceCheck/
+│       │       │   ├── SUB-RUN-02_MR-03_Audit__ComplianceCheck.ps1
+│       │       │   └── PART-RUNS/PART-RUN-01_MR-03_Audit__ComplianceCheck__EvaluateCompliance.ps1
+│       │       ├── SUB-RUN-03_MR-03_Audit__JulesSupervision/     # [NEU aus Draft]
+│       │       │   ├── SUB-RUN-03_MR-03_Audit__JulesSupervision.ps1
+│       │       │   └── PART-RUNS/PART-RUN-01_MR-03_Audit__JulesSupervision__SuperviseJulesSessions.ps1
+│       │       └── SUB-RUN-04_MR-03_Audit__AlertDisposition/     # [NEU aus Draft]
+│       │           ├── SUB-RUN-04_MR-03_Audit__AlertDisposition.ps1
+│       │           └── PART-RUNS/PART-RUN-01_MR-03_Audit__AlertDisposition__DispositionAlerts.ps1
 │       │
-│       ├── MAIN-RUN-04_Optimizer/                   # [OPTIONAL, aus Draft]
+│       ├── MAIN-RUN-04_Optimizer/          # CORE (nicht optional)
 │       │   ├── Optimizer-Router.ps1
 │       │   └── SUB-RUNS/
-│       │       ├── SUB-RUN-01_DataSync/
-│       │       │   └── SUB-RUN-01_DataSync.ps1
-│       │       └── SUB-RUN-02_SystemAnalysis/
-│       │           └── SUB-RUN-02_SystemAnalysis.ps1
+│       │       ├── SUB-RUN-01_MR-04_Optimizer__PerformanceDataCollection/
+│       │       │   ├── SUB-RUN-01_MR-04_Optimizer__PerformanceDataCollection.ps1
+│       │       │   └── PART-RUNS/PART-RUN-01_MR-04_Optimizer__PerformanceDataCollection__CollectPerformanceMetrics.ps1
+│       │       └── SUB-RUN-02_MR-04_Optimizer__SystemAnalysis/
+│       │           ├── SUB-RUN-02_MR-04_Optimizer__SystemAnalysis.ps1
+│       │           └── PART-RUNS/PART-RUN-01_MR-04_Optimizer__SystemAnalysis__AnalyzeSystemPerformance.ps1
 │       │
-│       └── MAIN-RUN-05_MemoryOptimization/          # [OPTIONAL, aus Draft]
+│       └── MAIN-RUN-05_MemoryOptimization/           # CORE (nicht optional)
 │           ├── MemoryOptimization-Router.ps1
 │           └── SUB-RUNS/
-│               └── SUB-RUN-01_MemoryMaintenance/
-│                   └── SUB-RUN-01_MemoryMaintenance.ps1
+│               └── SUB-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance/
+│                   ├── SUB-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance.ps1
+│                   └── PART-RUNS/PART-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance__OptimizeMemoryStore.ps1
 │
 ├── test/
 │   ├── Test-Boot.ps1                      # [NEU] Phase 1 Validierung
@@ -194,10 +257,11 @@ Vorce-Autopilot_NEW/
     │   └── proposals/                     # [ORDNER ANLEGEN]
     ├── log/                               # [ORDNER ANLEGEN]
     ├── prompts/
+    │   ├── prompt-registry.json
     │   ├── system/
-    │   ├── jules/
-    │   ├── phases/
-    │   └── deliberation/
+    │   ├── shared/deliberation/
+    │   ├── agents/jules/
+    │   └── runs/MAIN-RUN-*/SUB-RUN-*/
     ├── run-states/
     └── tmp/
 ```
@@ -285,18 +349,18 @@ param(
 >    - src/lib/TriageUtils.ps1        → src/lib/utils/TriageUtils.ps1
 >
 > 3. Konvertiere SUB-RUN Dateien zu Ordnern (für MAIN-RUN-01_Planning):
->    - Erstelle: src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_DataSync/
->    - Verschiebe: src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_DataSync.ps1
->      → src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_DataSync/SUB-RUN-01_DataSync.ps1
->    - Erstelle: src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_DataSync/PART-RUNS/
+>    - Erstelle: src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync/
+>    - Verschiebe: src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync.ps1
+>      → src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync/SUB-RUN-01_MR-01_Planning__DataSync.ps1
+>    - Erstelle: src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync/PART-RUNS/
 >    - Verschiebe die PART-RUN Dateien aus src/runs/MAIN-RUN-01_Planning/PART-RUNS/:
->      - PART-RUN-01_FetchIssues.ps1  → SUB-RUN-01_DataSync/PART-RUNS/PART-RUN-01_FetchIssues.ps1
->      - PART-RUN-02_FetchPRs.ps1     → SUB-RUN-01_DataSync/PART-RUNS/PART-RUN-02_FetchPRs.ps1
->    - Wiederhole für SUB-RUN-02_Triage:
->      - PART-RUN-03_FilterIssues.ps1 → SUB-RUN-02_Triage/PART-RUNS/PART-RUN-01_FilterIssues.ps1 (UMBENENNUNG: Nummerierung beginnt pro SUB-RUN bei 01!)
->    - Wiederhole für SUB-RUN-03_Strategy:
->      - PART-RUN-04_CreateProposal.ps1 → SUB-RUN-03_Strategy/PART-RUNS/PART-RUN-01_CreateProposal.ps1
->    - Erstelle: SUB-RUN-04_Delegation/ (leerer Ordner + leere SUB-RUN-04_Delegation.ps1 Datei mit Kommentar "# TODO: Implementierung in Phase 3")
+>      - PART-RUN-01_MR-01_Planning__DataSync__FetchIssues.ps1  → SUB-RUN-01_MR-01_Planning__DataSync/PART-RUNS/PART-RUN-01_MR-01_Planning__DataSync__FetchIssues.ps1
+>      - PART-RUN-02_MR-01_Planning__DataSync__FetchPRs.ps1     → SUB-RUN-01_MR-01_Planning__DataSync/PART-RUNS/PART-RUN-02_MR-01_Planning__DataSync__FetchPRs.ps1
+>    - Wiederhole für SUB-RUN-02_MR-01_Planning__Triage:
+>      - PART-RUN-03_FilterIssues.ps1 → SUB-RUN-02_MR-01_Planning__Triage/PART-RUNS/PART-RUN-01_MR-01_Planning__Triage__FilterIssues.ps1 (UMBENENNUNG: Nummerierung beginnt pro SUB-RUN bei 01!)
+>    - Wiederhole für SUB-RUN-03_MR-01_Planning__Strategy:
+>      - PART-RUN-04_CreateProposal.ps1 → SUB-RUN-03_MR-01_Planning__Strategy/PART-RUNS/PART-RUN-01_MR-01_Planning__Strategy__CreateProposal.ps1
+>    - Erstelle: SUB-RUN-04_MR-01_Planning__Delegation/ (leerer Ordner + leere SUB-RUN-04_MR-01_Planning__Delegation.ps1 Datei mit Kommentar "# TODO: Implementierung in Phase 3")
 >    - Lösche den jetzt leeren Ordner: src/runs/MAIN-RUN-01_Planning/PART-RUNS/
 >
 > 4. Erstelle leere Verzeichnisse für MAIN-RUN-02 bis 03:
@@ -468,7 +532,7 @@ param(
 >
 > Dateien die geändert werden müssen:
 >   - src/orchestrator/Vorce-Orchestrator.ps1 (lädt 4 Module)
->   - src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_DataSync/SUB-RUN-01_DataSync.ps1
+>   - src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync/SUB-RUN-01_MR-01_Planning__DataSync.ps1
 >   - Alle anderen .ps1 die Module laden
 > ```
 
@@ -491,8 +555,8 @@ param(
 >    - src/lib/utils/ existiert
 >    - var/log/ existiert
 >    - var/db/proposals/ existiert
->    - src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_DataSync/ ist ein ORDNER (kein File)
->    - src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_DataSync/PART-RUNS/ existiert
+>    - src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync/ ist ein ORDNER (kein File)
+>    - src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync/PART-RUNS/ existiert
 >    - src/runs/MAIN-RUN-01_Planning/PART-RUNS/ existiert NICHT mehr (alter Ordner gelöscht)
 >
 > 2. MODUL-CHECKS:
@@ -694,15 +758,15 @@ param(
 > 4. Delegation läuft IMMER
 >
 > RÜCKGABE: Array von Hashtables:
->   @{ id="01"; name="DataSync"; script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_DataSync/SUB-RUN-01_DataSync.ps1" }
+>   @{ id="01"; name="DataSync"; script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync/SUB-RUN-01_MR-01_Planning__DataSync.ps1" }
 >
 > REFERENZ:
 > C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_Restore\Vorce-Autopilot_3.0_draft\src\runs\MAIN-RUN-01_Planning\ROUTER_MAIN-RUN-01_Planning.ps1
 > ```
 
-> **📋 CLI-PROMPT #12 — SUB-RUN-01_DataSync.ps1 vollständig (C5)**
+> **📋 CLI-PROMPT #12 — SUB-RUN-01_MR-01_Planning__DataSync.ps1 vollständig (C5)**
 > ```
-> Du arbeitest in: C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_NEW\src\runs\MAIN-RUN-01_Planning\SUB-RUNS\SUB-RUN-01_DataSync\SUB-RUN-01_DataSync.ps1
+> Du arbeitest in: C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_NEW\src\runs\MAIN-RUN-01_Planning\SUB-RUNS\SUB-RUN-01_MR-01_Planning__DataSync\SUB-RUN-01_MR-01_Planning__DataSync.ps1
 >
 > Aufgabe: Überarbeite den DataSync SUB-RUN.
 >
@@ -720,10 +784,10 @@ param(
 >
 > LOGIK:
 > 1. PART-RUNs definieren (Pfade relativ zu $global:VorceRoot):
->    $myDir = $PSScriptRoot  # = .../SUB-RUN-01_DataSync/
+>    $myDir = $PSScriptRoot  # = .../SUB-RUN-01_MR-01_Planning__DataSync/
 >    $PartRuns = @(
->        @{ name="FetchIssues"; script=(Join-Path $myDir "PART-RUNS/PART-RUN-01_FetchIssues.ps1") },
->        @{ name="FetchPRs";    script=(Join-Path $myDir "PART-RUNS/PART-RUN-02_FetchPRs.ps1") }
+>        @{ name="FetchIssues"; script=(Join-Path $myDir "PART-RUNS/PART-RUN-01_MR-01_Planning__DataSync__FetchIssues.ps1") },
+>        @{ name="FetchPRs";    script=(Join-Path $myDir "PART-RUNS/PART-RUN-02_MR-01_Planning__DataSync__FetchPRs.ps1") }
 >    )
 > 2. Invoke-VorceSubRunParallel aufrufen
 > 3. Ergebnis zurückgeben
@@ -732,9 +796,9 @@ param(
 > C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_Restore\Vorce-Autopilot_3.0_draft\src\runs\MAIN-RUN-01_Planning\SUB-RUNS\SUB-RUN-01_MR-01_Planning__DataSync\SUB-RUN-01_MR-01_Planning__DataSync.ps1
 > ```
 
-> **📋 CLI-PROMPT #13 — SUB-RUN-02_Triage.ps1 vollständig implementieren**
+> **📋 CLI-PROMPT #13 — SUB-RUN-02_MR-01_Planning__Triage.ps1 vollständig implementieren**
 > ```
-> Du arbeitest in: C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_NEW\src\runs\MAIN-RUN-01_Planning\SUB-RUNS\SUB-RUN-02_Triage\SUB-RUN-02_Triage.ps1
+> Du arbeitest in: C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_NEW\src\runs\MAIN-RUN-01_Planning\SUB-RUNS\SUB-RUN-02_MR-01_Planning__Triage\SUB-RUN-02_MR-01_Planning__Triage.ps1
 >
 > Aufgabe: Implementiere die Triage-Logik (aktuell Stub).
 >
@@ -747,14 +811,14 @@ param(
 > 4. Speichere Ergebnis in var/db/triaged-issues.json
 > 5. Gib State mit Status und Anzahl zurück
 >
-> Hat einen PART-RUN: PART-RUN-01_FilterIssues.ps1 im PART-RUNS/ Unterordner.
+> Hat einen PART-RUN: PART-RUN-01_MR-01_Planning__Triage__FilterIssues.ps1 im PART-RUNS/ Unterordner.
 > Der SUB-RUN kann entweder direkt filtern ODER den PART-RUN via RunEngine aufrufen.
 > Empfehlung: Direkter Aufruf (kein paralleler PART-RUN nötig bei nur 1 Task).
 > ```
 
-> **📋 CLI-PROMPT #14 — SUB-RUN-03_Strategy.ps1 vollständig implementieren**
+> **📋 CLI-PROMPT #14 — SUB-RUN-03_MR-01_Planning__Strategy.ps1 vollständig implementieren**
 > ```
-> Du arbeitest in: C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_NEW\src\runs\MAIN-RUN-01_Planning\SUB-RUNS\SUB-RUN-03_Strategy\SUB-RUN-03_Strategy.ps1
+> Du arbeitest in: C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_NEW\src\runs\MAIN-RUN-01_Planning\SUB-RUNS\SUB-RUN-03_MR-01_Planning__Strategy\SUB-RUN-03_MR-01_Planning__Strategy.ps1
 >
 > Aufgabe: Implementiere die Strategie/Deliberation-Logik (aktuell Stub).
 >
@@ -771,9 +835,9 @@ param(
 > Benötigte Module: state/StateManager, engines/DeliberationEngine, engines/QuotaManager, utils/StatusPrinter
 > ```
 
-> **📋 CLI-PROMPT #15 — SUB-RUN-04_Delegation.ps1 neu erstellen (L4)**
+> **📋 CLI-PROMPT #15 — SUB-RUN-04_MR-01_Planning__Delegation.ps1 neu erstellen (L4)**
 > ```
-> Du arbeitest in: C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_NEW\src\runs\MAIN-RUN-01_Planning\SUB-RUNS\SUB-RUN-04_Delegation\SUB-RUN-04_Delegation.ps1
+> Du arbeitest in: C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_NEW\src\runs\MAIN-RUN-01_Planning\SUB-RUNS\SUB-RUN-04_MR-01_Planning__Delegation\SUB-RUN-04_MR-01_Planning__Delegation.ps1
 >
 > Aufgabe: Erstelle die Delegation-Logik (fehlt komplett).
 >
@@ -794,10 +858,10 @@ param(
 > C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_Restore\Vorce-Autopilot_3.0_draft\src\lib\integrations\jules-client.ps1
 > ```
 
-> **📋 CLI-PROMPT #16 — PART-RUN-01_CreateProposal.ps1 Config-Fix (C6)**
+> **📋 CLI-PROMPT #16 — PART-RUN-01_MR-01_Planning__Strategy__CreateProposal.ps1 Config-Fix (C6)**
 > ```
-> Du arbeitest in: C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_NEW\src\runs\MAIN-RUN-01_Planning\SUB-RUNS\SUB-RUN-03_Strategy\PART-RUNS\PART-RUN-01_CreateProposal.ps1
-> (Wurde umbenannt von PART-RUN-04 zu PART-RUN-01 und verschoben nach SUB-RUN-03_Strategy/PART-RUNS/)
+> Du arbeitest in: C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_NEW\src\runs\MAIN-RUN-01_Planning\SUB-RUNS\SUB-RUN-03_MR-01_Planning__Strategy\PART-RUNS\PART-RUN-01_MR-01_Planning__Strategy__CreateProposal.ps1
+> (Wurde umbenannt von PART-RUN-04 zu PART-RUN-01 und verschoben nach SUB-RUN-03_MR-01_Planning__Strategy/PART-RUNS/)
 >
 > Aufgabe: Ersetze alle hardkodierten Werte durch Config-Lesungen.
 >
@@ -827,7 +891,7 @@ param(
 > 4. Rufe Planning-Router auf → prüfe dass SUB-RUN-Definitionen zurückkommen
 > 5. Prüfe ob die referenzierten SUB-RUN Skripte existieren
 > 6. Prüfe ob die referenzierten PART-RUN Skripte innerhalb jedes SUB-RUN Ordners existieren
-> 7. Optional: Führe SUB-RUN-01_DataSync im DryRun-Modus aus
+> 7. Optional: Führe SUB-RUN-01_MR-01_Planning__DataSync im DryRun-Modus aus
 > ```
 
 ---
@@ -844,12 +908,12 @@ param(
 >
 > 1. Erstelle CheckAndDoing-Router.ps1 mit der einheitlichen Router-Signatur
 > 2. Erstelle SUB-RUNS/ Ordner mit 6 SUB-RUN Unterordnern:
->    - SUB-RUN-01_SessionSync/
->    - SUB-RUN-02_JulesCheck/
->    - SUB-RUN-03_LocalAgentCheck/
->    - SUB-RUN-04_ReviewDispatch/
->    - SUB-RUN-05_JulesRefill/
->    - SUB-RUN-06_Housekeeping/
+>    - SUB-RUN-01_MR-02_CheckAndDoing__SessionSync/
+>    - SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck/
+>    - SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck/
+>    - SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch/
+>    - SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill/
+>    - SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping/
 >
 > Router-Logik:
 >   - SessionSync: IMMER aktiv
@@ -863,9 +927,9 @@ param(
 > C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_Restore\Vorce-Autopilot_3.0_draft\src\runs\MAIN-RUN-02_CheckAndDoing\ROUTER_MAIN-RUN-02_CheckAndDoing.ps1
 > ```
 
-> **📋 CLI-PROMPT #19 — SUB-RUN-01_SessionSync.ps1 implementieren**
+> **📋 CLI-PROMPT #19 — SUB-RUN-01_MR-02_CheckAndDoing__SessionSync.ps1 implementieren**
 > ```
-> Du arbeitest in: C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_NEW\src\runs\MAIN-RUN-02_CheckAndDoing\SUB-RUNS\SUB-RUN-01_SessionSync\SUB-RUN-01_SessionSync.ps1
+> Du arbeitest in: C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_NEW\src\runs\MAIN-RUN-02_CheckAndDoing\SUB-RUNS\SUB-RUN-01_MR-02_CheckAndDoing__SessionSync\SUB-RUN-01_MR-02_CheckAndDoing__SessionSync.ps1
 >
 > Aufgabe: Erstelle SessionSync — synchronisiert den Status aller aktiven Sessions.
 >
@@ -881,10 +945,10 @@ param(
 > C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_Restore\Vorce-Autopilot_3.0_draft\src\runs\MAIN-RUN-02_CheckAndDoing\SUB-RUNS\SUB-RUN-01_MR-02_CheckAndDoing__SessionSync\SUB-RUN-01_MR-02_CheckAndDoing__SessionSync.ps1
 > ```
 
-> **📋 CLI-PROMPT #20 — SUB-RUN-02_JulesCheck.ps1 implementieren**
+> **📋 CLI-PROMPT #20 — SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck.ps1 implementieren**
 > ```
-> Erstelle: SUB-RUN-02_JulesCheck.ps1
-> Pfad: .../MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-02_JulesCheck/SUB-RUN-02_JulesCheck.ps1
+> Erstelle: SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck.ps1
+> Pfad: .../MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck/SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck.ps1
 > SIGNATUR: param([hashtable]$ConfigBag, [object]$ParentState)
 > LOGIK: Prüfe Status aktiver Jules-Sessions (Session-Status, Errors, Timeout).
 > ```
@@ -895,21 +959,21 @@ param(
 > Jede Datei in ihrem eigenen Ordner unter SUB-RUNS/.
 > SIGNATUR: Immer param([hashtable]$ConfigBag, [object]$ParentState)
 >
-> SUB-RUN-03_LocalAgentCheck.ps1:
+> SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck.ps1:
 >   - Prüfe laufende lokale Agent-Prozesse (claude, gemini)
 >   - Lese Prozess-Status und Exit-Codes
 >
-> SUB-RUN-04_ReviewDispatch.ps1:
+> SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch.ps1:
 >   - Finde PRs mit Status "ready for review"
 >   - Dispatche an Gemini/Claude für Code-Review
 >   - Speichere Review-Ergebnis in var/db/
 >
-> SUB-RUN-05_JulesRefill.ps1:
+> SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill.ps1:
 >   - Prüfe ob freie Jules-Slots verfügbar
 >   - Suche unassigned Tasks aus task-journal.json
 >   - Erstelle neue Jules-Sessions für freie Slots
 >
-> SUB-RUN-06_Housekeeping.ps1:
+> SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping.ps1:
 >   - Bereinige abgeschlossene Delegierungen aus active_delegations
 >   - Räume var/tmp/ auf (Dateien älter als 24h)
 >   - Aktualisiere Statistiken in global-state.json
@@ -937,10 +1001,10 @@ param(
 >    - AlertDisposition: NUR wenn Alerts/Warnungen in global-state
 >
 > 2. SUB-RUNS/ mit 4 Unterordnern + je eine .ps1 Datei:
->    - SUB-RUN-01_DataSync/SUB-RUN-01_DataSync.ps1
->    - SUB-RUN-02_ComplianceCheck/SUB-RUN-02_ComplianceCheck.ps1
->    - SUB-RUN-03_JulesSupervision/SUB-RUN-03_JulesSupervision.ps1
->    - SUB-RUN-04_AlertDisposition/SUB-RUN-04_AlertDisposition.ps1
+>    - SUB-RUN-01_MR-03_Audit__DataSync/SUB-RUN-01_MR-03_Audit__DataSync.ps1
+>    - SUB-RUN-02_MR-03_Audit__ComplianceCheck/SUB-RUN-02_MR-03_Audit__ComplianceCheck.ps1
+>    - SUB-RUN-03_MR-03_Audit__JulesSupervision/SUB-RUN-03_MR-03_Audit__JulesSupervision.ps1
+>    - SUB-RUN-04_MR-03_Audit__AlertDisposition/SUB-RUN-04_MR-03_Audit__AlertDisposition.ps1
 >
 > Alle SUB-RUNs können vorerst minimal sein (Status-Check, Log-Eintrag, kein Agent-Aufruf).
 > ```
@@ -952,28 +1016,30 @@ param(
 > Aufgabe: Aktualisiere die Config auf den neuen Stand.
 >
 > 1. router_rules aktualisieren — Skript-Pfade auf neue Ordnerstruktur:
->    Statt: "MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_DataSync.ps1"
->    Nutze: "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_DataSync/SUB-RUN-01_DataSync.ps1"
+>    Statt: "MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync.ps1"
+>    Nutze: "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync/SUB-RUN-01_MR-01_Planning__DataSync.ps1"
 >
 > 2. Neue router_rules für CheckAndDoing ergänzen (6 SUB-RUNs statt 4)
 >
 > 3. Neue router_rules für Audit ergänzen
 >
-> 4. Entferne "kiro_cli" aus qa_manager_chain (nicht implementiert)
->    ODER behalte es wenn User es will (→ Open Question)
+> 4. CLI-Fallback-Chain konfigurieren (alle 7 CLIs)
 >
 > 5. Ergänze "jules.monitoring_refill_enabled": true
+>
+> 6. Ergänze wake_intervals für Optimizer und Memory: optimizer_minutes: 720, memory_optimization_minutes: 60
 > ```
 
-> **📋 CLI-PROMPT #24 — Dashboard Polling implementieren (D4)**
+> **📋 CLI-PROMPT #24 — Dashboard WebSocket-Server implementieren (D4)**
 > ```
 > Du arbeitest im Dashboard: C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_NEW\web\Dashboard\
 >
 > Aufgabe: Implementiere Echtzeit-Datensync.
 >
-> NICHT über vite.config.ts (das ist ein Build-Tool, kein Runtime-Feature).
+> ARCHITEKTUR:
+> 1. WebSocket-Server in src/tools/services/sync-service.ps1 (PowerShell):
 >
-> RICHTIG: In der React-App einen Polling-Hook erstellen:
+>    - Lauscht auf Port 5174 (separat vom Vite-Dev-Server auf 5173)
 >   function useAutoRefresh(jsonPath, intervalMs = 5000) {
 >       const [data, setData] = useState(null);
 >       useEffect(() => {
@@ -1011,17 +1077,17 @@ param(
 
 ---
 
-### Phase 6 — OPTIONAL: MAIN-RUN-04 & 05 (aus Draft)
+### Phase 6 — MAIN-RUN-04_Optimizer & MAIN-RUN-05_MemoryOptimization (CORE)
 
 > [!NOTE]
-> Diese Phase ist optional und kommt nur wenn die Open Question #2 vom User bestätigt wird.
+> Diese Phase ist CORE – MAIN-RUN-04 und MAIN-RUN-05 werden vollständig implementiert.
 
 > **📋 CLI-PROMPT #26 — MAIN-RUN-04_Optimizer Ordnerstruktur**
 > ```
 > Erstelle MAIN-RUN-04_Optimizer/ mit:
 > - Optimizer-Router.ps1
-> - SUB-RUNS/SUB-RUN-01_DataSync/ (Perf-Daten sammeln)
-> - SUB-RUNS/SUB-RUN-02_SystemAnalysis/ (Analyse der Run-Zeiten, Quota-Verbrauch)
+> - SUB-RUNS/SUB-RUN-01_MR-04_Optimizer__PerformanceDataCollection/ (Perf-Daten sammeln)
+> - SUB-RUNS/SUB-RUN-02_MR-04_Optimizer__SystemAnalysis/ (Analyse der Run-Zeiten, Quota-Verbrauch)
 > Alle mit einheitlicher Signatur.
 > ```
 
@@ -1029,7 +1095,7 @@ param(
 > ```
 > Erstelle MAIN-RUN-05_MemoryOptimization/ mit:
 > - MemoryOptimization-Router.ps1
-> - SUB-RUNS/SUB-RUN-01_MemoryMaintenance/ (Autopilot-Memories bereinigen/optimieren)
+> - SUB-RUNS/SUB-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance/ (Autopilot-Memories bereinigen/optimieren)
 > Alle mit einheitlicher Signatur.
 > ```
 
@@ -1044,13 +1110,21 @@ param(
 | PowerShell-Funktion | `[Verb]-Vorce[Kontext]` | `Invoke-VorceAgent` |
 | Main-Run Ordner | `MAIN-RUN-[NN]_[Name]/` | `MAIN-RUN-01_Planning/` |
 | Router | `[RunName]-Router.ps1` | `Planning-Router.ps1` |
-| SUB-RUN **Ordner** | `SUB-RUN-[NN]_[Name]/` | `SUB-RUN-01_DataSync/` |
-| SUB-RUN Skript | `SUB-RUN-[NN]_[Name].ps1` (im Ordner) | `SUB-RUN-01_DataSync.ps1` |
-| PART-RUN Ordner | `PART-RUNS/` (innerhalb SUB-RUN) | `SUB-RUN-01_DataSync/PART-RUNS/` |
-| PART-RUN Skript | `PART-RUN-[NN]_[Name].ps1` | `PART-RUN-01_FetchIssues.ps1` |
-| PART-RUN Nummerierung | Pro SUB-RUN bei 01 beginnend | NN ist relativ zum SUB-RUN |
+| SUB-RUN **Ordner** | `SUB-RUN-[NN]_[Name]/` | `SUB-RUN-01_MR-01_Planning__DataSync/` |
+| SUB-RUN Skript | `SUB-RUN-[NN]_[Name].ps1` (im Ordner) | `SUB-RUN-01_MR-01_Planning__DataSync.ps1` |
+| PART-RUN Ordner | `PART-RUNS/` (Pflicht innerhalb jedes SUB-RUN) | `SUB-RUN-01_MR-01_Planning__DataSync/PART-RUNS/` |
+| PART-RUN Skript | `PART-RUN-[NN]_[Name].ps1` | `PART-RUN-01_MR-01_Planning__DataSync__FetchIssues.ps1` |
+| PART-RUN Nummerierung | Pro SUB-RUN bei 01 beginnend; mindestens ein PART-RUN | NN ist relativ zum SUB-RUN |
+| Prompt-Registry-ID | stabil, eindeutig, `snake_case` | `planning_session`, `deliberation_proposal` |
+| System-Prompt | `SYSTEM-PROMPT-[NN]_[Kontext]__[Aufgabe].md` | `SYSTEM-PROMPT-01_Autopilot__CEO-Orchestrator.md` |
+| Shared-Prompt | `SHARED-PROMPT-[NN]_[Kontext]__[Aufgabe].md` | `SHARED-PROMPT-01_Deliberation__Proposal.md` |
+| Agent-Prompt | `AGENT-PROMPT-[NN]_[Agent]__[Aufgabe].md` | `AGENT-PROMPT-01_Jules__Implementation.md` |
+| Main-Run-Prompt | `MAIN-RUN-PROMPT-[NN]_[MainRun]__[Aufgabe].md` | `MAIN-RUN-PROMPT-01_MR-01_Planning__Session.md` |
+| Part-Run-Prompt | `PART-RUN-PROMPT-[NN]_[MainRun]__[SubRun]__[Aufgabe].md` | `PART-RUN-PROMPT-01_MR-01_Planning__DataSync__Jules-Session-Sync.md` |
 | Run-State JSON | `[TYP]_[Name].json` | `MAIN_Planning.json` |
 | DB-Datei | `[kontext]-[typ].json` (kebab-case) | `github-issues.json` |
+| Tools-Ordner | agents/services | `src/tools/agents/`, `src/tools/services/` |
+| CLI-Clients | Fallback-Chain P1-P7 | `gemini`, `claude`, `codex`, `kiro`, `copilot`, `cursor-agent`, `hermes` |
 
 ---
 
@@ -1078,26 +1152,26 @@ graph TD
     C -->|Audit| F["Audit-Router.ps1"]
     C -->|Keiner| G["IDLE — warte auf Intervall"]
     
-    D --> D1["SUB-RUN-01_DataSync"]
-    D --> D2["SUB-RUN-02_Triage"]
-    D --> D3["SUB-RUN-03_Strategy"]
-    D --> D4["SUB-RUN-04_Delegation"]
+    D --> D1["SUB-RUN-01_MR-01_Planning__DataSync"]
+    D --> D2["SUB-RUN-02_MR-01_Planning__Triage"]
+    D --> D3["SUB-RUN-03_MR-01_Planning__Strategy"]
+    D --> D4["SUB-RUN-04_MR-01_Planning__Delegation"]
     
-    D1 --> D1a["PART-RUN-01_FetchIssues"]
-    D1 --> D1b["PART-RUN-02_FetchPRs"]
-    D3 --> D3a["PART-RUN-01_CreateProposal"]
+    D1 --> D1a["PART-RUN-01_MR-01_Planning__DataSync__FetchIssues"]
+    D1 --> D1b["PART-RUN-02_MR-01_Planning__DataSync__FetchPRs"]
+    D3 --> D3a["PART-RUN-01_MR-01_Planning__Strategy__CreateProposal"]
     
-    E --> E1["SUB-RUN-01_SessionSync"]
-    E --> E2["SUB-RUN-02_JulesCheck"]
-    E --> E3["SUB-RUN-03_LocalAgentCheck"]
-    E --> E4["SUB-RUN-04_ReviewDispatch"]
-    E --> E5["SUB-RUN-05_JulesRefill"]
-    E --> E6["SUB-RUN-06_Housekeeping"]
+    E --> E1["SUB-RUN-01_MR-02_CheckAndDoing__SessionSync"]
+    E --> E2["SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck"]
+    E --> E3["SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck"]
+    E --> E4["SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch"]
+    E --> E5["SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill"]
+    E --> E6["SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping"]
     
-    F --> F1["SUB-RUN-01_DataSync"]
-    F --> F2["SUB-RUN-02_ComplianceCheck"]
-    F --> F3["SUB-RUN-03_JulesSupervision"]
-    F --> F4["SUB-RUN-04_AlertDisposition"]
+    F --> F1["SUB-RUN-01_MR-03_Audit__DataSync"]
+    F --> F2["SUB-RUN-02_MR-03_Audit__ComplianceCheck"]
+    F --> F3["SUB-RUN-03_MR-03_Audit__JulesSupervision"]
+    F --> F4["SUB-RUN-04_MR-03_Audit__AlertDisposition"]
 ```
 
 ---
@@ -1116,8 +1190,23 @@ graph TD
 # Phase 3
 .\test\Test-PlanningRun.ps1
 
+# Phase 4
+.\test\Test-CheckAndDoingRun.ps1
+
+# Phase 5
+.\test\Test-AuditRun.ps1
+
+# Phase 6
+.\test\Test-OptimizerRun.ps1
+
 # Gesamt-Check: Alle Module ladbar, keine $PSScriptRoot Fehler
 Get-ChildItem -Recurse -Filter "*.ps1" src/ | Select-String '\$PSScriptRoot.*var/' | Should -BeNullOrEmpty
+```
+
+# Long-Naming-Konvention eingehalten?
+Get-ChildItem -Recurse -Directory src/runs/ | Where-Object { $_.Name -match '^SUB-RUN-' } | ForEach-Object {
+    if ($_.Name -notmatch 'MR-\d{2}_') { Write-Warning "FEHLER: $($_.Name) hat kein MR-Prefix!" }
+}
 ```
 
 ### Manuelle Verifikation

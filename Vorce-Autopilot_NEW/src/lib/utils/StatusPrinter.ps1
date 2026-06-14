@@ -9,7 +9,7 @@ function Write-VorceHeader {
     )
     $Line = "=" * 60
     Write-Host "`n$Line" -ForegroundColor $Color
-    Write-Host "  $Icon $Title" -ForegroundColor $Color -Bold
+    Write-Host "  $Icon $Title" -ForegroundColor $Color
     Write-Host "$Line" -ForegroundColor $Color
 }
 
@@ -23,11 +23,11 @@ function Write-VorceStep {
     
     $timestamp = (Get-Date).ToString("HH:mm:ss")
     $prefix = switch($Status) {
-        "RUN"   { "[ ⏩ ]" }
-        "OK"    { "[ ✅ ]" }
-        "WARN"  { "[ ⚠️  ]" }
-        "ERROR" { "[ ❌ ]" }
-        default { "[ ℹ️  ]" }
+        "RUN"   { "[ >> ]" }
+        "OK"    { "[ OK ]" }
+        "WARN"  { "[ !! ]" }
+        "ERROR" { "[ XX ]" }
+        default { "[ -- ]" }
     }
     
     $color = switch($Status) {

@@ -40,8 +40,25 @@ function getRepository(): string {
         return config.repository;
       }
     }
-  } catch (e) {}
+  } catch {
+    // Use the configured fallback below.
+  }
   return 'Vorce-Studios/Vorce';
+}
+
+function getPromptRegistry(promptsDir: string): Record<string, { path: string }> {
+  return readJsonFile(path.join(promptsDir, 'prompt-registry.json'), { prompts: {} }).prompts || {};
+}
+
+function loadRegisteredPrompts(promptsDir: string): Record<string, string> {
+  const prompts: Record<string, string> = {};
+  for (const [key, metadata] of Object.entries(getPromptRegistry(promptsDir))) {
+    const promptPath = path.resolve(promptsDir, metadata.path);
+    if (fs.existsSync(promptPath)) {
+      prompts[key] = fs.readFileSync(promptPath, 'utf-8');
+    }
+  }
+  return prompts;
 }
 
 export default defineConfig({
@@ -71,23 +88,8 @@ export default defineConfig({
                 const configContent = fs.readFileSync(configPath, 'utf-8');
                 const config = JSON.parse(configContent);
 
-                // Dynamically load prompts from files
-                config.prompts = config.prompts || {};
                 const promptsDir = path.resolve(__dirname, '../../var/prompts');
-                const groups = ['planning', 'monitoring', 'audit', 'ceo', 'deliberation', 'tasks', 'jules'];
-                for (const group of groups) {
-                  const groupDir = path.join(promptsDir, group);
-                  if (fs.existsSync(groupDir)) {
-                    const files = fs.readdirSync(groupDir);
-                    for (const file of files) {
-                      if (file.endsWith('.md')) {
-                        const key = path.basename(file, '.md');
-                        const content = fs.readFileSync(path.join(groupDir, file), 'utf-8');
-                        config.prompts[key] = content;
-                      }
-                    }
-                  }
-                }
+                config.prompts = loadRegisteredPrompts(promptsDir);
 
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify(config, null, 2));
@@ -185,7 +187,9 @@ export default defineConfig({
                       parsed.forEach((issue: any) => issue.repo = r);
                       allIssues = allIssues.concat(parsed);
                     }
-                  } catch (e) {}
+                  } catch {
+                    // Skip repositories that cannot be queried.
+                  }
                 }
                 if (successfulRepos === 0) throw new Error('No GitHub issue source was available');
                 const responseJson = JSON.stringify(allIssues);
@@ -193,7 +197,7 @@ export default defineConfig({
                 issuesCacheTime = now;
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(responseJson);
-              } catch (err) {
+              } catch {
                 // Fallback to static public file if GH command fails
                 const fallbackPath = [
                   path.resolve(__dirname, '../../var/db/github-issues.json'),
@@ -235,7 +239,9 @@ export default defineConfig({
                       parsed.forEach((pr: any) => pr.repo = r);
                       allPRs = allPRs.concat(parsed);
                     }
-                  } catch (e) {}
+                  } catch {
+                    // Skip repositories that cannot be queried.
+                  }
                 }
                 if (successfulRepos === 0) throw new Error('No GitHub PR source was available');
                 const responseJson = JSON.stringify(allPRs);
@@ -243,7 +249,7 @@ export default defineConfig({
                 prsCacheTime = now;
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(responseJson);
-              } catch (err) {
+              } catch {
                 // Fallback to static public file if GH command fails
                 const fallbackPath = [
                   path.resolve(__dirname, '../../var/db/pull-requests.json'),
@@ -270,14 +276,9 @@ export default defineConfig({
                 // Write modified prompts back to their respective markdown files
                 if (config.prompts) {
                   const promptsDir = path.resolve(__dirname, '../../var/prompts');
-                  const findPromptFile = (key: string) => {
-                    const groups = ['planning', 'monitoring', 'audit', 'ceo', 'deliberation', 'tasks', 'jules'];
-                    for (const g of groups) {
-                      const p = path.join(promptsDir, g, `${key}.md`);
-                      if (fs.existsSync(p)) return p;
-                    }
-                    return null;
-                  };
+                  const registry = getPromptRegistry(promptsDir);
+                  const findPromptFile = (key: string) =>
+                    registry[key]?.path ? path.resolve(promptsDir, registry[key].path) : null;
 
                   for (const key of Object.keys(config.prompts)) {
                     const promptFile = findPromptFile(key);
@@ -536,9 +537,9 @@ export default defineConfig({
                     try {
                       const repo = getRepository();
                       // Ensure labels exist before creating issue to prevent failures
-                      try { execSync(`gh label create "priority: high" --repo "${repo}" --color "CCCCCC" --description "High priority"`, { stdio: 'ignore' }); } catch (e) {}
-                      try { execSync(`gh label create "bug" --repo "${repo}" --color "CCCCCC" --description "Bug"`, { stdio: 'ignore' }); } catch (e) {}
-                      try { execSync(`gh label create "agent:gemini_cli" --repo "${repo}" --color "CCCCCC" --description "Gemini CLI agent"`, { stdio: 'ignore' }); } catch (e) {}
+                      try { execSync(`gh label create "priority: high" --repo "${repo}" --color "CCCCCC" --description "High priority"`, { stdio: 'ignore' }); } catch { /* label already exists */ }
+                      try { execSync(`gh label create "bug" --repo "${repo}" --color "CCCCCC" --description "Bug"`, { stdio: 'ignore' }); } catch { /* label already exists */ }
+                      try { execSync(`gh label create "agent:gemini_cli" --repo "${repo}" --color "CCCCCC" --description "Gemini CLI agent"`, { stdio: 'ignore' }); } catch { /* label already exists */ }
 
                       const command = `gh issue create --repo "${repo}" --title "${title.replace(/"/g, '\\"')}" --body "${issueBody.replace(/"/g, '\\"')}" --label "priority: high" --label "bug" --label "agent:gemini_cli"`;
                       const issueUrl = execSync(command, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
@@ -726,5 +727,17 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
+    proxy: {
+      // Proxy für WebSocket-Server auf Port 5174
+      '/ws': {
+        target: 'ws://localhost:5174',
+        ws: true,
+        changeOrigin: true,
+      }
+    },
+    // Statische Dateien aus var/ Verzeichnis serven
+    fs: {
+      allow: ['../../var']
+    }
   },
 })

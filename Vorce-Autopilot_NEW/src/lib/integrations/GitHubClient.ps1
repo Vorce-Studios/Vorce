@@ -50,7 +50,7 @@ function Save-VorceGitHubData {
     )
     
     $fileName = if ($Type -eq "issues") { "github-issues.json" } else { "pull-requests.json" }
-    $dbDir = Join-Path $PSScriptRoot "../../var/db"
+    $dbDir = Join-Path $global:VarDir "db"
     if (-not (Test-Path $dbDir)) { New-Item -ItemType Directory -Path $dbDir -Force | Out-Null }
     
     $filePath = Join-Path $dbDir $fileName

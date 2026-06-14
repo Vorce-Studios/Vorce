@@ -4,13 +4,14 @@
 function Get-VorceTriagedIssues {
     param(
         [Parameter(Mandatory)][object]$Issues,
-        [Parameter(Mandatory)][object]$Config
+        [Parameter(Mandatory)][Alias("FilterRules")][object]$Config
     )
     
     Write-VorceStep -Message "Starte Triage für $($Issues.Count) Issues..." -Status "RUN"
     
-    $includeLabels = $Config.issue_filters.include_labels
-    $excludeLabels = $Config.issue_filters.exclude_labels
+    $rules = if ($Config.PSObject.Properties.Name -contains "issue_filters") { $Config.issue_filters } else { $Config }
+    $includeLabels = @($rules.include_labels)
+    $excludeLabels = @($rules.exclude_labels)
     
     $triaged = @()
     

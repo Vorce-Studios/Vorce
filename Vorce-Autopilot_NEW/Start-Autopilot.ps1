@@ -13,6 +13,8 @@ $ScriptDir = $PSScriptRoot
 $DashboardDir = Join-Path $ScriptDir "web/Dashboard"
 $ToolsDir = Join-Path $ScriptDir "src/tools"
 $VarDir = Join-Path $ScriptDir "var"
+$pwsh = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
+if (-not $pwsh) { $pwsh = (Get-Command powershell -ErrorAction Stop).Source }
 
 Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host " VORCE 3.0 - INFRASTRUCTURE BOOT" -ForegroundColor Cyan
@@ -37,9 +39,6 @@ if (-not $NoDashboard.IsPresent) {
             Start-Process npm.cmd -ArgumentList "install", "--silent" -WorkingDirectory $DashboardDir -Wait -NoNewWindow
         }
         
-        $pwsh = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
-        if (-not $pwsh) { $pwsh = (Get-Command powershell -ErrorAction Stop).Source }
-        
         Start-Process $pwsh -ArgumentList @("-NoProfile", "-Command", "Set-Location -LiteralPath '$DashboardDir'; npm.cmd run dev -- --host 0.0.0.0") -WindowStyle Hidden
         
         Write-Host "[BOOT] Dashboard gestartet (Hintergrund)." -ForegroundColor Green
@@ -49,8 +48,13 @@ if (-not $NoDashboard.IsPresent) {
 # 2. Sync / Background Tools
 if (-not $NoSync.IsPresent) {
     Write-Host "[BOOT] Starte Hintergrund-Dienste..." -ForegroundColor Gray
-    # Platzhalter fuer zukuenftige Tools (z.B. Github Sync)
-    # Start-Process ...
+    $syncScript = Join-Path $ToolsDir "services/sync-service.ps1"
+    if (Test-Path $syncScript) {
+        $syncListening = Get-NetTCPConnection -LocalPort 5174 -State Listen -ErrorAction SilentlyContinue
+        if (-not $syncListening) {
+            Start-Process $pwsh -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $syncScript, "-VorceRoot", $ScriptDir) -WindowStyle Hidden
+        }
+    }
 }
 
 Write-Host "=====================================" -ForegroundColor Cyan

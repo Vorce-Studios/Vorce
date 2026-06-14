@@ -2,7 +2,8 @@
 # Test-Skript um den Orchestrator im DryRun-Modus zu prüfen
 
 # Setze Working Directory zum Projekt-Root
-Set-Location $PSScriptRoot
+$projectRoot = Split-Path -Parent $PSScriptRoot
+Set-Location $projectRoot
 Write-Host "Projekt-Root: $(Get-Location)"
 
 # Ergebnisse-Tracking
@@ -18,7 +19,7 @@ function Write-TestResult {
 }
 
 # 1. Setze $global:VorceRoot korrekt
-$global:VorceRoot = $PSScriptRoot
+$global:VorceRoot = $projectRoot
 Write-TestResult "VorceRoot korrekt gesetzt" ($global:VorceRoot -like "*Vorce-Autopilot_NEW")
 
 # Lade Config
@@ -140,7 +141,7 @@ $expectedKeys = @("VorceRoot", "VarDir", "LibDir", "Config", "GlobalState", "Quo
 $allKeysPresent = $true
 
 foreach ($key in $expectedKeys) {
-    if ($configBag.PSObject.Properties.Name -contains $key) {
+    if ($configBag.ContainsKey($key)) {
         Write-TestResult "ConfigBag enthält Key: $key" $true
     } else {
         Write-TestResult "ConfigBag fehlt Key: $key" $false

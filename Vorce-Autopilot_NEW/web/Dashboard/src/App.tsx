@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { LayoutDashboard, Activity, Settings, RefreshCw, Zap, BarChart3, Menu } from 'lucide-react';
 import { useData, useAutoRefresh } from './hooks';
+import { useWebSocket } from './hooks/useWebSocket';
 
 // Pages
 import DashboardPage from './pages/DashboardPage';
@@ -78,7 +79,7 @@ export default function App() {
   const { data: auditResult, refetch: refetchAuditResult } = useData<any>('/audit-result.json', null);
   const { data: liveLog, refetch: refetchLiveLog } = useData<{ content?: string }>('/live-log.json', {});
 
-  const refetchAll = () => {
+  const refetchAll = useCallback(() => {
     refetchConfig();
     refetchRegistry();
     refetchSessions();
@@ -90,9 +91,10 @@ export default function App() {
     refetchHistory();
     refetchAuditResult();
     refetchLiveLog();
-  };
+  }, [refetchConfig, refetchRegistry, refetchSessions, refetchIssues, refetchPRs, refetchProjectItems, refetchJulesSessions, refetchMemory, refetchHistory, refetchAuditResult, refetchLiveLog]);
 
-  // Auto-refresh every 30 seconds
+  // WebSocket pushes trigger immediate refreshes; polling remains as a fallback.
+  useWebSocket({ onMessage: refetchAll });
   useAutoRefresh(refetchAll, 30000);
 
   const isGlobalLoading = configLoading && registryLoading && sessionsLoading && issuesLoading && prLoading && historyLoading;

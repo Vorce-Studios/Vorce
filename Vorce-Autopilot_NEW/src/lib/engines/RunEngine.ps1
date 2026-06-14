@@ -39,6 +39,7 @@ function Invoke-VorceSubRunParallel {
     param(
         [Parameter(Mandatory)][string]$SubRunName,
         [Parameter(Mandatory)][array]$PartRuns,
+        [hashtable]$ConfigBag = @{},
         [int]$MaxParallel = 3
     )
     
@@ -56,15 +57,17 @@ function Invoke-VorceSubRunParallel {
             
             # Starte den Part-Run in einem Hintergrund-Job
             $job = Start-Job -ScriptBlock {
-                param($pName, $pScript, $pLibDir, $pVarDir)
+                param($pName, $pScript, $pLibDir, $pVarDir, $pRoot, $pConfigBag)
                 # Globale Variablen im Job-Kontext setzen
                 $global:VarDir = $pVarDir
+                $global:LibDir = $pLibDir
+                $global:VorceRoot = $pRoot
                 # Libs im Job-Kontext laden
                 . (Join-Path $pLibDir "utils/StatusPrinter.ps1")
                 . (Join-Path $pLibDir "state/StateManager.ps1")
                 . (Join-Path $pLibDir "engines/RunEngine.ps1")
-                Invoke-VorcePartRun -PartName $pName -ScriptPath $pScript
-            } -ArgumentList $part.name, $part.script, $global:LibDir, $global:VarDir
+                Invoke-VorcePartRun -PartName $pName -ScriptPath $pScript -Arguments @{ ConfigBag = $pConfigBag }
+            } -ArgumentList $part.name, $part.script, $global:LibDir, $global:VarDir, $global:VorceRoot, $ConfigBag
             
             $activeJobs += $job
         }
@@ -103,6 +106,48 @@ function Invoke-VorceSubRunParallel {
     # (z.B. SUB-RUN-01_DataSync_Aggregate.ps1)
     
     Write-VorceStep -Message "Sub-Run $SubRunName erfolgreich aggregiert." -Status "OK"
+    return $aggregatedData
+}
+
+function Invoke-VorceSubRunSequential {
+    param(
+        [Parameter(Mandatory)][string]$SubRunName,
+        [Parameter(Mandatory)][array]$PartRuns,
+        [Parameter(Mandatory)][hashtable]$ConfigBag,
+        [Parameter(Mandatory)][object]$ParentState
+    )
+
+    Write-VorceStep -Message "Starte sequenzielle Ausführung für $SubRunName ($($PartRuns.Count) Parts)" -Status "RUN"
+    $partStates = @()
+
+    foreach ($part in $PartRuns) {
+        $arguments = @{
+            ConfigBag = $ConfigBag
+            ParentState = $ParentState
+        }
+        if ($part.ContainsKey("arguments")) {
+            foreach ($key in $part.arguments.Keys) {
+                $arguments[$key] = $part.arguments[$key]
+            }
+        }
+
+        $partStates += Invoke-VorcePartRun `
+            -PartName $part.name `
+            -ScriptPath $part.script `
+            -ParentState $ParentState `
+            -Arguments $arguments
+    }
+
+    $failed = @($partStates | Where-Object { $_.status -eq "failed" })
+    $aggregatedData = @{
+        sub_run = $SubRunName
+        status = if ($failed.Count -gt 0) { "failed" } else { "completed" }
+        timestamp = (Get-Date).ToString("o")
+        parts = $partStates
+    }
+
+    $statePath = Join-Path $global:VarDir "run-states/SUB_$($SubRunName).json"
+    $aggregatedData | ConvertTo-Json -Depth 20 | Set-Content $statePath -Encoding UTF8
     return $aggregatedData
 }
 

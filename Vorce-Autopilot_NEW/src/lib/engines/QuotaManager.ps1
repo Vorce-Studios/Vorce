@@ -61,15 +61,12 @@ function Test-VorceQuota {
     $registry = Read-VorceQuotaRegistry
     if ($null -eq $registry) { return $false }
 
-    # Suche den Provider im Registry
-    $provider = $registry.PSObject.Properties.Name | Where-Object { $registry.$_.name -eq $AgentName } | Select-Object -First 1
-
-    if ($null -eq $provider) {
+    $providers = $registry.providers
+    if ($null -eq $providers -or $providers.PSObject.Properties.Name -notcontains $AgentName) {
         Write-Warning "Provider $AgentName nicht in Quota Registry gefunden"
         return $false
     }
-
-    $providerConfig = $registry.$provider
+    $providerConfig = $providers.$AgentName
 
     # Prüfe ob Provider enabled ist
     if ($providerConfig.enabled -ne $true) {
@@ -77,7 +74,7 @@ function Test-VorceQuota {
     }
 
     # Prüfe CLI-Command Verfügbarkeit
-    $commandName = $providerConfig.cli_command
+    $commandName = $providerConfig.command
     if ($commandName) {
         $command = Get-Command $commandName -ErrorAction SilentlyContinue
         if ($null -eq $command) {
@@ -86,15 +83,15 @@ function Test-VorceQuota {
     }
 
     # Prüfe Daily Limit
-    if ($providerConfig.daily_limit -and $providerConfig.usage_today.calls) {
+    if ($providerConfig.daily_limit -and $null -ne $providerConfig.usage_today.calls) {
         if ($providerConfig.usage_today.calls -ge $providerConfig.daily_limit) {
             return $false
         }
     }
 
     # Prüfe Daily Budget
-    if ($providerConfig.daily_budget_usd -and $providerConfig.estimated_cost_usd) {
-        if ($providerConfig.estimated_cost_usd -ge $providerConfig.daily_budget_usd) {
+    if ($providerConfig.daily_budget_usd -and $null -ne $providerConfig.usage_today.estimated_cost_usd) {
+        if ($providerConfig.usage_today.estimated_cost_usd -ge $providerConfig.daily_budget_usd) {
             return $false
         }
     }
@@ -114,37 +111,28 @@ function Register-VorceQuotaUsage {
         $registry = @{}
     }
 
-    # Suche oder erstelle Provider
-    $provider = $registry.PSObject.Properties.Name | Where-Object { $registry.$_.name -eq $AgentName } | Select-Object -First 1
-
-    if ($null -eq $provider) {
-        # Neuen Provider erstellen
-        $registry | Add-Member -MemberType NoteProperty -Name "new_provider" -Value @{
-            name = $AgentName;
+    if (-not $registry.providers) {
+        $registry | Add-Member -MemberType NoteProperty -Name "providers" -Value ([pscustomobject]@{}) -Force
+    }
+    if ($registry.providers.PSObject.Properties.Name -notcontains $AgentName) {
+        $registry.providers | Add-Member -MemberType NoteProperty -Name $AgentName -Value ([pscustomobject]@{
             model_tier = $ModelTier;
             enabled = $true;
-            cli_command = "";
+            command = "";
             daily_limit = 0;
             daily_budget_usd = 0;
-            usage_today = @{ calls = 0; cost_usd = 0 };
-            estimated_cost_usd = 0;
-            last_synced_at = (Get-Date).ToString("o")
-        } -Force
-        $provider = "new_provider"
+            usage_today = [pscustomobject]@{ calls = 0; estimated_cost_usd = 0; last_synced_at = (Get-Date).ToString("o") }
+        }) -Force
     }
+    $providerConfig = $registry.providers.$AgentName
 
-    # Inkrementiere usage_today.calls
-    if (-not $registry.$provider.usage_today) {
-        $registry.$provider | Add-Member -MemberType NoteProperty -Name "usage_today" -Value @{ calls = 0; cost_usd = 0 } -Force
+    if (-not $providerConfig.usage_today) {
+        $providerConfig | Add-Member -MemberType NoteProperty -Name "usage_today" -Value ([pscustomobject]@{ calls = 0; estimated_cost_usd = 0 }) -Force
     }
-    $registry.$provider.usage_today.calls++
+    $providerConfig.usage_today.calls = [int]$providerConfig.usage_today.calls + 1
 
-    # Addiere Cost zu estimated_cost_usd
-    $registry.$provider.estimated_cost_usd += $Cost
-    $registry.$provider.usage_today.cost_usd += $Cost
-
-    # Setze last_synced_at Timestamp
-    $registry.$provider.last_synced_at = (Get-Date).ToString("o")
+    $providerConfig.usage_today.estimated_cost_usd = [double]$providerConfig.usage_today.estimated_cost_usd + $Cost
+    $providerConfig.usage_today.last_synced_at = (Get-Date).ToString("o")
 
     # Speichere Registry
     Save-VorceQuotaRegistry -Registry $registry
@@ -165,15 +153,15 @@ function Get-VorceQuotaSummary {
     $summary = @()
     $summary += "=== QUOTA SUMMARY ==="
 
-    foreach ($providerName in $Registry.PSObject.Properties.Name) {
-        $provider = $Registry.$providerName
+    foreach ($providerName in $Registry.providers.PSObject.Properties.Name) {
+        $provider = $Registry.providers.$providerName
         $status = if ($provider.enabled) { "ENABLED" } else { "DISABLED" }
 
-        $summary += "`n[$status] $($provider.name)"
+        $summary += "`n[$status] $providerName"
         $summary += "  Calls today: $($provider.usage_today.calls ?? 0)"
-        $summary += "  Est. cost: $($provider.estimated_cost_usd.ToString("C2"))"
+        $summary += "  Est. cost: $([double]$provider.usage_today.estimated_cost_usd)"
         $summary += "  Daily limit: $($provider.daily_limit ?? 0)"
-        $summary += "  Daily budget: $($provider.daily_budget_usd.ToString("C2"))"
+        $summary += "  Daily budget: $([double]$provider.daily_budget_usd)"
     }
 
     return ($summary -join "`n")

@@ -6,7 +6,8 @@ param(
     [switch]$DryRun
 )
 
-$global:VorceRoot = Join-Path $PSScriptRoot ".."
+$global:VorceRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
+$global:VarDir = Join-Path $global:VorceRoot "var"
 $global:SrcDir = Join-Path $global:VorceRoot "src"
 $global:LibDir = Join-Path $global:SrcDir "lib"
 
@@ -16,6 +17,10 @@ $global:LibDir = Join-Path $global:SrcDir "lib"
 . (Join-Path $global:LibDir "utils/ProjectManager.ps1")
 . (Join-Path $global:LibDir "engines/RunEngine.ps1")
 . (Join-Path $global:LibDir "engines/QuotaManager.ps1")
+
+if ($null -eq $GlobalState) {
+    $GlobalState = Read-VorceGlobalState
+}
 
 Write-VorceHeader -Title "ORCHESTRATOR ACTIVE" -Icon "🧠"
 
@@ -43,7 +48,9 @@ function Select-NextMainRun {
     $runs = @(
         @{ Name="MAIN-RUN-01_Planning"; IntervalKey="planning_minutes" },
         @{ Name="MAIN-RUN-02_CheckAndDoing"; IntervalKey="check_and_doing_minutes" },
-        @{ Name="MAIN-RUN-03_Audit"; IntervalKey="memory_optimization_minutes" }
+        @{ Name="MAIN-RUN-03_Audit"; IntervalKey="audit_minutes" },
+        @{ Name="MAIN-RUN-04_Optimizer"; IntervalKey="optimizer_minutes" },
+        @{ Name="MAIN-RUN-05_MemoryOptimization"; IntervalKey="memory_optimization_minutes" }
     )
     $now = Get-Date
     $best = $null; $bestOverdue = -1
@@ -67,37 +74,34 @@ function Select-NextMainRun {
 # Wähle dynamisch den nächsten Main-RUN
 $RunsDir = Join-Path $global:SrcDir "runs"
 $result = Select-NextMainRun -GlobalState $GlobalState -Config $Config
-$mainRunName = $result.Name
-$bestOverdue = $result.OverdueMinutes
-
-if ($null -eq $mainRunName) {
+if ($null -eq $result) {
     Write-VorceStep -Message "Kein Run überfällig." -Status "INFO"
     return
 }
+$mainRunName = $result.Name
+$bestOverdue = $result.OverdueMinutes
 
 Write-VorceStep -Message "Wähle $mainRunName (überfällig um $bestOverdue Minuten)" -Status "RUN"
 
 # E) Dynamischen Router-Aufruf (C8)
 $MainRunPath = Join-Path $RunsDir $mainRunName
-$RouterPath = Join-Path $RunsDir "$mainRunName/*-Router.ps1"  # Wildcard
 $routerFile = Get-ChildItem -Path $MainRunPath -Filter "*-Router.ps1" | Select-Object -First 1
 
 Write-VorceStep -Message "Lade Sub-Runs von Router..." -Status "INFO"
 
+# Initialisiere Main-Run State vor dem Router-Aufruf.
+$MainState = Initialize-RunState -RunName $mainRunName -RunType "MAIN"
 $SubRuns = @()
 if ($routerFile) {
-    $SubRuns = & $routerFile.FullName -ConfigBag $ConfigBag -ParentState $null
+    $SubRuns = @(& $routerFile.FullName -ConfigBag $ConfigBag -MainState $MainState)
 } else {
     Write-VorceStep -Message "Kein Router gefunden in $mainRunName. Nutze Standard-Sub-Runs." -Status "WARN"
     $SubRuns = @(
-        @{ name="DataSync"; script=(Join-Path $MainRunPath "SUB-RUNS/SUB-RUN-01_DataSync/SUB-RUN-01_DataSync.ps1") },
-        @{ name="Triage"; script=(Join-Path $MainRunPath "SUB-RUNS/SUB-RUN-02_Triage/SUB-RUN-02_Triage.ps1") },
-        @{ name="Strategy"; script=(Join-Path $MainRunPath "SUB-RUNS/SUB-RUN-03_Strategy/SUB-RUN-03_Strategy.ps1") }
+        @{ name="DataSync"; script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync/SUB-RUN-01_MR-01_Planning__DataSync.ps1" },
+        @{ name="Triage"; script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-02_MR-01_Planning__Triage/SUB-RUN-02_MR-01_Planning__Triage.ps1" },
+        @{ name="Strategy"; script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-03_MR-01_Planning__Strategy/SUB-RUN-03_MR-01_Planning__Strategy.ps1" }
     )
 }
-
-# Initialisiere Main-Run State
-$MainState = Initialize-RunState -RunName $mainRunName -RunType "MAIN"
 
 # F) Try/Catch um jeden Sub-Run (C9)
 Write-VorceStep -Message "Geplante Sub-Runs: $($SubRuns.Count)" -Status "INFO"
@@ -122,11 +126,11 @@ foreach ($sub in $SubRuns) {
 }
 
 # G) Nach Abschluss last_runs Timestamp aktualisieren
-if (-not $GlobalState.last_runs) {
+if ($null -eq $GlobalState.last_runs) {
     $GlobalState | Add-Member -MemberType NoteProperty -Name "last_runs" -Value @{} -Force
 }
 $GlobalState.last_runs | Add-Member -MemberType NoteProperty -Name $mainRunName -Value (Get-Date).ToString("o") -Force
-Save-VorceGlobalState -State $GlobalState
+if (-not $DryRun) { Save-VorceGlobalState -State $GlobalState }
 
 # 6. Finale Aggregation und Abschluss
 Write-VorceDivider
@@ -142,6 +146,6 @@ Write-VorceStep -Message "Main-Aggregation für $mainRunName abgeschlossen." -St
 
 # 7. Finaler Sync
 Write-VorceStep -Message "Sichere Global State..." -Status "RUN"
-Save-VorceGlobalState -State $GlobalState
+if (-not $DryRun) { Save-VorceGlobalState -State $GlobalState }
 
 Write-VorceFooter -Message "$mainRunName erfolgreich beendet."

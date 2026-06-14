@@ -19,9 +19,9 @@ Write-VorceStep -Message "Starte Planning-Routing..." -Status "RUN"
 
 # Definiere die Sub-RUNs (Standard-Liste)
 $subRuns = @(
-    @{ id="01"; name="DataSync"; script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_DataSync/SUB-RUN-01_DataSync.ps1" },
-    @{ id="02"; name="Triage"; script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-02_Triage/SUB-RUN-02_Triage.ps1" },
-    @{ id="04"; name="Delegation"; script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-04_Delegation/SUB-RUN-04_Delegation.ps1" }
+    @{ id="01"; name="DataSync"; script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync/SUB-RUN-01_MR-01_Planning__DataSync.ps1" },
+    @{ id="02"; name="Triage"; script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-02_MR-01_Planning__Triage/SUB-RUN-02_MR-01_Planning__Triage.ps1" },
+    @{ id="04"; name="Delegation"; script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-04_MR-01_Planning__Delegation/SUB-RUN-04_MR-01_Planning__Delegation.ps1" }
 )
 
 # Prüfe ob Strategy aktiviert werden soll
@@ -40,7 +40,7 @@ if (Test-Path $issuesFile) {
             $subRuns += @{
                 id="03";
                 name="Strategy";
-                script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-03_Strategy/SUB-RUN-03_Strategy.ps1"
+                script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-03_MR-01_Planning__Strategy/SUB-RUN-03_MR-01_Planning__Strategy.ps1"
             }
             Write-VorceStep -Message "Strategy aktiviert (für $($maxIssuesPerCycle - $issueCount) neue Issues)" -Status "OK"
         } else {
@@ -55,7 +55,7 @@ if (Test-Path $issuesFile) {
     $subRuns += @{
         id="03";
         name="Strategy";
-        script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-03_Strategy/SUB-RUN-03_Strategy.ps1"
+        script="src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-03_MR-01_Planning__Strategy/SUB-RUN-03_MR-01_Planning__Strategy.ps1"
     }
 }
 
