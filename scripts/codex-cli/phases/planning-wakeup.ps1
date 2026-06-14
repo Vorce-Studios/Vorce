@@ -200,7 +200,7 @@ Antworte mit einem konkreten, korrigierten Handlungsplan für Jules.
                             } catch {}
                         }
                 }
-                
+
                 if (-not $recentConflictIssue) {
                     $prNumbers = @($conflictingPrs | Sort-Object number | ForEach-Object { $_.number }) -join "-"
                     $conflictTag = "resolve-conflicts-$prNumbers"
