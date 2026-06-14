@@ -1,12 +1,14 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
 - 2026-05-07: feat: Fetch and map Philips Hue Entertainment Areas in Spatial Editor (#123)
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
 - 2026-05-08: feat(mcp): implement shared state reading for project://current
 n* Upgrade Rust toolchain to `1.95.0` to satisfy dependencies (`bevy@0.19.0-dev`).
 - 2026-05-09: fix: Enable multi-threaded video pipeline and thread-local scaler (#1411)
@@ -199,7 +201,9 @@ n* Upgrade Rust toolchain to `1.95.0` to satisfy dependencies (`bevy@0.19.0-dev`
 - 2026-03-02: fix(stability): Resolve main branch build failures, failing tests, and clippy warnings.
 
 ## [0.2.0] - 2026-02-27
+
 ### Added
+
 - **UI:** Comprehensive migration from ImGui to **egui** for the entire interface.
 - **Node-Editor:** Custom visual programming interface for complex logic and triggers.
 - **Timeline:** Keyframe-based animation system for all layer parameters.
@@ -208,12 +212,15 @@ n* Upgrade Rust toolchain to `1.95.0` to satisfy dependencies (`bevy@0.19.0-dev`
 - **Rendering:** Advanced WGPU pipeline with support for effect chains and masks.
 
 ### Fixed
+
 - **Core:** Resolved numerous race conditions in the evaluation loop.
 - **Media:** Optimized GPU texture uploads for high-resolution video playback.
 - **UI:** Improved responsiveness and layout stability on various screen sizes.
 
 ## [0.1.0] - 2025-12-15
+
 ### Added
+
 - Initial release of MapFlow (VJMapper).
 - Basic layer management and transformation.
 - FFmpeg-based video decoding.

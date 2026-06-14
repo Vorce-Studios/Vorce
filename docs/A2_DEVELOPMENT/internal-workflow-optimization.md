@@ -5,6 +5,7 @@
 ## Problem Statement
 
 The development team identified two main issues:
+
 1. Development speed is too slow
 2. Jules session + PR monitoring is not being performed consistently
 
@@ -21,6 +22,7 @@ The development team identified two main issues:
 **File**: `.github/workflows/CICD-IssueFlow_Job02_SessionMonitor.yml`
 
 **Changes**:
+
 - Added `MONITOR_ISSUE_ID` environment variable for dynamic issue tracking
 - Replaced hardcoded `issue_number: 70` with configurable variable
 - Updated GitHub script to use `parseInt(issueId.replace('VOR-', ''))`
@@ -33,6 +35,7 @@ The development team identified two main issues:
 **Purpose**: Notify Paperclip about PR events via local API
 
 **Features**:
+
 - Updates issue status via PATCH API
 - Sends comments for PR events
 - Handles merge conflicts and check failures
@@ -42,6 +45,7 @@ The development team identified two main issues:
 **File**: `scripts/jules/monitor-jules-prs.ps1`
 
 **Features**:
+
 - Monitors all issues with `jules-task` label
 - Tracks PR status, checks, and session states
 - Generates formatted reports with needs-attention flags
