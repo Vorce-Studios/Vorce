@@ -98,27 +98,22 @@ pub struct CalibrationResult {
 ## 6. Implementierungs-Plan
 
 ### Schritt 1: `Vorce-vision` Crate Setup
-
 * Erstellen des Crates.
 * Einbinden von `nokhwa` und `image`.
 * Implementieren von `CameraInput` (Open, Stream, Capture Frame).
 
 ### Schritt 2: Pattern Generator
-
 * Erweitern von `Vorce-render` um `PatternRenderer`.
 * Implementieren der Gray-Code Logik (rekursive Generierung der Streifenmuster).
 
 ### Schritt 3: UI Integration (Vorstufe)
-
 * Ein "Camera View" Fenster in der GUI (ImGui Viewport), das den Live-Feed zeigt.
 
 ### Schritt 4: Die algorithmische Pipeline
-
 * Offline-Entwicklung der Decoding-Logik (kann gut mit Test-Bildern entwickelt werden, ohne echten Beamer).
 * Algorithmus zur Berechnung der Homographie (SVD solver).
 
 ### Schritt 5: Der "Wizard" State Machine
-
 * Implementierung des asynchronen Prozesses:
   `Projizieren -> Warten -> Grabben -> Speichern -> Nächstes Pattern`.
 

@@ -16,7 +16,6 @@ pub use layout::*;
 
 pub use settings::*;
 
-
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserConfig {
