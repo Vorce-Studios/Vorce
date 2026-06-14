@@ -185,7 +185,7 @@ impl OscillatorResources {
             usage: wgpu::BufferUsages::INDEX,
         });
 
-        let sim_params = crate::oscillator_renderer::create_sim_params(
+        let sim_params = crate::oscillator_renderer::sim::create_sim_params(
             config, sim_width, sim_height, 0.0, 0.016,
         );
         let sim_uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -194,7 +194,7 @@ impl OscillatorResources {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 
-        let dist_params = crate::oscillator_renderer::create_dist_params(
+        let dist_params = crate::oscillator_renderer::render::create_dist_params(
             config, 1920, 1080, sim_width, sim_height, 0.0,
         );
         let dist_uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
