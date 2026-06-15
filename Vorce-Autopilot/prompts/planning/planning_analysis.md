@@ -1,1 +1,0 @@
-Analysiere den aktuellen Status des Repositories $repo. Root-Kompass: #651 Release 1.0 Readiness. Identifiziere Blocker, offene PRs und kritische Lücken. Erstelle eine Liste der Top-3 Prioritäten für diesen Zyklus.

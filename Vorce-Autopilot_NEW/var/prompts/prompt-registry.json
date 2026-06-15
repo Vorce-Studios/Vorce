@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "prompts": {
+    "ceo_system": {
+      "path": "system/SYSTEM-PROMPT-01_Autopilot__CEO-Orchestrator.md",
+      "scope": "system"
+    },
+    "dashboard_instructions": {
+      "path": "system/SYSTEM-PROMPT-02_Autopilot__Dashboard-Context-Policy.md",
+      "scope": "system"
+    },
+    "deliberation_proposal": {
+      "path": "shared/deliberation/SHARED-PROMPT-01_Deliberation__Proposal.md",
+      "scope": "shared"
+    },
+    "deliberation_critique": {
+      "path": "shared/deliberation/SHARED-PROMPT-02_Deliberation__Critique.md",
+      "scope": "shared"
+    },
+    "deliberation_synthesis": {
+      "path": "shared/deliberation/SHARED-PROMPT-03_Deliberation__Synthesis.md",
+      "scope": "shared"
+    },
+    "jules_implementation": {
+      "path": "agents/jules/AGENT-PROMPT-01_Jules__Implementation.md",
+      "scope": "agent"
+    },
+    "jules_retry": {
+      "path": "agents/jules/AGENT-PROMPT-02_Jules__Retry.md",
+      "scope": "agent"
+    },
+    "jules_pr_check_fix": {
+      "path": "agents/jules/AGENT-PROMPT-03_Jules__PullRequest-Check-Fix.md",
+      "scope": "agent"
+    },
+    "jules_pr_conflict_replacement": {
+      "path": "agents/jules/AGENT-PROMPT-04_Jules__PullRequest-Conflict-Replacement.md",
+      "scope": "agent"
+    },
+    "planning_session": {
+      "path": "runs/MAIN-RUN-01_Planning/MAIN-RUN-PROMPT-01_MR-01_Planning__Session.md",
+      "scope": "main-run"
+    },
+    "issue_discovery": {
+      "path": "runs/MAIN-RUN-01_Planning/SUB-RUN-03_MR-01_Planning__Strategy/PART-RUN-PROMPT-01_MR-01_Planning__Strategy__Issue-Discovery.md",
+      "scope": "part-run"
+    },
+    "planning_jules_sync": {
+      "path": "runs/MAIN-RUN-01_Planning/SUB-RUN-01_MR-01_Planning__DataSync/PART-RUN-PROMPT-01_MR-01_Planning__DataSync__Jules-Session-Sync.md",
+      "scope": "part-run"
+    },
+    "planning_pr_sync": {
+      "path": "runs/MAIN-RUN-01_Planning/SUB-RUN-01_MR-01_Planning__DataSync/PART-RUN-PROMPT-02_MR-01_Planning__DataSync__PullRequest-Sync.md",
+      "scope": "part-run"
+    },
+    "planning_analysis": {
+      "path": "runs/MAIN-RUN-01_Planning/SUB-RUN-03_MR-01_Planning__Strategy/PART-RUN-PROMPT-02_MR-01_Planning__Strategy__Repository-Analysis.md",
+      "scope": "part-run"
+    },
+    "planning_proposal": {
+      "path": "runs/MAIN-RUN-01_Planning/SUB-RUN-03_MR-01_Planning__Strategy/PART-RUN-PROMPT-03_MR-01_Planning__Strategy__Issue-Proposal.md",
+      "scope": "part-run"
+    },
+    "planning_synthesis": {
+      "path": "runs/MAIN-RUN-01_Planning/SUB-RUN-03_MR-01_Planning__Strategy/PART-RUN-PROMPT-04_MR-01_Planning__Strategy__Priority-Synthesis.md",
+      "scope": "part-run"
+    },
+    "monitoring_session": {
+      "path": "runs/MAIN-RUN-02_CheckAndDoing/MAIN-RUN-PROMPT-01_MR-02_CheckAndDoing__Monitoring-Session.md",
+      "scope": "main-run"
+    },
+    "pr_review": {
+      "path": "runs/MAIN-RUN-02_CheckAndDoing/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch/PART-RUN-PROMPT-01_MR-02_CheckAndDoing__ReviewDispatch__PullRequest-Review.md",
+      "scope": "part-run"
+    },
+    "pr_conflict_resolution": {
+      "path": "runs/MAIN-RUN-02_CheckAndDoing/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch/PART-RUN-PROMPT-02_MR-02_CheckAndDoing__ReviewDispatch__Conflict-Resolution.md",
+      "scope": "part-run"
+    },
+    "monitor_sessions": {
+      "path": "runs/MAIN-RUN-02_CheckAndDoing/SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck/PART-RUN-PROMPT-01_MR-02_CheckAndDoing__JulesCheck__Session-Health.md",
+      "scope": "part-run"
+    },
+    "monitor_prs": {
+      "path": "runs/MAIN-RUN-02_CheckAndDoing/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch/PART-RUN-PROMPT-03_MR-02_CheckAndDoing__ReviewDispatch__PullRequest-Validation.md",
+      "scope": "part-run"
+    },
+    "monitor_conflicts": {
+      "path": "runs/MAIN-RUN-02_CheckAndDoing/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch/PART-RUN-PROMPT-04_MR-02_CheckAndDoing__ReviewDispatch__Conflict-Monitoring.md",
+      "scope": "part-run"
+    },
+    "monitoring_synthesis": {
+      "path": "runs/MAIN-RUN-02_CheckAndDoing/MAIN-RUN-PROMPT-02_MR-02_CheckAndDoing__Status-Synthesis.md",
+      "scope": "main-run"
+    },
+    "post_merge_qa": {
+      "path": "runs/MAIN-RUN-03_Audit/SUB-RUN-02_MR-03_Audit__ComplianceCheck/PART-RUN-PROMPT-01_MR-03_Audit__ComplianceCheck__Post-Merge-QA.md",
+      "scope": "part-run"
+    },
+    "audit_consistency": {
+      "path": "runs/MAIN-RUN-03_Audit/SUB-RUN-01_MR-03_Audit__DataSync/PART-RUN-PROMPT-01_MR-03_Audit__DataSync__Consistency-Check.md",
+      "scope": "part-run"
+    },
+    "audit_performance": {
+      "path": "runs/MAIN-RUN-03_Audit/SUB-RUN-02_MR-03_Audit__ComplianceCheck/PART-RUN-PROMPT-02_MR-03_Audit__ComplianceCheck__Performance-Assessment.md",
+      "scope": "part-run"
+    },
+    "audit_synthesis": {
+      "path": "runs/MAIN-RUN-03_Audit/SUB-RUN-02_MR-03_Audit__ComplianceCheck/PART-RUN-PROMPT-03_MR-03_Audit__ComplianceCheck__Audit-Synthesis.md",
+      "scope": "part-run"
+    }
+  }
+}

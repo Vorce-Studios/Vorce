@@ -1,0 +1,251 @@
+{
+  "quota_usage": [
+    {
+      "quota_available": true,
+      "daily_limit": 50,
+      "provider": "claude_code",
+      "daily_cost_usd": 3.0404,
+      "daily_calls": 12,
+      "daily_budget_usd": 10.0
+    },
+    {
+      "quota_available": true,
+      "daily_limit": 100,
+      "provider": "cline_cli",
+      "daily_cost_usd": 0,
+      "daily_calls": 0,
+      "daily_budget_usd": 5.0
+    },
+    {
+      "quota_available": true,
+      "daily_limit": 1000,
+      "provider": "codex_orchestrator",
+      "daily_cost_usd": 0,
+      "daily_calls": 5,
+      "daily_budget_usd": 0
+    },
+    {
+      "quota_available": true,
+      "daily_limit": 100,
+      "provider": "copilot_cli",
+      "daily_cost_usd": 0,
+      "daily_calls": 0,
+      "daily_budget_usd": 5.0
+    },
+    {
+      "quota_available": true,
+      "daily_limit": 100,
+      "provider": "cursor_agent",
+      "daily_cost_usd": 0,
+      "daily_calls": 0,
+      "daily_budget_usd": 5.0
+    },
+    {
+      "quota_available": true,
+      "daily_limit": 1500,
+      "provider": "gemini_cli",
+      "daily_cost_usd": 0,
+      "daily_calls": 47,
+      "daily_budget_usd": 0
+    },
+    {
+      "quota_available": true,
+      "daily_limit": 100,
+      "provider": "jules",
+      "daily_cost_usd": 0,
+      "daily_calls": 0,
+      "daily_budget_usd": 0
+    },
+    {
+      "quota_available": true,
+      "daily_limit": 100,
+      "provider": "kiro_cli",
+      "daily_cost_usd": 0,
+      "daily_calls": 0,
+      "daily_budget_usd": 5.0
+    }
+  ],
+  "run_times": [
+    {
+      "errors": 0,
+      "run_name": "PART_CreateProposal",
+      "sub_runs": 0,
+      "duration_seconds": 75.891236,
+      "end_time": "2026-06-14T12:23:38.247282+02:00",
+      "status": "initialized",
+      "start_time": "2026-06-14T12:22:22.356046+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_FetchIssues",
+      "sub_runs": 1,
+      "duration_seconds": 0.9706327,
+      "end_time": "2026-06-14T12:22:18.8440991+02:00",
+      "status": "completed",
+      "start_time": "2026-06-14T12:22:17.8734664+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_FetchPRs",
+      "sub_runs": 1,
+      "duration_seconds": 1.7114465,
+      "end_time": "2026-06-14T12:22:19.8492258+02:00",
+      "status": "completed",
+      "start_time": "2026-06-14T12:22:18.1377793+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_FilterIssues",
+      "sub_runs": 1,
+      "duration_seconds": 0.1782621,
+      "end_time": "2026-06-14T12:22:21.1940495+02:00",
+      "status": "completed",
+      "start_time": "2026-06-14T12:22:21.0157874+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_PART-RUN-01_MR-01_Planning__Delegation__CreateDelegations",
+      "sub_runs": 1,
+      "duration_seconds": 0.0706893,
+      "end_time": "2026-06-15T00:29:23.7891656+02:00",
+      "status": "completed",
+      "start_time": "2026-06-15T00:29:23.7184763+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_PART-RUN-01_MR-01_Planning__Strategy__CreateProposal",
+      "sub_runs": 1,
+      "duration_seconds": 0.0790352,
+      "end_time": "2026-06-15T00:29:23.6733559+02:00",
+      "status": "completed",
+      "start_time": "2026-06-15T00:29:23.5943207+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_PART-RUN-01_MR-01_Planning__Triage__FilterIssues",
+      "sub_runs": 1,
+      "duration_seconds": 0.0950492,
+      "end_time": "2026-06-15T00:29:23.5380711+02:00",
+      "status": "completed",
+      "start_time": "2026-06-15T00:29:23.4430219+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_PART-RUN-01_MR-02_CheckAndDoing__Housekeeping__CleanupRuntimeState",
+      "sub_runs": 1,
+      "duration_seconds": 0.2808598,
+      "end_time": "2026-06-15T00:29:25.4110075+02:00",
+      "status": "completed",
+      "start_time": "2026-06-15T00:29:25.1301477+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_PART-RUN-01_MR-02_CheckAndDoing__JulesCheck__InspectJulesSessions",
+      "sub_runs": 1,
+      "duration_seconds": 0.0842539,
+      "end_time": "2026-06-15T00:29:24.0758907+02:00",
+      "status": "completed",
+      "start_time": "2026-06-15T00:29:23.9916368+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_PART-RUN-01_MR-02_CheckAndDoing__JulesRefill__RefillJulesQueue",
+      "sub_runs": 1,
+      "duration_seconds": 0.0613579,
+      "end_time": "2026-06-15T00:29:25.0812714+02:00",
+      "status": "completed",
+      "start_time": "2026-06-15T00:29:25.0199135+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_PART-RUN-01_MR-02_CheckAndDoing__LocalAgentCheck__InspectLocalAgents",
+      "sub_runs": 1,
+      "duration_seconds": 0.0986809,
+      "end_time": "2026-06-15T00:29:24.2192121+02:00",
+      "status": "completed",
+      "start_time": "2026-06-15T00:29:24.1205312+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews",
+      "sub_runs": 1,
+      "duration_seconds": 0.0841298,
+      "end_time": "2026-06-15T00:29:24.9755285+02:00",
+      "status": "completed",
+      "start_time": "2026-06-15T00:29:24.8913987+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_PART-RUN-01_MR-02_CheckAndDoing__SessionSync__SyncActiveSessions",
+      "sub_runs": 1,
+      "duration_seconds": 0.1116461,
+      "end_time": "2026-06-15T00:29:23.9479046+02:00",
+      "status": "completed",
+      "start_time": "2026-06-15T00:29:23.8362585+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_PART-RUN-01_MR-03_Audit__AlertDisposition__DispositionAlerts",
+      "sub_runs": 1,
+      "duration_seconds": 0.0460948,
+      "end_time": "2026-06-15T00:29:25.8595475+02:00",
+      "status": "completed",
+      "start_time": "2026-06-15T00:29:25.8134527+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_PART-RUN-01_MR-03_Audit__ComplianceCheck__EvaluateCompliance",
+      "sub_runs": 1,
+      "duration_seconds": 0.1150902,
+      "end_time": "2026-06-15T00:29:25.690922+02:00",
+      "status": "completed",
+      "start_time": "2026-06-15T00:29:25.5758318+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_PART-RUN-01_MR-03_Audit__DataSync__ValidateDataSources",
+      "sub_runs": 1,
+      "duration_seconds": 0.0692876,
+      "end_time": "2026-06-15T00:29:25.5321033+02:00",
+      "status": "completed",
+      "start_time": "2026-06-15T00:29:25.4628157+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_PART-RUN-01_MR-03_Audit__JulesSupervision__SuperviseJulesSessions",
+      "sub_runs": 1,
+      "duration_seconds": 0.036446,
+      "end_time": "2026-06-15T00:29:25.7717288+02:00",
+      "status": "completed",
+      "start_time": "2026-06-15T00:29:25.7352828+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_PART-RUN-01_MR-04_Optimizer__SystemAnalysis__AnalyzeSystemPerformance",
+      "sub_runs": 1,
+      "duration_seconds": 0.0930374,
+      "end_time": "2026-06-15T00:27:35.8434187+02:00",
+      "status": "completed",
+      "start_time": "2026-06-15T00:27:35.7503813+02:00"
+    },
+    {
+      "errors": 0,
+      "run_name": "PART_PART-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance__OptimizeMemoryStore",
+      "sub_runs": 1,
+      "duration_seconds": 0.1069805,
+      "end_time": "2026-06-15T00:27:35.9970134+02:00",
+      "status": "completed",
+      "start_time": "2026-06-15T00:27:35.8900329+02:00"
+    }
+  ],
+  "recommendations": [],
+  "collection_timestamp": "2026-06-15T00:29:25.9547141+02:00",
+  "system_metrics": {
+    "total_issues_processed": 0,
+    "last_housekeeping": "2026-06-15T00:29:25.1908589+02:00",
+    "uptime_days": 7.0,
+    "memory_usage": 0.0,
+    "total_runs_completed": 3,
+    "active_delegations": 0
+  }
+}
