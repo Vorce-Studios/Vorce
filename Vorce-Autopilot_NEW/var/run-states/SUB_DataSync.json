@@ -1,43 +1,43 @@
 {
   "status": "completed",
+  "timestamp": "2026-06-15T04:55:18.4645433+02:00",
   "parts": [
     {
-      "id": "run_20260615_033202",
+      "id": "run_20260615_045516",
+      "name": "FetchPRs",
+      "type": "PART",
+      "status": "completed",
+      "started_at": "2026-06-15T04:55:16.3212248+02:00",
+      "completed_at": "2026-06-15T04:55:17.8671572+02:00",
+      "metadata": {},
+      "results": [
+        {
+          "timestamp": "2026-06-15T04:55:17.8580295+02:00",
+          "count": 26
+        }
+      ],
+      "PSComputerName": "localhost",
+      "RunspaceId": "6822adaa-d7fa-4c44-acf2-710b281cbceb",
+      "PSShowComputerName": false
+    },
+    {
+      "id": "run_20260615_045516",
       "name": "FetchIssues",
       "type": "PART",
       "status": "completed",
-      "started_at": "2026-06-15T03:32:02.1727216+02:00",
-      "completed_at": "2026-06-15T03:32:03.0134728+02:00",
+      "started_at": "2026-06-15T04:55:16.0678728+02:00",
+      "completed_at": "2026-06-15T04:55:17.9569523+02:00",
       "metadata": {},
       "results": [
         {
           "count": 37,
-          "timestamp": "2026-06-15T03:32:03.0032280+02:00"
+          "timestamp": "2026-06-15T04:55:17.9463930+02:00"
         }
       ],
       "PSComputerName": "localhost",
-      "RunspaceId": "13ab8d9f-6709-4da0-803f-7bd61734d151",
-      "PSShowComputerName": false
-    },
-    {
-      "id": "run_20260615_033202",
-      "name": "FetchPRs",
-      "type": "PART",
-      "status": "completed",
-      "started_at": "2026-06-15T03:32:02.4886755+02:00",
-      "completed_at": "2026-06-15T03:32:04.0083515+02:00",
-      "metadata": {},
-      "results": [
-        {
-          "count": 26,
-          "timestamp": "2026-06-15T03:32:03.9984193+02:00"
-        }
-      ],
-      "PSComputerName": "localhost",
-      "RunspaceId": "d5a569e8-5de4-454a-b7ae-fafc1e473701",
+      "RunspaceId": "d81cc83e-30d1-47e0-9640-da46a2c7c160",
       "PSShowComputerName": false
     }
   ],
-  "timestamp": "2026-06-15T03:32:04.1346563+02:00",
   "sub_run": "DataSync"
 }

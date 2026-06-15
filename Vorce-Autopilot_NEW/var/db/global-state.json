@@ -3,18 +3,18 @@
   "last_run": "2026-06-15T00:24:28.8435071+02:00",
   "last_runs": {
     "MAIN-RUN-04_Optimizer": "2026-06-15T03:29:15.7703047+02:00",
-    "MAIN-RUN-01_Planning": "2026-06-15T03:32:04.4429027+02:00",
-    "MAIN-RUN-02_CheckAndDoing": "2026-06-15T04:17:20.6246306+02:00",
     "MAIN-RUN-03_Audit": "2026-06-15T04:32:21.655795+02:00",
-    "MAIN-RUN-05_MemoryOptimization": "2026-06-15T04:47:22.4863223+02:00"
+    "MAIN-RUN-05_MemoryOptimization": "2026-06-15T04:47:22.4863223+02:00",
+    "MAIN-RUN-01_Planning": "2026-06-15T04:55:18.9208873+02:00",
+    "MAIN-RUN-02_CheckAndDoing": "2026-06-15T04:55:29.344907+02:00"
   },
   "active_delegations": [],
   "review_queue": [],
   "escalated_issues": [],
   "stats": {
-    "last_housekeeping": "2026-06-15T04:17:20.6151284+02:00",
+    "last_housekeeping": "2026-06-15T04:55:29.3119652+02:00",
     "errors": 0,
-    "total_runs": 12,
+    "total_runs": 13,
     "runs_completed": 0
   },
   "run_control": {
@@ -27,30 +27,30 @@
     "updated_at": "2026-06-14T23:01:09.86Z"
   },
   "agent_health": {
-    "timestamp": "2026-06-15T04:17:19.8932754+02:00",
+    "timestamp": "2026-06-15T04:55:28.1116428+02:00",
     "processes": {
       "cline": [
         {
-          "exitCode": null,
           "name": "cline",
-          "id": 16212,
           "error": null,
           "startTime": "2026-06-14T19:59:23.0231399+02:00",
+          "cpu": 69.015625,
           "status": "running",
-          "cpu": 64.984375,
-          "memory": 69242880
+          "id": 16212,
+          "memory": 96526336,
+          "exitCode": null
         }
       ],
       "claude": [
         {
-          "exitCode": null,
           "name": "claude",
-          "id": 2428,
           "error": null,
           "startTime": "2026-06-14T17:26:54.4113613+02:00",
+          "cpu": 1472.453125,
           "status": "running",
-          "cpu": 1469.421875,
-          "memory": 216838144
+          "id": 2428,
+          "memory": 305627136,
+          "exitCode": null
         }
       ]
     },

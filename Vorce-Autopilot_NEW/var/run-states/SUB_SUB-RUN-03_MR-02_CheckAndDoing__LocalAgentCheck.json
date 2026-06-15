@@ -1,52 +1,52 @@
 {
   "status": "completed",
+  "timestamp": "2026-06-15T04:55:28.1221807+02:00",
   "parts": [
     {
-      "id": "run_20260615_041719",
+      "id": "run_20260615_045527",
       "name": "PART-RUN-01_MR-02_CheckAndDoing__LocalAgentCheck__InspectLocalAgents",
       "type": "PART",
       "status": "completed",
-      "started_at": "2026-06-15T04:17:19.8591125+02:00",
-      "completed_at": "2026-06-15T04:17:19.8950119+02:00",
+      "started_at": "2026-06-15T04:55:27.9806757+02:00",
+      "completed_at": "2026-06-15T04:55:28.1196903+02:00",
       "metadata": {},
       "results": [
         {
-          "status": "completed",
-          "healthyProcesses": 2,
           "issues": 0,
-          "timestamp": "2026-06-15T04:17:19.8935341+02:00",
+          "issuesDetails": [],
+          "status": "completed",
+          "timestamp": "2026-06-15T04:55:28.1160713+02:00",
+          "healthyProcesses": 2,
           "totalProcesses": 2,
           "processes": {
             "cline": [
               {
-                "exitCode": null,
                 "name": "cline",
-                "id": 16212,
                 "error": null,
                 "startTime": "2026-06-14T19:59:23.0231399+02:00",
+                "cpu": 69.015625,
                 "status": "running",
-                "cpu": 64.984375,
-                "memory": 69242880
+                "id": 16212,
+                "memory": 96526336,
+                "exitCode": null
               }
             ],
             "claude": [
               {
-                "exitCode": null,
                 "name": "claude",
-                "id": 2428,
                 "error": null,
                 "startTime": "2026-06-14T17:26:54.4113613+02:00",
+                "cpu": 1472.453125,
                 "status": "running",
-                "cpu": 1469.421875,
-                "memory": 216838144
+                "id": 2428,
+                "memory": 305627136,
+                "exitCode": null
               }
             ]
-          },
-          "issuesDetails": []
+          }
         }
       ]
     }
   ],
-  "timestamp": "2026-06-15T04:17:19.8967973+02:00",
   "sub_run": "SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck"
 }

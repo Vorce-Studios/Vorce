@@ -21,6 +21,7 @@ $VarDir = Join-Path $ScriptDir "var"
 $LogDir = Join-Path $VarDir "log"
 $pwsh = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
 if (-not $pwsh) { $pwsh = (Get-Command powershell -ErrorAction Stop).Source }
+$npm = (Get-Command npm.cmd -CommandType Application -ErrorAction Stop).Source
 New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
 
 function Test-HttpHealth {
@@ -81,7 +82,8 @@ function Stop-VorceInfrastructure {
 
     $scriptPatterns = @(
         [regex]::Escape((Join-Path $ScriptDir "autopilot.ps1")),
-        [regex]::Escape((Join-Path $ToolsDir "services/sync-service.ps1"))
+        [regex]::Escape((Join-Path $ToolsDir "services/sync-service.ps1")),
+        [regex]::Escape($DashboardDir)
     )
     $processes = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
         $cmd = [string]$_.CommandLine
@@ -173,13 +175,13 @@ if (-not $NoDashboard.IsPresent) {
         Write-Host "[BOOT] Starte Dashboard Web-Server (Vite)..." -ForegroundColor Yellow
         if (-not (Test-Path (Join-Path $DashboardDir "node_modules"))) {
             Write-Host "[BOOT] node_modules fehlen. Fuehre npm install aus..." -ForegroundColor Cyan
-            Start-Process npm.cmd -ArgumentList "install", "--silent" -WorkingDirectory $DashboardDir -Wait -NoNewWindow
+            Start-Process $npm -ArgumentList "install", "--silent" -WorkingDirectory $DashboardDir -Wait -NoNewWindow
         }
 
         $dashboardOut = Join-Path $LogDir "dashboard-vite.log"
         $dashboardErr = Join-Path $LogDir "dashboard-vite-error.log"
         $dashboardProcess = Start-VorceProcess `
-            -FilePath "npm.cmd" `
+            -FilePath $npm `
             -ArgumentList @("run", "dev", "--", "--host", "0.0.0.0") `
             -WorkingDirectory $DashboardDir `
             -StdOut $dashboardOut `

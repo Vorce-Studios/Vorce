@@ -1,23 +1,23 @@
 {
   "status": "completed",
+  "timestamp": "2026-06-15T04:55:18.9157838+02:00",
   "parts": [
     {
-      "id": "run_20260615_033204",
+      "id": "run_20260615_045518",
       "name": "PART-RUN-01_MR-01_Planning__Delegation__CreateDelegations",
       "type": "PART",
       "status": "completed",
-      "started_at": "2026-06-15T03:32:04.3666000+02:00",
-      "completed_at": "2026-06-15T03:32:04.4351568+02:00",
+      "started_at": "2026-06-15T04:55:18.7812421+02:00",
+      "completed_at": "2026-06-15T04:55:18.9124845+02:00",
       "metadata": {},
       "results": [
         {
           "status": "no_proposals",
-          "count": 0,
-          "delegations": []
+          "delegations": [],
+          "count": 0
         }
       ]
     }
   ],
-  "timestamp": "2026-06-15T03:32:04.4379290+02:00",
   "sub_run": "SUB-RUN-04_MR-01_Planning__Delegation"
 }
