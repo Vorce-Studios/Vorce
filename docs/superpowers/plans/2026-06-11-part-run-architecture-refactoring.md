@@ -13,7 +13,6 @@
 ### Task 1: Refactor SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch.ps1
 
 **Files:**
-
 - Modify: `Vorce-Autopilot_2.0/src/runs/SUB-RUN/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch.ps1`
 
 - [ ] **Step 1: Remove outdated Monitoring Sequence code block**
@@ -39,7 +38,6 @@ $reviewResult = Invoke-PartRun `
 ```
 
 - [ ] **Step 3: Commit**
-
 ```bash
 git add Vorce-Autopilot_2.0/src/runs/SUB-RUN/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch.ps1
 git commit -m "refactor(sr-04): remove legacy monitoring sequence and wrap PR reviews in Part-Run"
@@ -50,7 +48,6 @@ git commit -m "refactor(sr-04): remove legacy monitoring sequence and wrap PR re
 ### Task 2: Refine Naming in SUB-RUN-02_MR-01_Planning__Triage.ps1
 
 **Files:**
-
 - Modify: `Vorce-Autopilot_2.0/src/runs/SUB-RUN/SUB-RUN-02_MR-01_Planning__Triage.ps1`
 
 - [ ] **Step 1: Update Part-Run names for CEO Proposal, QA Critique, and CEO Synthesis**
@@ -68,7 +65,6 @@ $synthesisPartName = "PART-RUN-03_SR-02_MR-01_Planning__CEOSynthesis-Issue-$issu
 ```
 
 - [ ] **Step 2: Commit**
-
 ```bash
 git add Vorce-Autopilot_2.0/src/runs/SUB-RUN/SUB-RUN-02_MR-01_Planning__Triage.ps1
 git commit -m "style(sr-02): refine Part-Run names to follow convention"
@@ -79,7 +75,6 @@ git commit -m "style(sr-02): refine Part-Run names to follow convention"
 ### Task 3: Refine Naming in SUB-RUN-03_MR-01_Planning__Strategy.ps1
 
 **Files:**
-
 - Modify: `Vorce-Autopilot_2.0/src/runs/SUB-RUN/SUB-RUN-03_MR-01_Planning__Strategy.ps1`
 
 - [ ] **Step 1: Update Part-Run names for sequential planning steps**
@@ -98,7 +93,6 @@ $partName = "PART-RUN-$partIdx_SR-03_MR-01_Planning__$($step.label -replace '[^A
   Update the name `PART-RUN-01_SR-03_MR-01_Planning__IssueProposal` (around Line 221).
 
 - [ ] **Step 3: Commit**
-
 ```bash
 git add Vorce-Autopilot_2.0/src/runs/SUB-RUN/SUB-RUN-03_MR-01_Planning__Strategy.ps1
 git commit -m "style(sr-03): refine Part-Run names for strategy generation"
@@ -109,7 +103,6 @@ git commit -m "style(sr-03): refine Part-Run names for strategy generation"
 ### Task 4: Refine Naming in SUB-RUN-05_MR-01_Planning__Optimization.ps1
 
 **Files:**
-
 - Modify: `Vorce-Autopilot_2.0/src/runs/SUB-RUN/SUB-RUN-05_MR-01_Planning__Optimization.ps1`
 
 - [ ] **Step 1: Update Part-Run names for Memory Optimization and Optimizer Analysis**
@@ -124,7 +117,6 @@ $partName = "PART-RUN-02_SR-05_MR-01_Planning__OptimizerAnalysis"
 ```
 
 - [ ] **Step 2: Commit**
-
 ```bash
 git add Vorce-Autopilot_2.0/src/runs/SUB-RUN/SUB-RUN-05_MR-01_Planning__Optimization.ps1
 git commit -m "style(sr-05): refine Part-Run names for optimization"
