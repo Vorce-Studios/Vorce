@@ -1,0 +1,229 @@
+{
+  "efficiency_analysis": {
+    "average_run_time_seconds": 4.2202218894736845,
+    "error_rate_percent": 5.26,
+    "total_runs_analyzed": 19,
+    "success_rate_percent": 94.74
+  },
+  "optimization_recommendations": [],
+  "analysis_timestamp": "2026-06-15T00:29:26.4297428+02:00",
+  "router_optimization": [
+    {
+      "recommendations": [],
+      "disabled_sub_runs": 0,
+      "total_sub_runs": 4,
+      "sub_run_efficiency": [
+        {
+          "error_count": 0,
+          "id": "01",
+          "path": "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync/SUB-RUN-01_MR-01_Planning__DataSync.ps1",
+          "enabled": true,
+          "optimization_potential": "medium",
+          "name": "DataSync",
+          "avg_duration_seconds": 0.0692876
+        },
+        {
+          "error_count": 0,
+          "id": "02",
+          "path": "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-02_MR-01_Planning__Triage/SUB-RUN-02_MR-01_Planning__Triage.ps1",
+          "enabled": true,
+          "optimization_potential": "medium",
+          "name": "Triage",
+          "avg_duration_seconds": 0.0950492
+        },
+        {
+          "error_count": 0,
+          "id": "03",
+          "path": "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-03_MR-01_Planning__Strategy/SUB-RUN-03_MR-01_Planning__Strategy.ps1",
+          "enabled": true,
+          "optimization_potential": "medium",
+          "name": "Strategy",
+          "avg_duration_seconds": 0.0790352
+        },
+        {
+          "error_count": 0,
+          "id": "04",
+          "path": "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-04_MR-01_Planning__Delegation/SUB-RUN-04_MR-01_Planning__Delegation.ps1",
+          "enabled": true,
+          "optimization_potential": "medium",
+          "name": "Delegation",
+          "avg_duration_seconds": 0.0706893
+        }
+      ],
+      "run_type": "Planning",
+      "enabled_sub_runs": 4
+    },
+    {
+      "recommendations": [],
+      "disabled_sub_runs": 0,
+      "total_sub_runs": 6,
+      "sub_run_efficiency": [
+        {
+          "error_count": 0,
+          "id": "01",
+          "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-01_MR-02_CheckAndDoing__SessionSync/SUB-RUN-01_MR-02_CheckAndDoing__SessionSync.ps1",
+          "enabled": true,
+          "optimization_potential": "medium",
+          "name": "SessionSync",
+          "avg_duration_seconds": 0.1116461
+        },
+        {
+          "error_count": 0,
+          "id": "02",
+          "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck/SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck.ps1",
+          "enabled": true,
+          "optimization_potential": "medium",
+          "name": "JulesCheck",
+          "avg_duration_seconds": 0.0842539
+        },
+        {
+          "error_count": 0,
+          "id": "03",
+          "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck/SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck.ps1",
+          "enabled": true,
+          "optimization_potential": "medium",
+          "name": "LocalAgentCheck",
+          "avg_duration_seconds": 0.0986809
+        },
+        {
+          "error_count": 0,
+          "id": "04",
+          "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch.ps1",
+          "enabled": true,
+          "optimization_potential": "medium",
+          "name": "ReviewDispatch",
+          "avg_duration_seconds": 0.0841298
+        },
+        {
+          "error_count": 0,
+          "id": "05",
+          "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill/SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill.ps1",
+          "enabled": true,
+          "optimization_potential": "medium",
+          "name": "JulesRefill",
+          "avg_duration_seconds": 0.0613579
+        },
+        {
+          "error_count": 0,
+          "id": "06",
+          "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping/SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping.ps1",
+          "enabled": true,
+          "optimization_potential": "medium",
+          "name": "Housekeeping",
+          "avg_duration_seconds": 0.2808598
+        }
+      ],
+      "run_type": "CheckAndDoing",
+      "enabled_sub_runs": 6
+    },
+    {
+      "recommendations": [],
+      "disabled_sub_runs": 0,
+      "total_sub_runs": 4,
+      "sub_run_efficiency": [
+        {
+          "error_count": 0,
+          "id": "01",
+          "path": "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SUB-RUN-01_MR-03_Audit__DataSync/SUB-RUN-01_MR-03_Audit__DataSync.ps1",
+          "enabled": true,
+          "optimization_potential": "medium",
+          "name": "DataSync",
+          "avg_duration_seconds": 0.0692876
+        },
+        {
+          "error_count": 0,
+          "id": "02",
+          "path": "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SUB-RUN-02_MR-03_Audit__ComplianceCheck/SUB-RUN-02_MR-03_Audit__ComplianceCheck.ps1",
+          "enabled": true,
+          "optimization_potential": "medium",
+          "name": "ComplianceCheck",
+          "avg_duration_seconds": 0.1150902
+        },
+        {
+          "error_count": 0,
+          "id": "03",
+          "path": "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SUB-RUN-03_MR-03_Audit__JulesSupervision/SUB-RUN-03_MR-03_Audit__JulesSupervision.ps1",
+          "enabled": true,
+          "optimization_potential": "medium",
+          "name": "JulesSupervision",
+          "avg_duration_seconds": 0.036446
+        },
+        {
+          "error_count": 0,
+          "id": "04",
+          "path": "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SUB-RUN-04_MR-03_Audit__AlertDisposition/SUB-RUN-04_MR-03_Audit__AlertDisposition.ps1",
+          "enabled": true,
+          "optimization_potential": "medium",
+          "name": "AlertDisposition",
+          "avg_duration_seconds": 0.0460948
+        }
+      ],
+      "run_type": "Audit",
+      "enabled_sub_runs": 4
+    },
+    {
+      "recommendations": [],
+      "disabled_sub_runs": 0,
+      "total_sub_runs": 2,
+      "sub_run_efficiency": [
+        {
+          "optimization_potential": "medium",
+          "path": "src/runs/MAIN-RUN-04_Optimizer/SUB-RUNS/SUB-RUN-01_MR-04_Optimizer__PerformanceDataCollection/SUB-RUN-01_MR-04_Optimizer__PerformanceDataCollection.ps1",
+          "id": "01",
+          "name": "PerformanceDataCollection",
+          "enabled": true
+        },
+        {
+          "error_count": 0,
+          "id": "02",
+          "path": "src/runs/MAIN-RUN-04_Optimizer/SUB-RUNS/SUB-RUN-02_MR-04_Optimizer__SystemAnalysis/SUB-RUN-02_MR-04_Optimizer__SystemAnalysis.ps1",
+          "enabled": true,
+          "optimization_potential": "medium",
+          "name": "SystemAnalysis",
+          "avg_duration_seconds": 0.0930374
+        }
+      ],
+      "run_type": "Optimizer",
+      "enabled_sub_runs": 2
+    },
+    {
+      "recommendations": [],
+      "disabled_sub_runs": 0,
+      "total_sub_runs": 1,
+      "sub_run_efficiency": [
+        {
+          "error_count": 0,
+          "id": "01",
+          "path": "src/runs/MAIN-RUN-05_MemoryOptimization/SUB-RUNS/SUB-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance/SUB-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance.ps1",
+          "enabled": true,
+          "optimization_potential": "medium",
+          "name": "MemoryMaintenance",
+          "avg_duration_seconds": 0.1069805
+        }
+      ],
+      "run_type": "MemoryOptimization",
+      "enabled_sub_runs": 1
+    }
+  ],
+  "bottleneck_analysis": {},
+  "system_process_analysis": {
+    "active_sessions": 0,
+    "configuration_efficiency": [
+      {
+        "current_configuration": {
+          "planning_minutes": 120,
+          "check_and_doing_minutes": 15,
+          "audit_minutes": 60,
+          "optimizer_minutes": 720,
+          "memory_optimization_minutes": 60,
+          "monitoring_minutes": 10
+        },
+        "recommendation": "Wake Intervals sind gut an Workload angepasst",
+        "configuration_area": "wake_intervals",
+        "efficiency_score": 85
+      }
+    ],
+    "daily_quota_usage": 64.0,
+    "memory_usage_mb": 0.0
+  }
+}

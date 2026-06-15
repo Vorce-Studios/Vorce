@@ -1,0 +1,15 @@
+{
+  "id": "run_20260615_045516",
+  "name": "FetchPRs",
+  "type": "PART",
+  "status": "completed",
+  "started_at": "2026-06-15T04:55:16.3212248+02:00",
+  "completed_at": "2026-06-15T04:55:17.8671572+02:00",
+  "metadata": {},
+  "results": [
+    {
+      "timestamp": "2026-06-15T04:55:17.8580295+02:00",
+      "count": 26
+    }
+  ]
+}
