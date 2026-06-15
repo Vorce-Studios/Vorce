@@ -7,14 +7,12 @@ Dieses Dokument definiert das Minimum Viable Product (MVP) für die Cluster Cont
 Das Ziel für den 1.0-Release ist eine minimale, testbare Control-Plane, die den Betrieb eines zentralen Master-Knotens mit mehreren Rendering-Slaves ermöglicht (Single-Master).
 
 **In Scope (1.0 MVP):**
-
 * Definition des Nachrichtenmodells für Wiedergabesteuerung (Play, Pause, Stop, Seek) und State Sync.
 * Definition des Mindestverhaltens für Ready/Health/Heartbeat-Signale.
 * Dokumentation des erwarteten Reconnect/Timeout-Verhaltens.
 * Dokumentation/Behandlung von Drift-Erkennung (entweder implementiert, testbar oder explizit als Einschränkung dokumentiert).
 
 **Out of Scope (Post-1.0):**
-
 * Multi-Master Setups (Redundanz, Failover).
 * Dezentrale State-Verwaltung (jeder Node darf alles).
 * Sub-Frame genaue Synchronisation (Genlock über Netzwerk) für alle Typen.

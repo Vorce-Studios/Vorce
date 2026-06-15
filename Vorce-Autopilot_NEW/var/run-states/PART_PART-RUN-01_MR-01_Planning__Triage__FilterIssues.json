@@ -1,0 +1,15 @@
+{
+  "id": "run_20260615_045518",
+  "name": "PART-RUN-01_MR-01_Planning__Triage__FilterIssues",
+  "type": "PART",
+  "status": "completed",
+  "started_at": "2026-06-15T04:55:18.5579327+02:00",
+  "completed_at": "2026-06-15T04:55:18.6733216+02:00",
+  "metadata": {},
+  "results": [
+    {
+      "timestamp": "2026-06-15T04:55:18.6676515+02:00",
+      "triaged_count": 11
+    }
+  ]
+}

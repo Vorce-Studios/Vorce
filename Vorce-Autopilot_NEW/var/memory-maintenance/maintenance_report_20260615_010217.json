@@ -1,0 +1,225 @@
+{
+  "token_savings_estimated": 0.0,
+  "analysis_results": {
+    "analysis_timestamp": "2026-06-15T01:02:17.7941083+02:00",
+    "unused_memories": [],
+    "memory_by_source": {
+      "system_init": [
+        {
+          "id": "mem-initial-001",
+          "text": "Issue naming convention: Master Issues: MF-StMa_IssueTitle, Standard Issues: MF-StIs_IssueTitle, User-created Issues: MF-User_IssueTitle, Sub-Issues: __MF-SubI_IssueTitle.",
+          "type": "permanent",
+          "priority": "critical",
+          "created_at": "2026-06-03T00:10:00Z",
+          "source": "system_init"
+        },
+        {
+          "id": "mem-initial-002",
+          "text": "Descriptions for Jules AI must be extremely detailed. Use local CLI agents for small bugfixes, scripts, and CI tasks to save Jules sessions.",
+          "type": "permanent",
+          "priority": "critical",
+          "created_at": "2026-06-03T00:10:01Z",
+          "source": "system_init"
+        }
+      ],
+      "dashboard": [
+        {
+          "id": "mem-1780439410675-95e1",
+          "text": "In case of PR merge conflicts use a CLI Tool for fixing the conflicts manually",
+          "type": "permanent",
+          "priority": "critical",
+          "created_at": "2026-06-02T22:30:10.675Z",
+          "source": "dashboard"
+        },
+        {
+          "id": "mem-1780439829670-orbi",
+          "text": "Source of Truth of all Autopilot Issues are the Vorce Github Issues, Changes only in the @Vorce Project Manager",
+          "type": "permanent",
+          "priority": "critical",
+          "created_at": "2026-06-02T22:37:09.67Z",
+          "source": "dashboard"
+        },
+        {
+          "id": "mem-1780440220884-3c1y",
+          "text": "Vorce Autopilot Token Consumption and Development Efficiency: Use as much as possible, but only as little as necessary. (Individual selection of Thinking Level & Model Tier based on the specific task)",
+          "type": "permanent",
+          "priority": "high",
+          "created_at": "2026-06-02T22:43:40.884Z",
+          "source": "dashboard"
+        }
+      ]
+    },
+    "total_memories": 5,
+    "memory_by_type": {
+      "permanent": [
+        {
+          "id": "mem-initial-001",
+          "text": "Issue naming convention: Master Issues: MF-StMa_IssueTitle, Standard Issues: MF-StIs_IssueTitle, User-created Issues: MF-User_IssueTitle, Sub-Issues: __MF-SubI_IssueTitle.",
+          "type": "permanent",
+          "priority": "critical",
+          "created_at": "2026-06-03T00:10:00Z",
+          "source": "system_init"
+        },
+        {
+          "id": "mem-initial-002",
+          "text": "Descriptions for Jules AI must be extremely detailed. Use local CLI agents for small bugfixes, scripts, and CI tasks to save Jules sessions.",
+          "type": "permanent",
+          "priority": "critical",
+          "created_at": "2026-06-03T00:10:01Z",
+          "source": "system_init"
+        },
+        {
+          "id": "mem-1780439410675-95e1",
+          "text": "In case of PR merge conflicts use a CLI Tool for fixing the conflicts manually",
+          "type": "permanent",
+          "priority": "critical",
+          "created_at": "2026-06-02T22:30:10.675Z",
+          "source": "dashboard"
+        },
+        {
+          "id": "mem-1780439829670-orbi",
+          "text": "Source of Truth of all Autopilot Issues are the Vorce Github Issues, Changes only in the @Vorce Project Manager",
+          "type": "permanent",
+          "priority": "critical",
+          "created_at": "2026-06-02T22:37:09.67Z",
+          "source": "dashboard"
+        },
+        {
+          "id": "mem-1780440220884-3c1y",
+          "text": "Vorce Autopilot Token Consumption and Development Efficiency: Use as much as possible, but only as little as necessary. (Individual selection of Thinking Level & Model Tier based on the specific task)",
+          "type": "permanent",
+          "priority": "high",
+          "created_at": "2026-06-02T22:43:40.884Z",
+          "source": "dashboard"
+        }
+      ]
+    },
+    "memory_by_age": {
+      "old": [
+        {
+          "id": "mem-initial-001",
+          "text": "Issue naming convention: Master Issues: MF-StMa_IssueTitle, Standard Issues: MF-StIs_IssueTitle, User-created Issues: MF-User_IssueTitle, Sub-Issues: __MF-SubI_IssueTitle.",
+          "type": "permanent",
+          "priority": "critical",
+          "created_at": "2026-06-03T00:10:00Z",
+          "source": "system_init"
+        },
+        {
+          "id": "mem-initial-002",
+          "text": "Descriptions for Jules AI must be extremely detailed. Use local CLI agents for small bugfixes, scripts, and CI tasks to save Jules sessions.",
+          "type": "permanent",
+          "priority": "critical",
+          "created_at": "2026-06-03T00:10:01Z",
+          "source": "system_init"
+        },
+        {
+          "id": "mem-1780439410675-95e1",
+          "text": "In case of PR merge conflicts use a CLI Tool for fixing the conflicts manually",
+          "type": "permanent",
+          "priority": "critical",
+          "created_at": "2026-06-02T22:30:10.675Z",
+          "source": "dashboard"
+        },
+        {
+          "id": "mem-1780439829670-orbi",
+          "text": "Source of Truth of all Autopilot Issues are the Vorce Github Issues, Changes only in the @Vorce Project Manager",
+          "type": "permanent",
+          "priority": "critical",
+          "created_at": "2026-06-02T22:37:09.67Z",
+          "source": "dashboard"
+        },
+        {
+          "id": "mem-1780440220884-3c1y",
+          "text": "Vorce Autopilot Token Consumption and Development Efficiency: Use as much as possible, but only as little as necessary. (Individual selection of Thinking Level & Model Tier based on the specific task)",
+          "type": "permanent",
+          "priority": "high",
+          "created_at": "2026-06-02T22:43:40.884Z",
+          "source": "dashboard"
+        }
+      ],
+      "recent": [],
+      "medium": []
+    },
+    "low_quality_memories": [],
+    "memory_by_priority": {
+      "high": [
+        {
+          "id": "mem-1780440220884-3c1y",
+          "text": "Vorce Autopilot Token Consumption and Development Efficiency: Use as much as possible, but only as little as necessary. (Individual selection of Thinking Level & Model Tier based on the specific task)",
+          "type": "permanent",
+          "priority": "high",
+          "created_at": "2026-06-02T22:43:40.884Z",
+          "source": "dashboard"
+        }
+      ],
+      "critical": [
+        {
+          "id": "mem-initial-001",
+          "text": "Issue naming convention: Master Issues: MF-StMa_IssueTitle, Standard Issues: MF-StIs_IssueTitle, User-created Issues: MF-User_IssueTitle, Sub-Issues: __MF-SubI_IssueTitle.",
+          "type": "permanent",
+          "priority": "critical",
+          "created_at": "2026-06-03T00:10:00Z",
+          "source": "system_init"
+        },
+        {
+          "id": "mem-initial-002",
+          "text": "Descriptions for Jules AI must be extremely detailed. Use local CLI agents for small bugfixes, scripts, and CI tasks to save Jules sessions.",
+          "type": "permanent",
+          "priority": "critical",
+          "created_at": "2026-06-03T00:10:01Z",
+          "source": "system_init"
+        },
+        {
+          "id": "mem-1780439410675-95e1",
+          "text": "In case of PR merge conflicts use a CLI Tool for fixing the conflicts manually",
+          "type": "permanent",
+          "priority": "critical",
+          "created_at": "2026-06-02T22:30:10.675Z",
+          "source": "dashboard"
+        },
+        {
+          "id": "mem-1780439829670-orbi",
+          "text": "Source of Truth of all Autopilot Issues are the Vorce Github Issues, Changes only in the @Vorce Project Manager",
+          "type": "permanent",
+          "priority": "critical",
+          "created_at": "2026-06-02T22:37:09.67Z",
+          "source": "dashboard"
+        }
+      ]
+    },
+    "orphaned_memories": []
+  },
+  "memory_efficiency_improvement": 0.0,
+  "cleanup_strategy": {
+    "memories_to_remove": [],
+    "memories_to_optimize": [],
+    "memories_to_archive": [],
+    "cleanup_summary": {
+      "orphaned_removed": 0,
+      "unused_removed": 0,
+      "optimized_total": 0,
+      "large_memories_optimized": 0,
+      "removed_total": 0,
+      "low_quality_archived": 0,
+      "archived_total": 0
+    }
+  },
+  "maintenance_timestamp": "2026-06-15T01:02:17.8612325+02:00",
+  "maintenance_actions": [
+    {
+      "description": "Entfernte verwaiste Memories (>30 Tage alt)",
+      "count": 0,
+      "action": "cleanup_orphaned"
+    },
+    {
+      "description": "Archivierte niedrige Qualität Memories",
+      "count": 0,
+      "action": "archive_low_quality"
+    },
+    {
+      "description": "Optimierte große Memories durch Zusammenfassung",
+      "count": 0,
+      "action": "optimize_large_memories"
+    }
+  ]
+}

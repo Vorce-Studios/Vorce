@@ -1,0 +1,40 @@
+{
+  "id": "run_20260615_043221",
+  "name": "PART-RUN-01_MR-03_Audit__DataSync__ValidateDataSources",
+  "type": "PART",
+  "status": "completed",
+  "started_at": "2026-06-15T04:32:21.2073272+02:00",
+  "completed_at": "2026-06-15T04:32:21.5400188+02:00",
+  "metadata": {},
+  "results": [
+    {
+      "status": "completed",
+      "successful_checks": 5,
+      "total_checks": 5,
+      "sync_results": [
+        {
+          "type": "github_api",
+          "response_time": "fast",
+          "status": "ok"
+        },
+        {
+          "type": "directory_var",
+          "status": "ok"
+        },
+        {
+          "type": "directory_var/db",
+          "status": "ok"
+        },
+        {
+          "type": "directory_var/log",
+          "status": "ok"
+        },
+        {
+          "type": "directory_var/tmp",
+          "status": "ok"
+        }
+      ],
+      "timestamp": "2026-06-15T04:32:21.5364874+02:00"
+    }
+  ]
+}
