@@ -8,10 +8,10 @@ function Get-VorcePrompt {
         [Parameter(Mandatory)][string]$PartRun,
         [hashtable]$Variables = @{}
     )
-    
+
     $promptDir = Join-Path $PSScriptRoot "../../var/prompts"
     $filePath = Join-Path $promptDir "$MainRun/$SubRun/$PartRun.md"
-    
+
     if (-not (Test-Path $filePath)) {
         # Fallback auf Deliberation
         $filePath = Join-Path $promptDir "deliberation/$PartRun.md"
@@ -24,16 +24,16 @@ function Get-VorcePrompt {
             }
         }
     }
-    
+
     $content = Get-Content $filePath -Raw -Encoding UTF8
-    
+
     # Variablen-Ersetzung (Simple {{Key}} Syntax)
     foreach ($key in $Variables.Keys) {
         $placeholder = "{{" + $key + "}}"
         $value = [string]$Variables[$key]
         $content = $content.Replace($placeholder, $value)
     }
-    
+
     return $content
 }
 

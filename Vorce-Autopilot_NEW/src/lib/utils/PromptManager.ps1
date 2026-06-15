@@ -15,7 +15,7 @@ function Get-VorcePrompt {
         [string]$PartRun,
         [hashtable]$Variables = @{}
     )
-    
+
     $promptDir = Join-Path $global:VarDir "prompts"
     $registry = Get-VorcePromptRegistry
     $lookupId = if ($PromptId) { $PromptId } else { $PartRun }
@@ -25,14 +25,14 @@ function Get-VorcePrompt {
         $null
     }
     $filePath = if ($registeredPath) { Join-Path $promptDir $registeredPath } else { Join-Path $promptDir "runs/$MainRun/$SubRun/$PartRun.md" }
-    
+
     if (-not (Test-Path $filePath)) {
         Write-VorceStep -Message "Prompt nicht gefunden: $lookupId" -Status "WARN"
         return ""
     }
-    
+
     $content = Get-Content $filePath -Raw -Encoding UTF8
-    
+
     # Variablen-Ersetzung (Simple {{Key}} Syntax)
     foreach ($key in $Variables.Keys) {
         $placeholder = "{{" + $key + "}}"
@@ -41,7 +41,7 @@ function Get-VorcePrompt {
         $content = $content.Replace('${' + $key + '}', $value)
         $content = $content.Replace('$' + $key, $value)
     }
-    
+
     return $content
 }
 

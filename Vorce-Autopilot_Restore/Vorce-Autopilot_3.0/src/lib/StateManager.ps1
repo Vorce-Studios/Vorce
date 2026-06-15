@@ -29,10 +29,10 @@ function Initialize-RunState {
         [Parameter(Mandatory)][string]$RunName,
         [Parameter(Mandatory)][string]$RunType # MAIN, SUB, PART
     )
-    
+
     $runId = "run_$((Get-Date).ToString('yyyyMMdd_HHmmss'))"
     $statePath = Join-Path $PSScriptRoot "../../var/run-states/$($RunType)_$($RunName).json"
-    
+
     $state = [pscustomobject]@{
         id = $runId
         name = $RunName
@@ -43,7 +43,7 @@ function Initialize-RunState {
         metadata = @{}
         results = @()
     }
-    
+
     $state | ConvertTo-Json -Depth 10 | Set-Content $statePath -Encoding UTF8
     return $state
 }

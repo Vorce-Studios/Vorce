@@ -384,14 +384,14 @@ Vorce-Autopilot_3.0/
 │   │           └── SUB-RUNS/           # SUB-RUN-01...06 (jeder Main-Run verfügt über diverse Sub-Runs, ein Sub-Run sind bestimmte Aufgaben die in der Regel auf mehrere PART-RUNS aufgesplittet sind um Tokensparend und effizent eine einzele Teilaufgabe zu erledigen und die Ergebnise in einer .json zu speichern)
 │   │               └── PART-RUNS/      # einzele Teilaufgaben von einem SUB-RUN (jeder PART-RUN muss ein Ergebniss in einer .json speichern, die Teilergebnisse werden am Ende des SUB-RUN zusammengeführt verarbeitet)
 │   └── tools/                          # alle Hintergrund Skripte die automatisch laufen wie z.B. Jules Session Monitoring, Github Sync usw.
-│ 
-├── web/   
+│
+├── web/  
 │   └── Dashboard/              # alle Dateien des Dashboard Webfrontend (inkl. Unterordnern mit einer Struktur und eindeutigen + einheitlichen Namen wo man erkennt für die Dateien jeweils sind)
-│ 
+│
 └── var/
     ├── config/
     │   └── autopilot-config.json  # Konfiguration (Intervalle, Labels)
-	├── prompts/                   # Systemprompts (inkl. Unterordnern mit der Run Struktur und eindeutigen + einheitlichen Namen wo man erkennt für was der Prompt jeweils ist 
+	├── prompts/                   # Systemprompts (inkl. Unterordnern mit der Run Struktur und eindeutigen + einheitlichen Namen wo man erkennt für was der Prompt jeweils ist
     ├── db/                        # active-sessions.json, pull-requests.json
     ├── log/                       # autopilot_14-06-2026_08-30.log (bei jedem Start wird eine neue Log Datei begonnen, es sollen immer nur die letzten 10 Logs aufbewart werden)  
     ├── run-states/            # run-state.json Files

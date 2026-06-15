@@ -28,7 +28,7 @@ Write-Host "RedirectStandardInput: $promptInputFile"
 
 try {
     $process = Start-Process -FilePath $PwshPath -ArgumentList $agentArgs -RedirectStandardOutput $outputFile -RedirectStandardError $errorFile -RedirectStandardInput $promptInputFile -NoNewWindow -Wait -PassThru
-    
+
     if ($null -eq $process) {
         Write-Host "Error: Start-Process returned null process object." -ForegroundColor Red
         exit 1
@@ -41,11 +41,11 @@ try {
         Write-Host "Error: Process exited with code $($process.ExitCode). Combined Output: $($combinedOutput | Select-Object -First 200)" -ForegroundColor Red
         exit 1
     }
-    
+
     $stdOutContent = Get-Content -Path $outputFile -Raw -Encoding UTF8
     $stdErrContent = Get-Content -Path $errorFile -Raw -Encoding UTF8
     $output = ($stdOutContent, $stdErrContent | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join "`n"
-    
+
     Write-Host "Success: Process completed. Output length: $($output.Length)" -ForegroundColor Green
     Write-Host "Output:" -ForegroundColor Green
     Write-Host $output -ForegroundColor Cyan

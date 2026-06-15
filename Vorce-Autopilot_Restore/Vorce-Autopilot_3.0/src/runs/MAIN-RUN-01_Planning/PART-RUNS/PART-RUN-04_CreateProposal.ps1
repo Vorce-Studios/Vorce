@@ -54,11 +54,11 @@ if ($null -ne $Result) {
     $proposalDir = Join-Path $VarDir "db/proposals"
     if (-not (Test-Path $proposalDir)) { New-Item -ItemType Directory -Path $proposalDir -Force | Out-Null }
     $Result | Set-Content (Join-Path $proposalDir "proposal_$($targetIssue.number).md") -Encoding UTF8
-    
-    return @{ 
+
+    return @{
         issue_number = $targetIssue.number
         status = "proposal_created"
-        timestamp = (Get-Date).ToString("o") 
+        timestamp = (Get-Date).ToString("o")
     }
 }
 
