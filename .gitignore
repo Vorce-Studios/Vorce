@@ -118,8 +118,35 @@ backfill-legacy-project-fields.ps1
 escalate-jules-sessions.ps1
 monitor-jules-sessions.ps1
 
-# Vorce-Autopilot: fully tracked directories (all files committed, no exceptions)
-!Vorce-Autopilot_NEW/**
-!Vorce-Autopilot_Restore/**
+
+# Paperclip runtime data (managed outside of repo)
+.paperclip/
+.paperclip-home/
+ops/paperclip/
+scripts/paperclip/
+
+autopilot-state.json
+scripts/codex-cli/autopilot-session-lock.md
+scripts/codex-cli/autopilot-tasks.md
+scripts/codex-cli/quota-registry.json
+scripts/codex-cli/tmp/
+.codex-worktrees/
+
+# Vorce-Autopilot Parallel-Rework Runtime
+Vorce-Autopilot/var/
+Vorce-Autopilot/dashboard/node_modules/
+Vorce-Autopilot/dashboard/dist/
+Vorce-Autopilot_2.0/var/
+Vorce-Autopilot_2.0/dashboard/node_modules/
+Vorce-Autopilot_2.0/dashboard/dist/
+
+# Specifically allow configuration JSONs but ignore runtime/dependency JSONs
+!Vorce-Autopilot/config/*.json
+!Vorce-Autopilot/dashboard/*.json
+!Vorce-Autopilot/dashboard/public/*.json
+!Vorce-Autopilot_2.0/config/*.json
+!Vorce-Autopilot_2.0/dashboard/*.json
+!Vorce-Autopilot_2.0/dashboard/public/*.json
+!Vorce-Autopilot_2.0/dashboard/src/**/*.json
 
 .worktrees/
