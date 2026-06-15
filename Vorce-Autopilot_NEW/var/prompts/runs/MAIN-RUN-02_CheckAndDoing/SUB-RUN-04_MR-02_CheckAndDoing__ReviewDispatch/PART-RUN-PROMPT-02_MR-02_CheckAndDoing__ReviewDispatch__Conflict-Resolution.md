@@ -6,4 +6,3 @@ Harte Regeln:
 - Keine Ersatz-PRs und keine neuen Tracking-PRs erzeugen.
 - Bestehenden PR-Branch auschecken, Base-Branch mergen, Konfliktdateien ermitteln, minimal beheben, testen, auf denselben Branch pushen.
 - Wenn ein Konflikt fachlich nicht aufloesbar ist, exakt PR, Branches, Konfliktdateien und Grund melden.
-
