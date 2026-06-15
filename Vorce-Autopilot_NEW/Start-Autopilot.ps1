@@ -4,6 +4,7 @@
 param(
     [switch]$NoDashboard,
     [switch]$NoSync,
+    [switch]$NoAutopilot,
     [switch]$Detach
 )
 
@@ -110,6 +111,37 @@ if (-not $NoSync.IsPresent) {
                 -PassThru
             $managedProcesses += $syncProcess
         }
+    }
+}
+
+# 3. Autopilot Loop
+if (-not $NoAutopilot.IsPresent) {
+    Write-Host "[BOOT] Pruefe Autopilot Loop..." -ForegroundColor Gray
+    $autopilotScript = Join-Path $ScriptDir "autopilot.ps1"
+    $existingAutopilot = @(Get-CimInstance Win32_Process |
+        Where-Object {
+            $_.CommandLine -match [regex]::Escape($autopilotScript) -and
+            $_.CommandLine -notmatch "-RunOnce"
+        })
+
+    if ($existingAutopilot.Count -gt 0) {
+        Write-Host "[BOOT] Autopilot Loop laeuft bereits (PID $($existingAutopilot[0].ProcessId))." -ForegroundColor Green
+    } else {
+        if (-not (Test-Path $autopilotScript)) {
+            throw "Autopilot Einstiegspunkt nicht gefunden: $autopilotScript"
+        }
+
+        $autopilotOut = Join-Path $LogDir "autopilot-service.log"
+        $autopilotErr = Join-Path $LogDir "autopilot-service-error.log"
+        $autopilotProcess = Start-Process $pwsh `
+            -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $autopilotScript, "-StartupSequence", "-StartupDelaySeconds", "8") `
+            -WorkingDirectory $ScriptDir `
+            -WindowStyle Hidden `
+            -RedirectStandardOutput $autopilotOut `
+            -RedirectStandardError $autopilotErr `
+            -PassThru
+        $managedProcesses += $autopilotProcess
+        Write-Host "[BOOT] Autopilot Loop gestartet (PID $($autopilotProcess.Id))." -ForegroundColor Green
     }
 }
 

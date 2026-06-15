@@ -37,6 +37,70 @@ function readJsonFile(filePath: string, fallback: any = null): any {
   return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 }
 
+function parseRunName(actualName: string): string {
+  return actualName.split('__').pop()?.replace(/^SUB-RUN-\d+_MR-\d+_/, '').replace(/^PART-RUN-\d+_MR-\d+_/, '') || actualName;
+}
+
+function firstCommentLine(filePath: string): string {
+  if (!fs.existsSync(filePath)) return '';
+  const line = fs.readFileSync(filePath, 'utf-8')
+    .split(/\r?\n/)
+    .find(item => item.trim().startsWith('#') && !item.includes('ps1'));
+  return line ? line.replace(/^#\s*/, '').trim() : '';
+}
+
+function getRunCatalog(): any {
+  const config = readJsonFile(CONFIG_PATH, {});
+  const runsRoot = path.join(VORCE_ROOT, 'src/runs');
+  return {
+    main_runs: MAIN_RUNS.map(definition => {
+      const mainDir = path.join(runsRoot, definition.name);
+      const configuredSubRuns = config.router_rules?.[definition.routerKey] || [];
+      const subRuns = configuredSubRuns.map((rule: any) => {
+        const scriptPath = path.join(VORCE_ROOT, rule.script || '');
+        const subDir = path.dirname(scriptPath);
+        const actualName = path.basename(subDir);
+        const partsDir = path.join(subDir, 'PART-RUNS');
+        const partRuns = fs.existsSync(partsDir)
+          ? fs.readdirSync(partsDir)
+            .filter(file => file.endsWith('.ps1'))
+            .sort()
+            .map(file => {
+              const partName = path.basename(file, '.ps1');
+              const partPath = path.join(partsDir, file);
+              return {
+                name: partName,
+                label: parseRunName(partName),
+                script: path.relative(VORCE_ROOT, partPath).replace(/\\/g, '/'),
+                description: firstCommentLine(partPath),
+              };
+            })
+          : [];
+
+        return {
+          id: rule.id,
+          name: actualName,
+          label: rule.name || parseRunName(actualName),
+          script: rule.script,
+          enabled: rule.enabled !== false,
+          description: firstCommentLine(scriptPath),
+          part_runs: partRuns,
+        };
+      });
+
+      return {
+        ...definition,
+        actualName: definition.name,
+        path: path.relative(VORCE_ROOT, mainDir).replace(/\\/g, '/'),
+        interval_minutes: Number(config.wake_intervals?.[definition.intervalKey] || 0),
+        description: firstCommentLine(path.join(mainDir, `${definition.routerKey}-Router.ps1`)),
+        sub_runs: subRuns,
+        part_run_count: subRuns.reduce((sum: number, sub: any) => sum + sub.part_runs.length, 0),
+      };
+    }),
+  };
+}
+
 function readRuntimeState(): any {
   const globalState = readJsonFile(GLOBAL_STATE_PATH, {});
   const dashboardState = readJsonFile(DASHBOARD_STATE_PATH, {});
@@ -205,6 +269,15 @@ export default defineConfig({
                 res.writeHead(404, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: 'autopilot-config.json not found' }));
               }
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+            }
+          } else if (req.method === 'GET' && req.url === '/run-catalog.json') {
+            try {
+              const catalog = getRunCatalog();
+              res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+              res.end(JSON.stringify(catalog, null, 2));
             } catch (err) {
               res.writeHead(500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));

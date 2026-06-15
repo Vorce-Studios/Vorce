@@ -126,6 +126,18 @@ if ($routerFile) {
     throw "Kein Router für $mainRunName gefunden: $MainRunPath"
 }
 
+$routerKey = ($Config.router_rules.PSObject.Properties | Where-Object {
+    @($_.Value | ForEach-Object { $_.script }) -match [regex]::Escape($mainRunName)
+} | Select-Object -First 1).Name
+if ($routerKey) {
+    $configuredRules = @($Config.router_rules.$routerKey)
+    $SubRuns = @($SubRuns | Where-Object {
+        $subRun = $_
+        $rule = $configuredRules | Where-Object { $_.name -eq $subRun.name -or $_.script -eq $subRun.script } | Select-Object -First 1
+        $null -eq $rule -or $rule.enabled -ne $false
+    })
+}
+
 # F) Try/Catch um jeden Sub-Run (C9)
 Write-VorceStep -Message "Geplante Sub-Runs: $($SubRuns.Count)" -Status "INFO"
 

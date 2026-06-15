@@ -4,6 +4,8 @@
 param(
     [switch]$DryRun,
     [switch]$RunOnce,
+    [switch]$StartupSequence,
+    [int]$StartupDelaySeconds = 8,
     [int]$IntervalMinutes = 15,
     [ValidateSet(
         "MAIN-RUN-01_Planning",
@@ -117,18 +119,45 @@ if (-not (Test-Path $configPath)) {
 $GlobalState = Read-VorceGlobalState
 Write-VorceLog "Global State geladen (v$($GlobalState.version))." -Status "OK"
 
+function Invoke-VorceOrchestrator {
+    param([string]$MainRunName)
+
+    $orchestratorPath = Join-Path $global:VorceRoot "src/orchestrator/Vorce-Orchestrator.ps1"
+    if (-not (Test-Path $orchestratorPath)) {
+        Write-VorceLog "Orchestrator nicht gefunden: $orchestratorPath" -Status "ERROR"
+        return
+    }
+
+    $GlobalState = Read-VorceGlobalState
+    if ([string]::IsNullOrWhiteSpace($MainRunName)) {
+        & $orchestratorPath -GlobalState $GlobalState -DryRun:$DryRun
+    } else {
+        & $orchestratorPath -GlobalState $GlobalState -DryRun:$DryRun -ForceMainRun $MainRunName
+    }
+}
+
 # --- 4. Main Loop ---
 Write-VorceLog "Starte Orchestrierung (Intervall: $IntervalMinutes min)..." -Status "RUN"
 
+if ($StartupSequence -and -not $ForceMainRun) {
+    Write-VorceLog "[STARTUP] Erzwinge Planning RUN beim Start..." -Status "RUN"
+    Invoke-VorceOrchestrator -MainRunName "MAIN-RUN-01_Planning"
+    if (-not $DryRun) {
+        Write-VorceLog "[STARTUP] Warte $StartupDelaySeconds Sekunden vor Check & Doing..." -Status "INFO"
+        Start-Sleep -Seconds $StartupDelaySeconds
+    }
+    Write-VorceLog "[STARTUP] Erzwinge Check & Doing RUN beim Start..." -Status "RUN"
+    Invoke-VorceOrchestrator -MainRunName "MAIN-RUN-02_CheckAndDoing"
+
+    if ($DryRun -or $RunOnce) {
+        Write-VorceLog "Startsequenz abgeschlossen." -Status "OK"
+        return
+    }
+}
+
 while ($true) {
     try {
-        # --- Orchestrator Aufruf ---
-        $orchestratorPath = Join-Path $global:VorceRoot "src/orchestrator/Vorce-Orchestrator.ps1"
-        if (Test-Path $orchestratorPath) {
-            & $orchestratorPath -GlobalState $GlobalState -DryRun:$DryRun -ForceMainRun $ForceMainRun
-        } else {
-            Write-VorceLog "Orchestrator nicht gefunden: $orchestratorPath" -Status "ERROR"
-        }
+        Invoke-VorceOrchestrator -MainRunName $ForceMainRun
 
     } catch {
         Write-VorceLog "[CRITICAL] Fehler im Loop: $($_.Exception.Message)" -Status "ERROR"

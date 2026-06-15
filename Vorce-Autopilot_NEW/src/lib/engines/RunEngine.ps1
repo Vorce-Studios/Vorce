@@ -55,6 +55,15 @@ function Invoke-VorceSubRunParallel {
         [int]$MaxParallel = 3
     )
     
+    $subSettings = $ConfigBag.Config.run_settings.sub_runs.($SubRunName)
+    if ($subSettings -and $subSettings.max_parallel -gt 0) {
+        $MaxParallel = [int]$subSettings.max_parallel
+    }
+    $PartRuns = @($PartRuns | Where-Object {
+        $partSettings = $ConfigBag.Config.run_settings.part_runs.($_.name)
+        $null -eq $partSettings -or $partSettings.enabled -ne $false
+    })
+
     Write-VorceStep -Message "Starte parallele Ausführung für $SubRunName ($($PartRuns.Count) Parts, Max: $MaxParallel)" -Status "RUN"
     
     $activeJobs = @()
@@ -134,6 +143,11 @@ function Invoke-VorceSubRunSequential {
         [Parameter(Mandatory)][hashtable]$ConfigBag,
         [Parameter(Mandatory)][object]$ParentState
     )
+
+    $PartRuns = @($PartRuns | Where-Object {
+        $partSettings = $ConfigBag.Config.run_settings.part_runs.($_.name)
+        $null -eq $partSettings -or $partSettings.enabled -ne $false
+    })
 
     Write-VorceStep -Message "Starte sequenzielle Ausführung für $SubRunName ($($PartRuns.Count) Parts)" -Status "RUN"
     $partStates = @()

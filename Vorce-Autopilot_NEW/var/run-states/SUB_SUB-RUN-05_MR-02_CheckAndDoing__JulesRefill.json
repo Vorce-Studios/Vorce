@@ -1,23 +1,23 @@
 {
-  "timestamp": "2026-06-15T00:29:25.0837771+02:00",
   "parts": [
     {
-      "id": "run_20260615_002925",
+      "id": "run_20260615_031709",
       "name": "PART-RUN-01_MR-02_CheckAndDoing__JulesRefill__RefillJulesQueue",
       "type": "PART",
       "status": "completed",
-      "started_at": "2026-06-15T00:29:25.0199135+02:00",
-      "completed_at": "2026-06-15T00:29:25.0812714+02:00",
+      "started_at": "2026-06-15T03:17:09.4905294+02:00",
+      "completed_at": "2026-06-15T03:17:09.5819777+02:00",
       "metadata": {},
       "results": [
         {
-          "timestamp": "2026-06-15T00:29:25.0803264+02:00",
-          "status": "disabled",
-          "refill_sessions_created": 0
+          "refill_sessions_created": 0,
+          "timestamp": "2026-06-15T03:17:09.5810123+02:00",
+          "status": "no_unassigned_tasks"
         }
       ]
     }
   ],
-  "sub_run": "SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill",
-  "status": "completed"
+  "timestamp": "2026-06-15T03:17:09.5846856+02:00",
+  "status": "completed",
+  "sub_run": "SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill"
 }

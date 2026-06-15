@@ -20,7 +20,7 @@ $global:LibDir = $ConfigBag.LibDir
 Write-VorceStep -Message "Starte JulesRefill..." -Status "RUN"
 
 # 1. Prüfe ob monitoring_refill_enabled
-if (-not $ConfigBag.Config.monitoring_refill_enabled) {
+if (-not $ConfigBag.Config.jules.monitoring_refill_enabled) {
     Write-VorceStep -Message "JulesRefill ist deaktiviert." -Status "INFO"
     return @{ status="disabled"; refill_sessions_created=0; timestamp=(Get-Date).ToString("o") }
 }

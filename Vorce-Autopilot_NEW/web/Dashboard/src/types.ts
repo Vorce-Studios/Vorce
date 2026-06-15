@@ -210,6 +210,7 @@ export interface AutopilotConfig {
   working_sessions?: WorkingSessionsConfig;
   dual_ceo: DualCeoConfig;
   router_rules?: Record<string, Array<{ name: string; script: string; enabled: boolean }>>;
+  run_settings?: RunSettings;
   prompts?: {
     planning_analysis?: string;
     planning_proposal?: string;
@@ -218,6 +219,23 @@ export interface AutopilotConfig {
     monitoring_prompt?: string;
     [key: string]: string | undefined;
   };
+}
+
+export interface RunUnitSettings {
+  enabled?: boolean;
+  description?: string;
+  system_prompt?: string;
+  llm_chain?: string[];
+  llm_provider?: string;
+  llm_model?: string;
+  allow_parallel?: boolean;
+  max_parallel?: number;
+}
+
+export interface RunSettings {
+  main_runs?: Record<string, RunUnitSettings>;
+  sub_runs?: Record<string, RunUnitSettings>;
+  part_runs?: Record<string, RunUnitSettings>;
 }
 
 export interface WorkingSessionsConfig {
