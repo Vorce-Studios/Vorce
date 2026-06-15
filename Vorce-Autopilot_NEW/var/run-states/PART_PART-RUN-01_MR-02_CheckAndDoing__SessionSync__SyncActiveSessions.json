@@ -1,0 +1,17 @@
+{
+  "id": "run_20260615_045527",
+  "name": "PART-RUN-01_MR-02_CheckAndDoing__SessionSync__SyncActiveSessions",
+  "type": "PART",
+  "status": "completed",
+  "started_at": "2026-06-15T04:55:27.8248348+02:00",
+  "completed_at": "2026-06-15T04:55:27.9026184+02:00",
+  "metadata": {},
+  "results": [
+    {
+      "status": "completed",
+      "updates": 0,
+      "timestamp": "2026-06-15T04:55:27.9007223+02:00",
+      "totalDelegations": 0
+    }
+  ]
+}

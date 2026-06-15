@@ -1,0 +1,114 @@
+{
+  "repository": "Vorce-Studios/Vorce",
+  "wake_intervals": {
+    "planning_minutes": 120,
+    "check_and_doing_minutes": 15,
+    "memory_optimization_minutes": 60,
+    "monitoring_minutes": 10
+  },
+  "jules": {
+    "max_daily_sessions": 100,
+    "max_concurrent_sessions": 15,
+    "auto_approve_plans": true,
+    "auto_retry_feedback_max": 3
+  },
+  "gemini_worktree_path": "../../VjMapper-gemini",
+  "issue_filters": {
+    "include_labels": [
+      "jules-task",
+      "bug",
+      "priority: critical"
+    ],
+    "exclude_labels": [
+      "wontfix",
+      "duplicate",
+      "on-hold",
+      "status: in-progress",
+      "status: needs-review",
+      "status: needs-testing",
+      "status: blocked",
+      "status: ready-to-merge"
+    ],
+    "autopilot_label": "autopilot-created"
+  },
+  "max_issues_per_planning_cycle": 10,
+  "dual_ceo": {
+    "enabled": true,
+    "ceo_chain": [
+      "codex_orchestrator:planning",
+      "claude_code:balanced"
+    ],
+    "qa_manager_chain": [
+      "gemini_cli:premium",
+      "kiro_cli:default"
+    ],
+    "max_deliberation_rounds": 3,
+    "deliberation_tasks": [
+      "planning",
+      "complex_review"
+    ],
+    "fallback_to_single": true,
+    "log_deliberations": true
+  },
+  "working_sessions": {
+    "preferred_agents": [
+      "claude_code",
+      "gemini_cli",
+      "cline_cli"
+    ]
+  },
+  "router_rules": {
+    "Planning": [
+      {
+        "id": "01",
+        "name": "DataSync",
+        "script": "MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_DataSync.ps1",
+        "enabled": true
+      },
+      {
+        "id": "02",
+        "name": "Triage",
+        "script": "MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-02_Triage.ps1",
+        "enabled": true
+      },
+      {
+        "id": "03",
+        "name": "Strategy",
+        "script": "MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-03_Strategy.ps1",
+        "enabled": true
+      },
+      {
+        "id": "04",
+        "name": "Delegation",
+        "script": "MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-04_Delegation.ps1",
+        "enabled": true
+      }
+    ],
+    "CheckAndDoing": [
+      {
+        "id": "01",
+        "name": "SessionSync",
+        "script": "MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-01_SessionSync.ps1",
+        "enabled": true
+      },
+      {
+        "id": "02",
+        "name": "JulesCheck",
+        "script": "MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-02_JulesCheck.ps1",
+        "enabled": true
+      },
+      {
+        "id": "03",
+        "name": "LocalAgentCheck",
+        "script": "MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-03_LocalAgentCheck.ps1",
+        "enabled": true
+      },
+      {
+        "id": "04",
+        "name": "ReviewDispatch",
+        "script": "MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-04_ReviewDispatch.ps1",
+        "enabled": true
+      }
+    ]
+  }
+}
