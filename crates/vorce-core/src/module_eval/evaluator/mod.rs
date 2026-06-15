@@ -242,9 +242,7 @@ impl ModuleEvaluator {
         let indices = self.indices_cache[&module.id].clone();
 
         // Step 1: Evaluate all trigger nodes
-        let mut sorted_parts: Vec<&crate::module::ModulePart> = module.parts.iter().collect();
-        sorted_parts.sort_by_key(|p| p.id);
-        for part in sorted_parts {
+        for part in &module.parts {
             if let ModulePartType::Trigger(trigger_type) = &part.part_type {
                 let state = self.trigger_states.entry(part.id).or_default();
                 let values = self.cached_result.trigger_values.entry(part.id).or_default();
@@ -266,9 +264,7 @@ impl ModuleEvaluator {
         }
         let mut trigger_inputs =
             self.compute_trigger_inputs(module, &self.cached_result.trigger_values);
-        let mut sorted_parts: Vec<&crate::module::ModulePart> = module.parts.iter().collect();
-        sorted_parts.sort_by_key(|p| p.id);
-        for part in sorted_parts {
+        for part in &module.parts {
             if part.link_data.mode == LinkMode::Master {
                 let mut activity = 1.0;
                 if part.link_data.trigger_input_enabled {
@@ -288,9 +284,7 @@ impl ModuleEvaluator {
         trigger_inputs = self.compute_trigger_inputs(module, &self.cached_result.trigger_values);
 
         // Step 5: Process Slave Behaviors (Invert Link Input)
-        let mut sorted_parts: Vec<&crate::module::ModulePart> = module.parts.iter().collect();
-        sorted_parts.sort_by_key(|p| p.id);
-        for part in sorted_parts {
+        for part in &module.parts {
             if part.link_data.mode == LinkMode::Slave {
                 if let Some(val) = trigger_inputs.get_mut(&part.id) {
                     if part.link_data.behavior == LinkBehavior::Inverted {
@@ -303,9 +297,7 @@ impl ModuleEvaluator {
         // Step 6: Generate source commands
         let socket_inputs = self.compute_socket_inputs(module, &self.cached_result.trigger_values);
 
-        let mut sorted_parts: Vec<&crate::module::ModulePart> = module.parts.iter().collect();
-        sorted_parts.sort_by_key(|p| p.id);
-        for part in sorted_parts {
+        for part in &module.parts {
             if let ModulePartType::Source(source_type) = &part.part_type {
                 // Default to 1.0 (playing) so media files play even if no trigger is attached
                 let trigger_value = trigger_inputs.get(&part.id).copied().unwrap_or(1.0);
@@ -388,9 +380,7 @@ impl ModuleEvaluator {
         }
 
         // Step 4: Trace Render Pipeline
-        let mut sorted_parts: Vec<&crate::module::ModulePart> = module.parts.iter().collect();
-        sorted_parts.sort_by_key(|p| p.id);
-        for part in sorted_parts {
+        for part in &module.parts {
             if let ModulePartType::Output(output_type) = &part.part_type {
                 if let Some(conn_idx) = primary_render_connection_idx(module, &indices, part.id) {
                     let conn = &module.connections[conn_idx];
