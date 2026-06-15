@@ -21,7 +21,7 @@ Write-Host "=====================================" -ForegroundColor Cyan
 # 1. Dashboard Health Check / Start
 if (-not $NoDashboard.IsPresent) {
     Write-Host "[BOOT] Pruefe Dashboard (Port 5173)..." -ForegroundColor Gray
-    
+
     $isListening = $false
     try {
         $conn = Get-NetTCPConnection -LocalPort 5173 -State Listen -ErrorAction SilentlyContinue
@@ -36,12 +36,12 @@ if (-not $NoDashboard.IsPresent) {
             Write-Host "[BOOT] node_modules fehlen. Fuehre npm install aus..." -ForegroundColor Cyan
             Start-Process npm.cmd -ArgumentList "install", "--silent" -WorkingDirectory $DashboardDir -Wait -NoNewWindow
         }
-        
+
         $pwsh = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
         if (-not $pwsh) { $pwsh = (Get-Command powershell -ErrorAction Stop).Source }
-        
+
         Start-Process $pwsh -ArgumentList @("-NoProfile", "-Command", "Set-Location -LiteralPath '$DashboardDir'; npm.cmd run dev -- --host 0.0.0.0") -WindowStyle Hidden
-        
+
         Write-Host "[BOOT] Dashboard gestartet (Hintergrund)." -ForegroundColor Green
     }
 }

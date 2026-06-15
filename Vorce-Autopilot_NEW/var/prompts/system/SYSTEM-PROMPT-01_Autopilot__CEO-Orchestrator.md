@@ -10,4 +10,3 @@ Lies zuerst das lokale Lagebild:
 - var/db/global-state.json
 - var/db/task-journal.json
 Wenn PRs blockiert sind oder Jules haengt musst du dich darum kümmern.
-

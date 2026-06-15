@@ -8,13 +8,13 @@ function Invoke-VorceAgent {
         [string]$ModelTier = "default",
         [string]$WorkingDirectory = $null
     )
-    
+
     Write-VorceStep -Message "Rufe KI-Agent auf: $AgentName ($ModelTier)..." -Status "RUN"
-    
+
     # In V3.0 nutzen wir temporäre Dateien für den Austausch
     $tmpDir = Join-Path $PSScriptRoot "../../var/tmp"
     if (-not (Test-Path $tmpDir)) { New-Item -ItemType Directory -Path $tmpDir -Force | Out-Null }
-    
+
     $timestamp = Get-Date -Format "HHmmss"
     $outputFile = Join-Path $tmpDir "output_$timestamp.txt"
     $errorFile = Join-Path $tmpDir "error_$timestamp.txt" # New error file
@@ -37,10 +37,10 @@ function Invoke-VorceAgent {
             $shellCommand = $pwshPath
             $agentArgs += @("-NoProfile", "-File", $geminiPs1Path)
             $agentArgs += @("--yolo") # Auto-accept all actions for autonomous mode
-            
+
             $promptInputFile = Join-Path $tmpDir "prompt_input_$timestamp.txt"
             Set-Content -Path $promptInputFile -Value $Prompt -Encoding UTF8
-            
+
             Write-VorceStep -Message "Agent gestartet. Warte auf Antwort von '$shellCommand' mit Argumenten '$($agentArgs -join ' ')' (Output in '$outputFile', Error in '$errorFile', Input from '$promptInputFile')..." -Status "INFO"
             Write-VorceStep -Message "DEBUG: Start-Process FilePath: '$shellCommand'" -Status "INFO"
             Write-VorceStep -Message "DEBUG: Start-Process ArgumentList: '$($agentArgs -join ' ')'" -Status "INFO"
@@ -49,7 +49,7 @@ function Invoke-VorceAgent {
         } elseif ($AgentName -eq "claude_code") {
             $shellCommand = "claude.cmd"
             $agentArgs += @("--prompt", $Prompt)
-            
+
             Write-VorceStep -Message "Agent gestartet. Warte auf Antwort von '$shellCommand' mit Argumenten '$($agentArgs -join ' ')' (Output in '$outputFile', Error in '$errorFile')..." -Status "INFO"
 
             $process = Start-Process -FilePath $shellCommand -ArgumentList $agentArgs -RedirectStandardOutput $outputFile -RedirectStandardError $errorFile -NoNewWindow -Wait -PassThru
@@ -66,7 +66,7 @@ function Invoke-VorceAgent {
         # Read both output and error streams
         $stdOutContent = if (Test-Path -LiteralPath $outputFile) { Get-Content -LiteralPath $outputFile -Raw -Encoding UTF8 } else { "" }
         $stdErrContent = if (Test-Path -LiteralPath $errorFile) { Get-Content -LiteralPath $errorFile -Raw -Encoding UTF8 } else { "" }
-        
+
         # Combine them for the final output
         $output = ($stdOutContent, $stdErrContent | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join "`n"
 
@@ -85,7 +85,7 @@ function Invoke-VorceAgent {
             Write-VorceStep -Message "Agent '$AgentName' hat keine Antwort geliefert. Output-Datei leer." -Status "WARN"
             return $null
         }
-        
+
         Write-VorceStep -Message "Antwort erhalten ($($output.Length) Zeichen)." -Status "OK"
         Write-VorceStep -Message "Agent Output (First 200 chars): $($output.Substring(0, [System.Math]::Min(200, $output.Length)))" -Status "INFO"
 

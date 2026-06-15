@@ -8,33 +8,33 @@ function Invoke-VorceDeliberation {
         [Parameter(Mandatory)][string]$TaskName,
         [Parameter(Mandatory)][hashtable]$Variables
     )
-    
+
     Write-VorceHeader -Title "DELIBERATION: $TaskName" -Icon "⚖️"
-    
+
     # 1. Proposal (Agent A)
     Write-VorceStep -Message "Phase 1: Erstelle Vorschlag..." -Status "RUN"
     $proposalPrompt = Get-VorcePrompt -MainRun $MainRun -SubRun $SubRun -PartRun "proposal" -Variables $Variables
     $proposal = Invoke-VorceAgent -AgentName "gemini_cli" -Prompt $proposalPrompt
-    
+
     if ($null -eq $proposal) { return $null }
-    
+
     # 2. Critique (Agent B)
     Write-VorceStep -Message "Phase 2: Review und Kritik..." -Status "RUN"
     $Variables["CeoProposal"] = $proposal
     $critiquePrompt = Get-VorcePrompt -MainRun $MainRun -SubRun $SubRun -PartRun "critique" -Variables $Variables
     $critique = Invoke-VorceAgent -AgentName "gemini_cli" -Prompt $critiquePrompt # Hier könnte ein anderer Agent stehen
-    
-    if ($null -eq $critique) { 
+
+    if ($null -eq $critique) {
         Write-VorceStep -Message "Critique fehlgeschlagen. Nutze Proposal als Fallback." -Status "WARN"
-        return $proposal 
+        return $proposal
     }
-    
+
     # 3. Synthesis (Agent A)
     Write-VorceStep -Message "Phase 3: Synthese der Ergebnisse..." -Status "RUN"
     $Variables["QaCritique"] = $critique
     $synthesisPrompt = Get-VorcePrompt -MainRun $MainRun -SubRun $SubRun -PartRun "synthesis" -Variables $Variables
     $synthesis = Invoke-VorceAgent -AgentName "gemini_cli" -Prompt $synthesisPrompt
-    
+
     return if ($null -ne $synthesis) { $synthesis } else { $proposal }
 }
 

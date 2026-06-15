@@ -170,9 +170,9 @@ while ($true) {
 
     $wakeupFile = Join-Path $global:VorceRoot "autopilot.wakeup"
     $remainingSeconds = $IntervalMinutes * 60
-    
+
     Write-VorceLog "[IDLE] Naechster Lauf in $IntervalMinutes Minuten..." -Status "INFO"
-    
+
     while ($remainingSeconds -gt 0) {
         if (Test-Path $wakeupFile) {
             Remove-Item $wakeupFile -Force
