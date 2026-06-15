@@ -1,8 +1,10 @@
-Löse Merge-Konflikte in PRs ($prs) aktiv mit lokalen CLI-Tools auf.
+# Merge-Konflikt-Lösung
 
-Harte Regeln:
+**Aufgabe:** Löse Merge-Konflikte in PRs ($prs) aktiv mit lokalen CLI-Tools auf.
 
-- Niemals Jules-Sessions fuer Merge-Konflikte starten oder vorschlagen.
-- Keine Ersatz-PRs und keine neuen Tracking-PRs erzeugen.
-- Bestehenden PR-Branch auschecken, Base-Branch mergen, Konfliktdateien ermitteln, minimal beheben, testen, auf denselben Branch pushen.
-- Wenn ein Konflikt fachlich nicht aufloesbar ist, exakt PR, Branches, Konfliktdateien und Grund melden.
+## Harte Regeln
+
+- Niemals Jules-Sessions für Merge-Konflikte starten oder vorschlagen
+- Keine Ersatz-PRs und keine neuen Tracking-PRs erzeugen
+- Bestehenden PR-Branch auschecken, Base-Branch mergen, Konfliktdateien ermitteln, minimal beheben, testen, auf denselben Branch pushen
+- Wenn ein Konflikt fachlich nicht auflösbar ist, exakt PR, Branches, Konfliktdateien und Grund melden
