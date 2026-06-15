@@ -1,0 +1,79 @@
+[17:52:40] [ >> ] Führe Startup Cleanup aus...
+
+============================================================
+  🤖 VORCE AUTOPILOT 3.0
+============================================================
+[17:52:40] [ -- ] Lade Konfiguration...
+[17:52:40] [ OK ] Global State geladen (v3.0.0).
+[17:52:40] [ >> ] Starte Orchestrierung (Intervall: 15 min)...
+[17:52:40] [ >> ] [STARTUP] Erzwinge Planning RUN beim Start...
+
+============================================================
+  🧠 ORCHESTRATOR ACTIVE
+============================================================
+[17:52:40] [ -- ] Config geladen: Vorce-Studios/Vorce, 17 konfigurierte Sub-Runs
+[17:52:40] [ >> ] Wähle MAIN-RUN-01_Planning (manuell ausgelöst)
+[17:52:40] [ -- ] Lade Sub-Runs von Router...
+[17:52:40] [ >> ] Starte Planning-Routing...
+[17:52:40] [ -- ] Aktuelle Issues in Pipeline: 37 / Max: 10
+[17:52:40] [ !! ] Strategy deaktiviert (Pipeline voll)
+[17:52:40] [ -- ] Geplante Sub-RUNs: 3
+[17:52:40] [ -- ]   - DataSync (ID: 01)
+[17:52:40] [ -- ]   - Triage (ID: 02)
+[17:52:40] [ -- ]   - Delegation (ID: 04)
+[17:52:40] [ -- ] Geplante Sub-Runs: 3
+------------------------------------------------------------
+[17:52:40] [ >> ] Starte Sub-Run: DataSync
+[17:52:41] [ >> ] Starte DataSync...
+[17:52:41] [ >> ] Starte parallele Ausführung für DataSync (2 Parts, Max: 2)
+[17:52:41] [ -- ] Queue -> Job: FetchIssues
+[17:52:41] [ -- ] Queue -> Job: FetchPRs
+[17:52:42] [ >> ] Führe Part-Run aus: FetchIssues
+[17:52:42] [ >> ] Lade Issues für Vorce-Studios/Vorce (Limit: 100)...
+[17:52:43] [ OK ] 37 Issues erfolgreich geladen.
+[17:52:43] [ OK ] GitHub issues in Datenbank gesichert: github-issues.json
+[17:52:43] [ OK ] Part-Run FetchIssues abgeschlossen.
+[17:52:43] [ OK ] Job abgeschlossen: Job1
+[17:52:42] [ >> ] Führe Part-Run aus: FetchPRs
+[17:52:42] [ >> ] Lade Pull Requests für Vorce-Studios/Vorce...
+[17:52:43] [ OK ] 0 Pull Requests erfolgreich geladen.
+[17:52:43] [ XX ] Fehler in Part-Run FetchPRs: Cannot bind argument to parameter 'Data' because it is null.
+[17:52:43] [ OK ] Job abgeschlossen: Job3
+[17:52:43] [ >> ] Starte Aggregations-Phase für DataSync...
+[17:52:43] [ XX ] Sub-Run DataSync mit 1 fehlgeschlagenen PART-RUNs aggregiert.
+[17:52:43] [ OK ] DataSync abgeschlossen.
+[17:52:43] [ XX ] Sub-Run DataSync fehlgeschlagen: Mindestens ein PART-RUN in DataSync ist fehlgeschlagen.
+------------------------------------------------------------
+[17:52:43] [ >> ] Starte Sub-Run: Triage
+[17:52:43] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-02_MR-01_Planning__Triage (1 Parts)
+[17:52:43] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-01_Planning__Triage__FilterIssues
+[17:52:43] [ >> ] Starte Triage für 37 Issues...
+[17:52:43] [ OK ] 12 Issues nach Filterung verbleibend.
+[17:52:43] [ OK ] Part-Run PART-RUN-01_MR-01_Planning__Triage__FilterIssues abgeschlossen.
+[17:52:43] [ OK ] Sub-Run Triage abgeschlossen.
+------------------------------------------------------------
+[17:52:43] [ >> ] Starte Sub-Run: Delegation
+[17:52:43] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-04_MR-01_Planning__Delegation (1 Parts)
+[17:52:43] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-01_Planning__Delegation__CreateDelegations
+[17:52:44] [ >> ] Starte Delegation...
+[17:52:44] [ -- ] Keine Proposals zum Delegieren gefunden.
+[17:52:44] [ OK ] Part-Run PART-RUN-01_MR-01_Planning__Delegation__CreateDelegations abgeschlossen.
+[17:52:44] [ OK ] Sub-Run Delegation abgeschlossen.
+------------------------------------------------------------
+[17:52:44] [ >> ] Führe alle Sub-Run Ergebnisse zusammen (Main-Aggregation)...
+[17:52:44] [ OK ] Main-Aggregation für MAIN-RUN-01_Planning abgeschlossen.
+[17:52:44] [ >> ] Sichere Global State...
+  DONE: MAIN-RUN-01_Planning mit Fehlern beendet.
+============================================================
+
+[17:52:44] [ -- ] [STARTUP] Warte 8 Sekunden vor Check & Doing...
+[17:52:52] [ >> ] [STARTUP] Erzwinge Check & Doing RUN beim Start...
+
+============================================================
+  🧠 ORCHESTRATOR ACTIVE
+============================================================
+[17:52:52] [ -- ] Config geladen: Vorce-Studios/Vorce, 17 konfigurierte Sub-Runs
+[17:52:52] [ >> ] Wähle MAIN-RUN-02_CheckAndDoing (manuell ausgelöst)
+[17:52:52] [ -- ] Lade Sub-Runs von Router...
+[17:52:52] [ >> ] Starte CheckAndDoing-Routing...
+[17:52:52] [ OK ] LocalAgentCheck aktiviert für 2 laufende Prozesse

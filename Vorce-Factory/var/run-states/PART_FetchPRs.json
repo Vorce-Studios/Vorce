@@ -1,0 +1,12 @@
+{
+  "id": "run_20260615_175242",
+  "name": "FetchPRs",
+  "type": "PART",
+  "status": "failed",
+  "started_at": "2026-06-15T17:52:42.4053720+02:00",
+  "completed_at": "2026-06-15T17:52:43.1617435+02:00",
+  "metadata": {
+    "error": "Cannot bind argument to parameter 'Data' because it is null."
+  },
+  "results": []
+}

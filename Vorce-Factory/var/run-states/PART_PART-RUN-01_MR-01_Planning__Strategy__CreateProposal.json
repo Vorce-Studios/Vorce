@@ -1,0 +1,16 @@
+{
+  "id": "run_20260615_002923",
+  "name": "PART-RUN-01_MR-01_Planning__Strategy__CreateProposal",
+  "type": "PART",
+  "status": "completed",
+  "started_at": "2026-06-15T00:29:23.5943207+02:00",
+  "completed_at": "2026-06-15T00:29:23.6733559+02:00",
+  "metadata": {},
+  "results": [
+    {
+      "timestamp": "2026-06-15T00:29:23.6722464+02:00",
+      "issue_number": 830,
+      "status": "dry_run"
+    }
+  ]
+}

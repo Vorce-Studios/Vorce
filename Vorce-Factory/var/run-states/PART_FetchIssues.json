@@ -1,0 +1,15 @@
+{
+  "id": "run_20260615_175241",
+  "name": "FetchIssues",
+  "type": "PART",
+  "status": "completed",
+  "started_at": "2026-06-15T17:52:41.9969263+02:00",
+  "completed_at": "2026-06-15T17:52:43.1803761+02:00",
+  "metadata": {},
+  "results": [
+    {
+      "count": 37,
+      "timestamp": "2026-06-15T17:52:43.1676576+02:00"
+    }
+  ]
+}

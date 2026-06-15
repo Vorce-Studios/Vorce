@@ -1,0 +1,23 @@
+{
+  "parts": [
+    {
+      "id": "run_20260614_115515",
+      "name": "CreateProposal",
+      "type": "PART",
+      "status": "completed",
+      "started_at": "2026-06-14T11:55:15.3236982+02:00",
+      "completed_at": "2026-06-14T11:55:15.6020227+02:00",
+      "metadata": {},
+      "results": [
+        {
+          "error": "Deliberation failed"
+        }
+      ],
+      "PSComputerName": "localhost",
+      "RunspaceId": "2a24dc57-8c81-440d-a085-78a6659aacbb",
+      "PSShowComputerName": false
+    }
+  ],
+  "timestamp": "2026-06-14T11:55:16.0091820+02:00",
+  "sub_run": "Strategy"
+}

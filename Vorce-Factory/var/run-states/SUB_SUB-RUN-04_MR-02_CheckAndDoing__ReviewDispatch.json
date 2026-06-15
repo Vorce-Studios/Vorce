@@ -1,0 +1,24 @@
+{
+  "status": "completed",
+  "timestamp": "2026-06-15T04:55:28.9393763+02:00",
+  "parts": [
+    {
+      "id": "run_20260615_045528",
+      "name": "PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews",
+      "type": "PART",
+      "status": "completed",
+      "started_at": "2026-06-15T04:55:28.1835158+02:00",
+      "completed_at": "2026-06-15T04:55:28.9369094+02:00",
+      "metadata": {},
+      "results": [
+        {
+          "status": "no_prs_for_review",
+          "reviews_dispatched": 0,
+          "prs_found": 0,
+          "timestamp": "2026-06-15T04:55:28.9359563+02:00"
+        }
+      ]
+    }
+  ],
+  "sub_run": "SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch"
+}
