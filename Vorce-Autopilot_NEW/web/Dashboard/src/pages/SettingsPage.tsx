@@ -16,6 +16,8 @@ interface PartRunCatalog {
   label: string;
   script: string;
   description?: string;
+  prompt_key?: string;
+  system_prompt?: string;
 }
 
 interface SubRunCatalog {
@@ -25,6 +27,8 @@ interface SubRunCatalog {
   script: string;
   enabled: boolean;
   description?: string;
+  prompt_key?: string;
+  system_prompt?: string;
   part_runs: PartRunCatalog[];
 }
 
@@ -35,6 +39,8 @@ interface MainRunCatalog {
   routerKey: string;
   intervalKey: keyof AutopilotConfig['wake_intervals'];
   description?: string;
+  prompt_key?: string;
+  system_prompt?: string;
   sub_runs: SubRunCatalog[];
   part_run_count: number;
 }
@@ -62,10 +68,10 @@ function joinChain(value?: string[]): string {
   return (value || []).join(', ');
 }
 
-function settingWithFallback(settings: RunUnitSettings | undefined, fallback?: string): RunUnitSettings {
+function settingWithFallback(settings: RunUnitSettings | undefined, descriptionFallback?: string, promptFallback?: string): RunUnitSettings {
   return {
-    description: fallback || '',
-    system_prompt: '',
+    description: settings?.description || descriptionFallback || '',
+    system_prompt: settings?.system_prompt || promptFallback || '',
     llm_chain: [],
     llm_provider: '',
     llm_model: '',
@@ -275,7 +281,7 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
 
         <div className="space-y-4">
           {catalog.main_runs.map(mainRun => {
-            const mainSettings = settingWithFallback(config.run_settings?.main_runs?.[mainRun.actualName], mainRun.description);
+            const mainSettings = settingWithFallback(config.run_settings?.main_runs?.[mainRun.actualName], mainRun.description, mainRun.system_prompt);
             const isOpen = expandedMain[mainRun.actualName] || false;
             return (
               <div key={mainRun.actualName} className="rounded-xl border border-slate-800 bg-slate-950/30 overflow-hidden">
@@ -337,7 +343,7 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                 {isOpen && (
                   <div className="border-t border-slate-800 p-4 space-y-3">
                     {mainRun.sub_runs.map(subRun => {
-                      const subSettings = settingWithFallback(config.run_settings?.sub_runs?.[subRun.name], subRun.description);
+                      const subSettings = settingWithFallback(config.run_settings?.sub_runs?.[subRun.name], subRun.description, subRun.system_prompt);
                       const subEnabled = (config.router_rules?.[mainRun.routerKey] || []).find(rule => rule.script === subRun.script || rule.name === subRun.label)?.enabled !== false;
                       const subOpen = expandedSub[subRun.name] || false;
                       return (
@@ -374,7 +380,7 @@ export default function SettingsPage({ config: propConfig, registry: propRegistr
                               {subRun.part_runs.length === 0 ? (
                                 <div className="text-xs text-slate-500">Keine PART-RUNs in der Ordnerstruktur gefunden.</div>
                               ) : subRun.part_runs.map(partRun => {
-                                const partSettings = settingWithFallback(config.run_settings?.part_runs?.[partRun.name], partRun.description);
+                                const partSettings = settingWithFallback(config.run_settings?.part_runs?.[partRun.name], partRun.description, partRun.system_prompt);
                                 return (
                                   <div key={partRun.name} className="rounded-lg border border-slate-800 bg-slate-950/45 p-3 space-y-3">
                                     <div className="flex flex-wrap items-start justify-between gap-3">

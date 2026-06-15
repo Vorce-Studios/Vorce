@@ -51,10 +51,24 @@ function firstCommentLine(filePath: string): string {
 
 function getRunCatalog(): any {
   const config = readJsonFile(CONFIG_PATH, {});
+  const promptsDir = path.join(VORCE_ROOT, 'var/prompts');
+  const promptRegistry = getPromptRegistry(promptsDir);
+  const promptEntries = Object.entries(promptRegistry).map(([key, metadata]) => ({
+    key,
+    path: metadata.path.replace(/\\/g, '/'),
+    content: fs.existsSync(path.resolve(promptsDir, metadata.path))
+      ? fs.readFileSync(path.resolve(promptsDir, metadata.path), 'utf-8')
+      : '',
+  }));
+  const promptForPath = (matcher: (entry: { key: string; path: string; content: string }) => boolean) =>
+    promptEntries.find(matcher) || null;
   const runsRoot = path.join(VORCE_ROOT, 'src/runs');
   return {
     main_runs: MAIN_RUNS.map(definition => {
       const mainDir = path.join(runsRoot, definition.name);
+      const mainPrompt = promptForPath(entry =>
+        entry.path.startsWith(`runs/${definition.name}/MAIN-RUN-PROMPT`)
+      );
       const configuredSubRuns = config.router_rules?.[definition.routerKey] || [];
       const subRuns = configuredSubRuns.map((rule: any) => {
         const scriptPath = path.join(VORCE_ROOT, rule.script || '');
@@ -68,11 +82,18 @@ function getRunCatalog(): any {
             .map(file => {
               const partName = path.basename(file, '.ps1');
               const partPath = path.join(partsDir, file);
+              const partOrdinal = partName.match(/^PART-RUN-(\d+)_/)?.[1] || '';
+              const partPrompt = promptForPath(entry =>
+                entry.path.includes(`/${actualName}/`) &&
+                entry.path.includes(`PART-RUN-PROMPT-${partOrdinal}_`)
+              );
               return {
                 name: partName,
                 label: parseRunName(partName),
                 script: path.relative(VORCE_ROOT, partPath).replace(/\\/g, '/'),
                 description: firstCommentLine(partPath),
+                prompt_key: partPrompt?.key || '',
+                system_prompt: partPrompt?.content || '',
               };
             })
           : [];
@@ -84,6 +105,7 @@ function getRunCatalog(): any {
           script: rule.script,
           enabled: rule.enabled !== false,
           description: firstCommentLine(scriptPath),
+          system_prompt: `Koordiniere ${rule.name || parseRunName(actualName)}. Fuehre die aktivierten PART-RUNs in der definierten Reihenfolge aus und liefere nur Status, Ergebnis und naechste Aktion zurueck.`,
           part_runs: partRuns,
         };
       });
@@ -94,6 +116,8 @@ function getRunCatalog(): any {
         path: path.relative(VORCE_ROOT, mainDir).replace(/\\/g, '/'),
         interval_minutes: Number(config.wake_intervals?.[definition.intervalKey] || 0),
         description: firstCommentLine(path.join(mainDir, `${definition.routerKey}-Router.ps1`)),
+        prompt_key: mainPrompt?.key || '',
+        system_prompt: mainPrompt?.content || '',
         sub_runs: subRuns,
         part_run_count: subRuns.reduce((sum: number, sub: any) => sum + sub.part_runs.length, 0),
       };

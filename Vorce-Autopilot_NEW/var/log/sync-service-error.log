@@ -1,0 +1,6 @@
+[31;1mMethodInvocationException: [0mC:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Autopilot_NEW\src\tools\services\sync-service.ps1:64[0m
+[31;1m[0m[36;1mLine |[0m
+[31;1m[0m[36;1m[36;1m  64 | [0m                 [36;1m$socket.SendAsync([0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m                 ~~~~~~~~~~~~~~~~~~[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mException calling "GetResult" with "0" argument(s): "An internal WebSocket error occurred. Please see the[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m[31;1m[36;1m     | [31;1minnerException, if present, for more details. "[0m
