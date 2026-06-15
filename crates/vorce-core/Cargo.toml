@@ -1,4 +1,4 @@
-[package]
+﻿[package]
 name = "vorce-core"
 version.workspace = true
 edition.workspace = true
@@ -18,11 +18,11 @@ mock-audio = []
 # Audio Analysis (Phase 1 Migration)
 audio-processor-analysis = "2.4"
 audio-processor-traits = "4.3"
-chrono = "0.4"
+chrono = "0.4.45"
 cpal = { workspace = true, optional = true }
 crossbeam-channel = { workspace = true }
 dirs = "6.0"
-glam = { workspace = true }
+glam = { workspace = true } # Updated to 0.33.1
 hound = { workspace = true }
 image = { workspace = true }
 num-complex = "0.4"
@@ -39,10 +39,10 @@ serde_json = { workspace = true }
 # Professional BPM/Key Detection
 stratum-dsp = "1.0"
 thiserror = { workspace = true }
-tobj = "4.0.3"
+tobj = "4.0.4" # Updated to 4.0.4
 tracing = { workspace = true }
 usvg.workspace = true
-uuid = { version = "1.22.0", features = ["v4", "serde"] }
+uuid = { version = "1.23.3", features = ["v4", "serde"] } # Updated to 1.23.3
 walkdir = "2.5.0"
 winit = { workspace = true, optional = true }
 
@@ -50,3 +50,4 @@ winit = { workspace = true, optional = true }
 proptest = { workspace = true }
 ron = { workspace = true }
 tempfile = "3.27"
+
