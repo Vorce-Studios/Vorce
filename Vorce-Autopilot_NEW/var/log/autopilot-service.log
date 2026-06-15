@@ -165,3 +165,281 @@
 ============================================================
 
 [03:32:14] [ -- ] [IDLE] Naechster Lauf in 15 Minuten...
+
+============================================================
+  🧠 ORCHESTRATOR ACTIVE
+============================================================
+[03:47:15] [ -- ] Config geladen: Vorce-Studios/Vorce, 17 konfigurierte Sub-Runs
+[03:47:15] [ >> ] Wähle MAIN-RUN-02_CheckAndDoing (überfällig um 0 Minuten)
+[03:47:15] [ -- ] Lade Sub-Runs von Router...
+[03:47:15] [ >> ] Starte CheckAndDoing-Routing...
+[03:47:15] [ OK ] LocalAgentCheck aktiviert für 2 laufende Prozesse
+[03:47:15] [ OK ] ReviewDispatch aktiviert für 26 PRs im Review-Status
+[03:47:15] [ OK ] JulesRefill aktiviert (Quota verfügbar)
+[03:47:15] [ -- ] Geplante CheckAndDoing-Sub-RUNs: 5
+[03:47:15] [ -- ]   - SessionSync (ID: 01)
+[03:47:15] [ -- ]   - LocalAgentCheck (ID: 03)
+[03:47:15] [ -- ]   - ReviewDispatch (ID: 04)
+[03:47:15] [ -- ]   - JulesRefill (ID: 05)
+[03:47:15] [ -- ]   - Housekeeping (ID: 06)
+[03:47:15] [ -- ] Geplante Sub-Runs: 5
+------------------------------------------------------------
+[03:47:15] [ >> ] Starte Sub-Run: SessionSync
+[03:47:15] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-01_MR-02_CheckAndDoing__SessionSync (1 Parts)
+[03:47:15] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-02_CheckAndDoing__SessionSync__SyncActiveSessions
+[03:47:15] [ >> ] Starte SessionSync...
+[03:47:15] [ OK ] SessionSync abgeschlossen: 0 von 0 Delegations aktualisiert.
+[03:47:15] [ OK ] Part-Run PART-RUN-01_MR-02_CheckAndDoing__SessionSync__SyncActiveSessions abgeschlossen.
+[03:47:15] [ OK ] Sub-Run SessionSync abgeschlossen.
+------------------------------------------------------------
+[03:47:15] [ >> ] Starte Sub-Run: LocalAgentCheck
+[03:47:15] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck (1 Parts)
+[03:47:15] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-02_CheckAndDoing__LocalAgentCheck__InspectLocalAgents
+[03:47:15] [ >> ] Starte LocalAgentCheck...
+[03:47:15] [ -- ] Gefunden 1 'claude' Prozesse
+[03:47:15] [ -- ] Gefunden 1 'cline' Prozesse
+[03:47:15] [ OK ] LocalAgentCheck abgeschlossen: 2 gesund, 0 Probleme.
+[03:47:15] [ OK ] Part-Run PART-RUN-01_MR-02_CheckAndDoing__LocalAgentCheck__InspectLocalAgents abgeschlossen.
+[03:47:15] [ OK ] Sub-Run LocalAgentCheck abgeschlossen.
+------------------------------------------------------------
+[03:47:15] [ >> ] Starte Sub-Run: ReviewDispatch
+[03:47:15] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch (1 Parts)
+[03:47:15] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews
+[03:47:15] [ >> ] Starte ReviewDispatch...
+[03:47:16] [ -- ] Keine PRs im Review-Status gefunden.
+[03:47:16] [ OK ] Part-Run PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews abgeschlossen.
+[03:47:16] [ OK ] Sub-Run ReviewDispatch abgeschlossen.
+------------------------------------------------------------
+[03:47:16] [ >> ] Starte Sub-Run: JulesRefill
+[03:47:16] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill (1 Parts)
+[03:47:16] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-02_CheckAndDoing__JulesRefill__RefillJulesQueue
+[03:47:16] [ >> ] Starte JulesRefill...
+[03:47:16] [ -- ] Keine unassigned Jules-Tasks gefunden.
+[03:47:16] [ OK ] Part-Run PART-RUN-01_MR-02_CheckAndDoing__JulesRefill__RefillJulesQueue abgeschlossen.
+[03:47:16] [ OK ] Sub-Run JulesRefill abgeschlossen.
+------------------------------------------------------------
+[03:47:16] [ >> ] Starte Sub-Run: Housekeeping
+[03:47:16] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping (1 Parts)
+[03:47:16] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-02_CheckAndDoing__Housekeeping__CleanupRuntimeState
+[03:47:16] [ >> ] Starte Housekeeping...
+[03:47:16] [ -- ] Bereinige var/tmp/ (Dateien älter als 24h)
+[03:47:16] [ -- ] Keine alten Dateien in var/tmp/
+[03:47:16] [ OK ] Housekeeping abgeschlossen: 0 Delegierungen, 0 tmp-Files bereinigt.
+[03:47:16] [ OK ] Part-Run PART-RUN-01_MR-02_CheckAndDoing__Housekeeping__CleanupRuntimeState abgeschlossen.
+[03:47:16] [ OK ] Sub-Run Housekeeping abgeschlossen.
+------------------------------------------------------------
+[03:47:16] [ >> ] Führe alle Sub-Run Ergebnisse zusammen (Main-Aggregation)...
+[03:47:16] [ OK ] Main-Aggregation für MAIN-RUN-02_CheckAndDoing abgeschlossen.
+[03:47:16] [ >> ] Sichere Global State...
+  DONE: MAIN-RUN-02_CheckAndDoing erfolgreich beendet.
+============================================================
+
+[03:47:16] [ -- ] [IDLE] Naechster Lauf in 15 Minuten...
+
+============================================================
+  🧠 ORCHESTRATOR ACTIVE
+============================================================
+[04:02:17] [ -- ] Config geladen: Vorce-Studios/Vorce, 17 konfigurierte Sub-Runs
+[04:02:17] [ >> ] Wähle MAIN-RUN-02_CheckAndDoing (überfällig um 0 Minuten)
+[04:02:17] [ -- ] Lade Sub-Runs von Router...
+[04:02:17] [ >> ] Starte CheckAndDoing-Routing...
+[04:02:17] [ OK ] LocalAgentCheck aktiviert für 2 laufende Prozesse
+[04:02:17] [ OK ] ReviewDispatch aktiviert für 26 PRs im Review-Status
+[04:02:17] [ OK ] JulesRefill aktiviert (Quota verfügbar)
+[04:02:17] [ -- ] Geplante CheckAndDoing-Sub-RUNs: 5
+[04:02:17] [ -- ]   - SessionSync (ID: 01)
+[04:02:17] [ -- ]   - LocalAgentCheck (ID: 03)
+[04:02:17] [ -- ]   - ReviewDispatch (ID: 04)
+[04:02:17] [ -- ]   - JulesRefill (ID: 05)
+[04:02:17] [ -- ]   - Housekeeping (ID: 06)
+[04:02:17] [ -- ] Geplante Sub-Runs: 5
+------------------------------------------------------------
+[04:02:17] [ >> ] Starte Sub-Run: SessionSync
+[04:02:17] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-01_MR-02_CheckAndDoing__SessionSync (1 Parts)
+[04:02:17] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-02_CheckAndDoing__SessionSync__SyncActiveSessions
+[04:02:17] [ >> ] Starte SessionSync...
+[04:02:17] [ OK ] SessionSync abgeschlossen: 0 von 0 Delegations aktualisiert.
+[04:02:17] [ OK ] Part-Run PART-RUN-01_MR-02_CheckAndDoing__SessionSync__SyncActiveSessions abgeschlossen.
+[04:02:17] [ OK ] Sub-Run SessionSync abgeschlossen.
+------------------------------------------------------------
+[04:02:17] [ >> ] Starte Sub-Run: LocalAgentCheck
+[04:02:17] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck (1 Parts)
+[04:02:17] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-02_CheckAndDoing__LocalAgentCheck__InspectLocalAgents
+[04:02:17] [ >> ] Starte LocalAgentCheck...
+[04:02:17] [ -- ] Gefunden 1 'claude' Prozesse
+[04:02:17] [ -- ] Gefunden 1 'cline' Prozesse
+[04:02:17] [ OK ] LocalAgentCheck abgeschlossen: 2 gesund, 0 Probleme.
+[04:02:17] [ OK ] Part-Run PART-RUN-01_MR-02_CheckAndDoing__LocalAgentCheck__InspectLocalAgents abgeschlossen.
+[04:02:17] [ OK ] Sub-Run LocalAgentCheck abgeschlossen.
+------------------------------------------------------------
+[04:02:17] [ >> ] Starte Sub-Run: ReviewDispatch
+[04:02:17] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch (1 Parts)
+[04:02:17] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews
+[04:02:17] [ >> ] Starte ReviewDispatch...
+[04:02:18] [ -- ] Keine PRs im Review-Status gefunden.
+[04:02:18] [ OK ] Part-Run PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews abgeschlossen.
+[04:02:18] [ OK ] Sub-Run ReviewDispatch abgeschlossen.
+------------------------------------------------------------
+[04:02:18] [ >> ] Starte Sub-Run: JulesRefill
+[04:02:18] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill (1 Parts)
+[04:02:18] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-02_CheckAndDoing__JulesRefill__RefillJulesQueue
+[04:02:18] [ >> ] Starte JulesRefill...
+[04:02:18] [ -- ] Keine unassigned Jules-Tasks gefunden.
+[04:02:18] [ OK ] Part-Run PART-RUN-01_MR-02_CheckAndDoing__JulesRefill__RefillJulesQueue abgeschlossen.
+[04:02:18] [ OK ] Sub-Run JulesRefill abgeschlossen.
+------------------------------------------------------------
+[04:02:18] [ >> ] Starte Sub-Run: Housekeeping
+[04:02:18] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping (1 Parts)
+[04:02:18] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-02_CheckAndDoing__Housekeeping__CleanupRuntimeState
+[04:02:18] [ >> ] Starte Housekeeping...
+[04:02:18] [ -- ] Bereinige var/tmp/ (Dateien älter als 24h)
+[04:02:18] [ -- ] Keine alten Dateien in var/tmp/
+[04:02:18] [ OK ] Housekeeping abgeschlossen: 0 Delegierungen, 0 tmp-Files bereinigt.
+[04:02:18] [ OK ] Part-Run PART-RUN-01_MR-02_CheckAndDoing__Housekeeping__CleanupRuntimeState abgeschlossen.
+[04:02:18] [ OK ] Sub-Run Housekeeping abgeschlossen.
+------------------------------------------------------------
+[04:02:18] [ >> ] Führe alle Sub-Run Ergebnisse zusammen (Main-Aggregation)...
+[04:02:18] [ OK ] Main-Aggregation für MAIN-RUN-02_CheckAndDoing abgeschlossen.
+[04:02:18] [ >> ] Sichere Global State...
+  DONE: MAIN-RUN-02_CheckAndDoing erfolgreich beendet.
+============================================================
+
+[04:02:18] [ -- ] [IDLE] Naechster Lauf in 15 Minuten...
+
+============================================================
+  🧠 ORCHESTRATOR ACTIVE
+============================================================
+[04:17:19] [ -- ] Config geladen: Vorce-Studios/Vorce, 17 konfigurierte Sub-Runs
+[04:17:19] [ >> ] Wähle MAIN-RUN-02_CheckAndDoing (überfällig um 0 Minuten)
+[04:17:19] [ -- ] Lade Sub-Runs von Router...
+[04:17:19] [ >> ] Starte CheckAndDoing-Routing...
+[04:17:19] [ OK ] LocalAgentCheck aktiviert für 2 laufende Prozesse
+[04:17:19] [ OK ] ReviewDispatch aktiviert für 26 PRs im Review-Status
+[04:17:19] [ OK ] JulesRefill aktiviert (Quota verfügbar)
+[04:17:19] [ -- ] Geplante CheckAndDoing-Sub-RUNs: 5
+[04:17:19] [ -- ]   - SessionSync (ID: 01)
+[04:17:19] [ -- ]   - LocalAgentCheck (ID: 03)
+[04:17:19] [ -- ]   - ReviewDispatch (ID: 04)
+[04:17:19] [ -- ]   - JulesRefill (ID: 05)
+[04:17:19] [ -- ]   - Housekeeping (ID: 06)
+[04:17:19] [ -- ] Geplante Sub-Runs: 5
+------------------------------------------------------------
+[04:17:19] [ >> ] Starte Sub-Run: SessionSync
+[04:17:19] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-01_MR-02_CheckAndDoing__SessionSync (1 Parts)
+[04:17:19] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-02_CheckAndDoing__SessionSync__SyncActiveSessions
+[04:17:19] [ >> ] Starte SessionSync...
+[04:17:19] [ OK ] SessionSync abgeschlossen: 0 von 0 Delegations aktualisiert.
+[04:17:19] [ OK ] Part-Run PART-RUN-01_MR-02_CheckAndDoing__SessionSync__SyncActiveSessions abgeschlossen.
+[04:17:19] [ OK ] Sub-Run SessionSync abgeschlossen.
+------------------------------------------------------------
+[04:17:19] [ >> ] Starte Sub-Run: LocalAgentCheck
+[04:17:19] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck (1 Parts)
+[04:17:19] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-02_CheckAndDoing__LocalAgentCheck__InspectLocalAgents
+[04:17:19] [ >> ] Starte LocalAgentCheck...
+[04:17:19] [ -- ] Gefunden 1 'claude' Prozesse
+[04:17:19] [ -- ] Gefunden 1 'cline' Prozesse
+[04:17:19] [ OK ] LocalAgentCheck abgeschlossen: 2 gesund, 0 Probleme.
+[04:17:19] [ OK ] Part-Run PART-RUN-01_MR-02_CheckAndDoing__LocalAgentCheck__InspectLocalAgents abgeschlossen.
+[04:17:19] [ OK ] Sub-Run LocalAgentCheck abgeschlossen.
+------------------------------------------------------------
+[04:17:19] [ >> ] Starte Sub-Run: ReviewDispatch
+[04:17:19] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch (1 Parts)
+[04:17:19] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews
+[04:17:19] [ >> ] Starte ReviewDispatch...
+[04:17:20] [ -- ] Keine PRs im Review-Status gefunden.
+[04:17:20] [ OK ] Part-Run PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews abgeschlossen.
+[04:17:20] [ OK ] Sub-Run ReviewDispatch abgeschlossen.
+------------------------------------------------------------
+[04:17:20] [ >> ] Starte Sub-Run: JulesRefill
+[04:17:20] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill (1 Parts)
+[04:17:20] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-02_CheckAndDoing__JulesRefill__RefillJulesQueue
+[04:17:20] [ >> ] Starte JulesRefill...
+[04:17:20] [ -- ] Keine unassigned Jules-Tasks gefunden.
+[04:17:20] [ OK ] Part-Run PART-RUN-01_MR-02_CheckAndDoing__JulesRefill__RefillJulesQueue abgeschlossen.
+[04:17:20] [ OK ] Sub-Run JulesRefill abgeschlossen.
+------------------------------------------------------------
+[04:17:20] [ >> ] Starte Sub-Run: Housekeeping
+[04:17:20] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping (1 Parts)
+[04:17:20] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-02_CheckAndDoing__Housekeeping__CleanupRuntimeState
+[04:17:20] [ >> ] Starte Housekeeping...
+[04:17:20] [ -- ] Bereinige var/tmp/ (Dateien älter als 24h)
+[04:17:20] [ -- ] Keine alten Dateien in var/tmp/
+[04:17:20] [ OK ] Housekeeping abgeschlossen: 0 Delegierungen, 0 tmp-Files bereinigt.
+[04:17:20] [ OK ] Part-Run PART-RUN-01_MR-02_CheckAndDoing__Housekeeping__CleanupRuntimeState abgeschlossen.
+[04:17:20] [ OK ] Sub-Run Housekeeping abgeschlossen.
+------------------------------------------------------------
+[04:17:20] [ >> ] Führe alle Sub-Run Ergebnisse zusammen (Main-Aggregation)...
+[04:17:20] [ OK ] Main-Aggregation für MAIN-RUN-02_CheckAndDoing abgeschlossen.
+[04:17:20] [ >> ] Sichere Global State...
+  DONE: MAIN-RUN-02_CheckAndDoing erfolgreich beendet.
+============================================================
+
+[04:17:20] [ -- ] [IDLE] Naechster Lauf in 15 Minuten...
+
+============================================================
+  🧠 ORCHESTRATOR ACTIVE
+============================================================
+[04:32:21] [ -- ] Config geladen: Vorce-Studios/Vorce, 17 konfigurierte Sub-Runs
+[04:32:21] [ >> ] Wähle MAIN-RUN-03_Audit (überfällig um 9.3 Minuten)
+[04:32:21] [ -- ] Lade Sub-Runs von Router...
+[04:32:21] [ >> ] Starte Audit-Routing...
+[04:32:21] [ -- ] Geplante Audit-Sub-RUNs: 2
+[04:32:21] [ -- ]   - DataSync (ID: 01)
+[04:32:21] [ -- ]   - ComplianceCheck (ID: 02)
+[04:32:21] [ -- ] Geplante Sub-Runs: 2
+------------------------------------------------------------
+[04:32:21] [ >> ] Starte Sub-Run: DataSync
+[04:32:21] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-01_MR-03_Audit__DataSync (1 Parts)
+[04:32:21] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-03_Audit__DataSync__ValidateDataSources
+[04:32:21] [ >> ] Starte Audit-DataSync...
+[04:32:21] [ OK ] GitHub API erreichbar
+[04:32:21] [ OK ] Audit-DataSync abgeschlossen: 5/5 Checks erfolgreich
+[04:32:21] [ OK ] Part-Run PART-RUN-01_MR-03_Audit__DataSync__ValidateDataSources abgeschlossen.
+[04:32:21] [ OK ] Sub-Run DataSync abgeschlossen.
+------------------------------------------------------------
+[04:32:21] [ >> ] Starte Sub-Run: ComplianceCheck
+[04:32:21] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-02_MR-03_Audit__ComplianceCheck (1 Parts)
+[04:32:21] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-03_Audit__ComplianceCheck__EvaluateCompliance
+[04:32:21] [ >> ] Starte Compliance-Check...
+[04:32:21] [ OK ] Config-Integrität OK
+[04:32:21] [ OK ] Globale Variablen OK
+[04:32:21] [ OK ] Module Verfügbarkeit OK
+[04:32:21] [ OK ] Quota-Registry OK
+[04:32:21] [ OK ] Compliance-Check abgeschlossen: 4 OK, 0 WARN, 0 ERROR
+[04:32:21] [ OK ] Part-Run PART-RUN-01_MR-03_Audit__ComplianceCheck__EvaluateCompliance abgeschlossen.
+[04:32:21] [ OK ] Sub-Run ComplianceCheck abgeschlossen.
+------------------------------------------------------------
+[04:32:21] [ >> ] Führe alle Sub-Run Ergebnisse zusammen (Main-Aggregation)...
+[04:32:21] [ OK ] Main-Aggregation für MAIN-RUN-03_Audit abgeschlossen.
+[04:32:21] [ >> ] Sichere Global State...
+  DONE: MAIN-RUN-03_Audit erfolgreich beendet.
+============================================================
+
+[04:32:21] [ -- ] [IDLE] Naechster Lauf in 15 Minuten...
+
+============================================================
+  🧠 ORCHESTRATOR ACTIVE
+============================================================
+[04:47:22] [ -- ] Config geladen: Vorce-Studios/Vorce, 17 konfigurierte Sub-Runs
+[04:47:22] [ >> ] Wähle MAIN-RUN-05_MemoryOptimization (überfällig um 15.1 Minuten)
+[04:47:22] [ -- ] Lade Sub-Runs von Router...
+[04:47:22] [ >> ] Starte MemoryOptimization-Routing...
+[04:47:22] [ -- ] Geplante MemoryOptimization-Sub-RUNs: 1
+[04:47:22] [ -- ]   - MemoryMaintenance (ID: 01)
+[04:47:22] [ -- ] Geplante Sub-Runs: 1
+------------------------------------------------------------
+[04:47:22] [ >> ] Starte Sub-Run: MemoryMaintenance
+[04:47:22] [ >> ] Starte sequenzielle Ausführung für SUB-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance (1 Parts)
+[04:47:22] [ >> ] Führe Part-Run aus: PART-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance__OptimizeMemoryStore
+[04:47:22] [ >> ] Starte Memory-Maintenance...
+[04:47:22] [ OK ] Memory-Maintenance abgeschlossen: 0 entfernt, 0 optimiert, 0 Tokens eingespart
+[04:47:22] [ OK ] Part-Run PART-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance__OptimizeMemoryStore abgeschlossen.
+[04:47:22] [ OK ] Sub-Run MemoryMaintenance abgeschlossen.
+------------------------------------------------------------
+[04:47:22] [ >> ] Führe alle Sub-Run Ergebnisse zusammen (Main-Aggregation)...
+[04:47:22] [ OK ] Main-Aggregation für MAIN-RUN-05_MemoryOptimization abgeschlossen.
+[04:47:22] [ >> ] Sichere Global State...
+  DONE: MAIN-RUN-05_MemoryOptimization erfolgreich beendet.
+============================================================
+
+[04:47:22] [ -- ] [IDLE] Naechster Lauf in 15 Minuten...

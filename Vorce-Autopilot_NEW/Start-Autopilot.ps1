@@ -119,6 +119,19 @@ function Start-VorceProcess {
     }
 
     if ($Visible.IsPresent) {
+        $quotedFile = '"' + $FilePath + '"'
+        $quotedArgs = @($ArgumentList | ForEach-Object {
+            $arg = [string]$_
+            if ($arg -match '[\s&()^=;!+,`~]') {
+                '"' + ($arg -replace '"', '\"') + '"'
+            } else {
+                $arg
+            }
+        })
+        $command = "cd /d `"$WorkingDirectory`" && $quotedFile $($quotedArgs -join ' ')"
+        $startArgs.FilePath = "cmd.exe"
+        $startArgs.ArgumentList = @("/k", $command)
+        $startArgs.WorkingDirectory = $WorkingDirectory
         $startArgs.WindowStyle = "Normal"
     } else {
         $startArgs.WindowStyle = "Hidden"

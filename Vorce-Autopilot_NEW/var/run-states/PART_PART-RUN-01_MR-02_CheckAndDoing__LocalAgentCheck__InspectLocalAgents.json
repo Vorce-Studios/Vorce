@@ -1,17 +1,17 @@
 {
-  "id": "run_20260615_033213",
+  "id": "run_20260615_041719",
   "name": "PART-RUN-01_MR-02_CheckAndDoing__LocalAgentCheck__InspectLocalAgents",
   "type": "PART",
   "status": "completed",
-  "started_at": "2026-06-15T03:32:13.3031956+02:00",
-  "completed_at": "2026-06-15T03:32:13.4031266+02:00",
+  "started_at": "2026-06-15T04:17:19.8591125+02:00",
+  "completed_at": "2026-06-15T04:17:19.8950119+02:00",
   "metadata": {},
   "results": [
     {
       "status": "completed",
       "healthyProcesses": 2,
       "issues": 0,
-      "timestamp": "2026-06-15T03:32:13.3993887+02:00",
+      "timestamp": "2026-06-15T04:17:19.8935341+02:00",
       "totalProcesses": 2,
       "processes": {
         "cline": [
@@ -22,8 +22,8 @@
             "error": null,
             "startTime": "2026-06-14T19:59:23.0231399+02:00",
             "status": "running",
-            "cpu": 59.4375,
-            "memory": 94224384
+            "cpu": 64.984375,
+            "memory": 69242880
           }
         ],
         "claude": [
@@ -34,8 +34,8 @@
             "error": null,
             "startTime": "2026-06-14T17:26:54.4113613+02:00",
             "status": "running",
-            "cpu": 1466.171875,
-            "memory": 219074560
+            "cpu": 1469.421875,
+            "memory": 216838144
           }
         ]
       },

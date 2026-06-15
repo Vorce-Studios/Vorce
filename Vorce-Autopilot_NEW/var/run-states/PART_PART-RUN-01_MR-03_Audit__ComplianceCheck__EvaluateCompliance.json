@@ -1,53 +1,53 @@
 {
-  "id": "run_20260615_032305",
+  "id": "run_20260615_043221",
   "name": "PART-RUN-01_MR-03_Audit__ComplianceCheck__EvaluateCompliance",
   "type": "PART",
   "status": "completed",
-  "started_at": "2026-06-15T03:23:05.8420432+02:00",
-  "completed_at": "2026-06-15T03:23:05.9538008+02:00",
+  "started_at": "2026-06-15T04:32:21.5815781+02:00",
+  "completed_at": "2026-06-15T04:32:21.6515580+02:00",
   "metadata": {},
   "results": [
     {
+      "status": "completed",
+      "failed_checks": 0,
+      "timestamp": "2026-06-15T04:32:21.6414698+02:00",
+      "passed_checks": 4,
+      "warning_checks": 0,
       "compliance_checks": [
         {
+          "status": "ok",
+          "category": "config_integrity",
           "checks_passed": [
             "repository_set",
             "wake_intervals_set",
             "max_issues_set"
-          ],
-          "category": "config_integrity",
-          "status": "ok"
+          ]
         },
         {
+          "status": "ok",
           "variables": [
             "VorceRoot",
             "VarDir",
             "LibDir"
           ],
-          "category": "global_variables",
-          "status": "ok"
+          "category": "global_variables"
         },
         {
+          "status": "ok",
           "modules": [
+            "StatusPrinter",
             "RunEngine",
             "QuotaManager",
-            "StateManager",
-            "StatusPrinter"
+            "StateManager"
           ],
-          "category": "module_availability",
-          "status": "ok"
+          "category": "module_availability"
         },
         {
-          "jules_quota": true,
+          "status": "ok",
           "category": "quota_registry",
-          "status": "ok"
+          "jules_quota": true
         }
-      ],
-      "status": "completed",
-      "warning_checks": 0,
-      "passed_checks": 4,
-      "timestamp": "2026-06-15T03:23:05.9492447+02:00",
-      "failed_checks": 0
+      ]
     }
   ]
 }

@@ -1,53 +1,53 @@
 {
-  "id": "run_20260615_033212",
+  "id": "run_20260615_041719",
   "name": "MAIN-RUN-02_CheckAndDoing",
   "type": "MAIN",
   "status": "completed",
-  "started_at": "2026-06-15T03:32:12.5597880+02:00",
-  "completed_at": "2026-06-15T03:32:14.2746977+02:00",
+  "started_at": "2026-06-15T04:17:19.1649943+02:00",
+  "completed_at": "2026-06-15T04:17:20.6320104+02:00",
   "metadata": {},
   "results": [
     {
       "status": "completed",
       "parts": [
         {
-          "id": "run_20260615_033213",
+          "id": "run_20260615_041719",
           "name": "PART-RUN-01_MR-02_CheckAndDoing__SessionSync__SyncActiveSessions",
           "type": "PART",
           "status": "completed",
-          "started_at": "2026-06-15T03:32:13.2094608+02:00",
-          "completed_at": "2026-06-15T03:32:13.2610615+02:00",
+          "started_at": "2026-06-15T04:17:19.7766369+02:00",
+          "completed_at": "2026-06-15T04:17:19.8205653+02:00",
           "metadata": {},
           "results": [
             {
               "status": "completed",
               "updates": 0,
-              "timestamp": "2026-06-15T03:32:13.2591374+02:00",
+              "timestamp": "2026-06-15T04:17:19.8188478+02:00",
               "totalDelegations": 0
             }
           ]
         }
       ],
-      "timestamp": "2026-06-15T03:32:13.2631167+02:00",
+      "timestamp": "2026-06-15T04:17:19.8221883+02:00",
       "sub_run": "SUB-RUN-01_MR-02_CheckAndDoing__SessionSync"
     },
     {
       "status": "completed",
       "parts": [
         {
-          "id": "run_20260615_033213",
+          "id": "run_20260615_041719",
           "name": "PART-RUN-01_MR-02_CheckAndDoing__LocalAgentCheck__InspectLocalAgents",
           "type": "PART",
           "status": "completed",
-          "started_at": "2026-06-15T03:32:13.3031956+02:00",
-          "completed_at": "2026-06-15T03:32:13.4031266+02:00",
+          "started_at": "2026-06-15T04:17:19.8591125+02:00",
+          "completed_at": "2026-06-15T04:17:19.8950119+02:00",
           "metadata": {},
           "results": [
             {
               "status": "completed",
               "healthyProcesses": 2,
               "issues": 0,
-              "timestamp": "2026-06-15T03:32:13.3993887+02:00",
+              "timestamp": "2026-06-15T04:17:19.8935341+02:00",
               "totalProcesses": 2,
               "processes": {
                 "cline": [
@@ -58,8 +58,8 @@
                     "error": null,
                     "startTime": "2026-06-14T19:59:23.0231399+02:00",
                     "status": "running",
-                    "cpu": 59.4375,
-                    "memory": 94224384
+                    "cpu": 64.984375,
+                    "memory": 69242880
                   }
                 ],
                 "claude": [
@@ -70,8 +70,8 @@
                     "error": null,
                     "startTime": "2026-06-14T17:26:54.4113613+02:00",
                     "status": "running",
-                    "cpu": 1466.171875,
-                    "memory": 219074560
+                    "cpu": 1469.421875,
+                    "memory": 216838144
                   }
                 ]
               },
@@ -80,81 +80,81 @@
           ]
         }
       ],
-      "timestamp": "2026-06-15T03:32:13.4053809+02:00",
+      "timestamp": "2026-06-15T04:17:19.8967973+02:00",
       "sub_run": "SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck"
     },
     {
       "status": "completed",
       "parts": [
         {
-          "id": "run_20260615_033213",
+          "id": "run_20260615_041719",
           "name": "PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews",
           "type": "PART",
           "status": "completed",
-          "started_at": "2026-06-15T03:32:13.4474162+02:00",
-          "completed_at": "2026-06-15T03:32:14.0509661+02:00",
+          "started_at": "2026-06-15T04:17:19.9317381+02:00",
+          "completed_at": "2026-06-15T04:17:20.4554000+02:00",
           "metadata": {},
           "results": [
             {
               "status": "no_prs_for_review",
-              "timestamp": "2026-06-15T03:32:14.0500120+02:00",
+              "timestamp": "2026-06-15T04:17:20.4545839+02:00",
               "prs_found": 0,
               "reviews_dispatched": 0
             }
           ]
         }
       ],
-      "timestamp": "2026-06-15T03:32:14.0533785+02:00",
+      "timestamp": "2026-06-15T04:17:20.4571353+02:00",
       "sub_run": "SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch"
     },
     {
       "status": "completed",
       "parts": [
         {
-          "id": "run_20260615_033214",
+          "id": "run_20260615_041720",
           "name": "PART-RUN-01_MR-02_CheckAndDoing__JulesRefill__RefillJulesQueue",
           "type": "PART",
           "status": "completed",
-          "started_at": "2026-06-15T03:32:14.0950932+02:00",
-          "completed_at": "2026-06-15T03:32:14.1521101+02:00",
+          "started_at": "2026-06-15T04:17:20.4927182+02:00",
+          "completed_at": "2026-06-15T04:17:20.5451908+02:00",
           "metadata": {},
           "results": [
             {
               "status": "no_unassigned_tasks",
               "refill_sessions_created": 0,
-              "timestamp": "2026-06-15T03:32:14.1511399+02:00"
+              "timestamp": "2026-06-15T04:17:20.5444495+02:00"
             }
           ]
         }
       ],
-      "timestamp": "2026-06-15T03:32:14.1542468+02:00",
+      "timestamp": "2026-06-15T04:17:20.5468117+02:00",
       "sub_run": "SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill"
     },
     {
       "status": "completed",
       "parts": [
         {
-          "id": "run_20260615_033214",
+          "id": "run_20260615_041720",
           "name": "PART-RUN-01_MR-02_CheckAndDoing__Housekeeping__CleanupRuntimeState",
           "type": "PART",
           "status": "completed",
-          "started_at": "2026-06-15T03:32:14.2039974+02:00",
-          "completed_at": "2026-06-15T03:32:14.2625145+02:00",
+          "started_at": "2026-06-15T04:17:20.5828145+02:00",
+          "completed_at": "2026-06-15T04:17:20.6199700+02:00",
           "metadata": {},
           "results": [
             {
               "status": "completed",
               "cleaned_delegations": 0,
-              "timestamp": "2026-06-15T03:32:14.2585524+02:00",
+              "timestamp": "2026-06-15T04:17:20.6182805+02:00",
               "stats_updated": true,
               "tmp_files_cleaned": 0,
-              "next_housekeeping": "2026-06-16T03:32:14.2584533+02:00",
+              "next_housekeeping": "2026-06-16T04:17:20.6182314+02:00",
               "session_locks_cleaned": 0
             }
           ]
         }
       ],
-      "timestamp": "2026-06-15T03:32:14.2646374+02:00",
+      "timestamp": "2026-06-15T04:17:20.6218838+02:00",
       "sub_run": "SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping"
     }
   ],
@@ -166,8 +166,8 @@
       "error": null,
       "startTime": "2026-06-14T17:26:54.4113613+02:00",
       "status": "running",
-      "cpu": 1466.171875,
-      "memory": 219074560
+      "cpu": 1469.421875,
+      "memory": 216838144
     },
     "16212": {
       "exitCode": null,
@@ -176,8 +176,8 @@
       "error": null,
       "startTime": "2026-06-14T19:59:23.0231399+02:00",
       "status": "running",
-      "cpu": 59.4375,
-      "memory": 94224384
+      "cpu": 64.984375,
+      "memory": 69242880
     }
   }
 }
