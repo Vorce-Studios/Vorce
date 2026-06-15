@@ -84,3 +84,105 @@ impl Default for TimelineV2 {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_timeline_empty_arrangement() {
+        let mut timeline = TimelineV2 {
+            show_mode: ShowMode::FullyAutomated,
+            module_arrangement: vec![],
+            ..TimelineV2::default()
+        };
+
+        let available_ids = vec![101, 102];
+
+        let mod_id = timeline.runtime_show_module(5.0, true, &available_ids);
+        assert_eq!(mod_id, None);
+    }
+
+    #[test]
+    fn test_timeline_overlapping_cues() {
+        let mut timeline = TimelineV2 {
+            show_mode: ShowMode::FullyAutomated,
+            module_arrangement: vec![
+                ModuleArrangementItem {
+                    id: 1,
+                    module_id: 101,
+                    start_time: 0.0,
+                    duration: 10.0,
+                    enabled: true,
+                    start_trigger: None,
+                },
+                ModuleArrangementItem {
+                    id: 2,
+                    module_id: 102,
+                    start_time: 5.0,
+                    duration: 10.0,
+                    enabled: true,
+                    start_trigger: None,
+                },
+            ],
+            ..TimelineV2::default()
+        };
+
+        let available_ids = vec![101, 102];
+
+        let mod_id = timeline.runtime_show_module(7.0, true, &available_ids);
+        assert_eq!(mod_id, Some(101));
+    }
+
+    #[test]
+    fn test_timeline_boundary_timestamps() {
+        let mut timeline = TimelineV2 {
+            show_mode: ShowMode::FullyAutomated,
+            module_arrangement: vec![
+                ModuleArrangementItem {
+                    id: 1,
+                    module_id: 101,
+                    start_time: 0.0,
+                    duration: 10.0,
+                    enabled: true,
+                    start_trigger: None,
+                },
+                ModuleArrangementItem {
+                    id: 2,
+                    module_id: 102,
+                    start_time: 10.0,
+                    duration: 10.0,
+                    enabled: true,
+                    start_trigger: None,
+                },
+            ],
+            ..TimelineV2::default()
+        };
+
+        let available_ids = vec![101, 102];
+
+        let mod_id = timeline.runtime_show_module(10.0, true, &available_ids);
+        assert_eq!(mod_id, Some(102));
+    }
+
+    #[test]
+    fn test_timeline_invalid_edits() {
+        let mut timeline = TimelineV2 {
+            show_mode: ShowMode::FullyAutomated,
+            module_arrangement: vec![ModuleArrangementItem {
+                id: 1,
+                module_id: 101,
+                start_time: 0.0,
+                duration: -5.0,
+                enabled: true,
+                start_trigger: None,
+            }],
+            ..TimelineV2::default()
+        };
+
+        let available_ids = vec![101];
+
+        let mod_id = timeline.runtime_show_module(2.0, true, &available_ids);
+        assert_eq!(mod_id, Some(101));
+    }
+}
