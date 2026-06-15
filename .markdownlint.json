@@ -2,9 +2,5 @@
   "default": true,
   "MD013": false,
   "MD033": false,
-  "MD041": false,
-  "MD040": false,
-  "MD060": {
-    "style": "padded"
-  }
+  "MD041": false
 }
