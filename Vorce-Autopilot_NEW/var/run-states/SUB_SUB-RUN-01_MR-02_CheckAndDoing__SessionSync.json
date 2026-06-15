@@ -1,24 +1,24 @@
 {
+  "status": "completed",
   "parts": [
     {
-      "id": "run_20260615_031708",
+      "id": "run_20260615_033213",
       "name": "PART-RUN-01_MR-02_CheckAndDoing__SessionSync__SyncActiveSessions",
       "type": "PART",
       "status": "completed",
-      "started_at": "2026-06-15T03:17:08.2985763+02:00",
-      "completed_at": "2026-06-15T03:17:08.4124924+02:00",
+      "started_at": "2026-06-15T03:32:13.2094608+02:00",
+      "completed_at": "2026-06-15T03:32:13.2610615+02:00",
       "metadata": {},
       "results": [
         {
-          "totalDelegations": 0,
+          "status": "completed",
           "updates": 0,
-          "timestamp": "2026-06-15T03:17:08.4043647+02:00",
-          "status": "completed"
+          "timestamp": "2026-06-15T03:32:13.2591374+02:00",
+          "totalDelegations": 0
         }
       ]
     }
   ],
-  "timestamp": "2026-06-15T03:17:08.4165038+02:00",
-  "status": "completed",
+  "timestamp": "2026-06-15T03:32:13.2631167+02:00",
   "sub_run": "SUB-RUN-01_MR-02_CheckAndDoing__SessionSync"
 }

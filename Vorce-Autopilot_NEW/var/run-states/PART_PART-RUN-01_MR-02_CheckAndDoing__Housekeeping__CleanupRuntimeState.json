@@ -1,20 +1,20 @@
 {
-  "id": "run_20260615_031709",
+  "id": "run_20260615_033214",
   "name": "PART-RUN-01_MR-02_CheckAndDoing__Housekeeping__CleanupRuntimeState",
   "type": "PART",
   "status": "completed",
-  "started_at": "2026-06-15T03:17:09.6449419+02:00",
-  "completed_at": "2026-06-15T03:17:09.9116384+02:00",
+  "started_at": "2026-06-15T03:32:14.2039974+02:00",
+  "completed_at": "2026-06-15T03:32:14.2625145+02:00",
   "metadata": {},
   "results": [
     {
-      "tmp_files_cleaned": 0,
-      "session_locks_cleaned": 0,
       "status": "completed",
-      "timestamp": "2026-06-15T03:17:09.9029742+02:00",
+      "cleaned_delegations": 0,
+      "timestamp": "2026-06-15T03:32:14.2585524+02:00",
       "stats_updated": true,
-      "next_housekeeping": "2026-06-16T03:17:09.9026790+02:00",
-      "cleaned_delegations": 0
+      "tmp_files_cleaned": 0,
+      "next_housekeeping": "2026-06-16T03:32:14.2584533+02:00",
+      "session_locks_cleaned": 0
     }
   ]
 }

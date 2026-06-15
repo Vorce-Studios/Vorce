@@ -1,22 +1,23 @@
 {
-  "timestamp": "2026-06-15T00:29:25.5346309+02:00",
+  "status": "completed",
+  "timestamp": "2026-06-15T03:23:05.7885592+02:00",
   "parts": [
     {
-      "id": "run_20260615_002925",
+      "id": "run_20260615_032305",
       "name": "PART-RUN-01_MR-03_Audit__DataSync__ValidateDataSources",
       "type": "PART",
       "status": "completed",
-      "started_at": "2026-06-15T00:29:25.4628157+02:00",
-      "completed_at": "2026-06-15T00:29:25.5321033+02:00",
+      "started_at": "2026-06-15T03:23:05.4339742+02:00",
+      "completed_at": "2026-06-15T03:23:05.7865534+02:00",
       "metadata": {},
       "results": [
         {
-          "successful_checks": 4,
           "total_checks": 5,
           "sync_results": [
             {
+              "response_time": "fast",
               "type": "github_api",
-              "status": "skipped_dry_run"
+              "status": "ok"
             },
             {
               "type": "directory_var",
@@ -35,12 +36,12 @@
               "status": "ok"
             }
           ],
-          "status": "completed",
-          "timestamp": "2026-06-15T00:29:25.5280034+02:00"
+          "successful_checks": 5,
+          "timestamp": "2026-06-15T03:23:05.7824065+02:00",
+          "status": "completed"
         }
       ]
     }
   ],
-  "sub_run": "SUB-RUN-01_MR-03_Audit__DataSync",
-  "status": "completed"
+  "sub_run": "SUB-RUN-01_MR-03_Audit__DataSync"
 }

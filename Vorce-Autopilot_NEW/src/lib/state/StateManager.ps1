@@ -40,7 +40,7 @@ function Save-VorceGlobalState {
     $path = Get-VorceGlobalStatePath
     $parent = Split-Path -Parent $path
     if (-not (Test-Path $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
-    $State | ConvertTo-Json -Depth 10 | Set-Content $path -Encoding UTF8
+    $State | ConvertTo-Json -Depth 20 | Set-Content $path -Encoding UTF8
 }
 
 function Initialize-RunState {
@@ -77,7 +77,7 @@ function Save-VorceRunState {
     $statePath = Join-Path $global:VarDir "run-states/$($State.type)_$($State.name).json"
     $stateDir = Split-Path -Parent $statePath
     if (-not (Test-Path $stateDir)) { New-Item -ItemType Directory -Path $stateDir -Force | Out-Null }
-    $State | ConvertTo-Json -Depth 10 | Set-Content $statePath -Encoding UTF8
+    $State | ConvertTo-Json -Depth 20 | Set-Content $statePath -Encoding UTF8
 }
 
 # Ende StateManager

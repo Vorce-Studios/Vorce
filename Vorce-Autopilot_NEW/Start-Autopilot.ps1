@@ -5,6 +5,9 @@ param(
     [switch]$NoDashboard,
     [switch]$NoSync,
     [switch]$NoAutopilot,
+    [switch]$Stop,
+    [switch]$Restart,
+    [switch]$Visible,
     [switch]$Detach
 )
 
@@ -47,11 +50,97 @@ function Wait-DashboardHealth {
     return $false
 }
 
+function Stop-ProcessTree {
+    param([Parameter(Mandatory)][int]$ProcessId)
+
+    $children = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.ParentProcessId -eq $ProcessId })
+    foreach ($child in $children) {
+        Stop-ProcessTree -ProcessId ([int]$child.ProcessId)
+    }
+
+    Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
+}
+
+function Stop-VorceInfrastructure {
+    $stopped = New-Object System.Collections.Generic.HashSet[int]
+    $ports = @(5173, 5174)
+
+    foreach ($port in $ports) {
+        $listeners = @(Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue)
+        foreach ($listener in $listeners) {
+            if ([int]$listener.OwningProcess -le 4) {
+                Write-Host "[STOP] Port $port wird von System-PID $($listener.OwningProcess) belegt; wird nicht beendet." -ForegroundColor DarkYellow
+                continue
+            }
+            if ($stopped.Add([int]$listener.OwningProcess)) {
+                Write-Host "[STOP] Beende Listener auf Port $port (PID $($listener.OwningProcess))..." -ForegroundColor Yellow
+                Stop-ProcessTree -ProcessId ([int]$listener.OwningProcess)
+            }
+        }
+    }
+
+    $scriptPatterns = @(
+        [regex]::Escape((Join-Path $ScriptDir "autopilot.ps1")),
+        [regex]::Escape((Join-Path $ToolsDir "services/sync-service.ps1"))
+    )
+    $processes = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+        $cmd = [string]$_.CommandLine
+        $scriptPatterns | Where-Object { $cmd -match $_ }
+    })
+
+    foreach ($process in $processes) {
+        if ($stopped.Add([int]$process.ProcessId)) {
+            Write-Host "[STOP] Beende Vorce-Prozess PID $($process.ProcessId)..." -ForegroundColor Yellow
+            Stop-ProcessTree -ProcessId ([int]$process.ProcessId)
+        }
+    }
+
+    if ($stopped.Count -eq 0) {
+        Write-Host "[STOP] Keine laufenden Vorce-Infrastrukturprozesse gefunden." -ForegroundColor Green
+    } else {
+        Write-Host "[STOP] $($stopped.Count) Prozess(e) beendet." -ForegroundColor Green
+    }
+}
+
+function Start-VorceProcess {
+    param(
+        [Parameter(Mandatory)][string]$FilePath,
+        [Parameter(Mandatory)][string[]]$ArgumentList,
+        [Parameter(Mandatory)][string]$WorkingDirectory,
+        [string]$StdOut,
+        [string]$StdErr
+    )
+
+    $startArgs = @{
+        FilePath = $FilePath
+        ArgumentList = $ArgumentList
+        WorkingDirectory = $WorkingDirectory
+        PassThru = $true
+    }
+
+    if ($Visible.IsPresent) {
+        $startArgs.WindowStyle = "Normal"
+    } else {
+        $startArgs.WindowStyle = "Hidden"
+        if ($StdOut) { $startArgs.RedirectStandardOutput = $StdOut }
+        if ($StdErr) { $startArgs.RedirectStandardError = $StdErr }
+    }
+
+    return Start-Process @startArgs
+}
+
 $managedProcesses = @()
 
 Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host " VORCE 3.0 - INFRASTRUCTURE BOOT" -ForegroundColor Cyan
 Write-Host "=====================================" -ForegroundColor Cyan
+
+if ($Stop.IsPresent -or $Restart.IsPresent) {
+    Stop-VorceInfrastructure
+    if (-not $Restart.IsPresent) {
+        return
+    }
+}
 
 # 1. Dashboard Health Check / Start
 if (-not $NoDashboard.IsPresent) {
@@ -76,13 +165,12 @@ if (-not $NoDashboard.IsPresent) {
 
         $dashboardOut = Join-Path $LogDir "dashboard-vite.log"
         $dashboardErr = Join-Path $LogDir "dashboard-vite-error.log"
-        $dashboardProcess = Start-Process npm.cmd `
+        $dashboardProcess = Start-VorceProcess `
+            -FilePath "npm.cmd" `
             -ArgumentList @("run", "dev", "--", "--host", "0.0.0.0") `
             -WorkingDirectory $DashboardDir `
-            -WindowStyle Hidden `
-            -RedirectStandardOutput $dashboardOut `
-            -RedirectStandardError $dashboardErr `
-            -PassThru
+            -StdOut $dashboardOut `
+            -StdErr $dashboardErr
         $managedProcesses += $dashboardProcess
 
         if (-not (Wait-DashboardHealth)) {
@@ -103,12 +191,12 @@ if (-not $NoSync.IsPresent) {
         if (-not $syncListening) {
             $syncOut = Join-Path $LogDir "sync-service.log"
             $syncErr = Join-Path $LogDir "sync-service-error.log"
-            $syncProcess = Start-Process $pwsh `
+            $syncProcess = Start-VorceProcess `
+                -FilePath $pwsh `
                 -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $syncScript, "-VorceRoot", $ScriptDir) `
-                -WindowStyle Hidden `
-                -RedirectStandardOutput $syncOut `
-                -RedirectStandardError $syncErr `
-                -PassThru
+                -WorkingDirectory $ScriptDir `
+                -StdOut $syncOut `
+                -StdErr $syncErr
             $managedProcesses += $syncProcess
         }
     }
@@ -133,13 +221,12 @@ if (-not $NoAutopilot.IsPresent) {
 
         $autopilotOut = Join-Path $LogDir "autopilot-service.log"
         $autopilotErr = Join-Path $LogDir "autopilot-service-error.log"
-        $autopilotProcess = Start-Process $pwsh `
+        $autopilotProcess = Start-VorceProcess `
+            -FilePath $pwsh `
             -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $autopilotScript, "-StartupSequence", "-StartupDelaySeconds", "8") `
             -WorkingDirectory $ScriptDir `
-            -WindowStyle Hidden `
-            -RedirectStandardOutput $autopilotOut `
-            -RedirectStandardError $autopilotErr `
-            -PassThru
+            -StdOut $autopilotOut `
+            -StdErr $autopilotErr
         $managedProcesses += $autopilotProcess
         Write-Host "[BOOT] Autopilot Loop gestartet (PID $($autopilotProcess.Id))." -ForegroundColor Green
     }

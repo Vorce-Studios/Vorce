@@ -1,22 +1,22 @@
 {
+  "status": "completed",
   "parts": [
     {
-      "id": "run_20260615_031707",
+      "id": "run_20260615_033204",
       "name": "PART-RUN-01_MR-01_Planning__Triage__FilterIssues",
       "type": "PART",
       "status": "completed",
-      "started_at": "2026-06-15T03:17:07.2343522+02:00",
-      "completed_at": "2026-06-15T03:17:07.3029449+02:00",
+      "started_at": "2026-06-15T03:32:04.2116345+02:00",
+      "completed_at": "2026-06-15T03:32:04.2797157+02:00",
       "metadata": {},
       "results": [
         {
-          "timestamp": "2026-06-15T03:17:07.2957292+02:00",
-          "triaged_count": 11
+          "triaged_count": 11,
+          "timestamp": "2026-06-15T03:32:04.2741271+02:00"
         }
       ]
     }
   ],
-  "timestamp": "2026-06-15T03:17:07.3154460+02:00",
-  "status": "completed",
+  "timestamp": "2026-06-15T03:32:04.2856246+02:00",
   "sub_run": "SUB-RUN-02_MR-01_Planning__Triage"
 }

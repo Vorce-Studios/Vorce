@@ -26,8 +26,8 @@ foreach ($pattern in $agentPatterns) {
     try {
         $processes = Get-Process -Name $pattern -ErrorAction SilentlyContinue
         if ($processes) {
-            $agentProcesses[$pattern] = $processes
-            Write-VorceStep -Message "Gefunden $($processes.Count) '$pattern' Prozesse" -Status "INFO"
+            $processSummaries = @()
+            Write-VorceStep -Message "Gefunden $(@($processes).Count) '$pattern' Prozesse" -Status "INFO"
 
             foreach ($process in $processes) {
                 $health = @{
@@ -40,6 +40,7 @@ foreach ($pattern in $agentPatterns) {
                     exitCode = $null
                     error = $null
                 }
+                $processSummaries += $health
 
                 # Prüfe ob Prozess "hanging" ist (CPU > 80% Memory > 4GB seit > 10min)
                 if ($process.CPU -gt 80 -and $process.WorkingSet64 -gt 4GB) {
@@ -55,8 +56,9 @@ foreach ($pattern in $agentPatterns) {
                 if (-not $ParentState.agents) {
                     $ParentState | Add-Member -MemberType NoteProperty -Name "agents" -Value @{} -Force
                 }
-                $ParentState.agents[$process.Id] = $health
+                $ParentState.agents[[string]$process.Id] = $health
             }
+            $agentProcesses[$pattern] = $processSummaries
         }
     } catch {
         $issue = @{
@@ -85,10 +87,21 @@ if ($localSessions -eq 0) {
 }
 
 # 4. Bereite Ergebnis vor
+$totalProcessCount = 0
+$healthyProcessCount = 0
+foreach ($agentKey in $agentProcesses.Keys) {
+    foreach ($agentProcess in @($agentProcesses[$agentKey])) {
+        $totalProcessCount++
+        if ($agentProcess.status -eq "running") {
+            $healthyProcessCount++
+        }
+    }
+}
+
 $localAgentResult = @{
     status = "completed"
-    totalProcesses = $agentProcesses.Values.Count
-    healthyProcesses = ($agentProcesses.Values | Where-Object { $_.Count -gt 0 } | Measure-Object).Count
+    totalProcesses = $totalProcessCount
+    healthyProcesses = $healthyProcessCount
     issues = $processIssues.Count
     processes = $agentProcesses
     issuesDetails = $processIssues

@@ -1,0 +1,118 @@
+{
+  "id": "run_20260615_032305",
+  "name": "MAIN-RUN-03_Audit",
+  "type": "MAIN",
+  "status": "completed",
+  "started_at": "2026-06-15T03:23:05.3229309+02:00",
+  "completed_at": "2026-06-15T03:23:06.0006852+02:00",
+  "metadata": {},
+  "results": [
+    {
+      "status": "completed",
+      "timestamp": "2026-06-15T03:23:05.7885592+02:00",
+      "parts": [
+        {
+          "id": "run_20260615_032305",
+          "name": "PART-RUN-01_MR-03_Audit__DataSync__ValidateDataSources",
+          "type": "PART",
+          "status": "completed",
+          "started_at": "2026-06-15T03:23:05.4339742+02:00",
+          "completed_at": "2026-06-15T03:23:05.7865534+02:00",
+          "metadata": {},
+          "results": [
+            {
+              "total_checks": 5,
+              "sync_results": [
+                {
+                  "response_time": "fast",
+                  "type": "github_api",
+                  "status": "ok"
+                },
+                {
+                  "type": "directory_var",
+                  "status": "ok"
+                },
+                {
+                  "type": "directory_var/db",
+                  "status": "ok"
+                },
+                {
+                  "type": "directory_var/log",
+                  "status": "ok"
+                },
+                {
+                  "type": "directory_var/tmp",
+                  "status": "ok"
+                }
+              ],
+              "successful_checks": 5,
+              "timestamp": "2026-06-15T03:23:05.7824065+02:00",
+              "status": "completed"
+            }
+          ]
+        }
+      ],
+      "sub_run": "SUB-RUN-01_MR-03_Audit__DataSync"
+    },
+    {
+      "status": "completed",
+      "timestamp": "2026-06-15T03:23:05.9557376+02:00",
+      "parts": [
+        {
+          "id": "run_20260615_032305",
+          "name": "PART-RUN-01_MR-03_Audit__ComplianceCheck__EvaluateCompliance",
+          "type": "PART",
+          "status": "completed",
+          "started_at": "2026-06-15T03:23:05.8420432+02:00",
+          "completed_at": "2026-06-15T03:23:05.9538008+02:00",
+          "metadata": {},
+          "results": [
+            {
+              "compliance_checks": [
+                {
+                  "checks_passed": [
+                    "repository_set",
+                    "wake_intervals_set",
+                    "max_issues_set"
+                  ],
+                  "category": "config_integrity",
+                  "status": "ok"
+                },
+                {
+                  "variables": [
+                    "VorceRoot",
+                    "VarDir",
+                    "LibDir"
+                  ],
+                  "category": "global_variables",
+                  "status": "ok"
+                },
+                {
+                  "modules": [
+                    "RunEngine",
+                    "QuotaManager",
+                    "StateManager",
+                    "StatusPrinter"
+                  ],
+                  "category": "module_availability",
+                  "status": "ok"
+                },
+                {
+                  "jules_quota": true,
+                  "category": "quota_registry",
+                  "status": "ok"
+                }
+              ],
+              "status": "completed",
+              "warning_checks": 0,
+              "passed_checks": 4,
+              "timestamp": "2026-06-15T03:23:05.9492447+02:00",
+              "failed_checks": 0
+            }
+          ]
+        }
+      ],
+      "sub_run": "SUB-RUN-02_MR-03_Audit__ComplianceCheck"
+    }
+  ]
+}

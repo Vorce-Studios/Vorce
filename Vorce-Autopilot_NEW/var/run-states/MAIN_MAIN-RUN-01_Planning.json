@@ -1,10 +1,99 @@
 {
-  "id": "run_20260615_031706",
+  "id": "run_20260615_033159",
   "name": "MAIN-RUN-01_Planning",
   "type": "MAIN",
-  "status": "initialized",
-  "started_at": "2026-06-15T03:17:06.9873492+02:00",
-  "completed_at": null,
+  "status": "completed",
+  "started_at": "2026-06-15T03:31:59.6094452+02:00",
+  "completed_at": "2026-06-15T03:32:04.4649312+02:00",
   "metadata": {},
-  "results": []
+  "results": [
+    {
+      "status": "completed",
+      "parts": [
+        {
+          "id": "run_20260615_033202",
+          "name": "FetchIssues",
+          "type": "PART",
+          "status": "completed",
+          "started_at": "2026-06-15T03:32:02.1727216+02:00",
+          "completed_at": "2026-06-15T03:32:03.0134728+02:00",
+          "metadata": {},
+          "results": [
+            {
+              "count": 37,
+              "timestamp": "2026-06-15T03:32:03.0032280+02:00"
+            }
+          ],
+          "PSComputerName": "localhost",
+          "RunspaceId": "13ab8d9f-6709-4da0-803f-7bd61734d151",
+          "PSShowComputerName": false
+        },
+        {
+          "id": "run_20260615_033202",
+          "name": "FetchPRs",
+          "type": "PART",
+          "status": "completed",
+          "started_at": "2026-06-15T03:32:02.4886755+02:00",
+          "completed_at": "2026-06-15T03:32:04.0083515+02:00",
+          "metadata": {},
+          "results": [
+            {
+              "count": 26,
+              "timestamp": "2026-06-15T03:32:03.9984193+02:00"
+            }
+          ],
+          "PSComputerName": "localhost",
+          "RunspaceId": "d5a569e8-5de4-454a-b7ae-fafc1e473701",
+          "PSShowComputerName": false
+        }
+      ],
+      "timestamp": "2026-06-15T03:32:04.1346563+02:00",
+      "sub_run": "DataSync"
+    },
+    {
+      "status": "completed",
+      "parts": [
+        {
+          "id": "run_20260615_033204",
+          "name": "PART-RUN-01_MR-01_Planning__Triage__FilterIssues",
+          "type": "PART",
+          "status": "completed",
+          "started_at": "2026-06-15T03:32:04.2116345+02:00",
+          "completed_at": "2026-06-15T03:32:04.2797157+02:00",
+          "metadata": {},
+          "results": [
+            {
+              "triaged_count": 11,
+              "timestamp": "2026-06-15T03:32:04.2741271+02:00"
+            }
+          ]
+        }
+      ],
+      "timestamp": "2026-06-15T03:32:04.2856246+02:00",
+      "sub_run": "SUB-RUN-02_MR-01_Planning__Triage"
+    },
+    {
+      "status": "completed",
+      "parts": [
+        {
+          "id": "run_20260615_033204",
+          "name": "PART-RUN-01_MR-01_Planning__Delegation__CreateDelegations",
+          "type": "PART",
+          "status": "completed",
+          "started_at": "2026-06-15T03:32:04.3666000+02:00",
+          "completed_at": "2026-06-15T03:32:04.4351568+02:00",
+          "metadata": {},
+          "results": [
+            {
+              "status": "no_proposals",
+              "count": 0,
+              "delegations": []
+            }
+          ]
+        }
+      ],
+      "timestamp": "2026-06-15T03:32:04.4379290+02:00",
+      "sub_run": "SUB-RUN-04_MR-01_Planning__Delegation"
+    }
+  ]
 }

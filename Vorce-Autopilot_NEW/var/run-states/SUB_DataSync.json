@@ -1,42 +1,43 @@
 {
+  "status": "completed",
   "parts": [
     {
-      "id": "run_20260614_122217",
+      "id": "run_20260615_033202",
       "name": "FetchIssues",
       "type": "PART",
       "status": "completed",
-      "started_at": "2026-06-14T12:22:17.8734664+02:00",
-      "completed_at": "2026-06-14T12:22:18.8440991+02:00",
+      "started_at": "2026-06-15T03:32:02.1727216+02:00",
+      "completed_at": "2026-06-15T03:32:03.0134728+02:00",
       "metadata": {},
       "results": [
         {
           "count": 37,
-          "timestamp": "2026-06-14T12:22:18.8381220+02:00"
+          "timestamp": "2026-06-15T03:32:03.0032280+02:00"
         }
       ],
       "PSComputerName": "localhost",
-      "RunspaceId": "2d5e423f-070a-4156-9174-a0787e13ade7",
+      "RunspaceId": "13ab8d9f-6709-4da0-803f-7bd61734d151",
       "PSShowComputerName": false
     },
     {
-      "id": "run_20260614_122218",
+      "id": "run_20260615_033202",
       "name": "FetchPRs",
       "type": "PART",
       "status": "completed",
-      "started_at": "2026-06-14T12:22:18.1377793+02:00",
-      "completed_at": "2026-06-14T12:22:19.8492258+02:00",
+      "started_at": "2026-06-15T03:32:02.4886755+02:00",
+      "completed_at": "2026-06-15T03:32:04.0083515+02:00",
       "metadata": {},
       "results": [
         {
-          "timestamp": "2026-06-14T12:22:19.8422530+02:00",
-          "count": 26
+          "count": 26,
+          "timestamp": "2026-06-15T03:32:03.9984193+02:00"
         }
       ],
       "PSComputerName": "localhost",
-      "RunspaceId": "d086119e-c733-4497-a790-da6d573deb2a",
+      "RunspaceId": "d5a569e8-5de4-454a-b7ae-fafc1e473701",
       "PSShowComputerName": false
     }
   ],
-  "timestamp": "2026-06-14T12:22:20.3611666+02:00",
+  "timestamp": "2026-06-15T03:32:04.1346563+02:00",
   "sub_run": "DataSync"
 }

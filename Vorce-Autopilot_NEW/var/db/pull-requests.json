@@ -68,12 +68,12 @@
       },
       {
         "__typename": "CheckRun",
-        "completedAt": "0001-01-01T00:00:00Z",
-        "conclusion": "",
+        "completedAt": "2026-06-14T10:30:34Z",
+        "conclusion": "SUCCESS",
         "detailsUrl": "https://github.com/Vorce-Studios/Vorce/actions/runs/27495270492/job/81268050609",
         "name": "Build & Test (Windows)",
         "startedAt": "2026-06-14T09:56:20Z",
-        "status": "IN_PROGRESS",
+        "status": "COMPLETED",
         "workflowName": "CICD-DevFlow: Job01 Validation"
       },
       {
@@ -87,6 +87,16 @@
         "workflowName": "CICD-DevFlow: Job01 Validation"
       },
       {
+        "__typename": "CheckRun",
+        "completedAt": "2026-06-14T10:30:42Z",
+        "conclusion": "FAILURE",
+        "detailsUrl": "https://github.com/Vorce-Studios/Vorce/actions/runs/27495270492/job/81270163922",
+        "name": "Validation Success",
+        "startedAt": "2026-06-14T10:30:38Z",
+        "status": "COMPLETED",
+        "workflowName": "CICD-DevFlow: Job01 Validation"
+      },
+      {
         "__typename": "StatusContext",
         "context": "pre-commit.ci - pr",
         "startedAt": "2026-06-14T09:56:25Z",
@@ -95,7 +105,7 @@
       }
     ],
     "title": "PR___M-102_s1_Cue-Timeline-Trigger-Roundtrip-Test",
-    "updatedAt": "2026-06-14T09:56:25Z",
+    "updatedAt": "2026-06-14T10:36:03Z",
     "url": "https://github.com/Vorce-Studios/Vorce/pull/863"
   },
   {
@@ -603,12 +613,12 @@
       },
       {
         "__typename": "CheckRun",
-        "completedAt": "0001-01-01T00:00:00Z",
-        "conclusion": "",
+        "completedAt": "2026-06-14T10:28:38Z",
+        "conclusion": "SUCCESS",
         "detailsUrl": "https://github.com/Vorce-Studios/Vorce/actions/runs/27495184327/job/81267805335",
         "name": "Build & Test (Windows)",
         "startedAt": "2026-06-14T09:52:26Z",
-        "status": "IN_PROGRESS",
+        "status": "COMPLETED",
         "workflowName": "CICD-DevFlow: Job01 Validation"
       },
       {
@@ -622,6 +632,16 @@
         "workflowName": "CICD-DevFlow: Job01 Validation"
       },
       {
+        "__typename": "CheckRun",
+        "completedAt": "2026-06-14T10:28:44Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/Vorce-Studios/Vorce/actions/runs/27495184327/job/81270040913",
+        "name": "Validation Success",
+        "startedAt": "2026-06-14T10:28:41Z",
+        "status": "COMPLETED",
+        "workflowName": "CICD-DevFlow: Job01 Validation"
+      },
+      {
         "__typename": "StatusContext",
         "context": "pre-commit.ci - pr",
         "startedAt": "2026-06-14T09:52:35Z",
@@ -630,7 +650,7 @@
       }
     ],
     "title": "PR___M-101_s1_Module-Scheduling-Deterministic-Order-Tests",
-    "updatedAt": "2026-06-14T09:52:32Z",
+    "updatedAt": "2026-06-14T10:28:58Z",
     "url": "https://github.com/Vorce-Studios/Vorce/pull/858"
   },
   {
@@ -855,7 +875,7 @@
     "baseRefName": "main",
     "headRefName": "B-Jules/___M-054_s3_Module-Evaluator-Mod-Decomposition-12349553993110312382",
     "isDraft": false,
-    "mergeable": "MERGEABLE",
+    "mergeable": "CONFLICTING",
     "number": 853,
     "statusCheckRollup": [
       {
@@ -964,7 +984,7 @@
     "baseRefName": "main",
     "headRefName": "B-Jules/___M-054_s12_Oscillator-Renderer-Decomposition-16219738825282261619",
     "isDraft": false,
-    "mergeable": "MERGEABLE",
+    "mergeable": "CONFLICTING",
     "number": 852,
     "statusCheckRollup": [
       {
@@ -1182,7 +1202,7 @@
     "baseRefName": "main",
     "headRefName": "B-Jules/___M-054_s5_Custom-Widgets-Decomposition-4983774720671313530",
     "isDraft": false,
-    "mergeable": "MERGEABLE",
+    "mergeable": "CONFLICTING",
     "number": 850,
     "statusCheckRollup": [
       {
@@ -1291,7 +1311,7 @@
     "baseRefName": "main",
     "headRefName": "B-Jules/___M-054_s2_Source-Inspector-Large-File-Decomposition-10211792298744253939",
     "isDraft": false,
-    "mergeable": "MERGEABLE",
+    "mergeable": "CONFLICTING",
     "number": 849,
     "statusCheckRollup": [
       {
@@ -1400,7 +1420,7 @@
     "baseRefName": "main",
     "headRefName": "B-Jules/___M-054_s8_Module-Canvas-Renderer-Decomposition-2932660296572770811",
     "isDraft": false,
-    "mergeable": "MERGEABLE",
+    "mergeable": "CONFLICTING",
     "number": 848,
     "statusCheckRollup": [
       {
@@ -1509,7 +1529,7 @@
     "baseRefName": "main",
     "headRefName": "B-Jules/___M-054_s9_UI-Config-Decomposition-16843685893937228161",
     "isDraft": false,
-    "mergeable": "MERGEABLE",
+    "mergeable": "CONFLICTING",
     "number": 847,
     "statusCheckRollup": [
       {
@@ -1618,7 +1638,7 @@
     "baseRefName": "main",
     "headRefName": "B-Jules/___M-510_s1_Decompose-Codegen-Core-12238610406487217967",
     "isDraft": false,
-    "mergeable": "MERGEABLE",
+    "mergeable": "CONFLICTING",
     "number": 845,
     "statusCheckRollup": [
       {
