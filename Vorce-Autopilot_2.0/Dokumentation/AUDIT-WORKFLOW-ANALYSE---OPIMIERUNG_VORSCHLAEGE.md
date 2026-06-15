@@ -109,7 +109,7 @@ if (payload.action === 'ignore-alert') {
 
 ## Optimierungsvorschläge
 
-### 🔴 Vorschlag 1: "Close/Ignore" alsprimäre Aktion (Empfohlen)
+### ### 🔴 Vorschlag 1: "Close/Ignore" als primäre Aktion (Empfohlen)
 
 **Konzept**: Ersetze "Trash"-Button durch "Close"-Button mit Kommentar-Feld.
 
@@ -172,7 +172,7 @@ if (payload.action === 'close-alert') {
 
 ---
 
-### 🟡 Vorschlag 2: Status-Anzeige & Verlauf
+### ### 🟡 Vorschlag 2: Status-Anzeige & Verlauf
 
 **Konzept**: Füge Status-Chip und History-Log zu jedem Alert hinzu.
 
@@ -204,7 +204,7 @@ if (payload.action === 'close-alert') {
 
 ---
 
-### 🟢 Vorschlag 3: "Never Again" Memory-Pattern
+### ### 🟢 Vorschlag 3: "Never Again" Memory-Pattern
 
 **Konzept**: Automatische Memory-Erstellung bei "Ignore" mit smarter Pattern-Matching.
 
@@ -238,7 +238,7 @@ const memoryEntry = {
 
 ---
 
-### 🔵 Vorschlag 4: Batch-Processing für wiederkehrende Alerts
+### ### 🔵 Vorschlag 4: Batch-Processing für wiederkehrende Alerts
 
 **Konzept**: Wenn mehrere Alerts gleicher Art (z.B. alle "PR #XXX verletzt Namenskonvention"), bieten "Alle ignorieren" an.
 
