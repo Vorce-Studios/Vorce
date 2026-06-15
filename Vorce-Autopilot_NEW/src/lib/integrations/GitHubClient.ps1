@@ -6,12 +6,12 @@ function Get-VorceGitHubIssues {
         [Parameter(Mandatory)][string]$Repository,
         [int]$Limit = 100
     )
-    
+
     Write-VorceStep -Message "Lade Issues für $Repository (Limit: $Limit)..." -Status "RUN"
-    
+
     $jsonFields = "number,title,labels,assignees,body,state,updatedAt"
     $issuesRaw = gh issue list --repo $Repository --state open --json $jsonFields --limit $Limit 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-VorceStep -Message "GitHub Issue-Abruf fehlgeschlagen: $($issuesRaw | Out-String)" -Status "ERROR"
         return @()
@@ -27,12 +27,12 @@ function Get-VorceGitHubPRs {
         [Parameter(Mandatory)][string]$Repository,
         [int]$Limit = 50
     )
-    
+
     Write-VorceStep -Message "Lade Pull Requests für $Repository..." -Status "RUN"
-    
+
     $jsonFields = "number,title,headRefName,baseRefName,mergeable,statusCheckRollup,isDraft,url,updatedAt"
     $prsRaw = gh pr list --repo $Repository --state open --json $jsonFields --limit $Limit 2>&1
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-VorceStep -Message "GitHub PR-Abruf fehlgeschlagen: $($prsRaw | Out-String)" -Status "ERROR"
         return @()
@@ -48,11 +48,11 @@ function Save-VorceGitHubData {
         [Parameter(Mandatory)][string]$Type, # issues | prs
         [Parameter(Mandatory)][object]$Data
     )
-    
+
     $fileName = if ($Type -eq "issues") { "github-issues.json" } else { "pull-requests.json" }
     $dbDir = Join-Path $global:VarDir "db"
     if (-not (Test-Path $dbDir)) { New-Item -ItemType Directory -Path $dbDir -Force | Out-Null }
-    
+
     $filePath = Join-Path $dbDir $fileName
     $Data | ConvertTo-Json -Depth 10 | Set-Content $filePath -Encoding UTF8
     Write-VorceStep -Message "GitHub $Type in Datenbank gesichert: $fileName" -Status "OK"

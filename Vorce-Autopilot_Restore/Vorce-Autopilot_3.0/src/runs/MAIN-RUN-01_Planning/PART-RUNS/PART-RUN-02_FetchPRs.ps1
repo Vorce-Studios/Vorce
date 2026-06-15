@@ -12,7 +12,7 @@ $Repo = "Vorce-Studios/Vorce"
 $PRs = Get-VorceGitHubPRs -Repository $Repo
 Save-VorceGitHubData -Type "prs" -Data $PRs
 
-return @{ 
-    count = $PRs.Count 
-    timestamp = (Get-Date).ToString("o") 
+return @{
+    count = $PRs.Count
+    timestamp = (Get-Date).ToString("o")
 }

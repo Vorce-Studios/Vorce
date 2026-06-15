@@ -12,7 +12,7 @@ $Repo = "Vorce-Studios/Vorce"
 $Issues = Get-VorceGitHubIssues -Repository $Repo
 Save-VorceGitHubData -Type "issues" -Data $Issues
 
-return @{ 
-    count = $Issues.Count 
-    timestamp = (Get-Date).ToString("o") 
+return @{
+    count = $Issues.Count
+    timestamp = (Get-Date).ToString("o")
 }

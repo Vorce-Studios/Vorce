@@ -49,7 +49,7 @@ Write-VorceStep -Message "Geplante Sub-Runs: $($SubRuns.Count)" -Status "INFO"
 foreach ($subName in $SubRuns) {
     Write-VorceDivider
     Write-VorceStep -Message "Starte Sub-Run: $subName" -Status "RUN"
-    
+
     $subScript = Join-Path $MainRunPath "SUB-RUNS/$subName.ps1"
     if (Test-Path $subScript) {
         $subResult = & $subScript -ParentState $MainState

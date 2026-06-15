@@ -8,7 +8,7 @@ Aktuell liegt im Ordner `Vorce-Autopilot_3.0` ein Stand, der zwar die neuen Komp
 - **Dokumentations-Altlasten:** Es gibt viele alte `.md` Dateien aus V1 und V2, die für Verwirrung sorgen.
 
 ## 2. Prüfung & Optimierung der neuen Struktur
-Die von dir vorgeschlagene Struktur in `NeueStruktur.md` ist exzellent, da sie strikt zwischen ausführbarem Code (`src/`), Frontend (`web/`) und veränderlichen Daten (`var/`) trennt. 
+Die von dir vorgeschlagene Struktur in `NeueStruktur.md` ist exzellent, da sie strikt zwischen ausführbarem Code (`src/`), Frontend (`web/`) und veränderlichen Daten (`var/`) trennt.
 
 **Architektonische Optimierungsgedanken:**
 1. **Verzeichnis-Hierarchie der Runs:** Anstatt `ROUTER` -> `SUB-RUNS` -> `PART-RUNS` als *einen* tief verschachtelten Baum für *alle* Runs anzulegen, ist es modularer, wenn jeder `MAIN-RUN` sein eigenes gekapseltes Verzeichnis hat:

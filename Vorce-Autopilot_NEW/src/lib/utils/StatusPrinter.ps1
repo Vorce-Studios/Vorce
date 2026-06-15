@@ -20,7 +20,7 @@ function Write-VorceStep {
         [int]$Current = 0,
         [int]$Total = 0
     )
-    
+
     $timestamp = (Get-Date).ToString("HH:mm:ss")
     $prefix = switch($Status) {
         "RUN"   { "[ >> ]" }
@@ -29,7 +29,7 @@ function Write-VorceStep {
         "ERROR" { "[ XX ]" }
         default { "[ -- ]" }
     }
-    
+
     $color = switch($Status) {
         "RUN"   { "Cyan" }
         "OK"    { "Green" }
@@ -37,10 +37,10 @@ function Write-VorceStep {
         "ERROR" { "Red" }
         default { "White" }
     }
-    
+
     $progress = ""
     if ($Total -gt 0) { $progress = " ($Current/$Total)" }
-    
+
     Write-Host "[$timestamp] $prefix $Message$progress" -ForegroundColor $color
 }
 

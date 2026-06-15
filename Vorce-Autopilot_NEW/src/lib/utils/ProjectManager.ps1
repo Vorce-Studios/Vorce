@@ -10,7 +10,7 @@ function Get-VorceProjectSettings {
 
 function Invoke-GhCommand {
     param([Parameter(Mandatory)][string[]]$Arguments)
-    
+
     $output = & gh @Arguments 2>&1
     if ($LASTEXITCODE -ne 0) {
         Write-VorceStep -Message "gh $($Arguments[0]) fehlgeschlagen: $($output | Out-String)" -Status "WARN"
@@ -23,17 +23,17 @@ function Sync-VorceProjectState {
     param(
         [Parameter(Mandatory)][object]$RunState
     )
-    
+
     $settings = Get-VorceProjectSettings
     Write-VorceStep -Message "Synchronisiere Status ($($RunState.status)) mit GitHub Project #$($settings.Number)..." -Status "RUN"
-    
+
     # In V3.0 nutzen wir die GH CLI direkt für Project V2
     try {
         # 1. Suche das Projekt-Item (z.B. basierend auf einem Issue oder dem Namen)
         # Für den Autopilot selbst nutzen wir oft ein "Management" Item.
-        
+
         $projectData = Invoke-GhCommand -Arguments @("project", "view", [string]$settings.Number, "--owner", $settings.Owner, "--format", "json")
-        
+
         if ($projectData) {
             # Hier würde die Logik folgen, um ein Item zu finden und zu editieren.
             # Da wir im Dry-Run/Mock Modus sind, loggen wir den Erfolg.
