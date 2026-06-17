@@ -1,25 +1,25 @@
 ﻿{
     "sub_run":  "SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping",
     "status":  "completed",
-    "timestamp":  "2026-06-17T23:02:41.8886580+02:00",
+    "timestamp":  "2026-06-18T00:18:43.9216402+02:00",
     "parts":  [
                   {
-                      "id":  "run_20260617_230241",
+                      "id":  "run_20260618_001843",
                       "name":  "PART-RUN-01_MR-02_CheckAndDoing__Housekeeping__CleanupRuntimeState",
                       "type":  "PART",
                       "status":  "completed",
-                      "started_at":  "2026-06-17T23:02:41.8161140+02:00",
-                      "completed_at":  "2026-06-17T23:02:41.8841482+02:00",
+                      "started_at":  "2026-06-18T00:18:43.8301164+02:00",
+                      "completed_at":  "2026-06-18T00:18:43.9191421+02:00",
                       "metadata":  {
 
                                    },
                       "results":  [
                                       {
                                           "tmp_files_cleaned":  0,
-                                          "timestamp":  "2026-06-17T23:02:41.8761457+02:00",
+                                          "timestamp":  "2026-06-18T00:18:43.8886327+02:00",
                                           "stats_updated":  true,
                                           "cleaned_delegations":  0,
-                                          "next_housekeeping":  "2026-06-18T23:02:41.8741465+02:00",
+                                          "next_housekeeping":  "2026-06-19T00:18:43.8866329+02:00",
                                           "status":  "completed",
                                           "session_locks_cleaned":  0
                                       }

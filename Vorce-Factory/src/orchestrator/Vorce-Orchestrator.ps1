@@ -1,5 +1,5 @@
 # Vorce-Orchestrator.ps1 (Vorce 3.0)
-# Zentrales Steuerungs-Modul für die Run-Hierarchie mit dynamischer Scheduling
+# Zentrales Steuerungs-Modul fuer die Run-Hierarchie mit dynamischer Scheduling
 [CmdletBinding()]
 param(
     [object]$GlobalState,
@@ -18,6 +18,9 @@ $global:VorceRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.
 $global:VarDir = Join-Path $global:VorceRoot "var"
 $global:SrcDir = Join-Path $global:VorceRoot "src"
 $global:LibDir = Join-Path $global:SrcDir "lib"
+
+# Fix Encoding for Windows PowerShell
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
 # A) Module laden (mit neuen Pfaden via $global:LibDir)
 . (Join-Path $global:LibDir "utils/StatusPrinter.ps1")
@@ -88,7 +91,7 @@ function Select-NextMainRun {
         $overdue = if ($null -eq $lastRun) { [int]::MaxValue } else { ($now - $lastRun).TotalMinutes - $interval }
         if ($overdue -gt $bestOverdue) { $best = $run; $bestOverdue = $overdue }
     }
-    # Nur ausführen wenn mindestens ein Run überfällig ist
+    # Nur ausfuehren wenn mindestens ein Run ueberfaellig ist
     if ($bestOverdue -gt 0) {
         return @{ Name=$best.Name; OverdueMinutes=$bestOverdue }
     } else {
@@ -96,13 +99,13 @@ function Select-NextMainRun {
     }
 }
 
-# Wähle dynamisch den nächsten Main-RUN
+# Waehle dynamisch den naechsten Main-RUN
 $RunsDir = Join-Path $global:SrcDir "runs"
 $result = Select-NextMainRun -GlobalState $GlobalState -DashboardState $DashboardState -Config $Config -ForceMainRun $ForceMainRun
 if ($null -eq $result) {
     if (-not $DryRun) { Save-VorceGlobalState -State $GlobalState }
     if (-not $DryRun) { $DashboardState | ConvertTo-Json -Depth 10 | Set-Content $DashboardStatePath -Encoding UTF8 }
-    Write-VorceStep -Message "Kein Run überfällig." -Status "INFO"
+    Write-VorceStep -Message "Kein Run ueberfaellig." -Status "INFO"
     return
 }
 
@@ -112,8 +115,8 @@ $bestOverdue = $result.OverdueMinutes
 # E) Starte Main-Run
 Write-VorceRunStart -RunName $mainRunName -Level Main
 
-$scheduleReason = if ($result.Forced) { "manuell ausgelöst" } elseif ($bestOverdue -eq [int]::MaxValue) { "noch nie ausgeführt" } else { "überfällig um $([math]::Round($bestOverdue, 1)) Minuten" }
-Write-VorceStep -Message "Wähle $mainRunName ($scheduleReason)" -Status "RUN"
+$scheduleReason = if ($result.Forced) { "manuell ausgeloest" } elseif ($bestOverdue -eq [int]::MaxValue) { "noch nie ausgefuehrt" } else { "ueberfaellig um $([math]::Round($bestOverdue, 1)) Minuten" }
+Write-VorceStep -Message "Waehle $mainRunName ($scheduleReason)" -Status "RUN"
 
 # F) Dynamischen Router-Aufruf (C8)
 $MainRunPath = Join-Path $RunsDir $mainRunName
@@ -127,7 +130,7 @@ $SubRuns = @()
 if ($routerFile) {
     $SubRuns = @(& $routerFile.FullName -ConfigBag $ConfigBag -MainState $MainState)
 } else {
-    throw "Kein Router für $mainRunName gefunden: $MainRunPath"
+    throw "Kein Router fuer $mainRunName gefunden: $MainRunPath"
 }
 
 $routerKey = ($Config.router_rules.PSObject.Properties | Where-Object {
@@ -142,11 +145,22 @@ if ($routerKey) {
     })
 }
 
-# G) Try/Catch um jeden Sub-Run (C9)
-Write-VorceStep -Message "Geplante Sub-Runs: $($SubRuns.Count)" -Status "INFO"
+# F) Try/Catch um jeden Sub-Run (C9)
+Write-VorceDivider -Style "double"
+Write-VorceStep -Message "GEPLANTER AUSFUEHRUNGSPLAN:" -Status "INFO"
+$planIndex = 0
+foreach ($sub in $SubRuns) {
+    $planIndex++
+    $partHint = if ($sub.parts) { "($($sub.parts.Count) Parts)" } else { "" }
+    Write-Host "    $planIndex. $($sub.name) $partHint" -ForegroundColor Gray
+}
+Write-VorceDivider -Style "double"
+
 $subIndex = 0
+$startTime = Get-Date
 foreach ($sub in $SubRuns) {
     $subIndex++
+    $subStart = Get-Date
     Write-VorceRunStart -RunName $sub.name -Level Sub -Index $subIndex -Total $SubRuns.Count
 
     try {
@@ -158,17 +172,19 @@ foreach ($sub in $SubRuns) {
                 $errorMsg = "Mindestens ein PART-RUN in $($sub.name) ist fehlgeschlagen."
                 throw $errorMsg
             }
-            Write-VorceRunEnd -RunName $sub.name -Level Sub -Status "completed"
+            $duration = [math]::Round(((Get-Date) - $subStart).TotalSeconds, 1)
+            Write-VorceRunEnd -RunName $sub.name -Level Sub -Status "completed" -DurationMs ($duration * 1000)
         } else {
             throw "Sub-Run Skript nicht gefunden: $subScript"
         }
     } catch {
-        Write-VorceRunEnd -RunName $sub.name -Level Sub -Status "failed"
-        $MainState.results += @{ name=$sub.name; status="failed"; error=$_.Exception.Message; timestamp=(Get-Date).ToString("o") }
+        $duration = [math]::Round(((Get-Date) - $subStart).TotalSeconds, 1)
+        Write-VorceRunEnd -RunName $sub.name -Level Sub -Status "failed" -DurationMs ($duration * 1000)
+        $MainState.results += @{ name=$sub.name; status="failed"; error=$_.Exception.Message; timestamp=(Get-Date).ToString("o"); duration_sec=$duration }
     }
 }
 
-# H) Nach Abschluss last_runs Timestamp aktualisieren
+# G) Nach Abschluss last_runs Timestamp aktualisieren
 if ($null -eq $GlobalState.last_runs) {
     $GlobalState | Add-Member -MemberType NoteProperty -Name "last_runs" -Value @{} -Force
 }
@@ -178,7 +194,24 @@ if (-not $DryRun) { $DashboardState | ConvertTo-Json -Depth 10 | Set-Content $Da
 
 # 6. Finale Aggregation und Abschluss
 Write-VorceDivider
-Write-VorceStep -Message "Führe alle Sub-Run Ergebnisse zusammen (Main-Aggregation)..." -Status "RUN"
+Write-VorceStep -Message "ZUSAMMENFASSUNG $mainRunName" -Status "INFO"
+$header = "  $($('Sub-Run').PadRight(30)) | $($('Status').PadRight(12)) | $($('Dauer').PadRight(10)) | Ergebnis"
+Write-Host $header -ForegroundColor Yellow
+Write-Host "  $('-' * 75)" -ForegroundColor Gray
+
+foreach ($res in $MainState.results) {
+    $statusCol = if ($res.status -eq "completed") { "[ OK  ]" } else { "[ ERR ]" }
+    $color = if ($res.status -eq "completed") { "Green" } else { "Red" }
+    $duration = if ($null -ne $res.duration_sec) { "$($res.duration_sec)s" } else { "-" }
+    $msg = if ($res.status -eq "failed") { $res.error } else { "Erfolgreich" }
+    
+    $rName = if ($res.name) { $res.name } elseif ($res.sub_run) { $res.sub_run } else { "Unknown" }
+    $line = "  $($rName.ToString().PadRight(30)) | $($statusCol.PadRight(12)) | $($duration.PadRight(10)) | $msg"
+    Write-Host $line -ForegroundColor $color
+}
+Write-VorceDivider
+
+Write-VorceStep -Message "Fuehre alle Sub-Run Ergebnisse zusammen (Main-Aggregation)..." -Status "RUN"
 
 $failedResults = @($MainState.results | Where-Object { $_.status -eq "failed" })
 $MainState.status = if ($failedResults.Count -gt 0) { "failed" } else { "completed" }
@@ -188,7 +221,7 @@ if (-not $DryRun) { Save-VorceRunState -State $MainState }
 # Falls ein Aggregations-Skript existiert (z.B. MAIN-RUN-01_Planning_Aggregate.ps1)
 # & ...
 
-Write-VorceStep -Message "Main-Aggregation für $mainRunName abgeschlossen." -Status "OK"
+Write-VorceStep -Message "Main-Aggregation fuer $mainRunName abgeschlossen." -Status "OK"
 
 # 7. Finaler Sync
 Write-VorceStep -Message "Sichere Global State..." -Status "RUN"

@@ -18,7 +18,7 @@ Verbesserung der Terminal-Visualisierung der Run-Hierarchie (Main/Sub/Part) und 
 > 4. Nutze ANSI-Farben konsistent: Main-Run (Cyan), Sub-Run (Yellow), Part-Run (White).
 > 5. Stelle sicher, dass Zeitstempel dezent am Rand stehen.
 
----
+---Done
 
 ## Phase 2: Live-Streaming & Hierarchie-Integration (RunEngine & Orchestrator)
 
@@ -39,7 +39,7 @@ Verbesserung der Terminal-Visualisierung der Run-Hierarchie (Main/Sub/Part) und 
 > 1. Füge vor dem Start der Sub-Run-Schleife eine Übersicht ein, die alle geplanten Sub-Runs und deren Part-Counts auflistet.
 > 2. Zeige am Ende des Main-Runs eine tabellarische Zusammenfassung: `Sub-Run | Status | Dauer | Ergebnis`.
 
----
+---Done
 
 ## Phase 3: Run-Struktur & Token-Optimierung
 
@@ -60,7 +60,7 @@ Verbesserung der Terminal-Visualisierung der Run-Hierarchie (Main/Sub/Part) und 
 > 1. Entferne redundante Pfadangaben und System-Anweisungen aus dem Context-Prompt, die für die reine Proposal-Erstellung nicht nötig sind.
 > 2. Implementiere eine Logik, die nur die für das spezifische Issue relevanten Code-Snippets (falls vorhanden) in den Prompt lädt.
 
----
+---Done
 
 ## Phase 4: Validierung
 

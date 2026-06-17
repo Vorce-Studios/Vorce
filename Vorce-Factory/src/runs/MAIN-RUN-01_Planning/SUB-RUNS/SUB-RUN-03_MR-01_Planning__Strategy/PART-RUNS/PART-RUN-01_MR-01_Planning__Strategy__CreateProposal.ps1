@@ -6,6 +6,17 @@ param(
     [Parameter(Mandatory)][object]$ParentState
 )
 
+# Optionale Arguments aus Sub-Run Level (für parallele Verarbeitung)
+$issueNumber = $null
+$issueTitle = $null
+$issueBody = $null
+
+if ($ConfigBag.Arguments -and $ConfigBag.Arguments.IssueNumber) {
+    $issueNumber = $ConfigBag.Arguments.IssueNumber
+    $issueTitle = $ConfigBag.Arguments.IssueTitle
+    $issueBody = $ConfigBag.Arguments.IssueBody
+}
+
 # Setze globale Variablen basierend auf ConfigBag
 $global:VorceRoot = $ConfigBag.VorceRoot
 $global:VarDir = $ConfigBag.VarDir
@@ -40,9 +51,21 @@ if ($null -eq $triaged -or $triaged.Count -eq 0) {
     return @{ status = "no_issues" }
 }
 
-# 0. Bestimme Target Issue (verwende erstes Issue in der Liste)
-$targetIssue = $triaged[0]
-Write-VorceStep -Message "Plane Strategie für Issue #$($targetIssue.number): $($targetIssue.title)" -Status "RUN"
+# 0. Bestimme Target Issue (aus Arguments oder aus triaged-issues.json)
+if ($issueNumber) {
+    # Verwendung des spezifischen Issue aus den Arguments (für parallele Verarbeitung)
+    $targetIssue = $triaged | Where-Object { $_.number -eq $issueNumber } | Select-Object -First 1
+    Write-VorceStep -Message "Plane Strategie für spezifisches Issue #$($issueNumber): $($issueTitle)" -Status "RUN"
+} else {
+    # Fallback: Verwende erstes Issue in der Liste (für sequentielle Verarbeitung)
+    $targetIssue = $triaged[0]
+    Write-VorceStep -Message "Plane Strategie für Issue #$($targetIssue.number): $($targetIssue.title)" -Status "RUN"
+}
+
+if ($null -eq $targetIssue) {
+    Write-VorceStep -Message "Kein Issue mit Nummer $issueNumber gefunden." -Status "ERROR"
+    return @{ status = "error"; message = "Issue #$issueNumber nicht gefunden" }
+}
 
 if ($ConfigBag.DryRun) {
     Write-VorceStep -Message "DryRun: Deliberation für Issue #$($targetIssue.number) wird nicht ausgeführt." -Status "INFO"
@@ -53,23 +76,40 @@ if ($ConfigBag.DryRun) {
     }
 }
 
-# 1. Vorbereiten der Variablen für den Basis-Prompt
+# 1. Vorbereiten der Variablen für den Basis-Prompt (Token-Optimiert)
 $BaseVariables = @{
     Repository = $repo
-    dashboardInstructions = "Verwende das Dashboard zur Visualisierung."
-    TaskJournalPath = "var/log/journal.md"
-    SessionLockPath = "var/tmp/session.lock"
 }
 
 # 2. Lade den Basis-Prompt (Planungssitzung)
 $contextPrompt = Get-VorcePrompt -PromptId "planning_session" -Variables $BaseVariables
 
-# 3. Erweitere Variablen für die Deliberation
+# 2.5. Lade relevante Code-Snippets (falls vorhanden für dieses Issue)
+$relevantCode = ""
+$codeSnippetsDir = Join-Path $global:VarDir "db/code-snippets"
+if (Test-Path $codeSnippetsDir) {
+    $issueSnippetFile = Join-Path $codeSnippetsDir "issue_$($targetIssue.number)_code.json"
+    if (Test-Path $issueSnippetFile) {
+        try {
+            $codeSnippets = Get-Content $issueSnippetFile -Raw | ConvertFrom-Json
+            if ($codeSnippets -and $codeSnippets.related_code) {
+                $relevantCode = $codeSnippets.related_code
+                Write-VorceStep -Message "Geladene relevante Code-Snippets für Issue #$($targetIssue.number)" -Status "INFO"
+            }
+        } catch {
+            Write-VorceStep -Message "Fehler beim Laden von Code-Snippets: $($_.Exception.Message)" -Status "WARN"
+        }
+    }
+}
+
+# 3. Erweitere Variablen für die Deliberation (Token-Optimiert)
 $Variables = @{
     contextPrompt = $contextPrompt
     IssueNumber   = $targetIssue.number
     IssueTitle    = $targetIssue.title
     IssueBody     = $targetIssue.body
+    Repository     = $repo
+    RelevantCode  = if ($relevantCode) { $relevantCode } else { "Keine zusätzlichen Code-Snippets gefunden." }
 }
 
 $Result = Invoke-VorceDeliberation `

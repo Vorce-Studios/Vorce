@@ -1,5 +1,5 @@
 # QuotaManager.ps1 (Vorce 3.0)
-# Quota-Management für alle AI-Provider und CLI-Kommandos
+# Quota-Management fuer alle AI-Provider und CLI-Kommandos
 
 function Read-VorceQuotaRegistry {
     # Liest aus: $global:VarDir/config/quota-registry.json
@@ -10,7 +10,7 @@ function Read-VorceQuotaRegistry {
         try {
             $content = Get-Content $registryPath -Raw
             if ([string]::IsNullOrWhiteSpace($content) -or $content -eq "null") {
-                # Datei existiert aber enthält ungültige Daten
+                # Datei existiert aber enthaelt ungueltige Daten
                 return @{}
             }
             return $content | ConvertFrom-Json
@@ -19,7 +19,7 @@ function Read-VorceQuotaRegistry {
             return $null
         }
     } else {
-        # Datei existiert nicht, leere Registry zurückgeben
+        # Datei existiert nicht, leere Registry zurueckgeben
         return @{}
     }
 }
@@ -40,7 +40,7 @@ function Save-VorceQuotaRegistry {
     try {
         $Registry | ConvertTo-Json -Depth 10 | Set-Content $registryPath -Encoding UTF8
 
-        # Setzt $global:VorceExhaustedProviders zurück
+        # Setzt $global:VorceExhaustedProviders zurueck
         if (Test-Path "Variable:global:VorceExhaustedProviders") {
             $global:VorceExhaustedProviders = @{}
         }
@@ -55,8 +55,8 @@ function Test-VorceQuota {
         [string]$ModelTier = "default"
     )
 
-    # Prüft ob Provider enabled, nicht erschöpft, unter daily_limit, unter daily_budget_usd
-    # Prüft ob CLI-Command verfügbar (Get-Command)
+    # Prueft ob Provider enabled, nicht erschoepft, unter daily_limit, unter daily_budget_usd
+    # Prueft ob CLI-Command verfuegbar (Get-Command)
 
     $registry = Read-VorceQuotaRegistry
     if ($null -eq $registry) { return $false }
@@ -68,12 +68,12 @@ function Test-VorceQuota {
     }
     $providerConfig = $providers.$AgentName
 
-    # Prüfe ob Provider enabled ist
+    # Pruefe ob Provider enabled ist
     if ($providerConfig.enabled -ne $true) {
         return $false
     }
 
-    # Prüfe CLI-Command Verfügbarkeit
+    # Pruefe CLI-Command Verfuegbarkeit
     $commandName = $providerConfig.command
     if ($commandName) {
         $command = Get-Command $commandName -ErrorAction SilentlyContinue
@@ -82,14 +82,14 @@ function Test-VorceQuota {
         }
     }
 
-    # Prüfe Daily Limit
+    # Pruefe Daily Limit
     if ($providerConfig.daily_limit -and $null -ne $providerConfig.usage_today.calls) {
         if ($providerConfig.usage_today.calls -ge $providerConfig.daily_limit) {
             return $false
         }
     }
 
-    # Prüfe Daily Budget
+    # Pruefe Daily Budget
     if ($providerConfig.daily_budget_usd -and $null -ne $providerConfig.usage_today.estimated_cost_usd) {
         if ($providerConfig.usage_today.estimated_cost_usd -ge $providerConfig.daily_budget_usd) {
             return $false
@@ -143,7 +143,7 @@ function Get-VorceQuotaSummary {
         [object]$Registry
     )
 
-    # Gibt Zusammenfassung aller Provider als String zurück
+    # Gibt Zusammenfassung aller Provider als String zurueck
 
     if ($null -eq $Registry) {
         $Registry = Read-VorceQuotaRegistry

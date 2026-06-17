@@ -1,5 +1,5 @@
 # RunEngine.ps1 (Vorce 3.0)
-# Modul zur Ausführung von PART-RUNS und SUB-RUNS mit Parallelitäts-Steuerung
+# Modul zur Ausfuehrung von PART-RUNS und SUB-RUNS mit Parallelitaets-Steuerung
 
 function Invoke-VorcePartRun {
     param(
@@ -11,12 +11,12 @@ function Invoke-VorcePartRun {
     
     $PartState = Initialize-RunState -RunName $PartName -RunType "PART"
     Write-VorceRunStart -RunName $PartName -Level Part
-    Write-VorceStep -Message "Führe Part-Run aus: $PartName" -Status "RUN"
-    
+    Write-VorceStep -Message "Fuehre Part-Run aus: $PartName" -Status "RUN"
+
     try {
         if (-not (Test-Path $ScriptPath)) { throw "Skript nicht gefunden: $ScriptPath" }
-        
-        # In V3 nutzen wir isolierte Jobs oder ScriptBlocks für Parallelität
+
+        # In V3 nutzen wir isolierte Jobs oder ScriptBlocks fuer Parallelitaet
         $result = & $ScriptPath @Arguments
         if ($null -ne $result) {
             $hasErrorProperty = if ($result -is [System.Collections.IDictionary]) {
@@ -67,7 +67,7 @@ function Invoke-VorceSubRunParallel {
         $null -eq $partSettings -or $partSettings.enabled -ne $false
     })
 
-    Write-VorceStep -Message "Starte parallele Ausführung für $SubRunName ($($PartRuns.Count) Parts, Max: $MaxParallel)" -Status "RUN"
+    Write-VorceStep -Message "Starte parallele Ausfuehrung fuer $SubRunName ($($PartRuns.Count) Parts, Max: $MaxParallel)" -Status "RUN"
     
     $activeJobs = @()
     $completedResults = @()
@@ -76,7 +76,7 @@ function Invoke-VorceSubRunParallel {
     $spinIdx = 0
     
     while ($queue.Count -gt 0 -or $activeJobs.Count -gt 0) {
-        # 1. Fülle Jobs auf, bis MaxParallel erreicht ist
+        # 1. Fuelle Jobs auf, bis MaxParallel erreicht ist
         while ($activeJobs.Count -lt $MaxParallel -and $queue.Count -gt 0) {
             $part = $queue.Dequeue()
             Write-VorceStep -Message "Queue -> Job: $($part.name)" -Status "INFO"
@@ -98,7 +98,7 @@ function Invoke-VorceSubRunParallel {
             $activeJobs += $job
         }
         
-        # 2. Prüfe auf fertige Jobs und streame Output
+        # 2. Pruefe auf fertige Jobs und streame Output
         $stillActive = @()
         foreach ($job in $activeJobs) {
             # Stream Output (Live)
@@ -116,7 +116,7 @@ function Invoke-VorceSubRunParallel {
             if ($job.State -ne "Running") {
                 # Job ist fertig - hole finales Ergebnis (State Objekt)
                 $jobResult = Receive-Job -Job $job
-                # Falls Receive-Job im Job-Kontext das PartState Objekt zurückgegeben hat
+                # Falls Receive-Job im Job-Kontext das PartState Objekt zurueckgegeben hat
                 $stateObj = $jobResult | Where-Object { $_.PSObject.Properties.Name -contains "RunName" -or $_.PSObject.Properties.Name -contains "status" } | Select-Object -First 1
                 
                 if ($job.State -eq "Failed") {
@@ -150,7 +150,7 @@ function Invoke-VorceSubRunParallel {
 
     
     # 3. Aggregations-Logik (Sub-Run Ebene)
-    Write-VorceStep -Message "Starte Aggregations-Phase für $SubRunName..." -Status "RUN"
+    Write-VorceStep -Message "Starte Aggregations-Phase fuer $SubRunName..." -Status "RUN"
     $failedParts = @($completedResults | Where-Object { $_.status -eq "failed" })
 
     $aggregatedData = @{
@@ -164,7 +164,7 @@ function Invoke-VorceSubRunParallel {
     $statePath = Join-Path $global:VarDir "run-states/SUB_$($SubRunName).json"
     $aggregatedData | ConvertTo-Json -Depth 10 | Set-Content $statePath -Encoding UTF8
     
-    # OPTIONAL: Falls ein dediziertes Aggregations-Skript existiert, führe es aus
+    # OPTIONAL: Falls ein dediziertes Aggregations-Skript existiert, fuehre es aus
     # (z.B. SUB-RUN-01_DataSync_Aggregate.ps1)
     
     if ($failedParts.Count -gt 0) {
@@ -188,7 +188,7 @@ function Invoke-VorceSubRunSequential {
         $null -eq $partSettings -or $partSettings.enabled -ne $false
     })
 
-    Write-VorceStep -Message "Starte sequenzielle Ausführung für $SubRunName ($($PartRuns.Count) Parts)" -Status "RUN"
+    Write-VorceStep -Message "Starte sequenzielle Ausfuehrung fuer $SubRunName ($($PartRuns.Count) Parts)" -Status "RUN"
     $partStates = @()
 
     foreach ($part in $PartRuns) {
