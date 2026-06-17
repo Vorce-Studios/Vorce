@@ -95,9 +95,6 @@ temp_373/
 .gemini/
 gha-creds-*.json
 
-# Paperclip runtime data
-.paperclip-home/
-
 # Ghost files (prevent bot regressions)
 .pre-commit-config copy.yaml
 JULES_ISSUES.md
@@ -110,16 +107,5 @@ test.py
 # crates/vendor/env_logger/
 # crates/vendor/rusty-spout/
 
-# Jules memory: Log files generated with date suffixes
-scripts/archive/logs/
 
-# Deleted Jules scripts (prevent bot regressions)
-backfill-legacy-project-fields.ps1
-escalate-jules-sessions.ps1
-monitor-jules-sessions.ps1
 
-# Vorce-Autopilot: fully tracked directories (all files committed, no exceptions)
-!Vorce-Autopilot_NEW/**
-!Vorce-Autopilot_Restore/**
-
-.worktrees/

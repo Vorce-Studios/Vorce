@@ -142,6 +142,53 @@ impl OscTrigger {
     }
 }
 
+/// A simpler TimelineAction enum specific to control triggers
+/// to avoid dependency cycles with vorce-ui
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum TimelineTriggerAction {
+    Play,
+    Pause,
+    Stop,
+    Seek(f32),
+}
+
+/// Timeline trigger
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TimelineTrigger {
+    /// Module ID this action should run against
+    pub module_id: Option<u32>,
+    /// The action to perform
+    pub action: TimelineTriggerAction,
+}
+
+impl TimelineTrigger {
+    /// Create a timeline play trigger
+    pub fn play() -> Self {
+        Self { module_id: None, action: TimelineTriggerAction::Play }
+    }
+
+    /// Create a timeline pause trigger
+    pub fn pause() -> Self {
+        Self { module_id: None, action: TimelineTriggerAction::Pause }
+    }
+
+    /// Create a timeline stop trigger
+    pub fn stop() -> Self {
+        Self { module_id: None, action: TimelineTriggerAction::Stop }
+    }
+
+    /// Create a timeline seek trigger
+    pub fn seek(time: f32) -> Self {
+        Self { module_id: None, action: TimelineTriggerAction::Seek(time) }
+    }
+
+    /// Apply an action to a specific module
+    pub fn with_module(mut self, module_id: u32) -> Self {
+        self.module_id = Some(module_id);
+        self
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -207,5 +254,16 @@ mod tests {
     fn test_osc_trigger_with_value() {
         let trigger = OscTrigger::with_value("/vorce/cue/1".to_string(), "1.0".to_string());
         assert_eq!(trigger.value, Some("1.0".to_string()));
+    }
+
+    #[test]
+    fn test_timeline_trigger() {
+        let play = TimelineTrigger::play();
+        assert!(matches!(play.action, TimelineTriggerAction::Play));
+        assert_eq!(play.module_id, None);
+
+        let pause = TimelineTrigger::pause().with_module(42);
+        assert!(matches!(pause.action, TimelineTriggerAction::Pause));
+        assert_eq!(pause.module_id, Some(42));
     }
 }

@@ -51,3 +51,4 @@ proptest = { workspace = true }
 ron = { workspace = true }
 tempfile = "3.27"
 
+vorce-control = { path = "../vorce-control" }

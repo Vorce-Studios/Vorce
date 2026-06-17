@@ -1,3 +1,0 @@
-## 2024-06-14 - HashMap copy performance optimization
-**Learning:** In Rust, copying a `HashMap` by iterating and using `.extend()` with `.map(|(k, v)| (k.clone(), *v))` is significantly slower than using the standard library's highly optimized `clone_from()` method. A microbenchmark showed a ~14x performance improvement (~96ms for `extend` vs ~63ms for `clone`, and `clone_from` is even more optimized when the destination map already has capacity).
-**Action:** Always prefer `clone_from()` or `clone()` over manual iteration and `.extend()` when copying entire HashMaps, especially in hot loops like rendering or effect chain building.
