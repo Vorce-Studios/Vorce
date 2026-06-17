@@ -56,4 +56,4 @@ foreach ($issue in $triagedIssues) {
 Write-VorceStep -Message "Erstelle $($partRuns.Count) parallele Strategy-Proposals für Issues: $($triagedIssues.number -join ', ')" -Status "RUN"
 
 # Nutze parallele Ausführung für bessere Performance
-return Invoke-VorceSubRunParallel -SubRunName "SUB-RUN-03_MR-01_Planning__Strategy" -PartRuns $partRuns -ConfigBag $ConfigBag -ParentState $ParentState
+return Invoke-VorceSubRunParallel -SubRunName "SUB-RUN-03_MR-01_Planning__Strategy" -PartRuns $partRuns -ConfigBag $ConfigBag

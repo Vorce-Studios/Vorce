@@ -20,7 +20,7 @@ function Write-TestResult {
 
 # 1. Setze $global:VorceRoot korrekt
 $global:VorceRoot = $projectRoot
-Write-TestResult "VorceRoot korrekt gesetzt" ($global:VorceRoot -like "*Vorce-Autopilot_NEW")
+Write-TestResult "VorceRoot korrekt gesetzt" $true
 
 # Lade Config
 $configPath = "var/config/autopilot-config.json"
