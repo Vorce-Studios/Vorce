@@ -68,7 +68,7 @@ for ($i = 0; $i -lt $maxSessionsToCreate; $i++) {
         $repo = $ConfigBag.Config.repository
         $taskTitle = "Jules Task: $($task.title)"
         $taskBody = @"
-**Task Type:** $($task.taskType ?? "general")
+**Task Type:** $($(if ($null -ne $task.taskType) { $task.taskType } else { "general" }))
 
 **Original Issue:** #$(if ($task.issueNumber) { $task.issueNumber } else { "unknown" })
 

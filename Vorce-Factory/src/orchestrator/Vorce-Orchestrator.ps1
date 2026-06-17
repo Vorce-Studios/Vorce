@@ -32,9 +32,6 @@ if ($null -eq $GlobalState) {
 
 Write-VorceHeader -Title "ORCHESTRATOR ACTIVE" -Icon "🧠" -Color Cyan
 
-# D) Starte Main-Run
-Write-VorceRunStart -RunName $mainRunName -Level Main
-
 # B) Config und Quota laden
 $Config = Get-Content (Join-Path $global:VarDir "config/autopilot-config.json") -Raw | ConvertFrom-Json
 $QuotaRegistry = Get-Content (Join-Path $global:VarDir "config/quota-registry.json") -Raw | ConvertFrom-Json
@@ -108,13 +105,17 @@ if ($null -eq $result) {
     Write-VorceStep -Message "Kein Run überfällig." -Status "INFO"
     return
 }
+
 $mainRunName = $result.Name
 $bestOverdue = $result.OverdueMinutes
+
+# E) Starte Main-Run
+Write-VorceRunStart -RunName $mainRunName -Level Main
 
 $scheduleReason = if ($result.Forced) { "manuell ausgelöst" } elseif ($bestOverdue -eq [int]::MaxValue) { "noch nie ausgeführt" } else { "überfällig um $([math]::Round($bestOverdue, 1)) Minuten" }
 Write-VorceStep -Message "Wähle $mainRunName ($scheduleReason)" -Status "RUN"
 
-# E) Dynamischen Router-Aufruf (C8)
+# F) Dynamischen Router-Aufruf (C8)
 $MainRunPath = Join-Path $RunsDir $mainRunName
 $routerFile = Get-ChildItem -Path $MainRunPath -Filter "*-Router.ps1" | Select-Object -First 1
 
@@ -141,10 +142,7 @@ if ($routerKey) {
     })
 }
 
-# F) Try/Catch um jeden Sub-Run (C9)
-Write-VorceStep -Message "Geplante Sub-Runs: $($SubRuns.Count)" -Status "INFO"
-
-# F) Try/Catch um jeden Sub-Run (C9)
+# G) Try/Catch um jeden Sub-Run (C9)
 Write-VorceStep -Message "Geplante Sub-Runs: $($SubRuns.Count)" -Status "INFO"
 $subIndex = 0
 foreach ($sub in $SubRuns) {
@@ -170,7 +168,7 @@ foreach ($sub in $SubRuns) {
     }
 }
 
-# G) Nach Abschluss last_runs Timestamp aktualisieren
+# H) Nach Abschluss last_runs Timestamp aktualisieren
 if ($null -eq $GlobalState.last_runs) {
     $GlobalState | Add-Member -MemberType NoteProperty -Name "last_runs" -Value @{} -Force
 }

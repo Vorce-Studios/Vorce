@@ -158,9 +158,9 @@ function Get-VorceQuotaSummary {
         $status = if ($provider.enabled) { "ENABLED" } else { "DISABLED" }
 
         $summary += "`n[$status] $providerName"
-        $summary += "  Calls today: $($provider.usage_today.calls ?? 0)"
+        $summary += "  Calls today: $(if ($provider.usage_today.calls) { $provider.usage_today.calls } else { 0 })"
         $summary += "  Est. cost: $([double]$provider.usage_today.estimated_cost_usd)"
-        $summary += "  Daily limit: $($provider.daily_limit ?? 0)"
+        $summary += "  Daily limit: $(if ($provider.daily_limit) { $provider.daily_limit } else { 0 })"
         $summary += "  Daily budget: $([double]$provider.daily_budget_usd)"
     }
 

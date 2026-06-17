@@ -67,7 +67,7 @@ if ($performanceData.run_times) {
         $systemAnalysis.bottleneck_analysis.error_prone_sub_runs = $errorProneRuns | ForEach-Object @{
             name = $_.run_name
             error_count = $_.errors
-            error_rate = [math]::Round($_.errors / $_.sub_runs * 100, 2) ?? 0
+            error_rate = $(if ($null -ne $_.sub_runs -and $_.sub_runs -gt 0) { [math]::Round($_.errors / $_.sub_runs * 100, 2) } else { 0 })
         }
     }
 }

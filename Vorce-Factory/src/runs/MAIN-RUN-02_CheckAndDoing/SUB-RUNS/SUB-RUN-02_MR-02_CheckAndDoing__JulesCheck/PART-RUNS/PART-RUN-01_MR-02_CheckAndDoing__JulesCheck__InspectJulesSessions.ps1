@@ -94,7 +94,7 @@ foreach ($session in $activeDelegations) {
 
         if ($julesComments.Count -eq 0) {
             $session.status = "stalled"
-            $session.lastActivity = ($commentsResult[0]?.created_at ?? $ghResult.createdAt)
+            $session.lastActivity = $(if ($null -ne $commentsResult -and $null -ne $commentsResult[0] -and $null -ne $commentsResult[0].created_at) { $commentsResult[0].created_at } else { $ghResult.createdAt })
 
             Write-VorceStep -Message "STALLED: Keine Jules Comments gefunden" -Status "WARN"
         } else {

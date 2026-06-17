@@ -94,7 +94,7 @@ if ($null -ne $Result) {
         status = "created"
     }
 
-    $proposalFile = Join-Path $proposalsDir "proposal_$($targetIssue.number ?? $targetIssue.id).json"
+    $proposalFile = Join-Path $proposalsDir "proposal_$($(if ($null -ne $targetIssue.number) { $targetIssue.number } else { $targetIssue.id })).json"
     $proposal | ConvertTo-Json -Depth 10 | Set-Content $proposalFile -Encoding UTF8
 
     return @{

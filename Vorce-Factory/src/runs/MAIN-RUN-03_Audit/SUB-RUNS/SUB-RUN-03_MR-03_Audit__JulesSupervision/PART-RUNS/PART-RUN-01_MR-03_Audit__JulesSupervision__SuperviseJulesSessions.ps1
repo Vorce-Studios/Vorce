@@ -41,8 +41,8 @@ foreach ($session in $julesSessions) {
     # Check 1: Ist der Status aktuell?
     $sessionCompliance.checks += @{
         type = "status_current";
-        status = $session.status ?? "unknown";
-        timestamp = $session.timestamp ?? "unknown"
+        status = $(if ($null -ne $session.status) { $session.status } else { "unknown" });
+        timestamp = $(if ($null -ne $session.timestamp) { $session.timestamp } else { "unknown" })
     }
 
     # Check 2: Hat der Session eine gültige URL?

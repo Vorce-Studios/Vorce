@@ -40,10 +40,10 @@ foreach ($alert in $alerts) {
     Write-VorceStep -Message "Handhabe Alert: $($alert.type) - $($alert.severity)" -Status "RUN"
 
     $disposition = @{
-        alert_id = $alert.id ?? "unknown"
+        alert_id = $(if ($null -ne $alert.id) { $alert.id } else { "unknown" })
         alert_type = $alert.type
         alert_severity = $alert.severity
-        timestamp = $alert.timestamp ?? "unknown"
+        timestamp = $(if ($null -ne $alert.timestamp) { $alert.timestamp } else { "unknown" })
         disposition = "unhandled"
         resolution = "none"
     }

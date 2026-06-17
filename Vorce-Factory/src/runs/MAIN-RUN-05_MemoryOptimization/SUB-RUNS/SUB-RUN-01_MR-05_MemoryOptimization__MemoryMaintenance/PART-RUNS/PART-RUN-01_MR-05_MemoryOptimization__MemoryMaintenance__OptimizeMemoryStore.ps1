@@ -61,14 +61,14 @@ $cutoff7d = (Get-Date).AddDays(-7)
 
 foreach ($memory in $memories) {
     # Nach Typ gruppieren
-    $type = $memory.type ?? "unknown"
+    $type = $(if ($null -ne $memory.type) { $memory.type } else { "unknown" })
     if (-not $memoryAnalysis.memory_by_type[$type]) {
         $memoryAnalysis.memory_by_type[$type] = @()
     }
     $memoryAnalysis.memory_by_type[$type] += $memory
 
     # Nach Priorität gruppieren
-    $priority = $memory.priority ?? "medium"
+    $priority = $(if ($null -ne $memory.priority) { $memory.priority } else { "medium" })
     if (-not $memoryAnalysis.memory_by_priority[$priority]) {
         $memoryAnalysis.memory_by_priority[$priority] = @()
     }
@@ -85,7 +85,7 @@ foreach ($memory in $memories) {
     }
 
     # Nach Quelle gruppieren
-    $source = $memory.source ?? "unknown"
+    $source = $(if ($null -ne $memory.source) { $memory.source } else { "unknown" })
     if (-not $memoryAnalysis.memory_by_source[$source]) {
         $memoryAnalysis.memory_by_source[$source] = @()
     }

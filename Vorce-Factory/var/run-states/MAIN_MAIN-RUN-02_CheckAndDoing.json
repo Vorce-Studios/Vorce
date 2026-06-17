@@ -1,10 +1,14 @@
-{
-  "id": "run_20260615_175252",
-  "name": "MAIN-RUN-02_CheckAndDoing",
-  "type": "MAIN",
-  "status": "initialized",
-  "started_at": "2026-06-15T17:52:52.2629898+02:00",
-  "completed_at": null,
-  "metadata": {},
-  "results": []
+﻿{
+    "id":  "run_20260617_230238",
+    "name":  "MAIN-RUN-02_CheckAndDoing",
+    "type":  "MAIN",
+    "status":  "initialized",
+    "started_at":  "2026-06-17T23:02:38.3838729+02:00",
+    "completed_at":  null,
+    "metadata":  {
+
+                 },
+    "results":  [
+
+                ]
 }

@@ -61,7 +61,7 @@ foreach ($delegation in $activeDelegations) {
             # Wenn der Status sich geändert hat, zähle als Update
             if ($delegation.previousStatus -ne $newStatus) {
                 $delegation.previousStatus = $newStatus
-                Write-VorceStep -Message "Status geändert: $($delegation.previousStatus ?? 'unknown') → $newStatus" -Status "OK"
+                Write-VorceStep -Message "Status geändert: $($(if ($null -ne $delegation.previousStatus) { $delegation.previousStatus } else { 'unknown' })) → $newStatus" -Status "OK"
                 $updatedCount++
             } else {
                 Write-VorceStep -Message "Status unverändert: $newStatus" -Status "INFO"

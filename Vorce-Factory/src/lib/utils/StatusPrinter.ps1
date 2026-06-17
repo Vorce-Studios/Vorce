@@ -8,25 +8,25 @@ $script:Colors = @{
 }
 
 $script:RunIcons = @{
-    Main = "🏠"
-    Sub = "📂"
-    Part = "🔧"
+    Main = "H"
+    Sub  = "S"
+    Part = "P"
 }
 
 function Write-VorceHeader {
     param(
         [Parameter(Mandatory)][string]$Title,
         [string]$Subtitle = "",
-        [string]$Icon = "🚀",
+        [string]$Icon = "!",
         [ConsoleColor]$Color = "Cyan"
     )
     $lineWidth = if ($Subtitle) { 70 } else { 60 }
-    $line = "═" * $lineWidth
+    $line = "=" * $lineWidth
     
     Write-Host ""
     Write-Host "  $line" -ForegroundColor $Color
     Write-Host "  $Icon $Title" -ForegroundColor $Color
-    if ($Subtitle) { Write-Host "  ── $Subtitle" -ForegroundColor $Color }
+    if ($Subtitle) { Write-Host "  -- $Subtitle" -ForegroundColor $Color }
     Write-Host "  $line" -ForegroundColor $Color
 }
 
@@ -43,7 +43,7 @@ function Write-VorceRunStart {
     $counter = if ($Total -gt 0) { " [$Index/$Total]" } else { "" }
     $ts = Get-Date -Format "HH:mm:ss"
     Write-Host ""
-    Write-Host "${indent}┌─ $icon START $RunName$counter [$ts]" -ForegroundColor $color
+    Write-Host "${indent}+-- $icon START $RunName$counter [$ts]" -ForegroundColor $color
 }
 
 function Write-VorceRunEnd {
@@ -58,7 +58,7 @@ function Write-VorceRunEnd {
     $indent = switch($Level) { "Main" { "" } ; "Sub" { "  " } ; "Part" { "    " } }
     $ts = Get-Date -Format "HH:mm:ss"
     $duration = if ($DurationMs -gt 0) { " (${DurationMs}ms)" } else { "" }
-    Write-Host "${indent}└─ $icon END $RunName [$ts]${duration}" -ForegroundColor $color
+    Write-Host "${indent}+-- $icon END $RunName [$ts]${duration}" -ForegroundColor $color
 }
 
 function Write-VorceStep {
@@ -90,15 +90,15 @@ function Write-VorceStep {
 
 function Write-VorceDivider {
     param([ConsoleColor]$Color = "DarkGray", [string]$Style = "single")
-    $line = switch($Style) { "single" { "─" * 70 } ; default { "-" * 70 } }
+    $line = switch($Style) { "single" { "-" * 70 } ; default { "=" * 70 } }
     Write-Host ""
     Write-Host "  $line" -ForegroundColor $Color
 }
 
 function Write-VorceFooter {
     param([string]$Message = "Abgeschlossen", [ConsoleColor]$Color = "Cyan", [ValidateSet("completed", "failed")]$Status = "completed")
-    $icon = if ($Status -eq "completed") { "✅" } else { "❌" }
-    $line = "═" * 60
+    $icon = if ($Status -eq "completed") { "OK" } else { "ERR" }
+    $line = "=" * 60
     $ts = Get-Date -Format "HH:mm:ss"
     Write-Host ""
     Write-Host "  $icon $Message [$ts]" -ForegroundColor $Color

@@ -65,10 +65,10 @@ if ($quotaRegistry.providers) {
         $provider = $quotaRegistry.providers.$providerName
         $performanceData.quota_usage += @{
             provider = $providerName
-            daily_calls = $provider.usage_today.calls ?? 0
-            daily_cost_usd = $provider.usage_today.estimated_cost_usd ?? 0
-            daily_limit = $provider.daily_limit ?? 0
-            daily_budget_usd = $provider.daily_budget_usd ?? 0
+            daily_calls = $(if ($null -ne $provider.usage_today.calls) { $provider.usage_today.calls } else { 0 })
+            daily_cost_usd = $(if ($null -ne $provider.usage_today.estimated_cost_usd) { $provider.usage_today.estimated_cost_usd } else { 0 })
+            daily_limit = $(if ($null -ne $provider.daily_limit) { $provider.daily_limit } else { 0 })
+            daily_budget_usd = $(if ($null -ne $provider.daily_budget_usd) { $provider.daily_budget_usd } else { 0 })
             quota_available = Test-VorceQuota -AgentName $providerName
         }
     }
@@ -77,8 +77,8 @@ if ($quotaRegistry.providers) {
 # 3. System-Metriken sammeln
 $performanceData.system_metrics = @{
     active_delegations = if ($ConfigBag.GlobalState.active_delegations) { $ConfigBag.GlobalState.active_delegations.Count } else { 0 }
-    total_issues_processed = if ($ConfigBag.GlobalState.stats) { $ConfigBag.GlobalState.stats.total_issues_processed ?? 0 } else { 0 }
-    total_runs_completed = if ($ConfigBag.GlobalState.stats) { $ConfigBag.GlobalState.stats.total_runs ?? 0 } else { 0 }
+    total_issues_processed = if ($ConfigBag.GlobalState.stats) { $(if ($null -ne $ConfigBag.GlobalState.stats.total_issues_processed) { $ConfigBag.GlobalState.stats.total_issues_processed } else { 0 }) } else { 0 }
+    total_runs_completed = if ($ConfigBag.GlobalState.stats) { $(if ($null -ne $ConfigBag.GlobalState.stats.total_runs) { $ConfigBag.GlobalState.stats.total_runs } else { 0 }) } else { 0 }
     last_housekeeping = if ($ConfigBag.GlobalState.stats) { $ConfigBag.GlobalState.stats.last_housekeeping } else { "unknown" }
     memory_usage = [math]::Round((Get-Process -Name "*vorce*" -ErrorAction SilentlyContinue | Measure-Object WorkingSet -Sum).Sum / 1MB, 2)
     uptime_days = [math]::Round((New-TimeSpan -Start (Get-Date).AddDays(-7)).TotalDays, 1) # Annahme 7 Tage Laufzeit

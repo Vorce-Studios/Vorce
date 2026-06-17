@@ -72,6 +72,8 @@ function Invoke-VorceSubRunParallel {
     $activeJobs = @()
     $completedResults = @()
     $queue = [System.Collections.Generic.Queue[object]]::new($PartRuns)
+    $spinChars = @("|", "/", "-", "\")
+    $spinIdx = 0
     
     while ($queue.Count -gt 0 -or $activeJobs.Count -gt 0) {
         # 1. Fülle Jobs auf, bis MaxParallel erreicht ist
@@ -91,27 +93,61 @@ function Invoke-VorceSubRunParallel {
                 . (Join-Path $pLibDir "state/StateManager.ps1")
                 . (Join-Path $pLibDir "engines/RunEngine.ps1")
                 Invoke-VorcePartRun -PartName $pName -ScriptPath $pScript -Arguments @{ ConfigBag = $pConfigBag }
-            } -ArgumentList $part.name, $part.script, $global:LibDir, $global:VarDir, $global:VorceRoot, $ConfigBag
+            } -ArgumentList $part.name, $part.script, $global:LibDir, $global:VarDir, $global:VorceRoot, $ConfigBag -Name $part.name
             
             $activeJobs += $job
         }
         
-        # 2. Prüfe auf fertige Jobs
+        # 2. Prüfe auf fertige Jobs und streame Output
         $stillActive = @()
         foreach ($job in $activeJobs) {
+            # Stream Output (Live)
+            $jobOutput = Receive-Job -Job $job
+            if ($jobOutput) {
+                foreach ($line in $jobOutput) {
+                    if ($line -is [System.Management.Automation.HostInformationMessage]) {
+                        Write-Host "    [$($job.Name)] $($line.Message)" -ForegroundColor Gray
+                    } else {
+                        Write-Host "    [$($job.Name)] $line" -ForegroundColor Gray
+                    }
+                }
+            }
+
             if ($job.State -ne "Running") {
-                $jobResult = Receive-Job -Job $job -Wait -ErrorAction SilentlyContinue
-                $completedResults += $jobResult
+                # Job ist fertig - hole finales Ergebnis (State Objekt)
+                $jobResult = Receive-Job -Job $job
+                # Falls Receive-Job im Job-Kontext das PartState Objekt zurückgegeben hat
+                $stateObj = $jobResult | Where-Object { $_.PSObject.Properties.Name -contains "RunName" -or $_.PSObject.Properties.Name -contains "status" } | Select-Object -First 1
+                
+                if ($job.State -eq "Failed") {
+                    $errorMsg = if ($job.ChildJobs[0].JobStateInfo.Reason) { $job.ChildJobs[0].JobStateInfo.Reason.Message } else { "Unbekannter Fehler im Hintergrund-Job." }
+                    Write-VorceStep -Message "Job CRASHED: $($job.Name) - $errorMsg" -Status "ERROR"
+                    $completedResults += @{ name=$job.Name; status="failed"; error=$errorMsg }
+                } elseif ($stateObj) {
+                    $completedResults += $stateObj
+                    $statusIcon = if ($stateObj.status -eq "completed") { "OK" } else { "ERROR" }
+                    Write-VorceStep -Message "Job abgeschlossen: $($job.Name)" -Status $statusIcon
+                } else {
+                    Write-VorceStep -Message "Job abgeschlossen: $($job.Name) (Kein State-Objekt empfangen)" -Status "WARN"
+                    $completedResults += @{ name=$job.Name; status="completed" }
+                }
                 Remove-Job $job -Force
-                Write-VorceStep -Message "Job abgeschlossen: $($job.Name)" -Status "OK"
             } else {
                 $stillActive += $job
             }
         }
         $activeJobs = $stillActive
         
-        if ($activeJobs.Count -gt 0 -or $queue.Count -gt 0) { Start-Sleep -Milliseconds 500 }
+        if ($activeJobs.Count -gt 0 -or $queue.Count -gt 0) { 
+            $spinIdx = ($spinIdx + 1) % $spinChars.Count
+            $char = $spinChars[$spinIdx]
+            $msg = "  $char [$($activeJobs.Count) aktive Jobs, $($queue.Count) in Warteschlange]      "
+            Write-Host -NoNewline "`r$msg"
+            Start-Sleep -Milliseconds 250 
+        }
     }
+    Write-Host "`r" # Clear Spinner line
+
     
     # 3. Aggregations-Logik (Sub-Run Ebene)
     Write-VorceStep -Message "Starte Aggregations-Phase für $SubRunName..." -Status "RUN"
