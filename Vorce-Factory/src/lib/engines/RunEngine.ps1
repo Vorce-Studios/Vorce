@@ -10,6 +10,7 @@ function Invoke-VorcePartRun {
     )
     
     $PartState = Initialize-RunState -RunName $PartName -RunType "PART"
+    Write-VorceRunStart -RunName $PartName -Level Part
     Write-VorceStep -Message "Führe Part-Run aus: $PartName" -Status "RUN"
     
     try {
@@ -33,10 +34,12 @@ function Invoke-VorcePartRun {
         $PartState.status = "completed"
         $PartState.results += $result
         Write-VorceStep -Message "Part-Run $PartName abgeschlossen." -Status "OK"
+        Write-VorceRunEnd -RunName $PartName -Level Part -Status "completed"
     } catch {
         $PartState.status = "failed"
         $PartState.metadata["error"] = $_.Exception.Message
         Write-VorceStep -Message "Fehler in Part-Run ${PartName}: $($_.Exception.Message)" -Status "ERROR"
+        Write-VorceRunEnd -RunName $PartName -Level Part -Status "failed"
     } finally {
         $PartState.completed_at = (Get-Date).ToString("o")
         # Speichern des Part-States

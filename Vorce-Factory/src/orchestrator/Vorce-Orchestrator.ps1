@@ -30,7 +30,10 @@ if ($null -eq $GlobalState) {
     $GlobalState = Read-VorceGlobalState
 }
 
-Write-VorceHeader -Title "ORCHESTRATOR ACTIVE" -Icon "🧠"
+Write-VorceHeader -Title "ORCHESTRATOR ACTIVE" -Icon "🧠" -Color Cyan
+
+# D) Starte Main-Run
+Write-VorceRunStart -RunName $mainRunName -Level Main
 
 # B) Config und Quota laden
 $Config = Get-Content (Join-Path $global:VarDir "config/autopilot-config.json") -Raw | ConvertFrom-Json
@@ -141,9 +144,12 @@ if ($routerKey) {
 # F) Try/Catch um jeden Sub-Run (C9)
 Write-VorceStep -Message "Geplante Sub-Runs: $($SubRuns.Count)" -Status "INFO"
 
+# F) Try/Catch um jeden Sub-Run (C9)
+Write-VorceStep -Message "Geplante Sub-Runs: $($SubRuns.Count)" -Status "INFO"
+$subIndex = 0
 foreach ($sub in $SubRuns) {
-    Write-VorceDivider
-    Write-VorceStep -Message "Starte Sub-Run: $($sub.name)" -Status "RUN"
+    $subIndex++
+    Write-VorceRunStart -RunName $sub.name -Level Sub -Index $subIndex -Total $SubRuns.Count
 
     try {
         $subScript = Join-Path $global:VorceRoot $sub.script
@@ -151,14 +157,15 @@ foreach ($sub in $SubRuns) {
             $subResult = & $subScript -ConfigBag $ConfigBag -ParentState $MainState
             $MainState.results += $subResult
             if ($subResult.status -eq "failed") {
-                throw "Mindestens ein PART-RUN in $($sub.name) ist fehlgeschlagen."
+                $errorMsg = "Mindestens ein PART-RUN in $($sub.name) ist fehlgeschlagen."
+                throw $errorMsg
             }
-            Write-VorceStep -Message "Sub-Run $($sub.name) abgeschlossen." -Status "OK"
+            Write-VorceRunEnd -RunName $sub.name -Level Sub -Status "completed"
         } else {
             throw "Sub-Run Skript nicht gefunden: $subScript"
         }
     } catch {
-        Write-VorceStep -Message "Sub-Run $($sub.name) fehlgeschlagen: $($_.Exception.Message)" -Status "ERROR"
+        Write-VorceRunEnd -RunName $sub.name -Level Sub -Status "failed"
         $MainState.results += @{ name=$sub.name; status="failed"; error=$_.Exception.Message; timestamp=(Get-Date).ToString("o") }
     }
 }
@@ -189,5 +196,6 @@ Write-VorceStep -Message "Main-Aggregation für $mainRunName abgeschlossen." -St
 Write-VorceStep -Message "Sichere Global State..." -Status "RUN"
 if (-not $DryRun) { Save-VorceGlobalState -State $GlobalState }
 
-$footerStatus = if ($MainState.status -eq "completed") { "erfolgreich beendet" } else { "mit Fehlern beendet" }
-Write-VorceFooter -Message "$mainRunName $footerStatus."
+$footerStatus = if ($MainState.status -eq "completed") { "completed" } else { "failed" }
+Write-VorceRunEnd -RunName $mainRunName -Level Main -Status $footerStatus
+Write-VorceFooter -Message "$mainRunName abgeschlossen." -Status $footerStatus
