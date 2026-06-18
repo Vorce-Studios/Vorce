@@ -25,7 +25,7 @@ Vollständige Modernisierung des Dashboards für die neue Run-Hierarchie und ein
 > 2. Jede Ebene (Main/Sub/Part) soll einen Status-Indikator (Farbe/Icon) und einen Link zum jeweiligen JSON-State-File haben.
 > 3. Implementiere einen "Log-Monitor" Bereich, der die neuesten Zeilen aus `var/log/autopilot.log` in Echtzeit streamt.
 
----
+---Done
 
 ## Phase 2: Prompt-Engine & Snippet-System
 
@@ -78,3 +78,7 @@ Vollständige Modernisierung des Dashboards für die neue Run-Hierarchie und ein
 > 1. Kürze narrative Erklärungen ("You are a helpful assistant...") zugunsten von direkten Direktiven.
 > 2. Verifiziere, dass keine zwei Prompts identische, großflächige Anweisungen enthalten (Verschiebe diese in Phase 2 Snippets).
 > 3. Teste den `PromptManager` mit einem Mock-Datensatz auf fehlerfreie Zusammenstellung.
+> 4. Teste mit C:\Users\Vinyl\Desktop\VJMapper\VjMapper\Vorce-Factory\Start-Autopilot.ps1 ob es noch Probleme und Fehler in den produktiven Runs gibt.
+> 5. Behebe die Probleme und Fehler.
+> 6. Teste erneut.
+> 7. Wiederhole dies, bis keine Probleme und Fehler mehr vorhanden sind.

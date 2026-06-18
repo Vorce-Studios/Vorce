@@ -1,7 +1,10 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import { LayoutDashboard, Activity, Settings, RefreshCw, Zap, BarChart3, Menu } from 'lucide-react';
 import { useData, useAutoRefresh } from './hooks';
-import { useWebSocket } from './hooks/useWebSocket';
+import { useWebSocketEnhanced } from './hooks/useWebSocketEnhanced';
+import { SyncStatus } from './components/SyncStatus';
+import { LiveLogMonitor } from './components/LiveLogMonitor';
+import { RunHierarchyView, RunFlatView } from './components/RunHierarchyView';
 
 // Pages
 import DashboardPage from './pages/DashboardPage';
@@ -69,6 +72,7 @@ const defaultActiveSessions: ActiveSessions = {
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [hierarchyViewExpanded, setHierarchyViewExpanded] = useState<Set<string>>(new Set());
 
   // Fetch data hooks
   const { data: config, loading: configLoading, refetch: refetchConfig } = useData<AutopilotConfig>('/autopilot-config.json', defaultAutopilotConfig);
@@ -97,13 +101,60 @@ export default function App() {
     refetchLiveLog();
   }, [refetchConfig, refetchRegistry, refetchSessions, refetchIssues, refetchPRs, refetchProjectItems, refetchJulesSessions, refetchMemory, refetchHistory, refetchAuditResult, refetchLiveLog]);
 
-  // WebSocket pushes trigger immediate refreshes; polling remains as a fallback.
-  useWebSocket({ onMessage: refetchAll });
+  // Enhanced WebSocket for real-time updates
+  const {
+    data: wsData,
+    lastSync,
+    connectionStatus,
+    hasUnreadUpdates,
+    unreadUpdatesCount,
+    reconnect
+  } = useWebSocketEnhanced({
+    onFileUpdate: (update) => {
+      // Handle file updates by refreshing specific data
+      if (update.path.includes('run-states')) {
+        refetchConfig();
+        refetchSessions();
+        refetchHistory();
+      }
+    },
+    onLogUpdate: () => {
+      // Handle log updates
+      refetchLiveLog();
+    }
+  });
+
+  // Legacy polling fallback
   useAutoRefresh(refetchAll, 30000);
+
+  // Handle hierarchy view toggle
+  const toggleHierarchyNode = useCallback((nodeId: string) => {
+    setHierarchyViewExpanded(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(nodeId)) {
+        newSet.delete(nodeId);
+      } else {
+        newSet.add(nodeId);
+      }
+      return newSet;
+    });
+  }, []);
 
   const isGlobalLoading = configLoading && registryLoading && sessionsLoading && issuesLoading && prLoading && historyLoading;
 
-    const renderActivePage = () => {
+  // Convert run states to hierarchical structure
+  const runStates = useMemo(() => {
+    return (sessions.run_states || []).map(state => ({
+      name: state.name || 'unknown',
+      type: state.name?.split('-')[0].toLowerCase() as 'main' | 'sub' | 'part' || 'part',
+      status: state.status || 'pending',
+      data: state,
+      path: state.name || '',
+      lastUpdated: state.last_updated || state.timestamp
+    }));
+  }, [sessions.run_states]);
+
+  const renderActivePage = () => {
       switch (activeTab) {
         case 'dashboard':
           return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} auditResult={auditResult} liveLog={liveLog?.content || ''} />;
@@ -157,14 +208,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={refetchAll}
-              disabled={isGlobalLoading}
-              className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-all duration-200"
-              title="Daten aktualisieren"
-            >
-              <RefreshCw className={`w-4 h-4 ${isGlobalLoading ? 'animate-spin' : ''}`} />
-            </button>
+            <SyncStatus onManualRefresh={refetchAll} />
           </div>
         </div>
       </header>

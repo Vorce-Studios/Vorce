@@ -72,3 +72,5 @@ Verbesserung der Terminal-Visualisierung der Run-Hierarchie (Main/Sub/Part) und 
 > 1. Überprüfe die visuelle Hierarchie im Terminal.
 > 2. Bestätige, dass Parallel-Jobs korrekt geloggt werden.
 > 3. Verifiziere die JSON-Handoffs in `var/run-states/`.
+
+---Done

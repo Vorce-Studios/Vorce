@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, CalendarClock, Ban, MessageSquare, Terminal, Play, CheckCircle, Trash2 } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, CalendarClock, Ban, MessageSquare, Terminal, Play, CheckCircle, Trash2, FolderOpen, Folder, FileJson } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue, AuditResult } from '../types';
 import DeliberationPanel from './DeliberationPanel';
+import { RunHierarchyView } from '../components/RunHierarchyView';
+import { LiveLogMonitor } from '../components/LiveLogMonitor';
 
 interface Props {
   registry: QuotaRegistry;
@@ -173,8 +175,23 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   const audit = parseAuditResult(auditResult);
   const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
   const [commentDraft, setCommentDraft] = useState<string>('');
+  const [expandedRunNodes, setExpandedRunNodes] = useState<Set<string>>(new Set());
 
   const activeAlerts = sessions.decisions_pending?.filter(a => a.status !== 'closed' && a.status !== 'ignored') || [];
+
+  // Convert run states to hierarchical structure
+  const runStates = useMemo(() => {
+    if (!sessions.run_states) return [];
+
+    return sessions.run_states.map(state => ({
+      name: state.name || 'unknown',
+      type: state.name?.split('-')[0].toLowerCase() as 'main' | 'sub' | 'part' || 'part',
+      status: state.status || 'pending',
+      data: state,
+      path: state.name || '',
+      lastUpdated: state.last_updated || state.timestamp
+    }));
+  }, [sessions.run_states]);
 
   const sendRunControl = async (mainRun: string, action: string, note?: string) => {
     await fetch('/api/run-control', {
@@ -189,6 +206,37 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ main_run: mainRun }),
+    });
+  };
+
+  const handleRunNodeClick = (runState: any) => {
+    // Log the run state details for debugging
+    console.log('Run state clicked:', runState);
+    // In a real implementation, this would open a detailed view or modal
+  };
+
+  const handleSelectFile = (filePath: string) => {
+    // Construct the full path to the JSON file
+    const fullPath = `/var/run-states/${filePath}.json`;
+
+    // In a real implementation, this would:
+    // 1. Open the file in a modal or new tab
+    // 2. Fetch the file content and display it
+    console.log('Opening JSON file:', fullPath);
+
+    // For now, we'll just show an alert
+    alert(`Öffne JSON-Datei: ${fullPath}\n\nIn einer echten Implementierung würde dies den Inhalt der Datei anzeigen.`);
+  };
+
+  const toggleRunNode = (nodeId: string) => {
+    setExpandedRunNodes(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(nodeId)) {
+        newSet.delete(nodeId);
+      } else {
+        newSet.add(nodeId);
+      }
+      return newSet;
     });
   };
 
@@ -256,6 +304,26 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
             )}
           </div>
         </div>
+      </div>
+
+      {/* Run Hierarchy View */}
+      <div className="glass-card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
+            <Activity className="w-5 h-5" />
+            Run-Hierarchie
+          </h3>
+          <span className="text-sm text-slate-400">
+            {runStates.length} Runs
+          </span>
+        </div>
+        <RunHierarchyView
+          runStates={runStates}
+          onNodeClick={handleRunNodeClick}
+          expandedNodes={expandedRunNodes}
+          onToggleNode={toggleRunNode}
+          onSelectFile={handleSelectFile}
+        />
       </div>
 
       {/* Audit Alert Box if issues found but no active decisions_pending */}
@@ -979,5 +1047,10 @@ function JulesStateBadge({ state }: { state: string }) {
   const cfg = configs[state] || { bg: 'bg-slate-500/20', text: 'text-slate-400', label: state };
   return (
     <span className={`badge ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
+  );
+}
+
+      <LiveLogMonitor visible={true} maxHeight="200px" />
+    </div>
   );
 }
