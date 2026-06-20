@@ -13,4 +13,3 @@ Regeln:
 - Halte den Scope eng am alten PR-Ziel.
 - Erstelle einen neuen PR auf frischer Basis.
 - Dokumentiere Abweichungen zum alten PR kurz im neuen PR.
-
