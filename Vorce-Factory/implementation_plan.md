@@ -407,7 +407,7 @@ param(
 >
 > Füge nach den globalen Variablen einen Health-Check ein (W4):
 >   # --- Health-Check ---
->   $requiredDirs = @($global:VarDir, $LogDir, $DbDir, 
+>   $requiredDirs = @($global:VarDir, $LogDir, $DbDir,
 >       (Join-Path $global:VarDir "run-states"),
 >       (Join-Path $global:VarDir "tmp"),
 >       (Join-Path $DbDir "proposals"))
@@ -1151,23 +1151,23 @@ graph TD
     C -->|CheckAndDoing| E["CheckAndDoing-Router.ps1"]
     C -->|Audit| F["Audit-Router.ps1"]
     C -->|Keiner| G["IDLE — warte auf Intervall"]
-    
+
     D --> D1["SUB-RUN-01_MR-01_Planning__DataSync"]
     D --> D2["SUB-RUN-02_MR-01_Planning__Triage"]
     D --> D3["SUB-RUN-03_MR-01_Planning__Strategy"]
     D --> D4["SUB-RUN-04_MR-01_Planning__Delegation"]
-    
+
     D1 --> D1a["PART-RUN-01_MR-01_Planning__DataSync__FetchIssues"]
     D1 --> D1b["PART-RUN-02_MR-01_Planning__DataSync__FetchPRs"]
     D3 --> D3a["PART-RUN-01_MR-01_Planning__Strategy__CreateProposal"]
-    
+
     E --> E1["SUB-RUN-01_MR-02_CheckAndDoing__SessionSync"]
     E --> E2["SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck"]
     E --> E3["SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck"]
     E --> E4["SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch"]
     E --> E5["SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill"]
     E --> E6["SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping"]
-    
+
     F --> F1["SUB-RUN-01_MR-03_Audit__DataSync"]
     F --> F2["SUB-RUN-02_MR-03_Audit__ComplianceCheck"]
     F --> F3["SUB-RUN-03_MR-03_Audit__JulesSupervision"]
