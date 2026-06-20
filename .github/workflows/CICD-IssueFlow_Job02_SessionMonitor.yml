@@ -29,7 +29,7 @@ jobs:
       JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Skip when Jules API key is missing
         if: ${{ env.JULES_API_KEY == '' }}
