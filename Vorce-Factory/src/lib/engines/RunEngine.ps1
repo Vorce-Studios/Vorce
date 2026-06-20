@@ -8,7 +8,7 @@ function Invoke-VorcePartRun {
         [object]$ParentState = $null,
         [hashtable]$Arguments = @{}
     )
-    
+
     $PartState = Initialize-RunState -RunName $PartName -RunType "PART"
     Write-VorceRunStart -RunName $PartName -Level Part
     Write-VorceStep -Message "Fuehre Part-Run aus: $PartName" -Status "RUN"
@@ -30,7 +30,7 @@ function Invoke-VorcePartRun {
                 throw $reason
             }
         }
-        
+
         $PartState.status = "completed"
         $PartState.results += $result
         Write-VorceStep -Message "Part-Run $PartName abgeschlossen." -Status "OK"
@@ -46,7 +46,7 @@ function Invoke-VorcePartRun {
         $statePath = Join-Path $global:VarDir "run-states/PART_$($PartName).json"
         $PartState | ConvertTo-Json -Depth 10 | Set-Content $statePath -Encoding UTF8
     }
-    
+
     return $PartState
 }
 
@@ -57,7 +57,7 @@ function Invoke-VorceSubRunParallel {
         [hashtable]$ConfigBag = @{},
         [int]$MaxParallel = 3
     )
-    
+
     $subSettings = $ConfigBag.Config.run_settings.sub_runs.($SubRunName)
     if ($subSettings -and $subSettings.max_parallel -gt 0) {
         $MaxParallel = [int]$subSettings.max_parallel
@@ -68,19 +68,19 @@ function Invoke-VorceSubRunParallel {
     })
 
     Write-VorceStep -Message "Starte parallele Ausfuehrung fuer $SubRunName ($($PartRuns.Count) Parts, Max: $MaxParallel)" -Status "RUN"
-    
+
     $activeJobs = @()
     $completedResults = @()
     $queue = [System.Collections.Generic.Queue[object]]::new($PartRuns)
     $spinChars = @("|", "/", "-", "\")
     $spinIdx = 0
-    
+
     while ($queue.Count -gt 0 -or $activeJobs.Count -gt 0) {
         # 1. Fuelle Jobs auf, bis MaxParallel erreicht ist
         while ($activeJobs.Count -lt $MaxParallel -and $queue.Count -gt 0) {
             $part = $queue.Dequeue()
             Write-VorceStep -Message "Queue -> Job: $($part.name)" -Status "INFO"
-            
+
             # Starte den Part-Run in einem Hintergrund-Job
             $job = Start-Job -ScriptBlock {
                 param($pName, $pScript, $pLibDir, $pVarDir, $pRoot, $pConfigBag)
@@ -94,10 +94,10 @@ function Invoke-VorceSubRunParallel {
                 . (Join-Path $pLibDir "engines/RunEngine.ps1")
                 Invoke-VorcePartRun -PartName $pName -ScriptPath $pScript -Arguments @{ ConfigBag = $pConfigBag }
             } -ArgumentList $part.name, $part.script, $global:LibDir, $global:VarDir, $global:VorceRoot, $ConfigBag -Name $part.name
-            
+
             $activeJobs += $job
         }
-        
+
         # 2. Pruefe auf fertige Jobs und streame Output
         $stillActive = @()
         foreach ($job in $activeJobs) {
@@ -118,7 +118,7 @@ function Invoke-VorceSubRunParallel {
                 $jobResult = Receive-Job -Job $job
                 # Falls Receive-Job im Job-Kontext das PartState Objekt zurueckgegeben hat
                 $stateObj = $jobResult | Where-Object { $_.PSObject.Properties.Name -contains "RunName" -or $_.PSObject.Properties.Name -contains "status" } | Select-Object -First 1
-                
+
                 if ($job.State -eq "Failed") {
                     $errorMsg = if ($job.ChildJobs[0].JobStateInfo.Reason) { $job.ChildJobs[0].JobStateInfo.Reason.Message } else { "Unbekannter Fehler im Hintergrund-Job." }
                     Write-VorceStep -Message "Job CRASHED: $($job.Name) - $errorMsg" -Status "ERROR"
@@ -137,18 +137,18 @@ function Invoke-VorceSubRunParallel {
             }
         }
         $activeJobs = $stillActive
-        
-        if ($activeJobs.Count -gt 0 -or $queue.Count -gt 0) { 
+
+        if ($activeJobs.Count -gt 0 -or $queue.Count -gt 0) {
             $spinIdx = ($spinIdx + 1) % $spinChars.Count
             $char = $spinChars[$spinIdx]
             $msg = "  $char [$($activeJobs.Count) aktive Jobs, $($queue.Count) in Warteschlange]      "
             Write-Host -NoNewline "`r$msg"
-            Start-Sleep -Milliseconds 250 
+            Start-Sleep -Milliseconds 250
         }
     }
     Write-Host "`r" # Clear Spinner line
 
-    
+
     # 3. Aggregations-Logik (Sub-Run Ebene)
     Write-VorceStep -Message "Starte Aggregations-Phase fuer $SubRunName..." -Status "RUN"
     $failedParts = @($completedResults | Where-Object { $_.status -eq "failed" })
@@ -159,14 +159,14 @@ function Invoke-VorceSubRunParallel {
         timestamp = (Get-Date).ToString("o")
         parts = $completedResults
     }
-    
+
     # Speichere Sub-Run State vorab
     $statePath = Join-Path $global:VarDir "run-states/SUB_$($SubRunName).json"
     $aggregatedData | ConvertTo-Json -Depth 10 | Set-Content $statePath -Encoding UTF8
-    
+
     # OPTIONAL: Falls ein dediziertes Aggregations-Skript existiert, fuehre es aus
     # (z.B. SUB-RUN-01_DataSync_Aggregate.ps1)
-    
+
     if ($failedParts.Count -gt 0) {
         Write-VorceStep -Message "Sub-Run $SubRunName mit $($failedParts.Count) fehlgeschlagenen PART-RUNs aggregiert." -Status "ERROR"
     } else {

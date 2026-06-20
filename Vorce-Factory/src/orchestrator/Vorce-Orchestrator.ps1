@@ -204,7 +204,7 @@ foreach ($res in $MainState.results) {
     $color = if ($res.status -eq "completed") { "Green" } else { "Red" }
     $duration = if ($null -ne $res.duration_sec) { "$($res.duration_sec)s" } else { "-" }
     $msg = if ($res.status -eq "failed") { $res.error } else { "Erfolgreich" }
-    
+
     $rName = if ($res.name) { $res.name } elseif ($res.sub_run) { $res.sub_run } else { "Unknown" }
     $line = "  $($rName.ToString().PadRight(30)) | $($statusCol.PadRight(12)) | $($duration.PadRight(10)) | $msg"
     Write-Host $line -ForegroundColor $color
