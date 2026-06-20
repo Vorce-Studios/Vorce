@@ -22,7 +22,7 @@ function Write-VorceHeader {
     )
     $lineWidth = if ($Subtitle) { 70 } else { 60 }
     $line = "=" * $lineWidth
-    
+
     Write-Host ""
     Write-Host "  $line" -ForegroundColor $Color
     Write-Host "  $Icon $Title" -ForegroundColor $Color
