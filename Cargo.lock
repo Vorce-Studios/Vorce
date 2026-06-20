@@ -4556,9 +4556,9 @@ dependencies = [
 
 [[package]]
 name = "grafton-ndi"
-version = "0.13.0"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8bbe269c59085424150e1b11d0ecc21b221bb3400dacfe0dc25696b0ad44e18a"
+checksum = "b9c5135de4b600d1f1de31d89033457faab08f215204b90066591bf1a05c6aa6"
 dependencies = [
  "base64",
  "bindgen",
