@@ -6,6 +6,17 @@ param(
     [string]$VorceRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\..\.."))
 )
 
+# Import logging module
+$LoggingModule = Join-Path $PSScriptRoot "..\..\..\src\lib\logging\Write-Log.ps1"
+if (Test-Path -LiteralPath $LoggingModule) {
+    . $LoggingModule
+} else {
+    Write-Warning "Logging module not found at $LoggingModule"
+}
+
+# Initialize logging
+Write-Log -Level INFO -Message "Starting sync service" -Component "sync-service" -Data @{ port = $Port; vorce_root = $VorceRoot }
+
 $varDir = Join-Path $VorceRoot "var"
 $listener = [System.Net.HttpListener]::new()
 $listener.Prefixes.Add("http://localhost:$Port/")
@@ -29,9 +40,17 @@ function Get-VorceSyncSnapshot {
     $runStateDir = Join-Path $varDir "run-states"
     if (Test-Path -LiteralPath $runStateDir) {
         foreach ($file in Get-ChildItem -LiteralPath $runStateDir -File -Filter "*.json") {
+            $data = Read-VorceSyncJson -Path $file.FullName
+
+            # Extract the actual run name from the file content
+            $runName = $file.BaseName
+            if ($data -and $data.name) {
+                $runName = $data.name
+            }
+
             $runStates += [pscustomobject]@{
-                name = $file.BaseName
-                data = Read-VorceSyncJson -Path $file.FullName
+                name = $runName
+                data = $data
             }
         }
     }
@@ -44,7 +63,7 @@ function Get-VorceSyncSnapshot {
     }
 }
 
-Write-Host "WebSocket sync service listening on ws://localhost:$Port/"
+Write-Log -Level INFO -Message "WebSocket sync service listening" -Component "sync-service" -Data @{ port = $Port; url = "ws://localhost:$Port/" }
 try {
     while ($listener.IsListening) {
         $context = $listener.GetContext()
@@ -58,19 +77,28 @@ try {
         $socket = $context.AcceptWebSocketAsync($nullProtocol).GetAwaiter().GetResult().WebSocket
         try {
             while ($socket.State -eq [System.Net.WebSockets.WebSocketState]::Open) {
-                $json = Get-VorceSyncSnapshot | ConvertTo-Json -Depth 20 -Compress
-                $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
-                $segment = [System.ArraySegment[byte]]::new($bytes)
-                $socket.SendAsync(
-                    $segment,
-                    [System.Net.WebSockets.WebSocketMessageType]::Text,
-                    $true,
-                    [System.Threading.CancellationToken]::None
-                ).GetAwaiter().GetResult()
-                Start-Sleep -Seconds 2
+                try {
+                    $json = Get-VorceSyncSnapshot | ConvertTo-Json -Depth 20 -Compress
+                    $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
+                    $segment = [System.ArraySegment[byte]]::new($bytes)
+                    $socket.SendAsync(
+                        $segment,
+                        [System.Net.WebSockets.WebSocketMessageType]::Text,
+                        $true,
+                        [System.Threading.CancellationToken]::None
+                    ).GetAwaiter().GetResult()
+                    Start-Sleep -Seconds 2
+                }
+                catch {
+                    Write-Log -Level ERROR -Message "WebSocket Send Error: $_" -Component "sync-service" -Data @{ error = $_.Exception.Message; timestamp = Get-Date -Format "o" }
+                    break
+                }
             }
-        } finally {
-            $socket.Dispose()
+        }
+        finally {
+            if ($socket -ne $null) {
+                $socket.Dispose()
+            }
         }
     }
 } finally {

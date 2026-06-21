@@ -1,5 +1,5 @@
 # SUB-RUN-02_MR-04_Optimizer__SystemAnalysis.ps1 (Vorce 3.0)
-# Deep System Analysis für Vorce-Autopilot Optimierung
+# Deep System Analysis für Vorce-Factory Optimierung
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][hashtable]$ConfigBag,

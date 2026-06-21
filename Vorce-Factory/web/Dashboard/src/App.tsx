@@ -1,11 +1,8 @@
-import { useCallback, useState, useMemo } from 'react';
+import { useCallback, useState } from 'react';
 import { LayoutDashboard, Activity, Settings, RefreshCw, Zap, BarChart3, Menu } from 'lucide-react';
 import { useData, useAutoRefresh } from './hooks';
 import { useWebSocketEnhanced } from './hooks/useWebSocketEnhanced';
 import { SyncStatus } from './components/SyncStatus';
-import { LiveLogMonitor } from './components/LiveLogMonitor';
-import { RunHierarchyView, RunFlatView } from './components/RunHierarchyView';
-
 // Pages
 import DashboardPage from './pages/DashboardPage';
 import WorkstreamsPage from './pages/WorkstreamsPage';
@@ -13,7 +10,7 @@ import SettingsPage from './pages/SettingsPage';
 import ManagerReportingPage from './pages/ManagerReportingPage';
 
 // Types
-import type { TabId, AutopilotConfig, QuotaRegistry, ActiveSessions, GitHubIssue, PullRequest, MemoryStore } from './types';
+import type { TabId, AutopilotConfig, QuotaRegistry, ActiveSessions, GitHubIssue, PullRequest, MemoryStore, RunSummary } from './types';
 
 // Defaults
 const defaultAutopilotConfig: AutopilotConfig = {
@@ -85,7 +82,8 @@ export default function App() {
   const { data: memoryStore, refetch: refetchMemory } = useData<MemoryStore>('/memories.json', { schema_version: 1, memories: [] });
   const { data: history, loading: historyLoading, refetch: refetchHistory } = useData<any[]>('/data.json', []);
   const { data: auditResult, refetch: refetchAuditResult } = useData<any>('/audit-result.json', null);
-  const { data: liveLog, refetch: refetchLiveLog } = useData<{ content?: string }>('/live-log.json', {});
+  const { data: runSummary, refetch: refetchRunSummary } = useData<RunSummary>('/run-summary.json', { generated_at: '', recent_runs: [], stats_24h: {}, stats_7d: {} });
+  const { data: runHierarchy, refetch: refetchHierarchy } = useData<any>('/run-hierarchy.json', null);
 
   const refetchAll = useCallback(() => {
     refetchConfig();
@@ -98,8 +96,9 @@ export default function App() {
     refetchMemory();
     refetchHistory();
     refetchAuditResult();
-    refetchLiveLog();
-  }, [refetchConfig, refetchRegistry, refetchSessions, refetchIssues, refetchPRs, refetchProjectItems, refetchJulesSessions, refetchMemory, refetchHistory, refetchAuditResult, refetchLiveLog]);
+    refetchRunSummary();
+    refetchHierarchy();
+  }, [refetchConfig, refetchRegistry, refetchSessions, refetchIssues, refetchPRs, refetchProjectItems, refetchJulesSessions, refetchMemory, refetchHistory, refetchAuditResult, refetchRunSummary, refetchHierarchy]);
 
   // Enhanced WebSocket for real-time updates
   const {
@@ -116,11 +115,13 @@ export default function App() {
         refetchConfig();
         refetchSessions();
         refetchHistory();
+        refetchRunSummary();
+        refetchHierarchy();
       }
     },
     onLogUpdate: () => {
-      // Handle log updates
-      refetchLiveLog();
+      // Live-Log wird nicht mehr verwendet; Summary reicht aus.
+      refetchRunSummary();
     }
   });
 
@@ -142,22 +143,10 @@ export default function App() {
 
   const isGlobalLoading = configLoading && registryLoading && sessionsLoading && issuesLoading && prLoading && historyLoading;
 
-  // Convert run states to hierarchical structure
-  const runStates = useMemo(() => {
-    return (sessions.run_states || []).map(state => ({
-      name: state.name || 'unknown',
-      type: state.name?.split('-')[0].toLowerCase() as 'main' | 'sub' | 'part' || 'part',
-      status: state.status || 'pending',
-      data: state,
-      path: state.name || '',
-      lastUpdated: state.last_updated || state.timestamp
-    }));
-  }, [sessions.run_states]);
-
   const renderActivePage = () => {
       switch (activeTab) {
         case 'dashboard':
-          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} auditResult={auditResult} liveLog={liveLog?.content || ''} />;
+          return <DashboardPage registry={registry} sessions={sessions} pullRequests={pullRequests} issues={issues} julesSessions={julesSessions} auditResult={auditResult} runHierarchy={runHierarchy} runSummary={runSummary} />;
         case 'workstreams':
           return <WorkstreamsPage issues={issues} sessions={sessions} pullRequests={pullRequests} julesSessions={julesSessions} projectItems={projectItems?.items || []} />;
         case 'reporting':
@@ -202,7 +191,7 @@ export default function App() {
               <Zap className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-md font-bold text-white tracking-wide">Vorce Autopilot</h1>
+              <h1 className="text-md font-bold text-white tracking-wide">Vorce-Factory</h1>
               <p className="text-[10px] text-slate-400 font-medium">System Dashboard</p>
             </div>
           </div>
@@ -264,7 +253,7 @@ export default function App() {
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 py-4 mt-auto">
         <div className="max-w-7xl mx-auto px-4 text-center text-xs text-slate-600">
-          Vorce-Autopilot Dashboard &bull; Build with Vite & React &bull; 2026
+          Vorce-Factory Dashboard &bull; Built with Vite & React &bull; 2026
         </div>
       </footer>
     </div>

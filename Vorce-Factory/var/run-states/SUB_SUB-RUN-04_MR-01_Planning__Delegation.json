@@ -1,12 +1,15 @@
 {
+  "sub_run": "SUB-RUN-04_MR-01_Planning__Delegation",
+  "status": "completed",
+  "timestamp": "2026-06-21T08:45:34.8742082+02:00",
   "parts": [
     {
-      "id": "run_20260615_175243",
+      "id": "run_20260621_084534",
       "name": "PART-RUN-01_MR-01_Planning__Delegation__CreateDelegations",
       "type": "PART",
       "status": "completed",
-      "started_at": "2026-06-15T17:52:43.8698980+02:00",
-      "completed_at": "2026-06-15T17:52:44.0623634+02:00",
+      "started_at": "2026-06-21T08:45:34.8231031+02:00",
+      "completed_at": "2026-06-21T08:45:34.8725733+02:00",
       "metadata": {},
       "results": [
         {
@@ -16,8 +19,5 @@
         }
       ]
     }
-  ],
-  "timestamp": "2026-06-15T17:52:44.0661813+02:00",
-  "status": "completed",
-  "sub_run": "SUB-RUN-04_MR-01_Planning__Delegation"
+  ]
 }

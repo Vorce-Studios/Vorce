@@ -1,6 +1,34 @@
 # QuotaManager.ps1 (Vorce 3.0)
 # Quota-Management fuer alle AI-Provider und CLI-Kommandos
 
+function Resolve-VorceProviderId {
+    param([Parameter(Mandatory)][string]$ProviderName)
+
+    $name = $ProviderName.Trim().ToLowerInvariant()
+    switch ($name) {
+        'gemini' { return 'gemini_cli' }
+        'gemini_cli' { return 'gemini_cli' }
+        'claude' { return 'claude_code' }
+        'claude_code' { return 'claude_code' }
+        'codex' { return 'codex_orchestrator' }
+        'codex_cli' { return 'codex_orchestrator' }
+        'codex_orchestrator' { return 'codex_orchestrator' }
+        'kiro' { return 'kiro_cli' }
+        'kiro_cli' { return 'kiro_cli' }
+        'cline' { return 'cline_cli' }
+        'cline_cli' { return 'cline_cli' }
+        'copilot' { return 'copilot_cli' }
+        'copilot_cli' { return 'copilot_cli' }
+        'cursor' { return 'cursor_agent' }
+        'cursor-agent' { return 'cursor_agent' }
+        'cursor_agent' { return 'cursor_agent' }
+        'jules' { return 'jules' }
+        'jules_cli' { return 'jules' }
+        'jules_extern' { return 'jules' }
+        default { return $ProviderName }
+    }
+}
+
 function Read-VorceQuotaRegistry {
     # Liest aus: $global:VarDir/config/quota-registry.json
     param()
@@ -62,11 +90,12 @@ function Test-VorceQuota {
     if ($null -eq $registry) { return $false }
 
     $providers = $registry.providers
-    if ($null -eq $providers -or $providers.PSObject.Properties.Name -notcontains $AgentName) {
-        Write-Warning "Provider $AgentName nicht in Quota Registry gefunden"
+    $canonicalName = Resolve-VorceProviderId -ProviderName $AgentName
+    if ($null -eq $providers -or $providers.PSObject.Properties.Name -notcontains $canonicalName) {
+        Write-Warning "Provider $canonicalName nicht in Quota Registry gefunden"
         return $false
     }
-    $providerConfig = $providers.$AgentName
+    $providerConfig = $providers.$canonicalName
 
     # Pruefe ob Provider enabled ist
     if ($providerConfig.enabled -ne $true) {
@@ -111,11 +140,13 @@ function Register-VorceQuotaUsage {
         $registry = @{}
     }
 
+    $canonicalName = Resolve-VorceProviderId -ProviderName $AgentName
+
     if (-not $registry.providers) {
         $registry | Add-Member -MemberType NoteProperty -Name "providers" -Value ([pscustomobject]@{}) -Force
     }
-    if ($registry.providers.PSObject.Properties.Name -notcontains $AgentName) {
-        $registry.providers | Add-Member -MemberType NoteProperty -Name $AgentName -Value ([pscustomobject]@{
+    if ($registry.providers.PSObject.Properties.Name -notcontains $canonicalName) {
+        $registry.providers | Add-Member -MemberType NoteProperty -Name $canonicalName -Value ([pscustomobject]@{
             model_tier = $ModelTier;
             enabled = $true;
             command = "";
@@ -124,7 +155,7 @@ function Register-VorceQuotaUsage {
             usage_today = [pscustomobject]@{ calls = 0; estimated_cost_usd = 0; last_synced_at = (Get-Date).ToString("o") }
         }) -Force
     }
-    $providerConfig = $registry.providers.$AgentName
+    $providerConfig = $registry.providers.$canonicalName
 
     if (-not $providerConfig.usage_today) {
         $providerConfig | Add-Member -MemberType NoteProperty -Name "usage_today" -Value ([pscustomobject]@{ calls = 0; estimated_cost_usd = 0 }) -Force

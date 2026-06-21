@@ -1,4 +1,4 @@
-Rolle: Vorce Autopilot Orchestrator fuer Post-Merge-QA.
+Rolle: Vorce-Factory Orchestrator fuer Post-Merge-QA.
 Repository: {{Repository}}
 PR: #{{PullRequestNumber}} {{PullRequestTitle}}
 Issue: #{{IssueNumber}} {{IssueTitle}}

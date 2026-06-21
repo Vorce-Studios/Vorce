@@ -1,45 +1,43 @@
 {
-  "id": "run_20260615_045527",
+  "id": "run_20260621_100139",
   "name": "PART-RUN-01_MR-02_CheckAndDoing__LocalAgentCheck__InspectLocalAgents",
   "type": "PART",
   "status": "completed",
-  "started_at": "2026-06-15T04:55:27.9806757+02:00",
-  "completed_at": "2026-06-15T04:55:28.1196903+02:00",
+  "started_at": "2026-06-21T10:01:39.5511961+02:00",
+  "completed_at": "2026-06-21T10:01:39.5880824+02:00",
   "metadata": {},
   "results": [
     {
-      "issues": 0,
-      "issuesDetails": [],
-      "status": "completed",
-      "timestamp": "2026-06-15T04:55:28.1160713+02:00",
       "healthyProcesses": 2,
+      "status": "completed",
+      "issuesDetails": [],
       "totalProcesses": 2,
+      "issues": 0,
       "processes": {
         "cline": [
           {
+            "status": "running",
+            "startTime": "2026-06-21T00:42:32.1791489+02:00",
+            "exitCode": null,
+            "id": 12964,
             "name": "cline",
-            "error": null,
-            "startTime": "2026-06-14T19:59:23.0231399+02:00",
-            "cpu": 69.015625,
-            "status": "running",
-            "id": 16212,
-            "memory": 96526336,
-            "exitCode": null
-          }
-        ],
-        "claude": [
+            "memory": 620564480,
+            "cpu": 142.578125,
+            "error": null
+          },
           {
-            "name": "claude",
-            "error": null,
-            "startTime": "2026-06-14T17:26:54.4113613+02:00",
-            "cpu": 1472.453125,
             "status": "running",
-            "id": 2428,
-            "memory": 305627136,
-            "exitCode": null
+            "startTime": "2026-06-21T00:43:04.8229828+02:00",
+            "exitCode": null,
+            "id": 15920,
+            "name": "cline",
+            "memory": 240750592,
+            "cpu": 89.140625,
+            "error": null
           }
         ]
-      }
+      },
+      "timestamp": "2026-06-21T10:01:39.5853113+02:00"
     }
   ]
 }

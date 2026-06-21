@@ -1,15 +1,15 @@
-# Vorce Autopilot - Dokumentation
+# Vorce-Factory Dashboard - Dokumentation
 
 ## Übersicht
 
-Vorce Autopilot ist ein vollautomatisiertes Entwicklungs- und Projektmanagement-System, das GitHub-Issues verarbeitet, Code-Reviews durchführt, Merge-Konflikte löst und AI-Agenten (Jules, Claude, Gemini, etc.) orchestriert.
+Vorce-Factory ist ein vollautomatisiertes Entwicklungs- und Projektmanagement-System, das GitHub-Issues verarbeitet, Code-Reviews durchführt, Merge-Konflikte löst und AI-Agenten (Jules, Claude, Gemini, etc.) orchestriert.
 
 ---
 
 ## Systemarchitektur
 
 ```
-Vorce Autopilot/
+Vorce-Factory/
 ├── dashboard/                  # React/Vite Frontend
 │   ├── src/
 │   │   ├── pages/
@@ -230,7 +230,7 @@ Vorce Autopilot/
 
 ---
 
-## JSX-Syntax-Regeln (für Vorce-Autopilot)
+## JSX-Syntax-Regeln (für Vorce-Factory)
 
 ### Gültige Strukturen
 

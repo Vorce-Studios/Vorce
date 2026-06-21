@@ -1,5 +1,5 @@
 # SUB-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance.ps1 (Vorce 3.0)
-# Autopilot-Memories prüfen/bereinigen/optimieren für Token-Effizienz
+# Vorce-Factory Memories prüfen/bereinigen/optimieren für Token-Effizienz
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][hashtable]$ConfigBag,
@@ -23,7 +23,7 @@ if (-not (Test-Path $maintenanceDir)) {
     New-Item -ItemType Directory -Path $maintenanceDir -Force | Out-Null
 }
 
-# 1. Lade Autopilot-Memories
+# 1. Lade Vorce-Factory Memories
 $memoryPath = Join-Path $global:VarDir "db/autopilot-memories.json"
 if (Test-Path $memoryPath) {
     try {
@@ -31,11 +31,11 @@ if (Test-Path $memoryPath) {
         $memories = if ($memoryStore.PSObject.Properties.Name -contains "memories") { @($memoryStore.memories) } else { @($memoryStore) }
     } catch {
         $memories = @()
-        Write-VorceStep -Message "Fehler beim Laden von Autopilot-Memories: $($_.Exception.Message)" -Status "ERROR"
+        Write-VorceStep -Message "Fehler beim Laden von Vorce-Factory Memories: $($_.Exception.Message)" -Status "ERROR"
     }
 } else {
     $memories = @()
-    Write-VorceStep -Message "Keine Autopilot-Memories gefunden" -Status "INFO"
+    Write-VorceStep -Message "Keine Vorce-Factory Memories gefunden" -Status "INFO"
 }
 
 # 2. Analysiere Memory-Nutzung

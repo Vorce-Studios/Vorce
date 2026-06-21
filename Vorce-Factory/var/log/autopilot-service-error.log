@@ -1,0 +1,52 @@
+[31;1mWrite-Error: [0mC:\Users\Vinyl\Desktop\VJMapper\VJMapper\Vorce-Factory\src\runs\MAIN-RUN-03_Audit\SUB-RUNS\SUB-RUN-01_MR-03_Audit__DataSync\PART-RUNS\PART-RUN-01_MR-03_Audit__DataSync__ValidateDataSources.ps1:31[0m
+[31;1m[0m[36;1mLine |[0m
+[31;1m[0m[36;1m[36;1m  31 | [0m … ingResult = [36;1mInvoke-VorceApiRequest -Uri "https://api.github.com/repos[0m …[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mAPI Request failed: An error occurred while sending the request.[0m
+[31;1mWrite-Error: [0mC:\Users\Vinyl\Desktop\VJMapper\VJMapper\Vorce-Factory\src\runs\MAIN-RUN-02_CheckAndDoing\SUB-RUNS\SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch\PART-RUNS\PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews.ps1:37[0m
+[31;1m[0m[36;1mLine |[0m
+[31;1m[0m[36;1m[36;1m  37 | [0m … rResponse = [36;1mInvoke-VorceApiRequest -Uri "https://api.github.com/repos[0m …[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mAPI Request failed: An error occurred while sending the request.[0m
+[31;1mWrite-Error: [0mC:\Users\Vinyl\Desktop\VJMapper\VJMapper\Vorce-Factory\src\runs\MAIN-RUN-03_Audit\SUB-RUNS\SUB-RUN-01_MR-03_Audit__DataSync\PART-RUNS\PART-RUN-01_MR-03_Audit__DataSync__ValidateDataSources.ps1:31[0m
+[31;1m[0m[36;1mLine |[0m
+[31;1m[0m[36;1m[36;1m  31 | [0m … ingResult = [36;1mInvoke-VorceApiRequest -Uri "https://api.github.com/repos[0m …[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mAPI Request failed: An error occurred while sending the request.[0m
+[31;1mWrite-Error: [0mC:\Users\Vinyl\Desktop\VJMapper\VJMapper\Vorce-Factory\src\runs\MAIN-RUN-02_CheckAndDoing\SUB-RUNS\SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch\PART-RUNS\PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews.ps1:37[0m
+[31;1m[0m[36;1mLine |[0m
+[31;1m[0m[36;1m[36;1m  37 | [0m … rResponse = [36;1mInvoke-VorceApiRequest -Uri "https://api.github.com/repos[0m …[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mAPI Request failed: An error occurred while sending the request.[0m
+[31;1mWrite-Error: [0mC:\Users\Vinyl\Desktop\VJMapper\VJMapper\Vorce-Factory\src\runs\MAIN-RUN-03_Audit\SUB-RUNS\SUB-RUN-01_MR-03_Audit__DataSync\PART-RUNS\PART-RUN-01_MR-03_Audit__DataSync__ValidateDataSources.ps1:31[0m
+[31;1m[0m[36;1mLine |[0m
+[31;1m[0m[36;1m[36;1m  31 | [0m … ingResult = [36;1mInvoke-VorceApiRequest -Uri "https://api.github.com/repos[0m …[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mAPI Request failed: An error occurred while sending the request.[0m
+[31;1mWrite-Error: [0mC:\Users\Vinyl\Desktop\VJMapper\VJMapper\Vorce-Factory\src\runs\MAIN-RUN-03_Audit\SUB-RUNS\SUB-RUN-01_MR-03_Audit__DataSync\PART-RUNS\PART-RUN-01_MR-03_Audit__DataSync__ValidateDataSources.ps1:31[0m
+[31;1m[0m[36;1mLine |[0m
+[31;1m[0m[36;1m[36;1m  31 | [0m … ingResult = [36;1mInvoke-VorceApiRequest -Uri "https://api.github.com/repos[0m …[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mAPI Request failed: An error occurred while sending the request.[0m
+[31;1mWrite-Error: [0mC:\Users\Vinyl\Desktop\VJMapper\VJMapper\Vorce-Factory\src\runs\MAIN-RUN-03_Audit\SUB-RUNS\SUB-RUN-01_MR-03_Audit__DataSync\PART-RUNS\PART-RUN-01_MR-03_Audit__DataSync__ValidateDataSources.ps1:31[0m
+[31;1m[0m[36;1mLine |[0m
+[31;1m[0m[36;1m[36;1m  31 | [0m … ingResult = [36;1mInvoke-VorceApiRequest -Uri "https://api.github.com/repos[0m …[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mAPI Request failed: An error occurred while sending the request.[0m
+[31;1mWrite-Error: [0mC:\Users\Vinyl\Desktop\VJMapper\VJMapper\Vorce-Factory\src\runs\MAIN-RUN-02_CheckAndDoing\SUB-RUNS\SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch\PART-RUNS\PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews.ps1:37[0m
+[31;1m[0m[36;1mLine |[0m
+[31;1m[0m[36;1m[36;1m  37 | [0m … rResponse = [36;1mInvoke-VorceApiRequest -Uri "https://api.github.com/repos[0m …[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mAPI Request failed: Ein Verbindungsversuch ist fehlgeschlagen, da die Gegenstelle nach einer bestimmten[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m[31;1m[36;1m     | [31;1mZeitspanne nicht richtig reagiert hat, oder die hergestellte Verbindung war fehlerhaft, da der verbundene Host[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m[31;1m[36;1m[31;1m[36;1m     | [31;1mnicht reagiert hat. (api.github.com:443)[0m
+[31;1mWrite-Error: [0mC:\Users\Vinyl\Desktop\VJMapper\VJMapper\Vorce-Factory\src\runs\MAIN-RUN-02_CheckAndDoing\SUB-RUNS\SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch\PART-RUNS\PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews.ps1:37[0m
+[31;1m[0m[36;1mLine |[0m
+[31;1m[0m[36;1m[36;1m  37 | [0m … rResponse = [36;1mInvoke-VorceApiRequest -Uri "https://api.github.com/repos[0m …[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mAPI Request failed: An error occurred while sending the request.[0m
+[31;1mWrite-Error: [0mC:\Users\Vinyl\Desktop\VJMapper\VJMapper\Vorce-Factory\src\runs\MAIN-RUN-02_CheckAndDoing\SUB-RUNS\SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch\PART-RUNS\PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews.ps1:37[0m
+[31;1m[0m[36;1mLine |[0m
+[31;1m[0m[36;1m[36;1m  37 | [0m … rResponse = [36;1mInvoke-VorceApiRequest -Uri "https://api.github.com/repos[0m …[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mAPI Request failed: An error occurred while sending the request.[0m

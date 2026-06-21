@@ -126,6 +126,9 @@ Write-VorceStep -Message "Lade Sub-Runs von Router..." -Status "INFO"
 
 # Initialisiere Main-Run State vor dem Router-Aufruf.
 $MainState = Initialize-RunState -RunName $mainRunName -RunType "MAIN"
+$MainState.main_run_id = $MainState.id
+$MainState.parent_run_id = $null
+$MainState = Save-VorceRunState -State $MainState
 $SubRuns = @()
 if ($routerFile) {
     $SubRuns = @(& $routerFile.FullName -ConfigBag $ConfigBag -MainState $MainState)
@@ -143,6 +146,61 @@ if ($routerKey) {
         $rule = $configuredRules | Where-Object { $_.name -eq $subRun.name -or $_.script -eq $subRun.script } | Select-Object -First 1
         $null -eq $rule -or $rule.enabled -ne $false
     })
+}
+
+function Get-RouterDecisionEntry {
+    param(
+        [Parameter(Mandatory)][object]$Rule,
+        [Parameter(Mandatory)][bool]$IsActive
+    )
+
+    $scriptPath = Join-Path $global:VorceRoot $Rule.script
+    $configuredEnabled = $Rule.enabled -ne $false
+    $reason = if (-not $configuredEnabled) {
+        "disabled_in_config"
+    } elseif (-not (Test-Path $scriptPath)) {
+        "script_missing"
+    } elseif ($IsActive) {
+        "active_by_router"
+    } else {
+        "skipped_by_router_condition"
+    }
+
+    return [pscustomobject]@{
+        id = $Rule.id
+        name = $Rule.name
+        script = $Rule.script
+        configured_enabled = $configuredEnabled
+        active = $IsActive -and $configuredEnabled -and (Test-Path $scriptPath)
+        reason = $reason
+    }
+}
+
+if ($routerKey -and $null -ne $MainState.metadata) {
+    $configuredRules = @($Config.router_rules.$routerKey)
+    $activeNames = @($SubRuns | ForEach-Object { $_.name })
+    $decisionEntries = foreach ($rule in $configuredRules) {
+        $ruleActive = $false
+        foreach ($activeName in $activeNames) {
+            if ($activeName -eq $rule.name -or $activeName -like "*$($rule.name)*") {
+                $ruleActive = $true
+                break
+            }
+        }
+        Get-RouterDecisionEntry -Rule $rule -IsActive $ruleActive
+    }
+
+    $MainState.metadata.router_decision = [pscustomobject]@{
+        configured_sub_runs = @($decisionEntries)
+        active_sub_runs = @($decisionEntries | Where-Object { $_.active })
+        inactive_sub_runs = @($decisionEntries | Where-Object { -not $_.active })
+        router_key = $routerKey
+        decision_timestamp = (Get-Date).ToString("o")
+    }
+
+    if (-not $DryRun) {
+        Save-VorceRunState -State $MainState
+    }
 }
 
 # F) Try/Catch um jeden Sub-Run (C9)

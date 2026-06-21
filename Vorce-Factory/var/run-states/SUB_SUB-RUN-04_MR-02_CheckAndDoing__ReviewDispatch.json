@@ -1,26 +1,19 @@
-﻿{
-    "sub_run":  "SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch",
-    "status":  "completed",
-    "timestamp":  "2026-06-18T00:18:43.6814720+02:00",
-    "parts":  [
-                  {
-                      "id":  "run_20260618_001843",
-                      "name":  "PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews",
-                      "type":  "PART",
-                      "status":  "completed",
-                      "started_at":  "2026-06-18T00:18:43.6129345+02:00",
-                      "completed_at":  "2026-06-18T00:18:43.6794703+02:00",
-                      "metadata":  {
-
-                                   },
-                      "results":  [
-                                      {
-                                          "reviews_dispatched":  0,
-                                          "status":  "dry_run",
-                                          "timestamp":  "2026-06-18T00:18:43.6769709+02:00",
-                                          "prs_found":  0
-                                      }
-                                  ]
-                  }
-              ]
+{
+  "sub_run": "SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch",
+  "status": "failed",
+  "timestamp": "2026-06-21T09:31:35.5376337+02:00",
+  "parts": [
+    {
+      "id": "run_20260621_093046",
+      "name": "PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews",
+      "type": "PART",
+      "status": "failed",
+      "started_at": "2026-06-21T09:30:46.8427634+02:00",
+      "completed_at": "2026-06-21T09:31:35.5358282+02:00",
+      "metadata": {
+        "error": "An error occurred while sending the request."
+      },
+      "results": []
+    }
+  ]
 }

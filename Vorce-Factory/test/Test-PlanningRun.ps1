@@ -24,7 +24,7 @@ $global:VorceRoot = $projectRoot
 $global:VarDir = Join-Path $global:VorceRoot "var"
 $global:LibDir = Join-Path $global:VorceRoot "src/lib"
 
-Write-TestResult "VorceRoot gesetzt" ($global:VorceRoot -like "*Vorce-Autopilot_NEW")
+Write-TestResult "VorceRoot gesetzt" ($global:VorceRoot -like "*Vorce-Factory")
 Write-TestResult "VarDir gesetzt" (Test-Path $global:VarDir)
 Write-TestResult "LibDir gesetzt" (Test-Path $global:LibDir)
 

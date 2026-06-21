@@ -11,7 +11,7 @@
 
 ## Overview
 
-**Purpose**: Zentrales Dashboard für Vorce Autopilot mit Statusübersicht, Audit-Alerts, Monitoring und Systemsteuerung.
+**Purpose**: Zentrales Dashboard für Vorce-Factory mit Statusübersicht, Audit-Alerts, Monitoring und Systemsteuerung.
 
 ---
 

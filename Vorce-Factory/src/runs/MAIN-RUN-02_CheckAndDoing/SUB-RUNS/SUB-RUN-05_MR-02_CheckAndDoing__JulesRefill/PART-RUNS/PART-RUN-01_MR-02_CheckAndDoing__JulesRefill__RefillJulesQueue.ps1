@@ -72,7 +72,7 @@ for ($i = 0; $i -lt $maxSessionsToCreate; $i++) {
 
 **Original Issue:** #$(if ($task.issueNumber) { $task.issueNumber } else { "unknown" })
 
-**Delegated from:** Vorce Autopilot
+**Delegated from:** Vorce-Factory
 
 **Task Details:**
 $(if ($task.description) { $task.description } else { "Keine zusätzlichen Details."})
@@ -84,7 +84,7 @@ $(if ($task.description) { $task.description } else { "Keine zusätzlichen Detai
 
 **Status:** In Progress
 **Assigned to:** @jules
-**Created by:** Vorce Autopilot
+**Created by:** Vorce-Factory
 "@
 
         # GitHub Issue erstellen

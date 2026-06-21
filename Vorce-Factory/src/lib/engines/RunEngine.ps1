@@ -1,15 +1,59 @@
 # RunEngine.ps1 (Vorce 3.0)
 # Modul zur Ausfuehrung von PART-RUNS und SUB-RUNS mit Parallelitaets-Steuerung
 
+function Get-VorceStringHash {
+    param([Parameter(Mandatory)][string]$Text)
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($Text)
+        return [Convert]::ToBase64String($sha.ComputeHash($bytes))
+    } finally {
+        $sha.Dispose()
+    }
+}
+
 function Invoke-VorcePartRun {
     param(
         [Parameter(Mandatory)][string]$PartName,
         [Parameter(Mandatory)][string]$ScriptPath,
         [object]$ParentState = $null,
-        [hashtable]$Arguments = @{}
+        [hashtable]$Arguments = @{},
+        [string]$InputFingerprint = $null
     )
-    
-    $PartState = Initialize-RunState -RunName $PartName -RunType "PART"
+
+    if (-not $InputFingerprint) {
+        $fingerprintInput = [ordered]@{
+            part = $PartName
+            script = $ScriptPath
+            parent = if ($ParentState) { $ParentState.id } else { '' }
+            arguments = $Arguments
+        }
+        $InputFingerprint = Get-VorceStringHash -Text (($fingerprintInput | ConvertTo-Json -Depth 10 -Compress))
+    }
+
+    $mainRunId = if ($ParentState -and $ParentState.main_run_id) { [string]$ParentState.main_run_id } else { '' }
+    $parentRunId = if ($ParentState) { [string]$ParentState.id } else { $null }
+    $reusable = if ($mainRunId) { Get-VorceReusableRunResult -MainRunId $mainRunId -RunName $PartName -InputFingerprint $InputFingerprint } else { $null }
+    if ($reusable) {
+        return [pscustomobject]@{
+            schema_version = 2
+            id = $reusable.id
+            main_run_id = $reusable.main_run_id
+            parent_run_id = $reusable.parent_run_id
+            name = $PartName
+            type = 'PART'
+            status = 'reused'
+            started_at = $reusable.started_at
+            completed_at = $reusable.completed_at
+            duration_ms = $reusable.duration_ms
+            input_fingerprint = $InputFingerprint
+            metadata = $reusable.metadata
+            results = @($reusable.results)
+            reusable = $true
+        }
+    }
+
+    $PartState = Initialize-RunState -RunName $PartName -RunType "PART" -MainRunId $mainRunId -ParentRunId $parentRunId -InputFingerprint $InputFingerprint
     Write-VorceRunStart -RunName $PartName -Level Part
     Write-VorceStep -Message "Fuehre Part-Run aus: $PartName" -Status "RUN"
 
@@ -42,9 +86,13 @@ function Invoke-VorcePartRun {
         Write-VorceRunEnd -RunName $PartName -Level Part -Status "failed"
     } finally {
         $PartState.completed_at = (Get-Date).ToString("o")
+        if ($PartState.started_at -and $PartState.completed_at) {
+            $PartState.duration_ms = [int]((New-TimeSpan -Start ([datetime]$PartState.started_at) -End ([datetime]$PartState.completed_at)).TotalMilliseconds)
+        }
         # Speichern des Part-States
         $statePath = Join-Path $global:VarDir "run-states/PART_$($PartName).json"
         $PartState | ConvertTo-Json -Depth 10 | Set-Content $statePath -Encoding UTF8
+        Save-VorceRunState -State $PartState | Out-Null
     }
     
     return $PartState
@@ -54,6 +102,7 @@ function Invoke-VorceSubRunParallel {
     param(
         [Parameter(Mandatory)][string]$SubRunName,
         [Parameter(Mandatory)][array]$PartRuns,
+        [object]$ParentState = $null,
         [hashtable]$ConfigBag = @{},
         [int]$MaxParallel = 3
     )
@@ -83,7 +132,7 @@ function Invoke-VorceSubRunParallel {
             
             # Starte den Part-Run in einem Hintergrund-Job
             $job = Start-Job -ScriptBlock {
-                param($pName, $pScript, $pLibDir, $pVarDir, $pRoot, $pConfigBag)
+                param($pName, $pScript, $pLibDir, $pVarDir, $pRoot, $pConfigBag, $pParentState)
                 # Globale Variablen im Job-Kontext setzen
                 $global:VarDir = $pVarDir
                 $global:LibDir = $pLibDir
@@ -92,8 +141,8 @@ function Invoke-VorceSubRunParallel {
                 . (Join-Path $pLibDir "utils/StatusPrinter.ps1")
                 . (Join-Path $pLibDir "state/StateManager.ps1")
                 . (Join-Path $pLibDir "engines/RunEngine.ps1")
-                Invoke-VorcePartRun -PartName $pName -ScriptPath $pScript -Arguments @{ ConfigBag = $pConfigBag }
-            } -ArgumentList $part.name, $part.script, $global:LibDir, $global:VarDir, $global:VorceRoot, $ConfigBag -Name $part.name
+                Invoke-VorcePartRun -PartName $pName -ScriptPath $pScript -ParentState $pParentState -Arguments @{ ConfigBag = $pConfigBag }
+            } -ArgumentList $part.name, $part.script, $global:LibDir, $global:VarDir, $global:VorceRoot, $ConfigBag, $ParentState -Name $part.name
             
             $activeJobs += $job
         }
@@ -163,6 +212,21 @@ function Invoke-VorceSubRunParallel {
     # Speichere Sub-Run State vorab
     $statePath = Join-Path $global:VarDir "run-states/SUB_$($SubRunName).json"
     $aggregatedData | ConvertTo-Json -Depth 10 | Set-Content $statePath -Encoding UTF8
+    Save-VorceRunState -State ([pscustomobject]@{
+        schema_version = 2
+        id = [guid]::NewGuid().ToString('N')
+        main_run_id = if ($ParentState -and $ParentState.main_run_id) { $ParentState.main_run_id } elseif ($ParentState) { $ParentState.id } else { $null }
+        parent_run_id = if ($ParentState) { $ParentState.id } else { $null }
+        name = $SubRunName
+        type = 'SUB'
+        status = $aggregatedData.status
+        started_at = if ($ParentState -and $ParentState.started_at) { $ParentState.started_at } else { (Get-Date).ToString("o") }
+        completed_at = (Get-Date).ToString("o")
+        duration_ms = $null
+        input_fingerprint = $null
+        metadata = @{}
+        results = @($completedResults)
+    }) | Out-Null
     
     # OPTIONAL: Falls ein dediziertes Aggregations-Skript existiert, fuehre es aus
     # (z.B. SUB-RUN-01_DataSync_Aggregate.ps1)
@@ -219,6 +283,21 @@ function Invoke-VorceSubRunSequential {
 
     $statePath = Join-Path $global:VarDir "run-states/SUB_$($SubRunName).json"
     $aggregatedData | ConvertTo-Json -Depth 20 | Set-Content $statePath -Encoding UTF8
+    Save-VorceRunState -State ([pscustomobject]@{
+        schema_version = 2
+        id = [guid]::NewGuid().ToString('N')
+        main_run_id = if ($ParentState -and $ParentState.main_run_id) { $ParentState.main_run_id } elseif ($ParentState) { $ParentState.id } else { $null }
+        parent_run_id = if ($ParentState) { $ParentState.id } else { $null }
+        name = $SubRunName
+        type = 'SUB'
+        status = $aggregatedData.status
+        started_at = if ($ParentState -and $ParentState.started_at) { $ParentState.started_at } else { (Get-Date).ToString("o") }
+        completed_at = (Get-Date).ToString("o")
+        duration_ms = $null
+        input_fingerprint = $null
+        metadata = @{}
+        results = @($partStates)
+    }) | Out-Null
     return $aggregatedData
 }
 

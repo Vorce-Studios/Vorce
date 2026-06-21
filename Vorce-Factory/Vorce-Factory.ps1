@@ -1,5 +1,5 @@
-# autopilot.ps1 (Vorce 3.0)
-# Haupt-Einstiegspunkt für den VORCE Autopilot Loop
+# Vorce-Factory.ps1 (Vorce 3.0)
+# Haupt-Einstiegspunkt für den VORCE Factory Loop
 [CmdletBinding()]
 param(
     [switch]$DryRun,
@@ -106,7 +106,7 @@ Enable-DebugMode -Enabled $false
 Write-VorceLog "Führe Startup Cleanup aus..." -Status "RUN"
 Clean-TmpFiles -MaxAgeHours 24
 
-Write-VorceHeader -Title "VORCE AUTOPILOT 3.0" -Icon "🤖"
+Write-VorceHeader -Title "VORCE FACTORY 3.0" -Icon "🏭"
 
 # --- 3. Initialisierung ---
 Write-VorceLog "Lade Konfiguration..." -Status "INFO"

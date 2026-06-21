@@ -1,4 +1,4 @@
-# Vorce-Autopilot NEW — System-Dokumentation
+# Vorce-Factory - System-Dokumentation
 
 > **Version:** 3.0-NEW | **Stand:** 2026-06-14
 
@@ -6,7 +6,7 @@
 
 ## 1. Architektur-Übersicht
 
-Vorce-Autopilot NEW ist ein modulares, datengetriebenes Framework zur autonomen Orchestrierung von KI-Agenten (Gemini CLI, Claude Code, Jules) für das Vorce-Studios/Vorce Repository.
+Vorce-Factory ist ein modulares, datengetriebenes Framework zur autonomen Orchestrierung von KI-Agenten (Gemini CLI, Claude Code, Jules) für das Vorce-Studios/Vorce Repository.
 
 ### Hierarchiemodell
 

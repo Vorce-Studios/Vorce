@@ -309,7 +309,7 @@
   },
   {
     "assignees": [],
-    "body": "´╗┐## Ziel\n\nDieses Master-Issue trackt die offenen Large-File-Dekompositionsarbeiten.\n\n## Sub-Issues (Progress Tracking)\n\n- [ ] #109 ___M-054_s1_TimelineV2-UI-Decomposition\n- [ ] #110 ___M-054_s2_Source-Inspector-Large-File-Decomposition\n- [ ] #111 ___M-054_s3_Module-Evaluator-Mod-Decomposition\n- [x] #112 ___M-054_s4_Media-Browser-Decomposition\n- [ ] #113 ___M-054_s5_Custom-Widgets-Decomposition\n- [ ] #114 ___M-054_s6_App-Actions-Dispatch-Decomposition\n- [x] #115 ___M-054_s7_AppUI-State-And-Helpers-Decomposition\n- [ ] #116 ___M-054_s8_Module-Canvas-Renderer-Decomposition\n- [ ] #117 ___M-054_s9_UI-Config-Decomposition\n- [x] #118 ___M-054_s10_App-UI-Layout-Decomposition\n- [x] #119 ___M-054_s11_WGSL-Codegen-Decomposition\n- [ ] #120 ___M-054_s12_Oscillator-Renderer-Decomposition\n\n<!-- jules-session:begin -->\n<!-- jules-session-id:  -->\n<!-- jules-session-name:  -->\n<!-- vorce-queue-state: approved-awaiting-dispatch -->\n<!-- vorce-remote-state: awaiting-session -->\n<!-- vorce-work-branch: B-Jules/___M-054_s3_Module-Evaluator-Mod-Decomposition-12349553993110312382 -->\n<!-- vorce-last-update: 2026-06-15T09:49:43Z -->\n## Vorce Project Manager\n- Queue State: `approved-awaiting-dispatch`\n- Remote State: `awaiting-session`\n- Work Branch: `B-Jules/___M-054_s3_Module-Evaluator-Mod-Decomposition-12349553993110312382`\n- Linked PR: https://github.com/Vorce-Studios/Vorce/pull/853\n- Last Update: `2026-06-15T09:49:43Z`\n<!-- jules-session:end -->",
+    "body": "´╗┐## Ziel\n\nDieses Master-Issue trackt die offenen Large-File-Dekompositionsarbeiten.\n\n## Sub-Issues (Progress Tracking)\n\n- [ ] #109 ___M-054_s1_TimelineV2-UI-Decomposition\n- [ ] #110 ___M-054_s2_Source-Inspector-Large-File-Decomposition\n- [ ] #111 ___M-054_s3_Module-Evaluator-Mod-Decomposition\n- [x] #112 ___M-054_s4_Media-Browser-Decomposition\n- [ ] #113 ___M-054_s5_Custom-Widgets-Decomposition\n- [ ] #114 ___M-054_s6_App-Actions-Dispatch-Decomposition\n- [x] #115 ___M-054_s7_AppUI-State-And-Helpers-Decomposition\n- [ ] #116 ___M-054_s8_Module-Canvas-Renderer-Decomposition\n- [ ] #117 ___M-054_s9_UI-Config-Decomposition\n- [x] #118 ___M-054_s10_App-UI-Layout-Decomposition\n- [x] #119 ___M-054_s11_WGSL-Codegen-Decomposition\n- [ ] #120 ___M-054_s12_Oscillator-Renderer-Decomposition\n\n<!-- jules-session:begin -->\n<!-- jules-session-id:  -->\n<!-- jules-session-name:  -->\n<!-- vorce-queue-state: approved-awaiting-dispatch -->\n<!-- vorce-remote-state: awaiting-session -->\n<!-- vorce-work-branch: B-Jules/___M-054_s3_Module-Evaluator-Mod-Decomposition-12349553993110312382 -->\n<!-- vorce-last-update: 2026-06-20T23:58:04Z -->\n## Vorce Project Manager\n- Queue State: `approved-awaiting-dispatch`\n- Remote State: `awaiting-session`\n- Work Branch: `B-Jules/___M-054_s3_Module-Evaluator-Mod-Decomposition-12349553993110312382`\n- Linked PR: https://github.com/Vorce-Studios/Vorce/pull/853\n- Last Update: `2026-06-20T23:58:04Z`\n<!-- jules-session:end -->",
     "labels": [
       {
         "id": "LA_kwDORuEBQc8AAAACdFTmUQ",
@@ -321,6 +321,6 @@
     "number": 54,
     "state": "OPEN",
     "title": "M...-054_Refactor-Large-File-Decomposition-and-Architecture-Cleanup",
-    "updatedAt": "2026-06-15T15:34:42Z"
+    "updatedAt": "2026-06-21T02:55:21Z"
   }
 ]

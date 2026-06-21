@@ -1,4 +1,6 @@
-# Vorce-Autopilot NEW — Rebuild Status
+# Vorce-Factory - Historischer Rebuild Status
+
+> Historisch: Dieser Status ist durch den aktuellen Code teilweise ueberholt. Aktuelle offene Punkte stehen in `CURRENT_IMPLEMENTATION_GAP_PLAN.md`.
 
 > **Stand:** 2026-06-14 | Legende: 🟢 Vollständig & getestet · 🟡 Stub/unvollständig · 🔴 Kritischer Bug · ⚪ Fehlt
 

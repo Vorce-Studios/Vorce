@@ -120,6 +120,125 @@ export interface ActiveSessions {
   optimizer_last_run?: any;
   main_runs?: MainRunRuntime[];
   run_states?: any[];
+  run_hierarchy?: RunHierarchyData | null;
+}
+
+export interface RunHierarchyPart {
+  name: string;
+  label?: string;
+  script: string;
+  configured_enabled: boolean;
+  runtime_status: string;
+  activation_reason?: string | null;
+  inactive_reason?: string | null;
+  latest_state_path?: string | null;
+  timestamp?: string | null;
+}
+
+export interface RunHierarchySub {
+  id: string;
+  name: string;
+  label?: string;
+  script: string;
+  configured_enabled: boolean;
+  runtime_status: string;
+  activation_reason?: string | null;
+  inactive_reason?: string | null;
+  router_active_last_run?: boolean;
+  latest_state_path?: string | null;
+  part_runs: RunHierarchyPart[];
+}
+
+export interface RunHierarchyMain {
+  name: string;
+  label: string;
+  router_key: string;
+  interval_key: string;
+  configured_sub_runs: number;
+  active_sub_runs_last_run: number;
+  latest_state_path?: string | null;
+  latest_state_status?: string;
+  last_run_timestamp?: string | null;
+  router_decision?: {
+    configured_sub_runs: any[];
+    active_sub_runs: any[];
+    inactive_sub_runs: any[];
+    router_key: string;
+    decision_timestamp?: string | null;
+  };
+  sub_runs: RunHierarchySub[];
+}
+
+export interface RunHierarchyData {
+  schema_version: number;
+  generated_at: string;
+  main_runs: RunHierarchyMain[];
+  legacy_orphan_states?: Array<{
+    source_file: string;
+    type?: string;
+    name?: string;
+    timestamp?: string | null;
+  }>;
+}
+
+export interface RecentRunSummary {
+  run_id: string;
+  main_run: string;
+  status: string;
+  started_at?: string;
+  completed_at?: string;
+  duration_ms?: number | null;
+  sub_runs: {
+    completed: number;
+    failed: number;
+    skipped: number;
+    reused: number;
+  };
+  part_runs: {
+    completed: number;
+    failed: number;
+    skipped: number;
+    reused: number;
+  };
+  provider_attempts: number;
+  fallbacks: number;
+  estimated_cost_usd: number;
+  input_tokens: number;
+  output_tokens: number;
+  result_summary: string;
+  primary_error: string | null;
+}
+
+export interface RunWindowStats {
+  runs_started?: number;
+  runs_completed?: number;
+  runs_failed?: number;
+  success_rate?: number;
+  avg_duration_ms?: number;
+  p95_duration_ms?: number;
+  sub_runs_completed?: number;
+  sub_runs_failed?: number;
+  sub_runs_skipped?: number;
+  sub_runs_reused?: number;
+  part_runs_completed?: number;
+  part_runs_failed?: number;
+  part_runs_skipped?: number;
+  part_runs_reused?: number;
+  provider_attempts?: number;
+  fallbacks?: number;
+  timeout_errors?: number;
+  rate_limit_errors?: number;
+  auth_errors?: number;
+  estimated_cost_usd?: number;
+  input_tokens?: number;
+  output_tokens?: number;
+}
+
+export interface RunSummary {
+  generated_at: string;
+  recent_runs: RecentRunSummary[];
+  stats_24h: RunWindowStats;
+  stats_7d: RunWindowStats;
 }
 
 // ── GitHub Project Types ──

@@ -25,4 +25,25 @@ export default defineConfig([
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
+  {
+    files: ['**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly',
+        console: 'readonly',
+        process: 'readonly',
+        Buffer: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly'
+      }
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off'
+    }
+  }
 ])

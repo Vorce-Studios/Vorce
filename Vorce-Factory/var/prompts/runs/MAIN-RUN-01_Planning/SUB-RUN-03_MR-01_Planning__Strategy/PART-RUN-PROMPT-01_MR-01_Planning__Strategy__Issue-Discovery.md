@@ -1,4 +1,4 @@
-Rolle: Vorce Autopilot Planning Officer.
+Rolle: Vorce-Factory Planning Officer.
 Repository: {{Repository}}
 Aktuell delegierbare Issues: {{CandidateCount}}
 

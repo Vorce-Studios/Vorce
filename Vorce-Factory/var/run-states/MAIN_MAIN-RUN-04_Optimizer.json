@@ -1,362 +1,558 @@
 {
-  "id": "run_20260615_032914",
+  "id": "run_20260621_074525",
   "name": "MAIN-RUN-04_Optimizer",
   "type": "MAIN",
   "status": "completed",
-  "started_at": "2026-06-15T03:29:14.9257329+02:00",
-  "completed_at": "2026-06-15T03:29:15.8111258+02:00",
+  "started_at": "2026-06-21T07:45:25.3236494+02:00",
+  "completed_at": "2026-06-21T07:45:26.1076957+02:00",
   "metadata": {},
   "results": [
     {
+      "sub_run": "SUB-RUN-01_MR-04_Optimizer__PerformanceDataCollection",
       "status": "completed",
+      "timestamp": "2026-06-21T07:45:25.8417114+02:00",
       "parts": [
         {
-          "id": "run_20260615_032915",
+          "id": "run_20260621_074525",
           "name": "PART-RUN-01_MR-04_Optimizer__PerformanceDataCollection__CollectPerformanceMetrics",
           "type": "PART",
           "status": "completed",
-          "started_at": "2026-06-15T03:29:15.0330452+02:00",
-          "completed_at": "2026-06-15T03:29:15.4664105+02:00",
+          "started_at": "2026-06-21T07:45:25.4078998+02:00",
+          "completed_at": "2026-06-21T07:45:25.8399369+02:00",
           "metadata": {},
           "results": [
             {
-              "critical_issues": 0,
+              "timestamp": "2026-06-21T07:45:25.8368124+02:00",
+              "status": "completed",
+              "performance_file": "C:\\Users\\Vinyl\\Desktop\\VJMapper\\VJMapper\\Vorce-Factory\\var\\performance\\performance_20260621_074525.json",
+              "data_points_collected": 31,
               "recommendations_count": 0,
-              "timestamp": "2026-06-15T03:29:15.4618546+02:00",
-              "data_points_collected": 30,
-              "performance_file": "C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\Vorce-Autopilot_NEW\\var\\performance\\performance_20260615_032915.json",
-              "status": "completed"
+              "critical_issues": 0
             }
           ]
         }
-      ],
-      "timestamp": "2026-06-15T03:29:15.4685256+02:00",
-      "sub_run": "SUB-RUN-01_MR-04_Optimizer__PerformanceDataCollection"
+      ]
     },
     {
+      "sub_run": "SUB-RUN-02_MR-04_Optimizer__SystemAnalysis",
       "status": "completed",
+      "timestamp": "2026-06-21T07:45:26.0917239+02:00",
       "parts": [
         {
-          "id": "run_20260615_032915",
+          "id": "run_20260621_074525",
           "name": "PART-RUN-01_MR-04_Optimizer__SystemAnalysis__AnalyzeSystemPerformance",
           "type": "PART",
           "status": "completed",
-          "started_at": "2026-06-15T03:29:15.5302035+02:00",
-          "completed_at": "2026-06-15T03:29:15.7655477+02:00",
+          "started_at": "2026-06-21T07:45:25.8904025+02:00",
+          "completed_at": "2026-06-21T07:45:26.0899847+02:00",
           "metadata": {},
           "results": [
             {
-              "bottlenecks_identified": 7,
-              "analysis_file": "C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\Vorce-Autopilot_NEW\\var\\analysis\\system_analysis_20260615_032915.json",
+              "status": "completed",
+              "timestamp": "2026-06-21T07:45:26.0867384+02:00",
               "critical_issues_found": 0,
               "analysis_depth": "deep",
-              "timestamp": "2026-06-15T03:29:15.7612416+02:00",
               "optimization_opportunities": 0,
-              "status": "completed",
-              "router_efficiency_score": 78
+              "router_efficiency_score": 78,
+              "bottlenecks_identified": 7,
+              "analysis_file": "C:\\Users\\Vinyl\\Desktop\\VJMapper\\VJMapper\\Vorce-Factory\\var\\analysis\\system_analysis_20260621_074526.json"
             }
           ]
         }
-      ],
-      "timestamp": "2026-06-15T03:29:15.7675291+02:00",
-      "sub_run": "SUB-RUN-02_MR-04_Optimizer__SystemAnalysis"
+      ]
     }
   ],
   "performance_data": {
+    "system_metrics": {
+      "last_housekeeping": "2026-06-21T07:30:24.7629424+02:00",
+      "active_delegations": 0,
+      "memory_usage": 0.0,
+      "uptime_days": 7.0,
+      "total_runs_completed": 146,
+      "total_issues_processed": 0
+    },
+    "collection_timestamp": "2026-06-21T07:45:25.4626119+02:00",
     "quota_usage": [
       {
-        "daily_calls": 12,
-        "daily_budget_usd": 10.0,
-        "daily_cost_usd": 3.0404,
         "daily_limit": 50,
+        "daily_budget_usd": 10.0,
+        "daily_calls": 12,
         "quota_available": true,
-        "provider": "claude_code"
+        "provider": "claude_code",
+        "daily_cost_usd": 3.0404
       },
       {
-        "daily_calls": 0,
-        "daily_budget_usd": 5.0,
-        "daily_cost_usd": 0,
         "daily_limit": 100,
+        "daily_budget_usd": 5.0,
+        "daily_calls": 0,
         "quota_available": true,
-        "provider": "cline_cli"
+        "provider": "cline_cli",
+        "daily_cost_usd": 0
       },
       {
-        "daily_calls": 5,
-        "daily_budget_usd": 0,
-        "daily_cost_usd": 0,
         "daily_limit": 1000,
-        "quota_available": true,
-        "provider": "codex_orchestrator"
-      },
-      {
-        "daily_calls": 0,
-        "daily_budget_usd": 5.0,
-        "daily_cost_usd": 0,
-        "daily_limit": 100,
-        "quota_available": true,
-        "provider": "copilot_cli"
-      },
-      {
-        "daily_calls": 0,
-        "daily_budget_usd": 5.0,
-        "daily_cost_usd": 0,
-        "daily_limit": 100,
-        "quota_available": true,
-        "provider": "cursor_agent"
-      },
-      {
-        "daily_calls": 47,
         "daily_budget_usd": 0,
-        "daily_cost_usd": 0,
+        "daily_calls": 5,
+        "quota_available": true,
+        "provider": "codex_orchestrator",
+        "daily_cost_usd": 0
+      },
+      {
+        "daily_limit": 100,
+        "daily_budget_usd": 5.0,
+        "daily_calls": 0,
+        "quota_available": true,
+        "provider": "copilot_cli",
+        "daily_cost_usd": 0
+      },
+      {
+        "daily_limit": 100,
+        "daily_budget_usd": 5.0,
+        "daily_calls": 0,
+        "quota_available": true,
+        "provider": "cursor_agent",
+        "daily_cost_usd": 0
+      },
+      {
         "daily_limit": 1500,
-        "quota_available": true,
-        "provider": "gemini_cli"
-      },
-      {
-        "daily_calls": 0,
         "daily_budget_usd": 0,
-        "daily_cost_usd": 0,
-        "daily_limit": 100,
+        "daily_calls": 47,
         "quota_available": true,
-        "provider": "jules"
+        "provider": "gemini_cli",
+        "daily_cost_usd": 0
       },
       {
-        "daily_calls": 0,
-        "daily_budget_usd": 5.0,
-        "daily_cost_usd": 0,
         "daily_limit": 100,
+        "daily_budget_usd": 0,
+        "daily_calls": 0,
         "quota_available": true,
-        "provider": "kiro_cli"
+        "provider": "jules",
+        "daily_cost_usd": 0
+      },
+      {
+        "daily_limit": 100,
+        "daily_budget_usd": 5.0,
+        "daily_calls": 0,
+        "quota_available": true,
+        "provider": "kiro_cli",
+        "daily_cost_usd": 0
       }
     ],
     "run_times": [
       {
-        "duration_seconds": 4.8520707,
-        "sub_runs": 3,
+        "start_time": "2026-06-21T06:30:08.1629983+02:00",
         "status": "completed",
         "run_name": "MAIN_MAIN-RUN-01_Planning",
+        "end_time": "2026-06-21T06:30:12.4927055+02:00",
+        "duration_seconds": 4.3297072,
         "errors": 0,
-        "start_time": "2026-06-15T03:28:57.6882165+02:00",
-        "end_time": "2026-06-15T03:29:02.5402872+02:00"
+        "sub_runs": 3
       },
       {
-        "duration_seconds": 0.6777543,
-        "sub_runs": 2,
+        "start_time": "2026-06-21T07:30:23.1347867+02:00",
+        "status": "completed",
+        "run_name": "MAIN_MAIN-RUN-02_CheckAndDoing",
+        "end_time": "2026-06-21T07:30:24.7947593+02:00",
+        "duration_seconds": 1.6599726,
+        "errors": 0,
+        "sub_runs": 5
+      },
+      {
+        "start_time": "2026-06-21T06:45:13.0177581+02:00",
         "status": "completed",
         "run_name": "MAIN_MAIN-RUN-03_Audit",
+        "end_time": "2026-06-21T06:45:19.6322665+02:00",
+        "duration_seconds": 6.6145084,
         "errors": 0,
-        "start_time": "2026-06-15T03:23:05.3229309+02:00",
-        "end_time": "2026-06-15T03:23:06.0006852+02:00"
+        "sub_runs": 2
       },
       {
-        "duration_seconds": 0.3319686,
-        "sub_runs": 1,
+        "start_time": "2026-06-21T07:15:22.4848488+02:00",
         "status": "completed",
         "run_name": "MAIN_MAIN-RUN-05_MemoryOptimization",
+        "end_time": "2026-06-21T07:15:22.6059605+02:00",
+        "duration_seconds": 0.1211117,
         "errors": 0,
-        "start_time": "2026-06-15T01:06:25.6983755+02:00",
-        "end_time": "2026-06-15T01:06:26.0303441+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 75.891236,
-        "sub_runs": 0,
+        "start_time": "2026-06-14T12:22:22.356046+02:00",
         "status": "initialized",
         "run_name": "PART_CreateProposal",
+        "end_time": "2026-06-14T12:23:38.247282+02:00",
+        "duration_seconds": 75.891236,
         "errors": 0,
-        "start_time": "2026-06-14T12:22:22.356046+02:00",
-        "end_time": "2026-06-14T12:23:38.247282+02:00"
+        "sub_runs": 0
       },
       {
-        "duration_seconds": 0.7522829,
-        "sub_runs": 1,
+        "start_time": "2026-06-21T06:30:08.9991022+02:00",
         "status": "completed",
         "run_name": "PART_FetchIssues",
+        "end_time": "2026-06-21T06:30:12.0457052+02:00",
+        "duration_seconds": 3.046603,
         "errors": 0,
-        "start_time": "2026-06-15T03:29:00.479485+02:00",
-        "end_time": "2026-06-15T03:29:01.2317679+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 1.479861,
-        "sub_runs": 1,
+        "start_time": "2026-06-21T06:30:09.0624531+02:00",
         "status": "completed",
         "run_name": "PART_FetchPRs",
+        "end_time": "2026-06-21T06:30:10.343835+02:00",
+        "duration_seconds": 1.2813819,
         "errors": 0,
-        "start_time": "2026-06-15T03:29:00.637605+02:00",
-        "end_time": "2026-06-15T03:29:02.117466+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 0.1782621,
-        "sub_runs": 1,
+        "start_time": "2026-06-14T12:22:21.0157874+02:00",
         "status": "completed",
         "run_name": "PART_FilterIssues",
+        "end_time": "2026-06-14T12:22:21.1940495+02:00",
+        "duration_seconds": 0.1782621,
         "errors": 0,
-        "start_time": "2026-06-14T12:22:21.0157874+02:00",
-        "end_time": "2026-06-14T12:22:21.1940495+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 0.0736572,
-        "sub_runs": 1,
+        "start_time": "2026-06-21T06:30:12.4266062+02:00",
         "status": "completed",
         "run_name": "PART_PART-RUN-01_MR-01_Planning__Delegation__CreateDelegations",
+        "end_time": "2026-06-21T06:30:12.4742527+02:00",
+        "duration_seconds": 0.0476465,
         "errors": 0,
-        "start_time": "2026-06-15T03:29:02.4149112+02:00",
-        "end_time": "2026-06-15T03:29:02.4885684+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 0.0790352,
-        "sub_runs": 1,
+        "start_time": "2026-06-15T00:29:23.5943207+02:00",
         "status": "completed",
         "run_name": "PART_PART-RUN-01_MR-01_Planning__Strategy__CreateProposal",
+        "end_time": "2026-06-15T00:29:23.6733559+02:00",
+        "duration_seconds": 0.0790352,
         "errors": 0,
-        "start_time": "2026-06-15T00:29:23.5943207+02:00",
-        "end_time": "2026-06-15T00:29:23.6733559+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 0.0732416,
-        "sub_runs": 1,
+        "start_time": "2026-06-21T06:30:12.3357321+02:00",
         "status": "completed",
         "run_name": "PART_PART-RUN-01_MR-01_Planning__Triage__FilterIssues",
+        "end_time": "2026-06-21T06:30:12.3876705+02:00",
+        "duration_seconds": 0.0519384,
         "errors": 0,
-        "start_time": "2026-06-15T03:29:02.2889758+02:00",
-        "end_time": "2026-06-15T03:29:02.3622174+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 0.3756085,
-        "sub_runs": 1,
+        "start_time": "2026-06-21T07:30:24.7307791+02:00",
         "status": "completed",
         "run_name": "PART_PART-RUN-01_MR-02_CheckAndDoing__Housekeeping__CleanupRuntimeState",
+        "end_time": "2026-06-21T07:30:24.7688532+02:00",
+        "duration_seconds": 0.0380741,
         "errors": 0,
-        "start_time": "2026-06-15T03:29:13.1207197+02:00",
-        "end_time": "2026-06-15T03:29:13.4963282+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 0.0842539,
-        "sub_runs": 1,
+        "start_time": "2026-06-15T00:29:23.9916368+02:00",
         "status": "completed",
         "run_name": "PART_PART-RUN-01_MR-02_CheckAndDoing__JulesCheck__InspectJulesSessions",
+        "end_time": "2026-06-15T00:29:24.0758907+02:00",
+        "duration_seconds": 0.0842539,
         "errors": 0,
-        "start_time": "2026-06-15T00:29:23.9916368+02:00",
-        "end_time": "2026-06-15T00:29:24.0758907+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 0.0592258,
-        "sub_runs": 1,
+        "start_time": "2026-06-21T07:30:24.6460901+02:00",
         "status": "completed",
         "run_name": "PART_PART-RUN-01_MR-02_CheckAndDoing__JulesRefill__RefillJulesQueue",
+        "end_time": "2026-06-21T07:30:24.6939744+02:00",
+        "duration_seconds": 0.0478843,
         "errors": 0,
-        "start_time": "2026-06-15T03:29:13.0081863+02:00",
-        "end_time": "2026-06-15T03:29:13.0674121+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 0.0808781,
-        "sub_runs": 1,
+        "start_time": "2026-06-21T07:30:23.7918567+02:00",
         "status": "completed",
         "run_name": "PART_PART-RUN-01_MR-02_CheckAndDoing__LocalAgentCheck__InspectLocalAgents",
+        "end_time": "2026-06-21T07:30:23.8278974+02:00",
+        "duration_seconds": 0.0360407,
         "errors": 0,
-        "start_time": "2026-06-15T03:29:11.5024971+02:00",
-        "end_time": "2026-06-15T03:29:11.5833752+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 0.6056549,
-        "sub_runs": 1,
+        "start_time": "2026-06-21T07:30:23.8655279+02:00",
         "status": "completed",
         "run_name": "PART_PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews",
+        "end_time": "2026-06-21T07:30:24.6088007+02:00",
+        "duration_seconds": 0.7432728,
         "errors": 0,
-        "start_time": "2026-06-15T03:29:12.3588693+02:00",
-        "end_time": "2026-06-15T03:29:12.9645242+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 0.1026633,
-        "sub_runs": 1,
+        "start_time": "2026-06-21T07:30:23.7050459+02:00",
         "status": "completed",
         "run_name": "PART_PART-RUN-01_MR-02_CheckAndDoing__SessionSync__SyncActiveSessions",
+        "end_time": "2026-06-21T07:30:23.7542793+02:00",
+        "duration_seconds": 0.0492334,
         "errors": 0,
-        "start_time": "2026-06-15T03:29:11.3552193+02:00",
-        "end_time": "2026-06-15T03:29:11.4578826+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 0.0460948,
-        "sub_runs": 1,
+        "start_time": "2026-06-15T00:29:25.8134527+02:00",
         "status": "completed",
         "run_name": "PART_PART-RUN-01_MR-03_Audit__AlertDisposition__DispositionAlerts",
+        "end_time": "2026-06-15T00:29:25.8595475+02:00",
+        "duration_seconds": 0.0460948,
         "errors": 0,
-        "start_time": "2026-06-15T00:29:25.8134527+02:00",
-        "end_time": "2026-06-15T00:29:25.8595475+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 0.1117576,
-        "sub_runs": 1,
+        "start_time": "2026-06-21T06:45:19.5691926+02:00",
         "status": "completed",
         "run_name": "PART_PART-RUN-01_MR-03_Audit__ComplianceCheck__EvaluateCompliance",
+        "end_time": "2026-06-21T06:45:19.6145048+02:00",
+        "duration_seconds": 0.0453122,
         "errors": 0,
-        "start_time": "2026-06-15T03:23:05.8420432+02:00",
-        "end_time": "2026-06-15T03:23:05.9538008+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 0.3525792,
-        "sub_runs": 1,
+        "start_time": "2026-06-21T06:45:13.0829229+02:00",
         "status": "completed",
         "run_name": "PART_PART-RUN-01_MR-03_Audit__DataSync__ValidateDataSources",
+        "end_time": "2026-06-21T06:45:19.5314819+02:00",
+        "duration_seconds": 6.448559,
         "errors": 0,
-        "start_time": "2026-06-15T03:23:05.4339742+02:00",
-        "end_time": "2026-06-15T03:23:05.7865534+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 0.036446,
-        "sub_runs": 1,
+        "start_time": "2026-06-15T00:29:25.7352828+02:00",
         "status": "completed",
         "run_name": "PART_PART-RUN-01_MR-03_Audit__JulesSupervision__SuperviseJulesSessions",
+        "end_time": "2026-06-15T00:29:25.7717288+02:00",
+        "duration_seconds": 0.036446,
         "errors": 0,
-        "start_time": "2026-06-15T00:29:25.7352828+02:00",
-        "end_time": "2026-06-15T00:29:25.7717288+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 0.1894268,
-        "sub_runs": 1,
+        "start_time": "2026-06-20T19:27:12.8659155+02:00",
         "status": "completed",
         "run_name": "PART_PART-RUN-01_MR-04_Optimizer__SystemAnalysis__AnalyzeSystemPerformance",
+        "end_time": "2026-06-20T19:27:12.953724+02:00",
+        "duration_seconds": 0.0878085,
         "errors": 0,
-        "start_time": "2026-06-15T00:29:26.3903632+02:00",
-        "end_time": "2026-06-15T00:29:26.57979+02:00"
+        "sub_runs": 1
       },
       {
-        "duration_seconds": 0.1530039,
-        "sub_runs": 1,
+        "start_time": "2026-06-21T07:15:22.5490618+02:00",
         "status": "completed",
         "run_name": "PART_PART-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance__OptimizeMemoryStore",
+        "end_time": "2026-06-21T07:15:22.588924+02:00",
+        "duration_seconds": 0.0398622,
         "errors": 0,
-        "start_time": "2026-06-15T01:06:25.8180597+02:00",
-        "end_time": "2026-06-15T01:06:25.9710636+02:00"
+        "sub_runs": 1
       }
     ],
-    "system_metrics": {
-      "last_housekeeping": "2026-06-15T03:29:13.1687122+02:00",
-      "uptime_days": 7.0,
-      "memory_usage": 0.0,
-      "total_issues_processed": 0,
-      "total_runs_completed": 7,
-      "active_delegations": 0
-    },
-    "collection_timestamp": "2026-06-15T03:29:15.1122563+02:00",
     "recommendations": []
   },
   "system_analysis": {
-    "analysis_timestamp": "2026-06-15T03:29:15.5855959+02:00",
-    "bottleneck_analysis": {},
     "optimization_recommendations": [],
-    "efficiency_analysis": {
-      "average_run_time_seconds": 3.935771018181819,
-      "total_runs_analyzed": 22,
-      "error_rate_percent": 4.55,
-      "success_rate_percent": 95.45
-    },
+    "router_optimization": [
+      {
+        "recommendations": [],
+        "run_type": "Planning",
+        "total_sub_runs": 4,
+        "disabled_sub_runs": 0,
+        "enabled_sub_runs": 4,
+        "sub_run_efficiency": [
+          {
+            "id": "01",
+            "avg_duration_seconds": 6.448559,
+            "enabled": true,
+            "error_count": 0,
+            "path": "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync/SUB-RUN-01_MR-01_Planning__DataSync.ps1",
+            "name": "DataSync",
+            "optimization_potential": "medium"
+          },
+          {
+            "id": "02",
+            "avg_duration_seconds": 0.0519384,
+            "enabled": true,
+            "error_count": 0,
+            "path": "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-02_MR-01_Planning__Triage/SUB-RUN-02_MR-01_Planning__Triage.ps1",
+            "name": "Triage",
+            "optimization_potential": "medium"
+          },
+          {
+            "id": "03",
+            "avg_duration_seconds": 0.0790352,
+            "enabled": true,
+            "error_count": 0,
+            "path": "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-03_MR-01_Planning__Strategy/SUB-RUN-03_MR-01_Planning__Strategy.ps1",
+            "name": "Strategy",
+            "optimization_potential": "medium"
+          },
+          {
+            "id": "04",
+            "avg_duration_seconds": 0.0476465,
+            "enabled": true,
+            "error_count": 0,
+            "path": "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-04_MR-01_Planning__Delegation/SUB-RUN-04_MR-01_Planning__Delegation.ps1",
+            "name": "Delegation",
+            "optimization_potential": "medium"
+          }
+        ]
+      },
+      {
+        "recommendations": [],
+        "run_type": "CheckAndDoing",
+        "total_sub_runs": 6,
+        "disabled_sub_runs": 0,
+        "enabled_sub_runs": 6,
+        "sub_run_efficiency": [
+          {
+            "id": "01",
+            "avg_duration_seconds": 0.0492334,
+            "enabled": true,
+            "error_count": 0,
+            "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-01_MR-02_CheckAndDoing__SessionSync/SUB-RUN-01_MR-02_CheckAndDoing__SessionSync.ps1",
+            "name": "SessionSync",
+            "optimization_potential": "medium"
+          },
+          {
+            "id": "02",
+            "avg_duration_seconds": 0.0842539,
+            "enabled": true,
+            "error_count": 0,
+            "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck/SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck.ps1",
+            "name": "JulesCheck",
+            "optimization_potential": "medium"
+          },
+          {
+            "id": "03",
+            "avg_duration_seconds": 0.0360407,
+            "enabled": true,
+            "error_count": 0,
+            "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck/SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck.ps1",
+            "name": "LocalAgentCheck",
+            "optimization_potential": "medium"
+          },
+          {
+            "id": "04",
+            "avg_duration_seconds": 0.7432728,
+            "enabled": true,
+            "error_count": 0,
+            "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch.ps1",
+            "name": "ReviewDispatch",
+            "optimization_potential": "medium"
+          },
+          {
+            "id": "05",
+            "avg_duration_seconds": 0.0478843,
+            "enabled": true,
+            "error_count": 0,
+            "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill/SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill.ps1",
+            "name": "JulesRefill",
+            "optimization_potential": "medium"
+          },
+          {
+            "id": "06",
+            "avg_duration_seconds": 0.0380741,
+            "enabled": true,
+            "error_count": 0,
+            "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping/SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping.ps1",
+            "name": "Housekeeping",
+            "optimization_potential": "medium"
+          }
+        ]
+      },
+      {
+        "recommendations": [],
+        "run_type": "Audit",
+        "total_sub_runs": 4,
+        "disabled_sub_runs": 0,
+        "enabled_sub_runs": 4,
+        "sub_run_efficiency": [
+          {
+            "id": "01",
+            "avg_duration_seconds": 6.448559,
+            "enabled": true,
+            "error_count": 0,
+            "path": "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SUB-RUN-01_MR-03_Audit__DataSync/SUB-RUN-01_MR-03_Audit__DataSync.ps1",
+            "name": "DataSync",
+            "optimization_potential": "medium"
+          },
+          {
+            "id": "02",
+            "avg_duration_seconds": 0.0453122,
+            "enabled": true,
+            "error_count": 0,
+            "path": "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SUB-RUN-02_MR-03_Audit__ComplianceCheck/SUB-RUN-02_MR-03_Audit__ComplianceCheck.ps1",
+            "name": "ComplianceCheck",
+            "optimization_potential": "medium"
+          },
+          {
+            "id": "03",
+            "avg_duration_seconds": 0.036446,
+            "enabled": true,
+            "error_count": 0,
+            "path": "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SUB-RUN-03_MR-03_Audit__JulesSupervision/SUB-RUN-03_MR-03_Audit__JulesSupervision.ps1",
+            "name": "JulesSupervision",
+            "optimization_potential": "medium"
+          },
+          {
+            "id": "04",
+            "avg_duration_seconds": 0.0460948,
+            "enabled": true,
+            "error_count": 0,
+            "path": "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SUB-RUN-04_MR-03_Audit__AlertDisposition/SUB-RUN-04_MR-03_Audit__AlertDisposition.ps1",
+            "name": "AlertDisposition",
+            "optimization_potential": "medium"
+          }
+        ]
+      },
+      {
+        "recommendations": [],
+        "run_type": "Optimizer",
+        "total_sub_runs": 2,
+        "disabled_sub_runs": 0,
+        "enabled_sub_runs": 2,
+        "sub_run_efficiency": [
+          {
+            "path": "src/runs/MAIN-RUN-04_Optimizer/SUB-RUNS/SUB-RUN-01_MR-04_Optimizer__PerformanceDataCollection/SUB-RUN-01_MR-04_Optimizer__PerformanceDataCollection.ps1",
+            "enabled": true,
+            "id": "01",
+            "name": "PerformanceDataCollection",
+            "optimization_potential": "medium"
+          },
+          {
+            "id": "02",
+            "avg_duration_seconds": 0.0878085,
+            "enabled": true,
+            "error_count": 0,
+            "path": "src/runs/MAIN-RUN-04_Optimizer/SUB-RUNS/SUB-RUN-02_MR-04_Optimizer__SystemAnalysis/SUB-RUN-02_MR-04_Optimizer__SystemAnalysis.ps1",
+            "name": "SystemAnalysis",
+            "optimization_potential": "medium"
+          }
+        ]
+      },
+      {
+        "recommendations": [],
+        "run_type": "MemoryOptimization",
+        "total_sub_runs": 1,
+        "disabled_sub_runs": 0,
+        "enabled_sub_runs": 1,
+        "sub_run_efficiency": [
+          {
+            "id": "01",
+            "avg_duration_seconds": 0.0398622,
+            "enabled": true,
+            "error_count": 0,
+            "path": "src/runs/MAIN-RUN-05_MemoryOptimization/SUB-RUNS/SUB-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance/SUB-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance.ps1",
+            "name": "MemoryMaintenance",
+            "optimization_potential": "medium"
+          }
+        ]
+      }
+    ],
+    "analysis_timestamp": "2026-06-21T07:45:25.9562334+02:00",
     "system_process_analysis": {
-      "active_sessions": 0,
       "configuration_efficiency": [
         {
-          "recommendation": "Wake Intervals sind gut an Workload angepasst",
-          "configuration_area": "wake_intervals",
-          "efficiency_score": 85,
           "current_configuration": {
             "planning_minutes": 120,
             "check_and_doing_minutes": 15,
@@ -364,209 +560,22 @@
             "optimizer_minutes": 720,
             "memory_optimization_minutes": 60,
             "monitoring_minutes": 10
-          }
+          },
+          "efficiency_score": 85,
+          "recommendation": "Wake Intervals sind gut an Workload angepasst",
+          "configuration_area": "wake_intervals"
         }
       ],
       "memory_usage_mb": 0.0,
+      "active_sessions": 0,
       "daily_quota_usage": 64.0
     },
-    "router_optimization": [
-      {
-        "recommendations": [],
-        "total_sub_runs": 4,
-        "enabled_sub_runs": 4,
-        "disabled_sub_runs": 0,
-        "run_type": "Planning",
-        "sub_run_efficiency": [
-          {
-            "id": "01",
-            "path": "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-01_MR-01_Planning__DataSync/SUB-RUN-01_MR-01_Planning__DataSync.ps1",
-            "avg_duration_seconds": 0.3525792,
-            "optimization_potential": "medium",
-            "enabled": true,
-            "name": "DataSync",
-            "error_count": 0
-          },
-          {
-            "id": "02",
-            "path": "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-02_MR-01_Planning__Triage/SUB-RUN-02_MR-01_Planning__Triage.ps1",
-            "avg_duration_seconds": 0.0732416,
-            "optimization_potential": "medium",
-            "enabled": true,
-            "name": "Triage",
-            "error_count": 0
-          },
-          {
-            "id": "03",
-            "path": "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-03_MR-01_Planning__Strategy/SUB-RUN-03_MR-01_Planning__Strategy.ps1",
-            "avg_duration_seconds": 0.0790352,
-            "optimization_potential": "medium",
-            "enabled": true,
-            "name": "Strategy",
-            "error_count": 0
-          },
-          {
-            "id": "04",
-            "path": "src/runs/MAIN-RUN-01_Planning/SUB-RUNS/SUB-RUN-04_MR-01_Planning__Delegation/SUB-RUN-04_MR-01_Planning__Delegation.ps1",
-            "avg_duration_seconds": 0.0736572,
-            "optimization_potential": "medium",
-            "enabled": true,
-            "name": "Delegation",
-            "error_count": 0
-          }
-        ]
-      },
-      {
-        "recommendations": [],
-        "total_sub_runs": 6,
-        "enabled_sub_runs": 6,
-        "disabled_sub_runs": 0,
-        "run_type": "CheckAndDoing",
-        "sub_run_efficiency": [
-          {
-            "id": "01",
-            "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-01_MR-02_CheckAndDoing__SessionSync/SUB-RUN-01_MR-02_CheckAndDoing__SessionSync.ps1",
-            "avg_duration_seconds": 0.1026633,
-            "optimization_potential": "medium",
-            "enabled": true,
-            "name": "SessionSync",
-            "error_count": 0
-          },
-          {
-            "id": "02",
-            "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck/SUB-RUN-02_MR-02_CheckAndDoing__JulesCheck.ps1",
-            "avg_duration_seconds": 0.0842539,
-            "optimization_potential": "medium",
-            "enabled": true,
-            "name": "JulesCheck",
-            "error_count": 0
-          },
-          {
-            "id": "03",
-            "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck/SUB-RUN-03_MR-02_CheckAndDoing__LocalAgentCheck.ps1",
-            "avg_duration_seconds": 0.0808781,
-            "optimization_potential": "medium",
-            "enabled": true,
-            "name": "LocalAgentCheck",
-            "error_count": 0
-          },
-          {
-            "id": "04",
-            "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch/SUB-RUN-04_MR-02_CheckAndDoing__ReviewDispatch.ps1",
-            "avg_duration_seconds": 0.6056549,
-            "optimization_potential": "medium",
-            "enabled": true,
-            "name": "ReviewDispatch",
-            "error_count": 0
-          },
-          {
-            "id": "05",
-            "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill/SUB-RUN-05_MR-02_CheckAndDoing__JulesRefill.ps1",
-            "avg_duration_seconds": 0.0592258,
-            "optimization_potential": "medium",
-            "enabled": true,
-            "name": "JulesRefill",
-            "error_count": 0
-          },
-          {
-            "id": "06",
-            "path": "src/runs/MAIN-RUN-02_CheckAndDoing/SUB-RUNS/SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping/SUB-RUN-06_MR-02_CheckAndDoing__Housekeeping.ps1",
-            "avg_duration_seconds": 0.3756085,
-            "optimization_potential": "medium",
-            "enabled": true,
-            "name": "Housekeeping",
-            "error_count": 0
-          }
-        ]
-      },
-      {
-        "recommendations": [],
-        "total_sub_runs": 4,
-        "enabled_sub_runs": 4,
-        "disabled_sub_runs": 0,
-        "run_type": "Audit",
-        "sub_run_efficiency": [
-          {
-            "id": "01",
-            "path": "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SUB-RUN-01_MR-03_Audit__DataSync/SUB-RUN-01_MR-03_Audit__DataSync.ps1",
-            "avg_duration_seconds": 0.3525792,
-            "optimization_potential": "medium",
-            "enabled": true,
-            "name": "DataSync",
-            "error_count": 0
-          },
-          {
-            "id": "02",
-            "path": "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SUB-RUN-02_MR-03_Audit__ComplianceCheck/SUB-RUN-02_MR-03_Audit__ComplianceCheck.ps1",
-            "avg_duration_seconds": 0.1117576,
-            "optimization_potential": "medium",
-            "enabled": true,
-            "name": "ComplianceCheck",
-            "error_count": 0
-          },
-          {
-            "id": "03",
-            "path": "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SUB-RUN-03_MR-03_Audit__JulesSupervision/SUB-RUN-03_MR-03_Audit__JulesSupervision.ps1",
-            "avg_duration_seconds": 0.036446,
-            "optimization_potential": "medium",
-            "enabled": true,
-            "name": "JulesSupervision",
-            "error_count": 0
-          },
-          {
-            "id": "04",
-            "path": "src/runs/MAIN-RUN-03_Audit/SUB-RUNS/SUB-RUN-04_MR-03_Audit__AlertDisposition/SUB-RUN-04_MR-03_Audit__AlertDisposition.ps1",
-            "avg_duration_seconds": 0.0460948,
-            "optimization_potential": "medium",
-            "enabled": true,
-            "name": "AlertDisposition",
-            "error_count": 0
-          }
-        ]
-      },
-      {
-        "recommendations": [],
-        "total_sub_runs": 2,
-        "enabled_sub_runs": 2,
-        "disabled_sub_runs": 0,
-        "run_type": "Optimizer",
-        "sub_run_efficiency": [
-          {
-            "enabled": true,
-            "name": "PerformanceDataCollection",
-            "path": "src/runs/MAIN-RUN-04_Optimizer/SUB-RUNS/SUB-RUN-01_MR-04_Optimizer__PerformanceDataCollection/SUB-RUN-01_MR-04_Optimizer__PerformanceDataCollection.ps1",
-            "optimization_potential": "medium",
-            "id": "01"
-          },
-          {
-            "id": "02",
-            "path": "src/runs/MAIN-RUN-04_Optimizer/SUB-RUNS/SUB-RUN-02_MR-04_Optimizer__SystemAnalysis/SUB-RUN-02_MR-04_Optimizer__SystemAnalysis.ps1",
-            "avg_duration_seconds": 0.1894268,
-            "optimization_potential": "medium",
-            "enabled": true,
-            "name": "SystemAnalysis",
-            "error_count": 0
-          }
-        ]
-      },
-      {
-        "recommendations": [],
-        "total_sub_runs": 1,
-        "enabled_sub_runs": 1,
-        "disabled_sub_runs": 0,
-        "run_type": "MemoryOptimization",
-        "sub_run_efficiency": [
-          {
-            "id": "01",
-            "path": "src/runs/MAIN-RUN-05_MemoryOptimization/SUB-RUNS/SUB-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance/SUB-RUN-01_MR-05_MemoryOptimization__MemoryMaintenance.ps1",
-            "avg_duration_seconds": 0.1530039,
-            "optimization_potential": "medium",
-            "enabled": true,
-            "name": "MemoryMaintenance",
-            "error_count": 0
-          }
-        ]
-      }
-    ]
+    "efficiency_analysis": {
+      "error_rate_percent": 4.35,
+      "total_runs_analyzed": 23,
+      "average_run_time_seconds": 4.391488908695653,
+      "success_rate_percent": 95.65
+    },
+    "bottleneck_analysis": {}
   }
 }

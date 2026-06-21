@@ -14,6 +14,7 @@ const GLOBAL_STATE_PATH = path.join(VORCE_ROOT, 'var/db/global-state.json');
 const DASHBOARD_STATE_PATH = path.join(VORCE_ROOT, 'var/db/dashboard-state.json');
 const CONFIG_PATH = path.join(VORCE_ROOT, 'var/config/autopilot-config.json');
 const RUN_STATES_DIR = path.join(VORCE_ROOT, 'var/run-states');
+const RUN_HISTORY_DIR = path.join(VORCE_ROOT, 'var/run-history');
 const MAIN_RUNS = [
   { name: 'MAIN-RUN-01_Planning', label: 'Planning', routerKey: 'Planning', intervalKey: 'planning_minutes' },
   { name: 'MAIN-RUN-02_CheckAndDoing', label: 'Check & Doing', routerKey: 'CheckAndDoing', intervalKey: 'check_and_doing_minutes' },
@@ -122,6 +123,332 @@ function getRunCatalog(): any {
         part_run_count: subRuns.reduce((sum: number, sub: any) => sum + sub.part_runs.length, 0),
       };
     }),
+  };
+}
+
+function getRunHierarchy(): any {
+  const config = readJsonFile(CONFIG_PATH, {});
+  const allRunStates = fs.existsSync(RUN_STATES_DIR)
+    ? fs.readdirSync(RUN_STATES_DIR)
+      .filter(file => file.endsWith('.json') && !file.includes('_VALIDATE-'))
+      .map(file => {
+        try {
+          const state = readJsonFile(path.join(RUN_STATES_DIR, file), null);
+          if (state) {
+            state.sourceFile = file;
+            return state;
+          }
+          return null;
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean)
+    : [];
+
+  const isCanonicalRunName = (value: any) => typeof value === 'string' && /^(MAIN|SUB|PART)-RUN-\d+_/.test(value);
+
+  const legacyOrphanStates = allRunStates.filter((state: any) => {
+    const name = String(state.name || '');
+    const sourceFile = String(state.sourceFile || '');
+    if (isCanonicalRunName(name)) return false;
+    if (isCanonicalRunName(path.basename(sourceFile, '.json'))) return false;
+    return /^((MAIN|SUB|PART)_|[A-Z][A-Za-z]+$)/.test(sourceFile) || sourceFile.startsWith('PART_') || sourceFile.startsWith('SUB_');
+  });
+
+  const getLatestMainState = (mainRunName: string): any => {
+    const mainStates = allRunStates.filter((state: any) =>
+      state.type === 'MAIN' && state.name === mainRunName
+    );
+    return mainStates.length > 0
+      ? mainStates.reduce((latest: any, current: any) =>
+          (!latest || new Date(current.completed_at || current.started_at) > new Date(latest.completed_at || latest.started_at))
+            ? current
+            : latest
+        )
+      : null;
+  };
+
+  const getSubRunState = (subRunName: string): any => {
+    const subStates = allRunStates.filter((state: any) =>
+      (state.type === 'SUB' && state.name === subRunName) ||
+      (state.type === 'SUB' && state.name?.endsWith(`__${subRunName}`)) ||
+      (state.type === 'SUB' && state.sub_run === subRunName) ||
+      state.sub_run?.endsWith(`__${subRunName}`)
+    );
+    return subStates.length > 0
+      ? subStates.reduce((latest: any, current: any) =>
+          (!latest || new Date(current.completed_at || current.started_at) > new Date(latest.completed_at || latest.started_at))
+            ? current
+            : latest
+        )
+      : null;
+  };
+
+  const getPartRunState = (partRunName: string): any => {
+    const partStates = allRunStates.filter((state: any) =>
+      (state.type === 'PART' && state.name === partRunName) ||
+      (state.type === 'PART' && state.name?.endsWith(`__${partRunName}`))
+    );
+    return partStates.length > 0
+      ? partStates.reduce((latest: any, current: any) =>
+          (!latest || new Date(current.completed_at || current.started_at) > new Date(latest.completed_at || latest.started_at))
+            ? current
+            : latest
+        )
+      : null;
+  };
+
+  const mainRuns = MAIN_RUNS.map(definition => {
+    const configuredSubRuns = config.router_rules?.[definition.routerKey] || [];
+    const latestMainState = getLatestMainState(definition.name);
+    const routerDecision = latestMainState?.metadata?.router_decision || null;
+
+    const activeSubRunsFromLastRun = routerDecision?.active_sub_runs
+      ? routerDecision.active_sub_runs.map((entry: any) => entry.name || entry.sub_run || entry)
+      : latestMainState?.results
+        ?.filter((result: any) => result.status && result.status !== 'skipped')
+        ?.map((result: any) => result.sub_run || result.name)
+        || [];
+
+    const subRuns = configuredSubRuns.map((rule: any) => {
+      const scriptPath = path.join(VORCE_ROOT, rule.script || '');
+      const subDir = path.dirname(scriptPath);
+      const subRunName = path.basename(subDir);
+
+      const subRunState = getSubRunState(rule.name);
+      const isActiveInLastRun = activeSubRunsFromLastRun.includes(rule.name) ||
+                               activeSubRunsFromLastRun.some((activeName: string) =>
+                                 activeName.includes(rule.name) || activeName.endsWith(`__${rule.name}`));
+
+      const partsDir = path.join(subDir, 'PART-RUNS');
+      const partScripts = fs.existsSync(partsDir)
+        ? fs.readdirSync(partsDir)
+          .filter(file => file.endsWith('.ps1'))
+          .sort()
+          .map(file => path.basename(file, '.ps1'))
+        : [];
+
+      const activePartRunsFromLastRun = latestMainState?.results
+        ?.find((result: any) => result.sub_run === rule.name ||
+                               result.sub_run?.endsWith(`__${rule.name}`) ||
+                               result.name === rule.name)
+        ?.parts
+        ?.filter((part: any) => part.status && part.status !== 'skipped')
+        ?.map((part: any) => part.name)
+        || [];
+
+      const partRuns = partScripts.map((partName: string) => {
+        const partRunState = getPartRunState(partName);
+        const isPartActiveInLastRun = activePartRunsFromLastRun.includes(partName) ||
+                                     activePartRunsFromLastRun.some((activeName: string) =>
+                                       activeName.includes(partName) || activeName.endsWith(`__${partName}`));
+
+        return {
+          name: partName,
+          label: parseRunName(partName),
+          script: path.relative(VORCE_ROOT, path.join(partsDir, `${partName}.ps1`)).replace(/\\/g, '/'),
+          configured_enabled: true,
+          runtime_status: partRunState?.status || 'not_started',
+          latest_state_path: partRunState ? path.relative(VORCE_ROOT, path.join(RUN_STATES_DIR, partRunState.sourceFile)).replace(/\\/g, '/') : null,
+          activation_reason: isPartActiveInLastRun ? 'activated_in_last_run' : 'not_activated_in_last_run',
+          inactive_reason: partRunState?.status === 'skipped' ? partRunState.skip_reason : null,
+          timestamp: partRunState?.completed_at || partRunState?.started_at || null
+        };
+      });
+
+      let runtimeStatus = 'not_started';
+      let activationReason = 'not_activated_in_last_run';
+      let inactiveReason = null;
+
+      if (subRunState) {
+        runtimeStatus = subRunState.status;
+        if (subRunState.status === 'skipped') {
+          inactiveReason = subRunState.skip_reason;
+        } else if (subRunState.status === 'completed' || subRunState.status === 'failed') {
+          activationReason = 'activated_in_last_run';
+        }
+      } else if (isActiveInLastRun) {
+        runtimeStatus = 'completed';
+        activationReason = 'activated_in_last_run';
+      }
+
+      return {
+        id: rule.id,
+        name: subRunName,
+        label: rule.name || parseRunName(subRunName),
+        script: rule.script,
+        configured_enabled: rule.enabled !== false,
+        runtime_status: runtimeStatus,
+        activation_reason: activationReason,
+        inactive_reason: inactiveReason,
+        router_active_last_run: isActiveInLastRun,
+        latest_state_path: subRunState ? path.relative(VORCE_ROOT, path.join(RUN_STATES_DIR, subRunState.sourceFile)).replace(/\\/g, '/') : null,
+        part_runs: partRuns
+      };
+    });
+
+    const fallbackRouterDecision = {
+      configured_sub_runs: configuredSubRuns.map((rule: any) => ({
+        id: rule.id,
+        name: rule.name,
+        script: rule.script,
+        configured_enabled: rule.enabled !== false,
+        active: activeSubRunsFromLastRun.some((activeName: string) => activeName === rule.name || activeName.includes(rule.name)),
+        reason: rule.enabled === false ? 'disabled_in_config' : (
+          activeSubRunsFromLastRun.some((activeName: string) => activeName === rule.name || activeName.includes(rule.name))
+            ? 'active_by_router'
+            : 'skipped_by_router_condition'
+        )
+      })),
+      active_sub_runs: activeSubRunsFromLastRun.map((name: string) => ({
+        name,
+        active: true
+      })),
+      inactive_sub_runs: configuredSubRuns
+        .filter((rule: any) => !activeSubRunsFromLastRun.includes(rule.name) &&
+                              !activeSubRunsFromLastRun.some((activeName: string) => activeName.includes(rule.name)))
+        .map((rule: any) => ({
+          id: rule.id,
+          name: rule.name,
+          script: rule.script,
+          active: false,
+          reason: rule.enabled === false ? 'disabled_in_config' : 'skipped_by_router_condition'
+      })),
+      router_key: definition.routerKey,
+      decision_timestamp: latestMainState?.completed_at || latestMainState?.started_at
+    };
+    const effectiveRouterDecision = routerDecision || fallbackRouterDecision;
+
+    return {
+      name: definition.name,
+      label: definition.label,
+      router_key: definition.routerKey,
+      interval_key: definition.intervalKey,
+      configured_sub_runs: configuredSubRuns.length,
+      active_sub_runs_last_run: activeSubRunsFromLastRun.length,
+      latest_state_path: latestMainState ? path.relative(VORCE_ROOT, path.join(RUN_STATES_DIR, latestMainState.sourceFile)).replace(/\\/g, '/') : null,
+      latest_state_status: latestMainState?.status || 'not_started',
+      last_run_timestamp: latestMainState?.completed_at || latestMainState?.started_at || null,
+      router_decision: effectiveRouterDecision,
+      sub_runs: subRuns
+    };
+  });
+
+  return {
+    schema_version: 1,
+    generated_at: new Date().toISOString(),
+    main_runs: mainRuns,
+    legacy_orphan_states: legacyOrphanStates.map((state: any) => ({
+      source_file: state.sourceFile,
+      type: state.type,
+      name: state.name,
+      timestamp: state.completed_at || state.started_at
+    }))
+  };
+}
+
+function getRunSummary(limit = 10): any {
+  const historyFiles = fs.existsSync(RUN_HISTORY_DIR)
+    ? fs.readdirSync(RUN_HISTORY_DIR, { withFileTypes: true })
+        .filter(entry => entry.isDirectory())
+        .flatMap(entry => {
+          const dir = path.join(RUN_HISTORY_DIR, entry.name);
+          return fs.readdirSync(dir)
+            .filter(file => file.endsWith('.json'))
+            .map(file => path.join(dir, file));
+        })
+    : [];
+
+  const mainRuns = historyFiles
+    .map(file => {
+      try {
+        const state = readJsonFile(file, null);
+        return state && state.type === 'MAIN' ? state : null;
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean)
+    .sort((a: any, b: any) => new Date(b.completed_at || b.started_at).getTime() - new Date(a.completed_at || a.started_at).getTime());
+
+  const countParts = (state: any, status: string) =>
+    (state.results || [])
+      .flatMap((result: any) => result.parts || [])
+      .filter((part: any) => part.status === status).length;
+
+  const summarizeWindow = (days: number) => {
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    const selected = mainRuns.filter((state: any) => new Date(state.completed_at || state.started_at).getTime() >= cutoff);
+    const durations = selected
+      .map((state: any) => {
+        const started = new Date(state.started_at || 0).getTime();
+        const completed = new Date(state.completed_at || state.started_at || 0).getTime();
+        return Math.max(0, completed - started);
+      })
+      .filter((value: number) => value > 0)
+      .sort((a: number, b: number) => a - b);
+    const allResults = selected.flatMap((state: any) => state.results || []);
+    const allParts = selected.flatMap((state: any) => (state.results || []).flatMap((result: any) => result.parts || []));
+    const p95Index = durations.length ? Math.min(durations.length - 1, Math.ceil(durations.length * 0.95) - 1) : -1;
+
+    return {
+      runs_started: selected.length,
+      runs_completed: selected.filter((state: any) => state.status === 'completed').length,
+      runs_failed: selected.filter((state: any) => state.status === 'failed').length,
+      success_rate: selected.length ? selected.filter((state: any) => state.status === 'completed').length / selected.length : 0,
+      avg_duration_ms: durations.length ? Math.round(durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length) : 0,
+      p95_duration_ms: p95Index >= 0 ? durations[p95Index] : 0,
+      sub_runs_completed: allResults.filter((result: any) => result.status === 'completed').length,
+      sub_runs_failed: allResults.filter((result: any) => result.status === 'failed').length,
+      sub_runs_skipped: allResults.filter((result: any) => result.status === 'skipped').length,
+      sub_runs_reused: allResults.filter((result: any) => result.status === 'reused').length,
+      part_runs_completed: allParts.filter((part: any) => part.status === 'completed').length,
+      part_runs_failed: allParts.filter((part: any) => part.status === 'failed').length,
+      part_runs_skipped: allParts.filter((part: any) => part.status === 'skipped').length,
+      part_runs_reused: allParts.filter((part: any) => part.status === 'reused').length,
+      provider_attempts: 0,
+      fallbacks: 0,
+      timeout_errors: selected.filter((state: any) => JSON.stringify(state).includes('timeout')).length,
+      rate_limit_errors: selected.filter((state: any) => JSON.stringify(state).includes('rate_limited')).length,
+      auth_errors: selected.filter((state: any) => JSON.stringify(state).includes('auth_missing')).length,
+      estimated_cost_usd: 0,
+      input_tokens: 0,
+      output_tokens: 0,
+    };
+  };
+
+  return {
+    generated_at: new Date().toISOString(),
+    recent_runs: mainRuns.slice(0, limit).map((state: any) => ({
+      run_id: state.id,
+      main_run: state.name,
+      status: state.status,
+      started_at: state.started_at,
+      completed_at: state.completed_at,
+      duration_ms: state.duration_ms || 0,
+      sub_runs: {
+        completed: (state.results || []).filter((result: any) => result.status === 'completed').length,
+        failed: (state.results || []).filter((result: any) => result.status === 'failed').length,
+        skipped: (state.results || []).filter((result: any) => result.status === 'skipped').length,
+        reused: (state.results || []).filter((result: any) => result.status === 'reused').length,
+      },
+      part_runs: {
+        completed: countParts(state, 'completed'),
+        failed: countParts(state, 'failed'),
+        skipped: countParts(state, 'skipped'),
+        reused: countParts(state, 'reused'),
+      },
+      provider_attempts: 0,
+      fallbacks: 0,
+      estimated_cost_usd: 0,
+      input_tokens: 0,
+      output_tokens: 0,
+      result_summary: `Sub-Runs: ${(state.results || []).length}`,
+      primary_error: null,
+    })),
+    stats_24h: summarizeWindow(1),
+    stats_7d: summarizeWindow(7),
   };
 }
 
@@ -302,6 +629,26 @@ export default defineConfig({
               const catalog = getRunCatalog();
               res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
               res.end(JSON.stringify(catalog, null, 2));
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+            }
+          } else if (req.method === 'GET' && req.url?.startsWith('/run-summary.json')) {
+            try {
+              const url = new URL(req.url, 'http://localhost');
+              const limit = Number(url.searchParams.get('limit') || '10');
+              const summary = getRunSummary(Number.isFinite(limit) && limit > 0 ? limit : 10);
+              res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+              res.end(JSON.stringify(summary, null, 2));
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+            }
+          } else if (req.method === 'GET' && req.url === '/run-hierarchy.json') {
+            try {
+              const hierarchy = getRunHierarchy();
+              res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+              res.end(JSON.stringify(hierarchy, null, 2));
             } catch (err) {
               res.writeHead(500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
@@ -884,16 +1231,6 @@ export default defineConfig({
               res.writeHead(500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
             }
-          } else if (req.method === 'GET' && req.url === '/api/live-log') {
-            try {
-              const liveLogPath = path.resolve(__dirname, '../../var/log/autopilot-live.log');
-              const content = fs.existsSync(liveLogPath) ? fs.readFileSync(liveLogPath, 'utf-8') : '';
-              res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ content }));
-            } catch (err) {
-              res.writeHead(500, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err), content: '' }));
-            }
           } else {
             next();
           }
@@ -904,14 +1241,7 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
-    proxy: {
-      // Proxy für WebSocket-Server auf Port 5174
-      '/ws': {
-        target: 'ws://localhost:5174',
-        ws: true,
-        changeOrigin: true,
-      }
-    },
+    hmr: false,
     // Statische Dateien aus var/ Verzeichnis serven
     fs: {
       allow: [

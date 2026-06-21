@@ -1,4 +1,6 @@
-# Vorce-Autopilot NEW — Überarbeiteter Refactoring-Plan v3
+# Vorce-Factory - Historischer Refactoring-Plan v3
+
+> Historisch: Dieser Plan enthaelt alte Pfade/Namen. Aktuelle offene Punkte stehen in `CURRENT_IMPLEMENTATION_GAP_PLAN.md`.
 
 > **Stand:** 2026-06-14  
 > **Autor:** Antigravity (Review & Neustrukturierung des bestehenden Plans)  

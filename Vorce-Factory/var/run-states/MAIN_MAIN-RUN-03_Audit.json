@@ -1,33 +1,34 @@
 {
-  "id": "run_20260615_043221",
+  "id": "run_20260621_091538",
   "name": "MAIN-RUN-03_Audit",
   "type": "MAIN",
   "status": "completed",
-  "started_at": "2026-06-15T04:32:21.1386624+02:00",
-  "completed_at": "2026-06-15T04:32:21.6639793+02:00",
+  "started_at": "2026-06-21T09:15:38.7522004+02:00",
+  "completed_at": "2026-06-21T09:15:44.4321630+02:00",
   "metadata": {},
   "results": [
     {
+      "sub_run": "SUB-RUN-01_MR-03_Audit__DataSync",
       "status": "completed",
+      "timestamp": "2026-06-21T09:15:44.3299587+02:00",
       "parts": [
         {
-          "id": "run_20260615_043221",
+          "id": "run_20260621_091538",
           "name": "PART-RUN-01_MR-03_Audit__DataSync__ValidateDataSources",
           "type": "PART",
           "status": "completed",
-          "started_at": "2026-06-15T04:32:21.2073272+02:00",
-          "completed_at": "2026-06-15T04:32:21.5400188+02:00",
+          "started_at": "2026-06-21T09:15:38.8175709+02:00",
+          "completed_at": "2026-06-21T09:15:44.3282706+02:00",
           "metadata": {},
           "results": [
             {
-              "status": "completed",
+              "timestamp": "2026-06-21T09:15:44.3254509+02:00",
               "successful_checks": 5,
-              "total_checks": 5,
               "sync_results": [
                 {
                   "type": "github_api",
-                  "response_time": "fast",
-                  "status": "ok"
+                  "status": "ok",
+                  "response_time": "fast"
                 },
                 {
                   "type": "directory_var",
@@ -46,36 +47,32 @@
                   "status": "ok"
                 }
               ],
-              "timestamp": "2026-06-15T04:32:21.5364874+02:00"
+              "status": "completed",
+              "total_checks": 5
             }
           ]
         }
-      ],
-      "timestamp": "2026-06-15T04:32:21.5418630+02:00",
-      "sub_run": "SUB-RUN-01_MR-03_Audit__DataSync"
+      ]
     },
     {
+      "sub_run": "SUB-RUN-02_MR-03_Audit__ComplianceCheck",
       "status": "completed",
+      "timestamp": "2026-06-21T09:15:44.4156358+02:00",
       "parts": [
         {
-          "id": "run_20260615_043221",
+          "id": "run_20260621_091544",
           "name": "PART-RUN-01_MR-03_Audit__ComplianceCheck__EvaluateCompliance",
           "type": "PART",
           "status": "completed",
-          "started_at": "2026-06-15T04:32:21.5815781+02:00",
-          "completed_at": "2026-06-15T04:32:21.6515580+02:00",
+          "started_at": "2026-06-21T09:15:44.3660211+02:00",
+          "completed_at": "2026-06-21T09:15:44.4138742+02:00",
           "metadata": {},
           "results": [
             {
-              "status": "completed",
-              "failed_checks": 0,
-              "timestamp": "2026-06-15T04:32:21.6414698+02:00",
-              "passed_checks": 4,
-              "warning_checks": 0,
               "compliance_checks": [
                 {
-                  "status": "ok",
                   "category": "config_integrity",
+                  "status": "ok",
                   "checks_passed": [
                     "repository_set",
                     "wake_intervals_set",
@@ -83,36 +80,39 @@
                   ]
                 },
                 {
-                  "status": "ok",
                   "variables": [
                     "VorceRoot",
                     "VarDir",
                     "LibDir"
                   ],
-                  "category": "global_variables"
+                  "category": "global_variables",
+                  "status": "ok"
                 },
                 {
-                  "status": "ok",
                   "modules": [
-                    "StatusPrinter",
                     "RunEngine",
                     "QuotaManager",
-                    "StateManager"
+                    "StateManager",
+                    "StatusPrinter"
                   ],
-                  "category": "module_availability"
+                  "category": "module_availability",
+                  "status": "ok"
                 },
                 {
-                  "status": "ok",
+                  "jules_quota": true,
                   "category": "quota_registry",
-                  "jules_quota": true
+                  "status": "ok"
                 }
-              ]
+              ],
+              "timestamp": "2026-06-21T09:15:44.4109303+02:00",
+              "status": "completed",
+              "warning_checks": 0,
+              "failed_checks": 0,
+              "passed_checks": 4
             }
           ]
         }
-      ],
-      "timestamp": "2026-06-15T04:32:21.6533057+02:00",
-      "sub_run": "SUB-RUN-02_MR-03_Audit__ComplianceCheck"
+      ]
     }
   ]
 }

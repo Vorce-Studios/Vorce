@@ -1,19 +1,10 @@
-﻿{
-    "id":  "run_20260618_001843",
-    "name":  "PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews",
-    "type":  "PART",
-    "status":  "completed",
-    "started_at":  "2026-06-18T00:18:43.6129345+02:00",
-    "completed_at":  "2026-06-18T00:18:43.6794703+02:00",
-    "metadata":  {
-
-                 },
-    "results":  [
-                    {
-                        "reviews_dispatched":  0,
-                        "status":  "dry_run",
-                        "timestamp":  "2026-06-18T00:18:43.6769709+02:00",
-                        "prs_found":  0
-                    }
-                ]
+{
+  "id": "run_20260621_100139",
+  "name": "PART-RUN-01_MR-02_CheckAndDoing__ReviewDispatch__DispatchReviews",
+  "type": "PART",
+  "status": "initialized",
+  "started_at": "2026-06-21T10:01:39.6252914+02:00",
+  "completed_at": null,
+  "metadata": {},
+  "results": []
 }

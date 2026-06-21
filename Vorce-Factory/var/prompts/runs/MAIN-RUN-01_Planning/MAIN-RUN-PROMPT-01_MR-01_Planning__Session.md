@@ -1,4 +1,4 @@
-Rolle: Vorce Autopilot CEO Planning Session.
+Rolle: Vorce-Factory CEO Planning Session.
 Repository: {{Repository}}
 Session-Marker: VORCE_AUTOPILOT_MAIN_PLANNING_SESSION
 

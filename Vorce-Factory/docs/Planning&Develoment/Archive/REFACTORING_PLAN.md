@@ -1,4 +1,6 @@
-# Vorce-Autopilot NEW — Refactoring-Plan (Überarbeitete Fassung)
+# Vorce-Factory - Historischer Refactoring-Plan (ueberarbeitete Fassung)
+
+> Historisch: Dieser Plan enthaelt alte Pfade/Namen. Aktuelle offene Punkte stehen in `CURRENT_IMPLEMENTATION_GAP_PLAN.md`.
 
 > **Letzte Aktualisierung:** 2026-06-14  
 > **Ziel:** Vollständig funktionsfähiges, modulares Autopilot-Framework ohne Legacy-Abhängigkeiten.  

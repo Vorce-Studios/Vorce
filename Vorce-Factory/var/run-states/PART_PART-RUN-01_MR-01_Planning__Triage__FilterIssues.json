@@ -1,15 +1,15 @@
 {
-  "id": "run_20260615_175243",
+  "id": "run_20260621_084534",
   "name": "PART-RUN-01_MR-01_Planning__Triage__FilterIssues",
   "type": "PART",
   "status": "completed",
-  "started_at": "2026-06-15T17:52:43.5949218+02:00",
-  "completed_at": "2026-06-15T17:52:43.7712275+02:00",
+  "started_at": "2026-06-21T08:45:34.7492277+02:00",
+  "completed_at": "2026-06-21T08:45:34.7853468+02:00",
   "metadata": {},
   "results": [
     {
-      "timestamp": "2026-06-15T17:52:43.7581001+02:00",
-      "triaged_count": 12
+      "triaged_count": 12,
+      "timestamp": "2026-06-21T08:45:34.7829626+02:00"
     }
   ]
 }

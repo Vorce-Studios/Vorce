@@ -1,4 +1,4 @@
-# Start-Autopilot.ps1 (Vorce 3.0)
+# Start-Vorce-Factory.ps1 (Vorce-Factory 3.0)
 # Infrastruktur-Bootstrapper fuer Dashboard und Hintergrunddienste
 [CmdletBinding()]
 param(
@@ -8,7 +8,9 @@ param(
     [switch]$Stop,
     [switch]$Restart,
     [switch]$Visible,
-    [switch]$Detach
+    [switch]$Detach,
+    [switch]$StopScripts,
+    [switch]$StopAll
 )
 
 $OutputEncoding = [System.Text.Encoding]::UTF8
@@ -36,17 +38,18 @@ function Test-HttpHealth {
 }
 
 function Test-DashboardHealth {
-    return (Test-HttpHealth -Uri "http://localhost:5173/api/health") -and
-           (Test-HttpHealth -Uri "http://localhost:5173/")
+    # Only check the health endpoint as it's more reliable
+    return Test-HttpHealth -Uri "http://localhost:5173/api/health"
 }
 
 function Wait-DashboardHealth {
-    param([int]$TimeoutSeconds = 30)
+    param([int]$TimeoutSeconds = 60)
 
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline) {
         if (Test-DashboardHealth) { return $true }
-        Start-Sleep -Milliseconds 500
+        Write-Host "[BOOT] Warte auf Dashboard Health..." -ForegroundColor Gray
+        Start-Sleep -Milliseconds 1000
     }
     return $false
 }
@@ -60,6 +63,79 @@ function Stop-ProcessTree {
     }
 
     Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
+}
+
+function Stop-AllRunScripts {
+    Write-Host "[STOP] Beende alle Run-Skripte..." -ForegroundColor Yellow
+    $stopped = New-Object System.Collections.Generic.HashSet[int]
+
+    # Patterns to identify run scripts
+    $runScriptPatterns = @(
+        [regex]::Escape((Join-Path $ScriptDir "autopilot.ps1")),
+        [regex]::Escape((Join-Path $ToolsDir "services/sync-service.ps1")),
+        [regex]::Escape((Join-Path $ScriptDir "src/tools/**/*.ps1"))
+    )
+
+    $processes = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+        $cmd = [string]$_.CommandLine
+        $runScriptPatterns | Where-Object { $cmd -match $_ }
+    })
+
+    foreach ($process in $processes) {
+        if ($stopped.Add([int]$process.ProcessId)) {
+            Write-Host "[STOP] Beende Run-Skript PID $($process.ProcessId)..." -ForegroundColor Yellow
+            Stop-ProcessTree -ProcessId ([int]$process.ProcessId)
+        }
+    }
+
+    if ($stopped.Count -eq 0) {
+        Write-Host "[STOP] Keine laufenden Run-Skripte gefunden." -ForegroundColor Green
+    } else {
+        Write-Host "[STOP] $($stopped.Count) Run-Skripte beendet." -ForegroundColor Green
+    }
+}
+
+function Stop-VorceDashboardAndScripts {
+    Write-Host "[STOP] Beende Dashboard und alle Run-Skripte..." -ForegroundColor Yellow
+    $stopped = New-Object System.Collections.Generic.HashSet[int]
+
+    # Stop Dashboard (port 5173)
+    $listeners = @(Get-NetTCPConnection -LocalPort 5173 -State Listen -ErrorAction SilentlyContinue)
+    foreach ($listener in $listeners) {
+        if ([int]$listener.OwningProcess -le 4) {
+            Write-Host "[STOP] Port 5173 wird von System-PID $($listener.OwningProcess) belegt; wird nicht beendet." -ForegroundColor DarkYellow
+            continue
+        }
+        if ($stopped.Add([int]$listener.OwningProcess)) {
+            Write-Host "[STOP] Beende Dashboard auf Port 5173 (PID $($listener.OwningProcess))..." -ForegroundColor Yellow
+            Stop-ProcessTree -ProcessId ([int]$listener.OwningProcess)
+        }
+    }
+
+    # Stop all run scripts
+    $runScriptPatterns = @(
+        [regex]::Escape((Join-Path $ScriptDir "autopilot.ps1")),
+        [regex]::Escape((Join-Path $ToolsDir "services/sync-service.ps1")),
+        [regex]::Escape((Join-Path $ScriptDir "src/tools/**/*.ps1"))
+    )
+
+    $processes = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+        $cmd = [string]$_.CommandLine
+        $runScriptPatterns | Where-Object { $cmd -match $_ }
+    })
+
+    foreach ($process in $processes) {
+        if ($stopped.Add([int]$process.ProcessId)) {
+            Write-Host "[STOP] Beende Run-Skript PID $($process.ProcessId)..." -ForegroundColor Yellow
+            Stop-ProcessTree -ProcessId ([int]$process.ProcessId)
+        }
+    }
+
+    if ($stopped.Count -eq 0) {
+        Write-Host "[STOP] Keine laufenden Vorce-Komponenten gefunden." -ForegroundColor Green
+    } else {
+        Write-Host "[STOP] $($stopped.Count) Vorce-Komponenten beendet." -ForegroundColor Green
+    }
 }
 
 function Stop-VorceInfrastructure {
@@ -150,11 +226,32 @@ Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host " VORCE 3.0 - INFRASTRUCTURE BOOT" -ForegroundColor Cyan
 Write-Host "=====================================" -ForegroundColor Cyan
 
-if ($Stop.IsPresent -or $Restart.IsPresent) {
+# Handle stop commands
+if ($StopScripts.IsPresent) {
+    Stop-AllRunScripts
+    return
+}
+
+if ($StopAll.IsPresent) {
+    Stop-VorceDashboardAndScripts
+    return
+}
+
+# Always stop existing processes when starting fresh
+if (-not $Stop.IsPresent) {
+    Write-Host "[BOOT] Beende bestehende Vorce-Prozesse..." -ForegroundColor Gray
     Stop-VorceInfrastructure
-    if (-not $Restart.IsPresent) {
-        return
-    }
+    Start-Sleep -Seconds 2
+}
+
+if ($Stop.IsPresent) {
+    Stop-VorceInfrastructure
+    return
+}
+
+if ($Restart.IsPresent) {
+    Stop-VorceInfrastructure
+    Start-Sleep -Seconds 2
 }
 
 # 1. Dashboard Health Check / Start

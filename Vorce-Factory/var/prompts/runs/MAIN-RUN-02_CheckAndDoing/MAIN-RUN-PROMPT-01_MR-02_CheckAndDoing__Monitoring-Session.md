@@ -1,4 +1,4 @@
-Rolle: Vorce Autopilot Monitoring Session.
+Rolle: Vorce-Factory Monitoring Session.
 Repository: {{Repository}}
 
 {{dashboardInstructions}}

@@ -1,26 +1,26 @@
 {
+  "sub_run": "SUB-RUN-01_MR-04_Optimizer__PerformanceDataCollection",
   "status": "completed",
+  "timestamp": "2026-06-21T07:45:25.8417114+02:00",
   "parts": [
     {
-      "id": "run_20260615_032915",
+      "id": "run_20260621_074525",
       "name": "PART-RUN-01_MR-04_Optimizer__PerformanceDataCollection__CollectPerformanceMetrics",
       "type": "PART",
       "status": "completed",
-      "started_at": "2026-06-15T03:29:15.0330452+02:00",
-      "completed_at": "2026-06-15T03:29:15.4664105+02:00",
+      "started_at": "2026-06-21T07:45:25.4078998+02:00",
+      "completed_at": "2026-06-21T07:45:25.8399369+02:00",
       "metadata": {},
       "results": [
         {
-          "critical_issues": 0,
+          "timestamp": "2026-06-21T07:45:25.8368124+02:00",
+          "status": "completed",
+          "performance_file": "C:\\Users\\Vinyl\\Desktop\\VJMapper\\VJMapper\\Vorce-Factory\\var\\performance\\performance_20260621_074525.json",
+          "data_points_collected": 31,
           "recommendations_count": 0,
-          "timestamp": "2026-06-15T03:29:15.4618546+02:00",
-          "data_points_collected": 30,
-          "performance_file": "C:\\Users\\Vinyl\\Desktop\\VJMapper\\VjMapper\\Vorce-Autopilot_NEW\\var\\performance\\performance_20260615_032915.json",
-          "status": "completed"
+          "critical_issues": 0
         }
       ]
     }
-  ],
-  "timestamp": "2026-06-15T03:29:15.4685256+02:00",
-  "sub_run": "SUB-RUN-01_MR-04_Optimizer__PerformanceDataCollection"
+  ]
 }

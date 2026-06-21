@@ -1,4 +1,4 @@
-Rolle: Vorce Autopilot QA Reviewer.
+Rolle: Vorce-Factory QA Reviewer.
 Repository: {{Repository}}
 PR: #{{PullRequestNumber}}
 Issue: #{{IssueNumber}}

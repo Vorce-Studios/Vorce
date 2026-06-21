@@ -1,40 +1,15 @@
 {
+  "sub_run": "DataSync",
+  "status": "completed",
+  "timestamp": "2026-06-21T08:45:34.7110784+02:00",
   "parts": [
     {
-      "id": "run_20260615_175241",
       "name": "FetchIssues",
-      "type": "PART",
-      "status": "completed",
-      "started_at": "2026-06-15T17:52:41.9969263+02:00",
-      "completed_at": "2026-06-15T17:52:43.1803761+02:00",
-      "metadata": {},
-      "results": [
-        {
-          "count": 37,
-          "timestamp": "2026-06-15T17:52:43.1676576+02:00"
-        }
-      ],
-      "PSComputerName": "localhost",
-      "RunspaceId": "23f15973-fdf1-434a-acff-1a7d4cb5564c",
-      "PSShowComputerName": false
+      "status": "completed"
     },
     {
-      "id": "run_20260615_175242",
       "name": "FetchPRs",
-      "type": "PART",
-      "status": "failed",
-      "started_at": "2026-06-15T17:52:42.4053720+02:00",
-      "completed_at": "2026-06-15T17:52:43.1617435+02:00",
-      "metadata": {
-        "error": "Cannot bind argument to parameter 'Data' because it is null."
-      },
-      "results": [],
-      "PSComputerName": "localhost",
-      "RunspaceId": "55f1b5ae-1ba9-4a2a-b292-61c97ae9a341",
-      "PSShowComputerName": false
+      "status": "completed"
     }
-  ],
-  "timestamp": "2026-06-15T17:52:43.4656864+02:00",
-  "status": "failed",
-  "sub_run": "DataSync"
+  ]
 }

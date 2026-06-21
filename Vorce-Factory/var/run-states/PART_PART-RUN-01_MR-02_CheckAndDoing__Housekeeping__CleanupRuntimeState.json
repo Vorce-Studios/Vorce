@@ -1,22 +1,20 @@
-﻿{
-    "id":  "run_20260618_001843",
-    "name":  "PART-RUN-01_MR-02_CheckAndDoing__Housekeeping__CleanupRuntimeState",
-    "type":  "PART",
-    "status":  "completed",
-    "started_at":  "2026-06-18T00:18:43.8301164+02:00",
-    "completed_at":  "2026-06-18T00:18:43.9191421+02:00",
-    "metadata":  {
-
-                 },
-    "results":  [
-                    {
-                        "tmp_files_cleaned":  0,
-                        "timestamp":  "2026-06-18T00:18:43.8886327+02:00",
-                        "stats_updated":  true,
-                        "cleaned_delegations":  0,
-                        "next_housekeeping":  "2026-06-19T00:18:43.8866329+02:00",
-                        "status":  "completed",
-                        "session_locks_cleaned":  0
-                    }
-                ]
+{
+  "id": "run_20260621_093135",
+  "name": "PART-RUN-01_MR-02_CheckAndDoing__Housekeeping__CleanupRuntimeState",
+  "type": "PART",
+  "status": "completed",
+  "started_at": "2026-06-21T09:31:35.6657065+02:00",
+  "completed_at": "2026-06-21T09:31:35.7045707+02:00",
+  "metadata": {},
+  "results": [
+    {
+      "timestamp": "2026-06-21T09:31:35.7015418+02:00",
+      "status": "completed",
+      "stats_updated": true,
+      "next_housekeeping": "2026-06-22T09:31:35.7014904+02:00",
+      "tmp_files_cleaned": 0,
+      "session_locks_cleaned": 0,
+      "cleaned_delegations": 0
+    }
+  ]
 }

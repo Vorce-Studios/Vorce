@@ -72,7 +72,7 @@ foreach ($proposal in $proposals) {
         $repo = $ConfigBag.Config.repository
         $title = "Strategy Task: $($proposal.title)"
 
-        $body = "Delegiert von Vorce Autopilot: Deliberation für Issue #$(if ($proposal.issueNumber) { $proposal.issueNumber } else { $proposal.issueId }).`n`nDeliberation Result:`n$($proposal.deliberation | ConvertTo-Json -Depth 5)"
+        $body = "Delegiert von Vorce-Factory: Deliberation für Issue #$(if ($proposal.issueNumber) { $proposal.issueNumber } else { $proposal.issueId }).`n`nDeliberation Result:`n$($proposal.deliberation | ConvertTo-Json -Depth 5)"
         if ($ConfigBag.DryRun) {
             $result = [pscustomobject]@{ html_url = "dry-run://delegation/$($proposal.issueNumber)"; number = $proposal.issueNumber }
         } else {

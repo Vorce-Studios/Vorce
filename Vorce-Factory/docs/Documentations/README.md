@@ -1,5 +1,5 @@
-Benutzer‑Doku (Kurz‑Version)  
-Vorce‑Autopilot NEW  
+Benutzer-Doku (Kurz-Version)  
+Vorce-Factory  
 Ein modularer KI‑Orchestrator für das Vorce‑Studios‑Repository.  
 Was macht das System?  
 - 

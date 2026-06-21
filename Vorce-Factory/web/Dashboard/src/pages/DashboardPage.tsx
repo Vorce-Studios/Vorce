@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react';
-import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, CalendarClock, Ban, MessageSquare, Terminal, Play, CheckCircle, Trash2, FolderOpen, Folder, FileJson } from 'lucide-react';
+import { useState } from 'react';
+import { Activity, DollarSign, GitPullRequest, Zap, Clock, TrendingUp, AlertCircle, XCircle, CalendarClock, Ban, MessageSquare, Terminal, Play, CheckCircle, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { QuotaRegistry, ActiveSessions, PullRequest, GitHubIssue, AuditResult } from '../types';
 import DeliberationPanel from './DeliberationPanel';
 import { RunHierarchyView } from '../components/RunHierarchyView';
-import { LiveLogMonitor } from '../components/LiveLogMonitor';
+import type { RunSummary } from '../types';
 
 interface Props {
   registry: QuotaRegistry;
@@ -13,7 +13,8 @@ interface Props {
   issues: GitHubIssue[];
   julesSessions?: any[];
   auditResult?: AuditResult;
-  liveLog?: string;
+  runHierarchy?: any;
+  runSummary?: RunSummary;
 }
 
 const PROVIDER_COLORS: Record<string, string> = {
@@ -119,45 +120,6 @@ function parseAuditResult(auditResult?: AuditResult) {
   }
 }
 
-function simplifyLiveLogLine(rawLine: string) {
-  const match = rawLine.match(/^\[(.*?)\]\s*(.*)$/);
-  const time = match ? match[1].split(' ')[1] || match[1] : '';
-  let message = (match ? match[2] : rawLine).trim();
-  if (!message) return null;
-
-  const level =
-    /(fehler|error|failed|fehlgeschlagen|exception|stacktrace)/i.test(message) ? 'error' :
-    /(warning|warnung|konflikt|blocked|escalat)/i.test(message) ? 'warn' :
-    /(ok|abgeschlossen|completed|erfolgreich)/i.test(message) ? 'ok' :
-    'info';
-
-  message = message
-    .replace(/^\[(PLANNING|MONITOR|AUDIT|LOOP|CEO|MEMORY|CODEX|DRY-RUN|INIT|STATE)\]\s*/i, '')
-    .replace(/^==========\s*/, '')
-    .replace(/\s*==========$/, '')
-    .replace(/^Starte Schritt:\s*/i, '')
-    .replace(/^Schritt:\s*/i, '')
-    .replace(/^Provider:\s*/i, 'Provider ')
-    .replace(/^Visible Phase:\s*/i, 'Dry-Run ')
-    .replace(/^Naechster Wake-Up/i, 'Nächster Run')
-    .replace(/^Oeffne sichtbares Terminal:/i, 'Öffne Terminal:');
-
-  if (message.length > 150) {
-    message = `${message.slice(0, 147)}...`;
-  }
-  return { time, message, level };
-}
-
-function getLiveLogItems(liveLog?: string) {
-  if (!liveLog) return [];
-  return liveLog
-    .split(/\r?\n/)
-    .map(line => simplifyLiveLogLine(line))
-    .filter((item): item is { time: string; message: string; level: string } => Boolean(item))
-    .slice(-14)
-    .reverse();
-}
-
 function formatNextRun(seconds?: number): string {
   if (typeof seconds !== 'number' || seconds <= 0) return 'N/A';
   if (seconds < 60) return `in ${seconds}s`;
@@ -166,32 +128,17 @@ function formatNextRun(seconds?: number): string {
   return `in ${mins}m ${secs}s`;
 }
 
-export default function DashboardPage({ registry, sessions, pullRequests, julesSessions, auditResult, liveLog }: Props) {
+export default function DashboardPage({ registry, sessions, pullRequests, julesSessions, auditResult, runHierarchy, runSummary }: Props) {
   const providers = registry.providers || {};
   const providerEntries = Object.entries(providers);
 
   const runControl = sessions.run_control || {};
-  const liveLogItems = getLiveLogItems(liveLog);
   const audit = parseAuditResult(auditResult);
   const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
   const [commentDraft, setCommentDraft] = useState<string>('');
   const [expandedRunNodes, setExpandedRunNodes] = useState<Set<string>>(new Set());
 
   const activeAlerts = sessions.decisions_pending?.filter(a => a.status !== 'closed' && a.status !== 'ignored') || [];
-
-  // Convert run states to hierarchical structure
-  const runStates = useMemo(() => {
-    if (!sessions.run_states) return [];
-
-    return sessions.run_states.map(state => ({
-      name: state.name || 'unknown',
-      type: state.name?.split('-')[0].toLowerCase() as 'main' | 'sub' | 'part' || 'part',
-      status: state.status || 'pending',
-      data: state,
-      path: state.name || '',
-      lastUpdated: state.last_updated || state.timestamp
-    }));
-  }, [sessions.run_states]);
 
   const sendRunControl = async (mainRun: string, action: string, note?: string) => {
     await fetch('/api/run-control', {
@@ -216,16 +163,9 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   };
 
   const handleSelectFile = (filePath: string) => {
-    // Construct the full path to the JSON file
-    const fullPath = `/var/run-states/${filePath}.json`;
-
-    // In a real implementation, this would:
-    // 1. Open the file in a modal or new tab
-    // 2. Fetch the file content and display it
-    console.log('Opening JSON file:', fullPath);
-
-    // For now, we'll just show an alert
-    alert(`Öffne JSON-Datei: ${fullPath}\n\nIn einer echten Implementierung würde dies den Inhalt der Datei anzeigen.`);
+    if (!filePath) return;
+    console.log('Opening JSON file:', filePath);
+    alert(`Öffne JSON-Datei: ${filePath}`);
   };
 
   const toggleRunNode = (nodeId: string) => {
@@ -244,21 +184,29 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
   const totalCallsToday = providerEntries.reduce((sum, [, p]) => sum + (p.usage_today?.calls || 0), 0);
 
   const julesUsage = providers.jules?.usage_today || {};
-  const runningJulesSessions = julesSessions ? julesSessions.filter(s =>
+  const julesArray = Array.isArray(julesSessions) ? julesSessions : [];
+  const runningJulesSessions = julesArray.filter(s =>
       String(s.repo || '') === 'Vorce-Studios/Vorce' &&
       ['IN_PROGRESS', 'PLANNING', 'QUEUED', 'AWAITING_PLAN_APPROVAL'].includes(String(s.state || ''))
-  ).length : 0;
-  const waitingJulesSessions = julesSessions ? julesSessions.filter(s =>
+  ).length;
+  const waitingJulesSessions = julesArray.filter(s =>
       String(s.repo || '') === 'Vorce-Studios/Vorce' &&
       ['AWAITING_USER_FEEDBACK', 'AWAITING_USER_FEEDBACK_CI_OR_BLOCKER', 'PAUSED'].includes(String(s.state || ''))
-    ).length : Number(julesUsage.scoped_live_waiting_sessions ?? julesUsage.pending_sessions ?? 0);
+    ).length || Number(julesUsage.scoped_live_waiting_sessions ?? julesUsage.pending_sessions ?? 0);
   const activeJulesSessions = julesSessions
     ? runningJulesSessions + waitingJulesSessions
     : Number(julesUsage.scoped_live_capacity_sessions ?? julesUsage.active_sessions ?? 0);
 
   // Filter PRs that are OPEN and NOT a Draft and belong to Vorce repo
-  const openPRs = pullRequests.filter(pr => pr.repo?.includes('Vorce') && pr.state === 'OPEN' && pr.isDraft !== true).length;
-  const conflictingPRs = pullRequests.filter(pr => pr.repo?.includes('Vorce') && pr.state === 'OPEN' && pr.isDraft !== true && pr.mergeable === 'CONFLICTING').length;
+  const prArray = Array.isArray(pullRequests) ? pullRequests : [];
+  const openPRs = prArray.filter(pr => pr.repo?.includes('Vorce') && pr.state === 'OPEN' && pr.isDraft !== true).length;
+  const conflictingPRs = prArray.filter(pr => pr.repo?.includes('Vorce') && pr.state === 'OPEN' && pr.isDraft !== true && pr.mergeable === 'CONFLICTING').length;
+  const hierarchyMainCount = runHierarchy?.main_runs?.length || 0;
+  const hierarchySubCount = runHierarchy?.main_runs?.reduce((sum: number, main: any) => sum + (main.sub_runs?.length || 0), 0) || 0;
+  const hierarchyPartCount = runHierarchy?.main_runs?.reduce(
+    (sum: number, main: any) => sum + (main.sub_runs || []).reduce((subSum: number, sub: any) => subSum + (sub.part_runs?.length || 0), 0),
+    0
+  ) || 0;
 
   const chartData = providerEntries
     .filter(([, p]) => p.enabled)
@@ -279,7 +227,7 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
               <Zap className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold gradient-text">Vorce Autopilot</h2>
+              <h2 className="text-xl font-bold gradient-text">Vorce-Factory</h2>
               <p className="text-sm text-slate-400 flex items-center gap-2 mt-0.5">
                 <span className="status-dot-active" />
                 Aktiv seit {timeAgo(sessions.started_at || '')}
@@ -314,11 +262,11 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
             Run-Hierarchie
           </h3>
           <span className="text-sm text-slate-400">
-            {runStates.length} Runs
+            {runHierarchy?.main_runs ? `${hierarchyMainCount} Main-Runs / ${hierarchySubCount} Sub-Runs / ${hierarchyPartCount} Part-Runs` : `${sessions.run_states?.length || 0} Runs`}
           </span>
         </div>
         <RunHierarchyView
-          runStates={runStates}
+          runHierarchy={runHierarchy}
           onNodeClick={handleRunNodeClick}
           expandedNodes={expandedRunNodes}
           onToggleNode={toggleRunNode}
@@ -567,9 +515,9 @@ export default function DashboardPage({ registry, sessions, pullRequests, julesS
         ))}
       </div>
 
-      {/* Live Logs & Working Sessions */}
+      {/* Run Summary & Working Sessions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <LiveLogPanel items={liveLogItems} />
+        <RunSummaryPanel summary={runSummary} />
         <WorkingSessionsPanel sessions={sessions.working_sessions || []} />
       </div>
 
@@ -1050,7 +998,59 @@ function JulesStateBadge({ state }: { state: string }) {
   );
 }
 
-      <LiveLogMonitor visible={true} maxHeight="200px" />
+function RunSummaryPanel({ summary }: { summary?: RunSummary }) {
+  const recent = summary?.recent_runs || [];
+  const stats24h = summary?.stats_24h || {};
+  return (
+    <div className="glass-card p-5 border border-slate-800">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+          <Activity className="text-cyan-400 w-4 h-4" />
+          Run-Zusammenfassung
+        </h3>
+        <span className="text-xs text-slate-400">{recent.length} letzte Runs</span>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 text-xs">
+        <StatBox label="24h Runs" value={String(stats24h.runs_completed || 0)} />
+        <StatBox label="24h Fallbacks" value={String(stats24h.fallbacks || 0)} />
+        <StatBox label="24h reused" value={String(stats24h.sub_runs_reused || 0)} />
+        <StatBox label="24h Dauer" value={`${Math.round((stats24h.avg_duration_ms || 0) / 1000)}s`} />
+      </div>
+      {recent.length === 0 ? (
+        <div className="text-xs text-slate-500">Noch keine Run-History vorhanden.</div>
+      ) : (
+        <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+          {recent.map((run) => (
+            <div key={run.run_id} className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-slate-100 truncate">{run.main_run}</div>
+                  <div className="text-[11px] text-slate-500">{run.status} • {run.result_summary}</div>
+                </div>
+                <div className="text-right text-[11px] text-slate-500">
+                  <div>{run.duration_ms ? `${Math.round(run.duration_ms / 1000)}s` : 'N/A'}</div>
+                  <div>{run.completed_at ? timeAgo(run.completed_at) : ''}</div>
+                </div>
+              </div>
+              <div className="mt-2 grid grid-cols-4 gap-2 text-[10px] text-slate-400">
+                <span>SUB {run.sub_runs.completed}/{run.sub_runs.failed}/{run.sub_runs.reused}</span>
+                <span>PART {run.part_runs.completed}/{run.part_runs.failed}/{run.part_runs.reused}</span>
+                <span>Fallbacks {run.fallbacks}</span>
+                <span>Attempts {run.provider_attempts}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-slate-800 bg-slate-950/30 p-2">
+      <div className="text-[10px] uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="text-sm text-slate-100 font-semibold">{value}</div>
     </div>
   );
 }

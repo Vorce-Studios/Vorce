@@ -1,4 +1,4 @@
-# Vorce Autopilot - Codebase Documentation
+# Vorce-Factory Dashboard - Codebase Documentation
 
 **Last Updated**: 2026-06-07  
 **Analyzed By**: Hermes Agent  
@@ -8,7 +8,7 @@
 ## Project Structure
 
 ```
-Vorce-Autopilot/dashboard/
+Vorce-Factory/dashboard/
 ├── src/
 │   ├── pages/
 │   │   ├── DashboardPage.tsx         (869 lines, 39.7KB) - MAIN DASHBOARD

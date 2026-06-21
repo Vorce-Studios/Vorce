@@ -1,7 +1,7 @@
 Entwickler‑Doku (Agent‑optimiert)  
 Version 3.0‑NEW – Stand 2026‑06‑14  
 1. Projekt‑Architektur  
-Vorce-Autopilot_NEW/
+Vorce-Factory/
 ├─ autopilot.ps1                 # Guard‑Loop, setzt globale Variablen
 ├─ Start‑Autopilot.ps1           # Bootstrapper, Health‑Check, startet Orchestrator
 ├─ src/
@@ -148,6 +148,6 @@ Test‑PlanningRun.ps1	End‑to‑End‑Durchlauf des Planning‑Flows, Existenz
 Test‑StartProcess.ps1	Grundlegende Startup‑Checks (autopilot, health‑check)
 12. Dokumentations‑Workflow  
 - 
-Die Entwickler‑Doku (dieses Dokument) wird als Agent-Doku.md im Projekt‑Root abgelegt.  
+Die Entwickler-Doku (dieses Dokument) liegt unter `docs/Documentations/Agent-Doku.md`.  
 - 
-Die Benutzer‑Doku (nachfolgend) wird als README.md bereitgestellt.
+Die Benutzer-Doku liegt unter `docs/Documentations/README.md`.
